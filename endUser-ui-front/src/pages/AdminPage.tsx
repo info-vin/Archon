@@ -3,7 +3,7 @@ import { api, AdminNewUserData } from '../services/api.ts';
 import { Employee, DocumentVersion, BlogPost, EmployeeRole } from '../types.ts';
 import { CheckCircleIcon, XCircleIcon, ClockIcon, PlusIcon, XIcon } from '../components/Icons.tsx';
 import { useAuth } from '../hooks/useAuth.tsx';
-import Avatar from '../components/Avatar.tsx';
+import UserAvatar from '../components/UserAvatar.tsx';
 
 
 const AdminPage: React.FC = () => {
@@ -191,7 +191,7 @@ const UserManagement: React.FC = () => {
                                 <tr key={emp.id}>
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <div className="flex items-center">
-                                            <Avatar src={emp.avatar} name={emp.name || ''} className="h-10 w-10" />
+                                            <UserAvatar name={emp.name || ''} className="h-10 w-10" />
                                             <div className="ml-4">
                                                 <div className="text-sm font-medium">{emp.name}</div>
                                                 <div className="text-sm text-muted-foreground">{emp.email}</div>
