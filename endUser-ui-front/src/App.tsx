@@ -9,7 +9,7 @@ import BlogPage from './pages/BlogPage.tsx';
 import SettingsPage from './pages/SettingsPage.tsx';
 import { LogOutIcon, SettingsIcon, UserIcon, MenuIcon, XIcon } from './components/Icons.tsx';
 import ThemeToggle from './components/ThemeToggle.tsx';
-import Avatar from './components/Avatar.tsx';
+import UserAvatar from './components/UserAvatar.tsx';
 import LiveClock from './components/LiveClock.tsx';
 
 const App: React.FC = () => {
@@ -252,7 +252,7 @@ const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                 </ul>
                 <div className="p-4 border-t border-border">
                    <div className="flex items-center mb-4">
-                       <Avatar src={user?.avatar} name={user?.name || ''} className="w-10 h-10 mr-3" />
+                       <UserAvatar name={user?.name || ''} className="w-10 h-10 mr-3" />
                        <div>
                            <p className="font-semibold">{user?.name}</p>
                            <p className="text-sm text-muted-foreground">{user?.email}</p>
