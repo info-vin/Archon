@@ -33,10 +33,11 @@
 
 ## 開發工具 (Tooling & Scripts)
 
-- **待辦項目：自動化 Mock Data 轉換為 SQL 種子檔案**
+- **已完成 (2025-08-26)：自動化 Mock Data 轉換為 SQL 種子檔案**
   - **目標**: 解決手動將前端 Mock Data 同步到資料庫的繁瑣問題。
   - **方案**:
     1.  讀取 `endUser-ui-front/src/services/api.ts` 檔案。
     2.  解析檔案內容，提取 `MOCK_EMPLOYEES`, `MOCK_PROJECTS` 等陣列資料。
     3.  將 JavaScript 物件轉換為 SQL `INSERT` 語句。
     4.  產生一個新的 SQL 檔案 (例如 `migration/seed_mock_data.sql`)，供開發者執行。
+  - **結論**: 已成功產生 `migration/seed_mock_data.sql` 檔案。
