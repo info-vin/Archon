@@ -466,6 +466,61 @@ class YourService:
             return False, {"error": str(e)}
 ```
 
+### Architectural Patterns & Developer Notes
+
+Based on recent development cycles, here are some key patterns and conventions to follow when adding new backend features. Adhering to these will ensure consistency and testability.
+
+1.  **Environment Setup**:
+    *   The Python backend uses a virtual environment managed by `uv`.
+    *   To run any command (like `pytest`), the virtual environment must be active. In PowerShell, use `.\python\.venv\Scripts\Activate.ps1`.
+    *   Alternatively, and preferably, use the provided `Makefile` commands (e.g., `make test-be`), which handle the environment context automatically.
+
+2.  **Lazy Initialization of Services**:
+    *   Any service class that depends on an external connection (like a `Supabase` client) **must not** create that connection in its `__init__` constructor.
+    *   The connection should be initialized "lazily" (on-demand) the first time a method requires it. This is critical for making the code testable.
+    *   **Example Pattern**:
+        ```python
+        from supabase import Client
+        from ..services.client_manager import get_supabase_client
+
+        class MyService:
+            def __init__(self):
+                self._supabase_client: Client | None = None
+
+            def _get_client(self) -> Client:
+                if self._supabase_client is None:
+                    self._supabase_client = get_supabase_client()
+                return self._supabase_client
+
+            def do_work(self):
+                client = self._get_client()
+                # ... use client ...
+        ```
+
+3.  **Unit Testing Services**:
+    *   When unit testing a service in isolation, you must mock its dependencies.
+    *   Use `unittest.mock.patch` to intercept calls to dependencies, like `get_supabase_client`.
+    *   Patch the dependency where it is *looked up* (i.e., in the module where it is called), not where it is defined.
+    *   **Example Pattern**:
+        ```python
+        from unittest.mock import patch, MagicMock
+        from src.server.services.my_service import MyService
+
+        @patch('src.server.services.my_service.get_supabase_client')
+        def test_my_service_work(mock_get_client):
+            # Arrange
+            mock_get_client.return_value = MagicMock() # Mock the return value
+            service = MyService()
+
+            # Act
+            service.do_work()
+
+            # Assert
+            mock_get_client.assert_called_once()
+            # ... other assertions ...
+        ```
+
+
 ## 🤝 Community Standards
 
 ### Communication Guidelines

@@ -151,7 +151,7 @@ sequenceDiagram
     2.  (可選) 新增 `customers` 和 `vendors` 資料表，並建立與 `projects` 的關聯。
     3.  建立一個新的 SQL 遷移檔案來執行上述變更。
 
-- **[ ] 檔案上傳功能 (File Handling)**
+- **[x] 檔案上傳功能 (File Handling)**
   - **目標**: 讓 Agent 可以安全地儲存產出的檔案。
   - **待辦**:
     1.  在 `python/src/server/services/` 下建立 `storage_service.py`，專門處理與 Supabase Storage 的所有互動 (上傳、下載、取得 URL)。
