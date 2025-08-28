@@ -88,6 +88,52 @@ graph TD
     A -- 13. 點擊連結審核檔案 --> F
 ```
 
+### 時序圖 (Sequence Diagram)
+
+```mermaid
+sequenceDiagram
+    participant User as 使用者
+    participant Frontend as 前端 (UI)
+    participant Backend as 後端 (API)
+    participant AI_Agent as AI Agent
+    participant Supabase_DB as 資料庫
+    participant Supabase_Storage as 存儲
+
+    User->>Frontend: 1. 建立/指派任務
+    Frontend->>Backend: 2. 呼叫 API (create/update task)
+    activate Backend
+
+    Backend->>AI_Agent: 3. 觸發 Agent (非同步)
+    activate AI_Agent
+    Backend->>Supabase_DB: 4. 更新任務狀態 (in progress)
+    
+    Note over Backend, Supabase_DB: Socket.IO 廣播
+    Backend-->>Frontend: 5. (via Socket.IO) 任務狀態更新
+    deactivate Backend
+
+    AI_Agent->>AI_Agent: 6. 執行任務 (例如: 後製 DM)
+    
+    AI_Agent->>Backend: 7. 呼叫檔案上傳 API
+    activate Backend
+
+    Backend->>Supabase_Storage: 8. 將檔案上傳
+    activate Supabase_Storage
+    Supabase_Storage-->>Backend: 9. 回傳檔案 URL
+    deactivate Supabase_Storage
+
+    Backend->>Supabase_DB: 10. 更新任務 (status: review, attachments: [URL])
+    
+    Note over Backend, Supabase_DB: Socket.IO 廣播
+    Backend-->>Frontend: 11. (via Socket.IO) 任務完成更新
+    deactivate Backend
+    deactivate AI_Agent
+
+    Frontend->>User: 12. UI 自動更新 (顯示連結)
+
+    User->>Supabase_Storage: 13. 點擊連結審核檔案
+
+```
+
 ## 4. 開發順序與待辦事項 (Development Plan)
 
 我們將依賴關係，由後到前分階段進行開發：**後端基礎 -> Agent 能力 -> 前端功能**。
