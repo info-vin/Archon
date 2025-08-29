@@ -198,6 +198,14 @@ sequenceDiagram
     2.  **前端**: 在 `endUser-ui` 中建立新的儀表板頁面 (`/dashboard`) 和相關圖表組件 (`ReportDashboard.tsx`)。
     3.  **前端**: 呼叫新的報告 API，並將數據視覺化呈現（例如：各專案任務數量、狀態分佈圖等）。
 
+- **[ ] AI 資訊頁面整合 (AI Info Page Integration)**
+  - **目標**: 將 `/public/ai/home.html` 的內容轉換為原生 React 元件，以獲得最佳的使用者體驗與可維護性，並在登入後的使用者介面中展示。
+  - **待辦**:
+    1.  分析 `ai/home.html` 的結構與樣式。
+    2.  在 `endUser-ui-front/src/components/` 或 `.../pages/` 中建立一個新的 `AIInfoPage.tsx` 元件。
+    3.  使用 JSX 和應用程式的樣式方案 (如 TailwindCSS) 重建頁面內容。
+    4.  在應用程式的路由中加入此頁面，並確保只有已登入的使用者可以存取。
+
 ---
 
 ---
