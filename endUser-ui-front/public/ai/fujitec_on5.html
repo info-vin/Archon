@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>台灣分公司中期經營計畫「Move On 5」財務影響與展望</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Murecho:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Custom Variables */
+        :root {
+            --sky-blue: #a0d8f0;
+            --grass-green: #98d8a8;
+            --sun-yellow: #f8e47c;
+            --warm-beige: #f5f0e1;
+            --forest-green: #4a6a52;
+            --night-blue: #2c3e50;
+            --text-dark: #3D3D3D;
+            --text-light: #fdfdfd;
+            --accent-red: #e57373;
+            --main-brand-color: #3182ce; /* Blue for primary highlights */
+            --secondary-brand-color: #4a5568; /* Darker grey for secondary elements */
+        }
+
+        /* Base styles from the example */
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            font-family: 'Murecho', sans-serif;
+            background-color: var(--warm-beige);
+            overflow: hidden;
+            color: var(--);
+        }
+
+        #presentation {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+
+        .slide {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            padding: 5vw;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.8s ease-in-out;
+            background-size: cover;
+            background-position: center;
+        }
+
+        .slide.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        /* Background Images - updated with new URLs */
+        #slide-1 { background-image: url('https://images.unsplash.com/photo-1508739773434-c26b3d09e071?ixlib=rb-4.0.3&q=85&fm=jpg&crop=entropy&cs=srgb&w=3200'); }
+        #slide-2 { background-image: url('https://images.unsplash.com/photo-1441974231531-c6227db76b6e?ixlib=rb-4.0.3&q=85&fm=jpg&crop=entropy&cs=srgb&w=3200'); }
+        #slide-3 { background-image: url('https://images.unsplash.com/photo-1473448912268-2022ce9509d8?ixlib=rb-4.0.3&q=85&fm=jpg&crop=entropy&cs=srgb&w=3200'); }
+        #slide-4 { background-image: url('https://images.unsplash.com/photo-1422493757035-1e5e03968f95?ixlib=rb-4.0.3&q=85&fm=jpg&crop=entropy&cs=srgb&w=3200'); }
+        #slide-5 { background-image: url('https://images.unsplash.com/photo-1501854140801-50d01698950b?ixlib=rb-4.0.3&q=85&fm=jpg&crop=entropy&cs=srgb&w=3200'); }
+        #slide-6 { background-image: url('https://images.unsplash.com/photo-1447752875215-b2761acb3c5d?ixlib=rb-4.0.3&q=85&fm=jpg&crop=entropy&cs=srgb&w=3200'); }
+        #slide-7 { background-image: url('https://images.unsplash.com/photo-1475924156734-496f6cac6ec1?ixlib=rb-4.0.3&q=85&fm=jpg&crop=entropy&cs=srgb&w=3200'); }
+        #slide-8 { background-image: url('https://images.unsplash.com/photo-1414609245224-afa02bfb3fda?ixlib=rb-4.0.3&q=85&fm=jpg&crop=entropy&cs=srgb&w=3200'); }
+        #slide-9 { background-image: url('https://images.unsplash.com/photo-1506318137071-a8e063b4bec0?ixlib=rb-4.0.3&q=85&fm=jpg&crop=entropy&cs=srgb&w=3200'); }
+        #slide-10 { background-image: url('https://images.unsplash.com/photo-1534796636912-3b95b3ab5986?ixlib=rb-4.0.3&q=85&fm=jpg&crop=entropy&cs=srgb&w=3200'); }
+        #slide-11 { background-image: url('https://images.unsplash.com/photo-1506748686214-e9df14d4d9d0?q=80&fm=jpg&crop=entropy&cs=tinysrgb&w=1920&h=1080&fit=crop'); } /* Minimalist, calm space with light, modern Japanese interior */
+
+
+        .slide h1, .slide h2, .slide h3, .slide p, .slide li, .slide span, .slide td, .slide th, .slide div[contenteditable="true"] {
+            outline: none;
+            cursor: text;
+            /* text-shadow: 1px 1px 3px rgba(0,0,0,0.3); */ /* Removed text shadow for better contrast with dark text */
+        }
+        .slide h1:focus, .slide h2:focus, .slide p:focus, .slide li:focus, .slide span:focus, .slide td:focus, .slide th:focus, .slide div[contenteditable="true"]:focus {
+            background-color: rgba(248, 228, 124, 0.3);
+            border-radius: 4px;
+        }
+        
+        .content-box {
+            background-color: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            padding: 2.5vw;
+            border-radius: 15px;
+            max-width: 80vw;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Night theme adaptation for content-box */
+        .night-theme .content-box {
+             background-color: rgba(44, 62, 80, 0.85);
+             color: var(--text-light);
+             text-shadow: none; /* Remove text shadow for dark background */
+        }
+        .night-theme h2, .night-theme h3 {
+            color: var(--sun-yellow); /* Yellow headings for night theme */
+        }
+        .night-theme p, .night-theme li, .night-theme span {
+            color: var(--text-light);
+        }
+
+
+        /* Navigation */
+        .nav-button {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background-color: rgba(255, 255, 255, 0.7);
+            color: var(--text-dark);
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            font-size: 24px;
+            cursor: pointer;
+            z-index: 100;
+            transition: background-color 0.3s;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .nav-button:hover {
+            background-color: white;
+        }
+        #prevBtn { left: 2vw; }
+        #nextBtn { right: 2vw; }
+
+        #slide-counter {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(0, 0, 0, 0.5);
+            color: white;
+            padding: 5px 15px;
+            border-radius: 15px;
+            font-size: 14px;
+            z-index: 100;
+        }
+        
+        /* Visual Description Tooltip */
+        .tooltip-container {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            z-index: 101;
+        }
+        .tooltip-icon {
+            width: 30px;
+            height: 30px;
+            background-color: rgba(255, 255, 255, 0.7);
+            color: var(--text-dark);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            cursor: pointer;
+            font-style: italic;
+        }
+        .tooltip-text {
+            visibility: hidden;
+            width: 250px;
+            background-color: var(--text-dark);
+            color: #fff;
+            text-align: left;
+            border-radius: 6px;
+            padding: 10px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+    /* Changed from right: 0; to left: -220px; for better positioning on left side */
+            left: -220px; 
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        .tooltip-container:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+        
+        /* Specific Slide Styles (adapted from the example) */
+        /* Slide 1: Vertical Title */
+        #slide-1 .content-box {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            height: 80vh;
+            background-color: transparent;
+            backdrop-filter: none;
+            box-shadow: none;
+        }
+        #slide-1 .vertical-title {
+            writing-mode: vertical-rl;
+            text-orientation: mixed;
+            /* Changed color to a darker shade for better contrast */
+            color: var(--accent-red); 
+            text-shadow: none; /* Removed text shadow */
+            padding-right: 2vw;
+        }
+        /* Updated font sizes for title and subtitle */
+        #slide-1 h1 { font-size: 3.5vw; letter-spacing: 0.3vw; margin: 0; }
+        #slide-1 .subtitle-jp { font-size: 1.8vw; margin-top: 1vw; font-weight: 300; }
+        #slide-1 p { font-size: 1.5vw; margin-top: 1vw; font-weight: 300; }
+
+
+        /* General table styling for all slides */
+        .content-box table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            margin-bottom: 15px;
+            background-color: rgba(255, 255, 255, 0.8); /* Slightly transparent white for tables */
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .content-box th, .content-box td {
+            border: 1px solid rgba(0,0,0,0.1);
+            padding: 10px;
+            text-align: left;
+            font-size: 0.95em;
+        }
+        .content-box th {
+            background-color: rgba(152, 216, 168, 0.3); /* Greenish header */
+            font-weight: 600;
+        }
+        .night-theme .content-box table {
+            background-color: rgba(0, 0, 0, 0.3); /* Darker transparent for tables in night theme */
+        }
+        .night-theme .content-box th {
+            background-color: rgba(248, 228, 124, 0.2);
+            color: var(--text-light);
+        }
+        .night-theme .content-box td {
+             color: var(--text-light);
+        }
+
+        /* Lists */
+        .content-box ul {
+            list-style: disc;
+            margin-left: 20px;
+            padding-left: 0;
+        }
+        .content-box li {
+            margin-bottom: 5px;
+        }
+        
+        /* Highlight spans */
+        .highlight {
+            color: var(--main-brand-color);
+            font-weight: 600;
+        }
+
+        .night-theme .highlight {
+            color: var(--sun-yellow); /* Yellow highlight for night theme */
+        }
+    </style>
+</head>
+<body>
+
+    <div id="presentation">
+
+        <!-- SLIDE 1: COVER -->
+        <section class="slide active" id="slide-1" data-theme="night">
+            <div class="content-box">
+                <div class="vertical-title">
+                    <h1 contenteditable="true">富士達股份有限公司中期經營計畫</h1>
+                    <p class="subtitle-jp" contenteditable="true">フジテック株式会社中期経営計画</p>
+                    <p contenteditable="true">「Move On 5」財務影響與展望</p>
+                </div>
+            </div>
+            <div class="tooltip-container">
+                <div class="tooltip-icon">i</div>
+                <div class="tooltip-text" contenteditable="true">背景為日本鳥居與富士山景觀，突出公司根基與展望。</div>
+            </div>
+        </section>
+
+        <!-- SLIDE 2: OVERALL PLAN OVERVIEW -->
+        <section class="slide" id="slide-2">
+            <div class="content-box">
+                <h2 contenteditable="true">公司整體中期經營計畫「Move On 5」概述</h2>
+                <h3 contenteditable="true">願景與核心理念：「不易流行」</h3>
+                <p contenteditable="true">
+                    堅守「安全・安心」、「品質」及「人才培育」等核心價值，同時靈活應對市場變化，推動「選擇與集中」策略，以全面提升企業價值。核心在於從<span class="highlight" contenteditable="true">單純的營收擴張轉向「高利潤成長」</span>。
+                </p>
+                <h3 contenteditable="true">公司整體財務目標摘要 (FY2023 實際 vs. FY2028 預期)</h3>
+                <ul class="list-disc ml-6 text-gray-700">
+                    <li contenteditable="true">銷售額：從 2,294 億日圓增至 3,250 億日圓 (CAGR 8%)</li>
+                    <li contenteditable="true">營業利潤：從 145 億日圓大幅增長至 <span class="highlight" contenteditable="true">440 億日圓 (3.0 倍)</span></li>
+                    <li contenteditable="true">營業利潤率：從 6.4% 顯著提升至 <span class="highlight" contenteditable="true">13.5% (+7.1 個百分點)</span></li>
+                </ul>
+            </div>
+            <div class="tooltip-container">
+                <div class="tooltip-icon">i</div>
+                <div class="tooltip-text" contenteditable="true">背景為日本森林湖泊景觀，象徵公司整體戰略的宏觀視野與自然和諧。</div>
+            </div>
+        </section>
+
+        <!-- SLIDE 3: OVERALL FINANCIAL TARGETS DETAIL -->
+        <section class="slide" id="slide-3">
+            <div class="content-box">
+                <h2 contenteditable="true">公司整體財務目標詳情 (FY2023 實際 vs. FY2028 預期)</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th contenteditable="true">財務指標</th>
+                            <th contenteditable="true">FY2023 實際 (億日圓/%)</th>
+                            <th contenteditable="true">FY2028 預期 (億日圓/%)</th>
+                            <th contenteditable="true">增長/提升幅度</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td contenteditable="true">銷售額</td>
+                            <td contenteditable="true">2,294</td>
+                            <td contenteditable="true">3,250</td>
+                            <td contenteditable="true">CAGR 8%</td>
+                        </tr>
+                        <tr>
+                            <td contenteditable="true">營業利潤</td>
+                            <td contenteditable="true">145</td>
+                            <td contenteditable="true">440</td>
+                            <td contenteditable="true"><span class="highlight">3.0 倍</span></td>
+                        </tr>
+                        <tr>
+                            <td contenteditable="true">銷售總利潤率</td>
+                            <td contenteditable="true">21%</td>
+                            <td contenteditable="true">26%</td>
+                            <td contenteditable="true">+5 個百分點</td>
+                        </tr>
+                        <tr>
+                            <td contenteditable="true">營業利潤率</td>
+                            <td contenteditable="true">6.4%</td>
+                            <td contenteditable="true"><span class="highlight">13.5%</span></td>
+                            <td contenteditable="true">+7.1 個百分點</td>
+                        </tr>
+                        <tr>
+                            <td contenteditable="true">股東權益報酬率(ROE)</td>
+                            <td contenteditable="true">12.9%</td>
+                            <td contenteditable="true">18%</td>
+                            <td contenteditable="true">+5.1 個百分點</td>
+                        </tr>
+                        <tr>
+                            <td contenteditable="true">每股盈餘(EPS)</td>
+                            <td contenteditable="true">228.55 日圓</td>
+                            <td contenteditable="true">384 日圓</td>
+                            <td contenteditable="true">+155.45 日圓</td>
+                        </tr>
+                        <tr>
+                            <td contenteditable="true">股息支付率</td>
+                            <td contenteditable="true">67.8%</td>
+                            <td contenteditable="true">80%</td>
+                            <td contenteditable="true">+12.2 個百分點</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <p class="text-sm text-gray-600 mt-2" contenteditable="true"><em>目標顯示公司戰略核心已轉向利潤率驅動的成長。</em></p>
+            </div>
+            <div class="tooltip-container">
+                <div class="tooltip-icon">i</div>
+                <div class="tooltip-text" contenteditable="true">背景為日本森林鳥瞰圖，強調數據和目標的重要性。</div>
+            </div>
+        </section>
+
+        <!-- SLIDE 4: THREE STRATEGIC PILLARS -->
+        <section class="slide" id="slide-4">
+            <div class="content-box">
+                <h2 contenteditable="true">「Move On 5」三大戰略支柱</h2>
+                <ul class="list-disc ml-6 text-gray-700">
+                    <li><span class="font-semibold" contenteditable="true">區域/事業組合的選擇與集中：</span> 優化資源配置，聚焦高潛力市場，將區域劃分為「成長」、「穩定」、「再聚焦」和「轉型或退出」四個象限。</li>
+                    <li><span class="font-semibold" contenteditable="true">高品質與高收益性的兩立：</span> 提升營運效率與盈利能力 (供應鏈優化、數位化、SG&A削減，並透過標準化降低成本)。</li>
+                    <li><span class="font-semibold" contenteditable="true">建立強韌的事業基礎：</span> 強化集團管理、培育具備全球視野的人才，深化ESG經營。</li>
+                </ul>
+                <p class="text-sm text-gray-600 mt-4" contenteditable="true"><em>三大支柱共同構建以效率和價值為導向的綜合性生態系統。</em></p>
+            </div>
+            <div class="tooltip-container">
+                <div class="tooltip-icon">i</div>
+                <div class="tooltip-text" contenteditable="true">背景為日本鄉村風景，象徵策略之間的協同作用與深遠影響。</div>
+            </div>
+        </section>
+
+        <!-- SLIDE 5: EAST ASIA REGION OVERVIEW -->
+        <section class="slide night-theme" id="slide-5">
+            <div class="content-box">
+                <h2 contenteditable="true">東亞區市場與財務表現分析 (含台灣)</h2>
+                <h3 contenteditable="true">東亞區財務目標 (FY2023 實際 vs. FY2028 預期)</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th contenteditable="true">財務指標</th>
+                            <th contenteditable="true">FY2023 實際 (億日圓/%)</th>
+                            <th contenteditable="true">FY2028 預期 (億日圓/%)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td contenteditable="true">銷售額</td>
+                            <td contenteditable="true">793</td>
+                            <td contenteditable="true">1,160</td>
+                        </tr>
+                        <tr>
+                            <td contenteditable="true">營業利潤</td>
+                            <td contenteditable="true">16</td>
+                            <td contenteditable="true">104.4</td>
+                        </tr>
+                        <tr>
+                            <td contenteditable="true">營業利潤率</td>
+                            <td contenteditable="true">2%</td>
+                            <td contenteditable="true"><span class="highlight">9%</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+                <p class="text-sm text-gray-400 mt-2" contenteditable="true"><em>東亞區營業利潤率目標大幅提升至9%，為公司整體利潤增長關鍵驅動力。</em></p>
+            </div>
+            <div class="tooltip-container">
+                <div class="tooltip-icon">i</div>
+                <div class="tooltip-text" contenteditable="true">背景為日本山景與雲海全景，象徵東亞區市場的廣闊與潛力。</div>
+            </div>
+        </section>
+
+        <!-- SLIDE 6: CHINA MARKET IMPACT -->
+        <section class="slide night-theme" id="slide-6">
+            <div class="content-box">
+                <h2 contenteditable="true">中國市場轉型策略對台灣廠區的潛在影響</h2>
+                <ul class="list-disc ml-6 text-gray-700">
+                    <li contenteditable="true">中國市場從傳統新設需求轉向<span class="font-semibold">家用電梯、附加設施、小型基礎設施、重點客戶</span>等高附加值細分市場。</li>
+                    <li contenteditable="true">中國市場積極追求成本降低，開發更具價格競爭力的設備。</li>
+                    <li contenteditable="true"><span class="highlight" contenteditable="true">對台灣廠區影響：</span> 生產重心可能從大批量標準品轉向<span class="font-semibold" contenteditable="true">小批量、多樣化、高附加值產品</span>，並須更積極地<span class="font-semibold" contenteditable="true">控制生產成本</span>。</li>
+                </ul>
+                <p class="text-sm text-gray-400 mt-4" contenteditable="true"><em>這要求台灣廠區在生產上具備更高靈活性，可能需投資新設備或技術。</em></p>
+            </div>
+            <div class="tooltip-container">
+                <div class="tooltip-icon">i</div>
+                <div class="tooltip-text" contenteditable="true">背景為日本森林風景，象徵市場的變化與聚焦。</div>
+            </div>
+        </section>
+
+        <!-- SLIDE 7: TAIWAN FACTORY OPERATIONAL IMPACT - PRODUCTION -->
+        <section class="slide" id="slide-7">
+            <div class="content-box">
+                <h2 contenteditable="true">「Move On 5」對台灣廠區營運與財務的影響</h2>
+                <h3 contenteditable="true">A. 生產策略與產品需求調整</h3>
+                <ul class="list-disc ml-6 text-gray-700">
+                    <li contenteditable="true"><span class="font-semibold" contenteditable="true">生產重心轉移：</span> 需具備更高生產彈性，適應小批量、多樣化、高附加值產品，並評估投資新設備或技術。</li>
+                    <li contenteditable="true"><span class="font-semibold" contenteditable="true">MOD與維護業務：</span> 需求增長將帶動替換零件、現代化套件需求，為廠區提供穩定且利潤較高的生產流。</li>
+                </ul>
+                <p class="text-sm text-gray-600 mt-4" contenteditable="true"><em>廠區應評估現有生產線，考慮投資支持定制化、高規格產品的流程。</em></p>
+            </div>
+            <div class="tooltip-container">
+                <div class="tooltip-icon">i</div>
+                <div class="tooltip-text" contenteditable="true">背景為日本茶園景觀，強調生產策略的調整與效率提升。</div>
+            </div>
+        </section>
+
+        <!-- SLIDE 8: TAIWAN FACTORY OPERATIONAL IMPACT - SUPPLY CHAIN -->
+        <section class="slide" id="slide-8">
+            <div class="content-box">
+                <h3 contenteditable="true">B. 製造/採購供應鏈優化措施</h3>
+                <ul class="list-disc ml-6 text-gray-700">
+                    <li contenteditable="true"><span class="font-semibold" contenteditable="true">導入標準機種與工法：</span> 透過簡化結構、易於安裝的產品和工法，降低成本、提升效率。</li>
+                    <li contenteditable="true"><span class="font-semibold" contenteditable="true">推動自動化與機器人化：</span> 大幅提升作業效率，確保製造成本與效率與全球主要生產基地同步。</li>
+                    <li contenteditable="true"><span class="font-semibold" contenteditable="true">毛利率改善目標：</span> 新設業務毛利率提升14個百分點，MOD業務毛利率提升8個百分點。台灣廠區需將這些目標內化為KPI。</li>
+                </ul>
+                <p class="text-sm text-gray-600 mt-4" contenteditable="true"><em>工廠不僅要「降低成本」，更要將其與具體毛利潤目標掛鉤。</em></p>
+            </div>
+            <div class="tooltip-container">
+                <div class="tooltip-icon">i</div>
+                <div class="tooltip-text" contenteditable="true">背景為日本竹林景觀，象徵供應鏈的優化與效率提升。</div>
+            </div>
+        </section>
+
+        <!-- SLIDE 9: TAIWAN FACTORY OPERATIONAL IMPACT - DIGITALIZATION/SG&A -->
+        <section class="slide night-theme" id="slide-9">
+            <div class="content-box">
+                <h3 contenteditable="true">C. 數位工具應用與智慧生產力提升 / SG&A削減</h3>
+                <ul class="list-disc ml-6 text-gray-700">
+                    <li contenteditable="true"><span class="font-semibold" contenteditable="true">數位化延伸至生產端：</span> 探索AI、AR等技術應用於廠區設備預防性維護、品質檢測、生產排程優化。</li>
+                    <li contenteditable="true"><span class="font-semibold" contenteditable="true">SG&A削減目標：</span> 透過業務標準化、BPR、導入生成式AI服務「Fujitec-GAI」及RPA，廠區需優化內部行政流程，嚴格控制間接費用。</li>
+                </ul>
+                <p class="text-sm text-gray-400 mt-4" contenteditable="true"><em>將數位化從服務端延伸至生產端，推動廠區自身的「智慧製造」倡議。</em></p>
+            </div>
+            <div class="tooltip-container">
+                <div class="tooltip-icon">i</div>
+                <div class="tooltip-text" contenteditable="true">背景為日本夜間城市景觀，象徵數位工具的廣泛應用與智慧生產。</div>
+            </div>
+        </section>
+
+        <!-- SLIDE 10: FINANCIAL OUTLOOK & RECOMMENDATIONS -->
+        <section class="slide" id="slide-10">
+            <div class="content-box">
+                <h2 contenteditable="true">台灣廠區財務展望與建議</h2>
+                <h3 contenteditable="true">台灣廠區在公司整體戰略中的財務貢獻預期</h3>
+                <p class="mb-4" contenteditable="true">
+                    台灣穩定的新設需求與成長的MOD市場，使其成為東亞區實現<span class="highlight" contenteditable="true">9%營業利潤率目標</span>的關鍵支撐點。廠區的效率提升與成本控制將直接貢獻此目標，扮演<span class="font-semibold" contenteditable="true">區域利潤中心</span>的關鍵角色。
+                </p>
+
+                <h3 contenteditable="true">具體財務建議</h3>
+                <ul class="list-disc ml-6 text-gray-700">
+                    <li contenteditable="true"><span class="font-semibold" contenteditable="true">深化成本控制與製造效率：</span> 將毛利率目標分解為廠區KPI，推動精益生產，評估自動化投資回報。</li>
+                    <li contenteditable="true"><span class="font-semibold" contenteditable="true">優化產品組合與生產彈性：</span> 密切關注市場變化，調整生產線以靈活應對高附加值、小批量訂單。</li>
+                    <li contenteditable="true"><span class="font-semibold" contenteditable="true">加速數位化轉型在廠區的應用：</span> 將數位工具應用於智慧製造，優化行政管理流程。</li>
+                    <li contenteditable="true"><span class="font-semibold" contenteditable="true">強化供應鏈韌性與在地化：</span> 降低單一來源依賴，探索多元供應商，明確台灣廠區在全球網絡中的戰略定位。</li>
+                </ul>
+            </div>
+            <div class="tooltip-container">
+                <div class="tooltip-icon">i</div>
+                <div class="tooltip-text" contenteditable="true">背景為日本城堡或歷史建築，強調展望與建議的實施。</div>
+            </div>
+        </section>
+        
+        <!-- SLIDE 11: Q&A -->
+        <section class="slide night-theme" id="slide-11">
+            <div class="content-box" style="text-align:center;">
+                <h1 contenteditable="true" style="font-size: 4vw; color: var(--sun-yellow);">感謝聆聽，敬請指教</h1>
+                <p contenteditable="true" style="font-size: 1.5vw; color: var(--text-light); margin-top: 1vw;">期待與您共同討論台灣廠區的未來方向。</p>
+            </div>
+             <div class="tooltip-container">
+                <div class="tooltip-icon">i</div>
+                <div class="tooltip-text" contenteditable="true">背景為簡潔寧靜的現代空間，象徵對話的結束與深思的開始，為開放式討論預留空間。</div>
+            </div>
+        </section>
+
+    </div>
+
+    <button id="prevBtn" class="nav-button">‹</button>
+    <button id="nextBtn" class="nav-button">›</button>
+    <div id="slide-counter" contenteditable="true">1 / 11</div>
+
+    <script>
+        const slides = document.querySelectorAll('.slide');
+        const nextBtn = document.getElementById('nextBtn');
+        const prevBtn = document.getElementById('prevBtn');
+        const slideCounter = document.getElementById('slide-counter');
+        
+        let currentSlide = 0;
+        const totalSlides = slides.length;
+
+        function showSlide(n) {
+            // Loop back to start or end
+            if (n >= totalSlides) {
+                currentSlide = 0; // Loop back to first slide
+            } else if (n < 0) {
+                currentSlide = totalSlides - 1; // Loop to last slide
+            } else {
+                 currentSlide = n;
+            }
+
+            slides.forEach(slide => slide.classList.remove('active'));
+            slides[currentSlide].classList.add('active');
+            
+            updateUI();
+        }
+
+        function updateUI() {
+            // Update counter
+            slideCounter.textContent = `${currentSlide + 1} / ${totalSlides}`;
+            
+            // Update nav buttons - optional: hide at ends or always show for looping
+            prevBtn.style.display = 'block'; // Always show for looping
+            nextBtn.style.display = 'block'; // Always show for looping
+        }
+
+        nextBtn.addEventListener('click', () => {
+            showSlide(currentSlide + 1);
+        });
+
+        prevBtn.addEventListener('click', () => {
+            showSlide(currentSlide - 1);
+        });
+        
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === ' ') {
+                 showSlide(currentSlide + 1);
+            } else if (e.key === 'ArrowLeft') {
+                 showSlide(currentSlide - 1);
+            }
+        });
+
+        // Initial setup
+        showSlide(0);
+
+    </script>
+</body>
+</html>

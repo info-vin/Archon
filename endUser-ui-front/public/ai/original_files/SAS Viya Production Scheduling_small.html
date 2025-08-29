@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>資料處理機制輪播卡片</title>
+<style>
+    :root {
+        --card-width: 300px;
+        --card-gap: 20px;
+    }
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft JhengHei", Roboto, "Helvetica Neue", Arial, sans-serif;
+        background-color: #f0f2f5;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        margin: 0;
+        padding: 20px;
+        box-sizing: border-box;
+    }
+    h1 {
+        color: #333;
+        margin-bottom: 30px;
+    }
+    .carousel-container {
+        position: relative;
+        width: var(--card-width);
+        max-width: 100%;
+        overflow: hidden;
+        border-radius: 15px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    }
+    .carousel-track {
+        display: flex;
+        transition: transform 0.5s ease-in-out;
+    }
+    .card {
+        flex: 0 0 var(--card-width);
+        width: var(--card-width);
+        box-sizing: border-box;
+        padding: 25px;
+        background-color: #ffffff;
+        text-align: left;
+        line-height: 1.6;
+    }
+    .card h3 {
+        color: #007bff;
+        margin-top: 0;
+        margin-bottom: 15px;
+        font-size: 1.4em;
+        border-bottom: 2px solid #007bff;
+        padding-bottom: 10px;
+    }
+    .card p {
+        margin: 10px 0;
+        color: #555;
+        font-size: 0.95em;
+    }
+    .card strong {
+        color: #333;
+        display: block;
+        margin-bottom: 5px;
+    }
+    .carousel-nav {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-top: 20px;
+    }
+    .nav-btn {
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        font-size: 20px;
+        cursor: pointer;
+        margin: 0 10px;
+        transition: background-color 0.3s, transform 0.2s;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+    .nav-btn:hover {
+        background-color: #0056b3;
+        transform: scale(1.1);
+    }
+    .nav-btn:active {
+        transform: scale(1.0);
+    }
+    .carousel-dots {
+        display: flex;
+        gap: 8px;
+    }
+    .dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background-color: #ccc;
+        cursor: pointer;
+        transition: background-color 0.3s;
+    }
+    .dot.active {
+        background-color: #007bff;
+    }
+</style>
+</head>
+<body>
+
+<h1>資料處理機制</h1>
+
+<div class="carousel-container">
+    <div class="carousel-track">
+        <!-- Card 1 -->
+        <div class="card">
+            <h3>歷史數據AI建模</h3>
+            <p><strong>說明：</strong>利用累積的歷史工時、任務、人員數據, 在SAS Viya中訓練機器學習模型。</p>
+            <p><strong>簡易案例：</strong>系統使用歷史工時數據, 訓練出一個能根據:工件類型、複雜度、作業員熟練度等來預測標準工時的AI(ML)模型。</p>
+        </div>
+        <!-- Card 2 -->
+        <div class="card">
+            <h3>智慧工時預測</h3>
+            <p><strong>說明：</strong>對新排程指令或任務, AI模型自動預測所需工時與可能延遲風險。</p>
+            <p><strong>簡易案例：</strong>生管輸入新訂單Z, Viya模型預測其中工序P5 需耗時3.2小時, 並提示此工序有15%機率延遲。</p>
+        </div>
+        <!-- Card 3 -->
+        <div class="card">
+            <h3>動態異常偵測與預警</h3>
+            <p><strong>說明：</strong>Viya模型分析回報工時數據, 自動識別與模式不符的異常情況並發出預警。</p>
+            <p><strong>簡易案例：</strong>作業員已回報某任務耗時遠超Viya模型預測值90%, 系統自動發出「工時異常預警」給生管, 並標示可能原因(如:新手操作、物料問題)。</p>
+        </div>
+        <!-- Card 4 -->
+        <div class="card">
+            <h3>人員效率與瓶頸分析</h3>
+            <p><strong>說明：</strong>Viya對人員工時數據進行多維度分析, 識別高效率/低效率人員, 找出潛在瓶頸。</p>
+            <p><strong>簡易案例：</strong>Viya儀表板顯示, 作業員庚在處理A類工件時效率顯著高於平均, 但在B類工件時則低於平均, 建議針對B類工件進行輔導或調整任務分配。</p>
+        </div>
+        <!-- Card 5 -->
+        <div class="card">
+            <h3>多源資料整合、約束條件設定</h3>
+            <p><strong>說明：</strong>從ERP、MES(若有)、人力資源系統等整合訂單、物料、產能、人員技能等資訊。生管可設定各種排程約束, 如交期、客戶優先級、物料到位時間、設備維護計畫等。</p>
+            <p><strong>簡易案例：</strong>系統每日自動從ERP同步新訂單, 並從HR系統更新可用人力與技能。訂單X為VIP客戶, 系統將其優先級調高; 機台A下週三保養, 系統在排程時會避開該時段。</p>
+        </div>
+        <!-- Card 6 -->
+        <div class="card">
+            <h3>智慧排程運算</h3>
+            <p><strong>說明：</strong>系統基於預設規則與優化演算法(如基因演算法、模擬退火、AutoML等)自動生成最佳化排程。</p>
+            <p><strong>簡易案例：</strong>系統考量交期、產能負荷、換線成本等因素, 自動計算出能最小化總生產時間的工單順序與資源分配。</p>
+        </div>
+        <!-- Card 7 -->
+        <div class="card">
+            <h3>連續進度監控、動態再排程、模擬與計畫比較</h3>
+            <p><strong>說明：</strong>連續追蹤作業人員回報的進度, 與計畫排程比對, 識別偏差。當發生重大進度偏差或突發狀況(如急單插入、設備故障), 系統能快速重新計算新排程。生管可調整參數(如增加加班、外包部分工序)進行"What-if"模擬, 比較不同方案影響。</p>
+            <p><strong>簡易案例：</strong>工序Y原計畫10:00完成, 作業員回報9:30已完成, 系統記錄為提前; 工序Z原計畫14:00完成, 現15:00仍未回報, 系統標示為延遲。機台B突然故障, 預計維修4小時, 生管輸入此資訊後, 系統自動將原分配給機台B的任務重新分配給其他可用機台, 並更新整體排程。生管想評估「增加週末加班」對訂單交率的影響, 在系統中模擬後, 比較加班前後的預計完工時間與成本。</p>
+        </div>
+        <!-- Card 8 -->
+        <div class="card">
+            <h3>自助式探索分析 (Visual Analytics)</h3>
+            <p><strong>說明：</strong>生管及管理層可透過SAS Visual Analytics互動式儀表板, 自行拖拉點選探索數據。</p>
+            <p><strong>簡易案例：</strong>總經理想了解「不同產品線的平均工時分佈與變異趨勢」, 可直接在VA儀表板上篩選產品線、時間區間, 系統即時呈現圖表。</p>
+        </div>
+        <!-- Card 9 -->
+        <div class="card">
+            <h3>持續模型優化</h3>
+            <p><strong>說明：</strong>SAS Viya的模型管理功能支持模型的監控與再訓練, 確保模型隨時間推移仍保持準確。</p>
+            <p><strong>簡易案例：</strong>每半年Viya平台自動使用最新的工時數據重新訓練工時預測模型, 若發現模型準確度下降, 會提醒介入調整。</p>
+        </div>
+    </div>
+</div>
+
+<div class="carousel-nav">
+    <button class="nav-btn" id="prevBtn">❮</button>
+    <div class="carousel-dots" id="dotsContainer"></div>
+    <button class="nav-btn" id="nextBtn">❯</button>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const track = document.querySelector('.carousel-track');
+        const cards = Array.from(track.children);
+        const nextButton = document.getElementById('nextBtn');
+        const prevButton = document.getElementById('prevBtn');
+        const dotsContainer = document.getElementById('dotsContainer');
+        
+        // 從CSS變數獲取卡片寬度
+        const cardWidth = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--card-width'));
+        
+        let currentIndex = 0;
+        let autoPlayInterval;
+
+        // 創建導航點
+        cards.forEach((_, index) => {
+            const dot = document.createElement('button');
+            dot.classList.add('dot');
+            if (index === 0) dot.classList.add('active');
+            dot.addEventListener('click', () => {
+                moveToSlide(index);
+                resetAutoPlay();
+            });
+            dotsContainer.appendChild(dot);
+        });
+
+        const dots = Array.from(dotsContainer.children);
+
+        const updateDots = () => {
+            dots.forEach(dot => dot.classList.remove('active'));
+            dots[currentIndex].classList.add('active');
+        };
+        
+        const moveToSlide = (targetIndex) => {
+            track.style.transform = 'translateX(-' + targetIndex * cardWidth + 'px)';
+            currentIndex = targetIndex;
+            updateDots();
+        };
+
+        // 下一張按鈕事件
+        nextButton.addEventListener('click', () => {
+            const newIndex = (currentIndex + 1) % cards.length;
+            moveToSlide(newIndex);
+            resetAutoPlay();
+        });
+
+        // 上一張按鈕事件
+        prevButton.addEventListener('click', () => {
+            const newIndex = (currentIndex - 1 + cards.length) % cards.length;
+            moveToSlide(newIndex);
+            resetAutoPlay();
+        });
+        
+        // 自動播放功能
+        const startAutoPlay = () => {
+            autoPlayInterval = setInterval(() => {
+                const newIndex = (currentIndex + 1) % cards.length;
+                moveToSlide(newIndex);
+            }, 5000); // 每5秒換一張
+        };
+
+        const resetAutoPlay = () => {
+            clearInterval(autoPlayInterval);
+            startAutoPlay();
+        };
+
+        // 啟動自動播放
+        startAutoPlay();
+    });
+</script>
+
+</body>
+</html>

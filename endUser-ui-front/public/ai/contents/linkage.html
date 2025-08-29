@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文件關聯性分析</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: 'Noto Sans TC', sans-serif; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 p-8">
+    <div class="container mx-auto">
+        <h1 class="text-3xl font-bold text-center mb-8 text-slate-900">文件關聯性分析</h1>
+        
+        <div class="bg-white p-6 rounded-lg shadow-md mb-8">
+            <h2 class="text-2xl font-semibold mb-4 text-slate-800">關聯性總覽</h2>
+            <p class="text-slate-600">提供的文件主要圍繞一個核心主題：「<b class="text-sky-600">運用 SAS 與 RPA 技術打造智慧製造解決方案</b>」。其中，`SAS智慧製造解決方案互動儀表板.html` 可視為最高層級的整合入口，而其他文件則是對其中特定概念（如系統架構、採納流程、資料處理機制）的深入闡述或不同形式的呈現。`NBllm.html` 和 `RPA_sas.html` 則是具體的解決方案提案文本。另外，`Employee Well-being Strategy Upgrade Plan.html` 文件主題獨立，與智慧製造主線無直接關聯。</p>
+        </div>
+
+        <div class="bg-white p-6 rounded-lg shadow-md mb-8">
+            <h2 class="text-2xl font-semibold mb-4 text-slate-800">文件關聯表</h2>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-100">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">主文件 / 概念</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">相關文件</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">關聯說明</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4 whitespace-nowrap font-bold text-sky-700">智慧製造解決方案</td>
+                            <td class="px-6 py-4 whitespace-nowrap">`SAS智慧製造解決方案互動儀表板.html`</td>
+                            <td class="px-6 py-4">最高層級的互動式儀表板，整合了多個核心概念。</td>
+                        </tr>
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4 whitespace-nowrap font-bold text-green-700">SAS Viya 平台</td>
+                            <td class="px-6 py-4 whitespace-nowrap">`sas_viya_arc.html`</td>
+                            <td class="px-6 py-4">詳細展示了儀表板中提到的 SAS Viya 的核心系統架構。</td>
+                        </tr>
+                         <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4 whitespace-nowrap font-bold text-green-700">RPA 流程自動化</td>
+                            <td class="px-6 py-4 whitespace-nowrap">`RPA_canvas.html`</td>
+                            <td class="px-6 py-4">詳細展示了 RPA 在生產管理中的應用流程，是提案中的核心技術之一。</td>
+                        </tr>
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4 whitespace-nowrap font-bold text-purple-700">資料處理機制</td>
+                            <td class="px-6 py-4 whitespace-nowrap">`SAS Viya Production Scheduling_small.html`<br>`互動資料機制列表.html`</td>
+                            <td class="px-6 py-4">兩者內容相同，但以不同互動形式（輪播卡片 vs. 列表）呈現了 SAS Viya 進行智慧排程時的資料處理步驟。</td>
+                        </tr>
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4 whitespace-nowrap font-bold text-orange-700">解決方案提案</td>
+                            <td class="px-6 py-4 whitespace-nowrap">`NBllm.html`<br>`RPA_sas.html`<br>`製造業智慧排程與人力資源管理解決方案提案.html`</td>
+                            <td class="px-6 py-4">這三份文件內容高度相似，是生成儀表板內容的原始提案文本，包含詳細的方案比較、報價與效益分析。</td>
+                        </tr>
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4 whitespace-nowrap font-bold text-gray-700">通用業務流程</td>
+                            <td class="px-6 py-4 whitespace-nowrap">`adoption_process_chart.html`</td>
+                            <td class="px-6 py-4">提供了一個通用的「採用歷程模式」，可應用於上述任何解決方案的導入藍圖中。</td>
+                        </tr>
+                         <tr class="hover:bg-red-50">
+                            <td class="px-6 py-4 whitespace-nowrap font-bold text-red-700">獨立主題</td>
+                            <td class="px-6 py-4 whitespace-nowrap">`Employee Well-being Strategy Upgrade Plan.html`</td>
+                            <td class="px-6 py-4">內容為「員工幸福感與心理健康」，與智慧製造主線無關，為一個獨立的解決方案簡報。</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-lg shadow-md">
+            <h2 class="text-2xl font-semibold mb-4 text-slate-800">視覺化關聯圖</h2>
+            <div class="w-full overflow-x-auto">
+                <div class="mermaid">
+                    graph TD
+                        subgraph "核心主題：智慧製造解決方案"
+                            A["SAS智慧製造解決方案互動儀表板.html<br>(<b>主入口</b>)"]
+                            B["解決方案提案<br>(NBllm/RPA_sas.html)"]
+                            C["SAS Viya 系統架構<br>(sas_viya_arc.html)"]
+                            D["RPA 流程剖析<br>(RPA_canvas.html)"]
+                            E["資料處理機制<br>(互動資料機制列表.html)"]
+                            F["通用採納流程<br>(adoption_process_chart.html)"]
+                        end
+
+                        subgraph "獨立主題"
+                            G["員工福祉策略<br>(Employee Well-being...)"]
+                        end
+
+                        B -- "提供核心內容" --> A
+                        C -- "技術架構支撐" --> A
+                        D -- "技術細節闡述" --> B
+                        E -- "內部機制解釋" --> B
+                        F -- "可套用的導入框架" --> B
+                        A -.-> F
+                        A -.-> C
+                        A -.-> D
+                        A -.-> E
+                        
+                        style A fill:#e0f2fe,stroke:#3b82f6,stroke-width:2px
+                        style G fill:#fee2e2,stroke:#ef4444,stroke-width:2px
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>
+        mermaid.initialize({ startOnLoad: true });
+    </script>
+</body>
+</html>

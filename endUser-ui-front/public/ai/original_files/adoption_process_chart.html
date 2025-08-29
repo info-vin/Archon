@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>成功的採用歷程模式</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft JhengHei', '微軟正黑體', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            max-width: 1000px;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 30px;
+            font-size: 2.2em;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .description {
+            text-align: center;
+            color: #5d6d7e;
+            margin-bottom: 40px;
+            font-size: 1.1em;
+            line-height: 1.6;
+            padding: 0 20px;
+        }
+
+        .chart-container {
+            position: relative;
+            width: 100%;
+            height: 500px;
+            background: #f8f9fa;
+            border-radius: 15px;
+            border: 2px solid #e9ecef;
+            overflow: hidden;
+            margin-bottom: 30px;
+        }
+
+        .chart-svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        .stage {
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .stage:hover {
+            transform: scale(1.02);
+        }
+
+        .stage-rect {
+            fill: #3498db;
+            stroke: #2980b9;
+            stroke-width: 2;
+            opacity: 0.8;
+            transition: all 0.3s ease;
+        }
+
+        .stage:hover .stage-rect {
+            fill: #e74c3c;
+            opacity: 1;
+        }
+
+        .stage-text {
+            fill: white;
+            font-size: 14px;
+            font-weight: bold;
+            text-anchor: middle;
+            dominant-baseline: middle;
+        }
+
+        .axis {
+            stroke: #2c3e50;
+            stroke-width: 3;
+            marker-end: url(#arrowhead);
+        }
+
+        .axis-label {
+            fill: #2c3e50;
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .value-curve {
+            fill: none;
+            stroke: #27ae60;
+            stroke-width: 4;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.2));
+        }
+
+        .info-panel {
+            background: rgba(52, 152, 219, 0.1);
+            border-radius: 15px;
+            padding: 25px;
+            margin-top: 20px;
+            border-left: 5px solid #3498db;
+            transition: all 0.3s ease;
+        }
+
+        .info-panel h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+
+        .info-panel p {
+            color: #5d6d7e;
+            line-height: 1.6;
+            font-size: 1.05em;
+        }
+
+        .legend {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 15px;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+        }
+
+        .animate-in {
+            animation: fadeInUp 0.6s ease-out forwards;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.7; }
+            100% { opacity: 1; }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+            
+            h1 {
+                font-size: 1.8em;
+            }
+            
+            .chart-container {
+                height: 400px;
+            }
+            
+            .legend {
+                gap: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container animate-in">
+        <h1>成功的採用歷程模式</h1>
+        <div class="description">
+            從數以百計的真實故事中，我們推導出了這個引導工作流程的簡單模式。<br>
+            點擊圖表中的各階段來了解更多詳情。
+        </div>
+
+        <div class="chart-container">
+            <svg class="chart-svg" viewBox="0 0 800 400">
+                <!-- 定義箭頭標記 -->
+                <defs>
+                    <marker id="arrowhead" markerWidth="10" markerHeight="7" 
+                            refX="9" refY="3.5" orient="auto">
+                        <polygon points="0 0, 10 3.5, 0 7" fill="#2c3e50" />
+                    </marker>
+                </defs>
+
+                <!-- X軸 -->
+                <line x1="80" y1="320" x2="720" y2="320" class="axis"/>
+                <text x="400" y="350" class="axis-label" text-anchor="middle">投資（時間、金錢）</text>
+
+                <!-- Y軸 -->
+                <line x1="80" y1="320" x2="80" y2="60" class="axis"/>
+                <text x="40" y="40" class="axis-label" text-anchor="middle">價值</text>
+
+                <!-- 價值曲線 -->
+                <path d="M 100 300 Q 200 280 250 250 Q 350 180 450 160 Q 550 120 650 80" 
+                      class="value-curve pulse"/>
+
+                <!-- 前導專案階段 -->
+                <g class="stage" data-stage="pilot">
+                    <rect x="120" y="270" width="100" height="40" rx="5" class="stage-rect"/>
+                    <text x="170" y="290" class="stage-text">前導專案</text>
+                </g>
+
+                <!-- 燈塔專案階段 -->
+                <g class="stage" data-stage="lighthouse">
+                    <rect x="280" y="220" width="100" height="40" rx="5" class="stage-rect"/>
+                    <text x="330" y="240" class="stage-text">燈塔專案</text>
+                </g>
+
+                <!-- 規模廣泛的採用階段 -->
+                <g class="stage" data-stage="scale">
+                    <rect x="480" y="120" width="120" height="40" rx="5" class="stage-rect"/>
+                    <text x="540" y="140" class="stage-text">規模廣泛的採用</text>
+                </g>
+
+                <!-- 階段連接線 -->
+                <path d="M 220 290 Q 240 280 260 260" 
+                      stroke="#95a5a6" stroke-width="2" fill="none" stroke-dasharray="5,5"/>
+                <path d="M 380 240 Q 420 200 460 160" 
+                      stroke="#95a5a6" stroke-width="2" fill="none" stroke-dasharray="5,5"/>
+            </svg>
+        </div>
+
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-color" style="background: #27ae60;"></div>
+                <span>價值增長曲線</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #3498db;"></div>
+                <span>採用階段</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #95a5a6;"></div>
+                <span>階段轉換</span>
+            </div>
+        </div>
+
+        <div class="info-panel" id="infoPanel">
+            <h3>採用歷程概覽</h3>
+            <p>這個模式展示了成功技術採用的三個關鍵階段。每個階段都需要不同的投資和策略，但隨著時間推移，價值會呈現指數級增長。點擊上方的各個階段來查看詳細說明。</p>
+        </div>
+    </div>
+
+    <script>
+        const stageInfo = {
+            pilot: {
+                title: "前導專案階段",
+                description: "在這個初始階段，組織開始小規模試驗新技術或流程。這是一個概念驗證（POC）階段，投資相對較少，但為後續發展奠定基礎。重點在於驗證可行性和識別潛在問題。"
+            },
+            lighthouse: {
+                title: "燈塔專案階段", 
+                description: "燈塔專案是擴大規模的關鍵步驟。在這個階段，成功的前導專案被用作示範案例，向組織展示更大的價值潛力。這個階段需要更多投資，但開始看到顯著的價值回報。"
+            },
+            scale: {
+                title: "規模廣泛的採用階段",
+                description: "在最終階段，技術或流程在整個組織中廣泛採用。這個階段需要最大的投資，但也產生最高的價值回報。成功的關鍵在於有效的變革管理和持續的支持。"
+            }
+        };
+
+        // 為每個階段添加點擊事件
+        document.querySelectorAll('.stage').forEach(stage => {
+            stage.addEventListener('click', function() {
+                const stageType = this.getAttribute('data-stage');
+                const info = stageInfo[stageType];
+                
+                const infoPanel = document.getElementById('infoPanel');
+                infoPanel.innerHTML = `
+                    <h3>${info.title}</h3>
+                    <p>${info.description}</p>
+                `;
+                
+                // 添加高亮效果
+                document.querySelectorAll('.stage-rect').forEach(rect => {
+                    rect.style.fill = '#3498db';
+                });
+                this.querySelector('.stage-rect').style.fill = '#e74c3c';
+                
+                // 滾動到信息面板
+                infoPanel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            });
+        });
+
+        // 頁面載入動畫
+        window.addEventListener('load', function() {
+            const stages = document.querySelectorAll('.stage');
+            stages.forEach((stage, index) => {
+                setTimeout(() => {
+                    stage.style.opacity = '0';
+                    stage.style.transform = 'translateY(20px)';
+                    stage.style.transition = 'all 0.6s ease';
+                    
+                    setTimeout(() => {
+                        stage.style.opacity = '1';
+                        stage.style.transform = 'translateY(0)';
+                    }, 100);
+                }, index * 200);
+            });
+        });
+
+        // 響應式調整
+        function adjustChart() {
+            const container = document.querySelector('.chart-container');
+            const svg = document.querySelector('.chart-svg');
+            
+            if (window.innerWidth < 768) {
+                svg.setAttribute('viewBox', '0 0 800 350');
+            } else {
+                svg.setAttribute('viewBox', '0 0 800 400');
+            }
+        }
+
+        window.addEventListener('resize', adjustChart);
+        adjustChart();
+    </script>
+</body>
+</html>

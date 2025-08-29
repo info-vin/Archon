@@ -1,0 +1,1273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-translate-key="pageTitle">Transforming Supply Chain Analytics with SAS: Taiwan High-Tech Focus</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Visualization & Content Choices: 
+        - Report Sections (All): Goal: Inform, Explain. Method: Structured HTML text, lists, and interactive cards. Interaction: Click to expand details. Language switching. Justification: Clear presentation, user-controlled depth, accessibility. Method: HTML/Tailwind CSS, Vanilla JS.
+        - SAS Solutions (Demand, Ops/Inv, Resilience): Goal: Illustrate benefits. Method: Conceptual Bar Charts (Chart.js). Interaction: Chart hover. Justification: Visual summary. Method: Chart.js.
+        - System Architecture: Goal: Organize, Explain flow. Method: HTML/Tailwind block diagram. Interaction: Static visual. Justification: Show system interaction. Method: HTML/CSS.
+        - Case Studies (Platform Section): Goal: Demonstrate. Method: Detailed expandable cards for each case. Interaction: Click to expand. Justification: Real-world validation. Method: HTML/JS.
+        - CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body { font-family: 'Inter', 'Noto Sans TC', sans-serif; scroll-behavior: smooth; }
+        .section-title { font-size: 1.75rem; font-weight: 700; color: #1D4ED8; margin-bottom: 1.5rem; padding-bottom: 0.5rem; border-bottom: 2px solid #60A5FA; } /* blue-700, border-blue-400 */
+        .subsection-title { font-size: 1.25rem; font-weight: 600; color: #2563EB; margin-bottom: 1rem; margin-top: 1.5rem; } /* blue-600 */
+        .card { background-color: white; border-radius: 0.5rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.07), 0 2px 4px -2px rgba(0,0,0,0.07); padding: 1.5rem; margin-bottom: 1.5rem; }
+        .card-title { font-size: 1.1rem; font-weight: 600; color: #1E40AF; margin-bottom: 0.75rem; } /* blue-800 */
+        .nav-link { padding: 0.5rem 0.75rem; color: #DBEAFE; text-decoration: none; border-radius: 0.375rem; transition: background-color 0.3s ease, color 0.3s ease; font-weight: 500; font-size: 0.875rem; white-space: nowrap;}
+        .nav-link:hover, .nav-link.active { background-color: #3B82F6; color: white; } /* blue-500 */
+        .details-card { cursor: pointer; transition: box-shadow 0.2s ease-in-out; border: 1px solid #E5E7EB; }
+        .details-card:hover { box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05); }
+        .details-content { display: none; margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid #E5E7EB; }
+        .details-content.open { display: block; }
+        .tech-highlight { font-family: Consolas, 'Courier New', monospace; background-color: #EFF6FF; padding: 0.1rem 0.3rem; border-radius: 0.2rem; color: #1D4ED8; font-size: 0.9em; }
+        .kpi-highlight { font-weight: 600; color: #1E40AF; }
+        .list-bullet { list-style-type: disc; margin-left: 1.25rem; }
+        .sub-item-title { font-weight: 600; color: #2563EB; margin-top:0.75rem;}
+        .lang-switcher button { padding: 0.3rem 0.6rem; margin-left: 0.5rem; background-color: #60A5FA; color: white; border-radius: 0.25rem; font-size: 0.75rem; cursor: pointer; border: none;}
+        .lang-switcher button.active { background-color: #1D4ED8; font-weight: bold; box-shadow: 0 0 0 2px #93C5FD;}
+        .lang-switcher button:hover { background-color: #3B82F6; }
+        .chart-container { position: relative; width: 100%; max-width: 500px; margin: 1.5rem auto; height: 280px; max-height: 320px; }
+        .detail-subsection { background-color: #f9fafb; padding: 0.75rem; margin-top: 1rem; border-radius: 0.25rem; border: 1px solid #e5e7eb;}
+        /* Architecture Diagram Styles */
+        .arch-diagram-container { background-color: #f8fafc; border: 1px solid #e2e8f0; padding: 1.5rem; border-radius: 0.5rem; }
+        .arch-layer { margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px dashed #cbd5e1; }
+        .arch-layer:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0;}
+        .arch-layer-title { font-size: 0.9rem; font-weight: 700; color: #1e3a8a; margin-bottom: 0.75rem; text-align: center; text-transform: uppercase; letter-spacing: 0.05em;}
+        .arch-box { background-color: #e0f2fe; border: 1px solid #7dd3fc; color: #0c4a6e; padding: 0.5rem; border-radius: 0.375rem; text-align: center; font-size: 0.8rem; line-height: 1.3; margin: 0.25rem; flex-grow: 1; }
+        .arch-box-viya { background-color: #cffafe; border-color: #67e8f9; color: #083344;}
+        .arch-box-solution { background-color: #dcfce7; border-color: #86efac; color: #14532d;}
+        .arch-box-output { background-color: #fee2e2; border-color: #fca5a5; color: #7f1d1d;}
+        .arch-arrow-h { display: flex; align-items: center; justify-content: center; margin: 0 0.5rem; color: #64748b; font-size:1.2rem; }
+        .arch-arrow-v { text-align: center; font-size: 1.5rem; color: #64748b; margin: 0.1rem 0; }
+        .arch-flow-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 0.5rem; }
+        .arch-main-flow { display: flex; flex-direction: column; align-items: center; }
+        .case-study-subtitle { font-size: 0.9rem; font-weight: 600; color: #3B82F6; margin-top: 0.5rem; margin-bottom: 0.25rem;}
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-700">
+
+    <header class="bg-blue-700 text-white sticky top-0 z-50 shadow-lg">
+        <div class="container mx-auto px-4 sm:px-6 py-3 flex flex-col sm:flex-row justify-between items-center">
+            <div class="text-center sm:text-left mb-2 sm:mb-0">
+                <h1 class="text-xl font-bold" data-translate-key="headerTitle">SAS Supply Chain Analytics: Taiwan High-Tech</h1>
+            </div>
+            <nav class="flex-shrink-0">
+                <ul class="flex flex-wrap justify-center items-center space-x-1">
+                    <li><a href="#introduction" class="nav-link" data-translate-key="navIntroduction">Introduction</a></li>
+                    <li><a href="#challenges" class="nav-link" data-translate-key="navChallenges">Challenges</a></li>
+                    <li><a href="#demand-forecasting" class="nav-link" data-translate-key="navDemand">Demand</a></li>
+                    <li><a href="#operations-inventory" class="nav-link" data-translate-key="navOpsInv">Operations & Inventory</a></li>
+                    <li><a href="#resilience" class="nav-link" data-translate-key="navResilience">Resilience</a></li>
+                    <li><a href="#architecture" class="nav-link" data-translate-key="navArchitecture">Architecture</a></li>
+                    <li><a href="#platform" class="nav-link" data-translate-key="navPlatform">Platform & Cases</a></li>
+                    <li><a href="#recommendations" class="nav-link" data-translate-key="navRecommendations">Recommendations</a></li>
+                </ul>
+            </nav>
+            <div class="lang-switcher mt-2 sm:mt-0 sm:ml-4">
+                <button data-lang="en" class="active">EN</button>
+                <button data-lang="zh-CN">简</button>
+                <button data-lang="zh-TW">繁</button>
+            </div>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 sm:px-6 py-8">
+
+        <section id="introduction" class="pt-8 pb-4">
+            <h2 class="section-title" data-translate-key="introTitle">Executive Summary & Strategic Context</h2>
+            <div class="card">
+                <p data-translate-key="introP1">Taiwan's high-tech manufacturing sector, a linchpin in the global technology ecosystem, operates under immense pressure characterized by relentless innovation, demand volatility, and acute geopolitical sensitivities. In this dynamic environment, supply chain excellence is paramount for sustained competitiveness. SAS delivers a comprehensive analytics ecosystem, addressing critical challenges across demand forecasting, operations optimization, inventory management, and supply chain resilience. By leveraging artificial intelligence (AI), machine learning (ML), and sophisticated optimization algorithms, SAS enables these firms to enhance forecast accuracy, streamline complex manufacturing processes, optimize inventory investments against the risks of obsolescence, and build more adaptive and resilient supply networks. Ultimately, the adoption of SAS analytics offers a pathway for Taiwan's high-tech industry to not only navigate current complexities but also to fortify its strategic global standing.</p>
+                <h3 class="subsection-title mt-6" data-translate-key="introSubtitle">The Transformation Imperative</h3>
+                <p data-translate-key="introP2">The high-tech manufacturing sector in Taiwan, particularly its globally dominant semiconductor industry, stands at a critical juncture. Taiwan occupies a pivotal position, manufacturing 65% of the world's semiconductors and over 70% of sub-7nm high-end ICs in 2023, and leads in 2nm process technology. This central role brings unique pressures, making supply chain excellence a strategic imperative for the nation's economic well-being. Advanced analytics and digital technologies are essential tools for navigating this complex terrain, moving beyond traditional cost reduction to embrace agility, resilience, and value preservation.</p>
+            </div>
+        </section>
+
+        <section id="challenges" class="py-8">
+            <h2 class="section-title" data-translate-key="challengesTitle">Key Supply Chain Challenges in Taiwan's High-Tech Sector</h2>
+            <p class="mb-6 text-slate-600" data-translate-key="challengesIntro">The strategic importance of Taiwan's high-tech sector is matched by the intensity of the interconnected challenges it faces, creating a complex operating environment that demands sophisticated analytical solutions.</p>
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="card details-card" onclick="toggleCardDetails(this)">
+                    <h3 class="card-title flex justify-between items-center" data-translate-key="challengeDemandVol">Intense Demand Volatility <span class="text-xl text-slate-400">&#x25BC;</span></h3>
+                    <div class="details-content">
+                        <p class="text-sm" data-translate-key="challengeDemandVolDesc">Highly unpredictable demand patterns due to rapid innovation, market shifts, and competitive actions in electronics and semiconductors. This leads to reduced forecast accuracy, inaccurate production planning, and potential for stockouts or excess inventory.</p>
+                        <p class="text-sm"><strong class="text-blue-600" data-translate-key="challengeAnalyticsImplication">Analytics Implication:</strong> <span data-translate-key="challengeDemandVolAI">Need for advanced AI/ML-driven forecasting models, real-time demand sensing, and scenario planning.</span></p>
+                    </div>
+                </div>
+                <div class="card details-card" onclick="toggleCardDetails(this)">
+                    <h3 class="card-title flex justify-between items-center" data-translate-key="challengeLifecycles">Short Product Lifecycles <span class="text-xl text-slate-400">&#x25BC;</span></h3>
+                    <div class="details-content">
+                        <p class="text-sm" data-translate-key="challengeLifecyclesDesc">Rapid technological advancements mean products become outdated quickly (e.g., 2-5 years for advanced semiconductors). This increases inventory obsolescence risk and pressure for rapid new product introduction (NPI).</p>
+                        <p class="text-sm"><strong class="text-blue-600" data-translate-key="challengeAnalyticsImplication">Analytics Implication:</strong> <span data-translate-key="challengeLifecyclesAI">Enhanced NPI forecasting, dynamic inventory policies, lifecycle-aware planning, and improved end-of-life (EOL) management.</span></p>
+                    </div>
+                </div>
+                <div class="card details-card" onclick="toggleCardDetails(this)">
+                    <h3 class="card-title flex justify-between items-center" data-translate-key="challengeGeopolitical">Geopolitical Risks & Disruptions <span class="text-xl text-slate-400">&#x25BC;</span></h3>
+                    <div class="details-content">
+                        <p class="text-sm" data-translate-key="challengeGeopoliticalDesc">Trade tensions and regional instability lead to supply uncertainties and precautionary inventory buildup, increasing costs and reducing competitiveness.</p>
+                        <p class="text-sm"><strong class="text-blue-600" data-translate-key="challengeAnalyticsImplication">Analytics Implication:</strong> <span data-translate-key="challengeGeopoliticalAI">Robust scenario planning for disruptions, multi-echelon inventory optimization, supplier risk assessment, and real-time event monitoring.</span></p>
+                    </div>
+                </div>
+                <div class="card details-card" onclick="toggleCardDetails(this)">
+                    <h3 class="card-title flex justify-between items-center" data-translate-key="challengeInventory">Inventory Conundrum <span class="text-xl text-slate-400">&#x25BC;</span></h3>
+                    <div class="details-content">
+                        <p class="text-sm" data-translate-key="challengeInventoryDesc">Balancing buffer stock needs against high holding costs and rapid obsolescence risk. Excessive inventory impairs margins and cash flow.</p>
+                        <p class="text-sm"><strong class="text-blue-600" data-translate-key="challengeAnalyticsImplication">Analytics Implication:</strong> <span data-translate-key="challengeInventoryAI">Accurate demand forecasting, optimized safety stock levels, improved inventory classification, and proactive obsolescence management.</span></p>
+                    </div>
+                </div>
+                <div class="card details-card" onclick="toggleCardDetails(this)">
+                    <h3 class="card-title flex justify-between items-center" data-translate-key="challengeOperational">Operational Complexity <span class="text-xl text-slate-400">&#x25BC;</span></h3>
+                    <div class="details-content">
+                        <p class="text-sm" data-translate-key="challengeOperationalDesc">Managing intricate production schedules (e.g., semiconductor recursive flows, sequence-dependent setups), numerous processing steps, and quality control in high-mix, high-volume environments.</p>
+                        <p class="text-sm"><strong class="text-blue-600" data-translate-key="challengeAnalyticsImplication">Analytics Implication:</strong> <span data-translate-key="challengeOperationalAI">AI-driven production scheduling, real-time process monitoring, predictive quality analytics, OEE optimization, and digital twin simulations.</span></p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="demand-forecasting" class="py-8">
+            <h2 class="section-title" data-translate-key="demandTitle">SAS-Driven Demand Forecasting for Enhanced Agility</h2>
+            <p class="mb-6 text-slate-600" data-translate-key="demandIntro">Accurate and agile demand forecasting is crucial. SAS elevates forecasting to a proactive, intelligent process, enabling Taiwanese high-tech firms to better anticipate and respond to dynamic market shifts.</p>
+            <div class="card">
+                <div class="details-card" onclick="toggleCardDetails(this)">
+                    <h3 class="card-title flex justify-between items-center" data-translate-key="demandUncertaintyTitle">Addressing Uncertainty: SAS Intelligent Planning & Forecast Server <span class="text-xl text-slate-400">&#x25BC;</span></h3>
+                    <div class="details-content">
+                        <div class="detail-subsection">
+                            <h4 class="sub-item-title" data-translate-key="demandSPIPTitle">SAS Intelligent Planning Suite:</h4>
+                            <p class="text-sm" data-translate-key="demandSPIPDesc">Accurately forecasts demand, develops productive planning processes, and boosts financial performance. Leverages advanced analytics and ML for greater accuracy, automates low-touch planning, and allows dynamic reforecasting. Integrates with <span class="tech-highlight">SAS Visual Forecasting</span> and <span class="tech-highlight">SAS Visual Data Mining and Machine Learning</span>.</p>
+                        </div>
+                        <div class="detail-subsection mt-3">
+                             <h4 class="sub-item-title" data-translate-key="demandSFSTitle">SAS Forecast Server:</h4>
+                            <p class="text-sm" data-translate-key="demandSFSDesc">Automatically generates millions of statistically based forecasts, selecting optimized models based on historical data. Supports hierarchical forecasting and improves S&OP cycle times. <span class="tech-highlight">SAS Supply Chain Optimization</span> solutions also offer a patented statistical forecasting engine.</p>
+                        </div>
+                        <p class="text-sm mt-4" data-translate-key="demandAIMLEvolution">The evolution to AI/ML-infused platforms like SAS Intelligent Planning is vital for discerning patterns from sparse NPI data or volatile demand in Taiwan's high-tech sector.</p>
+                    </div>
+                </div>
+
+                <div class="details-card mt-4" onclick="toggleCardDetails(this)">
+                    <h3 class="card-title flex justify-between items-center" data-translate-key="demandAIMLPowerTitle">Power of AI/ML in High-Tech Forecasting <span class="text-xl text-slate-400">&#x25BC;</span></h3>
+                    <div class="details-content">
+                        <p class="text-sm" data-translate-key="demandAIMLPowerDesc">SAS is a leader in AI/ML platforms. <span class="tech-highlight">SAS Intelligent Planning Cloud</span> uses embedded ML to automate analytics. SAS solutions employ time-series and ML techniques for intermittent demand, NPI uptake, and lifecycle prediction. Users can leverage SAS or open-source models. This "manage planning by exception" approach allows planners to focus on strategic, high-value products.</p>
+                    </div>
+                </div>
+
+                <div class="details-card mt-4" onclick="toggleCardDetails(this)">
+                    <h3 class="card-title flex justify-between items-center" data-translate-key="demandEconometricTitle">Econometric Modeling & Scenario Analysis <span class="text-xl text-slate-400">&#x25BC;</span></h3>
+                    <div class="details-content">
+                        <p class="text-sm" data-translate-key="demandEconometricDesc"><span class="tech-highlight">SAS Forecast Server</span> incorporates econometric factors (market trends, competitor actions) for a nuanced view of demand drivers. <span class="tech-highlight">SAS Intelligent Planning</span> offers AI-based "what-if" scenario simulations to assess impacts of different demand scenarios (e.g., competitor entry, tech shifts, trade policy changes). SAS also enables "Demand Shaping" to influence consumer behavior proactively.</p>
+                    </div>
+                </div>
+                <div class="mt-6">
+                    <h4 class="subsection-title text-center" data-translate-key="demandChartTitle">Conceptual Benefits: Advanced Demand Forecasting</h4>
+                    <div class="chart-container">
+                        <canvas id="demandForecastingChart"></canvas>
+                    </div>
+                    <p class="text-xs text-center text-slate-500" data-translate-key="demandChartDisclaimer">Illustrative chart. Actual improvements vary based on specific implementation and data.</p>
+                </div>
+                <div class="card mt-6 bg-blue-50 border border-blue-200">
+                    <h4 class="card-title text-blue-700" data-translate-key="demandCaseWistronTitle">Case Example: Wistron</h4>
+                    <p class="text-sm" data-translate-key="demandCaseWistronDesc">Wistron Corporation, a major Taiwanese electronics ODM, achieved "more precise demand forecasts" using SAS solutions. Featured in "Demand-Driven Inventory Optimization and Replenishment" by SAS expert Robert A. Davis, this suggests Wistron leveraged SAS's advanced forecasting (statistical, AI/ML, econometric) to better align its supply chain with market demand, leading to more effective inventory management and operational planning.</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="operations-inventory" class="py-8">
+            <h2 class="section-title" data-translate-key="opsInvTitle">Optimizing Operations & Inventory with SAS</h2>
+            <p class="mb-6 text-slate-600" data-translate-key="opsInvIntro">SAS provides tools to optimize multifaceted operations, from end-to-end coordination to production floor efficiencies and inventory strategies, crucial for Taiwan's complex high-tech manufacturing.</p>
+            <div class="card">
+                <div class="details-card" onclick="toggleCardDetails(this)">
+                    <h3 class="card-title flex justify-between items-center" data-translate-key="opsInvSCOTitle">End-to-End Supply Chain Optimization <span class="text-xl text-slate-400">&#x25BC;</span></h3>
+                    <div class="details-content">
+                        <p class="text-sm" data-translate-key="opsInvSCODesc"><strong class="text-blue-600">SAS Strategic Supply Chain Optimization:</strong> Employs mathematical optimization to maximize profit by balancing costs (purchasing, logistics, production, inventory) against constraints and service targets. Delivers optimal plans for purchasing, production, transportation, inventory, and sales. Handles alternate raw materials, multi-level BOMs, and complex production lines. Enables proactive responses to disruptions by estimating financial/operational impacts of "what-if" scenarios.</p>
+                    </div>
+                </div>
+                <div class="details-card mt-4" onclick="toggleCardDetails(this)">
+                    <h3 class="card-title flex justify-between items-center" data-translate-key="opsInvAIMfgTitle">AI in High-Tech Manufacturing <span class="text-xl text-slate-400">&#x25BC;</span></h3>
+                    <div class="details-content">
+                        <p class="text-sm" data-translate-key="opsInvAIMfgDesc">SAS embeds AI to optimize complex production schedules (critical for high-mix, high-volume fabs), improve quality via real-time monitoring and root-cause analysis (<span class="tech-highlight">SAS Viya</span>, <span class="tech-highlight">SAS Quality Analytic Suite</span>), and enhance efficiency. Techniques include deep learning and computer vision for automated defect detection. AI can unlock hidden capacity and transform quality control into a competitive differentiator.</p>
+                    </div>
+                </div>
+                <div class="details-card mt-4" onclick="toggleCardDetails(this)">
+                    <h3 class="card-title flex justify-between items-center" data-translate-key="opsInvIoTTitle">SAS Analytics for IoT & Digital Twins <span class="text-xl text-slate-400">&#x25BC;</span></h3>
+                    <div class="details-content">
+                         <div class="detail-subsection">
+                            <h4 class="sub-item-title" data-translate-key="opsInvIoTA4IoTTitle">SAS Analytics for IoT:</h4>
+                            <p class="text-sm" data-translate-key="opsInvIoTA4IoTDesc">Turns IoT data into actionable intelligence using <span class="tech-highlight">SAS Event Stream Processing</span> for real-time analytics. Key for predictive maintenance (analyzing sensor data for RUL) and real-time process monitoring for quality assurance. Supports the entire IoT analytics lifecycle.</p>
+                        </div>
+                        <div class="detail-subsection mt-3">
+                            <h4 class="sub-item-title" data-translate-key="opsInvIoTDTTitle">Digital Twins:</h4>
+                            <p class="text-sm" data-translate-key="opsInvIoTDTDesc">SAS integrates AI with technologies like Epic Games' Unreal Engine. For a fab, a digital twin fed by real-time IoT data allows virtual experimentation, simulation of changes, dynamic resource optimization, and failure prediction, enabling prescriptive operations management.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="card mt-6 bg-blue-50 border border-blue-200">
+                    <h4 class="card-title text-blue-700" data-translate-key="opsInvCaseGPTitle">Case Example: Georgia-Pacific</h4>
+                    <p class="text-sm" data-translate-key="opsInvCaseGPDesc">Achieved a 10% OEE improvement and 30% reduction in unplanned downtime using <span class="tech-highlight">SAS Viya</span>. Ran 15,000+ ML models for optimal production settings and used real-time data from 85,000 vibration sensors for predictive maintenance. Optimized shipping logistics with SAS predictive analytics. Demonstrates SAS Viya's transformative potential in complex manufacturing.</p>
+                </div>
+
+                <h3 class="subsection-title mt-8" data-translate-key="opsInvStrategicInvTitle">Strategic Inventory Management</h3>
+                 <div class="details-card mt-4" onclick="toggleCardDetails(this)">
+                    <h3 class="card-title flex justify-between items-center" data-translate-key="opsInvOptTitle">SAS Inventory Optimization <span class="text-xl text-slate-400">&#x25BC;</span></h3>
+                    <div class="details-content">
+                        <p class="text-sm" data-translate-key="opsInvOptDesc"><span class="tech-highlight">SAS Inventory Optimization Workbench</span> & <span class="tech-highlight">SAS Intelligent Inventory Management</span> automate and optimize inventory distribution by balancing resources and costs against service level goals. They calculate optimal order quantities and replenishment policies per SKU/location. An ICT solutions company used SAS to optimize service levels and inventory targets for components, sub-assemblies, and finished products using <span class="tech-highlight">SAS OPTMODEL</span>.</p>
+                    </div>
+                </div>
+                <div class="details-card mt-4" onclick="toggleCardDetails(this)">
+                    <h3 class="card-title flex justify-between items-center" data-translate-key="opsInvObsolescenceTitle">Tackling Short Lifecycles & Obsolescence <span class="text-xl text-slate-400">&#x25BC;</span></h3>
+                    <div class="details-content">
+                        <p class="text-sm" data-translate-key="opsInvObsolescenceDesc">SAS combines enhanced demand forecasting (AI/ML) with sophisticated inventory optimization. More precise demand signals for NPIs and existing products allow accurate stocking, reducing EOL overstock. <span class="tech-highlight">SAS Intelligent Inventory Management</span>'s ML capabilities can be adapted to predict EOL transitions or manage NPI inventory. This minimizes excess stock and EOL write-offs.</p>
+                    </div>
+                </div>
+                 <div class="details-card mt-4" onclick="toggleCardDetails(this)">
+                    <h3 class="card-title flex justify-between items-center" data-translate-key="opsInvMEIOTitle">Multi-Echelon Inventory Optimization (MEIO) <span class="text-xl text-slate-400">&#x25BC;</span></h3>
+                    <div class="details-content">
+                        <p class="text-sm" data-translate-key="opsInvMEIODesc">SAS solutions support MEIO, strategically managing inventory across the entire network (raw materials, WIP, finished goods). <span class="tech-highlight">SAS Inventory Optimization</span> simultaneously optimizes levels for every SKU at every location. MEIO allows smarter placement of inventory buffers globally to mitigate risks (e.g., geopolitical), balancing risk, cost, and responsiveness.</p>
+                    </div>
+                </div>
+                <div class="mt-6">
+                    <h4 class="subsection-title text-center" data-translate-key="opsInvChartTitle">Conceptual Benefits: Operations & Inventory Optimization</h4>
+                    <div class="chart-container">
+                        <canvas id="opsInventoryChart"></canvas>
+                    </div>
+                     <p class="text-xs text-center text-slate-500" data-translate-key="opsInvChartDisclaimer">Illustrative chart. Actual improvements vary.</p>
+                </div>
+                 <div class="card mt-6 bg-blue-50 border border-blue-200">
+                    <h4 class="card-title text-blue-700" data-translate-key="opsInvCaseWistronTitle">Case Example: Wistron (Inventory Context)</h4>
+                    <p class="text-sm" data-translate-key="opsInvCaseWistronDesc">Wistron's use of SAS for demand-driven inventory optimization, as highlighted by Robert A. Davis, involved aligning inventory levels and replenishment with true market demand. This likely reduced the bullwhip effect, leading to lower holding costs, minimized obsolescence, improved availability, and greater agility. Freed working capital can be reinvested into R&D and innovation.</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="resilience" class="py-8">
+            <h2 class="section-title" data-translate-key="resilienceTitle">Enhancing Supply Chain Resilience & Risk Management with SAS</h2>
+            <p class="mb-6 text-slate-600" data-translate-key="resilienceIntro">SAS analytics help firms move beyond reactive crisis management to proactively identify risks, enhance visibility, and build adaptive supply networks, crucial for Taiwan's pivotal role in global tech.</p>
+            <div class="card">
+                 <div class="details-card" onclick="toggleCardDetails(this)">
+                    <h3 class="card-title flex justify-between items-center" data-translate-key="resilienceRiskIDTitle">Proactive Risk Identification & Mitigation <span class="text-xl text-slate-400">&#x25BC;</span></h3>
+                    <div class="details-content">
+                        <p class="text-sm" data-translate-key="resilienceRiskIDDesc"><span class="tech-highlight">SAS Strategic Supply Chain Optimization</span> enables "what-if" scenario planning for disruptions (e.g., supplier failures). Broader SAS capabilities forecast disruptions and equipment failures. <span class="tech-highlight">SAS Fraud Management</span> technologies (real-time scoring, ML for anomaly detection) can be adapted to flag unusual supply chain events (supplier lead time deviations, unusual orders) as potential risks.</p>
+                    </div>
+                </div>
+                <div class="details-card mt-4" onclick="toggleCardDetails(this)">
+                    <h3 class="card-title flex justify-between items-center" data-translate-key="resilienceVisibilityTitle">End-to-End Visibility & Collaboration <span class="text-xl text-slate-400">&#x25BC;</span></h3>
+                    <div class="details-content">
+                        <p class="text-sm" data-translate-key="resilienceVisibilityDesc">SAS platforms unify data from disparate sources for a holistic supply chain view, crucial for understanding interdependencies. Supply chain digitization enhances transparency, allowing prompt identification of high-risk suppliers/components. SAS supports "supply chain control tower" concepts for real-time data aggregation, visibility, and decision support.</p>
+                    </div>
+                </div>
+                <div class="details-card mt-4" onclick="toggleCardDetails(this)">
+                    <h3 class="card-title flex justify-between items-center" data-translate-key="resilienceQualityTitle">SAS Quality Analytic Suite & Warranty Analytics <span class="text-xl text-slate-400">&#x25BC;</span></h3>
+                    <div class="details-content">
+                        <p class="text-sm" data-translate-key="resilienceQualityDesc"><span class="tech-highlight">SAS Quality Analytic Suite</span> (including <span class="tech-highlight">SAS Field Quality Analytics</span>) analyzes warranty claims, field performance, and customer feedback. This helps identify component failures, trace issues to suppliers/processes, and understand root causes for continuous improvement. American Honda used SAS to lower warranty costs by 20% and achieve 1% spare parts inventory accuracy.</p>
+                    </div>
+                </div>
+                <div class="details-card mt-4" onclick="toggleCardDetails(this)">
+                    <h3 class="card-title flex justify-between items-center" data-translate-key="resilienceIoTTitle">IoT for In-Transit Visibility & Quality Assurance <span class="text-xl text-slate-400">&#x25BC;</span></h3>
+                    <div class="details-content">
+                        <p class="text-sm" data-translate-key="resilienceIoTDesc"><span class="tech-highlight">SAS Analytics for IoT</span> monitors goods in transit, crucial for sensitive high-tech components. Real-time sensor data (temperature, shock) provides early warnings of potential damage. This helps prevent compromised components from entering manufacturing or reaching customers.</p>
+                    </div>
+                </div>
+                 <div class="mt-6">
+                    <h4 class="subsection-title text-center" data-translate-key="resilienceChartTitle">Conceptual Benefits: Resilience & Risk Management</h4>
+                    <div class="chart-container">
+                        <canvas id="resilienceChart"></canvas>
+                    </div>
+                    <p class="text-xs text-center text-slate-500" data-translate-key="resilienceChartDisclaimer">Illustrative chart. Actual improvements vary.</p>
+                </div>
+            </div>
+        </section>
+        
+        <section id="architecture" class="py-8">
+            <h2 class="section-title" data-translate-key="architectureTitle">SAS Supply Chain Analytics System Architecture</h2>
+            <p class="mb-6 text-slate-600" data-translate-key="architectureIntro">This conceptual architecture illustrates how SAS solutions integrate various data sources and analytical capabilities to empower intelligent supply chain decisions for Taiwan's high-tech manufacturers.</p>
+            <div class="card arch-diagram-container">
+                <div class="arch-main-flow">
+                    <div class="arch-layer w-full">
+                        <h3 class="arch-layer-title" data-translate-key="archLayerDataSources">Data Sources</h3>
+                        <div class="arch-flow-grid">
+                            <div class="arch-box" data-translate-key="archDSInternal">Internal Systems:<br><span class="tech-highlight">ERP, MES, SCM, IoT/Sensors, FDC</span></div>
+                            <div class="arch-box" data-translate-key="archDSExternal">External Data:<br><span class="tech-highlight">Market Trends, Supplier Feeds, Geopolitical Intel, Weather</span></div>
+                        </div>
+                    </div>
+                    <div class="arch-arrow-v">⬇️</div>
+                    <div class="arch-layer w-full">
+                        <h3 class="arch-layer-title" data-translate-key="archLayerIngestion">Data Ingestion & Integration</h3>
+                        <div class="arch-box arch-box-viya w-full md:w-3/4 lg:w-1/2 mx-auto" data-translate-key="archDIPlatform"><span class="tech-highlight">SAS Viya Platform</span><br>(Data Preparation, Connectors, Governance)</div>
+                    </div>
+                    <div class="arch-arrow-v">⬇️</div>
+                    <div class="arch-layer w-full">
+                        <h3 class="arch-layer-title" data-translate-key="archLayerCorePlatform">Core SAS Analytics & AI Platform</h3>
+                         <div class="arch-box arch-box-viya w-full md:w-3/4 lg:w-1/2 mx-auto mb-2" data-translate-key="archCoreViya"><span class="tech-highlight">SAS Viya</span></div>
+                        <div class="arch-flow-grid">
+                            <div class="arch-box" data-translate-key="archCoreVDMML">Visual Data Mining & ML (VDMML)</div>
+                            <div class="arch-box" data-translate-key="archCoreVA">Visual Analytics</div>
+                            <div class="arch-box" data-translate-key="archCoreOpt">Optimization</div>
+                            <div class="arch-box" data-translate-key="archCoreESP">Event Stream Processing (ESP)</div>
+                        </div>
+                    </div>
+                    <div class="arch-arrow-v">⬇️</div>
+                    <div class="arch-layer w-full">
+                        <h3 class="arch-layer-title" data-translate-key="archLayerSolutions">SAS Supply Chain Solution Domains</h3>
+                        <div class="grid md:grid-cols-3 gap-4">
+                            <div class="arch-box arch-box-solution">
+                                <strong data-translate-key="archSolDemand">Demand Forecasting & Planning</strong><br>
+                                <span class="text-xs" data-translate-key="archSolDemandTools">(SAS Intelligent Planning, Forecast Server)</span>
+                            </div>
+                            <div class="arch-box arch-box-solution">
+                                <strong data-translate-key="archSolOpsInv">Operations & Inventory Optimization</strong><br>
+                                <span class="text-xs" data-translate-key="archSolOpsInvTools">(Strategic SCO, Analytics for IoT, Intelligent Inventory Mgmt)</span>
+                            </div>
+                            <div class="arch-box arch-box-solution">
+                                <strong data-translate-key="archSolResilience">Resilience & Risk Management</strong><br>
+                                <span class="text-xs" data-translate-key="archSolResilienceTools">(Scenario Planning, Anomaly Detection, Quality Analytics)</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="arch-arrow-v">⬇️</div>
+                    <div class="arch-layer w-full">
+                        <h3 class="arch-layer-title" data-translate-key="archLayerOutcomes">Business Outcomes & User Interaction</h3>
+                        <div class="arch-flow-grid">
+                            <div class="arch-box arch-box-output" data-translate-key="archOutDashboards">Dashboards & Reports</div>
+                            <div class="arch-box arch-box-output" data-translate-key="archOutPlans">Optimized Plans (S&OP, Production, Inventory)</div>
+                            <div class="arch-box arch-box-output" data-translate-key="archOutAlerts">Real-time Alerts & Notifications</div>
+                            <div class="arch-box arch-box-output" data-translate-key="archOutRecs">Prescriptive Recommendations</div>
+                        </div>
+                    </div>
+                </div>
+                <p class="text-xs text-center mt-4 text-slate-600" data-translate-key="archDiagramDesc">This diagram shows data flowing from diverse internal and external sources, through SAS Viya for integration and core analytics (AI/ML, optimization, real-time processing), powering specific SAS supply chain solutions, and ultimately delivering actionable intelligence and optimized outcomes for strategic decision-making.</p>
+            </div>
+        </section>
+
+        <section id="platform" class="py-8">
+            <h2 class="section-title" data-translate-key="platformTitle">SAS Technology Platform & Industry Impact</h2>
+            <p class="mb-6 text-slate-600" data-translate-key="platformIntro">The transformative impact of SAS is driven by a powerful underlying platform and a commitment to leveraging cutting-edge AI, enabling holistic supply chain enhancements for Taiwanese high-tech leaders.</p>
+            <div class="card">
+                <div class="details-card" onclick="toggleCardDetails(this)">
+                    <h3 class="card-title flex justify-between items-center" data-translate-key="platformViyaTitle">SAS Viya: The Unifying Data and AI Platform <span class="text-xl text-slate-400">&#x25BC;</span></h3>
+                    <div class="details-content">
+                        <p class="text-sm" data-translate-key="platformViyaDesc">SAS Viya is a cloud-native data and AI platform, an "operating system" for analytics transformation. It provides an integrated environment for data management, model development (SAS & open-source like Python), deployment, and governance. Viya accelerates improvements to production, cost, and sustainability. Innovations include <span class="tech-highlight">SAS Data Maker</span> (synthetic data), <span class="tech-highlight">SAS Viya Intelligent Decisioning</span> (AI agents), and <span class="tech-highlight">SAS Viya Copilot</span> (conversational AI assistant). Studies show Viya accelerates the AI lifecycle significantly.</p>
+                    </div>
+                </div>
+                
+                <h3 class="subsection-title mt-8" data-translate-key="platformCaseStudiesTitle">Industry Success Stories & Quantifiable Impact</h3>
+                <p class="text-sm mb-4" data-translate-key="platformCaseStudiesIntro">The following examples illustrate how SAS solutions deliver tangible benefits across various high-tech and manufacturing sectors, providing valuable insights for Taiwanese companies.</p>
+
+                <div class="details-card mt-4" onclick="toggleCardDetails(this)">
+                    <h3 class="card-title flex justify-between items-center" data-translate-key="caseMurataTitle">Murata Manufacturing (Electronics Components) <span class="text-xl text-slate-400">&#x25BC;</span></h3>
+                    <div class="details-content">
+                        <h4 class="case-study-subtitle" data-translate-key="caseChallenge">Challenge:</h4>
+                        <p class="text-sm" data-translate-key="caseMurataChallenge">Improving production yield in complex, multi-stage electronic component manufacturing (billions of units/month) without major equipment overhauls, dealing with diverse data sources (sensors, equipment, environment).</p>
+                        <h4 class="case-study-subtitle" data-translate-key="caseSolution">SAS Solution:</h4>
+                        <p class="text-sm" data-translate-key="caseMurataSolution">Implemented <span class="tech-highlight">SAS Production Quality Analytics</span> to create a unified data repository. This enabled engineers to easily access and analyze data from multiple processes and plants, shifting focus from data collection to high-value analysis and problem-solving.</p>
+                        <h4 class="case-study-subtitle" data-translate-key="caseImpact">Impact & Supply Chain/OEE Benefits:</h4>
+                        <p class="text-sm" data-translate-key="caseMurataImpact">Achieved a <span class="kpi-highlight">1% yield improvement, translating to $50 million in annual savings</span>. Enhanced data coordination and analytical focus, directly boosting OEE's Quality component. Enabled cross-factory analysis of similar processes for new optimization opportunities.</p>
+                    </div>
+                </div>
+
+                <div class="details-card mt-4" onclick="toggleCardDetails(this)">
+                    <h3 class="card-title flex justify-between items-center" data-translate-key="caseSKHynixTitle">SK Hynix (Semiconductors) <span class="text-xl text-slate-400">&#x25BC;</span></h3>
+                    <div class="details-content">
+                        <h4 class="case-study-subtitle" data-translate-key="caseChallenge">Challenge:</h4>
+                        <p class="text-sm" data-translate-key="caseSKHynixChallenge">Accelerating R&D cycles and enhancing manufacturing automation in the data-intensive and rapidly innovating semiconductor memory sector.</p>
+                        <h4 class="case-study-subtitle" data-translate-key="caseSolution">SAS Solution:</h4>
+                        <p class="text-sm" data-translate-key="caseSKHynixSolution">Adopted <span class="tech-highlight">JMP (a SAS company product)</span> for statistical modeling, Design of Experiments (DOE), and ML for data cleaning. Developed new statistical models to simplify DOE, reducing sample sizes and analysis time. Implemented ML algorithms to clean complex datasets and remove noise without compromising experimental integrity. Standardized JMP use across departments.</p>
+                        <h4 class="case-study-subtitle" data-translate-key="caseImpact">Impact & Supply Chain/OEE Benefits:</h4>
+                        <p class="text-sm" data-translate-key="caseSKHynixImpact">Significantly reduced R&D and data analysis times. Improved intra-company synergies through common tools and methodologies. Enhanced communication of complex findings to non-data scientists and field engineers via JMP's visualization capabilities. Indirectly benefited all OEE pillars through faster NPI, more robust processes, and improved decision quality.</p>
+                    </div>
+                </div>
+                
+                <div class="details-card mt-4" onclick="toggleCardDetails(this)">
+                    <h3 class="card-title flex justify-between items-center" data-translate-key="caseGeorgiaPacificTitle">Georgia-Pacific (Manufacturing) <span class="text-xl text-slate-400">&#x25BC;</span></h3>
+                    <div class="details-content">
+                        <h4 class="case-study-subtitle" data-translate-key="caseChallenge">Challenge:</h4>
+                        <p class="text-sm" data-translate-key="caseGPChallenge">Improving equipment efficiency, reducing unplanned downtime, and optimizing shipping logistics in a large-scale manufacturing operation with high data volumes.</p>
+                        <h4 class="case-study-subtitle" data-translate-key="caseSolution">SAS Solution:</h4>
+                        <p class="text-sm" data-translate-key="caseGPSolution">Deployed <span class="tech-highlight">SAS Viya on AWS</span>. Utilized over 15,000 ML models for optimal production settings. Implemented predictive maintenance using real-time data from 85,000 vibration sensors and applied computer vision for automated problem detection on production lines. Leveraged SAS predictive analytics for shipping logistics optimization.</p>
+                        <h4 class="case-study-subtitle" data-translate-key="caseImpact">Impact & Supply Chain/OEE Benefits:</h4>
+                        <p class="text-sm" data-translate-key="caseGPImpact">Achieved a <span class="kpi-highlight">10% OEE improvement</span> and a <span class="kpi-highlight">30% reduction in unplanned downtime</span> in facilities using these tools. Enhanced productivity, optimized processes, and improved asset lifespan. Demonstrates SAS Viya's capability to handle massive data volumes and deliver significant operational and supply chain efficiencies.</p>
+                    </div>
+                </div>
+
+                <div class="details-card mt-4" onclick="toggleCardDetails(this)">
+                    <h3 class="card-title flex justify-between items-center" data-translate-key="caseAmericanHondaTitle">American Honda (Automotive) <span class="text-xl text-slate-400">&#x25BC;</span></h3>
+                    <div class="details-content">
+                        <h4 class="case-study-subtitle" data-translate-key="caseChallenge">Challenge:</h4>
+                        <p class="text-sm" data-translate-key="caseAHChallenge">High warranty costs and inefficiencies in spare parts inventory management.</p>
+                        <h4 class="case-study-subtitle" data-translate-key="caseSolution">SAS Solution:</h4>
+                        <p class="text-sm" data-translate-key="caseAHSolution">Utilized <span class="tech-highlight">SAS Quality Analytic Suite</span> (including Field Quality Analytics) to analyze warranty claims, field performance data, and customer feedback. Applied root cause analysis to identify sources of component failures.</p>
+                        <h4 class="case-study-subtitle" data-translate-key="caseImpact">Impact & Supply Chain/OEE Benefits:</h4>
+                        <p class="text-sm" data-translate-key="caseAHImpact">Lowered warranty costs by <span class="kpi-highlight">20%</span>. Achieved <span class="kpi-highlight">1% spare parts inventory accuracy</span>. Improved product quality by identifying and addressing root causes of failures, reducing a form of supply chain risk and enhancing aftermarket service efficiency.</p>
+                    </div>
+                </div>
+
+                <div class="details-card mt-4" onclick="toggleCardDetails(this)">
+                    <h3 class="card-title flex justify-between items-center" data-translate-key="caseKonicaMinoltaTitle">Konica Minolta (High-Capital Equipment) <span class="text-xl text-slate-400">&#x25BC;</span></h3>
+                    <div class="details-content">
+                         <h4 class="case-study-subtitle" data-translate-key="caseChallenge">Challenge:</h4>
+                        <p class="text-sm" data-translate-key="caseKMChallenge">Maximizing productivity of high-capital equipment by avoiding unplanned downtime due to failures.</p>
+                        <h4 class="case-study-subtitle" data-translate-key="caseSolution">SAS Solution:</h4>
+                        <p class="text-sm" data-translate-key="caseKMSolution">Analyzed sensor data using SAS analytics to predict equipment failures and enable proactive maintenance.</p>
+                        <h4 class="case-study-subtitle" data-translate-key="caseImpact">Impact & Supply Chain/OEE Benefits:</h4>
+                        <p class="text-sm" data-translate-key="caseKMImpact">Reduced equipment downtime, directly increasing OEE Availability. Shifted maintenance from reactive to predictive, improving operational stability.</p>
+                    </div>
+                </div>
+
+                <div class="details-card mt-4" onclick="toggleCardDetails(this)">
+                    <h3 class="card-title flex justify-between items-center" data-translate-key="caseOtherHighTechTitle">Other High-Tech Applications <span class="text-xl text-slate-400">&#x25BC;</span></h3>
+                    <div class="details-content">
+                        <div class="detail-subsection">
+                            <h4 class="sub-item-title" data-translate-key="caseSemiBackendTitle">Semiconductor Backend Equipment Leader:</h4>
+                            <p class="text-sm" data-translate-key="caseSemiBackendDesc">Deployed AI-enabled intelligent machines using SAS for predictive quality, anomaly detection, and prescriptive maintenance. Resulted in improved IC packaging Quality, increased Production Speed (Performance), and enhanced Availability.</p>
+                        </div>
+                        <div class="detail-subsection mt-3">
+                            <h4 class="sub-item-title" data-translate-key="caseSolarPanelTitle">Solar Panel Manufacturer:</h4>
+                            <p class="text-sm" data-translate-key="caseSolarPanelDesc">Utilized SAS computer vision for automated defect detection, leading to reduced scrap (Quality), decreased downtime (Availability), and increased production yield (Performance & Quality).</p>
+                        </div>
+                         <div class="detail-subsection mt-3">
+                            <h4 class="sub-item-title" data-translate-key="caseHDDManufTitle">HDD Manufacturer:</h4>
+                            <p class="text-sm" data-translate-key="caseHDDManufDesc">Applied SAS AI/ML to improve quality and yield, drastically reducing drive failure rates to near 0% (Quality) and enabling early yield excursion warnings (maintaining Performance & Quality).</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mt-6 bg-blue-50 border border-blue-200">
+                    <h4 class="card-title text-blue-700" data-translate-key="platformBenefitsTitle">Quantifiable Benefits & Strategic Advantages</h4>
+                    <p class="text-sm" data-translate-key="platformBenefitsDesc">SAS adoption yields tangible benefits. Examples: Appliance manufacturer reduced inventory 12%, boosted revenue 1%; Grocer cut order changes 40%, inventory 8%; Georgia-Pacific improved OEE 10%, cut unplanned downtime 30%; American Honda cut warranty costs 20%. For Taiwanese firms, this means improved forecast accuracy, reduced cycle times, optimized inventory, minimized obsolescence, enhanced supplier quality, and faster disruption response, leading to enhanced agility and competitiveness.</p>
+                </div>
+                <div class="details-card mt-4" onclick="toggleCardDetails(this)">
+                    <h3 class="card-title flex justify-between items-center" data-translate-key="platformFutureTitle">The Future: AI Copilots & Democratization <span class="text-xl text-slate-400">&#x25BC;</span></h3>
+                    <div class="details-content">
+                        <p class="text-sm" data-translate-key="platformFutureDesc">SAS Viya Copilot and GenAI integration democratize access to sophisticated analytics. Non-technical users (planners, managers) can run complex optimizations and scenario analyses via natural language. This is vital for Taiwanese firms where domain experts can combine their knowledge with advanced analytics for practical, impactful solutions and faster decision-making, fostering a culture of data-driven innovation.</p>
+                    </div>
+                </div>
+                 <div class="card mt-6 bg-blue-50 border border-blue-200">
+                    <h4 class="card-title text-blue-700" data-translate-key="platformTableTitle">Summary Table: SAS Solution Benefits</h4>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full text-sm">
+                            <thead class="bg-blue-200">
+                                <tr>
+                                    <th class="p-2 text-left" data-translate-key="tableHeaderArea">Supply Chain Area</th>
+                                    <th class="p-2 text-left" data-translate-key="tableHeaderSolutions">Key SAS Solutions/Capabilities</th>
+                                    <th class="p-2 text-left" data-translate-key="tableHeaderBenefits">Benefits for Taiwan High-Tech</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="border-b border-blue-100">
+                                    <td class="p-2" data-translate-key="tableAreaDemand">Demand Forecasting</td>
+                                    <td class="p-2"><span class="tech-highlight">SAS Intelligent Planning Suite, SAS Forecast Server, SAS Viya</span></td>
+                                    <td class="p-2" data-translate-key="tableBenefitsDemand">Improved NPI forecast accuracy, better handling of demand volatility, reduced forecast error, enhanced S&OP.</td>
+                                </tr>
+                                <tr class="border-b border-blue-100">
+                                    <td class="p-2" data-translate-key="tableAreaOps">Operations Optimization</td>
+                                    <td class="p-2"><span class="tech-highlight">SAS Strategic Supply Chain Optimization, SAS AI for Manufacturing, SAS Analytics for IoT</span></td>
+                                    <td class="p-2" data-translate-key="tableBenefitsOps">Reduced cycle times, increased OEE, optimized production schedules, minimized unplanned downtime.</td>
+                                </tr>
+                                <tr class="border-b border-blue-100">
+                                    <td class="p-2" data-translate-key="tableAreaInv">Inventory Management</td>
+                                    <td class="p-2"><span class="tech-highlight">SAS Inventory Optimization Workbench, SAS Intelligent Inventory Management, MEIO</span></td>
+                                    <td class="p-2" data-translate-key="tableBenefitsInv">Optimized WIP & finished goods, minimized obsolescence costs, reduced holding costs, improved service levels.</td>
+                                </tr>
+                                <tr class="border-b border-blue-100">
+                                    <td class="p-2" data-translate-key="tableAreaResilience">Resilience & Risk</td>
+                                    <td class="p-2"><span class="tech-highlight">SAS Strategic Supply Chain Optimization (scenarios), SAS Fraud Management (adapted), SAS Quality Analytic Suite, SAS Analytics for IoT</span></td>
+                                    <td class="p-2" data-translate-key="tableBenefitsResilience">Faster disruption response, proactive risk ID, enhanced supplier quality, reduced warranty costs.</td>
+                                </tr>
+                                <tr>
+                                    <td class="p-2" data-translate-key="tableAreaPlatform">Underlying Platform</td>
+                                    <td class="p-2"><span class="tech-highlight">SAS Viya</span></td>
+                                    <td class="p-2" data-translate-key="tableBenefitsPlatform">Accelerated AI lifecycle, unified data management, support for diverse user skills, scalability.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="recommendations" class="py-8">
+            <h2 class="section-title" data-translate-key="recommendationsTitle">Strategic Recommendations for Implementation</h2>
+             <p class="mb-6 text-slate-600" data-translate-key="recommendationsIntro">Successfully leveraging SAS requires a strategic approach to implementation, fostering a data-driven culture, and focusing on continuous value realization for Taiwan's high-tech sector.</p>
+            <div class="card">
+                <ul class="list-bullet space-y-3 text-sm">
+                    <li data-translate-key="recItem1">
+                        <strong class="text-blue-600" data-translate-key="recItem1Strong">Adopt a Phased Approach:</strong> Start with high-pain/high-ROI areas (e.g., demand forecasting for volatile lines, PdM for critical equipment). Achieve quick wins, build expertise, and secure stakeholder buy-in before broader rollouts.
+                    </li>
+                    <li data-translate-key="recItem2">
+                        <strong class="text-blue-600" data-translate-key="recItem2Strong">Tailor Solutions to High-Tech Niches:</strong> Customize SAS tools (<span class="tech-highlight">SAS Strategic Supply Chain Optimization</span>, packaged AI models) to reflect specific process flows (semiconductor fab, electronics assembly, IC testing) and strategic objectives.
+                    </li>
+                    <li data-translate-key="recItem3">
+                        <strong class="text-blue-600" data-translate-key="recItem3Strong">Invest in Data Governance & Integration:</strong> Prioritize strong data governance and integration of disparate systems (ERP, MES, CRM, IoT sensors) into <span class="tech-highlight">SAS Viya</span> to create a reliable, unified data foundation.
+                    </li>
+                    <li data-translate-key="recItem4">
+                        <strong class="text-blue-600" data-translate-key="recItem4Strong">Foster Data-Driven Culture & Upskill Talent:</strong> Accompany SAS implementation with change management. Invest in training (SAS programs available) to empower domain experts and citizen data scientists, leveraging tools like <span class="tech-highlight">SAS Viya Copilot</span>. Human expertise remains crucial.
+                    </li>
+                    <li data-translate-key="recItem5">
+                        <strong class="text-blue-600" data-translate-key="recItem5Strong">Partner for Success:</strong> Leverage SAS's deep industry expertise and partner ecosystem for guidance in tailoring solutions, system integration, change management, and aligning analytics with strategic goals for sustained competitive advantage.
+                    </li>
+                </ul>
+                 <p class="mt-6 text-sm" data-translate-key="recConclusion">The transformative power of SAS analytics is best realized through a continuous journey of improvement, adaptation, and deep integration into core business processes and strategic vision.</p>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="bg-blue-800 text-blue-100 py-8 text-center mt-12">
+        <div class="container mx-auto px-6">
+            <p data-translate-key="footerCopyright">&copy; SAS Institute Inc. All rights reserved.</p>
+            <p class="text-sm" data-translate-key="footerDisclaimer">This document focuses on SAS solutions for Supply Chain Analytics in Taiwan's High-Tech Sector, based on provided materials.</p>
+        </div>
+    </footer>
+
+    <script>
+        const translations = {
+            en: {
+                pageTitle: "Transforming Supply Chain Analytics with SAS: Taiwan High-Tech Focus",
+                headerTitle: "SAS Supply Chain Analytics: Taiwan High-Tech",
+                navIntroduction: "Introduction",
+                navChallenges: "Challenges",
+                navDemand: "Demand",
+                navOpsInv: "Operations & Inventory",
+                navResilience: "Resilience",
+                navArchitecture: "Architecture",
+                navPlatform: "Platform & Cases",
+                navRecommendations: "Recommendations",
+                introTitle: "Executive Summary & Strategic Context",
+                introP1: "Taiwan's high-tech manufacturing sector, a linchpin in the global technology ecosystem, operates under immense pressure characterized by relentless innovation, demand volatility, and acute geopolitical sensitivities. In this dynamic environment, supply chain excellence is paramount for sustained competitiveness. SAS delivers a comprehensive analytics ecosystem, addressing critical challenges across demand forecasting, operations optimization, inventory management, and supply chain resilience. By leveraging artificial intelligence (AI), machine learning (ML), and sophisticated optimization algorithms, SAS enables these firms to enhance forecast accuracy, streamline complex manufacturing processes, optimize inventory investments against the risks of obsolescence, and build more adaptive and resilient supply networks. Ultimately, the adoption of SAS analytics offers a pathway for Taiwan's high-tech industry to not only navigate current complexities but also to fortify its strategic global standing.",
+                introSubtitle: "The Transformation Imperative",
+                introP2: "The high-tech manufacturing sector in Taiwan, particularly its globally dominant semiconductor industry, stands at a critical juncture. Taiwan occupies a pivotal position, manufacturing 65% of the world's semiconductors and over 70% of sub-7nm high-end ICs in 2023, and leads in 2nm process technology. This central role brings unique pressures, making supply chain excellence a strategic imperative for the nation's economic well-being. Advanced analytics and digital technologies are essential tools for navigating this complex terrain, moving beyond traditional cost reduction to embrace agility, resilience, and value preservation.",
+                challengesTitle: "Key Supply Chain Challenges in Taiwan's High-Tech Sector",
+                challengesIntro: "The strategic importance of Taiwan's high-tech sector is matched by the intensity of the interconnected challenges it faces, creating a complex operating environment that demands sophisticated analytical solutions.",
+                challengeDemandVol: "Intense Demand Volatility",
+                challengeDemandVolDesc: "Highly unpredictable demand patterns due to rapid innovation, market shifts, and competitive actions in electronics and semiconductors. This leads to reduced forecast accuracy, inaccurate production planning, and potential for stockouts or excess inventory.",
+                challengeAnalyticsImplication: "Analytics Implication:",
+                challengeDemandVolAI: "Need for advanced AI/ML-driven forecasting models, real-time demand sensing, and scenario planning.",
+                challengeLifecycles: "Short Product Lifecycles",
+                challengeLifecyclesDesc: "Rapid technological advancements mean products become outdated quickly (e.g., 2-5 years for advanced semiconductors). This increases inventory obsolescence risk and pressure for rapid new product introduction (NPI).",
+                challengeLifecyclesAI: "Enhanced NPI forecasting, dynamic inventory policies, lifecycle-aware planning, and improved end-of-life (EOL) management.",
+                challengeGeopolitical: "Geopolitical Risks & Disruptions",
+                challengeGeopoliticalDesc: "Trade tensions and regional instability lead to supply uncertainties and precautionary inventory buildup, increasing costs and reducing competitiveness.",
+                challengeGeopoliticalAI: "Robust scenario planning for disruptions, multi-echelon inventory optimization, supplier risk assessment, and real-time event monitoring.",
+                challengeInventory: "Inventory Conundrum",
+                challengeInventoryDesc: "Balancing buffer stock needs against high holding costs and rapid obsolescence risk. Excessive inventory impairs margins and cash flow.",
+                challengeInventoryAI: "Accurate demand forecasting, optimized safety stock levels, improved inventory classification, and proactive obsolescence management.",
+                challengeOperational: "Operational Complexity",
+                challengeOperationalDesc: "Managing intricate production schedules (e.g., semiconductor recursive flows, sequence-dependent setups), numerous processing steps, and quality control in high-mix, high-volume environments.",
+                challengeOperationalAI: "AI-driven production scheduling, real-time process monitoring, predictive quality analytics, OEE optimization, and digital twin simulations.",
+                demandTitle: "SAS-Driven Demand Forecasting for Enhanced Agility",
+                demandIntro: "Accurate and agile demand forecasting is crucial. SAS elevates forecasting to a proactive, intelligent process, enabling Taiwanese high-tech firms to better anticipate and respond to dynamic market shifts.",
+                demandUncertaintyTitle: "Addressing Uncertainty: SAS Intelligent Planning & Forecast Server",
+                demandSPIPTitle: "SAS Intelligent Planning Suite:",
+                demandSPIPDesc: "Accurately forecasts demand, develops productive planning processes, and boosts financial performance. Leverages advanced analytics and ML for greater accuracy, automates low-touch planning, and allows dynamic reforecasting. Integrates with <span class=\"tech-highlight\">SAS Visual Forecasting</span> and <span class=\"tech-highlight\">SAS Visual Data Mining and Machine Learning</span>.",
+                demandSFSTitle: "SAS Forecast Server:",
+                demandSFSDesc: "Automatically generates millions of statistically based forecasts, selecting optimized models based on historical data. Supports hierarchical forecasting and improves S&OP cycle times. <span class=\"tech-highlight\">SAS Supply Chain Optimization</span> solutions also offer a patented statistical forecasting engine.",
+                demandAIMLEvolution: "The evolution to AI/ML-infused platforms like SAS Intelligent Planning is vital for discerning patterns from sparse NPI data or volatile demand in Taiwan's high-tech sector.",
+                demandAIMLPowerTitle: "Power of AI/ML in High-Tech Forecasting",
+                demandAIMLPowerDesc: "SAS is a leader in AI/ML platforms. <span class=\"tech-highlight\">SAS Intelligent Planning Cloud</span> uses embedded ML to automate analytics. SAS solutions employ time-series and ML techniques for intermittent demand, NPI uptake, and lifecycle prediction. Users can leverage SAS or open-source models. This \"manage planning by exception\" approach allows planners to focus on strategic, high-value products.",
+                demandEconometricTitle: "Econometric Modeling & Scenario Analysis",
+                demandEconometricDesc: "<span class=\"tech-highlight\">SAS Forecast Server</span> incorporates econometric factors (market trends, competitor actions) for a nuanced view of demand drivers. <span class=\"tech-highlight\">SAS Intelligent Planning</span> offers AI-based \"what-if\" scenario simulations to assess impacts of different demand scenarios (e.g., competitor entry, tech shifts, trade policy changes). SAS also enables \"Demand Shaping\" to influence consumer behavior proactively.",
+                demandChartTitle: "Conceptual Benefits: Advanced Demand Forecasting",
+                demandChartDisclaimer: "Illustrative chart. Actual improvements vary based on specific implementation and data.",
+                demandCaseWistronTitle: "Case Example: Wistron",
+                demandCaseWistronDesc: "Wistron Corporation, a major Taiwanese electronics ODM, achieved \"more precise demand forecasts\" using SAS solutions. Featured in \"Demand-Driven Inventory Optimization and Replenishment\" by SAS expert Robert A. Davis, this suggests Wistron leveraged SAS's advanced forecasting (statistical, AI/ML, econometric) to better align its supply chain with market demand, leading to more effective inventory management and operational planning.",
+                opsInvTitle: "Optimizing Operations & Inventory with SAS",
+                opsInvIntro: "SAS provides tools to optimize multifaceted operations, from end-to-end coordination to production floor efficiencies and inventory strategies, crucial for Taiwan's complex high-tech manufacturing.",
+                opsInvSCOTitle: "End-to-End Supply Chain Optimization",
+                opsInvSCODesc: "<strong class=\"text-blue-600\">SAS Strategic Supply Chain Optimization:</strong> Employs mathematical optimization to maximize profit by balancing costs (purchasing, logistics, production, inventory) against constraints and service targets. Delivers optimal plans for purchasing, production, transportation, inventory, and sales. Handles alternate raw materials, multi-level BOMs, and complex production lines. Enables proactive responses to disruptions by estimating financial/operational impacts of \"what-if\" scenarios.",
+                opsInvAIMfgTitle: "AI in High-Tech Manufacturing",
+                opsInvAIMfgDesc: "SAS embeds AI to optimize complex production schedules (critical for high-mix, high-volume fabs), improve quality via real-time monitoring and root-cause analysis (<span class=\"tech-highlight\">SAS Viya</span>, <span class=\"tech-highlight\">SAS Quality Analytic Suite</span>), and enhance efficiency. Techniques include deep learning and computer vision for automated defect detection. AI can unlock hidden capacity and transform quality control into a competitive differentiator.",
+                opsInvIoTTitle: "SAS Analytics for IoT & Digital Twins",
+                opsInvIoTA4IoTTitle: "SAS Analytics for IoT:",
+                opsInvIoTA4IoTDesc: "Turns IoT data into actionable intelligence using <span class=\"tech-highlight\">SAS Event Stream Processing</span> for real-time analytics. Key for predictive maintenance (analyzing sensor data for RUL) and real-time process monitoring for quality assurance. Supports the entire IoT analytics lifecycle.",
+                opsInvIoTDTTitle: "Digital Twins:",
+                opsInvIoTDTDesc: "SAS integrates AI with technologies like Epic Games' Unreal Engine. For a fab, a digital twin fed by real-time IoT data allows virtual experimentation, simulation of changes, dynamic resource optimization, and failure prediction, enabling prescriptive operations management.",
+                opsInvCaseGPTitle: "Case Example: Georgia-Pacific",
+                opsInvCaseGPDesc: "Achieved a 10% OEE improvement and 30% reduction in unplanned downtime using <span class=\"tech-highlight\">SAS Viya</span>. Ran 15,000+ ML models for optimal production settings and used real-time data from 85,000 vibration sensors for predictive maintenance. Optimized shipping logistics with SAS predictive analytics. Demonstrates SAS Viya's transformative potential in complex manufacturing.",
+                opsInvStrategicInvTitle: "Strategic Inventory Management",
+                opsInvOptTitle: "SAS Inventory Optimization",
+                opsInvOptDesc: "<span class=\"tech-highlight\">SAS Inventory Optimization Workbench</span> & <span class=\"tech-highlight\">SAS Intelligent Inventory Management</span> automate and optimize inventory distribution by balancing resources and costs against service level goals. They calculate optimal order quantities and replenishment policies per SKU/location. An ICT solutions company used SAS to optimize service levels and inventory targets for components, sub-assemblies, and finished products using <span class=\"tech-highlight\">SAS OPTMODEL</span>.",
+                opsInvObsolescenceTitle: "Tackling Short Lifecycles & Obsolescence",
+                opsInvObsolescenceDesc: "SAS combines enhanced demand forecasting (AI/ML) with sophisticated inventory optimization. More precise demand signals for NPIs and existing products allow accurate stocking, reducing EOL overstock. <span class=\"tech-highlight\">SAS Intelligent Inventory Management</span>'s ML capabilities can be adapted to predict EOL transitions or manage NPI inventory. This minimizes excess stock and EOL write-offs.",
+                opsInvMEIOTitle: "Multi-Echelon Inventory Optimization (MEIO)",
+                opsInvMEIODesc: "SAS solutions support MEIO, strategically managing inventory across the entire network (raw materials, WIP, finished goods). <span class=\"tech-highlight\">SAS Inventory Optimization</span> simultaneously optimizes levels for every SKU at every location. MEIO allows smarter placement of inventory buffers globally to mitigate risks (e.g., geopolitical), balancing risk, cost, and responsiveness.",
+                opsInvChartTitle: "Conceptual Benefits: Operations & Inventory Optimization",
+                opsInvChartDisclaimer: "Illustrative chart. Actual improvements vary.",
+                opsInvCaseWistronTitle: "Case Example: Wistron (Inventory Context)",
+                opsInvCaseWistronDesc: "Wistron's use of SAS for demand-driven inventory optimization, as highlighted by Robert A. Davis, involved aligning inventory levels and replenishment with true market demand. This likely reduced the bullwhip effect, leading to lower holding costs, minimized obsolescence, improved availability, and greater agility. Freed working capital can be reinvested into R&D and innovation.",
+                resilienceTitle: "Enhancing Supply Chain Resilience & Risk Management with SAS",
+                resilienceIntro: "SAS analytics help firms move beyond reactive crisis management to proactively identify risks, enhance visibility, and build adaptive supply networks, crucial for Taiwan's pivotal role in global tech.",
+                resilienceRiskIDTitle: "Proactive Risk Identification & Mitigation",
+                resilienceRiskIDDesc: "<span class=\"tech-highlight\">SAS Strategic Supply Chain Optimization</span> enables \"what-if\" scenario planning for disruptions (e.g., supplier failures). Broader SAS capabilities forecast disruptions and equipment failures. <span class=\"tech-highlight\">SAS Fraud Management</span> technologies (real-time scoring, ML for anomaly detection) can be adapted to flag unusual supply chain events (supplier lead time deviations, unusual orders) as potential risks.",
+                resilienceVisibilityTitle: "End-to-End Visibility & Collaboration",
+                resilienceVisibilityDesc: "SAS platforms unify data from disparate sources for a holistic supply chain view, crucial for understanding interdependencies. Supply chain digitization enhances transparency, allowing prompt identification of high-risk suppliers/components. SAS supports \"supply chain control tower\" concepts for real-time data aggregation, visibility, and decision support.",
+                resilienceQualityTitle: "SAS Quality Analytic Suite & Warranty Analytics",
+                resilienceQualityDesc: "<span class=\"tech-highlight\">SAS Quality Analytic Suite</span> (including <span class=\"tech-highlight\">SAS Field Quality Analytics</span>) analyzes warranty claims, field performance, and customer feedback. This helps identify component failures, trace issues to suppliers/processes, and understand root causes for continuous improvement. American Honda used SAS to lower warranty costs by 20% and achieve 1% spare parts inventory accuracy.",
+                resilienceIoTTitle: "IoT for In-Transit Visibility & Quality Assurance",
+                resilienceIoTDesc: "<span class=\"tech-highlight\">SAS Analytics for IoT</span> monitors goods in transit, crucial for sensitive high-tech components. Real-time sensor data (temperature, shock) provides early warnings of potential damage. This helps prevent compromised components from entering manufacturing or reaching customers.",
+                resilienceChartTitle: "Conceptual Benefits: Resilience & Risk Management",
+                resilienceChartDisclaimer: "Illustrative chart. Actual improvements vary.",
+                architectureTitle: "SAS Supply Chain Analytics System Architecture",
+                architectureIntro: "This conceptual architecture illustrates how SAS solutions integrate various data sources and analytical capabilities to empower intelligent supply chain decisions for Taiwan's high-tech manufacturers.",
+                archLayerDataSources: "Data Sources",
+                archDSInternal: "Internal Systems:<br><span class=\"tech-highlight\">ERP, MES, SCM, IoT/Sensors, FDC</span>",
+                archDSExternal: "External Data:<br><span class=\"tech-highlight\">Market Trends, Supplier Feeds, Geopolitical Intel, Weather</span>",
+                archLayerIngestion: "Data Ingestion & Integration",
+                archDIPlatform: "<span class=\"tech-highlight\">SAS Viya Platform</span><br>(Data Preparation, Connectors, Governance)",
+                archLayerCorePlatform: "Core SAS Analytics & AI Platform",
+                archCoreViya: "<span class=\"tech-highlight\">SAS Viya</span>",
+                archCoreVDMML: "Visual Data Mining & ML (VDMML)",
+                archCoreVA: "Visual Analytics",
+                archCoreOpt: "Optimization",
+                archCoreESP: "Event Stream Processing (ESP)",
+                archLayerSolutions: "SAS Supply Chain Solution Domains",
+                archSolDemand: "Demand Forecasting & Planning",
+                archSolDemandTools: "(SAS Intelligent Planning, Forecast Server)",
+                archSolOpsInv: "Operations & Inventory Optimization",
+                archSolOpsInvTools: "(Strategic SCO, Analytics for IoT, Intelligent Inventory Mgmt)",
+                archSolResilience: "Resilience & Risk Management",
+                archSolResilienceTools: "(Scenario Planning, Anomaly Detection, Quality Analytics)",
+                archLayerOutcomes: "Business Outcomes & User Interaction",
+                archOutDashboards: "Dashboards & Reports",
+                archOutPlans: "Optimized Plans (S&OP, Production, Inventory)",
+                archOutAlerts: "Real-time Alerts & Notifications",
+                archOutRecs: "Prescriptive Recommendations",
+                archDiagramDesc: "This diagram shows data flowing from diverse internal and external sources, through SAS Viya for integration and core analytics (AI/ML, optimization, real-time processing), powering specific SAS supply chain solutions, and ultimately delivering actionable intelligence and optimized outcomes for strategic decision-making.",
+                platformTitle: "SAS Technology Platform & Industry Impact",
+                platformIntro: "The transformative impact of SAS is driven by a powerful underlying platform and a commitment to leveraging cutting-edge AI, enabling holistic supply chain enhancements for Taiwanese high-tech leaders.",
+                platformViyaTitle: "SAS Viya: The Unifying Data and AI Platform",
+                platformViyaDesc: "SAS Viya is a cloud-native data and AI platform, an \"operating system\" for analytics transformation. It provides an integrated environment for data management, model development (SAS & open-source like Python), deployment, and governance. Viya accelerates improvements to production, cost, and sustainability. Innovations include <span class=\"tech-highlight\">SAS Data Maker</span> (synthetic data), <span class=\"tech-highlight\">SAS Viya Intelligent Decisioning</span> (AI agents), and <span class=\"tech-highlight\">SAS Viya Copilot</span> (conversational AI assistant). Studies show Viya accelerates the AI lifecycle significantly.",
+                platformCaseStudiesTitle: "Industry Success Stories & Quantifiable Impact",
+                platformCaseStudiesIntro: "The following examples illustrate how SAS solutions deliver tangible benefits across various high-tech and manufacturing sectors, providing valuable insights for Taiwanese companies.",
+                caseChallenge: "Challenge:",
+                caseSolution: "SAS Solution:",
+                caseImpact: "Impact & Supply Chain/OEE Benefits:",
+                caseMurataTitle: "Murata Manufacturing (Electronics Components)",
+                caseMurataChallenge: "Improving production yield in complex, multi-stage electronic component manufacturing (billions of units/month) without major equipment overhauls, dealing with diverse data sources (sensors, equipment, environment).",
+                caseMurataSolution: "Implemented <span class=\"tech-highlight\">SAS Production Quality Analytics</span> to create a unified data repository. This enabled engineers to easily access and analyze data from multiple processes and plants, shifting focus from data collection to high-value analysis and problem-solving.",
+                caseMurataImpact: "Achieved a <span class=\"kpi-highlight\">1% yield improvement, translating to $50 million in annual savings</span>. Enhanced data coordination and analytical focus, directly boosting OEE's Quality component. Enabled cross-factory analysis of similar processes for new optimization opportunities.",
+                caseSKHynixTitle: "SK Hynix (Semiconductors)",
+                caseSKHynixChallenge: "Accelerating R&D cycles and enhancing manufacturing automation in the data-intensive and rapidly innovating semiconductor memory sector.",
+                caseSKHynixSolution: "Adopted <span class=\"tech-highlight\">JMP (a SAS company product)</span> for statistical modeling, Design of Experiments (DOE), and ML for data cleaning. Developed new statistical models to simplify DOE, reducing sample sizes and analysis time. Implemented ML algorithms to clean complex datasets and remove noise without compromising experimental integrity. Standardized JMP use across departments.",
+                caseSKHynixImpact: "Significantly reduced R&D and data analysis times. Improved intra-company synergies through common tools and methodologies. Enhanced communication of complex findings to non-data scientists and field engineers via JMP's visualization capabilities. Indirectly benefited all OEE pillars through faster NPI, more robust processes, and improved decision quality.",
+                caseGeorgiaPacificTitle: "Georgia-Pacific (Manufacturing)",
+                caseGPChallenge: "Improving equipment efficiency, reducing unplanned downtime, and optimizing shipping logistics in a large-scale manufacturing operation with high data volumes.",
+                caseGPSolution: "Deployed <span class=\"tech-highlight\">SAS Viya on AWS</span>. Utilized over 15,000 ML models for optimal production settings. Implemented predictive maintenance using real-time data from 85,000 vibration sensors and applied computer vision for automated problem detection on production lines. Leveraged SAS predictive analytics for shipping logistics optimization.",
+                caseGPImpact: "Achieved a <span class=\"kpi-highlight\">10% OEE improvement</span> and a <span class=\"kpi-highlight\">30% reduction in unplanned downtime</span> in facilities using these tools. Enhanced productivity, optimized processes, and improved asset lifespan. Demonstrates SAS Viya's capability to handle massive data volumes and deliver significant operational and supply chain efficiencies.",
+                caseAmericanHondaTitle: "American Honda (Automotive)",
+                caseAHChallenge: "High warranty costs and inefficiencies in spare parts inventory management.",
+                caseAHSolution: "Utilized <span class=\"tech-highlight\">SAS Quality Analytic Suite</span> (including Field Quality Analytics) to analyze warranty claims, field performance data, and customer feedback. Applied root cause analysis to identify sources of component failures.",
+                caseAHImpact: "Lowered warranty costs by <span class=\"kpi-highlight\">20%</span>. Achieved <span class=\"kpi-highlight\">1% spare parts inventory accuracy</span>. Improved product quality by identifying and addressing root causes of failures, reducing a form of supply chain risk and enhancing aftermarket service efficiency.",
+                caseKonicaMinoltaTitle: "Konica Minolta (High-Capital Equipment)",
+                caseKMChallenge: "Maximizing productivity of high-capital equipment by avoiding unplanned downtime due to failures.",
+                caseKMSolution: "Analyzed sensor data using SAS analytics to predict equipment failures and enable proactive maintenance.",
+                caseKMImpact: "Reduced equipment downtime, directly increasing OEE Availability. Shifted maintenance from reactive to predictive, improving operational stability.",
+                caseOtherHighTechTitle: "Other High-Tech Applications",
+                caseSemiBackendTitle: "Semiconductor Backend Equipment Leader:",
+                caseSemiBackendDesc: "Deployed AI-enabled intelligent machines using SAS for predictive quality, anomaly detection, and prescriptive maintenance. Resulted in improved IC packaging Quality, increased Production Speed (Performance), and enhanced Availability.",
+                caseSolarPanelTitle: "Solar Panel Manufacturer:",
+                caseSolarPanelDesc: "Utilized SAS computer vision for automated defect detection, leading to reduced scrap (Quality), decreased downtime (Availability), and increased production yield (Performance & Quality).",
+                caseHDDManufTitle: "HDD Manufacturer:",
+                caseHDDManufDesc: "Applied SAS AI/ML to improve quality and yield, drastically reducing drive failure rates to near 0% (Quality) and enabling early yield excursion warnings (maintaining Performance & Quality).",
+                platformBenefitsTitle: "Quantifiable Benefits & Strategic Advantages",
+                platformBenefitsDesc: "SAS adoption yields tangible benefits. Examples: Appliance manufacturer reduced inventory 12%, boosted revenue 1%; Grocer cut order changes 40%, inventory 8%; Georgia-Pacific improved OEE 10%, cut unplanned downtime 30%; American Honda cut warranty costs 20%. For Taiwanese firms, this means improved forecast accuracy, reduced cycle times, optimized inventory, minimized obsolescence, enhanced supplier quality, and faster disruption response, leading to enhanced agility and competitiveness.",
+                platformFutureTitle: "The Future: AI Copilots & Democratization",
+                platformFutureDesc: "SAS Viya Copilot and GenAI integration democratize access to sophisticated analytics. Non-technical users (planners, managers) can run complex optimizations and scenario analyses via natural language. This is vital for Taiwanese firms where domain experts can combine their knowledge with advanced analytics for practical, impactful solutions and faster decision-making, fostering a culture of data-driven innovation.",
+                platformTableTitle: "Summary Table: SAS Solution Benefits",
+                tableHeaderArea: "Supply Chain Area",
+                tableHeaderSolutions: "Key SAS Solutions/Capabilities",
+                tableHeaderBenefits: "Benefits for Taiwan High-Tech",
+                tableAreaDemand: "Demand Forecasting",
+                tableBenefitsDemand: "Improved NPI forecast accuracy, better handling of demand volatility, reduced forecast error, enhanced S&OP.",
+                tableAreaOps: "Operations Optimization",
+                tableBenefitsOps: "Reduced cycle times, increased OEE, optimized production schedules, minimized unplanned downtime.",
+                tableAreaInv: "Inventory Management",
+                tableBenefitsInv: "Optimized WIP & finished goods, minimized obsolescence costs, reduced holding costs, improved service levels.",
+                tableAreaResilience: "Resilience & Risk",
+                tableBenefitsResilience: "Faster disruption response, proactive risk ID, enhanced supplier quality, reduced warranty costs.",
+                tableAreaPlatform: "Underlying Platform",
+                tableBenefitsPlatform: "Accelerated AI lifecycle, unified data management, support for diverse user skills, scalability.",
+                recommendationsTitle: "Strategic Recommendations for Implementation",
+                recommendationsIntro: "Successfully leveraging SAS requires a strategic approach to implementation, fostering a data-driven culture, and focusing on continuous value realization for Taiwan's high-tech sector.",
+                recItem1: "<strong class=\"text-blue-600\">Adopt a Phased Approach:</strong> Start with high-pain/high-ROI areas (e.g., demand forecasting for volatile lines, PdM for critical equipment). Achieve quick wins, build expertise, and secure stakeholder buy-in before broader rollouts.",
+                recItem1Strong: "Adopt a Phased Approach:",
+                recItem2: "<strong class=\"text-blue-600\">Tailor Solutions to High-Tech Niches:</strong> Customize SAS tools (<span class=\"tech-highlight\">SAS Strategic Supply Chain Optimization</span>, packaged AI models) to reflect specific process flows (semiconductor fab, electronics assembly, IC testing) and strategic objectives.",
+                recItem2Strong: "Tailor Solutions to High-Tech Niches:",
+                recItem3: "<strong class=\"text-blue-600\">Invest in Data Governance & Integration:</strong> Prioritize strong data governance and integration of disparate systems (ERP, MES, CRM, IoT sensors) into <span class=\"tech-highlight\">SAS Viya</span> to create a reliable, unified data foundation.",
+                recItem3Strong: "Invest in Data Governance & Integration:",
+                recItem4: "<strong class=\"text-blue-600\">Foster Data-Driven Culture & Upskill Talent:</strong> Accompany SAS implementation with change management. Invest in training (SAS programs available) to empower domain experts and citizen data scientists, leveraging tools like <span class=\"tech-highlight\">SAS Viya Copilot</span>. Human expertise remains crucial.",
+                recItem4Strong: "Foster Data-Driven Culture & Upskill Talent:",
+                recItem5: "<strong class=\"text-blue-600\">Partner for Success:</strong> Leverage SAS's deep industry expertise and partner ecosystem for guidance in tailoring solutions, system integration, change management, and aligning analytics with strategic goals for sustained competitive advantage.",
+                recItem5Strong: "Partner for Success:",
+                recConclusion: "The transformative power of SAS analytics is best realized through a continuous journey of improvement, adaptation, and deep integration into core business processes and strategic vision.",
+                footerCopyright: "&copy; SAS Institute Inc. All rights reserved.",
+                footerDisclaimer: "This document focuses on SAS solutions for Supply Chain Analytics in Taiwan's High-Tech Sector, based on provided materials.",
+                demandChartLabels: ['Forecast Accuracy', 'NPI Alignment', 'Scenario Readiness', 'Market Agility'],
+                demandChartDatasetLabel: 'Potential Impact Area',
+                opsInvChartLabels: ['Operational Efficiency', 'Cost Reduction', 'Inventory Turns', 'OEE Uplift'],
+                opsInvChartDatasetLabel: 'Optimization Focus',
+                resilienceChartLabels: ['Risk Mitigation', 'Supply Visibility', 'Response Speed', 'Supplier Stability'],
+                resilienceChartDatasetLabel: 'Resilience Factor'
+            },
+            "zh-CN": { // Simplified Chinese
+                pageTitle: "SAS变革供应链分析：聚焦台湾高科技产业",
+                headerTitle: "SAS供应链分析：台湾高科技产业",
+                navIntroduction: "导览",
+                navChallenges: "挑战",
+                navDemand: "需求预测",
+                navOpsInv: "运营与库存",
+                navResilience: "供应链韧性",
+                navArchitecture: "系统架构",
+                navPlatform: "平台与案例",
+                navRecommendations: "战略建议",
+                introTitle: "执行摘要与战略背景",
+                introP1: "台湾高科技制造业是全球技术生态系统的关键环节，在持续创新、需求波动和地缘政治敏感性加剧的压力下运营。在这一动态环境中，卓越的供应链对于保持持续竞争力至关重要。SAS提供全面的分析生态系统，应对需求预测、运营优化、库存管理和供应链韧性等关键挑战。通过利用人工智能(AI)、机器学习(ML)和复杂的优化算法，SAS使这些公司能够提高预测准确性，简化复杂的制造流程，优化库存投资以应对过时风险，并构建更具适应性和韧性的供应网络。最终，采用SAS分析为台湾高科技产业提供了一条途径，不仅可以应对当前的复杂性，还可以巩固其全球战略地位。",
+                introSubtitle: "转型势在必行",
+                introP2: "台湾高科技制造业，特别是其全球领先的半导体产业，正处于关键时刻。台湾在全球半导体制造领域占据举足轻重的地位，2023年生产了全球65%的半导体和超过70%的7纳米以下高端集成电路，并在2纳米工艺技术方面处于领先地位。这一核心角色带来了独特的压力，使得卓越的供应链成为国家经济福祉的战略要务。先进的分析和数字技术是应对这一复杂局面的重要工具，需要从传统的成本削减转向拥抱敏捷性、韧性和价值保全。",
+                challengesTitle: "台湾高科技产业供应链面临的主要挑战",
+                challengesIntro: "台湾高科技产业的战略重要性与其面临的相互关联的挑战强度相匹配，创造了一个复杂的运营环境，需要复杂的分析解决方案。",
+                challengeDemandVol: "剧烈的需求波动",
+                challengeDemandVolDesc: "由于电子和半导体领域的快速创新、市场变化和竞争行为，需求模式高度不可预测。这导致预测准确性降低、生产计划不准确，以及潜在的缺货或库存过剩。",
+                challengeAnalyticsImplication: "分析启示：",
+                challengeDemandVolAI: "需要先进的AI/ML驱动的预测模型、实时需求感知和情景规划。",
+                challengeLifecycles: "产品生命周期短",
+                challengeLifecyclesDesc: "快速的技术进步意味着产品迅速过时（例如，先进半导体的寿命约为2-5年）。这增加了库存过时风险和快速推出新产品(NPI)的压力。",
+                challengeLifecyclesAI: "加强NPI预测、动态库存策略、生命周期感知规划和改进的产品生命周期结束(EOL)管理。",
+                challengeGeopolitical: "地缘政治风险与中断",
+                challengeGeopoliticalDesc: "贸易紧张局势和地区不稳定导致供应不确定性和预防性库存积压，从而增加成本并降低竞争力。",
+                challengeGeopoliticalAI: "针对中断的稳健情景规划、多级库存优化、供应商风险评估和实时事件监控。",
+                challengeInventory: "库存难题",
+                challengeInventoryDesc: "在缓冲库存需求与高持有成本和快速过时风险之间取得平衡。过多的库存会损害利润率和现金流。",
+                challengeInventoryAI: "准确的需求预测、优化的安全库存水平、改进的库存分类和主动的过时管理。",
+                challengeOperational: "运营复杂性",
+                challengeOperationalDesc: "在高混合、大批量的环境中管理复杂的生产计划（例如半导体递归流程、顺序相关的设置）、众多处理步骤和质量控制。",
+                challengeOperationalAI: "AI驱动的生产计划、实时过程监控、预测性质量分析、OEE优化和数字孪生仿真。",
+                demandTitle: "SAS驱动的需求预测以增强敏捷性",
+                demandIntro: "准确和敏捷的需求预测至关重要。SAS将预测提升为一个主动的、智能化的过程，使台湾高科技公司能够更好地预测和应对动态的市场变化。",
+                demandUncertaintyTitle: "应对不确定性：SAS智能规划与预测服务器",
+                demandSPIPTitle: "SAS智能规划套件：",
+                demandSPIPDesc: "准确预测需求，制定高效的规划流程，并提升财务绩效。利用先进的分析和机器学习实现更高的准确性，自动化低接触式规划，并支持动态重新预测。与<span class=\"tech-highlight\">SAS Visual Forecasting</span>和<span class=\"tech-highlight\">SAS Visual Data Mining and Machine Learning</span>集成。",
+                demandSFSTitle: "SAS预测服务器：",
+                demandSFSDesc: "自动生成数百万个基于统计的预测，根据历史数据选择优化模型。支持分层预测并缩短S&OP周期时间。<span class=\"tech-highlight\">SAS供应链优化</span>解决方案还提供专利的统计预测引擎。",
+                demandAIMLEvolution: "向AI/ML融合平台（如SAS智能规划）的演进，对于从台湾高科技产业稀疏的NPI数据或波动需求中识别模式至关重要。",
+                demandAIMLPowerTitle: "AI/ML在预测高科技需求方面的力量",
+                demandAIMLPowerDesc: "SAS是AI/ML平台的领导者。<span class=\"tech-highlight\">SAS Intelligent Planning Cloud</span>使用嵌入式ML自动化分析。SAS解决方案采用时间序列和ML技术处理间歇性需求、NPI接纳和生命周期预测。用户可以利用SAS或开源模型。这种“例外管理规划”方法使规划人员能够专注于战略性、高价值产品。",
+                demandEconometricTitle: "计量经济学建模与情景分析",
+                demandEconometricDesc: "<span class=\"tech-highlight\">SAS Forecast Server</span>结合计量经济学因素（市场趋势、竞争对手行动），提供对需求驱动因素的细致观察。<span class=\"tech-highlight\">SAS Intelligent Planning</span>提供基于AI的“假设”情景模拟，以评估不同需求情景（例如竞争对手进入、技术转变、贸易政策变化）的影响。SAS还支持“需求塑造”以主动影响消费者行为。",
+                demandChartTitle: "概念性效益：高级需求预测",
+                demandChartDisclaimer: "说明性图表。实际改进因具体实施和数据而异。",
+                demandCaseWistronTitle: "案例：纬创资通",
+                demandCaseWistronDesc: "台湾主要电子ODM厂商纬创资通使用SAS解决方案实现了“更精确的需求预测”。SAS专家Robert A. Davis在其著作《需求驱动的库存优化与补货》中提及此案例，表明纬创利用SAS的先进预测（统计、AI/ML、计量经济学）更好地使其供应链与市场需求保持一致，从而实现更有效的库存管理和运营规划。",
+                opsInvTitle: "通过SAS优化运营与库存",
+                opsInvIntro: "SAS提供工具优化多方面运营，从端到端协调到生产车间效率和库存策略，对台湾复杂的高科技制造业至关重要。",
+                opsInvSCOTitle: "端到端供应链优化",
+                opsInvSCODesc: "<strong class=\"text-blue-600\">SAS战略供应链优化：</strong> 采用数学优化方法，通过平衡成本（采购、物流、生产、库存）与约束条件和服务目标来最大化利润。提供采购、生产、运输、库存和销售的最佳计划。处理替代原材料、多级BOM和复杂的生产线。通过估计“假设”情景的财务/运营影响，实现对中断的主动响应。",
+                opsInvAIMfgTitle: "AI在高科技制造业中的应用",
+                opsInvAIMfgDesc: "SAS嵌入AI以优化复杂的生产计划（对高混合、大批量的晶圆厂至关重要），通过实时监控和根本原因分析（<span class=\"tech-highlight\">SAS Viya</span>, <span class=\"tech-highlight\">SAS Quality Analytic Suite</span>）提高质量，并提升效率。技术包括用于自动缺陷检测的深度学习和计算机视觉。AI可以释放隐藏产能并将质量控制转变为竞争优势。",
+                opsInvIoTTitle: "SAS物联网分析与数字孪生",
+                opsInvIoTA4IoTTitle: "SAS物联网分析：",
+                opsInvIoTA4IoTDesc: "利用<span class=\"tech-highlight\">SAS Event Stream Processing</span>进行实时分析，将物联网数据转化为可操作的情报。关键在于预测性维护（分析传感器数据以获取RUL）和实时过程监控以确保质量。支持整个物联网分析生命周期。",
+                opsInvIoTDTTitle: "数字孪生：",
+                opsInvIoTDTDesc: "SAS将AI与Epic Games的Unreal Engine等技术集成。对于晶圆厂而言，由实时物联网数据供给的数字孪生可以进行虚拟实验、模拟变更、动态资源优化和故障预测，从而实现规范性运营管理。",
+                opsInvCaseGPTitle: "案例：Georgia-Pacific",
+                opsInvCaseGPDesc: "使用<span class=\"tech-highlight\">SAS Viya</span>实现了10%的OEE改进和30%的计划外停机减少。运行超过15,000个ML模型以获得最佳生产设置，并使用来自85,000个振动传感器的实时数据进行预测性维护。通过SAS预测分析优化了运输物流。展示了SAS Viya在复杂制造中巨大的转型潜力。",
+                opsInvStrategicInvTitle: "战略库存管理",
+                opsInvOptTitle: "SAS库存优化",
+                opsInvOptDesc: "<span class=\"tech-highlight\">SAS Inventory Optimization Workbench</span>和<span class=\"tech-highlight\">SAS Intelligent Inventory Management</span>通过平衡资源和成本与服务水平目标，自动化并优化库存分配。它们计算每个SKU/地点的最佳订单量和补货策略。一家ICT解决方案公司使用SAS通过<span class=\"tech-highlight\">SAS OPTMODEL</span>优化了组件、子组件和成品的库存水平与服务目标。",
+                opsInvObsolescenceTitle: "应对短生命周期与过时风险",
+                opsInvObsolescenceDesc: "SAS将增强的需求预测（AI/ML）与复杂的库存优化相结合。更精确的NPI和现有产品需求信号有助于准确备货，减少EOL积压。<span class=\"tech-highlight\">SAS Intelligent Inventory Management</span>的ML功能可用于预测EOL过渡或管理NPI库存。这最大限度地减少了过剩库存和EOL核销。",
+                opsInvMEIOTitle: "多级库存优化 (MEIO)",
+                opsInvMEIODesc: "SAS解决方案支持MEIO，战略性地管理整个网络（原材料、在制品、成品）的库存。<span class=\"tech-highlight\">SAS Inventory Optimization</span>同时优化每个地点每个SKU的库存水平。MEIO允许在全球范围内更智能地配置库存缓冲，以减轻风险（例如地缘政治），平衡风险、成本和响应能力。",
+                opsInvChartTitle: "概念性效益：运营与库存优化",
+                opsInvChartDisclaimer: "说明性图表。实际改进因具体情况而异。",
+                opsInvCaseWistronTitle: "案例：纬创资通（库存背景）",
+                opsInvCaseWistronDesc: "正如Robert A. Davis所强调，纬创资通使用SAS进行需求驱动的库存优化，包括使库存水平和补货与真实市场需求保持一致。这可能减少了牛鞭效应，从而降低了持有成本，最大限度地减少了过时风险，提高了可用性，并增强了敏捷性。释放的营运资金可以再投资于研发和创新。",
+                resilienceTitle: "通过SAS增强供应链韧性与风险管理",
+                resilienceIntro: "SAS分析帮助企业从被动危机管理转向主动识别风险、增强可见性并构建适应性供应网络，这对于台湾在全球科技领域的核心角色至关重要。",
+                resilienceRiskIDTitle: "主动风险识别与缓解",
+                resilienceRiskIDDesc: "<span class=\"tech-highlight\">SAS Strategic Supply Chain Optimization</span>支持针对中断（例如供应商故障）的“假设”情景规划。更广泛的SAS功能可以预测中断和设备故障。<span class=\"tech-highlight\">SAS Fraud Management</span>技术（实时评分、用于异常检测的ML）可用于标记异常的供应链事件（供应商交货时间偏差、异常订单）作为潜在风险。",
+                resilienceVisibilityTitle: "端到端可见性与协作",
+                resilienceVisibilityDesc: "SAS平台统一来自不同来源的数据，提供整体的供应链视图，这对于理解相互依赖性至关重要。供应链数字化提高了透明度，可以及时识别高风险供应商/组件。SAS支持“供应链控制塔”概念，用于实时数据聚合、可见性和决策支持。",
+                resilienceQualityTitle: "SAS质量分析套件与保修分析",
+                resilienceQualityDesc: "<span class=\"tech-highlight\">SAS Quality Analytic Suite</span>（包括<span class=\"tech-highlight\">SAS Field Quality Analytics</span>）分析保修索赔、现场性能和客户反馈。这有助于识别组件故障，追溯问题到供应商/流程，并了解根本原因以实现持续改进。美国本田使用SAS将保修成本降低了20%，并实现了1%的备件库存准确性。",
+                resilienceIoTTitle: "物联网用于在途可见性与质量保证",
+                resilienceIoTDesc: "<span class=\"tech-highlight\">SAS Analytics for IoT</span>监控运输中的货物，这对于敏感的高科技组件至关重要。来自嵌入式传感器的实时数据（温度、冲击）可提供潜在损坏的早期预警。这有助于防止受损组件进入制造过程或到达客户手中。",
+                resilienceChartTitle: "概念性效益：供应链韧性与风险管理",
+                resilienceChartDisclaimer: "说明性图表。实际改进因具体情况而异。",
+                architectureTitle: "SAS供应链分析系统架构",
+                architectureIntro: "此概念架构说明了SAS解决方案如何集成各种数据源和分析功能，从而为台湾高科技制造商的智能供应链决策提供支持。",
+                archLayerDataSources: "数据源",
+                archDSInternal: "内部系统：<br><span class=\"tech-highlight\">ERP、MES、SCM、物联网/传感器、FDC</span>",
+                archDSExternal: "外部数据：<br><span class=\"tech-highlight\">市场趋势、供应商反馈、地缘政治情报、天气</span>",
+                archLayerIngestion: "数据提取与集成",
+                archDIPlatform: "<span class=\"tech-highlight\">SAS Viya平台</span><br>（数据准备、连接器、治理）",
+                archLayerCorePlatform: "核心SAS分析与AI平台",
+                archCoreViya: "<span class=\"tech-highlight\">SAS Viya</span>",
+                archCoreVDMML: "可视化数据挖掘与机器学习 (VDMML)",
+                archCoreVA: "可视化分析",
+                archCoreOpt: "优化",
+                archCoreESP: "事件流处理 (ESP)",
+                archLayerSolutions: "SAS供应链解决方案领域",
+                archSolDemand: "需求预测与规划",
+                archSolDemandTools: "（SAS智能规划，预测服务器）",
+                archSolOpsInv: "运营与库存优化",
+                archSolOpsInvTools: "（战略性SCO，物联网分析，智能库存管理）",
+                archSolResilience: "供应链韧性与风险管理",
+                archSolResilienceTools: "（情景规划，异常检测，质量分析）",
+                archLayerOutcomes: "业务成果与用户交互",
+                archOutDashboards: "仪表板与报告",
+                archOutPlans: "优化计划（S&OP、生产、库存）",
+                archOutAlerts: "实时警报与通知",
+                archOutRecs: "规范性建议",
+                archDiagramDesc: "此图显示了数据从各种内部和外部来源流经SAS Viya进行集成和核心分析（AI/ML、优化、实时处理），为特定的SAS供应链解决方案提供支持，并最终为战略决策提供可操作的情报和优化结果。",
+                platformTitle: "SAS技术平台与行业影响",
+                platformIntro: "SAS的变革性影响得益于其强大的底层平台以及对尖端人工智能技术的投入，为台湾高科技领导者实现全面的供应链提升。",
+                platformViyaTitle: "SAS Viya：统一的数据与AI平台",
+                platformViyaDesc: "SAS Viya是一个云原生数据和AI平台，是分析转型的“操作系统”。它为数据管理、模型开发（SAS和Python等开源工具）、部署和治理提供了一个集成环境。Viya加速了生产、成本和可持续性方面的改进。创新包括<span class=\"tech-highlight\">SAS Data Maker</span>（合成数据）、<span class=\"tech-highlight\">SAS Viya Intelligent Decisioning</span>（AI代理）和<span class=\"tech-highlight\">SAS Viya Copilot</span>（对话式AI助手）。研究表明，Viya显著加速了AI生命周期。",
+                platformCaseStudiesTitle: "行业成功案例与可量化影响",
+                platformCaseStudiesIntro: "以下案例说明了SAS解决方案如何在各种高科技和制造领域带来切实的效益，为台湾公司提供宝贵的见解。",
+                caseChallenge: "挑战：",
+                caseSolution: "SAS解决方案：",
+                caseImpact: "影响与供应链/OEE效益：",
+                caseMurataTitle: "村田制作所（电子元件）",
+                caseMurataChallenge: "在复杂的多阶段电子元件制造（每月数十亿单位）中提高生产良率，而不进行重大设备改造，同时处理来自传感器、设备和环境等多种数据源的数据。",
+                caseMurataSolution: "实施<span class=\"tech-highlight\">SAS Production Quality Analytics</span>以创建统一的数据存储库。这使工程师能够轻松访问和分析来自多个流程和工厂的数据，将工作重点从数据收集转向高价值分析和问题解决。",
+                caseMurataImpact: "实现了<span class=\"kpi-highlight\">1%的良率提高，相当于每年节省5000万美元</span>。加强了数据协调和分析重点，直接提升了OEE的质量部分。实现了对不同工厂类似流程的跨工厂分析，开辟了新的优化途径。",
+                caseSKHynixTitle: "SK海力士（半导体）",
+                caseSKHynixChallenge: "在数据密集且快速创新的半导体存储器行业中，加速研发周期并增强制造自动化。",
+                caseSKHynixSolution: "采用<span class=\"tech-highlight\">JMP（SAS子公司产品）</span>进行统计建模、实验设计（DOE）和数据清理的机器学习。开发了新的统计模型以简化DOE，减少了样本量和分析时间。实施了ML算法以在不损害实验完整性的前提下清理复杂数据集并消除噪声。在各部门标准化了JMP的使用。",
+                caseSKHynixImpact: "显著缩短了研发和数据分析时间。通过通用工具和方法论改进了公司内部的协同效应。通过JMP的可视化功能，增强了向非数据科学家和现场工程师沟通复杂实验方法和发现的能力。通过更快的NPI、更稳健的流程和改进的决策质量，间接惠及所有OEE支柱。",
+                caseGeorgiaPacificTitle: "Georgia-Pacific（制造业）",
+                caseGPChallenge: "在具有高数据量的大规模制造运营中，提高设备效率、减少计划外停机并优化运输物流。",
+                caseGPSolution: "在AWS上部署了<span class=\"tech-highlight\">SAS Viya</span>。利用超过15,000个ML模型进行最佳生产设置。使用来自85,000个振动传感器的实时数据实施了预测性维护，并应用计算机视觉进行生产线上的自动问题检测。利用SAS预测分析优化了运输物流。",
+                caseGPImpact: "在使用这些工具的设施中，实现了<span class=\"kpi-highlight\">10%的OEE改进</span>和<span class=\"kpi-highlight\">30%的计划外停机减少</span>。提高了生产率，优化了流程，并延长了资产寿命。展示了SAS Viya处理海量数据并提供显著运营和供应链效率的能力。",
+                caseAmericanHondaTitle: "美国本田（汽车业）",
+                caseAHChallenge: "高昂的保修成本和备件库存管理效率低下。",
+                caseAHSolution: "利用<span class=\"tech-highlight\">SAS Quality Analytic Suite</span>（包括Field Quality Analytics）分析保修索赔、现场性能数据和客户反馈。应用根本原因分析来识别组件故障的来源。",
+                caseAHImpact: "将保修成本降低了<span class=\"kpi-highlight\">20%</span>。实现了<span class=\"kpi-highlight\">1%的备件库存准确性</span>。通过识别和解决故障的根本原因，改进了产品质量，减少了一种形式的供应链风险，并提高了售后服务效率。",
+                caseKonicaMinoltaTitle: "柯尼卡美能达（高资本设备）",
+                caseKMChallenge: "通过避免因故障导致的计划外停机，最大限度地提高高资本设备的生产率。",
+                caseKMSolution: "使用SAS分析传感器数据以预测设备故障并实现主动维护。",
+                caseKMImpact: "减少了设备停机时间，直接提高了OEE可用性。将维护从被动式转变为预测式，提高了运营稳定性。",
+                caseOtherHighTechTitle: "其他高科技应用",
+                caseSemiBackendTitle: "半导体后端设备领导者：",
+                caseSemiBackendDesc: "使用SAS部署了支持AI的智能机器，用于预测质量、异常检测和规范性维护。结果是提高了IC封装质量，提高了生产速度（性能），并增强了可用性。",
+                caseSolarPanelTitle: "太阳能电池板制造商：",
+                caseSolarPanelDesc: "利用SAS计算机视觉进行自动缺陷检测，从而减少了废品（质量），减少了停机时间（可用性），并提高了生产良率（性能和质量）。",
+                caseHDDManufTitle: "硬盘驱动器制造商：",
+                caseHDDManufDesc: "应用SAS AI/ML来提高质量和良率，将驱动器故障率大幅降低至接近0%（质量），并实现了早期良率偏移警告（保持性能和质量）。",
+                platformBenefitsTitle: "可量化的效益与战略优势",
+                platformBenefitsDesc: "采用SAS可以带来切实的效益。例如：家电制造商库存减少12%，收入增加1%；杂货商订单变更减少40%，库存减少8%；Georgia-Pacific OEE提高10%，计划外停机减少30%；美国本田保修成本降低20%。对台湾公司而言，这意味着提高预测准确性、缩短周期时间、优化库存、最大限度减少过时风险、提高供应商质量和更快地响应中断，从而增强敏捷性和竞争力。",
+                platformFutureTitle: "未来：AI助手与分析普及化",
+                platformFutureDesc: "SAS Viya Copilot和GenAI的集成使复杂分析的获取更加普及。非技术用户（规划师、经理）可以通过自然语言运行复杂的优化和情景分析。这对于台湾公司至关重要，领域专家可以将其知识与先进分析相结合，从而获得实用、有影响力的解决方案和更快的决策，培养数据驱动的创新文化。",
+                platformTableTitle: "总结表：SAS解决方案效益",
+                tableHeaderArea: "供应链领域",
+                tableHeaderSolutions: "关键SAS解决方案/功能",
+                tableHeaderBenefits: "对台湾高科技产业的效益",
+                tableAreaDemand: "需求预测",
+                tableBenefitsDemand: "提高NPI预测准确性，更好地处理需求波动，减少预测误差，增强S&OP。",
+                tableAreaOps: "运营优化",
+                tableBenefitsOps: "缩短周期时间，提高OEE，优化生产计划，最大限度减少计划外停机。",
+                tableAreaInv: "库存管理",
+                tableBenefitsInv: "优化在制品和成品库存，最大限度减少过时成本，降低持有成本，提高服务水平。",
+                tableAreaResilience: "供应链韧性与风险",
+                tableBenefitsResilience: "更快地响应中断，主动识别风险，提高供应商质量，降低保修成本。",
+                tableAreaPlatform: "底层平台",
+                tableBenefitsPlatform: "加速AI生命周期，统一数据管理，支持不同用户技能，可扩展性。",
+                recommendationsTitle: "实施战略建议",
+                recommendationsIntro: "成功利用SAS需要战略性的实施方法，培养数据驱动的文化，并专注于为台湾高科技产业实现持续的价值。",
+                recItem1: "<strong class=\"text-blue-600\">采取分阶段方法：</strong> 从高痛点/高投资回报率的领域开始（例如，波动产品线的需求预测，关键设备的预测性维护）。在更广泛推广之前，实现快速成功，积累经验并获得利益相关者的支持。",
+                recItem1Strong: "采取分阶段方法：",
+                recItem2: "<strong class=\"text-blue-600\">针对高科技细分市场定制解决方案：</strong> 定制SAS工具（<span class=\"tech-highlight\">SAS Strategic Supply Chain Optimization</span>，打包的AI模型）以反映特定的流程（半导体晶圆厂、电子组装、IC测试）和战略目标。",
+                recItem2Strong: "针对高科技细分市场定制解决方案：",
+                recItem3: "<strong class=\"text-blue-600\">投资数据治理与集成：</strong> 优先考虑强大的数据治理以及将不同系统（ERP、MES、CRM、物联网传感器）的数据集成到<span class=\"tech-highlight\">SAS Viya</span>中，以创建可靠、统一的数据基础。",
+                recItem3Strong: "投资数据治理与集成：",
+                recItem4: "<strong class=\"text-blue-600\">培养数据驱动文化与提升人才技能：</strong> 在实施SAS的同时进行变革管理。投资培训（SAS提供相关课程）以赋能领域专家和公民数据科学家，利用<span class=\"tech-highlight\">SAS Viya Copilot</span>等工具。人的专业知识仍然至关重要。",
+                recItem4Strong: "培养数据驱动文化与提升人才技能：",
+                recItem5: "<strong class=\"text-blue-600\">合作共赢：</strong> 利用SAS深厚的行业专业知识和合作伙伴生态系统，在定制解决方案、系统集成、变革管理以及使分析与战略目标保持一致以获得持续竞争优势方面获得指导。",
+                recItem5Strong: "合作共赢：",
+                recConclusion: "SAS分析的变革力量最好通过持续改进、适应以及与核心业务流程和战略愿景的深度整合来实现。",
+                footerCopyright: "© SAS Institute Inc. 版权所有。",
+                footerDisclaimer: "本文档重点介绍SAS针对台湾高科技产业供应链分析的解决方案，基于所提供的材料。",
+                demandChartLabels: ['预测准确性', 'NPI协同', '情景准备度', '市场敏捷性'],
+                demandChartDatasetLabel: '潜在影响领域',
+                opsInvChartLabels: ['运营效率', '成本降低', '库存周转', 'OEE提升'],
+                opsInvChartDatasetLabel: '优化重点',
+                resilienceChartLabels: ['风险缓解', '供应可见性', '响应速度', '供应商稳定性'],
+                resilienceChartDatasetLabel: '韧性因素'
+            },
+            "zh-TW": { // Traditional Chinese
+                pageTitle: "SAS變革供應鏈分析：聚焦臺灣高科技產業",
+                headerTitle: "SAS供應鏈分析：臺灣高科技產業",
+                navIntroduction: "導覽",
+                navChallenges: "挑戰",
+                navDemand: "需求預測",
+                navOpsInv: "營運與庫存",
+                navResilience: "供應鏈韌性",
+                navArchitecture: "系統架構",
+                navPlatform: "平台與案例",
+                navRecommendations: "戰略建議",
+                introTitle: "執行摘要與戰略背景",
+                introP1: "臺灣高科技製造業是全球技術生態系統的關鍵環節，在持續創新、需求波動和地緣政治敏感性加劇的壓力下營運。在這一動態環境中，卓越的供應鏈對於保持持續競爭力至關重要。SAS提供全面的分析生態系統，應對需求預測、營運優化、庫存管理和供應鏈韌性等關鍵挑戰。透過利用人工智能(AI)、機器學習(ML)和複雜的優化演算法，SAS使這些公司能夠提高預測準確性，簡化複雜的製造流程，優化庫存投資以應對過時風險，並建構更具適應性和韌性的供應網絡。最終，採用SAS分析為臺灣高科技產業提供了一條途徑，不僅可以應對當前的複雜性，還可以鞏固其全球戰略地位。",
+                introSubtitle: "轉型勢在必行",
+                introP2: "臺灣高科技製造業，特別是其全球領先的半導體產業，正處於關鍵時刻。臺灣在全球半導體製造領域佔據舉足輕重的地位，2023年製造了全球65%的半導體和超過70%的7奈米以下高階積體電路，並在2奈米工藝技術方面處於領先地位。這一核心角色帶來了獨特的壓力，使得卓越的供應鏈成為國家經濟福祉的戰略要務。先進的分析和數位技術是應對這一複雜局面的重要工具，需要從傳統的成本削減轉向擁抱敏捷性、韌性和價值保全。",
+                challengesTitle: "臺灣高科技產業供應鏈面臨的主要挑戰",
+                challengesIntro: "臺灣高科技產業的戰略重要性與其面臨的相互關聯的挑戰強度相匹配，創造了一個複雜的營運環境，需要複雜的分析解決方案。",
+                challengeDemandVol: "劇烈的需求波動",
+                challengeDemandVolDesc: "由於電子和半導體領域的快速創新、市場變化和競爭行為，需求模式高度不可預測。這導致預測準確性降低、生產計劃不準確，以及潛在的缺貨或庫存過剩。",
+                challengeAnalyticsImplication: "分析啟示：",
+                challengeDemandVolAI: "需要先進的AI/ML驅動的預測模型、即時需求感知和情境規劃。",
+                challengeLifecycles: "產品生命週期短",
+                challengeLifecyclesDesc: "快速的技術進步意味著產品迅速過時（例如，先進半導體的壽命約為2-5年）。這增加了庫存過時風險和快速推出新產品(NPI)的壓力。",
+                challengeLifecyclesAI: "加強NPI預測、動態庫存策略、生命週期感知規劃和改進的產品生命週期結束(EOL)管理。",
+                challengeGeopolitical: "地緣政治風險與中斷",
+                challengeGeopoliticalDesc: "貿易緊張局勢和地區不穩定導致供應不確定性和預防性庫存積壓，從而增加成本並降低競爭力。",
+                challengeGeopoliticalAI: "針對中斷的穩健情境規劃、多級庫存優化、供應商風險評估和即時事件監控。",
+                challengeInventory: "庫存難題",
+                challengeInventoryDesc: "在緩衝庫存需求與高持有成本和快速過時風險之間取得平衡。過多的庫存會損害利潤率和現金流。",
+                challengeInventoryAI: "準確的需求預測、優化的安全庫存水平、改進的庫存分類和主動的過時管理。",
+                challengeOperational: "營運複雜性",
+                challengeOperationalDesc: "在高混合、大批量的環境中管理複雜的生產計劃（例如半導體遞迴流程、順序相關的設定）、眾多處理步驟和品質控制。",
+                challengeOperationalAI: "AI驅動的生產計劃、即時流程監控、預測性品質分析、OEE優化和數位孿生模擬。",
+                demandTitle: "SAS驅動的需求預測以增強敏捷性",
+                demandIntro: "準確和敏捷的需求預測至關重要。SAS將預測提升為一個主動的、智能化的過程，使臺灣高科技公司能夠更好地預測和應對動態的市場變化。",
+                demandUncertaintyTitle: "應對不確定性：SAS智能規劃與預測伺服器",
+                demandSPIPTitle: "SAS智能規劃套件：",
+                demandSPIPDesc: "準確預測需求，制定高效的規劃流程，並提升財務績效。利用先進的分析和機器學習實現更高的準確性，自動化低接觸式規劃，並支援動態重新預測。與<span class=\"tech-highlight\">SAS Visual Forecasting</span>和<span class=\"tech-highlight\">SAS Visual Data Mining and Machine Learning</span>整合。",
+                demandSFSTitle: "SAS預測伺服器：",
+                demandSFSDesc: "自動產生數百萬個基於統計的預測，根據歷史數據選擇優化模型。支援分層預測並縮短S&OP週期時間。<span class=\"tech-highlight\">SAS供應鏈優化</span>解決方案還提供專利的統計預測引擎。",
+                demandAIMLEvolution: "向AI/ML融合平台（如SAS智能規劃）的演進，對於從臺灣高科技產業稀疏的NPI數據或波動需求中識別模式至關重要。",
+                demandAIMLPowerTitle: "AI/ML在預測高科技需求方面的力量",
+                demandAIMLPowerDesc: "SAS是AI/ML平台的領導者。<span class=\"tech-highlight\">SAS Intelligent Planning Cloud</span>使用嵌入式ML自動化分析。SAS解決方案採用時間序列和ML技術處理間歇性需求、NPI接納和生命週期預測。用戶可以利用SAS或開源模型。這種「例外管理規劃」方法使規劃人員能夠專注於戰略性、高價值產品。",
+                demandEconometricTitle: "計量經濟學建模與情境分析",
+                demandEconometricDesc: "<span class=\"tech-highlight\">SAS Forecast Server</span>結合計量經濟學因素（市場趨勢、競爭對手行動），提供對需求驅動因素的細緻觀察。<span class=\"tech-highlight\">SAS Intelligent Planning</span>提供基於AI的「假設」情境模擬，以評估不同需求情境（例如競爭對手進入、技術轉變、貿易政策變化）的影響。SAS還支援「需求塑造」以主動影響消費者行為。",
+                demandChartTitle: "概念性效益：高階需求預測",
+                demandChartDisclaimer: "說明性圖表。實際改進因具體實施和數據而異。",
+                demandCaseWistronTitle: "案例：緯創資通",
+                demandCaseWistronDesc: "臺灣主要電子ODM廠商緯創資通使用SAS解決方案實現了「更精確的需求預測」。SAS專家Robert A. Davis在其著作《需求驅動的庫存優化與補貨》中提及此案例，表明緯創利用SAS的先進預測（統計、AI/ML、計量經濟學）更好地使其供應鏈與市場需求保持一致，從而實現更有效的庫存管理和營運規劃。",
+                opsInvTitle: "透過SAS優化營運與庫存",
+                opsInvIntro: "SAS提供工具優化多方面營運，從端到端協調到生產車間效率和庫存策略，對臺灣複雜的高科技製造業至關重要。",
+                opsInvSCOTitle: "端到端供應鏈優化",
+                opsInvSCODesc: "<strong class=\"text-blue-600\">SAS戰略供應鏈優化：</strong> 採用數學優化方法，透過平衡成本（採購、物流、生產、庫存）與約束條件和服務目標來最大化利潤。提供採購、生產、運輸、庫存和銷售的最佳計畫。處理替代原材料、多級BOM和複雜的生產線。透過估計「假設」情境的財務/營運影響，實現對中斷的主動回應。",
+                opsInvAIMfgTitle: "AI在高科技製造業中的應用",
+                opsInvAIMfgDesc: "SAS嵌入AI以優化複雜的生產計畫（對高混合、大批量的晶圓廠至關重要），透過即時監控和根本原因分析（<span class=\"tech-highlight\">SAS Viya</span>, <span class=\"tech-highlight\">SAS Quality Analytic Suite</span>）提高品質，並提升效率。技術包括用於自動缺陷偵測的深度學習和電腦視覺。AI可以釋放隱藏產能並將品質控制轉變為競爭優勢。",
+                opsInvIoTTitle: "SAS物聯網分析與數位孿生",
+                opsInvIoTA4IoTTitle: "SAS物聯網分析：",
+                opsInvIoTA4IoTDesc: "利用<span class=\"tech-highlight\">SAS Event Stream Processing</span>進行即時分析，將物聯網數據轉化為可操作情報。關鍵在於預測性維護（分析感測器數據以獲取RUL）和即時流程監控以確保品質。支援整個物聯網分析生命週期。",
+                opsInvIoTDTTitle: "數位孿生：",
+                opsInvIoTDTDesc: "SAS將AI與Epic Games的Unreal Engine等技術整合。對於晶圓廠而言，由即時物聯網數據供給的數位孿生可以進行虛擬實驗、模擬變更、動態資源優化和故障預測，從而實現規範性營運管理。",
+                opsInvCaseGPTitle: "案例：Georgia-Pacific",
+                opsInvCaseGPDesc: "使用<span class=\"tech-highlight\">SAS Viya</span>實現了10%的OEE改進和30%的計劃外停機減少。運行超過15,000個ML模型以獲得最佳生產設定，並使用來自85,000個振動感測器的即時數據進行預測性維護。透過SAS預測分析優化了運輸物流。展示了SAS Viya在複雜製造中巨大的轉型潛力。",
+                opsInvStrategicInvTitle: "戰略庫存管理",
+                opsInvOptTitle: "SAS庫存優化",
+                opsInvOptDesc: "<span class=\"tech-highlight\">SAS Inventory Optimization Workbench</span>和<span class=\"tech-highlight\">SAS Intelligent Inventory Management</span>透過平衡資源和成本與服務水平目標，自動化並優化庫存分配。它們計算每個SKU/地點的最佳訂單量和補貨策略。一家ICT解決方案公司使用SAS透過<span class=\"tech-highlight\">SAS OPTMODEL</span>優化了組件、子組件和成品的庫存水平與服務目標。",
+                opsInvObsolescenceTitle: "應對短生命週期與過時風險",
+                opsInvObsolescenceDesc: "SAS將增強的需求預測（AI/ML）與複雜的庫存優化相結合。更精確的NPI和現有產品需求訊號有助於準確備貨，減少EOL積壓。<span class=\"tech-highlight\">SAS Intelligent Inventory Management</span>的ML功能可用於預測EOL過渡或管理NPI庫存。這最大限度地減少了過剩庫存和EOL核銷。",
+                opsInvMEIOTitle: "多級庫存優化 (MEIO)",
+                opsInvMEIODesc: "SAS解決方案支援MEIO，戰略性地管理整個網絡（原材料、在制品、成品）的庫存。<span class=\"tech-highlight\">SAS Inventory Optimization</span>同時優化每個地點每個SKU的庫存水平。MEIO允許在全球範圍內更智能地配置庫存緩衝，以減輕風險（例如地緣政治），平衡風險、成本和回應能力。",
+                opsInvChartTitle: "概念性效益：營運與庫存優化",
+                opsInvChartDisclaimer: "說明性圖表。實際改進因具體情況而異。",
+                opsInvCaseWistronTitle: "案例：緯創資通（庫存背景）",
+                opsInvCaseWistronDesc: "正如Robert A. Davis所強調，緯創資通使用SAS進行需求驅動的庫存優化，包括使庫存水平和補貨與真實市場需求保持一致。這可能減少了牛鞭效應，從而降低了持有成本，最大限度地減少了過時風險，提高了可用性，並增強了敏捷性。釋放的營運資金可以再投資於研發和創新。",
+                resilienceTitle: "透過SAS增強供應鏈韌性與風險管理",
+                resilienceIntro: "SAS分析幫助企業從被動危機管理轉向主動識別風險、增強可見性並建構適應性供應網絡，這對於臺灣在全球科技領域的核心角色至關重要。",
+                resilienceRiskIDTitle: "主動風險識別與緩解",
+                resilienceRiskIDDesc: "<span class=\"tech-highlight\">SAS Strategic Supply Chain Optimization</span>支援針對中斷（例如供應商故障）的「假設」情境規劃。更廣泛的SAS功能可以預測中斷和設備故障。<span class=\"tech-highlight\">SAS Fraud Management</span>技術（即時評分、用於異常偵測的ML）可用於標記異常的供應鏈事件（供應商交貨時間偏差、異常訂單）作為潛在風險。",
+                resilienceVisibilityTitle: "端到端可見性與協作",
+                resilienceVisibilityDesc: "SAS平台統一來自不同來源的數據，提供整體的供應鏈視圖，這對於理解相互依賴性至關重要。供應鏈數位化提高了透明度，可以及時識別高風險供應商/組件。SAS支援「供應鏈控制塔」概念，用於即時數據聚合、可見性和決策支援。",
+                resilienceQualityTitle: "SAS品質分析套件與保固分析",
+                resilienceQualityDesc: "<span class=\"tech-highlight\">SAS Quality Analytic Suite</span>（包括<span class=\"tech-highlight\">SAS Field Quality Analytics</span>）分析保固索賠、現場效能和客戶回饋。這有助於識別組件故障，追溯問題到供應商/流程，並了解根本原因以實現持續改進。美國本田使用SAS將保固成本降低了20%，並實現了1%的備品庫存準確性。",
+                resilienceIoTTitle: "物聯網用於在途可見性與品質保證",
+                resilienceIoTDesc: "<span class=\"tech-highlight\">SAS Analytics for IoT</span>監控運輸中的貨物，這對於敏感的高科技組件至關重要。來自嵌入式感測器的即時數據（溫度、衝擊）可提供潛在損壞的早期預警。這有助於防止受損組件進入製造流程或到達客戶手中。",
+                resilienceChartTitle: "概念性效益：供應鏈韌性與風險管理",
+                resilienceChartDisclaimer: "說明性圖表。實際改進因具體情況而異。",
+                architectureTitle: "SAS供應鏈分析系統架構",
+                architectureIntro: "此概念架構說明了SAS解決方案如何整合各種數據源和分析功能，從而為臺灣高科技製造商的智能供應鏈決策提供支援。",
+                archLayerDataSources: "數據源",
+                archDSInternal: "內部系統：<br><span class=\"tech-highlight\">ERP、MES、SCM、物聯網/感測器、FDC</span>",
+                archDSExternal: "外部數據：<br><span class=\"tech-highlight\">市場趨勢、供應商反饋、地緣政治情報、天氣</span>",
+                archLayerIngestion: "數據擷取與整合",
+                archDIPlatform: "<span class=\"tech-highlight\">SAS Viya平台</span><br>（數據準備、連接器、治理）",
+                archLayerCorePlatform: "核心SAS分析與AI平台",
+                archCoreViya: "<span class=\"tech-highlight\">SAS Viya</span>",
+                archCoreVDMML: "視覺化數據挖掘與機器學習 (VDMML)",
+                archCoreVA: "視覺化分析",
+                archCoreOpt: "優化",
+                archCoreESP: "事件流處理 (ESP)",
+                archLayerSolutions: "SAS供應鏈解決方案領域",
+                archSolDemand: "需求預測與規劃",
+                archSolDemandTools: "（SAS智能規劃，預測伺服器）",
+                archSolOpsInv: "營運與庫存優化",
+                archSolOpsInvTools: "（戰略性SCO，物聯網分析，智能庫存管理）",
+                archSolResilience: "供應鏈韌性與風險管理",
+                archSolResilienceTools: "（情境規劃，異常偵測，品質分析）",
+                archLayerOutcomes: "業務成果與用戶互動",
+                archOutDashboards: "儀表板與報告",
+                archOutPlans: "優化計畫（S&OP、生產、庫存）",
+                archOutAlerts: "即時警報與通知",
+                archOutRecs: "規範性建議",
+                archDiagramDesc: "此圖顯示了數據從各種內部和外部來源流經SAS Viya進行整合和核心分析（AI/ML、優化、即時處理），為特定的SAS供應鏈解決方案提供支援，並最終為戰略決策提供可操作的情報和優化結果。",
+                platformTitle: "SAS技術平台與產業影響",
+                platformIntro: "SAS的變革性影響得益於其強大的底層平台以及對尖端人工智能技術的投入，為臺灣高科技領導者實現全面的供應鏈提升。",
+                platformViyaTitle: "SAS Viya：統一的數據與AI平台",
+                platformViyaDesc: "SAS Viya是一個雲原生數據和AI平台，是分析轉型的「作業系統」。它為數據管理、模型開發（SAS和Python等開源工具）、部署和治理提供了一個整合環境。Viya加速了生產、成本和永續性方面的改進。創新包括<span class=\"tech-highlight\">SAS Data Maker</span>（合成數據）、<span class=\"tech-highlight\">SAS Viya Intelligent Decisioning</span>（AI代理）和<span class=\"tech-highlight\">SAS Viya Copilot</span>（對話式AI助理）。研究表明，Viya顯著加速了AI生命週期。",
+                platformCaseStudiesTitle: "產業成功案例與可量化影響",
+                platformCaseStudiesIntro: "以下案例說明了SAS解決方案如何在各種高科技和製造領域帶來切實的效益，為臺灣公司提供寶貴的見解。",
+                caseChallenge: "挑戰：",
+                caseSolution: "SAS解決方案：",
+                caseImpact: "影響與供應鏈/OEE效益：",
+                caseMurataTitle: "村田製作所（電子元件）",
+                caseMurataChallenge: "在複雜的多階段電子元件製造（每月數十億單位）中提高生產良率，而不進行重大設備改造，同時處理來自感測器、設備和環境等多种數據源的數據。",
+                caseMurataSolution: "實施<span class=\"tech-highlight\">SAS Production Quality Analytics</span>以創建統一的數據儲存庫。這使工程師能夠輕鬆存取和分析來自多個流程和工廠的數據，將工作重點從數據收集轉向高價值分析和問題解決。",
+                caseMurataImpact: "實現了<span class=\"kpi-highlight\">1%的良率提高，相當於每年節省5000萬美元</span>。加強了數據協調和分析重點，直接提升了OEE的品質部分。實現了對不同工廠類似流程的跨工廠分析，開闢了新的優化途徑。",
+                caseSKHynixTitle: "SK海力士（半導體）",
+                caseSKHynixChallenge: "在數據密集且快速創新的半導體記憶體產業中，加速研發週期並增強製造自動化。",
+                caseSKHynixSolution: "採用<span class=\"tech-highlight\">JMP（SAS子公司產品）</span>進行統計建模、實驗設計（DOE）和數據清理的機器學習。開發了新的統計模型以簡化DOE，減少了樣本量和分析時間。實施了ML演算法以在不損害實驗完整性的前提下清理複雜數據集並消除雜訊。在各部門標準化了JMP的使用。",
+                caseSKHynixImpact: "顯著縮短了研發和數據分析時間。透過通用工具和方法論改進了公司內部的協同效應。透過JMP的可視化功能，增強了向非數據科學家和現場工程師溝通複雜實驗方法和發現的能力。透過更快的NPI、更穩健的流程和改進的決策品質，間接惠及所有OEE支柱。",
+                caseGeorgiaPacificTitle: "Georgia-Pacific（製造業）",
+                caseGPChallenge: "在具有高數據量的大規模製造營運中，提高設備效率、減少計劃外停機並優化運輸物流。",
+                caseGPSolution: "在AWS上部署了<span class=\"tech-highlight\">SAS Viya</span>。利用超過15,000個ML模型進行最佳生產設定。使用來自85,000個振動感測器的即時數據實施了預測性維護，並應用電腦視覺進行生產線上的自動問題偵測。利用SAS預測分析優化了運輸物流。",
+                caseGPImpact: "在使用這些工具的設施中，實現了<span class=\"kpi-highlight\">10%的OEE改進</span>和<span class=\"kpi-highlight\">30%的計劃外停機減少</span>。提高了生產率，優化了流程，並延長了資產壽命。展示了SAS Viya處理海量數據並提供顯著營運和供應鏈效率的能力。",
+                caseAmericanHondaTitle: "美國本田（汽車業）",
+                caseAHChallenge: "高昂的保固成本和備品庫存管理效率低下。",
+                caseAHSolution: "利用<span class=\"tech-highlight\">SAS Quality Analytic Suite</span>（包括Field Quality Analytics）分析保固索賠、現場效能數據和客戶回饋。應用根本原因分析來識別組件故障的來源。",
+                caseAHImpact: "將保固成本降低了<span class=\"kpi-highlight\">20%</span>。實現了<span class=\"kpi-highlight\">1%的備品庫存準確性</span>。透過識別和解決故障的根本原因，改進了產品品質，減少了一種形式的供應鏈風險，並提高了售後服務效率。",
+                caseKonicaMinoltaTitle: "柯尼卡美能達（高資本設備）",
+                caseKMChallenge: "透過避免因故障導致的計劃外停機，最大限度地提高高資本設備的生產率。",
+                caseKMSolution: "使用SAS分析感測器數據以預測設備故障並實現主動維護。",
+                caseKMImpact: "減少了設備停機時間，直接提高了OEE稼動率。將維護從被動式轉變為預測式，提高了營運穩定性。",
+                caseOtherHighTechTitle: "其他高科技應用",
+                caseSemiBackendTitle: "半導體後段設備領導者：",
+                caseSemiBackendDesc: "使用SAS部署了支援AI的智能機器，用於預測品質、異常偵測和規範性維護。結果是提高了IC封裝品質，提高了生產速度（效能），並增強了稼動率。",
+                caseSolarPanelTitle: "太陽能電池板製造商：",
+                caseSolarPanelDesc: "利用SAS電腦視覺進行自動缺陷偵測，從而減少了廢品（品質），減少了停機時間（稼動率），並提高了生產良率（效能和品質）。",
+                caseHDDManufTitle: "硬碟驅動器製造商：",
+                caseHDDManufDesc: "應用SAS AI/ML來提高品質和良率，將驅動器故障率大幅降低至接近0%（品質），並實現了早期良率偏移警告（保持效能和品質）。",
+                platformBenefitsTitle: "可量化的效益與戰略優勢",
+                platformBenefitsDesc: "採用SAS可以帶來切實的效益。例如：家電製造商庫存減少12%，收入增加1%；雜貨商訂單變更減少40%，庫存減少8%；Georgia-Pacific OEE提高10%，計劃外停機減少30%；美國本田保固成本降低20%。對臺灣公司而言，這意味著提高預測準確性、縮短週期時間、優化庫存、最大限度減少過時風險、提高供應商品質和更快地回應中斷，從而增強敏捷性和競爭力。",
+                platformFutureTitle: "未來：AI助理與分析普及化",
+                platformFutureDesc: "SAS Viya Copilot和GenAI的整合使複雜分析的獲取更加普及。非技術用戶（規劃師、經理）可以透過自然語言運行複雜的優化和情境分析。這對於臺灣公司至關重要，領域專家可以將其知識與先進分析相結合，從而獲得實用、有影響力的解決方案和更快的決策，培養數據驅動的創新文化。",
+                platformTableTitle: "總結表：SAS解決方案效益",
+                tableHeaderArea: "供應鏈領域",
+                tableHeaderSolutions: "關鍵SAS解決方案/功能",
+                tableHeaderBenefits: "對臺灣高科技產業的效益",
+                tableAreaDemand: "需求預測",
+                tableBenefitsDemand: "提高NPI預測準確性，更好地處理需求波動，減少預測誤差，增強S&OP。",
+                tableAreaOps: "營運優化",
+                tableBenefitsOps: "縮短週期時間，提高OEE，優化生產計畫，最大限度減少計劃外停機。",
+                tableAreaInv: "庫存管理",
+                tableBenefitsInv: "優化在製品和成品庫存，最大限度減少過時成本，降低持有成本，提高服務水平。",
+                tableAreaResilience: "供應鏈韌性與風險",
+                tableBenefitsResilience: "更快地回應中斷，主動識別風險，提高供應商品質，降低保固成本。",
+                tableAreaPlatform: "底層平台",
+                tableBenefitsPlatform: "加速AI生命週期，統一數據管理，支援不同用戶技能，可擴展性。",
+                recommendationsTitle: "實施戰略建議",
+                recommendationsIntro: "成功利用SAS需要戰略性的實施方法，培養數據驅動的文化，並專注於為臺灣高科技產業實現持續的價值。",
+                recItem1: "<strong class=\"text-blue-600\">採取分階段方法：</strong> 從高痛點/高投資回報率的領域開始（例如，波動產品線的需求預測，關鍵設備的預測性維護）。在更廣泛推廣之前，實現快速成功，累積經驗並獲得利益相關者的支持。",
+                recItem1Strong: "採取分階段方法：",
+                recItem2: "<strong class=\"text-blue-600\">針對高科技細分市場客製化解決方案：</strong> 客製化SAS工具（<span class=\"tech-highlight\">SAS Strategic Supply Chain Optimization</span>，打包的AI模型）以反映特定的流程（半導體晶圓廠、電子組裝、IC測試）和戰略目標。",
+                recItem2Strong: "針對高科技細分市場客製化解決方案：",
+                recItem3: "<strong class=\"text-blue-600\">投資數據治理與整合：</strong> 優先考慮強大的數據治理以及將不同系統（ERP、MES、CRM、物聯網感測器）的數據整合到<span class=\"tech-highlight\">SAS Viya</span>中，以創建可靠、統一的數據基礎。",
+                recItem3Strong: "投資數據治理與整合：",
+                recItem4: "<strong class=\"text-blue-600\">培養數據驅動文化與提升人才技能：</strong> 在實施SAS的同時進行變革管理。投資培訓（SAS提供相關課程）以賦能領域專家和公民數據科學家，利用<span class=\"tech-highlight\">SAS Viya Copilot</span>等工具。人的專業知識仍然至關重要。",
+                recItem4Strong: "培養數據驅動文化與提升人才技能：",
+                recItem5: "<strong class=\"text-blue-600\">合作共贏：</strong> 利用SAS深厚的行業專業知識和合作夥伴生態系統，在客製化解決方案、系統整合、變革管理以及使分析與戰略目標保持一致以獲得持續競爭優勢方面獲得指導。",
+                recItem5Strong: "合作共贏：",
+                recConclusion: "SAS分析的變革力量最好透過持續改進、適應以及與核心業務流程和戰略願景的深度整合來實現。",
+                footerCopyright: "© SAS Institute Inc. 版權所有。",
+                footerDisclaimer: "本文件重點介紹SAS針對臺灣高科技產業供應鏈分析的解決方案，基於所提供的材料。",
+                demandChartLabels: ['預測準確性', 'NPI協同', '情境準備度', '市場敏捷性'],
+                demandChartDatasetLabel: '潛在影響領域',
+                opsInvChartLabels: ['營運效率', '成本降低', '庫存週轉', 'OEE提升'],
+                opsInvChartDatasetLabel: '優化重點',
+                resilienceChartLabels: ['風險緩解', '供應可見性', '回應速度', '供應商穩定性'],
+                resilienceChartDatasetLabel: '韌性因素'
+            }
+        };
+
+        document.addEventListener('DOMContentLoaded', function () {
+            const navLinks = document.querySelectorAll('.nav-link');
+            const sections = document.querySelectorAll('main section');
+            const header = document.querySelector('header');
+            let headerHeight = header ? header.offsetHeight : 64; 
+
+            window.addEventListener('resize', () => {
+                 headerHeight = header ? header.offsetHeight : 64;
+            });
+            
+            navLinks.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const targetId = this.getAttribute('href');
+                    const targetElement = document.querySelector(targetId);
+                    if (targetElement) {
+                        const elementPosition = targetElement.getBoundingClientRect().top + window.pageYOffset;
+                        const offsetPosition = elementPosition - headerHeight - 20; 
+
+                        window.scrollTo({
+                            top: offsetPosition,
+                            behavior: 'smooth'
+                        });
+                    }
+                });
+            });
+
+            function makeLinkActive() {
+                let current = sections[0].id; 
+                sections.forEach(section => {
+                    const sectionTop = section.offsetTop - headerHeight - 25; 
+                     if (pageYOffset >= sectionTop) {
+                        current = section.getAttribute('id');
+                    }
+                });
+
+                navLinks.forEach(link => {
+                    link.classList.remove('active');
+                    if (link.getAttribute('href') && link.getAttribute('href').substring(1) === current) {
+                        link.classList.add('active');
+                    }
+                });
+            }
+            window.addEventListener('scroll', makeLinkActive);
+            makeLinkActive(); 
+
+            const langButtons = document.querySelectorAll('.lang-switcher button');
+            let currentLang = 'en'; 
+
+            function translatePage(lang) {
+                document.documentElement.lang = lang.startsWith('zh') ? lang : 'en';
+                currentLang = lang;
+                document.querySelectorAll('[data-translate-key]').forEach(el => {
+                    const key = el.getAttribute('data-translate-key');
+                    if (translations[lang] && translations[lang][key]) {
+                        el.innerHTML = translations[lang][key];
+                    } else {
+                        if (translations['en'] && translations['en'][key]) {
+                            el.innerHTML = translations['en'][key]; 
+                        }
+                    }
+                });
+                langButtons.forEach(btn => {
+                    btn.classList.toggle('active', btn.getAttribute('data-lang') === lang);
+                });
+                 // Re-create charts on language change to update titles
+                createOrUpdateChart('demandForecastingChart', 'demand', 'demandChartTitle');
+                createOrUpdateChart('opsInventoryChart', 'opsInventory', 'opsInvChartTitle');
+                createOrUpdateChart('resilienceChart', 'resilience', 'resilienceChartTitle');
+            }
+
+            langButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    const lang = button.getAttribute('data-lang');
+                    translatePage(lang);
+                });
+            });
+            
+
+            // Chart.js Implementation
+            const commonChartOptions = (titleKey) => ({
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: { font: { size: 10 }, color: '#4B5563' }
+                    },
+                    title: {
+                        display: true,
+                        text: translations[currentLang][titleKey] || translations['en'][titleKey],
+                        font: { size: 12, weight: 'bold' },
+                        color: '#1E40AF',
+                        padding: { top: 5, bottom: 10 }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) { label += ': '; }
+                                if (context.parsed.y !== null) { label += context.parsed.y + '%'; } // Assuming data is percentage
+                                return label;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: { beginAtZero: true, max: 100, ticks: { font: {size: 10}, color: '#4B5563' } },
+                    x: { ticks: { font: {size: 10}, color: '#4B5563' } }
+                }
+            });
+
+            const chartData = {
+                demand: {
+                    labelsKey: 'demandChartLabels',
+                    datasets: [{
+                        labelKey: 'demandChartDatasetLabel',
+                        data: [75, 85, 65, 90], 
+                        backgroundColor: ['#BFDBFE', '#93C5FD', '#60A5FA', '#3B82F6']
+                    }]
+                },
+                opsInventory: {
+                    labelsKey: 'opsInvChartLabels',
+                    datasets: [{
+                        labelKey: 'opsInvChartDatasetLabel',
+                        data: [80, 70, 85, 75], 
+                        backgroundColor: ['#A7F3D0', '#6EE7B7', '#34D399', '#10B981']
+                    }]
+                },
+                resilience: {
+                    labelsKey: 'resilienceChartLabels',
+                    datasets: [{
+                        labelKey: 'resilienceChartDatasetLabel',
+                        data: [88, 78, 92, 70], 
+                        backgroundColor: ['#FBCFE8', '#F9A8D4', '#F472B6', '#EC4899']
+                    }]
+                }
+            };
+            
+            function createOrUpdateChart(canvasId, chartConfigKey, chartTitleKey) {
+                const ctx = document.getElementById(canvasId);
+                if (!ctx) return;
+
+                if (window[canvasId + '_chartInstance']) {
+                    window[canvasId + '_chartInstance'].destroy();
+                }
+                
+                const config = chartData[chartConfigKey];
+                const data = {
+                    labels: translations[currentLang][config.labelsKey] || translations['en'][config.labelsKey],
+                    datasets: config.datasets.map(ds => ({
+                        label: translations[currentLang][ds.labelKey] || translations['en'][ds.labelKey],
+                        data: ds.data,
+                        backgroundColor: ds.backgroundColor,
+                        borderColor: ds.backgroundColor.map(color => color.length === 7 ? color.substring(0,7) + 'CC' : color), // Basic darken/opacity
+                        borderWidth: 1
+                    }))
+                };
+                 const chartOptions = commonChartOptions(chartTitleKey);
+                 // Update title dynamically based on current language
+                 chartOptions.plugins.title.text = translations[currentLang][chartTitleKey] || translations['en'][chartTitleKey];
+
+                window[canvasId + '_chartInstance'] = new Chart(ctx, {
+                    type: 'bar',
+                    data: data,
+                    options: chartOptions
+                });
+            }
+            translatePage(currentLang); // Initial translation and chart creation
+
+        }); // End DOMContentLoaded
+
+        function toggleCardDetails(cardElement) {
+            const content = cardElement.querySelector('.details-content');
+            const icon = cardElement.querySelector('h3 span'); 
+            if (content) {
+                content.classList.toggle('open');
+                if (icon) {
+                    icon.innerHTML = content.classList.contains('open') ? '&#x25B2;' : '&#x25BC;';
+                }
+            }
+        }
+    </script>
+</body>
+</html>

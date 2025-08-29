@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SAS Viya 系統架構圖</title>
+    <style>
+        /* --- 全局樣式 --- */
+        body {
+            background-color: #2c3e50; /* 深藍灰色背景 */
+            font-family: 'Segoe UI', 'Microsoft JhengHei', Arial, sans-serif;
+            color: #ecf0f1; /* 淺灰色文字 */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        /* --- 主容器 --- */
+        .diagram-container {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 60px; /* 層與層之間的垂直間距 */
+            width: 100%;
+            max-width: 1200px;
+        }
+
+        /* --- 層級樣式 --- */
+        .layer {
+            display: flex;
+            justify-content: center;
+            align-items: stretch; /* 讓同層的盒子等高 */
+            width: 100%;
+            gap: 20px;
+        }
+
+        /* --- 模組方塊樣式 --- */
+        .box {
+            background-color: #34495e; /* 較淺的藍灰色 */
+            border: 2px solid #7f8c8d; /* 邊框顏色 */
+            border-radius: 8px;
+            padding: 15px 20px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            cursor: pointer;
+        }
+        
+        /* 滑鼠懸停效果 */
+        .box:hover {
+            border-color: #3498db; /* 藍色高亮 */
+            transform: translateY(-5px);
+        }
+
+        /* 模組標題 */
+        .box-title {
+            font-weight: bold;
+            font-size: 1.1em;
+            margin-bottom: 5px;
+            color: #ffffff;
+        }
+
+        /* 模組描述 */
+        .box-desc {
+            font-size: 0.9em;
+            color: #bdc3c7; /* 較暗的文字顏色 */
+        }
+        
+        /* 平台容器的特殊樣式 */
+        .platform-container {
+            width: 100%;
+            border: 2px dashed #95a5a6;
+            padding: 30px 20px 20px 20px;
+            border-radius: 10px;
+            position: relative;
+        }
+        .platform-container::before {
+            content: 'SAS Viya 平台';
+            position: absolute;
+            top: 5px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #2c3e50;
+            padding: 0 10px;
+            font-weight: bold;
+            color: #ecf0f1;
+        }
+
+
+        /* --- SVG 連接線樣式 --- */
+        #connector-svg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none; /* 讓 SVG 不會阻擋滑鼠事件 */
+            z-index: -1;
+        }
+
+        .connector-path {
+            stroke: #7f8c8d; /* 連接線顏色 */
+            stroke-width: 2px;
+            fill: none;
+            stroke-dasharray: 5, 5; /* 虛線效果 */
+            transition: stroke 0.3s ease, stroke-width 0.3s ease;
+        }
+        
+        .connector-path.highlight {
+            stroke: #3498db; /* 高亮顏色 */
+            stroke-width: 3px;
+            stroke-dasharray: none; /* 實線 */
+        }
+        
+        .arrow-head {
+            fill: #7f8c8d;
+            transition: fill 0.3s ease;
+        }
+        
+        .arrow-head.highlight {
+            fill: #3498db; /* 箭頭高亮顏色 */
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="diagram-container">
+        <!-- SVG 層，用於繪製連接線 -->
+        <svg id="connector-svg"></svg>
+
+        <!-- 第一層：分析應用層 -->
+        <div class="platform-container">
+            <div class="layer">
+                <div class="box" id="va">
+                    <div class="box-title">SAS Visual Analytics</div>
+                    <div class="box-desc">(統一儀表板)</div>
+                </div>
+                <div class="box" id="vdm">
+                    <div class="box-title">SAS Visual Data Mining & ML</div>
+                    <div class="box-desc">(AI工時建模)</div>
+                </div>
+                <div class="box" id="opt">
+                    <div class="box-title">SAS Optimization</div>
+                    <div class="box-desc">(排程最佳化)</div>
+                </div>
+                <div class="box" id="vf">
+                    <div class="box-title">SAS Visual Forecasting</div>
+                    <div class="box-desc">(需求預測)</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 第二層：核心運算服務層 -->
+        <div class="layer">
+            <div class="box" id="cas" style="min-width: 400px;">
+                <div class="box-title">SAS Cloud Analytic Services</div>
+                <div class="box-desc">(分散式記憶體內運算 + 資料管理)</div>
+            </div>
+        </div>
+
+        <!-- 第三層：資料來源層 (依照要求由左至右排列) -->
+        <div class="layer">
+            <div class="box" id="erp">
+                <div class="box-title">ERP系統</div>
+                <div class="box-desc">(訂單/BOM)</div>
+            </div>
+            <div class="box" id="report">
+                <div class="box-title">現有報工系統</div>
+                <div class="box-desc">(工時紀錄)</div>
+            </div>
+            <div class="box" id="excel">
+                <div class="box-title">Excel/文件</div>
+                <div class="box-desc">(歷史資料)</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const svg = document.getElementById('connector-svg');
+            const container = document.querySelector('.diagram-container');
+
+            // 定義連接關係
+            const connections = [
+                // 資料來源 -> CAS
+                { from: 'erp', to: 'cas', id: 'conn-erp-cas' },
+                { from: 'report', to: 'cas', id: 'conn-report-cas' },
+                { from: 'excel', to: 'cas', id: 'conn-excel-cas' },
+                // CAS -> Viya 平台 (所有應用模組)
+                { from: 'cas', to: 'va', id: 'conn-cas-va' },
+                { from: 'cas', to: 'vdm', id: 'conn-cas-vdm' },
+                { from: 'cas', to: 'opt', id: 'conn-cas-opt' },
+                { from: 'cas', to: 'vf', id: 'conn-cas-vf' }
+            ];
+
+            function drawConnectors() {
+                // 清空舊的線條
+                svg.innerHTML = '';
+                
+                // 定義箭頭
+                const marker = document.createElementNS('http://www.w3.org/2000/svg', 'marker');
+                marker.setAttribute('id', 'arrow');
+                marker.setAttribute('viewBox', '0 -5 10 10');
+                marker.setAttribute('refX', 8);
+                marker.setAttribute('refY', 0);
+                marker.setAttribute('markerWidth', 6);
+                marker.setAttribute('markerHeight', 6);
+                marker.setAttribute('orient', 'auto');
+                const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                path.setAttribute('d', 'M0,-5L10,0L0,5');
+                path.classList.add('arrow-head');
+                marker.appendChild(path);
+                
+                const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+                defs.appendChild(marker);
+                svg.appendChild(defs);
+
+                const containerRect = container.getBoundingClientRect();
+
+                connections.forEach(conn => {
+                    const fromEl = document.getElementById(conn.from);
+                    const toEl = document.getElementById(conn.to);
+                    
+                    if (!fromEl || !toEl) return;
+
+                    const fromRect = fromEl.getBoundingClientRect();
+                    const toRect = toEl.getBoundingClientRect();
+
+                    // 計算起點和終點座標 (相對於容器)
+                    const startX = fromRect.left + fromRect.width / 2 - containerRect.left;
+                    const startY = fromRect.top - containerRect.top;
+                    const endX = toRect.left + toRect.width / 2 - containerRect.left;
+                    const endY = toRect.bottom - containerRect.top;
+                    
+                    // 繪製 S 型曲線路徑
+                    const midY = startY + (endY - startY) / 2;
+                    const pathData = `M ${startX},${startY} C ${startX},${midY} ${endX},${midY} ${endX},${endY}`;
+
+                    const svgPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                    svgPath.setAttribute('d', pathData);
+                    svgPath.setAttribute('id', conn.id);
+                    svgPath.classList.add('connector-path');
+                    // 為向上的箭頭加上 marker
+                    if(startY > endY) {
+                       svgPath.setAttribute('marker-end', 'url(#arrow)');
+                    } else {
+                       svgPath.setAttribute('marker-start', 'url(#arrow)');
+                    }
+                    svg.appendChild(svgPath);
+                });
+            }
+
+            function setupInteractions() {
+                connections.forEach(conn => {
+                    const fromEl = document.getElementById(conn.from);
+                    const toEl = document.getElementById(conn.to);
+                    const pathEl = document.getElementById(conn.id);
+                    const arrowHead = pathEl.markerEnd ? document.querySelector('#arrow path') : null;
+
+                    if (!fromEl || !toEl || !pathEl) return;
+
+                    const highlight = () => {
+                        pathEl.classList.add('highlight');
+                        if(arrowHead) document.querySelector('#arrow path').classList.add('highlight');
+                    };
+                    const unhighlight = () => {
+                        pathEl.classList.remove('highlight');
+                        if(arrowHead) document.querySelector('#arrow path').classList.remove('highlight');
+                    };
+
+                    fromEl.addEventListener('mouseover', highlight);
+                    fromEl.addEventListener('mouseout', unhighlight);
+                    toEl.addEventListener('mouseover', highlight);
+                    toEl.addEventListener('mouseout', unhighlight);
+                });
+            }
+
+            // 初始繪製並設定互動
+            drawConnectors();
+            setupInteractions();
+
+            // 當視窗大小改變時，重新繪製
+            window.addEventListener('resize', drawConnectors);
+        });
+    </script>
+
+</body>
+</html>

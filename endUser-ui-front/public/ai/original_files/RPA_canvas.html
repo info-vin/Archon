@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>生產管理流程自動化 (PL-RPA) 互動報告</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: #FDFBF8;
+            color: #333;
+        }
+        .text-accent {
+            color: #147A75;
+        }
+        .bg-accent {
+            background-color: #147A75;
+        }
+        .border-accent {
+            border-color: #147A75;
+        }
+        .nav-link {
+            transition: color 0.3s, border-bottom-color 0.3s;
+            border-bottom: 2px solid transparent;
+        }
+        .nav-link:hover, .nav-link.active {
+            color: #147A75;
+            border-bottom-color: #147A75;
+        }
+        .flow-step {
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        .flow-step:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        .flow-arrow {
+            font-size: 2rem;
+            color: #9CA3AF;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 40vh;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 400px;
+            }
+        }
+        .tooltip {
+            visibility: hidden;
+            opacity: 0;
+            transition: opacity 0.3s;
+            position: absolute;
+            bottom: 110%;
+            left: 50%;
+            transform: translateX(-50%);
+            white-space: nowrap;
+        }
+        .flow-step:hover .tooltip {
+            visibility: visible;
+            opacity: 1;
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <header class="bg-white/80 backdrop-blur-md sticky top-0 z-50 shadow-sm">
+        <nav class="container mx-auto px-6 py-3 flex justify-between items-center">
+            <h1 class="text-xl md:text-2xl font-bold text-accent">PL-RPA 互動報告</h1>
+            <div class="hidden md:flex space-x-8">
+                <a href="#challenge" class="nav-link">當前挑戰</a>
+                <a href="#process" class="nav-link">流程剖析</a>
+                <a href="#solution" class="nav-link">解決方案</a>
+                <a href="#impact" class="nav-link">效益評估</a>
+                <a href="#benefits" class="nav-link">核心優勢</a>
+                <a href="#thesis-info" class="nav-link">相關論文</a>
+            </div>
+            <button id="mobile-menu-button" class="md:hidden p-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
+                </svg>
+            </button>
+        </nav>
+        <div id="mobile-menu" class="hidden md:hidden px-6 pt-2 pb-4 space-y-2">
+            <a href="#challenge" class="block nav-link">當前挑戰</a>
+            <a href="#process" class="block nav-link">流程剖析</a>
+            <a href="#solution" class="block nav-link">解決方案</a>
+            <a href="#impact" class="block nav-link">效益評估</a>
+            <a href="#benefits" class="block nav-link">核心優勢</a>
+            <a href="#thesis-info" class="block nav-link">相關論文</a>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-6 py-8 md:py-16">
+
+        <section id="hero" class="text-center mb-16 md:mb-24">
+            <h2 class="text-3xl md:text-5xl font-bold mb-4">解放生產力：探索生產管理流程自動化</h2>
+            <p class="text-lg md:text-xl max-w-3xl mx-auto text-gray-600">
+                從繁瑣的手動轉檔到智慧自動化，本報告將帶您深入了解「生產管理流程自動化機器人 (PL-RPA)」如何徹底改變傳統生產排程，解決資料孤島，實現高效、精準的智慧製造新未來。
+            </p>
+        </section>
+
+        <section id="challenge" class="mb-16 md:mb-24 scroll-mt-20">
+            <div class="text-center mb-12">
+                <h3 class="text-3xl font-bold">挑戰：傳統排程的困境</h3>
+                <p class="text-lg text-gray-600 mt-2">在導入自動化之前，中小型製造業的生產排程普遍面臨四大核心挑戰。</p>
+            </div>
+            <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+                <div class="bg-white p-6 rounded-lg shadow-md border-t-4 border-accent">
+                    <h4 class="font-bold text-xl mb-2">靜態規劃</h4>
+                    <p class="text-gray-600">依賴 Excel 進行規劃，無法即時應對機台當機、人為失誤等現場動態變化，導致計畫與現實脫節。</p>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-md border-t-4 border-amber-500">
+                    <h4 class="font-bold text-xl mb-2">運算緩慢</h4>
+                    <p class="text-gray-600">基於歷史平均值估算，運算速度慢且不考慮真實數據變異，模型精準度不足。</p>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-md border-t-4 border-sky-500">
+                    <h4 class="font-bold text-xl mb-2">市場變遷</h4>
+                    <p class="text-gray-600">客製化、少量多樣的訂單劇增，製程與工時變動頻繁，傳統標準化流程難以應對。</p>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-md border-t-4 border-rose-500">
+                    <h4 class="font-bold text-xl mb-2">資訊延遲</h4>
+                    <p class="text-gray-600">無法即時回覆交期、庫存難以掌控，不僅影響客戶信賴度，更直接導致成本增加。</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="process" class="mb-16 md:mb-24 scroll-mt-20">
+            <div class="text-center mb-12">
+                <h3 class="text-3xl font-bold">流程剖析：從手動到自動的變革</h3>
+                <p class="text-lg text-gray-600 mt-2">導入 APS 系統後，資料轉換仍是瓶頸。這裡我們將對比「導入前」與「導入後」的流程，凸顯自動化的價值。</p>
+            </div>
+
+            <div class="grid lg:grid-cols-2 gap-16">
+                <div>
+                    <h4 class="text-2xl font-bold mb-6 text-center">As-Is：手動轉檔流程</h4>
+                    <div class="flex flex-col items-center space-y-4">
+                        <div class="flow-step bg-white p-4 rounded-lg shadow w-full text-center">
+                            <span class="font-semibold">ERP 系統</span>
+                            <div class="tooltip bg-gray-800 text-white text-xs rounded py-1 px-2">業務人員匯出 TXT 格式訂單</div>
+                        </div>
+                        <div class="flow-arrow">↓</div>
+                        <div class="flow-step bg-rose-100 border border-rose-300 p-4 rounded-lg shadow w-full text-center">
+                            <span class="font-semibold text-rose-800">人工處理 (瓶頸)</span>
+                             <div class="tooltip bg-gray-800 text-white text-xs rounded py-1 px-2">生管手動複製貼上，將 TXT 轉為 Excel</div>
+                        </div>
+                        <div class="flow-arrow">↓</div>
+                        <div class="flow-step bg-white p-4 rounded-lg shadow w-full text-center">
+                            <span class="font-semibold">APS 輸入表單</span>
+                            <div class="tooltip bg-gray-800 text-white text-xs rounded py-1 px-2">將整理好的 Excel 匯入 APS</div>
+                        </div>
+                        <div class="flow-arrow">↓</div>
+                        <div class="flow-step bg-white p-4 rounded-lg shadow w-full text-center">
+                            <span class="font-semibold">APS 系統排程</span>
+                            <div class="tooltip bg-gray-800 text-white text-xs rounded py-1 px-2">執行生產排程</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <h4 class="text-2xl font-bold mb-6 text-center">To-Be：PL-RPA 自動化流程</h4>
+                     <div class="flex flex-col items-center space-y-4">
+                        <div class="flow-step bg-white p-4 rounded-lg shadow w-full text-center">
+                            <span class="font-semibold">ERP 系統</span>
+                            <div class="tooltip bg-gray-800 text-white text-xs rounded py-1 px-2">機器人定時登入並匯出訂單</div>
+                        </div>
+                        <div class="flow-arrow">↓</div>
+                        <div class="flow-step bg-teal-100 border border-teal-300 p-4 rounded-lg shadow w-full text-center">
+                            <span class="font-semibold text-accent">PL-RPA (核心)</span>
+                            <div class="tooltip bg-gray-800 text-white text-xs rounded py-1 px-2">自動化轉檔、驗證並格式化資料</div>
+                        </div>
+                        <div class="flow-arrow">↓</div>
+                        <div class="flow-step bg-white p-4 rounded-lg shadow w-full text-center">
+                           <span class="font-semibold">APS 系統</span>
+                           <div class="tooltip bg-gray-800 text-white text-xs rounded py-1 px-2">機器人自動上傳資料並觸發排程</div>
+                        </div>
+                         <div class="flow-arrow">↓</div>
+                        <div class="flow-step bg-white p-4 rounded-lg shadow w-full text-center">
+                            <span class="font-semibold">結果自動回傳</span>
+                            <div class="tooltip bg-gray-800 text-white text-xs rounded py-1 px-2">排程結果自動儲存並通知相關人員</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="solution" class="mb-16 md:mb-24 scroll-mt-20">
+            <div class="text-center mb-12">
+                <h3 class="text-3xl font-bold">解決方案：PL-RPA 架構解析</h3>
+                <p class="text-lg text-gray-600 mt-2">PL-RPA 的成功導入基於一個分層、分階段的完整架構。點擊下方頁籤了解各層次的職責。</p>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow-lg p-6 md:p-8">
+                <div class="mb-6 border-b border-gray-200">
+                    <nav id="rpa-tabs" class="flex flex-wrap -mb-px" aria-label="Tabs">
+                         <button class="tab-button active flex-1 md:flex-initial text-center whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm border-accent text-accent" data-target="tab-detailed">詳細活動層</button>
+                         <button class="tab-button flex-1 md:flex-initial text-center whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300" data-target="tab-user">使用者層</button>
+                         <button class="tab-button flex-1 md:flex-initial text-center whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300" data-target="tab-method">方法層</button>
+                         <button class="tab-button flex-1 md:flex-initial text-center whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300" data-target="tab-app">應用層</button>
+                    </nav>
+                </div>
+                <div>
+                    <div id="tab-detailed" class="tab-content">
+                        <h4 class="font-bold text-xl mb-2">詳細活動層 (Detailed Activities)</h4>
+                        <p class="text-gray-700">此層為 RPA 的基礎，負責定義標準流程、確保數據兼容性，並對指定程序進行修正、擴展與標準化。最終，會對實施結果進行有效性評估與風險檢測，確保自動化流程的穩定與可靠。</p>
+                    </div>
+                    <div id="tab-user" class="tab-content hidden">
+                        <h4 class="font-bold text-xl mb-2">使用者層 (User)</h4>
+                        <p class="text-gray-700">此層聚焦於與流程相關的人員，包括更新訂單的<span class="font-semibold text-accent">業務</span>、負責排程的<span class="font-semibold text-accent">生管</span>、以及規劃物料的<span class="font-semibold text-accent">採購</span>。透過分析他們現有的工作流程，進行修正與簡化，最終讓他們實際操作測試，並評估所帶來的效益。</p>
+                    </div>
+                     <div id="tab-method" class="tab-content hidden">
+                        <h4 class="font-bold text-xl mb-2">方法層 (Method)</h4>
+                        <p class="text-gray-700">此層是建構 PL-RPA 的藍圖，分為四個階段：<br>1. <span class="font-semibold">流程選擇：</span>訪談以確認需求。<br>2. <span class="font-semibold">流程修正：</span>使用案例圖將流程規則化。<br>3. <span class="font-semibold">測試：</span>透過活動圖與循序圖確保流程正確。<br>4. <span class="font-semibold">評估與操作：</span>撰寫說明文件以記錄並評估成效。</p>
+                    </div>
+                     <div id="tab-app" class="tab-content hidden">
+                        <h4 class="font-bold text-xl mb-2">應用層 (Application)</h4>
+                        <p class="text-gray-700">此層涵蓋了自動化流程中所有會使用到的工具與系統。包括日常辦公軟體 (Excel, Txt)、跨系統平台 (ERP, MES, APS)，以及作為這一切自動化核心的 RPA 開發工具 <span class="font-semibold text-accent">UiPath</span>。</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="impact" class="mb-16 md:mb-24 scroll-mt-20">
+            <div class="text-center mb-12">
+                <h3 class="text-3xl font-bold">效益評估：時間就是金錢</h3>
+                <p class="text-lg text-gray-600 mt-2">導入 PL-RPA 最直接的效益是大幅縮短處理時間。下方圖表顯示了處理不同數量訂單時，手動與自動化流程所需時間的驚人差異。請選擇訂單數量來查看比較結果。</p>
+            </div>
+            <div class="bg-white p-6 rounded-lg shadow-lg">
+                <div class="flex justify-center mb-6 space-x-2">
+                    <button class="chart-button bg-accent text-white py-2 px-4 rounded-lg shadow" data-orders="10">10 筆訂單</button>
+                    <button class="chart-button bg-gray-200 text-gray-700 py-2 px-4 rounded-lg" data-orders="50">50 筆訂單</button>
+                    <button class="chart-button bg-gray-200 text-gray-700 py-2 px-4 rounded-lg" data-orders="100">100 筆訂單</button>
+                </div>
+                <div class="chart-container">
+                    <canvas id="timeComparisonChart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <section id="benefits" class="mb-16 md:mb-24 scroll-mt-20">
+            <div class="text-center mb-12">
+                <h3 class="text-3xl font-bold">核心優勢：PL-RPA 帶來的價值</h3>
+                <p class="text-lg text-gray-600 mt-2">除了節省時間，導入 PL-RPA 更為企業帶來了多面向的長期價值。</p>
+            </div>
+            <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+                <div class="text-center p-4">
+                    <div class="flex items-center justify-center h-16 w-16 rounded-full bg-teal-100 text-accent mx-auto mb-4 text-3xl">✓</div>
+                    <h4 class="font-bold text-xl mb-2">提升效率</h4>
+                    <p class="text-gray-600">將數小時的工作縮短至數分鐘，讓人員專注於高價值任務。</p>
+                </div>
+                <div class="text-center p-4">
+                    <div class="flex items-center justify-center h-16 w-16 rounded-full bg-teal-100 text-accent mx-auto mb-4 text-3xl">🎯</div>
+                    <h4 class="font-bold text-xl mb-2">提高準確性</h4>
+                    <p class="text-gray-600">機器人 24/7 精準執行，根除因疲勞或疏忽造成的人為失誤。</p>
+                </div>
+                <div class="text-center p-4">
+                    <div class="flex items-center justify-center h-16 w-16 rounded-full bg-teal-100 text-accent mx-auto mb-4 text-3xl">🔄</div>
+                    <h4 class="font-bold text-xl mb-2">數據即時性</h4>
+                    <p class="text-gray-600">確保 ERP 與 APS 系統間數據同步，提供最即時的決策依據。</p>
+                </div>
+                <div class="text-center p-4">
+                    <div class="flex items-center justify-center h-16 w-16 rounded-full bg-teal-100 text-accent mx-auto mb-4 text-3xl">🧑‍💻</div>
+                    <h4 class="font-bold text-xl mb-2">優化人力</h4>
+                    <p class="text-gray-600">將員工從重複性勞動中解放，轉而投入分析、改善與創新等工作。</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="thesis-info" class="scroll-mt-20 mb-16 md:mb-24">
+            <div class="text-center mb-12">
+                <h3 class="text-3xl font-bold">相關論文資訊</h3>
+                <p class="text-lg text-gray-600 mt-2">此區域資訊受存取限制，請輸入帳號密碼以查閱。</p>
+            </div>
+            <div id="thesis-info-content-area" class="bg-slate-50 p-6 rounded-lg shadow-lg">
+                <form id="thesis-login-form" class="space-y-4 max-w-md mx-auto">
+                    <div>
+                        <label for="username" class="block text-sm font-medium text-gray-700">帳號:</label>
+                        <input type="text" id="username" name="username" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-accent focus:border-accent sm:text-sm">
+                    </div>
+                    <div>
+                        <label for="password" class="block text-sm font-medium text-gray-700">密碼:</label>
+                        <input type="password" id="password" name="password" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-accent focus:border-accent sm:text-sm">
+                    </div>
+                    <button type="submit" class="w-full bg-accent text-white py-2 px-4 rounded-lg shadow hover:bg-teal-700 transition duration-300">登入</button>
+                    <p id="login-error-message" class="text-red-500 text-sm hidden text-center"></p>
+                </form>
+
+                <div id="thesis-data-container" class="hidden">
+                    <div id="thesis-title-container" class="mb-3">
+                        </div>
+                    <button id="toggle-thesis-details-button" class="text-sm text-accent hover:underline mb-4 focus:outline-none">顯示詳細資訊</button>
+                    <div id="thesis-details-toggleable" class="hidden">
+                        <ul id="thesis-data-list-details" class="list-disc pl-5 mb-6 text-gray-700 space-y-1">
+                            </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+    
+    <footer class="bg-gray-800 text-white mt-16">
+        <div class="container mx-auto px-6 py-4 text-center">
+            <p>&copy; 2025 PL-RPA 互動報告. 根據研究文件生成。</p>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const mobileMenuButton = document.getElementById('mobile-menu-button');
+            const mobileMenu = document.getElementById('mobile-menu');
+            mobileMenuButton.addEventListener('click', () => {
+                mobileMenu.classList.toggle('hidden');
+            });
+            
+            const navLinks = document.querySelectorAll('.nav-link');
+            navLinks.forEach(link => {
+                link.addEventListener('click', (e) => {
+                    document.querySelector('.nav-link.active')?.classList.remove('active');
+                    e.target.classList.add('active');
+                    if (mobileMenu.classList.contains('hidden') === false) {
+                        mobileMenu.classList.add('hidden');
+                    }
+                });
+            });
+
+            const tabs = document.querySelectorAll('.tab-button');
+            const tabContents = document.querySelectorAll('.tab-content');
+
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    tabs.forEach(item => {
+                        item.classList.remove('border-accent', 'text-accent');
+                        item.classList.add('border-transparent', 'text-gray-500', 'hover:text-gray-700', 'hover:border-gray-300');
+                    });
+                    tab.classList.add('border-accent', 'text-accent');
+                    tab.classList.remove('border-transparent', 'text-gray-500', 'hover:text-gray-700', 'hover:border-gray-300');
+
+                    tabContents.forEach(content => {
+                        content.classList.add('hidden');
+                    });
+                    document.getElementById(tab.dataset.target).classList.remove('hidden');
+                });
+            });
+
+            const chartData = {
+                10: { manual: 10, rpa: 1 },
+                50: { manual: 50, rpa: 5 },
+                100: { manual: 100, rpa: 10 } 
+            };
+            
+            let myChart;
+            const ctx = document.getElementById('timeComparisonChart').getContext('2d');
+            
+            function createOrUpdateChart(orderCount) {
+                const data = chartData[orderCount];
+                const labels = ['手動流程 (分鐘)', 'PL-RPA 流程 (分鐘)'];
+                
+                if (myChart) {
+                    myChart.data.datasets[0].data = [data.manual, data.rpa];
+                    myChart.options.plugins.title.text = `處理 ${orderCount} 筆訂單所需時間比較`;
+                    myChart.update();
+                } else {
+                    myChart = new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: labels,
+                            datasets: [{
+                                label: '所需時間 (分鐘)',
+                                data: [data.manual, data.rpa],
+                                backgroundColor: [
+                                    'rgba(251, 146, 153, 0.6)', 
+                                    'rgba(20, 122, 117, 0.6)'    
+                                ],
+                                borderColor: [
+                                    'rgba(251, 146, 153, 1)',
+                                    'rgba(20, 122, 117, 1)'
+                                ],
+                                borderWidth: 1
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    title: {
+                                        display: true,
+                                        text: '時間 (分鐘)'
+                                    }
+                                }
+                            },
+                            plugins: {
+                                legend: {
+                                    display: false
+                                },
+                                title: {
+                                    display: true,
+                                    text: `處理 ${orderCount} 筆訂單所需時間比較`,
+                                    font: {
+                                        size: 18
+                                    }
+                                },
+                                tooltip: {
+                                     callbacks: {
+                                        label: function(context) {
+                                            let label = context.dataset.label || '';
+                                            if (label) {
+                                                label += ': ';
+                                            }
+                                            if (context.parsed.y !== null) {
+                                                label += context.parsed.y + ' 分鐘';
+                                            }
+                                            return label;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+            }
+
+            const chartButtons = document.querySelectorAll('.chart-button');
+            chartButtons.forEach(button => {
+                button.addEventListener('click', (e) => {
+                    chartButtons.forEach(btn => {
+                        btn.classList.remove('bg-accent', 'text-white');
+                        btn.classList.add('bg-gray-200', 'text-gray-700');
+                    });
+                    e.target.classList.add('bg-accent', 'text-white');
+                    e.target.classList.remove('bg-gray-200', 'text-gray-700');
+
+                    const orderCount = e.target.dataset.orders;
+                    createOrUpdateChart(orderCount);
+                });
+            });
+            
+            createOrUpdateChart('10'); // Initialize chart with 10 orders
+
+            // --- Thesis Information Section ---
+            const thesisLoginForm = document.getElementById('thesis-login-form');
+            const usernameInput = document.getElementById('username');
+            const passwordInput = document.getElementById('password');
+            const loginErrorMessage = document.getElementById('login-error-message');
+            const thesisDataContainer = document.getElementById('thesis-data-container');
+            
+            const thesisTitleContainer = document.getElementById('thesis-title-container');
+            const thesisDataListDetails = document.getElementById('thesis-data-list-details');
+            const toggleThesisDetailsButton = document.getElementById('toggle-thesis-details-button');
+            const thesisDetailsToggleable = document.getElementById('thesis-details-toggleable');
+
+            const thesisData = {
+                "論文名稱": "企業導入RPA效益之實證研究-以會計循環為例-依Ｚ公司個案研究分析",
+                "論文名稱(外文)": "A Case Study on The Benefit of RPA Implementation in Enterprises-Base on Accounting Cycle",
+                "指導教授": "李坤璋",
+                "指導教授(外文)": "LEE, KUEN-CHANG",
+                "口試委員": "林欣瑾、楊志豪、李坤璋",
+                "口試委員(外文)": "LIN, SIN-JIN、YANG, CHIH-HAO、LEE, KUEN-CHANG",
+                "口試日期": "2022-06-02",
+                "學位類別": "碩士",
+                "校院名稱": "東吳大學",
+                "系所名稱": "會計學系",
+                "學門": "商業及管理學門",
+                "學類": "會計學類",
+                "論文種類": "學術論文",
+                "論文出版年": "2022",
+                "畢業學年度": "110",
+                "語文別": "中文",
+                "論文頁數": "104",
+                "中文關鍵詞": "機器人流程自動化、個案研究、會計循環、適性評估、實證",
+                "外文關鍵詞": "Robotic Process Automation、Case Study、Accounting Cycle、Suitability Assessment、Empirical",
+                "本論文永久網址": "https://hdl.handle.net/11296/dascjm"
+            };
+
+            function populateThesisData() {
+                let dataPopulated = false; // Flag to prevent multiple populations
+                return function() {
+                    if (dataPopulated) return;
+
+                    for (const key in thesisData) {
+                        if (thesisData.hasOwnProperty(key)) {
+                            const value = thesisData[key];
+                            if (key === "論文名稱") {
+                                thesisTitleContainer.innerHTML = `<p class="text-lg"><span class="font-bold">${key}:</span> ${value}</p>`;
+                            } else {
+                                const listItem = document.createElement('li');
+                                if (key === "本論文永久網址") {
+                                    listItem.innerHTML = `<span class="font-semibold">${key}:</span> <a href="${value}" target="_blank" class="text-accent hover:underline">${value}</a>`;
+                                } else {
+                                    listItem.innerHTML = `<span class="font-semibold">${key}:</span> ${value}`;
+                                }
+                                thesisDataListDetails.appendChild(listItem);
+                            }
+                        }
+                    }
+                    dataPopulated = true;
+                }
+            }
+            const doPopulateThesisData = populateThesisData();
+
+
+            if (thesisLoginForm) {
+                thesisLoginForm.addEventListener('submit', function(event) {
+                    event.preventDefault();
+                    const username = usernameInput.value;
+                    const password = passwordInput.value;
+
+                    if (username === "AAA" && password === "BBB") {
+                        thesisLoginForm.classList.add('hidden');
+                        loginErrorMessage.classList.add('hidden');
+                        if(thesisDataContainer) thesisDataContainer.classList.remove('hidden');
+                        doPopulateThesisData(); 
+                    } else {
+                        if(loginErrorMessage) {
+                            loginErrorMessage.textContent = '帳號或密碼錯誤，請重試。';
+                            loginErrorMessage.classList.remove('hidden');
+                        }
+                        if(passwordInput) passwordInput.value = '';
+                        if(usernameInput) usernameInput.focus(); // Focus username after wrong attempt
+                    }
+                });
+            }
+
+            if (toggleThesisDetailsButton) {
+                toggleThesisDetailsButton.addEventListener('click', () => {
+                    if(thesisDetailsToggleable){
+                        const isHidden = thesisDetailsToggleable.classList.contains('hidden');
+                        if (isHidden) {
+                            thesisDetailsToggleable.classList.remove('hidden');
+                            toggleThesisDetailsButton.textContent = '隱藏詳細資訊';
+                        } else {
+                            thesisDetailsToggleable.classList.add('hidden');
+                            toggleThesisDetailsButton.textContent = '顯示詳細資訊';
+                        }
+                    }
+                });
+            }
+            // Removed Download CSV Button and its logic
+        });
+    </script>
+</body>
+</html>
