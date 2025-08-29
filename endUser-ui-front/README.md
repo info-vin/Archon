@@ -35,7 +35,9 @@ Once the setup is complete, you can start the Vite development server.
 ```bash
 npm run dev
 ```
-The application should now be running (typically on `http://localhost:5173`) and connected to your Supabase instance with test data.
+The application should now be running on `http://localhost:5173` by default.
+
+**Note on Ports:** `5173` is the default port for the local Vite development server. If you are running the entire Archon project via Docker, the main UI service (`archon-ui`) is typically exposed on port `3737` as configured in the root `docker-compose.yml` and `.env` files. Please refer to the main project's `README.md` for more details on the Docker setup.
 
 ### 5. Running Tests
 This project uses Vitest for unit testing. To run the tests:
