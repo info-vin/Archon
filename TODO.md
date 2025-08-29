@@ -1,4 +1,4 @@
-# Archon 專案開發藍圖：Phase 2
+# Archon 專案開發藍圖：Phase 2 v1.1
 
 本文件旨在規劃 Archon 專案的下一階段開發，核心目標是將 Agent 自動化與 RAG (檢索增強生成) 功能深度整合到 endUser-ui 中，實現人機協作的智慧任務管理。
 
@@ -52,9 +52,9 @@
         └── xxxx_add_customers_and_attachments.sql # (新) 資料庫遷移檔案
 ```
 
-## 3. 核心工作流程圖 (Core Workflow Diagram)
+## 3. 核心工作流程圖 (v1.1 - 含角色職責)
 
-下圖展示了使用者、前端、後端及 Agent 之間一次完整的任務協作流程：
+下圖展示了不同角色在一次完整的任務協作流程中的職責分工：
 
 ```mermaid
 graph TD
@@ -66,75 +66,75 @@ graph TD
         B[endUser-ui 介面]
     end
 
-    subgraph "後端 (Backend)"
-        C[Backend API]
+    subgraph "後端開發 (Backend Development)"
+        C[全端工程師]
         D[AI Agent]
-        E[Supabase DB]
-        F[Supabase Storage]
+    end
+
+    subgraph "資料庫與雲端維運 (Database & Cloud Ops)"
+        E[資料庫/Supabase工程師]
+        F[Supabase DB]
+        G[Supabase Storage]
     end
 
     A -- 1. 建立/指派任務 --> B
-    B -- 2. 呼叫 API (create/update task) --> C
+    B -- 2. 呼叫 API --> C
     C -- 3. 觸發 Agent --> D
-    C -- 4. 更新任務狀態 (todo ▶ progress) --> E
-    E -- 5. Socket.IO 即時廣播 --> B
-    D -- 6. 執行任務 (例如: 後製 DM) --> D
+    C -- 4. 更新任務狀態 --> F
+    E -- 5. (DB管理) 執行遷移、確保效能 --> F
+    D -- 6. 執行任務 --> D
     D -- 7. 呼叫檔案上傳 API --> C
-    C -- 8. 將檔案上傳至 --> F
-    F -- 9. 回傳檔案 URL --> C
-    C -- 10. 更新任務 (status: review, attachments: [URL]) --> E
-    E -- 11. Socket.IO 即時廣播 --> B
-    B -- 12. UI 自動更新 (任務移至 Review, 顯示連結) --> A
-    A -- 13. 點擊連結審核檔案 --> F
+    C -- 8. 將檔案上傳至 --> G
+    E -- 9. (儲存管理) 設定權限、監控用量 --> G
+    G -- 10. 回傳檔案 URL --> C
+    C -- 11. 更新任務，附加檔案連結 --> F
+    F -- 12. (via Socket.IO) 即時廣播更新 --> B
+    B -- 13. UI 自動更新 --> A
 ```
 
-### 時序圖 (Sequence Diagram)
+### 時序圖 (v1.1 - 含角色職責)
 
 ```mermaid
 sequenceDiagram
     participant User as 使用者
     participant Frontend as 前端 (UI)
-    participant Backend as 後端 (API)
+    participant FullStack_Dev as 全端工程師
+    participant Supabase_Admin as Supabase工程師
     participant AI_Agent as AI Agent
-    participant Supabase_DB as 資料庫
-    participant Supabase_Storage as 存儲
+    participant Supabase as Supabase (DB+Storage)
 
     User->>Frontend: 1. 建立/指派任務
-    Frontend->>Backend: 2. 呼叫 API (create/update task)
-    activate Backend
-
-    Backend->>AI_Agent: 3. 觸發 Agent (非同步)
-    activate AI_Agent
-    Backend->>Supabase_DB: 4. 更新任務狀態 (in progress)
+    Frontend->>FullStack_Dev: 2. 呼叫 API (create/update task)
     
-    Note over Backend, Supabase_DB: Socket.IO 廣播
-    Backend-->>Frontend: 5. (via Socket.IO) 任務狀態更新
-    deactivate Backend
+    alt 資料庫結構變更 (若需要)
+        FullStack_Dev->>Supabase_Admin: 3. 請求變更 DB Schema
+        Supabase_Admin->>Supabase: 4. 執行遷移腳本
+        Supabase-->>Supabase_Admin: 5. 確認變更
+        Supabase_Admin-->>FullStack_Dev: 6. 通知完成
+    end
 
-    AI_Agent->>AI_Agent: 6. 執行任務 (例如: 後製 DM)
+    FullStack_Dev->>Supabase: 7. 更新任務狀態 (in progress)
+    FullStack_Dev->>AI_Agent: 8. 觸發 Agent (非同步)
     
-    AI_Agent->>Backend: 7. 呼叫檔案上傳 API
-    activate Backend
+    Note over FullStack_Dev, Supabase: Socket.IO 廣播
+    FullStack_Dev-->>Frontend: 9. (via Socket.IO) 任務狀態更新
 
-    Backend->>Supabase_Storage: 8. 將檔案上傳
-    activate Supabase_Storage
-    Supabase_Storage-->>Backend: 9. 回傳檔案 URL
-    deactivate Supabase_Storage
-
-    Backend->>Supabase_DB: 10. 更新任務 (status: review, attachments: [URL])
+    AI_Agent->>AI_Agent: 10. 執行任務 (例如: 後製 DM)
+    AI_Agent->>FullStack_Dev: 11. 呼叫檔案上傳 API
     
-    Note over Backend, Supabase_DB: Socket.IO 廣播
-    Backend-->>Frontend: 11. (via Socket.IO) 任務完成更新
-    deactivate Backend
-    deactivate AI_Agent
+    FullStack_Dev->>Supabase: 12. 將檔案上傳至 Storage
+    Supabase-->>FullStack_Dev: 13. 回傳檔案 URL
 
-    Frontend->>User: 12. UI 自動更新 (顯示連結)
+    FullStack_Dev->>Supabase: 14. 更新任務 (status: review, attachments: [URL])
+    
+    Note over FullStack_Dev, Supabase: Socket.IO 廣播
+    FullStack_Dev-->>Frontend: 15. (via Socket.IO) 任務完成更新
 
-    User->>Supabase_Storage: 13. 點擊連結審核檔案
-
+    Frontend->>User: 16. UI 自動更新 (顯示連結)
+    User->>Supabase: 17. 點擊連結審核檔案
 ```
 
-## 4. 開發順序與待辦事項 (Development Plan)
+## 4. 開發順序與待辦事項 (v1.2 - 已整合 AGENTS.md 規範)
 
 我們將依賴關係，由後到前分階段進行開發：**後端基礎 -> Agent 能力 -> 前端功能**。
 
@@ -145,22 +145,20 @@ sequenceDiagram
 此為最高優先級，為所有新功能打下地基。
 
 - **[ ] 資料庫擴充 (Database Schema)**
-  - **目標**: 支援檔案附件和更多的資料實體。
-  - **待辦**:
-    1.  在 `archon_tasks` 資料表中，新增一個 `attachments` 欄位 (型別為 JSONB 或 TEXT[])，用來儲存檔案連結。
-    2.  (可選) 新增 `customers` 和 `vendors` 資料表，並建立與 `projects` 的關聯。
-    3.  建立一個新的 SQL 遷移檔案來執行上述變更。
+    - [x] 撰寫 SQL 遷移腳本，為 `archon_tasks` 表新增 `attachments` 欄位 (型別為 JSONB 或 TEXT[])。
+    - [ ] (可選) 撰寫 SQL 遷移腳本，新增 `customers` 和 `vendors` 資料表。
+    - [ ] 在開發環境中執行並驗證遷移腳本。
+    - [ ] 更新 Prisma schema (`schema.prisma`) 以反映資料庫變更。
 
 - **[x] 檔案上傳功能 (File Handling)**
-  - **目標**: 讓 Agent 可以安全地儲存產出的檔案。
-  - **待辦**:
-    1.  在 `python/src/server/services/` 下建立 `storage_service.py`，專門處理與 Supabase Storage 的所有互動 (上傳、下載、取得 URL)。
-    2.  在 `python/src/server/api_routes/` 下建立 `files_api.py`，提供一個 `POST /api/files/upload` 端點，接收檔案並使用 `StorageService` 進行上傳。
+  - ~~在 `python/src/server/services/` 下建立 `storage_service.py`，專門處理與 Supabase Storage 的所有互動 (上傳、下載、取得 URL)。~~
+  - ~~在 `python/src/server/api_routes/` 下建立 `files_api.py`，提供一個 `POST /api/files/upload` 端點，接收檔案並使用 `StorageService` 進行上傳。~~
 
 - **[ ] 核心 API 擴充 (Core API)**
-  - **目標**: 讓任務可以關聯檔案。
-  - **待辦**:
-    1.  修改 `projects_api.py` 中的 `update_task` 邏輯，使其可以接收並更新 `attachments` 欄位。
+    - [ ] 修改後端 `update_task` 的 API 端點 (`projects_api.py`)，使其能夠接收並處理 `attachments` 欄位的更新請求。
+    - [ ] 更新對應的服務層邏輯 (`task_service.py`) 來處理 `attachments` 的資料庫操作。
+    - [ ] 為 `attachments` 更新功能撰寫並通過 Pytest 測試案例。
+    - [ ] 根據 `AGENTS.md` 指南，在 `python/` 目錄下執行 `pytest` 和 `ruff check` 確保程式碼品質。
 
 ---
 
@@ -169,15 +167,15 @@ sequenceDiagram
 在後端 API 備妥後，賦予 Agent 使用這些新功能的能力。
 
 - **[ ] 開發 Agent 新工具 (Agent Tools)**
-  - **目標**: 讓 Agent 能呼叫新的後端服務。
-  - **待辦**:
-    1.  在 `python/src/agents/tools/` 中建立 `file_tools.py`。
-    2.  在其中定義一個 `upload_and_link_file_to_task` 工具，此工具會呼叫後端的 `POST /api/files/upload` 和 `PUT /api/tasks/{id}` 來完成檔案上傳與連結的完整流程。
+    - [ ] 建立 `python/src/agents/tools/file_tools.py`。
+    - [ ] 定義 `upload_and_link_file_to_task` 工具，並實作其呼叫後端上傳與連結 API 的邏輯。
+    - [ ] 為新工具撰寫並通過 Pytest 單元測試。
+    - [ ] 根據 `AGENTS.md` 指南，在 `python/` 目錄下執行 `pytest` 和 `ruff check`。
 
 - **[ ] 完善 Agent 工作邏輯 (Agent Logic)**
-  - **目標**: 讓 Agent 能完整執行使用者指派的任務。
-  - **待辦**:
-    1.  修改或建立「行銷 Agent」、「PM Agent」，讓它們在工作流程的最後一步，使用 `upload_and_link_file_to_task` 工具來交付成果。
+    - [ ] 識別需要使用新檔案工具的 Agent (例如「行銷 Agent」)。
+    - [ ] 修改該 Agent 的主要邏輯或提示 (prompt)，在其工作流程的最後一步加入呼叫 `upload_and_link_file_to_task` 工具的指令。
+    - [ ] 進行端對端測試，確保 Agent 能成功產出檔案並更新任務，且相關測試案例皆通過。
 
 ---
 
@@ -186,27 +184,24 @@ sequenceDiagram
 當後端和 Agent 都準備就緒後，開始進行使用者可見的功能開發。
 
 - **[ ] 任務附件顯示 (Task Attachments)**
-  - **目標**: 讓使用者可以在 UI 上看到並下載 Agent 產出的檔案。
-  - **待辦**:
-    1.  修改 `endUser-ui` 的任務詳情 (Task Details) 組件。
-    2.  當任務資料中包含 `attachments` 欄位時，將其渲染成一個或多個可點擊的檔案連結。
+    - [ ] 修改前端服務，確保能接收 `attachments` 資料。
+    - [ ] 修改 React 元件，將附件渲染為可點擊的檔案連結。
+    - [ ] 為新功能撰寫 Vitest 測試。
+    - [ ] 根據 `AGENTS.md` 指南，在 `endUser-ui-front` 目錄下執行 `npm test` 和 `npm run lint` 來驗證變更。
 
 - **[ ] 管理者儀表板 (Report Dashboard)**
-  - **目標**: 提供一個給管理者的數據報告儀表板。
-  - **待辦**:
-    1.  **後端**: 在 `python/src/server/api_routes/` 下建立 `reports_api.py`，提供用於儀表板的數據聚合 API (例如 `GET /api/reports/task_summary`)。
-    2.  **前端**: 在 `endUser-ui` 中建立新的儀表板頁面 (`/dashboard`) 和相關圖表組件 (`ReportDashboard.tsx`)。
-    3.  **前端**: 呼叫新的報告 API，並將數據視覺化呈現（例如：各專案任務數量、狀態分佈圖等）。
+    - [ ] **後端**: 建立 `reports_api.py` 並提供數據聚合 API。
+    - [ ] **前端**: 建立儀表板頁面與路由。
+    - [ ] **前端**: 建立儀表板 React 元件，呼叫 API 並將數據視覺化。
+    - [ ] 為新的儀表板元件撰寫 Vitest 測試。
+    - [ ] 根據 `AGENTS.md` 指南，執行 `npm test` 和 `npm run lint`。
 
 - **[ ] AI 資訊頁面整合 (AI Info Page Integration)**
-  - **目標**: 將 `/public/ai/home.html` 的內容轉換為原生 React 元件，以獲得最佳的使用者體驗與可維護性，並在登入後的使用者介面中展示。
-  - **待辦**:
-    1.  分析 `ai/home.html` 的結構與樣式。
-    2.  在 `endUser-ui-front/src/components/` 或 `.../pages/` 中建立一個新的 `AIInfoPage.tsx` 元件。
-    3.  使用 JSX 和應用程式的樣式方案 (如 TailwindCSS) 重建頁面內容。
-    4.  在應用程式的路由中加入此頁面，並確保只有已登入的使用者可以存取。
-
----
+    - [ ] 分析 `public/ai/home.html` 的結構與樣式。
+    - [ ] 建立新的 `AIInfoPage.tsx` React 元件。
+    - [ ] 使用 React 和 Tailwind CSS 重建頁面。
+    - [ ] 將此頁面加入應用程式路由。
+    - [ ] 根據 `AGENTS.md` 指南，執行 `npm test` 和 `npm run lint` 來驗證整合後的頁面。
 
 ---
 
