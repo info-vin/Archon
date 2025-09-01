@@ -164,6 +164,8 @@ sequenceDiagram
 
 ### **Phase 2.3: 前端功能開發 (Frontend Features)**
 
+- [x] 為 `TaskModal` 元件建立單元測試 (Unit tests for `TaskModal` component)
+
 - **[ ] 任務指派選單 (Assignment Dropdown - UI)**
     - [ ] **畫面開發**: 在任務表單中，呼叫後端的 `GET /api/assignable-users` API。
     - [ ] **元件實作**: 將回傳的列表渲染成下拉選單，供使用者進行指派。
@@ -214,7 +216,7 @@ sequenceDiagram
     *   使用者的操作（如點擊、輸入）是否觸發了正確的函式。
     *   UI 狀態是否根據 API 的模擬回傳值或使用者操作而正確更新。
 3.  **本地測試流程**:
-    *   在 `endUser-ui-front/` 等前端專案目錄下執行 `npm test` (或 `yarn test`)。
+    *   在 `enduser-ui-fe/` 等前端專案目錄下執行 `npm test` (或 `yarn test`)。
     *   在提交 (Commit) 程式碼前，必須確保所有本地測試都已通過。
 
 ---

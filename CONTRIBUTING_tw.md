@@ -35,6 +35,34 @@
 - 移動檔案或更改 imports 後，記得跑 `pnpm lint --filter <project_name>` 確保 ESLint 和 TypeScript 規則仍然通過。
 - 即使沒人要求，也請為你修改的程式碼增加或更新測試。
 
+### 前端測試實踐與常見問題 (Frontend Testing Practices & FAQ)
+
+在本次開發週期中，我們總結了以下前端測試的最佳實踐與常見問題的解決方案：
+
+1.  **如何執行特定子專案的測試？**
+    *   **問題**: 專案根目錄的 `make test-fe` 指令只會測試 `archon-ui-main`。
+    *   **解法**: 必須先進入目標專案的目錄，再執行測試指令。例如，要測試 `enduser-ui-fe`，正確的指令是：
+        ```bash
+        cd enduser-ui-fe && npm test
+        ```
+
+2.  **`Failed to resolve import` 錯誤**
+    *   **問題**: 執行測試時，出現無法解析 `import` 的錯誤，例如 `@testing-library/user-event`。
+    *   **解法**: 這代表該專案的 `package.json` 中缺少了必要的開發依賴 (`devDependencies`)。需在該專案目錄下使用 `npm install --save-dev <package-name>` 來安裝缺少的套件。
+
+3.  **測試中找不到「純圖示按鈕」**
+    *   **問題**: 使用 `screen.getByRole('button', { name: /.../i })` 無法找到一個只有圖示（例如 "X"）的按鈕。
+    *   **解法**: 為了無障礙性 (a11y) 和測試的穩定性，純圖示按鈕應加上 `aria-label` 屬性，為按鈕提供一個文字描述。例如：
+        ```html
+        <button aria-label="Close">
+          <XIcon />
+        </button>
+        ```
+
+4.  **表單必填欄位的驗證測試**
+    *   **問題**: 當 `input` 有 `required` 屬性時，在測試中 `userEvent.click(submitButton)` 可能不會觸發 `submit` 事件，導致無法測試元件內部的錯誤處理邏輯（例如 `alert`）。
+    *   **解法**: 為了繞過瀏覽器的預設驗證行為，專門測試元件的內部邏輯，可以使用 `fireEvent.submit(submitButton)` 來直接觸發 `submit` 事件。
+
 ### 後端 API 測試：模擬資料庫 (Backend API Testing: Mocking the Database)
 
 為了確保後端測試的穩定與獨立性，所有測試**嚴禁**連線至真實資料庫。我們透過模擬 (Mocking) 來達成此目的。

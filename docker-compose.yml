@@ -169,7 +169,7 @@ services:
   enduser-ui-front:
     profiles: ["frontend", "full"]
     build:
-      context: ./endUser-ui-front
+      context: ./enduser-ui-fe
       dockerfile: Dockerfile
     container_name: enduser-ui-front
     ports:
@@ -177,11 +177,11 @@ services:
     networks:
       - app-network
     volumes:
-      - ./endUser-ui-front/src:/app/src
-      - ./endUser-ui-front/public:/app/public
+      - ./enduser-ui-fe/src:/app/src
+      - ./enduser-ui-fe/public:/app/public
     depends_on:
       - archon-server
 
 networks:
   app-network:
-    driver: bridge
+    driver: bridgedge
