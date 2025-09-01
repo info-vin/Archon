@@ -214,7 +214,7 @@ sequenceDiagram
     *   使用者的操作（如點擊、輸入）是否觸發了正確的函式。
     *   UI 狀態是否根據 API 的模擬回傳值或使用者操作而正確更新。
 3.  **本地測試流程**:
-    *   在 `endUser-ui-front/` 等前端專案目錄下執行 `npm test` (或 `yarn test`)。
+    *   在 `enduser-ui-fe/` 等前端專案目錄下執行 `npm test` (或 `yarn test`)。
     *   在提交 (Commit) 程式碼前，必須確保所有本地測試都已通過。
 
 ---
