@@ -1,5 +1,5 @@
 -- Mock data seed for Archon tables
--- Generated from endUser-ui-front/src/services/api.ts
+-- Generated from enduser-ui-fe/src/services/api.ts
 
 -- Seed for profiles table (MOCK_EMPLOYEES)
 INSERT INTO profiles (id, "employeeId", name, email, department, position, status, role, avatar) VALUES
