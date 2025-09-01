@@ -46,7 +46,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({ onClose, onSubmit, employe
       <div className="bg-card rounded-lg shadow-xl w-full max-w-lg p-6 relative">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-2xl font-bold">Create New Task</h2>
-          <button onClick={onClose} className="p-1 rounded-full hover:bg-secondary">
+          <button onClick={onClose} className="p-1 rounded-full hover:bg-secondary" aria-label="Close">
             <XIcon className="w-6 h-6" />
           </button>
         </div>

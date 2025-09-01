@@ -164,6 +164,8 @@ sequenceDiagram
 
 ### **Phase 2.3: 前端功能開發 (Frontend Features)**
 
+- [x] 為 `TaskModal` 元件建立單元測試 (Unit tests for `TaskModal` component)
+
 - **[ ] 任務指派選單 (Assignment Dropdown - UI)**
     - [ ] **畫面開發**: 在任務表單中，呼叫後端的 `GET /api/assignable-users` API。
     - [ ] **元件實作**: 將回傳的列表渲染成下拉選單，供使用者進行指派。
