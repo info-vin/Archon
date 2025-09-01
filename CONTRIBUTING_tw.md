@@ -104,5 +104,6 @@ def test_some_api_call_success(client, mock_supabase_client, mocker):
 4.  **提交變更 (`git commit -m "..."`)**
     *   執行提交，並撰寫清晰、有意義的提交訊息，說明這次變更的目的。
 
-5.  **推送至遠端 (`git push origin <branch-name>`)**
+5.  **推送至遠端 (`git push`)**
     *   將本地的提交推送到遠端分支，與團隊成員同步進度。
+    *   **注意**: 第一次推送新的分支時，需使用 `git push --set-upstream origin <branch-name>` 來建立本地與遠端分支的追蹤關係。
