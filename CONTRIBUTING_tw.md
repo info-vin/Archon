@@ -35,6 +35,52 @@
 - 移動檔案或更改 imports 後，記得跑 `pnpm lint --filter <project_name>` 確保 ESLint 和 TypeScript 規則仍然通過。
 - 即使沒人要求，也請為你修改的程式碼增加或更新測試。
 
+### 後端 API 測試：模擬資料庫 (Backend API Testing: Mocking the Database)
+
+為了確保後端測試的穩定與獨立性，所有測試**嚴禁**連線至真實資料庫。我們透過模擬 (Mocking) 來達成此目的。
+
+- **測試指令**: 永遠使用 `make test-be` 來執行後端測試。此指令已在 `Makefile` 中定義，能確保在正確的虛擬環境中執行。
+
+- **常見錯誤**: 如果測試出現 `supabase._sync.client.SupabaseException: Invalid API key` 錯誤，這代表你的測試案例意外地觸發了真實的資料庫連線。
+
+- **解決方案**: 我們必須攔截 (patch) 任何嘗試建立真實資料庫客戶端的行為，並將其替換為測試環境提供的 `mock_supabase_client`。這需要使用 `pytest-mock` 套件提供的 `mocker` 功能。
+
+**範例：**
+
+假設一個 API 端點會呼叫 `LogService`，而 `LogService` 在初始化時會呼叫 `get_supabase_client()`。
+
+**錯誤的測試寫法（會觸發真實連線）:**
+```python
+# 這會失敗！
+def test_some_api_call_failure(client, mock_supabase_client):
+    # ... 即使這裡有 mock_supabase_client，
+    # LogService 內部呼叫的 get_supabase_client() 仍然是真實的。
+    response = client.post("/api/some_endpoint", json={...})
+    assert response.status_code == 200
+```
+
+**正確的測試寫法（使用 mocker.patch）:**
+```python
+# 正確！
+def test_some_api_call_success(client, mock_supabase_client, mocker):
+    # 使用 mocker.patch 攔截在 service 層的 get_supabase_client 呼叫
+    # 並讓它回傳我們測試專用的 mock_supabase_client
+    mocker.patch(
+        'src.server.services.log_service.get_supabase_client',
+        return_value=mock_supabase_client
+    )
+
+    # 接下來的測試邏輯...
+    # ...設定 mock_supabase_client 的預期回傳值...
+    mock_supabase_client.table.return_value.insert.return_value.execute.return_value = ...
+
+    # ...觸發 API ...
+    response = client.post("/api/record-gemini-log", json={...})
+
+    # ...驗證結果...
+    assert response.status_code == 201
+```
+
 ## PR 提交規範
 - 標題格式：[<project_name>] <標題>
 - 提交前務必運行 `pnpm lint` 和 `pnpm test`。
