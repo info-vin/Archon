@@ -141,20 +141,20 @@ sequenceDiagram
 
 此功能用於記錄開發過程中與 AI 的互動，作為未來分析與優化的教材。
 
-- **[ ] 資料庫擴充 (Database Schema)**
-    - [ ] 撰寫 SQL 遷移腳本 `20250901_create_gemini_logs_table.sql`。
-    - [ ] 在新腳本中建立 `gemini_logs` 資料表，需包含 `id`, `user_input`, `gemini_response`, `project_name`, `user_name`, `created_at` 欄位。
+- **[x] 資料庫擴充 (Database Schema)**
+    - [x] 撰寫 SQL 遷移腳本 `20250901_create_gemini_logs_table.sql`。
+    - [x] 在新腳本中建立 `gemini_logs` 資料表，需包含 `id`, `user_input`, `gemini_response`, `project_name`, `user_name`, `created_at` 欄位。
 
-- **[ ] 後端 API 開發 (Backend API)**
-    - [ ] 在 `python/src/server/api_routes/` 下建立 `log_api.py`。
-    - [ ] 建立 Pydantic 模型以驗證 `POST` 請求的 Body (`gemini_response` 為必填)。
-    - [ ] 實作 `POST /api/record-gemini-log` 端點，處理資料驗證與寫入邏輯。
+- **[x] 後端 API 開發 (Backend API)**
+    - [x] 在 `python/src/server/api_routes/` 下建立 `log_api.py`。
+    - [x] 建立 Pydantic 模型以驗證 `POST` 請求的 Body (`gemini_response` 為必填)。
+    - [x] 實作 `POST /api/record-gemini-log` 端點，處理資料驗證與寫入邏輯。
 
-- **[ ] 專案整合 (Integration)**
-    - [ ] 在主 FastAPI 應用中註冊 `log_api` 的路由。
+- **[x] 專案整合 (Integration)**
+    - [x] 在主 FastAPI 應用中註冊 `log_api` 的路由。
 
-- **[ ] 撰寫測試 (Testing)**
-    - [ ] 為新的 API 端點撰寫並通過 Pytest 測試案例。
+- **[x] 撰寫測試 (Testing)**
+    - [x] 為新的 API 端點撰寫並通過 Pytest 測試案例。
 
 ---
 
