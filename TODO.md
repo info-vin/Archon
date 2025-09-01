@@ -118,6 +118,12 @@ sequenceDiagram
             - `Marketer`: 可指派給**自己**，以及**任何 AI Agent**。
             - `AI Agent`: **不可指派任務**，僅作為被指派者。
     - [ ] **2. API 端點**: 在 `projects_api.py` 中建立 `GET /api/assignable-users`，根據上述權限規則，回傳合法的可指派人員列表。
+        - **實作細節 (Implementation Details):**
+            - 在 `projects_api.py` 的 `typing` import 中加入 `List`。
+            - 新增 Pydantic 模型 `AssignableUser(id: str, name: str, role: str)`。
+            - 新增 `@router.get("/assignable-users")` 路由函式。
+            - 函式內部暫時將當前使用者角色寫死為 "PM" 進行開發。
+            - 從 `profiles` 資料表讀取所有使用者，並根據 RBAC 規則過濾後回傳。
     - [ ] **3. 安全驗證**: 在 `create/update_task` API 中，加入伺服器端驗證，確保每次指派操作都經過權限檢查。
     - [ ] **4. 資料庫**: 確保 `users` 或 `profiles` 資料表包含 `role` 欄位以供判斷。
 
