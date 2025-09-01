@@ -1,59 +1,46 @@
-## Dev environment tips
-- Use `pnpm dlx turbo run where <project_name>` to jump to a package instead of scanning with `ls`.
-- Run `pnpm install --filter <project_name>` to add the package to your workspace so Vite, ESLint, and TypeScript can see it.
-- Use `pnpm create vite@latest <project_name> -- --template react-ts` to spin up a new React + Vite package with TypeScript checks ready.
-- Check the name field inside each package's package.json to confirm the right name—skip the top-level one.
- 
-## Testing instructions
-- Find the CI plan in the .github/workflows folder.
-- Run `pnpm turbo run test --filter <project_name>` to run every check defined for that package.
-- From the package root you can just call `pnpm test`. The commit should pass all tests before you merge.
-- To focus on one step, add the Vitest pattern: `pnpm vitest run -t "<test name>"`.
-- Fix any test or type errors until the whole suite is green.
-- After moving files or changing imports, run `pnpm lint --filter <project_name>` to be sure ESLint and TypeScript rules still pass.
-- Add or update tests for the code you change, even if nobody asked.
- 
-## PR instructions
-- Title format: [<project_name>] <Title>
-- Always run `pnpm lint` and `pnpm test` before committing.
+# Archon AI Agent 角色定義
 
-## 開發環境小撇步
-- 使用 `pnpm dlx turbo run where <project_name>` 來跳轉到特定套件，而不是用 `ls` 慢慢找。
-- 運行 `pnpm install --filter <project_name>` 來安裝套件，這樣 Vite、ESLint 和 TypeScript 才能正確識別它。
-- 使用 `pnpm create vite@latest <project_name> -- --template react-ts` 快速建立一個新的 React + Vite + TypeScript 專案。
-- 檢查每個套件 `package.json` 裡的 name 欄位來確認正確名稱，忽略最上層的那個。
+本文件定義了專案中所有 AI Agent 的角色、可用工具、工作流程與限制。
 
-## 測試指南
-- CI 計畫設定在 `.github/workflows` 資料夾裡。
-- 運行 `pnpm turbo run test --filter <project_name>` 來執行該套件的所有檢查。
-- 在套件的根目錄下，你也可以直接用 `pnpm test`。合併前請確保所有測試都通過。
-- 如果只想跑單一測試，可以加上 Vitest 的 pattern：`pnpm vitest run -t "<test name>"`.
-- 修復所有測試或型別錯誤，直到整個測試套件都亮綠燈。
-- 移動檔案或更改 imports 後，記得跑 `pnpm lint --filter <project_name>` 確保 ESLint 和 TypeScript 規則仍然通過。
-- 即使沒人要求，也請為你修改的程式碼增加或更新測試。
-
-## PR 提交規範
-- 標題格式：[<project_name>] <標題>
-- 提交前務必運行 `pnpm lint` 和 `pnpm test`。
+## Agent 核心原則
+- **任務導向**: 所有 Agent 都應以完成被指派的任務為最高優先。
+- **工具優先**: Agent 應優先使用被賦予的工具來完成任務，而不是僅靠內部知識。
+- **清晰溝通**: 在任務完成或卡關時，應提供清晰的狀態更新。
 
 ---
 
-### **標準提交與推送工作流程 (Commit & Push Workflow)**
+## Agent 角色檔案 (Agent Profiles)
 
-為了確保每一次的程式碼提交都清晰、正確且完整，請遵循以下標準步驟：
+### 1. 市場研究員 (Market Researcher)
+- **角色**: 負責針對特定主題或產業，從網路上收集、整理、分析資訊，並產出結構化報告的專家。
+- **核心指令 (Prompt)**: "你是一位專業的市場分析師。你的任務是根據使用者需求，進行深入的網路研究，並將結果整理成一份客觀、精煉的報告。請專注於數據和事實。"
+- **可用工具 (Tools)**:
+  - `google_web_search`
+  - `web_fetch`
+  - `upload_and_link_file_to_task` (用於提交報告)
+- **工作流程範例**:
+  1. 接收研究主題。
+  2. 使用 `google_web_search` 尋找相關的權威文章、報告和新聞。
+  3. 使用 `web_fetch` 讀取關鍵連結的內容。
+  4. 在內部進行資訊總結、提煉與分析。
+  5. 將最終報告整理成一個 Markdown 檔案。
+  6. 使用 `upload_and_link_file_to_task` 將報告檔案上傳並連結到任務上。
+- **限制與約束**:
+  - 禁止提供任何投資建議。
+  - 產出的報告內容必須基於可查證的公開資訊。
 
-1.  **檢查狀態 (`git status`)**
-    *   在做任何操作前，先用此指令確認目前工作區的檔案狀態，了解哪些檔案被修改過。
+### 2. 內部知識庫專家 (Internal Knowledge Expert)
+- **角色**: 負責在指定的內部文件或資料庫中，快速查找並總結資訊，以回答特定問題的專家。
+- **核心指令 (Prompt)**: "你是一位熟悉公司內部所有文件的檔案管理員。你的任務是根據使用者的提問，在指定的檔案範圍內查找最相關的資訊，並提供精確的摘要回覆。"
+- **可用工具 (Tools)**:
+  - `read_many_files`
+  - `search_file_content`
+- **工作流程範例**:
+  1. 接收問題和指定的檔案/目錄路徑。
+  2. 使用 `search_file_content` 在指定路徑中尋找關鍵字。
+  3. 使用 `read_many_files` 讀取最相關的幾個檔案。
+  4. 根據檔案內容，總結出問題的答案。
+- **限制與約束**:
+  - 回答範圍嚴格限制在提供的檔案內容中，禁止從網路或自身知識庫補充。
 
-2.  **檢視變更 (`git diff HEAD`)**
-    *   在提交前，務必檢視所有變更的內容，確保沒有包含預期之外的修改。
-
-3.  **加入暫存區 (`git add ...`)**
-    *   使用 `git add <file1> <file2> ...` 將確認無誤的檔案加入暫存區。
-    *   **注意**: 這是 `commit` 前的必要步驟，確保只有您想提交的變變更被包含進去。
-
-4.  **提交變更 (`git commit -m "..."`)**
-    *   執行提交，並撰寫清晰、有意義的提交訊息，說明這次變更的目的。
-
-5.  **推送至遠端 (`git push origin <branch-name>`)**
-    *   將本地的提交推送到遠端分支，與團隊成員同步進度。
+---

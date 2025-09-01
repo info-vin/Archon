@@ -1,4 +1,4 @@
-# Archon 專案開發藍圖：Phase 2 v1.2
+# Archon 專案開發藍圖：Phase 2 v1.3
 
 本文件旨在規劃 Archon 專案的下一階段開發，核心目標是將 Agent 自動化與 RAG (檢索增強生成) 功能深度整合到 endUser-ui 中，實現人機協作的智慧任務管理。
 
@@ -86,11 +86,15 @@ sequenceDiagram
 
 ## 3. 開發順序與待辦事項 (v1.3)
 
-我們將依賴關係，由後到前分階段進行開發：**後端基礎 -> Agent 能力 -> 前端功能**。
+我們將開發任務明確區分為「後端」與「前端」，以便團隊成員可以並行工作，同時確保後端基礎建設優先完成。
 
 ---
 
-### **Phase 2.1: 後端基礎建設 (Backend Foundation)**
+## 後端開發 (Backend Development)
+
+後端負責所有核心商業邏輯、資料庫互動、Agent 能力以及 API 端點。
+
+### **Phase 2.1: 核心基礎建設 (Core Foundation)**
 
 此為最高優先級，為所有新功能打下地基。
 
@@ -105,15 +109,19 @@ sequenceDiagram
     - [ ] **資料庫**: 確保 `users` 或 `profiles` 資料表包含 `role` 欄位以供判斷。
 
 - **[x] 檔案上傳功能 (File Handling)**
-  - ~~在 `python/src/server/services/` 下建立 `storage_service.py`，專門處理與 Supabase Storage 的所有互動 (上傳、下載、取得 URL)。~~
-  - ~~在 `python/src/server/api_routes/` 下建立 `files_api.py`，提供一個 `POST /api/files/upload` 端點，接收檔案並使用 `StorageService` 進行上傳。~~
+  - ~~在 `python/src/server/services/` 下建立 `storage_service.py`~~
+  - ~~在 `python/src/server/api_routes/` 下建立 `files_api.py`~~
 
 - **[ ] 核心 API 擴充 (Core API)**
     - [ ] 修改後端 `update_task` 的 API 端點 (`projects_api.py`)，使其能夠接收並處理 `attachments` 欄位的更新請求。
     - [ ] 更新對應的服務層邏輯 (`task_service.py`) 來處理 `attachments` 的資料庫操作。
     - [ ] 為 `attachments` 更新功能撰寫並通過 Pytest 測試案例。
 
----
+- **[ ] 管理者儀表板 API (Report Dashboard API)**
+    - [ ] 建立 `reports_api.py` 並提供數據聚合 API。
+
+- **[ ] 圖片連結增強 API (Enhanced Image Links API)**
+    - [ ] 修改資料模型 (如 `BlogPost`)，允許圖片關聯一個可選的「文件下載連結」(例如 PDF)。
 
 ### **Phase 2.2: Agent 能力擴充 (Agent Capabilities)**
 
@@ -129,11 +137,32 @@ sequenceDiagram
     - [ ] 修改該 Agent 的主要邏輯或提示 (prompt)，在其工作流程的最後一步加入呼叫 `upload_and_link_file_to_task` 工具的指令。
     - [ ] 進行端對端測試，確保 Agent 能成功產出檔案並更新任務。
 
+### **Phase 2.4: AI 協作日誌紀錄 (AI Collaboration Logging)**
+
+此功能用於記錄開發過程中與 AI 的互動，作為未來分析與優化的教材。
+
+- **[ ] 資料庫擴充 (Database Schema)**
+    - [ ] 撰寫 SQL 遷移腳本 `20250901_create_gemini_logs_table.sql`。
+    - [ ] 在新腳本中建立 `gemini_logs` 資料表，需包含 `id`, `user_input`, `gemini_response`, `project_name`, `user_name`, `created_at` 欄位。
+
+- **[ ] 後端 API 開發 (Backend API)**
+    - [ ] 在 `python/src/server/api_routes/` 下建立 `log_api.py`。
+    - [ ] 建立 Pydantic 模型以驗證 `POST` 請求的 Body (`gemini_response` 為必填)。
+    - [ ] 實作 `POST /api/record-gemini-log` 端點，處理資料驗證與寫入邏輯。
+
+- **[ ] 專案整合 (Integration)**
+    - [ ] 在主 FastAPI 應用中註冊 `log_api` 的路由。
+
+- **[ ] 撰寫測試 (Testing)**
+    - [ ] 為新的 API 端點撰寫並通過 Pytest 測試案例。
+
 ---
 
-### **Phase 2.3: 前端功能開發 (Frontend Features)**
+## 前端開發 (Frontend Development)
 
-當後端和 Agent 都準備就緒後，開始進行使用者可見的功能開發。
+前端負責所有使用者介面、互動體驗以及與後端 API 的串接。
+
+### **Phase 2.3: 前端功能開發 (Frontend Features)**
 
 - **[ ] 任務指派選單 (Assignment Dropdown - UI)**
     - [ ] **畫面開發**: 在任務表單中，呼叫後端的 `GET /api/assignable-users` API。
@@ -141,11 +170,9 @@ sequenceDiagram
     - [ ] **測試**: 撰寫 Vitest 測試，確保選單能正確顯示及運作。
 
 - **[ ] 使用者頭像更新 (User Avatar Update)**
-    - [ ] **尋找或建立新元件**: 引入一個新的頭像 (Avatar) 元件，該元件需支援：
-        - 顯示使用者英文名稱的縮寫。
-        - 可根據使用者角色（如管理員、一般成員）動態設定不同的顏色。
-    - [ ] **整合新元件**: 在 UI 中所有顯示「人類使用者」的地方（如任務指派人、評論者列表），替換為這個新的頭像元件。
-    - [ ] **區分 AI Agent**: 保留或改造舊的頭像元件，專門用來代表「AI Agent」，使其在視覺上與人類使用者有明顯區別。
+    - [ ] **尋找或建立新元件**: 引入一個新的頭像 (Avatar) 元件。
+    - [ ] **整合新元件**: 在 UI 中所有顯示「人類使用者」的地方，替換為這個新的頭像元件。
+    - [ ] **區分 AI Agent**: 保留或改造舊的頭像元件，專門用來代表「AI Agent」。
     - [ ] **撰寫測試**: 為新的頭像元件撰寫 Vitest 測試。
 
 - **[ ] 任務附件顯示 (Task Attachments)**
@@ -153,16 +180,14 @@ sequenceDiagram
     - [ ] 修改 React 元件，將附件渲染為可點擊的檔案連結。
     - [ ] 為新功能撰寫 Vitest 測試。
 
-- **[ ] 管理者儀表板 (Report Dashboard)**
-    - [ ] **後端**: 建立 `reports_api.py` 並提供數據聚合 API。
-    - [ ] **前端**: 建立儀表板頁面與路由。
-    - [ ] **前端**: 建立儀表板 React 元件，呼叫 API 並將數據視覺化。
+- **[ ] 管理者儀表板 UI (Report Dashboard UI)**
+    - [ ] 建立儀表板頁面與路由。
+    - [ ] 建立儀表板 React 元件，呼叫 API 並將數據視覺化。
     - [ ] 為新的儀表板元件撰寫 Vitest 測試。
 
-- **[ ] 圖片連結增強 (Enhanced Image Links)**
-    - [ ] **後端**: 修改資料模型 (如 `BlogPost`)，允許圖片關聯一個可選的「文件下載連結」(例如 PDF)。
-    - [ ] **前端**: 當圖片包含下載連結時，點擊圖片應觸發文件下載。
-    - [ ] **前端**: 可考慮在圖片上顯示一個下載圖示，以提示使用者。
+- **[ ] 圖片連結增強 UI (Enhanced Image Links UI)**
+    - [ ] 當圖片包含下載連結時，點擊圖片應觸發文件下載。
+    - [ ] 可考慮在圖片上顯示一個下載圖示，以提示使用者。
 
 ---
 
