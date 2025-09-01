@@ -104,9 +104,22 @@ sequenceDiagram
     - [ ] 在開發環境中執行並驗證遷移腳本。
 
 - **[ ] 角色權限管理 (RBAC - Security & Data)**
-    - [ ] **API 端點**: 在 `projects_api.py` 中建立 `GET /api/assignable-users`，根據當前登入者，回傳合法的可指派人員列表。
-    - [ ] **安全驗證**: 在 `create/update_task` API 中，加入伺服器端驗證，確保每次指派操作都經過權限檢查。
-    - [ ] **資料庫**: 確保 `users` 或 `profiles` 資料表包含 `role` 欄位以供判斷。
+    - **[ ] 1. 定義角色與權限 (v1.3)**
+        - **角色 (Roles):**
+            - `Admin` (管理者)
+            - `PM` (專案經理)
+            - `Engineer` (工程師)
+            - `Marketer` (行銷人員)
+            - `AI Agent` (人工智慧代理): 一個角色類別，未來可擴充為多個不同職能的 Agent。
+        - **權限 (Permissions) - "誰可以指派給誰":**
+            - `Admin`: 可指派給**任何人** (包括所有人類角色與 AI Agent)。
+            - `PM`: 可指派給**團隊中的 Engineer、Marketer**，以及**任何 AI Agent**。
+            - `Engineer`: 可指派給**自己、其他 Engineer**，以及**任何 AI Agent**。
+            - `Marketer`: 可指派給**自己**，以及**任何 AI Agent**。
+            - `AI Agent`: **不可指派任務**，僅作為被指派者。
+    - [ ] **2. API 端點**: 在 `projects_api.py` 中建立 `GET /api/assignable-users`，根據上述權限規則，回傳合法的可指派人員列表。
+    - [ ] **3. 安全驗證**: 在 `create/update_task` API 中，加入伺服器端驗證，確保每次指派操作都經過權限檢查。
+    - [ ] **4. 資料庫**: 確保 `users` 或 `profiles` 資料表包含 `role` 欄位以供判斷。
 
 - **[x] 檔案上傳功能 (File Handling)**
   - ~~在 `python/src/server/services/` 下建立 `storage_service.py`~~
