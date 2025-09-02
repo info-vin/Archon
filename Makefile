@@ -79,6 +79,7 @@ test-fe:
 # Run backend tests
 test-be:
 	@echo "Running backend tests..."
+	@cd python && uv sync --extra test
 	@cd python && uv run pytest
 
 # Run all linters
@@ -92,6 +93,7 @@ lint-fe:
 # Run backend linter
 lint-be:
 	@echo "Linting backend..."
+	@cd python && uv sync --extra dev
 	@cd python && uv run ruff check --fix
 
 # Clean everything (with confirmation)
