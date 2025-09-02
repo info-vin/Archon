@@ -38,6 +38,27 @@ from ..services.projects.versioning_service import VersioningService
 # Import Socket.IO broadcast functions from socketio_handlers
 from .socketio_handlers import broadcast_project_update
 
+
+def has_permission_to_assign(current_user_role: str, assignee_role: str) -> bool:
+    """根據 RBAC 規則，檢查目前的使用者角色是否有權限指派任務給目標角色。"""
+    permissions = {
+        # Admin 可以指派給任何人
+        "Admin": ["Admin", "PM", "Engineer", "Marketer", "Market Researcher", "Internal Knowledge Expert"],
+        # PM 可以指派給 Engineer, Marketer, 和任何 AI Agent
+        "PM": ["Engineer", "Marketer", "Market Researcher", "Internal Knowledge Expert"],
+        # Engineer 可以指派給自己、其他 Engineer, 和任何 AI Agent
+        "Engineer": ["Engineer", "Market Researcher", "Internal Knowledge Expert"],
+        # Marketer 可以指派給自己和任何 AI Agent
+        "Marketer": ["Marketer", "Market Researcher", "Internal Knowledge Expert"]
+    }
+    
+    # 取得當前操作者被允許指派的角色列表
+    allowed_roles = permissions.get(current_user_role, [])
+    
+    # 檢查目標角色是否在允許的列表中
+    return assignee_role in allowed_roles
+
+
 router = APIRouter(prefix="/api", tags=["projects"])
 
 
@@ -73,6 +94,53 @@ class CreateTaskRequest(BaseModel):
     assignee: str | None = "User"
     task_order: int | None = 0
     feature: str | None = None
+
+
+class AssignableUser(BaseModel):
+    id: str
+    name: str
+    role: str
+
+
+@router.get("/assignable-users", response_model=list[AssignableUser])
+async def list_assignable_users():
+    """
+    List users that can be assigned to a task based on the current user's role.
+    """
+    # For now, hardcode the role as "PM" for development as per TODO.md
+    current_user_role = "PM"
+
+    try:
+        logfire.info(f"Listing assignable users for role: {current_user_role}")
+        supabase = get_supabase_client()
+
+        # Get all profiles
+        response = supabase.table("profiles").select("id, username, role").execute()
+        if response.data is None:
+            logfire.warning("Could not fetch profiles from database.")
+            return []
+
+        all_users = response.data
+        assignable_users = []
+
+        # RBAC Rules from TODO.md
+        # PM can assign to: Engineer, Marketer, any AI Agent
+        if current_user_role == "PM":
+            allowed_roles = {"Engineer", "Marketer", "AI Agent"}
+            for user in all_users:
+                if user.get("role") in allowed_roles:
+                    assignable_users.append(
+                        AssignableUser(id=user["id"], name=user["username"], role=user["role"])
+                    )
+        
+        # TODO: Implement rules for other roles (Admin, Engineer, Marketer)
+
+        logfire.info(f"Found {len(assignable_users)} assignable users for role {current_user_role}")
+        return assignable_users
+
+    except Exception as e:
+        logfire.error(f"Failed to list assignable users: {e}")
+        raise HTTPException(status_code=500, detail={"error": "Failed to retrieve assignable users"})
 
 
 @router.get("/projects")
@@ -542,6 +610,24 @@ async def list_project_tasks(project_id: str, include_archived: bool = False, ex
 async def create_task(request: CreateTaskRequest):
     """Create a new task with automatic reordering and real-time Socket.IO broadcasting."""
     try:
+        # RBAC Validation
+        if request.assignee and request.assignee != "User":
+            current_user_role = "PM"  # Hardcoded for now
+            supabase = get_supabase_client()
+            response = supabase.table("profiles").select("role").eq("username", request.assignee).single().execute()
+            
+            if response.data:
+                assignee_role = response.data.get("role")
+                if not has_permission_to_assign(current_user_role, assignee_role):
+                    raise HTTPException(status_code=403, detail=f"As a {current_user_role}, you cannot assign tasks to a {assignee_role}.")
+            else:
+                agent_roles = {"Market Researcher", "Internal Knowledge Expert"}
+                if request.assignee in agent_roles:
+                    if not has_permission_to_assign(current_user_role, request.assignee):
+                        raise HTTPException(status_code=403, detail=f"As a {current_user_role}, you cannot assign tasks to a {request.assignee}.")
+                else:
+                    logfire.warning(f"Assignee '{request.assignee}' not found in profiles and is not a known agent role. Skipping permission check.")
+
         # Use TaskService to create the task
         task_service = TaskService()
         success, result = await task_service.create_task(
@@ -720,6 +806,24 @@ class RestoreVersionRequest(BaseModel):
 async def update_task(task_id: str, request: UpdateTaskRequest):
     """Update a task with real-time Socket.IO broadcasting."""
     try:
+        # RBAC Validation
+        if request.assignee is not None:
+            current_user_role = "PM"  # Hardcoded for now
+            supabase = get_supabase_client()
+            response = supabase.table("profiles").select("role").eq("username", request.assignee).single().execute()
+
+            if response.data:
+                assignee_role = response.data.get("role")
+                if not has_permission_to_assign(current_user_role, assignee_role):
+                    raise HTTPException(status_code=403, detail=f"As a {current_user_role}, you cannot assign tasks to a {assignee_role}.")
+            else:
+                agent_roles = {"Market Researcher", "Internal Knowledge Expert"}
+                if request.assignee in agent_roles:
+                    if not has_permission_to_assign(current_user_role, request.assignee):
+                        raise HTTPException(status_code=403, detail=f"As a {current_user_role}, you cannot assign tasks to a {request.assignee}.")
+                else:
+                    logfire.warning(f"Assignee '{request.assignee}' not found in profiles and is not a known agent role. Skipping permission check.")
+
         # Build update fields dictionary
         update_fields = {}
         if request.title is not None:
