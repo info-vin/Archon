@@ -280,13 +280,21 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
       host: '0.0.0.0', // Listen on all network interfaces with explicit IP
       port: parseInt(process.env.ARCHON_UI_PORT || env.ARCHON_UI_PORT || '3737'), // Use configurable port
       strictPort: true, // Exit if port is in use
-      allowedHosts: [env.HOST, 'localhost', '127.0.0.1'],
+      allowedHosts: (() => {
+        const defaultHosts = ['localhost', '127.0.0.1', '::1'];
+        const customHosts = env.VITE_ALLOWED_HOSTS?.trim()
+          ? env.VITE_ALLOWED_HOSTS.split(',').map(h => h.trim()).filter(Boolean)
+          : [];
+        const hostFromEnv = (process.env.HOST ?? env.HOST) && (process.env.HOST ?? env.HOST) !== 'localhost' 
+          ? [process.env.HOST ?? env.HOST] 
+          : [];
+        return [...new Set([...defaultHosts, ...hostFromEnv, ...customHosts])];
+      })(),
       proxy: {
         '/api': {
           target: `http://${host}:${port}`,
           changeOrigin: true,
           secure: false,
-          ws: true,
           configure: (proxy, options) => {
             proxy.on('error', (err, req, res) => {
               console.log('🚨 [VITE PROXY ERROR]:', err.message);
@@ -297,12 +305,6 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
               console.log('🔄 [VITE PROXY] Forwarding:', req.method, req.url, 'to', `http://${host}:${port}${req.url}`);
             });
           }
-        },
-        // Socket.IO specific proxy configuration
-        '/socket.io': {
-          target: `http://${host}:${port}`,
-          changeOrigin: true,
-          ws: true
         }
       },
     },
