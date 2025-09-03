@@ -56,3 +56,25 @@ This indicated that pinning the `torch` dependency in `pyproject.toml` was not a
 *   **Avoid Pinning Platform-Specific Dependencies:** For libraries like `torch` that have different builds for different platforms and Python versions, avoid pinning them directly in `pyproject.toml`. Let the package manager resolve the correct version.
 *   **Add `uv.lock` to `.gitignore`:** To prevent cross-platform conflicts with lock files, `python/uv.lock` should be added to `.gitignore`. This allows each developer to have a lock file that is specific to their environment.
 *   **Explicit Dependency Installation in `Makefile`:** The `Makefile` should be explicit about installing dependencies for different tasks. The `test-be` and `lint-be` targets were updated to run `uv sync --extra <group>` before executing the tests or linter. This ensures that the correct dependencies are always installed.
+
+## Frontend Testing and Makefile Fixes (2025/09/03)
+
+This section documents the process of debugging and fixing frontend test execution on Windows, and the subsequent improvements to the project's `Makefile` and developer documentation.
+
+### Initial Problem
+
+The frontend tests (`make test-fe`) were failing to run, and the process was slow and not targeted. The user requested a way to run tests for specific subprojects and to speed up the development cycle.
+
+### Investigation and Resolution
+
+1.  **Makefile Failures on Windows:** The initial attempts to modify the `Makefile` to accept parameters for targeted testing failed. The root cause was identified as a shell incompatibility, where the `Makefile` was configured to use `/bin/bash`, but the commands were being executed in a Windows environment (`cmd.exe`) that did not support the `[ -z ... ]` or `ifeq` syntax as written.
+2.  **Missing Frontend Dependencies:** The tests for the `enduser-ui-fe` subproject were failing with the error `'vitest' is not an internal or external command`. This was because the necessary `npm` dependencies had not been installed in that specific subproject's directory.
+3.  **`package-lock.json` Inconsistency:** The user pointed out that `package-lock.json` files can cause dependency conflicts when switching between different operating systems (like Windows and macOS).
+
+### Final Fixes and Improvements
+
+1.  **Simplified `Makefile`:** The `Makefile` was rewritten to remove the complex, shell-dependent conditional logic. The new `test-fe-project` and `test-fe-single` targets now rely on simple `cd` and `npm` commands, which are more robust across different platforms.
+2.  **Dependency Installation:** The missing `npm` dependencies for `enduser-ui-fe` were installed by running `npm install` within the subproject directory, which resolved the `vitest` error.
+3.  **Updated `.gitignore`:** The `package-lock.json` file was added to the `.gitignore` in the `enduser-ui-fe` directory to prevent future cross-platform dependency issues.
+4.  **Documentation Update:** `CONTRIBUTING_tw.md` was updated to document the new, simplified `Makefile` commands for running targeted frontend tests.
+5.  **Progress Update:** `TODO.md` was updated to reflect the completion of the frontend testing fixes.

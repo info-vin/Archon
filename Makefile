@@ -76,6 +76,20 @@ test-fe:
 	@echo "Running frontend tests..."
 	@cd archon-ui-main && npm test
 
+# 2. 測試特定前端子專案 (Test a specific frontend subproject)
+#    用法 (Usage): make test-fe-project project=<project_name>
+#    範例 (Example): make test-fe-project project=enduser-ui-fe
+test-fe-project:
+	@echo "Running frontend tests for $(project)..."
+	@cd $(project) && npm test
+
+# 3. 測試特定單一前端測試 (Test a single frontend test)
+#    用法 (Usage): make test-fe-single project=<project_name> test=<test_name>
+#    範例 (Example): make test-fe-single project=enduser-ui-fe test="TaskModal"
+test-fe-single:
+	@echo "Running single frontend test '$(test)' in $(project)..."
+	@cd $(project) && npm test -- -t "$(test)"
+
 # Run backend tests
 test-be:
 	@echo "Running backend tests..."

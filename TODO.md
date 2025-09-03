@@ -184,6 +184,7 @@ sequenceDiagram
 ### **Phase 2.3: 前端功能開發 (Frontend Features)**
 
 - [x] 為 `TaskModal` 元件建立單元測試 (Unit tests for `TaskModal` component)
+- [x] 解決前端測試在 Windows 環境下的執行問題，並優化 `Makefile` 指令。
 
 - **[ ] 任務指派選單 (Assignment Dropdown - UI)**
     - [ ] **畫面開發**: 在任務表單中，呼叫後端的 `GET /api/assignable-users` API。

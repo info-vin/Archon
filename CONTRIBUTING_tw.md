@@ -6,7 +6,7 @@
 - Run `pnpm install --filter <project_name>` to add the package to your workspace so Vite, ESLint, and TypeScript can see it.
 - Use `pnpm create vite@latest <project_name> -- --template react-ts` to spin up a new React + Vite package with TypeScript checks ready.
 - Check the name field inside each package's package.json to confirm the right name—skip the top-level one.
- 
+
 ## Testing instructions
 - Find the CI plan in the .github/workflows folder.
 - Run `pnpm turbo run test --filter <project_name>` to run every check defined for that package.
@@ -18,7 +18,7 @@
 - Fix any test or type errors until the whole suite is green.
 - After moving files or changing imports, run `pnpm lint --filter <project_name>` to be sure ESLint and TypeScript rules still pass.
 - Add or update tests for the code you change, even if nobody asked.
- 
+
 ## PR instructions
 - Title format: [<project_name>] <Title>
 - Always run `pnpm lint` and `pnpm test` before committing.
@@ -28,6 +28,11 @@
 - 運行 `pnpm install --filter <project_name>` 來安裝套件，這樣 Vite、ESLint 和 TypeScript 才能正確識別它。
 - 使用 `pnpm create vite@latest <project_name> -- --template react-ts` 快速建立一個新的 React + Vite + TypeScript 專案。
 - 檢查每個套件 `package.json` 裡的 name 欄位來確認正確名稱，忽略最上層的那個。
+
+### **跨平台指令注意事項 (Cross-platform Command Notes)**
+
+- **問題**: 在 Windows 環境下，使用 `rm` 指令會失敗。
+- **解法**: 在 Windows 環境下，請使用 `del` 指令來刪除檔案。在撰寫跨平台的指令時，需要特別注意不同作業系統的指令差異。
 
 ## 測試指南
 - CI 計畫設定在 `.github/workflows` 資料夾裡。
@@ -52,11 +57,28 @@
         cd enduser-ui-fe && npm test
         ```
 
-2.  **`Failed to resolve import` 錯誤**
+2.  **如何透過 `make` 指令加速測試？**
+    *   **問題**: `make test-fe` 會執行所有前端測試，速度較慢。
+    *   **解法**: 我們在 `Makefile` 中新增了兩個指令，讓您可以更精準地執行測試：
+        *   **方法2：測試特定子專案**
+            ```bash
+            # 語法：make test-fe-project project=<project_name>
+            make test-fe-project project=enduser-ui-fe
+            ```
+            這個指令只會執行 `enduser-ui-fe` 目錄下的所有測試。
+
+        *   **方法3：測試特定單一檔案**
+            ```bash
+            # 語法：make test-fe-single project=<project_name> test=<test_name>
+            make test-fe-single project=enduser-ui-fe test="TaskModal"
+            ```
+            這個指令只會執行 `enduser-ui-fe` 中，名稱包含 "TaskModal" 的測試，速度最快。
+
+3.  **`Failed to resolve import` 錯誤**
     *   **問題**: 執行測試時，出現無法解析 `import` 的錯誤，例如 `@testing-library/user-event`。
     *   **解法**: 這代表該專案的 `package.json` 中缺少了必要的開發依賴 (`devDependencies`)。需在該專案目錄下使用 `npm install --save-dev <package-name>` 來安裝缺少的套件。
 
-3.  **測試中找不到「純圖示按鈕」**
+4.  **測試中找不到「純圖示按鈕」**
     *   **問題**: 使用 `screen.getByRole('button', { name: /.../i })` 無法找到一個只有圖示（例如 "X"）的按鈕。
     *   **解法**: 為了無障礙性 (a11y) 和測試的穩定性，純圖示按鈕應加上 `aria-label` 屬性，為按鈕提供一個文字描述。例如：
         ```html
@@ -65,7 +87,7 @@
         </button>
         ```
 
-4.  **表單必填欄位的驗證測試**
+5.  **表單必填欄位的驗證測試**
     *   **問題**: 當 `input` 有 `required` 屬性時，在測試中 `userEvent.click(submitButton)` 可能不會觸發 `submit` 事件，導致無法測試元件內部的錯誤處理邏輯（例如 `alert`）。
     *   **解法**: 為了繞過瀏覽器的預設驗證行為，專門測試元件的內部邏輯，可以使用 `fireEvent.submit(submitButton)` 來直接觸發 `submit` 事件。
 
@@ -118,6 +140,11 @@ def test_some_api_call_success(client, mock_supabase_client, mocker):
 ## PR 提交規範
 - 標題格式：[<project_name>] <標題>
 - 提交前務必運行 `pnpm lint` 和 `pnpm test`。
+
+### **Commit 訊息的特殊字元問題 (Special Characters in Commit Messages)**
+
+- **問題**: 當使用 `git commit -m "..."` 並且訊息內容包含特殊字元（例如 `$` 或 `` ` ``）時，指令可能會因為安全限制而失敗。
+- **解法**: 為了避免這個問題，建議將複雜或包含特殊字元的 commit 訊息儲存到一個暫存檔案（例如 `commit_message.txt`），然後使用 `git commit -F commit_message.txt` 來執行提交。
 
 ---
 
