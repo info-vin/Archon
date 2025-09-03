@@ -1,0 +1,71 @@
+---
+sidebar_position: 10
+title: 實戰教學：解決一個複雜的合併衝突
+---
+
+# 實戰教學：解決一個複雜的合併衝突
+
+本文件是一個真實案例研究，記錄了在將一個長期開發、與 `main` 分支有巨大差異的功能分支 (`feature/gemini-log-api`) 合併回 `main` 的過程中，所遇到的一系列典型問題及其解決方案。
+
+這個過程幾乎涵蓋了開發中最常見的痛點，希望能幫助未來的開發者在遇到類似情況時，能更有信心地應對。
+
+## 背景與目標
+
+- **目標**: 將 `main` 分支的最新進度，安全地合併到 `feature/gemini-log-api` 功能分支中，為最終合併回 `main` 做準備。
+- **初始狀態**: 在 `feature/gemini-log-api` 分支上執行 `git merge main` 後，出現大量檔案衝突，合併程序中止。
+
+---
+
+## 除錯之旅：問題與解決方案
+
+### 第一關：`uv.lock` 檔案衝突與處理策略
+
+在合併初期，我們立刻遇到了 `uv.lock` 檔案的衝突。這引發了一個關鍵的團隊開發流程問題：**lock 檔案到底該如何管理？**
+
+- **問題**: `uv.lock` 檔案會因作業系統 (macOS/Windows/Linux) 的不同而內容相異，直接在 Git 中合併會產生難以解決的衝突。
+- **決策過程**:
+    1.  **方案 A (`.gitignore` 方案)**: 將 `uv.lock` 加入 `.gitignore`。優點是簡單，再無衝突；缺點是犧牲了「完全可重現的建置」，可能導致「在我電腦上可以，別人那裡不行」的問題。
+    2.  **方案 B (Docker 統一環境方案)**: 將 `uv.lock` 保留在版控中，但確立團隊規範：**所有 `uv sync` 操作都必須在 Docker 容器內執行**。
+    3.  **分析與選擇**: 經檢查 `docker-compose.yml`，發現專案已具備完美的 Docker 開發環境（原始碼掛載、熱重載）。為了保證環境的 100% 一致性，我們最終選擇了**方案 B**。
+- **解決方案**:
+    1.  暫時擱置 `uv.lock` 的衝突。
+    2.  優先解決 `pyproject.toml` 的衝突。
+    3.  在 `pyproject.toml` 解決後，**刪除帶有衝突標記的 `uv.lock` 檔案**。
+    4.  執行 `cd python && uv sync`，讓工具從乾淨的 `pyproject.toml` 重新生成一份全新的、無衝突的 `uv.lock`。
+
+### 第二關：`pyproject.toml` 語法錯誤
+
+- **問題**: 在手動解決 `pyproject.toml` 的衝突後，執行 `uv sync` 失敗，提示 `duplicate key` 錯誤。
+- **根本原因**: 手動合併時，不慎產生了兩個 `[project.dependencies]` 區塊，違反了 TOML 檔案格式。
+- **解決方案**: 仔細檢查檔案，將所有依賴性套件都整理到 `[project]` 和 `[project.optional-dependencies]` 這兩個合法的區塊之下，確保語法正確。
+
+### 第三關：`make test-be` 找不到模組
+
+- **問題**: 修正 `uv.lock` 後，執行 `make test-be` 失敗，提示 `ModuleNotFoundError: No module named 'mcp'`。
+- **根本原因**:
+    1.  經檢查，`mcp` 套件被定義在 `pyproject.toml` 的 `mcp` 依賴群組中。
+    2.  而 `Makefile` 中的 `test-be` 指令只執行了 `uv sync --extra dev`，僅安裝了 `dev` 群組，漏掉了測試 `mcp` 所需的 `mcp` 群組。
+- **解決方案**: 修改 `Makefile`，讓 `test-be` 指令可以安裝多個群組：`uv sync --extra dev --extra mcp`。
+
+### 第四關：API `404 Not Found` 錯誤
+
+- **問題**: 測試再度失敗，這次是 `files_api` 的相關測試回報 `404 Not Found`。
+- **根本原因**: 在最初解決 `main.py` 的衝突時，犯了一個邏輯錯誤：因為 `main` 分支沒有 `files_api.py`，就錯誤地在合併時將其移除了。這違背了「將新功能合併進主幹」的初衷。
+- **解決方案**:
+    1.  確認 `files_api.py` 檔案還存在於工作目錄（只是被 Git 標記為待刪除）。
+    2.  修改 `main.py`，將 `files_api` 的 router 重新 `import` 並用 `app.include_router()` 註冊回來。
+    3.  執行 `git add python/src/server/main.py python/src/server/api_routes/files_api.py`，明確地告訴 Git 我們要「保留」這個功能，而不是刪除它。
+
+---
+
+## 核心學習與最佳實踐
+
+這次複雜的合併過程，讓我們總結出以下幾點重要的經驗：
+
+1.  **合併前先同步**: 在合併一個大的分支前，先將 `main` 合併到你的功能分支，在本地解決衝突，是更安全的做法。
+2.  **明確合併目的**: 合併功能分支時，應以「保留並整合新功能」為核心，避免因為與 `main` 分支的差異而輕易刪除新程式碼。
+3.  **Lock 檔案應「重新生成」，而非「手動修改」**: 遇到 `*.lock` 檔案的衝突時，最佳解法永遠是先搞定定義檔（如 `pyproject.toml`），然後刪掉 lock 檔讓工具重新生成。
+4.  **基礎設施即規範**: `Makefile` 和 `Dockerfile` 等建置工具的設定，是比文字文件更可靠的「專案規範」。當文件與工具設定矛盾時，應優先以工具的設定為準，並考慮更新文件。
+5.  **勤用 `git status`**: 在合併過程中，這個指令是你最好的朋友，它能清晰地告訴你目前的狀態（哪些已解決、哪些還在衝突、哪些檔案被增刪）。
+
+最終，在經歷了這一系列除錯後，我們成功地將兩個分支合併，所有測試通過，並將一個穩定、可靠的分支推送到遠端，準備進行 Code Review。
