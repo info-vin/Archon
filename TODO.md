@@ -146,6 +146,10 @@ sequenceDiagram
 
 在後端 API 備妥後，賦予 Agent 使用這些新功能的能力。
 
+- **[ ] 技術研究：建立 Agent 測試模式 (Spike: Establish Agent Testing Pattern)**
+    - [ ] **目標**: 由於直接測試 `DocumentAgent` 的工具呼叫遇到困難，此任務的目標是建立一個最簡化的 Agent (`EchoAgent`) 和對應的測試，以探索並驗證一個可靠的、可用於測試 Agent 工具呼叫的模式。
+    - [ ] **產出**: 一個可以成功運行的 `test_echo_agent.py`，它將成為後續測試 `DocumentAgent` 的範本。
+
 - **[x] 開發 Agent 新工具 (Agent Tools)**
     - [x] 建立 `python/src/agents/tools/file_tools.py`。
     - [x] 定義 `upload_and_link_file_to_task` 工具，並實作其呼叫後端上傳與連結 API 的邏輯。
@@ -247,3 +251,25 @@ sequenceDiagram
 - **[ ] 處理圖片授權與替換佔位圖片**
     - [ ] **檢視**: 檢視專案中所有佔位圖片 (如 `picsum.photos`)。
     - [ ] **替換**: 將無授權的圖片替換為 a) 明確授權的圖庫資源（如 Unsplash）或 b) 專案自有設計素材。
+
+### **Phase 2.5: 架構重構與技術債清理 (Architectural Refactoring & Tech Debt)**
+
+此階段的任務專注於改善既有程式碼的架構，提升系統的長期可維護性、可測試性與穩定性。建議由「系統維護專家」角色來執行。
+
+- **[ ] 重構角色權限管理 (Refactor RBAC)**
+    - [ ] **問題**: 權限規則的定義 (`permissions` 字典) 和檢查邏輯 (`has_permission_to_assign` 函式) 都實作在 API 層 (`projects_api.py`)。
+    - [ ] **目標**: 建立一個新的服務 `services/rbac_service.py`，將所有權限相關的邏輯（規則定義、檢查函式）都遷移至此服務中，並讓 API 層呼叫此服務，達成職責分離。
+    - [ ] **問題**: 目前 API 中用來判斷操作者權限的角色是寫死的 (`current_user_role = "PM"`)。
+    - [ ] **目標**: 移除硬編碼的角色，為後續整合真實的用戶身份驗證機制做準備。
+
+- **[ ] 整合健康檢查邏輯 (Consolidate Health Checks)**
+    - [ ] **問題**: 健康檢查邏輯分散在 `main.py` 和 `projects_api.py` 中，且有部分重複。
+    - [ ] **目標**: 建立一個新的服務 `services/health_service.py`，將所有健康檢查（DB 連線、資料表是否存在等）的邏輯統一到此服務中，並只由 `main.py` 的 `/health` 端點對外提供統一的系統健康報告。
+
+- **[ ] 簡化應用程式啟動程序 (Simplify App Startup)**
+    - [ ] **問題**: `main.py` 中的 `lifespan` 函式隨著服務增加，變得越來越臃腫和複雜。
+    - [ ] **目標**: 建立一個新的服務 `services/startup_service.py`，將所有應用的啟動和關閉程序（如初始化日誌、爬蟲、任務管理器等）封裝進去，讓 `main.py` 的 `lifespan` 函式保持簡潔。
+
+- **[ ] 強化服務層抽象 (Enforce Service Layer Abstraction)**
+    - [ ] **問題**: 部分 API 端點（主要在 `projects_api.py`）會繞過服務層，直接呼叫 `get_supabase_client()` 來操作資料庫。
+    - [ ] **目標**: 全面審查並重構這些端點，確保所有資料庫的直接存取都必須透過對應的服務層（如 `ProjectService`, `TaskService`）來完成，禁止 API 層直接接觸資料庫。
