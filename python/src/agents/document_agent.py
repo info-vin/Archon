@@ -867,6 +867,37 @@ class DocumentAgent(BaseAgent[DocumentDependencies, DocumentOperation]):
         try:
             result = await self.run(user_message, deps)
             self.logger.info(f"Document operation completed: {result.operation_type}")
+
+            # After a document is successfully created or updated, upload it to the task.
+            if result.success and result.operation_type in ["create", "update"]:
+                import re
+                task_id_match = re.search(r"#(\d+)", user_message)
+                if task_id_match:
+                    task_id = task_id_match.group(1)
+                    self.logger.info(f"Found task ID {task_id} for file upload.")
+                    
+                    # Create a temporary file to upload
+                    file_content = f"# {result.title}\n\n{result.content_preview}"
+                    file_path = f"/tmp/{result.title.replace(' ', '_')}_{uuid.uuid4().hex[:8]}.md"
+                    with open(file_path, "w") as f:
+                        f.write(file_content)
+
+                    # Call the upload tool by directly calling the imported function
+                    task_service = TaskService()
+                    storage_service = StorageService()
+                    upload_result = await upload_and_link_file_to_task(
+                        task_id=task_id,
+                        local_file_path=file_path,
+                        storage_service=storage_service,
+                        task_service=task_service,
+                        description=f"Generated document: {result.title}"
+                    )
+
+                    if upload_result.get("success"):
+                        result.message = f"Successfully created document and uploaded to task #{task_id}."
+                    else:
+                        result.message += f" | Upload failed: {upload_result.get('error')}"
+
             return result
         except Exception as e:
             self.logger.error(f"Document operation failed: {str(e)}")
