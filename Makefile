@@ -93,7 +93,7 @@ test-fe-single:
 # Run backend tests
 test-be:
 	@echo "Running backend tests..."
-	@cd python && uv sync --extra test
+	@cd python && uv sync --extra dev --extra mcp
 	@cd python && uv run pytest
 
 # Run all linters
