@@ -155,10 +155,10 @@ sequenceDiagram
     - [x] 定義 `upload_and_link_file_to_task` 工具，並實作其呼叫後端上傳與連結 API 的邏輯。
     - [x] 為新工具撰寫並通過 Pytest 單元測試。
 
-- **[ ] 完善 Agent 工作邏輯 (Agent Logic)**
-    - [ ] 識別需要使用新檔案工具的 Agent (例如「行銷 Agent」)。
-    - [ ] 修改該 Agent 的主要邏輯或提示 (prompt)，在其工作流程的最後一步加入呼叫 `upload_and_link_file_to_task` 工具的指令。
-    - [ ] 進行端對端測試，確保 Agent 能成功產出檔案並更新任務。
+- **[x] 完善 Agent 工作邏輯 (Agent Logic)**
+    - [x] 識別需要使用新檔案工具的 Agent (例如「行銷 Agent」)。
+    - [x] 修改該 Agent 的主要邏輯或提示 (prompt)，在其工作流程的最後一步加入呼叫 `upload_and_link_file_to_task` 工具的指令。
+    - [x] 進行端對端測試，確保 Agent 能成功產出檔案並更新任務。
 
 ### **Phase 2.4: AI 協作日誌紀錄 (AI Collaboration Logging)**
 
