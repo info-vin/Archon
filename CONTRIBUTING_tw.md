@@ -95,7 +95,7 @@
 
 為了確保後端測試的穩定與獨立性，所有測試**嚴禁**連線至真實資料庫。我們透過模擬 (Mocking) 來達成此目的。
 
-- **測試指令**: 永遠使用 `make test-be` 來執行後端測試。此指令已在 `Makefile` 中定義，能確保在正確的虛擬環境中執行。
+- **測試指令**: 永遠使用 `make test-be` 來執行後端測試。此指令已在 `Makefile` 中定義，能確保在正確的虛擬環境中執行，並安裝所有必要的依賴（包括 `dev`, `mcp`, `agents` 等 extras）。
 
 - **常見錯誤**: 如果測試出現 `supabase._sync.client.SupabaseException: Invalid API key` 錯誤，這代表你的測試案例意外地觸發了真實的資料庫連線。
 
@@ -136,6 +136,57 @@ def test_some_api_call_success(client, mock_supabase_client, mocker):
     # ...驗證結果...
     assert response.status_code == 201
 ```
+
+### 測試非同步方法 (Testing Asynchronous Methods)
+
+當測試非同步方法時，特別是當這些方法回傳多個值（例如 `(success, result)` 元組）時，需要正確地模擬它們的行為。
+
+- **問題**: 直接將元組賦值給 `AsyncMock().return_value` 可能會導致 `TypeError: object tuple can't be used in 'await' expression`，因為 `AsyncMock` 預期回傳的是一個可等待的物件，而不是直接的結果。
+
+- **解決方案**: 使用 `pytest` 的 `monkeypatch` fixture 來直接替換類別上的非同步方法。這樣可以確保在測試執行時，呼叫到的是我們模擬的非同步函式，而不是真實的實作。
+
+**範例：**
+
+假設 `TaskService` 有一個非同步方法 `get_task`，它回傳 `(bool, dict)`。
+
+**錯誤的模擬寫法（會導致 TypeError）:**
+```python
+mock_task_service = AsyncMock(spec=TaskService)
+mock_task_service.get_task.return_value = (True, {"task": {"id": "test"}})
+# 當執行 await mock_task_service.get_task() 時，會嘗試 await 一個元組，導致錯誤。
+```
+
+**正確的模擬寫法（使用 monkeypatch）:**
+```python
+import pytest
+from unittest.mock import AsyncMock
+from src.server.services.projects.task_service import TaskService
+
+@pytest.mark.asyncio
+async def test_example_async_method_mocking(monkeypatch):
+    mock_get_task = AsyncMock(return_value=(True, {"task": {"id": "test-task"}}))
+    monkeypatch.setattr(TaskService, "get_task", mock_get_task)
+
+    # 現在，當你實例化 TaskService 並呼叫 get_task 時，會呼叫到 mock_get_task
+    task_service_instance = TaskService()
+    success, result = await task_service_instance.get_task("some-id")
+
+    assert success is True
+    assert result["task"]["id"] == "test-task"
+    mock_get_task.assert_called_once_with("some-id")
+```
+
+### 測試目錄中的 `__init__.py` 檔案
+
+- **問題**: 在某些環境或 `pytest` 版本中，如果測試檔案位於沒有 `__init__.py` 檔案的子目錄中，`pytest` 可能無法正確發現或匯入這些測試。
+
+- **解決方案**: 為了確保測試的穩定發現和可移植性，建議在所有包含測試檔案的子目錄中，都放置一個空的 `__init__.py` 檔案。例如，如果 `tests/agents/` 包含測試檔案，則應確保 `tests/agents/__init__.py` 存在。
+
+### 避免框架特定依賴 (Avoiding Framework-Specific Dependencies)
+
+- **問題**: 在核心業務邏輯或通用輔助函式中直接引入特定框架（如 FastAPI）的物件或類型，會導致程式碼與框架緊密耦合，降低可測試性和可重用性。
+
+- **解決方案**: 盡量保持核心邏輯的框架無關性。如果需要與框架特定物件互動，應將其限制在框架層（如 API 端點）或透過抽象介面、簡單資料結構來傳遞必要資訊。例如，如果一個服務需要處理上傳的檔案，可以讓它接受檔案內容的位元組流 (`bytes`) 和檔名 (`str`)，而不是直接要求 `fastapi.UploadFile` 物件。在測試中，可以建立符合這些簡單介面的模擬物件。
 
 ## PR 提交規範
 - 標題格式：[<project_name>] <標題>

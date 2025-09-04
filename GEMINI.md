@@ -133,3 +133,20 @@ The frontend tests (`make test-fe`) were failing to run, and the process was slo
 3.  **Updated `.gitignore`:** The `package-lock.json` file was added to the `.gitignore` in the `enduser-ui-fe` directory to prevent future cross-platform dependency issues.
 4.  **Documentation Update:** `CONTRIBUTING_tw.md` was updated to document the new, simplified `Makefile` commands for running targeted frontend tests.
 5.  **Progress Update:** `TODO.md` was updated to reflect the completion of the frontend testing fixes.
+
+## Git Commit Message Encoding on Windows (2025/09/04)
+
+This section documents a platform-specific issue encountered when committing with non-ASCII characters in the commit message on Windows.
+
+### The Problem
+
+When using `git commit -m "..."` with a message containing non-ASCII characters (e.g., Traditional Chinese) in a Windows `cmd.exe` or PowerShell environment, Git may fail with `error: pathspec '...' did not match any file(s) known to git`. This is caused by a character encoding mismatch between the shell and Git.
+
+### The Solution
+
+A robust workaround that avoids shell encoding issues is to save the commit message to a temporary file and use the `-F` flag to have Git read the message from that file.
+
+**Workflow:**
+1.  Write the full, multi-line commit message to a temporary file (e.g., `commit_message.txt`).
+2.  Execute the commit using `git commit -F commit_message.txt`.
+3.  Delete the temporary file after the commit is successful.

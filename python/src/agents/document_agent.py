@@ -19,6 +19,9 @@ from pydantic_ai import Agent, RunContext
 
 from .base_agent import ArchonDependencies, BaseAgent
 from .mcp_client import get_mcp_client
+from ..server.services.projects.task_service import TaskService
+from ..server.services.storage_service import StorageService
+from .tools.file_tools import upload_and_link_file_to_task
 
 logger = logging.getLogger(__name__)
 
@@ -123,7 +126,10 @@ class DocumentAgent(BaseAgent[DocumentDependencies, DocumentOperation]):
 **✅ Change Management:**
 - "Request approval for the API changes" → Use request_approval tool
 - "Submit PRD updates for review" → Use request_approval tool
-- "Create approval workflow for database changes" → Use request_approval tool""",
+- "Create approval workflow for database changes" → Use request_approval tool
+
+**📎 File & Task Management:**
+- "Upload the report.pdf and attach it to task #123" → Use upload_file_and_link_to_task tool""",
             **kwargs,
         )
 
@@ -656,6 +662,29 @@ class DocumentAgent(BaseAgent[DocumentDependencies, DocumentOperation]):
             except Exception as e:
                 logger.error(f"Error creating approval request: {e}")
                 return f"Error creating approval request: {str(e)}"
+
+        @agent.tool
+        async def upload_file_and_link_to_task(
+            ctx: RunContext[DocumentDependencies],
+            task_id: str,
+            local_file_path: str,
+            description: str | None = None,
+        ) -> str:
+            """Uploads a file from a local path and attaches it to a specific task."""
+            try:
+                task_service = TaskService()
+                storage_service = StorageService()
+                result = await upload_and_link_file_to_task(
+                    task_id=task_id,
+                    local_file_path=local_file_path,
+                    storage_service=storage_service,
+                    task_service=task_service,
+                    description=description,
+                )
+                return json.dumps(result)
+            except Exception as e:
+                logger.error(f"Error in upload_file_and_link_to_task tool: {e}")
+                return json.dumps({"success": False, "error": str(e)})
 
         return agent
 

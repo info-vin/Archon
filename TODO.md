@@ -146,10 +146,10 @@ sequenceDiagram
 
 在後端 API 備妥後，賦予 Agent 使用這些新功能的能力。
 
-- **[ ] 開發 Agent 新工具 (Agent Tools)**
-    - [ ] 建立 `python/src/agents/tools/file_tools.py`。
-    - [ ] 定義 `upload_and_link_file_to_task` 工具，並實作其呼叫後端上傳與連結 API 的邏輯。
-    - [ ] 為新工具撰寫並通過 Pytest 單元測試。
+- **[x] 開發 Agent 新工具 (Agent Tools)**
+    - [x] 建立 `python/src/agents/tools/file_tools.py`。
+    - [x] 定義 `upload_and_link_file_to_task` 工具，並實作其呼叫後端上傳與連結 API 的邏輯。
+    - [x] 為新工具撰寫並通過 Pytest 單元測試。
 
 - **[ ] 完善 Agent 工作邏輯 (Agent Logic)**
     - [ ] 識別需要使用新檔案工具的 Agent (例如「行銷 Agent」)。
