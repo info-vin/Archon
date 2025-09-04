@@ -327,3 +327,34 @@ class TestPollingEdgeCases:
             assert exc_info.value.status_code == 500
             # Response headers shouldn't be set on exception
             assert "ETag" not in response.headers
+
+class TestTaskUpdates:
+    """Tests for task update endpoints."""
+
+    def test_update_task_with_attachments(self, test_client):
+        """Test that attachments are correctly passed to the task service."""
+        with patch("src.server.api_routes.projects_api.TaskService") as mock_task_class, \
+             patch("src.server.api_routes.projects_api.get_supabase_client"):
+
+            mock_task_service = MagicMock()
+            mock_task_service.update_task = AsyncMock(return_value=(True, {"task": {"id": "task-123", "project_id": "proj-abc"}}))
+            mock_task_class.return_value = mock_task_service
+
+            task_id = "task-123"
+            attachments_payload = [
+                {"file_name": "report.pdf", "url": "/files/report.pdf"}
+            ]
+            
+            response = test_client.put(
+                f"/api/tasks/{task_id}",
+                json={"attachments": attachments_payload}
+            )
+
+            assert response.status_code == 200
+            assert response.json()["message"] == "Task updated successfully"
+
+            # Verify that the service method was called with the correct arguments
+            mock_task_service.update_task.assert_called_once()
+            call_args, call_kwargs = mock_task_service.update_task.call_args
+            assert call_args[0] == task_id
+            assert call_args[1] == {"attachments": attachments_payload}

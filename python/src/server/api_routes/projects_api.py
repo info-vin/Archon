@@ -856,6 +856,7 @@ class UpdateTaskRequest(BaseModel):
     assignee: str | None = None
     task_order: int | None = None
     feature: str | None = None
+    attachments: list[Any] | None = None
 
 
 class CreateDocumentRequest(BaseModel):
@@ -922,6 +923,8 @@ async def update_task(task_id: str, request: UpdateTaskRequest):
             update_fields["task_order"] = request.task_order
         if request.feature is not None:
             update_fields["feature"] = request.feature
+        if request.attachments is not None:
+            update_fields["attachments"] = request.attachments
 
         # Use TaskService to update the task
         task_service = TaskService()

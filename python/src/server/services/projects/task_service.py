@@ -348,6 +348,9 @@ class TaskService:
             if "feature" in update_fields:
                 update_data["feature"] = update_fields["feature"]
 
+            if "attachments" in update_fields:
+                update_data["attachments"] = update_fields["attachments"]
+
             # Update task
             response = (
                 self.supabase_client.table("archon_tasks")

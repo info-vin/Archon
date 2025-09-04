@@ -131,10 +131,10 @@ sequenceDiagram
   - ~~在 `python/src/server/services/` 下建立 `storage_service.py`~~
   - ~~在 `python/src/server/api_routes/` 下建立 `files_api.py`~~
 
-- **[ ] 核心 API 擴充 (Core API)**
-    - [ ] 修改後端 `update_task` 的 API 端點 (`projects_api.py`)，使其能夠接收並處理 `attachments` 欄位的更新請求。
-    - [ ] 更新對應的服務層邏輯 (`task_service.py`) 來處理 `attachments` 的資料庫操作。
-    - [ ] 為 `attachments` 更新功能撰寫並通過 Pytest 測試案例。
+- **[x] 核心 API 擴充 (Core API)**
+    - [x] 修改後端 `update_task` 的 API 端點 (`projects_api.py`)，使其能夠接收並處理 `attachments` 欄位的更新請求。
+    - [x] 更新對應的服務層邏輯 (`task_service.py`) 來處理 `attachments` 的資料庫操作。
+    - [x] 為 `attachments` 更新功能撰寫並通過 Pytest 測試案例。
 
 - **[ ] 管理者儀表板 API (Report Dashboard API)**
     - [ ] 建立 `reports_api.py` 並提供數據聚合 API。
