@@ -15,6 +15,8 @@ help:
 	@echo "  make stop       - Stop all services"
 	@echo "  make test       - Run all tests"
 	@echo "  make test-fe    - Run frontend tests only"
+	@echo "  make test-fe-project project=<project> - Run tests for a specific frontend project"
+	@echo "  make test-fe-single project=<project> test=<test> - Run a single frontend test"
 	@echo "  make test-be    - Run backend tests only"
 	@echo "  make lint       - Run all linters"
 	@echo "  make lint-fe    - Run frontend linter only"
