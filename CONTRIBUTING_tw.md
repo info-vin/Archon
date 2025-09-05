@@ -193,6 +193,44 @@ async def test_example_async_method_mocking(monkeypatch):
     mock_get_task.assert_called_once_with("some-id")
 ```
 
+**實戰範例：測試 Agent (`EchoAgent`)**
+
+基於上述 `monkeypatch` 模式，我們建立了 `EchoAgent` 作為一個可測試的範例。這個模式成功解決了測試 `pydantic-ai` 或其他非同步 Agent 的難題，並已在專案中建立對應的 `echo_agent.py` 與 `test_echo_agent.py` 作為未來開發的參考。
+
+- **`python/src/agents/echo_agent.py` (被測試的 Agent):**
+  ```python
+  from typing import Tuple
+
+  class EchoAgent:
+      async def arun(self, query: str) -> Tuple[bool, str]:
+          print(f"EchoAgent received: {query}")
+          return True, f"Echo: {query}"
+  ```
+
+- **`python/tests/agents/test_echo_agent.py` (測試程式碼):**
+  ```python
+  import pytest
+  from unittest.mock import AsyncMock
+  from src.agents.echo_agent import EchoAgent
+
+  @pytest.mark.asyncio
+  async def test_echo_agent_arun_method_with_monkeypatch(monkeypatch):
+      # 1. 安排：建立一個預設回傳值的 AsyncMock。
+      mock_arun = AsyncMock(return_value=(True, "mocked echo response"))
+
+      # 2. 安排：使用 monkeypatch 將 EchoAgent 類別上的 arun 方法替換為我們的 mock。
+      monkeypatch.setattr(EchoAgent, "arun", mock_arun)
+
+      # 3. 執行：實例化 Agent 並呼叫被修補過的方法。
+      agent = EchoAgent()
+      success, result = await agent.arun("hello world")
+
+      # 4. 斷言：驗證結果並確認 mock 被正確呼叫。
+      assert success is True
+      assert result == "mocked echo response"
+      mock_arun.assert_called_once_with("hello world")
+  ```
+
 ### 測試目錄中的 `__init__.py` 檔案
 
 - **問題**: 在某些環境或 `pytest` 版本中，如果測試檔案位於沒有 `__init__.py` 檔案的子目錄中，`pytest` 可能無法正確發現或匯入這些測試。

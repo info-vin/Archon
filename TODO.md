@@ -146,9 +146,9 @@ sequenceDiagram
 
 在後端 API 備妥後，賦予 Agent 使用這些新功能的能力。
 
-- **[ ] 技術研究：建立 Agent 測試模式 (Spike: Establish Agent Testing Pattern)**
-    - [ ] **目標**: 由於直接測試 `DocumentAgent` 的工具呼叫遇到困難，此任務的目標是建立一個最簡化的 Agent (`EchoAgent`) 和對應的測試，以探索並驗證一個可靠的、可用於測試 Agent 工具呼叫的模式。
-    - [ ] **產出**: 一個可以成功運行的 `test_echo_agent.py`，它將成為後續測試 `DocumentAgent` 的範本。
+- **[x] 技術研究：建立 Agent 測試模式 (Spike: Establish Agent Testing Pattern)**
+    - [x] **目標**: 由於直接測試 `DocumentAgent` 的工具呼叫遇到困難，此任務的目標是建立一個最簡化的 Agent (`EchoAgent`) 和對應的測試，以探索並驗證一個可靠的、可用於測試 Agent 工具呼叫的模式。
+    - [x] **產出**: 一個可以成功運行的 `test_echo_agent.py`，它將成為後續測試 `DocumentAgent` 的範本。
 
 - **[x] 開發 Agent 新工具 (Agent Tools)**
     - [x] 建立 `python/src/agents/tools/file_tools.py`。
