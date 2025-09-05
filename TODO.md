@@ -190,10 +190,10 @@ sequenceDiagram
 - [x] 為 `TaskModal` 元件建立單元測試 (Unit tests for `TaskModal` component)
 - [x] 解決前端測試在 Windows 環境下的執行問題，並優化 `Makefile` 指令。
 
-- **[ ] 任務指派選單 (Assignment Dropdown - UI)**
-    - [ ] **畫面開發**: 在任務表單中，呼叫後端的 `GET /api/assignable-users` API。
-    - [ ] **元件實作**: 將回傳的列表渲染成下拉選單，供使用者進行指派。
-    - [ ] **測試**: 撰寫 Vitest 測試，確保選單能正確顯示及運作。
+- **[x] 任務指派選單 (Assignment Dropdown - UI)**
+    - [x] **畫面開發**: 在任務表單中，呼叫後端的 `GET /api/assignable-users` API。
+    - [x] **元件實作**: 將回傳的列表渲染成下拉選單，供使用者進行指派。
+    - [x] **測試**: 撰寫 Vitest 測試，確保選單能正確顯示及運作。
 
 - **[ ] 使用者頭像更新 (User Avatar Update)**
     - [ ] **尋找或建立新元件**: 引入一個新的頭像 (Avatar) 元件。

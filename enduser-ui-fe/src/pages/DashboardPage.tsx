@@ -51,7 +51,7 @@ const DashboardPage: React.FC = () => {
         setLoading(true);
         const [tasksData, employeesData, projectsData] = await Promise.all([
           api.getTasks(),
-          api.getEmployees(),
+          api.getAssignableUsers(),
           api.getProjects()
         ]);
         setTasks(tasksData);

@@ -28,7 +28,7 @@ help:
 # Install dependencies
 install:
 	@echo "Installing dependencies..."
-	@cd archon-ui-main && npm install
+	@cd enduser-ui-fe && npm install
 	@cd python && uv sync --group all --group dev
 	@echo "✓ Dependencies installed"
 
@@ -75,8 +75,8 @@ test: test-fe test-be
 
 # Run frontend tests
 test-fe:
-	@echo "Running frontend tests..."
-	@cd archon-ui-main && npm test
+	@echo "Running frontend tests for enduser-ui-fe..."
+	@cd enduser-ui-fe && npm test
 
 # 2. 測試特定前端子專案 (Test a specific frontend subproject)
 #    用法 (Usage): make test-fe-project project=<project_name>
@@ -103,8 +103,8 @@ lint: lint-fe lint-be
 
 # Run frontend linter
 lint-fe:
-	@echo "Linting frontend..."
-	@cd archon-ui-main && npm run lint
+	@echo "Linting enduser-ui-fe..."
+	@cd enduser-ui-fe && npm run lint
 
 # Run backend linter
 lint-be:

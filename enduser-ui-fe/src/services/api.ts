@@ -255,6 +255,10 @@ const mockApi = {
         return newTask;
     },
     async getEmployees(): Promise<Employee[]> { return [...MOCK_EMPLOYEES]; },
+    async getAssignableUsers(): Promise<Employee[]> { 
+        // In mock mode, return a subset of employees to simulate RBAC filtering
+        return MOCK_EMPLOYEES.filter(e => e.role !== EmployeeRole.SYSTEM_ADMIN);
+    },
     async getDocumentVersions(): Promise<DocumentVersion[]> { return [...MOCK_DOCUMENT_VERSIONS]; },
     async getBlogPosts(): Promise<BlogPost[]> {
         await new Promise(res => setTimeout(res, 250));
@@ -397,6 +401,14 @@ const supabaseApi = {
     const { data, error } = await supabase!.from('profiles').select('*');
     if (error) throw new Error(error.message);
     return data as Employee[];
+  },
+  async getAssignableUsers(): Promise<Employee[]> {
+    // This function calls our own backend API, which has the RBAC logic.
+    const response = await fetch('/api/assignable-users');
+    if (!response.ok) {
+      throw new Error('Failed to fetch assignable users.');
+    }
+    return response.json();
   },
   async getDocumentVersions(): Promise<DocumentVersion[]> {
     const { data, error } = await supabase!.from('archon_document_versions').select('*');

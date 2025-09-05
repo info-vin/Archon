@@ -108,6 +108,19 @@
     *   **問題**: 當 `input` 有 `required` 屬性時，在測試中 `userEvent.click(submitButton)` 可能不會觸發 `submit` 事件，導致無法測試元件內部的錯誤處理邏輯（例如 `alert`）。
     *   **解法**: 為了繞過瀏覽器的預設驗證行為，專門測試元件的內部邏輯，可以使用 `fireEvent.submit(submitButton)` 來直接觸發 `submit` 事件。
 
+6.  **如何為沒有測試的元件建立 API Mock 與測試？**
+    *   **情境**: 當需要為一個呼叫 API 的元件（例如 `DashboardPage.tsx`）補上測試，但卻找不到任何既有的測試檔案或 API 模擬 (`mock`) 設定時。
+    *   **偵錯流程**:
+        1.  **尋找測試檔案**: 首先嘗試尋找 `ComponentName.test.tsx`，如果找不到，則擴大範圍。
+        2.  **尋找 Mock 設定**: 搜尋 API 的 URL (例如 `/api/employees`) 或 `msw` 的設定檔 (例如 `handlers.ts`, `mocks.ts`)，如果都找不到。
+        3.  **檢查 Vite 設定**: 最終手段是檢查 `vite.config.ts` 檔案，其中的 `test.setupFiles` 屬性會指向測試環境的進入點，例如 `./test/setup.ts`。
+    *   **解決方案 (建立測試環境)**:
+        1.  **安裝依賴**: 確保 `msw` 已安裝。如果測試時出現 `Failed to resolve import "msw/node"` 錯誤，需在專案目錄下執行 `npm install --save-dev msw`。
+        2.  **建立 Mock Handlers**: 在 `src/mocks/handlers.ts` 中，使用 `msw` 的 `http.get` 或 `http.post` 來定義 API 的模擬回應。
+        3.  **建立 Mock Server**: 在 `src/mocks/server.ts` 中，使用 `setupServer` 來設定一個模擬伺服器，並匯入上一步的 handlers。
+        4.  **啟動伺服器**: 在測試設定檔 (`test/setup.ts`) 中，匯入 `server`，並使用 `beforeAll`, `afterEach`, `afterAll` 來啟動、重設和關閉伺服器。
+        5.  **撰寫測試**: 最後，建立對應的 `ComponentName.test.tsx` 檔案，撰寫測試案例。由於 `msw` 已在全域啟動，測試中的 `fetch` 會自動被攔截，無需在單一測試檔案中做額外設定。
+
 ### 後端 API 測試：模擬資料庫 (Backend API Testing: Mocking the Database)
 
 為了確保後端測試的穩定與獨立性，所有測試**嚴禁**連線至真實資料庫。我們透過模擬 (Mocking) 來達成此目的。

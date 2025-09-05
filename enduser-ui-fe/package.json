@@ -23,6 +23,7 @@
     "@types/node": "^22.14.0",
     "@vitejs/plugin-react": "^5.0.1",
     "jsdom": "^26.1.0",
+    "msw": "^2.11.1",
     "typescript": "~5.8.2",
     "vite": "^6.2.0",
     "vitest": "^3.2.4"
