@@ -189,4 +189,4 @@ services:
 
 networks:
   app-network:
-    driver: bridgedge
+    driver: bridge

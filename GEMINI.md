@@ -70,4 +70,10 @@ SUPABASE_SERVICE_KEY=your-service-key-here
 - **RBAC 功能完成**: 後端已完成基於角色的存取控制 (RBAC) 的核心功能，包含了 `GET /api/assignable-users` 端點以及在任務建立/更新時的權限驗證。
 - **前端「任務指派」功能完成**: 已完成與 RBAC 對應的前端「任務指派選單」功能。此過程建立了完整的前端測試模式，包括如何為沒有測試的元件從零開始建立 `msw` API 模擬環境，相關實踐已歸檔至 `CONTRIBUTING_tw.md`。
 - **跨平台開發規範建立**: 解決了因 `uv.lock`、`package-lock.json` 和 `Makefile` 語法導致的跨平台（macOS vs Windows）開發問題。相關的最佳實踐與結論已整理並歸檔至 `CONTRIBUTING_tw.md` 的「後端依賴與環境管理」和「前端測試實踐」章節，作為所有開發者應遵循的規範。
+- **資料庫遷移與環境除錯 (2025-09-05)**:
+  - **任務**: 成功新增 `customers` 與 `vendors` 兩個新的資料表，並完成對應的資料庫遷移腳本 `migration/20250905_add_customers_and_vendors_tables.sql`。
+  - **環境修復**: 解決了在 Windows 環境下啟動 Docker 的一系列問題。主要包括：
+    - 修正了 `docker-compose.yml` 中網路驅動的拼寫錯誤 (`bridgedge` -> `bridge`)。
+    - 透過日誌分析，定位到 `archon-server` 啟動失敗的原因為 `.env` 檔案中 `SUPABASE_URL` 未正確設定，導致 DNS 解析失敗。
+    - 記錄了 `Makefile` 在 Windows PowerShell/cmd 環境下的相容性問題，並在檔案中添加了註解。相關解法已歸檔至 `CONTRIBUTING_tw.md`。
 - **目前開發焦點**: 根據 `TODO.md`，下一個主要開發任務為前端的「任務附件顯示 (Task Attachments)」與「使用者頭像更新 (User Avatar Update)」。

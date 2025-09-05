@@ -32,6 +32,8 @@ install:
 	@cd python && uv sync --group all --group dev
 	@echo "✓ Dependencies installed"
 
+# NOTE: The following check target uses syntax that is not compatible with Windows cmd/PowerShell.
+# It will cause an error on Windows systems.
 # Check environment
 check:
 	@echo "Checking environment..."

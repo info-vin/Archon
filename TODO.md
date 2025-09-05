@@ -100,8 +100,8 @@ sequenceDiagram
 
 - **[ ] 資料庫擴充 (Database Schema)**
     - [x] 撰寫 SQL 遷移腳本，為 `archon_tasks` 表新增 `attachments` 欄位 (型別為 JSONB 或 TEXT[])。
-    - [ ] (可選) 撰寫 SQL 遷移腳本，新增 `customers` 和 `vendors` 資料表。
-    - [ ] 在開發環境中執行並驗證遷移腳本。
+    - [x] (可選) 撰寫 SQL 遷移腳本，新增 `customers` 和 `vendors` 資料表。
+    - [x] 在開發環境中執行並驗證遷移腳本。
 
 - [x] **角色權限管理 (RBAC - Security & Data)**
     - [x] **1. 定義角色與權限 (v1.3)**

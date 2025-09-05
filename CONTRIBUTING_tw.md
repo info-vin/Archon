@@ -1,4 +1,3 @@
-
 ## 開發流程與標準 (原 AGENTS.md 內容)
 
 ## Dev environment tips
@@ -287,3 +286,29 @@ async def test_example_async_method_mocking(monkeypatch):
 5.  **推送至遠端 (`git push`)**
     *   將本地的提交推送到遠端分支，與團隊成員同步進度。
     *   **注意**: 第一次推送新的分支時，需使用 `git push --set-upstream origin <branch-name>` 來建立本地與遠端分支的追蹤關係。
+
+---
+
+## 常見環境問題與解法 (FAQ)
+
+本章節記錄專案開發過程中遇到的常見環境設定問題及其解決方案。
+
+### 1. Windows 環境下 `make` 指令失敗
+- **錯誤現象**: 執行 `make` 指令（如 `make dev-docker`）時，出現 `'{_} is not recognized as an internal or external command` 或類似錯誤。
+- **根本原因**: 專案的 `Makefile` 使用了與 `bash` 相容的 shell 語法，而 Windows 預設的 `cmd` 或 `PowerShell` 無法正確解析。
+- **解決方案**:
+    - **建議**: 在 Windows 上安裝並使用 [Git Bash](https://git-scm.com/downloads) 或 [WSL (Windows Subsystem for Linux)](https://learn.microsoft.com/en-us/windows/wsl/install) 來執行 `make` 指令。
+    - **臨時繞過**: 直接執行 `make` 指令背後的原生指令。例如，使用 `docker-compose up -d` 來代替 `make dev-docker`。但請注意，這會繞過 `Makefile` 中的環境檢查步驟。
+
+### 2. `docker-compose up` 網路錯誤
+- **錯誤現象**: 執行 `docker-compose up` 時，日誌出現 `Error response from daemon: plugin "bridgedge" not found`。
+- **根本原因**: `docker-compose.yml` 檔案中，網路驅動 (`driver`) 的名稱被錯誤地拼寫為 `bridgedge`。
+- **解決方案**: 將 `docker-compose.yml` 中 `networks.app-network.driver` 的值從 `bridgedge` 修改為 `bridge`。
+
+### 3. 容器 (Container) 健康檢查失敗或不斷重啟
+- **錯誤現象**: `docker-compose ps` 顯示容器狀態為 `unhealthy` 或 `restarting`。`archon-server` 的日誌顯示 `[Errno -2] Name or service not known`。
+- **根本原因**: 這是 DNS 解析錯誤，通常是因為容器無法連線到 `SUPABASE_URL` 指定的資料庫主機。絕大多數情況下，是因為專案根目錄的 `.env` 檔案遺失或配置不正確。
+- **解決方案**:
+    1.  確認專案根目錄下存在 `.env` 檔案。
+    2.  確保檔案中 `SUPABASE_URL` 和 `SUPABASE_SERVICE_KEY` 的值是從您的 Supabase 專案中複製的，且完全正確。
+    3.  修改 `.env` 檔案後，必須執行 `docker-compose down` 和 `docker-compose up -d` 來徹底重啟容器，以載入新的環境變數。
