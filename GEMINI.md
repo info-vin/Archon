@@ -67,8 +67,11 @@ SUPABASE_SERVICE_KEY=your-service-key-here
 
 ## 專案近期動態與結論 (Recent Project Updates & Key Decisions)
 
+- **前端「任務指派」功能與測試流程建立 (2025-09-07)**:
+  - **任務**: 完成了 `enduser-ui-fe` 中與後端 RBAC 對應的「任務指派選單」功能，包含元件開發與完整的測試案例。
+  - **挑戰與學習**: 開發過程中，遭遇了因 (1) 前端專案缺少 `msw` 依賴 (2) `replace` 工具使用不當導致檔案損毀 (3) `required` 欄位與 `userEvent` 互動 等多重因素導致的測試失敗。
+  - **結論**: 最終，透過遵循`git checkout`還原、`write_file`完整覆寫、以及參考`CONTRIBUTING_tw.md`指引的嚴謹流程，成功修復所有問題。此過程催生了新的「檔案修改與復原最佳實踐」，並已歸檔至 `CONTRIBUTING_tw.md`，為未來開發提供了寶貴的經驗。
 - **RBAC 功能完成**: 後端已完成基於角色的存取控制 (RBAC) 的核心功能，包含了 `GET /api/assignable-users` 端點以及在任務建立/更新時的權限驗證。
-- **前端「任務指派」功能完成**: 已完成與 RBAC 對應的前端「任務指派選單」功能。此過程建立了完整的前端測試模式，包括如何為沒有測試的元件從零開始建立 `msw` API 模擬環境，相關實踐已歸檔至 `CONTRIBUTING_tw.md`。
 - **跨平台開發規範建立**: 解決了因 `uv.lock`、`package-lock.json` 和 `Makefile` 語法導致的跨平台（macOS vs Windows）開發問題。相關的最佳實踐與結論已整理並歸檔至 `CONTRIBUTING_tw.md` 的「後端依賴與環境管理」和「前端測試實踐」章節，作為所有開發者應遵循的規範。
 - **資料庫遷移與環境除錯 (2025-09-05)**:
   - **任務**: 成功新增 `customers` 與 `vendors` 兩個新的資料表，並完成對應的資料庫遷移腳本 `migration/20250905_add_customers_and_vendors_tables.sql`。

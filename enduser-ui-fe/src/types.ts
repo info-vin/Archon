@@ -1,4 +1,3 @@
-
 export enum EmployeeRole {
   SYSTEM_ADMIN = 'system_admin',
   PROJECT_MANAGER = 'project_manager',
@@ -85,4 +84,10 @@ export interface BlogPost {
     authorName: string;
     publishDate: string; // ISO String
     imageUrl: string;
+}
+
+export interface AssignableUser {
+  id: string;
+  name: string;
+  role: string;
 }

@@ -1,24 +1,40 @@
-
-import React, { useState } from 'react';
-import { Employee, TaskPriority } from '../types.ts';
-import { NewTaskData } from '../services/api.ts';
+import React, { useState, useEffect } from 'react';
+import { AssignableUser } from '../types.ts';
+import { api, NewTaskData } from '../services/api.ts';
 import { XIcon } from './Icons.tsx';
 
 interface TaskModalProps {
   onClose: () => void;
   onSubmit: (taskData: NewTaskData) => Promise<void>;
-  employees: Employee[];
   projectId?: string;
 }
 
 const inputClass = "appearance-none rounded-md relative block w-full px-3 py-2 border border-border placeholder-muted-foreground text-foreground bg-input focus:outline-none focus:ring-ring focus:border-ring focus:z-10 sm:text-sm";
 
-export const TaskModal: React.FC<TaskModalProps> = ({ onClose, onSubmit, employees, projectId }) => {
+export const TaskModal: React.FC<TaskModalProps> = ({ onClose, onSubmit, projectId }) => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [assigneeId, setAssigneeId] = useState('');
   const [dueDate, setDueDate] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [assignableUsers, setAssignableUsers] = useState<AssignableUser[]>([]);
+  const [isLoadingUsers, setIsLoadingUsers] = useState(true);
+
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        setIsLoadingUsers(true);
+        const users = await api.getAssignableUsers();
+        setAssignableUsers(users);
+      } catch (error) {
+        console.error("Failed to fetch assignable users:", error);
+      } finally {
+        setIsLoadingUsers(false);
+      }
+    };
+
+    fetchUsers();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -62,9 +78,9 @@ export const TaskModal: React.FC<TaskModalProps> = ({ onClose, onSubmit, employe
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label htmlFor="assignee" className="block text-sm font-medium mb-1">Assignee</label>
-              <select id="assignee" value={assigneeId} onChange={(e) => setAssigneeId(e.target.value)} className={inputClass}>
-                <option value="">Unassigned</option>
-                {employees.map(emp => <option key={emp.id} value={emp.id}>{emp.name}</option>)}
+              <select id="assignee" value={assigneeId} onChange={(e) => setAssigneeId(e.target.value)} className={inputClass} disabled={isLoadingUsers}>
+                <option value="">{isLoadingUsers ? 'Loading...' : 'Unassigned'}</option>
+                {assignableUsers.map(user => <option key={user.id} value={user.id}>{user.name}</option>)}
               </select>
             </div>
             <div>
