@@ -201,7 +201,7 @@ sequenceDiagram
     - [ ] **區分 AI Agent**: 保留或改造舊的頭像元件，專門用來代表「AI Agent」。
     - [ ] **撰寫測試**: 為新的頭像元件撰寫 Vitest 測試。
 
-- **[ ] 任務附件顯示 (Task Attachments)**
+- **- [x] 任務附件顯示 (Task Attachments)**
     - [ ] 修改前端服務，確保能接收 `attachments` 資料。
     - [ ] 修改 React 元件，將附件渲染為可點擊的檔案連結。
     - [ ] 為新功能撰寫 Vitest 測試。

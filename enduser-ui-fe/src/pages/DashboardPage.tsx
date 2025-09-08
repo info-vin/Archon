@@ -1,8 +1,7 @@
-
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { api, NewTaskData } from '../services/api.ts';
 import { Task, TaskStatus, TaskPriority, Employee, Project } from '../types.ts';
-import { GanttChartIcon, KanbanIcon, ListIcon, TableIcon, PlusIcon, ChevronDownIcon, ChevronsUpDownIcon } from '../components/Icons.tsx';
+import { GanttChartIcon, KanbanIcon, ListIcon, TableIcon, PlusIcon, ChevronDownIcon, ChevronsUpDownIcon, PaperclipIcon } from '../components/Icons.tsx';
 import { TaskModal } from '../components/TaskModal.tsx';
 import {
     select,
@@ -35,7 +34,7 @@ const statusColors: { [key in TaskStatus]: string } = {
 };
 
 const DashboardPage: React.FC = () => {
-  const [viewMode, setViewMode] = useState<ViewMode>('gantt');
+  const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [tasks, setTasks] = useState<Task[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
@@ -188,7 +187,6 @@ const DashboardPage: React.FC = () => {
         <TaskModal
           onClose={() => setIsModalOpen(false)}
           onSubmit={handleCreateTask}
-          employees={employees}
           projectId={selectedProjectId !== 'all' ? selectedProjectId : projects[0]?.id}
         />
       )}
@@ -212,16 +210,30 @@ const ListView: React.FC<{ tasks: Task[] }> = ({ tasks }) => {
     return <div className="space-y-3">
         {tasks.map(task => (
             <div key={task.id} className="p-4 bg-card border border-border rounded-lg flex items-center justify-between">
-                <div className="flex items-center">
-                    <span className={`w-3 h-3 rounded-full mr-4 ${statusColors[task.status]}`}></span>
-                    <div>
-                        <p className="font-semibold">{task.title}</p>
-                        <p className="text-sm text-muted-foreground">{new Date(task.due_date).toLocaleDateString()}</p>
+                <div className="flex-1 min-w-0">
+                    <div className="flex items-center">
+                        <span className={`w-3 h-3 rounded-full mr-4 flex-shrink-0 ${statusColors[task.status]}`}></span>
+                        <div className="flex-1 min-w-0">
+                            <p className="font-semibold truncate">{task.title}</p>
+                            <p className="text-sm text-muted-foreground">Due: {new Date(task.due_date).toLocaleDateString()}</p>
+                        </div>
                     </div>
+                    {task.attachments && task.attachments.length > 0 && (
+                        <div className="mt-2 pl-7 flex items-start gap-2">
+                            <PaperclipIcon className="w-4 h-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+                            <div className="flex flex-wrap gap-x-3 gap-y-1">
+                                {task.attachments.map((att, index) => (
+                                    <a key={index} href={att} target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline truncate" title={att}>
+                                        {att.split('/').pop() || `Attachment ${index + 1}`}
+                                    </a>
+                                ))}
+                            </div>
+                        </div>
+                    )}
                 </div>
-                <div className="flex items-center space-x-4">
+                <div className="flex items-center space-x-4 ml-4">
                     <span className={`px-2 py-1 text-xs font-semibold rounded-full text-white ${priorityColors[task.priority]}`}>{task.priority}</span>
-                    <span className="text-sm">{task.assignee || 'Unassigned'}</span>
+                    <span className="text-sm text-right truncate">{task.assignee || 'Unassigned'}</span>
                 </div>
             </div>
         ))}
@@ -255,12 +267,16 @@ const TableView: React.FC<{ tasks: Task[], requestSort: (key: SortableTaskKeys) 
                     <SortableHeader columnKey="status" title="Status" />
                     <SortableHeader columnKey="priority" title="Priority" />
                     <SortableHeader columnKey="due_date" title="Due Date" />
+                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Attachments</th>
                 </tr>
             </thead>
             <tbody className="bg-card divide-y divide-border">
                 {tasks.map(task => (
                     <tr key={task.id}>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">{task.title}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <div className="truncate" title={task.title}>{task.title}</div>
+                            {task.description && <div className="text-xs text-muted-foreground truncate" title={task.description}>{task.description}</div>}
+                        </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm">
                             {task.assignee || 'Unassigned'}
                         </td>
@@ -271,6 +287,17 @@ const TableView: React.FC<{ tasks: Task[], requestSort: (key: SortableTaskKeys) 
                              <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full text-white ${priorityColors[task.priority]}`}>{task.priority}</span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">{new Date(task.due_date).toLocaleDateString()}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm">
+                            {task.attachments && task.attachments.length > 0 ? (
+                                <div className="flex flex-col gap-1">
+                                    {task.attachments.map((att, index) => (
+                                        <a key={index} href={att} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline truncate" title={att}>
+                                            {att.split('/').pop()}
+                                        </a>
+                                    ))}
+                                </div>
+                            ) : 'N/A'}
+                        </td>
                     </tr>
                 ))}
             </tbody>
@@ -297,6 +324,20 @@ const TableView: React.FC<{ tasks: Task[], requestSort: (key: SortableTaskKeys) 
                             <span>{new Date(task.due_date).toLocaleDateString()}</span>
                         </div>
                     </div>
+                    {task.attachments && task.attachments.length > 0 && (
+                        <div className="border-t border-border pt-2 mt-2">
+                            <div className="flex items-start gap-2">
+                                <PaperclipIcon className="w-4 h-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+                                <div className="flex flex-col gap-1">
+                                    {task.attachments.map((att, index) => (
+                                        <a key={index} href={att} target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline truncate" title={att}>
+                                            {att.split('/').pop()}
+                                        </a>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </div>
             ))}
         </div>
@@ -341,6 +382,20 @@ const KanbanView: React.FC<{ tasks: Task[], onTaskStatusChange: (taskId: string,
                                 <span className="text-sm text-muted-foreground">{new Date(task.due_date).toLocaleDateString()}</span>
                                 <span className="text-sm">{task.assignee || 'Unassigned'}</span>
                             </div>
+                            {task.attachments && task.attachments.length > 0 && (
+                                <div className="mt-2 pt-2 border-t border-border/50">
+                                    <div className="flex items-start gap-2">
+                                        <PaperclipIcon className="w-4 h-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+                                        <div className="flex flex-col gap-1">
+                                            {task.attachments.map((att, index) => (
+                                                <a key={index} href={att} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline truncate" title={att}>
+                                                    {att.split('/').pop()}
+                                                </a>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
                             <div className={`mt-2 h-1 rounded-full ${priorityColors[task.priority]}`}></div>
                         </div>
                     ))}
