@@ -3,7 +3,8 @@ export enum EmployeeRole {
   PROJECT_MANAGER = 'project_manager',
   SENIOR_MEMBER = 'senior_member',
   MEMBER = 'member',
-  VIEWER = 'viewer'
+  VIEWER = 'viewer',
+  AI_AGENT = 'ai_agent'
 }
 
 export enum TaskStatus {

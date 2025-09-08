@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { api, NewTaskData } from '../services/api.ts';
-import { Task, TaskStatus, TaskPriority, Employee, Project } from '../types.ts';
+import { Task, TaskStatus, TaskPriority, Employee, Project, AssignableUser } from '../types.ts';
 import { GanttChartIcon, KanbanIcon, ListIcon, TableIcon, PlusIcon, ChevronDownIcon, ChevronsUpDownIcon, PaperclipIcon } from '../components/Icons.tsx';
 import { TaskModal } from '../components/TaskModal.tsx';
+import UserAvatar from '../components/UserAvatar.tsx';
 import {
     select,
     extent,
@@ -36,7 +37,7 @@ const statusColors: { [key in TaskStatus]: string } = {
 const DashboardPage: React.FC = () => {
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [tasks, setTasks] = useState<Task[]>([]);
-  const [employees, setEmployees] = useState<Employee[]>([]);
+  const [employees, setEmployees] = useState<AssignableUser[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [selectedProjectId, setSelectedProjectId] = useState<string>('all');
   const [loading, setLoading] = useState(true);
@@ -177,9 +178,9 @@ const DashboardPage: React.FC = () => {
         )}
 
       <div className="flex-1 overflow-auto">
-        {viewMode === 'list' && <ListView tasks={sortedTasks} />}
-        {viewMode === 'table' && <TableView tasks={sortedTasks} requestSort={requestSort} sortConfig={sortConfig} />}
-        {viewMode === 'kanban' && <KanbanView tasks={filteredTasks} onTaskStatusChange={updateTaskStatus} />}
+        {viewMode === 'list' && <ListView tasks={sortedTasks} employees={employees} />}
+        {viewMode === 'table' && <TableView tasks={sortedTasks} employees={employees} requestSort={requestSort} sortConfig={sortConfig} />}
+        {viewMode === 'kanban' && <KanbanView tasks={filteredTasks} employees={employees} onTaskStatusChange={updateTaskStatus} />}
         {viewMode === 'gantt' && <GanttView tasks={filteredTasks} employees={employees} />}
       </div>
       
@@ -206,41 +207,47 @@ const ViewButton: React.FC<{ icon: React.ReactNode, label: string, active: boole
   </button>
 );
 
-const ListView: React.FC<{ tasks: Task[] }> = ({ tasks }) => {
+const ListView: React.FC<{ tasks: Task[], employees: AssignableUser[] }> = ({ tasks, employees }) => {
     return <div className="space-y-3">
-        {tasks.map(task => (
-            <div key={task.id} className="p-4 bg-card border border-border rounded-lg flex items-center justify-between">
-                <div className="flex-1 min-w-0">
-                    <div className="flex items-center">
-                        <span className={`w-3 h-3 rounded-full mr-4 flex-shrink-0 ${statusColors[task.status]}`}></span>
-                        <div className="flex-1 min-w-0">
-                            <p className="font-semibold truncate">{task.title}</p>
-                            <p className="text-sm text-muted-foreground">Due: {new Date(task.due_date).toLocaleDateString()}</p>
-                        </div>
-                    </div>
-                    {task.attachments && task.attachments.length > 0 && (
-                        <div className="mt-2 pl-7 flex items-start gap-2">
-                            <PaperclipIcon className="w-4 h-4 text-muted-foreground mt-0.5 flex-shrink-0" />
-                            <div className="flex flex-wrap gap-x-3 gap-y-1">
-                                {task.attachments.map((att, index) => (
-                                    <a key={index} href={att} target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline truncate" title={att}>
-                                        {att.split('/').pop() || `Attachment ${index + 1}`}
-                                    </a>
-                                ))}
+        {tasks.map(task => {
+            const assignee = employees.find(e => e.name === task.assignee);
+            return (
+                <div key={task.id} className="p-4 bg-card border border-border rounded-lg flex items-center justify-between">
+                    <div className="flex-1 min-w-0">
+                        <div className="flex items-center">
+                            <span className={`w-3 h-3 rounded-full mr-4 flex-shrink-0 ${statusColors[task.status]}`}></span>
+                            <div className="flex-1 min-w-0">
+                                <p className="font-semibold truncate">{task.title}</p>
+                                <p className="text-sm text-muted-foreground">Due: {new Date(task.due_date).toLocaleDateString()}</p>
                             </div>
                         </div>
-                    )}
+                        {task.attachments && task.attachments.length > 0 && (
+                            <div className="mt-2 pl-7 flex items-start gap-2">
+                                <PaperclipIcon className="w-4 h-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+                                <div className="flex flex-wrap gap-x-3 gap-y-1">
+                                    {task.attachments.map((att, index) => (
+                                        <a key={index} href={att} target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline truncate" title={att}>
+                                            {att.split('/').pop() || `Attachment ${index + 1}`}
+                                        </a>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                    <div className="flex items-center space-x-4 ml-4">
+                        <span className={`px-2 py-1 text-xs font-semibold rounded-full text-white ${priorityColors[task.priority]}`}>{task.priority}</span>
+                        <div className="flex items-center gap-2">
+                            <UserAvatar name={task.assignee || 'Unassigned'} size={24} isAI={assignee?.role === 'ai_agent'} />
+                            <span className="text-sm text-right truncate">{task.assignee || 'Unassigned'}</span>
+                        </div>
+                    </div>
                 </div>
-                <div className="flex items-center space-x-4 ml-4">
-                    <span className={`px-2 py-1 text-xs font-semibold rounded-full text-white ${priorityColors[task.priority]}`}>{task.priority}</span>
-                    <span className="text-sm text-right truncate">{task.assignee || 'Unassigned'}</span>
-                </div>
-            </div>
-        ))}
+            );
+        })}
     </div>;
 };
 
-const TableView: React.FC<{ tasks: Task[], requestSort: (key: SortableTaskKeys) => void, sortConfig: {key: SortableTaskKeys, direction: SortDirection} | null }> = ({ tasks, requestSort, sortConfig }) => {
+const TableView: React.FC<{ tasks: Task[], employees: AssignableUser[], requestSort: (key: SortableTaskKeys) => void, sortConfig: {key: SortableTaskKeys, direction: SortDirection} | null }> = ({ tasks, employees, requestSort, sortConfig }) => {
     const SortableHeader: React.FC<{ columnKey: SortableTaskKeys, title: string }> = ({ columnKey, title }) => {
         const isSorted = sortConfig?.key === columnKey;
         return (
@@ -271,80 +278,92 @@ const TableView: React.FC<{ tasks: Task[], requestSort: (key: SortableTaskKeys) 
                 </tr>
             </thead>
             <tbody className="bg-card divide-y divide-border">
-                {tasks.map(task => (
-                    <tr key={task.id}>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                            <div className="truncate" title={task.title}>{task.title}</div>
-                            {task.description && <div className="text-xs text-muted-foreground truncate" title={task.description}>{task.description}</div>}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm">
-                            {task.assignee || 'Unassigned'}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm">
-                            <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full text-white ${statusColors[task.status]}`}>{task.status}</span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm">
-                             <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full text-white ${priorityColors[task.priority]}`}>{task.priority}</span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">{new Date(task.due_date).toLocaleDateString()}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm">
-                            {task.attachments && task.attachments.length > 0 ? (
-                                <div className="flex flex-col gap-1">
-                                    {task.attachments.map((att, index) => (
-                                        <a key={index} href={att} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline truncate" title={att}>
-                                            {att.split('/').pop()}
-                                        </a>
-                                    ))}
+                {tasks.map(task => {
+                    const assignee = employees.find(e => e.name === task.assignee);
+                    return (
+                        <tr key={task.id}>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                <div className="truncate" title={task.title}>{task.title}</div>
+                                {task.description && <div className="text-xs text-muted-foreground truncate" title={task.description}>{task.description}</div>}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm">
+                                <div className="flex items-center gap-2">
+                                    <UserAvatar name={task.assignee || 'Unassigned'} size={24} isAI={assignee?.role === 'ai_agent'} />
+                                    <span>{task.assignee || 'Unassigned'}</span>
                                 </div>
-                            ) : 'N/A'}
-                        </td>
-                    </tr>
-                ))}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm">
+                                <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full text-white ${statusColors[task.status]}`}>{task.status}</span>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm">
+                                 <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full text-white ${priorityColors[task.priority]}`}>{task.priority}</span>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">{new Date(task.due_date).toLocaleDateString()}</td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm">
+                                {task.attachments && task.attachments.length > 0 ? (
+                                    <div className="flex flex-col gap-1">
+                                        {task.attachments.map((att, index) => (
+                                            <a key={index} href={att} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline truncate" title={att}>
+                                                {att.split('/').pop()}
+                                            </a>
+                                        ))}
+                                    </div>
+                                ) : 'N/A'}
+                            </td>
+                        </tr>
+                    );
+                })}
             </tbody>
         </table>
         {/* Mobile Card View */}
         <div className="md:hidden space-y-3">
-            {tasks.map(task => (
-                <div key={task.id} className="p-4 bg-card border border-border rounded-lg">
-                    <div className="flex justify-between items-start">
-                        <p className="font-semibold text-lg mb-2 pr-2">{task.title}</p>
-                        <span className={`flex-shrink-0 px-2 py-1 text-xs font-semibold rounded-full text-white ${priorityColors[task.priority]}`}>{task.priority}</span>
-                    </div>
-                    <div className="space-y-2 text-sm border-t border-border pt-2 mt-2">
-                        <div className="flex justify-between">
-                            <span className="text-muted-foreground">Status:</span>
-                            <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full text-white ${statusColors[task.status]}`}>{task.status}</span>
+            {tasks.map(task => {
+                const assignee = employees.find(e => e.name === task.assignee);
+                return (
+                    <div key={task.id} className="p-4 bg-card border border-border rounded-lg">
+                        <div className="flex justify-between items-start">
+                            <p className="font-semibold text-lg mb-2 pr-2">{task.title}</p>
+                            <span className={`flex-shrink-0 px-2 py-1 text-xs font-semibold rounded-full text-white ${priorityColors[task.priority]}`}>{task.priority}</span>
                         </div>
-                        <div className="flex justify-between">
-                            <span className="text-muted-foreground">Assignee:</span>
-                            <span>{task.assignee || 'Unassigned'}</span>
-                        </div>
-                        <div className="flex justify-between">
-                            <span className="text-muted-foreground">Due Date:</span>
-                            <span>{new Date(task.due_date).toLocaleDateString()}</span>
-                        </div>
-                    </div>
-                    {task.attachments && task.attachments.length > 0 && (
-                        <div className="border-t border-border pt-2 mt-2">
-                            <div className="flex items-start gap-2">
-                                <PaperclipIcon className="w-4 h-4 text-muted-foreground mt-0.5 flex-shrink-0" />
-                                <div className="flex flex-col gap-1">
-                                    {task.attachments.map((att, index) => (
-                                        <a key={index} href={att} target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline truncate" title={att}>
-                                            {att.split('/').pop()}
-                                        </a>
-                                    ))}
+                        <div className="space-y-2 text-sm border-t border-border pt-2 mt-2">
+                            <div className="flex justify-between">
+                                <span className="text-muted-foreground">Status:</span>
+                                <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full text-white ${statusColors[task.status]}`}>{task.status}</span>
+                            </div>
+                            <div className="flex justify-between items-center">
+                                <span className="text-muted-foreground">Assignee:</span>
+                                <div className="flex items-center gap-2">
+                                    <UserAvatar name={task.assignee || 'Unassigned'} size={20} isAI={assignee?.role === 'ai_agent'} />
+                                    <span>{task.assignee || 'Unassigned'}</span>
                                 </div>
                             </div>
+                            <div className="flex justify-between">
+                                <span className="text-muted-foreground">Due Date:</span>
+                                <span>{new Date(task.due_date).toLocaleDateString()}</span>
+                            </div>
                         </div>
-                    )}
-                </div>
-            ))}
+                        {task.attachments && task.attachments.length > 0 && (
+                            <div className="border-t border-border pt-2 mt-2">
+                                <div className="flex items-start gap-2">
+                                    <PaperclipIcon className="w-4 h-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+                                    <div className="flex flex-col gap-1">
+                                        {task.attachments.map((att, index) => (
+                                            <a key={index} href={att} target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline truncate" title={att}>
+                                                {att.split('/').pop()}
+                                            </a>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                )
+            })}
         </div>
     </div>;
 };
 
-const KanbanView: React.FC<{ tasks: Task[], onTaskStatusChange: (taskId: string, newStatus: TaskStatus) => void }> = ({ tasks, onTaskStatusChange }) => {
+const KanbanView: React.FC<{ tasks: Task[], employees: AssignableUser[], onTaskStatusChange: (taskId: string, newStatus: TaskStatus) => void }> = ({ tasks, employees, onTaskStatusChange }) => {
     const [draggedTaskId, setDraggedTaskId] = useState<string | null>(null);
     
     const onDragStart = (e: React.DragEvent<HTMLDivElement>, taskId: string) => {
@@ -375,37 +394,43 @@ const KanbanView: React.FC<{ tasks: Task[], onTaskStatusChange: (taskId: string,
             <div key={status} className="flex flex-col bg-card rounded-lg" onDragOver={onDragOver} onDrop={(e) => onDrop(e, status)}>
                 <h3 className="p-4 font-semibold text-lg border-b border-border">{title} ({tasks.filter(t => t.status === status).length})</h3>
                 <div className="p-4 space-y-4 overflow-y-auto">
-                    {tasks.filter(t => t.status === status).map(task => (
-                        <div key={task.id} draggable onDragStart={(e) => onDragStart(e, task.id)} className="p-4 bg-secondary border border-border rounded-lg shadow-sm cursor-grab">
-                            <p className="font-semibold mb-2">{task.title}</p>
-                            <div className="flex justify-between items-center">
-                                <span className="text-sm text-muted-foreground">{new Date(task.due_date).toLocaleDateString()}</span>
-                                <span className="text-sm">{task.assignee || 'Unassigned'}</span>
-                            </div>
-                            {task.attachments && task.attachments.length > 0 && (
-                                <div className="mt-2 pt-2 border-t border-border/50">
-                                    <div className="flex items-start gap-2">
-                                        <PaperclipIcon className="w-4 h-4 text-muted-foreground mt-0.5 flex-shrink-0" />
-                                        <div className="flex flex-col gap-1">
-                                            {task.attachments.map((att, index) => (
-                                                <a key={index} href={att} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline truncate" title={att}>
-                                                    {att.split('/').pop()}
-                                                </a>
-                                            ))}
-                                        </div>
+                    {tasks.filter(t => t.status === status).map(task => {
+                        const assignee = employees.find(e => e.name === task.assignee);
+                        return (
+                            <div key={task.id} draggable onDragStart={(e) => onDragStart(e, task.id)} className="p-4 bg-secondary border border-border rounded-lg shadow-sm cursor-grab">
+                                <p className="font-semibold mb-2">{task.title}</p>
+                                <div className="flex justify-between items-center">
+                                    <span className="text-sm text-muted-foreground">{new Date(task.due_date).toLocaleDateString()}</span>
+                                    <div className="flex items-center gap-2">
+                                        <UserAvatar name={task.assignee || 'Unassigned'} size={20} isAI={assignee?.role === 'ai_agent'} />
+                                        <span className="text-sm">{task.assignee || 'Unassigned'}</span>
                                     </div>
                                 </div>
-                            )}
-                            <div className={`mt-2 h-1 rounded-full ${priorityColors[task.priority]}`}></div>
-                        </div>
-                    ))}
+                                {task.attachments && task.attachments.length > 0 && (
+                                    <div className="mt-2 pt-2 border-t border-border/50">
+                                        <div className="flex items-start gap-2">
+                                            <PaperclipIcon className="w-4 h-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+                                            <div className="flex flex-col gap-1">
+                                                {task.attachments.map((att, index) => (
+                                                    <a key={index} href={att} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline truncate" title={att}>
+                                                        {att.split('/').pop()}
+                                                    </a>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+                                <div className={`mt-2 h-1 rounded-full ${priorityColors[task.priority]}`}></div>
+                            </div>
+                        )
+                    })}
                 </div>
             </div>
         ))}
     </div>;
 };
 
-const GanttView: React.FC<{ tasks: Task[], employees: Employee[] }> = ({ tasks, employees }) => {
+const GanttView: React.FC<{ tasks: Task[], employees: AssignableUser[] }> = ({ tasks, employees }) => {
     const svgRef = useRef<SVGSVGElement | null>(null);
     const wrapperRef = useRef<HTMLDivElement | null>(null);
     const [timeScale, setTimeScale] = useState<'weekly' | 'monthly'>('weekly');
