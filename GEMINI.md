@@ -67,6 +67,8 @@ SUPABASE_SERVICE_KEY=your-service-key-here
 
 ## 專案近期動態與結論 (Recent Project Updates & Key Decisions)
 
+- **後端 RBAC 重構完成 (2025-09-08)**: 遵循 Phase 2.5 的規劃，已將分散在 API 路由的權限邏輯，統一遷移至專門的 `RBACService`，提升了程式碼的內聚性與可維護性。
+
 - **前端核心功能完成 (2025-09-08)**:
   - **任務附件顯示**: 在 `DashboardPage` 的所有主要視圖（列表、表格、看板）中，成功實作了任務附件的顯示功能，並為此新增了對應的單元測試。
   - **使用者頭像更新**: 成功將 `UserAvatar` 元件整合至 `DashboardPage` 的所有主要視圖中。現在系統能根據使用者角色，正確顯示人類（圓形）和 AI（方形）的頭像，並已完成相關測試。
