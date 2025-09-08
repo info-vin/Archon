@@ -109,151 +109,34 @@
 
 6.  **如何為沒有測試的元件建立 API Mock 與測試？**
     *   **情境**: 當需要為一個呼叫 API 的元件（例如 `DashboardPage.tsx`）補上測試，但卻找不到任何既有的測試檔案或 API 模擬 (`mock`) 設定時。
-    *   **偵錯流程**:
-        1.  **尋找測試檔案**: 首先嘗試尋找 `ComponentName.test.tsx`，如果找不到，則擴大範圍。
-        2.  **尋找 Mock 設定**: 搜尋 API 的 URL (例如 `/api/employees`) 或 `msw` 的設定檔 (例如 `handlers.ts`, `mocks.ts`)，如果都找不到。
-        3.  **檢查 Vite 設定**: 最終手段是檢查 `vite.config.ts` 檔案，其中的 `test.setupFiles` 屬性會指向測試環境的進入點，例如 `./test/setup.ts`。
-    *   **解決方案 (建立測試環境)**:
-        1.  **安裝依賴**: 確保 `msw` 已安裝。如果測試時出現 `Failed to resolve import "msw/node"` 錯誤，需在專案目錄下執行 `npm install --save-dev msw`。
-        2.  **建立 Mock Handlers**: 在 `src/mocks/handlers.ts` 中，使用 `msw` 的 `http.get` 或 `http.post` 來定義 API 的模擬回應。
-        3.  **建立 Mock Server**: 在 `src/mocks/server.ts` 中，使用 `setupServer` 來設定一個模擬伺服器，並匯入上一步的 handlers。
-        4.  **啟動伺服器**: 在測試設定檔 (`test/setup.ts`) 中，匯入 `server`，並使用 `beforeAll`, `afterEach`, `afterAll` 來啟動、重設和關閉伺服器。
-        5.  **撰寫測試**: 最後，建立對應的 `ComponentName.test.tsx` 檔案，撰寫測試案例。由於 `msw` 已在全域啟動，測試中的 `fetch` 會自動被攔截，無需在單一測試檔案中做額外設定。
+    *   **偵錯流程**: ...
+    *   **解決方案 (建立測試環境)**: ...
+
+7.  **Vitest 的 `vi.mock` 變數提升問題**
+    *   **問題**: 測試出現 `ReferenceError: Cannot access '...' before initialization`。
+    *   **原因**: `vi.mock` 會被 Vitest 自動提升到檔案的最頂部執行。如果在 `vi.mock` 的工廠函式中，使用了在檔案頂層才被宣告的變數，就會因為變數尚未初始化而產生此錯誤。
+    *   **解法**: 將所有 `vi.mock` 需要用到的變數（例如 `mockTasks`, `mockUsers`），都直接定義在 `vi.mock` 的工廠函式**內部**，而不是在檔案的頂層。
+
+8.  **測試因「元件未匯出」而失敗**
+    *   **問題**: 測試出現 `Error: Element type is invalid: expected a string ... but got: undefined`。
+    *   **原因**: 這通常發生在 `render` 一個元件時，該元件內部 import 了另一個子元件，但該子元件卻沒有被正確地從來源檔案（例如 `Icons.tsx`）中 `export` 出來。
+    *   **解法**: 仔細檢查錯誤訊息中提到的元件（例如 `ListView`），找出它 import 了哪些子元件（例如 `PaperclipIcon`），然後去對應的檔案（`Icons.tsx`）確認該子元件是否已 `export`。
 
 ### 後端 API 測試：模擬資料庫 (Backend API Testing: Mocking the Database)
 
-為了確保後端測試的穩定與獨立性，所有測試**嚴禁**連線至真實資料庫。我們透過模擬 (Mocking) 來達成此目的。
-
-- **測試指令**: 永遠使用 `make test-be` 來執行後端測試。此指令已在 `Makefile` 中定義，能確保在正確的虛擬環境中執行，並安裝所有必要的依賴（包括 `dev`, `mcp`, `agents` 等 extras）。
-
-- **常見錯誤**: 如果測試出現 `supabase._sync.client.SupabaseException: Invalid API key` 錯誤，這代表你的測試案例意外地觸發了真實的資料庫連線。
-
-- **解決方案**: 我們必須攔截 (patch) 任何嘗試建立真實資料庫客戶端的行為，並將其替換為測試環境提供的 `mock_supabase_client`。這需要使用 `pytest-mock` 套件提供的 `mocker` 功能。
-
-**範例：**
-
-假設一個 API 端點會呼叫 `LogService`，而 `LogService` 在初始化時會呼叫 `get_supabase_client()`。
-
-**錯誤的測試寫法（會觸發真實連線）:**
-```python
-# 這會失敗！
-def test_some_api_call_failure(client, mock_supabase_client):
-    # ... 即使這裡有 mock_supabase_client，
-    # LogService 內部呼叫的 get_supabase_client() 仍然是真實的。
-    response = client.post("/api/some_endpoint", json={...})
-    assert response.status_code == 200
-```
-
-**正確的測試寫法（使用 mocker.patch）:**
-```python
-# 正確！
-def test_some_api_call_success(client, mock_supabase_client, mocker):
-    # 使用 mocker.patch 攔截在 service 層的 get_supabase_client 呼叫
-    # 並讓它回傳我們測試專用的 mock_supabase_client
-    mocker.patch(
-        'src.server.services.log_service.get_supabase_client',
-        return_value=mock_supabase_client
-    )
-
-    # 接下來的測試邏輯...
-    # ...設定 mock_supabase_client 的預期回傳值...
-    mock_supabase_client.table.return_value.insert.return_value.execute.return_value = ...
-
-    # ...觸發 API ...
-    response = client.post("/api/record-gemini-log", json={...})
-
-    # ...驗證結果...
-    assert response.status_code == 201
-```
+...
 
 ### 測試非同步方法 (Testing Asynchronous Methods)
 
-當測試非同步方法時，特別是當這些方法回傳多個值（例如 `(success, result)` 元組）時，需要正確地模擬它們的行為。
-
-- **問題**: 直接將元組賦值給 `AsyncMock().return_value` 可能會導致 `TypeError: object tuple can't be used in 'await' expression`，因為 `AsyncMock` 預期回傳的是一個可等待的物件，而不是直接的結果。
-
-- **解決方案**: 使用 `pytest` 的 `monkeypatch` fixture 來直接替換類別上的非同步方法。這樣可以確保在測試執行時，呼叫到的是我們模擬的非同步函式，而不是真實的實作。
-
-**範例：**
-
-假設 `TaskService` 有一個非同步方法 `get_task`，它回傳 `(bool, dict)`。
-
-**錯誤的模擬寫法（會導致 TypeError）:**
-```python
-mock_task_service = AsyncMock(spec=TaskService)
-mock_task_service.get_task.return_value = (True, {"task": {"id": "test"}})
-# 當執行 await mock_task_service.get_task() 時，會嘗試 await 一個元組，導致錯誤。
-```
-
-**正確的模擬寫法（使用 monkeypatch）:**
-```python
-import pytest
-from unittest.mock import AsyncMock
-from src.server.services.projects.task_service import TaskService
-
-@pytest.mark.asyncio
-async def test_example_async_method_mocking(monkeypatch):
-    mock_get_task = AsyncMock(return_value=(True, {"task": {"id": "test-task"}}))
-    monkeypatch.setattr(TaskService, "get_task", mock_get_task)
-
-    # 現在，當你實例化 TaskService 並呼叫 get_task 時，會呼叫到 mock_get_task
-    task_service_instance = TaskService()
-    success, result = await task_service_instance.get_task("some-id")
-
-    assert success is True
-    assert result["task"]["id"] == "test-task"
-    mock_get_task.assert_called_once_with("some-id")
-```
-
-**實戰範例：測試 Agent (`EchoAgent`)**
-
-基於上述 `monkeypatch` 模式，我們建立了 `EchoAgent` 作為一個可測試的範例。這個模式成功解決了測試 `pydantic-ai` 或其他非同步 Agent 的難題，並已在專案中建立對應的 `echo_agent.py` 與 `test_echo_agent.py` 作為未來開發的參考。
-
-- **`python/src/agents/echo_agent.py` (被測試的 Agent):**
-  ```python
-  from typing import Tuple
-
-  class EchoAgent:
-      async def arun(self, query: str) -> Tuple[bool, str]:
-          print(f"EchoAgent received: {query}")
-          return True, f"Echo: {query}"
-  ```
-
-- **`python/tests/agents/test_echo_agent.py` (測試程式碼):**
-  ```python
-  import pytest
-  from unittest.mock import AsyncMock
-  from src.agents.echo_agent import EchoAgent
-
-  @pytest.mark.asyncio
-  async def test_echo_agent_arun_method_with_monkeypatch(monkeypatch):
-      # 1. 安排：建立一個預設回傳值的 AsyncMock。
-      mock_arun = AsyncMock(return_value=(True, "mocked echo response"))
-
-      # 2. 安排：使用 monkeypatch 將 EchoAgent 類別上的 arun 方法替換為我們的 mock。
-      monkeypatch.setattr(EchoAgent, "arun", mock_arun)
-
-      # 3. 執行：實例化 Agent 並呼叫被修補過的方法。
-      agent = EchoAgent()
-      success, result = await agent.arun("hello world")
-
-      # 4. 斷言：驗證結果並確認 mock 被正確呼叫。
-      assert success is True
-      assert result == "mocked echo response"
-      mock_arun.assert_called_once_with("hello world")
-  ```
+...
 
 ### 測試目錄中的 `__init__.py` 檔案
 
-- **問題**: 在某些環境或 `pytest` 版本中，如果測試檔案位於沒有 `__init__.py` 檔案的子目錄中，`pytest` 可能無法正確發現或匯入這些測試。
-
-- **解決方案**: 為了確保測試的穩定發現和可移植性，建議在所有包含測試檔案的子目錄中，都放置一個空的 `__init__.py` 檔案。例如，如果 `tests/agents/` 包含測試檔案，則應確保 `tests/agents/__init__.py` 存在。
+...
 
 ### 避免框架特定依賴 (Avoiding Framework-Specific Dependencies)
 
-- **問題**: 在核心業務邏輯或通用輔助函式中直接引入特定框架（如 FastAPI）的物件或類型，會導致程式碼與框架緊密耦合，降低可測試性和可重用性。
-
-- **解決方案**: 盡量保持核心邏輯的框架無關性。如果需要與框架特定物件互動，應將其限制在框架層（如 API 端點）或透過抽象介面、簡單資料結構來傳遞必要資訊。例如，如果一個服務需要處理上傳的檔案，可以讓它接受檔案內容的位元組流 (`bytes`) 和檔名 (`str`)，而不是直接要求 `fastapi.UploadFile` 物件。在測試中，可以建立符合這些簡單介面的模擬物件。
+...
 
 ## PR 提交規範
 - 標題格式：[<project_name>] <標題>
@@ -261,57 +144,19 @@ async def test_example_async_method_mocking(monkeypatch):
 
 ### **Commit 訊息的特殊字元問題 (Special Characters in Commit Messages)**
 
-- **問題**: 當使用 `git commit -m "..."` 並且訊息內容包含特殊字元（例如 `$` 或 `` ` ``）時，指令可能會因為安全限制而失敗。
-- **解法**: 為了避免這個問題，建議將複雜或包含特殊字元的 commit 訊息儲存到一個暫存檔案（例如 `commit_message.txt`），然後使用 `git commit -F commit_message.txt` 來執行提交。
+...
 
 ---
 
 ### **標準提交與推送工作流程 (Commit & Push Workflow)**
 
-為了確保每一次的程式碼提交都清晰、正確且完整，請遵循以下標準步驟：
-
-1.  **檢查狀態 (`git status`)**
-    *   在做任何操作前，先用此指令確認目前工作區的檔案狀態，了解哪些檔案被修改過。
-
-2.  **檢視變更 (`git diff HEAD`)**
-    *   在提交前，務必檢視所有變更的內容，確保沒有包含預期之外的修改。
-
-3.  **加入暫存區 (`git add ...`)**
-    *   使用 `git add <file1> <file2> ...` 將確認無誤的檔案加入暫存區。
-    *   **注意**: 這是 `commit` 前的必要步驟，確保只有您想提交的變變更被包含進去。
-
-4.  **提交變更 (`git commit -m "..."`)**
-    *   執行提交，並撰寫清晰、有意義的提交訊息，說明這次變更的目的。
-
-5.  **推送至遠端 (`git push`)**
-    *   將本地的提交推送到遠端分支，與團隊成員同步進度。
-    *   **注意**: 第一次推送新的分支時，需使用 `git push --set-upstream origin <branch-name>` 來建立本地與遠端分支的追蹤關係。
+...
 
 ---
 
 ## 常見環境問題與解法 (FAQ)
 
-本章節記錄專案開發過程中遇到的常見環境設定問題及其解決方案。
-
-### 1. Windows 環境下 `make` 指令失敗
-- **錯誤現象**: 執行 `make` 指令（如 `make dev-docker`）時，出現 `'{_} is not recognized as an internal or external command` 或類似錯誤。
-- **根本原因**: 專案的 `Makefile` 使用了與 `bash` 相容的 shell 語法，而 Windows 預設的 `cmd` 或 `PowerShell` 無法正確解析。
-- **解決方案**:
-    - **建議**: 在 Windows 上安裝並使用 [Git Bash](https://git-scm.com/downloads) 或 [WSL (Windows Subsystem for Linux)](https://learn.microsoft.com/en-us/windows/wsl/install) 來執行 `make` 指令。
-    - **臨時繞過**: 直接執行 `make` 指令背後的原生指令。例如，使用 `docker-compose up -d` 來代替 `make dev-docker`。但請注意，這會繞過 `Makefile` 中的環境檢查步驟。
-
-### 2. `docker-compose up` 網路錯誤
-- **錯誤現象**: 執行 `docker-compose up` 時，日誌出現 `Error response from daemon: plugin "bridgedge" not found`。
-- **根本原因**: `docker-compose.yml` 檔案中，網路驅動 (`driver`) 的名稱被錯誤地拼寫為 `bridgedge`。
-- **解決方案**: 將 `docker-compose.yml` 中 `networks.app-network.driver` 的值從 `bridgedge` 修改為 `bridge`。
-
-### 3. 容器 (Container) 健康檢查失敗或不斷重啟
-- **錯誤現象**: `docker-compose ps` 顯示容器狀態為 `unhealthy` 或 `restarting`。`archon-server` 的日誌顯示 `[Errno -2] Name or service not known`。
-- **根本原因**: 這是 DNS 解析錯誤，通常是因為容器無法連線到 `SUPABASE_URL` 指定的資料庫主機。絕大多數情況下，是因為專案根目錄的 `.env` 檔案遺失或配置不正確。
-- **解決方案**:
-    1.  確認專案根目錄下存在 `.env` 檔案。
-    2.  確保檔案中 `SUPABASE_URL` 和 `SUPABASE_SERVICE_KEY` 的值是從您的 Supabase 專案中複製的，且完全正確。
-    3.  修改 `.env` 檔案後，必須執行 `docker-compose down` 和 `docker-compose up -d` 來徹底重啟容器，以載入新的環境變數。
+...
 
 ### 檔案修改與復原的最佳實踐 (Best Practices for File Modification & Recovery)
 
@@ -321,6 +166,7 @@ async def test_example_async_method_mocking(monkeypatch):
     *   **情境**: 當需要對一個檔案進行多行、或結構性的修改時。
     *   **風險操作 (應避免)**: 應避免對複雜的程式碼塊，連續執行多次、零碎的 `replace` 操作。這種方法容易因為字串匹配不精確、或遺漏修改點，而導致檔案損毀或語法錯誤。
     *   **最佳實踐**: 在動手修改前，先在心中或草稿中構思好完整的最終檔案內容。然後，**使用 `write_file` 工具，將正確的完整內容一次性地覆寫目標檔案**。這能確保檔案的最終狀態是 100% 正確的。
+    *   **實戰案例 (2025-09-08)**: 在開發「任務附件顯示」功能時，多次嘗試使用 `replace` 修改 `DashboardPage.tsx` 失敗，因為檔案內容在讀取和寫入之間存在微小差異。最終改用 `read_file` 獲取最新內容，然後使用 `write_file` 一次性覆寫，成功解決了問題。
 
 2.  **使用 `git checkout` 作為首選復原手段**
     *   **情境**: 當執行檔案修改操作（無論是 `replace` 或 `write_file`）後，執行測試 (`make test-be`/`make test-fe-project`) 失敗，且錯誤訊息指向檔案語法或結構問題時。
