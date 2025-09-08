@@ -67,7 +67,9 @@ SUPABASE_SERVICE_KEY=your-service-key-here
 
 ## 專案近期動態與結論 (Recent Project Updates & Key Decisions)
 
-- **後端 RBAC 重構完成 (2025-09-08)**: 遵循 Phase 2.5 的規劃，已將分散在 API 路由的權限邏輯，統一遷移至專門的 `RBACService`，提升了程式碼的內聚性與可維護性。
+- **後端重構 (2025-09-08)**:
+  - **RBAC 服務化**: 遵循 Phase 2.5 的規劃，已將分散在 API 路由的權限邏輯，統一遷移至專門的 `RBACService`，提升了程式碼的內聚性與可維護性。
+  - **健康檢查整合**: 將分散於 `main.py` 與 `projects_api.py` 的健康檢查邏輯，統一整合至 `HealthService`，並由根目錄的 `/health` 提供單一的系統狀態報告，移除了重複的端點。
 
 - **前端核心功能完成 (2025-09-08)**:
   - **任務附件顯示**: 在 `DashboardPage` 的所有主要視圖（列表、表格、看板）中，成功實作了任務附件的顯示功能，並為此新增了對應的單元測試。

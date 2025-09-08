@@ -253,67 +253,7 @@ async def create_project(request: CreateProjectRequest):
 
 
 
-@router.get("/projects/health")
-async def projects_health():
-    """Health check for projects API and database schema validation."""
-    try:
-        logfire.info("Projects health check requested")
-        supabase_client = get_supabase_client()
 
-        # Check if projects table exists by testing ProjectService
-        try:
-            project_service = ProjectService(supabase_client)
-            # Try to list projects with limit 1 to test table access
-            success, _ = project_service.list_projects()
-            projects_table_exists = success
-            if success:
-                logfire.info("Projects table detected successfully")
-            else:
-                logfire.warning("Projects table access failed")
-        except Exception as e:
-            projects_table_exists = False
-            logfire.warning(f"Projects table not found | error={str(e)}")
-
-        # Check if tasks table exists by testing TaskService
-        try:
-            task_service = TaskService(supabase_client)
-            # Try to list tasks with limit 1 to test table access
-            success, _ = task_service.list_tasks(include_closed=True)
-            tasks_table_exists = success
-            if success:
-                logfire.info("Tasks table detected successfully")
-            else:
-                logfire.warning("Tasks table access failed")
-        except Exception as e:
-            tasks_table_exists = False
-            logfire.warning(f"Tasks table not found | error={str(e)}")
-
-        schema_valid = projects_table_exists and tasks_table_exists
-
-        result = {
-            "status": "healthy" if schema_valid else "schema_missing",
-            "service": "projects",
-            "schema": {
-                "projects_table": projects_table_exists,
-                "tasks_table": tasks_table_exists,
-                "valid": schema_valid,
-            },
-        }
-
-        logfire.info(
-            f"Projects health check completed | status={result['status']} | schema_valid={schema_valid}"
-        )
-
-        return result
-
-    except Exception as e:
-        logfire.error(f"Projects health check failed | error={str(e)}")
-        return {
-            "status": "error",
-            "service": "projects",
-            "error": str(e),
-            "schema": {"projects_table": False, "tasks_table": False, "valid": False},
-        }
 
 
 @router.get("/projects/task-counts")

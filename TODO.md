@@ -257,12 +257,12 @@ sequenceDiagram
 此階段的任務專注於改善既有程式碼的架構，提升系統的長期可維護性、可測試性與穩定性。建議由「系統維護專家」角色來執行。
 
 - **[x] 重構角色權限管理 (Refactor RBAC)**
-    - [ ] **問題**: 權限規則的定義 (`permissions` 字典) 和檢查邏輯 (`has_permission_to_assign` 函式) 都實作在 API 層 (`projects_api.py`)。
-    - [ ] **目標**: 建立一個新的服務 `services/rbac_service.py`，將所有權限相關的邏輯（規則定義、檢查函式）都遷移至此服務中，並讓 API 層呼叫此服務，達成職責分離。
+    - [x] **問題**: 權限規則的定義 (`permissions` 字典) 和檢查邏輯 (`has_permission_to_assign` 函式) 都實作在 API 層 (`projects_api.py`)。
+    - [x] **目標**: 建立一個新的服務 `services/rbac_service.py`，將所有權限相關的邏輯（規則定義、檢查函式）都遷移至此服務中，並讓 API 層呼叫此服務，達成職責分離。
     - [ ] **問題**: 目前 API 中用來判斷操作者權限的角色是寫死的 (`current_user_role = "PM"`)。
     - [ ] **目標**: 移除硬編碼的角色，為後續整合真實的用戶身份驗證機制做準備。
 
-- **[ ] 整合健康檢查邏輯 (Consolidate Health Checks)**
+- **[x] 整合健康檢查邏輯 (Consolidate Health Checks)**
     - [ ] **問題**: 健康檢查邏輯分散在 `main.py` 和 `projects_api.py` 中，且有部分重複。
     - [ ] **目標**: 建立一個新的服務 `services/health_service.py`，將所有健康檢查（DB 連線、資料表是否存在等）的邏輯統一到此服務中，並只由 `main.py` 的 `/health` 端點對外提供統一的系統健康報告。
 
