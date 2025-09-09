@@ -86,6 +86,38 @@ sequenceDiagram
 
 ## 3. 開發順序與待辦事項 (v1.3)
 
+---
+
+## 優先任務：部署驗證 (Priority: Deployment Verification)
+
+此任務為當前最高優先級，旨在驗證核心部署管道，為後續所有開發建立一個穩定的基準。
+
+- **[ ] Spike: 執行最小化部署驗證任務**
+    - **指派角色**:
+        - **規劃者**: Gemini (已完成規劃)
+        - **執行者**: 系統維護專家
+        - **學習/記錄者**: 流程優化專家
+    - **目標 (Goal)**: 驗證 `main` 分支的後端服務，能在 Render 環境中成功建置並啟動，回應健康檢查請求。
+    - **分支 (Branch)**: `spike/verify-deployment-pipeline` (此為一次性分支，可隨時刪除)。
+    - **時間限制 (Timebox)**: 4 小時。
+    - **步驟 (Steps)**:
+        1.  從 `main` 建立 `spike/verify-deployment-pipeline` 分支。
+        2.  在 Render 上建立一個新的「預覽環境」或「暫時的 Web Service」。
+        3.  將此分支部署到新的預覽環境。
+        4.  監控部署日誌。
+    - **成功標準 (Success Criteria)**:
+        - 部署日誌顯示成功啟動。
+        - 服務的公開 `/health` 端點回傳 `200 OK` 及 `{"status":"ok"}`。
+    - **失敗標準 (Failure Criteria)**:
+        - Docker 建置失敗。
+        - 服務啟動時在日誌中噴出錯誤並崩潰。
+        - `/health` 端點無法訪問或回傳 5xx 錯誤。
+    - **產出 (Output)**:
+        - 「執行者」需提供部署日誌與最終結果（成功/失敗）。
+        - 「學習/記錄者」需將學習經驗更新至 `CONTRIBUTING_tw.md`，並關閉此任務。
+
+---
+
 我們將開發任務明確區分為「後端」與「前端」，以便團隊成員可以並行工作，同時確保後端基礎建設優先完成。
 
 ---
@@ -273,3 +305,21 @@ sequenceDiagram
 - **[ ] 強化服務層抽象 (Enforce Service Layer Abstraction)**
     - [ ] **問題**: 部分 API 端點（主要在 `projects_api.py`）會繞過服務層，直接呼叫 `get_supabase_client()` 來操作資料庫。
     - [ ] **目標**: 全面審查並重構這些端點，確保所有資料庫的直接存取都必須透過對應的服務層（如 `ProjectService`, `TaskService`）來完成，禁止 API 層直接接觸資料庫。
+
+### **Phase 2.6: 部署與分支策略整合 (Deployment & Branch Strategy Integration)**
+
+此階段為當前最高優先級，旨在解決近期部署失敗所暴露出的核心問題，並為未來的穩定開發奠定基礎。
+
+- **[ ] 釐清並統一 `main` 與 `gemini-log-api` 分支的開發策略**
+    - **問題**: `main` 分支的後端通訊方式已更新，而 `gemini-log-api` 分支的功能尚未開發完成。這導致 `enduser-ui-fe` 前端的整合路徑變得不明確且存在衝突。
+    - **目標**: **團隊必須優先做出決策**：
+        1.  **方案 A (Rebase)**: 將 `gemini-log-api` 的變更，以 `rebase` 或手動方式，整合到 `main` 分支最新的架構上。
+        2.  **方案 B (Postpone)**: 暫時擱置 `gemini-log-api` 的功能，先確保 `main` 分支的穩定性與可部署性，待 `main` 分支成功部署後，再回頭重新評估 `gemini-log-api` 的整合方案。
+    - **產出**: 一份明確的決策，以及後續的執行計畫。在完成此任務前，應暫緩 `enduser-ui-fe` 的大規模開發。
+
+- **[ ] 建立並驗證部署 SOP (Standard Operating Procedure)**
+    - **問題**: 缺乏標準化的部署流程，導致部署過程中出現重複、遺漏和錯誤。
+    - **目標**:
+        1.  在 `CONTRIBUTING_tw.md` 中，完成「部署策略與分支管理」章節的撰寫。
+        2.  由「系統維護專家」Agent，遵循新建立的 SOP，成功將 `main` 分支部署到 Render 一次。
+    - **產出**: 一個經過驗證、所有人都可遵循的部署流程文件。

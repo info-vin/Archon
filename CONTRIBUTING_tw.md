@@ -180,3 +180,54 @@
     *   **情境**: 當執行檔案修改操作（無論是 `replace` 或 `write_file`）後，執行測試 (`make test-be`/`make test-fe-project`) 失敗，且錯誤訊息指向檔案語法或結構問題時。
     *   **風險操作 (應避免)**: 不要在一個可能已損壞的檔案基礎上，繼續嘗試用 `replace` 進行「修補」。這往往會讓問題變得更複雜。
     *   **最佳實踐**: **立即使用 `git checkout -- <file_path>` 指令**，將出問題的檔案還原到上次提交時的乾淨狀態。然後，回到第一步，重新分析問題並使用 `write_file` 進行一次性修改。這能確保您永遠在一個已知的、正確的基礎上進行工作。
+
+---
+
+## 部署策略與分支管理 (Deployment Strategy & Branch Management)
+
+為了避免因流程不清導致的部署失敗，並確保每次上線的程式碼都穩定可靠，所有團隊成員應遵循以下策略。
+
+### 1. 部署環境 (Deployment Environment)
+- **平台**: 本專案所有服務，包括後端 (FastAPI) 與前端 (React)，均統一使用 **Render** 進行部署。
+- **目標**: 任何關於 Vercel, Supabase Functions 或其他平台的部署假設都是**不正確的**。所有與部署相關的修改（如 Dockerfile, 啟動指令）都應以 Render 環境為唯一目標。
+
+### 2. 分支策略 (Branching Strategy)
+- **`main` 分支**: 是唯一代表**穩定、可部署**程式碼的分支。
+- **`feature` 分支**: 所有新功能開發、錯誤修復或重構，都必須在**獨立的 `feature/...` 分支**上進行。
+- **合併流程**: 功能開發完成後，應發起 Pull Request (PR) 合併至 `main` 分支。PR 必須經過至少一位團隊成員審查，並確保所有自動化檢查 (CI) 都已通過。
+
+### 3. 部署前檢查清單 (Pre-Deployment Checklist)
+在執行部署指令前，**必須**在本地完成以下所有檢查：
+
+1.  **同步最新程式碼**:
+    ```bash
+    git checkout main
+    git pull origin main
+    ```
+2.  **執行完整測試**: 確保所有後端與前端測試都通過。這是避免將有問題的程式碼部署到生產環境的關鍵防線。
+    ```bash
+    make test
+    ```
+3.  **執行 Lint 檢查**: 確保程式碼風格一致。
+    ```bash
+    make lint-be
+    # (未來應加入 make lint-fe)
+    ```
+4.  **(可選但建議) 本地 Docker 建置**: 驗證 Dockerfile 與相關設定是否正確，能成功建置映像。
+    ```bash
+    docker-compose build
+    ```
+
+### 4. 部署指令 (Deployment Command)
+- 當 `main` 分支準備就緒後，使用以下指令觸發 Render 部署：
+  ```bash
+  git push render main
+  ```
+
+### 5. 部署後驗證 (Post-Deployment Verification)
+- 部署指令執行後，**務必**前往 Render Dashboard，即時查看服務的部署日誌。
+- **確認事項**:
+  - 部署程序是否成功完成。
+  - 服務是否已重新啟動。
+  - **沒有**任何錯誤訊息（如 `Invalid API key`, `ModuleNotFoundError`, 路徑錯誤等）。
+- 如果出現任何錯誤，應立即根據日誌進行除錯，或考慮回滾到上一個穩定版本。
