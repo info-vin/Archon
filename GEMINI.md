@@ -67,6 +67,11 @@ SUPABASE_SERVICE_KEY=your-service-key-here
 
 ## 專案近期動態與結論 (Recent Project Updates & Key Decisions)
 
+- **部署管道驗證成功 (2025-09-10)**:
+  - **任務**: 成功完成 `spike/verify-deployment-pipeline` 任務，驗證了後端服務在 Render 平台上的部署流程。
+  - **環境修復**: 解決了首次部署時遇到的五大設定問題（Dockerfile 路徑、根目錄、啟動指令、Port 綁定、健康檢查寬限期）。
+  - **產出**: 相關的除錯經驗與最佳實踐，已作為「Render 部署除錯實戰指南」歸檔至 `CONTRIBUTING_tw.md`，為未來的穩定部署奠定基礎。
+
 - **後端重構 (2025-09-08)**:
   - **RBAC 服務化**: 遵循 Phase 2.5 的規劃，已將分散在 API 路由的權限邏輯，統一遷移至專門的 `RBACService`，提升了程式碼的內聚性與可維護性。
   - **健康檢查整合**: 將分散於 `main.py` 與 `projects_api.py` 的健康檢查邏輯，統一整合至 `HealthService`，並由根目錄的 `/health` 提供單一的系統狀態報告，移除了重複的端點。
