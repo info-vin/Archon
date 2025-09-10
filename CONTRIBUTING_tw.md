@@ -231,3 +231,27 @@
   - 服務是否已重新啟動。
   - **沒有**任何錯誤訊息（如 `Invalid API key`, `ModuleNotFoundError`, 路徑錯誤等）。
 - 如果出現任何錯誤，應立即根據日誌進行除錯，或考慮回滾到上一個穩定版本。
+
+### 6. Render 部署除錯實戰指南 (Render Deployment Debugging Guide)
+
+根據 `spike/verify-deployment-pipeline` 的部署驗證任務，我們總結了首次在 Render 上部署後端服務時，最關鍵的五個設定。如果遇到部署失敗，請優先檢查這些項目：
+
+1.  **Dockerfile Path**:
+    *   **問題**: Render 在根目錄找不到 `Dockerfile`。
+    *   **解法**: 在 Render 設定中，將此路徑指定為 `python/Dockerfile.server`。
+
+2.  **Root Directory**:
+    *   **問題**: Docker 建置時，找不到 `src`, `tests` 等資料夾 (`"/tests": not found`)。
+    *   **解法**: 在 Render 設定中，將此路徑指定為 `python`，告訴 Render 從 `python` 目錄開始建置。
+
+3.  **Docker Command** (或 Start Command):
+    *   **問題**: 服務啟動時發生 `could not find ... /python/python` 錯誤。
+    *   **解法**: 在 Render 設定中，將此欄位**保持空白**。這會強制 Render 使用我們在 `Dockerfile.server` 中定義好的 `CMD` 指令，而不是用一個不正確的指令覆蓋它。
+
+4.  **環境變數 `ARCHON_SERVER_PORT`**:
+    *   **問題**: 部署成功，但日誌顯示 `No open ports detected`。
+    *   **解法**: 在 Render 的環境變數設定中，將 `ARCHON_SERVER_PORT` 的值設定為 `8181`。Render 的系統會自動偵測到這個 Port 並完成網路設定，即使它與預設的 `10000` 不同。
+
+5.  **Health Check Grace Period**:
+    *   **問題**: 應用程式日誌有正常輸出，但 Render 仍然顯示 `No open ports detected`。
+    *   **解法**: 這是因為我們的應用程式啟動較慢。在 Render 的健康檢查設定中，將 `Health Check Grace Period` 的值拉長，建議設定為 `120` 秒，給予服務足夠的啟動時間。
