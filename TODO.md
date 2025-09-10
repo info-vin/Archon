@@ -323,3 +323,14 @@ sequenceDiagram
         1.  在 `CONTRIBUTING_tw.md` 中，完成「部署策略與分支管理」章節的撰寫。
         2.  由「系統維護專家」Agent，遵循新建立的 SOP，成功將 `main` 分支部署到 Render 一次。
     - **產出**: 一個經過驗證、所有人都可遵循的部署流程文件。
+
+---
+
+### **Phase 2.7: 分支整合 (Branch Integration)**
+
+- **[ ] 將 gemini-log-api 的前端功能整合至 Spike 分支**
+    - **目標**: 將 `feature/gemini-log-api` 分支上 `enduser-ui-fe` 的相關功能，合併進 `spike/verify-deployment-pipeline` 分支，以便在已驗證的部署環境中進行測試。
+    - **分支**:
+        - **來源 (Source)**: `feature/gemini-log-api`
+        - **目標 (Target)**: `spike/verify-deployment-pipeline`
+    - **後續**: 整合完成後，可將 `spike` 分支重新部署到 Render 進行端對端驗證。
