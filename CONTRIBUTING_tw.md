@@ -132,7 +132,50 @@
 
 ### 後端 API 測試：模擬資料庫 (Backend API Testing: Mocking the Database)
 
-...
+所有後端 API 測試都**嚴格禁止**連線到真實的資料庫。為了達成此目標，我們採用了基於 `pytest` 的 `fixture` 和 `unittest.mock` 的模擬機制。
+
+**核心原理**:
+
+1.  **自動注入的模擬器**: 在 `python/tests/conftest.py` 中，我們定義了一個名為 `mock_supabase_client` 的 `fixture`。這個 `fixture` 會建立一個 `MagicMock` 物件，用來模擬真實的 `SupabaseClient`。
+2.  **全域攔截**: 同樣在 `conftest.py` 中，我們使用 `@pytest.fixture(autouse=True)` 和 `patch` 來自動攔截所有測試中對 `supabase.create_client` 或 `get_supabase_client` 的呼叫，並將它們替換為 `mock_supabase_client` 的實例。
+3.  **無需手動傳遞**: 因為使用了 `autouse=True` 的 `fixture`，開發者在撰寫新的 API 測試時，**無需**手動處理模擬的設定。`pytest` 會自動將 `client` (FastAPI 測試客戶端) 和 `mock_supabase_client` (模擬資料庫客戶端) 這兩個 `fixture` 注入到您的測試函式中。
+
+**如何在測試中使用**:
+
+您只需要將 `client` 和 `mock_supabase_client` 作為參數加入到您的測試函式簽名中，就可以開始使用它們。
+
+**程式碼範例**:
+
+以下是一個簡化的測試範例，展示如何設定模擬的回傳值，並驗證 API 的行為。
+
+```python
+# 檔案: python/tests/server/api_routes/test_your_api.py
+
+# 1. 將 fixture 加入函式簽名
+def test_your_api_endpoint(client, mock_supabase_client):
+    # 2. Arrange (安排): 設定模擬資料庫的行為
+    # 模擬一個成功的資料庫插入操作
+    mock_response = MagicMock()
+    mock_response.data = [{'id': 'new_record_id', 'name': 'test_name'}]
+    
+    # 設定當 .insert(...).execute() 被呼叫時，要回傳的假資料
+    mock_supabase_client.table.return_value.insert.return_value.execute.return_value = mock_response
+
+    # 3. Act (執行): 透過測試 client 呼叫您的 API
+    api_response = client.post("/api/your-endpoint", json={"name": "test_name"})
+
+    # 4. Assert (斷言): 驗證 API 的回傳結果是否符合預期
+    assert api_response.status_code == 201
+    assert api_response.json()["message"] == "Record created successfully"
+    assert api_response.json()["record_id"] == "new_record_id"
+
+    # (可選) 驗證 insert 方法是否被正確呼叫
+    mock_supabase_client.table.return_value.insert.assert_called_once_with({"name": "test_name"})
+```
+
+**關鍵點**:
+- 在「Arrange」階段，透過設定 `mock_supabase_client` 的 `return_value`，您可以精準地控制資料庫層的行為，模擬成功、失敗、回傳空值等多種情境。
+- 所有測試都應遵循 Arrange-Act-Assert (3A) 模式，以保持清晰和可讀性。
 
 ### 測試非同步方法 (Testing Asynchronous Methods)
 
@@ -184,6 +227,76 @@
 ---
 
 ## 部署策略與分支管理 (Deployment Strategy & Branch Management)
+
+### **部署標準作業流程 (SOP) - 修訂版**
+
+此流程的最終目標，是成功部署 `TODO.md` 中 2.7 節及之前所定義的所有核心功能，包括後端 RBAC、檔案上傳、日誌紀錄，以及前端的任務指派、附件顯示等。
+
+#### **階段一：部署前本地檢查 (Pre-Deployment Checks)**
+
+在推送任何程式碼到 Render 之前，必須在本地嚴格執行 `CONTRIBUTING_tw.md` 中定義的檢查清單，確保程式碼的穩定性。
+
+1.  **同步最新程式碼**:
+    ```bash
+    git checkout main
+    git pull origin main
+    ```
+2.  **執行完整測試 (關鍵步驟)**: 這是為了避免「測試又錯一堆」的狀況。此指令會涵蓋前後端的所有測試。
+    ```bash
+    make test
+    ```
+3.  **執行 Lint 檢查**:
+    ```bash
+    make lint-be
+    ```
+    只有當以上所有指令都成功通過後，才能進入下一階段。
+
+#### **階段二：資料庫遷移 (Database Migration)**
+
+部署新功能前，必須確保 Supabase 資料庫的結構與程式碼的期望一致。
+
+1.  **登入 Supabase 儀表板**。
+2.  **進入 SQL Editor**。
+3.  **依序執行**以下 `migration/` 目錄中尚未執行過的遷移腳本：
+    *   `20250905_add_customers_and_vendors_tables.sql` (如果需要)
+    *   為 `archon_tasks` 表新增 `attachments` 欄位的腳本。
+    *   `20250901_create_gemini_logs_table.sql` (用於 Phase 2.4 的日誌功能)。
+
+#### **階段三：Render 服務設定 (Infrastructure Setup)**
+
+此階段在 Render 上設定三個獨立的服務。
+
+1.  **部署後端 (`archon-server`)**:
+    *   **類型**: `Web Service`
+    *   **設定**: 完全依照本文件「Render 部署除錯實戰指南」章節中的後端設定（Root Directory: `python` 等）。
+
+2.  **部署管理後台 (`archon-ui-main`)**:
+    *   **類型**: `Web Service`
+    *   **設定**:
+        *   **Root Directory**: `archon-ui-main`
+        *   **Dockerfile Path**: `archon-ui-main/Dockerfile`
+        *   **Start Command**: `(保持空白)`
+        *   **Port**: `5173`
+
+3.  **部署使用者介面 (`enduser-ui-fe`)**:
+    *   **類型**: `Web Service`
+    *   **設定**:
+        *   **Root Directory**: `enduser-ui-fe`
+        *   **Dockerfile Path**: `enduser-ui-fe/Dockerfile`
+        *   **Start Command**: `(保持空白)`
+        *   **Port**: `5173`
+
+#### **階段四：部署後驗證 (Post-Deployment Verification)**
+
+1.  **部署後端服務**，等待其上線。
+2.  **複製後端網址**，並將其設定為兩個前端服務的 `VITE_API_URL` 環境變數，然後觸發前端服務的部署。
+3.  **監控日誌**: 分別檢查三個服務在 Render 上的部署日誌，確保沒有任何錯誤訊息。
+4.  **健康檢查**: 存取後端服務的 `/health` 端點，確認回傳 `{"status":"ok"}`。
+5.  **功能驗證 (Smoke Test)**:
+    *   打開 `enduser-ui-fe` 的公開網址，嘗試登入並查看任務列表。
+    *   打開 `archon-ui-main` 的公開網址，確認管理儀表板能正常載入。
+
+---
 
 為了避免因流程不清導致的部署失敗，並確保每次上線的程式碼都穩定可靠，所有團隊成員應遵循以下策略。
 
