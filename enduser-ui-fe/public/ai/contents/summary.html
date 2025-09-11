@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>專案綜合說明</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Noto Sans TC', sans-serif; }
+        .content-card { background-color: #ffffff; border-radius: 0.75rem; box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1); }
+    </style>
+</head>
+<body class="bg-slate-100 p-8">
+    <div class="container mx-auto">
+        <div class="content-card p-8">
+            <h1 class="text-3xl font-bold text-slate-800 mb-6 border-b-2 border-slate-200 pb-4">專案綜合說明 (v1.2)</h1>
+
+            <div class="space-y-6">
+                <div>
+                    <h2 class="text-xl font-semibold text-sky-700 mb-2">1. 專案目標</h2>
+                    <p class="text-slate-600">
+                        本專案旨在將多份圍繞「智慧製造與流程自動化」主題的 HTML 文件，整合成一個具備現代化風格、響應式設計、且易於導航的單一網頁儀表板。目標是提供一個清晰、連貫的視圖，讓使用者能方便地查閱從高階策略到技術細節的各項內容。
+                    </p>
+                </div>
+                
+                <div>
+                    <h2 class="text-xl font-semibold text-sky-700 mb-2">2. 主要功能與特色</h2>
+                    <ul class="list-disc list-inside text-slate-600 space-y-2">
+                        <li><b>統一風格介面：</b>採用全新的色彩主題與雙欄佈局，提升整體視覺一致性與專業感。</li>
+                        <li><b>可拖曳導航：</b>左側導航欄項目支援拖曳排序，使用者可根據自身偏好調整瀏覽順序，實現高度客製化。</li>
+                        <li><b>響應式設計：</b>自動適應桌面、平板與手機螢幕，確保在所有設備上均有最佳瀏覽體驗。</li>
+                        <li><b>模組化內容嵌入：</b>使用 `&lt;iframe&gt;` 嵌入各個獨立的互動圖表與文件，有效隔離樣式與腳本，便於日後獨立維護與更新。</li>
+                        <li><b>整合說明文件：</b>將專案說明、文件關聯圖、技術需求等輔助文件一併整合至儀表板中，方便使用者一站式查閱所有相關資訊。</li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h2 class="text-xl font-semibold text-sky-700 mb-2">3. 儀表板內容結構</h2>
+                    <p class="text-slate-600 mb-3">儀表板的內容被劃分為以下幾個邏輯區塊，可透過左側導航欄訪問：</p>
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <div class="bg-slate-50 p-4 rounded-lg border border-slate-200">
+                            <h3 class="font-bold text-slate-700">智慧製造方案</h3>
+                            <p class="text-sm text-slate-500">包含解決方案提案、技術核心、流程細節與導入效益，是本專案的核心主線。</p>
+                        </div>
+                        <div class="bg-slate-50 p-4 rounded-lg border border-slate-200">
+                            <h3 class="font-bold text-slate-700">員工福祉策略</h3>
+                            <p class="text-sm text-slate-500">一個獨立的解決方案簡報，展示了在員工福祉領域的策略規劃。</p>
+                        </div>
+                        <div class="bg-slate-50 p-4 rounded-lg border border-slate-200 col-span-full">
+                            <h3 class="font-bold text-slate-700">專案說明文件</h3>
+                            <p class="text-sm text-slate-500">整合了本說明、文件關聯圖與技術需求列表，提供專案的元數據信息。</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div>
+                    <h2 class="text-xl font-semibold text-sky-700 mb-2">4. 如何使用</h2>
+                    <p class="text-slate-600">
+                        點擊左側導航欄的項目，即可在右側內容區加載對應的內容。對於包含多個子項目的區塊（如「技術核心」），右側內容區會出現頁籤，供您切換查看。您可以按住導航項目並上下拖曳來改變它們的順序。
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

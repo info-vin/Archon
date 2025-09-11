@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<!--
+https://aistudio.google.com/app/prompts?state=%7B%22ids%22:%5B%221bhqd8mAA-8n3wC9vQvBZj4ZB41EFTzkJ%22%5D,
+    %22action%22:%22open%22,%22userId%22:%22110088342646618262689%22,%22resourceKeys%22:%7B%7D%7D&usp=sharing
+-->
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>生技醫藥資訊整合平台</title>
+    <style>
+        body {
+            font-family: Arial, 'Microsoft JhengHei', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+        .container {
+            width: 90%;
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .tab-nav {
+            display: flex;
+            border-bottom: 2px solid #007bff;
+            margin-bottom: 20px;
+        }
+        .tab-button {
+            background-color: #f0f0f0;
+            border: 1px solid #ccc;
+            border-bottom: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            font-size: 16px;
+            outline: none;
+            transition: background-color 0.3s;
+            border-radius: 5px 5px 0 0;
+            margin-right: 5px;
+        }
+        .tab-button:hover {
+            background-color: #e0e0e0;
+        }
+        .tab-button.active {
+            background-color: #007bff;
+            color: white;
+            border-color: #007bff;
+        }
+        .tab-content {
+            display: none;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-top: none;
+            background-color: #fff;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        h1 {
+            text-align: center;
+            color: #007bff;
+            margin-bottom: 30px;
+        }
+        h2 {
+            color: #333;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+            margin-top: 30px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
+            vertical-align: top;
+        }
+        th {
+            background-color: #f8f8f8;
+            font-weight: bold;
+        }
+        tbody tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        .flow-arrow {
+            text-align: center;
+            font-weight: bold;
+            font-size: 20px;
+            padding: 5px 0;
+        }
+        .note {
+            font-size: 0.9em;
+            color: #555;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>生技醫藥資訊整合平台</h1>
+
+        <div class="tab-nav">
+            <button class="tab-button active" onclick="openTab(event, 'aiPharma')">AI與新藥開發</button>
+            <button class="tab-button" onclick="openTab(event, 'cellVsDrug')">細胞治療 vs. 藥物</button>
+            <button class="tab-button" onclick="openTab(event, 'drugDevProcess')">新藥開發流程</button>
+            <button class="tab-button" onclick="openTab(event, 'taiwanBio')">台灣生技公司</button>
+        </div>
+
+        <!-- AI 與新藥開發 -->
+        <div id="aiPharma" class="tab-content active">
+            <h2>AI人工智慧在新藥開發上的協助</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>AI人工智慧在新藥開發上的協助 (AI's assistance in new drug development)</th>
+                        <th>舉例說明 (Example Description)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Faster drug development</strong></td>
+                        <td><strong>Target identification:</strong> 使臨床前，找lead compounds 的時間更快，曾有公司號稱可使臨床前找藥時間由 2~3 年縮為 4~6 個月 ( <strong>Target identification:</strong> to make pre-clinical, finding lead compounds faster, some companies claim to reduce pre-clinical drug discovery time from 2-3 years to 4-6 months)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>More effective drugs</strong></td>
+                        <td><strong>例:</strong> 利用藥理特性，由機器學習，未來找到更多低毒性，高療效的候選藥物，或用 AI 模擬 3D 空間結合 (binding), 找到適合的分子結構，提高藥物與受體的親合力，提高藥效，降低副作用。 ( <strong>Example:</strong> Using pharmacological characteristics, machine learning can find more low-toxicity, highly effective drug candidates in the future, or use AI to simulate 3D spatial binding (binding) to find suitable molecular structures, improve drug affinity with receptors, improve drug efficacy, and reduce side effects.)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Better clinical trial design (較佳的臨床實驗設計):</strong> <br> 1. Patient recruitment (病人招募方面)</td>
+                        <td><strong>例:</strong> 經由電子醫療資料庫篩選到最符合臨床試驗條件的病患，或排除不適合的病患，以提高臨床成功機率，或縮短病人招募時間。( <strong>Example:</strong> Screening patients who best meet the conditions for clinical trials, or excluding unsuitable patients, through electronic medical record databases to improve clinical success rates or shorten patient recruitment time.)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Better clinical trial design (較佳的臨床實驗設計):</strong> <br> 2. Trial Design (臨床設計)</td>
+                        <td><strong>例:</strong> 由資料庫或已公開的臨床論文找到較佳的臨床設計、病患數或是分群實驗 (subgrouping), 以增加成功機率 ( <strong>Example:</strong> Find better clinical trial design, number of patients, or subgrouping experiments from databases or published clinical papers to increase success rates.)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Better clinical trial design (較佳的臨床實驗設計):</strong> <br> 3. Real-time monitoring (即時監控)</td>
+                        <td><strong>例:</strong> 使用穿戴式設備，即時觀察病人狀況、生理指數、用藥狀況，使臨床實驗順利執行不漏洞。( <strong>Example:</strong> Use wearable devices to observe patient conditions, physiological indicators, and medication status in real-time, making clinical trials run smoothly without loopholes.)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Better clinical trial design (較佳的臨床實驗設計):</strong> <br> 4. Data analysis</td>
+                        <td><strong>例:</strong> AI 可協助處理大量高量的病患數據，如基因變化，節省數據分析時間。( <strong>Example:</strong> AI can help process large amounts of patient data, such as genetic variations, saving data analysis time.)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Prediction of drugs’ bioactivity</strong></td>
+                        <td><strong>例:</strong> 經由機器學習，根據藥物化學結構，建立藥物生物活性預測，於電腦模擬階段即可去除生物活性差的藥物，提高藥物開發效率 ( <strong>Example:</strong> Through machine learning, based on drug chemical structures, build drug bioactivity predictions, and remove drugs with poor bioactivity in the computer simulation stage to improve drug development efficiency.)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>AI in quality assurance (品保)</strong></td>
+                        <td><strong>例:</strong> 使用AI可自動導入藥物查檢的內容與項目，增加查廠通過關率，或預測藥物保存條件與保存期，減少實際實驗時的錯誤重來風險。( <strong>Example:</strong> Using AI can automatically introduce drug inspection contents and items, increase the passing rate of factory inspections, or predict drug storage conditions and shelf life, reducing the risk of errors and rework in actual experiments.)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Drug repurposing (藥物重新定位)</strong></td>
+                        <td><strong>例:</strong> 分析大量的臨床數據或藥理數據，幫藥物找到新出口或新適應症。( <strong>Example:</strong> Analyze large amounts of clinical data or pharmacological data to help drugs find new outlets or new indications.)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Drug combination analysis (藥物組合分析)</strong></td>
+                        <td><strong>例:</strong> 將不同治療機制的藥物，進行分析組合，找到 1+1>2 的療效，或找到二藥的搭配劑量。另外，AI處理複雜資訊的能力，可以做為個人化醫療的藥物建議，例如有 ABC 基因缺失者，可使用 X 藥，CD 缺失者，宜用 Y 藥等等，醫師只要上資料庫一找，馬上上有許多臨床上的資訊可對症下藥，減輕醫師負擔。( <strong>Example:</strong> Combining drugs with different treatment mechanisms for analysis to find synergistic effects (1+1>2) or optimal combination dosages of two drugs. In addition, AI's ability to process complex information can serve as drug recommendations for personalized medicine. For example, for those with ABC gene defects, drug X can be used; for those with CD defects, drug Y is recommended, etc. Doctors only need to search the database to immediately find a lot of clinical information for targeted medication, reducing the burden on doctors.)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Real-World Evidence (真實世界事證)</strong></td>
+                        <td><strong>例:</strong> AI 可大量搜尋網路或付費資料庫，找到真實世界事證，擴大醫護人員知識與視野，提供病患更佳的治療方案，不用像傳統，要憑醫師個人經驗。( <strong>Example:</strong> AI can extensively search the internet or paid databases to find real-world evidence, expand the knowledge and vision of medical staff, and provide patients with better treatment plans, without relying on traditional methods of relying on individual physician experience.)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Post-market safety monitoring (上市後安全性監控)</strong></td>
+                        <td><strong>例:</strong> 如上，AI 可大量搜尋網路或醫院呈報的藥物安全事件，做到較有效率的藥物安全監控。( <strong>Example:</strong> As above, AI can extensively search the internet or hospital-reported drug safety events to achieve more efficient drug safety monitoring.)</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- 細胞治療 vs. 藥物 -->
+        <div id="cellVsDrug" class="tab-content">
+            <h2>表3-7-2 細胞治療與藥物的產業面差別</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>面向</th>
+                        <th>藥物 (Drugs)</th>
+                        <th>細胞治療 (Cell Therapy)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>生產面 (Production Aspect)</strong></td>
+                        <td>可大量生產，先庫存，使成本下降，隨時供貨<br>“藥就人” (“Drug follows people”)</td>
+                        <td>客製化治療，難事先製備給未來客戶，成本高<br>一般約28天，Juno 拼 Car T 10天 (Generally around 28 days, Juno aims for Car T in 10 days)<br>“人就藥” (“People follow drug”)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>運輸面 (Transportation Aspect)</strong></td>
+                        <td>Ready to use<br>Easy for shipment<br>醫院可先庫存備用 (Hospitals can store in advance)</td>
+                        <td>病人須至 CPU 或其合作醫院，再等待細胞製備時間，除非 CPU 大量成立，否則限制其市場發展。 (Patients must go to CPU or its cooperative hospitals, then wait for cell preparation time. Unless CPU is established on a large scale, it will restrict market development.)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>利潤面 (Profit Aspect)</strong></td>
+                        <td>廠商利潤高 (High profit for manufacturers)</td>
+                        <td>尚無經濟規模，成本高收費高，故也限制病患量，口袋深的業者較能生存。 (Still no economic scale, high cost and high fees, therefore also limits the number of patients, only companies with deep pockets can survive.)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>管理面 (Management Aspect)</strong></td>
+                        <td>各國藥廠與原料藥供應鏈已符合 cGMP, 查廠與管理較容易 (Drug and raw material supply chains in various countries already comply with cGMP, factory inspections and management are relatively easy)</td>
+                        <td>CPU 良莠不齊，各國管理才剛開始，形同早期藥廠管理時代，須要時間進化。(CPU quality varies, management in various countries has just started, similar to the early stage of drug factory management era, time is needed for evolution.)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>創新面 (Innovation Aspect)</strong></td>
+                        <td>藥物有其限制，愈來愈難看到亮眼功效，故往基因層次發展。(Drugs have limitations, it's increasingly difficult to see dazzling effects, so development is moving towards the genetic level.)</td>
+                        <td>即使有 universal cells 構想，尚須克服排斥性，及功效性是否被犧牲的問題，待驗證。(Even with the concept of universal cells, rejection still needs to be overcome, and whether efficacy is sacrificed is a question that needs to be verified.)</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- 新藥開發流程 -->
+        <div id="drugDevProcess" class="tab-content">
+            <h2>新藥開發流程</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>階段</th>
+                        <th>目的</th>
+                        <th>主要活動</th>
+                        <th>所需時間 / 花費 (美金)</th>
+                        <th>核准上市機率</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>藥物發現 (Drug Discovery)</strong></td>
+                        <td>尋找新藥標的</td>
+                        <td>進行化學或生物性標的物的建構、篩選與開發</td>
+                        <td>1-5 年 / depends</td>
+                        <td>0.01-0.02%</td>
+                    </tr>
+                    <tr><td colspan="5" class="flow-arrow">⬇️</td></tr>
+                    <tr>
+                        <td><strong>臨床前實驗 (Preclinical)</strong></td>
+                        <td>動物安全性、有效性實驗</td>
+                        <td>於動物身上先測試安全性、生物活性、有效性及大約劑量</td>
+                        <td>3-7 年 / 0.15-0.3 百萬</td>
+                        <td>0.1%</td>
+                    </tr>
+                    <tr><td colspan="5" class="flow-arrow">⬇️ IND</td></tr>
+                    <tr>
+                        <td><strong>IND (人體臨床試驗申請)</strong></td>
+                        <td>人體臨床試驗申請</td>
+                        <td>準備臨床前各種實驗數據，以申請人體臨床試驗</td>
+                        <td>0.2-1 年</td>
+                        <td></td>
+                    </tr>
+                     <tr><td colspan="5" class="flow-arrow">⬇️</td></tr>
+                    <tr>
+                        <td><strong>臨床一期 (Phase I)</strong></td>
+                        <td>安全性及最高劑量忍受度確定</td>
+                        <td>試驗數目、對象：數十名以內健康志願受試者</td>
+                        <td>1-2 年 / 0.3-0.4 百萬</td>
+                        <td>30%</td>
+                    </tr>
+                    <tr><td colspan="5" class="flow-arrow">⬇️</td></tr>
+                    <tr>
+                        <td><strong>臨床二期 (Phase II)</strong></td>
+                        <td>有效性、有效劑量及短期安全性評估</td>
+                        <td>試驗數目、對象：數十到數百名志願受試病患</td>
+                        <td>1-3 年 / 0.5-1.0 百萬</td>
+                        <td>60%</td>
+                    </tr>
+                    <tr><td colspan="5" class="flow-arrow">⬇️</td></tr>
+                    <tr>
+                        <td><strong>臨床三期 (Phase III)</strong></td>
+                        <td>有效性及長期安全性評估</td>
+                        <td>試驗數目、對象：數百到數千名志願病患</td>
+                        <td>1-5 年 / 1-3.5 百萬</td>
+                        <td>70%</td>
+                    </tr>
+                    <tr><td colspan="5" class="flow-arrow">⬇️ NDA</td></tr>
+                    <tr>
+                        <td><strong>NDA (新藥上市申請)</strong></td>
+                        <td>新藥上市申請</td>
+                        <td>彙整所有從 Discovery 到 Phase III 的重要數據及研究，申請上市許可 (FDA 審核)</td>
+                        <td>18-24 個月</td>
+                        <td>90%</td>
+                    </tr>
+                    <tr><td colspan="5" class="flow-arrow">⬇️</td></tr>
+                    <tr>
+                        <td><strong>臨床四期 (Phase IV)</strong></td>
+                        <td>上市後監督期</td>
+                        <td>由藥廠或醫學觀察家使用者擴增後的長期安全性</td>
+                        <td>長期 / 0.5-1.6 百萬</td>
+                        <td></td>
+                    </tr>
+                </tbody>
+            </table>
+            <div class="note">
+                <p><strong>註:</strong></p>
+                <ul>
+                    <li>IND: Investigational New Drug (研究性新藥申請)</li>
+                    <li>NDA: New Drug Application (新藥上市申請)</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- 台灣生技公司 -->
+        <div id="taiwanBio" class="tab-content">
+            <h2>表1-3 台灣上市櫃生技新藥與製藥相關公司：追蹤獲利成長性與佈局</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>主要獲利方式</th>
+                        <th>代碼</th>
+                        <th>公司名稱</th>
+                        <th>主要產品</th>
+                        <th>2023年股本 (台幣百萬元)</th>
+                        <th>2022年營收 (台幣百萬元)</th>
+                        <th>毛利率</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>處方藥生產與銷售</td><td>1701</td><td>中化</td><td>醫院用學名藥、保健品</td><td>2,981</td><td>8,457</td><td>37%</td></tr>
+                    <tr><td>處方藥生產與銷售</td><td>1752</td><td>南光</td><td>注射液學名藥與代工</td><td>1,010</td><td>1,940</td><td>36%</td></tr>
+                    <tr><td>處方藥生產與銷售</td><td>3705</td><td>永信</td><td>醫院用學名藥、保健品</td><td>2,664</td><td>7,312</td><td>43%</td></tr>
+                    <tr><td>處方藥生產與銷售</td><td>4114</td><td>健喬</td><td>醫院用學名藥</td><td>3,687</td><td>4,386</td><td>42%</td></tr>
+                    <tr><td>處方藥生產與銷售</td><td>4123</td><td>晟德</td><td>生技投資與口服液生產</td><td>5,948</td><td>768</td><td>53%</td></tr>
+                    <tr><td>處方藥生產與銷售</td><td>4130</td><td>健亞</td><td>藥品OEM、ODM、抗血栓藥</td><td>1,094</td><td>439</td><td>35%</td></tr>
+                    <tr><td>藥妝保健品生產與銷售</td><td>1720</td><td>生達</td><td>醫院用學名藥、健康食品</td><td>1,787</td><td>5,851</td><td>43%</td></tr>
+                    <tr><td>藥妝保健品生產與銷售</td><td>1734</td><td>杏輝</td><td>醫院用學名藥、健康食品</td><td>1,677</td><td>2,857</td><td>38%</td></tr>
+                    <tr><td>藥妝保健品生產與銷售</td><td>1731</td><td>美吾華</td><td>藥妝類</td><td>1,329</td><td>1,245</td><td>66%</td></tr>
+                    <tr><td>藥妝保健品生產與銷售</td><td>4120</td><td>友華</td><td>奶粉、西藥系列</td><td>867</td><td>4,730</td><td>43%</td></tr>
+                    <tr><td>新藥研發</td><td>4147</td><td>中裕</td><td>愛滋病單株抗體藥</td><td>2,527</td><td>563</td><td>38%</td></tr>
+                    <tr><td>新藥研發</td><td>4162</td><td>智擎</td><td>胰臟癌用藥</td><td>1,457</td><td>654</td><td>92%</td></tr>
+                    <tr><td>新藥研發</td><td>4174</td><td>浩鼎</td><td>治療性癌症疫苗與試劑開發</td><td>2,294</td><td>5</td><td>-852%</td></tr>
+                    <tr><td>新藥研發</td><td>4743</td><td>合一</td><td>糖尿病足慢性潰瘍藥、氣喘與異位性皮膚炎免疫調節單株抗體新藥</td><td>4,466</td><td>1,066</td><td>79%</td></tr>
+                    <tr><td>新藥研發</td><td>6446</td><td>藥華藥</td><td>紅血球與血小板增生藥與其他癌藥開發</td><td>3,395</td><td>2,882</td><td>72%</td></tr>
+                    <tr><td>新藥研發</td><td>6547</td><td>高端疫苗</td><td>流感疫苗、新冠疫苗</td><td>3,284</td><td>365</td><td>-58%</td></tr>
+                    <tr><td>新藥研發</td><td>6550</td><td>北極星-KY</td><td>ADI-PEG 20 癌症開發</td><td>7,431</td><td>6</td><td>22%</td></tr>
+                    <tr><td>新藥研發</td><td>6576</td><td>逸達</td><td>前列腺癌、腦癌藥</td><td>1,183</td><td>302</td><td>92%</td></tr>
+                    <tr><td>新藥研發</td><td>6712</td><td>長聖</td><td>非基因改造細胞治療與基因改造CAR-T細胞治療</td><td>750</td><td>628</td><td>66%</td></tr>
+                    <tr><td>其他</td><td>1795</td><td>美時</td><td>全球利基學名藥開發與生產</td><td>2,626</td><td>14,633</td><td>53%</td></tr>
+                    <tr><td>其他</td><td>6472</td><td>保瑞</td><td>全球學名藥併購與代工</td><td>1,008</td><td>10,494</td><td>28%</td></tr>
+                    <tr><td>其他</td><td>1760</td><td>寶齡富錦</td><td>洗腎醫療產品、檢測試劑、醫美用品</td><td>857</td><td>2,399</td><td>55%</td></tr>
+                    <tr><td>其他</td><td>4105</td><td>東洋</td><td>困難學名藥生產與代工</td><td>2,486</td><td>5,062</td><td>60%</td></tr>
+                    <tr><td>其他</td><td>8432</td><td>東生華</td><td>非學名藥</td><td>384</td><td>464</td><td>60%</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        function openTab(evt, tabName) {
+            var i, tabcontent, tabbuttons;
+            tabcontent = document.getElementsByClassName("tab-content");
+            for (i = 0; i < tabcontent.length; i++) {
+                tabcontent[i].style.display = "none";
+                tabcontent[i].classList.remove("active");
+            }
+            tabbuttons = document.getElementsByClassName("tab-button");
+            for (i = 0; i < tabbuttons.length; i++) {
+                tabbuttons[i].classList.remove("active");
+            }
+            document.getElementById(tabName).style.display = "block";
+            document.getElementById(tabName).classList.add("active");
+            evt.currentTarget.classList.add("active");
+        }
+
+        // Optional: Activate the first tab by default if no other logic is present
+        // document.addEventListener("DOMContentLoaded", function() {
+        //     document.querySelector('.tab-button').click(); 
+        // });
+        // The HTML already sets the first tab and content as active, so the above JS to click is not strictly needed.
+    </script>
+</body>
+</html>

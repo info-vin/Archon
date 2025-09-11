@@ -33,6 +33,7 @@ from ..services.projects import (
 )
 from ..services.projects.document_service import DocumentService
 from ..services.projects.versioning_service import VersioningService
+from ..services.rbac_service import RBACService
 
 # Using HTTP polling for real-time updates
 
@@ -71,6 +72,49 @@ class CreateTaskRequest(BaseModel):
     assignee: str | None = "User"
     task_order: int | None = 0
     feature: str | None = None
+
+
+class AssignableUser(BaseModel):
+    id: str
+    name: str
+    role: str
+
+
+@router.get("/assignable-users", response_model=list[AssignableUser])
+async def list_assignable_users():
+    """
+    List users that can be assigned to a task based on the current user's role.
+    """
+    # For now, hardcode the role as "PM" for development as per TODO.md
+    current_user_role = "PM"
+
+    try:
+        logfire.info(f"Listing assignable users for role: {current_user_role}")
+        supabase = get_supabase_client()
+        rbac_service = RBACService()
+
+        # Get all profiles
+        response = supabase.table("profiles").select("id, username, role").execute()
+        if response.data is None:
+            logfire.warning("Could not fetch profiles from database.")
+            return []
+
+        all_users = response.data
+        assignable_users = []
+
+        for user in all_users:
+            user_role = user.get("role")
+            if user_role and rbac_service.has_permission_to_assign(current_user_role, user_role):
+                assignable_users.append(
+                    AssignableUser(id=user["id"], name=user["username"], role=user["role"])
+                )
+
+        logfire.info(f"Found {len(assignable_users)} assignable users for role {current_user_role}")
+        return assignable_users
+
+    except Exception as e:
+        logfire.error(f"Failed to list assignable users: {e}")
+        raise HTTPException(status_code=500, detail={"error": "Failed to retrieve assignable users"})
 
 
 @router.get("/projects")
@@ -209,67 +253,7 @@ async def create_project(request: CreateProjectRequest):
 
 
 
-@router.get("/projects/health")
-async def projects_health():
-    """Health check for projects API and database schema validation."""
-    try:
-        logfire.info("Projects health check requested")
-        supabase_client = get_supabase_client()
 
-        # Check if projects table exists by testing ProjectService
-        try:
-            project_service = ProjectService(supabase_client)
-            # Try to list projects with limit 1 to test table access
-            success, _ = project_service.list_projects()
-            projects_table_exists = success
-            if success:
-                logfire.info("Projects table detected successfully")
-            else:
-                logfire.warning("Projects table access failed")
-        except Exception as e:
-            projects_table_exists = False
-            logfire.warning(f"Projects table not found | error={str(e)}")
-
-        # Check if tasks table exists by testing TaskService
-        try:
-            task_service = TaskService(supabase_client)
-            # Try to list tasks with limit 1 to test table access
-            success, _ = task_service.list_tasks(include_closed=True)
-            tasks_table_exists = success
-            if success:
-                logfire.info("Tasks table detected successfully")
-            else:
-                logfire.warning("Tasks table access failed")
-        except Exception as e:
-            tasks_table_exists = False
-            logfire.warning(f"Tasks table not found | error={str(e)}")
-
-        schema_valid = projects_table_exists and tasks_table_exists
-
-        result = {
-            "status": "healthy" if schema_valid else "schema_missing",
-            "service": "projects",
-            "schema": {
-                "projects_table": projects_table_exists,
-                "tasks_table": tasks_table_exists,
-                "valid": schema_valid,
-            },
-        }
-
-        logfire.info(
-            f"Projects health check completed | status={result['status']} | schema_valid={schema_valid}"
-        )
-
-        return result
-
-    except Exception as e:
-        logfire.error(f"Projects health check failed | error={str(e)}")
-        return {
-            "status": "error",
-            "service": "projects",
-            "error": str(e),
-            "schema": {"projects_table": False, "tasks_table": False, "valid": False},
-        }
 
 
 @router.get("/projects/task-counts")
@@ -626,6 +610,25 @@ async def list_project_tasks(
 async def create_task(request: CreateTaskRequest):
     """Create a new task with automatic reordering."""
     try:
+        # RBAC Validation
+        if request.assignee and request.assignee != "User":
+            current_user_role = "PM"  # Hardcoded for now
+            supabase = get_supabase_client()
+            rbac_service = RBACService()
+            response = supabase.table("profiles").select("role").eq("username", request.assignee).single().execute()
+            
+            if response.data:
+                assignee_role = response.data.get("role")
+                if not rbac_service.has_permission_to_assign(current_user_role, assignee_role):
+                    raise HTTPException(status_code=403, detail=f"As a {current_user_role}, you cannot assign tasks to a {assignee_role}.")
+            else:
+                agent_roles = {"Market Researcher", "Internal Knowledge Expert"}
+                if request.assignee in agent_roles:
+                    if not rbac_service.has_permission_to_assign(current_user_role, request.assignee):
+                        raise HTTPException(status_code=403, detail=f"As a {current_user_role}, you cannot assign tasks to a {request.assignee}.")
+                else:
+                    logfire.warning(f"Assignee '{request.assignee}' not found in profiles and is not a known agent role. Skipping permission check.")
+
         # Use TaskService to create the task
         task_service = TaskService()
         success, result = await task_service.create_task(
@@ -770,6 +773,7 @@ class UpdateTaskRequest(BaseModel):
     assignee: str | None = None
     task_order: int | None = None
     feature: str | None = None
+    attachments: list[Any] | None = None
 
 
 class CreateDocumentRequest(BaseModel):
@@ -804,6 +808,26 @@ class RestoreVersionRequest(BaseModel):
 async def update_task(task_id: str, request: UpdateTaskRequest):
     """Update a task."""
     try:
+        # RBAC Validation
+        if request.assignee is not None:
+            current_user_role = "PM"  # Hardcoded for now
+            supabase = get_supabase_client()
+            rbac_service = RBACService()
+
+            response = supabase.table("profiles").select("role").eq("username", request.assignee).single().execute()
+
+            if response.data:
+                assignee_role = response.data.get("role")
+                if not rbac_service.has_permission_to_assign(current_user_role, assignee_role):
+                    raise HTTPException(status_code=403, detail=f"As a {current_user_role}, you cannot assign tasks to a {assignee_role}.")
+            else:
+                agent_roles = {"Market Researcher", "Internal Knowledge Expert"}
+                if request.assignee in agent_roles:
+                    if not rbac_service.has_permission_to_assign(current_user_role, request.assignee):
+                        raise HTTPException(status_code=403, detail=f"As a {current_user_role}, you cannot assign tasks to a {request.assignee}.")
+                else:
+                    logfire.warning(f"Assignee '{request.assignee}' not found in profiles and is not a known agent role. Skipping permission check.")
+
         # Build update fields dictionary
         update_fields = {}
         if request.title is not None:
@@ -818,6 +842,8 @@ async def update_task(task_id: str, request: UpdateTaskRequest):
             update_fields["task_order"] = request.task_order
         if request.feature is not None:
             update_fields["feature"] = request.feature
+        if request.attachments is not None:
+            update_fields["attachments"] = request.attachments
 
         # Use TaskService to update the task
         task_service = TaskService()

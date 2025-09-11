@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-key="title">SAS Enterprise Analytics System Architecture for High-Tech Manufacturing</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f4f8; /* Light blue-gray background */
+            color: #334155; /* Dark slate text */
+        }
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 1rem;
+            background-color: #ffffff;
+            border-radius: 1.5rem; /* More rounded corners */
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1); /* Softer, larger shadow */
+        }
+        .language-switcher {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        .language-button {
+            padding: 0.5rem 1rem;
+            border-radius: 0.75rem;
+            background-color: #60a5fa; /* Blue background */
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s ease-in-out;
+            border: none;
+        }
+        .language-button:hover {
+            background-color: #3b82f6; /* Darker blue on hover */
+        }
+        .language-button.active {
+            background-color: #1e40af; /* Even darker blue for active */
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        .layer-box {
+            background-color: #e2e8f0; /* Lighter blue-gray for layers */
+            border: 1px solid #cbd5e1;
+            border-radius: 1rem;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+        }
+        .layer-title {
+            font-size: 1.75rem; /* Larger title */
+            font-weight: 700;
+            color: #1e293b; /* Even darker blue-gray */
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+        .sub-section-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #334155;
+            margin-top: 1rem;
+            margin-bottom: 0.75rem;
+            border-bottom: 2px solid #94a3b8; /* Subtle underline */
+            padding-bottom: 0.25rem;
+        }
+        .component-list {
+            list-style: none;
+            padding-left: 0;
+            margin-bottom: 1rem;
+        }
+        .component-list li {
+            background-color: #f8fafc; /* Almost white for list items */
+            padding: 0.5rem 1rem;
+            margin-bottom: 0.5rem;
+            border-radius: 0.5rem;
+            border: 1px solid #e2e8f0;
+            display: flex;
+            align-items: flex-start; /* Align items to the start for better text flow */
+            font-size: 0.95rem;
+            flex-wrap: wrap; /* Allow content to wrap */
+        }
+        .component-list li span.icon {
+            flex-shrink: 0; /* Prevent icon from shrinking */
+            margin-right: 0.75rem;
+            color: #3b82f6; /* Blue icon color */
+            font-size: 1.2em; /* Slightly larger icon */
+            line-height: 1.5; /* Adjust line height for better alignment with text */
+        }
+        .component-list li .text-content {
+            flex-grow: 1; /* Allow text content to take remaining space */
+            line-height: 1.5; /* Ensure consistent line height for text */
+        }
+        .component-list li:last-child {
+            margin-bottom: 0;
+        }
+        .cross-cutting-box {
+            background-color: #dbeafe; /* Lightest blue for cross-cutting */
+            border: 1px solid #93c5fd;
+            border-radius: 1rem;
+            padding: 1.5rem;
+            margin-top: 2rem;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+        }
+        .cross-cutting-title {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+        .cross-cutting-item {
+            background-color: #bfdbfe; /* Slightly darker blue for items */
+            padding: 0.75rem 1.25rem;
+            margin-bottom: 0.75rem;
+            border-radius: 0.75rem;
+            font-weight: 600;
+            color: #1e40af; /* Dark blue text */
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+        }
+        .arrow {
+            text-align: center;
+            font-size: 2rem;
+            color: #64748b; /* Gray arrow color */
+            margin: 0.5rem 0;
+            line-height: 1;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .container {
+                margin: 1rem auto;
+                padding: 0.75rem;
+                border-radius: 1rem;
+            }
+            .layer-box {
+                padding: 1rem;
+                margin-bottom: 1rem;
+            }
+            .layer-title {
+                font-size: 1.5rem;
+            }
+            .sub-section-title {
+                font-size: 1.1rem;
+            }
+            .component-list li {
+                padding: 0.4rem 0.8rem;
+                font-size: 0.9rem;
+            }
+            .cross-cutting-box {
+                padding: 1rem;
+                margin-top: 1.5rem;
+            }
+            .cross-cutting-title {
+                font-size: 1.5rem;
+            }
+            .cross-cutting-item {
+                padding: 0.6rem 1rem;
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body class="p-4">
+    <div class="container">
+        <h1 class="text-4xl font-bold text-center mb-6 text-gray-800" data-key="mainTitle">SAS Enterprise Analytics System Architecture</h1>
+        <p class="text-lg text-center mb-8 text-gray-600" data-key="subtitle">
+            A unified, scalable, and open analytics ecosystem for high-tech manufacturing, driving data-driven decision-making and continuous innovation.
+        </p>
+
+        <div class="language-switcher">
+            <button class="language-button active" data-lang="en">English</button>
+            <button class="language-button" data-lang="zh-CN">简体中文</button>
+            <button class="language-button" data-lang="zh-TW">繁體中文</button>
+        </div>
+
+        <div class="layer-box">
+            <h2 class="layer-title" data-key="layer5Title">Layer 5: Intelligence Delivery & Consumption, Analytics Use Cases and Value Delivery</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <h3 class="sub-section-title" data-key="targetAudiencesTitle">▶ Target Audiences & Delivery Mechanisms</h3>
+                    <ul class="component-list">
+                        <li><span class="icon">💼</span> <div class="text-content" data-key="executives">**Executives & Senior Leadership:** Strategic dashboards, interactive briefing books, and high-level reports delivered via secure web portals and mobile apps for informed strategic planning and investment decisions.</div></li>
+                        <li><span class="icon">🏭</span> <div class="text-content" data-key="factoryManagers">**Factory Managers & Operations Supervisors:** Real-time operational dashboards, immediate production alerts, and performance scorecards displayed on large screens and accessible via mobile for proactive issue resolution and daily management.</div></li>
+                        <li><span class="icon">💻</span> <div class="text-content" data-key="engineersAnalysts">**Engineers & Quality Analysts:** Detailed analytical reports, deep-dive root cause analysis findings, and interactive data exploration tools, leveraging SAS Visual Analytics reports, custom applications, and Jupyter notebooks for in-depth problem-solving.</div></li>
+                        <li><span class="icon">🧑‍🔬</span> <div class="text-content" data-key="dataScientists">**Data Scientists & Analysts:** Direct access to raw and prepared data, analytical models, and robust development environments through SAS Studio and APIs for advanced model building, validation, and experimentation.</div></li>
+                        <li><span class="icon">📅</span> <div class="text-content" data-key="supplyChainPlanners">**Supply Chain Planners:** Accurate demand forecasts, optimized inventory recommendations, and critical risk alerts seamlessly integrated into existing planning systems and custom web applications to enhance supply chain resilience.</div></li>
+                        <li><span class="icon">💸</span> <div class="text-content" data-key="salesMarketing">**Sales & Marketing Teams:** Actionable market insights, precise customer segmentation, and comprehensive product performance reports, integrated directly with CRM systems and sales dashboards to drive revenue growth.</div></li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="sub-section-title" data-key="outputFormatsTitle">▶ Output Formats & Channels</h3>
+                    <ul class="component-list">
+                        <li><span class="icon">📊</span> <div class="text-content" data-key="interactiveDashboards">**Interactive Dashboards & Reports (SAS Visual Analytics):** Empowering self-service exploration, drill-down capabilities, and dynamic data visualization for all user levels.</div></li>
+                        <li><span class="icon">📧</span> <div class="text-content" data-key="automatedAlerts">**Automated Alerts & Notifications:** Timely delivery of critical event notifications (e.g., equipment failure prediction, quality deviation) via email, SMS, and enterprise messaging platforms (Teams, Slack).</div></li>
+                        <li><span class="icon">💻</span> <div class="text-content" data-key="embeddedAnalytics">**Embedded Analytics:** Seamless integration of analytical insights directly into existing business applications (ERP, MES, QMS) through robust APIs or embeddable visualization components, bringing intelligence to the point of decision.</div></li>
+                        <li><span class="icon">💻</span> <div class="text-content" data-key="apiEndpoints">**API Endpoints (Real-time Scoring):** Providing secure, high-performance API endpoints for real-time model scoring, enabling other operational systems to consume analytical predictions instantly.</div></li>
+                        <li><span class="icon">📄</span> <div class="text-content" data-key="scheduledReports">**Scheduled Reports & Data Exports:** Automated generation and distribution of reports and data in various formats (PDF, Excel, CSV, JSON) for offline consumption, regulatory compliance, or integration with external systems.</div></li>
+                        <li><span class="icon">💬</span> <div class="text-content" data-key="nlg">**Natural Language Generation (NLG):** Automated narrative explanations of complex analytical findings, translating data insights into easily understandable human language for broader accessibility.</div></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="arrow">&#x2B07;</div>
+
+        <div class="layer-box">
+            <h2 class="layer-title" data-key="layer4Title">Layer 4: Analytical Applications & Use Cases</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <h3 class="sub-section-title" data-key="manufacturingOpsTitle">▶ Manufacturing Operations Intelligence</h3>
+                    <ul class="component-list">
+                        <li><span class="icon">🔧</span> <div class="text-content" data-key="predictiveMaintenance">**Predictive Maintenance:** Moving beyond reactive repairs, we predict equipment failures (e.g., wafer fab tools, test handlers) before they occur by analyzing sensor data (vibration, temperature, current signatures) and historical maintenance logs. This enables optimized maintenance schedules, reduces unplanned downtime, and extends asset lifespan, directly impacting OEE.</div></li>
+                        <li><span class="icon">🌟</span> <div class="text-content" data-key="qualityYieldOptimization">**Quality & Yield Optimization:** Identifying the elusive root causes of defects and optimizing complex process parameters in real-time. This includes leveraging advanced statistical process control (SPC) for critical dimensions, multivariate analysis to understand interdependencies, and machine learning for rapid defect classification from inline metrology and vision systems, ultimately maximizing yield and product quality for high-value components like semiconductors.</div></li>
+                        <li><span class="icon">⚙</span> <div class="text-content" data-key="processOptimization">**Process Optimization & Control:** Enabling real-time adjustment of manufacturing processes for peak efficiency and output. This involves continuous analysis of streaming data from PLCs and SCADA systems, applying optimization algorithms to fine-tune recipes, and providing closed-loop control recommendations to maintain tight process windows and reduce variability.</div></li>
+                        <li><span class="icon">⚡</span> <div class="text-content" data-key="energyManagement">**Energy Management:** Proactive monitoring and optimization of energy consumption across energy-intensive manufacturing facilities. By forecasting energy demand, detecting anomalies in usage patterns, and optimizing load balancing through advanced models, we help reduce operational costs and support sustainability initiatives.</div></li>
+                        <li><span class="icon">👨‍🏭</span> <div class="text-content" data-key="workforceOptimization">**Workforce Optimization:** Ensuring the right skills are available at the right time. This involves predictive staffing models based on production forecasts, skill gap analysis to identify training needs, and scheduling optimization to maximize labor efficiency and minimize overtime, crucial in a highly specialized workforce like high-tech manufacturing.</div></li>
+                        <li><span class="icon">📅</span> <div class="text-content" data-key="productionScheduling">**Production Scheduling & Throughput Enhancement:** Optimizing complex production schedules, minimizing bottlenecks, and maximizing throughput in intricate multi-stage manufacturing environments. Leveraging simulation and advanced optimization algorithms, we can model various scenarios to identify the most efficient production paths and improve on-time delivery.</div></li>
+                        <li><span class="icon">🔍</span> <div class="text-content" data-key="rootCauseAnalysis">**Root Cause Analysis (RCA):** Automating and accelerating the identification of underlying causes for critical production issues or quality deviations. By correlating data from diverse sources (equipment logs, MES, QMS, operator notes via text analytics), we reduce the time-to-insight for complex problems, allowing engineers to focus on solutions rather than investigation.</div></li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="sub-section-title" data-key="enterpriseSupplyChainTitle">▶ Broader Enterprise & Supply Chain Analytics</h3>
+                    <ul class="component-list">
+                        <li><span class="icon">🚢</span> <div class="text-content" data-key="supplyChainRisk">**Supply Chain Risk Management:** Proactively identifying and mitigating risks across the global supply chain, from raw material sourcing to finished goods delivery. This includes network analysis for single points of failure, predictive analytics for supplier performance and geopolitical disruptions, ensuring continuity in critical material flows.</div></li>
+                        <li><span class="icon">📈</span> <div class="text-content" data-key="demandForecasting">**Demand Forecasting & Inventory Optimization:** Delivering highly accurate predictions of future product demand, especially for new product introductions and volatile markets. This enables optimized inventory levels across the supply chain, reducing carrying costs, minimizing obsolescence, and ensuring product availability, critical for just-in-time manufacturing.</div></li>
+                        <li><span class="icon">💳</span> <div class="text-content" data-key="warrantyReturns">**Warranty & Returns Analysis:** Predicting potential warranty claims and identifying common failure modes from field data and customer feedback. By applying survival analysis and text analytics to unstructured data, we provide insights that drive product design improvements and reduce post-sales support costs.</div></li>
+                        <li><span class="icon">👥</span> <div class="text-content" data-key="customerExperience">**Customer Experience Analytics:** Gaining a deeper understanding of customer sentiment and identifying pain points across the customer journey. Leveraging sentiment analysis and customer journey mapping, we help tailor interactions and improve satisfaction, which is paramount in a B2B high-tech environment.</div></li>
+                        <li><span class="icon">💸</span> <div class="text-content" data-key="financialPerformance">**Financial Performance Analytics:** Providing granular cost analysis, profitability insights by product line or fab, and robust financial forecasting. This supports strategic financial planning, identifies cost reduction opportunities, and enhances overall fiscal health.</div></li>
+                        <li><span class="icon">🧬</span> <div class="text-content" data-key="rdInnovation">**R&D and Product Innovation:** Accelerating the discovery and development of new materials and product designs. This involves text analytics on vast research papers, patent analysis for competitive intelligence, and predictive modeling for new material properties, significantly shortening innovation cycles.</div></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="arrow">&#x2B07;</div>
+
+        <div class="layer-box bg-blue-100 border-blue-300">
+            <h2 class="layer-title text-blue-800" data-key="layer3Title">Layer 3: SAS® Viya - The Enterprise Analytics Platform</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div>
+                    <h3 class="sub-section-title" data-key="foundationTitle">▶ Foundation</h3>
+                    <ul class="component-list">
+                        <li><span class="icon">&#x2601;</span> <div class="text-content" data-key="cloudNativeArchitecture">**Cloud-Native Architecture:** Leveraging Kubernetes for container orchestration and a microservices architecture, ensuring elastic scalability, portability across hybrid/multi-cloud, and efficient resource utilization.</div></li>
+                        <li><span class="icon">&#x1F4BB;</span> <div class="text-content" data-key="distributedProcessing">**Distributed In-Memory Processing (CAS - Cloud Analytic Services):** Providing massively parallel processing (MPP) and in-memory computing for high-performance analytics on petabytes of data, accelerating data loading, transformation, and model execution.</div></li>
+                        <li><span class="icon">&#x1F4BB;</span> <div class="text-content" data-key="openExtensibleAPIs">**Open & Extensible APIs:** Comprehensive REST APIs for programmatic access to all platform services, complemented by client APIs for Python, R, Java, and Lua, enabling seamless integration with existing enterprise applications and developer ecosystems.</div></li>
+                        <li><span class="icon">&#x1F4C1;</span> <div class="text-content" data-key="metadataManagement">**Centralized Metadata Management:** A unified repository for all data definitions, model lineage, user permissions, and governance policies, ensuring consistency, auditability, and simplified management across the analytics landscape.</div></li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="sub-section-title" data-key="coreAnalyticalCapabilitiesTitle">▶ Core Analytical Capabilities</h3>
+                    <ul class="component-list">
+                        <li><span class="icon">&#x1F50D;</span> <div class="text-content" data-key="dataAccessPrep">**Data Access & Preparation:** Native connectors to a vast array of data sources (databases, cloud services, streaming platforms, files) alongside visual and programmatic tools for robust data manipulation, cleansing, and feature engineering.</div></li>
+                        <li><span class="icon">&#x1F4C8;</span> <div class="text-content" data-key="statisticalAnalysis">**Statistical Analysis:** A comprehensive suite of statistical methods including regression, ANOVA, advanced time series forecasting, and experimental design, crucial for understanding complex manufacturing processes.</div></li>
+                        <li><span class="icon">&#x1F9E0;</span> <div class="text-content" data-key="machineLearningAlgorithms">**Machine Learning Algorithms:** A rich library of supervised (classification, regression), unsupervised (clustering, anomaly detection), and deep learning (neural networks for image/text) algorithms for building highly accurate predictive and prescriptive models.</div></li>
+                        <li><span class="icon">&#x1F9E0;</span> <div class="text-content" data-key="optimizationSimulation">**Optimization & Simulation:** Powerful capabilities for resource allocation, scheduling, and process optimization, enabling manufacturers to identify the most efficient operational strategies and simulate impact of changes.</div></li>
+                        <li><span class="icon">&#x1F4AC;</span> <div class="text-content" data-key="textAnalyticsNLP">**Text Analytics & Natural Language Processing (NLP):** Advanced capabilities for extracting insights from unstructured text data, such as maintenance logs, customer feedback, and incident reports, to uncover hidden patterns and root causes.</div></li>
+                        <li><span class="icon">&#x1F4F7;</span> <div class="text-content" data-key="computerVision">**Computer Vision:** Leveraging image recognition, object detection, and defect detection capabilities for automated quality control, visual inspection, and process monitoring in manufacturing lines.</div></li>
+                        <li><span class="icon">&#x1F4CA;</span> <div class="text-content" data-key="reportingVisualization">**Reporting & Visualization (SAS Visual Analytics):** Intuitive, interactive dashboards and reports with self-service exploration capabilities, allowing business users to easily consume and interpret complex analytical insights.</div></li>
+                        <li><span class="icon">&#x1F9E0;</span> <div class="text-content" data-key="aiDecisioning">**AI & Decisioning:** Empowering automated, real-time decision-making through a robust business rules engine and decision flows that orchestrate complex logic involving multiple analytical models and business rules.</div></li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="sub-section-title" data-key="operationalizationGovernanceTitle">▶ Operationalization & Governance</h3>
+                    <ul class="component-list">
+                        <li><span class="icon">&#x1F4C1;</span> <div class="text-content" data-key="modelManagementDeployment">**Model Management & Deployment:** A centralized model registry for storing, versioning, and managing analytical models, with seamless deployment as REST APIs for real-time scoring or efficient batch scoring in production environments.</div></li>
+                        <li><span class="icon">&#x1F4C1;</span> <div class="text-content" data-key="modelRegistry">**Model Registry:** A secure, centralized repository for all analytical models, ensuring version control, metadata capture, and easy discoverability across the organization.</div></li>
+                        <li><span class="icon">&#x1F4C8;</span> <div class="text-content" data-key="modelMonitoring">**Model Monitoring:** Continuous tracking of model performance (accuracy, bias, data drift) in production, with automated alerts and triggers for retraining, ensuring models remain relevant and effective over time.</div></li>
+                        <li><span class="icon">&#x2699;</span> <div class="text-content" data-key="modelLifecyclePlatforms">**Workflow & Orchestration (SAS Model Manager):** End-to-end lifecycle management for analytical models, from development and validation to deployment and monitoring, streamlining processes and ensuring governance.</div></li>
+                        <li><span class="icon">&#x1F512;</span> <div class="text-content" data-key="securityAccessControl">**Security & Access Control:** Granular Role-Based Access Control (RBAC) for data, models, and applications, coupled with robust data encryption (in-transit and at-rest) and integration with enterprise authentication systems (LDAP, SAML, OAuth2).</div></li>
+                        <li><span class="icon">&#x1F4DD;</span> <div class="text-content" data-key="auditabilityLineage">**Auditability & Lineage:** Comprehensive tracking of data transformations, model versions, and analytical results, providing full transparency and reproducibility for compliance, regulatory requirements, and internal audits.</div></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="arrow">&#x2B07;</div>
+
+        <div class="layer-box">
+            <h2 class="layer-title" data-key="layer2Title">Layer 2: Data Ingestion, Integration & Preparation</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div>
+                    <h3 class="sub-section-title" data-key="realTimeIngestionTitle">▶ Real-Time Data Ingestion</h3>
+                    <ul class="component-list">
+                        <li><span class="icon">&#x1F4E1;</span> <div class="text-content" data-key="streamingConnectors">**Streaming Data Connectors (MQTT/OPC UA):** Protocols for direct, low-latency connection to industrial control systems, sensors, and edge devices on the factory floor, enabling immediate data capture from OT sources.</div></li>
+                        <li><span class="icon">&#x1F4E1;</span> <div class="text-content" data-key="streamingPlatforms">**Streaming Platforms (e.g., Kafka/Event Hubs):** High-throughput, fault-tolerant distributed streaming platforms for ingesting and managing continuous data streams from diverse sources, ensuring no data loss in high-volume environments.</div></li>
+                        <li><span class="icon">&#x1F4BB;</span> <div class="text-content" data-key="dataGateways">**Data Gateways/Edge Agents:** Software deployed close to data sources (e.g., on factory floor servers) to collect, filter, aggregate, and securely transmit data to the central platform, reducing network load and latency.</div></li>
+                        <li><span class="icon">&#x1F4BB;</span> <div class="text-content" data-key="customApisSdks">**Custom APIs/SDKs:** Flexible interfaces for integrating with proprietary manufacturing equipment or specialized legacy systems, ensuring comprehensive data acquisition.</div></li>
+                        <li><span class="icon">&#x1F4C8;</span> <div class="text-content" data-key="streamProcessingEngines">**SAS Event Stream Processing (ESP):** Powerful engines for real-time analytics on streaming data, enabling immediate anomaly detection, predictive maintenance alerts, quality deviations, and operational monitoring at the speed of business.</div></li>
+                        <li><span class="icon">&#x1F4BB;</span> <div class="text-content" data-key="edgeAnalytics">**Edge Analytics:** Performing pre-processing, aggregation, and basic analytics directly at the data source (edge) to reduce data volume, minimize latency, and enable faster local decision-making before transmitting to the core platform.</div></li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="sub-section-title" data-key="batchIntegrationTitle">▶ Batch & Micro-Batch Data Integration</h3>
+                    <ul class="component-list">
+                        <li><span class="icon">&#x2699;</span> <div class="text-content" data-key="etlTools">**ETL/ELT Tools (SAS Data Management):** A comprehensive suite for robust data integration, transformation, and quality, supporting various data sources (databases, flat files, cloud storage) for efficient loading of IT and historical OT data.</div></li>
+                        <li><span class="icon">&#x1F50D;</span> <div class="text-content" data-key="dataCleansingTransform">**Data Cleansing & Transformation:** Automated processes for standardization, de-duplication, validation, parsing, and address verification, ensuring data accuracy and consistency.</div></li>
+                        <li><span class="icon">&#x1F50D;</span> <div class="text-content" data-key="dataQualityRules">**Data Quality Rules:** Implementing predefined rules to identify and rectify data inconsistencies, ensuring high-quality data for reliable analytical outcomes.</div></li>
+                        <li><span class="icon">&#x1F50D;</span> <div class="text-content" data-key="dataProfiling">**Data Profiling:** In-depth analysis of data characteristics, identifying anomalies, missing values, and assessing overall data quality to inform transformation strategies.</div></li>
+                        <li><span class="icon">&#x1F50D;</span> <div class="text-content" data-key="dataHarmonization">**Data Harmonization:** Mapping disparate data models from varied IT and OT systems to a unified schema, ensuring consistency and interoperability across the enterprise.</div></li>
+                        <li><span class="icon">&#x1F50D;</span> <div class="text-content" data-key="featureEngineering">**Feature Engineering:** The critical process of creating new, more powerful variables from raw data to significantly enhance the performance and interpretability of analytical models (e.g., calculating OEE, cycle time variances, or sensor value derivatives).</div></li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="sub-section-title" data-key="dataStorageStagingTitle">▶ Data Storage & Staging</h3>
+                    <ul class="component-list">
+                        <li><span class="icon">&#x1F4C7;</span> <div class="text-content" data-key="dataLake">**Data Lake (Raw & Staged Data):** Scalable, cost-effective storage (HDFS/Cloud Object Storage like Azure Data Lake Storage, AWS S3, Google Cloud Storage) for raw, semi-structured, and unstructured data from all sources, serving as the foundational repository.</div></li>
+                        <li><span class="icon">&#x1F4C7;</span> <div class="text-content" data-key="dataWarehouse">**Data Warehouse (Curated & Integrated Data):** Optimized for structured, integrated data, utilizing relational databases (Teradata, Oracle, SQL Server) or cloud data warehouses (Snowflake, BigQuery, Redshift) to support complex queries and reporting for business intelligence.</div></li>
+                        <li><span class="icon">&#x1F4C7;</span> <div class="text-content" data-key="nosqlDatabases">**NoSQL Databases (e.g., MongoDB, Cassandra):** Employed for specific use cases requiring flexible schema or high-volume, low-latency access to certain types of data, such as time-series sensor data or IoT device logs.</div></li>
+                        <li><span class="icon">&#x1F4C7;</span> <div class="text-content" data-key="dataMarts">**Data Marts:** Subject-oriented subsets of the data warehouse, meticulously tailored for specific business units or analytical applications (e.g., a "Quality Data Mart," or "Production Performance Data Mart") to provide focused insights.</div></li>
+                        <li><span class="icon">&#x1F4C7;</span> <div class="text-content" data-key="landingZones">**Landing Zones:** Temporary storage areas for incoming raw data before it undergoes initial processing, cleansing, and integration into the data lake or data warehouse.</div></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="arrow">&#x2B07;</div>
+
+        <div class="layer-box">
+            <h2 class="layer-title" data-key="layer1Title">Layer 1: Data Sources & Acquisition</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <h3 class="sub-section-title" data-key="otDataSourcesTitle">▶ Operational Technology (OT) Data Sources</h3>
+                    <ul class="component-list">
+                        <li><span class="icon">&#x2699;</span> <div class="text-content" data-key="scadaDcs">**SCADA/DCS Systems:** Real-time process control data, operational parameters, alarms, and events directly from the factory floor, providing a pulse on manufacturing operations.</div></li>
+                        <li><span class="icon">&#x2699;</span> <div class="text-content" data-key="plcs">**PLCs (Programmable Logic Controllers):** Granular machine state, precise cycle times, and critical sensor readings (temperature, pressure, vibration, current, voltage) from individual machines, vital for micro-level process understanding.</div></li>
+                        <li><span class="icon">&#x2699;</span> <div class="text-content" data-key="mes">**MES (Manufacturing Execution Systems):** Comprehensive work order status, detailed production tracking, material consumption, quality checks, and equipment utilization data, bridging the gap between planning and execution.</div></li>
+                        <li><span class="icon">&#x2699;</span> <div class="text-content" data-key="iotEdgeGateways">**IoT Devices & Edge Gateways:** High-frequency sensor data from individual machines, environmental sensors (e.g., cleanroom conditions), robotics, and automated guided vehicles (AGVs), providing pervasive real-time insights.</div></li>
+                        <li><span class="icon">&#x1F4F7;</span> <div class="text-content" data-key="visionSystems">**Vision Systems:** Image and video data crucial for automated defect detection, precise component alignment, and comprehensive quality inspection (e.g., optical character recognition on wafers, surface defect analysis), ensuring product integrity.</div></li>
+                        <li><span class="icon">&#x1F9EA;</span> <div class="text-content" data-key="testMetrology">**Test & Metrology Equipment:** Critical electrical test results, wafer/chip metrology data (critical dimensions, overlay, film thickness), and particle counts, essential for process control and yield management in semiconductor manufacturing.</div></li>
+                        <li><span class="icon">&#x1F916;</span> <div class="text-content" data-key="roboticsAutomation">**Robotics & Automation Logs:** Detailed logs of robot arm positions, task completion, and error events, enabling performance monitoring and troubleshooting of automated processes.</div></li>
+                        <li><span class="icon">&#x1F321;</span> <div class="text-content" data-key="environmentalMonitoring">**Environmental Monitoring:** Continuous data on temperature, humidity, pressure, and air quality within cleanrooms and sensitive manufacturing areas, critical for maintaining optimal production conditions.</div></li>
+                        <li><span class="icon">&#x1F4DD;</span> <div class="text-content" data-key="machineProcessLogs">**Machine & Process Log Files:** Unstructured and semi-structured log data generated by various equipment and processes, providing valuable diagnostic and historical context for operational events.</div></li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="sub-section-title" data-key="itDataSourcesTitle">▶ Information Technology (IT) Data Sources</h3>
+                    <ul class="component-list">
+                        <li><span class="icon">&#x1F4C1;</span> <div class="text-content" data-key="erpSystems">**ERP Systems (e.g., SAP, Oracle E-Business Suite):** Core enterprise data including production planning, inventory management, detailed supply chain information (supplier data, raw material availability), financial data, and customer orders, providing the backbone of business operations.</div></li>
+                        <li><span class="icon">&#x1F4C1;</span> <div class="text-content" data-key="plmSystems">**PLM (Product Lifecycle Management) Systems:** Comprehensive product design specifications, bill of materials (BOM), engineering changes, and revision history, crucial for understanding product evolution and quality traceability.</div></li>
+                        <li><span class="icon">&#x1F465;</span> <div class="text-content" data-key="crmSystems">**CRM (Customer Relationship Management) Systems:** Valuable customer feedback, service history, product returns, and warranty claims data, offering insights into customer satisfaction and product performance in the field.</div></li>
+                        <li><span class="icon">&#x1F4DD;</span> <div class="text-content" data-key="qmsSystems">**QMS (Quality Management Systems):** Structured data on non-conformance reports (NCRs), corrective and preventive actions (CAPAs), and audit findings, essential for maintaining quality standards and compliance.</div></li>
+                        <li><span class="icon">&#x1F69B;</span> <div class="text-content" data-key="scmSystems">**SCM (Supply Chain Management) Systems:** Logistics data, shipping schedules, and supplier performance metrics, providing end-to-end visibility and control over the extended supply chain.</div></li>
+                        <li><span class="icon">&#x1F9EC;</span> <div class="text-content" data-key="limsSystems">**LIMS (Laboratory Information Management Systems):** Detailed material composition data and R&D test results, critical for material science, quality assurance, and new product development.</div></li>
+                        <li><span class="icon">&#x1F46A;</span> <div class="text-content" data-key="hrSystems">**HR (Human Resources) Systems:** Workforce data, training records, and skill matrices, enabling workforce optimization, talent management, and safety compliance.</div></li>
+                        <li><span class="icon">&#x1F30D;</span> <div class="text-content" data-key="externalDataSources">**External Data Sources:** Broader market trends, economic indicators, weather data, and industry benchmarks, providing crucial context for strategic planning, demand forecasting, and supply chain disruption prediction.</div></li>
+                        <li><span class="icon">&#x1F5C4;</span> <div class="text-content" data-key="historicalArchives">**Historical Data Archives:** Legacy databases, data lakes, and data warehouses containing years of operational and business data, invaluable for training robust analytical models and understanding long-term trends.</div></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="cross-cutting-box">
+            <h2 class="cross-cutting-title" data-key="crossCuttingTitle">Cross-Cutting Capabilities</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="cross-cutting-item" data-key="security"><span class="icon">&#x1F512;</span> Security (End-to-End, Auth, Authz, Encryption, Compliance, Audit)</div>
+                <div class="cross-cutting-item" data-key="governance"><span class="icon">&#x1F4DD;</span> Governance (Data, Model, Regulatory, Auditability, Policy)</div>
+                <div class="cross-cutting-item" data-key="scalabilityPerformance"><span class="icon">&#x1F4C8;</span> Scalability & Performance (Massive Data, Complex Comp., Elastic, HA/DR)</div>
+                <div class="cross-cutting-item" data-key="opennessExtensibility"><span class="icon">&#x1F517;</span> Openness & Extensibility (Existing Systems, Open-Source, API-First, Custom Dev)</div>
+                <div class="cross-cutting-item" data-key="collaboration"><span class="icon">&#x1F91D;</span> Collaboration (Shared Workspaces, Version Control, Project Mgmt, Comments)</div>
+                <div class="cross-cutting-item" data-key="mlops"><span class="icon">&#x2699;</span> MLOps (Automated Lifecycle, CI/CD, Monitoring, Retraining, A/B Testing)</div>
+            </div>
+        </div>
+
+        <p class="text-center text-sm text-gray-500 mt-8" data-key="conclusion">
+            This architecture empowers organizations to transform data into actionable intelligence, driving continuous innovation in high-tech manufacturing.
+        </p>
+    </div>
+
+    <script>
+        const translations = {
+            'en': {
+                title: 'SAS Enterprise Analytics System Architecture for High-Tech Manufacturing',
+                mainTitle: 'SAS Enterprise Analytics System Architecture',
+                subtitle: 'A unified, scalable, and open analytics ecosystem for high-tech manufacturing, driving data-driven decision-making and continuous innovation.',
+                layer5Title: 'Layer 5: Intelligence Delivery & Consumption, Analytics Use Cases and Value Delivery',
+                targetAudiencesTitle: '▶ Target Audiences & Delivery Mechanisms',
+                executives: '**Executives & Senior Leadership:** Strategic dashboards, interactive briefing books, and high-level reports delivered via secure web portals and mobile apps for informed strategic planning and investment decisions.',
+                factoryManagers: '**Factory Managers & Operations Supervisors:** Real-time operational dashboards, immediate production alerts, and performance scorecards displayed on large screens and accessible via mobile for proactive issue resolution and daily management.',
+                engineersAnalysts: '**Engineers & Quality Analysts:** Detailed analytical reports, deep-dive root cause analysis findings, and interactive data exploration tools, leveraging SAS Visual Analytics reports, custom applications, and Jupyter notebooks for in-depth problem-solving.',
+                dataScientists: '**Data Scientists & Analysts:** Direct access to raw and prepared data, analytical models, and robust development environments through SAS Studio and APIs for advanced model building, validation, and experimentation.',
+                supplyChainPlanners: '**Supply Chain Planners:** Accurate demand forecasts, optimized inventory recommendations, and critical risk alerts seamlessly integrated into existing planning systems and custom web applications to enhance supply chain resilience.',
+                salesMarketing: '**Sales & Marketing Teams:** Actionable market insights, precise customer segmentation, and comprehensive product performance reports, integrated directly with CRM systems and sales dashboards to drive revenue growth.',
+                outputFormatsTitle: '▶ Output Formats & Channels',
+                interactiveDashboards: '**Interactive Dashboards & Reports (SAS Visual Analytics):** Empowering self-service exploration, drill-down capabilities, and dynamic data visualization for all user levels.',
+                automatedAlerts: '**Automated Alerts & Notifications:** Timely delivery of critical event notifications (e.g., equipment failure prediction, quality deviation) via email, SMS, and enterprise messaging platforms (Teams, Slack).',
+                embeddedAnalytics: '**Embedded Analytics:** Seamless integration of analytical insights directly into existing business applications (ERP, MES, QMS) through robust APIs or embeddable visualization components, bringing intelligence to the point of decision.',
+                apiEndpoints: '**API Endpoints (Real-time Scoring):** Providing secure, high-performance API endpoints for real-time model scoring, enabling other operational systems to consume analytical predictions instantly.',
+                scheduledReports: '**Scheduled Reports & Data Exports:** Automated generation and distribution of reports and data in various formats (PDF, Excel, CSV, JSON) for offline consumption, regulatory compliance, or integration with external systems.',
+                nlg: '**Natural Language Generation (NLG):** Automated narrative explanations of complex analytical findings, translating data insights into easily understandable human language for broader accessibility.',
+                layer4Title: 'Layer 4: Analytical Applications & Use Cases',
+                manufacturingOpsTitle: '▶ Manufacturing Operations Intelligence',
+                predictiveMaintenance: '**Predictive Maintenance:** Moving beyond reactive repairs, we predict equipment failures (e.g., wafer fab tools, test handlers) before they occur by analyzing sensor data (vibration, temperature, current signatures) and historical maintenance logs. This enables optimized maintenance schedules, reduces unplanned downtime, and extends asset lifespan, directly impacting OEE.',
+                qualityYieldOptimization: '**Quality & Yield Optimization:** Identifying the elusive root causes of defects and optimizing complex process parameters in real-time. This includes leveraging advanced statistical process control (SPC) for critical dimensions, multivariate analysis to understand interdependencies, and machine learning for rapid defect classification from inline metrology and vision systems, ultimately maximizing yield and product quality for high-value components like semiconductors.',
+                processOptimization: '**Process Optimization & Control:** Enabling real-time adjustment of manufacturing processes for peak efficiency and output. This involves continuous analysis of streaming data from PLCs and SCADA systems, applying optimization algorithms to fine-tune recipes, and providing closed-loop control recommendations to maintain tight process windows and reduce variability.',
+                energyManagement: '**Energy Management:** Proactive monitoring and optimization of energy consumption across energy-intensive manufacturing facilities. By forecasting energy demand, detecting anomalies in usage patterns, and optimizing load balancing through advanced models, we help reduce operational costs and support sustainability initiatives.',
+                workforceOptimization: '**Workforce Optimization:** Ensuring the right skills are available at the right time. This involves predictive staffing models based on production forecasts, skill gap analysis to identify training needs, and scheduling optimization to maximize labor efficiency and minimize overtime, crucial in a highly specialized workforce like high-tech manufacturing.',
+                productionScheduling: '**Production Scheduling & Throughput Enhancement:** Optimizing complex production schedules, minimizing bottlenecks, and maximizing throughput in intricate multi-stage manufacturing environments. Leveraging simulation and advanced optimization algorithms, we can model various scenarios to identify the most efficient production paths and improve on-time delivery.',
+                rootCauseAnalysis: '**Root Cause Analysis (RCA):** Automating and accelerating the identification of underlying causes for critical production issues or quality deviations. By correlating data from diverse sources (equipment logs, MES, QMS, operator notes via text analytics), we reduce the time-to-insight for complex problems, allowing engineers to focus on solutions rather than investigation.',
+                enterpriseSupplyChainTitle: '▶ Broader Enterprise & Supply Chain Analytics',
+                supplyChainRisk: '**Supply Chain Risk Management:** Proactively identifying and mitigating risks across the global supply chain, from raw material sourcing to finished goods delivery. This includes network analysis for single points of failure, predictive analytics for supplier performance and geopolitical disruptions, ensuring continuity in critical material flows.',
+                demandForecasting: '**Demand Forecasting & Inventory Optimization:** Delivering highly accurate predictions of future product demand, especially for new product introductions and volatile markets. This enables optimized inventory levels across the supply chain, reducing carrying costs, minimizing obsolescence, and ensuring product availability, critical for just-in-time manufacturing.',
+                warrantyReturns: '**Warranty & Returns Analysis:** Predicting potential warranty claims and identifying common failure modes from field data and customer feedback. By applying survival analysis and text analytics to unstructured data, we provide insights that drive product design improvements and reduce post-sales support costs.',
+                customerExperience: '**Customer Experience Analytics:** Gaining a deeper understanding of customer sentiment and identifying pain points across the customer journey. Leveraging sentiment analysis and customer journey mapping, we help tailor interactions and improve satisfaction, which is paramount in a B2B high-tech environment.',
+                financialPerformance: '**Financial Performance Analytics:** Providing granular cost analysis, profitability insights by product line or fab, and robust financial forecasting. This supports strategic financial planning, identifies cost reduction opportunities, and enhances overall fiscal health.',
+                rdInnovation: '**R&D and Product Innovation:** Accelerating the discovery and development of new materials and product designs. This involves text analytics on vast research papers, patent analysis for competitive intelligence, and predictive modeling for new material properties, significantly shortening innovation cycles.',
+                layer3Title: 'Layer 3: SAS® Viya - The Enterprise Analytics Platform',
+                foundationTitle: '▶ Foundation',
+                cloudNativeArchitecture: '**Cloud-Native Architecture:** Leveraging Kubernetes for container orchestration and a microservices architecture, ensuring elastic scalability, portability across hybrid/multi-cloud, and efficient resource utilization.',
+                distributedProcessing: '**Distributed In-Memory Processing (CAS - Cloud Analytic Services):** Providing massively parallel processing (MPP) and in-memory computing for high-performance analytics on petabytes of data, accelerating data loading, transformation, and model execution.',
+                openExtensibleAPIs: '**Open & Extensible APIs:** Comprehensive REST APIs for programmatic access to all platform services, complemented by client APIs for Python, R, Java, and Lua, enabling seamless integration with existing enterprise applications and developer ecosystems.',
+                metadataManagement: '**Centralized Metadata Management:** A unified repository for all data definitions, model lineage, user permissions, and governance policies, ensuring consistency, auditability, and simplified management across the analytics landscape.',
+                coreAnalyticalCapabilitiesTitle: '▶ Core Analytical Capabilities',
+                dataAccessPrep: '**Data Access & Preparation:** Native connectors to a vast array of data sources (databases, cloud services, streaming platforms, files) alongside visual and programmatic tools for robust data manipulation, cleansing, and feature engineering.',
+                statisticalAnalysis: '**Statistical Analysis:** A comprehensive suite of statistical methods including regression, ANOVA, advanced time series forecasting, and experimental design, crucial for understanding complex manufacturing processes.',
+                machineLearningAlgorithms: '**Machine Learning Algorithms:** A rich library of supervised (classification, regression), unsupervised (clustering, anomaly detection), and deep learning (neural networks for image/text) algorithms for building highly accurate predictive and prescriptive models.',
+                optimizationSimulation: '**Optimization & Simulation:** Powerful capabilities for resource allocation, scheduling, and process optimization, enabling manufacturers to identify the most efficient operational strategies and simulate impact of changes.',
+                textAnalyticsNLP: '**Text Analytics & Natural Language Processing (NLP):** Advanced capabilities for extracting insights from unstructured text data, such as maintenance logs, customer feedback, and incident reports, to uncover hidden patterns and root causes.',
+                computerVision: '**Computer Vision:** Leveraging image recognition, object detection, and defect detection capabilities for automated quality control, visual inspection, and process monitoring in manufacturing lines.',
+                reportingVisualization: '**Reporting & Visualization (SAS Visual Analytics):** Intuitive, interactive dashboards and reports with self-service exploration capabilities, allowing business users to easily consume and interpret complex analytical insights.',
+                aiDecisioning: '**AI & Decisioning:** Empowering automated, real-time decision-making through a robust business rules engine and decision flows that orchestrate complex logic involving multiple analytical models and business rules.',
+                operationalizationGovernanceTitle: '▶ Operationalization & Governance',
+                modelManagementDeployment: '**Model Management & Deployment:** A centralized model registry for storing, versioning, and managing analytical models, with seamless deployment as REST APIs for real-time scoring or efficient batch scoring in production environments.',
+                modelRegistry: '**Model Registry:** A secure, centralized repository for all analytical models, ensuring version control, metadata capture, and easy discoverability across the organization.',
+                modelMonitoring: '**Model Monitoring:** Continuous tracking of model performance (accuracy, bias, data drift) in production, with automated alerts and triggers for retraining, ensuring models remain relevant and effective over time.',
+                modelLifecyclePlatforms: '**Workflow & Orchestration (SAS Model Manager):** End-to-end lifecycle management for analytical models, from development and validation to deployment and monitoring, streamlining processes and ensuring governance.',
+                securityAccessControl: '**Security & Access Control:** Granular Role-Based Access Control (RBAC) for data, models, and applications, coupled with robust data encryption (in-transit and at-rest) and integration with enterprise authentication systems (LDAP, SAML, OAuth2).',
+                auditabilityLineage: '**Auditability & Lineage:** Comprehensive tracking of data transformations, model versions, and analytical results, providing full transparency and reproducibility for compliance, regulatory requirements, and internal audits.',
+                layer2Title: 'Layer 2: Data Ingestion, Integration & Preparation',
+                realTimeIngestionTitle: '▶ Real-Time Data Ingestion',
+                streamingConnectors: '**Streaming Data Connectors (MQTT/OPC UA):** Protocols for direct, low-latency connection to industrial control systems, sensors, and edge devices on the factory floor, enabling immediate data capture from OT sources.',
+                streamingPlatforms: '**Streaming Platforms (e.g., Kafka/Event Hubs):** High-throughput, fault-tolerant distributed streaming platforms for ingesting and managing continuous data streams from diverse sources, ensuring no data loss in high-volume environments.',
+                dataGateways: '**Data Gateways/Edge Agents:** Software deployed close to data sources (e.g., on factory floor servers) to collect, filter, aggregate, and securely transmit data to the central platform, reducing network load and latency.',
+                customApisSdks: '**Custom APIs/SDKs:** Flexible interfaces for integrating with proprietary manufacturing equipment or specialized legacy systems, ensuring comprehensive data acquisition.',
+                streamProcessingEngines: '**SAS Event Stream Processing (ESP):** Powerful engines for real-time analytics on streaming data, enabling immediate anomaly detection, predictive maintenance alerts, quality deviations, and operational monitoring at the speed of business.',
+                edgeAnalytics: '**Edge Analytics:** Performing pre-processing, aggregation, and basic analytics directly at the data source (edge) to reduce data volume, minimize latency, and enable faster local decision-making before transmitting to the core platform.',
+                batchIntegrationTitle: '▶ Batch & Micro-Batch Data Integration',
+                etlTools: '**ETL/ELT Tools (SAS Data Management):** A comprehensive suite for robust data integration, transformation, and quality, supporting various data sources (databases, flat files, cloud storage) for efficient loading of IT and historical OT data.',
+                dataCleansingTransform: '**Data Cleansing & Transformation:** Automated processes for standardization, de-duplication, validation, parsing, and address verification, ensuring data accuracy and consistency.',
+                dataQualityRules: '**Data Quality Rules:** Implementing predefined rules to identify and rectify data inconsistencies, ensuring high-quality data for reliable analytical outcomes.',
+                dataProfiling: '**Data Profiling:** In-depth analysis of data characteristics, identifying anomalies, missing values, and assessing overall data quality to inform transformation strategies.',
+                dataHarmonization: '**Data Harmonization:** Mapping disparate data models from varied IT and OT systems to a unified schema, ensuring consistency and interoperability across the enterprise.',
+                featureEngineering: '**Feature Engineering:** The critical process of creating new, more powerful variables from raw data to significantly enhance the performance and interpretability of analytical models (e.g., calculating OEE, cycle time variances, or sensor value derivatives).',
+                dataStorageStagingTitle: '▶ Data Storage & Staging',
+                dataLake: '**Data Lake (Raw & Staged Data):** Scalable, cost-effective storage (HDFS/Cloud Object Storage like Azure Data Lake Storage, AWS S3, Google Cloud Storage) for raw, semi-structured, and unstructured data from all sources, serving as the foundational repository.',
+                dataWarehouse: '**Data Warehouse (Curated & Integrated Data):** Optimized for structured, integrated data, utilizing relational databases (Teradata, Oracle, SQL Server) or cloud data warehouses (Snowflake, BigQuery, Redshift) to support complex queries and reporting for business intelligence.',
+                nosqlDatabases: '**NoSQL Databases (e.g., MongoDB, Cassandra):** Employed for specific use cases requiring flexible schema or high-volume, low-latency access to certain types of data, such as time-series sensor data or IoT device logs.',
+                dataMarts: '**Data Marts:** Subject-oriented subsets of the data warehouse, meticulously tailored for specific business units or analytical applications (e.g., a "Quality Data Mart," or "Production Performance Data Mart") to provide focused insights.',
+                landingZones: '**Landing Zones:** Temporary storage areas for incoming raw data before it undergoes initial processing, cleansing, and integration into the data lake or data warehouse.',
+                layer1Title: 'Layer 1: Data Sources & Acquisition',
+                otDataSourcesTitle: '▶ Operational Technology (OT) Data Sources',
+                scadaDcs: '**SCADA/DCS Systems:** Real-time process control data, operational parameters, alarms, and events directly from the factory floor, providing a pulse on manufacturing operations.',
+                plcs: '**PLCs (Programmable Logic Controllers):** Granular machine state, precise cycle times, and critical sensor readings (temperature, pressure, vibration, current, voltage) from individual machines, vital for micro-level process understanding.',
+                mes: '**MES (Manufacturing Execution Systems):** Comprehensive work order status, detailed production tracking, material consumption, quality checks, and equipment utilization data, bridging the gap between planning and execution.',
+                iotEdgeGateways: '**IoT Devices & Edge Gateways:** High-frequency sensor data from individual machines, environmental sensors (e.g., cleanroom conditions), robotics, and automated guided vehicles (AGVs), providing pervasive real-time insights.',
+                visionSystems: '**Vision Systems:** Image and video data crucial for automated defect detection, precise component alignment, and comprehensive quality inspection (e.g., optical character recognition on wafers, surface defect analysis), ensuring product integrity.',
+                testMetrology: '**Test & Metrology Equipment:** Critical electrical test results, wafer/chip metrology data (critical dimensions, overlay, film thickness), and particle counts, essential for process control and yield management in semiconductor manufacturing.',
+                roboticsAutomation: '**Robotics & Automation Logs:** Detailed logs of robot arm positions, task completion, and error events, enabling performance monitoring and troubleshooting of automated processes.',
+                environmentalMonitoring: '**Environmental Monitoring:** Continuous data on temperature, humidity, pressure, and air quality within cleanrooms and sensitive manufacturing areas, critical for maintaining optimal production conditions.',
+                machineProcessLogs: '**Machine & Process Log Files:** Unstructured and semi-structured log data generated by various equipment and processes, providing valuable diagnostic and historical context for operational events.',
+                itDataSourcesTitle: '▶ Information Technology (IT) Data Sources',
+                erpSystems: '**ERP Systems (e.g., SAP, Oracle E-Business Suite):** Core enterprise data including production planning, inventory management, detailed supply chain information (supplier data, raw material availability), financial data, and customer orders, providing the backbone of business operations.',
+                plmSystems: '**PLM (Product Lifecycle Management) Systems:** Comprehensive product design specifications, bill of materials (BOM), engineering changes, and revision history, crucial for understanding product evolution and quality traceability.',
+                crmSystems: '**CRM (Customer Relationship Management) Systems:** Valuable customer feedback, service history, product returns, and warranty claims data, offering insights into customer satisfaction and product performance in the field.',
+                qmsSystems: '**QMS (Quality Management Systems):** Structured data on non-conformance reports (NCRs), corrective and preventive actions (CAPAs), and audit findings, essential for maintaining quality standards and compliance.',
+                scmSystems: '**SCM (Supply Chain Management) Systems:** Logistics data, shipping schedules, and supplier performance metrics, providing end-to-end visibility and control over the extended supply chain.',
+                limsSystems: '**LIMS (Laboratory Information Management Systems):** Detailed material composition data and R&D test results, critical for material science, quality assurance, and new product development.',
+                hrSystems: '**HR (Human Resources) Systems:** Workforce data, training records, and skill matrices, enabling workforce optimization, talent management, and safety compliance.',
+                externalDataSources: '**External Data Sources:** Broader market trends, economic indicators, weather data, and industry benchmarks, providing crucial context for strategic planning, demand forecasting, and supply chain disruption prediction.',
+                historicalArchives: '**Historical Data Archives:** Legacy databases, data lakes, and data warehouses containing years of operational and business data, invaluable for training robust analytical models and understanding long-term trends.',
+                crossCuttingTitle: 'Cross-Cutting Capabilities',
+                security: 'Security (End-to-End, Auth, Authz, Encryption, Compliance, Audit)',
+                governance: 'Governance (Data, Model, Regulatory, Auditability, Policy)',
+                scalabilityPerformance: 'Scalability & Performance (Massive Data, Complex Comp., Elastic, HA/DR)',
+                opennessExtensibility: 'Openness & Extensibility (Existing Systems, Open-Source, API-First, Custom Dev)',
+                collaboration: 'Collaboration (Shared Workspaces, Version Control, Project Mgmt, Comments)',
+                mlops: 'MLOps (Automated Lifecycle, CI/CD, Monitoring, Retraining, A/B Testing)',
+                conclusion: 'This architecture empowers organizations to transform data into actionable intelligence, driving continuous innovation in high-tech manufacturing.'
+            },
+            'zh-CN': {
+                title: '高科技制造业企业分析系统架构',
+                mainTitle: 'SAS企业分析系统架构',
+                subtitle: '为高科技制造业提供统一、可扩展、开放的分析生态系统，驱动数据驱动的决策制定和持续改进与创新。',
+                layer5Title: '第5层：智能交付与消费、分析用例与价值交付',
+                targetAudiencesTitle: '▶ 目标受众与交付机制',
+                executives: '**高管与高级领导层：** 通过安全的网络门户和移动应用程序交付战略仪表板、交互式简报和高级报告，以支持明智的战略规划和投资决策。',
+                factoryManagers: '**工厂经理与运营主管：** 在大型屏幕上显示并可通过移动设备访问的实时运营仪表板、即时生产警报和绩效记分卡，用于主动解决问题和日常管理。',
+                engineersAnalysts: '**工程师与质量分析师：** 详细的分析报告、深入的根本原因分析结果和交互式数据探索工具，利用SAS Visual Analytics报告、自定义应用程序和Jupyter Notebooks进行深入的问题解决。',
+                dataScientists: '**数据科学家与分析师：** 通过SAS Studio和API直接访问原始和准备好的数据、分析模型和强大的开发环境，用于高级模型构建、验证和实验。',
+                supplyChainPlanners: '**供应链规划师：** 将准确的需求预测、优化的库存建议和关键风险警报无缝集成到现有规划系统和自定义Web应用程序中，以增强供应链弹性。',
+                salesMarketing: '**销售与市场团队：** 可操作的市场洞察、精确的客户细分和全面的产品绩效报告，直接与CRM系统和销售仪表板集成，以推动收入增长。',
+                outputFormatsTitle: '▶ 输出格式与渠道',
+                interactiveDashboards: '**交互式仪表板与报告（SAS Visual Analytics）：** 赋能所有用户进行自助式探索、钻取功能和动态数据可视化。',
+                automatedAlerts: '**自动化警报与通知：** 通过电子邮件、短信和企业消息平台（Teams、Slack）及时交付关键事件通知（例如，设备故障预测、质量偏差）。',
+                embeddedAnalytics: '**嵌入式分析：** 通过强大的API或可嵌入的可视化组件，将分析洞察无缝集成到现有业务应用程序（ERP、MES、QMS）中，将智能带到决策点。',
+                apiEndpoints: '**API端点（实时评分）：** 提供安全、高性能的API端点用于实时模型评分，使其他运营系统能够即时消费分析预测。',
+                scheduledReports: '**计划报告与数据导出：** 自动生成和分发各种格式（PDF、Excel、CSV、JSON）的报告和数据，用于离线消费、法规遵从或与外部系统集成。',
+                nlg: '**自然语言生成（NLG）：** 对复杂分析结果进行自动化叙述性解释，将数据洞察转化为易于理解的人类语言，以实现更广泛的可访问性。',
+                layer4Title: '第4层：分析应用与用例',
+                manufacturingOpsTitle: '▶ 制造运营智能',
+                predictiveMaintenance: '**预测性维护：** 超越被动维修，我们通过分析传感器数据（振动、温度、电流特征）和历史维护日志，预测设备（例如晶圆厂工具、测试处理机）在发生故障之前。这使得优化维护计划、减少计划外停机时间并延长资产寿命成为可能，直接影响OEE。',
+                qualityYieldOptimization: '**质量与良率优化：** 实时识别难以捉摸的缺陷根本原因并优化复杂的工艺参数。这包括利用先进的统计过程控制（SPC）进行关键尺寸控制、多变量分析以理解相互依赖关系，以及机器学习从在线计量和视觉系统进行快速缺陷分类，最终最大限度地提高半导体等高价值组件的良率和产品质量。',
+                processOptimization: '**过程优化与控制：** 实现制造过程的实时调整，以达到最高效率和产量。这包括对来自PLC和SCADA系统的流数据进行持续分析、应用优化算法来微调配方，并提供闭环控制建议，以保持严格的工艺窗口并减少变异性。',
+                energyManagement: '**能源管理：** 对能源密集型制造设施的能源消耗进行主动监控和优化。通过预测能源需求、检测使用模式中的异常，并通过高级模型优化负载平衡，我们帮助降低运营成本并支持可持续发展举措。',
+                workforceOptimization: '**劳动力优化：** 确保在正确的时间拥有正确的技能。这包括基于生产预测的预测性人员配备模型、识别培训需求的技能差距分析，以及调度优化以最大限度地提高劳动效率和减少加班，这在高科技制造业等高度专业化的劳动力中至关重要。',
+                productionScheduling: '**生产调度与吞吐量提升：** 在复杂的多阶段制造环境中优化复杂的生产计划、最小化瓶颈并最大化吞吐量。利用模拟和高级优化算法，我们可以模拟各种场景，以确定最有效的生产路径并提高准时交货率。',
+                rootCauseAnalysis: '**根本原因分析（RCA）：** 自动化并加速识别关键生产问题或质量偏差的根本原因。通过关联来自不同来源的数据（设备日志、MES、QMS、通过文本分析的操作员笔记），我们缩短了复杂问题的洞察时间，使工程师能够专注于解决方案而非调查。',
+                enterpriseSupplyChainTitle: '▶ 更广泛的企业与供应链分析',
+                supplyChainRisk: '**供应链风险管理：** 主动识别和减轻全球供应链中的风险，从原材料采购到成品交付。这包括对单点故障进行网络分析、对供应商绩效和地缘政治中断进行预测性分析，确保关键物料流的连续性。',
+                demandForecasting: '**需求预测与库存优化：** 提供高度准确的未来产品需求预测，特别是针对新产品发布和波动市场。这使得整个供应链的库存水平得到优化，从而降低持有成本、最大限度地减少过时，并确保产品可用性，这对于即时生产至关重要。',
+                warrantyReturns: '**保修与退货分析：** 预测潜在的保修索赔，并从现场数据和客户反馈中识别常见的故障模式。通过对非结构化数据应用生存分析和文本分析，我们提供洞察力，从而推动产品设计改进并降低售后支持成本。',
+                customerExperience: '**客户体验分析：** 更深入地了解客户情绪并识别客户旅程中的痛点。利用情感分析和客户旅程映射，我们帮助定制交互并提高满意度，这在B2B高科技环境中至关重要。',
+                financialPerformance: '**财务绩效分析：** 提供精细的成本分析、按产品线或晶圆厂划分的盈利能力洞察以及强大的财务预测。这支持战略财务规划、识别成本降低机会并增强整体财务健康。',
+                rdInnovation: '**研发与产品创新：** 加速新材料和产品设计的发现与开发。这涉及对大量研究论文进行文本分析、对竞争情报进行专利分析，以及对新材料特性进行预测建模，从而显著缩短创新周期。',
+                layer3Title: '第3层：SAS® Viya - 企业分析平台',
+                foundationTitle: '▶ 基础',
+                cloudNativeArchitecture: '**云原生架构：** 利用Kubernetes进行容器编排和微服务架构，确保弹性可扩展性、混合/多云环境下的可移植性以及高效的资源利用。',
+                distributedProcessing: '**分布式内存处理 (CAS - 云分析服务)：** 提供大规模并行处理（MPP）和内存计算，用于对PB级数据进行高性能分析，加速数据加载、转换和模型执行。',
+                openExtensibleAPIs: '**开放与可扩展API：** 提供全面的REST API，用于对所有平台服务进行编程访问，并辅以Python、R、Java和Lua的客户端API，实现与现有企业应用程序和开发生态系统的无缝集成。',
+                metadataManagement: '**集中式元数据管理：** 所有数据定义、模型血缘、用户权限和治理策略的统一存储库，确保分析领域的一致性、可审计性和简化管理。',
+                coreAnalyticalCapabilitiesTitle: '▶ 核心分析能力',
+                dataAccessPrep: '**数据访问与准备：** 原生连接器连接到各种数据源（数据库、云服务、流媒体平台、文件），以及用于强大数据操作、清洗和特征工程的可视化和编程工具。',
+                statisticalAnalysis: '**统计分析：** 一套全面的统计方法，包括回归、方差分析、高级时间序列预测和实验设计，对于理解复杂的制造过程至关重要。',
+                machineLearningAlgorithms: '**机器学习算法：** 丰富的监督学习（分类、回归）、无监督学习（聚类、异常检测）和深度学习（用于图像/文本的神经网络）算法库，用于构建高精度的预测和规范性模型。',
+                optimizationSimulation: '**优化与模拟：** 强大的资源分配、调度和过程优化能力，使制造商能够确定最有效的运营策略并模拟变更的影响。',
+                textAnalyticsNLP: '**文本分析与自然语言处理（NLP）：** 从非结构化文本数据（如维护日志、客户反馈和事件报告）中提取洞察的高级能力，以发现隐藏的模式和根本原因。',
+                computerVision: '**计算机视觉：** 利用图像识别、对象检测和缺陷检测能力，实现制造生产线中的自动化质量控制、视觉检测和过程监控。',
+                reportingVisualization: '**报告与可视化（SAS Visual Analytics）：** 直观、交互式的仪表板和报告，具有自助探索功能，使业务用户能够轻松消费和解释复杂的分析洞察。',
+                aiDecisioning: '**AI与决策：** 通过强大的业务规则引擎和决策流实现自动化、实时决策，这些决策流协调涉及多个分析模型和业务规则的复杂逻辑。',
+                operationalizationGovernanceTitle: '▶ 运营化与治理',
+                modelManagementDeployment: '**模型管理与部署：** 一个集中的模型注册表，用于存储、版本控制和管理分析模型，并可无缝部署为REST API，用于实时评分或在生产环境中进行高效的批量评分。',
+                modelRegistry: '**模型注册表：** 一个安全、集中式存储库，用于所有分析模型，确保版本控制、元数据捕获和在整个组织中的易于发现。',
+                modelMonitoring: '**模型监控：** 持续跟踪生产中的模型性能（准确性、偏差、数据漂移），并提供自动化警报和再训练触发器，确保模型随着时间的推移保持相关性和有效性。',
+                modelLifecyclePlatforms: '**工作流与编排 (SAS Model Manager)：** 分析模型的端到端生命周期管理，从开发和验证到部署和监控，简化流程并确保治理。',
+                securityAccessControl: '**安全与访问控制：** 对数据、模型和应用程序进行细粒度基于角色的访问控制（RBAC），结合强大的数据加密（传输中和静态）以及与企业身份验证系统（LDAP、SAML、OAuth2）的集成。',
+                auditabilityLineage: '**可审计性与血缘：** 对数据转换、模型版本和分析结果进行全面跟踪，为合规性、法规要求和内部审计提供完全的透明度和可重现性。',
+                layer2Title: '第2层：数据摄取、集成与准备',
+                realTimeIngestionTitle: '▶ 实时数据摄取',
+                streamingConnectors: '**流数据连接器（MQTT/OPC UA）：** 用于直接、低延迟连接到工厂车间工业控制系统、传感器和边缘设备的协议，从而实现从OT源的即时数据捕获。',
+                streamingPlatforms: '**流平台（例如，Kafka/Event Hubs）：** 高吞吐量、容错的分布式流平台，用于摄取和管理来自不同源的连续数据流，确保在高容量环境中不丢失数据。',
+                dataGateways: '**数据网关/边缘代理：** 部署在靠近数据源（例如，工厂车间服务器）的软件，用于收集、过滤、聚合并将数据安全地传输到中央平台，从而减少网络负载和延迟。',
+                customApisSdks: '**自定义API/SDK：** 用于与专有制造设备或专业遗留系统集成的灵活接口，确保全面的数据采集。',
+                streamProcessingEngines: '**SAS事件流处理（ESP）：** 用于对流数据进行实时分析的强大引擎，实现即时异常检测、预测性维护警报、质量偏差和以业务速度进行运营监控。',
+                edgeAnalytics: '**边缘分析：** 直接在数据源（边缘）执行预处理、聚合和基本分析，以减少数据量、最小化延迟，并在传输到核心平台之前实现更快的本地决策。',
+                batchIntegrationTitle: '▶ 批处理与微批处理数据集成',
+                etlTools: '**ETL/ELT工具（SAS Data Management）：** 一套全面的工具，用于强大的数据集成、转换和质量管理，支持各种数据源（数据库、平面文件、云存储），以高效加载IT和历史OT数据。',
+                dataCleansingTransform: '**数据清洗与转换：** 用于标准化、去重、验证、解析和地址验证的自动化流程，确保数据准确性和一致性。',
+                dataQualityRules: '**数据质量规则：** 实施预定义规则以识别和纠正数据不一致，确保高质量数据以获得可靠的分析结果。',
+                dataProfiling: '**数据画像：** 对数据特征进行深入分析，识别异常、缺失值，并评估整体数据质量，为转换策略提供信息。',
+                dataHarmonization: '**数据协调：** 将来自不同IT和OT系统的异构数据模型映射到统一的模式，确保企业范围内的₁致性和互操作性。',
+                featureEngineering: '**特征工程：** 从原始数据创建新的、更强大的变量的关键过程，以显著提高分析模型的性能和可解释性（例如，计算OEE、周期时间方差或传感器值导数）。',
+                dataStorageStagingTitle: '▶ 数据存储与暂存',
+                dataLake: '**数据湖（原始与暂存数据）：** 可扩展、经济高效的存储（HDFS/云对象存储，如Azure Data Lake Storage、AWS S3、Google Cloud Storage），用于存储来自所有来源的原始、半结构化和非结构化数据，作为基础存储库。',
+                dataWarehouse: '**数据仓库（精选与集成数据）：** 针对结构化、集成数据进行优化，利用关系型数据库（Teradata、Oracle、SQL Server）或云数据仓库（Snowflake、BigQuery、Redshift）支持复杂的查询和业务智能报告。',
+                nosqlDatabases: '**NoSQL数据库（例如，MongoDB、Cassandra）：** 用于需要灵活模式或对某些类型数据（如时间序列传感器数据或IoT设备日志）进行高容量、低延迟访问的特定用例。',
+                dataMarts: '**数据集市：** 数据仓库中面向主题的子集，为特定业务单元或分析应用程序（例如，“质量数据集市”或“生产绩效数据集市”）精心定制，以提供有针对性的洞察。',
+                landingZones: '**着陆区：** 传入原始数据的临时存储区域，在数据进行初步处理、清洗和集成到数据湖或数据仓库之前。',
+                layer1Title: '第1层：数据源与采集',
+                otDataSourcesTitle: '▶ 运营技术（OT）数据源',
+                scadaDcs: '**SCADA/DCS系统：** 直接来自工厂车间的实时过程控制数据、操作参数、警报和事件，提供制造运营的脉搏。',
+                plcs: '**PLC（可编程逻辑控制器）：** 来自单个机器的精细机器状态、精确周期时间以及关键传感器读数（温度、压力、振动、电流、电压），对于微观过程理解至关重要。',
+                mes: '**MES（制造执行系统）：** 全面的工单状态、详细的生产跟踪、物料消耗、质量检查和设备利用率数据，弥合了计划与执行之间的差距。',
+                iotEdgeGateways: '**IoT设备与边缘网关：** 来自单个机器、环境传感器（例如，洁净室条件）、机器人和自动导引车（AGV）的高频传感器数据，提供普遍的实时洞察。',
+                visionSystems: '**视觉系统：** 图像和视频数据对于自动化缺陷检测、精确组件对齐和全面质量检查（例如，晶圆上的光学字符识别、表面缺陷分析）至关重要，确保产品完整性。',
+                testMetrology: '**测试与计量设备：** 关键的电气测试结果、晶圆/芯片计量数据（关键尺寸、套刻、膜厚）和颗粒计数，对于半导体制造中的过程控制和良率管理至关重要。',
+                roboticsAutomation: '**机器人与自动化日志：** 机器人手臂位置、任务完成和错误事件的详细日志，实现自动化过程的性能监控和故障排除。',
+                environmentalMonitoring: '**环境监测：** 洁净室和敏感制造区域内的温度、湿湿度、压力、空气质量等连续数据，对于维持最佳生产条件至关重要。',
+                machineProcessLogs: '**机器与过程日志文件：** 由各种设备和过程生成的非结构化和半结构化日志数据，为操作事件提供有价值的诊断和历史背景。',
+                itDataSourcesTitle: '▶ 信息技术（IT）数据源',
+                erpSystems: '**ERP系统（例如，SAP、Oracle E-Business Suite）：** 核心企业数据，包括生产计划、库存管理、详细的供应链信息（供应商数据、原材料可用性）、财务数据和客户订单，提供业务运营的骨干。',
+                plmSystems: '**PLM（产品生命周期管理）系统：** 全面的产品设计规范、物料清单（BOM）、工程变更和修订历史，对于理解产品演变和质量追溯至关重要。',
+                crmSystems: '**CRM（客户关系管理）系统：** 有价值的客户反馈、服务历史、产品退货和保修索赔数据，提供对客户满意度和现场产品性能的洞察。',
+                qmsSystems: '**QMS（质量管理系统）：** 关于不合格报告（NCR）、纠正和预防措施（CAPA）以及审计发现的结构化数据，对于维护质量标准和合规性至关重要。',
+                scmSystems: '**SCM（供应链管理）系统）：** 物流数据、发货计划和供应商绩效指标，提供对扩展供应链的端到端可见性和控制。',
+                limsSystems: '**LIMS（实验室信息管理系统）：** 详细的材料成分数据和研发测试结果，对于材料科学、质量保证和新产品开发至关重要。',
+                hrSystems: '**HR（人力资源）系统）：** 劳动力数据、培训记录和技能矩阵，实现劳动力优化、人才管理和安全合规。',
+                externalDataSources: '**外部数据源：** 更广泛的市场趋势、经济指标、天气数据和行业基准，为战略规划、需求预测和供应链中断预测提供关键背景。',
+                historicalArchives: '**历史数据档案：** 包含多年运营和业务数据的遗留数据库、数据湖和数据仓库，对于训练强大的分析模型和理解长期趋势具有无价的价值。',
+                crossCuttingTitle: '横向能力',
+                security: '安全性（端到端、认证、授权、加密、合规性、审计）',
+                governance: '治理（数据、模型、法规、可审计性、策略）',
+                scalabilityPerformance: '可扩展性与性能（海量数据、复杂计算、弹性、高可用性/灾难恢复）',
+                opennessExtensibility: '开放性与可扩展性（现有系统、开源、API优先、自定义开发）',
+                collaboration: '协作（共享工作区、版本控制、项目管理、评论）',
+                mlops: 'MLOps（自动化生命周期、CI/CD、监控、再训练、A/B测试）',
+                conclusion: '该架构赋能组织将数据转化为可操作的智能，驱动高科技制造业的持续创新。'
+            },
+            'zh-TW': {
+                title: '高科技製造業企業分析系統架構',
+                mainTitle: 'SAS企業分析系統架構',
+                subtitle: '為高科技製造業提供統一、可擴展、開放的分析生態系統，驅動數據驅動的決策制定和持續改進與創新。',
+                layer5Title: '第5層：智能交付與消費、分析用例與價值交付',
+                targetAudiencesTitle: '▶ 目標受眾與交付機制',
+                executives: '**高管與高級領導層：** 透過安全的網路入口和行動應用程式交付戰略儀表板、互動式簡報和高階報告，以支持明智的戰略規劃和投資決策。',
+                factoryManagers: '**工廠經理與營運主管：** 在大型螢幕上顯示並可透過行動裝置存取的即時營運儀表板、即時生產警報和績效記分卡，用於主動解決問題和日常管理。',
+                engineersAnalysts: '**工程師與品質分析師：** 詳細的分析報告、深入的根本原因分析結果和互動式數據探索工具，利用SAS Visual Analytics報告、自訂應用程式和Jupyter Notebooks進行深入的問題解決。',
+                dataScientists: '**數據科學家與分析師：** 透過SAS Studio和API直接存取原始和準備好的數據、分析模型和強大的開發環境，用於高級模型建構、驗證和實驗。',
+                supplyChainPlanners: '**供應鏈規劃師：** 將準確的需求預測、優化的庫存建議和關鍵風險警報無縫整合到現有規劃系統和自訂Web應用程式中，以增強供應鏈彈性。',
+                salesMarketing: '**銷售與市場團隊：** 可操作的市場洞察、精確的客戶細分和全面的產品績效報告，直接與CRM系統和銷售儀表板整合，以推動收入增長。',
+                outputFormatsTitle: '▶ 輸出格式與管道',
+                interactiveDashboards: '**互動式儀表板與報告（SAS Visual Analytics）：** 賦能所有使用者進行自助式探索、鑽取功能和動態數據視覺化。',
+                automatedAlerts: '**自動化警報與通知：** 透過電子郵件、簡訊和企業訊息平台（Teams、Slack）及時交付關鍵事件通知（例如，設備故障預測、品質偏差）。',
+                embeddedAnalytics: '**嵌入式分析：** 透過強大的API或可嵌入的視覺化組件，將分析洞察無縫整合到現有業務應用程式（ERP、MES、QMS）中，將智能帶到決策點。',
+                apiEndpoints: '**API端點（即時評分）：** 提供安全、高性能的API端點用於即時模型評分，使其他營運系統能夠即時消費分析預測。',
+                scheduledReports: '**排程報告與數據匯出：** 自動生成和分發各種格式（PDF、Excel、CSV、JSON）的報告和數據，用於離線消費、法規遵循或與外部系統整合。',
+                nlg: '**自然語言生成（NLG）：** 對複雜分析結果進行自動化敘述性解釋，將數據洞察轉化為易於理解的人類語言，以實現更廣泛的存取性。',
+                layer4Title: '第4層：分析應用與用例',
+                manufacturingOpsTitle: '▶ 製造營運智能',
+                predictiveMaintenance: '**預測性維護：** 超越被動維修，我們透過分析感測器數據（振動、溫度、電流特徵）和歷史維護日誌，預測設備（例如晶圓廠工具、測試處理機）在發生故障之前。這使得優化維護計畫、減少計畫外停機時間並延長資產壽命成為可能，直接影響OEE。',
+                qualityYieldOptimization: '**品質與良率優化：** 即時識別難以捉摸的缺陷根本原因並優化複雜的工藝參數。這包括利用先進的統計過程控制（SPC）進行關鍵尺寸控制、多變數分析以理解相互依賴關係，以及機器學習從線上量測和視覺系統進行快速缺陷分類，最終最大限度地提高半導體等高價值組件的良率和產品品質。',
+                processOptimization: '**過程優化與控制：** 實現製造過程的即時調整，以達到最高效率和產量。這包括對來自PLC和SCADA系統的流數據進行持續分析、應用優化演算法來微調配方，並提供閉環控制建議，以保持嚴格的工藝視窗並減少變異性。',
+                energyManagement: '**能源管理：** 對能源密集型製造設施的能源消耗進行主動監控和優化。透過預測能源需求、檢測使用模式中的異常，並透過高級模型優化負載平衡，我們幫助降低營運成本並支持可持續發展舉措。',
+                workforceOptimization: '**勞動力優化：** 確保在正確的時間擁有正確的技能。這包括基於生產預測的預測性人員配備模型、識別培訓需求的技能差距分析，以及排程優化以最大限度地提高勞動效率和減少加班，這在高科技製造業等高度專業化的勞動力中至關重要。',
+                productionScheduling: '**生產排程與吞吐量提升：** 在複雜的多階段製造環境中優化複雜的生產計畫、最小化瓶頸並最大化吞吐量。利用模擬和高級優化演算法，我們可以模擬各種場景，以確定最有效的生產路徑並提高準時交貨率。',
+                rootCauseAnalysis: '**根本原因分析（RCA）：** 自動化並加速識別關鍵生產問題或品質偏差的根本原因。透過關聯來自不同來源的數據（設備日誌、MES、QMS、透過文本分析的操作員筆記），我們縮短了複雜問題的洞察時間，使工程師能夠專注於解決方案而非調查。',
+                enterpriseSupplyChainTitle: '▶ 更廣泛的企業與供應鏈分析',
+                supplyChainRisk: '**供應鏈風險管理：** 主動識別和減輕全球供應鏈中的風險，從原材料採購到成品交付。這包括對單點故障進行網路分析、對供應商績效和地緣政治中斷進行預測性分析，確保關鍵物料流的連續性。',
+                demandForecasting: '**需求預測與庫存優化：** 提供高度準確的未來產品需求預測，特別是針對新產品發布和波動市場。這使得整個供應鏈的庫存水平得到優化，從而降低持有成本、最大限度地減少過時，並確保產品可用性，這對於即時生產至關重要。',
+                warrantyReturns: '**保修與退貨分析：** 預測潛在的保修索賠，並從現場數據和客戶反饋中識別常見的故障模式。透過對非結構化數據應用生存分析和文本分析，我們提供洞察力，從而推動產品設計改進並降低售後支持成本。',
+                customerExperience: '**客戶體驗分析：** 更深入地了解客戶情緒並識別客戶旅程中的痛點。利用情感分析和客戶旅程映射，我們幫助定制交互並提高滿意度，這在B2B高科技環境中至關重要。',
+                financialPerformance: '**財務績效分析：** 提供精細的成本分析、按產品線或晶圓廠劃分的盈利能力洞察以及強大的財務預測。這支持戰略財務規劃、識別成本降低機會並增強整體財務健康。',
+                rdInnovation: '**研發與產品創新：** 加速新材料和產品設計的發現與開發。這涉及對大量研究論文進行文本分析、對競爭情報進行專利分析，以及對新材料特性進行預測建模，從而顯著縮短創新周期。',
+                layer3Title: '第3層：SAS® Viya - 企業分析平台',
+                foundationTitle: '▶ 基礎',
+                cloudNativeArchitecture: '**雲原生架構：** 利用Kubernetes進行容器編排和微服務架構，確保彈性可擴展性、混合/多雲環境下的可移植性以及高效的資源利用。',
+                distributedProcessing: '**分布式內存處理 (CAS - 雲端分析服務)：** 提供大規模並行處理（MPP）和內存計算，用於對PB級數據進行高性能分析，加速數據加載、轉換和模型執行。',
+                openExtensibleAPIs: '**開放與可擴展API：** 提供全面的REST API，用於對所有平台服務進行編程訪問，並輔以Python、R、Java和Lua的客戶端API，實現與現有企業應用程序和開發生態系統的無縫集成。',
+                metadataManagement: '**集中式元數據管理：** 所有數據定義、模型血緣、用戶權限和治理策略的統一存儲庫，確保分析領域的一致性、可審計性和簡化管理。',
+                coreAnalyticalCapabilitiesTitle: '▶ 核心分析能力',
+                dataAccessPrep: '**數據訪問與準備：** 原生連接器連接到各種數據源（數據庫、雲服務、流媒體平台、文件），以及用於強大數據操作、清洗和特征工程的可視化和編程工具。',
+                statisticalAnalysis: '**統計分析：** 一套全面的統計方法，包括回歸、方差分析、高級時間序列預測和實驗設計，對於理解複雜的製造過程至關重要。',
+                machineLearningAlgorithms: '**機器學習算法：** 豐富的監督學習（分類、回歸）、無監督學習（聚類、異常檢測）和深度學習（用於圖像/文本的類神經網絡）算法庫，用於構建高精度的預測和規範性模型。',
+                optimizationSimulation: '**優化與模擬：** 強大的資源分配、排程和過程優化能力，使製造商能夠確定最有效的運營策略並模擬變更的影響。',
+                textAnalyticsNLP: '**文本分析與自然語言處理（NLP）：** 從非結構化文本數據（如維護日誌、客戶反饋和事件報告）中提取洞察的高級能力，以發現隱藏的模式和根本原因。',
+                computerVision: '**計算機視覺：** 利用圖像識別、對象檢測和缺陷檢測能力，實現製造生產線中的自動化品質控制、視覺檢測和過程監控。',
+                reportingVisualization: '**報告與視覺化（SAS Visual Analytics）：** 直觀、互動式的儀表板和報告，具有自助探索功能，使業務用戶能夠輕鬆消費和解釋複雜的分析洞察。',
+                aiDecisioning: '**AI與決策：** 透過強大的業務規則引擎和決策流實現自動化、即時決策，這些決策流協調涉及多個分析模型和業務規則的複雜邏輯。',
+                operationalizationGovernanceTitle: '▶ 營運化與治理',
+                modelManagementDeployment: '**模型管理與部署：** 一個集中的模型註冊表，用於存儲、版本控制和管理分析模型，並可無縫部署為REST API，用於即時評分或在生產環境中進行高效的批量評分。',
+                modelRegistry: '**模型註冊表：** 一個安全、集中式存儲庫，用於所有分析模型，確保版本控制、元數據捕獲和在整個組織中的易於發現。',
+                modelMonitoring: '**模型監控：** 持續跟踪生產中的模型性能（準確性、偏差、數據漂移），並提供自動化警報和再訓練觸發器，確保模型隨著時間的推移保持相關性和有效性。',
+                modelLifecyclePlatforms: '**工作流與編排 (SAS Model Manager)：** 分析模型的端到端生命週期管理，從開發和驗證到部署和監控，簡化流程並確保治理。',
+                securityAccessControl: '**安全與存取控制：** 對數據、模型和應用程式進行細粒度基於角色的存取控制（RBAC），結合強大的數據加密（傳輸中和靜態）以及與企業身份驗證系統（LDAP、SAML、OAuth2）的整合。',
+                auditabilityLineage: '**可審計性與血緣：** 對數據轉換、模型版本和分析結果進行全面跟踪，為合規性、法規要求和內部審計提供完全的透明度和可重現性。',
+                layer2Title: '第2層：數據攝取、整合與準備',
+                realTimeIngestionTitle: '▶ 即時數據攝取',
+                streamingConnectors: '**流數據連接器（MQTT/OPC UA）：** 用於直接、低延遲連接到工廠車間工業控制系統、感測器和邊緣設備的協議，從而實現從OT源的即時數據捕獲。',
+                streamingPlatforms: '**流平台（例如，Kafka/Event Hubs）：** 高吞吐量、容錯的分布式流平台，用於攝取和管理來自不同源的連續數據流，確保在高容量環境中不丟失數據。',
+                dataGateways: '**數據網關/邊緣代理：** 部署在靠近數據源（例如，工廠車間伺服器）的軟體，用於收集、過濾、聚合並將數據安全地傳輸到中央平台，從而減少網路負載和延遲。',
+                customApisSdks: '**自訂API/SDK：** 用於與專有製造設備或專業遺留系統整合的靈活介面，確保全面的數據採集。',
+                streamProcessingEngines: '**SAS事件流處理（ESP）：** 用於對流數據進行即時分析的強大引擎，實現即時異常檢測、預測性維護警報、品質偏差和以業務速度進行營運監控。',
+                edgeAnalytics: '**邊緣分析：** 直接在數據源（邊緣）執行預處理、聚合和基本分析，以減少數據量、最小化延遲，並在傳輸到核心平台之前實現更快的本地決策。',
+                batchIntegrationTitle: '▶ 批次與微批次數據整合',
+                etlTools: '**ETL/ELT工具（SAS Data Management）：** 一套全面的工具，用於強大的數據整合、轉換和品質管理，支持各種數據源（數據庫、平面文件、雲存儲），以高效加載IT和歷史OT數據。',
+                dataCleansingTransform: '**數據清洗與轉換：** 用於標準化、去重、驗證、解析和地址驗證的自動化流程，確保數據準確性和一致性。',
+                dataQualityRules: '**數據品質規則：** 實施預定義規則以識別和糾正數據不一致，確保高品質數據以獲得可靠的分析結果。',
+                dataProfiling: '**數據剖析：** 對數據特徵進行深入分析，識別異常、缺失值，並評估整體數據品質，為轉換策略提供信息。',
+                dataHarmonization: '**數據協調：** 將來自不同IT和OT系統的異構數據模型映射到統一的模式，確保企業範圍內的₁致性和互操作性。',
+                featureEngineering: '**特徵工程：** 從原始數據創建新的、更強大的變量的重要過程，以顯著提高分析模型的性能和可解釋性（例如，計算OEE、週期時間方差或傳感器值導數）。',
+                dataStorageStagingTitle: '▶ 數據儲存與暫存',
+                dataLake: '**數據湖（原始與暫存數據）：** 可擴展、經濟高效的存儲（HDFS/雲對象存儲，如Azure Data Lake Storage、AWS S3、Google Cloud Storage），用於存儲來自所有來源的原始、半結構化和非結構化數據，作為基礎存儲庫。',
+                dataWarehouse: '**數據倉庫（精選與整合數據）：** 針對結構化、整合數據進行優化，利用關係型數據庫（Teradata、Oracle、SQL Server）或雲數據倉庫（Snowflake、BigQuery、Redshift）支持複雜的查詢和業務智能報告。',
+                nosqlDatabases: '**NoSQL數據庫（例如，MongoDB、Cassandra）：** 用於需要靈活模式或對某些類型數據（如時間序列傳感器數據或IoT設備日誌）進行高容量、低延遲訪問的特定用例。',
+                dataMarts: '**數據集市：** 數據倉庫中面向主題的子集，為特定業務單元或分析應用程式（例如，“品質數據集市”或“生產績效數據集市”）精心定制，以提供有針對性的洞察。',
+                landingZones: '**著陸區：** 傳入原始數據的臨時存儲區域，在數據進行初步處理、清洗和整合到數據湖或數據倉庫之前。',
+                layer1Title: '第1層：數據源與採集',
+                otDataSourcesTitle: '▶ 營運技術（OT）數據源',
+                scadaDcs: '**SCADA/DCS系統：** 直接來自工廠車間的實時過程控制數據、操作參數、警報和事件，提供製造運營的脈搏。',
+                plcs: '**PLC（可編程邏輯控制器）：** 來自單個機器的精細機器狀態、精確週期時間以及關鍵傳感器讀數（溫度、壓力、振動、電流、電壓），對於微觀過程理解至關重要。',
+                mes: '**MES（製造執行系統）：** 全面的工單狀態、詳細的生產跟踪、物料消耗、質量檢查和設備利用率數據，彌合了計劃與執行之間的差距。',
+                iotEdgeGateways: '**IoT設備與邊緣網關：** 來自單個機器、環境傳感器（例如，潔淨室條件）、機器人和自動導引車（AGV）的高頻傳感器數據，提供普遍的實時洞察。',
+                visionSystems: '**視覺系統：** 圖像和視頻數據對於自動化缺陷檢測、精確組件對齊和全面質量檢查（例如，晶圓上的光學字符識別、表面缺陷分析）至關重要，確保產品完整性。',
+                testMetrology: '**測試與計量設備：** 關鍵的電氣測試結果、晶圓/芯片計量數據（關鍵尺寸、套刻、膜厚）和顆粒計數，對於半導體製造中的過程控制和良率管理至關重要。',
+                roboticsAutomation: '**機器人與自動化日誌：** 機器人手臂位置、任務完成和錯誤事件的詳細日誌，實現自動化過程的性能監控和故障排除。',
+                environmentalMonitoring: '**環境監測：** 潔淨室和敏感製造區域內的溫度、濕度、壓力、空氣質量等連續數據，對於維持最佳生產條件至關重要。',
+                machineProcessLogs: '**機器與過程日誌文件：** 由各種設備和過程生成的非結構化和半結構化日誌數據，為操作事件提供有價值的診斷和歷史背景。',
+                itDataSourcesTitle: '▶ 信息技術（IT）數據源',
+                erpSystems: '**ERP系統（例如，SAP、Oracle E-Business Suite）：** 核心企業數據，包括生產計劃、庫存管理、詳細的供應鏈信息（供應商數據、原材料可用性）、財務數據和客戶訂單，提供業務運營的骨干。',
+                plmSystems: '**PLM（產品生命週期管理）系統：** 全面的產品設計規範、物料清單（BOM）、工程變更和修訂歷史，對於理解產品演變和質量追溯至關重要。',
+                crmSystems: '**CRM（客戶關係管理）系統：** 有價值的客戶反饋、服務歷史、產品退貨和保修索賠數據，提供對客戶滿意度和現場產品性能的洞察。',
+                qmsSystems: '**QMS（質量管理系統）：** 關於不合格報告（NCR）、糾正和預防措施（CAPA）以及審計發現的結構化數據，對於維護質量標準和合規性至關重要。',
+                scmSystems: '**SCM（供應鏈管理）系統）：** 物流數據、發貨計劃和供應商績效指標，提供對擴展供應鏈的端到端可見性和控制。',
+                limsSystems: '**LIMS（實驗室信息管理系統）：** 詳細的材料成分數據和研發測試結果，對於材料科學、質量保證和新產品開發至關重要。',
+                hrSystems: '**HR（人力資源）系統）：** 勞動力數據、培訓記錄和技能矩陣，實現勞動力優化、人才管理和安全合規。',
+                externalDataSources: '**外部數據源：** 更廣泛的市場趨勢、經濟指標、天氣數據和行業基準，為戰略規劃、需求預測和供應鏈中斷預測提供關鍵背景。',
+                historicalArchives: '**歷史數據檔案：** 包含多年運營和業務數據的遺留數據庫、數據湖和數據倉庫，對於訓練強大的分析模型和理解長期趨勢具有無價的價值。',
+                crossCuttingTitle: '橫向能力',
+                security: '安全性（端到端、認證、授權、加密、合規性、審計）',
+                governance: '治理（數據、模型、法規、可審計性、策略）',
+                scalabilityPerformance: '可擴展性與性能（海量數據、複雜計算、彈性、高可用性/災難恢復）',
+                opennessExtensibility: '開放性與可擴展性（現有系統、開源、API優先、自定義開發）',
+                collaboration: '協作（共享工作區、版本控制、項目管理、評論）',
+                mlops: 'MLOps（自動化生命週期、CI/CD、監控、再訓練、A/B測試）',
+                conclusion: '該架構賦能組織將數據轉化為可操作的智能，驅動高科技製造業的持續創新。'
+            }
+        };
+
+        function setLanguage(lang) {
+            document.documentElement.lang = lang; // Set HTML lang attribute
+            document.querySelectorAll('[data-key]').forEach(element => {
+                const key = element.getAttribute('data-key');
+                let text = translations[lang][key];
+
+                // Handle bolding within text content if it exists
+                if (text && text.includes('**')) {
+                    text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+                }
+                element.innerHTML = text;
+            });
+
+            // Update active button state
+            document.querySelectorAll('.language-button').forEach(button => {
+                if (button.dataset.lang === lang) {
+                    button.classList.add('active');
+                } else {
+                    button.classList.remove('active');
+                }
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Set default language to English on load
+            setLanguage('en');
+
+            // Add event listeners to language buttons
+            document.querySelectorAll('.language-button').forEach(button => {
+                button.addEventListener('click', () => {
+                    setLanguage(button.dataset.lang);
+                });
+            });
+        });
+    </script>
+</body>
+</html>

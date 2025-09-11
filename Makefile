@@ -33,11 +33,10 @@ install:
 # Check environment
 check:
 	@echo "Checking environment..."
-	@node -v >/dev/null 2>&1 || { echo "✗ Node.js not found (require Node 18+)."; exit 1; }
 	@node check-env.js
 	@echo "Checking Docker..."
-	@docker --version > /dev/null 2>&1 || { echo "✗ Docker not found"; exit 1; }
-	@$(COMPOSE) version > /dev/null 2>&1 || { echo "✗ Docker Compose not found"; exit 1; }
+	@docker --version > /dev/null
+	@$(COMPOSE) version > /dev/null
 	@echo "✓ Environment OK"
 
 

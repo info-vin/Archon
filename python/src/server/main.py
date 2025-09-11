@@ -26,6 +26,8 @@ from .api_routes.knowledge_api import router as knowledge_router
 from .api_routes.mcp_api import router as mcp_router
 from .api_routes.progress_api import router as progress_router
 from .api_routes.projects_api import router as projects_router
+from .api_routes.log_api import router as log_router
+from .api_routes.files_api import router as files_router
 
 # Import modular API routers
 from .api_routes.settings_api import router as settings_router
@@ -202,6 +204,8 @@ app.include_router(progress_router)
 app.include_router(agent_chat_router)
 app.include_router(internal_router)
 app.include_router(bug_report_router)
+app.include_router(log_router)
+app.include_router(files_router)
 
 
 # Root endpoint

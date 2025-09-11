@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>高韌性幸福職場策略升級計畫</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Murecho:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --sky-blue: #a0d8f0;
+            --grass-green: #98d8a8;
+            --sun-yellow: #f8e47c;
+            --warm-beige: #f5f0e1;
+            --forest-green: #4a6a52;
+            --night-blue: #2c3e50;
+            --text-dark: #3D3D3D;
+            --text-light: #fdfdfd;
+            --accent-red: #e57373;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            font-family: 'Murecho', sans-serif;
+            background-color: var(--warm-beige);
+            overflow: hidden;
+            color: var(--text-dark);
+        }
+
+        #presentation {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+
+        .slide {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            padding: 5vw;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.8s ease-in-out;
+            background-size: cover;
+            background-position: center;
+        }
+
+        .slide.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        /* Background Journey */
+        #slide-1 { background-image: url('https://images.unsplash.com/photo-1508739773434-c26b3d09e071?ixlib=rb-4.0.3&q=85&fm=jpg&crop=entropy&cs=srgb&w=3200'); }
+        #slide-2 { background-image: url('https://images.unsplash.com/photo-1441974231531-c6227db76b6e?ixlib=rb-4.0.3&q=85&fm=jpg&crop=entropy&cs=srgb&w=3200'); }
+        #slide-3 { background-image: url('https://images.unsplash.com/photo-1473448912268-2022ce9509d8?ixlib=rb-4.0.3&q=85&fm=jpg&crop=entropy&cs=srgb&w=3200'); }
+        #slide-4 { background-image: url('https://images.unsplash.com/photo-1422493757035-1e5e03968f95?ixlib=rb-4.0.3&q=85&fm=jpg&crop=entropy&cs=srgb&w=3200'); }
+        #slide-5 { background-image: url('https://images.unsplash.com/photo-1501854140801-50d01698950b?ixlib=rb-4.0.3&q=85&fm=jpg&crop=entropy&cs=srgb&w=3200'); }
+        #slide-6 { background-image: url('https://images.unsplash.com/photo-1447752875215-b2761acb3c5d?ixlib=rb-4.0.3&q=85&fm=jpg&crop=entropy&cs=srgb&w=3200'); }
+        #slide-7 { background-image: url('https://images.unsplash.com/photo-1475924156734-496f6cac6ec1?ixlib=rb-4.0.3&q=85&fm=jpg&crop=entropy&cs=srgb&w=3200'); }
+        #slide-8 { background-image: url('https://images.unsplash.com/photo-1414609245224-afa02bfb3fda?ixlib=rb-4.0.3&q=85&fm=jpg&crop=entropy&cs=srgb&w=3200'); }
+        #slide-9 { background-image: url('https://images.unsplash.com/photo-1506318137071-a8e063b4bec0?ixlib=rb-4.0.3&q=85&fm=jpg&crop=entropy&cs=srgb&w=3200'); }
+        #slide-10 { background-image: url('https://images.unsplash.com/photo-1534796636912-3b95b3ab5986?ixlib=rb-4.0.3&q=85&fm=jpg&crop=entropy&cs=srgb&w=3200'); }
+
+
+        .slide h1, .slide h2, .slide h3, .slide p, .slide li, .slide span, .slide td, .slide th, .slide div[contenteditable="true"] {
+            outline: none;
+            cursor: text;
+        }
+        .slide h1:focus, .slide h2:focus, .slide p:focus, .slide li:focus, .slide span:focus, .slide td:focus, .slide th:focus, .slide div[contenteditable="true"]:focus {
+            background-color: rgba(248, 228, 124, 0.3);
+            border-radius: 4px;
+        }
+        
+        .content-box {
+            background-color: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            padding: 2.5vw;
+            border-radius: 15px;
+            max-width: 80vw;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.1);
+        }
+        
+        .night-theme .content-box {
+             background-color: rgba(44, 62, 80, 0.85);
+             color: var(--text-light);
+        }
+        .night-theme h2, .night-theme h3 {
+            color: var(--sun-yellow);
+        }
+
+
+        /* Navigation */
+        .nav-button {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background-color: rgba(255, 255, 255, 0.7);
+            color: var(--text-dark);
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            font-size: 24px;
+            cursor: pointer;
+            z-index: 100;
+            transition: background-color 0.3s;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .nav-button:hover {
+            background-color: white;
+        }
+        #prevBtn { left: 2vw; }
+        #nextBtn { right: 2vw; }
+
+        #slide-counter {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(0, 0, 0, 0.5);
+            color: white;
+            padding: 5px 15px;
+            border-radius: 15px;
+            font-size: 14px;
+            z-index: 100;
+        }
+        
+        /* Visual Description Tooltip */
+        .tooltip-container {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            z-index: 101;
+        }
+        .tooltip-icon {
+            width: 30px;
+            height: 30px;
+            background-color: rgba(255, 255, 255, 0.7);
+            color: var(--text-dark);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            cursor: pointer;
+            font-style: italic;
+        }
+        .tooltip-text {
+            visibility: hidden;
+            width: 250px;
+            background-color: var(--text-dark);
+            color: #fff;
+            text-align: left;
+            border-radius: 6px;
+            padding: 10px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            right: 0;
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        .tooltip-container:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+        
+        /* Specific Slide Styles */
+        /* Slide 1: Vertical Title */
+        #slide-1 .content-box {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            height: 80vh;
+            background-color: transparent;
+            backdrop-filter: none;
+            box-shadow: none;
+        }
+        #slide-1 .vertical-title {
+            writing-mode: vertical-rl;
+            text-orientation: mixed;
+            color: var(--text-light);
+            text-shadow: 2px 2px 8px rgba(0,0,0,0.6);
+            padding-right: 2vw;
+        }
+        #slide-1 h1 { font-size: 4vw; letter-spacing: 0.5vw; margin: 0; }
+        #slide-1 p { font-size: 1.5vw; margin-top: 2vw; font-weight: 300; }
+
+        /* Slide 2: Iceberg */
+        .iceberg-container { text-align: center; }
+        .iceberg-top { 
+            background: var(--sky-blue); 
+            padding: 15px; 
+            border-radius: 10px 10px 0 0;
+            clip-path: polygon(0 20%, 100% 0, 100% 100%, 0 100%);
+        }
+        .water-line { border-top: 3px dashed var(--sky-blue); margin: 5px 0; }
+        .iceberg-bottom {
+            background: #e0f7fa; 
+            padding: 20px;
+            border-radius: 0 0 10px 10px;
+            clip-path: polygon(0 0, 100% 0, 80% 100%, 20% 100%);
+        }
+
+        /* Slide 3: Funnel */
+        .funnel { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+        .funnel-step { text-align: center; padding: 10px; color: white; }
+        .funnel-step-1 { background: var(--accent-red); width: 80%; clip-path: polygon(0 0, 100% 0, 90% 100%, 10% 100%); }
+        .funnel-step-2 { background: #f06292; width: 60%; clip-path: polygon(10% 0, 90% 0, 80% 100%, 20% 100%);}
+        .funnel-step-3 { background: #ba68c8; width: 40%; clip-path: polygon(20% 0, 80% 0, 70% 100%, 30% 100%);}
+
+        /* Slide 5: VS Chart */
+        .vs-chart { display: flex; justify-content: space-around; align-items: flex-start; gap: 1rem; }
+        .vs-column { flex: 1; padding: 1rem; border-radius: 10px; }
+        .vs-column-left { background-color: rgba(189, 189, 189, 0.3); }
+        .vs-column-right { background-color: rgba(248, 228, 124, 0.3); }
+        .vs-separator { display: flex; align-items: center; font-size: 2rem; font-weight: bold; color: var(--accent-red); }
+
+        /* Slide 6: Budget Table */
+        .budget-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        .budget-table th, .budget-table td { padding: 12px; text-align: left; border-bottom: 1px solid rgba(0,0,0,0.1); }
+        .budget-table th { background-color: rgba(152, 216, 168, 0.3); }
+        .night-theme .budget-table th, .night-theme .budget-table td { border-bottom: 1px solid rgba(255,255,255,0.2); }
+        .night-theme .budget-table th { background-color: rgba(248, 228, 124, 0.2); }
+
+        /* Slide 9: CTA */
+        .cta-box {
+            border: 3px solid var(--accent-red);
+            padding: 2rem;
+            text-align: center;
+            background: rgba(255, 229, 229, 0.7);
+            border-radius: 15px;
+            margin-top: 2rem;
+        }
+        .night-theme .cta-box {
+             background: rgba(229, 115, 115, 0.3);
+        }
+
+    </style>
+</head>
+<body>
+
+    <div id="presentation">
+
+        <!-- SLIDE 1: COVER -->
+        <section class="slide active" id="slide-1" data-theme="night">
+            <div class="content-box">
+                <div class="vertical-title">
+                    <h1 contenteditable="true">高韌性幸福職場策略升級計畫</h1>
+                    <p contenteditable="true">導入 AI 數據驅動工具，提升生產力與員工留任率</p>
+                </div>
+            </div>
+            <div class="tooltip-container">
+                <div class="tooltip-icon">i</div>
+                <div class="tooltip-text" contenteditable="true">公司 Logo 搭配一張充滿活力、專注且協作的團隊照片，背景乾淨專業。此處以夜晚星空象徵旅程的起點。</div>
+            </div>
+        </section>
+
+        <!-- SLIDE 2: THE PROBLEM -->
+        <section class="slide" id="slide-2">
+            <div class="content-box">
+                <h2 contenteditable="true">我們正在流失最寶貴的資產</h2>
+                <p contenteditable="true">總經理，我想從一個真實的故事開始。上個季度，我們失去了三位核心業務人才。離職面談中，他們不約而同提到了同一個詞：<b>『壓力與耗竭』</b>。這不是偶然，而是一個清晰的警訊。</p>
+                <div class="iceberg-container" style="margin-top:20px;">
+                    <div class="iceberg-top">
+                      <strong contenteditable="true">可見問題：</strong><span contenteditable="true">核心人才離職、專案延遲</span>
+                    </div>
+                    <div class="water-line"></div>
+                    <div class="iceberg-bottom">
+                      <strong contenteditable="true">隱形風險：</strong><span contenteditable="true">員工過勞、心理壓力、團隊士氣低落</span>
+                    </div>
+                </div>
+            </div>
+            <div class="tooltip-container">
+                <div class="tooltip-icon">i</div>
+                <div class="tooltip-text" contenteditable="true">頁面中央使用一個醒目的「冰山模型」圖示。水面上方是「可見問題」，水面下方巨大的冰山主體標示著「隱形風險」。背景是充滿綠意的森林，象徵問題的根源深藏其中。</div>
+            </div>
+        </section>
+
+        <!-- SLIDE 3: WHY CURRENT SOLUTIONS FAIL -->
+        <section class="slide" id="slide-3">
+            <div class="content-box">
+                <h2 contenteditable="true">我們現有的「安全網」為何沒有接住員工？</h2>
+                <p contenteditable="true">我們有提供 EAP 服務，但數據顯示，它並未發揮預期效果，參與率甚至不足10%。</p>
+                <div class="funnel" style="margin-top: 20px;">
+                    <div class="funnel-step funnel-step-1" contenteditable="true">1. 被動的危機工具：員工認為出大事才用</div>
+                    <div class="funnel-step funnel-step-2" contenteditable="true">2. 汙名化恐懼：擔心被貼標籤</div>
+                    <div class="funnel-step funnel-step-3" contenteditable="true">3. HR 的數據盲區：決策憑感覺</div>
+                </div>
+            </div>
+            <div class="tooltip-container">
+                <div class="tooltip-icon">i</div>
+                <div class="tooltip-text" contenteditable="true">一個「漏斗圖示」視覺化呈現出從100%員工到不足10%使用率的巨大落差，象徵現行方案的失效。背景是林間小徑，暗示我們需要找到新的出路。</div>
+            </div>
+        </section>
+
+        <!-- SLIDE 4: THE SOLUTION -->
+        <section class="slide" id="slide-4">
+            <div class="content-box">
+                <h2 contenteditable="true">解決方案：從「被動協助」到「主動賦能」</h2>
+                <p contenteditable="true">我們提議導入 <b>AIZEN 數位身心健康平台</b>。它為員工提供匿名、即時的支持；為公司提供匿名的組織健康數據，讓我們從「猜測」轉向「洞察」。</p>
+                <div style="background: rgba(245, 240, 225, 0.8); padding: 15px; border-radius: 10px; margin-top: 20px; border-left: 5px solid var(--grass-green);">
+                    <h3 contenteditable="true" style="margin-top:0;">【成功案例分享】</h3>
+                    <p contenteditable="true">台灣某上市科技公司導入類似平台後，6 個月內：員工流失率下降15%，專案生產力提升8%，投資回報率 (ROI) 高達350%。</p>
+                </div>
+            </div>
+            <div class="tooltip-container">
+                <div class="tooltip-icon">i</div>
+                <div class="tooltip-text" contenteditable="true">一個「儀表板 (Dashboard)」的簡化圖示，象徵數據驅動的管理模式。案例分享區塊用不同底色特別標示。背景是開闊的山景，象徵視野的開闊與前景的光明。</div>
+            </div>
+        </section>
+        
+        <!-- SLIDE 5: COMPARISON -->
+        <section class="slide" id="slide-5">
+            <div class="content-box">
+                <h2 contenteditable="true">這不是替代，而是一次全面的戰略升級</h2>
+                <div class="vs-chart">
+                    <div class="vs-column vs-column-left">
+                        <h3 contenteditable="true">傳統 EAP (被動滅火)</h3>
+                        <ul>
+                            <li contenteditable="true">定位：危機處理，事後補救</li>
+                            <li contenteditable="true">使用：預約制，流程冗長</li>
+                            <li contenteditable="true">隱私：需真人對話，仍有顧慮</li>
+                            <li contenteditable="true">數據：無組織數據</li>
+                        </ul>
+                    </div>
+                    <div class="vs-separator">VS</div>
+                    <div class="vs-column vs-column-right">
+                        <h3 contenteditable="true">AIZEN 數位平台 (主動防火)</h3>
+                        <ul>
+                            <li contenteditable="true">定位：日常預防，培養韌性</li>
+                            <li contenteditable="true">使用：即時、隨選，融入日常</li>
+                            <li contenteditable="true">隱私：AI 互動，高度匿名</li>
+                            <li contenteditable="true">數據：提供趨勢報告，輔助決策</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="tooltip-container">
+                <div class="tooltip-icon">i</div>
+                <div class="tooltip-text" contenteditable="true">將比較表格設計成「對決圖」。左邊是灰色調的「傳統 EAP」，右邊是亮黃色調的「AIZEN 平台」，對比直觀。背景是更廣闊的山脈，象徵戰略高度。</div>
+            </div>
+        </section>
+
+        <!-- SLIDE 6: ROADMAP & BUDGET -->
+        <section class="slide" id="slide-6">
+            <div class="content-box">
+                <h2 contenteditable="true">分階段執行計畫與具體預算</h2>
+                <h3 contenteditable="true">【執行時程】</h3>
+                <p contenteditable="true"><b>短期 (未來3個月)：</b>試點與驗證 → <b>中期 (4-12個月)：</b>全面推廣 → <b>長期 (1年以上)：</b>融入企業文化</p>
+                <h3 contenteditable="true">【投資預算規劃】</h3>
+                <table class="budget-table">
+                    <thead>
+                        <tr>
+                            <th contenteditable="true">項目</th>
+                            <th contenteditable="true">預估金額</th>
+                            <th contenteditable="true">備註</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td contenteditable="true">試點階段 (3個月)</td>
+                            <td contenteditable="true">10 萬元</td>
+                            <td contenteditable="true">涵蓋平台授權與啟動工作坊</td>
+                        </tr>
+                        <tr>
+                            <td contenteditable="true">全面推廣階段 (9個月)</td>
+                            <td contenteditable="true">XX 萬元</td>
+                            <td contenteditable="true">將依試點成效與規模調整</td>
+                        </tr>
+                         <tr>
+                            <td contenteditable="true"><b>預期年度總投資</b></td>
+                            <td contenteditable="true"><b>XX 萬元</b></td>
+                            <td contenteditable="true"><b>每位員工平均每月成本僅 XX 元</b></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="tooltip-container">
+                <div class="tooltip-icon">i</div>
+                <div class="tooltip-text" contenteditable="true">上半部分為一個清晰的時間軸，下半部分為一個簡潔的表格列出預算。背景是森林中的道路，象徵計畫路徑清晰。</div>
+            </div>
+        </section>
+
+        <!-- SLIDE 7: FAQ -->
+        <section class="slide night-theme" id="slide-7">
+            <div class="content-box">
+                <h2 contenteditable="true">預先回應您的關切</h2>
+                <div style="margin-top: 1rem;">
+                    <h3 contenteditable="true">Q1: 我們已經有 EAP 了，為何還需要這個？</h3>
+                    <p contenteditable="true">A: 兩者是互補關係。EAP 是處理嚴重問題的「急診室」，AIZEN 則是培養日常健康的「健身房」。前者被動反應，後者主動預防。</p>
+                </div>
+                <div style="margin-top: 1rem;">
+                    <h3 contenteditable="true">Q2: 員工真的會願意使用嗎？</h3>
+                    <p contenteditable="true">A: 匿名性和便利性是關鍵。國際案例顯示，這類數位工具因其高度隱私，使用率可達 70% 以上，遠高於傳統 EAP。</p>
+                </div>
+                <div style="margin-top: 1rem;">
+                    <h3 contenteditable="true">Q3: 如何確保數據安全與員工隱私？</h3>
+                    <p contenteditable="true">A: 這是最高優先級。平台符合 GDPR 等國際最高資安標準，所有數據均匿名化處理，公司僅能看到不含個資的聚合趨勢報告。</p>
+                </div>
+            </div>
+            <div class="tooltip-container">
+                <div class="tooltip-icon">i</div>
+                <div class="tooltip-text" contenteditable="true">使用問答形式的佈局。背景進入黃昏，光線變得柔和，象徵深入溝通、消除疑慮的溫和氛圍。</div>
+            </div>
+        </section>
+        
+        <!-- SLIDE 8: ROI -->
+        <section class="slide night-theme" id="slide-8">
+            <div class="content-box">
+                 <h2 contenteditable="true">這是一筆高回報的投資</h2>
+                 <p contenteditable="true">投資員工福祉，就是投資企業的未來，將帶來多維度的、可衡量的回報。</p>
+                 <div style="display:flex; justify-content: space-around; text-align: center; margin-top:2rem; gap:1rem;">
+                     <div>
+                         <h3 contenteditable="true">財務回報 📈</h3>
+                         <p contenteditable="true">降低離職成本與醫療支出，ROI 可高達 800%。</p>
+                     </div>
+                     <div>
+                         <h3 contenteditable="true">效能提升 🚀</h3>
+                         <p contenteditable="true">提升生產力與創新力，成功留住核心人才。</p>
+                     </div>
+                      <div>
+                         <h3 contenteditable="true">品牌價值 ❤️</h3>
+                         <p contenteditable="true">強化雇主品牌，具體實踐 ESG 承諾。</p>
+                     </div>
+                 </div>
+            </div>
+             <div class="tooltip-container">
+                <div class="tooltip-icon">i</div>
+                <div class="tooltip-text" contenteditable="true">一個包含三個核心區塊的資訊圖，每個區塊都有一個代表性圖標和向上的箭頭。背景轉換到夜晚，象徵在黑暗中也能看到清晰的回報與光明的未來。</div>
+            </div>
+        </section>
+
+        <!-- SLIDE 9: CTA -->
+        <section class="slide night-theme" id="slide-9">
+            <div class="content-box">
+                <h2 contenteditable="true">我們的明確建議與行動呼籲</h2>
+                <p contenteditable="true">總結來說，員工的身心耗竭是我們必須正視的隱形風險，而 AIZEN 平台提供了一個數據驅動、高效率、高回報的解決方案。</p>
+                <div class="cta-box">
+                    <h3 contenteditable="true">【下一步行動】</h3>
+                    <p contenteditable="true" style="font-size: 1.2rem; font-weight: bold;">建議：批准 <u>10萬元</u> 的試點預算，授權人力資源部在 <u>7月底</u> 前啟動第一階段計畫，並於 <u>9月的董事會議</u> 上向您及董事會匯報初步成效與數據。</p>
+                </div>
+            </div>
+             <div class="tooltip-container">
+                <div class="tooltip-icon">i</div>
+                <div class="tooltip-text" contenteditable="true">頁面底部有一個非常醒目的「Call to Action」區塊，用不同顏色或加粗字體強調關鍵信息。背景是璀璨的星空，象徵著遠大的願景與即將開啟的新篇章。</div>
+            </div>
+        </section>
+        
+        <!-- SLIDE 10: Q&A -->
+        <section class="slide night-theme" id="slide-10">
+            <div class="content-box" style="text-align:center;">
+                <h1 contenteditable="true" style="font-size: 4vw; color: var(--sun-yellow);">感謝聆聽，敬請指教</h1>
+            </div>
+             <div class="tooltip-container">
+                <div class="tooltip-icon">i</div>
+                <div class="tooltip-text" contenteditable="true">簡潔的背景，僅有公司 Logo 和標題，為開放式討論預留空間。背景是寧靜的星空，象徵對話的結束與深思的開始。</div>
+            </div>
+        </section>
+
+    </div>
+
+    <button id="prevBtn" class="nav-button">‹</button>
+    <button id="nextBtn" class="nav-button">›</button>
+    <div id="slide-counter">1 / 10</div>
+
+    <script>
+        const slides = document.querySelectorAll('.slide');
+        const nextBtn = document.getElementById('nextBtn');
+        const prevBtn = document.getElementById('prevBtn');
+        const slideCounter = document.getElementById('slide-counter');
+        
+        let currentSlide = 0;
+        const totalSlides = slides.length;
+
+        function showSlide(n) {
+            // Loop back to start or end
+            if (n >= totalSlides) {
+                currentSlide = totalSlides - 1;
+            } else if (n < 0) {
+                currentSlide = 0;
+            } else {
+                 currentSlide = n;
+            }
+
+            slides.forEach(slide => slide.classList.remove('active'));
+            slides[currentSlide].classList.add('active');
+            
+            updateUI();
+        }
+
+        function updateUI() {
+            // Update counter
+            slideCounter.textContent = `${currentSlide + 1} / ${totalSlides}`;
+            
+            // Update nav buttons
+            prevBtn.style.display = currentSlide === 0 ? 'none' : 'block';
+            nextBtn.style.display = currentSlide === totalSlides - 1 ? 'none' : 'block';
+        }
+
+        nextBtn.addEventListener('click', () => {
+            showSlide(currentSlide + 1);
+        });
+
+        prevBtn.addEventListener('click', () => {
+            showSlide(currentSlide - 1);
+        });
+        
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === ' ') {
+                 if (currentSlide < totalSlides - 1) showSlide(currentSlide + 1);
+            } else if (e.key === 'ArrowLeft') {
+                 if (currentSlide > 0) showSlide(currentSlide - 1);
+            }
+        });
+
+        // Initial setup
+        showSlide(0);
+
+    </script>
+</body>
+</html>

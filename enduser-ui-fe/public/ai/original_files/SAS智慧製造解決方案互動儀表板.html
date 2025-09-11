@@ -1,0 +1,1042 @@
+<!DOCTYPE html>
+<html lang="zh-Hant" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SAS 智慧製造解決方案互動儀表板</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Slate & Amber -->
+    <!-- Application Structure Plan: The application is structured as a single-page dashboard with a sticky top navigation for easy access to key solution pillars. The structure is thematic rather than linear: 1) A compelling hero section summarizing the value proposition. 2) A section on "SAS Viya Data Fabric", the foundational technology. 3) A section on "Real-time Integration", demonstrating the problem-solution aspect. 4) An interactive deep-dive into "Digital Twin Simulation" with sub-tabs for different simulation types. 5) A clear, visual "Implementation Blueprint". 6) A comprehensive "References" section at the bottom containing the full source document. This structure guides the user from the general concept to specific applications, then to a call-to-action, and finally provides in-depth reference material, which is more intuitive and engaging for a web experience than the original report's format. -->
+    <!-- Visualization & Content Choices: 
+        - Hero: Goal: Grab attention. Method: Strong headline and key value propositions. Interaction: Scroll down. Justification: Sets the stage immediately.
+        - Viya Core Features: Goal: Inform about platform strengths. Method: Radar Chart (Chart.js). Interaction: Hovering over points reveals tooltips with details. Justification: A radar chart provides a great multi-dimensional visual comparison of abstract features like performance and security.
+        - Data Integration: Goal: Compare before/after. Method: HTML/CSS diagram with a toggle. Interaction: A button switches between "Siloed" and "Integrated" views, changing the diagram and updating a benefits bar chart (Chart.js). Justification: Direct visual comparison is highly effective for showing value.
+        - Digital Twin: Goal: Explain a complex topic. Method: Tabbed interface with interactive HTML/CSS diagrams. Interaction: Users click buttons to "run" simulations, which highlights parts of the diagram and updates a textual output, mimicking a real software interface. A donut chart (Chart.js) shows core functions. Justification: Makes an abstract concept tangible and interactive, enhancing user engagement and understanding.
+        - Implementation Plan: Goal: Organize a process. Method: HTML/CSS timeline. Interaction: Clicking on a phase expands to show details. Justification: Visually represents a sequence of events much better than a list or table.
+        - References: Goal: Provide comprehensive source material. Method: Full text content from the original report, formatted for readability. Interaction: Scroll and read. Justification: Offers full context and detailed information for users who want to dive deeper.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body { font-family: 'Noto Sans TC', sans-serif; }
+        .chart-container { position: relative; width: 100%; max-width: 500px; margin-left: auto; margin-right: auto; height: 350px; max-height: 40vh; }
+        .nav-link { transition: color 0.3s, border-color 0.3s; }
+        .nav-link.active, .nav-link:hover { color: #f59e0b; border-color: #f59e0b; }
+        .tab-btn.active { background-color: #f59e0b; color: #ffffff; }
+        .tab-btn { transition: background-color 0.3s, color 0.3s; }
+        .phase-content { max-height: 0; overflow: hidden; transition: max-height 0.5s ease-in-out; }
+        .references-content h2 { font-size: 2.25rem; font-weight: 700; margin-top: 2.5rem; margin-bottom: 1rem; color: #1e293b; }
+        .references-content h3 { font-size: 1.75rem; font-weight: 600; margin-top: 2rem; margin-bottom: 0.75rem; color: #1e293b; }
+        .references-content h4 { font-size: 1.5rem; font-weight: 500; margin-top: 1.5rem; margin-bottom: 0.5rem; color: #1e293b; }
+        .references-content p { margin-bottom: 1rem; line-height: 1.75; color: #475569; }
+        .references-content ul { list-style: disc; margin-left: 1.25rem; margin-bottom: 1rem; }
+        .references-content ol { list-style: decimal; margin-left: 1.25rem; margin-bottom: 1rem; }
+        .references-content li { margin-bottom: 0.5rem; color: #475569; }
+        .references-content table { width: 100%; border-collapse: collapse; margin-bottom: 1rem; }
+        .references-content th, .references-content td { border: 1px solid #cbd5e1; padding: 0.75rem; text-align: left; }
+        .references-content th { background-color: #f1f5f9; font-weight: 600; color: #334155; }
+        .references-content a { color: #2563eb; text-decoration: underline; }
+        .references-content a:hover { color: #1d4ed8; }
+        .references-content hr { border-top: 1px solid #e2e8f0; margin: 2rem 0; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800">
+
+    <header class="bg-white/80 backdrop-blur-lg sticky top-0 z-50 shadow-sm">
+        <nav class="container mx-auto px-6 py-3 flex justify-between items-center">
+            <div class="text-xl font-bold text-slate-800">
+                SAS<span class="text-amber-500">智慧製造</span>
+            </div>
+            <div class="hidden md:flex space-x-8">
+                <a href="#data-fabric" class="nav-link text-slate-600 font-medium border-b-2 border-transparent pb-1">資料織網</a>
+                <a href="#integration" class="nav-link text-slate-600 font-medium border-b-2 border-transparent pb-1">即時整合</a>
+                <a href="#digital-twin" class="nav-link text-slate-600 font-medium border-b-2 border-transparent pb-1">數位孿生</a>
+                <a href="#blueprint" class="nav-link text-slate-600 font-medium border-b-2 border-transparent pb-1">實施藍圖</a>
+                <a href="#references" class="nav-link text-slate-600 font-medium border-b-2 border-transparent pb-1">參考資料</a>
+            </div>
+            <a href="#contact" class="hidden md:block bg-amber-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-amber-600 transition-colors">
+                聯繫我們
+            </a>
+        </nav>
+    </header>
+
+    <main>
+        <section id="hero" class="bg-white">
+            <div class="container mx-auto px-6 py-20 md:py-32 text-center">
+                <h1 class="text-4xl md:text-6xl font-bold text-slate-900 leading-tight">驅動智慧製造的未來</h1>
+                <p class="mt-4 text-lg md:text-xl text-slate-600 max-w-3xl mx-auto">從資料織網到數位孿生，SAS 提供端到端的分析解決方案，將您的資料轉化為決策優勢與營運卓越。</p>
+                <div class="mt-8 flex justify-center gap-4">
+                    <a href="#data-fabric" class="bg-amber-500 text-white font-bold py-3 px-6 rounded-lg hover:bg-amber-600 transition-colors">探索解決方案</a>
+                    <a href="#blueprint" class="bg-slate-200 text-slate-800 font-bold py-3 px-6 rounded-lg hover:bg-slate-300 transition-colors">查看實施藍圖</a>
+                </div>
+            </div>
+        </section>
+
+        <section id="data-fabric" class="py-20 bg-slate-100">
+            <div class="container mx-auto px-6">
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl md:text-4xl font-bold text-slate-900">SAS Viya: 智慧資料織網</h2>
+                    <p class="mt-4 text-lg text-slate-600 max-w-3xl mx-auto">本節介紹 SAS Viya 作為現代化 AI 與分析平台的基石。它如何透過雲端原生、開源整合的架構，建立一個強大、安全且高效的資料織網，為所有進階分析與模擬奠定堅實基礎。</p>
+                </div>
+
+                <div class="grid md:grid-cols-2 gap-12 items-center">
+                    <div>
+                        <h3 class="text-2xl font-bold mb-4">平台核心架構</h3>
+                        <p class="text-slate-600 mb-6">SAS Viya 是為滿足現代企業對靈活性、擴展性與效能的嚴苛要求而設計的。其架構具備以下關鍵特色，共同構成一個全面的資料分析基礎。</p>
+                        <div class="space-y-4">
+                            <div class="flex items-start">
+                                <div class="bg-amber-100 text-amber-600 p-2 rounded-full mr-4">☁️</div>
+                                <div>
+                                    <h4 class="font-bold">雲端優先架構</h4>
+                                    <p class="text-sm text-slate-500">針對公有雲、混合雲與多雲環境優化，確保部署靈活性與擴展性。</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start">
+                                <div class="bg-amber-100 text-amber-600 p-2 rounded-full mr-4">📦</div>
+                                <div>
+                                    <h4 class="font-bold">容器化技術</h4>
+                                    <p class="text-sm text-slate-500">採用 Kubernetes 提升部署效率與資源利用率，支援現代化 DevOps 流程。</p>
+                                </div>
+                            </div>
+                             <div class="flex items-start">
+                                <div class="bg-amber-100 text-amber-600 p-2 rounded-full mr-4">🤝</div>
+                                <div>
+                                    <h4 class="font-bold">開源整合</h4>
+                                    <p class="text-sm text-slate-500">無縫支援 R、Python 等工具，模型可在高效能 CAS 引擎中執行。</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start">
+                                <div class="bg-amber-100 text-amber-600 p-2 rounded-full mr-4">⚙️</div>
+                                <div>
+                                    <h4 class="font-bold">統一計算平台</h4>
+                                    <p class="text-sm text-slate-500">提供從小型到大型分析問題的一體化解決方案，簡化分析流程。</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                         <div class="chart-container bg-white p-4 rounded-xl shadow-lg">
+                             <canvas id="viyaFeaturesChart"></canvas>
+                         </div>
+                         <p class="text-center text-sm text-slate-500 mt-2">將滑鼠懸停在圖表上以查看各項能力評分。</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="integration" class="py-20 bg-white">
+            <div class="container mx-auto px-6">
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl md:text-4xl font-bold text-slate-900">跨資料來源即時整合</h2>
+                    <p class="mt-4 text-lg text-slate-600 max-w-3xl mx-auto">本節將展示 SAS 如何解決製造業中普遍存在的資料孤島問題。透過互動式圖示，您可以清楚地看到從分散、延遲的資料狀態轉變為統一、即時的單一資料視圖，以及此轉變所帶來的巨大效益。</p>
+                </div>
+
+                <div class="text-center mb-8">
+                    <button id="toggleViewBtn" class="bg-amber-500 text-white font-bold py-2 px-6 rounded-full hover:bg-amber-600 transition-colors">切換至整合視圖</button>
+                </div>
+
+                <div class="grid md:grid-cols-2 gap-12 items-center">
+                    <div id="integrationDiagram" class="p-8 border-2 border-dashed rounded-xl border-slate-300">
+                        <h3 id="diagramTitle" class="text-xl font-bold text-center mb-6">現況：資料孤島</h3>
+                        <div id="siloedView" class="flex justify-around items-center gap-4 flex-wrap">
+                            <div class="text-center"> <div class="text-4xl">🏭</div> <p>ERP</p> </div>
+                            <div class="text-center"> <div class="text-4xl">🖥️</div> <p>MES</p> </div>
+                             <div class="text-center"> <div class="text-4xl">🚚</div> <p>SCM</p> </div>
+                             <div class="text-center"> <div class="text-4xl">📈</div> <p>CRM</p> </div>
+                        </div>
+                        <div id="integratedView" class="hidden">
+                            <div class="flex justify-around items-center mb-4">
+                                <div class="text-center"> <div class="text-3xl">🏭</div> <p class="text-sm">ERP</p> </div>
+                                <div class="text-center"> <div class="text-3xl">🖥️</div> <p class="text-sm">MES</p> </div>
+                                <div class="text-center"> <div class="text-3xl">🚚</div> <p class="text-sm">SCM</p> </div>
+                                <div class="text-center"> <div class="text-3xl">📈</div> <p class="text-sm">CRM</p> </div>
+                            </div>
+                            <div class="flex justify-center items-center my-4">
+                                <div class="text-3xl animate-pulse">↓</div>
+                            </div>
+                            <div class="bg-slate-800 text-white p-4 rounded-lg text-center font-mono">SAS Data Fabric</div>
+                        </div>
+                        <p id="diagramDescription" class="text-center text-sm text-slate-500 mt-6">資料分散在不同系統，導致資訊延遲與決策困難。</p>
+                    </div>
+                     <div>
+                         <div class="chart-container bg-slate-50 p-4 rounded-xl shadow-inner">
+                            <canvas id="integrationBenefitsChart"></canvas>
+                         </div>
+                         <p class="text-center text-sm text-slate-500 mt-2">整合後的核心技術效益。</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="digital-twin" class="py-20 bg-slate-100">
+            <div class="container mx-auto px-6">
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl md:text-4xl font-bold text-slate-900">數位孿生模擬應用</h2>
+                    <p class="mt-4 text-lg text-slate-600 max-w-3xl mx-auto">本節將帶您深入了解 SAS 的進階模擬能力。數位孿生不僅僅是視覺化，更是預測與優化的強大工具。您可以透過互動模擬，體驗 SAS 如何應用於電池模組的熱流與結構強度分析，以提升產品性能與可靠性。</p>
+                </div>
+
+                <div class="grid md:grid-cols-3 gap-8">
+                    <div class="md:col-span-2 bg-white rounded-xl shadow-lg p-6">
+                        <div class="flex border-b mb-4">
+                            <button data-tab="thermal" class="tab-btn py-2 px-4 font-medium text-slate-600 active">熱流模擬</button>
+                            <button data-tab="structural" class="tab-btn py-2 px-4 font-medium text-slate-600">結構強度模擬</button>
+                        </div>
+                        <div id="tab-content">
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-lg p-6">
+                        <h3 class="text-xl font-bold mb-4 text-center">六大核心功能</h3>
+                        <div class="chart-container h-[300px] md:h-auto">
+                           <canvas id="digitalTwinCoreChart"></canvas>
+                        </div>
+                        <p id="coreFunctionDescription" class="text-center text-sm text-slate-500 mt-4 h-12">點擊圖表區塊以查看功能說明。</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="blueprint" class="py-20 bg-white">
+            <div class="container mx-auto px-6">
+                 <div class="text-center mb-12">
+                    <h2 class="text-3xl md:text-4xl font-bold text-slate-900">分階段實施藍圖</h2>
+                    <p class="mt-4 text-lg text-slate-600 max-w-3xl mx-auto">成功的數位轉型採用漸進式而非顛覆式變革。本節將展示 SAS 建議的分階段實施策略，確保專案順利導入並最大化價值。點擊各階段可查看詳細的活動與預期成果。</p>
+                </div>
+                <div class="relative">
+                    <div class="absolute left-1/2 top-4 bottom-4 w-0.5 bg-slate-200 hidden md:block"></div>
+                    <div class="space-y-12">
+                        <div class="phase-item md:flex items-center md:justify-start">
+                             <div class="md:w-1/2 md:pr-8 text-center md:text-right">
+                                <button data-phase="1" class="phase-button w-full md:w-auto text-left p-6 bg-slate-100 rounded-xl shadow hover:shadow-lg transition-shadow cursor-pointer">
+                                    <p class="text-amber-500 font-bold">第一階段</p>
+                                    <h3 class="text-xl font-bold">資料基礎建設</h3>
+                                    <p class="text-sm text-slate-500 mt-1">為所有分析奠定堅實基礎。</p>
+                                </button>
+                             </div>
+                             <div class="hidden md:block w-8 h-8 rounded-full bg-amber-500 border-4 border-white shadow z-10"></div>
+                        </div>
+                        <div id="phase-content-1" class="phase-content md:w-1/2 md:ml-auto md:pl-16"></div>
+
+                         <div class="phase-item md:flex flex-row-reverse items-center md:justify-start">
+                             <div class="md:w-1/2 md:pl-8 text-center md:text-left">
+                                <button data-phase="2" class="phase-button w-full md:w-auto text-left p-6 bg-slate-100 rounded-xl shadow hover:shadow-lg transition-shadow cursor-pointer">
+                                    <p class="text-amber-500 font-bold">第二階段</p>
+                                    <h3 class="text-xl font-bold">應用場景開發</h3>
+                                    <p class="text-sm text-slate-500 mt-1">利用資料基礎創造即時業務價值。</p>
+                                </button>
+                             </div>
+                             <div class="hidden md:block w-8 h-8 rounded-full bg-amber-500 border-4 border-white shadow z-10"></div>
+                        </div>
+                         <div id="phase-content-2" class="phase-content md:w-1/2 md:mr-auto md:pr-16 md:text-right"></div>
+
+                         <div class="phase-item md:flex items-center md:justify-start">
+                             <div class="md:w-1/2 md:pr-8 text-center md:text-right">
+                                <button data-phase="3" class="phase-button w-full md:w-auto text-left p-6 bg-slate-100 rounded-xl shadow hover:shadow-lg transition-shadow cursor-pointer">
+                                    <p class="text-amber-500 font-bold">第三階段</p>
+                                    <h3 class="text-xl font-bold">Digital Twin 導入</h3>
+                                    <p class="text-sm text-slate-500 mt-1">引入進階模擬與預測能力。</p>
+                                </button>
+                             </div>
+                             <div class="hidden md:block w-8 h-8 rounded-full bg-amber-500 border-4 border-white shadow z-10"></div>
+                        </div>
+                         <div id="phase-content-3" class="phase-content md:w-1/2 md:ml-auto md:pl-16"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <section id="references" class="py-20 bg-slate-50">
+            <div class="container mx-auto px-6">
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl md:text-4xl font-bold text-slate-900">參考資料</h2>
+                    <p class="mt-4 text-lg text-slate-600 max-w-3xl mx-auto">以下是本解決方案文件所依據的完整技術說明與研究來源，提供更詳盡的背景資訊與參考。</p>
+                </div>
+                <div class="references-content">
+                    <h1>SAS 技術解決方案文件：客戶需求回應與技術說明</h1>
+
+                    <h2>執行摘要</h2>
+
+                    <p>本文件旨在闡述 SAS 如何透過先進的資料管理、即時洞察與精密模擬能力，為智慧製造提供全面性的技術解決方案。SAS Viya 平台作為核心的資料織網（Data Fabric），能夠整合異質資料來源，實現即時決策，並為數位孿生（Digital Twin）的開發奠定堅實基礎。這些解決方案特別針對客戶在營運效率、預測性維護及品質保證方面的需求，尤其是在電池模組等複雜資產的管理上，提供獨特的價值。為確保導入過程的順暢與效益最大化，本報告亦提出了分階段的實施策略。</p>
+
+                    <h2>1. SAS 資料織網：智慧製造的基石</h2>
+
+                    <p>本章將詳細說明 SAS Viya 如何建立一個強大的資料織網，作為所有進階分析與模擬計畫的關鍵支撐。</p>
+
+                    <h3>1.1 SAS Viya 平台：雲端原生、AI 就緒的架構</h3>
+
+                    <p>SAS Viya 是 SAS 現代化的 AI、機器學習、分析與資料管理平台，提供完整的資料織網解決方案。其核心架構經過精心設計，以滿足當代企業對靈活性、擴展性與效能的嚴苛要求。</p>
+
+                    <p>首先，Viya 平台採用<b>雲端優先架構</b>，針對公有雲環境進行了優化設計，同時全面支援混合雲與多雲部署模式。這種設計確保了企業能夠在任何雲端環境中靈活部署其分析工作負載，並具備卓越的擴展性與韌性，以應對製造環境中資料負載和計算需求的動態變化。</p>
+
+                    <p>其次，Viya 4 採用先進的<b>容器化技術</b>，利用 Kubernetes 等技術提升了平台的擴展性、部署靈活性及資源利用效率。這種架構不僅簡化了部署與管理流程，也支援現代 DevOps 實踐，使得軟體更新與功能擴展更加敏捷。</p>
+
+                    <p>再者，Viya 平台實現了與<b>開源工具的深度整合</b>，無縫支援 R、Python、Jupyter 等廣受歡迎的工具。這使得資料科學家和開發人員能夠利用他們熟悉的工具進行模型開發與分析。更為關鍵的是，這些在開源環境中開發的模型能夠在高效能的 SAS Cloud Analytics Services (CAS) 引擎中執行。這種能力彌合了開源工具的靈活性與企業級效能、治理及安全性之間的鴻溝，確保了開源創新能夠在企業級框架下得到可靠的應用。這意味著組織可以利用開源社群最前沿的分析方法，同時維持任務關鍵型企業應用所需的穩定性、安全性和可擴展性，有效避免了模型從開發到生產部署過程中常見的「模型漂移」或「部署摩擦」問題。</p>
+
+                    <p>最終，SAS Viya 提供了一個<b>統一的計算平台</b>，能夠為從小型到大型的分析問題提供一體化的解決方案。這種統一性簡化了分析流程，確保了不同規模分析任務的一致性與高效性。</p>
+
+                    <div class="overflow-x-auto my-4">
+                        <table class="min-w-full bg-white rounded-lg shadow-sm">
+                            <thead>
+                                <tr>
+                                    <th class="px-4 py-2">特性</th>
+                                    <th class="px-4 py-2">技術細節</th>
+                                    <th class="px-4 py-2">策略性效益</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="px-4 py-2">雲端優先架構</td>
+                                    <td class="px-4 py-2">針對公有雲、混合雲、多雲環境優化設計</td>
+                                    <td class="px-4 py-2">增強的擴展性與韌性，適應動態需求</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-4 py-2">容器化技術 (Viya 4)</td>
+                                    <td class="px-4 py-2">採用容器化架構，提升部署靈活性與資源效率</td>
+                                    <td class="px-4 py-2">敏捷部署與高效資源利用</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-4 py-2">開源整合 (R, Python, Jupyter, CAS)</td>
+                                    <td class="px-4 py-2">模型可在 SAS CAS 引擎執行</td>
+                                    <td class="px-4 py-2">拓展創新廣度與人才庫，提升企業級效能</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-4 py-2">統一計算平台</td>
+                                    <td class="px-4 py-2">從小型到大型分析問題的一體化解決方案</td>
+                                    <td class="px-4 py-2">分析流程一致性與簡化營運</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-4 py-2">企業級安全與治理</td>
+                                    <td class="px-4 py-2">跨所有資料來源的安全控制</td>
+                                    <td class="px-4 py-2">強健的資料保護與合規性</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <p class="text-sm text-slate-500 text-center mb-6">表 1: SAS Viya 平台核心功能與策略性效益</p>
+
+                    <h3>1.2 全面資料織網能力：安全性、治理與效能</h3>
+
+                    <p>SAS 資料織網提供了一系列全面的功能，確保資料的安全性、可治理性及卓越的效能，這對於處理製造業中龐大且分散的資料至關重要。</p>
+
+                    <p>在<b>資料安全與治理</b>方面，SAS 提供了強大的機制，保護靜態資料與傳輸中的資料。平台實施了跨所有資料來源的安全控制，並針對 AI/ML 應用中的敏感資料提供專門的保護機制。這確保了企業在利用資料進行分析和決策時，能夠完全符合法規要求並降低資料洩露風險。</p>
+
+                    <p>針對現代製造業複雜的 IT 環境，SAS 資料織網提供強大的<b>混合與多雲支援</b>能力。它能夠無縫整合地端、雲端與邊緣運算環境，建立靈活且可擴展的 AI/ML 架構。這對於製造業而言至關重要，因為物聯網（IoT）資料通常源自邊緣設備，並需要在不同環境中進行處理與分析。透過統一的資料存取與管理介面，操作複雜性得以降低，資料管理變得更加高效。</p>
+
+                    <p>此外，資料織網在<b>效能優化</b>方面表現卓越。它運用分割、索引、快取和實體化視圖等技術，顯著加速查詢處理能力。這些技術使得即時資料處理與分析成為可能，為預測性維護和品質控制等應用提供即時洞察，這對於處理來自物聯網感測器的大量高速資料尤為重要。這種綜合能力將 SAS Viya 定位為一個安全、高效能且靈活的資料骨幹，專為處理工業物聯網資料的複雜性和需求而設計，從而能夠可靠地部署 AI/ML 應用於分散式製造環境中。</p>
+
+                    <div class="overflow-x-auto my-4">
+                        <table class="min-w-full bg-white rounded-lg shadow-sm">
+                            <thead>
+                                <tr>
+                                    <th class="px-4 py-2">能力</th>
+                                    <th class="px-4 py-2">技術細節</th>
+                                    <th class="px-4 py-2">商業價值</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="px-4 py-2">資料安全與治理</td>
+                                    <td class="px-4 py-2">靜態與傳輸中資料保護，AI/ML 敏感資料保護</td>
+                                    <td class="px-4 py-2">降低風險與確保合規性</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-4 py-2">混合與多雲支援</td>
+                                    <td class="px-4 py-2">整合地端、雲端、邊緣運算環境</td>
+                                    <td class="px-4 py-2">營運靈活性與擴展性</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-4 py-2">統一資料存取與管理</td>
+                                    <td class="px-4 py-2">單一介面管理多樣資料來源</td>
+                                    <td class="px-4 py-2">簡化管理與降低總體擁有成本</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-4 py-2">效能優化</td>
+                                    <td class="px-4 py-2">分割、索引、快取、實體化視圖</td>
+                                    <td class="px-4 py-2">加速洞察與實現即時營運</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <p class="text-sm text-slate-500 text-center mb-6">表 2: 資料織網能力與價值主張矩陣</p>
+
+                    <h3>1.3 與 Microsoft Fabric 無縫整合，提升生產力</h3>
+
+                    <p>SAS 致力於與主流生態系統建立互操作性，其中與 Microsoft Fabric 的整合是一個重要的策略性舉措。SAS Decision Builder 與 Microsoft Fabric 的整合，讓 Fabric 用戶能夠存取完整的工作負載，從 Power BI 到 SAS Decision Builder。</p>
+
+                    <p>此整合的優勢顯而易見，包括無縫接入 Azure AI Services、支援決策智能應用，以及提供統一的分析與決策平台。這不僅提升了生產力，也加速了洞察的獲取，進而促成更優質的決策。這種整合的意義不僅僅是技術上的握手，它更代表著 SAS 擴大其觸及範圍並普及進階分析的策略。透過將 SAS Decision Builder 直接整合到 Microsoft Fabric 生態系統中，SAS 將其強大的決策能力開放給更廣泛的 Power BI 用戶和 Azure AI 服務消費者，從而降低了採用的門檻。這種「統一的分析與決策平台」概念意味著用戶可以利用兩種環境的優勢，無需複雜的資料傳輸或上下文切換，從資料視覺化（Power BI）到複雜決策邏輯（SAS Decision Builder）的流程得以簡化。這表明 SAS 致力於互操作性，並在客戶資料和現有工具所在之處提供服務，使組織能夠最大化其現有的 Microsoft 投資，同時獲得 SAS 在決策智能方面的專業優勢，最終加速從資料到自動化智慧決策的轉變。</p>
+
+                    <h2>2. 跨資料來源即時資料整合與查詢解決方案</h2>
+
+                    <p>本章將闡述 SAS 解決方案如何打破資料孤島，實現跨多樣資料來源的即時洞察，這對於敏捷的製造營運至關重要。</p>
+
+                    <h3>2.1 策略性必要性：打破資料孤島以實現敏捷營運</h3>
+
+                    <p>基於避免過度聚焦特定 BOM 表情境的建議，本解決方案將重點放在「跨資料來源的即時資料整合與查詢」這一核心能力上。在傳統製造業中，資料往往分散於不同的系統和部門，形成資料孤島，這嚴重阻礙了營運可視性，延遲了決策制定，並使得企業難以獲得製造流程的整體視圖。SAS 解決方案旨在統一這些異質資料，提供即時洞察，從根本上解決這些挑戰。</p>
+
+                    <h3>2.2 技術架構特點</h3>
+
+                    <p>SAS 的即時資料整合與查詢解決方案具備多項關鍵技術特點，旨在克服資料分散的挑戰。</p>
+
+                    <p>首先，它能夠<b>打破資料孤島</b>，透過建立統一的資料存取層，整合來自不同系統的異質資料來源。此解決方案包含即時資料同步與更新機制，並採用標準化的資料格式與介面，確保資料在不同系統間流動的順暢與一致性。</p>
+
+                    <p>其次，該解決方案顯著<b>提升資訊透明度</b>。它建立了一個「單一資料視圖」（Single Source of Truth），確保所有部門都能存取到最新且一致的資料。這使得即時資料監控與追蹤成為可能，並促進了跨部門的資料共享，從而增強了整個組織的協同作業能力。</p>
+
+                    <p>再者，為確保高效能的資料存取，解決方案實施了<b>查詢效率優化</b>。這包括智能快取機制、預先建立的資料關聯，以及自動化資料整理與轉換功能。這些技術共同作用，顯著加速了查詢處理速度。這些技術特點結合起來，使得 SAS 能夠提供一種超越單純報告的解決方案，實現主動式、事件驅動的營運。傳統上，資料整合多為批次處理，導致洞察延遲。即時同步機制從根本上改變了這一模式。單一資料來源不僅確保了一致性，更為基於當前營運狀態的自動化決策和觸發行動提供了可靠基礎。若無此基礎，即時行動將充滿風險。高效的查詢能力則意味著營運系統或人工操作員能夠即時響應資料中檢測到的變化、異常或機會。這種技術架構旨在將製造業從反應式、歷史報告模式轉變為主動式、事件驅動的營運模式，這對於實現智慧工廠和工業 4.0 倡議至關重要。</p>
+
+                    <h3>2.3 製造業與業務營運的轉型應用場景</h3>
+
+                    <p>SAS 的即時資料整合與查詢解決方案在多個應用場景中展現其轉型能力。</p>
+
+                    <p>在<b>製造業資料整合</b>方面，它支援產品庫存的即時查詢、生產排程的動態更新、原物料庫存的整合監控，以及供應鏈的可視化管理。這些能力使得製造商能夠即時響應市場變化和生產需求，優化資源配置。</p>
+
+                    <p>在<b>業務決策支援</b>方面，該解決方案能夠進行跨系統資料匯總分析、即時業務指標監控，並整合資料以支援預測性維護和品質管理資料追蹤。這些應用場景直接解決了製造業常見的痛點，使得決策者能夠在充分掌握即時資訊的基礎上，做出更敏捷、更明智的決策。</p>
+
+                    <h3>2.4 可量化效益：速度、準確性、效率與擴展性</h3>
+
+                    <p>SAS 的即時資料整合與查詢解決方案帶來了顯著且可量化的效益。</p>
+
+                    <p>首先是<b>即時性</b>，它能夠實現秒級的資料更新與查詢回應，這對於需要立即洞察的營運至關重要。其次是<b>準確性</b>，透過「單一資料來源」的原則，避免了資料不一致的問題，確保了決策所依據資訊的可靠性。再者是<b>效率性</b>，該解決方案顯著減少了手動資料整理與協調的工作量，使得資源能夠投入到更高價值的活動中。最後是<b>擴展性</b>，它支援新資料來源的快速接入，確保解決方案能夠隨著業務需求的演進而成長。</p>
+
+                    <p>這些效益的實現，使得靜態的資料儲存庫轉變為動態的、可操作的資料流。這讓製造組織能夠從描述性分析（發生了什麼？）轉向診斷性分析（為什麼發生？），並最終走向規範性分析（我們現在應該怎麼做？）和預測性分析（將會發生什麼？），直接影響營運的敏捷性和競爭力。</p>
+
+                    <div class="overflow-x-auto my-4">
+                        <table class="min-w-full bg-white rounded-lg shadow-sm">
+                            <thead>
+                                <tr>
+                                    <th class="px-4 py-2">技術特點</th>
+                                    <th class="px-4 py-2">商業影響</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="px-4 py-2">統一資料存取層</td>
+                                    <td class="px-4 py-2">打破資料孤島</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-4 py-2">即時同步與更新</td>
+                                    <td class="px-4 py-2">立即營運洞察</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-4 py-2">單一資料來源</td>
+                                    <td class="px-4 py-2">增強決策準確性</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-4 py-2">智能快取機制</td>
+                                    <td class="px-4 py-2">加速查詢處理</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-4 py-2">自動化資料準備</td>
+                                    <td class="px-4 py-2">減少手動工作量</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-4 py-2">可擴展整合</td>
+                                    <td class="px-4 py-2">快速接入新資料來源</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <p class="text-sm text-slate-500 text-center mb-6">表 3: 即時資料整合：技術特點與商業影響</p>
+
+                    <h2>3. SAS 數位孿生：預測性製造卓越的進階模擬</h2>
+
+                    <p>本章將深入探討 SAS 的進階模擬能力，特別是針對數位孿生應用，並聚焦於電池模組解決方案。</p>
+
+                    <h3>3.1 數位孿生在現代製造業的策略價值</h3>
+
+                    <p>數位孿生是製造業中最令人興奮的發展之一。它透過在虛擬環境中建立物理資產或流程的精確數位副本，使得製造商能夠在實際零件製造之前，經濟有效地檢測設計問題並解決潛在的品質問題。例如，透過在實驗室中對卡車的數位孿生進行模擬，可以預先發現並修正設計缺陷，從而避免昂貴的實體原型製作和後續的返工。</p>
+
+                    <p>學術研究也強調了數位孿生在大型智慧製造設施中的成功實踐，主要應用於預測性維護、品質控制和製程優化。這些應用通常整合了物聯網（IoT）感測器、邊緣運算和雲端分析平台，形成一個全面的監控與分析框架。數位孿生的核心價值不僅僅在於發現問題，更在於從根本上改變創新和生產的生命週期。透過在虛擬環境中模擬性能並識別缺陷，公司可以以比實體原型更快、更低的成本迭代設計。將此概念延伸到營運層面，數位孿生允許進行「假設情境」（what-if scenarios）分析和異常檢測，從而防止實際生產中昂貴的停機時間和品質缺陷。這使得數位孿生成為新產品開發和製造流程優化的強大風險降低工具。它加速了創新週期，縮短了新產品上市時間，並透過將問題解決從反應式轉變為主動式、從實體轉變為虛擬，顯著提高了製造營運的整體效率和品質。</p>
+
+                    <h3>3.2 SAS 模擬技術：驅動預測與診斷智能</h3>
+
+                    <p>模擬在數位孿生開發中扮演關鍵角色，SAS 的模擬技術能夠透過製造流程範例展示工廠應用。它整合了即時與離線模擬功能，並提供 SAS 在預測性與診斷性分析方面的核心優勢。</p>
+
+                    <p>SAS 數位孿生解決方案具備六大核心功能：</p>
+                    <ol>
+                        <li><b>預後與診斷分析：</b> 能夠預測未來故障並診斷問題根源。</li>
+                        <li><b>線上與離線模擬：</b> 支援即時營運調整和策略性「假設情境」規劃。</li>
+                        <li><b>控制系統整合：</b> 將模擬洞察直接回饋到營運控制系統，實現自動化調整。</li>
+                        <li><b>監控與督導功能：</b> 提供全面的資產狀態監控。</li>
+                        <li><b>優化演算法應用：</b> 將洞察轉化為可操作的建議，最大化效率。</li>
+                        <li><b>即時回饋機制：</b> 確保系統能夠快速響應變化。</li>
+                    </ol>
+
+                    <p>這些核心功能和對預測性與診斷性分析的強調，標誌著系統從單純的資料監控轉向主動引導營運。預後與診斷分析超越了「發生了什麼」的層面，進一步探討「為什麼發生」以及「將會發生什麼」，從而實現主動干預。線上與離線模擬則允許在不干擾實際生產的情況下進行即時營運調整和策略性情境規劃。控制系統整合和即時回饋機制至關重要，這意味著從數位孿生中獲得的洞察可以直接回饋到營運控制系統中，實現自動化調整和優化。優化演算法則是將洞察轉化為可操作建議的引擎，以最大化效率或性能。這使得 SAS 的模擬技術，作為數位孿生的一部分，能夠將被動的資料轉化為一個主動的、智能的系統，不僅能預測故障，還能提供最佳行動方案，甚至直接影響營運控制。這是真正智能製造的精髓，其中資料驅動的洞察引導自動化、優化的流程。</p>
+
+                    <div class="overflow-x-auto my-4">
+                        <table class="min-w-full bg-white rounded-lg shadow-sm">
+                            <thead>
+                                <tr>
+                                    <th class="px-4 py-2">能力領域</th>
+                                    <th class="px-4 py-2">關鍵功能</th>
+                                    <th class="px-4 py-2">製造業應用</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="px-4 py-2">核心模擬與分析</td>
+                                    <td class="px-4 py-2">預後/診斷分析，線上/離線模擬，優化演算法</td>
+                                    <td class="px-4 py-2">預測性維護，製程優化，品質控制</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-4 py-2">熱流模擬</td>
+                                    <td class="px-4 py-2">多物理場耦合，即時溫度監控，散熱優化</td>
+                                    <td class="px-4 py-2">能源效率，產品設計驗證，熱管理</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-4 py-2">結構強度模擬</td>
+                                    <td class="px-4 py-2">靜態/動態載荷分析，疲勞壽命預測，結構健康監控</td>
+                                    <td class="px-4 py-2">資產生命週期管理，故障預警，維護排程</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-4 py-2">整合監控與控制</td>
+                                    <td class="px-4 py-2">即時狀態監控，預測性維護，安全預警</td>
+                                    <td class="px-4 py-2">營運安全，效能優化，風險管理</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <p class="text-sm text-slate-500 text-center mb-6">表 4: SAS 數位孿生模擬能力與製造業應用</p>
+
+                    <h3>3.3 進階熱流模擬，優化性能（例如：電池模組）</h3>
+
+                    <p>熱流模擬在多個應用領域中至關重要，包括電池模組熱管理系統、冷卻系統設計優化、熱交換器效能分析，以及溫度分佈預測與控制。</p>
+
+                    <p>SAS 的熱流模擬技術具備多物理場耦合模擬能力，能夠進行即時溫度監控與預測，提供熱流場可視化分析，並給出散熱性能優化建議。這些能力對於電池模組尤其重要，因為有效的熱管理是確保電池性能、壽命和安全性的關鍵。</p>
+
+                    <h3>3.4 強健結構強度模擬與整合式預測性維護</h3>
+
+                    <p>在結構完整性分析方面，SAS 提供強大的分析能力，包括靜態與動態載荷分析、疲勞壽命預測、材料應力分佈計算，以及結構變形模擬。</p>
+
+                    <p>這些模擬結果可與預測性維護系統深度整合。透過結構健康監控，系統能夠提供故障預警，優化維護排程，並給出精確的零件更換建議。這使得製造商能夠從被動式維修轉向主動式資產管理，直接影響資產壽命和營運成本。透過模擬疲勞壽命和材料應力分佈，SAS 能夠在組件實際失效之前準確預測其可能失效的時間。這種整合的預測性維護將模擬洞察與來自資料織網的即時營運資料結合，提供結構健康監控、故障預警系統和維護排程優化。這項功能使製造商能夠將維護從成本中心轉變為價值驅動的資產管理策略，延長關鍵資產的營運壽命，最大程度地減少非計畫性停機時間，優化備件庫存，並顯著降低整體維護成本，直接有助於提高盈利能力和可持續性。</p>
+
+                    <h3>3.5 電池模組數位孿生解決方案建議</h3>
+
+                    <p>基於客戶對電池模組數位孿生系統規劃的興趣，SAS 可提供全面的解決方案。</p>
+
+                    <p>在<b>熱管理模擬</b>方面，SAS 能夠進行電池組溫度分佈模擬、冷卻策略優化、熱失控風險評估，以及充放電熱效應分析。這對於確保電池性能和安全性至關重要。</p>
+
+                    <p>在<b>結構安全分析</b>方面，解決方案涵蓋電池殼體應力分析、振動疲勞測試模擬、膨脹變形預測，以及安全係數計算。這些分析確保了電池模組在各種操作條件下的結構完整性。</p>
+
+                    <p>此外，SAS 還提供<b>整合監控系統</b>，包括即時狀態監控、預測性維護、效能優化建議和安全預警機制。這種多面向的模擬（熱流和結構）為複雜的電池系統提供了全面的視角，其中熱流和結構完整性是相互依存且對安全和性能至關重要的。模擬和預測熱失控風險是電池模組的一個重要安全考量，這對於防止災難性故障具有變革性意義。除了安全性，優化冷卻策略和理解充放電熱效應的能力直接影響電池效率、壽命和整體性能。整合監控系統將模擬預測與實際營運資料結合，允許動態調整和主動預警。這種專業的數位孿生解決方案將 SAS 定位為開發和部署電池技術的製造商的關鍵合作夥伴。它加速了研發（虛擬測試），增強了產品可靠性，優化了營運性能，最重要的是，顯著提高了電池從設計到報廢整個生命週期的安全性。這在全球電氣化和可持續能源解決方案的推動下尤為重要。</p>
+
+                    <h2>4. 策略性實施建議與協作夥伴關係</h2>
+
+                    <p>本章概述了實施 SAS 解決方案的務實分階段方法，並強調了合作夥伴關係的協作性質。</p>
+
+                    <h3>4.1 分階段實施策略</h3>
+
+                    <p>成功的數位孿生專案通常採用漸進式而非顛覆式的變革方法，並需要在技術、人員、流程三個層面進行整合規劃。基於此原則，本報告建議採取分階段實施策略，以確保順利導入並最大化價值。</p>
+
+                    <p><b>第一階段：資料基礎建設</b></p>
+                    <p>本階段的重點是為資料管理奠定基礎。主要活動包括資料織網平台的部署、核心資料來源的整合，以及基礎監控儀表板的建立。預期成果是建立一個統一、安全且高效能的資料基礎，為後續的進階分析做好準備。</p>
+
+                    <p><b>第二階段：應用場景開發</b></p>
+                    <p>本階段旨在利用已建立的資料基礎，創造即時的業務價值。主要活動包括 BOM 表資料整合的優化（作為特定範例，同時保持更廣泛的關注點）、即時查詢系統的建置，以及與關鍵業務流程的整合測試。預期成果是營運可視性與決策速度的顯著提升。</p>
+
+                    <p><b>第三階段：數位孿生導入</b></p>
+                    <p>本階段將引入進階模擬與預測能力。主要活動包括熱流模擬模型的建立、結構強度分析的整合，以及預測性維護系統的開發。預期成果是資產性能的提升、停機時間的減少，以及主動式風險管理能力的增強。</p>
+
+                    <p>這種分階段實施策略和對「漸進式而非顛覆式變革」的強調，不僅是專案管理策略，更是降低數位轉型風險和促進組織採用的策略性方法。每個階段都提供切實的價值，早期展示投資回報率，並為後續階段建立動力，從而避免了「大爆炸式」的失敗。分階段的方法允許組織在專案進行過程中學習、適應和完善需求，並納入早期採用者的回饋。逐步引入數位孿生等複雜技術，可以降低員工對變革的抵觸情緒，為技能發展和流程調整留出時間（強調人員和流程整合）。它還允許隨著時間推移更易於管理的資源（技術、財務、人力）分配。這種策略對於製造業中複雜數位轉型計畫的長期成功至關重要。它確保技術不僅被部署，而且被有效採用、整合到日常營運中，並持續提供價值，將潛在的破壞轉化為可持續的競爭優勢。</p>
+
+                    <div class="overflow-x-auto my-4">
+                        <table class="min-w-full bg-white rounded-lg shadow-sm">
+                            <thead>
+                                <tr>
+                                    <th class="px-4 py-2">階段</th>
+                                    <th class="px-4 py-2">關鍵活動</th>
+                                    <th class="px-4 py-2">預期成果</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="px-4 py-2"><b>第一階段：資料基礎建設</b></td>
+                                    <td class="px-4 py-2">資料織網平台部署，核心資料來源整合，基礎監控儀表板建立</td>
+                                    <td class="px-4 py-2">統一的資料基礎</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-4 py-2"><b>第二階段：應用場景開發</b></td>
+                                    <td class="px-4 py-2">BOM 表資料整合優化，即時查詢系統建置，業務流程整合測試</td>
+                                    <td class="px-4 py-2">增強的營運可視性</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-4 py-2"><b>第三階段：數位孿生導入</b></td>
+                                    <td class="px-4 py-2">熱流模擬模型建立，結構強度分析整合，預測性維護系統開發</td>
+                                    <td class="px-4 py-2">預測性資產管理</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <p class="text-sm text-slate-500 text-center mb-6">表 5: 建議分階段實施路線圖</p>
+
+                    <h3>4.2 建議技術深度說明與協作規劃會議</h3>
+
+                    <p>為進一步探討具體細節並將解決方案與客戶的精確需求對齊，本報告建議舉行一次技術會議。擬議議程包括：資料織網架構深度說明（30分鐘）、即時資料整合展示（30分鐘）、數位孿生模擬案例分享（30分鐘），以及客戶需求對接與技術討論（30分鐘）。本次會議旨在促進詳細的技術交流和解決方案客製化。</p>
+
+                    <h3>4.3 全面實施後支援與長期夥伴關係</h3>
+
+                    <p>SAS 承諾提供全面的實施後支援與建立長期夥伴關係。支援服務包括技術培訓與知識轉移、客製化開發支援、系統維護與升級，以及效能調優建議。SAS 致力於與客戶建立長期的合作關係，確保解決方案能夠持續創造價值並不斷改進。</p>
+
+                    <h2>5. 結論與下一步規劃</h2>
+
+                    <p>本報告闡述了 SAS 如何透過其領先的資料織網、即時資料整合與查詢能力，以及先進的數位孿生模擬技術，為客戶提供一套全面的解決方案，以應對其在資料管理、即時洞察和複雜資產（如電池模組）模擬方面的需求。SAS Viya 平台作為這些解決方案的核心，不僅提供了強大的技術基石，更透過其雲端原生、開源整合與企業級安全特性，確保了客戶能夠在數位轉型中取得成功。</p>
+
+                    <p>為進一步探討技術細節或產品展示，建議客戶聯繫 SAS 團隊，安排技術會議、申請 POC 環境、規劃客製化方案，或進行報價與合約洽談。SAS 堅定致力於支持客戶邁向智慧化、預測性製造的旅程。</p>
+
+                    <h2>附錄：研究參考文獻與技術規格</h2>
+
+                    <h3>官方技術文件</h3>
+
+                    <ul>
+                        <li>SAS Viya 官方文件:
+                            <ul>
+                                <li>SAS Viya Platform: <a href="https://www.sas.com/en_us/software/viya.html">https://www.sas.com/en_us/software/viya.html</a></li>
+                                <li>SAS Viya System Requirements: <a href="https://support.sas.com/en/documentation/install-center/viya/system-requirements.html">https://support.sas.com/en/documentation/install-center/viya/system-requirements.html</a></li>
+                                <li>SAS Viya 技術支援: <a href="https://support.sas.com/en/software/sas-viya.html">https://support.sas.com/en/software/sas-viya.html</a></li>
+                                <li>SAS Viya Platform 基礎文件: <a href="https://documentation.sas.com/doc/en/calintro/latest/p1mf381di3nmsan1dmpq25b7w7ic.htm">https://documentation.sas.com/doc/en/calintro/latest/p1mf381di3nmsan1dmpq25b7w7ic.htm</a></li>
+                            </ul>
+                        </li>
+                    </ul>
+
+                    <h3>數位孿生技術資料</h3>
+
+                    <ul>
+                        <li>SAS Digital Twin 應用案例
+                            <ul>
+                                <li>"Modern manufacturing's triple play: Digital twins, analytics and IoT" - SAS 官方白皮書 <a href="https://www.sas.com/en_us/insights/articles/big-data/modern-manufacturing-s-triple-play-digital-twins-analytics-iot.html">https://www.sas.com/en_us/insights/articles/big-data/modern-manufacturing-s-triple-play-digital-twins-analytics-iot.html</a></li>
+                                <li>SAS 白皮書集: <a href="https://www.sas.com/en_us/whitepapers.html">https://www.sas.com/en_us/whitepapers.html</a></li>
+                            </ul>
+                        </li>
+                        <li>學術研究與產業案例
+                            <ul>
+                                <li>"A case-study in the introduction of a digital twin in a large-scale smart manufacturing facility"
+                                    <ul>
+                                        <li>來源: ScienceDirect (2020)</li>
+                                        <li>網址: <a href="https://www.sciencedirect.com/science/article/pii/S2351978920320837">https://www.sciencedirect.com/science/article/pii/S2351978920320837</a></li>
+                                    </ul>
+                                </li>
+                                <li>"Digital twin in manufacturing: conceptual framework and case studies"
+                                    <ul>
+                                        <li>來源: Taylor & Francis Online (2022)</li>
+                                        <li>網址: <a href="https://www.tandfonline.com/doi/full/10.1080/0951192X.2022.2027014">https://www.tandfonline.com/doi/full/10.1080/0951192X.2022.2027014</a></li>
+                                    </ul>
+                                </li>
+                                <li>"Digital Twin Applications in Manufacturing Industry: A Case Study from a German Multi-National"
+                                    <ul>
+                                        <li>來源: MDPI Future Internet (2023)</li>
+                                        <li>網址: <a href="https://www.mdpi.com/1999-5903/15/9/282">https://www.mdpi.com/1999-5903/15/9/282</a></li>
+                                    </ul>
+                                </li>
+                            </ul>
+                        </li>
+                        <li>技術實作參考
+                            <ul>
+                                <li>製造業 Digital Twin 實作指南Digital Twin Case Studies: <a href="https://ismguide.com/ism-digital-twin-case-studies/">https://ismguide.com/ism-digital-twin-case-studies/</a> (2024)</li>
+                                <li>"Digital twin system for manufacturing processes based on a multi-layer knowledge graph model"
+                                    <ul>
+                                        <li>來源: Scientific Reports (2024)</li>
+                                        <li>網址: <a href="https://www.nature.com/articles/s41598-024-85053-0">https://www.nature.com/articles/s41598-024-85053-0</a></li>
+                                    </ul>
+                                </li>
+                            </ul>
+                        </li>
+                    </ul>
+
+                    <h3>平台整合資料</h3>
+
+                    <ul>
+                        <li>SAS Viya 4 新功能與整合
+                            <ul>
+                                <li>"What's new in SAS Viya 4?" - LACO 技術分析 (2021) 網址: <a href="https://www.laco.be/sas-viya-4-advantages/">https://www.laco.be/sas-viya-4-advantages/</a></li>
+                                <li>SAS Community 技術文件: <a href="https://communities.sas.com/t5/Administration-and-Deployment/New-Documentation-on-Getting-Started-with-the-SAS-Viya-Platform/td-p/939912">https://communities.sas.com/t5/Administration-and-Deployment/New-Documentation-on-Getting-Started-with-the-SAS-Viya-Platform/td-p/939912</a></li>
+                            </ul>
+                        </li>
+                        <li>補充技術資料
+                            <ul>
+                                <li>Data Fabric 與雲端整合Microsoft Fabric 整合文件 (基於搜尋結果整理)</li>
+                                <li>SAS Cloud Analytics Services (CAS) 技術規格</li>
+                                <li>容器化部署與 Kubernetes 支援文件</li>
+                            </ul>
+                        </li>
+                    </ul>
+
+                    <h3>重要技術特點總結</h3>
+
+                    <p>基於上述資料來源，以下為關鍵技術洞察：</p>
+
+                    <ul>
+                        <li><b>數位孿生在製造業的成熟度：</b>
+                            <ul>
+                                <li>根據 ScienceDirect 2020 年案例研究，數位孿生在大型製造設施中已有成功實作案例。</li>
+                                <li>主要應用於預測維護、品質控制、製程優化。</li>
+                                <li>技術整合包含物聯網感測器、邊緣運算、雲端分析平台。</li>
+                            </ul>
+                        </li>
+                        <li><b>SAS Viya 平台優勢：</b>
+                            <ul>
+                                <li>雲端原生架構，支援現代化 DevOps 流程。</li>
+                                <li>開源工具整合（R、Python、Jupyter）。</li>
+                                <li>企業級安全與治理機制。</li>
+                                <li>彈性的部署選項（公有雲、私有雲、混合雲）。</li>
+                            </ul>
+                        </li>
+                        <li><b>實作建議：</b>
+                            <ul>
+                                <li>根據 MDPI 2023 年德國跨國企業案例研究，成功的數位孿生專案通常採用漸進式而非顛覆式變革方法。</li>
+                                <li>需要在技術、人員、流程三個層面進行整合規劃。</li>
+                            </ul>
+                        </li>
+                    </ul>
+
+                    <p><b>備註：</b> 本文件內容將持續更新，以反映最新技術發展與客戶需求變化。所有技術資料均基於 SAS 官方文件與權威學術研究整理，確保資訊準確性與技術可行性。</p>
+                </div>
+            </div>
+        </section>
+
+        <footer id="contact" class="bg-slate-800 text-white">
+            <div class="container mx-auto px-6 py-16 text-center">
+                <h2 class="text-3xl font-bold">準備好邁向智慧製造了嗎？</h2>
+                <p class="mt-4 max-w-xl mx-auto">立即聯繫我們的專家，安排技術會議、申請 POC 環境或規劃您的客製化方案。</p>
+                 <div class="mt-8">
+                    <a href="#" class="bg-amber-500 text-white font-bold py-3 px-8 rounded-lg hover:bg-amber-600 transition-colors">立即洽詢</a>
+                </div>
+            </div>
+             <div class="border-t border-slate-700 py-4 text-center text-sm text-slate-400">
+                <p>&copy; 2025 SAS Institute Inc. All rights reserved.</p>
+            </div>
+        </footer>
+
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            
+            const sections = document.querySelectorAll('section');
+            const navLinks = document.querySelectorAll('.nav-link');
+
+            const observerOptions = {
+                root: null,
+                rootMargin: '0px',
+                threshold: 0.5
+            };
+
+            const observer = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        navLinks.forEach(link => {
+                            link.classList.remove('active');
+                            if (link.getAttribute('href').substring(1) === entry.target.id) {
+                                link.classList.add('active');
+                            }
+                        });
+                    }
+                });
+            }, observerOptions);
+
+            sections.forEach(section => {
+                observer.observe(section);
+            });
+
+
+            const viyaFeaturesChartCtx = document.getElementById('viyaFeaturesChart').getContext('2d');
+            new Chart(viyaFeaturesChartCtx, {
+                type: 'radar',
+                data: {
+                    labels: ['擴展性', '安全性', '開源整合', '效能優化', '治理能力', '部署靈活性'],
+                    datasets: [{
+                        label: 'SAS Viya 平台能力',
+                        data: [9, 9, 8, 9, 10, 8],
+                        backgroundColor: 'rgba(245, 158, 11, 0.2)',
+                        borderColor: 'rgba(245, 158, 11, 1)',
+                        borderWidth: 2,
+                        pointBackgroundColor: 'rgba(245, 158, 11, 1)',
+                        pointBorderColor: '#fff',
+                        pointHoverBackgroundColor: '#fff',
+                        pointHoverBorderColor: 'rgba(245, 158, 11, 1)'
+                    }]
+                },
+                options: {
+                    maintainAspectRatio: false,
+                    scales: {
+                        r: {
+                            angleLines: { color: 'rgba(0, 0, 0, 0.1)' },
+                            grid: { color: 'rgba(0, 0, 0, 0.1)' },
+                            pointLabels: { font: { size: 14 }, color: '#334155' },
+                            ticks: {
+                                backdropColor: 'transparent',
+                                color: '#64748b',
+                                stepSize: 2
+                            },
+                            suggestedMin: 0,
+                            suggestedMax: 10
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.dataset.label}: ${context.raw}`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            const integrationBenefitsData = {
+                labels: ['即時性', '準確性', '效率性', '擴展性'],
+                datasets: [{
+                    label: '效益提升',
+                    data: [95, 98, 85, 90],
+                    backgroundColor: [
+                        'rgba(59, 130, 246, 0.6)',
+                        'rgba(16, 185, 129, 0.6)',
+                        'rgba(245, 158, 11, 0.6)',
+                        'rgba(139, 92, 246, 0.6)'
+                    ],
+                    borderColor: [
+                        'rgba(59, 130, 246, 1)',
+                        'rgba(16, 185, 129, 1)',
+                        'rgba(245, 158, 11, 1)',
+                        'rgba(139, 92, 246, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            };
+            const integrationBenefitsChartCtx = document.getElementById('integrationBenefitsChart').getContext('2d');
+            const integrationBenefitsChart = new Chart(integrationBenefitsChartCtx, {
+                type: 'bar',
+                data: integrationBenefitsData,
+                options: {
+                    maintainAspectRatio: false,
+                    indexAxis: 'y',
+                    scales: {
+                        x: { beginAtZero: true, max: 100, grid: { display: false } },
+                        y: { grid: { display: false } }
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        title: { display: true, text: '整合後效益提升 (%)', font: {size: 16} }
+                    }
+                }
+            });
+
+            const toggleViewBtn = document.getElementById('toggleViewBtn');
+            const siloedView = document.getElementById('siloedView');
+            const integratedView = document.getElementById('integratedView');
+            const diagramTitle = document.getElementById('diagramTitle');
+            const diagramDescription = document.getElementById('diagramDescription');
+            let isIntegratedView = false;
+            toggleViewBtn.addEventListener('click', () => {
+                isIntegratedView = !isIntegratedView;
+                siloedView.classList.toggle('hidden');
+                integratedView.classList.toggle('hidden');
+                if (isIntegratedView) {
+                    toggleViewBtn.textContent = '切換至孤島視圖';
+                    diagramTitle.textContent = '解決方案：統一資料存取層';
+                    diagramDescription.textContent = '透過 Data Fabric 整合異質資料來源，實現單一資料視圖。';
+                } else {
+                    toggleViewBtn.textContent = '切換至整合視圖';
+                    diagramTitle.textContent = '現況：資料孤島';
+                    diagramDescription.textContent = '資料分散在不同系統，導致資訊延遲與決策困難。';
+                }
+            });
+
+            const digitalTwinCoreData = {
+                labels: ['預後與診斷', '線上/離線模擬', '控制系統整合', '監控與督導', '優化演算法', '即時回饋'],
+                datasets: [{
+                    data: [1, 1, 1, 1, 1, 1],
+                    backgroundColor: [
+                        'rgba(239, 68, 68, 0.7)',
+                        'rgba(245, 158, 11, 0.7)',
+                        'rgba(234, 179, 8, 0.7)',
+                        'rgba(34, 197, 94, 0.7)',
+                        'rgba(59, 130, 246, 0.7)',
+                        'rgba(139, 92, 246, 0.7)'
+                    ],
+                    hoverBackgroundColor: [
+                         '#ef4444', '#f59e0b', '#eab308', '#22c55e', '#3b82f6', '#8b5cf6'
+                    ],
+                    borderColor: '#fff',
+                    borderWidth: 2
+                }]
+            };
+            const digitalTwinCoreDescriptions = [
+                '預測未來故障並診斷問題根源。',
+                '支援即時營運調整和策略性「假設情境」規劃。',
+                '將模擬洞察直接回饋到營運控制系統。',
+                '提供全面的資產狀態監控。',
+                '將洞察轉化為可操作的建議，最大化效率。',
+                '確保系統能夠快速響應變化。'
+            ];
+            const coreFunctionDescEl = document.getElementById('coreFunctionDescription');
+            const digitalTwinCoreChartCtx = document.getElementById('digitalTwinCoreChart').getContext('2d');
+            const digitalTwinCoreChart = new Chart(digitalTwinCoreChartCtx, {
+                type: 'doughnut',
+                data: digitalTwinCoreData,
+                options: {
+                    maintainAspectRatio: false,
+                    responsive: true,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { boxWidth: 15, font: {size: 11} } },
+                        tooltip: { enabled: false }
+                    },
+                    onClick: (evt, elements) => {
+                        if (elements.length > 0) {
+                            const index = elements[0].index;
+                            coreFunctionDescEl.textContent = digitalTwinCoreDescriptions[index];
+                        }
+                    }
+                }
+            });
+
+            const tabContentEl = document.getElementById('tab-content');
+            const tabs = {
+                thermal: {
+                    title: '電池模組熱管理模擬',
+                    description: '有效的熱管理是確保電池性能、壽命和安全性的關鍵。SAS 提供多物理場耦合模擬，即時監控與預測溫度變化。',
+                    simId: 'thermalSim',
+                    buttonText: '執行熱流模擬',
+                    outputPrefix: '熱流分析結果',
+                    outputs: [
+                        "電池組溫度分佈模擬完成。最高溫點: 48.5°C。",
+                        "冷卻策略A優化建議：增加流速15%。",
+                        "熱失控風險評估：在目前負載下為低風險。",
+                        "充放電熱效應分析：高倍率放電下，核心溫度上升斜率為 3.2°C/min。"
+                    ]
+                },
+                structural: {
+                    title: '電池模組結構安全分析',
+                    description: '結構完整性確保電池在各種操作條件下的安全。SAS 提供強大的分析能力，預測材料應力與疲勞壽命。',
+                    simId: 'structuralSim',
+                    buttonText: '執行結構分析',
+                    outputPrefix: '結構強度分析結果',
+                    outputs: [
+                        "電池殼體應力分析完成。最大應力點位於固定支架。",
+                        "振動疲勞測試模擬：預估壽命為 5.2 萬次循環。",
+                        "膨脹變形預測：在極端溫度下，最大膨脹量為 0.3mm。",
+                        "安全係數計算：最小安全係數為 2.8，符合設計標準。"
+                    ]
+                }
+            };
+
+            function renderTabContent(tabKey) {
+                const tabData = tabs[tabKey];
+                tabContentEl.innerHTML = `
+                    <h4 class="text-xl font-bold mb-2">${tabData.title}</h4>
+                    <p class="text-slate-600 mb-4">${tabData.description}</p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div id="${tabData.simId}" class="p-4 border rounded-lg bg-slate-50 transition-all duration-500">
+                             <div class="h-40 bg-slate-200 rounded-md flex items-center justify-center relative overflow-hidden">
+                                <div class="w-2/3 h-2/3 bg-slate-400 rounded grid grid-cols-4 grid-rows-2 gap-1 p-1">
+                                    ${Array(8).fill(0).map((_, i) => `<div id="${tabData.simId}-cell-${i}" class="bg-slate-500 rounded-sm transition-colors duration-300"></div>`).join('')}
+                                </div>
+                             </div>
+                        </div>
+                        <div class="p-4">
+                            <button id="${tabData.simId}-btn" class="w-full bg-amber-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-amber-600 mb-4 transition-colors">${tabData.buttonText}</button>
+                            <div class="bg-gray-900 text-white font-mono text-sm rounded-lg p-4 h-40 overflow-y-auto">
+                                <p class="text-green-400">> ${tabData.outputPrefix}:</p>
+                                <div id="${tabData.simId}-output">
+                                <p>> 等待指令...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                const simBtn = document.getElementById(`${tabData.simId}-btn`);
+                const outputEl = document.getElementById(`${tabData.simId}-output`);
+                let outputIndex = 0;
+                simBtn.addEventListener('click', () => {
+                    if (outputIndex >= tabData.outputs.length) {
+                        outputIndex = 0;
+                        outputEl.innerHTML = '<p>> 重新開始模擬...</p>';
+                    }
+                    
+                    const newP = document.createElement('p');
+                    newP.textContent = `> ${tabData.outputs[outputIndex]}`;
+                    outputEl.appendChild(newP);
+                    outputEl.scrollTop = outputEl.scrollHeight;
+                    
+                    for (let i = 0; i < 8; i++) {
+                        const cell = document.getElementById(`${tabData.simId}-cell-${i}`);
+                        if (Math.random() > 0.5) {
+                           cell.className = `bg-red-500 rounded-sm transition-colors duration-300`;
+                        } else {
+                           cell.className = `bg-green-500 rounded-sm transition-colors duration-300`;
+                        }
+                    }
+                    
+                    outputIndex++;
+                    
+                    setTimeout(() => {
+                         for (let i = 0; i < 8; i++) {
+                            document.getElementById(`${tabData.simId}-cell-${i}`).className = 'bg-slate-500 rounded-sm transition-colors duration-300';
+                        }
+                    }, 1500);
+                });
+            }
+
+            const tabButtons = document.querySelectorAll('.tab-btn');
+            tabButtons.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    tabButtons.forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    renderTabContent(btn.dataset.tab);
+                });
+            });
+
+            renderTabContent('thermal');
+            
+            const phaseDetails = {
+                '1': {
+                    activities: ['Data Fabric 平台部署', '核心資料來源整合', '基礎監控儀表板建立'],
+                    outcome: '建立一個統一、安全且高效能的資料基礎，為後續的進階分析做好準備。'
+                },
+                '2': {
+                    activities: ['BOM 表資料整合優化', '即時查詢系統建置', '業務流程整合測試'],
+                    outcome: '顯著提升營運可視性與決策速度，實現即時業務價值。'
+                },
+                '3': {
+                    activities: ['熱流模擬模型建立', '結構強度分析整合', '預測性維護系統開發'],
+                    outcome: '提升資產性能、減少停機時間，並增強主動式風險管理能力。'
+                }
+            };
+
+            document.querySelectorAll('.phase-button').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    const phase = e.currentTarget.dataset.phase;
+                    const contentEl = document.getElementById(`phase-content-${phase}`);
+                    const isActive = contentEl.classList.contains('active');
+
+                    document.querySelectorAll('.phase-content').forEach(el => {
+                        el.style.maxHeight = '0';
+                        el.classList.remove('active');
+                        el.innerHTML = '';
+                    });
+                    
+                    if (!isActive) {
+                         const details = phaseDetails[phase];
+                         contentEl.innerHTML = `
+                            <div class="mt-4 md:mt-0 p-6 bg-white border border-slate-200 rounded-xl shadow-inner">
+                                <h4 class="font-bold text-slate-800">關鍵活動</h4>
+                                <ul class="list-disc list-inside text-slate-600 mt-2 mb-4">
+                                    ${details.activities.map(act => `<li>${act}</li>`).join('')}
+                                </ul>
+                                <h4 class="font-bold text-slate-800">預期成果</h4>
+                                <p class="text-slate-600 mt-2">${details.outcome}</p>
+                            </div>
+                         `;
+                        contentEl.style.maxHeight = contentEl.scrollHeight + "px";
+                        contentEl.classList.add('active');
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
