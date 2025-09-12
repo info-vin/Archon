@@ -317,12 +317,18 @@ sequenceDiagram
         2.  **方案 B (Postpone)**: 暫時擱置 `gemini-log-api` 的功能，先確保 `main` 分支的穩定性與可部署性，待 `main` 分支成功部署後，再回頭重新評估 `gemini-log-api` 的整合方案。
     - **產出**: 一份明確的決策，以及後續的執行計畫。在完成此任務前，應暫緩 `enduser-ui-fe` 的大規模開發。
 
-- **[ ] 建立並驗證部署 SOP (Standard Operating Procedure)**
+- **[x] 建立並驗證部署 SOP (Standard Operating Procedure)**
     - **問題**: 缺乏標準化的部署流程，導致部署過程中出現重複、遺漏和錯誤。
     - **目標**:
         1.  在 `CONTRIBUTING_tw.md` 中，完成「部署策略與分支管理」章節的撰寫。
         2.  由「系統維護專家」Agent，遵循新建立的 SOP，成功將 `main` 分支部署到 Render 一次。
     - **產出**: 一個經過驗證、所有人都可遵循的部署流程文件。
+    - **狀態**: **已在 `spike/verify-deployment-pipeline` 分支完成草稿。**
+
+- **[ ] 分析並解決 `main` 與 `feature/gemini-log-api` 的遷移腳本 (`migration/`) 衝突**
+    - **問題**: `git diff` 分析顯示，兩個分支的 `migration/` 目錄存在嚴重分歧 (`add_hybrid_search_tsvector.sql` vs `create_gemini_logs_table.sql` 等)，直接合併將導致資料遺失。
+    - **目標**: 制定一個安全的計畫來合併兩個分支的資料庫遷移腳本，確保所有變更都按順序保留。
+    - **前置條件**: 此任務必須在分支整合策略決定後進行。
 
 ---
 
@@ -333,4 +339,5 @@ sequenceDiagram
     - **分支**:
         - **來源 (Source)**: `feature/gemini-log-api`
         - **目標 (Target)**: `spike/verify-deployment-pipeline`
+    - **前置任務**: 此任務**必須**在 `Phase 2.6` 的分支策略與遷移腳本衝突解決後才能進行。
     - **後續**: 整合完成後，可將 `spike` 分支重新部署到 Render 進行端對端驗證。

@@ -1,0 +1,58 @@
+# Deployment Verification Log for spike/verify-deployment-pipeline
+
+## Date
+2025-09-10
+
+## Initial Test
+
+### Action
+1. Checked out `spike/verify-deployment-pipeline`.
+2. Ran `docker compose --profile full up -d --build` to simulate deployment.
+3. Ran `curl http://localhost:8181/health` to verify service health.
+
+### Result: FAILURE
+The deployment was successful in that the service started, but the service itself is not healthy because the database schema is out of date.
+
+#### Health Check Output:
+```json
+{
+  "status": "migration_required",
+  "service": "archon-backend",
+  "timestamp": "2025-09-10T04:58:18.859024",
+  "ready": false,
+  "migration_required": true,
+  "message": "Database schema outdated - missing required columns from recent updates",
+  "migration_instructions": "Open Supabase Dashboard → SQL Editor → Run: migration/add_source_url_display_name.sql",
+  "schema_valid": false
+}
+```
+
+### Analysis
+The backend service started but is not in a ready state because the database schema is outdated. A migration needs to be run. The required migration script is `migration/add_source_url_display_name.sql`.
+
+---
+
+## Re-verification after Fix
+
+### Action
+1. User executed the database migration script `migration/add_source_url_display_name.sql` in Supabase.
+2. Restarted Docker services.
+3. Ran `curl http://localhost:8181/health` again.
+
+### Result: SUCCESS
+The health check was successful.
+
+#### Health Check Output:
+```json
+{
+  "status": "healthy",
+  "service": "archon-backend",
+  "timestamp": "2025-09-10T05:54:08.260557",
+  "ready": true,
+  "credentials_loaded": true,
+  "schema_valid": true
+}
+```
+
+### Conclusion
+The root cause of the deployment issue was confirmed to be the outdated database schema. Applying the necessary migration resolves the issue.

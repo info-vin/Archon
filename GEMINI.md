@@ -67,10 +67,14 @@ SUPABASE_SERVICE_KEY=your-service-key-here
 
 ## 專案近期動態與結論 (Recent Project Updates & Key Decisions)
 
-- **部署管道驗證成功 (2025-09-10)**:
-  - **任務**: 成功完成 `spike/verify-deployment-pipeline` 任務，驗證了後端服務在 Render 平台上的部署流程。
-  - **環境修復**: 解決了首次部署時遇到的五大設定問題（Dockerfile 路徑、根目錄、啟動指令、Port 綁定、健康檢查寬限期）。
-  - **產出**: 相關的除錯經驗與最佳實踐，已作為「Render 部署除錯實戰指南」歸檔至 `CONTRIBUTING_tw.md`，為未來的穩定部署奠定基礎。
+- **分支策略與部署流程釐清 (2025-09-12)**:
+  - **發現問題**: 經分析，`main` (及其衍生的 `spike` 分支) 與 `feature/gemini-log-api` 分支在**資料庫遷移腳本 (`migration/`)** 上存在嚴重分歧，直接合併風險極高。
+  - **核心決策**: 暫停所有分支合併活動。當前最優先任務是**建立一份完整、可驗證的部署標準作業流程 (SOP)**，並將其記錄在預計用於部署的 `spike/verify-deployment-pipeline` 分支上。
+  - **產出**:
+    1. 在 `spike` 分支上更新 `CONTRIBUTING_tw.md`，包含詳細的後端與前端部署SOP。
+    2. 在 `spike` 分支上更新 `TODO.md`，明確標示出 `migration/` 的衝突問題，並將其設為分支合併的前置任務。
+    3. 將 `deployment_verification_log.txt` 複製到 `spike` 分支，以保留關鍵的除錯歷史。
+    4. 將此結論記錄於 `GEMINI.md`。
 
 - **後端重構 (2025-09-08)**:
   - **RBAC 服務化**: 遵循 Phase 2.5 的規劃，已將分散在 API 路由的權限邏輯，統一遷移至專門的 `RBACService`，提升了程式碼的內聚性與可維護性。

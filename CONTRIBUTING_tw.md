@@ -228,76 +228,6 @@ def test_your_api_endpoint(client, mock_supabase_client):
 
 ## 部署策略與分支管理 (Deployment Strategy & Branch Management)
 
-### **部署標準作業流程 (SOP) - 修訂版**
-
-此流程的最終目標，是成功部署 `TODO.md` 中 2.7 節及之前所定義的所有核心功能，包括後端 RBAC、檔案上傳、日誌紀錄，以及前端的任務指派、附件顯示等。
-
-#### **階段一：部署前本地檢查 (Pre-Deployment Checks)**
-
-在推送任何程式碼到 Render 之前，必須在本地嚴格執行 `CONTRIBUTING_tw.md` 中定義的檢查清單，確保程式碼的穩定性。
-
-1.  **同步最新程式碼**:
-    ```bash
-    git checkout main
-    git pull origin main
-    ```
-2.  **執行完整測試 (關鍵步驟)**: 這是為了避免「測試又錯一堆」的狀況。此指令會涵蓋前後端的所有測試。
-    ```bash
-    make test
-    ```
-3.  **執行 Lint 檢查**:
-    ```bash
-    make lint-be
-    ```
-    只有當以上所有指令都成功通過後，才能進入下一階段。
-
-#### **階段二：資料庫遷移 (Database Migration)**
-
-部署新功能前，必須確保 Supabase 資料庫的結構與程式碼的期望一致。
-
-1.  **登入 Supabase 儀表板**。
-2.  **進入 SQL Editor**。
-3.  **依序執行**以下 `migration/` 目錄中尚未執行過的遷移腳本：
-    *   `20250905_add_customers_and_vendors_tables.sql` (如果需要)
-    *   為 `archon_tasks` 表新增 `attachments` 欄位的腳本。
-    *   `20250901_create_gemini_logs_table.sql` (用於 Phase 2.4 的日誌功能)。
-
-#### **階段三：Render 服務設定 (Infrastructure Setup)**
-
-此階段在 Render 上設定三個獨立的服務。
-
-1.  **部署後端 (`archon-server`)**:
-    *   **類型**: `Web Service`
-    *   **設定**: 完全依照本文件「Render 部署除錯實戰指南」章節中的後端設定（Root Directory: `python` 等）。
-
-2.  **部署管理後台 (`archon-ui-main`)**:
-    *   **類型**: `Web Service`
-    *   **設定**:
-        *   **Root Directory**: `archon-ui-main`
-        *   **Dockerfile Path**: `archon-ui-main/Dockerfile`
-        *   **Start Command**: `(保持空白)`
-        *   **Port**: `5173`
-
-3.  **部署使用者介面 (`enduser-ui-fe`)**:
-    *   **類型**: `Web Service`
-    *   **設定**:
-        *   **Root Directory**: `enduser-ui-fe`
-        *   **Dockerfile Path**: `enduser-ui-fe/Dockerfile`
-        *   **Start Command**: `(保持空白)`
-        *   **Port**: `5173`
-
-#### **階段四：部署後驗證 (Post-Deployment Verification)**
-
-1.  **部署後端服務**，等待其上線。
-2.  **複製後端網址**，並將其設定為兩個前端服務的 `VITE_API_URL` 環境變數，然後觸發前端服務的部署。
-3.  **監控日誌**: 分別檢查三個服務在 Render 上的部署日誌，確保沒有任何錯誤訊息。
-4.  **健康檢查**: 存取後端服務的 `/health` 端點，確認回傳 `{"status":"ok"}`。
-5.  **功能驗證 (Smoke Test)**:
-    *   打開 `enduser-ui-fe` 的公開網址，嘗試登入並查看任務列表。
-    *   打開 `archon-ui-main` 的公開網址，確認管理儀表板能正常載入。
-
----
-
 為了避免因流程不清導致的部署失敗，並確保每次上線的程式碼都穩定可靠，所有團隊成員應遵循以下策略。
 
 ### 1. 部署環境 (Deployment Environment)
@@ -309,43 +239,76 @@ def test_your_api_endpoint(client, mock_supabase_client):
 - **`feature` 分支**: 所有新功能開發、錯誤修復或重構，都必須在**獨立的 `feature/...` 分支**上進行。
 - **合併流程**: 功能開發完成後，應發起 Pull Request (PR) 合併至 `main` 分支。PR 必須經過至少一位團隊成員審查，並確保所有自動化檢查 (CI) 都已通過。
 
-### 3. 部署前檢查清單 (Pre-Deployment Checklist)
-在執行部署指令前，**必須**在本地完成以下所有檢查：
+### 3. 部署標準作業流程 (SOP) - 修訂版 v1.1
+
+此流程的最終目標，是成功部署一個穩定的版本到 Render，包含所有已完成的核心功能。
+
+#### **階段一：部署前本地檢查 (Pre-Deployment Checks)**
+
+在推送任何程式碼到 Render 之前，必須在本地嚴格執行以下檢查清單，確保程式碼的穩定性。
 
 1.  **同步最新程式碼**:
     ```bash
-    git checkout main
-    git pull origin main
+    # 根據你的目標分支，例如 main 或 spike/...
+    git checkout <your-target-branch>
+    git pull origin <your-target-branch>
     ```
-2.  **執行完整測試**: 確保所有後端與前端測試都通過。這是避免將有問題的程式碼部署到生產環境的關鍵防線。
+2.  **執行完整測試 (關鍵步驟)**: 這是為了避免「測試又錯一堆」的狀況。此指令會涵蓋前後端的所有測試。
     ```bash
     make test
     ```
-3.  **執行 Lint 檢查**: 確保程式碼風格一致。
+3.  **執行 Lint 檢查**:
     ```bash
     make lint-be
-    # (未來應加入 make lint-fe)
     ```
-4.  **(可選但建議) 本地 Docker 建置**: 驗證 Dockerfile 與相關設定是否正確，能成功建置映像。
-    ```bash
-    docker-compose build
-    ```
+    只有當以上所有指令都成功通過後，才能進入下一階段。
 
-### 4. 部署指令 (Deployment Command)
-- 當 `main` 分支準備就緒後，使用以下指令觸發 Render 部署：
+#### **階段二：資料庫遷移 (Database Migration) - 關鍵手動步驟**
+
+**這是最容易出錯的步驟！** 根據 `deployment_verification_log.txt` 的經驗，應用程式會因為資料庫結構未更新而無法啟動。
+
+1.  **登入 Supabase 儀表板**。
+2.  **進入 SQL Editor**。
+3.  **比對並依序執行** `migration/` 目錄中，尚未在 Supabase 中執行過的遷移腳本。請仔細確認執行順序。
+
+#### **階段三：Render 服務設定 (Infrastructure Setup)**
+
+此階段在 Render 上設定三個獨立的服務。這些設定通常只需要在專案初次設定時執行。
+
+1.  **部署後端 (`archon-server`)**:
+    *   **類型**: `Web Service`
+    *   **設定**: 完全依照本文件「Render 部署除錯實戰指南」章節中的後端設定（Root Directory: `python` 等）。
+
+2.  **部署管理後台 (`archon-ui-main`)**:
+    *   **類型**: `Static Site`
+    *   **Root Directory**: `archon-ui-main`
+    *   **Build Command**: `npm install && npm run build`
+    *   **Publish Directory**: `archon-ui-main/dist`
+    *   **環境變數**: 新增 `VITE_API_URL`，其值為後端服務的公開網址。
+
+3.  **部署使用者介面 (`enduser-ui-fe`)**:
+    *   **類型**: `Static Site`
+    *   **Root Directory**: `enduser-ui-fe`
+    *   **Build Command**: `npm install && npm run build`
+    *   **Publish Directory**: `enduser-ui-fe/dist`
+    *   **環境變數**: 新增 `VITE_API_URL`，其值為後端服務的公開網址。
+
+#### **階段四：執行部署 (Deployment Execution)**
+- 當 `main` 或目標分支準備就緒後，使用以下指令觸發 Render 部署：
   ```bash
-  git push render main
+  # 假設你的 Render remote 叫做 render
+  git push render <your-target-branch>:main
   ```
 
-### 5. 部署後驗證 (Post-Deployment Verification)
-- 部署指令執行後，**務必**前往 Render Dashboard，即時查看服務的部署日誌。
-- **確認事項**:
-  - 部署程序是否成功完成。
-  - 服務是否已重新啟動。
-  - **沒有**任何錯誤訊息（如 `Invalid API key`, `ModuleNotFoundError`, 路徑錯誤等）。
-- 如果出現任何錯誤，應立即根據日誌進行除錯，或考慮回滾到上一個穩定版本。
+#### **階段五：部署後驗證 (Post-Deployment Verification)**
 
-### 6. Render 部署除錯實戰指南 (Render Deployment Debugging Guide)
+1.  **監控日誌**: 分別檢查三個服務在 Render 上的部署日誌，確認建置 (build) 和服務啟動 (live) 過程沒有任何錯誤訊息。
+2.  **健康檢查**: 存取後端服務的 `/health` 端點，確認回傳 `{"status":"ok"}` 或 `{"status":"healthy"}`。
+3.  **功能驗證 (Smoke Test)**:
+    *   打開 `enduser-ui-fe` 的公開網址，嘗試登入並查看任務列表。
+    *   打開 `archon-ui-main` 的公開網址，確認管理儀表板能正常載入。
+
+### 4. Render 部署除錯實戰指南 (Render Deployment Debugging Guide)
 
 根據 `spike/verify-deployment-pipeline` 的部署驗證任務，我們總結了首次在 Render 上部署後端服務時，最關鍵的五個設定。如果遇到部署失敗，請優先檢查這些項目：
 
