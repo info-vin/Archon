@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import DashboardPage from './DashboardPage';
 import React from 'react';
@@ -10,34 +10,49 @@ vi.mock('../services/api', () => {
     { id: '3', name: 'AI Assistant', role: 'ai_agent' },
   ];
 
+  // Combined mock tasks for all test cases
   const mockTasks = [
-      { 
-          id: 'task-1', 
-          project_id: 'proj-1', 
-          title: 'Human task', 
-          description: '', 
-          status: 'review', 
-          assignee: 'Alice Johnson', 
-          task_order: 1, 
-          priority: 'high', 
-          due_date: '2025-09-10T23:59:59Z', 
-          created_at: '2025-07-10T10:00:00Z', 
-          updated_at: '2025-07-15T10:00:00Z', 
-          attachments: [] 
+      {
+          id: 'task-1',
+          project_id: 'proj-1',
+          title: 'Human task',
+          description: '',
+          status: 'review',
+          assignee: 'Alice Johnson',
+          task_order: 1,
+          priority: 'high',
+          due_date: '2025-09-10T23:59:59Z',
+          created_at: '2025-07-10T10:00:00Z',
+          updated_at: '2025-07-15T10:00:00Z',
+          attachments: []
       },
-      { 
-          id: 'task-2', 
-          project_id: 'proj-1', 
-          title: 'AI task', 
-          description: '', 
-          status: 'doing', 
-          assignee: 'AI Assistant', 
-          task_order: 2, 
-          priority: 'low', 
-          due_date: '2025-09-11T23:59:59Z', 
-          created_at: '2025-07-11T10:00:00Z', 
-          updated_at: '2025-07-16T10:00:00Z', 
-          attachments: [] 
+      {
+          id: 'task-2',
+          project_id: 'proj-1',
+          title: 'AI task',
+          description: '',
+          status: 'doing',
+          assignee: 'AI Assistant',
+          task_order: 2,
+          priority: 'low',
+          due_date: '2025-09-11T23:59:59Z',
+          created_at: '2025-07-11T10:00:00Z',
+          updated_at: '2025-07-16T10:00:00Z',
+          attachments: []
+      },
+      {
+          id: 'task-4',
+          project_id: 'proj-1',
+          title: 'Fix authentication bug',
+          description: 'Users are reporting intermittent login failures.',
+          status: 'review',
+          assignee: 'Alice Johnson',
+          task_order: 3,
+          priority: 'high',
+          due_date: '2025-09-10T23:59:59Z',
+          created_at: '2025-07-10T10:00:00Z',
+          updated_at: '2025-07-15T10:00:00Z',
+          attachments: ['https://example.com/debug-log.txt', 'https://example.com/screenshot-error.png']
       }
   ];
 
@@ -75,8 +90,12 @@ describe('DashboardPage', () => {
       expect(screen.getByText('AI task')).toBeInTheDocument();
     });
 
-    const humanAvatar = screen.getByTitle('Alice Johnson');
-    const aiAvatar = screen.getByTitle('AI Assistant');
+    // Scope queries to within the specific task item to avoid ambiguity
+    const humanTaskItem = screen.getByText('Human task').closest('.p-4');
+    const aiTaskItem = screen.getByText('AI task').closest('.p-4');
+
+    const humanAvatar = within(humanTaskItem).getByTitle('Alice Johnson');
+    const aiAvatar = within(aiTaskItem).getByTitle('AI Assistant');
 
     expect(humanAvatar).toBeInTheDocument();
     expect(aiAvatar).toBeInTheDocument();
@@ -85,5 +104,26 @@ describe('DashboardPage', () => {
     expect(humanAvatar.style.borderRadius).toBe('50%');
     // AI avatars are square with rounded corners
     expect(aiAvatar.style.borderRadius).toBe('8px');
+  });
+
+  it('should display attachments for tasks that have them', async () => {
+    render(<DashboardPage />);
+
+    // Wait for the task with the specific title to be rendered
+    await waitFor(() => {
+      expect(screen.getByText('Fix authentication bug')).toBeInTheDocument();
+    });
+
+    // Find the attachment links by their text content (the filename)
+    const attachmentLink1 = screen.getByText('debug-log.txt');
+    const attachmentLink2 = screen.getByText('screenshot-error.png');
+
+    // Assert that the links are present
+    expect(attachmentLink1).toBeInTheDocument();
+    expect(attachmentLink2).toBeInTheDocument();
+
+    // Assert that the links have the correct href attribute
+    expect(attachmentLink1).toHaveAttribute('href', 'https://example.com/debug-log.txt');
+    expect(attachmentLink2).toHaveAttribute('href', 'https://example.com/screenshot-error.png');
   });
 });
