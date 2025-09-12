@@ -265,11 +265,20 @@ def test_your_api_endpoint(client, mock_supabase_client):
 
 #### **階段二：資料庫遷移 (Database Migration) - 關鍵手動步驟**
 
-**這是最容易出錯的步驟！** 根據 `GEMINI.md` 中記錄的 2025-09-10 部署經驗，應用程式會因為資料庫結構未更新而無法啟動。
+**這是最容易出錯的步驟！** 根據 `GEMINI.md` 中記錄的部署經驗，應用程式會因為資料庫結構未更新而無法啟動。在部署新版本前，**必須**手動執行遷移腳本。
 
 1.  **登入 Supabase 儀表板**。
 2.  **進入 SQL Editor**。
-3.  **比對並依序執行** `migration/` 目錄中，尚未在 Supabase 中執行過的遷移腳本。請仔細確認執行順序。
+3.  **依序執行以下腳本**：此順序整合了 `spike` 與 `feature` 分支的變更，確保所有功能正常運作。請嚴格按照順序執行，並跳過已執行過的腳本。
+
+    1.  `RESET_DB.sql` (*可選，僅用於開發環境，會清空所有資料*)
+    2.  `add_source_url_display_name.sql`
+    3.  `add_hybrid_search_tsvector.sql`
+    4.  `20250829_add_attachments_to_tasks.sql`
+    5.  `20250901_create_gemini_logs_table.sql`
+    6.  `20250905_add_customers_and_vendors_tables.sql`
+    7.  `complete_setup.sql`
+    8.  `seed_mock_data.sql`
 
 #### **階段三：Render 服務設定 (Infrastructure Setup)**
 
