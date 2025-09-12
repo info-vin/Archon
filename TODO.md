@@ -12,7 +12,7 @@
     - **狀態**: **已完成**。已從 `spike/verify-deployment-pipeline` 建立 `feature/e2e-file-upload` 分支。
     - **說明**: 所有移植工作都將在此分支上進行，以確保 `spike` 分支的穩定。
 
-- **[ ] 第二步：移植後端服務與 Agent 工具**
+- **[x] 第二步：移植後端服務與 Agent 工具**
     - **目標**: 手動將 `file_tools.py`, `storage_service.py`, `task_service.py` 和 `document_agent.py` 的相關程式碼，從 `feature` 分支複製並合併到本分支。
     - **相依性分析**: 在移植過程中，需特別注意 `Phase 2.5` 中尚未完成的重構項目（例如：寫死的角色 `current_user_role`）。需評估這些技術債對「Agent 上傳檔案」功能的影響，並在移植時一併考慮解決或繞過。
     - **驗證**: 完成後，執行 `make test-be` 確保後端測試通過。
