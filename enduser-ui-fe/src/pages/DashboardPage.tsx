@@ -42,8 +42,7 @@ const DashboardPage: React.FC = () => {
   const [selectedProjectId, setSelectedProjectId] = useState<string>('all');
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [sortConfig, setSortConfig] = useState<{ key: SortableTaskKeys; direction: SortDirection } | null>({ key: 'created_at', direction: 'ascending'});
-
+  const [sortConfig, setSortConfig] = useState<{ key: SortableTaskKeys; direction: SortDirection } | null>({ key: 'created_at', direction: 'ascending' });
 
   useEffect(() => {
     const fetchData = async () => {
@@ -105,7 +104,6 @@ const DashboardPage: React.FC = () => {
     return projects.find(p => p.id === selectedProjectId);
   }, [projects, selectedProjectId]);
 
-
   const updateTaskStatus = useCallback((taskId: string, newStatus: TaskStatus) => {
     setTasks(prevTasks => prevTasks.map(task =>
       task.id === taskId ? { ...task, status: newStatus } : task
@@ -124,7 +122,6 @@ const DashboardPage: React.FC = () => {
       alert(`Failed to create task: ${error.message}`);
     }
   };
-
 
   if (loading) return <div className="flex items-center justify-center h-full">Loading tasks...</div>;
 

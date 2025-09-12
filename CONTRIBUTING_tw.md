@@ -199,6 +199,17 @@ def test_your_api_endpoint(client, mock_supabase_client):
 
 ---
 
+### Git 工作流程常見問題 (Git Workflow FAQ)
+
+1.  **`git cherry-pick --continue` 卡住**
+    *   **問題**: 在解決衝突並 `git add` 檔案後，執行 `git cherry-pick --continue` 指令卡住，沒有任何反應。
+    *   **原因**: 這通常發生在非互動式的指令環境中。`cherry-pick` 預設會嘗試打開文字編輯器來讓您確認 commit message，或觸發 GPG 簽章的密碼輸入提示，這些都會導致流程卡住。
+    *   **解法**: 使用 `--no-edit` 和 `--no-gpg-sign` 兩個參數，可以繞過所有互動環節。
+        ```bash
+        # 解決衝突並 add 檔案後，執行此指令
+        git cherry-pick --continue --no-edit --no-gpg-sign
+        ```
+
 ### **標準提交與推送工作流程 (Commit & Push Workflow)**
 
 ...

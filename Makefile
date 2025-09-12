@@ -15,6 +15,8 @@ help:
 	@echo "  make stop       - Stop all services"
 	@echo "  make test       - Run all tests"
 	@echo "  make test-fe    - Run frontend tests only"
+	@echo "  make test-fe-project project=<project> - Run tests for a specific frontend project"
+	@echo "  make test-fe-single project=<project> test=<test> - Run a single frontend test"
 	@echo "  make test-be    - Run backend tests only"
 	@echo "  make lint       - Run all linters"
 	@echo "  make lint-fe    - Run frontend linter only"
@@ -26,17 +28,20 @@ help:
 # Install dependencies
 install:
 	@echo "Installing dependencies..."
-	@cd archon-ui-main && npm install
+	@cd enduser-ui-fe && npm install
 	@cd python && uv sync --group all --group dev
 	@echo "✓ Dependencies installed"
 
+# NOTE: The following check target uses syntax that is not compatible with Windows cmd/PowerShell.
+# It will cause an error on Windows systems.
 # Check environment
 check:
 	@echo "Checking environment..."
+	@node -v >/dev/null 2>&1 || { echo "✗ Node.js not found (require Node 18+)."; exit 1; }
 	@node check-env.js
 	@echo "Checking Docker..."
-	@docker --version > /dev/null
-	@$(COMPOSE) version > /dev/null
+	@docker --version > /dev/null 2>&1 || { echo "✗ Docker not found"; exit 1; }
+	@$(COMPOSE) version > /dev/null 2>&1 || { echo "✗ Docker Compose not found"; exit 1; }
 	@echo "✓ Environment OK"
 
 
@@ -72,12 +77,27 @@ test: test-fe test-be
 
 # Run frontend tests
 test-fe:
-	@echo "Running frontend tests..."
-	@cd archon-ui-main && npm test
+	@echo "Running frontend tests for enduser-ui-fe..."
+	@cd enduser-ui-fe && npm test
+
+# 2. 測試特定前端子專案 (Test a specific frontend subproject)
+#    用法 (Usage): make test-fe-project project=<project_name>
+#    範例 (Example): make test-fe-project project=enduser-ui-fe
+test-fe-project:
+	@echo "Running frontend tests for $(project)..."
+	@cd $(project) && npm test
+
+# 3. 測試特定單一前端測試 (Test a single frontend test)
+#    用法 (Usage): make test-fe-single project=<project_name> test=<test_name>
+#    範例 (Example): make test-fe-single project=enduser-ui-fe test="TaskModal"
+test-fe-single:
+	@echo "Running single frontend test '$(test)' in $(project)..."
+	@cd $(project) && npm test -- -t "$(test)"
 
 # Run backend tests
 test-be:
 	@echo "Running backend tests..."
+	@cd python && uv sync --extra dev --extra mcp --extra agents
 	@cd python && uv run pytest
 
 # Run all linters
@@ -85,12 +105,13 @@ lint: lint-fe lint-be
 
 # Run frontend linter
 lint-fe:
-	@echo "Linting frontend..."
-	@cd archon-ui-main && npm run lint
+	@echo "Linting enduser-ui-fe..."
+	@cd enduser-ui-fe && npm run lint
 
 # Run backend linter
 lint-be:
 	@echo "Linting backend..."
+	@cd python && uv sync --extra dev
 	@cd python && uv run ruff check --fix
 
 # Clean everything (with confirmation)
