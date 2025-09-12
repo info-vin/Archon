@@ -265,7 +265,7 @@ def test_your_api_endpoint(client, mock_supabase_client):
 
 #### **階段二：資料庫遷移 (Database Migration) - 關鍵手動步驟**
 
-**這是最容易出錯的步驟！** 根據 `deployment_verification_log.txt` 的經驗，應用程式會因為資料庫結構未更新而無法啟動。
+**這是最容易出錯的步驟！** 根據 `GEMINI.md` 中記錄的 2025-09-10 部署經驗，應用程式會因為資料庫結構未更新而無法啟動。
 
 1.  **登入 Supabase 儀表板**。
 2.  **進入 SQL Editor**。

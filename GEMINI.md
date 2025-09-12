@@ -67,14 +67,17 @@ SUPABASE_SERVICE_KEY=your-service-key-here
 
 ## 專案近期動態與結論 (Recent Project Updates & Key Decisions)
 
-- **分支策略與部署流程釐清 (2025-09-12)**:
-  - **發現問題**: 經分析，`main` (及其衍生的 `spike` 分支) 與 `feature/gemini-log-api` 分支在**資料庫遷移腳本 (`migration/`)** 上存在嚴重分歧，直接合併風險極高。
-  - **核心決策**: 暫停所有分支合併活動。當前最優先任務是**建立一份完整、可驗證的部署標準作業流程 (SOP)**，並將其記錄在預計用於部署的 `spike/verify-deployment-pipeline` 分支上。
+- **策略重新校準與文件驅動開發 (2025-09-12)**:
+  - **核心問題**: 意識到先前的計畫過於專注分支合併，而忽略了「端對端功能驗證」的核心目標。直接合併 `spike` 與 `feature` 分支存在巨大風險。
+  - **關鍵發現 1 (分支衝突)**: `spike` 分支與 `feature/gemini-log-api` 分支在資料庫遷移腳本 (`migration/`) 上存在嚴重分歧。
+  - **關鍵發現 2 (部署經驗)**: 過去的後端部署日誌顯示，**手動執行資料庫遷移**是服務能成功啟動的關鍵前置步驟。
+  - **關鍵發現 3 (前端測試)**: 對 `spike` 分支的調查顯示，`archon-ui-main` 的大型測試集 (如 `pages.test.tsx`) 已不存在，因此前端測試效能並非當前在此分支上的問題。
+  - **最終決策**: 暫停所有合併活動。轉向「文件驅動」的「先驗證，再規劃」模式。所有文件更新將在 `spike/verify-deployment-pipeline` 分支上進行，以其作為建立端對端測試環境的基礎。
   - **產出**:
-    1. 在 `spike` 分支上更新 `CONTRIBUTING_tw.md`，包含詳細的後端與前端部署SOP。
-    2. 在 `spike` 分支上更新 `TODO.md`，明確標示出 `migration/` 的衝突問題，並將其設為分支合併的前置任務。
-    3. 將 `deployment_verification_log.txt` 複製到 `spike` 分支，以保留關鍵的除錯歷史。
-    4. 將此結論記錄於 `GEMINI.md`。
+    1. 更新 `AGENTS.md`，加入「端對端思維」原則。
+    2. 更新 `CONTRIBUTING_tw.md`，提供包含前後端的完整部署 SOP。
+    3. 更新 `TODO.md`，將 `Phase 2.6` 調整為「程式碼驗證與測試計畫」，`Phase 2.7` 調整為「建立端對端功能驗證環境」。
+    4. 將此結論與發現記錄於 `GEMINI.md`。
 
 - **後端重構 (2025-09-08)**:
   - **RBAC 服務化**: 遵循 Phase 2.5 的規劃，已將分散在 API 路由的權限邏輯，統一遷移至專門的 `RBACService`，提升了程式碼的內聚性與可維護性。

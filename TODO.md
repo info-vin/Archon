@@ -88,37 +88,43 @@ sequenceDiagram
 
 ---
 
-## 優先任務：部署驗證 (Priority: Deployment Verification)
+### **Phase 2.6: 程式碼驗證與測試計畫 (Code Verification & Test Plan)**
 
-此任務為當前最高優先級，旨在驗證核心部署管道，為後續所有開發建立一個穩定的基準。
+此階段為當前最高優先級，旨在解決分支分歧帶來的風險，並為下一步的端對端功能整合建立一個清晰、可執行的計畫。
 
-- **[x] Spike: 執行最小化部署驗證任務 (已完成，學習經驗已歸檔至 CONTRIBUTING_tw.md)**
-    - **指派角色**:
-        - **規劃者**: Gemini (已完成規劃)
-        - **執行者**: 系統維護專家
-        - **學習/記錄者**: 流程優化專家
-    - **目標 (Goal)**: 驗證 `main` 分支的後端服務，能在 Render 環境中成功建置並啟動，回應健康檢查請求。
-    - **分支 (Branch)**: `spike/verify-deployment-pipeline` (此為一次性分支，可隨時刪除)。
-    - **時間限制 (Timebox)**: 4 小時。
-    - **步驟 (Steps)**:
-        1.  從 `main` 建立 `spike/verify-deployment-pipeline` 分支。
-        2.  在 Render 上建立一個新的「預覽環境」或「暫時的 Web Service」。
-        3.  將此分支部署到新的預覽環境。
-        4.  監控部署日誌。
-    - **成功標準 (Success Criteria)**:
-        - 部署日誌顯示成功啟動。
-        - 服務的公開 `/health` 端點回傳 `200 OK` 及 `{"status":"ok"}`。
-    - **失敗標準 (Failure Criteria)**:
-        - Docker 建置失敗。
-        - 服務啟動時在日誌中噴出錯誤並崩潰。
-        - `/health` 端點無法訪問或回傳 5xx 錯誤。
-    - **產出 (Output)**:
-        - 「執行者」需提供部署日誌與最終結果（成功/失敗）。
-        - 「學習/記錄者」需將學習經驗更新至 `CONTRIBUTING_tw.md`，並關閉此任務。
+- **[ ] 驗證時序圖與程式碼一致性**
+    - **目標**: 抽查 `TODO.md` 核心工作流程圖中的關鍵步驟，確認程式碼實現與圖表描述一致，特別是 API 路徑和呼叫邏輯。
+    - **方法**: 靜態程式碼分析。
+
+- **[ ] 驗證 Phase 2.5 重構成效**
+    - **目標**: 檢查 `TODO.md` 中標示為 `[x]` 的 Phase 2.5 架構重構任務，確認程式碼中確實已經包含了對應的變更（例如 `HealthService`）。
+    - **方法**: 靜態程式碼分析。
+
+- **[ ] 建立端對端測試與部署計畫**
+    - **問題**: 單純的後端部署驗證，無法確保完整的使用者功能。在合併分支前，需要一個包含前端在內的完整測試計畫。
+    - **目標**: 共同制定一個針對「前端移植後」的端對端測試與部署計畫，定義清楚要整合的分支、合併的方法、部署的步驟，以及需要手動驗證的核心功能點。
+    - **產出**: 一份具體的測試計畫，作為 `Phase 2.7` 的執行依據。
+
+- **[ ] 分析並解決 `migration/` 腳本衝突**
+    - **問題**: `spike` 分支與 `feature/gemini-log-api` 分支的 `migration/` 目錄存在嚴重分歧，直接合併將導致資料遺失。
+    - **目標**: 制定一個安全的計畫來合併兩個分支的資料庫遷移腳本，確保所有變更都按順序保留。
+    - **前置條件**: 此任務必須在分支整合策略決定後進行。
 
 ---
 
-我們將開發任務明確區分為「後端」與「前端」，以便團隊成員可以並行工作，同時確保後端基礎建設優先完成。
+### **Phase 2.7: 建立端對端功能驗證環境 (Establish E2E Feature Validation Environment)**
+
+此階段的目標是建立一個包含前後端必要功能的、可部署、可測試的獨立分支。
+
+- **[ ] 整合前後端功能至 `spike` 分支**
+    - **目標**: 將 `feature/gemini-log-api` 分支上必要的前後端功能，安全地整合進 `spike/verify-deployment-pipeline` 分支。
+    - **前置任務**: 此任務**必須**在 `Phase 2.6` 的所有驗證與規劃完成後才能進行。
+    - **方法**: 根據 `Phase 2.6` 制定的計畫，使用 `rebase` 或 `cherry-pick` 等方式進行整合。
+
+- **[ ] 部署 `spike` 分支並進行端對端測試**
+    - **目標**: 將整合後的 `spike` 分支部署到 Render，並根據 `Phase 2.6` 中制定的測試計畫，手動驗證核心使用者場景（例如「案例三：人機協作產出文件」）是否能成功運作。
+    - **成功標準**: 核心使用者場景運作成功，無重大錯誤。
+    - **後續**: 驗證成功後，此 `spike` 分支可作為未來合併回 `main` 分支的基礎。
 
 ---
 
@@ -305,39 +311,3 @@ sequenceDiagram
 - **[ ] 強化服務層抽象 (Enforce Service Layer Abstraction)**
     - [ ] **問題**: 部分 API 端點（主要在 `projects_api.py`）會繞過服務層，直接呼叫 `get_supabase_client()` 來操作資料庫。
     - [ ] **目標**: 全面審查並重構這些端點，確保所有資料庫的直接存取都必須透過對應的服務層（如 `ProjectService`, `TaskService`）來完成，禁止 API 層直接接觸資料庫。
-
-### **Phase 2.6: 部署與分支策略整合 (Deployment & Branch Strategy Integration)**
-
-此階段為當前最高優先級，旨在解決近期部署失敗所暴露出的核心問題，並為未來的穩定開發奠定基礎。
-
-- **[ ] 釐清並統一 `main` 與 `gemini-log-api` 分支的開發策略**
-    - **問題**: `main` 分支的後端通訊方式已更新，而 `gemini-log-api` 分支的功能尚未開發完成。這導致 `enduser-ui-fe` 前端的整合路徑變得不明確且存在衝突。
-    - **目標**: **團隊必須優先做出決策**：
-        1.  **方案 A (Rebase)**: 將 `gemini-log-api` 的變更，以 `rebase` 或手動方式，整合到 `main` 分支最新的架構上。
-        2.  **方案 B (Postpone)**: 暫時擱置 `gemini-log-api` 的功能，先確保 `main` 分支的穩定性與可部署性，待 `main` 分支成功部署後，再回頭重新評估 `gemini-log-api` 的整合方案。
-    - **產出**: 一份明確的決策，以及後續的執行計畫。在完成此任務前，應暫緩 `enduser-ui-fe` 的大規模開發。
-
-- **[x] 建立並驗證部署 SOP (Standard Operating Procedure)**
-    - **問題**: 缺乏標準化的部署流程，導致部署過程中出現重複、遺漏和錯誤。
-    - **目標**:
-        1.  在 `CONTRIBUTING_tw.md` 中，完成「部署策略與分支管理」章節的撰寫。
-        2.  由「系統維護專家」Agent，遵循新建立的 SOP，成功將 `main` 分支部署到 Render 一次。
-    - **產出**: 一個經過驗證、所有人都可遵循的部署流程文件。
-    - **狀態**: **已在 `spike/verify-deployment-pipeline` 分支完成草稿。**
-
-- **[ ] 分析並解決 `main` 與 `feature/gemini-log-api` 的遷移腳本 (`migration/`) 衝突**
-    - **問題**: `git diff` 分析顯示，兩個分支的 `migration/` 目錄存在嚴重分歧 (`add_hybrid_search_tsvector.sql` vs `create_gemini_logs_table.sql` 等)，直接合併將導致資料遺失。
-    - **目標**: 制定一個安全的計畫來合併兩個分支的資料庫遷移腳本，確保所有變更都按順序保留。
-    - **前置條件**: 此任務必須在分支整合策略決定後進行。
-
----
-
-### **Phase 2.7: 分支整合 (Branch Integration)**
-
-- **[ ] 將 gemini-log-api 的前端功能整合至 Spike 分支**
-    - **目標**: 將 `feature/gemini-log-api` 分支上 `enduser-ui-fe` 的相關功能，合併進 `spike/verify-deployment-pipeline` 分支，以便在已驗證的部署環境中進行測試。
-    - **分支**:
-        - **來源 (Source)**: `feature/gemini-log-api`
-        - **目標 (Target)**: `spike/verify-deployment-pipeline`
-    - **前置任務**: 此任務**必須**在 `Phase 2.6` 的分支策略與遷移腳本衝突解決後才能進行。
-    - **後續**: 整合完成後，可將 `spike` 分支重新部署到 Render 進行端對端驗證。
