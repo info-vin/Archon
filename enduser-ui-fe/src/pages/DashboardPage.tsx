@@ -223,8 +223,8 @@ const ListView: React.FC<{ tasks: Task[], employees: AssignableUser[] }> = ({ ta
                                 <PaperclipIcon className="w-4 h-4 text-muted-foreground mt-0.5 flex-shrink-0" />
                                 <div className="flex flex-wrap gap-x-3 gap-y-1">
                                     {task.attachments.map((att, index) => (
-                                        <a key={index} href={att} target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline truncate" title={att}>
-                                            {att.split('/').pop() || `Attachment ${index + 1}`}
+                                        <a key={index} href={att.url} download={att.filename} className="text-sm text-primary hover:underline truncate" title={att.filename}>
+                                            {att.filename}
                                         </a>
                                     ))}
                                 </div>
@@ -300,8 +300,8 @@ const TableView: React.FC<{ tasks: Task[], employees: AssignableUser[], requestS
                                 {task.attachments && task.attachments.length > 0 ? (
                                     <div className="flex flex-col gap-1">
                                         {task.attachments.map((att, index) => (
-                                            <a key={index} href={att} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline truncate" title={att}>
-                                                {att.split('/').pop()}
+                                            <a key={index} href={att.url} download={att.filename} className="text-primary hover:underline truncate" title={att.filename}>
+                                                {att.filename}
                                             </a>
                                         ))}
                                     </div>
@@ -409,8 +409,8 @@ const KanbanView: React.FC<{ tasks: Task[], employees: AssignableUser[], onTaskS
                                             <PaperclipIcon className="w-4 h-4 text-muted-foreground mt-0.5 flex-shrink-0" />
                                             <div className="flex flex-col gap-1">
                                                 {task.attachments.map((att, index) => (
-                                                    <a key={index} href={att} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline truncate" title={att}>
-                                                        {att.split('/').pop()}
+                                                    <a key={index} href={att.url} download={att.filename} className="text-xs text-primary hover:underline truncate" title={att.filename}>
+                                                        {att.filename}
                                                     </a>
                                                 ))}
                                             </div>

@@ -62,7 +62,7 @@ export interface Task {
   due_date: string; // ISO string
   created_at: string; // ISO string
   updated_at: string; // ISO string
-  attachments?: string[];
+  attachments?: { filename: string; url: string }[];
 }
 
 // Replaced AuditLog with DocumentVersion to match the provided SQL schema
