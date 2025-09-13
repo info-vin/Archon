@@ -8,10 +8,18 @@
 
 此階段的目標是解決所有已知的、阻礙專案進行端對端測試的根本性問題，是進入下一階段開發的關鍵前置任務。
 
-- **[ ] 解決資料庫遷移腳本衝突**
-    - [ ] **第一步**: 分析 `migration/` 目錄中的所有腳本，識別衝突點與執行順序。
-    - [ ] **第二步**: 制定一個合併策略，建立一個單一、統一的 `000_unified_schema.sql`。
-    - [ ] **第三步**: 封存舊的、衝突的腳本至 `migration/archive/`。
+- **[x] 第一步：解決資料庫遷移腳本衝突**
+    - [x] 釐清 `enduser-ui-fe` 的資料與功能對應關係。
+    - [x] 以 `spike` 分支為基準，分析遷移腳本衝突。
+    - [x] 制定合併策略，建立一個單一、統一的 `000_unified_schema.sql`。
+    - [x] 封存舊的、衝突的腳本至 `migration/archive/`。
+    - [x] 提交資料庫重構 (`refactor(db): ...`)。
+
+- **[ ] 第二步：端對端整合測試 (Final Acceptance Test)**
+    - [ ] **資料庫準備**: 在 Supabase 手動執行 `RESET_DB.sql` (可選), `000_unified_schema.sql`, `seed_mock_data.sql`。
+    - [ ] **啟動應用**: 執行 `make dev`。
+    - [ ] **手動驗證**: 建立任務 -> 指派給 Agent -> 驗證產出的附件。
+
 - **[ ] (from P2.5) 移除 API 中寫死的角色 (`current_user_role`)**
 - **[ ] (from P2.5) 簡化應用程式啟動程序 (Simplify App Startup)**
 - **[ ] (from P2.5) 強化服務層抽象 (Enforce Service Layer Abstraction)**
@@ -106,30 +114,12 @@ sequenceDiagram
 
 ### **Phase 2.8: 功能整合與端對端測試 (Feature Integration & E2E Testing)**
 
-此階段的目標是建立一個可執行的整合計畫，將 `feature/gemini-log-api` 分支的「Agent 上傳檔案」功能，安全地移植到 `spike` 分支的較新架構上，並完成端對端的功能驗證。
-
 - **[x] 第一步：建立整合分支**
-    - **狀態**: **已完成**。已從 `spike/verify-deployment-pipeline` 建立 `feature/e2e-file-upload` 分支。
-    - **說明**: 所有移植工作都將在此分支上進行，以確保 `spike` 分支的穩定。
-
 - **[x] 第二步：移植後端服務與 Agent 工具**
-    - **目標**: 手動將 `file_tools.py`, `storage_service.py`, `task_service.py` 和 `document_agent.py` 的相關程式碼，從 `feature` 分支複製並合併到本分支。
-    - **相依性分析**: 在移植過程中，需特別注意 `Phase 2.5` 中尚未完成的重構項目（例如：寫死的角色 `current_user_role`）。需評估這些技術債對「Agent 上傳檔案」功能的影響，並在移植時一併考慮解決或繞過。
-    - **驗證**: 完成後，執行 `make test-be` 確保後端測試通過。
-
 - **[x] 第三步：整合資料庫遷移腳本**
-    - **目標**: 整理出一個清晰的列表，定義在部署時，需要按什麼順序執行來自兩個不同分支的 SQL 腳本。
-    - **產出**: 更新 `CONTRIBUTING_tw.md` 中的部署 SOP，包含明確的遷移腳本執行順序。
-
 - **[x] 第四步：移植前端介面 (高風險)**
-    - [x] 手動合併 commit `001660c` (附件 UI 功能)
-    - [x] 移植 commit `e5bdd70` (圖示與測試修復)
-    - **目標**: 將 `feature` 分支上實現附件功能的前端元件與邏輯，移植到本分支。
-    - **方法**: 由於前端有大規模重構，建議使用 `git cherry-pick` 小心地、逐一地應用相關 commit，並在過程中持續運行前端測試。
-
 - **[x] 第五步：端對端手動測試**
-    - **狀態**: **已完成**。結論：被資料庫遷移腳本的嚴重衝突所阻塞。此問題將移至 Phase 2.9 追蹤。
-    - **目標**: 當所有程式碼都整合完畢，且單元測試通過後，啟動整個應用，手動測試一次完整的使用者場景（建立任務 -> Agent 執行 -> 上傳檔案 -> 前端顯示附件），確保功能如預期般運作。
+    - **狀態**: **已完成**。結論：被資料庫遷移腳本的嚴重衝突所阻塞。此問題已移至 Phase 2.9 追蹤。
 
 ---
 
@@ -153,11 +143,7 @@ sequenceDiagram
 
 ## 後端開發 (Backend Development)
 
-後端負責所有核心商業邏輯、資料庫互動、Agent 能力以及 API 端點。
-
 ### **Phase 2.1: 核心基礎建設 (Core Foundation)**
-
-此為最高優先級，為所有新功能打下地基。
 
 - **[x] 資料庫擴充 (Database Schema)**
 - **[x] 角色權限管理 (RBAC - Security & Data)**
@@ -168,15 +154,11 @@ sequenceDiagram
 
 ### **Phase 2.2: Agent 能力擴充 (Agent Capabilities)**
 
-在後端 API 備妥後，賦予 Agent 使用這些新功能的能力。
-
 - **[x] 技術研究：建立 Agent 測試模式 (Spike: Establish Agent Testing Pattern)**
 - **[x] 開發 Agent 新工具 (Agent Tools)**
 - **[x] 完善 Agent 工作邏輯 (Agent Logic)**
 
 ### **Phase 2.4: AI 協作日誌紀錄 (AI Collaboration Logging)**
-
-此功能用於記錄開發過程中與 AI 的互動，作為未來分析與優化的教材。
 
 - **[x] 資料庫擴充 (Database Schema)**
 - **[x] 後端 API 開發 (Backend API)**
@@ -186,8 +168,6 @@ sequenceDiagram
 ---
 
 ## 前端開發 (Frontend Development)
-
-前端負責所有使用者介面、互動體驗以及與後端 API 的串接。
 
 ### **Phase 2.3: 前端功能開發 (Frontend Features)**
 
@@ -201,11 +181,6 @@ sequenceDiagram
 
 ---
 
-## 4. 開發與測試策略 (Development & Testing Strategy)
-...
-
----
-
 ## 5. 內容與文案更新 (Content & Copywriting Updates)
 
 - **[x] 更新 Blog 頁面的假資料，替換為三個真實應用案例，以更好地展示系統能力。**
@@ -213,17 +188,8 @@ sequenceDiagram
 
 ### **Phase 2.5: 架構重構與技術債清理 (Architectural Refactoring & Tech Debt)**
 
-此階段的任務專注於改善既有程式碼的架構，提升系統的長期可維護性、可測試性與穩定性。建議由「系統維護專家」角色來執行。
-
 - **[x] 重構角色權限管理 (Refactor RBAC)**
-- ~~**[ ] 問題**: 目前 API 中用來判斷操作者權限的角色是寫死的 (`current_user_role = "PM"`)。~~
-- ~~**[ ] 目標**: 移除硬編碼的角色，為後續整合真實的用戶身份驗證機制做準備。~~
-
 - **[x] 整合健康檢查邏輯 (Consolidate Health Checks)**
-- ~~**[ ] 問題**: 健康檢查邏輯分散在 `main.py` 和 `projects_api.py` 中，且有部分重複。~~
-- ~~**[ ] 目標**: 建立一個新的服務 `services/health_service.py`...~~
 
-- ~~**[ ] 簡化應用程式啟動程序 (Simplify App Startup)**~~
-- ~~**[ ] 強化服務層抽象 (Enforce Service Layer Abstraction)**~~
+> **備註**: 此階段剩餘的技術債項目已統一遷移至 Phase 2.9 進行追蹤與處理。
 
-> **備註**: 這些技術債項目已統一遷移至 Phase 2.9 進行追蹤與處理。
