@@ -26,6 +26,7 @@ This project utilizes a team of specialized AI agents. When performing tasks, ad
 - **市場研究員 (Market Researcher)**
 - **內部知識庫專家 (Internal Knowledge Expert)**
 - **系統維護專家 (System Maintenance Expert)**
+- **流程優化專家 (Process Improvement Expert)**
 
 ## Architecture Overview
 
@@ -98,3 +99,10 @@ SUPABASE_SERVICE_KEY=your-service-key-here
     - 透過日誌分析，定位到 `archon-server` 啟動失敗的原因為 `.env` 檔案中 `SUPABASE_URL` 未正確設定，導致 DNS 解析失敗。
     - 記錄了 `Makefile` 在 Windows PowerShell/cmd 環境下的相容性問題，並在檔案中添加了註解。相關解法已歸檔至 `CONTRIBUTING_tw.md`。
 - **目前開發焦點**: 根據 `TODO.md`，下一個主要開發任務為前端的「任務附件顯示 (Task Attachments)」與「使用者頭像更新 (User Avatar Update)」。
+
+- **文件同步與進度校準 (2025-09-13)**:
+  - **背景**: 使用者提出關於文件內容不一致、進度未更新，以及對我的筆記記錄方式的疑問。
+  - **決議與執行**:
+    1.  **角色同步**: 校驗並發現 `GEMINI.md` 的 AI 角色列表落後於 `AGENTS.md`。已將遺漏的「流程優化專家」補全，確保入口文件與角色定義檔一致。
+    2.  **進度更新**: 比對 `git log` 與 `TODO.md`，確認 `Phase 2.8` 的第一步（建立分支）和第四步（移植前端）均已完成。已更新 `TODO.md` 將其標示為 `[x]`，使計畫能準確反映實際進度。
+    3.  **流程澄清**: 重申了我的工作流程，即關鍵決策記錄於 `GEMINI.md`，而普適性的SOP與除錯知識則歸檔至 `CONTRIBUTING_tw.md`，不保留任何私有筆記。本次結論本身也依此原則被歸檔。
