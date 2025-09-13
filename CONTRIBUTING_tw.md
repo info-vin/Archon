@@ -1,26 +1,21 @@
-## 開發流程與標準 (原 AGENTS.md 內容)
+## 開發心法與通用原則 (Development Mindset & General Principles)
 
-## Dev environment tips
-- Use `pnpm dlx turbo run where <project_name>` to jump to a package instead of scanning with `ls`.
-- Run `pnpm install --filter <project_name>` to add the package to your workspace so Vite, ESLint, and TypeScript can see it.
-- Use `pnpm create vite@latest <project_name> -- --template react-ts` to spin up a new React + Vite package with TypeScript checks ready.
-- Check the name field inside each package's package.json to confirm the right name—skip the top-level one.
+這是在專案開發過程中，透過不斷試錯總結出的寶貴經驗。請在開始任何任務前，先閱讀並理解這些原則。
 
-## Testing instructions
-- Find the CI plan in the .github/workflows folder.
-- Run `pnpm turbo run test --filter <project_name>` to run every check defined for that package.
-- From the package root you can just call `pnpm test`. The commit should pass all tests before you merge.
-- To focus on one step, add the Vitest pattern:
-  ```bash
-  pnpm vitest run -t "<test name>"
-  ```
-- Fix any test or type errors until the whole suite is green.
-- After moving files or changing imports, run `pnpm lint --filter <project_name>` to be sure ESLint and TypeScript rules still pass.
-- Add or update tests for the code you change, even if nobody asked.
+### 1. 警惕「副本任務」陷阱
+- **情境**: 在分析出一個問題後，容易為了解決這個問題而開啟一個新的、孤立的調查或研究任務。
+- **心法**: **分析是為了解決「主線任務」，而不是為了開啟「副本任務」**。在得到分析結果後，應回頭思考如何將此結果應用於完成最初的、最大的目標，而不是陷入無止盡的調查循環。
 
-## PR instructions
-- Title format: [<project_name>] <Title>
-- Always run `pnpm lint` and `pnpm test` before committing.
+### 2. 驗證而非假設
+- **原則**: 不要「幻想」一個可運行的環境或一個完美的程式碼狀態。永遠要透過指令或工具進行驗證。
+- **案例 A：關於 `cherry-pick` 和 UI**：程式碼移植成功（`git cherry-pick`）不代表視覺整合成功。對於 UI 變更，在所有測試的最後，必須進行「眼見為實」的視覺化驗收，不能僅信賴自動化測試，因為樣式和佈局問題是自動化測試的盲區。
+- **案例 B：關於端對端測試**：在制定端對端測試計畫前，必須先驗證所有前置條件都已滿足。應主動查閱專案文件（如 `GEMINI.md`）中已記錄的風險（例如，資料庫遷移衝突），並優先解決這些「阻塞性問題」，而不是規劃一個無法執行的「幻想計畫」。
+
+### 3. 精準修改，避免副作用
+- **原則**: 修復 Bug 或修改程式碼時，應採取最小、最精準的修改。
+- **心法**: 在使用 `replace` 等工具時，務必提供足夠的上下文，確保只修改到目標程式碼。這能有效避免「改 A 壞 B」的副作用，是建立穩定性的基礎。
+
+---
 
 ## 開發環境小撇步
 - 使用 `pnpm dlx turbo run where <project_name>` 來跳轉到特定套件，而不是用 `ls` 慢慢找。
