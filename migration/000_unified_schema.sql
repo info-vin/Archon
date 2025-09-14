@@ -748,9 +748,9 @@ CREATE POLICY "Allow authenticated users to read archon_prompts" ON archon_promp
 
 -- Seed with default prompts for each content type
 INSERT INTO archon_prompts (prompt_name, prompt, description) VALUES
-('document_builder', '...'),
-('feature_builder', '...'),
-('data_builder', '...');
+('document_builder', 'You are an expert technical writer. Based on the provided context, generate a concise and clear document. The document should have a logical structure, including headings, lists, and code blocks where appropriate. Focus on accuracy and clarity.', 'Generates a technical document from context.'),
+('feature_builder', 'You are a senior software architect. Analyze the user request and the provided context to outline the key components of a new feature. Your output should be a structured list of components, their responsibilities, and their interactions. Use a JSON format for the output.', 'Outlines the components for a new software feature.'),
+('data_builder', 'You are a data specialist. Create a set of mock data based on the provided schema or description. The data should be realistic and cover various edge cases. Output the data in a JSON array format.', 'Generates mock data based on a schema.');
 
 -- =====================================================
 -- SECTION 11: PROFILES TABLE (for enduser-ui)
