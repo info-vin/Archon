@@ -18,7 +18,7 @@ if (useMockData) {
     console.warn("Supabase credentials are not set in localStorage. Using mock data. Please update them in the Admin Panel -> Settings.");
 } else {
     try {
-        supabase = createClient(supabaseUrl!, supabaseAnonKey!);
+        supabase = createClient(supabaseUrl!, supabaseAnonKey!); 
     } catch (error) {
         console.error("Failed to initialize Supabase client. Check credentials in localStorage.", error);
     }
@@ -61,6 +61,7 @@ const MOCK_EMPLOYEES: Employee[] = [
     { id: '1', employeeId: 'E1001', name: 'Admin User', email: 'admin@archon.com', department: 'IT', position: 'System Administrator', status: 'active', role: EmployeeRole.SYSTEM_ADMIN, avatar: `https://i.pravatar.cc/150?u=admin@archon.com` },
     { id: '2', employeeId: 'E1002', name: 'Alice Johnson', email: 'alice@archon.com', department: 'Engineering', position: 'Senior Developer', status: 'active', role: EmployeeRole.SENIOR_MEMBER, avatar: `https://i.pravatar.cc/150?u=alice@archon.com` },
     { id: '3', employeeId: 'E1003', name: 'Bob Williams', email: 'bob@archon.com', department: 'Engineering', position: 'Frontend Developer', status: 'active', role: EmployeeRole.MEMBER, avatar: `https://i.pravatar.cc/150?u=bob@archon.com` },
+    { id: '4', employeeId: 'E1004', name: 'Design AI Agent', email: 'ai-designer@archon.com', department: 'AI', position: 'AI Agent', status: 'active', role: EmployeeRole.AI_AGENT, avatar: `https://i.pravatar.cc/150?u=ai-designer@archon.com` },
 ];
 
 const MOCK_PROJECTS: Project[] = [

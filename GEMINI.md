@@ -119,62 +119,57 @@
 
 ---
 
-# Branch Integration Analysis: `attachments` Data Structure
+# 端對端測試失敗根本原因分析與統一修復計畫 (v3.0)
 
-## 1. Problem Statement
+## 1. 問題陳述 (Problem Statement)
 
-The `enduser-ui-fe` application fails to render task attachments due to a `TypeError: att.split is not a function`. This error is caused by a fundamental conflict in the data structure for `attachments` between code originating from two different feature branches: `feature/e2e-file-upload` and `feature/gemini-log-api`.
+`enduser-ui-fe` 應用程式在手動端對端測試中完全失敗。經調查，根本原因並非單一 Bug，而是多個問題的疊加，暴露了文件、程式碼與測試資料之間的不一致性。
 
-- **`feature/gemini-log-api`** expects `attachments` to be a `string[]` (an array of URLs).
-- **`feature/e2e-file-upload`** expects `attachments` to be `{ filename: string; url: string }[]` (an array of objects).
+### 症狀清單 (Symptom Checklist)
+1.  **附件錯誤**: 渲染附件時出現 `TypeError: att.split is not a function`。
+2.  **選單缺失**: 任務指派的下拉選單中缺少 AI Agent 的選項。
+3.  **編輯功能失效**: 無法編輯任務。
+4.  **畫面空白**: 主要的任務表格遺失，點擊後頁面變為空白。
 
-The current state of the `feature/e2e-file-upload` branch is a broken mix of these two implementations.
+## 2. 根本原因分析 (Root Cause Analysis)
 
-## 2. Evidence and Analysis
+- **症狀 1 & 4 (附件錯誤導致畫面空白)**: `DashboardPage.tsx` 的 `TableView` 行動版視圖中，存在一段錯誤的渲染邏輯 (`att.split('/')`)，它預期 `attachments` 是字串陣列。然而，後端 Agent (`file_tools.py`) 產出的 `attachments` 是**物件陣列** (`{ file_name, url }`)。當此錯誤發生時，導致整個 React 應用程式崩潰，呈現為白畫面。
 
-### 2.1. Code Difference (`git diff`)
-A `git diff` between the two branches clearly shows the conflict:
-- **`types.ts`**: The `Task` interface has two different definitions for `attachments`.
-- **`services/api.ts`**: The mock data (`MOCK_TASKS`) uses two different structures.
-- **`DashboardPage.tsx`**: The rendering logic is different. One uses `att.split('/')?.pop()` (expecting a string), and the other uses `att.url` and `att.filename` (expecting an object).
+- **症狀 2 (選單缺失)**: 此問題有兩個原因：
+  1.  **前端假資料不全**: `api.ts` 中的 `MOCK_EMPLOYEES` 陣列沒有包含任何角色為 `AI_AGENT` 的使用者。
+  2.  **後端權限不足**: `rbac_service.py` 中，為 `PM` 角色設定的可指派權限列表，未包含 `ai_agent` 角色。
 
-### 2.2. Historical Analysis (`git log`)
-A targeted `git log -S` investigation reveals the history of this divergence:
-1.  **Commit `001660c` (2025-09-08, on `feature/gemini-log-api`)**: The initial feature was implemented, treating `attachments` as a simple `string[]`.
-2.  **Commit `b399c03` (2025-09-13, on `feature/e2e-file-upload`)**: Five days later, on a separate branch, the feature was refactored to use the `{ filename, url }` object structure to provide better download functionality.
+- **症狀 3 (編輯功能失效)**: 這並非 Bug，而是**功能未實作**。UI 中並未提供編輯任務的按鈕或相關處理函式。
 
-The branches were never synchronized, leading to the current conflict.
+## 3. 統一修復計畫 (Unified Fix Plan)
 
-### 2.3. Architectural Blueprint (`TODO.md`)
-The core architectural document, `TODO.md`, contains a sequence diagram that explicitly defines the intended data structure. Step 10 shows:
-```mermaid
-Backend->>Supabase: 10. 更新任務 (status: 'review', attachments: [URL])
-```
-This confirms the architecturally-aligned data structure is an array of URL strings.
+此計畫基於完整的風險評估，旨在一次性、系統性地解決所有已發現的 Bug，並同步更新相關文件。
 
-### 2.4. Backend & Database Analysis
-- **Database**: The `archon_tasks` table defines the `attachments` column as `JSONB`. This is a flexible type that does not enforce a specific structure, meaning the application code is the source of truth.
-- **Backend Agent**: Analysis of the agent's `file_tools.py` shows that it appends a new attachment (likely a URL string returned from file upload) to the existing list. This behavior is consistent with a `string[]` structure.
+### 階段一：修正文件 (Documentation First)
+*   **目標**: 建立統一的、正確的資料結構標準，並記錄下來。
+*   **行動**:
+    1.  **`TODO.md`**: 更新核心工作流程時序圖，將 `attachments: [URL]` 修改為 `attachments: [{filename, url}, ...]`。
+    2.  **`GEMINI.md`**: 更新本分析文件，確保計畫的透明性與可追溯性。
 
-## 3. Conclusion
+### 階段二：修正後端與假資料 (Backend & Mock Data)
+*   **目標**: 確保資料來源（無論是後端 API 還是前端假資料）都能提供正確的資料。
+*   **行動**:
+    1.  **`rbac_service.py`**: 在 `PM` 的權限列表中加入 `'ai_agent'`。
+    2.  **`api.ts`**: 在 `MOCK_EMPLOYEES` 陣列中新增一筆 AI Agent 的假資料。
 
-All evidence points to a single conclusion: The correct and architecturally-consistent data structure for `attachments` is **`string[]`**.
+### 階段三：修正前端程式碼 (Frontend Code)
+*   **目標**: 使前端的型別定義和 UI 渲染與新的資料標準完全一致。
+*   **行動**:
+    1.  **`types.ts`**: 將 `Task` 介面中的 `attachments` 型別修正為 `Array<{ file_name: string; url: string; ... }>`。
+    2.  **`DashboardPage.tsx`**: 統一所有視圖（特別是 `TableView` 的行動版）的附件渲染邏輯，使用 `att.file_name` 和 `att.url`。
+    3.  **`DashboardPage.test.tsx`**: 修復因上述修改而可能失敗的單元測試。
 
-The object-based implementation (`{ filename, url }`), while well-intentioned, was a deviation from the documented architecture and is not supported by the backend agent's current logic. To resolve the integration conflict and prevent further "change A, break B" issues, we must standardize on `string[]`.
+### 階段四：驗證 (Verification)
+*   **目標**: 確保所有修改都已生效且未引入新問題。
+*   **行動**:
+    1.  **自動化測試**: 執行 `make test-fe-project project=enduser-ui-fe`。
+    2.  **手動端對端測試**: 請求使用者驗證**附件顯示**和**指派選單**功能是否均已恢復正常。
 
-## 4. Integration and Verification Plan
-
-The goal is to make the `enduser-ui-fe` codebase internally consistent and aligned with the `string[]` data structure.
-
-### 4.1. Execution Steps
-1.  **【Modify】`enduser-ui-fe/src/types.ts`**: Change the `Task` interface to `attachments?: string[]`.
-2.  **【Modify】`enduser-ui-fe/src/services/api.ts`**: Update the `MOCK_TASKS` data to use an array of URL strings for attachments.
-3.  **【Verify/Keep】`enduser-ui-fe/src/pages/DashboardPage.tsx`**: Ensure the rendering logic is the one from `feature/gemini-log-api` which correctly handles a `string[]` (using `att.split('/')?.pop()`).
-4.  **【Modify】`enduser-ui-fe/src/pages/DashboardPage.test.tsx`**: Update/fix any unit tests to align with the `string[]` data structure.
-
-### 4.2. Verification Steps
-1.  **【Unit Test】**: After the modifications, run `make test-fe-project project=enduser-ui-fe`. All tests must pass.
-2.  **【E2E Manual Test】**: Start the full test environment (`docker compose up -d --build archon-server archon-mcp` and `cd enduser-ui-fe && npm run dev`). The user will be asked to verify:
-    *   The task list renders correctly.
-    *   Attachment links display a proper filename (e.g., `debug-log.txt`).
-    *   Clicking an attachment link opens the correct URL in a new tab.
+### 排錯預案 (Debugging Plan)
+- 若在任何步驟中，自動化測試失敗，將立即使用 `git checkout` 還原導致失敗的檔案，重新分析錯誤，並提出對**測試本身**的修復，而不是在錯誤的基礎上繼續修改。
+- 若出現預期外的視覺佈局問題，將請求使用者提供截圖與描述，以便進行精準的 CSS/UI 修正。

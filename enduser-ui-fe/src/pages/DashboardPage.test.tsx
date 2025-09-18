@@ -52,7 +52,10 @@ vi.mock('../services/api', () => {
           due_date: '2025-09-10T23:59:59Z',
           created_at: '2025-07-10T10:00:00Z',
           updated_at: '2025-07-15T10:00:00Z',
-          attachments: ['https://example.com/debug-log.txt', 'https://example.com/screenshot-error.png']
+          attachments: [
+            { file_name: 'debug-log.txt', url: 'https://example.com/debug-log.txt' },
+            { file_name: 'screenshot-error.png', url: 'https://example.com/screenshot-error.png' }
+          ]
       }
   ];
 

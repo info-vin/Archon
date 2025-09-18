@@ -101,7 +101,7 @@ sequenceDiagram
     Backend->>Supabase: 8. 將檔案上傳至 Storage
     Supabase-->>Backend: 9. 回傳檔案 URL
 
-    Backend->>Supabase: 10. 更新任務 (status: 'review', attachments: [URL])
+    Backend->>Supabase: 10. 更新任務 (status: 'review', attachments: [{filename, url}, ...])
     
     Note over Backend, Frontend: (via Socket.IO) 廣播任務完成
     Backend-->>Frontend: 11. 即時完成更新
