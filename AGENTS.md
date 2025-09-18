@@ -75,6 +75,15 @@
   4. **(本地驗證)**: 使用 `run_shell_command` 執行 `docker-compose build`，確保 Docker 映像能成功建置。
   5. **執行部署**: 使用 `run_shell_command` 執行 `git push render main` (或其他指定的部署指令)。
   6. **驗證部署結果**: 前往 Render Dashboard，檢查服務的部署日誌，確認服務已成功啟動且無錯誤訊息。
+
+#### **排錯核心原則 (Derived from `mcp-server` failure on 2025-09-17)**
+
+1.  **全面性原則 (Principle of Totality):** 在診斷一個看似孤立的問題（如服務啟動失敗）時，禁止只分析單一檔案或日誌。必須將所有相關的上下文都納入分析範圍，這至少包括：`Dockerfile`, `docker-compose.yml`, `Makefile`, 相關的 `.md` 歷史紀錄文件，以及 `git` 分支歷史。
+
+2.  **證據優先原則 (Principle of Evidence First):** 禁止在沒有交叉比對「已知成功案例」（如 `spike` 分支）與「當前失敗案例」（如 `feature` 分支）的實作差異前，提出任何「創造性」的修復方案。修復應優先採用「移植」成功案例的模式，而非「發明」新的解決方案。
+
+3.  **最小化驗證原則 (Principle of Minimal Verification):** 在執行任何程式碼修改後，應採用最小化的驗證閉環。例如，修改後端程式碼後，應先執行 `docker compose build <service_name>` 來驗證其可建置性，而不是直接執行 `docker compose up` 嘗試啟動所有服務。這能更快地隔離問題。
+
 - **限制與約束**:
   - 執行任何有風險的 shell 指令前 (如 `rm -rf`)，必須先向使用者解釋指令的目的與潛在影響，並取得同意。
   - 變更不應破壞 CI/CD 流程 (`.github/workflows/`)。
