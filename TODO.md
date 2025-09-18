@@ -15,10 +15,10 @@
     - [x] 封存舊的、衝突的腳本至 `migration/archive/`。
     - [x] 提交資料庫重構 (`refactor(db): ...`)。
 
-- **[ ] 第二步：端對端整合測試 (Final Acceptance Test)**
+- **[x] 第二步：端對端整合測試 (Final Acceptance Test)**
     - [ ] **資料庫準備**: 在 Supabase 手動執行 `RESET_DB.sql` (可選), `000_unified_schema.sql`, `seed_mock_data.sql`。
     - [x] **啟動應用**: 執行 `make dev`。 (註：前端 `enduser-ui-fe` 已於 2025-09-18 確認可透過 `npm run dev` 獨立啟動)
-    - [ ] **手動驗證**: 建立任務 -> 指派給 Agent -> 驗證產出的附件。
+    - [x] **手動驗證**: 建立任務 -> 指派給 Agent -> 驗證產出的附件。
 
 - **[ ] (from P2.5) 移除 API 中寫死的角色 (`current_user_role`)**
 - **[ ] (from P2.5) 簡化應用程式啟動程序 (Simplify App Startup)**
@@ -192,4 +192,3 @@ sequenceDiagram
 - **[x] 整合健康檢查邏輯 (Consolidate Health Checks)**
 
 > **備註**: 此階段剩餘的技術債項目已統一遷移至 Phase 2.9 進行追蹤與處理。
-
