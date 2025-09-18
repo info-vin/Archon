@@ -23,6 +23,42 @@
 - 使用 `pnpm create vite@latest <project_name> -- --template react-ts` 快速建立一個新的 React + Vite + TypeScript 專案。
 - 檢查每個套件 `package.json` 裡的 name 欄位來確認正確名稱，忽略最上層的那個。
 
+### 本地端對端測試環境啟動 SOP (v1.0)
+
+> **目標**: 啟動一個用於手動端對端測試的標準環境，包含後端服務 (在 Docker 中) 與使用者介面 (`enduser-ui-fe` 在本地)。
+> **警告**: 此流程取代 `make dev` 指令。`make dev` 會啟動多餘的 UI 容器，且不會啟動我們測試所需的 `enduser-ui-fe`，應避免使用。
+
+**第一步：啟動後端服務**
+
+此指令會精準地只啟動 `archon-server` 和 `archon-mcp` 兩個後端服務。
+
+```bash
+docker compose up -d --build archon-server archon-mcp
+```
+
+**第二步：驗證後端服務**
+
+使用此指令檢查容器狀態。預期的成功結果是 `archon-server` 和 `archon-mcp` 的 `STATUS` 欄位都顯示為 `(healthy)`。
+
+```bash
+docker ps
+```
+如果狀態不是 `healthy`，請使用 `docker logs <container_name>` 來檢查對應服務的日誌。
+
+**第三步：啟動前端服務**
+
+在確認後端健康後，啟動 `enduser-ui-fe` 的開發伺服器。
+
+```bash
+cd enduser-ui-fe && npm run dev
+```
+
+**第四步：完成**
+
+完成以上步驟後，測試環境即準備就緒：
+- **後端 API**: `http://localhost:8181`
+- **使用者介面**: `http://localhost:5173` (或 Vite 在終端機中顯示的 URL)
+
 ### **跨平台指令注意事項 (Cross-platform Command Notes)**
 
 - **問題**: 在 Windows 環境下，使用 `rm` 指令會失敗。
