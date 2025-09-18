@@ -54,6 +54,22 @@
 
 ## 專案近期動態與結論 (Recent Project Updates & Key Decisions)
 
+- **`enduser-ui-fe` 啟動成功 (2025-09-18)**
+  - **問題**: `enduser-ui-fe` 的 `npm run dev` 指令會無聲掛起。
+  - **根本原因**: 專案根目錄的 `.env` 檔案中，`GEMINI_API_KEY` 的值為空。透過 `vite.config.ts` 的 `define` 設定，這個空值被直接注入到前端應用程式中，導致某個需要此 Key 的 SDK 或模組在初始化時崩潰或無限等待。
+  - **解決方案**:
+    1.  在 `.env` 檔案中為 `GEMINI_API_KEY` 提供一個有效的金鑰。
+    2.  作為預防措施，刪除 `node_modules` 並重新執行 `npm install`，確保依賴環境的純淨。
+  - **驗證**: 經過上述修復，`npm run dev` 成功啟動服務。
+  - **客觀證據**:
+    ```
+    VITE v6.3.5  ready in 241 ms
+
+      ➜  Local:   http://localhost:5173/
+      ➜  Network: use --host to expose
+      ➜  press h + enter to show help
+    ```
+
 - **`enduser-ui-fe` 啟動失敗調查 (2025-09-18)**
   - **問題**: 在後端服務正常啟動後，執行 `cd enduser-ui-fe && npm run dev` 指令，程序會無聲無息地掛起，沒有任何日誌輸出，並在兩分鐘後超時。
   - **靜態分析過程**: 

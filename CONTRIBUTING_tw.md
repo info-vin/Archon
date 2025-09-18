@@ -161,6 +161,11 @@ cd enduser-ui-fe && npm run dev
     *   **原因**: 這通常發生在 `render` 一個元件時，該元件內部 import 了另一個子元件，但該子元件卻沒有被正確地從來源檔案（例如 `Icons.tsx`）中 `export` 出來。
     *   **解法**: 仔細檢查錯誤訊息中提到的元件（例如 `ListView`），找出它 import 了哪些子元件（例如 `PaperclipIcon`），然後去對應的檔案（`Icons.tsx`）確認該子元件是否已 `export`。
 
+9.  **`enduser-ui-fe` 啟動時無聲掛起**
+    *   **問題**: 執行 `cd enduser-ui-fe && npm run dev` 指令時，程序卡住，沒有任何日誌輸出。
+    *   **原因**: 這很可能是因為專案根目錄的 `.env` 檔案中 `GEMINI_API_KEY` 的值為空。`vite.config.ts` 會將這個空值注入到應用程式中，導致需要此金鑰的模組在初始化時失敗。
+    *   **解法**: 確保 `.env` 檔案中的 `GEMINI_API_KEY` 擁有一個有效的、非空的值。
+
 ### 後端 API 測試：模擬資料庫 (Backend API Testing: Mocking the Database)
 
 所有後端 API 測試都**嚴格禁止**連線到真實的資料庫。為了達成此目標，我們採用了基於 `pytest` 的 `fixture` 和 `unittest.mock` 的模擬機制。

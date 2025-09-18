@@ -17,7 +17,7 @@
 
 - **[ ] 第二步：端對端整合測試 (Final Acceptance Test)**
     - [ ] **資料庫準備**: 在 Supabase 手動執行 `RESET_DB.sql` (可選), `000_unified_schema.sql`, `seed_mock_data.sql`。
-    - [ ] **啟動應用**: 執行 `make dev`。
+    - [x] **啟動應用**: 執行 `make dev`。 (註：前端 `enduser-ui-fe` 已於 2025-09-18 確認可透過 `npm run dev` 獨立啟動)
     - [ ] **手動驗證**: 建立任務 -> 指派給 Agent -> 驗證產出的附件。
 
 - **[ ] (from P2.5) 移除 API 中寫死的角色 (`current_user_role`)**
