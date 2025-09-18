@@ -54,6 +54,17 @@
 
 ## 專案近期動態與結論 (Recent Project Updates & Key Decisions)
 
+- **端對端手動測試失敗 (2025-09-18)**
+  - **背景**: 在解決 `enduser-ui-fe` 的啟動問題後，我們進行了手動端對端測試。
+  - **測試結果**: 雖然服務可以啟動，但功能完全不可用，與預期有巨大差異。
+  - **主要問題點**:
+    1.  前端在渲染附件時出現 `TypeError: att.split is not a function` 的執行錯誤。
+    2.  無法編輯任務。
+    3.  缺少 Agent 指派選單。
+    4.  表格遺失，點擊後頁面空白且無法返回。
+  - **結論**: 當前的 `feature/e2e-file-upload` 分支與 `feature/gemini-log-api` 分支存在嚴重的程式碼差異。問題的根源是**分支整合不完整**，而非單一 Bug。
+  - **新戰略**: 放棄「頭痛醫頭、腳痛醫腳」的 bug 修復模式。新的戰略是先進行**分支整合分析**，找出兩個分支在 `enduser-ui-fe/` 目錄下的具體程式碼差異，然後再制定精準的整合計畫（如 `git cherry-pick`）。
+
 - **`enduser-ui-fe` 啟動成功 (2025-09-18)**
   - **問題**: `enduser-ui-fe` 的 `npm run dev` 指令會無聲掛起。
   - **根本原因**: 專案根目錄的 `.env` 檔案中，`GEMINI_API_KEY` 的值為空。透過 `vite.config.ts` 的 `define` 設定，這個空值被直接注入到前端應用程式中，導致某個需要此 Key 的 SDK 或模組在初始化時崩潰或無限等待。
@@ -105,3 +116,65 @@
     1.  `deployment_verification_log.txt` 顯示 `spike` 分支過去的問題是資料庫遷移，而非啟動崩潰。
     2.  `git diff` 顯示 `spike` 和 `feature` 分支的程式碼及關鍵設定檔 (`docker-compose.yml`, `pyproject.toml`) 幾乎完全相同。
 -   **核心教訓**: 必須在通盤分析所有相關檔案（`.py`, `.yml`, `Makefile`, `.md` 紀錄, `git` 歷史）後，才能制定修復計畫。禁止在資訊不全的情況下，提出創造性的、未經驗證的修改。
+
+---
+
+# Branch Integration Analysis: `attachments` Data Structure
+
+## 1. Problem Statement
+
+The `enduser-ui-fe` application fails to render task attachments due to a `TypeError: att.split is not a function`. This error is caused by a fundamental conflict in the data structure for `attachments` between code originating from two different feature branches: `feature/e2e-file-upload` and `feature/gemini-log-api`.
+
+- **`feature/gemini-log-api`** expects `attachments` to be a `string[]` (an array of URLs).
+- **`feature/e2e-file-upload`** expects `attachments` to be `{ filename: string; url: string }[]` (an array of objects).
+
+The current state of the `feature/e2e-file-upload` branch is a broken mix of these two implementations.
+
+## 2. Evidence and Analysis
+
+### 2.1. Code Difference (`git diff`)
+A `git diff` between the two branches clearly shows the conflict:
+- **`types.ts`**: The `Task` interface has two different definitions for `attachments`.
+- **`services/api.ts`**: The mock data (`MOCK_TASKS`) uses two different structures.
+- **`DashboardPage.tsx`**: The rendering logic is different. One uses `att.split('/')?.pop()` (expecting a string), and the other uses `att.url` and `att.filename` (expecting an object).
+
+### 2.2. Historical Analysis (`git log`)
+A targeted `git log -S` investigation reveals the history of this divergence:
+1.  **Commit `001660c` (2025-09-08, on `feature/gemini-log-api`)**: The initial feature was implemented, treating `attachments` as a simple `string[]`.
+2.  **Commit `b399c03` (2025-09-13, on `feature/e2e-file-upload`)**: Five days later, on a separate branch, the feature was refactored to use the `{ filename, url }` object structure to provide better download functionality.
+
+The branches were never synchronized, leading to the current conflict.
+
+### 2.3. Architectural Blueprint (`TODO.md`)
+The core architectural document, `TODO.md`, contains a sequence diagram that explicitly defines the intended data structure. Step 10 shows:
+```mermaid
+Backend->>Supabase: 10. 更新任務 (status: 'review', attachments: [URL])
+```
+This confirms the architecturally-aligned data structure is an array of URL strings.
+
+### 2.4. Backend & Database Analysis
+- **Database**: The `archon_tasks` table defines the `attachments` column as `JSONB`. This is a flexible type that does not enforce a specific structure, meaning the application code is the source of truth.
+- **Backend Agent**: Analysis of the agent's `file_tools.py` shows that it appends a new attachment (likely a URL string returned from file upload) to the existing list. This behavior is consistent with a `string[]` structure.
+
+## 3. Conclusion
+
+All evidence points to a single conclusion: The correct and architecturally-consistent data structure for `attachments` is **`string[]`**.
+
+The object-based implementation (`{ filename, url }`), while well-intentioned, was a deviation from the documented architecture and is not supported by the backend agent's current logic. To resolve the integration conflict and prevent further "change A, break B" issues, we must standardize on `string[]`.
+
+## 4. Integration and Verification Plan
+
+The goal is to make the `enduser-ui-fe` codebase internally consistent and aligned with the `string[]` data structure.
+
+### 4.1. Execution Steps
+1.  **【Modify】`enduser-ui-fe/src/types.ts`**: Change the `Task` interface to `attachments?: string[]`.
+2.  **【Modify】`enduser-ui-fe/src/services/api.ts`**: Update the `MOCK_TASKS` data to use an array of URL strings for attachments.
+3.  **【Verify/Keep】`enduser-ui-fe/src/pages/DashboardPage.tsx`**: Ensure the rendering logic is the one from `feature/gemini-log-api` which correctly handles a `string[]` (using `att.split('/')?.pop()`).
+4.  **【Modify】`enduser-ui-fe/src/pages/DashboardPage.test.tsx`**: Update/fix any unit tests to align with the `string[]` data structure.
+
+### 4.2. Verification Steps
+1.  **【Unit Test】**: After the modifications, run `make test-fe-project project=enduser-ui-fe`. All tests must pass.
+2.  **【E2E Manual Test】**: Start the full test environment (`docker compose up -d --build archon-server archon-mcp` and `cd enduser-ui-fe && npm run dev`). The user will be asked to verify:
+    *   The task list renders correctly.
+    *   Attachment links display a proper filename (e.g., `debug-log.txt`).
+    *   Clicking an attachment link opens the correct URL in a new tab.
