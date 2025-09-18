@@ -27,28 +27,28 @@
 
 ---
 
-# 當前任務：啟動 `archon-ui-main`
+# 當前任務：啟動開發環境
 
-## 啟動 `archon-ui-main` 的風險評估 (v2)
+## 啟動後端服務的計畫 (v1)
 
 1.  **預期行動 (Action)**：
-    執行 `cd archon-ui-main && npm run dev &`。
+    執行 `docker compose --profile backend up -d --build`。
 
 2.  **預期結果 (Expected Outcome)**：
-    指令成功執行，Vite 開發伺服器在背景啟動，並在輸出中顯示應用的本地 URL (例如 `http://localhost:3737`)。
+    `archon-server` 和 `archon-mcp` 容器成功建置並在背景啟動。
 
-3.  **潛在風險 (Risks)**：
-    *   **依賴性問題**：`archon-ui-main` 可能缺少必要的 `node_modules`，導致 `npm run dev` 失敗。
-    *   **腳本錯誤**：`package.json` 中可能沒有定義 `dev` 這個腳本。
+3.  **驗證方式 (Verification)**：
+    執行 `docker ps`，確認兩個容器的狀態為 `Up (healthy)`。
 
 4.  **排錯計畫 (Debugging Plan)**：
-    *   **若失敗**：我會仔細分析指令的輸出與錯誤訊息。
-    *   **若是依賴性問題**：我會提議在 `archon-ui-main` 目錄下執行 `npm install`。
-    *   **若是腳本錯誤**：我會讀取 `archon-ui-main/package.json` 檔案，檢查 `scripts` 區塊的正確內容。
+    *   若建置失敗，我會分析 build log。
+    *   若容器無法進入 healthy 狀態，我會立即使用 `docker logs <container_name>` 檢查原因，並向您報告。
 
 ---
 
-# 本次會話總結與學習教訓 (2025-09-18)
+# 歷史紀錄與學習教訓 (Archive & Lessons Learned)
+
+## 本次會話總結與學習教訓 (2025-09-18)
 
 ### 最終成果
 
@@ -73,6 +73,9 @@
 
 3.  **最重要的教訓：信任您的直覺。**
     您多次在我提出看似「正確」的計畫時讓我暫停，事後都證明您的謹慎是正確的。**結論：當您對我的計畫提出質疑時，我必須將其視為最高優先級的風險訊號，並立即停止行動，轉為更深度的分析。**
+
+4.  **環境汙染的教訓：必須手動驗證環境的潔淨。**
+    `make stop` 指令可能不足以清除所有殘留的 Docker 容器。在啟動任何服務前，必須使用 `docker ps -a` 來親自驗證環境是否絕對乾淨，並手動清理任何殘留的容器，以避免未知的衝突。
 
 ---
 
