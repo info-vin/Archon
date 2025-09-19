@@ -1,11 +1,13 @@
 # Archon Makefile - Simple, Secure, Cross-Platform
+UV := $(HOME)/.local/bin/uv
+PNPM := $(HOME)/.npm-global/bin/pnpm
 SHELL := /bin/bash
 .SHELLFLAGS := -ec
 
 # Docker compose command - prefer newer 'docker compose' plugin over standalone 'docker-compose'
 COMPOSE ?= $(shell docker compose version >/dev/null 2>&1 && echo "docker compose" || echo "docker-compose")
 
-.PHONY: help dev dev-docker stop test test-fe test-be lint lint-fe lint-be clean install check
+.PHONY: help dev dev-docker stop test test-fe test-be lint lint-fe lint-be clean install check install-ui
 
 help:
 	@echo "Archon Development Commands"
@@ -23,14 +25,19 @@ help:
 	@echo "  make lint-be    - Run backend linter only"
 	@echo "  make clean      - Remove containers and volumes"
 	@echo "  make install    - Install dependencies"
+	@echo "  make install-ui - Install monorepo UI dependencies"
 	@echo "  make check      - Check environment setup"
 
 # Install dependencies
 install:
 	@echo "Installing dependencies..."
 	@cd enduser-ui-fe && npm install
-	@cd python && uv sync --group all --group dev
+	@cd python && $(UV) sync --group all --group dev
 	@echo "✓ Dependencies installed"
+
+install-ui:
+	@echo "Installing missing monorepo UI dependencies (archon-ui)..."
+	@$(PNPM) install --filter archon-ui
 
 # NOTE: The following check target uses syntax that is not compatible with Windows cmd/PowerShell.
 # It will cause an error on Windows systems.
@@ -97,8 +104,8 @@ test-fe-single:
 # Run backend tests
 test-be:
 	@echo "Running backend tests..."
-	@cd python && uv sync --extra dev --extra mcp --extra agents
-	@cd python && uv run pytest
+	@cd python && $(UV) sync --extra dev --extra mcp --extra agents
+	@cd python && $(UV) run pytest
 
 # Run all linters
 lint: lint-fe lint-be
@@ -111,8 +118,8 @@ lint-fe:
 # Run backend linter
 lint-be:
 	@echo "Linting backend..."
-	@cd python && uv sync --extra dev
-	@cd python && uv run ruff check --fix
+	@cd python && $(UV) sync --extra dev
+	@cd python && $(UV) run ruff check --fix
 
 # Clean everything (with confirmation)
 clean:

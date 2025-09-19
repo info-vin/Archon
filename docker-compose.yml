@@ -1,13 +1,15 @@
 # Docker Compose profiles:
-# - Default (no profile): Starts archon-server, archon-mcp, and archon-frontend
-# - Agents are opt-in: archon-agents starts only with the "agents" profile
+# - backend: Starts archon-server and archon-mcp for hybrid development
+# - frontend: Starts the archon-frontend container for full docker mode
+# - agents: Starts the optional archon-agents service
 # Usage:
-#   docker compose up                        # Starts server, mcp, frontend (agents disabled)
-#   docker compose --profile agents up -d    # Also starts archon-agents
+#   docker compose --profile backend up
+#   docker compose --profile frontend --profile backend up (for full docker mode)
 
 services:
   # Server Service (FastAPI + Socket.IO + Crawling)
   archon-server:
+    profiles: ["backend"]
     build:
       context: ./python
       dockerfile: Dockerfile.server
@@ -63,6 +65,7 @@ services:
 
   # Lightweight MCP Server Service (HTTP-based)
   archon-mcp:
+    profiles: ["backend"]
     build:
       context: ./python
       dockerfile: Dockerfile.mcp
@@ -146,6 +149,7 @@ services:
 
   # Frontend
   archon-frontend:
+    profiles: ["frontend"]
     build: ./archon-ui-main
     container_name: archon-ui
     ports:

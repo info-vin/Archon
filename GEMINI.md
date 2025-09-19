@@ -151,3 +151,85 @@
 ### 排錯預案 (Debugging Plan)
 - 若在任何步驟中，自動化測試失敗，將立即使用 `git checkout` 還原導致失敗的檔案，重新分析錯誤，並提出對**測試本身**的修復，而不是在錯誤的基礎上繼續修改。
 - 若出現預期外的視覺佈局問題，將請求使用者提供截圖與描述，以便進行精準的 CSS/UI 修正。
+---
+
+# 最終安全計畫 v8 (2025-09-19)
+
+本計畫是我在深度分析了 `Makefile`, `README.md`, `CONTRIBUTING_tw.md`, `docker-compose.yml` 及多個 `package.json` 後，制定的最終方案。它旨在解決我們遇到的所有問題，特別是 `make install` 指令不完整的根本原因，並遵循最嚴格的安全操作原則。
+
+### **第零步：徹底清理與驗證 Docker 環境 (Clean & Verify)**
+
+這是最重要的一步，旨在確保我們從一個絕對乾淨、無干擾的狀態開始。
+
+*   **行動 A: 清理 Docker 服務**
+    *   **指令**: `make stop`
+    *   **理由**: `Makefile` 提供了此指令，其本質是 `docker compose down`。這遵循了 `GEMINI.md` 中關於「避免環境汙染」的教訓。
+    *   **預期結果**: 終端機顯示 `Stopping all services...` 和 `✓ Services stopped`。
+    *   **排錯計畫**: 若此指令失敗，我會嘗試直接執行 `docker compose down` 並分析錯誤日誌。
+
+*   **行動 B: 驗證 Docker 環境**
+    *   **指令**: `docker ps -a`
+    *   **理由**: 雙重確認沒有任何殘留或「孤兒」容器。這是 `GEMINI.md` 中記錄的、避免未知衝突的硬性要求。
+    *   **預期結果**: 輸出列表為空，或確認不包含任何名為 `archon-*` 的容器。
+    *   **排錯計畫**: 如果仍有殘留容器，我會向您報告容器列表，並請求手動移除它們的許可，而不是擅自行動。
+
+---
+
+### **第一步：執行標準但「不完整」的安裝 (Standard but Incomplete Install)**
+
+*   **行動**: `make install`
+*   **理由**: 這是 `README.md` 和 `Makefile` 中規定的官方開發流程第一步。我明確知道這一步是不完整的，但仍需執行以遵循標準流程。
+*   **預期結果**: 終端機將顯示 `enduser-ui-fe` 和 `python` 的安裝日誌，最後顯示 `✓ Dependencies installed`。此步驟結束後，`archon-ui-main/node_modules` 目錄**預期依然不存在**。
+*   **排錯計畫**: 如果 `npm` (for `enduser-ui-fe`) 或 `uv` (for `python`) 安裝失敗，我會分析其對應的錯誤日誌。
+
+---
+
+### **第二步：手動補全遺漏的依賴 (Manually Install Missing Dependency)**
+
+這一步是解決我們所有問題的關鍵。
+
+*   **行動**: `pnpm install --filter archon-ui`
+*   **理由**: 補上 `make install` 的缺口。根據 `CONTRIBUTING_tw.md`，這是為 monorepo 中的單一子專案 (`archon-ui`) 安裝依賴的**唯一正確方法**。
+*   **預期結果**: `pnpm` 日誌顯示成功獲取並連結依賴，`archon-ui-main/node_modules` 目錄被成功建立。
+*   **排錯計畫**: 如果失敗，極有可能是 `pnpm` 指令本身未安裝。我會先執行 `pnpm --version` 來驗證，並向您報告。
+
+---
+
+### **第三步：執行標準開發啟動 (Standard Development Launch)**
+
+*   **行動**: `make dev`
+*   **理由**: `Makefile` 提供的最可靠的混合模式啟動指令，它會處理好後端啟動和前端所需的所有環境變數，解決了 `TODO.md` 工作流程圖中的跨環境連接問題。
+*   **預期結果**: Docker 在背景啟動後端服務，然後 Vite 伺服器在前台啟動，並在終端機打印出 `archon-ui-main` 的訪問地址 (如 `http://localhost:5173`)。
+*   **排錯計畫**:
+    *   若後端啟動失敗，我會用 `docker logs archon-server` 檢查日誌。
+    *   若前端啟動失敗，我會檢查 Vite 的錯誤輸出，並再次確認 `.env` 文件中的相關變數。
+---
+
+## Makefile Workaround for `make v3.81` (2025-09-19)
+
+- **Problem**: The default `make` on the user's system was confirmed to be `/usr/bin/make`, which is the old `v3.81`. This version has quirks related to `PATH` handling and command pre-validation.
+- **Decision**: Abandoned the attempt to use the Homebrew-installed `make 4.4.1` as it was not discoverable in the `PATH`. The plan reverted to making the `Makefile` compatible with the old `v3.81`.
+- **Final Solution**:
+    1.  **`Makefile` Modification**: A single `write_file` operation was used to create a definitive, compatible `Makefile`.
+        -   Removed the `export PATH` directive.
+        -   Defined explicit variables pointing to the absolute paths of the executables: `UV := $(HOME)/.local/bin/uv` and `PNPM := $(HOME)/.npm-global/bin/pnpm`.
+        -   Replaced all calls to `uv` and `pnpm` with their respective variables (`$(UV)`, `$(PNPM)`).
+        -   Ensured the `install-ui` target was present.
+    2.  **`GEMINI.md` Update**: This log was updated to reflect the final, pragmatic solution.
+- **Outcome**: This approach, while less elegant, is robust and works correctly within the constraints of the user's confirmed environment.
+
+---
+
+## Process Correction: The Importance of Direct Verification (2025-09-19)
+
+- **Event**: After `make dev` failed with a "Port 3737 in use" error, I immediately proposed a fix to `docker-compose.yml` based on analyzing the file's content.
+- **User Feedback**: The user correctly pointed out that I should have first used `docker ps` and `docker logs` to get direct, conclusive evidence of which container was causing the conflict, before jumping to a solution based on configuration.
+- **Lesson Learned**: My diagnosis, while likely correct, was a "deductive leap." The more rigorous and trustworthy process is to always gather direct evidence of the runtime state (e.g., `docker ps`) before analyzing configuration files (`docker-compose.yml`). This avoids assumptions and builds a stronger case for any proposed changes. I must integrate this "verify runtime state first" principle into my workflow, especially when dealing with complex, stateful systems like Docker.
+
+---
+
+## Process Correction: The Importance of Direct Verification (2025-09-19)
+
+- **Event**: After `make dev` failed with a "Port 3737 in use" error, I immediately proposed a fix to `docker-compose.yml` based on analyzing the file's content.
+- **User Feedback**: The user correctly pointed out that I should have first used `docker ps` and `docker logs` to get direct, conclusive evidence of which container was causing the conflict, before jumping to a solution based on configuration.
+- **Lesson Learned**: My diagnosis, while likely correct, was a "deductive leap." The more rigorous and trustworthy process is to always gather direct evidence of the runtime state (e.g., `docker ps`) before analyzing configuration files (`docker-compose.yml`). This avoids assumptions and builds a stronger case for any proposed changes. I must integrate this "verify runtime state first" principle into my workflow, especially when dealing with complex, stateful systems like Docker.

@@ -358,6 +358,9 @@ After changing hostname or ports:
 # Install dependencies
 make install
 
+# Install dependencies for the monorepo UI
+make install-ui
+
 # Start development (recommended)
 make dev        # Backend in Docker, frontend local with hot reload
 
