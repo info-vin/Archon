@@ -52,9 +52,11 @@ CREATE TRIGGER update_archon_settings_updated_at
 -- Create RLS (Row Level Security) policies for settings
 ALTER TABLE archon_settings ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Allow service role full access" ON archon_settings;
 CREATE POLICY "Allow service role full access" ON archon_settings
     FOR ALL USING (auth.role() = 'service_role');
 
+DROP POLICY IF EXISTS "Allow authenticated users to read and update" ON archon_settings;
 CREATE POLICY "Allow authenticated users to read and update" ON archon_settings
     FOR ALL TO authenticated
     USING (true);
@@ -163,7 +165,7 @@ CREATE TABLE IF NOT EXISTS archon_sources (
     summary TEXT,
     total_word_count INTEGER DEFAULT 0,
     title TEXT,
-    metadata JSONB DEFAULT '{}',
+    metadata JSONB DEFAULT '{}'::jsonb,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
@@ -500,18 +502,21 @@ ALTER TABLE archon_crawled_pages ENABLE ROW LEVEL SECURITY;
 ALTER TABLE archon_sources ENABLE ROW LEVEL SECURITY;
 ALTER TABLE archon_code_examples ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Allow public read access to archon_crawled_pages" ON archon_crawled_pages;
 CREATE POLICY "Allow public read access to archon_crawled_pages"
   ON archon_crawled_pages
   FOR SELECT
   TO public
   USING (true);
 
+DROP POLICY IF EXISTS "Allow public read access to archon_sources" ON archon_sources;
 CREATE POLICY "Allow public read access to archon_sources"
   ON archon_sources
   FOR SELECT
   TO public
   USING (true);
 
+DROP POLICY IF EXISTS "Allow public read access to archon_code_examples" ON archon_code_examples;
 CREATE POLICY "Allow public read access to archon_code_examples"
   ON archon_code_examples
   FOR SELECT
@@ -706,51 +711,51 @@ ALTER TABLE archon_document_versions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE archon_prompts ENABLE ROW LEVEL SECURITY;
 
 -- Create RLS policies for service role (full access)
+DROP POLICY IF EXISTS "Allow service role full access to archon_projects" ON archon_projects;
 CREATE POLICY "Allow service role full access to archon_projects" ON archon_projects
     FOR ALL USING (auth.role() = 'service_role');
 
+DROP POLICY IF EXISTS "Allow service role full access to archon_tasks" ON archon_tasks;
 CREATE POLICY "Allow service role full access to archon_tasks" ON archon_tasks
     FOR ALL USING (auth.role() = 'service_role');
 
+DROP POLICY IF EXISTS "Allow service role full access to archon_project_sources" ON archon_project_sources;
 CREATE POLICY "Allow service role full access to archon_project_sources" ON archon_project_sources
     FOR ALL USING (auth.role() = 'service_role');
 
+DROP POLICY IF EXISTS "Allow service role full access to archon_document_versions" ON archon_document_versions;
 CREATE POLICY "Allow service role full access to archon_document_versions" ON archon_document_versions
     FOR ALL USING (auth.role() = 'service_role');
 
+DROP POLICY IF EXISTS "Allow service role full access to archon_prompts" ON archon_prompts;
 CREATE POLICY "Allow service role full access to archon_prompts" ON archon_prompts
     FOR ALL USING (auth.role() = 'service_role');
 
 -- Create RLS policies for authenticated users
+DROP POLICY IF EXISTS "Allow authenticated users to read and update archon_projects" ON archon_projects;
 CREATE POLICY "Allow authenticated users to read and update archon_projects" ON archon_projects
     FOR ALL TO authenticated
     USING (true);
 
+DROP POLICY IF EXISTS "Allow authenticated users to read and update archon_tasks" ON archon_tasks;
 CREATE POLICY "Allow authenticated users to read and update archon_tasks" ON archon_tasks
     FOR ALL TO authenticated
     USING (true);
 
+DROP POLICY IF EXISTS "Allow authenticated users to read and update archon_project_sources" ON archon_project_sources;
 CREATE POLICY "Allow authenticated users to read and update archon_project_sources" ON archon_project_sources
     FOR ALL TO authenticated
     USING (true);
 
+DROP POLICY IF EXISTS "Allow authenticated users to read archon_document_versions" ON archon_document_versions;
 CREATE POLICY "Allow authenticated users to read archon_document_versions" ON archon_document_versions
     FOR SELECT TO authenticated
     USING (true);
 
+DROP POLICY IF EXISTS "Allow authenticated users to read archon_prompts" ON archon_prompts;
 CREATE POLICY "Allow authenticated users to read archon_prompts" ON archon_prompts
     FOR SELECT TO authenticated
     USING (true);
-
--- =====================================================
--- SECTION 10: DEFAULT PROMPTS DATA
--- =====================================================
-
--- Seed with default prompts for each content type
-INSERT INTO archon_prompts (prompt_name, prompt, description) VALUES
-('document_builder', 'You are an expert technical writer. Based on the provided context, generate a concise and clear document. The document should have a logical structure, including headings, lists, and code blocks where appropriate. Focus on accuracy and clarity.', 'Generates a technical document from context.'),
-('feature_builder', 'You are a senior software architect. Analyze the user request and the provided context to outline the key components of a new feature. Your output should be a structured list of components, their responsibilities, and their interactions. Use a JSON format for the output.', 'Outlines the components for a new software feature.'),
-('data_builder', 'You are a data specialist. Create a set of mock data based on the provided schema or description. The data should be realistic and cover various edge cases. Output the data in a JSON array format.', 'Generates mock data based on a schema.');
 
 -- =====================================================
 -- SECTION 11: PROFILES TABLE (for enduser-ui)
@@ -767,9 +772,13 @@ CREATE TABLE IF NOT EXISTS profiles (
     avatar TEXT
 );
 ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow authenticated users to read profiles" ON profiles;
 CREATE POLICY "Allow authenticated users to read profiles" ON profiles
     FOR SELECT TO authenticated
     USING (true);
+
+DROP POLICY IF EXISTS "Allow service role full access to profiles" ON profiles;
 CREATE POLICY "Allow service role full access to profiles" ON profiles
     FOR ALL USING (auth.role() = 'service_role');
 
@@ -785,6 +794,8 @@ CREATE TABLE IF NOT EXISTS blog_posts (
     "imageUrl" TEXT
 );
 ALTER TABLE blog_posts ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow public read access to blog_posts" ON blog_posts;
 CREATE POLICY "Allow public read access to blog_posts" ON blog_posts
     FOR SELECT TO public
     USING (true);

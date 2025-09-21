@@ -156,3 +156,24 @@ Key improvements:
 - **Simple @sio.event handlers** - Official Socket.IO 2025 pattern
 - **Root namespace only** - No complex namespace management
 - **Direct room management** - Simple `sio.enter_room()` and `sio.emit()` calls
+
+---
+
+## Frontend and Backend: A Decoupled Architecture
+
+This section clarifies how "Static" frontend sites can work with a powerful "Dynamic" backend that runs AI agents. This is the core of modern web architecture.
+
+- **The Frontend (Static Site):** The user interfaces (`archon-ui-main` and `enduser-ui-fe`) are what you see and interact with in the browser. They are deployed as "Static Sites" on Render, meaning they consist only of HTML, JS, and CSS. They do not run any Python or Agent logic themselves.
+
+- **The Backend (Web Service):** The AI agents and all core business logic run in our backend service (`archon-server`). This is a separate, continuously running Python application deployed as a "Web Service" on Render.
+
+### How They Cooperate
+
+The interaction follows a clear, decoupled flow, as defined in the project's core workflow diagrams:
+
+1.  **User Action:** A user clicks a button on a frontend page (e.g., "Assign Task" on `enduser-ui-fe`).
+2.  **API Request:** The JavaScript code in the browser sends an API request to the backend service's URL (e.g., `https://your-backend.onrender.com/api/tasks`).
+3.  **Backend Processing:** The `archon-server` receives this request and triggers the appropriate AI Agent to perform the task.
+4.  **Data Update & Notification:** The Agent completes its work, saves the results to the database, and the backend uses real-time communication (Socket.IO) to notify the frontend that there is new data to display.
+
+In summary: the frontend is "static," responsible only for presenting the interface and sending requests; the backend is "dynamic," responsible for handling all complex logic and AI agent operations. They are two separate but cooperating services.

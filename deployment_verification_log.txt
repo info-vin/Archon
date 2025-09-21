@@ -1,58 +1,51 @@
-# Deployment Verification Log for spike/verify-deployment-pipeline
+# Deployment Verification Log
 
-## Date
-2025-09-10
+## Session: 2025-09-21
 
-## Initial Test
+### Goal
+Execute E2E test for `Phase 2.9` by starting the full local development environment.
 
-### Action
-1. Checked out `spike/verify-deployment-pipeline`.
-2. Ran `docker compose --profile full up -d --build` to simulate deployment.
-3. Ran `curl http://localhost:8181/health` to verify service health.
+### Action 1: Parallel Startup & Verification
+1.  Executed `make stop` to ensure a clean environment.
+2.  Verified dependencies in `python/.venv` and `*/node_modules` exist, skipping re-installation.
+3.  Executed `make dev &` to start core services.
+4.  Executed `cd enduser-ui-fe && npm run dev &` to start end-user UI.
+5.  Waited ~120 seconds for services to initialize.
+6.  User verified with browser that services on ports 8181, 3737, and 5174 were accessible.
 
-### Result: FAILURE
-The deployment was successful in that the service started, but the service itself is not healthy because the database schema is out of date.
+### Result 1: Partial Success, E2E Test Failure
+- **Startup:** All three services started successfully and were accessible.
+- **E2E Test:** User performed manual test and received an error on `archon-ui-main` (port 3737) when updating a task.
+- **Browser Error Log:** `Failed to update task ... 500 (Internal Server Error)`
 
-#### Health Check Output:
-```json
-{
-  "status": "migration_required",
-  "service": "archon-backend",
-  "timestamp": "2025-09-10T04:58:18.859024",
-  "ready": false,
-  "migration_required": true,
-  "message": "Database schema outdated - missing required columns from recent updates",
-  "migration_instructions": "Open Supabase Dashboard → SQL Editor → Run: migration/add_source_url_display_name.sql",
-  "schema_valid": false
-}
-```
+### Action 2: Backend Log Investigation
+1.  User provided logs from `docker-compose logs archon-server`.
+
+### Result 2: Root Cause Identified
+- **Backend Error Log:** `Failed to update task | error={'message': 'column profiles.username does not exist', 'code': '42703', ...}`
 
 ### Analysis
-The backend service started but is not in a ready state because the database schema is outdated. A migration needs to be run. The required migration script is `migration/add_source_url_display_name.sql`.
+- The root cause of the E2E test failure is a bug in the backend (`archon-server`).
+- The code attempts to query a column `profiles.username` which does not exist.
+- The correct column name, per `000_unified_schema.sql`, is `profiles.name`.
 
 ---
 
-## Re-verification after Fix
+## Next Steps & Commit Plan
 
-### Action
-1. User executed the database migration script `migration/add_source_url_display_name.sql` in Supabase.
-2. Restarted Docker services.
-3. Ran `curl http://localhost:8181/health` again.
+### 1. Troubleshooting & Fix Plan
+1.  **Stop Services:** (Already completed by user).
+2.  **Find Bug:** Search backend source code (`python/src/server/`) for the string `profiles.username`.
+3.  **Fix Code:** Replace the incorrect `username` reference with the correct `name` reference.
+4.  **Re-verify:** Restart the full environment and have the user re-run the manual E2E test to confirm the fix.
 
-### Result: SUCCESS
-The health check was successful.
-
-#### Health Check Output:
-```json
-{
-  "status": "healthy",
-  "service": "archon-backend",
-  "timestamp": "2025-09-10T05:54:08.260557",
-  "ready": true,
-  "credentials_loaded": true,
-  "schema_valid": true
-}
-```
-
-### Conclusion
-The root cause of the deployment issue was confirmed to be the outdated database schema. Applying the necessary migration resolves the issue.
+### 2. Git Commit Plan & Notes
+*   After the fix is verified, the following steps will be taken:
+*   **Action 1: `git status`**: Check all modified files, which are expected to include:
+    - `GEMINI.md` (updated SOP)
+    - `CONTRIBUTING_tw.md` (updated SOP and principles)
+    - `deployment_verification_log.txt` (this file)
+    - The fixed Python file (e.g., `.../task_service.py`)
+    - `TODO.md` (updated task status)
+*   **Action 2: `git add`**: Stage all the above files.
+*   **Action 3: `git commit`**: Propose a comprehensive commit message summarizing the entire debugging session, the fix, and the documentation updates.

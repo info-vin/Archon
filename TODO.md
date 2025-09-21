@@ -16,17 +16,19 @@
     - [x] 提交資料庫重構 (`refactor(db): ...`)。
 
 - **[x] 第二步：端對端整合測試 (Final Acceptance Test)**
-    - [ ] **資料庫準備**: 在 Supabase 手動執行 `RESET_DB.sql` (可選), `000_unified_schema.sql`, `seed_mock_data.sql`。
-    - [x] **啟動應用**: 執行 `make dev`。
+    - [x] **資料庫準備**: 在 Supabase 手動執行 `RESET_DB.sql` (可選), `000_unified_schema.sql`, `seed_mock_data.sql`。
+    - [x] **啟動應用**: 成功啟動所有服務 (backend, archon-ui-main, enduser-ui-fe)。
     - [x] `make install` (with `make 3.81` workaround)
     - [x] `make install-ui` (with `make 3.81` workaround)
     - [x] Fix `docker-compose.yml` profiles
-    - [ ] **Current**: Execute final `make dev` command.
-    - [x] **手動驗證**: 建立任務 -> 指派給 Agent -> 驗證產出的附件。
+    - [x] **Current**: Execute final `make dev` command.
+    - [ ] **手動驗證**: 建立任務 -> 指派給 Agent -> 驗證產出的附件。 (發現新 Bug)
 
 - **[ ] (from P2.5) 移除 API 中寫死的角色 (`current_user_role`)**
 - **[ ] (from P2.5) 簡化應用程式啟動程序 (Simplify App Startup)**
 - **[ ] (from P2.5) 強化服務層抽象 (Enforce Service Layer Abstraction)**
+- **[ ] (Tech Debt) 修復 `seed_mock_data.sql` 的冪等性，確保可重複執行。**
+- **[ ] (Bug) 修復更新任務時，因 `profiles.username` 欄位不存在而導致的 500 錯誤。**
 
 ---
 

@@ -15,6 +15,20 @@
 - **原則**: 修復 Bug 或修改程式碼時，應採取最小、最精準的修改。
 - **心法**: 在使用 `replace` 等工具時，務必提供足夠的上下文，確保只修改到目標程式碼。這能有效避免「改 A 壞 B」的副作用，是建立穩定性的基礎。
 
+### 4. 撰寫冪等的資料庫腳本 (Writing Idempotent Database Scripts)
+- **情境**: 執行資料庫遷移腳本（如 `000_unified_schema.sql`）時，因 `policy ... already exists` 等錯誤而中斷。
+- **心法**: 資料庫遷移腳本應始終具備「冪等性 (Idempotency)」，確保其可以安全地重複執行而不會中途失敗。這犧牲了微不足道的效能，換來了設定過程的穩定性與可靠性。
+- **最佳實踐**: 對於不支援 `CREATE ... IF NOT EXISTS` 的資料庫物件（如 `POLICY`, `FUNCTION`, `TRIGGER`），在 `CREATE` 語句之前，必須先使用 `DROP ... IF EXISTS` 語句進行清理。
+- **範例**:
+    ```sql
+    -- 不穩健的寫法 (Brittle way)
+    CREATE POLICY "MyPolicy" ON my_table;
+
+    -- 穩健的、冪等的寫法 (Robust, Idempotent way)
+    DROP POLICY IF EXISTS "MyPolicy" ON my_table;
+    CREATE POLICY "MyPolicy" ON my_table;
+    ```
+
 ---
 
 ## 開發環境小撇步
@@ -23,40 +37,98 @@
 - 使用 `pnpm create vite@latest <project_name> -- --template react-ts` 快速建立一個新的 React + Vite + TypeScript 專案。
 - 檢查每個套件 `package.json` 裡的 name 欄位來確認正確名稱，忽略最上層的那個。
 
-### 本地開發環境啟動 SOP (v2.0 - 2025-09-19 修訂)
+### 本地開發環境啟動與驗證 SOP (v1.0 - 2025-09-19)
 
-> **目標**: 啟動一個標準的混合開發環境，包含後端服務 (在 Docker 中) 與主控台介面 (`archon-ui-main` 在本地)。
-> **核心**: 此流程使用 `Makefile` 作為指令的單一事實來源，確保所有開發者體驗一致。
+本文件是經歷了數次失敗與偵錯後，總結出的最終、最可靠的本地開發環境啟動流程。
 
-**第一步：安裝依賴**
+#### 1. 目標 (Objective)
 
-此指令會安裝所有必要的後端 (`uv`) 和前端 (`npm`) 依賴。
+在本地成功啟動一個完整、可用於端對端手動測試的開發環境。
+
+#### 2. 核心架構 (Core Architecture)
+
+本地開發環境由三個獨立運行的部分組成，必須對它們有清晰的認識：
+
+- **核心後端 (Core Backend)**:
+  - **服務**: `archon-server`, `archon-mcp`
+  - **運行方式**: 在 Docker 容器中運行。
+  - **監控埠號**: `8181` (API), `8051` (MCP)
+
+- **管理後台 (Admin UI)**:
+  - **服務**: `archon-ui-main`
+  - **運行方式**: 在本地終端機中運行 (Vite Dev Server)。
+  - **監控埠號**: `3737`
+
+- **使用者介面 (End-User UI)**:
+  - **服務**: `enduser-ui-fe`
+  - **運行方式**: 在本地終端機中運行 (Vite Dev Server)。
+  - **監控埠號**: `5173`
+
+#### 3. 執行步驟 (Execution Steps)
+
+**第一步：清理環境 (Clean Environment)**
+
+確保沒有任何殘留的 Docker 容器在運行，避免連接埠衝突。
+
+```bash
+make stop
+# 預期結果：看到 "Services stopped"，且 `docker ps -a` 應為空。
+```
+
+**第二步：安裝所有依賴 (Install All Dependencies)**
+
+此步驟會安裝專案所需的所有後端和前端依賴。
 
 ```bash
 make install
-```
-
-**第二步：安裝 Monorepo UI 依賴**
-
-此指令會使用 `pnpm` 安裝 `archon-ui-main` 的特定依賴。
-
-```bash
 make install-ui
+# 預期結果：兩個指令都成功執行，沒有錯誤訊息。
 ```
 
-**第三步：啟動開發環境**
+**第三步：啟動核心服務 (Start Core Services)**
 
-此指令會啟動後端 Docker 容器，並在本機啟動 `archon-ui-main` 的開發伺服器。
+在**第一個終端機分頁**中，啟動後端服務和管理後台 UI。
 
 ```bash
 make dev
+# 預期結果：指令會持續運行，並在日誌最後顯示 Vite 伺服器已在 http://localhost:3737 上準備就緒。
 ```
 
-**第四步：完成**
+**第四步：啟動使用者介面 (Start End-User UI)**
 
-完成以上步驟後，開發環境即準備就緒：
-- **後端 API**: `http://localhost:8181`
-- **主控台介面**: `http://localhost:3737` (或 Vite 在終端機中顯示的 URL)
+**打開一個新的終端機分頁**，進入 `enduser-ui-fe` 目錄並啟動其開發伺服器。
+
+```bash
+cd enduser-ui-fe && npm run dev
+# 預期結果：指令會持續運行，並顯示 Vite 伺服器已在 http://localhost:5173 上準備就緒。
+```
+
+#### 4. 排錯計畫 v2 (已加入「改A壞B」風險評估)
+
+##### **第一階段：資料庫準備**
+
+**目標**: 在 Supabase SQL Editor 中，成功手動依序執行 `000_unified_schema.sql` 和 `seed_mock_data.sql`。
+
+| **潛在錯誤** | **解決方案** | **「改A壞B」風險與緩解策略** |
+| :--- | :--- | :--- |
+| 1. SQL 語法錯誤 (Syntax Error) | 我讀取 SQL 檔案，分析後提出 `replace` 或 `write_file` 修正。 | **風險**: **高**。直接修改共享的 SQL 腳本，可能會破壞所有人的開發環境。<br>**緩解策略**: 我**不會**直接修改原檔案。我會將修正後的 SQL 內容輸出到一個**臨時檔案** (如 `temp_fix.sql`) 中，在您確認邏輯無誤後，我才會提議覆寫原始檔案，並再次提醒這是一個會被 `git` 追蹤的永久性修改。 |
+| 2. 物件已存在 (Object already exists) | 建議先執行 `migration/RESET_DB.sql`。 | **風險**: **極高**。這是破壞性操作，會清空資料庫，可能導致您手動添加的、未記錄的測試資料遺失。<br>**緩解策略**: 我**必須**用加粗和警告的語氣，再三向您確認您理解其後果，並主動詢問：「**資料庫中是否有任何需要保留的資料？**」。我只會將其作為最後手段。 |
+
+---
+
+##### **第二階段：應用程式啟動**
+
+**目標**: 成功啟動所有服務，並能在瀏覽器中存取 `http://localhost:3737` (管理後台) 和 `http://localhost:5173` (使用者介面)。
+
+| **潛在錯誤** | **解決方案** | **「改A壞B」風險與緩解策略** |
+| :--- | :--- | :--- |
+| 1. `make dev` 埠號衝突 (Port in use) | 執行 `make stop` 清理環境。 | **風險**: **低**。`make stop` 是 SOP 的一部分，設計上只會停止 `docker-compose.yml` 中定義的服務，是安全的清理操作。 |
+| 2. `enduser-ui-fe` 依賴找不到 | 在 `enduser-ui-fe` 目錄下執行 `npm install`。 | **風險**: **中等**。如果 `package.json` 使用了浮動版本號 (如 `^1.2.3`)，`npm install` 可能會引入有破壞性變更的新版套件。<br>**緩解策略**: 在建議安裝前，我會先檢查 `enduser-ui-fe/` 目錄下是否存在 `package-lock.json` 檔案。<br>  - **如果存在**，我會建議執行 `npm ci`，它會嚴格按照 lock 檔案安裝，**完全避免**此風險。<br>  - **如果不存在**，我會指出 `npm install` 的風險，並建議在安裝後立即執行 `make test-fe-project project=enduser-ui-fe` 來驗證變更。 |
+| 3. `enduser-ui-fe` 啟動時無聲掛起 | 檢查根目錄 `.env` 檔案中的 `GEMINI_API_KEY`。 | **風險**: **極低**。此為唯讀檢查操作，僅要求使用者確認，不涉及任何修改。 |
+
+#### 5. 最終驗證 (Final Verification)
+
+當所有服務都成功啟動後，請在瀏覽器中打開**使用者介面**: `http://localhost:5173`，並根據 `TODO.md` 的指示，完成一次「建立任務 -> 指派給 Agent -> 驗證產出的附件」的完整端對端測試流程。
 
 ### **跨平台指令注意事項 (Cross-platform Command Notes)**
 
