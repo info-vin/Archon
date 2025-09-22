@@ -85,7 +85,7 @@ async def list_assignable_users():
     """
     List users that can be assigned to a task based on the current user's role.
     """
-    # For now, hardcode the role as "PM" for development as per TODO.md
+    # TODO(Phase 2.9): Remove hardcoded role. See TODO.md.
     current_user_role = "PM"
 
     try:
@@ -94,7 +94,7 @@ async def list_assignable_users():
         rbac_service = RBACService()
 
         # Get all profiles
-        response = supabase.table("profiles").select("id, username, role").execute()
+        response = supabase.table("profiles").select("id, name, role").execute()
         if response.data is None:
             logfire.warning("Could not fetch profiles from database.")
             return []
@@ -106,7 +106,7 @@ async def list_assignable_users():
             user_role = user.get("role")
             if user_role and rbac_service.has_permission_to_assign(current_user_role, user_role):
                 assignable_users.append(
-                    AssignableUser(id=user["id"], name=user["username"], role=user["role"])
+                    AssignableUser(id=user["id"], name=user["name"], role=user["role"])
                 )
 
         logfire.info(f"Found {len(assignable_users)} assignable users for role {current_user_role}")
@@ -612,10 +612,11 @@ async def create_task(request: CreateTaskRequest):
     try:
         # RBAC Validation
         if request.assignee and request.assignee != "User":
-            current_user_role = "PM"  # Hardcoded for now
+            # TODO(Phase 2.9): Remove hardcoded role. See TODO.md.
+            current_user_role = "PM"
             supabase = get_supabase_client()
             rbac_service = RBACService()
-            response = supabase.table("profiles").select("role").eq("username", request.assignee).single().execute()
+            response = supabase.table("profiles").select("role").eq("name", request.assignee).single().execute()
             
             if response.data:
                 assignee_role = response.data.get("role")
@@ -810,11 +811,12 @@ async def update_task(task_id: str, request: UpdateTaskRequest):
     try:
         # RBAC Validation
         if request.assignee is not None:
-            current_user_role = "PM"  # Hardcoded for now
+            # TODO(Phase 2.9): Remove hardcoded role. See TODO.md.
+            current_user_role = "PM"
             supabase = get_supabase_client()
             rbac_service = RBACService()
 
-            response = supabase.table("profiles").select("role").eq("username", request.assignee).single().execute()
+            response = supabase.table("profiles").select("role").eq("name", request.assignee).single().execute()
 
             if response.data:
                 assignee_role = response.data.get("role")

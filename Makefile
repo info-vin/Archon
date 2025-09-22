@@ -104,7 +104,7 @@ test-fe-single:
 # Run backend tests
 test-be:
 	@echo "Running backend tests..."
-	@cd python && $(UV) sync --extra dev --extra mcp --extra agents
+	@cd python && $(UV) sync --group dev --group mcp --group agents --group server
 	@cd python && $(UV) run pytest
 
 # Run all linters
@@ -118,7 +118,7 @@ lint-fe:
 # Run backend linter
 lint-be:
 	@echo "Linting backend..."
-	@cd python && $(UV) sync --extra dev
+	@cd python && $(UV) sync --group dev
 	@cd python && $(UV) run ruff check --fix
 
 # Clean everything (with confirmation)

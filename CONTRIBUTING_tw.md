@@ -10,6 +10,7 @@
 - **原則**: 不要「幻想」一個可運行的環境或一個完美的程式碼狀態。永遠要透過指令或工具進行驗證。
 - **案例 A：關於 `cherry-pick` 和 UI**：程式碼移植成功（`git cherry-pick`）不代表視覺整合成功。對於 UI 變更，在所有測試的最後，必須進行「眼見為實」的視覺化驗收，不能僅信賴自動化測試，因為樣式和佈局問題是自動化測試的盲區。
 - **案例 B：關於端對端測試**：在制定端對端測試計畫前，必須先驗證所有前置條件都已滿足。應主動查閱專案文件（如 `GEMINI.md`）中已記錄的風險（例如，資料庫遷移衝突），並優先解決這些「阻塞性問題」，而不是規劃一個無法執行的「幻想計畫」。
+- **案例 C：關於建置腳本**：當 `make test-be` 失敗且 `Makefile` 中的指令 (`uv sync --extra`) 與 `pyproject.toml` 的結構 (`[dependency-groups]`) 產生矛盾時，不能輕率地認定 `Makefile` 就是錯的。必須使用 `git log -p -- Makefile` 來追溯該指令的引入歷史，理解其作者的意圖。在本次除錯中，正是 `git log` 揭示了專案曾刻意選擇 `[dependency-groups]`，從而確認了 `--group` 才是正確的參數，指明了唯一的、正確的修復方向。
 
 ### 3. 精準修改，避免副作用
 - **原則**: 修復 Bug 或修改程式碼時，應採取最小、最精準的修改。
@@ -28,6 +29,11 @@
     DROP POLICY IF EXISTS "MyPolicy" ON my_table;
     CREATE POLICY "MyPolicy" ON my_table;
     ```
+
+### 5. 以 `Makefile` 作為指令的單一事實來源 (Makefile as Single Source of Truth)
+- **情境**: 專案中的 `README.md` 或其他貢獻指南，記載了與 `Makefile` 中不一致的、或已經過時的指令，導致開發者遵循文件操作時發生錯誤。
+- **心法**: **可執行的腳本 (`Makefile`) 是指令的最終真理**。文件應當是腳本的「說明」，而不是一個獨立的、可能過時的副本。
+- **最佳實踐**: 當新增或修改一個開發流程時，應優先更新 `Makefile`。然後，在撰寫 `.md` 文件時，應**引用** `make <command>`，而不是直接複製貼上底層的 shell 指令。這確保了當 `Makefile` 更新時，文件中的指令引用永遠不會過時。
 
 ---
 
@@ -146,7 +152,7 @@ cd enduser-ui-fe && npm run dev
 2.  **安裝特定任務的依賴**
     *   **問題**: 執行 `make test-be` 或 `make lint-be` 時，可能會出現 `ModuleNotFoundError` (例如 `pytest-mock` 找不到) 或其他依賴問題。
     *   **原因**: 這是因為 `pyproject.toml` 將 `test` 和 `dev` 的依賴分組管理，預設的 `uv sync` 不會安裝它們。
-    *   **解法**: `Makefile` 中的指令已經更新，會自動處理這個問題。當您執行 `make test-be` 時，它會先執行 `uv sync --extra test` 來安裝測試所需的額外套件。同理，`make lint-be` 也會安裝 `dev` 依賴。
+    *   **解法**: `Makefile` 中的指令已經更新，會自動處理這個問題。當您執行 `make test-be` 時，它會先執行 `uv sync --group dev --group mcp --group agents` 來安裝測試所需的額外套件。同理，`make lint-be` 也會安裝 `dev` 依賴。
 
 3.  **Makefile 的跨平台相容性**
     *   **問題**: `Makefile` 中的某些語法（例如註解或複雜的條件判斷）在 Windows 的 `make` 環境中可能會解析失敗。
