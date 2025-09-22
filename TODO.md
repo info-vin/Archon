@@ -25,10 +25,10 @@
     - [ ] **手動驗證**: 建立任務 -> 指派給 Agent -> 驗證產出的附件。 (發現新 Bug)
 
 - **[ ] (from P2.5) 移除 API 中寫死的角色 (`current_user_role`)**
-- **[ ] (from P2.5) 簡化應用程式啟動程序 (Simplify App Startup)**
-- **[ ] (from P2.5) 強化服務層抽象 (Enforce Service Layer Abstraction)**
-- **[ ] (Tech Debt) 修復 `seed_mock_data.sql` 的冪等性，確保可重複執行。**
-- **[ ] (Bug) 修復更新任務時，因 `profiles.username` 欄位不存在而導致的 500 錯誤。**
+- [x] (from P2.5) 簡化應用程式啟動程序 (Simplify App Startup) - *已在近期提交中透過 `Makefile` 和 SOP 優化完成。*
+- [x] (from P2.5) 強化服務層抽象 (Enforce Service Layer Abstraction) - *已將 `projects_api.py` 和 `settings_api.py` 中的直接呼叫重構至服務層。*
+- [x] (Tech Debt) 修復 `seed_mock_data.sql` 的冪等性，確保可重複執行。
+- [x] (Bug) 修復更新任務時，因 `profiles.username` 欄位不存在而導致的 500 錯誤。
 
 ---
 
