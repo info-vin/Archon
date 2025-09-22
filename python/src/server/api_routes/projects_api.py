@@ -25,6 +25,7 @@ from ..utils.etag_utils import check_etag, generate_etag
 logger = get_logger(__name__)
 
 # Service imports
+from ..services import ProfileService
 from ..services.projects import (
     ProjectCreationService,
     ProjectService,
@@ -90,18 +91,16 @@ async def list_assignable_users():
 
     try:
         logfire.info(f"Listing assignable users for role: {current_user_role}")
-        supabase = get_supabase_client()
+        profile_service = ProfileService()
         rbac_service = RBACService()
 
-        # Get all profiles
-        response = supabase.table("profiles").select("id, name, role").execute()
-        if response.data is None:
-            logfire.warning("Could not fetch profiles from database.")
-            return []
+        # Get all profiles via ProfileService
+        success, all_users = profile_service.list_all_users()
+        if not success:
+            # The service already logs the error, so we just return a generic failure
+            raise HTTPException(status_code=500, detail={"error": "Failed to retrieve profiles"})
 
-        all_users = response.data
         assignable_users = []
-
         for user in all_users:
             user_role = user.get("role")
             if user_role and rbac_service.has_permission_to_assign(current_user_role, user_role):
@@ -614,12 +613,15 @@ async def create_task(request: CreateTaskRequest):
         if request.assignee and request.assignee != "User":
             # TODO(Phase 2.9): Remove hardcoded role. See TODO.md.
             current_user_role = "PM"
-            supabase = get_supabase_client()
+            profile_service = ProfileService()
             rbac_service = RBACService()
-            response = supabase.table("profiles").select("role").eq("name", request.assignee).single().execute()
-            
-            if response.data:
-                assignee_role = response.data.get("role")
+            success, assignee_role = profile_service.get_user_role(request.assignee)
+
+            if not success:
+                # Service failed, raise an internal server error
+                raise HTTPException(status_code=500, detail={"error": "Failed to verify assignee role"})
+
+            if assignee_role:
                 if not rbac_service.has_permission_to_assign(current_user_role, assignee_role):
                     raise HTTPException(status_code=403, detail=f"As a {current_user_role}, you cannot assign tasks to a {assignee_role}.")
             else:
@@ -813,13 +815,15 @@ async def update_task(task_id: str, request: UpdateTaskRequest):
         if request.assignee is not None:
             # TODO(Phase 2.9): Remove hardcoded role. See TODO.md.
             current_user_role = "PM"
-            supabase = get_supabase_client()
+            profile_service = ProfileService()
             rbac_service = RBACService()
+            success, assignee_role = profile_service.get_user_role(request.assignee)
 
-            response = supabase.table("profiles").select("role").eq("name", request.assignee).single().execute()
+            if not success:
+                # Service failed, raise an internal server error
+                raise HTTPException(status_code=500, detail={"error": "Failed to verify assignee role"})
 
-            if response.data:
-                assignee_role = response.data.get("role")
+            if assignee_role:
                 if not rbac_service.has_permission_to_assign(current_user_role, assignee_role):
                     raise HTTPException(status_code=403, detail=f"As a {current_user_role}, you cannot assign tasks to a {assignee_role}.")
             else:
