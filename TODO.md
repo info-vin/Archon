@@ -24,7 +24,7 @@
     - [x] **Current**: Execute final `make dev` command.
     - [ ] **手動驗證**: 建立任務 -> 指派給 Agent -> 驗證產出的附件。 (發現新 Bug)
 
-- **[ ] (from P2.5) 移除 API 中寫死的角色 (`current_user_role`)**
+- [x] (from P2.5) 移除 API 中寫死的角色 (`current_user_role`) - 已改為從 HTTP 標頭讀取，暫時解決硬編碼問題。
 - [x] (from P2.5) 簡化應用程式啟動程序 (Simplify App Startup) - *已在近期提交中透過 `Makefile` 和 SOP 優化完成。*
 - [x] (from P2.5) 強化服務層抽象 (Enforce Service Layer Abstraction) - *已將 `projects_api.py` 和 `settings_api.py` 中的直接呼叫重構至服務層。*
 - [x] (Tech Debt) 修復 `seed_mock_data.sql` 的冪等性，確保可重複執行。

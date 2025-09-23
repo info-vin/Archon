@@ -16,15 +16,7 @@ from fastapi import APIRouter, Header, HTTPException, Request, Response
 from fastapi import status as http_status
 from pydantic import BaseModel
 
-# Removed direct logging import - using unified config
-# Set up standard logger for background tasks
 from ..config.logfire_config import get_logger, logfire
-from ..utils import get_supabase_client
-from ..utils.etag_utils import check_etag, generate_etag
-
-logger = get_logger(__name__)
-
-# Service imports
 from ..services import ProfileService
 from ..services.projects import (
     ProjectCreationService,
@@ -35,6 +27,11 @@ from ..services.projects import (
 from ..services.projects.document_service import DocumentService
 from ..services.projects.versioning_service import VersioningService
 from ..services.rbac_service import RBACService
+from ..utils import get_supabase_client
+from ..utils.etag_utils import check_etag, generate_etag
+
+logger = get_logger(__name__)
+
 
 # Using HTTP polling for real-time updates
 
@@ -82,12 +79,12 @@ class AssignableUser(BaseModel):
 
 
 @router.get("/assignable-users", response_model=list[AssignableUser])
-async def list_assignable_users():
+async def list_assignable_users(x_user_role: str | None = Header(None, alias="X-User-Role")):
     """
     List users that can be assigned to a task based on the current user's role.
     """
     # TODO(Phase 2.9): Remove hardcoded role. See TODO.md.
-    current_user_role = "PM"
+    current_user_role = x_user_role or "User"
 
     try:
         logfire.info(f"Listing assignable users for role: {current_user_role}")
@@ -113,7 +110,7 @@ async def list_assignable_users():
 
     except Exception as e:
         logfire.error(f"Failed to list assignable users: {e}")
-        raise HTTPException(status_code=500, detail={"error": "Failed to retrieve assignable users"})
+        raise HTTPException(status_code=500, detail={"error": "Failed to retrieve assignable users"}) from e
 
 
 @router.get("/projects")
@@ -124,7 +121,7 @@ async def list_projects(
 ):
     """
     List all projects.
-    
+
     Args:
         include_content: If True (default), returns full project content.
                         If False, returns lightweight metadata with statistics.
@@ -197,7 +194,7 @@ async def list_projects(
         raise
     except Exception as e:
         logfire.error(f"Failed to list projects | error={str(e)}")
-        raise HTTPException(status_code=500, detail={"error": str(e)})
+        raise HTTPException(status_code=500, detail={"error": str(e)}) from e
 
 
 @router.post("/projects")
@@ -247,12 +244,7 @@ async def create_project(request: CreateProjectRequest):
 
     except Exception as e:
         logfire.error(f"Failed to start project creation | error={str(e)} | title={request.title}")
-        raise HTTPException(status_code=500, detail={"error": str(e)})
-
-
-
-
-
+        raise HTTPException(status_code=500, detail={"error": str(e)}) from e
 
 
 @router.get("/projects/task-counts")
@@ -263,7 +255,6 @@ async def get_all_task_counts(
     """
     Get task counts for all projects in a single batch query.
     Optimized endpoint to avoid N+1 query problem.
-    
     Returns counts grouped by project_id with todo, doing, and done counts.
     Review status is included in doing count to match frontend logic.
     """
@@ -313,7 +304,7 @@ async def get_all_task_counts(
         raise
     except Exception as e:
         logfire.error(f"Failed to get task counts | error={str(e)}")
-        raise HTTPException(status_code=500, detail={"error": str(e)})
+        raise HTTPException(status_code=500, detail={"error": str(e)}) from e
 
 
 @router.get("/projects/{project_id}")
@@ -353,7 +344,7 @@ async def get_project(project_id: str):
         raise
     except Exception as e:
         logfire.error(f"Failed to get project | error={str(e)} | project_id={project_id}")
-        raise HTTPException(status_code=500, detail={"error": str(e)})
+        raise HTTPException(status_code=500, detail={"error": str(e)}) from e
 
 
 @router.put("/projects/{project_id}")
@@ -464,7 +455,7 @@ async def update_project(project_id: str, request: UpdateProjectRequest):
         raise
     except Exception as e:
         logfire.error(f"Project update failed | project_id={project_id} | error={str(e)}")
-        raise HTTPException(status_code=500, detail={"error": str(e)})
+        raise HTTPException(status_code=500, detail={"error": str(e)}) from e
 
 
 @router.delete("/projects/{project_id}")
@@ -496,7 +487,7 @@ async def delete_project(project_id: str):
         raise
     except Exception as e:
         logfire.error(f"Failed to delete project | error={str(e)} | project_id={project_id}")
-        raise HTTPException(status_code=500, detail={"error": str(e)})
+        raise HTTPException(status_code=500, detail={"error": str(e)}) from e
 
 
 @router.get("/projects/{project_id}/features")
@@ -526,7 +517,7 @@ async def get_project_features(project_id: str):
         raise
     except Exception as e:
         logfire.error(f"Failed to get project features | error={str(e)} | project_id={project_id}")
-        raise HTTPException(status_code=500, detail={"error": str(e)})
+        raise HTTPException(status_code=500, detail={"error": str(e)}) from e
 
 
 @router.get("/projects/{project_id}/tasks")
@@ -599,20 +590,20 @@ async def list_project_tasks(
         raise
     except Exception as e:
         logfire.error(f"Failed to list project tasks | error={str(e)} | project_id={project_id}")
-        raise HTTPException(status_code=500, detail={"error": str(e)})
+        raise HTTPException(status_code=500, detail={"error": str(e)}) from e
 
 
 # Remove the complex /tasks endpoint - it's not needed and breaks things
 
 
 @router.post("/tasks")
-async def create_task(request: CreateTaskRequest):
+async def create_task(request: CreateTaskRequest, x_user_role: str | None = Header(None, alias="X-User-Role")):
     """Create a new task with automatic reordering."""
     try:
         # RBAC Validation
         if request.assignee and request.assignee != "User":
             # TODO(Phase 2.9): Remove hardcoded role. See TODO.md.
-            current_user_role = "PM"
+            current_user_role = x_user_role or "User"
             profile_service = ProfileService()
             rbac_service = RBACService()
             success, assignee_role = profile_service.get_user_role(request.assignee)
@@ -658,7 +649,7 @@ async def create_task(request: CreateTaskRequest):
         raise
     except Exception as e:
         logfire.error(f"Failed to create task | error={str(e)} | project_id={request.project_id}")
-        raise HTTPException(status_code=500, detail={"error": str(e)})
+        raise HTTPException(status_code=500, detail={"error": str(e)}) from e
 
 
 @router.get("/tasks")
@@ -737,7 +728,7 @@ async def list_tasks(
         raise
     except Exception as e:
         logfire.error(f"Failed to list tasks | error={str(e)}")
-        raise HTTPException(status_code=500, detail={"error": str(e)})
+        raise HTTPException(status_code=500, detail={"error": str(e)}) from e
 
 
 @router.get("/tasks/{task_id}")
@@ -766,7 +757,7 @@ async def get_task(task_id: str):
         raise
     except Exception as e:
         logfire.error(f"Failed to get task | error={str(e)} | task_id={task_id}")
-        raise HTTPException(status_code=500, detail={"error": str(e)})
+        raise HTTPException(status_code=500, detail={"error": str(e)}) from e
 
 
 class UpdateTaskRequest(BaseModel):
@@ -808,13 +799,13 @@ class RestoreVersionRequest(BaseModel):
 
 
 @router.put("/tasks/{task_id}")
-async def update_task(task_id: str, request: UpdateTaskRequest):
+async def update_task(task_id: str, request: UpdateTaskRequest, x_user_role: str | None = Header(None, alias="X-User-Role")):
     """Update a task."""
     try:
         # RBAC Validation
         if request.assignee is not None:
             # TODO(Phase 2.9): Remove hardcoded role. See TODO.md.
-            current_user_role = "PM"
+            current_user_role = x_user_role or "User"
             profile_service = ProfileService()
             rbac_service = RBACService()
             success, assignee_role = profile_service.get_user_role(request.assignee)
@@ -873,7 +864,7 @@ async def update_task(task_id: str, request: UpdateTaskRequest):
         raise
     except Exception as e:
         logfire.error(f"Failed to update task | error={str(e)} | task_id={task_id}")
-        raise HTTPException(status_code=500, detail={"error": str(e)})
+        raise HTTPException(status_code=500, detail={"error": str(e)}) from e
 
 
 @router.delete("/tasks/{task_id}")
@@ -900,7 +891,7 @@ async def delete_task(task_id: str):
         raise
     except Exception as e:
         logfire.error(f"Failed to archive task | error={str(e)} | task_id={task_id}")
-        raise HTTPException(status_code=500, detail={"error": str(e)})
+        raise HTTPException(status_code=500, detail={"error": str(e)}) from e
 
 
 # MCP endpoints for task operations
@@ -939,7 +930,7 @@ async def mcp_update_task_status(task_id: str, status: str):
         logfire.error(
             f"Failed to update task status | error={str(e)} | task_id={task_id}"
         )
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 # Progress tracking via HTTP polling - see /api/progress endpoints
@@ -951,7 +942,7 @@ async def mcp_update_task_status(task_id: str, status: str):
 async def list_project_documents(project_id: str, include_content: bool = False):
     """
     List all documents for a specific project.
-    
+
     Args:
         project_id: Project UUID
         include_content: If True, includes full document content.
@@ -982,7 +973,7 @@ async def list_project_documents(project_id: str, include_content: bool = False)
         raise
     except Exception as e:
         logfire.error(f"Failed to list documents | error={str(e)} | project_id={project_id}")
-        raise HTTPException(status_code=500, detail={"error": str(e)})
+        raise HTTPException(status_code=500, detail={"error": str(e)}) from e
 
 
 @router.post("/projects/{project_id}/docs")
@@ -1020,7 +1011,7 @@ async def create_project_document(project_id: str, request: CreateDocumentReques
         raise
     except Exception as e:
         logfire.error(f"Failed to create document | error={str(e)} | project_id={project_id}")
-        raise HTTPException(status_code=500, detail={"error": str(e)})
+        raise HTTPException(status_code=500, detail={"error": str(e)}) from e
 
 
 @router.get("/projects/{project_id}/docs/{doc_id}")
@@ -1049,7 +1040,7 @@ async def get_project_document(project_id: str, doc_id: str):
         logfire.error(
             f"Failed to get document | error={str(e)} | project_id={project_id} | doc_id={doc_id}"
         )
-        raise HTTPException(status_code=500, detail={"error": str(e)})
+        raise HTTPException(status_code=500, detail={"error": str(e)}) from e
 
 
 @router.put("/projects/{project_id}/docs/{doc_id}")
@@ -1089,7 +1080,7 @@ async def update_project_document(project_id: str, doc_id: str, request: UpdateD
         logfire.error(
             f"Failed to update document | error={str(e)} | project_id={project_id} | doc_id={doc_id}"
         )
-        raise HTTPException(status_code=500, detail={"error": str(e)})
+        raise HTTPException(status_code=500, detail={"error": str(e)}) from e
 
 
 @router.delete("/projects/{project_id}/docs/{doc_id}")
@@ -1118,7 +1109,7 @@ async def delete_project_document(project_id: str, doc_id: str):
         logfire.error(
             f"Failed to delete document | error={str(e)} | project_id={project_id} | doc_id={doc_id}"
         )
-        raise HTTPException(status_code=500, detail={"error": str(e)})
+        raise HTTPException(status_code=500, detail={"error": str(e)}) from e
 
 
 # ==================== VERSION MANAGEMENT ENDPOINTS ====================
@@ -1152,7 +1143,7 @@ async def list_project_versions(project_id: str, field_name: str = None):
         raise
     except Exception as e:
         logfire.error(f"Failed to list versions | error={str(e)} | project_id={project_id}")
-        raise HTTPException(status_code=500, detail={"error": str(e)})
+        raise HTTPException(status_code=500, detail={"error": str(e)}) from e
 
 
 @router.post("/projects/{project_id}/versions")
@@ -1191,7 +1182,7 @@ async def create_project_version(project_id: str, request: CreateVersionRequest)
         raise
     except Exception as e:
         logfire.error(f"Failed to create version | error={str(e)} | project_id={project_id}")
-        raise HTTPException(status_code=500, detail={"error": str(e)})
+        raise HTTPException(status_code=500, detail={"error": str(e)}) from e
 
 
 @router.get("/projects/{project_id}/versions/{field_name}/{version_number}")
@@ -1226,7 +1217,7 @@ async def get_project_version(project_id: str, field_name: str, version_number: 
         logfire.error(
             f"Failed to get version | error={str(e)} | project_id={project_id} | field_name={field_name} | version_number={version_number}"
         )
-        raise HTTPException(status_code=500, detail={"error": str(e)})
+        raise HTTPException(status_code=500, detail={"error": str(e)}) from e
 
 
 @router.post("/projects/{project_id}/versions/{field_name}/{version_number}/restore")
@@ -1269,4 +1260,4 @@ async def restore_project_version(
         logfire.error(
             f"Failed to restore version | error={str(e)} | project_id={project_id} | field_name={field_name} | version_number={version_number}"
         )
-        raise HTTPException(status_code=500, detail={"error": str(e)})
+        raise HTTPException(status_code=500, detail={"error": str(e)}) from e
