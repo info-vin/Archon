@@ -1,34 +1,39 @@
-# Archon 專案開發藍圖：Phase 2 v1.3
+# Archon 專案開發藍圖：Phase 2 v1.4
 
 本文件旨在規劃 Archon 專案的下一階段開發，核心目標是將 Agent 自動化與 RAG (檢索增強生成) 功能深度整合到 endUser-ui 中，實現人機協作的智慧任務管理。
 
 ---
 
-### **Phase 2.9: 核心技術債清理與資料庫遷移 (Core Tech Debt & DB Migration)**
+### **Phase 3.0: 部署準備與最終技術債清理 (Deployment Readiness & Final Tech Debt)**
 
-此階段的目標是解決所有已知的、阻礙專案進行端對端測試的根本性問題，是進入下一階段開發的關鍵前置任務。
+此階段的核心目標是清理剩餘的、影響架構一致性的技術債，並完成一次成功的端對端部署，為下一階段的功能開發奠定一個絕對穩定的基礎。
 
-- **[x] 第一步：解決資料庫遷移腳本衝突**
-    - [x] 釐清 `enduser-ui-fe` 的資料與功能對應關係。
-    - [x] 以 `spike` 分支為基準，分析遷移腳本衝突。
-    - [x] 制定合併策略，建立一個單一、統一的 `000_unified_schema.sql`。
-    - [x] 封存舊的、衝突的腳本至 `migration/archive/`。
-    - [x] 提交資料庫重構 (`refactor(db): ...`)。
+- **[ ] 第一步：強化服務層抽象 (Enforce Service Layer Abstraction)**
+    - **目標**: 將 `knowledge_api.py` 中剩餘的資料庫直接呼叫，全部重構至 `KnowledgeService` 中，以達成後端架構的完全一致。
+    - **執行計畫**:
+        1.  **建立安全網**: 為 `knowledge_api.py` 中需要重構的端點，編寫「特性測試 (Characterization Tests)」，鎖定其當前的 API 契約。
+        2.  **原子化重構**: 逐一將端點的業務邏輯遷移至 `KnowledgeService`。
+        3.  **驗證**: 確保所有相關測試在重構後依然通過。
 
-- **[x] 第二步：端對端整合測試 (Final Acceptance Test)**
-    - [x] **資料庫準備**: 在 Supabase 手動執行 `RESET_DB.sql` (可選), `000_unified_schema.sql`, `seed_mock_data.sql`。
-    - [x] **啟動應用**: 成功啟動所有服務 (backend, archon-ui-main, enduser-ui-fe)。
-    - [x] `make install` (with `make 3.81` workaround)
-    - [x] `make install-ui` (with `make 3.81` workaround)
-    - [x] Fix `docker-compose.yml` profiles
-    - [x] **Current**: Execute final `make dev` command.
-    - [ ] **手動驗證**: 建立任務 -> 指派給 Agent -> 驗證產出的附件。 (發現新 Bug)
+- **[ ] 第二步：完整本地驗證 (Full Local Verification)**
+    - **目標**: 在部署前，於本地環境執行一次完整的迴歸測試，確保近期所有重構未引入任何副作用。
+    - **執行計畫**:
+        1.  執行後端完整測試: `make test-be`
+        2.  執行前端完整測試: `make test-fe`
+        3.  執行 Lint 檢查: `make lint`
 
-- [x] (from P2.5) 移除 API 中寫死的角色 (`current_user_role`) - 已改為從 HTTP 標頭讀取，暫時解決硬編碼問題。
-- [x] (from P2.5) 簡化應用程式啟動程序 (Simplify App Startup) - *已在近期提交中透過 `Makefile` 和 SOP 優化完成。*
-- [x] (from P2.5) 強化服務層抽象 (Enforce Service Layer Abstraction) - *已將 `projects_api.py` 和 `settings_api.py` 中的直接呼叫重構至服務層。*
-- [x] (Tech Debt) 修復 `seed_mock_data.sql` 的冪等性，確保可重複執行。
-- [x] (Bug) 修復更新任務時，因 `profiles.username` 欄位不存在而導致的 500 錯誤。
+- **[ ] 第三步：部署至 Render (Deployment to Render)**
+    - **目標**: 將 `main` 分支成功部署至 Render，並驗證所有服務 (後端, `archon-ui-main`, `enduser-ui-fe`) 均正常運行。
+    - **驗收標準**: 線上環境功能與本地開發環境完全一致。
+
+---
+
+### **歷史存檔：Phase 2.9 技術債清理成果**
+
+> **結論**: Phase 2.9 成功解決了大量阻塞性的本地環境與資料庫問題，為 Phase 3.0 的部署準備工作鋪平了道路。所有相關任務均已完成，包括：
+> - **資料庫**: 統一了遷移腳本 (`000_unified_schema.sql`)，並修復了 `seed_mock_data.sql` 的冪等性。
+> - **環境與啟動**: 修復了 `Makefile` 和 `docker-compose.yml` 的配置問題，簡化了啟動程序。
+> - **後端 API**: 修復了因 `profiles.username` 欄位錯誤導致的 500 Bug，並推進了 `projects_api` 和 `settings_api` 的服務層抽象重構。
 
 ---
 
