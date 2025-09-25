@@ -24,6 +24,7 @@ from ..services.crawling import CrawlOrchestrationService
 from ..services.knowledge import DatabaseMetricsService, KnowledgeItemService
 from ..services.search.rag_service import RAGService
 from ..services.storage import DocumentStorageService
+from ..services.knowledge_service import KnowledgeService
 from ..utils import get_supabase_client
 from ..utils.document_processing import extract_text_from_document
 
@@ -285,8 +286,6 @@ async def get_knowledge_item_chunks(source_id: str, domain_filter: str | None = 
         )
         raise HTTPException(status_code=500, detail={"error": str(e)})
 
-
-from ..services.knowledge_service import KnowledgeService
 
 @router.get("/knowledge-items/{source_id}/code-examples")
 async def get_knowledge_item_code_examples(source_id: str):
