@@ -124,6 +124,50 @@ cd enduser-ui-fe && npm run dev
 
 # 歷史紀錄與學習教訓 (Archive & Lessons Learned)
 
+## 本次會話總結與學習教訓 (2025-09-25): 突破 Mocking 迷霧
+
+- **最終成果**: 在經歷了數次失敗後，終於成功為 `knowledge_api.py` 的 `get_code_examples` 端點建立了一個穩定、可通過的特性測試。這個過程雖然曲折，但最終讓我們對專案的測試框架有了根本性的理解。
+
+- **偵錯與診斷 (從猜測到證實的過程)**:
+    1.  **初步失敗與錯誤假設**: 最初的測試因 `assert 0 == 1` 而失敗。我據此提出了多次錯誤的假設，包括 mock 鏈不對、需要 `patch` 等，並進行了多次無效的「來回修改」，加劇了問題的混亂性。
+    2.  **使用者的關鍵指引**: 在我陷入混亂後，使用者引導我重新閱讀 `CONTRIBUTING_tw.md`，並最終讓我自己去閱讀 `conftest.py`。
+    3.  **根本原因分析 (最終突破)**: 閱讀 `conftest.py` 後，我終於發現了問題的根源。一個被 `@pytest.fixture(autouse=True)` 標記的 `prevent_real_db_calls` 函式，會在**每一個測試前**自動執行，並將所有資料庫查詢的預設回傳值設定為**空列表 `[]`**。
+    4.  **證實假說**: 這解釋了為何我在測試函式內部的 mock 設定一直不生效。正確的做法，不是去創造新的 mock 物件，而是**覆寫**這個由 `autouse` fixture 建立的、已經存在的 mock 物件的行為。
+
+- **最終成功的測試程式碼 (2025-09-25)**:
+    ```python
+    # 測試執行日誌：
+    # ============================= test session starts ==============================
+    # ...
+    # ============================= 434 passed in 22.38s ===============================
+
+    from unittest.mock import MagicMock
+    from fastapi.testclient import TestClient
+
+    MOCK_SOURCE_ID = "file_test_py_12345"
+
+    def test_get_code_examples_locks_contract(client: TestClient, mock_supabase_client: MagicMock):
+        # Arrange
+        MOCK_CODE_EXAMPLES = [{"id": "ex_1"}]
+        mock_response = MagicMock()
+        mock_response.data = MOCK_CODE_EXAMPLES
+        
+        # 關鍵：覆寫 conftest.py 中的預設行為
+        mock_supabase_client.from_.return_value.select.return_value.eq.return_value.execute.return_value = mock_response
+
+        # Act
+        response = client.get(f"/api/knowledge-items/{MOCK_SOURCE_ID}/code-examples")
+
+        # Assert
+        assert response.status_code == 200
+        assert response.json()["count"] == 1
+    ```
+
+- **關鍵學習**:
+    - **`conftest.py` 是最高優先級的上下文**: 在理解任何測試的行為時，必須首先閱讀 `conftest.py`，特別是其中帶有 `autouse=True` 的 fixture，因為它們會隱性地影響所有測試的初始狀態。
+    - **不要與框架對抗**: 當一個框架提供了自動化的機制時（如此處的自動 mock），應當去理解並利用它，而不是試圖用手動的方式（如 `with patch(...)`）去繞過或對抗它。
+    - **從失敗中學習，而不是重複失敗**: 反覆在同一個問題上失敗，代表我的除錯流程存在根本性缺陷。我不僅要解決眼前的 Bug，更要理解導致我犯錯的思維模式，並從流程上進行修正。
+
 ## 本次會話總結與學習教訓 (2025-09-24)
 
 - **核心挑戰**: 在完成 Phase 2.9 的技術債清理後，發現 `knowledge_api.py` 仍存在直接的資料庫呼叫，違反了服務層抽象原則。在提議重構後，被使用者指出計畫缺乏深度、存在「改A壞B」和陷入「副本任務」的風險。
@@ -135,11 +179,13 @@ cd enduser-ui-fe && npm run dev
         - **建立安全網**: 在修改任何程式碼**之前**，必須先為要修改的 API 編寫「特性測試 (Characterization Tests)」，用以鎖定其當前的行為（API 契約）。
         - **原子化修改**: 一次只修改一個最小單元（一個 API 端點），並確保其通過特性測試。
         - **杜絕補丁**: 如果測試失敗，應立即用 `git checkout` 還原，而不是在錯誤的基礎上繼續修補。
+    4.  **設定檔優先原則 (第三次突破)**: 即便有了安全計畫，我的執行依然失敗了。因為我只考慮了 Python 程式碼，卻忽略了 `docker-compose.yml`, `Makefile` 等決定程式碼**如何執行**的設定檔。這違反了「行動前風險評估原則」。一個真正「確認可執行」的計畫，必須是同時分析了**應用程式碼**和**基礎設施設定檔**後的產物。
 
 - **關鍵學習**:
     - **計畫必須包含「防呆」**: 一個好的計畫不僅要說明「做什麼」，更要說明「如何防止出錯」。特別是針對我過去「反覆修改」的行為模式，新的工作流程必須從根本上杜絕這種可能性。
     - **測試是修改的「藍圖」而非「事後檢查」**: 對於沒有測試的遺留程式碼，重構的第一步永遠是補上測試。這個測試定義了重構的「驗收標準」，是確保不破壞既有功能的唯一方法。
     - **始終連結到更高層次的架構**: 任何程式碼層級的修改，都必須能回答「它如何符合或強化既有架構」的問題。我的重構提議，是為了讓 `knowledge_api` 回歸到專案已確立的「API層-服務層」分離的標準架構。
+    - **先看框架，再看畫布**: 在修改「畫布」(應用程式碼)之前，必須先理解「畫框」(`yml`, `Makefile` 等設定檔)是如何限制和支撐這幅畫的。不理解框架，任何對畫布的修改都可能導致災難。
 
 - **下一步**:
     - **文件化**: 將本次學習沉澱到 `GEMINI.md`。（**當前步驟**）

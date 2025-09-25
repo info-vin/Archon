@@ -286,24 +286,14 @@ async def get_knowledge_item_chunks(source_id: str, domain_filter: str | None = 
         raise HTTPException(status_code=500, detail={"error": str(e)})
 
 
+from ..services.knowledge_service import KnowledgeService
+
 @router.get("/knowledge-items/{source_id}/code-examples")
 async def get_knowledge_item_code_examples(source_id: str):
     """Get all code examples for a specific knowledge item."""
     try:
-        safe_logfire_info(f"Fetching code examples for source_id: {source_id}")
-
-        # Query code examples with full content for this specific source
-        supabase = get_supabase_client()
-        result = (
-            supabase.from_("archon_code_examples")
-            .select("id, source_id, content, summary, metadata")
-            .eq("source_id", source_id)
-            .execute()
-        )
-
-        code_examples = result.data if result.data else []
-
-        safe_logfire_info(f"Found {len(code_examples)} code examples for {source_id}")
+        knowledge_service = KnowledgeService()
+        code_examples = await knowledge_service.get_code_examples(source_id)
 
         return {
             "success": True,
