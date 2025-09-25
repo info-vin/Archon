@@ -125,48 +125,21 @@ cd enduser-ui-fe && npm run dev
 # 歷史紀錄與學習教訓 (Archive & Lessons Learned)
 
 ## 本次會話總結與學習教訓 (2025-09-25): 突破 Mocking 迷霧
-
-- **最終成果**: 在經歷了數次失敗後，終於成功為 `knowledge_api.py` 的 `get_code_examples` 端點建立了一個穩定、可通過的特性測試。這個過程雖然曲折，但最終讓我們對專案的測試框架有了根本性的理解。
-
-- **偵錯與診斷 (從猜測到證實的過程)**:
-    1.  **初步失敗與錯誤假設**: 最初的測試因 `assert 0 == 1` 而失敗。我據此提出了多次錯誤的假設，包括 mock 鏈不對、需要 `patch` 等，並進行了多次無效的「來回修改」，加劇了問題的混亂性。
-    2.  **使用者的關鍵指引**: 在我陷入混亂後，使用者引導我重新閱讀 `CONTRIBUTING_tw.md`，並最終讓我自己去閱讀 `conftest.py`。
-    3.  **根本原因分析 (最終突破)**: 閱讀 `conftest.py` 後，我終於發現了問題的根源。一個被 `@pytest.fixture(autouse=True)` 標記的 `prevent_real_db_calls` 函式，會在**每一個測試前**自動執行，並將所有資料庫查詢的預設回傳值設定為**空列表 `[]`**。
-    4.  **證實假說**: 這解釋了為何我在測試函式內部的 mock 設定一直不生效。正確的做法，不是去創造新的 mock 物件，而是**覆寫**這個由 `autouse` fixture 建立的、已經存在的 mock 物件的行為。
-
-- **最終成功的測試程式碼 (2025-09-25)**:
-    ```python
-    # 測試執行日誌：
-    # ============================= test session starts ==============================
-    # ...
-    # ============================= 434 passed in 22.38s ===============================
-
-    from unittest.mock import MagicMock
-    from fastapi.testclient import TestClient
-
-    MOCK_SOURCE_ID = "file_test_py_12345"
-
-    def test_get_code_examples_locks_contract(client: TestClient, mock_supabase_client: MagicMock):
-        # Arrange
-        MOCK_CODE_EXAMPLES = [{"id": "ex_1"}]
-        mock_response = MagicMock()
-        mock_response.data = MOCK_CODE_EXAMPLES
-        
-        # 關鍵：覆寫 conftest.py 中的預設行為
-        mock_supabase_client.from_.return_value.select.return_value.eq.return_value.execute.return_value = mock_response
-
-        # Act
-        response = client.get(f"/api/knowledge-items/{MOCK_SOURCE_ID}/code-examples")
-
-        # Assert
-        assert response.status_code == 200
-        assert response.json()["count"] == 1
-    ```
-
+- **最終成果**: 遵循「證據驅動」和「沙盒驗證」的原則，成功為 `knowledge_api.py` 中一個重構後的異步端點修復了測試。所有變更已合併。
+- **偵錯歷程**:
+    1.  **初步失敗**: 直接為 `knowledge_api.py` 編寫測試，因 `assert 0 == 1` 失敗。
+    2.  **錯誤轉向**: 試圖用 `@patch` 解決，但被使用者指出這破壞了專案的測試一致性。
+    3.  **模式確立**: 在使用者指導下，透過比對 `test_settings_api.py` 等成功範例，確立了「用 `with patch` mock 服務類別」的正確模式。
+    4.  **二次失敗**: 應用新模式後，測試因 `500 Server Error` 失敗。
+    5.  **日誌注入**: 在 API 端點中臨時加入 `traceback` 日誌，成功捕獲到 `TypeError: object list can't be used in 'await' expression`。
+    6.  **根因分析**: 定位到問題根源是測試中的 `MagicMock` 回傳了一個同步的 `list`，而 API 正試圖 `await` 它。
+    7.  **最終修復**: 根據 `test_settings_api.py` 中的範例，將 `MagicMock` 替換為 `AsyncMock`，使其回傳一個可被 `await` 的協程。
+    8.  **沙盒驗證**: 在臨時測試檔案 `temp_test_fix.py` 中驗證了 `AsyncMock` 的解決方案是成功的。
+    9.  **最終整合**: 將驗證過的修復應用到主測試檔案，並移除了所有臨時的偵錯程式碼和檔案。
 - **關鍵學習**:
-    - **`conftest.py` 是最高優先級的上下文**: 在理解任何測試的行為時，必須首先閱讀 `conftest.py`，特別是其中帶有 `autouse=True` 的 fixture，因為它們會隱性地影響所有測試的初始狀態。
-    - **不要與框架對抗**: 當一個框架提供了自動化的機制時（如此處的自動 mock），應當去理解並利用它，而不是試圖用手動的方式（如 `with patch(...)`）去繞過或對抗它。
-    - **從失敗中學習，而不是重複失敗**: 反覆在同一個問題上失敗，代表我的除錯流程存在根本性缺陷。我不僅要解決眼前的 Bug，更要理解導致我犯錯的思維模式，並從流程上進行修正。
+    - **證據優於猜測**: 在修復一個問題前，應優先採用「日誌注入」等手段獲取確切的錯誤 traceback，而不是基於表面現象進行猜測。
+    - **深度參考範例**: 參考其他檔案時，不僅要看表面的模式（如 `with patch`），更要看細節的實現（如 `AsyncMock` 的使用），以應對 `async` 等複雜場景。
+    - **沙盒驗證的價值**: 對於不確定的修復，先在一個隔離的臨時檔案中進行驗證，可以完全避免對主幹程式碼的「來回修改」，是保證穩定性的最佳實踐。
 
 ## 本次會話總結與學習教訓 (2025-09-24)
 
