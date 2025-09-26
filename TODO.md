@@ -4,27 +4,25 @@
 
 ---
 
-### **Phase 3.0: 部署準備與最終技術債清理 (Deployment Readiness & Final Tech Debt)**
+### Phase 3.0: 核心功能硬化與部署前最終驗證 (Core Feature Hardening & Final Pre-Deployment Validation)
 
-此階段的核心目標是清理剩餘的、影響架構一致性的技術債，並完成一次成功的端對端部署，為下一階段的功能開發奠定一個絕對穩定的基礎。
+此階段的核心目標是為當前核心功能建立自動化測試覆蓋，並演練一次真實的部署流程，以確保**實作與定義的「工作流程圖」和「時序圖」完全一致**。
 
-- **[ ] 第一步：強化服務層抽象 (Enforce Service Layer Abstraction)**
-    - **目標**: 將 `knowledge_api.py` 中剩餘的資料庫直接呼叫，全部重構至 `KnowledgeService` 中，以達成後端架構的完全一致。
+- **[ ] 3.1 核心功能驗證：E2E 檔案上傳自動化測試**
+    - **目標**: 此測試旨在驗證「工作流程圖」中 6-10 的核心步驟（Agent 產出 -> 上傳 -> 連結回任務）的後端邏輯正確性。
+    - **我的角色**: 系統維護專家 (`AGENTS.md`)。
     - **執行計畫**:
-        1.  **建立安全網**: 為 `knowledge_api.py` 中需要重構的端點，編寫「特性測試 (Characterization Tests)」，鎖定其當前的 API 契約。
-        2.  **原子化重構**: 逐一將端點的業務邏輯遷移至 `KnowledgeService`。
-        3.  **驗證**: 確保所有相關測試在重構後依然通過。
+        1.  **應用既有模式**: 遵循 `git log` (`5816a8b`) 中為 `knowledge_api` 建立的測試模式，使用 `pytest` 和 `AsyncMock` 來模擬 `StorageService` 等外部服務。
+        2.  **編寫測試**: 建立一個新的測試案例，模擬一次完整的檔案上傳 API 呼叫，並斷言 (assert) `StorageService` 的 `upload` 方法被以正確的參數呼叫。
+        3.  **驗證**: 執行 `make test-be`，確保新測試通過。
 
-- **[ ] 第二步：完整本地驗證 (Full Local Verification)**
-    - **目標**: 在部署前，於本地環境執行一次完整的迴歸測試，確保近期所有重構未引入任何副作用。
+- **[ ] 3.2 最終部署演練 (Final Deployment Drill)**
+    - **目標**: 根據 `CONTRIBUTING_tw.md` 中已修正的分支策略，將一個穩定的 `feature` 分支成功部署至 Render。
+    - **前置條件**: 任務 3.1 必須完成。
     - **執行計畫**:
-        1.  執行後端完整測試: `make test-be`
-        2.  執行前端完整測試: `make test-fe`
-        3.  執行 Lint 檢查: `make lint`
-
-- **[ ] 第三步：部署至 Render (Deployment to Render)**
-    - **目標**: 將 `main` 分支成功部署至 Render，並驗證所有服務 (後端, `archon-ui-main`, `enduser-ui-fe`) 均正常運行。
-    - **驗收標準**: 線上環境功能與本地開發環境完全一致。
+        1.  確保 `feature/e2e-file-upload` 分支通過所有本地測試 (`make test`)。
+        2.  遵循 `CONTRIBUTING_tw.md` 的部署 SOP，**從 `feature/e2e-file-upload` 分支**推送到 Render。
+        3.  驗證線上環境所有服務正常，且檔案上傳功能運作正常。
 
 ---
 
@@ -33,7 +31,9 @@
 > **結論**: Phase 2.9 成功解決了大量阻塞性的本地環境與資料庫問題，為 Phase 3.0 的部署準備工作鋪平了道路。所有相關任務均已完成，包括：
 > - **資料庫**: 統一了遷移腳本 (`000_unified_schema.sql`)，並修復了 `seed_mock_data.sql` 的冪等性。
 > - **環境與啟動**: 修復了 `Makefile` 和 `docker-compose.yml` 的配置問題，簡化了啟動程序。
-> - **後端 API**: 修復了因 `profiles.username` 欄位錯誤導致的 500 Bug，並推進了 `projects_api` 和 `settings_api` 的服務層抽象重構。
+> - **後端 API**: 修復了因 `profiles.username` 欄位錯誤導致的 500 Bug。
+> - **服務層抽象**: 完成了 `projects_api`、`settings_api` 與 `knowledge_api` 的重構，將資料庫直接呼叫遷移至對應的 Service (commit `6cfb87b` 等)。
+> - **角色權限**: 完成了對 `projects_api.py` 中硬編碼角色的初步修復 (commit `653a55b`)。
 
 ---
 
@@ -157,7 +157,6 @@ sequenceDiagram
 ### **Phase 2.1: 核心基礎建設 (Core Foundation)**
 
 - **[x] 資料庫擴充 (Database Schema)**
-- **[x] 角色權限管理 (RBAC - Security & Data)**
 - **[x] 檔案上傳功能 (File Handling)**
 - **[x] 核心 API 擴充 (Core API)**
 - **[ ] 管理者儀表板 API (Report Dashboard API)**
@@ -199,7 +198,6 @@ sequenceDiagram
 
 ### **Phase 2.5: 架構重構與技術債清理 (Architectural Refactoring & Tech Debt)**
 
-- **[x] 重構角色權限管理 (Refactor RBAC)**
 - **[x] 整合健康檢查邏輯 (Consolidate Health Checks)**
 
 > **備註**: 此階段剩餘的技術債項目已統一遷移至 Phase 2.9 進行追蹤與處理。
