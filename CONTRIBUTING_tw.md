@@ -233,6 +233,49 @@ def test_your_api_endpoint(client, mock_supabase_client):
     mock_supabase_client.table.return_value.insert.assert_called_once_with({"name": "test_name"})
 ```
 
+### 3.2.1 如何測試啟動背景任務的 API 端點
+
+**情境**: 當一個 API 端點的主要職責是接收請求，然後使用 `asyncio.create_task` 啟動一個長時間運行的背景任務來處理時，我們不應該在 API 的單元測試中等待整個背景任務完成。
+
+**最佳實踐**: **測試端點的「職責」，而非「實作細節」**。此類端點的職責是「正確地啟動任務」。因此，我們應該模擬 (Mock) `asyncio.create_task` 本身，並驗證它是否被以正確的參數呼叫。
+
+**程式碼範例**:
+```python
+# 檔案: python/tests/server/api_routes/test_knowledge_api.py
+
+# 1. 在測試函式上使用 @patch 來模擬 `create_task`
+@patch('src.server.api_routes.knowledge_api.asyncio.create_task')
+def test_upload_document_endpoint_success(mock_create_task, client: TestClient):
+    """
+    驗證 /documents/upload 端點能成功接收檔案，
+    並正確啟動一個背景任務。
+    """
+    # 2. Arrange (安排): 準備測試資料
+    file_name = "test_document.txt"
+    file_content = b"This is a test file."
+
+    # 3. Act (執行): 呼叫 API 端點
+    response = client.post(
+        "/api/documents/upload",
+        files={"file": (file_name, file_content, "text/plain")},
+        data={"tags": '["test"]', "knowledge_type": "docs"},
+    )
+
+    # 4. Assert (斷言):
+    # 斷言 API 立即回傳了成功的回應
+    assert response.status_code == 200
+    assert response.json()["success"] is True
+    assert "progressId" in response.json()
+
+    # 斷言背景任務有被啟動
+    mock_create_task.assert_called_once()
+```
+
+**關於 `RuntimeWarning`**:
+採用此策略時，`pytest` 可能會顯示 `RuntimeWarning: coroutine ... was never awaited` 的警告。這是一個**預期中且無害的**副作用，因為被傳遞給模擬 `create_task` 的協程確實從未被執行。這恰好證明了我們的測試成功地將 API 端點的職責與背景任務的實作細節隔離開來。
+
+*👨‍🍳 **主廚筆記**: 這個測試策略是在為檔案上傳功能編寫測試時確立的。詳見 [我的工作日誌 (2025-09-27)](GEMINI.md#本次會話總結與學習教訓-2025-09-27)，了解其背後的完整偵錯與決策過程。*
+
 ### 3.3 前端測試實踐與常見問題 (Frontend Testing Practices & FAQ)
 在本次開發週期中，我們總結了以下前端測試的最佳實踐與常見問題的解決方案：
 

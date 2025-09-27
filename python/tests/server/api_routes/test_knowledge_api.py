@@ -29,3 +29,35 @@ def test_get_code_examples_locks_contract(mock_knowledge_service_class, client: 
 
     # Verify that the service method was called correctly
     mock_instance.get_code_examples.assert_called_once_with(MOCK_SOURCE_ID)
+
+@patch('src.server.api_routes.knowledge_api.asyncio.create_task')
+def test_upload_document_endpoint_success(mock_create_task, client: TestClient):
+    """
+    Tests that the /documents/upload endpoint correctly receives a file,
+    starts a background task, and returns an immediate success response.
+    This test focuses on the endpoint's responsibility, which is to delegate
+    processing to a background task.
+    """
+    # Arrange
+    file_content = b"This is the content of the test file."
+    file_name = "test_document.txt"
+    tags_json = '["pytest", "test-tag"]'
+    knowledge_type = "test-knowledge"
+
+    # Act
+    response = client.post(
+        "/api/documents/upload",
+        files={"file": (file_name, file_content, "text/plain")},
+        data={"tags": tags_json, "knowledge_type": knowledge_type},
+    )
+
+    # Assert the immediate API response
+    assert response.status_code == 200
+    response_json = response.json()
+    assert response_json["success"] is True
+    assert "progressId" in response_json
+    assert response_json["filename"] == file_name
+    assert response_json["message"] == "Document upload started"
+
+    # Assert that the background task was created
+    mock_create_task.assert_called_once()
