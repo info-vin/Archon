@@ -44,25 +44,24 @@
 
 ## 第二章：歷史工作日誌 (Past Journal Entries)
 
-### 本次會話總結與學習教訓 (2025-09-27): 追溯真實的依賴關係
+### 本次會話總結與學習教訓 (2025-09-27): 追溯真實的依賴關係與SOP的靈活應用
 
-- **核心挑戰**: 為 `knowledge_api.py` 中，一個會啟動非同步背景任務的 `/documents/upload` 端點，編寫一個穩定可靠的單元測試。
+- **第一項挑戰：為非同步端點建立測試**
+    - **偵錯歷程**: 在為 `/documents/upload` 編寫測試時，最初因讀取錯誤的服務檔案 (`storage_service.py`) 而產生困惑。透過 `search_file_content` 精準定位到 `DocumentStorageService` 類別的真實位置 (`storage_services.py`)，才得以釐清依賴關係。
+    - **最終成果**: 成功為 Phase 3.1 建立單元測試，並將「如何測試啟動背景任務的端點」的最佳實踐（模擬 `asyncio.create_task`）更新到了 `CONTRIBUTING_tw.md`。
 
-- **偵錯與診斷 (從混亂到清晰的過程)**:
-    1.  **初步分析錯誤**: 我最初根據 `import` 的路徑，讀取了 `storage_service.py` 和 `document_storage_service.py`，但發現其內容與 `knowledge_api.py` 中實際使用的 `DocumentStorageService` **類別**行為完全不符。
-    2.  **發現矛盾**: 這產生了一個核心矛盾：API 程式碼明確表示 `new DocumentStorageService()`，但我找到的檔案卻沒有這個類別的正確定義。這證明了**檔名是不可信的**。
-    3.  **根因分析與定位**: 我意識到，唯一的事實來源是程式碼本身。我放棄了基於檔名的猜測，改用 `search_file_content` 工具，在整個專案中直接搜索 `class DocumentStorageService` 這個字串。
-    4.  **定位成功**: 搜索結果精準地將我導向了 `storage_services.py` (複數) 這個檔案，其中包含了 `DocumentStorageService` 類別的完整定義，徹底解決了疑惑。
-
-- **最終成果與驗證**: 
-    - **完成測試**: 根據清晰的依賴關係，我成功為 `/documents/upload` 端點編寫了單元測試，並透過 `make test-be` 驗證所有 433 個測試案例均通過。
-    - **完成 Phase 3.1**: 這代表 `TODO.md` 中的 Phase 3.1 任務已完成。
-    - **分析測試警告**: 測試過程中出現的 `RuntimeWarning: coroutine ... was never awaited` 是我們測試策略（模擬 `asyncio.create_task`）下的預期產物，它不影響測試的正確性，因為我們的目標是驗證「背景任務已被啟動」，而非「背景任務已執行完畢」。
+- **第二項挑戰：修復部署前檢查的阻塞性問題**
+    - **偵錯歷程**:
+        1.  **`make test` 失敗**: 在執行部署SOP的第一步時，`make test` 因 `npm: command not found` 錯誤而失敗。
+        2.  **`git log` 調查**: 遵循使用者「先調查，不推測」的指導，透過 `git log -p -- Makefile` 發現 commit `13ef300` 在引入 `$(PNPM)` 變數時，並未完全替換所有 `npm` 指令，是歷史遺留的疏忽。
+        3.  **`make lint-be` 風險**: 同時，我們也預見到 `make lint-be` 中的 `--fix` 參數會污染工作區，並在實際執行後得到證實。我們遵循SOP，使用 `git checkout .` 成功恢復了工作區。
+        4.  **微型驗證**: 為了避免 `make test` 的漫長等待，我們採納了使用者「化整為零」的建議，改用 `make test-fe-single` 進行「微型驗證」，以最低成本確認了 `pnpm` 的修復是有效的。
+    - **最終成果**: 制定並執行了一個基於完整證據的 `Makefile` 修復計畫，將所有 `npm` 替換為 `$(PNPM)`，並移除了 `lint-be` 的 `--fix` 風險。
 
 - **關鍵學習**:
     - **信任程式碼，而非檔名**: 當 `import` 路徑、檔名與程式碼實際行為產生矛盾時，唯一的事實來源是 `class ...` 的定義本身。必須使用 `search_file_content` 等工具去追溯，而不是靠 `ls` 或 `glob` 猜測。
-    - **以「成品」追溯「原料」**: 在分析一段程式碼（成品）時，要理解它的依賴（原料），最可靠的方法是從它的使用點 (`new DocumentStorageService()`) 出發，反向搜索其定義 (`class DocumentStorageService`)，而不是從檔案列表正向猜測。
-    - **測試端點的「職責」，而非「實作細節」**: 對於一個職責是「啟動背景任務」的 API 端點，其單元測試的核心，應該是去驗證「啟動」這個行為本身是否成功。因此，最佳實踐是去模擬 (Mock) `asyncio.create_task`，並斷言它被正確呼叫。這遠比深入測試背景任務的內部實作細節更簡潔、更穩定。
+    - **測試端點的「職責」，而非「實作細節」**: 對於一個職責是「啟動背景任務」的 API 端點，其單元測試的核心，應該是去驗證「啟動」這個行為本身是否成功。
+    - **SOP 的靈活性與最小化驗證**: SOP 提供了指導框架，但在執行中應保持靈活性。當一個驗證步驟（如 `make test`）過於耗時，應主動尋找或設計一個成本更低的「微型驗證」步驟（如 `make test-fe-single`），以最高效率達成驗證目的。
 
 ### 本次會話總結與學習教訓 (2025-09-25): 突破 Mocking 迷霧
 - **最終成果**: 遵循「證據驅動」和「沙盒驗證」的原則，成功為 `knowledge_api.py` 中一個重構後的異步端點修復了測試。所有變更已合併。

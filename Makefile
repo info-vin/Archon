@@ -31,7 +31,7 @@ help:
 # Install dependencies
 install:
 	@echo "Installing dependencies..."
-	@cd enduser-ui-fe && npm install
+	@cd enduser-ui-fe && $(PNPM) install
 	@cd python && $(UV) sync --group all --group dev
 	@echo "✓ Dependencies installed"
 
@@ -63,7 +63,7 @@ dev: check
 	@cd archon-ui-main && \
 	VITE_ARCHON_SERVER_PORT=$${ARCHON_SERVER_PORT:-8181} \
 	VITE_ARCHON_SERVER_HOST=$${HOST:-} \
-	npm run dev
+	$(PNPM) run dev
 
 # Full Docker development
 dev-docker: check
@@ -85,21 +85,21 @@ test: test-fe test-be
 # Run frontend tests
 test-fe:
 	@echo "Running frontend tests for enduser-ui-fe..."
-	@cd enduser-ui-fe && npm test
+	@cd enduser-ui-fe && $(PNPM) test
 
 # 2. 測試特定前端子專案 (Test a specific frontend subproject)
 #    用法 (Usage): make test-fe-project project=<project_name>
 #    範例 (Example): make test-fe-project project=enduser-ui-fe
 test-fe-project:
 	@echo "Running frontend tests for $(project)..."
-	@cd $(project) && npm test
+	@cd $(project) && $(PNPM) test
 
 # 3. 測試特定單一前端測試 (Test a single frontend test)
 #    用法 (Usage): make test-fe-single project=<project_name> test=<test_name>
 #    範例 (Example): make test-fe-single project=enduser-ui-fe test="TaskModal"
 test-fe-single:
 	@echo "Running single frontend test '$(test)' in $(project)..."
-	@cd $(project) && npm test -- -t "$(test)"
+	@cd $(project) && $(PNPM) test -- -t "$(test)"
 
 # Run backend tests
 test-be:
@@ -113,13 +113,13 @@ lint: lint-fe lint-be
 # Run frontend linter
 lint-fe:
 	@echo "Linting enduser-ui-fe..."
-	@cd enduser-ui-fe && npm run lint
+	@cd enduser-ui-fe && $(PNPM) run lint
 
 # Run backend linter
 lint-be:
 	@echo "Linting backend..."
 	@cd python && $(UV) sync --group dev
-	@cd python && $(UV) run ruff check --fix
+	@cd python && $(UV) run ruff check
 
 # Clean everything (with confirmation)
 clean:
