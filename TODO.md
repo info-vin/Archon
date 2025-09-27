@@ -20,6 +20,7 @@
     - **目標**: 根據 `CONTRIBUTING_tw.md` 中已修正的分支策略，將一個穩定的 `feature` 分支成功部署至 Render。
     - **前置條件**: 任務 3.1 必須完成。
     - **執行計畫**:
+        - **[ ] 0. (前置任務) 修正 Makefile**: 補上 `archon-ui-main` 的測試覆蓋，並修正 `npm` / `lint-be` 的問題，以確保 `make test` 能作為一個完整的、可執行的檢查。
         1.  確保 `feature/e2e-file-upload` 分支通過所有本地測試 (`make test`)。
         2.  遵循 `CONTRIBUTING_tw.md` 的部署 SOP，**從 `feature/e2e-file-upload` 分支**推送到 Render。
         3.  驗證線上環境所有服務正常，且檔案上傳功能運作正常。
