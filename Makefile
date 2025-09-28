@@ -79,24 +79,38 @@ stop:
 	@$(COMPOSE) --profile backend --profile frontend --profile full down
 	@echo "✓ Services stopped"
 
-# Run all tests
-test: test-fe test-be
+# Run all tests (fast version)
+# This runs backend tests and a quick frontend smoke test on enduser-ui-fe.
+# The full, slow archon-ui-main tests are skipped for efficiency.
+test: test-fe-enduser test-be
 
-# Run frontend tests
-test-fe:
-	@echo "Running frontend tests for enduser-ui-fe..."
+# Run all frontend tests (fast and slow)
+test-fe-all: test-fe-enduser test-fe-admin
+
+# Run QUICK frontend tests for the End-User UI (enduser-ui-fe)
+test-fe-enduser:
+	@echo "Running FAST frontend tests for End-User UI (enduser-ui-fe)..."
 	@cd enduser-ui-fe && $(PNPM) test
 
-# 2. 測試特定前端子專案 (Test a specific frontend subproject)
-#    用法 (Usage): make test-fe-project project=<project_name>
-#    範例 (Example): make test-fe-project project=enduser-ui-fe
+# Run SLOW, COMPREHENSIVE frontend tests for the Admin UI (archon-ui-main)
+# NOTE: These tests are known to be very slow (>20 minutes). Run them intentionally.
+test-fe-admin:
+	@echo "Running SLOW frontend tests for Admin UI (archon-ui-main)..."
+	@cd archon-ui-main && /Users/vincenta/.npm-global/bin/pnpm test
+
+# (Legacy) Alias for the fast enduser-ui-fe tests to maintain backward compatibility.
+test-fe: test-fe-enduser
+
+# Test a specific frontend subproject
+# Usage: make test-fe-project project=<project_name>
+# Example: make test-fe-project project=enduser-ui-fe
 test-fe-project:
 	@echo "Running frontend tests for $(project)..."
 	@cd $(project) && $(PNPM) test
 
-# 3. 測試特定單一前端測試 (Test a single frontend test)
-#    用法 (Usage): make test-fe-single project=<project_name> test=<test_name>
-#    範例 (Example): make test-fe-single project=enduser-ui-fe test="TaskModal"
+# Test a single frontend test file
+# Usage: make test-fe-single project=<project_name> test=<test_name>
+# Example: make test-fe-single project=enduser-ui-fe test="TaskModal"
 test-fe-single:
 	@echo "Running single frontend test '$(test)' in $(project)..."
 	@cd $(project) && $(PNPM) test -- -t "$(test)"
@@ -107,13 +121,24 @@ test-be:
 	@cd python && $(UV) sync --group dev --group mcp --group agents --group server
 	@cd python && $(UV) run pytest
 
-# Run all linters
-lint: lint-fe lint-be
+# Run all linters (fast version)
+lint: lint-fe-enduser lint-be
 
-# Run frontend linter
-lint-fe:
-	@echo "Linting enduser-ui-fe..."
+# Run all frontend linters
+lint-fe-all: lint-fe-enduser lint-fe-admin
+
+# Run linter for the End-User UI (enduser-ui-fe)
+lint-fe-enduser:
+	@echo "Linting End-User UI (enduser-ui-fe)..."
 	@cd enduser-ui-fe && $(PNPM) run lint
+
+# Run linter for the Admin UI (archon-ui-main)
+lint-fe-admin:
+	@echo "Linting Admin UI (archon-ui-main)..."
+	@cd archon-ui-main && /Users/vincenta/.npm-global/bin/pnpm run lint
+
+# (Legacy) Alias for the enduser-ui-fe linter.
+lint-fe: lint-fe-enduser
 
 # Run backend linter
 lint-be:
