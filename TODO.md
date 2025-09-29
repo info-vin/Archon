@@ -20,12 +20,10 @@
     - **目標**: 根據 `CONTRIBUTING_tw.md` 中已修正的分支策略，將一個穩定的 `feature` 分支成功部署至 Render。
     - **前置條件**: 任務 3.1 必須完成。
     - **執行計畫**:
-        - **[x] 0. (前置任務) 修正 Makefile**: 該任務已完成。`make test` 現在是一個完整、快速且可執行的檢查。
-            - **結論**: 問題的根源並非 `Makefile` 結構或 `archon-ui-main` 的效能，而是兩個前端專案 `package.json` 中的 `test` 指令均為 `vitest` 而非 `vitest run`，導致測試在腳本環境中掛起。在修正此問題後，`make test` 已能快速地成功執行所有測試。
-        - **[ ] 0.5. (前置任務) 統一 CI 工具鏈**: 修正 `.github/workflows/ci.yml`，將前端測試的依賴安裝從 `npm` 改為 `pnpm`，以解決與專案標準的衝突，這是成功部署的硬性障礙。
-        1.  確保 `feature/e2e-file-upload` 分支通過所有本地測試 (`make test`)。
-        2.  遵循 `CONTRIBUTING_tw.md` 的部署 SOP，**從 `feature/e2e-file-upload` 分支**推送到 Render。
-        3.  驗證線上環境所有服務正常，且檔案上傳功能運作正常。
+        - **[ ] 0. (前置任務) 建立完整的本地演練環境**: 修正 `docker-compose.yml` 以支援 `enduser-ui-fe`，使其能反映包含兩個前端的完整專案架構。
+        - **[ ] 1. 執行本地部署演練**: 在 `docker-compose` 環境中，成功演練一次完整的啟動流程，驗證服務間的依賴與啟動順序。
+        - **[ ] 2. 執行對 Render 的部署**: 只有在本地演練成功後，才遵循 `CONTRIBUTING_tw.md` 的SOP，將 `feature/e2e-file-upload` 分支部署到 Render。
+        - **[ ] 3. 驗證線上環境**: 驗證所有服務在 Render 上正常運行，且核心功能符合預期。
 
 ---
 
