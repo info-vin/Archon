@@ -402,13 +402,13 @@ def test_upload_document_endpoint_success(mock_create_task, client: TestClient):
 2.  **部署管理後台 (`archon-ui-main`)**:
     *   **類型**: `Static Site`
     *   **Root Directory**: `archon-ui-main`
-    *   **Build Command**: `npm install && npm run build`
+    *   **Build Command**: `pnpm install --frozen-lockfile && pnpm run build`
     *   **Publish Directory**: `archon-ui-main/dist`
     *   **環境變數**: 新增 `VITE_API_URL`，其值為後端服務的公開網址。
 3.  **部署使用者介面 (`enduser-ui-fe`)**:
     *   **類型**: `Static Site`
     *   **Root Directory**: `enduser-ui-fe`
-    *   **Build Command**: `npm install && npm run build`
+    *   **Build Command**: `pnpm install --frozen-lockfile && pnpm run build`
     *   **Publish Directory**: `enduser-ui-fe/dist`
     *   **環境變數**: 新增 `VITE_API_URL`，其值為後端服務的公開網址。
 
