@@ -359,65 +359,68 @@ def test_upload_document_endpoint_success(mock_create_task, client: TestClient):
 - **`feature/...` 分支**: 所有開發、修復、重構都**必須**在獨立的 `feature/...` 分支上進行。這些分支是本專案的實際工作線。
 - **部署**: 部署**必須**從 `feature/...` 分支進行。在部署前，應確保該 `feature` 分支是完整且穩定的。**嚴禁**將 `feature` 分支合併到 `main`，也**嚴禁**從 `main` 部署。
 
-### 5.2 部署標準作業流程 (SOP) - 修訂版 v1.2 (教學模式)
-此流程將一步步指導您如何將一個穩定的 `feature` 分支，完整地部署到 Render 平台。
+### 5.2 部署標準作業流程 (SOP) - 修訂版 v1.1
+此流程的最終目標，是成功部署一個穩定的版本到 Render，包含所有已完成的核心功能。
 
-#### **階段一：本地最終檢查 (Final Pre-flight Check)**
-*   **目的**: 確保您本地的程式碼是最新且無誤的。
-*   **動作**:
-    1.  在您的終端機中，執行 `git pull`，確保您擁有所有最新的變更。
-    2.  接著執行 `make test`，確認所有測試均成功通過。
+#### 5.2.1 階段一：部署前本地檢查 (Pre-Deployment Checks)
+在推送任何程式碼到 Render 之前，必須在本地嚴格執行以下檢查清單，確保程式碼的穩定性。
+1.  **同步最新程式碼**:
+    ```bash
+    # 根據你的目標分支，例如 main 或 spike/...
+    git checkout <your-target-branch>
+    git pull origin <your-target-branch>
+    ```
+2.  **執行完整測試 (關鍵步驟)**: 這是為了避免「測試又錯一堆」的狀況。此指令會涵蓋前後端的所有測試。
+    ```bash
+    make test
+    ```
+3.  **執行 Lint 檢查**:
+    ```bash
+    make lint-be
+    ```
+    只有當以上所有指令都成功通過後，才能進入下一階段。
 
-#### **階段二：資料庫遷移 (Manual Database Migration)**
-*   **目的**: 確保線上的資料庫結構與程式碼版本同步。這是最關鍵的手動步驟。
-*   **動作**:
-    1.  請您登入 **Supabase 儀表板** 並進入 **SQL Editor**。
-    2.  **清空資料庫 (如果需要)**: 如果您的目標資料庫不是全新的，為了避免後續錯誤，請先執行 `migration/RESET_DB.sql` 的內容。**警告：此操作會刪除所有資料。**
-    3.  **執行核心腳本**: 依序複製並執行以下兩個腳本的內容：
-        *   `migration/000_unified_schema.sql`
-        *   `migration/seed_mock_data.sql`
+#### 5.2.2 階段二：資料庫遷移 (Database Migration) - 關鍵手動步驟
+**這是最容易出錯的步驟！** 根據 `GEMINI.md` 中記錄的部署經驗，應用程式會因為資料庫結構未更新而無法啟動。在部署新版本前，**必須**手動執行遷移腳本。
 
-#### **階段三：Render 服務設定與部署 (Render Setup & Deployment)**
-*   **目的**: 在 Render 上正確設定三個服務（1個後端，2個前端），並觸發部署。
-*   **動作 (後端 `archon-server`)**:
-    1.  在 Render 點擊 "New" -> "**Web Service**"，並連接您的 GitHub 倉庫。
-    2.  **Name**: `archon-server` (或您自訂的名稱)
-    3.  **Root Directory**: `python`
-    4.  **Dockerfile Path**: `python/Dockerfile.server`
-    5.  **Start Command**: (保持空白)
-    6.  **環境變數**: 根據您的 `.env` 檔案，將 `SUPABASE_URL`, `SUPABASE_SERVICE_KEY` 等變數加入。
-    7.  點擊 "Create Web Service" 並等待其首次部署完成。完成後，複製其公開網址 (例如 `https://your-archon-server.onrender.com`)。
+**核心流程**:
+1.  **登入 Supabase 儀表板**並進入 **SQL Editor**。
+2.  **（如果是非全新資料庫）** 為了避免 `... already exists` 錯誤，強烈建議先執行 `migration/RESET_DB.sql` 的內容來清空資料庫。**警告：此操作會刪除所有資料。**
+3.  **依序執行**以下兩個核心腳本的內容：
+    1.  `migration/000_unified_schema.sql` (建立所有資料表與結構)
+    2.  `migration/seed_mock_data.sql` (填入初始的假資料)
 
-*   **動作 (前端 1 - `archon-ui-main`)**:
-    1.  在 Render 點擊 "New" -> "**Static Site**"。
-    2.  **Name**: `archon-ui-main` (或自訂)
-    3.  **Root Directory**: `archon-ui-main`
-    4.  **Build Command**: `pnpm install --frozen-lockfile && pnpm run build`
-    5.  **Publish Directory**: `archon-ui-main/dist`
-    6.  **環境變數**: 新增一個名為 `VITE_API_URL` 的變數，其值貼上您剛剛複製的後端服務網址。
-    7.  點擊 "Create Static Site"。
+#### 5.2.3 階段三：Render 服務設定 (Infrastructure Setup)
+此階段在 Render 上設定三個獨立的服務。這些設定通常只需要在專案初次設定時執行。
+1.  **部署後端 (`archon-server`)**:
+    *   **類型**: `Web Service`
+    *   **設定**: 完全依照本文件「Render 部署除錯實戰指南」章節中的後端設定（Root Directory: `python` 等）。
+2.  **部署管理後台 (`archon-ui-main`)**:
+    *   **類型**: `Static Site`
+    *   **Root Directory**: `archon-ui-main`
+    *   **Build Command**: `pnpm install --frozen-lockfile && pnpm run build`
+    *   **Publish Directory**: `archon-ui-main/dist`
+    *   **環境變數**: 新增 `VITE_API_URL`，其值為後端服務的公開網址。
+3.  **部署使用者介面 (`enduser-ui-fe`)**:
+    *   **類型**: `Static Site`
+    *   **Root Directory**: `enduser-ui-fe`
+    *   **Build Command**: `pnpm install --frozen-lockfile && pnpm run build`
+    *   **Publish Directory**: `enduser-ui-fe/dist`
+    *   **環境變數**: 新增 `VITE_API_URL`，其值為後端服務的公開網址。
 
-*   **動作 (前端 2 - `enduser-ui-fe`)**:
-    1.  再次點擊 "New" -> "**Static Site**"。
-    2.  **Name**: `enduser-ui-fe` (或自訂)
-    3.  **Root Directory**: `enduser-ui-fe`
-    4.  **Build Command**: `pnpm install --frozen-lockfile && pnpm run build`
-    5.  **Publish Directory**: `enduser-ui-fe/dist`
-    6.  **環境變數**: 同樣新增 `VITE_API_URL` 變數，其值也是您的後端服務網址。
-    7.  點擊 "Create Static Site"。
+#### 5.2.4 階段四：執行部署 (Deployment Execution)
+- 當 `main` 或目標分支準備就緒後，使用以下指令觸發 Render 部署：
+  ```bash
+  # 假設你的 Render remote 叫做 render
+  git push render <your-target-branch>:main
+  ```
 
-*   **動作 (觸發部署)**:
-    *   在您的本地終端機中，執行以下指令來推送您的程式碼，這將觸發 Render 上所有服務的自動建置與部署。
-        ```bash
-        git push render feature/e2e-file-upload:main
-        ```
-
-#### **階段四：部署後驗證 (Post-Deployment Verification)**
-*   **目的**: 確認所有服務都已成功上線並正常運作。
-*   **動作**:
-    1.  **監控日誌**: 在 Render 儀表板上，檢查三個服務的部署日誌，確保沒有錯誤。
-    2.  **健康檢查**: 存取後端服務的 `/health` 端點，確認看到成功的回應。
-    3.  **手動煙霧測試**: 分別打開 `archon-ui-main` 和 `enduser-ui-fe` 的公開網址，實際操作核心功能，確認一切符合預期。
+#### 5.2.5 階段五：部署後驗證 (Post-Deployment Verification)
+1.  **監控日誌**: 分別檢查三個服務在 Render 上的部署日誌，確認建置 (build) 和服務啟動 (live) 過程沒有任何錯誤訊息。
+2.  **健康檢查**: 存取後端服務的 `/health` 端點，確認回傳 `{"status":"ok"}` 或 `{"status":"healthy"}`。
+3.  **功能驗證 (Smoke Test)**:
+    *   打開 `enduser-ui-fe` 的公開網址，嘗試登入並查看任務列表。
+    *   打開 `archon-ui-main` 的公開網址，確認管理儀表板能正常載入。
 
 ### 5.3 Render 部署除錯實戰指南 (Render Deployment Debugging Guide)
 根據 `spike/verify-deployment-pipeline` 的部署驗證任務，我們總結了首次在 Render 上部署後端服務時，最關鍵的五個設定。如果遇到部署失敗，請優先檢查這些項目：
