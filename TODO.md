@@ -20,7 +20,8 @@
     - **目標**: 根據 `CONTRIBUTING_tw.md` 中已修正的分支策略，將一個穩定的 `feature` 分支成功部署至 Render。
     - **前置條件**: 任務 3.1 必須完成。
     - **執行計畫**:
-        - **[ ] 0. (前置任務) 修正 Makefile**: 補上 `archon-ui-main` 的測試覆蓋，並修正 `npm` / `lint-be` 的問題，以確保 `make test` 能作為一個完整的、可執行的檢查。
+        - **[x] 0. (前置任務) 修正 Makefile**: 該任務已完成。`make test` 現在是一個完整、快速且可執行的檢查。
+            - **結論**: 問題的根源並非 `Makefile` 結構或 `archon-ui-main` 的效能，而是兩個前端專案 `package.json` 中的 `test` 指令均為 `vitest` 而非 `vitest run`，導致測試在腳本環境中掛起。在修正此問題後，`make test` 已能快速地成功執行所有測試。
         1.  確保 `feature/e2e-file-upload` 分支通過所有本地測試 (`make test`)。
         2.  遵循 `CONTRIBUTING_tw.md` 的部署 SOP，**從 `feature/e2e-file-upload` 分支**推送到 Render。
         3.  驗證線上環境所有服務正常，且檔案上傳功能運作正常。

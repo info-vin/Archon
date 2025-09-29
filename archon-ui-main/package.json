@@ -16,7 +16,7 @@
     "biome:ai-fix": "biome check --write --reporter=json",
     "biome:ci": "biome ci",
     "preview": "npx vite preview",
-    "test": "vitest",
+    "test": "vitest run",
     "test:ui": "vitest --ui",
     "test:coverage": "npm run test:coverage:run && npm run test:coverage:summary",
     "test:coverage:run": "vitest run --coverage --reporter=dot --reporter=json",
