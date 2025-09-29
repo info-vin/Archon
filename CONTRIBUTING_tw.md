@@ -382,17 +382,13 @@ def test_upload_document_endpoint_success(mock_create_task, client: TestClient):
 
 #### 5.2.2 階段二：資料庫遷移 (Database Migration) - 關鍵手動步驟
 **這是最容易出錯的步驟！** 根據 `GEMINI.md` 中記錄的部署經驗，應用程式會因為資料庫結構未更新而無法啟動。在部署新版本前，**必須**手動執行遷移腳本。
-1.  **登入 Supabase 儀表板**。
-2.  **進入 SQL Editor**。
-3.  **依序執行以下腳本**：此順序整合了 `spike` 與 `feature` 分支的變更，確保所有功能正常運作。請嚴格按照順序執行，並跳過已執行過的腳本。
-    1.  `RESET_DB.sql` (*可選，僅用於開發環境，會清空所有資料*)
-    2.  `add_source_url_display_name.sql`
-    3.  `add_hybrid_search_tsvector.sql`
-    4.  `20250829_add_attachments_to_tasks.sql`
-    5.  `20250901_create_gemini_logs_table.sql`
-    6.  `20250905_add_customers_and_vendors_tables.sql`
-    7.  `complete_setup.sql`
-    8.  `seed_mock_data.sql`
+
+**核心流程**:
+1.  **登入 Supabase 儀表板**並進入 **SQL Editor**。
+2.  **（如果是非全新資料庫）** 為了避免 `... already exists` 錯誤，強烈建議先執行 `migration/RESET_DB.sql` 的內容來清空資料庫。**警告：此操作會刪除所有資料。**
+3.  **依序執行**以下兩個核心腳本的內容：
+    1.  `migration/000_unified_schema.sql` (建立所有資料表與結構)
+    2.  `migration/seed_mock_data.sql` (填入初始的假資料)
 
 #### 5.2.3 階段三：Render 服務設定 (Infrastructure Setup)
 此階段在 Render 上設定三個獨立的服務。這些設定通常只需要在專案初次設定時執行。
