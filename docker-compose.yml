@@ -1,10 +1,11 @@
 # Docker Compose profiles:
 # - backend: Starts archon-server and archon-mcp for hybrid development
-# - frontend: Starts the archon-frontend container for full docker mode
+# - frontend: Starts the archon-frontend (Admin UI) container
+# - enduser: Starts the enduser-frontend (End-User UI) container
 # - agents: Starts the optional archon-agents service
 # Usage:
 #   docker compose --profile backend up
-#   docker compose --profile frontend --profile backend up (for full docker mode)
+#   docker compose --profile backend --profile frontend --profile enduser up (for full docker mode)
 
 services:
   # Server Service (FastAPI + Socket.IO + Crawling)
@@ -147,7 +148,7 @@ services:
       retries: 3
       start_period: 40s
 
-  # Frontend
+  # Frontend (Admin UI)
   archon-frontend:
     profiles: ["frontend"]
     build: ./archon-ui-main
@@ -172,6 +173,32 @@ services:
     volumes:
       - ./archon-ui-main/src:/app/src
       - ./archon-ui-main/public:/app/public
+    depends_on:
+      archon-server:
+        condition: service_healthy
+
+  # Frontend (End-User UI)
+  enduser-frontend:
+    profiles: ["enduser"]
+    build: ./enduser-ui-fe
+    container_name: enduser-ui
+    ports:
+      - "${ENDUSER_UI_PORT:-5173}:5173"
+    environment:
+      - VITE_API_URL=http://${HOST:-localhost}:${ARCHON_SERVER_PORT:-8181}
+      - VITE_ARCHON_SERVER_PORT=${ARCHON_SERVER_PORT:-8181}
+      - HOST=${HOST:-localhost}
+      - PROD=${PROD:-false}
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5173"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    volumes:
+      - ./enduser-ui-fe/src:/app/src
+      - ./enduser-ui-fe/public:/app/public
     depends_on:
       archon-server:
         condition: service_healthy

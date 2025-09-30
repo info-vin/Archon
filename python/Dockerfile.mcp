@@ -21,7 +21,6 @@ COPY src/__init__.py src/
 
 # Copy the server files MCP needs for HTTP communication
 COPY src/server/__init__.py src/server/
-COPY src/server/services/__init__.py src/server/services/
 COPY src/server/services/mcp_service_client.py src/server/services/
 COPY src/server/services/client_manager.py src/server/services/
 COPY src/server/services/mcp_session_manager.py src/server/services/
