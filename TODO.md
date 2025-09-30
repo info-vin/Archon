@@ -16,14 +16,25 @@
         2.  **編寫測試**: 建立一個新的測試案例，模擬一次完整的檔案上傳 API 呼叫，並斷言 (assert) `StorageService` 的 `upload` 方法被以正確的參數呼叫。
         3.  **驗證**: 執行 `make test-be`，確保新測試通過。
 
-- **[ ] 3.2 最終部署演練 (Final Deployment Drill)**
+- **[x] 3.2 最終部署演練 (Final Deployment Drill)**
     - **目標**: 根據 `CONTRIBUTING_tw.md` 中已修正的分支策略，將一個穩定的 `feature` 分支成功部署至 Render。
     - **前置條件**: 任務 3.1 必須完成。
     - **執行計畫**:
-        - **[ ] 0. (前置任務) 建立完整的本地演練環境**: 修正 `docker-compose.yml` 以支援 `enduser-ui-fe`，使其能反映包含兩個前端的完整專案架構。
-        - **[ ] 1. 執行本地部署演練**: 在 `docker-compose` 環境中，成功演練一次完整的啟動流程，驗證服務間的依賴與啟動順序。
-        - **[ ] 2. 執行對 Render 的部署**: 只有在本地演練成功後，才遵循 `CONTRIBUTING_tw.md` 的SOP，將 `feature/e2e-file-upload` 分支部署到 Render。
-        - **[ ] 3. 驗證線上環境**: 驗證所有服務在 Render 上正常運行，且核心功能符合預期。
+        - **[x] 0. (前置任務) 建立完整的本地演練環境**: 修正 `docker-compose.yml` 以支援 `enduser-ui-fe`，使其能反映包含兩個前端的完整專案架構。
+        - **[x] 1. 執行本地部署演練**: 在 `docker-compose` 環境中，成功演練一次完整的啟動流程，驗證服務間的依賴與啟動順序。
+        - **[x] 2. 執行對 Render 的部署**: 只有在本地演練成功後，才遵循 `CONTRIBUTING_tw.md` 的SOP，將 `feature/e2e-file-upload` 分支部署到 Render。
+        - **[x] 3. 驗證線上環境**: 驗證所有服務在 Render 上正常運行，且核心功能符合預期。
+    - **結論**: 部署演練完成。過程中發現並修正了 `archon-mcp` 服務的啟動錯誤、Render 的部署流程，以及前端的建置指令。所有發現皆已記錄。
+
+### Phase 3.3: 部署後技術債清理 (Post-Deployment Tech Debt Cleanup)
+
+此階段的任務是清理在 Phase 3.2 部署演練過程中，為確保目標專一而暫時擱置的技術問題。
+
+- **[ ] 3.3.1 清理後端 Linting 問題**
+    - **問題**: `make lint-be` 檢查顯示後端程式碼存在 160 個問題。雖然大多是格式問題，但包含了如 `F821: Undefined name` 和 `F823: Referenced before assignment` 等會導致執行時崩潰的關鍵錯誤。
+    - **排錯計畫**:
+        1.  **第一階段 (自動修復)**: 執行 `cd python && uv run ruff check --fix .` 來自動修正所有格式與風格問題。
+        2.  **第二階段 (手動修復)**: 再次執行 `make lint-be`，針對剩餘的關鍵錯誤 (如 `F821`)，逐一分析其上下文並進行精準的手動修復。
 
 ---
 

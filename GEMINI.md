@@ -1,6 +1,5 @@
 # 廚師日誌 (Chef's Journal)
 
-## 【日誌說明】
 > 本文件是 AI 助理 Gemini 的工作日誌。它記錄了為打造「專案食譜」(`CONTRIBUTING_tw.md`) 中那些完美流程，所經歷的所有實驗、失敗與成功發現。
 >
 > 當您對食譜中的某個步驟為何如此設計時，可以從食譜的「主廚筆記」連結跳轉至此，查看最原始的研發紀錄。
@@ -43,6 +42,31 @@
 ---
 
 ## 第二章：歷史工作日誌 (Past Journal Entries)
+
+### 本次會話總結與學習教訓 (2025-09-30): 部署演練的真實挑戰
+
+- **最終成果**: 成功完成 Phase 3.2 的部署演練。儘管過程一波三折，但我們在過程中發現並修復了應用程式和部署流程中的多個關鍵缺陷，並將所有學習固化為新的SOP文件。
+
+- **偵錯歷程**: 
+    1.  **`archon-mcp` 啟動失敗**: 
+        - **偵錯**: 在本地 Docker 演練中，透過 `docker ps -a` 發現 `archon-mcp` 容器啟動後立即退出。`docker logs` 顯示了致命錯誤 `ModuleNotFoundError: No module named 'src.server.services.profile_service'`。
+        - **分析**: 遵循「先調查，不推測」的原則，使用 `git log` 追溯相關檔案 (`__init__.py`, `Dockerfile.mcp`) 的歷史，發現主服務 `archon-server` 的一次重構，在一個被 `archon-mcp` 共享的 `__init__.py` 檔案中引入了新的依賴，但這個依賴的檔案並未被複製到輕量級的 `mcp` 容器中，導致了啟動崩潰。
+        - **解決**: 透過修改 `Dockerfile.mcp`，移除了對這個共享 `__init__.py` 檔案的複製，從根本上解除了兩個服務間的意外耦合，成功修復問題。
+
+    2.  **`git push render` 部署失敗**: 
+        - **偵錯**: 第一次推送因 `409 Conflict (service suspended)` 失敗，確認是 Render 服務因閒置而休眠。在使用者手動恢復後，第二次推送出現 `repository not found` 錯誤。
+        - **分析**: 意識到 `CONTRIBUTING_tw.md` 中的SOP存在錯誤假設。我們設定為 Git remote 的 URL (`https://api.render.com/...`) 實際上是一個「Deploy Hook」（部署掛鉤），它只能被 `curl` 等工具觸發，而不能作為 Git 儲存庫進行 `push`。
+        - **解決**: 修正了部署流程，改為將程式碼 `push` 到 Render 所監控的 `origin` (GitHub) 分支，依靠 Render 的 GitHub App 自動觸發部署，並更新了 `CONTRIBUTING_tw.md` 以反映正確的流程。
+
+    3.  **前端建置失敗**: 
+        - **偵錯**: `enduser-ui-fe` 在 Render 上的部署日誌顯示 `ERR_PNPM_NO_LOCKFILE`。
+        - **分析**: 該錯誤意味著建置指令要求使用 `pnpm-lock.yaml` 進行嚴格安裝，但該檔案並未提交到儲存庫中。
+        - **解決 (務實的權宜之計)**: 採納了使用者「先求成功，再求完美」的建議，在 Render 的建置指令中加入 `--no-frozen-lockfile` 參數作為臨時解決方案，讓部署得以繼續。同時，將「補全 `pnpm-lock.yaml` 檔案」作為技術債記錄到 `TODO.md` 中。
+
+- **關鍵學習**:
+    - **驗證所有服務**: 一個看似健康的後端，不代表整個應用是健康的。在微服務架構下，必須對所有對外服務（包括前端）進行驗證，才能確認部署的真正狀態。
+    - **區分端點類型**: 必須嚴格區分「Git 遠端儲存庫位址」和「Deploy Hook URL」。前者用於推送程式碼，後者用於觸發動作，混用會導致 `repository not found` 錯誤。
+    - **鎖定檔案的必要性**: `pnpm-lock.yaml` (或 `package-lock.json`, `yarn.lock`) 對於保證 CI/CD 環境與本地開發環境的一致性至關重要，是可重現建置的基石，應一律納入版本控制。
 
 ### 本次會話總結與學習教訓 (2025-09-27): 追溯真實的依賴關係與SOP的靈活應用
 
