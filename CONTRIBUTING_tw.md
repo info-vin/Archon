@@ -323,7 +323,12 @@ def test_upload_document_endpoint_success(mock_create_task, client: TestClient):
     *   **原因**: 這通常發生在 `render` 一個元件時，該元件內部 import 了另一個子元件，但該子元件卻沒有被正確地從來源檔案（例如 `Icons.tsx`）中 `export` 出來。
     *   **解法**: 仔細檢查錯誤訊息中提到的元件（例如 `ListView`），找出它 import 了哪些子元件（例如 `PaperclipIcon`），然後去對應的檔案（`Icons.tsx`）確認該子元件是否已 `export`。
 
-7.  **警惕 Mock Data 的不一致性**
+7.  **警惕無聲的測試通過 (Beware of Silent Passes)**
+    *   **情境**: `make lint-be` 報告了 `F821: Undefined name` 等會導致執行時崩潰的致命錯誤，但 `make test-be` 卻依然全部通過。
+    *   **教訓**: 這不是一個可以忽略的現象，而是**測試套件存在盲區**的強烈信號。這意味著沒有任何一個測試案例實際執行到出錯的程式碼路徑。
+    *   **最佳實踐**: 在這種情況下，**絕對不能**直接去修復產品程式碼。第一步應該是遵循 TDD 原則，編寫一個**新的、最小化的單元測試**，專門去呼叫那段出錯的程式碼，從而讓 `make test-be` **必然地失敗**。只有在這個「紅燈」測試就緒後，才能開始修復產品程式碼，最終讓測試「轉綠」。
+
+8.  **警惕 Mock Data 的不一致性**
     *   **情境**: 一個關於頭像樣式的測試意外失敗，追查後發現，儘管產品程式碼 (`UserAvatar.tsx`) 的邏輯是正確的，但測試檔案 (`DashboardPage.test.tsx`) 中的假任務物件只有 `assignee: 'AI Assistant'` 欄位，卻缺少了邏輯判斷所依賴的 `assignee_id: '3'` 欄位。
     *   **教訓**: 測試失敗的根源，不一定是產品程式碼的 Bug，也常常是**測試資料與產品邏輯所依賴的資料結構不一致**所導致。當遇到看似無關的測試失敗時（例如「改A壞B」），應優先審查相關的 Mock Data 是否完整且正確。
 

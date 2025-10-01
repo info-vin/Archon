@@ -31,10 +31,23 @@
 此階段的任務是清理在 Phase 3.2 部署演練過程中，為確保目標專一而暫時擱置的技術問題。
 
 - **[ ] 3.3.1 清理後端 Linting 問題**
-    - **問題**: `make lint-be` 檢查顯示後端程式碼存在 160 個問題。雖然大多是格式問題，但包含了如 `F821: Undefined name` 和 `F823: Referenced before assignment` 等會導致執行時崩潰的關鍵錯誤。
-    - **排錯計畫**:
-        1.  **第一階段 (自動修復)**: 執行 `cd python && uv run ruff check --fix .` 來自動修正所有格式與風格問題。
-        2.  **第二階段 (手動修復)**: 再次執行 `make lint-be`，針對剩餘的關鍵錯誤 (如 `F821`)，逐一分析其上下文並進行精準的手動修復。
+    - **問題**: `make lint-be` 檢查顯示後端程式碼存在大量問題。
+    - **狀態**: **已解決**。透過 TDD 和深入分析，最關鍵的 `F821: Undefined name` 和 `F823: Referenced before assignment` 阻斷性錯誤已被修復並添加了單元測試覆蓋 (`commit 161e5a2`)。
+    - **最終計畫：清理剩餘風格問題**:
+        1.  **自動修復**: 執行 `cd python && uv run ruff check . --fix --exit-zero` 來自動修正所有可安全修復的風格問題。
+        2.  **手動評估**: 檢查 `ruff` 報告中剩餘的、無法自動修復的警告，並評估其嚴重性。
+    - **Ruff 最新報告 (已排除 F821/F823)**:
+      ```
+      B904: Within an `except` clause, raise exceptions with `raise ... from err`
+      E722: Do not use bare `except`
+      UP046: `Generic` subclass instead of type parameters
+      UP041: Replace aliased errors with `TimeoutError`
+      I001: Import block is un-sorted or un-formatted
+      W293: Blank line contains whitespace
+      E402: Module level import not at top of file
+      F841: Local variable is assigned to but never used
+      ... (及其他風格問題)
+      ```
 
 ### Phase 3.4: UI 緊急修復與SOP強化 (UI Hotfix & SOP Enhancement)
 
