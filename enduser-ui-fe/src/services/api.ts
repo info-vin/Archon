@@ -52,7 +52,10 @@ export type NewTaskData = {
   description: string;
   assigneeId?: string;
   due_date: string;
+  priority: TaskPriority;
 };
+
+export type UpdateTaskData = Partial<Omit<NewTaskData, 'project_id'> & { assignee_id: string | null }>;
 
 export type NewBlogPostData = Omit<BlogPost, 'id' | 'authorName' | 'publishDate'>;
 
@@ -70,10 +73,10 @@ const MOCK_PROJECTS: Project[] = [
 ];
 
 const MOCK_TASKS: Task[] = [
-    { id: 'task-1', project_id: 'proj-1', title: 'Implement Supabase Integration', description: '', status: TaskStatus.DONE, assignee: 'Alice Johnson', task_order: 1, priority: TaskPriority.CRITICAL, due_date: '2025-08-30T23:59:59Z', created_at: '2025-06-01T10:00:00Z', updated_at: '2025-08-28T10:00:00Z' },
-    { id: 'task-2', project_id: 'proj-1', title: 'Develop Kanban View', description: '', status: TaskStatus.DOING, assignee: 'Bob Williams', task_order: 2, priority: TaskPriority.HIGH, due_date: '2025-08-15T23:59:59Z', created_at: '2025-06-15T10:00:00Z', updated_at: '2025-07-20T10:00:00Z' },
-    { id: 'task-3', project_id: 'proj-2', title: 'Design new landing page mockups', description: '', status: TaskStatus.TODO, assignee: 'Unassigned', task_order: 1, priority: TaskPriority.MEDIUM, due_date: '2025-08-01T23:59:59Z', created_at: '2025-07-01T10:00:00Z', updated_at: '2025-07-01T10:00:00Z' },
-    { id: 'task-4', project_id: 'proj-1', title: 'Fix authentication bug', description: 'Users are reporting intermittent login failures.', status: TaskStatus.REVIEW, assignee: 'Alice Johnson', task_order: 3, priority: TaskPriority.HIGH, due_date: '2025-09-10T23:59:59Z', created_at: '2025-07-10T10:00:00Z', updated_at: '2025-07-15T10:00:00Z', attachments: [{ file_name: 'debug-log.txt', url: 'data:text/plain;charset=utf-8,This%20is%20a%20mock%20debug%20log%20file.'},{ file_name: 'screenshot-error.png', url: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=' }] },
+    { id: 'task-1', project_id: 'proj-1', title: 'Implement Supabase Integration', description: '', status: TaskStatus.DONE, assignee: 'Alice Johnson', assignee_id: '2', task_order: 1, priority: TaskPriority.CRITICAL, due_date: '2025-08-30T23:59:59Z', created_at: '2025-06-01T10:00:00Z', updated_at: '2025-08-28T10:00:00Z' },
+    { id: 'task-2', project_id: 'proj-1', title: 'Develop Kanban View', description: '', status: TaskStatus.DOING, assignee: 'Bob Williams', assignee_id: '3', task_order: 2, priority: TaskPriority.HIGH, due_date: '2025-08-15T23:59:59Z', created_at: '2025-06-15T10:00:00Z', updated_at: '2025-07-20T10:00:00Z' },
+    { id: 'task-3', project_id: 'proj-2', title: 'Design new landing page mockups', description: '', status: TaskStatus.TODO, assignee: 'Unassigned', assignee_id: null, task_order: 1, priority: TaskPriority.MEDIUM, due_date: '2025-08-01T23:59:59Z', created_at: '2025-07-01T10:00:00Z', updated_at: '2025-07-01T10:00:00Z' },
+    { id: 'task-4', project_id: 'proj-1', title: 'Fix authentication bug', description: 'Users are reporting intermittent login failures.', status: TaskStatus.REVIEW, assignee: 'Alice Johnson', assignee_id: '2', task_order: 3, priority: TaskPriority.HIGH, due_date: '2025-09-10T23:59:59Z', created_at: '2025-07-10T10:00:00Z', updated_at: '2025-07-15T10:00:00Z', attachments: [{ file_name: 'debug-log.txt', url: 'data:text/plain;charset=utf-8,This%20is%20a%20mock%20debug%20log%20file.'},{ file_name: 'screenshot-error.png', url: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=' }] },
 ];
 
 const MOCK_DOCUMENT_VERSIONS: DocumentVersion[] = [
@@ -174,14 +177,35 @@ const mockApi = {
             description: taskData.description,
             status: TaskStatus.TODO,
             assignee: assignee ? assignee.name : 'Unassigned',
+            assignee_id: taskData.assigneeId || null,
             task_order: MOCK_TASKS.filter(t => t.project_id === taskData.project_id).length + 1,
-            priority: TaskPriority.HIGH,
+            priority: taskData.priority, // Use passed priority
             due_date: taskData.due_date,
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
         };
         MOCK_TASKS.push(newTask);
         return newTask;
+    },
+    async updateTask(taskId: string, updates: UpdateTaskData): Promise<Task> {
+        const taskIndex = MOCK_TASKS.findIndex(t => t.id === taskId);
+        if (taskIndex === -1) {
+            throw new Error("Task not found");
+        }
+        let assigneeName = MOCK_TASKS[taskIndex].assignee;
+        if (updates.assignee_id) {
+            const assignee = MOCK_EMPLOYEES.find(e => e.id === updates.assignee_id);
+            assigneeName = assignee ? assignee.name : 'Unassigned';
+        }
+
+        const updatedTask = {
+            ...MOCK_TASKS[taskIndex],
+            ...updates,
+            assignee: assigneeName,
+            updated_at: new Date().toISOString(),
+        };
+        MOCK_TASKS[taskIndex] = updatedTask;
+        return updatedTask;
     },
     async getEmployees(): Promise<Employee[]> { return [...MOCK_EMPLOYEES]; },
     async getAssignableUsers(): Promise<AssignableUser[]> { 
@@ -321,8 +345,37 @@ const supabaseApi = {
         if (employee) { assigneeName = employee.name; } 
         else if (error) { console.warn('Error fetching assignee name:', error.message); }
     }
-    const taskToInsert = { project_id: taskData.project_id, title: taskData.title, description: taskData.description, priority: TaskPriority.HIGH, due_date: taskData.due_date, assignee: assigneeName, status: TaskStatus.TODO };
+    const taskToInsert = { 
+        project_id: taskData.project_id, 
+        title: taskData.title, 
+        description: taskData.description, 
+        priority: taskData.priority, // Use passed priority
+        due_date: taskData.due_date, 
+        assignee: assigneeName, 
+        assignee_id: taskData.assigneeId || null,
+        status: TaskStatus.TODO 
+    };
     const { data, error } = await supabase!.from('archon_tasks').insert(taskToInsert).select().single();
+    if (error) throw new Error(error.message);
+    return data as Task;
+  },
+  async updateTask(taskId: string, updates: UpdateTaskData): Promise<Task> {
+    let processedUpdates: any = { ...updates };
+
+    // If assignee_id is being updated, we also need to update the assignee name string.
+    if (updates.assignee_id) {
+        const { data: employee, error } = await supabase!.from('profiles').select('name').eq('id', updates.assignee_id).single();
+        if (employee) { 
+            processedUpdates.assignee = employee.name; 
+        } else if (error) { 
+            console.warn('Error fetching assignee name for update:', error.message); 
+            processedUpdates.assignee = 'Unassigned';
+        }
+    } else if (updates.assignee_id === null) {
+        processedUpdates.assignee = 'Unassigned';
+    }
+
+    const { data, error } = await supabase!.from('archon_tasks').update(processedUpdates).eq('id', taskId).select().single();
     if (error) throw new Error(error.message);
     return data as Task;
   },

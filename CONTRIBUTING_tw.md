@@ -323,6 +323,10 @@ def test_upload_document_endpoint_success(mock_create_task, client: TestClient):
     *   **原因**: 這通常發生在 `render` 一個元件時，該元件內部 import 了另一個子元件，但該子元件卻沒有被正確地從來源檔案（例如 `Icons.tsx`）中 `export` 出來。
     *   **解法**: 仔細檢查錯誤訊息中提到的元件（例如 `ListView`），找出它 import 了哪些子元件（例如 `PaperclipIcon`），然後去對應的檔案（`Icons.tsx`）確認該子元件是否已 `export`。
 
+7.  **警惕 Mock Data 的不一致性**
+    *   **情境**: 一個關於頭像樣式的測試意外失敗，追查後發現，儘管產品程式碼 (`UserAvatar.tsx`) 的邏輯是正確的，但測試檔案 (`DashboardPage.test.tsx`) 中的假任務物件只有 `assignee: 'AI Assistant'` 欄位，卻缺少了邏輯判斷所依賴的 `assignee_id: '3'` 欄位。
+    *   **教訓**: 測試失敗的根源，不一定是產品程式碼的 Bug，也常常是**測試資料與產品邏輯所依賴的資料結構不一致**所導致。當遇到看似無關的測試失敗時（例如「改A壞B」），應優先審查相關的 Mock Data 是否完整且正確。
+
 ---
 
 ## 第四章：貢獻流程 (Contribution Workflow)

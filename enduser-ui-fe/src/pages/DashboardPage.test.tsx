@@ -33,6 +33,7 @@ vi.mock('../services/api', () => {
           description: '',
           status: 'doing',
           assignee: 'AI Assistant',
+          assignee_id: '3', // This was missing
           task_order: 2,
           priority: 'low',
           due_date: '2025-09-11T23:59:59Z',

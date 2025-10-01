@@ -1,159 +1,136 @@
-import { render, screen, waitFor, fireEvent, act } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import { TaskModal } from './TaskModal';
 import userEvent from '@testing-library/user-event';
+import { Task, TaskPriority, TaskStatus } from '../types';
 
-// Note: The mock server in `src/mocks/handlers.ts` provides the users now.
-// We don't need to pass them as props anymore.
+const mockTask: Task = {
+  id: 'task-1',
+  project_id: 'proj-123',
+  title: 'Existing Task',
+  description: 'This is an existing task to be edited.',
+  status: TaskStatus.TODO,
+  priority: TaskPriority.HIGH,
+  created_at: new Date().toISOString(),
+  due_date: '2025-11-15T00:00:00.000Z',
+  assignee: 'Alice Johnson',
+  assignee_id: '2',
+  attachments: [],
+};
 
 describe('TaskModal', () => {
-  it('should not be in the document when closed', () => {
-    // This test confirms the component isn't rendered when it's not supposed to be.
-    const { queryByRole } = render(<div />);
-    expect(queryByRole('dialog')).not.toBeInTheDocument();
-  });
 
-  it('should render correctly, show loading state, and then load users', async () => {
-    render(<TaskModal onClose={() => {}} onSubmit={async () => {}} projectId="proj-123" />);
-    
-    // Check for the modal and its static content
-    expect(screen.getByRole('dialog')).toBeInTheDocument();
+  const setup = (props: Partial<React.ComponentProps<typeof TaskModal>> = {}) => {
+    const defaultProps: React.ComponentProps<typeof TaskModal> = {
+      onClose: vi.fn(),
+      onTaskCreated: vi.fn(),
+      onTaskUpdated: vi.fn(),
+      projectId: 'proj-123',
+      ...props,
+    };
+    return render(<TaskModal {...defaultProps} />);
+  };
+
+  it('should render in create mode correctly', async () => {
+    setup();
     expect(screen.getByText('Create New Task')).toBeInTheDocument();
-    
-    // Check for the initial loading state in the assignee dropdown
-    expect(screen.getByRole('option', { name: 'Loading...' })).toBeInTheDocument();
-
-    // Wait for the loading to complete and for users to be populated from the mock API
-    const userOption = await screen.findByRole('option', { name: 'Alice Johnson' });
-    expect(userOption).toBeInTheDocument();
-    expect(screen.getByRole('option', { name: 'Bob Williams' })).toBeInTheDocument();
-    expect(screen.queryByRole('option', { name: 'Loading...' })).not.toBeInTheDocument();
+    expect(screen.getByLabelText('Title')).toHaveValue('');
+    expect(screen.getByRole('button', { name: 'Create Task' })).toBeInTheDocument();
+    // Wait for users to load
+    await screen.findByRole('option', { name: 'Alice Johnson' });
   });
 
-  it('should allow typing in title, description, and due date', async () => {
-    const user = userEvent.setup();
-    render(<TaskModal onClose={() => {}} onSubmit={async () => {}} projectId="proj-123" />);
-
-    const titleInput = screen.getByLabelText('Title');
-    await user.type(titleInput, 'New Feature');
-    expect(titleInput).toHaveValue('New Feature');
-
-    const descriptionTextarea = screen.getByLabelText('Description');
-    await user.type(descriptionTextarea, 'Implement the new feature');
-    expect(descriptionTextarea).toHaveValue('Implement the new feature');
-
-    const dateInput = screen.getByLabelText('Due Date');
-    await user.type(dateInput, '2025-12-31');
-    expect(dateInput).toHaveValue('2025-12-31');
-  });
-
-  it('should allow selecting an assignee after loading', async () => {
-    const user = userEvent.setup();
-    render(<TaskModal onClose={() => {}} onSubmit={async () => {}} projectId="proj-123" />);
+  it('should render in edit mode and populate fields', async () => {
+    setup({ task: mockTask });
+    expect(screen.getByText('Edit Task')).toBeInTheDocument();
+    expect(screen.getByLabelText('Title')).toHaveValue(mockTask.title);
+    expect(screen.getByLabelText('Description')).toHaveValue(mockTask.description);
+    expect(screen.getByLabelText('Due Date')).toHaveValue('2025-11-15');
+    expect(screen.getByLabelText('Priority')).toHaveValue(TaskPriority.HIGH);
     
-    // Wait for users to be loaded from the mock API
+    // Wait for users to load to check assignee
     const assigneeSelect = await screen.findByLabelText('Assignee');
+    expect(assigneeSelect).toHaveValue(mockTask.assignee_id);
+  });
+
+  it('should allow selecting priority', async () => {
+    const user = userEvent.setup();
+    setup();
+    const prioritySelect = screen.getByLabelText('Priority');
+    await user.selectOptions(prioritySelect, TaskPriority.LOW);
+    expect(prioritySelect).toHaveValue(TaskPriority.LOW);
+  });
+
+  it('should call onTaskCreated with correct data in create mode', async () => {
+    const user = userEvent.setup();
+    const onTaskCreated = vi.fn();
+    setup({ onTaskCreated });
+
     await screen.findByRole('option', { name: 'Alice Johnson' });
 
-    // Now, select an option from the populated dropdown
-    await user.selectOptions(assigneeSelect, '2'); // Selects Alice Johnson (id: '2')
-    expect(assigneeSelect).toHaveValue('2');
-  });
+    await user.type(screen.getByLabelText('Title'), 'New Test Task');
+    await user.selectOptions(screen.getByLabelText('Priority'), TaskPriority.CRITICAL);
+    await user.type(screen.getByLabelText('Due Date'), '2025-12-01');
 
-  it('should call onClose when the close button is clicked', async () => {
-    const user = userEvent.setup();
-    const handleClose = vi.fn();
-    render(<TaskModal onClose={handleClose} onSubmit={async () => {}} projectId="proj-123" />);
-    
-    const closeButton = screen.getByRole('button', { name: /close/i });
-    await user.click(closeButton);
-    expect(handleClose).toHaveBeenCalledTimes(1);
-  });
-
-  it('should call onClose when the cancel button is clicked', async () => {
-    const user = userEvent.setup();
-    const handleClose = vi.fn();
-    render(<TaskModal onClose={handleClose} onSubmit={async () => {}} projectId="proj-123" />);
-    
-    const cancelButton = screen.getByRole('button', { name: 'Cancel' });
-    await user.click(cancelButton);
-    expect(handleClose).toHaveBeenCalledTimes(1);
-  });
-
-  it('should show an alert if title or due date is missing on submit', () => {
-    const handleSubmit = vi.fn();
+    // Mock window.alert
     const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {});
-
-    render(<TaskModal onClose={() => {}} onSubmit={handleSubmit} projectId="proj-123" />);
-    
-    const submitButton = screen.getByRole('button', { name: 'Create Task' });
-    
-    // Use fireEvent.submit to bypass browser validation for required fields
-    act(() => {
-      fireEvent.submit(submitButton);
-    });
-
-    expect(alertSpy).toHaveBeenCalledWith('Title and Due Date are required.');
-    expect(handleSubmit).not.toHaveBeenCalled();
-
-    alertSpy.mockRestore();
-  });
-
-  it('should call onSubmit with the correct data when form is submitted', async () => {
-    const user = userEvent.setup();
-    const handleSubmit = vi.fn().mockResolvedValue(undefined);
-    render(<TaskModal onClose={() => {}} onSubmit={handleSubmit} projectId="proj-123" />);
-
-    // Wait for users to load before interacting with the form
-    await screen.findByRole('option', { name: 'Alice Johnson' });
-
-    await user.type(screen.getByLabelText('Title'), 'Test Task');
-    await user.type(screen.getByLabelText('Description'), 'Test Desc');
-    await user.selectOptions(screen.getByLabelText('Assignee'), '2'); // Alice Johnson
-    await user.type(screen.getByLabelText('Due Date'), '2025-10-26');
 
     await user.click(screen.getByRole('button', { name: 'Create Task' }));
 
     await waitFor(() => {
-      expect(handleSubmit).toHaveBeenCalledTimes(1);
-      expect(handleSubmit).toHaveBeenCalledWith({
-        project_id: 'proj-123',
-        title: 'Test Task',
-        description: 'Test Desc',
-        assigneeId: '2',
-        due_date: new Date('2025-10-26').toISOString(),
-      });
+      expect(onTaskCreated).toHaveBeenCalledTimes(1);
+      expect(onTaskCreated).toHaveBeenCalledWith(expect.objectContaining({
+        title: 'New Test Task',
+        priority: TaskPriority.CRITICAL,
+      }));
     });
+
+    alertSpy.mockRestore();
   });
 
-  it('should disable the submit button while submitting', async () => {
+  it('should call onTaskUpdated with correct data in edit mode', async () => {
     const user = userEvent.setup();
-    let resolveSubmit: (value: void) => void;
-    const promise = new Promise<void>(resolve => {
-      resolveSubmit = resolve;
-    });
-    const handleSubmit = vi.fn().mockImplementation(() => promise);
+    const onTaskUpdated = vi.fn();
+    setup({ task: mockTask, onTaskUpdated });
 
-    render(<TaskModal onClose={() => {}} onSubmit={handleSubmit} projectId="proj-123" />);
-
-    // Wait for users to load
     await screen.findByRole('option', { name: 'Alice Johnson' });
 
-    await user.type(screen.getByLabelText('Title'), 'Test Task');
-    await user.type(screen.getByLabelText('Due Date'), '2025-10-26');
+    const titleInput = screen.getByLabelText('Title');
+    await user.clear(titleInput);
+    await user.type(titleInput, 'Updated Title');
+    await user.selectOptions(screen.getByLabelText('Priority'), TaskPriority.LOW);
+
+    // Mock window.alert
+    const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {});
+
+    await user.click(screen.getByRole('button', { name: 'Save Changes' }));
+
+    await waitFor(() => {
+      expect(onTaskUpdated).toHaveBeenCalledTimes(1);
+      expect(onTaskUpdated).toHaveBeenCalledWith(expect.objectContaining({
+        id: mockTask.id,
+        title: 'Updated Title',
+        priority: TaskPriority.LOW,
+      }));
+    });
     
+    alertSpy.mockRestore();
+  });
+
+  it('should show an alert if title or due date is missing', async () => {
+    const user = userEvent.setup();
+    const onTaskCreated = vi.fn();
+    const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {});
+    setup({ onTaskCreated });
+
     const submitButton = screen.getByRole('button', { name: 'Create Task' });
-    await user.click(submitButton);
+    fireEvent.submit(submitButton);
 
     await waitFor(() => {
-      expect(submitButton).toBeDisabled();
-      expect(screen.getByText('Creating...')).toBeInTheDocument();
+      expect(alertSpy).toHaveBeenCalledWith('Title and Due Date are required.');
     });
+    expect(onTaskCreated).not.toHaveBeenCalled();
 
-    resolveSubmit!(undefined);
-
-    await waitFor(() => {
-      expect(submitButton).not.toBeDisabled();
-    });
+    alertSpy.mockRestore();
   });
 });

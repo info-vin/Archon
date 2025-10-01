@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { api, NewTaskData } from '../services/api.ts';
-import { Task, TaskStatus, TaskPriority, Employee, Project, AssignableUser } from '../types.ts';
+import { api } from '../services/api.ts';
+import { Task, TaskStatus, TaskPriority, Project, AssignableUser } from '../types.ts';
 import { GanttChartIcon, KanbanIcon, ListIcon, TableIcon, PlusIcon, ChevronDownIcon, ChevronsUpDownIcon, PaperclipIcon } from '../components/Icons.tsx';
 import { TaskModal } from '../components/TaskModal.tsx';
 import UserAvatar from '../components/UserAvatar.tsx';
@@ -41,8 +41,10 @@ const DashboardPage: React.FC = () => {
   const [projects, setProjects] = useState<Project[]>([]);
   const [selectedProjectId, setSelectedProjectId] = useState<string>('all');
   const [loading, setLoading] = useState(true);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingTask, setEditingTask] = useState<Task | null | undefined>(undefined);
   const [sortConfig, setSortConfig] = useState<{ key: SortableTaskKeys; direction: SortDirection } | null>({ key: 'created_at', direction: 'ascending' });
+
+  const isModalOpen = editingTask !== undefined;
 
   useEffect(() => {
     const fetchData = async () => {
@@ -111,16 +113,14 @@ const DashboardPage: React.FC = () => {
     // In a real app, you would also call api.updateTask here
   }, []);
 
-  const handleCreateTask = async (taskData: NewTaskData) => {
-    try {
-      const newTask = await api.createTask(taskData);
-      setTasks(prevTasks => [...prevTasks, newTask]);
-      setIsModalOpen(false);
-      alert('Task created successfully!');
-    } catch (error: any) {
-      console.error("Failed to create task:", error);
-      alert(`Failed to create task: ${error.message}`);
-    }
+  const handleTaskCreated = (newTask: Task) => {
+    setTasks(prevTasks => [...prevTasks, newTask]);
+  };
+
+  const handleTaskUpdated = (updatedTask: Task) => {
+    setTasks(prevTasks => prevTasks.map(task => 
+      task.id === updatedTask.id ? updatedTask : task
+    ));
   };
 
   if (loading) return <div className="flex items-center justify-center h-full">Loading tasks...</div>;
@@ -151,7 +151,7 @@ const DashboardPage: React.FC = () => {
             <ViewButton icon={<GanttChartIcon className="w-5 h-5" />} label="Gantt" active={viewMode === 'gantt'} onClick={() => setViewMode('gantt')} />
           </div>
           <button 
-            onClick={() => setIsModalOpen(true)}
+            onClick={() => setEditingTask(null)} // null signifies create mode
             className="flex items-center justify-center px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
           >
             <PlusIcon className="w-5 h-5 mr-2" />
@@ -163,7 +163,7 @@ const DashboardPage: React.FC = () => {
             <div className="mb-4 flex justify-end">
                  <select
                     onChange={(e) => requestSort(e.target.value as SortableTaskKeys)}
-                    value={sortConfig?.key}
+                    value={sortConfig?.key ?? 'created_at'}
                     className="bg-card border border-border rounded-md px-3 py-1 text-foreground focus:outline-none focus:ring-2 focus:ring-ring text-sm"
                 >
                     <option value="title">Sort by Title</option>
@@ -175,16 +175,18 @@ const DashboardPage: React.FC = () => {
         )}
 
       <div className="flex-1 overflow-auto">
-        {viewMode === 'list' && <ListView tasks={sortedTasks} employees={employees} />}
-        {viewMode === 'table' && <TableView tasks={sortedTasks} employees={employees} requestSort={requestSort} sortConfig={sortConfig} />}
-        {viewMode === 'kanban' && <KanbanView tasks={filteredTasks} employees={employees} onTaskStatusChange={updateTaskStatus} />}
+        {viewMode === 'list' && <ListView tasks={sortedTasks} employees={employees} onTaskClick={setEditingTask} />}
+        {viewMode === 'table' && <TableView tasks={sortedTasks} employees={employees} requestSort={requestSort} sortConfig={sortConfig} onTaskClick={setEditingTask} />}
+        {viewMode === 'kanban' && <KanbanView tasks={filteredTasks} employees={employees} onTaskStatusChange={updateTaskStatus} onTaskClick={setEditingTask} />}
         {viewMode === 'gantt' && <GanttView tasks={filteredTasks} employees={employees} />}
       </div>
       
       {isModalOpen && (
         <TaskModal
-          onClose={() => setIsModalOpen(false)}
-          onSubmit={handleCreateTask}
+          task={editingTask}
+          onClose={() => setEditingTask(undefined)}
+          onTaskCreated={handleTaskCreated}
+          onTaskUpdated={handleTaskUpdated}
           projectId={selectedProjectId !== 'all' ? selectedProjectId : projects[0]?.id}
         />
       )}
@@ -204,12 +206,12 @@ const ViewButton: React.FC<{ icon: React.ReactNode, label: string, active: boole
   </button>
 );
 
-const ListView: React.FC<{ tasks: Task[], employees: AssignableUser[] }> = ({ tasks, employees }) => {
+const ListView: React.FC<{ tasks: Task[], employees: AssignableUser[], onTaskClick: (task: Task) => void }> = ({ tasks, employees, onTaskClick }) => {
     return <div className="space-y-3">
         {tasks.map(task => {
-            const assignee = employees.find(e => e.name === task.assignee);
+            const assignee = employees.find(e => e.id === task.assignee_id);
             return (
-                <div key={task.id} className="p-4 bg-card border border-border rounded-lg flex items-center justify-between">
+                <button key={task.id} onClick={() => onTaskClick(task)} className="w-full text-left p-4 bg-card border border-border rounded-lg flex items-center justify-between hover:bg-accent transition-colors">
                     <div className="flex-1 min-w-0">
                         <div className="flex items-center">
                             <span className={`w-3 h-3 rounded-full mr-4 flex-shrink-0 ${statusColors[task.status]}`}></span>
@@ -223,7 +225,7 @@ const ListView: React.FC<{ tasks: Task[], employees: AssignableUser[] }> = ({ ta
                                 <PaperclipIcon className="w-4 h-4 text-muted-foreground mt-0.5 flex-shrink-0" />
                                 <div className="flex flex-wrap gap-x-3 gap-y-1">
                                     {task.attachments.map((att, index) => (
-                                        <a key={index} href={att.url} download={att.file_name} className="text-sm text-primary hover:underline truncate" title={att.file_name}>
+                                        <a key={index} href={att.url} download={att.file_name} onClick={(e) => e.stopPropagation()} className="text-sm text-primary hover:underline truncate" title={att.file_name}>
                                             {att.file_name}
                                         </a>
                                     ))}
@@ -238,13 +240,13 @@ const ListView: React.FC<{ tasks: Task[], employees: AssignableUser[] }> = ({ ta
                             <span className="text-sm text-right truncate">{task.assignee || 'Unassigned'}</span>
                         </div>
                     </div>
-                </div>
+                </button>
             );
         })}
     </div>;
 };
 
-const TableView: React.FC<{ tasks: Task[], employees: AssignableUser[], requestSort: (key: SortableTaskKeys) => void, sortConfig: {key: SortableTaskKeys, direction: SortDirection} | null }> = ({ tasks, employees, requestSort, sortConfig }) => {
+const TableView: React.FC<{ tasks: Task[], employees: AssignableUser[], requestSort: (key: SortableTaskKeys) => void, sortConfig: {key: SortableTaskKeys, direction: SortDirection} | null, onTaskClick: (task: Task) => void }> = ({ tasks, employees, requestSort, sortConfig, onTaskClick }) => {
     const SortableHeader: React.FC<{ columnKey: SortableTaskKeys, title: string }> = ({ columnKey, title }) => {
         const isSorted = sortConfig?.key === columnKey;
         return (
@@ -276,9 +278,9 @@ const TableView: React.FC<{ tasks: Task[], employees: AssignableUser[], requestS
             </thead>
             <tbody className="bg-card divide-y divide-border">
                 {tasks.map(task => {
-                    const assignee = employees.find(e => e.name === task.assignee);
+                    const assignee = employees.find(e => e.id === task.assignee_id);
                     return (
-                        <tr key={task.id}>
+                        <tr key={task.id} onClick={() => onTaskClick(task)} className="hover:bg-accent cursor-pointer">
                             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                 <div className="truncate" title={task.title}>{task.title}</div>
                                 {task.description && <div className="text-xs text-muted-foreground truncate" title={task.description}>{task.description}</div>}
@@ -300,7 +302,7 @@ const TableView: React.FC<{ tasks: Task[], employees: AssignableUser[], requestS
                                 {task.attachments && task.attachments.length > 0 ? (
                                     <div className="flex flex-col gap-1">
                                         {task.attachments.map((att, index) => (
-                                            <a key={index} href={att.url} download={att.file_name} className="text-primary hover:underline truncate" title={att.file_name}>
+                                            <a key={index} href={att.url} download={att.file_name} onClick={(e) => e.stopPropagation()} className="text-primary hover:underline truncate" title={att.file_name}>
                                                 {att.file_name}
                                             </a>
                                         ))}
@@ -315,9 +317,9 @@ const TableView: React.FC<{ tasks: Task[], employees: AssignableUser[], requestS
         {/* Mobile Card View */}
         <div className="md:hidden space-y-3">
             {tasks.map(task => {
-                const assignee = employees.find(e => e.name === task.assignee);
+                const assignee = employees.find(e => e.id === task.assignee_id);
                 return (
-                    <div key={task.id} className="p-4 bg-card border border-border rounded-lg">
+                    <button key={task.id} onClick={() => onTaskClick(task)} className="w-full text-left p-4 bg-card border border-border rounded-lg hover:bg-accent transition-colors">
                         <div className="flex justify-between items-start">
                             <p className="font-semibold text-lg mb-2 pr-2">{task.title}</p>
                             <span className={`flex-shrink-0 px-2 py-1 text-xs font-semibold rounded-full text-white ${priorityColors[task.priority]}`}>{task.priority}</span>
@@ -345,7 +347,7 @@ const TableView: React.FC<{ tasks: Task[], employees: AssignableUser[], requestS
                                     <PaperclipIcon className="w-4 h-4 text-muted-foreground mt-0.5 flex-shrink-0" />
                                     <div className="flex flex-col gap-1">
                                         {task.attachments.map((att, index) => (
-                                            <a key={index} href={att.url} download={att.file_name} target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline truncate" title={att.file_name}>
+                                            <a key={index} href={att.url} download={att.file_name} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="text-sm text-primary hover:underline truncate" title={att.file_name}>
                                                 {att.file_name}
                                             </a>
                                         ))}
@@ -353,14 +355,14 @@ const TableView: React.FC<{ tasks: Task[], employees: AssignableUser[], requestS
                                 </div>
                             </div>
                         )}
-                    </div>
+                    </button>
                 )
             })}
         </div>
     </div>;
 };
 
-const KanbanView: React.FC<{ tasks: Task[], employees: AssignableUser[], onTaskStatusChange: (taskId: string, newStatus: TaskStatus) => void }> = ({ tasks, employees, onTaskStatusChange }) => {
+const KanbanView: React.FC<{ tasks: Task[], employees: AssignableUser[], onTaskStatusChange: (taskId: string, newStatus: TaskStatus) => void, onTaskClick: (task: Task) => void }> = ({ tasks, employees, onTaskStatusChange, onTaskClick }) => {
     const [draggedTaskId, setDraggedTaskId] = useState<string | null>(null);
     
     const onDragStart = (e: React.DragEvent<HTMLDivElement>, taskId: string) => {
@@ -392,9 +394,9 @@ const KanbanView: React.FC<{ tasks: Task[], employees: AssignableUser[], onTaskS
                 <h3 className="p-4 font-semibold text-lg border-b border-border">{title} ({tasks.filter(t => t.status === status).length})</h3>
                 <div className="p-4 space-y-4 overflow-y-auto">
                     {tasks.filter(t => t.status === status).map(task => {
-                        const assignee = employees.find(e => e.name === task.assignee);
+                        const assignee = employees.find(e => e.id === task.assignee_id);
                         return (
-                            <div key={task.id} draggable onDragStart={(e) => onDragStart(e, task.id)} className="p-4 bg-secondary border border-border rounded-lg shadow-sm cursor-grab">
+                            <div key={task.id} draggable onDragStart={(e) => onDragStart(e, task.id)} onClick={() => onTaskClick(task)} className="p-4 bg-secondary border border-border rounded-lg shadow-sm cursor-grab">
                                 <p className="font-semibold mb-2">{task.title}</p>
                                 <div className="flex justify-between items-center">
                                     <span className="text-sm text-muted-foreground">{new Date(task.due_date).toLocaleDateString()}</span>
@@ -409,7 +411,7 @@ const KanbanView: React.FC<{ tasks: Task[], employees: AssignableUser[], onTaskS
                                             <PaperclipIcon className="w-4 h-4 text-muted-foreground mt-0.5 flex-shrink-0" />
                                             <div className="flex flex-col gap-1">
                                                 {task.attachments.map((att, index) => (
-                                                    <a key={index} href={att.url} download={att.file_name} className="text-xs text-primary hover:underline truncate" title={att.file_name}>
+                                                    <a key={index} href={att.url} download={att.file_name} onClick={(e) => e.stopPropagation()} className="text-xs text-primary hover:underline truncate" title={att.file_name}>
                                                         {att.file_name}
                                                     </a>
                                                 ))}
