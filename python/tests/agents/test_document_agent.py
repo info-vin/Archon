@@ -1,43 +1,47 @@
-
 import pytest
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 from src.agents.document_agent import DocumentAgent, DocumentDependencies
 
-def test_list_documents_raises_name_error():
+# Now that the NameError is fixed, we write a proper unit test.
+# We use the standard `mock_supabase_client` fixture from conftest.py
+@patch('openai.OpenAI')
+def test_list_documents_success(mock_openai_llm, mock_supabase_client):
     """
-    This test is designed to fail if the NameError for 'get_supabase_client'
-    is NOT raised. It directly calls the problematic method to prove the bug's existence.
-    This serves as a regression test once the bug is fixed.
+    Tests that the list_documents tool successfully queries and formats documents
+    when the underlying database call is successful.
     """
     # Arrange
-    # We don't need a real model or full dependencies for this test,
-    # as the NameError happens before any of them are substantially used.
-    agent = DocumentAgent(model="mock-model")
-    
-    # Create a mock for the agent's internal PydanticAI agent
-    # to isolate the tool call.
-    agent.agent = MagicMock()
+    agent = DocumentAgent(model="openai:gpt-4o")
 
-    # Find the actual tool function attached to the agent instance
-    # This is a bit of introspection to get the real function to test
-    list_documents_tool = None
-    for tool in agent.agent.tools:
-        if tool.__name__ == 'list_documents':
-            list_documents_tool = tool
-            break
-    
-    assert list_documents_tool is not None, "Could not find list_documents tool on agent"
 
-    # Create mock context dependencies
-    mock_deps = DocumentDependencies(project_id="test-project-id")
+    # Configure the mock supabase client to return mock data
+    mock_response = MagicMock()
+    mock_response.data = [{
+        "docs": [
+            {"document_type": "prd", "title": "Test PRD"},
+            {"document_type": "meeting_notes", "title": "Sprint Planning"}
+        ]
+    }]
+    mock_supabase_client.table.return_value.select.return_value.eq.return_value.execute.return_value = mock_response
+
+    # Find the tool to test
+    list_documents_tool = next((t for t in agent.agent.tools if t.__name__ == 'list_documents'), None)
+    assert list_documents_tool is not None
+
+    # Create mock context
     mock_context = MagicMock()
-    mock_context.deps = mock_deps
+    mock_context.deps = DocumentDependencies(project_id="test-project-id")
 
-    # Act & Assert
-    # We expect a NameError because get_supabase_client is not imported.
-    # This test will PASS if the NameError is raised, and FAIL if it is not.
-    with pytest.raises(NameError, match="name 'get_supabase_client' is not defined"):
-        # We need to run the async tool function in a way pytest can manage.
-        # Since this is a sync test function, we can create a new event loop.
-        import asyncio
-        asyncio.run(list_documents_tool(mock_context))
+    # Act: Run the tool
+    import asyncio
+    result = asyncio.run(list_documents_tool(mock_context))
+
+    # Assert
+    assert "Found 2 documents" in result
+    assert "- Test PRD (prd)" in result
+    assert "- Sprint Planning (meeting_notes)" in result
+
+    # Verify that the mock was called correctly
+    mock_supabase_client.table.assert_called_with("archon_projects")
+    mock_supabase_client.table.return_value.select.assert_called_with("docs")
+    mock_supabase_client.table.return_value.select.return_value.eq.assert_called_with("id", "test-project-id")

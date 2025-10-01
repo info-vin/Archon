@@ -19,6 +19,7 @@ from pydantic_ai import Agent, RunContext
 
 from .base_agent import ArchonDependencies, BaseAgent
 from .mcp_client import get_mcp_client
+from ..server.utils import get_supabase_client
 from ..server.services.projects.task_service import TaskService
 from ..server.services.storage_service import StorageService
 from .tools.file_tools import upload_and_link_file_to_task
