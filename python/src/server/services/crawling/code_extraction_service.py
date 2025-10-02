@@ -3,7 +3,7 @@ Code Extraction Service
 
 Handles extraction, processing, and storage of code examples from documents.
 """
-
+import asyncio
 import re
 from collections.abc import Callable
 from typing import Any
@@ -245,7 +245,6 @@ class CodeExtractionService:
 
                 # Get dynamic minimum length based on document context
                 # Extract some context from the document for analysis
-                doc_context = md[:1000] if md else html_content[:1000] if html_content else ""
 
                 # Check markdown first to see if it has code blocks
                 if md:
@@ -945,7 +944,7 @@ class CodeExtractionService:
         start_pos: int,
         min_length: int = 250,
         language: str = "",
-        max_length: int = None,
+        max_length: int | None = None,
     ) -> tuple[str, int]:
         """
         Find a complete code block starting from a position, extending until we find a natural boundary.

@@ -22,7 +22,7 @@ async def add_documents_to_supabase(
     contents: list[str],
     metadatas: list[dict[str, Any]],
     url_to_full_document: dict[str, str],
-    batch_size: int = None,  # Will load from settings
+    batch_size: int | None = None,  # Will load from settings
     progress_callback: Any | None = None,
     enable_parallel_batches: bool = True,
     provider: str | None = None,
@@ -64,13 +64,11 @@ async def add_documents_to_supabase(
             if batch_size is None:
                 batch_size = int(rag_settings.get("DOCUMENT_STORAGE_BATCH_SIZE", "50"))
             delete_batch_size = int(rag_settings.get("DELETE_BATCH_SIZE", "50"))
-            enable_parallel = rag_settings.get("ENABLE_PARALLEL_BATCHES", "true").lower() == "true"
         except Exception as e:
             search_logger.warning(f"Failed to load storage settings: {e}, using defaults")
             if batch_size is None:
                 batch_size = 50
             delete_batch_size = 50
-            enable_parallel = True
 
         # Get unique URLs to delete existing records
         unique_urls = list(set(urls))
@@ -116,16 +114,13 @@ async def add_documents_to_supabase(
                 search_logger.error(f"Failed to delete {len(failed_urls)} URLs")
 
         # Check if contextual embeddings are enabled
-        # Fix: Get from credential service instead of environment
-        from ..credential_service import credential_service
-
         try:
             use_contextual_embeddings = await credential_service.get_credential(
                 "USE_CONTEXTUAL_EMBEDDINGS", "false", decrypt=True
             )
             if isinstance(use_contextual_embeddings, str):
                 use_contextual_embeddings = use_contextual_embeddings.lower() == "true"
-        except:
+        except Exception:
             # Fallback to environment variable
             use_contextual_embeddings = os.getenv("USE_CONTEXTUAL_EMBEDDINGS", "false") == "true"
 
@@ -158,7 +153,7 @@ async def add_documents_to_supabase(
                         "CONTEXTUAL_EMBEDDINGS_MAX_WORKERS", "4", decrypt=True
                     )
                     max_workers = int(max_workers)
-                except:
+                except Exception:
                     max_workers = 4
             else:
                 max_workers = 1
@@ -188,7 +183,7 @@ async def add_documents_to_supabase(
             if use_contextual_embeddings:
                 # Prepare full documents list for batch processing
                 full_documents = []
-                for j, content in enumerate(batch_contents):
+                for j, _content in enumerate(batch_contents):
                     url = batch_urls[j]
                     full_document = url_to_full_document.get(url, "")
                     full_documents.append(full_document)
@@ -198,7 +193,7 @@ async def add_documents_to_supabase(
                     contextual_batch_size = int(
                         rag_settings.get("CONTEXTUAL_EMBEDDING_BATCH_SIZE", "50")
                     )
-                except:
+                except Exception:
                     contextual_batch_size = 50
 
                 try:
@@ -246,7 +241,7 @@ async def add_documents_to_supabase(
 
             # Create embeddings for the batch with rate limit progress support
             # Create a wrapper for progress callback to handle rate limiting updates
-            async def embedding_progress_wrapper(message: str, percentage: float):
+            async def embedding_progress_wrapper(message: str, percentage: float, current_progress=current_progress, batch_num=batch_num):
                 # Forward rate limiting messages to the main progress callback
                 if progress_callback and "rate limit" in message.lower():
                     try:
@@ -254,9 +249,9 @@ async def add_documents_to_supabase(
                             "document_storage",
                             current_progress,  # Use current batch progress
                             message,
-                        batch=batch_num,
-                        type="rate_limit_wait"
-                    )
+                            batch=batch_num,
+                            type="rate_limit_wait"
+                        )
                     except Exception as e:
                         search_logger.warning(f"Progress callback failed during rate limiting: {e}")
 
