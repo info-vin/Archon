@@ -178,6 +178,11 @@ cd enduser-ui-fe && npm run dev
 - 運行 `pnpm install --filter <project_name>` 來安裝套件，這樣 Vite、ESLint 和 TypeScript 才能正確識別它。
 - 使用 `pnpm create vite@latest <project_name> -- --template react-ts` 快速建立一個新的 React + Vite + TypeScript 專案。
 - 檢查每個套件 `package.json` 裡的 name 欄位來確認正確名稱，忽略最上層的那個。
+- **更新 `gemini-cli` 全域工具**：
+  ```bash
+  npm install -g @google/gemini-cli@latest
+  gemini --version
+  ```
 
 ---
 
