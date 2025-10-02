@@ -4,8 +4,9 @@ Log Service Module for Archon
 This module provides business logic for logging Gemini interactions.
 """
 from datetime import datetime
-from ..utils import get_supabase_client
+
 from ..config.logfire_config import get_logger
+from ..utils import get_supabase_client
 
 logger = get_logger(__name__)
 

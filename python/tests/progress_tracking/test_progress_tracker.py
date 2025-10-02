@@ -1,8 +1,7 @@
 """Unit tests for the ProgressTracker class."""
 
+
 import pytest
-from datetime import datetime
-from unittest.mock import patch
 
 from src.server.utils.progress.progress_tracker import ProgressTracker
 
@@ -37,10 +36,10 @@ class TestProgressTracker:
         """Test that clear_progress removes the state from memory."""
         # Verify state exists
         assert ProgressTracker.get_progress("test-progress-id") is not None
-        
+
         # Clear progress
         ProgressTracker.clear_progress("test-progress-id")
-        
+
         # Verify state is gone
         assert ProgressTracker.get_progress("test-progress-id") is None
 
@@ -48,9 +47,9 @@ class TestProgressTracker:
     async def test_start_updates_status_and_time(self, progress_tracker):
         """Test that start() updates status and start time."""
         initial_data = {"test_key": "test_value"}
-        
+
         await progress_tracker.start(initial_data)
-        
+
         assert progress_tracker.state["status"] == "starting"
         assert "start_time" in progress_tracker.state
         assert progress_tracker.state["test_key"] == "test_value"
@@ -65,13 +64,13 @@ class TestProgressTracker:
             total_pages=20,
             processed_pages=5
         )
-        
+
         assert progress_tracker.state["status"] == "crawling"
         assert progress_tracker.state["progress"] == 25
         assert progress_tracker.state["log"] == "Processing page 5/20"
         assert progress_tracker.state["total_pages"] == 20
         assert progress_tracker.state["processed_pages"] == 5
-        
+
         # Check log entry was added
         assert len(progress_tracker.state["logs"]) == 1
         log_entry = progress_tracker.state["logs"][0]
@@ -85,10 +84,10 @@ class TestProgressTracker:
         # Set initial progress
         await progress_tracker.update("crawling", 50, "Halfway done")
         assert progress_tracker.state["progress"] == 50
-        
+
         # Try to set lower progress
         await progress_tracker.update("crawling", 30, "Should not decrease")
-        
+
         # Progress should remain at 50
         assert progress_tracker.state["progress"] == 50
         # But status and message should update
@@ -100,7 +99,7 @@ class TestProgressTracker:
         # Test negative progress
         await progress_tracker.update("starting", -10, "Negative progress")
         assert progress_tracker.state["progress"] == 0
-        
+
         # Test progress over 100
         await progress_tracker.update("running", 150, "Over 100 progress")
         assert progress_tracker.state["progress"] == 100
@@ -109,9 +108,9 @@ class TestProgressTracker:
     async def test_complete_sets_100_percent_and_duration(self, progress_tracker):
         """Test that complete() sets progress to 100% and calculates duration."""
         completion_data = {"chunks_stored": 500, "word_count": 10000}
-        
+
         await progress_tracker.complete(completion_data)
-        
+
         assert progress_tracker.state["status"] == "completed"
         assert progress_tracker.state["progress"] == 100
         assert progress_tracker.state["chunks_stored"] == 500
@@ -124,9 +123,9 @@ class TestProgressTracker:
     async def test_error_sets_error_status(self, progress_tracker):
         """Test that error() sets error status and details."""
         error_details = {"error_code": 500, "component": "embedding_service"}
-        
+
         await progress_tracker.error("Failed to create embeddings", error_details)
-        
+
         assert progress_tracker.state["status"] == "error"
         assert progress_tracker.state["error"] == "Failed to create embeddings"
         assert progress_tracker.state["error_details"]["error_code"] == 500
@@ -141,7 +140,7 @@ class TestProgressTracker:
             batch_size=25,
             message="Processing batch 3 of 6"
         )
-        
+
         expected_progress = int((3 / 6) * 100)  # 50%
         assert progress_tracker.state["progress"] == expected_progress
         assert progress_tracker.state["status"] == "processing_batch"
@@ -157,7 +156,7 @@ class TestProgressTracker:
             total_pages=30,
             current_url="https://example.com/page15"
         )
-        
+
         expected_progress = int((15 / 30) * 100)  # 50%
         assert progress_tracker.state["progress"] == expected_progress
         assert progress_tracker.state["status"] == "crawling"
@@ -174,7 +173,7 @@ class TestProgressTracker:
             total_chunks=100,
             operation="storing embeddings"
         )
-        
+
         expected_progress = int((75 / 100) * 100)  # 75%
         assert progress_tracker.state["progress"] == expected_progress
         assert progress_tracker.state["status"] == "document_storage"
@@ -187,11 +186,11 @@ class TestProgressTracker:
         # Test seconds
         formatted = progress_tracker._format_duration(45.5)
         assert "45.5 seconds" in formatted
-        
+
         # Test minutes
         formatted = progress_tracker._format_duration(125.0)
         assert "2.1 minutes" in formatted
-        
+
         # Test hours
         formatted = progress_tracker._format_duration(7200.0)
         assert "2.0 hours" in formatted
@@ -199,10 +198,10 @@ class TestProgressTracker:
     def test_get_state_returns_copy(self, progress_tracker):
         """Test that get_state returns a copy, not the original state."""
         state_copy = progress_tracker.get_state()
-        
+
         # Modify the copy
         state_copy["test_modification"] = "should not affect original"
-        
+
         # Original state should be unchanged
         assert "test_modification" not in progress_tracker.state
 
@@ -210,16 +209,16 @@ class TestProgressTracker:
         """Test that multiple trackers maintain independent state."""
         tracker1 = ProgressTracker("id-1", "crawl")
         tracker2 = ProgressTracker("id-2", "upload")
-        
+
         # Verify they have different states
         assert tracker1.progress_id != tracker2.progress_id
         assert tracker1.state["progress_id"] != tracker2.state["progress_id"]
         assert tracker1.state["type"] != tracker2.state["type"]
-        
+
         # Verify they can be retrieved independently
         state1 = ProgressTracker.get_progress("id-1")
         state2 = ProgressTracker.get_progress("id-2")
-        
+
         assert state1["progress_id"] == "id-1"
         assert state2["progress_id"] == "id-2"
         assert state1["type"] == "crawl"

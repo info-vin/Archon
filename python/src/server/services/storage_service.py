@@ -1,9 +1,11 @@
 
 import mimetypes
-from fastapi import UploadFile, HTTPException
+
+from fastapi import UploadFile
 from supabase import Client
-from src.server.services.client_manager import get_supabase_client
+
 from src.server.config.logfire_config import get_logger
+from src.server.services.client_manager import get_supabase_client
 
 logger = get_logger(__name__)
 
@@ -39,7 +41,7 @@ class StorageService:
             )
 
             public_url = supabase.storage.from_(bucket_name).get_public_url(file_path)
-            
+
             logger.info(f"Successfully uploaded file '{file.filename}' to bucket '{bucket_name}'.")
             return public_url
 

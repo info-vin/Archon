@@ -1,4 +1,5 @@
-from unittest.mock import MagicMock, patch, AsyncMock
+from unittest.mock import AsyncMock, patch
+
 from fastapi.testclient import TestClient
 
 # This test relies on the `mock_supabase_client` fixture auto-injected by `conftest.py`

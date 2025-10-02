@@ -1,7 +1,7 @@
 # python/src/server/services/health_service.py
 
-from ..utils import get_supabase_client
 from ..config.logfire_config import get_logger
+from ..utils import get_supabase_client
 
 logger = get_logger(__name__)
 
@@ -35,7 +35,7 @@ class HealthService:
     def get_system_health(self) -> dict:
         """Returns a comprehensive health status of the system."""
         db_connected = self.check_database_connection()
-        
+
         if not db_connected:
             return {
                 "status": "unhealthy",
@@ -45,7 +45,7 @@ class HealthService:
 
         # List of essential tables to check
         tables_to_check = ["projects", "tasks", "profiles", "gemini_logs"]
-        
+
         table_statuses = {}
         all_tables_ok = True
         for table in tables_to_check:

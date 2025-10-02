@@ -132,7 +132,7 @@ class CrawlingService:
                     f"total_pages={kwargs.get('total_pages', 'N/A')} | processed_pages={kwargs.get('processed_pages', 'N/A')} | "
                     f"kwargs_keys={list(kwargs.keys())}"
                 )
-                
+
                 # Update progress via tracker (stores in memory for HTTP polling)
                 await self.progress_tracker.update(
                     status=base_status,
@@ -341,7 +341,7 @@ class CrawlingService:
 
             # Detect URL type and perform crawl
             crawl_results, crawl_type = await self._crawl_by_url_type(url, request)
-            
+
             # Update progress tracker with crawl type
             if self.progress_tracker and crawl_type:
                 await self.progress_tracker.update(
@@ -415,7 +415,7 @@ class CrawlingService:
             if request.get("extract_code_examples", True) and actual_chunks_stored > 0:
                 # Check for cancellation before starting code extraction
                 self._check_cancellation()
-                
+
                 await update_mapped_progress("code_extraction", 0, "Starting code extraction...")
 
                 # Create progress callback for code extraction
@@ -424,7 +424,7 @@ class CrawlingService:
                         # Use ProgressMapper to ensure progress never goes backwards
                         raw_progress = data.get("progress", data.get("percentage", 0))
                         mapped_progress = self.progress_mapper.map_progress("code_extraction", raw_progress)
-                        
+
                         # Update progress state via tracker
                         await self.progress_tracker.update(
                             status=data.get("status", "code_extraction"),
@@ -445,7 +445,7 @@ class CrawlingService:
 
                 # Check for cancellation after code extraction
                 self._check_cancellation()
-                
+
                 # Send heartbeat after code extraction
                 await send_heartbeat_if_needed()
 
@@ -571,7 +571,7 @@ class CrawlingService:
         crawl_type = None
 
         if self.url_handler.is_txt(url) or self.url_handler.is_markdown(url):
-            # Handle text files  
+            # Handle text files
             crawl_type = "llms-txt" if "llms" in url.lower() else "text_file"
             if self.progress_tracker:
                 await self.progress_tracker.update(
@@ -593,7 +593,7 @@ class CrawlingService:
                 if self.url_handler.is_link_collection_file(url, content):
                     # Extract links from the content
                     extracted_links = self.url_handler.extract_markdown_links(content, url)
-                    
+
                     # Filter out self-referential links to avoid redundant crawling
                     if extracted_links:
                         original_count = len(extracted_links)
@@ -604,7 +604,7 @@ class CrawlingService:
                         self_filtered_count = original_count - len(extracted_links)
                         if self_filtered_count > 0:
                             logger.info(f"Filtered out {self_filtered_count} self-referential links from {original_count} extracted links")
-                    
+
                     # Filter out binary files (PDFs, images, archives, etc.) to avoid wasteful crawling
                     if extracted_links:
                         original_count = len(extracted_links)
@@ -612,7 +612,7 @@ class CrawlingService:
                         filtered_count = original_count - len(extracted_links)
                         if filtered_count > 0:
                             logger.info(f"Filtered out {filtered_count} binary files from {original_count} extracted links")
-                    
+
                     if extracted_links:
                         # Crawl the extracted links using batch crawling
                         logger.info(f"Crawling {len(extracted_links)} extracted links from {url}")
@@ -623,11 +623,11 @@ class CrawlingService:
                             start_progress=10,
                             end_progress=20,
                         )
-                        
+
                         # Combine original text file results with batch results
                         crawl_results.extend(batch_results)
                         crawl_type = "link_collection_with_crawled_links"
-                        
+
                         logger.info(f"Link collection crawling completed: {len(crawl_results)} total results (1 text file + {len(batch_results)} extracted links)")
                     else:
                         logger.info(f"No valid links found in link collection file: {url}")

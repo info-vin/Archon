@@ -1,7 +1,8 @@
 
-import pytest
-from unittest.mock import patch, AsyncMock
+from unittest.mock import AsyncMock, patch
+
 from fastapi.testclient import TestClient
+
 from src.server.services.storage_service import StorageUploadError
 
 # This test uses the global 'client' fixture from conftest.py
@@ -11,7 +12,7 @@ def test_upload_file_success(mock_upload_file, client: TestClient):
     """Tests successful file upload API endpoint."""
     # Arrange
     mock_upload_file.return_value = "http://fake.url/success/test.pdf"
-    
+
     file_content = b"this is a test file"
     files = {"file": ("test.pdf", file_content, "application/pdf")}
     data = {"bucket_name": "test-bucket", "file_path": "test/test.pdf"}

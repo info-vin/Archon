@@ -1,5 +1,7 @@
+from unittest.mock import AsyncMock, patch
+
 from fastapi.testclient import TestClient
-from unittest.mock import patch, AsyncMock
+
 
 @patch('src.server.api_routes.projects_api.TaskService')
 def test_update_task_succeeds(mock_task_service_class, client: TestClient):
@@ -11,7 +13,7 @@ def test_update_task_succeeds(mock_task_service_class, client: TestClient):
     # Arrange
     # Configure the mock instance that will be created inside the endpoint
     mock_instance = mock_task_service_class.return_value
-    
+
     # The service method is expected to return a tuple: (success, result_dict)
     mock_service_result = {
         "task": {

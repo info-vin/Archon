@@ -1,5 +1,5 @@
-from ..utils import get_supabase_client
 from ..config.logfire_config import get_logger, safe_logfire_info
+from ..utils import get_supabase_client
 
 logger = get_logger(__name__)
 

@@ -259,7 +259,7 @@ async def add_documents_to_supabase(
                     )
                     except Exception as e:
                         search_logger.warning(f"Progress callback failed during rate limiting: {e}")
-            
+
             # Pass progress callback for rate limiting updates
             result = await create_embeddings_batch(
                 contextual_contents,

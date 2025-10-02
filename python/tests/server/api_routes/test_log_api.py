@@ -1,7 +1,6 @@
 """
 Tests for the Log API endpoint.
 """
-import pytest
 from unittest.mock import MagicMock
 
 # Assuming the client and mock_supabase_client fixtures are defined in conftest.py
@@ -24,7 +23,7 @@ def test_record_gemini_log_success(client, mock_supabase_client, mocker):
     # Mock the Supabase client response for a successful insertion
     mock_insert_response = MagicMock()
     mock_insert_response.data = [{'id': '12345', **test_payload}]
-    
+
     mock_supabase_client.table.return_value.insert.return_value.execute.return_value = mock_insert_response
 
     # Act
@@ -67,7 +66,7 @@ def test_record_gemini_log_database_error(client, mock_supabase_client, mocker):
     # Arrange
     # Patch the get_supabase_client call to ensure the mock is used
     mocker.patch('src.server.services.log_service.get_supabase_client', return_value=mock_supabase_client)
-    
+
     test_payload = {
         "user_input": "Another error",
         "gemini_response": "A valid response.",

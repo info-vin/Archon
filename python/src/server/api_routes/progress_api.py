@@ -39,21 +39,21 @@ async def get_progress(
                 status_code=404,
                 detail={"error": f"Operation {operation_id} not found"}
             )
-        
+
 
         # Ensure we have the progress_id in the data
         operation["progress_id"] = operation_id
-        
+
         # Get operation type for proper model selection
         operation_type = operation.get("type", "crawl")
-        
+
         # Create standardized response using Pydantic model
         progress_response = create_progress_response(operation_type, operation)
-        
-        
+
+
         # Convert to dict with camelCase fields for API response
         response_data = progress_response.model_dump(by_alias=True, exclude_none=True)
-        
+
         # Debug logging for code extraction fields
         if operation_type == "crawl" and operation.get("status") == "code_extraction":
             logger.info(f"Code extraction response fields: completedSummaries={response_data.get('completedSummaries')}, totalSummaries={response_data.get('totalSummaries')}, codeBlocksFound={response_data.get('codeBlocksFound')}")

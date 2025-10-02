@@ -1,8 +1,10 @@
 
+from unittest.mock import AsyncMock, MagicMock, patch
+
 import pytest
-from unittest.mock import MagicMock, AsyncMock, patch
 
 from src.server.services.storage_service import StorageService, StorageUploadError
+
 
 # We need to patch the name as it is looked up in the storage_service module
 @patch('src.server.services.storage_service.get_supabase_client')

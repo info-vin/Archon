@@ -81,7 +81,7 @@ class CrawlProgressResponse(BaseProgressResponse):
     total_pages: int = Field(0, alias="totalPages")
     processed_pages: int = Field(0, alias="processedPages")
     crawl_type: str | None = Field(None, alias="crawlType")  # 'normal', 'sitemap', 'llms-txt', 'refresh'
-    
+
     # Code extraction specific fields
     code_blocks_found: int = Field(0, alias="codeBlocksFound")
     code_examples_stored: int = Field(0, alias="codeExamplesStored")
@@ -217,7 +217,7 @@ def create_progress_response(
         if snake_field in progress_data:
             # Use the camelCase name since ProgressDetails expects it
             details_data[camel_field] = progress_data[snake_field]
-    
+
     # Also check for crawl-specific fields that might use alternative names
     if 'pages_crawled' not in progress_data and 'processed_pages' in progress_data:
         details_data['pagesCrawled'] = progress_data['processed_pages']
@@ -235,14 +235,14 @@ def create_progress_response(
             from ..config.logfire_config import get_logger
             logger = get_logger(__name__)
             logger.info(f"Code extraction progress fields present: completed_summaries={progress_data.get('completed_summaries')}, total_summaries={progress_data.get('total_summaries')}")
-        
+
         return model_class(**progress_data)
     except Exception as e:
         # Log validation errors for debugging
         from ..config.logfire_config import get_logger
         logger = get_logger(__name__)
         logger.error(f"Failed to create {model_class.__name__}: {e}", exc_info=True)
-        
+
         essential_fields = {
             "progress_id": progress_data.get("progress_id", "unknown"),
             "status": progress_data.get("status", "running"),

@@ -21,13 +21,13 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from .api_routes.agent_chat_api import router as agent_chat_router
 from .api_routes.bug_report_api import router as bug_report_router
+from .api_routes.files_api import router as files_router
 from .api_routes.internal_api import router as internal_router
 from .api_routes.knowledge_api import router as knowledge_router
+from .api_routes.log_api import router as log_router
 from .api_routes.mcp_api import router as mcp_router
 from .api_routes.progress_api import router as progress_router
 from .api_routes.projects_api import router as projects_router
-from .api_routes.log_api import router as log_router
-from .api_routes.files_api import router as files_router
 
 # Import modular API routers
 from .api_routes.settings_api import router as settings_router

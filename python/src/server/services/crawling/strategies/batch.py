@@ -139,7 +139,7 @@ class BatchCrawlStrategy:
 
         total_urls = len(urls)
         await report_progress(
-            start_progress, 
+            start_progress,
             f"Starting to crawl {total_urls} URLs...",
             total_pages=total_urls,
             processed_pages=0

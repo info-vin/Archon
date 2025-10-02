@@ -1,8 +1,9 @@
 
-from fastapi import APIRouter, HTTPException, UploadFile, File, Form
+from fastapi import APIRouter, File, Form, HTTPException, UploadFile
 from pydantic import BaseModel
+
 from src.server.config.logfire_config import get_logger
-from src.server.services.storage_service import storage_service, StorageUploadError
+from src.server.services.storage_service import StorageUploadError, storage_service
 
 logger = get_logger(__name__)
 

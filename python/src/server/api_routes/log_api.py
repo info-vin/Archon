@@ -1,9 +1,9 @@
 """
 API endpoint for logging Gemini interactions.
 """
+
 from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel
-from typing import Optional
 
 from ..config.logfire_config import get_logger
 from ..services.log_service import LogService
@@ -13,10 +13,10 @@ logger = get_logger(__name__)
 router = APIRouter(prefix="/api", tags=["Logging"])
 
 class GeminiLogRequest(BaseModel):
-    user_input: Optional[str] = None
+    user_input: str | None = None
     gemini_response: str
-    project_name: Optional[str] = None
-    user_name: Optional[str] = None
+    project_name: str | None = None
+    user_name: str | None = None
 
 @router.post("/record-gemini-log", status_code=status.HTTP_201_CREATED)
 async def record_gemini_log(request: GeminiLogRequest):
@@ -25,7 +25,7 @@ async def record_gemini_log(request: GeminiLogRequest):
     """
     try:
         logger.info(f"Received request to log Gemini interaction for project: {request.project_name}")
-        
+
         log_service = LogService()
         success, result = log_service.create_log_entry(request.dict())
 

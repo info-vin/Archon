@@ -115,7 +115,7 @@ class ProgressTracker:
         # Add any additional data
         for key, value in kwargs.items():
             self.state[key] = value
-        
+
 
         self._update_state()
 

@@ -232,7 +232,7 @@ class CodeExtractionService:
             # Check for cancellation before processing each document
             if cancellation_check:
                 cancellation_check()
-            
+
             try:
                 source_url = doc["url"]
                 html_content = doc.get("html", "")
@@ -1401,7 +1401,7 @@ class CodeExtractionService:
                 # Check for cancellation during summary generation
                 if cancellation_check:
                     cancellation_check()
-                
+
                 # Map the progress from generate_code_summaries_batch (0-100) to our range
                 if "progress" in data or "percentage" in data:
                     raw_progress = data.get("progress", data.get("percentage", 0))
@@ -1423,7 +1423,7 @@ class CodeExtractionService:
             results = await generate_code_summaries_batch(
                 code_blocks_for_summaries, max_workers, progress_callback=summary_progress_callback
             )
-            
+
             # Ensure all results are valid dicts
             validated_results = []
             for result in results:
@@ -1435,7 +1435,7 @@ class CodeExtractionService:
                         "example_name": "Code Example",
                         "summary": "Code example for demonstration purposes."
                     })
-            
+
             return validated_results
         except asyncio.CancelledError:
             # If cancelled, return default summaries for all blocks

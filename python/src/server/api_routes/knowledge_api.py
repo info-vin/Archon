@@ -22,9 +22,9 @@ from ..config.logfire_config import get_logger, safe_logfire_error, safe_logfire
 from ..services.crawler_manager import get_crawler
 from ..services.crawling import CrawlOrchestrationService
 from ..services.knowledge import DatabaseMetricsService, KnowledgeItemService
+from ..services.knowledge_service import KnowledgeService
 from ..services.search.rag_service import RAGService
 from ..services.storage import DocumentStorageService
-from ..services.knowledge_service import KnowledgeService
 from ..utils import get_supabase_client
 from ..utils.document_processing import extract_text_from_document
 
@@ -97,8 +97,8 @@ async def get_crawl_progress(progress_id: str):
     Frontend should poll this endpoint to track crawl progress.
     """
     try:
-        from ..utils.progress.progress_tracker import ProgressTracker
         from ..models.progress_models import create_progress_response
+        from ..utils.progress.progress_tracker import ProgressTracker
 
         # Get progress from the tracker's in-memory storage
         progress_data = ProgressTracker.get_progress(progress_id)
@@ -110,16 +110,16 @@ async def get_crawl_progress(progress_id: str):
 
         # Ensure we have the progress_id in the data
         progress_data["progress_id"] = progress_id
-        
+
         # Get operation type for proper model selection
         operation_type = progress_data.get("type", "crawl")
-        
+
         # Create standardized response using Pydantic model
         progress_response = create_progress_response(operation_type, progress_data)
-        
+
         # Convert to dict with camelCase fields for API response
         response_data = progress_response.model_dump(by_alias=True, exclude_none=True)
-        
+
         safe_logfire_info(
             f"Progress retrieved | operation_id={progress_id} | status={response_data.get('status')} | "
             f"progress={response_data.get('progress')} | totalPages={response_data.get('totalPages')} | "
@@ -246,7 +246,7 @@ async def get_knowledge_item_chunks(source_id: str, domain_filter: str | None = 
 
         # Query document chunks with content for this specific source
         supabase = get_supabase_client()
-        
+
         # Build the query
         query = supabase.from_("archon_crawled_pages").select(
             "id, source_id, content, metadata, url"
@@ -432,7 +432,7 @@ async def crawl_knowledge_item(request: KnowledgeItemRequest):
         # Initialize progress tracker IMMEDIATELY so it's available for polling
         from ..utils.progress.progress_tracker import ProgressTracker
         tracker = ProgressTracker(progress_id, operation_type="crawl")
-        
+
         # Detect crawl type from URL
         url_str = str(request.url)
         crawl_type = "normal"
@@ -440,7 +440,7 @@ async def crawl_knowledge_item(request: KnowledgeItemRequest):
             crawl_type = "sitemap"
         elif url_str.endswith(".txt"):
             crawl_type = "llms-txt" if "llms" in url_str.lower() else "text_file"
-        
+
         await tracker.start({
             "url": url_str,
             "current_url": url_str,
@@ -459,23 +459,23 @@ async def crawl_knowledge_item(request: KnowledgeItemRequest):
         )
         # Create a proper response that will be converted to camelCase
         from pydantic import BaseModel, Field
-        
+
         class CrawlStartResponse(BaseModel):
             success: bool
             progress_id: str = Field(alias="progressId")
             message: str
             estimated_duration: str = Field(alias="estimatedDuration")
-            
+
             class Config:
                 populate_by_name = True
-        
+
         response = CrawlStartResponse(
             success=True,
             progress_id=progress_id,
             message="Crawling started",
             estimated_duration="3-5 minutes"
         )
-        
+
         return response.model_dump(by_alias=True)
     except Exception as e:
         safe_logfire_error(f"Failed to start crawl | error={str(e)} | url={str(request.url)}")
@@ -977,7 +977,7 @@ async def stop_crawl_task(progress_id: str):
                 task.cancel()
                 try:
                     await asyncio.wait_for(task, timeout=2.0)
-                except (asyncio.TimeoutError, asyncio.CancelledError):
+                except (TimeoutError, asyncio.CancelledError):
                     pass
             del active_crawl_tasks[progress_id]
             found = True

@@ -17,11 +17,11 @@ from typing import Any
 from pydantic import BaseModel, Field
 from pydantic_ai import Agent, RunContext
 
-from .base_agent import ArchonDependencies, BaseAgent
-from .mcp_client import get_mcp_client
-from ..server.utils import get_supabase_client
 from ..server.services.projects.task_service import TaskService
 from ..server.services.storage_service import StorageService
+from ..server.utils import get_supabase_client
+from .base_agent import ArchonDependencies, BaseAgent
+from .mcp_client import get_mcp_client
 from .tools.file_tools import upload_and_link_file_to_task
 
 logger = logging.getLogger(__name__)
@@ -877,7 +877,7 @@ class DocumentAgent(BaseAgent[DocumentDependencies, DocumentOperation]):
                 if task_id_match:
                     task_id = task_id_match.group(1)
                     self.logger.info(f"Found task ID {task_id} for file upload.")
-                    
+
                     # Create a temporary file to upload
                     file_content = f"# {result.title}\n\n{result.content_preview}"
                     file_path = f"/tmp/{result.title.replace(' ', '_')}_{uuid.uuid4().hex[:8]}.md"
