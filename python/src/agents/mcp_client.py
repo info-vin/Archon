@@ -91,7 +91,7 @@ class MCPClient:
 
         except httpx.HTTPError as e:
             logger.error(f"HTTP error calling MCP tool {tool_name}: {e}")
-            raise Exception(f"Failed to call MCP tool: {str(e)}")
+            raise Exception(f"Failed to call MCP tool: {str(e)}") from e
         except Exception as e:
             logger.error(f"Error calling MCP tool {tool_name}: {e}")
             raise
