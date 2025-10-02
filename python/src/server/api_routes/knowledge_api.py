@@ -27,6 +27,7 @@ from ..services.search.rag_service import RAGService
 from ..services.storage import DocumentStorageService
 from ..utils import get_supabase_client
 from ..utils.document_processing import extract_text_from_document
+from ..utils.progress.progress_tracker import ProgressTracker
 
 # Get logger for this module
 logger = get_logger(__name__)
@@ -92,7 +93,7 @@ class RagQueryRequest(BaseModel):
 @router.get("/crawl-progress/{progress_id}")
 async def get_crawl_progress(progress_id: str):
     """Get crawl progress for polling.
-    
+
     Returns the current state of a crawl operation.
     Frontend should poll this endpoint to track crawl progress.
     """
@@ -129,7 +130,7 @@ async def get_crawl_progress(progress_id: str):
         return response_data
     except Exception as e:
         safe_logfire_error(f"Failed to get crawl progress | error={str(e)} | progress_id={progress_id}")
-        raise HTTPException(status_code=500, detail={"error": str(e)})
+        raise HTTPException(status_code=500, detail={"error": str(e)}) from e
 
 
 @router.get("/knowledge-items/sources")
@@ -141,7 +142,7 @@ async def get_knowledge_sources():
         return []
     except Exception as e:
         safe_logfire_error(f"Failed to get knowledge sources | error={str(e)}")
-        raise HTTPException(status_code=500, detail={"error": str(e)})
+        raise HTTPException(status_code=500, detail={"error": str(e)}) from e
 
 
 @router.get("/knowledge-items")
@@ -161,7 +162,7 @@ async def get_knowledge_items(
         safe_logfire_error(
             f"Failed to get knowledge items | error={str(e)} | page={page} | per_page={per_page}"
         )
-        raise HTTPException(status_code=500, detail={"error": str(e)})
+        raise HTTPException(status_code=500, detail={"error": str(e)}) from e
 
 
 @router.put("/knowledge-items/{source_id}")
@@ -186,7 +187,7 @@ async def update_knowledge_item(source_id: str, updates: dict):
         safe_logfire_error(
             f"Failed to update knowledge item | error={str(e)} | source_id={source_id}"
         )
-        raise HTTPException(status_code=500, detail={"error": str(e)})
+        raise HTTPException(status_code=500, detail={"error": str(e)}) from e
 
 
 @router.delete("/knowledge-items/{source_id}")
@@ -235,7 +236,7 @@ async def delete_knowledge_item(source_id: str):
         safe_logfire_error(
             f"Failed to delete knowledge item | error={str(e)} | source_id={source_id}"
         )
-        raise HTTPException(status_code=500, detail={"error": str(e)})
+        raise HTTPException(status_code=500, detail={"error": str(e)}) from e
 
 
 @router.get("/knowledge-items/{source_id}/chunks")
@@ -284,7 +285,7 @@ async def get_knowledge_item_chunks(source_id: str, domain_filter: str | None = 
         safe_logfire_error(
             f"Failed to fetch chunks | error={str(e)} | source_id={source_id}"
         )
-        raise HTTPException(status_code=500, detail={"error": str(e)})
+        raise HTTPException(status_code=500, detail={"error": str(e)}) from e
 
 
 @router.get("/knowledge-items/{source_id}/code-examples")
@@ -305,7 +306,7 @@ async def get_knowledge_item_code_examples(source_id: str):
         safe_logfire_error(
             f"Failed to fetch code examples | error={str(e)} | source_id={source_id}"
         )
-        raise HTTPException(status_code=500, detail={"error": str(e)})
+        raise HTTPException(status_code=500, detail={"error": str(e)}) from e
 
 
 @router.post("/knowledge-items/{source_id}/refresh")
@@ -341,7 +342,6 @@ async def refresh_knowledge_item(source_id: str):
         progress_id = str(uuid.uuid4())
 
         # Initialize progress tracker IMMEDIATELY so it's available for polling
-        from ..utils.progress.progress_tracker import ProgressTracker
         tracker = ProgressTracker(progress_id, operation_type="crawl")
         await tracker.start({
             "url": url,
@@ -362,7 +362,7 @@ async def refresh_knowledge_item(source_id: str):
             safe_logfire_error(f"Failed to get crawler | error={str(e)}")
             raise HTTPException(
                 status_code=500, detail={"error": f"Failed to initialize crawler: {str(e)}"}
-            )
+            ) from e
 
         # Use the same crawl orchestration as regular crawl
         crawl_service = CrawlOrchestrationService(
@@ -408,7 +408,7 @@ async def refresh_knowledge_item(source_id: str):
         safe_logfire_error(
             f"Failed to refresh knowledge item | error={str(e)} | source_id={source_id}"
         )
-        raise HTTPException(status_code=500, detail={"error": str(e)})
+        raise HTTPException(status_code=500, detail={"error": str(e)}) from e
 
 
 @router.post("/knowledge-items/crawl")
@@ -430,7 +430,6 @@ async def crawl_knowledge_item(request: KnowledgeItemRequest):
         progress_id = str(uuid.uuid4())
 
         # Initialize progress tracker IMMEDIATELY so it's available for polling
-        from ..utils.progress.progress_tracker import ProgressTracker
         tracker = ProgressTracker(progress_id, operation_type="crawl")
 
         # Detect crawl type from URL
@@ -479,11 +478,11 @@ async def crawl_knowledge_item(request: KnowledgeItemRequest):
         return response.model_dump(by_alias=True)
     except Exception as e:
         safe_logfire_error(f"Failed to start crawl | error={str(e)} | url={str(request.url)}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 async def _perform_crawl_with_progress(
-    progress_id: str, request: KnowledgeItemRequest, tracker: "ProgressTracker"
+    progress_id: str, request: KnowledgeItemRequest, tracker: ProgressTracker
 ):
     """Perform the actual crawl operation with progress tracking using service layer."""
     # Acquire semaphore to limit concurrent crawls
@@ -595,7 +594,7 @@ async def upload_document(
             if not all(isinstance(tag, str) for tag in tag_list):
                 raise HTTPException(status_code=422, detail={"error": "tags must be a JSON array of strings"})
         except json.JSONDecodeError as ex:
-            raise HTTPException(status_code=422, detail={"error": f"Invalid tags JSON: {str(ex)}"})
+            raise HTTPException(status_code=422, detail={"error": f"Invalid tags JSON: {str(ex)}"}) from ex
 
         # Read file content immediately to avoid closed file issues
         file_content = await file.read()
@@ -606,7 +605,6 @@ async def upload_document(
         }
 
         # Initialize progress tracker IMMEDIATELY so it's available for polling
-        from ..utils.progress.progress_tracker import ProgressTracker
         tracker = ProgressTracker(progress_id, operation_type="upload")
         await tracker.start({
             "filename": file.filename,
@@ -636,7 +634,7 @@ async def upload_document(
         safe_logfire_error(
             f"Failed to start document upload | error={str(e)} | filename={file.filename} | error_type={type(e).__name__}"
         )
-        raise HTTPException(status_code=500, detail={"error": str(e)})
+        raise HTTPException(status_code=500, detail={"error": str(e)}) from e
 
 
 async def _perform_upload_with_progress(
@@ -645,7 +643,7 @@ async def _perform_upload_with_progress(
     file_metadata: dict,
     tag_list: list[str],
     knowledge_type: str,
-    tracker: "ProgressTracker",
+    tracker: ProgressTracker,
 ):
     """Perform document upload with progress tracking using service layer."""
     # Create cancellation check function for document uploads
@@ -794,7 +792,7 @@ async def perform_rag_query(request: RagQueryRequest):
         safe_logfire_error(
             f"RAG query failed | error={str(e)} | query={request.query[:50]} | source={request.source}"
         )
-        raise HTTPException(status_code=500, detail={"error": f"RAG query failed: {str(e)}"})
+        raise HTTPException(status_code=500, detail={"error": f"RAG query failed: {str(e)}"}) from e
 
 
 @router.post("/rag/code-examples")
@@ -830,7 +828,7 @@ async def search_code_examples(request: RagQueryRequest):
         )
         raise HTTPException(
             status_code=500, detail={"error": f"Code examples search failed: {str(e)}"}
-        )
+        ) from e
 
 
 @router.post("/code-examples")
@@ -855,7 +853,7 @@ async def get_available_sources():
         return result
     except Exception as e:
         safe_logfire_error(f"Failed to get available sources | error={str(e)}")
-        raise HTTPException(status_code=500, detail={"error": str(e)})
+        raise HTTPException(status_code=500, detail={"error": str(e)}) from e
 
 
 @router.delete("/sources/{source_id}")
@@ -890,7 +888,7 @@ async def delete_source(source_id: str):
         raise
     except Exception as e:
         safe_logfire_error(f"Failed to delete source | error={str(e)} | source_id={source_id}")
-        raise HTTPException(status_code=500, detail={"error": str(e)})
+        raise HTTPException(status_code=500, detail={"error": str(e)}) from e
 
 
 @router.get("/database/metrics")
@@ -903,7 +901,7 @@ async def get_database_metrics():
         return metrics
     except Exception as e:
         safe_logfire_error(f"Failed to get database metrics | error={str(e)}")
-        raise HTTPException(status_code=500, detail={"error": str(e)})
+        raise HTTPException(status_code=500, detail={"error": str(e)}) from e
 
 
 @router.get("/health")
@@ -951,7 +949,7 @@ async def get_crawl_task_status(task_id: str):
         raise
     except Exception as e:
         safe_logfire_error(f"Failed to get task status | error={str(e)} | task_id={task_id}")
-        raise HTTPException(status_code=500, detail={"error": str(e)})
+        raise HTTPException(status_code=500, detail={"error": str(e)}) from e
 
 
 @router.post("/knowledge-items/stop/{progress_id}")
@@ -1015,4 +1013,4 @@ async def stop_crawl_task(progress_id: str):
         safe_logfire_error(
             f"Failed to stop crawl task | error={str(e)} | progress_id={progress_id}"
         )
-        raise HTTPException(status_code=500, detail={"error": str(e)})
+        raise HTTPException(status_code=500, detail={"error": str(e)}) from e
