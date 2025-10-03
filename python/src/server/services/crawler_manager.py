@@ -130,7 +130,7 @@ class CrawlerManager:
             # This allows retries and proper error propagation
             self._crawler = None
             self._initialized = False
-            raise Exception(f"Failed to initialize Crawl4AI crawler: {e}")
+            raise Exception(f"Failed to initialize Crawl4AI crawler: {e}") from e
 
     async def cleanup(self):
         """Clean up the crawler resources."""

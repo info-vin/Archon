@@ -31,12 +31,12 @@
 此階段的任務是清理在 Phase 3.2 部署演練過程中，為確保目標專一而暫時擱置的技術問題。
 
 - **[ ] 3.3.1 清理後端 Linting 問題**
-    - **問題**: `make lint-be` 檢查顯示後端程式碼存在大量 (158) 待處理問題。
-    - **狀態**: **前置任務完成**。經過漫長的偵錯，原先阻礙 `make test-be` 執行的 `test_document_agent.py` 測試失敗問題，已透過 `@pytest.mark.skip` 暫時跳過。測試基準線已建立 (`434 passed, 1 skipped`)，並且 `ruff --fix` 已自動修復了 959 個簡單問題。
-    - **下一步**: 開始手動修復剩餘的 158 個問題，優先處理 `F821` (Undefined name) 和 `F823` (Undefined local) 等嚴重錯誤。
-- **[ ] 3.3.2 (技術債) 修復被跳過的 Agent 測試**
+    - **問題**: `make lint-be` 檢查顯示後端程式碼存在大量 (126) 待處理問題。
+    - **狀態**: **F821 / F823 嚴重錯誤已解決**。`test_document_agent.py` 的測試已修復並啟用。
+    - **下一步**: 繼續清理剩餘的 126 個問題，優先處理 `B904` (不正確的 raise) 和 `E722` (裸露的 except) 等高風險問題。
+- **[x] 3.3.2 (技術債) 修復被跳過的 Agent 測試**
     - **問題**: `tests/agents/test_document_agent.py` 中的 `test_list_documents_success` 測試因與舊版 `pydantic-ai` 函式庫深度耦合而難以 Mock，目前已被暫時跳過。
-    - **解決方案**: 需採用「延遲初始化」重構 `BaseAgent`，或採用更精密的「依賴注入」模式，以使其變得可測試。
+    - **解決方案**: **已解決**。透過對 `pydantic-ai` Agent 內部結構的偵錯，採用了 `agent.agent.override` 和 `@patch` 相結合的模式，成功修復並啟用了此測試。
 
 ### Phase 3.4: UI 緊急修復與SOP強化 (UI Hotfix & SOP Enhancement)
 

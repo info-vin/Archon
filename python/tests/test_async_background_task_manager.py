@@ -344,7 +344,7 @@ class TestGlobalTaskManager:
         async def test_task():
             return "test"
 
-        task_id = await manager.submit_task(test_task, ())
+        await manager.submit_task(test_task, ())
         await asyncio.sleep(0.01)
 
         # Cleanup
@@ -497,7 +497,6 @@ class TestAsyncTaskPatterns:
         await asyncio.sleep(0.2)
 
         # Verify execution pattern - should see at most 2 concurrent executions
-        starts_before_ends = 0
         for i, event in enumerate(execution_order):
             if event.startswith("start-"):
                 # Count how many starts we've seen before the first end

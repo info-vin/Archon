@@ -531,11 +531,11 @@ class CrawlingService:
         Check if a link is a self-referential link to the base URL.
         Handles query parameters, fragments, trailing slashes, and normalizes
         scheme/host/ports for accurate comparison.
-        
+
         Args:
             link: The link to check
             base_url: The base URL to compare against
-            
+
         Returns:
             True if the link is self-referential, False otherwise
         """

@@ -23,7 +23,7 @@ async def get_progress(
 ):
     """
     Get progress for an operation with ETag support.
-    
+
     Returns progress state with percentage, status, and message.
     Clients should poll this endpoint to track long-running operations.
     """
@@ -90,14 +90,14 @@ async def get_progress(
         raise
     except Exception as e:
         logfire.error(f"Failed to get progress | error={str(e)} | operation_id={operation_id}")
-        raise HTTPException(status_code=500, detail={"error": str(e)})
+        raise HTTPException(status_code=500, detail={"error": str(e)}) from e
 
 
 @router.get("/")
 async def list_active_operations():
     """
     List all active operations.
-    
+
     This endpoint is useful for debugging and monitoring active operations.
     """
     try:
@@ -128,4 +128,4 @@ async def list_active_operations():
 
     except Exception as e:
         logfire.error(f"Failed to list active operations | error={str(e)}")
-        raise HTTPException(status_code=500, detail={"error": str(e)})
+        raise HTTPException(status_code=500, detail={"error": str(e)}) from e

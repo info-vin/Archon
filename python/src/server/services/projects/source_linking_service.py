@@ -118,9 +118,6 @@ class SourceLinkingService:
                         result["business_failed"] += 1
                         logger.warning(f"Failed to link business source {source_id}: {e}")
 
-            # Overall success if no critical failures
-            total_failed = result["technical_failed"] + result["business_failed"]
-
             return True, result
 
         except Exception as e:

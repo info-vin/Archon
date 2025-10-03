@@ -328,7 +328,7 @@ class DocumentAgent(BaseAgent[DocumentDependencies, DocumentOperation]):
                         if new_content.startswith("[") and new_content.endswith("]"):
                             try:
                                 current_content[section_to_update] = json.loads(new_content)
-                            except:
+                            except Exception:
                                 current_content[section_to_update].append(new_content)
                         else:
                             current_content[section_to_update].append(new_content)
@@ -337,7 +337,7 @@ class DocumentAgent(BaseAgent[DocumentDependencies, DocumentOperation]):
                         try:
                             update_dict = json.loads(new_content)
                             current_content[section_to_update].update(update_dict)
-                        except:
+                        except Exception:
                             current_content[section_to_update]["update"] = new_content
                     else:
                         # Simple string replacement
@@ -346,7 +346,7 @@ class DocumentAgent(BaseAgent[DocumentDependencies, DocumentOperation]):
                     # Create new section
                     try:
                         current_content[section_to_update] = json.loads(new_content)
-                    except:
+                    except Exception:
                         current_content[section_to_update] = new_content
 
                 # Update document via MCP

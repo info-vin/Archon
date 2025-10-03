@@ -49,7 +49,6 @@ class TestProgressMapper:
         result = progress_mapper.map_progress("crawling", 50.0)
 
         # Should be halfway between crawling range (2-5%)
-        expected = 2 + (50 / 100) * (5 - 2)  # 3.5%, rounded to 4
         assert result == 4
 
     def test_map_progress_document_storage(self, progress_mapper):
@@ -58,7 +57,6 @@ class TestProgressMapper:
         result = progress_mapper.map_progress("document_storage", 25.0)
 
         # Should be 25% through document_storage range (10-30%)
-        expected = 10 + (25 / 100) * (30 - 10)  # 10 + 5 = 15
         assert result == 15
 
     def test_map_progress_code_extraction(self, progress_mapper):
@@ -67,7 +65,6 @@ class TestProgressMapper:
         result = progress_mapper.map_progress("code_extraction", 50.0)
 
         # Should be 50% through code_extraction range (30-95%)
-        expected = 30 + (50 / 100) * (95 - 30)  # 30 + 32.5 = 62.5, rounded to 62
         assert result == 62
 
     def test_map_progress_never_goes_backwards(self, progress_mapper):

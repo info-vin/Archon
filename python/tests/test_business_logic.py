@@ -17,7 +17,7 @@ def test_progress_calculation(client):
 def test_rate_limiting(client):
     """Test that API handles multiple requests gracefully."""
     # Make several requests
-    for i in range(5):
+    for _i in range(5):
         response = client.get("/api/projects")
         assert response.status_code in [200, 429, 500]  # 500 is OK in test environment
 

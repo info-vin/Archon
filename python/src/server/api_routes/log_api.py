@@ -47,4 +47,4 @@ async def record_gemini_log(request: GeminiLogRequest):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="An unexpected error occurred."
-        )
+        ) from e

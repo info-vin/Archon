@@ -116,7 +116,7 @@ class ProgressTestHelper:
     ):
         """Assert that batch progress was reported correctly."""
         found_batch_call = False
-        for call_args, call_kwargs in callback_mock.call_history:
+        for _call_args, call_kwargs in callback_mock.call_history:
             if "current_batch" in call_kwargs:
                 assert call_kwargs["current_batch"] == expected_current_batch
                 assert call_kwargs["total_batches"] == expected_total_batches

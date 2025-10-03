@@ -80,7 +80,7 @@ class TestProjectsListPolling:
 
             # First request to get ETag
             response1 = Response()
-            result1 = await list_projects(response=response1, if_none_match=None)
+            await list_projects(response=response1, if_none_match=None)
             etag = response1.headers["ETag"]
 
             # Second request with same data and ETag

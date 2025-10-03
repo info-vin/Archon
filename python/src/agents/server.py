@@ -104,7 +104,7 @@ async def fetch_credentials_from_server():
                 await asyncio.sleep(retry_delay)
             else:
                 logger.error(f"Failed to fetch credentials after {max_retries} attempts")
-                raise Exception("Could not fetch credentials from server")
+                raise Exception("Could not fetch credentials from server") from e
 
 
 # Lifespan context manager

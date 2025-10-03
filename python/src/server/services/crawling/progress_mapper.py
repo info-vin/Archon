@@ -21,7 +21,6 @@ class ProgressMapper:
         "document_storage": (10, 30), # Embeddings + batch processing - significant but not longest
         "code_extraction": (30, 95),  # LONGEST PHASE: AI analysis of code examples
         "code_storage": (30, 95),     # Alias
-        "extracting": (30, 95),       # Alias for code_extraction
         "finalization": (95, 100),    # Quick final steps
         "completed": (100, 100),
         "complete": (100, 100),       # Alias

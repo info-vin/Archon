@@ -119,13 +119,13 @@ async def create_embedding(text: str, provider: str | None = None) -> list[float
         if "insufficient_quota" in error_msg:
             raise EmbeddingQuotaExhaustedError(
                 f"OpenAI quota exhausted: {error_msg}", text_preview=text
-            )
+            ) from e
         elif "rate_limit" in error_msg.lower():
-            raise EmbeddingRateLimitError(f"Rate limit hit: {error_msg}", text_preview=text)
+            raise EmbeddingRateLimitError(f"Rate limit hit: {error_msg}", text_preview=text) from e
         else:
             raise EmbeddingAPIError(
                 f"Embedding error: {error_msg}", text_preview=text, original_error=e
-            )
+            ) from e
 
 
 async def create_embeddings_batch(
@@ -238,7 +238,6 @@ async def create_embeddings_batch(
                                     if "insufficient_quota" in error_message:
                                         # Quota exhausted is critical - stop everything
                                         tokens_so_far = total_tokens_used - batch_tokens
-                                        cost_so_far = (tokens_so_far / 1_000_000) * 0.02
 
                                         search_logger.error(
                                             f"⚠️ QUOTA EXHAUSTED at batch {batch_index}! "

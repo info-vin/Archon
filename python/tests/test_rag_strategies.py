@@ -211,12 +211,11 @@ class TestRerankingStrategy:
         """Test reranking when model is available"""
         with (
             patch.object(reranking_strategy, "is_available") as mock_available,
-            patch.object(reranking_strategy, "model") as mock_model,
+            patch.object(reranking_strategy, "model"),
         ):
             mock_available.return_value = True
             mock_model_instance = MagicMock()
             mock_model_instance.predict.return_value = [0.95, 0.85]  # Mock scores
-            mock_model = mock_model_instance
             reranking_strategy.model = mock_model_instance
 
             original_results = [
