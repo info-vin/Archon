@@ -47,6 +47,6 @@ class StorageService:
 
         except Exception as e:
             logger.error(f"Failed to upload file to Supabase. Bucket: {bucket_name}, Error: {e}")
-            raise StorageUploadError(f"Storage upload failed: {e}")
+            raise StorageUploadError(f"Storage upload failed: {e}") from e
 
 storage_service = StorageService()

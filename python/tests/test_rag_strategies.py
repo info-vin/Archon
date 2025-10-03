@@ -216,7 +216,6 @@ class TestRerankingStrategy:
             mock_available.return_value = True
             mock_model_instance = MagicMock()
             mock_model_instance.predict.return_value = [0.95, 0.85]  # Mock scores
-            mock_model = mock_model_instance
             reranking_strategy.model = mock_model_instance
 
             original_results = [

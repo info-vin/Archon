@@ -83,7 +83,7 @@ def extract_text_from_document(file_content: bytes, filename: str, content_type:
             content_type=content_type,
             error=str(e),
         )
-        raise Exception(f"Failed to extract text from {filename}: {str(e)}")
+        raise Exception(f"Failed to extract text from {filename}: {str(e)}") from e
 
 
 def extract_text_from_pdf(file_content: bytes) -> str:
@@ -144,7 +144,7 @@ def extract_text_from_pdf(file_content: bytes) -> str:
                 raise Exception("No text could be extracted from PDF")
 
         except Exception as e:
-            raise Exception(f"PyPDF2 failed to extract text: {str(e)}")
+            raise Exception(f"PyPDF2 failed to extract text: {str(e)}") from e
 
     # If we get here, no libraries worked
     raise Exception("Failed to extract text from PDF - no working PDF libraries available")
@@ -187,4 +187,4 @@ def extract_text_from_docx(file_content: bytes) -> str:
         return "\n\n".join(text_content)
 
     except Exception as e:
-        raise Exception(f"Failed to extract text from Word document: {str(e)}")
+        raise Exception(f"Failed to extract text from Word document: {str(e)}") from e

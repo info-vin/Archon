@@ -338,14 +338,9 @@ class TestIntegration:
 
     def test_backward_compatibility(self):
         """Test that the system handles existing sources gracefully."""
-        handler = URLHandler()
-
-        # Simulate an existing source with old-style source_id
-        existing_source = {
-            'source_id': 'github.com',  # Old style - just domain
-            'source_url': None,  # Not populated in old system
-            'source_display_name': None,  # Not populated in old system
-        }
+        # This test is documentary. It shows that an old source record,
+        # which only had a domain as `source_id`, would be migrated
+        # to have backfilled `source_url` and `source_display_name`.
 
         # The migration should handle this by backfilling
         # source_url and source_display_name with source_id value
