@@ -28,10 +28,14 @@ class TestAsyncCredentialService:
         # Clear cache and reset state
         credential_service._cache.clear()
         credential_service._cache_initialized = False
+        credential_service._rag_settings_cache = None
+        credential_service._rag_cache_timestamp = None
         yield
         # Cleanup after test
         credential_service._cache.clear()
         credential_service._cache_initialized = False
+        credential_service._rag_settings_cache = None
+        credential_service._rag_cache_timestamp = None
 
     @pytest.fixture
     def mock_supabase_client(self):
