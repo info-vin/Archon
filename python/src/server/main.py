@@ -291,7 +291,7 @@ async def _check_database_schema():
         client = get_supabase_client()
 
         # Try to query the new columns directly - if they exist, schema is up to date
-        test_query = client.table('archon_sources').select('source_url, source_display_name').limit(1).execute()
+        client.table('archon_sources').select('source_url, source_display_name').limit(1).execute()
 
         # Cache successful result permanently
         _schema_check_cache["valid"] = True

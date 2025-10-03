@@ -252,12 +252,9 @@ class ProjectService:
             tasks_count = len(tasks_response.data) if tasks_response.data else 0
 
             # Delete the project (tasks will be deleted by cascade)
-            response = (
-                self.supabase_client.table("archon_projects")
-                .delete()
-                .eq("id", project_id)
-                .execute()
-            )
+            self.supabase_client.table("archon_projects").delete().eq(
+                "id", project_id
+            ).execute()
 
             # For DELETE operations, success is indicated by no error, not by response.data content
             # response.data will be empty list [] even on successful deletion

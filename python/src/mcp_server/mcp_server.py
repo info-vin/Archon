@@ -31,6 +31,10 @@ from typing import Any
 from dotenv import load_dotenv
 from mcp.server.fastmcp import Context, FastMCP
 
+from src.server.config.logfire_config import mcp_logger, setup_logfire
+from src.server.services.mcp_service_client import get_mcp_service_client
+from src.server.services.mcp_session_manager import get_session_manager
+
 # Add the project root to Python path for imports
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
@@ -52,14 +56,6 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Import Logfire configuration
-from src.server.config.logfire_config import mcp_logger, setup_logfire
-
-# Import service client for HTTP calls
-from src.server.services.mcp_service_client import get_mcp_service_client
-
-# Import session management
-from src.server.services.mcp_session_manager import get_session_manager
 
 # Global initialization lock and flag
 _initialization_lock = threading.Lock()
@@ -154,7 +150,7 @@ async def lifespan(server: FastMCP) -> AsyncIterator[ArchonContext]:
         try:
             # Initialize session manager
             logger.info("🔐 Initializing session manager...")
-            session_manager = get_session_manager()
+            get_session_manager()
             logger.info("✓ Session manager initialized")
 
             # Initialize service client for HTTP calls

@@ -91,8 +91,6 @@ class TestCrawlOrchestrationProgressIntegration:
             "tags": ["test"]
         }
 
-        urls_to_crawl = [f"https://example.com/page{i}" for i in range(1, 61)]
-
         # Execute the crawl (using internal orchestration method would be ideal)
         # For now, test the document storage orchestration part
         crawl_results = mock_crawl_results

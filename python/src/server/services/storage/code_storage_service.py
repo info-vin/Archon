@@ -187,9 +187,6 @@ def extract_code_blocks(markdown_content: str, min_length: int = None) -> list[d
         enable_diagram_filtering = (
             _get_setting_fallback("ENABLE_DIAGRAM_FILTERING", "true").lower() == "true"
         )
-        enable_contextual_length = (
-            _get_setting_fallback("ENABLE_CONTEXTUAL_LENGTH", "true").lower() == "true"
-        )
         context_window_size = int(_get_setting_fallback("CONTEXT_WINDOW_SIZE", "1000"))
 
     except Exception as e:
@@ -202,7 +199,6 @@ def extract_code_blocks(markdown_content: str, min_length: int = None) -> list[d
         max_prose_ratio = 0.15
         min_code_indicators = 3
         enable_diagram_filtering = True
-        enable_contextual_length = True
         context_window_size = 1000
 
     search_logger.debug(f"Extracting code blocks with minimum length: {min_length} characters")
@@ -870,7 +866,7 @@ async def add_code_examples_to_supabase(
 
         # Prepare batch data - only for successful embeddings
         batch_data = []
-        for j, (embedding, text) in enumerate(
+        for _j, (embedding, text) in enumerate(
             zip(valid_embeddings, successful_texts, strict=False)
         ):
             # Find the original index

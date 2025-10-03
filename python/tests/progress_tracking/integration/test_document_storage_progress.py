@@ -97,7 +97,7 @@ class TestDocumentStorageProgressIntegration:
         mock_create_embeddings.return_value = create_mock_embedding_result(3)
 
         # Call the function
-        result = await add_documents_to_supabase(
+        await add_documents_to_supabase(
             client=mock_supabase_client,
             urls=sample_document_data["urls"],
             chunk_numbers=sample_document_data["chunk_numbers"],
@@ -118,7 +118,7 @@ class TestDocumentStorageProgressIntegration:
         assert len(batch_calls) >= 2  # Should have multiple batch progress updates
 
         # Verify batch structure
-        for call_args, call_kwargs in batch_calls:
+        for _call_args, call_kwargs in batch_calls:
             assert "current_batch" in call_kwargs
             assert "total_batches" in call_kwargs
             assert "completed_batches" in call_kwargs
@@ -239,7 +239,7 @@ class TestDocumentStorageProgressIntegration:
             chunk_numbers=sample_document_data["chunk_numbers"][:3],
             contents=sample_document_data["contents"][:3],
             metadatas=sample_document_data["metadatas"][:3],
-            url_to_full_document={k: v for k, v in list(sample_document_data["url_to_full_document"].items())[:2]},
+            url_to_full_document=dict(list(sample_document_data["url_to_full_document"].items())[:2]),
             progress_callback=failing_callback
         )
 
