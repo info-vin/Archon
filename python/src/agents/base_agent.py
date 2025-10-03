@@ -91,7 +91,7 @@ class RateLimitHandler:
                             })
                         raise Exception(
                             f"Rate limit exceeded after {self.max_retries} retries: {full_error}"
-                        )
+                        ) from e
 
                     # Extract wait time from error message if available
                     wait_time = self._extract_wait_time(full_error)
@@ -216,9 +216,9 @@ class BaseAgent(ABC, Generic[DepsT, OutputT]):
             self.logger.info(f"Agent {self.name} completed successfully")
             # PydanticAI returns a RunResult with data attribute
             return result.data
-        except TimeoutError:
+        except TimeoutError as e:
             self.logger.error(f"Agent {self.name} timed out after 120 seconds")
-            raise Exception(f"Agent {self.name} operation timed out - taking too long to respond")
+            raise Exception(f"Agent {self.name} operation timed out - taking too long to respond") from e
         except Exception as e:
             self.logger.error(f"Agent {self.name} failed: {str(e)}")
             raise

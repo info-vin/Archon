@@ -91,7 +91,7 @@ async def get_status():
         except Exception as e:
             api_logger.error(f"MCP server status API failed - error={str(e)}")
             safe_set_attribute(span, "error", str(e))
-            raise HTTPException(status_code=500, detail=str(e))
+            raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.get("/config")
@@ -136,7 +136,7 @@ async def get_mcp_config():
         except Exception as e:
             api_logger.error("Failed to get MCP configuration", exc_info=True)
             safe_set_attribute(span, "error", str(e))
-            raise HTTPException(status_code=500, detail={"error": str(e)})
+            raise HTTPException(status_code=500, detail={"error": str(e)}) from e
 
 
 @router.get("/clients")
@@ -192,7 +192,7 @@ async def get_mcp_sessions():
         except Exception as e:
             api_logger.error(f"Failed to get MCP sessions - error={str(e)}")
             safe_set_attribute(span, "error", str(e))
-            raise HTTPException(status_code=500, detail=str(e))
+            raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.get("/health")

@@ -45,7 +45,7 @@ async def upload_file(bucket_name: str = Form(...), file_path: str = Form(...), 
 
     except StorageUploadError as e:
         logger.error(f"Storage service failed to upload file. Error: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to upload file: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to upload file: {e}") from e
     except Exception as e:
         logger.error(f"An unexpected error occurred during file upload: {e}")
-        raise HTTPException(status_code=500, detail="An unexpected error occurred.")
+        raise HTTPException(status_code=500, detail="An unexpected error occurred.") from e

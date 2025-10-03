@@ -90,7 +90,7 @@ async def get_progress(
         raise
     except Exception as e:
         logfire.error(f"Failed to get progress | error={str(e)} | operation_id={operation_id}")
-        raise HTTPException(status_code=500, detail={"error": str(e)})
+        raise HTTPException(status_code=500, detail={"error": str(e)}) from e
 
 
 @router.get("/")
@@ -128,4 +128,4 @@ async def list_active_operations():
 
     except Exception as e:
         logfire.error(f"Failed to list active operations | error={str(e)}")
-        raise HTTPException(status_code=500, detail={"error": str(e)})
+        raise HTTPException(status_code=500, detail={"error": str(e)}) from e

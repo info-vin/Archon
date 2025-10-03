@@ -300,7 +300,7 @@ class DocumentStorageOperations:
                     )
                     raise Exception(
                         f"Unable to create source record for '{source_id}'. This will cause foreign key violations. Error: {str(fallback_error)}"
-                    )
+                    ) from fallback_error
 
         # Verify ALL source records exist before proceeding with document storage
         if unique_source_ids:
