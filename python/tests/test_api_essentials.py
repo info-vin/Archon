@@ -49,7 +49,7 @@ def test_list_projects(client, mock_supabase_client):
     # If successful, response should be JSON (list or dict)
     if response.status_code == 200:
         data = response.json()
-        assert isinstance(data, (list, dict))
+        assert isinstance(data, list | dict)
 
 
 def test_create_task(client, test_task):

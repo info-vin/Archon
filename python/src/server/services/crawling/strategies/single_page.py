@@ -21,7 +21,7 @@ class SinglePageCrawlStrategy:
     def __init__(self, crawler, markdown_generator):
         """
         Initialize single page crawl strategy.
-        
+
         Args:
             crawler (AsyncWebCrawler): The Crawl4AI crawler instance for web crawling operations
             markdown_generator (DefaultMarkdownGenerator): The markdown generator instance for converting HTML to markdown
@@ -63,13 +63,13 @@ class SinglePageCrawlStrategy:
     ) -> dict[str, Any]:
         """
         Crawl a single web page and return the result with retry logic.
-        
+
         Args:
             url: URL of the web page to crawl
             transform_url_func: Function to transform URLs (e.g., GitHub URLs)
             is_documentation_site_func: Function to check if URL is a documentation site
             retry_count: Number of retry attempts
-            
+
         Returns:
             Dict with success status, content, and metadata
         """
@@ -217,14 +217,14 @@ class SinglePageCrawlStrategy:
     ) -> list[dict[str, Any]]:
         """
         Crawl a .txt or markdown file with comprehensive error handling and progress reporting.
-        
+
         Args:
             url: URL of the text/markdown file
             transform_url_func: Function to transform URLs (e.g., GitHub URLs)
             progress_callback: Optional callback for progress updates
             start_progress: Starting progress percentage
             end_progress: Ending progress percentage
-            
+
         Returns:
             List containing the crawled document
         """

@@ -112,7 +112,7 @@ class CrawlProgressResponse(BaseProgressResponse):
         """Convert duration to string if it's a float."""
         if v is None:
             return None
-        if isinstance(v, (int, float)):
+        if isinstance(v, int | float):
             return str(v)
         return v
 
@@ -166,11 +166,11 @@ def create_progress_response(
 ) -> BaseProgressResponse:
     """
     Factory function to create the appropriate progress response based on operation type.
-    
+
     Args:
         operation_type: Type of operation (crawl, upload, project_creation)
         progress_data: Raw progress data from ProgressTracker
-    
+
     Returns:
         Appropriate progress response model
     """

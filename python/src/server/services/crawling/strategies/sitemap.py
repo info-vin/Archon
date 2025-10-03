@@ -19,11 +19,11 @@ class SitemapCrawlStrategy:
     def parse_sitemap(self, sitemap_url: str, cancellation_check: Callable[[], None] | None = None) -> list[str]:
         """
         Parse a sitemap and extract URLs with comprehensive error handling.
-        
+
         Args:
             sitemap_url: URL of the sitemap to parse
             cancellation_check: Optional function to check for cancellation
-            
+
         Returns:
             List of URLs extracted from the sitemap
         """

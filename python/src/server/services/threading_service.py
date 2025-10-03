@@ -84,7 +84,7 @@ class RateLimiter:
 
     async def acquire(self, estimated_tokens: int = 8000, progress_callback: Callable | None = None) -> bool:
         """Acquire permission to make API call with token awareness
-        
+
         Args:
             estimated_tokens: Estimated number of tokens for the operation
             progress_callback: Optional async callback for progress updates during wait
@@ -458,7 +458,7 @@ class ThreadingService:
     @asynccontextmanager
     async def rate_limited_operation(self, estimated_tokens: int = 8000, progress_callback: Callable | None = None):
         """Context manager for rate-limited operations
-        
+
         Args:
             estimated_tokens: Estimated number of tokens for the operation
             progress_callback: Optional async callback for progress updates during wait

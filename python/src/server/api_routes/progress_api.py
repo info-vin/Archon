@@ -23,7 +23,7 @@ async def get_progress(
 ):
     """
     Get progress for an operation with ETag support.
-    
+
     Returns progress state with percentage, status, and message.
     Clients should poll this endpoint to track long-running operations.
     """
@@ -97,7 +97,7 @@ async def get_progress(
 async def list_active_operations():
     """
     List all active operations.
-    
+
     This endpoint is useful for debugging and monitoring active operations.
     """
     try:

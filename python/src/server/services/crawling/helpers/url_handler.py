@@ -37,10 +37,10 @@ class URLHandler:
     def is_markdown(url: str) -> bool:
         """
         Check if a URL points to a markdown file (.md, .mdx, .markdown).
-        
+
         Args:
             url: URL to check
-            
+
         Returns:
             True if URL is a markdown file, False otherwise
         """
@@ -212,7 +212,7 @@ class URLHandler:
         This creates a 16-character hash that is extremely unlikely to collide
         for distinct canonical URLs, solving race condition issues when multiple crawls
         target the same domain.
-        
+
         Uses 16-char SHA256 prefix (64 bits) which provides
         ~18 quintillion unique values. Collision probability
         is negligible for realistic usage (<1M sources).
@@ -278,11 +278,11 @@ class URLHandler:
     def extract_markdown_links(content: str, base_url: str | None = None) -> list[str]:
         """
         Extract markdown-style links from text content.
-        
+
         Args:
             content: Text content to extract links from
             base_url: Base URL to resolve relative links against
-            
+
         Returns:
             List of absolute URLs found in the content
         """
@@ -367,11 +367,11 @@ class URLHandler:
     def is_link_collection_file(url: str, content: str | None = None) -> bool:
         """
         Check if a URL/file appears to be a link collection file like llms.txt.
-        
+
         Args:
             url: URL to check
             content: Optional content to analyze for link density
-            
+
         Returns:
             True if file appears to be a link collection, False otherwise
         """
