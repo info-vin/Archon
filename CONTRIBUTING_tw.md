@@ -392,7 +392,7 @@ def test_upload_document_endpoint_success(mock_create_task, client: TestClient):
     ```bash
     make lint-be
     ```
-    > 👨‍🍳 **主廚筆記**: 在本次部署演練 (2025-09-30) 中，我們發現 `lint-be` 存在大量錯誤。為專注於完成部署流程，我們決定將其作為技術債記錄在 `TODO.md` 中，暫時擱置。
+    > 👨‍🍳 **主廚筆記**: 在 2025-09-30 的部署演練中，我們發現 `lint-be` 存在大量錯誤並將其記錄為技術債。**此問題已在 `commit 37b1e43` 中被完全修復**，現在 `make lint-be` 可以成功通過。
 
 #### 5.2.2 階段二：資料庫遷移 (Database Migration) - 關鍵手動步驟
 **這是最容易出錯的步驟！** 根據 `GEMINI.md` 中記錄的部署經驗，應用程式會因為資料庫結構未更新而無法啟動。在部署新版本前，**必須**手動執行遷移腳本。

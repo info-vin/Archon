@@ -28,15 +28,17 @@
 
 ### Phase 3.3: 部署後技術債清理 (Post-Deployment Tech Debt Cleanup)
 
-此階段的任務是清理在 Phase 3.2 部署演練過程中，為確保目標專一而暫時擱置的技術問題。
+**此階段的任務已完成**，清理了在 Phase 3.2 部署演練過程中暫時擱置的技術問題。
 
-- **[ ] 3.3.1 清理後端 Linting 問題**
-    - **問題**: `make lint-be` 檢查顯示後端程式碼存在大量 (126) 待處理問題。
-    - **狀態**: **F821 / F823 嚴重錯誤已解決**。`test_document_agent.py` 的測試已修復並啟用。
-    - **下一步**: 繼續清理剩餘的 126 個問題，優先處理 `B904` (不正確的 raise) 和 `E722` (裸露的 except) 等高風險問題。
+- **[x] 3.3.1 清理後端 Linting 問題**
+    - **問題**: `make lint-be` 檢查顯示後端程式碼存在大量待處理問題。
+    - **解決方案**: **已解決**。在 `commit 37b1e43` 中，所有後端 Linting 問題已被完全修復，`make lint-be` 現在可以成功通過。
 - **[x] 3.3.2 (技術債) 修復被跳過的 Agent 測試**
-    - **問題**: `tests/agents/test_document_agent.py` 中的 `test_list_documents_success` 測試因與舊版 `pydantic-ai` 函式庫深度耦合而難以 Mock，目前已被暫時跳過。
-    - **解決方案**: **已解決**。透過對 `pydantic-ai` Agent 內部結構的偵錯，採用了 `agent.agent.override` 和 `@patch` 相結合的模式，成功修復並啟用了此測試。
+    - **問題**: `tests/agents/test_document_agent.py` 中的 `test_list_documents_success` 測試因與舊版 `pydantic-ai` 函式庫深度耦合而難以 Mock，一度被暫時跳過。
+    - **解決方案**: **已解決**。在 `commit 1a2e58da` 中，透過對 `pydantic-ai` Agent 內部結構的偵錯，採用了 `agent.agent.override` 和 `@patch` 相結合的模式，成功修復並啟用了此測試。
+- **[ ] 3.3.3 (技術債) 修復剩餘的 2 個被跳過的測試**
+    - **問題**: `make test-be` 的結果 (`435 passed, 2 skipped`) 顯示，在 `tests/test_token_optimization_integration.py` 中仍有 2 個測試被跳過。
+    - **下一步**: 需要調查這兩個測試被跳過的原因，並將其修復或移除。
 
 ### Phase 3.4: UI 緊急修復與SOP強化 (UI Hotfix & SOP Enhancement)
 
