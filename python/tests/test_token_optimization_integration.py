@@ -1,188 +1,186 @@
 """
-Integration tests to verify token optimization in running system.
-Run with: uv run pytest tests/test_token_optimization_integration.py -v
+Refactored integration tests to verify API response token optimization
+in a proper pytest environment, using service-level mocking.
 """
-
-import asyncio
-from typing import Any
-
-import httpx
-import pytest
+import json
+from unittest.mock import MagicMock, patch
 
 
-async def measure_response_size(url: str, params: dict[str, Any] | None = None) -> tuple[int, float]:
-    """Measure response size and estimate token count."""
-    async with httpx.AsyncClient() as client:
-        try:
-            response = await client.get(url, params=params, timeout=10.0)
-            response_text = response.text
-            response_size = len(response_text)
-            # Rough token estimate: 1 token ≈ 4 characters
-            estimated_tokens = response_size / 4
-            return response_size, estimated_tokens
-        except httpx.ConnectError:
-            print(f"⚠️  Could not connect to {url} - is the server running?")
-            return 0, 0
-        except Exception as e:
-            print(f"❌ Error measuring {url}: {e}")
-            return 0, 0
+# --- Mock Data ---
+
+# A large content field to test the reduction for projects
+MOCK_PROJECTS_DATA = [
+    {
+        "id": "proj-1",
+        "name": "Project Alpha",
+        "description": "A project about AI.",
+        "content": "a" * 2000,  # This field should be excluded in the lightweight response
+        "created_at": "2025-10-03T12:00:00Z",
+    }
+]
+
+# A large description field to test the reduction for tasks
+MOCK_TASKS_DATA = [
+    {
+        "id": "task-1",
+        "title": "Analyze market trends",
+        "project_id": "proj-1",
+        "description": "b" * 1500,  # This field should be excluded/summarized
+        "status": "in_progress",
+    },
+    {
+        "id": "task-2",
+        "title": "Draft report",
+        "project_id": "proj-1",
+        "description": "A short description.",
+        "status": "todo",
+    },
+]
+
+# A large content field to test the reduction for documents
+MOCK_DOCS_DATA = [
+    {
+        "id": "doc-1",
+        "name": "Research Paper.pdf",
+        "project_id": "proj-1",
+        "content": "c" * 3000,  # This field should be excluded
+        "tags": ["research", "ai"],
+    }
+]
 
 
-async def test_projects_endpoint():
-    """Test /api/projects with and without include_content."""
-    base_url = "http://localhost:8181/api/projects"
+def measure_response_size(response):
+    """Helper to get the byte size of a JSON response."""
+    return len(json.dumps(response.json()))
 
-    print("\n=== Testing Projects Endpoint ===")
 
-    # Test with full content (backward compatibility)
-    size_full, tokens_full = await measure_response_size(base_url, {"include_content": "true"})
-    if size_full > 0:
-        print(f"Full content: {size_full:,} bytes | ~{tokens_full:,.0f} tokens")
-    else:
-        pytest.skip("Server not available on http://localhost:8181")
-
-    # Test lightweight
-    size_light, tokens_light = await measure_response_size(base_url, {"include_content": "false"})
-    print(f"Lightweight: {size_light:,} bytes | ~{tokens_light:,.0f} tokens")
-
-    # Calculate reduction
-    if size_full > 0:
-        reduction = (1 - size_light / size_full) * 100 if size_full > size_light else 0
-        print(f"Reduction: {reduction:.1f}%")
-
-        if reduction > 50:
-            print("✅ Significant token reduction achieved!")
+@patch("src.server.api_routes.projects_api.SourceLinkingService")
+@patch("src.server.api_routes.projects_api.ProjectService")
+def test_projects_endpoint_optimization(mock_project_service, mock_source_service, client):
+    """
+    Tests that the /api/projects endpoint correctly reduces response size
+    when requested.
+    """
+    # Arrange: Mock the ProjectService to return different data based on `include_content`.
+    def list_projects_mock(include_content=True):
+        if include_content:
+            return (True, {"projects": MOCK_PROJECTS_DATA})
         else:
-            print("⚠️  Token reduction less than expected")
+            # Return data without the large 'content' field
+            light_data = [{k: v for k, v in MOCK_PROJECTS_DATA[0].items() if k != "content"}]
+            return (True, {"projects": light_data})
 
-    # Verify backward compatibility - default should include content
-    size_default, _ = await measure_response_size(base_url)
-    if size_default > 0:
-        if abs(size_default - size_full) < 100:  # Allow small variation
-            print("✅ Backward compatibility maintained (default includes content)")
+    mock_project_service.return_value.list_projects.side_effect = list_projects_mock
+
+    # Mock the SourceLinkingService to just pass through the data
+    mock_source_service.return_value.format_projects_with_sources.side_effect = (
+        lambda projects: projects
+    )
+
+    # Act & Measure: Test with full content (default behavior)
+    response_full = client.get("/api/projects")
+    assert response_full.status_code == 200
+    projects_full = response_full.json()["projects"]
+    size_full = len(json.dumps(projects_full))
+    assert "content" in projects_full[0]
+
+    # Act & Measure: Test lightweight (metadata only)
+    response_light = client.get("/api/projects", params={"include_content": "false"})
+    assert response_light.status_code == 200
+    projects_light = response_light.json()["projects"]
+    size_light = len(json.dumps(projects_light))
+    assert "content" not in projects_light[0]
+
+    # Assert: Check for significant reduction
+    assert size_full > size_light
+    reduction = (1 - size_light / size_full) * 100
+    print(f"Projects Reduction: {reduction:.1f}%")
+    assert reduction > 50
+
+
+@patch("src.server.api_routes.projects_api.TaskService")
+def test_tasks_endpoint_optimization(mock_task_service, client):
+    """
+    Tests that the /api/tasks endpoint correctly reduces response size
+    by excluding large fields.
+    """
+    # Arrange: Mock the TaskService to return different data based on the flag.
+    def list_tasks_mock(
+        project_id=None,
+        status=None,
+        include_closed=False,
+        exclude_large_fields=False,
+        include_archived=False,
+    ):
+        if not exclude_large_fields:
+            return (True, {"tasks": MOCK_TASKS_DATA})
         else:
-            print("⚠️  Default behavior may have changed")
+            # In a real scenario, the service might summarize or remove fields.
+            # Here, we simulate by removing the large description.
+            light_data = []
+            for task in MOCK_TASKS_DATA:
+                new_task = task.copy()
+                if len(new_task.get("description", "")) > 1000:
+                    new_task["description"] = "..."  # Simulate field reduction
+                light_data.append(new_task)
+            return (True, {"tasks": light_data})
+
+    mock_task_service.return_value.list_tasks.side_effect = list_tasks_mock
+
+    # Act & Measure: Test with full content
+    response_full = client.get("/api/tasks", params={"exclude_large_fields": "false"})
+    assert response_full.status_code == 200
+    tasks_full = response_full.json()["tasks"]
+    size_full = len(json.dumps(tasks_full))
+    assert len(tasks_full[0]["description"]) > 1000
+
+    # Act & Measure: Test lightweight
+    response_light = client.get("/api/tasks", params={"exclude_large_fields": "true"})
+    assert response_light.status_code == 200
+    tasks_light = response_light.json()["tasks"]
+    size_light = len(json.dumps(tasks_light))
+    assert len(tasks_light[0]["description"]) < 1000
+
+    # Assert: Check for reduction
+    assert size_full > size_light
+    reduction = (1 - size_light / size_full) * 100
+    print(f"Tasks Reduction: {reduction:.1f}%")
+    assert reduction > 30
 
 
-async def test_tasks_endpoint():
-    """Test /api/tasks with exclude_large_fields."""
-    base_url = "http://localhost:8181/api/tasks"
+@patch("src.server.api_routes.projects_api.DocumentService")
+def test_documents_endpoint_optimization(mock_document_service, client):
+    """
+    Tests that the /api/projects/{id}/docs endpoint correctly reduces response size.
+    """
+    project_id = "proj-1"
 
-    print("\n=== Testing Tasks Endpoint ===")
-
-    # Test with full content
-    size_full, tokens_full = await measure_response_size(base_url, {"exclude_large_fields": "false"})
-    if size_full > 0:
-        print(f"Full content: {size_full:,} bytes | ~{tokens_full:,.0f} tokens")
-    else:
-        pytest.skip("Server not available on http://localhost:8181")
-
-    # Test lightweight
-    size_light, tokens_light = await measure_response_size(base_url, {"exclude_large_fields": "true"})
-    print(f"Lightweight: {size_light:,} bytes | ~{tokens_light:,.0f} tokens")
-
-    # Calculate reduction
-    if size_full > size_light:
-        reduction = (1 - size_light / size_full) * 100
-        print(f"Reduction: {reduction:.1f}%")
-
-        if reduction > 30:  # Tasks may have less reduction if fewer have large fields
-            print("✅ Token reduction achieved for tasks!")
+    # Arrange: Mock the DocumentService.
+    def list_documents_mock(project_id, include_content=False):
+        if include_content:
+            return (True, {"documents": MOCK_DOCS_DATA, "total_count": len(MOCK_DOCS_DATA)})
         else:
-            print("ℹ️  Minimal reduction (tasks may not have large fields)")
+            light_data = [{k: v for k, v in doc.items() if k != "content"} for doc in MOCK_DOCS_DATA]
+            return (True, {"documents": light_data, "total_count": len(light_data)})
 
+    mock_document_service.return_value.list_documents.side_effect = list_documents_mock
 
-async def test_documents_endpoint():
-    """Test /api/projects/{id}/docs with include_content."""
-    # First get a project ID if available
-    async with httpx.AsyncClient() as client:
-        try:
-            response = await client.get(
-                "http://localhost:8181/api/projects",
-                params={"include_content": "false"},
-                timeout=10.0
-            )
-            if response.status_code == 200:
-                projects = response.json()
-                if projects and len(projects) > 0:
-                    project_id = projects[0]["id"]
-                    print(f"\n=== Testing Documents Endpoint (Project: {project_id[:8]}...) ===")
+    # Act & Measure: Test with full content
+    response_full = client.get(f"/api/projects/{project_id}/docs", params={"include_content": "true"})
+    assert response_full.status_code == 200
+    docs_full = response_full.json()["documents"]
+    size_full = len(json.dumps(docs_full))
+    assert "content" in docs_full[0]
 
-                    base_url = f"http://localhost:8181/api/projects/{project_id}/docs"
+    # Act & Measure: Test without content (default behavior for this endpoint)
+    response_light = client.get(f"/api/projects/{project_id}/docs")
+    assert response_light.status_code == 200
+    docs_light = response_light.json()["documents"]
+    size_light = len(json.dumps(docs_light))
+    assert "content" not in docs_light[0]
 
-                    # Test with content
-                    size_full, tokens_full = await measure_response_size(base_url, {"include_content": "true"})
-                    print(f"With content: {size_full:,} bytes | ~{tokens_full:,.0f} tokens")
-
-                    # Test without content (default)
-                    size_light, tokens_light = await measure_response_size(base_url, {"include_content": "false"})
-                    print(f"Metadata only: {size_light:,} bytes | ~{tokens_light:,.0f} tokens")
-
-                    # Calculate reduction if there are documents
-                    if size_full > size_light and size_full > 500:  # Only if meaningful data
-                        reduction = (1 - size_light / size_full) * 100
-                        print(f"Reduction: {reduction:.1f}%")
-                        print("✅ Document endpoint optimized!")
-                    else:
-                        print("ℹ️  No documents or minimal content in project")
-                else:
-                    print("\n⚠️  No projects available for document testing")
-        except Exception as e:
-            print(f"\n⚠️  Could not test documents endpoint: {e}")
-
-
-async def test_mcp_endpoints():
-    """Test MCP endpoints if available."""
-    mcp_url = "http://localhost:8051/health"
-
-    print("\n=== Testing MCP Server ===")
-
-    async with httpx.AsyncClient() as client:
-        try:
-            response = await client.get(mcp_url, timeout=5.0)
-            if response.status_code == 200:
-                print("✅ MCP server is running")
-                # Could add specific MCP tool tests here
-            else:
-                print(f"⚠️  MCP server returned status {response.status_code}")
-        except httpx.ConnectError:
-            print("ℹ️  MCP server not running (optional for tests)")
-        except Exception as e:
-            print(f"⚠️  Could not check MCP server: {e}")
-
-
-async def main():
-    """Run all integration tests."""
-    print("=" * 60)
-    print("Token Optimization Integration Tests")
-    print("=" * 60)
-
-    # Check if server is running
-    async with httpx.AsyncClient() as client:
-        try:
-            response = await client.get("http://localhost:8181/health", timeout=5.0)
-            if response.status_code == 200:
-                print("✅ Server is healthy and running")
-            else:
-                print(f"⚠️  Server returned status {response.status_code}")
-        except httpx.ConnectError:
-            print("❌ Server is not running! Start with: docker-compose up -d")
-            print("\nTests require a running server. Please start the services first.")
-            return
-        except Exception as e:
-            print(f"❌ Error checking server health: {e}")
-            return
-
-    # Run tests
-    await test_projects_endpoint()
-    await test_tasks_endpoint()
-    await test_documents_endpoint()
-    await test_mcp_endpoints()
-
-    print("\n" + "=" * 60)
-    print("✅ Integration tests completed!")
-    print("=" * 60)
-
-
-if __name__ == "__main__":
-    asyncio.run(main())
+    # Assert: Check for reduction
+    assert size_full > size_light
+    reduction = (1 - size_light / size_full) * 100
+    print(f"Documents Reduction: {reduction:.1f}%")
+    assert reduction > 80
