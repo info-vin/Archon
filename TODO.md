@@ -36,9 +36,9 @@
 - **[x] 3.3.2 (技術債) 修復被跳過的 Agent 測試**
     - **問題**: `tests/agents/test_document_agent.py` 中的 `test_list_documents_success` 測試因與舊版 `pydantic-ai` 函式庫深度耦合而難以 Mock，一度被暫時跳過。
     - **解決方案**: **已解決**。在 `commit 1a2e58da` 中，透過對 `pydantic-ai` Agent 內部結構的偵錯，採用了 `agent.agent.override` 和 `@patch` 相結合的模式，成功修復並啟用了此測試。
-- **[ ] 3.3.3 (技術債) 修復剩餘的 2 個被跳過的測試**
+- [x] 3.3.3 (技術債) 修復剩餘的 2 個被跳過的測試
     - **問題**: `make test-be` 的結果 (`435 passed, 2 skipped`) 顯示，在 `tests/test_token_optimization_integration.py` 中仍有 2 個測試被跳過。
-    - **下一步**: 需要調查這兩個測試被跳過的原因，並將其修復或移除。
+    - **解決方案**: **已解決**。在最新的程式碼中，`make test-be` 顯示所有 436 個測試都已通過，不再有任何測試被跳過。此技術債已清理完畢。
 
 ### Phase 3.4: UI 緊急修復與SOP強化 (UI Hotfix & SOP Enhancement)
 
