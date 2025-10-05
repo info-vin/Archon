@@ -62,3 +62,8 @@ def test_upload_document_endpoint_success(mock_create_task, client: TestClient):
 
     # Assert that the background task was created
     mock_create_task.assert_called_once()
+
+    # Suppress the "coroutine never awaited" warning by closing the coroutine
+    # This is safe because we're only testing that the task was created, not executed.
+    coro = mock_create_task.call_args[0][0]
+    coro.close()
