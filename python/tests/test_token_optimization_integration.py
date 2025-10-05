@@ -3,8 +3,7 @@ Refactored integration tests to verify API response token optimization
 in a proper pytest environment, using service-level mocking.
 """
 import json
-from unittest.mock import MagicMock, patch
-
+from unittest.mock import patch
 
 # --- Mock Data ---
 
