@@ -309,6 +309,7 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
       },
     },
     define: {
+      'import.meta.env.VITE_API_URL': JSON.stringify(env.VITE_API_URL),
       'import.meta.env.VITE_HOST': JSON.stringify(host),
       'import.meta.env.VITE_PORT': JSON.stringify(port),
       'import.meta.env.PROD': env.PROD === 'true',
