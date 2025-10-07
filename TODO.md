@@ -49,37 +49,46 @@
     - **解決方案**: 採用了測試驅動的修復流程，由表及裡地依次修正了 `TaskModal.tsx` (UI 元件)、`TaskModal.test.tsx` (單元測試)、`api.ts` (服務層)，最終完整地實現了「點擊編輯」和「優先級設定」功能，並確保所有相關測試 100% 通過。
     - **學習**: 整個偵錯流程被記錄到 `GEMINI.md` (2025-10-01)，其中關於遵循 SOP 解決 `fireEvent.submit` 和處理 Mock Data 不一致 (`assignee_id`) 的經驗，被固化到 `CONTRIBUTING_tw.md` 中。
 
-### Phase 3.5: 前端工具鏈統一與技術債清理 (Frontend Toolchain Unification & Tech Debt Cleanup)
+### Phase 3.5: 前端標準化與部署 (Frontend Standardization & Deployment)
 
-**目標：** 尊重當前的 `feature/e2e-file-upload` 工作流程，並根據 10/07 的調查結論，將專案中所有前端的工具鏈統一到 `pnpm`，並清理已發現的技術債，為未來的開發建立一個乾淨、一致的環境。
+**目標：** 分別針對 `archon-ui-main` 和 `enduser-ui-fe`，將其工具鏈統一至 `pnpm`，清理各自的技術債，並確保兩者最終都能在 Render 上成功部署和運行。
 
-- **[ ] 3.5.1 統一工具鏈：全面遷移至 `pnpm`**
-    - **目標**: 將專案中所有前端相關的專案 (`archon-ui-main`, `enduser-ui-fe`, `docs`)、CI 流程和部署設定，全部從 `npm` 遷移到 `pnpm`，解決 `package-lock.json` 和 `pnpm-lock.yaml` 混用的問題。
+---
+
+- **[ ] 3.5.1: `archon-ui-main` (管理後台) 標準化與部署**
+    - **目標**: 將 `archon-ui-main` 的工具鏈遷移至 `pnpm`，修復其 API 呼叫錯誤，並成功將其部署到 Render。
     - **任務**:
-        1.  **清理 `npm` 鎖定檔**: 刪除 `archon-ui-main/package-lock.json`, `enduser-ui-fe/package-lock.json`, `docs/package-lock.json`。
-        2.  **生成 `pnpm` 鎖定檔**: 在 `enduser-ui-fe` 和 `docs` 目錄下，執行 `pnpm import` 來從既有的 `package-lock.json` (刪除前) 生成 `pnpm-lock.yaml`。
-        3.  **更新 Dockerfiles**: 將 `archon-ui-main/Dockerfile` 中的 `npm ci` 指令替換為 `pnpm install --frozen-lockfile`。
-        4.  **更新 Render 設定**: 將 `enduser-ui-fe` 在 Render 上的 `Build Command` 修正為 `pnpm install --frozen-lockfile && pnpm run build`。
-        5.  **更新 CI/CD**: 檢查 `.github/workflows/ci.yml`，將所有 `npm ci` 或 `npm install` 步驟替換為 `pnpm install --frozen-lockfile`。
-        6.  **更新 `Makefile`**: 檢查 `Makefile`，將殘存的 `npm` 相關前端指令（如 `make install-ui`）全部更新為 `pnpm`。
+        1.  **統一工具鏈**:
+            - 刪除 `archon-ui-main/package-lock.json`。
+            - 更新 `archon-ui-main/Dockerfile` 以使用 `pnpm install --frozen-lockfile`。
+        2.  **修復技術債**:
+            - 修改 `archon-ui-main/src/components/settings/FeaturesSection.tsx`，使其呼叫正確的 `/health` API。
+        3.  **部署與驗證**:
+            - 在 Render 上為 `archon-ui-main` 建立或更新服務，確保其建置指令為 `pnpm install --frozen-lockfile && pnpm run build`。
+            - 設定正確的 `VITE_API_URL` 環境變數。
+            - 成功部署並手動驗證儀表板可正常載入且無 404 錯誤。
 
-- **[ ] 3.5.2 清理 `archon-ui-main` 技術債**
-    - **目標**: 根據調查結論，修復管理者儀表板的 API 呼叫錯誤。
+---
+
+- **[ ] 3.5.2: `enduser-ui-fe` (使用者介面) 標準化與部署**
+    - **目標**: 將 `enduser-ui-fe` 的工具鏈遷移至 `pnpm`，並驗證其在 Render 上的部署依然穩健。
     - **任務**:
-        1.  修改 `archon-ui-main/src/components/settings/FeaturesSection.tsx`，使其呼叫正確的 `/health` API 端點，而非已被棄用的 `/api/projects/health`。
+        1.  **統一工具鏈**:
+            - 刪除 `enduser-ui-fe/package-lock.json`。
+            - 在 `enduser-ui-fe/` 目錄下執行 `pnpm import` 以生成 `pnpm-lock.yaml`。
+            - 更新 `enduser-ui-fe` 在 Render 上的 `Build Command` 為 `pnpm install --frozen-lockfile && pnpm run build`。
+        2.  **部署與驗證**:
+            - 重新部署 `enduser-ui-fe` 到 Render。
+            - 手動驗證使用者介面所有核心功能（如任務列表、建立、編輯）均正常運作。
 
-- **[ ] 3.5.3 文件化標準**
-    - **目標**: 將 `pnpm` 的標準地位正式寫入文件。
+---
+
+- **[ ] 3.5.3: 全域設定與文件更新 (Global Config & Documentation Update)**
+    - **目標**: 完成剩餘的全域配置統一和文件更新。
     - **任務**:
-        1.  更新 `CONTRIBUTING_tw.md`，在適當章節（如 2.4 開發環境小撇步）明確指出 `pnpm` 是專案唯一的前端套件管理器。
-
-- **[ ] 3.5.4 最終完整性驗證**
-    - **目標**: 確保在以上所有改造完成後，專案在當前的 `feature/e2e-file-upload` 分支上依然保持健康、可驗證、可部署的狀態。
-    - **任務**: 在 `feature/e2e-file-upload` 分支上，必須成功執行一次完整的端對端驗證，包括：
-        1.  `make test` (所有測試通過)
-        2.  `make lint-be` (後端 Lint 通過)
-        3.  `docker-compose up --build` (本地環境成功啟動)
-        4.  再次部署到 Render 並通過手動煙霧測試 (Smoke Test)。
+        1.  **更新 CI/CD**: 檢查 `.github/workflows/ci.yml`，將所有 `npm` 指令替換為 `pnpm`。
+        2.  **更新 `Makefile`**: 檢查 `Makefile`，將所有 `npm` 指令替換為 `pnpm`。
+        3.  **文件化標準**: 更新 `CONTRIBUTING_tw.md`，明確 `pnpm` 為專案唯一的前端套件管理器。
 
 ---
 
