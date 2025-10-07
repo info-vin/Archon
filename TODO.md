@@ -49,41 +49,37 @@
     - **解決方案**: 採用了測試驅動的修復流程，由表及裡地依次修正了 `TaskModal.tsx` (UI 元件)、`TaskModal.test.tsx` (單元測試)、`api.ts` (服務層)，最終完整地實現了「點擊編輯」和「優先級設定」功能，並確保所有相關測試 100% 通過。
     - **學習**: 整個偵錯流程被記錄到 `GEMINI.md` (2025-10-01)，其中關於遵循 SOP 解決 `fireEvent.submit` 和處理 Mock Data 不一致 (`assignee_id`) 的經驗，被固化到 `CONTRIBUTING_tw.md` 中。
 
-### Phase 3.5: 前端工具鏈與設定全面統一 (Frontend Tooling & Config Unification)
+### Phase 3.5: 前端工具鏈統一與技術債清理 (Frontend Toolchain Unification & Tech Debt Cleanup)
 
-**目標：** 徹底解決專案中 `npm` 與 `pnpm` 混用的歷史遺留問題，並將開發流程回歸到以 `main` 分支為核心的軌道上。將所有前端相關專案（`archon-ui-main`, `enduser-ui-fe`）及流程（CI, Docker, Render）統一到 **`pnpm`** 這一個標準上，根除因環境不一致導致的偶發性錯誤。
+**目標：** 尊重當前的 `feature/e2e-file-upload` 工作流程，並根據 10/07 的調查結論，將專案中所有前端的工具鏈統一到 `pnpm`，並清理已發現的技術債，為未來的開發建立一個乾淨、一致的環境。
 
-- **[ ] 3.5.1 撥亂反正：建立基於 `main` 分支的新工作區**
+- **[ ] 3.5.1 統一工具鏈：全面遷移至 `pnpm`**
+    - **目標**: 將專案中所有前端相關的專案 (`archon-ui-main`, `enduser-ui-fe`, `docs`)、CI 流程和部署設定，全部從 `npm` 遷移到 `pnpm`，解決 `package-lock.json` 和 `pnpm-lock.yaml` 混用的問題。
     - **任務**:
-        1.  由開發者手動執行 `git checkout main`, `git pull`, `git checkout -b feature/align-to-main`，建立一個乾淨的、基於 `main` 分支的新工作分支。
-        2.  從 `feature/e2e-file-upload` 分支上，使用 `git cherry-pick` 精準地將有效的變更（如 Lint 修復、文件更新等）轉移到新的 `feature/align-to-main` 分支上。
-        3.  廢棄 `feature/e2e-file-upload` 分支。
+        1.  **清理 `npm` 鎖定檔**: 刪除 `archon-ui-main/package-lock.json`, `enduser-ui-fe/package-lock.json`, `docs/package-lock.json`。
+        2.  **生成 `pnpm` 鎖定檔**: 在 `enduser-ui-fe` 和 `docs` 目錄下，執行 `pnpm import` 來從既有的 `package-lock.json` (刪除前) 生成 `pnpm-lock.yaml`。
+        3.  **更新 Dockerfiles**: 將 `archon-ui-main/Dockerfile` 中的 `npm ci` 指令替換為 `pnpm install --frozen-lockfile`。
+        4.  **更新 Render 設定**: 將 `enduser-ui-fe` 在 Render 上的 `Build Command` 修正為 `pnpm install --frozen-lockfile && pnpm run build`。
+        5.  **更新 CI/CD**: 檢查 `.github/workflows/ci.yml`，將所有 `npm ci` 或 `npm install` 步驟替換為 `pnpm install --frozen-lockfile`。
+        6.  **更新 `Makefile`**: 檢查 `Makefile`，將殘存的 `npm` 相關前端指令（如 `make install-ui`）全部更新為 `pnpm`。
 
-- **[ ] 3.5.2 核心決策與SOP更新**
-    - **任務**: 在 `CONTRIBUTING_tw.md` 和 `CONTRIBUTING.md` 中，明確聲明 `pnpm` 為專案唯一的前端包管理器，並修正所有關於分支策略的錯誤/過時描述，確立 `main` 分支的核心地位。
-
-- **[ ] 3.5.3 `archon-ui-main` 專案改造**
+- **[ ] 3.5.2 清理 `archon-ui-main` 技術債**
+    - **目標**: 根據調查結論，修復管理者儀表板的 API 呼叫錯誤。
     - **任務**:
-        1.  **修正 `Dockerfile`**: 將 `archon-ui-main/Dockerfile` 中的 `npm ci` 指令替換為 `pnpm install --frozen-lockfile`。
-        2.  **清理儲存庫**: 從 `archon-ui-main/` 目錄中刪除 `package-lock.json` 檔案。
+        1.  修改 `archon-ui-main/src/components/settings/FeaturesSection.tsx`，使其呼叫正確的 `/health` API 端點，而非已被棄用的 `/api/projects/health`。
 
-- **[ ] 3.5.4 `enduser-ui-fe` 專案改造**
+- **[ ] 3.5.3 文件化標準**
+    - **目標**: 將 `pnpm` 的標準地位正式寫入文件。
     - **任務**:
-        1.  **遷移至 `pnpm`**: 刪除 `enduser-ui-fe/package-lock.json`，並執行 `pnpm import` 來生成 `pnpm-lock.yaml`，將其依賴管理遷移至 `pnpm`。
-        2.  **修正 `Dockerfile`**: (如果存在) 將 `enduser-ui-fe/Dockerfile` 中的 `npm` 指令替換為 `pnpm`。
-        3.  **修正 Render 設定**: 將 `enduser-ui-fe` 在 Render 上的 `Build Command` 修正為 `pnpm install --frozen-lockfile && pnpm run build`。
+        1.  更新 `CONTRIBUTING_tw.md`，在適當章節（如 2.4 開發環境小撇步）明確指出 `pnpm` 是專案唯一的前端套件管理器。
 
-- **[ ] 3.5.5 全域腳本與文件審查**
-    - **任務**: 全面搜尋專案，檢查 `Makefile`，將殘存的 `npm` 相關前端指令全部更新為 `pnpm`。
-
-- **[ ] 3.5.6 技術債清算：修復前端 API 呼叫錯誤**
-    - **任務**: 新增一項技術債任務，要求「修復 `archon-ui-main`，使其呼叫正確的 `/health` API，而非已廢棄的 `/api/projects/health`」。
-
-- **[ ] 3.5.7 新功能需求記錄**
-    - **任務**: 新增兩個功能需求，分別是「在 `enduser-ui-fe` 中，提供手動變更任務狀態的 UI」和「在 `archon-ui-main` 中，建立新增/管理使用者的 UI」。
-
-- **[ ] 3.5.8 最終完整性驗證**
-    - **任務**: 在以上所有改造完成後，需在新的 `feature/align-to-main` 分支上執行一次完整的端對端驗證，包括 `make test`、`docker-compose up --build`，以及最終的 Render 部署驗證。
+- **[ ] 3.5.4 最終完整性驗證**
+    - **目標**: 確保在以上所有改造完成後，專案在當前的 `feature/e2e-file-upload` 分支上依然保持健康、可驗證、可部署的狀態。
+    - **任務**: 在 `feature/e2e-file-upload` 分支上，必須成功執行一次完整的端對端驗證，包括：
+        1.  `make test` (所有測試通過)
+        2.  `make lint-be` (後端 Lint 通過)
+        3.  `docker-compose up --build` (本地環境成功啟動)
+        4.  (可選) 再次部署到 Render 並通過手動煙霧測試 (Smoke Test)。
 
 ---
 
