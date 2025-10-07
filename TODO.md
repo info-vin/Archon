@@ -79,7 +79,7 @@
         1.  `make test` (所有測試通過)
         2.  `make lint-be` (後端 Lint 通過)
         3.  `docker-compose up --build` (本地環境成功啟動)
-        4.  (可選) 再次部署到 Render 並通過手動煙霧測試 (Smoke Test)。
+        4.  再次部署到 Render 並通過手動煙霧測試 (Smoke Test)。
 
 ---
 
