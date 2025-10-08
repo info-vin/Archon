@@ -92,6 +92,41 @@
 
 ---
 
+### Phase 3.6: 使用者介面功能增強與 API 強化 (UI Feature Enhancement & API Hardening)
+
+- **目標**: 根據最新的全面性分析，補全 `enduser-ui-fe` 的核心易用性功能，並強化後端 API 的穩定性。
+
+- **[ ] 3.6.1: (研究) 找到 pydantic-ai 的官方文件**
+    - **問題**: `pydantic-ai` 是一個真實存在的依賴，但無法透過公開網路搜尋找到。
+    - **計畫**: 根據 `uv.lock` 的紀錄，該套件來自公開 PyPI 倉庫。下一步是直接訪問 `https://pypi.org/project/pydantic-ai/` 並找到其 GitHub 連結。
+
+- **[ ] 3.6.2: (後端) 為 `attachments` 欄位增加嚴格的格式驗證**
+    - **問題**: `PUT /tasks/{task_id}` 端點接受任何 JSON 作為 `attachments`，有資料污染風險。
+    - **計畫**: 使用 Pydantic Model 定義一個嚴格的 `Attachment` 型別 (`{filename: str, url: str}`)，並在 `UpdateTaskRequest` 中使用 `list[Attachment]` 來強制驗證傳入的資料格式。
+
+- **[ ] 3.6.3: (全端) 實作「完成日期」功能**
+    - **問題**: `archon_tasks` 資料表缺少 `due_date` 欄位。
+    - **計畫**:
+        1.  **資料庫**: 建立一個新的遷移腳本，為 `archon_tasks` 表新增 `due_date TIMESTAMPTZ` 欄位。
+        2.  **後端**: 在 `projects_api.py` 的 `CreateTaskRequest` 和 `UpdateTaskRequest` 中新增 `due_date` 欄位。
+        3.  **前端**: 在 `enduser-ui-fe` 的 `TaskModal.tsx` 中新增日期選擇器，並更新 `api.ts` 以支援該欄位的傳遞。
+
+- **[ ] 3.6.4: (前端) 實作「新增專案」功能**
+    - **問題**: `enduser-ui-fe` 缺少建立新專案的 UI 入口。
+    - **計畫**:
+        1.  在 `enduser-ui-fe` 的 `DashboardPage.tsx` 新增「新增專案」按鈕。
+        2.  建立 `ProjectModal.tsx` 元件，提供建立專案的表單。
+        3.  在 `api.ts` 中新增 `createProject` 函式，呼叫後端已有的 `POST /projects` API。
+
+- **[ ] 3.6.5: (全端) 實作「Blog 控管機制」**
+    - **問題**: Blog 內容目前是靜態假資料，無法管理。
+    - **計畫**:
+        1.  **後端**: 建立 `blog_api.py`，提供對 `blog_posts` 資料表的 `CRUD` (建立、讀取、更新、刪除) API。
+        2.  **前端 (管理)**: 在 `archon-ui-main` (管理後台) 中建立一個新的頁面和對應元件，用於增、刪、改、查 Blog 文章。
+        3.  **前端 (展示)**: 修改 `enduser-ui-fe` 的 Blog 頁面，使其從讀取 `api.ts` 的假資料，改為呼叫新的 `GET /api/blogs` API。
+
+---
+
 ### **歷史存檔：Phase 2.9 技術債清理成果**
 
 > **結論**: Phase 2.9 成功解決了大量阻塞性的本地環境與資料庫問題，為 Phase 3.0 的部署準備工作鋪平了道路。所有相關任務均已完成，包括：
