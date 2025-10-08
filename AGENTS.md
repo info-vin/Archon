@@ -53,36 +53,37 @@
   - `write_file`
   - `replace`
   - `glob`
-- **工作流程範例 1 (依賴管理)**:
-  1. 接收任務，例如「更新後端依賴性」。
-  2. 使用 `read_file` 讀取 `python/pyproject.toml` 來檢查現有依賴。
-  3. 使用 `run_shell_command` 執行 `cd python && uv sync` 或 `uv pip install ...` 來更新依賴。
-  4. 檢查 `uv.lock` 的變更，確保一致性。
-  5. 使用 `run_shell_command` 執行 `make test-be` 來驗證變更沒有破壞任何功能。
-  6. 提交 `pyproject.toml` 和 `uv.lock` 的變更。
-- **工作流程範例 2 (架構重構)**:
-  1. 接收任務，例如「重構 RBAC 權限邏輯」。
-  2. 使用 `read_file` 讀取 `projects_api.py`，分析現有的權限檢查邏輯。
-  3. 使用 `write_file` 建立新的服務檔案 `rbac_service.py`。
-  4. 使用 `replace` 將 `projects_api.py` 中的權限邏輯（例如 `has_permission_to_assign` 函式）剪下，並貼到 `rbac_service.py` 中。
-  5. 修改 `projects_api.py`，將原本直接呼叫函式的地方，改為 import 並呼叫 `RBACService` 的方法。
-  6. 使用 `run_shell_command` 執行 `make test-be`，確保重構後的程式碼行為與之前一致。
-- **工作流程範例 3 (部署管理)**:
-  - **0. 定義驗證目標**: 部署不僅是為了讓服務『啟動』，而是為了驗證一個**完整的核心使用案例**。計畫前需明確，本次部署需要哪些前後端服務協同工作，以及部署後要驗證的端對端功能點是什麼。
-  1. 接收任務，例如「將 `main` 分支部署到 Render」。
-  2. 使用 `run_shell_command` 執行 `git checkout main && git pull`，確保處於最新狀態。
-  3. **執行完整測試**: 使用 `run_shell_command` 執行 `make test`，確保所有後端與前端測試都通過。
-  4. **(本地驗證)**: 使用 `run_shell_command` 執行 `docker-compose build`，確保 Docker 映像能成功建置。
-  5. **執行部署**: 使用 `run_shell_command` 執行 `git push render main` (或其他指定的部署指令)。
-  6. **驗證部署結果**: 前往 Render Dashboard，檢查服務的部署日誌，確認服務已成功啟動且無錯誤訊息。
 
-#### **排錯核心原則 (Derived from `mcp-server` failure on 2025-09-17)**
+#### **核心原則與檢查清單 (Core Principles & Checklists)**
 
-1.  **全面性原則 (Principle of Totality):** 在診斷一個看似孤立的問題（如服務啟動失敗）時，禁止只分析單一檔案或日誌。必須將所有相關的上下文都納入分析範圍，這至少包括：`Dockerfile`, `docker-compose.yml`, `Makefile`, 相關的 `.md` 歷史紀錄文件，以及 `git` 分支歷史。
+> **【鐵律】以下原則是從 `GEMINI.md` 的歷史錯誤中提煉而來，此 Agent 在執行任何任務前都必須遵守。**
 
-2.  **證據優先原則 (Principle of Evidence First):** 禁止在沒有交叉比對「已知成功案例」（如 `spike` 分支）與「當前失敗案例」（如 `feature` 分支）的實作差異前，提出任何「創造性」的修復方案。修復應優先採用「移植」成功案例的模式，而非「發明」新的解決方案。
+1.  **同步優先原則 (Sync-First Principle)**:
+    - **檢查清單**: 在開始任何分析或修改前，必須先執行 `git pull`，確保本地端是最新狀態。
+    - **歷史教訓**: (2025-10-03) 曾因未同步，而嘗試修復一個遠端早已被解決的問題。
 
-3.  **最小化驗證原則 (Principle of Minimal Verification):** 在執行任何程式碼修改後，應採用最小化的驗證閉環。例如，修改後端程式碼後，應先執行 `docker compose build <service_name>` 來驗證其可建置性，而不是直接執行 `docker compose up` 嘗試啟動所有服務。這能更快地隔離問題。
+2.  **文件驅動原則 (Documentation-Driven Principle)**:
+    - **檢查清單**: 嚴格遵循「分析 -> 文件記錄 (`GEMINI.md`) -> 取得同意 -> 執行 -> `git push`」的順序。
+    - **歷史教訓**: (2025-10-05) 曾因在 `push` 前未記錄文件，導致團隊事實來源不一致。
+
+3.  **單一事實來源原則 (Single Source of Truth Principle)**:
+    - **檢查清單**: 當 `Makefile`, `ci.yml`, `Dockerfile`, `.md` 文件之間出現矛盾時，必須停止線性思考，發起**全面性的配置審計**，並將矛盾點呈現給決策者。
+    - **歷史教訓**: (2025-10-05, 2025-09-29) 多次因未意識到專案存在多個矛盾的「事實來源」而導致偵錯方向錯誤。`Makefile` 是指令的唯一事實來源，而 `git log -p` 是意圖的最終仲裁者。
+
+4.  **資料同步原則 (Data-Sync Principle)**:
+    - **檢查清單**: 當修改任何資料結構 (如 `types.ts` 中的介面) 時，必須建立一個檢查清單，`grep` 整個專案，確保所有相關的**生產程式碼、測試程式碼、所有模擬資料 (Mock Data)** 都已同步更新。
+    - **歷史教訓**: (2025-09-18) 曾因只修改了型別檔和測試檔，卻忘記修改 UI 使用的主要 Mock Data (`api.ts`)，導致自動化測試通過但手動測試失敗。
+
+5.  **測試優先原則 (Test-First Principle)**:
+    - **檢查清單 (修復 Bug)**: 必須先為 Bug 編寫一個**必然失敗**的測試。
+    - **檢查清單 (重構)**: 必須先為要重構的目標編寫**特性測試 (Characterization Tests)** 以鎖定其外部行為。
+    - **檢查清單 (Mocking)**: 在寫測試前，必須先檢查 `conftest.py` 或相關測試設定檔，理解已存在的 Mock 框架，**禁止**與框架對抗。
+    - **歷史教訓**: (2025-10-01, 2025-09-25) 多次因未優先編寫測試或不理解 Mock 框架而導致「改A壞B」或反覆修改。
+
+6.  **部署驗證原則 (Deployment-Verification Principle)**:
+    - **檢查清單**: 部署後若出現 404 或其他非預期錯誤，必須將「**雲端服務的設定傳播延遲**」作為首要懷疑點，等待 3-5 分鐘並使用無痕模式進行驗證。
+    - **檢查清單**: 部署前，必須確認 `pnpm-lock.yaml` 等鎖定檔案已被提交。
+    - **歷史教訓**: (2025-10-08) 曾因未考慮到 Render 的路由傳播延遲，而在所有設定都正確的情況下浪費了大量時間偵錯 404 錯誤。
 
 - **限制與約束**:
   - 執行任何有風險的 shell 指令前 (如 `rm -rf`)，必須先向使用者解釋指令的目的與潛在影響，並取得同意。
@@ -96,13 +97,14 @@
   - `write_file`
   - `replace`
   - `search_file_content`
-- **工作流程範例 (分析 Spike 任務)**:
-  1. 接收任務，例如「分析 `spike/verify-deployment-pipeline` 的執行結果」。
-  2. 讀取執行者（如系統維護專家）提供的日誌與結論。
-  3. 使用 `read_file` 讀取 `CONTRIBUTING_tw.md`，找到相關章節（如「部署除錯 FAQ」）。
-  4. **提煉知識**: 根據日誌，總結出具體的錯誤原因與解決方案。
-  5. 使用 `replace` 或 `write_file`，將新的 Q&A 條目新增到 `CONTRIBUTING_tw.md` 中。
-  6. 在 `TODO.md` 對應的 Spike 任務中，註記「學習點已歸檔至 CONTRIBUTING_tw.md」，然後關閉任務。
+- **工作流程範例 (分析 `GEMINI.md` 的學習歷程)**:
+  1. 接收任務，例如「分析 `GEMINI.md` 並將學習重點更新至 `CONTRIBUTING.md`」。
+  2. 使用 `read_file` 完整讀取 `GEMINI.md`。
+  3. **提煉知識**: 分析所有「關鍵學習」和「歷史教訓」，將其分類 (例如：測試、部署、流程)。
+  4. **總結原則**: 將同類別的學習點，總結為清晰、可執行的原則或檢查清單。
+  5. 使用 `read_file` 讀取 `CONTRIBUTING_tw.md`，找到相關章節（如「開發心法」或「FAQ」）。
+  6. 使用 `replace` 或 `write_file`，將新提煉的原則或常見問題解答更新到 `CONTRIBUTING_tw.md` 中。
+  7. (可選) 如果發現 `AGENTS.md` 中的定義可以被優化，也可以提議對其進行修改。
 - **限制與約束**:
   - 專注於記錄「發生了什麼」、「為什麼發生」以及「如何解決/預防」。
   - 產出的文件應清晰、簡潔，易於其他團隊成員理解。
