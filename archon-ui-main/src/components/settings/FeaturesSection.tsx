@@ -54,12 +54,10 @@ export const FeaturesSection = () => {
       setDisconnectScreenEnabled(disconnectScreenRes.value === 'true');
       
       // Check projects schema health
-
       if (projectsHealthResponse && projectsHealthResponse.ok) {
         const healthData = await projectsHealthResponse.json();
-        console.log('🔍 Projects health data:', healthData);
         
-        const schemaValid = healthData.modules?.includes('projects') === true;
+        const schemaValid = healthData.schema_valid === true;
         setProjectsSchemaValid(schemaValid);
         
         if (!schemaValid) {
