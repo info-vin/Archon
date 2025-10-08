@@ -127,7 +127,7 @@ make dev
 **第四步：啟動使用者介面 (Start End-User UI)**
 **打開一個新的終端機分頁**，進入 `enduser-ui-fe` 目錄並啟動其開發伺服器。
 ```bash
-cd enduser-ui-fe && npm run dev
+cd enduser-ui-fe && pnpm run dev
 # 預期結果：指令會持續運行，並顯示 Vite 伺服器已在 http://localhost:5173 上準備就緒。
 ```
 
@@ -418,10 +418,7 @@ def test_upload_document_endpoint_success(mock_create_task, client: TestClient):
 3.  **部署使用者介面 (`enduser-ui-fe`)**:
     *   **類型**: `Static Site`
     *   **Root Directory**: `enduser-ui-fe`
-    - **Build Command**: `npm ci && npm run build`
-    *   **Publish Directory**: `enduser-ui-fe/dist`
-    *   **環境變數**: 新增 `VITE_API_URL`，其值為後端服務的公開網址。
-    -   > 👨‍🍳 **主廚筆記**: 經過調查，`enduser-ui-fe` 專案使用 `npm` 進行依賴管理（存在 `package-lock.json`），而非 `pnpm`。因此，已將建置指令修正為 `npm ci && npm run build`，以使用正確的工具並確保可重現的建置。此技術債已解決。
+    - **Build Command**: `pnpm install --frozen-lockfile && pnpm run build`
 
 #### 5.2.4 階段四：執行部署 (Deployment Execution)
 - **核心觀念**: Render 已設定為「Git 儲存庫整合」。這代表我們**不應該**使用 `git push render` 這種方式。正確的流程是將程式碼推送到 Render 所監控的 GitHub 分支。
