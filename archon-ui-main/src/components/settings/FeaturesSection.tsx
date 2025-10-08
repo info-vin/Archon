@@ -59,7 +59,7 @@ export const FeaturesSection = () => {
         const healthData = await projectsHealthResponse.json();
         console.log('🔍 Projects health data:', healthData);
         
-        const schemaValid = healthData.schema?.valid === true;
+        const schemaValid = healthData.modules?.includes('projects') === true;
         setProjectsSchemaValid(schemaValid);
         
         if (!schemaValid) {
