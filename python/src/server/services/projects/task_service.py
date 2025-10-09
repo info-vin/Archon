@@ -52,6 +52,7 @@ class TaskService:
         feature: str | None = None,
         sources: list[dict[str, Any]] = None,
         code_examples: list[dict[str, Any]] = None,
+        due_date: datetime | None = None,
     ) -> tuple[bool, dict[str, Any]]:
         """
         Create a new task under a project with automatic reordering.
@@ -113,6 +114,9 @@ class TaskService:
             if feature:
                 task_data["feature"] = feature
 
+            if due_date:
+                task_data["due_date"] = due_date.isoformat()
+
             response = self.supabase_client.table("archon_tasks").insert(task_data).execute()
 
             if response.data:
@@ -129,6 +133,7 @@ class TaskService:
                         "assignee": task["assignee"],
                         "task_order": task["task_order"],
                         "created_at": task["created_at"],
+                        "due_date": task.get("due_date"),
                     }
                 }
             else:
@@ -166,7 +171,7 @@ class TaskService:
                 query = self.supabase_client.table("archon_tasks").select(
                     "id, project_id, parent_task_id, title, description, "
                     "status, assignee, task_order, feature, archived, "
-                    "archived_at, archived_by, created_at, updated_at, "
+                    "archived_at, archived_by, created_at, updated_at, due_date, "
                     "sources, code_examples"  # Still fetch for counting, but will process differently
                 )
             else:
@@ -254,6 +259,7 @@ class TaskService:
                     "created_at": task["created_at"],
                     "updated_at": task["updated_at"],
                     "archived": task.get("archived", False),
+                    "due_date": task.get("due_date"),
                 }
 
                 if not exclude_large_fields:
@@ -350,6 +356,9 @@ class TaskService:
 
             if "attachments" in update_fields:
                 update_data["attachments"] = update_fields["attachments"]
+
+            if "due_date" in update_fields:
+                update_data["due_date"] = update_fields["due_date"]
 
             # Update task
             response = (

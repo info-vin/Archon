@@ -3,6 +3,7 @@ import { api } from '../services/api.ts';
 import { Task, TaskStatus, TaskPriority, Project, AssignableUser } from '../types.ts';
 import { GanttChartIcon, KanbanIcon, ListIcon, TableIcon, PlusIcon, ChevronDownIcon, ChevronsUpDownIcon, PaperclipIcon } from '../components/Icons.tsx';
 import { TaskModal } from '../components/TaskModal.tsx';
+import { ProjectModal } from '../components/ProjectModal.tsx';
 import UserAvatar from '../components/UserAvatar.tsx';
 import {
     select,
@@ -42,9 +43,10 @@ const DashboardPage: React.FC = () => {
   const [selectedProjectId, setSelectedProjectId] = useState<string>('all');
   const [loading, setLoading] = useState(true);
   const [editingTask, setEditingTask] = useState<Task | null | undefined>(undefined);
+  const [isProjectModalOpen, setProjectModalOpen] = useState(false);
   const [sortConfig, setSortConfig] = useState<{ key: SortableTaskKeys; direction: SortDirection } | null>({ key: 'created_at', direction: 'ascending' });
 
-  const isModalOpen = editingTask !== undefined;
+  const isTaskModalOpen = editingTask !== undefined;
 
   useEffect(() => {
     const fetchData = async () => {
@@ -123,6 +125,11 @@ const DashboardPage: React.FC = () => {
     ));
   };
 
+  const handleProjectCreated = (newProject: Project) => {
+    setProjects(prevProjects => [...prevProjects, newProject]);
+    setSelectedProjectId(newProject.id);
+  };
+
   if (loading) return <div className="flex items-center justify-center h-full">Loading tasks...</div>;
 
   return (
@@ -150,6 +157,13 @@ const DashboardPage: React.FC = () => {
             <ViewButton icon={<KanbanIcon className="w-5 h-5" />} label="Kanban" active={viewMode === 'kanban'} onClick={() => setViewMode('kanban')} />
             <ViewButton icon={<GanttChartIcon className="w-5 h-5" />} label="Gantt" active={viewMode === 'gantt'} onClick={() => setViewMode('gantt')} />
           </div>
+          <button
+            onClick={() => setProjectModalOpen(true)}
+            className="flex items-center justify-center px-4 py-2 bg-secondary text-secondary-foreground rounded-md hover:bg-secondary/90"
+          >
+            <PlusIcon className="w-5 h-5 mr-2" />
+            New Project
+          </button>
           <button 
             onClick={() => setEditingTask(null)} // null signifies create mode
             className="flex items-center justify-center px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
@@ -181,13 +195,20 @@ const DashboardPage: React.FC = () => {
         {viewMode === 'gantt' && <GanttView tasks={filteredTasks} employees={employees} />}
       </div>
       
-      {isModalOpen && (
+      {isTaskModalOpen && (
         <TaskModal
           task={editingTask}
           onClose={() => setEditingTask(undefined)}
           onTaskCreated={handleTaskCreated}
           onTaskUpdated={handleTaskUpdated}
           projectId={selectedProjectId !== 'all' ? selectedProjectId : projects[0]?.id}
+        />
+      )}
+
+      {isProjectModalOpen && (
+        <ProjectModal
+          onClose={() => setProjectModalOpen(false)}
+          onProjectCreated={handleProjectCreated}
         />
       )}
     </div>

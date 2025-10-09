@@ -55,6 +55,11 @@ export type NewTaskData = {
   priority: TaskPriority;
 };
 
+export type NewProjectData = {
+  title: string;
+  description?: string;
+};
+
 export type UpdateTaskData = Partial<Omit<NewTaskData, 'project_id'> & { assignee_id: string | null }>;
 
 export type NewBlogPostData = Omit<BlogPost, 'id' | 'authorName' | 'publishDate'>;
@@ -212,6 +217,17 @@ const mockApi = {
         // In mock mode, return a subset of employees to simulate RBAC filtering
         return MOCK_EMPLOYEES.filter(e => e.role !== EmployeeRole.SYSTEM_ADMIN).map(e => ({ id: e.id, name: e.name, role: e.role }));
     },
+    async createProject(projectData: NewProjectData): Promise<{ project: Project }> {
+        const newProject: Project = {
+            id: `proj-${Date.now()}`,
+            title: projectData.title,
+            description: projectData.description || '',
+            status: 'active',
+            projectManagerId: sessionStorage.getItem('mock_user_id') || '1',
+        };
+        MOCK_PROJECTS.push(newProject);
+        return { project: newProject };
+    },
     async getDocumentVersions(): Promise<DocumentVersion[]> { return [...MOCK_DOCUMENT_VERSIONS]; },
     async getBlogPosts(): Promise<BlogPost[]> {
     const response = await fetch('/api/blogs');
@@ -340,6 +356,20 @@ const supabaseApi = {
     const { data, error } = await supabase!.from('archon_projects').select('*');
     if (error) throw new Error(error.message);
     return data as Project[];
+  },
+  async createProject(projectData: NewProjectData): Promise<{ project: Project }> {
+    const response = await fetch('/api/projects', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(projectData)
+    });
+    if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Failed to create project.');
+    }
+    return response.json();
   },
   async createTask(taskData: NewTaskData): Promise<Task> {
     let assigneeName = 'Unassigned';

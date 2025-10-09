@@ -70,6 +70,7 @@ class CreateTaskRequest(BaseModel):
     assignee: str | None = "User"
     task_order: int | None = 0
     feature: str | None = None
+    due_date: datetime | None = None
 
 
 class AssignableUser(BaseModel):
@@ -632,6 +633,7 @@ async def create_task(request: CreateTaskRequest, x_user_role: str | None = Head
             assignee=request.assignee or "User",
             task_order=request.task_order or 0,
             feature=request.feature,
+            due_date=request.due_date,
         )
 
         if not success:
@@ -760,6 +762,11 @@ async def get_task(task_id: str):
         raise HTTPException(status_code=500, detail={"error": str(e)}) from e
 
 
+class Attachment(BaseModel):
+    filename: str
+    url: str
+
+
 class UpdateTaskRequest(BaseModel):
     title: str | None = None
     description: str | None = None
@@ -767,7 +774,8 @@ class UpdateTaskRequest(BaseModel):
     assignee: str | None = None
     task_order: int | None = None
     feature: str | None = None
-    attachments: list[Any] | None = None
+    attachments: list[Attachment] | None = None
+    due_date: datetime | None = None
 
 
 class CreateDocumentRequest(BaseModel):
@@ -840,7 +848,12 @@ async def update_task(task_id: str, request: UpdateTaskRequest, x_user_role: str
         if request.feature is not None:
             update_fields["feature"] = request.feature
         if request.attachments is not None:
-            update_fields["attachments"] = request.attachments
+            # Pydantic models must be converted to dicts for JSON serialization
+            update_fields["attachments"] = [
+                attachment.model_dump() for attachment in request.attachments
+            ]
+        if request.due_date is not None:
+            update_fields["due_date"] = request.due_date
 
         # Use TaskService to update the task
         task_service = TaskService()

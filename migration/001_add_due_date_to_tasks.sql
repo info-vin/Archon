@@ -1,0 +1,2 @@
+ALTER TABLE archon_tasks
+ADD COLUMN due_date TIMESTAMPTZ;
