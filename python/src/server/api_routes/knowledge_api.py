@@ -14,7 +14,7 @@ import json
 import uuid
 from datetime import datetime
 
-from fastapi import APIRouter, File, Form, HTTPException, UploadFile
+from fastapi import APIRouter, File, Form, HTTPException, UploadFile, Header
 from pydantic import BaseModel
 
 # Import unified logging

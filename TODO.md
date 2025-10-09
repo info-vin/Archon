@@ -92,40 +92,62 @@
 
 ---
 
-### Phase 3.6: 使用者介面功能增強與 API 強化 (UI Feature Enhancement & API Hardening)
+### Phase 3.6: 核心易用性 & API 強化 (Core Usability & API Hardening)
 
-- **目標**: 根據最新的全面性分析，補全 `enduser-ui-fe` 的核心易用性功能，並強化後端 API 的穩定性。
+- **目標**: 釐清三大核心元件的職責，並在此基礎上，補全核心功能、強化 API 穩定性。
+    - **`archon-server` (後端)**: 核心業務邏輯與資料庫互動的唯一入口。
+    - **`enduser-ui-fe` (使用者介面)**: 面向一般使用者，提供任務管理、查詢知識庫等核心操作。
+    - **`archon-ui-main` (管理後台)**: 面向系統管理員，提供系統監控、設定與高階管理功能。
+
+---
+
+#### **跨領域任務 (Cross-Cutting Tasks)**
 
 - **[ ] 3.6.1: (研究) 找到 pydantic-ai 的官方文件**
     - **問題**: `pydantic-ai` 是一個真實存在的依賴，但無法透過公開網路搜尋找到。
     - **計畫**: 根據 `uv.lock` 的紀錄，該套件來自公開 PyPI 倉庫。下一步是直接訪問 `https://pypi.org/project/pydantic-ai/` 並找到其 GitHub 連結。
 
-- **[ ] 3.6.2: (後端) 為 `attachments` 欄位增加嚴格的格式驗證**
+---
+
+#### **`archon-server` (後端 API) 任務**
+
+- **[ ] 3.6.2: (API 強化) 為 `attachments` 欄位增加嚴格的格式驗證**
     - **問題**: `PUT /tasks/{task_id}` 端點接受任何 JSON 作為 `attachments`，有資料污染風險。
     - **計畫**: 使用 Pydantic Model 定義一個嚴格的 `Attachment` 型別 (`{filename: str, url: str}`)，並在 `UpdateTaskRequest` 中使用 `list[Attachment]` 來強制驗證傳入的資料格式。
 
-- **[ ] 3.6.3: (全端) 實作「完成日期」功能**
-    - **問題**: `archon_tasks` 資料表缺少 `due_date` 欄位。
-    - **計畫**:
-        1.  **資料庫**: 建立一個新的遷移腳本，為 `archon_tasks` 表新增 `due_date TIMESTAMPTZ` 欄位。
-        2.  **後端**: 在 `projects_api.py` 的 `CreateTaskRequest` 和 `UpdateTaskRequest` 中新增 `due_date` 欄位。
-        3.  **前端**: 在 `enduser-ui-fe` 的 `TaskModal.tsx` 中新增日期選擇器，並更新 `api.ts` 以支援該欄位的傳遞。
+---
 
-- **[ ] 3.6.4: (前端) 實作「新增專案」功能**
+#### **`enduser-ui-fe` (使用者介面) 任務**
+
+- **[ ] 3.6.3: (功能) 實作「新增專案」功能**
     - **問題**: `enduser-ui-fe` 缺少建立新專案的 UI 入口。
     - **計畫**:
-        1.  在 `enduser-ui-fe` 的 `DashboardPage.tsx` 新增「新增專案」按鈕。
+        1.  在 `DashboardPage.tsx` 新增「新增專案」按鈕。
         2.  建立 `ProjectModal.tsx` 元件，提供建立專案的表單。
         3.  在 `api.ts` 中新增 `createProject` 函式，呼叫後端已有的 `POST /projects` API。
 
-- **[x] 3.6.5: (全端) 實作「Blog 控管機制」**
-    - **動機**: 將靜態的 Blog 內容改為可由後台動態管理。
+---
+
+#### **全端功能 (Full-Stack Features)**
+
+- **[ ] 3.6.4: (功能) 實作「完成日期 (Due Date)」功能**
+    - **問題**: `archon_tasks` 資料表缺少 `due_date` 欄位，導致無法追蹤任務時程。
+    - **計畫**:
+        1.  **資料庫 (`archon-server`)**: 建立一個新的遷移腳本，為 `archon_tasks` 表新增 `due_date TIMESTAMPTZ` 欄位。
+        2.  **後端 (`archon-server`)**: 在 `projects_api.py` 的 `CreateTaskRequest` 和 `UpdateTaskRequest` 中新增 `due_date` 欄位。
+        3.  **前端 (`enduser-ui-fe`)**: 在 `TaskModal.tsx` 中新增日期選擇器，並更新 `api.ts` 以支援該欄位的傳遞。
+
+- **[x] 3.6.5: (功能) 實作「Blog 內容管理」**
+    - **動機**: 將靜態的 Blog 內容改為可由後台動態管理，並釐清前後端職責。
     - **實作**:
-        1.  **後端**: 在 `knowledge_api.py` 中新增安全的 `CRUD` 端點，並建立 `BlogService` 處理業務邏輯。權限控管遵循 `projects_api.py` 的 `X-User-Role` Header 模式。
-        2.  **資料**: 建立 `migration/seed_blog_posts.sql` 將現有假資料轉為種子資料。
-        3.  **前端 (使用者)**: 修改 `enduser-ui-fe` 的 `api.ts` 以從 API 獲取文章。
-        4.  **前端 (管理者)**: 擴充 `enduser-ui-fe` 的 `AdminPage.tsx`，加入完整的文章管理（新增、編輯、刪除）功能。
-        5.  **測試**: 為後端 API (含權限) 和前端元件新增 `pytest` 與 `vitest` 測試。
+        1.  **後端 (`archon-server`)**: 在 `knowledge_api.py` 中新增安全的 `CRUD` 端點，並建立 `BlogService` 處理業務邏輯。權限控管遵循 `X-User-Role` Header 模式。
+        2.  **資料庫 (`archon-server`)**: 建立 `migration/seed_blog_posts.sql` 將現有假資料轉為種子資料。
+        3.  **前端 (使用者介面 `enduser-ui-fe`)**:
+            - **閱覽**: 修改 `api.ts` 以從後端 API 獲取文章列表。
+            - **管理**: 在 `AdminPage.tsx` 中，為授權使用者（如 `SYSTEM_ADMIN`）提供完整的文章管理功能（新增、編輯、刪除）。
+        4.  **測試**:
+            - **後端**: 為 `knowledge_api` 的 blog 端點新增 `pytest` 單元測試，驗證 API 邏輯與權限控制。 (**已完成**)
+            - **前端**: 為 `AdminPage.tsx` 的管理功能新增 `vitest` 單元測試。
 
 ---
 

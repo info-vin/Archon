@@ -20,3 +20,9 @@ class RBACService:
         """Checks if the current user role has permission to assign tasks to the target role."""
         allowed_roles = self.permissions.get(current_user_role, [])
         return assignee_role in allowed_roles
+
+    def can_manage_content(self, current_user_role: str) -> bool:
+        """Checks if the current user role has permission to manage content."""
+        # Define roles that can manage content
+        content_manager_roles = ["Admin", "SYSTEM_ADMIN"]
+        return current_user_role in content_manager_roles
