@@ -55,7 +55,7 @@
 
 ---
 
-- **[ ] 3.5.1: `archon-ui-main` (管理後台) 標準化與部署**
+- **[x] 3.5.1: `archon-ui-main` (管理後台) 標準化與部署**
     - **目標**: 將 `archon-ui-main` 的工具鏈遷移至 `pnpm`，修復其 API 呼叫錯誤，並成功將其部署到 Render。
     - **任務**:
         1.  **統一工具鏈**:
@@ -70,7 +70,7 @@
 
 ---
 
-- **[ ] 3.5.2: `enduser-ui-fe` (使用者介面) 標準化與部署**
+- **[x] 3.5.2: `enduser-ui-fe` (使用者介面) 標準化與部署**
     - **目標**: 將 `enduser-ui-fe` 的工具鏈遷移至 `pnpm`，並驗證其在 Render 上的部署依然穩健。
     - **任務**:
         1.  **統一工具鏈**:
@@ -83,7 +83,7 @@
 
 ---
 
-- **[ ] 3.5.3: 全域設定與文件更新 (Global Config & Documentation Update)**
+- **[x] 3.5.3: 全域設定與文件更新 (Global Config & Documentation Update)**
     - **目標**: 完成剩餘的全域配置統一和文件更新。
     - **任務**:
         1.  **更新 CI/CD**: 檢查 `.github/workflows/ci.yml`，將所有 `npm` 指令替換為 `pnpm`。
@@ -118,12 +118,14 @@
         2.  建立 `ProjectModal.tsx` 元件，提供建立專案的表單。
         3.  在 `api.ts` 中新增 `createProject` 函式，呼叫後端已有的 `POST /projects` API。
 
-- **[ ] 3.6.5: (全端) 實作「Blog 控管機制」**
-    - **問題**: Blog 內容目前是靜態假資料，無法管理。
-    - **計畫**:
-        1.  **後端**: 建立 `blog_api.py`，提供對 `blog_posts` 資料表的 `CRUD` (建立、讀取、更新、刪除) API。
-        2.  **前端 (管理)**: 在 `archon-ui-main` (管理後台) 中建立一個新的頁面和對應元件，用於增、刪、改、查 Blog 文章。
-        3.  **前端 (展示)**: 修改 `enduser-ui-fe` 的 Blog 頁面，使其從讀取 `api.ts` 的假資料，改為呼叫新的 `GET /api/blogs` API。
+- **[x] 3.6.5: (全端) 實作「Blog 控管機制」**
+    - **動機**: 將靜態的 Blog 內容改為可由後台動態管理。
+    - **實作**:
+        1.  **後端**: 在 `knowledge_api.py` 中新增安全的 `CRUD` 端點，並建立 `BlogService` 處理業務邏輯。權限控管遵循 `projects_api.py` 的 `X-User-Role` Header 模式。
+        2.  **資料**: 建立 `migration/seed_blog_posts.sql` 將現有假資料轉為種子資料。
+        3.  **前端 (使用者)**: 修改 `enduser-ui-fe` 的 `api.ts` 以從 API 獲取文章。
+        4.  **前端 (管理者)**: 擴充 `enduser-ui-fe` 的 `AdminPage.tsx`，加入完整的文章管理（新增、編輯、刪除）功能。
+        5.  **測試**: 為後端 API (含權限) 和前端元件新增 `pytest` 與 `vitest` 測試。
 
 ---
 

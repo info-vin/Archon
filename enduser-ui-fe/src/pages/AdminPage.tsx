@@ -260,33 +260,68 @@ const BlogManagement: React.FC = () => {
     const { user } = useAuth();
     const [posts, setPosts] = useState<BlogPost[]>([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [editingPost, setEditingPost] = useState<BlogPost | null>(null);
 
     useEffect(() => {
         api.getBlogPosts().then(setPosts).catch(err => alert(`Failed to load blog posts: ${err.message}`));
     }, []);
 
-    const handleCreatePost = async (postData: Omit<BlogPost, 'id' | 'authorName' | 'publishDate'>) => {
+    const handleSavePost = async (postData: Omit<BlogPost, 'id' | 'authorName' | 'publishDate'>, postId?: string) => {
         try {
             if (!user) throw new Error("User not found");
-            const newPostData = {
-                ...postData,
-                authorName: user.name,
-                publishDate: new Date().toISOString(),
-            };
-            const newPost = await api.createBlogPost(newPostData);
-            setPosts(prev => [newPost, ...prev]);
+            if (postId) { // Editing existing post
+                const updatedPost = await api.updateBlogPost(postId, postData);
+                setPosts(prev => prev.map(p => p.id === postId ? updatedPost : p));
+                alert('Blog post updated successfully!');
+            } else { // Creating new post
+                const newPostData = {
+                    ...postData,
+                    authorName: user.name,
+                    publishDate: new Date().toISOString(),
+                };
+                const newPost = await api.createBlogPost(newPostData);
+                setPosts(prev => [newPost, ...prev]);
+                alert('Blog post created successfully!');
+            }
             setIsModalOpen(false);
-            alert('Blog post created successfully!');
+            setEditingPost(null);
         } catch(error: any) {
-             alert(`Failed to create post: ${error.message}`);
+             alert(`Failed to save post: ${error.message}`);
         }
     };
+
+    const handleDeletePost = async (postId: string) => {
+        if (window.confirm('Are you sure you want to delete this post?')) {
+            try {
+                await api.deleteBlogPost(postId);
+                setPosts(prev => prev.filter(p => p.id !== postId));
+                alert('Post deleted successfully!');
+            } catch (error: any) {
+                alert(`Failed to delete post: ${error.message}`);
+            }
+        }
+    };
+
+    const openNewPostModal = () => {
+        setEditingPost(null);
+        setIsModalOpen(true);
+    };
+
+    const openEditPostModal = (post: BlogPost) => {
+        setEditingPost(post);
+        setIsModalOpen(true);
+    };
+
+    const closeModal = () => {
+        setIsModalOpen(false);
+        setEditingPost(null);
+    }
 
     return (
         <div className="bg-card p-4 rounded-lg">
             <div className="flex justify-between items-center mb-4">
                 <h2 className="text-xl font-semibold">Blog Posts</h2>
-                <button onClick={() => setIsModalOpen(true)} className="flex items-center px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90">
+                <button onClick={openNewPostModal} className="flex items-center px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90">
                     <PlusIcon className="w-5 h-5 mr-2" />
                     New Post
                 </button>
@@ -308,39 +343,42 @@ const BlogManagement: React.FC = () => {
                                 <td className="px-6 py-4 whitespace-nowrap">{post.authorName}</td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">{new Date(post.publishDate).toLocaleDateString()}</td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                    <button className="text-primary hover:text-primary/90">Edit</button>
+                                    <button onClick={() => openEditPostModal(post)} className="text-primary hover:text-primary/90">Edit</button>
+                                    <button onClick={() => handleDeletePost(post.id)} className="text-destructive hover:text-destructive/90 ml-4">Delete</button>
                                 </td>
                             </tr>
                         ))}
                     </tbody>
                 </table>
             </div>
-            {isModalOpen && <NewPostModal onClose={() => setIsModalOpen(false)} onSubmit={handleCreatePost} />}
+            {isModalOpen && <PostEditorModal post={editingPost} onClose={closeModal} onSubmit={handleSavePost} />}
         </div>
     );
 };
 
-const NewPostModal: React.FC<{onClose: () => void, onSubmit: (data: any) => Promise<void>}> = ({ onClose, onSubmit }) => {
-    const [title, setTitle] = useState('');
-    const [excerpt, setExcerpt] = useState('');
-    const [imageUrl, setImageUrl] = useState('');
+const PostEditorModal: React.FC<{post: BlogPost | null, onClose: () => void, onSubmit: (data: any, postId?: string) => Promise<void>}> = ({ post, onClose, onSubmit }) => {
+    const [title, setTitle] = useState(post?.title || '');
+    const [excerpt, setExcerpt] = useState(post?.excerpt || '');
+    const [content, setContent] = useState(post?.content || ''); // Assuming content is part of the post object
+    const [imageUrl, setImageUrl] = useState(post?.imageUrl || '');
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        onSubmit({ title, excerpt, imageUrl });
+        onSubmit({ title, excerpt, content, imageUrl }, post?.id);
     };
     const inputClass = "appearance-none rounded-md relative block w-full px-3 py-2 border border-border placeholder-muted-foreground text-foreground bg-input focus:outline-none focus:ring-ring focus:border-ring focus:z-10 sm:text-sm";
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
-            <div className="bg-card rounded-lg shadow-xl w-full max-w-lg p-6 relative">
-                <h2 className="text-2xl font-bold mb-4">Create New Blog Post</h2>
+            <div className="bg-card rounded-lg shadow-xl w-full max-w-2xl p-6 relative">
+                <h2 className="text-2xl font-bold mb-4">{post ? 'Edit' : 'Create'} Blog Post</h2>
                 <button onClick={onClose} className="absolute top-4 right-4 p-1 rounded-full hover:bg-secondary"><XIcon className="w-6 h-6" /></button>
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <input type="text" placeholder="Title" value={title} onChange={e => setTitle(e.target.value)} className={inputClass} required/>
                     <textarea placeholder="Excerpt" value={excerpt} onChange={e => setExcerpt(e.target.value)} className={inputClass} rows={3} required></textarea>
+                    <textarea placeholder="Main Content (Markdown)" value={content} onChange={e => setContent(e.target.value)} className={inputClass} rows={10} required></textarea>
                     <input type="url" placeholder="Image URL" value={imageUrl} onChange={e => setImageUrl(e.target.value)} className={inputClass} required/>
-                    <div className="flex justify-end space-x-2"><button type="submit" className="px-4 py-2 rounded-md bg-primary text-primary-foreground hover:bg-primary/90">Create</button></div>
+                    <div className="flex justify-end space-x-2"><button type="submit" className="px-4 py-2 rounded-md bg-primary text-primary-foreground hover:bg-primary/90">{post ? 'Save Changes' : 'Create'}</button></div>
                 </form>
             </div>
         </div>

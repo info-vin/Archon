@@ -25,6 +25,9 @@ from ..services.knowledge import DatabaseMetricsService, KnowledgeItemService
 from ..services.knowledge_service import KnowledgeService
 from ..services.search.rag_service import RAGService
 from ..services.storage import DocumentStorageService
+from ..services.blog_service import BlogService
+from ..models.blog import CreateBlogPostRequest, UpdateBlogPostRequest, BlogPostResponse
+from ..services.rbac_service import RBACService
 from ..utils import get_supabase_client
 from ..utils.document_processing import extract_text_from_document
 from ..utils.progress.progress_tracker import ProgressTracker
@@ -34,6 +37,79 @@ logger = get_logger(__name__)
 
 # Create router
 router = APIRouter(prefix="/api", tags=["knowledge"])
+
+
+# Blog Post Endpoints
+@router.get("/blogs", response_model=list[BlogPostResponse])
+async def list_blog_posts():
+    """List all blog posts."""
+    blog_service = BlogService()
+    success, result = await blog_service.list_posts()
+    if not success:
+        raise HTTPException(status_code=500, detail=result.get("error"))
+    return result.get("posts", [])
+
+@router.get("/blogs/{post_id}", response_model=BlogPostResponse)
+async def get_blog_post(post_id: str):
+    """Get a single blog post by ID."""
+    blog_service = BlogService()
+    success, result = await blog_service.get_post(post_id)
+    if not success:
+        raise HTTPException(status_code=404, detail=result.get("error"))
+    return result.get("post")
+
+@router.post("/blogs", response_model=BlogPostResponse)
+async def create_blog_post(
+    request: CreateBlogPostRequest,
+    x_user_role: str | None = Header(None, alias="X-User-Role")
+):
+    """Create a new blog post."""
+    rbac_service = RBACService()
+    current_user_role = x_user_role or "User"
+    if not rbac_service.can_manage_content(current_user_role):
+        raise HTTPException(status_code=403, detail="Forbidden: You do not have permission to create blog posts.")
+    
+    blog_service = BlogService()
+    success, result = await blog_service.create_post(request.model_dump())
+    if not success:
+        raise HTTPException(status_code=500, detail=result.get("error"))
+    return result.get("post")
+
+@router.put("/blogs/{post_id}", response_model=BlogPostResponse)
+async def update_blog_post(
+    post_id: str,
+    request: UpdateBlogPostRequest,
+    x_user_role: str | None = Header(None, alias="X-User-Role")
+):
+    """Update an existing blog post."""
+    rbac_service = RBACService()
+    current_user_role = x_user_role or "User"
+    if not rbac_service.can_manage_content(current_user_role):
+        raise HTTPException(status_code=403, detail="Forbidden: You do not have permission to update blog posts.")
+
+    blog_service = BlogService()
+    update_data = request.model_dump(exclude_unset=True)
+    success, result = await blog_service.update_post(post_id, update_data)
+    if not success:
+        raise HTTPException(status_code=404, detail=result.get("error"))
+    return result.get("post")
+
+@router.delete("/blogs/{post_id}", status_code=204)
+async def delete_blog_post(
+    post_id: str,
+    x_user_role: str | None = Header(None, alias="X-User-Role")
+):
+    """Delete a blog post."""
+    rbac_service = RBACService()
+    current_user_role = x_user_role or "User"
+    if not rbac_service.can_manage_content(current_user_role):
+        raise HTTPException(status_code=403, detail="Forbidden: You do not have permission to delete blog posts.")
+
+    blog_service = BlogService()
+    success, result = await blog_service.delete_post(post_id)
+    if not success:
+        raise HTTPException(status_code=404, detail=result.get("error"))
+    return None
 
 
 # Create a semaphore to limit concurrent crawl OPERATIONS (not pages within a crawl)

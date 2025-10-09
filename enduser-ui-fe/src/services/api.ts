@@ -214,9 +214,12 @@ const mockApi = {
     },
     async getDocumentVersions(): Promise<DocumentVersion[]> { return [...MOCK_DOCUMENT_VERSIONS]; },
     async getBlogPosts(): Promise<BlogPost[]> {
-        await new Promise(res => setTimeout(res, 250));
-        return MOCK_BLOG_POSTS;
-    },
+    const response = await fetch('/api/blogs');
+    if (!response.ok) {
+      throw new Error('Failed to fetch blog posts.');
+    }
+    return response.json();
+  },
     async createBlogPost(postData: any): Promise<BlogPost> {
         const newPost: BlogPost = {
             id: `post-${Date.now()}`,
@@ -398,14 +401,55 @@ const supabaseApi = {
     return data as DocumentVersion[];
   },
   async getBlogPosts(): Promise<BlogPost[]> {
-    await new Promise(res => setTimeout(res, 250)); // Simulating network latency
-    return MOCK_BLOG_POSTS;
+    const response = await fetch('/api/blogs');
+    if (!response.ok) {
+      throw new Error('Failed to fetch blog posts.');
+    }
+    const data = await response.json();
+    return data;
   },
-  async createBlogPost(postData: any): Promise<BlogPost> {
-    console.warn("createBlogPost is not implemented for Supabase API yet.");
-    // For demonstration, let's just return a mock response.
-    const newPost: BlogPost = { id: `post-${Date.now()}`, ...postData };
-    return newPost;
+  async createBlogPost(postData: NewBlogPostData): Promise<BlogPost> {
+    const response = await fetch('/api/blogs', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            // Assuming a mechanism to get the user role for the header
+            'X-User-Role': 'SYSTEM_ADMIN' // Placeholder
+        },
+        body: JSON.stringify(postData)
+    });
+    if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Failed to create blog post.');
+    }
+    return response.json();
+  },
+  async updateBlogPost(postId: string, postData: Partial<NewBlogPostData>): Promise<BlogPost> {
+    const response = await fetch(`/api/blogs/${postId}`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-User-Role': 'SYSTEM_ADMIN' // Placeholder
+        },
+        body: JSON.stringify(postData)
+    });
+    if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Failed to update blog post.');
+    }
+    return response.json();
+  },
+  async deleteBlogPost(postId: string): Promise<void> {
+    const response = await fetch(`/api/blogs/${postId}`, {
+        method: 'DELETE',
+        headers: {
+            'X-User-Role': 'SYSTEM_ADMIN' // Placeholder
+        }
+    });
+    if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Failed to delete blog post.');
+    }
   },
   async updateEmployee(employeeId: string, updates: Partial<Employee>): Promise<Employee> {
     const { data, error } = await supabase!.from('profiles').update(updates).eq('id', employeeId).select().single();
