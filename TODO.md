@@ -111,7 +111,7 @@
 
 #### **`archon-server` (後端 API) 任務**
 
-- **[ ] 3.6.2: (API 強化) 為 `attachments` 欄位增加嚴格的格式驗證**
+- **[x] 3.6.2: (API 強化) 為 `attachments` 欄位增加嚴格的格式驗證**
     - **問題**: `PUT /tasks/{task_id}` 端點接受任何 JSON 作為 `attachments`，有資料污染風險。
     - **計畫**: 使用 Pydantic Model 定義一個嚴格的 `Attachment` 型別 (`{filename: str, url: str}`)，並在 `UpdateTaskRequest` 中使用 `list[Attachment]` 來強制驗證傳入的資料格式。
 
@@ -119,7 +119,7 @@
 
 #### **`enduser-ui-fe` (使用者介面) 任務**
 
-- **[ ] 3.6.3: (功能) 實作「新增專案」功能**
+- **[x] 3.6.3: (功能) 實作「新增專案」功能**
     - **問題**: `enduser-ui-fe` 缺少建立新專案的 UI 入口。
     - **計畫**:
         1.  在 `DashboardPage.tsx` 新增「新增專案」按鈕。
@@ -130,7 +130,7 @@
 
 #### **全端功能 (Full-Stack Features)**
 
-- **[ ] 3.6.4: (功能) 實作「完成日期 (Due Date)」功能**
+- **[x] 3.6.4: (功能) 實作「完成日期 (Due Date)」功能**
     - **問題**: `archon_tasks` 資料表缺少 `due_date` 欄位，導致無法追蹤任務時程。
     - **計畫**:
         1.  **資料庫 (`archon-server`)**: 建立一個新的遷移腳本，為 `archon_tasks` 表新增 `due_date TIMESTAMPTZ` 欄位。
@@ -148,6 +148,12 @@
         4.  **測試**:
             - **後端**: 為 `knowledge_api` 的 blog 端點新增 `pytest` 單元測試，驗證 API 邏輯與權限控制。 (**已完成**)
             - **前端**: 為 `AdminPage.tsx` 的管理功能新增 `vitest` 單元測試。
+
+- **[ ] 3.6.6: (部署) 部署新功能並優化遷移流程**
+    - **目標**: 將 `feature/e2e-file-upload` 分支上已包含「完成日期」與「新增專案」的新功能，正式部署到線上環境，並在此過程中，研究如何優化目前高風險的手動資料庫遷移流程。
+    - **計畫**:
+        1.  **執行部署**: 遵循 `CONTRIBUTING_tw.md` 中的部署 SOP，特別注意需手動執行新的 `migration/001_add_due_date_to_tasks.sql` 遷移腳本。
+        2.  **研究優化**: 調查是否有適用於本專案 (Python/Supabase) 的自動化資料庫遷移工具 (例如 Alembic)，以取代目前手動執行 `.sql` 檔案的流程，並將研究結果記錄下來作為下一個階段的技術決策依據。
 
 ---
 
