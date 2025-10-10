@@ -1,527 +1,161 @@
 # 專案食譜 (Project Cookbook)
 
-> 歡迎來到 Archon 廚房！本食譜記載了我們團隊合作的最佳實踐與標準作業流程。
->
-> **與 `GEMINI.md` (廚師日誌) 的關係:**
-> 本食譜中的許多原則，都附有「👨‍🍳 **主廚筆記**」連結。當您想了解某個流程或原則背後的詳細研發故事時，可以點擊該連結，跳轉至 `GEMINI.md` 中對應的真實案例，以獲得最完整的上下文。
+> 歡迎來到 Archon 廚房！本食譜記載了我們團隊合作的最佳實踐與標準作業流程 (SOP)。
+> 
+> 本文件旨在提供清晰、可執行的指南。所有關於「為什麼」的歷史決策與背景故事，都已被整理至 **附錄 A**，以保持本食譜的簡潔與易用性。
 
 ---
 
 ## 第一章：核心心法 (Core Mindset)
 
-這是在專案開發過程中，透過不斷試錯總結出的寶貴經驗。請在開始任何任務前，先閱讀並理解這些原則。
-
-### 1.1 警惕「副本任務」陷阱
-- **情境**: 在分析出一個問題後，容易為了解決這個問題而開啟一個新的、孤立的調查或研究任務。
-- **心法**: **分析是為了解決「主線任務」，而不是為了開啟「副本任務」**。在得到分析結果後，應回頭思考如何將此結果應用於完成最初的、最大的目標，而不是陷入無止盡的調查循環。
-
-### 1.2 驗證而非假設
-- **原則**: 不要「幻想」一個可運行的環境或一個完美的程式碼狀態。永遠要透過指令或工具進行驗證。
-- **案例 A：關於 `cherry-pick` 和 UI**：程式碼移植成功（`git cherry-pick`）不代表視覺整合成功。對於 UI 變更，在所有測試的最後，必須進行「眼見為實」的視覺化驗收，不能僅信賴自動化測試，因為樣式和佈局問題是自動化測試的盲區。
-- **案例 B：關於端對端測試**：在制定端對端測試計畫前，必須先驗證所有前置條件都已滿足。應主動查閱專案文件（如 `GEMINI.md`）中已記錄的風險（例如，資料庫遷移衝突），並優先解決這些「阻塞性問題」，而不是規劃一個無法執行的「幻想計畫」。
-- **案例 C：關於建置腳本**：當 `make test-be` 失敗且 `Makefile` 中的指令 (`uv sync --extra`) 與 `pyproject.toml` 的結構 (`[dependency-groups]`) 產生矛盾時，不能輕率地認定 `Makefile` 就是錯的。必須使用 `git log -p -- Makefile` 來追溯該指令的引入歷史，理解其作者的意圖。在本次除錯中，正是 `git log` 揭示了專案曾刻意選擇 `[dependency-groups]`，從而確認了 `--group` 才是正確的參數，指明了唯一的、正確的修復方向。
-
-*👨‍🍳 **主廚筆記**: 這個案例的完整偵錯過程，展示了追溯 `git log` 的重要性。詳見 [我的工作日誌 (2025-09-22)](GEMINI.md#本次會話總結與學習教訓-2025-09-22)，了解我們是如何在 `Makefile` 和 `pyproject.toml` 的矛盾中找到真相的。*
-
-### 1.3 精準修改，避免副作用
-- **原則**: 修復 Bug 或修改程式碼時，應採取最小、最精準的修改。
-- **心法**: 在使用 `replace` 等工具時，務必提供足夠的上下文，確保只修改到目標程式碼。這能有效避免「改 A 壞 B」的副作用，是建立穩定性的基礎。
-
-### 1.4 徹底理解工具，避免「自動修復」陷阱
-- **情境**: 在修復 `projects_api.py` 的技術債後，執行 `make lint-be` 驗證，卻導致大量不相關的檔案被自動修改，汙染了工作區。
-- **教訓**: **永遠不要假設一個指令的行為**。`make lint-be` 看似是單純的檢查工具，但透過閱讀 `Makefile` 才發現其包含了 `--fix` 參數，會自動修改檔案。這種帶有副作用的指令是極其危險的。
-- **最佳實踐**: 在處理有潛在副作用的工具時，必須遵循「**先分析 -> 原子化寫入 -> 再驗證**」的安全工作流程：
-    1.  **分析 (Analyze)**: 使用該工具的「唯讀模式」（如 `ruff check` 而非 `ruff check --fix`）來**完整地**收集所有需要修改的點。
-    2.  **原子化寫入 (Atomic Write)**: 在本地將所有必要的修改（功能程式碼 + 所有 Lint 修復）一次性準備好，然後使用單一的 `write_file` 指令完整覆寫檔案。
-    3.  **驗證 (Verify)**: 此時，再執行原來的指令（如 `make lint-be`）。因為檔案已經是乾淨的，帶有副作用的 `--fix` 旗標將無事可做，該指令從而變成一個純粹的、安全的**驗證步驟**。
-
-*👨‍🍳 **主廚筆記**: 這條原則來自一次慘痛的教訓。詳見 [我的工作日誌 (2025-09-23)](GEMINI.md#本次會話總結與學習教訓-2025-09-23)，了解 `make lint-be` 的 `--fix` 副作用是如何導致信任危機，並最終催生出這套安全工作流程的。*
-
-### 1.5 撰寫冪等的資料庫腳本 (Writing Idempotent Database Scripts)
-- **情境**: 執行資料庫遷移腳本（如 `000_unified_schema.sql`）時，因 `policy ... already exists` 等錯誤而中斷。
-- **心法**: 資料庫遷移腳本應始終具備「冪等性 (Idempotency)」，確保其可以安全地重複執行而不會中途失敗。這犧牲了微不足道的效能，換來了設定過程的穩定性與可靠性。
-- **最佳實踐**: 對於不支援 `CREATE ... IF NOT EXISTS` 的資料庫物件（如 `POLICY`, `FUNCTION`, `TRIGGER`），在 `CREATE` 語句之前，必須先使用 `DROP ... IF EXISTS` 語句進行清理。
-- **範例**:
-    ```sql
-    -- 不穩健的寫法 (Brittle way)
-    CREATE POLICY "MyPolicy" ON my_table;
-
-    -- 穩健的、冪等的寫法 (Robust, Idempotent way)
-    DROP POLICY IF EXISTS "MyPolicy" ON my_table;
-    CREATE POLICY "MyPolicy" ON my_table;
-    ```
-
-*👨‍🍳 **主廚筆記**: 這個原則是在本地環境啟動過程中，反覆遭遇資料庫錯誤後總結出來的。詳見 [我的工作日誌 (2025-09-21)](GEMINI.md#本次會話總結與學習教訓-2025-09-21)，查看關於 `000_unified_schema.sql` 冪等性修復的討論。*
-
-### 1.6 以 `Makefile` 作為指令的單一事實來源 (Makefile as Single Source of Truth)
-- **情境**: 專案中的 `README.md` 或其他貢獻指南，記載了與 `Makefile` 中不一致的、或已經過時的指令，導致開發者遵循文件操作時發生錯誤。
-- **心法**: **可執行的腳本 (`Makefile`) 是指令的最終真理**。文件應當是腳本的「說明」，而不是一個獨立的、可能過時的副本。
-- **最佳實踐**: 當新增或修改一個開發流程時，應優先更新 `Makefile`。然後，在撰寫 `.md` 文件時，應**引用** `make <command>`，而不是直接複製貼上底層的 shell 指令。這確保了當 `Makefile` 更新時，文件中的指令引用永遠不會過時。
-
-*👨‍🍳 **主廚筆記**: 這個共識是在多次因文件與 `Makefile` 不一致而導致啟動失敗後確立的。詳見 [我的工作日誌 (2025-09-19)](GEMINI.md#本次會話總結與學習教訓-2025-09-19)，了解我們是如何統一指令，並確立 `Makefile` 核心地位的。*
-
-### 1.7 檔案修改與復原的最佳實踐 (Best Practices for File Modification & Recovery)
-為了確保程式碼修改的穩定性與可追蹤性，並避免在開發過程中產生難以修復的錯誤，請遵循以下最佳實踐：
-
-1.  **優先使用 `write_file` 進行完整覆寫**
-    *   **情境**: 當需要對一個檔案進行多行、或結構性的修改時。
-    *   **風險操作 (應避免)**: 應避免對複雜的程式碼塊，連續執行多次、零碎的 `replace` 操作。這種方法容易因為字串匹配不精確、或遺漏修改點，而導致檔案損毀或語法錯誤。
-    *   **最佳實踐**: 在動手修改前，先在心中或草稿中構思好完整的最終檔案內容。然後，**使用 `write_file` 工具，將正確的完整內容一次性地覆寫目標檔案**。這能確保檔案的最終狀態是 100% 正確的。
-    *   **實戰案例 (2025-09-08)**: 在開發「任務附件顯示」功能時，多次嘗試使用 `replace` 修改 `DashboardPage.tsx` 失敗，因為檔案內容在讀取和寫入之間存在微小差異。最終改用 `read_file` 獲取最新內容，然後使用 `write_file` 一次性覆寫，成功解決了問題。
-
-2.  **使用 `git checkout` 作為首選復原手段**
-    *   **情境**: 當執行檔案修改操作（無論是 `replace` 或 `write_file`）後，執行測試 (`make test-be`/`make test-fe-project`) 失敗，且錯誤訊息指向檔案語法或結構問題時。
-    *   **風險操作 (應避免)**: 不要在一個可能已損壞的檔案基礎上，繼續嘗試用 `replace` 進行「修補」。這往往會讓問題變得更複雜。
-    *   **最佳實踐**: **立即使用 `git checkout -- <file_path>` 指令**，將出問題的檔案還原到上次提交時的乾淨狀態。然後，回到第一步，重新分析問題並使用 `write_file` 進行一次性修改。這能確保您永遠在一個已知的、正確的基礎上進行工作。
-
-*👨‍🍳 **主廚筆記**: 這個原則是在多次嘗試修補檔案不成，最終導致需要手動恢復時得到的教訓。詳見 [我的工作日誌 (2025-09-23)](GEMINI.md#本次會話總結與學習教訓-2025-09-23)，其中記錄了放棄修補、直接使用 `git checkout` 恢復穩定狀態的決策過程。*
+| 原則 | 解釋 |
+| :--- | :--- |
+| 1. **警惕「副本任務」陷阱** | 分析是為了解決「主線任務」，而不是為了開啟無止盡的調查循環。在得到分析結果後，應回頭思考如何將此結果應用於完成最初的目標。 |
+| 2. **驗證而非假設** | 不要「幻想」一個可運行的環境或完美的程式碼狀態。永遠要透過指令或工具進行驗證，並在最後進行「眼見為實」的視覺化驗收。 |
+| 3. **精準修改，避免副作用** | 修復 Bug 或修改程式碼時，應採取最小、最精準的修改。使用 `replace` 時務必提供足夠的上下文，以避免「改 A 壞 B」。 |
+| 4. **徹底理解工具** | 永遠不要假設一個指令的行為。在使用 `make` 或其他腳本前，先閱讀其源碼，理解其是否包含 `--fix` 等有副作用的參數。 |
+| 5. **撰寫冪等的資料庫腳本** | 所有資料庫遷移腳本都應具備「冪等性」，確保其可以安全地重複執行。應大量使用 `DROP ... IF EXISTS` 和 `CREATE ... IF NOT EXISTS`。 |
+| 6. **`Makefile` 是唯一指令來源** | 文件應引用 `make <command>`，而不是直接複製貼上底層 shell 指令，以確保文件與腳本永遠同步。 |
+| 7. **安全地修改與復原** | 複雜修改應使用 `write_file` 一次性覆寫。當修改後測試失敗，應立即用 `git checkout -- <file>` 還原，而不是在錯誤的基礎上繼續修補。 |
 
 ---
 
 ## 第二章：環境設定 (Environment Setup)
 
-### 2.1 本地開發環境啟動與驗證 SOP (v1.0 - 2025-09-19)
-本文件是經歷了數次失敗與偵錯後，總結出的最終、最可靠的本地開發環境啟動流程。
+### 2.1 本地開發環境啟動 SOP
 
-#### 2.1.1 目標 (Objective)
-在本地成功啟動一個完整、可用於端對端手動測試的開發環境。
+**目標**: 在本地成功啟動一個完整、可用於端對端手動測試的開發環境。
 
-#### 2.1.2 核心架構 (Core Architecture)
-本地開發環境由三個獨立運行的部分組成，必須對它們有清晰的認識：
-- **核心後端 (Core Backend)**:
-  - **服務**: `archon-server`, `archon-mcp`
-  - **運行方式**: 在 Docker 容器中運行。
-  - **監控埠號**: `8181` (API), `8051` (MCP)
-- **管理後台 (Admin UI)**:
-  - **服務**: `archon-ui-main`
-  - **運行方式**: 在本地終端機中運行 (Vite Dev Server)。
-  - **監控埠號**: `3737`
-- **使用者介面 (End-User UI)**:
-  - **服務**: `enduser-ui-fe`
-  - **運行方式**: 在本地終端機中運行 (Vite Dev Server)。
-  - **監控埠號**: `5173`
+**核心架構**:
+本地開發環境由三個獨立運行的部分組成：
+- **核心後端 (Core Backend)**: `archon-server`, `archon-mcp` (Docker, Port `8181`/`8051`)
+- **管理後台 (Admin UI)**: `archon-ui-main` (本地 Vite, Port `3737`)
+- **使用者介面 (End-User UI)**: `enduser-ui-fe` (本地 Vite, Port `5173`)
 
-#### 2.1.3 執行步驟 (Execution Steps)
-**第一步：清理環境 (Clean Environment)**
-確保沒有任何殘留的 Docker 容器在運行，避免連接埠衝突。
-```bash
-make stop
-# 預期結果：看到 "Services stopped"，且 `docker ps -a` 應為空。
-```
+**執行步驟**:
+1.  **清理環境**: `make stop`
+2.  **安裝所有依賴**: `make install && make install-ui`
+3.  **啟動核心服務 (終端機 1)**: `make dev`
+4.  **啟動使用者介面 (終端機 2)**: `cd enduser-ui-fe && pnpm run dev`
 
-**第二步：安裝所有依賴 (Install All Dependencies)**
-此步驟會安裝專案所需的所有後端和前端依賴。
-```bash
-make install
-make install-ui
-# 預期結果：兩個指令都成功執行，沒有錯誤訊息。
-```
+**最終驗證**: 當所有服務都成功啟動後，請在瀏覽器中打開使用者介面 `http://localhost:5173`，並根據 `TODO.md` 的指示，完成一次完整的端對端測試流程。
 
-**第三步：啟動核心服務 (Start Core Services)**
-在**第一個終端機分頁**中，啟動後端服務和管理後台 UI。
-```bash
-make dev
-# 預期結果：指令會持續運行，並在日誌最後顯示 Vite 伺服器已在 http://localhost:3737 上準備就緒。
-```
+### 2.2 後端依賴與環境管理
 
-**第四步：啟動使用者介面 (Start End-User UI)**
-**打開一個新的終端機分頁**，進入 `enduser-ui-fe` 目錄並啟動其開發伺服器。
-```bash
-cd enduser-ui-fe && pnpm run dev
-# 預期結果：指令會持續運行，並顯示 Vite 伺服器已在 http://localhost:5173 上準備就緒。
-```
-
-#### 2.1.4 排錯計畫 v2 (已加入「改A壞B」風險評估)
-
-##### **第一階段：資料庫準備**
-**目標**: 在 Supabase SQL Editor 中，成功手動依序執行 `000_unified_schema.sql` 和 `seed_mock_data.sql`。
-
-| **潛在錯誤** | **解決方案** | **「改A壞B」風險與緩解策略** |
-| :--- | :--- | :--- |
-| 1. SQL 語法錯誤 (Syntax Error) | 我讀取 SQL 檔案，分析後提出 `replace` 或 `write_file` 修正。 | **風險**: **高**。直接修改共享的 SQL 腳本，可能會破壞所有人的開發環境。<br>**緩解策略**: 我**不會**直接修改原檔案。我會將修正後的 SQL 內容輸出到一個**臨時檔案** (如 `temp_fix.sql`) 中，在您確認邏輯無誤後，我才會提議覆寫原始檔案，並再次提醒這是一個會被 `git` 追蹤的永久性修改。 |
-| 2. 物件已存在 (Object already exists) | **(內容已根據 `GEMINI.md` 修正)** `seed_mock_data.sql` 對部分資料表**不是**冪等的，重複執行會因違反 `UNIQUE` 約束而失敗。若發生此錯誤，建議在開發環境中執行 `migration/RESET_DB.sql` 來清空資料庫後重試。 | **風險**: **極高**。`RESET_DB.sql` 是破壞性操作，會清空資料庫，可能導致您手動添加的、未記錄的測試資料遺失。<br>**緩解策略**: 我**必須**用加粗和警告的語氣，再三向您確認您理解其後果，並主動詢問：「**資料庫中是否有任何需要保留的資料？**」。我只會將其作為最後手段。 |
-
-##### **第二階段：應用程式啟動**
-**目標**: 成功啟動所有服務，並能在瀏覽器中存取 `http://localhost:3737` (管理後台) 和 `http://localhost:5173` (使用者介面)。
-
-| **潛在錯誤** | **解決方案** | **「改A壞B」風險與緩解策略** |
-| :--- | :--- | :--- |
-| 1. `make dev` 埠號衝突 (Port in use) | 執行 `make stop` 清理環境。 | **風險**: **低**。`make stop` 是 SOP 的一部分，設計上只會停止 `docker-compose.yml` 中定義的服務，是安全的清理操作。 |
-| 2. `enduser-ui-fe` 依賴找不到 | **(內容已根據 `GEMINI.md` 修正)** 重新執行 `make install-ui`。若問題持續，可嘗試進入 `enduser-ui-fe` 目錄下執行 `pnpm install`。 | **風險**: **中等**。如果 `package.json` 使用了浮動版本號 (如 `^1.2.3`)，`pnpm install` 可能會引入有破壞性變更的新版套件。<br>**緩解策略**: 在建議安裝前，我會先檢查 `enduser-ui-fe/` 目錄下是否存在 `pnpm-lock.yaml` 檔案。<br>  - **如果存在**，我會建議執行 `pnpm install --frozen-lockfile`，它會嚴格按照 lock 檔案安裝，**完全避免**此風險。<br>  - **如果不存在**，我會指出 `pnpm install` 的風險，並建議在安裝後立即執行 `make test-fe-project project=enduser-ui-fe` 來驗證變更。 |
-| 3. `enduser-ui-fe` 啟動時無聲掛起 | 檢查根目錄 `.env` 檔案中的 `GEMINI_API_KEY`。 | **風險**: **極低**。此為唯讀檢查操作，僅要求使用者確認，不涉及任何修改。 |
-
-#### 2.1.5 最終驗證 (Final Verification)
-當所有服務都成功啟動後，請在瀏覽器中打開**使用者介面**: `http://localhost:5173`，並根據 `TODO.md` 的指示，完成一次「建立任務 -> 指派給 Agent -> 驗證產出的附件」的完整端對端測試流程。
-
-### 2.2 後端依賴與環境管理 (Backend Dependency & Environment)
-為了確保後端開發環境在不同平台（macOS, Windows, Linux）之間的一致性與穩定性，我們總結了以下最佳實踐：
-
-1.  **鎖定檔案的管理 (`uv.lock`)**
-    *   **問題**: `python/uv.lock` 檔案會因為作業系統或 Python 版本的不同，而產生不相容的內容。例如，`torch` 套件在不同平台上有不同的編譯版本，強制提交 lock 檔案會導致其他開發者無法成功安裝依賴。
-    *   **結論**: `python/uv.lock` **必須**被加入到專案根目錄的 `.gitignore` 檔案中。每位開發者都應該在自己的環境中生成一份本地的 lock 檔案，而不是共用同一份。
-
-2.  **安裝特定任務的依賴**
-    *   **問題**: 執行 `make test-be` 或 `make lint-be` 時，可能會出現 `ModuleNotFoundError` (例如 `pytest-mock` 找不到) 或其他依賴問題。
-    *   **原因**: 這是因為 `pyproject.toml` 將 `test` 和 `dev` 的依賴分組管理，預設的 `uv sync` 不會安裝它們。
-    *   **解法**: `Makefile` 中的指令已經更新，會自動處理這個問題。當您執行 `make test-be` 時，它會先執行 `uv sync --group dev --group mcp --group agents` 來安裝測試所需的額外套件。同理，`make lint-be` 也會安裝 `dev` 依賴。
-
-3.  **Makefile 的跨平台相容性**
-    *   **問題**: `Makefile` 中的某些語法（例如註解或複雜的條件判斷）在 Windows 的 `make` 環境中可能會解析失敗。
-    *   **結論**: 專案中的 `Makefile` 已經過簡化，移除了可能導致問題的複雜語法，以確保核心指令（如 `make test-be`, `make test-fe-project`）在主流作業系統上都能正常運作。
-
-### 2.3 跨平台指令注意事項 (Cross-platform Command Notes)
-- **問題**: 在 Windows 環境下，使用 `rm` 指令會失敗。
-- **解法**: 在 Windows 環境下，請使用 `del` 指令來刪除檔案。在撰寫跨平台的指令時，需要特別注意不同作業系統的指令差異。
-
-### 2.4 開發環境小撇步
-- 使用 `pnpm dlx turbo run where <project_name>` 來跳轉到特定套件，而不是用 `ls` 慢慢找。
-- 運行 `pnpm install --filter <project_name>` 來安裝套件，這樣 Vite、ESLint 和 TypeScript 才能正確識別它。
-- 使用 `pnpm create vite@latest <project_name> -- --template react-ts` 快速建立一個新的 React + Vite + TypeScript 專案。
-- 檢查每個套件 `package.json` 裡的 name 欄位來確認正確名稱，忽略最上層的那個。
-- **更新 `gemini-cli` 全域工具**：
-  ```bash
-  npm install -g @google/gemini-cli@latest
-  gemini --version
-  ```
+- **`uv.lock` 管理**: `python/uv.lock` **必須**被加入到 `.gitignore`。每位開發者應在本地生成，不應提交共享。
+- **依賴組安裝**: `Makefile` 中的 `make test-be` 和 `make lint-be` 會自動使用 `--group` 參數安裝 `test` 和 `dev` 的依賴，無需手動操作。
 
 ---
 
 ## 第三章：測試指南 (Testing Guide)
 
 ### 3.1 通用測試指令
-- CI 計畫設定在 `.github/workflows` 資料夾裡。
-- 運行 `pnpm turbo run test --filter <project_name>` 來執行該套件的所有檢查。
-- 在套件的根目錄下，你也可以直接用 `pnpm test`。合併前請確保所有測試都通過。
-- 如果只想跑單一測試，可以加上 Vitest 的 pattern：
-  ```bash
-  pnpm vitest run -t "<test name>"
-  ```
-- 修復所有測試或型別錯誤，直到整個測試套件都亮綠燈。
-- 移動檔案或更改 imports 後，記得跑 `pnpm lint --filter <project_name>` 確保 ESLint 和 TypeScript 規則仍然通過。
-- 即使沒人要求，也請為你修改的程式碼增加或更新測試。
 
-### 3.2 後端 API 測試：模擬資料庫 (Backend API Testing: Mocking the Database)
-所有後端 API 測試都**嚴格禁止**連線到真實的資料庫。為了達成此目標，我們採用了基於 `pytest` 的 `fixture` 和 `unittest.mock` 的模擬機制。
+| 目的 | 指令 | 範例 |
+| :--- | :--- | :--- |
+| **執行所有測試** | `make test` | `make test` |
+| **僅執行後端測試** | `make test-be` | `make test-be` |
+| **測試特定前端專案** | `make test-fe-project project=<name>` | `make test-fe-project project=enduser-ui-fe` |
+| **測試特定前端檔案** | `make test-fe-single project=<name> test=<pattern>` | `make test-fe-single project=enduser-ui-fe test="TaskModal"` |
 
-**核心原理**:
-1.  **自動注入的模擬器**: 在 `python/tests/conftest.py` 中，我們定義了一個名為 `mock_supabase_client` 的 `fixture`。這個 `fixture` 會建立一個 `MagicMock` 物件，用來模擬真實的 `SupabaseClient`。
-2.  **全域攔截**: 同樣在 `conftest.py` 中，我們使用 `@pytest.fixture(autouse=True)` 和 `patch` 來自動攔截所有測試中對 `supabase.create_client` 或 `get_supabase_client` 的呼叫，並將它們替換為 `mock_supabase_client` 的實例。
-3.  **無需手動傳遞**: 因為使用了 `autouse=True` 的 `fixture`，開發者在撰寫新的 API 測試時，**無需**手動處理模擬的設定。`pytest` 會自動將 `client` (FastAPI 測試客戶端) 和 `mock_supabase_client` (模擬資料庫客戶端) 這兩個 `fixture` 注入到您的測試函式中。
+### 3.2 後端 API 測試：模擬資料庫
 
-**如何在測試中使用**:
-您只需要將 `client` 和 `mock_supabase_client` 作為參數加入到您的測試函式簽名中，就可以開始使用它們。
+所有後端 API 測試都**嚴格禁止**連線到真實的資料庫。專案在 `python/tests/conftest.py` 中使用 `pytest fixture` 和 `patch` 自動模擬了 `SupabaseClient`。您只需在測試函式簽名中加入 `client` 和 `mock_supabase_client` 即可使用。
 
-**程式碼範例**:
-以下是一個簡化的測試範例，展示如何設定模擬的回傳值，並驗證 API 的行為。
-```python
-# 檔案: python/tests/server/api_routes/test_your_api.py
+### 3.3 前端測試常見問題 (FAQ)
 
-# 1. 將 fixture 加入函式簽名
-def test_your_api_endpoint(client, mock_supabase_client):
-    # 2. Arrange (安排): 設定模擬資料庫的行為
-    # 模擬一個成功的資料庫插入操作
-    mock_response = MagicMock()
-    mock_response.data = [{'id': 'new_record_id', 'name': 'test_name'}]
-    
-    # 設定當 .insert(...).execute() 被呼叫時，要回傳的假資料
-    mock_supabase_client.table.return_value.insert.return_value.execute.return_value = mock_response
-
-    # 3. Act (執行): 透過測試 client 呼叫您的 API
-    api_response = client.post("/api/your-endpoint", json={"name": "test_name"})
-
-    # 4. Assert (斷言): 驗證 API 的回傳結果是否符合預期
-    assert api_response.status_code == 201
-    assert api_response.json()["message"] == "Record created successfully"
-    assert api_response.json()["record_id"] == "new_record_id"
-
-    # (可選) 驗證 insert 方法是否被正確呼叫
-    mock_supabase_client.table.return_value.insert.assert_called_once_with({"name": "test_name"})
-```
-
-### 3.2.1 如何測試啟動背景任務的 API 端點
-
-**情境**: 當一個 API 端點的主要職責是接收請求，然後使用 `asyncio.create_task` 啟動一個長時間運行的背景任務來處理時，我們不應該在 API 的單元測試中等待整個背景任務完成。
-
-**最佳實踐**: **測試端點的「職責」，而非「實作細節」**。此類端點的職責是「正確地啟動任務」。因此，我們應該模擬 (Mock) `asyncio.create_task` 本身，並驗證它是否被以正確的參數呼叫。
-
-**程式碼範例**:
-```python
-# 檔案: python/tests/server/api_routes/test_knowledge_api.py
-
-# 1. 在測試函式上使用 @patch 來模擬 `create_task`
-@patch('src.server.api_routes.knowledge_api.asyncio.create_task')
-def test_upload_document_endpoint_success(mock_create_task, client: TestClient):
-    """
-    驗證 /documents/upload 端點能成功接收檔案，
-    並正確啟動一個背景任務。
-    """
-    # 2. Arrange (安排): 準備測試資料
-    file_name = "test_document.txt"
-    file_content = b"This is a test file."
-
-    # 3. Act (執行): 呼叫 API 端點
-    response = client.post(
-        "/api/documents/upload",
-        files={"file": (file_name, file_content, "text/plain")},
-        data={"tags": '["test"]', "knowledge_type": "docs"},
-    )
-
-    # 4. Assert (斷言):
-    # 斷言 API 立即回傳了成功的回應
-    assert response.status_code == 200
-    assert response.json()["success"] is True
-    assert "progressId" in response.json()
-
-    # 斷言背景任務有被啟動
-    mock_create_task.assert_called_once()
-```
-
-**關於 `RuntimeWarning`**:
-採用此策略時，`pytest` 可能會顯示 `RuntimeWarning: coroutine ... was never awaited` 的警告。這是一個**預期中且無害的**副作用，因為被傳遞給模擬 `create_task` 的協程確實從未被執行。這恰好證明了我們的測試成功地將 API 端點的職責與背景任務的實作細節隔離開來。
-
-*👨‍🍳 **主廚筆記**: 這個測試策略是在為檔案上傳功能編寫測試時確立的。詳見 [我的工作日誌 (2025-09-27)](GEMINI.md#本次會話總結與學習教訓-2025-09-27)，了解其背後的完整偵錯與決策過程。*
-
-### 3.3 前端測試實踐與常見問題 (Frontend Testing Practices & FAQ)
-在本次開發週期中，我們總結了以下前端測試的最佳實踐與常見問題的解決方案：
-
-1.  **如何執行特定子專案的測試？**
-    *   **問題**: 專案根目錄的 `make test-fe` 指令只會測試 `archon-ui-main`。
-    *   **解法 (已根據 `Makefile` 修正)**: 使用 `Makefile` 中提供的標準指令，可以更精準地執行測試：
-        *   **方法1：測試特定子專案**
-            ```bash
-            # 語法：make test-fe-project project=<project_name>
-            make test-fe-project project=enduser-ui-fe
-            ```
-            這個指令只會執行 `enduser-ui-fe` 目錄下的所有測試。
-
-        *   **方法2：測試特定單一檔案**
-            ```bash
-            # 語法：make test-fe-single project=<project_name> test=<test_name>
-            make test-fe-single project=enduser-ui-fe test="TaskModal"
-            ```
-            這個指令只會執行 `enduser-ui-fe` 中，名稱包含 "TaskModal" 的測試，速度最快。
-
-2.  **`Failed to resolve import` 錯誤**
-    *   **問題**: 執行測試時，出現無法解析 `import` 的錯誤，例如 `@testing-library/user-event`。
-    *   **解法**: 這代表該專案的 `package.json` 中缺少了必要的開發依賴 (`devDependencies`)。需在該專案目錄下使用 `pnpm install --save-dev <package-name>` 來安裝缺少的套件。
-
-3.  **測試中找不到「純圖示按鈕」**
-    *   **問題**: 使用 `screen.getByRole('button', { name: /.../i })` 無法找到一個只有圖示（例如 "X"）的按鈕。
-    *   **解法**: 為了無障礙性 (a11y) 和測試的穩定性，純圖示按鈕應加上 `aria-label` 屬性，為按鈕提供一個文字描述。例如：
-        ```html
-        <button aria-label="Close">
-          <XIcon />
-        </button>
-        ```
-
-4.  **表單必填欄位的驗證測試**
-    *   **問題**: 當 `input` 有 `required` 屬性時，在測試中 `userEvent.click(submitButton)` 可能不會觸發 `submit` 事件，導致無法測試元件內部的錯誤處理邏輯（例如 `alert`）。
-    *   **解法**: 為了繞過瀏覽器的預設驗證行為，專門測試元件的內部邏輯，可以使用 `fireEvent.submit(submitButton)` 來直接觸發 `submit` 事件。
-
-5.  **Vitest 的 `vi.mock` 變數提升問題**
-    *   **問題**: 測試出現 `ReferenceError: Cannot access '...' before initialization`。
-    *   **原因**: `vi.mock` 會被 Vitest 自動提升到檔案的最頂部執行。如果在 `vi.mock` 的工廠函式中，使用了在檔案頂層才被宣告的變數，就會因為變數尚未初始化而產生此錯誤。
-    *   **解法**: 將所有 `vi.mock` 需要用到的變數（例如 `mockTasks`, `mockUsers`），都直接定義在 `vi.mock` 的工廠函式**內部**，而不是在檔案的頂層。
-
-6.  **測試因「元件未匯出」而失敗**
-    *   **問題**: 測試出現 `Error: Element type is invalid: expected a string ... but got: undefined`。
-    *   **原因**: 這通常發生在 `render` 一個元件時，該元件內部 import 了另一個子元件，但該子元件卻沒有被正確地從來源檔案（例如 `Icons.tsx`）中 `export` 出來。
-    *   **解法**: 仔細檢查錯誤訊息中提到的元件（例如 `ListView`），找出它 import 了哪些子元件（例如 `PaperclipIcon`），然後去對應的檔案（`Icons.tsx`）確認該子元件是否已 `export`。
-
-7.  **警惕無聲的測試通過 (Beware of Silent Passes)**
-    *   **情境**: `make lint-be` 報告了 `F821: Undefined name` 等會導致執行時崩潰的致命錯誤，但 `make test-be` 卻依然全部通過。
-    *   **教訓**: 這不是一個可以忽略的現象，而是**測試套件存在盲區**的強烈信號。這意味著沒有任何一個測試案例實際執行到出錯的程式碼路徑。
-    *   **最佳實踐**: 在這種情況下，**絕對不能**直接去修復產品程式碼。第一步應該是遵循 TDD 原則，編寫一個**新的、最小化的單元測試**，專門去呼叫那段出錯的程式碼，從而讓 `make test-be` **必然地失敗**。只有在這個「紅燈」測試就緒後，才能開始修復產品程式碼，最終讓測試「轉綠」。
-
-8.  **警惕 Mock Data 的不一致性**
-    *   **情境**: 一個關於頭像樣式的測試意外失敗，追查後發現，儘管產品程式碼 (`UserAvatar.tsx`) 的邏輯是正確的，但測試檔案 (`DashboardPage.test.tsx`) 中的假任務物件只有 `assignee: 'AI Assistant'` 欄位，卻缺少了邏輯判斷所依賴的 `assignee_id: '3'` 欄位。
-    *   **教訓**: 測試失敗的根源，不一定是產品程式碼的 Bug，也常常是**測試資料與產品邏輯所依賴的資料結構不一致**所導致。當遇到看似無關的測試失敗時（例如「改A壞B」），應優先審查相關的 Mock Data 是否完整且正確。
+| 問題 | 原因 | 解決方案 |
+| :--- | :--- | :--- |
+| **`Failed to resolve import`** | `package.json` 中缺少開發依賴。 | 在該專案目錄下執行 `pnpm install --save-dev <package-name>`。 |
+| **找不到純圖示按鈕** | 按鈕缺少無障礙文字描述。 | 為按鈕加上 `aria-label="描述"` 屬性。 |
+| **`required` 表單提交測試** | `userEvent.click` 會被瀏覽器預設行為攔截。 | 使用 `fireEvent.submit(submitButton)` 直接觸發提交事件。 |
+| **`vi.mock` 變數提升錯誤** | `vi.mock` 的工廠函式使用了在頂層宣告的變數。 | 將 `vi.mock` 需要的變數直接定義在工廠函式**內部**。 |
 
 ---
 
-## 第四章：貢獻流程 (Contribution Workflow)
+## 第四章：貢獻與部署流程 (Contribution & Deployment)
 
-### 4.1 Git 工作流程常見問題 (Git Workflow FAQ)
-1.  **`git cherry-pick --continue` 卡住**
-    *   **問題**: 在解決衝突並 `git add` 檔案後，執行 `git cherry-pick --continue` 指令卡住，沒有任何反應。
-    *   **原因**: 這通常發生在非互動式的指令環境中。`cherry-pick` 預設會嘗試打開文字編輯器來讓您確認 commit message，或觸發 GPG 簽章的密碼輸入提示，這些都會導致流程卡住。
-    *   **解法**: 使用 `--no-edit` 和 `--no-gpg-sign` 兩個參數，可以繞過所有互動環節。
-        ```bash
-        # 解決衝突並 add 檔案後，執行此指令
-        git cherry-pick --continue --no-edit --no-gpg-sign
-        ```
+### 4.1 Git 工作流程
 
-### 4.2 PR 提交規範
-- **標題格式**：`[<project_name>] <標題>`
-- **提交前檢查**: 務必運行 `pnpm lint` 和 `pnpm test`。
+- **分支策略**: 所有工作都**必須**在 `feature/...` 分支上進行。部署也**必須**從 `feature/...` 分支進行。`main` 分支請勿使用。
+- **`cherry-pick` 卡住**: 若 `git cherry-pick --continue` 卡住，請改用 `git cherry-pick --continue --no-edit --no-gpg-sign`。
 
----
+### 4.2 部署標準作業流程 (SOP)
 
-## 第五章：部署 (Deployment)
+此流程的最終目標，是成功將一個穩定的 `feature/...` 分支部署到 **Render**。
 
-### 5.1 部署策略與分支管理 (Deployment Strategy & Branch Management)
-為了避免因流程不清導致的部署失敗，並確保每次上線的程式碼都穩定可靠，所有團隊成員應遵循以下策略。
+1.  **階段一：部署前本地檢查**
+    1.  同步最新程式碼: `git checkout <your-branch> && git pull`
+    2.  執行完整測試: `make test`
+    3.  執行 Lint 檢查: `make lint-be`
 
-#### 5.1.1 部署環境 (Deployment Environment)
-- **平台**: 本專案所有服務，包括後端 (FastAPI) 與前端 (React)，均統一使用 **Render** 進行部署。
-- **目標**: 任何關於 Vercel, Supabase Functions 或其他平台的部署假設都是**不正確的**。所有與部署相關的修改（如 Dockerfile, 啟動指令）都應以 Render 環境為唯一目標。
+2.  **階段二：資料庫遷移 (關鍵手動步驟)**
+    1.  登入 Supabase 儀表板並進入 **SQL Editor**。
+    2.  **（可選）** 若非全新資料庫，可執行 `migration/RESET_DB.sql` 清空資料庫 (**警告：此操作會刪除所有資料**)。
+    3.  **依序執行**所有本次部署涉及的新遷移腳本 (如 `000_unified_schema.sql`, `001_add_due_date_to_tasks.sql` 等)。
 
-#### 5.1.2 分支策略 (Branching Strategy) - **專案特定**
-**【警告】本專案有特定的分支策略，與標準 GitFlow 不同。**
+3.  **階段三：執行部署**
+    1.  確認 Render 儀表板監控的是正確的 `feature/...` 分支。
+    2.  將本地變更推送到 GitHub: `git push origin <your-branch>`
+    3.  Render 會自動偵測到新的提交並開始部署。
 
-- **`main` 分支**: **請勿使用。** `git log` 顯示 `main` 分支與本專案工作無關，其程式碼版本不相容。
-- **`feature/...` 分支**: 所有開發、修復、重構都**必須**在獨立的 `feature/...` 分支上進行。這些分支是本專案的實際工作線。
-- **部署**: 部署**必須**從 `feature/...` 分支進行。在部署前，應確保該 `feature` 分支是完整且穩定的。**嚴禁**將 `feature` 分支合併到 `main`，也**嚴禁**從 `main` 部署。
-
-### 5.2 部署標準作業流程 (SOP) - 修訂版 v1.2
-此流程的最終目標，是成功部署一個穩定的版本到 Render，包含所有已完成的核心功能。
-
-#### 5.2.1 階段一：部署前本地檢查 (Pre-Deployment Checks)
-在推送任何程式碼到 Render 之前，必須在本地嚴格執行以下檢查清單，確保程式碼的穩定性。
-1.  **同步最新程式碼**:
-    ```bash
-    # 根據你的目標分支，例如 feature/e2e-file-upload
-    git checkout <your-target-branch>
-    git pull origin <your-target-branch>
-    ```
-2.  **執行完整測試 (關鍵步驟)**: 這是為了避免「測試又錯一堆」的狀況。此指令會涵蓋前後端的所有測試。
-    ```bash
-    make test
-    ```
-3.  **執行 Lint 檢查**:
-    ```bash
-    make lint-be
-    ```
-    > 👨‍🍳 **主廚筆記**: 在 2025-09-30 的部署演練中，我們發現 `lint-be` 存在大量錯誤並將其記錄為技術債。**此問題已在 `commit 37b1e43` 中被完全修復**，現在 `make lint-be` 可以成功通過。
-
-#### 5.2.2 階段二：資料庫遷移 (Database Migration) - 關鍵手動步驟
-**這是最容易出錯的步驟！** 根據 `GEMINI.md` 中記錄的部署經驗，應用程式會因為資料庫結構未更新而無法啟動。在部署新版本前，**必須**手動執行遷移腳本。
-
-**核心流程**:
-1.  **登入 Supabase 儀表板**並進入 **SQL Editor**。
-2.  **（如果是非全新資料庫）** 為了避免 `... already exists` 錯誤，強烈建議先執行 `migration/RESET_DB.sql` 的內容來清空資料庫。**警告：此操作會刪除所有資料。**
-3.  **依序執行**以下兩個核心腳本的內容：
-    1.  `migration/000_unified_schema.sql` (建立所有資料表與結構)
-    2.  `migration/seed_mock_data.sql` (填入初始的假資料)
-
-#### 5.2.3 階段三：Render 服務設定 (Infrastructure Setup)
-此階段在 Render 上設定三個獨立的服務。這些設定通常只需要在專案初次設定時執行。
-1.  **部署後端 (`archon-server`)**:
-    *   **類型**: `Web Service`
-    *   **設定**: 完全依照本文件「Render 部署除錯實戰指南」章節中的後端設定（Root Directory: `python` 等）。
-2.  **部署管理後台 (`archon-ui-main`)**:
-    *   **類型**: `Static Site`
-    *   **Root Directory**: `archon-ui-main`
-    *   **Build Command**: `pnpm install --frozen-lockfile && pnpm run build`
-    *   **Publish Directory**: `archon-ui-main/dist`
-    *   **環境變數**: 新增 `VITE_API_URL`，其值為後端服務的公開網址。
-3.  **部署使用者介面 (`enduser-ui-fe`)**:
-    *   **類型**: `Static Site`
-    *   **Root Directory**: `enduser-ui-fe`
-    - **Build Command**: `pnpm install --frozen-lockfile && pnpm run build`
-
-#### 5.2.4 階段四：執行部署 (Deployment Execution)
-- **核心觀念**: Render 已設定為「Git 儲存庫整合」。這代表我們**不應該**使用 `git push render` 這種方式。正確的流程是將程式碼推送到 Render 所監控的 GitHub 分支。
-- **執行步驟**:
-  1.  在 Render 儀表板上，確認您的服務監控的是哪個分支（在本次演練中，是 `feature/e2e-file-upload`）。
-  2.  將您本地的變更推送到 GitHub (`origin`) 上對應的分支。
-      ```bash
-      # 確保您在正確的分支上
-      git checkout feature/e2e-file-upload
-      
-      # 推送變更
-      git push origin feature/e2e-file-upload
-      ```
-  3.  推送成功後，Render 會自動偵測到新的提交並開始部署。
-
-#### 5.2.5 階段五：部署後驗證 (Post-Deployment Verification)
-1.  **監控日誌**: 分別檢查三個服務在 Render 上的部署日誌，確認建置 (build) 和服務啟動 (live) 過程沒有任何錯誤訊息。
-2.  **健康檢查**: 存取後端服務的 `/health` 端點，確認回傳 `{"status":"ok"}` 或 `{"status":"healthy"}`。
-3.  **功能驗證 (Smoke Test)**:
-    *   打開 `enduser-ui-fe` 的公開網址，嘗試登入並查看任務列表。
-    *   打開 `archon-ui-main` 的公開網址，確認管理儀表板能正常載入。
-
-> 👨‍🍳 **主廚筆記：首次部署的歷史調查 (2025-10-07)**
-> 為了釐清為何首次部署時，會出現「一個前端成功，一個前端失敗」的混亂情況，我們進行了詳細的歷史調查。這份時序列表記錄了當時發生的真實情況，可作為未來排查類似問題的重要參考。
->
-> ### **事件時序列表 (2025/09/24 - 2025/10/01)**
->
-> **【背景：API 演進】**
->
-> *   **日期**: ~ 2025/09/24
-> *   **元件**: `後端 (Backend)`
-> *   **事件**: 後端 `knowledge_api.py` 進行了服務層重構，將資料庫直接呼叫移至 `KnowledgeService`。這是後端架構優化的一部分，但尚未有任何前端與之對應。
-> *   **證據**: `git commit 6cfb87b`, `GEMINI.md (2025-09-24)`
->
-> ---
->
-> **【背景：測試環境修正】**
->
-> *   **日期**: 2025/09/29
-> *   **元件**: `archon-ui-main` & `enduser-ui-fe`
-> *   **事件**: 為了解決 `make test` 指令在 CI/CD 環境中會掛起的問題，開發者將這兩個前端專案的 `package.json` 中的 `test` 指令從 `vitest` 修改為 `vitest run`。
-> *   **證據**: `git commit 235ff99`
->
-> ---
->
-> **【核心事件：部署日】**
->
-> *   **日期**: 2025/09/30
-> *   **元件**: `部署 (Deployment)` & `enduser-ui-fe`
-> *   **事件**:
->     1.  **執行部署演練**: 團隊根據 `TODO.md` (Phase 3.2) 的計畫，正式將 `feature/e2e-file-upload` 分支部署到 Render。
->     2.  **部署目標**: 本次部署的**唯一前端目標**是 `enduser-ui-fe`。
->     3.  **建置失敗**: `enduser-ui-fe` 在 Render 上初次建置時，因缺少 `pnpm-lock.yaml` 檔案而觸發 `ERR_PNPM_NO_LOCKFILE` 錯誤。
->     4.  **臨時繞過**: 團隊在 Render 的建置指令中加入了 `--no-frozen-lockfile` 參數，作為臨時解決方案讓部署繼續。
->     5.  **部署成功**: `enduser-ui-fe` 最終成功部署，並在 Render 環境中被正確設定了 `VITE_API_URL`，使其能夠成功連線到後端服務 `alowten.onrender.com`。
-> *   **證據**: `GEMINI.md (2025-09-30)`
->
-> ---
->
-> **【並行事件：被忽略的 `archon-ui-main` 問題】**
->
-> *   **日期**: ~ 2025/09/30 (與部署同時間段)
-> *   **元件**: `archon-ui-main`
-> *   **事件**:
->     1.  **本地開發問題**: `archon-ui-main` (管理者儀表板) 在本地開發與測試時，出現無法連線到後端的狀況。
->     2.  **問題根源**: 經事後調查，失敗原因並非網路或 URL 設定錯誤，而是其程式碼 (`FeaturesSection.tsx`) 中**寫死了一個已被後端棄用的 API 端點** (`/api/projects/health`)。
->     3.  **結果**: 後端服務因為已經沒有這個 API，所以對 `archon-ui-main` 的健康檢查請求回傳 404 Not Found，導致其顯示為「連線失敗」。
-> *   **證據**:
->     *   `archon-ui-main/src/components/settings/FeaturesSection.tsx` 的原始碼。
->     *   `TODO.md` 中 Phase 3.5.6 的技術債紀錄。
->
-> ---
->
-> **【後續：線上功能修復】**
->
-> *   **日期**: 2025/10/01
-> *   **元件**: `enduser-ui-fe`
-> *   **事件**: 在 `enduser-ui-fe` 成功部署上線後，團隊根據使用者回報，修復了任務無法點擊編輯、無法設定優先級等 UI Bug。這證明了當時 `enduser-ui-fe` 是處於活躍且可用的線上狀態。
-> *   **證據**: `git commit 0525be8`, `GEMINI.md (2025-10-01)`
-
-### 5.3 Render 部署除錯實戰指南 (Render Deployment Debugging Guide)
-根據 `spike/verify-deployment-pipeline` 的部署驗證任務，我們總結了首次在 Render 上部署後端服務時，最關鍵的五個設定。如果遇到部署失敗，請優先檢查這些項目：
-1.  **Dockerfile Path**:
-    *   **問題**: Render 在根目錄找不到 `Dockerfile`。
-    *   **解法**: 在 Render 設定中，將此路徑指定為 `python/Dockerfile.server`。
-2.  **Root Directory**:
-    *   **問題**: Docker 建置時，找不到 `src`, `tests` 等資料夾 (`"/tests": not found`)。
-    *   **解法**: 在 Render 設定中，將此路徑指定為 `python`，告訴 Render 從 `python` 目錄開始建置。
-3.  **Docker Command** (或 Start Command):
-    *   **問題**: 服務啟動時發生 `could not find ... /python/python` 錯誤。
-    *   **解法**: 在 Render 設定中，將此欄位**保持空白**。這會強制 Render 使用我們在 `Dockerfile.server` 中定義好的 `CMD` 指令，而不是用一個不正確的指令覆蓋它。
-4.  **環境變數 `ARCHON_SERVER_PORT`**:
-    *   **問題**: 部署成功，但日誌顯示 `No open ports detected`。
-    *   **解法**: 在 Render 的環境變數設定中，將 `ARCHON_SERVER_PORT` 的值設定為 `8181`。Render 的系統會自動偵測到這個 Port 並完成網路設定，即使它與預設的 `10000` 不同。
-5.  **Health Check Grace Period**:
-    *   **問題**: 應用程式日誌有正常輸出，但 Render 仍然顯示 `No open ports detected`。
-    *   **解法**: 這是因為我們的應用程式啟動較慢。在 Render 的健康檢查設定中，將 `Health Check Grace Period` 的值拉長，建議設定為 `120` 秒，給予服務足夠的啟動時間。
+4.  **階段四：部署後驗證**
+    1.  在 Render 儀表板監控所有服務的部署日誌。
+    2.  存取後端服務的 `/health` 端點，確認回傳 `{"status":"ok"}`。
+    3.  打開前端服務的公開網址，進行功能驗證 (Smoke Test)。
 
 ---
 
-## 附錄 A：重要架構決策
+## 附錄 A：重要架構決策與歷史紀錄
 
-### A.1 健康檢查邏輯已統一 (2025-09-08)
-為移除重複程式碼，原有的 `/api/projects/health` 端點已被**移除**。
+本附錄記載了專案開發過程中的關鍵決策背景與歷史教訓，以時間順序排列。
 
-現在，所有服務的健康狀態（包含資料庫連線、資料表是否存在等）都已統一由 `HealthService` 管理，並只透過根路徑的 `/health` 端點對外提供。未來若有其他分支或新功能需要進行健康檢查，請務必遵循此一新架構。
+### 2025-10-07: 首次部署的歷史調查
+
+- **情境**: 為了釐清首次部署時，為何 `enduser-ui-fe` 成功，而 `archon-ui-main` 失敗。
+- **調查結論**: 兩個獨立事件同時發生：
+    1.  **成功的 `enduser-ui-fe`**: 當時的部署目標只有 `enduser-ui-fe`。雖然遇到了 `pnpm-lock.yaml` 缺失的問題（並透過 `--no-frozen-lockfile` 臨時繞過），但最終成功部署並設定了正確的 API URL。
+    2.  **失敗的 `archon-ui-main`**: `archon-ui-main` 的程式碼當時寫死了一個已被後端重構移除的 API 端點 (`/api/projects/health`)，導致其本地和線上都無法連線，這與部署流程本身無關。
+- **確立原則**: 此調查確立了在除錯時，必須區分「部署流程問題」與「應用程式自身 Bug」的重要性。
+
+### 2025-09-30: Render 部署流程確立
+
+- **情境**: 在部署演練中，`git push render` 指令失敗，回報 `repository not found`。
+- **決策理由**: 經查證，Render 提供的 URL 是一個「Deploy Hook」，只能被 `curl` 等工具觸發，而不能作為 Git remote。因此，專案的部署流程**不應**使用 `git push render`。
+- **確立原則**: 確立了正確的部署流程：將程式碼 `push` 到 Render 所監控的 `origin` (GitHub) 分支，依靠 Render 的 GitHub App 自動觸發部署。
+
+### 2025-09-29: `Makefile` 意圖的最終仲裁
+
+- **情境**: `make test` 指令緩慢且包含所有前後端測試，與 `ci.yml` 中僅測試後端的行為產生矛盾。
+- **決策理由**: 直接修改 `Makefile` 是危險的。透過 `git log -p -- Makefile` 深入分析提交歷史，發現開發者曾短暫嘗試過快慢測試分離，但很快就手動還原了該修改。這證明了 `make test` 的「緩慢但完整」是**刻意為之**的選擇。
+- **確立原則**: 當文件、程式碼、CI/CD 腳本之間出現矛盾時，`git log -p` 是揭示真實意圖的最終仲裁者。
+
+### 2025-09-27: 測試背景任務的 API
+
+- **情境**: 為 `/documents/upload` 這個啟動背景任務的端點編寫單元測試時，不知如何斷言。
+- **決策理由**: 單元測試應專注於被測單元的「職責」，而非其「依賴的實作細節」。此端點的職責是「接收請求並正確啟動任務」，而不是「完成任務」。
+- **確立原則**: 確立了測試此類端點的最佳實踐：模擬 (Mock) `asyncio.create_task` 本身，並驗證它是否被以正確的參數呼叫。測試中出現的 `RuntimeWarning: coroutine ... was never awaited` 是此策略下預期內且無害的副作用。
+
+### 2025-09-23: 「自動修復」的陷阱
+
+- **情境**: 執行 `make lint-be` 驗證程式碼，卻導致大量不相關的檔案被自動修改，汙染了工作區。
+- **決策理由**: 閱讀 `Makefile` 後發現，`lint-be` 指令包含了 `--fix` 參數，使其從一個「檢查工具」變成了「修改工具」。
+- **確立原則**: 確立了處理此類工具的安全工作流程：「先用唯讀模式 (`ruff check`) 分析 -> 將所有修改一次性用 `write_file` 寫入 -> 最後再用原指令 (`make lint-be`) 進行純粹的驗證」。
+
+### 2025-09-22: `Makefile` 與 `pyproject.toml` 的矛盾
+
+- **情境**: `make test-be` 失敗，因為 `Makefile` 中的 `uv sync --extra` 指令與 `pyproject.toml` 的 `[dependency-groups]` 結構不符。
+- **決策理由**: 透過 `git log -p -- Makefile` 追溯歷史，發現專案曾刻意選擇 `[dependency-groups]` 結構，從而確認了 `Makefile` 需要被修正以使用 `--group` 參數，而不是反過來修改 `pyproject.toml`。
+- **確立原則**: 再次印證了「追溯 `git log` 以理解歷史意圖」的重要性。
+
+### 2025-09-21: 資料庫腳本的冪等性
+
+- **情境**: 執行資料庫遷移腳本 `000_unified_schema.sql` 時，因 `policy ... already exists` 錯誤而中斷。
+- **決策理由**: 遷移腳本的穩定性與可重複執行性，比微不足道的效能更重要。
+- **確立原則**: 所有資料庫遷移腳本都必須具備「冪等性」。對於不支援 `CREATE ... IF NOT EXISTS` 的物件（如 `POLICY`），在 `CREATE` 之前必須先使用 `DROP ... IF EXISTS`。
+
+### 2025-09-19: `Makefile` 作為單一事實來源
+
+- **情境**: 專案中的 `README.md` 記載了與 `Makefile` 不一致的啟動指令，導致開發者遵循文件操作時發生錯誤。
+- **決策理由**: 可執行的腳本是指令的最終真理，文件應作為其說明而存在。
+- **確立原則**: 確立了 `Makefile` 作為所有專案指令的「單一事實來源」。所有 `.md` 文件在指導操作時，都應引用 `make <command>`，而不是複製貼上其底層指令。

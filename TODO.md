@@ -103,9 +103,10 @@
 
 #### **跨領域任務 (Cross-Cutting Tasks)**
 
-- **[ ] 3.6.1: (研究) 找到 pydantic-ai 的官方文件**
+- **[x] 3.6.1: (研究) 找到 pydantic-ai 的官方文件**
     - **問題**: `pydantic-ai` 是一個真實存在的依賴，但無法透過公開網路搜尋找到。
     - **計畫**: 根據 `uv.lock` 的紀錄，該套件來自公開 PyPI 倉庫。下一步是直接訪問 `https://pypi.org/project/pydantic-ai/` 並找到其 GitHub 連結。
+    - **結論**: **已完成**。已確認 `https://pypi.org/project/pydantic-ai/` 為其官方 PyPI 頁面。
 
 ---
 
