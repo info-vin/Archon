@@ -150,11 +150,47 @@
             - **後端**: 為 `knowledge_api` 的 blog 端點新增 `pytest` 單元測試，驗證 API 邏輯與權限控制。 (**已完成**)
             - **前端**: 為 `AdminPage.tsx` 的管理功能新增 `vitest` 單元測試。
 
-- **[ ] 3.6.6: (部署) 部署新功能並優化遷移流程**
-    - **目標**: 將 `feature/e2e-file-upload` 分支上已包含「完成日期」與「新增專案」的新功能，正式部署到線上環境，並在此過程中，研究如何優化目前高風險的手動資料庫遷移流程。
+- **[ ] 3.6.6: (部署) 部署新功能**
+    - **目標**: 將 `feature/e2e-file-upload` 分支上已包含「完成日期」與「新增專案」的新功能，正式部署到線上環境。
     - **計畫**:
-        1.  **執行部署**: 遵循 `CONTRIBUTING_tw.md` 中的部署 SOP，特別注意需手動執行新的 `migration/001_add_due_date_to_tasks.sql` 遷移腳本。
-        2.  **研究優化**: 調查是否有適用於本專案 (Python/Supabase) 的自動化資料庫遷移工具 (例如 Alembic)，以取代目前手動執行 `.sql` 檔案的流程，並將研究結果記錄下來作為下一個階段的技術決策依據。
+        1.  **執行部署**: 遵循 `CONTRIBUTING_tw.md` 中定義的、包含**手動資料庫遷移**的部署 SOP。
+        2.  **驗證**: 驗證新功能在線上環境正常運作。
+
+---
+
+### Phase 3.7: 體現人機協作與固化核心流程 (Embodying Human-Agent Collaboration & Solidifying Core Processes)
+
+#### 第一部分：體現「人機協作」的專案狀態 (Feature: Embody "Human-Agent" Project Status)
+*(此部分基於您對問題一、二的選擇：B, B)*
+
+-   **任務 3.7.1 (後端 API): 實作「動態計算狀態」**
+    -   **目標**: 修改 `GET /projects` API，回傳一個根據任務狀態動態計算的 `computed_status` 欄位。
+    -   **計算邏輯**:
+        -   如果專案下有任何任務狀態為 `review` -> `computed_status` 為 `Pending Review` (待人類審核)。
+        -   如果專案下有任何任務的執行者是 AI Agent 且狀態為 `doing` -> `computed_status` 為 `Agent Executing` (AI 執行中)。
+        -   如果專案下所有任務都已 `done` -> `computed_status` 為 `Complete` (已完成)。
+        -   其他情況 -> `computed_status` 為 `In Progress` (進行中)。
+
+-   **任務 3.7.2 (前端 UI): 呈現「協作狀態」**
+    -   **目標**: 在專案列表頁面，用不同的顏色或圖示，清晰地展示每個專案的 `computed_status`。
+
+-   **任務 3.7.3 (後端通知): 實作「狀態向上影響」**
+    -   **目標**: 當任務狀態的變更觸發專案 `computed_status` 改變時，透過 Socket.IO 發送即時通知。
+
+#### 第二部分：固化「以人為本」的資料庫遷移流程 (Process: Solidify "Human-Centric" DB Migration)
+*(此部分基於您對問題三、四的選擇：B, A)*
+
+-   **任務 3.7.4 (基礎建設): 建立遷移紀錄表**
+    -   **目標**: 建立 `schema_migrations` 表。
+    -   **產出**: `migration/000_create_migrations_table.sql`。
+
+-   **任務 3.7.5 (模式建立): 將既有腳本「冪等化」**
+    -   **目標**: 重構現有遷移腳本，建立一個可供未來所有遷移參考的、安全的寫作模式。
+    -   **產出**: 提供 `001_add_due_date_to_tasks.sql` 和 `seed_blog_posts.sql` 的重構後程式碼。
+
+-   **任務 3.7.6 (文件化): 更新貢獻指南 (SOP)**
+    -   **目標**: 將新的、更安全的遷移流程，明文寫入 `CONTRIBUTING_tw.md`。
+    -   **產出**: 提供 `CONTRIBUTING_tw.md` 中 `4.2` 節的全新文字。
 
 ---
 

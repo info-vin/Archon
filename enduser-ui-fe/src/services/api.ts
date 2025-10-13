@@ -244,6 +244,13 @@ const mockApi = {
         MOCK_BLOG_POSTS.unshift(newPost);
         return newPost;
     },
+    async deleteBlogPost(postId: string): Promise<void> {
+        console.log(`Mock delete for blog post ${postId}`);
+        const index = MOCK_BLOG_POSTS.findIndex(p => p.id === postId);
+        if (index > -1) {
+            MOCK_BLOG_POSTS.splice(index, 1);
+        }
+    },
     async updateEmployee(employeeId: string, updates: Partial<Employee>): Promise<Employee> {
         const index = MOCK_EMPLOYEES.findIndex(e => e.id === employeeId);
         if (index > -1) {
