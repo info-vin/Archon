@@ -1,16 +1,17 @@
 # python/src/server/models/blog.py
 
-from pydantic import BaseModel, Field
-from typing import Optional
 from datetime import datetime
+
+from pydantic import BaseModel, Field
+
 
 class BlogPostBase(BaseModel):
     title: str
-    excerpt: Optional[str] = None
+    excerpt: str | None = None
     content: str
-    author_name: Optional[str] = Field(None, alias='authorName')
-    publish_date: Optional[datetime] = Field(None, alias='publishDate')
-    image_url: Optional[str] = Field(None, alias='imageUrl')
+    author_name: str | None = Field(None, alias='authorName')
+    publish_date: datetime | None = Field(None, alias='publishDate')
+    image_url: str | None = Field(None, alias='imageUrl')
 
     class Config:
         populate_by_name = True
@@ -20,14 +21,14 @@ class CreateBlogPostRequest(BlogPostBase):
     pass
 
 class UpdateBlogPostRequest(BaseModel):
-    title: Optional[str] = None
-    excerpt: Optional[str] = None
-    content: Optional[str] = None
-    author_name: Optional[str] = Field(None, alias='authorName')
-    publish_date: Optional[datetime] = Field(None, alias='publishDate')
-    image_url: Optional[str] = Field(None, alias='imageUrl')
+    title: str | None = None
+    excerpt: str | None = None
+    content: str | None = None
+    author_name: str | None = Field(None, alias='authorName')
+    publish_date: datetime | None = Field(None, alias='publishDate')
+    image_url: str | None = Field(None, alias='imageUrl')
 
 class BlogPostResponse(BlogPostBase):
     id: str
     created_at: datetime = Field(alias='createdAt')
-    updated_at: Optional[datetime] = Field(None, alias='updatedAt')
+    updated_at: datetime | None = Field(None, alias='updatedAt')
