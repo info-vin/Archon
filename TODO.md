@@ -150,47 +150,82 @@
             - **後端**: 為 `knowledge_api` 的 blog 端點新增 `pytest` 單元測試，驗證 API 邏輯與權限控制。 (**已完成**)
             - **前端**: 為 `AdminPage.tsx` 的管理功能新增 `vitest` 單元測試。
 
-- **[ ] 3.6.6: (部署) 部署新功能**
+- **[x] 3.6.6: (部署) 部署新功能**
     - **目標**: 將 `feature/e2e-file-upload` 分支上已包含「完成日期」與「新增專案」的新功能，正式部署到線上環境。
-    - **計畫**:
-        1.  **執行部署**: 遵循 `CONTRIBUTING_tw.md` 中定義的、包含**手動資料庫遷移**的部署 SOP。
-        2.  **驗證**: 驗證新功能在線上環境正常運作。
+    - **結論**: **部署前置任務完成**。本地部署檢查 (`git pull`, `make test`, `make lint-be`) 已在手動修復 Linting 錯誤後全部通過。分支已處於可部署狀態，下一步是執行 `CONTRIBUTING_tw.md` SOP 中的「階段二：資料庫遷移」。為保持藍圖清晰，我們將在此結束 Phase 3.6，並在未來需要時執行實際部署。
 
 ---
 
 ### Phase 3.7: 體現人機協作與固化核心流程 (Embodying Human-Agent Collaboration & Solidifying Core Processes)
 
-#### 第一部分：體現「人機協作」的專案狀態 (Feature: Embody "Human-Agent" Project Status)
+**目標**: 將產品的核心價值「人機協作」具象化為產品功能，並將近期學到的「以人為本」的開發流程，固化為專案的標準作業程序 (SOP)。此階段的計畫，完全基於您在 2025-10-13 所做的選擇。
+
+---
+
+#### **第一部分：體現「人機協作」的專案狀態 (Feature: Embody "Human-Agent" Project Status)**
 *(此部分基於您對問題一、二的選擇：B, B)*
 
--   **任務 3.7.1 (後端 API): 實作「動態計算狀態」**
-    -   **目標**: 修改 `GET /projects` API，回傳一個根據任務狀態動態計算的 `computed_status` 欄位。
-    -   **計算邏輯**:
-        -   如果專案下有任何任務狀態為 `review` -> `computed_status` 為 `Pending Review` (待人類審核)。
-        -   如果專案下有任何任務的執行者是 AI Agent 且狀態為 `doing` -> `computed_status` 為 `Agent Executing` (AI 執行中)。
-        -   如果專案下所有任務都已 `done` -> `computed_status` 為 `Complete` (已完成)。
-        -   其他情況 -> `computed_status` 為 `In Progress` (進行中)。
+- **[ ] 3.7.1 (後端 API): 實作「動態計算狀態」**
+    - **目標**: 修改 `GET /projects` API，回傳一個根據任務狀態動態計算的 `computed_status` 欄位。
+    - **動機**: 初步嘗試在 API 層直接實作，已證實會導致 N+1 查詢問題，並破壞 `test_projects_api_polling.py` 等多個既有測試。必須採用更穩健的架構。
+    - **實作計畫**:
+        1.  **修改服務層 (`ProjectService`)**: 在 `ProjectService` 的 `list_projects` 方法中，注入 `TaskService`。在獲取所有專案後，收集所有 `project_id`，並透過 `TaskService` 的批次查詢方法，一次性獲取所有任務。最後，在服務層的記憶體中進行計算，將 `computed_status` 附加到專案物件上。
+        2.  **編寫整合測試**: 在 `test_projects_api.py` 中，編寫一個新的整合測試，該測試需同時模擬 (Patch) `ProjectService` 和 `TaskService` 的回傳值，以驗證在 API 層能正確接收到服務層計算出的 `computed_status`。
 
--   **任務 3.7.2 (前端 UI): 呈現「協作狀態」**
-    -   **目標**: 在專案列表頁面，用不同的顏色或圖示，清晰地展示每個專案的 `computed_status`。
+- **[ ] 3.7.2 (前端 UI): 呈現「協作狀態」**
+    - **目標**: 在專案列表頁面 (`enduser-ui-fe`)，用不同的顏色或圖示，清晰地展示每個專案的 `computed_status`，例如「待人類審核」顯示黃色警告圖示，「AI 執行中」顯示藍色齒輪圖示。
 
--   **任務 3.7.3 (後端通知): 實作「狀態向上影響」**
-    -   **目標**: 當任務狀態的變更觸發專案 `computed_status` 改變時，透過 Socket.IO 發送即時通知。
+- **[ ] 3.7.3 (後端通知): 實作「狀態向上影響」**
+    - **目標**: 當任務狀態的變更（例如，從 `doing` 變為 `review`）觸發專案 `computed_status` 改變時，後端應能透過 Socket.IO 向前端即時發送 `project_updated` 事件，確保 UI 能自動刷新，無需使用者手動操作。
 
-#### 第二部分：固化「以人為本」的資料庫遷移流程 (Process: Solidify "Human-Centric" DB Migration)
+---
+
+#### **第二部分：固化「以人為本」的資料庫遷移流程 (Process: Solidify "Human-Centric" DB Migration)**
 *(此部分基於您對問題三、四的選擇：B, A)*
 
--   **任務 3.7.4 (基礎建設): 建立遷移紀錄表**
-    -   **目標**: 建立 `schema_migrations` 表。
-    -   **產出**: `migration/000_create_migrations_table.sql`。
+- **[ ] 3.7.4 (基礎建設): 建立遷移紀錄表**
+    - **目標**: 建立一個名為 `schema_migrations` 的表，用於追蹤已執行的資料庫遷移腳本。
+    - **產出**: 一個新的遷移腳本 `migration/002_create_schema_migrations_table.sql`。
 
--   **任務 3.7.5 (模式建立): 將既有腳本「冪等化」**
-    -   **目標**: 重構現有遷移腳本，建立一個可供未來所有遷移參考的、安全的寫作模式。
-    -   **產出**: 提供 `001_add_due_date_to_tasks.sql` 和 `seed_blog_posts.sql` 的重構後程式碼。
+- **[ ] 3.7.5 (模式建立): 將既有腳本「冪等化」**
+    - **目標**: 重構 `001_add_due_date_to_tasks.sql` 和 `seed_blog_posts.sql`，使其符合冪等性原則，並為未來的遷移腳本建立一個可供複製的「安全樣板」。
+    - **實作**: 在腳本中使用 `IF NOT EXISTS` 或 `DROP ... IF EXISTS; CREATE ...;` 等模式。
 
--   **任務 3.7.6 (文件化): 更新貢獻指南 (SOP)**
-    -   **目標**: 將新的、更安全的遷移流程，明文寫入 `CONTRIBUTING_tw.md`。
-    -   **產出**: 提供 `CONTRIBUTING_tw.md` 中 `4.2` 節的全新文字。
+- **[ ] 3.7.6 (文件化): 更新貢獻指南 (SOP)**
+    - **目標**: 將新的、更安全的遷移流程，明文寫入 `CONTRIBUTING_tw.md`，取代舊的 `4.2` 節。
+    - **產出 (待寫入 `CONTRIBUTING_tw.md` 的全新 `4.2` 節內容)**:
+        '''markdown
+        ### 4.2 資料庫遷移標準作業流程 (SOP)
+
+        **目標**: 安全、可追蹤地將資料庫結構變更應用到任何環境。
+
+        **核心原則**:
+        1.  **冪等性**: 所有遷移腳本都必須是「可重複執行的 (idempotent)」。
+        2.  **可追蹤性**: 所有執行過的遷移都必須被記錄在 `schema_migrations` 表中。
+        3.  **不可變性**: 一旦一個遷移腳本被合併並在生產環境執行過，就**永遠不應**再修改它。若要撤銷，應建立一個新的遷移腳本。
+
+        **執行步驟**:
+
+        1.  **建立新腳本**:
+            - 在 `migration/` 目錄下，建立一個新的 SQL 檔案。
+            - 命名必須遵循 `[三位數版本號]_[描述性名稱].sql` 的格式，例如 `002_add_user_roles.sql`。版本號必須是遞增的。
+
+        2.  **撰寫冪等化 SQL**:
+            - 使用 `CREATE TABLE IF NOT EXISTS ...`。
+            - 使用 `ALTER TABLE ... ADD COLUMN IF NOT EXISTS ...`。
+            - 對於不支援 `IF EXISTS` 的物件 (如 `POLICY`, `TRIGGER`)，使用 `DROP ... IF EXISTS; CREATE ...;` 的模式。
+
+        3.  **註冊遷移版本**:
+            - 在您的 SQL 腳本的**最後**，必須加上一行 `INSERT INTO public.schema_migrations (version) VALUES (\'[您的版本號]\');`。
+            - 例如，在 `002_add_user_roles.sql` 的結尾，必須是 `INSERT INTO public.schema_migrations (version) VALUES (\'002\');`。
+
+        4.  **本地驗證**:
+            - **場景一 (乾淨資料庫)**: 執行 `make db-reset`，然後手動依序執行所有遷移腳本，確認無誤。
+            - **場景二 (重複執行)**: 再次執行您的新腳本，確認它因為冪等性而沒有產生任何錯誤。
+
+        5.  **部署流程**:
+            - 在部署時，部署腳本或手動操作者，應先查詢 `schema_migrations` 表，然後只執行那些版本號不存在於表中的 `migration/*.sql` 檔案。
+        '''
 
 ---
 
