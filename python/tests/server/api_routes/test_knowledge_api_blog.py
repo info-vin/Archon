@@ -1,8 +1,10 @@
 # python/tests/server/api_routes/test_knowledge_api_blog.py
 
+from unittest.mock import AsyncMock, patch
+
 import pytest
 from fastapi.testclient import TestClient
-from unittest.mock import AsyncMock, patch
+
 
 @pytest.fixture
 def client():

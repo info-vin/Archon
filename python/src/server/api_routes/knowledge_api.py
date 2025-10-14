@@ -14,20 +14,20 @@ import json
 import uuid
 from datetime import datetime
 
-from fastapi import APIRouter, File, Form, HTTPException, UploadFile, Header
+from fastapi import APIRouter, File, Form, Header, HTTPException, UploadFile
 from pydantic import BaseModel
 
 # Import unified logging
 from ..config.logfire_config import get_logger, safe_logfire_error, safe_logfire_info
+from ..models.blog import BlogPostResponse, CreateBlogPostRequest, UpdateBlogPostRequest
+from ..services.blog_service import BlogService
 from ..services.crawler_manager import get_crawler
 from ..services.crawling import CrawlOrchestrationService
 from ..services.knowledge import DatabaseMetricsService, KnowledgeItemService
 from ..services.knowledge_service import KnowledgeService
+from ..services.rbac_service import RBACService
 from ..services.search.rag_service import RAGService
 from ..services.storage import DocumentStorageService
-from ..services.blog_service import BlogService
-from ..models.blog import CreateBlogPostRequest, UpdateBlogPostRequest, BlogPostResponse
-from ..services.rbac_service import RBACService
 from ..utils import get_supabase_client
 from ..utils.document_processing import extract_text_from_document
 from ..utils.progress.progress_tracker import ProgressTracker
@@ -68,7 +68,7 @@ async def create_blog_post(
     current_user_role = x_user_role or "User"
     if not rbac_service.can_manage_content(current_user_role):
         raise HTTPException(status_code=403, detail="Forbidden: You do not have permission to create blog posts.")
-    
+
     blog_service = BlogService()
     success, result = await blog_service.create_post(request.model_dump())
     if not success:
