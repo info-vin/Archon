@@ -156,76 +156,46 @@
 
 ---
 
-### Phase 3.7: 體現人機協作與固化核心流程 (Embodying Human-Agent Collaboration & Solidifying Core Processes)
+### Phase 3.7: 體現人機協作與固化核心流程
 
-**目標**: 將產品的核心價值「人機協作」具象化為產品功能，並將近期學到的「以人為本」的開發流程，固化為專案的標準作業程序 (SOP)。此階段的計畫，完全基於您在 2025-10-13 所做的選擇。
-
----
-
-#### **第一部分：體現「人機協作」的專案狀態 (Feature: Embody "Human-Agent" Project Status)**
-*(此部分基於您對問題一、二的選擇：B, B)*
-
-- **[ ] 3.7.1 (後端 API): 實作「動態計算狀態」**
-    - **目標**: 修改 `GET /projects` API，回傳一個根據任務狀態動態計算的 `computed_status` 欄位。
-    - **動機**: 初步嘗試在 API 層直接實作，已證實會導致 N+1 查詢問題，並破壞 `test_projects_api_polling.py` 等多個既有測試。必須採用更穩健的架構。
-    - **實作計畫**:
-        1.  **修改服務層 (`ProjectService`)**: 在 `ProjectService` 的 `list_projects` 方法中，注入 `TaskService`。在獲取所有專案後，收集所有 `project_id`，並透過 `TaskService` 的批次查詢方法，一次性獲取所有任務。最後，在服務層的記憶體中進行計算，將 `computed_status` 附加到專案物件上。
-        2.  **編寫整合測試**: 在 `test_projects_api.py` 中，編寫一個新的整合測試，該測試需同時模擬 (Patch) `ProjectService` 和 `TaskService` 的回傳值，以驗證在 API 層能正確接收到服務層計算出的 `computed_status`。
-
-- **[ ] 3.7.2 (前端 UI): 呈現「協作狀態」**
-    - **目標**: 在專案列表頁面 (`enduser-ui-fe`)，用不同的顏色或圖示，清晰地展示每個專案的 `computed_status`，例如「待人類審核」顯示黃色警告圖示，「AI 執行中」顯示藍色齒輪圖示。
-
-- **[ ] 3.7.3 (後端通知): 實作「狀態向上影響」**
-    - **目標**: 當任務狀態的變更（例如，從 `doing` 變為 `review`）觸發專案 `computed_status` 改變時，後端應能透過 Socket.IO 向前端即時發送 `project_updated` 事件，確保 UI 能自動刷新，無需使用者手動操作。
+**目標**: 將產品的核心價值「人機協作」具象化為產品功能，並將近期學到的「以人為本」的開發流程，固化為專案的標準作業程序 (SOP)。
 
 ---
 
-#### **第二部分：固化「以人為本」的資料庫遷移流程 (Process: Solidify "Human-Centric" DB Migration)**
-*(此部分基於您對問題三、四的選擇：B, A)*
+#### **第一部分：體現「人機協作」的專案狀態 (基於輪詢架構)**
+
+- **[ ] 3.7.1 (後端 API): 實作向下相容的「動態計算狀態」**
+    - **目標**: 修改 `GET /projects` API，使其**可選地**回傳 `computed_status` 欄位，確保對 `archon-ui-main` 無任何破壞性影響。
+    - **計畫**:
+        1.  修改 `GET /projects` 端點，增加一個查詢參數 `include_computed_status: bool = False`。
+        2.  **僅當** `include_computed_status` 為 `True` 時，才在 `ProjectService` 中執行批次查詢與計算邏輯，並將 `computed_status` 欄位附加到回傳的專案物件上。
+        3.  預設情況下 (`False`)，API 回傳的資料結構與目前完全相同，保證 `archon-ui-main` 的穩定。
+
+- **[ ] 3.7.2 (前端 UI): `enduser-ui-fe` 請求並呈現「協作狀態」**
+    - **目標**: 讓 `enduser-ui-fe` 使用新的 API 功能，並在 UI 上呈現。
+    - **計畫**:
+        1.  修改 `enduser-ui-fe` 的 API 呼叫，在請求 `GET /projects` 時，附加上 `?include_computed_status=true` 參數。
+        2.  在 `DashboardPage.tsx` 中，根據回傳的 `computed_status` 欄位，顯示不同的顏色或圖示。
+
+- **[ ] 3.7.3 (前端 UI): 遵循既有輪詢 (Polling) 架構**
+    - **目標**: 讓專案狀態能在任務更新後刷新，同時完全尊重專案的既有架構。
+    - **計畫**: 本任務**不做任何事**。我們將遵循 `task_service.py` 中「任務更新由輪詢處理」的既定事實。`computed_status` 的更新將會在前端下一次輪詢 `/projects` 端點時自然體現。
+
+---
+
+#### **第二部分：固化「以人為本」的資料庫遷移流程**
 
 - **[ ] 3.7.4 (基礎建設): 建立遷移紀錄表**
-    - **目標**: 建立一個名為 `schema_migrations` 的表，用於追蹤已執行的資料庫遷移腳本。
-    - **產出**: 一個新的遷移腳本 `migration/002_create_schema_migrations_table.sql`。
+    - **目標**: 建立 `schema_migrations` 表以追蹤已執行的遷移。
+    - **計畫**: 建立 `migration/002_create_schema_migrations_table.sql`。
 
-- **[ ] 3.7.5 (模式建立): 將既有腳本「冪等化」**
-    - **目標**: 重構 `001_add_due_date_to_tasks.sql` 和 `seed_blog_posts.sql`，使其符合冪等性原則，並為未來的遷移腳本建立一個可供複製的「安全樣板」。
-    - **實作**: 在腳本中使用 `IF NOT EXISTS` 或 `DROP ... IF EXISTS; CREATE ...;` 等模式。
+- **[ ] 3.7.5 (模式建立): 將既有腳本「冪等化」並註冊版本**
+    - **目標**: 遵循 `CONTRIBUTING_tw.md` 附錄 A (2025-09-21) 的歷史教訓，確保遷移腳本的穩定性。
+    - **計畫**: 重構 `001_add_due_date_to_tasks.sql`，使用 `ADD COLUMN IF NOT EXISTS`，並在結尾插入版本紀錄。
 
-- **[ ] 3.7.6 (文件化): 更新貢獻指南 (SOP)**
-    - **目標**: 將新的、更安全的遷移流程，明文寫入 `CONTRIBUTING_tw.md`，取代舊的 `4.2` 節。
-    - **產出 (待寫入 `CONTRIBUTING_tw.md` 的全新 `4.2` 節內容)**:
-        '''markdown
-        ### 4.2 資料庫遷移標準作業流程 (SOP)
-
-        **目標**: 安全、可追蹤地將資料庫結構變更應用到任何環境。
-
-        **核心原則**:
-        1.  **冪等性**: 所有遷移腳本都必須是「可重複執行的 (idempotent)」。
-        2.  **可追蹤性**: 所有執行過的遷移都必須被記錄在 `schema_migrations` 表中。
-        3.  **不可變性**: 一旦一個遷移腳本被合併並在生產環境執行過，就**永遠不應**再修改它。若要撤銷，應建立一個新的遷移腳本。
-
-        **執行步驟**:
-
-        1.  **建立新腳本**:
-            - 在 `migration/` 目錄下，建立一個新的 SQL 檔案。
-            - 命名必須遵循 `[三位數版本號]_[描述性名稱].sql` 的格式，例如 `002_add_user_roles.sql`。版本號必須是遞增的。
-
-        2.  **撰寫冪等化 SQL**:
-            - 使用 `CREATE TABLE IF NOT EXISTS ...`。
-            - 使用 `ALTER TABLE ... ADD COLUMN IF NOT EXISTS ...`。
-            - 對於不支援 `IF EXISTS` 的物件 (如 `POLICY`, `TRIGGER`)，使用 `DROP ... IF EXISTS; CREATE ...;` 的模式。
-
-        3.  **註冊遷移版本**:
-            - 在您的 SQL 腳本的**最後**，必須加上一行 `INSERT INTO public.schema_migrations (version) VALUES (\'[您的版本號]\');`。
-            - 例如，在 `002_add_user_roles.sql` 的結尾，必須是 `INSERT INTO public.schema_migrations (version) VALUES (\'002\');`。
-
-        4.  **本地驗證**:
-            - **場景一 (乾淨資料庫)**: 執行 `make db-reset`，然後手動依序執行所有遷移腳本，確認無誤。
-            - **場景二 (重複執行)**: 再次執行您的新腳本，確認它因為冪等性而沒有產生任何錯誤。
-
-        5.  **部署流程**:
-            - 在部署時，部署腳本或手動操作者，應先查詢 `schema_migrations` 表，然後只執行那些版本號不存在於表中的 `migration/*.sql` 檔案。
-        '''
+- **[ ] 3.7.6 (文件化): 將新SOP寫入貢獻指南**
+    - **目標**: 將新的、更安全的遷移流程，明文寫入 `CONTRIBUTING_tw.md`。
+    - **計畫**: 使用 `replace` 工具，將 `TODO.md` 中已為您草擬好的新版 `4.2` 節，覆寫到 `CONTRIBUTING_tw.md`。
 
 ---
 
