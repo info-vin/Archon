@@ -118,7 +118,8 @@ async def list_assignable_users(x_user_role: str | None = Header(None, alias="X-
 async def list_projects(
     response: Response,
     include_content: bool = True,
-    if_none_match: str | None = Header(None)
+    include_computed_status: bool = False,
+    if_none_match: str | None = Header(None),
 ):
     """
     List all projects.
@@ -126,13 +127,20 @@ async def list_projects(
     Args:
         include_content: If True (default), returns full project content.
                         If False, returns lightweight metadata with statistics.
+        include_computed_status: If True, computes and includes project status based on tasks.
     """
     try:
-        logfire.debug(f"Listing all projects | include_content={include_content}")
+        logfire.debug(
+            f"Listing all projects | include_content={include_content} "
+            f"| include_computed_status={include_computed_status}"
+        )
 
-        # Use ProjectService to get projects with include_content parameter
+        # Use ProjectService to get projects
         project_service = ProjectService()
-        success, result = project_service.list_projects(include_content=include_content)
+        success, result = project_service.list_projects(
+            include_content=include_content,
+            include_computed_status=include_computed_status,
+        )
 
         if not success:
             raise HTTPException(status_code=500, detail=result)

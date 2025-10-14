@@ -360,9 +360,13 @@ const supabaseApi = {
     return data as Task[];
   },
   async getProjects(): Promise<Project[]> {
-    const { data, error } = await supabase!.from('archon_projects').select('*');
-    if (error) throw new Error(error.message);
-    return data as Project[];
+    const response = await fetch('/api/projects?include_computed_status=true');
+    if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Failed to fetch projects.');
+    }
+    const data = await response.json();
+    return data.projects as Project[];
   },
   async createProject(projectData: NewProjectData): Promise<{ project: Project }> {
     const response = await fetch('/api/projects', {

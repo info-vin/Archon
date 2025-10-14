@@ -61,7 +61,7 @@ def test_projects_endpoint_optimization(mock_project_service, mock_source_servic
     when requested.
     """
     # Arrange: Mock the ProjectService to return different data based on `include_content`.
-    def list_projects_mock(include_content=True):
+    def list_projects_mock(include_content=True, include_computed_status=False):
         if include_content:
             return (True, {"projects": MOCK_PROJECTS_DATA})
         else:
