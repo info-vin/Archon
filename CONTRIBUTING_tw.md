@@ -112,6 +112,17 @@
     2.  **首次設定**: 若 `schema_migrations` 表不存在，請先執行 `migration/002_create_schema_migrations_table.sql` 以建立遷移紀錄表。
     3.  **依序執行**: 依序手動執行所有本次部署涉及的**新**遷移腳本。由於冪等性與版本註冊，重複執行舊腳本是安全的，但為了清晰起見，建議只執行新的。
 
+    **本地開發首次設定SOP (從零開始)**:
+    當您需要在本地建立一個全新的、乾淨的資料庫時，請遵循此流程。**此流程會刪除所有資料**。
+    1.  登入 Supabase 儀表板並進入 **SQL Editor**。
+    2.  將下列腳本的內容，**依序**複製貼上並執行：
+        1.  `migration/RESET_DB.sql` (清空所有舊資料)
+        2.  `migration/000_unified_schema.sql` (建立基礎結構)
+        3.  `migration/001_add_due_date_to_tasks.sql` (追加欄位更新)
+        4.  `migration/002_create_schema_migrations_table.sql` (建立版本追蹤表)
+        5.  `migration/seed_mock_data.sql` (填充核心假資料)
+        6.  `migration/seed_blog_posts.sql` (填充部落格假資料)
+
 3.  **階段三：執行部署**
     1.  確認 Render 儀表板監控的是正確的 `feature/...` 分支。
     2.  將本地變更推送到 GitHub: `git push origin <your-branch>`
