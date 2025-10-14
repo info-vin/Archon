@@ -164,20 +164,20 @@
 
 #### **第一部分：體現「人機協作」的專案狀態 (基於輪詢架構)**
 
-- **[ ] 3.7.1 (後端 API): 實作向下相容的「動態計算狀態」**
+- **[x] 3.7.1 (後端 API): 實作向下相容的「動態計算狀態」**
     - **目標**: 修改 `GET /projects` API，使其**可選地**回傳 `computed_status` 欄位，確保對 `archon-ui-main` 無任何破壞性影響。
     - **計畫**:
         1.  修改 `GET /projects` 端點，增加一個查詢參數 `include_computed_status: bool = False`。
         2.  **僅當** `include_computed_status` 為 `True` 時，才在 `ProjectService` 中執行批次查詢與計算邏輯，並將 `computed_status` 欄位附加到回傳的專案物件上。
         3.  預設情況下 (`False`)，API 回傳的資料結構與目前完全相同，保證 `archon-ui-main` 的穩定。
 
-- **[ ] 3.7.2 (前端 UI): `enduser-ui-fe` 請求並呈現「協作狀態」**
+- **[x] 3.7.2 (前端 UI): `enduser-ui-fe` 請求並呈現「協作狀態」**
     - **目標**: 讓 `enduser-ui-fe` 使用新的 API 功能，並在 UI 上呈現。
     - **計畫**:
         1.  修改 `enduser-ui-fe` 的 API 呼叫，在請求 `GET /projects` 時，附加上 `?include_computed_status=true` 參數。
         2.  在 `DashboardPage.tsx` 中，根據回傳的 `computed_status` 欄位，顯示不同的顏色或圖示。
 
-- **[ ] 3.7.3 (前端 UI): 遵循既有輪詢 (Polling) 架構**
+- **[x] 3.7.3 (前端 UI): 遵循既有輪詢 (Polling) 架構**
     - **目標**: 讓專案狀態能在任務更新後刷新，同時完全尊重專案的既有架構。
     - **計畫**: 本任務**不做任何事**。我們將遵循 `task_service.py` 中「任務更新由輪詢處理」的既定事實。`computed_status` 的更新將會在前端下一次輪詢 `/projects` 端點時自然體現。
 
@@ -185,15 +185,15 @@
 
 #### **第二部分：固化「以人為本」的資料庫遷移流程**
 
-- **[ ] 3.7.4 (基礎建設): 建立遷移紀錄表**
+- **[x] 3.7.4 (基礎建設): 建立遷移紀錄表**
     - **目標**: 建立 `schema_migrations` 表以追蹤已執行的遷移。
     - **計畫**: 建立 `migration/002_create_schema_migrations_table.sql`。
 
-- **[ ] 3.7.5 (模式建立): 將既有腳本「冪等化」並註冊版本**
+- **[x] 3.7.5 (模式建立): 將既有腳本「冪等化」並註冊版本**
     - **目標**: 遵循 `CONTRIBUTING_tw.md` 附錄 A (2025-09-21) 的歷史教訓，確保遷移腳本的穩定性。
     - **計畫**: 重構 `001_add_due_date_to_tasks.sql`，使用 `ADD COLUMN IF NOT EXISTS`，並在結尾插入版本紀錄。
 
-- **[ ] 3.7.6 (文件化): 將新SOP寫入貢獻指南**
+- **[x] 3.7.6 (文件化): 將新SOP寫入貢獻指南**
     - **目標**: 將新的、更安全的遷移流程，明文寫入 `CONTRIBUTING_tw.md`。
     - **計畫**: 使用 `replace` 工具，將 `TODO.md` 中已為您草擬好的新版 `4.2` 節，覆寫到 `CONTRIBUTING_tw.md`。
 

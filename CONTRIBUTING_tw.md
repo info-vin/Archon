@@ -89,10 +89,28 @@
     2.  執行完整測試: `make test`
     3.  執行 Lint 檢查: `make lint-be`
 
-2.  **階段二：資料庫遷移 (關鍵手動步驟)**
+2.  **階段二：資料庫遷移 (Database Migration) - v2 (Tracked)**
+
+    此流程的最終目標是安全、可追蹤地更新資料庫結構。
+
+    **核心原則**:
+    *   **冪等性**: 所有遷移腳本都必須是冪等的 (`IF NOT EXISTS`)。
+    *   **版本註冊**: 每個腳本都必須在執行成功後，將自己的版本號註冊到 `schema_migrations` 表中。
+
+    **開發新遷移腳本的流程**:
+    1.  **建立檔案**: 建立一個新的 SQL 檔案，並使用下一個可用的數字作為前綴 (例如 `003_add_new_feature.sql`)。
+    2.  **撰寫冪等 SQL**: 使用 `ALTER TABLE ... ADD COLUMN IF NOT EXISTS ...` 或 `CREATE TABLE IF NOT EXISTS ...` 等語法。
+    3.  **註冊版本**: 在腳本的結尾，加上註冊指令：
+        ```sql
+        -- 註冊此遷移腳本的版本
+        INSERT INTO schema_migrations (version) VALUES ('003_add_new_feature') ON CONFLICT (version) DO NOTHING;
+        ```
+        *(請將 `'003_add_new_feature'` 替換為不含 `.sql` 副檔名的檔名)*
+
+    **執行遷移的SOP (部署時)**:
     1.  登入 Supabase 儀表板並進入 **SQL Editor**。
-    2.  **（可選）** 若非全新資料庫，可執行 `migration/RESET_DB.sql` 清空資料庫 (**警告：此操作會刪除所有資料**)。
-    3.  **依序執行**所有本次部署涉及的新遷移腳本 (如 `000_unified_schema.sql`, `001_add_due_date_to_tasks.sql` 等)。
+    2.  **首次設定**: 若 `schema_migrations` 表不存在，請先執行 `migration/002_create_schema_migrations_table.sql` 以建立遷移紀錄表。
+    3.  **依序執行**: 依序手動執行所有本次部署涉及的**新**遷移腳本。由於冪等性與版本註冊，重複執行舊腳本是安全的，但為了清晰起見，建議只執行新的。
 
 3.  **階段三：執行部署**
     1.  確認 Render 儀表板監控的是正確的 `feature/...` 分支。
