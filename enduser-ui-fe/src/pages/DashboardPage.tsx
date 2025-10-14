@@ -35,6 +35,18 @@ const statusColors: { [key in TaskStatus]: string } = {
   [TaskStatus.DONE]: 'bg-green-500',
 };
 
+const projectStatusColors: { [key: string]: string } = {
+  not_started: 'bg-gray-400',
+  in_progress: 'bg-blue-500',
+  completed: 'bg-green-500',
+};
+
+const projectStatusIndicator: { [key: string]: string } = {
+  not_started: '○',
+  in_progress: '●',
+  completed: '✔',
+};
+
 const DashboardPage: React.FC = () => {
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -147,7 +159,10 @@ const DashboardPage: React.FC = () => {
             >
                 <option value="all">All Projects</option>
                 {projects.map(project => (
-                    <option key={project.id} value={project.id}>{project.title}</option>
+                    <option key={project.id} value={project.id}>
+                        {project.computed_status ? `${projectStatusIndicator[project.computed_status]} ` : ''}
+                        {project.title}
+                    </option>
                 ))}
             </select>
           </div>

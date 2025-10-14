@@ -39,6 +39,7 @@ export interface Project {
   description: string;
   status: 'planning' | 'active' | 'completed' | 'on_hold';
   projectManagerId: string;
+  computed_status?: 'not_started' | 'in_progress' | 'completed' | null;
 }
 
 export interface ProjectAssignment {

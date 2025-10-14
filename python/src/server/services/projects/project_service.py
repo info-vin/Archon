@@ -13,6 +13,7 @@ from typing import Any
 from src.server.utils import get_supabase_client
 
 from ...config.logfire_config import get_logger
+from .task_service import TaskService
 
 logger = get_logger(__name__)
 
@@ -23,6 +24,7 @@ class ProjectService:
     def __init__(self, supabase_client=None):
         """Initialize with optional supabase client"""
         self.supabase_client = supabase_client or get_supabase_client()
+        self.task_service = TaskService(self.supabase_client)
 
     def create_project(self, title: str, github_repo: str = None) -> tuple[bool, dict[str, Any]]:
         """
@@ -73,73 +75,84 @@ class ProjectService:
             logger.error(f"Error creating project: {e}")
             return False, {"error": f"Database error: {str(e)}"}
 
-    def list_projects(self, include_content: bool = True) -> tuple[bool, dict[str, Any]]:
+    def _compute_project_status(self, project_id: str, task_counts: dict) -> str:
+        """Helper function to compute project status from task counts."""
+        counts = task_counts.get(project_id, {"todo": 0, "doing": 0, "done": 0})
+        total_tasks = counts["todo"] + counts["doing"] + counts["done"]
+
+        if counts["doing"] > 0:
+            return "in_progress"
+        if total_tasks > 0 and counts["todo"] == 0 and counts["doing"] == 0:
+            return "completed"
+        return "not_started"
+
+    def list_projects(
+        self, include_content: bool = True, include_computed_status: bool = False
+    ) -> tuple[bool, dict[str, Any]]:
         """
         List all projects.
 
         Args:
             include_content: If True (default), includes docs, features, data fields.
                            If False, returns lightweight metadata only with counts.
+            include_computed_status: If True, computes and includes project status.
 
         Returns:
             Tuple of (success, result_dict)
         """
         try:
-            if include_content:
-                # Current behavior - maintain backward compatibility
-                response = (
-                    self.supabase_client.table("archon_projects")
-                    .select("*")
-                    .order("created_at", desc=True)
-                    .execute()
-                )
+            # Always fetch all fields for simplicity, as we might need them for stats or status
+            response = (
+                self.supabase_client.table("archon_projects")
+                .select("*")
+                .order("created_at", desc=True)
+                .execute()
+            )
 
-                projects = []
-                for project in response.data:
-                    projects.append({
-                        "id": project["id"],
-                        "title": project["title"],
-                        "github_repo": project.get("github_repo"),
-                        "created_at": project["created_at"],
-                        "updated_at": project["updated_at"],
-                        "pinned": project.get("pinned", False),
-                        "description": project.get("description", ""),
-                        "docs": project.get("docs", []),
-                        "features": project.get("features", []),
-                        "data": project.get("data", []),
+            if not response.data:
+                return True, {"projects": [], "total_count": 0}
+
+            # Get task counts if needed for computed status
+            task_counts = {}
+            if include_computed_status:
+                success, counts = self.task_service.get_all_project_task_counts()
+                if success:
+                    task_counts = counts
+                else:
+                    logger.warning("Failed to retrieve task counts for computing project status.")
+
+            projects = []
+            for project_data in response.data:
+                project = {
+                    "id": project_data["id"],
+                    "title": project_data["title"],
+                    "github_repo": project_data.get("github_repo"),
+                    "created_at": project_data["created_at"],
+                    "updated_at": project_data["updated_at"],
+                    "pinned": project_data.get("pinned", False),
+                    "description": project_data.get("description", ""),
+                }
+
+                if include_content:
+                    project.update({
+                        "docs": project_data.get("docs", []),
+                        "features": project_data.get("features", []),
+                        "data": project_data.get("data", []),
                     })
-            else:
-                # Lightweight response for MCP - fetch all data but only return metadata + stats
-                # FIXED: N+1 query problem - now using single query
-                response = (
-                    self.supabase_client.table("archon_projects")
-                    .select("*")  # Fetch all fields in single query
-                    .order("created_at", desc=True)
-                    .execute()
-                )
+                else:
+                    # Lightweight response with stats
+                    project["stats"] = {
+                        "docs_count": len(project_data.get("docs", [])),
+                        "features_count": len(project_data.get("features", [])),
+                        "has_data": bool(project_data.get("data", [])),
+                    }
 
-                projects = []
-                for project in response.data:
-                    # Calculate counts from fetched data (no additional queries)
-                    docs_count = len(project.get("docs", []))
-                    features_count = len(project.get("features", []))
-                    has_data = bool(project.get("data", []))
+                if include_computed_status:
+                    project["computed_status"] = self._compute_project_status(
+                        project["id"], task_counts
+                    )
 
-                    # Return only metadata + stats, excluding large JSONB fields
-                    projects.append({
-                        "id": project["id"],
-                        "title": project["title"],
-                        "github_repo": project.get("github_repo"),
-                        "created_at": project["created_at"],
-                        "updated_at": project["updated_at"],
-                        "pinned": project.get("pinned", False),
-                        "description": project.get("description", ""),
-                        "stats": {
-                            "docs_count": docs_count,
-                            "features_count": features_count,
-                            "has_data": has_data
-                        }
-                    })
+                projects.append(project)
 
             return True, {"projects": projects, "total_count": len(projects)}
 
