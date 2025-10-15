@@ -7,6 +7,24 @@
 
 ---
 
+### 本次會話總結與學習教訓 (2025-10-15): 透過程式碼與資料庫結構交叉驗證，確認問題根源
+
+- **核心任務**: 驗證使用者在 `GEMINI.md` 中對 `enduser-ui-fe` Blog 錯誤的診斷，並根據驗證結果修復問題。
+
+- **診斷與修復流程**:
+    1.  **使用者提供的診斷**: 使用者指出問題根源為後端 Pydantic 模型 `BlogPostResponse` 與資料庫 `blog_posts` 資料表的結構不一致。模型要求 `content` 和 `created_at` 欄位，但資料庫中缺少這兩個欄位。
+    2.  **第一步：驗證資料庫結構**: 我讀取了 `migration/000_unified_schema.sql` 檔案，確認 `blog_posts` 資料表的定義中確實缺少 `content` 和 `created_at` 欄位。
+    3.  **第二步：驗證 Pydantic 模型**: 我讀取了 `python/src/server/models/blog.py` 檔案，確認 `BlogPostResponse` 模型確實要求 `content` 和 `created_at` 欄位。
+    4.  **結論**: 交叉驗證的結果完全支持使用者的診斷。API 之所以回傳 `500 Internal Server Error`，正是因為從資料庫獲取的資料無法通過 Pydantic 模型的驗證。
+    5.  **修復執行**:
+        -   修改了 `migration/000_unified_schema.sql`，為 `blog_posts` 資料表新增了 `content`, `created_at`, `updated_at` 欄位，並加上了必要的觸發器。
+        -   更新了 `migration/seed_blog_posts.sql` 種子資料檔案，使其與新的資料表結構保持一致。
+
+- **關鍵學習**:
+    -   一個看似前端的問題（頁面無法顯示資料），其根本原因可能深藏於後端與資料庫的互動之中。
+    -   `fastapi.exceptions.ResponseValidationError` 是一個關鍵的錯誤訊息，它明確指向了資料從業務邏輯傳遞到客戶端前的最後一關——Pydantic 模型驗證失敗。
+    -   在處理這類問題時，必須同時審視「程式碼（模型定義）」和「資料庫（結構定義）」，將兩者視為一個不可分割的整體來進行診斷。
+
 ### 本次會話總結與學習教訓 (2025-10-15): 在系統性偵錯中釐清多重問題根源
 
 - **核心任務**: 執行對 Render 的部署，並解決部署後發現的多個前端與後端錯誤。

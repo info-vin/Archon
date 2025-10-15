@@ -789,11 +789,20 @@ CREATE TABLE IF NOT EXISTS blog_posts (
     id TEXT PRIMARY KEY,
     title TEXT NOT NULL,
     excerpt TEXT,
+    content TEXT NOT NULL, -- Added based on Pydantic model
     author_name TEXT,
     publish_date TIMESTAMPTZ,
-    image_url TEXT
+    image_url TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW(), -- Added based on Pydantic model
+    updated_at TIMESTAMPTZ DEFAULT NOW()  -- Added for consistency
 );
 ALTER TABLE blog_posts ENABLE ROW LEVEL SECURITY;
+
+-- Add trigger to automatically update updated_at timestamp
+CREATE OR REPLACE TRIGGER update_blog_posts_updated_at
+    BEFORE UPDATE ON blog_posts
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at_column();
 
 DROP POLICY IF EXISTS "Allow public read access to blog_posts" ON blog_posts;
 CREATE POLICY "Allow public read access to blog_posts" ON blog_posts
