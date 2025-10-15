@@ -789,9 +789,9 @@ CREATE TABLE IF NOT EXISTS blog_posts (
     id TEXT PRIMARY KEY,
     title TEXT NOT NULL,
     excerpt TEXT,
-    "authorName" TEXT,
-    "publishDate" TIMESTAMPTZ,
-    "imageUrl" TEXT
+    author_name TEXT,
+    publish_date TIMESTAMPTZ,
+    image_url TEXT
 );
 ALTER TABLE blog_posts ENABLE ROW LEVEL SECURITY;
 
