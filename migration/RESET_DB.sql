@@ -176,6 +176,7 @@ BEGIN
     DROP TABLE IF EXISTS archon_settings CASCADE;
     
     -- Legacy tables (without archon_ prefix) - for migration purposes
+    DROP TABLE IF EXISTS blog_posts CASCADE;
     DROP TABLE IF EXISTS document_versions CASCADE;
     DROP TABLE IF EXISTS project_sources CASCADE;
     DROP TABLE IF EXISTS tasks CASCADE;
