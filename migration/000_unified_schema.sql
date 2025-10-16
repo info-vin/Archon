@@ -565,6 +565,9 @@ CREATE TABLE IF NOT EXISTS archon_tasks (
   archived BOOLEAN DEFAULT false,
   archived_at TIMESTAMPTZ NULL,
   archived_by TEXT NULL,
+  due_date TIMESTAMPTZ,
+  priority TEXT,
+  completed_at TIMESTAMPTZ NULL,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );

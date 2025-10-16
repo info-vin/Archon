@@ -326,6 +326,12 @@ class TaskService:
             Tuple of (success, result_dict)
         """
         try:
+            # Get current task state to check for status change
+            success, result = self.get_task(task_id)
+            if not success:
+                return False, result
+            current_task = result["task"]
+
             # Build update data
             update_data = {"updated_at": datetime.now().isoformat()}
 
@@ -337,10 +343,18 @@ class TaskService:
                 update_data["description"] = update_fields["description"]
 
             if "status" in update_fields:
-                is_valid, error_msg = self.validate_status(update_fields["status"])
+                new_status = update_fields["status"]
+                is_valid, error_msg = self.validate_status(new_status)
                 if not is_valid:
                     return False, {"error": error_msg}
-                update_data["status"] = update_fields["status"]
+                update_data["status"] = new_status
+
+                # If task is being marked as 'done', set completed_at timestamp
+                if new_status == "done" and current_task.get("status") != "done":
+                    update_data["completed_at"] = datetime.now().isoformat()
+                # If task is being moved from 'done' to another status, clear completed_at
+                elif new_status != "done" and current_task.get("status") == "done":
+                    update_data["completed_at"] = None
 
             if "assignee" in update_fields:
                 is_valid, error_msg = self.validate_assignee(update_fields["assignee"])
@@ -359,6 +373,12 @@ class TaskService:
 
             if "due_date" in update_fields:
                 update_data["due_date"] = update_fields["due_date"]
+
+            if "priority" in update_fields:
+                update_data["priority"] = update_fields["priority"]
+
+            if "completed_at" in update_fields:
+                update_data["completed_at"] = update_fields["completed_at"]
 
             # Update task
             response = (

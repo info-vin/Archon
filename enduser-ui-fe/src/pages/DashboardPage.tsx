@@ -18,7 +18,7 @@ import {
 } from 'd3';
 
 type ViewMode = 'list' | 'table' | 'kanban' | 'gantt';
-type SortableTaskKeys = keyof Task;
+type SortableTaskKeys = 'title' | 'due_date' | 'priority' | 'status' | 'completed_at' | 'created_at';
 type SortDirection = 'ascending' | 'descending';
 
 const priorityColors: { [key in TaskPriority]: string } = {
@@ -120,11 +120,17 @@ const DashboardPage: React.FC = () => {
     return projects.find(p => p.id === selectedProjectId);
   }, [projects, selectedProjectId]);
 
-  const updateTaskStatus = useCallback((taskId: string, newStatus: TaskStatus) => {
-    setTasks(prevTasks => prevTasks.map(task =>
-      task.id === taskId ? { ...task, status: newStatus } : task
-    ));
-    // In a real app, you would also call api.updateTask here
+  const updateTaskStatus = useCallback(async (taskId: string, newStatus: TaskStatus) => {
+    try {
+      const updatedTask = await api.updateTask(taskId, { status: newStatus });
+      setTasks(prevTasks => prevTasks.map(task =>
+        task.id === taskId ? updatedTask : task
+      ));
+    } catch (error: any) {
+      console.error("Failed to update task status:", error);
+      alert(`Failed to update task status: ${error.message}`);
+      // Optional: Revert optimistic update if you were doing one
+    }
   }, []);
 
   const handleTaskCreated = (newTask: Task) => {
@@ -199,6 +205,7 @@ const DashboardPage: React.FC = () => {
                     <option value="due_date">Sort by Due Date</option>
                     <option value="priority">Sort by Priority</option>
                     <option value="status">Sort by Status</option>
+                    <option value="completed_at">Sort by Completed Date</option>
                 </select>
             </div>
         )}
@@ -309,6 +316,7 @@ const TableView: React.FC<{ tasks: Task[], employees: AssignableUser[], requestS
                     <SortableHeader columnKey="status" title="Status" />
                     <SortableHeader columnKey="priority" title="Priority" />
                     <SortableHeader columnKey="due_date" title="Due Date" />
+                    <SortableHeader columnKey="completed_at" title="Completed At" />
                     <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Attachments</th>
                 </tr>
             </thead>
@@ -334,6 +342,9 @@ const TableView: React.FC<{ tasks: Task[], employees: AssignableUser[], requestS
                                  <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full text-white ${priorityColors[task.priority]}`}>{task.priority}</span>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">{new Date(task.due_date).toLocaleDateString()}</td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
+                                {task.completed_at ? new Date(task.completed_at).toLocaleDateString() : 'N/A'}
+                            </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm">
                                 {task.attachments && task.attachments.length > 0 ? (
                                     <div className="flex flex-col gap-1">
