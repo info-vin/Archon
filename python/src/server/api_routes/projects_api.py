@@ -34,6 +34,8 @@ from ..services.projects import (
 )
 from ..services.projects.document_service import DocumentService
 from ..services.projects.versioning_service import VersioningService
+from ..services import ProfileService
+from ..services.rbac_service import RBACService
 
 # Using HTTP polling for real-time updates
 
@@ -71,15 +73,73 @@ class CreateTaskRequest(BaseModel):
     status: str | None = "todo"
     assignee: str | None = "User"
     task_order: int | None = 0
-    priority: str | None = "medium"
     feature: str | None = None
+    due_date: datetime | None = None
+
+
+class Attachment(BaseModel):
+    filename: str
+    url: str
+
+
+class UpdateTaskRequest(BaseModel):
+    title: str | None = None
+    description: str | None = None
+    status: str | None = None
+    assignee: str | None = None
+    task_order: int | None = None
+    feature: str | None = None
+    attachments: list[Attachment] | None = None
+    due_date: datetime | None = None
+
+
+class AssignableUser(BaseModel):
+    id: str
+    name: str
+    role: str
+
+
+@router.get("/assignable-users", response_model=list[AssignableUser])
+async def list_assignable_users(x_user_role: str | None = Header(None, alias="X-User-Role")):
+    """
+    List users that can be assigned to a task based on the current user's role.
+    """
+    # TODO(Phase 2.9): Remove hardcoded role. See TODO.md.
+    current_user_role = x_user_role or "User"
+
+    try:
+        logfire.info(f"Listing assignable users for role: {current_user_role}")
+        profile_service = ProfileService()
+        rbac_service = RBACService()
+
+        # Get all profiles via ProfileService
+        success, all_users = profile_service.list_all_users()
+        if not success:
+            # The service already logs the error, so we just return a generic failure
+            raise HTTPException(status_code=500, detail={"error": "Failed to retrieve profiles"})
+
+        assignable_users = []
+        for user in all_users:
+            user_role = user.get("role")
+            if user_role and rbac_service.has_permission_to_assign(current_user_role, user_role):
+                assignable_users.append(
+                    AssignableUser(id=user["id"], name=user["name"], role=user["role"])
+                )
+
+        logfire.info(f"Found {len(assignable_users)} assignable users for role {current_user_role}")
+        return assignable_users
+
+    except Exception as e:
+        logfire.error(f"Failed to list assignable users: {e}")
+        raise HTTPException(status_code=500, detail={"error": "Failed to retrieve assignable users"}) from e
 
 
 @router.get("/projects")
 async def list_projects(
     response: Response,
     include_content: bool = True,
-    if_none_match: str | None = Header(None)
+    include_computed_status: bool = False,
+    if_none_match: str | None = Header(None),
 ):
     """
     List all projects.
@@ -87,13 +147,20 @@ async def list_projects(
     Args:
         include_content: If True (default), returns full project content.
                         If False, returns lightweight metadata with statistics.
+        include_computed_status: If True, computes and includes project status based on tasks.
     """
     try:
-        logfire.debug(f"Listing all projects | include_content={include_content}")
+        logfire.debug(
+            f"Listing all projects | include_content={include_content} "
+            f"| include_computed_status={include_computed_status}"
+        )
 
-        # Use ProjectService to get projects with include_content parameter
+        # Use ProjectService to get projects
         project_service = ProjectService()
-        success, result = project_service.list_projects(include_content=include_content)
+        success, result = project_service.list_projects(
+            include_content=include_content,
+            include_computed_status=include_computed_status,
+        )
 
         if not success:
             raise HTTPException(status_code=500, detail=result)
@@ -211,67 +278,7 @@ async def create_project(request: CreateProjectRequest):
 
 
 
-@router.get("/projects/health")
-async def projects_health():
-    """Health check for projects API and database schema validation."""
-    try:
-        logfire.info("Projects health check requested")
-        supabase_client = get_supabase_client()
 
-        # Check if projects table exists by testing ProjectService
-        try:
-            project_service = ProjectService(supabase_client)
-            # Try to list projects with limit 1 to test table access
-            success, _ = project_service.list_projects()
-            projects_table_exists = success
-            if success:
-                logfire.info("Projects table detected successfully")
-            else:
-                logfire.warning("Projects table access failed")
-        except Exception as e:
-            projects_table_exists = False
-            logfire.warning(f"Projects table not found | error={str(e)}")
-
-        # Check if tasks table exists by testing TaskService
-        try:
-            task_service = TaskService(supabase_client)
-            # Try to list tasks with limit 1 to test table access
-            success, _ = task_service.list_tasks(include_closed=True)
-            tasks_table_exists = success
-            if success:
-                logfire.info("Tasks table detected successfully")
-            else:
-                logfire.warning("Tasks table access failed")
-        except Exception as e:
-            tasks_table_exists = False
-            logfire.warning(f"Tasks table not found | error={str(e)}")
-
-        schema_valid = projects_table_exists and tasks_table_exists
-
-        result = {
-            "status": "healthy" if schema_valid else "schema_missing",
-            "service": "projects",
-            "schema": {
-                "projects_table": projects_table_exists,
-                "tasks_table": tasks_table_exists,
-                "valid": schema_valid,
-            },
-        }
-
-        logfire.info(
-            f"Projects health check completed | status={result['status']} | schema_valid={schema_valid}"
-        )
-
-        return result
-
-    except Exception as e:
-        logfire.error(f"Projects health check failed | error={str(e)}")
-        return {
-            "status": "error",
-            "service": "projects",
-            "error": str(e),
-            "schema": {"projects_table": False, "tasks_table": False, "valid": False},
-        }
 
 
 @router.get("/projects/task-counts")
@@ -655,9 +662,32 @@ async def list_project_tasks(
 
 
 @router.post("/tasks")
-async def create_task(request: CreateTaskRequest):
+async def create_task(request: CreateTaskRequest, x_user_role: str | None = Header(None, alias="X-User-Role")):
     """Create a new task with automatic reordering."""
     try:
+        # RBAC Validation
+        if request.assignee and request.assignee != "User":
+            # TODO(Phase 2.9): Remove hardcoded role. See TODO.md.
+            current_user_role = x_user_role or "User"
+            profile_service = ProfileService()
+            rbac_service = RBACService()
+            success, assignee_role = profile_service.get_user_role(request.assignee)
+
+            if not success:
+                # Service failed, raise an internal server error
+                raise HTTPException(status_code=500, detail={"error": "Failed to verify assignee role"})
+
+            if assignee_role:
+                if not rbac_service.has_permission_to_assign(current_user_role, assignee_role):
+                    raise HTTPException(status_code=403, detail=f"As a {current_user_role}, you cannot assign tasks to a {assignee_role}.")
+            else:
+                agent_roles = {"Market Researcher", "Internal Knowledge Expert"}
+                if request.assignee in agent_roles:
+                    if not rbac_service.has_permission_to_assign(current_user_role, request.assignee):
+                        raise HTTPException(status_code=403, detail=f"As a {current_user_role}, you cannot assign tasks to a {request.assignee}.")
+                else:
+                    logfire.warning(f"Assignee '{request.assignee}' not found in profiles and is not a known agent role. Skipping permission check.")
+
         # Use TaskService to create the task
         task_service = TaskService()
         success, result = await task_service.create_task(
@@ -666,8 +696,8 @@ async def create_task(request: CreateTaskRequest):
             description=request.description or "",
             assignee=request.assignee or "User",
             task_order=request.task_order or 0,
-            priority=request.priority or "medium",
             feature=request.feature,
+            due_date=request.due_date,
         )
 
         if not success:
@@ -685,7 +715,7 @@ async def create_task(request: CreateTaskRequest):
         raise
     except Exception as e:
         logfire.error(f"Failed to create task | error={str(e)} | project_id={request.project_id}")
-        raise HTTPException(status_code=500, detail={"error": str(e)})
+        raise HTTPException(status_code=500, detail={"error": str(e)}) from e
 
 
 @router.get("/tasks")
@@ -837,9 +867,32 @@ class RestoreVersionRequest(BaseModel):
 
 
 @router.put("/tasks/{task_id}")
-async def update_task(task_id: str, request: UpdateTaskRequest):
+async def update_task(task_id: str, request: UpdateTaskRequest, x_user_role: str | None = Header(None, alias="X-User-Role")):
     """Update a task."""
     try:
+        # RBAC Validation
+        if request.assignee is not None:
+            # TODO(Phase 2.9): Remove hardcoded role. See TODO.md.
+            current_user_role = x_user_role or "User"
+            profile_service = ProfileService()
+            rbac_service = RBACService()
+            success, assignee_role = profile_service.get_user_role(request.assignee)
+
+            if not success:
+                # Service failed, raise an internal server error
+                raise HTTPException(status_code=500, detail={"error": "Failed to verify assignee role"})
+
+            if assignee_role:
+                if not rbac_service.has_permission_to_assign(current_user_role, assignee_role):
+                    raise HTTPException(status_code=403, detail=f"As a {current_user_role}, you cannot assign tasks to a {assignee_role}.")
+            else:
+                agent_roles = {"Market Researcher", "Internal Knowledge Expert"}
+                if request.assignee in agent_roles:
+                    if not rbac_service.has_permission_to_assign(current_user_role, request.assignee):
+                        raise HTTPException(status_code=403, detail=f"As a {current_user_role}, you cannot assign tasks to a {request.assignee}.")
+                else:
+                    logfire.warning(f"Assignee '{request.assignee}' not found in profiles and is not a known agent role. Skipping permission check.")
+
         # Build update fields dictionary
         update_fields = {}
         if request.title is not None:
@@ -852,10 +905,15 @@ async def update_task(task_id: str, request: UpdateTaskRequest):
             update_fields["assignee"] = request.assignee
         if request.task_order is not None:
             update_fields["task_order"] = request.task_order
-        if request.priority is not None:
-            update_fields["priority"] = request.priority
         if request.feature is not None:
             update_fields["feature"] = request.feature
+        if request.attachments is not None:
+            # Pydantic models must be converted to dicts for JSON serialization
+            update_fields["attachments"] = [
+                attachment.model_dump() for attachment in request.attachments
+            ]
+        if request.due_date is not None:
+            update_fields["due_date"] = request.due_date
 
         # Use TaskService to update the task
         task_service = TaskService()
@@ -879,7 +937,7 @@ async def update_task(task_id: str, request: UpdateTaskRequest):
         raise
     except Exception as e:
         logfire.error(f"Failed to update task | error={str(e)} | task_id={task_id}")
-        raise HTTPException(status_code=500, detail={"error": str(e)})
+        raise HTTPException(status_code=500, detail={"error": str(e)}) from e
 
 
 @router.delete("/tasks/{task_id}")
