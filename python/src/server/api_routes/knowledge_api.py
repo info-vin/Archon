@@ -13,30 +13,103 @@ import asyncio
 import json
 import uuid
 from datetime import datetime
-from urllib.parse import urlparse
 
-from fastapi import APIRouter, File, Form, HTTPException, UploadFile
+from fastapi import APIRouter, File, Form, Header, HTTPException, UploadFile
 from pydantic import BaseModel
-
-# Basic validation - simplified inline version
 
 # Import unified logging
 from ..config.logfire_config import get_logger, safe_logfire_error, safe_logfire_info
+from ..models.blog import BlogPostResponse, CreateBlogPostRequest, UpdateBlogPostRequest
+from ..services.blog_service import BlogService
 from ..services.crawler_manager import get_crawler
-from ..services.crawling import CrawlingService
-from ..services.credential_service import credential_service
-from ..services.embeddings.provider_error_adapters import ProviderErrorFactory
-from ..services.knowledge import DatabaseMetricsService, KnowledgeItemService, KnowledgeSummaryService
+from ..services.crawling import CrawlOrchestrationService
+from ..services.knowledge import DatabaseMetricsService, KnowledgeItemService
+from ..services.knowledge_service import KnowledgeService
+from ..services.rbac_service import RBACService
 from ..services.search.rag_service import RAGService
 from ..services.storage import DocumentStorageService
 from ..utils import get_supabase_client
 from ..utils.document_processing import extract_text_from_document
+from ..utils.progress.progress_tracker import ProgressTracker
 
 # Get logger for this module
 logger = get_logger(__name__)
 
 # Create router
 router = APIRouter(prefix="/api", tags=["knowledge"])
+
+
+# Blog Post Endpoints
+@router.get("/blogs", response_model=list[BlogPostResponse])
+async def list_blog_posts():
+    """List all blog posts."""
+    blog_service = BlogService()
+    success, result = await blog_service.list_posts()
+    if not success:
+        raise HTTPException(status_code=500, detail=result.get("error"))
+    return result.get("posts", [])
+
+@router.get("/blogs/{post_id}", response_model=BlogPostResponse)
+async def get_blog_post(post_id: str):
+    """Get a single blog post by ID."""
+    blog_service = BlogService()
+    success, result = await blog_service.get_post(post_id)
+    if not success:
+        raise HTTPException(status_code=404, detail=result.get("error"))
+    return result.get("post")
+
+@router.post("/blogs", response_model=BlogPostResponse)
+async def create_blog_post(
+    request: CreateBlogPostRequest,
+    x_user_role: str | None = Header(None, alias="X-User-Role")
+):
+    """Create a new blog post."""
+    rbac_service = RBACService()
+    current_user_role = x_user_role or "User"
+    if not rbac_service.can_manage_content(current_user_role):
+        raise HTTPException(status_code=403, detail="Forbidden: You do not have permission to create blog posts.")
+
+    blog_service = BlogService()
+    success, result = await blog_service.create_post(request.model_dump())
+    if not success:
+        raise HTTPException(status_code=500, detail=result.get("error"))
+    return result.get("post")
+
+@router.put("/blogs/{post_id}", response_model=BlogPostResponse)
+async def update_blog_post(
+    post_id: str,
+    request: UpdateBlogPostRequest,
+    x_user_role: str | None = Header(None, alias="X-User-Role")
+):
+    """Update an existing blog post."""
+    rbac_service = RBACService()
+    current_user_role = x_user_role or "User"
+    if not rbac_service.can_manage_content(current_user_role):
+        raise HTTPException(status_code=403, detail="Forbidden: You do not have permission to update blog posts.")
+
+    blog_service = BlogService()
+    update_data = request.model_dump(exclude_unset=True)
+    success, result = await blog_service.update_post(post_id, update_data)
+    if not success:
+        raise HTTPException(status_code=404, detail=result.get("error"))
+    return result.get("post")
+
+@router.delete("/blogs/{post_id}", status_code=204)
+async def delete_blog_post(
+    post_id: str,
+    x_user_role: str | None = Header(None, alias="X-User-Role")
+):
+    """Delete a blog post."""
+    rbac_service = RBACService()
+    current_user_role = x_user_role or "User"
+    if not rbac_service.can_manage_content(current_user_role):
+        raise HTTPException(status_code=403, detail="Forbidden: You do not have permission to delete blog posts.")
+
+    blog_service = BlogService()
+    success, result = await blog_service.delete_post(post_id)
+    if not success:
+        raise HTTPException(status_code=404, detail=result.get("error"))
+    return None
 
 
 # Create a semaphore to limit concurrent crawl OPERATIONS (not pages within a crawl)
@@ -55,92 +128,6 @@ crawl_semaphore = asyncio.Semaphore(CONCURRENT_CRAWL_LIMIT)
 
 # Track active async crawl tasks for cancellation support
 active_crawl_tasks: dict[str, asyncio.Task] = {}
-
-
-
-
-async def _validate_provider_api_key(provider: str = None) -> None:
-    """Validate LLM provider API key before starting operations."""
-    logger.info("🔑 Starting API key validation...")
-    
-    try:
-        # Basic provider validation
-        if not provider:
-            provider = "openai"
-        else:
-            # Simple provider validation
-            allowed_providers = {"openai", "ollama", "google", "openrouter", "anthropic", "grok"}
-            if provider not in allowed_providers:
-                raise HTTPException(
-                    status_code=400,
-                    detail={
-                        "error": "Invalid provider name",
-                        "message": f"Provider '{provider}' not supported",
-                        "error_type": "validation_error"
-                    }
-                )
-
-        # Basic sanitization for logging
-        safe_provider = provider[:20]  # Limit length
-        logger.info(f"🔑 Testing {safe_provider.title()} API key with minimal embedding request...")
-
-        try:
-            # Test API key with minimal embedding request using provider-scoped configuration
-            from ..services.embeddings.embedding_service import create_embedding
-
-            test_result = await create_embedding(text="test", provider=provider)
-
-            if not test_result:
-                logger.error(
-                    f"❌ {provider.title()} API key validation failed - no embedding returned"
-                )
-                raise HTTPException(
-                    status_code=401,
-                    detail={
-                        "error": f"Invalid {provider.title()} API key",
-                        "message": f"Please verify your {provider.title()} API key in Settings.",
-                        "error_type": "authentication_failed",
-                        "provider": provider,
-                    },
-                )
-        except Exception as e:
-            logger.error(
-                f"❌ {provider.title()} API key validation failed: {e}",
-                exc_info=True,
-            )
-            raise HTTPException(
-                status_code=401,
-                detail={
-                    "error": f"Invalid {provider.title()} API key",
-                    "message": f"Please verify your {provider.title()} API key in Settings. Error: {str(e)[:100]}",
-                    "error_type": "authentication_failed",
-                    "provider": provider,
-                },
-            )
-            
-        logger.info(f"✅ {provider.title()} API key validation successful")
-
-    except HTTPException:
-        # Re-raise our intended HTTP exceptions
-        logger.error("🚨 Re-raising HTTPException from validation")
-        raise
-    except Exception as e:
-        # Sanitize error before logging to prevent sensitive data exposure
-        error_str = str(e)
-        sanitized_error = ProviderErrorFactory.sanitize_provider_error(error_str, provider or "openai")
-        logger.error(f"❌ Caught exception during API key validation: {sanitized_error}")
-        
-        # Always fail for any exception during validation - better safe than sorry
-        logger.error("🚨 API key validation failed - blocking crawl operation")
-        raise HTTPException(
-            status_code=401,
-            detail={
-                "error": "Invalid API key",
-                "message": f"Please verify your {(provider or 'openai').title()} API key in Settings before starting a crawl.",
-                "error_type": "authentication_failed",
-                "provider": provider or "openai"
-            }
-        ) from None
 
 
 # Request Models
@@ -177,13 +164,12 @@ class RagQueryRequest(BaseModel):
     query: str
     source: str | None = None
     match_count: int = 5
-    return_mode: str = "chunks"  # "chunks" or "pages"
 
 
 @router.get("/crawl-progress/{progress_id}")
 async def get_crawl_progress(progress_id: str):
     """Get crawl progress for polling.
-    
+
     Returns the current state of a crawl operation.
     Frontend should poll this endpoint to track crawl progress.
     """
@@ -220,7 +206,7 @@ async def get_crawl_progress(progress_id: str):
         return response_data
     except Exception as e:
         safe_logfire_error(f"Failed to get crawl progress | error={str(e)} | progress_id={progress_id}")
-        raise HTTPException(status_code=500, detail={"error": str(e)})
+        raise HTTPException(status_code=500, detail={"error": str(e)}) from e
 
 
 @router.get("/knowledge-items/sources")
@@ -232,7 +218,7 @@ async def get_knowledge_sources():
         return []
     except Exception as e:
         safe_logfire_error(f"Failed to get knowledge sources | error={str(e)}")
-        raise HTTPException(status_code=500, detail={"error": str(e)})
+        raise HTTPException(status_code=500, detail={"error": str(e)}) from e
 
 
 @router.get("/knowledge-items")
@@ -252,38 +238,7 @@ async def get_knowledge_items(
         safe_logfire_error(
             f"Failed to get knowledge items | error={str(e)} | page={page} | per_page={per_page}"
         )
-        raise HTTPException(status_code=500, detail={"error": str(e)})
-
-
-@router.get("/knowledge-items/summary")
-async def get_knowledge_items_summary(
-    page: int = 1, per_page: int = 20, knowledge_type: str | None = None, search: str | None = None
-):
-    """
-    Get lightweight summaries of knowledge items.
-    
-    Returns minimal data optimized for frequent polling:
-    - Only counts, no actual document/code content
-    - Basic metadata for display
-    - Efficient batch queries
-    
-    Use this endpoint for card displays and frequent polling.
-    """
-    try:
-        # Input guards
-        page = max(1, page)
-        per_page = min(100, max(1, per_page))
-        service = KnowledgeSummaryService(get_supabase_client())
-        result = await service.get_summaries(
-            page=page, per_page=per_page, knowledge_type=knowledge_type, search=search
-        )
-        return result
-
-    except Exception as e:
-        safe_logfire_error(
-            f"Failed to get knowledge summaries | error={str(e)} | page={page} | per_page={per_page}"
-        )
-        raise HTTPException(status_code=500, detail={"error": str(e)})
+        raise HTTPException(status_code=500, detail={"error": str(e)}) from e
 
 
 @router.put("/knowledge-items/{source_id}")
@@ -308,7 +263,7 @@ async def update_knowledge_item(source_id: str, updates: dict):
         safe_logfire_error(
             f"Failed to update knowledge item | error={str(e)} | source_id={source_id}"
         )
-        raise HTTPException(status_code=500, detail={"error": str(e)})
+        raise HTTPException(status_code=500, detail={"error": str(e)}) from e
 
 
 @router.delete("/knowledge-items/{source_id}")
@@ -357,54 +312,19 @@ async def delete_knowledge_item(source_id: str):
         safe_logfire_error(
             f"Failed to delete knowledge item | error={str(e)} | source_id={source_id}"
         )
-        raise HTTPException(status_code=500, detail={"error": str(e)})
+        raise HTTPException(status_code=500, detail={"error": str(e)}) from e
 
 
 @router.get("/knowledge-items/{source_id}/chunks")
-async def get_knowledge_item_chunks(
-    source_id: str,
-    domain_filter: str | None = None,
-    limit: int = 20,
-    offset: int = 0
-):
-    """
-    Get document chunks for a specific knowledge item with pagination.
-    
-    Args:
-        source_id: The source ID
-        domain_filter: Optional domain filter for URLs
-        limit: Maximum number of chunks to return (default 20, max 100)
-        offset: Number of chunks to skip (for pagination)
-    
-    Returns:
-        Paginated chunks with metadata
-    """
+async def get_knowledge_item_chunks(source_id: str, domain_filter: str | None = None):
+    """Get all document chunks for a specific knowledge item with optional domain filtering."""
     try:
-        # Validate pagination parameters
-        limit = min(limit, 100)  # Cap at 100 to prevent excessive data transfer
-        limit = max(limit, 1)    # At least 1
-        offset = max(offset, 0)   # Can't be negative
+        safe_logfire_info(f"Fetching chunks for source_id: {source_id}, domain_filter: {domain_filter}")
 
-        safe_logfire_info(
-            f"Fetching chunks | source_id={source_id} | domain_filter={domain_filter} | "
-            f"limit={limit} | offset={offset}"
-        )
-
+        # Query document chunks with content for this specific source
         supabase = get_supabase_client()
 
-        # First get total count
-        count_query = supabase.from_("archon_crawled_pages").select(
-            "id", count="exact", head=True
-        )
-        count_query = count_query.eq("source_id", source_id)
-
-        if domain_filter:
-            count_query = count_query.ilike("url", f"%{domain_filter}%")
-
-        count_result = count_query.execute()
-        total = count_result.count if hasattr(count_result, "count") else 0
-
-        # Build the main query with pagination
+        # Build the query
         query = supabase.from_("archon_crawled_pages").select(
             "id, source_id, content, metadata, url"
         )
@@ -412,17 +332,14 @@ async def get_knowledge_item_chunks(
 
         # Apply domain filtering if provided
         if domain_filter:
+            # Case-insensitive URL match
             query = query.ilike("url", f"%{domain_filter}%")
 
         # Deterministic ordering (URL then id)
         query = query.order("url", desc=False).order("id", desc=False)
 
-        # Apply pagination
-        query = query.range(offset, offset + limit - 1)
-
         result = query.execute()
-        # Check for error more explicitly to work with mocks
-        if hasattr(result, "error") and result.error is not None:
+        if getattr(result, "error", None):
             safe_logfire_error(
                 f"Supabase query error | source_id={source_id} | error={result.error}"
             )
@@ -430,196 +347,47 @@ async def get_knowledge_item_chunks(
 
         chunks = result.data if result.data else []
 
-        # Extract useful fields from metadata to top level for frontend
-        # This ensures the API response matches the TypeScript DocumentChunk interface
-        for chunk in chunks:
-            metadata = chunk.get("metadata", {}) or {}
-
-            # Generate meaningful titles from available data
-            title = None
-
-            # Try to get title from various metadata fields
-            if metadata.get("filename"):
-                title = metadata.get("filename")
-            elif metadata.get("headers"):
-                title = metadata.get("headers").split(";")[0].strip("# ")
-            elif metadata.get("title") and metadata.get("title").strip():
-                title = metadata.get("title").strip()
-            else:
-                # Try to extract from content first for more specific titles
-                if chunk.get("content"):
-                    content = chunk.get("content", "").strip()
-                    # Look for markdown headers at the start
-                    lines = content.split("\n")[:5]
-                    for line in lines:
-                        line = line.strip()
-                        if line.startswith("# "):
-                            title = line[2:].strip()
-                            break
-                        elif line.startswith("## "):
-                            title = line[3:].strip()
-                            break
-                        elif line.startswith("### "):
-                            title = line[4:].strip()
-                            break
-
-                    # Fallback: use first meaningful line that looks like a title
-                    if not title:
-                        for line in lines:
-                            line = line.strip()
-                            # Skip code blocks, empty lines, and very short lines
-                            if (line and not line.startswith("```") and not line.startswith("Source:")
-                                and len(line) > 15 and len(line) < 80
-                                and not line.startswith("from ") and not line.startswith("import ")
-                                and "=" not in line and "{" not in line):
-                                title = line
-                                break
-
-                # If no content-based title found, generate from URL
-                if not title:
-                    url = chunk.get("url", "")
-                    if url:
-                        # Extract meaningful part from URL
-                        if url.endswith(".txt"):
-                            title = url.split("/")[-1].replace(".txt", "").replace("-", " ").title()
-                        else:
-                            # Get domain and path info
-                            parsed = urlparse(url)
-                            if parsed.path and parsed.path != "/":
-                                title = parsed.path.strip("/").replace("-", " ").replace("_", " ").title()
-                            else:
-                                title = parsed.netloc.replace("www.", "").title()
-
-            chunk["title"] = title or ""
-            chunk["section"] = metadata.get("headers", "").replace(";", " > ") if metadata.get("headers") else None
-            chunk["source_type"] = metadata.get("source_type")
-            chunk["knowledge_type"] = metadata.get("knowledge_type")
-
-        safe_logfire_info(
-            f"Fetched {len(chunks)} chunks for {source_id} | total={total}"
-        )
+        safe_logfire_info(f"Found {len(chunks)} chunks for {source_id}")
 
         return {
             "success": True,
             "source_id": source_id,
             "domain_filter": domain_filter,
             "chunks": chunks,
-            "total": total,
-            "limit": limit,
-            "offset": offset,
-            "has_more": offset + limit < total,
+            "count": len(chunks),
         }
 
-    except HTTPException:
-        raise
     except Exception as e:
         safe_logfire_error(
             f"Failed to fetch chunks | error={str(e)} | source_id={source_id}"
         )
-        raise HTTPException(status_code=500, detail={"error": str(e)})
+        raise HTTPException(status_code=500, detail={"error": str(e)}) from e
 
 
 @router.get("/knowledge-items/{source_id}/code-examples")
-async def get_knowledge_item_code_examples(
-    source_id: str,
-    limit: int = 20,
-    offset: int = 0
-):
-    """
-    Get code examples for a specific knowledge item with pagination.
-    
-    Args:
-        source_id: The source ID
-        limit: Maximum number of examples to return (default 20, max 100)
-        offset: Number of examples to skip (for pagination)
-    
-    Returns:
-        Paginated code examples with metadata
-    """
+async def get_knowledge_item_code_examples(source_id: str):
+    """Get all code examples for a specific knowledge item."""
     try:
-        # Validate pagination parameters
-        limit = min(limit, 100)  # Cap at 100 to prevent excessive data transfer
-        limit = max(limit, 1)    # At least 1
-        offset = max(offset, 0)   # Can't be negative
-
-        safe_logfire_info(
-            f"Fetching code examples | source_id={source_id} | limit={limit} | offset={offset}"
-        )
-
-        supabase = get_supabase_client()
-
-        # First get total count
-        count_result = (
-            supabase.from_("archon_code_examples")
-            .select("id", count="exact", head=True)
-            .eq("source_id", source_id)
-            .execute()
-        )
-        total = count_result.count if hasattr(count_result, "count") else 0
-
-        # Get paginated code examples
-        result = (
-            supabase.from_("archon_code_examples")
-            .select("id, source_id, content, summary, metadata")
-            .eq("source_id", source_id)
-            .order("id", desc=False)  # Deterministic ordering
-            .range(offset, offset + limit - 1)
-            .execute()
-        )
-
-        # Check for error to match chunks endpoint pattern
-        if hasattr(result, "error") and result.error is not None:
-            safe_logfire_error(
-                f"Supabase query error (code examples) | source_id={source_id} | error={result.error}"
-            )
-            raise HTTPException(status_code=500, detail={"error": str(result.error)})
-
-        code_examples = result.data if result.data else []
-
-        # Extract title and example_name from metadata to top level for frontend
-        # This ensures the API response matches the TypeScript CodeExample interface
-        for example in code_examples:
-            metadata = example.get("metadata", {}) or {}
-            # Extract fields to match frontend TypeScript types
-            example["title"] = metadata.get("title")  # AI-generated title
-            example["example_name"] = metadata.get("example_name")  # Same as title for compatibility
-            example["language"] = metadata.get("language")  # Programming language
-            example["file_path"] = metadata.get("file_path")  # Original file path if available
-            # Note: content field is already at top level from database
-            # Note: summary field is already at top level from database
-
-        safe_logfire_info(
-            f"Fetched {len(code_examples)} code examples for {source_id} | total={total}"
-        )
+        knowledge_service = KnowledgeService()
+        code_examples = await knowledge_service.get_code_examples(source_id)
 
         return {
             "success": True,
             "source_id": source_id,
             "code_examples": code_examples,
-            "total": total,
-            "limit": limit,
-            "offset": offset,
-            "has_more": offset + limit < total,
+            "count": len(code_examples),
         }
 
     except Exception as e:
         safe_logfire_error(
             f"Failed to fetch code examples | error={str(e)} | source_id={source_id}"
         )
-        raise HTTPException(status_code=500, detail={"error": str(e)})
+        raise HTTPException(status_code=500, detail={"error": str(e)}) from e
 
 
 @router.post("/knowledge-items/{source_id}/refresh")
 async def refresh_knowledge_item(source_id: str):
     """Refresh a knowledge item by re-crawling its URL with the same metadata."""
-    
-    # Validate API key before starting expensive refresh operation
-    logger.info("🔍 About to validate API key for refresh...")
-    provider_config = await credential_service.get_active_provider("embedding")
-    provider = provider_config.get("provider", "openai")
-    await _validate_provider_api_key(provider)
-    logger.info("✅ API key validation completed successfully for refresh")
-    
     try:
         safe_logfire_info(f"Starting knowledge item refresh | source_id={source_id}")
 
@@ -650,7 +418,6 @@ async def refresh_knowledge_item(source_id: str):
         progress_id = str(uuid.uuid4())
 
         # Initialize progress tracker IMMEDIATELY so it's available for polling
-        from ..utils.progress.progress_tracker import ProgressTracker
         tracker = ProgressTracker(progress_id, operation_type="crawl")
         await tracker.start({
             "url": url,
@@ -671,10 +438,10 @@ async def refresh_knowledge_item(source_id: str):
             safe_logfire_error(f"Failed to get crawler | error={str(e)}")
             raise HTTPException(
                 status_code=500, detail={"error": f"Failed to initialize crawler: {str(e)}"}
-            )
+            ) from e
 
         # Use the same crawl orchestration as regular crawl
-        crawl_service = CrawlingService(
+        crawl_service = CrawlOrchestrationService(
             crawler=crawler, supabase_client=get_supabase_client()
         )
         crawl_service.set_progress_id(progress_id)
@@ -696,15 +463,7 @@ async def refresh_knowledge_item(source_id: str):
                     safe_logfire_info(
                         f"Acquired crawl semaphore for refresh | source_id={source_id}"
                     )
-                    result = await crawl_service.orchestrate_crawl(request_dict)
-
-                    # Store the ACTUAL crawl task for proper cancellation
-                    crawl_task = result.get("task")
-                    if crawl_task:
-                        active_crawl_tasks[progress_id] = crawl_task
-                        safe_logfire_info(
-                            f"Stored actual refresh crawl task | progress_id={progress_id} | task_name={crawl_task.get_name()}"
-                        )
+                    await crawl_service.orchestrate_crawl(request_dict)
             finally:
                 # Clean up task from registry when done (success or failure)
                 if progress_id in active_crawl_tasks:
@@ -713,8 +472,9 @@ async def refresh_knowledge_item(source_id: str):
                         f"Cleaned up refresh task from registry | progress_id={progress_id}"
                     )
 
-        # Start the wrapper task - we don't need to track it since we'll track the actual crawl task
-        asyncio.create_task(_perform_refresh_with_semaphore())
+        task = asyncio.create_task(_perform_refresh_with_semaphore())
+        # Track the task for cancellation support
+        active_crawl_tasks[progress_id] = task
 
         return {"progressId": progress_id, "message": f"Started refresh for {url}"}
 
@@ -724,7 +484,7 @@ async def refresh_knowledge_item(source_id: str):
         safe_logfire_error(
             f"Failed to refresh knowledge item | error={str(e)} | source_id={source_id}"
         )
-        raise HTTPException(status_code=500, detail={"error": str(e)})
+        raise HTTPException(status_code=500, detail={"error": str(e)}) from e
 
 
 @router.post("/knowledge-items/crawl")
@@ -738,13 +498,6 @@ async def crawl_knowledge_item(request: KnowledgeItemRequest):
     if not request.url.startswith(("http://", "https://")):
         raise HTTPException(status_code=422, detail="URL must start with http:// or https://")
 
-    # Validate API key before starting expensive operation
-    logger.info("🔍 About to validate API key...")
-    provider_config = await credential_service.get_active_provider("embedding")
-    provider = provider_config.get("provider", "openai")
-    await _validate_provider_api_key(provider)
-    logger.info("✅ API key validation completed successfully")
-
     try:
         safe_logfire_info(
             f"Starting knowledge item crawl | url={str(request.url)} | knowledge_type={request.knowledge_type} | tags={request.tags}"
@@ -753,7 +506,6 @@ async def crawl_knowledge_item(request: KnowledgeItemRequest):
         progress_id = str(uuid.uuid4())
 
         # Initialize progress tracker IMMEDIATELY so it's available for polling
-        from ..utils.progress.progress_tracker import ProgressTracker
         tracker = ProgressTracker(progress_id, operation_type="crawl")
 
         # Detect crawl type from URL
@@ -768,14 +520,15 @@ async def crawl_knowledge_item(request: KnowledgeItemRequest):
             "url": url_str,
             "current_url": url_str,
             "crawl_type": crawl_type,
-            # Don't override status - let tracker.start() set it to "starting"
+            "status": "initializing",
             "progress": 0,
             "log": f"Starting crawl for {request.url}"
         })
 
-        # Start background task - no need to track this wrapper task
-        # The actual crawl task will be stored inside _perform_crawl_with_progress
-        asyncio.create_task(_perform_crawl_with_progress(progress_id, request, tracker))
+        # Start background task
+        task = asyncio.create_task(_perform_crawl_with_progress(progress_id, request, tracker))
+        # Track the task for cancellation support
+        active_crawl_tasks[progress_id] = task
         safe_logfire_info(
             f"Crawl started successfully | progress_id={progress_id} | url={str(request.url)}"
         )
@@ -801,11 +554,11 @@ async def crawl_knowledge_item(request: KnowledgeItemRequest):
         return response.model_dump(by_alias=True)
     except Exception as e:
         safe_logfire_error(f"Failed to start crawl | error={str(e)} | url={str(request.url)}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 async def _perform_crawl_with_progress(
-    progress_id: str, request: KnowledgeItemRequest, tracker
+    progress_id: str, request: KnowledgeItemRequest, tracker: ProgressTracker
 ):
     """Perform the actual crawl operation with progress tracking using service layer."""
     # Acquire semaphore to limit concurrent crawls
@@ -829,8 +582,16 @@ async def _perform_crawl_with_progress(
                 return
 
             supabase_client = get_supabase_client()
-            orchestration_service = CrawlingService(crawler, supabase_client)
+            orchestration_service = CrawlOrchestrationService(crawler, supabase_client)
             orchestration_service.set_progress_id(progress_id)
+
+            # Store the current task in active_crawl_tasks for cancellation support
+            current_task = asyncio.current_task()
+            if current_task:
+                active_crawl_tasks[progress_id] = current_task
+                safe_logfire_info(
+                    f"Stored current task in active_crawl_tasks | progress_id={progress_id}"
+                )
 
             # Convert request to dict for service
             request_dict = {
@@ -842,20 +603,11 @@ async def _perform_crawl_with_progress(
                 "generate_summary": True,
             }
 
-            # Orchestrate the crawl - this returns immediately with task info including the actual task
+            # Orchestrate the crawl (now returns immediately with task info)
             result = await orchestration_service.orchestrate_crawl(request_dict)
 
-            # Store the ACTUAL crawl task for proper cancellation
-            crawl_task = result.get("task")
-            if crawl_task:
-                active_crawl_tasks[progress_id] = crawl_task
-                safe_logfire_info(
-                    f"Stored actual crawl task in active_crawl_tasks | progress_id={progress_id} | task_name={crawl_task.get_name()}"
-                )
-            else:
-                safe_logfire_error(f"No task returned from orchestrate_crawl | progress_id={progress_id}")
-
             # The orchestration service now runs in background and handles all progress updates
+            # Just log that the task was started
             safe_logfire_info(
                 f"Crawl task started | progress_id={progress_id} | task_id={result.get('task_id')}"
             )
@@ -896,17 +648,8 @@ async def upload_document(
     file: UploadFile = File(...),
     tags: str | None = Form(None),
     knowledge_type: str = Form("technical"),
-    extract_code_examples: bool = Form(True),
 ):
     """Upload and process a document with progress tracking."""
-    
-    # Validate API key before starting expensive upload operation  
-    logger.info("🔍 About to validate API key for upload...")
-    provider_config = await credential_service.get_active_provider("embedding")
-    provider = provider_config.get("provider", "openai")
-    await _validate_provider_api_key(provider)
-    logger.info("✅ API key validation completed successfully for upload")
-    
     try:
         # DETAILED LOGGING: Track knowledge_type parameter flow
         safe_logfire_info(
@@ -927,7 +670,7 @@ async def upload_document(
             if not all(isinstance(tag, str) for tag in tag_list):
                 raise HTTPException(status_code=422, detail={"error": "tags must be a JSON array of strings"})
         except json.JSONDecodeError as ex:
-            raise HTTPException(status_code=422, detail={"error": f"Invalid tags JSON: {str(ex)}"})
+            raise HTTPException(status_code=422, detail={"error": f"Invalid tags JSON: {str(ex)}"}) from ex
 
         # Read file content immediately to avoid closed file issues
         file_content = await file.read()
@@ -938,7 +681,6 @@ async def upload_document(
         }
 
         # Initialize progress tracker IMMEDIATELY so it's available for polling
-        from ..utils.progress.progress_tracker import ProgressTracker
         tracker = ProgressTracker(progress_id, operation_type="upload")
         await tracker.start({
             "filename": file.filename,
@@ -947,14 +689,13 @@ async def upload_document(
             "log": f"Starting upload for {file.filename}"
         })
         # Start background task for processing with file content and metadata
-        # Upload tasks can be tracked directly since they don't spawn sub-tasks
-        upload_task = asyncio.create_task(
+        task = asyncio.create_task(
             _perform_upload_with_progress(
-                progress_id, file_content, file_metadata, tag_list, knowledge_type, extract_code_examples, tracker
+                progress_id, file_content, file_metadata, tag_list, knowledge_type, tracker
             )
         )
         # Track the task for cancellation support
-        active_crawl_tasks[progress_id] = upload_task
+        active_crawl_tasks[progress_id] = task
         safe_logfire_info(
             f"Document upload started successfully | progress_id={progress_id} | filename={file.filename}"
         )
@@ -969,7 +710,7 @@ async def upload_document(
         safe_logfire_error(
             f"Failed to start document upload | error={str(e)} | filename={file.filename} | error_type={type(e).__name__}"
         )
-        raise HTTPException(status_code=500, detail={"error": str(e)})
+        raise HTTPException(status_code=500, detail={"error": str(e)}) from e
 
 
 async def _perform_upload_with_progress(
@@ -978,8 +719,7 @@ async def _perform_upload_with_progress(
     file_metadata: dict,
     tag_list: list[str],
     knowledge_type: str,
-    extract_code_examples: bool,
-    tracker: "ProgressTracker",
+    tracker: ProgressTracker,
 ):
     """Perform document upload with progress tracking using service layer."""
     # Create cancellation check function for document uploads
@@ -1016,13 +756,7 @@ async def _perform_upload_with_progress(
             safe_logfire_info(
                 f"Document text extracted | filename={filename} | extracted_length={len(extracted_text)} | content_type={content_type}"
             )
-        except ValueError as ex:
-            # ValueError indicates unsupported format or empty file - user error
-            logger.warning(f"Document validation failed: {filename} - {str(ex)}")
-            await tracker.error(str(ex))
-            return
         except Exception as ex:
-            # Other exceptions are system errors - log with full traceback
             logger.error(f"Failed to extract text from document: {filename}", exc_info=True)
             await tracker.error(f"Failed to extract text from document: {str(ex)}")
             return
@@ -1039,11 +773,10 @@ async def _perform_upload_with_progress(
         ):
             """Progress callback for tracking document processing"""
             # Map the document storage progress to overall progress range
-            # Use "storing" stage for uploads (30-100%), not "document_storage" (25-40%)
-            mapped_percentage = progress_mapper.map_progress("storing", percentage)
+            mapped_percentage = progress_mapper.map_progress("document_storage", percentage)
 
             await tracker.update(
-                status="storing",
+                status="document_storage",
                 progress=mapped_percentage,
                 log=message,
                 currentUrl=f"file://{filename}",
@@ -1058,7 +791,6 @@ async def _perform_upload_with_progress(
             source_id=source_id,
             knowledge_type=knowledge_type,
             tags=tag_list,
-            extract_code_examples=extract_code_examples,
             progress_callback=document_progress_callback,
             cancellation_check=check_upload_cancellation,
         )
@@ -1068,11 +800,10 @@ async def _perform_upload_with_progress(
             await tracker.complete({
                 "log": "Document uploaded successfully!",
                 "chunks_stored": result.get("chunks_stored"),
-                "code_examples_stored": result.get("code_examples_stored", 0),
                 "sourceId": result.get("source_id"),
             })
             safe_logfire_info(
-                f"Document uploaded successfully | progress_id={progress_id} | source_id={result.get('source_id')} | chunks_stored={result.get('chunks_stored')} | code_examples_stored={result.get('code_examples_stored', 0)}"
+                f"Document uploaded successfully | progress_id={progress_id} | source_id={result.get('source_id')} | chunks_stored={result.get('chunks_stored')}"
             )
         else:
             error_msg = result.get("error", "Unknown error")
@@ -1117,13 +848,10 @@ async def perform_rag_query(request: RagQueryRequest):
         raise HTTPException(status_code=422, detail="Query cannot be empty")
 
     try:
-        # Use RAGService for unified RAG query with return_mode support
+        # Use RAGService for RAG query
         search_service = RAGService(get_supabase_client())
         success, result = await search_service.perform_rag_query(
-            query=request.query,
-            source=request.source,
-            match_count=request.match_count,
-            return_mode=request.return_mode
+            query=request.query, source=request.source, match_count=request.match_count
         )
 
         if success:
@@ -1140,7 +868,7 @@ async def perform_rag_query(request: RagQueryRequest):
         safe_logfire_error(
             f"RAG query failed | error={str(e)} | query={request.query[:50]} | source={request.source}"
         )
-        raise HTTPException(status_code=500, detail={"error": f"RAG query failed: {str(e)}"})
+        raise HTTPException(status_code=500, detail={"error": f"RAG query failed: {str(e)}"}) from e
 
 
 @router.post("/rag/code-examples")
@@ -1176,7 +904,7 @@ async def search_code_examples(request: RagQueryRequest):
         )
         raise HTTPException(
             status_code=500, detail={"error": f"Code examples search failed: {str(e)}"}
-        )
+        ) from e
 
 
 @router.post("/code-examples")
@@ -1201,7 +929,7 @@ async def get_available_sources():
         return result
     except Exception as e:
         safe_logfire_error(f"Failed to get available sources | error={str(e)}")
-        raise HTTPException(status_code=500, detail={"error": str(e)})
+        raise HTTPException(status_code=500, detail={"error": str(e)}) from e
 
 
 @router.delete("/sources/{source_id}")
@@ -1236,7 +964,7 @@ async def delete_source(source_id: str):
         raise
     except Exception as e:
         safe_logfire_error(f"Failed to delete source | error={str(e)} | source_id={source_id}")
-        raise HTTPException(status_code=500, detail={"error": str(e)})
+        raise HTTPException(status_code=500, detail={"error": str(e)}) from e
 
 
 @router.get("/database/metrics")
@@ -1249,7 +977,7 @@ async def get_database_metrics():
         return metrics
     except Exception as e:
         safe_logfire_error(f"Failed to get database metrics | error={str(e)}")
-        raise HTTPException(status_code=500, detail={"error": str(e)})
+        raise HTTPException(status_code=500, detail={"error": str(e)}) from e
 
 
 @router.get("/health")
@@ -1280,6 +1008,25 @@ async def knowledge_health():
     return result
 
 
+@router.get("/knowledge-items/task/{task_id}")
+async def get_crawl_task_status(task_id: str):
+    """Get status of a background crawl task."""
+    try:
+        from ..services.background_task_manager import get_task_manager
+
+        task_manager = get_task_manager()
+        status = await task_manager.get_task_status(task_id)
+
+        if "error" in status and status["error"] == "Task not found":
+            raise HTTPException(status_code=404, detail={"error": "Task not found"})
+
+        return status
+    except HTTPException:
+        raise
+    except Exception as e:
+        safe_logfire_error(f"Failed to get task status | error={str(e)} | task_id={task_id}")
+        raise HTTPException(status_code=500, detail={"error": str(e)}) from e
+
 
 @router.post("/knowledge-items/stop/{progress_id}")
 async def stop_crawl_task(progress_id: str):
@@ -1292,7 +1039,7 @@ async def stop_crawl_task(progress_id: str):
 
         found = False
         # Step 1: Cancel the orchestration service
-        orchestration = await get_active_orchestration(progress_id)
+        orchestration = get_active_orchestration(progress_id)
         if orchestration:
             orchestration.cancel()
             found = True
@@ -1310,20 +1057,16 @@ async def stop_crawl_task(progress_id: str):
             found = True
 
         # Step 3: Remove from active orchestrations registry
-        await unregister_orchestration(progress_id)
+        unregister_orchestration(progress_id)
 
         # Step 4: Update progress tracker to reflect cancellation (only if we found and cancelled something)
         if found:
             try:
                 from ..utils.progress.progress_tracker import ProgressTracker
-                # Get current progress from existing tracker, default to 0 if not found
-                current_state = ProgressTracker.get_progress(progress_id)
-                current_progress = current_state.get("progress", 0) if current_state else 0
-
                 tracker = ProgressTracker(progress_id, operation_type="crawl")
                 await tracker.update(
                     status="cancelled",
-                    progress=current_progress,
+                    progress=-1,
                     log="Crawl cancelled by user"
                 )
             except Exception:
@@ -1346,4 +1089,4 @@ async def stop_crawl_task(progress_id: str):
         safe_logfire_error(
             f"Failed to stop crawl task | error={str(e)} | progress_id={progress_id}"
         )
-        raise HTTPException(status_code=500, detail={"error": str(e)})
+        raise HTTPException(status_code=500, detail={"error": str(e)}) from e

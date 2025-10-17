@@ -11,31 +11,30 @@ Modules:
 - projects_api: Project and task management with streaming
 """
 
+import asyncio
 import logging
 import os
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, Response
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from .api_routes.agent_chat_api import router as agent_chat_router
 from .api_routes.bug_report_api import router as bug_report_router
+from .api_routes.files_api import router as files_router
 from .api_routes.internal_api import router as internal_router
 from .api_routes.knowledge_api import router as knowledge_router
+from .api_routes.log_api import router as log_router
 from .api_routes.mcp_api import router as mcp_router
-from .api_routes.migration_api import router as migration_router
-from .api_routes.ollama_api import router as ollama_router
-from .api_routes.pages_api import router as pages_router
 from .api_routes.progress_api import router as progress_router
 from .api_routes.projects_api import router as projects_router
-from .api_routes.providers_api import router as providers_router
-from .api_routes.version_api import router as version_router
 
 # Import modular API routers
 from .api_routes.settings_api import router as settings_router
 
 # Import Logfire configuration
 from .config.logfire_config import api_logger, setup_logfire
+from .services.background_task_manager import cleanup_task_manager
 from .services.crawler_manager import cleanup_crawler, initialize_crawler
 
 # Import utilities and core classes
@@ -110,6 +109,16 @@ async def lifespan(app: FastAPI):
         except Exception as e:
             api_logger.warning(f"Could not initialize prompt service: {e}")
 
+        # Set the main event loop for background tasks
+        try:
+            from .services.background_task_manager import get_task_manager
+
+            task_manager = get_task_manager()
+            current_loop = asyncio.get_running_loop()
+            task_manager.set_main_loop(current_loop)
+            api_logger.info("✅ Main event loop set for background tasks")
+        except Exception as e:
+            api_logger.warning(f"Could not set main event loop: {e}")
 
         # MCP Client functionality removed from architecture
         # Agents now use MCP tools directly
@@ -119,7 +128,7 @@ async def lifespan(app: FastAPI):
         api_logger.info("🎉 Archon backend started successfully!")
 
     except Exception as e:
-        api_logger.error("❌ Failed to start backend", exc_info=True)
+        api_logger.error(f"❌ Failed to start backend: {str(e)}")
         raise
 
     yield
@@ -135,13 +144,19 @@ async def lifespan(app: FastAPI):
         try:
             await cleanup_crawler()
         except Exception as e:
-            api_logger.warning("Could not cleanup crawling context: %s", e, exc_info=True)
+            api_logger.warning("Could not cleanup crawling context", error=str(e))
 
+        # Cleanup background task manager
+        try:
+            await cleanup_task_manager()
+            api_logger.info("Background task manager cleaned up")
+        except Exception as e:
+            api_logger.warning("Could not cleanup background task manager", error=str(e))
 
         api_logger.info("✅ Cleanup completed")
 
     except Exception as e:
-        api_logger.error("❌ Error during shutdown", exc_info=True)
+        api_logger.error(f"❌ Error during shutdown: {str(e)}")
 
 
 # Create FastAPI application
@@ -184,16 +199,13 @@ app.include_router(settings_router)
 app.include_router(mcp_router)
 # app.include_router(mcp_client_router)  # Removed - not part of new architecture
 app.include_router(knowledge_router)
-app.include_router(pages_router)
-app.include_router(ollama_router)
 app.include_router(projects_router)
 app.include_router(progress_router)
 app.include_router(agent_chat_router)
 app.include_router(internal_router)
 app.include_router(bug_report_router)
-app.include_router(providers_router)
-app.include_router(version_router)
-app.include_router(migration_router)
+app.include_router(log_router)
+app.include_router(files_router)
 
 
 # Root endpoint
@@ -211,13 +223,12 @@ async def root():
 
 # Health check endpoint
 @app.get("/health")
-async def health_check(response: Response):
+async def health_check():
     """Health check endpoint that indicates true readiness including credential loading."""
     from datetime import datetime
 
     # Check if initialization is complete
     if not _initialization_complete:
-        response.status_code = 503  # Service Unavailable
         return {
             "status": "initializing",
             "service": "archon-backend",
@@ -229,7 +240,6 @@ async def health_check(response: Response):
     # Check for required database schema
     schema_status = await _check_database_schema()
     if not schema_status["valid"]:
-        response.status_code = 503  # Service Unavailable
         return {
             "status": "migration_required",
             "service": "archon-backend",
@@ -253,9 +263,9 @@ async def health_check(response: Response):
 
 # API health check endpoint (alias for /health at /api/health)
 @app.get("/api/health")
-async def api_health_check(response: Response):
+async def api_health_check():
     """API health check endpoint - alias for /health."""
-    return await health_check(response)
+    return await health_check()
 
 
 # Cache schema check result to avoid repeated database queries
@@ -318,19 +328,11 @@ async def _check_database_schema():
         # Check for table doesn't exist (less specific, only if column check didn't match)
         # Look for relation/table errors specifically
         if ('relation' in error_msg and 'does not exist' in error_msg) or ('table' in error_msg and 'does not exist' in error_msg):
-            # Table doesn't exist - this is a critical setup issue
-            result = {
-                "valid": False,
-                "message": "Required table missing (archon_sources). Run initial migrations before starting."
-            }
-            # Cache failed result with timestamp
-            _schema_check_cache["valid"] = False
-            _schema_check_cache["checked_at"] = current_time
-            _schema_check_cache["result"] = result
-            return result
+            # Table doesn't exist - not a migration issue, it's a setup issue
+            return {"valid": True, "message": "Table doesn't exist - handled by startup error"}
 
-        # Other errors indicate a problem - fail fast principle
-        result = {"valid": False, "message": f"Schema check error: {type(e).__name__}: {str(e)}"}
+        # Other errors don't necessarily mean migration needed
+        result = {"valid": True, "message": f"Schema check inconclusive: {str(e)}"}
         # Don't cache inconclusive results - allow retry
         return result
 
