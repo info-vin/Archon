@@ -16,7 +16,7 @@
     "biome:ai-fix": "biome check --write --reporter=json",
     "biome:ci": "biome ci",
     "preview": "npx vite preview",
-    "test": "vitest",
+    "test": "vitest run",
     "test:run": "vitest run",
     "test:ui": "vitest --ui",
     "test:integration": "vitest run --config vitest.integration.config.ts",
