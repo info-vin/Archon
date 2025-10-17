@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>智慧製造與人力資源整合儀表板 v1.3</title>
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=Inter:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+    :root {
+        --primary-color: #0f766e; /* Teal-700 */
+        --secondary-color: #0d9488; /* Teal-600 */
+        --accent-color: #0ea5e9; /* Sky-500 */
+        --background-light: #f8fafc; /* Slate-50 */
+        --background-secondary: #f1f5f9; /* Slate-100 */
+        --panel-bg-color: #ffffff;
+        --text-dark: #1e293b; /* Slate-800 */
+        --text-light: #64748b; /* Slate-500 */
+        --border-color: #e2e8f0; /* Slate-200 */
+        --border-hover: #cbd5e1; /* Slate-300 */
+        --success-color: #10b981; /* Emerald-500 */
+        --warning-color: #f59e0b; /* Amber-500 */
+        --error-color: #ef4444; /* Red-500 */
+    }
+
+    html, body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        font-family: 'Noto Sans TC', 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        background: linear-gradient(135deg, var(--background-light) 0%, var(--background-secondary) 100%);
+        color: var(--text-dark);
+    }
+
+    .main-container {
+        display: flex;
+        width: 100%;
+        height: 100vh;
+        background: var(--panel-bg-color);
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    }
+
+    /* --- 左側導航面板 --- */
+    .nav-panel {
+        flex: 0 0 320px;
+        background: linear-gradient(180deg, #ffffff 0%, var(--background-light) 100%);
+        border-right: 1px solid var(--border-color);
+        display: flex;
+        flex-direction: column;
+        box-shadow: 4px 0 6px -1px rgba(0, 0, 0, 0.1);
+    }
+
+    .nav-header {
+        padding: 24px 20px;
+        border-bottom: 1px solid var(--border-color);
+        flex-shrink: 0;
+        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        color: white;
+    }
+
+    .nav-header h2 {
+        font-size: 1.25rem;
+        font-weight: 700;
+        margin: 0;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    }
+
+    .nav-header .subtitle {
+        font-size: 0.875rem;
+        opacity: 0.9;
+        margin-top: 4px;
+        font-weight: 300;
+    }
+
+    #nav-list-container {
+        overflow-y: auto;
+        flex-grow: 1;
+        padding: 8px 0;
+    }
+
+    .nav-item {
+        padding: 16px 20px;
+        cursor: grab;
+        border-bottom: 1px solid var(--border-color);
+        transition: all 0.3s ease;
+        font-size: 0.95rem;
+        border-left: 4px solid transparent;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        position: relative;
+        background: linear-gradient(90deg, transparent 0%, transparent 100%);
+    }
+
+    .nav-item:hover {
+        background: linear-gradient(90deg, var(--background-light) 0%, rgba(15, 118, 110, 0.05) 100%);
+        border-left-color: var(--accent-color);
+        transform: translateX(2px);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+
+    .nav-item.active {
+        background: linear-gradient(90deg, rgba(15, 118, 110, 0.1) 0%, rgba(14, 165, 233, 0.05) 100%);
+        color: var(--primary-color);
+        font-weight: 600;
+        border-left-color: var(--primary-color);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+
+    .nav-item .drag-handle {
+        opacity: 0.4;
+        cursor: grab;
+        transition: opacity 0.3s ease;
+        font-size: 1.1rem;
+    }
+
+    .nav-item:hover .drag-handle {
+        opacity: 0.7;
+    }
+
+    .nav-item .nav-icon {
+        width: 20px;
+        height: 20px;
+        opacity: 0.7;
+        transition: opacity 0.3s ease;
+    }
+
+    .nav-item.active .nav-icon {
+        opacity: 1;
+    }
+
+    /* Sortable.js 樣式 */
+    .sortable-ghost {
+        opacity: 0.5;
+        background: linear-gradient(90deg, rgba(14, 165, 233, 0.1) 0%, rgba(14, 165, 233, 0.05) 100%);
+        transform: rotate(2deg);
+    }
+
+    .sortable-drag {
+        cursor: grabbing !important;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    }
+
+    /* --- 右側內容面板 --- */
+    .content-panel {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        background: var(--background-light);
+        overflow: hidden;
+    }
+
+    .content-header {
+        padding: 20px 24px;
+        background: var(--panel-bg-color);
+        border-bottom: 1px solid var(--border-color);
+        flex-shrink: 0;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+
+    .content-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--text-dark);
+        margin: 0;
+        background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .content-section {
+        width: 100%;
+        height: 100%;
+        display: none;
+        flex-direction: column;
+        flex-grow: 1;
+    }
+
+    .content-section.active {
+        display: flex;
+    }
+
+    .iframe-wrapper {
+        flex-grow: 1;
+        width: 100%;
+        height: 100%;
+        background: var(--panel-bg-color);
+        border-radius: 12px 12px 0 0;
+        overflow: hidden;
+        box-shadow: 0 -4px 6px -1px rgba(0, 0, 0, 0.1);
+        margin: 16px;
+        margin-bottom: 0;
+    }
+
+    .iframe-wrapper iframe {
+        width: 100%;
+        height: 100%;
+        border: none;
+        border-radius: 12px 12px 0 0;
+    }
+
+    /* --- 技術核心區塊內的頁籤 --- */
+    .tabs-container {
+        background: var(--panel-bg-color);
+        border-bottom: 1px solid var(--border-color);
+        flex-shrink: 0;
+        padding: 0 24px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+
+    .tab-button {
+        padding: 12px 20px;
+        cursor: pointer;
+        border: none;
+        background-color: transparent;
+        border-bottom: 3px solid transparent;
+        margin-bottom: -1px;
+        transition: all 0.3s ease;
+        color: var(--text-light);
+        font-weight: 500;
+        font-size: 0.95rem;
+        position: relative;
+    }
+
+    .tab-button:hover {
+        color: var(--primary-color);
+        background: rgba(15, 118, 110, 0.05);
+    }
+
+    .tab-button.active {
+        border-bottom-color: var(--primary-color);
+        color: var(--primary-color);
+        font-weight: 600;
+        background: rgba(15, 118, 110, 0.05);
+    }
+
+    .tab-content {
+        display: none;
+        flex-grow: 1;
+        width: 100%;
+        height: 100%;
+    }
+
+    .tab-content.active {
+        display: block;
+    }
+
+    /* --- Loading 狀態 --- */
+    .loading-indicator {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 200px;
+        color: var(--text-light);
+        font-size: 0.95rem;
+    }
+
+    .loading-spinner {
+        width: 24px;
+        height: 24px;
+        border: 2px solid var(--border-color);
+        border-top: 2px solid var(--primary-color);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin-right: 12px;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    /* --- 響應式設計 --- */
+    @media (max-width: 1024px) {
+        .nav-panel {
+            flex: 0 0 280px;
+        }
+        
+        .nav-item {
+            padding: 14px 16px;
+            font-size: 0.9rem;
+        }
+        
+        .content-header {
+            padding: 16px 20px;
+        }
+        
+        .iframe-wrapper {
+            margin: 12px;
+            margin-bottom: 0;
+        }
+    }
+
+    @media (max-width: 900px) {
+        body, html {
+            overflow: auto;
+        }
+        
+        .main-container {
+            flex-direction: column;
+            height: auto;
+            min-height: 100vh;
+        }
+        
+        .nav-panel {
+            flex: 0 0 auto;
+            border-right: none;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .nav-header {
+            padding: 16px 20px;
+        }
+        
+        #nav-list-container {
+            display: flex;
+            overflow-x: auto;
+            white-space: nowrap;
+            -webkit-overflow-scrolling: touch;
+            padding: 8px 0;
+        }
+        
+        .nav-item {
+            border-bottom: none;
+            border-left: none;
+            border-top: 4px solid transparent;
+            flex-shrink: 0;
+            min-width: 140px;
+            text-align: center;
+            flex-direction: column;
+            gap: 4px;
+        }
+        
+        .nav-item.active {
+            border-left: none;
+            border-top: 4px solid var(--primary-color);
+        }
+        
+        .nav-item:hover {
+            transform: translateY(-2px);
+        }
+        
+        .content-panel {
+            height: calc(100vh - 120px);
+        }
+        
+        .content-header {
+            padding: 12px 16px;
+        }
+        
+        .iframe-wrapper {
+            margin: 8px;
+            margin-bottom: 0;
+            border-radius: 8px 8px 0 0;
+        }
+        
+        .tabs-container {
+            padding: 0 16px;
+        }
+        
+        .tab-button {
+            padding: 10px 16px;
+            font-size: 0.9rem;
+        }
+    }
+
+    @media (max-width: 640px) {
+        .nav-item {
+            min-width: 120px;
+            padding: 12px 8px;
+            font-size: 0.85rem;
+        }
+        
+        .content-title {
+            font-size: 1.25rem;
+        }
+        
+        .tab-button {
+            padding: 8px 12px;
+            font-size: 0.85rem;
+        }
+    }
+
+    /* --- 滾動條樣式 --- */
+    #nav-list-container::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    #nav-list-container::-webkit-scrollbar-track {
+        background: var(--background-light);
+    }
+
+    #nav-list-container::-webkit-scrollbar-thumb {
+        background: var(--border-hover);
+        border-radius: 3px;
+    }
+
+    #nav-list-container::-webkit-scrollbar-thumb:hover {
+        background: var(--text-light);
+    }
+
+    /* --- 動畫效果 --- */
+    .fade-in {
+        animation: fadeIn 0.3s ease-in-out;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+</style>
+</head>
+<body>
+
+<div class="main-container">
+    <!-- Left Panel: Navigation -->
+    <div class="nav-panel">
+        <div class="nav-header">
+            <h2>智慧製造解決方案</h2>
+            <div class="subtitle">
+                                <a href="/flow.html" style="color: white;">整合儀表板 v1.3
+                </a>
+            </div>
+        </div>
+        <div id="nav-list-container">
+            <div class="nav-item active" data-target="content-summary">
+                <span class="drag-handle">☰</span>
+                <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                </svg>
+                <span>專案綜合說明</span>
+            </div>
+            <div class="nav-item" data-target="content-linkage">
+                <span class="drag-handle">☰</span>
+                <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path>
+                </svg>
+                <span>文件關聯分析</span>
+            </div>
+            <div class="nav-item" data-target="content-requirements">
+                <span class="drag-handle">☰</span>
+                <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path>
+                </svg>
+                <span>技術需求</span>
+            </div>
+            <div class="nav-item" data-target="content-proposal">
+                <span class="drag-handle">☰</span>
+                <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                </svg>
+                <span>解決方案提案</span>
+            </div>
+            <div class="nav-item" data-target="content-tech">
+                <span class="drag-handle">☰</span>
+                <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path>
+                </svg>
+                <span>技術核心</span>
+            </div>
+            <div class="nav-item" data-target="content-hightech">
+                <span class="drag-handle">☰</span>
+                <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"></path>
+                </svg>
+                <span>高科技製造</span>
+            </div>
+            <div class="nav-item" data-target="content-process">
+                <span class="drag-handle">☰</span>
+                <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path>
+                </svg>
+                <span>流程細節</span>
+            </div>
+            <div class="nav-item" data-target="content-implementation">
+                <span class="drag-handle">☰</span>
+                <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+                </svg>
+                <span>導入效益</span>
+            </div>
+            <div class="nav-item" data-target="content-wellbeing">
+                <span class="drag-handle">☰</span>
+                <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+                </svg>
+                <span>員工福祉策略</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Panel: Content Display -->
+    <div class="content-panel">
+        <div class="content-header">
+            <h1 class="content-title" id="content-title">專案綜合說明</h1>
+        </div>
+
+        <div id="content-summary" class="content-section active">
+            <div class="iframe-wrapper">
+                <iframe src="contents/summary.html" title="綜合說明" loading="lazy"></iframe>
+            </div>
+        </div>
+
+        <div id="content-linkage" class="content-section">
+            <div class="iframe-wrapper">
+                <iframe src="contents/linkage.html" title="文件關聯分析" loading="lazy"></iframe>
+            </div>
+        </div>
+
+        <div id="content-requirements" class="content-section">
+            <div class="iframe-wrapper">
+                <iframe src="contents/requirements.html" title="技術需求" loading="lazy"></iframe>
+            </div>
+        </div>
+
+        <div id="content-proposal" class="content-section">
+            <div class="iframe-wrapper">
+                <iframe src="original_files/NBllm.html" title="解決方案提案" loading="lazy"></iframe>
+            </div>
+        </div>
+
+        <div id="content-tech" class="content-section">
+            <div class="tabs-container">
+                <button class="tab-button active" data-tab="tab-sas-arc">SAS Viya 架構</button>
+                <button class="tab-button" data-tab="tab-rpa-canvas">RPA 流程</button>
+            </div>
+            <div id="tab-sas-arc" class="tab-content active">
+                <div class="iframe-wrapper">
+                    <iframe src="original_files/sas_viya_arc.html" title="SAS Viya 系統架構" loading="lazy"></iframe>
+                </div>
+            </div>
+            <div id="tab-rpa-canvas" class="tab-content">
+                <div class="iframe-wrapper">
+                    <iframe src="original_files/RPA_canvas.html" title="RPA 流程自動化" loading="lazy"></iframe>
+                </div>
+            </div>
+        </div>
+
+        <div id="content-hightech" class="content-section">
+            <div class="tabs-container">
+                <button class="tab-button active" data-tab="tab-oee">OEE 最大化</button>
+                <button class="tab-button" data-tab="tab-yield">良率與品質</button>
+                <button class="tab-button" data-tab="tab-architecture">架構圖</button>
+                <button class="tab-button" data-tab="tab-supply-chain">供應鏈轉型</button>
+            </div>
+            <div id="tab-oee" class="tab-content active">
+                <div class="iframe-wrapper">
+                    <iframe src="hightech/SAS in hightech manufacturing_ Maximizing OEE.html" title="SAS 高科技製造 - OEE 最大化" loading="lazy"></iframe>
+                </div>
+            </div>
+            <div id="tab-yield" class="tab-content">
+                <div class="iframe-wrapper">
+                    <iframe src="hightech/SAS in hightech manufacturing_ Yield & Quality.html" title="SAS 高科技製造 - 良率與品質" loading="lazy"></iframe>
+                </div>
+            </div>
+            <div id="tab-architecture" class="tab-content">
+                <div class="iframe-wrapper">
+                    <iframe src="hightech/SAS in hightech manufacturing_ architecture diagram.html" title="SAS 高科技製造 - 架構圖" loading="lazy"></iframe>
+                </div>
+            </div>
+            <div id="tab-supply-chain" class="tab-content">
+                <div class="iframe-wrapper">
+                    <iframe src="hightech/SAS in hightech manufacturing_ Transforming High-Tech Supply Chains.html" title="SAS 高科技製造 - 供應鏈轉型" loading="lazy"></iframe>
+                </div>
+            </div>
+        </div>
+
+        <div id="content-process" class="content-section">
+            <div class="iframe-wrapper">
+                <iframe src="original_files/互動資料機制列表.html" title="互動資料機制列表" loading="lazy"></iframe>
+            </div>
+        </div>
+
+        <div id="content-implementation" class="content-section">
+            <div class="iframe-wrapper">
+                <iframe src="original_files/adoption_process_chart.html" title="成功採納歷程模式" loading="lazy"></iframe>
+            </div>
+        </div>
+
+        <div id="content-wellbeing" class="content-section">
+            <div class="iframe-wrapper">
+                <iframe src="original_files/Employee Well-being Strategy Upgrade Plan.html" title="員工福祉策略升級計畫" loading="lazy"></iframe>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const navContainer = document.getElementById('nav-list-container');
+    const navItems = document.querySelectorAll('.nav-item');
+    const contentSections = document.querySelectorAll('.content-section');
+    const tabButtons = document.querySelectorAll('.tab-button');
+    const tabContents = document.querySelectorAll('.tab-content');
+    const contentTitle = document.getElementById('content-title');
+
+    // 標題映射
+    const titleMap = {
+        'content-summary': '專案綜合說明',
+        'content-linkage': '文件關聯分析',
+        'content-requirements': '技術需求',
+        'content-proposal': '解決方案提案',
+        'content-tech': '技術核心',
+        'content-hightech': '高科技製造',
+        'content-process': '流程細節',
+        'content-implementation': '導入效益',
+        'content-wellbeing': '員工福祉策略'
+    };
+
+    // Function to handle navigation item click
+    function handleNavClick(event) {
+        // 防止拖曳時觸發點擊
+        if (event.target.classList.contains('drag-handle')) {
+            return;
+        }
+        
+        const clickedItem = event.currentTarget;
+        
+        // 更新導航狀態
+        navItems.forEach(i => i.classList.remove('active'));
+        clickedItem.classList.add('active');
+        
+        // 更新內容區域
+        const targetId = clickedItem.getAttribute('data-target');
+        contentSections.forEach(section => {
+            section.classList.remove('active');
+            if (section.id === targetId) {
+                section.classList.add('active');
+                section.classList.add('fade-in');
+            }
+        });
+
+        // 更新標題
+        if (titleMap[targetId]) {
+            contentTitle.textContent = titleMap[targetId];
+        }
+
+        // 如果是技術核心或高科技製造，確保第一個頁籤是活躍的
+        if (targetId === 'content-tech') {
+            resetTabs('content-tech', 'tab-sas-arc');
+        } else if (targetId === 'content-hightech') {
+            resetTabs('content-hightech', 'tab-oee');
+        }
+    }
+
+    // Function to reset tabs for a section
+    function resetTabs(sectionId, firstTabId) {
+        const section = document.getElementById(sectionId);
+        if (!section) return;
+        
+        const sectionTabButtons = section.querySelectorAll('.tab-button');
+        const sectionTabContents = section.querySelectorAll('.tab-content');
+        
+        sectionTabButtons.forEach(b => b.classList.remove('active'));
+        sectionTabContents.forEach(c => c.classList.remove('active'));
+        
+        const firstTab = section.querySelector(`[data-tab="${firstTabId}"]`);
+        const firstContent = document.getElementById(firstTabId);
+        
+        if (firstTab && firstContent) {
+            firstTab.classList.add('active');
+            firstContent.classList.add('active');
+        }
+    }
+
+    // 為導航項目添加點擊事件
+    navItems.forEach(item => {
+        item.addEventListener('click', handleNavClick);
+    });
+
+    // Sortable.js 拖曳功能
+    new Sortable(navContainer, {
+        animation: 200,
+        ghostClass: 'sortable-ghost',
+        handle: '.drag-handle',
+        dragClass: 'sortable-drag',
+        easing: "cubic-bezier(1, 0, 0, 1)",
+        onStart: function (evt) {
+            // 拖曳開始時添加視覺回饋
+            evt.item.style.transform = 'rotate(2deg)';
+        },
+        onEnd: function (evt) {
+            // 拖曳結束時重置樣式
+            evt.item.style.transform = '';
+            console.log('導航順序已更新');
+            
+            // 可以在這裡添加保存用戶偏好的邏輯
+            // localStorage.setItem('navOrder', JSON.stringify(getNavOrder()));
+        }
+    });
+
+    // 頁籤功能
+    tabButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            // 找到所屬的 section
+            const section = button.closest('.content-section');
+            if (!section) return;
+            
+            // 更新該 section 內的頁籤狀態
+            const sectionTabButtons = section.querySelectorAll('.tab-button');
+            const sectionTabContents = section.querySelectorAll('.tab-content');
+            
+            sectionTabButtons.forEach(b => b.classList.remove('active'));
+            button.classList.add('active');
+
+            // 更新頁籤內容
+            const targetTabId = button.getAttribute('data-tab');
+            sectionTabContents.forEach(content => {
+                content.classList.remove('active');
+                if (content.id === targetTabId) {
+                    content.classList.add('active');
+                    content.classList.add('fade-in');
+                }
+            });
+        });
+    });
+
+    // 獲取當前導航順序（用於保存用戶偏好）
+    function getNavOrder() {
+        const items = navContainer.querySelectorAll('.nav-item');
+        return Array.from(items).map(item => item.getAttribute('data-target'));
+    }
+
+    // 載入用戶偏好的導航順序（如果有的話）
+    function loadNavOrder() {
+        try {
+            const savedOrder = localStorage.getItem('navOrder');
+            if (savedOrder) {
+                const order = JSON.parse(savedOrder);
+                // 這裡可以實現重新排序邏輯
+                console.log('載入已保存的導航順序:', order);
+            }
+        } catch (e) {
+            console.log('無法載入導航順序偏好');
+        }
+    }
+
+    // 初始化時載入用戶偏好
+    loadNavOrder();
+
+    // 為 iframe 添加載入完成事件（可選）
+    const iframes = document.querySelectorAll('iframe');
+    iframes.forEach(iframe => {
+        iframe.addEventListener('load', function() {
+            console.log(`已載入: ${this.title}`);
+        });
+    });
+
+    // 鍵盤快捷鍵支援（可選）
+    document.addEventListener('keydown', function(e) {
+        // Alt + 數字鍵快速切換導航
+        if (e.altKey && e.key >= '1' && e.key <= '9') {
+            e.preventDefault();
+            const index = parseInt(e.key) - 1;
+            const targetItem = navItems[index];
+            if (targetItem) {
+                targetItem.click();
+            }
+        }
+    });
+});
+</script>
+
+</body>
+</html>

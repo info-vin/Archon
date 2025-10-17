@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>APS排程系統類別UML關係 (互動+程式碼參考)</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- D3.js CDN -->
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        /* 基礎樣式 */
+        body {
+            font-family: 'Inter', 'Segoe UI', 'Microsoft JhengHei', Arial, sans-serif;
+            background-color: #f3f4f6;
+            color: #333;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 2rem;
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        h1, h2, h3 {
+            color: #1f2937;
+            font-weight: 700;
+        }
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+        h2 {
+            font-size: 2rem;
+            margin-top: 2.5rem;
+            margin-bottom: 1rem;
+            border-bottom: 2px solid #e5e7eb;
+            padding-bottom: 0.5rem;
+        }
+        h3 {
+            font-size: 1.5rem;
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
+            color: #4b5563;
+        }
+        .class-description {
+            background-color: #eef2f6;
+            border-left: 4px solid #3b82f6;
+            padding: 1rem 1.5rem;
+            margin-bottom: 1rem;
+            border-radius: 8px;
+        }
+        .class-description strong {
+            color: #1d4ed8;
+        }
+        .relationship {
+            margin-left: 2rem;
+            margin-bottom: 0.5rem;
+        }
+        .relationship strong {
+            color: #059669;
+        }
+        ul {
+            list-style-type: disc;
+            margin-left: 2rem;
+        }
+
+        /* D3 圖表樣式 */
+        .legend { padding: 15px; margin-bottom: 20px; background-color: #ecf0f1; border-radius: 8px; }
+        .legend h3 { margin-top: 0; color: #2c3e50; }
+        .legend-item { display: inline-block; margin-right: 20px; font-size: 0.9em; }
+        .legend-color { display: inline-block; width: 12px; height: 12px; border-radius: 50%; margin-right: 5px; vertical-align: middle; }
+        #uml-diagram { width: 100%; height: 800px; border: 1px solid #ddd; border-radius: 8px; background-color: #fdfdfd; cursor: move; }
+        .tooltip { position: absolute; text-align: left; padding: 10px; font: 12px sans-serif; background: rgba(44, 62, 80, 0.9); color: #fff; border-radius: 8px; pointer-events: none; opacity: 0; transition: opacity 0.2s; max-width: 350px; z-index: 10; }
+        .node text { pointer-events: none; font-size: 10px; font-weight: bold; }
+        .link { stroke-opacity: 0.6; }
+        .link.inheritance { stroke: #2c3e50; stroke-width: 2px; }
+        .link.usage { stroke: #7f7f7f; stroke-dasharray: 5, 5; stroke-width: 1.5px; }
+
+        /* Mermaid 程式碼區塊樣式 */
+        .code-container {
+            position: relative;
+            margin-top: 1rem;
+        }
+        #mermaid-code-block {
+            background-color: #2d333b;
+            color: #cdd9e5;
+            padding: 1.5rem;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.9em;
+        }
+        #copy-button {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: #6c757d;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.8em;
+            transition: background-color 0.2s;
+        }
+        #copy-button:hover {
+            background-color: #5a6268;
+        }
+    </style>
+</head>
+<body class="p-4 sm:p-6 md:p-8">
+    <div class="container">
+        <h1 class="text-blue-700">APS排程系統類別UML關係說明</h1>
+        <p class="mb-6 text-gray-700">
+            本文件旨在根據您提供的技術轉移文件，詳細說明APS排程系統中各個C#檔案（.cs）所代表的類別及其之間的UML關係。APS系統的核心是排程演算法，各模組圍繞著工序、資源和排程邏輯協同工作。這些關係主要包括：
+        </p>
+        <ul class="list-disc ml-6 mb-6 text-gray-700">
+            <li><b>繼承 (Inheritance)</b>：一個類別衍生自另一個類別 (圖中以實心黑線與空心箭頭表示)。</li>
+            <li><b>依賴/組合/聚合 (Dependency/Composition/Aggregation)</b>：一個類別需要使用或由其他類別組成 (圖中以灰色虛線與實心箭頭表示)。</li>
+        </ul>
+
+        <h2 id="uml-diagram-section">互動式UML架構圖</h2>
+        <p class="mb-4">
+            以下是APS排程系統主要類別的互動式UML架構圖。此圖旨在提供一個高層次的視覺概覽，展示各模組和類別之間的核心關係。您可以：
+        </p>
+        <ul class="list-disc ml-6 mb-4">
+            <li><b>查看說明</b>：將滑鼠懸停在節點上查看詳細說明。</li>
+            <li><b>重新佈局</b>：拖曳節點以自由排列。</li>
+            <li><b>縮放/平移</b>：使用滑鼠滾輪縮放圖表，按住圖表空白處拖曳平移。</li>
+        </ul>
+        
+        <div class="legend">
+            <h3>圖例說明</h3>
+            <div class="legend-item"><span class="legend-color" style="background-color: #d62728;"></span>系統進入點</div>
+            <div class="legend-item"><span class="legend-color" style="background-color: #1f77b4;"></span>核心排程/作業邏輯</div>
+            <div class="legend-item"><span class="legend-color" style="background-color: #2ca02c;"></span>啟發式演算法</div>
+            <div class="legend-item"><span class="legend-color" style="background-color: #ff7f0e;"></span>資料模型/個體</div>
+            <div class="legend-item"><span class="legend-color" style="background-color: #9467bd;"></span>管理器/工廠</div>
+            <div class="legend-item"><span class="legend-color" style="background-color: #8c564b;"></span>全域設定/配置</div>
+            <div class="legend-item"><span class="legend-color" style="background-color: #7f7f7f;"></span>輔助工具/日誌</div>
+        </div>
+        <svg id="uml-diagram"></svg>
+        <div class="tooltip"></div>
+
+        <!-- 文字說明部分 -->
+        <h2 id="overview">概述</h2>
+        <p class="mb-4">
+            APS系統的核心是排程演算法，各模組圍繞著工序、資源和排程邏輯協同工作。以下是主要檔案及類別的關係解析：
+        </p>
+        <h2 id="interface">1. Interface.cs</h2>
+        <div class="class-description"><strong>類別：</strong> <code>Interface</code><p>程式的進入點，提供多種排程演算法的呼叫介面。</p></div>
+        <h3 class="text-green-700">關係：</h3>
+        <ul class="list-disc ml-6">
+            <li class="relationship"><strong>依賴：</strong> <code>GlobalParam</code> (用於初始化全域參數)。</li>
+            <li class="relationship"><strong>依賴：</strong> <code>Scheduler</code> (用於實際排程操作)。</li>
+            <li class="relationship"><strong>依賴：</strong> 各種演算法類別，例如 <code>GeneticAlgorithm</code>, <code>SimulatedAnnealing</code>, 等。</li>
+            <li class="relationship"><strong>依賴：</strong> <code>Log</code> (用於記錄執行日誌)。</li>
+        </ul>
+        <!-- ... 其他類別的詳細文字說明保持不變 ... -->
+        <h2 id="operation">6. Operation (Operation.cs, BatchOperation.cs, OperationManager.cs)</h2>
+        <div class="class-description"><strong>類別：</strong> <code>Operation</code><p>代表APS中的工單表格，處理工序資料、資源選擇和約束設定。</p></div>
+        <div class="class-description"><strong>類別：</strong> <code>BatchOperation</code><p>繼承自<code>Operation</code>，專門處理批次爐工序。</p></div>
+        <div class="class-description"><strong>類別：</strong> <code>OperationManager</code><p>管理APS中的工序表格，維護一個靜態的工序字典。</p></div>
+        <h3 class="text-green-700">關係：</h3>
+        <ul class="list-disc ml-6">
+            <li class="relationship"><strong>繼承：</strong> <code>BatchOperation</code> 繼承自 <code>Operation</code>。</li>
+            <li class="relationship"><strong>組合/聚合：</strong> <code>OperationManager</code> 管理多個<code>Operation</code>物件。</li>
+            <li class="relationship"><strong>依賴：</strong> <code>Operation</code> 依賴 <code>ResourceGroupManager</code> 和 <code>ResourceManager</code>。</li>
+        </ul>
+        <h2 id="algorithms">7. Algorithms (...)</h2>
+        <div class="class-description"><strong>類別：</strong> <code>Scheduler</code><p>負責APS系統中的核心排程邏輯。</p></div>
+        <div class="class-description"><strong>類別：</strong> <code>SchedulerHelper</code><p>輔助執行APS排程，提供快取機制。</p></div>
+        <div class="class-description"><strong>類別：</strong> <code>Individual</code><p>代表演算法中的一個解（個體）。</p></div>
+        <h3 class="text-green-700">關係：</h3>
+        <ul class="list-disc ml-6">
+            <li class="relationship"><strong>組合/聚合：</strong> 各啟發式演算法（如<code>GeneticAlgorithm</code>）通常會包含一個 <code>SchedulerHelper</code> 和 <code>Scheduler</code> 的實例。</li>
+            <li class="relationship"><strong>依賴：</strong> 各演算法會大量使用並操作 <code>Individual</code> 物件來表示和評估解。</li>
+        </ul>
+
+        <h2 id="conclusion">總結</h2>
+        <p class="mb-4">
+            這份說明文件結合了詳細的文字解析與互動式的視覺化圖表，希望能幫助演算法工程師快速理解APS排程系統中主要C#類別之間的架構與數據流。
+        </p>
+
+        <!-- 新增的附錄區塊 -->
+        <h2 id="mermaid-code-appendix">附錄：Mermaid UML 原始碼參考</h2>
+        <p class="mb-4">
+            以下是系統結構的Mermaid語法版本，可用於其他支援Mermaid的工具（如GitLab、Notion等），方便複製貼上使用。
+        </p>
+        <div class="code-container">
+            <button id="copy-button">複製</button>
+            <pre id="mermaid-code-block"><code>
+classDiagram
+    direction LR
+
+    class Interface {
+        +int Basic(...)
+        +int GeneticAlgorithm(...)
+    }
+    class GlobalParam {
+        +void InitGlobalParam(...)
+    }
+    class Log {
+        +void SaveLog(...)
+    }
+    class ResourceGroupManager {
+        -Dictionary&lt;int, ResourceGroup&gt; _idToResourceGroup
+        +ResourceGroup GetResourceGroup(int id)
+    }
+    class ResourceManager {
+        -Dictionary&lt;int, Resource&gt; _idToResource
+        +Resource GetResource(int id)
+    }
+    class Operation {
+        +string OrderNo
+        +DateTime EndTime
+    }
+    class BatchOperation
+    class OperationManager {
+        -Dictionary&lt;int, Operation&gt; _idToOperation
+        +Operation GetOperation(int id)
+    }
+    class Scheduler {
+        -List&lt;Operation&gt; SchedulableOps
+        +void ScheduleOperations(...)
+    }
+    class SchedulerHelper {
+        -Scheduler _scheduler
+        +double Fitness(...)
+    }
+    class Individual {
+        +List&lt;int&gt; Sequence
+        +double Fitness
+    }
+    class AntColonyOptimization
+    class Ant
+    class TabuSearch
+    class SimulatedAnnealing
+    class ParticleSwarmOptimization
+    class Particle
+    class GeneticAlgorithm
+
+    Interface --&gt; GlobalParam : 依賴 (初始化參數)
+    Interface --&gt; Scheduler : 依賴 (執行排程)
+    Interface --&gt; GeneticAlgorithm : 依賴 (呼叫演算法)
+    Interface --&gt; Log : 依賴 (記錄日誌)
+
+    Log --&gt; GlobalParam : 依賴 (獲取路徑)
+
+    ResourceGroupManager *-- "ResourceGroup" : 組合
+    ResourceManager *-- "Resource" : 組合
+
+    BatchOperation --|&gt; Operation : 繼承
+    OperationManager *-- Operation : 組合 (管理多個)
+    Operation ..&gt; ResourceGroupManager : 依賴
+    Operation ..&gt; ResourceManager : 依賴
+
+    Scheduler *-- Operation : 組合
+    Scheduler ..&gt; OperationManager : 依賴
+
+    SchedulerHelper *-- Scheduler : 組合
+
+    Ant --|&gt; Individual : 繼承
+    AntColonyOptimization o-- Ant : 聚合
+    Particle *-- Individual : 組合
+    ParticleSwarmOptimization o-- Particle : 聚合
+
+    GeneticAlgorithm *-- SchedulerHelper : 組合
+    GeneticAlgorithm ..&gt; Individual : 依賴
+
+    SimulatedAnnealing *-- SchedulerHelper : 組合
+    SimulatedAnnealing ..&gt; Individual : 依賴
+    
+    TabuSearch *-- SchedulerHelper : 組合
+    TabuSearch ..&gt; Individual : 依賴
+
+    AntColonyOptimization *-- SchedulerHelper : 組合
+    ParticleSwarmOptimization *-- SchedulerHelper : 組合
+            </code></pre>
+        </div>
+    </div>
+
+    <!-- D3.js 和複製按鈕的 JavaScript -->
+    <script>
+        // D3.js 圖表渲染腳本 (與前一版相同)
+        const graph = {
+            nodes: [
+                { id: "Interface.cs", group: 1, description: "類別: Interface<br>程式的進入點，提供多種排程演算法的呼叫介面。" },
+                { id: "Algorithms\\Scheduler.cs", group: 2, description: "類別: Scheduler<br>負責APS系統中的核心排程邏輯。" },
+                { id: "Operation\\Operation.cs", group: 2, description: "類別: Operation<br>代表APS中的工單表格，處理工序資料、資源選擇和约束设定。" },
+                { id: "Operation\\BatchOperation.cs", group: 2, description: "類別: BatchOperation<br>繼承自Operation，專門處理批次爐工序。" },
+                { id: "Algorithms\\GeneticAlgorithm.cs", group: 3, description: "類別: GeneticAlgorithm<br>實作遺傳演算法。" },
+                { id: "Algorithms\\SimulatedAnnealing.cs", group: 3, description: "類別: SimulatedAnnealing<br>實作模擬退火演算法。" },
+                { id: "Algorithms\\TabuSearch.cs", group: 3, description: "類別: TabuSearch<br>實作禁忌搜尋演算法。" },
+                { id: "Algorithms\\AntColonyOptimization.cs", group: 3, description: "類別: AntColonyOptimization<br>實作螞蟻演算法。" },
+                { id: "Algorithms\\ParticleSwarmOptimization.cs", group: 3, description: "類別: ParticleSwarmOptimization<br>實作粒子群優化演算法。" },
+                { id: "ResourceGroup\\ResourceGroup.cs", group: 4, description: "類別: ResourceGroup<br>代表APS中的資源群組表格。" },
+                { id: "Resource\\Resource.cs", group: 4, description: "類別: Resource<br>代表APS中的資源表格。" },
+                { id: "Algorithms\\Individual.cs", group: 4, description: "類別: Individual<br>代表遺傳演算法中的一個個體，包含排程順序和總生產時間。" },
+                { id: "Algorithms\\AntColonyOptimization.cs\\Ant", group: 4, description: "巢狀類別: Ant<br>螞蟻個體，繼承自Individual。" },
+                { id: "Algorithms\\ParticleSwarmOptimization.cs\\Particle", group: 4, description: "巢狀類別: Particle<br>粒子個體，包含當前位置和個體最佳位置。" },
+                { id: "ResourceGroup\\ResourceGroupManager.cs", group: 5, description: "類別: ResourceGroupManager<br>負責管理APS中的資源群組表格。" },
+                { id: "Resource\\ResourceManager.cs", group: 5, description: "類別: ResourceManager<br>管理APS中的資源表格，維護一個資源字典。" },
+                { id: "Operation\\OperationManager.cs", group: 5, description: "類別: OperationManager<br>管理APS中的工序表格，維護一個靜態的工序字典。" },
+                { id: "GlobalParam.cs", group: 6, description: "類別: GlobalParam<br>負責初始化和管理APS排程系統的全局參數。" },
+                { id: "Logs\\NLog.config", group: 6, description: "配置: NLog.config<br>NLog的設定檔，Log類別會讀取此配置。" },
+                { id: "Logs\\Log.cs", group: 7, description: "類別: Log<br>負責記錄APS排程系統的日誌。" },
+                { id: "Algorithms\\SchedulerHelper.cs", group: 7, description: "類別: SchedulerHelper<br>輔助執行APS排程，提供快取機制。" },
+                { id: "Algorithms\\PerformanceMetricsHelper.cs", group: 7, description: "類別: PerformanceMetricsHelper<br>提供生產週期(Schedule Span)的評估與格式化。" },
+            ],
+            links: [
+                { source: "Operation\\BatchOperation.cs", target: "Operation\\Operation.cs", type: "inheritance" },
+                { source: "Algorithms\\AntColonyOptimization.cs\\Ant", target: "Algorithms\\Individual.cs", type: "inheritance" },
+                { source: "Interface.cs", target: "GlobalParam.cs", type: "usage" },
+                { source: "Interface.cs", target: "Logs\\Log.cs", type: "usage" },
+                { source: "Interface.cs", target: "Algorithms\\Scheduler.cs", type: "usage" },
+                { source: "Interface.cs", target: "Algorithms\\GeneticAlgorithm.cs", type: "usage" },
+                { source: "Interface.cs", target: "Algorithms\\SimulatedAnnealing.cs", type: "usage" },
+                { source: "Interface.cs", target: "Algorithms\\TabuSearch.cs", type: "usage" },
+                { source: "Interface.cs", target: "Algorithms\\AntColonyOptimization.cs", type: "usage" },
+                { source: "Interface.cs", target: "Algorithms\\ParticleSwarmOptimization.cs", type: "usage" },
+                { source: "Logs\\Log.cs", target: "Logs\\NLog.config", type: "usage" },
+                { source: "Logs\\Log.cs", target: "GlobalParam.cs", type: "usage" },
+                { source: "Algorithms\\Scheduler.cs", target: "Operation\\OperationManager.cs", type: "usage" },
+                { source: "Operation\\Operation.cs", target: "ResourceGroup\\ResourceGroupManager.cs", type: "usage" },
+                { source: "Operation\\Operation.cs", target: "Resource\\ResourceManager.cs", type: "usage" },
+                { source: "ResourceGroup\\ResourceGroupManager.cs", target: "ResourceGroup\\ResourceGroup.cs", type: "usage" },
+                { source: "Resource\\ResourceManager.cs", target: "Resource\\Resource.cs", type: "usage" },
+                { source: "Algorithms\\SchedulerHelper.cs", target: "Algorithms\\Scheduler.cs", type: "usage" },
+                { source: "Algorithms\\GeneticAlgorithm.cs", target: "Algorithms\\SchedulerHelper.cs", type: "usage" },
+                { source: "Algorithms\\GeneticAlgorithm.cs", target: "Algorithms\\Individual.cs", type: "usage" },
+                { source: "Algorithms\\SimulatedAnnealing.cs", target: "Algorithms\\SchedulerHelper.cs", type: "usage" },
+                { source: "Algorithms\\SimulatedAnnealing.cs", target: "Algorithms\\Individual.cs", type: "usage" },
+                { source: "Algorithms\\TabuSearch.cs", target: "Algorithms\\SchedulerHelper.cs", type: "usage" },
+                { source: "Algorithms\\TabuSearch.cs", target: "Algorithms\\Individual.cs", type: "usage" },
+                { source: "Algorithms\\AntColonyOptimization.cs", target: "Algorithms\\SchedulerHelper.cs", type: "usage" },
+                { source: "Algorithms\\AntColonyOptimization.cs", target: "Algorithms\\AntColonyOptimization.cs\\Ant", type: "usage" },
+                { source: "Algorithms\\ParticleSwarmOptimization.cs", target: "Algorithms\\SchedulerHelper.cs", type: "usage" },
+                { source: "Algorithms\\ParticleSwarmOptimization.cs", target: "Algorithms\\ParticleSwarmOptimization.cs\\Particle", type: "usage" },
+                { source: "Algorithms\\ParticleSwarmOptimization.cs\\Particle", target: "Algorithms\\Individual.cs", type: "usage" }
+            ]
+        };
+        const svg = d3.select("#uml-diagram"), width = +svg.node().getBoundingClientRect().width, height = +svg.node().getBoundingClientRect().height;
+        const tooltip = d3.select(".tooltip");
+        const color = d3.scaleOrdinal().domain([1, 2, 3, 4, 5, 6, 7]).range(["#d62728", "#1f77b4", "#2ca02c", "#ff7f0e", "#9467bd", "#8c564b", "#7f7f7f"]);
+        const simulation = d3.forceSimulation(graph.nodes).force("link", d3.forceLink(graph.links).id(d => d.id).distance(120)).force("charge", d3.forceManyBody().strength(-350)).force("center", d3.forceCenter(width / 2, height / 2)).force("collide", d3.forceCollide().radius(30));
+        svg.append('defs').selectAll('marker').data(['usage', 'inheritance']).join('marker').attr('id', d => `arrow-${d}`).attr('viewBox', '0 -5 10 10').attr('refX', d => d === 'inheritance' ? 24 : 20).attr('refY', 0).attr('markerWidth', 6).attr('markerHeight', 6).attr('orient', 'auto').append('path').attr('d', 'M0,-5L10,0L0,5').attr('fill', d => d === 'inheritance' ? 'none' : '#7f7f7f').attr('stroke', d => d === 'inheritance' ? '#2c3e50' : '#7f7f7f');
+        const g = svg.append("g");
+        const link = g.append("g").attr("class", "links").selectAll("line").data(graph.links).join("line").attr("class", d => `link ${d.type}`).attr("marker-end", d => `url(#arrow-${d.type})`);
+        const node = g.append("g").attr("class", "nodes").selectAll("g").data(graph.nodes).join("g").attr("class", "node").call(drag(simulation));
+        node.append("circle").attr("r", 15).attr("fill", d => color(d.group));
+        node.append("text").text(d => d.id.split('\\').pop().replace('.cs', '')).attr('x', 20).attr('y', 4);
+        node.on("mouseover", (event, d) => { tooltip.transition().duration(200).style("opacity", 1); tooltip.html(`<strong>${d.id}</strong><hr style="margin:4px 0;border-color:#666;">${d.description}`).style("left", (event.pageX + 15) + "px").style("top", (event.pageY - 28) + "px"); }).on("mouseout", () => { tooltip.transition().duration(500).style("opacity", 0); });
+        simulation.on("tick", () => { link.attr("x1", d => d.source.x).attr("y1", d => d.source.y).attr("x2", d => d.target.x).attr("y2", d => d.target.y); node.attr("transform", d => `translate(${d.x},${d.y})`); });
+        function drag(simulation) { function dragstarted(event) { if (!event.active) simulation.alphaTarget(0.3).restart(); event.subject.fx = event.subject.x; event.subject.fy = event.subject.y; } function dragged(event) { event.subject.fx = event.x; event.subject.fy = event.y; } function dragended(event) { if (!event.active) simulation.alphaTarget(0); event.subject.fx = null; event.subject.fy = null; } return d3.drag().on("start", dragstarted).on("drag", dragged).on("end", dragended); }
+        const zoom = d3.zoom().scaleExtent([0.1, 4]).on('zoom', (event) => { g.attr('transform', event.transform); });
+        svg.call(zoom);
+
+        // 複製按鈕的 JavaScript
+        document.addEventListener('DOMContentLoaded', (event) => {
+            const copyButton = document.getElementById('copy-button');
+            const codeBlock = document.getElementById('mermaid-code-block');
+
+            if (copyButton && codeBlock) {
+                copyButton.addEventListener('click', () => {
+                    const codeToCopy = codeBlock.innerText;
+                    navigator.clipboard.writeText(codeToCopy).then(() => {
+                        // 提供複製成功的回饋
+                        copyButton.innerText = '已複製!';
+                        copyButton.style.backgroundColor = '#28a745'; // 綠色
+                        setTimeout(() => {
+                            copyButton.innerText = '複製';
+                            copyButton.style.backgroundColor = '#6c757d'; // 恢復原色
+                        }, 2000);
+                    }).catch(err => {
+                        console.error('無法複製程式碼: ', err);
+                        copyButton.innerText = '複製失敗';
+                    });
+                });
+            }
+        });
+    </script>
+</body>
+</html>

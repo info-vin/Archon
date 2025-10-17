@@ -1,0 +1,1081 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智慧轉型新動能：SAS 與 UiPath 解決方案</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        /* Base Styles */
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f2f5;
+            color: #333;
+            line-height: 1.6;
+            scroll-behavior: smooth;
+        }
+
+        /* Hero Section (Full Screen Background Image) */
+        .hero-section {
+            position: relative;
+            width: 100%;
+            height: 100vh; /* Full viewport height */
+            overflow: hidden; /* Ensure images don't overflow */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.7); /* Darker shadow for readability */
+            box-sizing: border-box; /* Include padding in element's total width and height */
+            padding: 20px; /* Padding for mobile */
+        }
+
+        /* Background image animation container */
+        .hero-background-slideshow {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0; /* Behind other hero content */
+        }
+
+        .hero-background-slideshow > div {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-size: cover;
+            background-position: center center;
+            opacity: 0;
+            animation: imageFade 18s infinite; /* Total 18s cycle for 3 images (33% * 3 = 99%, add buffer) */
+        }
+
+        /* Define specific images for slideshow - Corrected paths for placeholders */
+        .hero-background-slideshow div:nth-child(1) {
+            background-image: url('https://images.unsplash.com/photo-1473448912268-2022ce9509d8?ixlib=rb-4.0.3&q=85&fm=jpg&crop=entropy&cs=srgb&w=3200'); /* Placeholder for Mountain Panorama */
+            animation-delay: 0s;
+        }
+        .hero-background-slideshow div:nth-child(2) {
+            background-image: url('https://images.unsplash.com/photo-1501854140801-50d01698950b?ixlib=rb-4.0.3&q=85&fm=jpg&crop=entropy&cs=srgb&w=3200'); /* Placeholder for Serene Lake */
+            animation-delay: 6s; /* Starts 6s after first image */
+        }
+        .hero-background-slideshow div:nth-child(3) {
+            background-image: url('https://images.unsplash.com/photo-1534796636912-3b95b3ab5986?ixlib=rb-4.0.3&q=85&fm=jpg&crop=entropy&cs=srgb&w=3200'); /* Placeholder for Dense Forest */
+            animation-delay: 12s; /* Starts 12s after first image */
+        }
+        /* insert */
+        .full-background-1 {
+        /* 設置背景圖片 */
+        background-image: url("https://images.unsplash.com/photo-1475924156734-496f6cac6ec1?ixlib=rb-4.0.3&q=85&fm=jpg&crop=entropy&cs=srgb&w=3200"); /* 替換為你的圖片路徑 */
+        background-size: cover; /* 或 100% 100% */
+        background-repeat: no-repeat;
+        background-position: center center; /* 圖片置中 */
+        height: 500px; /* 設置 `section` 的高度，根據實際內容調整 */
+        /* 其他樣式 */
+        color: white; /* 調整文字顏色以確保可見性 */
+        text-align: center;
+        }
+
+        /* Keyframes for fade animation */
+        @keyframes imageFade {
+            0% { opacity: 0; }
+            10% { opacity: 1; } /* Fade in duration */
+            33% { opacity: 1; } /* Hold duration (18s / 3 images = 6s per image. 10% fade in + X% hold + 10% fade out) */
+            43% { opacity: 0; } /* Fade out duration */
+            100% { opacity: 0; } /* Keep hidden until next cycle */
+        }
+
+        .hero-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.4); /* Darker overlay for better text contrast */
+            z-index: 1;
+        }
+        .hero-content {
+            position: relative;
+            z-index: 2;
+            text-align: center;
+            max-width: 900px; /* Constrain width */
+        }
+        .hero-content h1 {
+            font-size: 4em; /* Larger, more impactful title */
+            margin-bottom: 20px;
+            font-weight: 700;
+        }
+        .hero-content p {
+            font-size: 1.8em; /* Larger subtitle */
+            font-weight: 300;
+        }
+
+        /* Navigation (Top Left & Right - as per reference image) */
+        .top-nav {
+            position: absolute;
+            top: 30px;
+            left: 30px;
+            right: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start; /* Align logo/title to top */
+            z-index: 10;
+            color: white;
+        }
+        .company-logo {
+            font-size: 1.8em;
+            font-weight: 700;
+            color: white;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            line-height: 1.2;
+            text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.5);
+        }
+        .company-logo small {
+            font-size: 0.6em;
+            display: block;
+            opacity: 0.8;
+            font-weight: 300;
+        }
+        .main-menu {
+            display: flex;
+            gap: 30px;
+        }
+        .main-menu a {
+            color: white;
+            text-decoration: none;
+            font-size: 1.1em;
+            font-weight: 500;
+            padding: 5px 0;
+            position: relative;
+            transition: color 0.3s ease;
+            text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.5);
+        }
+        .main-menu a::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            width: 0;
+            height: 2px;
+            background-color: white;
+            transition: width 0.3s ease;
+        }
+        .main-menu a:hover {
+            color: #e0e0e0; /* Slight grey on hover */
+        }
+        .main-menu a:hover::after {
+            width: 100%;
+        }
+
+        /* Side Navigation / Quick Links */
+        .side-nav {
+            position: absolute;
+            right: 30px;
+            top: 50%; /* Center vertically */
+            transform: translateY(-50%);
+            z-index: 5;
+            background-color: rgba(255, 255, 255, 0.1); /* Semi-transparent white */
+            padding: 20px 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            color: white;
+            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px); /* Frosted glass effect */
+            -webkit-backdrop-filter: blur(5px);
+        }
+        .side-nav ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .side-nav li {
+            margin-bottom: 15px;
+        }
+        .side-nav li:last-child {
+            margin-bottom: 0;
+        }
+        .side-nav a {
+            color: white;
+            text-decoration: none;
+            font-size: 1.1em;
+            font-weight: 500;
+            transition: color 0.3s ease, transform 0.3s ease;
+            display: block;
+            padding-right: 20px; /* Space for arrow */
+            position: relative;
+        }
+        .side-nav a::after {
+            content: '→'; /* Right arrow */
+            position: absolute;
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            opacity: 0;
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+        .side-nav a:hover {
+            color: #d0d0d0;
+            transform: translateX(5px);
+        }
+        .side-nav a:hover::after {
+            opacity: 1;
+            transform: translateY(-50%) translateX(5px);
+        }
+        .side-nav .accordion-title {
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 1.2em;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .side-nav .accordion-title::after {
+            content: '▲'; /* Up arrow */
+            font-size: 0.8em;
+            transform: rotate(0deg);
+            transition: transform 0.3s ease;
+        }
+        .side-nav .accordion-title.collapsed::after {
+            content: '▼'; /* Down arrow */
+            transform: rotate(0deg);
+        }
+        .side-nav .accordion-content {
+            max-height: 300px; /* Set a max-height */
+            overflow: hidden;
+            transition: max-height 0.5s ease-out, opacity 0.5s ease-out;
+            opacity: 1;
+        }
+        .side-nav .accordion-content.collapsed {
+            max-height: 0;
+            opacity: 0;
+            pointer-events: none; /* Disable interaction when collapsed */
+        }
+
+        /* News Section (Bottom Left) */
+        .news-section {
+            position: absolute;
+            bottom: 30px;
+            left: 30px;
+            z-index: 5;
+            background-color: rgba(0, 0, 0, 0.5); /* Darker semi-transparent background */
+            padding: 20px 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            color: white;
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+            width: 350px; /* Fixed width for news section */
+        }
+        .news-section h4 {
+            font-size: 1.3em;
+            margin-top: 0;
+            margin-bottom: 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+            padding-bottom: 10px;
+            font-weight: 500;
+            color: white;
+            text-align: left; /* Align with screenshot */
+        }
+        .news-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .news-list li {
+            margin-bottom: 10px;
+            font-size: 0.95em;
+        }
+        .news-list span.date {
+            display: inline-block;
+            width: 85px; /* Fixed width for date column */
+            margin-right: 10px;
+            font-weight: 300;
+            opacity: 0.8;
+        }
+        .news-list a {
+            color: white;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+        .news-list a:hover {
+            color: #a0e0ff; /* Lighter blue on hover */
+        }
+
+        /* Main Content Sections */
+        .container {
+            max-width: 1200px;
+            margin: 0px auto; /* No top margin, aligns with full-width header */
+            background-color: #fff;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08); /* More subtle shadow */
+            overflow: hidden;
+            border-radius: 0; /* Align with Toyota's sharper corners on main blocks */
+        }
+        .content-section {
+            padding: 80px 40px; /* Generous padding */
+            background-color: #ffffff;
+            border-radius: 0; /* No rounding */
+            box-shadow: none; /* No shadow on inner sections */
+        }
+        .section-divider {
+            border: none;
+            border-top: 1px solid #e0e0e0; /* Light grey divider */
+            margin: 40px auto; /* Space above and below */
+            width: 80%; /* Width of the divider */
+        }
+        .content-section h2 {
+            font-size: 2.8em;
+            margin-bottom: 60px;
+            color: #004080;
+            text-align: center;
+            font-weight: 700;
+        }
+        .content-section h2::after {
+            background-color: #0056b3;
+            bottom: -20px;
+        }
+        .intro-text-inner {
+            text-align: center;
+            font-size: 1.2em;
+            margin-bottom: 50px;
+            color: #555;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        /*------*/
+        .intro-text-inner-1 {
+            text-align: center;
+            font-size: 1.2em;
+            margin-bottom: 50px;
+            color: #ffffff;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .product-info {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 60px; /* Increased gap between product info blocks */
+            margin-bottom: 60px;
+            align-items: flex-start; /* Align tops of items */
+        }
+        .product-block {
+            flex: 1 1 calc(50% - 30px); /* Adjust for gap */
+            min-width: 300px; /* Minimum width for mobile responsiveness */
+            background-color: #fdfdfd;
+            padding: 35px;
+            border-radius: 4px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.07);
+            border: 1px solid #e9ecef;
+            box-sizing: border-box;
+        }
+        .product-block h3 {
+            font-size: 2.2em;
+            color: #004080;
+            margin-top: 0;
+            margin-bottom: 25px;
+            text-align: center;
+            font-weight: 600;
+        }
+        .product-block p {
+            font-size: 1.1em;
+            color: #4a4a4a;
+            margin-bottom: 20px;
+        }
+        .image-placeholder {
+            min-height: 250px;
+            background-color: #e6e9ee;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            border-radius: 4px;
+            margin: 40px 0 20px; /* More margin top, less bottom */
+            font-style: italic;
+            color: #6a6a6a;
+            padding: 30px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            line-height: 1.5;
+            font-size: 0.95em;
+        }
+        .feature-list {
+            list-style: none;
+            padding: 0;
+            margin-top: 25px;
+        }
+        .feature-list li {
+            background: #f5faff;
+            margin-bottom: 12px;
+            padding: 15px 25px;
+            border-left: 6px solid #007bff;
+            border-radius: 4px;
+            font-size: 1.1em;
+            color: #444;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        /* 推廣策略 Section - Specific Styling (from uploaded image) */
+        #strategy {
+            background-color: #f8f8f8; /* Light background similar to reference */
+            padding-top: 60px;
+            padding-bottom: 60px;
+        }
+        #strategy h2 {
+            color: #333; /* Darker heading for this section */
+            font-size: 2.5em;
+            margin-bottom: 50px;
+        }
+        #strategy h2::after {
+            background-color: #a0a0a0; /* Grey underline */
+        }
+        #strategy .intro-text-inner {
+            color: #666;
+            margin-bottom: 40px;
+        }
+        .strategy-content {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 30px;
+            margin-bottom: 60px; /* Space between general strategy and detailed strategy */
+        }
+        .strategy-item {
+            background-color: #ffffff;
+            border: 1px solid #e0e0e0;
+            padding: 30px;
+            flex: 1 1 calc(33.33% - 20px); /* 3 items per row, adjusted for gap */
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            border-radius: 8px; /* Slightly rounded corners */
+            text-align: center;
+            min-width: 280px; /* Ensure readability on smaller screens */
+            box-sizing: border-box;
+        }
+        .strategy-item .icon {
+            font-size: 3em;
+            color: #007bff;
+            margin-bottom: 20px;
+        }
+        .strategy-item h4 {
+            font-size: 1.5em;
+            color: #004080;
+            margin-bottom: 15px;
+        }
+        .strategy-item p {
+            font-size: 1em;
+            color: #555;
+        }
+
+        /* New table-like layout for Strategy Details */
+        .strategy-subheader {
+            font-size: 2em;
+            color: #004080;
+            text-align: center;
+            margin-top: 60px; /* Space above this subheader */
+            margin-bottom: 40px;
+            font-weight: 600;
+        }
+
+        .strategy-details-wrapper {
+            background-color: #ffffff; /* White background for the whole wrapper */
+            padding: 30px 40px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+        }
+
+        .strategy-industry-block {
+            margin-bottom: 40px; /* Space between industry blocks */
+        }
+        .strategy-industry-block:last-child {
+            margin-bottom: 0;
+        }
+
+        .industry-title {
+            font-size: 1.8em;
+            font-weight: 700;
+            color: #0056b3; /* Darker blue for industry titles */
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e0e0e0; /* Separator for industry title */
+            text-align: center;
+        }
+
+        .industry-details {
+            display: flex;
+            flex-direction: column; /* Stack rows vertically */
+            border: 1px solid #e9ecef; /* Outer border for the details block */
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .detail-row {
+            display: flex; /* Flexbox for label and content */
+            border-bottom: 1px solid #eee; /* Separator between rows */
+            padding: 15px 20px;
+        }
+        .detail-row:last-child {
+            border-bottom: none; /* No border for the last row */
+        }
+
+        .detail-label {
+            flex-basis: 250px; /* Fixed width for the label column on desktop */
+            min-width: 120px; /* Min width for label */
+            font-weight: 600;
+            color: #4a4a4a;
+            padding-right: 20px;
+            box-sizing: border-box; /* Include padding in width */
+        }
+
+        .detail-content {
+            flex-grow: 1; /* Content takes remaining space */
+            color: #555;
+        }
+        .detail-content ul {
+            padding-left: 20px;
+            margin: 0;
+            list-style-type: disc;
+        }
+        .detail-content ul li {
+            margin-bottom: 5px;
+            line-height: 1.4;
+        }
+        .detail-row-last {
+             background-color: #f7f7f7; /* Light background for the last row (pain points) */
+        }
+        .highlight-box {
+            background-color: #edf8ed;
+            border-left: 6px solid #28a745;
+            padding: 30px;
+            margin: 70px auto 40px; /* More margin, centered */
+            border-radius: 4px;
+            font-size: 1.3em; /* Larger, more prominent */
+            color: #333;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            font-weight: 500;
+            max-width: 900px;
+        }
+
+        /* Footer */
+        footer {
+            background-color: #2a2a2a;
+            color: white;
+            text-align: center;
+            padding: 40px 20px;
+            font-size: 0.95em;
+        }
+
+        /* Responsive Adjustments */
+        @media (max-width: 1024px) {
+            .hero-content h1 {
+                font-size: 3.5em;
+            }
+            .hero-content p {
+                font-size: 1.5em;
+            }
+            .main-menu {
+                gap: 20px;
+                font-size: 1em;
+            }
+            .side-nav {
+                top: auto;
+                bottom: 30px;
+                right: 30px;
+                transform: none;
+                width: 250px; /* Fixed width on smaller desktops/tablets */
+            }
+            .news-section {
+                left: 20px;
+                bottom: 20px;
+                width: 300px;
+            }
+            .product-block {
+                flex: 1 1 100%; /* Stack on smaller screens */
+            }
+            .product-info {
+                gap: 40px;
+            }
+            .strategy-item {
+                flex: 1 1 calc(50% - 15px); /* 2 items per row */
+            }
+        }
+
+        @media (max-width: 768px) {
+            .hero-section {
+                height: auto; /* Allow height to adjust */
+                min-height: 70vh; /* Minimum height for visual impact */
+            }
+            .hero-content h1 {
+                font-size: 2.5em;
+                margin-top: 80px; /* Space from top */
+            }
+            .hero-content p {
+                font-size: 1.2em;
+            }
+            .top-nav {
+                flex-direction: column;
+                align-items: center;
+                top: 20px;
+                left: 20px;
+                right: 20px;
+            }
+            .main-menu {
+                flex-direction: column;
+                gap: 10px;
+                margin-top: 20px;
+                align-items: center;
+            }
+            .main-menu a {
+                font-size: 1em;
+            }
+            .side-nav {
+                position: static; /* Remove fixed positioning */
+                width: auto; /* Full width */
+                transform: none;
+                margin: 40px auto 0; /* Center and give space */
+                padding: 15px 20px;
+                background-color: rgba(255, 255, 255, 0.9); /* More opaque */
+                color: #333; /* Darker text */
+                text-shadow: none;
+            }
+            .side-nav a {
+                color: #0056b3; /* Blue links */
+            }
+            .news-section {
+                position: static;
+                width: auto;
+                margin: 40px auto 0;
+                padding: 15px 20px;
+                background-color: rgba(0, 0, 0, 0.8);
+            }
+            .content-section {
+                padding: 50px 20px;
+            }
+            .section-divider {
+                margin: 30px auto;
+            }
+            .content-section h2 {
+                font-size: 2em;
+                margin-bottom: 40px;
+            }
+            .content-section h3 {
+                font-size: 1.8em;
+            }
+            .content-section h4 {
+                font-size: 1.4em;
+            }
+            .intro-text-inner, .product-block p, .feature-list li, .highlight-box {
+                font-size: 0.95em;
+            }
+            .highlight-box {
+                margin: 50px 20px;
+                padding: 25px;
+            }
+            .strategy-item {
+                flex: 1 1 100%; /* Stack on mobile */
+            }
+            /* Strategy details responsive */
+            .detail-row {
+                flex-direction: column; /* Stack label and content vertically */
+                padding: 10px 15px;
+            }
+            .detail-label {
+                flex-basis: auto; /* Remove fixed width */
+                width: 100%; /* Take full width */
+                padding-right: 0;
+                margin-bottom: 5px; /* Space between label and content */
+            }
+            .detail-content ul {
+                padding-left: 15px; /* Adjust padding for lists */
+            }
+            .industry-title {
+                font-size: 1.5em;
+                margin-bottom: 15px;
+            }
+            .strategy-details-wrapper {
+                padding: 20px;
+            }
+        }
+        @media (max-width: 480px) {
+            .hero-content h1 {
+                font-size: 1.8em;
+            }
+            .hero-content p {
+                font-size: 1em;
+            }
+            .news-list span.date {
+                display: block;
+                width: auto;
+                margin-right: 0;
+                margin-bottom: 5px;
+            }
+        }
+    </style>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Smooth scroll for internal links
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    document.querySelector(this.getAttribute('href')).scrollIntoView({
+                        behavior: 'smooth'
+                    });
+                });
+            });
+
+            // Accordion for Side Nav "Entry here"
+            const accordionTitle = document.querySelector('.side-nav .accordion-title');
+            const accordionContent = document.querySelector('.side-nav .accordion-content');
+
+            if (accordionTitle && accordionContent) {
+                accordionTitle.addEventListener('click', function() {
+                    accordionContent.classList.toggle('collapsed');
+                    accordionTitle.classList.toggle('collapsed');
+                });
+                // Initialize as collapsed on page load
+                accordionContent.classList.add('collapsed');
+                accordionTitle.classList.add('collapsed');
+            }
+        });
+    </script>
+</head>
+<body>
+    <div class="hero-section" id="home">
+        <div class="hero-background-slideshow">
+            <!-- These are placeholder images. For a live site, replace with actual high-quality panorama images. -->
+            <div></div> <!-- Image 1: Mountain Panorama -->
+            <div></div> <!-- Image 2: Serene Lake -->
+            <div></div> <!-- Image 3: Dense Forest -->
+        </div>
+        <div class="hero-overlay"></div>
+        <div class="top-nav">
+            <a href="#home" class="company-logo">
+                [公司名稱]<small>AI 解決方案專家</small>
+            </a>
+            <nav class="main-menu">
+                <a href="#about">關於我們</a>
+                <a href="#products">產品與特性</a>
+                <a href="#applications">應用範圍</a>
+                <a href="#strategy">推廣策略</a>
+                <a href="#contact">聯絡我們</a>
+            </nav>
+        </div>
+
+        <div class="hero-content">
+            <h1>我的每一步，賦能企業未來</h1>
+            <p>透過數據洞察與智能自動化，加速企業數位轉型</p>
+        </div>
+
+        <!-- Side Navigation / Quick Links -->
+        <aside class="side-nav">
+            <ul>
+                <li><div class="accordion-title">聯絡我們 →</div></li>
+                <div class="accordion-content">
+                    <li><a href="#contact">立即諮詢</a></li>
+                    <li><a href="#contact">合作夥伴專區</a></li>
+                    <li><a href="#contact">職涯發展</a></li>
+                </div>
+            </ul>
+        </aside>
+
+        <!-- News Section -->
+        <div class="news-section">
+            <h4>【最新消息】</h4>
+            <ul class="news-list">
+                <li><span class="date">f2025.06.01</span> <a href="#">新解決方案發布：智慧醫療 AI 平台。</a></li>
+                <li><span class="date">2025.05.15</span> <a href="#">成功導入 UiPath 智能物流自動化。</a></li>
+                <li><span class="date">2025.04.20</span> <a href="#">參加智慧製造展，展示 SAS 應用成果。</a></li>
+                <li><span class="date">2025.03.10</span> <a href="#">與合作夥伴共同舉辦 AI 論壇。</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="container">
+        <section id="about" class="content-section">
+            <h2>攜手共創，邁向未來</h2>
+            <div class="intro-text-inner">
+                <p>歡迎新成員加入我們的團隊！本簡報旨在提供一個全面的視角，讓所有夥伴都能快速理解我們公司核心產品 SAS 與 UiPath 的架構、特性與應用範疇。</p>
+                <p>我們深信，透過數據分析的深度洞察與流程自動化的卓越執行，能夠為客戶帶來實質的價值，共同開創更廣闊的市場機會。</p>
+                <p>讓我們一起致力於推動企業的智慧轉型，實現創新與成長。</p>
+            </div>
+        </section>
+
+        <hr class="section-divider"> <!-- Inter-section divider -->
+
+        <section id="products" class="content-section">
+            <h2>產品核心：數據智慧與智能自動化</h2>
+            <div class="intro-text-inner">
+                <p>我們提供兩大領先解決方案：SAS 賦能數據洞察，UiPath 驅動智能自動化。兩者相輔相成，為企業帶來全面的智慧轉型能力。</p>
+            </div>
+            
+            <div class="product-info">
+                <div class="product-block">
+                    <h3>SAS - 數據智慧的賦能者</h3>
+                    <p>SAS作為全球領先的分析軟體與服務供應商，致力於提供端到端的數據分析解決方案，將數據轉化為可執行的洞察。</p>
+                    <div class="image-placeholder">
+                        [來自文件 '2025.02_SAS 智慧醫療解決方案_for_simentor.pdf' 第 4 頁的示意圖：展示 SAS End-to-End Analytics Kernel 連接資料與 AI 生命週期的每一個環節，包括資料源介接整合、資料虛擬化、資料品質流程、模型建置驗證、模型治理與核准、模型部署上線、模型成效追蹤等階段。]
+                    </div>
+                    <h4>核心特性：SAS End-to-End Analytics Kernel</h4>
+                    <ul class="feature-list">
+                        <li><strong>異質資料介接：</strong> 能夠整合來自檔案系統、資料倉儲、OCR、CDC、APIs等不同來源的數據，並轉換為記憶體中數據 (參考文件 P.54)。</li>
+                        <li><strong>高效分析引擎：</strong> 具備同步/非同步串流分析引擎及分散式記憶體高效能運算 (HPC) 引擎 (參考文件 P.54)。</li>
+                        <li><strong>全面的分析能力：</strong> 涵蓋模型風險治理與部署、自動化數值模型、進階分析、統計分析與檢定、資料互動式探索、資料清整/資料品質等 (參考文件 P.54)。</li>
+                        <li><strong>資料治理與協作：</strong> 支持CI/CD、Git版本控制、Container Registry等，確保模型開發與部署的順暢與治理 (參考文件 P.54)。</li>
+                    </ul>
+                </div>
+                
+                <div class="product-block">
+                    <h3>UiPath - 智能自動化協作者</h3>
+                    <p>UiPath 是領先的企業級自動化平台，透過結合機器人流程自動化 (RPA) 與AI技術，實現了Agentic Automation，讓自動化更智慧、更自主。</p>
+                    <div class="image-placeholder">
+                        [來自文件 'UiPath智能自動化平台_2025_Agentic Automation.pdf' 第 2 頁的示意圖：展示 Robotic 與 Agentic 兩種自動化模式的比較，以及它們如何結合，強調 Agentic 自動化具備 AI 驅動、自主決策和適應性行為的特點。]
+                    </div>
+                    <h4>核心特性：Agentic Automation</h4>
+                    <ul class="feature-list">
+                        <li><strong>Robot 與 AI Agent 結合：</strong> 傳統Robot擅長結構化和邏輯性任務；AI Agent則具備創造性、直觀性及處理歧義的能力，兩者結合形成更強大的自動化解決方案 (參考文件 P.2)。</li>
+                        <li><strong>Agentic Process Automation (APA)：</strong> 這是RPA的下一步，基於RPA的可靠性，加上AI模型的適應性，減少對使用者介入的依賴 (參考文件 P.4)。</li>
+                        <li><strong>豐富的 GenAI Activities：</strong> 提供多種AI能力，如命名實體識別、圖像分析、物件偵測、簽名相似度分析、格式重整、語義相似度、圖像比較、索引與資料引入 (RAG) 等 (參考文件 P.39-40)。</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <hr class="section-divider"> <!-- Inter-section divider -->
+
+        <section id="applications" class="content-section">
+            <h2>應用範圍：智慧轉型，遍及各行各業</h2>
+            <div class="intro-text-inner">
+                <p>SAS與UiPath的解決方案能深度融入各產業核心業務，驅動效率提升與決策優化，從醫療照護到智慧製造，無遠弗屆。</p>
+            </div>
+            
+            <div class="product-info">
+                <div class="product-block">
+                    <h3>SAS 應用：數據驅動決策</h3>
+                    <h4>智慧醫療解決方案</h4>
+                    <div class="image-placeholder">
+                        [來自文件 '2025.02_SAS 智慧醫療解決方案_for_simentor.pdf' 第 3 頁的示意圖：展示台灣血液透析中心的應用效益，包括預判透析病患心臟衰竭準確度與降低乾體重調整誤差，說明 SAS 如何支援即時臨床決策。]
+                    </div>
+                    <p>在醫療領域，SAS運用其End-to-End Analytics Kernel建立「醫療知識管理平台」，整合LLM與SAS Gen-AI Trusted Layer，應用於精準醫療，如：</p>
+                    <ul class="feature-list">
+                        <li><strong>即時臨床決策支援系統：</strong> 台灣已有案例顯示，可90%預判透析病患心臟衰竭準確度，並80%降低透析病患乾體重調整誤差 (參考文件 P.3)。</li>
+                        <li><strong>AI平台核心知識管理：</strong> 運用AI Platform建構核心知識管理層，實現更精準的醫療應用 (參考文件 P.53)。</li>
+                    </ul>
+                    <h4>智慧製造 AI 數據平台</h4>
+                    <div class="image-placeholder">
+                        [來自文件 '2024.07_Manufacturing_AI_Platform.pdf' 第 4 頁的示意圖：展示 IDC 對 GenAI 在製造業應用效率提升的預測，指出到 2026 年將有 50% 的 G2000 公司整合營運系統與 GenAI，提升 5% 的效率。]
+                    </div>
+                    <p>製造業面臨數據量激增與複雜的生產挑戰，SAS平台能提供：</p>
+                    <ul class="feature-list">
+                        <li><strong>GenAI 整合營運：</strong> 預計到2026年，50%的全球大型製造業將營運系統與GenAI整合，提升5%效率 (參考文件 P.4)。</li>
+                        <li><strong>AI/ML 融入自動化流程：</strong> 預計到2028年，AI/ML整合到產線機器人和自動化流程的比例將增加30%，提升效率並減少10%停機時間 (參考文件 P.4)。</li>
+                        <li><strong>供應商與採購誠信：</strong> 透過AI與進階分析建立交易違規調查系統，運用機器學習、文字探勘、異常偵測等技術 (參考文件 P.67)。</li>
+                    </ul>
+                </div>
+                
+                <div class="product-block">
+                    <h3>UiPath 應用：將機器人裝上大腦</h3>
+                    <h4>智能自動化解決方案</h4>
+                    <div class="image-placeholder">
+                        [來自文件 'UiPath智能自動化平台_2025_Agentic Automation.pdf' 第 5 頁的示意圖：以「Agentic Automation 就是把機器人裝上大腦！」的標語概括 Agentic Automation 的理念，強調其為自動化注入智慧。]
+                    </div>
+                    <p>UiPath的智能自動化平台能夠幫助企業在各個業務環節實現高效率、自動化的作業，尤其在處理非結構化數據和需要動態決策的場景中表現卓越。</p>
+                    <ul class="feature-list">
+                        <li><strong>發票處理自動化：</strong> 協助Canon製造業在4個月內處理數千張發票積壓問題 (參考文件 P.6)。</li>
+                        <li><strong>客戶服務自動化：</strong> 透過結合AI模型，實現更智能的客戶互動與問題解決。</li>
+                        <li><strong>財務審計與合規：</strong> 自動化數據收集與比對，提高審計效率和合規性。</li>
+                        <li><strong>IT營運自動化：</strong> 智能監控與自動響應IT事件，減少停機時間。</li>
+                        <li><strong>文件處理與數據擷取：</strong> 利用圖像分析和NLP能力，自動從非結構化文件中提取關鍵資訊。</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <hr class="section-divider"> <!-- Inter-section divider -->
+
+        <section id="strategy" class="content-section">
+            <h2>推廣策略：將產品價值傳遞給客戶</h2>
+            <div class="intro-text-inner">
+                <p>我們在系統整合領域的豐富經驗和廣泛的客戶群體，是我們推廣SAS與UiPath解決方案的巨大優勢。以下是針對不同客戶類型，建議的推廣重點與應用範疇。</p>
+            </div>
+            <!-- General Strategy Points (Keep the cards) -->
+            <div class="strategy-content">
+                <div class="strategy-item">
+                    <div class="icon">💡</div> <!-- Example Icon -->
+                    <h4>深入洞察客戶需求</h4>
+                    <p>透過專業諮詢與分析，精準識別客戶痛點，將 SAS 與 UiPath 方案與客戶的實際業務目標緊密結合。</p>
+                </div>
+                <div class="strategy-item">
+                    <div class="icon">🤝</div> <!-- Example Icon -->
+                    <h4>展示整合解決方案</h4>
+                    <p>強調 SAS 的數據洞察與 UiPath 的自動化執行如何協同工作，提供端到端、更全面的智慧轉型能力。</p>
+                </div>
+                <div class="strategy-item">
+                    <div class="icon">📈</div> <!-- Example Icon -->
+                    <h4>量化投資回報 (ROI)</h4>
+                    <p>利用成功案例和數據，清晰呈現我們的解決方案為客戶帶來的實際效益，如效率提升、成本節省、風險降低等。</p>
+                </div>
+                <div class="strategy-item">
+                    <div class="icon">🌍</div> <!-- Example Icon -->
+                    <h4>擴展產業應用廣度</h4>
+                    <p>運用跨產業經驗，將成功模式複製到新的垂直領域，不斷拓展 SAS 和 UiPath 的應用場景。</p>
+                </div>
+                 <div class="strategy-item">
+                    <div class="icon">✨</div> <!-- Example Icon -->
+                    <h4>建立長期合作關係</h4>
+                    <p>提供卓越的售後服務與持續的技術支持，與客戶建立互信互利的長期合作夥伴關係。</p>
+                </div>
+            </div>
+
+            <!-- New table-like section based on the reference image -->
+            <h3 class="strategy-subheader">各產業應用與推廣重點</h3>
+            <div class="strategy-details-wrapper">
+                <!-- Financial Industry -->
+                <div class="strategy-industry-block">
+                    <div class="industry-title">金融機構</div>
+                    <div class="industry-details">
+                        <div class="detail-row">
+                            <div class="detail-label">公司既有優勢與資源</div>
+                            <div class="detail-content">熟悉金融機構網路系統建置、委外服務、資安與網路通訊整合。</div>
+                        </div>
+                        <div class="detail-row">
+                            <div class="detail-label">SAS 解決方案推廣重點</div>
+                            <div class="detail-content">風險管理模型優化、反詐騙偵測、客戶行為分析、精準行銷、法規合規性報告。</div>
+                        </div>
+                        <div class="detail-row">
+                            <div class="detail-label">UiPath 解決方案推廣重點</div>
+                            <div class="detail-content">自動化開戶流程、信貸審批自動化、客服機器人、報表自動生成、反洗錢(AML)數據整合。</div>
+                        </div>
+                        <div class="detail-row detail-row-last">
+                            <div class="detail-label">潛在應用範疇 / 業務痛點</div>
+                            <div class="detail-content">
+                                <ul>
+                                    <li>數據量龐大，需快速洞察。</li>
+                                    <li>法規日益嚴格，合規壓力大。</li>
+                                    <li>營運流程複雜，人工耗時。</li>
+                                    <li>客戶互動體驗提升。</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Manufacturing Industry -->
+                <div class="strategy-industry-block">
+                    <div class="industry-title">製造業 (竹科上市公司)</div>
+                    <div class="industry-details">
+                        <div class="detail-row">
+                            <div class="detail-label">公司既有優勢與資源</div>
+                            <div class="detail-content">智慧物流倉儲、網路系統（軟硬體）熟悉、資訊安全、網路通訊整合業務。</div>
+                        </div>
+                        <div class="detail-row">
+                            <div class="detail-label">SAS 解決方案推廣重點</div>
+                            <div class="detail-content">生產排程優化、良率預測、設備預防性維護、供應鏈風險管理、品質異常偵測、智慧採購誠信調查。</div>
+                        </div>
+                        <div class="detail-row">
+                            <div class="detail-label">UiPath 解決方案推廣重點</div>
+                            <div class="detail-content">智慧倉儲自動化（置物、領物、取物控管）、生產數據採集自動化、物料追蹤、供應鏈數據處理、報關文件自動化。</div>
+                        </div>
+                        <div class="detail-row detail-row-last">
+                            <div class="detail-label">潛在應用範疇 / 業務痛點</div>
+                            <div class="detail-content">
+                                <ul>
+                                    <li>生產效率提升、停機時間減少。</li>
+                                    <li>供應鏈韌性與透明度。</li>
+                                    <li>品質管理與瑕疵預防。</li>
+                                    <li>跨系統數據整合與分析。</li>
+                                    <li>人工作業繁瑣，易出錯。</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Medical Institutions -->
+                <div class="strategy-industry-block">
+                    <div class="industry-title">大型醫療院所</div>
+                    <div class="industry-details">
+                        <div class="detail-row">
+                            <div class="detail-label">公司既有優勢與資源</div>
+                            <div class="detail-content">智慧藥櫃（領藥、取藥、置藥）、公立醫療院所標案經驗、系統規劃。</div>
+                        </div>
+                        <div class="detail-row">
+                            <div class="detail-label">SAS 解決方案推廣重點</div>
+                            <div class="detail-content">病患心臟衰竭預判、醫療知識管理平台、精準醫療分析、用藥安全監控、醫療資源配置優化。</div>
+                        </div>
+                        <div class="detail-row">
+                            <div class="detail-label">UiPath 解決方案推廣重點</div>
+                            <div class="detail-content">智慧藥櫃自動化介面整合、病患掛號與分流自動化、病歷資料歸檔與查詢、檢驗報告處理、行政流程自動化。</div>
+                        </div>
+                        <div class="detail-row detail-row-last">
+                            <div class="detail-label">潛在應用範疇 / 業務痛點</div>
+                            <div class="detail-content">
+                                <ul>
+                                    <li>臨床決策支援精準化。</li>
+                                    <li>醫療流程效率提升。</li>
+                                    <li>降低醫療錯誤風險。</li>
+                                    <li>數據分析需求高。</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Government/Public Institutions -->
+                <div class="strategy-industry-block">
+                    <div class="industry-title">政府/公家機關</div>
+                    <div class="industry-details">
+                        <div class="detail-row">
+                            <div class="detail-label">公司既有優勢與資源</div>
+                            <div class="detail-content">政府標案經驗、電子化政府合作任務、中南部智慧城鄉及智慧交通號誌。</div>
+                        </div>
+                        <div class="detail-row">
+                            <div class="detail-label">SAS 解決方案推廣重點</div>
+                            <div class="detail-content">智慧城市數據分析（交通流量預測、環境監控）、公共安全預警、政策評估、民生服務數據洞察。</div>
+                        </div>
+                        <div class="detail-row">
+                            <div class="detail-label">UiPath 解決方案推廣重點</div>
+                            <div class="detail-content">文件審批自動化、市民服務熱線自動回覆、數據錄入與核對、公文流程自動化、交通監控數據處理。</div>
+                        </div>
+                        <div class="detail-row detail-row-last">
+                            <div class="detail-label">潛在應用範疇 / 業務痛點</div>
+                            <div class="detail-content">
+                                <ul>
+                                    <li>公共服務效率提升。</li>
+                                    <li>數據治理與開放。</li>
+                                    <li>應對突發事件的快速響應。</li>
+                                    <li>跨部門數據整合。</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="highlight-box">
+                <strong>公司在各產業客戶痛點的理解，是我們成功推動這些先進解決方案的基石。我們將共同努力，挖掘更多潛在商機，幫助客戶實現全面性的智慧轉型！</strong>
+            </div>
+        </section>
+
+        <hr class="section-divider"> <!-- Inter-section divider -->
+
+        <section id="contact" class="full-background-1">
+            <h2>聯絡我們</h2>
+            <div class="intro-text-inner-1">
+                <p>若您對我們的智慧轉型解決方案感興趣，或有任何合作意向，歡迎隨時與我們聯繫。</p>
+                <p>我們的專業團隊將竭誠為您服務，共同探討如何透過 SAS 和 UiPath 實現企業的卓越成長。</p>
+                <p><strong>電話：</strong> [您的公司電話] | <strong>信箱：</strong> [您的公司信箱] | <strong>地址：</strong> [您的公司地址]</p>
+            </div>
+        </section>
+
+        <footer>
+            <p>&copy; 2025 [您的公司名稱]. All rights reserved. | 智慧轉型，從數據與自動化開始</p>
+        </footer>
+    </div>
+</body>
+</html>

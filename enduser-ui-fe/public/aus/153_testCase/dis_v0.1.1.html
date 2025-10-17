@@ -1,0 +1,2018 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fujitec Intelligent Scheduling POC</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', 'Noto Sans TC', sans-serif;
+            background-color: #f8fafc; /* slate-50 */
+            color: #334155; /* slate-700 */
+        }
+        .content-section h2 {
+            font-size: 1.875rem; /* text-3xl */
+            font-weight: 700;
+            color: #1e293b; /* slate-800 */
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #e2e8f0; /* slate-200 */
+        }
+        .content-section h3 {
+            font-size: 1.5rem; /* text-2xl */
+            font-weight: 600;
+            color: #1e293b; /* slate-800 */
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+        }
+        .content-section h4 {
+            font-size: 1.25rem; /* text-xl */
+            font-weight: 600;
+            color: #475569; /* slate-600 */
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
+        }
+        .content-section p, .content-section ul, .content-section ol {
+            margin-bottom: 1rem;
+            line-height: 1.75;
+        }
+        .content-section ul {
+            list-style-position: inside;
+        }
+        .content-section li::marker {
+            color: #64748b; /* slate-500 */
+        }
+        .content-section code:not(pre code) {
+            background-color: #e2e8f0; /* slate-200 */
+            color: #dc2626; /* red-600 */
+            padding: 0.125rem 0.375rem;
+            border-radius: 0.25rem;
+            font-size: 0.9em;
+        }
+        .code-block {
+            position: relative;
+            background-color: #1e293b; /* slate-800 */
+            color: #e2e8f0; /* slate-200 */
+            border-radius: 0.5rem;
+            margin-top: 1rem;
+            margin-bottom: 1.5rem;
+            overflow: hidden;
+        }
+        .code-block pre {
+            padding: 1.5rem;
+            overflow-x: auto;
+        }
+        .code-block .copy-button {
+            position: absolute;
+            top: 0.75rem;
+            right: 0.75rem;
+            background-color: #475569; /* slate-600 */
+            color: #f1f5f9; /* slate-100 */
+            border: none;
+            padding: 0.5rem 0.75rem;
+            border-radius: 0.375rem;
+            cursor: pointer;
+            font-size: 0.875rem;
+            transition: background-color 0.2s;
+        }
+        .code-block .copy-button:hover {
+            background-color: #64748b; /* slate-500 */
+        }
+        .info-box {
+            background-color: #eff6ff; /* blue-50 */
+            border-left: 4px solid #3b82f6; /* blue-500 */
+            padding: 1rem;
+            margin: 1.5rem 0;
+            border-radius: 0.25rem;
+        }
+        .info-box-title {
+            font-weight: 600;
+            color: #1d4ed8; /* blue-700 */
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+        .pro-tip-box {
+            background-color: #f0fdf4; /* green-50 */
+            border-left: 4px solid #22c55e; /* green-500 */
+            padding: 1rem;
+            margin: 1.5rem 0;
+            border-radius: 0.25rem;
+        }
+        .pro-tip-title {
+            font-weight: 600;
+            color: #15803d; /* green-700 */
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+        .warning-box {
+            background-color: #fffbeb; /* yellow-50 */
+            border-left: 4px solid #f59e0b; /* yellow-500 */
+            padding: 1rem;
+            margin: 1.5rem 0;
+            border-radius: 0.25rem;
+        }
+        .warning-title {
+            font-weight: 600;
+            color: #b45309; /* yellow-700 */
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+        .table-container {
+            overflow-x: auto;
+            margin: 1.5rem 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 0.75rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0; /* slate-200 */
+        }
+        th {
+            background-color: #f1f5f9; /* slate-100 */
+            font-weight: 600;
+            color: #334155; /* slate-700 */
+        }
+        .arch-diagram {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            margin: 2rem 0;
+        }
+        .arch-diagram-title {
+            text-align: center;
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            color: #1e293b;
+        }
+        .lang-btn {
+            padding: 0.25rem 0.75rem;
+            border-radius: 0.375rem;
+            border: 1px solid transparent;
+            transition: all 0.2s;
+        }
+        .lang-btn.active {
+            background-color: #e0e7ff; /* indigo-100 */
+            color: #3730a3; /* indigo-800 */
+            border-color: #a5b4fc; /* indigo-300 */
+            font-weight: 600;
+        }
+        .lang-btn:not(.active):hover {
+            background-color: #f1f5f9; /* slate-100 */
+        }
+    </style>
+</head>
+<body class="bg-slate-50">
+
+    <!-- Header -->
+    <header class="bg-white shadow-md sticky top-0 z-10">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-20">
+                <div class="flex items-center space-x-4">
+                    <svg class="h-10 w-10 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 17.25v1.007a3 3 0 01-.879 2.122L7.5 21h9l-.621-.621A3 3 0 0115 18.257V17.25m6-12V15a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 15V5.25m18 0A2.25 2.25 0 0018.75 3H5.25A2.25 2.25 0 003 5.25m18 0V12a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 12V5.25" />
+                    </svg>
+                    <div>
+                        <h1 class="text-xl font-bold text-slate-800" data-lang-key="handbook_title">Fujitec Intelligent Scheduling POC</h1>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-6">
+                    <nav class="hidden md:flex space-x-6 text-sm font-medium text-slate-600">
+                        <a href="#part1" class="hover:text-blue-600 transition-colors" data-lang-key="nav_part1">Part I: Data Engineering</a>
+                        <a href="#part2" class="hover:text-blue-600 transition-colors" data-lang-key="nav_part2">Part II: Optimization</a>
+                        <a href="#part3" class="hover:text-blue-600 transition-colors" data-lang-key="nav_part3">Part III: Visualization</a>
+                        <a href="#part4" class="hover:text-blue-600 transition-colors" data-lang-key="nav_part4">Part IV: Automation</a>
+                    </nav>
+                    <div class="hidden md:flex items-center space-x-1 border border-slate-200 rounded-lg p-1 text-sm text-slate-600">
+                        <button id="lang-en" class="lang-btn active">EN</button>
+                        <button id="lang-zh" class="lang-btn">繁</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
+
+        <!-- Foreword -->
+        <div class="bg-white p-8 rounded-lg shadow-sm mb-12">
+            <h1 class="text-4xl font-bold text-slate-900 mb-4" data-lang-key="main_title">Guide for Fujitec PoC preparing</h1>
+            <p class="text-lg text-slate-600 mb-6" data-lang-key="main_intro">This document serves as a guide for the Fujitec Intelligent Production Proof of Concept (POC) project. It provides the essential context, technical architecture, and implementation considerations necessary to plan and execute a successful solution that introduces intelligence, agility, and clarity into their production planning.</p>
+            <div class="info-box">
+                <div class="info-box-title">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    <span data-lang-key="challenge_title">The Core Challenge & Our Mission</span>
+                </div>
+                <p class="text-blue-800" data-lang-key="challenge_desc">Fujitec's current reliance on manual, error-prone scheduling creates bottlenecks and limits visibility. Our mission is to demonstrate how a data-driven, intelligent system can address these issues head-on. This guide provides the strategic framework and technical details for building a high-impact POC that showcases the art of the possible.</p>
+            </div>
+        </div>
+
+
+        <!-- Solution Architecture Diagram -->
+        <div class="arch-diagram">
+		
+		   <h3 class="arch-diagram-title" data-lang-key="arch_title">End-to-End Solution Architecture</h3>
+		
+		
+<svg
+   width="100%"
+   viewBox="0 0 1200 600"
+   style="font-family: 'Inter', 'Noto Sans TC', sans-serif;"
+   version="1.1"
+   id="svg39"
+   sodipodi:docname="arch_before_tb.svg"
+   inkscape:version="1.4.2 (f4327f4, 2025-05-13)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview39"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:zoom="1.4183333"
+     inkscape:cx="562.6322"
+     inkscape:cy="297.17979"
+     inkscape:window-width="2400"
+     inkscape:window-height="1261"
+     inkscape:window-x="2391"
+     inkscape:window-y="-9"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg39" />
+  <!-- Background -->
+  <rect
+     width="100%"
+     height="100%"
+     fill="#f8fafc"
+     id="rect1" />
+  <!-- Group Titles -->
+  <text
+     x="135"
+     y="40"
+     font-family="inherit"
+     font-size="16"
+     font-weight="bold"
+     fill="#334155"
+     text-anchor="middle"
+     data-lang-key="arch_group1"
+     id="text1">1. Data Sources</text>
+  <text
+     x="570"
+     y="40"
+     font-family="inherit"
+     font-size="16px"
+     font-weight="bold"
+     fill="#334155"
+     text-anchor="middle"
+     data-lang-key="arch_group21"
+     id="text2">2. SAS Analytics for IoT</text>
+  <text
+     x="1035"
+     y="40"
+     font-family="inherit"
+     font-size="16"
+     font-weight="bold"
+     fill="#334155"
+     text-anchor="middle"
+     data-lang-key="arch_group3"
+     id="text3">3. Action &amp; Automation</text>
+  <!-- Dashed Boxes for Groups -->
+  <rect
+     x="20"
+     y="55"
+     width="230"
+     height="525"
+     fill="#ffffff"
+     stroke="#e2e8f0"
+     stroke-width="2"
+     rx="8"
+     id="rect3" />
+  <rect
+     x="270"
+     y="55"
+     width="600"
+     height="525"
+     fill="#ffffff"
+     stroke="#e2e8f0"
+     stroke-width="2"
+     rx="8"
+     id="rect4" />
+  <rect
+     x="890"
+     y="55"
+     width="290"
+     height="525"
+     fill="#ffffff"
+     stroke="#e2e8f0"
+     stroke-width="2"
+     rx="8"
+     id="rect5" />
+  <!-- Icons and Boxes -->
+  <g
+     id="g7">
+    <rect
+       x="50"
+       y="80"
+       width="170"
+       height="100"
+       fill="#eff6ff"
+       rx="8"
+       id="rect6" />
+    <text
+       x="135"
+       y="110"
+       text-anchor="middle"
+       font-family="inherit"
+       font-size="14"
+       fill="#1e40af"
+       data-lang-key="arch_source1_1"
+       id="text6">Work Reporting</text>
+    <text
+       x="135"
+       y="130"
+       text-anchor="middle"
+       font-family="inherit"
+       font-size="12"
+       fill="#1d4ed8"
+       data-lang-key="arch_source1_2"
+       id="text7">(Excel)</text>
+  </g>
+  <g
+     id="g9">
+    <rect
+       x="50"
+       y="220"
+       width="170"
+       height="100"
+       fill="#eff6ff"
+       rx="8"
+       id="rect7" />
+    <text
+       x="135"
+       y="250"
+       text-anchor="middle"
+       font-family="inherit"
+       font-size="14"
+       fill="#1e40af"
+       data-lang-key="arch_source2_1"
+       id="text8">PLM / Process</text>
+    <text
+       x="135"
+       y="270"
+       text-anchor="middle"
+       font-family="inherit"
+       font-size="12"
+       fill="#1d4ed8"
+       data-lang-key="arch_source2_2"
+       id="text9">(Excel)</text>
+  </g>
+  <g
+     id="g11">
+    <rect
+       x="50"
+       y="360"
+       width="170"
+       height="100"
+       fill="#eff6ff"
+       rx="8"
+       id="rect9" />
+    <text
+       x="135"
+       y="390"
+       text-anchor="middle"
+       font-family="inherit"
+       font-size="14"
+       fill="#1e40af"
+       data-lang-key="arch_source3_1"
+       id="text10">ERP System</text>
+    <text
+       x="135"
+       y="410"
+       text-anchor="middle"
+       font-family="inherit"
+       font-size="12"
+       fill="#1d4ed8"
+       data-lang-key="arch_source3_2"
+       id="text11">(Excel/CSV)</text>
+    <rect
+       x="49.48061"
+       y="475.52762"
+       width="170"
+       height="100"
+       fill="#eff6ff"
+       rx="8"
+       id="rect9-8"
+       style="font-family:Inter, 'Noto Sans TC', sans-serif" />
+    <text
+       x="134.48061"
+       y="505.52762"
+       text-anchor="middle"
+       font-family="inherit"
+       font-size="14px"
+       fill="#1e40af"
+       data-lang-key="arch_source3_11"
+       id="text10-9"
+       style="font-family:Inter, 'Noto Sans TC', sans-serif">Real-time Data</text>
+    <text
+       x="134.48061"
+       y="525.52759"
+       text-anchor="middle"
+       font-family="inherit"
+       font-size="12px"
+       fill="#1d4ed8"
+       data-lang-key="arch_source3_21"
+       id="text11-2"
+       style="font-family:Inter, 'Noto Sans TC', sans-serif">(Kafka/APIs)</text>
+  </g>
+  <rect
+     x="300"
+     y="80"
+     width="200"
+     height="297.3913"
+     fill="#f0fdf4"
+     rx="8"
+     id="rect11"
+     style="stroke-width:0.787125" />
+  <rect
+     x="303"
+     y="426.78848"
+     width="200"
+     height="145.80493"
+     fill="#f0fdf4"
+     rx="8"
+     id="rect11-7"
+     style="font-family:Inter, 'Noto Sans TC', sans-serif;stroke-width:0.551145" />
+  <text
+     x="400"
+     y="105"
+     text-anchor="middle"
+     font-weight="bold"
+     font-family="inherit"
+     font-size="14"
+     fill="#166534"
+     data-lang-key="arch_etl_1"
+     id="text12">ETL Pipeline</text>
+  <text
+     x="400"
+     y="125"
+     text-anchor="middle"
+     font-family="inherit"
+     font-size="12px"
+     fill="#15803d"
+     data-lang-key="arch_etl_22"
+     id="text13">(SAS Studio &amp; SAS Job Execution)</text>
+  <text
+     x="397.17978"
+     y="318.89542"
+     text-anchor="middle"
+     font-family="inherit"
+     font-size="12px"
+     fill="#14532d"
+     id="text14">PROC IMPORT</text>
+  <text
+     x="400"
+     y="260"
+     text-anchor="middle"
+     font-family="inherit"
+     font-size="12"
+     fill="#14532d"
+     id="text15">DATA Step &amp; PROC FORMAT</text>
+  <text
+     x="400"
+     y="280"
+     text-anchor="middle"
+     font-family="inherit"
+     font-size="12"
+     fill="#14532d"
+     data-lang-key="arch_etl_3"
+     id="text16">(Cleansing)</text>
+  <text
+     x="401.4101"
+     y="352.24442"
+     text-anchor="middle"
+     font-family="inherit"
+     font-size="12px"
+     fill="#14532d"
+     id="text17">PROC SQL (Join)</text>
+  <text
+     x="397.71329"
+     y="521.00616"
+     text-anchor="middle"
+     font-family="inherit"
+     font-size="12px"
+     fill="#14532d"
+     id="text17-3"
+     style="font-family:Inter, 'Noto Sans TC', sans-serif"><tspan
+       sodipodi:role="line"
+       id="tspan45"
+       x="397.71329"
+       y="521.00616">Continuously monitor resource</tspan><tspan
+       sodipodi:role="line"
+       x="397.71329"
+       y="536.00616"
+       id="tspan48">availability,</tspan><tspan
+       sodipodi:role="line"
+       id="tspan46"
+       x="397.71329"
+       y="551.00616">job status,</tspan><tspan
+       sodipodi:role="line"
+       x="397.71329"
+       y="566.00616"
+       id="tspan49">machine state, etc</tspan><tspan
+       sodipodi:role="line"
+       x="397.71329"
+       y="581.00616"
+       id="tspan47" /></text>
+  <rect
+     x="320"
+     y="154.19507"
+     width="160"
+     height="60"
+     fill="#bbf7d0"
+     rx="4"
+     id="rect17" />
+  <text
+     x="400"
+     y="184.19507"
+     text-anchor="middle"
+     font-weight="bold"
+     font-family="inherit"
+     font-size="13px"
+     fill="#14532d"
+     data-lang-key="arch_etl_4"
+     id="text18">Analytic Base Table (ABT)</text>
+  <rect
+     x="316.71716"
+     y="438.83313"
+     width="176.92126"
+     height="60"
+     fill="#bbf7d0"
+     rx="4.4230318"
+     id="rect17-9"
+     style="font-family:Inter, 'Noto Sans TC', sans-serif;stroke-width:1.05155" />
+  <text
+     x="400.24243"
+     y="466.01291"
+     text-anchor="middle"
+     font-weight="bold"
+     font-family="inherit"
+     font-size="13px"
+     fill="#14532d"
+     data-lang-key="arch_etl_41"
+     id="text18-5"
+     style="font-family:Inter, 'Noto Sans TC', sans-serif"><tspan
+       sodipodi:role="line"
+       id="tspan43"
+       x="400.24243"
+       y="466.01291">SAS Event Stream</tspan><tspan
+       sodipodi:role="line"
+       id="tspan44"
+       x="400.24243"
+       y="482.26291">Processing</tspan></text>
+  <rect
+     x="540"
+     y="80"
+     width="300"
+     height="129.94124"
+     fill="#fefce8"
+     rx="8"
+     id="rect18"
+     style="stroke-width:0.849645" />
+  <rect
+     x="540.7027"
+     y="242.13396"
+     width="300"
+     height="129.94124"
+     fill="#fefce8"
+     rx="8"
+     id="rect18-9"
+     style="font-family:Inter, 'Noto Sans TC', sans-serif;stroke-width:0.849645" />
+  <text
+     x="690"
+     y="105"
+     text-anchor="middle"
+     font-weight="bold"
+     font-family="inherit"
+     font-size="14"
+     fill="#854d0e"
+     data-lang-key="arch_opt_1"
+     id="text19">Optimization Engine</text>
+  <text
+     x="683.77686"
+     y="266.06058"
+     text-anchor="middle"
+     font-weight="bold"
+     font-family="inherit"
+     font-size="14px"
+     fill="#854d0e"
+     data-lang-key="arch_opt_11"
+     id="text19-2"
+     style="font-family:Inter, 'Noto Sans TC', sans-serif">Decisioning Engine</text>
+  <text
+     x="690"
+     y="125"
+     text-anchor="middle"
+     font-family="inherit"
+     font-size="12"
+     fill="#a16207"
+     id="text20">(PROC OPTMODEL)</text>
+  <text
+     x="685.62061"
+     y="284.74698"
+     text-anchor="middle"
+     font-family="inherit"
+     font-size="12px"
+     fill="#a16207"
+     id="text20-5"
+     style="font-family:Inter, 'Noto Sans TC', sans-serif">(SAS Intelligent Decisioning)</text>
+  <text
+     x="688.5899"
+     y="144.0423"
+     text-anchor="middle"
+     font-family="inherit"
+     font-size="12px"
+     fill="#854d0e"
+     id="text21">MILP Solver</text>
+  <path
+     x="560.70508"
+     y="155.58167"
+     width="260"
+     height="40"
+     fill="#fef08a"
+     rx="0"
+     id="rect21"
+     inkscape:path-effect="#path-effect42"
+     sodipodi:type="rect"
+     ry="0"
+     d="m 564.70508,155.58167 252,0 a 4,4 45 0 1 4,4 v 32 a 4,4 135 0 1 -4,4 l -252,0 a 4,4 45 0 1 -4,-4 v -32 a 4,4 135 0 1 4,-4 z" />
+  <text
+     x="690.70508"
+     y="180.58167"
+     text-anchor="middle"
+     font-weight="bold"
+     font-family="inherit"
+     font-size="13px"
+     fill="#854d0e"
+     data-lang-key="arch_opt_2"
+     id="text22">Optimized Schedule Dataset</text>
+  <rect
+     x="540"
+     y="421.2691"
+     width="300"
+     height="138.73091"
+     fill="#fefce8"
+     rx="8"
+     id="rect22"
+     style="stroke-width:0.730466" />
+  <text
+     x="690"
+     y="446.2691"
+     text-anchor="middle"
+     font-weight="bold"
+     font-family="inherit"
+     font-size="14px"
+     fill="#854d0e"
+     data-lang-key="arch_viz_1"
+     id="text23">Decision Support Layer</text>
+  <text
+     x="690"
+     y="466.2691"
+     text-anchor="middle"
+     font-family="inherit"
+     font-size="12px"
+     fill="#a16207"
+     data-lang-key="arch_viz_2"
+     id="text24">(SAS Visual Analytics)</text>
+  <text
+     x="690"
+     y="503.64279"
+     text-anchor="middle"
+     font-family="inherit"
+     font-size="12px"
+     fill="#854d0e"
+     data-lang-key="arch_viz_3"
+     id="text25">Interactive Dashboard</text>
+  <text
+     x="690"
+     y="521.08105"
+     text-anchor="middle"
+     font-family="inherit"
+     font-size="12px"
+     fill="#854d0e"
+     id="text26">Gantt Chart</text>
+  <text
+     x="683.19073"
+     y="309.90732"
+     text-anchor="middle"
+     font-family="inherit"
+     font-size="12px"
+     fill="#854d0e"
+     id="text26-1"
+     style="font-family:Inter, 'Noto Sans TC', sans-serif">Decisions</text>
+  <text
+     x="683.67609"
+     y="345.8158"
+     text-anchor="middle"
+     font-family="inherit"
+     font-size="12px"
+     fill="#854d0e"
+     id="text26-1-5"
+     style="font-family:Inter, 'Noto Sans TC', sans-serif">Models</text>
+  <text
+     x="683.90643"
+     y="362.79346"
+     text-anchor="middle"
+     font-family="inherit"
+     font-size="12px"
+     fill="#854d0e"
+     id="text26-1-5-7"
+     style="font-family:Inter, 'Noto Sans TC', sans-serif">API</text>
+  <text
+     x="683.95691"
+     y="327.4621"
+     text-anchor="middle"
+     font-family="inherit"
+     font-size="12px"
+     fill="#854d0e"
+     id="text26-1-1"
+     style="font-family:Inter, 'Noto Sans TC', sans-serif">Business rules</text>
+  <text
+     x="690"
+     y="541.3396"
+     text-anchor="middle"
+     font-family="inherit"
+     font-size="12px"
+     fill="#854d0e"
+     data-lang-key="arch_viz_4"
+     id="text27">KPIs &amp; &quot;What-If&quot; Scenarios</text>
+  <rect
+     x="921.4101"
+     y="160.37602"
+     width="230"
+     height="117.95535"
+     fill="#faf5ff"
+     rx="8"
+     id="rect27"
+     style="stroke-width:0.809511" />
+  <text
+     x="1036.4102"
+     y="185.37602"
+     text-anchor="middle"
+     font-weight="bold"
+     font-family="inherit"
+     font-size="14px"
+     fill="#5b21b6"
+     id="text28">RPA Bot</text>
+  <text
+     x="1036.4102"
+     y="205.37602"
+     text-anchor="middle"
+     font-family="inherit"
+     font-size="12px"
+     fill="#6d28d9"
+     id="text29">(e.g., UiPath)</text>
+  <text
+     x="1036.4102"
+     y="227.94359"
+     text-anchor="middle"
+     font-family="inherit"
+     font-size="12px"
+     fill="#5b21b6"
+     data-lang-key="arch_rpa_1"
+     id="text30">Parses JSON</text>
+  <text
+     x="1036.4102"
+     y="247.94359"
+     text-anchor="middle"
+     font-family="inherit"
+     font-size="12px"
+     fill="#5b21b6"
+     data-lang-key="arch_rpa_2"
+     id="text31">Populates Excel Report</text>
+  <rect
+     x="921.4101"
+     y="380.37604"
+     width="230"
+     height="100"
+     fill="#f3e8ff"
+     rx="8"
+     id="rect31" />
+  <text
+     x="1036.4102"
+     y="420.37604"
+     text-anchor="middle"
+     font-weight="bold"
+     font-family="inherit"
+     font-size="14px"
+     fill="#5b21b6"
+     data-lang-key="arch_user_1"
+     id="text32">Business Users</text>
+  <text
+     x="1036.4102"
+     y="440.37604"
+     text-anchor="middle"
+     font-family="inherit"
+     font-size="12px"
+     fill="#6d28d9"
+     data-lang-key="arch_user_2"
+     id="text33">(Planners, Managers)</text>
+  <!-- Arrows -->
+  <path
+     d="m 220,130 c 40,0 40,50 80,50"
+     stroke="#64748b"
+     fill="none"
+     stroke-width="2"
+     stroke-dasharray="5, 5"
+     id="path33"
+     sodipodi:nodetypes="cc" />
+  <path
+     d="m 220,270 h 80"
+     stroke="#64748b"
+     fill="none"
+     stroke-width="2"
+     stroke-dasharray="5, 5"
+     id="path34"
+     sodipodi:nodetypes="cc" />
+  <path
+     d="m 220,527.03878 c 40,0 40,-50 80,-50"
+     stroke="#64748b"
+     fill="none"
+     stroke-width="2"
+     stroke-dasharray="5, 5"
+     id="path35"
+     sodipodi:nodetypes="cc" />
+  <path
+     d="m 216.53944,402.27309 c 40,0 40,-50 80,-50"
+     stroke="#64748b"
+     fill="none"
+     stroke-width="2"
+     stroke-dasharray="5, 5"
+     id="path35-3"
+     style="font-family:Inter, 'Noto Sans TC', sans-serif"
+     sodipodi:nodetypes="cc" />
+  <path
+     d="m 683.70152,194.43008 v 26.83901"
+     stroke="#64748b"
+     fill="none"
+     stroke-width="1.63826"
+     marker-end="url(#arrowhead)"
+     id="path36"
+     sodipodi:nodetypes="cc" />
+  <path
+     d="m 692.3379,418.59715 -0.43781,-26.83901"
+     stroke="#64748b"
+     fill="none"
+     stroke-width="1.63826"
+     marker-end="url(#arrowhead-6)"
+     id="path36-2"
+     sodipodi:nodetypes="cc"
+     style="font-family:Inter, 'Noto Sans TC', sans-serif;marker-mid:url(#arrowhead);marker-end:url(#arrowhead-6)" />
+  <path
+     d="m 675.25831,375.94044 -0.35726,26.84021"
+     stroke="#64748b"
+     fill="none"
+     stroke-width="1.63826"
+     marker-end="url(#arrowhead-6-8)"
+     id="path36-2-2"
+     sodipodi:nodetypes="cc"
+     style="font-family:Inter, 'Noto Sans TC', sans-serif;marker-mid:url(#arrowhead-11);marker-end:url(#arrowhead-6-8)" />
+  <path
+     d="m 498.89894,178.05471 h 26.83901"
+     stroke="#64748b"
+     fill="none"
+     stroke-width="1.63826"
+     marker-end="url(#arrowhead-68)"
+     id="path37-6"
+     style="font-family:Inter, 'Noto Sans TC', sans-serif;marker-end:url(#arrowhead-68)"
+     sodipodi:nodetypes="cc" />
+  <path
+     d="m 917.47011,449.44996 -55.11657,-0.17574"
+     stroke="#64748b"
+     fill="none"
+     stroke-width="1.89091"
+     marker-end="url(#arrowhead)"
+     id="path38"
+     style="stroke-width:1.891;stroke-dasharray:none;marker-start:url(#RoundedArrow)"
+     sodipodi:nodetypes="cc" />
+  <path
+     d="m 843.59495,270.21382 c 30.91957,0 30.91957,-41.49586 61.83915,-41.49586"
+     stroke="#64748b"
+     fill="none"
+     stroke-width="1.79097"
+     marker-end="url(#arrowhead)"
+     id="path39"
+     sodipodi:nodetypes="cc" />
+  <path
+     d="m 498.12091,455.32355 c 13.54947,0 13.54947,-136.17538 27.09894,-136.17538"
+     stroke="#64748b"
+     fill="none"
+     stroke-width="2.14774"
+     marker-end="url(#arrowhead-1)"
+     id="path39-4"
+     style="font-family:Inter, 'Noto Sans TC', sans-serif;marker-end:url(#arrowhead-1)"
+     sodipodi:nodetypes="cc" />
+  <defs
+     id="defs39">
+    <marker
+       style="overflow:visible"
+       id="RoundedArrow"
+       refX="0"
+       refY="0"
+       orient="auto-start-reverse"
+       inkscape:stockid="Rounded arrow"
+       markerWidth="1"
+       markerHeight="1"
+       viewBox="0 0 1 1"
+       inkscape:isstock="true"
+       inkscape:collect="always"
+       preserveAspectRatio="xMidYMid">
+      <path
+         transform="scale(0.7)"
+         d="m -0.21114562,-4.1055728 6.42229122,3.21114561 a 1,1 90 0 1 0,1.78885438 L -0.21114562,4.1055728 A 1.236068,1.236068 31.717474 0 1 -2,3 v -6 a 1.236068,1.236068 148.28253 0 1 1.78885438,-1.1055728 z"
+         style="fill:context-stroke;fill-rule:evenodd;stroke:none"
+         id="path8" />
+    </marker>
+    <inkscape:path-effect
+       effect="fillet_chamfer"
+       id="path-effect42"
+       is_visible="true"
+       lpeversion="1"
+       nodesatellites_param="F,0,0,1,0,4,0,1 @ F,0,0,1,0,4,0,1 @ F,0,0,1,0,4,0,1 @ F,0,0,1,0,4,0,1"
+       radius="0"
+       unit="px"
+       method="auto"
+       mode="F"
+       chamfer_steps="1"
+       flexible="false"
+       use_knot_distance="true"
+       apply_no_radius="true"
+       apply_with_radius="true"
+       only_selected="false"
+       hide_knots="false" />
+    <marker
+       id="arrowhead"
+       markerWidth="10"
+       markerHeight="7"
+       refX="0"
+       refY="3.5"
+       orient="auto"
+       viewBox="0 0 10 7"
+       preserveAspectRatio="xMidYMid">
+      <polygon
+         points="0 0, 10 3.5, 0 7"
+         fill="#64748b"
+         id="polygon39" />
+    </marker>
+    <marker
+       id="arrowhead-6"
+       markerWidth="10"
+       markerHeight="7"
+       refX="0"
+       refY="3.5"
+       orient="auto"
+       viewBox="0 0 10 7"
+       preserveAspectRatio="xMidYMid">
+      <polygon
+         points="10,3.5 0,7 0,0 "
+         fill="#64748b"
+         id="polygon39-1" />
+    </marker>
+    <marker
+       id="arrowhead-3"
+       markerWidth="10"
+       markerHeight="7"
+       refX="0"
+       refY="3.5"
+       orient="auto"
+       viewBox="0 0 10 7"
+       preserveAspectRatio="xMidYMid">
+      <polygon
+         points="10,3.5 0,7 0,0 "
+         fill="#64748b"
+         id="polygon39-2" />
+    </marker>
+    <marker
+       id="arrowhead-68"
+       markerWidth="10"
+       markerHeight="7"
+       refX="0"
+       refY="3.5"
+       orient="auto">
+      <polygon
+         points="10,3.5 0,7 0,0 "
+         fill="#64748b"
+         id="polygon39-5" />
+    </marker>
+    <marker
+       id="arrowhead-1"
+       markerWidth="10"
+       markerHeight="7"
+       refX="0"
+       refY="3.5"
+       orient="auto"
+       viewBox="0 0 10 7"
+       preserveAspectRatio="xMidYMid">
+      <polygon
+         points="10,3.5 0,7 0,0 "
+         fill="#64748b"
+         id="polygon39-23" />
+    </marker>
+    <marker
+       id="arrowhead-11"
+       markerWidth="10"
+       markerHeight="7"
+       refX="0"
+       refY="3.5"
+       orient="auto"
+       viewBox="0 0 10 7"
+       preserveAspectRatio="xMidYMid">
+      <polygon
+         points="10,3.5 0,7 0,0 "
+         fill="#64748b"
+         id="polygon39-3" />
+    </marker>
+    <marker
+       id="arrowhead-6-8"
+       markerWidth="10"
+       markerHeight="7"
+       refX="0"
+       refY="3.5"
+       orient="auto"
+       viewBox="0 0 10 7"
+       preserveAspectRatio="xMidYMid">
+      <polygon
+         points="0,7 0,0 10,3.5 "
+         fill="#64748b"
+         id="polygon39-1-7" />
+    </marker>
+  </defs>
+  <path
+     style="fill:none"
+     d="m 688.13161,192.47944 121.2691,72.62044 -77.55582,57.81434"
+     id="path42"
+     sodipodi:nodetypes="ccc" />
+</svg>
+        </div>
+
+
+
+        <!-- Main Content Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+            <!-- Left Nav -->
+            <aside class="lg:col-span-1 hidden lg:block">
+                <div class="sticky top-28">
+                    <h3 class="font-semibold text-slate-800 mb-4" data-lang-key="nav_title">Handbook Navigation</h3>
+                    <nav id="left-nav" class="flex flex-col space-y-2 text-sm">
+                        <!-- Navigation items will be dynamically populated by JS -->
+                    </nav>
+                </div>
+            </aside>
+
+            <!-- Right Content -->
+            <div class="lg:col-span-3 bg-white p-8 rounded-lg shadow-sm content-section">
+                
+                <section id="part1">
+                    <h2 data-lang-key="p1_title">Part I: Foundational Data Engineering</h2>
+                    <div class="info-box">
+                        <div class="info-box-title">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7.014A8.003 8.003 0 0112 3c2.757 0 5.223 1.28 6.986 3.286C21.5 8 22 11 22 13c-2 1-2.343 1.343-2.343 1.343z" /><path stroke-linecap="round" stroke-linejoin="round" d="M12 12l9 9" /></svg>
+                            <span data-lang-key="p1_box_title">The "Garbage In, Garbage Out" Principle</span>
+                        </div>
+                        <p class="text-blue-800" data-lang-key="p1_box_desc">The most fundamental principle in any data analytics project is that the quality of the output is entirely dependent on the quality of the input. Fujitec's current data environment presents a classic 'messy data' challenge, fragmented across disparate sources. The primary objective of this part is to conquer this chaos by constructing a robust Extract, Transform, and Load (ETL) pipeline. This pipeline will ingest the raw data and methodically cleanse, standardize, and integrate it into a single, reliable dataset known as an Analytic Base Table (ABT).</p>
+                    </div>
+                </section>
+                
+                <section id="chapter1">
+                    <h3 data-lang-key="c1_title">Chapter 1: Project Setup and Data Reconnaissance</h3>
+                    <h4 data-lang-key="c1_1_title">1.1. Navigating Your SAS Analytics for IoT (SAS VIYA) Environment</h4>
+                    <p data-lang-key="c1_1_desc">The project will be developed entirely within the SAS Analytics for IoT (SAS VIYA), a comprehensive, web-based ecosystem for analytics. The primary interface for all coding and data management tasks will be SAS Studio. Familiarize yourself with the Navigation Pane (left), the Work Area (center), and the Log/Results tabs (right/bottom), as these are essential for development and debugging.</p>
+                    
+                    <h4 data-lang-key="c1_2_title">1.2. Establishing the Project Directory Structure</h4>
+                    <p data-lang-key="c1_2_desc">A well-organized project is a hallmark of professional development. Before any data is ingested, create this standardized folder structure in the SAS Studio "Explorer" pane. This ensures all assets are easy to locate, manage, and audit.</p>
+                    <div class="code-block">
+                        <pre><code>/projects/fujitec/
+├── raw_data/       # <span data-lang-key="c1_dir_1">Original, untouched source files. This is critical for auditing and reprocessing.</span>
+├── working_data/   # <span data-lang-key="c1_dir_2">Intermediate & final SAS datasets (ABT).</span>
+├── sas_code/       # <span data-lang-key="c1_dir_3">All .sas program files, centralizing all logic.</span>
+└── documentation/  # <span data-lang-key="c1_dir_4">Project documents like this guide.</span></code></pre>
+                    </div>
+                    
+                    <h4 data-lang-key="c1_3_title">1.3. Initial Data Ingestion and Source File Analysis</h4>
+                    <p data-lang-key="c1_3_desc">Upon receiving the data package, upload all Excel and CSV files to the <code>/projects/fujitec/raw_data/</code> directory. These files are considered immutable. To ensure clarity, we will establish a data dictionary—a "Rosetta Stone" mapping original field names to standardized project variable names.</p>
+                    <div class="table-container">
+                        <table id="data-dictionary-table">
+                            <thead>
+                                <tr>
+                                    <th data-lang-key="c1_tbl_h1">Source System</th>
+                                    <th data-lang-key="c1_tbl_h2">Original Field Name</th>
+                                    <th data-lang-key="c1_tbl_h3">Standardized Variable Name</th>
+                                    <th data-lang-key="c1_tbl_h4">Description & Business Rule</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td data-lang-key="c1_tbl_r1_c1">Work Reporting</td>
+                                    <td>員工編號 / Employee ID</td>
+                                    <td><code>Employee_ID</code></td>
+                                    <td data-lang-key="c1_tbl_r1_c4">Unique employee identifier. Must be standardized to handle inconsistencies.</td>
+                                </tr>
+                                <tr>
+                                    <td data-lang-key="c1_tbl_r2_c1">Work Reporting</td>
+                                    <td>報工日期 / Work Date</td>
+                                    <td><code>Work_Date_Raw</code></td>
+                                    <td data-lang-key="c1_tbl_r2_c4">Raw date string. Must be converted to a standard SAS Date value.</td>
+                                </tr>
+                                <tr>
+                                    <td data-lang-key="c1_tbl_r3_c1">Work Reporting</td>
+                                    <td>實際工時 / Actual Man-Hours</td>
+                                    <td><code>Actual_Man_Hours_Raw</code></td>
+                                    <td data-lang-key="c1_tbl_r3_c4">Raw hours. Must be cleaned and converted to numeric.</td>
+                                </tr>
+                                 <tr>
+                                    <td data-lang-key="c1_tbl_r4_c1">PLM/Process</td>
+                                    <td>需用技能 / Required Skill</td>
+                                    <td><code>Required_Skill</code></td>
+                                    <td data-lang-key="c1_tbl_r4_c4">Critical input for workforce assignment constraint in the optimization model.</td>
+                                </tr>
+                                <tr>
+                                    <td>ERP</td>
+                                    <td>訂單號碼 / Work Order No.</td>
+                                    <td><code>Work_Order_No</code></td>
+                                    <td data-lang-key="c1_tbl_r5_c4">Unique identifier for a production work order.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <section id="chapter2">
+                    <h3 data-lang-key="c2_title">Chapter 2: Normalizing and Ingesting Raw Data</h3>
+                    <h4 data-lang-key="c2_1_title">2.1. Why Normalize to a Standard Format?</h4>
+                    <p data-lang-key="c2_1_desc">Fujitec's data is delivered in a mix of Excel (`.xlsx`) and CSV formats. Using `PROC IMPORT` with `DBMS=XLSX` allows SAS to directly read modern Excel files, avoiding potential data corruption issues from manual CSV conversions and creating a more reliable ingestion pipeline.</p>
+                    
+                    <h4 data-lang-key="c2_2_title">2.2. A Detailed `PROC IMPORT` Walkthrough</h4>
+                    <p data-lang-key="c2_2_desc">The first program, `01_ingest_data.sas`, reads the raw files into a dedicated "staging" library, isolating the raw ingested data for more organized and auditable processing.</p>
+                    <div class="code-block">
+                        <button class="copy-button" onclick="copyCode(this)">Copy</button>
+                        <pre><code class="language-sas">/*======================================================================
+  PROGRAM: 01_ingest_data.sas
+  PURPOSE: Ingest raw Excel files into staging SAS datasets.
+======================================================================*/
+
+/* A LIBNAME statement assigns a nickname to a physical directory for easier management. */
+libname staging '/projects/fujitec/working_data/staging';
+
+/* --- Ingest Work Reporting Data --- */
+PROC IMPORT 
+    /* DATAFILE= points to the exact location of the source Excel file. */
+    DATAFILE="/projects/fujitec/raw_data/Fujitec_Work_Reporting.xlsx" 
+    /* OUT= specifies the new SAS dataset to be created (libname.dataset_name). */
+    OUT=staging.work_reporting_raw 
+    /* DBMS=XLSX tells SAS this is a modern Excel file. This is crucial. */
+    DBMS=XLSX 
+    /* REPLACE allows this code to be re-run without failing. Useful for development. */
+    REPLACE;
+    
+    /* SHEET= specifies which worksheet to read. Must match the name exactly. */
+    SHEET="Work Reporting Data";
+    
+    /* GETNAMES=YES tells SAS the first row contains column headers for variable names. */
+    GETNAMES=YES;
+RUN;
+
+/* --- Ingest PLM/Process Design Data --- */
+PROC IMPORT 
+    DATAFILE="/projects/fujitec/raw_data/Fujitec_PLM_Process.xlsx" 
+    OUT=staging.plm_process_raw 
+    DBMS=XLSX 
+    REPLACE;
+    SHEET="PLM Data";
+    GETNAMES=YES;
+RUN;
+
+/* --- Ingest ERP System Data --- */
+PROC IMPORT 
+    DATAFILE="/projects/fujitec/raw_data/Fujitec_ERP_Data.xlsx" 
+    OUT=staging.erp_raw 
+    DBMS=XLSX 
+    REPLACE;
+    SHEET="ERP Data";
+    GETNAMES=YES;
+RUN;</code></pre>
+                    </div>
+                </section>
+
+                <section id="chapter3">
+                    <h3 data-lang-key="c3_title">Chapter 3: The Transformation Pipeline - A Deep Dive into Data Cleansing</h3>
+                    <p data-lang-key="c3_desc">With raw data staged, we now clean it. The core strategy is to isolate cleansing logic from ingestion logic. For each raw staging table, a corresponding cleaned table will be created. This modular approach greatly simplifies debugging and auditing.</p>
+
+                    <h4 data-lang-key="c3_1_title">3.1. Handling Inconsistent Text and IDs</h4>
+                    <p data-lang-key="c3_1_desc">Inconsistent text is a common point of failure. For known variations (e.g., "J.Smith" vs "jsmith"), we'll use `PROC FORMAT` to create a reusable standardization map.</p>
+                    <div class="pro-tip-box">
+                        <div class="pro-tip-title">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" /></svg>
+                            <span data-lang-key="c3_protip_title">Pro Tip: Use PROC FORMAT</span>
+                        </div>
+                        <p class="text-green-800" data-lang-key="c3_protip_desc">`PROC FORMAT` is superior to long `IF-THEN/ELSE` chains because it centralizes the standardization logic in a reusable "map," making it easier to read, update, and maintain.</p>
+                    </div>
+                    <div class="code-block">
+                        <button class="copy-button" onclick="copyCode(this)">Copy</button>
+                        <pre><code class="language-sas">/* 1. Define the standardization format. It acts as a lookup table. */
+PROC FORMAT;
+  /* The VALUE statement defines the mapping for the format named $EmpID_Std. */
+  VALUE $EmpID_Std
+    /* List of input values on the left, standardized output value on the right. */
+    'J.SMITH', 'JSMITH', 'SMITH.J' = 'EMP_12345'
+    'T.JONES', 'JONES.T' = 'EMP_67890'
+    /* The OTHER keyword assigns a default for any value not explicitly listed. */
+    OTHER = 'UNKNOWN_ID';
+RUN;
+
+/* 2. Apply the format in a DATA step */
+DATA work.work_reporting_clean_step1;
+  SET staging.work_reporting_raw;
+  
+  /* Apply the custom format using the PUT() function to create a new, standardized variable */
+  Standard_Employee_ID = PUT(UPCASE(TRIM(Employee_ID)), $EmpID_Std.);
+RUN;</code></pre>
+                    </div>
+                    
+                    <h4 data-lang-key="c3_2_title">3.2. The Date Conundrum: Standardizing Multiple Date Formats</h4>
+                    <p data-lang-key="c3_2_desc">Handling inconsistent date formats is a classic data engineering challenge. The most reliable method is to read the date as a character string, then use conditional logic with the `INPUT()` function and the flexible `ANYDTDTE.` informat to convert it to a standard SAS date value (a number representing days since Jan 1, 1960).</p>
+                    <div class="code-block">
+                        <button class="copy-button" onclick="copyCode(this)">Copy</button>
+                        <pre><code class="language-sas">DATA work.work_reporting_clean_step2;
+  SET work.work_reporting_clean_step1;
+  
+  /* LENGTH 8 is standard for numeric variables. FORMAT DATE9. displays it as DDMMMYYYY. */
+  LENGTH Standard_Work_Date 8.;
+  FORMAT Standard_Work_Date DATE9.;
+
+  /* The ANYDTDTE. informat is very powerful; it tries to automatically detect
+     many common date formats that use delimiters like /, -, or space. */
+  Standard_Work_Date = INPUT(Work_Date_Raw, ANYDTDTE40.); 
+  
+  /* If conversion fails, the value will be missing. We can flag this for review. */
+  IF missing(Standard_Work_Date) THEN PUT "WARNING: Unrecognized date format for " Work_Date_Raw;
+
+  DROP Work_Date_Raw;
+  RENAME Standard_Work_Date = Work_Date;
+RUN;</code></pre>
+                    </div>
+
+                    <h4 data-lang-key="c3_3_title">3.3. Cleansing Numeric Fields and Removing Duplicates</h4>
+                    <p data-lang-key="c3_3_desc">Numeric fields can contain errors like non-numeric text or impossible values (e.g., negative hours). These must be cleaned. After standardizing key fields, `PROC SORT` with the `NODUPKEY` option efficiently removes duplicate records.</p>
+                    <div class="code-block">
+                        <button class="copy-button" onclick="copyCode(this)">Copy</button>
+                        <pre><code class="language-sas">/* This final step in the cleaning process cleans numerics and removes duplicates. */
+DATA work.work_reporting_clean_tmp;
+    SET work.work_reporting_clean_step2;
+    /* The ?? modifier on the informat tells SAS not to write errors to the log if conversion fails. */
+    Actual_Man_Hours_Num = INPUT(Actual_Man_Hours_Raw, ??8.);
+    /* Set invalid values to missing, which SAS handles correctly in calculations. */
+    IF Actual_Man_Hours_Num &lt; 0 THEN Actual_Man_Hours_Num = .;
+    DROP Actual_Man_Hours_Raw;
+    RENAME Actual_Man_Hours_Num = Actual_Man_Hours;
+RUN;
+
+PROC SORT DATA=work.work_reporting_clean_tmp OUT=work.work_reporting_clean NODUPKEY;
+  /* The BY statement lists all variables that define a unique record.
+     NODUPKEY removes any observation where this combination has already been seen. */
+  BY Standard_Employee_ID Work_Date Work_Order_No;
+RUN;</code></pre>
+                    </div>
+                </section>
+                
+                <section id="chapter4">
+                    <h3 data-lang-key="c4_title">Chapter 4: Final Assembly - Creating the Analytic Base Table (ABT)</h3>
+                    <p data-lang-key="c4_desc">The ABT is the "single source of truth" for the project. It's a single, wide table that joins all our cleaned data sources. This design is optimal for modeling and visualization as it eliminates the need for complex joins later on. The creation of the ABT directly addresses Fujitec's core problem of "information silos."</p>
+                    <div class="code-block">
+                        <button class="copy-button" onclick="copyCode(this)">Copy</button>
+                        <pre><code class="language-sas">/*======================================================================
+  PROGRAM: 03_create_abt.sas
+  PURPOSE: Joins cleaned tables into the final Analytic Base Table (ABT).
+======================================================================*/
+
+/* Define a permanent library for the final ABT. */
+libname prod '/projects/fujitec/working_data/production';
+
+PROC SQL;
+  CREATE TABLE prod.fujitec_abt AS
+  SELECT
+    t1.Work_Order_No,
+    t1.Operation_Code,
+    t1.Work_Date,
+    t1.Actual_Man_Hours,
+    t1.Standard_Employee_ID AS Employee_ID,
+    t2.Required_Skill,
+    t3.Due_Date,
+    t3.Material_ID
+  FROM
+    work.work_reporting_clean AS t1
+    /* LEFT JOIN ensures that all records from the primary table (work reporting)
+       are kept, even if there isn't a match in the other tables. */
+    LEFT JOIN work.plm_process_clean AS t2
+      /* The ON clause specifies the key(s) used to match records. */
+      ON t1.Operation_Code = t2.Operation_Code
+    LEFT JOIN work.erp_clean AS t3
+      ON t1.Work_Order_No = t3.Work_Order_No;
+QUIT;</code></pre>
+                    </div>
+                    <div class="info-box">
+                        <div class="info-box-title">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                            <span data-lang-key="c4_milestone_title">First Major Milestone</span>
+                        </div>
+                        <p class="text-blue-800" data-lang-key="c4_milestone_desc">The successful creation of `prod.fujitec_abt` marks the completion of the data engineering phase. This single dataset is a valuable asset in its own right, providing Fujitec with a consolidated view of their operations that they previously lacked.</p>
+                    </div>
+                </section>
+                
+                <section id="part2">
+                    <h2 class="mt-12" data-lang-key="p2_title">Part II: The Optimization Core: Building the Scheduling Engine</h2>
+                    <p data-lang-key="p2_desc">With a reliable ABT, we can now build the analytical "brain" of the solution: an intelligent scheduling engine using `PROC OPTMODEL`. The goal is to translate Fujitec's complex scheduling problem into a mathematical model that finds a provably optimal production schedule.</p>
+                </section>
+
+                <section id="chapter5">
+                    <h3 data-lang-key="c5_title">Chapter 5: A Practitioner's Guide to Optimization Techniques</h3>
+                    <h4 data-lang-key="c5_1_title">5.1. Why Mixed-Integer Linear Programming (MILP)?</h4>
+                    <p data-lang-key="c5_1_desc">We've chosen MILP because it finds the best possible outcome (e.g., minimum completion time) and, most importantly, provides a mathematical **guarantee of optimality**. This rigor is essential to prove that our intelligent system is superior to manual scheduling. While other techniques might find "good" solutions faster, they cannot provide this same level of certainty, which is essential for making a compelling business case to Fujitec.</p>
+                </section>
+
+                <section id="chapter6">
+                    <h3 data-lang-key="c6_title">Chapter 6: Translating "Tribal Knowledge" into Mathematical Code</h3>
+                    <h4 data-lang-key="c6_1_title">6.1. The Power of `PROC OPTMODEL`</h4>
+                    <p data-lang-key="c6_1_desc">A huge risk in scheduling projects is failing to capture the unwritten rules used by experienced planners. `PROC OPTMODEL`'s syntax closely mimics mathematical algebra, making it easy to translate a business rule (e.g., "Task A must finish before Task B can start") directly into a transparent, auditable line of code. This process transforms implicit, person-dependent knowledge into an explicit, robust corporate asset.</p>
+                    
+                    <h4 data-lang-key="c6_2_title">6.2. Setting up the Model</h4>
+                    <p data-lang-key="c6_2_desc">We'll create a new program, `04_optimize_schedule.sas`. The model follows a logical progression: declare sets and parameters, read data, declare decision variables, define constraints, set the objective, solve, and export.</p>
+                </section>
+
+                <section id="chapter7">
+                    <h3 data-lang-key="c7_title">Chapter 7: Formulating the Constraints - The Rules of the Factory</h3>
+                    <p data-lang-key="c7_desc">Constraints are the mathematical statements that define the rules the schedule must obey. They are the heart of the model.</p>
+                    
+                    <h4 data-lang-key="c7_1_title">7.1. Precedence Constraints</h4>
+                    <p data-lang-key="c7_1_desc"><strong>Business Rule:</strong> A successor task cannot begin until its predecessor is complete. <strong>SAS Code:</strong> We translate this directly. For a task `t` that must follow task `p`, the logic is: `StartTime[t] >= StartTime[p] + TaskDuration[p]`.</p>
+                    <div class="code-block">
+                        <button class="copy-button" onclick="copyCode(this)">Copy</button>
+                        <pre><code class="language-sas">/* --- CONSTRAINT: PRECEDENCE --- */
+/* This ensures that for each task 't' with a predecessor 'p', the start time of 't'
+   must be greater than or equal to the start time of 'p' plus its duration. */
+CON Precedence_con {t IN TASKS, p IN PREDECESSORS[t]}:
+  StartTime[t] >= StartTime[p] + TaskDuration[p];</code></pre>
+                    </div>
+
+                    <h4 data-lang-key="c7_2_title">7.2. The Critical Workforce Constraints</h4>
+                    <p data-lang-key="c7_2_desc"><strong>Business Rule:</strong> Every task must be assigned to exactly one employee who has the required skill. This directly models and solves Fujitec's single-skilled workforce bottleneck.</p>
+                    <div class="code-block">
+                        <button class="copy-button" onclick="copyCode(this)">Copy</button>
+                        <pre><code class="language-sas">/* --- CONSTRAINT: SKILL REQUIREMENT & SINGLE ASSIGNMENT --- */
+/* For each task 't', this ensures exactly one employee is assigned.
+   The summation is performed ONLY over the set of employees 'e' who possess
+   the skill required for task 't' (where HasSkill[e, RequiredSkill[t]] = 1). */
+CON SkillRequirement_con {t IN TASKS}:
+  SUM{e IN EMPLOYEES: HasSkill[e, RequiredSkill[t]] = 1} Assign[e, t] = 1;</code></pre>
+                    </div>
+                </section>
+                
+                <section id="chapter8">
+                    <h3 data-lang-key="c8_title">Chapter 8: Solving the Model and Exporting the Optimal Schedule</h3>
+                    <h4 data-lang-key="c8_1_title">8.1. Defining the Objective: Minimize Makespan</h4>
+                    <p data-lang-key="c8_1_desc">The business goal is to minimize the makespan (the completion time of the last job). We define a `Makespan` variable and tell the solver to make it as small as possible.</p>
+                    <div class="code-block">
+                        <button class="copy-button" onclick="copyCode(this)">Copy</button>
+                        <pre><code class="language-sas">/* --- CONSTRAINT: MAKESPAN DEFINITION --- */
+/* This defines the Makespan. It must be >= the completion time of every task. */
+CON Makespan_def_con {t IN TASKS}:
+  Makespan >= StartTime[t] + TaskDuration[t];
+
+/* --- OBJECTIVE FUNCTION --- */
+/* The objective is to minimize the Makespan. The solver will adjust decision
+   variables (StartTime, Assign) to find a valid schedule with the smallest
+   possible value for the Makespan variable. */
+MIN Objective = Makespan;</code></pre>
+                    </div>
+
+                    <h4 data-lang-key="c8_2_title">8.2. Invoking the Solver and Exporting the Solution</h4>
+                    <p data-lang-key="c8_2_desc">A single `SOLVE` statement triggers the powerful MILP solver. After a successful solve, we use `CREATE DATA` to extract the optimal values (e.g., `StartTime[t].sol`) and save them to a new SAS dataset, ready for the dashboard.</p>
+                    <div class="code-block">
+                        <button class="copy-button" onclick="copyCode(this)">Copy</button>
+                        <pre><code class="language-sas">/* This statement tells SAS to find the guaranteed optimal solution. */
+SOLVE WITH MILP;
+
+/* --- EXPORT THE SOLUTION --- */
+/* The CREATE DATA statement extracts the optimal solution values and saves them.
+   This table is the primary output of the optimization engine. */
+CREATE DATA prod.optimized_schedule FROM [t]=TASKS
+  COLUMNS Task_ID=t
+          /* The .sol suffix retrieves the optimal value found by the solver. */
+          Task_Start_Time=StartTime[t].sol 
+          Task_End_Time=(StartTime[t].sol + TaskDuration[t])
+          /* This finds the employee 'e' for whom the binary Assign variable is 1. */
+          Assigned_Employee=({e IN EMPLOYEES: Assign[e,t].sol > 0.5} e)
+          Machine=TaskMachine[t];</code></pre>
+                    </div>
+                </section>
+
+                <section id="part3">
+                    <h2 class="mt-12" data-lang-key="p3_title">Part III: The Decision-Support Layer: From Data to Decisions</h2>
+                    <p data-lang-key="p3_desc">The raw output from the optimization is just numbers. This layer translates this into clear, actionable intelligence using an interactive dashboard in SAS Visual Analytics. This combats the "limited visibility" of Fujitec's current Excel process with an intuitive, "at-a-glance" interface.</p>
+                </section>
+
+                <section id="chapter9">
+                    <h3 data-lang-key="c9_title">Chapter 9: Building the Dashboard in SAS Visual Analytics</h3>
+                    <h4 data-lang-key="c9_1_title">9.1. Building the Gantt Chart</h4>
+                    <p data-lang-key="c9_1_desc">The Gantt chart is the visual centerpiece. We can build a highly effective one using a standard Bar Chart object in SAS VA.</p>
+                     <div class="pro-tip-box">
+                        <div class="pro-tip-title">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" /></svg>
+                            <span data-lang-key="c9_protip_title">Gantt Chart Trick</span>
+                        </div>
+                        <p class="text-green-800" data-lang-key="c9_protip_desc">Use a stacked horizontal bar chart. The first measure is the task's start time (`Gantt_Start`), which you make transparent. The second measure is the task's duration (`Gantt_Duration`), which you color. This creates the classic "floating bar" effect of a Gantt chart.</p>
+                    </div>
+                </section>
+
+                <section id="chapter10">
+                    <h3 data-lang-key="c10_title">Chapter 10: Empowering Managers with "What-If" Scenarios</h3>
+                    <p data-lang-key="c10_desc">A cornerstone of this POC is providing managers a tool to proactively manage disruptions. This moves them from reactive firefighting to proactive contingency planning. We achieve this using Parameters in SAS Visual Analytics.</p>
+                    <ol class="list-decimal pl-5 space-y-2">
+                        <li data-lang-key="c10_li1"><strong>Generate Scenario Data:</strong> In SAS Studio, run the optimization model multiple times with different assumptions (e.g., "Baseline", "Welder Absent"). Combine the results into one dataset with a `Scenario` column.</li>
+                        <li data-lang-key="c10_li2"><strong>Create a Parameter in VA:</strong> Create a new character parameter named `Scenario_Selection`.</li>
+                        <li data-lang-key="c10_li3"><strong>Create a User Control:</strong> Add a Drop-down list to the report, linking it to the `Scenario` column and the `Scenario_Selection` parameter.</li>
+                        <li data-lang-key="c10_li4"><strong>Link to Visuals:</strong> Filter the report page to only show data where the `Scenario` column equals the `Scenario_Selection` parameter. When a user selects a scenario, the entire dashboard updates instantly.</li>
+                    </ol>
+                </section>
+
+                <section id="part4">
+                    <h2 class="mt-12" data-lang-key="p4_title">Part IV: Intelligent Automation: Connecting Analytics to Action</h2>
+                    <p data-lang-key="p4_desc">An optimal plan is only valuable if it's integrated into the workflow. This final part addresses the "last mile" of analytics by demonstrating how to connect the intelligence from SAS to Fujitec's downstream systems, providing a scalable blueprint for integrating with legacy platforms.</p>
+                </section>
+
+                <section id="chapter11">
+                    <h3 data-lang-key="c11_title">Chapter 11: The "Brain and Hands" - Intelligent Process Automation (IPA)</h3>
+                    <p data-lang-key="c11_desc">We'll combine advanced analytics with Robotic Process Automation (RPA) in a "Brain and Hands" model:</p>
+                    <ul class="list-disc pl-5 space-y-2">
+                        <li><strong data-lang-key="c11_li1_strong">The Brain (SAS Analytics for IoT (SAS VIYA)):</strong> <span data-lang-key="c11_li1_span">Performs the complex decision-making to create the optimal schedule.</span></li>
+                        <li><strong data-lang-key="c11_li2_strong">The Hands (RPA Bot):</strong> <span data-lang-key="c11_li2_span">Executes simple, repetitive tasks based on the brain's decision. For this POC, the bot will take the schedule and automatically populate a standard Excel report.</span></li>
+                    </ul>
+                </section>
+
+                <section id="chapter12">
+                    <h3 data-lang-key="c12_title">Chapter 12: The Integration Workflow</h3>
+                    <p data-lang-key="c12_desc">The integration is a three-step process that uses `PROC HTTP` to make a REST API call to the RPA platform's endpoint, sending a JSON payload to trigger the bot.</p>
+                    <div class="code-block">
+                        <button class="copy-button" onclick="copyCode(this)">Copy</button>
+                        <pre><code class="language-sas">/* This PROC HTTP step sends the JSON payload to the RPA platform's API endpoint. */
+PROC HTTP
+  /* The URL is the specific API endpoint provided by the RPA platform. */
+  URL="&lt;RPA_ORCHESTRATOR_API_URL&gt;"
+  /* METHOD="POST" is used to send data to a server. */
+  METHOD="POST"
+  /* IN= specifies the fileref that contains the request body (our JSON payload). */
+  IN=json_payload_fileref;
+  HEADERS
+    /* This header tells the server that the data being sent is in JSON format. */
+    "Content-Type"="application/json"
+    /* Most modern APIs require an authentication token for security. */
+    "Authorization"="Bearer &lt;RPA_PLATFORM_API_TOKEN&gt;";
+RUN;</code></pre>
+                    </div>
+                    <p data-lang-key="c12_3_desc">The bot receives the API call, parses the JSON, opens an Excel template, and populates it with the schedule data. This completes the end-to-end intelligent automation workflow.</p>
+                </section>
+
+                <section id="conclusion">
+                    <h2 class="mt-12" data-lang-key="conclusion_title">Conclusion: Delivering a High-Impact POC</h2>
+                    <p data-lang-key="conclusion_desc">By leveraging this guide, the implementation team will be equipped to deliver the technical components of the POC and gain a deep, practical understanding of how to solve real-world business problems with advanced analytics. The successful completion of this project is the first critical step in transforming Fujitec's production operations.</p>
+                    <div class="info-box mt-8">
+                        <div class="info-box-title">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                            <span data-lang-key="conclusion_box_title">Final Checklist for the Implementer</span>
+                        </div>
+                        <ul class="list-disc pl-5 text-blue-800">
+                            <li data-lang-key="conclusion_li1"><strong>Data Engineering:</strong> `prod.fujitec_abt` created, validated, and documented.</li>
+                            <li data-lang-key="conclusion_li2"><strong>Optimization Model:</strong> `04_optimize_schedule.sas` successfully generates an optimal schedule.</li>
+                            <li data-lang-key="conclusion_li3"><strong>Visualization:</strong> SAS VA dashboard is complete with KPIs, Gantt chart, and "What-If" scenarios.</li>
+                            <li data-lang-key="conclusion_li4"><strong>Automation:</strong> The `Analytics -> API -> RPA` integration workflow is successfully demonstrated.</li>
+                        </ul>
+                    </div>
+                </section>
+
+                <section id="suggested_reply">
+                    <h2 class="mt-12" data-lang-key="reply_title">Suggested Reply & POC Success Metrics</h2>
+                    <p data-lang-key="reply_intro">
+                        This section provides a suggested response framework for the upcoming meeting with the client's team (Ryan's team). It directly addresses the request for a clear definition of POC success by linking our proposed technical solutions to their stated business challenges and desired outcomes.
+                    </p>
+                
+                    <div class="info-box">
+                        <div class="info-box-title">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <span data-lang-key="reply_poc_title">Proposed POC Validation Metrics</span>
+                        </div>
+                        <p data-lang-key="reply_poc_desc">
+                            To ensure the POC is focused and its success is measurable, we propose the following three core validation metrics. Each metric is directly tied to the client's pain points and can be demonstrated using the detailed steps in this handbook.
+                        </p>
+                    </div>
+                
+                    <h4 data-lang-key="reply_metric1_title">Metric 1: Data Consolidation & Quality Assurance</h4>
+                    <ul class="list-disc pl-5 space-y-2">
+                        <li><strong data-lang-key="reply_metric1_pain">Pain Point Addressed:</strong> <span data-lang-key="reply_metric1_pain_desc">Resolves the "information silo" and "error-prone manual data entry" issues (Corresponds to challenges: Data Integration, Reduce data error rate by >80%).</span></li>
+                        <li><strong data-lang-key="reply_metric1_validation">Validation Method:</strong> <span data-lang-key="reply_metric1_validation_desc">We will perform a live demonstration of the data engineering workflow from <strong>Part I (Chapters 1-4)</strong> of this handbook. This will show the process of ingesting disparate Excel files (Work Reporting, ERP, PLM) using <code>PROC IMPORT</code>, cleansing the data, automatically flagging format errors with a <code>DATA Step</code>, and producing a unified, clean Analytic Base Table (ABT).</span></li>
+                        <li><strong data-lang-key="reply_metric1_success">Success Criteria:</strong> <span data-lang-key="reply_metric1_success_desc">Successful generation of the <code>prod.fujitec_abt</code> dataset. We will showcase a before-and-after comparison of the data to prove the system's capability to automatically detect and handle data errors.</span></li>
+                    </ul>
+                
+                    <h4 data-lang-key="reply_metric2_title">Metric 2: Automated & Optimized Scheduling</h4>
+                    <ul class="list-disc pl-5 space-y-2">
+                        <li><strong data-lang-key="reply_metric2_pain">Pain Point Addressed:</strong> <span data-lang-key="reply_metric2_pain_desc">Tackles the time-consuming manual scheduling process and the inability to effectively manage the single-skilled workforce bottleneck (Corresponds to challenges: Reduce scheduling time by 70%, Increase labor utilization by 10%).</span></li>
+                        <li><strong data-lang-key="reply_metric2_validation">Validation Method:</strong> <span data-lang-key="reply_metric2_validation_desc">We will execute the <code>PROC OPTMODEL</code> optimization model from <strong>Part II (Chapters 5-8)</strong>. The demo will highlight how the <code>SkillRequirement_con</code> constraint ensures the right employee is assigned to the right job, generating a mathematically optimal schedule in minutes.</span></li>
+                        <li><strong data-lang-key="reply_metric2_success">Success Criteria:</strong> <span data-lang-key="reply_metric2_success_desc">Successful execution of the <code>04_optimize_schedule.sas</code> program to produce the <code>prod.optimized_schedule</code> dataset. This automated process time will be benchmarked against the client's current manual scheduling time.</span></li>
+                    </ul>
+                
+                    <h4 data-lang-key="reply_metric3_title">Metric 3: Interactive Decision Support & Scenario Planning</h4>
+                    <ul class="list-disc pl-5 space-y-2">
+                        <li><strong data-lang-key="reply_metric3_pain">Pain Point Addressed:</strong> <span data-lang-key="reply_metric3_pain_desc">Addresses the lack of transparency and the difficulty in responding to disruptions like rush orders or machine downtime (Corresponds to challenges: Process Transparency, Rapid Response to Changes).</span></li>
+                        <li><strong data-lang-key="reply_metric3_validation">Validation Method:</strong> <span data-lang-key="reply_metric3_validation_desc">We will present the interactive SAS Visual Analytics dashboard from <strong>Part III (Chapters 9-10)</strong>. The key feature will be the "What-If" scenario planning capability. For instance, we can simulate a "key welder is absent" scenario, allowing managers to instantly see the impact on the overall schedule and evaluate different responses with a simple click.</span></li>
+                        <li><strong data-lang-key="reply_metric3_success">Success Criteria:</strong> <span data-lang-key="reply_metric3_success_desc">A fully interactive dashboard where managers can select pre-configured scenarios (e.g., Baseline, Employee Absent). The dashboard's KPIs and Gantt chart must update instantly, demonstrating the system's powerful decision support capabilities.</span></li>
+                    </ul>
+                </section>
+
+            </div>
+        </div>
+    </main>
+    
+    <footer class="bg-slate-800 text-slate-400 mt-12">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-6 text-center text-sm">
+            <p data-lang-key="footer_text">&copy; 2025 SAS Institute Inc. All rights reserved. | Fujitec Intelligent Scheduling POC</p>
+        </div>
+    </footer>
+
+<script>
+    const translations = {
+        en: {
+            handbook_title: "Fujitec Intelligent Scheduling POC",
+            nav_part1: "Part I: Data Engineering",
+            nav_part2: "Part II: Optimization",
+            nav_part3: "Part III: Visualization",
+            nav_part4: "Part IV: Automation",
+            main_title: "A Guide for Planning & Implementation",
+            main_intro: "This document serves as a guide for the Fujitec Intelligent Production Proof of Concept (POC) project. It provides the essential context, technical architecture, and implementation considerations necessary to plan and execute a successful solution that introduces intelligence, agility, and clarity into their production planning.",
+            challenge_title: "The Core Challenge & Our Mission",
+            challenge_desc: "Fujitec's current reliance on manual, error-prone scheduling creates bottlenecks and limits visibility. Our mission is to demonstrate how a data-driven, intelligent system can address these issues head-on. This guide provides the strategic framework and technical details for building a high-impact POC that showcases the art of the possible.",
+            arch_title: "End-to-End Solution Architecture",
+            arch_group1: "1. Data Sources",
+            arch_group2: "2. SAS Analytics for IoT (SAS VIYA)",
+            arch_group3: "3. Action & Automation",
+            arch_source1_1: "Work Reporting",
+            arch_source1_2: "(Excel)",
+            arch_source2_1: "PLM / Process",
+            arch_source2_2: "(Excel)",
+            arch_source3_1: "ERP System",
+            arch_source3_2: "(Excel/CSV)",
+            arch_etl_1: "ETL Pipeline",
+            arch_etl_2: "(SAS Studio)",
+            arch_etl_3: "(Cleansing)",
+            arch_etl_4: "Analytic Base Table (ABT)",
+            arch_opt_1: "Optimization Engine",
+            arch_opt_2: "Optimized Schedule Dataset",
+            arch_viz_1: "Decision Support Layer",
+            arch_viz_2: "(SAS Visual Analytics)",
+            arch_viz_3: "Interactive Dashboard",
+            arch_viz_4: "KPIs & \"What-If\" Scenarios",
+            arch_rpa_1: "Parses JSON",
+            arch_rpa_2: "Populates Excel Report",
+            arch_user_1: "Business Users",
+            arch_user_2: "(Planners, Managers)",
+            arch_arrow_text: "PROC HTTP (API Call)",
+            nav_title: "Handbook Navigation",
+            nav_link_p1: "Part I: Data Engineering",
+            nav_link_c1: "Chapter 1: Setup",
+            nav_link_c2: "Chapter 2: Ingestion",
+            nav_link_c3: "Chapter 3: Cleansing",
+            nav_link_c4: "Chapter 4: ABT Creation",
+            nav_link_p2: "Part II: Optimization Core",
+            nav_link_c5: "Chapter 5: Techniques",
+            nav_link_c6: "Chapter 6: Model Setup",
+            nav_link_c7: "Chapter 7: Constraints",
+            nav_link_c8: "Chapter 8: Solving",
+            nav_link_p3: "Part III: Decision Support",
+            nav_link_c9: "Chapter 9: Dashboard",
+            nav_link_c10: "Chapter 10: What-If",
+            nav_link_p4: "Part IV: Automation",
+            nav_link_c11: "Chapter 11: IPA",
+            nav_link_c12: "Chapter 12: Integration",
+            nav_link_conclusion: "Conclusion",
+            p1_title: "Part I: Foundational Data Engineering",
+            p1_box_title: "The \"Garbage In, Garbage Out\" Principle",
+            p1_box_desc: "The most fundamental principle in any data analytics project is that the quality of the output is entirely dependent on the quality of the input. Fujitec's current data environment presents a classic 'messy data' challenge, fragmented across disparate sources. The primary objective of this part is to conquer this chaos by constructing a robust Extract, Transform, and Load (ETL) pipeline. This pipeline will ingest the raw data and methodically cleanse, standardize, and integrate it into a single, reliable dataset known as an Analytic Base Table (ABT).",
+            c1_title: "Chapter 1: Project Setup and Data Reconnaissance",
+            c1_1_title: "1.1. Navigating Your SAS Analytics for IoT (SAS VIYA) Environment",
+            c1_1_desc: "The project will be developed entirely within the SAS Analytics for IoT (SAS VIYA), a comprehensive, web-based ecosystem for analytics. The primary interface for all coding and data management tasks will be SAS Studio. Familiarize yourself with the Navigation Pane (left), the Work Area (center), and the Log/Results tabs (right/bottom), as these are essential for development and debugging.",
+            c1_2_title: "1.2. Establishing the Project Directory Structure",
+            c1_2_desc: "A well-organized project is a hallmark of professional development. Before any data is ingested, create this standardized folder structure in the SAS Studio \"Explorer\" pane. This ensures all assets are easy to locate, manage, and audit.",
+            c1_dir_1: "Original, untouched source files. This is critical for auditing and reprocessing.",
+            c1_dir_2: "Intermediate & final SAS datasets (ABT).",
+            c1_dir_3: "All .sas program files, centralizing all logic.",
+            c1_dir_4: "Project documents like this guide.",
+            c1_3_title: "1.3. Initial Data Ingestion and Source File Analysis",
+            c1_3_desc: "Upon receiving the data package, upload all Excel and CSV files to the <code>/projects/fujitec/raw_data/</code> directory. These files are considered immutable. To ensure clarity, we will establish a data dictionary—a \"Rosetta Stone\" mapping original field names to standardized project variable names.",
+            c1_tbl_h1: "Source System",
+            c1_tbl_h2: "Original Field Name",
+            c1_tbl_h3: "Standardized Variable Name",
+            c1_tbl_h4: "Description & Business Rule",
+            c1_tbl_r1_c1: "Work Reporting",
+            c1_tbl_r1_c4: "Unique employee identifier. Must be standardized to handle inconsistencies.",
+            c1_tbl_r2_c1: "Work Reporting",
+            c1_tbl_r2_c4: "Raw date string. Must be converted to a standard SAS Date value.",
+            c1_tbl_r3_c1: "Work Reporting",
+            c1_tbl_r3_c4: "Raw hours. Must be cleaned and converted to numeric.",
+            c1_tbl_r4_c1: "PLM/Process",
+            c1_tbl_r4_c4: "Critical input for workforce assignment constraint in the optimization model.",
+            c1_tbl_r5_c4: "Unique identifier for a production work order.",
+            c2_title: "Chapter 2: Normalizing and Ingesting Raw Data",
+            c2_1_title: "2.1. Why Normalize to a Standard Format?",
+            c2_1_desc: "Fujitec's data is delivered in a mix of Excel (`.xlsx`) and CSV formats. Using `PROC IMPORT` with `DBMS=XLSX` allows SAS to directly read modern Excel files, avoiding potential data corruption issues from manual CSV conversions and creating a more reliable ingestion pipeline.",
+            c2_2_title: "2.2. A Detailed `PROC IMPORT` Walkthrough",
+            c2_2_desc: "The first program, `01_ingest_data.sas`, reads the raw files into a dedicated \"staging\" library, isolating the raw ingested data for more organized and auditable processing.",
+            c3_title: "Chapter 3: The Transformation Pipeline - A Deep Dive into Data Cleansing",
+            c3_desc: "With raw data staged, we now clean it. The core strategy is to isolate cleansing logic from ingestion logic. For each raw staging table, a corresponding cleaned table will be created. This modular approach greatly simplifies debugging and auditing.",
+            c3_1_title: "3.1. Handling Inconsistent Text and IDs",
+            c3_1_desc: "Inconsistent text is a common point of failure. For known variations (e.g., \"J.Smith\" vs \"jsmith\"), we'll use `PROC FORMAT` to create a reusable standardization map.",
+            c3_protip_title: "Pro Tip: Use PROC FORMAT",
+            c3_protip_desc: "`PROC FORMAT` is superior to long `IF-THEN/ELSE` chains because it centralizes the standardization logic in a reusable \"map,\" making it easier to read, update, and maintain.",
+            c3_2_title: "3.2. The Date Conundrum: Standardizing Multiple Date Formats",
+            c3_2_desc: "Handling inconsistent date formats is a classic data engineering challenge. The most reliable method is to read the date as a character string, then use conditional logic with the `INPUT()` function and the flexible `ANYDTDTE.` informat to convert it to a standard SAS date value (a number representing days since Jan 1, 1960).",
+            c3_3_title: "3.3. Cleansing Numeric Fields and Removing Duplicates",
+            c3_3_desc: "Numeric fields can contain errors like non-numeric text or impossible values (e.g., negative hours). These must be cleaned. After standardizing key fields, `PROC SORT` with the `NODUPKEY` option efficiently removes duplicate records.",
+            c4_title: "Chapter 4: Final Assembly - Creating the Analytic Base Table (ABT)",
+            c4_desc: "The ABT is the \"single source of truth\" for the project. It's a single, wide table that joins all our cleaned data sources. This design is optimal for modeling and visualization as it eliminates the need for complex joins later on. The creation of the ABT directly addresses Fujitec's core problem of \"information silos.\"",
+            c4_milestone_title: "First Major Milestone",
+            c4_milestone_desc: "The successful creation of `prod.fujitec_abt` marks the completion of the data engineering phase. This single dataset is a valuable asset in its own right, providing Fujitec with a consolidated view of their operations that they previously lacked.",
+            p2_title: "Part II: The Optimization Core: Building the Scheduling Engine",
+            p2_desc: "With a reliable ABT, we can now build the analytical \"brain\" of the solution: an intelligent scheduling engine using `PROC OPTMODEL`. The goal is to translate Fujitec's complex scheduling problem into a mathematical model that finds a provably optimal production schedule.",
+            c5_title: "Chapter 5: A Practitioner's Guide to Optimization Techniques",
+            c5_1_title: "5.1. Why Mixed-Integer Linear Programming (MILP)?",
+            c5_1_desc: "We've chosen MILP because it finds the best possible outcome (e.g., minimum completion time) and, most importantly, provides a mathematical **guarantee of optimality**. This rigor is essential to prove that our intelligent system is superior to manual scheduling. While other techniques might find \"good\" solutions faster, they cannot provide this same level of certainty, which is essential for making a compelling business case to Fujitec.",
+            c6_title: "Chapter 6: Translating \"Tribal Knowledge\" into Mathematical Code",
+            c6_1_title: "6.1. The Power of `PROC OPTMODEL`",
+            c6_1_desc: "A huge risk in scheduling projects is failing to capture the unwritten rules used by experienced planners. `PROC OPTMODEL`'s syntax closely mimics mathematical algebra, making it easy to translate a business rule (e.g., \"Task A must finish before Task B can start\") directly into a transparent, auditable line of code. This process transforms implicit, person-dependent knowledge into an explicit, robust corporate asset.",
+            c6_2_title: "6.2. Setting up the Model",
+            c6_2_desc: "We'll create a new program, `04_optimize_schedule.sas`. The model follows a logical progression: declare sets and parameters, read data, declare decision variables, define constraints, set the objective, solve, and export.",
+            c7_title: "Chapter 7: Formulating the Constraints - The Rules of the Factory",
+            c7_desc: "Constraints are the mathematical statements that define the rules the schedule must obey. They are the heart of the model.",
+            c7_1_title: "7.1. Precedence Constraints",
+            c7_1_desc: "<strong>Business Rule:</strong> A successor task cannot begin until its predecessor is complete. <strong>SAS Code:</strong> We translate this directly. For a task `t` that must follow task `p`, the logic is: `StartTime[t] >= StartTime[p] + TaskDuration[p]`.",
+            c7_2_title: "7.2. The Critical Workforce Constraints",
+            c7_2_desc: "<strong>Business Rule:</strong> Every task must be assigned to exactly one employee who has the required skill. This directly models and solves Fujitec's single-skilled workforce bottleneck.",
+            c8_title: "Chapter 8: Solving the Model and Exporting the Optimal Schedule",
+            c8_1_title: "8.1. Defining the Objective: Minimize Makespan",
+            c8_1_desc: "The business goal is to minimize the makespan (the completion time of the last job). We define a `Makespan` variable and tell the solver to make it as small as possible.",
+            c8_2_title: "8.2. Invoking the Solver and Exporting the Solution",
+            c8_2_desc: "A single `SOLVE` statement triggers the powerful MILP solver. After a successful solve, we use `CREATE DATA` to extract the optimal values (e.g., `StartTime[t].sol`) and save them to a new SAS dataset, ready for the dashboard.",
+            p3_title: "Part III: The Decision-Support Layer: From Data to Decisions",
+            p3_desc: "The raw output from the optimization is just numbers. This layer translates this into clear, actionable intelligence using an interactive dashboard in SAS Visual Analytics. This combats the \"limited visibility\" of Fujitec's current Excel process with an intuitive, \"at-a-glance\" interface.",
+            c9_title: "Chapter 9: Building the Dashboard in SAS Visual Analytics",
+            c9_1_title: "9.1. Building the Gantt Chart",
+            c9_1_desc: "The Gantt chart is the visual centerpiece. We can build a highly effective one using a standard Bar Chart object in SAS VA.",
+            c9_protip_title: "Gantt Chart Trick",
+            c9_protip_desc: "Use a stacked horizontal bar chart. The first measure is the task's start time (`Gantt_Start`), which you make transparent. The second measure is the task's duration (`Gantt_Duration`), which you color. This creates the classic \"floating bar\" effect of a Gantt chart.",
+            c10_title: "Chapter 10: Empowering Managers with \"What-If\" Scenarios",
+            c10_desc: "A cornerstone of this POC is providing managers a tool to proactively manage disruptions. This moves them from reactive firefighting to proactive contingency planning. We achieve this using Parameters in SAS Visual Analytics.",
+            c10_li1: "<strong>Generate Scenario Data:</strong> In SAS Studio, run the optimization model multiple times with different assumptions (e.g., \"Baseline\", \"Welder Absent\"). Combine the results into one dataset with a `Scenario` column.",
+            c10_li2: "<strong>Create a Parameter in VA:</strong> Create a new character parameter named `Scenario_Selection`.",
+            c10_li3: "<strong>Create a User Control:</strong> Add a Drop-down list to the report, linking it to the `Scenario` column and the `Scenario_Selection` parameter.",
+            c10_li4: "<strong>Link to Visuals:</strong> Filter the report page to only show data where the `Scenario` column equals the `Scenario_Selection` parameter. When a user selects a scenario, the entire dashboard updates instantly.",
+            p4_title: "Part IV: Intelligent Automation: Connecting Analytics to Action",
+            p4_desc: "An optimal plan is only valuable if it's integrated into the workflow. This final part addresses the \"last mile\" of analytics by demonstrating how to connect the intelligence from SAS to Fujitec's downstream systems, providing a scalable blueprint for integrating with legacy platforms.",
+            c11_title: "Chapter 11: The \"Brain and Hands\" - Intelligent Process Automation (IPA)",
+            c11_desc: "We'll combine advanced analytics with Robotic Process Automation (RPA) in a \"Brain and Hands\" model:",
+            c11_li1_strong: "The Brain (SAS Analytics for IoT (SAS VIYA)):",
+            c11_li1_span: "Performs the complex decision-making to create the optimal schedule.",
+            c11_li2_strong: "The Hands (RPA Bot):",
+            c11_li2_span: "Executes simple, repetitive tasks based on the brain's decision. For this POC, the bot will take the schedule and automatically populate a standard Excel report.",
+            c12_title: "Chapter 12: The Integration Workflow",
+            c12_desc: "The integration is a three-step process that uses `PROC HTTP` to make a REST API call to the RPA platform's endpoint, sending a JSON payload to trigger the bot.",
+            c12_3_desc: "The bot receives the API call, parses the JSON, opens an Excel template, and populates it with the schedule data. This completes the end-to-end intelligent automation workflow.",
+            conclusion_title: "Conclusion: Delivering a High-Impact POC",
+            conclusion_desc: "By leveraging this guide, the implementation team will be equipped to deliver the technical components of the POC and gain a deep, practical understanding of how to solve real-world business problems with advanced analytics. The successful completion of this project is the first critical step in transforming Fujitec's production operations.",
+            conclusion_box_title: "Final Checklist for the Implementer",
+            conclusion_li1: "<strong>Data Engineering:</strong> `prod.fujitec_abt` created, validated, and documented.",
+            conclusion_li2: "<strong>Optimization Model:</strong> `04_optimize_schedule.sas` successfully generates an optimal schedule.",
+            conclusion_li3: "<strong>Visualization:</strong> SAS VA dashboard is complete with KPIs, Gantt chart, and \"What-If\" scenarios.",
+            conclusion_li4: "<strong>Automation:</strong> The `Analytics -> API -> RPA` integration workflow is successfully demonstrated.",
+            footer_text: "&copy; 2025 SAS Institute Inc. All rights reserved. | Fujitec Intelligent Scheduling POC",
+            
+            /* Suggested Reply Translations */
+            nav_link_reply: "Suggested Reply",
+            reply_title: "Suggested Reply & POC Success Metrics",
+            reply_intro: "This section directly addresses the request for a clear definition of POC success by linking our proposed technical solutions to their stated business challenges and desired outcomes.",
+            reply_poc_title: "Proposed POC Validation Metrics",
+            reply_poc_desc: "To ensure the POC is focused and its success is measurable, we propose the following three core validation metrics. Each metric is directly tied to the client's pain points and can be demonstrated using the detailed steps in this handbook.",
+            reply_metric1_title: "Metric 1: Data Consolidation & Quality Assurance",
+            reply_metric1_pain: "Pain Point Addressed:",
+            reply_metric1_pain_desc: "Resolves the \"information silo\" and \"error-prone manual data entry\" issues (Corresponds to challenges: Data Integration, Reduce data error rate by >80%).",
+            reply_metric1_validation: "Validation Method:",
+            reply_metric1_validation_desc: "We will perform a live demonstration of the data engineering workflow from <strong>Part I (Chapters 1-4)</strong> of this handbook. This will show the process of ingesting disparate Excel files (Work Reporting, ERP, PLM) using <code>PROC IMPORT</code>, cleansing the data, automatically flagging format errors with a <code>DATA Step</code>, and producing a unified, clean Analytic Base Table (ABT).",
+            reply_metric1_success: "Success Criteria:",
+            reply_metric1_success_desc: "Successful generation of the <code>prod.fujitec_abt</code> dataset. We will showcase a before-and-after comparison of the data to prove the system's capability to automatically detect and handle data errors.",
+            reply_metric2_title: "Metric 2: Automated & Optimized Scheduling",
+            reply_metric2_pain: "Pain Point Addressed:",
+            reply_metric2_pain_desc: "Tackles the time-consuming manual scheduling process and the inability to effectively manage the single-skilled workforce bottleneck (Corresponds to challenges: Reduce scheduling time by 70%, Increase labor utilization by 10%).",
+            reply_metric2_validation: "Validation Method:",
+            reply_metric2_validation_desc: "We will execute the <code>PROC OPTMODEL</code> optimization model from <strong>Part II (Chapters 5-8)</strong>. The demo will highlight how the <code>SkillRequirement_con</code> constraint ensures the right employee is assigned to the right job, generating a mathematically optimal schedule in minutes.",
+            reply_metric2_success: "Success Criteria:",
+            reply_metric2_success_desc: "Successful execution of the <code>04_optimize_schedule.sas</code> program to produce the <code>prod.optimized_schedule</code> dataset. This automated process time will be benchmarked against the client's current manual scheduling time.",
+            reply_metric3_title: "Metric 3: Interactive Decision Support & Scenario Planning",
+            reply_metric3_pain: "Pain Point Addressed:",
+            reply_metric3_pain_desc: "Addresses the lack of transparency and the difficulty in responding to disruptions like rush orders or machine downtime (Corresponds to challenges: Process Transparency, Rapid Response to Changes).",
+            reply_metric3_validation: "Validation Method:",
+            reply_metric3_validation_desc: "We will present the interactive SAS Visual Analytics dashboard from <strong>Part III (Chapters 9-10)</strong>. The key feature will be the \"What-If\" scenario planning capability. For instance, we can simulate a \"key welder is absent\" scenario, allowing managers to instantly see the impact on the overall schedule and evaluate different responses with a simple click.",
+            reply_metric3_success: "Success Criteria:",
+            reply_metric3_success_desc: "A fully interactive dashboard where managers can select pre-configured scenarios (e.g., Baseline, Employee Absent). The dashboard's KPIs and Gantt chart must update instantly, demonstrating the system's powerful decision support capabilities."
+        },
+        zh: {
+            handbook_title: "富士達智能排程 POC",
+            nav_part1: "第一部分: 數據工程",
+            nav_part2: "第二部分: 優化",
+            nav_part3: "第三部分: 視覺化",
+            nav_part4: "第四部分: 自動化",
+            main_title: "富士達 POC 準備指南",
+            main_intro: "本文件為富士達智能生產概念驗證 (POC) 專案的指南。它提供了規劃與執行一個成功解決方案所必需的背景、技術架構和實施考量，旨在將智慧、敏捷性和清晰度引入其生產規劃中。",
+            challenge_title: "核心挑戰與我們的使命",
+            challenge_desc: "富士達目前對手動、易出錯的排程的依賴造成了瓶頸並限制了可見度。我們的使命是展示一個數據驅動的智能系統如何正面解決這些問題。本指南提供了建立一個高影響力POC的戰略框架和技術細節，以展示各種可能性。",
+            arch_title: "端到端解決方案架構",
+            arch_group1: "1. 數據來源",
+            arch_group2: "2. SAS Analytics for IoT (SAS VIYA)",
+            arch_group3: "3. 行動與自動化",
+            arch_source1_1: "工時回報",
+            arch_source1_2: "(Excel)",
+            arch_source2_1: "PLM / 流程",
+            arch_source2_2: "(Excel)",
+            arch_source3_1: "ERP 系統",
+            arch_source3_2: "(Excel/CSV)",
+            arch_etl_1: "ETL 流程",
+            arch_etl_2: "(SAS Studio)",
+            arch_etl_3: "(數據清洗)",
+            arch_etl_4: "分析基礎表 (ABT)",
+            arch_opt_1: "優化引擎",
+            arch_opt_2: "優化排程資料集",
+            arch_viz_1: "決策支援層",
+            arch_viz_2: "(SAS Visual Analytics)",
+            arch_viz_3: "互動式儀表板",
+            arch_viz_4: "KPI 與「假設」情境分析",
+            arch_rpa_1: "解析 JSON",
+            arch_rpa_2: "填入 Excel 報告",
+            arch_user_1: "業務使用者",
+            arch_user_2: "(規劃師、經理)",
+            arch_arrow_text: "PROC HTTP (API 呼叫)",
+            nav_title: "手冊導覽",
+            nav_link_p1: "第一部分: 數據工程",
+            nav_link_c1: "第 1 章: 設定",
+            nav_link_c2: "第 2 章: 匯入",
+            nav_link_c3: "第 3 章: 清洗",
+            nav_link_c4: "第 4 章: 建立 ABT",
+            nav_link_p2: "第二部分: 優化核心",
+            nav_link_c5: "第 5 章: 技術",
+            nav_link_c6: "第 6 章: 模型設定",
+            nav_link_c7: "第 7 章: 限制條件",
+            nav_link_c8: "第 8 章: 求解",
+            nav_link_p3: "第三部分: 決策支援",
+            nav_link_c9: "第 9 章: 儀表板",
+            nav_link_c10: "第 10 章: 假設分析",
+            nav_link_p4: "第四部分: 自動化",
+            nav_link_c11: "第 11 章: IPA",
+            nav_link_c12: "第 12 章: 整合",
+            nav_link_conclusion: "結論",
+            p1_title: "第一部分: 基礎數據工程",
+            p1_box_title: "「垃圾進，垃圾出」原則",
+            p1_box_desc: "任何數據分析專案最基本的原則是，輸出的品質完全取決於輸入的品質。富士達目前的數據環境呈現出典型的「髒數據」挑戰，資訊分散在不同的來源中。此部分的主要目標是透過建構一個強大的提取、轉換和載入 (ETL) 流程來克服這種混亂。此流程將匯入原始數據，並有條不紊地進行清洗、標準化和整合，以建立一個稱為分析基礎表 (ABT) 的單一、可靠的資料集。",
+            c1_title: "第 1 章: 專案設定與數據探索",
+            c1_1_title: "1.1. 導覽您的 SAS Analytics for IoT (SAS VIYA) 環境",
+            c1_1_desc: "整個專案將在 SAS Analytics for IoT (SAS VIYA) 中開發，這是一個全面的、基於 Web 的分析生態系統。所有編碼和數據管理任務的主要介面將是 SAS Studio。請熟悉導覽窗格（左）、工作區（中）和日誌/結果標籤頁（右/下），因為這些對於開發和偵錯至關重要。",
+            c1_2_title: "1.2. 建立專案目錄結構",
+            c1_2_desc: "一個組織良好的專案是專業開發的標誌。在匯入任何數據之前，請在 SAS Studio 的「檔案總管」窗格中建立此標準化資料夾結構。這可確保所有資產都易於定位、管理和稽核。",
+            c1_dir_1: "原始、未經處理的來源檔案。這對於稽核和重新處理至關重要。",
+            c1_dir_2: "中繼和最終的 SAS 資料集 (ABT)。",
+            c1_dir_3: "所有 .sas 程式檔案，集中所有邏輯。",
+            c1_dir_4: "專案文件，如本指南。",
+            c1_3_title: "1.3. 初始數據匯入與來源檔案分析",
+            c1_3_desc: "收到數據包後，將所有 Excel 和 CSV 檔案上傳到 `/projects/fujitec/raw_data/` 目錄。這些檔案被視為不可變的。為確保清晰度，我們將建立一個數據字典——一個「羅塞塔石碑」，將原始欄位名稱對應到標準化的專案變數名稱。",
+            c1_tbl_h1: "來源系統",
+            c1_tbl_h2: "原始欄位名稱",
+            c1_tbl_h3: "標準化變數名稱",
+            c1_tbl_h4: "描述與業務規則",
+            c1_tbl_r1_c1: "工時回報",
+            c1_tbl_r1_c4: "唯一的員工標識符。必須進行標準化以處理不一致的情況。",
+            c1_tbl_r2_c1: "工時回報",
+            c1_tbl_r2_c4: "原始日期字串。必須轉換為標準的 SAS 日期值。",
+            c1_tbl_r3_c1: "工時回報",
+            c1_tbl_r3_c4: "原始工時。必須清洗並轉換為數值。",
+            c1_tbl_r4_c1: "PLM/流程",
+            c1_tbl_r4_c4: "優化模型中人力指派限制條件的關鍵輸入。",
+            c1_tbl_r5_c4: "生產工單的唯一標識符。",
+            c2_title: "第 2 章: 標準化與匯入原始數據",
+            c2_1_title: "2.1. 為何要標準化格式？",
+            c2_1_desc: "富士達的數據以 Excel (`.xlsx`) 和 CSV 格式混合提供。使用 `PROC IMPORT` 搭配 `DBMS=XLSX` 可讓 SAS 直接讀取現代 Excel 檔案，避免手動轉換為 CSV 可能導致的數據損毀問題，從而建立更可靠的匯入流程。",
+            c2_2_title: "2.2. `PROC IMPORT` 詳細演練",
+            c2_2_desc: "第一個程式 `01_ingest_data.sas` 會將原始檔案讀取到一個專用的「中繼」程式庫中，從而隔離原始匯入的數據，使處理過程更有組織且可稽核。",
+            c3_title: "第 3 章: 轉換流程 - 深入數據清洗",
+            c3_desc: "原始數據載入到中繼表後，我們現在開始清洗。核心策略是將清洗邏輯與匯入邏輯分開。對於每個原始中繼表，都會建立一個對應的已清洗表。這種模組化方法大大簡化了偵錯和稽核。",
+            c3_1_title: "3.1. 處理不一致的文本和 ID",
+            c3_1_desc: "不一致的文本是數據專案中常見的失敗點。對於已知的變體（例如 \"J.Smith\" vs \"jsmith\"），我們將使用 `PROC FORMAT` 來建立一個可重複使用的標準化對應表。",
+            c3_protip_title: "專家提示：使用 PROC FORMAT",
+            c3_protip_desc: "`PROC FORMAT` 優於冗長的 `IF-THEN/ELSE` 鏈，因為它將標準化邏輯集中在一個可重複使用的「對應表」中，使其更易於閱讀、更新和維護。",
+            c3_2_title: "3.2. 日期難題：標準化多種日期格式",
+            c3_2_desc: "處理不一致的日期格式是典型的數據工程挑戰。最可靠的方法是將日期讀取為字串，然後使用條件邏輯搭配 `INPUT()` 函數和靈活的 `ANYDTDTE.` informat 將其轉換為標準的 SAS 日期值（一個表示自 1960 年 1 月 1 日以來天數的數字）。",
+            c3_3_title: "3.3. 清洗數值欄位與移除重複項",
+            c3_3_desc: "數值欄位可能包含非數字文本或不可能的值（如負工時）等錯誤，必須進行清理。在標準化關鍵欄位後，使用 `PROC SORT` 搭配 `NODUPKEY` 選項可以有效地移除重複的記錄。",
+            c4_title: "第 4 章: 最終組裝 - 建立分析基礎表 (ABT)",
+            c4_desc: "ABT 是整個專案的「單一事實來源」。它是一個單一、寬大的表格，將所有已清洗的數據源連接在一起。這種設計對於模型建立和視覺化都是最佳的，因為它消除了稍後進行複雜連接的需要。建立 ABT 直接解決了富士達「資訊孤島」的核心問題。",
+            c4_milestone_title: "第一個主要里程碑",
+            c4_milestone_desc: "`prod.fujitec_abt` 的成功建立標誌著數據工程階段的完成。這個單一的資料集本身就是一項寶貴的資產，為富士達提供了他們以前所缺乏的、對其運營的統一檢視。",
+            p2_title: "第二部分: 優化核心：建構排程引擎",
+            p2_desc: "有了可靠的 ABT，我們現在可以建構解決方案的分析「大腦」：一個使用 `PROC OPTMODEL` 的智能排程引擎。目標是將富士達複雜的排程問題轉化為一個數學模型，以找到可證明的最佳生產排程。",
+            c5_title: "第 5 章: 優化技術實踐指南",
+            c5_1_title: "5.1. 為何選擇混合整數線性規劃 (MILP)？",
+            c5_1_desc: "我們選擇 MILP 是因為它能找到最佳的可能結果（例如，最短的完工時間），最重要的是，它提供了數學上的**最佳性保證**。這種嚴謹性對於證明我們的智能系統優於手動排程至關重要。雖然其他技術可能更快地找到「好」的解決方案，但它們無法提供同等級別的確定性，這對於向富士達提出有說服力的商業案例至關重要。",
+            c6_title: "第 6 章: 將「部落知識」轉化為數學程式碼",
+            c6_1_title: "6.1. `PROC OPTMODEL` 的威力",
+            c6_1_desc: "排程專案中的一個巨大風險是未能捕捉到經驗豐富的規劃師使用的潛規則。`PROC OPTMODEL` 的語法與數學代數非常相似，使得將業務規則（例如「任務 A 必須在任務 B 開始前完成」）直接轉化為透明、可稽核的程式碼變得容易。這個過程將隱性的、依賴於人的知識轉化為明確、穩健的公司資產。",
+            c6_2_title: "6.2. 設定模型",
+            c6_2_desc: "我們將建立一個新程式 `04_optimize_schedule.sas`。模型遵循一個邏輯進程：宣告集合和參數，讀取數據，宣告決策變數，定義限制條件，設定目標，求解，並匯出結果。",
+            c7_title: "第 7 章: 制定限制條件 - 工廠的規則",
+            c7_desc: "限制條件是定義排程必須遵守的規則的數學陳述。它們是模型的核心。",
+            c7_1_title: "7.1. 先後順序限制條件",
+            c7_1_desc: "<strong>業務規則：</strong>後續任務必須在其前置任務完成後才能開始。<strong>SAS 程式碼：</strong>我們直接轉譯此邏輯。對於必須跟在任務 `p` 後面的任務 `t`，其邏輯為：`StartTime[t] >= StartTime[p] + TaskDuration[p]`。",
+            c7_2_title: "7.2. 關鍵的人力資源限制條件",
+            c7_2_desc: "<strong>業務規則：</strong>每項任務必須指派給一名擁有所需技能的員工。這直接模擬並解決了富士達的單一技能人力瓶頸問題。",
+            c8_title: "第 8 章: 求解模型與匯出最佳排程",
+            c8_1_title: "8.1. 定義目標：最小化完工時間 (Makespan)",
+            c8_1_desc: "業務目標是最小化完工時間（最後一個工作完成的時間）。我們定義一個 `Makespan` 變數，並告訴求解器使其盡可能小。",
+            c8_2_title: "8.2. 呼叫求解器與匯出解決方案",
+            c8_2_desc: "一個 `SOLVE` 陳述式即可觸發強大的 MILP 求解器。成功求解後，我們使用 `CREATE DATA` 來提取最佳值（例如 `StartTime[t].sol`）並將其保存到一個新的 SAS 資料集中，以供儀表板使用。",
+            p3_title: "第三部分: 決策支援層：從數據到決策",
+            p3_desc: "優化引擎的原始輸出只是一堆數字。這一層透過在 SAS Visual Analytics 中建立互動式儀表板，將其轉化為清晰、可操作的情報。這以一個直觀的、「一目了然」的介面，克服了富士達目前 Excel 流程的「有限可見度」問題。",
+            c9_title: "第 9 章: 在 SAS Visual Analytics 中建立儀表板",
+            c9_1_title: "9.1. 建立甘特圖",
+            c9_1_desc: "甘特圖是視覺化的核心。我們可以使用 SAS VA 中的標準長條圖物件來建立一個非常有效的甘特圖。",
+            c9_protip_title: "甘特圖技巧",
+            c9_protip_desc: "使用堆疊式水平長條圖。第一個量值是任務的開始時間 (`Gantt_Start`)，將其設為透明。第二個量值是任務的持續時間 (`Gantt_Duration`)，為其上色。這就產生了甘特圖經典的「浮動長條」效果。",
+            c10_title: "第 10 章: 賦予管理者「假設」情境分析能力",
+            c10_desc: "此 POC 的一個基石是為管理者提供一個主動管理中斷的工具。這使他們從被動的救火隊員轉變為主動的應急規劃者。我們使用 SAS Visual Analytics 中的參數功能來實現這一點。",
+            c10_li1: "<strong>生成情境數據：</strong>在 SAS Studio 中，多次運行優化模型，每次使用不同的假設（例如「基準」、「焊工缺席」）。將結果合併到一個資料集中，並帶有 `Scenario` 欄位。",
+            c10_li2: "<strong>在 VA 中建立參數：</strong>建立一個名為 `Scenario_Selection` 的新字元參數。",
+            c10_li3: "<strong>建立使用者控制項：</strong>在報告中新增一個下拉式清單，將其與 `Scenario` 欄位和 `Scenario_Selection` 參數連結。",
+            c10_li4: "<strong>連結至視覺化圖表：</strong>篩選報告頁面，僅顯示 `Scenario` 欄位等於 `Scenario_Selection` 參數的數據。當使用者選擇一個情境時，整個儀表板會立即更新。",
+            p4_title: "第四部分: 智能自動化：連接分析與行動",
+            p4_desc: "一個最佳化的計劃只有在整合到工作流程中時才有價值。最後一部分透過展示如何將 SAS 的智能連接到富士達的下游系統，來解決分析的「最後一哩路」，為與舊有平台的整合提供可擴展的藍圖。",
+            c11_title: "第 11 章: 「大腦與雙手」- 智能流程自動化 (IPA)",
+            c11_desc: "我們將在「大腦與雙手」模型中結合高級分析與機器人流程自動化 (RPA)：",
+            c11_li1_strong: "大腦 (SAS Analytics for IoT (SAS VIYA)):",
+            c11_li1_span: "執行複雜的決策以創建最佳排程。",
+            c11_li2_strong: "雙手 (RPA 機器人):",
+            c11_li2_span: "根據大腦的決策執行簡單、重複性的任務。在此 POC 中，機器人將獲取排程並自動填寫標準的 Excel 報告。",
+            c12_title: "第 12 章: 整合工作流程",
+            c12_desc: "整合是一個三步驟的過程，使用 `PROC HTTP` 向 RPA 平台的端點發出 REST API 呼叫，發送 JSON 有效負載以觸發機器人。",
+            c12_3_desc: "機器人接收 API 呼叫，解析 JSON，打開 Excel 範本，並用排程數據填寫。這完成了端到端的智能自動化工作流程。",
+            conclusion_title: "結論: 交付高影響力的 POC",
+            conclusion_desc: "透過利用本指南，實施團隊將有能力交付 POC 的技術組件，並深入了解如何利用高級分析解決實際的業務問題。此專案的成功完成是轉變富士達生產運營的關鍵第一步。",
+            conclusion_box_title: "實施者最終檢查清單",
+            conclusion_li1: "<strong>數據工程:</strong> `prod.fujitec_abt` 已建立、驗證並記錄。",
+            conclusion_li2: "<strong>優化模型:</strong> `04_optimize_schedule.sas` 成功生成最佳排程。",
+            conclusion_li3: "<strong>視覺化:</strong> SAS VA 儀表板已完成，包含 KPI、甘特圖和「假設」情境分析。",
+            conclusion_li4: "<strong>自動化:</strong> `分析 -> API -> RPA` 整合工作流程已成功展示。",
+            footer_text: "&copy; 2025 SAS Institute Inc. 保留所有權利。 | 富士達智能排程 POC",
+
+            /* Suggested Reply Translations */
+            nav_link_reply: "建議回覆",
+            reply_title: "建議回覆與 POC 成功指標",
+            reply_intro: "本章節透過將我們提議的技術解決方案與客戶提出的業務挑戰和期望成果直接掛鉤，明確地回應了定義 POC 成功標準的要求。",
+            reply_poc_title: "提議的 POC 驗證指標",
+            reply_poc_desc: "為確保 POC 的重點明確且其成功是可衡量的，我們提出以下三個核心驗證指標。每個指標都直接對應客戶的痛點，並可使用本手冊中的詳細步驟進行展示。",
+            reply_metric1_title: "指標一：數據整合與品質提升",
+            reply_metric1_pain: "解決的痛點：",
+            reply_metric1_pain_desc: "解決「資訊孤島」和「手動輸入易出錯」的問題 (對應挑戰：資料整合、數據錯誤率降低80%以上)。",
+            reply_metric1_validation: "驗證方式：",
+            reply_metric1_validation_desc: "我們將實際演練本手冊<strong>第一部分 (第 1-4 章)</strong> 的數據工程流程。具體展示如何透過 <code>PROC IMPORT</code> 和 <code>DATA Step</code> 將散落的 Excel (工時、ERP、PLM) 整合、清洗並自動標記出錯誤格式的數據，最終產出統一、乾淨的分析基礎表 (ABT)。",
+            reply_metric1_success: "成功標準：",
+            reply_metric1_success_desc: "成功產出 <code>prod.fujitec_abt</code> 資料集，並展示數據清洗前後的差異，證明系統能自動捕捉潛在的數據錯誤。",
+            reply_metric2_title: "指標二：智能化排程與效率提升",
+            reply_metric2_pain: "解決的痛點：",
+            reply_metric2_pain_desc: "解決「人工排程耗時」及「無法有效處理單一技能人力瓶頸」的問題 (對應挑戰：減少70%排程時間、人力利用率提升10%)。",
+            reply_metric2_validation: "驗證方式：",
+            reply_metric2_validation_desc: "我們將執行<strong>第二部分 (第 5-8 章)</strong> 的 <code>PROC OPTMODEL</code> 最佳化模型。重點展示 <code>SkillRequirement_con</code> 限制式如何確保「正確技能的員工被指派到對應的工單」，並在數分鐘內生成一個數學上保證最佳的排程。",
+            reply_metric2_success: "成功標準：",
+            reply_metric2_success_desc: "成功運行 <code>04_optimize_schedule.sas</code> 程式碼，並產出 <code>prod.optimized_schedule</code> 資料集。將此自動化過程與客戶目前的人工排程時間進行對比。",
+            reply_metric3_title: "指標三：決策可視性與應變能力",
+            reply_metric3_pain: "解決的痛點：",
+            reply_metric3_pain_desc: "解決「資訊不透明」和「難以應對急單、設備故障等突發狀況」的問題 (對應挑戰：流程透明化、快速應對變化)。",
+            reply_metric3_validation: "驗證方式：",
+            reply_metric3_validation_desc: "我們將展示<strong>第三部分 (第 9-10 章)</strong> 的 SAS Visual Analytics 互動儀表板。除了呈現甘特圖外，核心是展示「What-If (假設情境)」分析功能。例如，模擬「關鍵焊工突然請假」的情境，讓主管能透過簡單的點選，立即看到對整體排程的衝擊，並評估不同應變方案。",
+            reply_metric3_success: "成功標準：",
+            reply_metric3_success_desc: "成功展示一個可互動的儀表板，管理者可在其中選擇不同的預設情境（如：基準、人員缺席），並看到儀表板的 KPI 和甘特圖立即更新，證明系統的決策支援能力。"
+        }
+    };
+
+    const navItems = [
+        { id: 'part1', key: 'nav_link_p1', type: 'header' },
+        { id: 'chapter1', key: 'nav_link_c1', type: 'item' },
+        { id: 'chapter2', key: 'nav_link_c2', type: 'item' },
+        { id: 'chapter3', key: 'nav_link_c3', type: 'item' },
+        { id: 'chapter4', key: 'nav_link_c4', type: 'item' },
+        { id: 'part2', key: 'nav_link_p2', type: 'header' },
+        { id: 'chapter5', key: 'nav_link_c5', type: 'item' },
+        { id: 'chapter6', key: 'nav_link_c6', type: 'item' },
+        { id: 'chapter7', key: 'nav_link_c7', type: 'item' },
+        { id: 'chapter8', key: 'nav_link_c8', type: 'item' },
+        { id: 'part3', key: 'nav_link_p3', type: 'header' },
+        { id: 'chapter9', key: 'nav_link_c9', type: 'item' },
+        { id: 'chapter10', key: 'nav_link_c10', type: 'item' },
+        { id: 'part4', key: 'nav_link_p4', type: 'header' },
+        { id: 'chapter11', key: 'nav_link_c11', type: 'item' },
+        { id: 'chapter12', key: 'nav_link_c12', type: 'item' },
+        { id: 'conclusion', key: 'nav_link_conclusion', type: 'header' },
+        { id: 'suggested_reply', key: 'nav_link_reply', type: 'header' },
+    ];
+
+    function copyCode(button) {
+        const pre = button.nextElementSibling;
+        const code = pre.querySelector('code');
+        const text = code.innerText;
+
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        document.body.appendChild(textArea);
+        textArea.select();
+        try {
+            document.execCommand('copy');
+            button.innerText = 'Copied!';
+            setTimeout(() => {
+                button.innerText = 'Copy';
+            }, 2000);
+        } catch (err) {
+            console.error('Failed to copy text: ', err);
+            button.innerText = 'Error';
+        }
+        document.body.removeChild(textArea);
+    }
+    
+    function buildLeftNav(lang) {
+        const navContainer = document.getElementById('left-nav');
+        navContainer.innerHTML = '';
+        navItems.forEach(item => {
+            const link = document.createElement('a');
+            link.href = `#${item.id}`;
+            link.innerHTML = translations[lang][item.key];
+            if (item.type === 'header') {
+                link.className = 'font-semibold text-blue-600 pt-4 border-t';
+            } else {
+                link.className = 'ml-4 text-slate-600 hover:text-blue-600';
+            }
+            navContainer.appendChild(link);
+        });
+    }
+
+    function switchLanguage(lang) {
+        document.querySelectorAll('[data-lang-key]').forEach(el => {
+            const key = el.getAttribute('data-lang-key');
+            if (translations[lang] && translations[lang][key]) {
+                el.innerHTML = translations[lang][key];
+            }
+        });
+        
+        buildLeftNav(lang);
+
+        document.getElementById('lang-en').classList.toggle('active', lang === 'en');
+        document.getElementById('lang-zh').classList.toggle('active', lang === 'zh');
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        switchLanguage('en');
+        document.getElementById('lang-en').addEventListener('click', () => switchLanguage('en'));
+        document.getElementById('lang-zh').addEventListener('click', () => switchLanguage('zh'));
+    });
+
+</script>
+
+</body>
+</html>

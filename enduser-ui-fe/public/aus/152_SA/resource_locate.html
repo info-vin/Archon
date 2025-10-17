@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>雲端機器配置器與部署說明 (修正版)</title>
+    <!-- Tailwind CSS (用於主要 UI) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Bootstrap 5 CSS (用於表格) -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Table CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/bootstrap-table@1.22.4/dist/bootstrap-table.min.css">
+    <!-- Font Awesome (用於圖示) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+    <style>
+        /* 避免 Tailwind CSS 和 Bootstrap 之間的衝突 */
+        .bootstrap-table .table {
+            --bs-table-bg: transparent;
+            --bs-table-border-color: #e5e7eb; /* 類似 tailwind gray-200 */
+        }
+        .bootstrap-table .fixed-table-toolbar .search-input {
+            border: 1px solid #d1d5db; /* 類似 tailwind gray-300 */
+            border-radius: 0.375rem;
+            padding: 0.5rem 0.75rem;
+        }
+        #estimate-modal { z-index: 1050; } /* 確保 Modal 在最上層 */
+    </style>
+</head>
+<body class="bg-gray-50">
+
+    <!-- ============================================================================ -->
+    <!-- 主要應用程式介面                                                            -->
+    <!-- ============================================================================ -->
+    <div class="max-w-7xl mx-auto p-4 sm:p-8 font-sans">
+        <header class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-800">雲端機器配置器</h1>
+            <p class="text-gray-600 mt-1">請選擇您的理想規格，我們將為您推薦最適合的機器。</p>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- 左側: 配置面板 -->
+            <main class="lg:col-span-2 bg-white p-6 rounded-lg shadow-md">
+                <form id="config-form">
+                    <!-- 第一部分: 基本計算參數 -->
+                    <div class="mb-6">
+                        <h3 class="text-lg font-semibold text-gray-700 border-b pb-2 mb-4">第一部分: 基本計算參數</h3>
+                        <div class="space-y-4">
+                            <div>
+                                <label for="provider" class="block text-sm font-medium text-gray-600">雲端供應商</label>
+                                <select id="provider" class="w-full p-2 border rounded-md mt-1">
+                                    <option value="GCP">GCP</option>
+                                    <option value="AWS">AWS</option>
+                                    <option value="Azure">Azure</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="region" class="block text-sm font-medium text-gray-600">區域</label>
+                                <select id="region" class="w-full p-2 border rounded-md mt-1">
+                                    <option value="us-central1">us-central1</option>
+                                    <option value="asia-east1">asia-east1</option>
+                                    <option value="europe-west1">europe-west1</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="vcpu" class="block text-sm font-medium text-gray-600">vCPU: <span id="vcpu-value">2</span> 核心</label>
+                                <input type="range" id="vcpu" min="1" max="64" value="2" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer mt-1">
+                            </div>
+                            <div>
+                                <label for="memory" class="block text-sm font-medium text-gray-600">記憶體: <span id="memory-value">8</span> GB</label>
+                                <input type="range" id="memory" min="1" max="256" value="8" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer mt-1">
+                            </div>
+                            <div>
+                                <label for="workload" class="block text-sm font-medium text-gray-600">工作負載優化</label>
+                                <select id="workload" class="w-full p-2 border rounded-md mt-1"></select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 第二部分: 儲存與網路 -->
+                    <div class="mb-6">
+                        <h3 class="text-lg font-semibold text-gray-700 border-b pb-2 mb-4">第二部分: 儲存與網路</h3>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-600">磁碟類型</label>
+                                <div class="flex items-center space-x-4 mt-1">
+                                    <label><input type="radio" name="diskType" value="Persistent" class="mr-1" checked> 持久性磁碟 (SSD/HDD)</label>
+                                    <label><input type="radio" name="diskType" value="LocalSSD" class="mr-1"> 本地 SSD (臨時)</label>
+                                </div>
+                            </div>
+                            <div>
+                                <label for="diskSize" class="block text-sm font-medium text-gray-600">磁碟大小: <span id="diskSize-value">50</span> GB</label>
+                                <input type="range" id="diskSize" min="10" max="2048" value="50" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer mt-1">
+                            </div>
+                            <div>
+                                <label for="networkBandwidth" class="block text-sm font-medium text-gray-600">網路頻寬</label>
+                                <select id="networkBandwidth" class="w-full p-2 border rounded-md mt-1">
+                                    <option value="Standard">標準 (基於機器大小)</option>
+                                    <option value="High">高</option>
+                                    <option value="Premium">優選</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 第三部分: 高級選項 (可摺疊) -->
+                    <details class="mb-6">
+                        <summary class="text-lg font-semibold text-gray-700 border-b pb-2 mb-4 cursor-pointer">第三部分: 高級選項</summary>
+                        <div class="space-y-4 pt-4">
+                            <div>
+                                <label for="os" class="block text-sm font-medium text-gray-600">作業系統</label>
+                                <select id="os" class="w-full p-2 border rounded-md mt-1">
+                                    <option>Debian 11</option>
+                                    <option>Ubuntu 22.04 LTS</option>
+                                    <option>Windows Server 2022</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="flex items-center">
+                                    <input type="checkbox" id="preemptible" class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                                    <span class="ml-2 text-sm font-medium text-gray-600">使用搶佔式/競價型實例</span>
+                                </label>
+                                <p class="text-xs text-gray-500 mt-1 ml-6">以更低的價格運行，但可能被中斷。適合容錯工作負載。</p>
+                            </div>
+                            <div id="gpu-section" class="hidden">
+                                <h4 class="text-md font-semibold text-gray-700 mt-4 pt-4 border-t">加速器</h4>
+                                <div class="space-y-4 mt-2">
+                                    <div>
+                                        <label for="gpuType" class="block text-sm font-medium text-gray-600">GPU 類型與數量</label>
+                                        <p class="text-xs text-gray-500 mb-1">僅在選擇 GPU 加速工作負載時可用</p>
+                                        <select id="gpuType" class="w-full p-2 border rounded-md">
+                                            <option value="None">None</option>
+                                            <option value="NVIDIA T4">NVIDIA T4 x1</option>
+                                            <option value="NVIDIA V100">NVIDIA V100 x2</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </details>
+                    
+                    <!-- 按鈕 -->
+                    <div class="flex items-center justify-start space-x-4 mt-8">
+                         <button type="button" class="px-6 py-2 bg-blue-600 text-white font-semibold rounded-md hover:bg-blue-700 transition-colors">添加到估算</button>
+                         <button type="reset" class="px-6 py-2 bg-gray-200 text-gray-700 font-semibold rounded-md hover:bg-gray-300 transition-colors">重置</button>
+                    </div>
+                </form>
+            </main>
+            
+            <!-- 右側: 摘要與成本面板 -->
+            <aside class="lg:col-span-1 h-fit sticky top-8 bg-white p-6 rounded-lg shadow-md">
+                <h2 class="text-xl font-bold text-gray-800 border-b pb-3 mb-4">配置摘要</h2>
+                <div id="summary-panel" class="space-y-3 text-sm text-gray-700">
+                   <!-- 動態摘要內容將注入此處 -->
+                </div>
+                <div class="mt-6 pt-4 border-t">
+                    <h3 class="font-semibold text-gray-800">建議機器類型</h3>
+                    <p id="suggested-machine" class="text-blue-600 font-bold text-lg my-2 h-8">...</p>
+                    <h3 class="font-semibold text-gray-800 mt-4">估計每月成本</h3>
+                    <p id="estimated-cost" class="text-green-600 font-bold text-2xl my-2">$0.00</p>
+                    <p class="text-xs text-gray-500">此為預估值，實際價格可能因地區和用量而異。</p>
+                </div>
+                <button id="get-final-estimate-btn" class="w-full mt-6 px-4 py-3 bg-green-600 text-white font-bold rounded-md hover:bg-green-700 transition-colors">獲取最終估算</button>
+            </aside>
+        </div>
+    </div>
+
+    <!-- ============================================================================ -->
+    <!-- 動態表格區塊 (Bootstrap Table)                                                 -->
+    <!-- ============================================================================ -->
+    <div class="max-w-7xl mx-auto p-4 sm:p-8 mt-12 font-sans">
+        <div class="bg-white p-6 rounded-lg shadow-md">
+            <h2 class="text-2xl font-bold text-gray-800 border-b pb-3 mb-4">估算歷史紀錄</h2>
+             <div id="toolbar">
+                <button id="remove" class="btn btn-danger" disabled>
+                    <i class="fa fa-trash"></i> 刪除選取項目
+                </button>
+            </div>
+            <table
+              id="history-table"
+              data-toggle="table"
+              data-toolbar="#toolbar"
+              data-search="true"
+              data-show-refresh="true"
+              data-show-toggle="true"
+              data-show-columns="true"
+              data-show-export="true"
+              data-pagination="true"
+              data-page-list="[10, 25, 50, 100, all]"
+              class="table-sm">
+              <thead>
+                <tr>
+                  <th data-field="state" data-checkbox="true"></th>
+                  <th data-field="id" data-sortable="true">ID</th>
+                  <th data-field="machine" data-sortable="true">建議機器</th>
+                  <th data-field="cost" data-sortable="true">估計月費</th>
+                  <th data-field="specs">主要規格</th>
+                  <th data-field="operate" data-formatter="operateFormatter" data-events="operateEvents">操作</th>
+                </tr>
+              </thead>
+            </table>
+        </div>
+    </div>
+    
+    <!-- ============================================================================ -->
+    <!-- Docker 部署說明區塊                                                          -->
+    <!-- ============================================================================ -->
+    <div class="max-w-7xl mx-auto p-4 sm:p-8 mt-12 font-sans">
+         <div class="bg-white p-6 rounded-lg shadow-md">
+            <h2 class="text-2xl font-bold text-gray-800 border-b pb-3 mb-4">Docker 部署說明</h2>
+            <p class="mb-6 text-gray-600">
+                由於此應用程式是一個無依賴的單一 HTML 檔案，我們可以透過 Docker 和一個輕量級的 Nginx 網頁伺服器輕鬆地將其容器化並部署。
+            </p>
+            <h3 class="text-xl font-semibold text-gray-700 mb-2">步驟 1: 建立 Dockerfile</h3>
+            <pre class="bg-gray-900 text-white p-4 rounded-lg overflow-x-auto"><code>... Dockerfile 內容 ...</code></pre>
+            <h3 class="text-xl font-semibold text-gray-700 mt-8 mb-2">步驟 2: 建置並運行 Docker 容器</h3>
+            <pre class="bg-gray-900 text-white p-4 rounded-lg overflow-x-auto"><code>... docker build ...</code></pre>
+            <pre class="bg-gray-900 text-white p-4 rounded-lg overflow-x-auto"><code>... docker run ...</code></pre>
+            <h3 class="text-xl font-semibold text-gray-700 mt-8 mb-2">步驟 3: 驗證</h3>
+            <p class="text-gray-600">
+                部署完成！打開您的網頁瀏覽器並訪問 <a href="http://localhost:8080" target="_blank" class="text-blue-600 hover:underline font-bold">http://localhost:8080</a>。
+            </p>
+         </div>
+    </div>
+    
+    <!-- ============================================================================ -->
+    <!-- 最終估算 Modal (互動視窗)                                                      -->
+    <!-- ============================================================================ -->
+    <div id="estimate-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden">
+        <div class="relative top-20 mx-auto p-5 border w-full max-w-lg shadow-lg rounded-md bg-white">
+            <div class="mt-3 text-center">
+                <h3 class="text-xl leading-6 font-bold text-gray-900">盤點規格總表</h3>
+                <div class="mt-4 px-7 py-3">
+                    <ul id="final-summary-list" class="text-left space-y-2 text-gray-700">
+                        <!-- 規格列表將動態生成於此 -->
+                    </ul>
+                </div>
+                <div class="items-center px-4 py-3">
+                    <button id="confirm-and-add-btn" class="px-4 py-2 bg-green-600 text-white text-base font-medium rounded-md w-full shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-300">
+                        確認並寫入歷史紀錄
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- ============================================================================ -->
+    <!-- JavaScript 函式庫                                                             -->
+    <!-- ============================================================================ -->
+    <script src="https://cdn.jsdelivr.net/npm/jquery/dist/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/bootstrap-table@1.22.4/dist/bootstrap-table.min.js"></script>
+    <script src="https://unpkg.com/bootstrap-table@1.22.4/dist/extensions/export/bootstrap-table-export.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/tableexport.jquery.plugin@1.10.21/tableExport.min.js"></script>
+    
+    <!-- ============================================================================ -->
+    <!-- 主要應用程式邏輯                                                             -->
+    <!-- ============================================================================ -->
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // --- 資料 ---
+        const MOCK_DATA = {
+            GCP: [ { name: 'c4d-highcpu-2', vcpu: 2, memory: 3, workload: 'Compute Optimized' }, { name: 'n1-standard-4', vcpu: 4, memory: 15, workload: 'General Purpose' }, { name: 'e2-medium', vcpu: 2, memory: 8, workload: 'Balanced' }, { name: 'g2-standard-4', vcpu: 4, memory: 16, workload: 'GPU Accelerated' }, ],
+            AWS: [ { name: 'm8g.large', vcpu: 2, memory: 8, workload: 'General Purpose' }, { name: 'r5.xlarge', vcpu: 4, memory: 32, workload: 'Memory Optimized' }, { name: 'c5.xlarge', vcpu: 4, memory: 8, workload: 'Compute Optimized' }, ],
+            Azure: [ { name: 'D2s_v4', vcpu: 2, memory: 8, workload: 'General Purpose' }, { name: 'E2s_v5', vcpu: 2, memory: 16, workload: 'Memory Optimized' }, { name: 'F2s_v2', vcpu: 2, memory: 4, workload: 'Compute Optimized' }, ],
+        };
+        const WORKLOAD_TYPES = ['General Purpose', 'Compute Optimized', 'Memory Optimized', 'Balanced', 'GPU Accelerated'];
+
+        // --- DOM 元素 ---
+        const form = document.getElementById('config-form');
+        const providerSelect = document.getElementById('provider');
+        const regionSelect = document.getElementById('region');
+        const vcpuSlider = document.getElementById('vcpu');
+        const memorySlider = document.getElementById('memory');
+        const workloadSelect = document.getElementById('workload');
+        const vcpuValueSpan = document.getElementById('vcpu-value');
+        const memoryValueSpan = document.getElementById('memory-value');
+        const diskSizeSlider = document.getElementById('diskSize');
+        const diskSizeValueSpan = document.getElementById('diskSize-value');
+        const networkBandwidthSelect = document.getElementById('networkBandwidth');
+        const osSelect = document.getElementById('os');
+        const preemptibleCheckbox = document.getElementById('preemptible');
+        const gpuSection = document.getElementById('gpu-section');
+        const gpuTypeSelect = document.getElementById('gpuType');
+        const summaryPanel = document.getElementById('summary-panel');
+        const suggestedMachineP = document.getElementById('suggested-machine');
+        const estimatedCostP = document.getElementById('estimated-cost');
+        const getFinalEstimateBtn = document.getElementById('get-final-estimate-btn');
+        const estimateModal = document.getElementById('estimate-modal');
+        const confirmAndAddBtn = document.getElementById('confirm-and-add-btn');
+        const finalSummaryList = document.getElementById('final-summary-list');
+
+        // --- Bootstrap Table 元素 ---
+        const $table = $('#history-table');
+        const $remove = $('#remove');
+        let tableIdCounter = 0;
+        
+        // --- 函式定義 ---
+
+        function updateConfiguration() {
+            const provider = providerSelect.value;
+            const vcpu = parseInt(vcpuSlider.value, 10);
+            const memory = parseInt(memorySlider.value, 10);
+            const workload = workloadSelect.value;
+            const diskSize = parseInt(diskSizeSlider.value, 10);
+            const isPreemptible = preemptibleCheckbox.checked;
+
+            vcpuValueSpan.textContent = vcpu;
+            memoryValueSpan.textContent = memory;
+            diskSizeValueSpan.textContent = diskSize;
+
+            const isGpuWorkload = workload === 'GPU Accelerated';
+            gpuSection.classList.toggle('hidden', !isGpuWorkload);
+
+            updateSummaryPanel();
+
+            const availableMachines = MOCK_DATA[provider] || [];
+            const suggestion = availableMachines.filter(m => m.workload === workload).find(m => m.vcpu >= vcpu && m.memory >= memory);
+            suggestedMachineP.textContent = suggestion ? `${provider}: ${suggestion.name}` : '無匹配的機器類型';
+
+            let cost = (vcpu * 15 + memory * 5 + diskSize * 0.1);
+            if (isPreemptible) { cost *= 0.3; }
+            estimatedCostP.textContent = `$${cost.toFixed(2)}`;
+        }
+
+        function getCurrentConfig() {
+            const isGpuWorkload = workloadSelect.value === 'GPU Accelerated';
+            const gpuType = gpuTypeSelect.value;
+            const config = {
+                '供應商': providerSelect.value,
+                '區域': regionSelect.value,
+                'vCPU': `${vcpuSlider.value} 核心`,
+                '記憶體': `${memorySlider.value} GB`,
+                '工作負載': workloadSelect.value,
+                '磁碟類型': document.querySelector('input[name="diskType"]:checked').value === 'Persistent' ? '持久性磁碟' : '本地 SSD',
+                '磁碟大小': `${diskSizeSlider.value} GB`,
+                '網路': networkBandwidthSelect.value,
+                '作業系統': osSelect.value,
+                '搶佔實例': preemptibleCheckbox.checked ? '是' : '否'
+            };
+            if (isGpuWorkload && gpuType !== 'None') {
+                config['GPU'] = gpuType;
+            }
+            return config;
+        }
+
+        function updateSummaryPanel() {
+            const config = getCurrentConfig();
+            summaryPanel.innerHTML = Object.entries(config)
+                .map(([key, value]) => `<div class="flex justify-between"><span>${key}:</span><span class="font-medium text-right">${value}</span></div>`)
+                .join('');
+        }
+        
+        function showFinalEstimate() {
+            const config = getCurrentConfig();
+            config['建議機器'] = suggestedMachineP.textContent;
+            config['估計月費'] = estimatedCostP.textContent;
+
+            finalSummaryList.innerHTML = Object.entries(config)
+                .map(([key, value]) => `<li class="flex justify-between py-1 border-b border-gray-200"><strong class="font-medium text-gray-600">${key}</strong><span class="text-gray-800">${value}</span></li>`)
+                .join('');
+
+            estimateModal.classList.remove('hidden');
+        }
+
+        function addRowToHistoryTable() {
+            const config = getCurrentConfig();
+            const machine = suggestedMachineP.textContent;
+            const cost = estimatedCostP.textContent;
+
+            let specs = `${config.vCPU}, ${config.記憶體}, ${config.磁碟大小} ${config.磁碟類型}, ${config.作業系統}`;
+            if (config.GPU) {
+                specs += `, ${config.GPU}`;
+            }
+
+            $table.bootstrapTable('append', {
+                id: tableIdCounter++,
+                machine: machine,
+                cost: cost,
+                specs: specs
+            });
+        }
+
+        function initTable() {
+            $table.bootstrapTable({
+                height: 400,
+                data: []
+            });
+            $table.on('check.bs.table uncheck.bs.table check-all.bs.table uncheck-all.bs.table', function () {
+                $remove.prop('disabled', !$table.bootstrapTable('getSelections').length);
+            });
+            $remove.click(function () {
+                const ids = $.map($table.bootstrapTable('getSelections'), row => row.id);
+                $table.bootstrapTable('remove', { field: 'id', values: ids });
+                $remove.prop('disabled', true);
+            });
+        }
+        
+        // --- Bootstrap Table 需要全域可存取的函式 ---
+        window.operateFormatter = function(value, row, index) {
+            return '<a class="remove" href="javascript:void(0)" title="刪除"><i class="fa fa-trash"></i></a>';
+        };
+        window.operateEvents = {
+            'click .remove': function (e, value, row, index) {
+                $table.bootstrapTable('remove', { field: 'id', values: [row.id] });
+            }
+        };
+
+        // --- 初始化與事件監聽 ---
+        WORKLOAD_TYPES.forEach(type => {
+            const option = document.createElement('option');
+            option.value = type;
+            option.textContent = type;
+            workloadSelect.appendChild(option);
+        });
+        workloadSelect.value = 'General Purpose';
+
+        const allInputs = [ providerSelect, regionSelect, vcpuSlider, memorySlider, workloadSelect, diskSizeSlider, networkBandwidthSelect, osSelect, preemptibleCheckbox, gpuTypeSelect ];
+        allInputs.forEach(el => el.addEventListener('input', updateConfiguration));
+        document.querySelectorAll('input[name="diskType"]').forEach(radio => radio.addEventListener('change', updateConfiguration));
+        
+        form.addEventListener('reset', () => setTimeout(updateConfiguration, 0));
+        getFinalEstimateBtn.addEventListener('click', showFinalEstimate);
+
+        confirmAndAddBtn.addEventListener('click', () => {
+            addRowToHistoryTable();
+            estimateModal.classList.add('hidden');
+        });
+
+        initTable();
+        updateConfiguration(); // 頁面載入時執行一次
+    });
+    </script>
+</body>
+</html>

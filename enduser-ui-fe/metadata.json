@@ -1,0 +1,5 @@
+{
+  "name": "Archon Task Manager",
+  "description": "An employee task management system based on the Archon project structure. It features project-based access control, multiple task views (List, Table, Kanban, Gantt), and administrator functionalities for data verification and management.",
+  "requestFramePermissions": []
+}

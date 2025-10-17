@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>互動式資料處理機制展示</title>
+<style>
+    /* --- 基本與佈局 --- */
+    :root {
+        --primary-color: #007bff;
+        --secondary-color: #0056b3;
+        --light-gray: #f0f2f5;
+        --text-color: #333;
+        --border-color: #ddd;
+    }
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft JhengHei", Roboto, "Helvetica Neue", Arial, sans-serif;
+        background-color: var(--light-gray);
+        margin: 0;
+        padding: 20px;
+        display: flex;
+        justify-content: center;
+        align-items: flex-start;
+        min-height: 100vh;
+        color: var(--text-color);
+    }
+    .main-container {
+        display: flex;
+        width: 95%;
+        max-width: 1400px;
+        height: 90vh;
+        gap: 20px;
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        overflow: hidden;
+    }
+
+    /* --- 左側列表 --- */
+    .card-list-panel {
+        flex: 0 0 300px;
+        border-right: 1px solid var(--border-color);
+        display: flex;
+        flex-direction: column;
+        position: relative;
+    }
+    .card-list-panel h2 {
+        padding: 20px;
+        margin: 0;
+        border-bottom: 1px solid var(--border-color);
+        font-size: 1.2em;
+        color: var(--primary-color);
+        flex-shrink: 0;
+    }
+    #card-list-container {
+        overflow-y: auto;
+        flex-grow: 1;
+    }
+    .preview-card {
+        padding: 15px 20px;
+        cursor: pointer;
+        border-bottom: 1px solid #e9ecef;
+        transition: background-color 0.3s, color 0.3s;
+        font-size: 0.95em;
+    }
+    .preview-card:hover {
+        background-color: #e9ecef;
+    }
+    .preview-card.active {
+        background-color: var(--primary-color);
+        color: white;
+        font-weight: bold;
+    }
+    #back-to-top {
+        position: absolute;
+        bottom: 15px;
+        right: 15px;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background-color: var(--primary-color);
+        color: white;
+        border: none;
+        font-size: 1.2em;
+        cursor: pointer;
+        display: none; /* Initially hidden */
+        opacity: 0.8;
+        transition: opacity 0.3s, transform 0.3s;
+    }
+    #back-to-top:hover {
+        opacity: 1;
+        transform: scale(1.1);
+    }
+    
+    /* --- 右側內容區 --- */
+    .active-card-panel {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        padding: 20px;
+        overflow: hidden; /* Important for layout */
+    }
+
+    /* --- 控制項 --- */
+    .controls-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 20px;
+        padding-bottom: 20px;
+        border-bottom: 1px solid var(--border-color);
+        flex-shrink: 0;
+    }
+    .control-group {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+        min-width: 200px;
+    }
+    .control-group label {
+        font-size: 0.9em;
+        font-weight: bold;
+    }
+    .control-group input[type="range"] {
+        cursor: pointer;
+    }
+
+    /* --- 輪播卡片 --- */
+    .carousel-wrapper {
+        position: relative;
+        flex-grow: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .carousel-container {
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        cursor: grab;
+    }
+    .carousel-container:active {
+        cursor: grabbing;
+    }
+    .carousel-track {
+        display: flex;
+        height: 100%;
+        transition: transform 0.5s ease-in-out;
+    }
+    .card {
+        flex: 0 0 100%;
+        width: 100%;
+        height: 100%;
+        box-sizing: border-box;
+        padding: 20px;
+        background-color: #ffffff;
+        text-align: left;
+        line-height: 1.7;
+        overflow-y: auto;
+        /* Font size will be set by JS */
+    }
+    .card h3 {
+        color: var(--primary-color);
+        margin-top: 0;
+        margin-bottom: 15px;
+        border-bottom: 2px solid var(--primary-color);
+        padding-bottom: 10px;
+    }
+    .card p {
+        margin: 10px 0;
+    }
+    .card strong {
+        color: #000;
+        display: block;
+        margin-bottom: 5px;
+    }
+    .nav-btn {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        background-color: rgba(0, 0, 0, 0.3);
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 45px;
+        height: 45px;
+        font-size: 24px;
+        cursor: pointer;
+        z-index: 10;
+        transition: background-color 0.3s;
+    }
+    .nav-btn:hover {
+        background-color: rgba(0, 0, 0, 0.6);
+    }
+    #prevBtn { left: 10px; }
+    #nextBtn { right: 10px; }
+
+    /* --- RWD --- */
+    @media (max-width: 800px) {
+        body {
+            padding: 0;
+        }
+        .main-container {
+            flex-direction: column;
+            width: 100%;
+            height: 100vh;
+            border-radius: 0;
+        }
+        .card-list-panel {
+            flex: 0 0 auto; /* Let it size based on content */
+            border-right: none;
+            border-bottom: 1px solid var(--border-color);
+            max-height: 35vh; /* Limit height */
+        }
+        .active-card-panel {
+            padding: 15px;
+            flex-grow: 1;
+        }
+        .controls-container {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 15px;
+        }
+        .nav-btn {
+            width: 35px;
+            height: 35px;
+            font-size: 18px;
+        }
+        #prevBtn { left: 5px; }
+        #nextBtn { right: 5px; }
+    }
+</style>
+</head>
+<body>
+
+<div class="main-container">
+    <!-- Left Panel: Card List -->
+    <div class="card-list-panel">
+        <h2>機制列表</h2>
+        <div id="card-list-container">
+            <!-- Preview cards will be generated by JS -->
+        </div>
+        <button id="back-to-top" title="回到最上">▲</button>
+    </div>
+
+    <!-- Right Panel: Active Card and Controls -->
+    <div class="active-card-panel">
+        <!-- Controls -->
+        <div class="controls-container">
+            <div class="control-group">
+                <label for="fontSizeSlider">字體大小: <span id="fontSizeValue">30</span>px</label>
+                <input type="range" id="fontSizeSlider" min="20" max="40" value="30">
+            </div>
+            <div class="control-group">
+                <label for="autoplaySlider">輪播速度: <span id="autoplayValue">3</span> 秒</label>
+                <input type="range" id="autoplaySlider" min="1" max="5" value="3" step="0.5">
+            </div>
+        </div>
+
+        <!-- Carousel -->
+        <div class="carousel-wrapper">
+            <div class="carousel-container" id="carouselContainer">
+                <div class="carousel-track" id="carouselTrack">
+                    <!-- Full cards will be generated by JS -->
+                </div>
+            </div>
+            <button class="nav-btn" id="prevBtn">❮</button>
+            <button class="nav-btn" id="nextBtn">❯</button>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // --- DATA ---
+    const cardData = [
+      { id: 0, mechanism: "歷史數據AI建模", description: "利用累積的歷史工時、任務、人員數據, 在SAS Viya中訓練機器學習模型。", example: "系統使用歷史工時數據, 訓練出一個能根據:工件類型、複雜度、作業員熟練度等來預測標準工時的AI(ML)模型。" },
+      { id: 1, mechanism: "智慧工時預測", description: "對新排程指令或任務, AI模型自動預測所需工時與可能延遲風險。", example: "生管輸入新訂單Z, Viya模型預測其中工序P5 需耗時3.2小時, 並提示此工序有15%機率延遲。" },
+      { id: 2, mechanism: "動態異常偵測與預警", description: "Viya模型分析回報工時數據, 自動識別與模式不符的異常情況並發出預警。", example: "作業員已回報某任務耗時遠超Viya模型預測值90%, 系統自動發出「工時異常預警」給生管, 並標示可能原因(如:新手操作、物料問題)。" },
+      { id: 3, mechanism: "人員效率與瓶頸分析", description: "Viya對人員工時數據進行多維度分析, 識別高效率/低效率人員, 找出潛在瓶頸。", example: "Viya儀表板顯示, 作業員庚在處理A類工件時效率顯著高於平均, 但在B類工件時則低於平均, 建議針對B類工件進行輔導或調整任務分配。" },
+      { id: 4, mechanism: "多源資料整合、約束條件設定", description: "從ERP、MES(若有)、人力資源系統等整合訂單、物料、產能、人員技能等資訊。生管可設定各種排程約束, 如交期、客戶優先級、物料到位時間、設備維護計畫等。", example: "系統每日自動從ERP同步新訂單, 並從HR系統更新可用人力與技能。訂單X為VIP客戶, 系統將其優先級調高; 機台A下週三保養, 系統在排程時會避開該時段。" },
+      { id: 5, mechanism: "智慧排程運算", description: "系統基於預設規則與優化演算法(如基因演算法、模擬退火、AutoML等)自動生成最佳化排程。", example: "系統考量交期、產能負荷、換線成本等因素, 自動計算出能最小化總生產時間的工單順序與資源分配。" },
+      { id: 6, mechanism: "連續進度監控、動態再排程、模擬與計畫比較", description: "連續追蹤作業人員回報的進度, 與計畫排程比對, 識別偏差。當發生重大進度偏差或突發狀況(如急單插入、設備故障), 系統能快速重新計算新排程。生管可調整參數(如增加加班、外包部分工序)進行\"What-if\"模擬, 比較不同方案影響。", example: "工序Y原計畫10:00完成, 作業員回報9:30已完成, 系統記錄為提前; 工序Z原計畫14:00完成, 現15:00仍未回報, 系統標示為延遲。機台B突然故障, 預計維修4小時, 生管輸入此資訊後, 系統自動將原分配給機台B的任務重新分配給其他可用機台, 並更新整體排程。生管想評估「增加週末加班」對訂單交率的影響, 在系統中模擬後, 比較加班前後的預計完工時間與成本。" },
+      { id: 7, mechanism: "自助式探索分析 (Visual Analytics)", description: "生管及管理層可透過SAS Visual Analytics互動式儀表板, 自行拖拉點選探索數據。", example: "總經理想了解「不同產品線的平均工時分佈與變異趨勢」, 可直接在VA儀表板上篩選產品線、時間區間, 系統即時呈現圖表。" },
+      { id: 8, mechanism: "持續模型優化", description: "SAS Viya的模型管理功能支持模型的監控與再訓練, 確保模型隨時間推移仍保持準確。", example: "每半年Viya平台自動使用最新的工時數據重新訓練工時預測模型, 若發現模型準確度下降, 會提醒介入調整。" }
+    ];
+
+    // --- DOM ELEMENTS ---
+    const listContainer = document.getElementById('card-list-container');
+    const track = document.getElementById('carouselTrack');
+    const prevButton = document.getElementById('prevBtn');
+    const nextButton = document.getElementById('nextBtn');
+    const backToTopBtn = document.getElementById('back-to-top');
+    const carouselContainer = document.getElementById('carouselContainer');
+
+    // Controls
+    const fontSizeSlider = document.getElementById('fontSizeSlider');
+    const fontSizeValue = document.getElementById('fontSizeValue');
+    const autoplaySlider = document.getElementById('autoplaySlider');
+    const autoplayValue = document.getElementById('autoplayValue');
+    
+    // --- STATE ---
+    let currentIndex = 0;
+    let autoplayInterval;
+    let isDragging = false, startX, scrollLeft;
+    
+    // --- FUNCTIONS ---
+    function renderCards() {
+        listContainer.innerHTML = '';
+        track.innerHTML = '';
+
+        cardData.forEach(data => {
+            // Create preview card for left panel
+            const preview = document.createElement('div');
+            preview.className = 'preview-card';
+            preview.textContent = data.mechanism;
+            preview.dataset.index = data.id;
+            preview.addEventListener('click', () => {
+                moveToSlide(data.id);
+                resetAutoplay();
+            });
+            listContainer.appendChild(preview);
+
+            // Create full card for right panel
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.innerHTML = `
+                <h3>${data.mechanism}</h3>
+                <p><strong>說明：</strong>${data.description}</p>
+                <p><strong>簡易案例：</strong>${data.example}</p>
+            `;
+            track.appendChild(card);
+        });
+        updateFontSize(); // Apply initial font size
+    }
+
+    function moveToSlide(index) {
+        currentIndex = index;
+        const offset = -currentIndex * track.offsetWidth;
+        track.style.transform = `translateX(${offset}px)`;
+        updateActiveStates();
+    }
+
+    function updateActiveStates() {
+        // Update active preview card
+        const previews = listContainer.querySelectorAll('.preview-card');
+        previews.forEach(p => p.classList.remove('active'));
+        const activePreview = listContainer.querySelector(`.preview-card[data-index='${currentIndex}']`);
+        if(activePreview) {
+            activePreview.classList.add('active');
+            // Scroll it into view if needed
+            activePreview.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+    }
+
+    function changeSlide(direction) {
+        currentIndex = (currentIndex + direction + cardData.length) % cardData.length;
+        moveToSlide(currentIndex);
+        resetAutoplay();
+    }
+    
+    function updateFontSize() {
+        const size = fontSizeSlider.value;
+        fontSizeValue.textContent = size;
+        const cards = track.querySelectorAll('.card');
+        cards.forEach(card => card.style.fontSize = `${size}px`);
+    }
+
+    function startAutoplay() {
+        const duration = parseFloat(autoplaySlider.value) * 1000;
+        if(autoplayInterval) clearInterval(autoplayInterval);
+        autoplayInterval = setInterval(() => changeSlide(1), duration);
+    }
+    
+    function resetAutoplay() {
+        clearInterval(autoplayInterval);
+        startAutoplay();
+    }
+
+    // --- EVENT LISTENERS ---
+
+    // Navigation
+    prevButton.addEventListener('click', () => changeSlide(-1));
+    nextButton.addEventListener('click', () => changeSlide(1));
+
+    // Controls
+    fontSizeSlider.addEventListener('input', updateFontSize);
+    autoplaySlider.addEventListener('input', () => {
+        autoplayValue.textContent = parseFloat(autoplaySlider.value).toFixed(1);
+        resetAutoplay();
+    });
+
+    // Left Panel Scroll & Back to Top
+    listContainer.addEventListener('scroll', () => {
+        backToTopBtn.style.display = listContainer.scrollTop > 100 ? 'block' : 'none';
+    });
+    backToTopBtn.addEventListener('click', () => {
+        listContainer.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+
+    // Swipe/Drag functionality
+    let touchStartX = 0;
+    let touchEndX = 0;
+    
+    carouselContainer.addEventListener('touchstart', (e) => {
+        touchStartX = e.changedTouches[0].screenX;
+        clearInterval(autoplayInterval); // Pause autoplay on touch
+    }, {passive: true});
+
+    carouselContainer.addEventListener('touchend', (e) => {
+        touchEndX = e.changedTouches[0].screenX;
+        handleSwipe();
+        startAutoplay(); // Resume autoplay after swipe
+    });
+    
+    function handleSwipe() {
+        const swipeThreshold = 50; // Minimum distance for a swipe
+        if (touchEndX < touchStartX - swipeThreshold) {
+            changeSlide(1); // Swiped left
+        }
+        if (touchEndX > touchStartX + swipeThreshold) {
+            changeSlide(-1); // Swiped right
+        }
+    }
+
+    // --- INITIALIZATION ---
+    renderCards();
+    moveToSlide(0);
+    startAutoplay();
+});
+</script>
+
+</body>
+</html>

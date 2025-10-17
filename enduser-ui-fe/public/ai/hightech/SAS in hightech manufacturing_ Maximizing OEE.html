@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-translate-key="pageTitle">Maximizing OEE with SAS: A Technical Deep Dive</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; scroll-behavior: smooth; }
+        .main-title { font-size: 2.5rem; font-weight: 700; color: #3730a3; margin-bottom: 0.5rem; text-align: center; } /* indigo-800 */
+        .sub-main-title { font-size: 1.125rem; font-weight: 400; color: #4f46e5; margin-bottom: 2rem; text-align: center; } /* indigo-600 */
+        .section-title { font-size: 2rem; font-weight: 700; color: #4338ca; margin-bottom: 1.5rem; padding-bottom: 0.5rem; border-bottom: 2px solid #6366f1; } /* indigo-700, border-indigo-500 */
+        .subsection-title { font-size: 1.5rem; font-weight: 600; color: #4f46e5; margin-bottom: 1rem; margin-top: 1.5rem; } /* indigo-600 */
+        .card { background-color: white; border-radius: 0.75rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06); padding: 1.5rem; margin-bottom: 1.5rem; }
+        .card-title { font-size: 1.125rem; font-weight: 600; color: #4338ca; margin-bottom: 0.75rem; } /* indigo-700 */
+        .nav-link { padding: 0.5rem 1rem; color: #e0e7ff; text-decoration: none; border-radius: 0.375rem; transition: background-color 0.3s ease, color 0.3s ease; font-weight: 500; } /* indigo-100 */
+        .nav-link:hover, .nav-link.active { background-color: #6366f1; color: white; } /* indigo-500 */
+        .diagram-box { background-color: #eef2ff; border: 1px solid #c7d2fe; color: #4338ca; padding: 0.6rem; border-radius: 0.375rem; text-align: center; font-size: 0.85rem; line-height: 1.3; margin-bottom: 0.5rem; } 
+        .arrow { display: flex; align-items: center; justify-content: center; font-size: 1.25rem; color: #4f46e5; margin: 0.1rem 0; } 
+        .tech-highlight { font-family: 'Courier New', Courier, monospace; background-color: #e0e7ff; padding: 0.1rem 0.3rem; border-radius: 0.2rem; color: #3730a3; font-size: 0.9em; } 
+        .challenge-card { background-color: #fff1f2; border-left: 4px solid #f43f5e; padding: 1rem; margin-bottom: 1rem; border-radius: 0.25rem; } 
+        .solution-card { background-color: #f0fdf4; border-left: 4px solid #22c55e; padding: 1rem; margin-bottom: 1rem; border-radius: 0.25rem; } 
+        .outcome-card { background-color: #eff6ff; border-left: 4px solid #3b82f6; padding: 1rem; margin-top: 0.5rem; border-radius: 0.25rem; } 
+        .detail-label { font-weight: 700; color: #4338ca; display: block; margin-bottom: 0.25rem; } 
+        .text-sm-detail { font-size: 0.875rem; line-height: 1.5; color: #374151; } 
+        .list-disc-detail li { margin-bottom: 0.35rem; }
+        .arch-container { background-color: #f9fafb; padding: 1.5rem; border-radius: 0.75rem; box-shadow: 0 2px 10px rgba(0,0,0,0.07); }
+        .arch-layer-title { font-size: 0.95rem; font-weight: 600; color: #4f46e5; margin-bottom: 0.5rem; text-align: center; text-transform: uppercase; letter-spacing: 0.05em; padding-bottom: 0.5rem; border-bottom: 1px solid #e0e7ff;}
+        .arch-component { background-color: #e0e7ff; color: #3730a3; padding: 0.5rem 0.75rem; border-radius: 0.375rem; text-align: center; font-size: 0.85rem; margin: 0.25rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); flex-grow: 1; line-height: 1.3; } 
+        .lang-switcher button { padding: 0.3rem 0.6rem; margin-left: 0.5rem; background-color: #4f46e5; color: white; border-radius: 0.25rem; font-size: 0.75rem; cursor: pointer; border: none;}
+        .lang-switcher button.active { background-color: #312e81; font-weight: bold; box-shadow: 0 0 0 2px #a5b4fc;}
+        .lang-switcher button:hover { background-color: #6366f1; }
+        .outcome-kpi { font-weight: 500; color: #1e3a8a; } 
+        .outcome-role { font-style: italic; color: #4338ca; } 
+        .outcome-process { color: #555; font-size: 0.85em; }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-700">
+
+    <header class="bg-indigo-700 text-white sticky top-0 z-50 shadow-md">
+        <div class="container mx-auto px-4 sm:px-6 py-2 flex flex-col sm:flex-row justify-between items-center">
+            <div class="flex-grow text-center sm:text-left mb-2 sm:mb-0">
+                <p class="text-xs text-indigo-300" data-translate-key="header_brand_oee">SAS Technical Deep Dive</p>
+                <h1 class="text-xl font-bold" data-translate-key="header_title_oee">Maximizing OEE</h1>
+            </div>
+            <nav class="flex-shrink-0">
+                <ul class="flex flex-wrap justify-center items-center space-x-1 sm:space-x-2 text-xs sm:text-sm">
+                    <li><a href="#intro-oee" class="nav-link" data-translate-key="nav_intro_oee">Introduction</a></li>
+                    <li><a href="#pdm" class="nav-link" data-translate-key="nav_pdm">Predictive Maintenance</a></li>
+                    <li><a href="#realtime-monitoring" class="nav-link" data-translate-key="nav_realtime">Real-Time Monitoring</a></li>
+                    <li><a href="#impact-oee" class="nav-link" data-translate-key="nav_impact_oee">Impact</a></li>
+                    <li><a href="#tech-oee" class="nav-link" data-translate-key="nav_tech_oee">Tech Enablers</a></li>
+                    <li><a href="#conclusion-oee" class="nav-link" data-translate-key="nav_conclusion_oee">Conclusion</a></li>
+                </ul>
+            </nav>
+            <div class="lang-switcher mt-2 sm:mt-0 sm:ml-4">
+                <button data-lang="en" class="active">EN</button>
+                <button data-lang="zh-CN">简</button>
+                <button data-lang="zh-TW">繁</button>
+            </div>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 sm:px-6 py-8">
+
+        <section id="intro-oee" class="py-10">
+            <h1 class="main-title" data-translate-key="oee_main_title">Maximizing Overall Equipment Effectiveness (OEE) with SAS</h1>
+            <p class="sub-main-title" data-translate-key="oee_sub_main_title">A SAS Technical Deep Dive for Taiwan's High-Tech Manufacturers</p>
+            <p class="text-lg text-slate-600 max-w-3xl mx-auto leading-relaxed text-center" data-translate-key="oee_intro_paragraph_concise">
+                For senior professionals in Taiwan's advanced manufacturing, Overall Equipment Effectiveness (OEE = Availability × Performance × Quality) is a critical, well-understood imperative. The primary challenge lies in systematically addressing the losses within each component to achieve world-class operational excellence. SAS delivers a powerful suite of analytics solutions designed to significantly boost OEE. This deep dive explores the technical mechanisms and operational outcomes.
+            </p>
+             <div class="card max-w-3xl mx-auto mt-8 bg-sky-50 border border-sky-200">
+                <h3 class="card-title text-center text-sky-700" data-translate-key="oee_focus_title">SAS Analytics: Targeting OEE Losses in High-Tech Manufacturing</h3>
+                <p class="text-sm-detail text-center" data-translate-key="oee_sas_approach_intro_text">
+                    SAS analytics directly target OEE loss areas by transforming data from critical systems like <span class="tech-highlight">MES</span>, <span class="tech-highlight">SCADA</span>, and <span class="tech-highlight">FDC</span> into actionable strategies. This enhances uptime (Availability), optimizes throughput (Performance), and achieves near-zero defect rates (Quality) in demanding processes such as <span class="outcome-process">semiconductor lithography & etching, PCB lamination, and SMT assembly.</span>
+                </p>
+            </div>
+        </section>
+
+        <section id="pdm" class="py-8">
+            <h2 class="section-title" data-translate-key="pdm_section_title">1. Predictive and Prescriptive Maintenance Strategies</h2>
+            <p class="text-slate-600 mb-6 text-center max-w-3xl mx-auto" data-translate-key="pdm_intro_paragraph">SAS transforms maintenance from a reactive or rigidly scheduled activity into an intelligent, data-driven strategy, focusing on predicting failures and prescribing optimal actions to maximize equipment uptime and longevity, directly impacting OEE's Availability component.</p>
+
+            <div class="card">
+                <h3 class="subsection-title" data-translate-key="pdm_challenge_title">1.1 Challenge Validation</h3>
+                <div class="challenge-card">
+                    <p><span class="detail-label" data-translate-key="pdm_challenge_label">Challenge:</span> <span data-translate-key="pdm_challenge_text_oee">High-tech manufacturing faces significant OEE losses due to:</span></p>
+                    <ul class="list-disc pl-5 mt-2 text-slate-700">
+                        <li data-translate-key="pdm_challenge_bullet_1">High costs associated with unplanned equipment downtime (reducing Availability) and production interruptions (reducing Performance).</li>
+                        <li data-translate-key="pdm_challenge_bullet_2">Suboptimal Preventive Maintenance (PM) schedules: either too frequent (unnecessary cost, increased planned downtime impacting Availability) or too infrequent (leading to unexpected failures impacting Availability and potentially Quality).</li>
+                        <li data-translate-key="pdm_challenge_bullet_3">Difficulty in predicting the Remaining Useful Life (RUL) of critical components, leading to premature replacements or unexpected breakdowns.</li>
+                        <li data-translate-key="pdm_challenge_bullet_4">Inefficient allocation of limited maintenance resources (personnel, spare parts), impacting MTTR and thus Availability.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3 class="subsection-title" data-translate-key="pdm_solution_title">1.2 SAS Technical Solution</h3>
+                <p class="text-sm-detail mb-4" data-translate-key="pdm_solution_intro">SAS employs a multi-methodological approach for predictive maintenance, detailed in "PredictiveMainternanceor flotrend 06.pdf", leveraging <span class="tech-highlight">SAS Viya</span> for advanced analytics:</p>
+                
+                <div class="solution-card mb-4">
+                    <h4 class="card-title" data-translate-key="pdm_tbm_title">Time-Based Management (TBM) for PM Optimization:</h4>
+                    <p class="text-sm-detail"><span data-translate-key="pdm_tbm_text_enhanced">TBM predicts optimal PM timing by analyzing historical failure data, equipment running time, and previous maintenance events.</span> <strong data-translate-key="pdm_tbm_detail_strong">Technical Mechanism:</strong> <span data-translate-key="pdm_tbm_detail_text">Involves collecting facility/incident data (e.g., from MES or CMMS) and applying statistical life distribution fitting (e.g., Weibull, Lognormal, Exponential distributions using <span class="tech-highlight">SAS/STAT®</span> or <span class="tech-highlight">SAS Viya</span> procedures like PROC LIFEREG or PROC RELIABILITY). These models estimate failure probabilities over time or usage cycles, thus forecasting optimal PM intervals that balance the cost of maintenance with the risk of failure, moving beyond fixed vendor-recommended schedules.</span></p>
+                </div>
+
+                <div class="solution-card mb-4">
+                    <h4 class="card-title" data-translate-key="pdm_cbm_title">Condition-Based Management (CBM) for Symptom-Driven Prediction:</h4>
+                    <p class="text-sm-detail"><span data-translate-key="pdm_cbm_text_enhanced">CBM predicts failures based on real-time equipment symptoms derived from sensor/tag data (e.g., vibration signatures from pumps, temperature profiles in ovens, pressure differentials in vacuum chambers, FDC parameters from etchers).</span> <strong data-translate-key="pdm_cbm_detail_strong">Technical Mechanism:</strong> <span data-translate-key="pdm_cbm_detail_text">Utilizes <span class="tech-highlight">SAS VDMML</span> within Viya for Exploratory Data Analysis (EDA) of sensor data, feature engineering (e.g., calculating moving averages, spectral densities), and building abnormal pattern detection models. This involves visualizing key parameter groups (e.g., using PCA for dimensionality reduction of correlated sensor signals) and defining relationships between parameter groups using techniques like Canonical Correlation Analysis to identify correlated changes indicative of equipment degradation or impending failure. ML models (e.g., SVM, Random Forests, Neural Networks) are trained to classify equipment health states or predict RUL based on these sensor patterns.</span></p>
+                </div>
+
+                <div class="solution-card mb-4">
+                    <h4 class="card-title" data-translate-key="pdm_ebm_title">Event-Based Management (EBM) for Event-Driven Prediction:</h4>
+                    <p class="text-sm-detail"><span data-translate-key="pdm_ebm_text_enhanced">EBM predicts failures by analyzing specific operational events or sequences of events (e.g., alarms, operator interventions, specific error codes from equipment logs) that often precede breakdowns, incorporating sensor and parameter data for context.</span> <strong data-translate-key="pdm_ebm_detail_strong">Technical Mechanism:</strong> <span data-translate-key="pdm_ebm_detail_text">Involves collecting and integrating micro (high-frequency sensor/tag data via <span class="tech-highlight">SAS ESP</span>) and macro (summarized events from MES, CMMS) data. Data marts are built via EDA in <span class="tech-highlight">SAS Viya</span>. Early Warning Systems (EWS) are implemented using <span class="tech-highlight">SAS ESP</span> or <span class="tech-highlight">SAS Intelligent Decisioning</span> to trigger alerts based on critical event sequences, parameter thresholds, or engineer-defined rules. Machine learning models (Decision Trees, Neural Networks, Regression in <span class="tech-highlight">VDMML</span>) can predict these critical events or the likelihood of failure following certain event patterns.</span></p>
+                </div>
+                 <div class="solution-card">
+                    <h4 class="card-title" data-translate-key="pdm_schedule_opt_title">Optimizing Maintenance Schedules & Resource Allocation:</h4>
+                    <p class="text-sm-detail"><span data-translate-key="pdm_schedule_opt_text_enhanced">By accurately predicting failures and RUL using TBM, CBM, and EBM, SAS enables optimization of PM schedules and resource allocation (as highlighted in "01.AI in Manufacturing_KOR_for flotrend 01.pdf").</span> <strong data-translate-key="pdm_schedule_opt_detail_strong">Technical Mechanism:</strong> <span data-translate-key="pdm_schedule_opt_detail_text">Long-run maintenance data, failure predictions (probabilities, RUL estimates), and operational constraints (production targets, resource availability, costs) feed into <span class="tech-highlight">SAS Optimization</span> (using mathematical programming techniques like MIP, LP) or custom decision models in Viya. These models determine the most cost-effective PM intervals and schedules, prioritizing work on critical assets, balancing proactive maintenance with operational demands to maximize overall equipment availability and minimize total maintenance cost.</span></p>
+                </div>
+                
+                <div class="diagram-container mt-6">
+                    <h4 class="diagram-title" data-translate-key="pdm_arch_title">SAS Predictive Maintenance Solution Architecture (Conceptual)</h4>
+                    <div class="diagram-box text-xs" data-translate-key="pdm_arch_source">Source Layer: Engineering DW (Process, Quality, Event, Test Info, Sensor Data, FDC)</div>
+                    <div class="arrow">⬇️</div>
+                    <div class="diagram-box text-xs" data-translate-key="pdm_arch_dm_enhanced"><span class="tech-highlight">SAS Viya (VDMML, SAS/STAT, Optimization)</span><br/>DM Logic & Model: Data Mgt for EWS, Rule Mgt (NN, DT, Reg, Weibull), Knowledge Base, PM Optimization</div>
+                    <div class="arrow">⬇️</div>
+                    <div class="diagram-box text-xs" data-translate-key="pdm_arch_ews_server_enhanced">EWS Layer - Server (<span class="tech-highlight">SAS Viya/ESP</span>): EWS Mart, Data Processing, Real-Time Scoring, Alerting</div>
+                    <div class="arrow">⬇️</div>
+                    <div class="diagram-box text-xs" data-translate-key="pdm_arch_ews_client_enhanced">EWS Layer - Client (<span class="tech-highlight">Visual Analytics</span>): Web Reporting, Root Cause Analysis, Simulation, Monitoring, Maintenance Scheduling Interface</div>
+                    <p class="text-xs text-center mt-2 italic" data-translate-key="pdm_arch_footer">(Adapted from PredictiveMainternanceor flotrend 06.pdf, p10)</p>
+                </div>
+            </div>
+
+            <div class="card mt-6">
+                <h3 class="subsection-title" data-translate-key="pdm_outcome_title">1.3 Operational Outcome</h3>
+                <div class="outcome-card">
+                    <ul class="list-disc pl-5 mt-2 text-slate-700">
+                        <li><strong data-translate-key="pdm_outcome_bullet_1_strong">Reduced Unplanned Downtime:</strong> <span data-translate-key="pdm_outcome_bullet_1_text">For <span class="outcome-role">Maintenance & Production Teams</span>, significantly impacts the <span class="outcome-kpi">Availability component of OEE</span> by predicting and preventing unexpected failures of critical equipment (e.g., lithography tools, etchers, bonders in <span class="outcome-process">semiconductor fabs</span>; SMT lines, AOI in <span class="outcome-process">PCB assembly</span>). Konica Minolta, for instance, reduced equipment downtime by using SAS to analyze sensor data and predict failures. Quantifiable impact: <span class="outcome-kpi">Unplanned downtime reduction by 15-30%</span> is achievable.</span></li>
+                        <li><strong data-translate-key="pdm_outcome_bullet_2_strong">Optimized Maintenance Costs:</strong> <span data-translate-key="pdm_outcome_bullet_2_text">Benefits <span class="outcome-role">Maintenance Planners & Financial Controllers</span> by shifting from costly reactive or excessive preventive maintenance to condition-based or predictive interventions for <span class="outcome-process">all critical production assets</span>. This optimizes <span class="outcome-kpi">PM costs (reduction by 10-25%), spare parts inventory (reducing by 5-15%), and overtime labor.</span></span></li>
+                        <li><strong data-translate-key="pdm_outcome_bullet_3_strong">Extended Equipment Lifespan:</strong> <span data-translate-key="pdm_outcome_bullet_3_text">Proactive identification and mitigation of degradation by <span class="outcome-role">Equipment Engineers</span> slows down wear and tear on critical machinery in <span class="outcome-process">semiconductor fabs or PCB assembly lines</span>, potentially extending the <span class="outcome-kpi">Mean Time Between Failures (MTBF) by 10-25%</span> and overall asset life, deferring capital expenditure.</span></li>
+                        <li><strong data-translate-key="pdm_outcome_bullet_4_strong">Improved Maintenance Planning & Resource Efficiency:</strong> <span data-translate-key="pdm_outcome_bullet_4_text">For <span class="outcome-role">Maintenance Schedulers and Managers</span>, better forecasting of maintenance needs (type, timing, parts for <span class="outcome-process">specific tools or production lines</span>) allows for more efficient scheduling and <span class="outcome-kpi">improved technician utilization by 10-20%.</span></span></li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <section id="realtime-monitoring" class="py-8">
+            <h2 class="section-title" data-translate-key="rtm_section_title">2. Real-Time Monitoring & Anomaly Detection for OEE</h2>
+            <p class="text-slate-600 mb-6 text-center max-w-3xl mx-auto" data-translate-key="rtm_intro_paragraph">Continuous, intelligent monitoring of equipment and processes is vital for early detection of issues that could degrade OEE components (Performance, Quality, Availability).</p>
+
+            <div class="card">
+                <h3 class="subsection-title" data-translate-key="rtm_challenge_title">2.1 Challenge Validation</h3>
+                <div class="challenge-card">
+                     <p><span class="detail-label" data-translate-key="rtm_challenge_label">Challenge:</span> <span data-translate-key="rtm_challenge_text_oee">High-tech processes generate vast, high-velocity data streams where:</span></p>
+                    <ul class="list-disc pl-5 mt-2 text-slate-700">
+                        <li data-translate-key="rtm_challenge_bullet_1">Subtle equipment degradation (affecting Performance) or process anomalies (affecting Quality) can go undetected by traditional systems until they cause major yield loss or downtime (Availability).</li>
+                        <li data-translate-key="rtm_challenge_bullet_2">Handling and analyzing complex, voluminous FDC (Fault Detection and Classification) data in real-time to identify precursors to failures or quality deviations is a significant hurdle.</li>
+                        <li data-translate-key="rtm_challenge_bullet_3">Lack of integrated view across different sensor data, FDC traces, and process parameters hinders comprehensive equipment health assessment and proactive control.</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="card">
+                <h3 class="subsection-title" data-translate-key="rtm_solution_title">2.2 SAS Technical Solution</h3>
+                <div class="solution-card mb-4">
+                    <h4 class="card-title" data-translate-key="rtm_esp_title">SAS ESP for Real-Time Equipment Anomaly Detection:</h4>
+                    <p class="text-sm-detail"><span data-translate-key="rtm_esp_text_enhanced"><span class="tech-highlight">SAS Event Stream Processing (ESP)</span> is pivotal for real-time analytics on high-frequency data from critical manufacturing tools.</span> <strong data-translate-key="rtm_esp_detail_strong">Technical Mechanism:</strong> <span data-translate-key="rtm_esp_detail_text">ESP ingests, processes, and analyzes high-velocity data from equipment sensors (as seen in computer vision examples in "01.AI...01.pdf", p20, p30, applicable to any sensor stream) and FDC systems (e.g., plasma etch parameters, deposition rates). It performs in-stream scoring of analytical models (e.g., anomaly detection models like autoencoders or PCA-based models from <span class="tech-highlight">VDMML</span>, ASPC rules) to identify deviations from normal operating conditions or established process fingerprints immediately. ESP projects use various windows (filter, aggregate, pattern, procedural, model scoring) to enable complex event processing (CEP) to detect subtle anomalies or critical event sequences that might indicate an impending tool fault or a process deviation affecting quality. Alerts can be triggered and integrated with PLCs for automated actions or MES for tool interdiction. (T2.High-tech...05.pdf, p22, p24, p52; June2022...03.pdf, p7, p10).</span></p>
+                </div>
+                <div class="solution-card mb-4">
+                    <h4 class="card-title" data-translate-key="rtm_digitaltwin_title">Equipment Digital Twins for Performance Simulation & OEE Optimization:</h4>
+                    <p class="text-sm-detail"><span data-translate-key="rtm_digitaltwin_text_enhanced">SAS supports creating data-driven Equipment Digital Twins that model the behavior and health of specific manufacturing assets.</span> <strong data-translate-key="rtm_digitaltwin_detail_strong">Technical Mechanism:</strong> <span data-translate-key="rtm_digitaltwin_detail_text">Predictive models (built in <span class="tech-highlight">SAS Viya</span> using <span class="tech-highlight">VDMML/Model Studio</span>) that correlate equipment parameters (e.g., RF power, gas flows, temperature), operational settings, and sensor inputs (e.g., FDC data, vibration, acoustic signals) with performance metrics (throughput, cycle time, energy consumption, wear rates, predicted RUL) form the core. These digital twins can incorporate real-time degradation models ("01.AI...01.pdf", p5) updated by live data from <span class="tech-highlight">SAS ESP</span>. Engineers can then use this virtual replica within <span class="tech-highlight">SAS Visual Analytics</span> or custom applications for "what-if" analysis, simulating performance under different load conditions, recipe changes, or maintenance scenarios to optimize OEE (particularly Performance and Availability) without disrupting live production. (June2022...03.pdf, p10, p15).</span></p>
+                </div>
+                 <div class="solution-card">
+                    <h4 class="card-title" data-translate-key="rtm_fdc_title">Integrating FDC Data for Comprehensive Equipment Insights:</h4>
+                    <p class="text-sm-detail"><span data-translate-key="rtm_fdc_text_enhanced">FDC data from semiconductor tools (e.g., etchers, CVD, PVD) is voluminous, high-dimensional, and critical for understanding equipment and process health.</span> <strong data-translate-key="rtm_fdc_detail_strong">Technical Mechanism:</strong> <span data-translate-key="rtm_fdc_detail_text">SAS ingests FDC data (often requiring aggregation and transformation like Time Series Data Reduction - TSDR, Principal Component Analysis - PCA, Singular Value Decomposition - SVD for feature extraction, as per "June2022...03.pdf" p9, and "T2.High-tech...05.pdf" p17) using <span class="tech-highlight">SAS Viya Data Preparation</span> and <span class="tech-highlight">SAS Access to Hadoop/Cloud Storage</span>. <span class="tech-highlight">SAS Viya's CAS</span> and High-Performance Data Mining (HPDM) procedures in <span class="tech-highlight">VDMML</span> analyze this data for pattern recognition (e.g., identifying abnormal plasma signatures, endpoint detection issues), dimensionality reduction, and building predictive models that link FDC signatures to equipment health states (e.g., chamber matching issues, sensor drift), process outcomes (e.g., etch uniformity), or yield deviations. This allows for early fault detection, more precise equipment diagnostics, and proactive quality control. (Manufacturing semicon...07.pdf, p11, p18).</span></p>
+                </div>
+
+                <div class="diagram-container mt-6">
+                    <h4 class="diagram-title" data-translate-key="rtm_flow_title">Real-Time Anomaly Detection & FDC Integration Flow</h4>
+                    <div class="diagram-box text-xs" data-translate-key="rtm_flow_source">Equipment Sensors / FDC Systems (High-Frequency Data Streams)</div>
+                    <div class="arrow">⬇️</div>
+                    <div class="diagram-box text-xs" data-translate-key="rtm_flow_esp"><span class="tech-highlight">SAS ESP (Edge/Near-Edge)</span><br/>Data Ingestion, Filtering, In-Stream Anomaly Detection (ML Models), FDC Pattern Analysis, CEP</div>
+                    <div class="arrow">⬇️</div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div class="diagram-box text-xs" data-translate-key="rtm_flow_alerts">Real-Time Alerts to Operators / Maintenance Teams</div>
+                        <div class="diagram-box text-xs" data-translate-key="rtm_flow_control">Automated Equipment Adjustments / MES Flags (via PLC/MES Integration)</div>
+                    </div>
+                    <div class="arrow">⬆️ <span class="text-xs italic" data-translate-key="rtm_flow_feedback_label">Data for Model Refinement</span> ⬇️</div>
+                    <div class="diagram-box text-xs" data-translate-key="rtm_flow_viya"><span class="tech-highlight">SAS Viya Platform</span><br/>(Historical FDC Analysis, Model Training/Retraining, Digital Twin Simulation)</div>
+                </div>
+            </div>
+
+            <div class="card mt-6">
+                <h3 class="subsection-title" data-translate-key="rtm_outcome_title">2.3 Operational Outcome</h3>
+                <div class="outcome-card">
+                    <ul class="list-disc pl-5 mt-2 text-slate-700">
+                        <li><strong data-translate-key="rtm_outcome_bullet_1_strong">Early Detection of Equipment Degradation & Anomalies:</strong> <span data-translate-key="rtm_outcome_bullet_1_text">Benefits <span class="outcome-role">Equipment Engineers and Maintenance Teams</span> by identifying subtle deviations in equipment performance (e.g., sensor drift, abnormal FDC signatures) or process parameters (e.g., in critical <span class="outcome-process">semiconductor tools like etchers or photolithography systems</span>) before they escalate into failures or quality issues. This improves <span class="outcome-kpi">Mean Time To Detect (MTTD)</span> significantly and reduces minor stoppages, boosting <span class="outcome-kpi">OEE Performance and Availability.</span></span></li>
+                        <li><strong data-translate-key="rtm_outcome_bullet_2_strong">Prevention of Major Failures & Production Stops:</strong> <span data-translate-key="rtm_outcome_bullet_2_text">For <span class="outcome-role">Production Planners and Plant Management</span>, proactive alerts from real-time monitoring of FDC and other sensor data enable interventions that prevent catastrophic equipment failures during <span class="outcome-process">high-volume production runs</span>, directly boosting the <span class="outcome-kpi">Availability component of OEE (potential 5-10% reduction in unscheduled downtime).</span></span></li>
+                        <li><strong data-translate-key="rtm_outcome_bullet_3_strong">Improved Equipment Performance & Throughput:</strong> <span data-translate-key="rtm_outcome_bullet_3_text">Digital twin simulations allow <span class="outcome-role">Process Engineers</span> to optimize equipment settings for various <span class="outcome-process">production scenarios (e.g., different product types or batch sizes on assembly lines or within fab tools)</span> leading to higher <span class="outcome-kpi">Performance efficiency (part of OEE), reduced cycle times, and increased throughput.</span></span></li>
+                        <li><strong data-translate-key="rtm_outcome_bullet_4_strong">More Precise Diagnostics for Equipment Issues:</strong> <span data-translate-key="rtm_outcome_bullet_4_text">Comprehensive FDC data analysis provides <span class="outcome-role">Maintenance Technicians and Equipment Engineers</span> with deeper insights into the root causes of equipment malfunctions in <span class="outcome-process">complex tools (e.g., identifying specific chamber issues, sensor faults)</span>, reducing <span class="outcome-kpi">Mean Time To Repair (MTTR) by 10-20%.</span></span></li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <section id="impact-oee" class="py-8">
+            <h2 class="section-title" data-translate-key="qoee_section_title">3. Quantifiable OEE Improvements & Case Study Relevance</h2>
+            <p class="text-slate-600 mb-6 text-center max-w-3xl mx-auto" data-translate-key="qoee_intro_paragraph">SAS solutions have demonstrated tangible improvements across Availability, Performance, and Quality – the core components of OEE – in various high-tech manufacturing settings.</p>
+            <div class="grid md:grid-cols-2 gap-6">
+                <div class="card">
+                    <h4 class="card-title" data-translate-key="qoee_case_km_title">Konica Minolta (High-Capital Equipment)</h4>
+                    <p class="text-sm-detail mb-1" data-translate-key="qoee_case_km_impact">Maximized productivity by analyzing sensor data to predict failures and avoid unplanned downtime.</p>
+                    <p class="text-xs outcome-kpi" data-translate-key="qoee_case_km_kpi">OEE Impact: Reduced Equipment Downtime (↑ Availability).</p>
+                </div>
+                <div class="card">
+                    <h4 class="card-title" data-translate-key="qoee_case_semibe_title">Semiconductor Backend Equipment Leader</h4>
+                    <p class="text-sm-detail mb-1" data-translate-key="qoee_case_semibe_impact">AI-enabled intelligent machines for predictive quality, anomaly detection, prescriptive maintenance.</p>
+                    <p class="text-xs outcome-kpi" data-translate-key="qoee_case_semibe_kpi">OEE Impact: Improved IC packaging Quality, increased Production Speed (↑ Performance), enhanced Availability.</p>
+                </div>
+                 <div class="card">
+                    <h4 class="card-title" data-translate-key="qoee_case_solar_title">Solar Panel Manufacturer</h4>
+                    <p class="text-sm-detail mb-1" data-translate-key="qoee_case_solar_impact">Used computer vision for defect detection, reducing scrap and downtime.</p>
+                    <p class="text-xs outcome-kpi" data-translate-key="qoee_case_solar_kpi">OEE Impact: Reduced Scrap (↑ Quality), Reduced Downtime (↑ Availability), Increased Production Yield (↑ Performance & Quality).</p>
+                </div>
+                <div class="card">
+                    <h4 class="card-title" data-translate-key="qoee_case_hdd_title">HDD Manufacturer</h4>
+                    <p class="text-sm-detail mb-1" data-translate-key="qoee_case_hdd_impact">AI/ML improved quality and yield, drastically reduced failure rates.</p>
+                    <p class="text-xs outcome-kpi" data-translate-key="qoee_case_hdd_kpi">OEE Impact: Reduced Drive Failure to ~0% (↑ Quality); Early yield excursion warning (maintains ↑ Performance & Quality).</p>
+                </div>
+            </div>
+             <div class="card mt-4">
+                <h4 class="card-title" data-translate-key="qoee_relevance_title">Applicability to Taiwanese High-Tech Manufacturers:</h4>
+                <p class="text-sm-detail" data-translate-key="qoee_relevance_text">Taiwanese high-tech manufacturers, particularly in capital-intensive semiconductor fabs and precision electronics assembly, face immense pressure to maximize OEE. The SAS solutions demonstrated can directly translate to:</p>
+                <ul class="list-disc-detail pl-5 mt-2 text-sm-detail">
+                    <li data-translate-key="qoee_relevance_bullet_1">Higher uptime for critical tools (lithography, etchers, CMP).</li>
+                    <li data-translate-key="qoee_relevance_bullet_2">Improved throughput and cycle times in complex process flows.</li>
+                    <li data-translate-key="qoee_relevance_bullet_3">Reduced scrap and rework, enhancing the first-pass yield.</li>
+                    <li data-translate-key="qoee_relevance_bullet_4">Lower maintenance costs and optimized use of engineering resources.</li>
+                    <li data-translate-key="qoee_relevance_bullet_5">Empowerment of local engineering talent with "Citizen Data Scientist" tools to proactively manage equipment health and process performance.</li>
+                </ul>
+            </div>
+        </section>
+
+        <section id="tech-oee" class="py-8 bg-white rounded-xl shadow-lg my-8 p-6 md:p-8">
+            <h2 class="section-title" data-translate-key="tech_oee_section_title">4. SAS Technology Enablers for OEE Excellence</h2>
+            <p class="text-slate-600 mb-6 text-center max-w-3xl mx-auto" data-translate-key="tech_oee_intro_paragraph">
+                SAS's comprehensive analytics platform provides the technological backbone for these advanced OEE solutions.
+            </p>
+            <div class="grid md:grid-cols-2 gap-6">
+                <div class="detail-card">
+                    <h4 class="card-title" data-translate-key="tech_oee_viya_title"><span class="tech-highlight">SAS Viya Platform</span></h4>
+                    <p class="text-sm-detail" data-translate-key="tech_oee_viya_text">Central hub for data integration, advanced analytics, AI/ML model development (<span class="tech-highlight">VDMML, Model Studio</span>), and visualization (<span class="tech-highlight">Visual Analytics</span>). Its <span class="tech-highlight">CAS</span> engine handles large-scale data processing for training predictive maintenance and anomaly detection models.</p>
+                </div>
+                <div class="detail-card">
+                    <h4 class="card-title" data-translate-key="tech_oee_esp_title"><span class="tech-highlight">SAS Event Stream Processing (ESP)</span></h4>
+                    <p class="text-sm-detail" data-translate-key="tech_oee_esp_text">Enables real-time ingestion and analysis of sensor/FDC data at the edge. Deploys analytical models for in-stream scoring, anomaly detection, and triggering immediate alerts or control actions crucial for proactive OEE management.</p>
+                </div>
+                <div class="detail-card">
+                    <h4 class="card-title" data-translate-key="tech_oee_optimization_title"><span class="tech-highlight">SAS Optimization</span></h4>
+                    <p class="text-sm-detail" data-translate-key="tech_oee_optimization_text">Provides powerful algorithms to optimize maintenance schedules, resource allocation, and equipment settings (as part of digital twin simulations) based on predictive insights and operational constraints.</p>
+                </div>
+                 <div class="detail-card">
+                    <h4 class="card-title" data-translate-key="tech_oee_datamgt_title">Data Management & Governance Tools</h4>
+                    <p class="text-sm-detail" data-translate-key="tech_oee_datamgt_text">Tools like <span class="tech-highlight">SAS Data Integration Studio</span>, <span class="tech-highlight">SAS Viya Data Preparation</span>, and <span class="tech-highlight">SAS Information Governance</span> ensure high-quality, integrated data from diverse manufacturing sources (MES, FDC, Historians) for reliable OEE analytics.</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="conclusion-oee" class="py-10 text-center">
+            <h2 class="section-title" data-translate-key="oee_conclusion_title">Conclusion: Elevating OEE with SAS Analytics</h2>
+            <p class="text-lg text-slate-600 max-w-3xl mx-auto leading-relaxed" data-translate-key="oee_conclusion_paragraph">
+                By integrating advanced predictive maintenance, real-time anomaly detection, sophisticated FDC data analysis, and AI-powered digital twins, SAS provides Taiwanese high-tech manufacturers with a powerful framework to significantly improve Overall Equipment Effectiveness. This data-driven approach leads to reduced downtime, optimized performance, enhanced quality, and ultimately, a stronger competitive position in the global market.
+            </p>
+        </section>
+    </main>
+
+    <footer class="bg-indigo-800 text-indigo-100 py-8 text-center mt-12">
+        <div class="container mx-auto px-6">
+            <p data-translate-key="footer_copyright">&copy; SAS Institute Inc. All rights reserved.</p>
+            <p class="text-sm" data-translate-key="footer_disclaimer_oee">This document focuses on SAS solutions for OEE, based on provided materials.</p>
+        </div>
+    </footer>
+
+    <script>
+        const translations = {
+            en: {
+                pageTitle: "Maximizing OEE with SAS: A Technical Deep Dive",
+                header_brand_oee: "SAS Technical Deep Dive",
+                header_title_oee: "Maximizing OEE",
+                nav_intro_oee: "Introduction",
+                nav_pdm: "Predictive Maintenance",
+                nav_realtime: "Real-Time Monitoring",
+                nav_impact_oee: "Impact",
+                nav_tech_oee: "Tech Enablers",
+                nav_conclusion_oee: "Conclusion",
+                oee_main_title: "Maximizing Overall Equipment Effectiveness (OEE) with SAS",
+                oee_sub_main_title: "A SAS Technical Deep Dive for Taiwan's High-Tech Manufacturers",
+                oee_intro_paragraph_concise: "For senior professionals in Taiwan's advanced manufacturing, Overall Equipment Effectiveness (OEE = Availability × Performance × Quality) is a critical, well-understood imperative. The primary challenge lies in systematically addressing the losses within each component to achieve world-class operational excellence. SAS delivers a powerful suite of analytics solutions designed to significantly boost OEE. This deep dive explores the technical mechanisms and operational outcomes.",
+                oee_focus_title: "SAS Analytics: Targeting OEE Losses in High-Tech Manufacturing",
+                oee_sas_approach_intro_text: "SAS analytics directly target OEE loss areas by transforming data from critical systems like <span class=\"tech-highlight\">MES</span>, <span class=\"tech-highlight\">SCADA</span>, and <span class=\"tech-highlight\">FDC</span> into actionable strategies. This enhances uptime (Availability), optimizes throughput (Performance), and achieves near-zero defect rates (Quality) in demanding processes such as <span class=\"outcome-process\">semiconductor lithography & etching, PCB lamination, and SMT assembly.</span>",
+                pdm_section_title: "1. Predictive and Prescriptive Maintenance Strategies",
+                pdm_intro_paragraph: "SAS transforms maintenance from a reactive or rigidly scheduled activity into an intelligent, data-driven strategy, focusing on predicting failures and prescribing optimal actions to maximize equipment uptime and longevity, directly impacting OEE's Availability component.",
+                pdm_challenge_title: "1.1 Challenge Validation",
+                pdm_challenge_label: "Challenge:",
+                pdm_challenge_text_oee: "High-tech manufacturing faces significant OEE losses due to:",
+                pdm_challenge_bullet_1: "High costs associated with unplanned equipment downtime (reducing Availability) and production interruptions (reducing Performance).",
+                pdm_challenge_bullet_2: "Suboptimal Preventive Maintenance (PM) schedules: either too frequent (unnecessary cost, increased planned downtime impacting Availability) or too infrequent (leading to unexpected failures impacting Availability and potentially Quality).",
+                pdm_challenge_bullet_3: "Difficulty in predicting the Remaining Useful Life (RUL) of critical components, leading to premature replacements or unexpected breakdowns.",
+                pdm_challenge_bullet_4: "Inefficient allocation of limited maintenance resources (personnel, spare parts), impacting MTTR and thus Availability.",
+                pdm_solution_title: "1.2 SAS Technical Solution",
+                pdm_solution_intro: "SAS employs a multi-methodological approach for predictive maintenance, detailed in \"PredictiveMainternanceor flotrend 06.pdf\", leveraging <span class=\"tech-highlight\">SAS Viya</span> for advanced analytics:",
+                pdm_tbm_title: "Time-Based Management (TBM) for PM Optimization:",
+                pdm_tbm_text_enhanced: "TBM predicts optimal PM timing by analyzing historical failure data, equipment running time, and previous maintenance events.",
+                pdm_tbm_detail_strong: "Technical Mechanism:",
+                pdm_tbm_detail_text: "Involves collecting facility/incident data (e.g., from MES or CMMS) and applying statistical life distribution fitting (e.g., Weibull, Lognormal, Exponential distributions using <span class=\"tech-highlight\">SAS/STAT®</span> or <span class=\"tech-highlight\">SAS Viya</span> procedures like PROC LIFEREG or PROC RELIABILITY). These models estimate failure probabilities over time or usage cycles, thus forecasting optimal PM intervals that balance the cost of maintenance with the risk of failure, moving beyond fixed vendor-recommended schedules.",
+                pdm_cbm_title: "Condition-Based Management (CBM) for Symptom-Driven Prediction:",
+                pdm_cbm_text_enhanced: "CBM predicts failures based on real-time equipment symptoms derived from sensor/tag data (e.g., vibration signatures from pumps, temperature profiles in ovens, pressure differentials in vacuum chambers, FDC parameters from etchers).",
+                pdm_cbm_detail_strong: "Technical Mechanism:",
+                pdm_cbm_detail_text: "Utilizes <span class=\"tech-highlight\">SAS VDMML</span> within Viya for Exploratory Data Analysis (EDA) of sensor data, feature engineering (e.g., calculating moving averages, spectral densities), and building abnormal pattern detection models. This involves visualizing key parameter groups (e.g., using PCA for dimensionality reduction of correlated sensor signals) and defining relationships between parameter groups using techniques like Canonical Correlation Analysis to identify correlated changes indicative of equipment degradation or impending failure. ML models (e.g., SVM, Random Forests, Neural Networks) are trained to classify equipment health states or predict RUL based on these sensor patterns.",
+                pdm_ebm_title: "Event-Based Management (EBM) for Event-Driven Prediction:",
+                pdm_ebm_text_enhanced: "EBM predicts failures by analyzing specific operational events or sequences of events (e.g., alarms, operator interventions, specific error codes from equipment logs) that often precede breakdowns, incorporating sensor and parameter data for context.",
+                pdm_ebm_detail_strong: "Technical Mechanism:",
+                pdm_ebm_detail_text: "Involves collecting and integrating micro (high-frequency sensor/tag data via <span class=\"tech-highlight\">SAS ESP</span>) and macro (summarized events from MES, CMMS) data. Data marts are built via EDA in <span class=\"tech-highlight\">SAS Viya</span>. Early Warning Systems (EWS) are implemented using <span class=\"tech-highlight\">SAS ESP</span> or <span class=\"tech-highlight\">SAS Intelligent Decisioning</span> to trigger alerts based on critical event sequences, parameter thresholds, or engineer-defined rules. Machine learning models (Decision Trees, Neural Networks, Regression in <span class=\"tech-highlight\">VDMML</span>) can predict these critical events or the likelihood of failure following certain event patterns.",
+                pdm_schedule_opt_title: "Optimizing Maintenance Schedules & Resource Allocation:",
+                pdm_schedule_opt_text_enhanced: "By accurately predicting failures and RUL using TBM, CBM, and EBM, SAS enables optimization of PM schedules and resource allocation (as highlighted in \"01.AI in Manufacturing_KOR_for flotrend 01.pdf\").",
+                pdm_schedule_opt_detail_strong: "Technical Mechanism:",
+                pdm_schedule_opt_detail_text: "Long-run maintenance data, failure predictions (probabilities, RUL estimates), and operational constraints (production targets, resource availability, costs) feed into <span class=\"tech-highlight\">SAS Optimization</span> (using mathematical programming techniques like MIP, LP) or custom decision models in Viya. These models determine the most cost-effective PM intervals and schedules, prioritizing work on critical assets, balancing proactive maintenance with operational demands to maximize overall equipment availability and minimize total maintenance cost.",
+                pdm_arch_title: "SAS Predictive Maintenance Solution Architecture (Conceptual)",
+                pdm_arch_source: "Source Layer: Engineering DW (Process, Quality, Event, Test Info, Sensor Data, FDC)",
+                pdm_arch_dm_enhanced: "<span class=\"tech-highlight\">SAS Viya (VDMML, SAS/STAT, Optimization)</span><br/>DM Logic & Model: Data Mgt for EWS, Rule Mgt (NN, DT, Reg, Weibull), Knowledge Base, PM Optimization",
+                pdm_arch_ews_server_enhanced: "EWS Layer - Server (<span class=\"tech-highlight\">SAS Viya/ESP</span>): EWS Mart, Data Processing, Real-Time Scoring, Alerting",
+                pdm_arch_ews_client_enhanced: "EWS Layer - Client (<span class=\"tech-highlight\">Visual Analytics</span>): Web Reporting, Root Cause Analysis, Simulation, Monitoring, Maintenance Scheduling Interface",
+                pdm_arch_footer: "(Adapted from PredictiveMainternanceor flotrend 06.pdf, p10)",
+                pdm_outcome_title: "1.3 Operational Outcome",
+                pdm_outcome_bullet_1_strong: "Reduced Unplanned Downtime:",
+                pdm_outcome_bullet_1_text: "For <span class=\"outcome-role\">Maintenance & Production Teams</span>, significantly impacts the <span class=\"outcome-kpi\">Availability component of OEE</span> by predicting and preventing unexpected failures of critical equipment (e.g., lithography tools, etchers, bonders in <span class=\"outcome-process\">semiconductor fabs</span>; SMT lines, AOI in <span class=\"outcome-process\">PCB assembly</span>). Konica Minolta, for instance, reduced equipment downtime by using SAS to analyze sensor data and predict failures. Quantifiable impact: <span class=\"outcome-kpi\">Unplanned downtime reduction by 15-30%</span> is achievable.",
+                pdm_outcome_bullet_2_strong: "Optimized Maintenance Costs:",
+                pdm_outcome_bullet_2_text: "Benefits <span class=\"outcome-role\">Maintenance Planners & Financial Controllers</span> by shifting from costly reactive or excessive preventive maintenance to condition-based or predictive interventions for <span class=\"outcome-process\">all critical production assets</span>. This optimizes <span class=\"outcome-kpi\">PM costs (reduction by 10-25%), spare parts inventory (reducing by 5-15%), and overtime labor.</span>",
+                pdm_outcome_bullet_3_strong: "Extended Equipment Lifespan:",
+                pdm_outcome_bullet_3_text: "Proactive identification and mitigation of degradation by <span class=\"outcome-role\">Equipment Engineers</span> slows down wear and tear on critical machinery in <span class=\"outcome-process\">semiconductor fabs or PCB assembly lines</span>, potentially extending the <span class=\"outcome-kpi\">Mean Time Between Failures (MTBF) by 10-25%</span> and overall asset life, deferring capital expenditure.",
+                pdm_outcome_bullet_4_strong: "Improved Maintenance Planning & Resource Efficiency:",
+                pdm_outcome_bullet_4_text: "For <span class=\"outcome-role\">Maintenance Schedulers and Managers</span>, better forecasting of maintenance needs (type, timing, parts for <span class=\"outcome-process\">specific tools or production lines</span>) allows for more efficient scheduling and <span class=\"outcome-kpi\">improved technician utilization by 10-20%.</span>",
+                rtm_section_title: "2. Real-Time Monitoring & Anomaly Detection for OEE",
+                rtm_intro_paragraph: "Continuous, intelligent monitoring of equipment and processes is vital for early detection of issues that could degrade OEE components (Performance, Quality, Availability).",
+                rtm_challenge_title: "2.1 Challenge Validation",
+                rtm_challenge_label: "Challenge:",
+                rtm_challenge_text_oee: "High-tech processes generate vast, high-velocity data streams where:",
+                rtm_challenge_bullet_1: "Subtle equipment degradation (affecting Performance) or process anomalies (affecting Quality) can go undetected by traditional systems until they cause major yield loss or downtime (Availability).",
+                rtm_challenge_bullet_2: "Handling and analyzing complex, voluminous FDC (Fault Detection and Classification) data in real-time to identify precursors to failures or quality deviations is a significant hurdle.",
+                rtm_challenge_bullet_3: "Lack of integrated view across different sensor data, FDC traces, and process parameters hinders comprehensive equipment health assessment and proactive control.",
+                rtm_solution_title: "2.2 SAS Technical Solution",
+                rtm_esp_title: "SAS ESP for Real-Time Equipment Anomaly Detection:",
+                rtm_esp_text_enhanced: "<span class=\"tech-highlight\">SAS Event Stream Processing (ESP)</span> is pivotal for real-time analytics on high-frequency data from critical manufacturing tools.",
+                rtm_esp_detail_strong: "Technical Mechanism:",
+                rtm_esp_detail_text: "ESP ingests, processes, and analyzes high-velocity data from equipment sensors (as seen in computer vision examples in \"01.AI...01.pdf\", p20, p30, applicable to any sensor stream) and FDC systems (e.g., plasma etch parameters, deposition rates). It performs in-stream scoring of analytical models (e.g., anomaly detection models like autoencoders or PCA-based models from <span class=\"tech-highlight\">VDMML</span>, ASPC rules) to identify deviations from normal operating conditions or established process fingerprints immediately. ESP projects use various windows (filter, aggregate, pattern, procedural, model scoring) to enable complex event processing (CEP) to detect subtle anomalies or critical event sequences that might indicate an impending tool fault or a process deviation affecting quality. Alerts can be triggered and integrated with PLCs for automated actions or MES for tool interdiction. (T2.High-tech...05.pdf, p22, p24, p52; June2022...03.pdf, p7, p10).",
+                rtm_digitaltwin_title: "Equipment Digital Twins for Performance Simulation & OEE Optimization:",
+                rtm_digitaltwin_text_enhanced: "SAS supports creating data-driven Equipment Digital Twins that model the behavior and health of specific manufacturing assets.",
+                rtm_digitaltwin_detail_strong: "Technical Mechanism:",
+                rtm_digitaltwin_detail_text: "Predictive models (built in <span class=\"tech-highlight\">SAS Viya</span> using <span class=\"tech-highlight\">VDMML/Model Studio</span>) that correlate equipment parameters (e.g., RF power, gas flows, temperature), operational settings, and sensor inputs (e.g., FDC data, vibration, acoustic signals) with performance metrics (throughput, cycle time, energy consumption, wear rates, predicted RUL) form the core. These digital twins can incorporate real-time degradation models (\"01.AI...01.pdf\", p5) updated by live data from <span class=\"tech-highlight\">SAS ESP</span>. Engineers can then use this virtual replica within <span class=\"tech-highlight\">SAS Visual Analytics</span> or custom applications for \"what-if\" analysis, simulating performance under different load conditions, recipe changes, or maintenance scenarios to optimize OEE (particularly Performance and Availability) without disrupting live production. (June2022...03.pdf, p10, p15).",
+                rtm_fdc_title: "Integrating FDC Data for Comprehensive Equipment Insights:",
+                rtm_fdc_text_enhanced: "FDC data from semiconductor tools (e.g., etchers, CVD, PVD) is voluminous, high-dimensional, and critical for understanding equipment and process health.",
+                rtm_fdc_detail_strong: "Technical Mechanism:",
+                rtm_fdc_detail_text: "SAS ingests FDC data (often requiring aggregation and transformation like Time Series Data Reduction - TSDR, Principal Component Analysis - PCA, Singular Value Decomposition - SVD for feature extraction, as per \"June2022...03.pdf\" p9, and \"T2.High-tech...05.pdf\" p17) using <span class=\"tech-highlight\">SAS Viya Data Preparation</span> and <span class=\"tech-highlight\">SAS Access to Hadoop/Cloud Storage</span>. <span class=\"tech-highlight\">SAS Viya's CAS</span> and High-Performance Data Mining (HPDM) procedures in <span class=\"tech-highlight\">VDMML</span> analyze this data for pattern recognition (e.g., identifying abnormal plasma signatures, endpoint detection issues), dimensionality reduction, and building predictive models that link FDC signatures to equipment health states (e.g., chamber matching issues, sensor drift), process outcomes (e.g., etch uniformity), or yield deviations. This allows for early fault detection, more precise equipment diagnostics, and proactive quality control. (Manufacturing semicon...07.pdf, p11, p18).",
+                rtm_flow_title: "Real-Time Anomaly Detection & FDC Integration Flow",
+                rtm_flow_source: "Equipment Sensors / FDC Systems (High-Frequency Data Streams)",
+                rtm_flow_esp: "<span class=\"tech-highlight\">SAS ESP (Edge/Near-Edge)</span><br/>Data Ingestion, Filtering, In-Stream Anomaly Detection (ML Models), FDC Pattern Analysis, CEP",
+                rtm_flow_alerts: "Real-Time Alerts to Operators / Maintenance Teams",
+                rtm_flow_control: "Automated Equipment Adjustments / MES Flags (via PLC/MES Integration)",
+                rtm_flow_feedback_label: "Data for Model Refinement",
+                rtm_flow_viya: "<span class=\"tech-highlight\">SAS Viya Platform</span><br/>(Historical FDC Analysis, Model Training/Retraining, Digital Twin Simulation)",
+                rtm_outcome_title: "2.3 Operational Outcome",
+                rtm_outcome_bullet_1_strong: "Early Detection of Equipment Degradation & Anomalies:",
+                rtm_outcome_bullet_1_text: "Benefits <span class=\"outcome-role\">Equipment Engineers and Maintenance Teams</span> by identifying subtle deviations in equipment performance (e.g., sensor drift, abnormal FDC signatures) or process parameters (e.g., in critical <span class=\"outcome-process\">semiconductor tools like etchers or photolithography systems</span>) before they escalate into failures or quality issues. This improves <span class=\"outcome-kpi\">Mean Time To Detect (MTTD)</span> significantly and reduces minor stoppages, boosting <span class=\"outcome-kpi\">OEE Performance and Availability.</span>",
+                rtm_outcome_bullet_2_strong: "Prevention of Major Failures & Production Stops:",
+                rtm_outcome_bullet_2_text: "For <span class=\"outcome-role\">Production Planners and Plant Management</span>, proactive alerts from real-time monitoring of FDC and other sensor data enable interventions that prevent catastrophic equipment failures during <span class=\"outcome-process\">high-volume production runs</span>, directly boosting the <span class=\"outcome-kpi\">Availability component of OEE (potential 5-10% reduction in unscheduled downtime).</span>",
+                rtm_outcome_bullet_3_strong: "Improved Equipment Performance & Throughput:",
+                rtm_outcome_bullet_3_text: "Digital twin simulations allow <span class=\"outcome-role\">Process Engineers</span> to optimize equipment settings for various <span class=\"outcome-process\">production scenarios (e.g., different product types or batch sizes on assembly lines or within fab tools)</span> leading to higher <span class=\"outcome-kpi\">Performance efficiency (part of OEE), reduced cycle times, and increased throughput.</span>",
+                rtm_outcome_bullet_4_strong: "More Precise Diagnostics for Equipment Issues:",
+                rtm_outcome_bullet_4_text: "Comprehensive FDC data analysis provides <span class=\"outcome-role\">Maintenance Technicians and Equipment Engineers</span> with deeper insights into the root causes of equipment malfunctions in <span class=\"outcome-process\">complex tools (e.g., identifying specific chamber issues, sensor faults)</span>, reducing <span class=\"outcome-kpi\">Mean Time To Repair (MTTR) by 10-20%.</span>",
+                qoee_section_title: "3. Quantifiable OEE Improvements & Case Study Relevance",
+                qoee_intro_paragraph: "SAS solutions have demonstrated tangible improvements across Availability, Performance, and Quality – the core components of OEE – in various high-tech manufacturing settings.",
+                qoee_case_km_title: "Konica Minolta (High-Capital Equipment)",
+                qoee_case_km_impact: "Maximized productivity by analyzing sensor data to predict failures and avoid unplanned downtime.",
+                qoee_case_km_kpi: "OEE Impact: Reduced Equipment Downtime (↑ Availability).",
+                qoee_case_semibe_title: "Semiconductor Backend Equipment Leader",
+                qoee_case_semibe_impact: "AI-enabled intelligent machines for predictive quality, anomaly detection, prescriptive maintenance.",
+                qoee_case_semibe_kpi: "OEE Impact: Improved IC packaging Quality, increased Production Speed (↑ Performance), enhanced Availability.",
+                qoee_case_solar_title: "Solar Panel Manufacturer",
+                qoee_case_solar_impact: "Used computer vision for defect detection, reducing scrap and downtime.",
+                qoee_case_solar_kpi: "OEE Impact: Reduced Scrap (↑ Quality), Reduced Downtime (↑ Availability), Increased Production Yield (↑ Performance & Quality).",
+                qoee_case_hdd_title: "HDD Manufacturer",
+                qoee_case_hdd_impact: "AI/ML improved quality and yield, drastically reduced failure rates.",
+                qoee_case_hdd_kpi: "OEE Impact: Reduced Drive Failure to ~0% (↑ Quality); Early yield excursion warning (maintains ↑ Performance & Quality).",
+                qoee_relevance_title: "Applicability to Taiwanese High-Tech Manufacturers:",
+                qoee_relevance_text: "Taiwanese high-tech manufacturers, particularly in capital-intensive semiconductor fabs and precision electronics assembly, face immense pressure to maximize OEE. The SAS solutions demonstrated can directly translate to:",
+                qoee_relevance_bullet_1: "Higher uptime for critical tools (lithography, etchers, CMP).",
+                qoee_relevance_bullet_2: "Improved throughput and cycle times in complex process flows.",
+                qoee_relevance_bullet_3: "Reduced scrap and rework, enhancing the first-pass yield.",
+                qoee_relevance_bullet_4: "Lower maintenance costs and optimized use of engineering resources.",
+                qoee_relevance_bullet_5: "Empowerment of local engineering talent with \"Citizen Data Scientist\" tools to proactively manage equipment health and process performance.",
+                tech_oee_section_title: "4. SAS Technology Enablers for OEE Excellence",
+                tech_oee_intro_paragraph: "SAS's comprehensive analytics platform provides the technological backbone for these advanced OEE solutions.",
+                tech_oee_viya_title: "<span class=\"tech-highlight\">SAS Viya Platform</span>",
+                tech_oee_viya_text: "Central hub for data integration, advanced analytics, AI/ML model development (<span class=\"tech-highlight\">VDMML, Model Studio</span>), and visualization (<span class=\"tech-highlight\">Visual Analytics</span>). Its <span class=\"tech-highlight\">CAS</span> engine handles large-scale data processing for training predictive maintenance and anomaly detection models.",
+                tech_oee_esp_title: "<span class=\"tech-highlight\">SAS Event Stream Processing (ESP)</span>",
+                tech_oee_esp_text: "Enables real-time ingestion and analysis of sensor/FDC data at the edge. Deploys analytical models for in-stream scoring, anomaly detection, and triggering immediate alerts or control actions crucial for proactive OEE management.",
+                tech_oee_optimization_title: "<span class=\"tech-highlight\">SAS Optimization</span>",
+                tech_oee_optimization_text: "Provides powerful algorithms to optimize maintenance schedules, resource allocation, and equipment settings (as part of digital twin simulations) based on predictive insights and operational constraints.",
+                tech_oee_datamgt_title: "Data Management & Governance Tools",
+                tech_oee_datamgt_text: "Tools like <span class=\"tech-highlight\">SAS Data Integration Studio</span>, <span class=\"tech-highlight\">SAS Viya Data Preparation</span>, and <span class=\"tech-highlight\">SAS Information Governance</span> ensure high-quality, integrated data from diverse manufacturing sources (MES, FDC, Historians) for reliable OEE analytics.",
+                oee_conclusion_title: "Conclusion: Elevating OEE with SAS Analytics",
+                oee_conclusion_paragraph: "By integrating advanced predictive maintenance, real-time anomaly detection, sophisticated FDC data analysis, and AI-powered digital twins, SAS provides Taiwanese high-tech manufacturers with a powerful framework to significantly improve Overall Equipment Effectiveness. This data-driven approach leads to reduced downtime, optimized performance, enhanced quality, and ultimately, a stronger competitive position in the global market.",
+                footer_copyright: "© SAS Institute Inc. All rights reserved.",
+                footer_disclaimer_oee: "This document focuses on SAS solutions for OEE, based on provided materials."
+            },
+            "zh-CN": { /* Translations for Simplified Chinese - PDM, RTM, and OEE sections */
+                pageTitle: "SAS最大化OEE：技术深度解析",
+                header_brand_oee: "SAS 技术深度解析",
+                header_title_oee: "最大化OEE",
+                nav_intro_oee: "简介",
+                nav_pdm: "预测性维护",
+                nav_realtime: "实时监控",
+                nav_impact_oee: "可量化影响",
+                nav_tech_oee: "技术支持",
+                nav_conclusion_oee: "结论",
+                oee_main_title: "SAS助力最大化整体设备效率 (OEE)",
+                oee_sub_main_title: "为台湾高科技制造商提供的SAS技术深度解析",
+                oee_intro_paragraph_concise: "对于台湾先进制造业的资深专业人士而言，整体设备效率（OEE = 可用率 × 生产性能 × 质量合格率）是一项至关重要且广为人知的指标。主要挑战在于系统地解决每个组成部分的损失，以实现世界一流的卓越运营。SAS 提供强大的分析解决方案套件，旨在显著提升 OEE。本次深度解析将探讨其技术机制和运营成果。",
+                oee_focus_title: "SAS 分析：针对高科技制造业的 OEE 损失",
+                oee_sas_approach_intro_text: "SAS 分析通过将来自<span class=\"tech-highlight\">MES</span>、<span class=\"tech-highlight\">SCADA</span>和<span class=\"tech-highlight\">FDC</span>等关键系统的数据转化为可操作的策略，直接针对 OEE 损失领域。这提高了正常运行时间（可用率），优化了吞吐量（生产性能），并在<span class=\"outcome-process\">半导体光刻和蚀刻、PCB层压和SMT组装等</span>要求严苛的工艺中实现了接近零缺陷率（质量合格率）。",
+                pdm_section_title: "1. 预测性与规范性维护策略",
+                pdm_intro_paragraph: "SAS 将维护从被动或严格计划的活动转变为智能的、数据驱动的策略，专注于预测故障并规定最佳行动方案，以最大限度地延长设备正常运行时间和使用寿命，直接影响OEE的可用性部分。",
+                pdm_challenge_title: "1.1 挑战验证",
+                pdm_challenge_label: "挑战：",
+                pdm_challenge_text_oee: "高科技制造业面临着由于以下原因造成的重大OEE损失：",
+                pdm_challenge_bullet_1: "与计划外设备停机（降低可用性）和生产中断（降低性能）相关的高昂成本。",
+                pdm_challenge_bullet_2: "预防性维护 (PM) 计划不理想：过于频繁（不必要的成本，增加计划停机时间影响可用性）或过于稀疏（导致意外故障影响可用性和潜在质量）。",
+                pdm_challenge_bullet_3: "难以预测关键部件的剩余使用寿命 (RUL)，导致过早更换或意外故障。",
+                pdm_challenge_bullet_4: "有限的维护资源（人员、备件）分配效率低下，影响MTTR并因此影响可用性。",
+                pdm_solution_title: "1.2 SAS 技术解决方案",
+                pdm_solution_intro: "SAS 采用多种方法进行预测性维护，详见 \"PredictiveMainternanceor flotrend 06.pdf\"，利用 <span class=\"tech-highlight\">SAS Viya</span> 进行高级分析：",
+                pdm_tbm_title: "基于时间的管理 (TBM) 用于 PM 优化：",
+                pdm_tbm_text_enhanced: "TBM 通过分析历史故障数据、设备运行时间和先前的维护事件来预测最佳 PM 时间。",
+                pdm_tbm_detail_strong: "技术机制：",
+                pdm_tbm_detail_text: "包括收集设施/事件数据（例如，来自MES或CMMS）并应用统计寿命分布拟合（例如，使用 <span class=\"tech-highlight\">SAS/STAT®</span> 或 <span class=\"tech-highlight\">SAS Viya</span> 程序如PROC LIFEREG或PROC RELIABILITY的Weibull、Lognormal、Exponential分布）。这些模型估计随时间或使用周期的故障概率，从而预测最佳PM间隔，平衡维护成本与故障风险，超越固定的供应商推荐计划。",
+                pdm_cbm_title: "基于状态的管理 (CBM) 用于症状驱动的预测：",
+                pdm_cbm_text_enhanced: "CBM 根据从传感器/标签数据（例如，泵的振动特征、烘箱的温度曲线、真空室的压差、蚀刻机的FDC参数）中观察到的实时设备症状来预测故障。",
+                pdm_cbm_detail_strong: "技术机制：",
+                pdm_cbm_detail_text: "在Viya中利用<span class=\"tech-highlight\">SAS VDMML</span>进行传感器数据的探索性数据分析（EDA）、特征工程（例如，计算移动平均值、谱密度）和构建异常模式检测模型。这包括可视化关键参数组（例如，使用PCA对相关传感器信号进行降维）和使用典型相关分析等技术定义参数组之间的关系，以识别指示设备退化或即将发生故障的相关变化。训练ML模型（例如，SVM、随机森林、神经网络）以根据这些传感器模式对设备健康状态进行分类或预测RUL。",
+                pdm_ebm_title: "基于事件的管理 (EBM) 用于事件驱动的预测：",
+                pdm_ebm_text_enhanced: "EBM 通过分析通常在故障前发生的特定操作事件或事件序列（例如，警报、操作员干预、设备日志中的特定错误代码），并结合传感器和参数数据进行上下文分析，来预测故障。",
+                pdm_ebm_detail_strong: "技术机制：",
+                pdm_ebm_detail_text: "包括收集和整合微观（通过<span class=\"tech-highlight\">SAS ESP</span>获取的高频传感器/标签数据）和宏观（来自MES、CMMS的汇总事件）数据。通过<span class=\"tech-highlight\">SAS Viya</span>中的EDA构建数据集市。使用<span class=\"tech-highlight\">SAS ESP</span>或<span class=\"tech-highlight\">SAS Intelligent Decisioning</span>实施早期预警系统（EWS），根据关键事件序列、参数阈值或工程师定义的规则触发警报。机器学习模型（<span class=\"tech-highlight\">VDMML</span>中的决策树、神经网络、回归）可以预测这些关键事件或在某些事件模式后发生故障的可能性。",
+                pdm_schedule_opt_title: "优化维护计划与资源分配：",
+                pdm_schedule_opt_text_enhanced: "通过使用TBM、CBM和EBM准确预测故障和RUL，SAS能够优化PM计划和资源分配（如“01.AI in Manufacturing_KOR_for flotrend 01.pdf”中所强调）。",
+                pdm_schedule_opt_detail_strong: "技术机制：",
+                pdm_schedule_opt_detail_text: "长期维护数据、故障预测（概率、RUL估计）和运营约束（生产目标、资源可用性、成本）输入到<span class=\"tech-highlight\">SAS Optimization</span>（使用MIP、LP等数学规划技术）或Viya中的自定义决策模型中。这些模型确定最具成本效益的PM间隔和计划，优先处理关键资产的工作，平衡主动维护与运营需求，以最大化整体设备可用性并最小化总维护成本。",
+                pdm_arch_title: "SAS 预测性维护解决方案架构（概念性）",
+                pdm_arch_source: "源层：工程数据仓库（过程、质量、事件、测试信息、传感器数据、FDC）",
+                pdm_arch_dm_enhanced: "<span class=\"tech-highlight\">SAS Viya (VDMML, SAS/STAT, Optimization)</span><br/>数据挖掘逻辑与模型：EWS数据管理、规则管理（神经网络、决策树、回归、威布尔分布）、知识库、PM优化",
+                pdm_arch_ews_server_enhanced: "EWS层 - 服务器 (<span class=\"tech-highlight\">SAS Viya/ESP</span>)：EWS数据集市、数据处理、实时评分、警报",
+                pdm_arch_ews_client_enhanced: "EWS层 - 客户端 (<span class=\"tech-highlight\">Visual Analytics</span>)：Web报告、根本原因分析、仿真、监控、维护计划界面",
+                pdm_arch_footer: "（改编自 PredictiveMainternanceor flotrend 06.pdf, 第10页）",
+                pdm_outcome_title: "1.3 运营成果",
+                pdm_outcome_bullet_1_strong: "减少计划外停机时间：",
+                pdm_outcome_bullet_1_text: "对于<span class=\"outcome-role\">维护与生产团队</span>，通过预测和防止关键设备（例如<span class=\"outcome-process\">半导体工厂</span>中的光刻工具、蚀刻机、键合机；<span class=\"outcome-process\">PCB组装</span>中的SMT生产线、AOI）的意外故障，显著影响<span class=\"outcome-kpi\">OEE的可用性部分</span>。例如，柯尼卡美能达通过使用SAS分析传感器数据和预测故障，减少了设备停机时间。可量化影响：<span class=\"outcome-kpi\">计划外停机时间可减少15-30%。</span>",
+                pdm_outcome_bullet_2_strong: "优化维护成本：",
+                pdm_outcome_bullet_2_text: "<span class=\"outcome-role\">维护计划员和财务控制员</span>受益于从昂贵的反应式或过度的预防性维护转向基于状态或预测性的干预，针对<span class=\"outcome-process\">所有关键生产资产</span>。这优化了<span class=\"outcome-kpi\">PM成本（降低10-25%）、备件库存（减少5-15%）和加班劳动。</span>",
+                pdm_outcome_bullet_3_strong: "延长设备使用寿命：",
+                pdm_outcome_bullet_3_text: "<span class=\"outcome-role\">设备工程师</span>主动识别和减轻退化，减缓了<span class=\"outcome-process\">半导体工厂或PCB组装线</span>中关键机械的磨损，可能将<span class=\"outcome-kpi\">平均故障间隔时间（MTBF）延长10-25%</span>并延长整体资产寿命，推迟资本支出。",
+                pdm_outcome_bullet_4_strong: "改进维护计划与资源效率：",
+                pdm_outcome_bullet_4_text: "对于<span class=\"outcome-role\">维护调度员和经理</span>，更好地预测<span class=\"outcome-process\">特定工具或生产线</span>的维护需求（类型、时间、部件）可以实现更有效的调度和<span class=\"outcome-kpi\">技术员利用率提高10-20%。</span>",
+                rtm_section_title: "2. OEE的实时监控与异常检测",
+                rtm_intro_paragraph: "对设备和过程进行持续、智能的监控对于早期发现可能降低OEE组成部分（性能、质量、可用性）的问题至关重要。",
+                rtm_challenge_title: "2.1 挑战验证",
+                rtm_challenge_label: "挑战：",
+                rtm_challenge_text_oee: "高科技流程产生大量高速数据流，其中：",
+                rtm_challenge_bullet_1: "设备退化（影响性能）或过程异常（影响质量）的细微迹象可能被传统系统忽略，直到造成重大良率损失或停机（可用性）。",
+                rtm_challenge_bullet_2: "实时处理和分析复杂、大量的FDC（故障检测与分类）数据以识别故障或质量偏差的前兆是一项重大障碍。",
+                rtm_challenge_bullet_3: "缺乏跨不同传感器数据、FDC轨迹和过程参数的集成视图，阻碍了全面的设备健康评估和主动控制。",
+                rtm_solution_title: "2.2 SAS 技术解决方案",
+                rtm_esp_title: "SAS ESP 用于实时设备异常检测：",
+                rtm_esp_text_enhanced: "<span class=\"tech-highlight\">SAS Event Stream Processing (ESP)</span> 对关键制造工具的高频数据进行实时分析至关重要。",
+                rtm_esp_detail_strong: "技术机制：",
+                rtm_esp_detail_text: "ESP 从设备传感器（如 \"01.AI...01.pdf\" 中计算机视觉示例所示，第20、30页，适用于任何传感器流）和 FDC 系统（例如，等离子蚀刻参数、沉积速率）提取、处理和分析高速数据。它在流中对分析模型（例如，来自 <span class=\"tech-highlight\">VDMML</span> 的异常检测模型如自编码器或基于PCA的模型，ASPC 规则）进行评分，以立即识别与正常操作条件或已建立的过程指纹的偏差。ESP 项目使用各种窗口（过滤、聚合、模式、过程、模型评分）来实现复杂事件处理 (CEP)，以检测可能指示即将发生的工具故障或影响质量的过程偏差的细微异常或关键事件序列。可以触发警报并与 PLC 集成以实现自动化操作或与 MES 集成以进行工具干预。(T2.High-tech...05.pdf, 第22, 24, 52页; June2022...03.pdf, 第7, 10页)。",
+                rtm_digitaltwin_title: "设备数字孪生用于性能仿真与OEE优化：",
+                rtm_digitaltwin_text_enhanced: "SAS 支持创建数据驱动的设备数字孪生，对特定制造资产的行为和健康状况进行建模。",
+                rtm_digitaltwin_detail_strong: "技术机制：",
+                rtm_digitaltwin_detail_text: "核心是由 <span class=\"tech-highlight\">SAS Viya</span> 中使用 <span class=\"tech-highlight\">VDMML/Model Studio</span> 构建的预测模型组成，这些模型将设备参数（例如，射频功率、气体流速、温度）、操作设置和传感器输入（例如 FDC 数据、振动、声学信号）与性能指标（吞吐量、周期时间、能耗、磨损率、预测的RUL）相关联。这些数字孪生可以包含由来自 <span class=\"tech-highlight\">SAS ESP</span> 的实时数据更新的实时退化模型（\"01.AI...01.pdf\"，第5页）。然后，工程师可以在 <span class=\"tech-highlight\">SAS Visual Analytics</span> 或自定义应用程序中使用此虚拟副本进行“假设”分析，在不同负载条件、配方更改或维护场景下模拟性能，以优化 OEE（特别是性能和可用性），而不会中断实际生产。(June2022...03.pdf, 第10, 15页)。",
+                rtm_fdc_title: "集成FDC数据以获得全面的设备洞察：",
+                rtm_fdc_text_enhanced: "来自半导体工具（例如，蚀刻机、CVD、PVD）的FDC数据量大、维度高，对于理解设备和过程健康至关重要。",
+                rtm_fdc_detail_strong: "技术机制：",
+                rtm_fdc_detail_text: "SAS 使用 <span class=\"tech-highlight\">SAS Viya Data Preparation</span> 和 <span class=\"tech-highlight\">SAS Access to Hadoop/Cloud Storage</span> 提取 FDC 数据（通常需要聚合和转换，如 \"June2022...03.pdf\" 第9页和 \"T2.High-tech...05.pdf\" 第17页所述的时间序列数据缩减 - TSDR、主成分分析 - PCA、奇异值分解 - SVD 进行特征提取）。<span class=\"tech-highlight\">SAS Viya 的 CAS</span> 和 <span class=\"tech-highlight\">VDMML</span> 中的高性能数据挖掘 (HPDM) 程序分析此数据以进行模式识别（例如，识别异常等离子体特征、终点检测问题）、降维和构建预测模型，这些模型将 FDC 特征与设备健康状态（例如，腔室匹配问题、传感器漂移）、过程结果（例如，蚀刻均匀性）或良率偏差联系起来。这有助于早期故障检测、更精确的设备诊断和主动质量控制。(Manufacturing semicon...07.pdf, 第11, 18页)。",
+                rtm_flow_title: "实时异常检测与FDC集成流程",
+                rtm_flow_source: "设备传感器/FDC系统（高频数据流）",
+                rtm_flow_esp: "<span class=\"tech-highlight\">SAS ESP (边缘/近边缘)</span><br/>数据提取、过滤、流内异常检测（ML模型）、FDC模式分析、CEP",
+                rtm_flow_alerts: "向操作员/维护团队发送实时警报",
+                rtm_flow_control: "自动化设备调整/MES标记（通过PLC/MES集成）",
+                rtm_flow_feedback_label: "用于模型优化的数据",
+                rtm_flow_viya: "<span class=\"tech-highlight\">SAS Viya 平台</span><br/>（历史FDC分析、模型训练/再训练、数字孪生仿真）",
+                rtm_outcome_title: "2.3 运营成果",
+                rtm_outcome_bullet_1_strong: "早期检测设备退化与异常：",
+                rtm_outcome_bullet_1_text: "使<span class=\"outcome-role\">设备工程师和维护团队</span>受益，通过在设备性能（例如传感器漂移、异常FDC特征）或工艺参数（例如在<span class=\"outcome-process\">诸如蚀刻机或光刻系统等关键半导体工具</span>中）发生故障或质量问题升级前提早识别细微偏差。这显著改善了<span class=\"outcome-kpi\">平均检测时间（MTTD）</span>并减少了微小停机，从而提升了<span class=\"outcome-kpi\">OEE性能和可用性。</span>",
+                rtm_outcome_bullet_2_strong: "预防重大故障与生产中断：",
+                rtm_outcome_bullet_2_text: "对于<span class=\"outcome-role\">生产计划员和工厂管理</span>，来自FDC和其他传感器数据的实时监控所产生的主动警报能够实现干预，防止在<span class=\"outcome-process\">大批量生产运行</span>期间发生灾难性设备故障，直接提升<span class=\"outcome-kpi\">OEE的可用性部分（计划外停机时间可能减少5-10%）。</span>",
+                rtm_outcome_bullet_3_strong: "改进设备性能与吞吐量：",
+                rtm_outcome_bullet_3_text: "数字孪生仿真允许<span class=\"outcome-role\">工艺工程师</span>针对各种<span class=\"outcome-process\">生产场景（例如，装配线或工厂工具内的不同产品类型或批量大小）</span>优化设备设置，从而提高<span class=\"outcome-kpi\">性能效率（OEE的一部分）、缩短周期时间并增加吞吐量。</span>",
+                rtm_outcome_bullet_4_strong: "更精确的设备问题诊断：",
+                rtm_outcome_bullet_4_text: "全面的FDC数据分析为<span class=\"outcome-role\">维护技术人员和设备工程师</span>提供了对<span class=\"outcome-process\">复杂工具（例如，识别特定腔室问题、传感器故障）</span>中设备故障根本原因的更深入洞察，将<span class=\"outcome-kpi\">平均修复时间（MTTR）缩短10-20%。</span>",
+                qoee_section_title: "3. 可量化的OEE改进与案例研究相关性",
+                qoee_intro_paragraph: "SAS解决方案已在各种高科技制造环境中展示了在可用性、性能和质量方面的显著改进——OEE的核心组成部分。",
+                qoee_case_km_title: "柯尼卡美能达（高资本设备）",
+                qoee_case_km_impact: "通过分析传感器数据预测故障并避免计划外停机，最大限度地提高了生产率。",
+                qoee_case_km_kpi: "OEE影响：减少设备停机时间（↑ 可用性）。",
+                qoee_case_semibe_title: "半导体后端设备领导者",
+                qoee_case_semibe_impact: "AI赋能的智能机器，用于预测质量、异常检测、规范性维护。",
+                qoee_case_semibe_kpi: "OEE影响：改进IC封装质量，提高生产速度（↑ 性能），增强可用性。",
+                qoee_case_solar_title: "太阳能电池板制造商",
+                qoee_case_solar_impact: "使用计算机视觉进行缺陷检测，减少废品和停机时间。",
+                qoee_case_solar_kpi: "OEE影响：减少废品（↑ 质量），减少停机时间（↑ 可用性），提高生产良率（↑ 性能和质量）。",
+                qoee_case_hdd_title: "硬盘驱动器制造商",
+                qoee_case_hdd_impact: "AI/ML改进了质量和良率，大幅降低了故障率。",
+                qoee_case_hdd_kpi: "OEE影响：驱动器故障率降至约0%（↑ 质量）；良率偏移早期预警（保持↑ 性能和质量）。",
+                qoee_relevance_title: "对台湾高科技制造商的适用性：",
+                qoee_relevance_text: "台湾高科技制造商，特别是在资本密集的半导体晶圆厂和精密电子组装领域，面临着最大化OEE的巨大压力。已证明的SAS解决方案可以直接转化为：",
+                qoee_relevance_bullet_1: "提高关键工具（光刻、蚀刻、CMP）的正常运行时间。",
+                qoee_relevance_bullet_2: "改进复杂工艺流程的吞吐量和周期时间。",
+                qoee_relevance_bullet_3: "减少废品和返工，提高首次通过良率。",
+                qoee_relevance_bullet_4: "降低维护成本并优化工程资源的使用。",
+                qoee_relevance_bullet_5: "通过“公民数据科学家”工具赋能本地工程人才，主动管理设备健康和工艺性能。",
+                tech_oee_section_title: "4. SAS OEE卓越技术支持",
+                tech_oee_intro_paragraph: "SAS全面的分析平台为这些先进的OEE解决方案提供了技术支柱。",
+                tech_oee_viya_title: "<span class=\"tech-highlight\">SAS Viya 平台</span>",
+                tech_oee_viya_text: "数据集成、高级分析、AI/ML模型开发（<span class=\"tech-highlight\">VDMML, Model Studio</span>）和可视化（<span class=\"tech-highlight\">Visual Analytics</span>）的中央枢纽。其<span class=\"tech-highlight\">CAS</span>引擎处理大规模数据，用于训练预测性维护和异常检测模型。",
+                tech_oee_esp_title: "<span class=\"tech-highlight\">SAS Event Stream Processing (ESP)</span>",
+                tech_oee_esp_text: "实现边缘传感器/FDC数据的实时提取和分析。部署分析模型进行流内评分、异常检测，并触发对主动OEE管理至关重要的即时警报或控制操作。",
+                tech_oee_optimization_title: "<span class=\"tech-highlight\">SAS Optimization</span>",
+                tech_oee_optimization_text: "提供强大的算法，根据预测性洞察和操作约束优化维护计划、资源分配和设备设置（作为数字孪生仿真的一部分）。",
+                tech_oee_datamgt_title: "数据管理与治理工具",
+                tech_oee_datamgt_text: "诸如<span class=\"tech-highlight\">SAS Data Integration Studio</span>、<span class=\"tech-highlight\">SAS Viya Data Preparation</span>和<span class=\"tech-highlight\">SAS Information Governance</span>之类的工具可确保来自不同制造来源（MES、FDC、历史库）的高质量、集成数据，用于可靠的OEE分析。",
+                oee_conclusion_title: "结论：通过SAS分析提升OEE",
+                oee_conclusion_paragraph: "通过整合先进的预测性维护、实时异常检测、复杂的FDC数据分析和AI驱动的数字孪生，SAS为台湾高科技制造商提供了一个强大的框架，以显著改善整体设备效率。这种数据驱动的方法可以减少停机时间、优化性能、提高质量，并最终在全球市场上增强竞争力。",
+                footer_copyright: "© SAS Institute Inc. 版权所有。",
+                footer_disclaimer_oee: "本文档重点介绍基于所提供材料的SAS OEE解决方案。"
+            },
+            "zh-TW": { /* Translations for Traditional Chinese - PDM, RTM, and OEE sections */
+                pageTitle: "SAS最大化OEE：技術深度解析",
+                header_brand_oee: "SAS 技術深度解析",
+                header_title_oee: "最大化OEE",
+                nav_intro_oee: "簡介",
+                nav_pdm: "預測性維護",
+                nav_realtime: "即時監控",
+                nav_impact_oee: "可量化影響",
+                nav_tech_oee: "技術支援",
+                nav_conclusion_oee: "結論",
+                oee_main_title: "SAS助力最大化整體設備效率 (OEE)",
+                oee_sub_main_title: "為臺灣高科技製造商提供的SAS技術深度解析",
+                oee_intro_paragraph_concise: "對於臺灣先進製造業的資深專業人士而言，整體設備效率（OEE = 可用率 × 生產效能 × 品質合格率）是一項至關重要且廣為人知的指標。主要挑戰在於系統地解決每個組成部分的損失，以實現世界一流的卓越營運。SAS 提供強大的分析解決方案套件，旨在顯著提升 OEE。本次深度解析將探討其技術機制和營運成果。",
+                oee_focus_title: "SAS 分析：針對高科技製造業的 OEE 損失",
+                oee_sas_approach_intro_text: "SAS 分析透過將來自<span class=\"tech-highlight\">MES</span>、<span class=\"tech-highlight\">SCADA</span>和<span class=\"tech-highlight\">FDC</span>等關鍵系統的數據轉化為可操作的策略，直接針對 OEE 損失領域。這提高了正常運行時間（可用率），優化了吞吐量（生產效能），並在<span class=\"outcome-process\">半導體光刻和蝕刻、PCB層壓和SMT組裝等</span>要求嚴苛的工藝中實現了接近零缺陷率（品質合格率）。",
+                pdm_section_title: "1. 預測性與規範性維護策略",
+                pdm_intro_paragraph: "SAS 將維護從被動或嚴格計劃的活動轉變為智慧的、數據驅動的策略，專注於預測故障並規定最佳行動方案，以最大限度地延長設備正常運行時間和使用壽命，直接影響OEE的可用率部分。",
+                pdm_challenge_title: "1.1 挑戰驗證",
+                pdm_challenge_label: "挑戰：",
+                pdm_challenge_text_oee: "高科技製造業面臨著由於以下原因造成的重大OEE損失：",
+                pdm_challenge_bullet_1: "與計劃外設備停機（降低可用率）和生產中斷（降低效能稼動率）相關的高昂成本。",
+                pdm_challenge_bullet_2: "預防性維護 (PM) 計畫不理想：過於頻繁（不必要的成本，增加計劃停機時間影響可用率）或過於稀疏（導致意外故障影響可用率和潛在品質）。",
+                pdm_challenge_bullet_3: "難以預測關鍵組件的剩餘使用壽命 (RUL)，導致過早更換或意外故障。",
+                pdm_challenge_bullet_4: "有限的維護資源（人員、備品）分配效率低落，影響MTTR並因此影響可用率。",
+                pdm_solution_title: "1.2 SAS 技術解決方案",
+                pdm_solution_intro: "SAS 採用多種方法進行預測性維護，詳見 \"PredictiveMainternanceor flotrend 06.pdf\"，利用 <span class=\"tech-highlight\">SAS Viya</span> 進行進階分析：",
+                pdm_tbm_title: "基於時間的管理 (TBM) 用於 PM 優化：",
+                pdm_tbm_text_enhanced: "TBM 透過分析歷史故障數據、設備運行時間和先前的維護事件來預測最佳 PM 時間。",
+                pdm_tbm_detail_strong: "技術機制：",
+                pdm_tbm_detail_text: "包括收集設施/事件數據（例如，來自MES或CMMS）並應用統計壽命分佈擬合（例如，使用<span class=\"tech-highlight\">SAS/STAT®</span>或<span class=\"tech-highlight\">SAS Viya</span>程序如PROC LIFEREG或PROC RELIABILITY的Weibull、Lognormal、Exponential分佈）。這些模型估計隨時間或使用週期的故障機率，從而預測最佳PM間隔，平衡維護成本與故障風險，超越固定的供應商建議計畫。",
+                pdm_cbm_title: "基於狀態的管理 (CBM) 用於症狀驅動的預測：",
+                pdm_cbm_text_enhanced: "CBM 根據從感測器/標籤數據（例如，泵的振動特徵、烘箱的溫度曲線、真空室的壓差、蝕刻機的FDC參數）中觀察到的即時設備症狀來預測故障。",
+                pdm_cbm_detail_strong: "技術機制：",
+                pdm_cbm_detail_text: "在Viya中利用<span class=\"tech-highlight\">SAS VDMML</span>進行感測器數據的探索性數據分析（EDA）、特徵工程（例如，計算移動平均值、譜密度）和建構異常模式偵測模型。這包括可視化關鍵參數組（例如，使用PCA對相關感測器訊號進行降維）和使用典型相關分析等技術定義參數組之間的關係，以識別指示設備退化或即將發生故障的相關變化。訓練ML模型（例如，SVM、隨機森林、神經網路）以根據這些感測器模式對設備健康狀態進行分類或預測RUL。",
+                pdm_ebm_title: "基於事件的管理 (EBM) 用於事件驅動的預測：",
+                pdm_ebm_text_enhanced: "EBM 透過分析通常在故障前發生的特定操作事件或事件序列（例如，警報、操作員干預、設備日誌中的特定錯誤代碼），並結合感測器和參數數據進行上下文分析，來預測故障。",
+                pdm_ebm_detail_strong: "技術機制：",
+                pdm_ebm_detail_text: "包括收集和整合微觀（透過<span class=\"tech-highlight\">SAS ESP</span>獲取的高頻感測器/標籤數據）和宏觀（來自MES、CMMS的匯總事件）數據。透過<span class=\"tech-highlight\">SAS Viya</span>中的EDA建構資料超市。使用<span class=\"tech-highlight\">SAS ESP</span>或<span class=\"tech-highlight\">SAS Intelligent Decisioning</span>實施早期預警系統（EWS），根據關鍵事件序列、參數閾值或工程師定義的規則觸發警報。機器學習模型（<span class=\"tech-highlight\">VDMML</span>中的決策樹、神經網路、迴歸）可以預測这些關鍵事件或在某些事件模式後發生故障的可能性。",
+                pdm_schedule_opt_title: "優化維護計畫與資源分配：",
+                pdm_schedule_opt_text_enhanced: "透過使用TBM、CBM和EBM準確預測故障和RUL，SAS能夠優化PM計畫和資源分配（如“01.AI in Manufacturing_KOR_for flotrend 01.pdf”中所強調）。",
+                pdm_schedule_opt_detail_strong: "技術機制：",
+                pdm_schedule_opt_detail_text: "長期維護數據、故障預測（機率、RUL估計）和營運約束（生產目標、資源可用性、成本）輸入到<span class=\"tech-highlight\">SAS Optimization</span>（使用MIP、LP等數學規劃技術）或Viya中的自訂決策模型中。這些模型確定最具成本效益的PM間隔和計畫，優先處理關鍵資產的工作，平衡主動維護與營運需求，以最大化整體設備可用率並最小化總維護成本。",
+                pdm_arch_title: "SAS 預測性維護解決方案架構（概念性）",
+                pdm_arch_source: "源層：工程數據倉儲（流程、品質、事件、測試資訊、感測器數據、FDC）",
+                pdm_arch_dm_enhanced: "<span class=\"tech-highlight\">SAS Viya (VDMML, SAS/STAT, Optimization)</span><br/>數據挖掘邏輯與模型：EWS數據管理、規則管理（神經網路、決策樹、迴歸、威布爾分佈）、知識庫、PM優化",
+                pdm_arch_ews_server_enhanced: "EWS層 - 伺服器 (<span class=\"tech-highlight\">SAS Viya/ESP</span>)：EWS資料超市、數據處理、即時評分、警報",
+                pdm_arch_ews_client_enhanced: "EWS層 - 客戶端 (<span class=\"tech-highlight\">Visual Analytics</span>)：Web報告、根本原因分析、模擬、監控、維護計畫介面",
+                pdm_arch_footer: "（改編自 PredictiveMainternanceor flotrend 06.pdf, 第10頁）",
+                pdm_outcome_title: "1.3 營運成果",
+                pdm_outcome_bullet_1_strong: "減少計劃外停機時間：",
+                pdm_outcome_bullet_1_text: "對於<span class=\"outcome-role\">維護與生產團隊</span>，透過預測和防止關鍵設備（例如<span class=\"outcome-process\">半導體晶圓廠</span>中的光刻工具、蝕刻機、鍵合機；<span class=\"outcome-process\">PCB組裝</span>中的SMT生產線、AOI）的意外故障，顯著影響<span class=\"outcome-kpi\">OEE的可用率部分</span>。例如，柯尼卡美能達透過使用SAS分析感測器數據和預測故障，減少了設備停機時間。可量化影響：<span class=\"outcome-kpi\">計劃外停機時間可減少15-30%。</span>",
+                pdm_outcome_bullet_2_strong: "優化維護成本：",
+                pdm_outcome_bullet_2_text: "<span class=\"outcome-role\">維護計畫員和財務控制員</span>受益於從昂貴的反應式或過度的預防性維護轉向基於狀態或預測性的干預，針對<span class=\"outcome-process\">所有關鍵生產資產</span>。這優化了<span class=\"outcome-kpi\">PM成本（降低10-25%）、備品庫存（減少5-15%）和加班勞動。</span>",
+                pdm_outcome_bullet_3_strong: "延長設備使用壽命：",
+                pdm_outcome_bullet_3_text: "<span class=\"outcome-role\">設備工程師</span>主動識別和減輕退化，減緩了<span class=\"outcome-process\">半導體晶圓廠或PCB組裝線</span>中關鍵機械的磨損，可能將<span class=\"outcome-kpi\">平均故障間隔時間（MTBF）延長10-25%</span>並延長整體資產壽命，推遲資本支出。",
+                pdm_outcome_bullet_4_strong: "改進維護計畫與資源效率：",
+                pdm_outcome_bullet_4_text: "對於<span class=\"outcome-role\">維護排程員和經理</span>，更好地預測<span class=\"outcome-process\">特定工具或生產線</span>的維護需求（類型、時間、部件）可以實現更有效的排程和<span class=\"outcome-kpi\">技術員利用率提高10-20%。</span>",
+                rtm_section_title: "2. OEE的即時監控與異常偵測",
+                rtm_intro_paragraph: "對設備和流程進行持續、智慧的監控對於早期發現可能降低OEE組成部分（效能稼動率、品質良率、可用率）的問題至關重要。",
+                rtm_challenge_title: "2.1 挑戰驗證",
+                rtm_challenge_label: "挑戰：",
+                rtm_challenge_text_oee: "高科技流程產生大量高速數據流，其中：",
+                rtm_challenge_bullet_1: "設備退化（影響效能稼動率）或流程異常（影響品質良率）的細微跡象可能被傳統系統忽略，直到造成重大良率損失或停機（可用率）。",
+                rtm_challenge_bullet_2: "即時處理和分析複雜、大量的FDC（故障檢測与分類）數據以識別故障或品質偏差的前兆是一項重大障礙。",
+                rtm_challenge_bullet_3: "缺乏跨不同感測器數據、FDC軌跡和流程參數的整合視圖，阻礙了全面的設備健康評估和主動控制。",
+                rtm_solution_title: "2.2 SAS 技術解決方案",
+                rtm_esp_title: "SAS ESP 用於即時設備異常偵測：",
+                rtm_esp_text_enhanced: "<span class=\"tech-highlight\">SAS Event Stream Processing (ESP)</span> 對關鍵製造工具的高頻數據進行即時分析至關重要。",
+                rtm_esp_detail_strong: "技術機制：",
+                rtm_esp_detail_text: "ESP 從設備感測器（如 \"01.AI...01.pdf\" 中電腦視覺範例所示，第20、30頁，適用於任何感測器流）和 FDC 系統（例如，等離子蝕刻參數、沉積速率）提取、處理和分析高速數據。它在流中對分析模型（例如，來自 <span class=\"tech-highlight\">VDMML</span> 的異常偵測模型如自編碼器或基於PCA的模型，ASPC 規則）進行評分，以立即識別與正常操作條件或已建立的流程指紋的偏差。ESP 專案使用各種窗口（過濾、聚合、模式、程序、模型評分）來實現複雜事件處理 (CEP)，以偵測可能指示即將發生的工具故障或影響品質的流程偏差的細微異常或關鍵事件序列。可以觸發警報並與 PLC 整合以實現自動化操作或與 MES 整合以進行工具干預。(T2.High-tech...05.pdf, 第22, 24, 52頁; June2022...03.pdf, 第7, 10頁)。",
+                rtm_digitaltwin_title: "設備數位孿生用於效能模擬與OEE優化：",
+                rtm_digitaltwin_text_enhanced: "SAS 支援創建數據驅動的設備數位孿生，對特定製造資產的行為和健康狀況進行建模。",
+                rtm_digitaltwin_detail_strong: "技術機制：",
+                rtm_digitaltwin_detail_text: "核心是由 <span class=\"tech-highlight\">SAS Viya</span> 中使用 <span class=\"tech-highlight\">VDMML/Model Studio</span> 建構的預測模型組成，這些模型將設備參數（例如，射頻功率、氣體流速、溫度）、操作設定和感測器輸入（例如 FDC 數據、振動、聲學訊號）與效能指標（吞吐量、週期時間、能耗、磨損率、預測的RUL）相關聯。這些數位孿生可以包含由來自 <span class=\"tech-highlight\">SAS ESP</span> 的即時數據更新的即時退化模型（\"01.AI...01.pdf\"，第5頁）。然後，工程師可以在 <span class=\"tech-highlight\">SAS Visual Analytics</span> 或自訂應用程式中使用此虛擬副本進行「假設」分析，在不同負載條件、配方更改或維護情境下模擬效能，以優化 OEE（特別是效能稼動率和可用率），而不會中斷實際生產。(June2022...03.pdf, 第10, 15頁)。",
+                rtm_fdc_title: "整合FDC數據以獲得全面的設備洞察：",
+                rtm_fdc_text_enhanced: "來自半導體工具（例如，蝕刻機、CVD、PVD）的FDC數據量大、維度高，對於理解設備和流程健康至關重要。",
+                rtm_fdc_detail_strong: "技術機制：",
+                rtm_fdc_detail_text: "SAS 使用 <span class=\"tech-highlight\">SAS Viya Data Preparation</span> 和 <span class=\"tech-highlight\">SAS Access to Hadoop/Cloud Storage</span> 提取 FDC 數據（通常需要聚合和轉換，如 \"June2022...03.pdf\" 第9頁和 \"T2.High-tech...05.pdf\" 第17頁所述的時間序列數據縮減 - TSDR、主成分分析 - PCA、奇異值分解 - SVD 進行特徵提取）。<span class=\"tech-highlight\">SAS Viya 的 CAS</span> 和 <span class=\"tech-highlight\">VDMML</span> 中的高效能數據挖掘 (HPDM) 程序分析此數據以進行模式識別（例如，識別異常等離子體特徵、終點偵測問題）、降維和建構預測模型，這些模型將 FDC 特徵與設備健康狀態（例如，腔室匹配問題、感測器偏移）、流程結果（例如，蝕刻均勻性）或良率偏差連結起來。這有助於早期故障偵測、更精確的設備診斷和主動品質控制。(Manufacturing semicon...07.pdf, 第11, 18頁)。",
+                rtm_flow_title: "即時異常偵測與FDC整合流程",
+                rtm_flow_source: "設備感測器/FDC系統（高頻數據流）",
+                rtm_flow_esp: "<span class=\"tech-highlight\">SAS ESP (邊緣/近邊緣)</span><br/>數據提取、過濾、流內異常偵測（ML模型）、FDC模式分析、CEP",
+                rtm_flow_alerts: "向操作員/維護團隊發送即時警報",
+                rtm_flow_control: "自動化設備調整/MES標記（透過PLC/MES整合）",
+                rtm_flow_feedback_label: "用於模型優化的數據",
+                rtm_flow_viya: "<span class=\"tech-highlight\">SAS Viya 平台</span><br/>（歷史FDC分析、模型訓練/再訓練、數位孿生模擬）",
+                rtm_outcome_title: "2.3 營運成果",
+                rtm_outcome_bullet_1_strong: "早期偵測設備退化與異常：",
+                rtm_outcome_bullet_1_text: "使<span class=\"outcome-role\">設備工程師和維護團隊</span>受益，透過在設備效能（例如感測器偏移、異常FDC特徵）或工藝參數（例如在<span class=\"outcome-process\">諸如蝕刻機或光刻系統等關鍵半導體工具</span>中）發生故障或品質問題升級前提早識別細微偏差。這顯著改善了<span class=\"outcome-kpi\">平均偵測時間（MTTD）</span>並減少了微小停機，從而提升了<span class=\"outcome-kpi\">OEE效能稼動率和可用率。</span>",
+                rtm_outcome_bullet_2_strong: "預防重大故障與生產中斷：",
+                rtm_outcome_bullet_2_text: "對於<span class=\"outcome-role\">生產計劃員和工廠管理</span>，來自FDC和其他感測器數據的即時監控所產生的主動警報能夠實現干預，防止在<span class=\"outcome-process\">大批量生產運行</span>期間發生災難性設備故障，直接提升<span class=\"outcome-kpi\">OEE的可用率部分（計劃外停機時間可能減少5-10%）。</span>",
+                rtm_outcome_bullet_3_strong: "改進設備效能與吞吐量：",
+                rtm_outcome_bullet_3_text: "數位孿生模擬允許<span class=\"outcome-role\">流程工程師</span>針對各種<span class=\"outcome-process\">生產情境（例如，裝配線或工廠工具內的不同產品類型或批量大小）</span>優化設備設定，從而提高<span class=\"outcome-kpi\">效能效率（OEE的一部分）、縮短週期時間並增加吞吐量。</span>",
+                rtm_outcome_bullet_4_strong: "更精確的設備問題診斷：",
+                rtm_outcome_bullet_4_text: "全面的FDC數據分析為<span class=\"outcome-role\">維護技術人員和設備工程師</span>提供了對<span class=\"outcome-process\">複雜工具（例如，識別特定腔室問題、感測器故障）</span>中設備故障根本原因的更深入洞察，將<span class=\"outcome-kpi\">平均修復時間（MTTR）縮短10-20%。</span>",
+                qoee_section_title: "3. 可量化的OEE改進與案例研究相關性",
+                qoee_intro_paragraph: "SAS解決方案已在各種高科技製造環境中展示了在可用率、效能稼動率和品質良率方面的顯著改進——OEE的核心組成部分。",
+                qoee_case_km_title: "柯尼卡美能達（高資本設備）",
+                qoee_case_km_impact: "透過分析感測器數據預測故障並避免計劃外停機，最大限度地提高了生產率。",
+                qoee_case_km_kpi: "OEE影響：減少設備停機時間（↑ 可用率）。",
+                qoee_case_semibe_title: "半導體後端設備領導者",
+                qoee_case_semibe_impact: "AI賦能的智慧機器，用於預測品質、異常偵測、規範性維護。",
+                qoee_case_semibe_kpi: "OEE影響：改進IC封裝品質，提高生產速度（↑ 效能稼動率），增強可用率。",
+                qoee_case_solar_title: "太陽能電池板製造商",
+                qoee_case_solar_impact: "使用電腦視覺進行缺陷偵測，減少廢品和停機時間。",
+                qoee_case_solar_kpi: "OEE影響：減少廢品（↑ 品質良率），減少停機時間（↑ 可用率），提高生產良率（↑ 效能稼動率和品質良率）。",
+                qoee_case_hdd_title: "硬碟驅動器製造商",
+                qoee_case_hdd_impact: "AI/ML改進了品質和良率，大幅降低了故障率。",
+                qoee_case_hdd_kpi: "OEE影響：驅動器故障率降至約0%（↑ 品質良率）；良率偏移早期預警（保持↑ 效能稼動率和品質良率）。",
+                qoee_relevance_title: "對臺灣高科技製造商的適用性：",
+                qoee_relevance_text: "臺灣高科技製造商，特別是在資本密集的半導體晶圓廠和精密電子組裝領域，面臨著最大化OEE的巨大壓力。已證明的SAS解決方案可以直接轉化為：",
+                qoee_relevance_bullet_1: "提高關鍵工具（光刻、蝕刻、CMP）的正常運行時間。",
+                qoee_relevance_bullet_2: "改進複雜流程的吞吐量和週期時間。",
+                qoee_relevance_bullet_3: "減少廢品和重工，提高首次通過良率。",
+                qoee_relevance_bullet_4: "降低維護成本並優化工程資源的使用。",
+                qoee_relevance_bullet_5: "透過「公民數據科學家」工具賦能本地工程人才，主動管理設備健康和流程效能。",
+                tech_oee_section_title: "4. SAS OEE卓越技術支援",
+                tech_oee_intro_paragraph: "SAS全面的分析平台為這些先進的OEE解決方案提供了技術支柱。",
+                tech_oee_viya_title: "<span class=\"tech-highlight\">SAS Viya 平台</span>",
+                tech_oee_viya_text: "數據整合、進階分析、AI/ML模型開發（<span class=\"tech-highlight\">VDMML, Model Studio</span>）和可視化（<span class=\"tech-highlight\">Visual Analytics</span>）的中央樞紐。其<span class=\"tech-highlight\">CAS</span>引擎處理大規模數據，用於訓練預測性維護和異常偵測模型。",
+                tech_oee_esp_title: "<span class=\"tech-highlight\">SAS Event Stream Processing (ESP)</span>",
+                tech_oee_esp_text: "實現邊緣感測器/FDC數據的即時擷取和分析。部署分析模型進行流內評分、異常偵測，並觸發對主動OEE管理至關重要的即時警報或控制操作。",
+                tech_oee_optimization_title: "<span class=\"tech-highlight\">SAS Optimization</span>",
+                tech_oee_optimization_text: "提供強大的演算法，根據預測性洞察和操作約束優化維護計畫、資源分配和設備設定（作為數位孿生模擬的一部分）。",
+                tech_oee_datamgt_title: "數據管理與治理工具",
+                tech_oee_datamgt_text: "諸如<span class=\"tech-highlight\">SAS Data Integration Studio</span>、<span class=\"tech-highlight\">SAS Viya Data Preparation</span>和<span class=\"tech-highlight\">SAS Information Governance</span>之類的工具可確保來自不同製造來源（MES、FDC、歷史庫）的高品質、整合數據，用於可靠的OEE分析。",
+                oee_conclusion_title: "結論：透過SAS分析提升OEE",
+                oee_conclusion_paragraph: "透過整合先進的預測性維護、即時異常偵測、複雜的FDC數據分析和AI驅動的數位孿生，SAS為臺灣高科技製造商提供了一個強大的框架，以顯著改善整體設備效率。這種數據驅動的方法可以減少停機時間、優化效能、提高品質，並最終在全球市場上增強競爭力。",
+                footer_copyright: "© SAS Institute Inc. 版權所有。",
+                footer_disclaimer_oee: "本文件重點介紹基於所提供材料的SAS OEE解決方案。"
+            }
+        };
+
+        document.addEventListener('DOMContentLoaded', function () {
+            const navLinks = document.querySelectorAll('.nav-link');
+            const sections = document.querySelectorAll('main section');
+            const header = document.querySelector('header');
+            let headerHeight = header ? header.offsetHeight : 70; 
+
+            window.addEventListener('resize', () => {
+                 headerHeight = header ? header.offsetHeight : 70;
+            });
+            
+            navLinks.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const targetId = this.getAttribute('href');
+                    const targetElement = document.querySelector(targetId);
+                    if (targetElement) {
+                        const elementPosition = targetElement.getBoundingClientRect().top + window.pageYOffset;
+                        const offsetPosition = elementPosition - headerHeight - 15; 
+
+                        window.scrollTo({
+                            top: offsetPosition,
+                            behavior: 'smooth'
+                        });
+                    }
+                });
+            });
+
+            function makeLinkActive() {
+                let current = 'intro-oee'; 
+                sections.forEach(section => {
+                    const sectionTop = section.offsetTop - headerHeight - 20; 
+                     if (pageYOffset >= sectionTop) {
+                        current = section.getAttribute('id');
+                    }
+                });
+                navLinks.forEach(link => {
+                    link.classList.remove('active');
+                    if (link.getAttribute('href') && link.getAttribute('href').substring(1) === current) {
+                        link.classList.add('active');
+                    }
+                });
+            }
+            window.addEventListener('scroll', makeLinkActive);
+            makeLinkActive(); 
+
+            const langButtons = document.querySelectorAll('.lang-switcher button');
+            let currentLang = 'en'; 
+
+            function translatePage(lang) {
+                document.documentElement.lang = lang;
+                currentLang = lang;
+                document.querySelectorAll('[data-translate-key]').forEach(el => {
+                    const key = el.getAttribute('data-translate-key');
+                    if (translations[lang] && translations[lang][key]) {
+                        el.innerHTML = translations[lang][key];
+                    } else {
+                        if (translations['en'] && translations['en'][key]) {
+                            el.innerHTML = translations['en'][key]; 
+                        }
+                    }
+                });
+                langButtons.forEach(btn => {
+                    btn.classList.toggle('active', btn.getAttribute('data-lang') === lang);
+                });
+            }
+
+            langButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    const lang = button.getAttribute('data-lang');
+                    translatePage(lang);
+                });
+            });
+            translatePage(currentLang); 
+        });
+    </script>
+</body>
+</html>

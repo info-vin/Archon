@@ -1,0 +1,1038 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enhancing Yield Management and Defect Reduction: A SAS Technical Deep Dive</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Visualization & Content Choices:
+        - Challenge Validations: Goal: Inform. Viz: Bulleted lists in cards. Method: HTML/Tailwind. NO SVG.
+        - Data Ingestion & Prep Flow: Goal: Organize. Viz: HTML/CSS diagram. Method: HTML/Tailwind. NO SVG/Mermaid.
+        - Low Yield Analysis Workflow Diagram: Goal: Organize. Viz: HTML/CSS diagram. Method: HTML/Tailwind. NO SVG/Mermaid.
+        - AI Defect Detection (PCB) Diagram: Goal: Organize. Viz: HTML/CSS diagram. Method: HTML/Tailwind. NO SVG/Mermaid.
+        - Computer Vision Architecture Diagram: Goal: Organize. Viz: HTML/CSS diagram. Method: HTML/Tailwind. NO SVG/Mermaid.
+        - Overall Yield & Defect System Architecture Diagram: Goal: Organize. Viz: HTML/CSS diagram. Method: HTML/Tailwind. NO SVG/Mermaid.
+        - Operational Outcomes: Goal: Inform. Viz: Bulleted lists in outcome-cards. Method: HTML/Tailwind. NO SVG.
+        - CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .content-section { margin-bottom: 3rem; }
+        .section-title { font-size: 2.25rem; font-weight: 700; color: #1d4ed8; margin-bottom: 1.5rem; padding-bottom: 0.5rem; border-bottom: 2px solid #3b82f6; }
+        .subsection-title { font-size: 1.75rem; font-weight: 600; color: #2563eb; margin-bottom: 1rem; margin-top: 2rem; }
+        .point-title { font-size: 1.25rem; font-weight: 600; color: #1e3a8a; margin-bottom: 0.75rem; }
+        .detail-card { background-color: white; border-radius: 0.5rem; padding: 1.5rem; margin-bottom: 1rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06); }
+        .detail-label { font-weight: 700; color: #1e40af; display: block; margin-bottom: 0.25rem; }
+        .outcome-card { background-color: #eff6ff; border-left: 4px solid #2563eb; padding: 1rem; margin-top: 0.5rem; border-radius: 0.25rem; }
+        ul { list-style-position: inside; }
+        li { margin-bottom: 0.5rem; }
+        .tech-highlight { font-family: 'Courier New', Courier, monospace; background-color: #e0e7ff; padding: 0.1rem 0.3rem; border-radius: 0.2rem; color: #3730a3; font-size: 0.9em; }
+        .diagram-container { background-color: #f9fafb; padding: 1.5rem; border-radius: 0.5rem; margin-top: 1rem; border: 1px solid #e5e7eb; }
+        .diagram-title { font-size: 1rem; font-weight: 600; color: #1e3a8a; margin-bottom: 1rem; text-align: center; }
+        .diagram-box { background-color: #eef2ff; border: 1px solid #c7d2fe; color: #4338ca; padding: 0.5rem; border-radius: 0.375rem; text-align: center; font-size: 0.8rem; line-height: 1.2; margin-bottom: 0.5rem; }
+        .diagram-arrow { display: flex; align-items: center; justify-content: center; font-size: 1.25rem; color: #4f46e5; margin: 0.1rem 0; }
+        .text-sm-detail { font-size: 0.875rem; line-height: 1.6; color: #374151; }
+        .list-disc-detail li { margin-bottom: 0.4rem; }
+        .lang-switcher button { padding: 0.25rem 0.5rem; margin: 0 0.25rem; background-color: #4f46e5; color: white; border-radius: 0.25rem; font-size: 0.75rem;}
+        .lang-switcher button.active { background-color: #3730a3; font-weight: bold;}
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800">
+
+    <header class="bg-blue-700 text-white py-6 shadow-lg">
+        <div class="container mx-auto px-6 flex flex-col sm:flex-row justify-between items-center">
+            <div>
+                <h1 data-translate-key="mainTitle" class="text-2xl md:text-3xl font-bold text-center sm:text-left">Enhancing Yield Management and Defect Reduction</h1>
+                <p data-translate-key="mainSubtitle" class="text-lg md:text-xl text-center sm:text-left mt-1 text-blue-200">A SAS Technical Deep Dive for Taiwan's High-Tech Manufacturers</p>
+            </div>
+            <div class="lang-switcher mt-4 sm:mt-0">
+                <button data-lang="en" class="active">English</button>
+                <button data-lang="zh-CN">简体中文</button>
+                <button data-lang="zh-TW">繁體中文</button>
+            </div>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-6 py-12">
+        <p data-translate-key="introParagraph" class="text-lg text-slate-700 mb-8 leading-relaxed">
+            The core challenge in semiconductor and PCB manufacturing—managing immense complexity and data volumes to maximize yield and minimize defects—is precisely what SAS aims to address. SAS's multi-faceted approach, combining robust data handling, advanced statistical methods, and sophisticated AI/ML techniques, is well-documented and designed to deliver tangible operational outcomes. This document provides a technical validation of these capabilities with enhanced detail and illustrative diagrams.
+        </p>
+
+        <section class="content-section">
+            <h2 data-translate-key="section1Title" class="section-title">1. SAS Methodologies for Yield Prediction and Optimization: Technical Validation and Operational Outcomes</h2>
+            <p data-translate-key="section1Intro" class="text-slate-600 mb-6">SAS's "Quality Mining" and "Low Yield Analysis" are structured methodologies built upon the SAS Viya platform. They leverage SAS Viya's powerful data processing (CAS - Cloud Analytic Services) and analytical engines (like VDMML) to deliver tangible results.</p>
+
+            <div>
+                <h3 data-translate-key="subsection1_1Title" class="subsection-title">1.1 Data Extraction and Preparation (The Foundation)</h3>
+                <div class="detail-card">
+                    <p><span data-translate-key="challengeValidationLabel" class="detail-label">Challenge Validation:</span> <span data-translate-key="challenge1_1_text">High-tech manufacturing environments generate massive, often siloed datasets from diverse systems like MES (Manufacturing Execution Systems), EWS (Early Warning Systems), FDC (Fault Detection and Classification), CP (Characterization Program), WAT (Wafer Acceptance Test), process history, and equipment logs. This data is frequently "dirty" (containing errors, outliers, inconsistencies), "summarized" (lacking necessary granularity), or "sampled" (not representing the full process), demanding significant engineering hours for preparation to make it suitable for reliable analytics.</span></p>
+                </div>
+                <div class="detail-card">
+                    <p><span data-translate-key="solutionLabel_1_1_1" class="detail-label">SAS Technical Solution & Operational Outcome (SAS Data Integration Studio / SAS Studio Flows / SAS Viya Data Preparation):</span></p>
+                    <p data-translate-key="solutionText_1_1_1" class="text-sm-detail">These tools automate the creation and management of robust big data pipelines at scale. They facilitate ETL (Extraction, Transformation, Loading) and ELT processes, connecting to and processing data from varied sources including relational databases (Oracle, PostgreSQL), data warehouses, Hadoop, flat files, and streaming data endpoints. Key capabilities include:</p>
+                    <ul class="list-disc-detail pl-5 mt-2 text-sm-detail">
+                        <li data-translate-key="solutionBullet_1_1_1_a"><strong>Automated Data Ingestion:</strong> Scheduled or event-driven data pulls from source systems.</li>
+                        <li data-translate-key="solutionBullet_1_1_1_b"><strong>Data Cleansing & Validation:</strong> Identifying and handling missing values, outliers, and inconsistencies using predefined rules or data quality functions.</li>
+                        <li data-translate-key="solutionBullet_1_1_1_c"><strong>Data Transformation:</strong> Aggregating, joining, transposing, and deriving new variables to structure data appropriately for analysis (e.g., creating time-based features, aligning sensor data with lot/wafer context).</li>
+                        <li data-translate-key="solutionBullet_1_1_1_d"><strong>Scalable Processing:</strong> Leveraging <span class="tech-highlight">SAS Viya's CAS</span> engine for distributed, in-memory processing of large datasets.</li>
+                    </ul>
+                    <div class="outcome-card">
+                        <p><span data-translate-key="outcomeLabel" class="font-semibold text-blue-700">Operational Outcome:</span> <span data-translate-key="outcomeText_1_1_1">Significant reduction in manual data preparation time (often by >50%), consistent data quality across projects, and the ability to efficiently handle terabytes of manufacturing data. This frees up valuable engineering resources to focus on analysis and interpretation rather than data wrangling.</span></p>
+                    </div>
+                </div>
+                <div class="detail-card">
+                    <p><span data-translate-key="solutionLabel_1_1_2" class="detail-label">SAS Technical Solution & Operational Outcome (SAS Enterprise Guide - EG):</span></p>
+                     <p data-translate-key="solutionText_1_1_2" class="text-sm-detail">EG is frequently used as a user-friendly, project-based front-end for data access, manipulation, ad-hoc analysis, and reporting. It's particularly valued for its ease of use in accessing <span class="tech-highlight">SAS Viya's CAS</span> for high-performance, multi-threaded data processing. Engineers can create reusable process flows to automate routine data preparation tasks. The TSMC case specifically highlights leveraging EG with Viya CAS to boost data preparation performance and enable efficient EDA.</p>
+                    <div class="outcome-card">
+                        <p><span data-translate-key="outcomeLabel" class="font-semibold text-blue-700">Operational Outcome:</span> <span data-translate-key="outcomeText_1_1_2">Empowers engineers and analysts (including those who are not expert programmers) to perform complex data manipulations and ad-hoc queries more efficiently, accelerating the initial stages of any yield analysis project and fostering a data-driven culture.</span></p>
+                    </div>
+                </div>
+                <div class="detail-card">
+                    <p><span data-translate-key="solutionLabel_1_1_3" class="detail-label">SAS Technical Solution & Operational Outcome (Data "Cooking" and Analytical Data Marts):</span></p>
+                    <p data-translate-key="solutionText_1_1_3" class="text-sm-detail">SAS enables the transformation of raw, often disparate, manufacturing data into "analytics-ready data" by creating structured Analytical Data Marts or Analytical Base Tables (ABTs). This involves:</p>
+                    <ul class="list-disc-detail pl-5 mt-2 text-sm-detail">
+                        <li data-translate-key="solutionBullet_1_1_3_a">Systematic handling of missing values (e.g., imputation based on statistical measures or predictive models).</li>
+                        <li data-translate-key="solutionBullet_1_1_3_b">Deriving new and meaningful features (feature engineering), such as calculating summary statistics over time windows, creating interaction terms, or transforming variables for better model performance.</li>
+                        <li data-translate-key="solutionBullet_1_1_3_c">Ensuring high data quality and consistency suitable for advanced modeling.</li>
+                        <li data-translate-key="solutionBullet_1_1_3_d">The "Automated Feature Machine" within <span class="tech-highlight">SAS Viya (VDMML)</span> can automate many data transformation and feature creation tasks, incorporating best practices to generate optimal features for models, thereby reducing manual trial-and-error.</li>
+                    </ul>
+                    <div class="outcome-card">
+                        <p><span data-translate-key="outcomeLabel" class="font-semibold text-blue-700">Operational Outcome:</span> <span data-translate-key="outcomeText_1_1_3">Higher quality input data for models, leading to more accurate and reliable predictions. Automation in feature engineering saves considerable time and effort, allowing for more sophisticated features to be developed and tested, ultimately improving model performance and insight generation.</span></p>
+                    </div>
+                    <div class="diagram-container">
+                        <h4 data-translate-key="diagramTitle_DataIngestion" class="diagram-title">Data Ingestion & Preparation Flow</h4>
+                        <div class="grid grid-cols-3 gap-2 items-center">
+                            <div class="col-span-1 space-y-1">
+                                <div data-translate-key="diagram_mesData" class="diagram-box text-xs">MES Data</div>
+                                <div data-translate-key="diagram_fdcSensorData" class="diagram-box text-xs">FDC/Sensor Data</div>
+                                <div data-translate-key="diagram_watCpData" class="diagram-box text-xs">WAT/CP Data</div>
+                                <div data-translate-key="diagram_equipmentLogs" class="diagram-box text-xs">Equipment Logs</div>
+                            </div>
+                            <div class="col-span-1 text-center">
+                                <div class="diagram-arrow text-2xl">➡️</div>
+                            </div>
+                            <div class="col-span-1 space-y-1">
+                                <div data-translate-key="diagram_sasViyaDI" class="diagram-box h-full flex flex-col justify-center"><span class="tech-highlight">SAS Viya</span><br/>Data Integration, Prep & Quality (DI Studio, Studio Flows, Viya Data Prep, EG)</div>
+                            </div>
+                        </div>
+                        <div class="diagram-arrow text-2xl text-center my-1">⬇️</div>
+                        <div data-translate-key="diagram_adm" class="diagram-box w-2/3 mx-auto">Curated Analytical Data Mart / ABT</div>
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <h3 data-translate-key="subsection1_2Title" class="subsection-title">1.2 Yield Prediction Modeling (The Core Analytics)</h3>
+                <div class="detail-card">
+                     <p><span data-translate-key="challengeValidationLabel" class="detail-label">Challenge Validation:</span> <span data-translate-key="challenge1_2_text">Predicting End-of-Line (EOL) yield at various critical process steps using vast and complex upstream process data (from hundreds or thousands of parameters) is a significant hurdle. The specific factors and their interactions impacting yield are often unknown or not clearly understood, making traditional statistical modeling insufficient.</span></p>
+                </div>
+                <div class="detail-card">
+                    <p><span data-translate-key="solutionLabel_1_2_1" class="detail-label">SAS Technical Solution & Operational Outcome (SAS Visual Data Mining and Machine Learning - VDMML):</span></p>
+                    <p data-translate-key="solutionText_1_2_1" class="text-sm-detail">VDMML, a key component of <span class="tech-highlight">SAS Viya</span>, provides a comprehensive, interactive, and often automated environment for building, evaluating, and deploying predictive models. It supports a wide range of supervised learning algorithms crucial for yield prediction:</p>
+                    <ul class="list-disc-detail pl-5 mt-2 text-sm-detail">
+                        <li data-translate-key="solutionBullet_1_2_1_a"><strong>Decision Trees, Gradient Boosting, Random Forests:</strong> These ensemble methods are extensively used to classify outcomes (e.g., good/bad wafer, assigning to high/low yield bins based on EOL test results) and, importantly, to identify the most influential manufacturing stages or process parameters affecting yield through variable importance measures (e.g., Gini importance, permutation importance). They excel at handling mixed data types and capturing non-linear relationships.</li>
+                        <li data-translate-key="solutionBullet_1_2_1_b"><strong>Regression Models (Linear, Quantile, Generalized Linear Models, Partial Least Squares - PLS):</strong> These are employed to predict continuous yield values directly or specific quality inspection metrics based on a set of input parameters. PLS is particularly useful when dealing with many, potentially collinear, predictor variables (common in FDC data).</li>
+                        <li data-translate-key="solutionBullet_1_2_1_c"><strong>Neural Networks & Deep Learning:</strong> For capturing highly complex, non-linear relationships and interactions between numerous process parameters and yield outcomes, which are common in intricate semiconductor or advanced PCB manufacturing processes.</li>
+                    </ul>
+                    <div class="outcome-card">
+                        <p><span data-translate-key="outcomeLabel" class="font-semibold text-blue-700">Operational Outcome:</span> <span data-translate-key="outcomeText_1_2_1">More precise EOL yield predictions at critical junctures, enabling proactive adjustments. Clear identification of key process variables, equipment, and stages that significantly impact yield, allowing engineers to focus their improvement efforts. This was a key achievement in the TSMC engagement, leading to better process understanding and control.</span></p>
+                    </div>
+                </div>
+                <div class="detail-card">
+                    <p><span data-translate-key="solutionLabel_1_2_2" class="detail-label">SAS Technical Solution & Operational Outcome (High-Performance Computing - CAS):</span></p>
+                    <p data-translate-key="solutionText_1_2_2" class="text-sm-detail">SAS Viya’s in-memory Cloud Analytic Services (CAS) architecture is designed for massively parallel, distributed processing of large datasets. This is particularly vital in semiconductor manufacturing where data volumes from FDC, WAT, and MES can easily reach terabytes or petabytes. CAS enables significantly faster model training, scoring, and iterative model refinement by distributing computations across multiple nodes and cores.</p>
+                    <div class="outcome-card">
+                        <p><span data-translate-key="outcomeLabel" class="font-semibold text-blue-700">Operational Outcome:</span> <span data-translate-key="outcomeText_1_2_2">Drastic reduction in model development and deployment times (from days/weeks to hours/days), allowing for more frequent model updates to adapt to process changes and quicker responses to emerging yield issues. Enables analysis of full datasets rather than relying on samples.</span></p>
+                    </div>
+                </div>
+                 <div class="detail-card">
+                    <p><span data-translate-key="solutionLabel_1_2_3" class="detail-label">SAS Technical Solution & Operational Outcome (Automated Machine Learning - AutoML):</span></p>
+                    <p data-translate-key="solutionText_1_2_3" class="text-sm-detail">SAS Viya includes AutoML capabilities (e.g., within Model Studio) which automate significant parts of the model development lifecycle. This includes automated feature engineering, algorithm selection (testing multiple algorithms like logistic regression, gradient boosting, neural networks, etc.), and hyperparameter tuning to find the best performing model for yield prediction or classification tasks with minimal manual intervention.</p>
+                    <div class="outcome-card">
+                        <p><span data-translate-key="outcomeLabel" class="font-semibold text-blue-700">Operational Outcome:</span> <span data-translate-key="outcomeText_1_2_3">Faster deployment of effective yield prediction models. Democratization of model building, enabling process engineers (Citizen Data Scientists) to develop and deploy robust models without deep data science expertise, thus addressing talent shortages.</span></p>
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <h3 data-translate-key="subsection1_3Title" class="subsection-title">1.3 Optimization and Root Cause Identification (The Actionable Insights)</h3>
+                 <div class="detail-card">
+                    <p><span data-translate-key="challengeValidationLabel" class="detail-label">Challenge Validation:</span> <span data-translate-key="challenge1_3_text">Root cause analysis (RCA) for yield excursions is often a lengthy, manual, and inconclusive process, relying heavily on tribal knowledge. Identifying optimal conditions for process recipes to maximize yield can also be unclear and involve costly trial-and-error.</span></p>
+                </div>
+                <div class="detail-card">
+                    <p><span data-translate-key="solutionLabel_1_3_1" class="detail-label">SAS Technical Solution & Operational Outcome (AI-Assisted Yield Management):</span></p>
+                    <p data-translate-key="solutionText_1_3_1" class="text-sm-detail">SAS uses the insights derived from the trained AI models to perform faster and more accurate RCA. This includes leveraging model interpretability features:</p>
+                    <ul class="list-disc-detail pl-5 mt-2 text-sm-detail">
+                        <li data-translate-key="solutionBullet_1_3_1_a"><strong>Variable Importance Rankings:</strong> From tree-based models (Random Forest, Gradient Boosting) to identify the most influential parameters.</li>
+                        <li data-translate-key="solutionBullet_1_3_1_b"><strong>Partial Dependence Plots (PDP) & Individual Conditional Expectation (ICE) plots:</strong> To understand how changes in specific parameters affect predicted yield.</li>
+                        <li data-translate-key="solutionBullet_1_3_1_c"><strong>LIME (Local Interpretable Model-agnostic Explanations) or SHAP (SHapley Additive exPlanations) values (if supported/integrated):</strong> To explain individual predictions and identify contributing factors for specific low-yield events.</li>
+                    </ul>
+                    <div class="outcome-card">
+                        <p><span data-translate-key="outcomeLabel" class="font-semibold text-blue-700">Operational Outcome:</span> <span data-translate-key="outcomeText_1_3_1">Quicker and more accurate identification of the true root causes of yield loss, enabling more effective and targeted corrective actions, moving beyond simple correlations to understand causal drivers.</span></p>
+                    </div>
+                </div>
+                <div class="detail-card">
+                    <p><span data-translate-key="solutionLabel_1_3_2" class="detail-label">SAS Technical Solution & Operational Outcome (Low Yield Analysis Workflow):</span></p>
+                    <p data-translate-key="solutionText_1_3_2" class="text-sm-detail">This is a structured, often automated, approach within SAS to systematically diagnose yield problems:</p>
+                    <ul class="list-disc-detail pl-5 mt-2 text-sm-detail">
+                        <li data-translate-key="solutionBullet_1_3_2_a"><strong>Problem Definition & Data Selection:</strong> Clearly defining the yield issue (e.g., specific defect type, affected product/process step) and automatically extracting relevant data (process parameters, equipment IDs, timestamps, material IDs, upstream/downstream data) for the affected lots/wafers versus a "golden" or high-yield population.</li>
+                        <li data-translate-key="solutionBullet_1_3_2_b"><strong>Automated Pattern Discovery (Classification/Clustering):</strong> Grouping defective wafers based on spatial defect patterns on the wafer map (e.g., edge defects, center clusters, scratches using spatial clustering algorithms like DBScan) or by parametric signatures (e.g., wafers failing specific electrical tests, using K-Means or hierarchical clustering on WAT data).</li>
+                        <li data-translate-key="solutionBullet_1_3_2_c"><strong>Difference Testing & Commonality/Variability Analysis:</strong> Employing statistical tests (e.g., T-tests, ANOVA, Chi-squared) and decision tree analysis to automatically compare distributions of hundreds/thousands of process parameters, equipment settings, and material characteristics between high-yield and low-yield groups (or different defect clusters). This helps pinpoint statistically significant differences and identify critical process steps, specific equipment (EQP), chambers (CHB), or material batches contributing to yield variations.</li>
+                        <li data-translate-key="solutionBullet_1_3_2_d"><strong>Interactive Data Mart Creation & EDA:</strong> Generating temporary, focused data marts that consolidate relevant data for the specific yield issue. Engineers can then use <span class="tech-highlight">SAS Visual Analytics</span> or <span class="tech-highlight">SAS Enterprise Guide</span> for interactive Exploratory Data Analysis (EDA) – creating box plots, scatter plots, correlation matrices, parallel coordinate plots – to visually explore relationships highlighted by the automated analysis and validate findings.</li>
+                    </ul>
+                    <div class="outcome-card">
+                        <p><span data-translate-key="outcomeLabel" class="font-semibold text-blue-700">Operational Outcome:</span> <span data-translate-key="outcomeText_1_3_2">A systematic and significantly accelerated approach to RCA, reducing analysis time for complex yield issues from days/weeks to hours (e.g., from 82 hours to 10 hours in reported cases). Provides engineers with statistically validated, targeted areas for investigation and corrective action.</span></p>
+                    </div>
+                    <div class="diagram-container">
+                        <h4 data-translate-key="diagramTitle_LYA" class="diagram-title">Low Yield Analysis Workflow</h4>
+                        <div data-translate-key="diagram_lya1" class="diagram-box text-xs">1. Define Low Yield Problem & Select Data (Low vs. High Yield Lots)</div>
+                        <div class="diagram-arrow">⬇️</div>
+                        <div data-translate-key="diagram_lya2" class="diagram-box text-xs">2. Automated Pattern Discovery (Spatial/Parametric Clustering of Defects/Failures)</div>
+                        <div class="diagram-arrow">⬇️</div>
+                        <div data-translate-key="diagram_lya3" class="diagram-box text-xs">3. Difference Testing & Commonality Analysis (Identify Key Parameters/Equipment/Steps)</div>
+                        <div class="diagram-arrow">⬇️</div>
+                        <div data-translate-key="diagram_lya4" class="diagram-box text-xs">4. Interactive EDA by Engineers (Visual Analytics, EG)</div>
+                        <div class="diagram-arrow">⬇️</div>
+                        <div data-translate-key="diagram_lya5" class="diagram-box text-xs">5. Root Cause Identified & Corrective Action</div>
+                    </div>
+                </div>
+                <div class="detail-card">
+                    <p><span data-translate-key="solutionLabel_1_3_3" class="detail-label">SAS Technical Solution & Operational Outcome (Process Simulation / Digital Twins for Yield):</span></p>
+                    <p data-translate-key="solutionText_1_3_3" class="text-sm-detail">SAS supports the creation and use of AI-driven digital twins to simulate manufacturing processes specifically for yield optimization. The predictive yield models (linking process parameters to yield outcomes) form the core of this digital twin. This allows engineers to:</p>
+                    <ul class="list-disc-detail pl-5 mt-2 text-sm-detail">
+                        <li data-translate-key="solutionBullet_1_3_3_a">Virtually test the impact of new recipe parameters or process adjustments on predicted yield *before* implementation on the factory floor.</li>
+                        <li data-translate-key="solutionBullet_1_3_3_b">Identify optimal operating windows and robust recipe settings that maximize yield while minimizing variability.</li>
+                        <li data-translate-key="solutionBullet_1_3_3_c">The photomask blanks film formation case, where ML predicts quality values (a proxy for yield) and optimization algorithms search for optimal control parameters, is a prime example of this approach.</li>
+                    </ul>
+                    <div class="outcome-card">
+                        <p><span data-translate-key="outcomeLabel" class="font-semibold text-blue-700">Operational Outcome:</span> <span data-translate-key="outcomeText_1_3_3">Reduced time and cost for process optimization and yield ramp-up for new products/processes. Identification of more robust process windows leading to sustained high yield. Minimized risk associated with implementing process changes.</span></p>
+                    </div>
+                </div>
+                <div class="detail-card">
+                    <p><span data-translate-key="solutionLabel_1_3_4" class="detail-label">SAS Technical Solution & Operational Outcome (Early Warning Systems - EWS for Yield):</span></p>
+                    <p data-translate-key="solutionText_1_3_4" class="text-sm-detail">SAS solutions, particularly leveraging <span class="tech-highlight">SAS Event Stream Processing (ESP)</span>, enable the development of EWS that predict and flag process anomalies or deviations likely to lead to yield excursions *in real-time*. Models trained on historical data to identify precursors to low yield events are deployed in ESP to score live sensor and process data. This was a key benefit for the HDD manufacturer, which reduced its early warning time for potential yield excursions from 78 days to 5 days or less.</p>
+                    <div class="outcome-card">
+                        <p><span data-translate-key="outcomeLabel" class="font-semibold text-blue-700">Operational Outcome:</span> <span data-translate-key="outcomeText_1_3_4">Proactive prevention of yield loss by allowing engineers to intervene *before* out-of-specification conditions occur or low-yield material is produced. Leads to more stable and higher average yield rates (e.g., improvement from 60% to 80% in some projects).</span></p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="content-section">
+            <h2 data-translate-key="section2Title" class="section-title">2. AI-Driven Defect Detection, Classification, and Root Cause Analysis: Technical Validation and Operational Outcomes</h2>
+            <p data-translate-key="section2Intro" class="text-slate-600 mb-6">SAS leverages AI/ML not only for overall yield prediction but also for the specific challenges of defect management, including automated detection, accurate classification, and efficient root cause analysis.</p>
+
+            <div>
+                <h3 data-translate-key="subsection2_1Title" class="subsection-title">2.1 Automated Defect Detection & Classification</h3>
+                <div class="detail-card">
+                    <p><span data-translate-key="challengeValidationLabel" class="detail-label">Challenge Validation:</span> <span data-translate-key="challenge2_1_text">Manual defect detection is notoriously slow, error-prone, and inconsistent, especially for subtle or complex defects. Traditional SPC methods may not effectively catch complex, emerging defect patterns or subtle process deviations leading to specific defect types.</span></p>
+                </div>
+                <div class="detail-card">
+                    <p><span data-translate-key="solutionLabel_2_1_1" class="detail-label">SAS Technical Solution & Operational Outcome (Machine Learning Algorithms - VDMML):</span></p>
+                    <p data-translate-key="solutionText_2_1_1" class="text-sm-detail">Algorithms such as decision trees, gradient boosting, random forests, and support vector machines in <span class="tech-highlight">SAS VDMML</span> are used to build models that can automatically classify products or components (e.g., good/bad wafer, presence/absence of specific defect types like scratches, particles, voids) based on parametric, sensor, or image data. These models also help identify the manufacturing stages or process parameters most influential in causing these specific defects.</p>
+                     <div class="outcome-card">
+                        <p><span data-translate-key="outcomeLabel" class="font-semibold text-blue-700">Operational Outcome:</span> <span data-translate-key="outcomeText_2_1_1">Increased accuracy, speed, and consistency in defect classification compared to manual methods. Identification of critical control points for specific defect reduction, enabling targeted process improvements.</span></p>
+                    </div>
+                </div>
+                <div class="detail-card">
+                    <p><span data-translate-key="solutionLabel_2_1_2" class="detail-label">SAS Technical Solution & Operational Outcome (PCB Specifics - Defect Mapping & Image Pattern Analysis):</span></p>
+                    <p data-translate-key="solutionText_2_1_2" class="text-sm-detail">For PCB manufacturing, SAS provides specialized solutions that support detailed defect mapping by linking the physical X-Y coordinates of defects (often from Automated Optical Inspection - AOI, Automated Electrical Inspection - AEI, or Automated Visual Inspection - AVI systems) with specific process parameters (e.g., variations in temperature, pressure, speed during lamination, etching, or plating) and material information. This enables automated failure cause analysis based on defect coordinates and clustering techniques. This involves:</p>
+                    <ul class="list-disc-detail pl-5 mt-2 text-sm-detail">
+                        <li data-translate-key="solutionBullet_2_1_2_a"><strong>Data Integration:</strong> Combining defect data (images, coordinates, types) from AOI/AEI/AVI systems with contextual data from MES (lot history, routing), SPC (process measurements), FDC (equipment sensor data), and material tracking systems.</li>
+                        <li data-translate-key="solutionBullet_2_1_2_b"><strong>Spatial Analysis & Clustering:</strong> Using clustering algorithms (e.g., K-Means, DBScan, or spatial statistics) on defect coordinate data to identify defect hotspots (areas with unusually high defect density), recurring spatial patterns on the PCB surface (e.g., defects aligned in a specific direction, repeating patterns across multiple boards), and correlating these patterns with specific equipment (e.g., a particular printer, etcher, or plating tank), process steps, or even specific vendor materials.</li>
+                        <li data-translate-key="solutionBullet_2_1_2_c"><strong>Parameter Correlation & Defect Signatures:</strong> Linking defect locations, types, and frequencies with critical process parameters (e.g., copper thickness, line width/spacing, via characteristics, solder mask registration) and FDC sensor readings from the tools that processed those specific areas of the PCB. This helps build "defect signatures" associated with certain process deviations or equipment states.</li>
+                    </ul>
+                    <div class="outcome-card">
+                        <p><span data-translate-key="outcomeLabel" class="font-semibold text-blue-700">Operational Outcome:</span> <span data-translate-key="outcomeText_2_1_2">Faster identification of systematic defect sources in PCB manufacturing (e.g., a misaligned print head, a faulty plating bath, an issue with a specific batch of laminate). Enables targeted corrective actions on specific machines or process steps. Improved understanding of how subtle process variations translate to physical defects, leading to more robust process design and control.</span></p>
+                    </div>
+                    <div class="diagram-container">
+                        <h4 data-translate-key="diagramTitle_PCBDefect" class="diagram-title">AI-Driven Defect Detection & RCA (PCB Focus)</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
+                            <div>
+                                <div data-translate-key="diagram_pcb1" class="diagram-box text-xs">AOI/AEI/AVI Image Data (Defect Location, Type)</div>
+                                <div class="diagram-arrow">⬇️</div>
+                                <div data-translate-key="diagram_pcb2" class="diagram-box text-xs">MES/Process Data (Lot, Equipment, Parameters)</div>
+                            </div>
+                            <div class="md:mt-8"> 
+                                <div class="diagram-arrow md:rotate-0 rotate-90 text-2xl">➡️</div>
+                            </div>
+                             <div>
+                                <div data-translate-key="diagram_pcb3" class="diagram-box col-span-2 md:col-span-1"><span class="tech-highlight">SAS Viya (VDMML, Visual Analytics)</span><br/>Data Integration, Spatial Clustering, ML Classification, Parameter Correlation</div>
+                            </div>
+                        </div>
+                        <div class="diagram-arrow text-2xl text-center my-1">⬇️</div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+                            <div data-translate-key="diagram_pcb4" class="diagram-box text-xs">Defect Hotspot Maps & Pattern Identification</div>
+                            <div data-translate-key="diagram_pcb5" class="diagram-box text-xs">Root Cause Insights (Key Parameters/Equipment Linked to Defects)</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <h3 data-translate-key="subsection2_2Title" class="subsection-title">2.2 AI-Driven Root Cause Analysis (RCA) for Defects</h3>
+                <div class="detail-card">
+                     <p><span data-translate-key="challengeValidationLabel" class="detail-label">Challenge Validation:</span> <span data-translate-key="challenge2_2_text">Traditional RCA methods for specific defect types can be time-consuming, often relying on tribal knowledge and manual data sifting across multiple systems, leading to inconclusive results or addressing symptoms rather than true root causes.</span></p>
+                </div>
+                <div class="detail-card">
+                    <p><span data-translate-key="solutionLabel_2_2_1" class="detail-label">SAS Technical Solution & Operational Outcome (Model Interpretability):</span></p>
+                    <p data-translate-key="solutionText_2_2_1" class="text-sm-detail">SAS models (e.g., decision trees, logistic regression, gradient boosting, explainable AI techniques like LIME/SHAP if integrated/available) provide clear insights into variable importance, partial dependence plots, and individual prediction explanations. These features help engineers pinpoint which factors (specific process parameters, equipment settings, material batches, environmental conditions, operator actions) are most strongly correlated with, or causally contributing to, the occurrence of particular defects.</p>
+                    <div class="outcome-card">
+                        <p><span data-translate-key="outcomeLabel" class="font-semibold text-blue-700">Operational Outcome:</span> <span data-translate-key="outcomeText_2_2_1">More focused, data-driven, and faster RCA, reducing the time spent on investigating irrelevant factors. Increased confidence in RCA findings due to statistical validation.</span></p>
+                    </div>
+                </div>
+                <div class="detail-card">
+                    <p><span data-translate-key="solutionLabel_2_2_2" class="detail-label">SAS Technical Solution & Operational Outcome (Automated Workflow for RCA):</span></p>
+                    <p data-translate-key="solutionText_2_2_2" class="text-sm-detail">As part of the Low Yield Analysis framework (which can be adapted for specific defect RCA), <span class="tech-highlight">SAS Viya</span> can automate many steps in the RCA process. This includes automatically identifying statistically significant differences in numerous process parameters between defective and non-defective populations (or populations with different defect types), highlighting potential root causes through statistical tests (t-tests, ANOVA, chi-square) and decision tree/rule induction analysis.</p>
+                    <div class="outcome-card">
+                        <p><span data-translate-key="outcomeLabel" class="font-semibold text-blue-700">Operational Outcome:</span> <span data-translate-key="outcomeText_2_2_2">Standardization and significant acceleration of the RCA process for defects. Enables engineers to quickly narrow down potential causes from thousands of variables, leading to quicker problem resolution and prevention of recurrence.</span></p>
+                    </div>
+                </div>
+                <div class="detail-card">
+                    <p><span data-translate-key="solutionLabel_2_2_3" class="detail-label">SAS Technical Solution & Operational Outcome (Integration of Diverse Data for Holistic RCA):</span></p>
+                    <p data-translate-key="solutionText_2_2_3" class="text-sm-detail">By creating a unified data repository (as demonstrated in the Murata case, where quality, cost, and delivery data were integrated for holistic analysis), SAS enables a more comprehensive RCA. This allows engineers to consider data from all relevant manufacturing stages (e.g., incoming material quality certificates, specific tool processing history from FDC, environmental sensor data, operator logs, upstream/downstream test results) when investigating the origins of specific defects.</p>
+                    <div class="outcome-card">
+                        <p><span data-translate-key="outcomeLabel" class="font-semibold text-blue-700">Operational Outcome:</span> <span data-translate-key="outcomeText_2_2_3">More comprehensive and accurate RCA by uncovering complex interactions between different parts of the manufacturing process or supply chain that might contribute to defects. Avoids overlooking crucial factors that reside in siloed data systems.</span></p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="content-section">
+            <h2 data-translate-key="section3Title" class="section-title">3. Leveraging SAS Computer Vision for Quality Inspection: Technical Validation and Operational Outcomes</h2>
+            <p data-translate-key="section3Intro" class="text-slate-600 mb-6">SAS Computer Vision offers an automated, AI-powered approach to visual inspection, directly addressing the limitations of manual methods by providing higher accuracy, speed, and consistency.</p>
+
+            <div class="detail-card">
+                 <p><span data-translate-key="challengeValidationLabel" class="detail-label">Challenge Validation:</span> <span data-translate-key="challenge3_1_text">Manual visual inspection is inherently prone to human error due to fatigue and subjectivity, leading to inconsistency in defect detection. It's often a bottleneck in high-volume production and may not be feasible for 100% inspection of all units, especially where defects are microscopic or require sustained attention to detail.</span></p>
+            </div>
+            <div class="detail-card">
+                <p><span data-translate-key="solutionLabel_3_1_1" class="detail-label">SAS Technical Solution & Operational Outcome (Offline Model Training - SAS Visual Data Mining and Machine Learning):</span></p>
+                <p data-translate-key="solutionText_3_1_1" class="text-sm-detail">The process begins with developing robust deep learning models:</p>
+                <ul class="list-disc-detail pl-5 mt-2 text-sm-detail">
+                    <li data-translate-key="solutionBullet_3_1_1_a"><strong>Data Ingestion & Preparation:</strong> Raw video or image data from production line cameras, microscopes, or AOI systems is loaded into <span class="tech-highlight">SAS Viya's CAS</span> for distributed processing. This includes collecting a diverse set of labeled images representing both "good" products and various types of "defective" products.</li>
+                    <li data-translate-key="solutionBullet_3_1_1_b"><strong>Image Processing/Augmentation:</strong> Images undergo pre-processing (e.g., resizing to standard dimensions, color conversion, normalization, noise reduction using filters like Bilateral Filter) and extensive augmentation (e.g., rotation, flipping, scaling, brightness/contrast adjustments, adding synthetic noise). Augmentation artificially expands the training dataset, improving model robustness and its ability to generalize to unseen variations in lighting, orientation, or defect appearance. Techniques like Canny Edge detection can be applied if relevant for highlighting defect features.</li>
+                    <li data-translate-key="solutionBullet_3_1_1_c"><strong>Deep Learning Model Generation:</strong> Deep learning models, particularly Convolutional Neural Networks (CNNs) tailored for image classification (e.g., ResNet, VGG) or object detection architectures like YOLO (You Only Look Once) and its variants (e.g., Tiny YOLO for edge deployment), are trained in <span class="tech-highlight">SAS VDMML</span> or <span class="tech-highlight">SAS Model Studio</span>. These models learn to identify and classify defects based on the labeled image datasets. The output is a deployable model, often in SAS's ASTORE (Analytic Store) file format, which encapsulates the trained model logic, weights, and parameters.</li>
+                </ul>
+                <div class="outcome-card">
+                    <p><span data-translate-key="outcomeLabel" class="font-semibold text-blue-700">Operational Outcome (Offline Training):</span> <span data-translate-key="outcomeText_3_1_1">Creation of highly accurate and specialized visual defect detection/classification models tailored to the specific products, defect types, and imaging conditions of the manufacturer. These models can often surpass human accuracy for specific, well-defined visual inspection tasks.</span></p>
+                </div>
+            </div>
+            <div class="detail-card">
+                <p><span data-translate-key="solutionLabel_3_1_2" class="detail-label">SAS Technical Solution & Operational Outcome (Online Scoring - SAS Event Stream Processing - ESP on the Edge):</span></p>
+                <p data-translate-key="solutionText_3_1_2" class="text-sm-detail">The trained models are then deployed for real-time inspection:</p>
+                <ul class="list-disc-detail pl-5 mt-2 text-sm-detail">
+                    <li data-translate-key="solutionBullet_3_1_2_a"><strong>Model Ingestion & Edge Deployment:</strong> The trained ASTORE model is ingested by <span class="tech-highlight">SAS ESP</span>, which is designed for low-latency, high-throughput stream processing. ESP projects containing the vision models can be deployed at the edge, on servers or industrial PCs located close to the production line cameras, minimizing network latency.</li>
+                    <li data-translate-key="solutionBullet_3_1_2_b"><strong>Real-Time Image/Video Processing:</strong> Live video footage or streaming images from production line cameras are captured and processed by ESP in real-time. This includes necessary pre-processing like frame extraction from video and resizing (e.g., to 416x416 for Tiny YOLO input).</li>
+                    <li data-translate-key="solutionBullet_3_1_2_c"><strong>In-Stream Scoring & Tracking:</strong> Each image or frame is scored in-stream using the deployed deep learning model to detect defects, identify objects of interest (e.g., components on a PCB, specific regions on a wafer), and track them over time. This involves:
+                        <ul class="list-circle pl-5 mt-1 text-sm-detail">
+                            <li data-translate-key="solutionBullet_3_1_2_c1">Object Detection (e.g., Tiny YOLO): Identifying objects of interest within the frame and drawing bounding boxes around them, along with classifying them (e.g., "good component," "misaligned component," "solder defect").</li>
+                            <li data-translate-key="solutionBullet_3_1_2_c2">Keypoint Detection: For more granular analysis, specific keypoints within the detected objects (e.g., corners of a chip, leads of a component) can be identified after cropping and resizing the bounding box region. This is useful for precise alignment checks or dimensional measurements.</li>
+                            <li data-translate-key="solutionBullet_3_1_2_c3">Kalman Filtering: This is a crucial technique used for robust object tracking in video streams. It associates real-time temporal information (object movement and state across frames) with the (often time-independent) deep learning model outputs, helping to maintain object identity, predict future positions, and smooth out noisy detections, even with temporary occlusions.</li>
+                            <li data-translate-key="solutionBullet_3_1_2_c4">Data Association for Tracking: Techniques like Intersection over Union (IoU) between bounding boxes in consecutive frames are used to associate detected objects, ensuring that the same physical object is tracked consistently as it moves through the camera's field of view.</li>
+                        </ul>
+                    </li>
+                    <li data-translate-key="solutionBullet_3_1_2_d"><strong>Alert Triggering & PLC/MES Integration:</strong> Based on the scoring results (e.g., a defect is detected above a certain confidence threshold, an object is misplaced, a critical dimension is out of tolerance), <span class="tech-highlight">SAS ESP</span> can trigger immediate alerts to operators (e.g., via dashboards, visual signals) or higher-level systems. Crucially, ESP can integrate directly with Programmable Logic Controllers (PLCs) or Manufacturing Execution Systems (MES) to initiate automated responses on the production line, such as stopping a conveyor belt, diverting a defective product to a rejection bin, adjusting a machine parameter, or flagging a lot for further inspection.</li>
+                </ul>
+                <div class="outcome-card">
+                    <p><span data-translate-key="outcomeLabel" class="font-semibold text-blue-700">Operational Outcome (Online Scoring):</span> <span data-translate-key="outcomeText_3_1_2">Real-time, 100% automated visual inspection for targeted defect types. Significant reduction in inspection errors and escapes compared to manual methods. Immediate feedback and automated action for quality deviations, preventing further processing of defective units and minimizing scrap. Increased throughput due to faster inspection cycles. Consistent inspection quality 24/7.</span></p>
+                </div>
+                 <div class="diagram-container mt-4">
+                        <h4 data-translate-key="diagramTitle_CV" class="diagram-title">SAS Computer Vision Architecture (Conceptual)</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-2 items-center">
+                            <div data-translate-key="diagram_cv1" class="diagram-box text-xs">Production Line Cameras / Imaging Systems</div>
+                            <div class="diagram-arrow md:col-span-1 text-2xl">➡️</div>
+                            <div data-translate-key="diagram_cv2" class="diagram-box md:col-span-1"><span class="tech-highlight">SAS ESP (Edge)</span><br/>Real-Time Image Ingestion, Pre-processing, DL Model Scoring (ASTORE)</div>
+                            <div class="diagram-arrow md:col-span-1 text-2xl">➡️</div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2 mt-2">
+                            <div class="text-center">
+                                <div class="diagram-arrow text-2xl">⬇️</div>
+                                <div data-translate-key="diagram_cv3" class="diagram-box text-xs">Alerts to Operators / Dashboards (<span class="tech-highlight">Visual Analytics</span>)</div>
+                            </div>
+                            <div class="text-center">
+                                <div class="diagram-arrow text-2xl">⬇️</div>
+                                <div data-translate-key="diagram_cv4" class="diagram-box text-xs">Automated Actions (via PLC/MES Integration)</div>
+                            </div>
+                        </div>
+                        <p data-translate-key="diagram_cv_footer" class="text-xs text-center mt-2 italic">Offline Model Training using <span class="tech-highlight">SAS Viya (VDMML)</span> with labeled image data.</p>
+                    </div>
+            </div>
+            <div class="detail-card">
+                 <p><span data-translate-key="solutionLabel_3_1_3" class="detail-label">SAS Technical Solution & Operational Outcome (Accuracy and Impact):</span></p>
+                 <p data-translate-key="solutionText_3_1_3" class="text-sm-detail">The success of SAS Computer Vision is validated by cases like the MedTech device manufacturer achieving 99% accuracy in predicting good/bad product images, mitigating a potential $20 million risk. Its use in solar panel defect detection and GSK's application for in-line inspection further demonstrate its effectiveness in diverse manufacturing settings.</p>
+                <div class="outcome-card">
+                     <p><span data-translate-key="outcomeLabel" class="font-semibold text-blue-700">Operational Outcome:</span> <span data-translate-key="outcomeText_3_1_3">Drastically improved quality assurance and consistency. Reduced risk of shipping defective products. Lower costs associated with rework, scrap, and warranty claims. Potential for capturing detailed image data for further process improvement analysis.</span></p>
+                </div>
+            </div>
+        </section>
+
+        <section class="content-section">
+            <h2 data-translate-key="section4Title" class="section-title">4. Validated Outcomes: How SAS Empowers Taiwanese High-Tech Manufacturers</h2>
+            <div class="grid md:grid-cols-2 gap-6">
+                <div class="detail-card">
+                    <h4 data-translate-key="outcomeTitle_massiveData" class="point-title">Handling Massive Data</h4>
+                    <p data-translate-key="outcomeText_massiveData" class="text-slate-700 text-sm-detail">SAS Viya's distributed in-memory processing (CAS) is explicitly designed to handle the "too much Big Data" challenge prevalent in semiconductor and PCB manufacturing, enabling complex analyses on large datasets that would be infeasible with traditional tools.</p>
+                    <div class="outcome-card">
+                        <p><span data-translate-key="outcomeLabel" class="font-semibold text-blue-700">Operational Outcome:</span> <span data-translate-key="outcomeDetail_massiveData">Ability to analyze comprehensive datasets for deeper insights, rather than relying on sampled or summarized data, leading to more accurate models and root cause identification.</span></p>
+                    </div>
+                </div>
+                <div class="detail-card">
+                    <h4 data-translate-key="outcomeTitle_dataSilos" class="point-title">Breaking Data Silos</h4>
+                    <p data-translate-key="outcomeText_dataSilos" class="text-slate-700 text-sm-detail">SAS's strong emphasis on data integration (using tools like SAS DI Studio, SAS Studio Flows) and the creation of unified analytical data marts directly addresses the "siloed data" problem. This allows for a holistic view of the manufacturing process, integrating data from MES, ERP, EWS, FDC, and quality systems.</p>
+                    <div class="outcome-card">
+                        <p><span data-translate-key="outcomeLabel" class="font-semibold text-blue-700">Operational Outcome:</span> <span data-translate-key="outcomeDetail_dataSilos">Enables end-to-end traceability and allows engineers to uncover complex interactions between different process stages and data sources that affect yield and quality. Murata's success in creating a single data repository for analyzing quality, cost, and delivery is a testament to this.</span></p>
+                    </div>
+                </div>
+                <div class="detail-card">
+                    <h4 data-translate-key="outcomeTitle_speedAccuracy" class="point-title">Speed and Accuracy</h4>
+                    <p data-translate-key="outcomeText_speedAccuracy" class="text-slate-700 text-sm-detail">The automation of data preparation, the use of high-performance computing for AI/ML model training and scoring, and real-time computer vision significantly accelerate the entire analytics lifecycle. For example, reducing RCA time from 82 hours to 10 hours and achieving 99% accuracy in visual inspection.</p>
+                    <div class="outcome-card">
+                        <p><span data-translate-key="outcomeLabel" class="font-semibold text-blue-700">Operational Outcome:</span> <span data-translate-key="outcomeDetail_speedAccuracy">Faster decision-making, quicker response to quality issues, reduced time-to-market for new products or process adjustments, and higher confidence in analytical results.</span></p>
+                    </div>
+                </div>
+                <div class="detail-card">
+                    <h4 data-translate-key="outcomeTitle_proactiveQuality" class="point-title">Proactive Quality Control</h4>
+                    <p data-translate-key="outcomeText_proactiveQuality" class="text-slate-700 text-sm-detail">Predictive quality models and Early Warning Systems (EWS) enable a shift from reactive defect sorting to proactive prevention of quality excursions and yield loss. The HDD manufacturer case, where warning times were drastically reduced, exemplifies this.</p>
+                    <div class="outcome-card">
+                        <p><span data-translate-key="outcomeLabel" class="font-semibold text-blue-700">Operational Outcome:</span> <span data-translate-key="outcomeDetail_proactiveQuality">More stable production processes, reduced scrap and rework costs, and improved consistency in product quality.</span></p>
+                    </div>
+                </div>
+                <div class="detail-card">
+                    <h4 data-translate-key="outcomeTitle_empoweringEngineers" class="point-title">Empowering Engineers (Citizen Data Scientist Enablement)</h4>
+                    <p data-translate-key="outcomeText_empoweringEngineers" class="text-slate-700 text-sm-detail">While SAS provides highly advanced analytical capabilities, tools like SAS Enterprise Guide and the visual interfaces within SAS Viya (e.g., VDMML, Model Studio, SAS Studio Flows) are designed to make these powerful analytics more accessible to process engineers and domain experts who may not have deep coding or data science expertise.</p>
+                    <div class="outcome-card">
+                        <p><span data-translate-key="outcomeLabel" class="font-semibold text-blue-700">Operational Outcome:</span> <span data-translate-key="outcomeDetail_empoweringEngineers">Addresses the talent shortage in specialized data science roles in Taiwan. Allows companies to leverage the deep process knowledge of their existing engineering teams, enabling them to conduct sophisticated analyses and contribute directly to quality improvement initiatives.</span></p>
+                    </div>
+                </div>
+                <div class="detail-card">
+                    <h4 data-translate-key="outcomeTitle_continuousImprovement" class="point-title">Continuous Improvement</h4>
+                    <p data-translate-key="outcomeText_continuousImprovement" class="text-slate-700 text-sm-detail">The integrated SAS platform, which supports the entire analytics lifecycle from data to discovery to deployment and monitoring (using tools like <span class="tech-highlight">SAS Model Manager</span> for model performance tracking and retraining triggers), facilitates a continuous improvement loop. Insights from deployed models and real-time monitoring can be fed back to refine processes, update models, and identify new areas for optimization.</p>
+                    <div class="outcome-card">
+                        <p><span data-translate-key="outcomeLabel" class="font-semibold text-blue-700">Operational Outcome:</span> <span data-translate-key="outcomeDetail_continuousImprovement">Sustained improvements in yield, quality, and efficiency over time, helping Taiwanese manufacturers maintain their competitive edge in a rapidly evolving global market.</span></p>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <section class="content-section">
+            <h2 data-translate-key="section5Title" class="section-title">5. Overall Yield & Defect Reduction System Architecture (Conceptual)</h2>
+            <div class="diagram-container">
+                <h4 data-translate-key="diagramTitle_OverallArch" class="diagram-title">Integrated SAS Solution for Yield & Defect Management</h4>
+                <div class="grid grid-cols-1 md:grid-cols-5 gap-2 items-start">
+                    <div class="md:col-span-1 space-y-1 p-2 border border-dashed border-slate-300 rounded">
+                        <p data-translate-key="diagram_dataSourcesLabel" class="text-xs font-semibold text-center mb-1">DATA SOURCES</p>
+                        <div data-translate-key="diagram_ds_mes" class="diagram-box text-xs">MES (Lot, WIP)</div>
+                        <div data-translate-key="diagram_ds_fdc" class="diagram-box text-xs">FDC/Sensors (Real-Time Parameters)</div>
+                        <div data-translate-key="diagram_ds_wat" class="diagram-box text-xs">WAT/CP (Electrical Test)</div>
+                        <div data-translate-key="diagram_ds_aoi" class="diagram-box text-xs">AOI/AVI (Image/Defect Data)</div>
+                        <div data-translate-key="diagram_ds_logs" class="diagram-box text-xs">Equipment Logs</div>
+                        <div data-translate-key="diagram_ds_hist" class="diagram-box text-xs">Historical Databases</div>
+                    </div>
+
+                    <div class="md:col-span-1 flex flex-col items-center justify-center">
+                         <div class="diagram-arrow text-2xl">➡️</div>
+                    </div>
+                    <div class="md:col-span-1 space-y-1 p-2 border border-dashed border-slate-300 rounded">
+                        <p data-translate-key="diagram_dataPlatformLabel" class="text-xs font-semibold text-center mb-1">DATA PLATFORM</p>
+                        <div data-translate-key="diagram_dp_sasViya" class="diagram-box text-xs h-full flex flex-col justify-center"><span class="tech-highlight">SAS Viya</span><br/>Data Integration (DI/Flows/EG)<br/>Data Quality & Governance<br/>Analytical Data Marts (CAS)</div>
+                    </div>
+
+                    <div class="md:col-span-1 flex flex-col items-center justify-center">
+                         <div class="diagram-arrow text-2xl">➡️</div>
+                    </div>
+                    <div class="md:col-span-1 space-y-1 p-2 border border-dashed border-slate-300 rounded">
+                        <p data-translate-key="diagram_analyticsActionLabel" class="text-xs font-semibold text-center mb-1">ANALYTICS & ACTION</p>
+                        <div data-translate-key="diagram_aa_viyaModels" class="diagram-box text-xs"><span class="tech-highlight">SAS Viya (VDMML, Model Studio)</span><br/>Yield Prediction Models<br/>Defect Classification<br/>RCA Models<br/>Digital Twin Simulation</div>
+                        <div class="diagram-arrow">↕️</div>
+                        <div data-translate-key="diagram_aa_esp" class="diagram-box text-xs"><span class="tech-highlight">SAS ESP (Edge)</span><br/>Real-Time Scoring<br/>Computer Vision<br/>Anomaly Detection<br/>Alerts & PLC Integration</div>
+                         <div class="diagram-arrow">⬇️</div>
+                        <div data-translate-key="diagram_aa_va" class="diagram-box text-xs"><span class="tech-highlight">SAS Visual Analytics</span><br/>Dashboards & Reports</div>
+                    </div>
+                </div>
+                <p data-translate-key="diagram_overall_footer" class="text-xs text-center mt-3 italic">This conceptual diagram shows how various data sources are integrated and processed within the SAS ecosystem to drive yield enhancement and defect reduction through advanced analytics and real-time actions.</p>
+            </div>
+        </section>
+
+        <section class="content-section text-center mt-12">
+             <p data-translate-key="conclusionParagraph" class="text-lg text-slate-700 leading-relaxed">
+                By applying these technically detailed methodologies and leveraging its powerful, integrated analytics platform, SAS provides Taiwanese high-tech manufacturers with the concrete tools and actionable insights necessary to significantly improve product and production quality, enhance yield, and reduce defects within their highly complex and data-intensive operational environments.
+            </p>
+        </section>
+
+    </main>
+
+    <footer class="bg-slate-800 text-slate-300 py-8 text-center mt-12">
+        <div class="container mx-auto px-6">
+            <p data-translate-key="footerCopyright">&copy; SAS Institute Inc. All rights reserved.</p>
+            <p data-translate-key="footerDisclaimer" class="text-sm">This document is for informational purposes only.</p>
+        </div>
+    </footer>
+<script>
+const translations = {
+    en: {
+        mainTitle: "Enhancing Yield Management and Defect Reduction",
+        mainSubtitle: "A SAS Technical Deep Dive for Taiwan's High-Tech Manufacturers",
+        introParagraph: "The core challenge in semiconductor and PCB manufacturing—managing immense complexity and data volumes to maximize yield and minimize defects—is precisely what SAS aims to address. SAS's multi-faceted approach, combining robust data handling, advanced statistical methods, and sophisticated AI/ML techniques, is well-documented and designed to deliver tangible operational outcomes. This document provides a technical validation of these capabilities with enhanced detail and illustrative diagrams.",
+        section1Title: "1. SAS Methodologies for Yield Prediction and Optimization: Technical Validation and Operational Outcomes",
+        section1Intro: "SAS's \"Quality Mining\" and \"Low Yield Analysis\" are structured methodologies built upon the SAS Viya platform. They leverage SAS Viya's powerful data processing (CAS - Cloud Analytic Services) and analytical engines (like VDMML) to deliver tangible results.",
+        subsection1_1Title: "1.1 Data Extraction and Preparation (The Foundation)",
+        challengeValidationLabel: "Challenge Validation:",
+        outcomeLabel: "Operational Outcome:",
+        challenge1_1_text: "High-tech manufacturing environments generate massive, often siloed datasets from diverse systems like MES (Manufacturing Execution Systems), EWS (Early Warning Systems), FDC (Fault Detection and Classification), CP (Characterization Program), WAT (Wafer Acceptance Test), process history, and equipment logs. This data is frequently \"dirty\" (containing errors, outliers, inconsistencies), \"summarized\" (lacking necessary granularity), or \"sampled\" (not representing the full process), demanding significant engineering hours for preparation to make it suitable for reliable analytics.",
+        solutionLabel_1_1_1: "SAS Technical Solution & Operational Outcome (SAS Data Integration Studio / SAS Studio Flows / SAS Viya Data Preparation):",
+        solutionText_1_1_1: "These tools automate the creation and management of robust big data pipelines at scale. They facilitate ETL (Extraction, Transformation, Loading) and ELT processes, connecting to and processing data from varied sources including relational databases (Oracle, PostgreSQL), data warehouses, Hadoop, flat files, and streaming data endpoints. Key capabilities include:",
+        solutionBullet_1_1_1_a: "Automated Data Ingestion: Scheduled or event-driven data pulls from source systems.",
+        solutionBullet_1_1_1_b: "Data Cleansing & Validation: Identifying and handling missing values, outliers, and inconsistencies using predefined rules or data quality functions.",
+        solutionBullet_1_1_1_c: "Data Transformation: Aggregating, joining, transposing, and deriving new variables to structure data appropriately for analysis (e.g., creating time-based features, aligning sensor data with lot/wafer context).",
+        solutionBullet_1_1_1_d: "Scalable Processing: Leveraging SAS Viya's CAS engine for distributed, in-memory processing of large datasets.",
+        outcomeText_1_1_1: "Significant reduction in manual data preparation time (often by >50%), consistent data quality across projects, and the ability to efficiently handle terabytes of manufacturing data. This frees up valuable engineering resources to focus on analysis and interpretation rather than data wrangling.",
+        solutionLabel_1_1_2: "SAS Technical Solution & Operational Outcome (SAS Enterprise Guide - EG):",
+        solutionText_1_1_2: "EG is frequently used as a user-friendly, project-based front-end for data access, manipulation, ad-hoc analysis, and reporting. It's particularly valued for its ease of use in accessing SAS Viya's CAS for high-performance, multi-threaded data processing. Engineers can create reusable process flows to automate routine data preparation tasks. The TSMC case specifically highlights leveraging EG with Viya CAS to boost data preparation performance and enable efficient EDA.",
+        outcomeText_1_1_2: "Empowers engineers and analysts (including those who are not expert programmers) to perform complex data manipulations and ad-hoc queries more efficiently, accelerating the initial stages of any yield analysis project and fostering a data-driven culture.",
+        solutionLabel_1_1_3: "SAS Technical Solution & Operational Outcome (Data \"Cooking\" and Analytical Data Marts):",
+        solutionText_1_1_3: "SAS enables the transformation of raw, often disparate, manufacturing data into \"analytics-ready data\" by creating structured Analytical Data Marts or Analytical Base Tables (ABTs). This involves:",
+        solutionBullet_1_1_3_a: "Systematic handling of missing values (e.g., imputation based on statistical measures or predictive models).",
+        solutionBullet_1_1_3_b: "Deriving new and meaningful features (feature engineering), such as calculating summary statistics over time windows, creating interaction terms, or transforming variables for better model performance.",
+        solutionBullet_1_1_3_c: "Ensuring high data quality and consistency suitable for advanced modeling.",
+        solutionBullet_1_1_3_d: "The \"Automated Feature Machine\" within SAS Viya (VDMML) can automate many data transformation and feature creation tasks, incorporating best practices to generate optimal features for models, thereby reducing manual trial-and-error.",
+        outcomeText_1_1_3: "Higher quality input data for models, leading to more accurate and reliable predictions. Automation in feature engineering saves considerable time and effort, allowing for more sophisticated features to be developed and tested, ultimately improving model performance and insight generation.",
+        diagramTitle_DataIngestion: "Data Ingestion & Preparation Flow",
+        diagram_mesData: "MES Data",
+        diagram_fdcSensorData: "FDC/Sensor Data",
+        diagram_watCpData: "WAT/CP Data",
+        diagram_equipmentLogs: "Equipment Logs",
+        diagram_sasViyaDI: "SAS Viya - Data Integration, Prep & Quality (DI Studio, Studio Flows, Viya Data Prep, EG)",
+        diagram_adm: "Curated Analytical Data Mart / ABT",
+        subsection1_2Title: "1.2 Yield Prediction Modeling (The Core Analytics)",
+        challenge1_2_text: "Predicting End-of-Line (EOL) yield at various critical process steps using vast and complex upstream process data (from hundreds or thousands of parameters) is a significant hurdle. The specific factors and their interactions impacting yield are often unknown or not clearly understood, making traditional statistical modeling insufficient.",
+        solutionLabel_1_2_1: "SAS Technical Solution & Operational Outcome (SAS Visual Data Mining and Machine Learning - VDMML):",
+        solutionText_1_2_1: "VDMML, a key component of SAS Viya, provides a comprehensive, interactive, and often automated environment for building, evaluating, and deploying predictive models. It supports a wide range of supervised learning algorithms crucial for yield prediction:",
+        solutionBullet_1_2_1_a: "Decision Trees, Gradient Boosting, Random Forests: These ensemble methods are extensively used to classify outcomes (e.g., good/bad wafer, assigning to high/low yield bins based on EOL test results) and, importantly, to identify the most influential manufacturing stages or process parameters affecting yield through variable importance measures (e.g., Gini importance, permutation importance). They excel at handling mixed data types and capturing non-linear relationships.",
+        solutionBullet_1_2_1_b: "Regression Models (Linear, Quantile, Generalized Linear Models, Partial Least Squares - PLS): These are employed to predict continuous yield values directly or specific quality inspection metrics based on a set of input parameters. PLS is particularly useful when dealing with many, potentially collinear, predictor variables (common in FDC data).",
+        solutionBullet_1_2_1_c: "Neural Networks & Deep Learning: For capturing highly complex, non-linear relationships and interactions between numerous process parameters and yield outcomes, which are common in intricate semiconductor or advanced PCB manufacturing processes.",
+        outcomeText_1_2_1: "More precise EOL yield predictions at critical junctures, enabling proactive adjustments. Clear identification of key process variables, equipment, and stages that significantly impact yield, allowing engineers to focus their improvement efforts. This was a key achievement in the TSMC engagement, leading to better process understanding and control.",
+        solutionLabel_1_2_2: "SAS Technical Solution & Operational Outcome (High-Performance Computing - CAS):",
+        solutionText_1_2_2: "SAS Viya’s in-memory Cloud Analytic Services (CAS) architecture is designed for massively parallel, distributed processing of large datasets. This is particularly vital in semiconductor manufacturing where data volumes from FDC, WAT, and MES can easily reach terabytes or petabytes. CAS enables significantly faster model training, scoring, and iterative model refinement by distributing computations across multiple nodes and cores.",
+        outcomeText_1_2_2: "Drastic reduction in model development and deployment times (from days/weeks to hours/days), allowing for more frequent model updates to adapt to process changes and quicker responses to emerging yield issues. Enables analysis of full datasets rather than relying on samples.",
+        solutionLabel_1_2_3: "SAS Technical Solution & Operational Outcome (Automated Machine Learning - AutoML):",
+        solutionText_1_2_3: "SAS Viya includes AutoML capabilities (e.g., within Model Studio) which automate significant parts of the model development lifecycle. This includes automated feature engineering, algorithm selection (testing multiple algorithms like logistic regression, gradient boosting, neural networks, etc.), and hyperparameter tuning to find the best performing model for yield prediction or classification tasks with minimal manual intervention.",
+        outcomeText_1_2_3: "Faster deployment of effective yield prediction models. Democratization of model building, enabling process engineers (Citizen Data Scientists) to develop and deploy robust models without deep data science expertise, thus addressing talent shortages.",
+        subsection1_3Title: "1.3 Optimization and Root Cause Identification (The Actionable Insights)",
+        challenge1_3_text: "Root cause analysis (RCA) for yield excursions is often a lengthy, manual, and inconclusive process, relying heavily on tribal knowledge. Identifying optimal conditions for process recipes to maximize yield can also be unclear and involve costly trial-and-error.",
+        solutionLabel_1_3_1: "SAS Technical Solution & Operational Outcome (AI-Assisted Yield Management):",
+        solutionText_1_3_1: "SAS uses the insights derived from the trained AI models to perform faster and more accurate RCA. This includes leveraging model interpretability features:",
+        solutionBullet_1_3_1_a: "Variable Importance Rankings: From tree-based models (Random Forest, Gradient Boosting) to identify the most influential parameters.",
+        solutionBullet_1_3_1_b: "Partial Dependence Plots (PDP) & Individual Conditional Expectation (ICE) plots: To understand how changes in specific parameters affect predicted yield.",
+        solutionBullet_1_3_1_c: "LIME (Local Interpretable Model-agnostic Explanations) or SHAP (SHapley Additive exPlanations) values (if supported/integrated): To explain individual predictions and identify contributing factors for specific low-yield events.",
+        outcomeText_1_3_1: "Quicker and more accurate identification of the true root causes of yield loss, enabling more effective and targeted corrective actions, moving beyond simple correlations to understand causal drivers.",
+        solutionLabel_1_3_2: "SAS Technical Solution & Operational Outcome (Low Yield Analysis Workflow):",
+        solutionText_1_3_2: "This is a structured, often automated, approach within SAS to systematically diagnose yield problems:",
+        solutionBullet_1_3_2_a: "Problem Definition & Data Selection: Clearly defining the yield issue (e.g., specific defect type, affected product/process step) and automatically extracting relevant data (process parameters, equipment IDs, timestamps, material IDs, upstream/downstream data) for the affected lots/wafers versus a \"golden\" or high-yield population.",
+        solutionBullet_1_3_2_b: "Automated Pattern Discovery (Classification/Clustering): Grouping defective wafers based on spatial defect patterns on the wafer map (e.g., edge defects, center clusters, scratches using spatial clustering algorithms like DBScan) or by parametric signatures (e.g., wafers failing specific electrical tests, using K-Means or hierarchical clustering on WAT data).",
+        solutionBullet_1_3_2_c: "Difference Testing & Commonality/Variability Analysis: Employing statistical tests (e.g., T-tests, ANOVA, Chi-squared) and decision tree analysis to automatically compare distributions of hundreds/thousands of process parameters, equipment settings, and material characteristics between high-yield and low-yield groups (or different defect clusters). This helps pinpoint statistically significant differences and identify critical process steps, specific equipment (EQP), chambers (CHB), or material batches contributing to yield variations.",
+        solutionBullet_1_3_2_d: "Interactive Data Mart Creation & EDA: Generating temporary, focused data marts that consolidate relevant data for the specific yield issue. Engineers can then use SAS Visual Analytics or SAS Enterprise Guide for interactive Exploratory Data Analysis (EDA) – creating box plots, scatter plots, correlation matrices, parallel coordinate plots – to visually explore relationships highlighted by the automated analysis and validate findings.",
+        outcomeText_1_3_2: "A systematic and significantly accelerated approach to RCA, reducing analysis time for complex yield issues from days/weeks to hours (e.g., from 82 hours to 10 hours in reported cases). Provides engineers with statistically validated, targeted areas for investigation and corrective action.",
+        diagramTitle_LYA: "Low Yield Analysis Workflow",
+        diagram_lya1: "1. Define Low Yield Problem & Select Data (Low vs. High Yield Lots)",
+        diagram_lya2: "2. Automated Pattern Discovery (Spatial/Parametric Clustering of Defects/Failures)",
+        diagram_lya3: "3. Difference Testing & Commonality Analysis (Identify Key Parameters/Equipment/Steps)",
+        diagram_lya4: "4. Interactive EDA by Engineers (Visual Analytics, EG)",
+        diagram_lya5: "5. Root Cause Identified & Corrective Action",
+        solutionLabel_1_3_3: "SAS Technical Solution & Operational Outcome (Process Simulation / Digital Twins for Yield):",
+        solutionText_1_3_3: "SAS supports the creation and use of AI-driven digital twins to simulate manufacturing processes specifically for yield optimization. The predictive yield models (linking process parameters to yield outcomes) form the core of this digital twin. This allows engineers to:",
+        solutionBullet_1_3_3_a: "Virtually test the impact of new recipe parameters or process adjustments on predicted yield *before* implementation on the factory floor.",
+        solutionBullet_1_3_3_b: "Identify optimal operating windows and robust recipe settings that maximize yield while minimizing variability.",
+        solutionBullet_1_3_3_c: "The photomask blanks film formation case, where ML predicts quality values (a proxy for yield) and optimization algorithms search for optimal control parameters, is a prime example of this approach.",
+        outcomeText_1_3_3: "Reduced time and cost for process optimization and yield ramp-up for new products/processes. Identification of more robust process windows leading to sustained high yield. Minimized risk associated with implementing process changes.",
+        solutionLabel_1_3_4: "SAS Technical Solution & Operational Outcome (Early Warning Systems - EWS for Yield):",
+        solutionText_1_3_4: "SAS solutions, particularly leveraging SAS Event Stream Processing (ESP), enable the development of EWS that predict and flag process anomalies or deviations likely to lead to yield excursions *in real-time*. Models trained on historical data to identify precursors to low yield events are deployed in ESP to score live sensor and process data. This was a key benefit for the HDD manufacturer, which reduced its early warning time for potential yield excursions from 78 days to 5 days or less.",
+        outcomeText_1_3_4: "Proactive prevention of yield loss by allowing engineers to intervene *before* out-of-specification conditions occur or low-yield material is produced. Leads to more stable and higher average yield rates (e.g., improvement from 60% to 80% in some projects).",
+        section2Title: "2. AI-Driven Defect Detection, Classification, and Root Cause Analysis: Technical Validation and Operational Outcomes",
+        section2Intro: "SAS leverages AI/ML not only for overall yield prediction but also for the specific challenges of defect management, including automated detection, accurate classification, and efficient root cause analysis.",
+        subsection2_1Title: "2.1 Automated Defect Detection & Classification",
+        challenge2_1_text: "Manual defect detection is notoriously slow, error-prone, and inconsistent, especially for subtle or complex defects. Traditional SPC methods may not effectively catch complex, emerging defect patterns or subtle process deviations leading to specific defect types.",
+        solutionLabel_2_1_1: "SAS Technical Solution & Operational Outcome (Machine Learning Algorithms - VDMML):",
+        solutionText_2_1_1: "Algorithms such as decision trees, gradient boosting, random forests, and support vector machines in SAS VDMML are used to build models that can automatically classify products or components (e.g., good/bad wafer, presence/absence of specific defect types like scratches, particles, voids) based on parametric, sensor, or image data. These models also help identify the manufacturing stages or process parameters most influential in causing these specific defects.",
+        outcomeText_2_1_1: "Increased accuracy, speed, and consistency in defect classification compared to manual methods. Identification of critical control points for specific defect reduction, enabling targeted process improvements.",
+        solutionLabel_2_1_2: "SAS Technical Solution & Operational Outcome (PCB Specifics - Defect Mapping & Image Pattern Analysis):",
+        solutionText_2_1_2: "For PCB manufacturing, SAS provides specialized solutions that support detailed defect mapping by linking the physical X-Y coordinates of defects (often from Automated Optical Inspection - AOI, Automated Electrical Inspection - AEI, or Automated Visual Inspection - AVI systems) with specific process parameters (e.g., variations in temperature, pressure, speed during lamination, etching, or plating) and material information. This enables automated failure cause analysis based on defect coordinates and clustering techniques. This involves:",
+        solutionBullet_2_1_2_a: "Data Integration: Combining defect data (images, coordinates, types) from AOI/AEI/AVI systems with contextual data from MES (lot history, routing), SPC (process measurements), FDC (equipment sensor data), and material tracking systems.",
+        solutionBullet_2_1_2_b: "Spatial Analysis & Clustering: Using clustering algorithms (e.g., K-Means, DBScan, or spatial statistics) on defect coordinate data to identify defect hotspots (areas with unusually high defect density), recurring spatial patterns on the PCB surface (e.g., defects aligned in a specific direction, repeating patterns across multiple boards), and correlating these patterns with specific equipment (e.g., a particular printer, etcher, or plating tank), process steps, or even specific vendor materials.",
+        solutionBullet_2_1_2_c: "Parameter Correlation & Defect Signatures: Linking defect locations, types, and frequencies with critical process parameters (e.g., copper thickness, line width/spacing, via characteristics, solder mask registration) and FDC sensor readings from the tools that processed those specific areas of the PCB. This helps build \"defect signatures\" associated with certain process deviations or equipment states.",
+        outcomeText_2_1_2: "Faster identification of systematic defect sources in PCB manufacturing (e.g., a misaligned print head, a faulty plating bath, an issue with a specific batch of laminate). Enables targeted corrective actions on specific machines or process steps. Improved understanding of how subtle process variations translate to physical defects, leading to more robust process design and control.",
+        diagramTitle_PCBDefect: "AI-Driven Defect Detection & RCA (PCB Focus)",
+        diagram_pcb1: "AOI/AEI/AVI Image Data (Defect Location, Type)",
+        diagram_pcb2: "MES/Process Data (Lot, Equipment, Parameters)",
+        diagram_pcb3: "SAS Viya (VDMML, Visual Analytics) - Data Integration, Spatial Clustering, ML Classification, Parameter Correlation",
+        diagram_pcb4: "Defect Hotspot Maps & Pattern Identification",
+        diagram_pcb5: "Root Cause Insights (Key Parameters/Equipment Linked to Defects)",
+        subsection2_2Title: "2.2 AI-Driven Root Cause Analysis (RCA) for Defects",
+        challenge2_2_text: "Traditional RCA methods for specific defect types can be time-consuming, often relying on tribal knowledge and manual data sifting across multiple systems, leading to inconclusive results or addressing symptoms rather than true root causes.",
+        solutionLabel_2_2_1: "SAS Technical Solution & Operational Outcome (Model Interpretability):",
+        solutionText_2_2_1: "SAS models (e.g., decision trees, logistic regression, gradient boosting, explainable AI techniques like LIME/SHAP if integrated/available) provide clear insights into variable importance, partial dependence plots, and individual prediction explanations. These features help engineers pinpoint which factors (specific process parameters, equipment settings, material batches, environmental conditions, operator actions) are most strongly correlated with, or causally contributing to, the occurrence of particular defects.",
+        outcomeText_2_2_1: "More focused, data-driven, and faster RCA, reducing the time spent on investigating irrelevant factors. Increased confidence in RCA findings due to statistical validation.",
+        solutionLabel_2_2_2: "SAS Technical Solution & Operational Outcome (Automated Workflow for RCA):",
+        solutionText_2_2_2: "As part of the Low Yield Analysis framework (which can be adapted for specific defect RCA), SAS Viya can automate many steps in the RCA process. This includes automatically identifying statistically significant differences in numerous process parameters between defective and non-defective populations (or populations with different defect types), highlighting potential root causes through statistical tests (t-tests, ANOVA, chi-square) and decision tree/rule induction analysis.",
+        outcomeText_2_2_2: "Standardization and significant acceleration of the RCA process for defects. Enables engineers to quickly narrow down potential causes from thousands of variables, leading to quicker problem resolution and prevention of recurrence.",
+        solutionLabel_2_2_3: "SAS Technical Solution & Operational Outcome (Integration of Diverse Data for Holistic RCA):",
+        solutionText_2_2_3: "By creating a unified data repository (as demonstrated in the Murata case, where quality, cost, and delivery data were integrated for holistic analysis), SAS enables a more comprehensive RCA. This allows engineers to consider data from all relevant manufacturing stages (e.g., incoming material quality certificates, specific tool processing history from FDC, environmental sensor data, operator logs, upstream/downstream test results) when investigating the origins of specific defects.",
+        outcomeText_2_2_3: "More comprehensive and accurate RCA by uncovering complex interactions between different parts of the manufacturing process or supply chain that might contribute to defects. Avoids overlooking crucial factors that reside in siloed data systems.",
+        section3Title: "3. Leveraging SAS Computer Vision for Quality Inspection: Technical Validation and Operational Outcomes",
+        section3Intro: "SAS Computer Vision offers an automated, AI-powered approach to visual inspection, directly addressing the limitations of manual methods by providing higher accuracy, speed, and consistency.",
+        challenge3_1_text: "Manual visual inspection is inherently prone to human error due to fatigue and subjectivity, leading to inconsistency in defect detection. It's often a bottleneck in high-volume production and may not be feasible for 100% inspection of all units, especially where defects are microscopic or require sustained attention to detail.",
+        solutionLabel_3_1_1: "SAS Technical Solution & Operational Outcome (Offline Model Training - SAS Visual Data Mining and Machine Learning):",
+        solutionText_3_1_1: "The process begins with developing robust deep learning models:",
+        solutionBullet_3_1_1_a: "Data Ingestion & Preparation: Raw video or image data from production line cameras, microscopes, or AOI systems is loaded into SAS Viya's CAS for distributed processing. This includes collecting a diverse set of labeled images representing both \"good\" products and various types of \"defective\" products.",
+        solutionBullet_3_1_1_b: "Image Processing/Augmentation: Images undergo pre-processing (e.g., resizing to standard dimensions, color conversion, normalization, noise reduction using filters like Bilateral Filter) and extensive augmentation (e.g., rotation, flipping, scaling, brightness/contrast adjustments, adding synthetic noise). Augmentation artificially expands the training dataset, improving model robustness and its ability to generalize to unseen variations in lighting, orientation, or defect appearance. Techniques like Canny Edge detection can be applied if relevant for highlighting defect features.",
+        solutionBullet_3_1_1_c: "Deep Learning Model Generation: Deep learning models, particularly Convolutional Neural Networks (CNNs) tailored for image classification (e.g., ResNet, VGG) or object detection architectures like YOLO (You Only Look Once) and its variants (e.g., Tiny YOLO for edge deployment), are trained in SAS VDMML or SAS Model Studio. These models learn to identify and classify defects based on the labeled image datasets. The output is a deployable model, often in SAS's ASTORE (Analytic Store) file format, which encapsulates the trained model logic, weights, and parameters.",
+        outcomeText_3_1_1: "Creation of highly accurate and specialized visual defect detection/classification models tailored to the specific products, defect types, and imaging conditions of the manufacturer. These models can often surpass human accuracy for specific, well-defined visual inspection tasks.",
+        solutionLabel_3_1_2: "SAS Technical Solution & Operational Outcome (Online Scoring - SAS Event Stream Processing - ESP on the Edge):",
+        solutionText_3_1_2: "The trained models are then deployed for real-time inspection:",
+        solutionBullet_3_1_2_a: "Model Ingestion & Edge Deployment: The trained ASTORE model is ingested by SAS ESP, which is designed for low-latency, high-throughput stream processing. ESP projects containing the vision models can be deployed at the edge, on servers or industrial PCs located close to the production line cameras, minimizing network latency.",
+        solutionBullet_3_1_2_b: "Real-Time Image/Video Processing: Live video footage or streaming images from production line cameras are captured and processed by ESP in real-time. This includes necessary pre-processing like frame extraction from video and resizing (e.g., to 416x416 for Tiny YOLO input).",
+        solutionBullet_3_1_2_c: "In-Stream Scoring & Tracking: Each image or frame is scored in-stream using the deployed deep learning model to detect defects, identify objects of interest (e.g., components on a PCB, specific regions on a wafer), and track them over time. This involves:",
+        solutionBullet_3_1_2_c1: "Object Detection (e.g., Tiny YOLO): Identifying objects of interest within the frame and drawing bounding boxes around them, along with classifying them (e.g., \"good component,\" \"misaligned component,\" \"solder defect\").",
+        solutionBullet_3_1_2_c2: "Keypoint Detection: For more granular analysis, specific keypoints within the detected objects (e.g., corners of a chip, leads of a component) can be identified after cropping and resizing the bounding box region. This is useful for precise alignment checks or dimensional measurements.",
+        solutionBullet_3_1_2_c3: "Kalman Filtering: This is a crucial technique used for robust object tracking in video streams. It associates real-time temporal information (object movement and state across frames) with the (often time-independent) deep learning model outputs, helping to maintain object identity, predict future positions, and smooth out noisy detections, even with temporary occlusions.",
+        solutionBullet_3_1_2_c4: "Data Association for Tracking: Techniques like Intersection over Union (IoU) between bounding boxes in consecutive frames are used to associate detected objects, ensuring that the same physical object is tracked consistently as it moves through the camera's field of view.",
+        solutionBullet_3_1_2_d: "Alert Triggering & PLC/MES Integration: Based on the scoring results (e.g., a defect is detected above a certain confidence threshold, an object is misplaced, a critical dimension is out of tolerance), SAS ESP can trigger immediate alerts to operators (e.g., via dashboards, visual signals) or higher-level systems. Crucially, ESP can integrate directly with Programmable Logic Controllers (PLCs) or Manufacturing Execution Systems (MES) to initiate automated responses on the production line, such as stopping a conveyor belt, diverting a defective product to a rejection bin, adjusting a machine parameter, or flagging a lot for further inspection.",
+        outcomeText_3_1_2: "Real-time, 100% automated visual inspection for targeted defect types. Significant reduction in inspection errors and escapes compared to manual methods. Immediate feedback and automated action for quality deviations, preventing further processing of defective units and minimizing scrap. Increased throughput due to faster inspection cycles. Consistent inspection quality 24/7.",
+        diagramTitle_CV: "SAS Computer Vision Architecture (Conceptual)",
+        diagram_cv1: "Production Line Cameras / Imaging Systems",
+        diagram_cv2: "SAS ESP (Edge) - Real-Time Image Ingestion, Pre-processing, DL Model Scoring (ASTORE)",
+        diagram_cv3: "Alerts to Operators / Dashboards (Visual Analytics)",
+        diagram_cv4: "Automated Actions (via PLC/MES Integration)",
+        diagram_cv_footer: "Offline Model Training using SAS Viya (VDMML) with labeled image data.",
+        solutionLabel_3_1_3: "SAS Technical Solution & Operational Outcome (Accuracy and Impact):",
+        solutionText_3_1_3: "The success of SAS Computer Vision is validated by cases like the MedTech device manufacturer achieving 99% accuracy in predicting good/bad product images, mitigating a potential $20 million risk. Its use in solar panel defect detection and GSK's application for in-line inspection further demonstrate its effectiveness in diverse manufacturing settings.",
+        outcomeText_3_1_3: "Drastically improved quality assurance and consistency. Reduced risk of shipping defective products. Lower costs associated with rework, scrap, and warranty claims. Potential for capturing detailed image data for further process improvement analysis.",
+        section4Title: "4. Validated Outcomes: How SAS Empowers Taiwanese High-Tech Manufacturers",
+        outcomeTitle_massiveData: "Handling Massive Data",
+        outcomeText_massiveData: "SAS Viya's distributed in-memory processing (CAS) is explicitly designed to handle the \"too much Big Data\" challenge prevalent in semiconductor and PCB manufacturing, enabling complex analyses on large datasets that would be infeasible with traditional tools.",
+        outcomeDetail_massiveData: "Ability to analyze comprehensive datasets for deeper insights, rather than relying on sampled or summarized data, leading to more accurate models and root cause identification.",
+        outcomeTitle_dataSilos: "Breaking Data Silos",
+        outcomeText_dataSilos: "SAS's strong emphasis on data integration (using tools like SAS DI Studio, SAS Studio Flows) and the creation of unified analytical data marts directly addresses the \"siloed data\" problem. This allows for a holistic view of the manufacturing process, integrating data from MES, ERP, EWS, FDC, and quality systems.",
+        outcomeDetail_dataSilos: "Enables end-to-end traceability and allows engineers to uncover complex interactions between different process stages and data sources that affect yield and quality. Murata's success in creating a single data repository for analyzing quality, cost, and delivery is a testament to this.",
+        outcomeTitle_speedAccuracy: "Speed and Accuracy",
+        outcomeText_speedAccuracy: "The automation of data preparation, the use of high-performance computing for AI/ML model training and scoring, and real-time computer vision significantly accelerate the entire analytics lifecycle. For example, reducing RCA time from 82 hours to 10 hours and achieving 99% accuracy in visual inspection.",
+        outcomeDetail_speedAccuracy: "Faster decision-making, quicker response to quality issues, reduced time-to-market for new products or process adjustments, and higher confidence in analytical results.",
+        outcomeTitle_proactiveQuality: "Proactive Quality Control",
+        outcomeText_proactiveQuality: "Predictive quality models and Early Warning Systems (EWS) enable a shift from reactive defect sorting to proactive prevention of quality excursions and yield loss. The HDD manufacturer case, where warning times were drastically reduced, exemplifies this.",
+        outcomeDetail_proactiveQuality: "More stable production processes, reduced scrap and rework costs, and improved consistency in product quality.",
+        outcomeTitle_empoweringEngineers: "Empowering Engineers (Citizen Data Scientist Enablement)",
+        outcomeText_empoweringEngineers: "While SAS provides highly advanced analytical capabilities, tools like SAS Enterprise Guide and the visual interfaces within SAS Viya (e.g., VDMML, Model Studio, SAS Studio Flows) are designed to make these powerful analytics more accessible to process engineers and domain experts who may not have deep coding or data science expertise.",
+        outcomeDetail_empoweringEngineers: "Addresses the talent shortage in specialized data science roles in Taiwan. Allows companies to leverage the deep process knowledge of their existing engineering teams, enabling them to conduct sophisticated analyses and contribute directly to quality improvement initiatives.",
+        outcomeTitle_continuousImprovement: "Continuous Improvement",
+        outcomeText_continuousImprovement: "The integrated SAS platform, which supports the entire analytics lifecycle from data to discovery to deployment and monitoring (using tools like SAS Model Manager for model performance tracking and retraining triggers), facilitates a continuous improvement loop. Insights from deployed models and real-time monitoring can be fed back to refine processes, update models, and identify new areas for optimization.",
+        outcomeDetail_continuousImprovement: "Sustained improvements in yield, quality, and efficiency over time, helping Taiwanese manufacturers maintain their competitive edge in a rapidly evolving global market.",
+        section5Title: "5. Overall Yield & Defect Reduction System Architecture (Conceptual)",
+        diagramTitle_OverallArch: "Integrated SAS Solution for Yield & Defect Management",
+        diagram_dataSourcesLabel: "DATA SOURCES",
+        diagram_ds_mes: "MES (Lot, WIP)",
+        diagram_ds_fdc: "FDC/Sensors (Real-Time Parameters)",
+        diagram_ds_wat: "WAT/CP (Electrical Test)",
+        diagram_ds_aoi: "AOI/AVI (Image/Defect Data)",
+        diagram_ds_logs: "Equipment Logs",
+        diagram_ds_hist: "Historical Databases",
+        diagram_dataPlatformLabel: "DATA PLATFORM",
+        diagram_dp_sasViya: "SAS Viya - Data Integration (DI/Flows/EG), Data Quality & Governance, Analytical Data Marts (CAS)",
+        diagram_analyticsActionLabel: "ANALYTICS & ACTION",
+        diagram_aa_viyaModels: "SAS Viya (VDMML, Model Studio) - Yield Prediction Models, Defect Classification, RCA Models, Digital Twin Simulation",
+        diagram_aa_esp: "SAS ESP (Edge) - Real-Time Scoring, Computer Vision, Anomaly Detection, Alerts & PLC Integration",
+        diagram_aa_va: "SAS Visual Analytics - Dashboards & Reports",
+        diagram_overall_footer: "This conceptual diagram shows how various data sources are integrated and processed within the SAS ecosystem to drive yield enhancement and defect reduction through advanced analytics and real-time actions.",
+        conclusionParagraph: "By applying these technically detailed methodologies and leveraging its powerful, integrated analytics platform, SAS provides Taiwanese high-tech manufacturers with the concrete tools and actionable insights necessary to significantly improve product and production quality, enhance yield, and reduce defects within their highly complex and data-intensive operational environments.",
+        footerCopyright: "© SAS Institute Inc. All rights reserved.",
+        footerDisclaimer: "This document is for informational purposes only."
+    },
+    "zh-CN": {
+        mainTitle: "提升良率管理与缺陷减少",
+        mainSubtitle: "SAS 为台湾高科技制造商提供的技术深度解析",
+        introParagraph: "半导体和PCB制造的核心挑战——管理巨大的复杂性和数据量以最大化良率并最小化缺陷——正是SAS致力于解决的问题。SAS的多方面方法，结合了强大的数据处理、先进的统计方法和复杂的AI/ML技术，拥有充分的文档记录，旨在提供切实的运营成果。本文档通过增强的细节和说明性图表对这些功能进行了技术验证。",
+        section1Title: "1. SAS 良率预测与优化方法论：技术验证与运营成果",
+        section1Intro: "SAS的“质量挖掘”和“低良率分析”是构建于SAS Viya平台之上的结构化方法论。它们利用SAS Viya强大的数据处理（CAS - 云分析服务）和分析引擎（如VDMML）来交付实际成果。",
+        subsection1_1Title: "1.1 数据提取与准备（基础）",
+        challengeValidationLabel: "挑战验证：",
+        outcomeLabel: "运营成果：",
+        challenge1_1_text: "高科技制造环境从各种系统中产生海量且通常孤立的数据集，如MES（制造执行系统）、EWS（早期预警系统）、FDC（故障检测与分类）、CP（特性程序）、WAT（晶圆允收测试）、过程历史和设备日志。这些数据通常是“脏”的（包含错误、异常值、不一致性），“汇总”的（缺乏必要的粒度），或“采样”的（不能代表完整过程），需要大量的工程时间进行准备，以使其适合可靠的分析。",
+        solutionLabel_1_1_1: "SAS 技术解决方案与运营成果 (SAS Data Integration Studio / SAS Studio Flows / SAS Viya Data Preparation):",
+        solutionText_1_1_1: "这些工具大规模自动化大数据管道的创建和管理。它们促进了强大的ETL（提取、转换、加载）和ELT过程，连接并处理来自各种来源的数据，包括关系数据库（Oracle、PostgreSQL）、数据仓库、Hadoop、平面文件和流数据端点。关键功能包括：",
+        solutionBullet_1_1_1_a: "自动化数据提取：计划或事件驱动的数据从源系统提取。",
+        solutionBullet_1_1_1_b: "数据清洗与验证：使用预定义规则或数据质量功能识别和处理缺失值、异常值和不一致性。",
+        solutionBullet_1_1_1_c: "数据转换：聚合、连接、转置和派生新变量以适当结构化数据以供分析（例如，创建基于时间的特征，将传感器数据与批次/晶圆上下文对齐）。",
+        solutionBullet_1_1_1_d: "可扩展处理：利用 SAS Viya 的 CAS 引擎进行分布式内存中大型数据集处理。",
+        outcomeText_1_1_1: "显著减少手动数据准备时间（通常超过50%），跨项目保持一致的数据质量，并能有效处理TB级的制造数据。这使宝贵的工程资源能够专注于分析和解读，而不是数据整理。",
+        solutionLabel_1_1_2: "SAS 技术解决方案与运营成果 (SAS Enterprise Guide - EG):",
+        solutionText_1_1_2: "EG 常被用作用户友好的、基于项目的前端，用于数据访问、操作、即席分析和报告。它因其易于访问 SAS Viya 的 CAS 以进行高性能、多线程数据处理而特别受到重视。工程师可以创建可重用的流程来自动化常规数据准备任务。台积电案例特别强调了利用 EG 和 Viya CAS 来提升数据准备性能并实现高效的 EDA。",
+        outcomeText_1_1_2: "使工程师和分析师（包括那些不是专业程序员的人）能够更有效地执行复杂的数据操作和即席查询，加速任何良率分析项目的初始阶段，并培养数据驱动的文化。",
+        solutionLabel_1_1_3: "SAS 技术解决方案与运营成果 (数据“加工”与分析数据集市):",
+        solutionText_1_1_3: "SAS 通过创建结构化的分析数据集市或分析基础表 (ABT)，将原始的、通常分散的制造数据转换为“分析就绪数据”。这包括：",
+        solutionBullet_1_1_3_a: "系统化处理缺失值（例如，基于统计度量或预测模型进行插补）。",
+        solutionBullet_1_1_3_b: "派生新的有意义的特征（特征工程），例如计算时间窗口内的汇总统计数据、创建交互项或转换变量以获得更好的模型性能。",
+        solutionBullet_1_1_3_c: "确保适合高级建模的高数据质量和一致性。",
+        solutionBullet_1_1_3_d: "SAS Viya (VDMML) 中的“自动化特征机器”可以自动化许多数据转换和特征创建任务，结合最佳实践为模型生成最佳特征，从而减少手动试错。",
+        outcomeText_1_1_3: "为模型提供更高质量的输入数据，从而实现更准确可靠的预测。特征工程的自动化节省了大量时间和精力，允许开发和测试更复杂的特征，最终提高模型性能和洞察生成。",
+        diagramTitle_DataIngestion: "数据提取与准备流程",
+        diagram_mesData: "MES 数据",
+        diagram_fdcSensorData: "FDC/传感器数据",
+        diagram_watCpData: "WAT/CP 数据",
+        diagram_equipmentLogs: "设备日志",
+        diagram_sasViyaDI: "SAS Viya - 数据集成、准备与质量 (DI Studio, Studio Flows, Viya Data Prep, EG)",
+        diagram_adm: "精选分析数据集市 / ABT",
+        subsection1_2Title: "1.2 良率预测建模（核心分析）",
+        challenge1_2_text: "使用庞大而复杂的上游过程数据（来自数百或数千个参数）在各个关键过程步骤预测最终（EOL）良率是一个重大障碍。影响良率的具体因素及其相互作用通常是未知或不清楚的，使得传统的统计建模不足以应对。",
+        solutionLabel_1_2_1: "SAS 技术解决方案与运营成果 (SAS Visual Data Mining and Machine Learning - VDMML):",
+        solutionText_1_2_1: "VDMML 是 SAS Viya 的一个关键组件，为构建、评估和部署预测模型提供了一个全面的、交互式的、通常是自动化的环境。它支持对良率预测至关重要的广泛监督学习算法：",
+        solutionBullet_1_2_1_a: "决策树、梯度提升、随机森林：这些集成方法广泛用于分类结果（例如，好/坏晶圆，根据EOL测试结果分配到高/低良率区间），并且重要的是，通过变量重要性度量（例如，基尼重要性、排列重要性）识别影响良率的最具影响力的制造阶段或过程参数。它们擅长处理混合数据类型和捕获非线性关系。",
+        solutionBullet_1_2_1_b: "回归模型（线性、分位数、广义线性模型、偏最小二乘 - PLS）：这些模型用于基于一组输入参数直接预测连续良率值或特定质量检测指标。PLS 在处理许多可能共线的预测变量（在FDC数据中很常见）时特别有用。",
+        solutionBullet_1_2_1_c: "神经网络与深度学习：用于捕获众多过程参数与良率结果之间高度复杂、非线性的关系和相互作用，这在复杂的半导体或高级PCB制造过程中很常见。",
+        outcomeText_1_2_1: "在关键节点实现更精确的EOL良率预测，从而能够进行主动调整。清晰识别对良率有显著影响的关键过程变量、设备和阶段，使工程师能够集中精力进行改进。这是台积电项目中的一项关键成就，带来了更好的过程理解和控制。",
+        solutionLabel_1_2_2: "SAS 技术解决方案与运营成果 (高性能计算 - CAS):",
+        solutionText_1_2_2: "SAS Viya 的内存中云分析服务 (CAS) 架构专为大规模并行、分布式处理大型数据集而设计。这在半导体制造中尤其重要，因为来自FDC、WAT和MES的数据量很容易达到TB或PB级别。CAS 通过在多个节点和核心上分配计算，显著加快了模型训练、评分和迭代模型优化的速度。",
+        outcomeText_1_2_2: "大幅缩短模型开发和部署时间（从数天/数周缩短至数小时/数天），允许更频繁地更新模型以适应过程变化，并更快地响应新出现的良率问题。能够分析完整数据集而不是依赖样本。",
+        solutionLabel_1_2_3: "SAS 技术解决方案与运营成果 (自动化机器学习 - AutoML):",
+        solutionText_1_2_3: "SAS Viya 包含 AutoML 功能（例如，在 Model Studio 内），可自动化模型开发生命周期的重要部分。这包括自动化特征工程、算法选择（测试多种算法，如逻辑回归、梯度提升、神经网络等）和超参数调整，以最少的人工干预找到用于良率预测或分类任务的最佳性能模型。",
+        outcomeText_1_2_3: "更快地部署有效的良率预测模型。实现模型构建的民主化，使过程工程师（公民数据科学家）能够在没有深厚数据科学专业知识的情况下开发和部署强大的模型，从而解决人才短缺问题。",
+        subsection1_3Title: "1.3 优化与根本原因识别（可操作的洞察）",
+        challenge1_3_text: "良率偏差的根本原因分析（RCA）通常是一个漫长、手动且不确定的过程，严重依赖经验知识。确定最大化良率的过程配方的最佳条件也可能不清楚，并且涉及昂贵的反复试验。",
+        solutionLabel_1_3_1: "SAS 技术解决方案与运营成果 (AI辅助良率管理):",
+        solutionText_1_3_1: "SAS 利用从训练好的AI模型中获得的洞察来进行更快、更准确的RCA。这包括利用模型可解释性功能：",
+        solutionBullet_1_3_1_a: "变量重要性排名：从基于树的模型（随机森林、梯度提升）中识别最具影响力的参数。",
+        solutionBullet_1_3_1_b: "部分依赖图 (PDP) 和个体条件期望 (ICE) 图：了解特定参数的变化如何影响预测良率。",
+        solutionBullet_1_3_1_c: "LIME (局部可解释模型无关解释) 或 SHAP (SHapley 加性解释) 值（如果支持/集成）：解释单个预测并识别特定低良率事件的促成因素。",
+        outcomeText_1_3_1: "更快、更准确地识别良率损失的真正根本原因，从而能够采取更有效和有针对性的纠正措施，超越简单的相关性分析，理解因果驱动因素。",
+        solutionLabel_1_3_2: "SAS 技术解决方案与运营成果 (低良率分析工作流):",
+        solutionText_1_3_2: "这是SAS内部系统诊断良率问题的一种结构化、通常是自动化的方法：",
+        solutionBullet_1_3_2_a: "问题定义与数据选择：清晰定义良率问题（例如，特定缺陷类型、受影响的产品/过程步骤），并自动提取受影响批次/晶圆与“黄金”或高良率群体的相关数据（过程参数、设备ID、时间戳、材料ID、上游/下游数据）。",
+        solutionBullet_1_3_2_b: "自动化模式发现（分类/聚类）：基于晶圆图上的空间缺陷模式（例如，边缘缺陷、中心簇、使用空间聚类算法如DBScan的划痕）或参数特征（例如，未通过特定电学测试的晶圆，使用K-Means或层次聚类对WAT数据进行聚类）对缺陷晶圆进行分组。",
+        solutionBullet_1_3_2_c: "差异测试与共性/变异性分析：采用统计检验（例如，T检验、ANOVA、卡方检验）和决策树分析，自动比较高良率和低良率群体（或不同缺陷簇）之间数百/数千个过程参数、设备设置和材料特性的分布。这有助于精确指出统计上显著的差异，并识别导致良率变化的关键过程步骤、特定设备（EQP）、腔室（CHB）或材料批次。",
+        solutionBullet_1_3_2_d: "交互式数据集市创建与EDA：生成临时的、集中的数据集市，整合特定良率问题的相关数据。然后，工程师可以使用 SAS Visual Analytics 或 SAS Enterprise Guide 进行交互式探索性数据分析（EDA）——创建箱线图、散点图、相关矩阵、平行坐标图——以可视化地探索自动化分析突显的关系并验证发现。",
+        outcomeText_1_3_2: "一种系统化且显著加速的RCA方法，将复杂良率问题的分析时间从数天/数周缩短至数小时（例如，在报告案例中从82小时缩短至10小时）。为工程师提供经过统计验证的、有针对性的调查和纠正措施领域。",
+        diagramTitle_LYA: "低良率分析工作流程",
+        diagram_lya1: "1. 定义低良率问题并选择数据（低良率与高良率批次）",
+        diagram_lya2: "2. 自动化模式发现（缺陷/故障的空间/参数聚类）",
+        diagram_lya3: "3. 差异测试与共性分析（识别关键参数/设备/步骤）",
+        diagram_lya4: "4. 工程师进行交互式EDA（Visual Analytics, EG）",
+        diagram_lya5: "5. 识别根本原因并采取纠正措施",
+        solutionLabel_1_3_3: "SAS 技术解决方案与运营成果 (面向良率的过程模拟/数字孪生):",
+        solutionText_1_3_3: "SAS 支持创建和使用AI驱动的数字孪生来模拟制造过程，专门用于良率优化。预测性良率模型（将过程参数与良率结果联系起来）构成了此数字孪生的核心。这使工程师能够：",
+        solutionBullet_1_3_3_a: "在工厂车间实施*之前*，虚拟测试新配方参数或过程调整对预测良率的影响。",
+        solutionBullet_1_3_3_b: "识别最佳操作窗口和稳健的配方设置，以最大化良率同时最小化变异性。",
+        solutionBullet_1_3_3_c: "光掩模坯料薄膜形成案例中，机器学习预测质量值（作为良率的代表），优化算法搜索最佳控制参数，是此方法的一个典型例子。",
+        outcomeText_1_3_3: "缩短新产品/过程的流程优化和良率提升时间与成本。识别更稳健的工艺窗口，实现持续高良率。最小化实施工艺变更相关的风险。",
+        solutionLabel_1_3_4: "SAS 技术解决方案与运营成果 (面向良率的早期预警系统 - EWS):",
+        solutionText_1_3_4: "SAS 解决方案，特别是利用 SAS Event Stream Processing (ESP)，能够开发 EWS，*实时*预测并标记可能导致良率偏差的过程异常或偏差。基于历史数据训练的模型，用于识别低良率事件的前兆，部署在 ESP 中以对实时传感器和过程数据进行评分。这对硬盘驱动器制造商来说是一个关键优势，将其良率偏差的潜在预警时间从78天缩短至5天或更短。",
+        outcomeText_1_3_4: "通过允许工程师在不合格情况发生或生产出低良率材料*之前*进行干预，主动防止良率损失。实现更稳定和更高的平均良率（例如，在某些项目中从60%提高到80%）。",
+        section2Title: "2. AI驱动的缺陷检测、分类和根本原因分析：技术验证与运营成果",
+        section2Intro: "SAS 不仅利用 AI/ML进行整体良率预测，还针对缺陷管理的具体挑战，包括自动化检测、准确分类和高效的根本原因分析。",
+        subsection2_1Title: "2.1 自动化缺陷检测与分类",
+        challenge2_1_text: "手动缺陷检测速度慢、易出错且不一致，尤其对于细微或复杂的缺陷。传统的SPC方法可能无法有效捕捉复杂、新出现的缺陷模式或导致特定缺陷类型的细微过程偏差。",
+        solutionLabel_2_1_1: "SAS 技术解决方案与运营成果 (机器学习算法 - VDMML):",
+        solutionText_2_1_1: "SAS VDMML 中的决策树、梯度提升、随机森林和支持向量机等算法用于构建模型，这些模型可以根据参数、传感器或图像数据自动对产品或组件进行分类（例如，好/坏晶圆，是否存在特定缺陷类型如划痕、颗粒、空洞）。这些模型还有助于识别导致这些特定缺陷的最具影响力的制造阶段或过程参数。",
+        outcomeText_2_1_1: "与手动方法相比，缺陷分类的准确性、速度和一致性得到提高。识别特定缺陷减少的关键控制点，从而实现有针对性的过程改进。",
+        solutionLabel_2_1_2: "SAS 技术解决方案与运营成果 (PCB特性 - 缺陷映射与图像模式分析):",
+        solutionText_2_1_2: "对于PCB制造，SAS提供专门的解决方案，通过将缺陷的物理X-Y坐标（通常来自自动光学检测 - AOI、自动电气检测 - AEI或自动视觉检测 - AVI系统）与特定的过程参数（例如，层压、蚀刻或电镀过程中的温度、压力、速度变化）和材料信息联系起来，支持详细的缺陷映射。这使得能够基于缺陷坐标和聚类技术进行自动化的故障原因分析。这包括：",
+        solutionBullet_2_1_2_a: "数据集成：整合来自AOI/AEI/AVI系统的缺陷数据（图像、坐标、类型）与来自MES（批次历史、路径）、SPC（过程测量）、FDC（设备传感器数据）和材料跟踪系统的上下文数据。",
+        solutionBullet_2_1_2_b: "空间分析与聚类：对缺陷坐标数据使用聚类算法（例如，K-Means、DBScan或空间统计），以识别缺陷热点（缺陷密度异常高的区域）、PCB表面上重复出现的空间模式（例如，特定方向排列的缺陷、多块板上重复的模式），并将这些模式与特定设备（例如，特定的打印机、蚀刻机或电镀槽）、过程步骤甚至特定的供应商材料相关联。",
+        solutionBullet_2_1_2_c: "参数关联与缺陷特征：将缺陷位置、类型和频率与关键过程参数（例如，铜厚、线宽/间距、通孔特性、阻焊层对位）以及处理PCB特定区域的工具的FDC传感器读数联系起来。这有助于构建与某些过程偏差或设备状态相关的“缺陷特征”。",
+        outcomeText_2_1_2: "更快地识别PCB制造中的系统性缺陷源（例如，打印头未对准、电镀槽故障、特定批次层压板问题）。能够针对特定机器或工艺步骤采取有针对性的纠正措施。更好地理解细微工艺变化如何转化为物理缺陷，从而实现更稳健的工艺设计和控制。",
+        diagramTitle_PCBDefect: "AI驱动的缺陷检测与RCA（PCB重点）",
+        diagram_pcb1: "AOI/AEI/AVI 图像数据（缺陷位置、类型）",
+        diagram_pcb2: "MES/过程数据（批次、设备、参数）",
+        diagram_pcb3: "SAS Viya (VDMML, Visual Analytics) - 数据集成、空间聚类、机器学习分类、参数关联",
+        diagram_pcb4: "缺陷热点图与模式识别",
+        diagram_pcb5: "根本原因洞察（与缺陷相关的关键参数/设备）",
+        subsection2_2Title: "2.2 AI驱动的缺陷根本原因分析（RCA）",
+        challenge2_2_text: "针对特定缺陷类型的传统RCA方法可能非常耗时，通常依赖于经验知识和手动筛选多个系统的数据，导致结果不确定或只解决了表面问题而非真正根本原因。",
+        solutionLabel_2_2_1: "SAS 技术解决方案与运营成果 (模型可解释性):",
+        solutionText_2_2_1: "SAS 模型（例如，决策树、逻辑回归、梯度提升、可解释AI技术如LIME/SHAP，如果集成/可用）提供关于变量重要性、部分依赖图和个体预测解释的清晰洞察。这些功能帮助工程师精确定位哪些因素（特定的过程参数、设备设置、材料批次、环境条件、操作员行为）与特定缺陷的发生最密切相关或具有因果关系。",
+        outcomeText_2_2_1: "更专注、数据驱动且更快的RCA，减少调查无关因素所花费的时间。由于统计验证，RCA结果的可信度增加。",
+        solutionLabel_2_2_2: "SAS 技术解决方案与运营成果 (RCA自动化工作流):",
+        solutionText_2_2_2: "作为低良率分析框架的一部分（可适用于特定缺陷RCA），SAS Viya 可以自动化RCA过程中的许多步骤。这包括自动识别缺陷群体和非缺陷群体（或具有不同缺陷类型的群体）之间参数的统计显著差异，通过统计检验（t检验、ANOVA、卡方检验）和决策树/规则归纳分析来突显潜在的根本原因。",
+        outcomeText_2_2_2: "缺陷RCA过程的标准化和显著加速。使工程师能够从数千个变量中快速缩小潜在原因范围，从而更快地解决问题并防止再次发生。",
+        solutionLabel_2_2_3: "SAS 技术解决方案与运营成果 (多样化数据集成以实现整体RCA):",
+        solutionText_2_2_3: "通过创建统一的数据存储库（如村田制作所案例所示，整合了质量、成本和交付数据进行整体分析），SAS实现了更全面的RCA。这使工程师在调查特定缺陷来源时，能够考虑来自所有相关制造阶段的数据（例如，进料质量证书、来自FDC的特定工具处理历史、环境传感器数据、操作员日志、上游/下游测试结果）。",
+        outcomeText_2_2_3: "通过揭示制造过程或供应链不同部分之间可能导致缺陷的复杂相互作用，实现更全面、更准确的RCA。避免忽略存在于孤立数据系统中的关键因素。",
+        section3Title: "3. 利用SAS计算机视觉进行质量检测：技术验证与运营成果",
+        section3Intro: "SAS计算机视觉提供了一种自动化的、由AI驱动的视觉检测方法，通过提供更高的准确性、速度和一致性，直接解决了手动方法的局限性。",
+        challenge3_1_text: "手动视觉检测本身就容易因疲劳和主观性而出错，导致缺陷检测不一致。在高产量生产中，这通常是一个瓶颈，并且可能无法对所有单元进行100%的检测，尤其是在缺陷微小或需要持续关注细节的情况下。",
+        solutionLabel_3_1_1: "SAS 技术解决方案与运营成果 (离线模型训练 - SAS Visual Data Mining and Machine Learning):",
+        solutionText_3_1_1: "该过程从开发强大的深度学习模型开始：",
+        solutionBullet_3_1_1_a: "数据提取与准备：从生产线摄像头、显微镜或AOI系统获取的原始视频或图像数据被加载到SAS Viya的CAS中进行分布式处理。这包括收集代表“良好”产品和各种类型“缺陷”产品的多样化标记图像集。",
+        solutionBullet_3_1_1_b: "图像处理/增强：图像经过预处理（例如，调整大小至标准尺寸、颜色转换、归一化、使用双边滤波等滤波器降噪）和广泛增强（例如，旋转、翻转、缩放、亮度/对比度调整、添加合成噪声）。增强技术人为地扩展了训练数据集，提高了模型的鲁棒性及其对光照、方向或缺陷外观的未见变化的泛化能力。如果与突出缺陷特征相关，可以应用像Canny边缘检测这样的技术。",
+        solutionBullet_3_1_1_c: "深度学习模型生成：深度学习模型，特别是为图像分类定制的卷积神经网络（CNN）（例如ResNet、VGG）或物体检测架构如YOLO（You Only Look Once）及其变体（例如用于边缘部署的Tiny YOLO），在SAS VDMML或SAS Model Studio中进行训练。这些模型学习根据标记的图像数据集识别和分类缺陷。输出是一个可部署的模型，通常采用SAS的ASTORE（分析存储）文件格式，其中封装了训练好的模型逻辑、权重和参数。",
+        outcomeText_3_1_1: "创建高度准确和专业的视觉缺陷检测/分类模型，这些模型针对制造商的特定产品、缺陷类型和成像条件进行了定制。对于特定的、定义明确的视觉检测任务，这些模型通常可以超越人类的准确性。",
+        solutionLabel_3_1_2: "SAS 技术解决方案与运营成果 (在线评分 - SAS Event Stream Processing - ESP on the Edge):",
+        solutionText_3_1_2: "然后将训练好的模型部署用于实时检测：",
+        solutionBullet_3_1_2_a: "模型提取与边缘部署：训练好的ASTORE模型由SAS ESP提取，ESP专为低延迟、高吞吐量的流处理而设计。包含视觉模型的ESP项目可以部署在边缘，位于靠近生产线摄像头的服务器或工业PC上，从而最大限度地减少网络延迟。",
+        solutionBullet_3_1_2_b: "实时图像/视频处理：ESP实时捕获和处理来自生产线摄像头的实时视频片段或流图像。这包括必要的预处理，如从视频中提取帧并调整大小（例如，调整为Tiny YOLO输入的416x416）。",
+        solutionBullet_3_1_2_c: "流内评分与跟踪：使用部署的深度学习模型对每个图像或帧进行流内评分，以检测缺陷、识别感兴趣的对象（例如，PCB上的组件、晶圆上的特定区域），并随时间跟踪它们。这包括：",
+        solutionBullet_3_1_2_c1: "物体检测（例如Tiny YOLO）：识别帧内的感兴趣对象并在其周围绘制边界框，同时对其进行分类（例如，“良好组件”、“未对准组件”、“焊接缺陷”）。",
+        solutionBullet_3_1_2_c2: "关键点检测：为了进行更精细的分析，可以在裁剪和调整边界框区域大小后（例如，调整为关键点模型的110x110），识别检测到的对象内的特定关键点（例如，芯片的角点、组件的引脚）。这对于精确的对准检查或尺寸测量非常有用。",
+        solutionBullet_3_1_2_c3: "卡尔曼滤波：这是一种用于视频流中稳健物体跟踪的关键技术。它将实时时间信息（物体在帧间的运动和状态）与（通常与时间无关的）深度学习模型输出相关联，有助于即使在有遮挡或检测噪声的情况下也能保持物体身份、预测未来位置并平滑噪声检测。",
+        solutionBullet_3_1_2_c4: "用于跟踪的数据关联：使用诸如连续帧中边界框之间的交并比（IoU）之类的技术来关联检测到的对象，确保在物体移动通过摄像机视场时能够一致地跟踪同一物理对象。",
+        solutionBullet_3_1_2_d: "警报触发与PLC/MES集成：根据评分结果（例如，检测到高于某个置信度阈值的缺陷、物体错位、关键尺寸超出公差），SAS ESP可以向操作员（例如，通过仪表板、视觉信号）或更高级别的系统触发即时警报。关键的是，ESP可以直接与可编程逻辑控制器（PLC）或制造执行系统（MES）集成，以在生产线上启动自动响应，例如停止传送带、将有缺陷的产品分流到废品箱、调整机器参数或标记某批次以供进一步检查。",
+        outcomeText_3_1_2: "针对特定缺陷类型的实时、100%自动化视觉检测。与手动方法相比，显著减少了检测错误和漏检。对质量偏差的即时反馈和自动化措施，防止了对缺陷单元的进一步处理并最大限度地减少了废品。由于检测周期加快，提高了生产效率。全天候保持一致的检测质量。",
+        diagramTitle_CV: "SAS 计算机视觉架构（概念性）",
+        diagram_cv1: "生产线摄像头/成像系统",
+        diagram_cv2: "SAS ESP (边缘) - 实时图像提取、预处理、深度学习模型评分 (ASTORE)",
+        diagram_cv3: "向操作员/仪表板发出警报 (Visual Analytics)",
+        diagram_cv4: "自动化操作 (通过 PLC/MES 集成)",
+        diagram_cv_footer: "使用 SAS Viya (VDMML) 和标记图像数据进行离线模型训练。",
+        solutionLabel_3_1_3: "SAS 技术解决方案与运营成果 (准确性与影响):",
+        solutionText_3_1_3: "SAS计算机视觉的成功得到了诸如医疗技术设备制造商在预测好/坏产品图像方面达到99%准确性，从而减轻了2000万美元潜在风险的案例验证。其在太阳能电池板缺陷检测和葛兰素史克公司在线检测中的应用进一步证明了其在不同制造环境中的有效性。",
+        outcomeText_3_1_3: "显著提高质量保证和一致性。降低运输有缺陷产品的风险。减少与返工、废品和保修索赔相关的成本。有潜力捕获详细图像数据以供进一步的过程改进分析。",
+        section4Title: "4. 经验证的成果：SAS 如何赋能台湾高科技制造商",
+        outcomeTitle_massiveData: "处理海量数据",
+        outcomeText_massiveData: "SAS Viya 的分布式内存处理 (CAS) 专为应对半导体和 PCB 制造中普遍存在的“大数据过多”挑战而设计，能够在大型数据集上进行复杂分析，这是传统工具难以实现的。",
+        outcomeDetail_massiveData: "能够分析全面的数据集以获得更深入的洞察，而不是依赖抽样或汇总数据，从而产生更准确的模型和根本原因识别。",
+        outcomeTitle_dataSilos: "打破数据孤岛",
+        outcomeText_dataSilos: "SAS 强调数据集成（使用 SAS DI Studio、SAS Studio Flows 等工具）和创建统一的分析数据集市，直接解决了“数据孤岛”问题。这使得能够全面了解制造过程，整合来自 MES、ERP、EWS、FDC 和质量系统的数据。",
+        outcomeDetail_dataSilos: "实现端到端的可追溯性，使工程师能够发现影响良率和质量的不同工艺阶段和数据源之间的复杂相互作用。村田制作所成功创建单一数据存储库以分析质量、成本和交付，就是这一点的证明。",
+        outcomeTitle_speedAccuracy: "速度与准确性",
+        outcomeText_speedAccuracy: "数据准备的自动化、用于 AI/ML 模型训练和评分的高性能计算以及实时计算机视觉显著加速了整个分析生命周期。例如，将 RCA 时间从82小时减少到10小时，并在视觉检测中达到99%的准确性。",
+        outcomeDetail_speedAccuracy: "更快的决策制定，更快地响应质量问题，缩短新产品或工艺调整的上市时间，并提高分析结果的可信度。",
+        outcomeTitle_proactiveQuality: "主动质量控制",
+        outcomeText_proactiveQuality: "预测性质量模型和早期预警系统 (EWS) 使质量管理从被动缺陷筛选转变为主动预防质量超标和良率损失。硬盘制造商的案例（预警时间大幅缩短）就是例证。",
+        outcomeDetail_proactiveQuality: "更稳定的生产过程，减少废品和返工成本，提高产品质量的一致性。",
+        outcomeTitle_empoweringEngineers: "赋能工程师（公民数据科学家）",
+        outcomeText_empoweringEngineers: "尽管 SAS 提供高度先进的分析功能，但 SAS Enterprise Guide 等工具以及 SAS Viya 中的可视化界面（例如 VDMML、Model Studio、SAS Studio Flows）旨在使这些强大的分析功能更易于流程工程师和领域专家使用，即使他们可能没有深厚的编码或数据科学专业知识。",
+        outcomeDetail_empoweringEngineers: "解决台湾专业数据科学人才短缺的问题。允许公司利用其现有工程团队深厚的流程知识，使他们能够进行复杂的分析并直接为质量改进计划做出贡献。",
+        outcomeTitle_continuousImprovement: "持续改进",
+        outcomeText_continuousImprovement: "集成的 SAS 平台支持从数据到发现、再到部署和监控的整个分析生命周期（使用 SAS Model Manager 等工具进行模型性能跟踪和再训练触发），促进了持续改进循环。来自已部署模型和实时监控的洞察可以反馈以优化流程、更新模型并确定新的优化领域。",
+        outcomeDetail_continuousImprovement: "随着时间的推移，在良率、质量和效率方面持续改进，帮助台湾制造商在快速发展的全球市场中保持竞争优势。",
+        section5Title: "5. 整体良率与缺陷降低系统架构（概念性）",
+        diagramTitle_OverallArch: "SAS 良率与缺陷管理集成解决方案",
+        diagram_dataSourcesLabel: "数据源",
+        diagram_ds_mes: "MES (批次, 在制品)",
+        diagram_ds_fdc: "FDC/传感器 (实时参数)",
+        diagram_ds_wat: "WAT/CP (电性测试)",
+        diagram_ds_aoi: "AOI/AVI (图像/缺陷数据)",
+        diagram_ds_logs: "设备日志",
+        diagram_ds_hist: "历史数据库",
+        diagram_dataPlatformLabel: "数据平台",
+        diagram_dp_sasViya: "SAS Viya - 数据集成 (DI/Flows/EG), 数据质量与治理, 分析数据集市 (CAS)",
+        diagram_analyticsActionLabel: "分析与行动",
+        diagram_aa_viyaModels: "SAS Viya (VDMML, Model Studio) - 良率预测模型, 缺陷分类, RCA 模型, 数字孪生模拟",
+        diagram_aa_esp: "SAS ESP (边缘) - 实时评分, 计算机视觉, 异常检测, 警报与PLC集成",
+        diagram_aa_va: "SAS Visual Analytics - 仪表板与报告",
+        diagram_overall_footer: "此概念图显示了各种数据源如何在SAS生态系统中集成和处理，通过高级分析和实时操作来驱动良率提升和缺陷减少。",
+        conclusionParagraph: "通过应用这些技术上详尽的方法论并利用其强大、集成的分析平台，SAS为台湾高科技制造商提供了具体的工具和可操作的洞察，以在其高度复杂和数据密集型的运营环境中显著改善产品和生产质量、提高良率并减少缺陷。",
+        footerCopyright: "© SAS Institute Inc. 保留所有权利。",
+        footerDisclaimer: "本文档仅供参考。"
+    },
+    "zh-TW": {
+        mainTitle: "提升良率管理與缺陷減少",
+        mainSubtitle: "SAS 為臺灣高科技製造商提供的技術深度解析",
+        introParagraph: "半導體和PCB製造的核心挑戰——管理巨大的複雜性和數據量以最大化良率並最小化缺陷——正是SAS致力於解決的問題。SAS的多方面方法，結合了強大的數據處理、先進的統計方法和複雜的AI/ML技術，擁有充分的文檔記錄，旨在提供切實的營運成果。本文件透過增強的細節和說明性圖表對這些功能進行了技術驗證。",
+        section1Title: "1. SAS 良率預測與優化方法論：技術驗證與營運成果",
+        section1Intro: "SAS的「品質挖掘」和「低良率分析」是建構於SAS Viya平台之上的結構化方法論。它們利用SAS Viya強大的數據處理（CAS - 雲端分析服務）和分析引擎（如VDMML）來交付實際成果。",
+        subsection1_1Title: "1.1 數據提取與準備（基礎）",
+        challengeValidationLabel: "挑戰驗證：",
+        outcomeLabel: "營運成果：",
+        challenge1_1_text: "高科技製造環境從各種系統中產生海量且通常孤立的數據集，如MES（製造執行系統）、EWS（早期預警系統）、FDC（故障檢測與分類）、CP（特性程序）、WAT（晶圓允收測試）、過程歷史和設備日誌。這些數據通常是「髒」的（包含錯誤、異常值、不一致性），「匯總」的（缺乏必要的粒度），或「抽樣」的（不能代表完整過程），需要大量的工程時間進行準備，以使其適合可靠的分析。",
+        solutionLabel_1_1_1: "SAS 技術解決方案與營運成果 (SAS Data Integration Studio / SAS Studio Flows / SAS Viya Data Preparation):",
+        solutionText_1_1_1: "這些工具大規模自動化大數據管道的創建和管理。它們促進了強大的ETL（提取、轉換、載入）和ELT過程，連接並處理來自各種來源的數據，包括關聯式資料庫（Oracle、PostgreSQL）、資料倉儲、Hadoop、平面檔案和流數據端點。關鍵功能包括：",
+        solutionBullet_1_1_1_a: "自動化數據提取：計劃或事件驅動的數據從源系統提取。",
+        solutionBullet_1_1_1_b: "數據清理與驗證：使用預定義規則或數據品質功能識別和處理遺失值、異常值和不一致性。",
+        solutionBullet_1_1_1_c: "數據轉換：聚合、連接、轉置和派生新變數以適當結構化數據以供分析（例如，創建基於時間的特徵，將感測器數據與批次/晶圓上下文對齊）。",
+        solutionBullet_1_1_1_d: "可擴展處理：利用 SAS Viya 的 CAS 引擎進行分散式記憶體中大型資料集處理。",
+        outcomeText_1_1_1: "顯著減少手動數據準備時間（通常超過50%），跨專案保持一致的數據品質，並能有效處理TB級的製造數據。這使寶貴的工程資源能夠專注於分析和解讀，而不是數據整理。",
+        solutionLabel_1_1_2: "SAS 技術解決方案與營運成果 (SAS Enterprise Guide - EG):",
+        solutionText_1_1_2: "EG 常被用作使用者友善的、基於專案的前端，用於數據存取、操作、即席分析和報告。它因其易於存取 SAS Viya 的 CAS 以進行高效能、多執行緒數據處理而特別受到重視。工程師可以創建可重複使用的流程來自動化常規數據準備任務。台積電案例特別強調了利用 EG 和 Viya CAS 來提升數據準備效能並實現高效的 EDA。",
+        outcomeText_1_1_2: "使工程師和分析師（包括那些不是專業程式設計師的人）能夠更有效地執行複雜的數據操作和即席查詢，加速任何良率分析專案的初始階段，並培養數據驅動的文化。",
+        solutionLabel_1_1_3: "SAS 技術解決方案與營運成果 (數據「加工」與分析資料超市):",
+        solutionText_1_1_3: "SAS 透過創建結構化的分析資料超市或分析基礎表 (ABT)，將原始的、通常分散的製造數據轉換為「分析就緒數據」。這包括：",
+        solutionBullet_1_1_3_a: "系統化處理遺失值（例如，基於統計度量或預測模型進行插補）。",
+        solutionBullet_1_1_3_b: "派生新的有意義的特徵（特徵工程），例如計算時間窗口內的匯總統計數據、創建交互項或轉換變數以獲得更好的模型效能。",
+        solutionBullet_1_1_3_c: "確保適合進階模型的高數據品質和一致性。",
+        solutionBullet_1_1_3_d: "SAS Viya (VDMML) 中的「自動化特徵機器」可以自動化許多數據轉換和特徵創建任務，結合最佳實務為模型生成最佳特徵，從而減少手動試錯。",
+        outcomeText_1_1_3: "為模型提供更高品質的輸入數據，從而實現更準確可靠的預測。特徵工程的自動化節省了大量時間和精力，允許開發和測試更複雜的特徵，最終提高模型效能和洞察生成。",
+        diagramTitle_DataIngestion: "數據提取與準備流程",
+        diagram_mesData: "MES 數據",
+        diagram_fdcSensorData: "FDC/感測器數據",
+        diagram_watCpData: "WAT/CP 數據",
+        diagram_equipmentLogs: "設備日誌",
+        diagram_sasViyaDI: "SAS Viya - 數據整合、準備與品質 (DI Studio, Studio Flows, Viya Data Prep, EG)",
+        diagram_adm: "精選分析資料超市 / ABT",
+        subsection1_2Title: "1.2 良率預測建模（核心分析）",
+        challenge1_2_text: "使用龐大而複雜的上游過程數據（來自數百或數千個參數）在各個關鍵過程步驟預測最終（EOL）良率是一個重大障礙。影響良率的具體因素及其相互作用通常是未知或不清楚的，使得傳統的統計建模不足以應對。",
+        solutionLabel_1_2_1: "SAS 技術解決方案與營運成果 (SAS Visual Data Mining and Machine Learning - VDMML):",
+        solutionText_1_2_1: "VDMML 是 SAS Viya 的一個關鍵組件，為建構、評估和部署預測模型提供了一個全面的、互動式的、通常是自動化的環境。它支援對良率預測至關重要的廣泛監督式學習演算法：",
+        solutionBullet_1_2_1_a: "決策樹、梯度提升、隨機森林：這些集成方法廣泛用於分類結果（例如，好/壞晶圓，根據EOL測試結果分配到高/低良率區間），並且重要的是，透過變數重要性度量（例如，基尼重要性、排列重要性）識別影響良率的最具影響力的製造階段或過程參數。它們擅長處理混合數據類型和捕獲非線性關係。",
+        solutionBullet_1_2_1_b: "迴歸模型（線性、分位數、廣義線性模型、偏最小二乘 - PLS）：這些模型用於基於一組輸入參數直接預測連續良率值或特定品質檢測指標。PLS 在處理許多可能共線的預測變數（在FDC數據中很常見）時特別有用。",
+        solutionBullet_1_2_1_c: "神經網路與深度學習：用於捕獲眾多過程參數與良率結果之間高度複雜、非線性的關係和相互作用，這在複雜的半導體或進階PCB製造過程中很常見。",
+        outcomeText_1_2_1: "在關鍵節點實現更精確的EOL良率預測，從而能夠進行主動調整。清晰識別對良率有顯著影響的關鍵過程變數、設備和階段，使工程師能夠集中精力進行改進。這是台積電專案中的一項關鍵成就，带来了更好的過程理解和控制。",
+        solutionLabel_1_2_2: "SAS 技術解決方案與營運成果 (高效能運算 - CAS):",
+        solutionText_1_2_2: "SAS Viya 的記憶體中雲端分析服務 (CAS) 架構專為大規模並行、分散式處理大型資料集而設計。這在半導體製造中尤其重要，因為來自FDC、WAT和MES的數據量很容易達到TB或PB級別。CAS 透過在多個節點和核心上分配計算，顯著加快了模型訓練、評分和迭代模型優化的速度。",
+        outcomeText_1_2_2: "大幅縮短模型開發和部署時間（從數天/數週縮短至數小時/數天），允許更頻繁地更新模型以適應過程變化，並更快地回應新出現的良率問題。能夠分析完整資料集而不是依賴樣本。",
+        solutionLabel_1_2_3: "SAS 技術解決方案与运营成果 (自动化机器学习 - AutoML):",
+        solutionText_1_2_3: "SAS Viya 包含 AutoML 功能（例如，在 Model Studio 内），可自动化模型开发生命周期的重要部分。这包括自动化特征工程、算法选择（测试多种算法，如逻辑回归、梯度提升、神经网络等）和超参数调整，以最少的人工干预找到用于良率预测或分类任务的最佳性能模型。",
+        outcomeText_1_2_3: "更快地部署有效的良率预测模型。实现模型构建的民主化，使过程工程师（公民数据科学家）能够在没有深厚数据科学专业知识的情况下开发和部署强大的模型，从而解决人才短缺问题。",
+        subsection1_3Title: "1.3 優化與根本原因識別（可操作的洞察）",
+        challenge1_3_text: "良率偏差的根本原因分析（RCA）通常是一個漫長、手動且不確定的過程，嚴重依賴經驗知識。確定最大化良率的過程配方的最佳條件也可能不清楚，並且涉及昂貴的反覆試驗。",
+        solutionLabel_1_3_1: "SAS 技術解決方案與營運成果 (AI輔助良率管理):",
+        solutionText_1_3_1: "SAS 利用從訓練好的AI模型中獲得的洞察來進行更快、更準確的RCA。這包括利用模型可解釋性功能：",
+        solutionBullet_1_3_1_a: "變數重要性排名：從基於樹的模型（隨機森林、梯度提升）中識別最具影響力的參數。",
+        solutionBullet_1_3_1_b: "部分依賴圖 (PDP) 和個體條件期望 (ICE) 圖：了解特定參數的變化如何影響預測良率。",
+        solutionBullet_1_3_1_c: "LIME (局部可解釋模型無關解釋) 或 SHAP (SHapley 加性解釋) 值（如果支援/整合）：解釋單個預測並識別特定低良率事件的促成因素。",
+        outcomeText_1_3_1: "更快、更準確地識別良率損失的真正根本原因，從而能夠採取更有效和有針對性的糾正措施，超越簡單的相關性分析，理解因果驅動因素。",
+        solutionLabel_1_3_2: "SAS 技術解決方案與營運成果 (低良率分析工作流程):",
+        solutionText_1_3_2: "這是SAS內部系統診斷良率問題的一種結構化、通常是自動化的方法：",
+        solutionBullet_1_3_2_a: "問題定義與數據選擇：清晰定義良率問題（例如，特定缺陷類型、受影響的產品/過程步驟），並自動提取受影響批次/晶圓與「黃金」或高良率群體的相關數據（過程參數、設備ID、時間戳、材料ID、上游/下游數據）。",
+        solutionBullet_1_3_2_b: "自動化模式發現（分類/聚類）：基於晶圓圖上的空間缺陷模式（例如，邊緣缺陷、中心簇、使用空間聚類演算法如DBScan的劃痕）或參數特徵（例如，未通過特定電學測試的晶圓，使用K-Means或層次聚類對WAT數據進行聚類）對缺陷晶圓進行分組。",
+        solutionBullet_1_3_2_c: "差異測試與共性/變異性分析：採用統計檢驗（例如，T檢驗、ANOVA、卡方檢驗）和決策樹分析，自動比較高良率和低良率群體（或不同缺陷簇）之間數百/數千個過程參數、設備設定和材料特性的分佈。這有助於精確指出統計上顯著的差異，並識別導致良率變化的關鍵過程步驟、特定設備（EQP）、腔室（CHB）或材料批次。",
+        solutionBullet_1_3_2_d: "互動式資料超市創建與EDA：產生臨時的、集中的資料超市，整合特定良率問題的相關數據。然後，工程師可以使用 SAS Visual Analytics 或 SAS Enterprise Guide 進行互動式探索性數據分析（EDA）——創建箱形圖、散佈圖、相關矩陣、平行座標圖——以可視化地探索自動化分析突顯的關係並驗證發現。",
+        outcomeText_1_3_2: "一種系統化且顯著加速的RCA方法，將複雜良率問題的分析時間從數天/數週縮短至數小時（例如，在報告案例中從82小時縮短至10小時）。為工程師提供經過統計驗證的、有針對性的調查和糾正措施領域。",
+        diagramTitle_LYA: "低良率分析工作流程",
+        diagram_lya1: "1. 定義低良率問題並選擇數據（低良率與高良率批次）",
+        diagram_lya2: "2. 自動化模式發現（缺陷/故障的空間/參數聚類）",
+        diagram_lya3: "3. 差異測試與共性分析（識別關鍵參數/設備/步驟）",
+        diagram_lya4: "4. 工程師進行互動式EDA（Visual Analytics, EG）",
+        diagram_lya5: "5. 識別根本原因並採取糾正措施",
+        solutionLabel_1_3_3: "SAS 技術解決方案與營運成果 (面向良率的過程模擬/數位孿生):",
+        solutionText_1_3_3: "SAS 支援創建和使用AI驅動的數位孿生來模擬製造過程，專門用於良率優化。預測性良率模型（將過程參數與良率結果聯繫起來）構成了此數位孿生的核心。這使工程師能夠：",
+        solutionBullet_1_3_3_a: "在工廠車間實施*之前*，虛擬測試新配方參數或過程調整對預測良率的影響。",
+        solutionBullet_1_3_3_b: "識別最佳操作窗口和穩健的配方設定，以最大化良率同時最小化變異性。",
+        solutionBullet_1_3_3_c: "光罩坯料薄膜形成案例中，機器學習預測品質值（作為良率的代表），優化演算法搜索最佳控制參數，是此方法的一個典型例子。",
+        outcomeText_1_3_3: "縮短新產品/過程的流程優化和良率提升時間与成本。識別更穩健的工藝窗口，實現持續高良率。最小化實施工藝變更相關的風險。",
+        solutionLabel_1_3_4: "SAS 技術解決方案與營運成果 (面向良率的早期預警系統 - EWS):",
+        solutionText_1_3_4: "SAS 解決方案，特別是利用 SAS Event Stream Processing (ESP)，能夠開發 EWS，*即時*預測並標記可能導致良率偏差的過程異常或偏差。基於歷史數據訓練的模型，用於識別低良率事件的前兆，部署在 ESP 中以對即時感測器和過程數據進行評分。這對硬碟驅動器製造商來說是一個關鍵優勢，將其良率偏差的潛在預警時間從78天縮短至5天或更短。",
+        outcomeText_1_3_4: "透過允許工程師在不合格情況發生或生產出低良率材料*之前*進行干預，主動防止良率損失。實現更穩定和更高的平均良率（例如，在某些專案中從60%提高到80%）。",
+        section2Title: "2. AI驅動的缺陷檢測、分類和根本原因分析：技術驗證與營運成果",
+        section2Intro: "SAS 不僅利用 AI/ML進行整體良率預測，還針對缺陷管理的具體挑戰，包括自動化檢測、準確分類和高效的根本原因分析。",
+        subsection2_1Title: "2.1 自動化缺陷檢測與分類",
+        challenge2_1_text: "手動缺陷檢測速度慢、易出錯且不一致，尤其對於細微或複雜的缺陷。傳統的SPC方法可能無法有效捕捉複雜、新出現的缺陷模式或導致特定缺陷類型的細微過程偏差。",
+        solutionLabel_2_1_1: "SAS 技術解決方案與營運成果 (機器學習演算法 - VDMML):",
+        solutionText_2_1_1: "SAS VDMML 中的決策樹、梯度提升、隨機森林和支援向量機等演算法用於建構模型，這些模型可以根據參數、感測器或影像數據自動對產品或組件進行分類（例如，好/壞晶圓，是否存在特定缺陷類型如劃痕、顆粒、空洞）。這些模型還有助於識別導致這些特定缺陷的最具影響力的製造階段或過程參數。",
+        outcomeText_2_1_1: "與手動方法相比，缺陷分類的準確性、速度和一致性得到提高。識別特定缺陷減少的關鍵控制點，從而實現有針對性的過程改進。",
+        solutionLabel_2_1_2: "SAS 技術解決方案與營運成果 (PCB特性 - 缺陷映射與影像模式分析):",
+        solutionText_2_1_2: "對於PCB製造，SAS提供專門的解決方案，透過將缺陷的實體X-Y座標（通常來自自動光學檢測 - AOI、自動電氣檢測 - AEI或自動視覺檢測 - AVI系統）与特定的過程參數（例如，層壓、蝕刻或電鍍過程中的溫度、壓力、速度變化）和材料資訊連結起來，支援詳細的缺陷映射。這使得能夠基於缺陷座標和聚類技術進行自動化的故障原因分析。這包括：",
+        solutionBullet_2_1_2_a: "數據整合：整合來自AOI/AEI/AVI系統的缺陷數據（影像、座標、類型）與來自MES（批次歷史、路徑）、SPC（過程量測）、FDC（設備感測器數據）和材料追蹤系統的上下文數據。",
+        solutionBullet_2_1_2_b: "空間分析與聚類：對缺陷座標數據使用聚類演算法（例如，K-Means、DBScan或空間統計），以識別缺陷熱點（缺陷密度異常高的區域）、PCB表面上重複出現的空間模式（例如，特定方向排列的缺陷、多塊板上重複的模式），並將這些模式與特定設備（例如，特定的印表機、蝕刻機或電鍍槽）、過程步驟甚至特定的供應商材料相關聯。",
+        solutionBullet_2_1_2_c: "參數關聯與缺陷特徵：將缺陷位置、類型和頻率與關鍵過程參數（例如，銅厚、線寬/間距、通孔特性、阻焊層對位）以及處理PCB特定區域的工具的FDC感測器讀數連結起來。這有助於建構與某些過程偏差或設備狀態相關的「缺陷特徵」。",
+        outcomeText_2_1_2: "更快地識別PCB製造中的系統性缺陷源（例如，印表機頭未對準、電鍍槽故障、特定批次層壓板問題）。能夠針對特定機器或工藝步驟採取有針對性的糾正措施。更好地理解細微工藝變化如何轉化為實體缺陷，從而實現更穩健的工藝設計和控制。",
+        diagramTitle_PCBDefect: "AI驅動的缺陷檢測與RCA（PCB重點）",
+        diagram_pcb1: "AOI/AEI/AVI 影像數據（缺陷位置、類型）",
+        diagram_pcb2: "MES/過程數據（批次、設備、參數）",
+        diagram_pcb3: "SAS Viya (VDMML, Visual Analytics) - 數據整合、空間聚類、機器學習分類、參數關聯",
+        diagram_pcb4: "缺陷熱點圖與模式識別",
+        diagram_pcb5: "根本原因洞察（與缺陷相關的關鍵參數/設備）",
+        subsection2_2Title: "2.2 AI驅動的缺陷根本原因分析（RCA）",
+        challenge2_2_text: "針對特定缺陷類型的傳統RCA方法可能非常耗時，通常依賴於經驗知識和手動篩選多個系統的數據，導致結果不確定或只解決了表面問題而非真正根本原因。",
+        solutionLabel_2_2_1: "SAS 技術解決方案與營運成果 (模型可解釋性):",
+        solutionText_2_2_1: "SAS 模型（例如，決策樹、邏輯迴歸、梯度提升、可解釋AI技術如LIME/SHAP，如果整合/可用）提供關於變數重要性、部分依賴圖和個體預測解釋的清晰洞察。這些功能幫助工程師精確定位哪些因素（特定的過程參數、設備設定、材料批次、環境條件、操作員行為）與特定缺陷的發生最密切相關或具有因果關係。",
+        outcomeText_2_2_1: "更專注、數據驅動且更快的RCA，減少調查無關因素所花費的時間。由於統計驗證，RCA結果的可信度增加。",
+        solutionLabel_2_2_2: "SAS 技術解決方案與營運成果 (RCA自動化工作流程):",
+        solutionText_2_2_2: "作為低良率分析框架的一部分（可適用於特定缺陷RCA），SAS Viya 可以自動化RCA過程中的許多步驟。這包括自動識別缺陷群體和非缺陷群體（或具有不同缺陷類型的群體）之間參數的統計顯著差異，透過統計檢驗（t檢驗、ANOVA、卡方檢驗）和決策樹/規則歸納分析來突顯潛在的根本原因。",
+        outcomeText_2_2_2: "缺陷RCA過程的標準化和顯著加速。使工程師能夠從數千個變數中快速縮小潛在原因範圍，從而更快地解決問題並防止再次發生。",
+        solutionLabel_2_2_3: "SAS 技術解決方案與營運成果 (多樣化數據整合以實現整體RCA):",
+        solutionText_2_2_3: "透過創建統一的數據儲存庫（如村田製作所案例所示，整合了品質、成本和交付數據進行整體分析），SAS實現了更全面的RCA。這使工程師在調查特定缺陷來源時，能夠考慮來自所有相關製造階段的數據（例如，進料品質證書、來自FDC的特定工具處理歷史、環境感測器數據、操作員日誌、上游/下游測試結果）。",
+        outcomeText_2_2_3: "透過揭示製造過程或供應鏈不同部分之間可能導致缺陷的複雜相互作用，實現更全面、更準確的RCA。避免忽略存在於孤立數據系統中的關鍵因素。",
+        section3Title: "3. 利用SAS電腦視覺進行品質檢測：技術驗證与營運成果",
+        section3Intro: "SAS電腦視覺提供了一種自動化的、由AI驅動的視覺檢測方法，透過提供更高的準確性、速度和一致性，直接解決了手動方法的局限性。",
+        challenge3_1_text: "手動視覺檢測本身就容易因疲勞和主觀性而出錯，導致缺陷檢測不一致。在高產量生產中，這通常是一個瓶頸，並且可能無法對所有單元進行100%的檢測，尤其是在缺陷微小或需要持續關注細節的情況下。",
+        solutionLabel_3_1_1: "SAS 技術解決方案與營運成果 (離線模型訓練 - SAS Visual Data Mining and Machine Learning):",
+        solutionText_3_1_1: "該過程從開發強大的深度學習模型開始：",
+        solutionBullet_3_1_1_a: "數據提取與準備：從生產線攝影機、顯微鏡或AOI系統獲取的原始影片或影像數據被載入到SAS Viya的CAS中進行分散式處理。這包括收集代表「良好」產品和各種類型「缺陷」產品的多樣化標記影像集。",
+        solutionBullet_3_1_1_b: "影像處理/增強：影像經過預處理（例如，調整大小至標準尺寸、顏色轉換、標準化、使用雙邊濾波等濾波器降噪）和廣泛增強（例如，旋轉、翻轉、縮放、亮度/對比度調整、添加合成噪聲）。增強技術人為地擴展了訓練資料集，提高了模型的穩健性及其對光照、方向或缺陷外觀的未見變化的泛化能力。如果與突顯缺陷特徵相關，可以應用像Canny邊緣檢測這樣的技術。",
+        solutionBullet_3_1_1_c: "深度學習模型產生：深度學習模型，特別是為影像分類客製化的卷積神經網路（CNN）（例如ResNet、VGG）或物件偵測架構如YOLO（You Only Look Once）及其變體（例如用於邊緣部署的Tiny YOLO），在SAS VDMML或SAS Model Studio中進行訓練。這些模型學習根據標記的影像資料集識別和分類缺陷。輸出是一個可部署的模型，通常採用SAS的ASTORE（分析儲存）檔案格式，其中封裝了訓練好的模型邏輯、權重和參數。",
+        outcomeText_3_1_1: "創建高度準確和專業的視覺缺陷檢測/分類模型，這些模型針對製造商的特定產品、缺陷類型和成像條件進行了客製化。對於特定的、定義明確的視覺檢測任務，這些模型通常可以超越人類的準確性。",
+        solutionLabel_3_1_2: "SAS 技術解決方案與營運成果 (線上評分 - SAS Event Stream Processing - ESP on the Edge):",
+        solutionText_3_1_2: "然後將訓練好的模型部署用於即時檢測：",
+        solutionBullet_3_1_2_a: "模型提取與邊緣部署：訓練好的ASTORE模型由SAS ESP提取，ESP專為低延遲、高吞吐量的流處理而設計。包含視覺模型的ESP專案可以部署在邊緣，位於靠近生產線攝影機的伺服器或工業PC上，從而最大限度地減少網路延遲。",
+        solutionBullet_3_1_2_b: "即時影像/影片處理：ESP即時捕獲和處理來自生產線攝影機的即時影片片段或流影像。這包括必要的預處理，如從影片中提取幀並調整大小（例如，調整為Tiny YOLO輸入的416x416）。",
+        solutionBullet_3_1_2_c: "流內評分與追蹤：使用部署的深度學習模型對每個影像或幀進行流內評分，以檢測缺陷、識別感興趣的物件（例如，PCB上的組件、晶圓上的特定區域），並隨時間追蹤它們。這包括：",
+        solutionBullet_3_1_2_c1: "物件偵測（例如Tiny YOLO）：識別幀內的感興趣物件並在其周圍繪製邊界框，同時對其進行分類（例如，「良好組件」、「未對準組件」、「焊接缺陷」）。",
+        solutionBullet_3_1_2_c2: "關鍵點偵測：為了進行更精細的分析，可以在裁剪和調整邊界框區域大小後（例如，調整為關鍵點模型的110x110），識別偵測到的物件內的特定關鍵點（例如，晶片的角點、組件的引腳）。這對於精確的對位檢查或尺寸量測非常有用。",
+        solutionBullet_3_1_2_c3: "卡爾曼濾波：這是一種用於影片流中穩健物件追蹤的關鍵技術。它將即時時間資訊（物件在幀間的運動和狀態）與（通常與時間無關的）深度學習模型輸出相關聯，有助於即使在有遮擋或偵測雜訊的情況下也能保持物件身份、預測未來位置並平滑雜訊偵測。",
+        solutionBullet_3_1_2_c4: "用於追蹤的數據關聯：使用諸如連續幀中邊界框之間的交併比（IoU）之類的技術來關聯偵測到的物件，確保在物件移動通過攝影機視場時能夠一致地追蹤同一實體物件。",
+        solutionBullet_3_1_2_d: "警報觸發與PLC/MES整合：根據評分結果（例如，偵測到高於某個信賴度閾值的缺陷、物件錯位、關鍵尺寸超出公差），SAS ESP可以向操作員（例如，透過儀表板、視覺訊號）或更高級別的系統觸發即時警報。關鍵的是，ESP可以直接與可程式化邏輯控制器（PLC）或製造執行系統（MES）整合，以在生產線上啟動自動回應，例如停止傳送帶、將有缺陷的產品分流到廢品箱、調整機器參數或標記某批次以供進一步檢查。",
+        outcomeText_3_1_2: "針對特定缺陷類型的即時、100%自動化視覺檢測。與手動方法相比，顯著減少了檢測錯誤和漏檢。對品質偏差的即時回饋和自動化措施，防止了對缺陷單元的進一步處理並最大限度地減少了廢品。由於檢測週期加快，提高了生產效率。全天候保持一致的檢測品質。",
+        diagramTitle_CV: "SAS 電腦視覺架構（概念性）",
+        diagram_cv1: "生產線攝影機/成像系統",
+        diagram_cv2: "SAS ESP (邊緣) - 即時影像擷取、預處理、深度學習模型評分 (ASTORE)",
+        diagram_cv3: "向操作員/儀表板發出警報 (Visual Analytics)",
+        diagram_cv4: "自動化操作 (透過 PLC/MES 整合)",
+        diagram_cv_footer: "使用 SAS Viya (VDMML) 和標記影像數據進行離線模型訓練。",
+        solutionLabel_3_1_3: "SAS 技術解決方案與營運成果 (準確性與影響):",
+        solutionText_3_1_3: "SAS電腦視覺的成功得到了諸如醫療技術設備製造商在預測好/壞產品影像方面達到99%準確性，從而減輕了2000萬美元潛在風險的案例驗證。其在太陽能電池板缺陷檢測和葛蘭素史克公司線上檢測中的應用進一步證明了其在不同製造環境中的有效性。",
+        outcomeText_3_1_3: "顯著提高品質保證和一致性。降低運輸有缺陷產品的風險。減少與重工、廢品和保固索賠相關的成本。有潛力捕獲詳細影像數據以供進一步的過程改進分析。",
+        section4Title: "4. 經驗證的成果：SAS 如何賦能臺灣高科技製造商",
+        outcomeTitle_massiveData: "處理海量數據",
+        outcomeText_massiveData: "SAS Viya 的分散式記憶體處理 (CAS) 專為應對半導體和 PCB 製造中普遍存在的「大數據過多」挑戰而設計，能夠在大型資料集上進行複雜分析，這是傳統工具難以實現的。",
+        outcomeDetail_massiveData: "能夠分析全面的資料集以獲得更深入的洞察，而不是依賴抽樣或匯總數據，從而產生更準確的模型和根本原因識別。",
+        outcomeTitle_dataSilos: "打破數據孤島",
+        outcomeText_dataSilos: "SAS 強調數據整合（使用 SAS DI Studio、SAS Studio Flows 等工具）和創建統一的分析資料超市，直接解決了「數據孤島」問題。這使得能夠全面了解製造過程，整合來自 MES、ERP、EWS、FDC 和品質系統的數據。",
+        outcomeDetail_dataSilos: "實現端對端的可追溯性，使工程師能夠發現影響良率和品質的不同工藝階段和數據源之間的複雜相互作用。村田製作所成功創建單一數據儲存庫以分析品質、成本和交付，就是這一點的證明。",
+        outcomeTitle_speedAccuracy: "速度與準確性",
+        outcomeText_speedAccuracy: "數據準備的自動化、用於 AI/ML 模型訓練和評分的高效能運算以及即時電腦視覺顯著加速了整個分析生命週期。例如，將 RCA 時間從82小時減少到10小時，並在視覺檢測中達到99%的準確性。",
+        outcomeDetail_speedAccuracy: "更快的決策制定，更快地回應品質問題，縮短新產品或工藝調整的上市時間，並提高分析結果的可信度。",
+        outcomeTitle_proactiveQuality: "主動品質控制",
+        outcomeText_proactiveQuality: "預測性品質模型和早期預警系統 (EWS) 使品質管理從被動缺陷篩選轉變為主動預防品質超標和良率損失。硬碟製造商的案例（預警時間大幅縮短）就是例證。",
+        outcomeDetail_proactiveQuality: "更穩定的生產過程，減少廢品和重工成本，提高產品品質的一致性。",
+        outcomeTitle_empoweringEngineers: "賦能工程師（公民數據科學家）",
+        outcomeText_empoweringEngineers: "儘管 SAS 提供高度先進的分析功能，但 SAS Enterprise Guide 等工具以及 SAS Viya 中的視覺化介面（例如 VDMML、Model Studio、SAS Studio Flows）旨在使這些強大的分析功能更易於流程工程師和領域專家使用，即使他們可能沒有深厚的編碼或數據科學專業知識。",
+        outcomeDetail_empoweringEngineers: "解決臺灣專業數據科學人才短缺的問題。允許公司利用其現有工程團隊深厚的流程知識，使他們能夠進行複雜的分析並直接為品質改進計劃做出貢獻。",
+        outcomeTitle_continuousImprovement: "持續改進",
+        outcomeText_continuousImprovement: "整合的 SAS 平台支援從數據到發現、再到部署和監控的整個分析生命週期（使用 SAS Model Manager 等工具進行模型效能追蹤和再訓練觸發），促進了持續改進循環。來自已部署模型和即時監控的洞察可以回饋以優化流程、更新模型並確定新的優化領域。",
+        outcomeDetail_continuousImprovement: "隨著時間的推移，在良率、品質和效率方面持續改進，幫助臺灣製造商在快速發展的全球市場中保持競爭優勢。",
+        section5Title: "5. 整體良率與缺陷降低系統架構（概念性）",
+        diagramTitle_OverallArch: "SAS 良率與缺陷管理整合解決方案",
+        diagram_dataSourcesLabel: "數據源",
+        diagram_ds_mes: "MES (批次, 在製品)",
+        diagram_ds_fdc: "FDC/感測器 (即時參數)",
+        diagram_ds_wat: "WAT/CP (電性測試)",
+        diagram_ds_aoi: "AOI/AVI (影像/缺陷數據)",
+        diagram_ds_logs: "設備日誌",
+        diagram_ds_hist: "歷史資料庫",
+        diagram_dataPlatformLabel: "數據平台",
+        diagram_dp_sasViya: "SAS Viya - 數據整合 (DI/Flows/EG), 數據品質與治理, 分析資料超市 (CAS)",
+        diagram_analyticsActionLabel: "分析與行動",
+        diagram_aa_viyaModels: "SAS Viya (VDMML, Model Studio) - 良率預測模型, 缺陷分類, RCA 模型, 數位孿生模擬",
+        diagram_aa_esp: "SAS ESP (邊緣) - 即時評分, 電腦視覺, 異常檢測, 警報與PLC整合",
+        diagram_aa_va: "SAS Visual Analytics - 儀表板與報告",
+        diagram_overall_footer: "此概念圖顯示了各種數據源如何在SAS生態系統中整合和處理，透過進階分析和即時操作來驅動良率提升和缺陷減少。",
+        conclusionParagraph: "透過應用這些技術上詳盡的方法論並利用其強大、整合的分析平台，SAS為臺灣高科技製造商提供了具體的工具和可操作的洞察，以在其高度複雜和數據密集型的營運環境中顯著改善產品和生產品質、提高良率並減少缺陷。",
+        footerCopyright: "© SAS Institute Inc. 保留所有權利。",
+        footerDisclaimer: "本文件僅供參考。"
+    }
+};
+
+document.addEventListener('DOMContentLoaded', () => {
+    const langButtons = document.querySelectorAll('.lang-switcher button');
+    let currentLang = 'en'; // Default language
+
+    function translatePage(lang) {
+        document.documentElement.lang = lang;
+        currentLang = lang;
+        document.querySelectorAll('[data-translate-key]').forEach(el => {
+            const key = el.getAttribute('data-translate-key');
+            if (translations[lang] && translations[lang][key]) {
+                el.innerHTML = translations[lang][key]; // Use innerHTML to allow tech-highlight spans
+            } else {
+                 // Fallback or log missing translation
+                if (translations['en'] && translations['en'][key]) {
+                    el.innerHTML = translations['en'][key];
+                }
+                console.warn(`Missing translation for key: ${key} in language: ${lang}`);
+            }
+        });
+        // Update active button
+        langButtons.forEach(btn => {
+            btn.classList.toggle('active', btn.getAttribute('data-lang') === lang);
+        });
+    }
+
+    langButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            const lang = button.getAttribute('data-lang');
+            translatePage(lang);
+        });
+    });
+
+    // Initial translation
+    translatePage(currentLang);
+});
+</script>
+</body>
+</html>
