@@ -11,7 +11,7 @@ from supabase import Client
 
 from ..config.logfire_config import get_logger, search_logger
 from .client_manager import get_supabase_client
-from .llm_provider_service import extract_message_text, get_llm_client
+from .llm_provider_service import get_llm_client
 
 logger = get_logger(__name__)
 
@@ -76,13 +76,12 @@ The above content is from the documentation for '{source_id}'. Please provide a 
                 search_logger.error(f"Empty or invalid response from LLM for {source_id}")
                 return default_summary
 
-            choice = response.choices[0]
-            summary_text, _, _ = extract_message_text(choice)
-            if not summary_text:
+            message_content = response.choices[0].message.content
+            if message_content is None:
                 search_logger.error(f"LLM returned None content for {source_id}")
                 return default_summary
 
-            summary = summary_text.strip()
+            summary = message_content.strip()
 
             # Ensure the summary is not too long
             if len(summary) > max_length:
@@ -105,7 +104,6 @@ async def generate_source_title_and_metadata(
     provider: str = None,
     original_url: str | None = None,
     source_display_name: str | None = None,
-    source_type: str | None = None,
 ) -> tuple[str, dict[str, Any]]:
     """
     Generate a user-friendly title and metadata for a source based on its content.
@@ -169,7 +167,7 @@ Requirements:
 - Use proper capitalization
 
 Examples:
-- "Anthropic Documentation" 
+- "Anthropic Documentation"
 - "OpenAI API Reference"
 - "Mem0 llms.txt"
 - "Supabase Docs"
@@ -188,9 +186,7 @@ Generate only the title, nothing else."""
                     ],
                 )
 
-                choice = response.choices[0]
-                generated_title, _, _ = extract_message_text(choice)
-                generated_title = generated_title.strip()
+                generated_title = response.choices[0].message.content.strip()
                 # Clean up the title
                 generated_title = generated_title.strip("\"'")
                 if len(generated_title) < 50:  # Sanity check
@@ -204,7 +200,7 @@ Generate only the title, nothing else."""
     metadata = {
         "knowledge_type": knowledge_type,
         "tags": tags or [],
-        "source_type": source_type or "url",  # Use provided source_type or default to "url"
+        "source_type": "url",  # Default, should be overridden by caller based on actual URL
         "auto_generated": True
     }
 
@@ -223,7 +219,6 @@ async def update_source_info(
     original_url: str | None = None,
     source_url: str | None = None,
     source_display_name: str | None = None,
-    source_type: str | None = None,
 ):
     """
     Update or insert source information in the sources table.
@@ -251,21 +246,18 @@ async def update_source_info(
             search_logger.info(f"Preserving existing title for {source_id}: {existing_title}")
 
             # Update metadata while preserving title
-            # Use provided source_type or determine from URLs
-            determined_source_type = source_type
-            if not determined_source_type:
-                # Determine source_type based on source_url or original_url
-                if source_url and source_url.startswith("file://"):
-                    determined_source_type = "file"
-                elif original_url and original_url.startswith("file://"):
-                    determined_source_type = "file"
-                else:
-                    determined_source_type = "url"
+            # Determine source_type based on source_url or original_url
+            if source_url and source_url.startswith("file://"):
+                source_type = "file"
+            elif original_url and original_url.startswith("file://"):
+                source_type = "file"
+            else:
+                source_type = "url"
 
             metadata = {
                 "knowledge_type": knowledge_type,
                 "tags": tags or [],
-                "source_type": determined_source_type,
+                "source_type": source_type,
                 "auto_generated": False,  # Mark as not auto-generated since we're preserving
                 "update_frequency": update_frequency,
             }
@@ -273,22 +265,23 @@ async def update_source_info(
             if original_url:
                 metadata["original_url"] = original_url
 
-            # Use upsert to handle race conditions
-            upsert_data = {
-                "source_id": source_id,
-                "title": existing_title,
+            # Update existing source (preserving title)
+            update_data = {
                 "summary": summary,
                 "total_word_count": word_count,
                 "metadata": metadata,
+                "updated_at": "now()",
             }
 
             # Add new fields if provided
             if source_url:
-                upsert_data["source_url"] = source_url
+                update_data["source_url"] = source_url
             if source_display_name:
-                upsert_data["source_display_name"] = source_display_name
+                update_data["source_display_name"] = source_display_name
 
-            client.table("archon_sources").upsert(upsert_data).execute()
+            client.table("archon_sources").update(update_data).eq(
+                "source_id", source_id
+            ).execute()
 
             search_logger.info(
                 f"Updated source {source_id} while preserving title: {existing_title}"
@@ -299,27 +292,24 @@ async def update_source_info(
                 # Use the display name directly as the title (truncated to prevent DB issues)
                 title = source_display_name[:100].strip()
 
-                # Use provided source_type or determine from URLs
-                determined_source_type = source_type
-                if not determined_source_type:
-                    # Determine source_type based on source_url or original_url
-                    if source_url and source_url.startswith("file://"):
-                        determined_source_type = "file"
-                    elif original_url and original_url.startswith("file://"):
-                        determined_source_type = "file"
-                    else:
-                        determined_source_type = "url"
+                # Determine source_type based on source_url or original_url
+                if source_url and source_url.startswith("file://"):
+                    source_type = "file"
+                elif original_url and original_url.startswith("file://"):
+                    source_type = "file"
+                else:
+                    source_type = "url"
 
                 metadata = {
                     "knowledge_type": knowledge_type,
                     "tags": tags or [],
-                    "source_type": determined_source_type,
+                    "source_type": source_type,
                     "auto_generated": False,
                 }
             else:
                 # Fallback to AI generation only if no display name
                 title, metadata = await generate_source_title_and_metadata(
-                    source_id, content, knowledge_type, tags, None, original_url, source_display_name, source_type
+                    source_id, content, knowledge_type, tags, original_url, source_display_name
                 )
 
                 # Override the source_type from AI with actual URL-based determination
@@ -396,10 +386,7 @@ class SourceManagementService:
 
     def delete_source(self, source_id: str) -> tuple[bool, dict[str, Any]]:
         """
-        Delete a source from the database.
-
-        With CASCADE DELETE constraints in place (migration 009), deleting the source
-        will automatically delete all associated crawled_pages and code_examples.
+        Delete a source and all associated crawled pages and code examples from the database.
 
         Args:
             source_id: The source ID to delete
@@ -410,31 +397,61 @@ class SourceManagementService:
         try:
             logger.info(f"Starting delete_source for source_id: {source_id}")
 
-            # With CASCADE DELETE, we only need to delete from the sources table
-            # The database will automatically handle deleting related records
-            logger.info(f"Deleting source {source_id} (CASCADE will handle related records)")
+            # Delete from crawled_pages table
+            try:
+                logger.info(f"Deleting from crawled_pages table for source_id: {source_id}")
+                pages_response = (
+                    self.supabase_client.table("archon_crawled_pages")
+                    .delete()
+                    .eq("source_id", source_id)
+                    .execute()
+                )
+                pages_deleted = len(pages_response.data) if pages_response.data else 0
+                logger.info(f"Deleted {pages_deleted} pages from crawled_pages")
+            except Exception as pages_error:
+                logger.error(f"Failed to delete from crawled_pages: {pages_error}")
+                return False, {"error": f"Failed to delete crawled pages: {str(pages_error)}"}
 
-            source_response = (
-                self.supabase_client.table("archon_sources")
-                .delete()
-                .eq("source_id", source_id)
-                .execute()
-            )
+            # Delete from code_examples table
+            try:
+                logger.info(f"Deleting from code_examples table for source_id: {source_id}")
+                code_response = (
+                    self.supabase_client.table("archon_code_examples")
+                    .delete()
+                    .eq("source_id", source_id)
+                    .execute()
+                )
+                code_deleted = len(code_response.data) if code_response.data else 0
+                logger.info(f"Deleted {code_deleted} code examples")
+            except Exception as code_error:
+                logger.error(f"Failed to delete from code_examples: {code_error}")
+                return False, {"error": f"Failed to delete code examples: {str(code_error)}"}
 
-            source_deleted = len(source_response.data) if source_response.data else 0
+            # Delete from sources table
+            try:
+                logger.info(f"Deleting from sources table for source_id: {source_id}")
+                source_response = (
+                    self.supabase_client.table("archon_sources")
+                    .delete()
+                    .eq("source_id", source_id)
+                    .execute()
+                )
+                source_deleted = len(source_response.data) if source_response.data else 0
+                logger.info(f"Deleted {source_deleted} source records")
+            except Exception as source_error:
+                logger.error(f"Failed to delete from sources: {source_error}")
+                return False, {"error": f"Failed to delete source: {str(source_error)}"}
 
-            if source_deleted > 0:
-                logger.info(f"Successfully deleted source {source_id} and all related data via CASCADE")
-                return True, {
-                    "source_id": source_id,
-                    "message": "Source and all related data deleted successfully via CASCADE DELETE"
-                }
-            else:
-                logger.warning(f"No source found with ID {source_id}")
-                return False, {"error": f"Source {source_id} not found"}
+            logger.info("Delete operation completed successfully")
+            return True, {
+                "source_id": source_id,
+                "pages_deleted": pages_deleted,
+                "code_examples_deleted": code_deleted,
+                "source_records_deleted": source_deleted,
+            }
 
         except Exception as e:
-            logger.error(f"Error deleting source {source_id}: {e}")
+            logger.error(f"Unexpected error in delete_source: {e}")
             return False, {"error": f"Error deleting source: {str(e)}"}
 
     def update_source_metadata(
@@ -629,7 +646,7 @@ class SourceManagementService:
 
             if knowledge_type:
                 # Filter by metadata->knowledge_type
-                query = query.contains("metadata", {"knowledge_type": knowledge_type})
+                query = query.filter("metadata->>knowledge_type", "eq", knowledge_type)
 
             response = query.execute()
 

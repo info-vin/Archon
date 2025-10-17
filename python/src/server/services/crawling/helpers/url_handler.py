@@ -6,8 +6,7 @@ Handles URL transformations and validations.
 
 import hashlib
 import re
-from urllib.parse import urlparse, urljoin
-from typing import List, Optional
+from urllib.parse import urljoin, urlparse
 
 from ....config.logfire_config import get_logger
 
@@ -29,22 +28,19 @@ class URLHandler:
             True if URL is a sitemap, False otherwise
         """
         try:
-            parsed = urlparse(url)
-            path = parsed.path.lower()
-            # Only match URLs that end with .xml and contain sitemap in the filename
-            return path.endswith(".xml") and "sitemap" in path
+            return url.endswith("sitemap.xml") or "sitemap" in urlparse(url).path
         except Exception as e:
             logger.warning(f"Error checking if URL is sitemap: {e}")
             return False
-    
-    @staticmethod  
+
+    @staticmethod
     def is_markdown(url: str) -> bool:
         """
         Check if a URL points to a markdown file (.md, .mdx, .markdown).
-        
+
         Args:
             url: URL to check
-            
+
         Returns:
             True if URL is a markdown file, False otherwise
         """
@@ -216,7 +212,7 @@ class URLHandler:
         This creates a 16-character hash that is extremely unlikely to collide
         for distinct canonical URLs, solving race condition issues when multiple crawls
         target the same domain.
-        
+
         Uses 16-char SHA256 prefix (64 bits) which provides
         ~18 quintillion unique values. Collision probability
         is negligible for realistic usage (<1M sources).
@@ -277,9 +273,9 @@ class URLHandler:
             # Fallback: use a hash of the error message + url to still get something unique
             fallback = f"error_{redacted}_{str(e)}"
             return hashlib.sha256(fallback.encode("utf-8")).hexdigest()[:16]
-    
+
     @staticmethod
-    def extract_markdown_links(content: str, base_url: Optional[str] = None) -> List[str]:
+    def extract_markdown_links(content: str, base_url: str | None = None) -> list[str]:
         """
         Extract markdown-style links from text content.
 
@@ -289,22 +285,6 @@ class URLHandler:
 
         Returns:
             List of absolute URLs found in the content
-        """
-        # Extract with text and return only URLs for backward compatibility
-        links_with_text = URLHandler.extract_markdown_links_with_text(content, base_url)
-        return [url for url, _ in links_with_text]
-
-    @staticmethod
-    def extract_markdown_links_with_text(content: str, base_url: Optional[str] = None) -> List[tuple[str, str]]:
-        """
-        Extract markdown-style links from text content with their link text.
-
-        Args:
-            content: Text content to extract links from
-            base_url: Base URL to resolve relative links against
-
-        Returns:
-            List of (url, link_text) tuples
         """
         try:
             if not content:
@@ -333,7 +313,7 @@ class URLHandler:
                 cleaned = ''.join(c for c in cleaned if unicodedata.category(c) not in ('Cf', 'Cc'))
                 return cleaned
 
-            links = []
+            urls = []
             for match in re.finditer(combined_pattern, content):
                 url = (
                     match.group('md')
@@ -366,35 +346,32 @@ class URLHandler:
 
                 # Only include HTTP/HTTPS URLs
                 if url.startswith(('http://', 'https://')):
-                    # Extract link text if available (from markdown links)
-                    link_text = match.group('text') if match.group('md') else ''
-                    link_text = link_text.strip() if link_text else ''
-                    links.append((url, link_text))
+                    urls.append(url)
 
-            # Remove duplicates while preserving order (first occurrence wins)
+            # Remove duplicates while preserving order
             seen = set()
-            unique_links = []
-            for url, text in links:
+            unique_urls = []
+            for url in urls:
                 if url not in seen:
                     seen.add(url)
-                    unique_links.append((url, text))
+                    unique_urls.append(url)
 
-            logger.info(f"Extracted {len(unique_links)} unique links from content")
-            return unique_links
+            logger.info(f"Extracted {len(unique_urls)} unique links from content")
+            return unique_urls
 
         except Exception as e:
-            logger.error(f"Error extracting markdown links with text: {e}", exc_info=True)
+            logger.error(f"Error extracting markdown links: {e}", exc_info=True)
             return []
-    
+
     @staticmethod
-    def is_link_collection_file(url: str, content: Optional[str] = None) -> bool:
+    def is_link_collection_file(url: str, content: str | None = None) -> bool:
         """
         Check if a URL/file appears to be a link collection file like llms.txt.
-        
+
         Args:
             url: URL to check
             content: Optional content to analyze for link density
-            
+
         Returns:
             True if file appears to be a link collection, False otherwise
         """
@@ -402,7 +379,7 @@ class URLHandler:
             # Extract filename from URL
             parsed = urlparse(url)
             filename = parsed.path.split('/')[-1].lower()
-            
+
             # Check for specific link collection filenames
             # Note: "full-*" or "*-full" patterns are NOT link collections - they contain complete content, not just links
             link_collection_patterns = [
@@ -413,12 +390,12 @@ class URLHandler:
                 'llms.mdx', 'links.mdx', 'resources.mdx', 'references.mdx',
                 'llms.markdown', 'links.markdown', 'resources.markdown', 'references.markdown',
             ]
-            
+
             # Direct filename match
             if filename in link_collection_patterns:
                 logger.info(f"Detected link collection file by filename: {filename}")
                 return True
-            
+
             # Pattern-based detection for variations, but exclude "full" variants
             # Only match files that are likely link collections, not complete content files
             if filename.endswith(('.txt', '.md', '.mdx', '.markdown')):
@@ -429,7 +406,7 @@ class URLHandler:
                     if any(filename.startswith(pattern + '.') or filename.startswith(pattern + '-') for pattern in base_patterns):
                         logger.info(f"Detected potential link collection file: {filename}")
                         return True
-            
+
             # Content-based detection if content is provided
             if content:
                 # Never treat "full" variants as link collections to preserve single-page behavior
@@ -439,19 +416,19 @@ class URLHandler:
                 # Reuse extractor to avoid regex divergence and maintain consistency
                 extracted_links = URLHandler.extract_markdown_links(content, url)
                 total_links = len(extracted_links)
-                
+
                 # Calculate link density (links per 100 characters)
                 content_length = len(content.strip())
                 if content_length > 0:
                     link_density = (total_links * 100) / content_length
-                    
+
                     # If more than 2% of content is links, likely a link collection
                     if link_density > 2.0 and total_links > 3:
                         logger.info(f"Detected link collection by content analysis: {total_links} links, density {link_density:.2f}%")
                         return True
-            
+
             return False
-            
+
         except Exception as e:
             logger.warning(f"Error checking if file is link collection: {e}", exc_info=True)
             return False

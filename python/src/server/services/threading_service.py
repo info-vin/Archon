@@ -84,14 +84,14 @@ class RateLimiter:
 
     async def acquire(self, estimated_tokens: int = 8000, progress_callback: Callable | None = None) -> bool:
         """Acquire permission to make API call with token awareness
-        
+
         Args:
             estimated_tokens: Estimated number of tokens for the operation
             progress_callback: Optional async callback for progress updates during wait
         """
         while True:  # Loop instead of recursion to avoid stack overflow
             wait_time_to_sleep = None
-            
+
             async with self._lock:
                 now = time.time()
 
@@ -104,7 +104,7 @@ class RateLimiter:
                     self.request_times.append(now)
                     self.token_usage.append((now, estimated_tokens))
                     return True
-                
+
                 # Calculate wait time if we can't make the request
                 wait_time = self._calculate_wait_time(estimated_tokens)
                 if wait_time > 0:
@@ -118,7 +118,7 @@ class RateLimiter:
                     wait_time_to_sleep = wait_time
                 else:
                     return False
-            
+
             # Sleep outside the lock to avoid deadlock
             if wait_time_to_sleep is not None:
                 # For long waits, break into smaller chunks with progress updates
@@ -458,7 +458,7 @@ class ThreadingService:
     @asynccontextmanager
     async def rate_limited_operation(self, estimated_tokens: int = 8000, progress_callback: Callable | None = None):
         """Context manager for rate-limited operations
-        
+
         Args:
             estimated_tokens: Estimated number of tokens for the operation
             progress_callback: Optional async callback for progress updates during wait

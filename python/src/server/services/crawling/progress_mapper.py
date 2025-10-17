@@ -10,31 +10,28 @@ class ProgressMapper:
     """Maps sub-task progress to overall progress ranges"""
 
     # Define progress ranges for each stage
-    # Reflects actual processing time distribution
+    # Updated to reflect actual processing time distribution - code extraction is the longest
     STAGE_RANGES = {
-        # Common stages
         "starting": (0, 1),
         "initializing": (0, 1),
-        "error": (-1, -1),            # Special case for errors
-        "cancelled": (-1, -1),        # Special case for cancellation
+        "analyzing": (1, 2),       # URL analysis is very quick
+        "crawling": (2, 5),        # Crawling pages is relatively fast
+        "processing": (5, 8),      # Content processing/chunking is quick
+        "source_creation": (8, 10), # DB operations are fast
+        "document_storage": (10, 30), # Embeddings + batch processing - significant but not longest
+        "code_extraction": (30, 95),  # LONGEST PHASE: AI analysis of code examples
+        "code_storage": (30, 95),     # Alias
+        "finalization": (95, 100),    # Quick final steps
         "completed": (100, 100),
-
-        # Crawl-specific stages - rebalanced based on actual time taken
-        "analyzing": (1, 3),          # URL analysis is quick
-        "crawling": (3, 15),          # Crawling can take time for deep/many URLs
-        "processing": (15, 20),       # Content processing/chunking
-        "source_creation": (20, 25),  # DB operations
-        "document_storage": (25, 40), # Embeddings generation takes significant time
-        "code_extraction": (40, 90),  # Code extraction + summaries - still longest but more balanced
-        "finalization": (90, 100),    # Final steps and cleanup
-
+        "complete": (100, 100),       # Alias
+        "error": (-1, -1),            # Special case for errors
         # Upload-specific stages
         "reading": (0, 5),
-        "text_extraction": (5, 10),   # Clear name for text extraction from files
+        "extracting": (5, 10),
         "chunking": (10, 15),
-        # Note: source_creation is defined above at (20, 25) for all operations
-        "summarizing": (25, 35),
-        "storing": (35, 100),
+        "creating_source": (15, 20),
+        "summarizing": (20, 30),
+        "storing": (30, 100),
     }
 
     def __init__(self):
@@ -53,9 +50,9 @@ class ProgressMapper:
         Returns:
             Overall progress percentage (0-100)
         """
-        # Handle error and cancelled states - preserve last known progress
-        if stage in ("error", "cancelled"):
-            return self.last_overall_progress
+        # Handle error state
+        if stage == "error":
+            return -1
 
         # Get stage range
         if stage not in self.STAGE_RANGES:
@@ -65,7 +62,7 @@ class ProgressMapper:
         start, end = self.STAGE_RANGES[stage]
 
         # Handle completion
-        if stage == "completed":
+        if stage in ["completed", "complete"]:
             self.last_overall_progress = 100
             return 100
 
@@ -73,16 +70,6 @@ class ProgressMapper:
         stage_progress = max(0, min(100, stage_progress))  # Clamp to 0-100
         stage_range = end - start
         mapped_progress = start + (stage_progress / 100.0) * stage_range
-
-        # Debug logging for document_storage
-        if stage == "document_storage" and stage_progress >= 90:
-            import logging
-            logger = logging.getLogger(__name__)
-            logger.info(
-                f"DEBUG: ProgressMapper.map_progress | stage={stage} | stage_progress={stage_progress}% | "
-                f"range=({start}, {end}) | mapped_before_check={mapped_progress:.1f}% | "
-                f"last_overall={self.last_overall_progress}%"
-            )
 
         # Ensure progress never goes backwards
         mapped_progress = max(self.last_overall_progress, mapped_progress)

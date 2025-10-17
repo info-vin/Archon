@@ -4,7 +4,6 @@ Batch Crawling Strategy
 Handles batch crawling of multiple URLs in parallel.
 """
 
-import asyncio
 from collections.abc import Awaitable, Callable
 from typing import Any
 
@@ -37,8 +36,9 @@ class BatchCrawlStrategy:
         is_documentation_site_func: Callable[[str], bool],
         max_concurrent: int | None = None,
         progress_callback: Callable[..., Awaitable[None]] | None = None,
+        start_progress: int = 15,
+        end_progress: int = 60,
         cancellation_check: Callable[[], None] | None = None,
-        link_text_fallbacks: dict[str, str] | None = None,
     ) -> list[dict[str, Any]]:
         """
         Batch crawl multiple URLs in parallel with progress reporting.
@@ -49,8 +49,8 @@ class BatchCrawlStrategy:
             is_documentation_site_func: Function to check if URL is a documentation site
             max_concurrent: Maximum concurrent crawls
             progress_callback: Optional callback for progress updates
-            cancellation_check: Optional function to check for cancellation
-            link_text_fallbacks: Optional dict mapping URLs to link text for title fallback
+            start_progress: Starting progress percentage
+            end_progress: Ending progress percentage
 
         Returns:
             List of crawl results
@@ -64,26 +64,12 @@ class BatchCrawlStrategy:
         # Load settings from database - fail fast on configuration errors
         try:
             settings = await credential_service.get_credentials_by_category("rag_strategy")
-
-            # Clamp batch_size to prevent zero step in range()
-            raw_batch_size = int(settings.get("CRAWL_BATCH_SIZE", "50"))
-            batch_size = max(1, raw_batch_size)
-            if batch_size != raw_batch_size:
-                logger.warning(f"Invalid CRAWL_BATCH_SIZE={raw_batch_size}, clamped to {batch_size}")
-
+            batch_size = int(settings.get("CRAWL_BATCH_SIZE", "50"))
             if max_concurrent is None:
                 # CRAWL_MAX_CONCURRENT: Pages to crawl in parallel within this single crawl operation
                 # (Different from server-level CONCURRENT_CRAWL_LIMIT which limits total crawl operations)
-                raw_max_concurrent = int(settings.get("CRAWL_MAX_CONCURRENT", "10"))
-                max_concurrent = max(1, raw_max_concurrent)
-                if max_concurrent != raw_max_concurrent:
-                    logger.warning(f"Invalid CRAWL_MAX_CONCURRENT={raw_max_concurrent}, clamped to {max_concurrent}")
-
-            # Clamp memory threshold to sane bounds for dispatcher
-            raw_memory_threshold = float(settings.get("MEMORY_THRESHOLD_PERCENT", "80"))
-            memory_threshold = min(99.0, max(10.0, raw_memory_threshold))
-            if memory_threshold != raw_memory_threshold:
-                logger.warning(f"Invalid MEMORY_THRESHOLD_PERCENT={raw_memory_threshold}, clamped to {memory_threshold}")
+                max_concurrent = int(settings.get("CRAWL_MAX_CONCURRENT", "10"))
+            memory_threshold = float(settings.get("MEMORY_THRESHOLD_PERCENT", "80"))
             check_interval = float(settings.get("DISPATCHER_CHECK_INTERVAL", "0.5"))
         except (ValueError, KeyError, TypeError) as e:
             # Critical configuration errors should fail fast
@@ -138,22 +124,22 @@ class BatchCrawlStrategy:
             max_session_permit=max_concurrent,
         )
 
-        async def report_progress(progress_val: int, message: str, status: str = "crawling", **kwargs):
+        async def report_progress(progress_val: int, message: str, **kwargs):
             """Helper to report progress if callback is available"""
             if progress_callback:
                 # Pass step information as flattened kwargs for consistency
                 await progress_callback(
-                    status,
+                    "crawling",
                     progress_val,
                     message,
-                    current_step=message,
-                    step_message=message,
+                    currentStep=message,
+                    stepMessage=message,
                     **kwargs
                 )
 
         total_urls = len(urls)
         await report_progress(
-            0,  # Start at 0% progress
+            start_progress,
             f"Starting to crawl {total_urls} URLs...",
             total_pages=total_urls,
             processed_pages=0
@@ -162,7 +148,6 @@ class BatchCrawlStrategy:
         # Use configured batch size
         successful_results = []
         processed = 0
-        cancelled = False
 
         # Transform all URLs at the beginning
         url_mapping = {}  # Map transformed URLs back to original
@@ -175,27 +160,16 @@ class BatchCrawlStrategy:
         for i in range(0, total_urls, batch_size):
             # Check for cancellation before processing each batch
             if cancellation_check:
-                try:
-                    cancellation_check()
-                except asyncio.CancelledError:
-                    cancelled = True
-                    await report_progress(
-                        min(int((processed / max(total_urls, 1)) * 100), 99),
-                        "Crawl cancelled",
-                        status="cancelled",
-                        total_pages=total_urls,
-                        processed_pages=processed,
-                        successful_count=len(successful_results),
-                    )
-                    break
+                cancellation_check()
 
             batch_urls = transformed_urls[i : i + batch_size]
             batch_start = i
             batch_end = min(i + batch_size, total_urls)
 
             # Report batch start with smooth progress
-            # Calculate progress as percentage of total URLs processed
-            progress_percentage = int((i / total_urls) * 100)
+            progress_percentage = start_progress + int(
+                (i / total_urls) * (end_progress - start_progress)
+            )
             await report_progress(
                 progress_percentage,
                 f"Processing batch {batch_start + 1}-{batch_end} of {total_urls} URLs...",
@@ -217,49 +191,19 @@ class BatchCrawlStrategy:
                 if cancellation_check:
                     try:
                         cancellation_check()
-                    except asyncio.CancelledError:
-                        cancelled = True
-                        await report_progress(
-                            min(int((processed / max(total_urls, 1)) * 100), 99),
-                            "Crawl cancelled",
-                            status="cancelled",
-                            total_pages=total_urls,
-                            processed_pages=processed,
-                            successful_count=len(successful_results),
-                        )
-                        break
                     except Exception:
-                        logger.exception("Unexpected error from cancellation_check()")
-                        raise
+                        # If cancelled, break out of the loop
+                        logger.info("Batch crawl cancelled during processing")
+                        break
 
                 processed += 1
-                if result.success and result.markdown and result.markdown.fit_markdown:
+                if result.success and result.markdown:
                     # Map back to original URL
                     original_url = url_mapping.get(result.url, result.url)
-
-                    # Extract title from HTML <title> tag
-                    title = "Untitled"
-                    if result.html:
-                        import re
-                        title_match = re.search(r'<title[^>]*>(.*?)</title>', result.html, re.IGNORECASE | re.DOTALL)
-                        if title_match:
-                            extracted_title = title_match.group(1).strip()
-                            # Clean up HTML entities
-                            extracted_title = extracted_title.replace('&amp;', '&').replace('&lt;', '<').replace('&gt;', '>').replace('&quot;', '"')
-                            if extracted_title:
-                                title = extracted_title
-
-                    # Fallback to link text if HTML title extraction failed
-                    if title == "Untitled" and link_text_fallbacks:
-                        fallback_text = link_text_fallbacks.get(original_url, "")
-                        if fallback_text:
-                            title = fallback_text
-
                     successful_results.append({
                         "url": original_url,
-                        "markdown": result.markdown.fit_markdown,
+                        "markdown": result.markdown,
                         "html": result.html,  # Use raw HTML
-                        "title": title,
                     })
                 else:
                     logger.warning(
@@ -267,26 +211,23 @@ class BatchCrawlStrategy:
                     )
 
                 # Report individual URL progress with smooth increments
-                # Calculate progress as percentage of total URLs processed
-                progress_percentage = int((processed / total_urls) * 100)
+                progress_percentage = start_progress + int(
+                    (processed / total_urls) * (end_progress - start_progress)
+                )
                 # Report more frequently for smoother progress
                 if (
                     processed % 5 == 0 or processed == total_urls
                 ):  # Report every 5 URLs or at the end
                     await report_progress(
                         progress_percentage,
-                        f"Crawled {processed}/{total_urls} pages",
+                        f"Crawled {processed}/{total_urls} pages ({len(successful_results)} successful)",
                         total_pages=total_urls,
                         processed_pages=processed,
                         successful_count=len(successful_results)
                     )
-            if cancelled:
-                break
 
-        if cancelled:
-            return successful_results
         await report_progress(
-            100,
+            end_progress,
             f"Batch crawling completed: {len(successful_results)}/{total_urls} pages successful",
             total_pages=total_urls,
             processed_pages=processed,

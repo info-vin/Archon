@@ -36,8 +36,6 @@ class CredentialItem:
     description: str | None = None
 
 
-
-
 class CredentialService:
     """Service for managing application credentials and configuration."""
 
@@ -241,28 +239,6 @@ class CredentialService:
                 self._rag_cache_timestamp = None
                 logger.debug(f"Invalidated RAG settings cache due to update of {key}")
 
-                # Also invalidate provider service cache to ensure immediate effect
-                try:
-                    from .llm_provider_service import clear_provider_cache
-                    clear_provider_cache()
-                    logger.debug("Also cleared LLM provider service cache")
-                except Exception as e:
-                    logger.warning(f"Failed to clear provider service cache: {e}")
-
-                # Also invalidate LLM provider service cache for provider config
-                try:
-                    from . import llm_provider_service
-                    # Clear the provider config caches that depend on RAG settings
-                    cache_keys_to_clear = ["provider_config_llm", "provider_config_embedding", "rag_strategy_settings"]
-                    for cache_key in cache_keys_to_clear:
-                        if cache_key in llm_provider_service._settings_cache:
-                            del llm_provider_service._settings_cache[cache_key]
-                            logger.debug(f"Invalidated LLM provider service cache key: {cache_key}")
-                except ImportError:
-                    logger.warning("Could not import llm_provider_service to invalidate cache")
-                except Exception as e:
-                    logger.error(f"Error invalidating LLM provider service cache: {e}")
-
             logger.info(
                 f"Successfully {'encrypted and ' if is_encrypted else ''}stored credential: {key}"
             )
@@ -290,28 +266,6 @@ class CredentialService:
                 self._rag_settings_cache = None
                 self._rag_cache_timestamp = None
                 logger.debug(f"Invalidated RAG settings cache due to deletion of {key}")
-
-                # Also invalidate provider service cache to ensure immediate effect
-                try:
-                    from .llm_provider_service import clear_provider_cache
-                    clear_provider_cache()
-                    logger.debug("Also cleared LLM provider service cache")
-                except Exception as e:
-                    logger.warning(f"Failed to clear provider service cache: {e}")
-
-                # Also invalidate LLM provider service cache for provider config
-                try:
-                    from . import llm_provider_service
-                    # Clear the provider config caches that depend on RAG settings
-                    cache_keys_to_clear = ["provider_config_llm", "provider_config_embedding", "rag_strategy_settings"]
-                    for cache_key in cache_keys_to_clear:
-                        if cache_key in llm_provider_service._settings_cache:
-                            del llm_provider_service._settings_cache[cache_key]
-                            logger.debug(f"Invalidated LLM provider service cache key: {cache_key}")
-                except ImportError:
-                    logger.warning("Could not import llm_provider_service to invalidate cache")
-                except Exception as e:
-                    logger.error(f"Error invalidating LLM provider service cache: {e}")
 
             logger.info(f"Successfully deleted credential: {key}")
             return True
@@ -437,31 +391,8 @@ class CredentialService:
             # Get RAG strategy settings (where UI saves provider selection)
             rag_settings = await self.get_credentials_by_category("rag_strategy")
 
-            # Get the selected provider based on service type
-            if service_type == "embedding":
-                # First check for explicit EMBEDDING_PROVIDER setting (new split provider approach)
-                explicit_embedding_provider = rag_settings.get("EMBEDDING_PROVIDER")
-
-                # Validate that embedding provider actually supports embeddings
-                embedding_capable_providers = {"openai", "google", "ollama"}
-
-                if (explicit_embedding_provider and
-                    explicit_embedding_provider != "" and
-                    explicit_embedding_provider in embedding_capable_providers):
-                    # Use the explicitly set embedding provider
-                    provider = explicit_embedding_provider
-                    logger.debug(f"Using explicit embedding provider: '{provider}'")
-                else:
-                    # Fall back to OpenAI as default embedding provider for backward compatibility
-                    if explicit_embedding_provider and explicit_embedding_provider not in embedding_capable_providers:
-                        logger.warning(f"Invalid embedding provider '{explicit_embedding_provider}' doesn't support embeddings, defaulting to OpenAI")
-                    provider = "openai"
-                    logger.debug(f"No explicit embedding provider set, defaulting to OpenAI for backward compatibility")
-            else:
-                provider = rag_settings.get("LLM_PROVIDER", "openai")
-                # Ensure provider is a valid string, not a boolean or other type
-                if not isinstance(provider, str) or provider.lower() in ("true", "false", "none", "null"):
-                    provider = "openai"
+            # Get the selected provider
+            provider = rag_settings.get("LLM_PROVIDER", "openai")
 
             # Get API key for this provider
             api_key = await self._get_provider_api_key(provider)
@@ -469,15 +400,8 @@ class CredentialService:
             # Get base URL if needed
             base_url = self._get_provider_base_url(provider, rag_settings)
 
-            # Get models with provider-specific fallback logic
+            # Get models
             chat_model = rag_settings.get("MODEL_CHOICE", "")
-
-            # If MODEL_CHOICE is empty, try provider-specific model settings
-            if not chat_model and provider == "ollama":
-                chat_model = rag_settings.get("OLLAMA_CHAT_MODEL", "")
-                if chat_model:
-                    logger.debug(f"Using OLLAMA_CHAT_MODEL: {chat_model}")
-
             embedding_model = rag_settings.get("EMBEDDING_MODEL", "")
 
             return {
@@ -505,9 +429,6 @@ class CredentialService:
         key_mapping = {
             "openai": "OPENAI_API_KEY",
             "google": "GOOGLE_API_KEY",
-            "openrouter": "OPENROUTER_API_KEY",
-            "anthropic": "ANTHROPIC_API_KEY",
-            "grok": "GROK_API_KEY",
             "ollama": None,  # No API key needed
         }
 
@@ -519,15 +440,9 @@ class CredentialService:
     def _get_provider_base_url(self, provider: str, rag_settings: dict) -> str | None:
         """Get base URL for provider."""
         if provider == "ollama":
-            return rag_settings.get("LLM_BASE_URL", "http://host.docker.internal:11434/v1")
+            return rag_settings.get("LLM_BASE_URL", "http://localhost:11434/v1")
         elif provider == "google":
             return "https://generativelanguage.googleapis.com/v1beta/openai/"
-        elif provider == "openrouter":
-            return "https://openrouter.ai/api/v1"
-        elif provider == "anthropic":
-            return "https://api.anthropic.com/v1"
-        elif provider == "grok":
-            return "https://api.x.ai/v1"
         return None  # Use default for OpenAI
 
     async def set_active_provider(self, provider: str, service_type: str = "llm") -> bool:
@@ -535,7 +450,7 @@ class CredentialService:
         try:
             # For now, we'll update the RAG strategy settings
             return await self.set_credential(
-                "LLM_PROVIDER",
+                "llm_provider",
                 provider,
                 category="rag_strategy",
                 description=f"Active {service_type} provider",

@@ -44,7 +44,6 @@ class DocumentStorageOperations:
         cancellation_check: Callable | None = None,
         source_url: str | None = None,
         source_display_name: str | None = None,
-        url_to_page_id: dict[str, str] | None = None,
     ) -> dict[str, Any]:
         """
         Process crawled documents and store them in the database.
@@ -78,16 +77,7 @@ class DocumentStorageOperations:
         for doc_index, doc in enumerate(crawl_results):
             # Check for cancellation during document processing
             if cancellation_check:
-                try:
-                    cancellation_check()
-                except asyncio.CancelledError:
-                    if progress_callback:
-                        await progress_callback(
-                            "cancelled",
-                            99,
-                            f"Document processing cancelled at document {doc_index + 1}/{len(crawl_results)}"
-                        )
-                    raise
+                cancellation_check()
 
             doc_url = (doc.get('url') or '').strip()
             markdown_content = (doc.get('markdown') or '').strip()
@@ -114,22 +104,13 @@ class DocumentStorageOperations:
             for i, chunk in enumerate(chunks):
                 # Check for cancellation during chunk processing
                 if cancellation_check and i % 10 == 0:  # Check every 10 chunks
-                    try:
-                        cancellation_check()
-                    except asyncio.CancelledError:
-                        if progress_callback:
-                            await progress_callback(
-                                "cancelled",
-                                99,
-                                f"Chunk processing cancelled at chunk {i + 1}/{len(chunks)} of document {doc_index + 1}"
-                            )
-                        raise
+                    cancellation_check()
 
                 all_urls.append(doc_url)
                 all_chunk_numbers.append(i)
                 all_contents.append(chunk)
 
-                # Create metadata for each chunk (page_id will be set later)
+                # Create metadata for each chunk
                 word_count = len(chunk.split())
                 metadata = {
                     "url": doc_url,
@@ -137,7 +118,6 @@ class DocumentStorageOperations:
                     "description": doc.get("description", ""),
                     "source_id": source_id,
                     "knowledge_type": request.get("knowledge_type", "documentation"),
-                    "page_id": None,  # Will be set after pages are stored
                     "crawl_type": crawl_type,
                     "word_count": word_count,
                     "char_count": len(chunk),
@@ -157,100 +137,12 @@ class DocumentStorageOperations:
             if doc_index > 0 and doc_index % 5 == 0:
                 await asyncio.sleep(0)
 
-        # Create/update source record FIRST (required for FK constraints on pages and chunks)
+        # Create/update source record FIRST before storing documents
         if all_contents and all_metadatas:
             await self._create_source_records(
                 all_metadatas, all_contents, source_word_counts, request,
                 source_url, source_display_name
             )
-
-        # Store pages AFTER source is created but BEFORE chunks (FK constraint requirement)
-        from .page_storage_operations import PageStorageOperations
-        page_storage_ops = PageStorageOperations(self.supabase_client)
-
-        # Check if this is an llms-full.txt file
-        is_llms_full = crawl_type == "llms-txt" or (
-            len(url_to_full_document) == 1 and
-            next(iter(url_to_full_document.keys())).endswith("llms-full.txt")
-        )
-
-        if is_llms_full and url_to_full_document:
-            # Handle llms-full.txt with section-based pages
-            base_url = next(iter(url_to_full_document.keys()))
-            content = url_to_full_document[base_url]
-
-            # Store section pages
-            url_to_page_id = await page_storage_ops.store_llms_full_sections(
-                base_url,
-                content,
-                original_source_id,
-                request,
-                crawl_type="llms_full",
-            )
-
-            # Parse sections and re-chunk each section
-            from .helpers.llms_full_parser import parse_llms_full_sections
-            sections = parse_llms_full_sections(content, base_url)
-
-            # Clear existing chunks and re-create from sections
-            all_urls.clear()
-            all_chunk_numbers.clear()
-            all_contents.clear()
-            all_metadatas.clear()
-            url_to_full_document.clear()
-
-            # Chunk each section separately
-            for section in sections:
-                # Update url_to_full_document with section content
-                url_to_full_document[section.url] = section.content
-                section_chunks = await storage_service.smart_chunk_text_async(
-                    section.content, chunk_size=5000
-                )
-
-                for i, chunk in enumerate(section_chunks):
-                    all_urls.append(section.url)
-                    all_chunk_numbers.append(i)
-                    all_contents.append(chunk)
-
-                    word_count = len(chunk.split())
-                    metadata = {
-                        "url": section.url,
-                        "title": section.section_title,
-                        "description": "",
-                        "source_id": original_source_id,
-                        "knowledge_type": request.get("knowledge_type", "documentation"),
-                        "page_id": url_to_page_id.get(section.url),
-                        "crawl_type": "llms_full",
-                        "word_count": word_count,
-                        "char_count": len(chunk),
-                        "chunk_index": i,
-                        "tags": request.get("tags", []),
-                    }
-                    all_metadatas.append(metadata)
-        else:
-            # Handle regular pages
-            reconstructed_crawl_results = []
-            for url, markdown in url_to_full_document.items():
-                reconstructed_crawl_results.append({
-                    "url": url,
-                    "markdown": markdown,
-                })
-
-            if reconstructed_crawl_results:
-                url_to_page_id = await page_storage_ops.store_pages(
-                    reconstructed_crawl_results,
-                    original_source_id,
-                    request,
-                    crawl_type,
-                )
-            else:
-                url_to_page_id = {}
-
-            # Update all chunk metadata with correct page_id
-            for metadata in all_metadatas:
-                chunk_url = metadata.get("url")
-                if chunk_url and chunk_url in url_to_page_id:
-                    metadata["page_id"] = url_to_page_id[chunk_url]
 
         safe_logfire_info(f"url_to_full_document keys: {list(url_to_full_document.keys())[:5]}")
 
@@ -273,7 +165,6 @@ class DocumentStorageOperations:
             enable_parallel_batches=True,  # Enable parallel processing
             provider=None,  # Use configured provider
             cancellation_check=cancellation_check,  # Pass cancellation check
-            url_to_page_id=url_to_page_id,  # Link chunks to pages
         )
 
         # Calculate chunk counts
@@ -407,8 +298,8 @@ class DocumentStorageOperations:
                     safe_logfire_error(
                         f"Both source creation attempts failed for '{source_id}': {str(fallback_error)}"
                     )
-                    raise RuntimeError(
-                        f"Unable to create source record for '{source_id}'. This will cause foreign key violations."
+                    raise Exception(
+                        f"Unable to create source record for '{source_id}'. This will cause foreign key violations. Error: {str(fallback_error)}"
                     ) from fallback_error
 
         # Verify ALL source records exist before proceeding with document storage
@@ -441,9 +332,9 @@ class DocumentStorageOperations:
         url_to_full_document: dict[str, str],
         source_id: str,
         progress_callback: Callable | None = None,
+        start_progress: int = 85,
+        end_progress: int = 95,
         cancellation_check: Callable[[], None] | None = None,
-        provider: str | None = None,
-        embedding_provider: str | None = None,
     ) -> int:
         """
         Extract code examples from crawled documents and store them.
@@ -453,21 +344,15 @@ class DocumentStorageOperations:
             url_to_full_document: Mapping of URLs to full document content
             source_id: The unique source_id for all documents
             progress_callback: Optional callback for progress updates
+            start_progress: Starting progress percentage
+            end_progress: Ending progress percentage
             cancellation_check: Optional function to check for cancellation
-            provider: Optional LLM provider to use for code summaries
-            embedding_provider: Optional embedding provider override for code example embeddings
 
         Returns:
             Number of code examples stored
         """
         result = await self.code_extraction_service.extract_and_store_code_examples(
-            crawl_results,
-            url_to_full_document,
-            source_id,
-            progress_callback,
-            cancellation_check,
-            provider,
-            embedding_provider,
+            crawl_results, url_to_full_document, source_id, progress_callback, start_progress, end_progress, cancellation_check
         )
 
         return result

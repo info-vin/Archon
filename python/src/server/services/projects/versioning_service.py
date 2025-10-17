@@ -221,7 +221,7 @@ class VersioningService:
 
             if restore_result.data:
                 # Create restore version record
-                restore_version_result = self.create_version(
+                self.create_version(
                     project_id=project_id,
                     field_name=field_name,
                     content=content_to_restore,
