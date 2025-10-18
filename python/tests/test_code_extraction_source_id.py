@@ -130,7 +130,7 @@ class TestCodeExtractionSourceId:
         source_ids_seen = []
         
         original_extract = code_service._extract_code_blocks_from_documents
-        async def track_source_id(crawl_results, source_id, progress_callback=None, cancellation_check=None):
+        async def track_source_id(crawl_results, source_id, progress_callback=None, start=0, end=100, cancellation_check=None):
             source_ids_seen.append(source_id)
             return []  # Return empty list to skip further processing
         
