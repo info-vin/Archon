@@ -109,10 +109,10 @@ class TestCodeExtractionSourceId:
         assert args[0] == crawl_results
         assert args[1] == url_to_full_document
         assert args[2] == source_id
-        assert args[3] is None
-        assert args[4] is None
-        assert args[5] is None
-        assert args[6] is None
+        assert args[3] is None  # progress_callback
+        assert args[4] == 85    # start_progress (default value)
+        assert args[5] == 95    # end_progress (default value)
+        assert args[6] is None  # cancellation_check
         assert result == 5
 
     @pytest.mark.asyncio
