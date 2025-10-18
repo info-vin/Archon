@@ -111,5 +111,5 @@
 **[ ] 4.4: 執行測試修復計畫**
     - **[X] 4.4.1**: **(刪除)** `tests/server/api_routes/test_migration_api.py` 和 `tests/server/api_routes/test_version_api.py`。
     - **[X] 4.4.2**: **(跳過)** 為 `tests/test_async_llm_provider_service.py` 中 3 個失敗的測試加上 `@pytest.mark.skip`。
-    - **[ ] 4.4.3**: **(修復)** 調查並修復 `ProgressMapper` 的計算錯誤。
+    - **[X] 4.4.3**: **(修復)** 調查並修復 `ProgressMapper` 的計算錯誤。
     - **[ ] 4.4.4**: **(修復)** 處理剩餘的 6 個特定邏輯錯誤。

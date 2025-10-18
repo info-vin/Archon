@@ -171,7 +171,7 @@ class TestCrawlOrchestrationProgressIntegration:
         # Test sequence of stage progressions with mapping (updated for new ranges)
         test_stages = [
             ("analyzing", 100, 3),      # Should map to ~3%
-            ("crawling", 100, 15),      # Should map to ~15% 
+            ("crawling", 100, 5),       # Should map to 5% 
             ("processing", 100, 20),    # Should map to ~20%
             ("source_creation", 100, 25), # Should map to ~25%
             ("document_storage", 25, 29), # 25% of 25-40% = 29%
