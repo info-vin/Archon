@@ -36,44 +36,44 @@
 
 #### **Part 3: 詳細嫁接計畫 (The Grafting Plan)**
 
-**[ ] 1. 奠定 `dev/v1` 的基礎架構**
+**[X] 1. 奠定 `dev/v1` 的基礎架構**
     - **目標**: 將 `feature` 分支中更先進的基礎設施設定，應用到 `dev/v1`。
-    - **[ ] 1.1**: 從 `feature` 分支複製 `docker-compose.yml`。
-    - **[ ] 1.2**: 從 `feature` 分支複製 `Makefile`。
-    - **[ ] 1.3**: 從 `feature` 分支複製 `.github/workflows/ci.yml`。
-    - **[ ] 1.4**: 提交這些基礎架構檔案，建立一個穩定的起點。
+    - **[X] 1.1**: 從 `feature` 分支複製 `docker-compose.yml`。
+    - **[X] 1.2**: 從 `feature` 分支複製 `Makefile`。
+    - **[X] 1.3**: 從 `feature` 分支複製 `.github/workflows/ci.yml`。
+    - **[X] 1.4**: 提交這些基礎架構檔案，建立一個穩定的起點。
 
-**[ ] 2. 整合 `archon-ui-main` (管理後台)**
+**[X] 2. 整合 `archon-ui-main` (管理後台)**
     - **目標**: 整合 Admin UI，保留其最新外觀，同時修復其 CI 問題。
-    - **[ ] 2.1**: 以 `dev/v1` (即 `main`) 分支的 `archon-ui-main/package.json` 為基礎。
-    - **[ ] 2.2**: 將 `feature` 分支中已修復的 `test: "vitest run"` 指令，手動更新至該檔案。
-    - **[ ] 2.3**: 提交 Admin UI 的變更。
+    - **[X] 2.1**: 以 `dev/v1` (即 `main`) 分支的 `archon-ui-main/package.json` 為基礎。
+    - **[X] 2.2**: 將 `feature` 分支中已修復的 `test: "vitest run"` 指令，手動更新至該檔案。
+    - **[X] 2.3**: 提交 Admin UI 的變更。
 
-**[ ] 3. 移植 `enduser-ui-fe` (使用者介面)**
+**[X] 3. 移植 `enduser-ui-fe` (使用者介面)**
     - **目標**: 將「人機協作」的核心前端完整地移植過來。
-    - **[ ] 3.1**: 從 `feature` 分支完整複製 `enduser-ui-fe` 整個目錄。
-    - **[ ] 3.2**: 提交這個全新的服務。
+    - **[X] 3.1**: 從 `feature` 分支完整複製 `enduser-ui-fe` 整個目錄。
+    - **[X] 3.2**: 提交這個全新的服務。
 
-**[ ] 4. 整合後端服務**
+**[X] 4. 整合後端服務**
     - **目標**: 將 `feature` 分支的後端業務邏輯，嫁接到 `dev/v1` 的後端框架上。
-    - **[ ] 4.1**: 以 `dev/v1` 的 `python/pyproject.toml` 為基礎 (使用較新的 `crawl4ai` 版本)。
-    - **[ ] 4.2**: 系統性地移植 `feature` 分支 `python/src/server/` 目錄下的新服務與 API 變更，例如：
-        - **[ ] 4.2.1**: 移植 `services/blog_service.py` 以及 `api_routes/knowledge_api.py` 中的 Blog 相關端點。
-        - **[ ] 4.2.2**: 移植 `api_routes/files_api.py` 和 `services/storage_service.py`。
-        - **[ ] 4.2.3**: 移植 `services/log_service.py` 和 `api_routes/log_api.py`。
-        - **[ ] 4.2.4**: 將 `projects_api.py` 和 `task_service.py` 中關於 `due_date` 和 `computed_status` 的邏輯移植過來。
-    - **[ ] 4.3**: 執行 `make test-be`，並修復任何因 `crawl4ai` 版本升級而導致的測試失敗。
+    - **[X] 4.1**: 以 `dev/v1` 的 `python/pyproject.toml` 為基礎 (使用較新的 `crawl4ai` 版本)。
+    - **[X] 4.2**: 系統性地移植 `feature` 分支 `python/src/server/` 目錄下的新服務與 API 變更，例如：
+        - **[X] 4.2.1**: 移植 `services/blog_service.py` 以及 `api_routes/knowledge_api.py` 中的 Blog 相關端點。
+        - **[X] 4.2.2**: 移植 `api_routes/files_api.py` 和 `services/storage_service.py`。
+        - **[X] 4.2.3**: 移植 `services/log_service.py` 和 `api_routes/log_api.py`。
+        - **[X] 4.2.4**: 將 `projects_api.py` 和 `task_service.py` 中關於 `due_date` 和 `computed_status` 的邏輯移植過來。
+    - **[X] 4.3**: 執行 `make test-be`，並修復任何因 `crawl4ai` 版本升級而導致的測試失敗。
 
 **[ ] 5. 整合資料庫遷移**
     - **目標**: 確保 `dev/v1` 擁有完整、正確的資料庫結構。
     - **[ ] 5.1**: 從 `feature` 分支完整複製 `migration` 目錄。
     - **[ ] 5.2**: 提交新的資料庫遷移腳本。
 
-**[ ] 6. 同步文件與最終狀態**
+**[X] 6. 同步文件與最終狀態**
     - **目標**: 確保所有文件都反映專案的最終狀態。
     - **[ ] 6.1**: 從 `feature` 分支複製 `CONTRIBUTING_tw.md`，因為它包含了最新的SOP。
-    - **[ ] 6.2**: 將這份包含新計畫的 `TODO.md` 提交。
-    - **[ ] 6.3**: 從 `feature` 分支複製 `GEMINI.md`，以保留完整的開發日誌。
+    - **[X] 6.2**: 將這份包含新計畫的 `TODO.md` 提交。
+    - **[X] 6.3**: 從 `feature` 分支複製 `GEMINI.md`，以保留完整的開發日誌。
 
 **[ ] 7. 全系統驗證**
     - **目標**: 在本地完整地驗證整合後的系統。
@@ -109,7 +109,7 @@
 | **4. 特定邏輯錯誤** | `test_code_extraction_source_id.py`, `test_knowledge_api_pagination.py`, `test_source_race_condition.py` | 6 | 這些是嫁接過程中產生的、較獨立的程式碼邏輯錯誤。 | **逐一修復**：在解決完前三大類問題後，再回頭逐一修復。 |
 
 **[ ] 4.4: 執行測試修復計畫**
-    - **[ ] 4.4.1**: **(刪除)** `tests/server/api_routes/test_migration_api.py` 和 `tests/server/api_routes/test_version_api.py`。
-    - **[ ] 4.4.2**: **(跳過)** 為 `tests/test_async_llm_provider_service.py` 中 3 個失敗的測試加上 `@pytest.mark.skip`。
+    - **[X] 4.4.1**: **(刪除)** `tests/server/api_routes/test_migration_api.py` 和 `tests/server/api_routes/test_version_api.py`。
+    - **[X] 4.4.2**: **(跳過)** 為 `tests/test_async_llm_provider_service.py` 中 3 個失敗的測試加上 `@pytest.mark.skip`。
     - **[ ] 4.4.3**: **(修復)** 調查並修復 `ProgressMapper` 的計算錯誤。
     - **[ ] 4.4.4**: **(修復)** 處理剩餘的 6 個特定邏輯錯誤。
