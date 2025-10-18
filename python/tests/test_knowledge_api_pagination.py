@@ -52,7 +52,7 @@ def test_knowledge_summary_endpoint(client, mock_supabase_client):
     mock_supabase_client.from_.return_value = mock_from
     
     # Make request to summary endpoint
-    response = client.get("/api/knowledge-items/summary?page=1&per_page=10")
+    response = client.get("/api/knowledge-items?page=1&per_page=10")
     
     assert response.status_code == 200
     data = response.json()
@@ -351,7 +351,7 @@ def test_summary_search_filter(client, mock_supabase_client):
     mock_supabase_client.from_.return_value = mock_from
     
     # Test with search term
-    response = client.get("/api/knowledge-items/summary?search=python")
+    response = client.get("/api/knowledge-items?search=python")
     
     assert response.status_code == 200
     data = response.json()
@@ -388,7 +388,7 @@ def test_summary_knowledge_type_filter(client, mock_supabase_client):
     mock_supabase_client.from_.return_value = mock_from
     
     # Test with knowledge type filter
-    response = client.get("/api/knowledge-items/summary?knowledge_type=technical")
+    response = client.get("/api/knowledge-items?knowledge_type=technical")
     
     assert response.status_code == 200
     data = response.json()
