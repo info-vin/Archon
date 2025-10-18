@@ -279,9 +279,10 @@ async def update_source_info(
             if source_display_name:
                 update_data["source_display_name"] = source_display_name
 
-            client.table("archon_sources").update(update_data).eq(
-                "source_id", source_id
-            ).execute()
+            # Add source_id for upsert
+            update_data["source_id"] = source_id
+
+            client.table("archon_sources").upsert(update_data).execute()
 
             search_logger.info(
                 f"Updated source {source_id} while preserving title: {existing_title}"
