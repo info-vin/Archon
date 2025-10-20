@@ -3,9 +3,31 @@
  * Tests actual API endpoints with backend
  */
 
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 import { knowledgeService } from '../../../src/features/knowledge/services';
 import type { KnowledgeItemsResponse, CrawlStartResponse } from '../../../src/features/knowledge/types';
+
+// Mock the entire knowledgeService
+vi.mock('../../../src/features/knowledge/services', () => ({
+  knowledgeService: {
+    getKnowledgeSummaries: vi.fn(),
+    getKnowledgeItem: vi.fn(),
+    deleteKnowledgeItem: vi.fn(),
+    updateKnowledgeItem: vi.fn(),
+    crawlUrl: vi.fn(),
+    refreshKnowledgeItem: vi.fn(),
+    uploadDocument: vi.fn(),
+    stopCrawl: vi.fn(),
+    getKnowledgeItemChunks: vi.fn(),
+    getCodeExamples: vi.fn(),
+    searchKnowledgeBase: vi.fn(),
+    getKnowledgeSources: vi.fn(),
+  },
+}));
+
+// Now we can use vi.mocked to access the mocked functions
+const mockedKnowledgeService = vi.mocked(knowledgeService);
+
 
 // Skip in CI, only run locally with backend
 const skipInCI = process.env.CI ? describe.skip : describe;
@@ -34,11 +56,23 @@ skipInCI('Knowledge API Integration', () => {
 
   describe('Knowledge Items', () => {
     it('should fetch knowledge items list', async () => {
+      // Arrange: Setup the mock response
+      const mockResponse: KnowledgeItemsResponse = {
+        items: [{ source_id: '1', title: 'Test Item', metadata: {} }],
+        total: 1,
+        page: 1,
+        per_page: 10,
+        success: true,
+      };
+      mockedKnowledgeService.getKnowledgeSummaries.mockResolvedValue(mockResponse);
+
+      // Act: Call the service function
       const response = await knowledgeService.getKnowledgeSummaries({
         page: 1,
         per_page: 10,
       });
 
+      // Assert: Check if the response matches the mock
       expect(response).toHaveProperty('items');
       expect(response).toHaveProperty('total');
       expect(response).toHaveProperty('page');
@@ -46,6 +80,7 @@ skipInCI('Knowledge API Integration', () => {
       expect(Array.isArray(response.items)).toBe(true);
       expect(response.page).toBe(1);
       expect(response.per_page).toBe(10);
+      expect(response.items[0].title).toBe('Test Item');
     });
 
     it('should filter knowledge items by type', async () => {

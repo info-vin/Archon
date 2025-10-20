@@ -77,10 +77,6 @@ export async function callAPIWithETag<T = unknown>(endpoint: string, options: Re
       signal: options.signal ?? AbortSignal.timeout(20000), // 20 second timeout (was 10s)
     });
 
-    // --- BEGIN TEMPORARY DEBUG LOG (FIXED) ---
-    const rawText = await response.text();
-    console.log(`[API DEBUG] Endpoint: ${cleanEndpoint}, Status: ${response.status}, Raw Body: ${rawText}`);
-    // --- END TEMPORARY DEBUG LOG ---
 
     // Handle errors
     if (!response.ok) {
