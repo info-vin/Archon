@@ -89,6 +89,17 @@
                 | :--- | :--- | :--- |
                 | `progress-api.test.ts` | `../../../src/features/knowledge/progress/services` | `../../../src/features/progress/services/progressService` |
             - **解決方案**: 更新 `import` 語句，指向正確的檔案路徑。
+        - **[ ] 7.2.1.2: 調查整合測試失敗**
+            - **問題**: `knowledge-api.test.ts` 和 `progress-api.test.ts` 因 API 回傳空物件 `{}` 而失敗。
+            - **根本原因 (假設)**: API 呼叫在測試中失敗，但錯誤被 API 客戶端抑制，導致其回傳空物件。
+            - **數據統計對照表**:
+                | 測試檔案 | 預期行為 | 實際行為 |
+                | :--- | :--- | :--- |
+                | `knowledge-api.test.ts` | API 回傳 `{ "items": [...] }` 等資料 | API 回傳 `{}` |
+                | `progress-api.test.ts` | API 回傳 `{ "progressId": "..." }` 等資料 | API 回傳 `{}` |
+            - **解決方案**:
+                1.  檢查 `src/features/shared/api/apiClient.ts` 的錯誤處理邏輯。
+                2.  確認測試環境中的後端伺服器是否正常運行。
     - **[ ] 7.3**: 執行 `make lint` 檢查所有程式碼品質。
     - **[ ] 7.4**: 執行 `make dev` 並手動測試核心的「人機協作」工作流程。
 
