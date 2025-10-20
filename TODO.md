@@ -81,7 +81,7 @@
     - **[ ] 7.2**: 執行 `make test` 運行所有後端與前端測試。
     - **[ ] 7.2.1: 修復 `archon-ui-main` 測試失敗**
         - **目標**: 逐一修復 `archon-ui-main` 中的 13 個測試失敗。
-        - **[ ] 7.2.1.1: 修正 `progress-api.test.ts` 的匯入錯誤**
+        - **[X] 7.2.1.1: 修正 `progress-api.test.ts` 的匯入錯誤**
             - **問題**: 測試因 `Failed to resolve import` 錯誤而失敗。
             - **根本原因**: `progressService` 的檔案路徑在嫁接後發生變更。
             - **數據統計對照表**:
