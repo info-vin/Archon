@@ -147,6 +147,12 @@
                 1.  參考 `knowledge-api.test.ts` 的成功範例。
                 2.  使用 `vi.mock` 來模擬 `progressService` 和 `knowledgeService`。
                 3.  為 `progress-api.test.ts` 中的測試案例提供模擬的回傳值。
+        - **[ ] 7.2.1.9: 修正 `apiClient.test.ts` 中的斷言錯誤**
+            - **問題**: `apiClient.test.ts` 中的測試因 `fetch` 呼叫的 URL 格式不匹配而失敗。
+            - **根本原因**: 測試的斷言是錯誤的，它期望一個相對路徑，但程式碼在測試環境中正確地產生了一個絕對路徑。
+            - **解決方案**:
+                1.  修改 `apiClient.test.ts` 中的 `expect(...).toHaveBeenCalledWith(...)` 區塊。
+                2.  將斷言中的 `expect.stringContaining("/test-endpoint")` 修改為 `expect.stringContaining("http://localhost:8181/api/test-endpoint")`，以匹配程式碼的實際輸出。
     - **[ ] 7.3**: 執行 `make lint` 檢查所有程式碼品質。
     - **[ ] 7.4**: 執行 `make dev` 並手動測試核心的「人機協作」工作流程。
 
