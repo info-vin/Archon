@@ -141,6 +141,12 @@
             - **解決方案**:
                 1.  **修復 `apiClient`**: 將 `apiClient.ts` 恢復到其原始的、正確的狀態。
                 2.  **全面應用 Mock**: 將 `vi.mock` 模式應用到 `knowledge-api.test.ts` 和 `progress-api.test.ts` 中所有剩餘的失敗測試。
+        - **[ ] 7.2.1.8: 將 Mock 模式應用於 `progress-api.test.ts`**
+            - **問題**: `progress-api.test.ts` 中的測試仍在嘗試進行真實的網路呼叫。
+            - **解決方案**:
+                1.  參考 `knowledge-api.test.ts` 的成功範例。
+                2.  使用 `vi.mock` 來模擬 `progressService` 和 `knowledgeService`。
+                3.  為 `progress-api.test.ts` 中的測試案例提供模擬的回傳值。
     - **[ ] 7.3**: 執行 `make lint` 檢查所有程式碼品質。
     - **[ ] 7.4**: 執行 `make dev` 並手動測試核心的「人機協作」工作流程。
 
