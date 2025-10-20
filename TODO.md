@@ -79,6 +79,16 @@
     - **目標**: 在本地完整地驗證整合後的系統。
     - **[ ] 7.1**: 執行 `make install && make install-ui` 安裝所有依賴。
     - **[ ] 7.2**: 執行 `make test` 運行所有後端與前端測試。
+    - **[ ] 7.2.1: 修復 `archon-ui-main` 測試失敗**
+        - **目標**: 逐一修復 `archon-ui-main` 中的 13 個測試失敗。
+        - **[ ] 7.2.1.1: 修正 `progress-api.test.ts` 的匯入錯誤**
+            - **問題**: 測試因 `Failed to resolve import` 錯誤而失敗。
+            - **根本原因**: `progressService` 的檔案路徑在嫁接後發生變更。
+            - **數據統計對照表**:
+                | 檔案 | 舊匯入路徑 | 新匯入路徑 |
+                | :--- | :--- | :--- |
+                | `progress-api.test.ts` | `../../../src/features/knowledge/progress/services` | `../../../src/features/progress/services/progressService` |
+            - **解決方案**: 更新 `import` 語句，指向正確的檔案路徑。
     - **[ ] 7.3**: 執行 `make lint` 檢查所有程式碼品質。
     - **[ ] 7.4**: 執行 `make dev` 並手動測試核心的「人機協作」工作流程。
 
