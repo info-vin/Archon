@@ -100,6 +100,15 @@
             - **解決方案**:
                 1.  檢查 `src/features/shared/api/apiClient.ts` 的錯誤處理邏輯。
                 2.  確認測試環境中的後端伺服器是否正常運行。
+        - **[ ] 7.2.1.3: 調查 Service 層的錯誤抑制**
+            - **問題**: `apiClient` 正確拋出錯誤，但整合測試仍收到空物件。
+            - **根本原因 (新假設)**: 上層的服務 (例如 `knowledgeService`) 捕獲了來自 `apiClient` 的錯誤，並回傳 `{}`，而不是重新拋出錯誤。
+            - **數據統計對照表**:
+                | 檔案 | 預期行為 | 實際行為 |
+                | :--- | :--- | :--- |
+                | `knowledgeService.ts` | 應將 `apiClient` 的錯誤向上傳播 | 疑似在 `catch` 區塊回傳了 `{}` |
+            - **解決方案**:
+                1.  檢查 `src/features/knowledge/services/knowledgeService.ts` 的錯誤處理邏輯。
     - **[ ] 7.3**: 執行 `make lint` 檢查所有程式碼品質。
     - **[ ] 7.4**: 執行 `make dev` 並手動測試核心的「人機協作」工作流程。
 
