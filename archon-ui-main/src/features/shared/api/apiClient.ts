@@ -77,13 +77,18 @@ export async function callAPIWithETag<T = unknown>(endpoint: string, options: Re
       signal: options.signal ?? AbortSignal.timeout(20000), // 20 second timeout (was 10s)
     });
 
+    // --- BEGIN TEMPORARY DEBUG LOG (FIXED) ---
+    const rawText = await response.text();
+    console.log(`[API DEBUG] Endpoint: ${cleanEndpoint}, Status: ${response.status}, Raw Body: ${rawText}`);
+    // --- END TEMPORARY DEBUG LOG ---
+
     // Handle errors
     if (!response.ok) {
       let errorMessage = `HTTP error! status: ${response.status}`;
       try {
-        const errorBody = await response.text();
-        if (errorBody) {
-          const errorJson = JSON.parse(errorBody);
+        // Use the rawText we already read for the error body
+        if (rawText) {
+          const errorJson = JSON.parse(rawText);
           // Handle nested error structure from backend {"detail": {"error": "message"}}
           if (typeof errorJson.detail === "object" && errorJson.detail !== null && "error" in errorJson.detail) {
             errorMessage = errorJson.detail.error;
@@ -104,8 +109,8 @@ export async function callAPIWithETag<T = unknown>(endpoint: string, options: Re
       return undefined as T;
     }
 
-    // Parse response data
-    const result = await response.json();
+    // Parse response data from the text we already read
+    const result = rawText ? JSON.parse(rawText) : {};
 
     // Check for API errors
     if (result.error) {
