@@ -79,7 +79,7 @@
     - **目標**: 在本地完整地驗證整合後的系統。
     - **[ ] 7.1**: 執行 `make install && make install-ui` 安裝所有依賴。
     - **[ ] 7.2**: 執行 `make test` 運行所有後端與前端測試。
-    - **[ ] 7.2.1: 修復 `archon-ui-main` 測試失敗**
+    - **[X] 7.2.1: 初步修復與根本原因分析**
         - **目標**: 逐一修復 `archon-ui-main` 中的 13 個測試失敗。
         - **[X] 7.2.1.1: 修正 `progress-api.test.ts` 的匯入錯誤**
             - **問題**: 測試因 `Failed to resolve import` 錯誤而失敗。
@@ -89,7 +89,7 @@
                 | :--- | :--- | :--- |
                 | `progress-api.test.ts` | `../../../src/features/knowledge/progress/services` | `../../../src/features/progress/services/progressService` |
             - **解決方案**: 更新 `import` 語句，指向正確的檔案路徑。
-        - **[ ] 7.2.1.2: 調查整合測試失敗**
+        - **[X] 7.2.1.2: 調查整合測試失敗**
             - **問題**: `knowledge-api.test.ts` 和 `progress-api.test.ts` 因 API 回傳空物件 `{}` 而失敗。
             - **根本原因 (假設)**: API 呼叫在測試中失敗，但錯誤被 API 客戶端抑制，導致其回傳空物件。
             - **數據統計對照表**:
@@ -100,7 +100,7 @@
             - **解決方案**:
                 1.  檢查 `src/features/shared/api/apiClient.ts` 的錯誤處理邏輯。
                 2.  確認測試環境中的後端伺服器是否正常運行。
-        - **[ ] 7.2.1.3: 調查 Service 層的錯誤抑制**
+        - **[X] 7.2.1.3: 調查 Service 層的錯誤抑制**
             - **問題**: `apiClient` 正確拋出錯誤，但整合測試仍收到空物件。
             - **根本原因 (新假設)**: 上層的服務 (例如 `knowledgeService`) 捕獲了來自 `apiClient` 的錯誤，並回傳 `{}`，而不是重新拋出錯誤。
             - **數據統計對照表**:
@@ -109,7 +109,7 @@
                 | `knowledgeService.ts` | 應將 `apiClient` 的錯誤向上傳播 | 疑似在 `catch` 區塊回傳了 `{}` |
             - **解決方案**:
                 1.  檢查 `src/features/knowledge/services/knowledgeService.ts` 的錯誤處理邏輯。
-        - **[ ] 7.2.1.4: 調查後端「成功式失敗」的回應**
+        - **[X] 7.2.1.4: 調查後端「成功式失敗」的回應**
             - **問題**: `apiClient` 和 `knowledgeService` 都沒有抑制錯誤，但測試仍然收到空物件。
             - **根本原因 (新假設)**: 後端 API 在內部發生錯誤時，錯誤地回傳了 `200 OK` 狀態碼和一個空的 JSON 物件 `{}`，而不是一個合適的 4xx/5xx 錯誤碼。
             - **數據統計對照表**:
@@ -147,12 +147,15 @@
                 1.  參考 `knowledge-api.test.ts` 的成功範例。
                 2.  使用 `vi.mock` 來模擬 `progressService` 和 `knowledgeService`。
                 3.  為 `progress-api.test.ts` 中的測試案例提供模擬的回傳值。
-        - **[ ] 7.2.1.9: 修正 `apiClient.test.ts` 中的斷言錯誤**
-            - **問題**: `apiClient.test.ts` 中的測試因 `fetch` 呼叫的 URL 格式不匹配而失敗。
-            - **根本原因**: 測試的斷言是錯誤的，它期望一個相對路徑，但程式碼在測試環境中正確地產生了一個絕對路徑。
+    - **[ ] 7.2.2: 最終修復：移除寫死（Hardcoding）的測試**
+        - **目標**: 採用更健壯的方案，徹底解決剩餘的 4 個測試失敗。
+        - **根本原因總結**: 經過 `git log`、`Makefile` 和程式碼的交叉比對，我們確認失敗的根源在於 `apiClient.ts` 在測試環境中會寫死 `http://localhost:8181` 這個 URL，而測試的斷言與之不匹配。
+        - **[ ] 7.2.2.1: (正確的修復) 使測試環境的 URL 可配置**
+            - **問題**: `apiClient.test.ts` 中的斷言如果寫死，會變得脆弱且難以維護。
             - **解決方案**:
-                1.  修改 `apiClient.test.ts` 中的 `expect(...).toHaveBeenCalledWith(...)` 區塊。
-                2.  將斷言中的 `expect.stringContaining("/test-endpoint")` 修改為 `expect.stringContaining("http://localhost:8181/api/test-endpoint")`，以匹配程式碼的實際輸出。
+                1.  調查 `vite.config.ts` 和 `vitest.config.ts`，找到在測試中注入環境變數的最佳實踐。
+                2.  修改測試設定，將後端 URL 作為環境變數 (`import.meta.env.VITE_API_BASE_URL`) 注入。
+                3.  修改 `apiClient.test.ts`，讓它從環境變數讀取 Base URL，並用其來建構預期的 URL 進行斷言。
     - **[ ] 7.3**: 執行 `make lint` 檢查所有程式碼品質。
     - **[ ] 7.4**: 執行 `make dev` 並手動測試核心的「人機協作」工作流程。
 
