@@ -136,6 +136,11 @@
                 2.  使用 `vi.mock` 來模擬整個 `knowledgeService` 和 `progressService`。
                 3.  為每個測試案例提供它們所期望的回傳值，使測試不再發出任何真實的網路請求。
                 4.  我將首先修復 `tests/integration/knowledge/knowledge-api.test.ts` 中的第一個失敗測試 (`should fetch knowledge items list`) 作為範例。
+        - **[ ] 7.2.1.7: 全面應用 Mock 模式並修復 `apiClient`**
+            - **問題**: 在清理日誌時，意外地破壞了 `apiClient.ts`；同時，Mock 模式只應用於一個測試。
+            - **解決方案**:
+                1.  **修復 `apiClient`**: 將 `apiClient.ts` 恢復到其原始的、正確的狀態。
+                2.  **全面應用 Mock**: 將 `vi.mock` 模式應用到 `knowledge-api.test.ts` 和 `progress-api.test.ts` 中所有剩餘的失敗測試。
     - **[ ] 7.3**: 執行 `make lint` 檢查所有程式碼品質。
     - **[ ] 7.4**: 執行 `make dev` 並手動測試核心的「人機協作」工作流程。
 
