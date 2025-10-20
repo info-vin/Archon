@@ -128,6 +128,14 @@
                 | `apiClient.ts` | `response.clone().text()` | 先讀取一次 `text()`，然後在後續邏輯中重複使用該文字變數。 |
             - **解決方案**:
                 1.  修改 `apiClient.ts` 中的偵錯日誌，避免使用 `.clone()`，改為先讀取一次 body，然後再進行後續操作。
+        - **[ ] 7.2.1.6: (最終解決方案) 模擬 API 服務層**
+            - **問題**: 整合測試試圖呼叫一個不存在的後端，而測試環境回傳了錯誤的「偽成功」回應。
+            - **根本原因**: 前端整合測試的架構錯誤，它不應該依賴於一個真實的、正在運行的後端。
+            - **解決方案**:
+                1.  移除 `apiClient.ts` 中的暫時性偵錯日誌。
+                2.  使用 `vi.mock` 來模擬整個 `knowledgeService` 和 `progressService`。
+                3.  為每個測試案例提供它們所期望的回傳值，使測試不再發出任何真實的網路請求。
+                4.  我將首先修復 `tests/integration/knowledge/knowledge-api.test.ts` 中的第一個失敗測試 (`should fetch knowledge items list`) 作為範例。
     - **[ ] 7.3**: 執行 `make lint` 檢查所有程式碼品質。
     - **[ ] 7.4**: 執行 `make dev` 並手動測試核心的「人機協作」工作流程。
 
