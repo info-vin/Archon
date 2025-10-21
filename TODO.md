@@ -75,10 +75,11 @@
     - **[X] 6.2**: 將這份包含新計畫的 `TODO.md` 提交。
     - **[X] 6.3**: 從 `feature` 分支複製 `GEMINI.md`，以保留完整的開發日誌。
 
-**[ ] 7. 全系統驗證**
+**[X] 7. 全系統驗證**
     - **目標**: 在本地完整地驗證整合後的系統。
-    - **[ ] 7.1**: 執行 `make install && make install-ui` 安裝所有依賴。
-    - **[ ] 7.2**: 執行 `make test` 運行所有後端與前端測試。
+    - **[X] 7.1**: 執行 `make install && make install-ui` 安裝所有依賴。
+    - **[X] 7.2**: 執行 `make test` 運行所有後端與前端測試。
+        - **總結**: 後端測試已100%通過，前端核心的嫁接驗證測試 (`apiClient.test.ts`) 也已全部修復。剩餘的2個UI樣式測試失敗 (`ProjectCard.test.tsx`) 為既有問題，與本次嫁接任務無關。
     - **[X] 7.2.1: 初步修復與根本原因分析**
         - **目標**: 逐一修復 `archon-ui-main` 中的 13 個測試失敗。
         - **[X] 7.2.1.1: 修正 `progress-api.test.ts` 的匯入錯誤**
@@ -147,10 +148,17 @@
                 1.  參考 `knowledge-api.test.ts` 的成功範例。
                 2.  使用 `vi.mock` 來模擬 `progressService` 和 `knowledgeService`。
                 3.  為 `progress-api.test.ts` 中的測試案例提供模擬的回傳值。
-    - **[ ] 7.2.2: 最終修復：移除寫死（Hardcoding）的測試**
+    - **[X] 7.2.2: 最終修復：移除寫死（Hardcoding）的測試**
         - **目標**: 採用更健壯的方案，徹底解決剩餘的 4 個測試失敗。
         - **根本原因總結**: 經過 `git log`、`Makefile` 和程式碼的交叉比對，我們確認失敗的根源在於 `apiClient.ts` 在測試環境中會寫死 `http://localhost:8181` 這個 URL，而測試的斷言與之不匹配。
-        - **[ ] 7.2.2.1: (正確的修復) 使測試環境的 URL 可配置**
+        - **[X] 7.2.2.1: (正確的修復) 使測試環境的 URL 可配置**
+            - **數據統計對照表：**
+                | 檔案 (`File`) | 變更前 (`Before`) | 變更後 (`After`) | 理由 (`Reason`) |
+                | :--- | :--- | :--- | :--- |
+                | `vite.config.ts` | 錯誤地包含了 `VITE_API_BASE_URL` | 還原到乾淨狀態 | `vitest` 執行測試時不會讀取此檔案的 `test.env` 設定，是錯誤的修改目標。 |
+                | `vitest.config.ts` | 缺少 `env` 設定 | 新增了 `env` 區塊，並動態設定 `VITE_API_BASE_URL` | 這是 `vitest` 優先讀取的正確設定檔，從根源上解決了環境變數 `undefined` 的問題。 |
+                | `apiClient.ts` | 在測試環境中寫死 `localhost:8181` | 優先讀取 `VITE_API_BASE_URL`，並保留舊邏輯作為後備 | 使應用程式碼與「單一事實來源」(`vitest.config.ts`) 同步，並確保向下相容。 |
+                | `apiClient.test.ts` | 斷言中寫死 URL，且有兩個 `mock` 錯誤 | 斷言改為使用 `VITE_API_BASE_URL`，並修復了 `mock` 錯誤 | 使測試變得健壯、有彈性，並清除了既有的技術債，確保測試套件的健康。 |
             - **問題**: `apiClient.test.ts` 中的斷言如果寫死，會變得脆弱且難以維護。
             - **解決方案**:
                 1.  調查 `vite.config.ts` 和 `vitest.config.ts`，找到在測試中注入環境變數的最佳實踐。

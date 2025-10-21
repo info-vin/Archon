@@ -25,9 +25,16 @@ function buildFullUrl(cleanEndpoint: string): string {
   const isTestEnv = typeof process !== "undefined" && process.env?.NODE_ENV === "test";
 
   if (isTestEnv && !fullUrl.startsWith("http")) {
-    const testHost = "localhost";
-    const testPort = process.env?.ARCHON_SERVER_PORT || "8181";
-    fullUrl = `http://${testHost}:${testPort}${fullUrl}`;
+    // Use the environment variable from vitest.config.ts if available
+    const baseUrl = (import.meta.env as any).VITE_API_BASE_URL;
+    if (baseUrl) {
+      fullUrl = `${baseUrl}${fullUrl}`;
+    } else {
+      // Fallback to the old hardcoded URL
+      const testHost = "localhost";
+      const testPort = process.env?.ARCHON_SERVER_PORT || "8181";
+      fullUrl = `http://${testHost}:${testPort}${fullUrl}`;
+    }
   }
 
   return fullUrl;
