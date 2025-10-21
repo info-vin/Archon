@@ -127,9 +127,9 @@ lint: lint-fe lint-be
 lint-fe:
 	@echo "Linting all frontend projects..."
 	@echo "--- Linting End-User UI (enduser-ui-fe) ---"
-	@cd enduser-ui-fe && $(PNPM) run lint
+	@cd enduser-ui-fe && $(PNPM) run --if-present lint
 	@echo "--- Linting Admin UI (archon-ui-main) ---"
-	@cd archon-ui-main && $(PNPM) run lint
+	@cd archon-ui-main && $(PNPM) run --if-present lint
 
 # Run backend linter
 lint-be:
