@@ -61,7 +61,7 @@ class ProgressTracker:
     async def _delayed_cleanup(cls, progress_id: str, delay_seconds: int = 30):
         """
         Remove progress state from memory after a delay.
-        
+
         This gives clients time to see the final state before cleanup.
         """
         await asyncio.sleep(delay_seconds)
@@ -319,7 +319,7 @@ class ProgressTracker:
     ):
         """
         Update code extraction progress with detailed metrics.
-        
+
         Args:
             completed_summaries: Number of code summaries completed
             total_summaries: Total code summaries to generate

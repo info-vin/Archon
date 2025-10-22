@@ -5,6 +5,29 @@ import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { useToast } from '../../features/shared/hooks/useToast';
 
+type ApiOllamaModel = {
+  name: string;
+  size: number;
+  parameters?: string | {
+    family?: string;
+    parameter_size?: string;
+    quantization?: string;
+    format?: string;
+  };
+  capabilities?: string[];
+  context_window?: number;
+  custom_context_length?: number;
+  base_context_length?: number;
+  max_context_length?: number;
+  architecture?: string;
+  format?: string;
+  parent_model?: string;
+  dimensions?: number;
+  block_count?: number;
+  attention_heads?: number;
+  instance_url?: string;
+};
+
 interface ContextInfo {
   current?: number;
   max?: number;
@@ -483,7 +506,7 @@ export const OllamaModelSelectionModal: React.FC<OllamaModelSelectionModalProps>
   };
 
   // Load models - first try cache, then fetch from instance
-  const loadModels = async (forceRefresh: boolean = false) => {
+  const loadModels = useCallback(async (forceRefresh: boolean = false) => {
     try {
       setLoading(true);
       
@@ -528,7 +551,7 @@ export const OllamaModelSelectionModal: React.FC<OllamaModelSelectionModalProps>
         const data = await response.json();
         
         // Helper function to determine real compatibility based on model characteristics
-        const getArchonCompatibility = (model: any, modelType: string): 'full' | 'partial' | 'limited' => {
+        const getArchonCompatibility = (model: ApiOllamaModel, modelType: string): 'full' | 'partial' | 'limited' => {
           if (modelType === 'chat') {
             // Chat model compatibility based on name patterns and capabilities
             const modelName = model.name.toLowerCase();
@@ -580,7 +603,7 @@ export const OllamaModelSelectionModal: React.FC<OllamaModelSelectionModalProps>
         
         // Process chat models
         if (data.chat_models) {
-          data.chat_models.forEach((model: any) => {
+          data.chat_models.forEach((model: ApiOllamaModel) => {
             const compatibility = getArchonCompatibility(model, 'chat');
             // DEBUG: Log raw model data from API
             // console.log(`🔍 DEBUG: Raw model data for ${model.name}:`, {
@@ -631,7 +654,7 @@ export const OllamaModelSelectionModal: React.FC<OllamaModelSelectionModalProps>
         
         // Process embedding models
         if (data.embedding_models) {
-          data.embedding_models.forEach((model: any) => {
+          data.embedding_models.forEach((model: ApiOllamaModel) => {
             const compatibility = getArchonCompatibility(model, 'embedding');
             
             // DEBUG: Log raw embedding model data from API
@@ -709,7 +732,7 @@ export const OllamaModelSelectionModal: React.FC<OllamaModelSelectionModalProps>
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedInstanceUrl, modelType, instances, showToast]);
 
   // Refresh models from instances
   const refreshModels = async () => {
@@ -753,7 +776,7 @@ export const OllamaModelSelectionModal: React.FC<OllamaModelSelectionModalProps>
         // console.log('🚨 MODAL DEBUG: POST discover-with-details response:', data);
         
         // Functions to determine real compatibility and performance based on model characteristics
-        const getArchonCompatibility = (model: any, modelType: string): 'full' | 'partial' | 'limited' => {
+        const getArchonCompatibility = (model: ApiOllamaModel, modelType: string): 'full' | 'partial' | 'limited' => {
           if (modelType === 'chat') {
             // Chat model compatibility based on name patterns and capabilities
             const modelName = model.name.toLowerCase();
@@ -934,7 +957,7 @@ export const OllamaModelSelectionModal: React.FC<OllamaModelSelectionModalProps>
     if (isOpen) {
       loadModels();
     }
-  }, [isOpen]);
+  }, [isOpen, loadModels]);
 
   if (!isOpen) return null;
 

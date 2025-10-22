@@ -34,18 +34,18 @@ class KnowledgeSummaryService:
     ) -> dict[str, Any]:
         """
         Get lightweight summaries of knowledge items.
-        
+
         Returns only essential data needed for card displays:
         - Basic metadata (title, url, type, tags)
         - Counts only (no actual content)
         - Minimal processing overhead
-        
+
         Args:
             page: Page number (1-based)
             per_page: Items per page
             knowledge_type: Optional filter by knowledge type
             search: Optional search term
-            
+
         Returns:
             Dict with minimal item summaries and pagination info
         """
@@ -167,10 +167,10 @@ class KnowledgeSummaryService:
     async def _get_document_counts_batch(self, source_ids: list[str]) -> dict[str, int]:
         """
         Get document counts for multiple sources in a single query.
-        
+
         Args:
             source_ids: List of source IDs
-            
+
         Returns:
             Dict mapping source_id to document count
         """
@@ -198,10 +198,10 @@ class KnowledgeSummaryService:
     async def _get_code_example_counts_batch(self, source_ids: list[str]) -> dict[str, int]:
         """
         Get code example counts for multiple sources efficiently.
-        
+
         Args:
             source_ids: List of source IDs
-            
+
         Returns:
             Dict mapping source_id to code example count
         """
@@ -227,10 +227,10 @@ class KnowledgeSummaryService:
     async def _get_first_urls_batch(self, source_ids: list[str]) -> dict[str, str]:
         """
         Get first URL for each source in a batch.
-        
+
         Args:
             source_ids: List of source IDs
-            
+
         Returns:
             Dict mapping source_id to first URL
         """

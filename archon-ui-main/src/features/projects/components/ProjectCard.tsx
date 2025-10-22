@@ -56,14 +56,14 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
       <div className="flex-1 p-4 pb-2">
         {/* Title section */}
         <div className="flex flex-col items-center justify-center mb-4 min-h-[48px]">
-          <h3 className={
+          <h3 className={cn(
               "font-medium text-center leading-tight line-clamp-2 transition-all duration-300",
               isSelected
                 ? "text-gray-900 dark:text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.8)]"
                 : project.pinned
                   ? "text-purple-700 dark:text-purple-300"
                   : "text-gray-500 dark:text-gray-400",
-            }
+            )}
           >
             {project.title}
           </h3>
@@ -74,17 +74,17 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
         <div className="flex flex-col sm:flex-row items-stretch gap-2 w-full">
           {/* Todo pill */}
           <div className="relative flex-1">
-            <div className={
+            <div className={cn(
                 "absolute inset-0 bg-pink-600 rounded-full blur-md",
                 isSelected ? "opacity-30 dark:opacity-75" : "opacity-0",
-              }
+              )}
             ></div>
-            <div className={
+            <div className={cn(
                 "relative flex items-center h-12 backdrop-blur-sm rounded-full border shadow-sm transition-all duration-300",
                 isSelected
                   ? "bg-white/70 dark:bg-zinc-900/90 border-pink-300 dark:border-pink-500/50 dark:shadow-[0_0_10px_rgba(236,72,153,0.5)] hover:shadow-md dark:hover:shadow-[0_0_15px_rgba(236,72,153,0.7)]"
                   : "bg-white/30 dark:bg-zinc-900/30 border-gray-300/50 dark:border-gray-700/50",
-              }
+              )}
             >
               <div className="flex flex-col items-center justify-center px-2 min-w-[40px]">
                 <ListTodo
@@ -122,17 +122,17 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
 
           {/* Doing pill (includes review) */}
           <div className="relative flex-1">
-            <div className={
+            <div className={cn(
                 "absolute inset-0 bg-blue-600 rounded-full blur-md",
                 isSelected ? "opacity-30 dark:opacity-75" : "opacity-0",
-              }
+              )}
             ></div>
-            <div className={
+            <div className={cn(
                 "relative flex items-center h-12 backdrop-blur-sm rounded-full border shadow-sm transition-all duration-300",
                 isSelected
                   ? "bg-white/70 dark:bg-zinc-900/90 border-blue-300 dark:border-blue-500/50 dark:shadow-[0_0_10px_rgba(59,130,246,0.5)] hover:shadow-md dark:hover:shadow-[0_0_15px_rgba(59,130,246,0.7)]"
                   : "bg-white/30 dark:bg-zinc-900/30 border-gray-300/50 dark:border-gray-700/50",
-              }
+              )}
             >
               <div className="flex flex-col items-center justify-center px-2 min-w-[40px]">
                 <Activity
@@ -170,17 +170,17 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
 
           {/* Done pill */}
           <div className="relative flex-1">
-            <div className={
+            <div className={cn(
                 "absolute inset-0 bg-green-600 rounded-full blur-md",
                 isSelected ? "opacity-30 dark:opacity-75" : "opacity-0",
-              }
+              )}
             ></div>
-            <div className={
+            <div className={cn(
                 "relative flex items-center h-12 backdrop-blur-sm rounded-full border shadow-sm transition-all duration-300",
                 isSelected
                   ? "bg-white/70 dark:bg-zinc-900/90 border-green-300 dark:border-green-500/50 dark:shadow-[0_0_10px_rgba(34,197,94,0.5)] hover:shadow-md dark:hover:shadow-[0_0_15px_rgba(34,197,94,0.7)]"
                   : "bg-white/30 dark:bg-zinc-900/30 border-gray-300/50 dark:border-gray-700/50",
-              }
+              )}
             >
               <div className="flex flex-col items-center justify-center px-2 min-w-[40px]">
                 <CheckCircle2

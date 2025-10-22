@@ -138,39 +138,41 @@ const normalizeBaseUrl = (url?: string | null): string | null => {
   return normalized || null;
 };
 
+type RagSettingsType = {
+  MODEL_CHOICE: string;
+  USE_CONTEXTUAL_EMBEDDINGS: boolean;
+  CONTEXTUAL_EMBEDDINGS_MAX_WORKERS: number;
+  USE_HYBRID_SEARCH: boolean;
+  USE_AGENTIC_RAG: boolean;
+  USE_RERANKING: boolean;
+  LLM_PROVIDER?: string;
+  LLM_BASE_URL?: string;
+  LLM_INSTANCE_NAME?: string;
+  EMBEDDING_MODEL?: string;
+  EMBEDDING_PROVIDER?: string;
+  OLLAMA_EMBEDDING_URL?: string;
+  OLLAMA_EMBEDDING_INSTANCE_NAME?: string;
+  // Crawling Performance Settings
+  CRAWL_BATCH_SIZE?: number;
+  CRAWL_MAX_CONCURRENT?: number;
+  CRAWL_WAIT_STRATEGY?: string;
+  CRAWL_PAGE_TIMEOUT?: number;
+  CRAWL_DELAY_BEFORE_HTML?: number;
+  // Storage Performance Settings
+  DOCUMENT_STORAGE_BATCH_SIZE?: number;
+  EMBEDDING_BATCH_SIZE?: number;
+  DELETE_BATCH_SIZE?: number;
+  ENABLE_PARALLEL_BATCHES?: boolean;
+  // Advanced Settings
+  MEMORY_THRESHOLD_PERCENT?: number;
+  DISPATCHER_CHECK_INTERVAL?: number;
+  CODE_EXTRACTION_BATCH_SIZE?: number;
+  CODE_SUMMARY_MAX_WORKERS?: number;
+};
+
 interface RAGSettingsProps {
-  ragSettings: {
-    MODEL_CHOICE: string;
-    USE_CONTEXTUAL_EMBEDDINGS: boolean;
-    CONTEXTUAL_EMBEDDINGS_MAX_WORKERS: number;
-    USE_HYBRID_SEARCH: boolean;
-    USE_AGENTIC_RAG: boolean;
-    USE_RERANKING: boolean;
-    LLM_PROVIDER?: string;
-    LLM_BASE_URL?: string;
-    LLM_INSTANCE_NAME?: string;
-    EMBEDDING_MODEL?: string;
-    EMBEDDING_PROVIDER?: string;
-    OLLAMA_EMBEDDING_URL?: string;
-    OLLAMA_EMBEDDING_INSTANCE_NAME?: string;
-    // Crawling Performance Settings
-    CRAWL_BATCH_SIZE?: number;
-    CRAWL_MAX_CONCURRENT?: number;
-    CRAWL_WAIT_STRATEGY?: string;
-    CRAWL_PAGE_TIMEOUT?: number;
-    CRAWL_DELAY_BEFORE_HTML?: number;
-    // Storage Performance Settings
-    DOCUMENT_STORAGE_BATCH_SIZE?: number;
-    EMBEDDING_BATCH_SIZE?: number;
-    DELETE_BATCH_SIZE?: number;
-    ENABLE_PARALLEL_BATCHES?: boolean;
-    // Advanced Settings
-    MEMORY_THRESHOLD_PERCENT?: number;
-    DISPATCHER_CHECK_INTERVAL?: number;
-    CODE_EXTRACTION_BATCH_SIZE?: number;
-    CODE_SUMMARY_MAX_WORKERS?: number;
-  };
-  setRagSettings: (settings: any) => void;
+  ragSettings: RagSettingsType;
+  setRagSettings: (settings: RagSettingsType | ((prev: RagSettingsType) => RagSettingsType)) => void;
 }
 
 export const RAGSettings = ({
@@ -340,7 +342,7 @@ export const RAGSettings = ({
     }, 30000);
 
     return () => clearInterval(interval);
-  }, [ragSettings.LLM_PROVIDER, reloadApiCredentials]);
+  }, [ragSettings.LLM_PROVIDER, reloadApiCredentials, ragSettings]);
 
   useEffect(() => {
     const needsDetection = chatProvider === 'ollama' || embeddingProvider === 'ollama';
@@ -606,17 +608,19 @@ export const RAGSettings = ({
         throw new Error(`Backend health check failed: HTTP ${response.status}`);
       }
       
-    } catch (error: any) {
+    } catch (error) {
       const responseTime = Date.now() - startTime;
       setStatus({ online: false, responseTime, checking: false });
       
       let errorMessage = 'Connection failed';
-      if (error.name === 'AbortError') {
-        errorMessage = 'Request timeout (>15s)';
-      } else if (error.message.includes('Backend health check failed')) {
-        errorMessage = 'Backend proxy error';
-      } else {
-        errorMessage = error.message || 'Unknown error';
+      if (error instanceof Error) {
+        if (error.name === 'AbortError') {
+          errorMessage = 'Request timeout (>15s)';
+        } else if (error.message.includes('Backend health check failed')) {
+          errorMessage = 'Backend proxy error';
+        } else {
+          errorMessage = error.message || 'Unknown error';
+        }
       }
       
       // console.log(`❌ ${url} failed: ${errorMessage} (${responseTime}ms)`);
@@ -696,14 +700,18 @@ const manualTestConnection = useCallback(async (
         }
         return false;
       }
-    } catch (error: any) {
+    } catch (error) {
       setStatus({ online: false, responseTime: null, checking: false });
 
       if (!suppressToast) {
-        if (error.name === 'AbortError') {
-          showToast(`${instanceName} connection failed: Request timeout (>15s)`, 'error');
+        if (error instanceof Error) {
+          if (error.name === 'AbortError') {
+            showToast(`${instanceName} connection failed: Request timeout (>15s)`, 'error');
+          } else {
+            showToast(`${instanceName} connection failed: ${error.message || 'Unknown error'}`, 'error');
+          }
         } else {
-          showToast(`${instanceName} connection failed: ${error.message || 'Unknown error'}`, 'error');
+          showToast(`${instanceName} connection failed: Unknown error`, 'error');
         }
       }
 

@@ -86,7 +86,7 @@ class CredentialsService {
     );
   }
 
-  private handleCredentialError(error: any, context: string): Error {
+  private handleCredentialError(error: unknown, context: string): Error {
     const errorMessage = error instanceof Error ? error.message : String(error);
 
     // Check for network errors
@@ -130,7 +130,7 @@ class CredentialsService {
         description?: string;
       }
       return Object.entries(result.credentials).map(
-        ([key, value]: [string, CredentialValue]) => {
+        ([key, value]: [string, string | CredentialValue]) => {
           if (value && typeof value === "object" && value.is_encrypted) {
             return {
               key,
@@ -243,7 +243,7 @@ class CredentialsService {
             "CRAWL_WAIT_STRATEGY",
           ].includes(key)
         ) {
-          (settings as any)[key] = cred.value || "";
+          settings[key] = cred.value || "";
         }
         // Number fields
         else if (
@@ -261,8 +261,8 @@ class CredentialsService {
             "CODE_SUMMARY_MAX_WORKERS",
           ].includes(key)
         ) {
-          (settings as any)[key] =
-            parseInt(cred.value || "0", 10) || (settings as any)[key];
+          settings[key] =
+            parseInt(cred.value || "0", 10) || settings[key];
         }
         // Float fields
         else if (key === "CRAWL_DELAY_BEFORE_HTML") {
@@ -270,7 +270,7 @@ class CredentialsService {
         }
         // Boolean fields
         else {
-          (settings as any)[key] = cred.value === "true";
+          settings[key] = cred.value === "true";
         }
       }
     });
@@ -453,14 +453,14 @@ class CredentialsService {
           }
           
           // Parse the field value
-          let value: any = cred.value;
+          let value: string | boolean | number = cred.value;
           if (field === 'isEnabled' || field === 'isPrimary' || field === 'isHealthy') {
             value = cred.value === 'true';
           } else if (field === 'responseTimeMs' || field === 'modelsAvailable' || field === 'loadBalancingWeight') {
             value = parseInt(cred.value || '0', 10);
           }
           
-          (instanceMap[instanceId] as any)[field] = value;
+          (instanceMap[instanceId] as Partial<OllamaInstance>)[field] = value;
         }
       });
       
@@ -502,7 +502,7 @@ class CredentialsService {
       const promises: Promise<Credential>[] = [];
       
       instances.forEach(instance => {
-        const fields: Record<string, any> = {
+        const fields: Record<string, string | boolean | number> = {
           name: instance.name,
           baseUrl: instance.baseUrl,
           isEnabled: instance.isEnabled,

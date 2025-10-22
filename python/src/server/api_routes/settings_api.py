@@ -71,7 +71,7 @@ async def list_credentials(category: str | None = None):
         ]
     except Exception as e:
         logfire.error(f"Error listing credentials | category={category} | error={str(e)}")
-        raise HTTPException(status_code=500, detail={"error": str(e)})
+        raise HTTPException(status_code=500, detail={"error": str(e)}) from e
 
 
 @router.get("/credentials/categories/{category}")
@@ -90,7 +90,7 @@ async def get_credentials_by_category(category: str):
         logfire.error(
             f"Error getting credentials by category | category={category} | error={str(e)}"
         )
-        raise HTTPException(status_code=500, detail={"error": str(e)})
+        raise HTTPException(status_code=500, detail={"error": str(e)}) from e
 
 
 @router.post("/credentials")
@@ -124,7 +124,7 @@ async def create_credential(request: CredentialRequest):
 
     except Exception as e:
         logfire.error(f"Error creating credential | key={request.key} | error={str(e)}")
-        raise HTTPException(status_code=500, detail={"error": str(e)})
+        raise HTTPException(status_code=500, detail={"error": str(e)}) from e
 
 
 # Define optional settings with their default values
@@ -180,7 +180,7 @@ async def get_credential(key: str):
         raise
     except Exception as e:
         logfire.error(f"Error getting credential | key={key} | error={str(e)}")
-        raise HTTPException(status_code=500, detail={"error": str(e)})
+        raise HTTPException(status_code=500, detail={"error": str(e)}) from e
 
 
 @router.put("/credentials/{key}")
@@ -240,7 +240,7 @@ async def update_credential(key: str, request: dict[str, Any]):
 
     except Exception as e:
         logfire.error(f"Error updating credential | key={key} | error={str(e)}")
-        raise HTTPException(status_code=500, detail={"error": str(e)})
+        raise HTTPException(status_code=500, detail={"error": str(e)}) from e
 
 
 @router.delete("/credentials/{key}")
@@ -260,7 +260,7 @@ async def delete_credential(key: str):
 
     except Exception as e:
         logfire.error(f"Error deleting credential | key={key} | error={str(e)}")
-        raise HTTPException(status_code=500, detail={"error": str(e)})
+        raise HTTPException(status_code=500, detail={"error": str(e)}) from e
 
 
 @router.post("/credentials/initialize")
@@ -275,7 +275,7 @@ async def initialize_credentials_endpoint():
         return {"success": True, "message": "Credentials reloaded from database"}
     except Exception as e:
         logfire.error(f"Error reloading credentials | error={str(e)}")
-        raise HTTPException(status_code=500, detail={"error": str(e)})
+        raise HTTPException(status_code=500, detail={"error": str(e)}) from e
 
 
 @router.get("/database/metrics")
@@ -331,7 +331,7 @@ async def database_metrics():
 
     except Exception as e:
         logfire.error(f"Error getting database metrics | error={str(e)}")
-        raise HTTPException(status_code=500, detail={"error": str(e)})
+        raise HTTPException(status_code=500, detail={"error": str(e)}) from e
 
 
 @router.get("/settings/health")
@@ -346,7 +346,7 @@ async def settings_health():
 @router.post("/credentials/status-check")
 async def check_credential_status(request: dict[str, list[str]]):
     """Check status of API credentials by actually decrypting and validating them.
-    
+
     This endpoint is specifically for frontend status indicators and returns
     decrypted credential values for connectivity testing.
     """
@@ -388,4 +388,4 @@ async def check_credential_status(request: dict[str, list[str]]):
 
     except Exception as e:
         logfire.error(f"Error in credential status check | error={str(e)}")
-        raise HTTPException(status_code=500, detail={"error": str(e)})
+        raise HTTPException(status_code=500, detail={"error": str(e)}) from e

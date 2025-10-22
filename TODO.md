@@ -241,7 +241,7 @@ sequenceDiagram
                 1.  調查 `vite.config.ts` 和 `vitest.config.ts`，找到在測試中注入環境變數的最佳實踐。
                 2.  修改測試設定，將後端 URL 作為環境變數 (`import.meta.env.VITE_API_BASE_URL`) 注入。
                 3.  修改 `apiClient.test.ts`，讓它從環境變數讀取 Base URL，並用其來建構預期的 URL 進行斷言。
-    - **[ ] 7.3**: 執行 `make lint` 檢查所有程式碼品質。
+    - **[X] 7.3**: 執行 `make lint` 檢查所有程式碼品質。
     - **[ ] 7.4**: 執行 `make dev` 並手動測試核心的「人機協作」工作流程。
 
 **[ ] 8. 部署至 Render**

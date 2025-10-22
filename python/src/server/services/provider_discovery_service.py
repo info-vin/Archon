@@ -113,11 +113,11 @@ class ProviderDiscoveryService:
     async def _test_tool_support(self, model_name: str, api_url: str) -> bool:
         """
         Test if a model supports function/tool calling by making an actual API call.
-        
+
         Args:
             model_name: Name of the model to test
             api_url: Base URL of the Ollama instance
-            
+
         Returns:
             True if tool calling is supported, False otherwise
         """

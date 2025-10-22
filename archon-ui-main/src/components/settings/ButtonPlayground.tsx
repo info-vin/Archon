@@ -58,8 +58,8 @@ export const ButtonPlayground: React.FC = () => {
     layer: 'layer1' | 'layer2',
     corner: keyof CornerRadius,
     value: number,
-    linked: any,
-    setRadius: any
+    linked: { [key in keyof CornerRadius]: boolean },
+    setRadius: React.Dispatch<React.SetStateAction<CornerRadius>>
   ) => {
     if (layer === 'layer1') {
       if (linked[corner]) {

@@ -31,7 +31,7 @@ global.fetch = vi.fn(() =>
     status: 200,
     headers: new Headers(),
   } as Response)
-) as any
+) as typeof fetch
 
 // Mock localStorage
 const localStorageMock = {

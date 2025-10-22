@@ -38,7 +38,6 @@ class TestKnowledgeAPIIntegration:
         ]
 
         # Set up mock table/from chain
-        mock_table = MagicMock()
         mock_from = MagicMock()
 
         # Mock the from_ method to return our mock_from object
@@ -198,7 +197,7 @@ class TestKnowledgeAPIIntegration:
 
         response = client.get("/api/knowledge-items/summary")
         assert response.status_code == 200
-        summary_data = response.json()
+        response.json()
 
         # Step 2: Get first page of chunks
         query_state["type"] = "chunks"
@@ -226,9 +225,6 @@ class TestKnowledgeAPIIntegration:
         """Test that parallel requests to different endpoints work correctly."""
         # Reset mock to ensure clean state
         mock_supabase_client.reset_mock()
-
-        # Setup mocks for different endpoints
-        mock_execute = MagicMock()
 
         # Track which query we're on
         query_counter = {"count": 0}

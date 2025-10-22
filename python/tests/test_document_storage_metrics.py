@@ -46,7 +46,7 @@ class TestDocumentStorageMetrics:
                     {"url": "https://example.com/page5", "markdown": "Content 5"},
                 ]
 
-                result = await doc_storage.process_and_store_documents(
+                await doc_storage.process_and_store_documents(
                     crawl_results=crawl_results,
                     request={},
                     crawl_type="test",
@@ -93,7 +93,7 @@ class TestDocumentStorageMetrics:
                     {"url": "https://example.com/page3", "markdown": ""},
                 ]
 
-                result = await doc_storage.process_and_store_documents(
+                await doc_storage.process_and_store_documents(
                     crawl_results=crawl_results,
                     request={},
                     crawl_type="test",
@@ -138,7 +138,7 @@ class TestDocumentStorageMetrics:
                     {"url": "https://example.com/page", "markdown": "Long content here..."},
                 ]
 
-                result = await doc_storage.process_and_store_documents(
+                await doc_storage.process_and_store_documents(
                     crawl_results=crawl_results,
                     request={},
                     crawl_type="test",
@@ -164,9 +164,6 @@ class TestDocumentStorageMetrics:
         """Test that processed_docs count is accurate."""
         mock_supabase = Mock()
         doc_storage = DocumentStorageOperations(mock_supabase)
-
-        # Track which documents are chunked
-        chunked_urls = []
 
         def mock_chunk(text, chunk_size):
             if text:

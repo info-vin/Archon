@@ -39,14 +39,14 @@ logger = get_logger(__name__)
 def _preserve_code_blocks_across_pages(text: str) -> str:
     """
     Fix code blocks that were split across PDF page boundaries.
-    
+
     PDFs often break markdown code blocks with page headers like:
     ```python
     def hello():
     --- Page 2 ---
         return "world"
     ```
-    
+
     This function rejoins split code blocks by removing page separators
     that appear within code blocks.
     """
@@ -65,7 +65,6 @@ def _preserve_code_blocks_across_pages(text: str) -> str:
         # Replace each match by removing the page separator
         for match in reversed(matches):  # Reverse to maintain positions
             before_page_break = match.group(1)
-            page_separator = match.group(2)
             after_page_break = match.group(3)
 
             # Rejoin the code block without the page separator
@@ -84,7 +83,6 @@ def _clean_html_to_text(html_content: str) -> str:
 
     # First preserve code blocks with their content before general cleaning
     # This ensures code blocks remain intact for extraction
-    code_blocks = []
 
     # Find and temporarily replace code blocks to preserve them
     code_patterns = [
@@ -98,7 +96,7 @@ def _clean_html_to_text(html_content: str) -> str:
 
     for pattern in code_patterns:
         matches = list(re.finditer(pattern, processed_html, re.DOTALL | re.IGNORECASE))
-        for i, match in enumerate(reversed(matches)):  # Reverse to maintain positions
+        for _, match in enumerate(reversed(matches)):  # Reverse to maintain positions
             # Extract code content and clean HTML entities
             code_content = match.group(1)
             # Clean HTML entities and span tags from code

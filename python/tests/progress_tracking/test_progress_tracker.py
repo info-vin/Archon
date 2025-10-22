@@ -25,7 +25,7 @@ class TestProgressTracker:
     def test_get_progress(self):
         """Test getting progress by ID"""
         progress_id = "test-456"
-        tracker = ProgressTracker(progress_id, operation_type="upload")
+        ProgressTracker(progress_id, operation_type="upload")
 
         # Should be able to get progress by ID
         retrieved = ProgressTracker.get_progress(progress_id)
@@ -209,8 +209,8 @@ class TestProgressTracker:
 
     def test_multiple_trackers(self):
         """Test multiple progress trackers don't interfere"""
-        tracker1 = ProgressTracker("tracker-1", operation_type="crawl")
-        tracker2 = ProgressTracker("tracker-2", operation_type="upload")
+        ProgressTracker("tracker-1", operation_type="crawl")
+        ProgressTracker("tracker-2", operation_type="upload")
 
         # Both should exist independently
         assert ProgressTracker.get_progress("tracker-1") is not None

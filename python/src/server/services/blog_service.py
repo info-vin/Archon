@@ -16,6 +16,7 @@ class BlogService:
     async def list_posts(self) -> tuple[bool, dict[str, Any]]:
         """Retrieve a list of all blog posts."""
         try:
+            response = self.supabase.table("blog_posts").select("*").execute()
             if response.data is None: # type: ignore
                 return False, {"error": "Failed to fetch blog posts."}
             return True, {"posts": response.data}

@@ -62,7 +62,7 @@ class TestCodeExtractionSourceId:
         correct_source_id = "393224e227ba92eb"
 
         # Call the method with the correct source_id
-        result = await code_service.extract_and_store_code_examples(
+        await code_service.extract_and_store_code_examples(
             crawl_results,
             url_to_full_document,
             correct_source_id,
@@ -131,7 +131,6 @@ class TestCodeExtractionSourceId:
         # Create a mock that will track what source_id is used
         source_ids_seen = []
 
-        original_extract = code_service._extract_code_blocks_from_documents
         async def track_source_id(crawl_results, source_id, progress_callback=None, start=0, end=100, cancellation_check=None):
             source_ids_seen.append(source_id)
             return []  # Return empty list to skip further processing
