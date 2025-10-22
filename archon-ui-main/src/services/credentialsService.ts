@@ -125,8 +125,12 @@ class CredentialsService {
     // The API returns {credentials: {...}} where credentials is a dict
     // Convert to array format expected by frontend
     if (result.credentials && typeof result.credentials === "object") {
+      interface CredentialValue {
+        is_encrypted?: boolean;
+        description?: string;
+      }
       return Object.entries(result.credentials).map(
-        ([key, value]: [string, any]) => {
+        ([key, value]: [string, CredentialValue]) => {
           if (value && typeof value === "object" && value.is_encrypted) {
             return {
               key,
@@ -224,6 +228,7 @@ class CredentialsService {
     // Map credentials to settings
     [...ragCredentials, ...apiKeysCredentials].forEach((cred) => {
       if (cred.key in settings) {
+        const key = cred.key as keyof RagSettings;
         // String fields
         if (
           [
@@ -236,9 +241,9 @@ class CredentialsService {
             "EMBEDDING_PROVIDER",
             "EMBEDDING_MODEL",
             "CRAWL_WAIT_STRATEGY",
-          ].includes(cred.key)
+          ].includes(key)
         ) {
-          (settings as any)[cred.key] = cred.value || "";
+          (settings as any)[key] = cred.value || "";
         }
         // Number fields
         else if (
@@ -254,18 +259,18 @@ class CredentialsService {
             "DISPATCHER_CHECK_INTERVAL",
             "CODE_EXTRACTION_BATCH_SIZE",
             "CODE_SUMMARY_MAX_WORKERS",
-          ].includes(cred.key)
+          ].includes(key)
         ) {
-          (settings as any)[cred.key] =
-            parseInt(cred.value || "0", 10) || (settings as any)[cred.key];
+          (settings as any)[key] =
+            parseInt(cred.value || "0", 10) || (settings as any)[key];
         }
         // Float fields
-        else if (cred.key === "CRAWL_DELAY_BEFORE_HTML") {
-          settings[cred.key] = parseFloat(cred.value || "0.5") || 0.5;
+        else if (key === "CRAWL_DELAY_BEFORE_HTML") {
+          settings[key] = parseFloat(cred.value || "0.5") || 0.5;
         }
         // Boolean fields
         else {
-          (settings as any)[cred.key] = cred.value === "true";
+          (settings as any)[key] = cred.value === "true";
         }
       }
     });
@@ -441,7 +446,7 @@ class CredentialsService {
         const parts = cred.key.split('_');
         if (parts.length >= 3 && parts[0] === 'ollama' && parts[1] === 'instance') {
           const instanceId = parts[2];
-          const field = parts.slice(3).join('_');
+          const field = parts.slice(3).join('_') as keyof OllamaInstance;
           
           if (!instanceMap[instanceId]) {
             instanceMap[instanceId] = { id: instanceId };
@@ -494,7 +499,7 @@ class CredentialsService {
       }
       
       // Add new instance credentials
-      const promises: Promise<any>[] = [];
+      const promises: Promise<Credential>[] = [];
       
       instances.forEach(instance => {
         const fields: Record<string, any> = {

@@ -106,16 +106,16 @@ interface ModelCardProps {
 
 const ModelCard: React.FC<ModelCardProps> = ({ model, isSelected, onSelect }) => {
   // DEBUG: Log model data when rendering each card
-  console.log(`🎨 DEBUG: Rendering card for ${model.name}:`, {
-    context_info: model.context_info,
-    context_window: model.context_window,
-    max_context_length: model.max_context_length,
-    base_context_length: model.base_context_length,
-    custom_context_length: model.custom_context_length,
-    architecture: model.architecture,
-    parent_model: model.parent_model,
-    capabilities: model.capabilities
-  });
+  // console.log(`🎨 DEBUG: Rendering card for ${model.name}:`, {
+  //   context_info: model.context_info,
+  //   context_window: model.context_window,
+  //   max_context_length: model.max_context_length,
+  //   base_context_length: model.base_context_length,
+  //   custom_context_length: model.custom_context_length,
+  //   architecture: model.architecture,
+  //   parent_model: model.parent_model,
+  //   capabilities: model.capabilities
+  // });
 
   const getCardBorderColor = () => {
     switch (model.archon_compatibility) {
@@ -369,29 +369,29 @@ export const OllamaModelSelectionModal: React.FC<OllamaModelSelectionModalProps>
 
   // Filter and sort models
   const filteredModels = useMemo(() => {
-    console.log('🚨 FILTERING DEBUG: Starting model filtering', {
-      modelsCount: models.length,
-      models: models.map(m => ({ 
-        name: m.name, 
-        host: m.host, 
-        model_type: m.model_type, 
-        archon_compatibility: m.archon_compatibility,
-        instance_url: m.instance_url
-      })),
-      selectedInstanceUrl,
-      modelType,
-      searchTerm,
-      compatibilityFilter,
-      timestamp: new Date().toISOString()
-    });
+    // console.log('🚨 FILTERING DEBUG: Starting model filtering', {
+    //   modelsCount: models.length,
+    //   models: models.map(m => ({
+    //     name: m.name,
+    //     host: m.host,
+    //     model_type: m.model_type,
+    //     archon_compatibility: m.archon_compatibility,
+    //     instance_url: m.instance_url
+    //   })),
+    //   selectedInstanceUrl,
+    //   modelType,
+    //   searchTerm,
+    //   compatibilityFilter,
+    //   timestamp: new Date().toISOString()
+    // });
     
-    console.log('🚨 HOST COMPARISON DEBUG:', {
-      selectedInstanceUrl,
-      modelHosts: models.map(m => m.host),
-      exactMatches: models.filter(m => m.host === selectedInstanceUrl).length
-    });
+    // console.log('🚨 HOST COMPARISON DEBUG:', {
+    //   selectedInstanceUrl,
+    //   modelHosts: models.map(m => m.host),
+    //   exactMatches: models.filter(m => m.host === selectedInstanceUrl).length
+    // });
     
-    let filtered = models.filter(model => {
+    const filtered = models.filter(model => {
       // Filter by selected host
       if (selectedInstanceUrl && model.host !== selectedInstanceUrl) {
         return false;
@@ -427,10 +427,11 @@ export const OllamaModelSelectionModal: React.FC<OllamaModelSelectionModalProps>
 
       // Secondary sort: User-selected sort option within same support level
       switch (sortBy) {
-        case 'context':
+        case 'context': {
           const contextDiff = (b.context_length || 0) - (a.context_length || 0);
           if (contextDiff !== 0) return contextDiff;
           break;
+        }
         case 'performance':
           // Performance sorting removed - will be implemented via external data sources
           // For now, fall through to name sorting
@@ -444,12 +445,12 @@ export const OllamaModelSelectionModal: React.FC<OllamaModelSelectionModalProps>
       return a.name.localeCompare(b.name);
     });
 
-    console.log('🚨 FILTERING DEBUG: Filtering complete', {
-      originalCount: models.length,
-      filteredCount: filtered.length,
-      filtered: filtered.map(m => ({ name: m.name, host: m.host, model_type: m.model_type })),
-      timestamp: new Date().toISOString()
-    });
+    // console.log('🚨 FILTERING DEBUG: Filtering complete', {
+    //   originalCount: models.length,
+    //   filteredCount: filtered.length,
+    //   filtered: filtered.map(m => ({ name: m.name, host: m.host, model_type: m.model_type })),
+    //   timestamp: new Date().toISOString()
+    // });
     
     return filtered;
   }, [models, searchTerm, compatibilityFilter, sortBy, modelType, selectedInstanceUrl]);
@@ -490,7 +491,7 @@ export const OllamaModelSelectionModal: React.FC<OllamaModelSelectionModalProps>
       const cacheKey = `ollama_models_${selectedInstanceUrl}_${modelType}`;
       
       if (forceRefresh) {
-        console.log(`🔥 Force refresh: Clearing cache for ${cacheKey}`);
+        // console.log(`🔥 Force refresh: Clearing cache for ${cacheKey}`);
         sessionStorage.removeItem(cacheKey);
       }
       
@@ -507,13 +508,13 @@ export const OllamaModelSelectionModal: React.FC<OllamaModelSelectionModalProps>
           setLoadedFromCache(true);
           setCacheTimestamp(new Date(parsed.timestamp).toLocaleTimeString());
           setLoading(false);
-          console.log(`✅ Loaded ${parsed.models.length} ${modelType} models from cache (age: ${Math.round(age/1000)}s)`);
+          // console.log(`✅ Loaded ${parsed.models.length} ${modelType} models from cache (age: ${Math.round(age/1000)}s)`);
           return;
         }
       }
       
       // Cache miss or expired - fetch from instance
-      console.log(`🔄 Fetching fresh ${modelType} models for ${selectedInstanceUrl}`);
+      // console.log(`🔄 Fetching fresh ${modelType} models for ${selectedInstanceUrl}`);
       const instanceUrl = instances.find(i => i.url.replace('/v1', '') === selectedInstanceUrl)?.url || selectedInstanceUrl + '/v1';
       
       // Use the dynamic discovery API with fetch_details to get comprehensive data
@@ -582,15 +583,15 @@ export const OllamaModelSelectionModal: React.FC<OllamaModelSelectionModalProps>
           data.chat_models.forEach((model: any) => {
             const compatibility = getArchonCompatibility(model, 'chat');
             // DEBUG: Log raw model data from API
-            console.log(`🔍 DEBUG: Raw model data for ${model.name}:`, {
-              context_window: model.context_window,
-              custom_context_length: model.custom_context_length,
-              base_context_length: model.base_context_length,
-              max_context_length: model.max_context_length,
-              architecture: model.architecture,
-              parent_model: model.parent_model,
-              capabilities: model.capabilities
-            });
+            // console.log(`🔍 DEBUG: Raw model data for ${model.name}:`, {
+            //   context_window: model.context_window,
+            //   custom_context_length: model.custom_context_length,
+            //   base_context_length: model.base_context_length,
+            //   max_context_length: model.max_context_length,
+            //   architecture: model.architecture,
+            //   parent_model: model.parent_model,
+            //   capabilities: model.capabilities
+            // });
 
             // Create context_info object with the 3 comprehensive context data points
             const context_info: ContextInfo = {
@@ -600,7 +601,7 @@ export const OllamaModelSelectionModal: React.FC<OllamaModelSelectionModalProps>
             };
 
             // DEBUG: Log context_info object creation
-            console.log(`📏 DEBUG: Context info for ${model.name}:`, context_info);
+            // console.log(`📏 DEBUG: Context info for ${model.name}:`, context_info);
 
             allModels.push({
               name: model.name,
@@ -634,13 +635,13 @@ export const OllamaModelSelectionModal: React.FC<OllamaModelSelectionModalProps>
             const compatibility = getArchonCompatibility(model, 'embedding');
             
             // DEBUG: Log raw embedding model data from API
-            console.log(`🔍 DEBUG: Raw embedding model data for ${model.name}:`, {
-              context_window: model.context_window,
-              custom_context_length: model.custom_context_length,
-              base_context_length: model.base_context_length,
-              max_context_length: model.max_context_length,
-              embedding_dimensions: model.embedding_dimensions
-            });
+            // console.log(`🔍 DEBUG: Raw embedding model data for ${model.name}:`, {
+            //   context_window: model.context_window,
+            //   custom_context_length: model.custom_context_length,
+            //   base_context_length: model.base_context_length,
+            //   max_context_length: model.max_context_length,
+            //   embedding_dimensions: model.embedding_dimensions
+            // });
 
             // Create context_info object for embedding models if context data available
             const context_info: ContextInfo = {
@@ -650,7 +651,7 @@ export const OllamaModelSelectionModal: React.FC<OllamaModelSelectionModalProps>
             };
 
             // DEBUG: Log context_info object creation
-            console.log(`📏 DEBUG: Embedding context info for ${model.name}:`, context_info);
+            // console.log(`📏 DEBUG: Embedding context info for ${model.name}:`, context_info);
             
             allModels.push({
               name: model.name,
@@ -680,7 +681,7 @@ export const OllamaModelSelectionModal: React.FC<OllamaModelSelectionModalProps>
         }
         
         // DEBUG: Log final allModels array to see what gets set
-        console.log(`🚀 DEBUG: Final allModels array (${allModels.length} models):`, allModels);
+        // console.log(`🚀 DEBUG: Final allModels array (${allModels.length} models):`, allModels);
         
         setModels(allModels);
         setLoadedFromCache(false);
@@ -692,7 +693,7 @@ export const OllamaModelSelectionModal: React.FC<OllamaModelSelectionModalProps>
           timestamp: Date.now()
         }));
         
-        console.log(`✅ Fetched and cached ${allModels.length} models`);
+        // console.log(`✅ Fetched and cached ${allModels.length} models`);
       } else {
         // Fallback to stored models endpoint
         const response = await fetch('/api/ollama/models/stored');
@@ -703,7 +704,7 @@ export const OllamaModelSelectionModal: React.FC<OllamaModelSelectionModalProps>
         }
       }
     } catch (error) {
-      console.error('Failed to load models:', error);
+      // console.error('Failed to load models:', error);
       showToast('Failed to load models', 'error');
     } finally {
       setLoading(false);
@@ -712,10 +713,10 @@ export const OllamaModelSelectionModal: React.FC<OllamaModelSelectionModalProps>
 
   // Refresh models from instances
   const refreshModels = async () => {
-    console.log('🚨 MODAL DEBUG: refreshModels called - OllamaModelSelectionModal', {
-      timestamp: new Date().toISOString(),
-      instancesCount: instances.length
-    });
+    // console.log('🚨 MODAL DEBUG: refreshModels called - OllamaModelSelectionModal', {
+    //   timestamp: new Date().toISOString(),
+    //   instancesCount: instances.length
+    // });
     
     // Clear cache for this instance and model type
     const cacheKey = `ollama_models_${selectedInstanceUrl}_${modelType}`;
@@ -730,12 +731,12 @@ export const OllamaModelSelectionModal: React.FC<OllamaModelSelectionModalProps>
         ? [instances.find(i => i.url.replace('/v1', '') === selectedInstanceUrl)?.url || selectedInstanceUrl + '/v1'] 
         : instances.map(instance => instance.url);
       
-      console.log('🚨 API CALL DEBUG:', {
-        selectedInstanceUrl,
-        allInstances: instances,
-        instanceUrlsToQuery: instanceUrls,
-        timestamp: new Date().toISOString()
-      });
+      // console.log('🚨 API CALL DEBUG:', {
+      //   selectedInstanceUrl,
+      //   allInstances: instances,
+      //   instanceUrlsToQuery: instanceUrls,
+      //   timestamp: new Date().toISOString()
+      // });
       
       // Use the correct API endpoint that provides comprehensive model data
       const instanceUrlParams = instanceUrls.map(url => `instance_urls=${encodeURIComponent(url)}`).join('&');
@@ -749,7 +750,7 @@ export const OllamaModelSelectionModal: React.FC<OllamaModelSelectionModalProps>
 
       if (response.ok) {
         const data = await response.json();
-        console.log('🚨 MODAL DEBUG: POST discover-with-details response:', data);
+        // console.log('🚨 MODAL DEBUG: POST discover-with-details response:', data);
         
         // Functions to determine real compatibility and performance based on model characteristics
         const getArchonCompatibility = (model: any, modelType: string): 'full' | 'partial' | 'limited' => {
@@ -809,15 +810,15 @@ export const OllamaModelSelectionModal: React.FC<OllamaModelSelectionModalProps>
             const compatibility = getArchonCompatibility(model, 'chat');
             
             // DEBUG: Log raw model data from API
-            console.log(`🔍 DEBUG [refresh]: Raw model data for ${model.name}:`, {
-              context_window: model.context_window,
-              custom_context_length: model.custom_context_length,
-              base_context_length: model.base_context_length,
-              max_context_length: model.max_context_length,
-              architecture: model.architecture,
-              parent_model: model.parent_model,
-              capabilities: model.capabilities
-            });
+            // console.log(`🔍 DEBUG [refresh]: Raw model data for ${model.name}:`, {
+            //   context_window: model.context_window,
+            //   custom_context_length: model.custom_context_length,
+            //   base_context_length: model.base_context_length,
+            //   max_context_length: model.max_context_length,
+            //   architecture: model.architecture,
+            //   parent_model: model.parent_model,
+            //   capabilities: model.capabilities
+            // });
 
             // Create context_info object with the 3 comprehensive context data points
             const context_info: ContextInfo = {
@@ -827,7 +828,7 @@ export const OllamaModelSelectionModal: React.FC<OllamaModelSelectionModalProps>
             };
 
             // DEBUG: Log context_info object creation
-            console.log(`📏 DEBUG [refresh]: Context info for ${model.name}:`, context_info);
+            // console.log(`📏 DEBUG [refresh]: Context info for ${model.name}:`, context_info);
             
             return {
               ...model, 
@@ -857,13 +858,13 @@ export const OllamaModelSelectionModal: React.FC<OllamaModelSelectionModalProps>
             const compatibility = getArchonCompatibility(model, 'embedding');
             
             // DEBUG: Log raw embedding model data from API
-            console.log(`🔍 DEBUG [refresh]: Raw embedding model data for ${model.name}:`, {
-              context_window: model.context_window,
-              custom_context_length: model.custom_context_length,
-              base_context_length: model.base_context_length,
-              max_context_length: model.max_context_length,
-              embedding_dimensions: model.embedding_dimensions
-            });
+            // console.log(`🔍 DEBUG [refresh]: Raw embedding model data for ${model.name}:`, {
+            //   context_window: model.context_window,
+            //   custom_context_length: model.custom_context_length,
+            //   base_context_length: model.base_context_length,
+            //   max_context_length: model.max_context_length,
+            //   embedding_dimensions: model.embedding_dimensions
+            // });
 
             // Create context_info object for embedding models if context data available
             const context_info: ContextInfo = {
@@ -873,7 +874,7 @@ export const OllamaModelSelectionModal: React.FC<OllamaModelSelectionModalProps>
             };
 
             // DEBUG: Log context_info object creation
-            console.log(`📏 DEBUG [refresh]: Embedding context info for ${model.name}:`, context_info);
+            // console.log(`📏 DEBUG [refresh]: Embedding context info for ${model.name}:`, context_info);
             
             return {
               ...model, 
@@ -903,8 +904,8 @@ export const OllamaModelSelectionModal: React.FC<OllamaModelSelectionModalProps>
         ];
         
         // DEBUG: Log final allModels array to see what gets set
-        console.log(`🚀 DEBUG [refresh]: Final allModels array (${allModels.length} models):`, allModels);
-        console.log('🚨 MODAL DEBUG: Setting models:', allModels);
+        // console.log(`🚀 DEBUG [refresh]: Final allModels array (${allModels.length} models):`, allModels);
+        // console.log('🚨 MODAL DEBUG: Setting models:', allModels);
         setModels(allModels);
         setLoadedFromCache(false);
         setCacheTimestamp(null);
@@ -922,7 +923,7 @@ export const OllamaModelSelectionModal: React.FC<OllamaModelSelectionModalProps>
         throw new Error('Failed to refresh models');
       }
     } catch (error) {
-      console.error('Failed to refresh models:', error);
+      // console.error('Failed to refresh models:', error);
       showToast('Failed to refresh models', 'error');
     } finally {
       setRefreshing(false);

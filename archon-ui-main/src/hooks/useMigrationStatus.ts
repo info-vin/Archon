@@ -13,7 +13,7 @@ export const useMigrationStatus = (): MigrationStatus => {
   });
 
   useEffect(() => {
-    const checkMigrationStatus = async () => {
+    const checkMigrationStatus = async (): Promise<void> => {
       try {
         const response = await fetch('/api/health');
         const healthData = await response.json();

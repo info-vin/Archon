@@ -56,7 +56,7 @@ const saveProviderModels = (providerModels: ProviderModelMap): void => {
   try {
     localStorage.setItem(PROVIDER_MODELS_KEY, JSON.stringify(providerModels));
   } catch (error) {
-    console.error('Failed to save provider models:', error);
+    // console.error('Failed to save provider models:', error);
   }
 };
 
@@ -67,7 +67,7 @@ const loadProviderModels = (): ProviderModelMap => {
       return JSON.parse(saved);
     }
   } catch (error) {
-    console.error('Failed to load provider models:', error);
+    // console.error('Failed to load provider models:', error);
   }
 
   // Return defaults for all providers if nothing saved
@@ -275,7 +275,7 @@ export const RAGSettings = ({
         return updated;
       });
     }
-  }, [ragSettings.MODEL_CHOICE, chatProvider]);
+  }, [ragSettings.MODEL_CHOICE, chatProvider, ragSettings]);
 
   useEffect(() => {
     // Update embedding provider models when embedding model changes
@@ -292,7 +292,7 @@ export const RAGSettings = ({
         return updated;
       });
     }
-  }, [ragSettings.EMBEDDING_MODEL, embeddingProvider]);
+  }, [ragSettings.EMBEDDING_MODEL, embeddingProvider, ragSettings]);
 
   const hasLoadedCredentialsRef = useRef(false);
 
@@ -309,14 +309,14 @@ export const RAGSettings = ({
         credentials[key] = !!result?.has_value;
       }
 
-      console.log(
-        '🔑 Updated API credential status snapshot:',
-        Object.keys(credentials),
-      );
+      // console.log(
+      //   '🔑 Updated API credential status snapshot:',
+      //   Object.keys(credentials),
+      // );
       setApiCredentials(credentials);
       hasLoadedCredentialsRef.current = true;
     } catch (error) {
-      console.error('Failed to load API credentials for status checking:', error);
+      // console.error('Failed to load API credentials for status checking:', error);
     }
   }, []);
 
@@ -396,13 +396,13 @@ export const RAGSettings = ({
     if (ragSettings.LLM_PROVIDER && ragSettings.LLM_PROVIDER !== chatProvider) {
       setChatProvider(ragSettings.LLM_PROVIDER as ProviderKey);
     }
-  }, [ragSettings.LLM_PROVIDER]); // Remove chatProvider dependency to avoid loops
+  }, [ragSettings.LLM_PROVIDER, chatProvider]);
 
   useEffect(() => {
     if (ragSettings.EMBEDDING_PROVIDER && ragSettings.EMBEDDING_PROVIDER !== embeddingProvider) {
       setEmbeddingProvider(ragSettings.EMBEDDING_PROVIDER as ProviderKey);
     }
-  }, [ragSettings.EMBEDDING_PROVIDER]); // Remove embeddingProvider dependency to avoid loops
+  }, [ragSettings.EMBEDDING_PROVIDER, embeddingProvider]);
 
   useEffect(() => {
     setOllamaManualConfirmed(false);
@@ -423,7 +423,7 @@ export const RAGSettings = ({
       }));
     }
     updateChatRagSettingsRef.current = true;
-  }, [chatProvider]);
+  }, [chatProvider, ragSettings.LLM_PROVIDER, setRagSettings]);
 
   useEffect(() => {
     // Only update if this is a user‐initiated change, not a sync from ragSettings
@@ -434,7 +434,7 @@ export const RAGSettings = ({
       }));
     }
     updateEmbeddingRagSettingsRef.current = true;
-  }, [embeddingProvider]);
+  }, [embeddingProvider, ragSettings.EMBEDDING_PROVIDER, setRagSettings]);
 
 
   // Status tracking
@@ -486,7 +486,7 @@ export const RAGSettings = ({
 
       return isConnected;
     } catch (error) {
-      console.error(`Error testing ${provider} connection:`, error);
+      // console.error(`Error testing ${provider} connection:`, error);
       setProviderConnectionStatus(prev => ({
         ...prev,
         [provider]: { connected: false, checking: false, lastChecked: new Date() }
@@ -508,7 +508,7 @@ export const RAGSettings = ({
         const timeSinceLastCheck = lastChecked ? now.getTime() - lastChecked.getTime() : Infinity;
 
         if (timeSinceLastCheck > 30000) { // 30 seconds
-          console.log(`🔄 Testing ${provider} connection...`);
+          // console.log(`🔄 Testing ${provider} connection...`);
           await testProviderConnection(provider);
         }
       }
@@ -519,7 +519,7 @@ export const RAGSettings = ({
     const interval = setInterval(testConnections, 60000);
 
     return () => clearInterval(interval);
-  }, [apiCredentials, testProviderConnection]); // Test when credentials change
+  }, [apiCredentials, testProviderConnection, providerConnectionStatus]); // Test when credentials change
 
   useEffect(() => {
     const handleCredentialUpdate = (event: Event) => {
@@ -597,10 +597,10 @@ export const RAGSettings = ({
         if (instanceStatus?.is_healthy) {
           const responseTime = Math.round(instanceStatus.response_time_ms || (Date.now() - startTime));
           setStatus({ online: true, responseTime, checking: false });
-          console.log(`✅ ${url} online: ${responseTime}ms (${instanceStatus.models_available || 0} models)`);
+          // console.log(`✅ ${url} online: ${responseTime}ms (${instanceStatus.models_available || 0} models)`);
         } else {
           setStatus({ online: false, responseTime: null, checking: false });
-          console.log(`❌ ${url} unhealthy: ${instanceStatus?.error_message || 'No status available'}`);
+          // console.log(`❌ ${url} unhealthy: ${instanceStatus?.error_message || 'No status available'}`);
         }
       } else {
         throw new Error(`Backend health check failed: HTTP ${response.status}`);
@@ -619,12 +619,12 @@ export const RAGSettings = ({
         errorMessage = error.message || 'Unknown error';
       }
       
-      console.log(`❌ ${url} failed: ${errorMessage} (${responseTime}ms)`);
+      // console.log(`❌ ${url} failed: ${errorMessage} (${responseTime}ms)`);
     }
   };
 
   // Manual test function with user feedback using backend proxy
-const manualTestConnection = async (
+const manualTestConnection = useCallback(async (
     url: string,
     setStatus: React.Dispatch<React.SetStateAction<{ online: boolean; responseTime: number | null; checking: boolean }>>,
     instanceName: string,
@@ -677,7 +677,7 @@ const manualTestConnection = async (
 
           // Scenario 2: Manual "Test Connection" button - refresh Ollama metrics if Ollama provider is selected
           if (ragSettings.LLM_PROVIDER === 'ollama' || embeddingProvider === 'ollama' || context === 'embedding') {
-            console.log('🔄 Fetching Ollama metrics - Test Connection button clicked');
+            // console.log('🔄 Fetching Ollama metrics - Test Connection button clicked');
             fetchOllamaMetrics();
           }
 
@@ -709,11 +709,11 @@ const manualTestConnection = async (
 
       return false;
     }
-  };
+  }, [embeddingProvider, fetchOllamaMetrics, ollamaMetrics.embeddingInstanceModels, ollamaMetrics.llmInstanceModels, ragSettings.LLM_PROVIDER, showToast]);
 
   // Function to handle LLM instance deletion
   const handleDeleteLLMInstance = () => {
-    if (window.confirm('Are you sure you want to delete the current LLM instance configuration?')) {
+    // if (window.confirm('Are you sure you want to delete the current LLM instance configuration?')) {
       // Reset LLM instance configuration
       setLLMInstanceConfig({
         name: '',
@@ -730,12 +730,12 @@ const manualTestConnection = async (
       setLLMStatus({ online: false, responseTime: null, checking: false });
       
       showToast('LLM instance configuration deleted', 'success');
-    }
+    // }
   };
 
   // Function to handle Embedding instance deletion
   const handleDeleteEmbeddingInstance = () => {
-    if (window.confirm('Are you sure you want to delete the current Embedding instance configuration?')) {
+    // if (window.confirm('Are you sure you want to delete the current Embedding instance configuration?')) {
       // Reset Embedding instance configuration
       setEmbeddingInstanceConfig({
         name: '',
@@ -752,11 +752,11 @@ const manualTestConnection = async (
       setEmbeddingStatus({ online: false, responseTime: null, checking: false });
       
       showToast('Embedding instance configuration deleted', 'success');
-    }
+    // }
   };
 
   // Function to fetch Ollama metrics
-  const fetchOllamaMetrics = async () => {
+  const fetchOllamaMetrics = useCallback(async () => {
     try {
       setOllamaMetrics(prev => ({ ...prev, loading: true }));
 
@@ -790,18 +790,18 @@ const manualTestConnection = async (
         const allEmbeddingModels = modelsData.embedding_models || [];
         
         // Count models for LLM instance
-        const llmChatModels = allChatModels.filter((model: any) => 
+        const llmChatModels = allChatModels.filter((model: { instance_url: string }) =>
           normalizeBaseUrl(model.instance_url) === llmUrlBase
         );
-        const llmEmbeddingModels = allEmbeddingModels.filter((model: any) => 
+        const llmEmbeddingModels = allEmbeddingModels.filter((model: { instance_url: string }) =>
           normalizeBaseUrl(model.instance_url) === llmUrlBase
         );
 
         // Count models for Embedding instance
-        const embChatModels = allChatModels.filter((model: any) => 
+        const embChatModels = allChatModels.filter((model: { instance_url: string }) =>
           normalizeBaseUrl(model.instance_url) === embUrlBase
         );
-        const embEmbeddingModels = allEmbeddingModels.filter((model: any) => 
+        const embEmbeddingModels = allEmbeddingModels.filter((model: { instance_url: string }) =>
           normalizeBaseUrl(model.instance_url) === embUrlBase
         );
         
@@ -828,14 +828,14 @@ const manualTestConnection = async (
           }
         });
       } else {
-        console.error('Failed to fetch models:', modelsData);
+        // console.error('Failed to fetch models:', modelsData);
         setOllamaMetrics(prev => ({ ...prev, loading: false }));
       }
     } catch (error) {
-      console.error('Error fetching Ollama metrics:', error);
+      // console.error('Error fetching Ollama metrics:', error);
       setOllamaMetrics(prev => ({ ...prev, loading: false }));
     }
-  };
+  }, [embeddingInstanceConfig.url, llmInstanceConfig.url, llmStatus.online, embeddingStatus.online]);
 
   // Auto-check status when instances are configured or when Ollama is selected
   // Use refs to prevent infinite connection testing
@@ -910,10 +910,10 @@ const manualTestConnection = async (
 
     if ((current.provider === 'ollama' || current.embProvider === 'ollama') && meaningfulChange) {
       lastMetricsFetchRef.current = current;
-      console.log('🔄 Fetching Ollama metrics - state changed');
+      // console.log('🔄 Fetching Ollama metrics - state changed');
       fetchOllamaMetrics();
     }
-  }, [ragSettings.LLM_PROVIDER, embeddingProvider, llmStatus.online, embeddingStatus.online]);
+  }, [ragSettings.LLM_PROVIDER, embeddingProvider, llmStatus.online, embeddingStatus.online, llmInstanceConfig.url, embeddingInstanceConfig.url, fetchOllamaMetrics]);
 
   const hasApiCredential = (credentialKey: ProviderCredentialKey): boolean => {
     if (credentialKey in apiCredentials) {
@@ -930,7 +930,7 @@ const manualTestConnection = async (
   // Function to check if a provider is properly configured
   const getProviderStatus = (providerKey: string): 'configured' | 'missing' | 'partial' => {
     switch (providerKey) {
-      case 'openai':
+      case 'openai': {
         const hasOpenAIKey = hasApiCredential('OPENAI_API_KEY');
 
         // Only show configured if we have both API key AND confirmed connection
@@ -942,8 +942,8 @@ const manualTestConnection = async (
         if (!hasOpenAIKey) return 'missing';
         if (isChecking) return 'partial';
         return openAIConnected ? 'configured' : 'missing';
-        
-      case 'google':
+      }
+      case 'google': {
         const hasGoogleKey = hasApiCredential('GOOGLE_API_KEY');
         
         // Only show configured if we have both API key AND confirmed connection
@@ -953,7 +953,7 @@ const manualTestConnection = async (
         if (!hasGoogleKey) return 'missing';
         if (googleChecking) return 'partial';
         return googleConnected ? 'configured' : 'missing';
-        
+      }
       case 'ollama':
         {
           if (ollamaManualConfirmed || llmStatus.online || embeddingStatus.online) {
@@ -970,27 +970,30 @@ const manualTestConnection = async (
 
           return 'missing';
         }
-      case 'anthropic':
+      case 'anthropic': {
         const hasAnthropicKey = hasApiCredential('ANTHROPIC_API_KEY');
         const anthropicConnected = providerConnectionStatus['anthropic']?.connected || false;
         const anthropicChecking = providerConnectionStatus['anthropic']?.checking || false;
         if (!hasAnthropicKey) return 'missing';
         if (anthropicChecking) return 'partial';
         return anthropicConnected ? 'configured' : 'missing';
-      case 'grok':
+      }
+      case 'grok': {
         const hasGrokKey = hasApiCredential('GROK_API_KEY');
         const grokConnected = providerConnectionStatus['grok']?.connected || false;
         const grokChecking = providerConnectionStatus['grok']?.checking || false;
         if (!hasGrokKey) return 'missing';
         if (grokChecking) return 'partial';
         return grokConnected ? 'configured' : 'missing';
-      case 'openrouter':
+      }
+      case 'openrouter': {
         const hasOpenRouterKey = hasApiCredential('OPENROUTER_API_KEY');
         const openRouterConnected = providerConnectionStatus['openrouter']?.connected || false;
         const openRouterChecking = providerConnectionStatus['openrouter']?.checking || false;
         if (!hasOpenRouterKey) return 'missing';
         if (openRouterChecking) return 'partial';
         return openRouterConnected ? 'configured' : 'missing';
+      }
       default:
         return 'missing';
     }
@@ -1077,7 +1080,7 @@ const manualTestConnection = async (
         llmRetryTimeoutRef.current = null;
       }
     };
-  }, [chatProvider, ragSettings.LLM_BASE_URL, ragSettings.LLM_INSTANCE_NAME, llmInstanceConfig.url, llmInstanceConfig.name]);
+  }, [chatProvider, ragSettings.LLM_BASE_URL, ragSettings.LLM_INSTANCE_NAME, llmInstanceConfig.url, llmInstanceConfig.name, manualTestConnection]);
 
   useEffect(() => {
     if (embeddingProvider !== 'ollama') {
@@ -1135,20 +1138,20 @@ const manualTestConnection = async (
         embeddingRetryTimeoutRef.current = null;
       }
     };
-  }, [embeddingProvider, ragSettings.OLLAMA_EMBEDDING_URL, ragSettings.OLLAMA_EMBEDDING_INSTANCE_NAME, embeddingInstanceConfig.url, embeddingInstanceConfig.name]);
+  }, [embeddingProvider, ragSettings.OLLAMA_EMBEDDING_URL, ragSettings.OLLAMA_EMBEDDING_INSTANCE_NAME, embeddingInstanceConfig.url, embeddingInstanceConfig.name, manualTestConnection]);
 
   // Test Ollama connectivity when Settings page loads (scenario 4: page load)
   // This useEffect is placed after function definitions to ensure access to manualTestConnection
   useEffect(() => {
-    console.log('🔍 Page load check:', {
-      hasRunInitialTest: hasRunInitialTestRef.current,
-      provider: ragSettings.LLM_PROVIDER,
-      ragSettingsCount: Object.keys(ragSettings).length,
-      llmUrl: llmInstanceConfig.url,
-      llmName: llmInstanceConfig.name,
-      embUrl: embeddingInstanceConfig.url,
-      embName: embeddingInstanceConfig.name
-    });
+    // console.log('🔍 Page load check:', {
+    //   hasRunInitialTest: hasRunInitialTestRef.current,
+    //   provider: ragSettings.LLM_PROVIDER,
+    //   ragSettingsCount: Object.keys(ragSettings).length,
+    //   llmUrl: llmInstanceConfig.url,
+    //   llmName: llmInstanceConfig.name,
+    //   embUrl: embeddingInstanceConfig.url,
+    //   embName: embeddingInstanceConfig.name
+    // });
     
     // Only run once when data is properly loaded and not run before
     if (
@@ -1158,13 +1161,13 @@ const manualTestConnection = async (
     ) {
       
       hasRunInitialTestRef.current = true;
-      console.log('🔄 Settings page loaded with Ollama - Testing connectivity');
+      // console.log('🔄 Settings page loaded with Ollama - Testing connectivity');
 
       // Test LLM instance if a URL is available (either saved or default)
       if (llmInstanceConfig.url) {
         setTimeout(() => {
           const instanceName = llmInstanceConfig.name || 'LLM Instance';
-          console.log('🔍 Testing LLM instance on page load:', instanceName, llmInstanceConfig.url);
+          // console.log('🔍 Testing LLM instance on page load:', instanceName, llmInstanceConfig.url);
           manualTestConnection(
             llmInstanceConfig.url,
             setLLMStatus,
@@ -1178,7 +1181,7 @@ const manualTestConnection = async (
       else {
         setTimeout(() => {
           const defaultInstanceName = 'Local Ollama (Default)';
-          console.log('🔍 Testing default Ollama chat instance on page load:', DEFAULT_OLLAMA_URL);
+          // console.log('🔍 Testing default Ollama chat instance on page load:', DEFAULT_OLLAMA_URL);
           manualTestConnection(
             DEFAULT_OLLAMA_URL,
             setLLMStatus,
@@ -1194,7 +1197,7 @@ const manualTestConnection = async (
           embeddingInstanceConfig.url !== llmInstanceConfig.url) {
         setTimeout(() => {
           const instanceName = embeddingInstanceConfig.name || 'Embedding Instance';
-          console.log('🔍 Testing Embedding instance on page load:', instanceName, embeddingInstanceConfig.url);
+          // console.log('🔍 Testing Embedding instance on page load:', instanceName, embeddingInstanceConfig.url);
           manualTestConnection(
             embeddingInstanceConfig.url,
             setEmbeddingStatus,
@@ -1208,7 +1211,7 @@ const manualTestConnection = async (
       else if (embeddingProvider === 'ollama' && !embeddingInstanceConfig.url) {
         setTimeout(() => {
           const defaultEmbeddingName = 'Local Ollama (Default)';
-          console.log('🔍 Testing default Ollama embedding instance on page load:', DEFAULT_OLLAMA_URL);
+          // console.log('🔍 Testing default Ollama embedding instance on page load:', DEFAULT_OLLAMA_URL);
           manualTestConnection(
             DEFAULT_OLLAMA_URL,
             setEmbeddingStatus,
@@ -1221,7 +1224,7 @@ const manualTestConnection = async (
 
       // Fetch Ollama metrics after testing connections
       setTimeout(() => {
-        console.log('📊 Fetching Ollama metrics on page load');
+        // console.log('📊 Fetching Ollama metrics on page load');
         fetchOllamaMetrics();
       }, 2000);
     }
@@ -1481,7 +1484,7 @@ const manualTestConnection = async (
 
                   showToast('RAG settings saved successfully!', 'success');
                 } catch (err) {
-                  console.error('Failed to save RAG settings:', err);
+                  // console.error('Failed to save RAG settings:', err);
                   showToast('Failed to save settings', 'error');
                 } finally {
                   setSaving(false);
