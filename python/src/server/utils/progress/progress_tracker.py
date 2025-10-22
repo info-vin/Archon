@@ -148,11 +148,11 @@ class ProgressTracker:
         })
         # Keep only the last 200 log entries
         if len(self.state["logs"]) > 200:
-            self.state["logs"] = self.state["logs"][-200:]
+            self.state["logs"] = list(self.state["logs"][-200:])
 
         # Add any additional data (but don't allow overriding core fields)
         protected_fields = {"progress", "status", "log", "progress_id", "type", "start_time"}
-        for key, value in kwargs.items():
+        for key, value in dict(kwargs).items():
             if key not in protected_fields:
                 self.state[key] = value
 
