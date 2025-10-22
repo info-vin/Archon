@@ -65,7 +65,7 @@ def register_task_tools(mcp: FastMCP):
     ) -> str:
         """
         Find and search tasks (consolidated: list + search + get).
-        
+
         Args:
             query: Keyword search in title, description, feature (optional)
             task_id: Get specific task by ID (returns full details)
@@ -75,10 +75,10 @@ def register_task_tools(mcp: FastMCP):
             include_closed: Include done tasks in results
             page: Page number for pagination
             per_page: Items per page (default: 10)
-        
+
         Returns:
             JSON array of tasks or single task (optimized payloads for lists)
-        
+
         Examples:
             find_tasks() # All tasks
             find_tasks(query="auth") # Search for "auth"

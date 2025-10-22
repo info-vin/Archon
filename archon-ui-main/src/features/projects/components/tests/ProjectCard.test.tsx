@@ -68,23 +68,22 @@ describe("ProjectCard", () => {
 
     const card = container.firstChild;
     expect(card).toBeInTheDocument();
-    // Check for selected-specific classes
-    expect((card as HTMLElement)?.className || "").toContain("scale-[1.02]");
-    expect((card as HTMLElement)?.className || "").toContain("border-purple");
+    // The visual styles for selection are handled by SelectableCard, not ProjectCard directly.
+    // We can infer selection by checking for an element that *only* appears when selected.
+    const glowEffect = container.querySelector(".animate-\\[pulse_8s_ease-in-out_infinite\\]");
+    expect(glowEffect).toBeInTheDocument();
   });
 
   it("should apply pinned styles when project is pinned", () => {
     const pinnedProject = { ...mockProject, pinned: true };
 
-    const { container } = render(
+    render(
       <ProjectCard project={pinnedProject} isSelected={false} taskCounts={mockTaskCounts} {...mockHandlers} />,
     );
 
-    const card = container.firstChild;
-    expect(card).toBeInTheDocument();
-    // Check for pinned-specific classes
-    expect((card as HTMLElement)?.className || "").toContain("from-purple");
-    expect((card as HTMLElement)?.className || "").toContain("border-purple-500");
+    // The pinned state is indicated by the "DEFAULT" badge
+    const pinnedBadge = screen.getByText("DEFAULT");
+    expect(pinnedBadge).toBeInTheDocument();
   });
 
   it("should render aurora glow effect when selected", () => {
