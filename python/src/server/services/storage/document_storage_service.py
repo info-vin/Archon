@@ -202,7 +202,6 @@ async def add_documents_to_supabase(
                     successful_count = 0
 
                     for ctx_i in range(0, len(batch_contents), contextual_batch_size):
-                        # Check for cancellation before each contextual sub-batch
                         if cancellation_check:
                             cancellation_check()
 

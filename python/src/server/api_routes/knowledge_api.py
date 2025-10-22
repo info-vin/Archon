@@ -68,6 +68,9 @@ async def create_blog_post(
     current_user_role = x_user_role or "User"
     if not rbac_service.can_manage_content(current_user_role):
         raise HTTPException(status_code=403, detail="Forbidden: You do not have permission to create blog posts.")
+        raise HTTPException(
+            status_code=403, detail="Forbidden: You do not have permission to create blog posts."
+        )
 
     blog_service = BlogService()
     success, result = await blog_service.create_post(request.model_dump())
@@ -81,11 +84,15 @@ async def update_blog_post(
     request: UpdateBlogPostRequest,
     x_user_role: str | None = Header(None, alias="X-User-Role")
 ):
+async def update_blog_post(post_id: str, request: UpdateBlogPostRequest, x_user_role: str | None = Header(None, alias="X-User-Role")):
     """Update an existing blog post."""
     rbac_service = RBACService()
     current_user_role = x_user_role or "User"
     if not rbac_service.can_manage_content(current_user_role):
         raise HTTPException(status_code=403, detail="Forbidden: You do not have permission to update blog posts.")
+        raise HTTPException(
+            status_code=403, detail="Forbidden: You do not have permission to update blog posts."
+        )
 
     blog_service = BlogService()
     update_data = request.model_dump(exclude_unset=True)
@@ -99,11 +106,15 @@ async def delete_blog_post(
     post_id: str,
     x_user_role: str | None = Header(None, alias="X-User-Role")
 ):
+async def delete_blog_post(post_id: str, x_user_role: str | None = Header(None, alias="X-User-Role")):
     """Delete a blog post."""
     rbac_service = RBACService()
     current_user_role = x_user_role or "User"
     if not rbac_service.can_manage_content(current_user_role):
         raise HTTPException(status_code=403, detail="Forbidden: You do not have permission to delete blog posts.")
+        raise HTTPException(
+            status_code=403, detail="Forbidden: You do not have permission to delete blog posts."
+        )
 
     blog_service = BlogService()
     success, result = await blog_service.delete_post(post_id)
@@ -225,6 +236,7 @@ async def get_knowledge_sources():
 async def get_knowledge_items(
     page: int = 1, per_page: int = 20, knowledge_type: str | None = None, search: str | None = None
 ):
+async def get_knowledge_items(page: int = 1, per_page: int = 20, knowledge_type: str | None = None, search: str | None = None):
     """Get knowledge items with pagination and filtering."""
     try:
         # Use KnowledgeItemService
@@ -667,8 +679,10 @@ async def upload_document(
             # Validate tags is a list of strings
             if not isinstance(tag_list, list):
                 raise HTTPException(status_code=422, detail={"error": "tags must be a JSON array of strings"})
+                raise HTTPException(status_code=422, detail="tags must be a JSON array of strings")
             if not all(isinstance(tag, str) for tag in tag_list):
                 raise HTTPException(status_code=422, detail={"error": "tags must be a JSON array of strings"})
+                raise HTTPException(status_code=422, detail="tags must be a JSON array of strings")
         except json.JSONDecodeError as ex:
             raise HTTPException(status_code=422, detail={"error": f"Invalid tags JSON: {str(ex)}"}) from ex
 

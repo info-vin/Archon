@@ -15,6 +15,9 @@ class KnowledgeService:
             result = (
                 self.supabase.from_("archon_code_examples")
                 .select("id, source_id, content, summary, metadata")
+                .select(
+                    "id, source_id, content, summary, metadata"
+                )
                 .eq("source_id", source_id)
                 .execute()
             )
