@@ -332,15 +332,7 @@ class ProgressTracker:
         if current_file:
             log += f" - {current_file}"
 
-        await self.update(
-            status="code_extraction",
-            progress=progress_val,
-            log=log,
-            completed_summaries=completed_summaries,
-            total_summaries=total_summaries,
-            code_blocks_found=code_blocks_found,
-            current_file=current_file
-        )
+        await self.update(status="code_extraction", progress=progress_val, log=log, completed_summaries=completed_summaries, total_summaries=total_summaries, code_blocks_found=code_blocks_found, current_file=current_file)
 
     def _update_state(self):
         """Update progress state in memory storage."""
