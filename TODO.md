@@ -152,26 +152,38 @@ sequenceDiagram
     - **[X] 6.2**: 將這份包含新計畫的 `TODO.md` 提交。
     - **[X] 6.3**: 從 `feature` 分支複製 `GEMINI.md`，以保留完整的開發日誌。
 
-**[X] 7. 全系統驗證**
-    - **目標**: 在本地完整地驗證整合後的系統。
-    - **項目進度總結表**
+    - **[ ] 7.4: 修正架構違規並完成手動測試**
 
-| `TODO.md` 任務 | 狀態 | 解決方案與思考脈絡 |
-| :--- | :--- | :--- |
-| **7.1 (依賴安裝)** | ✅ **已完成** | `make install` 和 `make install-ui` 已在先前步驟中成功執行。 |
-| **7.2 (自動化測試)** | ✅ **已完成** | **單一事實**: `make test` 執行結果顯示所有後端與前端測試均 100% 通過（已知的跳過項目除外）。**結論**: 系統的自動化測試套件健康、可信。 |
-| **7.3 (程式碼品質)** | ✅ **已完成** | **單一事實**: `make lint` 執行結果顯示所有後端與前端專案的程式碼品質檢查均通過。**結論**: 程式碼庫乾淨，符合團隊規範。 |
+        **A. 問題分析與數據列表**
 
-    - **[X] 7.1**: 執行 `make install && make install-ui` 安裝所有依賴。
-    - **[X] 7.2**: 執行 `make test` 運行所有後端與前端測試。
-    - **[X] 7.3**: 執行 `make lint` 檢查所有程式碼品質。
-    - **[ ] 7.4**: 執行 `make dev` 並手動測試核心的「人機協作」工作流程。
+        | 失敗服務 (Failed Service) | 錯誤訊息 (Error Message) | 歷史根源 (Historical Root Cause) | 違反原則 (Violated Principle) |
+        | :--- | :--- | :--- | :--- |
+        | `archon-mcp` | `ModuleNotFoundError` | Commit `cd469ef` | 共享了不該共享的 `__init__.py` |
+        | `archon-agents` | `ModuleNotFoundError` | Commit `bb01f73` | 違反了 "No Direct Imports" |
+
+        **B. 具體修復計畫**
+
+        - **7.4.1: 解除 `archon-mcp` 的耦合**
+            - **目標**: 修改 `python/Dockerfile.mcp`。
+            - **行動**: 移除 `COPY src/server/services/__init__.py src/server/services/` 這一行。
+            - **理由**: 允許 `archon-server` 保留其 `__init__.py` 的修復，同時防止副作用影響 `archon-mcp`。
+        - **7.4.2: 移除 `archon-agents` 的冗餘依賴**
+            - **目標**: 修改 `python/src/agents/document_agent.py`。
+            - **行動**: 移除 `from src.server.services.client_manager import get_supabase_client` 這一行。
+            - **理由**: 此 `import` 是多餘的，且違反架構原則。
+
+        **C. 驗證流程**
+
+        - **7.4.3**: 執行 `make dev`，預期所有後端服務都將成功啟動。
+        - **7.4.4**: 執行 `cd enduser-ui-fe && pnpm run dev` 啟動前端。
+        - **7.4.5**: 根據本文件上方的核心工作流程圖，完成一次端對端手動測試。
 
 **[ ] 8. 部署至 Render**
     - **目標**: 將功能完整的 `dev/v1` 分支部署到雲端。
     - **[ ] 8.1**: 在 Render 上為 `enduser-ui-fe` 建立新的服務。
     - **[ ] 8.2**: 確保 Render 上所有服務 (`archon-server`, `archon-ui-main`, `enduser-ui-fe`) 的建置指令、環境變數都已根據新的架構更新。
-    - **[ ] 8.3**: 將 `dev/v1` 推送至遠端，觸發部署。
+    - **[ ] 8.3**: **部署前驗證**: 在本地模擬生產環境建置 (`docker compose --profile full build`)，確認本次的 Dockerfile 修改不會影響生產環境的建置。
+    - **[ ] 8.4**: 將 `dev/v1` 推送至遠端，觸發部署。
 
 **[ ] 9. 最終驗證與慶祝**
     - **目標**: 確認線上環境功能正常，並更新進度。
