@@ -56,7 +56,7 @@ check:
 dev: check
 	@echo "Starting hybrid development..."
 	@echo "Backend: Docker | Frontend: Local with hot reload"
-	@$(COMPOSE) --profile backend up -d --build
+	@$(COMPOSE) --profile backend --profile agents up -d --build
 	@set -a; [ -f .env ] && . ./.env; set +a; \
 	echo "Backend running at http://$${HOST:-localhost}:$${ARCHON_SERVER_PORT:-8181}"
 	@echo "Starting frontend..."
