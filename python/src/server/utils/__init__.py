@@ -13,11 +13,8 @@ The actual implementations have been moved to:
 """
 
 # Import all functions from new services for backward compatibility
-import asyncio
 
 # Keep some imports that are still needed
-import os
-from typing import Optional
 
 from ..services.client_manager import get_supabase_client
 from ..services.embeddings import (

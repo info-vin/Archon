@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 
 // FORCE DEBUG - This should ALWAYS appear in console when this file loads
-console.log('🚨 DEBUG: OllamaModelDiscoveryModal.tsx file loaded at', new Date().toISOString());
+// console.log('🚨 DEBUG: OllamaModelDiscoveryModal.tsx file loaded at', new Date().toISOString());
 import { 
   X, Search, Activity, Database, Zap, Clock, Server, 
   Loader, CheckCircle, AlertCircle, Filter, Download,
@@ -44,7 +44,7 @@ const OllamaModelDiscoveryModal: React.FC<OllamaModelDiscoveryModalProps> = ({
   initialChatModel,
   initialEmbeddingModel
 }) => {
-  console.log('🔴 COMPONENT DEBUG: OllamaModelDiscoveryModal component loaded/rendered', { isOpen });
+  // console.log('🔴 COMPONENT DEBUG: OllamaModelDiscoveryModal component loaded/rendered', { isOpen });
   const [models, setModels] = useState<EnrichedModel[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -86,23 +86,23 @@ const OllamaModelDiscoveryModal: React.FC<OllamaModelDiscoveryModalProps> = ({
   const cacheKey = useMemo(() => {
     const sortedUrls = [...enabledInstanceUrls].sort();
     const key = `ollama-models-${sortedUrls.join('|')}`;
-    console.log('🟡 CACHE KEY DEBUG: Generated cache key', {
-      key,
-      enabledInstanceUrls,
-      sortedUrls
-    });
+    // console.log('🟡 CACHE KEY DEBUG: Generated cache key', {
+    //   key,
+    //   enabledInstanceUrls,
+    //   sortedUrls
+    // });
     return key;
   }, [enabledInstanceUrls]);
 
   // Save models to localStorage
   const saveModelsToCache = useCallback((modelsToCache: EnrichedModel[]) => {
     try {
-      console.log('🟡 CACHE DEBUG: Attempting to save models to cache', {
-        cacheKey,
-        modelCount: modelsToCache.length,
-        instanceUrls: enabledInstanceUrls,
-        timestamp: Date.now()
-      });
+      // console.log('🟡 CACHE DEBUG: Attempting to save models to cache', {
+      //   cacheKey,
+      //   modelCount: modelsToCache.length,
+      //   instanceUrls: enabledInstanceUrls,
+      //   timestamp: Date.now()
+      // });
       
       const cacheData = {
         models: modelsToCache,
@@ -114,64 +114,64 @@ const OllamaModelDiscoveryModal: React.FC<OllamaModelDiscoveryModalProps> = ({
       setLastDiscoveryTime(Date.now());
       setHasCache(true);
       
-      console.log('🟢 CACHE DEBUG: Successfully saved models to cache', {
-        cacheKey,
-        modelCount: modelsToCache.length,
-        cacheSize: JSON.stringify(cacheData).length,
-        storedInLocalStorage: !!localStorage.getItem(cacheKey)
-      });
+      // console.log('🟢 CACHE DEBUG: Successfully saved models to cache', {
+      //   cacheKey,
+      //   modelCount: modelsToCache.length,
+      //   cacheSize: JSON.stringify(cacheData).length,
+      //   storedInLocalStorage: !!localStorage.getItem(cacheKey)
+      // });
     } catch (error) {
-      console.error('🔴 CACHE DEBUG: Failed to save models to cache:', error);
+      // console.error('🔴 CACHE DEBUG: Failed to save models to cache:', error);
     }
   }, [cacheKey, enabledInstanceUrls]);
 
   // Load models from localStorage
   const loadModelsFromCache = useCallback(() => {
-    console.log('🟡 CACHE DEBUG: Attempting to load models from cache', {
-      cacheKey,
-      enabledInstanceUrls,
-      hasLocalStorageItem: !!localStorage.getItem(cacheKey)
-    });
+    // console.log('🟡 CACHE DEBUG: Attempting to load models from cache', {
+    //   cacheKey,
+    //   enabledInstanceUrls,
+    //   hasLocalStorageItem: !!localStorage.getItem(cacheKey)
+    // });
     
     try {
       const cached = localStorage.getItem(cacheKey);
       if (cached) {
-        console.log('🟡 CACHE DEBUG: Found cached data', {
-          cacheKey,
-          cacheSize: cached.length
-        });
+        // console.log('🟡 CACHE DEBUG: Found cached data', {
+        //   cacheKey,
+        //   cacheSize: cached.length
+        // });
         
         const cacheData = JSON.parse(cached);
         const cacheAge = Date.now() - cacheData.timestamp;
         const cacheAgeMinutes = Math.floor(cacheAge / (60 * 1000));
         
-        console.log('🟡 CACHE DEBUG: Cache data parsed', {
-          modelCount: cacheData.models?.length,
-          timestamp: cacheData.timestamp,
-          cacheAge,
-          cacheAgeMinutes,
-          cachedInstanceUrls: cacheData.instanceUrls,
-          currentInstanceUrls: enabledInstanceUrls
-        });
+        // console.log('🟡 CACHE DEBUG: Cache data parsed', {
+        //   modelCount: cacheData.models?.length,
+        //   timestamp: cacheData.timestamp,
+        //   cacheAge,
+        //   cacheAgeMinutes,
+        //   cachedInstanceUrls: cacheData.instanceUrls,
+        //   currentInstanceUrls: enabledInstanceUrls
+        // });
         
         // Use cache if less than 10 minutes old and same instances
         const instanceUrlsMatch = JSON.stringify(cacheData.instanceUrls?.sort()) === JSON.stringify([...enabledInstanceUrls].sort());
         const isCacheValid = cacheAge < 10 * 60 * 1000 && instanceUrlsMatch;
         
-        console.log('🟡 CACHE DEBUG: Cache validation', {
-          isCacheValid,
-          cacheAge: cacheAge,
-          maxAge: 10 * 60 * 1000,
-          instanceUrlsMatch,
-          cachedUrls: JSON.stringify(cacheData.instanceUrls?.sort()),
-          currentUrls: JSON.stringify([...enabledInstanceUrls].sort())
-        });
+        // console.log('🟡 CACHE DEBUG: Cache validation', {
+        //   isCacheValid,
+        //   cacheAge: cacheAge,
+        //   maxAge: 10 * 60 * 1000,
+        //   instanceUrlsMatch,
+        //   cachedUrls: JSON.stringify(cacheData.instanceUrls?.sort()),
+        //   currentUrls: JSON.stringify([...enabledInstanceUrls].sort())
+        // });
         
         if (isCacheValid) {
-          console.log('🟢 CACHE DEBUG: Using cached models', {
-            modelCount: cacheData.models.length,
-            timestamp: cacheData.timestamp
-          });
+          // console.log('🟢 CACHE DEBUG: Using cached models', {
+          //   modelCount: cacheData.models.length,
+          //   timestamp: cacheData.timestamp
+          // });
           
           setModels(cacheData.models);
           setDiscoveryComplete(true);
@@ -180,15 +180,15 @@ const OllamaModelDiscoveryModal: React.FC<OllamaModelDiscoveryModalProps> = ({
           setDiscoveryProgress(`Loaded ${cacheData.models.length} cached models`);
           return true;
         } else {
-          console.log('🟠 CACHE DEBUG: Cache invalid - will refresh', {
-            reason: cacheAge >= 10 * 60 * 1000 ? 'expired' : 'different instances'
-          });
+          // console.log('🟠 CACHE DEBUG: Cache invalid - will refresh', {
+          //   reason: cacheAge >= 10 * 60 * 1000 ? 'expired' : 'different instances'
+          // });
         }
       } else {
-        console.log('🟠 CACHE DEBUG: No cached data found for key:', cacheKey);
+        // console.log('🟠 CACHE DEBUG: No cached data found for key:', cacheKey);
       }
     } catch (error) {
-      console.error('🔴 CACHE DEBUG: Failed to load cached models:', error);
+      // console.error('🔴 CACHE DEBUG: Failed to load cached models:', error);
     }
     return false;
   }, [cacheKey, enabledInstanceUrls]);
@@ -200,22 +200,22 @@ const OllamaModelDiscoveryModal: React.FC<OllamaModelDiscoveryModalProps> = ({
         const testKey = 'ollama-test-key';
         const testData = { test: 'localStorage working', timestamp: Date.now() };
         
-        console.log('🔧 LOCALSTORAGE DEBUG: Testing localStorage functionality');
+        // console.log('🔧 LOCALSTORAGE DEBUG: Testing localStorage functionality');
         localStorage.setItem(testKey, JSON.stringify(testData));
         
         const retrieved = localStorage.getItem(testKey);
         const parsed = retrieved ? JSON.parse(retrieved) : null;
         
-        console.log('🟢 LOCALSTORAGE DEBUG: localStorage test successful', {
-          saved: testData,
-          retrieved: parsed,
-          working: !!parsed && parsed.test === testData.test
-        });
+        // console.log('🟢 LOCALSTORAGE DEBUG: localStorage test successful', {
+        //   saved: testData,
+        //   retrieved: parsed,
+        //   working: !!parsed && parsed.test === testData.test
+        // });
         
         localStorage.removeItem(testKey);
         
       } catch (error) {
-        console.error('🔴 LOCALSTORAGE DEBUG: localStorage test failed', error);
+        // console.error('🔴 LOCALSTORAGE DEBUG: localStorage test failed', error);
       }
     };
     
@@ -225,57 +225,57 @@ const OllamaModelDiscoveryModal: React.FC<OllamaModelDiscoveryModalProps> = ({
   // Check cache when modal opens or instances change
   useEffect(() => {
     if (isOpen && enabledInstanceUrls.length > 0) {
-      console.log('🟡 MODAL DEBUG: Modal opened, checking cache', {
-        isOpen,
-        enabledInstanceUrls,
-        instanceUrlsCount: enabledInstanceUrls.length
-      });
+      // console.log('🟡 MODAL DEBUG: Modal opened, checking cache', {
+      //   isOpen,
+      //   enabledInstanceUrls,
+      //   instanceUrlsCount: enabledInstanceUrls.length
+      // });
       loadModelsFromCache(); // Progress message is set inside this function
     } else {
-      console.log('🟡 MODAL DEBUG: Modal state change', {
-        isOpen,
-        enabledInstanceUrlsCount: enabledInstanceUrls.length
-      });
+      // console.log('🟡 MODAL DEBUG: Modal state change', {
+      //   isOpen,
+      //   enabledInstanceUrlsCount: enabledInstanceUrls.length
+      // });
     }
   }, [isOpen, enabledInstanceUrls, loadModelsFromCache]);
 
   // Discover models when modal opens
   const discoverModels = useCallback(async (forceRefresh: boolean = false) => {
-    console.log('🚨 DISCOVERY DEBUG: discoverModels FUNCTION CALLED', {
-      forceRefresh,
-      enabledInstanceUrls,
-      instanceUrlsCount: enabledInstanceUrls.length,
-      timestamp: new Date().toISOString(),
-      callStack: new Error().stack?.split('\n').slice(0, 3)
-    });
-    console.log('🟡 DISCOVERY DEBUG: Starting model discovery', {
-      forceRefresh,
-      enabledInstanceUrls,
-      instanceUrlsCount: enabledInstanceUrls.length,
-      timestamp: new Date().toISOString()
-    });
+    // console.log('🚨 DISCOVERY DEBUG: discoverModels FUNCTION CALLED', {
+    //   forceRefresh,
+    //   enabledInstanceUrls,
+    //   instanceUrlsCount: enabledInstanceUrls.length,
+    //   timestamp: new Date().toISOString(),
+    //   callStack: new Error().stack?.split('\n').slice(0, 3)
+    // });
+    // console.log('🟡 DISCOVERY DEBUG: Starting model discovery', {
+    //   forceRefresh,
+    //   enabledInstanceUrls,
+    //   instanceUrlsCount: enabledInstanceUrls.length,
+    //   timestamp: new Date().toISOString()
+    // });
     
     if (enabledInstanceUrls.length === 0) {
-      console.log('🔴 DISCOVERY DEBUG: No enabled instances');
+      // console.log('🔴 DISCOVERY DEBUG: No enabled instances');
       setError('No enabled Ollama instances configured');
       return;
     }
 
     // Check cache first if not forcing refresh
     if (!forceRefresh) {
-      console.log('🟡 DISCOVERY DEBUG: Checking cache before discovery');
+      // console.log('🟡 DISCOVERY DEBUG: Checking cache before discovery');
       const loaded = loadModelsFromCache();
       if (loaded) {
-        console.log('🟢 DISCOVERY DEBUG: Used cached models, skipping API call');
+        // console.log('🟢 DISCOVERY DEBUG: Used cached models, skipping API call');
         return; // Progress message already set by loadModelsFromCache
       }
-      console.log('🟡 DISCOVERY DEBUG: No valid cache, proceeding with API discovery');
+      // console.log('🟡 DISCOVERY DEBUG: No valid cache, proceeding with API discovery');
     } else {
-      console.log('🟡 DISCOVERY DEBUG: Force refresh requested, skipping cache');
+      // console.log('🟡 DISCOVERY DEBUG: Force refresh requested, skipping cache');
     }
 
     const discoveryStartTime = Date.now();
-    console.log('🟡 DISCOVERY DEBUG: Starting API discovery at', new Date(discoveryStartTime).toISOString());
+    // console.log('🟡 DISCOVERY DEBUG: Starting API discovery at', new Date(discoveryStartTime).toISOString());
 
     setLoading(true);
     setError(null);
@@ -284,36 +284,36 @@ const OllamaModelDiscoveryModal: React.FC<OllamaModelDiscoveryModalProps> = ({
 
     try {
       // Discover models (no timeout - let it complete naturally)
-      console.log('🚨 DISCOVERY DEBUG: About to call ollamaService.discoverModels', {
-        instanceUrls: enabledInstanceUrls,
-        includeCapabilities: true,
-        timestamp: new Date().toISOString()
-      });
+      // console.log('🚨 DISCOVERY DEBUG: About to call ollamaService.discoverModels', {
+      //   instanceUrls: enabledInstanceUrls,
+      //   includeCapabilities: true,
+      //   timestamp: new Date().toISOString()
+      // });
       
       const discoveryResult = await ollamaService.discoverModels({
         instanceUrls: enabledInstanceUrls,
         includeCapabilities: true
       });
       
-      console.log('🚨 DISCOVERY DEBUG: ollamaService.discoverModels returned', {
-        totalModels: discoveryResult.total_models,
-        chatModelsCount: discoveryResult.chat_models?.length,
-        embeddingModelsCount: discoveryResult.embedding_models?.length,
-        hostStatusCount: Object.keys(discoveryResult.host_status || {}).length,
-        timestamp: new Date().toISOString()
-      });
+      // console.log('🚨 DISCOVERY DEBUG: ollamaService.discoverModels returned', {
+      //   totalModels: discoveryResult.total_models,
+      //   chatModelsCount: discoveryResult.chat_models?.length,
+      //   embeddingModelsCount: discoveryResult.embedding_models?.length,
+      //   hostStatusCount: Object.keys(discoveryResult.host_status || {}).length,
+      //   timestamp: new Date().toISOString()
+      // });
       
       const discoveryEndTime = Date.now();
       const discoveryDuration = discoveryEndTime - discoveryStartTime;
-      console.log('🟢 DISCOVERY DEBUG: API discovery completed', {
-        duration: discoveryDuration,
-        durationSeconds: (discoveryDuration / 1000).toFixed(1),
-        totalModels: discoveryResult.total_models,
-        chatModels: discoveryResult.chat_models.length,
-        embeddingModels: discoveryResult.embedding_models.length,
-        hostStatus: Object.keys(discoveryResult.host_status).length,
-        errors: discoveryResult.discovery_errors.length
-      });
+      // console.log('🟢 DISCOVERY DEBUG: API discovery completed', {
+      //   duration: discoveryDuration,
+      //   durationSeconds: (discoveryDuration / 1000).toFixed(1),
+      //   totalModels: discoveryResult.total_models,
+      //   chatModels: discoveryResult.chat_models.length,
+      //   embeddingModels: discoveryResult.embedding_models.length,
+      //   hostStatus: Object.keys(discoveryResult.host_status).length,
+      //   errors: discoveryResult.discovery_errors.length
+      // });
 
       // Enrich models with instance information and status
       const enrichedModels: EnrichedModel[] = [];
@@ -365,19 +365,19 @@ const OllamaModelDiscoveryModal: React.FC<OllamaModelDiscoveryModalProps> = ({
         }
       });
 
-      console.log('🚨 DISCOVERY DEBUG: About to call setModels', {
-        enrichedModelsCount: enrichedModels.length,
-        enrichedModels: enrichedModels.map(m => ({ name: m.name, capabilities: m.capabilities })),
-        timestamp: new Date().toISOString()
-      });
+      // console.log('🚨 DISCOVERY DEBUG: About to call setModels', {
+      //   enrichedModelsCount: enrichedModels.length,
+      //   enrichedModels: enrichedModels.map(m => ({ name: m.name, capabilities: m.capabilities })),
+      //   timestamp: new Date().toISOString()
+      // });
       
       setModels(enrichedModels);
       setDiscoveryComplete(true);
       
-      console.log('🚨 DISCOVERY DEBUG: Called setModels and setDiscoveryComplete', {
-        enrichedModelsCount: enrichedModels.length,
-        timestamp: new Date().toISOString()
-      });
+      // console.log('🚨 DISCOVERY DEBUG: Called setModels and setDiscoveryComplete', {
+      //   enrichedModelsCount: enrichedModels.length,
+      //   timestamp: new Date().toISOString()
+      // });
       
       // Cache the discovered models
       saveModelsToCache(enrichedModels);
@@ -448,14 +448,14 @@ const OllamaModelDiscoveryModal: React.FC<OllamaModelDiscoveryModalProps> = ({
 
   // Filter and sort models
   const filteredAndSortedModels = useMemo(() => {
-    console.log('🚨 FILTERING DEBUG: filteredAndSortedModels useMemo running', {
-      modelsLength: models.length,
-      models: models.map(m => ({ name: m.name, capabilities: m.capabilities })),
-      selectionState,
-      timestamp: new Date().toISOString()
-    });
+    // console.log('🚨 FILTERING DEBUG: filteredAndSortedModels useMemo running', {
+    //   modelsLength: models.length,
+    //   models: models.map(m => ({ name: m.name, capabilities: m.capabilities })),
+    //   selectionState,
+    //   timestamp: new Date().toISOString()
+    // });
     
-    let filtered = models.filter(model => {
+    const filtered = models.filter(model => {
       // Text filter
       if (selectionState.filterText && !model.name.toLowerCase().includes(selectionState.filterText.toLowerCase())) {
         return false;
@@ -486,12 +486,12 @@ const OllamaModelDiscoveryModal: React.FC<OllamaModelDiscoveryModalProps> = ({
       }
     });
 
-    console.log('🚨 FILTERING DEBUG: filteredAndSortedModels result', {
-      originalCount: models.length,
-      filteredCount: filtered.length,
-      filtered: filtered.map(m => ({ name: m.name, capabilities: m.capabilities })),
-      timestamp: new Date().toISOString()
-    });
+    // console.log('🚨 FILTERING DEBUG: filteredAndSortedModels result', {
+    //   originalCount: models.length,
+    //   filteredCount: filtered.length,
+    //   filtered: filtered.map(m => ({ name: m.name, capabilities: m.capabilities })),
+    //   timestamp: new Date().toISOString()
+    // });
 
     return filtered;
   }, [models, selectionState]);
@@ -539,24 +539,24 @@ const OllamaModelDiscoveryModal: React.FC<OllamaModelDiscoveryModalProps> = ({
 
   // Auto-discover when modal opens (only if no cache available)
   useEffect(() => {
-    console.log('🟡 AUTO-DISCOVERY DEBUG: useEffect triggered', {
-      isOpen,
-      discoveryComplete,
-      loading,
-      hasCache,
-      willAutoDiscover: isOpen && !discoveryComplete && !loading && !hasCache
-    });
+    // console.log('🟡 AUTO-DISCOVERY DEBUG: useEffect triggered', {
+    //   isOpen,
+    //   discoveryComplete,
+    //   loading,
+    //   hasCache,
+    //   willAutoDiscover: isOpen && !discoveryComplete && !loading && !hasCache
+    // });
     
     if (isOpen && !discoveryComplete && !loading && !hasCache) {
-      console.log('🟢 AUTO-DISCOVERY DEBUG: Starting auto-discovery');
+      // console.log('🟢 AUTO-DISCOVERY DEBUG: Starting auto-discovery');
       discoverModels();
     } else {
-      console.log('🟠 AUTO-DISCOVERY DEBUG: Skipping auto-discovery', {
-        reason: !isOpen ? 'modal closed' : 
-                discoveryComplete ? 'already complete' :
-                loading ? 'already loading' :
-                hasCache ? 'has cache' : 'unknown'
-      });
+      // console.log('🟠 AUTO-DISCOVERY DEBUG: Skipping auto-discovery', {
+      //   reason: !isOpen ? 'modal closed' :
+      //           discoveryComplete ? 'already complete' :
+      //           loading ? 'already loading' :
+      //           hasCache ? 'has cache' : 'unknown'
+      // });
     }
   }, [isOpen, discoveryComplete, loading, hasCache, discoverModels]);
 
@@ -658,12 +658,12 @@ const OllamaModelDiscoveryModal: React.FC<OllamaModelDiscoveryModalProps> = ({
                 variant="outline"
                 size="sm"
                 onClick={() => {
-                  console.log('🚨 REFRESH BUTTON CLICKED - About to call discoverModels(true)', {
-                    timestamp: new Date().toISOString(),
-                    loading,
-                    enabledInstanceUrls,
-                    instanceUrlsCount: enabledInstanceUrls.length
-                  });
+                    // console.log('🚨 REFRESH BUTTON CLICKED - About to call discoverModels(true)', {
+                    //   timestamp: new Date().toISOString(),
+                    //   loading,
+                    //   enabledInstanceUrls,
+                    //   instanceUrlsCount: enabledInstanceUrls.length
+                    // });
                   discoverModels(true);  // Force refresh
                 }}
                 disabled={loading}
@@ -704,14 +704,14 @@ const OllamaModelDiscoveryModal: React.FC<OllamaModelDiscoveryModalProps> = ({
             ) : (
               <div className="h-96 overflow-y-auto p-6">
                 {(() => {
-                  console.log('🚨 RENDERING DEBUG: About to render models list', {
-                    filteredAndSortedModelsLength: filteredAndSortedModels.length,
-                    modelsLength: models.length,
-                    loading,
-                    error,
-                    discoveryComplete,
-                    timestamp: new Date().toISOString()
-                  });
+                  // console.log('🚨 RENDERING DEBUG: About to render models list', {
+                  //   filteredAndSortedModelsLength: filteredAndSortedModels.length,
+                  //   modelsLength: models.length,
+                  //   loading,
+                  //   error,
+                  //   discoveryComplete,
+                  //   timestamp: new Date().toISOString()
+                  // });
                   return null;
                 })()}
                 {filteredAndSortedModels.length === 0 ? (

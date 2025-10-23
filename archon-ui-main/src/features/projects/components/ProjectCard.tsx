@@ -41,7 +41,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
       blur="xl"
       transparency="light"
       size="none"
-      className={cn(
+      className={[
         "w-72 min-h-[180px] flex flex-col shrink-0",
         project.pinned
           ? "bg-gradient-to-b from-purple-100/80 via-purple-50/30 to-purple-100/50 dark:from-purple-900/30 dark:via-purple-900/20 dark:to-purple-900/10"
@@ -49,15 +49,14 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
             ? "bg-gradient-to-b from-white/70 via-purple-50/20 to-white/50 dark:from-white/5 dark:via-purple-900/5 dark:to-black/20"
             : "bg-gradient-to-b from-white/80 to-white/60 dark:from-white/10 dark:to-black/30",
         optimistic && "opacity-80 ring-1 ring-cyan-400/30",
-      )}
+      ].filter(Boolean).join(" ")}
     >
 
       {/* Main content area with padding */}
       <div className="flex-1 p-4 pb-2">
         {/* Title section */}
         <div className="flex flex-col items-center justify-center mb-4 min-h-[48px]">
-          <h3
-            className={cn(
+          <h3 className={cn(
               "font-medium text-center leading-tight line-clamp-2 transition-all duration-300",
               isSelected
                 ? "text-gray-900 dark:text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.8)]"
@@ -75,14 +74,12 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
         <div className="flex flex-col sm:flex-row items-stretch gap-2 w-full">
           {/* Todo pill */}
           <div className="relative flex-1">
-            <div
-              className={cn(
+            <div className={cn(
                 "absolute inset-0 bg-pink-600 rounded-full blur-md",
                 isSelected ? "opacity-30 dark:opacity-75" : "opacity-0",
               )}
             ></div>
-            <div
-              className={cn(
+            <div className={cn(
                 "relative flex items-center h-12 backdrop-blur-sm rounded-full border shadow-sm transition-all duration-300",
                 isSelected
                   ? "bg-white/70 dark:bg-zinc-900/90 border-pink-300 dark:border-pink-500/50 dark:shadow-[0_0_10px_rgba(236,72,153,0.5)] hover:shadow-md dark:hover:shadow-[0_0_15px_rgba(236,72,153,0.7)]"
@@ -125,14 +122,12 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
 
           {/* Doing pill (includes review) */}
           <div className="relative flex-1">
-            <div
-              className={cn(
+            <div className={cn(
                 "absolute inset-0 bg-blue-600 rounded-full blur-md",
                 isSelected ? "opacity-30 dark:opacity-75" : "opacity-0",
               )}
             ></div>
-            <div
-              className={cn(
+            <div className={cn(
                 "relative flex items-center h-12 backdrop-blur-sm rounded-full border shadow-sm transition-all duration-300",
                 isSelected
                   ? "bg-white/70 dark:bg-zinc-900/90 border-blue-300 dark:border-blue-500/50 dark:shadow-[0_0_10px_rgba(59,130,246,0.5)] hover:shadow-md dark:hover:shadow-[0_0_15px_rgba(59,130,246,0.7)]"
@@ -175,14 +170,12 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
 
           {/* Done pill */}
           <div className="relative flex-1">
-            <div
-              className={cn(
+            <div className={cn(
                 "absolute inset-0 bg-green-600 rounded-full blur-md",
                 isSelected ? "opacity-30 dark:opacity-75" : "opacity-0",
               )}
             ></div>
-            <div
-              className={cn(
+            <div className={cn(
                 "relative flex items-center h-12 backdrop-blur-sm rounded-full border shadow-sm transition-all duration-300",
                 isSelected
                   ? "bg-white/70 dark:bg-zinc-900/90 border-green-300 dark:border-green-500/50 dark:shadow-[0_0_10px_rgba(34,197,94,0.5)] hover:shadow-md dark:hover:shadow-[0_0_15px_rgba(34,197,94,0.7)]"

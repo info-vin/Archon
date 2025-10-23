@@ -6,20 +6,20 @@ import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { ProviderStep } from '../components/onboarding/ProviderStep';
 
-export const OnboardingPage = () => {
+export const OnboardingPage = (): JSX.Element => {
   const [currentStep, setCurrentStep] = useState(1);
   const navigate = useNavigate();
 
-  const handleProviderSaved = () => {
+  const handleProviderSaved = (): void => {
     setCurrentStep(3);
   };
 
-  const handleProviderSkip = () => {
+  const handleProviderSkip = (): void => {
     // Navigate to settings with guidance
     navigate('/settings');
   };
 
-  const handleComplete = () => {
+  const handleComplete = (): void => {
     // Mark onboarding as dismissed and navigate to home
     localStorage.setItem('onboardingDismissed', 'true');
     navigate('/');

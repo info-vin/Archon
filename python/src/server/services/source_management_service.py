@@ -5,7 +5,7 @@ Handles source metadata, summaries, and management.
 Consolidates both utility functions and class-based service.
 """
 
-from typing import Any
+from typing import Any, Self
 
 from supabase import Client
 
@@ -526,8 +526,7 @@ class SourceManagementService:
             logger.error(f"Error updating source metadata: {e}")
             return False, {"error": f"Error updating source metadata: {str(e)}"}
 
-    async def create_source_info(
-        self,
+    async def create_source_info(self: Self,
         source_id: str,
         content_sample: str,
         word_count: int = 0,

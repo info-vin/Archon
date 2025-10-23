@@ -6,6 +6,7 @@ the overall progress maps correctly and doesn't contaminate future stages.
 """
 
 import asyncio
+
 import pytest
 
 from src.server.services.crawling.progress_mapper import ProgressMapper

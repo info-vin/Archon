@@ -39,7 +39,13 @@ export interface ModelDiscoveryResponse {
     name: string;
     instance_url: string;
     size: number;
-    parameters?: any;
+    parameters?: {
+      family?: string;
+      parameter_size?: string;
+      quantization?: string;
+      parameter_count?: string;
+      format?: string;
+    };
     // Real API data from /api/show
     context_window?: number;
     architecture?: string;
@@ -54,7 +60,13 @@ export interface ModelDiscoveryResponse {
     instance_url: string;
     dimensions?: number;
     size: number;
-    parameters?: any;
+    parameters?: {
+      family?: string;
+      parameter_size?: string;
+      quantization?: string;
+      parameter_count?: string;
+      format?: string;
+    };
     // Real API data from /api/show
     architecture?: string;
     format?: string;
@@ -101,7 +113,15 @@ export interface InstanceValidationResponse {
     supported_dimensions?: number[];
     error?: string;
   };
-  health_status: Record<string, any>;
+  health_status: Record<string, HealthStatus>;
+}
+
+interface HealthStatus {
+  is_healthy: boolean;
+  response_time_ms?: number;
+  models_available?: number;
+  error_message?: string;
+  last_checked?: string;
 }
 
 export interface EmbeddingRouteResponse {
@@ -130,7 +150,11 @@ export interface EmbeddingRoutesResponse {
     models: string[];
     avg_performance: number;
   }>;
-  routing_statistics: Record<string, any>;
+  routing_statistics: Record<string, RoutingStatistics>;
+}
+
+interface RoutingStatistics {
+  [key: string]: number | string | string[];
 }
 
 // Request interfaces
@@ -154,7 +178,7 @@ export interface EmbeddingRouteOptions {
 class OllamaService {
   private baseUrl = getApiUrl();
 
-  private handleApiError(error: any, context: string): Error {
+  private handleApiError(error: unknown, context: string): Error {
     const errorMessage = error instanceof Error ? error.message : String(error);
 
     // Check for network errors

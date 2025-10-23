@@ -7,10 +7,10 @@ from typing import Any
 
 def generate_etag(data: Any) -> str:
     """Generate an ETag hash from data.
-    
+
     Args:
         data: Any JSON-serializable data to hash
-        
+
     Returns:
         ETag string (MD5 hash of JSON representation)
     """
@@ -26,11 +26,11 @@ def generate_etag(data: Any) -> str:
 
 def check_etag(request_etag: str | None, current_etag: str) -> bool:
     """Check if request ETag matches current ETag.
-    
+
     Args:
         request_etag: ETag from If-None-Match header
         current_etag: Current ETag of the data
-        
+
     Returns:
         True if ETags match (data unchanged), False otherwise
     """

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Variants } from 'framer-motion';
 /**
  * Custom hook for creating staggered entrance animations
  * @param items Array of items to animate
@@ -6,7 +7,15 @@ import { useEffect, useState } from 'react';
  * @param forceReanimateCounter Optional counter to force reanimation when it changes
  * @returns Animation variants and props for Framer Motion
  */
-export const useStaggeredEntrance = <T,>(items: T[], staggerDelay: number = 0.15, forceReanimateCounter?: number) => {
+
+interface UseStaggeredEntranceReturn {
+  isVisible: boolean;
+  containerVariants: Variants;
+  itemVariants: Variants;
+  titleVariants: Variants;
+}
+
+export const useStaggeredEntrance = <T,>(items: T[], staggerDelay: number = 0.15, forceReanimateCounter?: number): UseStaggeredEntranceReturn => {
   const [isVisible, setIsVisible] = useState(false);
   useEffect(() => {
     // Set visible after component mounts for the animation to trigger

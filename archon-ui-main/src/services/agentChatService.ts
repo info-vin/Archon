@@ -24,7 +24,7 @@ interface ChatSession {
 interface ChatRequest {
   message: string;
   project_id?: string;
-  context?: Record<string, any>;
+  context?: Record<string, unknown>;
 }
 
 class AgentChatService {
@@ -115,7 +115,6 @@ class AgentChatService {
       if (!response.ok) {
         // If we get a 404, the agent service is not running
         if (response.status === 404) {
-          console.log('Agent chat service not available - service may be disabled');
           throw new Error('Agent chat service is not available. The service may be disabled.');
         }
         throw new Error(`Failed to create session: ${response.statusText}`);
@@ -186,7 +185,6 @@ class AgentChatService {
         if (!response.ok) {
           // If we get a 404, the service is not available - stop polling
           if (response.status === 404) {
-            console.log('Agent chat service not available (404) - stopping polling');
             clearInterval(pollInterval);
             this.pollingIntervals.delete(sessionId);
             const errorHandler = this.errorHandlers.get(sessionId);

@@ -230,7 +230,7 @@ export const BugReportModal: React.FC<BugReportModalProps> = ({
                     onChange={(e) =>
                       setReport((r) => ({
                         ...r,
-                        severity: e.target.value as any,
+                        severity: e.target.value as "low" | "medium" | "high" | "critical",
                       }))
                     }
                     options={[

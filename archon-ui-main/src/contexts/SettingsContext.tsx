@@ -10,15 +10,7 @@ interface SettingsContextType {
   refreshSettings: () => Promise<void>;
 }
 
-const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
-
-export const useSettings = () => {
-  const context = useContext(SettingsContext);
-  if (context === undefined) {
-    throw new Error('useSettings must be used within a SettingsProvider');
-  }
-  return context;
-};
+import { SettingsContext } from './SettingsContextObject';
 
 interface SettingsProviderProps {
   children: ReactNode;
@@ -29,7 +21,7 @@ export const SettingsProvider: React.FC<SettingsProviderProps> = ({ children }) 
   const [styleGuideEnabled, setStyleGuideEnabledState] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  const loadSettings = async () => {
+  const loadSettings = async (): Promise<void> => {
     try {
       setLoading(true);
 
@@ -64,7 +56,7 @@ export const SettingsProvider: React.FC<SettingsProviderProps> = ({ children }) 
     loadSettings();
   }, []);
 
-  const setProjectsEnabled = async (enabled: boolean) => {
+  const setProjectsEnabled = async (enabled: boolean): Promise<void> => {
     try {
       // Update local state immediately
       setProjectsEnabledState(enabled);
@@ -85,7 +77,7 @@ export const SettingsProvider: React.FC<SettingsProviderProps> = ({ children }) 
     }
   };
 
-  const setStyleGuideEnabled = async (enabled: boolean) => {
+  const setStyleGuideEnabled = async (enabled: boolean): Promise<void> => {
     try {
       // Update local state immediately
       setStyleGuideEnabledState(enabled);
@@ -106,7 +98,7 @@ export const SettingsProvider: React.FC<SettingsProviderProps> = ({ children }) 
     }
   };
 
-  const refreshSettings = async () => {
+  const refreshSettings = async (): Promise<void> => {
     await loadSettings();
   };
 

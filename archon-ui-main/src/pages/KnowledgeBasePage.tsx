@@ -4,7 +4,7 @@ import { KnowledgeViewWithBoundary } from '../features/knowledge';
 // All implementation is in features/knowledge/components/KnowledgeView.tsx
 // Uses KnowledgeViewWithBoundary for proper error handling
 
-function KnowledgeBasePage(props: any) {
+function KnowledgeBasePage(props: React.ComponentProps<typeof KnowledgeViewWithBoundary>): JSX.Element {
   return <KnowledgeViewWithBoundary {...props} />;
 }
 

@@ -55,7 +55,7 @@ class CrawlerManager:
                 raise ImportError("crawl4ai is not installed or available")
 
             # Check for Docker environment
-            in_docker = os.path.exists("/.dockerenv") or os.getenv("DOCKER_CONTAINER", False)
+            in_docker = os.path.exists("/.dockerenv") or bool(os.getenv("DOCKER_CONTAINER"))
 
             # Initialize browser config - same for Docker and local
             # crawl4ai/Playwright will handle Docker-specific settings internally

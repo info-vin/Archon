@@ -202,7 +202,7 @@ class TestAsyncCredentialService:
         mock_table.select().execute.return_value = mock_response
 
         with patch.object(credential_service, "_get_supabase_client", return_value=mock_client):
-            result = await credential_service.load_all_credentials()
+            await credential_service.load_all_credentials()
 
             # Should have loaded credentials into cache
             assert credential_service._cache_initialized is True

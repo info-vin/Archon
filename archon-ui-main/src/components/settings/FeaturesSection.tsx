@@ -61,16 +61,8 @@ export const FeaturesSection = () => {
       setDisconnectScreenEnabled(disconnectScreenRes.value === 'true');
       
       // Check projects schema health
-      console.log('🔍 Projects health response:', {
-        response: projectsHealthResponse,
-        ok: projectsHealthResponse?.ok,
-        status: projectsHealthResponse?.status,
-        url: `${credentialsService['baseUrl']}/api/projects/health`
-      });
-      
       if (projectsHealthResponse && projectsHealthResponse.ok) {
         const healthData = await projectsHealthResponse.json();
-        console.log('🔍 Projects health data:', healthData);
         
         const schemaValid = healthData.schema?.valid === true;
         setProjectsSchemaValid(schemaValid);
@@ -84,7 +76,6 @@ export const FeaturesSection = () => {
         }
       } else {
         // If health check fails, assume schema is invalid
-        console.log('🔍 Projects health check failed');
         setProjectsSchemaValid(false);
         setProjectsSchemaError(
           'Unable to verify projects schema. Please ensure the backend is running and database is accessible.'

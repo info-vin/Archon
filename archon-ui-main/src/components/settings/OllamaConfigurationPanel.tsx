@@ -37,7 +37,7 @@ const OllamaConfigurationPanel: React.FC<OllamaConfigurationPanelProps> = ({
   const [newInstanceType, setNewInstanceType] = useState<'chat' | 'embedding'>('chat');
   const [showAddInstance, setShowAddInstance] = useState(false);
   const [discoveringModels, setDiscoveringModels] = useState(false);
-  const [modelDiscoveryResults, setModelDiscoveryResults] = useState<any>(null);
+  const [modelDiscoveryResults, setModelDiscoveryResults] = useState<Record<string, { models: { name: string; }[]; error?: string; }> | null>(null);
   const [showModelDiscoveryModal, setShowModelDiscoveryModal] = useState(false);
   const [selectedChatModel, setSelectedChatModel] = useState<string | null>(null);
   const [selectedEmbeddingModel, setSelectedEmbeddingModel] = useState<string | null>(null);
@@ -47,7 +47,7 @@ const OllamaConfigurationPanel: React.FC<OllamaConfigurationPanelProps> = ({
   const { showToast } = useToast();
 
   // Load instances from database
-  const loadInstances = async () => {
+  const loadInstances = useCallback(async () => {
     try {
       setLoading(true);
       
@@ -80,7 +80,7 @@ const OllamaConfigurationPanel: React.FC<OllamaConfigurationPanelProps> = ({
     } finally {
       setLoading(false);
     }
-  };
+  }, [showToast, onConfigChange]);
 
   // Save instances to database
   const saveInstances = async (newInstances: OllamaInstance[]) => {
@@ -316,7 +316,7 @@ const OllamaConfigurationPanel: React.FC<OllamaConfigurationPanelProps> = ({
     } catch (error) {
       console.error('Failed to set up URL update timeout:', error);
     }
-  }, [showToast]);
+  }, [showToast, loadInstances]);
 
   // Handle immediate URL change (for UI responsiveness) without triggering API calls
   const handleUrlChange = (instanceId: string, newUrl: string) => {
@@ -439,7 +439,7 @@ const OllamaConfigurationPanel: React.FC<OllamaConfigurationPanelProps> = ({
   // Load instances from database on mount
   useEffect(() => {
     loadInstances();
-  }, []); // Empty dependency array - load only on mount
+  }, [loadInstances]); // Empty dependency array - load only on mount
 
   // Load saved model preferences on mount
   useEffect(() => {

@@ -1,22 +1,18 @@
 import React from 'react';
 /**
- * Props for the Button component
+ * Button - A customizable button component
+ *
+ * This component provides a reusable button with various styles,
+ * sizes, and color options.
  */
-interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+export const Button: React.FC<React.ButtonHTMLAttributes<HTMLButtonElement> & {
   children: React.ReactNode;
   variant?: 'primary' | 'secondary' | 'outline' | 'ghost';
   size?: 'sm' | 'md' | 'lg';
   accentColor?: 'purple' | 'green' | 'pink' | 'blue' | 'cyan' | 'orange';
   neonLine?: boolean;
   icon?: React.ReactNode;
-}
-/**
- * Button - A customizable button component
- *
- * This component provides a reusable button with various styles,
- * sizes, and color options.
- */
-export const Button: React.FC<ButtonProps> = ({
+}> = ({
   children,
   variant = 'primary',
   size = 'md',

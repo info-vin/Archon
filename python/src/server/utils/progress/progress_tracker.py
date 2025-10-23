@@ -61,7 +61,7 @@ class ProgressTracker:
     async def _delayed_cleanup(cls, progress_id: str, delay_seconds: int = 30):
         """
         Remove progress state from memory after a delay.
-        
+
         This gives clients time to see the final state before cleanup.
         """
         await asyncio.sleep(delay_seconds)
@@ -106,7 +106,7 @@ class ProgressTracker:
                 f"DEBUG: ProgressTracker.update called | status={status} | progress={progress} | "
                 f"current_state_progress={self.state.get('progress', 0)} | kwargs_keys={list(kwargs.keys())}"
             )
-        
+
         # CRITICAL: Never allow progress to go backwards
         current_progress = self.state.get("progress", 0)
         new_progress = min(100, max(0, progress))  # Ensure 0-100
@@ -129,7 +129,7 @@ class ProgressTracker:
             "log": log,
             "timestamp": datetime.now().isoformat(),
         })
-        
+
         # DEBUG: Log final state for document_storage
         if status == "document_storage" and actual_progress >= 35:
             safe_logfire_info(
@@ -148,17 +148,17 @@ class ProgressTracker:
         })
         # Keep only the last 200 log entries
         if len(self.state["logs"]) > 200:
-            self.state["logs"] = self.state["logs"][-200:]
+            self.state["logs"] = list(self.state["logs"][-200:])
 
         # Add any additional data (but don't allow overriding core fields)
         protected_fields = {"progress", "status", "log", "progress_id", "type", "start_time"}
-        for key, value in kwargs.items():
+        for key, value in dict(kwargs).items():
             if key not in protected_fields:
                 self.state[key] = value
-        
+
 
         self._update_state()
-        
+
         # Schedule cleanup for terminal states
         if status in ["cancelled", "failed"]:
             asyncio.create_task(self._delayed_cleanup(self.progress_id))
@@ -189,7 +189,7 @@ class ProgressTracker:
         safe_logfire_info(
             f"Progress completed | progress_id={self.progress_id} | type={self.operation_type} | duration={self.state.get('duration_formatted', 'unknown')}"
         )
-        
+
         # Schedule cleanup after delay to allow clients to see final state
         asyncio.create_task(self._delayed_cleanup(self.progress_id))
 
@@ -214,7 +214,7 @@ class ProgressTracker:
         safe_logfire_error(
             f"Progress error | progress_id={self.progress_id} | type={self.operation_type} | error={error_message}"
         )
-        
+
         # Schedule cleanup after delay to allow clients to see final state
         asyncio.create_task(self._delayed_cleanup(self.progress_id))
 
@@ -241,9 +241,9 @@ class ProgressTracker:
         )
 
     async def update_crawl_stats(
-        self, 
-        processed_pages: int, 
-        total_pages: int, 
+        self,
+        processed_pages: int,
+        total_pages: int,
         current_url: str | None = None,
         pages_found: int | None = None
     ):
@@ -269,16 +269,16 @@ class ProgressTracker:
             "total_pages": total_pages,
             "current_url": current_url,
         }
-        
+
         if pages_found is not None:
             update_data["pages_found"] = pages_found
-            
+
         await self.update(**update_data)
 
     async def update_storage_progress(
-        self, 
-        chunks_stored: int, 
-        total_chunks: int, 
+        self,
+        chunks_stored: int,
+        total_chunks: int,
         operation: str = "storing",
         word_count: int | None = None,
         embeddings_created: int | None = None
@@ -294,7 +294,7 @@ class ProgressTracker:
             embeddings_created: Number of embeddings created
         """
         progress_val = int((chunks_stored / max(total_chunks, 1)) * 100)
-        
+
         update_data = {
             "status": "document_storage",
             "progress": progress_val,
@@ -302,14 +302,14 @@ class ProgressTracker:
             "chunks_stored": chunks_stored,
             "total_chunks": total_chunks,
         }
-        
+
         if word_count is not None:
             update_data["word_count"] = word_count
         if embeddings_created is not None:
             update_data["embeddings_created"] = embeddings_created
-            
+
         await self.update(**update_data)
-    
+
     async def update_code_extraction_progress(
         self,
         completed_summaries: int,
@@ -319,7 +319,7 @@ class ProgressTracker:
     ):
         """
         Update code extraction progress with detailed metrics.
-        
+
         Args:
             completed_summaries: Number of code summaries completed
             total_summaries: Total code summaries to generate
@@ -327,20 +327,12 @@ class ProgressTracker:
             current_file: Current file being processed
         """
         progress_val = int((completed_summaries / max(total_summaries, 1)) * 100)
-        
+
         log = f"Extracting code: {completed_summaries}/{total_summaries} summaries"
         if current_file:
             log += f" - {current_file}"
-        
-        await self.update(
-            status="code_extraction",
-            progress=progress_val,
-            log=log,
-            completed_summaries=completed_summaries,
-            total_summaries=total_summaries,
-            code_blocks_found=code_blocks_found,
-            current_file=current_file
-        )
+
+        await self.update(status="code_extraction", progress=progress_val, log=log, completed_summaries=completed_summaries, total_summaries=total_summaries, code_blocks_found=code_blocks_found, current_file=current_file)
 
     def _update_state(self):
         """Update progress state in memory storage."""

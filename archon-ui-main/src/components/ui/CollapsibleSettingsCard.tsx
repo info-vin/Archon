@@ -3,16 +3,14 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { PowerButton } from './PowerButton';
 import { LucideIcon } from 'lucide-react';
 
-interface CollapsibleSettingsCardProps {
+export const CollapsibleSettingsCard: React.FC<{
   title: string;
   icon: LucideIcon;
   accentColor?: 'purple' | 'green' | 'pink' | 'blue' | 'cyan' | 'orange';
   children: React.ReactNode;
   defaultExpanded?: boolean;
   storageKey?: string;
-}
-
-export const CollapsibleSettingsCard: React.FC<CollapsibleSettingsCardProps> = ({
+}> = ({
   title,
   icon: Icon,
   accentColor = 'blue',

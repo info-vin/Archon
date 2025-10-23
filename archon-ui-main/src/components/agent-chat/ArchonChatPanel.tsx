@@ -52,16 +52,13 @@ export const ArchonChatPanel: React.FC<ArchonChatPanelProps> = props => {
         
         // Create a new chat session
         try {
-          console.log(`[CHAT PANEL] Creating session with agentType: "rag"`);
           const { session_id } = await agentChatService.createSession(undefined, 'rag');
-          console.log(`[CHAT PANEL] Session created with ID: ${session_id}`);
           setSessionId(session_id);
           sessionIdRef.current = session_id;
           
           // Load initial chat history
           try {
             const history = await agentChatService.getChatHistory(session_id);
-            console.log(`[CHAT PANEL] Loaded chat history:`, history);
             setMessages(history || []);
           } catch (error) {
             console.error('Failed to load chat history:', error);
@@ -124,7 +121,6 @@ export const ArchonChatPanel: React.FC<ArchonChatPanelProps> = props => {
   useEffect(() => {
     return () => {
       if (sessionIdRef.current) {
-        console.log('[CHAT PANEL] Component unmounting, cleaning up session:', sessionIdRef.current);
         // Stop streaming messages when component unmounts
         agentChatService.stopStreaming(sessionIdRef.current);
       }

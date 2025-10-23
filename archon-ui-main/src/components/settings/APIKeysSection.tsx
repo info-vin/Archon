@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Key, Plus, Trash2, Save, Lock, Unlock, Eye, EyeOff } from 'lucide-react';
 import { Input } from '../ui/Input';
 import { Button } from '../ui/Button';
@@ -30,7 +30,7 @@ export const APIKeysSection = () => {
   // Load credentials on mount
   useEffect(() => {
     loadCredentials();
-  }, []);
+  }, [loadCredentials]);
 
   // Track unsaved changes
   useEffect(() => {
@@ -38,7 +38,7 @@ export const APIKeysSection = () => {
     setHasUnsavedChanges(hasChanges);
   }, [customCredentials]);
 
-  const loadCredentials = async () => {
+  const loadCredentials = useCallback(async () => {
     try {
       setLoading(true);
       
@@ -76,7 +76,7 @@ export const APIKeysSection = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [showToast]);
 
   const handleAddNewRow = () => {
     const newCred: CustomCredential = {
@@ -94,7 +94,7 @@ export const APIKeysSection = () => {
     setCustomCredentials([...customCredentials, newCred]);
   };
 
-  const updateCredential = (index: number, field: keyof CustomCredential, value: any) => {
+  const updateCredential = (index: number, field: keyof CustomCredential, value: string | boolean) => {
     setCustomCredentials(customCredentials.map((cred, i) => {
       if (i === index) {
         const updated = { ...cred, [field]: value };

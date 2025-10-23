@@ -81,7 +81,7 @@ class BugReportService {
       // Try to get version from main health endpoint
       const response = await fetch('/api/system/version');
       if (response.ok) {
-        const data = await response.json();
+        const data: { version?: string } = await response.json();
         return data.version || 'v0.1.0';
       }
     } catch {
@@ -95,7 +95,12 @@ class BugReportService {
    */
   private getMemoryInfo(): string {
     try {
-      const memory = (performance as any).memory;
+      interface PerformanceWithMemory extends Performance {
+        memory?: {
+          usedJSHeapSize: number;
+        };
+      }
+      const memory = (performance as PerformanceWithMemory).memory;
       if (memory) {
         return `${Math.round(memory.usedJSHeapSize / 1024 / 1024)}MB used`;
       }

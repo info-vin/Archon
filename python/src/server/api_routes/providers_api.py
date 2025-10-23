@@ -9,6 +9,7 @@ from fastapi import APIRouter, HTTPException, Path
 
 from ..config.logfire_config import logfire
 from ..services.credential_service import credential_service
+
 # Provider validation - simplified inline version
 
 router = APIRouter(prefix="/api/providers", tags=["providers"])
@@ -151,4 +152,6 @@ async def get_provider_status(
         # Basic error sanitization for logging
         safe_error = str(e)[:100]  # Limit length
         logfire.error(f"Error testing {provider[:20]} connectivity: {safe_error}")
-        raise HTTPException(status_code=500, detail={"error": "Internal server error during connectivity test"})
+        raise HTTPException(
+            status_code=500, detail={"error": "Internal server error during connectivity test"}
+        ) from e

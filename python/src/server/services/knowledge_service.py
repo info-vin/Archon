@@ -12,12 +12,7 @@ class KnowledgeService:
         try:
             safe_logfire_info(f"Fetching code examples for source_id: {source_id}")
 
-            result = (
-                self.supabase.from_("archon_code_examples")
-                .select("id, source_id, content, summary, metadata")
-                .eq("source_id", source_id)
-                .execute()
-            )
+            result = self.supabase.from_("archon_code_examples").select("id, source_id, content, summary, metadata").eq("source_id", source_id).execute()
 
             code_examples = result.data if isinstance(result.data, list) else []
             safe_logfire_info(f"Found {len(code_examples)} code examples for {source_id}")

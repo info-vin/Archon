@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Loader,
   Settings,
@@ -34,7 +35,7 @@ import { UpdateBanner } from "../features/settings/version/components/UpdateBann
 import { VersionStatusCard } from "../features/settings/version/components/VersionStatusCard";
 import { MigrationStatusCard } from "../features/settings/migrations/components/MigrationStatusCard";
 
-export const SettingsPage = () => {
+export const SettingsPage = (): JSX.Element => {
   const [ragSettings, setRagSettings] = useState<RagSettings>({
     USE_CONTEXTUAL_EMBEDDINGS: false,
     CONTEXTUAL_EMBEDDINGS_MAX_WORKERS: 3,
@@ -70,11 +71,7 @@ export const SettingsPage = () => {
     useStaggeredEntrance([1, 2, 3, 4], 0.15);
 
   // Load settings on mount
-  useEffect(() => {
-    loadSettings();
-  }, []);
-
-  const loadSettings = async (isRetry = false) => {
+  const loadSettings = useCallback(async (isRetry = false): Promise<void> => {
     try {
       setLoading(true);
       setError(null);
@@ -94,7 +91,11 @@ export const SettingsPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [showToast]);
+
+  useEffect(() => {
+    loadSettings();
+  }, [loadSettings]);
 
   if (loading) {
     return (
