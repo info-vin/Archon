@@ -174,9 +174,20 @@ sequenceDiagram
 
         **C. 驗證流程**
 
-        - **7.4.3**: 執行 `make dev`，預期所有後端服務都將成功啟動。
-        - **7.4.4**: 執行 `cd enduser-ui-fe && pnpm run dev` 啟動前端。
-        - **7.4.5**: 根據本文件上方的核心工作流程圖，完成一次端對端手動測試。
+        此流程包含兩種驗證模式，以確保系統在不同環境下的穩定性。
+
+        - **模式一：混合模式驗證 (Hybrid Mode Verification)**
+            - **7.4.3**: 執行 `make dev`，預期所有後端服務都將成功啟動。
+            - **7.4.4**: 執行 `cd enduser-ui-fe && pnpm run dev` 啟動使用者介面前端。
+            - **7.4.5**: 根據本文件上方的核心工作流程圖，完成一次基本的端對端手動測試。
+
+        - **模式二：全 Docker 環境驗證 (Full Docker Verification)**
+            - **前置修復**: 為了能在全 Docker 環境下啟動 `archon-ui-main`，必須先解決其 `Dockerfile` 的工具鏈衝突問題。
+                - **問題**: `archon-ui-main/Dockerfile` 使用了過時的 `npm`，與專案 `pnpm` 標準衝突。
+                - **行動**: 需要修改 `archon-ui-main/Dockerfile`，將所有 `npm` 指令替換為 `pnpm`。
+            - **驗證步驟**:
+                - 依序執行 `make stop` 和 `make dev-docker`。
+                - **預期結果**: 所有服務 (包含 `archon-ui`) 容器皆能成功啟動，並可進行完整的端對端手動測試。
 
 **[ ] 8. 部署至 Render**
     - **目標**: 將功能完整的 `dev/v1` 分支部署到雲端。

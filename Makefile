@@ -68,10 +68,11 @@ dev: check
 # Full Docker development
 dev-docker: check
 	@echo "Starting full Docker environment..."
-	@$(COMPOSE) --profile full up -d --build
+	@$(COMPOSE) --profile backend --profile frontend --profile enduser --profile agents up -d --build
 	@echo "✓ All services running"
-	@echo "Frontend: http://localhost:3737"
-	@echo "API: http://localhost:8181"
+	@echo "Admin UI: http://localhost:3737"
+	@echo "End-User UI: http://localhost:5173"
+	@echo "API Server: http://localhost:8181"
 
 # Stop all services
 stop:

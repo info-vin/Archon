@@ -22,23 +22,47 @@
 
 ## 第二章：環境設定 (Environment Setup)
 
-### 2.1 本地開發環境啟動 SOP
+### 2.1 本地開發環境啟動 SOP (混合模式)
 
-**目標**: 在本地成功啟動一個完整、可用於端對端手動測試的開發環境。
+**目標**: 在本地成功啟動一個用於日常開發的混合模式環境。
 
 **核心架構**:
-本地開發環境由三個獨立運行的部分組成：
-- **核心後端 (Core Backend)**: `archon-server`, `archon-mcp` (Docker, Port `8181`/`8051`)
-- **管理後台 (Admin UI)**: `archon-ui-main` (本地 Vite, Port `3737`)
-- **使用者介面 (End-User UI)**: `enduser-ui-fe` (本地 Vite, Port `5173`)
+- **後端 (Backend)**: 在 Docker 中運行 (`archon-server`, `archon-mcp`, `archon-agents`)。
+- **前端 (Frontend)**: 在**本機**手動運行，以利用熱加載功能。
+    - `archon-ui-main` (管理後台) -> Port `3737`
+    - `enduser-ui-fe` (使用者介面) -> Port `5173`
 
 **執行步驟**:
-1.  **清理環境**: `make stop`
-2.  **安裝所有依賴**: `make install && make install-ui`
-3.  **啟動核心服務 (終端機 1)**: `make dev`
-4.  **啟動使用者介面 (終端機 2)**: `cd enduser-ui-fe && pnpm run dev`
 
-**最終驗證**: 當所有服務都成功啟動後，請在瀏覽器中打開使用者介面 `http://localhost:5173`，並根據 `TODO.md` 的指示，完成一次完整的端對端測試流程。
+1.  **清理環境 (若有需要)**:
+    ```bash
+    make stop
+    ```
+
+2.  **啟動後端服務 (終端機 1)**:
+    ```bash
+    make dev
+    ```
+    *(此指令只會啟動 Docker 中的後端服務)*
+
+3.  **啟動管理後台 (終端機 2)**:
+    ```bash
+    # 首次執行或依賴變更時，需先安裝依賴
+    make install-ui
+    # 啟動開發伺服器
+    cd archon-ui-main && pnpm run dev
+    ```
+
+4.  **啟動使用者介面 (終端機 3)**:
+    ```bash
+    # 首次執行或依賴變更時，需先安裝依賴
+    make install
+    # 啟動開發伺服器
+    cd enduser-ui-fe && pnpm run dev
+    ```
+
+**最終驗證**:
+當所有服務都成功啟動後，您可以在瀏覽器中分別打開 `http://localhost:3737` (管理後台) 和 `http://localhost:5173` (使用者介面)。
 
 ### 2.2 後端依賴與環境管理
 
