@@ -17,8 +17,6 @@ from typing import Any
 from pydantic import BaseModel, Field
 from pydantic_ai import Agent, RunContext
 
-from src.server.services.client_manager import get_supabase_client
-
 from .base_agent import ArchonDependencies, BaseAgent
 from .mcp_client import get_mcp_client
 
@@ -63,7 +61,7 @@ class DocumentAgent(BaseAgent[DocumentDependencies, DocumentOperation]):
     - Version control tracking
     """
 
-    def __init__(self, model: str = None, **kwargs):
+    def __init__(self, model: str = None, supabase_client: Any = None, **kwargs):
         # Use provided model or fall back to default
         if model is None:
             model = os.getenv("DOCUMENT_AGENT_MODEL", "openai:gpt-4o")
@@ -71,6 +69,7 @@ class DocumentAgent(BaseAgent[DocumentDependencies, DocumentOperation]):
         super().__init__(
             model=model, name="DocumentAgent", retries=3, enable_rate_limiting=True, **kwargs
         )
+        self.supabase_client = supabase_client
 
     def _create_agent(self, **kwargs) -> Agent:
         """Create the PydanticAI agent with tools and prompts."""
@@ -149,7 +148,10 @@ class DocumentAgent(BaseAgent[DocumentDependencies, DocumentOperation]):
                 if not ctx.deps.project_id:
                     return "No project is currently selected. Please specify a project or create one first to manage documents."
 
-                supabase = get_supabase_client()
+                if not self.supabase_client:
+                    logger.error("Supabase client not provided to DocumentAgent")
+                    return "Error: DocumentAgent not configured for database access."
+                supabase = self.supabase_client
                 response = (
                     supabase.table("archon_projects")
                     .select("docs")
@@ -180,7 +182,10 @@ class DocumentAgent(BaseAgent[DocumentDependencies, DocumentOperation]):
         async def get_document(ctx: RunContext[DocumentDependencies], document_title: str) -> str:
             """Get the content of a specific document by title."""
             try:
-                supabase = get_supabase_client()
+                if not self.supabase_client:
+                    logger.error("Supabase client not provided to DocumentAgent")
+                    return "Error: DocumentAgent not configured for database access."
+                supabase = self.supabase_client
                 response = (
                     supabase.table("archon_projects")
                     .select("docs")
