@@ -6,7 +6,7 @@ import { useTheme } from '../../contexts/ThemeContext';
 import { credentialsService } from '../../services/credentialsService';
 import { useToast } from '../../features/shared/hooks/useToast';
 import { serverHealthService } from '../../services/serverHealthService';
-import { useSettings } from '../../contexts/SettingsContext';
+import { useSettings } from '../../contexts/useSettings';
 
 export const FeaturesSection = () => {
   const {
