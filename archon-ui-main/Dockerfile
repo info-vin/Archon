@@ -6,11 +6,14 @@ WORKDIR /app
 # Install system dependencies needed for some npm packages
 RUN apk add --no-cache python3 make g++ git curl
 
+# Install pnpm
+RUN npm install -g pnpm
+
 # Copy package files
-COPY package*.json ./
+COPY package.json pnpm-lock.yaml ./
 
 # Install dependencies including dev dependencies for testing
-RUN npm ci
+RUN pnpm install
 
 # Create coverage directory with proper permissions
 RUN mkdir -p /app/coverage && chmod 777 /app/coverage
@@ -22,4 +25,4 @@ COPY . .
 EXPOSE 3737
 
 # Start Vite dev server (already configured with --port 3737 --host in package.json)
-CMD ["npm", "run", "dev"]
+CMD ["pnpm", "run", "dev"]

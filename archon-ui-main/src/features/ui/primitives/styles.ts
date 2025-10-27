@@ -5,7 +5,6 @@
  * Theme Support:
  * - All styles use Tailwind's dark: prefix for automatic theme switching
  * - Theme is managed by ThemeContext (light/dark)
- * - For runtime theme values, use useThemeAware hook
  */
 
 // Base glassmorphism classes with Tron aesthetic - TRUE GLASS EFFECT
