@@ -1,6 +1,6 @@
 import React from 'react';
 import { Moon, Sun } from 'lucide-react';
-import { useTheme } from '../../contexts/ThemeContext';
+import { useTheme } from '../../contexts/useTheme';
 interface ThemeToggleProps {
   accentColor?: 'purple' | 'green' | 'pink' | 'blue';
 }

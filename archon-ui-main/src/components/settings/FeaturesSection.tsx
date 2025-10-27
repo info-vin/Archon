@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Moon, Sun, FileText, Layout, Bot, Settings, Palette, Flame, Monitor } from 'lucide-react';
 import { Switch } from '@/features/ui/primitives/switch';
 import { Card } from '../ui/Card';
-import { useTheme } from '../../contexts/ThemeContext';
+import { useTheme } from '../../contexts/useTheme';
 import { credentialsService } from '../../services/credentialsService';
 import { useToast } from '../../features/shared/hooks/useToast';
 import { serverHealthService } from '../../services/serverHealthService';
