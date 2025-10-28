@@ -163,6 +163,11 @@ sequenceDiagram
 | **7.4.1 & 7.4.2 (後端)** | ✅ **已完成** | **單一事實**: `git show 6f79c43` 證實，後端 `archon-mcp` 和 `archon-agents` 的啟動失敗問題，早已在該 commit 中被修復。 |
 | **7.4 (前端 `archon-ui-main`)** | ✅ **已完成** | **單一事實**: 經過對 `git status`, `git diff`, `git log -p`, `search_file_content` 的反覆交叉比對，最終發現 `archon-ui-main` 的啟動失敗是由一個從未被使用的「殭屍檔案」(`useThemeAware.ts`) 及其錯誤的導入路徑所引起。**解決方案**: 將此無用檔案及其引用徹底從程式碼庫中刪除，從根源上解決問題，而非進行不必要的「局部修復」。 |
 
+    **[ ] 7.5: 全面路徑別名重構 (Comprehensive Path Alias Refactoring)**
+        - **目標**: 清償 `commit bb01f73` 遺留的技術債，將 `archon-ui-main` 中所有次優的相對路徑 (`../`) 導入，統一重構為 `@/` 別名路徑。
+        - **理由**: 這是確保程式碼架構一致性、可維護性，並從根本上杜絕未來因路徑問題導致的執行期錯誤的關鍵步驟，是部署到 Render 前的必要品質保證。
+        - **狀態**: `In Progress`
+
 **[ ] 8. 部署至 Render**
     - **目標**: 將功能完整的 `dev/v1` 分支部署到雲端。
     - **[ ] 8.1**: 在 Render 上為 `enduser-ui-fe` 建立新的服務。
