@@ -61,3 +61,9 @@ BEGIN
         (proj1_id, 'Fix authentication bug', 'Users are reporting intermittent login failures.', 'review', 'Alice Johnson', 3, '2024-09-04T10:00:00Z', '2024-09-08T10:00:00Z');
     END IF;
 END $$;
+
+-- Seed for archon_settings table
+INSERT INTO archon_settings (key, value, is_encrypted, category, description) VALUES
+('PROJECTS_ENABLED', 'true', false, 'features', 'Enable or disable Projects and Tasks functionality'),
+('STYLE_GUIDE_ENABLED', 'true', false, 'features', 'Show UI style guide and components in navigation')
+ON CONFLICT (key) DO NOTHING;
