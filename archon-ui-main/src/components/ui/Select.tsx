@@ -14,12 +14,7 @@ export const Select: React.FC<SelectProps> = ({
   className = '',
   ...props
 }) => {
-  const accentColorMap = {
-    purple: 'focus-within:border-purple-500 focus-within:shadow-[0_0_15px_rgba(168,85,247,0.5)]',
-    green: 'focus-within:border-emerald-500 focus-within:shadow-[0_0_15px_rgba(16,185,129,0.5)]',
-    pink: 'focus-within:border-pink-500 focus-within:shadow-[0_0_15px_rgba(236,72,153,0.5)]',
-    blue: 'focus-within:border-blue-500 focus-within:shadow-[0_0_15px_rgba(59,130,246,0.5)]'
-  };
+  import { accentColorMap } from '@/features/ui/primitives/accent-colors';
   return <div className="w-full">
       {label && <label className="block text-gray-600 dark:text-zinc-400 text-sm mb-1.5">
           {label}
