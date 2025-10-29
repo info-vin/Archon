@@ -1,4 +1,5 @@
 import React from 'react';
+import { accentColorMap } from '@/features/ui/primitives/accent-colors';
 import { Moon, Sun } from 'lucide-react';
 import { useTheme } from '../../contexts/useTheme';
 interface ThemeToggleProps {
@@ -14,7 +15,7 @@ export const ThemeToggle: React.FC<ThemeToggleProps> = ({
   const toggleTheme = () => {
     setTheme(theme === 'dark' ? 'light' : 'dark');
   };
-  import { accentColorMap } from '@/features/ui/primitives/accent-colors';
+ 
   return <button onClick={toggleTheme} className={`
         relative p-2 rounded-md backdrop-blur-md 
         bg-gradient-to-b ${accentColorMap[accentColor].bg}

@@ -69,6 +69,28 @@
 - **`uv.lock` 管理**: `python/uv.lock` **必須**被加入到 `.gitignore`。每位開發者應在本地生成，不應提交共享。
 - **依賴組安裝**: `Makefile` 中的 `make test-be` 和 `make lint-be` 會自動使用 `--group` 參數安裝 `test` 和 `dev` 的依賴，無需手動操作。
 
+### 2.3 全 Docker 環境手動驗證 SOP
+
+**原因**：此流程旨在提供一個最徹底、最乾淨的本地驗證方法，模擬生產環境，適用於偵錯複雜的啟動問題或驗證重大變更。它能完全排除舊容器、資料卷或建置快取的干擾，確保測試的準確性。
+
+**詳細步驟**：
+
+1.  **徹底清理 (Clean Slate)**：
+    *   **指令**：`make clean`
+    *   **說明**：此指令會徹底移除所有容器、網路和**資料卷**。執行時會出現 `(y/N)` 確認提示，請務必輸入 `y`。這是確保完全乾淨狀態的關鍵。
+
+2.  **驗證清理 (Verify Cleanup)**：
+    *   **指令**：`docker ps -a`
+    *   **說明**：執行此指令後，應看不到任何與本專案相關的容器，列表應為空。
+
+3.  **重新建置 (Rebuild)**：
+    *   **指令**：`docker compose --profile backend --profile frontend --profile enduser --profile agents build`
+    *   **說明**：此指令會根據最新的程式碼，為所有服務建立全新的 Docker 映像檔。
+
+4.  **前景啟動與觀察 (Foreground & Observe)**：
+    *   **指令**：`docker compose --profile backend --profile frontend --profile enduser --profile agents up`
+    *   **說明**：在前景啟動所有服務 (注意**沒有** `-d` 旗標)。所有服務的日誌將會即時輸出到目前的終端機，讓您可以直接觀察啟動順序和任何潛在的錯誤訊息。
+
 ---
 
 ## 第三章：測試指南 (Testing Guide)
@@ -109,9 +131,9 @@
 此流程的最終目標，是成功將一個穩定的 `feature/...` 分支部署到 **Render**。
 
 1.  **階段一：部署前本地檢查**
-    1.  同步最新程式碼: `git checkout <your-branch> && git pull`
-    2.  執行完整測試: `make test`
-    3.  執行 Lint 檢查: `make lint-be`
+    此步驟提供兩種流程選項：
+    *   **流程一 (快速檢查)**: 至少執行 `make test` 與 `make lint`。
+    *   **流程二 (完整驗證)**: 執行「[2.3 全 Docker 環境手動驗證 SOP](#23-全-docker-環境手動驗證-sop)」，以進行最徹底的檢查。
 
 2.  **階段二：資料庫遷移 (Database Migration) - v2 (Tracked)**
 

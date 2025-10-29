@@ -27,17 +27,6 @@ export const APIKeysSection = () => {
 
   const { showToast } = useToast();
 
-  // Load credentials on mount
-  useEffect(() => {
-    loadCredentials();
-  }, [loadCredentials]);
-
-  // Track unsaved changes
-  useEffect(() => {
-    const hasChanges = customCredentials.some(cred => cred.hasChanges || cred.isNew);
-    setHasUnsavedChanges(hasChanges);
-  }, [customCredentials]);
-
   const loadCredentials = useCallback(async () => {
     try {
       setLoading(true);
@@ -77,6 +66,17 @@ export const APIKeysSection = () => {
       setLoading(false);
     }
   }, [showToast]);
+
+  // Load credentials on mount
+  useEffect(() => {
+    loadCredentials();
+  }, [loadCredentials]);
+
+  // Track unsaved changes
+  useEffect(() => {
+    const hasChanges = customCredentials.some(cred => cred.hasChanges || cred.isNew);
+    setHasUnsavedChanges(hasChanges);
+  }, [customCredentials]);
 
   const handleAddNewRow = () => {
     const newCred: CustomCredential = {
@@ -305,11 +305,12 @@ export const APIKeysSection = () => {
                       disabled={cred.isFromBackend && cred.is_encrypted && cred.value === '[ENCRYPTED]'}
                       className={`
                         absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded transition-colors
-                        ${cred.isFromBackend && cred.is_encrypted && cred.value === '[ENCRYPTED]'
-                          ? 'cursor-not-allowed opacity-50 text-pink-400'
-                          : cred.is_encrypted 
-                            ? 'text-pink-600 dark:text-pink-400 hover:bg-pink-100 dark:hover:bg-pink-900/20' 
-                            : 'text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+                        ${
+                          cred.isFromBackend && cred.is_encrypted && cred.value === '[ENCRYPTED]'
+                            ? 'cursor-not-allowed opacity-50 text-pink-400'
+                            : cred.is_encrypted 
+                              ? 'text-pink-600 dark:text-pink-400 hover:bg-pink-100 dark:hover:bg-pink-900/20' 
+                              : 'text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
                         }
                       `}
                       title={

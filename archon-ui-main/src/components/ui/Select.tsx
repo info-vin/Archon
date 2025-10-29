@@ -1,4 +1,5 @@
 import React from 'react';
+import { accentColorMap } from '@/features/ui/primitives/accent-colors';
 interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
   accentColor?: 'purple' | 'green' | 'pink' | 'blue';
   label?: string;
@@ -14,7 +15,7 @@ export const Select: React.FC<SelectProps> = ({
   className = '',
   ...props
 }) => {
-  import { accentColorMap } from '@/features/ui/primitives/accent-colors';
+ 
   return <div className="w-full">
       {label && <label className="block text-gray-600 dark:text-zinc-400 text-sm mb-1.5">
           {label}
