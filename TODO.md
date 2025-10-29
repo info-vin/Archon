@@ -179,7 +179,7 @@ sequenceDiagram
     - **目標**: 將功能完整的 `dev/v1` 分支部署到雲端。
     - **[ ] 8.1**: 在 Render 上為 `enduser-ui-fe` 建立新的服務。
     - **[ ] 8.2**: 確保 Render 上所有服務 (`archon-server`, `archon-ui-main`, `enduser-ui-fe`) 的建置指令、環境變數都已根據新的架構更新。
-    - **[ ] 8.3**: **部署前驗證**: 在本地模擬生產環境建置 (`docker compose --profile full build`)，確認本次的 Dockerfile 修改不會影響生產環境的建置。
+    - **[ ] 8.3**: **部署前驗證**: 在本地模擬生產環境建置 (`docker compose --profile backend --profile frontend --profile enduser --profile agents build`)，確認本次的 Dockerfile 修改不會影響生產環境的建置。
     - **[ ] 8.4**: 將 `dev/v1` 推送至遠端，觸發部署。
 
 **[ ] 9. 最終驗證與慶祝**

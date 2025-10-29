@@ -2,7 +2,7 @@ import { BookOpen, Palette, Settings } from "lucide-react";
 import type React from "react";
 import { Link, useLocation } from "react-router-dom";
 // TEMPORARY: Use old SettingsContext until settings are migrated
-import { useSettings } from "../../contexts/SettingsContext";
+import { useSettings } from "@/contexts/useSettings";
 import { glassmorphism } from "../../features/ui/primitives/styles";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../../features/ui/primitives/tooltip";
 import { cn } from "../../lib/utils";

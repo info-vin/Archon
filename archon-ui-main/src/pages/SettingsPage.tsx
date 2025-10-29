@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useToast } from "../features/shared/hooks/useToast";
-import { useSettings } from "../contexts/SettingsContext";
+import { useSettings } from "@/contexts/useSettings";
 import { useStaggeredEntrance } from "../hooks/useStaggeredEntrance";
 import { FeaturesSection } from "../components/settings/FeaturesSection";
 import { APIKeysSection } from "../components/settings/APIKeysSection";

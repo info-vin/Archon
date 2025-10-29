@@ -77,7 +77,7 @@ dev-docker: check
 # Stop all services
 stop:
 	@echo "Stopping all services..."
-	@$(COMPOSE) --profile backend --profile frontend --profile full down
+	@$(COMPOSE) --profile backend --profile frontend --profile enduser --profile agents down
 	@echo "✓ Services stopped"
 
 # Run all tests
