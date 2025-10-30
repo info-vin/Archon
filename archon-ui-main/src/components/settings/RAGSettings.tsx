@@ -185,6 +185,19 @@ export const RAGSettings = ({
   const [showModelDiscoveryModal, setShowModelDiscoveryModal] = useState(false);
   const [showOllamaConfig, setShowOllamaConfig] = useState(false);
   
+  // Status tracking
+  const [llmStatus, setLLMStatus] = useState({ online: false, responseTime: null, checking: false });
+  const [embeddingStatus, setEmbeddingStatus] = useState({ online: false, responseTime: null, checking: false });
+
+  // API key credentials for status checking
+  const [apiCredentials, setApiCredentials] = useState<{[key: string]: boolean}>({});
+  // Provider connection status tracking
+  const [providerConnectionStatus, setProviderConnectionStatus] = useState<{
+    [key: string]: { connected: boolean; checking: boolean; lastChecked?: Date }
+  }>({});
+  const [ollamaServerStatus, setOllamaServerStatus] = useState<'unknown' | 'online' | 'offline'>('unknown');
+  const [ollamaManualConfirmed, setOllamaManualConfirmed] = useState(false);
+
   // Edit modals state
   const [showEditLLMModal, setShowEditLLMModal] = useState(false);
   const [showEditEmbeddingModal, setShowEditEmbeddingModal] = useState(false);
@@ -239,6 +252,180 @@ export const RAGSettings = ({
     llmOnline: false,
     embOnline: false
   });
+
+  const { showToast } = useToast();
+  const fetchOllamaMetrics = useCallback(async () => {
+    try {
+      setOllamaMetrics(prev => ({ ...prev, loading: true }));
+
+      // Prepare normalized instance URLs for the API call
+      const instanceUrls: string[] = [];
+      const llmUrlBase = normalizeBaseUrl(llmInstanceConfig.url);
+      const embUrlBase = normalizeBaseUrl(embeddingInstanceConfig.url);
+
+      if (llmUrlBase) instanceUrls.push(llmUrlBase);
+      if (embUrlBase && embUrlBase !== llmUrlBase) {
+        instanceUrls.push(embUrlBase);
+      }
+
+      if (instanceUrls.length === 0) {
+        setOllamaMetrics(prev => ({ ...prev, loading: false }));
+        return;
+      }
+
+      // Build query parameters
+      const params = new URLSearchParams();
+      instanceUrls.forEach(url => params.append('instance_urls', url));
+      params.append('include_capabilities', 'true');
+
+      // Fetch models from configured instances
+      const modelsResponse = await fetch(`/api/ollama/models?${params.toString()}`);
+      const modelsData = await modelsResponse.json();
+
+      if (modelsResponse.ok) {
+        // Extract models from the response
+        const allChatModels = modelsData.chat_models || [];
+        const allEmbeddingModels = modelsData.embedding_models || [];
+
+        // Count models for LLM instance
+        const llmChatModels = allChatModels.filter((model: { instance_url: string }) =>
+          normalizeBaseUrl(model.instance_url) === llmUrlBase
+        );
+        const llmEmbeddingModels = allEmbeddingModels.filter((model: { instance_url: string }) =>
+          normalizeBaseUrl(model.instance_url) === llmUrlBase
+        );
+
+        // Count models for Embedding instance
+        const embChatModels = allChatModels.filter((model: { instance_url: string }) =>
+          normalizeBaseUrl(model.instance_url) === embUrlBase
+        );
+        const embEmbeddingModels = allEmbeddingModels.filter((model: { instance_url: string }) =>
+          normalizeBaseUrl(model.instance_url) === embUrlBase
+        );
+
+        // Calculate totals
+        const totalModels = modelsData.total_models || 0;
+        const activeHosts = (llmStatus.online ? 1 : 0) + (embeddingStatus.online ? 1 : 0);
+
+        setOllamaMetrics({
+          totalModels: totalModels,
+          chatModels: allChatModels.length,
+          embeddingModels: allEmbeddingModels.length,
+          activeHosts,
+          loading: false,
+          // Per-instance model counts
+          llmInstanceModels: {
+            chat: llmChatModels.length,
+            embedding: llmEmbeddingModels.length,
+            total: llmChatModels.length + llmEmbeddingModels.length
+          },
+          embeddingInstanceModels: {
+            chat: embChatModels.length,
+            embedding: embEmbeddingModels.length,
+            total: embChatModels.length + embEmbeddingModels.length
+          }
+        });
+      } else {
+        // console.error('Failed to fetch models:', modelsData);
+        setOllamaMetrics(prev => ({ ...prev, loading: false }));
+      }
+    } catch (error) {
+      // console.error('Error fetching Ollama metrics:', error);
+      setOllamaMetrics(prev => ({ ...prev, loading: false }));
+    }
+  }, [embeddingInstanceConfig.url, llmInstanceConfig.url, llmStatus.online, embeddingStatus.online]);
+
+  // Manual test function with user feedback using backend proxy
+const manualTestConnection = useCallback(async (
+    url: string,
+    setStatus: React.Dispatch<React.SetStateAction<{ online: boolean; responseTime: number | null; checking: boolean }>>,
+    instanceName: string,
+    context?: 'chat' | 'embedding',
+    options?: { suppressToast?: boolean }
+  ): Promise<boolean> => {
+    const suppressToast = options?.suppressToast ?? false;
+    setStatus(prev => ({ ...prev, checking: true }));
+    const startTime = Date.now();
+
+    try {
+      // Strip /v1 suffix for backend health check (backend expects base Ollama URL)
+      const baseUrl = url.replace('/v1', '').replace(/\/$/, '');
+
+      // Use the backend health check endpoint to avoid CORS issues
+      const backendHealthUrl = `/api/ollama/instances/health?instance_urls=${encodeURIComponent(baseUrl)}&include_models=true`;
+
+      const response = await fetch(backendHealthUrl, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+        signal: AbortSignal.timeout(15000)
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const instanceStatus = data.instance_status?.[baseUrl];
+
+        if (instanceStatus?.is_healthy) {
+          const responseTime = Math.round(instanceStatus.response_time_ms || (Date.now() - startTime));
+          setStatus({ online: true, responseTime, checking: false });
+
+          // Context-aware model count display
+          let modelCount = instanceStatus.models_available || 0;
+          let modelType = 'models';
+
+          if (context === 'chat') {
+            modelCount = ollamaMetrics.llmInstanceModels?.chat || 0;
+            modelType = 'chat models';
+          } else if (context === 'embedding') {
+            modelCount = ollamaMetrics.embeddingInstanceModels?.embedding || 0;
+            modelType = 'embedding models';
+          }
+
+          if (!suppressToast) {
+            showToast(`${instanceName} connection successful: ${modelCount} ${modelType} available (${responseTime}ms)`, 'success');
+          }
+
+          // Scenario 2: Manual "Test Connection" button - refresh Ollama metrics if Ollama provider is selected
+          if (ragSettings.LLM_PROVIDER === 'ollama' || embeddingProvider === 'ollama' || context === 'embedding') {
+            // console.log('🔄 Fetching Ollama metrics - Test Connection button clicked');
+            fetchOllamaMetrics();
+          }
+
+          return true;
+        } else {
+          setStatus({ online: false, responseTime: null, checking: false });
+          if (!suppressToast) {
+            showToast(`${instanceName} connection failed: ${instanceStatus?.error_message || 'Instance is not healthy'}`, 'error');
+          }
+          return false;
+        }
+      } else {
+        setStatus({ online: false, responseTime: null, checking: false });
+        if (!suppressToast) {
+          showToast(`${instanceName} connection failed: Backend proxy error (HTTP ${response.status})`, 'error');
+        }
+        return false;
+      }
+    } catch (error) {
+      setStatus({ online: false, responseTime: null, checking: false });
+
+      if (!suppressToast) {
+        if (error instanceof Error) {
+          if (error.name === 'AbortError') {
+            showToast(`${instanceName} connection failed: Request timeout (>15s)`, 'error');
+          } else {
+            showToast(`${instanceName} connection failed: ${error.message || 'Unknown error'}`, 'error');
+          }
+        } else {
+          showToast(`${instanceName} connection failed: Unknown error`, 'error');
+        }
+      }
+
+      return false;
+    }
+  }, [embeddingProvider, fetchOllamaMetrics, ollamaMetrics.embeddingInstanceModels, ollamaMetrics.llmInstanceModels, ragSettings.LLM_PROVIDER, showToast]);
 
   useEffect(() => {
     const newLLMUrl = ragSettings.LLM_BASE_URL || '';
@@ -453,20 +640,6 @@ export const RAGSettings = ({
     updateEmbeddingRagSettingsRef.current = true;
   }, [embeddingProvider, ragSettings.EMBEDDING_PROVIDER, setRagSettings]);
 
-
-  // Status tracking
-  const [llmStatus, setLLMStatus] = useState({ online: false, responseTime: null, checking: false });
-  const [embeddingStatus, setEmbeddingStatus] = useState({ online: false, responseTime: null, checking: false });
-  
-  // API key credentials for status checking
-  const [apiCredentials, setApiCredentials] = useState<{[key: string]: boolean}>({});
-  // Provider connection status tracking
-  const [providerConnectionStatus, setProviderConnectionStatus] = useState<{
-    [key: string]: { connected: boolean; checking: boolean; lastChecked?: Date }
-  }>({});
-  const [ollamaServerStatus, setOllamaServerStatus] = useState<'unknown' | 'online' | 'offline'>('unknown');
-  const [ollamaManualConfirmed, setOllamaManualConfirmed] = useState(false);
-
   useEffect(() => {
     return () => {
       if (llmRetryTimeoutRef.current) {
@@ -579,236 +752,6 @@ export const RAGSettings = ({
     llmInstanceModels: { chat: 0, embedding: 0, total: 0 },
     embeddingInstanceModels: { chat: 0, embedding: 0, total: 0 }
   });
-  const { showToast } = useToast();
-
-  // Function to test connection status using backend proxy
-  const testConnection = async (url: string, setStatus: React.Dispatch<React.SetStateAction<{ online: boolean; responseTime: number | null; checking: boolean }>>) => {
-    setStatus(prev => ({ ...prev, checking: true }));
-    const startTime = Date.now();
-    
-    try {
-      // Strip /v1 suffix for backend health check (backend expects base Ollama URL)
-      const baseUrl = url.replace('/v1', '').replace(/\/$/, '');
-      
-      // Use the backend health check endpoint to avoid CORS issues
-      const backendHealthUrl = `/api/ollama/instances/health?instance_urls=${encodeURIComponent(baseUrl)}&include_models=true`;
-      
-      const response = await fetch(backendHealthUrl, {
-        method: 'GET',
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-        },
-        signal: AbortSignal.timeout(15000)
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        const instanceStatus = data.instance_status?.[baseUrl];
-        
-        if (instanceStatus?.is_healthy) {
-          const responseTime = Math.round(instanceStatus.response_time_ms || (Date.now() - startTime));
-          setStatus({ online: true, responseTime, checking: false });
-          // console.log(`✅ ${url} online: ${responseTime}ms (${instanceStatus.models_available || 0} models)`);
-        } else {
-          setStatus({ online: false, responseTime: null, checking: false });
-          // console.log(`❌ ${url} unhealthy: ${instanceStatus?.error_message || 'No status available'}`);
-        }
-      } else {
-        throw new Error(`Backend health check failed: HTTP ${response.status}`);
-      }
-      
-    } catch (error) {
-      const responseTime = Date.now() - startTime;
-      setStatus({ online: false, responseTime, checking: false });
-      
-      let errorMessage = 'Connection failed';
-      if (error instanceof Error) {
-        if (error.name === 'AbortError') {
-          errorMessage = 'Request timeout (>15s)';
-        } else if (error.message.includes('Backend health check failed')) {
-          errorMessage = 'Backend proxy error';
-        } else {
-          errorMessage = error.message || 'Unknown error';
-        }
-      }
-      
-      // console.log(`❌ ${url} failed: ${errorMessage} (${responseTime}ms)`);
-    }
-  };
-
-  const fetchOllamaMetrics = useCallback(async () => {
-    try {
-      setOllamaMetrics(prev => ({ ...prev, loading: true }));
-
-      // Prepare normalized instance URLs for the API call
-      const instanceUrls: string[] = [];
-      const llmUrlBase = normalizeBaseUrl(llmInstanceConfig.url);
-      const embUrlBase = normalizeBaseUrl(embeddingInstanceConfig.url);
-
-      if (llmUrlBase) instanceUrls.push(llmUrlBase);
-      if (embUrlBase && embUrlBase !== llmUrlBase) {
-        instanceUrls.push(embUrlBase);
-      }
-
-      if (instanceUrls.length === 0) {
-        setOllamaMetrics(prev => ({ ...prev, loading: false }));
-        return;
-      }
-
-      // Build query parameters
-      const params = new URLSearchParams();
-      instanceUrls.forEach(url => params.append('instance_urls', url));
-      params.append('include_capabilities', 'true');
-
-      // Fetch models from configured instances
-      const modelsResponse = await fetch(`/api/ollama/models?${params.toString()}`);
-      const modelsData = await modelsResponse.json();
-
-      if (modelsResponse.ok) {
-        // Extract models from the response
-        const allChatModels = modelsData.chat_models || [];
-        const allEmbeddingModels = modelsData.embedding_models || [];
-
-        // Count models for LLM instance
-        const llmChatModels = allChatModels.filter((model: { instance_url: string }) =>
-          normalizeBaseUrl(model.instance_url) === llmUrlBase
-        );
-        const llmEmbeddingModels = allEmbeddingModels.filter((model: { instance_url: string }) =>
-          normalizeBaseUrl(model.instance_url) === llmUrlBase
-        );
-
-        // Count models for Embedding instance
-        const embChatModels = allChatModels.filter((model: { instance_url: string }) =>
-          normalizeBaseUrl(model.instance_url) === embUrlBase
-        );
-        const embEmbeddingModels = allEmbeddingModels.filter((model: { instance_url: string }) =>
-          normalizeBaseUrl(model.instance_url) === embUrlBase
-        );
-
-        // Calculate totals
-        const totalModels = modelsData.total_models || 0;
-        const activeHosts = (llmStatus.online ? 1 : 0) + (embeddingStatus.online ? 1 : 0);
-
-        setOllamaMetrics({
-          totalModels: totalModels,
-          chatModels: allChatModels.length,
-          embeddingModels: allEmbeddingModels.length,
-          activeHosts,
-          loading: false,
-          // Per-instance model counts
-          llmInstanceModels: {
-            chat: llmChatModels.length,
-            embedding: llmEmbeddingModels.length,
-            total: llmChatModels.length + llmEmbeddingModels.length
-          },
-          embeddingInstanceModels: {
-            chat: embChatModels.length,
-            embedding: embEmbeddingModels.length,
-            total: embChatModels.length + embEmbeddingModels.length
-          }
-        });
-      } else {
-        // console.error('Failed to fetch models:', modelsData);
-        setOllamaMetrics(prev => ({ ...prev, loading: false }));
-      }
-    } catch (error) {
-      // console.error('Error fetching Ollama metrics:', error);
-      setOllamaMetrics(prev => ({ ...prev, loading: false }));
-    }
-  }, [embeddingInstanceConfig.url, llmInstanceConfig.url, llmStatus.online, embeddingStatus.online]);
-
-  // Manual test function with user feedback using backend proxy
-const manualTestConnection = useCallback(async (
-    url: string,
-    setStatus: React.Dispatch<React.SetStateAction<{ online: boolean; responseTime: number | null; checking: boolean }>>,
-    instanceName: string,
-    context?: 'chat' | 'embedding',
-    options?: { suppressToast?: boolean }
-  ): Promise<boolean> => {
-    const suppressToast = options?.suppressToast ?? false;
-    setStatus(prev => ({ ...prev, checking: true }));
-    const startTime = Date.now();
-    
-    try {
-      // Strip /v1 suffix for backend health check (backend expects base Ollama URL)
-      const baseUrl = url.replace('/v1', '').replace(/\/$/, '');
-      
-      // Use the backend health check endpoint to avoid CORS issues
-      const backendHealthUrl = `/api/ollama/instances/health?instance_urls=${encodeURIComponent(baseUrl)}&include_models=true`;
-      
-      const response = await fetch(backendHealthUrl, {
-        method: 'GET',
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-        },
-        signal: AbortSignal.timeout(15000)
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        const instanceStatus = data.instance_status?.[baseUrl];
-        
-        if (instanceStatus?.is_healthy) {
-          const responseTime = Math.round(instanceStatus.response_time_ms || (Date.now() - startTime));
-          setStatus({ online: true, responseTime, checking: false });
-
-          // Context-aware model count display
-          let modelCount = instanceStatus.models_available || 0;
-          let modelType = 'models';
-
-          if (context === 'chat') {
-            modelCount = ollamaMetrics.llmInstanceModels?.chat || 0;
-            modelType = 'chat models';
-          } else if (context === 'embedding') {
-            modelCount = ollamaMetrics.embeddingInstanceModels?.embedding || 0;
-            modelType = 'embedding models';
-          }
-
-          if (!suppressToast) {
-            showToast(`${instanceName} connection successful: ${modelCount} ${modelType} available (${responseTime}ms)`, 'success');
-          }
-
-          // Scenario 2: Manual "Test Connection" button - refresh Ollama metrics if Ollama provider is selected
-          if (ragSettings.LLM_PROVIDER === 'ollama' || embeddingProvider === 'ollama' || context === 'embedding') {
-            // console.log('🔄 Fetching Ollama metrics - Test Connection button clicked');
-            fetchOllamaMetrics();
-          }
-
-          return true;
-        } else {
-          setStatus({ online: false, responseTime: null, checking: false });
-          if (!suppressToast) {
-            showToast(`${instanceName} connection failed: ${instanceStatus?.error_message || 'Instance is not healthy'}`, 'error');
-          }
-          return false;
-        }
-      } else {
-        setStatus({ online: false, responseTime: null, checking: false });
-        if (!suppressToast) {
-          showToast(`${instanceName} connection failed: Backend proxy error (HTTP ${response.status})`, 'error');
-        }
-        return false;
-      }
-    } catch (error) {
-      setStatus({ online: false, responseTime: null, checking: false });
-
-      if (!suppressToast) {
-        if (error instanceof Error) {
-          if (error.name === 'AbortError') {
-            showToast(`${instanceName} connection failed: Request timeout (>15s)`, 'error');
-          } else {
-            showToast(`${instanceName} connection failed: ${error.message || 'Unknown error'}`, 'error');
-          }
-        } else {
-          showToast(`${instanceName} connection failed: Unknown error`, 'error');
-        }
-      }
-
-      return false;
-    }
-  }, [embeddingProvider, fetchOllamaMetrics, ollamaMetrics.embeddingInstanceModels, ollamaMetrics.llmInstanceModels, ragSettings.LLM_PROVIDER, showToast]);
 
   // Function to handle LLM instance deletion
   const handleDeleteLLMInstance = () => {
