@@ -216,11 +216,30 @@ export const RAGSettings = ({
     url: ragSettings.OLLAMA_EMBEDDING_URL || 'http://host.docker.internal:11434/v1'
   });
 
-  // Update instance configs when ragSettings change (after loading from database)
-  // Use refs to prevent infinite loops
+  // --- Refs for managing component state and side effects ---
+  // Refs to prevent infinite loops in useEffect hooks when syncing with ragSettings
   const lastLLMConfigRef = useRef({ url: '', name: '' });
   const lastEmbeddingConfigRef = useRef({ url: '', name: '' });
-  
+  // Ref to track if the initial credential load has completed
+  const hasLoadedCredentialsRef = useRef(false);
+  // Refs to manage effect re-runs for provider changes
+  const updateChatRagSettingsRef = useRef(true);
+  const updateEmbeddingRagSettingsRef = useRef(true);
+  // Refs for managing polling timeouts for Ollama connection tests
+  const llmRetryTimeoutRef = useRef<number | null>(null);
+  const embeddingRetryTimeoutRef = useRef<number | null>(null);
+  // Ref to track whether the initial on-load connection test has been performed
+  const hasRunInitialTestRef = useRef(false);
+  // Ref to track the last state that triggered a metrics fetch, preventing redundant calls
+  const lastMetricsFetchRef = useRef({
+    provider: '',
+    embProvider: '',
+    llmUrl: '',
+    embUrl: '',
+    llmOnline: false,
+    embOnline: false
+  });
+
   useEffect(() => {
     const newLLMUrl = ragSettings.LLM_BASE_URL || '';
     const newLLMName = ragSettings.LLM_INSTANCE_NAME || '';
@@ -295,8 +314,6 @@ export const RAGSettings = ({
       });
     }
   }, [ragSettings.EMBEDDING_MODEL, embeddingProvider, ragSettings]);
-
-  const hasLoadedCredentialsRef = useRef(false);
 
   const reloadApiCredentials = useCallback(async () => {
     try {
@@ -413,8 +430,6 @@ export const RAGSettings = ({
 
   // Update ragSettings when independent providers change (one-way: local state -> ragSettings)
   // Split the “first‐run” guard into two refs so chat and embedding effects don’t interfere.
-  const updateChatRagSettingsRef = useRef(true);
-  const updateEmbeddingRagSettingsRef = useRef(true);
 
   useEffect(() => {
     // Only update if this is a user‐initiated change, not a sync from ragSettings
@@ -442,8 +457,6 @@ export const RAGSettings = ({
   // Status tracking
   const [llmStatus, setLLMStatus] = useState({ online: false, responseTime: null, checking: false });
   const [embeddingStatus, setEmbeddingStatus] = useState({ online: false, responseTime: null, checking: false });
-  const llmRetryTimeoutRef = useRef<number | null>(null);
-  const embeddingRetryTimeoutRef = useRef<number | null>(null);
   
   // API key credentials for status checking
   const [apiCredentials, setApiCredentials] = useState<{[key: string]: boolean}>({});
@@ -555,9 +568,6 @@ export const RAGSettings = ({
     };
   }, [reloadApiCredentials, testProviderConnection]);
 
-  // Ref to track if initial test has been run (will be used after function definitions)
-  const hasRunInitialTestRef = useRef(false);
-  
   // Ollama metrics state
   const [ollamaMetrics, setOllamaMetrics] = useState({
     totalModels: 0,
