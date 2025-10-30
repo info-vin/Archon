@@ -627,6 +627,87 @@ export const RAGSettings = ({
     }
   };
 
+  const fetchOllamaMetrics = useCallback(async () => {
+    try {
+      setOllamaMetrics(prev => ({ ...prev, loading: true }));
+
+      // Prepare normalized instance URLs for the API call
+      const instanceUrls: string[] = [];
+      const llmUrlBase = normalizeBaseUrl(llmInstanceConfig.url);
+      const embUrlBase = normalizeBaseUrl(embeddingInstanceConfig.url);
+
+      if (llmUrlBase) instanceUrls.push(llmUrlBase);
+      if (embUrlBase && embUrlBase !== llmUrlBase) {
+        instanceUrls.push(embUrlBase);
+      }
+
+      if (instanceUrls.length === 0) {
+        setOllamaMetrics(prev => ({ ...prev, loading: false }));
+        return;
+      }
+
+      // Build query parameters
+      const params = new URLSearchParams();
+      instanceUrls.forEach(url => params.append('instance_urls', url));
+      params.append('include_capabilities', 'true');
+
+      // Fetch models from configured instances
+      const modelsResponse = await fetch(`/api/ollama/models?${params.toString()}`);
+      const modelsData = await modelsResponse.json();
+
+      if (modelsResponse.ok) {
+        // Extract models from the response
+        const allChatModels = modelsData.chat_models || [];
+        const allEmbeddingModels = modelsData.embedding_models || [];
+
+        // Count models for LLM instance
+        const llmChatModels = allChatModels.filter((model: { instance_url: string }) =>
+          normalizeBaseUrl(model.instance_url) === llmUrlBase
+        );
+        const llmEmbeddingModels = allEmbeddingModels.filter((model: { instance_url: string }) =>
+          normalizeBaseUrl(model.instance_url) === llmUrlBase
+        );
+
+        // Count models for Embedding instance
+        const embChatModels = allChatModels.filter((model: { instance_url: string }) =>
+          normalizeBaseUrl(model.instance_url) === embUrlBase
+        );
+        const embEmbeddingModels = allEmbeddingModels.filter((model: { instance_url: string }) =>
+          normalizeBaseUrl(model.instance_url) === embUrlBase
+        );
+
+        // Calculate totals
+        const totalModels = modelsData.total_models || 0;
+        const activeHosts = (llmStatus.online ? 1 : 0) + (embeddingStatus.online ? 1 : 0);
+
+        setOllamaMetrics({
+          totalModels: totalModels,
+          chatModels: allChatModels.length,
+          embeddingModels: allEmbeddingModels.length,
+          activeHosts,
+          loading: false,
+          // Per-instance model counts
+          llmInstanceModels: {
+            chat: llmChatModels.length,
+            embedding: llmEmbeddingModels.length,
+            total: llmChatModels.length + llmEmbeddingModels.length
+          },
+          embeddingInstanceModels: {
+            chat: embChatModels.length,
+            embedding: embEmbeddingModels.length,
+            total: embChatModels.length + embEmbeddingModels.length
+          }
+        });
+      } else {
+        // console.error('Failed to fetch models:', modelsData);
+        setOllamaMetrics(prev => ({ ...prev, loading: false }));
+      }
+    } catch (error) {
+      // console.error('Error fetching Ollama metrics:', error);
+      setOllamaMetrics(prev => ({ ...prev, loading: false }));
+    }
+  }, [embeddingInstanceConfig.url, llmInstanceConfig.url, llmStatus.online, embeddingStatus.online]);
+
   // Manual test function with user feedback using backend proxy
 const manualTestConnection = useCallback(async (
     url: string,
@@ -762,87 +843,6 @@ const manualTestConnection = useCallback(async (
       showToast('Embedding instance configuration deleted', 'success');
     // }
   };
-
-  const fetchOllamaMetrics = useCallback(async () => {
-    try {
-      setOllamaMetrics(prev => ({ ...prev, loading: true }));
-
-      // Prepare normalized instance URLs for the API call
-      const instanceUrls: string[] = [];
-      const llmUrlBase = normalizeBaseUrl(llmInstanceConfig.url);
-      const embUrlBase = normalizeBaseUrl(embeddingInstanceConfig.url);
-
-      if (llmUrlBase) instanceUrls.push(llmUrlBase);
-      if (embUrlBase && embUrlBase !== llmUrlBase) {
-        instanceUrls.push(embUrlBase);
-      }
-
-      if (instanceUrls.length === 0) {
-        setOllamaMetrics(prev => ({ ...prev, loading: false }));
-        return;
-      }
-
-      // Build query parameters
-      const params = new URLSearchParams();
-      instanceUrls.forEach(url => params.append('instance_urls', url));
-      params.append('include_capabilities', 'true');
-
-      // Fetch models from configured instances
-      const modelsResponse = await fetch(`/api/ollama/models?${params.toString()}`);
-      const modelsData = await modelsResponse.json();
-
-      if (modelsResponse.ok) {
-        // Extract models from the response
-        const allChatModels = modelsData.chat_models || [];
-        const allEmbeddingModels = modelsData.embedding_models || [];
-        
-        // Count models for LLM instance
-        const llmChatModels = allChatModels.filter((model: { instance_url: string }) =>
-          normalizeBaseUrl(model.instance_url) === llmUrlBase
-        );
-        const llmEmbeddingModels = allEmbeddingModels.filter((model: { instance_url: string }) =>
-          normalizeBaseUrl(model.instance_url) === llmUrlBase
-        );
-
-        // Count models for Embedding instance
-        const embChatModels = allChatModels.filter((model: { instance_url: string }) =>
-          normalizeBaseUrl(model.instance_url) === embUrlBase
-        );
-        const embEmbeddingModels = allEmbeddingModels.filter((model: { instance_url: string }) =>
-          normalizeBaseUrl(model.instance_url) === embUrlBase
-        );
-        
-        // Calculate totals
-        const totalModels = modelsData.total_models || 0;
-        const activeHosts = (llmStatus.online ? 1 : 0) + (embeddingStatus.online ? 1 : 0);
-
-        setOllamaMetrics({
-          totalModels: totalModels,
-          chatModels: allChatModels.length,
-          embeddingModels: allEmbeddingModels.length,
-          activeHosts,
-          loading: false,
-          // Per-instance model counts
-          llmInstanceModels: {
-            chat: llmChatModels.length,
-            embedding: llmEmbeddingModels.length,
-            total: llmChatModels.length + llmEmbeddingModels.length
-          },
-          embeddingInstanceModels: {
-            chat: embChatModels.length,
-            embedding: embEmbeddingModels.length,
-            total: embChatModels.length + embEmbeddingModels.length
-          }
-        });
-      } else {
-        // console.error('Failed to fetch models:', modelsData);
-        setOllamaMetrics(prev => ({ ...prev, loading: false }));
-      }
-    } catch (error) {
-      // console.error('Error fetching Ollama metrics:', error);
-      setOllamaMetrics(prev => ({ ...prev, loading: false }));
-    }
-  }, [embeddingInstanceConfig.url, llmInstanceConfig.url, llmStatus.online, embeddingStatus.online]);
 
   React.useEffect(() => {
     const current = {
