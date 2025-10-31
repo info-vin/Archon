@@ -253,7 +253,19 @@ export const RAGSettings = ({
     embOnline: false
   });
 
+  const [ollamaMetrics, setOllamaMetrics] = useState({
+    totalModels: 0,
+    chatModels: 0,
+    embeddingModels: 0,
+    activeHosts: 0,
+    loading: true,
+    // Per-instance model counts
+    llmInstanceModels: { chat: 0, embedding: 0, total: 0 },
+    embeddingInstanceModels: { chat: 0, embedding: 0, total: 0 }
+  });
+
   const { showToast } = useToast();
+
   const fetchOllamaMetrics = useCallback(async () => {
     try {
       setOllamaMetrics(prev => ({ ...prev, loading: true }));
@@ -741,17 +753,7 @@ const manualTestConnection = useCallback(async (
     };
   }, [reloadApiCredentials, testProviderConnection]);
 
-  // Ollama metrics state
-  const [ollamaMetrics, setOllamaMetrics] = useState({
-    totalModels: 0,
-    chatModels: 0,
-    embeddingModels: 0,
-    activeHosts: 0,
-    loading: true,
-    // Per-instance model counts
-    llmInstanceModels: { chat: 0, embedding: 0, total: 0 },
-    embeddingInstanceModels: { chat: 0, embedding: 0, total: 0 }
-  });
+
 
   // Function to handle LLM instance deletion
   const handleDeleteLLMInstance = () => {
