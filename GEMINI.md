@@ -272,7 +272,7 @@
 - **衍生的次要問題與學習**:
     - **`make test` 的警告**: 我釐清了測試輸出中的 `stderr` 警告，是來自於「錯誤處理測試」中預期內的 `console.error`，並非真的測試失敗。
     - **`pnpm install` 的錯誤**: 我為自己給出了在根目錄執行 `pnpm install` 的模糊指令而道歉，並修正為應遵循 `Makefile` (`make install`, `make install-ui`) 作為指令的唯一事實來源。
-    - **UI 警告「Projects table not detected」**: 在解決部署問題後，UI 依然顯示資料表不存在的警告。我透過比對前端 `FeaturesSection.tsx` 的程式碼（它期望 `schema.valid` 欄位）和後端 `/health` API 的實際回應（它只提供 `modules` 陣列），診斷出這是前後端**數據規格不一致**的問題，而非資料庫問題。最終透過修改前端的判斷邏輯，使其符合後端 API 的新規格，成功解決了這個有誤導性的警告。
+    - **UI 警告「Projects table not detected」與 500 錯誤的真正根源 (2025-10-31 新增)**: 今天我們發現，除了上述的數據規格不一致問題，`FeaturesSection.tsx` 還呼叫了一個錯誤的 API 端點 `/api/projects/health`。後端沒有這個路由，而是將其錯誤地匹配到 `/api/projects/{project_id}`，並把 `"health"` 當作 `project_id` 傳入。這導致資料庫在查詢 UUID 型別的 `id` 欄位時，因無法轉換字串 `"health"` 而拋出 `invalid input syntax for type uuid` 錯誤，最終引發了 500 Internal Server Error。這解釋了為何 UI 會顯示「Unable to verify projects schema」。
 
 - **關鍵學習**:
     1.  **信任證據，但要質疑假設**: 當所有證據都指向「應該要成功」但事實卻是失敗時，必須開始質疑那些看不見的假設，例如「設定是即時生效的」。
