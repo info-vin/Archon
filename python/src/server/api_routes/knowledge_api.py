@@ -192,7 +192,7 @@ async def get_knowledge_sources():
         raise HTTPException(status_code=500, detail={"error": str(e)}) from e
 
 
-@router.get("/knowledge-items")
+@router.get("/knowledge-items/summary")
 async def get_knowledge_items(
     page: int = 1,
     per_page: int = 10,
