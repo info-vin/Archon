@@ -109,7 +109,7 @@ async def get_mcp_config():
 
             # Configuration for streamable-http mode with actual port
             config = {
-                "host": os.getenv("ARCHON_HOST", "localhost"),
+                "host": "localhost",
                 "port": mcp_port,
                 "transport": "streamable-http",
             }

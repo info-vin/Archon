@@ -9,16 +9,13 @@ Handles:
 """
 
 import json
-from datetime import UTC, datetime
-from email.utils import format_datetime
+from datetime import datetime
 from typing import Any
 
 from fastapi import APIRouter, Header, HTTPException, Request, Response
 from fastapi import status as http_status
 from pydantic import BaseModel
 
-# Removed direct logging import - using unified config
-# Set up standard logger for background tasks
 from ..config.logfire_config import get_logger, logfire
 from ..services import ProfileService
 from ..services.projects import (
@@ -34,6 +31,7 @@ from ..utils import get_supabase_client
 from ..utils.etag_utils import check_etag, generate_etag
 
 logger = get_logger(__name__)
+
 
 # Using HTTP polling for real-time updates
 
@@ -72,22 +70,6 @@ class CreateTaskRequest(BaseModel):
     assignee: str | None = "User"
     task_order: int | None = 0
     feature: str | None = None
-    due_date: datetime | None = None
-
-
-class Attachment(BaseModel):
-    filename: str
-    url: str
-
-
-class UpdateTaskRequest(BaseModel):
-    title: str | None = None
-    description: str | None = None
-    status: str | None = None
-    assignee: str | None = None
-    task_order: int | None = None
-    feature: str | None = None
-    attachments: list[Attachment] | None = None
     due_date: datetime | None = None
 
 
@@ -274,11 +256,6 @@ async def create_project(request: CreateProjectRequest):
         raise HTTPException(status_code=500, detail={"error": str(e)}) from e
 
 
-
-
-
-
-
 @router.get("/projects/task-counts")
 async def get_all_task_counts(
     request: Request,
@@ -287,7 +264,6 @@ async def get_all_task_counts(
     """
     Get task counts for all projects in a single batch query.
     Optimized endpoint to avoid N+1 query problem.
-
     Returns counts grouped by project_id with todo, doing, and done counts.
     Review status is included in doing count to match frontend logic.
     """
@@ -584,45 +560,19 @@ async def list_project_tasks(
 
         tasks = result.get("tasks", [])
 
-        # Generate ETag from task data (includes description and updated_at to drive polling invalidation)
-        etag_tasks: list[dict[str, object]] = []
-        last_modified_dt: datetime | None = None
-
-        for task in tasks:
-            raw_updated = task.get("updated_at")
-            parsed_updated: datetime | None = None
-            if isinstance(raw_updated, datetime):
-                parsed_updated = raw_updated
-            elif isinstance(raw_updated, str):
-                try:
-                    parsed_updated = datetime.fromisoformat(raw_updated.replace("Z", "+00:00"))
-                except ValueError:
-                    parsed_updated = None
-
-            if parsed_updated is not None:
-                parsed_updated = parsed_updated.astimezone(UTC)
-                if last_modified_dt is None or parsed_updated > last_modified_dt:
-                    last_modified_dt = parsed_updated
-
-            etag_tasks.append(
-                {
-                    "id": task.get("id") or "",
-                    "title": task.get("title") or "",
-                    "status": task.get("status") or "",
-                    "task_order": task.get("task_order") or 0,
-                    "assignee": task.get("assignee") or "",
-                    "priority": task.get("priority") or "",
-                    "feature": task.get("feature") or "",
-                    "description": task.get("description") or "",
-                    "updated_at": (
-                        parsed_updated.isoformat()
-                        if parsed_updated is not None
-                        else (str(raw_updated) if raw_updated else "")
-                    ),
-                }
-            )
-
-        etag_data = {"tasks": etag_tasks, "project_id": project_id, "count": len(tasks)}
+        # Generate ETag from task data (excluding timestamps for consistency)
+        etag_data = {
+            "tasks": [{
+                "id": task.get("id"),
+                "title": task.get("title"),
+                "status": task.get("status"),
+                "task_order": task.get("task_order"),
+                "assignee": task.get("assignee"),
+                "feature": task.get("feature")
+            } for task in tasks],
+            "project_id": project_id,
+            "count": len(tasks)
+        }
         current_etag = generate_etag(etag_data)
 
         # Check if client's ETag matches (304 Not Modified)
@@ -630,18 +580,14 @@ async def list_project_tasks(
             response.status_code = 304
             response.headers["ETag"] = current_etag
             response.headers["Cache-Control"] = "no-cache, must-revalidate"
-            response.headers["Last-Modified"] = format_datetime(
-                last_modified_dt or datetime.now(UTC)
-            )
+            response.headers["Last-Modified"] = datetime.utcnow().isoformat()
             logfire.debug(f"Tasks unchanged, returning 304 | project_id={project_id} | etag={current_etag}")
             return None
 
         # Set ETag headers for successful response
         response.headers["ETag"] = current_etag
         response.headers["Cache-Control"] = "no-cache, must-revalidate"
-        response.headers["Last-Modified"] = format_datetime(
-            last_modified_dt or datetime.now(UTC)
-        )
+        response.headers["Last-Modified"] = datetime.utcnow().isoformat()
 
         logfire.debug(
             f"Project tasks retrieved | project_id={project_id} | task_count={len(tasks)} | etag={current_etag}"
@@ -652,7 +598,7 @@ async def list_project_tasks(
     except HTTPException:
         raise
     except Exception as e:
-        logfire.error(f"Failed to list project tasks | project_id={project_id}", exc_info=True)
+        logfire.error(f"Failed to list project tasks | error={str(e)} | project_id={project_id}")
         raise HTTPException(status_code=500, detail={"error": str(e)}) from e
 
 
@@ -720,16 +666,15 @@ async def create_task(request: CreateTaskRequest, x_user_role: str | None = Head
 async def list_tasks(
     status: str | None = None,
     project_id: str | None = None,
-    include_closed: bool = True,
+    include_closed: bool = False,
     page: int = 1,
-    per_page: int = 10,
+    per_page: int = 50,
     exclude_large_fields: bool = False,
-    q: str | None = None,  # Search query parameter
 ):
-    """List tasks with optional filters including status, project, and keyword search."""
+    """List tasks with optional filters including status and project."""
     try:
         logfire.info(
-            f"Listing tasks | status={status} | project_id={project_id} | include_closed={include_closed} | page={page} | per_page={per_page} | q={q}"
+            f"Listing tasks | status={status} | project_id={project_id} | include_closed={include_closed} | page={page} | per_page={per_page}"
         )
 
         # Use TaskService to list tasks
@@ -739,7 +684,6 @@ async def list_tasks(
             status=status,
             include_closed=include_closed,
             exclude_large_fields=exclude_large_fields,
-            search_query=q,  # Pass search query to service
         )
 
         if not success:
@@ -826,6 +770,20 @@ async def get_task(task_id: str):
         raise HTTPException(status_code=500, detail={"error": str(e)}) from e
 
 
+class Attachment(BaseModel):
+    filename: str
+    url: str
+
+
+class UpdateTaskRequest(BaseModel):
+    title: str | None = None
+    description: str | None = None
+    status: str | None = None
+    assignee: str | None = None
+    task_order: int | None = None
+    feature: str | None = None
+    attachments: list[Attachment] | None = None
+    due_date: datetime | None = None
 
 
 class CreateDocumentRequest(BaseModel):

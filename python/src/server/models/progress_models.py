@@ -2,7 +2,7 @@
 
 from typing import Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, Field, field_validator
 
 
 class ProgressDetails(BaseModel):
@@ -21,7 +21,8 @@ class ProgressDetails(BaseModel):
     embeddings_created: int | None = Field(None, alias="embeddingsCreated")
     code_blocks_found: int | None = Field(None, alias="codeBlocksFound")
 
-    model_config = ConfigDict(populate_by_name=True)
+    class Config:
+        populate_by_name = True
 
 
 class BaseProgressResponse(BaseModel):
@@ -62,7 +63,8 @@ class BaseProgressResponse(BaseModel):
             return result
         return []
 
-    model_config = ConfigDict(populate_by_name=True)  # Accept both snake_case and camelCase
+    class Config:
+        populate_by_name = True  # Accept both snake_case and camelCase
 
 
 class CrawlProgressResponse(BaseProgressResponse):
@@ -114,16 +116,17 @@ class CrawlProgressResponse(BaseProgressResponse):
             return str(v)
         return v
 
-    model_config = ConfigDict(populate_by_name=True)  # Accept both snake_case and camelCase
+    class Config:
+        populate_by_name = True  # Accept both snake_case and camelCase
 
 
 class UploadProgressResponse(BaseProgressResponse):
     """Progress response for document upload operations."""
 
     status: Literal[
-        "starting", "reading", "text_extraction", "chunking",
-        "source_creation", "summarizing", "storing",
-        "completed", "failed", "cancelled", "error"
+        "starting", "reading", "extracting", "chunking",
+        "creating_source", "summarizing", "storing", "source_creation",
+        "completed", "failed", "cancelled"
     ]
 
     # Upload-specific fields
@@ -136,7 +139,8 @@ class UploadProgressResponse(BaseProgressResponse):
     word_count: int | None = Field(None, alias="wordCount")
     source_id: str | None = Field(None, alias="sourceId")
 
-    model_config = ConfigDict(populate_by_name=True)  # Accept both snake_case and camelCase
+    class Config:
+        populate_by_name = True  # Accept both snake_case and camelCase
 
 
 class ProjectCreationProgressResponse(BaseProgressResponse):
@@ -152,7 +156,8 @@ class ProjectCreationProgressResponse(BaseProgressResponse):
     tasks_created: int = Field(0, alias="tasksCreated")
     total_tasks_planned: int | None = Field(None, alias="totalTasksPlanned")
 
-    model_config = ConfigDict(populate_by_name=True)  # Accept both snake_case and camelCase
+    class Config:
+        populate_by_name = True  # Accept both snake_case and camelCase
 
 
 def create_progress_response(
@@ -196,6 +201,7 @@ def create_progress_response(
         "total_chunks": "totalChunks",
         "current_batch": "currentBatch",
         "total_batches": "totalBatches",
+        "completed_batches": "currentBatch",  # Alternative name
         "current_operation": "currentOperation",
         "chunks_per_second": "chunksPerSecond",
         "estimated_time_remaining": "estimatedTimeRemaining",
@@ -212,7 +218,11 @@ def create_progress_response(
             # Use the camelCase name since ProgressDetails expects it
             details_data[camel_field] = progress_data[snake_field]
 
-    # (removed redundant remapping; handled via detail_field_mappings)
+    # Also check for crawl-specific fields that might use alternative names
+    if 'pages_crawled' not in progress_data and 'processed_pages' in progress_data:
+        details_data['pagesCrawled'] = progress_data['processed_pages']
+    if 'totalPages' not in details_data and 'total_pages' in progress_data:
+        details_data['totalPages'] = progress_data['total_pages']
 
     # Create details object if we have any detail fields
     if details_data:

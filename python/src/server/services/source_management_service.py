@@ -5,7 +5,7 @@ Handles source metadata, summaries, and management.
 Consolidates both utility functions and class-based service.
 """
 
-from typing import Any, Self
+from typing import Any
 
 from supabase import Client
 
@@ -279,10 +279,9 @@ async def update_source_info(
             if source_display_name:
                 update_data["source_display_name"] = source_display_name
 
-            # Add source_id for upsert
-            update_data["source_id"] = source_id
-
-            client.table("archon_sources").upsert(update_data).execute()
+            client.table("archon_sources").upsert(update_data).eq(
+                "source_id", source_id
+            ).execute()
 
             search_logger.info(
                 f"Updated source {source_id} while preserving title: {existing_title}"
@@ -526,7 +525,8 @@ class SourceManagementService:
             logger.error(f"Error updating source metadata: {e}")
             return False, {"error": f"Error updating source metadata: {str(e)}"}
 
-    async def create_source_info(self: Self,
+    async def create_source_info(
+        self,
         source_id: str,
         content_sample: str,
         word_count: int = 0,

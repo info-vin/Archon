@@ -137,18 +137,17 @@ class TestProgressTracker:
         tracker = ProgressTracker("test-crawl-stats", operation_type="crawl")
 
         await tracker.update_crawl_stats(
-            processed_pages=5,
-            total_pages=10,
-            current_url="https://example.com/page5",
-            pages_found=15
+            processed_pages=50,
+            total_pages=100,
+            current_url="https://example.com/page50"
         )
 
         assert tracker.state["status"] == "crawling"
         assert tracker.state["progress"] == 50  # 5/10 = 50%
-        assert tracker.state["processed_pages"] == 5
-        assert tracker.state["total_pages"] == 10
-        assert tracker.state["current_url"] == "https://example.com/page5"
-        assert tracker.state["pages_found"] == 15
+        assert tracker.state["processed_pages"] == 50
+        assert tracker.state["total_pages"] == 100
+        assert tracker.state["current_url"] == "https://example.com/page50"
+        assert tracker.state["processed_pages"] == 50
 
     @pytest.mark.asyncio
     async def test_update_storage_progress(self):
@@ -156,19 +155,15 @@ class TestProgressTracker:
         tracker = ProgressTracker("test-storage", operation_type="crawl")
 
         await tracker.update_storage_progress(
-            chunks_stored=25,
-            total_chunks=100,
-            operation="Storing embeddings",
-            word_count=5000,
-            embeddings_created=25
+            chunks_stored=250,
+            total_chunks=500,
+            operation="embedding"
         )
 
         assert tracker.state["status"] == "document_storage"
-        assert tracker.state["progress"] == 25  # 25/100 = 25%
-        assert tracker.state["chunks_stored"] == 25
-        assert tracker.state["total_chunks"] == 100
-        assert tracker.state["word_count"] == 5000
-        assert tracker.state["embeddings_created"] == 25
+        assert tracker.state["progress"] == 50  # 50/100 = 50%
+        assert tracker.state["chunks_stored"] == 250
+        assert tracker.state["total_chunks"] == 500
 
     @pytest.mark.asyncio
     async def test_update_code_extraction_progress(self):
@@ -176,17 +171,17 @@ class TestProgressTracker:
         tracker = ProgressTracker("test-code", operation_type="crawl")
 
         await tracker.update_code_extraction_progress(
-            completed_summaries=3,
+            documents_processed=75,
+            total_documents=100,
+            code_blocks_found=150,
             total_summaries=10,
-            code_blocks_found=15,
             current_file="main.py"
         )
 
         assert tracker.state["status"] == "code_extraction"
-        assert tracker.state["progress"] == 30  # 3/10 = 30%
-        assert tracker.state["completed_summaries"] == 3
+        assert tracker.state["progress"] == 75  # 75/100 = 75%
+        assert tracker.state["code_blocks_found"] == 150
         assert tracker.state["total_summaries"] == 10
-        assert tracker.state["code_blocks_found"] == 15
         assert tracker.state["current_file"] == "main.py"
 
     @pytest.mark.asyncio

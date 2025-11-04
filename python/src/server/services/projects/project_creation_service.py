@@ -156,8 +156,8 @@ class ProjectCreationService:
 
 
 
-            # Initialize DocumentAgent with the supabase client from the current service
-            document_agent = DocumentAgent(supabase_client=self.supabase_client)
+            # Initialize DocumentAgent
+            document_agent = DocumentAgent()
 
             # Generate comprehensive PRD using conversation
             prd_request = f"Create a PRD document titled '{title} - Product Requirements Document' for a project called '{title}'"

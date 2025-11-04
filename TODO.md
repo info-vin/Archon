@@ -163,7 +163,7 @@ sequenceDiagram
 | **7.4.1 & 7.4.2 (後端)** | ✅ **已完成** | **單一事實**: `git show 6f79c43` 證實，後端 `archon-mcp` 和 `archon-agents` 的啟動失敗問題，早已在該 commit 中被修復。 |
 | **7.4 (前端 `archon-ui-main`)** | ✅ **已完成** | **單一事實**: 經過對 `git status`, `git diff`, `git log -p`, `search_file_content` 的反覆交叉比對，最終發現 `archon-ui-main` 的啟動失敗是由一個從未被使用的「殭屍檔案」(`useThemeAware.ts`) 及其錯誤的導入路徑所引起。**解決方案**: 將此無用檔案及其引用徹底從程式碼庫中刪除，從根源上解決問題，而非進行不必要的「局部修復」。 |
 
-    **[ ] 7.5: 修正種子資料遺漏導致的 404 錯誤 (Fix 404 Error Caused by Missing Seed Data)**
+    **[X] 7.5: 修正種子資料遺漏導致的 404 錯誤 (Fix 404 Error Caused by Missing Seed Data)**
         - **目標**: 解決因 `migration/seed_mock_data.sql` 遺漏初始設定，導致前端讀取 `STYLE_GUIDE_ENABLED` 等設定時出現 `404` 錯誤的問題。
         - **根本原因分析 (Root Cause Analysis):**
             - `404` 並非路由錯誤，而是後端 `settings_api.py` 在資料庫中找不到對應設定時，正確回傳的業務邏輯。

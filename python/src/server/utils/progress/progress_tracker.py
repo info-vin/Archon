@@ -4,7 +4,6 @@ Progress Tracker Utility
 Tracks operation progress in memory for HTTP polling access.
 """
 
-import asyncio
 from datetime import datetime
 from typing import Any
 
@@ -52,26 +51,6 @@ class ProgressTracker:
         if progress_id in cls._progress_states:
             del cls._progress_states[progress_id]
 
-    @classmethod
-    def list_active(cls) -> dict[str, dict[str, Any]]:
-        """Get all active progress states."""
-        return cls._progress_states.copy()
-
-    @classmethod
-    async def _delayed_cleanup(cls, progress_id: str, delay_seconds: int = 30):
-        """
-        Remove progress state from memory after a delay.
-
-        This gives clients time to see the final state before cleanup.
-        """
-        await asyncio.sleep(delay_seconds)
-        if progress_id in cls._progress_states:
-            status = cls._progress_states[progress_id].get("status", "unknown")
-            # Only clean up if still in terminal state (prevent cleanup of reused IDs)
-            if status in ["completed", "failed", "error", "cancelled"]:
-                del cls._progress_states[progress_id]
-                safe_logfire_info(f"Progress state cleaned up after delay | progress_id={progress_id} | status={status}")
-
     async def start(self, initial_data: dict[str, Any] | None = None):
         """
         Start progress tracking with initial data.
@@ -100,13 +79,6 @@ class ProgressTracker:
             log: Log message describing current operation
             **kwargs: Additional data to include in update
         """
-        # Debug logging for document_storage issue
-        if status == "document_storage" and progress >= 90:
-            safe_logfire_info(
-                f"DEBUG: ProgressTracker.update called | status={status} | progress={progress} | "
-                f"current_state_progress={self.state.get('progress', 0)} | kwargs_keys={list(kwargs.keys())}"
-            )
-
         # CRITICAL: Never allow progress to go backwards
         current_progress = self.state.get("progress", 0)
         new_progress = min(100, max(0, progress))  # Ensure 0-100
@@ -130,13 +102,6 @@ class ProgressTracker:
             "timestamp": datetime.now().isoformat(),
         })
 
-        # DEBUG: Log final state for document_storage
-        if status == "document_storage" and actual_progress >= 35:
-            safe_logfire_info(
-                f"DEBUG ProgressTracker state updated | status={status} | actual_progress={actual_progress} | "
-                f"state_progress={self.state.get('progress')} | received_progress={progress}"
-            )
-
         # Add log entry
         if "logs" not in self.state:
             self.state["logs"] = []
@@ -144,24 +109,15 @@ class ProgressTracker:
             "timestamp": datetime.now().isoformat(),
             "message": log,
             "status": status,
-            "progress": actual_progress,  # Use the actual progress after "never go backwards" check
+            "progress": progress,
         })
-        # Keep only the last 200 log entries
-        if len(self.state["logs"]) > 200:
-            self.state["logs"] = list(self.state["logs"][-200:])
 
-        # Add any additional data (but don't allow overriding core fields)
-        protected_fields = {"progress", "status", "log", "progress_id", "type", "start_time"}
-        for key, value in dict(kwargs).items():
-            if key not in protected_fields:
-                self.state[key] = value
+        # Add any additional data
+        for key, value in kwargs.items():
+            self.state[key] = value
 
 
         self._update_state()
-
-        # Schedule cleanup for terminal states
-        if status in ["cancelled", "failed"]:
-            asyncio.create_task(self._delayed_cleanup(self.progress_id))
 
     async def complete(self, completion_data: dict[str, Any] | None = None):
         """
@@ -190,9 +146,6 @@ class ProgressTracker:
             f"Progress completed | progress_id={self.progress_id} | type={self.operation_type} | duration={self.state.get('duration_formatted', 'unknown')}"
         )
 
-        # Schedule cleanup after delay to allow clients to see final state
-        asyncio.create_task(self._delayed_cleanup(self.progress_id))
-
     async def error(self, error_message: str, error_details: dict[str, Any] | None = None):
         """
         Mark progress as failed with error information.
@@ -215,9 +168,6 @@ class ProgressTracker:
             f"Progress error | progress_id={self.progress_id} | type={self.operation_type} | error={error_message}"
         )
 
-        # Schedule cleanup after delay to allow clients to see final state
-        asyncio.create_task(self._delayed_cleanup(self.progress_id))
-
     async def update_batch_progress(
         self, current_batch: int, total_batches: int, batch_size: int, message: str
     ):
@@ -230,7 +180,7 @@ class ProgressTracker:
             batch_size: Size of each batch
             message: Progress message
         """
-        progress_val = int((current_batch / max(total_batches, 1)) * 100)
+        progress_val = int((current_batch / total_batches) * 100)
         await self.update(
             status="processing_batch",
             progress=progress_val,
@@ -241,98 +191,74 @@ class ProgressTracker:
         )
 
     async def update_crawl_stats(
-        self,
-        processed_pages: int,
-        total_pages: int,
-        current_url: str | None = None,
-        pages_found: int | None = None
+        self, processed_pages: int, total_pages: int, current_url: str | None = None
     ):
         """
-        Update crawling statistics with detailed metrics.
+        Update crawling statistics.
 
         Args:
             processed_pages: Number of pages processed
             total_pages: Total pages to process
             current_url: Currently processing URL
-            pages_found: Total pages discovered during crawl
         """
         progress_val = int((processed_pages / max(total_pages, 1)) * 100)
         log = f"Processing page {processed_pages}/{total_pages}"
         if current_url:
             log += f": {current_url}"
 
-        update_data = {
-            "status": "crawling",
-            "progress": progress_val,
-            "log": log,
-            "processed_pages": processed_pages,
-            "total_pages": total_pages,
-            "current_url": current_url,
-        }
-
-        if pages_found is not None:
-            update_data["pages_found"] = pages_found
-
-        await self.update(**update_data)
+        await self.update(
+            status="crawling",
+            progress=progress_val,
+            log=log,
+            processed_pages=processed_pages,
+            total_pages=total_pages,
+            current_url=current_url,
+        )
 
     async def update_storage_progress(
-        self,
-        chunks_stored: int,
-        total_chunks: int,
-        operation: str = "storing",
-        word_count: int | None = None,
-        embeddings_created: int | None = None
+        self, chunks_stored: int, total_chunks: int, operation: str = "storing"
     ):
         """
-        Update document storage progress with detailed metrics.
+        Update document storage progress.
 
         Args:
             chunks_stored: Number of chunks stored
             total_chunks: Total chunks to store
             operation: Storage operation description
-            word_count: Total word count processed
-            embeddings_created: Number of embeddings created
         """
         progress_val = int((chunks_stored / max(total_chunks, 1)) * 100)
-
-        update_data = {
-            "status": "document_storage",
-            "progress": progress_val,
-            "log": f"{operation}: {chunks_stored}/{total_chunks} chunks",
-            "chunks_stored": chunks_stored,
-            "total_chunks": total_chunks,
-        }
-
-        if word_count is not None:
-            update_data["word_count"] = word_count
-        if embeddings_created is not None:
-            update_data["embeddings_created"] = embeddings_created
-
-        await self.update(**update_data)
+        await self.update(
+            status="document_storage",
+            progress=progress_val,
+            log=f"{operation}: {chunks_stored}/{total_chunks} chunks",
+            chunks_stored=chunks_stored,
+            total_chunks=total_chunks,
+        )
 
     async def update_code_extraction_progress(
-        self,
-        completed_summaries: int,
-        total_summaries: int,
-        code_blocks_found: int,
-        current_file: str | None = None
+        self, documents_processed: int, total_documents: int, code_blocks_found: int, total_summaries: int, current_file: str
     ):
         """
-        Update code extraction progress with detailed metrics.
+        Update code extraction progress.
 
         Args:
-            completed_summaries: Number of code summaries completed
-            total_summaries: Total code summaries to generate
-            code_blocks_found: Total number of code blocks found
-            current_file: Current file being processed
+            documents_processed: Number of documents processed
+            total_documents: Total documents to process
+            code_blocks_found: Number of code blocks found
+            total_summaries: Total summaries to process
+            current_file: Currently processing file
         """
-        progress_val = int((completed_summaries / max(total_summaries, 1)) * 100)
-
-        log = f"Extracting code: {completed_summaries}/{total_summaries} summaries"
-        if current_file:
-            log += f" - {current_file}"
-
-        await self.update(status="code_extraction", progress=progress_val, log=log, completed_summaries=completed_summaries, total_summaries=total_summaries, code_blocks_found=code_blocks_found, current_file=current_file)
+        progress_val = int((documents_processed / max(total_documents, 1)) * 100)
+        await self.update(
+            status="code_extraction",
+            progress=progress_val,
+            log=f"Processing document {documents_processed}/{total_documents}",
+            documents_processed=documents_processed,
+            total_documents=total_documents,
+            code_blocks_found=code_blocks_found,
+            total_summaries=total_summaries,
+            current_file=current_file,
+        )
 
     def _update_state(self):
         """Update progress state in memory storage."""

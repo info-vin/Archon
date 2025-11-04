@@ -15,8 +15,8 @@ from pydantic import BaseModel
 
 # Import logging
 from ..config.logfire_config import logfire
+from ..services import SettingsService
 from ..services.credential_service import credential_service, initialize_credentials
-from ..utils import get_supabase_client
 
 router = APIRouter(prefix="/api", tags=["settings"])
 
@@ -283,38 +283,11 @@ async def database_metrics():
     """Get database metrics and statistics."""
     try:
         logfire.info("Getting database metrics")
-        supabase_client = get_supabase_client()
+        settings_service = SettingsService()
+        success, tables_info = settings_service.get_database_statistics()
 
-        # Get various table counts
-        tables_info = {}
-
-        # Get projects count
-        projects_response = (
-            supabase_client.table("archon_projects").select("id", count="exact").execute()
-        )
-        tables_info["projects"] = (
-            projects_response.count if projects_response.count is not None else 0
-        )
-
-        # Get tasks count
-        tasks_response = supabase_client.table("archon_tasks").select("id", count="exact").execute()
-        tables_info["tasks"] = tasks_response.count if tasks_response.count is not None else 0
-
-        # Get crawled pages count
-        pages_response = (
-            supabase_client.table("archon_crawled_pages").select("id", count="exact").execute()
-        )
-        tables_info["crawled_pages"] = (
-            pages_response.count if pages_response.count is not None else 0
-        )
-
-        # Get settings count
-        settings_response = (
-            supabase_client.table("archon_settings").select("id", count="exact").execute()
-        )
-        tables_info["settings"] = (
-            settings_response.count if settings_response.count is not None else 0
-        )
+        if not success:
+            raise HTTPException(status_code=500, detail={"error": tables_info})
 
         total_records = sum(tables_info.values())
         logfire.info(
@@ -341,51 +314,3 @@ async def settings_health():
     result = {"status": "healthy", "service": "settings"}
 
     return result
-
-
-@router.post("/credentials/status-check")
-async def check_credential_status(request: dict[str, list[str]]):
-    """Check status of API credentials by actually decrypting and validating them.
-
-    This endpoint is specifically for frontend status indicators and returns
-    decrypted credential values for connectivity testing.
-    """
-    try:
-        credential_keys = request.get("keys", [])
-        logfire.info(f"Checking status for credentials: {credential_keys}")
-
-        result = {}
-
-        for key in credential_keys:
-            try:
-                # Get decrypted value for status checking
-                decrypted_value = await credential_service.get_credential(key, decrypt=True)
-
-                if decrypted_value and isinstance(decrypted_value, str) and decrypted_value.strip():
-                    result[key] = {
-                        "key": key,
-                        "value": decrypted_value,
-                        "has_value": True
-                    }
-                else:
-                    result[key] = {
-                        "key": key,
-                        "value": None,
-                        "has_value": False
-                    }
-
-            except Exception as e:
-                logfire.warning(f"Failed to get credential for status check: {key} | error={str(e)}")
-                result[key] = {
-                    "key": key,
-                    "value": None,
-                    "has_value": False,
-                    "error": str(e)
-                }
-
-        logfire.info(f"Credential status check completed | checked={len(credential_keys)} | found={len([k for k, v in result.items() if v.get('has_value')])}")
-        return result
-
-    except Exception as e:
-        logfire.error(f"Error in credential status check | error={str(e)}")
-        raise HTTPException(status_code=500, detail={"error": str(e)}) from e
