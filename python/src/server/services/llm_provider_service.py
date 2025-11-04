@@ -634,7 +634,7 @@ def _extract_reasoning_strings(value: Any) -> list[str]:
         text = value.strip()
         return [text] if text else []
 
-    if isinstance(value, (list, tuple, set)):
+    if isinstance(value, list | tuple | set):
         collected: list[str] = []
         for item in value:
             collected.extend(_extract_reasoning_strings(item))
