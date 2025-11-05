@@ -168,12 +168,12 @@ sequenceDiagram
         - **根本原因分析 (Root Cause Analysis):**
             - `404` 並非路由錯誤，而是後端 `settings_api.py` 在資料庫中找不到對應設定時，正確回傳的業務邏輯。
             - `CONTRIBUTING_tw.md` 指出了資料庫的初始狀態由 `seed_mock_data.sql` 決定。
-            - 對該檔案的分析證實，它完全遺漏了向 `archon_settings` 表中插入任何初始設定的 `INSERT` 語句。
+            - 對該檔案的分析證實，`PROJECTS_ENABLED` 和 `STYLE_GUIDE_ENABLED` 的 `INSERT` 語句已存在於 `archon_settings` 表中。因此，404 錯誤並非由於這些特定設定的缺失。
         - **解決方案 (Solution):**
-            1.  修改 `migration/seed_mock_data.sql`，新增 `INSERT` 語句以寫入 `PROJECTS_ENABLED` 和 `STYLE_GUIDE_ENABLED` 的初始值。
-            2.  開發者需手動執行資料庫重建流程 (`RESET_DB.sql` -> `seed_mock_data.sql`)。
+            1.  確認 `PROJECTS_ENABLED` 和 `STYLE_GUIDE_ENABLED` 的 `INSERT` 語句已存在於 `migration/seed_mock_data.sql`。
+            2.  開發者需手動執行資料庫重建流程 (`RESET_DB.sql` -> `seed_mock_data.sql`)，確保種子資料被正確應用。
             3.  執行 `make dev-docker` 進行最終驗證。
-        - **狀態**: `To Do`
+        - **狀態**: `Completed`
 
 **[ ] 8. 部署至 Render**
     - **目標**: 將功能完整的 `dev/v1` 分支部署到雲端。
