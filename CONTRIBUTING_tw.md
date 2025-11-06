@@ -117,6 +117,17 @@
 | **`required` 表單提交測試** | `userEvent.click` 會被瀏覽器預設行為攔截。 | 使用 `fireEvent.submit(submitButton)` 直接觸發提交事件。 |
 | **`vi.mock` 變數提升錯誤** | `vi.mock` 的工廠函式使用了在頂層宣告的變數。 | 將 `vi.mock` 需要的變數直接定義在工廠函式**內部**。 |
 
+### 3.4 端到端驗收測試 (End-to-End Acceptance Tests)
+
+一旦所有服務都已啟動，請使用以下表格執行核心功能的端到端驗收測試。這不僅是表面的 UI 檢查，更是確認前端到後端 API 串接是否正常的關鍵步驟。
+
+| Feature | User Action (E2E Step) | Key Backend API(s) Triggered | Expected Outcome (Acceptance Criteria) |
+| :--- | :--- | :--- | :--- |
+| **1. Web Crawling** | 1. Navigate to **Knowledge Base**.<br>2. Click **Crawl Website**.<br>3. Enter a documentation URL (e.g., `https://ai.pydantic.dev/llms-full.txt`).<br>4. Click **Start Crawl**. | `POST /api/knowledge-items/crawl`<br>`GET /api/crawl-progress/[progress_id]` (Polling) | A progress bar appears for the new item. After completion, the new knowledge item (e.g., "Pydantic AI") is visible in the list, and you can click to inspect its content. |
+| **2. Document Upload** | 1. Navigate to **Knowledge Base**.<br>2. Click **Upload Document**.<br>3. Select a PDF or Markdown file.<br>4. Click **Upload**. | `POST /api/documents/upload`<br>`GET /api/crawl-progress/[progress_id]` (Polling) | A progress bar appears. After completion, the uploaded document appears as a new item in the knowledge base list. |
+| **3. Project & Task Creation** | 1. Navigate to **Projects**.<br>2. Click **New Project** and create a project.<br>3. Click into the newly created project.<br>4. Click **New Task** and create a task. | `POST /api/projects`<br>`POST /api/tasks` | The new project appears in the project list (`GET /api/projects`). After entering the project, the new task is visible in the task board (`GET /api/projects/[project_id]/tasks`). |
+| **4. AI Assistant Integration** | 1. Navigate to the **MCP Dashboard**.<br>2. Observe the "Connection Config" section. | `GET /api/mcp/config` | The UI displays the correct Host, Port, and Transport mode for your AI coding assistant to connect to the MCP server. |
+
 ---
 
 ## 第四章：貢獻與部署流程 (Contribution & Deployment)
@@ -245,3 +256,55 @@
 - **情境**: 專案中的 `README.md` 記載了與 `Makefile` 不一致的啟動指令，導致開發者遵循文件操作時發生錯誤。
 - **決策理由**: 可執行的腳本是指令的最終真理，文件應作為其說明而存在。
 - **確立原則**: 確立了 `Makefile` 作為所有專案指令的「單一事實來源」。所有 `.md` 文件在指導操作時，都應引用 `make <command>`，而不是複製貼上其底層指令。
+
+---
+
+## 附錄 B：系統分析與比較 (System Analysis & Comparison)
+
+### `make dev` vs `make dev-docker` 比較分析
+
+這份表格是基於對 `Makefile` 內容的直接分析得出的「單一事實」。
+
+| 特性 | `make dev` (混合開發) | `make dev-docker` (全 Docker 開發) | 差異原因分析 |
+| :--- | :--- | :--- | :--- |
+| **啟動模式** | 混合模式 | 全 Docker 模式 | `dev` 模式旨在為前端開發提供最佳體驗，因此只在 Docker 中運行後端，而在本地直接運行前端以利用熱重載(Hot Reload)功能。`dev-docker` 則模擬一個更接近生產的環境，所有服務都在 Docker 容器中運行。 |
+| **Docker Profiles** | `--profile backend --profile agents` | `--profile backend --profile frontend --profile enduser --profile agents` | `dev` 模式只啟動後端相關的 `backend` 和 `agents` profiles。`dev-docker` 額外啟動了 `frontend` (archon-ui-main) 和 `enduser` (enduser-ui-fe) 兩個前端 profile，將它們也容器化。 |
+| **前端服務** | 在本地主機上通過 `pnpm run dev` 啟動 `archon-ui-main`。 | `archon-ui-main` 和 `enduser-ui-fe` 都在 Docker 容器內運行。 | `dev` 模式讓前端開發者可以直接在本地編輯器中修改程式碼，並立即在瀏覽器中看到結果，無需重新建置 Docker 映像。`dev-docker` 則將前端作為獨立的容器化服務來管理。 |
+| **`enduser-ui-fe`** | **不啟動** | 在 Docker 容器內啟動 | `dev` 模式的設計目標是專注於 `archon-ui-main` (管理後台) 的開發，因此沒有包含 `enduser-ui-fe`。而 `dev-docker` 則會啟動包括 `enduser-ui-fe` 在內的所有服務。 |
+| **主要用途** | 專注於**管理後台 (`archon-ui-main`)** 的前端開發，同時需要後端 API 支持。 | 進行**全系統整合測試**，或當開發者不需要頻繁修改前端程式碼，只想啟動一個完整的、隔離的本地環境時使用。 | 兩種模式為不同的開發場景提供了優化。`dev` 專注於效率，`dev-docker` 專注於環境一致性。 |
+
+### SQL 資料庫結構 vs. 工作時序圖 差異分析
+
+此分析基於對 `migration/000_unified_schema.sql`、`CONTRIBUTING_tw.md` 和 `TODO.md` 的交叉比對。
+
+**1. 資料庫實體盤點**
+
+*   **`000_unified_schema.sql` 中定義的表格 (共 14 個)**:
+    *   **核心任務管理**: `archon_projects`, `archon_tasks`
+    *   **知識庫 (RAG)**: `archon_sources`, `archon_crawled_pages`, `archon_code_examples`
+    *   **系統設定**: `archon_settings`, `archon_prompts`
+    *   **使用者與內容**: `profiles`, `blog_posts`
+    *   **版本與紀錄**: `archon_project_sources`, `archon_document_versions`, `gemini_logs`
+    *   **其他業務**: `customers`, `vendors`
+*   **`TODO.md` 時序圖中隱含的實體**:
+    *   `tasks` (在步驟 3 和 10 中被更新)
+    *   `Storage` (在步驟 8 中被寫入)
+
+**2. 差異比較表**
+
+| 項目 | `000_unified_schema.sql` 中定義的表格 | `TODO.md` 時序圖中隱含的實體 | 差異分析 |
+| :--- | :--- | :--- | :--- |
+| **核心任務管理** | `archon_projects`, `archon_tasks` | `tasks` | **一致**。時序圖的核心是更新任務 (`tasks`)，這與 `archon_tasks` 表格直接對應。`archon_projects` 作為其父級，也是一致的。 |
+| **知識庫** | `archon_sources`, `archon_crawled_pages`, `archon_code_examples` | *未提及* | **存在差異**。時序圖聚焦於「任務執行與檔案上傳」，並未描繪 Agent 執行任務時與知識庫（RAG）的互動細節。因此，與知識庫相關的表格沒有在圖中出現是合理的，這代表時序圖的抽象層級較高。 |
+| **系統設定** | `archon_settings`, `archon_prompts` | *未提及* | **存在差異**。時序圖並未包含系統讀取設定或 Prompt 的步驟，因此這些表格沒有出現。 |
+| **使用者與內容** | `profiles`, `blog_posts` | *未提及* | **存在差異**。`profiles` 和 `blog_posts` 主要由 `enduser-ui-fe` 使用，而時序圖主要描繪的是 `archon-ui-main` 的核心任務流程，因此未被提及。 |
+| **版本與紀錄** | `archon_document_versions`, `gemini_logs`, `archon_project_sources` | *未提及* | **存在差異**。這些屬於系統內部紀錄與版本控制的表格，在高級別的用戶工作流程圖中通常會被省略。 |
+| **其他業務** | `customers`, `vendors` | *未提及* | **存在差異**。這些是後來在 `feature` 分支中添加的實驗性表格，與當前的核心工作時序圖無關。 |
+| **檔案儲存** | *不適用 (由 Storage 管理)* | `Storage` | **一致**。時序圖明確區分了 `DB` 和 `Storage`。步驟 8 `將檔案上傳至 Storage` 描述的是檔案儲存，而非資料庫表格操作，這與 SQL 結構中沒有專門儲存檔案實體的設計是一致的。 |
+
+**3. 結論**
+
+資料庫的實際結構遠比時序圖複雜。這是一個**正常且健康的現象**。時序圖的目的是為了**溝通核心業務流程**，因此它會省略大量背景、設定和非核心功能的細節。主要的「差異」在於：
+
+*   **時序圖的抽象層級較高**：它只展示了與「建立任務 -> Agent 執行 -> 交付結果」這一條主線最直接相關的資料庫互動（即更新 `archon_tasks` 表）。
+*   **資料庫結構更完整**：它包含了支持所有系統功能所需的全部表格，包括時序圖中未展示的 RAG、系統設定、使用者資料等。
