@@ -117,17 +117,6 @@
 | **`required` 表單提交測試** | `userEvent.click` 會被瀏覽器預設行為攔截。 | 使用 `fireEvent.submit(submitButton)` 直接觸發提交事件。 |
 | **`vi.mock` 變數提升錯誤** | `vi.mock` 的工廠函式使用了在頂層宣告的變數。 | 將 `vi.mock` 需要的變數直接定義在工廠函式**內部**。 |
 
-### 3.4 端到端驗收測試 (End-to-End Acceptance Tests)
-
-一旦所有服務都已啟動，請使用以下表格執行核心功能的端到端驗收測試。這不僅是表面的 UI 檢查，更是確認前端到後端 API 串接是否正常的關鍵步驟。
-
-| Feature | User Action (E2E Step) | Key Backend API(s) Triggered | Expected Outcome (Acceptance Criteria) |
-| :--- | :--- | :--- | :--- |
-| **1. Web Crawling** | 1. Navigate to **Knowledge Base**.<br>2. Click **Crawl Website**.<br>3. Enter a documentation URL (e.g., `https://ai.pydantic.dev/llms-full.txt`).<br>4. Click **Start Crawl**. | `POST /api/knowledge-items/crawl`<br>`GET /api/crawl-progress/[progress_id]` (Polling) | A progress bar appears for the new item. After completion, the new knowledge item (e.g., "Pydantic AI") is visible in the list, and you can click to inspect its content. |
-| **2. Document Upload** | 1. Navigate to **Knowledge Base**.<br>2. Click **Upload Document**.<br>3. Select a PDF or Markdown file.<br>4. Click **Upload**. | `POST /api/documents/upload`<br>`GET /api/crawl-progress/[progress_id]` (Polling) | A progress bar appears. After completion, the uploaded document appears as a new item in the knowledge base list. |
-| **3. Project & Task Creation** | 1. Navigate to **Projects**.<br>2. Click **New Project** and create a project.<br>3. Click into the newly created project.<br>4. Click **New Task** and create a task. | `POST /api/projects`<br>`POST /api/tasks` | The new project appears in the project list (`GET /api/projects`). After entering the project, the new task is visible in the task board (`GET /api/projects/[project_id]/tasks`). |
-| **4. AI Assistant Integration** | 1. Navigate to the **MCP Dashboard**.<br>2. Observe the "Connection Config" section. | `GET /api/mcp/config` | The UI displays the correct Host, Port, and Transport mode for your AI coding assistant to connect to the MCP server. |
-
 ---
 
 ## 第四章：貢獻與部署流程 (Contribution & Deployment)

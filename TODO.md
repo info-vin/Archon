@@ -182,6 +182,17 @@ sequenceDiagram
     - **[ ] 8.3**: **部署前驗證**: 在本地模擬生產環境建置 (`docker compose --profile backend --profile frontend --profile enduser --profile agents build`)，確認本次的 Dockerfile 修改不會影響生產環境的建置。
     - **[ ] 8.4**: 將 `dev/v1` 推送至遠端，觸發部署。
 
+### Phase 5: End-to-End Acceptance Checklist
+
+**目標**: 在每次重大部署前，手動執行此清單，以確保核心功能的端到端流程（從前端 UI 到後端 API）符合預期。此清單基於對程式碼和歷史 `fix` 紀錄的分析，旨在覆蓋關鍵路徑和已知的潛在問題點。
+
+| Feature | User Action (E2E Step) | Key Backend API(s) Triggered | Expected Outcome (Acceptance Criteria) | 注意事項 / 歷史問題 |
+| :--- | :--- | :--- | :--- | :--- |
+| **1. Web Crawling** | 1. Navigate to **Knowledge Base**.<br>2. Click **Crawl Website**.<br>3. Enter a documentation URL.<br>4. Click **Start Crawl**. | `POST /api/knowledge-items/crawl`<br>`GET /api/crawl-progress/[progress_id]` (Polling) | A progress bar appears. After completion, the new knowledge item is visible in the list. | **歷史問題**: 此功能曾有超時、競爭條件和記憶體問題。**建議**: 除了測試簡單 URL，可嘗試一個結構複雜、包含 JS 渲染的網站，以驗證其穩定性。 |
+| **2. Document Upload** | 1. Navigate to **Knowledge Base**.<br>2. Click **Upload Document**.<br>3. Select a PDF or Markdown file.<br>4. Click **Upload**. | `POST /api/documents/upload`<br>`GET /api/crawl-progress/[progress_id]` (Polling) | A progress bar appears. After completion, the uploaded document appears as a new item. | **注意**: 應確認手動上傳的檔案，其程式碼範例是否能被正確提取 (Ref: `6abb883`)。 |
+| **3. Project & Task Creation** | 1. Navigate to **Projects**.<br>2. Click **New Project** and create a project.<br>3. Click into the newly created project.<br>4. Click **New Task** and create a task. | `POST /api/projects`<br>`POST /api/tasks` | The new project appears in the project list. The new task is visible in the task board. | **注意**: 建立任務後，可檢查其 API 回應是否包含 `feature` 欄位 (Ref: `5293687`)。 |
+| **4. AI Assistant Integration** | 1. Navigate to the **MCP Dashboard**.<br>2. Observe the "Connection Config" section. | `GET /api/mcp/config` | The UI displays the correct Host, Port, and Transport mode. | **說明**: 此步驟僅為基礎的連線設定檢查。完整的 MCP 功能需在 AI 客戶端中，實際呼叫 `update_task` 等工具來進行驗證。 |
+
 **[ ] 9. 最終驗證與慶祝**
     - **目標**: 確認線上環境功能正常，並更新進度。
     - **[ ] 9.1**: 驗證線上服務核心功能。
