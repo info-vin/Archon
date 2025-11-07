@@ -68,7 +68,8 @@ dev: check
 # Full Docker development
 dev-docker: check
 	@echo "Starting full Docker environment..."
-	@$(COMPOSE) --profile backend --profile frontend --profile enduser --profile agents up -d --build
+	@set -a; [ -f .env ] && . ./.env; set +a; \
+	$(COMPOSE) --profile backend --profile frontend --profile enduser --profile agents up -d --build
 	@echo "✓ All services running"
 	@echo "Admin UI: http://localhost:3737"
 	@echo "End-User UI: http://localhost:5173"
