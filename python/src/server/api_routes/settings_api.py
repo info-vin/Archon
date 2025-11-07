@@ -41,6 +41,23 @@ class CredentialResponse(BaseModel):
     message: str
 
 
+class CredentialStatusRequest(BaseModel):
+    keys: list[str]
+
+
+@router.post("/credentials/status-check")
+async def check_credential_status(request: CredentialStatusRequest):
+    """Check if a list of credentials have values."""
+    try:
+        logfire.info(f"Checking status for {len(request.keys)} credentials")
+        statuses = await credential_service.check_credentials_exist(request.keys)
+        logfire.info(f"Credential status check successful | count={len(statuses)}")
+        return statuses
+    except Exception as e:
+        logfire.error(f"Error checking credential status | error={str(e)}")
+        raise HTTPException(status_code=500, detail={"error": str(e)}) from e
+
+
 # Credential Management Endpoints
 @router.get("/credentials")
 async def list_credentials(category: str | None = None):

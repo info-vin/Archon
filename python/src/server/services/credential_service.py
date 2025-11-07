@@ -356,6 +356,31 @@ class CredentialService:
             logger.error(f"Error listing credentials: {e}")
             return []
 
+    async def check_credentials_exist(self, keys: list[str]) -> dict[str, dict[str, Any]]:
+        """
+        Check if a list of credentials exist and have a value.
+        Returns a dictionary with the status for each key.
+        """
+        if not self._cache_initialized:
+            await self.load_all_credentials()
+
+        statuses = {}
+        for key in keys:
+            value = self._cache.get(key)
+            has_value = False
+            if value:
+                if isinstance(value, dict) and value.get("is_encrypted"):
+                    # For encrypted values, check if encrypted_value is present and not empty
+                    if value.get("encrypted_value"):
+                        has_value = True
+                elif isinstance(value, str) and value:
+                    # For non-encrypted values, check if the string is not empty
+                    has_value = True
+
+            statuses[key] = {"key": key, "has_value": has_value}
+
+        return statuses
+
     def get_config_as_env_dict(self) -> dict[str, str]:
         """
         Get configuration as environment variable style dict.
