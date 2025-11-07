@@ -280,69 +280,55 @@ async def api_health_check():
 _schema_check_cache = {"valid": None, "checked_at": 0}
 
 async def _check_database_schema():
-    """Check if required database schema exists - only for existing users who need migration."""
+    """Check if the projects table exists to determine schema validity."""
     import time
 
     # If we've already confirmed schema is valid, don't check again
-    if _schema_check_cache["valid"] is True:
+    if _schema_check_cache.get("valid") is True:
         return {"valid": True, "message": "Schema is up to date (cached)"}
 
     # If we recently failed, don't spam the database (wait at least 30 seconds)
     current_time = time.time()
-    if (_schema_check_cache["valid"] is False and
-        current_time - _schema_check_cache["checked_at"] < 30):
-        return _schema_check_cache["result"]
+    if (_schema_check_cache.get("valid") is False and
+        current_time - _schema_check_cache.get("checked_at", 0) < 30):
+        return _schema_check_cache.get("result", {"valid": False, "message": "Schema check recently failed."})
 
     try:
         from .services.client_manager import get_supabase_client
-
         client = get_supabase_client()
 
-        # Try to query the new columns directly - if they exist, schema is up to date
-        client.table('archon_sources').select('source_url, source_display_name').limit(1).execute()
+        # Check if the 'archon_projects' table exists.
+        client.table('archon_projects').select('id').limit(1).execute()
 
-        # Cache successful result permanently
+        # Cache successful result
         _schema_check_cache["valid"] = True
         _schema_check_cache["checked_at"] = current_time
+        _schema_check_cache["result"] = {"valid": True, "message": "Schema is up to date"}
 
-        return {"valid": True, "message": "Schema is up to date"}
+        return _schema_check_cache["result"]
 
     except Exception as e:
         error_msg = str(e).lower()
-
-        # Log schema check error for debugging
         api_logger.debug(f"Schema check error: {type(e).__name__}: {str(e)}")
 
-        # Check for specific error types based on PostgreSQL error codes and messages
-
-        # Check for missing columns first (more specific than table check)
-        missing_source_url = 'source_url' in error_msg and ('column' in error_msg or 'does not exist' in error_msg)
-        missing_source_display = 'source_display_name' in error_msg and ('column' in error_msg or 'does not exist' in error_msg)
-
-        # Also check for PostgreSQL error code 42703 (undefined column)
-        is_column_error = '42703' in error_msg or 'column' in error_msg
-
-        if (missing_source_url or missing_source_display) and is_column_error:
+        # Check if the error indicates the table does not exist.
+        if 'relation "archon_projects" does not exist' in error_msg:
             result = {
                 "valid": False,
-                "message": "Database schema outdated - missing required columns from recent updates"
+                "message": "Projects table not detected. This is required for the projects feature."
             }
-            # Cache failed result with timestamp
+            # Cache failed result
             _schema_check_cache["valid"] = False
             _schema_check_cache["checked_at"] = current_time
             _schema_check_cache["result"] = result
             return result
 
-        # Check for table doesn't exist (less specific, only if column check didn't match)
-        # Look for relation/table errors specifically
-        if ('relation' in error_msg and 'does not exist' in error_msg) or ('table' in error_msg and 'does not exist' in error_msg):
-            # Table doesn't exist - not a migration issue, it's a setup issue
-            return {"valid": True, "message": "Table doesn't exist - handled by startup error"}
-
-        # Other errors don't necessarily mean migration needed
-        result = {"valid": True, "message": f"Schema check inconclusive: {str(e)}"}
-        # Don't cache inconclusive results - allow retry
-        return result
+        # For other errors, consider the schema valid to not block other functionalities,
+        # but log the error.
+        api_logger.warning(f"Inconclusive schema check: {error_msg}")
+        # To be safe, let's not block the app for other errors.
+        # The original code returned true for inconclusive results.
+        return {"valid": True, "message": f"Schema check inconclusive: {str(e)}"}
 
 
 # Export the app directly for uvicorn to use
