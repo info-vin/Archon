@@ -64,7 +64,7 @@ export const FeaturesSection = () => {
       if (projectsHealthResponse && projectsHealthResponse.ok) {
         const healthData = await projectsHealthResponse.json();
         
-        const schemaValid = healthData.schema?.valid === true;
+        const schemaValid = healthData.schema_valid === true;
         setProjectsSchemaValid(schemaValid);
         
         if (!schemaValid) {
