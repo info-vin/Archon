@@ -12,7 +12,6 @@ This module handles all knowledge base operations including:
 import asyncio
 import json
 import uuid
-from datetime import datetime
 
 from fastapi import APIRouter, File, Form, Header, HTTPException, UploadFile
 from pydantic import BaseModel
@@ -980,32 +979,6 @@ async def get_database_metrics():
         raise HTTPException(status_code=500, detail={"error": str(e)}) from e
 
 
-@router.get("/health")
-async def knowledge_health():
-    """Knowledge API health check with migration detection."""
-    # Check for database migration needs
-    from ..main import _check_database_schema
-
-    schema_status = await _check_database_schema()
-    if not schema_status["valid"]:
-        return {
-            "status": "migration_required",
-            "service": "knowledge-api",
-            "timestamp": datetime.now().isoformat(),
-            "ready": False,
-            "migration_required": True,
-            "message": schema_status["message"],
-            "migration_instructions": "Open Supabase Dashboard → SQL Editor → Run: migration/add_source_url_display_name.sql"
-        }
-
-    # Removed health check logging to reduce console noise
-    result = {
-        "status": "healthy",
-        "service": "knowledge-api",
-        "timestamp": datetime.now().isoformat(),
-    }
-
-    return result
 
 
 @router.get("/knowledge-items/task/{task_id}")

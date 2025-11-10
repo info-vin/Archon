@@ -62,12 +62,10 @@ export const FeaturesSection = () => {
       
       // Check projects schema health
       if (projectsHealthResponse && projectsHealthResponse.ok) {
-        const healthData = await projectsHealthResponse.json();
-        
-        const schemaValid = healthData.schema_valid === true;
-        setProjectsSchemaValid(schemaValid);
-        
-        if (!schemaValid) {
+                        const healthData = await projectsHealthResponse.json();
+                
+                        const schemaValid = healthData.schema_valid === true;
+                        setProjectsSchemaValid(schemaValid);        if (!schemaValid) {
           setProjectsSchemaError(
             'Projects table not detected. Please ensure you have installed the archon_tasks.sql structure to your database and restart the server.'
           );
