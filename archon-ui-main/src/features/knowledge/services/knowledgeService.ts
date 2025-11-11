@@ -39,7 +39,7 @@ export const knowledgeService = {
     }
 
     const queryString = params.toString();
-    const endpoint = `/api/knowledge-items/summary${queryString ? `?${queryString}` : ""}`;
+    const endpoint = `/api/knowledge-items${queryString ? `?${queryString}` : ""}`;
 
     return callAPIWithETag<KnowledgeItemsResponse>(endpoint);
   },

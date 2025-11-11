@@ -195,6 +195,10 @@ export const RAGSettings = ({
   const [providerConnectionStatus, setProviderConnectionStatus] = useState<{
     [key: string]: { connected: boolean; checking: boolean; lastChecked?: Date }
   }>({});
+  const providerConnectionStatusRef = useRef(providerConnectionStatus);
+  useEffect(() => {
+    providerConnectionStatusRef.current = providerConnectionStatus;
+  }, [providerConnectionStatus]);
   const [ollamaServerStatus, setOllamaServerStatus] = useState<'unknown' | 'online' | 'offline'>('unknown');
   const [ollamaManualConfirmed, setOllamaManualConfirmed] = useState(false);
 
@@ -696,30 +700,30 @@ const manualTestConnection = useCallback(async (
   }, []);
 
   // Test provider connections when API credentials change
-  useEffect(() => {
-    const testConnections = async () => {
-      // Test all supported providers
-      const providers = ['openai', 'google', 'anthropic', 'openrouter', 'grok'];
+  const testConnections = useCallback(async () => {
+    // Test all supported providers
+    const providers = ['openai', 'google', 'anthropic', 'openrouter', 'grok'];
 
-      for (const provider of providers) {
-        // Don't test if we've already checked recently (within last 30 seconds)
-        const lastChecked = providerConnectionStatus[provider]?.lastChecked;
-        const now = new Date();
-        const timeSinceLastCheck = lastChecked ? now.getTime() - lastChecked.getTime() : Infinity;
+    for (const provider of providers) {
+      // Don't test if we've already checked recently (within last 30 seconds)
+      const lastChecked = providerConnectionStatusRef.current[provider]?.lastChecked;
+      const now = new Date();
+      const timeSinceLastCheck = lastChecked ? now.getTime() - lastChecked.getTime() : Infinity;
 
-        if (timeSinceLastCheck > 30000) { // 30 seconds
-          // console.log(`🔄 Testing ${provider} connection...`);
-          await testProviderConnection(provider);
-        }
+      if (timeSinceLastCheck > 30000) { // 30 seconds
+        // console.log(`🔄 Testing ${provider} connection...`);
+        await testProviderConnection(provider);
       }
-    };
+    }
+  }, [testProviderConnection]);
 
+  useEffect(() => {
     // Test connections periodically (every 60 seconds)
     testConnections();
     const interval = setInterval(testConnections, 60000);
 
     return () => clearInterval(interval);
-  }, [apiCredentials, testProviderConnection]); // Test when credentials change
+  }, [apiCredentials, testConnections]); // Test when credentials change
 
   useEffect(() => {
     const handleCredentialUpdate = (event: Event) => {
