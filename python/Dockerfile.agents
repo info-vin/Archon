@@ -24,11 +24,13 @@ ENV PYTHONUNBUFFERED=1
 # Expose Agents port
 ARG ARCHON_AGENTS_PORT=8052
 ENV ARCHON_AGENTS_PORT=${ARCHON_AGENTS_PORT}
-EXPOSE ${ARCHON_AGENTS_PORT}
+EXPOSE 8052
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-    CMD sh -c "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:${ARCHON_AGENTS_PORT}/health')\""
+    CMD sh -c "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8052/health')\""
 
-# Run the Agents service
-CMD sh -c "python -m uvicorn src.agents.server:app --host 0.0.0.0 --port ${ARCHON_AGENTS_PORT}"
+# Add and use entrypoint script
+COPY docker-entrypoint-agents.sh /app/
+RUN chmod +x /app/docker-entrypoint-agents.sh
+CMD ["/app/docker-entrypoint-agents.sh"]

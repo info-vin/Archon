@@ -37,5 +37,7 @@ ARG ARCHON_MCP_PORT=8051
 ENV ARCHON_MCP_PORT=${ARCHON_MCP_PORT}
 EXPOSE 8051
 
-# Run the MCP server
-CMD ["python", "-m", "src.mcp_server.mcp_server"]
+# Add and use entrypoint script
+COPY docker-entrypoint-mcp.sh /app/
+RUN chmod +x /app/docker-entrypoint-mcp.sh
+CMD ["/app/docker-entrypoint-mcp.sh"]
