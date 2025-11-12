@@ -94,10 +94,10 @@ async def lifespan(app: FastAPI):
         api_logger.info("🔥 Logfire initialized for backend")
 
         # Initialize crawling context
-        try:
-            await initialize_crawler()
-        except Exception as e:
-            api_logger.warning(f"Could not fully initialize crawling context: {str(e)}")
+        # try:
+        #     await initialize_crawler()
+        # except Exception as e:
+        #     api_logger.warning(f"Could not fully initialize crawling context: {str(e)}")
 
         # Make crawling context available to modules
         # Crawler is now managed by CrawlerManager

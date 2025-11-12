@@ -170,7 +170,7 @@ sequenceDiagram
 **[ ] 8. 部署至 Render**
     - **目標**: 將功能完整的 `dev/v1` 分支部署到雲端。
     - **[ ] 8.1**: 在 Render 上為 `enduser-ui-fe` 建立新的服務。
-    - **[ ] 8.2**: 確保 Render 上所有服務 (`archon-server`, `archon-mcp`, `archon-ui-main`, `enduser-ui-fe`) 的建置指令、環境變數都已根據新的架構更新。
+    - **[ ] 8.2**: 確保 Render 上所有服務 (`archon-server`, `archon-mcp`, `archon-ui-main`, `enduser-ui-fe`) 的建置指令、環境變數都已根據新的架構更新，**並再次確認 Render 上的「重寫規則 (Rewrite Rule)」是否正確無誤，以確保前端能正確路由到後端 API。**
     - **[ ] 8.3**: **部署前驗證**: 在本地模擬生產環境建置 (`docker compose --profile backend --profile frontend --profile enduser --profile agents build`)，確認本次的 Dockerfile 修改不會影響生產環境的建置。
     - **[ ] 8.4**: 將 `dev/v1` 推送至遠端，觸發部署。
     - **[ ] 8.5: 端對端驗收 (End-to-End Acceptance)**: 根據以下清單，手動驗收線上核心功能。
@@ -181,6 +181,7 @@ sequenceDiagram
 | **2. Document Upload** | 1. Navigate to **Knowledge Base**.<br>2. Click **Upload Document**.<br>3. Select a PDF or Markdown file.<br>4. Click **Upload**. | `POST /api/documents/upload`<br>`GET /api/crawl-progress/[progress_id]` (Polling) | A progress bar appears. After completion, the uploaded document appears as a new item. | **注意**: 應確認手動上傳的檔案，其程式碼範例是否能被正確提取 (Ref: `6abb883`)。 |
 | **3. Project & Task Creation** | 1. Navigate to **Projects**.<br>2. Click **New Project** and create a project.<br>3. Click into the newly created project.<br>4. Click **New Task** and create a task. | `POST /api/projects`<br>`POST /api/tasks` | The new project appears in the project list. The new task is visible in the task board. | **注意**: 建立任務後，可檢查其 API 回應是否包含 `feature` 欄位 (Ref: `5293687`)。 |
 | **4. AI Assistant Integration** | 1. Navigate to the **MCP Dashboard**.<br>2. Observe the "Connection Config" section. | `GET /api/mcp/config` | The UI displays the correct Host, Port, and Transport mode. | **說明**: 此步驟僅為基礎的連線設定檢查。完整的 MCP 功能需在 AI 客戶端中，實際呼叫 `update_task` 等工具來進行驗證。 |
+| **5. Admin UI Stability** | 1. Navigate to **Settings** -> **RAG**.<br>2. Interact with the form (e.g., change provider). | `GET /api/llm-providers` | The page loads correctly without console errors. All interactive elements respond as expected. | **歷史問題**: 此頁面曾有 `Maximum update depth exceeded` 的 React 錯誤 (Ref: `GEMINI.md 2025-11-11`)。需確認已修復。 |
 
 **[ ] 9. 最終驗證與慶祝**
     - **目標**: 確認線上環境功能正常，並更新進度。
