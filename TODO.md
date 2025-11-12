@@ -167,12 +167,23 @@ sequenceDiagram
             3.  執行 `make dev-docker` 進行最終驗證。
         - **狀態**: `Completed`
 
-**[ ] 8. 部署至 Render**
-    - **目標**: 將功能完整的 `dev/v1` 分支部署到雲端。
-    - **[ ] 8.1**: 在 Render 上為 `enduser-ui-fe` 建立新的服務。
-    - **[ ] 8.2**: 確保 Render 上所有服務 (`archon-server`, `archon-mcp`, `archon-ui-main`, `enduser-ui-fe`) 的建置指令、環境變數都已根據新的架構更新，**並再次確認 Render 上的「重寫規則 (Rewrite Rule)」是否正確無誤，以確保前端能正確路由到後端 API。**
-    - **[ ] 8.3**: **部署前驗證**: 在本地模擬生產環境建置 (`docker compose --profile backend --profile frontend --profile enduser --profile agents build`)，確認本次的 Dockerfile 修改不會影響生產環境的建置。
-    - **[ ] 8.4**: 將 `dev/v1` 推送至遠端，觸發部署。
+**[~] 8. 部署至 Render (Deployment to Render)**
+    - **目標**: 將功能完整的 `dev/v1` 分支部署到雲端，並解決所有部署過程中發現的問題。
+    - **當前狀態**: ✅ **部署完成，等待驗收**。所有後端和前端服務均已成功部署。前端與後端的連線問題已透過修正程式碼解決。現在需要進行最後的端對端功能驗收。
+
+    - ### 部署偵錯日誌與解決方案總結
+
+| 服務 | 遇到的問題 | 根本原因 | 最終解決方案 (Commit/Pattern) |
+| :--- | :--- | :--- | :--- |
+| **`archon-server`** | 1. 啟動時因爬蟲初始化而超時。<br>2. 前端無法連線 (CORS)。 | 1. 在資源受限的容器中，於啟動階段啟動瀏覽器。<br>2. `allow_origins=["*"]` 與 `allow_credentials=True` 的組合被瀏覽器阻止。 | 1. 延遲爬蟲初始化 (`bd8b4fd`)。<br>2. 設定明確的 `origins` 來源清單 (`fix(api): ...`)。 |
+| **`archon-mcp`** | 1. `EXPOSE` 指令導致建置失敗。<br>2. `ValueError` 因無法解析 `$PORT`。<br>3. `export` 指令找不到。 | Dockerfile 語法錯誤 & Render 環境與 Shell 交互作用的複雜性。 | 引入標準的 **Entrypoint 腳本模式** (`9da96e7`, `694eb3c`)，將啟動邏輯封裝在容器內部，徹底解決了所有執行階段的配置問題。 |
+| **`archon-agents`** | (同 `archon-mcp`)<br>4. 缺少 `OPENAI_API_KEY` 等環境變數。 | (同 `archon-mcp`)<br>部署說明不完整。 | (同 `archon-mcp`)<br>提供了完整的環境變數清單。 |
+| **`archon-ui-main`** | 所有 API 呼叫都失敗，回傳 `index.html`。 | 程式碼中完全沒有使用 `VITE_API_URL`，導致 API 請求路徑錯誤。 | 修正 `vite.config.ts` 以注入變數，並修正 `api.ts` 以使用該變數 (`fix(deploy): ...frontend...`)。 |
+
+    - **[X] 8.1**: 在 Render 上為所有服務 (`archon-server`, `archon-mcp`, `archon-agents`, `archon-ui-main`, `enduser-ui-fe`) 建立對應的服務。
+    - **[X] 8.2**: 根據部署偵錯結果，為所有服務設定正確的建置指令、環境變數和重寫規則。
+    - **[X] 8.3**: 部署前驗證 (已透過線上偵錯完成)。
+    - **[X] 8.4**: 將 `dev/v1` 推送至遠端，觸發部署。
     - **[ ] 8.5: 端對端驗收 (End-to-End Acceptance)**: 根據以下清單，手動驗收線上核心功能。
 
 | Feature | User Action (E2E Step) | Key Backend API(s) Triggered | Expected Outcome (Acceptance Criteria) | 注意事項 / 歷史問題 |
