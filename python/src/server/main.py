@@ -39,7 +39,7 @@ from .api_routes.version_api import router as version_router
 # Import Logfire configuration
 from .config.logfire_config import api_logger, setup_logfire
 from .services.background_task_manager import cleanup_task_manager
-from .services.crawler_manager import cleanup_crawler, initialize_crawler
+from .services.crawler_manager import cleanup_crawler
 
 # Import utilities and core classes
 from .services.credential_service import initialize_credentials
@@ -172,9 +172,15 @@ app = FastAPI(
 )
 
 # Configure CORS
+origins = [
+    "https://archon-ui-wiwy.onrender.com",
+    "https://enduser-ui-fe.onrender.com",
+    "http://localhost:5173",
+    "http://localhost:3000",
+]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allow all origins for development
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
