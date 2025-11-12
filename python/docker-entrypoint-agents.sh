@@ -5,13 +5,13 @@
 # Exit immediately if a command exits with a non-zero status.
 set -e
 
-# Use the value of $PORT if ARCHON_AGENTS_PORT is not set.
-# This makes the container compatible with cloud environments like Render.
-export ARCHON_AGENTS_PORT=${ARCHON_AGENTS_PORT:-$PORT}
+# Use the value of $PORT from the environment, falling back to the build-time ARG.
+# This ensures compatibility with cloud environments like Render.
+export ARCHON_AGENTS_PORT=${PORT:-$ARCHON_AGENTS_PORT}
 
 # Check if the port is set
 if [ -z "$ARCHON_AGENTS_PORT" ]; then
-  echo "Error: ARCHON_AGENTS_PORT or PORT must be set." >&2
+  echo "Error: PORT (from Render) or ARCHON_AGENTS_PORT (build-time) must be set." >&2
   exit 1
 fi
 
