@@ -330,6 +330,8 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
       'import.meta.env.VITE_HOST': JSON.stringify(isDocker ? 'localhost' : host),
       'import.meta.env.VITE_PORT': JSON.stringify(port),
       'import.meta.env.PROD': env.PROD === 'true',
+      // Inject VITE_API_URL for production builds
+      'import.meta.env.VITE_API_URL': JSON.stringify(env.VITE_API_URL || ''),
     },
     resolve: {
       alias: {

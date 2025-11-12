@@ -7,15 +7,23 @@
 
 // Get the API URL from environment or use relative URLs for proxy
 export function getApiUrl(): string {
-  // Check if VITE_API_URL is explicitly provided (for absolute URL mode)
   const viteApiUrl = import.meta.env.VITE_API_URL;
-  if (viteApiUrl) {
+
+  // In production, VITE_API_URL MUST be set and non-empty
+  if (import.meta.env.PROD) {
+    if (!viteApiUrl || viteApiUrl.length === 0) {
+      console.error(
+        "CRITICAL ERROR: VITE_API_URL is not set in production environment. API calls will fail.",
+      );
+      // Return empty string to allow app to load, but API calls will fail visibly
+      return "";
+    }
     return viteApiUrl;
   }
 
-  // Default to relative URLs to use Vite proxy in development
-  // or direct proxy in production - this ensures all requests go through proxy
-  return '';
+  // In development, if VITE_API_URL is provided, use it.
+  // Otherwise, return empty string to use Vite's proxy.
+  return viteApiUrl || "";
 }
 
 // Get the base path for API endpoints
