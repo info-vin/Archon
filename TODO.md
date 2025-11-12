@@ -183,7 +183,13 @@ sequenceDiagram
 | **4. AI Assistant Integration** | 1. Navigate to the **MCP Dashboard**.<br>2. Observe the "Connection Config" section. | `GET /api/mcp/config` | The UI displays the correct Host, Port, and Transport mode. | **說明**: 此步驟僅為基礎的連線設定檢查。完整的 MCP 功能需在 AI 客戶端中，實際呼叫 `update_task` 等工具來進行驗證。 |
 | **5. Admin UI Stability** | 1. Navigate to **Settings** -> **RAG**.<br>2. Interact with the form (e.g., change provider). | `GET /api/llm-providers` | The page loads correctly without console errors. All interactive elements respond as expected. | **歷史問題**: 此頁面曾有 `Maximum update depth exceeded` 的 React 錯誤 (Ref: `GEMINI.md 2025-11-11`)。需確認已修復。 |
 
-**[ ] 9. 最終驗證與慶祝**
+**[ ] 9. 技術債與未來優化 (Technical Debt & Future Optimizations)**
+    - **[ ] 9.1**: **爬蟲服務隨用隨啟 (Lazy Crawler Initialization)**
+        - **目標**: 將 `Crawl4AI` 瀏覽器啟動邏輯從服務啟動階段移除，改為在第一次收到爬蟲任務時才啟動。
+        - **理由**: 避免服務啟動時因資源耗盡導致超時，確保服務快速部署和穩定運行。
+        - **影響**: 在此任務完成前，爬蟲功能將無法使用。
+
+**[ ] 10. 最終驗證與慶祝**
     - **目標**: 確認線上環境功能正常，並更新進度。
-    - **[ ] 9.1**: 驗證線上服務核心功能。
-    - **[ ] 9.2**: 更新 `TODO.md` 中的進度對照表，將分數從 0% 更新為 100%。
+    - **[ ] 10.1**: 驗證線上服務核心功能。
+    - **[ ] 10.2**: 更新 `TODO.md` 中的進度對照表，將分數從 0% 更新為 100%。

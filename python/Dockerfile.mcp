@@ -35,7 +35,7 @@ ENV PYTHONUNBUFFERED=1
 # Expose MCP port
 ARG ARCHON_MCP_PORT=8051
 ENV ARCHON_MCP_PORT=${ARCHON_MCP_PORT}
-EXPOSE ${ARCHON_MCP_PORT}
+EXPOSE 8051
 
 # Run the MCP server
 CMD ["python", "-m", "src.mcp_server.mcp_server"]
