@@ -181,6 +181,20 @@
         6.  `migration/seed_blog_posts.sql` (填充部落格假資料)
 
 3.  **階段三：執行部署**
+
+    **3.1 前端服務的路由設定 (重要)**
+
+    對於單頁應用 (SPA) 前端服務 (如 `archon-ui-main`, `enduser-ui-fe`)，您**必須**在 Render 儀表板上設定代理規則，否則所有 API 請求都會失敗。
+
+    1.  在 Render 儀表板，進入您的前端服務設定頁面。
+    2.  找到 **"Redirects/Rewrites"** 區塊。
+    3.  新增一條**重寫 (Rewrite)** 規則：
+        *   **Source (來源路徑):** `/api/:path*`
+        *   **Destination (目標位址):** `https://<您的後端服務網址>/api/:path*`
+    
+    > **說明**: 此規則將所有 `/api/` 開頭的請求，從前端服務代理到後端服務，這是在生產環境中複製本地開發 `proxy` 功能所必需的步驟。請將 `<您的後端服務網址>` 替換為您 `archon-server` 的真實公開網址。
+
+    **3.2 觸發部署**
     1.  確認 Render 儀表板監控的是正確的 `feature/...` 分支。
     2.  將本地變更推送到 GitHub: `git push origin <your-branch>`
     3.  Render 會自動偵測到新的提交並開始部署。
