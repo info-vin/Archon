@@ -673,6 +673,8 @@ async def upload_document(
 
         # Read file content immediately to avoid closed file issues
         file_content = await file.read()
+        if not file_content:
+            raise HTTPException(status_code=422, detail={"error": "Uploaded file is empty"})
         file_metadata = {
             "filename": file.filename,
             "content_type": file.content_type,

@@ -274,11 +274,11 @@ async def add_documents_to_supabase(
             successful_texts = result.texts_processed
 
             if not batch_embeddings:
-                search_logger.warning(
-                    f"Skipping batch {batch_num} - no successful embeddings created"
-                )
-                completed_batches += 1
-                continue
+                # If embedding fails for the whole batch, raise an error to stop processing
+                # This prevents creating a source with no associated content chunks
+                error_message = f"Skipping batch {batch_num} - no successful embeddings created. Check embedding provider."
+                search_logger.error(error_message)
+                raise Exception(error_message)
 
             # Prepare batch data - only for successful embeddings
             batch_data = []
