@@ -279,7 +279,7 @@ async def update_source_info(
             if source_display_name:
                 update_data["source_display_name"] = source_display_name
 
-            client.table("archon_sources").update(update_data).eq(
+            client.table("archon_sources").upsert(update_data).eq(
                 "source_id", source_id
             ).execute()
 

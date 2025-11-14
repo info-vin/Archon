@@ -20,6 +20,16 @@ router = APIRouter(prefix="/api/mcp", tags=["mcp"])
 
 def get_container_status() -> dict[str, Any]:
     """Get simple MCP container status without Docker management."""
+    # If running in Render, Docker is not available. Return a standalone status.
+    if os.getenv("RENDER") == "true":
+        return {
+            "status": "running",
+            "uptime": None,
+            "logs": [],
+            "container_status": "standalone",
+            "message": "Running in a standalone environment. Docker info not available."
+        }
+
     docker_client = None
     try:
         docker_client = docker.from_env()
