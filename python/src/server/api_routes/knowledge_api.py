@@ -795,6 +795,23 @@ async def _perform_upload_with_progress(
         )
 
         if success:
+            # After storing chunks, create the main source entry
+            try:
+                from ..services.source_management_service import SourceManagementService
+                source_service = SourceManagementService(get_supabase_client())
+                await source_service.create_source_from_upload(
+                    source_id=source_id,
+                    filename=filename,
+                    knowledge_type=knowledge_type,
+                    tags=tag_list,
+                    chunks_stored=result.get("chunks_stored", 0),
+                )
+                safe_logfire_info(f"Created source entry for {source_id}")
+            except Exception as source_error:
+                await tracker.error(f"Failed to create source entry: {source_error}")
+                safe_logfire_error(f"Failed to create source entry for {source_id}: {source_error}")
+                return
+
             # Complete the upload with 100% progress
             await tracker.complete({
                 "log": "Document uploaded successfully!",

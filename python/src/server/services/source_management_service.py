@@ -673,3 +673,39 @@ class SourceManagementService:
         except Exception as e:
             logger.error(f"Error listing sources by type: {e}")
             return False, {"error": f"Error listing sources by type: {str(e)}"}
+
+    async def create_source_from_upload(
+        self,
+        source_id: str,
+        filename: str,
+        knowledge_type: str,
+        tags: list[str],
+        chunks_stored: int,
+    ) -> None:
+        """
+        Create a new source record specifically for a file upload.
+
+        This ensures the metadata is set correctly with source_type='file'.
+        """
+        try:
+            logger.info(f"Creating source entry for uploaded file: {source_id}")
+            metadata = {
+                "knowledge_type": knowledge_type,
+                "tags": tags or [],
+                "source_type": "file",
+                "file_name": filename,
+                "status": "completed",
+            }
+            source_data = {
+                "source_id": source_id,
+                "title": filename,
+                "summary": f"Content from uploaded file: {filename}",
+                "total_word_count": 0,  # This can be updated later if needed
+                "metadata": metadata,
+            }
+            self.supabase_client.table("archon_sources").upsert(source_data).execute()
+            logger.info(f"Successfully created source entry for {source_id}")
+        except Exception as e:
+            logger.error(f"Error creating source entry for upload {source_id}: {e}")
+            # Re-raise the exception to be caught by the background task handler
+            raise
