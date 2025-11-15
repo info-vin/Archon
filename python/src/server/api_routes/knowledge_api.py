@@ -10,6 +10,7 @@ This module handles all knowledge base operations including:
 """
 
 import asyncio
+import io
 import json
 import uuid
 
@@ -27,6 +28,7 @@ from ..services.knowledge_service import KnowledgeService
 from ..services.rbac_service import RBACService
 from ..services.search.rag_service import RAGService
 from ..services.storage import DocumentStorageService
+from ..services.storage_service import storage_service
 from ..utils import get_supabase_client
 from ..utils.document_processing import extract_text_from_document
 from ..utils.progress.progress_tracker import ProgressTracker
@@ -762,6 +764,28 @@ async def _perform_upload_with_progress(
             await tracker.error(f"Failed to extract text from document: {str(ex)}")
             return
 
+        # Upload the original file to Supabase Storage and get the public URL
+        public_url = None
+        try:
+            # We need to re-create an UploadFile object for the storage service
+            # Create an in-memory file-like object
+            in_memory_file = io.BytesIO(file_content)
+            upload_file_for_storage = UploadFile(filename=filename, file=in_memory_file)
+
+            # Define the path for the file in the bucket
+            file_path = f"uploads/{progress_id}/{filename}"
+            public_url = await storage_service.upload_file(
+                bucket_name="archon_documents",
+                file_path=file_path,
+                file=upload_file_for_storage,
+            )
+            safe_logfire_info(f"Original file uploaded to {public_url}")
+        except Exception as e:
+            logger.error(f"Failed to upload original file to storage: {e}", exc_info=True)
+            # We can still proceed with chunking, but the source_url will be null
+            await tracker.update(status="warning", log=f"Could not upload original file: {e}")
+
+
         # Use DocumentStorageService to handle the upload
         doc_storage_service = DocumentStorageService(get_supabase_client())
 
@@ -807,6 +831,7 @@ async def _perform_upload_with_progress(
                     knowledge_type=knowledge_type,
                     tags=tag_list,
                     chunks_stored=result.get("chunks_stored", 0),
+                    source_url=public_url,
                 )
                 safe_logfire_info(f"Created source entry for {source_id}")
             except Exception as source_error:

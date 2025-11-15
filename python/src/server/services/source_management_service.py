@@ -681,6 +681,7 @@ class SourceManagementService:
         knowledge_type: str,
         tags: list[str],
         chunks_stored: int,
+        source_url: str | None = None,
     ) -> None:
         """
         Create a new source record specifically for a file upload.
@@ -703,6 +704,8 @@ class SourceManagementService:
                 "total_word_count": 0,  # This can be updated later if needed
                 "metadata": metadata,
             }
+            if source_url:
+                source_data["source_url"] = source_url
             self.supabase_client.table("archon_sources").upsert(source_data).execute()
             logger.info(f"Successfully created source entry for {source_id}")
         except Exception as e:

@@ -46,6 +46,38 @@
 
 ---
 
+### 本日會話總結與學習教訓 (2025-11-15): 從「雙重更新」到「檔案未上傳」的偵錯之旅
+
+*   **核心任務**: 解決 `archon-server` 在 Render 部署後，文件上傳功能導致的資料不一致問題 (UI 無法檢視文件，資料庫 `source_url` 為 `null`，`source_type` 錯誤)。
+
+*   **偵錯歷程 (一次由淺入深、不斷自我修正的偵錯)**:
+    1.  **初步診斷 (語法錯誤)**: 最初根據 `git log` 發現 `source_management_service.py` 中 `upsert` 語法錯誤 (`9ea2c13`)。我提議修正為 `update`，但被使用者質疑。
+    2.  **修正意圖 (競爭條件)**: 經使用者提醒，我意識到 `upsert` 的意圖是避免競爭條件，因此修正了 `upsert` 的語法，使其能正確運作。
+    3.  **發現「雙重更新」**: 儘管修正了 `upsert`，但使用者回報問題依舊。深入調查後，發現 `DocumentStorageService.upload_document` (在 `storage_services.py` 中) 錯誤地呼叫了通用的 `update_source_info`，導致在 `knowledge_api.py` 中正確呼叫 `create_source_from_upload` 之前，資料已被錯誤地寫入 (`source_type='url'`, `source_url=null`)。我將此錯誤的呼叫移除。
+    4.  **最終根源 (檔案未上傳)**: 即使移除了「雙重更新」，使用者仍無法檢視文件。在使用者持續質疑下，我意識到最根本的問題是：**原始檔案本身從未被上傳到 Supabase Storage**。因此，根本沒有 `source_url` 可以儲存。
+    5.  **找到缺失環節**: 透過全域搜尋 `supabase.storage`，我找到了負責實際檔案上傳的 `StorageService` (在 `storage_service.py` 中)。
+    6.  **全面修正**: 制定並執行了以下綜合修正計畫：
+        *   修改 `source_management_service.py` 中的 `create_source_from_upload` 函式，使其能接受並儲存 `source_url`。
+        *   修改 `knowledge_api.py`，導入 `storage_service`。
+        *   在 `knowledge_api.py` 的 `_perform_upload_with_progress` 函式中，加入呼叫 `storage_service.upload_file` 的邏輯，將原始檔案上傳到 Supabase Storage，並取得 `public_url`。
+        *   將此 `public_url` 傳遞給 `create_source_from_upload`。
+    7.  **驗證與修正 Lint**: 在修正過程中，因移動 `import` 語句導致 `make lint-be` 失敗 (`I001` 錯誤)，已修正。最終 `make lint-be` 和 `make test-be` 均通過。
+
+*   **最終成果**:
+    *   文件上傳功能已完全修復，確保原始檔案被正確上傳到 Supabase Storage。
+    *   `archon_sources` 記錄中的 `source_url` 和 `source_type` 欄位將被正確填充。
+    *   前端 UI 將能夠成功檢視上傳的文件。
+    *   所有修改已合併到一個單一、乾淨的 commit 中。
+
+*   **本日關鍵學習**:
+    *   **徹底性與耐心**: 即使問題看似解決，也必須持續追問「為什麼」，直到所有使用者觀察到的現象都能被程式碼邏輯完整解釋。
+    *   **信任使用者的直覺**: 使用者對「無法檢視」的持續質疑，是推動我找到最終根源的關鍵。
+    *   **系統性思維**: 問題往往不是單一 Bug，而是多個層面 (語法、邏輯、架構、服務職責) 的綜合結果。解決方案必須是全面的。
+    *   **驗證的重要性**: 每次修改後立即執行 Lint 和測試，是避免「改A壞B」和「來回修改」的唯一途徑。我的多次失誤再次證明了這一點。
+    *   **服務職責分離**: 混淆的服務職責 (如 `DocumentStorageService` 錯誤地更新 `archon_sources`) 是導致複雜 Bug 的常見原因。
+
+---
+
 ### 本日會話總結與學習教訓 (2025-11-13): 在 Render 路由迷霧中找到 API 連線的真相
 
 *   **核心任務**: 解決  在 Render 部署後，無法與後端 API 連線的問題。

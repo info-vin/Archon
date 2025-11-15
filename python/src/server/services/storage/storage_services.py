@@ -104,28 +104,10 @@ class DocumentStorageService(BaseStorageService):
                     metadatas.append(meta)
                     total_word_count += meta.get("word_count", 0)
 
-                await report_progress("Updating source information...", 50)
+                await report_progress("Storing document chunks...", 70)
 
                 # Create URL to full document mapping
                 url_to_full_document = {doc_url: file_content}
-
-                # Update source information
-                from ..source_management_service import extract_source_summary, update_source_info
-
-                source_summary = await extract_source_summary(source_id, file_content[:5000])
-
-                logger.info(f"Updating source info for {source_id} with knowledge_type={knowledge_type}")
-                await update_source_info(
-                    self.supabase_client,
-                    source_id,
-                    source_summary,
-                    total_word_count,
-                    file_content[:1000],  # content for title generation
-                    knowledge_type,      # Pass knowledge_type parameter!
-                    tags,               # FIX: Pass tags parameter!
-                )
-
-                await report_progress("Storing document chunks...", 70)
 
                 # Store documents
                 await add_documents_to_supabase(
