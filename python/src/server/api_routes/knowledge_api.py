@@ -766,24 +766,19 @@ async def _perform_upload_with_progress(
 
         # Upload the original file to Supabase Storage and get the public URL
         public_url = None
-        try:
-            # We need to re-create an UploadFile object for the storage service
-            # Create an in-memory file-like object
-            in_memory_file = io.BytesIO(file_content)
-            upload_file_for_storage = UploadFile(filename=filename, file=in_memory_file)
+        # We need to re-create an UploadFile object for the storage service
+        # Create an in-memory file-like object
+        in_memory_file = io.BytesIO(file_content)
+        upload_file_for_storage = UploadFile(filename=filename, file=in_memory_file)
 
-            # Define the path for the file in the bucket
-            file_path = f"uploads/{progress_id}/{filename}"
-            public_url = await storage_service.upload_file(
-                bucket_name="archon_documents",
-                file_path=file_path,
-                file=upload_file_for_storage,
-            )
-            safe_logfire_info(f"Original file uploaded to {public_url}")
-        except Exception as e:
-            logger.error(f"Failed to upload original file to storage: {e}", exc_info=True)
-            # We can still proceed with chunking, but the source_url will be null
-            await tracker.update(status="warning", log=f"Could not upload original file: {e}")
+        # Define the path for the file in the bucket
+        file_path = f"uploads/{progress_id}/{filename}"
+        public_url = await storage_service.upload_file(
+            bucket_name="archon_documents",
+            file_path=file_path,
+            file=upload_file_for_storage,
+        )
+        safe_logfire_info(f"Original file uploaded to {public_url}")
 
 
         # Use DocumentStorageService to handle the upload
