@@ -34,7 +34,7 @@ class StorageService:
             if content_type is None:
                 content_type = "application/octet-stream"
 
-            await supabase.storage.from_(bucket_name).upload(
+            supabase.storage.from_(bucket_name).upload(
                 path=file_path,
                 file=content,
                 file_options={"content-type": content_type, "upsert": "true"}

@@ -13,6 +13,7 @@ import asyncio
 import io
 import json
 import uuid
+from urllib.parse import quote
 
 from fastapi import APIRouter, File, Form, Header, HTTPException, UploadFile
 from pydantic import BaseModel
@@ -772,7 +773,7 @@ async def _perform_upload_with_progress(
         upload_file_for_storage = UploadFile(filename=filename, file=in_memory_file)
 
         # Define the path for the file in the bucket
-        file_path = f"uploads/{progress_id}/{filename}"
+        file_path = f"uploads/{progress_id}/{quote(filename)}"
         public_url = await storage_service.upload_file(
             bucket_name="archon_documents",
             file_path=file_path,
