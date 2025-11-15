@@ -46,7 +46,14 @@ class StorageService:
             return public_url
 
         except Exception as e:
-            logger.error(f"Failed to upload file to Supabase. Bucket: {bucket_name}, Error: {e}")
-            raise StorageUploadError(f"Storage upload failed: {e}") from e
+            detailed_error_message = f"Storage upload failed: {e}"
+            if hasattr(e, 'response') and e.response:
+                try:
+                    response_json = e.response.json()
+                    detailed_error_message += f" Supabase response: {response_json}"
+                except ValueError:
+                    detailed_error_message += f" Supabase response text: {e.response.text}"
+            logger.error(f"Failed to upload file to Supabase. Bucket: {bucket_name}, Error: {detailed_error_message}")
+            raise StorageUploadError(detailed_error_message) from e
 
 storage_service = StorageService()
