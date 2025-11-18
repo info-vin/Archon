@@ -192,7 +192,7 @@ CREATE TABLE IF NOT EXISTS archon_crawled_pages (
     content TEXT NOT NULL,
     metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
     source_id TEXT NOT NULL,
-    embedding VECTOR(768),  -- Google's text-embedding-004 model has 768 dimensions
+    embedding VECTOR(1536),  -- OpenAI embeddings are 1536 dimensions
     content_search_vector tsvector GENERATED ALWAYS AS (to_tsvector('english', content)) STORED,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
     UNIQUE(url, chunk_number),
@@ -215,7 +215,7 @@ CREATE TABLE IF NOT EXISTS archon_code_examples (
     summary TEXT NOT NULL,  -- Summary of the code example
     metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
     source_id TEXT NOT NULL,
-    embedding VECTOR(768),  -- Google's text-embedding-004 model has 768 dimensions
+    embedding VECTOR(1536),  -- OpenAI embeddings are 1536 dimensions
     content_search_vector tsvector GENERATED ALWAYS AS (to_tsvector('english', content || ' ' || COALESCE(summary, ''))) STORED,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
     UNIQUE(url, chunk_number),
@@ -236,7 +236,7 @@ CREATE INDEX idx_archon_code_examples_summary_trgm ON archon_code_examples USING
 
 -- Create a function to search for documentation chunks
 CREATE OR REPLACE FUNCTION match_archon_crawled_pages (
-  query_embedding VECTOR(768),
+  query_embedding VECTOR(1536),
   match_count INT DEFAULT 10,
   filter JSONB DEFAULT '{}'::jsonb,
   source_filter TEXT DEFAULT NULL
@@ -272,7 +272,7 @@ $$;
 
 -- Create a function to search for code examples
 CREATE OR REPLACE FUNCTION match_archon_code_examples (
-  query_embedding VECTOR(768),
+  query_embedding VECTOR(1536),
   match_count INT DEFAULT 10,
   filter JSONB DEFAULT '{}'::jsonb,
   source_filter TEXT DEFAULT NULL
@@ -314,7 +314,7 @@ $$;
 
 -- Hybrid search function for archon_crawled_pages
 CREATE OR REPLACE FUNCTION hybrid_search_archon_crawled_pages(
-    query_embedding vector(768),
+    query_embedding vector(1536),
     query_text TEXT,
     match_count INT DEFAULT 10,
     filter JSONB DEFAULT '{}'::jsonb,
@@ -401,7 +401,7 @@ $$;
 
 -- Hybrid search function for archon_code_examples
 CREATE OR REPLACE FUNCTION hybrid_search_archon_code_examples(
-    query_embedding vector(768),
+    query_embedding vector(1536),
     query_text TEXT,
     match_count INT DEFAULT 10,
     filter JSONB DEFAULT '{}'::jsonb,
