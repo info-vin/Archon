@@ -40,13 +40,9 @@ class StorageService:
                 file_options={"content-type": content_type, "upsert": "true"}
             )
 
-            # Deterministically construct the public URL instead of relying on get_public_url,
-            # which can fail due to race conditions immediately after upload.
-            # The format is: {SUPABASE_URL}/storage/v1/object/public/{bucket_name}/{file_path}
-            base_url = supabase.storage_url
-            public_url = f"{base_url}/object/public/{bucket_name}/{file_path}"
+            public_url = supabase.storage.from_(bucket_name).get_public_url(file_path)
 
-            logger.info(f"Successfully uploaded file '{file.filename}' to bucket '{bucket_name}'. Public URL: {public_url}")
+            logger.info(f"Successfully uploaded file '{file.filename}' to bucket '{bucket_name}'.")
             return public_url
 
         except Exception as e:
