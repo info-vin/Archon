@@ -727,6 +727,7 @@ async def _perform_upload_with_progress(
 ):
     """Perform document upload with extensive diagnostic logging to find silent failures."""
     import traceback
+
     from ..services.crawling.progress_mapper import ProgressMapper
     progress_mapper = ProgressMapper()
 
@@ -752,7 +753,7 @@ async def _perform_upload_with_progress(
             in_memory_file = io.BytesIO(file_content)
             upload_file_for_storage = UploadFile(filename=filename, file=in_memory_file)
             file_path = f"uploads/{progress_id}/{quote(filename)}"
-            
+
             public_url = await storage_service.upload_file(
                 bucket_name="archon_documents",
                 file_path=file_path,
@@ -772,7 +773,7 @@ async def _perform_upload_with_progress(
         logger.info("DIAGNOSTIC: Attempting to store document chunks.")
         doc_storage_service = DocumentStorageService(get_supabase_client())
         source_id = f"file_{filename.replace(' ', '_').replace('.', '_')}_{uuid.uuid4().hex[:8]}"
-        
+
         async def document_progress_callback(message: str, percentage: int, batch_info: dict = None):
             mapped_percentage = progress_mapper.map_progress("document_storage", percentage)
             await tracker.update(status="document_storage", progress=mapped_percentage, log=message, **(batch_info or {}))
@@ -792,7 +793,7 @@ async def _perform_upload_with_progress(
             logger.error(f"DIAGNOSTIC: CRITICAL FAILURE at storing document chunks. Error: {error_msg}")
             await tracker.error(error_msg)
             return
-        
+
         logger.info(f"DIAGNOSTIC: Document chunks stored successfully. Chunks stored: {result.get('chunks_stored', 0)}")
 
         # Step 4: Create the main source entry in archon_sources (THE MOST LIKELY POINT OF FAILURE)
@@ -800,7 +801,7 @@ async def _perform_upload_with_progress(
         try:
             from ..services.source_management_service import SourceManagementService
             source_service = SourceManagementService(get_supabase_client())
-            
+
             logger.info(f"DIAGNOSTIC: Calling create_source_from_upload with source_url={public_url}")
             await source_service.create_source_from_upload(
                 source_id=source_id,
