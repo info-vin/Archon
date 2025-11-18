@@ -40,20 +40,13 @@ class StorageService:
                 file_options={"content-type": content_type, "upsert": "true"}
             )
 
-            # The bucket is private, so we must create a signed URL.
-            # Set expiration to 10 years to make it effectively permanent for our use case.
-            TEN_YEARS_IN_SECONDS = 10 * 365 * 24 * 60 * 60  # 315,360,000
-            signed_url_response = supabase.storage.from_(bucket_name).create_signed_url(
-                path=file_path, expires_in=TEN_YEARS_IN_SECONDS
-            )
+            # Deterministically construct the public URL instead of relying on get_public_url,
+            # which can fail due to race conditions immediately after upload.
+            # The format is: {SUPABASE_URL}/storage/v1/object/public/{bucket_name}/{file_path}
+            base_url = supabase.storage_url
+            public_url = f"{base_url}/object/public/{bucket_name}/{file_path}"
 
-            # The response is a dictionary, e.g., {'signedURL': '...'}
-            public_url = signed_url_response.get("signedURL")
-
-            if not public_url:
-                raise StorageUploadError(f"Failed to create signed URL for {file_path}. Response: {signed_url_response}")
-
-            logger.info(f"Successfully uploaded file '{file.filename}' and created signed URL.")
+            logger.info(f"Successfully uploaded file '{file.filename}' to bucket '{bucket_name}'. Public URL: {public_url}")
             return public_url
 
         except Exception as e:
