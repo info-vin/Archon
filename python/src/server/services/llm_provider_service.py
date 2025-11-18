@@ -132,6 +132,19 @@ async def get_llm_client(
     api_key = None
 
     try:
+        # ================== START DIAGNOSTIC LOGGING ==================
+        logger.info("DIAGNOSTIC: Entering get_llm_client.")
+        logger.info(f"DIAGNOSTIC: Input 'provider' override: {provider}")
+        logger.info(f"DIAGNOSTIC: Input 'use_embedding_provider': {use_embedding_provider}")
+        try:
+            embedding_provider_config = await credential_service.get_active_provider('embedding')
+            llm_provider_config = await credential_service.get_active_provider('llm')
+            logger.info(f"DIAGNOSTIC: Fetched 'embedding' provider config: {embedding_provider_config}")
+            logger.info(f"DIAGNOSTIC: Fetched 'llm' provider config: {llm_provider_config}")
+        except Exception as diag_exc:
+            logger.error(f"DIAGNOSTIC: FAILED to fetch provider configs during diagnosis: {diag_exc}")
+        # =================== END DIAGNOSTIC LOGGING ===================
+
         # Get provider configuration from database settings
         if provider:
             # Explicit provider requested - get minimal config
