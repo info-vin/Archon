@@ -177,6 +177,7 @@ origins = [
     "https://enduser-ui-fe.onrender.com",
     "http://localhost:5173",
     "http://localhost:3000",
+    "http://localhost:3737",
 ]
 app.add_middleware(
     CORSMiddleware,

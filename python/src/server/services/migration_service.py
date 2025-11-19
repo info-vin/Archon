@@ -44,11 +44,18 @@ class MigrationService:
 
     def __init__(self):
         self._supabase: Client | None = None
-        # Handle both Docker (/app/migration) and local (./migration) environments
-        if Path("/app/migration").exists():
-            self._migrations_dir = Path("/app/migration")
+        # This robustly handles both Docker and local environments by first checking
+        # for the fixed Docker path, then falling back to a path calculated
+        # relative to this file's location, making it independent of the
+        # current working directory.
+        docker_migrations_path = Path("/app/migration")
+        if docker_migrations_path.exists():
+            self._migrations_dir = docker_migrations_path
         else:
-            self._migrations_dir = Path("migration")
+            # For local execution, robustly find the project root relative to this file.
+            # python/src/server/services -> python/src/server -> python/src -> python -> project_root
+            project_root = Path(__file__).resolve().parent.parent.parent.parent
+            self._migrations_dir = project_root / "migration"
 
     def _get_supabase_client(self) -> Client:
         """Get or create Supabase client."""
