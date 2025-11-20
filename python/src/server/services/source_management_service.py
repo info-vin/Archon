@@ -674,7 +674,7 @@ class SourceManagementService:
             logger.error(f"Error listing sources by type: {e}")
             return False, {"error": f"Error listing sources by type: {str(e)}"}
 
-    async def create_source_from_upload(
+    def create_source_from_upload(
         self,
         source_id: str,
         filename: str,
@@ -700,6 +700,7 @@ class SourceManagementService:
             source_data = {
                 "source_id": source_id,
                 "title": filename,
+                "source_display_name": filename,  # Bug B Fix: Add missing field
                 "summary": f"Content from uploaded file: {filename}",
                 "total_word_count": 0,  # This can be updated later if needed
                 "metadata": metadata,

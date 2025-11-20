@@ -734,20 +734,15 @@ async def _perform_upload_with_progress(
     try:
         filename = file_metadata["filename"]
         content_type = file_metadata["content_type"]
-        logger.info(f"DIAGNOSTIC: Starting upload process for progress_id={progress_id}, filename={filename}")
-
+        
         # Step 1: Extract text
-        await tracker.update(status="processing", progress=progress_mapper.map_progress("processing", 50), log=f"Extracting text from {filename}")
         try:
             extracted_text = extract_text_from_document(file_content, filename, content_type)
-            logger.info(f"DIAGNOSTIC: Text extracted, length={len(extracted_text)}")
         except Exception as ex:
-            logger.error(f"DIAGNOSTIC: CRITICAL FAILURE at text extraction. Error: {str(ex)}\n{traceback.format_exc()}")
             await tracker.error(f"Failed to extract text: {str(ex)}")
             return
 
         # Step 2: Upload original file to Storage
-        logger.info("DIAGNOSTIC: Attempting to upload original file to Supabase Storage.")
         public_url = None
         try:
             in_memory_file = io.BytesIO(file_content)
@@ -759,18 +754,14 @@ async def _perform_upload_with_progress(
                 file_path=file_path,
                 file=upload_file_for_storage,
             )
-            logger.info(f"DIAGNOSTIC: File upload to storage complete. URL received: {public_url}")
             if not public_url:
-                logger.error("DIAGNOSTIC: CRITICAL FAILURE - storage_service.upload_file returned a null or empty URL.")
                 await tracker.error("Failed to get a valid URL from storage service.")
                 return
         except Exception as ex:
-            logger.error(f"DIAGNOSTIC: CRITICAL FAILURE at file upload to storage. Error: {str(ex)}\n{traceback.format_exc()}")
             await tracker.error(f"Failed to upload file to storage: {str(ex)}")
             return
 
         # Step 3: Store document chunks
-        logger.info("DIAGNOSTIC: Attempting to store document chunks.")
         doc_storage_service = DocumentStorageService(get_supabase_client())
         source_id = f"file_{filename.replace(' ', '_').replace('.', '_')}_{uuid.uuid4().hex[:8]}"
 
@@ -778,7 +769,7 @@ async def _perform_upload_with_progress(
             mapped_percentage = progress_mapper.map_progress("document_storage", percentage)
             await tracker.update(status="document_storage", progress=mapped_percentage, log=message, **(batch_info or {}))
 
-        success, result = await doc_storage_service.upload_document(
+        success, result = doc_storage_service.upload_document(
             file_content=extracted_text,
             filename=filename,
             source_id=source_id,
@@ -790,20 +781,15 @@ async def _perform_upload_with_progress(
 
         if not success:
             error_msg = result.get("error", "Unknown error during chunk storage")
-            logger.error(f"DIAGNOSTIC: CRITICAL FAILURE at storing document chunks. Error: {error_msg}")
             await tracker.error(error_msg)
             return
 
-        logger.info(f"DIAGNOSTIC: Document chunks stored successfully. Chunks stored: {result.get('chunks_stored', 0)}")
-
-        # Step 4: Create the main source entry in archon_sources (THE MOST LIKELY POINT OF FAILURE)
-        logger.info(f"DIAGNOSTIC: Attempting to create main source entry in 'archon_sources' with source_id={source_id}.")
+        # Step 4: Create the main source entry in archon_sources
         try:
             from ..services.source_management_service import SourceManagementService
             source_service = SourceManagementService(get_supabase_client())
 
-            logger.info(f"DIAGNOSTIC: Calling create_source_from_upload with source_url={public_url}")
-            await source_service.create_source_from_upload(
+            source_service.create_source_from_upload(
                 source_id=source_id,
                 filename=filename,
                 knowledge_type=knowledge_type,
@@ -811,16 +797,11 @@ async def _perform_upload_with_progress(
                 chunks_stored=result.get("chunks_stored", 0),
                 source_url=public_url,
             )
-            logger.info(f"DIAGNOSTIC: SUCCESSFULLY created source entry for {source_id}.")
         except Exception as source_error:
-            # THIS IS THE MOST IMPORTANT LOG. IT WILL CATCH THE SILENT ERROR.
-            detailed_error = traceback.format_exc()
-            logger.error(f"DIAGNOSTIC: CRITICAL FAILURE at creating source entry. THIS IS THE ROOT CAUSE. Error: {str(source_error)}\nFULL TRACEBACK:\n{detailed_error}")
             await tracker.error(f"Failed to create source entry in database: {source_error}")
             return
 
         # Step 5: Final completion
-        logger.info("DIAGNOSTIC: Process appears to be fully successful. Completing tracker.")
         await tracker.complete({
             "log": "Document uploaded successfully!",
             "chunks_stored": result.get("chunks_stored"),
@@ -829,12 +810,10 @@ async def _perform_upload_with_progress(
 
     except Exception as e:
         detailed_error = traceback.format_exc()
-        logger.error(f"DIAGNOSTIC: An unexpected error occurred in the main upload task. Error: {str(e)}\n{detailed_error}")
         await tracker.error(f"An unexpected error occurred: {str(e)}")
     finally:
         if progress_id in active_crawl_tasks:
             del active_crawl_tasks[progress_id]
-            logger.info(f"DIAGNOSTIC: Cleaned up upload task from registry | progress_id={progress_id}")
 
 
 @router.post("/knowledge-items/search")
