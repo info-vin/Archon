@@ -734,7 +734,7 @@ async def _perform_upload_with_progress(
     try:
         filename = file_metadata["filename"]
         content_type = file_metadata["content_type"]
-        
+
         # Step 1: Extract text
         try:
             extracted_text = extract_text_from_document(file_content, filename, content_type)
@@ -809,8 +809,7 @@ async def _perform_upload_with_progress(
         })
 
     except Exception as e:
-        detailed_error = traceback.format_exc()
-        await tracker.error(f"An unexpected error occurred: {str(e)}")
+        await tracker.error(f"An unexpected error occurred: {str(e)}\nTraceback:\n{traceback.format_exc()}")
     finally:
         if progress_id in active_crawl_tasks:
             del active_crawl_tasks[progress_id]

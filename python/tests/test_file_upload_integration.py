@@ -1,14 +1,9 @@
-import asyncio
-import io
-import json
 import uuid
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-from fastapi import UploadFile
 
 from src.server.api_routes.knowledge_api import _perform_upload_with_progress
-from src.server.services.source_management_service import SourceManagementService as RealSourceManagementService
 
 
 # Mock dependencies for _perform_upload_with_progress
@@ -78,10 +73,10 @@ async def test_file_upload_runs_to_completion(mock_dependencies):
 
     # 1. Verify that no error was tracked
     tracker.error.assert_not_called()
-    
+
     # 2. Verify the process completed successfully
     tracker.complete.assert_called_once()
-    
+
     # 3. Verify that the 'upsert' method on the mocked Supabase client was called.
     mock_supabase_client.table.assert_called_with("archon_sources")
     upsert_call = mock_supabase_client.table.return_value.upsert
