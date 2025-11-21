@@ -707,7 +707,13 @@ class SourceManagementService:
             }
             if source_url:
                 source_data["source_url"] = source_url
-            self.supabase_client.table("archon_sources").upsert(source_data).execute()
+            response = self.supabase_client.table("archon_sources").upsert(source_data).execute()
+
+            # Check if the response has an error
+            if getattr(response, 'error', None):
+                logger.error(f"Supabase error creating source entry for {source_id}: {response.error}")
+                raise Exception(f"Supabase error: {response.error.message}")
+
             logger.info(f"Successfully created source entry for {source_id}")
         except Exception as e:
             logger.error(f"Error creating source entry for upload {source_id}: {e}")

@@ -33,8 +33,12 @@ def mock_dependencies():
         # Mock extract_text_from_document
         mock_extract_text.return_value = "mock extracted text"
 
-        # Mock get_supabase_client - this is crucial
+        # Mock get_supabase_client to simulate a successful database write
         mock_supabase_client = MagicMock()
+        # Configure the mock chain to return a response object with .error = None
+        mock_response = MagicMock()
+        mock_response.error = None
+        mock_supabase_client.table.return_value.upsert.return_value.execute.return_value = mock_response
         mock_get_supabase_client.return_value = mock_supabase_client
 
         yield {

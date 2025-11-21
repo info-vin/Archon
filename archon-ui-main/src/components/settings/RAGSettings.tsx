@@ -723,7 +723,7 @@ const manualTestConnection = useCallback(async (
     const interval = setInterval(testConnections, 60000);
 
     return () => clearInterval(interval);
-  }, [apiCredentials, testConnections]); // Test when credentials change
+  }, [JSON.stringify(apiCredentials), testConnections]); // Test when credentials change
 
   useEffect(() => {
     const handleCredentialUpdate = (event: Event) => {
