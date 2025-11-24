@@ -797,9 +797,13 @@ async def _perform_upload_with_progress(
                 chunks_stored=result.get("chunks_stored", 0),
                 source_url=public_url,
             )
+            safe_logfire_info(f"Database entry created | source_id={source_id} | filename={filename}")
         except Exception as source_error:
-            await tracker.error(f"Failed to create source entry in database: {source_error}")
-            return
+            # Explicitly log the critical failure to write to archon_sources
+            error_message = f"Failed to create source entry in database: {source_error}\nTraceback:\n{traceback.format_exc()}"
+            safe_logfire_error(f"🚨 CRITICAL UPLOAD FAILURE: {error_message}")
+            await tracker.error(error_message) # Mark the tracker as failed
+            return # Terminate the background task here as a critical step failed
 
         # Step 5: Final completion
         await tracker.complete({
