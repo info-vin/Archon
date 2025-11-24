@@ -769,7 +769,7 @@ async def _perform_upload_with_progress(
             mapped_percentage = progress_mapper.map_progress("document_storage", percentage)
             await tracker.update(status="document_storage", progress=mapped_percentage, log=message, **(batch_info or {}))
 
-        success, result = doc_storage_service.upload_document(
+        success, result = await doc_storage_service.upload_document(
             file_content=extracted_text,
             filename=filename,
             source_id=source_id,
