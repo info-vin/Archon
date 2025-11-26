@@ -184,15 +184,15 @@ sequenceDiagram
     - **[X] 8.2**: 根據部署偵錯結果，為所有服務設定正確的建置指令、環境變數和重寫規則。
     - **[X] 8.3**: 部署前驗證 (已透過線上偵錯完成)。
     - **[X] 8.4**: 將 `dev/v1` 推送至遠端，觸發部署。
-    - **[X] 8.5: 端對端驗收 (End-to-End Acceptance)**: 根據以下清單，手動驗收線上核心功能。
+    - **[X] 8.5: 端對端驗收 (End-to-End Acceptance)**: 後端核心功能已通過 `make test-be` 驗證。E2E 測試發現數個整合性問題，目前正在收斂。
 
-| Feature | User Action (E2E Step) | Key Backend API(s) Triggered | Expected Outcome (Acceptance Criteria) | 注意事項 / 歷史問題 |
-| :--- | :--- | :--- | :--- | :--- |
-| **1. Web Crawling** | 1. Navigate to **Knowledge Base**.<br>2. Click **Crawl Website**.<br>3. Enter a documentation URL.<br>4. Click **Start Crawl**. | `POST /api/knowledge-items/crawl`<br>`GET /api/crawl-progress/[progress_id]` (Polling) | A progress bar appears. After completion, the new knowledge item is visible in the list. | **歷史問題**: 此功能曾有超時、競爭條件和記憶體問題。**建議**: 除了測試簡單 URL，可嘗試一個結構複雜、包含 JS 渲染的網站，以驗證其穩定性。 |
-| **2. Document Upload** | 1. Navigate to **Knowledge Base**.<br>2. Click **Upload Document**.<br>3. Select a PDF or Markdown file.<br>4. Click **Upload**. | `POST /api/documents/upload`<br>`GET /api/crawl-progress/[progress_id]` (Polling) | A progress bar appears. After completion, the uploaded document appears as a new item. | **注意**: 應確認手動上傳的檔案，其程式碼範例是否能被正確提取 (Ref: `6abb883`)。 |
-| **3. Project & Task Creation** | 1. Navigate to **Projects**.<br>2. Click **New Project** and create a project.<br>3. Click into the newly created project.<br>4. Click **New Task** and create a task. | `POST /api/projects`<br>`POST /api/tasks` | The new project appears in the project list. The new task is visible in the task board. | **注意**: 建立任務後，可檢查其 API 回應是否包含 `feature` 欄位 (Ref: `5293687`)。 |
-| **4. AI Assistant Integration** | 1. Navigate to the **MCP Dashboard**.<br>2. Observe the "Connection Config" section. | `GET /api/mcp/config` | The UI displays the correct Host, Port, and Transport mode. | **說明**: 此步驟僅為基礎的連線設定檢查。完整的 MCP 功能需在 AI 客戶端中，實際呼叫 `update_task` 等工具來進行驗證。 |
-| **5. Admin UI Stability** | 1. Navigate to **Settings** -> **RAG**.<br>2. Interact with the form (e.g., change provider). | `GET /api/llm-providers` | The page loads correctly without console errors. All interactive elements respond as expected. | **歷史問題**: 此頁面曾有 `Maximum update depth exceeded` 的 React 錯誤 (Ref: `GEMINI.md 2025-11-11`)。需確認已修復。 |
+| Feature | Status (2025-11-26) | Blocker / Next Action |
+| :--- | :--- | :--- |
+| **1. Web Crawling** | ⚠️ **未驗證 (Not Verified)** | 爬蟲功能因 `Lazy Crawler Initialization` (Part 9.1) 技術債而尚未啟用。 |
+| **2. Document Upload** | 🟡 **部分成功 (Partially Succeeded)** | **後端功能已驗證，前端程式碼已修正。** <br> **Blocker**: 待前端 Linting (`make lint-fe`) 和測試 (`make test`) 驗證。 |
+| **3. Project & Task Creation** | ⚠️ **未驗證 (Not Verified)** | 需在其他核心功能穩定後進行驗證。 |
+| **4. AI Assistant Integration** | ✅ **通過 (Passed)** | Connection Config 正常顯示。 |
+| **5. Admin UI Stability (RAG)** | 🔴 **驗證失敗 (Failed)** | **Blocker**: 1. `RAG Settings` 頁面顯示 "Migrations pending" 警告，需優先調查並解決資料庫遷移問題.<br>2. `RAGSettings.tsx` 存在 `React Hook useEffect has a complex expression` Lint 警告。 |
 
 **[ ] 9. 技術債與未來優化 (Technical Debt & Future Optimizations)**
     - **[ ] 9.1**: **爬蟲服務隨用隨啟 (Lazy Crawler Initialization)**

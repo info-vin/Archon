@@ -22,9 +22,15 @@ interface ContentViewerProps {
   selectedItem: InspectorSelectedItem | null;
   onCopy: (text: string, id: string) => void;
   copiedId: string | null;
+  sourceDocumentUrl?: string;
 }
 
-export const ContentViewer: React.FC<ContentViewerProps> = ({ selectedItem, onCopy, copiedId }) => {
+export const ContentViewer: React.FC<ContentViewerProps> = ({
+  selectedItem,
+  onCopy,
+  copiedId,
+  sourceDocumentUrl,
+}) => {
   if (!selectedItem) {
     return (
       <div className="flex-1 flex items-center justify-center text-gray-500">
@@ -80,6 +86,9 @@ export const ContentViewer: React.FC<ContentViewerProps> = ({ selectedItem, onCo
 
     return cleaned.trim();
   };
+
+  const finalSourceUrl =
+    sourceDocumentUrl || (selectedItem.type === "document" && selectedItem.metadata?.url);
 
   return (
     <div className="flex flex-col h-full">
@@ -221,19 +230,16 @@ export const ContentViewer: React.FC<ContentViewerProps> = ({ selectedItem, onCo
                 <span className="text-cyan-400">{(selectedItem.metadata.relevance_score * 100).toFixed(0)}%</span>
               </span>
             )}
-            {selectedItem.type === "document" &&
-              selectedItem.metadata &&
-              "url" in selectedItem.metadata &&
-              selectedItem.metadata.url && (
-                <a
-                  href={selectedItem.metadata.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-cyan-400 hover:text-cyan-300 transition-colors underline"
-                >
-                  View Source
-                </a>
-              )}
+            {finalSourceUrl && (
+              <a
+                href={finalSourceUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-cyan-400 hover:text-cyan-300 transition-colors underline"
+              >
+                View Source
+              </a>
+            )}
           </div>
           <span className="text-gray-600">{selectedItem.type === "document" ? "Document Chunk" : "Code Example"}</span>
         </div>

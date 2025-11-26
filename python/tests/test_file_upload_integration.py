@@ -21,7 +21,7 @@ def mock_dependencies():
 
         # Mock DocumentStorageService.upload_document to be a sync function that returns a tuple
         mock_doc_storage_instance = MockDocumentStorageService.return_value
-        mock_doc_storage_instance.upload_document.return_value = (True, {"chunks_stored": 10})
+        mock_doc_storage_instance.upload_document = AsyncMock(return_value=(True, {"chunks_stored": 10}))
 
         # Mock ProgressTracker
         mock_tracker_instance = MockProgressTracker.return_value

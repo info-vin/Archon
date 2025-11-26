@@ -179,7 +179,7 @@ export const KnowledgeInspector: React.FC<KnowledgeInspectorProps> = ({
 
           {/* Content Viewer */}
           <div className="flex-1 min-h-0 bg-black/20 flex flex-col">
-            <ContentViewer selectedItem={selectedItem} onCopy={handleCopy} copiedId={copiedId} />
+            <ContentViewer selectedItem={selectedItem} onCopy={handleCopy} copiedId={copiedId} sourceDocumentUrl={item.source_url} />
           </div>
         </div>
       </InspectorDialogContent>
