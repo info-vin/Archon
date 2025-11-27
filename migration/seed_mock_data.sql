@@ -67,3 +67,10 @@ INSERT INTO archon_settings (key, value, is_encrypted, category, description) VA
 ('PROJECTS_ENABLED', 'true', false, 'features', 'Enable or disable Projects and Tasks functionality'),
 ('STYLE_GUIDE_ENABLED', 'true', false, 'features', 'Show UI style guide and components in navigation')
 ON CONFLICT (key) DO NOTHING;
+
+-- Set the default LLM provider to Google
+INSERT INTO archon_settings (key, value, is_encrypted, category, description)
+VALUES ('LLM_PROVIDER', 'google', false, 'ai', 'The primary LLM provider for embeddings and generation.')
+ON CONFLICT (key) DO UPDATE SET
+    value = EXCLUDED.value,
+    updated_at = NOW();

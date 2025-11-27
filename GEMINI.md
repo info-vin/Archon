@@ -45,6 +45,27 @@
 
 ---
 
+### 本日會話總結與學習教訓 (2025-11-27): 抽絲剝繭，修復文件檢視的雙層後端 Bug
+
+*   **核心任務**: 解決文件上傳後，「檢視 (View)」功能完全失效（點擊後空白）以及「文件計數 (Docs)」始終為 0 的問題。
+
+*   **偵錯歷程 (一次從前端表現反向追蹤至後端根源的系統性調查)**:
+    1.  **`about:blank` 的關鍵線索**: 使用者確認，點擊檢視彈窗中的「View Source」連結會導向 `about:blank`，但手動複製貼上 Supabase URL 卻可以正常存取。這將問題精準定位到「前端收到的 URL 字串本身是無效的」。
+    2.  **前端 vs. 後端欄位不匹配**: 透過逐層分析 React 元件 (`KnowledgeTable` -> `KnowledgeList` -> `KnowledgeView` -> `KnowledgeInspector` -> `ContentViewer`)，我最終在前端類型定義檔 (`types/knowledge.ts`) 中發現了關鍵矛盾：前端 `KnowledgeItem` 模型需要 `url` 欄位，而資料庫中儲存的是 `source_url`。
+    3.  **後端根源 I (URL 錯誤)**: 我深入後端 `knowledge_item_service.py`，發現 `list_items` 方法在處理檔案上傳類型的項目時，因找不到對應的「已爬取頁面」，而錯誤地 fallback 到一個硬性編碼的無效 URL `f"source://{source_id}"`。這就是導致 `about:blank` 的直接原因。
+    4.  **後端根源 II (計數錯誤)**: 在修復 URL 問題後，使用者接著指出「Docs」計數為 0。我重新檢查同一檔案，發現程式碼中存在一行 `chunk_counts[source_id] = 0  # Default to 0 to avoid timeout`，將文件區塊計數**硬性設定為 0**。
+
+*   **最終的綜合性修復 (後端重構)**:
+    1.  **URL 修正**: 修改 `knowledge_item_service.py`，使其優先使用從資料庫 `archon_sources` 表中讀取的 `source.get("source_url")`。
+    2.  **計數修正**: 移除了硬性設定為 0 的計數邏輯，並將其重構為一個高效的 Supabase RPC 呼叫 (`get_counts_by_source`)，以批次方式一次性獲取正確的文件區塊數與程式碼範例數。
+    3.  **資料庫與種子資料更新**: 遵循您的指示與專案規範，為新的 RPC 函式建立了新的遷移檔案 (`003_...`)，並更新了 `seed_mock_data.sql` 以設定預設的 `LLM_PROVIDER`。
+
+*   **本日關鍵學習**:
+    *   一個看似簡單的前端 Bug（連結無法點擊），其背後可能是由後端資料轉換邏輯中的多個、層層疊加的錯誤（URL fallback 邏輯錯誤、計數邏輯被硬性關閉、前後端欄位命名不一致）所共同導致。
+    *   在偵錯時，必須對整個資料流進行端對端的追蹤，從資料庫綱要 (Schema)、後端 API 服務、一直到前端的類型定義 (TypeScript types)，才能找出所有潛在的矛盾點並從根本上解決問題。
+
+---
+
 ### 本日會話總結與學習教訓 (2025-11-26): 打通 Gemini 詞嵌入任督二脈，並發現前端新挑戰
 
 *   **核心任務**: 解決因 `LLM_PROVIDER` 設定錯誤導致的 Gemini API 切換失敗，並徹底修復文件上傳的後端流程。

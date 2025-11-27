@@ -177,8 +177,9 @@
         2.  `migration/000_unified_schema.sql` (建立基礎結構)
         3.  `migration/001_add_due_date_to_tasks.sql` (追加欄位更新)
         4.  `migration/002_create_schema_migrations_table.sql` (建立版本追蹤表)
-        5.  `migration/seed_mock_data.sql` (填充核心假資料)
-        6.  `migration/seed_blog_posts.sql` (填充部落格假資料)
+        5.  `migration/003_add_get_counts_by_source_function.sql` (追加函式)
+        6.  `migration/seed_mock_data.sql` (填充核心假資料)
+        7.  `migration/seed_blog_posts.sql` (填充部落格假資料)
 
 3.  **階段三：執行部署**
 
