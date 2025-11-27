@@ -137,7 +137,9 @@ class KnowledgeItemService:
                 source_metadata = source.get("metadata", {})
 
                 # Use batched data instead of individual queries
-                first_page_url = first_urls.get(source_id, f"source://{source_id}")
+                # PRIORITIZE the source_url from the source record itself, especially for file uploads
+                # Then, fall back to the first crawled page URL if it exists.
+                first_page_url = source.get("source_url") or first_urls.get(source_id, "")
                 code_examples_count = code_example_counts.get(source_id, 0)
                 chunks_count = chunk_counts.get(source_id, 0)
 
