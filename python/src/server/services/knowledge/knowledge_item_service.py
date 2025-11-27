@@ -103,32 +103,22 @@ class KnowledgeItemService:
                     .in_("source_id", source_ids)
                     .execute()
                 )
-
-                # Group URLs by source_id (take first one for each)
                 for item in urls_result.data or []:
                     if item["source_id"] not in first_urls:
                         first_urls[item["source_id"]] = item["url"]
 
-                # Get code example counts per source - NO CONTENT, just counts!
-                # Fetch counts individually for each source
-                for source_id in source_ids:
-                    count_result = (
-                        self.supabase.from_("archon_code_examples")
-                        .select("id", count="exact", head=True)
-                        .eq("source_id", source_id)
-                        .execute()
+                # Batch fetch code example and chunk counts using a single RPC call
+                counts_result = (
+                    self.supabase.rpc(
+                        "get_counts_by_source", {"source_ids_param": source_ids}
                     )
-                    code_example_counts[source_id] = (
-                        count_result.count if hasattr(count_result, "count") else 0
-                    )
+                    .execute()
+                )
+                if counts_result.data:
+                    for row in counts_result.data:
+                        code_example_counts[row["source_id"]] = row["code_example_count"]
+                        chunk_counts[row["source_id"]] = row["chunk_count"]
 
-                # Ensure all sources have a count (default to 0)
-                for source_id in source_ids:
-                    if source_id not in code_example_counts:
-                        code_example_counts[source_id] = 0
-                    chunk_counts[source_id] = 0  # Default to 0 to avoid timeout
-
-                safe_logfire_info(f"Code example counts: {code_example_counts}")
 
             # Transform sources to items with batched data
             items = []
@@ -141,7 +131,7 @@ class KnowledgeItemService:
                 # Then, fall back to the first crawled page URL if it exists.
                 first_page_url = source.get("source_url") or first_urls.get(source_id, "")
                 code_examples_count = code_example_counts.get(source_id, 0)
-                chunks_count = chunk_counts.get(source_id, 0)
+                document_count = chunk_counts.get(source_id, 0)
 
                 # Determine source type
                 source_type = self._determine_source_type(source_metadata, first_page_url)
@@ -151,9 +141,8 @@ class KnowledgeItemService:
                     "title": source.get("title", source.get("summary", "Untitled")),
                     "url": first_page_url,
                     "source_id": source_id,
-                    "code_examples": [{"count": code_examples_count}]
-                    if code_examples_count > 0
-                    else [],  # Minimal array just for count display
+                    "document_count": document_count,
+                    "code_examples_count": code_examples_count,
                     "metadata": {
                         "knowledge_type": source_metadata.get("knowledge_type", "technical"),
                         "tags": source_metadata.get("tags", []),
@@ -162,10 +151,8 @@ class KnowledgeItemService:
                         "description": source_metadata.get(
                             "description", source.get("summary", "")
                         ),
-                        "chunks_count": chunks_count,
+                        "chunks_count": document_count, # Keep for potential backward compatibility
                         "word_count": source.get("total_word_count", 0),
-                        "estimated_pages": round(source.get("total_word_count", 0) / 250, 1),
-                        "pages_tooltip": f"{round(source.get('total_word_count', 0) / 250, 1)} pages (≈ {source.get('total_word_count', 0):,} words)",
                         "last_scraped": source.get("updated_at"),
                         "file_name": source_metadata.get("file_name"),
                         "file_type": source_metadata.get("file_type"),

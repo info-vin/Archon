@@ -189,7 +189,7 @@ sequenceDiagram
 | Feature | Status (2025-11-26) | Blocker / Next Action |
 | :--- | :--- | :--- |
 | **1. Web Crawling** | ⚠️ **未驗證 (Not Verified)** | 爬蟲功能因 `Lazy Crawler Initialization` (Part 9.1) 技術債而尚未啟用。 |
-| **2. Document Upload** | 🟡 **部分成功 (Partially Succeeded)** | **後端功能已驗證，前端程式碼已修正。** <br> **Blocker**: 待前端 Linting (`make lint-fe`) 和測試 (`make test`) 驗證。 |
+| **2. Document Upload** | ✅ **已完成 (Completed)** | **後端文件計數和 URL 解析已修正。** |
 | **3. Project & Task Creation** | ⚠️ **未驗證 (Not Verified)** | 需在其他核心功能穩定後進行驗證。 |
 | **4. AI Assistant Integration** | ✅ **通過 (Passed)** | Connection Config 正常顯示。 |
 | **5. Admin UI Stability (RAG)** | 🔴 **驗證失敗 (Failed)** | **Blocker**: 1. `RAG Settings` 頁面顯示 "Migrations pending" 警告，需優先調查並解決資料庫遷移問題.<br>2. `RAGSettings.tsx` 存在 `React Hook useEffect has a complex expression` Lint 警告。 |
