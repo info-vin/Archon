@@ -742,9 +742,11 @@ async def _perform_upload_with_progress(
             await tracker.error(f"Failed to extract text: {str(ex)}")
             return
 
-        # Step 2: Upload original file to Storage
+        # Step 2: Upload original file to Storage and create the main source entry
         public_url = None
+        source_id = f"file_{filename.replace(' ', '_').replace('.', '_')}_{uuid.uuid4().hex[:8]}"
         try:
+            # Upload the raw file to get a stable URL
             in_memory_file = io.BytesIO(file_content)
             upload_file_for_storage = UploadFile(filename=filename, file=in_memory_file)
             file_path = f"uploads/{progress_id}/{quote(filename)}"
@@ -757,13 +759,29 @@ async def _perform_upload_with_progress(
             if not public_url:
                 await tracker.error("Failed to get a valid URL from storage service.")
                 return
+
+            # Create the source record in the database BEFORE processing chunks
+            from ..services.source_management_service import SourceManagementService
+            source_service = SourceManagementService(get_supabase_client())
+
+            source_service.create_source_from_upload(
+                source_id=source_id,
+                filename=filename,
+                knowledge_type=knowledge_type,
+                tags=tag_list,
+                chunks_stored=0,  # Placeholder, will be updated later
+                source_url=public_url,
+            )
+            safe_logfire_info(f"Database entry created | source_id={source_id} | filename={filename}")
+
         except Exception as ex:
-            await tracker.error(f"Failed to upload file to storage: {str(ex)}")
+            error_message = f"Failed during initial file upload or source creation: {str(ex)}\nTraceback:\n{traceback.format_exc()}"
+            safe_logfire_error(f"🚨 CRITICAL UPLOAD FAILURE: {error_message}")
+            await tracker.error(error_message)
             return
 
         # Step 3: Store document chunks
         doc_storage_service = DocumentStorageService(get_supabase_client())
-        source_id = f"file_{filename.replace(' ', '_').replace('.', '_')}_{uuid.uuid4().hex[:8]}"
 
         async def document_progress_callback(message: str, percentage: int, batch_info: dict = None):
             mapped_percentage = progress_mapper.map_progress("document_storage", percentage)
@@ -784,26 +802,40 @@ async def _perform_upload_with_progress(
             await tracker.error(error_msg)
             return
 
-        # Step 4: Create the main source entry in archon_sources
+        # Step 4: Update the source entry with final counts
         try:
             from ..services.source_management_service import SourceManagementService
             source_service = SourceManagementService(get_supabase_client())
 
-            source_service.create_source_from_upload(
+            word_count = result.get("total_word_count", 0)
+            chunks_stored = result.get("chunks_stored", 0)
+            
+            # This is a bit awkward, but we need to call update_source_metadata
+            # to set the word count and we can update chunks_stored at the same time
+            # by manipulating the metadata field. A dedicated function would be better.
+            
+            # Get existing metadata first
+            _, source_details = source_service.get_source_details(source_id)
+            metadata = source_details.get("source", {}).get("metadata", {})
+            metadata['chunks_stored'] = chunks_stored
+            
+            source_service.update_source_metadata(
                 source_id=source_id,
-                filename=filename,
-                knowledge_type=knowledge_type,
-                tags=tag_list,
-                chunks_stored=result.get("chunks_stored", 0),
-                source_url=public_url,
+                word_count=word_count,
+                tags=metadata.get('tags'), # Pass tags to avoid them being overwritten
+                knowledge_type=metadata.get('knowledge_type') # Pass knowledge_type to avoid it being overwritten
             )
-            safe_logfire_info(f"Database entry created | source_id={source_id} | filename={filename}")
-        except Exception as source_error:
-            # Explicitly log the critical failure to write to archon_sources
-            error_message = f"Failed to create source entry in database: {source_error}\nTraceback:\n{traceback.format_exc()}"
-            safe_logfire_error(f"🚨 CRITICAL UPLOAD FAILURE: {error_message}")
-            await tracker.error(error_message) # Mark the tracker as failed
-            return # Terminate the background task here as a critical step failed
+
+            # Update the metadata field itself
+            supabase_client = get_supabase_client()
+            supabase_client.table("archon_sources").update({"metadata": metadata}).eq("source_id", source_id).execute()
+            
+            safe_logfire_info(f"Updated source with counts | source_id={source_id} | word_count={word_count} | chunks_stored={chunks_stored}")
+
+        except Exception as update_error:
+            # This is not a critical failure, so we just log it
+            safe_logfire_error(f"Could not update source counts for {source_id}: {update_error}")
+
 
         # Step 5: Final completion
         await tracker.complete({

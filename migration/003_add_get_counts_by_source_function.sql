@@ -1,8 +1,8 @@
 -- This function efficiently gets the chunk count and code example count for a given array of source_ids.
 -- It is designed to be called from the backend service to avoid N+1 query problems when listing knowledge items.
 
-CREATE OR REPLACE FUNCTION get_counts_by_source(source_ids_param uuid[])
-RETURNS TABLE (source_id uuid, chunk_count bigint, code_example_count bigint)
+CREATE OR REPLACE FUNCTION get_counts_by_source(source_ids_param text[])
+RETURNS TABLE (source_id text, chunk_count bigint, code_example_count bigint)
 LANGUAGE plpgsql
 AS $$
 BEGIN
@@ -15,25 +15,25 @@ BEGIN
         public.archon_sources s
     LEFT JOIN (
         SELECT
-            source_id,
+            p.source_id,
             COUNT(*) as count
         FROM
-            public.archon_crawled_pages
+            public.archon_crawled_pages p
         WHERE
-            source_id = ANY(source_ids_param)
+            p.source_id = ANY(source_ids_param)
         GROUP BY
-            source_id
+            p.source_id
     ) AS cp_counts ON s.source_id = cp_counts.source_id
     LEFT JOIN (
         SELECT
-            source_id,
+            e.source_id,
             COUNT(*) as count
         FROM
-            public.archon_code_examples
+            public.archon_code_examples e
         WHERE
-            source_id = ANY(source_ids_param)
+            e.source_id = ANY(source_ids_param)
         GROUP BY
-            source_id
+            e.source_id
     ) AS ce_counts ON s.source_id = ce_counts.source_id
     WHERE
         s.source_id = ANY(source_ids_param);
