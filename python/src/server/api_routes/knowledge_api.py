@@ -809,16 +809,16 @@ async def _perform_upload_with_progress(
 
             word_count = result.get("total_word_count", 0)
             chunks_stored = result.get("chunks_stored", 0)
-            
+
             # This is a bit awkward, but we need to call update_source_metadata
             # to set the word count and we can update chunks_stored at the same time
             # by manipulating the metadata field. A dedicated function would be better.
-            
+
             # Get existing metadata first
             _, source_details = source_service.get_source_details(source_id)
             metadata = source_details.get("source", {}).get("metadata", {})
             metadata['chunks_stored'] = chunks_stored
-            
+
             source_service.update_source_metadata(
                 source_id=source_id,
                 word_count=word_count,
@@ -829,7 +829,7 @@ async def _perform_upload_with_progress(
             # Update the metadata field itself
             supabase_client = get_supabase_client()
             supabase_client.table("archon_sources").update({"metadata": metadata}).eq("source_id", source_id).execute()
-            
+
             safe_logfire_info(f"Updated source with counts | source_id={source_id} | word_count={word_count} | chunks_stored={chunks_stored}")
 
         except Exception as update_error:

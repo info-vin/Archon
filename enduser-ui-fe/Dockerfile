@@ -2,6 +2,9 @@ FROM node:18-alpine
 
 WORKDIR /app
 
+# Install system dependencies
+RUN apk add --no-cache python3 make g++ git curl
+
 # Install pnpm
 RUN npm install -g pnpm
 

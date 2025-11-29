@@ -166,7 +166,7 @@ services:
     networks:
       - app-network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3737"]
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:3737"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -192,7 +192,7 @@ services:
     networks:
       - app-network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5173"]
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:5173"]
       interval: 30s
       timeout: 10s
       retries: 3
