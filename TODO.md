@@ -93,7 +93,7 @@ sequenceDiagram
 
 根據 `AGENTS.md` 的核心職責，我們重新評估當前 `dev/v1` 分支（等同於 `main`）的狀態。在完成了 Part 1 到 Part 6 的結構性嫁接與文件同步後，系統的核心功能已經全部到位，只剩下最後的整合驗證與部署。因此，我們將進度更新為 85%。
 
-- **總進度**: **85%**
+- **總進度**: **90%**
 
 ---
 
@@ -186,8 +186,9 @@ sequenceDiagram
     - **[X] 8.4**: 將 `dev/v1` 推送至遠端，觸發部署。
     - **[X] 8.5: 端對端驗收 (End-to-End Acceptance)**: 後端核心功能已通過 `make test-be` 驗證。E2E 測試發現數個整合性問題，目前正在收斂。
 
-| Feature | Status (2025-11-26) | Blocker / Next Action |
+| Feature | Status (2025-11-29) | Blocker / Next Action |
 | :--- | :--- | :--- |
+| **0. Local Docker Environment** | ✅ **已修復 (Fixed)** | **根本原因**: `docker-compose.yml` 中的健康檢查因 IPv4/IPv6 解析問題而失敗，且 `enduser-ui-fe` 的 Docker 映像中缺少 `curl`。 **解決方案**: `commit 5c51b06` 已修正 IP 位址並為映像檔安裝 `curl`。**所有服務現已健康。** |
 | **1. Web Crawling** | ⚠️ **未驗證 (Not Verified)** | 爬蟲功能因 `Lazy Crawler Initialization` (Part 9.1) 技術債而尚未啟用。 |
 | **2. Document Upload** | ✅ **已完成 (Completed)** | **後端文件計數和 URL 解析已修正。** |
 | **3. Project & Task Creation** | ⚠️ **未驗證 (Not Verified)** | 需在其他核心功能穩定後進行驗證。 |
