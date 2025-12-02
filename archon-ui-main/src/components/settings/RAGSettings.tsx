@@ -1142,9 +1142,17 @@ const manualTestConnection = useCallback(async (
         fetchOllamaMetrics();
       }, 2000);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ragSettings.LLM_PROVIDER, llmInstanceConfig.url, llmInstanceConfig.name, 
-      embeddingInstanceConfig.url, embeddingInstanceConfig.name]); // Don't include function deps to avoid re-runs
+  }, [
+    ragSettings.LLM_PROVIDER,
+    embeddingProvider,
+    ragSettings,
+    llmInstanceConfig.url,
+    llmInstanceConfig.name,
+    embeddingInstanceConfig.url,
+    embeddingInstanceConfig.name,
+    manualTestConnection,
+    fetchOllamaMetrics,
+  ]);
   
   return <Card accentColor="green" className="overflow-hidden p-8">
         {/* Description */}

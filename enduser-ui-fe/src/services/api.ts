@@ -230,11 +230,8 @@ const mockApi = {
     },
     async getDocumentVersions(): Promise<DocumentVersion[]> { return [...MOCK_DOCUMENT_VERSIONS]; },
     async getBlogPosts(): Promise<BlogPost[]> {
-    const response = await fetch('/api/blogs');
-    if (!response.ok) {
-      throw new Error('Failed to fetch blog posts.');
-    }
-    return response.json();
+    console.log("Using mock blog posts.");
+    return Promise.resolve([...MOCK_BLOG_POSTS]);
   },
     async createBlogPost(postData: any): Promise<BlogPost> {
         const newPost: BlogPost = {

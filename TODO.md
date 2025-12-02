@@ -189,22 +189,28 @@ sequenceDiagram
 | Feature | Status (2025-11-29) | Blocker / Next Action |
 | :--- | :--- | :--- |
 | **0. Local Docker Environment** | ✅ **已修復 (Fixed)** | **根本原因**: `docker-compose.yml` 中的健康檢查因 IPv4/IPv6 解析問題而失敗，且 `enduser-ui-fe` 的 Docker 映像中缺少 `curl`。 **解決方案**: `commit 5c51b06` 已修正 IP 位址並為映像檔安裝 `curl`。**所有服務現已健康。** |
-| **1. Web Crawling** | ⚠️ **未驗證 (Not Verified)** | 爬蟲功能因 `Lazy Crawler Initialization` (Part 9.1) 技術債而尚未啟用。 |
+| 1. Web Crawling | ⚠️ **未驗證 (Not Verified)** | 技術債 (9.1) 已解決，待手動 E2E 驗證。 |
 | **2. Document Upload** | ✅ **已完成 (Completed)** | **後端文件計數和 URL 解析已修正。** |
 | **3. Project & Task Creation** | ⚠️ **未驗證 (Not Verified)** | 需在其他核心功能穩定後進行驗證。 |
 | **4. AI Assistant Integration** | ✅ **通過 (Passed)** | Connection Config 正常顯示。 |
 | **5. Admin UI Stability (RAG)** | 🔴 **驗證失敗 (Failed)** | **Blocker**: 1. `RAG Settings` 頁面顯示 "Migrations pending" 警告，需優先調查並解決資料庫遷移問題.<br>2. `RAGSettings.tsx` 存在 `React Hook useEffect has a complex expression` Lint 警告。 |
 
-**[ ] 9. 技術債與未來優化 (Technical Debt & Future Optimizations)**
-    - **[ ] 9.1**: **爬蟲服務隨用隨啟 (Lazy Crawler Initialization)**
+**[X] 9. 技術債與未來優化 (Technical Debt & Future Optimizations)**
+    - **[X] 9.1**: **爬蟲服務隨用隨啟 (Lazy Crawler Initialization)**
         - **目標**: 將 `Crawl4AI` 瀏覽器啟動邏輯從服務啟動階段移除，改為在第一次收到爬蟲任務時才啟動。
         - **理由**: 避免服務啟動時因資源耗盡導致超時，確保服務快速部署和穩定運行。
-        - **影響**: 在此任務完成前，爬蟲功能將無法使用。
+        - **影響**: **(已解決)** 經 `git log` 調查確認，此功能已在 `crawler_manager.py` 的初始設計中實現。
 
     - **[ ] 9.2**: **為詞嵌入服務增加 API 金鑰自動故障轉移 (Failover) 功能**
         - **目標**: 增強 `embedding_service.py` 的健壯性 (robustness)。
         - **理由**: 目前當首選的詞嵌入提供商（如 OpenAI）因額度耗盡 (`insufficient_quota`) 而失敗時，整個流程會中斷。此功能將允許系統自動嘗試下一個已配置的、可用的提供商（如 Gemini），從而提高系統的穩定性和可靠性。
         - **影響**: 在此任務完成前，使用者需要手動在 RAG 設定中更換模型提供商來應對 API 額度問題。
+        - **開發計畫**:
+            - **1. 修改設定**: 在 RAG 設定中，允許使用者定義一個備援 (Fallback) 的詞嵌入服務提供商。
+            - **2. 修改 `embedding_service.py`**:
+                - 調整 `create_embeddings_batch` 函式的邏輯，使其可以接受一個供應商列表。
+                - 當使用主要供應商失敗後（特別是捕捉 `EmbeddingQuotaExhaustedError` 等嚴重錯誤時），記錄錯誤並自動使用備援供應商重試。
+                - 如果所有供應商都失敗，才回傳最終的失敗結果。
 
 **[ ] 10. 最終驗證與慶祝**
     - **目標**: 確認線上環境功能正常，並更新進度。
