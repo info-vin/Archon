@@ -40,11 +40,14 @@ class ProfileService:
             A tuple containing a success boolean and the user's role or None if not found.
         """
         try:
-            response = self.supabase_client.table("profiles").select("role").eq("name", user_name).single().execute()
+            # Use limit(1) to safely handle potential duplicate names instead of .single()
+            response = self.supabase_client.table("profiles").select("role").eq("name", user_name).limit(1).execute()
             if response.data:
-                return True, response.data.get("role")
+                # If data is returned, take the role from the first record
+                return True, response.data[0].get("role")
+            # If no user is found, it's not an error, just return no role
             return True, None
         except Exception as e:
-            # Log as warning because user not being found is a possible case
-            logger.warning(f"Could not retrieve role for user '{user_name}': {e}")
+            # An exception here points to a more serious issue (e.g., DB connection)
+            logger.error(f"An unexpected error occurred while retrieving role for user '{user_name}': {e}")
             return False, None

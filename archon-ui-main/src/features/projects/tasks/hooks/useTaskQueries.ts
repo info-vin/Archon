@@ -172,6 +172,10 @@ export function useUpdateTask(projectId: string) {
         showToast(`Task moved to ${updates.status}`, "success");
       }
     },
+    onSettled: (_data, _error) => {
+      // Always refetch to ensure consistency after operation completes
+      queryClient.invalidateQueries({ queryKey: taskKeys.byProject(projectId) });
+    },
   });
 }
 

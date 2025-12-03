@@ -568,6 +568,7 @@ async def list_project_tasks(
                 "status": task.get("status"),
                 "task_order": task.get("task_order"),
                 "assignee": task.get("assignee"),
+                "priority": task.get("priority"), # <-- 新增此行
                 "feature": task.get("feature")
             } for task in tasks],
             "project_id": project_id,
