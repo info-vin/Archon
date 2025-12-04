@@ -191,7 +191,7 @@ sequenceDiagram
 | **0. Local Docker Environment** | ✅ **已修復 (Fixed)** | **根本原因**: `docker-compose.yml` 中的健康檢查因 IPv4/IPv6 解析問題而失敗，且 `enduser-ui-fe` 的 Docker 映像中缺少 `curl`。 **解決方案**: `commit 5c51b06` 已修正 IP 位址並為映像檔安裝 `curl`。**所有服務現已健康。** |
 | 1. Web Crawling | ✅ **已完成 (Completed)** | 經使用者手動 E2E 驗證，功能正常。 |
 | **2. Document Upload** | ✅ **已完成 (Completed)** | **後端文件計數和 URL 解析已修正。** |
-| **3. Project & Task Management** | ✅ **已完成 (Completed)** | **建立**與**更新**功能 (包括指派人、優先級、狀態等) 經修復與手動驗證，功能正常。 |
+| **3. Project & Task Management** | ✅ **已完成 (Completed)** | **建立**與**更新**功能 (包括指派人、優先級、狀態等) 功能正常。已修復更新 `priority` 時，因競爭條件導致 UI 閃爍或還原的 Bug。 |
 | **4. AI Assistant Integration** | ✅ **通過 (Passed)** | Connection Config 正常顯示。 |
 | **5. Admin UI Stability (RAG)** | 🔴 **驗證失敗 (Failed)** | **Blocker**: 1. `RAG Settings` 頁面顯示 "Migrations pending" 警告，需優先調查並解決資料庫遷移問題.<br>2. `RAGSettings.tsx` 存在 `React Hook useEffect has a complex expression` Lint 警告。 |
 

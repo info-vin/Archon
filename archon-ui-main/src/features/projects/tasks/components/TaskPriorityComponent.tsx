@@ -1,13 +1,6 @@
-/**
- * TaskPriority Component
- *
- * Server-backed priority selector for tasks.
- * Priority is decoupled from drag-and-drop task_order.
- * Levels: critical | high | medium | low.
- */
-
 import { AlertCircle } from "lucide-react";
 import type React from "react";
+import { useEffect, useState } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger } from "../../../ui/primitives/select";
 import { cn, glassmorphism } from "../../../ui/primitives/styles";
 import type { TaskPriority } from "../types";
@@ -31,10 +24,20 @@ const PRIORITY_OPTIONS: Array<{
 ];
 
 export const TaskPriorityComponent: React.FC<TaskPriorityProps> = ({
-  priority = "medium",
+  priority: newPriority,
   onPriorityChange,
   isLoading = false,
 }) => {
+  // Use internal state to prevent UI flicker from temporary undefined props during refetch
+  const [currentPriority, setCurrentPriority] = useState(newPriority || "medium");
+
+  useEffect(() => {
+    // Only update the internal state if the new prop is valid
+    if (newPriority && newPriority !== currentPriority) {
+      setCurrentPriority(newPriority);
+    }
+  }, [newPriority, currentPriority]);
+
   // Get priority-specific styling with Tron glow
   const getPriorityStyles = (priorityValue: TaskPriority) => {
     switch (priorityValue) {
@@ -73,8 +76,8 @@ export const TaskPriorityComponent: React.FC<TaskPriorityProps> = ({
     }
   };
 
-  const currentStyles = getPriorityStyles(priority);
-  const currentOption = PRIORITY_OPTIONS.find((opt) => opt.value === priority) || PRIORITY_OPTIONS[2]; // Default to medium
+  const currentStyles = getPriorityStyles(currentPriority);
+  const currentOption = PRIORITY_OPTIONS.find((opt) => opt.value === currentPriority) || PRIORITY_OPTIONS[2]; // Default to medium
 
   // If no change handler, just show a static button
   if (!onPriorityChange) {
@@ -99,7 +102,7 @@ export const TaskPriorityComponent: React.FC<TaskPriorityProps> = ({
   }
 
   return (
-    <Select value={priority} onValueChange={(value) => onPriorityChange(value as TaskPriority)}>
+    <Select value={currentPriority} onValueChange={(value) => onPriorityChange(value as TaskPriority)}>
       <SelectTrigger
         disabled={isLoading}
         className={cn(

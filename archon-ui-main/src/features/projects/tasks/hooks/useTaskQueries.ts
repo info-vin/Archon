@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useIsMutating, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   createOptimisticEntity,
   type OptimisticEntity,
@@ -22,7 +22,11 @@ export const taskKeys = {
 
 // Fetch tasks for a specific project
 export function useProjectTasks(projectId: string | undefined, enabled = true) {
-  const { refetchInterval } = useSmartPolling(2000); // 2s active per guideline for real-time task updates
+  const { refetchInterval: smartInterval } = useSmartPolling(2000); // 2s active per guideline for real-time task updates
+  const isMutating = useIsMutating({ mutationKey: taskKeys.byProject(projectId!) }) > 0;
+
+  // Disable polling while any task mutation is in-flight to prevent race conditions
+  const refetchInterval = isMutating ? false : smartInterval;
 
   return useQuery<Task[]>({
     queryKey: projectId ? taskKeys.byProject(projectId) : DISABLED_QUERY_KEY,
@@ -31,7 +35,7 @@ export function useProjectTasks(projectId: string | undefined, enabled = true) {
       return taskService.getTasksByProject(projectId);
     },
     enabled: !!projectId && enabled,
-    refetchInterval, // Smart interval based on page visibility/focus
+    refetchInterval, // Smart interval that pauses during mutations
     refetchOnWindowFocus: true, // Refetch immediately when tab gains focus (ETag makes this cheap)
     staleTime: STALE_TIMES.frequent,
   });
@@ -125,6 +129,7 @@ export function useUpdateTask(projectId: string) {
   const { showToast } = useToast();
 
   return useMutation<Task, Error, { taskId: string; updates: UpdateTaskRequest }, { previousTasks?: Task[] }>({
+    mutationKey: taskKeys.byProject(projectId),
     mutationFn: ({ taskId, updates }: { taskId: string; updates: UpdateTaskRequest }) =>
       taskService.updateTask(taskId, updates),
     onMutate: async ({ taskId, updates }) => {
@@ -185,6 +190,7 @@ export function useDeleteTask(projectId: string) {
   const { showToast } = useToast();
 
   return useMutation<void, Error, string, { previousTasks?: Task[] }>({
+    mutationKey: taskKeys.byProject(projectId),
     mutationFn: (taskId: string) => taskService.deleteTask(taskId),
     onMutate: async (taskId) => {
       // Cancel any outgoing refetches
