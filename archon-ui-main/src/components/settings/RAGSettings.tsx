@@ -700,30 +700,30 @@ const manualTestConnection = useCallback(async (
   }, []);
 
   // Test provider connections when API credentials change
-  const testConnections = useCallback(async () => {
-    // Test all supported providers
-    const providers = ['openai', 'google', 'anthropic', 'openrouter', 'grok'];
-
-    for (const provider of providers) {
-      // Don't test if we've already checked recently (within last 30 seconds)
-      const lastChecked = providerConnectionStatusRef.current[provider]?.lastChecked;
-      const now = new Date();
-      const timeSinceLastCheck = lastChecked ? now.getTime() - lastChecked.getTime() : Infinity;
-
-      if (timeSinceLastCheck > 30000) { // 30 seconds
-        // console.log(`🔄 Testing ${provider} connection...`);
-        await testProviderConnection(provider);
-      }
-    }
-  }, [testProviderConnection]);
-
   useEffect(() => {
+    const testConnections = async () => {
+      // Test all supported providers
+      const providers = ['openai', 'google', 'anthropic', 'openrouter', 'grok'];
+
+      for (const provider of providers) {
+        // Don't test if we've already checked recently (within last 30 seconds)
+        const lastChecked = providerConnectionStatusRef.current[provider]?.lastChecked;
+        const now = new Date();
+        const timeSinceLastCheck = lastChecked ? now.getTime() - lastChecked.getTime() : Infinity;
+
+        if (timeSinceLastCheck > 30000) { // 30 seconds
+          // console.log(`🔄 Testing ${provider} connection...`);
+          await testProviderConnection(provider);
+        }
+      }
+    };
+
     // Test connections periodically (every 60 seconds)
     testConnections();
     const interval = setInterval(testConnections, 60000);
 
     return () => clearInterval(interval);
-  }, [JSON.stringify(apiCredentials), testConnections]); // Test when credentials change
+  }, [apiCredentials, testProviderConnection]); // Test when credentials change
 
   useEffect(() => {
     const handleCredentialUpdate = (event: Event) => {

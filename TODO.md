@@ -193,7 +193,7 @@ sequenceDiagram
 | **2. Document Upload** | ✅ **已完成 (Completed)** | **後端文件計數和 URL 解析已修正。** |
 | **3. Project & Task Management** | ✅ **已完成 (Completed)** | **建立**與**更新**功能 (包括指派人、優先級、狀態等) 功能正常。已修復更新 `priority` 時，因競爭條件導致 UI 閃爍或還原的 Bug。 |
 | **4. AI Assistant Integration** | ✅ **通過 (Passed)** | Connection Config 正常顯示。 |
-| **5. Admin UI Stability (RAG)** | 🔴 **驗證失敗 (Failed)** | **Blocker**: 1. `RAG Settings` 頁面顯示 "Migrations pending" 警告，需優先調查並解決資料庫遷移問題.<br>2. `RAGSettings.tsx` 存在 `React Hook useEffect has a complex expression` Lint 警告。 |
+| **5. Admin UI Stability (RAG)** | 🟡 **部分通過 (Partially Passed)** | **Blocker**: 1. `RAG Settings` 頁面顯示 "Migrations pending" 警告 (使用者指示暫緩處理).<br>2. ~~`RAGSettings.tsx` 存在 `React Hook useEffect has a complex expression` Lint 警告。~~ (✅ **已修復**) |
 
 **[X] 9. 技術債與未來優化 (Technical Debt & Future Optimizations)**
     - **[X] 9.1**: **爬蟲服務隨用隨啟 (Lazy Crawler Initialization)**
