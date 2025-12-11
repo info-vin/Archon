@@ -538,3 +538,46 @@ class TestAsyncLLMProviderService:
 
                 # Each of the 3 providers makes 1 call to get_active_provider (logic)
                 assert mock_credential_service.get_active_provider.call_count == 3
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("provider_name, config_fixture", [
+        ("openai", "openai_provider_config"),
+        ("ollama", "ollama_provider_config"),
+        ("google", "google_provider_config"),
+    ])
+    async def test_create_embedding_client_success(self, provider_name, config_fixture, request):
+        """Test successful client creation for various providers."""
+        from src.server.services.llm_provider_service import create_embedding_client
+        config = request.getfixturevalue(config_fixture)
+
+        with patch("src.server.services.llm_provider_service.openai.AsyncOpenAI") as mock_openai:
+            mock_client = self._make_mock_client()
+            mock_openai.return_value = mock_client
+
+            client = await create_embedding_client(config)
+
+            assert client == mock_client
+            # For ollama, base_url is explicitly provided, for others it might be None
+            # The create_embedding_client function passes the config values directly.
+            mock_openai.assert_called_once_with(
+                api_key=config["api_key"],
+                base_url=config["base_url"]
+            )
+
+    @pytest.mark.asyncio
+    async def test_create_embedding_client_unsupported_provider(self):
+        """Test that an unsupported provider raises a ValueError."""
+        from src.server.services.llm_provider_service import create_embedding_client
+        config = {"provider": "unsupported", "api_key": "some-key", "base_url": None, "embedding_model": "test"}
+
+        with pytest.raises(ValueError, match="Unsupported embedding provider: unsupported"):
+            await create_embedding_client(config)
+
+    @pytest.mark.asyncio
+    async def test_create_embedding_client_missing_key(self):
+        """Test that a missing API key for a required provider raises a ValueError."""
+        from src.server.services.llm_provider_service import create_embedding_client
+        config = {"provider": "openai", "api_key": None, "base_url": None, "embedding_model": "test"}
+
+        with pytest.raises(ValueError, match="OpenAI API key not found"):
+            await create_embedding_client(config)

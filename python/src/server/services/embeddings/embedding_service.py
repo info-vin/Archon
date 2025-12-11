@@ -13,7 +13,7 @@ import openai
 
 from ...config.logfire_config import safe_span, search_logger
 from ..credential_service import credential_service
-from ..llm_provider_service import get_embedding_model, get_llm_client
+from ..llm_provider_service import create_embedding_client, get_llm_client
 from ..threading_service import get_threading_service
 from .embedding_exceptions import (
     EmbeddingAPIError,
@@ -68,13 +68,12 @@ class EmbeddingBatchResult:
 get_openai_client = get_llm_client
 
 
-async def create_embedding(text: str, provider: str | None = None) -> list[float]:
+async def create_embedding(text: str) -> list[float]:
     """
-    Create an embedding for a single text using the configured provider.
+    Create an embedding for a single text using the configured provider with failover.
 
     Args:
         text: Text to create an embedding for
-        provider: Optional provider override
 
     Returns:
         List of floats representing the embedding
@@ -85,7 +84,7 @@ async def create_embedding(text: str, provider: str | None = None) -> list[float
         EmbeddingAPIError: For other API errors
     """
     try:
-        result = await create_embeddings_batch([text], provider=provider)
+        result = await create_embeddings_batch([text])
         if not result.embeddings:
             # Check if there were failures
             if result.has_failures and result.failed_items:
@@ -131,20 +130,16 @@ async def create_embedding(text: str, provider: str | None = None) -> list[float
 async def create_embeddings_batch(
     texts: list[str],
     progress_callback: Any | None = None,
-    provider: str | None = None,
 ) -> EmbeddingBatchResult:
     """
-    Create embeddings for multiple texts with graceful failure handling.
+    Create embeddings for multiple texts with graceful failure handling and provider failover.
 
-    This function processes texts in batches and returns a structured result
-    containing both successful embeddings and failed items. It follows the
-    "skip, don't corrupt" principle - failed items are tracked but not stored
-    with zero embeddings.
+    This function attempts to use the primary embedding provider, and on failure,
+    transparently switches to a configured fallback provider.
 
     Args:
         texts: List of texts to create embeddings for
         progress_callback: Optional callback for progress reporting
-        provider: Optional provider override
 
     Returns:
         EmbeddingBatchResult with successful embeddings and failure details
@@ -156,173 +151,120 @@ async def create_embeddings_batch(
     validated_texts = []
     for i, text in enumerate(texts):
         if not isinstance(text, str):
-            search_logger.error(
-                f"Invalid text type at index {i}: {type(text)}, value: {text}", exc_info=True
-            )
-            # Try to convert to string
+            search_logger.error(f"Invalid text type at index {i}: {type(text)}, value: {text}", exc_info=True)
             try:
                 validated_texts.append(str(text))
             except Exception as e:
-                search_logger.error(
-                    f"Failed to convert text at index {i} to string: {e}", exc_info=True
-                )
-                validated_texts.append("")  # Use empty string as fallback
+                search_logger.error(f"Failed to convert text at index {i} to string: {e}", exc_info=True)
+                validated_texts.append("")
         else:
             validated_texts.append(text)
-
     texts = validated_texts
 
     result = EmbeddingBatchResult()
-    threading_service = get_threading_service()
+    threading_service = get_threading_service() # Variable assigned and used now
 
-    with safe_span(
-        "create_embeddings_batch", text_count=len(texts), total_chars=sum(len(t) for t in texts)
-    ) as span:
+    with safe_span("create_embeddings_batch", text_count=len(texts), total_chars=sum(len(t) for t in texts)) as span:
         try:
-            async with get_llm_client(provider=provider, use_embedding_provider=True) as client:
-                # Load batch size and dimensions from settings
+            configs = await credential_service.get_embedding_provider_configs()
+            if not configs:
+                raise ValueError("No valid embedding providers configured.")
+
+            last_exception = None
+            for idx, config in enumerate(configs):
+                client: openai.AsyncOpenAI | None = None
+                provider_name = config.get("provider", "unknown")
+                is_last_provider = (idx == len(configs) - 1)
+
                 try:
-                    rag_settings = await credential_service.get_credentials_by_category(
-                        "rag_strategy"
-                    )
+                    search_logger.info(f"Attempting embedding creation with provider: {provider_name}")
+                    client = await create_embedding_client(config)
+
+                    rag_settings = await credential_service.get_credentials_by_category("rag_strategy")
                     batch_size = int(rag_settings.get("EMBEDDING_BATCH_SIZE", "100"))
                     embedding_dimensions = int(rag_settings.get("EMBEDDING_DIMENSIONS", "1536"))
-                except Exception as e:
-                    search_logger.warning(f"Failed to load embedding settings: {e}, using defaults")
-                    batch_size = 100
-                    embedding_dimensions = 1536
 
-                total_tokens_used = 0
+                    all_batches_succeeded_for_provider = True
+                    for i in range(0, len(texts), batch_size):
+                        batch = texts[i : i + batch_size]
+                        batch_index = i // batch_size # Variable used now
 
-                for i in range(0, len(texts), batch_size):
-                    batch = texts[i : i + batch_size]
-                    batch_index = i // batch_size
+                        try:
+                            batch_tokens = sum(len(text.split()) for text in batch) * 1.3
+                            rate_limit_callback = None
+                            if progress_callback:
+                                async def rate_limit_callback(data: dict):
+                                    processed = result.success_count + result.failure_count
+                                    message = f"Rate limited: {data.get('message', 'Waiting...')}"
+                                    await progress_callback(message, (processed / len(texts)) * 100)
 
-                    try:
-                        # Estimate tokens for this batch
-                        batch_tokens = sum(len(text.split()) for text in batch) * 1.3
-                        total_tokens_used += batch_tokens
-
-                        # Create rate limit progress callback if we have a progress callback
-                        rate_limit_callback = None
-                        if progress_callback:
-                            async def rate_limit_callback(data: dict):
-                                # Send heartbeat during rate limit wait
-                                processed = result.success_count + result.failure_count
-                                message = f"Rate limited: {data.get('message', 'Waiting...')}"
-                                await progress_callback(message, (processed / len(texts)) * 100)
-
-                        # Rate limit each batch
-                        async with threading_service.rate_limited_operation(batch_tokens, rate_limit_callback):
-                            retry_count = 0
-                            max_retries = 3
-
-                            while retry_count < max_retries:
-                                try:
-                                    # Create embeddings for this batch
-                                    embedding_model = await get_embedding_model(provider=provider)
-                                    response = await client.embeddings.create(
-                                        model=embedding_model,
-                                        input=batch,
-                                        dimensions=embedding_dimensions,
-                                    )
-
-                                    # Add successful embeddings
-                                    for text, item in zip(batch, response.data, strict=False):
-                                        result.add_success(item.embedding, text)
-
-                                    break  # Success, exit retry loop
-
-                                except openai.RateLimitError as e:
-                                    error_message = str(e)
-                                    if "insufficient_quota" in error_message:
-                                        # Quota exhausted is critical - stop everything
-                                        tokens_so_far = total_tokens_used - batch_tokens
-
-                                        search_logger.error(
-                                            f"⚠️ QUOTA EXHAUSTED at batch {batch_index}! "
-                                            f"Processed {result.success_count} texts successfully.",
-                                            exc_info=True,
+                            async with threading_service.rate_limited_operation(batch_tokens, rate_limit_callback): # Re-introduced rate limiting
+                                retry_count = 0
+                                max_retries = 3
+                                while retry_count < max_retries:
+                                    try:
+                                        embedding_model = config.get("embedding_model")
+                                        response = await client.embeddings.create(
+                                            model=embedding_model,
+                                            input=batch,
+                                            dimensions=embedding_dimensions,
                                         )
+                                        for item, text_item in zip(response.data, batch, strict=False):
+                                            result.add_success(item.embedding, text_item)
+                                        break
+                                    except openai.RateLimitError as e:
+                                        error_message = str(e)
+                                        if "insufficient_quota" in error_message:
+                                            search_logger.error(f"Provider {provider_name} has insufficient quota.", exc_info=True)
+                                            raise
 
-                                        # Add remaining texts as failures
-                                        for text in texts[i:]:
-                                            result.add_failure(
-                                                text,
-                                                EmbeddingQuotaExhaustedError(
-                                                    "OpenAI quota exhausted",
-                                                    tokens_used=tokens_so_far,
-                                                ),
-                                                batch_index,
-                                            )
-
-                                        # Return what we have so far
-                                        span.set_attribute("quota_exhausted", True)
-                                        span.set_attribute("partial_success", True)
-                                        return result
-
-                                    else:
-                                        # Regular rate limit - retry
                                         retry_count += 1
-                                        if retry_count < max_retries:
-                                            wait_time = 2**retry_count
-                                            search_logger.warning(
-                                                f"Rate limit hit for batch {batch_index}, "
-                                                f"waiting {wait_time}s before retry {retry_count}/{max_retries}"
-                                            )
-                                            await asyncio.sleep(wait_time)
-                                        else:
-                                            raise  # Will be caught by outer try
+                                        if retry_count >= max_retries:
+                                            search_logger.error(f"Rate limit retries exceeded for provider {provider_name}. Batch {batch_index}.", exc_info=True)
+                                            raise
 
-                    except Exception as e:
-                        # This batch failed - track failures but continue with next batch
-                        search_logger.error(f"Batch {batch_index} failed: {e}", exc_info=True)
+                                        wait_time = 2 ** retry_count
+                                        search_logger.warning(f"Rate limit hit for {provider_name}. Batch {batch_index}. Waiting {wait_time}s before retry {retry_count}/{max_retries}")
+                                        await asyncio.sleep(wait_time)
+                        except Exception as e:
+                            all_batches_succeeded_for_provider = False
+                            search_logger.error(f"Batch {batch_index} failed for provider {provider_name}: {e}", exc_info=True) # batch_index used
+                            for text in batch:
+                                result.add_failure(text, EmbeddingAPIError(f"Batch {batch_index} failed: {e}", original_error=e), batch_index)
 
-                        for text in batch:
-                            if isinstance(e, EmbeddingError):
-                                result.add_failure(text, e, batch_index)
-                            else:
-                                result.add_failure(
-                                    text,
-                                    EmbeddingAPIError(
-                                        f"Failed to create embedding: {str(e)}", original_error=e
-                                    ),
-                                    batch_index,
-                                )
+                        if progress_callback:
+                            processed = result.success_count + result.failure_count
+                            progress = (processed / len(texts)) * 100
+                            message = f"Processed {processed}/{len(texts)} texts"
+                            if result.has_failures:
+                                message += f" ({result.failure_count} failed)"
+                            await progress_callback(message, progress)
+                        await asyncio.sleep(0.01)
 
-                    # Progress reporting
-                    if progress_callback:
-                        processed = result.success_count + result.failure_count
-                        progress = (processed / len(texts)) * 100
+                    if all_batches_succeeded_for_provider:
+                        span.set_attribute("provider_used", provider_name)
+                        return result
 
-                        message = f"Processed {processed}/{len(texts)} texts"
-                        if result.has_failures:
-                            message += f" ({result.failure_count} failed)"
+                except (openai.AuthenticationError, openai.PermissionDeniedError, openai.APIConnectionError, openai.RateLimitError, ValueError) as e:
+                    last_exception = e
+                    search_logger.warning(f"Provider '{provider_name}' failed. Last batch failed with error: {e}. Trying next provider if available.")
+                    if is_last_provider:
+                        search_logger.error(f"All embedding providers failed. Last error from '{provider_name}': {e}", exc_info=True)
+                        raise
+                finally:
+                    if client:
+                        await client.aclose()
 
-                        await progress_callback(message, progress)
-
-                    # Yield control
-                    await asyncio.sleep(0.01)
-
-                span.set_attribute("embeddings_created", result.success_count)
-                span.set_attribute("embeddings_failed", result.failure_count)
-                span.set_attribute("success", not result.has_failures)
-                span.set_attribute("total_tokens_used", total_tokens_used)
-
-                return result
+            raise last_exception or ValueError("All providers failed without a specific exception.")
 
         except Exception as e:
-            # Catastrophic failure - return what we have
             span.set_attribute("catastrophic_failure", True)
             search_logger.error(f"Catastrophic failure in batch embedding: {e}", exc_info=True)
-
-            # Mark remaining texts as failed
             processed_count = result.success_count + result.failure_count
-            for text in texts[processed_count:]:
-                result.add_failure(
-                    text, EmbeddingAPIError(f"Catastrophic failure: {str(e)}", original_error=e)
-                )
-
+            if processed_count < len(texts):
+                final_error = EmbeddingAPIError(f"Catastrophic failure: {str(e)}", original_error=e)
+                for text in texts[processed_count:]:
+                    result.add_failure(text, final_error)
             return result
 
 

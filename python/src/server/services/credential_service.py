@@ -449,6 +449,69 @@ class CredentialService:
                 "embedding_model": "",
             }
 
+    async def get_embedding_provider_configs(self) -> list[dict[str, Any]]:
+        """
+        Get the currently active primary and fallback embedding provider configurations.
+        This is designed for failover and is separate from the main LLM provider logic.
+
+        Returns:
+            A list of provider configuration dictionaries, with the primary first.
+            e.g., [{'provider': 'openai', 'api_key': '...', 'embedding_model': '...'},
+                   {'provider': 'google', 'api_key': '...', 'embedding_model': '...'}]
+        """
+        configs = []
+        try:
+            rag_settings = await self.get_credentials_by_category("rag_strategy")
+
+            provider_types = [
+                {"type": "primary", "suffix": ""},
+                {"type": "fallback", "suffix": "_FALLBACK"},
+            ]
+
+            for pt in provider_types:
+                provider_key = f"EMBEDDING_PROVIDER{pt['suffix']}"
+                model_key = f"EMBEDDING_MODEL{pt['suffix']}"
+                api_key_override_key = f"EMBEDDING_API_KEY{pt['suffix']}"
+
+                provider = rag_settings.get(provider_key)
+                if not provider:
+                    # For the primary provider only, we can fall back to the main LLM_PROVIDER
+                    if pt["type"] == "primary":
+                        provider = rag_settings.get("LLM_PROVIDER", "openai")
+                    else:
+                        continue  # No fallback provider configured
+
+                embedding_model = rag_settings.get(model_key)
+                if not embedding_model and pt["type"] == "primary":
+                    embedding_model = rag_settings.get("EMBEDDING_MODEL") # Main fallback
+
+                if not provider or not embedding_model:
+                    continue
+
+                # 1. Check for a specific embedding API key (e.g., EMBEDDING_API_KEY_FALLBACK)
+                api_key = await self.get_credential(api_key_override_key)
+
+                # 2. If not found, fall back to the provider's standard key (e.g., OPENAI_API_KEY)
+                if not api_key:
+                    api_key = await self._get_provider_api_key(provider)
+
+                base_url = self._get_provider_base_url(provider, rag_settings)
+
+                # A provider is only valid if it has an API key (or doesn't need one, like ollama)
+                if api_key:
+                    configs.append({
+                        "provider": provider,
+                        "api_key": api_key,
+                        "base_url": base_url,
+                        "embedding_model": embedding_model,
+                    })
+
+            return configs
+
+        except Exception as e:
+            logger.error(f"Error getting embedding provider configs: {e}")
+            return []
+
     async def _get_provider_api_key(self, provider: str) -> str | None:
         """Get API key for a specific provider."""
         key_mapping = {

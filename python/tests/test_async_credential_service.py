@@ -336,3 +336,88 @@ class TestAsyncCredentialService:
         result2 = await get_credential("PERSISTENT_KEY", "default")
         assert result2 == "persistent_value"
         assert result1 == result2
+
+    @pytest.mark.asyncio
+    async def test_get_embedding_provider_configs_full(self):
+        """Test get_embedding_provider_configs with both primary and fallback."""
+        mock_rag_settings = {
+            "EMBEDDING_PROVIDER": "openai",
+            "EMBEDDING_MODEL": "model-a",
+            "EMBEDDING_API_KEY": "key-a",
+            "EMBEDDING_PROVIDER_FALLBACK": "google",
+            "EMBEDDING_MODEL_FALLBACK": "model-b",
+            "EMBEDDING_API_KEY_FALLBACK": "key-b",
+        }
+
+        async def mock_get_credential(key):
+            if key == "EMBEDDING_API_KEY":
+                return "key-a"
+            if key == "EMBEDDING_API_KEY_FALLBACK":
+                return "key-b"
+            return None
+
+        with patch.object(credential_service, 'get_credentials_by_category', return_value=mock_rag_settings), \
+             patch.object(credential_service, 'get_credential', side_effect=mock_get_credential):
+
+            configs = await credential_service.get_embedding_provider_configs()
+
+            assert len(configs) == 2
+            assert configs[0]["provider"] == "openai"
+            assert configs[0]["api_key"] == "key-a"
+            assert configs[0]["embedding_model"] == "model-a"
+            assert configs[1]["provider"] == "google"
+            assert configs[1]["api_key"] == "key-b"
+            assert configs[1]["embedding_model"] == "model-b"
+
+    @pytest.mark.asyncio
+    async def test_get_embedding_provider_configs_primary_only(self):
+        """Test get_embedding_provider_configs with only a primary provider."""
+        mock_rag_settings = {
+            "EMBEDDING_PROVIDER": "openai",
+            "EMBEDDING_MODEL": "model-a",
+        }
+
+        async def mock_get_credential(key):
+            if key == "OPENAI_API_KEY":
+                return "general_openai_key"
+            return None
+
+        with patch.object(credential_service, 'get_credentials_by_category', return_value=mock_rag_settings), \
+             patch.object(credential_service, 'get_credential', side_effect=mock_get_credential):
+
+            configs = await credential_service.get_embedding_provider_configs()
+
+            assert len(configs) == 1
+            assert configs[0]["provider"] == "openai"
+            assert configs[0]["api_key"] == "general_openai_key"
+            assert configs[0]["embedding_model"] == "model-a"
+
+    @pytest.mark.asyncio
+    async def test_get_embedding_provider_configs_fallback_to_llm_provider(self):
+        """Test get_embedding_provider_configs falling back to LLM_PROVIDER."""
+        mock_rag_settings = {
+            "LLM_PROVIDER": "google",
+            "EMBEDDING_MODEL": "model-b",
+        }
+
+        async def mock_get_credential(key):
+            if key == "GOOGLE_API_KEY":
+                return "general_google_key"
+            return None
+
+        with patch.object(credential_service, 'get_credentials_by_category', return_value=mock_rag_settings), \
+             patch.object(credential_service, 'get_credential', side_effect=mock_get_credential):
+
+            configs = await credential_service.get_embedding_provider_configs()
+
+            assert len(configs) == 1
+            assert configs[0]["provider"] == "google"
+            assert configs[0]["api_key"] == "general_google_key"
+            assert configs[0]["embedding_model"] == "model-b"
+
+    @pytest.mark.asyncio
+    async def test_get_embedding_provider_configs_no_provider(self):
+        """Test get_embedding_provider_configs with no provider configured."""
+        with patch.object(credential_service, 'get_credentials_by_category', return_value={}):
+            configs = await credential_service.get_embedding_provider_configs()
+            assert len(configs) == 0

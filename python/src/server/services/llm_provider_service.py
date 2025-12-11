@@ -345,6 +345,50 @@ async def get_llm_client(
                 )
 
 
+async def create_embedding_client(config: dict[str, Any]) -> openai.AsyncOpenAI:
+    """
+    Create an async OpenAI-compatible client for a specific embedding configuration.
+    This is a simplified, direct client factory, not a context manager.
+
+    Args:
+        config: A dictionary with provider, api_key, and base_url.
+
+    Returns:
+        openai.AsyncOpenAI: An OpenAI-compatible client.
+    """
+    provider_name = config.get("provider")
+    api_key = config.get("api_key")
+    base_url = config.get("base_url")
+
+    logger.info(f"Creating embedding client for provider: {provider_name}")
+
+    if not provider_name:
+        raise ValueError("Provider not specified in embedding configuration")
+
+    # The client must be closed by the caller.
+    if provider_name == "openai":
+        if not api_key:
+            raise ValueError("OpenAI API key not found for embedding client")
+        return openai.AsyncOpenAI(api_key=api_key)
+
+    elif provider_name == "ollama":
+        return openai.AsyncOpenAI(api_key="ollama", base_url=base_url)
+
+    elif provider_name == "google":
+        if not api_key:
+            raise ValueError("Google API key not found for embedding client")
+        return openai.AsyncOpenAI(api_key=api_key, base_url=base_url)
+
+    # Extend with other providers as needed, mirroring get_llm_client logic
+    elif provider_name in ["openrouter", "anthropic", "grok"]:
+         if not api_key:
+            raise ValueError(f"{provider_name.capitalize()} API key not found for embedding client")
+         return openai.AsyncOpenAI(api_key=api_key, base_url=base_url)
+
+    else:
+        raise ValueError(f"Unsupported embedding provider: {provider_name}")
+
+
 async def _get_optimal_ollama_instance(instance_type: str | None = None,
                                        use_embedding_provider: bool = False,
                                        base_url_override: str | None = None) -> str:

@@ -422,3 +422,71 @@ class TestAsyncEmbeddingService:
                         assert result.success_count == 5
                         assert len(result.embeddings) == 5
                         assert result.texts_processed == texts
+
+    @pytest.mark.asyncio
+    async def test_create_embeddings_batch_with_failover(self, mock_threading_service):
+        """Test that the batch creation fails over to a secondary provider."""
+
+        # 1. Setup mock provider configs
+        primary_config = {"provider": "primary-fail", "embedding_model": "model-fail", "api_key": "key-fail", "base_url": None}
+        secondary_config = {"provider": "secondary-success", "embedding_model": "model-success", "api_key": "key-success", "base_url": None}
+
+        # 2. Mock the new functions
+        mock_get_configs = AsyncMock(return_value=[primary_config, secondary_config])
+
+        # Mock client that will be returned by the successful provider
+        mock_success_client = MagicMock()
+        mock_success_embeddings = MagicMock()
+        mock_success_response = MagicMock()
+        mock_success_response.data = [
+            MagicMock(embedding=[0.1]*1536),
+            MagicMock(embedding=[0.2]*1536)
+        ]
+        mock_success_embeddings.create = AsyncMock(return_value=mock_success_response)
+        mock_success_client.embeddings = mock_success_embeddings
+        mock_success_client.aclose = AsyncMock()
+
+        # This client will be returned for the failing provider
+        mock_fail_client = MagicMock()
+        mock_fail_client.embeddings.create.side_effect = openai.AuthenticationError(message="Invalid API Key", response=MagicMock(), body=None)
+        mock_fail_client.aclose = AsyncMock()
+
+        # Stateful side effect for creating clients
+        async def create_client_side_effect(config):
+            if config["provider"] == "primary-fail":
+                return mock_fail_client
+            elif config["provider"] == "secondary-success":
+                return mock_success_client
+            return MagicMock()
+
+        mock_create_client = AsyncMock(side_effect=create_client_side_effect)
+
+        with patch("src.server.services.embeddings.embedding_service.get_threading_service", return_value=mock_threading_service), \
+             patch("src.server.services.embeddings.embedding_service.credential_service.get_embedding_provider_configs", mock_get_configs), \
+             patch("src.server.services.embeddings.embedding_service.create_embedding_client", mock_create_client), \
+             patch("src.server.services.embeddings.embedding_service.credential_service.get_credentials_by_category", AsyncMock(return_value={"EMBEDDING_BATCH_SIZE": "10"})):
+
+            # 3. Execute the function
+            texts_to_embed = ["text1", "text2"]
+            result = await create_embeddings_batch(texts_to_embed)
+
+            # 4. Assertions
+            assert result.success_count == 2
+            assert result.failure_count == 0
+            assert len(result.embeddings) == 2
+
+            # Check that config fetching was called
+            mock_get_configs.assert_awaited_once()
+
+            # Check that client creation was attempted for both providers
+            assert mock_create_client.call_count == 2
+            mock_create_client.assert_any_await(primary_config)
+            mock_create_client.assert_any_await(secondary_config)
+
+            # Check that the failing client was used and then the successful one
+            mock_fail_client.embeddings.create.assert_awaited_once()
+            mock_success_client.embeddings.create.assert_awaited_once()
+
+            # Check clients were closed
+            mock_fail_client.aclose.assert_awaited_once()
+            mock_success_client.aclose.assert_awaited_once()
