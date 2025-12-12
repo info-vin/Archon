@@ -68,6 +68,17 @@
 
 # 第三章：近期工作日誌 (Recent Journal Entries)
 
+### 本日會話總結與學習教訓 (2025-12-12)
+*   **核心任務**: 解決 `make test-be` 中因詞嵌入服務 (Embedding Service) 重構而導致的 17 個測試失敗。
+*   **偵錯歷程**:
+    1.  遵循「歷史是最終的仲裁者」原則，透過 `git log` 追溯到 `commit 9853fb067657` 是所有失敗的根源。該提交重構了 `embedding_service` 以支援多供應商故障轉移，但未同步更新測試。
+    2.  制定了「先修復邏輯，再重構測試」的系統性計畫，並獲得使用者同意。
+    3.  修復了 `llm_provider_service` 中的一個斷言錯誤，並修正了 `embedding_service` 中阻礙故障轉移的 `except` 區塊邏輯。
+    4.  大規模重構了 `test_async_embedding_service.py` 和 `test_embedding_service_no_zeros.py` 中的過時測試，將其 Mock 策略與新架構對齊。
+*   **遭遇問題**: 在重構過程中，因疏忽引入了新的 `TypeError`（非同步的 Mock 類型錯誤）和 `NameError`（忘記 `import MagicMock`），導致修復中的測試出現新的失敗。
+*   **最終狀態 (進行中)**: 在使用者協助測試並提供回饋後，已精準定位剩餘的 3 個失敗原因（`TypeError`, `AttributeError`, `AttributeError`）。目前正在逐一進行最後的精準修復。
+*   **關鍵學習**: 大規模重構測試時，必須極度小心 Mock 的類型（`Mock` vs `AsyncMock`）和依賴的 `import`。即使有完美的計畫，也需要透過實際測試來驗證每一步的修改，並根據回饋快速修正。
+
 ### 本日會話總結與學習教訓 (2025-11-28)
 *   **核心任務**: 偵錯 `make dev-docker` 環境下，前端 Admin UI (`:3737`) 顯示「Failed to Load Knowledge Base」錯誤。
 *   **偵錯歷程**: 透過使用者提供的精確錯誤訊息 `invalid input syntax for type uuid`，最終定位到問題是資料庫函式 `get_counts_by_source` 的參數型別 (`uuid[]`) 與資料表 `archon_sources` 的欄位型別 (`text`) 不匹配，並在修復後進一步解決了函式重載衝突 (`PGRST203`) 和欄位引用歧義 (`42702`) 的問題。

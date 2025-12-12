@@ -559,10 +559,11 @@ class TestAsyncLLMProviderService:
             assert client == mock_client
             # For ollama, base_url is explicitly provided, for others it might be None
             # The create_embedding_client function passes the config values directly.
-            mock_openai.assert_called_once_with(
-                api_key=config["api_key"],
-                base_url=config["base_url"]
-            )
+            expected_call_args = {"api_key": config["api_key"]}
+            if config.get("base_url"):
+                expected_call_args["base_url"] = config["base_url"]
+
+            mock_openai.assert_called_once_with(**expected_call_args)
 
     @pytest.mark.asyncio
     async def test_create_embedding_client_unsupported_provider(self):
