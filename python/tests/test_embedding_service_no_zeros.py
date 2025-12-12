@@ -152,7 +152,7 @@ class TestNoZeroEmbeddings:
         with patch("src.server.services.embeddings.embedding_service.credential_service.get_embedding_provider_configs", mock_get_configs), \
              patch("src.server.services.embeddings.embedding_service.create_embedding_client", mock_create_client), \
              patch("src.server.services.embeddings.embedding_service.credential_service.get_credentials_by_category", AsyncMock(return_value={"EMBEDDING_DIMENSIONS": "3072"})):
-            
+
             result = await create_embeddings_batch(["test text"])
 
             # Verify the dimensions parameter was passed correctly

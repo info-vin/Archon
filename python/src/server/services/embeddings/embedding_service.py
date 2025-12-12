@@ -228,9 +228,9 @@ async def create_embeddings_batch(
                                         await asyncio.sleep(wait_time)
                         except Exception as e:
                             # Re-raise specific exceptions that should trigger provider failover
-                            if isinstance(e, (openai.AuthenticationError, openai.PermissionDeniedError, openai.APIConnectionError, openai.RateLimitError)):
+                            if isinstance(e, openai.AuthenticationError | openai.PermissionDeniedError | openai.APIConnectionError | openai.RateLimitError):
                                 raise
-                            
+
                             all_batches_succeeded_for_provider = False
                             search_logger.error(f"Batch {batch_index} failed for provider {provider_name}: {e}", exc_info=True) # batch_index used
                             for text in batch:

@@ -211,7 +211,7 @@ class TestAsyncEmbeddingService:
             body={"error": {"message": "insufficient_quota"}},
         )
         mock_client.embeddings.create = AsyncMock(side_effect=error)
-        
+
         primary_config = {"provider": "openai", "embedding_model": "text-embedding-3-small", "api_key": "key-ok"}
         mock_get_configs = AsyncMock(return_value=[primary_config])
         mock_create_client = AsyncMock(return_value=mock_client)
