@@ -60,7 +60,7 @@ RUN playwright install chromium
 COPY python/src/server/ src/server/
 COPY python/src/__init__.py src/
 COPY python/tests/ tests/
-COPY migration/000_unified_schema.sql migration/000_unified_schema.sql
+COPY migration/ migration/
 
 # Set environment variables
 ENV PYTHONPATH="/app:$PYTHONPATH"
