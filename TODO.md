@@ -6,7 +6,7 @@
 
 ### Phase 3.8: 系統嫁接與部署 (System Grafting & Deployment)
 
-**總目標**: 將 `feature/e2e-file-upload` 分支的「人機協作」功能，安全、可控地「嫁接」到 `main` 分支的現代化基礎之上，並最終將整合後的系統部署到 Render。
+**總目標**: 將 `feature/e2e-file-upload` 分支的功能嫁接到 `dev/v1` 分支後，將整合後的系統從 `dev/v1` 部署到 Render。
 
 ---
 

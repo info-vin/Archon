@@ -1,0 +1,145 @@
+# Render Blueprint: Infrastructure as Code for the Archon Project
+#
+# Documentation: https://render.com/docs/blueprint-spec
+#
+# This file defines all the services, environment variables, and deployment
+# settings for the project. After creating this file, you can point a new
+# "Blueprint" instance in your Render dashboard to your Git repository,
+# and Render will automatically provision and deploy all the services defined below.
+
+services:
+  # 1. Main Backend API (archon-server)
+  - name: archon-server
+    type: web
+    env: docker
+    repo: https://github.com/info-vin/Archon # 從您提供的內容中提取
+    branch: dev/v1
+    region: oregon # 從您提供的內容中提取
+    plan: free # 從您提供的內容中提取
+    autoDeploy: true # 對應 autoDeployTrigger: commit
+    healthCheckPath: /api/health
+    dockerfilePath: Dockerfile.server
+    dockerContext: .
+    startCommand: python -m uvicorn src.server.main:app --host 0.0.0.0 --port $PORT --workers 1
+    envVars:
+      # 這些變數因為 sync: false，需要您在 Render 儀表板上設定為 Secret 或環境變數
+      - key: OPENAI_API_KEY
+        fromSecret: OPENAI_API_KEY # 引用您在 Render 定義的 Secret
+      - key: LOG_LEVEL
+        fromSecret: LOG_LEVEL
+      - key: GEMINI_API_KEY
+        fromSecret: GEMINI_API_KEY
+      - key: SUPABASE_URL
+        fromSecret: SUPABASE_URL
+      - key: SUPABASE_SERVICE_KEY
+        fromSecret: SUPABASE_SERVICE_KEY
+      # ⚠️ 請確保在 Render 儀表板上手動設定以下環境變數，並替換為您的實際前端服務公開 URL
+      # 這是為了 CORS 跨域請求，archon-server 需要知道哪些前端網址可以發送請求給它
+      - key: CORS_ORIGINS
+        value: "https://<ARCHON_UI_MAIN_PUBLIC_URL>,https://<ENDUSER_UI_FE_PUBLIC_URL>"
+
+  # 2. Admin UI (archon-ui-main)
+  - name: archon-ui-main
+    type: static # 從您提供的內容中提取
+    repo: https://github.com/info-vin/Archon
+    branch: dev/v1
+    autoDeploy: true # 對應 autoDeployTrigger: commit
+    rootDir: archon-ui-main # 從您提供的內容中提取
+    buildCommand: pnpm install --frozen-lockfile && pnpm run build # 從您提供的內容中提取
+    staticPublishPath: dist # 從您提供的內容中提取
+    envVars:
+      # VITE_API_URL 因為 sync: false，需要您在 Render 儀表板上手動設定
+      # 其值應為 archon-server 的公開 URL (例如：https://your-archon-server.onrender.com)
+      - key: VITE_API_URL
+        fromSecret: VITE_API_URL # 引用您在 Render 定義的 Secret
+    routes:
+      # API Proxy rule: ⚠️ 請將 destination 替換為您的 archon-server 實際公開 URL
+      - type: rewrite
+        source: /api/:path*
+        destination: https://<YOUR_ARCHON_SERVER_PUBLIC_URL>/api/:path* # 替換為實際的 archon-server URL
+      # SPA Fallback rule
+      - type: rewrite
+        source: /*
+        destination: /index.html
+
+  # 3. End-User UI (enduser-ui-fe)
+  - name: enduser-ui-fe
+    type: static # 從您提供的內容中提取
+    repo: https://github.com/info-vin/Archon
+    branch: dev/v1
+    autoDeploy: true # 對應 autoDeployTrigger: commit
+    rootDir: enduser-ui-fe # 從您提供的內容中提取
+    buildCommand: pnpm install --frozen-lockfile && pnpm run build # 從您提供的內容中提取
+    staticPublishPath: dist # 從您提供的內容中提取
+    envVars:
+      # VITE_API_URL 因為 sync: false，需要您在 Render 儀表板上手動設定
+      # 其值應為 archon-server 的公開 URL (例如：https://your-archon-server.onrender.com)
+      - key: VITE_API_URL
+        fromSecret: VITE_API_URL # 引用您在 Render 定義的 Secret
+    routes:
+      # ⚠️ API Proxy rule: 這是根據 CONTRIBUNTING_tw.md 和一般 SPA 需求手動添加的。
+      #    請確認 enduser-ui-fe 是否需要呼叫後端 API。
+      #    如果需要，請將 destination 替換為您的 archon-server 實際公開 URL。
+      - type: rewrite
+        source: /api/:path*
+        destination: https://<YOUR_ARCHON_SERVER_PUBLIC_URL>/api/:path* # 替換為實際的 archon-server URL
+      # SPA Fallback rule
+      - type: rewrite
+        source: /*
+        destination: /index.html
+
+  # 4. Master Control Program (archon-mcp)
+  - name: archon-mcp
+    type: web # 從您提供的內容中提取 (請注意，worker 或 privateService 可能更適合若無對外 API)
+    env: docker
+    repo: https://github.com/info-vin/Archon
+    branch: dev/v1
+    region: oregon
+    plan: free
+    autoDeploy: true
+    dockerContext: python
+    dockerfilePath: python/Dockerfile.mcp
+    startCommand: /app/docker-entrypoint-mcp.sh # 從 Dockerfile 中推斷
+    envVars:
+      # 這些變數因為 sync: false，需要您在 Render 儀表板上設定為 Secret 或環境變數
+      - key: LOG_LEVEL
+        fromSecret: LOG_LEVEL
+      - key: ARCHON_SERVER_PORT
+        fromSecret: ARCHON_SERVER_PORT
+      - key: ARCHON_SERVER_HOST
+        fromSecret: ARCHON_SERVER_HOST
+      - key: SUPABASE_SERVICE_KEY
+        fromSecret: SUPABASE_SERVICE_KEY
+      - key: SUPABASE_URL
+        fromSecret: SUPABASE_URL
+
+  # 5. AI Agents (archon-agents)
+  - name: archon-agents
+    type: web # 從您提供的內容中提取 (請注意，worker 或 privateService 可能更適合若無對外 API)
+    env: docker
+    repo: https://github.com/info-vin/Archon
+    branch: dev/v1
+    region: oregon
+    plan: free
+    autoDeploy: true
+    healthCheckPath: /health
+    dockerContext: python # 根據 rootDir: python 和 Dockerfile 路徑推斷
+    dockerfilePath: Dockerfile.agents # 根據 Dockerfile 路徑推斷 (相對於 dockerContext)
+    startCommand: /app/docker-entrypoint-agents.sh # 從 Dockerfile 中推斷
+    envVars:
+      # 這些變數因為 sync: false，需要您在 Render 儀表板上設定為 Secret 或環境變數
+      - key: LOG_LEVEL
+        fromSecret: LOG_LEVEL
+      - key: ARCHON_SERVER_PORT
+        fromSecret: ARCHON_SERVER_PORT
+      - key: ARCHON_SERVER_HOST
+        fromSecret: ARCHON_SERVER_HOST
+      - key: SUPABASE_SERVICE_KEY
+        fromSecret: SUPABASE_SERVICE_KEY
+      - key: SUPABASE_URL
+        fromSecret: SUPABASE_URL
+      # ⚠️ 請根據您的 LLM 供應商設定其中一個或兩個金鑰
+      - key: OPENAI_API_KEY
+        fromSecret: OPENAI_API_KEY
+      - key: GEMINI_API_KEY
+        fromSecret: GEMINI_API_KEY
