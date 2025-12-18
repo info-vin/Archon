@@ -30,12 +30,30 @@ mock_select.order.return_value = mock_select
 mock_table.select.return_value = mock_select
 mock_client.table.return_value = mock_table
 
+import os
+import sys
+from pathlib import Path
+
+# --- START: CRITICAL PATH FIX FOR PYTEST SRC-LAYOUT ---
+# This ensures Python can find 'server' as a top-level module when running tests
+src_path = str(Path(__file__).parent.parent / "src")
+if src_path not in sys.path:
+    sys.path.insert(0, src_path)
+# --- END: CRITICAL PATH FIX ---
+
 # Apply global patches immediately
 _global_patches = [
     patch("supabase.create_client", return_value=mock_client),
-    patch("src.server.services.client_manager.get_supabase_client", return_value=mock_client),
-    patch("src.server.utils.get_supabase_client", return_value=mock_client),
+    patch("server.services.client_manager.get_supabase_client", return_value=mock_client),
+    patch("server.utils.get_supabase_client", return_value=mock_client),
 ]
+
+print(f"\n--- DEBUG CONTEST.PY IMPORT ENVIRONMENT ---")
+print(f"sys.path: {sys.path}")
+print(f"sys.modules keys (first 20): {list(sys.modules.keys())[:20]}")
+print(f"sys.modules['server']: {sys.modules.get('server')}")
+print(f"sys.modules['server.services']: {sys.modules.get('server.services')}")
+print(f"--- END DEBUG ---")
 
 for p in _global_patches:
     p.start()
@@ -80,8 +98,8 @@ def prevent_real_db_calls():
 
     # Patch all the common ways to get a Supabase client
     with patch("supabase.create_client", return_value=mock_client):
-        with patch("src.server.services.client_manager.get_supabase_client", return_value=mock_client):
-            with patch("src.server.utils.get_supabase_client", return_value=mock_client):
+        with patch("server.services.client_manager.get_supabase_client", return_value=mock_client):
+            with patch("server.utils.get_supabase_client", return_value=mock_client):
                 yield
 
 
@@ -137,21 +155,21 @@ def client(mock_supabase_client):
     """FastAPI test client with mocked database."""
     # Patch all the ways Supabase client can be created
     with patch(
-        "src.server.services.client_manager.get_supabase_client",
+        "server.services.client_manager.get_supabase_client",
         return_value=mock_supabase_client,
     ):
         with patch(
-            "src.server.utils.get_supabase_client",
+            "server.utils.get_supabase_client",
             return_value=mock_supabase_client,
         ):
             with patch(
-                "src.server.services.credential_service.create_client",
+                "server.services.credential_service.create_client",
                 return_value=mock_supabase_client,
             ):
                 with patch("supabase.create_client", return_value=mock_supabase_client):
                     from unittest.mock import AsyncMock
 
-                    import src.server.main as server_main
+                    import server.main as server_main
 
                     # Mark initialization as complete for testing (before accessing app)
                     server_main._initialization_complete = True
@@ -159,7 +177,7 @@ def client(mock_supabase_client):
 
                     # Mock the schema check to always return valid
                     mock_schema_check = AsyncMock(return_value={"valid": True, "message": "Schema is up to date"})
-                    with patch("src.server.main._check_database_schema", new=mock_schema_check):
+                    with patch("server.main._check_database_schema", new=mock_schema_check):
                         return TestClient(app)
 
 
