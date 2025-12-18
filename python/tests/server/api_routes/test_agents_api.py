@@ -13,10 +13,12 @@ module_patch = patch(
     'src.server.api_routes.agents_api.agent_service',
     mock_agent_service
 )
-module_patch.start()
 
 # Now we can import the app
 from src.server.main import app
+
+# Start the patch AFTER the app is imported
+module_patch.start()
 
 client = TestClient(app)
 
@@ -51,7 +53,7 @@ def test_get_assignable_agents_service_error():
     
     # Assert that the app's exception handler caught it (FastAPI returns 500)
     assert response.status_code == 500
-    assert "Internal Server Error" in response.text
+    assert "Failed to retrieve assignable agents" in response.text
     
     # Clean up the side effect
     mock_agent_service.get_assignable_agents.side_effect = None
@@ -64,4 +66,3 @@ def test_get_assignable_agents_service_error():
 # Stop the patch after all tests in this module are done
 def teardown_module(module):
     module_patch.stop()
-

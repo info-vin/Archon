@@ -1,6 +1,7 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from typing import List, Dict
 
+from ..config.logfire_config import logfire
 from ..services.agent_service import agent_service, AgentService
 
 router = APIRouter(
@@ -15,5 +16,9 @@ async def get_assignable_agents(
     """
     Get a list of all assignable AI agents.
     """
-    agents = await service.get_assignable_agents()
-    return agents
+    try:
+        agents = await service.get_assignable_agents()
+        return agents
+    except Exception as e:
+        logfire.error(f"Failed to get assignable agents: {e}")
+        raise HTTPException(status_code=500, detail="Failed to retrieve assignable agents") from e
