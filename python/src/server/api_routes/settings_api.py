@@ -15,7 +15,7 @@ from pydantic import BaseModel
 
 # Import logging
 from ..config.logfire_config import logfire
-from ..services import SettingsService
+from ..services.settings_service import SettingsService
 from ..services.credential_service import credential_service, initialize_credentials
 
 router = APIRouter(prefix="/api", tags=["settings"])

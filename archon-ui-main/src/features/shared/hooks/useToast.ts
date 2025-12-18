@@ -35,7 +35,7 @@ export function useToast() {
  * Create toast context value with state management
  * Used internally by ToastProvider component
  */
-export function createToastContext() {
+export function useCreateToastContext() {
   const [toasts, setToasts] = useState<Toast[]>([]);
   const timeoutsRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
 

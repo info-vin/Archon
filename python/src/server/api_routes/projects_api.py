@@ -17,7 +17,7 @@ from fastapi import status as http_status
 from pydantic import BaseModel
 
 from ..config.logfire_config import get_logger, logfire
-from ..services import ProfileService
+from ..services.profile_service import ProfileService
 from ..services.projects import (
     ProjectCreationService,
     ProjectService,
