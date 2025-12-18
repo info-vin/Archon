@@ -1,15 +1,15 @@
+
 from fastapi import APIRouter, Depends, HTTPException
-from typing import List, Dict
 
 from ..config.logfire_config import logfire
-from ..services.agent_service import agent_service, AgentService
+from ..services.agent_service import AgentService, agent_service
 
 router = APIRouter(
     prefix="/api/agents",
     tags=["agents"],
 )
 
-@router.get("/assignable", response_model=List[Dict])
+@router.get("/assignable", response_model=list[dict])
 async def get_assignable_agents(
     service: AgentService = Depends(lambda: agent_service)
 ):

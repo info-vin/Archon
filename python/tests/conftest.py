@@ -30,9 +30,9 @@ mock_select.order.return_value = mock_select
 mock_table.select.return_value = mock_select
 mock_client.table.return_value = mock_table
 
-import os
-import sys
-from pathlib import Path
+import os  # noqa: E402
+import sys  # noqa: E402
+from pathlib import Path  # noqa: E402
 
 # --- START: CRITICAL PATH FIX FOR PYTEST SRC-LAYOUT ---
 # This ensures Python can find 'server' as a top-level module when running tests
@@ -48,12 +48,12 @@ _global_patches = [
     patch("server.utils.get_supabase_client", return_value=mock_client),
 ]
 
-print(f"\n--- DEBUG CONTEST.PY IMPORT ENVIRONMENT ---")
+print("\n--- DEBUG CONTEST.PY IMPORT ENVIRONMENT ---")
 print(f"sys.path: {sys.path}")
 print(f"sys.modules keys (first 20): {list(sys.modules.keys())[:20]}")
 print(f"sys.modules['server']: {sys.modules.get('server')}")
 print(f"sys.modules['server.services']: {sys.modules.get('server.services')}")
-print(f"--- END DEBUG ---")
+print("--- END DEBUG ---")
 
 for p in _global_patches:
     p.start()

@@ -20,6 +20,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from .api_routes.agent_chat_api import router as agent_chat_router
+from .api_routes.agents_api import router as agents_router
 from .api_routes.bug_report_api import router as bug_report_router
 from .api_routes.files_api import router as files_router
 from .api_routes.internal_api import router as internal_router
@@ -33,7 +34,6 @@ from .api_routes.projects_api import router as projects_router
 from .api_routes.providers_api import router as providers_router
 from .api_routes.settings_api import router as settings_router
 from .api_routes.version_api import router as version_router
-from .api_routes.agents_api import router as agents_router
 
 # Import Logfire configuration
 from .config.logfire_config import api_logger, setup_logfire

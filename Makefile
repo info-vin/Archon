@@ -137,7 +137,7 @@ lint-fe:
 lint-be:
 	@echo "Linting backend..."
 	@cd python && $(UV) sync --group dev
-	@cd python && $(UV) run ruff check
+	@cd python && $(UV) run ruff check --fix
 
 # Clean everything (with confirmation)
 clean:
