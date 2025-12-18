@@ -1,5 +1,5 @@
 import type React from "react";
-import { createToastContext, getToastIcon, ToastContext } from "../../shared/hooks/useToast";
+import { useCreateToastContext, getToastIcon, ToastContext } from "../../shared/hooks/useToast";
 import {
   ToastProvider as RadixToastProvider,
   Toast,
@@ -20,7 +20,7 @@ interface ToastProviderProps {
  * Provides the same API as legacy ToastContext for easy migration
  */
 export function ToastProvider({ children, duration = 4000, swipeDirection = "right" }: ToastProviderProps) {
-  const { toasts, showToast, removeToast } = createToastContext();
+  const { toasts, showToast, removeToast } = useCreateToastContext();
 
   return (
     <RadixToastProvider duration={duration} swipeDirection={swipeDirection}>
