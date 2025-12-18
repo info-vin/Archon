@@ -10,15 +10,19 @@ Handles:
 from datetime import datetime
 from typing import Any
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
 # Import logging
 from ..config.logfire_config import logfire
+from ..services.credential_service import CredentialService, credential_service, initialize_credentials
 from ..services.settings_service import SettingsService
-from ..services.credential_service import credential_service, initialize_credentials
 
 router = APIRouter(prefix="/api", tags=["settings"])
+
+
+def get_credential_service() -> CredentialService:
+    return credential_service
 
 
 class CredentialRequest(BaseModel):
@@ -46,11 +50,14 @@ class CredentialStatusRequest(BaseModel):
 
 
 @router.post("/credentials/status-check")
-async def check_credential_status(request: CredentialStatusRequest):
+async def check_credential_status(
+    request: CredentialStatusRequest,
+    cred_service: CredentialService = Depends(get_credential_service),
+):
     """Check if a list of credentials have values."""
     try:
         logfire.info(f"Checking status for {len(request.keys)} credentials")
-        statuses = await credential_service.check_credentials_exist(request.keys)
+        statuses = await cred_service.check_credentials_exist(request.keys)
         logfire.info(f"Credential status check successful | count={len(statuses)}")
         return statuses
     except Exception as e:
@@ -60,11 +67,14 @@ async def check_credential_status(request: CredentialStatusRequest):
 
 # Credential Management Endpoints
 @router.get("/credentials")
-async def list_credentials(category: str | None = None):
+async def list_credentials(
+    category: str | None = None,
+    cred_service: CredentialService = Depends(get_credential_service),
+):
     """List all credentials and their categories."""
     try:
         logfire.info(f"Listing credentials | category={category}")
-        credentials = await credential_service.list_all_credentials()
+        credentials = await cred_service.list_all_credentials()
 
         if category:
             # Filter by category
@@ -92,11 +102,14 @@ async def list_credentials(category: str | None = None):
 
 
 @router.get("/credentials/categories/{category}")
-async def get_credentials_by_category(category: str):
+async def get_credentials_by_category(
+    category: str,
+    cred_service: CredentialService = Depends(get_credential_service),
+):
     """Get all credentials for a specific category."""
     try:
         logfire.info(f"Getting credentials by category | category={category}")
-        credentials = await credential_service.get_credentials_by_category(category)
+        credentials = await cred_service.get_credentials_by_category(category)
 
         logfire.info(
             f"Credentials retrieved by category | category={category} | count={len(credentials)}"
@@ -111,14 +124,17 @@ async def get_credentials_by_category(category: str):
 
 
 @router.post("/credentials")
-async def create_credential(request: CredentialRequest):
+async def create_credential(
+    request: CredentialRequest,
+    cred_service: CredentialService = Depends(get_credential_service),
+):
     """Create or update a credential."""
     try:
         logfire.info(
             f"Creating/updating credential | key={request.key} | is_encrypted={request.is_encrypted} | category={request.category}"
         )
 
-        success = await credential_service.set_credential(
+        success = await cred_service.set_credential(
             key=request.key,
             value=request.value,
             is_encrypted=request.is_encrypted,
@@ -156,12 +172,15 @@ OPTIONAL_SETTINGS_WITH_DEFAULTS = {
 
 
 @router.get("/credentials/{key}")
-async def get_credential(key: str):
+async def get_credential(
+    key: str,
+    cred_service: CredentialService = Depends(get_credential_service),
+):
     """Get a specific credential by key."""
     try:
         logfire.info(f"Getting credential | key={key}")
         # Never decrypt - always get metadata only for encrypted credentials
-        value = await credential_service.get_credential(key, decrypt=False)
+        value = await cred_service.get_credential(key, decrypt=False)
 
         if value is None:
             # Check if this is an optional setting with a default value
@@ -201,7 +220,11 @@ async def get_credential(key: str):
 
 
 @router.put("/credentials/{key}")
-async def update_credential(key: str, request: dict[str, Any]):
+async def update_credential(
+    key: str,
+    request: dict[str, Any],
+    cred_service: CredentialService = Depends(get_credential_service),
+):
     """Update an existing credential."""
     try:
         logfire.info(f"Updating credential | key={key}")
@@ -220,7 +243,7 @@ async def update_credential(key: str, request: dict[str, Any]):
             description = request.description
 
         # Get existing credential to preserve metadata if not provided
-        existing_creds = await credential_service.list_all_credentials()
+        existing_creds = await cred_service.list_all_credentials()
         existing = next((c for c in existing_creds if c.key == key), None)
 
         if existing is None:
@@ -237,7 +260,7 @@ async def update_credential(key: str, request: dict[str, Any]):
                 description = existing.description
             logfire.info(f"Updating existing credential | key={key} | category={category}")
 
-        success = await credential_service.set_credential(
+        success = await cred_service.set_credential(
             key=key,
             value=value,
             is_encrypted=is_encrypted,
@@ -261,11 +284,14 @@ async def update_credential(key: str, request: dict[str, Any]):
 
 
 @router.delete("/credentials/{key}")
-async def delete_credential(key: str):
+async def delete_credential(
+    key: str,
+    cred_service: CredentialService = Depends(get_credential_service),
+):
     """Delete a credential."""
     try:
         logfire.info(f"Deleting credential | key={key}")
-        success = await credential_service.delete_credential(key)
+        success = await cred_service.delete_credential(key)
 
         if success:
             logfire.info(f"Credential deleted successfully | key={key}")
