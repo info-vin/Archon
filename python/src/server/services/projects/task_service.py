@@ -6,20 +6,19 @@ shared between MCP tools and FastAPI endpoints.
 """
 
 # Removed direct logging import - using unified config
+import asyncio
 from datetime import datetime
 from typing import Any
-import asyncio
 
 from src.server.utils import get_supabase_client
+
 from ...config.logfire_config import get_logger
-from ..agent_service import agent_service # Correct, simple import
+from ..agent_service import agent_service, AI_AGENT_ROLES # Correct, simple import, now import AI_AGENT_ROLES
 
 logger = get_logger(__name__)
 
 # Task updates are handled via polling - no broadcasting needed
 
-# Known AI agent roles that can be assigned tasks
-AI_AGENT_ROLES = {"Market Researcher", "Internal Knowledge Expert"}
 
 class TaskService:
     """Service class for task operations"""

@@ -1,20 +1,22 @@
 # python/src/server/services/agent_service.py
 
+# Known AI agent roles that can be assigned tasks
+AI_AGENT_ROLES = {
+    "Market Researcher": "ai-researcher-1",
+    "Internal Knowledge Expert": "ai-knowledge-expert-1"
+}
+
 class AgentService:
     """Service for handling business logic related to AI agents."""
 
     async def get_assignable_agents(self) -> list[dict]:
         """
         Retrieves a list of assignable AI agents.
-
-        This is a placeholder implementation.
         """
-        # In the future, this could fetch agents from a database
-        # or a configuration file.
-        return [
-            {"id": "ai-researcher-1", "name": "AI Market Researcher", "role": "Market Researcher"},
-            {"id": "ai-knowledge-expert-1", "name": "AI Internal Knowledge Expert", "role": "Internal Knowledge Expert"},
-        ]
+        assignable_agents = []
+        for role_name, agent_id in AI_AGENT_ROLES.items():
+            assignable_agents.append({"id": agent_id, "name": role_name, "role": role_name})
+        return assignable_agents
 
     async def run_agent_task(self, task_id: str, agent_id: str):
         """
@@ -24,8 +26,9 @@ class AgentService:
         # In a real implementation, this would trigger a process,
         # call an external API, or add a job to a dedicated agent queue.
         # For now, we just log the action.
-        from ..config.logfire_config import get_logger
         import asyncio
+
+        from ..config.logfire_config import get_logger
         logger = get_logger(__name__)
         logger.info(f"AI agent '{agent_id}' has been notified to start working on task '{task_id}'.")
         # Simulate some async work

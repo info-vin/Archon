@@ -1,9 +1,11 @@
-import unittest
-from unittest.mock import patch, MagicMock, AsyncMock
-import pytest
 import asyncio
+import unittest
+from unittest.mock import AsyncMock, MagicMock, patch
 
-from src.server.services.projects.task_service import TaskService, AI_AGENT_ROLES
+import pytest
+
+from src.server.services.projects.task_service import AI_AGENT_ROLES, TaskService
+
 
 @pytest.mark.asyncio
 class TestTaskServiceAIAssignment(unittest.TestCase):
@@ -13,11 +15,11 @@ class TestTaskServiceAIAssignment(unittest.TestCase):
         mock_agent_service.run_agent_task = AsyncMock()
         mock_supabase_client = MagicMock()
         task_service = TaskService(supabase_client=mock_supabase_client)
-        
+
         ai_agent_name = list(AI_AGENT_ROLES)[0]
         task_id = "task-abc"
         mock_task_data = {"id": task_id, "assignee": ai_agent_name, "project_id": "p1", "title": "t1"}
-        
+
         execute_mock = MagicMock()
         execute_mock.data = [mock_task_data]
         mock_supabase_client.table.return_value.insert.return_value.execute.return_value = execute_mock
@@ -35,10 +37,10 @@ class TestTaskServiceAIAssignment(unittest.TestCase):
 
         ai_agent_name = list(AI_AGENT_ROLES)[0]
         task_id = "task-xyz"
-        
+
         mock_current_task = {"id": task_id, "assignee": "human-user"}
         mock_updated_task = {"id": task_id, "assignee": ai_agent_name}
-        
+
         get_execute_mock = MagicMock()
         get_execute_mock.data = [mock_current_task]
         mock_supabase_client.table.return_value.select.return_value.eq.return_value.execute.return_value = get_execute_mock

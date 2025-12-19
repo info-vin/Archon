@@ -2,11 +2,14 @@ from unittest.mock import AsyncMock, patch
 
 from fastapi.testclient import TestClient
 
+from src.server.services.agent_service import AI_AGENT_ROLES # Import the actual roles
+
 # It's important to patch the service BEFORE it's imported by the app
 # so that the router gets the mocked dependency
 mock_agent_service = AsyncMock()
 mock_agent_service.get_assignable_agents.return_value = [
-    {"id": "ai-tester-1", "name": "測試 AI Agent", "role": "TEST"},
+    {"id": agent_id, "name": role_name, "role": role_name}
+    for role_name, agent_id in AI_AGENT_ROLES.items()
 ]
 
 # The patch needs to target where the object is *used*, which is in the api_routes module
@@ -35,9 +38,11 @@ def test_get_assignable_agents_success():
 
     data = response.json()
     assert isinstance(data, list)
-    assert len(data) == 1
-    assert data[0]["id"] == "ai-tester-1"
-    assert data[0]["name"] == "測試 AI Agent"
+    assert len(data) == len(AI_AGENT_ROLES)
+    # Check that the returned agents match the expected roles
+    expected_agents = [{"id": agent_id, "name": role_name, "role": role_name} for role_name, agent_id in AI_AGENT_ROLES.items()]
+    assert all(any(item == expected for expected in expected_agents) for item in data)
+
 
     # Verify that the mocked service method was called
     mock_agent_service.get_assignable_agents.assert_awaited_once()
