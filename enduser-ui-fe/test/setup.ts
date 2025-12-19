@@ -12,6 +12,8 @@ vi.mock('../src/services/api', () => ({
         { id: '2', name: 'Alice Johnson', role: 'Engineer' },
         { id: '3', name: 'Bob Williams', role: 'Marketer' },
     ]),
+    // This makes the function exist on the mock object
+    getAssignableAgents: vi.fn().mockResolvedValue([]),
     getProjects: vi.fn().mockResolvedValue([]),
     getTasks: vi.fn().mockResolvedValue([]),
     getBlogPosts: vi.fn().mockResolvedValue([]),

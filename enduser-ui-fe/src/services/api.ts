@@ -227,6 +227,13 @@ const supabaseApi = {
     }
     return response.json();
   },
+  async getAssignableAgents(): Promise<AssignableUser[]> {
+    const response = await fetch('/api/agents/assignable');
+    if (!response.ok) {
+      throw new Error('Failed to fetch assignable AI agents.');
+    }
+    return response.json();
+  },
   async getDocumentVersions(): Promise<DocumentVersion[]> {
     const { data, error } = await supabase!.from('archon_document_versions').select('*');
     if (error) throw new Error(error.message);

@@ -65,6 +65,9 @@ vi.mock('../services/api', () => {
       getTasks: vi.fn().mockResolvedValue(mockTasks),
       getProjects: vi.fn().mockResolvedValue([{ id: 'proj-1', title: 'Test Project' }]),
       getAssignableUsers: vi.fn().mockResolvedValue(mockUsers),
+      getAssignableAgents: vi.fn().mockResolvedValue([
+        { id: 'ai-asst-1', name: 'AI Assistant', role: 'ai_agent' }
+      ]),
       createTask: vi.fn().mockResolvedValue({ id: 'new-task-1' }),
     },
   };

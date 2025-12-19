@@ -26,19 +26,30 @@ export const TaskModal: React.FC<TaskModalProps> = ({ task, onClose, onTaskCreat
   const isEditMode = task != null;
 
   useEffect(() => {
-    const fetchUsers = async () => {
+    const fetchAssignableOptions = async () => {
       try {
         setIsLoadingUsers(true);
-        const users = await api.getAssignableUsers();
-        setAssignableUsers(users);
+        const [users, aiAgents] = await Promise.all([
+          api.getAssignableUsers(),
+          api.getAssignableAgents()
+        ]);
+        
+        const formattedAiAgents = aiAgents.map(agent => ({
+          ...agent,
+          name: `(AI) ${agent.name}`
+        }));
+
+        setAssignableUsers([...users, ...formattedAiAgents]);
       } catch (error) {
-        console.error("Failed to fetch assignable users:", error);
+        console.error("Failed to fetch assignable users or agents:", error);
+        // Even if one fails, we might want to show the other. For now, we fail together.
+        // Or, handle partial data loading.
       } finally {
         setIsLoadingUsers(false);
       }
     };
 
-    fetchUsers();
+    fetchAssignableOptions();
   }, []);
 
   useEffect(() => {
