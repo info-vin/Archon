@@ -8,15 +8,18 @@ shared between MCP tools and FastAPI endpoints.
 # Removed direct logging import - using unified config
 from datetime import datetime
 from typing import Any
+import asyncio
 
 from src.server.utils import get_supabase_client
-
 from ...config.logfire_config import get_logger
+from ..agent_service import agent_service # Correct, simple import
 
 logger = get_logger(__name__)
 
 # Task updates are handled via polling - no broadcasting needed
 
+# Known AI agent roles that can be assigned tasks
+AI_AGENT_ROLES = {"Market Researcher", "Internal Knowledge Expert"}
 
 class TaskService:
     """Service class for task operations"""
@@ -26,6 +29,14 @@ class TaskService:
     def __init__(self, supabase_client=None):
         """Initialize with optional supabase client"""
         self.supabase_client = supabase_client or get_supabase_client()
+
+    def _notify_ai_agent_of_assignment(self, task_id: str, agent_id: str):
+        """
+        Triggers the agent service call in a non-blocking way.
+        """
+        logger.info(f"Scheduling notification for AI agent {agent_id} for task {task_id}")
+        # Use asyncio.create_task to run the async call without blocking the main flow
+        asyncio.create_task(agent_service.run_agent_task(task_id=task_id, agent_id=agent_id))
 
     def validate_status(self, status: str) -> tuple[bool, str]:
         """Validate task status"""
@@ -122,6 +133,9 @@ class TaskService:
             if response.data:
                 task = response.data[0]
 
+                # If the assignee is an AI agent, notify the MCP
+                if assignee in AI_AGENT_ROLES:
+                    self._notify_ai_agent_of_assignment(task_id=task["id"], agent_id=assignee)
 
                 return True, {
                     "task": {
@@ -391,6 +405,11 @@ class TaskService:
             if response.data:
                 task = response.data[0]
 
+                # If the assignee was updated to an AI agent, notify the MCP
+                if "assignee" in update_fields and update_fields["assignee"] in AI_AGENT_ROLES:
+                    self._notify_ai_agent_of_assignment(
+                        task_id=task_id, agent_id=update_fields["assignee"]
+                    )
 
                 return True, {"task": task, "message": "Task updated successfully"}
             else:
