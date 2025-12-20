@@ -13,7 +13,7 @@ from typing import Any
 from src.server.utils import get_supabase_client
 
 from ...config.logfire_config import get_logger
-from ..agent_service import agent_service, AI_AGENT_ROLES # Correct, simple import, now import AI_AGENT_ROLES
+from ..agent_service import AI_AGENT_ROLES, agent_service  # Correct, simple import, now import AI_AGENT_ROLES
 
 logger = get_logger(__name__)
 
@@ -465,6 +465,72 @@ class TaskService:
             logger.error(f"Error archiving task: {e}")
             return False, {"error": f"Error archiving task: {str(e)}"}
 
+    async def update_task_status_from_agent(
+        self, task_id: str, new_status: str, agent_id: str
+    ) -> tuple[bool, dict[str, Any]]:
+        """
+        Update a task's status from an agent. Includes validation.
+        """
+        try:
+            success, result = self.get_task(task_id)
+            if not success:
+                return False, result
+            current_task = result["task"]
+
+            # Validation: Check if the reporting agent is the assigned agent
+            if current_task.get("assignee") != agent_id:
+                error_msg = f"Agent '{agent_id}' is not authorized to update task '{task_id}'. Task is assigned to '{current_task.get('assignee')}'."
+                logger.warning(error_msg)
+                return False, {"error": error_msg}
+
+            # Use the existing update_task method to perform the update
+            return await self.update_task(task_id, {"status": new_status})
+
+        except Exception as e:
+            logger.error(f"Error updating task status from agent: {e}")
+            return False, {"error": f"Error updating task status from agent: {str(e)}"}
+
+    async def save_agent_output(
+        self, task_id: str, output: dict[str, Any], agent_id: str
+    ) -> tuple[bool, dict[str, Any]]:
+        """
+        Save the output from an AI agent to the task's attachments.
+        """
+        try:
+            success, result = self.get_task(task_id)
+            if not success:
+                return False, result
+            current_task = result["task"]
+
+            # Validation: Check if the reporting agent is the assigned agent
+            if current_task.get("assignee") != agent_id:
+                error_msg = f"Agent '{agent_id}' is not authorized to save output for task '{task_id}'. Task is assigned to '{current_task.get('assignee')}'."
+                logger.warning(error_msg)
+                return False, {"error": error_msg}
+            
+            # Prepare the agent output to be stored
+            agent_output_data = {
+                "agent_id": agent_id,
+                "timestamp": datetime.now().isoformat(),
+                "output": output
+            }
+
+            # Get current attachments and append the new output
+            current_attachments = current_task.get("attachments") or []
+            if isinstance(current_attachments, list):
+                current_attachments.append(agent_output_data)
+                new_attachments = current_attachments
+            else:
+                 # If attachments is not a list, wrap it and the new output in a new list
+                new_attachments = [current_attachments, agent_output_data]
+
+            # Use the existing update_task method to save the attachments
+            return await self.update_task(task_id, {"attachments": new_attachments})
+
+        except Exception as e:
+            logger.error(f"Error saving agent output: {e}")
+            return False, {"error": f"Error saving agent output: {str(e)}"}
+
     def get_all_project_task_counts(self) -> tuple[bool, dict[str, dict[str, int]]]:
         """
         Get task counts for all projects in a single optimized query.
@@ -522,3 +588,6 @@ class TaskService:
         except Exception as e:
             logger.error(f"Error fetching task counts: {e}")
             return False, {"error": f"Error fetching task counts: {str(e)}"}
+
+
+task_service = TaskService()
