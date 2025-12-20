@@ -3,7 +3,8 @@
 import asyncio
 
 from ..config.logfire_config import get_logger
-from .shared_constants import AI_AGENT_ROLES # Import AI_AGENT_ROLES from new shared module
+from .shared_constants import AI_AGENT_ROLES  # Import AI_AGENT_ROLES from new shared module
+
 
 class AgentService:
     """Service for handling business logic related to AI agents."""

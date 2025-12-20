@@ -13,7 +13,8 @@ from typing import Any
 from src.server.utils import get_supabase_client
 
 from ...config.logfire_config import get_logger
-from ..shared_constants import AI_AGENT_ROLES # Import AI_AGENT_ROLES from shared module
+from ..shared_constants import AI_AGENT_ROLES  # Import AI_AGENT_ROLES from shared module
+
 # agent_service will be imported locally within _notify_ai_agent_of_assignment to break circular dependency
 
 logger = get_logger(__name__)
@@ -511,7 +512,7 @@ class TaskService:
                 error_msg = f"Agent '{agent_id}' is not authorized to save output for task '{task_id}'. Task is assigned to '{current_task.get('assignee')}'."
                 logger.warning(error_msg)
                 return False, {"error": error_msg}
-            
+
             # Prepare the agent output to be stored
             agent_output_data = {
                 "agent_id": agent_id,

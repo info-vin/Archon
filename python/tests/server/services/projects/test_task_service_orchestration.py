@@ -1,10 +1,12 @@
-import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
-from datetime import datetime
 from typing import Any
+from unittest.mock import AsyncMock, MagicMock, patch
 
-from src.server.services.projects.task_service import TaskService, task_service # Ensure task_service singleton is imported
-from src.server.services.agent_service import AI_AGENT_ROLES # For agent role validation
+import pytest
+
+from src.server.services.projects.task_service import (  # Ensure task_service singleton is imported
+    TaskService,
+)
+
 
 # Mock Supabase client for all tests
 @pytest.fixture
@@ -107,7 +109,7 @@ async def test_save_agent_output_success_empty_attachments(test_task_service, mo
     assert result["task"]["attachments"][0]["agent_id"] == test_agent_id
     assert result["task"]["attachments"][0]["output"] == test_output
     test_task_service.get_task.assert_called_once_with(test_task_id)
-    
+
     # Assert update_task was called with the correct structure (ignoring dynamic timestamp)
     call_args, _ = test_task_service.update_task.call_args_list[0]
     updated_task_id, update_fields = call_args
@@ -155,7 +157,7 @@ async def test_save_agent_output_success_existing_attachments(test_task_service,
     assert result["task"]["attachments"][1]["agent_id"] == test_agent_id
     assert result["task"]["attachments"][1]["output"] == test_output
     test_task_service.get_task.assert_called_once_with(test_task_id)
-    
+
     # Assert update_task was called with the correct structure (ignoring dynamic timestamp)
     call_args, _ = test_task_service.update_task.call_args_list[0]
     updated_task_id, update_fields = call_args

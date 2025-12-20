@@ -137,7 +137,7 @@ async def list_projects(
 
         # Use ProjectService to get projects
         project_service = ProjectService()
-        success, result = project_service.list_projects(
+        success, result = await project_service.list_projects(
             include_content=include_content,
             include_computed_status=include_computed_status,
         )
@@ -306,8 +306,6 @@ async def get_all_task_counts(
 
         return result
 
-    except HTTPException:
-        raise
     except Exception as e:
         logfire.error(f"Failed to get task counts | error={str(e)}")
         raise HTTPException(status_code=500, detail={"error": str(e)}) from e

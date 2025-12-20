@@ -2,7 +2,7 @@ from unittest.mock import AsyncMock, patch
 
 from fastapi.testclient import TestClient
 
-from src.server.services.agent_service import AI_AGENT_ROLES # Import the actual roles
+from src.server.services.agent_service import AI_AGENT_ROLES  # Import the actual roles
 
 # It's important to patch the service BEFORE it's imported by the app
 # so that the router gets the mocked dependency

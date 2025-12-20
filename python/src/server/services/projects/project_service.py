@@ -86,7 +86,7 @@ class ProjectService:
             return "completed"
         return "not_started"
 
-    def list_projects(
+    async def list_projects(
         self, include_content: bool = True, include_computed_status: bool = False
     ) -> tuple[bool, dict[str, Any]]:
         """
@@ -103,7 +103,7 @@ class ProjectService:
         try:
             # Always fetch all fields for simplicity, as we might need them for stats or status
             response = (
-                self.supabase_client.table("archon_projects")
+                await self.supabase_client.table("archon_projects")
                 .select("*")
                 .order("created_at", desc=True)
                 .execute()
@@ -115,7 +115,7 @@ class ProjectService:
             # Get task counts if needed for computed status
             task_counts = {}
             if include_computed_status:
-                success, counts = self.task_service.get_all_project_task_counts()
+                success, counts = await self.task_service.get_all_project_task_counts()
                 if success:
                     task_counts = counts
                 else:

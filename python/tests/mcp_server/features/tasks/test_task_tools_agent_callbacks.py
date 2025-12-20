@@ -1,8 +1,8 @@
 import json
 from unittest.mock import AsyncMock, MagicMock, patch
 
-import pytest
 import httpx
+import pytest
 from mcp.server.fastmcp import Context
 
 from src.mcp_server.features.tasks.task_tools import register_task_tools

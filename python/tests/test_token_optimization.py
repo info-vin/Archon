@@ -4,7 +4,7 @@ Ensures backward compatibility and validates token reduction.
 """
 
 import json
-from unittest.mock import Mock, patch
+from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
@@ -17,7 +17,7 @@ class TestProjectServiceOptimization:
     """Test ProjectService with include_content parameter."""
 
     @patch('src.server.utils.get_supabase_client')
-    def test_list_projects_with_full_content(self, mock_supabase):
+    async def test_list_projects_with_full_content(self, mock_supabase):
         """Test backward compatibility - default returns full content."""
         # Setup mock
         mock_client = Mock()
@@ -41,14 +41,14 @@ class TestProjectServiceOptimization:
         mock_table = Mock()
         mock_select = Mock()
         mock_order = Mock()
-        mock_order.execute.return_value = mock_response
+        mock_order.execute = AsyncMock(return_value=mock_response)
         mock_select.order.return_value = mock_order
         mock_table.select.return_value = mock_select
         mock_client.table.return_value = mock_table
 
         # Test
         service = ProjectService(mock_client)
-        success, result = service.list_projects()  # Default include_content=True
+        success, result = await service.list_projects()  # Default include_content=True
 
         # Assertions
         assert success
@@ -65,7 +65,7 @@ class TestProjectServiceOptimization:
         mock_table.select.assert_called_with("*")
 
     @patch('src.server.utils.get_supabase_client')
-    def test_list_projects_lightweight(self, mock_supabase):
+    async def test_list_projects_lightweight(self, mock_supabase):
         """Test lightweight response excludes large fields."""
         # Setup mock
         mock_client = Mock()
@@ -91,14 +91,14 @@ class TestProjectServiceOptimization:
         mock_select = Mock()
         mock_order = Mock()
 
-        mock_order.execute.return_value = mock_response
+        mock_order.execute = AsyncMock(return_value=mock_response)
         mock_select.order.return_value = mock_order
         mock_table.select.return_value = mock_select
         mock_client.table.return_value = mock_table
 
         # Test
         service = ProjectService(mock_client)
-        success, result = service.list_projects(include_content=False)
+        success, result = await service.list_projects(include_content=False)
 
         # Assertions
         assert success
@@ -190,7 +190,7 @@ class TestTaskServiceOptimization:
         mock_order1 = Mock()
         mock_order2 = Mock()
 
-        mock_order2.execute.return_value = mock_response
+        mock_order2.execute = AsyncMock(return_value=mock_response)
         mock_order1.order.return_value = mock_order2
         mock_or.order.return_value = mock_order1
         mock_select.neq().or_.return_value = mock_or
@@ -233,7 +233,7 @@ class TestTaskServiceOptimization:
         mock_order1 = Mock()
         mock_order2 = Mock()
 
-        mock_order2.execute.return_value = mock_response
+        mock_order2.execute = AsyncMock(return_value=mock_response)
         mock_order1.order.return_value = mock_order2
         mock_or.order.return_value = mock_order1
         mock_select.neq().or_.return_value = mock_or
