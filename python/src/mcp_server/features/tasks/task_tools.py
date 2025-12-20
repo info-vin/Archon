@@ -371,3 +371,100 @@ def register_task_tools(mcp: FastMCP):
         except Exception as e:
             logger.error(f"Error managing task ({action}): {e}", exc_info=True)
             return MCPErrorFormatter.from_exception(e, f"{action} task")
+
+    @mcp.tool()
+    async def report_task_status(
+        ctx: Context,
+        task_id: str,
+        status: str,
+        agent_id: str
+    ) -> str:
+        """
+        Allows an AI agent to report a status update for a specific task.
+
+        Args:
+            task_id: The ID of the task to update.
+            status: The new status of the task (e.g., "processing", "review", "done").
+            agent_id: The ID of the AI agent reporting the status.
+
+        Returns: {success: bool, task?: object, message: string}
+        """
+        try:
+            api_url = get_api_url()
+            timeout = get_default_timeout()
+
+            async with httpx.AsyncClient(timeout=timeout) as client:
+                response = await client.post(
+                    urljoin(api_url, f"/api/tasks/{task_id}/agent-status"),
+                    json={
+                        "status": status,
+                        "agent_id": agent_id
+                    }
+                )
+
+                if response.status_code == 200:
+                    result = response.json()
+                    return json.dumps({
+                        "success": True,
+                        "task": result.get("task"),
+                        "message": result.get("message", "Task status updated successfully")
+                    })
+                else:
+                    return MCPErrorFormatter.from_http_error(response, "report task status")
+
+        except httpx.RequestError as e:
+            return MCPErrorFormatter.from_exception(
+                e, "report task status", {"task_id": task_id, "status": status, "agent_id": agent_id}
+            )
+        except Exception as e:
+            logger.error(f"Error reporting task status: {e}", exc_info=True)
+            return MCPErrorFormatter.from_exception(e, "report task status")
+
+    @mcp.tool()
+    async def report_task_output(
+        ctx: Context,
+        task_id: str,
+        output: dict[str, Any],
+        agent_id: str
+    ) -> str:
+        """
+        Allows an AI agent to report its final output or intermediate results for a specific task.
+        The output is stored in the task's attachments field.
+
+        Args:
+            task_id: The ID of the task.
+            output: The output from the agent, as a JSON object.
+            agent_id: The ID of the AI agent reporting the output.
+
+        Returns: {success: bool, task?: object, message: string}
+        """
+        try:
+            api_url = get_api_url()
+            timeout = get_default_timeout()
+
+            async with httpx.AsyncClient(timeout=timeout) as client:
+                response = await client.post(
+                    urljoin(api_url, f"/api/tasks/{task_id}/agent-output"),
+                    json={
+                        "output": output,
+                        "agent_id": agent_id
+                    }
+                )
+
+                if response.status_code == 200:
+                    result = response.json()
+                    return json.dumps({
+                        "success": True,
+                        "task": result.get("task"),
+                        "message": result.get("message", "Task output saved successfully")
+                    })
+                else:
+                    return MCPErrorFormatter.from_http_error(response, "report task output")
+
+        except httpx.RequestError as e:
+            return MCPErrorFormatter.from_exception(
+                e, "report task output", {"task_id": task_id, "agent_id": agent_id}
+            )
+        except Exception as e:
+            logger.error(f"Error reporting task output: {e}", exc_info=True)
+            return MCPErrorFormatter.from_exception(e, "report task output")

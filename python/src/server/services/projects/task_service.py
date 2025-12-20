@@ -13,7 +13,8 @@ from typing import Any
 from src.server.utils import get_supabase_client
 
 from ...config.logfire_config import get_logger
-from ..agent_service import AI_AGENT_ROLES, agent_service  # Correct, simple import, now import AI_AGENT_ROLES
+from ..shared_constants import AI_AGENT_ROLES # Import AI_AGENT_ROLES from shared module
+# agent_service will be imported locally within _notify_ai_agent_of_assignment to break circular dependency
 
 logger = get_logger(__name__)
 
@@ -23,7 +24,7 @@ logger = get_logger(__name__)
 class TaskService:
     """Service class for task operations"""
 
-    VALID_STATUSES = ["todo", "doing", "review", "done"]
+    VALID_STATUSES = ["todo", "doing", "review", "done", "processing", "dispatched"]
 
     def __init__(self, supabase_client=None):
         """Initialize with optional supabase client"""
@@ -32,7 +33,11 @@ class TaskService:
     def _notify_ai_agent_of_assignment(self, task_id: str, agent_id: str):
         """
         Triggers the agent service call in a non-blocking way.
+        Imports agent_service locally to break circular dependency.
         """
+        # Local import to break circular dependency
+        from ..agent_service import agent_service
+
         logger.info(f"Scheduling notification for AI agent {agent_id} for task {task_id}")
         # Use asyncio.create_task to run the async call without blocking the main flow
         asyncio.create_task(agent_service.run_agent_task(task_id=task_id, agent_id=agent_id))
@@ -88,7 +93,7 @@ class TaskService:
             # REORDERING LOGIC: If inserting at a specific position, increment existing tasks
             if task_order > 0:
                 # Get all tasks in the same project and status with task_order >= new task's order
-                existing_tasks_response = (
+                existing_tasks_response = await (
                     self.supabase_client.table("archon_tasks")
                     .select("id, task_order")
                     .eq("project_id", project_id)
@@ -102,9 +107,8 @@ class TaskService:
 
                     # Increment task_order for all affected tasks
                     for existing_task in existing_tasks_response.data:
-                        new_order = existing_task["task_order"] + 1
-                        self.supabase_client.table("archon_tasks").update({
-                            "task_order": new_order,
+                        await self.supabase_client.table("archon_tasks").update({
+                            "task_order": existing_task["task_order"] + 1,
                             "updated_at": datetime.now().isoformat(),
                         }).eq("id", existing_task["id"]).execute()
 
@@ -127,7 +131,7 @@ class TaskService:
             if due_date:
                 task_data["due_date"] = due_date.isoformat()
 
-            response = self.supabase_client.table("archon_tasks").insert(task_data).execute()
+            response = await self.supabase_client.table("archon_tasks").insert(task_data).execute()
 
             if response.data:
                 task = response.data[0]
@@ -156,7 +160,7 @@ class TaskService:
             logger.error(f"Error creating task: {e}")
             return False, {"error": f"Error creating task: {str(e)}"}
 
-    def list_tasks(
+    async def list_tasks(
         self,
         project_id: str = None,
         status: str = None,
@@ -222,7 +226,7 @@ class TaskService:
             logger.debug(f"Listing tasks with filters: {', '.join(filters_applied)}")
 
             # Execute query and get raw response
-            response = (
+            response = await (
                 query.order("task_order", desc=False).order("created_at", desc=False).execute()
             )
 
@@ -307,7 +311,7 @@ class TaskService:
             logger.error(f"Error listing tasks: {e}")
             return False, {"error": f"Error listing tasks: {str(e)}"}
 
-    def get_task(self, task_id: str) -> tuple[bool, dict[str, Any]]:
+    async def get_task(self, task_id: str) -> tuple[bool, dict[str, Any]]:
         """
         Get a specific task by ID.
 
@@ -315,7 +319,7 @@ class TaskService:
             Tuple of (success, result_dict)
         """
         try:
-            response = (
+            response = await (
                 self.supabase_client.table("archon_tasks").select("*").eq("id", task_id).execute()
             )
 
@@ -340,7 +344,7 @@ class TaskService:
         """
         try:
             # Get current task state to check for status change
-            success, result = self.get_task(task_id)
+            success, result = await self.get_task(task_id)
             if not success:
                 return False, result
             current_task = result["task"]
@@ -394,7 +398,7 @@ class TaskService:
                 update_data["completed_at"] = update_fields["completed_at"]
 
             # Update task
-            response = (
+            response = await (
                 self.supabase_client.table("archon_tasks")
                 .update(update_data)
                 .eq("id", task_id)
@@ -429,7 +433,7 @@ class TaskService:
         """
         try:
             # First, check if task exists and is not already archived
-            task_response = (
+            task_response = await (
                 self.supabase_client.table("archon_tasks").select("*").eq("id", task_id).execute()
             )
             if not task_response.data:
@@ -448,7 +452,7 @@ class TaskService:
             }
 
             # Archive the main task
-            response = (
+            response = await (
                 self.supabase_client.table("archon_tasks")
                 .update(archive_data)
                 .eq("id", task_id)
@@ -472,7 +476,7 @@ class TaskService:
         Update a task's status from an agent. Includes validation.
         """
         try:
-            success, result = self.get_task(task_id)
+            success, result = await self.get_task(task_id)
             if not success:
                 return False, result
             current_task = result["task"]
@@ -484,7 +488,7 @@ class TaskService:
                 return False, {"error": error_msg}
 
             # Use the existing update_task method to perform the update
-            return await self.update_task(task_id, {"status": new_status})
+            return await self.update_task(task_id, {"status": new_status, "assignee": agent_id})
 
         except Exception as e:
             logger.error(f"Error updating task status from agent: {e}")
@@ -497,7 +501,7 @@ class TaskService:
         Save the output from an AI agent to the task's attachments.
         """
         try:
-            success, result = self.get_task(task_id)
+            success, result = await self.get_task(task_id)
             if not success:
                 return False, result
             current_task = result["task"]
@@ -531,7 +535,7 @@ class TaskService:
             logger.error(f"Error saving agent output: {e}")
             return False, {"error": f"Error saving agent output: {str(e)}"}
 
-    def get_all_project_task_counts(self) -> tuple[bool, dict[str, dict[str, int]]]:
+    async def get_all_project_task_counts(self) -> tuple[bool, dict[str, dict[str, int]]]:
         """
         Get task counts for all projects in a single optimized query.
 
@@ -546,7 +550,7 @@ class TaskService:
             logger.debug("Fetching task counts for all projects in batch")
 
             # Query all non-archived tasks grouped by project_id and status
-            response = (
+            response = await (
                 self.supabase_client.table("archon_tasks")
                 .select("project_id, status")
                 .or_("archived.is.null,archived.is.false")

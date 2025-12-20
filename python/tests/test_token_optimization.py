@@ -162,7 +162,7 @@ class TestTaskServiceOptimization:
     """Test TaskService with exclude_large_fields parameter."""
 
     @patch('src.server.utils.get_supabase_client')
-    def test_list_tasks_with_large_fields(self, mock_supabase):
+    async def test_list_tasks_with_large_fields(self, mock_supabase):
         """Test backward compatibility - default includes large fields."""
         mock_client = Mock()
         mock_supabase.return_value = mock_client
@@ -198,14 +198,14 @@ class TestTaskServiceOptimization:
         mock_client.table.return_value = mock_table
 
         service = TaskService(mock_client)
-        success, result = service.list_tasks()
+        success, result = await service.list_tasks()
 
         assert success
         assert "sources" in result["tasks"][0]
         assert "code_examples" in result["tasks"][0]
 
     @patch('src.server.utils.get_supabase_client')
-    def test_list_tasks_exclude_large_fields(self, mock_supabase):
+    async def test_list_tasks_exclude_large_fields(self, mock_supabase):
         """Test excluding large fields returns counts instead."""
         mock_client = Mock()
         mock_supabase.return_value = mock_client
@@ -241,7 +241,7 @@ class TestTaskServiceOptimization:
         mock_client.table.return_value = mock_table
 
         service = TaskService(mock_client)
-        success, result = service.list_tasks(exclude_large_fields=True)
+        success, result = await service.list_tasks(exclude_large_fields=True)
 
         assert success
         task = result["tasks"][0]

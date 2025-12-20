@@ -22,7 +22,7 @@ from ..services.projects import (
     ProjectCreationService,
     ProjectService,
     SourceLinkingService,
-    TaskService,
+    task_service,
 )
 from ..services.projects.document_service import DocumentService
 from ..services.projects.versioning_service import VersioningService
@@ -274,10 +274,7 @@ async def get_all_task_counts(
         logfire.debug(f"Getting task counts for all projects | etag={if_none_match}")
 
         # Use TaskService to get batch task counts
-        # Get client explicitly to ensure mocking works in tests
-        supabase_client = get_supabase_client()
-        task_service = TaskService(supabase_client)
-        success, result = task_service.get_all_project_task_counts()
+        success, result = await task_service.get_all_project_task_counts()
 
         if not success:
             logfire.error(f"Failed to get task counts | error={result.get('error')}")
@@ -547,8 +544,7 @@ async def list_project_tasks(
         )
 
         # Use TaskService to list tasks
-        task_service = TaskService()
-        success, result = task_service.list_tasks(
+        success, result = await task_service.list_tasks(
             project_id=project_id,
             include_closed=True,  # Get all tasks, including done
             exclude_large_fields=exclude_large_fields,
@@ -634,7 +630,6 @@ async def create_task(request: CreateTaskRequest, x_user_role: str | None = Head
                     logfire.warning(f"Assignee '{request.assignee}' not found in profiles and is not a known agent role. Skipping permission check.")
 
         # Use TaskService to create the task
-        task_service = TaskService()
         success, result = await task_service.create_task(
             project_id=request.project_id,
             title=request.title,
@@ -679,8 +674,7 @@ async def list_tasks(
         )
 
         # Use TaskService to list tasks
-        task_service = TaskService()
-        success, result = task_service.list_tasks(
+        success, result = await task_service.list_tasks(
             project_id=project_id,
             status=status,
             include_closed=include_closed,
@@ -747,8 +741,7 @@ async def get_task(task_id: str):
     """Get a specific task by ID."""
     try:
         # Use TaskService to get the task
-        task_service = TaskService()
-        success, result = task_service.get_task(task_id)
+        success, result = await task_service.get_task(task_id)
 
         if not success:
             if "not found" in result.get("error", "").lower():
@@ -786,6 +779,16 @@ class UpdateTaskRequest(BaseModel):
     feature: str | None = None
     attachments: list[Attachment] | None = None
     due_date: datetime | None = None
+
+
+class AgentStatusUpdateRequest(BaseModel):
+    status: str
+    agent_id: str
+
+
+class AgentOutputUpdateRequest(BaseModel):
+    output: dict[str, Any]
+    agent_id: str
 
 
 class CreateDocumentRequest(BaseModel):
@@ -868,7 +871,6 @@ async def update_task(task_id: str, request: UpdateTaskRequest, x_user_role: str
             update_fields["due_date"] = request.due_date
 
         # Use TaskService to update the task
-        task_service = TaskService()
         success, result = await task_service.update_task(task_id, update_fields)
 
         if not success:
@@ -897,7 +899,6 @@ async def delete_task(task_id: str):
     """Archive a task (soft delete)."""
     try:
         # Use TaskService to archive the task
-        task_service = TaskService()
         success, result = await task_service.archive_task(task_id, archived_by="api")
 
         if not success:
@@ -919,6 +920,42 @@ async def delete_task(task_id: str):
         raise HTTPException(status_code=500, detail={"error": str(e)}) from e
 
 
+@router.post("/tasks/{task_id}/agent-status", status_code=200, tags=["Agent Callback"])
+async def report_task_status_from_agent(task_id: str, request: AgentStatusUpdateRequest):
+    """Endpoint for an AI agent to report a status update for a task."""
+    try:
+        logger.info(f"Agent '{request.agent_id}' reporting status '{request.status}' for task '{task_id}'")
+        success, result = await task_service.update_task_status_from_agent(
+            task_id=task_id, new_status=request.status, agent_id=request.agent_id
+        )
+        if not success:
+            raise HTTPException(status_code=400, detail=result.get("error", "Failed to update status from agent"))
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        logfire.error(f"Failed to update status from agent | error={str(e)} | task_id={task_id}")
+        raise HTTPException(status_code=500, detail={"error": str(e)}) from e
+
+
+@router.post("/tasks/{task_id}/agent-output", status_code=200, tags=["Agent Callback"])
+async def report_task_output_from_agent(task_id: str, request: AgentOutputUpdateRequest):
+    """Endpoint for an AI agent to report its final output for a task."""
+    try:
+        logger.info(f"Agent '{request.agent_id}' reporting output for task '{task_id}'")
+        success, result = await task_service.save_agent_output(
+            task_id=task_id, output=request.output, agent_id=request.agent_id
+        )
+        if not success:
+            raise HTTPException(status_code=400, detail=result.get("error", "Failed to save agent output"))
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        logfire.error(f"Failed to save agent output | error={str(e)} | task_id={task_id}")
+        raise HTTPException(status_code=500, detail={"error": str(e)}) from e
+
+
 # MCP endpoints for task operations
 
 
@@ -929,7 +966,6 @@ async def mcp_update_task_status(task_id: str, status: str):
         logfire.info(f"MCP task status update | task_id={task_id} | status={status}")
 
         # Use TaskService to update the task
-        task_service = TaskService()
         success, result = await task_service.update_task(
             task_id=task_id, update_fields={"status": status}
         )
