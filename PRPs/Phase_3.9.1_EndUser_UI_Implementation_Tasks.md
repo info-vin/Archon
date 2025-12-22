@@ -73,32 +73,34 @@ Transform Archon into a platform where users can seamlessly assign tasks to eith
 
 ### Phase 3: UI for AI Agent Assignment (`enduser-ui-fe`) (前端 AI 代理指派介面)
 
-### CREATE enduser-ui-fe/src/features/agents/hooks/useAgentQueries.ts: (創建 enduser-ui-fe/src/features/agents/hooks/useAgentQueries.ts)
+### NOTE on Implementation Deviation: (關於實作差異的說明：)
+- The functionality was implemented directly in `TaskModal.tsx` instead of creating a separate `useAgentQueries.ts` hook. (此功能直接在 `TaskModal.tsx` 中實作，並未創建獨立的 `useAgentQueries.ts` 鉤子。)
 
-- **IMPLEMENT (實作)**: `useAssignableAgents()` query hook to fetch the list of AI agents from `/api/agents/assignable`. (實作 `useAssignableAgents()` 查詢鉤子，從 `/api/agents/assignable` 獲取 AI 代理列表。)
-- **PATTERN (模式)**: Follow `QUERY_PATTERNS.md` and existing `useProjectQueries.ts` for structure and caching. (遵循 `QUERY_PATTERNS.md` 和現有的 `useProjectQueries.ts` 的結構和快取模式。)
-- **VALIDATE (驗證)**: `make test-fe` (unit tests for this hook).
+### MODIFY enduser-ui-fe/src/components/TaskModal.tsx: (修改 enduser-ui-fe/src/components/TaskModal.tsx)
 
-### MODIFY enduser-ui-fe/src/features/projects/tasks/components/TaskForm.tsx: (修改 enduser-ui-fe/src/features/projects/tasks/components/TaskForm.tsx)
-
-- **INTEGRATE (整合)**: The `useAssignableAgents()` hook to fetch AI agents. (整合 `useAssignableAgents()` 鉤子以獲取 AI 代理。)
-- **UPDATE (更新)**: The assignee selection dropdown/component to include both human users (from `useAssignableUsers()`) and AI agents. (更新指派人選擇下拉選單/組件，以包含人類使用者和 AI 代理。)
-- **UI/UX (使用者介面/體驗)**: Differentiate AI agents visually (e.g., specific icon, color, or label) as per `UI_STANDARDS.md`. (根據 `UI_STANDARDS.md` 在視覺上區分 AI 代理（例如，特定圖示、顏色或標籤）。)
+- **INTEGRATE (整合)**: Call `api.getAssignableUsers()` and `api.getAssignableAgents()` to fetch all assignable options. (呼叫 `api.getAssignableUsers()` 和 `api.getAssignableAgents()` 以獲取所有可指派選項。)
+- **UPDATE (更新)**: The assignee selection dropdown to merge and display both human users and AI agents. (更新指派人選擇下拉選單，以合併並顯示人類使用者和 AI 代理。)
+- **UI/UX (使用者介面/體驗)**: Differentiate AI agents visually by prepending `(AI)` to their names. (透過在名稱前加上 `(AI)` 來視覺上區分 AI 代理。)
 - **VALIDATE (驗證)**: Manually test task creation and assignment to an AI agent in the browser. (手動測試在瀏覽器中創建和指派任務給 AI 代理。)
 
-### Phase 4: AI Agent Orchestration & Execution (`archon-mcp` / `archon-agents`) (AI 代理協調與執行)
+### Phase 4: Validate and Implement Agent Execution Workflow (驗證並實作代理執行工作流)
 
-### CREATE python/src/mcp_server/services/agent_orchestration_service.py: (創建 python/src/mcp_server/services/agent_orchestration_service.py)
+### Task 4.1: Create End-to-End Integration Test (創建端到端整合測試)
+- **Goal (目標)**: Create a single, automated integration test that validates the entire "AI as a Teammate" workflow, from task assignment to agent callback. This test will serve as the safety net and executable specification for all future agent development. (建立一個自動化整合測試，驗證從任務指派到代理回呼的完整「AI 作為隊友」工作流。此測試將作為未來所有代理開發的安全網與可執行的規範。)
+- **File (檔案)**: `python/tests/server/test_e2e_agent_workflow.py`
+- **Key Implementation Pattern (關鍵實作模式)**:
+    - **Patching Strategy**: Must follow the "Golden Pattern" established in `commit 518312d`. Patch singleton services (like `agent_service`) at the module level *before* `app` is imported. Use `setup_module` and `teardown_module` for patch lifecycle. (必須遵循 `commit 518312d` 中建立的「黃金模式」。在 `app` 導入前，於模組級別 `patch` 單例服務（如 `agent_service`），並使用 `setup_module` 和 `teardown_module` 管理 `patch` 生命週期。)
+    - **Workflow Stages**: The test must cover three stages: (測試必須涵蓋三個階段：)
+        1.  **Task Assignment**: `POST /api/tasks` with an AI assignee, and assert `agent_service.run_agent_task` is `awaited`. (使用 AI 指派人 `POST /api/tasks`，並斷言 `agent_service.run_agent_task` 被 `await`。)
+        2.  **Simulated Agent Callback**: Mock `run_agent_task` to use the `TestClient` to call back to `/api/tasks/{id}/agent-status` and `/api/tasks/{id}/agent-output`. (Mock `run_agent_task` 以便使用 `TestClient` 回呼 `/api/tasks/{id}/agent-status` 和 `/api/tasks/{id}/agent-output`。)
+        3.  **Result Verification**: Assert that the underlying service methods (`task_service.update_task`, `task_service.save_agent_output`) are correctly called. (斷言底層的服務方法（`task_service.update_task`, `task_service.save_agent_output`）被正確呼叫。)
+- **VALIDATE (驗證)**: `make test-be` must pass with zero new errors. (必須通過 `make test-be` 且沒有新錯誤。)
 
-- **IMPLEMENT (實作)**: A new service to manage the lifecycle of AI agent tasks. (實作一個新服務來管理 AI 代理任務的生命週期。)
-- **METHODS (方法)**: `trigger_agent_task(task_id, agent_id)`, `report_agent_status(task_id, status)`, `report_agent_output(task_id, output)`. (觸發代理任務、報告代理狀態、報告代理輸出。)
-- **VALIDATE (驗證)**: `uv run pytest python/src/mcp_server/services/agent_orchestration_service.py`
-
-### CREATE python/src/agents/features/example_agent.py: (創建 python/src/agents/features/example_agent.py)
-
-- **IMPLEMENT (實作)**: A basic example AI agent (e.g., `MarketingContentAgent`, `KnowledgeBaseAgent`) that can receive a task. (實作一個基本的 AI 代理範例（例如，行銷內容代理、知識庫代理），它可以接收任務。)
-- **LOGIC (邏輯)**: Agent should simulate processing a task and reporting its status/output back via the orchestration service. (代理應模擬處理任務，並透過協調服務報告其狀態/輸出。)
-- **VALIDATE (驗證)**: `uv run pytest python/src/agents/features/example_agent.py`
+### Task 4.2: Implement `SummaryAgent` based on Test Pattern (基於測試模式實作 `SummaryAgent`)
+- **Goal (目標)**: Create a new, simple agent that conforms to the workflow validated in Task 4.1. (創建一個符合任務 4.1 中已驗證工作流的、簡單的新代理。)
+- **File (檔案)**: `python/src/agents/features/summary_agent.py`
+- **Logic (邏輯)**: The agent will be triggered by `agent_service.run_agent_task`. It will perform a simple action and use the `mcp_client` to call back to the `archon-server` with status and results. (該代理將由 `agent_service.run_agent_task` 觸發，執行一個簡單的操作，並使用 `mcp_client` 回呼 `archon-server`。)
+- **VALIDATE (驗證)**: `uv run pytest python/src/agents/features/test_summary_agent.py`
 
 ### Phase 5: End-to-End Validation & Refinements (端到端驗證與優化)
 
