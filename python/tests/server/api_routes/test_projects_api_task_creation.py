@@ -1,6 +1,7 @@
-from unittest.mock import patch, MagicMock, AsyncMock
-import pytest
+from unittest.mock import AsyncMock, MagicMock, patch
+
 from fastapi.testclient import TestClient
+
 
 # To test the API routes in isolation, we patch the services they depend on.
 # These patches target the namespaces where the services are imported and used.
@@ -34,7 +35,7 @@ def test_create_task_with_ai_assignee_success(mock_profile_class, mock_rbac_clas
         "assignee": "ai-researcher-1"
     }
     headers = {"X-User-Role": "Admin"}
-    
+
     response = client.post("/api/tasks", json=task_payload, headers=headers)
 
     # --- Assertions ---

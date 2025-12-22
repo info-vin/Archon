@@ -6,13 +6,12 @@ import logging
 import os
 from dataclasses import dataclass
 from typing import Any
-import asyncio
 
-from pydantic_ai import Agent, RunContext
 from pydantic import BaseModel, Field
+from pydantic_ai import Agent, RunContext
 
 from .base_agent import ArchonDependencies, BaseAgent
-from .mcp_client import get_mcp_client # Agent needs to call MCP to update task status/output
+from .mcp_client import get_mcp_client  # Agent needs to call MCP to update task status/output
 
 logger = logging.getLogger(__name__)
 
@@ -79,7 +78,7 @@ class SummaryAgent(BaseAgent[SummaryDependencies, SummaryOperation]):
                     "step": "summarization",
                     "log": "✍️ Generating summary..."
                 })
-            
+
             # --- Call LLM for summarization ---
             # In a real scenario, this would involve a call to an LLM.
             # This call will be mocked in the unit test.
@@ -92,7 +91,7 @@ class SummaryAgent(BaseAgent[SummaryDependencies, SummaryOperation]):
 
             # Report output back to archon-server via MCP Client
             mcp_client = await get_mcp_client()
-            
+
             await mcp_client.call_tool(
                 tool_name="manage_task",
                 action="update",
@@ -104,7 +103,7 @@ class SummaryAgent(BaseAgent[SummaryDependencies, SummaryOperation]):
                     "original_text_length": len(text)
                 },
             )
-            
+
             if progress_callback:
                 await progress_callback({
                     "step": "summarization",

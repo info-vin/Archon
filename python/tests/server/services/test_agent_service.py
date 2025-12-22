@@ -1,7 +1,9 @@
-from unittest.mock import patch, AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, patch
+
 import pytest
 
 from src.server.services.agent_service import AgentService
+
 
 @pytest.mark.asyncio
 # Correctly patch the dependencies at their source, accounting for local imports.
@@ -21,7 +23,7 @@ async def test_run_agent_task(mock_get_logger, mock_task_service):
 
     # Configure the mock for update_task to return a successful tuple
     mock_task_service.update_task.return_value = (True, {})
-    
+
     agent_service = AgentService()
     task_id = "task-123"
     agent_id = "ai-test-agent"
@@ -60,7 +62,7 @@ async def test_run_agent_task_fails_to_update(mock_get_logger, mock_task_service
 
     # Configure the mock to return a failure tuple
     mock_task_service.update_task.return_value = (False, {"error": "DB down"})
-    
+
     agent_service = AgentService()
     task_id = "task-456"
     agent_id = "ai-failing-agent"
