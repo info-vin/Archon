@@ -54,7 +54,7 @@ export const KnowledgeCardTags: React.FC<KnowledgeCardTagsProps> = ({ sourceId, 
       });
       setIsEditing(false);
       setNewTagValue("");
-    } catch (_error) {
+    } catch {
       // Reset on error
       setEditingTags(tags);
       setNewTagValue("");
@@ -96,7 +96,7 @@ export const KnowledgeCardTags: React.FC<KnowledgeCardTagsProps> = ({ sourceId, 
         setIsEditing(false);
         setNewTagValue("");
         setOriginalTagBeingEdited(null);
-      } catch (_error) {
+      } catch {
         // Reset on error
         setEditingTags(tags);
         setNewTagValue("");
@@ -157,7 +157,7 @@ export const KnowledgeCardTags: React.FC<KnowledgeCardTagsProps> = ({ sourceId, 
           tags: updatedTags,
         },
       });
-    } catch (_error) {
+    } catch {
       // Error handling is done by the mutation hook
     }
   };

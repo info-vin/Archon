@@ -51,7 +51,7 @@ export const McpClientList: React.FC<McpClientListProps> = ({ clients, className
         <Monitor className="w-12 h-12 mx-auto mb-3 text-zinc-500" />
         <p className="text-zinc-400">Client detection coming soon</p>
         <p className="text-sm text-zinc-500 mt-2">
-          We'll automatically detect when AI assistants connect to the MCP server
+          We&apos;ll automatically detect when AI assistants connect to the MCP server
         </p>
       </div>
     );

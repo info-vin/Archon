@@ -1,7 +1,7 @@
 /**
  * Setup for integration tests - minimal mocking to allow real API calls
  */
-import { expect, afterEach, vi } from 'vitest'
+import { afterEach, vi } from 'vitest'
 import { cleanup } from '@testing-library/react'
 import '@testing-library/jest-dom/vitest'
 

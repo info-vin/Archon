@@ -54,7 +54,7 @@ export const LevelSelector: React.FC<LevelSelectorProps> = ({ value, onValueChan
         </div>
       ))}
       <div className="mt-2 pt-2 border-t border-gray-600 dark:border-gray-500 text-xs">
-        💡 More data isn't always better. Choose based on your needs.
+        💡 More data isn&apos;t always better. Choose based on your needs.
       </div>
     </div>
   );

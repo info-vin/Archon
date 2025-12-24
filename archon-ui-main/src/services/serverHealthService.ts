@@ -24,7 +24,7 @@ class ServerHealthService {
       // Load disconnect screen settings from API
       const enabledRes = await credentialsService.getCredential('DISCONNECT_SCREEN_ENABLED').catch(() => ({ value: 'true' }));
       this.disconnectScreenEnabled = enabledRes.value === 'true';
-    } catch (error) {
+    } catch {
       // Failed to load disconnect screen settings
     }
   }
@@ -45,7 +45,7 @@ class ServerHealthService {
       }
       console.error('🏥 [Health] Response not OK:', response.status);
       return false;
-    } catch (error) {
+    } catch {
       console.error('🏥 [Health] Health check failed:', error);
       // Health check failed
       return false;

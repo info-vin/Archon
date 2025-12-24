@@ -1,10 +1,6 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
-
-// FORCE DEBUG - This should ALWAYS appear in console when this file loads
-// console.log('🚨 DEBUG: OllamaModelDiscoveryModal.tsx file loaded at', new Date().toISOString());
 import { 
-  X, Search, Activity, Database, Zap, Clock, Server, 
-  Loader, CheckCircle, AlertCircle, Filter, Download,
+  X, Search, Activity, Database, Zap, Clock, Server,
+  Loader, CheckCircle, AlertCircle, 
   MessageCircle, Layers, Cpu, HardDrive
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -14,7 +10,7 @@ import { Input } from '../ui/Input';
 import { Badge } from '../ui/Badge';
 import { Card } from '../ui/Card';
 import { useToast } from '../../features/shared/hooks/useToast';
-import { ollamaService, type OllamaModel, type ModelDiscoveryResponse } from '../../services/ollamaService';
+import { ollamaService, type OllamaModel } from '../../services/ollamaService';
 import type { OllamaInstance, ModelSelectionState } from './types/OllamaTypes';
 
 interface OllamaModelDiscoveryModalProps {
@@ -47,7 +43,7 @@ const OllamaModelDiscoveryModal: React.FC<OllamaModelDiscoveryModalProps> = ({
   // console.log('🔴 COMPONENT DEBUG: OllamaModelDiscoveryModal component loaded/rendered', { isOpen });
   const [models, setModels] = useState<EnrichedModel[]>([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [, setError] = useState<string | null>(null);
   const [discoveryComplete, setDiscoveryComplete] = useState(false);
   const [discoveryProgress, setDiscoveryProgress] = useState<string>('');
   const [lastDiscoveryTime, setLastDiscoveryTime] = useState<number | null>(null);
@@ -143,7 +139,6 @@ const OllamaModelDiscoveryModal: React.FC<OllamaModelDiscoveryModalProps> = ({
         
         const cacheData = JSON.parse(cached);
         const cacheAge = Date.now() - cacheData.timestamp;
-        const cacheAgeMinutes = Math.floor(cacheAge / (60 * 1000));
         
         // console.log('🟡 CACHE DEBUG: Cache data parsed', {
         //   modelCount: cacheData.models?.length,
@@ -204,7 +199,6 @@ const OllamaModelDiscoveryModal: React.FC<OllamaModelDiscoveryModalProps> = ({
         localStorage.setItem(testKey, JSON.stringify(testData));
         
         const retrieved = localStorage.getItem(testKey);
-        const parsed = retrieved ? JSON.parse(retrieved) : null;
         
         // console.log('🟢 LOCALSTORAGE DEBUG: localStorage test successful', {
         //   saved: testData,
@@ -304,7 +298,7 @@ const OllamaModelDiscoveryModal: React.FC<OllamaModelDiscoveryModalProps> = ({
       // });
       
       const discoveryEndTime = Date.now();
-      const discoveryDuration = discoveryEndTime - discoveryStartTime;
+      
       // console.log('🟢 DISCOVERY DEBUG: API discovery completed', {
       //   duration: discoveryDuration,
       //   durationSeconds: (discoveryDuration / 1000).toFixed(1),

@@ -357,7 +357,7 @@ export const ComboBox = React.forwardRef<HTMLButtonElement, ComboBoxProps>(
                           highlightedIndex === filteredOptions.length && "bg-cyan-100/50 dark:bg-cyan-800/30",
                         )}
                       >
-                        <span className="ml-4">Add "{search}"</span>
+                        <span className="ml-4">Add &quot;{search}&quot;</span>
                       </button>
                     )}
                   </>

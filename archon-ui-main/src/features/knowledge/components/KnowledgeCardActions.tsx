@@ -30,7 +30,6 @@ interface KnowledgeCardActionsProps {
 }
 
 export const KnowledgeCardActions: React.FC<KnowledgeCardActionsProps> = ({
-  sourceId: _sourceId, // Currently unused, may be needed for future features
   itemTitle = "this knowledge item",
   isUrl,
   hasCodeExamples,

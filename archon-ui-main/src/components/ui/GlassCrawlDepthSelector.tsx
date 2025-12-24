@@ -60,7 +60,6 @@ export const GlassCrawlDepthSelector: React.FC<GlassCrawlDepthSelectorProps> = (
         {levels.map((level) => {
           const isSelected = level <= value;
           const isCurrentValue = level === value;
-          const isHovered = level === hoveredLevel;
           
           return (
             <button
@@ -148,7 +147,7 @@ export const GlassCrawlDepthSelector: React.FC<GlassCrawlDepthSelectorProps> = (
             </div>
           </div>
           <div className="mt-2 pt-2 border-t border-gray-700 text-[10px] text-gray-500">
-            💡 More data isn't always better. Choose based on your needs.
+            💡 More data isn&apos;t always better. Choose based on your needs.
           </div>
         </motion.div>
       )}

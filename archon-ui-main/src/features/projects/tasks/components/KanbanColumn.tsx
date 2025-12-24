@@ -3,12 +3,11 @@ import { useRef } from "react";
 import { useDrop } from "react-dnd";
 import { cn } from "../../../ui/primitives/styles";
 import type { Task } from "../types";
-import { getColumnColor, getColumnGlow, ItemTypes } from "../utils/task-styles";
+import { getColumnGlow, ItemTypes } from "../utils/task-styles";
 import { TaskCard } from "./TaskCard";
 
 interface KanbanColumnProps {
   status: Task["status"];
-  title: string;
   tasks: Task[];
   projectId: string;
   onTaskMove: (taskId: string, newStatus: Task["status"]) => void;
@@ -21,7 +20,6 @@ interface KanbanColumnProps {
 
 export const KanbanColumn = ({
   status,
-  title,
   tasks,
   projectId,
   onTaskMove,

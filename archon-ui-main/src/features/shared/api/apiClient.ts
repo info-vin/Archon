@@ -67,7 +67,6 @@ export async function callAPIWithETag<T = unknown>(endpoint: string, options: Re
 
     // Only set Content-Type for requests that have a body (POST, PUT, PATCH, etc.)
     // GET and DELETE requests should not have Content-Type header
-    const method = options.method?.toUpperCase() || "GET";
     const hasBody = options.body !== undefined && options.body !== null;
     if (hasBody && !headers["Content-Type"]) {
       headers["Content-Type"] = "application/json";
@@ -100,7 +99,7 @@ export async function callAPIWithETag<T = unknown>(endpoint: string, options: Re
             errorMessage = errorJson.error;
           }
         }
-      } catch (_e) {
+      } catch {
         // Ignore parse errors
       }
       throw new APIServiceError(errorMessage, "HTTP_ERROR", response.status);

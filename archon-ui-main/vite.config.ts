@@ -43,7 +43,7 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
                                   req.url.endsWith('.html') ? 'text/html' : 'text/plain';
                 res.setHeader('Content-Type', contentType);
                 res.end(data);
-              } catch (err) {
+              } catch {
                 console.log('[VITE] Coverage file not found:', filePath);
                 res.statusCode = 404;
                 res.end('Not found');
@@ -54,7 +54,7 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
           });
           
           // Test execution endpoint (basic tests)
-          server.middlewares.use('/api/run-tests', (req: any, res: any) => {
+          server.middlewares.use('/api/run-tests', (req: any) => {
             if (req.method !== 'POST') {
               res.statusCode = 405;
               res.end('Method not allowed');
@@ -81,7 +81,8 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
               
               lines.forEach((line: string) => {
                 // Send all lines including empty ones for proper formatting
-                res.write(`data: ${JSON.stringify({ type: 'output', message: line, timestamp: new Date().toISOString() })}\n\n`);
+                res.write(`data: ${JSON.stringify({ type: 'output', message: line, timestamp: new Date().toISOString() })}
+`);
               });
               
               // Flush the response to ensure immediate delivery
@@ -95,7 +96,8 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
               lines.forEach((line: string) => {
                 // Strip ANSI escape codes
                 const cleanLine = line.replace(/\\x1b\[[0-9;]*m/g, '');
-                res.write(`data: ${JSON.stringify({ type: 'output', message: cleanLine, timestamp: new Date().toISOString() })}\n\n`);
+                res.write(`data: ${JSON.stringify({ type: 'output', message: cleanLine, timestamp: new Date().toISOString() })}
+`);
               });
             });
 
@@ -106,7 +108,8 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
                 status: code === 0 ? 'completed' : 'failed',
                 message: code === 0 ? 'Tests completed and results generated!' : 'Tests failed',
                 timestamp: new Date().toISOString() 
-              })}\n\n`);
+              })}
+`);
               res.end();
             });
 
@@ -115,7 +118,8 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
                 type: 'error', 
                 message: error.message, 
                 timestamp: new Date().toISOString() 
-              })}\n\n`);
+              })}
+`);
               res.end();
             });
 
@@ -125,7 +129,7 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
           });
 
           // Test execution with coverage endpoint
-          server.middlewares.use('/api/run-tests-with-coverage', (req: any, res: any) => {
+          server.middlewares.use('/api/run-tests-with-coverage', (req: any) => {
             if (req.method !== 'POST') {
               res.statusCode = 405;
               res.end('Method not allowed');
@@ -169,7 +173,8 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
                 const cleanLine = line.replace(/\\x1b\[[0-9;]*m/g, '');
                 
                 // Send all lines for verbose reporter output
-                res.write(`data: ${JSON.stringify({ type: 'output', message: cleanLine, timestamp: new Date().toISOString() })}\n\n`);
+                res.write(`data: ${JSON.stringify({ type: 'output', message: cleanLine, timestamp: new Date().toISOString() })}
+`);
               });
               
               // Flush the response to ensure immediate delivery
@@ -183,7 +188,8 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
               lines.forEach((line: string) => {
                 // Strip ANSI escape codes
                 const cleanLine = line.replace(/\\x1b\[[0-9;]*m/g, '');
-                res.write(`data: ${JSON.stringify({ type: 'output', message: cleanLine, timestamp: new Date().toISOString() })}\n\n`);
+                res.write(`data: ${JSON.stringify({ type: 'output', message: cleanLine, timestamp: new Date().toISOString() })}
+`);
               });
             });
 
@@ -194,7 +200,8 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
                 status: code === 0 ? 'completed' : 'failed',
                 message: code === 0 ? 'Tests completed with coverage and results generated!' : 'Tests failed',
                 timestamp: new Date().toISOString() 
-              })}\n\n`);
+              })}
+`);
               res.end();
             });
 
@@ -203,7 +210,8 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
                 type: 'error', 
                 message: error.message, 
                 timestamp: new Date().toISOString() 
-              })}\n\n`);
+              })}
+`);
               res.end();
             });
 
@@ -213,7 +221,7 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
           });
 
           // Coverage generation endpoint
-          server.middlewares.use('/api/generate-coverage', (req: any, res: any) => {
+          server.middlewares.use('/api/generate-coverage', (req: any) => {
             if (req.method !== 'POST') {
               res.statusCode = 405;
               res.end('Method not allowed');
@@ -232,7 +240,8 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
               type: 'status', 
               message: 'Starting coverage generation...', 
               timestamp: new Date().toISOString() 
-            })}\n\n`);
+            })}
+`);
 
             // Run coverage generation
             const coverageProcess = exec('npm run test:coverage', {
@@ -242,14 +251,16 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
             coverageProcess.stdout?.on('data', (data) => {
               const lines = data.toString().split('\n').filter((line: string) => line.trim());
               lines.forEach((line: string) => {
-                res.write(`data: ${JSON.stringify({ type: 'output', message: line, timestamp: new Date().toISOString() })}\n\n`);
+                res.write(`data: ${JSON.stringify({ type: 'output', message: line, timestamp: new Date().toISOString() })}
+`);
               });
             });
 
             coverageProcess.stderr?.on('data', (data) => {
               const lines = data.toString().split('\n').filter((line: string) => line.trim());
               lines.forEach((line: string) => {
-                res.write(`data: ${JSON.stringify({ type: 'output', message: line, timestamp: new Date().toISOString() })}\n\n`);
+                res.write(`data: ${JSON.stringify({ type: 'output', message: line, timestamp: new Date().toISOString() })}
+`);
               });
             });
 
@@ -260,7 +271,8 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
                 status: code === 0 ? 'completed' : 'failed',
                 message: code === 0 ? 'Coverage report generated successfully!' : 'Coverage generation failed',
                 timestamp: new Date().toISOString() 
-              })}\n\n`);
+              })}
+`);
               res.end();
             });
 
@@ -269,7 +281,8 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
                 type: 'error', 
                 message: error.message, 
                 timestamp: new Date().toISOString() 
-              })}\n\n`);
+              })}
+`);
               res.end();
             });
 
@@ -299,13 +312,13 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
           target: `http://${proxyHost}:${port}`,
           changeOrigin: true,
           secure: false,
-          configure: (proxy, options) => {
-            proxy.on('error', (err, req, res) => {
+          configure: (proxy) => {
+            proxy.on('error', (err, req) => {
               console.log('🚨 [VITE PROXY ERROR]:', err.message);
               console.log('🚨 [VITE PROXY ERROR] Target:', `http://${proxyHost}:${port}`);
               console.log('🚨 [VITE PROXY ERROR] Request:', req.url);
             });
-            proxy.on('proxyReq', (proxyReq, req, res) => {
+            proxy.on('proxyReq', (proxyReq, req) => {
               console.log('🔄 [VITE PROXY] Forwarding:', req.method, req.url, 'to', `http://${proxyHost}:${port}${req.url}`);
             });
           }

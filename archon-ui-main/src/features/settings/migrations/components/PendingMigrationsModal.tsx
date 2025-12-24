@@ -90,7 +90,7 @@ export function PendingMigrationsModal({
               <li>Copy the SQL for each migration below</li>
               <li>Open your Supabase dashboard SQL Editor</li>
               <li>Paste and execute each migration in order</li>
-              <li>Click "Refresh Status" below to verify migrations were applied</li>
+              <li>Click &quot;Refresh Status&quot; below to verify migrations were applied</li>
             </ol>
             {migrations.length > 1 && (
               <button

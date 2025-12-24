@@ -1,6 +1,6 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { Activity, CheckCircle2, FileText, LayoutGrid, List, ListTodo, Pin } from "lucide-react";
+import { Activity, CheckCircle2, FileText, List, ListTodo, Pin } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useStaggeredEntrance } from "../../../hooks/useStaggeredEntrance";

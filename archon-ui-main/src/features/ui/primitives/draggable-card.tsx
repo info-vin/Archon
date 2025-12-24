@@ -11,12 +11,10 @@ interface DraggableCardProps extends Omit<CardProps, "ref"> {
 
   // Visual states
   isDragging?: boolean;
-  onDragStart?: () => void;
-  onDragEnd?: () => void;
 }
 
 export const DraggableCard = React.forwardRef<HTMLDivElement, DraggableCardProps>(
-  ({ itemType, itemId, index, onDrop, onDragStart, onDragEnd, children, className, ...cardProps }, ref) => {
+  ({ itemType, itemId, index, onDrop, onDragEnd, children, className, ...cardProps }, ref) => {
     const [{ isDragging }, drag] = useDrag({
       type: itemType,
       item: { id: itemId, index },
@@ -28,7 +26,7 @@ export const DraggableCard = React.forwardRef<HTMLDivElement, DraggableCardProps
       },
     });
 
-    const [{ isOver }, drop] = useDrop({
+    const [, drop] = useDrop({
       accept: itemType,
       hover: (draggedItem: { id: string; index: number }) => {
         if (draggedItem.id === itemId) return;
@@ -39,8 +37,7 @@ export const DraggableCard = React.forwardRef<HTMLDivElement, DraggableCardProps
           draggedItem.index = index;
         }
       },
-      collect: (monitor) => ({
-        isOver: !!monitor.isOver(),
+      collect: () => ({
       }),
     });
 

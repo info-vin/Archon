@@ -7,7 +7,6 @@ import { useToast } from '../../features/shared/hooks/useToast';
 import { cn } from '../../lib/utils';
 import { credentialsService, OllamaInstance } from '../../services/credentialsService';
 import { OllamaModelDiscoveryModal } from './OllamaModelDiscoveryModal';
-import type { OllamaInstance as OllamaInstanceType } from './types/OllamaTypes';
 
 interface OllamaConfigurationPanelProps {
   isVisible: boolean;
@@ -30,14 +29,12 @@ const OllamaConfigurationPanel: React.FC<OllamaConfigurationPanelProps> = ({
   separateHosts = false
 }) => {
   const [instances, setInstances] = useState<OllamaInstance[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [, setLoading] = useState(true);
   const [testingConnections, setTestingConnections] = useState<Set<string>>(new Set());
   const [newInstanceUrl, setNewInstanceUrl] = useState('');
   const [newInstanceName, setNewInstanceName] = useState('');
   const [newInstanceType, setNewInstanceType] = useState<'chat' | 'embedding'>('chat');
   const [showAddInstance, setShowAddInstance] = useState(false);
-  const [discoveringModels, setDiscoveringModels] = useState(false);
-  const [modelDiscoveryResults, setModelDiscoveryResults] = useState<Record<string, { models: { name: string; }[]; error?: string; }> | null>(null);
   const [showModelDiscoveryModal, setShowModelDiscoveryModal] = useState(false);
   const [selectedChatModel, setSelectedChatModel] = useState<string | null>(null);
   const [selectedEmbeddingModel, setSelectedEmbeddingModel] = useState<string | null>(null);
@@ -61,6 +58,7 @@ const OllamaConfigurationPanel: React.FC<OllamaConfigurationPanelProps> = ({
       const databaseInstances = await credentialsService.getOllamaInstances();
       setInstances(databaseInstances);
       onConfigChange(databaseInstances);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
       console.error('Failed to load Ollama instances from database:', error);
       showToast('Failed to load Ollama configuration from database', 'error');

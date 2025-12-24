@@ -40,7 +40,7 @@ export const KnowledgeTable: React.FC<KnowledgeTableProps> = ({ items, onViewDoc
       await deleteMutation.mutateAsync(item.source_id);
       showToast("Knowledge item deleted successfully", "success");
       onDeleteSuccess();
-    } catch (_error) {
+    } catch {
       showToast("Failed to delete knowledge item", "error");
     } finally {
       setDeletingIds((prev) => {

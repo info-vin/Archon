@@ -57,7 +57,7 @@ export const BackendStartupError: React.FC = () => {
                 </code>
                 <div className="text-red-300 text-xs mt-2">
                   <p>Note:</p>
-                  <p>• Use 'down' and 'up' (not 'restart') so new env vars are picked up.</p>
+                  <p>• Use &apos;down&apos; and &apos;up&apos; (not &apos;restart&apos;) so new env vars are picked up.</p>
                   <p>• If you originally started with a specific profile (backend, frontend, or full),</p>
                   <p>&nbsp;&nbsp;run the same profile again:</p>
                   <br />

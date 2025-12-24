@@ -81,7 +81,7 @@ export const OnboardingPage = (): JSX.Element => {
               </h1>
               
               <p className="text-lg text-gray-600 dark:text-zinc-400 mb-8 max-w-md mx-auto">
-                Let's get you set up with your AI provider in just a few steps. This will enable intelligent knowledge retrieval and code assistance.
+                Let&apos;s get you set up with your AI provider in just a few steps. This will enable intelligent knowledge retrieval and code assistance.
               </p>
               
               <Button
@@ -143,7 +143,7 @@ export const OnboardingPage = (): JSX.Element => {
               </h1>
               
               <p className="text-lg text-gray-600 dark:text-zinc-400 mb-8 max-w-md mx-auto">
-                You're ready to start using Archon. Begin by adding knowledge sources through website crawling or document uploads.
+                You&apos;re ready to start using Archon. Begin by adding knowledge sources through website crawling or document uploads.
               </p>
               
               <Button

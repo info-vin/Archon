@@ -87,7 +87,8 @@ Transform Archon into a platform where users can seamlessly assign tasks to eith
 
 ### Task 4.1: Create End-to-End Integration Test (創建端到端整合測試)
 - **Goal (目標)**: Create a single, automated integration test that validates the entire "AI as a Teammate" workflow, from task assignment to agent callback. This test will serve as the safety net and executable specification for all future agent development. (建立一個自動化整合測試，驗證從任務指派到代理回呼的完整「AI 作為隊友」工作流。此測試將作為未來所有代理開發的安全網與可執行的規範。)
-- **File (檔案)**: `python/tests/server/test_e2e_agent_workflow.py`
+- **File (檔案)**: `python/tests/server/test_projects_api_agent_callback.py`
+- **Note on Implementation (實作說明)**: The core end-to-end agent workflow, including task assignment and agent callback, was implemented in this file, fulfilling the goal of Task 4.1, although the filename differs from the original plan. (核心的端到端代理工作流，包括任務指派和代理回呼，已在此檔案中實現，達成了 Task 4.1 的目標，儘管檔名與原計畫不同。)
 - **Key Implementation Pattern (關鍵實作模式)**:
     - **Patching Strategy**: Must follow the "Golden Pattern" established in `commit 518312d`. Patch singleton services (like `agent_service`) at the module level *before* `app` is imported. Use `setup_module` and `teardown_module` for patch lifecycle. (必須遵循 `commit 518312d` 中建立的「黃金模式」。在 `app` 導入前，於模組級別 `patch` 單例服務（如 `agent_service`），並使用 `setup_module` 和 `teardown_module` 管理 `patch` 生命週期。)
     - **Workflow Stages**: The test must cover three stages: (測試必須涵蓋三個階段：)
@@ -96,11 +97,11 @@ Transform Archon into a platform where users can seamlessly assign tasks to eith
         3.  **Result Verification**: Assert that the underlying service methods (`task_service.update_task`, `task_service.save_agent_output`) are correctly called. (斷言底層的服務方法（`task_service.update_task`, `task_service.save_agent_output`）被正確呼叫。)
 - **VALIDATE (驗證)**: `make test-be` must pass with zero new errors. (必須通過 `make test-be` 且沒有新錯誤。)
 
-### Task 4.2: Implement `SummaryAgent` based on Test Pattern (基於測試模式實作 `SummaryAgent`)
-- **Goal (目標)**: Create a new, simple agent that conforms to the workflow validated in Task 4.1. (創建一個符合任務 4.1 中已驗證工作流的、簡單的新代理。)
-- **File (檔案)**: `python/src/agents/features/summary_agent.py`
-- **Logic (邏輯)**: The agent will be triggered by `agent_service.run_agent_task`. It will perform a simple action and use the `mcp_client` to call back to the `archon-server` with status and results. (該代理將由 `agent_service.run_agent_task` 觸發，執行一個簡單的操作，並使用 `mcp_client` 回呼 `archon-server`。)
-- **VALIDATE (驗證)**: `uv run pytest python/src/agents/features/test_summary_agent.py`
+### Task 4.2: Implement `CodeReviewAgent` based on Test Pattern (基於測試模式實作 `CodeReviewAgent`)
+- **Goal (目標)**: Create a new, simple agent that conforms to the workflow validated in Task 4.1. The `CodeReviewAgent` was implemented to fulfill this, serving as a concrete example. (創建一個符合任務 4.1 中已驗證工作流的、簡單的新代理。`CodeReviewAgent` 的實作即是為了達成此目標，作為一個具體的範例。)
+- **File (檔案)**: `python/src/agents/features/code_review_agent.py`
+- **Logic (邏輯)**: The agent is triggered by `agent_service.run_agent_task`. It receives code, uses the `llm_provider` to generate a mock review, and then calls back to the `archon-server` with the results. (該代理由 `agent_service.run_agent_task` 觸發，接收程式碼，使用 `llm_provider` 生成模擬的審查，然後回呼 `archon-server` 並附上結果。)
+- **VALIDATE (驗證)**: `uv run pytest python/src/agents/features/tests/test_code_review_agent.py`
 
 ### Phase 5: End-to-End Validation & Refinements (端到端驗證與優化)
 

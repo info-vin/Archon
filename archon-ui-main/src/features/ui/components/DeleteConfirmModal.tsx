@@ -40,11 +40,11 @@ export const DeleteConfirmModal: React.FC<DeleteConfirmModalProps> = ({
     knowledge: "Delete Knowledge Item",
   };
 
-  const MESSAGES: Record<DeleteConfirmModalProps["type"], (_n: string) => string> = {
-    project: (_n) => `Are you sure you want to delete this project?`,
-    task: (_n) => `Are you sure you want to delete this task?`,
-    client: (_n) => `Are you sure you want to delete this client?`,
-    document: (_n) => `Are you sure you want to delete this document?`,
+  const MESSAGES: Record<DeleteConfirmModalProps["type"], (n: string) => string> = {
+    project: () => `Are you sure you want to delete this project?`,
+    task: () => `Are you sure you want to delete this task?`,
+    client: () => `Are you sure you want to delete this client?`,
+    document: () => `Are you sure you want to delete this document?`,
     knowledge: (n) =>
       `Are you sure you want to delete "${n}"? All associated documents and code examples will be permanently removed.`,
   };

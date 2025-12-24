@@ -116,7 +116,7 @@ export function useCreateTask() {
 
       showToast("Task created successfully", "success");
     },
-    onSettled: (_data, _error, variables) => {
+    onSettled: (_data, error, variables) => {
       // Always refetch to ensure consistency after operation completes
       queryClient.invalidateQueries({ queryKey: taskKeys.byProject(variables.project_id) });
     },
@@ -177,7 +177,7 @@ export function useUpdateTask(projectId: string) {
         showToast(`Task moved to ${updates.status}`, "success");
       }
     },
-    onSettled: (_data, _error) => {
+    onSettled: () => {
       // Always refetch to ensure consistency after operation completes
       queryClient.invalidateQueries({ queryKey: taskKeys.byProject(projectId) });
     },

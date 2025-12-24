@@ -52,7 +52,7 @@ export const StaticTypography = () => {
         <div>
           <div className="text-xs text-gray-500 dark:text-gray-400 mb-2 font-mono">Code • font-mono</div>
           <code className="font-mono text-sm bg-black/20 px-2 py-1 rounded text-cyan-400">
-            const example = "code text";
+            const example = &quot;code text&quot;;
           </code>
         </div>
       </Card>

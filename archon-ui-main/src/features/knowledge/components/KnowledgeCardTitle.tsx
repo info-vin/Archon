@@ -93,7 +93,7 @@ export const KnowledgeCardTitle: React.FC<KnowledgeCardTitleProps> = ({
         },
       });
       setIsEditing(false);
-    } catch (_error) {
+    } catch {
       // Reset on error
       setEditValue(title);
       setIsEditing(false);

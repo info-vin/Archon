@@ -26,11 +26,11 @@ async function testKnowledgeAPI(): Promise<void> {
       per_page: 5,
     });
     if (items.items.length > 0) {
-      const first = items.items[0];
+      // First item
     }
 
     // Test 2: Filter by type
-    const technicalItems = await knowledgeService.getKnowledgeSummaries({
+    await knowledgeService.getKnowledgeSummaries({
       knowledge_type: 'technical',
       page: 1,
       per_page: 3,
@@ -39,19 +39,19 @@ async function testKnowledgeAPI(): Promise<void> {
     // Test 3: Get chunks if item exists
     if (items.items.length > 0) {
       const sourceId = items.items[0].source_id;
-      const chunks = await knowledgeService.getKnowledgeItemChunks(sourceId);
+      await knowledgeService.getKnowledgeItemChunks(sourceId);
 
       // Test 4: Get code examples
-      const examples = await knowledgeService.getCodeExamples(sourceId);
+      await knowledgeService.getCodeExamples(sourceId);
     }
 
     // Test 5: Search
     try {
-      const searchResults = await knowledgeService.searchKnowledgeBase({
+      await knowledgeService.searchKnowledgeBase({
         query: 'API',
         limit: 3,
       });
-    } catch (error) {
+    } catch {
       // Search endpoint might not be implemented yet
     }
 
@@ -64,15 +64,15 @@ async function testKnowledgeAPI(): Promise<void> {
       });
       
       // Get progress
-      const progress = await progressService.getProgress(crawlResponse.progressId);
+      await progressService.getProgress(crawlResponse.progressId);
       
       // Stop the crawl
       await knowledgeService.stopCrawl(crawlResponse.progressId);
-    } catch (error) {
+    } catch {
       // Crawl test failed
     }
     
-  } catch (error) {
+  } catch {
     process.exit(1);
   }
 }

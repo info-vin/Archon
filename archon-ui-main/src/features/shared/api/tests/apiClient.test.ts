@@ -17,7 +17,7 @@ describe("apiClient (callAPIWithETag)", () => {
     // Mock AbortSignal.timeout for test environment
     // Note: Production now uses 20s timeout for database performance issues
     global.AbortSignal = {
-      timeout: vi.fn((_ms: number) => ({
+      timeout: vi.fn(() => ({
         aborted: false,
         addEventListener: vi.fn(),
         removeEventListener: vi.fn(),

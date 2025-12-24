@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { FileCode, Copy, Check } from 'lucide-react';
+import { Copy, Check } from 'lucide-react';
 import { Card } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { useToast } from '../../features/shared/hooks/useToast';
@@ -198,15 +198,12 @@ find_tasks(filter_by="project", filter_value="proj-123")
     const elements: JSX.Element[] = [];
     let inCodeBlock = false;
     let codeBlockContent: string[] = [];
-    let codeBlockLang = '';
-    const listStack: string[] = [];
 
     lines.forEach((line, index) => {
       // Code blocks
       if (line.startsWith('```')) {
         if (!inCodeBlock) {
           inCodeBlock = true;
-          codeBlockLang = line.slice(3).trim();
           codeBlockContent = [];
         } else {
           inCodeBlock = false;
@@ -356,7 +353,9 @@ find_tasks(filter_by="project", filter_value="proj-123")
           </div>
           <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
             <div className="prose prose-sm dark:prose-invert max-w-none">
+              {/* eslint-disable react/no-unescaped-entities */}
               {renderMarkdown(currentRules)}
+              {/* eslint-enable react/no-unescaped-entities */}
             </div>
           </div>
         </div>

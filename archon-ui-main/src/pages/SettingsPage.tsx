@@ -3,7 +3,6 @@ import {
   Loader,
   Settings,
   ChevronDown,
-  ChevronUp,
   Palette,
   Key,
   Brain,
@@ -70,7 +69,7 @@ export const SettingsPage = (): JSX.Element => {
     useStaggeredEntrance([1, 2, 3, 4], 0.15);
 
   // Load settings on mount
-  const loadSettings = useCallback(async (isRetry = false): Promise<void> => {
+  const loadSettings = useCallback(async (): Promise<void> => {
     try {
       setLoading(true);
       setError(null);

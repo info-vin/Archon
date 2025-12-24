@@ -12,7 +12,7 @@ type ToggleGroupProps = (
 };
 
 export const ToggleGroup = React.forwardRef<React.ElementRef<typeof ToggleGroupPrimitive.Root>, ToggleGroupProps>(
-  ({ className, variant = "subtle", size = "sm", ...props }, ref) => {
+  ({ className, variant = "subtle", ...props }, ref) => {
     return (
       <ToggleGroupPrimitive.Root
         ref={ref}
@@ -37,7 +37,7 @@ export interface ToggleGroupItemProps extends React.ComponentPropsWithoutRef<typ
 export const ToggleGroupItem = React.forwardRef<
   React.ElementRef<typeof ToggleGroupPrimitive.Item>,
   ToggleGroupItemProps
->(({ className, size = "sm", ...props }, ref) => {
+>(({ className, ...props }, ref) => {
   const sizes = {
     sm: "px-3 py-2 text-xs",
     md: "px-4 py-2.5 text-sm",
@@ -48,7 +48,7 @@ export const ToggleGroupItem = React.forwardRef<
       ref={ref}
       className={cn(
         "relative select-none outline-none transition-all",
-        sizes[size],
+        sizes[props.size || "sm"],
         "text-gray-600 dark:text-gray-300 hover:text-white",
         "data-[state=on]:text-cyan-700 dark:data-[state=on]:text-cyan-300",
         "data-[state=on]:bg-cyan-500/20",

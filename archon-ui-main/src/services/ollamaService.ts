@@ -237,7 +237,7 @@ class OllamaService {
 
       const data = await response.json();
       return data;
-    } catch (error) {
+    } catch {
       throw this.handleApiError(error, "Model discovery");
     }
   }
@@ -275,7 +275,7 @@ class OllamaService {
 
       const data = await response.json();
       return data;
-    } catch (error) {
+    } catch {
       throw this.handleApiError(error, "Instance health checking");
     }
   }
@@ -306,7 +306,7 @@ class OllamaService {
 
       const data = await response.json();
       return data;
-    } catch (error) {
+    } catch {
       throw this.handleApiError(error, "Instance validation");
     }
   }
@@ -337,7 +337,7 @@ class OllamaService {
 
       const data = await response.json();
       return data;
-    } catch (error) {
+    } catch {
       throw this.handleApiError(error, "Embedding route analysis");
     }
   }
@@ -375,7 +375,7 @@ class OllamaService {
 
       const data = await response.json();
       return data;
-    } catch (error) {
+    } catch {
       throw this.handleApiError(error, "Getting embedding routes");
     }
   }
@@ -399,7 +399,7 @@ class OllamaService {
 
       const data = await response.json();
       return data;
-    } catch (error) {
+    } catch {
       throw this.handleApiError(error, "Cache clearing");
     }
   }
@@ -485,7 +485,7 @@ class OllamaService {
             instanceUrl,
           });
           embeddingDimensions = route.dimensions;
-        } catch (error) {
+        } catch {
           // Ignore routing errors, just report basic capability
         }
       }

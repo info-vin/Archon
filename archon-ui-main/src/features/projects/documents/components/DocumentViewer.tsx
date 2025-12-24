@@ -92,42 +92,42 @@ export const DocumentViewer = ({ document, onSave }: DocumentViewerProps) => {
         <div className="markdown-content">
           <ReactMarkdown
             components={{
-              h1: ({ node, ...props }) => (
+              h1: ({ ...props }) => (
                 <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4 mt-6" {...props} />
               ),
-              h2: ({ node, ...props }) => (
+              h2: ({ ...props }) => (
                 <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-3 mt-5" {...props} />
               ),
-              h3: ({ node, ...props }) => (
+              h3: ({ ...props }) => (
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2 mt-4" {...props} />
               ),
-              p: ({ node, ...props }) => (
+              p: ({ ...props }) => (
                 <p className="text-sm text-gray-700 dark:text-gray-300 mb-3 leading-relaxed" {...props} />
               ),
-              ul: ({ node, ...props }) => (
+              ul: ({ ...props }) => (
                 <ul
                   className="list-disc list-inside text-sm text-gray-700 dark:text-gray-300 mb-3 space-y-1"
                   {...props}
                 />
               ),
-              ol: ({ node, ...props }) => (
+              ol: ({ ...props }) => (
                 <ol
                   className="list-decimal list-inside text-sm text-gray-700 dark:text-gray-300 mb-3 space-y-1"
                   {...props}
                 />
               ),
-              li: ({ node, ...props }) => <li className="ml-4" {...props} />,
-              code: ({ node, ...props }) => (
+              li: ({ ...props }) => <li className="ml-4" {...props} />,
+              code: ({ ...props }) => (
                 <code
                   className="bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded text-xs font-mono text-cyan-600 dark:text-cyan-400"
                   {...props}
                 />
               ),
-              pre: ({ node, ...props }) => (
+              pre: ({ ...props }) => (
                 <pre className="bg-gray-100 dark:bg-gray-900 p-3 rounded-lg overflow-x-auto mb-3" {...props} />
               ),
-              a: ({ node, ...props }) => <a className="text-cyan-600 dark:text-cyan-400 hover:underline" {...props} />,
-              blockquote: ({ node, ...props }) => (
+              a: ({ ...props }) => <a className="text-cyan-600 dark:text-cyan-400 hover:underline" {...props} />,
+              blockquote: ({ ...props }) => (
                 <blockquote
                   className="border-l-4 border-gray-300 dark:border-gray-700 pl-4 italic text-gray-600 dark:text-gray-400 my-3"
                   {...props}

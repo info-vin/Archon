@@ -31,7 +31,7 @@ export const StaticButtons = () => {
             </Button>
           </div>
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-3 font-mono">
-            variant="default" • Outer glow on hover
+            variant=&quot;default&quot; • Outer glow on hover
           </p>
         </Card>
 
@@ -51,7 +51,7 @@ export const StaticButtons = () => {
             </Button>
           </div>
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-3 font-mono">
-            variant="outline" • Inner glow effect
+            variant=&quot;outline&quot; • Inner glow effect
           </p>
         </Card>
 
@@ -68,7 +68,7 @@ export const StaticButtons = () => {
               Large
             </Button>
           </div>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-3 font-mono">variant="ghost"</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-3 font-mono">variant=&quot;ghost&quot;</p>
         </Card>
 
         {/* Icon Button */}
@@ -86,7 +86,7 @@ export const StaticButtons = () => {
               <Plus className="w-4 h-4" />
             </Button>
           </div>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-3 font-mono">size="icon"</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-3 font-mono">size=&quot;icon&quot;</p>
         </Card>
 
         {/* Destructive */}
@@ -104,7 +104,7 @@ export const StaticButtons = () => {
               Destroy
             </Button>
           </div>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-3 font-mono">variant="destructive"</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-3 font-mono">variant=&quot;destructive&quot;</p>
         </Card>
       </div>
     </div>

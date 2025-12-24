@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Settings, Check, Save, Loader, ChevronDown, ChevronUp, Zap, Database, Trash2, Cog } from 'lucide-react';
+import { Check, Save, Loader, ChevronDown, ChevronUp, Zap, Database, Cog } from 'lucide-react';
 import { Card } from '../ui/Card';
 import { Input } from '../ui/Input';
 import { Select } from '../ui/Select';
@@ -758,50 +758,6 @@ const manualTestConnection = useCallback(async (
   }, [reloadApiCredentials, testProviderConnection]);
 
 
-
-  // Function to handle LLM instance deletion
-  const handleDeleteLLMInstance = () => {
-    // if (window.confirm('Are you sure you want to delete the current LLM instance configuration?')) {
-      // Reset LLM instance configuration
-      setLLMInstanceConfig({
-        name: '',
-        url: ''
-      });
-      
-      // Clear related RAG settings
-      const updatedSettings = { ...ragSettings };
-      delete updatedSettings.LLM_BASE_URL;
-      delete updatedSettings.MODEL_CHOICE;
-      setRagSettings(updatedSettings);
-      
-      // Reset status
-      setLLMStatus({ online: false, responseTime: null, checking: false });
-      
-      showToast('LLM instance configuration deleted', 'success');
-    // }
-  };
-
-  // Function to handle Embedding instance deletion
-  const handleDeleteEmbeddingInstance = () => {
-    // if (window.confirm('Are you sure you want to delete the current Embedding instance configuration?')) {
-      // Reset Embedding instance configuration
-      setEmbeddingInstanceConfig({
-        name: '',
-        url: ''
-      });
-      
-      // Clear related RAG settings
-      const updatedSettings = { ...ragSettings };
-      delete updatedSettings.OLLAMA_EMBEDDING_URL;
-      delete updatedSettings.EMBEDDING_MODEL;
-      setRagSettings(updatedSettings);
-      
-      // Reset status
-      setEmbeddingStatus({ online: false, responseTime: null, checking: false });
-      
-      showToast('Embedding instance configuration deleted', 'success');
-    // }
-  };
 
   React.useEffect(() => {
     const current = {
