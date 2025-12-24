@@ -55,7 +55,7 @@ const getDefaultModels = (provider: ProviderKey): ProviderModels => {
 const saveProviderModels = (providerModels: ProviderModelMap): void => {
   try {
     localStorage.setItem(PROVIDER_MODELS_KEY, JSON.stringify(providerModels));
-  } catch (error) {
+  } catch (_error) {
     // console.error('Failed to save provider models:', error);
   }
 };
@@ -66,7 +66,7 @@ const loadProviderModels = (): ProviderModelMap => {
     if (saved) {
       return JSON.parse(saved);
     }
-  } catch (error) {
+  } catch (_error) {
     // console.error('Failed to load provider models:', error);
   }
 
@@ -345,7 +345,7 @@ export const RAGSettings = ({
         // console.error('Failed to fetch models:', modelsData);
         setOllamaMetrics(prev => ({ ...prev, loading: false }));
       }
-    } catch (error) {
+    } catch (_error) {
       // console.error('Error fetching Ollama metrics:', error);
       setOllamaMetrics(prev => ({ ...prev, loading: false }));
     }
@@ -424,7 +424,7 @@ const manualTestConnection = useCallback(async (
         }
         return false;
       }
-    } catch (error) {
+    } catch (_error) {
       setStatus({ online: false, responseTime: null, checking: false });
 
       if (!suppressToast) {
@@ -537,7 +537,7 @@ const manualTestConnection = useCallback(async (
       // );
       setApiCredentials(credentials);
       hasLoadedCredentialsRef.current = true;
-    } catch (error) {
+    } catch (_error) {
       // console.error('Failed to load API credentials for status checking:', error);
     }
   }, []);
@@ -601,7 +601,7 @@ const manualTestConnection = useCallback(async (
         const data = await response.json();
         const instanceStatus = data.instance_status?.[normalizedUrl];
         setOllamaServerStatus(instanceStatus?.is_healthy ? 'online' : 'offline');
-      } catch (error) {
+      } catch (_error) {
         if (!cancelled) {
           setOllamaServerStatus('offline');
         }
@@ -689,7 +689,7 @@ const manualTestConnection = useCallback(async (
       }));
 
       return isConnected;
-    } catch (error) {
+    } catch (_error) {
       // console.error(`Error testing ${provider} connection:`, error);
       setProviderConnectionStatus(prev => ({
         ...prev,
@@ -1361,7 +1361,7 @@ const manualTestConnection = useCallback(async (
                   setRagSettings(updatedSettings);
 
                   showToast('RAG settings saved successfully!', 'success');
-                } catch (err) {
+                } catch (_err) {
                   // console.error('Failed to save RAG settings:', err);
                   showToast('Failed to save settings', 'error');
                 } finally {

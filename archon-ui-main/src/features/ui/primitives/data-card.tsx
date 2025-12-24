@@ -14,9 +14,7 @@ interface DataCardProps extends React.HTMLAttributes<HTMLDivElement> {
   transparency?: "clear" | "light" | "medium" | "frosted" | "solid";
 }
 
-interface DataCardHeaderProps extends React.HTMLAttributes<HTMLDivElement> {}
-interface DataCardContentProps extends React.HTMLAttributes<HTMLDivElement> {}
-interface DataCardFooterProps extends React.HTMLAttributes<HTMLDivElement> {}
+
 
 export const DataCard = React.forwardRef<HTMLDivElement, DataCardProps>(
   (
@@ -105,7 +103,7 @@ export const DataCard = React.forwardRef<HTMLDivElement, DataCardProps>(
 DataCard.displayName = "DataCard";
 
 // Header component
-export const DataCardHeader = React.forwardRef<HTMLDivElement, DataCardHeaderProps>(
+export const DataCardHeader = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
   ({ className, children, ...props }, ref) => {
     return (
       <div ref={ref} className={cn("relative p-4 pb-2", className)} {...props}>
@@ -118,7 +116,7 @@ export const DataCardHeader = React.forwardRef<HTMLDivElement, DataCardHeaderPro
 DataCardHeader.displayName = "DataCardHeader";
 
 // Content component (flexible - grows to fill space)
-export const DataCardContent = React.forwardRef<HTMLDivElement, DataCardContentProps>(
+export const DataCardContent = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
   ({ className, children, ...props }, ref) => {
     return (
       <div ref={ref} className={cn("flex-1 px-4", className)} {...props}>
@@ -131,7 +129,7 @@ export const DataCardContent = React.forwardRef<HTMLDivElement, DataCardContentP
 DataCardContent.displayName = "DataCardContent";
 
 // Footer component (anchored to bottom)
-export const DataCardFooter = React.forwardRef<HTMLDivElement, DataCardFooterProps>(
+export const DataCardFooter = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
   ({ className, children, ...props }, ref) => {
     return (
       <div

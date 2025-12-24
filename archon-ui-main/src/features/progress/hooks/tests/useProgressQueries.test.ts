@@ -40,10 +40,11 @@ const createWrapper = () => {
     },
   });
 
-  return ({ children }: { children: React.ReactNode }) =>
-    React.createElement(QueryClientProvider, { client: queryClient }, children);
-};
-
+        const Wrapper = ({ children }: { children: React.ReactNode }) =>
+          React.createElement(QueryClientProvider, { client: queryClient }, children);
+        Wrapper.displayName = "Wrapper";
+        return Wrapper;
+      };
 describe("useProgressQueries", () => {
   beforeEach(() => {
     vi.clearAllMocks();

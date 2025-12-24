@@ -725,7 +725,7 @@ export const OllamaModelSelectionModal: React.FC<OllamaModelSelectionModalProps>
           setLoadedFromCache(false);
         }
       }
-    } catch (error) {
+    } catch (_error) {
       // console.error('Failed to load models:', error);
       showToast('Failed to load models', 'error');
     } finally {
@@ -944,7 +944,7 @@ export const OllamaModelSelectionModal: React.FC<OllamaModelSelectionModalProps>
       } else {
         throw new Error('Failed to refresh models');
       }
-    } catch (error) {
+    } catch (_error) {
       // console.error('Failed to refresh models:', error);
       showToast('Failed to refresh models', 'error');
     } finally {

@@ -59,7 +59,7 @@ const OllamaConfigurationPanel: React.FC<OllamaConfigurationPanelProps> = ({
       setInstances(databaseInstances);
       onConfigChange(databaseInstances);
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    } catch (error) {
+    } catch (_error) {
       console.error('Failed to load Ollama instances from database:', error);
       showToast('Failed to load Ollama configuration from database', 'error');
       
@@ -212,7 +212,7 @@ const OllamaConfigurationPanel: React.FC<OllamaConfigurationPanelProps> = ({
       if (!url.protocol.startsWith('http')) {
         throw new Error('URL must use HTTP or HTTPS protocol');
       }
-    } catch (error) {
+    } catch (_error) {
       showToast('Please provide a valid HTTP/HTTPS URL', 'error');
       return;
     }

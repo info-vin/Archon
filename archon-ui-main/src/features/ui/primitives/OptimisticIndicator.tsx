@@ -36,10 +36,12 @@ export function withOptimisticStyles<T extends { className?: string }>(
   Component: ComponentType<T>,
   isOptimistic: boolean,
 ) {
-  return (props: T) => (
-    <Component
-      {...props}
-      className={cn(props.className, isOptimistic && "opacity-70 animate-pulse ring-1 ring-cyan-400/20")}
-    />
-  );
-}
+        const WithOptimisticStylesComponent = (props: T) => (
+          <Component
+            {...props}
+            className={cn(props.className, isOptimistic && "opacity-70 animate-pulse ring-1 ring-cyan-400/20")}
+          />
+        );
+        WithOptimisticStylesComponent.displayName = `WithOptimisticStyles(${Component.displayName || Component.name || 'Component'})`;
+        return WithOptimisticStylesComponent;
+      }

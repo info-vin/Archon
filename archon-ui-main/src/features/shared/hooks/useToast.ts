@@ -65,9 +65,10 @@ export function useCreateToastContext() {
   }, []);
 
   useEffect(() => {
+    const currentTimers = timeoutsRef.current;
     return () => {
-      for (const timeoutId of timeoutsRef.current.values()) clearTimeout(timeoutId);
-      timeoutsRef.current.clear();
+      for (const timeoutId of currentTimers.values()) clearTimeout(timeoutId);
+      currentTimers.clear();
     };
   }, []);
 

@@ -30,8 +30,8 @@ export function useInspectorData({ sourceId, searchQuery }: UseInspectorDataProp
   const { data: documentsResponse, isLoading: docsLoading } = useKnowledgeChunks(sourceId, { limit: 100 });
   const { data: codeResponse, isLoading: codeLoading } = useKnowledgeCodeExamples(sourceId, { limit: 100 });
 
-  const documentChunks = documentsResponse?.chunks || [];
-  const codeList = codeResponse?.code_examples || [];
+  const documentChunks = useMemo(() => documentsResponse?.chunks || [], [documentsResponse?.chunks]);
+  const codeList = useMemo(() => codeResponse?.code_examples || [], [codeResponse?.code_examples]);
 
   // Filter documents based on search
   const filteredDocuments = useMemo(() => {

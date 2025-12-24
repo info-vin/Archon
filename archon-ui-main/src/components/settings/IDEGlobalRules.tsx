@@ -370,7 +370,7 @@ find_tasks(filter_by="project", filter_value="proj-123")
             <li><strong>Gemini CLI:</strong> Create a GEMINI.md file in your project root</li>
             <li><strong>Cursor:</strong> Create .cursorrules file or add to Settings → Rules</li>
             <li><strong>Windsurf:</strong> Create .windsurfrules file in project root</li>
-            <li><strong>Other IDEs:</strong> Add to your IDE's AI assistant configuration</li>
+            <li><strong>Other IDEs:</strong> {"Add to your IDE's AI assistant configuration"}</li>
           </ul>
         </div>
       </div>

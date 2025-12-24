@@ -1,5 +1,5 @@
 import { 
-  X, Search, Activity, Database, Zap, Clock, Server,
+  X, Search, Activity, Database, Server,
   Loader, CheckCircle, AlertCircle, 
   MessageCircle, Layers, Cpu, HardDrive
 } from 'lucide-react';
@@ -116,8 +116,8 @@ const OllamaModelDiscoveryModal: React.FC<OllamaModelDiscoveryModalProps> = ({
       //   cacheSize: JSON.stringify(cacheData).length,
       //   storedInLocalStorage: !!localStorage.getItem(cacheKey)
       // });
-    } catch (error) {
-      // console.error('🔴 CACHE DEBUG: Failed to save models to cache:', error);
+    } catch (_error) {
+      // console.error('🔴 CACHE DEBUG: Failed to save models to cache:', _error);
     }
   }, [cacheKey, enabledInstanceUrls]);
 
@@ -182,8 +182,8 @@ const OllamaModelDiscoveryModal: React.FC<OllamaModelDiscoveryModalProps> = ({
       } else {
         // console.log('🟠 CACHE DEBUG: No cached data found for key:', cacheKey);
       }
-    } catch (error) {
-      // console.error('🔴 CACHE DEBUG: Failed to load cached models:', error);
+    } catch (_error) {
+      // console.error('🔴 CACHE DEBUG: Failed to load cached models:', _error);
     }
     return false;
   }, [cacheKey, enabledInstanceUrls]);
@@ -198,7 +198,7 @@ const OllamaModelDiscoveryModal: React.FC<OllamaModelDiscoveryModalProps> = ({
         // console.log('🔧 LOCALSTORAGE DEBUG: Testing localStorage functionality');
         localStorage.setItem(testKey, JSON.stringify(testData));
         
-        const retrieved = localStorage.getItem(testKey);
+        const _retrieved = localStorage.getItem(testKey);
         
         // console.log('🟢 LOCALSTORAGE DEBUG: localStorage test successful', {
         //   saved: testData,
@@ -208,8 +208,8 @@ const OllamaModelDiscoveryModal: React.FC<OllamaModelDiscoveryModalProps> = ({
         
         localStorage.removeItem(testKey);
         
-      } catch (error) {
-        // console.error('🔴 LOCALSTORAGE DEBUG: localStorage test failed', error);
+      } catch (_error) {
+        // console.error('🔴 LOCALSTORAGE DEBUG: localStorage test failed', _error);
       }
     };
     
@@ -268,8 +268,8 @@ const OllamaModelDiscoveryModal: React.FC<OllamaModelDiscoveryModalProps> = ({
       // console.log('🟡 DISCOVERY DEBUG: Force refresh requested, skipping cache');
     }
 
-    const discoveryStartTime = Date.now();
-    // console.log('🟡 DISCOVERY DEBUG: Starting API discovery at', new Date(discoveryStartTime).toISOString());
+    const _discoveryStartTime = Date.now();
+    // console.log('🟡 DISCOVERY DEBUG: Starting API discovery at', new Date(_discoveryStartTime).toISOString());
 
     setLoading(true);
     setError(null);
@@ -297,7 +297,7 @@ const OllamaModelDiscoveryModal: React.FC<OllamaModelDiscoveryModalProps> = ({
       //   timestamp: new Date().toISOString()
       // });
       
-      const discoveryEndTime = Date.now();
+      const _discoveryEndTime = Date.now();
       
       // console.log('🟢 DISCOVERY DEBUG: API discovery completed', {
       //   duration: discoveryDuration,
