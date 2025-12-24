@@ -119,8 +119,7 @@ test-fe-single:
 # Run backend tests
 test-be:
 	@echo "Running backend tests..."
-	@cd python && $(UV) sync --group dev --group mcp --group agents --group server
-	@cd python && $(UV) run pytest
+	@cd python && $(UV) sync --group dev --group mcp --group agents --group server && $(UV) run --env-file ../.env pytest
 
 # Run all linters
 lint: lint-fe lint-be
