@@ -103,18 +103,54 @@ Transform Archon into a platform where users can seamlessly assign tasks to eith
 - **Logic (邏輯)**: The agent is triggered by `agent_service.run_agent_task`. It receives code, uses the `llm_provider` to generate a mock review, and then calls back to the `archon-server` with the results. (該代理由 `agent_service.run_agent_task` 觸發，接收程式碼，使用 `llm_provider` 生成模擬的審查，然後回呼 `archon-server` 並附上結果。)
 - **VALIDATE (驗證)**: `uv run pytest python/src/agents/features/tests/test_code_review_agent.py`
 
-### Phase 5: End-to-End Validation & Refinements (端到端驗證與優化)
+### Phase 5: Automated End-to-End Workflow Validation (自動化端到端工作流驗證)
 
-### INTEGRATE & TEST (整合與測試):
+#### Task 5.1: Scaffold E2E Test Suite for "AI as a Teammate" (為「AI 作為隊友」搭建 E2E 測試套件)
+- **Goal (目標)**: 建立一個新的 Vitest/Playwright 測試檔案，專門用於驗證基於 `MOCK_BLOG_POSTS` 業務案例的完整使用者操作流程。此套件將模擬使用者在 UI 上的行為，並驗證後端與 AI Agent 的互動是否如預期。
+- **Action (行動)**:
+    - 創建新檔案 `enduser-ui-fe/tests/e2e/ai-teammate-workflows.spec.ts`。
+    - 在測試設定 (`setup`) 中，配置測試環境以模擬使用者登入，並確保可以攔截和監控對 `archon-server` 的 API 請求。
+- **VALIDATE (驗證)**: 能夠在該檔案中執行一個空的 `test('setup complete')` 並且通過。`pnpm test:e2e tests/e2e/ai-teammate-workflows.spec.ts`。
 
-- **END-TO-END (端到端)**: Perform comprehensive end-to-end testing of the entire flow: (對整個流程執行全面的端到端測試：)
-    1.  Create a task in `enduser-ui-fe`. (在 `enduser-ui-fe` 中創建任務。)
-    2.  Assign it to an AI agent. (將其指派給 AI 代理。)
-    3.  Verify `archon-server` correctly triggers the AI agent. (驗證 `archon-server` 正確觸發 AI 代理。)
-    4.  Verify AI agent processes the task and reports status/output. (驗證 AI 代理處理任務並報告狀態/輸出。)
-    5.  Verify `enduser-ui-fe` correctly displays AI agent's status and output. (驗證 `enduser-ui-fe` 正確顯示 AI 代理的狀態和輸出。)
-- **UI/UX REVIEW (使用者介面/體驗審查)**: Ensure the user experience for assigning tasks to AI is intuitive and clear. (確保將任務指派給 AI 的使用者體驗直觀清晰。)
-- **PERFORMANCE (效能)**: Monitor performance for task assignment and AI agent processing. (監控任務指派和 AI 代理處理的效能。)
+#### Task 5.2: Implement E2E Test for "Marketing Campaign" Use Case (實作「行銷活動」使用案例的 E2E 測試)
+- **Goal (目標)**: 自動化驗證行銷人員指派 AI 撰寫部落格文章的完整流程。
+- **Scenario (場景)**: 基於 `MOCK_BLOG_POSTS[0]` 的 "AI-Powered Content Creation" 案例。
+- **Action (行動)**:
+    1.  編寫測試，模擬使用者點擊「新增任務」。
+    2.  在任務標題中輸入 "Draft a blog post about our new AI features"。
+    3.  在指派人下拉選單中，選擇名為 "Content Writer AI" 的代理。
+    4.  點擊「儲存」。
+    5.  **斷言 (Assert)**:
+        -   一個 `POST /api/tasks` 請求被發送到後端，其 `assignee_id` 對應 "Content Writer AI"。
+        -   UI 上的任務狀態短時間內應顯示為 "AI Processing" 或類似狀態。
+        -   (模擬 Agent 回呼後) 任務最終狀態變為 "Completed" 或 "Needs Review"。
+        -   (模擬 Agent 回呼後) 任務詳情中出現由 AI 生成的內容（一個 `agent_output`）。
+- **VALIDATE (驗證)**: `pnpm test:e2e tests/e2e/ai-teammate-workflows.spec.ts --test-name="Marketing Campaign"`。
+
+#### Task 5.3: Implement E2E Test for "Technical Support" Use Case (實作「技術支援」使用案例的 E2E 測試)
+- **Goal (目標)**: 自動化驗證技術支援工程師指派 AI 分析日誌的流程。
+- **Scenario (場景)**: 基於 `MOCK_BLOG_POSTS[1]` 的 "Automated Log Analysis" 案例。
+- **Action (行動)**:
+    1.  編寫測試，模擬使用者創建一個標題為 "Analyze user error logs for ticket #12345" 的任務。
+    2.  在任務描述中貼上一段模擬的錯誤日誌。
+    3.  在指派人下拉選單中，選擇名為 "Log Analyzer AI" 的代理。
+    4.  點擊「儲存」。
+    5.  **斷言 (Assert)**:
+        -   `POST /api/tasks` 請求被正確發送。
+        -   後續模擬 Agent 回呼，斷言任務詳情中出現分析結果，例如 "Root cause identified: NullPointerException in ... "。
+- **VALIDATE (驗證)**: `pnpm test:e2e tests/e2e/ai-teammate-workflows.spec.ts --test-name="Technical Support"`。
+
+#### Task 5.4: Implement E2E Test for "Sales Outreach" Use Case (實作「業務拓展」使用案例的 E2E 測試)
+- **Goal (目標)**: 自動化驗證業務開發代表指派 AI 生成潛在客戶列表的流程。
+- **Scenario (場景)**: 基於 `MOCK_BLOG_POSTS[2]` 的 "Intelligent Lead Generation" 案例。
+- **Action (行動)**:
+    1.  編寫測試，模擬使用者創建一個標題為 "Generate lead list for ACME Corp in the finance sector" 的任務。
+    2.  在指派人下拉選單中，選擇名為 "Sales Intelligence AI" 的代理。
+    3.  點擊「儲存」。
+    4.  **斷言 (Assert)**:
+        -   `POST /api/tasks` 請求被正確發送。
+        -   後續模擬 Agent 回呼，斷言任務詳情中出現一個格式化的潛在客戶列表 (例如 Markdown 表格)。
+- **VALIDATE (驗證)**: `pnpm test:e2e tests/e2e/ai-teammate-workflows.spec.ts --test-name="Sales Outreach"`。
 
 ---
 
@@ -207,3 +243,17 @@ psql $DATABASE_URL -c "SELECT id, title, assignee, status FROM archon_tasks WHER
 - The specific logic for individual AI agents will be developed within the `python/src/agents/features/` directory, following a separate PRP for each agent's capability. (單個 AI 代理的具體邏輯將在 `python/src/agents/features/` 目錄中開發，並為每個代理的功能遵循單獨的 PRP。)
 - Consider implementing robust error handling and fallback mechanisms for AI agent communication failures. (考慮為 AI 代理通訊故障實施強大的錯誤處理和備用機制。)
 - Performance implications, especially for AI agent response times, should be monitored and optimized. (應監控和優化效能影響，特別是 AI 代理響應時間。)
+
+---
+
+### Phase 5 Remaining Tasks (Phase 5 剩餘任務)
+
+The initial E2E test architecture and the first test case ("Marketing Campaign") are now complete. The following tasks remain to complete the full scope of Phase 5.
+
+- **Phase 5.1: Complete Mocked E2E Tests (完成前端模擬 E2E 測試)**
+  - [ ] **Task 5.3: Implement Mocked E2E Test for "Technical Support" Use Case**
+  - [ ] **Task 5.4: Implement Mocked E2E Test for "Sales Outreach" Use Case**
+
+- **Phase 5.2: Transition to Full Integration E2E Tests (過渡到完整整合 E2E 測試)**
+  - [ ] **Task 5.5: Create Automated Database Reset/Seed Mechanism** (Revisit the `test:db:setup` script, likely using a Node.js/TypeScript approach based on project patterns).
+  - [ ] **Task 5.6: Configure E2E Tests to run against a real backend** (This will involve disabling the API mocking and running against a live `archon-server`).

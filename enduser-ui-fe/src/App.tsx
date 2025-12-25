@@ -22,7 +22,7 @@ const App: React.FC = () => {
   );
 };
 
-const AppRoutes: React.FC = () => {
+export const AppRoutes: React.FC = () => {
   const { isAuthenticated, loading } = useAuth();
 
   useEffect(() => {
