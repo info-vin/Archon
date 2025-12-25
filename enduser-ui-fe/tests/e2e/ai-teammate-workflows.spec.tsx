@@ -86,4 +86,89 @@ describe('AI as a Teammate E2E Workflows', () => {
       }));
     });
   });
+
+  test('Technical Support: User can create a task with logs and assign it to a Log Analyzer AI', async () => {
+    // Arrange: Define mock log data
+    const mockErrorLog = `
+      [2025-12-25T10:30:00.123Z] ERROR: NullPointerException at com.example.UserService:123
+      ...stacktrace...
+      [2025-12-25T10:30:00.124Z] INFO: User 'testuser' failed to login.
+    `;
+
+    // Render the component starting at the dashboard
+    renderWithProviders(<AppRoutes />, { route: '/dashboard' });
+
+    // Act: Simulate user actions
+    // 1. Click "New Task"
+    const newTaskButton = await screen.findByRole('button', { name: /new task/i });
+    fireEvent.click(newTaskButton);
+
+    // 2. Fill form
+    const titleInput = await screen.findByLabelText(/title/i);
+    const descriptionInput = screen.getByLabelText(/description/i);
+    const dueDateInput = screen.getByLabelText(/due date/i);
+    
+    const taskTitle = 'Analyze user error logs for ticket #12345';
+    fireEvent.change(titleInput, { target: { value: taskTitle } });
+    fireEvent.change(descriptionInput, { target: { value: mockErrorLog } });
+    fireEvent.change(dueDateInput, { target: { value: '2025-12-28' } });
+
+    // 3. Select AI agent
+    const assigneeSelect = screen.getByLabelText(/assignee/i);
+    fireEvent.change(assigneeSelect, { target: { value: 'agent-log-analyzer' } });
+
+    // 4. Submit form
+    const saveButton = screen.getByRole('button', { name: /create task/i });
+    fireEvent.click(saveButton);
+
+    // Assert: Verify the API call
+    await waitFor(() => {
+      expect(api.createTask).toHaveBeenCalledTimes(1);
+      expect(api.createTask).toHaveBeenCalledWith(expect.objectContaining({
+        title: taskTitle,
+        description: mockErrorLog,
+        assigneeId: 'agent-log-analyzer',
+        project_id: 'proj-e2e-1',
+        due_date: new Date('2025-12-28').toISOString(),
+        priority: 'medium',
+      }));
+    });
+  });
+
+  test('Sales Outreach: User can create a task and assign it to a Sales AI', async () => {
+    // Arrange
+    renderWithProviders(<AppRoutes />, { route: '/dashboard' });
+
+    // Act
+    // 1. Click "New Task"
+    const newTaskButton = await screen.findByRole('button', { name: /new task/i });
+    fireEvent.click(newTaskButton);
+
+    // 2. Fill form
+    const titleInput = await screen.findByLabelText(/title/i);
+    const dueDateInput = screen.getByLabelText(/due date/i);
+    
+    const taskTitle = 'Generate lead list for ACME Corp in the finance sector';
+    fireEvent.change(titleInput, { target: { value: taskTitle } });
+    fireEvent.change(dueDateInput, { target: { value: '2025-12-29' } });
+
+    // 3. Select AI agent
+    const assigneeSelect = screen.getByLabelText(/assignee/i);
+    fireEvent.change(assigneeSelect, { target: { value: 'agent-sales-intel' } });
+
+    // 4. Submit form
+    const saveButton = screen.getByRole('button', { name: /create task/i });
+    fireEvent.click(saveButton);
+
+    // Assert
+    await waitFor(() => {
+      expect(api.createTask).toHaveBeenCalledTimes(1);
+      expect(api.createTask).toHaveBeenCalledWith(expect.objectContaining({
+        title: taskTitle,
+        assigneeId: 'agent-sales-intel',
+        project_id: 'proj-e2e-1',
+        due_date: new Date('2025-12-29').toISOString(),
+      }));
+    });
+  });
 });
