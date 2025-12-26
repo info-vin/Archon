@@ -32,5 +32,8 @@ export default defineConfig({
 
     // Use the same jsdom environment
     environment: 'jsdom',
+
+    // Global setup script for E2E tests (e.g., database reset)
+    globalSetup: './tests/e2e/globalSetup.ts',
   },
 });

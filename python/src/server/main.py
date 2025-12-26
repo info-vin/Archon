@@ -33,6 +33,7 @@ from .api_routes.progress_api import router as progress_router
 from .api_routes.projects_api import router as projects_router
 from .api_routes.providers_api import router as providers_router
 from .api_routes.settings_api import router as settings_router
+from .api_routes.test_api import router as test_api_router # NEW IMPORT
 from .api_routes.version_api import router as version_router
 
 # Import Logfire configuration
@@ -187,6 +188,7 @@ app.add_middleware(
 )
 
 
+app.include_router(test_api_router) # NEW ROUTER
 # Add middleware to skip logging for health checks
 @app.middleware("http")
 async def skip_health_check_logs(request, call_next):
