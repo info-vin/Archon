@@ -137,7 +137,7 @@ def list_projects(
 
         # Use ProjectService to get projects
         project_service = ProjectService()
-        success, result = await project_service.list_projects(
+        success, result = project_service.list_projects(
             include_content=include_content,
             include_computed_status=include_computed_status,
         )
