@@ -115,7 +115,7 @@ async def list_assignable_users(x_user_role: str | None = Header(None, alias="X-
 
 
 @router.get("/projects")
-async def list_projects(
+def list_projects(
     response: Response,
     include_content: bool = True,
     include_computed_status: bool = False,
