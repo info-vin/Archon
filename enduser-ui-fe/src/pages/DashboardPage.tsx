@@ -69,10 +69,10 @@ const DashboardPage: React.FC = () => {
           api.getAssignableUsers(),
           api.getProjects()
         ]);
-        setTasks(tasksData);
-        setEmployees(employeesData);
-        setProjects(projectsData);
-         if (projectsData.length > 0 && selectedProjectId === 'all') {
+        setTasks(tasksData || []);
+        setEmployees(employeesData || []);
+        setProjects(projectsData || []);
+         if (projectsData && projectsData.length > 0 && selectedProjectId === 'all') {
             setSelectedProjectId(projectsData[0].id);
         }
       } catch (error: any) {
@@ -117,7 +117,7 @@ const DashboardPage: React.FC = () => {
   };
   
   const currentProject = useMemo(() => {
-    return projects.find(p => p.id === selectedProjectId);
+    return projects?.find(p => p.id === selectedProjectId);
   }, [projects, selectedProjectId]);
 
   const updateTaskStatus = useCallback(async (taskId: string, newStatus: TaskStatus) => {

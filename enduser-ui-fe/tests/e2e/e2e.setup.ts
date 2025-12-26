@@ -54,7 +54,7 @@ if (useRealApi) {
 
 
 // =============================================================================
-// SECTION 2: CONDITIONAL API MOCKING (Handles Vitest hoisting)
+// SECTION 2: SURGICAL & CONDITIONAL API MOCKING
 // =============================================================================
 
 vi.mock('../../src/services/api', async (importOriginal) => {
