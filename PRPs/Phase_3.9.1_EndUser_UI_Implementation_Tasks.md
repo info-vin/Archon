@@ -138,10 +138,10 @@ Transform Archon into a platform where users can seamlessly assign tasks to eith
 - [ ] **Task 5.5: Implement Automated Database Reset via API Endpoint (透過 API 端點實現自動化資料庫重置)**
     - **Step 5.5.1: Create Backend API Endpoint (創建後端 API 端點):**
         - **Action (行動):** Create a new file `python/src/server/api_routes/test_api.py`.
-        - **Logic (邏輯):** Define a `POST /api/test/reset-database` endpoint, protected by an `ENABLE_TEST_ENDPOINTS` environment variable. This endpoint will use the backend's existing Supabase client to execute the `RESET_DB.sql` and `seed_mock_data.sql` scripts. (This may require wrapping the SQL in a database function/RPC if the client does not support raw multi-statement SQL execution).
+        - **Logic (邏輯):** Define a `POST /api/test/reset-database` endpoint, protected by an `ENABLE_TEST_ENDPOINTS` environment variable. This endpoint will use the backend's existing Supabase client to execute the `RESET_DB.sql` and `seed_mock_data.sql` scripts. (This may require wrapping the SQL in a database function/RPC if the client does not support raw multi-statement SQL execution). (這可能需要將 SQL 包裝成資料庫函式/RPC，如果客戶端不支持原始的多語句 SQL 執行)。
     - **Step 5.5.2: Create `globalSetup.ts` for Vitest (為 Vitest 創建 `globalSetup.ts`):**
         - **Action (行動):** Create `enduser-ui-fe/tests/e2e/globalSetup.ts`.
-        - **Logic (邏輯):** This script will use Node.js's `execSync` to make an HTTP POST request to the `/api/test/reset-database` endpoint before any tests are run.
+        - **Logic (邏輯):** This script will use Node.js's `execSync` to make an HTTP POST request to the `/api/test/reset-database` endpoint before any tests are run. (此腳本將使用 Node.js 的 `execSync` 在任何測試運行前，發送一個 HTTP POST 請求到 `/api/test/reset-database` 端點。)
     - **Step 5.5.3: Update Vitest E2E Configuration (更新 Vitest E2E 設定):**
         - **Action (行動):** Modify `enduser-ui-fe/vitest.e2e.config.ts` to include `globalSetup: './tests/e2e/globalSetup.ts'`.
-- [ ] **Task 5.6: Configure E2E Tests to run against a real backend (設定 E2E 測試以針對真實後端運行)** (This will involve disabling the API mocking and running against a live `archon-server` that has been reset by the new API endpoint).
+- [ ] **Task 5.6: Configure E2E Tests to run against a real backend (設定 E2E 測試以針對真實後端運行)** (This will involve disabling the API mocking and running against a live `archon-server` that has been reset by the new API endpoint). (這將涉及停用 API 模擬，並針對一個已被新 API 端點重置的、真實運行的 `archon-server` 進行測試)。
