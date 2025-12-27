@@ -1,0 +1,3995 @@
+
+> archon-task-manager@0.0.0 test:e2e /app/enduser-ui-fe
+> vitest run --config ./vitest.e2e.config.ts
+
+
+ RUN  v3.2.4 /app/enduser-ui-fe
+
+🚀 [E2E Global Setup] Starting...
+[dotenv@17.2.3] injecting env (6) from ../.env.test -- tip: ⚙️  write to custom object with { processEnv: myObject }
+🚀 [E2E Global Setup] Triggering database reset via API...
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0100    22  100    22    0     0    751      0 --:--:-- --:--:-- --:--:--   785
+{"detail":"Not Found"}✅ [E2E Global Setup] Database reset API call successful.
+🎉 [E2E Global Setup] Complete.
+stdout | tests/e2e/ai-teammate-workflows.spec.tsx
+✅ [E2E Setup] Supabase credentials injected into localStorage for jsdom (top-level).
+✅ [E2E Setup] Mock user injected into localStorage for jsdom (top-level).
+✅ [E2E Setup] window.fetch overridden to proxy /api calls to http://localhost:8181
+
+stdout | tests/e2e/ai-teammate-workflows.spec.tsx
+ HYBRID MOCK MODE [e2e.setup.ts] - Mocking only getCurrentUser to simulate login.
+
+ ❯ tests/e2e/ai-teammate-workflows.spec.tsx (4 tests | 3 failed) 3156ms
+   ✓ AI as a Teammate E2E Workflows > E2E setup is complete and API calls are working 46ms
+   × AI as a Teammate E2E Workflows > Marketing Campaign: User can create a task and assign it to an AI content writer 1066ms
+     → Unable to find role="button" and name `/new task/i`
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex h-screen bg-background text-foreground"[39m
+    [36m>[39m
+      [36m<nav[39m
+        [33mclass[39m=[32m"fixed inset-y-0 left-0 z-50 w-64 bg-card border-r border-border flex flex-col transform -translate-x-full transition-transform duration-300 ease-in-out md:relative md:translate-x-0"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"p-4 border-b border-border flex justify-between items-center gap-2"[39m
+        [36m>[39m
+          [36m<a[39m
+            [33mclass[39m=[32m"text-2xl font-bold"[39m
+            [33mdata-discover[39m=[32m"true"[39m
+            [33mhref[39m=[32m"/dashboard"[39m
+          [36m>[39m
+            [0mArchon[0m
+          [36m</a>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"hidden md:block"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex items-center justify-center bg-card border border-border rounded-md px-3 py-1.5 h-10"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"text-sm font-semibold tracking-wider text-foreground"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"hidden md:inline"[39m
+                [36m>[39m
+                  [0mDec 27, 07:20[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"md:hidden"[39m
+                [36m>[39m
+                  [0m07:20[0m
+                [36m</span>[39m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"border-l border-border h-5 mx-2"[39m
+              [36m/>[39m
+              [36m<button[39m
+                [33maria-label[39m=[32m"Toggle theme"[39m
+                [33mclass[39m=[32m"p-1 rounded-md hover:bg-secondary transition-colors"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33mclass[39m=[32m"w-5 h-5"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mheight[39m=[32m"24"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"2"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"24"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</button>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"md:hidden p-1"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33mclass[39m=[32m"w-6 h-6"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"24"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"24"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<line[39m
+                [33mx1[39m=[32m"18"[39m
+                [33mx2[39m=[32m"6"[39m
+                [33my1[39m=[32m"6"[39m
+                [33my2[39m=[32m"18"[39m
+              [36m/>[39m
+              [36m<line[39m
+                [33mx1[39m=[32m"6"[39m
+                [33mx2[39m=[32m"18"[39m
+                [33my1[39m=[32m"6"[39m
+                [33my2[39m=[32m"18"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<ul[39m
+          [33mclass[39m=[32m"flex-grow p-2"[39m
+        [36m>[39m
+          [36m<li[39m
+            [33mclass[39m=[32m"mb-2"[39m
+          [36m>[39m
+            [36m<a[39m
+              [33mclass[39m=[32m"flex items-center p-2 rounded-md hover:bg-secondary bg-secondary"[39m
+              [33mdata-discover[39m=[32m"true"[39m
+              [33mhref[39m=[32m"/dashboard"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33mclass[39m=[32m"w-5 h-5 mr-3"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"24"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"24"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"[39m
+                [36m/>[39m
+                [36m<circle[39m
+                  [33mcx[39m=[32m"12"[39m
+                  [33mcy[39m=[32m"7"[39m
+                  [33mr[39m=[32m"4"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0mMy Tasks[0m
+            [36m</a>[39m
+          [36m</li>[39m
+          [36m<li[39m
+            [33mclass[39m=[32m"mb-2"[39m
+          [36m>[39m
+            [36m<a[39m
+              [33mclass[39m=[32m"flex items-center p-2 rounded-md hover:bg-secondary "[39m
+              [33mdata-discover[39m=[32m"true"[39m
+              [33mhref[39m=[32m"/settings"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33mclass[39m=[32m"w-5 h-5 mr-3"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"24"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"24"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 0 2.73l-.15.08a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.38a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1 0-2.73l.15-.08a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"[39m
+                [36m/>[39m
+                [36m<circle[39m
+                  [33mcx[39m=[32m"12"[39m
+                  [33mcy[39m=[32m"12"[39m
+                  [33mr[39m=[32m"3"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0mSettings[0m
+            [36m</a>[39m
+          [36m</li>[39m
+        [36m</ul>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"p-4 border-t border-border"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex items-center mb-4"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mstyle[39m=[32m"display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; color: rgb(255, 255, 255); font-size: 20px; font-weight: bold; font-family: sans-serif; border-radius: 50%; background-color: rgb(173, 52, 31);"[39m
+              [33mtitle[39m=[32m"E2E Test User"[39m
+            [36m>[39m
+              [0mE[0m
+            [36m</div>[39m
+            [36m<div>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"font-semibold"[39m
+              [36m>[39m
+                [0mE2E Test User[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+              [36m>[39m
+                [0me2e@archon.com[0m
+              [36m</p>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"w-full flex items-center justify-center p-2 rounded-md bg-destructive text-destructive-foreground hover:bg-destructive/90"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33mclass[39m=[32m"w-5 h-5 mr-2"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"24"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"24"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"[39m
+              [36m/>[39m
+              [36m<polyline[39m
+                [33mpoints[39m=[32m"16 17 21 12 16 7"[39m
+              [36m/>[39m
+              [36m<line[39m
+                [33mx1[39m=[32m"21"[39m
+                [33mx2[39m=[32m"9"[39m
+                [33my1[39m=[32m"12"[39m
+                [33my2[39m=[32m"12"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0mLogout[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</nav>[39m
+      [36m<main[39m
+        [33mclass[39m=[32m"flex-1 flex flex-col overflow-hidden"[39m
+      [36m>[39m
+        [36m<header[39m
+          [33mclass[39m=[32m"md:hidden flex items-center justify-between p-4 border-b border-border bg-background/80 backdrop-blur"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33maria-label[39m=[32m"Open sidebar"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33mclass[39m=[32m"w-6 h-6"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"24"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"24"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<line[39m
+                [33mx1[39m=[32m"4"[39m
+                [33mx2[39m=[32m"20"[39m
+                [33my1[39m=[32m"12"[39m
+                [33my2[39m=[32m"12"[39m
+              [36m/>[39m
+              [36m<line[39m
+                [33mx1[39m=[32m"4"[39m
+                [33mx2[39m=[32m"20"[39m
+                [33my1[39m=[32m"6"[39m
+                [33my2[39m=[32m"6"[39m
+              [36m/>[39m
+              [36m<line[39m
+                [33mx1[39m=[32m"4"[39m
+                [33mx2[39m=[32m"20"[39m
+                [33my1[39m=[32m"18"[39m
+                [33my2[39m=[32m"18"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</button>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex items-center justify-center bg-card border border-border rounded-md px-3 py-1.5 h-10"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"text-sm font-semibold tracking-wider text-foreground"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"hidden md:inline"[39m
+              [36m>[39m
+                [0mDec 27, 07:20[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"md:hidden"[39m
+              [36m>[39m
+                [0m07:20[0m
+              [36m</span>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"border-l border-border h-5 mx-2"[39m
+            [36m/>[39m
+            [36m<button[39m
+              [33maria-label[39m=[32m"Toggle theme"[39m
+              [33mclass[39m=[32m"p-1 rounded-md hover:bg-secondary transition-colors"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33mclass[39m=[32m"w-5 h-5"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"24"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"24"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</header>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex items-center justify-center h-full"[39m
+        [36m>[39m
+          [0mLoading...[0m
+        [36m</div>[39m
+      [36m</main>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex h-screen bg-background text-foreground"[39m
+    [36m>[39m
+      [36m<nav[39m
+        [33mclass[39m=[32m"fixed inset-y-0 left-0 z-50 w-64 bg-card border-r border-border flex flex-col transform -translate-x-full transition-transform duration-300 ease-in-out md:relative md:translate-x-0"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"p-4 border-b border-border flex justify-between items-center gap-2"[39m
+        [36m>[39m
+          [36m<a[39m
+            [33mclass[39m=[32m"text-2xl font-bold"[39m
+            [33mdata-discover[39m=[32m"true"[39m
+            [33mhref[39m=[32m"/dashboard"[39m
+          [36m>[39m
+            [0mArchon[0m
+          [36m</a>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"hidden md:block"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex items-center justify-center bg-card border border-border rounded-md px-3 py-1.5 h-10"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"text-sm font-semibold tracking-wider text-foreground"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"hidden md:inline"[39m
+                [36m>[39m
+                  [0mDec 27, 07:20[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"md:hidden"[39m
+                [36m>[39m
+                  [0m07:20[0m
+                [36m</span>[39m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"border-l border-border h-5 mx-2"[39m
+              [36m/>[39m
+              [36m<button[39m
+                [33maria-label[39m=[32m"Toggle theme"[39m
+                [33mclass[39m=[32m"p-1 rounded-md hover:bg-secondary transition-colors"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33mclass[39m=[32m"w-5 h-5"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mheight[39m=[32m"24"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"2"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"24"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</button>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"md:hidden p-1"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33mclass[39m=[32m"w-6 h-6"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"24"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"24"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<line[39m
+                [33mx1[39m=[32m"18"[39m
+                [33mx2[39m=[32m"6"[39m
+                [33my1[39m=[32m"6"[39m
+                [33my2[39m=[32m"18"[39m
+              [36m/>[39m
+              [36m<line[39m
+                [33mx1[39m=[32m"6"[39m
+                [33mx2[39m=[32m"18"[39m
+                [33my1[39m=[32m"6"[39m
+                [33my2[39m=[32m"18"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<ul[39m
+          [33mclass[39m=[32m"flex-grow p-2"[39m
+        [36m>[39m
+          [36m<li[39m
+            [33mclass[39m=[32m"mb-2"[39m
+          [36m>[39m
+            [36m<a[39m
+              [33mclass[39m=[32m"flex items-center p-2 rounded-md hover:bg-secondary bg-secondary"[39m
+              [33mdata-discover[39m=[32m"true"[39m
+              [33mhref[39m=[32m"/dashboard"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33mclass[39m=[32m"w-5 h-5 mr-3"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"24"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"24"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"[39m
+                [36m/>[39m
+                [36m<circle[39m
+                  [33mcx[39m=[32m"12"[39m
+                  [33mcy[39m=[32m"7"[39m
+                  [33mr[39m=[32m"4"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0mMy Tasks[0m
+            [36m</a>[39m
+          [36m</li>[39m
+          [36m<li[39m
+            [33mclass[39m=[32m"mb-2"[39m
+          [36m>[39m
+            [36m<a[39m
+              [33mclass[39m=[32m"flex items-center p-2 rounded-md hover:bg-secondary "[39m
+              [33mdata-discover[39m=[32m"true"[39m
+              [33mhref[39m=[32m"/settings"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33mclass[39m=[32m"w-5 h-5 mr-3"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"24"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"24"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 0 2.73l-.15.08a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.38a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1 0-2.73l.15-.08a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"[39m
+                [36m/>[39m
+                [36m<circle[39m
+                  [33mcx[39m=[32m"12"[39m
+                  [33mcy[39m=[32m"12"[39m
+                  [33mr[39m=[32m"3"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0mSettings[0m
+            [36m</a>[39m
+          [36m</li>[39m
+        [36m</ul>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"p-4 border-t border-border"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex items-center mb-4"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mstyle[39m=[32m"display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; color: rgb(255, 255, 255); font-size: 20px; font-weight: bold; font-family: sans-serif; border-radius: 50%; background-color: rgb(173, 52, 31);"[39m
+              [33mtitle[39m=[32m"E2E Test User"[39m
+            [36m>[39m
+              [0mE[0m
+            [36m</div>[39m
+            [36m<div>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"font-semibold"[39m
+              [36m>[39m
+                [0mE2E Test User[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+              [36m>[39m
+                [0me2e@archon.com[0m
+              [36m</p>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"w-full flex items-center justify-center p-2 rounded-md bg-destructive text-destructive-foreground hover:bg-destructive/90"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33mclass[39m=[32m"w-5 h-5 mr-2"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"24"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"24"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"[39m
+              [36m/>[39m
+              [36m<polyline[39m
+                [33mpoints[39m=[32m"16 17 21 12 16 7"[39m
+              [36m/>[39m
+              [36m<line[39m
+                [33mx1[39m=[32m"21"[39m
+                [33mx2[39m=[32m"9"[39m
+                [33my1[39m=[32m"12"[39m
+                [33my2[39m=[32m"12"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0mLogout[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</nav>[39m
+      [36m<main[39m
+        [33mclass[39m=[32m"flex-1 flex flex-col overflow-hidden"[39m
+      [36m>[39m
+        [36m<header[39m
+          [33mclass[39m=[32m"md:hidden flex items-center justify-between p-4 border-b border-border bg-background/80 backdrop-blur"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33maria-label[39m=[32m"Open sidebar"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33mclass[39m=[32m"w-6 h-6"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"24"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"24"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<line[39m
+                [33mx1[39m=[32m"4"[39m
+                [33mx2[39m=[32m"20"[39m
+                [33my1[39m=[32m"12"[39m
+                [33my2[39m=[32m"12"[39m
+              [36m/>[39m
+              [36m<line[39m
+                [33mx1[39m=[32m"4"[39m
+                [33mx2[39m=[32m"20"[39m
+                [33my1[39m=[32m"6"[39m
+                [33my2[39m=[32m"6"[39m
+              [36m/>[39m
+              [36m<line[39m
+                [33mx1[39m=[32m"4"[39m
+                [33mx2[39m=[32m"20"[39m
+                [33my1[39m=[32m"18"[39m
+                [33my2[39m=[32m"18"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</button>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex items-center justify-center bg-card border border-border rounded-md px-3 py-1.5 h-10"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"text-sm font-semibold tracking-wider text-foreground"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"hidden md:inline"[39m
+              [36m>[39m
+                [0mDec 27, 07:20[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"md:hidden"[39m
+              [36m>[39m
+                [0m07:20[0m
+              [36m</span>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"border-l border-border h-5 mx-2"[39m
+            [36m/>[39m
+            [36m<button[39m
+              [33maria-label[39m=[32m"Toggle theme"[39m
+              [33mclass[39m=[32m"p-1 rounded-md hover:bg-secondary transition-colors"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33mclass[39m=[32m"w-5 h-5"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"24"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"24"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</header>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex items-center justify-center h-full"[39m
+        [36m>[39m
+          [0mLoading...[0m
+        [36m</div>[39m
+      [36m</main>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+   × AI as a Teammate E2E Workflows > Technical Support: User can create a task with logs and assign it to a Log Analyzer AI 1019ms
+     → Unable to find role="button" and name `/new task/i`
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex h-screen bg-background text-foreground"[39m
+    [36m>[39m
+      [36m<nav[39m
+        [33mclass[39m=[32m"fixed inset-y-0 left-0 z-50 w-64 bg-card border-r border-border flex flex-col transform -translate-x-full transition-transform duration-300 ease-in-out md:relative md:translate-x-0"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"p-4 border-b border-border flex justify-between items-center gap-2"[39m
+        [36m>[39m
+          [36m<a[39m
+            [33mclass[39m=[32m"text-2xl font-bold"[39m
+            [33mdata-discover[39m=[32m"true"[39m
+            [33mhref[39m=[32m"/dashboard"[39m
+          [36m>[39m
+            [0mArchon[0m
+          [36m</a>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"hidden md:block"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex items-center justify-center bg-card border border-border rounded-md px-3 py-1.5 h-10"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"text-sm font-semibold tracking-wider text-foreground"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"hidden md:inline"[39m
+                [36m>[39m
+                  [0mDec 27, 07:20[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"md:hidden"[39m
+                [36m>[39m
+                  [0m07:20[0m
+                [36m</span>[39m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"border-l border-border h-5 mx-2"[39m
+              [36m/>[39m
+              [36m<button[39m
+                [33maria-label[39m=[32m"Toggle theme"[39m
+                [33mclass[39m=[32m"p-1 rounded-md hover:bg-secondary transition-colors"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33mclass[39m=[32m"w-5 h-5"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mheight[39m=[32m"24"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"2"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"24"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</button>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"md:hidden p-1"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33mclass[39m=[32m"w-6 h-6"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"24"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"24"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<line[39m
+                [33mx1[39m=[32m"18"[39m
+                [33mx2[39m=[32m"6"[39m
+                [33my1[39m=[32m"6"[39m
+                [33my2[39m=[32m"18"[39m
+              [36m/>[39m
+              [36m<line[39m
+                [33mx1[39m=[32m"6"[39m
+                [33mx2[39m=[32m"18"[39m
+                [33my1[39m=[32m"6"[39m
+                [33my2[39m=[32m"18"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<ul[39m
+          [33mclass[39m=[32m"flex-grow p-2"[39m
+        [36m>[39m
+          [36m<li[39m
+            [33mclass[39m=[32m"mb-2"[39m
+          [36m>[39m
+            [36m<a[39m
+              [33mclass[39m=[32m"flex items-center p-2 rounded-md hover:bg-secondary bg-secondary"[39m
+              [33mdata-discover[39m=[32m"true"[39m
+              [33mhref[39m=[32m"/dashboard"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33mclass[39m=[32m"w-5 h-5 mr-3"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"24"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"24"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"[39m
+                [36m/>[39m
+                [36m<circle[39m
+                  [33mcx[39m=[32m"12"[39m
+                  [33mcy[39m=[32m"7"[39m
+                  [33mr[39m=[32m"4"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0mMy Tasks[0m
+            [36m</a>[39m
+          [36m</li>[39m
+          [36m<li[39m
+            [33mclass[39m=[32m"mb-2"[39m
+          [36m>[39m
+            [36m<a[39m
+              [33mclass[39m=[32m"flex items-center p-2 rounded-md hover:bg-secondary "[39m
+              [33mdata-discover[39m=[32m"true"[39m
+              [33mhref[39m=[32m"/settings"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33mclass[39m=[32m"w-5 h-5 mr-3"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"24"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"24"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 0 2.73l-.15.08a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.38a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1 0-2.73l.15-.08a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"[39m
+                [36m/>[39m
+                [36m<circle[39m
+                  [33mcx[39m=[32m"12"[39m
+                  [33mcy[39m=[32m"12"[39m
+                  [33mr[39m=[32m"3"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0mSettings[0m
+            [36m</a>[39m
+          [36m</li>[39m
+        [36m</ul>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"p-4 border-t border-border"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex items-center mb-4"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mstyle[39m=[32m"display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; color: rgb(255, 255, 255); font-size: 20px; font-weight: bold; font-family: sans-serif; border-radius: 50%; background-color: rgb(173, 52, 31);"[39m
+              [33mtitle[39m=[32m"E2E Test User"[39m
+            [36m>[39m
+              [0mE[0m
+            [36m</div>[39m
+            [36m<div>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"font-semibold"[39m
+              [36m>[39m
+                [0mE2E Test User[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+              [36m>[39m
+                [0me2e@archon.com[0m
+              [36m</p>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"w-full flex items-center justify-center p-2 rounded-md bg-destructive text-destructive-foreground hover:bg-destructive/90"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33mclass[39m=[32m"w-5 h-5 mr-2"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"24"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"24"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"[39m
+              [36m/>[39m
+              [36m<polyline[39m
+                [33mpoints[39m=[32m"16 17 21 12 16 7"[39m
+              [36m/>[39m
+              [36m<line[39m
+                [33mx1[39m=[32m"21"[39m
+                [33mx2[39m=[32m"9"[39m
+                [33my1[39m=[32m"12"[39m
+                [33my2[39m=[32m"12"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0mLogout[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</nav>[39m
+      [36m<main[39m
+        [33mclass[39m=[32m"flex-1 flex flex-col overflow-hidden"[39m
+      [36m>[39m
+        [36m<header[39m
+          [33mclass[39m=[32m"md:hidden flex items-center justify-between p-4 border-b border-border bg-background/80 backdrop-blur"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33maria-label[39m=[32m"Open sidebar"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33mclass[39m=[32m"w-6 h-6"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"24"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"24"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<line[39m
+                [33mx1[39m=[32m"4"[39m
+                [33mx2[39m=[32m"20"[39m
+                [33my1[39m=[32m"12"[39m
+                [33my2[39m=[32m"12"[39m
+              [36m/>[39m
+              [36m<line[39m
+                [33mx1[39m=[32m"4"[39m
+                [33mx2[39m=[32m"20"[39m
+                [33my1[39m=[32m"6"[39m
+                [33my2[39m=[32m"6"[39m
+              [36m/>[39m
+              [36m<line[39m
+                [33mx1[39m=[32m"4"[39m
+                [33mx2[39m=[32m"20"[39m
+                [33my1[39m=[32m"18"[39m
+                [33my2[39m=[32m"18"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</button>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex items-center justify-center bg-card border border-border rounded-md px-3 py-1.5 h-10"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"text-sm font-semibold tracking-wider text-foreground"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"hidden md:inline"[39m
+              [36m>[39m
+                [0mDec 27, 07:20[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"md:hidden"[39m
+              [36m>[39m
+                [0m07:20[0m
+              [36m</span>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"border-l border-border h-5 mx-2"[39m
+            [36m/>[39m
+            [36m<button[39m
+              [33maria-label[39m=[32m"Toggle theme"[39m
+              [33mclass[39m=[32m"p-1 rounded-md hover:bg-secondary transition-colors"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33mclass[39m=[32m"w-5 h-5"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"24"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"24"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</header>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex-1 flex flex-col h-full overflow-hidden p-6 bg-background"[39m
+        [36m>[39m
+          [36m<header[39m
+            [33mclass[39m=[32m"flex flex-col md:flex-row md:justify-between md:items-center mb-6 gap-4"[39m
+          [36m>[39m
+            [36m<h1[39m
+              [33mclass[39m=[32m"text-3xl font-bold"[39m
+            [36m>[39m
+              [0mAll Tasks[0m
+            [36m</h1>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full md:w-auto"[39m
+            [36m/>[39m
+          [36m</header>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex-1 overflow-auto"[39m
+          [36m>[39m
+            [36m<ul[39m
+              [33mclass[39m=[32m"space-y-2"[39m
+            [36m/>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</main>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex h-screen bg-background text-foreground"[39m
+    [36m>[39m
+      [36m<nav[39m
+        [33mclass[39m=[32m"fixed inset-y-0 left-0 z-50 w-64 bg-card border-r border-border flex flex-col transform -translate-x-full transition-transform duration-300 ease-in-out md:relative md:translate-x-0"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"p-4 border-b border-border flex justify-between items-center gap-2"[39m
+        [36m>[39m
+          [36m<a[39m
+            [33mclass[39m=[32m"text-2xl font-bold"[39m
+            [33mdata-discover[39m=[32m"true"[39m
+            [33mhref[39m=[32m"/dashboard"[39m
+          [36m>[39m
+            [0mArchon[0m
+          [36m</a>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"hidden md:block"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex items-center justify-center bg-card border border-border rounded-md px-3 py-1.5 h-10"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"text-sm font-semibold tracking-wider text-foreground"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"hidden md:inline"[39m
+                [36m>[39m
+                  [0mDec 27, 07:20[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"md:hidden"[39m
+                [36m>[39m
+                  [0m07:20[0m
+                [36m</span>[39m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"border-l border-border h-5 mx-2"[39m
+              [36m/>[39m
+              [36m<button[39m
+                [33maria-label[39m=[32m"Toggle theme"[39m
+                [33mclass[39m=[32m"p-1 rounded-md hover:bg-secondary transition-colors"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33mclass[39m=[32m"w-5 h-5"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mheight[39m=[32m"24"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"2"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"24"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</button>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"md:hidden p-1"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33mclass[39m=[32m"w-6 h-6"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"24"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"24"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<line[39m
+                [33mx1[39m=[32m"18"[39m
+                [33mx2[39m=[32m"6"[39m
+                [33my1[39m=[32m"6"[39m
+                [33my2[39m=[32m"18"[39m
+              [36m/>[39m
+              [36m<line[39m
+                [33mx1[39m=[32m"6"[39m
+                [33mx2[39m=[32m"18"[39m
+                [33my1[39m=[32m"6"[39m
+                [33my2[39m=[32m"18"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<ul[39m
+          [33mclass[39m=[32m"flex-grow p-2"[39m
+        [36m>[39m
+          [36m<li[39m
+            [33mclass[39m=[32m"mb-2"[39m
+          [36m>[39m
+            [36m<a[39m
+              [33mclass[39m=[32m"flex items-center p-2 rounded-md hover:bg-secondary bg-secondary"[39m
+              [33mdata-discover[39m=[32m"true"[39m
+              [33mhref[39m=[32m"/dashboard"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33mclass[39m=[32m"w-5 h-5 mr-3"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"24"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"24"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"[39m
+                [36m/>[39m
+                [36m<circle[39m
+                  [33mcx[39m=[32m"12"[39m
+                  [33mcy[39m=[32m"7"[39m
+                  [33mr[39m=[32m"4"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0mMy Tasks[0m
+            [36m</a>[39m
+          [36m</li>[39m
+          [36m<li[39m
+            [33mclass[39m=[32m"mb-2"[39m
+          [36m>[39m
+            [36m<a[39m
+              [33mclass[39m=[32m"flex items-center p-2 rounded-md hover:bg-secondary "[39m
+              [33mdata-discover[39m=[32m"true"[39m
+              [33mhref[39m=[32m"/settings"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33mclass[39m=[32m"w-5 h-5 mr-3"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"24"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"24"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 0 2.73l-.15.08a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.38a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1 0-2.73l.15-.08a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"[39m
+                [36m/>[39m
+                [36m<circle[39m
+                  [33mcx[39m=[32m"12"[39m
+                  [33mcy[39m=[32m"12"[39m
+                  [33mr[39m=[32m"3"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0mSettings[0m
+            [36m</a>[39m
+          [36m</li>[39m
+        [36m</ul>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"p-4 border-t border-border"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex items-center mb-4"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mstyle[39m=[32m"display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; color: rgb(255, 255, 255); font-size: 20px; font-weight: bold; font-family: sans-serif; border-radius: 50%; background-color: rgb(173, 52, 31);"[39m
+              [33mtitle[39m=[32m"E2E Test User"[39m
+            [36m>[39m
+              [0mE[0m
+            [36m</div>[39m
+            [36m<div>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"font-semibold"[39m
+              [36m>[39m
+                [0mE2E Test User[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+              [36m>[39m
+                [0me2e@archon.com[0m
+              [36m</p>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"w-full flex items-center justify-center p-2 rounded-md bg-destructive text-destructive-foreground hover:bg-destructive/90"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33mclass[39m=[32m"w-5 h-5 mr-2"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"24"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"24"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"[39m
+              [36m/>[39m
+              [36m<polyline[39m
+                [33mpoints[39m=[32m"16 17 21 12 16 7"[39m
+              [36m/>[39m
+              [36m<line[39m
+                [33mx1[39m=[32m"21"[39m
+                [33mx2[39m=[32m"9"[39m
+                [33my1[39m=[32m"12"[39m
+                [33my2[39m=[32m"12"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0mLogout[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</nav>[39m
+      [36m<main[39m
+        [33mclass[39m=[32m"flex-1 flex flex-col overflow-hidden"[39m
+      [36m>[39m
+        [36m<header[39m
+          [33mclass[39m=[32m"md:hidden flex items-center justify-between p-4 border-b border-border bg-background/80 backdrop-blur"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33maria-label[39m=[32m"Open sidebar"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33mclass[39m=[32m"w-6 h-6"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"24"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"24"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<line[39m
+                [33mx1[39m=[32m"4"[39m
+                [33mx2[39m=[32m"20"[39m
+                [33my1[39m=[32m"12"[39m
+                [33my2[39m=[32m"12"[39m
+              [36m/>[39m
+              [36m<line[39m
+                [33mx1[39m=[32m"4"[39m
+                [33mx2[39m=[32m"20"[39m
+                [33my1[39m=[32m"6"[39m
+                [33my2[39m=[32m"6"[39m
+              [36m/>[39m
+              [36m<line[39m
+                [33mx1[39m=[32m"4"[39m
+                [33mx2[39m=[32m"20"[39m
+                [33my1[39m=[32m"18"[39m
+                [33my2[39m=[32m"18"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</button>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex items-center justify-center bg-card border border-border rounded-md px-3 py-1.5 h-10"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"text-sm font-semibold tracking-wider text-foreground"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"hidden md:inline"[39m
+              [36m>[39m
+                [0mDec 27, 07:20[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"md:hidden"[39m
+              [36m>[39m
+                [0m07:20[0m
+              [36m</span>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"border-l border-border h-5 mx-2"[39m
+            [36m/>[39m
+            [36m<button[39m
+              [33maria-label[39m=[32m"Toggle theme"[39m
+              [33mclass[39m=[32m"p-1 rounded-md hover:bg-secondary transition-colors"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33mclass[39m=[32m"w-5 h-5"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"24"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"24"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</header>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex-1 flex flex-col h-full overflow-hidden p-6 bg-background"[39m
+        [36m>[39m
+          [36m<header[39m
+            [33mclass[39m=[32m"flex flex-col md:flex-row md:justify-between md:items-center mb-6 gap-4"[39m
+          [36m>[39m
+            [36m<h1[39m
+              [33mclass[39m=[32m"text-3xl font-bold"[39m
+            [36m>[39m
+              [0mAll Tasks[0m
+            [36m</h1>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full md:w-auto"[39m
+            [36m/>[39m
+          [36m</header>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex-1 overflow-auto"[39m
+          [36m>[39m
+            [36m<ul[39m
+              [33mclass[39m=[32m"space-y-2"[39m
+            [36m/>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</main>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+   × AI as a Teammate E2E Workflows > Sales Outreach: User can create a task and assign it to a Sales AI 1018ms
+     → Unable to find role="button" and name `/new task/i`
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex h-screen bg-background text-foreground"[39m
+    [36m>[39m
+      [36m<nav[39m
+        [33mclass[39m=[32m"fixed inset-y-0 left-0 z-50 w-64 bg-card border-r border-border flex flex-col transform -translate-x-full transition-transform duration-300 ease-in-out md:relative md:translate-x-0"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"p-4 border-b border-border flex justify-between items-center gap-2"[39m
+        [36m>[39m
+          [36m<a[39m
+            [33mclass[39m=[32m"text-2xl font-bold"[39m
+            [33mdata-discover[39m=[32m"true"[39m
+            [33mhref[39m=[32m"/dashboard"[39m
+          [36m>[39m
+            [0mArchon[0m
+          [36m</a>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"hidden md:block"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex items-center justify-center bg-card border border-border rounded-md px-3 py-1.5 h-10"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"text-sm font-semibold tracking-wider text-foreground"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"hidden md:inline"[39m
+                [36m>[39m
+                  [0mDec 27, 07:20[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"md:hidden"[39m
+                [36m>[39m
+                  [0m07:20[0m
+                [36m</span>[39m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"border-l border-border h-5 mx-2"[39m
+              [36m/>[39m
+              [36m<button[39m
+                [33maria-label[39m=[32m"Toggle theme"[39m
+                [33mclass[39m=[32m"p-1 rounded-md hover:bg-secondary transition-colors"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33mclass[39m=[32m"w-5 h-5"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mheight[39m=[32m"24"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"2"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"24"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</button>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"md:hidden p-1"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33mclass[39m=[32m"w-6 h-6"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"24"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"24"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<line[39m
+                [33mx1[39m=[32m"18"[39m
+                [33mx2[39m=[32m"6"[39m
+                [33my1[39m=[32m"6"[39m
+                [33my2[39m=[32m"18"[39m
+              [36m/>[39m
+              [36m<line[39m
+                [33mx1[39m=[32m"6"[39m
+                [33mx2[39m=[32m"18"[39m
+                [33my1[39m=[32m"6"[39m
+                [33my2[39m=[32m"18"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<ul[39m
+          [33mclass[39m=[32m"flex-grow p-2"[39m
+        [36m>[39m
+          [36m<li[39m
+            [33mclass[39m=[32m"mb-2"[39m
+          [36m>[39m
+            [36m<a[39m
+              [33mclass[39m=[32m"flex items-center p-2 rounded-md hover:bg-secondary bg-secondary"[39m
+              [33mdata-discover[39m=[32m"true"[39m
+              [33mhref[39m=[32m"/dashboard"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33mclass[39m=[32m"w-5 h-5 mr-3"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"24"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"24"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"[39m
+                [36m/>[39m
+                [36m<circle[39m
+                  [33mcx[39m=[32m"12"[39m
+                  [33mcy[39m=[32m"7"[39m
+                  [33mr[39m=[32m"4"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0mMy Tasks[0m
+            [36m</a>[39m
+          [36m</li>[39m
+          [36m<li[39m
+            [33mclass[39m=[32m"mb-2"[39m
+          [36m>[39m
+            [36m<a[39m
+              [33mclass[39m=[32m"flex items-center p-2 rounded-md hover:bg-secondary "[39m
+              [33mdata-discover[39m=[32m"true"[39m
+              [33mhref[39m=[32m"/settings"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33mclass[39m=[32m"w-5 h-5 mr-3"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"24"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"24"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 0 2.73l-.15.08a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.38a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1 0-2.73l.15-.08a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"[39m
+                [36m/>[39m
+                [36m<circle[39m
+                  [33mcx[39m=[32m"12"[39m
+                  [33mcy[39m=[32m"12"[39m
+                  [33mr[39m=[32m"3"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0mSettings[0m
+            [36m</a>[39m
+          [36m</li>[39m
+        [36m</ul>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"p-4 border-t border-border"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex items-center mb-4"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mstyle[39m=[32m"display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; color: rgb(255, 255, 255); font-size: 20px; font-weight: bold; font-family: sans-serif; border-radius: 50%; background-color: rgb(173, 52, 31);"[39m
+              [33mtitle[39m=[32m"E2E Test User"[39m
+            [36m>[39m
+              [0mE[0m
+            [36m</div>[39m
+            [36m<div>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"font-semibold"[39m
+              [36m>[39m
+                [0mE2E Test User[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+              [36m>[39m
+                [0me2e@archon.com[0m
+              [36m</p>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"w-full flex items-center justify-center p-2 rounded-md bg-destructive text-destructive-foreground hover:bg-destructive/90"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33mclass[39m=[32m"w-5 h-5 mr-2"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"24"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"24"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"[39m
+              [36m/>[39m
+              [36m<polyline[39m
+                [33mpoints[39m=[32m"16 17 21 12 16 7"[39m
+              [36m/>[39m
+              [36m<line[39m
+                [33mx1[39m=[32m"21"[39m
+                [33mx2[39m=[32m"9"[39m
+                [33my1[39m=[32m"12"[39m
+                [33my2[39m=[32m"12"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0mLogout[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</nav>[39m
+      [36m<main[39m
+        [33mclass[39m=[32m"flex-1 flex flex-col overflow-hidden"[39m
+      [36m>[39m
+        [36m<header[39m
+          [33mclass[39m=[32m"md:hidden flex items-center justify-between p-4 border-b border-border bg-background/80 backdrop-blur"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33maria-label[39m=[32m"Open sidebar"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33mclass[39m=[32m"w-6 h-6"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"24"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"24"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<line[39m
+                [33mx1[39m=[32m"4"[39m
+                [33mx2[39m=[32m"20"[39m
+                [33my1[39m=[32m"12"[39m
+                [33my2[39m=[32m"12"[39m
+              [36m/>[39m
+              [36m<line[39m
+                [33mx1[39m=[32m"4"[39m
+                [33mx2[39m=[32m"20"[39m
+                [33my1[39m=[32m"6"[39m
+                [33my2[39m=[32m"6"[39m
+              [36m/>[39m
+              [36m<line[39m
+                [33mx1[39m=[32m"4"[39m
+                [33mx2[39m=[32m"20"[39m
+                [33my1[39m=[32m"18"[39m
+                [33my2[39m=[32m"18"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</button>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex items-center justify-center bg-card border border-border rounded-md px-3 py-1.5 h-10"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"text-sm font-semibold tracking-wider text-foreground"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"hidden md:inline"[39m
+              [36m>[39m
+                [0mDec 27, 07:20[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"md:hidden"[39m
+              [36m>[39m
+                [0m07:20[0m
+              [36m</span>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"border-l border-border h-5 mx-2"[39m
+            [36m/>[39m
+            [36m<button[39m
+              [33maria-label[39m=[32m"Toggle theme"[39m
+              [33mclass[39m=[32m"p-1 rounded-md hover:bg-secondary transition-colors"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33mclass[39m=[32m"w-5 h-5"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"24"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"24"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</header>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex-1 flex flex-col h-full overflow-hidden p-6 bg-background"[39m
+        [36m>[39m
+          [36m<header[39m
+            [33mclass[39m=[32m"flex flex-col md:flex-row md:justify-between md:items-center mb-6 gap-4"[39m
+          [36m>[39m
+            [36m<h1[39m
+              [33mclass[39m=[32m"text-3xl font-bold"[39m
+            [36m>[39m
+              [0mAll Tasks[0m
+            [36m</h1>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full md:w-auto"[39m
+            [36m/>[39m
+          [36m</header>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex-1 overflow-auto"[39m
+          [36m>[39m
+            [36m<ul[39m
+              [33mclass[39m=[32m"space-y-2"[39m
+            [36m/>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</main>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex h-screen bg-background text-foreground"[39m
+    [36m>[39m
+      [36m<nav[39m
+        [33mclass[39m=[32m"fixed inset-y-0 left-0 z-50 w-64 bg-card border-r border-border flex flex-col transform -translate-x-full transition-transform duration-300 ease-in-out md:relative md:translate-x-0"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"p-4 border-b border-border flex justify-between items-center gap-2"[39m
+        [36m>[39m
+          [36m<a[39m
+            [33mclass[39m=[32m"text-2xl font-bold"[39m
+            [33mdata-discover[39m=[32m"true"[39m
+            [33mhref[39m=[32m"/dashboard"[39m
+          [36m>[39m
+            [0mArchon[0m
+          [36m</a>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"hidden md:block"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex items-center justify-center bg-card border border-border rounded-md px-3 py-1.5 h-10"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"text-sm font-semibold tracking-wider text-foreground"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"hidden md:inline"[39m
+                [36m>[39m
+                  [0mDec 27, 07:20[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"md:hidden"[39m
+                [36m>[39m
+                  [0m07:20[0m
+                [36m</span>[39m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"border-l border-border h-5 mx-2"[39m
+              [36m/>[39m
+              [36m<button[39m
+                [33maria-label[39m=[32m"Toggle theme"[39m
+                [33mclass[39m=[32m"p-1 rounded-md hover:bg-secondary transition-colors"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33mclass[39m=[32m"w-5 h-5"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mheight[39m=[32m"24"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"2"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"24"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</button>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"md:hidden p-1"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33mclass[39m=[32m"w-6 h-6"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"24"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"24"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<line[39m
+                [33mx1[39m=[32m"18"[39m
+                [33mx2[39m=[32m"6"[39m
+                [33my1[39m=[32m"6"[39m
+                [33my2[39m=[32m"18"[39m
+              [36m/>[39m
+              [36m<line[39m
+                [33mx1[39m=[32m"6"[39m
+                [33mx2[39m=[32m"18"[39m
+                [33my1[39m=[32m"6"[39m
+                [33my2[39m=[32m"18"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<ul[39m
+          [33mclass[39m=[32m"flex-grow p-2"[39m
+        [36m>[39m
+          [36m<li[39m
+            [33mclass[39m=[32m"mb-2"[39m
+          [36m>[39m
+            [36m<a[39m
+              [33mclass[39m=[32m"flex items-center p-2 rounded-md hover:bg-secondary bg-secondary"[39m
+              [33mdata-discover[39m=[32m"true"[39m
+              [33mhref[39m=[32m"/dashboard"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33mclass[39m=[32m"w-5 h-5 mr-3"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"24"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"24"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"[39m
+                [36m/>[39m
+                [36m<circle[39m
+                  [33mcx[39m=[32m"12"[39m
+                  [33mcy[39m=[32m"7"[39m
+                  [33mr[39m=[32m"4"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0mMy Tasks[0m
+            [36m</a>[39m
+          [36m</li>[39m
+          [36m<li[39m
+            [33mclass[39m=[32m"mb-2"[39m
+          [36m>[39m
+            [36m<a[39m
+              [33mclass[39m=[32m"flex items-center p-2 rounded-md hover:bg-secondary "[39m
+              [33mdata-discover[39m=[32m"true"[39m
+              [33mhref[39m=[32m"/settings"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33mclass[39m=[32m"w-5 h-5 mr-3"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"24"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"24"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 0 2.73l-.15.08a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.38a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1 0-2.73l.15-.08a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"[39m
+                [36m/>[39m
+                [36m<circle[39m
+                  [33mcx[39m=[32m"12"[39m
+                  [33mcy[39m=[32m"12"[39m
+                  [33mr[39m=[32m"3"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0mSettings[0m
+            [36m</a>[39m
+          [36m</li>[39m
+        [36m</ul>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"p-4 border-t border-border"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex items-center mb-4"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mstyle[39m=[32m"display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; color: rgb(255, 255, 255); font-size: 20px; font-weight: bold; font-family: sans-serif; border-radius: 50%; background-color: rgb(173, 52, 31);"[39m
+              [33mtitle[39m=[32m"E2E Test User"[39m
+            [36m>[39m
+              [0mE[0m
+            [36m</div>[39m
+            [36m<div>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"font-semibold"[39m
+              [36m>[39m
+                [0mE2E Test User[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+              [36m>[39m
+                [0me2e@archon.com[0m
+              [36m</p>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"w-full flex items-center justify-center p-2 rounded-md bg-destructive text-destructive-foreground hover:bg-destructive/90"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33mclass[39m=[32m"w-5 h-5 mr-2"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"24"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"24"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"[39m
+              [36m/>[39m
+              [36m<polyline[39m
+                [33mpoints[39m=[32m"16 17 21 12 16 7"[39m
+              [36m/>[39m
+              [36m<line[39m
+                [33mx1[39m=[32m"21"[39m
+                [33mx2[39m=[32m"9"[39m
+                [33my1[39m=[32m"12"[39m
+                [33my2[39m=[32m"12"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0mLogout[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</nav>[39m
+      [36m<main[39m
+        [33mclass[39m=[32m"flex-1 flex flex-col overflow-hidden"[39m
+      [36m>[39m
+        [36m<header[39m
+          [33mclass[39m=[32m"md:hidden flex items-center justify-between p-4 border-b border-border bg-background/80 backdrop-blur"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33maria-label[39m=[32m"Open sidebar"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33mclass[39m=[32m"w-6 h-6"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"24"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"24"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<line[39m
+                [33mx1[39m=[32m"4"[39m
+                [33mx2[39m=[32m"20"[39m
+                [33my1[39m=[32m"12"[39m
+                [33my2[39m=[32m"12"[39m
+              [36m/>[39m
+              [36m<line[39m
+                [33mx1[39m=[32m"4"[39m
+                [33mx2[39m=[32m"20"[39m
+                [33my1[39m=[32m"6"[39m
+                [33my2[39m=[32m"6"[39m
+              [36m/>[39m
+              [36m<line[39m
+                [33mx1[39m=[32m"4"[39m
+                [33mx2[39m=[32m"20"[39m
+                [33my1[39m=[32m"18"[39m
+                [33my2[39m=[32m"18"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</button>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex items-center justify-center bg-card border border-border rounded-md px-3 py-1.5 h-10"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"text-sm font-semibold tracking-wider text-foreground"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"hidden md:inline"[39m
+              [36m>[39m
+                [0mDec 27, 07:20[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"md:hidden"[39m
+              [36m>[39m
+                [0m07:20[0m
+              [36m</span>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"border-l border-border h-5 mx-2"[39m
+            [36m/>[39m
+            [36m<button[39m
+              [33maria-label[39m=[32m"Toggle theme"[39m
+              [33mclass[39m=[32m"p-1 rounded-md hover:bg-secondary transition-colors"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33mclass[39m=[32m"w-5 h-5"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"24"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"24"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</header>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex-1 flex flex-col h-full overflow-hidden p-6 bg-background"[39m
+        [36m>[39m
+          [36m<header[39m
+            [33mclass[39m=[32m"flex flex-col md:flex-row md:justify-between md:items-center mb-6 gap-4"[39m
+          [36m>[39m
+            [36m<h1[39m
+              [33mclass[39m=[32m"text-3xl font-bold"[39m
+            [36m>[39m
+              [0mAll Tasks[0m
+            [36m</h1>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full md:w-auto"[39m
+            [36m/>[39m
+          [36m</header>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex-1 overflow-auto"[39m
+          [36m>[39m
+            [36m<ul[39m
+              [33mclass[39m=[32m"space-y-2"[39m
+            [36m/>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</main>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/e2e/ai-teammate-workflows.spec.tsx > AI as a Teammate E2E Workflows > Marketing Campaign: User can create a task and assign it to an AI content writer
+TestingLibraryElementError: Unable to find role="button" and name `/new task/i`
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex h-screen bg-background text-foreground"[39m
+    [36m>[39m
+      [36m<nav[39m
+        [33mclass[39m=[32m"fixed inset-y-0 left-0 z-50 w-64 bg-card border-r border-border flex flex-col transform -translate-x-full transition-transform duration-300 ease-in-out md:relative md:translate-x-0"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"p-4 border-b border-border flex justify-between items-center gap-2"[39m
+        [36m>[39m
+          [36m<a[39m
+            [33mclass[39m=[32m"text-2xl font-bold"[39m
+            [33mdata-discover[39m=[32m"true"[39m
+            [33mhref[39m=[32m"/dashboard"[39m
+          [36m>[39m
+            [0mArchon[0m
+          [36m</a>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"hidden md:block"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex items-center justify-center bg-card border border-border rounded-md px-3 py-1.5 h-10"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"text-sm font-semibold tracking-wider text-foreground"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"hidden md:inline"[39m
+                [36m>[39m
+                  [0mDec 27, 07:20[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"md:hidden"[39m
+                [36m>[39m
+                  [0m07:20[0m
+                [36m</span>[39m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"border-l border-border h-5 mx-2"[39m
+              [36m/>[39m
+              [36m<button[39m
+                [33maria-label[39m=[32m"Toggle theme"[39m
+                [33mclass[39m=[32m"p-1 rounded-md hover:bg-secondary transition-colors"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33mclass[39m=[32m"w-5 h-5"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mheight[39m=[32m"24"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"2"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"24"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</button>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"md:hidden p-1"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33mclass[39m=[32m"w-6 h-6"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"24"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"24"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<line[39m
+                [33mx1[39m=[32m"18"[39m
+                [33mx2[39m=[32m"6"[39m
+                [33my1[39m=[32m"6"[39m
+                [33my2[39m=[32m"18"[39m
+              [36m/>[39m
+              [36m<line[39m
+                [33mx1[39m=[32m"6"[39m
+                [33mx2[39m=[32m"18"[39m
+                [33my1[39m=[32m"6"[39m
+                [33my2[39m=[32m"18"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<ul[39m
+          [33mclass[39m=[32m"flex-grow p-2"[39m
+        [36m>[39m
+          [36m<li[39m
+            [33mclass[39m=[32m"mb-2"[39m
+          [36m>[39m
+            [36m<a[39m
+              [33mclass[39m=[32m"flex items-center p-2 rounded-md hover:bg-secondary bg-secondary"[39m
+              [33mdata-discover[39m=[32m"true"[39m
+              [33mhref[39m=[32m"/dashboard"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33mclass[39m=[32m"w-5 h-5 mr-3"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"24"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"24"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"[39m
+                [36m/>[39m
+                [36m<circle[39m
+                  [33mcx[39m=[32m"12"[39m
+                  [33mcy[39m=[32m"7"[39m
+                  [33mr[39m=[32m"4"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0mMy Tasks[0m
+            [36m</a>[39m
+          [36m</li>[39m
+          [36m<li[39m
+            [33mclass[39m=[32m"mb-2"[39m
+          [36m>[39m
+            [36m<a[39m
+              [33mclass[39m=[32m"flex items-center p-2 rounded-md hover:bg-secondary "[39m
+              [33mdata-discover[39m=[32m"true"[39m
+              [33mhref[39m=[32m"/settings"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33mclass[39m=[32m"w-5 h-5 mr-3"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"24"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"24"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 0 2.73l-.15.08a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.38a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1 0-2.73l.15-.08a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"[39m
+                [36m/>[39m
+                [36m<circle[39m
+                  [33mcx[39m=[32m"12"[39m
+                  [33mcy[39m=[32m"12"[39m
+                  [33mr[39m=[32m"3"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0mSettings[0m
+            [36m</a>[39m
+          [36m</li>[39m
+        [36m</ul>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"p-4 border-t border-border"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex items-center mb-4"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mstyle[39m=[32m"display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; color: rgb(255, 255, 255); font-size: 20px; font-weight: bold; font-family: sans-serif; border-radius: 50%; background-color: rgb(173, 52, 31);"[39m
+              [33mtitle[39m=[32m"E2E Test User"[39m
+            [36m>[39m
+              [0mE[0m
+            [36m</div>[39m
+            [36m<div>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"font-semibold"[39m
+              [36m>[39m
+                [0mE2E Test User[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+              [36m>[39m
+                [0me2e@archon.com[0m
+              [36m</p>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"w-full flex items-center justify-center p-2 rounded-md bg-destructive text-destructive-foreground hover:bg-destructive/90"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33mclass[39m=[32m"w-5 h-5 mr-2"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"24"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"24"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"[39m
+              [36m/>[39m
+              [36m<polyline[39m
+                [33mpoints[39m=[32m"16 17 21 12 16 7"[39m
+              [36m/>[39m
+              [36m<line[39m
+                [33mx1[39m=[32m"21"[39m
+                [33mx2[39m=[32m"9"[39m
+                [33my1[39m=[32m"12"[39m
+                [33my2[39m=[32m"12"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0mLogout[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</nav>[39m
+      [36m<main[39m
+        [33mclass[39m=[32m"flex-1 flex flex-col overflow-hidden"[39m
+      [36m>[39m
+        [36m<header[39m
+          [33mclass[39m=[32m"md:hidden flex items-center justify-between p-4 border-b border-border bg-background/80 backdrop-blur"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33maria-label[39m=[32m"Open sidebar"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33mclass[39m=[32m"w-6 h-6"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"24"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"24"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<line[39m
+                [33mx1[39m=[32m"4"[39m
+                [33mx2[39m=[32m"20"[39m
+                [33my1[39m=[32m"12"[39m
+                [33my2[39m=[32m"12"[39m
+              [36m/>[39m
+              [36m<line[39m
+                [33mx1[39m=[32m"4"[39m
+                [33mx2[39m=[32m"20"[39m
+                [33my1[39m=[32m"6"[39m
+                [33my2[39m=[32m"6"[39m
+              [36m/>[39m
+              [36m<line[39m
+                [33mx1[39m=[32m"4"[39m
+                [33mx2[39m=[32m"20"[39m
+                [33my1[39m=[32m"18"[39m
+                [33my2[39m=[32m"18"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</button>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex items-center justify-center bg-card border border-border rounded-md px-3 py-1.5 h-10"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"text-sm font-semibold tracking-wider text-foreground"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"hidden md:inline"[39m
+              [36m>[39m
+                [0mDec 27, 07:20[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"md:hidden"[39m
+              [36m>[39m
+                [0m07:20[0m
+              [36m</span>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"border-l border-border h-5 mx-2"[39m
+            [36m/>[39m
+            [36m<button[39m
+              [33maria-label[39m=[32m"Toggle theme"[39m
+              [33mclass[39m=[32m"p-1 rounded-md hover:bg-secondary transition-colors"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33mclass[39m=[32m"w-5 h-5"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"24"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"24"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</header>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex items-center justify-center h-full"[39m
+        [36m>[39m
+          [0mLoading...[0m
+        [36m</div>[39m
+      [36m</main>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex h-screen bg-background text-foreground"[39m
+    [36m>[39m
+      [36m<nav[39m
+        [33mclass[39m=[32m"fixed inset-y-0 left-0 z-50 w-64 bg-card border-r border-border flex flex-col transform -translate-x-full transition-transform duration-300 ease-in-out md:relative md:translate-x-0"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"p-4 border-b border-border flex justify-between items-center gap-2"[39m
+        [36m>[39m
+          [36m<a[39m
+            [33mclass[39m=[32m"text-2xl font-bold"[39m
+            [33mdata-discover[39m=[32m"true"[39m
+            [33mhref[39m=[32m"/dashboard"[39m
+          [36m>[39m
+            [0mArchon[0m
+          [36m</a>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"hidden md:block"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex items-center justify-center bg-card border border-border rounded-md px-3 py-1.5 h-10"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"text-sm font-semibold tracking-wider text-foreground"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"hidden md:inline"[39m
+                [36m>[39m
+                  [0mDec 27, 07:20[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"md:hidden"[39m
+                [36m>[39m
+                  [0m07:20[0m
+                [36m</span>[39m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"border-l border-border h-5 mx-2"[39m
+              [36m/>[39m
+              [36m<button[39m
+                [33maria-label[39m=[32m"Toggle theme"[39m
+                [33mclass[39m=[32m"p-1 rounded-md hover:bg-secondary transition-colors"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33mclass[39m=[32m"w-5 h-5"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mheight[39m=[32m"24"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"2"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"24"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</button>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"md:hidden p-1"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33mclass[39m=[32m"w-6 h-6"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"24"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"24"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<line[39m
+                [33mx1[39m=[32m"18"[39m
+                [33mx2[39m=[32m"6"[39m
+                [33my1[39m=[32m"6"[39m
+                [33my2[39m=[32m"18"[39m
+              [36m/>[39m
+              [36m<line[39m
+                [33mx1[39m=[32m"6"[39m
+                [33mx2[39m=[32m"18"[39m
+                [33my1[39m=[32m"6"[39m
+                [33my2[39m=[32m"18"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<ul[39m
+          [33mclass[39m=[32m"flex-grow p-2"[39m
+        [36m>[39m
+          [36m<li[39m
+            [33mclass[39m=[32m"mb-2"[39m
+          [36m>[39m
+            [36m<a[39m
+              [33mclass[39m=[32m"flex items-center p-2 rounded-md hover:bg-secondary bg-secondary"[39m
+              [33mdata-discover[39m=[32m"true"[39m
+              [33mhref[39m=[32m"/dashboard"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33mclass[39m=[32m"w-5 h-5 mr-3"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"24"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"24"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"[39m
+                [36m/>[39m
+                [36m<circle[39m
+                  [33mcx[39m=[32m"12"[39m
+                  [33mcy[39m=[32m"7"[39m
+                  [33mr[39m=[32m"4"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0mMy Tasks[0m
+            [36m</a>[39m
+          [36m</li>[39m
+          [36m<li[39m
+            [33mclass[39m=[32m"mb-2"[39m
+          [36m>[39m
+            [36m<a[39m
+              [33mclass[39m=[32m"flex items-center p-2 rounded-md hover:bg-secondary "[39m
+              [33mdata-discover[39m=[32m"true"[39m
+              [33mhref[39m=[32m"/settings"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33mclass[39m=[32m"w-5 h-5 mr-3"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"24"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"24"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 0 2.73l-.15.08a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.38a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1 0-2.73l.15-.08a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"[39m
+                [36m/>[39m
+                [36m<circle[39m
+                  [33mcx[39m=[32m"12"[39m
+                  [33mcy[39m=[32m"12"[39m
+                  [33mr[39m=[32m"3"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0mSettings[0m
+            [36m</a>[39m
+          [36m</li>[39m
+        [36m</ul>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"p-4 border-t border-border"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex items-center mb-4"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mstyle[39m=[32m"display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; color: rgb(255, 255, 255); font-size: 20px; font-weight: bold; font-family: sans-serif; border-radius: 50%; background-color: rgb(173, 52, 31);"[39m
+              [33mtitle[39m=[32m"E2E Test User"[39m
+            [36m>[39m
+              [0mE[0m
+            [36m</div>[39m
+            [36m<div>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"font-semibold"[39m
+              [36m>[39m
+                [0mE2E Test User[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+              [36m>[39m
+                [0me2e@archon.com[0m
+              [36m</p>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"w-full flex items-center justify-center p-2 rounded-md bg-destructive text-destructive-foreground hover:bg-destructive/90"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33mclass[39m=[32m"w-5 h-5 mr-2"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"24"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"24"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"[39m
+              [36m/>[39m
+              [36m<polyline[39m
+                [33mpoints[39m=[32m"16 17 21 12 16 7"[39m
+              [36m/>[39m
+              [36m<line[39m
+                [33mx1[39m=[32m"21"[39m
+                [33mx2[39m=[32m"9"[39m
+                [33my1[39m=[32m"12"[39m
+                [33my2[39m=[32m"12"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0mLogout[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</nav>[39m
+      [36m<main[39m
+        [33mclass[39m=[32m"flex-1 flex flex-col overflow-hidden"[39m
+      [36m>[39m
+        [36m<header[39m
+          [33mclass[39m=[32m"md:hidden flex items-center justify-between p-4 border-b border-border bg-background/80 backdrop-blur"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33maria-label[39m=[32m"Open sidebar"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33mclass[39m=[32m"w-6 h-6"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"24"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"24"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<line[39m
+                [33mx1[39m=[32m"4"[39m
+                [33mx2[39m=[32m"20"[39m
+                [33my1[39m=[32m"12"[39m
+                [33my2[39m=[32m"12"[39m
+              [36m/>[39m
+              [36m<line[39m
+                [33mx1[39m=[32m"4"[39m
+                [33mx2[39m=[32m"20"[39m
+                [33my1[39m=[32m"6"[39m
+                [33my2[39m=[32m"6"[39m
+              [36m/>[39m
+              [36m<line[39m
+                [33mx1[39m=[32m"4"[39m
+                [33mx2[39m=[32m"20"[39m
+                [33my1[39m=[32m"18"[39m
+                [33my2[39m=[32m"18"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</button>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex items-center justify-center bg-card border border-border rounded-md px-3 py-1.5 h-10"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"text-sm font-semibold tracking-wider text-foreground"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"hidden md:inline"[39m
+              [36m>[39m
+                [0mDec 27, 07:20[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"md:hidden"[39m
+              [36m>[39m
+                [0m07:20[0m
+              [36m</span>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"border-l border-border h-5 mx-2"[39m
+            [36m/>[39m
+            [36m<button[39m
+              [33maria-label[39m=[32m"Toggle theme"[39m
+              [33mclass[39m=[32m"p-1 rounded-md hover:bg-secondary transition-colors"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33mclass[39m=[32m"w-5 h-5"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"24"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"24"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</header>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex items-center justify-center h-full"[39m
+        [36m>[39m
+          [0mLoading...[0m
+        [36m</div>[39m
+      [36m</main>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ tests/e2e/ai-teammate-workflows.spec.tsx:37:40
+     35|     renderWithProviders(<AppRoutes />, { route: '/dashboard' });
+     36|
+     37|     const newTaskButton = await screen.findByRole('button', { name: /n…
+       |                                        ^
+     38|     expect(newTaskButton).toBeInTheDocument();
+     39|     fireEvent.click(newTaskButton);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  tests/e2e/ai-teammate-workflows.spec.tsx > AI as a Teammate E2E Workflows > Technical Support: User can create a task with logs and assign it to a Log Analyzer AI
+TestingLibraryElementError: Unable to find role="button" and name `/new task/i`
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex h-screen bg-background text-foreground"[39m
+    [36m>[39m
+      [36m<nav[39m
+        [33mclass[39m=[32m"fixed inset-y-0 left-0 z-50 w-64 bg-card border-r border-border flex flex-col transform -translate-x-full transition-transform duration-300 ease-in-out md:relative md:translate-x-0"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"p-4 border-b border-border flex justify-between items-center gap-2"[39m
+        [36m>[39m
+          [36m<a[39m
+            [33mclass[39m=[32m"text-2xl font-bold"[39m
+            [33mdata-discover[39m=[32m"true"[39m
+            [33mhref[39m=[32m"/dashboard"[39m
+          [36m>[39m
+            [0mArchon[0m
+          [36m</a>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"hidden md:block"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex items-center justify-center bg-card border border-border rounded-md px-3 py-1.5 h-10"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"text-sm font-semibold tracking-wider text-foreground"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"hidden md:inline"[39m
+                [36m>[39m
+                  [0mDec 27, 07:20[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"md:hidden"[39m
+                [36m>[39m
+                  [0m07:20[0m
+                [36m</span>[39m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"border-l border-border h-5 mx-2"[39m
+              [36m/>[39m
+              [36m<button[39m
+                [33maria-label[39m=[32m"Toggle theme"[39m
+                [33mclass[39m=[32m"p-1 rounded-md hover:bg-secondary transition-colors"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33mclass[39m=[32m"w-5 h-5"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mheight[39m=[32m"24"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"2"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"24"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</button>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"md:hidden p-1"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33mclass[39m=[32m"w-6 h-6"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"24"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"24"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<line[39m
+                [33mx1[39m=[32m"18"[39m
+                [33mx2[39m=[32m"6"[39m
+                [33my1[39m=[32m"6"[39m
+                [33my2[39m=[32m"18"[39m
+              [36m/>[39m
+              [36m<line[39m
+                [33mx1[39m=[32m"6"[39m
+                [33mx2[39m=[32m"18"[39m
+                [33my1[39m=[32m"6"[39m
+                [33my2[39m=[32m"18"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<ul[39m
+          [33mclass[39m=[32m"flex-grow p-2"[39m
+        [36m>[39m
+          [36m<li[39m
+            [33mclass[39m=[32m"mb-2"[39m
+          [36m>[39m
+            [36m<a[39m
+              [33mclass[39m=[32m"flex items-center p-2 rounded-md hover:bg-secondary bg-secondary"[39m
+              [33mdata-discover[39m=[32m"true"[39m
+              [33mhref[39m=[32m"/dashboard"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33mclass[39m=[32m"w-5 h-5 mr-3"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"24"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"24"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"[39m
+                [36m/>[39m
+                [36m<circle[39m
+                  [33mcx[39m=[32m"12"[39m
+                  [33mcy[39m=[32m"7"[39m
+                  [33mr[39m=[32m"4"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0mMy Tasks[0m
+            [36m</a>[39m
+          [36m</li>[39m
+          [36m<li[39m
+            [33mclass[39m=[32m"mb-2"[39m
+          [36m>[39m
+            [36m<a[39m
+              [33mclass[39m=[32m"flex items-center p-2 rounded-md hover:bg-secondary "[39m
+              [33mdata-discover[39m=[32m"true"[39m
+              [33mhref[39m=[32m"/settings"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33mclass[39m=[32m"w-5 h-5 mr-3"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"24"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"24"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 0 2.73l-.15.08a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.38a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1 0-2.73l.15-.08a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"[39m
+                [36m/>[39m
+                [36m<circle[39m
+                  [33mcx[39m=[32m"12"[39m
+                  [33mcy[39m=[32m"12"[39m
+                  [33mr[39m=[32m"3"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0mSettings[0m
+            [36m</a>[39m
+          [36m</li>[39m
+        [36m</ul>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"p-4 border-t border-border"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex items-center mb-4"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mstyle[39m=[32m"display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; color: rgb(255, 255, 255); font-size: 20px; font-weight: bold; font-family: sans-serif; border-radius: 50%; background-color: rgb(173, 52, 31);"[39m
+              [33mtitle[39m=[32m"E2E Test User"[39m
+            [36m>[39m
+              [0mE[0m
+            [36m</div>[39m
+            [36m<div>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"font-semibold"[39m
+              [36m>[39m
+                [0mE2E Test User[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+              [36m>[39m
+                [0me2e@archon.com[0m
+              [36m</p>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"w-full flex items-center justify-center p-2 rounded-md bg-destructive text-destructive-foreground hover:bg-destructive/90"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33mclass[39m=[32m"w-5 h-5 mr-2"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"24"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"24"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"[39m
+              [36m/>[39m
+              [36m<polyline[39m
+                [33mpoints[39m=[32m"16 17 21 12 16 7"[39m
+              [36m/>[39m
+              [36m<line[39m
+                [33mx1[39m=[32m"21"[39m
+                [33mx2[39m=[32m"9"[39m
+                [33my1[39m=[32m"12"[39m
+                [33my2[39m=[32m"12"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0mLogout[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</nav>[39m
+      [36m<main[39m
+        [33mclass[39m=[32m"flex-1 flex flex-col overflow-hidden"[39m
+      [36m>[39m
+        [36m<header[39m
+          [33mclass[39m=[32m"md:hidden flex items-center justify-between p-4 border-b border-border bg-background/80 backdrop-blur"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33maria-label[39m=[32m"Open sidebar"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33mclass[39m=[32m"w-6 h-6"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"24"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"24"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<line[39m
+                [33mx1[39m=[32m"4"[39m
+                [33mx2[39m=[32m"20"[39m
+                [33my1[39m=[32m"12"[39m
+                [33my2[39m=[32m"12"[39m
+              [36m/>[39m
+              [36m<line[39m
+                [33mx1[39m=[32m"4"[39m
+                [33mx2[39m=[32m"20"[39m
+                [33my1[39m=[32m"6"[39m
+                [33my2[39m=[32m"6"[39m
+              [36m/>[39m
+              [36m<line[39m
+                [33mx1[39m=[32m"4"[39m
+                [33mx2[39m=[32m"20"[39m
+                [33my1[39m=[32m"18"[39m
+                [33my2[39m=[32m"18"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</button>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex items-center justify-center bg-card border border-border rounded-md px-3 py-1.5 h-10"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"text-sm font-semibold tracking-wider text-foreground"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"hidden md:inline"[39m
+              [36m>[39m
+                [0mDec 27, 07:20[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"md:hidden"[39m
+              [36m>[39m
+                [0m07:20[0m
+              [36m</span>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"border-l border-border h-5 mx-2"[39m
+            [36m/>[39m
+            [36m<button[39m
+              [33maria-label[39m=[32m"Toggle theme"[39m
+              [33mclass[39m=[32m"p-1 rounded-md hover:bg-secondary transition-colors"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33mclass[39m=[32m"w-5 h-5"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"24"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"24"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</header>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex-1 flex flex-col h-full overflow-hidden p-6 bg-background"[39m
+        [36m>[39m
+          [36m<header[39m
+            [33mclass[39m=[32m"flex flex-col md:flex-row md:justify-between md:items-center mb-6 gap-4"[39m
+          [36m>[39m
+            [36m<h1[39m
+              [33mclass[39m=[32m"text-3xl font-bold"[39m
+            [36m>[39m
+              [0mAll Tasks[0m
+            [36m</h1>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full md:w-auto"[39m
+            [36m/>[39m
+          [36m</header>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex-1 overflow-auto"[39m
+          [36m>[39m
+            [36m<ul[39m
+              [33mclass[39m=[32m"space-y-2"[39m
+            [36m/>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</main>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex h-screen bg-background text-foreground"[39m
+    [36m>[39m
+      [36m<nav[39m
+        [33mclass[39m=[32m"fixed inset-y-0 left-0 z-50 w-64 bg-card border-r border-border flex flex-col transform -translate-x-full transition-transform duration-300 ease-in-out md:relative md:translate-x-0"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"p-4 border-b border-border flex justify-between items-center gap-2"[39m
+        [36m>[39m
+          [36m<a[39m
+            [33mclass[39m=[32m"text-2xl font-bold"[39m
+            [33mdata-discover[39m=[32m"true"[39m
+            [33mhref[39m=[32m"/dashboard"[39m
+          [36m>[39m
+            [0mArchon[0m
+          [36m</a>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"hidden md:block"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex items-center justify-center bg-card border border-border rounded-md px-3 py-1.5 h-10"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"text-sm font-semibold tracking-wider text-foreground"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"hidden md:inline"[39m
+                [36m>[39m
+                  [0mDec 27, 07:20[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"md:hidden"[39m
+                [36m>[39m
+                  [0m07:20[0m
+                [36m</span>[39m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"border-l border-border h-5 mx-2"[39m
+              [36m/>[39m
+              [36m<button[39m
+                [33maria-label[39m=[32m"Toggle theme"[39m
+                [33mclass[39m=[32m"p-1 rounded-md hover:bg-secondary transition-colors"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33mclass[39m=[32m"w-5 h-5"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mheight[39m=[32m"24"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"2"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"24"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</button>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"md:hidden p-1"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33mclass[39m=[32m"w-6 h-6"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"24"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"24"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<line[39m
+                [33mx1[39m=[32m"18"[39m
+                [33mx2[39m=[32m"6"[39m
+                [33my1[39m=[32m"6"[39m
+                [33my2[39m=[32m"18"[39m
+              [36m/>[39m
+              [36m<line[39m
+                [33mx1[39m=[32m"6"[39m
+                [33mx2[39m=[32m"18"[39m
+                [33my1[39m=[32m"6"[39m
+                [33my2[39m=[32m"18"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<ul[39m
+          [33mclass[39m=[32m"flex-grow p-2"[39m
+        [36m>[39m
+          [36m<li[39m
+            [33mclass[39m=[32m"mb-2"[39m
+          [36m>[39m
+            [36m<a[39m
+              [33mclass[39m=[32m"flex items-center p-2 rounded-md hover:bg-secondary bg-secondary"[39m
+              [33mdata-discover[39m=[32m"true"[39m
+              [33mhref[39m=[32m"/dashboard"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33mclass[39m=[32m"w-5 h-5 mr-3"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"24"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"24"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"[39m
+                [36m/>[39m
+                [36m<circle[39m
+                  [33mcx[39m=[32m"12"[39m
+                  [33mcy[39m=[32m"7"[39m
+                  [33mr[39m=[32m"4"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0mMy Tasks[0m
+            [36m</a>[39m
+          [36m</li>[39m
+          [36m<li[39m
+            [33mclass[39m=[32m"mb-2"[39m
+          [36m>[39m
+            [36m<a[39m
+              [33mclass[39m=[32m"flex items-center p-2 rounded-md hover:bg-secondary "[39m
+              [33mdata-discover[39m=[32m"true"[39m
+              [33mhref[39m=[32m"/settings"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33mclass[39m=[32m"w-5 h-5 mr-3"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"24"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"24"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 0 2.73l-.15.08a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.38a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1 0-2.73l.15-.08a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"[39m
+                [36m/>[39m
+                [36m<circle[39m
+                  [33mcx[39m=[32m"12"[39m
+                  [33mcy[39m=[32m"12"[39m
+                  [33mr[39m=[32m"3"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0mSettings[0m
+            [36m</a>[39m
+          [36m</li>[39m
+        [36m</ul>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"p-4 border-t border-border"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex items-center mb-4"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mstyle[39m=[32m"display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; color: rgb(255, 255, 255); font-size: 20px; font-weight: bold; font-family: sans-serif; border-radius: 50%; background-color: rgb(173, 52, 31);"[39m
+              [33mtitle[39m=[32m"E2E Test User"[39m
+            [36m>[39m
+              [0mE[0m
+            [36m</div>[39m
+            [36m<div>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"font-semibold"[39m
+              [36m>[39m
+                [0mE2E Test User[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+              [36m>[39m
+                [0me2e@archon.com[0m
+              [36m</p>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"w-full flex items-center justify-center p-2 rounded-md bg-destructive text-destructive-foreground hover:bg-destructive/90"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33mclass[39m=[32m"w-5 h-5 mr-2"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"24"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"24"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"[39m
+              [36m/>[39m
+              [36m<polyline[39m
+                [33mpoints[39m=[32m"16 17 21 12 16 7"[39m
+              [36m/>[39m
+              [36m<line[39m
+                [33mx1[39m=[32m"21"[39m
+                [33mx2[39m=[32m"9"[39m
+                [33my1[39m=[32m"12"[39m
+                [33my2[39m=[32m"12"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0mLogout[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</nav>[39m
+      [36m<main[39m
+        [33mclass[39m=[32m"flex-1 flex flex-col overflow-hidden"[39m
+      [36m>[39m
+        [36m<header[39m
+          [33mclass[39m=[32m"md:hidden flex items-center justify-between p-4 border-b border-border bg-background/80 backdrop-blur"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33maria-label[39m=[32m"Open sidebar"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33mclass[39m=[32m"w-6 h-6"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"24"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"24"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<line[39m
+                [33mx1[39m=[32m"4"[39m
+                [33mx2[39m=[32m"20"[39m
+                [33my1[39m=[32m"12"[39m
+                [33my2[39m=[32m"12"[39m
+              [36m/>[39m
+              [36m<line[39m
+                [33mx1[39m=[32m"4"[39m
+                [33mx2[39m=[32m"20"[39m
+                [33my1[39m=[32m"6"[39m
+                [33my2[39m=[32m"6"[39m
+              [36m/>[39m
+              [36m<line[39m
+                [33mx1[39m=[32m"4"[39m
+                [33mx2[39m=[32m"20"[39m
+                [33my1[39m=[32m"18"[39m
+                [33my2[39m=[32m"18"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</button>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex items-center justify-center bg-card border border-border rounded-md px-3 py-1.5 h-10"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"text-sm font-semibold tracking-wider text-foreground"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"hidden md:inline"[39m
+              [36m>[39m
+                [0mDec 27, 07:20[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"md:hidden"[39m
+              [36m>[39m
+                [0m07:20[0m
+              [36m</span>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"border-l border-border h-5 mx-2"[39m
+            [36m/>[39m
+            [36m<button[39m
+              [33maria-label[39m=[32m"Toggle theme"[39m
+              [33mclass[39m=[32m"p-1 rounded-md hover:bg-secondary transition-colors"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33mclass[39m=[32m"w-5 h-5"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"24"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"24"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</header>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex-1 flex flex-col h-full overflow-hidden p-6 bg-background"[39m
+        [36m>[39m
+          [36m<header[39m
+            [33mclass[39m=[32m"flex flex-col md:flex-row md:justify-between md:items-center mb-6 gap-4"[39m
+          [36m>[39m
+            [36m<h1[39m
+              [33mclass[39m=[32m"text-3xl font-bold"[39m
+            [36m>[39m
+              [0mAll Tasks[0m
+            [36m</h1>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full md:w-auto"[39m
+            [36m/>[39m
+          [36m</header>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex-1 overflow-auto"[39m
+          [36m>[39m
+            [36m<ul[39m
+              [33mclass[39m=[32m"space-y-2"[39m
+            [36m/>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</main>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ tests/e2e/ai-teammate-workflows.spec.tsx:69:40
+     67|     renderWithProviders(<AppRoutes />, { route: '/dashboard' });
+     68|
+     69|     const newTaskButton = await screen.findByRole('button', { name: /n…
+       |                                        ^
+     70|     fireEvent.click(newTaskButton);
+     71|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  tests/e2e/ai-teammate-workflows.spec.tsx > AI as a Teammate E2E Workflows > Sales Outreach: User can create a task and assign it to a Sales AI
+TestingLibraryElementError: Unable to find role="button" and name `/new task/i`
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex h-screen bg-background text-foreground"[39m
+    [36m>[39m
+      [36m<nav[39m
+        [33mclass[39m=[32m"fixed inset-y-0 left-0 z-50 w-64 bg-card border-r border-border flex flex-col transform -translate-x-full transition-transform duration-300 ease-in-out md:relative md:translate-x-0"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"p-4 border-b border-border flex justify-between items-center gap-2"[39m
+        [36m>[39m
+          [36m<a[39m
+            [33mclass[39m=[32m"text-2xl font-bold"[39m
+            [33mdata-discover[39m=[32m"true"[39m
+            [33mhref[39m=[32m"/dashboard"[39m
+          [36m>[39m
+            [0mArchon[0m
+          [36m</a>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"hidden md:block"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex items-center justify-center bg-card border border-border rounded-md px-3 py-1.5 h-10"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"text-sm font-semibold tracking-wider text-foreground"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"hidden md:inline"[39m
+                [36m>[39m
+                  [0mDec 27, 07:20[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"md:hidden"[39m
+                [36m>[39m
+                  [0m07:20[0m
+                [36m</span>[39m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"border-l border-border h-5 mx-2"[39m
+              [36m/>[39m
+              [36m<button[39m
+                [33maria-label[39m=[32m"Toggle theme"[39m
+                [33mclass[39m=[32m"p-1 rounded-md hover:bg-secondary transition-colors"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33mclass[39m=[32m"w-5 h-5"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mheight[39m=[32m"24"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"2"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"24"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</button>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"md:hidden p-1"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33mclass[39m=[32m"w-6 h-6"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"24"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"24"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<line[39m
+                [33mx1[39m=[32m"18"[39m
+                [33mx2[39m=[32m"6"[39m
+                [33my1[39m=[32m"6"[39m
+                [33my2[39m=[32m"18"[39m
+              [36m/>[39m
+              [36m<line[39m
+                [33mx1[39m=[32m"6"[39m
+                [33mx2[39m=[32m"18"[39m
+                [33my1[39m=[32m"6"[39m
+                [33my2[39m=[32m"18"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<ul[39m
+          [33mclass[39m=[32m"flex-grow p-2"[39m
+        [36m>[39m
+          [36m<li[39m
+            [33mclass[39m=[32m"mb-2"[39m
+          [36m>[39m
+            [36m<a[39m
+              [33mclass[39m=[32m"flex items-center p-2 rounded-md hover:bg-secondary bg-secondary"[39m
+              [33mdata-discover[39m=[32m"true"[39m
+              [33mhref[39m=[32m"/dashboard"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33mclass[39m=[32m"w-5 h-5 mr-3"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"24"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"24"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"[39m
+                [36m/>[39m
+                [36m<circle[39m
+                  [33mcx[39m=[32m"12"[39m
+                  [33mcy[39m=[32m"7"[39m
+                  [33mr[39m=[32m"4"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0mMy Tasks[0m
+            [36m</a>[39m
+          [36m</li>[39m
+          [36m<li[39m
+            [33mclass[39m=[32m"mb-2"[39m
+          [36m>[39m
+            [36m<a[39m
+              [33mclass[39m=[32m"flex items-center p-2 rounded-md hover:bg-secondary "[39m
+              [33mdata-discover[39m=[32m"true"[39m
+              [33mhref[39m=[32m"/settings"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33mclass[39m=[32m"w-5 h-5 mr-3"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"24"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"24"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 0 2.73l-.15.08a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.38a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1 0-2.73l.15-.08a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"[39m
+                [36m/>[39m
+                [36m<circle[39m
+                  [33mcx[39m=[32m"12"[39m
+                  [33mcy[39m=[32m"12"[39m
+                  [33mr[39m=[32m"3"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0mSettings[0m
+            [36m</a>[39m
+          [36m</li>[39m
+        [36m</ul>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"p-4 border-t border-border"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex items-center mb-4"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mstyle[39m=[32m"display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; color: rgb(255, 255, 255); font-size: 20px; font-weight: bold; font-family: sans-serif; border-radius: 50%; background-color: rgb(173, 52, 31);"[39m
+              [33mtitle[39m=[32m"E2E Test User"[39m
+            [36m>[39m
+              [0mE[0m
+            [36m</div>[39m
+            [36m<div>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"font-semibold"[39m
+              [36m>[39m
+                [0mE2E Test User[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+              [36m>[39m
+                [0me2e@archon.com[0m
+              [36m</p>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"w-full flex items-center justify-center p-2 rounded-md bg-destructive text-destructive-foreground hover:bg-destructive/90"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33mclass[39m=[32m"w-5 h-5 mr-2"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"24"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"24"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"[39m
+              [36m/>[39m
+              [36m<polyline[39m
+                [33mpoints[39m=[32m"16 17 21 12 16 7"[39m
+              [36m/>[39m
+              [36m<line[39m
+                [33mx1[39m=[32m"21"[39m
+                [33mx2[39m=[32m"9"[39m
+                [33my1[39m=[32m"12"[39m
+                [33my2[39m=[32m"12"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0mLogout[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</nav>[39m
+      [36m<main[39m
+        [33mclass[39m=[32m"flex-1 flex flex-col overflow-hidden"[39m
+      [36m>[39m
+        [36m<header[39m
+          [33mclass[39m=[32m"md:hidden flex items-center justify-between p-4 border-b border-border bg-background/80 backdrop-blur"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33maria-label[39m=[32m"Open sidebar"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33mclass[39m=[32m"w-6 h-6"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"24"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"24"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<line[39m
+                [33mx1[39m=[32m"4"[39m
+                [33mx2[39m=[32m"20"[39m
+                [33my1[39m=[32m"12"[39m
+                [33my2[39m=[32m"12"[39m
+              [36m/>[39m
+              [36m<line[39m
+                [33mx1[39m=[32m"4"[39m
+                [33mx2[39m=[32m"20"[39m
+                [33my1[39m=[32m"6"[39m
+                [33my2[39m=[32m"6"[39m
+              [36m/>[39m
+              [36m<line[39m
+                [33mx1[39m=[32m"4"[39m
+                [33mx2[39m=[32m"20"[39m
+                [33my1[39m=[32m"18"[39m
+                [33my2[39m=[32m"18"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</button>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex items-center justify-center bg-card border border-border rounded-md px-3 py-1.5 h-10"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"text-sm font-semibold tracking-wider text-foreground"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"hidden md:inline"[39m
+              [36m>[39m
+                [0mDec 27, 07:20[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"md:hidden"[39m
+              [36m>[39m
+                [0m07:20[0m
+              [36m</span>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"border-l border-border h-5 mx-2"[39m
+            [36m/>[39m
+            [36m<button[39m
+              [33maria-label[39m=[32m"Toggle theme"[39m
+              [33mclass[39m=[32m"p-1 rounded-md hover:bg-secondary transition-colors"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33mclass[39m=[32m"w-5 h-5"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"24"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"24"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</header>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex-1 flex flex-col h-full overflow-hidden p-6 bg-background"[39m
+        [36m>[39m
+          [36m<header[39m
+            [33mclass[39m=[32m"flex flex-col md:flex-row md:justify-between md:items-center mb-6 gap-4"[39m
+          [36m>[39m
+            [36m<h1[39m
+              [33mclass[39m=[32m"text-3xl font-bold"[39m
+            [36m>[39m
+              [0mAll Tasks[0m
+            [36m</h1>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full md:w-auto"[39m
+            [36m/>[39m
+          [36m</header>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex-1 overflow-auto"[39m
+          [36m>[39m
+            [36m<ul[39m
+              [33mclass[39m=[32m"space-y-2"[39m
+            [36m/>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</main>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex h-screen bg-background text-foreground"[39m
+    [36m>[39m
+      [36m<nav[39m
+        [33mclass[39m=[32m"fixed inset-y-0 left-0 z-50 w-64 bg-card border-r border-border flex flex-col transform -translate-x-full transition-transform duration-300 ease-in-out md:relative md:translate-x-0"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"p-4 border-b border-border flex justify-between items-center gap-2"[39m
+        [36m>[39m
+          [36m<a[39m
+            [33mclass[39m=[32m"text-2xl font-bold"[39m
+            [33mdata-discover[39m=[32m"true"[39m
+            [33mhref[39m=[32m"/dashboard"[39m
+          [36m>[39m
+            [0mArchon[0m
+          [36m</a>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"hidden md:block"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex items-center justify-center bg-card border border-border rounded-md px-3 py-1.5 h-10"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"text-sm font-semibold tracking-wider text-foreground"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"hidden md:inline"[39m
+                [36m>[39m
+                  [0mDec 27, 07:20[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"md:hidden"[39m
+                [36m>[39m
+                  [0m07:20[0m
+                [36m</span>[39m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"border-l border-border h-5 mx-2"[39m
+              [36m/>[39m
+              [36m<button[39m
+                [33maria-label[39m=[32m"Toggle theme"[39m
+                [33mclass[39m=[32m"p-1 rounded-md hover:bg-secondary transition-colors"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33mclass[39m=[32m"w-5 h-5"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mheight[39m=[32m"24"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"2"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"24"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</button>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"md:hidden p-1"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33mclass[39m=[32m"w-6 h-6"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"24"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"24"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<line[39m
+                [33mx1[39m=[32m"18"[39m
+                [33mx2[39m=[32m"6"[39m
+                [33my1[39m=[32m"6"[39m
+                [33my2[39m=[32m"18"[39m
+              [36m/>[39m
+              [36m<line[39m
+                [33mx1[39m=[32m"6"[39m
+                [33mx2[39m=[32m"18"[39m
+                [33my1[39m=[32m"6"[39m
+                [33my2[39m=[32m"18"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<ul[39m
+          [33mclass[39m=[32m"flex-grow p-2"[39m
+        [36m>[39m
+          [36m<li[39m
+            [33mclass[39m=[32m"mb-2"[39m
+          [36m>[39m
+            [36m<a[39m
+              [33mclass[39m=[32m"flex items-center p-2 rounded-md hover:bg-secondary bg-secondary"[39m
+              [33mdata-discover[39m=[32m"true"[39m
+              [33mhref[39m=[32m"/dashboard"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33mclass[39m=[32m"w-5 h-5 mr-3"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"24"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"24"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"[39m
+                [36m/>[39m
+                [36m<circle[39m
+                  [33mcx[39m=[32m"12"[39m
+                  [33mcy[39m=[32m"7"[39m
+                  [33mr[39m=[32m"4"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0mMy Tasks[0m
+            [36m</a>[39m
+          [36m</li>[39m
+          [36m<li[39m
+            [33mclass[39m=[32m"mb-2"[39m
+          [36m>[39m
+            [36m<a[39m
+              [33mclass[39m=[32m"flex items-center p-2 rounded-md hover:bg-secondary "[39m
+              [33mdata-discover[39m=[32m"true"[39m
+              [33mhref[39m=[32m"/settings"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33mclass[39m=[32m"w-5 h-5 mr-3"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"24"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"24"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 0 2.73l-.15.08a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.38a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1 0-2.73l.15-.08a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"[39m
+                [36m/>[39m
+                [36m<circle[39m
+                  [33mcx[39m=[32m"12"[39m
+                  [33mcy[39m=[32m"12"[39m
+                  [33mr[39m=[32m"3"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0mSettings[0m
+            [36m</a>[39m
+          [36m</li>[39m
+        [36m</ul>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"p-4 border-t border-border"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex items-center mb-4"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mstyle[39m=[32m"display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; color: rgb(255, 255, 255); font-size: 20px; font-weight: bold; font-family: sans-serif; border-radius: 50%; background-color: rgb(173, 52, 31);"[39m
+              [33mtitle[39m=[32m"E2E Test User"[39m
+            [36m>[39m
+              [0mE[0m
+            [36m</div>[39m
+            [36m<div>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"font-semibold"[39m
+              [36m>[39m
+                [0mE2E Test User[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+              [36m>[39m
+                [0me2e@archon.com[0m
+              [36m</p>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"w-full flex items-center justify-center p-2 rounded-md bg-destructive text-destructive-foreground hover:bg-destructive/90"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33mclass[39m=[32m"w-5 h-5 mr-2"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"24"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"24"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"[39m
+              [36m/>[39m
+              [36m<polyline[39m
+                [33mpoints[39m=[32m"16 17 21 12 16 7"[39m
+              [36m/>[39m
+              [36m<line[39m
+                [33mx1[39m=[32m"21"[39m
+                [33mx2[39m=[32m"9"[39m
+                [33my1[39m=[32m"12"[39m
+                [33my2[39m=[32m"12"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0mLogout[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</nav>[39m
+      [36m<main[39m
+        [33mclass[39m=[32m"flex-1 flex flex-col overflow-hidden"[39m
+      [36m>[39m
+        [36m<header[39m
+          [33mclass[39m=[32m"md:hidden flex items-center justify-between p-4 border-b border-border bg-background/80 backdrop-blur"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33maria-label[39m=[32m"Open sidebar"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33mclass[39m=[32m"w-6 h-6"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"24"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"24"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<line[39m
+                [33mx1[39m=[32m"4"[39m
+                [33mx2[39m=[32m"20"[39m
+                [33my1[39m=[32m"12"[39m
+                [33my2[39m=[32m"12"[39m
+              [36m/>[39m
+              [36m<line[39m
+                [33mx1[39m=[32m"4"[39m
+                [33mx2[39m=[32m"20"[39m
+                [33my1[39m=[32m"6"[39m
+                [33my2[39m=[32m"6"[39m
+              [36m/>[39m
+              [36m<line[39m
+                [33mx1[39m=[32m"4"[39m
+                [33mx2[39m=[32m"20"[39m
+                [33my1[39m=[32m"18"[39m
+                [33my2[39m=[32m"18"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</button>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex items-center justify-center bg-card border border-border rounded-md px-3 py-1.5 h-10"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"text-sm font-semibold tracking-wider text-foreground"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"hidden md:inline"[39m
+              [36m>[39m
+                [0mDec 27, 07:20[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"md:hidden"[39m
+              [36m>[39m
+                [0m07:20[0m
+              [36m</span>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"border-l border-border h-5 mx-2"[39m
+            [36m/>[39m
+            [36m<button[39m
+              [33maria-label[39m=[32m"Toggle theme"[39m
+              [33mclass[39m=[32m"p-1 rounded-md hover:bg-secondary transition-colors"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33mclass[39m=[32m"w-5 h-5"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"24"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"24"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</header>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex-1 flex flex-col h-full overflow-hidden p-6 bg-background"[39m
+        [36m>[39m
+          [36m<header[39m
+            [33mclass[39m=[32m"flex flex-col md:flex-row md:justify-between md:items-center mb-6 gap-4"[39m
+          [36m>[39m
+            [36m<h1[39m
+              [33mclass[39m=[32m"text-3xl font-bold"[39m
+            [36m>[39m
+              [0mAll Tasks[0m
+            [36m</h1>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full md:w-auto"[39m
+            [36m/>[39m
+          [36m</header>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex-1 overflow-auto"[39m
+          [36m>[39m
+            [36m<ul[39m
+              [33mclass[39m=[32m"space-y-2"[39m
+            [36m/>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</main>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ tests/e2e/ai-teammate-workflows.spec.tsx:95:40
+     93|     renderWithProviders(<AppRoutes />, { route: '/dashboard' });
+     94|
+     95|     const newTaskButton = await screen.findByRole('button', { name: /n…
+       |                                        ^
+     96|     fireEvent.click(newTaskButton);
+     97|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 1 passed (4)
+   Start at  07:20:50
+   Duration  7.67s (transform 624ms, setup 540ms, collect 1.59s, tests 3.16s, environment 1.39s, prepare 197ms)
+
+ ELIFECYCLE  Command failed with exit code 1.
