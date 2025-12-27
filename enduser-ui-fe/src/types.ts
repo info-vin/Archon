@@ -58,6 +58,7 @@ export interface Task {
   description: string;
   status: TaskStatus;
   assignee?: string; // Changed from assigneeId to match DB schema (TEXT field)
+  assignee_id?: string | null;
   task_order: number;
   priority: TaskPriority;
   due_date: string; // ISO string
