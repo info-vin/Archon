@@ -23,7 +23,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({ task, onClose, onTaskCreat
   const [assignableUsers, setAssignableUsers] = useState<AssignableUser[]>([]);
   const [isLoadingUsers, setIsLoadingUsers] = useState(true);
 
-  const isEditMode = task != null;
+  const isEditMode = task != null && task.id;
 
   useEffect(() => {
     const fetchAssignableOptions = async () => {
@@ -53,11 +53,13 @@ export const TaskModal: React.FC<TaskModalProps> = ({ task, onClose, onTaskCreat
   }, []);
 
   useEffect(() => {
-    if (isEditMode) {
+    if (isEditMode && task) {
       setTitle(task.title);
       setDescription(task.description || '');
       setAssigneeId(task.assignee_id || '');
-      setDueDate(new Date(task.due_date).toISOString().split('T')[0]);
+      if (task.due_date) {
+        setDueDate(new Date(task.due_date).toISOString().split('T')[0]);
+      }
       setPriority(task.priority);
     }
   }, [task, isEditMode]);
@@ -88,19 +90,17 @@ export const TaskModal: React.FC<TaskModalProps> = ({ task, onClose, onTaskCreat
         };
         const updatedTask = await api.updateTask(task.id, updatedData);
         onTaskUpdated(updatedTask);
-        alert('Task updated successfully!');
       } else {
         const newTaskData: NewTaskData = {
           project_id: finalProjectId,
           title,
           description,
-          assigneeId: assigneeId || undefined,
+          assignee_id: assigneeId || undefined,
           due_date: new Date(dueDate).toISOString(),
           priority,
         };
         const newTask = await api.createTask(newTaskData);
         onTaskCreated(newTask);
-        alert('Task created successfully!');
       }
       onClose();
     } catch (error: any) {

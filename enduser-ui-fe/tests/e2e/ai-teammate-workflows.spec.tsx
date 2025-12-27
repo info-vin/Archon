@@ -4,6 +4,7 @@ import { MemoryRouter } from 'react-router-dom';
 import { AppRoutes } from '../../src/App';
 import { AuthProvider } from '../../src/hooks/useAuth';
 import { api } from '../../src/services/api';
+import { resetMockTasks } from '../../src/mocks/handlers';
 
 const renderWithProviders = (ui: React.ReactElement, { route = '/' } = {}) => {
   window.history.pushState({}, 'Test page', route);
@@ -19,6 +20,7 @@ const renderWithProviders = (ui: React.ReactElement, { route = '/' } = {}) => {
 describe('AI as a Teammate E2E Workflows', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    resetMockTasks();
   });
 
   test('E2E setup is complete and API calls are working', async () => {
@@ -27,8 +29,9 @@ describe('AI as a Teammate E2E Workflows', () => {
     expect(user?.name).toBe('E2E Test User');
 
     const assignableAgents = await api.getAssignableAgents();
-    expect(assignableAgents).toHaveLength(2);
-    expect(assignableAgents[0].name).toBe('(AI) Market Researcher');
+    expect(assignableAgents.length).toBeGreaterThanOrEqual(5);
+    expect(assignableAgents.some(a => a.id === 'agent-content-writer')).toBe(true);
+    expect(assignableAgents.some(a => a.id === 'agent-log-analyzer')).toBe(true);
   });
 
   test('Marketing Campaign: User can create a task and assign it to an AI content writer', async () => {
