@@ -1,12 +1,12 @@
 ---
 name: "PRP 3.9.1: End-User UI Implementation Tasks - AI as a Teammate (繁體中文版)"
-description: "Detailed implementation tasks for realizing the 'AI as a Teammate' vision within the enduser-ui-fe, transitioning from mock data to real API calls, and integrating AI agent assignment. (實現 enduser-ui-fe 中「AI 作為隊友」願景的詳細實作任務，包含從模擬資料過渡到真實 API 呼叫，並整合 AI 代理指派功能。)"
+description: "Detailed implementation tasks for realizing the 'AI as a Teammate' vision within the enduser-ui-fe, transitioning from mock data to real API calls, and integrating AI agent assignment. (實現 enduser-ui-fe 中「AI 作為隊友」願景的詳細實作任務，包含從模擬 資料過渡到真實 API 呼叫，並整合 AI 代理指派功能。)"
 ---
 
 ## Original Story (原始故事)
 
 **AI as a Teammate Vision (AI 作為隊友的願景):**
-Transform Archon into a platform where users can seamlessly assign tasks to either human colleagues or specialized AI Agents directly from the `enduser-ui-fe` interface. These AI Agents will then autonomously execute or assist in task completion, enabling true human-AI collaboration. (將 Archon 轉變為一個平台，讓使用者可以直接從 `enduser-ui-fe` 介面將任務無縫地指派給人類同事或專業的 AI 代理。這些 AI 代理將自主執行或協助完成任務，實現真正的人機協作。)
+Transform Archon into a platform where users can seamlessly assign tasks to either human colleagues or specialized AI Agents directly from the `enduser-ui-fe` interface. These AI Agents will then autonomously execute or assist in task completion, enabling true human-AI collaboration. (將 Archon 轉變為一個平台，讓使用者可以直接從 `enduser-ui-fe` 介面將任 務無縫地指派給人類同事或專業的 AI 代理。這些 AI 代理將自主執行或協助完成任務，實現真正的 人機協作。)
 
 ## Story Metadata (故事元資料)
 
@@ -20,7 +20,7 @@ Transform Archon into a platform where users can seamlessly assign tasks to eith
 
 - **enduser-ui-fe/src/services/api.ts**: This file currently contains the mock data fallback mechanism. Understanding its structure is critical for migrating to real API calls. (此檔案目前包含模擬資料的備用機制。理解其結構對於遷移到真實 API 呼叫至關重要。)
 - **PRPs/ai_docs/ARCHITECTURE.md**: Provides the overall system architecture, including FastAPI backend and React frontend, which is essential for understanding integration points. (提供整體系統架構，包含 FastAPI 後端和 React 前端，這對於理解整合點至關重要。)
-- **PRPs/ai_docs/DATA_FETCHING_ARCHITECTURE.md**: Details the TanStack Query usage in the frontend for data fetching, caching, and mutations. (詳細說明前端使用 TanStack Query 進行資料獲取、快取和突變的方式。)
+- **PRPs/ai_docs/DATA_FETCHING_ARCHITECTURE.md**: Details the TanStack Query usage in the frontend for data fetching, caching, and mutations. (詳細說明前端使用 TanStack Query 進 行資料獲取、快取和突變的方式。)
 - **PRPs/ai_docs/API_NAMING_CONVENTIONS.md**: Standardizes backend endpoint and frontend service method naming. (標準化後端端點和前端服務方法的命名。)
 - **PRPs/ai_docs/UI_STANDARDS.md**: Essential for ensuring all new UI components and modifications adhere to project styling, accessibility, and best practices. (確保所有新的 UI 元件和修改都符合專案樣式、可訪問性和最佳實踐。)
 - **PRPs/ai_docs/QUERY_PATTERNS.md**: Guides the creation of query keys and mutations using TanStack Query. (指導使用 TanStack Query 建立查詢鍵和突變。)
@@ -38,15 +38,15 @@ Transform Archon into a platform where users can seamlessly assign tasks to eith
 - **REMOVE (移除)**: The `mockApi` object and its implementation. (模擬 API 物件及其實作)
 - **REMOVE (移除)**: The `useMockData` boolean and the conditional export `export const api = useMockData ? mockApi : supabaseApi;`. (移除 `useMockData` 布林值和條件式導出)
 - **UPDATE (更新)**: Ensure `export const api = supabaseApi;` is the default. (確保 `export const api = supabaseApi;` 為預設導出)
-- **UPDATE (更新)**: Modify `getSupabaseConfig` to robustly handle missing `localStorage` items, potentially throwing errors or displaying a critical warning to the user to configure them. Consider initial configuration from environment variables if not found in localStorage. (修改 `getSupabaseConfig` 以穩健處理缺少的 `localStorage` 項目，可能拋出錯誤或向使用者顯示關鍵警告以配置它們。如果 `localStorage` 中未找到，可考慮從環境變數進行初始配置。)
+- **UPDATE (更新)**: Modify `getSupabaseConfig` to robustly handle missing `localStorage` items, potentially throwing errors or displaying a critical warning to the user to configure them. Consider initial configuration from environment variables if not found in localStorage. (修改 `getSupabaseConfig` 以穩健處理缺少的 `localStorage` 項目，可能拋出錯誤或 向使用者顯示關鍵警告以配置它們。如果 `localStorage` 中未找到，可考慮從環境變數進行初始配 置。)
 - **VALIDATE (驗證)**: `uv run python -c "from services.user_service import UserService; print('✓ Import successful')"`
 
 ### UPDATE enduser-ui-fe/src/features/**/services/*.ts & enduser-ui-fe/src/features/**/hooks/*.ts: (更新 enduser-ui-fe/src/features/**/services/*.ts 和 enduser-ui-fe/src/features/**/hooks/*.ts)
 
-- **ADAPT (調整)**: All existing frontend services and TanStack Query hooks to explicitly use the `supabaseApi` methods (formerly `api.getTasks()`, `api.getProjects()`, etc.). (所有現有的前端服務和 TanStack Query 鉤子明確使用 `supabaseApi` 方法)
+- **ADAPT (調整)**: All existing frontend services and TanStack Query hooks to explicitly use the `supabaseApi` methods (formerly `api.getTasks()`, `api.getProjects()`, etc.). ( 所有現有的前端服務和 TanStack Query 鉤子明確使用 `supabaseApi` 方法)
 - **REMOVE (移除)**: Any remaining logic that checks for mock data usage. (任何剩餘的檢查模擬資料使用的邏輯)
 - **ENSURE (確保)**: Error handling is in place for all API calls. (所有 API 呼叫都有錯誤處理)
-- **VALIDATE (驗證)**: Run all frontend unit and integration tests (`make test-fe`). (執行所有前端單元測試和整合測試)
+- **VALIDATE (驗證)**: Run all frontend unit and integration tests (`make test-fe`). (執 行所有前端單元測試和整合測試)
 
 ### Phase 2: Backend API Enhancements (`archon-server`) (後端 API 增強)
 
@@ -59,8 +59,8 @@ Transform Archon into a platform where users can seamlessly assign tasks to eith
 
 ### MODIFY python/src/server/api_routes/tasks_api.py: (修改 python/src/server/api_routes/tasks_api.py)
 
-- **UPDATE (更新)**: `POST /api/tasks` and `PUT /api/tasks/{task_id}` endpoints to support assigning tasks to AI agents. (更新 `POST /api/tasks` 和 `PUT /api/tasks/{task_id}` 端點以支持將任務指派給 AI 代理)
-- **LOGIC (邏輯)**: When an AI agent ID is provided as an assignee, trigger a background task (via `archon-mcp` or direct service call) to notify or activate the AI agent. (當提供 AI 代理 ID 作為指派人時，觸發後台任務（透過 `archon-mcp` 或直接服務呼叫）通知或激活 AI 代理。)
+- **UPDATE (更新)**: `POST /api/tasks` and `PUT /api/tasks/{task_id}` endpoints to support assigning tasks to AI agents. (更新 `POST /api/tasks` 和 `PUT /api/tasks/{task_id}` 端 點以支持將任務指派給 AI 代理)
+- **LOGIC (邏輯)**: When an AI agent ID is provided as an assignee, trigger a background task (via `archon-mcp` or direct service call) to notify or activate the AI agent. (當提 供 AI 代理 ID 作為指派人時，觸發後台任務（透過 `archon-mcp` 或直接服務呼叫）通知或激活 AI 代理。)
 - **VALIDICATE (驗證)**: Ensure assignment logic correctly distinguishes human users from AI agents. (確保指派邏輯正確區分人類使用者和 AI 代理)
 - **VALIDATE (驗證)**: `uv run pytest python/src/server/api_routes/tasks_api.py`
 
@@ -105,7 +105,7 @@ Transform Archon into a platform where users can seamlessly assign tasks to eith
 
 ### Phase 5.1: Mocked E2E Test Implementation & Architecture Refactor (已完成)
 
-此階段的目標是為「AI 作為隊友」的使用者操作流程，建立一個穩健、可靠的前端 E2E 測試套件。經過一系列的偵錯與架構探索，我們不僅完成了所有預定的測試案例，還建立了一套清晰、隔離且可維護的 E2E 測試架構。
+此階段的目標是為「AI 作為隊友」的使用者操作流程，建立一個穩健、可靠的前端 E2E 測試套件。 經過一系列的偵錯與架構探索，我們不僅完成了所有預定的測試案例，還建立了一套清晰、隔離且可 維護的 E2E 測試架構。
 
 #### Final Test Architecture (最終測試架構)
 
@@ -115,7 +115,7 @@ Transform Archon into a platform where users can seamlessly assign tasks to eith
     *   我們為 E2E 測試創建了一個獨立的 Vitest 設定檔，使其與單元測試的設定完全隔離。
 
 2.  **隔離的 Mocking 環境 (`tests/e2e/e2e.setup.ts`)**:
-    *   所有 E2E 測試所需的 API Mock（例如，模擬登入使用者、返回 AI Agent 列表）都被集中到這個專屬的設定檔中。
+    *   所有 E2E 測試所需的 API Mock（例如，模擬登入使用者、返回 AI Agent 列表）都被集中 到這個專屬的設定檔中。
     *   同時，我們修正了全域 `test/setup.ts`，使其與 E2E 的設定檔協同工作，確保了 `window.matchMedia` 等通用 Mock 能被正確載入，避免了設定衝突。
 
 3.  **標準化的元件渲染策略**:
@@ -135,15 +135,15 @@ Transform Archon into a platform where users can seamlessly assign tasks to eith
 
 在前端的 Mock E2E 測試穩定運行的基礎上，下一步是將其過渡為與真實後端互動的完整整合測試。
 
-- [x] **Task 5.5: Implement Automated Database Reset via API Endpoint (透過 API 端點實現自動化資料庫重置)**
+- [x] **Task 5.5: Implement Automated Database Reset via API Endpoint (透過 API 端點實現 自動化資料庫重置)**
     - **Status: COMPLETED (已完成)**
     - **Summary (總結):** The automated database reset mechanism is fully implemented and operational. A new backend endpoint (`POST /api/test/reset-database`) was created, protected by the `ENABLE_TEST_ENDPOINTS` flag. The E2E test suite's `globalSetup.ts` now successfully calls this endpoint before tests run, ensuring a clean and predictable database state, as confirmed by the successful `globalSetup` logs.
 
-- [ ] **Task 5.6: Configure E2E Tests to run against a real backend (設定 E2E 測試以針對真實後端運行)**
+- [ ] **Task 5.6: Configure E2E Tests to run against a real backend (設定 E2E 測試以針對 真實後端運行)**
     - **Status: BLOCKED (已阻擋)**
     - **Analysis of New Problem (新問題分析):** Although the database reset (Task 5.5) is successful, the E2E tests themselves fail to initialize their Supabase client when run in the `jsdom` environment. The tests produce the error: `Supabase credentials are not set in localStorage. ... Error: supabaseUrl is required.` This indicates that the environment variables from `.env.test` are not being passed to the frontend test environment. The tests currently pass only because they are still using mocked API calls.
     - **Next Action (下一步行動):** Modify `enduser-ui-fe/tests/e2e/e2e.setup.ts`. Before the tests run, we must read the Supabase credentials (e.g., from `process.env`) and programmatically set them in the `jsdom` `localStorage` so that the frontend's Supabase client can initialize correctly. This will unblock the transition to real API calls.
-<<<<<<< HEAD
+
 - [x] **Task 5.7: Fix Failing E2E Test for Task Creation**
   - **Status: COMPLETED (已完成)**
   - **Summary (總結):** The E2E test for creating a new task was failing due to a complex series of issues within the test environment itself. The fix involved a multi-step process: (1) Correcting the MSW mock data in `handlers.ts` to match the frontend's type definitions and expected API response structures. (2) Refactoring the test setup script (`e2e.setup.ts`) to establish a stable hybrid mocking strategy, using `vi.mock` for authentication (`getCurrentUser`) and MSW for all data-related `fetch` requests. (3) Refactoring the `api.ts` service to ensure all data-fetching functions consistently use `fetch`, making them mockable by MSW. (4) Restoring the missing UI elements (including the "New Task" button) to `DashboardPage.tsx`. After these foundational fixes, all E2E tests now pass successfully.
