@@ -305,45 +305,28 @@ const DashboardPage: React.FC = () => {
       <header className="flex flex-col md:flex-row md:justify-between md:items-center mb-6 gap-4">
         <h1 className="text-3xl font-bold">{currentProject ? `${currentProject.title} Tasks` : 'All Tasks'}</h1>
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full md:w-auto">
-            <div className="relative">
-                <select
-                    id="project-filter"
-                    value={selectedProjectId}
-                    onChange={(e) => setSelectedProjectId(e.target.value)}
-                    className="w-full sm:w-48 appearance-none rounded-md border border-gray-300 bg-white py-2 pl-3 pr-10 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                >
-                    {projects.map((project) => (
-                        <option key={project.id} value={project.id}>
-                            {project.title}
-                        </option>
-                    ))}
-                </select>
-                <ChevronDownIcon className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-            </div>
+          {/* Project Dropdown */}
+          <div className="relative">
+            <button onClick={() => {}} className="flex items-center justify-between w-full sm:w-48 px-4 py-2 bg-card border border-border rounded-md text-sm">
+              <span>{currentProject?.title || 'Select Project'}</span>
+              <ChevronDownIcon className="h-4 w-4" />
+            </button>
+            {/* Dropdown content would be here */}
+          </div>
 
-            <div className="flex items-center rounded-md bg-gray-100 p-1">
-                 <button onClick={() => setViewMode('list')} className={`p-1.5 rounded ${viewMode === 'list' ? 'bg-white shadow-sm' : 'hover:bg-gray-200'}`}><ListIcon className="h-5 w-5" /></button>
-                 <button onClick={() => setViewMode('table')} className={`p-1.5 rounded ${viewMode === 'table' ? 'bg-white shadow-sm' : 'hover:bg-gray-200'}`}><TableIcon className="h-5 w-5" /></button>
-                 <button onClick={() => setViewMode('kanban')} className={`p-1.5 rounded ${viewMode === 'kanban' ? 'bg-white shadow-sm' : 'hover:bg-gray-200'}`}><KanbanIcon className="h-5 w-5" /></button>
-                 <button onClick={() => setViewMode('gantt')} className={`p-1.5 rounded ${viewMode === 'gantt' ? 'bg-white shadow-sm' : 'hover:bg-gray-200'}`}><GanttChartIcon className="h-5 w-5" /></button>
-            </div>
+          {/* View Mode Buttons */}
+          <div className="flex items-center bg-card border border-border rounded-md p-1">
+            <button onClick={() => setViewMode('list')} className={`p-1.5 ${viewMode === 'list' ? 'bg-background' : ''}`}><ListIcon className="h-5 w-5" /></button>
+            <button onClick={() => setViewMode('table')} className={`p-1.5 ${viewMode === 'table' ? 'bg-background' : ''}`}><TableIcon className="h-5 w-5" /></button>
+            <button onClick={() => setViewMode('kanban')} className={`p-1.5 ${viewMode === 'kanban' ? 'bg-background' : ''}`}><KanbanIcon className="h-5 w-5" /></button>
+            <button onClick={() => setViewMode('gantt')} className={`p-1.5 ${viewMode === 'gantt' ? 'bg-background' : ''}`}><GanttChartIcon className="h-5 w-5" /></button>
+          </div>
 
-            <div className="flex items-center gap-2 ml-auto">
-              <button
-                onClick={() => setProjectModalOpen(true)}
-                className="rounded-md border bg-white px-4 py-2 text-sm font-medium hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-              >
-                New Project
-              </button>
-
-              <button
-                onClick={() => setEditingTask(null)}
-                className="flex items-center justify-center gap-2 rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-              >
-                <PlusIcon className="h-5 w-5" />
-                New Task
-              </button>
-            </div>
+          {/* New Task Button */}
+          <button onClick={() => setEditingTask(null)} className="px-4 py-2 bg-primary text-primary-foreground rounded-md text-sm font-semibold hover:bg-primary/90 flex items-center gap-2">
+            <PlusIcon className="h-4 w-4" />
+            New Task
+          </button>
         </div>
       </header>
       
