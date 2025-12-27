@@ -2,15 +2,6 @@
 
 **[LATEST TASK]**
 
-### [ ] Task 5.7: Fix E2E tests broken by DashboardPage.tsx refactoring
-- **Status**: **FAILED**
-- **Analysis (2025-12-26)**:
-  - The E2E tests (`ai-teammate-workflows.spec.tsx`) are failing because they cannot find the "New Task" button.
-  - The backend API (`/api/projects`) is now responding successfully after applying a synchronous workaround (commit `574a150`), so the page is no longer stuck in a "Loading..." state.
-  - The root cause is now confirmed to be a frontend issue. The same commit (`574a150`) that fixed the backend also included a large, un-vetted refactoring of `DashboardPage.tsx`.
-  - In this refactoring, the JSX for the "New Task" button and other header controls was removed from the component, causing the tests to fail.
-- **Next Action**: The `DashboardPage.tsx` component needs to be fixed to correctly render the header controls, or the E2E tests need to be updated to match the new refactored component structure.
-
 ---
 
 本文件旨在規劃 Archon 專案的下一階段開發，核心目標是將 Agent 自動化與 RAG (檢索增強生成) 功能深度整合到 endUser-ui 中，實現人機協作的智慧任務管理。

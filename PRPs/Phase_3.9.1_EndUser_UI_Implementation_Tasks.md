@@ -139,7 +139,11 @@ Transform Archon into a platform where users can seamlessly assign tasks to eith
     - **Status: COMPLETED (已完成)**
     - **Summary (總結):** The automated database reset mechanism is fully implemented and operational. A new backend endpoint (`POST /api/test/reset-database`) was created, protected by the `ENABLE_TEST_ENDPOINTS` flag. The E2E test suite's `globalSetup.ts` now successfully calls this endpoint before tests run, ensuring a clean and predictable database state, as confirmed by the successful `globalSetup` logs.
 
-- [ ] **Task 5.6: Configure E2E Tests to run against a real backend (設定 E2E 測試以針對真實後端運行)**
-    - **Status: BLOCKED (已阻擋)**
-    - **Analysis of New Problem (新問題分析):** Although the database reset (Task 5.5) is successful, the E2E tests themselves fail to initialize their Supabase client when run in the `jsdom` environment. The tests produce the error: `Supabase credentials are not set in localStorage. ... Error: supabaseUrl is required.` This indicates that the environment variables from `.env.test` are not being passed to the frontend test environment. The tests currently pass only because they are still using mocked API calls.
-    - **Next Action (下一步行動):** Modify `enduser-ui-fe/tests/e2e/e2e.setup.ts`. Before the tests run, we must read the Supabase credentials (e.g., from `process.env`) and programmatically set them in the `jsdom` `localStorage` so that the frontend's Supabase client can initialize correctly. This will unblock the transition to real API calls.
+- [x] **Task 5.6: Configure E2E Tests to run against a real backend (設定 E2E 測試以針對真實後端運行)**
+    - **Status: COMPLETED (已完成)**
+    - **Summary (總結):** The E2E test setup (`e2e.setup.ts`) was successfully modified to read Supabase credentials from `.env.test` and inject them into `localStorage` (see commit `e281dad582dc`). This successfully unblocked the tests from running against a real backend. However, this progress immediately revealed subsequent issues, including a backend API hang (fixed in `574a150e91`) and new frontend component-related test failures, which are now being tracked in Task 5.7.
+
+- [ ] **Task 5.7: Fix E2E tests broken by DashboardPage.tsx refactoring (修復因 DashboardPage.tsx 重構而損壞的 E2E 測試)**
+    - **Status: PENDING (待處理)**
+    - **Analysis (分析):** The E2E tests (`ai-teammate-workflows.spec.tsx`) are failing because they cannot find key elements like the "New Task" button. This was caused by a large refactoring of `DashboardPage.tsx` in commit `574a150e91`, where the header controls were removed from the component's direct output.
+    - **Next Action (下一步行動):** Investigate the refactored `DashboardPage.tsx` and the test file `ai-teammate-workflows.spec.tsx` to determine if the test should be updated to find the elements in their new location, or if the component should be fixed to restore the previous structure.
