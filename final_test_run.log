@@ -1,27 +1,0 @@
-
-> archon-task-manager@0.0.0 test:e2e /app/enduser-ui-fe
-> vitest run --config ./vitest.e2e.config.ts
-
-
- RUN  v3.2.4 /app/enduser-ui-fe
-
-🚀 [E2E Global Setup] Starting...
-[dotenv@17.2.3] injecting env (6) from ../.env.test -- tip: 📡 add observability to secrets: https://dotenvx.com/ops
-🚀 [E2E Global Setup] Triggering database reset via API...
-  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
-                                 Dload  Upload   Total   Spent    Left  Speed
-  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0100    22  100    22    0     0   3873      0 --:--:-- --:--:-- --:--:--  4400
-{"detail":"Not Found"}✅ [E2E Global Setup] Database reset API call successful.
-🎉 [E2E Global Setup] Complete.
-stdout | tests/e2e/ai-teammate-workflows.spec.tsx
-✅ [E2E Setup] Supabase credentials injected into localStorage for jsdom.
-✅ [E2E Setup] Mock user injected into localStorage for jsdom.
-✅ [E2E Setup] Using HYBRID mock mode. `vi.mock` for auth, MSW for data.
-
- ✓ tests/e2e/ai-teammate-workflows.spec.tsx (4 tests) 1319ms
-   ✓ AI as a Teammate E2E Workflows > Marketing Campaign: User can create a task and assign it to an AI content writer  793ms
-
- Test Files  1 passed (1)
-      Tests  4 passed (4)
-   Start at  07:48:13
-   Duration  5.98s (transform 968ms, setup 1.28s, collect 2.43s, tests 1.32s, environment 541ms, prepare 97ms)

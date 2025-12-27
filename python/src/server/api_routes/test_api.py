@@ -1,8 +1,10 @@
 # python/src/server/api_routes/test_api.py
 import os
+
 from fastapi import APIRouter, HTTPException, status
-from supabase import Client # Needed for type hinting for get_supabase_client
-from ..services.client_manager import get_supabase_client # Found this definition
+from supabase import Client  # Needed for type hinting for get_supabase_client
+
+from ..services.client_manager import get_supabase_client  # Found this definition
 
 # This router should only be included if the environment allows it.
 # This ensures test-specific endpoints are not exposed in production.
@@ -31,7 +33,7 @@ else:
             # These functions are defined in migration/004_create_test_utility_functions.sql
             await supabase_client.rpc('reset_test_database').execute()
             await supabase_client.rpc('seed_test_database').execute()
-            
+
             return {"message": "Database reset and seeded successfully via API."}
         except Exception as e:
             # Log the error for debugging purposes
@@ -39,4 +41,4 @@ else:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"Database setup failed via API: {str(e)}",
-            )
+            ) from e

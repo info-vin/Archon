@@ -1,7 +1,6 @@
 """Test suite for batch task counts endpoint - Performance optimization tests."""
 from unittest.mock import AsyncMock, patch
 
-import pytest
 from fastapi.testclient import TestClient
 
 # 1. Create mocks BEFORE app import

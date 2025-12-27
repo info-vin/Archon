@@ -91,6 +91,26 @@
 
 # 第三章：近期工作日誌 (Recent Journal Entries)
 
+### 本日會話總結與學習教訓 (2025-12-27 - 精簡版)
+*   **任務**: 將 `origin/fix/e2e-dashboard-test-final-75474661524362878` 分支的 E2E 測試修復方案合併到 `feat/agents` 分支，並確保所有測試和 Lint 檢查通過。
+*   **執行步驟**:
+    1.  **執行合併**: 嘗試將 `origin/fix/e2e-dashboard-test-final-75474661524362878` 合併到 `feat/agents`，導致 `PRPs/Phase_3.9.1_EndUser_UI_Implementation_Tasks.md`、`enduser-ui-fe/src/mocks/handlers.ts` 和 `enduser-ui-fe/src/pages/DashboardPage.tsx` 發生合併衝突。
+    2.  **解決合併衝突**: 將衝突檔案的內容完全替換為 `origin/fix/e2e-dashboard-test-final-75474661524362878` 分支的版本。
+    3.  **修復 E2E 測試問題**:
+        *   移除 `enduser-ui-fe/tests/e2e/ai-teammate-workflows.spec.tsx` 中對已移除函數 `resetMockTasks()` 的調用和其 `import` 語句。
+        *   修正 `enduser-ui-fe/tests/e2e/ai-teammate-workflows.spec.tsx` 中 `AppRoutes` 導入語句的 `from` 關鍵字遺失問題。
+        *   更新 `enduser-ui-fe/tests/e2e/ai-teammate-workflows.spec.tsx` 中 `assignableAgents` 斷言以匹配新的模擬數據。
+        *   **驗證**: `cd enduser-ui-fe && pnpm test:e2e` 成功通過。
+    4.  **修復 Lint 錯誤**:
+        *   執行 `make lint` 發現 `python/src/server/api_routes/test_api.py` 存在 `B904` Lint 錯誤。
+        *   將 `raise HTTPException(...)` 修改為 `raise HTTPException(...) from e`。
+        *   **驗證**: `make lint` 成功通過。
+    5.  **檔案處理**: 移動 `final_test_run.log` 到 `/tmp`。
+*   **關鍵學習**:
+    *   **精確衝突解決**: 合併衝突後，需要使用 `git diff <target-branch> -- <file>` 驗證工作目錄與目標版本的一致性。
+    *   **使用者反饋的重要性**: 即使工具顯示成功，也應仔細驗證使用者指出的潛在錯誤。
+    *   **完整性考量**: 程式碼修復應考慮其在整個專案中的影響，確保相關依賴和測試同步更新。
+
 ### 本日會話總結與學習教訓 (2025-12-25)
 *   **核心任務**: 系統性地解決前端 `archon-ui-main` 專案中所有 ESLint 警告，將程式碼品質恢復到健康基準。
 *   **偵錯與修復歷程**:
