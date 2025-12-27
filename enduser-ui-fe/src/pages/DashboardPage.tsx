@@ -305,7 +305,28 @@ const DashboardPage: React.FC = () => {
       <header className="flex flex-col md:flex-row md:justify-between md:items-center mb-6 gap-4">
         <h1 className="text-3xl font-bold">{currentProject ? `${currentProject.title} Tasks` : 'All Tasks'}</h1>
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full md:w-auto">
-            {/* Project filter and view buttons remain the same */}
+          {/* Project Dropdown */}
+          <div className="relative">
+            <button onClick={() => {}} className="flex items-center justify-between w-full sm:w-48 px-4 py-2 bg-card border border-border rounded-md text-sm">
+              <span>{currentProject?.title || 'Select Project'}</span>
+              <ChevronDownIcon className="h-4 w-4" />
+            </button>
+            {/* Dropdown content would be here */}
+          </div>
+
+          {/* View Mode Buttons */}
+          <div className="flex items-center bg-card border border-border rounded-md p-1">
+            <button onClick={() => setViewMode('list')} className={`p-1.5 ${viewMode === 'list' ? 'bg-background' : ''}`}><ListIcon className="h-5 w-5" /></button>
+            <button onClick={() => setViewMode('table')} className={`p-1.5 ${viewMode === 'table' ? 'bg-background' : ''}`}><TableIcon className="h-5 w-5" /></button>
+            <button onClick={() => setViewMode('kanban')} className={`p-1.5 ${viewMode === 'kanban' ? 'bg-background' : ''}`}><KanbanIcon className="h-5 w-5" /></button>
+            <button onClick={() => setViewMode('gantt')} className={`p-1.5 ${viewMode === 'gantt' ? 'bg-background' : ''}`}><GanttChartIcon className="h-5 w-5" /></button>
+          </div>
+
+          {/* New Task Button */}
+          <button onClick={() => setEditingTask(null)} className="px-4 py-2 bg-primary text-primary-foreground rounded-md text-sm font-semibold hover:bg-primary/90 flex items-center gap-2">
+            <PlusIcon className="h-4 w-4" />
+            New Task
+          </button>
         </div>
       </header>
       

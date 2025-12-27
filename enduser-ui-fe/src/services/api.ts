@@ -146,9 +146,12 @@ const supabaseApi = {
     return profile as Employee;
   },
   async getTasks(): Promise<Task[]> {
-    const { data, error } = await supabase!.from('archon_tasks').select('*');
-    if (error) throw new Error(error.message);
-    return data as Task[];
+    const response = await fetch('/api/tasks');
+    if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Failed to fetch tasks.');
+    }
+    return response.json();
   },
   async getProjects(): Promise<Project[]> {
     const response = await fetch('/api/projects?include_computed_status=true');
@@ -174,25 +177,18 @@ const supabaseApi = {
     return response.json();
   },
   async createTask(taskData: NewTaskData): Promise<Task> {
-    let assigneeName = 'Unassigned';
-    if (taskData.assigneeId) {
-        const { data: employee, error } = await supabase!.from('profiles').select('name').eq('id', taskData.assigneeId).single();
-        if (employee) { assigneeName = employee.name; } 
-        else if (error) { console.warn('Error fetching assignee name:', error.message); }
+    const response = await fetch('/api/tasks', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(taskData)
+    });
+    if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Failed to create task.');
     }
-    const taskToInsert = { 
-        project_id: taskData.project_id, 
-        title: taskData.title, 
-        description: taskData.description, 
-        priority: taskData.priority, // Use passed priority
-        due_date: taskData.due_date, 
-        assignee: assigneeName, 
-        assignee_id: taskData.assigneeId || null,
-        status: TaskStatus.TODO 
-    };
-    const { data, error } = await supabase!.from('archon_tasks').insert(taskToInsert).select().single();
-    if (error) throw new Error(error.message);
-    return data as Task;
+    return response.json();
   },
   async updateTask(taskId: string, updates: UpdateTaskData): Promise<Task> {
     let processedUpdates: any = { ...updates };
