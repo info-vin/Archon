@@ -115,7 +115,7 @@ async def list_assignable_users(x_user_role: str | None = Header(None, alias="X-
 
 
 @router.get("/projects")
-def list_projects(
+async def list_projects(
     response: Response,
     include_content: bool = True,
     include_computed_status: bool = False,
@@ -137,7 +137,7 @@ def list_projects(
 
         # Use ProjectService to get projects
         project_service = ProjectService()
-        success, result = project_service.list_projects(
+        success, result = await project_service.list_projects(
             include_content=include_content,
             include_computed_status=include_computed_status,
         )
@@ -149,7 +149,7 @@ def list_projects(
         if include_content:
             # Use SourceLinkingService to format projects with sources
             source_service = SourceLinkingService()
-            formatted_projects = source_service.format_projects_with_sources(result["projects"])
+            formatted_projects = await source_service.format_projects_with_sources(result["projects"])
         else:
             # Lightweight response doesn't need source formatting
             formatted_projects = result["projects"]
@@ -319,7 +319,7 @@ async def get_project(project_id: str):
 
         # Use ProjectService to get the project
         project_service = ProjectService()
-        success, result = project_service.get_project(project_id)
+        success, result = await project_service.get_project(project_id)
 
         if not success:
             if "not found" in result.get("error", "").lower():
@@ -383,7 +383,7 @@ async def update_project(project_id: str, request: UpdateProjectRequest):
 
                 # Get current project for comparison
                 project_service = ProjectService(supabase_client)
-                success, current_result = project_service.get_project(project_id)
+                success, current_result = await project_service.get_project(project_id)
 
                 if success and current_result.get("project"):
                     current_project = current_result["project"]
@@ -417,7 +417,7 @@ async def update_project(project_id: str, request: UpdateProjectRequest):
 
         # Use ProjectService to update the project
         project_service = ProjectService(supabase_client)
-        success, result = project_service.update_project(project_id, update_fields)
+        success, result = await project_service.update_project(project_id, update_fields)
 
         if not success:
             if "not found" in result.get("error", "").lower():
@@ -447,7 +447,7 @@ async def update_project(project_id: str, request: UpdateProjectRequest):
                 logfire.warning(f"Failed to update some sources: {source_result}")
 
         # Format project response with sources using SourceLinkingService
-        formatted_project = source_service.format_project_with_sources(project)
+        formatted_project = await source_service.format_project_with_sources(project)
 
         logfire.info(
             f"Project updated successfully | project_id={project_id} | title={project.get('title')} | technical_sources={len(formatted_project.get('technical_sources', []))} | business_sources={len(formatted_project.get('business_sources', []))}"
@@ -470,7 +470,7 @@ async def delete_project(project_id: str):
 
         # Use ProjectService to delete the project
         project_service = ProjectService()
-        success, result = project_service.delete_project(project_id)
+        success, result = await project_service.delete_project(project_id)
 
         if not success:
             if "not found" in result.get("error", "").lower():
@@ -502,7 +502,7 @@ async def get_project_features(project_id: str):
 
         # Use ProjectService to get features
         project_service = ProjectService()
-        success, result = project_service.get_project_features(project_id)
+        success, result = await project_service.get_project_features(project_id)
 
         if not success:
             if "not found" in result.get("error", "").lower():
