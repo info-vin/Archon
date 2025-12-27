@@ -44,9 +44,9 @@ class TestProjectsListPolling:
             mock_proj_instance.list_projects = AsyncMock(return_value=(True, {"projects": [{"id": "proj-1", "name": "Test Project"}]}))
             mock_proj_class.return_value = mock_proj_instance
 
-            # Configure the mock for SourceLinkingService (which is synchronous)
+            # Configure the mock for SourceLinkingService (which is now asynchronous)
             mock_source_instance = MagicMock()
-            mock_source_instance.format_projects_with_sources.return_value = [{"id": "proj-1", "name": "Test Project"}]
+            mock_source_instance.format_projects_with_sources = AsyncMock(return_value=[{"id": "proj-1", "name": "Test Project"}])
             mock_source_class.return_value = mock_source_instance
 
             # First request
@@ -80,7 +80,7 @@ class TestProjectTasksPolling:
             with patch('src.server.api_routes.projects_api.ProjectService') as mock_proj_class:
                 mock_proj_instance = MagicMock()
                 mock_proj_class.return_value = mock_proj_instance
-                mock_proj_instance.get_project.return_value = (True, {"id": "proj-1"})
+                mock_proj_instance.get_project = AsyncMock(return_value=(True, {"id": "proj-1"}))
 
                 headers = {"If-None-Match": etag} if etag else {}
                 response = client.get("/api/projects/proj-1/tasks", headers=headers)
@@ -107,7 +107,7 @@ class TestPollingEdgeCases:
         with patch('src.server.api_routes.projects_api.ProjectService') as mock_proj_class:
             mock_proj_instance = MagicMock()
             mock_proj_class.return_value = mock_proj_instance
-            mock_proj_instance.get_project.return_value = (False, {"error": "Project not found"})
+            mock_proj_instance.get_project = AsyncMock(return_value=(False, {"error": "Project not found"}))
 
             response = client.get("/api/projects/non-existent")
 
