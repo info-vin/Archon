@@ -6,8 +6,8 @@ import { XIcon } from './Icons.tsx';
 interface TaskModalProps {
   task?: Task | null;
   onClose: () => void;
-  onTaskCreated: (newTask: Task) => void;
-  onTaskUpdated: (updatedTask: Task) => void;
+  onTaskCreated: () => void;
+  onTaskUpdated: () => void;
   projectId?: string;
 }
 
@@ -86,8 +86,8 @@ export const TaskModal: React.FC<TaskModalProps> = ({ task, onClose, onTaskCreat
           due_date: new Date(dueDate).toISOString(),
           priority,
         };
-        const updatedTask = await api.updateTask(task.id, updatedData);
-        onTaskUpdated(updatedTask);
+        await api.updateTask(task.id, updatedData);
+        onTaskUpdated();
         alert('Task updated successfully!');
       } else {
         const newTaskData: NewTaskData = {
@@ -98,8 +98,8 @@ export const TaskModal: React.FC<TaskModalProps> = ({ task, onClose, onTaskCreat
           due_date: new Date(dueDate).toISOString(),
           priority,
         };
-        const newTask = await api.createTask(newTaskData);
-        onTaskCreated(newTask);
+        await api.createTask(newTaskData);
+        onTaskCreated();
         alert('Task created successfully!');
       }
       onClose();
