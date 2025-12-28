@@ -239,6 +239,8 @@ def test_some_endpoint():
         5.  `migration/003_add_get_counts_by_source_function.sql` (追加函式)
         6.  `migration/seed_mock_data.sql` (填充核心假資料)
         7.  `migration/seed_blog_posts.sql` (填充部落格假資料)
+        8.  `migration/004_create_test_utility_functions.sql` (**E2E 測試所需**)
+            > **說明**: 此腳本建立了用於自動化端對端測試的資料庫函式 (`reset_test_database`, `seed_test_database`)。如果您需要運行完整的前端 E2E 測試套件，則**必須**執行此腳本。
 
 3.  **階段三：執行部署**
 
@@ -316,6 +318,12 @@ def test_some_endpoint():
 - **情境**: `make test-be` 失敗，因為 `Makefile` 中的 `uv sync --extra` 指令與 `pyproject.toml` 的 `[dependency-groups]` 結構不符。
 - **決策理由**: 透過 `git log -p -- Makefile` 追溯歷史，發現專案曾刻意選擇 `[dependency-groups]` 結構，從而確認了 `Makefile` 需要被修正以使用 `--group` 參數，而不是反過來修改 `pyproject.toml`。
 - **確立原則**: 再次印證了「追溯 `git log` 以理解歷史意圖」的重要性。
+
+### 2025-12-27: 合併後完整性驗證的重要性
+
+- **情境**: 將一個修復 E2E 測試的 `fix/...` 分支合併回 `feature/...` 分支後，儘管程式碼邏輯正確，但 CI/CD 流程中的 `lint` 和 `test` 檢查依然失敗。
+- **決策理由**: 調查發現，合併後產生了新的、非程式碼邏輯的錯誤，包括 `import` 語句遺漏和 Lint 格式問題。這證明了即使是看似安全的合併，也可能引入預期外的副作用。
+- **確立原則**: 在任何 `git merge` 或 `git cherry-pick` 操作完成後，**必須**立即在本地執行完整的、端到端的驗證流程（至少包含 `make lint` 和 `make test`）。這確保了程式碼的「邏輯正確性」和「工程完整性」都得到保障，避免將破碎的提交推送到遠端。
 
 ### 2025-09-27: 後端端到端 (E2E) Agent 工作流測試模式
 

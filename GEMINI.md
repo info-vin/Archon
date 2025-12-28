@@ -111,6 +111,10 @@
 
 ---
 
+# 第三章：近期工作日誌 (Recent Journal Entries)
+
+---
+
 # 第四章：歷史檔案：原則的考古學 (Historical Archive: The Archaeology of Principles)
 
 > **【封存說明】**
