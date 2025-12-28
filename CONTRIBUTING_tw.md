@@ -104,11 +104,70 @@
 | **測試特定前端專案** | `make test-fe-project project=<name>` | `make test-fe-project project=enduser-ui-fe` |
 | **測試特定前端檔案** | `make test-fe-single project=<name> test=<pattern>` | `make test-fe-single project=enduser-ui-fe test="TaskModal"` |
 
-### 3.2 後端 API 測試：模擬資料庫
+### 3.2 後端 API 測試：模擬資料庫與服務
+
+#### 3.2.1 資料庫模擬 (Database Mocking)
 
 所有後端 API 測試都**嚴格禁止**連線到真實的資料庫。專案在 `python/tests/conftest.py` 中使用 `pytest fixture` 和 `patch` 自動模擬了 `SupabaseClient`。您只需在測試函式簽名中加入 `client` 和 `mock_supabase_client` 即可使用。
 
-### 3.3 前端測試常見問題 (FAQ)
+#### 3.2.2 服務模擬的黃金模式 (Service Mocking "Golden Pattern")
+
+在測試 FastAPI 端點時，若該端點依賴於一個在應用程式啟動時就已初始化的服務單例 (Service Singleton)，則**必須**遵循以下模式：
+
+1.  **在 `app` 導入前 Patch**: `patch` 必須在 `import app` 語句**之前**定義。
+2.  **使用 `setup_module` 和 `teardown_module`**: 利用 `pytest` 的 `setup_module` 和 `teardown_module` 函式，手動管理 `patch` 的生命週期 (`start()` 和 `stop()`)。
+
+**範例**:
+```python
+# python/tests/server/test_example_api.py
+
+from unittest.mock import patch, AsyncMock
+
+# 1. 在 app 導入前定義 patch
+mock_agent_service = patch('src.server.services.agent_service.AgentService', new_callable=AsyncMock)
+
+# 2. 在 setup_module 中啟動 patch
+def setup_module(module):
+    mock_agent_service.start()
+
+def teardown_module(module):
+    mock_agent_service.stop()
+
+# 現在可以安全地導入 app
+from src.server.main import app
+from fastapi.testclient import TestClient
+
+client = TestClient(app)
+
+def test_some_endpoint():
+    # ... 您的測試邏輯 ...
+```
+
+### 3.3 前端 E2E 測試 (`enduser-ui-fe`)
+
+#### 3.3.1 E2E 測試核心架構
+
+為確保前端 E2E 測試的穩定性與可維護性，專案採用了以下架構：
+
+1.  **專屬設定檔**: 使用獨立的 `vitest.e2e.config.ts` 設定檔，將 E2E 測試與單元測試完全隔離。
+2.  **隔離的 Mocking 環境**: 所有 E2E 測試所需的 API Mock 都集中在 `tests/e2e/e2e.setup.ts` 中管理。
+3.  **標準化元件渲染**: 為解決 React Router 的問題，所有測試都直接渲染 `AppRoutes` 元件，並為其提供 `AuthProvider` 和 `MemoryRouter` 作為包裹 (Wrapper)。
+4.  **混合 Mocking 策略**:
+    *   **認證 (Authentication)**: 使用 `vi.mock` 來模擬 `getCurrentUser` 等認證相關函式。
+    *   **數據 (Data)**: 使用 **Mock Service Worker (MSW)** 攔截所有數據相關的 `fetch` 請求。請確保 `src/mocks/handlers.ts` 中的模擬資料結構與前端 `types.ts` 中的類型定義**完全一致**。
+
+#### 3.3.2 完整整合測試的準備工作
+
+為了讓 E2E 測試能針對真實後端運行，專案提供了以下機制：
+
+1.  **自動化資料庫重置**:
+    *   後端提供一個受 `ENABLE_TEST_ENDPOINTS` 環境變數保護的 `POST /api/test/reset-database` 端點。
+    *   E2E 測試套件的 `globalSetup.ts` 會在測試運行前自動呼叫此端點，確保資料庫處於乾淨、可預測的狀態。
+2.  **測試環境中的 Supabase 初始化**:
+    *   E2E 測試設定會以程式化方式，在 `jsdom` 的 `localStorage` 中設定 Supabase 的 URL 和金鑰。
+    *   這使得前端的 Supabase 客戶端能在測試環境中正確初始化，並發出真實的 API 請求。
+
+### 3.4 前端測試常見問題 (FAQ)
 
 | 問題 | 原因 | 解決方案 |
 | :--- | :--- | :--- |
@@ -258,6 +317,17 @@
 - **決策理由**: 透過 `git log -p -- Makefile` 追溯歷史，發現專案曾刻意選擇 `[dependency-groups]` 結構，從而確認了 `Makefile` 需要被修正以使用 `--group` 參數，而不是反過來修改 `pyproject.toml`。
 - **確立原則**: 再次印證了「追溯 `git log` 以理解歷史意圖」的重要性。
 
+### 2025-09-27: 後端端到端 (E2E) Agent 工作流測試模式
+
+- **情境**: 需要為一個完整的、非同步的「AI as a Teammate」工作流（從 API 觸發到 Agent 回呼）建立一個可靠的後端整合測試。
+- **決策理由**: 此類測試的挑戰在於，它跨越多個非同步服務和 API 回呼，直接測試的複雜度和不穩定性都很高。因此，需要一個清晰、可重複的模式來模擬工作流的各個階段。
+- **確立原則**: 確立了後端 E2E Agent 工作流的測試模式，其核心要素包括：
+    1.  **遵循服務模擬黃金模式**: 使用 `setup_module` 在 `app` 導入前 `patch` 核心的 `AgentService`。
+    2.  **分階段驗證**: 測試必須清晰地分為三個階段：
+        *   **任務指派**: 呼叫 `POST /api/tasks`，並斷言 `agent_service.run_agent_task` 被 `await`。
+        *   **模擬 Agent 回呼**: Mock `run_agent_task` 的實作，讓它使用 `TestClient` 反向呼叫 `archon-server` 的狀態更新和結果回傳 API（`/api/tasks/{id}/agent-status` 和 `/api/tasks/{id}/agent-output`）。
+        *   **結果驗證**: 斷言 `task_service` 的相應方法被正確呼叫，以確認回呼已成功觸發了核心業務邏輯。
+
 ### 2025-09-21: 資料庫腳本的冪等性
 
 - **情境**: 執行資料庫遷移腳本 `000_unified_schema.sql` 時，因 `policy ... already exists` 錯誤而中斷。
@@ -321,3 +391,79 @@
 
 *   **時序圖的抽象層級較高**：它只展示了與「建立任務 -> Agent 執行 -> 交付結果」這一條主線最直接相關的資料庫互動（即更新 `archon_tasks` 表）。
 *   **資料庫結構更完整**：它包含了支持所有系統功能所需的全部表格，包括時序圖中未展示的 RAG、系統設定、使用者資料等。
+
+---
+
+## 附錄 C: 系統設計與歷史日誌 (System Design & Historical Logs)
+
+### 核心工作流程圖 (v1.2 - 聚焦使用者與系統)
+
+下圖展示了使用者與系統元件在一次完整任務協作流程中的互動關係。
+
+```mermaid
+graph TD
+    subgraph "使用者 (User)"
+        A[專案經理/行銷人員/工程師]
+    end
+
+    subgraph "系統 (System)"
+        B[前端 Frontend UI]
+        C[後端 Backend API]
+        D[AI Agent]
+        E[Supabase DB]
+        F[Supabase Storage]
+    end
+
+    A -- 1. 建立/指派任務 --> B
+    B -- 2. 呼叫 API --> C
+    C -- 3. 觸發 Agent (非同步) --> D
+    C -- 4. 更新任務狀態 --> E
+    D -- 5. 執行任務 (e.g., 網路爬蟲、文件生成) --> D
+    D -- 6. 呼叫檔案上傳 API --> C
+    C -- 7. 將檔案上傳至 --> F
+    F -- 8. 回傳檔案 URL --> C
+    C -- 9. 更新任務，附加檔案連結 --> E
+    E -- 10. (via Socket.IO) 即時廣播更新 --> B
+    B -- 11. UI 自動更新，顯示進度與結果 --> A
+```
+
+### 時序圖 (v1.2)
+
+```mermaid
+sequenceDiagram
+    participant User as 使用者
+    participant Frontend as 前端 (UI)
+    participant Backend as 後端 (API)
+    participant AI_Agent as AI Agent
+    participant Supabase as Supabase (DB+Storage)
+
+    User->>Frontend: 1. 建立/指派任務
+    Frontend->>Backend: 2. 呼叫 API (create/update task)
+
+    Backend->>Supabase: 3. 更新任務狀態 (e.g., 'in_progress')
+    Backend->>AI_Agent: 4. 觸發 Agent (非同步執行)
+
+    Note over Backend, Frontend: (via Socket.IO) 廣播任務狀態更新
+    Backend-->>Frontend: 5. 即時狀態更新
+
+    AI_Agent->>AI_Agent: 6. 執行任務 (研究、寫報告...)
+    AI_Agent->>Backend: 7. 呼叫檔案上傳 API (附帶產出檔案)
+
+    Backend->>Supabase: 8. 將檔案上傳至 Storage
+    Supabase-->>Backend: 9. 回傳檔案 URL
+
+    Backend->>Supabase: 10. 更新任務 (status: 'review', attachments: [{filename, url}, ...])
+
+    Note over Backend, Frontend: (via Socket.IO) 廣播任務完成
+    Backend-->>Frontend: 11. 即時完成更新
+    Frontend->>User: 12. UI 自動更新 (顯示報告連結)
+```
+
+### Phase 3.8 部署偵錯日誌與解決方案總結
+
+| 服務 | 遇到的問題 | 根本原因 | 最終解決方案 (Commit/Pattern) |
+| :--- | :--- | :--- | :--- |
+| **`archon-server`** | 1. 啟動時因爬蟲初始化而超時。<br>2. 前端無法連線 (CORS)。 | 1. 在資源受限的容器中，於啟動階段啟動瀏覽器。<br>2. `allow_origins=["*"]` 與 `allow_credentials=True` 的組合被瀏覽器阻止。 | 1. 延遲爬蟲初始化 (`bd8b4fd`)。<br>2. 設定明確的 `origins` 來源清單 (`fix(api): ...`)。 |
+| **`archon-mcp`** | 1. `EXPOSE` 指令導致建置失敗。<br>2. `ValueError` 因無法解析 `$PORT`。<br>3. `export` 指令找不到。 | Dockerfile 語法錯誤 & Render 環境與 Shell 交互作用的複雜性。 | 引入標準的 **Entrypoint 腳本模式** (`9da96e7`, `694eb3c`)，將啟動邏輯封裝在容器內部，徹底解決了所有執行階段的配置問題。 |
+| **`archon-agents`** | (同 `archon-mcp`)<br>4. 缺少 `OPENAI_API_KEY` 等環境變數。 | (同 `archon-mcp`)<br>部署說明不完整。 | (同 `archon-mcp`)<br>提供了完整的環境變數清單。 |
+| **`archon-ui-main`** | 所有 API 呼叫都失敗，回傳 `index.html`。 | 程式碼中完全沒有使用 `VITE_API_URL`，導致 API 請求路徑錯誤。 | 修正 `vite.config.ts` 以注入變數，並修正 `api.ts` 以使用該變數 (`fix(deploy): ...frontend...`)。 |
