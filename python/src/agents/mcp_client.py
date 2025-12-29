@@ -18,12 +18,13 @@ logger = logging.getLogger(__name__)
 class MCPClient:
     """Client for calling MCP tools via HTTP."""
 
-    def __init__(self, mcp_url: str = None):
+    def __init__(self, mcp_url: str = None, server_url: str = None):
         """
         Initialize MCP client.
 
         Args:
             mcp_url: MCP server URL (defaults to service discovery)
+            server_url: Archon-Server URL (defaults to service discovery)
         """
         if mcp_url:
             self.mcp_url = mcp_url
@@ -43,8 +44,28 @@ class MCPClient:
                 else:
                     self.mcp_url = f"http://localhost:{mcp_port}"
 
+        if server_url:
+            self.server_url = server_url
+        else:
+            # Use service discovery to find Archon server
+            try:
+                from ..server.config.service_discovery import get_server_url
+
+                self.server_url = get_server_url()
+            except ImportError:
+                # Fallback for when running in agents container
+                import os
+
+                server_port = os.getenv("ARCHON_SERVER_PORT", "8181")
+                if os.getenv("DOCKER_CONTAINER"):
+                    self.server_url = f"http://archon-server:{server_port}"
+                else:
+                    self.server_url = f"http://localhost:{server_port}"
+
+
         self.client = httpx.AsyncClient(timeout=30.0)
-        logger.info(f"MCP Client initialized with URL: {self.mcp_url}")
+        logger.info(f"MCP Client initialized with MCP URL: {self.mcp_url}")
+        logger.info(f"MCP Client initialized with Server URL: {self.server_url}")
 
     async def __aenter__(self):
         """Async context manager entry."""
@@ -135,6 +156,34 @@ class MCPClient:
         """Manage tasks through MCP."""
         result = await self.call_tool("manage_task", action=action, project_id=project_id, **kwargs)
         return json.dumps(result) if isinstance(result, dict) else str(result)
+
+    async def create_change_proposal(
+        self, proposal_type: str, payload: dict
+    ) -> dict:
+        """
+        Create a new change proposal for human review by directly calling the archon-server API.
+        NOTE: This is a temporary solution and bypasses the MCP RPC protocol.
+        """
+        # This requires a temporary credential solution. For now, we assume the agent container
+        # can directly communicate or has a mechanism to obtain a valid token.
+        # In a real implementation, we would need to handle auth properly.
+        # For this PoC, we rely on the server being in a trusted network.
+        # A placeholder for where a real token would be fetched/used.
+        headers = {"Content-Type": "application/json"} # "Authorization": "Bearer <token>"
+
+        request_data = {"proposal_type": proposal_type, "payload": payload}
+
+        try:
+            response = await self.client.post(
+                f"{self.server_url}/api/changes",
+                json=request_data,
+                headers=headers,
+            )
+            response.raise_for_status()
+            return response.json()
+        except httpx.HTTPError as e:
+            logger.error(f"HTTP error creating change proposal: {e} - Response: {e.response.text}")
+            raise Exception(f"Failed to create change proposal: {str(e)}") from e
 
 
 # Global MCP client instance (created on first use)

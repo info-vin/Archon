@@ -302,7 +302,16 @@ const supabaseApi = {
   async updateUserPassword(newPassword: string): Promise<void> {
     const { error } = await supabase!.auth.updateUser({ password: newPassword });
     if (error) throw new Error(error.message);
-  }
+  },
+
+  async getChangeProposals(status: string): Promise<any[]> {
+    const response = await fetch(`/api/changes?status=${status}`);
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.detail || 'Failed to fetch change proposals');
+    }
+    return response.json();
+  },
 };
 
 // Export the Supabase API implementation unconditionally
