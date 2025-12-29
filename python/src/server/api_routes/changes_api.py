@@ -1,7 +1,6 @@
 # python/src/server/api_routes/changes_api.py
 
 import logging
-from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
@@ -25,7 +24,7 @@ class ChangeProposal(BaseModel):
     status: str
     type: str
     request_payload: dict
-    user_id: Optional[str]
+    user_id: str | None
     created_at: str
     updated_at: str
 
@@ -63,12 +62,12 @@ async def create_change_proposal(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to create proposal.",
-        )
+        ) from e
 
 
 @router.get(
     "/api/changes",
-    response_model=List[ChangeProposal],
+    response_model=list[ChangeProposal],
     tags=["Changes"],
     summary="List change proposals",
 )
@@ -93,7 +92,7 @@ async def list_change_proposals(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to retrieve proposals.",
-        )
+        ) from e
 
 
 @router.get(
@@ -144,15 +143,15 @@ async def approve_change_proposal(
         )
         return approved_proposal
     except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)) from e
     except PermissionError as e:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e)) from e
     except Exception as e:
         logger.error(f"Error approving proposal '{change_id}': {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to approve proposal: {e}",
-        )
+        ) from e
 
 
 @router.post(
@@ -177,10 +176,10 @@ async def reject_change_proposal(
         )
         return rejected_proposal
     except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e)) from e
     except Exception as e:
         logger.error(f"Error rejecting proposal '{change_id}': {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to reject proposal.",
-        )
+        ) from e

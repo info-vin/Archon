@@ -3,8 +3,7 @@
 import logging
 import os
 import subprocess
-import uuid
-from typing import Any, Dict, List
+from typing import Any
 
 from supabase_py_async import AsyncClient
 
@@ -38,8 +37,8 @@ class ProposeChangeService:
         self.supabase: AsyncClient = get_supabase_client()
 
     async def create_proposal(
-        self, user_id: str, proposal_type: str, payload: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, user_id: str, proposal_type: str, payload: dict[str, Any]
+    ) -> dict[str, Any]:
         """Creates a new change proposal in the database."""
         logger.info(
             f"Creating proposal of type '{proposal_type}' for user '{user_id}'"
@@ -60,7 +59,7 @@ class ProposeChangeService:
             raise Exception("Failed to create proposal in database.")
         return response.data[0]
 
-    async def get_proposal(self, change_id: str) -> Dict[str, Any] | None:
+    async def get_proposal(self, change_id: str) -> dict[str, Any] | None:
         """Retrieves a single proposal by its ID."""
         response = (
             await self.supabase.table("proposed_changes")
@@ -71,7 +70,7 @@ class ProposeChangeService:
         )
         return response.data
 
-    async def list_proposals(self, status: str = "pending") -> List[Dict[str, Any]]:
+    async def list_proposals(self, status: str = "pending") -> list[dict[str, Any]]:
         """Lists all proposals, optionally filtered by status."""
         response = (
             await self.supabase.table("proposed_changes")
@@ -84,7 +83,7 @@ class ProposeChangeService:
 
     async def approve_proposal(
         self, change_id: str, approver_id: str
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Approves a proposal and triggers its execution."""
         logger.info(f"Approving proposal '{change_id}' by user '{approver_id}'")
         proposal = await self.get_proposal(change_id)
@@ -125,7 +124,7 @@ class ProposeChangeService:
 
     async def reject_proposal(
         self, change_id: str, rejector_id: str
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Rejects a proposal."""
         logger.info(f"Rejecting proposal '{change_id}' by user '{rejector_id}'")
         response = (
@@ -138,7 +137,7 @@ class ProposeChangeService:
             raise ValueError(f"Proposal with id '{change_id}' not found or could not be updated.")
         return response.data[0]
 
-    async def _execute_approved_proposal(self, proposal: Dict[str, Any]) -> None:
+    async def _execute_approved_proposal(self, proposal: dict[str, Any]) -> None:
         """
         Executes the action defined in the proposal.
         This is a critical function and must handle actions securely.

@@ -107,7 +107,11 @@ test-fe-background:
 #    範例 (Example): make test-fe-project project=enduser-ui-fe
 test-fe-project:
 	@echo "Running frontend tests for $(project)..."
-	@cd $(project) && $(PNPM) test
+	@if [ "$(project)" = "enduser-ui-fe" ]; then \
+		cd $(project) && $(PNPM) run test:e2e; \
+	else \
+		cd $(project) && $(PNPM) test; \
+	fi
 
 # 3. 測試特定單一前端測試 (Test a single frontend test)
 #    用法 (Usage): make test-fe-single project=<project_name> test=<test_name>

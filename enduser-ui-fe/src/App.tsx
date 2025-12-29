@@ -7,7 +7,8 @@ import DashboardPage from './pages/DashboardPage.tsx';
 import AdminPage from './pages/AdminPage.tsx';
 import BlogPage from './pages/BlogPage.tsx';
 import SettingsPage from './pages/SettingsPage.tsx';
-import { LogOutIcon, SettingsIcon, UserIcon, MenuIcon, XIcon } from './components/Icons.tsx';
+import ApprovalsPage from './pages/ApprovalsPage.tsx';
+import { LogOutIcon, SettingsIcon, UserIcon, MenuIcon, XIcon, CheckSquareIcon } from './components/Icons.tsx';
 import ThemeToggle from './components/ThemeToggle.tsx';
 import UserAvatar from './components/UserAvatar.tsx';
 import LiveClock from './components/LiveClock.tsx';
@@ -74,6 +75,16 @@ export const AppRoutes: React.FC = () => {
           <ProtectedRoute>
             <MainLayout>
               <SettingsPage />
+            </MainLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/approvals"
+        element={
+          <ProtectedRoute>
+            <MainLayout>
+              <ApprovalsPage />
             </MainLayout>
           </ProtectedRoute>
         }
@@ -239,6 +250,12 @@ const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                         <Link to="/settings" className={`flex items-center p-2 rounded-md hover:bg-secondary ${location.pathname.startsWith('/settings') ? 'bg-secondary' : ''}`}>
                             <SettingsIcon className="w-5 h-5 mr-3" />
                             Settings
+                        </Link>
+                    </li>
+                    <li className="mb-2">
+                        <Link to="/approvals" className={`flex items-center p-2 rounded-md hover:bg-secondary ${location.pathname.startsWith('/approvals') ? 'bg-secondary' : ''}`}>
+                            <CheckSquareIcon className="w-5 h-5 mr-3" />
+                            Approvals
                         </Link>
                     </li>
                     {isAdmin && (

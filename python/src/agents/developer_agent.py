@@ -3,7 +3,6 @@
 import logging
 import os
 from dataclasses import dataclass
-from typing import Any, List
 
 from pydantic_ai import Agent, RunContext
 
@@ -58,7 +57,7 @@ class DeveloperAgent(BaseAgent[DeveloperDependencies, str]):
             """
             try:
                 mcp_client = await get_mcp_client()
-                response = await mcp_client.create_change_proposal(
+                await mcp_client.create_change_proposal(
                     proposal_type="file_write",
                     payload={"filepath": filepath, "content": content, "reason": reason},
                 )
@@ -77,7 +76,7 @@ class DeveloperAgent(BaseAgent[DeveloperDependencies, str]):
             """
             try:
                 mcp_client = await get_mcp_client()
-                response = await mcp_client.create_change_proposal(
+                await mcp_client.create_change_proposal(
                     proposal_type="git_checkout",
                     payload={"branch_name": branch_name, "reason": reason},
                 )
@@ -88,7 +87,7 @@ class DeveloperAgent(BaseAgent[DeveloperDependencies, str]):
 
         @agent.tool
         async def propose_shell_command(
-            ctx: RunContext[DeveloperDependencies], command: str, args: List[str], reason: str
+            ctx: RunContext[DeveloperDependencies], command: str, args: list[str], reason: str
         ) -> str:
             """
             Proposes to run a shell command from a pre-approved whitelist. The change will be submitted for human review.
@@ -96,7 +95,7 @@ class DeveloperAgent(BaseAgent[DeveloperDependencies, str]):
             """
             try:
                 mcp_client = await get_mcp_client()
-                response = await mcp_client.create_change_proposal(
+                await mcp_client.create_change_proposal(
                     proposal_type="shell_command",
                     payload={"command": command, "args": args, "reason": reason},
                 )
