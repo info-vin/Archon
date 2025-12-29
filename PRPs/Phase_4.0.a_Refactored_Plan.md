@@ -170,22 +170,56 @@ Task 3: CREATE `HRStatsPage.tsx` in `enduser-ui-fe`. (任務 3：在 `enduser-ui
 
 ## Validation Loop (驗證迴圈)
 
-(Copied from `prp_base.md` template) (從 `prp_base.md` 範本複製)
+(Adapted from project's `CONTRIBUTING_tw.md` and `Phase_3.9.1` validation patterns) (改編自專案的 `CONTRIBUTING_tw.md` 和 `Phase_3.9.1` 驗證模式)
 
 ### Level 1: Syntax & Style (Immediate Feedback) (等級 1：語法與風格 (即時回饋))
 ```bash
-ruff check src/ --fix && mypy src/ && ruff format src/
+# Run after each file creation/modification - fix before proceeding (在每次檔案建立/修改後運行 - 在繼續之前修復)
+ruff check src/ --fix     # Auto-format and fix linting issues for Python (自動格式化並修復 Python 的 linting 問題)
+mypy src/                 # Type checking with specific files for Python (對 Python 檔案進行類型檢查)
+ruff format src/          # Ensure consistent formatting for Python (確保 Python 格式一致)
+# For Frontend (if applicable): (針對前端，如果適用)
+# pnpm run lint --fix     # Auto-format and fix linting issues for frontend (自動格式化並修復前端的 linting 問題)
+# pnpm run typecheck      # Type checking for frontend (前端的類型檢查)
+
+# Project-wide validation (專案範圍驗證)
+make lint                 # Run all project linters (執行所有專案的 linter)
+
+# Expected: Zero errors. If errors exist, READ output and fix before proceeding. (預期：零錯誤。如果存在錯誤，閱讀輸出並在繼續之前修復。)
 ```
 ### Level 2: Unit Tests (Component Validation) (等級 2：單元測試 (元件驗證))
 ```bash
-uv run pytest src/services/tests/ -v && uv run pytest src/tools/tests/ -v
+# Test each component as it's created (在每個元件建立後進行測試)
+uv run pytest python/src/server/services/tests/test_{domain}_service.py -v # Backend service unit tests (後端服務單元測試)
+uv run pytest python/src/agents/tools/tests/test_{tool_name}.py -v        # Agent tool unit tests (Agent 工具單元測試)
+
+# Full backend unit test suite for affected areas (受影響區域的完整後端單元測試套件)
+make test-be
+
+# Full frontend test suite for affected areas (if applicable) (受影響區域的完整前端測試套件，如果適用)
+# make test-fe-project project=enduser-ui-fe # Example for frontend project (前端專案範例)
+
+# Expected: All tests pass. If failing, debug root cause and fix implementation. (預期：所有測試通過。如果失敗，偵錯根本原因並修復實作。)
 ```
 ### Level 3: Integration Testing (System Validation) (等級 3：整合測試 (系統驗證))
 ```bash
-make dev # Start backend (啟動後端)
-# In another terminal (在另一個終端機中)
-curl -f http://localhost:8181/health || echo "Service health check failed"
-# ... further integration tests for new endpoints ... (新端點的進一步整合測試)
+# Start backend services (啟動後端服務)
+make dev # Or 'make dev-docker' for full environment (或使用 'make dev-docker' 啟動完整環境)
+# In a separate terminal, verify services: (在單獨的終端機中，驗證服務：)
+curl -f http://localhost:8181/health || echo "Archon Server health check failed" # Backend health check (後端健康檢查)
+# curl -f http://localhost:8000/health || echo "Knowledge API health check failed" # Other services (其他服務)
+
+# Feature-specific API endpoint testing (功能特定的 API 端點測試)
+# Example: (範例)
+# curl -X POST http://localhost:8181/api/changes -H "Content-Type: application/json" -d '{"proposal_type": "file", ...}' | jq .
+
+# End-to-End Integration Tests (端對端整合測試)
+# These simulate the full user journey and AI workflow. (這些模擬完整的用戶旅程和 AI 工作流程。)
+make test # Run all project tests, including E2E (運行所有專案測試，包括 E2E)
+# Or specific E2E test: (或特定的 E2E 測試)
+# make test-fe-project project=enduser-ui-fe # (Run E2E tests for enduser-ui-fe) (運行 enduser-ui-fe 的 E2E 測試)
+
+# Expected: All integrations working, proper responses, no connection errors. (預期：所有整合正常工作，回應正確，無連線錯誤。)
 ```
 
 ## Final Validation Checklist (最終驗證清單)

@@ -113,6 +113,14 @@
 
 # 第三章：近期工作日誌 (Recent Journal Entries)
 
+### 2025-12-29: 技術債調查：確認 Embedding Service 故障轉移功能已完成
+*   **核心任務**: 根據您的指示，調查 `@TODO.md` 中「為詞嵌入服務增加 API 金鑰自動故障轉移功能」技術債的完成狀態。
+*   **調查歷程**:
+    1.  **`git log` 分析**: 透過 `git log --follow python/src/server/services/embeddings/embedding_service.py` 指令，發現 `commit 9853fb0` 和 `7dac4ce` 的提交訊息明確指出了「implement provider failover」(實作供應商故障轉移)。
+    2.  **程式碼審查**: 審查該檔案的 `create_embeddings_batch` 函式，確認其包含一個遍歷多個供應商設定的迴圈，並能在發生 `AuthenticationError` 或 `RateLimitError` 時，自動嘗試下一個供應商。
+    3.  **測試驗證**: 透過 `git show 9853fb0` 發現了對應的測試檔案 `python/tests/test_async_embedding_service.py`。審查該檔案，定位到 `test_create_embeddings_batch_with_failover` 測試案例。此案例完整地模擬了主要供應商失敗、系統成功轉向次要供應商的場景。
+*   **結論**: 此項技術債**早已完成**且有自動化測試覆蓋。建議從 `@TODO.md` 中移除此項目。
+
 ### 2025-12-29: 抽絲剝繭：解決 `make test` 失敗背後的雙重 Bug
 *   **核心任務**: 徹底解決 `make test` 指令失敗的問題。
 *   **偵錯歷程**: 
