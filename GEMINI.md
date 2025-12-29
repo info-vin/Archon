@@ -113,6 +113,14 @@
 
 # 第三章：近期工作日誌 (Recent Journal Entries)
 
+### 2025-12-29: 抽絲剝繭：解決 `make test` 失敗背後的雙重 Bug
+*   **核心任務**: 徹底解決 `make test` 指令失敗的問題。
+*   **偵錯歷程**: 
+    1.  **第一層 Bug (`archon-ui-main`)**: 首先，透過 `git bisect` 成功定位到 `commit 5d02240`。該提交在一次大規模 linting 重構中，意外地破壞了 `optimistic.ts` 輔助函式的邏輯。我們恢復了其原始邏輯，修復了 `archon-ui-main` 的單元測試。
+    2.  **第二層 Bug (`Makefile`)**: 修復後，`make test` 依然失敗。進一步調查發現，根源在於 `Makefile` 錯誤地對 `enduser-ui-fe` 專案執行了 `pnpm test`，而該專案只定義了 `test:e2e` 指令，並無通用的 `test` 指令。
+    3.  **最終修復**: 修正了 `Makefile`，使其正確呼叫 `pnpm run test:e2e`。此後，`enduser-ui-fe` 的 E2E 測試得以成功執行，最終使完整的 `make test` 指令通過。
+*   **關鍵學習**: 一個看似單一的頂層指令失敗 (`make test`)，其背後可能隱藏著多個、性質完全不同的底層 Bug。必須採用系統性的隔離偵錯方法，逐一擊破。同時，也凸顯了在同一個專案中，理解不同子專案（`unit test` vs `e2e test`）之間迥異的測試架構與指令的重要性。
+
 ---
 
 # 第四章：歷史檔案：原則的考古學 (Historical Archive: The Archaeology of Principles)

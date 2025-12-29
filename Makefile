@@ -92,7 +92,7 @@ test: test-fe test-be
 test-fe:
 	@echo "Running all frontend tests..."
 	@echo "--- Testing End-User UI (enduser-ui-fe) ---"
-	@cd enduser-ui-fe && $(PNPM) test
+	@cd enduser-ui-fe && $(PNPM) run test:e2e
 	@echo "--- Testing Admin UI (archon-ui-main) ---"
 	@cd archon-ui-main && $(PNPM) test
 

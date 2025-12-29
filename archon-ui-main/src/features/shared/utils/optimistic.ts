@@ -77,6 +77,6 @@ export function removeDuplicateEntities<T extends { id: string }>(entities: T[])
  * Clean up optimistic metadata from an entity
  */
 export function cleanOptimisticMetadata<T>(entity: T & Partial<OptimisticEntity>): T {
-  const { ...cleaned } = entity;
+  const { _optimistic, _localId, ...cleaned } = entity;
   return cleaned as T;
 }
