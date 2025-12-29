@@ -129,49 +129,43 @@ Task 7: CREATE Tests for the entire loop (任務 7：為整個迴圈建立測試
   - IMPLEMENT: Frontend component tests for `ApprovalsPage` and `DiffViewer`. (實作：前端 `ApprovalsPage` 和 `DiffViewer` 的元件測試。)
 ```
 
-### Phase 4.1: Version Control Integration (階段 4.1：版本控制整合)
-*Focus: Enable the AI to manage its own feature branches.* (焦點：使 AI 能夠管理自己的 feature 分支。)
+### Phase 4.1: Integrate 104 Job Board API (階段 4.1：整合 104 人力銀行 API)
+*Focus: Connect the system to a real-world, external API for practical marketing analysis.* (焦點：將系統連接到真實世界的外部 API，以進行實用的市場分析。)
+
+**User Persona (使用者畫像)**: Marketing Analyst (行銷分析師).
+
+**Use Case (使用案例)**: The analyst needs to quickly understand the hiring landscape for "SaaS" companies in a specific region. They use the Archon UI, enter "SaaS" as a keyword, and instantly receive a list of current, real-world job descriptions. They use this data to analyze competitor messaging and tailor their own company's marketing and recruitment campaigns, all without leaving the platform or manually scraping websites. (分析師需要快速了解特定地區「SaaS」公司的招聘情況。他們使用 Archon UI，輸入「SaaS」作為關鍵字，立即獲得當前真實的職位描述列表。他們利用這些數據來分析競爭對手的訊息，並調整自己公司的行銷和招聘活動，所有操作都在平台內完成，無需手動抓取網站。)
 
 ```yaml
-Task 1: CREATE python/src/agents/tools/version_control_tools.py (任務 1：建立版本控制工具)
-  - IMPLEMENT: New tools `propose_git_create_branch(branch_name)` and `propose_git_commit(message)`. (實作：新的 `propose_git_create_branch` 和 `propose_git_commit` 工具。)
-  - LOGIC: These tools will call the `ProposeChangeService` to create "git" type proposals. (邏輯：這些工具將呼叫 `ProposeChangeService` 來建立「git」類型的提議。)
+Task 1: CREATE python/src/server/services/job_board_service.py (任務 1：建立職缺看板服務)
+  - IMPLEMENT: A `JobBoardService` with a method `search_104_jobs(keyword: str)`. (實作：一個包含 `search_104_jobs` 方法的 `JobBoardService`。)
+  - LOGIC: This service will use `httpx` to call the 104 API, handle authentication with an API key stored in environment variables, and parse the JSON response. (邏輯：此服務將使用 `httpx` 呼叫 104 API，使用環境變數中儲存的 API 金鑰進行身份驗證，並解析 JSON 回應。)
 
-Task 2: EXTEND python/src/server/services/propose_change_service.py (任務 2：擴充提議服務)
-  - IMPLEMENT: Add logic to the `execute_proposal` method to handle the "git" type. It will use `subprocess.run` to execute the corresponding `git` commands. (實作：在 `execute_proposal` 方法中新增邏輯以處理「git」類型。它將使用 `subprocess.run` 來執行相應的 `git` 命令。)
-  - SECURITY: Command arguments must be sanitized. (安全性：命令參數必須進行清理。)
+Task 2: CREATE a new API route for jobs. (任務 2：為職缺建立新的 API 路由)
+  - IMPLEMENT: A new endpoint `POST /api/marketing/fetch-jobs` that takes a keyword and returns the data from the `JobBoardService`. (實作：一個新的 `POST /api/marketing/fetch-jobs` 端點，接收關鍵字並從 `JobBoardService` 返回數據。)
 
-Task 3: ADD UI elements in `enduser-ui-fe` (任務 3：在前端新增 UI 元件)
-  - IMPLEMENT: Small UI indicators to show which task is associated with which AI-managed branch. (實作：小型 UI 指示器，顯示哪個任務與哪個 AI 管理的分支相關聯。)
-
-Task 4: CREATE tests for Git proposal execution. (任務 4：為 Git 提議執行建立測試)
-  - IMPLEMENT: Tests to ensure the backend correctly executes `git` commands upon approval. (實作：測試以確保後端在批准後能正確執行 `git` 命令。)
+Task 3: CREATE a new UI page in `enduser-ui-fe`. (任務 3：在 `enduser-ui-fe` 中建立新 UI 頁面)
+  - IMPLEMENT: A simple page with a text input for the keyword and a button to trigger the API call. The results will be displayed in a list or table. (實作：一個帶有關鍵字輸入框和觸發 API 呼叫按鈕的簡單頁面。結果將顯示在列表或表格中。)
 ```
 
-### Phase 4.2: E2E Workflow & Execution Capability (階段 4.2：端對端工作流程與執行能力)
-*Focus: Allow the AI to run tests and complete the full development loop.* (焦點：允許 AI 運行測試並完成完整的開發迴圈。)
+### Phase 4.2: HR Statistics Dashboard (階段 4.2：人事統計儀表板)
+*Focus: Provide managers with data-driven insights through data visualization.* (焦點：透過數據視覺化為管理者提供數據驅動的洞察。)
+
+**User Persona (使用者畫像)**: Project Manager / Team Lead (專案經理 / 團隊負責人).
+
+**Use Case (使用案例)**: Before the weekly sprint planning meeting, the manager opens the "Stats Dashboard" in Archon. They immediately see a bar chart showing the task distribution across the team, identifying that one developer is overloaded while another has available bandwidth. They also see a pie chart showing that a high number of tasks are "In Review." This allows them to start the meeting with concrete data, facilitating a quick and effective discussion about reallocating work and addressing review bottlenecks. (在每週的衝刺計畫會議之前，經理在 Archon 中打開「統計儀表板」。他們立即看到一個顯示團隊任務分配的長條圖，從而識別出某位開發人員超載，而另一位則有空閒。他們還看到一個顯示大量任務處於「審查中」狀態的圓餅圖。這使他們能夠帶著具體數據開始會議，從而促進關於重新分配工作和解決審查瓶頸的快速有效討論。)
 
 ```yaml
-Task 1: CREATE python/src/agents/tools/execution_tools.py (任務 1：建立執行工具)
-  - IMPLEMENT: New tool `propose_run_shell_command(command: str)`. (實作：新的 `propose_run_shell_command` 工具。)
-  - LOGIC: This tool will call the `ProposeChangeService` to create a "shell" type proposal. (邏輯：此工具將呼叫 `ProposeChangeService` 來建立「shell」類型的提議。)
+Task 1: CREATE backend statistics endpoints. (任務 1：建立後端統計端點)
+  - IMPLEMENT: `GET /api/stats/tasks-by-employee`, `GET /api/stats/tasks-by-status`, etc., as originally planned. (實作：如原計畫的 `GET /api/stats/tasks-by-employee` 等端點。)
+  - LOGIC: These endpoints will perform SQL aggregate queries against the `archon_tasks` and `profiles` tables. (邏輯：這些端點將對 `archon_tasks` 和 `profiles` 表執行 SQL 聚合查詢。)
 
-Task 2: EXTEND python/src/server/services/propose_change_service.py (任務 2：擴充提議服務)
-  - IMPLEMENT: Add logic to `execute_proposal` for the "shell" type. (實作：在 `execute_proposal` 中新增邏輯以處理「shell」類型。)
-  - SECURITY: This is the most critical security point. The implementation MUST use a strict whitelist. Only commands like `make test-be`, `make lint`, etc., are allowed. All other commands must be rejected. (安全性：這是最關鍵的安全點。實作必須使用嚴格的白名單。只允許像 `make test-be`, `make lint` 這樣的命令。所有其他命令都必須被拒絕。)
+Task 2: CHOOSE and INTEGRATE a charting library. (任務 2：選擇並整合圖表庫)
+  - ACTION: Add `recharts` to `enduser-ui-fe`'s `package.json`. (行動：將 `recharts` 加入 `enduser-ui-fe` 的 `package.json`。)
 
-Task 3: CREATE final End-to-End Integration Test (任務 3：建立最終的端對端整合測試)
-  - IMPLEMENT: A `pytest` that simulates the entire workflow: (實作：一個模擬整個工作流程的 `pytest`：)
-    1. Create a task. (建立任務)
-    2. Simulate the AI proposing to create a branch. (模擬 AI 提議建立分支)
-    3. Programmatically approve it. (以程式化方式批准)
-    4. Simulate the AI proposing a file change. (模擬 AI 提議檔案變更)
-    5. Approve it. (批准)
-    6. Simulate the AI proposing to run `make test-be`. (模擬 AI 提議運行 `make test-be`)
-    7. Approve it and check the result. (批准並檢查結果)
-    8. Simulate the AI proposing a commit. (模擬 AI 提議 commit)
-    9. Approve it. (批准)
-    10. Verify the final commit exists on the correct branch. (驗證最終的 commit 存在於正確的分支上。)
+Task 3: CREATE `HRStatsPage.tsx` in `enduser-ui-fe`. (任務 3：在 `enduser-ui-fe` 中建立 `HRStatsPage.tsx`)
+  - IMPLEMENT: A new page that fetches data from the stats endpoints upon loading. (實作：一個在載入時從統計端點獲取數據的新頁面。)
+  - UI: Use components from `recharts` (e.g., `<BarChart>`, `<PieChart>`) to visualize the data. (UI：使用 `recharts` 的元件來視覺化數據。)
 ```
 
 ## Validation Loop (驗證迴圈)
