@@ -302,7 +302,41 @@ const supabaseApi = {
   async updateUserPassword(newPassword: string): Promise<void> {
     const { error } = await supabase!.auth.updateUser({ password: newPassword });
     if (error) throw new Error(error.message);
-  }
+  },
+
+  // --- CHANGE PROPOSAL API ---
+  async getPendingChanges(): Promise<any[]> {
+    const response = await fetch('/api/changes');
+    if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Failed to fetch pending changes.');
+    }
+    return response.json();
+  },
+
+  async approveChange(changeId: string): Promise<any> {
+    const response = await fetch(`/api/changes/${changeId}/approve`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+    });
+    if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Failed to approve change.');
+    }
+    return response.json();
+  },
+
+  async rejectChange(changeId: string): Promise<any> {
+    const response = await fetch(`/api/changes/${changeId}/reject`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+    });
+    if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Failed to reject change.');
+    }
+    return response.json();
+  },
 };
 
 // Export the Supabase API implementation unconditionally

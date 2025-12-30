@@ -7,7 +7,8 @@ import DashboardPage from './pages/DashboardPage.tsx';
 import AdminPage from './pages/AdminPage.tsx';
 import BlogPage from './pages/BlogPage.tsx';
 import SettingsPage from './pages/SettingsPage.tsx';
-import { LogOutIcon, SettingsIcon, UserIcon, MenuIcon, XIcon } from './components/Icons.tsx';
+import ApprovalsPage from './pages/ApprovalsPage.tsx'; // Import the new page
+import { LogOutIcon, SettingsIcon, UserIcon, MenuIcon, XIcon, ShieldCheckIcon } from './components/Icons.tsx'; // Add new Icon
 import ThemeToggle from './components/ThemeToggle.tsx';
 import UserAvatar from './components/UserAvatar.tsx';
 import LiveClock from './components/LiveClock.tsx';
