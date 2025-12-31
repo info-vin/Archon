@@ -1,12 +1,11 @@
 # python/src/mcp_server/features/developer/file_operation_tools.py
 import logging
-from typing import Dict, Any
+
 from pydantic import BaseModel, Field
 
 # This is a placeholder for the actual service.
 # In a real implementation, this would be injected.
 from .....server.services.propose_change_service import ProposeChangeService
-from .....server.dependencies import get_propose_change_service # Assuming this exists
 
 logger = logging.getLogger(__name__)
 
@@ -37,10 +36,18 @@ class ProposeFileChangeTool(BaseModel):
         """Submits the file change proposal."""
         logger.info(f"Proposing a change to file: {self.file_path}")
         try:
+            # Read the original content for diffing purposes
+            try:
+                with open(self.file_path, encoding='utf-8') as f:
+                    original_content = f.read()
+            except FileNotFoundError:
+                original_content = "" # File is new
+
             service = ToolDependencies.get_propose_change_service()
             payload = {
                 "file_path": self.file_path,
                 "new_content": self.new_content,
+                "original_content": original_content,
                 "description": f"Propose to overwrite the file at {self.file_path}"
             }
             proposal = await service.create_proposal(change_type='file', payload=payload)

@@ -1,12 +1,13 @@
 # python/src/server/services/propose_change_service.py
-from typing import Any, Dict, List, Optional
-from uuid import UUID
-import logging
 import asyncio
-import aiofiles
+import logging
 from pathlib import Path
+from typing import Any
+from uuid import UUID
 
+import aiofiles
 from supabase_py_async import AsyncClient
+
 
 # A placeholder for the actual execution logic
 # In a real implementation, this would interact with file systems, git, etc.
@@ -31,7 +32,7 @@ class ActionExecutor:
 
         return stdout.decode().strip()
 
-    async def execute_file_change(self, payload: Dict[str, Any]) -> str:
+    async def execute_file_change(self, payload: dict[str, Any]) -> str:
         file_path_str = payload.get('file_path')
         new_content = payload.get('new_content')
 
@@ -51,7 +52,7 @@ class ActionExecutor:
 
         return f"File '{file_path}' written successfully."
 
-    async def execute_git_change(self, payload: Dict[str, Any]) -> str:
+    async def execute_git_change(self, payload: dict[str, Any]) -> str:
         git_command = payload.get('command')
         if not git_command:
             raise ValueError("Git payload must contain a 'command'.")
@@ -73,7 +74,7 @@ class ActionExecutor:
         else:
             raise ValueError(f"Unsupported git command: {git_command}")
 
-    async def execute_shell_change(self, payload: Dict[str, Any]) -> str:
+    async def execute_shell_change(self, payload: dict[str, Any]) -> str:
         command_to_run = payload.get('command')
         if not command_to_run:
             raise ValueError("Shell payload must contain a 'command'.")
@@ -93,7 +94,7 @@ class ProposeChangeService:
         self.executor = ActionExecutor()
         self.logger = logging.getLogger(__name__)
 
-    async def create_proposal(self, change_type: str, payload: Dict[str, Any]) -> Dict[str, Any]:
+    async def create_proposal(self, change_type: str, payload: dict[str, Any]) -> dict[str, Any]:
         """Creates a new proposed change and stores it in the database."""
         self.logger.info(f"Creating proposal of type '{change_type}' with payload: {payload}")
 
@@ -108,7 +109,7 @@ class ProposeChangeService:
 
         return response.data[0]
 
-    async def list_proposals(self, status: Optional[str] = 'pending') -> List[Dict[str, Any]]:
+    async def list_proposals(self, status: str | None = 'pending') -> list[dict[str, Any]]:
         """Lists all proposals, optionally filtered by status."""
         self.logger.info(f"Listing proposals with status: {status}")
 
@@ -120,7 +121,7 @@ class ProposeChangeService:
 
         return response.data
 
-    async def get_proposal(self, proposal_id: UUID) -> Optional[Dict[str, Any]]:
+    async def get_proposal(self, proposal_id: UUID) -> dict[str, Any] | None:
         """Retrieves a single proposal by its ID."""
         self.logger.info(f"Getting proposal with ID: {proposal_id}")
 
@@ -128,7 +129,7 @@ class ProposeChangeService:
 
         return response.data
 
-    async def approve_proposal(self, proposal_id: UUID, user_id: UUID) -> Dict[str, Any]:
+    async def approve_proposal(self, proposal_id: UUID, user_id: UUID) -> dict[str, Any]:
         """Marks a proposal as approved."""
         self.logger.info(f"Approving proposal {proposal_id} by user {user_id}")
 
@@ -143,7 +144,7 @@ class ProposeChangeService:
 
         return response.data[0]
 
-    async def reject_proposal(self, proposal_id: UUID, user_id: UUID) -> Dict[str, Any]:
+    async def reject_proposal(self, proposal_id: UUID, user_id: UUID) -> dict[str, Any]:
         """Marks a proposal as rejected."""
         self.logger.info(f"Rejecting proposal {proposal_id} by user {user_id}")
 
@@ -158,7 +159,7 @@ class ProposeChangeService:
 
         return response.data[0]
 
-    async def execute_proposal(self, proposal_id: UUID) -> Dict[str, Any]:
+    async def execute_proposal(self, proposal_id: UUID) -> dict[str, Any]:
         """Executes an approved proposal and updates its status."""
         self.logger.info(f"Executing proposal {proposal_id}")
 

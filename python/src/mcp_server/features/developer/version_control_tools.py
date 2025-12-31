@@ -1,5 +1,6 @@
 # python/src/mcp_server/features/developer/version_control_tools.py
 import logging
+
 from pydantic import BaseModel, Field
 
 # Using the same dependency injector pattern as file_operation_tools

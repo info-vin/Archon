@@ -3,7 +3,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { api } from '../services/api'; // Import the actual api service
 
 // Assuming DiffViewer is created and placed here
-// import DiffViewer from '../components/DiffViewer';
+import DiffViewer from '../components/DiffViewer';
 
 interface ChangeProposal {
   id: string;
@@ -13,6 +13,8 @@ interface ChangeProposal {
   request_payload: {
     [key: string]: any;
     description: string;
+    original_content?: string;
+    new_content?: string;
   };
 }
 
@@ -104,14 +106,14 @@ const ApprovalsPage: React.FC = () => {
                   </div>
                 </div>
                 {/* Example of conditionally showing a DiffViewer for file changes */}
-                {/* {proposal.type === 'file' && (
+                {proposal.type === 'file' && (
                   <div className="mt-4">
                     <DiffViewer
-                      oldCode={proposal.request_payload.old_content || ''}
-                      newCode={proposal.request_payload.new_content || ''}
+                      oldValue={proposal.request_payload.original_content || ''}
+                      newValue={proposal.request_payload.new_content || ''}
                     />
                   </div>
-                )} */}
+                )}
               </li>
             ))
           ) : (
