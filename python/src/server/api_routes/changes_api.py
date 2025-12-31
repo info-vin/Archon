@@ -1,10 +1,11 @@
 # python/src/server/api_routes/changes_api.py
-from uuid import UUID
 import logging
-from fastapi import APIRouter, Depends, HTTPException, Body
+from uuid import UUID
 
+from fastapi import APIRouter, Depends, HTTPException
+
+from ..dependencies import get_current_user_id, get_propose_change_service
 from ..services.propose_change_service import ProposeChangeService
-from ..dependencies import get_propose_change_service, get_current_user_id
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -23,7 +24,7 @@ async def list_pending_changes(
         return proposals
     except Exception as e:
         logger.error(f"Error listing pending changes: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail="Failed to retrieve proposed changes.")
+        raise HTTPException(status_code=500, detail="Failed to retrieve proposed changes.") from e
 
 @router.get("/changes/{change_id}", tags=["Changes"])
 async def get_change_details(
@@ -43,7 +44,7 @@ async def get_change_details(
         raise
     except Exception as e:
         logger.error(f"Error getting change details for {change_id}: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail="Failed to retrieve change details.")
+        raise HTTPException(status_code=500, detail="Failed to retrieve change details.") from e
 
 @router.post("/changes/{change_id}/approve", tags=["Changes"])
 async def approve_and_execute_change(
@@ -70,10 +71,10 @@ async def approve_and_execute_change(
         return executed_proposal
     except (ValueError, PermissionError) as e:
         logger.warning(f"Failed to approve/execute change {change_id}: {e}")
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e)) from e
     except Exception as e:
         logger.error(f"Error during approval/execution of change {change_id}: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail="An unexpected error occurred during the approval process.")
+        raise HTTPException(status_code=500, detail="An unexpected error occurred during the approval process.") from e
 
 @router.post("/changes/{change_id}/reject", tags=["Changes"])
 async def reject_change(
@@ -93,4 +94,4 @@ async def reject_change(
         return rejected_proposal
     except Exception as e:
         logger.error(f"Error rejecting change {change_id}: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail="Failed to reject proposed change.")
+        raise HTTPException(status_code=500, detail="Failed to reject proposed change.") from e
