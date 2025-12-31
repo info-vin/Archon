@@ -275,6 +275,42 @@ def test_some_endpoint():
     2.  存取後端服務的 `/health` 端點，確認回傳 `{"status":"ok"}`。
     3.  打開前端服務的公開網址，進行功能驗證 (Smoke Test)。
 
+### 4.3 AI 開發者協作流程 (AI Developer Workflow)
+
+隨著 `Phase_4.1` 的完成，專案引入了一套由 AI Agent 輔助開發的全新工作流程。此流程的核心是「**提議 -> 審核 -> 執行**」，旨在確保 AI 在安全、可控的環境下為程式碼庫做出貢獻。
+
+#### 4.3.1 資料庫基礎：`proposed_changes` 資料表
+
+此工作流程由 `migration/005_create_proposed_changes_table.sql` 所建立的 `proposed_changes` 資料表支撐。
+
+- **核心欄位**:
+    - `id`: 提案的唯一標識符。
+    - `type`: 提案類型（`file`, `git`, `shell`）。
+    - `status`: 提案狀態（`pending`, `approved`, `rejected`, `executed`, `failed`）。
+    - `request_payload`: 一個 `jsonb` 欄位，儲存了提案的具體內容。例如，對於一個 `file` 類型的提案，這裡會包含 `file_path`, `new_content`, 以及用於 Diff 顯示的 `original_content`。
+
+#### 4.3.2 開發者審核工作流程
+
+開發者的主要職責是**審核** AI 提出的程式碼變更。
+
+1.  **接收通知與進入審核頁面**:
+    *   當 AI 提出一個新的變更時，開發者會（在未來的版本中）收到通知。
+    *   登入 `enduser-ui-fe`，並導航至側邊欄新增的 **`/approvals`** 頁面。
+
+2.  **審核變更**:
+    *   頁面會列出所有狀態為 `pending` 的提案。
+    *   對於 `file` 類型的提案，您現在可以看到一個**程式碼差異比對 (Diff Viewer)**，清晰地展示了檔案的原始內容 (`oldValue`) 與 AI 提議的新內容 (`newValue`)。
+
+3.  **做出決策**:
+    *   **批准 (Approve)**: 如果您認為變更是正確且安全的，點擊「Approve」按鈕。後端將會執行此變更（例如，覆寫檔案），並將提案狀態更新為 `executed`。
+    *   **拒絕 (Reject)**: 如果變更不符合要求，點擊「Reject」按鈕。該提案的狀態將會變為 `rejected`，不會對程式碼庫產生任何影響。
+
+#### 4.3.3 與 Git 流程的結合
+
+- AI 的所有工作都會在一個獨立的 `feature/` 分支上進行。
+- AI 提交的變更，在被批准和執行後，最終會以一個 `commit` 的形式出現在該 `feature/` 分支上。
+- 開發者後續可以像對待任何人類開發者提交的 `commit` 一樣，對其進行 code review、合併或進一步修改。
+
 ---
 
 ## 附錄 A：重要架構決策與歷史紀錄
