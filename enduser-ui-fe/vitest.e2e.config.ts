@@ -18,7 +18,8 @@ export default defineConfig({
   test: {
     // Use an array to load BOTH the global setup file and the E2E-specific one.
     // The order is important: global setup first, then E2E-specific setup.
-    setupFiles: ['./test/setup.ts', './tests/e2e/e2e.setup.ts'],
+    // 'pre-setup.ts' ensures environment is ready before any imports (hoisted or otherwise).
+    setupFiles: ['./tests/e2e/pre-setup.ts', './test/setup.ts', './tests/e2e/e2e.setup.tsx'],
     
     // Only run tests located in the tests/e2e/ directory for this config
     include: ['tests/e2e/**/*.spec.tsx'],
