@@ -237,9 +237,10 @@ def test_some_endpoint():
         3.  `migration/001_add_due_date_to_tasks.sql` (追加欄位更新)
         4.  `migration/002_create_schema_migrations_table.sql` (建立版本追蹤表)
         5.  `migration/003_add_get_counts_by_source_function.sql` (追加函式)
-        6.  `migration/seed_mock_data.sql` (填充核心假資料)
-        7.  `migration/seed_blog_posts.sql` (填充部落格假資料)
-        8.  `migration/004_create_test_utility_functions.sql` (**E2E 測試所需**)
+        6.  `migration/005_create_proposed_changes_table.sql` (建立 AI 提案表)
+        7.  `migration/seed_mock_data.sql` (填充核心假資料)
+        8.  `migration/seed_blog_posts.sql` (填充部落格假資料)
+        9.  `migration/004_create_test_utility_functions.sql` (**E2E 測試所需**)
             > **說明**: 此腳本建立了用於自動化端對端測試的資料庫函式 (`reset_test_database`, `seed_test_database`)。如果您需要運行完整的前端 E2E 測試套件，則**必須**執行此腳本。
 
 3.  **階段三：執行部署**
@@ -406,8 +407,9 @@ def test_some_endpoint():
 
 **1. 資料庫實體盤點**
 
-*   **`000_unified_schema.sql` 中定義的表格 (共 14 個)**:
+*   **系統中定義的表格 (共 15 個)**:
     *   **核心任務管理**: `archon_projects`, `archon_tasks`
+    *   **AI 協作與提案**: `proposed_changes`
     *   **知識庫 (RAG)**: `archon_sources`, `archon_crawled_pages`, `archon_code_examples`
     *   **系統設定**: `archon_settings`, `archon_prompts`
     *   **使用者與內容**: `profiles`, `blog_posts`
@@ -421,7 +423,7 @@ def test_some_endpoint():
 
 | 項目 | `000_unified_schema.sql` 中定義的表格 | `TODO.md` 時序圖中隱含的實體 | 差異分析 |
 | :--- | :--- | :--- | :--- |
-| **核心任務管理** | `archon_projects`, `archon_tasks` | `tasks` | **一致**。時序圖的核心是更新任務 (`tasks`)，這與 `archon_tasks` 表格直接對應。`archon_projects` 作為其父級，也是一致的。 |
+| **核心任務管理** | `archon_projects`, `archon_tasks`, `proposed_changes` | `tasks` | **部分一致**。時序圖的核心是更新任務 (`tasks`)。`proposed_changes` 是為 AI 開發者流程新增的提案機制，屬於較深層的技術實作，未在高級別業務圖中展示。 |
 | **知識庫** | `archon_sources`, `archon_crawled_pages`, `archon_code_examples` | *未提及* | **存在差異**。時序圖聚焦於「任務執行與檔案上傳」，並未描繪 Agent 執行任務時與知識庫（RAG）的互動細節。因此，與知識庫相關的表格沒有在圖中出現是合理的，這代表時序圖的抽象層級較高。 |
 | **系統設定** | `archon_settings`, `archon_prompts` | *未提及* | **存在差異**。時序圖並未包含系統讀取設定或 Prompt 的步驟，因此這些表格沒有出現。 |
 | **使用者與內容** | `profiles`, `blog_posts` | *未提及* | **存在差異**。`profiles` 和 `blog_posts` 主要由 `enduser-ui-fe` 使用，而時序圖主要描繪的是 `archon-ui-main` 的核心任務流程，因此未被提及。 |
@@ -440,74 +442,5 @@ def test_some_endpoint():
 
 ## 附錄 C: 系統設計與歷史日誌 (System Design & Historical Logs)
 
-### 核心工作流程圖 (v1.2 - 聚焦使用者與系統)
-
-下圖展示了使用者與系統元件在一次完整任務協作流程中的互動關係。
-
-```mermaid
-graph TD
-    subgraph "使用者 (User)"
-        A[專案經理/行銷人員/工程師]
-    end
-
-    subgraph "系統 (System)"
-        B[前端 Frontend UI]
-        C[後端 Backend API]
-        D[AI Agent]
-        E[Supabase DB]
-        F[Supabase Storage]
-    end
-
-    A -- 1. 建立/指派任務 --> B
-    B -- 2. 呼叫 API --> C
-    C -- 3. 觸發 Agent (非同步) --> D
-    C -- 4. 更新任務狀態 --> E
-    D -- 5. 執行任務 (e.g., 網路爬蟲、文件生成) --> D
-    D -- 6. 呼叫檔案上傳 API --> C
-    C -- 7. 將檔案上傳至 --> F
-    F -- 8. 回傳檔案 URL --> C
-    C -- 9. 更新任務，附加檔案連結 --> E
-    E -- 10. (via Socket.IO) 即時廣播更新 --> B
-    B -- 11. UI 自動更新，顯示進度與結果 --> A
-```
-
-### 時序圖 (v1.2)
-
-```mermaid
-sequenceDiagram
-    participant User as 使用者
-    participant Frontend as 前端 (UI)
-    participant Backend as 後端 (API)
-    participant AI_Agent as AI Agent
-    participant Supabase as Supabase (DB+Storage)
-
-    User->>Frontend: 1. 建立/指派任務
-    Frontend->>Backend: 2. 呼叫 API (create/update task)
-
-    Backend->>Supabase: 3. 更新任務狀態 (e.g., 'in_progress')
-    Backend->>AI_Agent: 4. 觸發 Agent (非同步執行)
-
-    Note over Backend, Frontend: (via Socket.IO) 廣播任務狀態更新
-    Backend-->>Frontend: 5. 即時狀態更新
-
-    AI_Agent->>AI_Agent: 6. 執行任務 (研究、寫報告...)
-    AI_Agent->>Backend: 7. 呼叫檔案上傳 API (附帶產出檔案)
-
-    Backend->>Supabase: 8. 將檔案上傳至 Storage
-    Supabase-->>Backend: 9. 回傳檔案 URL
-
-    Backend->>Supabase: 10. 更新任務 (status: 'review', attachments: [{filename, url}, ...])
-
-    Note over Backend, Frontend: (via Socket.IO) 廣播任務完成
-    Backend-->>Frontend: 11. 即時完成更新
-    Frontend->>User: 12. UI 自動更新 (顯示報告連結)
-```
-
-### Phase 3.8 部署偵錯日誌與解決方案總結
-
-| 服務 | 遇到的問題 | 根本原因 | 最終解決方案 (Commit/Pattern) |
-| :--- | :--- | :--- | :--- |
-| **`archon-server`** | 1. 啟動時因爬蟲初始化而超時。<br>2. 前端無法連線 (CORS)。 | 1. 在資源受限的容器中，於啟動階段啟動瀏覽器。<br>2. `allow_origins=["*"]` 與 `allow_credentials=True` 的組合被瀏覽器阻止。 | 1. 延遲爬蟲初始化 (`bd8b4fd`)。<br>2. 設定明確的 `origins` 來源清單 (`fix(api): ...`)。 |
-| **`archon-mcp`** | 1. `EXPOSE` 指令導致建置失敗。<br>2. `ValueError` 因無法解析 `$PORT`。<br>3. `export` 指令找不到。 | Dockerfile 語法錯誤 & Render 環境與 Shell 交互作用的複雜性。 | 引入標準的 **Entrypoint 腳本模式** (`9da96e7`, `694eb3c`)，將啟動邏輯封裝在容器內部，徹底解決了所有執行階段的配置問題。 |
-| **`archon-agents`** | (同 `archon-mcp`)<br>4. 缺少 `OPENAI_API_KEY` 等環境變數。 | (同 `archon-mcp`)<br>部署說明不完整。 | (同 `archon-mcp`)<br>提供了完整的環境變數清單。 |
-| **`archon-ui-main`** | 所有 API 呼叫都失敗，回傳 `index.html`。 | 程式碼中完全沒有使用 `VITE_API_URL`，導致 API 請求路徑錯誤。 | 修正 `vite.config.ts` 以注入變數，並修正 `api.ts` 以使用該變數 (`fix(deploy): ...frontend...`)。 |
+> **注意**: 本附錄內容已移至更完整的執行日誌中，請參閱：
+> [Phase 3.8 Execution Log](PRPs/archive/Phase_3.8_Execution_Log.md)
