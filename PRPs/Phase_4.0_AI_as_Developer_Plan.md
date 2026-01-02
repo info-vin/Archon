@@ -176,6 +176,29 @@ AI Agent 將被授予一組全新的、高權限的工具。這些工具的執�
     *   **路由**: 在 `enduser-ui-fe` 中新增 `/stats` 路由。
     *   **資料獲取**: 頁面載入時，平行呼叫上述三個 API，並在等待時顯示 Loading 狀態。
     *   **視覺化元件**:
-        *   使用 `recharts` 建立「員工任務長條圖」。
-        *   使用 `recharts` 建立「任務狀態圓餅圖」。
-        *   以表格形式展示「員工表現摘要」。
+---
+
+## 7. 階段性執行與驗證紀錄 (Execution & Validation Log)
+
+### Phase 4.0.i: 知識庫整合 (Completed: 2026-01-02)
+
+**1. 實作重點**:
+- **後端安全強化**: 在 `knowledge_api.py` 中實作 `X-User-Role` 選填 Header，達成「向後相容 Admin UI、向前鎖定一般用戶」的漸進式加鎖。
+- **前端 API 統一化**: 重構 `enduser-ui-fe` 的 API Client，自動注入身份 Header。
+- **UI 閉環**: 實作 `KnowledgeSelector` 並整合至任務建立視窗。
+
+**2. 核心驗證目標 (Closed-Loop Verification)**:
+- **測試目標**: 驗證「Admin 上傳 -> User 選擇 -> 任務建立 -> 資料入庫」的完整閉環。
+- **執行方式**: 使用 `make dev-docker` 啟動完整環境進行手動驗證（因自動化 E2E 測試尚未涵蓋新增的 `KnowledgeSelector` 互動邏輯）。
+
+**3. 已知問題 (Technical Debt)**:
+- **分頁限制**: 選擇器目前僅抓取前 100 筆資料，未來需優化。
+- **Admin UI 補強**: `archon-ui-main` 需補上 Role Header 以全面關閉安全性漏洞。
+
+---
+
+## 8. 下一步計畫 (Next Steps)
+
+1. **Phase 4.1 (Ongoing)**: **AI 開發者隊友深化**。專案已完成基礎審核流程，下一步將優化 AI 在執行 Git 與 Test 工具時的準確度。
+2. **Phase 4.2 (Planned)**: **業務功能擴充**。包含 HR 統計儀表板 (Dashboard) 與 104 人力銀行整合 (Job Board API)。
+
