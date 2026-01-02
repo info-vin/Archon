@@ -54,6 +54,7 @@ export type NewTaskData = {
   assigneeId?: string;
   due_date: string;
   priority: TaskPriority;
+  knowledge_source_ids?: string[]; // IDs of knowledge sources to associate with the task
 };
 
 export type NewProjectData = {
@@ -67,6 +68,26 @@ export type NewBlogPostData = Omit<BlogPost, 'id' | 'authorName' | 'publishDate'
 
 // --- SUPABASE API IMPLEMENTATION ---
 const supabaseApi = {
+  /**
+   * Internal helper to build headers with user role for RBAC
+   */
+  async _getHeaders(extraHeaders: Record<string, string> = {}): Promise<Record<string, string>> {
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      ...extraHeaders,
+    };
+
+    try {
+      const user = await this.getCurrentUser();
+      if (user?.role) {
+        headers['X-User-Role'] = user.role;
+      }
+    } catch (e) {
+      console.warn("Could not attach X-User-Role to headers", e);
+    }
+    return headers;
+  },
+
   async login(credentials: LoginCredentials): Promise<Employee | null> {
     const { data, error } = await supabase!.auth.signInWithPassword({
       email: credentials.email,
@@ -176,19 +197,37 @@ const supabaseApi = {
     }
     return response.json();
   },
-  async createTask(taskData: NewTaskData): Promise<Task> {
+  async createTask(task_data: NewTaskData): Promise<Task> {
+    // Map frontend field 'assigneeId' to backend expected 'assignee' if needed, 
+    // but the backend CreateTaskRequest expects 'assignee' as a string (name or id).
+    // Based on projects_api.py, it takes 'assignee' string.
+    const payload = {
+      ...task_data,
+      assignee: task_data.assigneeId // Backend expects 'assignee'
+    };
+
     const response = await fetch('/api/tasks', {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(taskData)
+        headers: await this._getHeaders(),
+        body: JSON.stringify(payload)
     });
     if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.detail || 'Failed to create task.');
     }
-    return response.json();
+    const data = await response.json();
+    return data.task;
+  },
+  async getKnowledgeItems(): Promise<any[]> {
+    const response = await fetch('/api/knowledge-items?per_page=100', {
+      headers: await this._getHeaders()
+    });
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.detail?.error || 'Failed to fetch knowledge items.');
+    }
+    const data = await response.json();
+    return data.items || [];
   },
   async updateTask(taskId: string, updates: UpdateTaskData): Promise<Task> {
     let processedUpdates: any = { ...updates };

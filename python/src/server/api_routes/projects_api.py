@@ -71,6 +71,7 @@ class CreateTaskRequest(BaseModel):
     task_order: int | None = 0
     feature: str | None = None
     due_date: datetime | None = None
+    knowledge_source_ids: list[str] | None = None  # List of knowledge source IDs to be associated with the task
 
 
 class AssignableUser(BaseModel):
@@ -636,6 +637,7 @@ async def create_task(request: CreateTaskRequest, x_user_role: str | None = Head
             task_order=request.task_order or 0,
             feature=request.feature,
             due_date=request.due_date,
+            knowledge_source_ids=request.knowledge_source_ids,
         )
 
         if not success:

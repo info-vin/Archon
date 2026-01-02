@@ -244,8 +244,20 @@ async def get_knowledge_items(
 
 
 @router.put("/knowledge-items/{source_id}")
-async def update_knowledge_item(source_id: str, updates: dict):
+async def update_knowledge_item(
+    source_id: str,
+    updates: dict,
+    x_user_role: str | None = Header(None, alias="X-User-Role")
+):
     """Update a knowledge item's metadata."""
+    # RBAC Check with Backward Compatibility
+    if x_user_role:
+        rbac_service = RBACService()
+        if not rbac_service.can_manage_content(x_user_role):
+            raise HTTPException(status_code=403, detail="Forbidden: You do not have permission to update knowledge items.")
+    else:
+        logger.warning(f"update_knowledge_item called without X-User-Role header for source_id: {source_id}. Allowing for backward compatibility.")
+
     try:
         # Use KnowledgeItemService
         service = KnowledgeItemService(get_supabase_client())
@@ -269,8 +281,19 @@ async def update_knowledge_item(source_id: str, updates: dict):
 
 
 @router.delete("/knowledge-items/{source_id}")
-async def delete_knowledge_item(source_id: str):
+async def delete_knowledge_item(
+    source_id: str,
+    x_user_role: str | None = Header(None, alias="X-User-Role")
+):
     """Delete a knowledge item from the database."""
+    # RBAC Check with Backward Compatibility
+    if x_user_role:
+        rbac_service = RBACService()
+        if not rbac_service.can_manage_content(x_user_role):
+            raise HTTPException(status_code=403, detail="Forbidden: You do not have permission to delete knowledge items.")
+    else:
+        logger.warning(f"delete_knowledge_item called without X-User-Role header for source_id: {source_id}. Allowing for backward compatibility.")
+
     try:
         logger.debug(f"Starting delete_knowledge_item for source_id: {source_id}")
         safe_logfire_info(f"Deleting knowledge item | source_id={source_id}")
@@ -388,8 +411,19 @@ async def get_knowledge_item_code_examples(source_id: str):
 
 
 @router.post("/knowledge-items/{source_id}/refresh")
-async def refresh_knowledge_item(source_id: str):
+async def refresh_knowledge_item(
+    source_id: str,
+    x_user_role: str | None = Header(None, alias="X-User-Role")
+):
     """Refresh a knowledge item by re-crawling its URL with the same metadata."""
+    # RBAC Check with Backward Compatibility
+    if x_user_role:
+        rbac_service = RBACService()
+        if not rbac_service.can_manage_content(x_user_role):
+            raise HTTPException(status_code=403, detail="Forbidden: You do not have permission to refresh knowledge items.")
+    else:
+        logger.warning(f"refresh_knowledge_item called without X-User-Role header for source_id: {source_id}. Allowing for backward compatibility.")
+
     try:
         safe_logfire_info(f"Starting knowledge item refresh | source_id={source_id}")
 
@@ -490,8 +524,19 @@ async def refresh_knowledge_item(source_id: str):
 
 
 @router.post("/knowledge-items/crawl")
-async def crawl_knowledge_item(request: KnowledgeItemRequest):
+async def crawl_knowledge_item(
+    request: KnowledgeItemRequest,
+    x_user_role: str | None = Header(None, alias="X-User-Role")
+):
     """Crawl a URL and add it to the knowledge base with progress tracking."""
+    # RBAC Check with Backward Compatibility
+    if x_user_role:
+        rbac_service = RBACService()
+        if not rbac_service.can_manage_content(x_user_role):
+            raise HTTPException(status_code=403, detail="Forbidden: You do not have permission to crawl knowledge items.")
+    else:
+        logger.warning(f"crawl_knowledge_item called without X-User-Role header for url: {request.url}. Allowing for backward compatibility.")
+
     # Validate URL
     if not request.url:
         raise HTTPException(status_code=422, detail="URL is required")
@@ -650,8 +695,17 @@ async def upload_document(
     file: UploadFile = File(...),
     tags: str | None = Form(None),
     knowledge_type: str = Form("technical"),
+    x_user_role: str | None = Header(None, alias="X-User-Role")
 ):
     """Upload and process a document with progress tracking."""
+    # RBAC Check with Backward Compatibility
+    if x_user_role:
+        rbac_service = RBACService()
+        if not rbac_service.can_manage_content(x_user_role):
+            raise HTTPException(status_code=403, detail="Forbidden: You do not have permission to upload documents.")
+    else:
+        logger.warning(f"upload_document called without X-User-Role header for file: {file.filename}. Allowing for backward compatibility.")
+
     try:
         # DETAILED LOGGING: Track knowledge_type parameter flow
         safe_logfire_info(

@@ -157,6 +157,24 @@ Task 5: FRONTEND - Integrate into Task Modal
   - ACTION: Pass selected IDs to `api.createTask` on submission.
 ```
 
+## Phase 4.0.i Execution Log (知識庫整合執行紀錄)
+
+### Status: ✅ Completed (2026-01-02)
+
+**1. Backend Security Hardening (後端安全性強化)**
+- **RBAC Enforcement**: Added `X-User-Role` header check to `delete`, `update`, `crawl`, and `upload` endpoints in `knowledge_api.py`.
+- **Backward Compatibility**: Implemented a "soft-lock" mechanism where requests without the header are logged as warnings but allowed, preventing breakage of the legacy Admin UI.
+- **Verification**: Added `test_knowledge_api_security.py` covering forbidden, authorized, and compatibility scenarios.
+
+**2. Frontend Integration (前端整合)**
+- **Unified API Client**: Refactored `enduser-ui-fe/api.ts` to use a private `_getHeaders()` helper, automatically injecting `X-User-Role` from the auth session into all requests.
+- **Knowledge Selector**: Created `KnowledgeSelector.tsx`, a reusable combobox component with search filtering.
+- **Task Association**: Updated `createTask` to accept `knowledge_source_ids` and pass them to the backend, where they are stored in the `sources` JSONB column.
+
+**3. Known Issues & Future Work (已知問題與未來工作)**
+- **Pagination Limit**: The `KnowledgeSelector` currently fetches only the first 100 items (`per_page=100`). For large knowledge bases, server-side search and infinite scroll will be needed.
+- **Admin UI Header**: The legacy `archon-ui-main` still needs to be updated to send `X-User-Role` headers to fully close the "soft-lock" security gap.
+
 ## Validation Loop (驗證迴圈)
 
 ### Level 1: Syntax & Style (已執行)

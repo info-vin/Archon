@@ -86,3 +86,41 @@ def test_create_task_with_ai_assignee_permission_denied(mock_profile_class, mock
 
     # Verify the task service was NOT called because the permission check failed first.
     mock_task_service.create_task.assert_not_called()
+
+
+@patch('src.server.api_routes.projects_api.task_service', new_callable=AsyncMock)
+@patch('src.server.api_routes.projects_api.RBACService', new_callable=MagicMock)
+@patch('src.server.api_routes.projects_api.ProfileService', new_callable=MagicMock)
+def test_create_task_with_knowledge_sources(mock_profile_class, mock_rbac_class, mock_task_service):
+    """
+    Unit test for the POST /tasks endpoint with knowledge_source_ids.
+    Verifies that knowledge_source_ids are passed to the task service.
+    """
+    # --- Setup Mocks ---
+    mock_rbac_instance = mock_rbac_class.return_value
+    mock_rbac_instance.has_permission_to_assign.return_value = True
+
+    mock_task_service.create_task = AsyncMock(return_value=(True, {"task": {"id": "new-task-id"}}))
+
+    # --- Test Execution ---
+    from src.server.main import app
+    client = TestClient(app)
+
+    task_payload = {
+        "project_id": "proj-123",
+        "title": "Task with Knowledge",
+        "knowledge_source_ids": ["source-1", "source-2"]
+    }
+
+    response = client.post("/api/tasks", json=task_payload)
+
+    # --- Assertions ---
+    assert response.status_code == 200
+    assert response.json()["task"]["id"] == "new-task-id"
+
+    # Verify that the API route logic correctly called the task service with knowledge_source_ids
+    mock_task_service.create_task.assert_awaited_once()
+    _, called_kwargs = mock_task_service.create_task.call_args
+    assert called_kwargs["project_id"] == "proj-123"
+    assert called_kwargs["title"] == "Task with Knowledge"
+    assert called_kwargs["knowledge_source_ids"] == ["source-1", "source-2"]

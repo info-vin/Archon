@@ -69,6 +69,7 @@ class TaskService:
         sources: list[dict[str, Any]] = None,
         code_examples: list[dict[str, Any]] = None,
         due_date: datetime | None = None,
+        knowledge_source_ids: list[str] | None = None,
     ) -> tuple[bool, dict[str, Any]]:
         """
         Create a new task under a project with automatic reordering.
@@ -113,6 +114,12 @@ class TaskService:
                             "updated_at": datetime.now().isoformat(),
                         }).eq("id", existing_task["id"]).execute()
 
+            # Process knowledge_source_ids if provided
+            final_sources = sources or []
+            if knowledge_source_ids:
+                for sid in knowledge_source_ids:
+                    final_sources.append({"source_id": sid, "type": "knowledge_item"})
+
             task_data = {
                 "project_id": project_id,
                 "title": title,
@@ -120,7 +127,7 @@ class TaskService:
                 "status": task_status,
                 "assignee": assignee,
                 "task_order": task_order,
-                "sources": sources or [],
+                "sources": final_sources,
                 "code_examples": code_examples or [],
                 "created_at": datetime.now().isoformat(),
                 "updated_at": datetime.now().isoformat(),

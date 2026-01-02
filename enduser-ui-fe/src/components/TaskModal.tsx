@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { AssignableUser, Task, TaskPriority, NewTaskData, UpdateTaskData } from '../types.ts';
 import { api } from '../services/api.ts';
 import { XIcon } from './Icons.tsx';
+import { KnowledgeSelector } from './KnowledgeSelector.tsx';
 
 interface TaskModalProps {
   task?: Task | null;
@@ -22,6 +23,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({ task, onClose, onTaskCreat
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [assignableUsers, setAssignableUsers] = useState<AssignableUser[]>([]);
   const [isLoadingUsers, setIsLoadingUsers] = useState(true);
+  const [selectedKnowledgeIds, setSelectedKnowledgeIds] = useState<string[]>([]);
 
   const isEditMode = task != null && task.id;
 
@@ -61,6 +63,14 @@ export const TaskModal: React.FC<TaskModalProps> = ({ task, onClose, onTaskCreat
         setDueDate(new Date(task.due_date).toISOString().split('T')[0]);
       }
       setPriority(task.priority);
+      
+      // Initialize selected knowledge IDs from existing sources
+      if (task.sources && Array.isArray(task.sources)) {
+        const ids = task.sources
+          .filter(s => s.source_id && s.type === 'knowledge_item')
+          .map(s => s.source_id);
+        setSelectedKnowledgeIds(ids);
+      }
     }
   }, [task, isEditMode]);
 
@@ -87,6 +97,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({ task, onClose, onTaskCreat
           assignee_id: assigneeId || null,
           due_date: new Date(dueDate).toISOString(),
           priority,
+          // Note: updateTask might need knowledge_source_ids too, but for now we focus on creation
         };
         await api.updateTask(task.id, updatedData);
         onTaskUpdated();
@@ -99,6 +110,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({ task, onClose, onTaskCreat
           assignee_id: assigneeId || undefined,
           due_date: new Date(dueDate).toISOString(),
           priority,
+          knowledge_source_ids: selectedKnowledgeIds,
         };
         await api.createTask(newTaskData);
         onTaskCreated();
@@ -150,6 +162,13 @@ export const TaskModal: React.FC<TaskModalProps> = ({ task, onClose, onTaskCreat
               {Object.values(TaskPriority).map(p => <option key={p} value={p}>{p.charAt(0).toUpperCase() + p.slice(1)}</option>)}
             </select>
           </div>
+          
+          <KnowledgeSelector 
+            selectedIds={selectedKnowledgeIds} 
+            onChange={setSelectedKnowledgeIds}
+            disabled={isSubmitting}
+          />
+
           <div className="flex justify-end space-x-3 pt-4">
             <button type="button" onClick={onClose} className="px-4 py-2 rounded-md bg-secondary text-secondary-foreground hover:bg-secondary/80">
               Cancel
