@@ -124,6 +124,39 @@ Task 4: INTEGRATE ROUTING in enduser-ui-fe/src/App.tsx (任務 4：整合路由)
   - IMPLEMENTED: A new navigation link in the main sidebar to the `/approvals` page, complete with an icon.
 ```
 
+### Phase 4: Knowledge Context Integration (Phase 4.0.i)
+*Focus: Bridge the Admin Knowledge Base to the End-User Task Creation workflow.*
+
+```yaml
+Task 1: BACKEND - Update Task Schema & API
+  - FILE: `python/src/server/api_routes/projects_api.py`
+  - ACTION: Update `CreateTaskRequest` model to include `knowledge_source_ids: list[str] | None = None`.
+  - ACTION: Update `create_task` endpoint to pass `knowledge_source_ids` to `task_service`.
+  - FILE: `python/src/server/services/projects/task_service.py`
+  - ACTION: Ensure `create_task` method accepts and persists `knowledge_source_ids` (likely in `metadata` JSONB column).
+
+Task 2: BACKEND - Enable Read-Access for Knowledge Items
+  - FILE: `python/src/server/api_routes/knowledge_api.py`
+  - ACTION: Modify `get_knowledge_items` dependency to allow `MEMBER` role (currently might be implicit or Admin-only).
+  - VERIFY: Ensure sensitive actions (delete/upload) remain Admin-only.
+
+Task 3: FRONTEND - Update API Client
+  - FILE: `enduser-ui-fe/src/services/api.ts`
+  - ACTION: Add `getKnowledgeItems()` method to fetch available knowledge sources (id, title, type).
+  - ACTION: Update `createTask` payload type to include `knowledge_source_ids`.
+
+Task 4: FRONTEND - Create Knowledge Selector Component
+  - FILE: `enduser-ui-fe/src/components/KnowledgeSelector.tsx`
+  - ACTION: Create a reusable dropdown/multiselect component that fetches data from `getKnowledgeItems`.
+  - UI: Should support searching by title.
+
+Task 5: FRONTEND - Integrate into Task Modal
+  - FILE: `enduser-ui-fe/src/components/TaskModal.tsx`
+  - ACTION: Import `KnowledgeSelector`.
+  - ACTION: Add state `selectedKnowledgeIds`.
+  - ACTION: Pass selected IDs to `api.createTask` on submission.
+```
+
 ## Validation Loop (驗證迴圈)
 
 ### Level 1: Syntax & Style (已執行)
