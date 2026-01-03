@@ -57,12 +57,9 @@ export async function callAPIWithETag<T = unknown>(endpoint: string, options: Re
 
     // Build headers - only set Content-Type for requests with a body
     // NOTE: We do NOT add If-None-Match headers; the browser handles ETag revalidation automatically
-    //
-    // Currently assumes headers are passed as plain objects (Record<string, string>)
-    // which works for all our current usage. The API doesn't require Accept headers
-    // since it always returns JSON, and we only set Content-Type when sending data.
     const headers: Record<string, string> = {
       ...((options.headers as Record<string, string>) || {}),
+      "X-User-Role": "Admin", // Default role for Admin UI to comply with backend RBAC
     };
 
     // Only set Content-Type for requests that have a body (POST, PUT, PATCH, etc.)

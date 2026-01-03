@@ -52,6 +52,12 @@ describe("useTaskQueries", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     showToastMock.mockClear();
+    // Silence console.error for expected failures to keep test output clean
+    vi.spyOn(console, "error").mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
   describe("taskKeys", () => {

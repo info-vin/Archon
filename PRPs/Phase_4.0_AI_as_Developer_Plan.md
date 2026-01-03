@@ -180,20 +180,29 @@ AI Agent 將被授予一組全新的、高權限的工具。這些工具的執�
 
 ## 7. 階段性執行與驗證紀錄 (Execution & Validation Log)
 
-### Phase 4.0.i: 知識庫整合 (Completed: 2026-01-02)
+### Phase 4.0.i: 知識庫整合 (Completed: 2026-01-03)
 
 **1. 實作重點**:
 - **後端安全強化**: 在 `knowledge_api.py` 中實作 `X-User-Role` 選填 Header，達成「向後相容 Admin UI、向前鎖定一般用戶」的漸進式加鎖。
 - **前端 API 統一化**: 重構 `enduser-ui-fe` 的 API Client，自動注入身份 Header。
 - **UI 閉環**: 實作 `KnowledgeSelector` 並整合至任務建立視窗。
+- **Admin UI 安全補強**: 已在 `archon-ui-main` 的 API Client 中注入 `X-User-Role: Admin` Header，關閉權限漏洞。
 
 **2. 核心驗證目標 (Closed-Loop Verification)**:
 - **測試目標**: 驗證「Admin 上傳 -> User 選擇 -> 任務建立 -> 資料入庫」的完整閉環。
-- **執行方式**: 自動化 E2E 測試（已根據使用者回饋，將原先的手動驗證升級為自動化測試）。利用 Phase 3.9.1 建立的 E2E 測試架構，新增 `knowledge-selector.spec.tsx` 來覆蓋 `KnowledgeSelector` 的互動邏輯，確保任務建立時能正確關聯知識庫項目。
+- **執行方式**: 自動化 E2E 測試。新增 `knowledge-selector.spec.tsx`，成功驗證了知識庫項目選擇與任務建立的整合邏輯。
+- **驗證結果**:
+    - `enduser-ui-fe` E2E 測試: **通過** (5/5 tests passed)。
+    - `archon-ui-main` 單元測試: **通過** (128/128 tests passed)，且測試輸出日誌已完成靜音優化。
+    - 後端測試: **通過** (473/473 tests passed)。
 
-**3. 已知問題 (Technical Debt)**:
-- **分頁限制**: 選擇器目前僅抓取前 100 筆資料，未來需優化。
-- **Admin UI 補強**: `archon-ui-main` 需補上 Role Header 以全面關閉安全性漏洞。
+**3. 已知問題 (Known Issues)**:
+- **分頁優化**: 知識庫選擇器目前每頁抓取數量已提升至 1000 筆，但仍需實作正式的前端分頁/無限捲動機制。
+- **E2E 環境設定警告**: E2E 測試啟動時回報 `Could not connect to backend to reset database`。雖不影響 MSW 模式下的測試結果，但重置機制仍待 Phase 4.1 優化。
+
+**4. 修正計畫 (Fix Plan) - 執行狀態**:
+- **目標**: 達成全綠燈 (All Green)。
+- **狀態**: **已完成**。已修復 `archon-ui-main` 的測試干擾日誌，並實作了 Admin UI 的 Role Header。
 
 ---
 

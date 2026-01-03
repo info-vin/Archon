@@ -219,7 +219,9 @@ const supabaseApi = {
     return data.task;
   },
   async getKnowledgeItems(): Promise<any[]> {
-    const response = await fetch('/api/knowledge-items?per_page=100', {
+    // TODO: Implement proper frontend pagination/infinite scroll.
+    // Increased per_page to 1000 as a temporary mitigation for the "100 items limit" issue.
+    const response = await fetch('/api/knowledge-items?per_page=1000', {
       headers: await this._getHeaders()
     });
     if (!response.ok) {

@@ -51,6 +51,12 @@ const createWrapper = () => {
 describe("useProjectQueries", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // Silence console.error for expected failures to keep test output clean
+    vi.spyOn(console, "error").mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
   describe("projectKeys", () => {
