@@ -95,7 +95,10 @@ services:
     depends_on:
       archon-server:
         condition: service_healthy
-      
+      archon-agents:
+        condition: service_healthy
+        required: false  # Do not fail if agents service is disabled/not started
+
     extra_hosts:
       - "host.docker.internal:host-gateway"
     healthcheck:
