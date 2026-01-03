@@ -83,6 +83,9 @@ mcp = [
     "supabase==2.15.1",
     "logfire>=0.30.0",
     "fastapi>=0.104.0",
+    "openai>=1.71.0",
+    "cryptography>=41.0.0",
+    "aiofiles>=23.2.1",
 ]
 
 # Agents container dependencies
