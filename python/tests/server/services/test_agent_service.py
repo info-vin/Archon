@@ -79,3 +79,72 @@ async def test_run_agent_task_fails_to_update(mock_get_logger, mock_task_service
     mock_logger.info.assert_called_with(
         f"AI agent '{agent_id}' finished its work for task '{task_id}'."
     )
+
+
+@pytest.mark.asyncio
+@patch('src.server.services.agent_service.asyncio.create_subprocess_shell')
+@patch('src.server.services.agent_service.get_logger')
+async def test_run_command_success(mock_get_logger, mock_subprocess):
+    """
+    Test run_command_with_self_healing when command succeeds.
+    """
+    mock_logger = MagicMock()
+    mock_get_logger.return_value = mock_logger
+
+    # Mock subprocess success
+    mock_process = AsyncMock()
+    mock_process.communicate.return_value = (b"success output", b"")
+    mock_process.returncode = 0
+    mock_subprocess.return_value = mock_process
+
+    agent_service = AgentService()
+    success, output = await agent_service.run_command_with_self_healing("echo test")
+
+    assert success is True
+    assert output == "success output"
+    mock_logger.info.assert_called_with("Command 'echo test' succeeded.")
+
+
+@pytest.mark.asyncio
+@patch('src.server.services.agent_service.credential_service')
+@patch('src.server.services.agent_service.get_llm_client')
+@patch('src.server.services.agent_service.asyncio.create_subprocess_shell')
+@patch('src.server.services.agent_service.get_logger')
+async def test_run_command_failure_triggers_healing(
+    mock_get_logger, mock_subprocess, mock_get_llm, mock_credential_service
+):
+    """
+    Test run_command_with_self_healing when command fails.
+    Verifies that it calls the LLM for analysis.
+    """
+    mock_logger = MagicMock()
+    mock_get_logger.return_value = mock_logger
+
+    # Mock subprocess failure
+    mock_process = AsyncMock()
+    mock_process.communicate.return_value = (b"", b"Error: command failed")
+    mock_process.returncode = 1
+    mock_subprocess.return_value = mock_process
+
+    # Mock Credential Service
+    mock_credential_service.get_active_provider = AsyncMock(return_value={"chat_model": "gpt-4-test"})
+
+    # Mock LLM Client
+    mock_client = AsyncMock()
+    mock_get_llm.return_value.__aenter__.return_value = mock_client
+
+    mock_response = MagicMock()
+    mock_response.choices = [MagicMock(message=MagicMock(content="Suggested Fix: Check syntax"))]
+    mock_client.chat.completions.create.return_value = mock_response
+
+    agent_service = AgentService()
+    success, output = await agent_service.run_command_with_self_healing("failing_cmd")
+
+    assert success is False
+    assert "Self-Healing Analysis" in output
+    assert "Suggested Fix: Check syntax" in output
+
+    # Verify LLM was called
+    mock_client.chat.completions.create.assert_awaited_once()
+    # Verify logger warned about failure
+    mock_logger.warning.assert_called_with("Command 'failing_cmd' failed with exit code 1.")
