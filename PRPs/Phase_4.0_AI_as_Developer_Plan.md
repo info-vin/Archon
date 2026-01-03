@@ -189,7 +189,7 @@ AI Agent 將被授予一組全新的、高權限的工具。這些工具的執�
 
 **2. 核心驗證目標 (Closed-Loop Verification)**:
 - **測試目標**: 驗證「Admin 上傳 -> User 選擇 -> 任務建立 -> 資料入庫」的完整閉環。
-- **執行方式**: 使用 `make dev-docker` 啟動完整環境進行手動驗證（因自動化 E2E 測試尚未涵蓋新增的 `KnowledgeSelector` 互動邏輯）。
+- **執行方式**: 自動化 E2E 測試（已根據使用者回饋，將原先的手動驗證升級為自動化測試）。利用 Phase 3.9.1 建立的 E2E 測試架構，新增 `knowledge-selector.spec.tsx` 來覆蓋 `KnowledgeSelector` 的互動邏輯，確保任務建立時能正確關聯知識庫項目。
 
 **3. 已知問題 (Technical Debt)**:
 - **分頁限制**: 選擇器目前僅抓取前 100 筆資料，未來需優化。
