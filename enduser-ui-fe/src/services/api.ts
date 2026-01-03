@@ -18,15 +18,18 @@ const getSupabaseConfig = () => {
 
 const { url: supabaseUrl, key: supabaseAnonKey } = getSupabaseConfig();
 
-// Detect if we should use mock data
-const useMockData = !supabaseUrl || !supabaseAnonKey || supabaseUrl === 'YOUR_SUPABASE_URL';
+// Detect if we explicitly LACK credentials
+// If credentials exist but are invalid (e.g. internal docker URL), we detect that at runtime via Smart Fallback.
+const forceMockMode = !supabaseUrl || !supabaseAnonKey || supabaseUrl === 'YOUR_SUPABASE_URL';
 
 export let supabase: SupabaseClient | null = null;
 
-if (useMockData) {
+if (forceMockMode) {
     console.warn("Supabase credentials are not set. Application is running in MOCK mode.");
 } else {
     try {
+        // Set a shorter timeout for the client if possible, but standard fetch doesn't support global timeout easily in createClient
+        // without a custom fetch wrapper. We handle the fast-fail in the Smart API wrapper.
         supabase = createClient(supabaseUrl!, supabaseAnonKey!); 
     } catch (error) {
         console.error("Failed to initialize Supabase client:", error);
@@ -46,16 +49,68 @@ const MOCK_USER: Employee = {
     avatar: 'https://i.pravatar.cc/150?u=admin@archon.com'
 };
 
+const MOCK_TASKS: Task[] = [
+    {
+        id: 'mock-task-1',
+        title: 'Initial Setup (Mock)',
+        description: 'This is a mock task because the backend is unreachable.',
+        status: TaskStatus.TODO,
+        priority: TaskPriority.HIGH,
+        project_id: 'mock-project-1',
+        assignee: 'Admin User',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        task_order: 1
+    }
+];
+
+const MOCK_PROJECTS: Project[] = [
+    {
+        id: 'mock-project-1',
+        title: 'Mock Project',
+        description: 'Project for mock mode',
+        status: 'active',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+    }
+];
+
 // --- MOCK API IMPLEMENTATION ---
+// Enhanced to include all methods from supabaseApi to prevent crashes
 const mockApi: any = {
     async login() { return MOCK_USER; },
     async logout() { return; },
     async getCurrentUser() { return MOCK_USER; },
-    async getTasks() { return []; },
-    async getProjects() { return []; },
+    async getTasks() { return MOCK_TASKS; },
+    async getProjects() { return MOCK_PROJECTS; },
     async getAssignableAgents() { return []; },
     async getKnowledgeItems() { return []; },
-    async getPendingChanges() { return []; }
+    async getPendingChanges() { return []; },
+
+    // Stubs for missing methods to prevent crashes
+    async register() { throw new Error("Registration not supported in Mock Mode"); },
+    async adminCreateUser() { throw new Error("Admin Create User not supported in Mock Mode"); },
+    async createProject(data: any) {
+        console.log("Mock createProject", data);
+        return { project: { ...MOCK_PROJECTS[0], ...data, id: 'mock-new-' + Date.now() } };
+    },
+    async createTask(data: any) {
+        console.log("Mock createTask", data);
+        return { ...MOCK_TASKS[0], ...data, id: 'mock-task-' + Date.now() };
+    },
+    async updateTask(id: string, data: any) { return { ...MOCK_TASKS[0], id, ...data }; },
+    async getEmployees() { return [MOCK_USER]; },
+    async getAssignableUsers() { return [{ id: MOCK_USER.id, name: MOCK_USER.name, role: MOCK_USER.role }]; },
+    async getDocumentVersions() { return []; },
+    async getBlogPosts() { return []; },
+    async createBlogPost() { throw new Error("Blog creation not supported in Mock Mode"); },
+    async updateBlogPost() { throw new Error("Blog update not supported in Mock Mode"); },
+    async deleteBlogPost() { return; },
+    async updateEmployee() { return MOCK_USER; },
+    async updateUserEmail() { return; },
+    async updateUserPassword() { return; },
+    async approveChange() { return { success: true }; },
+    async rejectChange() { return { success: true }; }
 }
 
 
@@ -430,5 +485,100 @@ const supabaseApi = {
   },
 };
 
-// Export the correct API implementation based on whether Supabase is configured
-export const api = useMockData ? mockApi : supabaseApi;
+// --- SMART FALLBACK API IMPLEMENTATION ---
+
+// Check connection helper
+// We use a simple fetch to the Supabase health check or just the base URL
+// If it fails or times out, we know we are in trouble.
+let isFallbackMode = forceMockMode;
+let connectionChecked = false;
+
+// Create a wrapper that dynamically falls back to mockApi on network failures
+const createSmartApi = () => {
+    // Collect all unique method names from both APIs
+    const allMethods = new Set([...Object.keys(supabaseApi), ...Object.keys(mockApi)]);
+    const smartApi: any = {};
+
+    allMethods.forEach(key => {
+        smartApi[key] = async (...args: any[]) => {
+            // 1. If we already know we are in fallback/mock mode, go straight to mock
+            if (isFallbackMode) {
+                // Check if mock implementation exists
+                if (typeof mockApi[key] === 'function') {
+                    return mockApi[key](...args);
+                }
+                console.warn(`[SmartAPI] Method ${key} called in Mock Mode but not implemented.`);
+                throw new Error(`Method ${key} not supported in Mock Mode.`);
+            }
+
+            // 2. Initial Connection Check (Fast-Fail)
+            // Perform this only once to avoid overhead, but do it before the first real call.
+            if (!connectionChecked && supabaseUrl) {
+                connectionChecked = true;
+                try {
+                    // Try to fetch the root URL (Kong) with a short timeout (2s)
+                    // If supabaseUrl is internal (e.g. http://supabase_kong:8000), this will fail fast in browser.
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 2000); // 2s timeout
+
+                    // We just fetch the URL. It might return 404 or 200, but as long as it connects, we are good.
+                    // If it's a network error (dns, refused), fetch throws.
+                    await fetch(supabaseUrl, { method: 'HEAD', signal: controller.signal }).catch(e => {
+                        // If HEAD fails (e.g. CORS), try GET. Or just ignore specific http errors.
+                        // We strictly care about Network/Connection errors.
+                        if (e.name === 'AbortError' || e.message.includes('Failed to fetch') || e.message.includes('Network request failed')) {
+                            throw e;
+                        }
+                    });
+                    clearTimeout(timeoutId);
+                } catch (e: any) {
+                    console.warn(`[SmartAPI] Initial connection check to ${supabaseUrl} failed: ${e.message}. Switching to Mock Mode.`);
+                    isFallbackMode = true;
+                    // Retry current call in mock mode
+                    if (typeof mockApi[key] === 'function') {
+                        return mockApi[key](...args);
+                    }
+                }
+            }
+
+            // 3. Try Real API
+            try {
+                // Double check isFallbackMode in case the check above flipped it
+                if (isFallbackMode && typeof mockApi[key] === 'function') {
+                    return mockApi[key](...args);
+                }
+
+                const method = (supabaseApi as any)[key];
+                if (typeof method !== 'function') throw new Error(`Method ${key} not found in Supabase API`);
+
+                return await method.apply(supabaseApi, args);
+            } catch (error: any) {
+                // 4. Runtime Fallback on Network Error
+                // If the initial check passed (or was skipped), but this specific call fails with network error.
+                const isNetworkError =
+                    error.message && (
+                        error.message.includes('Failed to fetch') ||
+                        error.message.includes('Network request failed') ||
+                        error.message.includes('connection refused') ||
+                        error.message.includes('upstream connect error')
+                    );
+
+                if (isNetworkError) {
+                    console.warn(`[SmartAPI] Network error detected during ${key}: ${error.message}. Switching to Mock Mode.`);
+                    isFallbackMode = true;
+                    if (typeof mockApi[key] === 'function') {
+                        return mockApi[key](...args);
+                    }
+                }
+
+                // If it's a business logic error (e.g. 401 Unauthorized, 404 Not Found), rethrow.
+                throw error;
+            }
+        };
+    });
+
+    return smartApi;
+};
+
+// Export the Smart API
+export const api = createSmartApi();
