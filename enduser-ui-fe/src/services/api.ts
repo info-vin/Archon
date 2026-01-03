@@ -3,13 +3,18 @@ import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
 // --- SUPABASE CLIENT SETUP ---
 const getSupabaseConfig = () => {
-    const url = localStorage.getItem('supabaseUrl');
-    const key = localStorage.getItem('supabaseAnonKey');
-    // A robust implementation would handle missing keys more gracefully,
-    // but for this step, we assume they are present as we are removing the mock fallback.
+    // 1. Try localStorage first (user override)
+    let url = localStorage.getItem('supabaseUrl');
+    let key = localStorage.getItem('supabaseAnonKey');
+    
+    // 2. Fallback to Environment Variables (Docker injection)
     if (!url || !key) {
-        console.error("Supabase credentials are not set in localStorage. Please configure them in the Admin Panel -> Settings.");
-        // throw new Error("Supabase credentials are not set.");
+        url = (import.meta as any).env.VITE_SUPABASE_URL;
+        key = (import.meta as any).env.VITE_SUPABASE_ANON_KEY;
+    }
+
+    if (!url || !key) {
+        console.error("Supabase credentials are not set. Please configure them in localStorage or via Docker environment variables.");
     }
     return { url, key };
 };

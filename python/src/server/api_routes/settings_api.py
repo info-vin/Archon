@@ -168,6 +168,7 @@ OPTIONAL_SETTINGS_WITH_DEFAULTS = {
     "DISCONNECT_SCREEN_ENABLED": "true",  # Show disconnect screen when server is unavailable
     "PROJECTS_ENABLED": "false",  # Enable project management features
     "LOGFIRE_ENABLED": "false",  # Enable Pydantic Logfire integration
+    "STYLE_GUIDE_ENABLED": "false",  # Enable Style Guide in navigation
 }
 
 

@@ -30,7 +30,7 @@ services:
       - ARCHON_SERVER_PORT=${ARCHON_SERVER_PORT:-8181}
       - ARCHON_MCP_PORT=${ARCHON_MCP_PORT:-8051}
       - AGENTS_ENABLED=${AGENTS_ENABLED:-false}
-      - ENABLE_TEST_ENDPOINTS=${ENABLE_TEST_ENDPOINTS:-false}
+      - ENABLE_TEST_ENDPOINTS=true
     networks:
       - app-network
     volumes:
@@ -79,6 +79,8 @@ services:
     environment:
       - SUPABASE_URL=${SUPABASE_URL}
       - SUPABASE_SERVICE_KEY=${SUPABASE_SERVICE_KEY}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
       - LOGFIRE_TOKEN=${LOGFIRE_TOKEN:-}
       - SERVICE_DISCOVERY_MODE=docker_compose
       - TRANSPORT=sse
@@ -190,6 +192,8 @@ services:
     environment:
       - VITE_API_URL=http://${HOST:-localhost}:${ARCHON_SERVER_PORT:-8181}
       - VITE_ARCHON_SERVER_PORT=${ARCHON_SERVER_PORT:-8181}
+      - VITE_SUPABASE_URL=${SUPABASE_URL}
+      - VITE_SUPABASE_ANON_KEY=${SUPABASE_SERVICE_KEY}
       - HOST=${HOST:-localhost}
       - PROD=${PROD:-false}
     networks:

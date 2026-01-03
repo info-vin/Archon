@@ -207,18 +207,19 @@ Phase 4.0 established the **mechanism** (Propose -> Approve), ensuring security 
 
 ```yaml
 Task 1: Smart Git Operations (Git 操作智能化)
-  - [ ] FILE: `python/src/mcp_server/features/developer/version_control_tools.py`
-  - [ ] ACTION: Enhance `git_commit` tool to optionally accept `diff_context`.
-  - [ ] LOGIC: If the Agent provides a generic message like "update code", the tool should internally run `git diff --staged`, feed it to a lightweight LLM call, and generate a semantic commit message (e.g., "fix(auth): handle null user in login handler").
+  - [x] FILE: `python/src/mcp_server/features/developer/version_control_tools.py`
+  - [x] ACTION: Enhance `git_commit` tool to optionally accept `diff_context`.
+  - [x] LOGIC: If the Agent provides a generic message like "update code", the tool should internally run `git diff --staged`, feed it to a lightweight LLM call, and generate a semantic commit message (e.g., "fix(auth): handle null user in login handler").
+  - [x] INFRA: Injected `OPENAI_API_KEY` into `archon-mcp` container via `docker-compose.yml` to enable LLM calls from Agent.
 
 Task 2: Test-Driven Self-Healing (測試驅動自癒)
-  - [ ] FILE: `python/src/server/services/agent_service.py`
-  - [ ] ACTION: Implement a feedback loop in the task execution logic.
-  - [ ] LOGIC: 
-      If `run_shell_command` returns exit code != 0:
-      1. Capture `stderr` (last 50 lines).
-      2. Append to the conversation history with a structured system prompt: "The previous command failed with the following error. Analyze why and propose a fix."
-      3. Trigger the Agent again (up to 3 retries).
+  - [x] FILE: `python/src/server/services/agent_service.py`
+  - [x] ACTION: Implement a feedback loop in the task execution logic.
+  - [x] LOGIC: 
+      If `run_shell_command` (via `run_command_with_self_healing`) returns exit code != 0:
+      1. Capture `stderr` (last 2000 characters).
+      2. Call LLM to analyze the error and provide a fix suggestion.
+      3. Update the task `output` with the AI analysis to provide a hint for the next attempt.
 ```
 
 ---

@@ -9,6 +9,13 @@ router = APIRouter(
     tags=["agents"],
 )
 
+@router.get("/health")
+async def agents_health():
+    """
+    Health check for the AI agents service.
+    """
+    return {"status": "healthy", "service": "agents"}
+
 @router.get("/assignable", response_model=list[dict])
 async def get_assignable_agents(
     service: AgentService = Depends(lambda: agent_service)

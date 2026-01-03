@@ -312,6 +312,37 @@ def test_some_endpoint():
 - AI 提交的變更，在被批准和執行後，最終會以一個 `commit` 的形式出現在該 `feature/` 分支上。
 - 開發者後續可以像對待任何人類開發者提交的 `commit` 一樣，對其進行 code review、合併或進一步修改。
 
+## 第五章：AI Agent 自癒能力驗證 (Self-Healing Verification)
+
+本章節介紹如何手動驗證 Archon 系統的 AI 自癒與智能分析能力。
+
+### 5.1 演練場景：自動分析語法錯誤
+
+當 Agent 執行的指令失敗時，系統應自動呼叫 LLM 分析錯誤並提供修復建議。
+
+**步驟 1：製造錯誤檔案**
+在專案根目錄建立一個包含 Python 語法錯誤的檔案：
+```python
+# broken_script.py
+print("Hello World" # 故意漏掉右括號
+```
+
+**步驟 2：手動觸發 Agent 任務**
+使用以下 `curl` 指令模擬系統派發任務給 Agent。請確保後端已開啟 `ENABLE_TEST_ENDPOINTS=true`。
+```bash
+curl -X POST http://localhost:8181/api/test/trigger-agent-task \
+     -H "Content-Type: application/json" \
+     -d '{
+       "task_id": "00000000-0000-0000-0000-000000000000", # 請替換為真實的 Task UUID
+       "agent_id": "Developer AI",
+       "command": "python3 broken_script.py"
+     }'
+```
+
+**步驟 3：觀察診斷結果**
+1.  **UI 觀察**: 訪問 `http://localhost:5173`，進入對應任務的詳情頁。
+2.  **預期結果**: 任務狀態變為 `failed`，且在 `output` 欄位中會出現 AI 的診斷建議（例如：「偵測到 SyntaxError，建議修正 broken_script.py 第 2 行...」）。
+
 ---
 
 ## 附錄 A：重要架構決策與歷史紀錄

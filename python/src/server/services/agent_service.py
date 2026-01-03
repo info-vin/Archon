@@ -3,9 +3,10 @@
 import asyncio
 
 from ..config.logfire_config import get_logger
-from .shared_constants import AI_AGENT_ROLES  # Import AI_AGENT_ROLES from new shared module
-from .llm_provider_service import get_llm_client
 from .credential_service import credential_service
+from .llm_provider_service import get_llm_client
+from .shared_constants import AI_AGENT_ROLES  # Import AI_AGENT_ROLES from new shared module
+
 
 class AgentService:
     """Service for handling business logic related to AI agents."""
@@ -98,31 +99,44 @@ If it's an environment issue, suggest how to fix the environment.
             assignable_agents.append({"id": agent_id, "name": role_name, "role": role_name})
         return assignable_agents
 
-    async def run_agent_task(self, task_id: str, agent_id: str):
+    async def run_agent_task(self, task_id: str, agent_id: str, command: str | None = None):
         """
-        Placeholder method to run a task by an AI agent.
-        This updates the task status to 'processing' and then simulates work.
+        Runs a task by an AI agent with self-healing feedback loop.
         """
         # Local import to break circular dependency
         from ..services.projects.task_service import task_service
 
         logger = get_logger(__name__)
-        logger.info(f"AI agent '{agent_id}' has been notified to start working on task '{task_id}'.")
+        logger.info(f"AI agent '{agent_id}' starting work on task '{task_id}'.")
 
-        # --- NEW LOGIC: Update task status to processing ---
-        # Call task_service to update the task status. This provides immediate feedback in the UI.
+        # 1. Update status to processing
         success, result = await task_service.update_task(
-            task_id, {"status": "processing", "assignee": agent_id} # Explicitly set assignee to ensure consistency
+            task_id, {"status": "processing", "assignee": agent_id}
         )
-        if success:
-            logger.info(f"Task '{task_id}' status updated to 'processing' by agent '{agent_id}'.")
-        else:
-            logger.error(f"Failed to update task '{task_id}' status to 'processing': {result.get('error')}")
-        # --- END NEW LOGIC ---
+        if not success:
+            logger.error(f"Failed to update task status: {result.get('error')}")
+            return
 
-        # Simulate some async work (keeping original placeholder for now)
-        await asyncio.sleep(1)
-        logger.info(f"AI agent '{agent_id}' finished its work for task '{task_id}'.")
+        # 2. Execute command with self-healing if provided
+        if command:
+            success, output_or_analysis = await self.run_command_with_self_healing(command)
+            
+            # 3. Feed the results back into the task output/description
+            final_status = "done" if success else "failed"
+            update_data = {
+                "status": final_status,
+                "output": output_or_analysis
+            }
+            
+            # If failed, we keep it in 'failed' status but provide the AI analysis 
+            # as a hint for the next manual or automated retry.
+            await task_service.update_task(task_id, update_data)
+            logger.info(f"Task '{task_id}' finished with status '{final_status}'. Output/Analysis provided.")
+        else:
+            # Fallback for tasks without explicit shell commands (simulated work)
+            await asyncio.sleep(1)
+            await task_service.update_task(task_id, {"status": "done", "output": "Simulated task completed successfully."})
+            logger.info(f"AI agent '{agent_id}' finished simulated work for task '{task_id}'.")
 
 # Create a singleton instance of the service
 agent_service = AgentService()

@@ -4,10 +4,11 @@ import logging
 
 from pydantic import BaseModel, Field
 
+from .....server.services.credential_service import credential_service
+from .....server.services.llm_provider_service import get_llm_client
+
 # Using the same dependency injector pattern as file_operation_tools
 from .file_operation_tools import ToolDependencies
-from .....server.services.llm_provider_service import get_llm_client
-from .....server.services.credential_service import credential_service
 
 logger = logging.getLogger(__name__)
 
@@ -66,10 +67,10 @@ Instructions:
             if (generated_message.startswith('"') and generated_message.endswith('"')) or \
                (generated_message.startswith("'") and generated_message.endswith("'")):
                 generated_message = generated_message[1:-1]
-            
+
             logger.info(f"Smart Commit: Replaced '{original_message}' with '{generated_message}'")
             return generated_message
-            
+
     except Exception as e:
         logger.error(f"Failed to generate smart commit message: {e}")
         return original_message

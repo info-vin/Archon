@@ -79,6 +79,20 @@
 
 # 第三章：近期工作日誌 (Recent Journal Entries)
 
+### 2026-01-03: 穩定全 Docker 開發環境與啟動 Phase 5 自癒能力
+*   **核心任務**: 1. 修復 `archon-ui-main` (Port 3737) 設定頁面崩潰。 2. 實作 Phase 5 智能 Git 與自癒反饋。
+*   **偵錯歷程**:
+    1.  **前端崩潰**: 日誌顯示 `useState is not defined`。根源是 `APIKeysSection.tsx` 缺少 React Hook 導入。已補上 `import React, { useState... }`。
+    2.  **API 404**: 前端收集除錯資訊時呼叫了無效路徑（`/api/system/version`）。已對齊為 `/api/version/current`，並在後端補上 `/api/agents/health`。
+    3.  **預設值缺失**: 解決了 `STYLE_GUIDE_ENABLED` 在資料庫無資料時報 404 的問題，將其加入後端 `OPTIONAL_SETTINGS_WITH_DEFAULTS`。
+    4.  **Phase 5 基礎設施**: 發現 `archon-mcp` 容器缺少 API Key 導致 Agent 無法執行智能操作。已更新 `docker-compose.yml` 注入 Key 並重啟容器驗證。
+    5.  **前端自動初始化 (Port 5173)**: 解決了 End-User UI 在全 Docker 環境下因缺少 `localStorage` 崩潰的問題。透過在 `docker-compose.yml` 注入 `VITE_SUPABASE_...` 變數並修改 `api.ts` 實現自動 Fallback 機制。
+*   **關鍵學習**: 
+    *   **環境一致性**: 在全 Docker 模式下，環境變數 (`.env`) 不會自動傳遞給所有服務，必須在 `docker-compose.yml` 中明確宣告。
+    *   **對齊預期**: 後端對於選用設定應提供預設值（Fallback），而非嚴格回傳 404，以提高前端渲染的健壯性。
+    *   **零配置啟動 (Zero-Config)**: 對於開發環境，前端應具備讀取環境變數的能力，減少對瀏覽器 `localStorage` 的依賴，以達成「一鍵啟動」的體驗。
+*   **結論**: 成功清除了環境雜訊，並在 `AgentService` 中打通了「分析錯誤 -> 建議修復」的反饋閉環，標誌著 Phase 5 核心邏輯已就緒並制度化 (CONTRIBUTING_tw.md)。
+
 ---
 
 # 第四章：歷史檔案：原則的考古學 (Historical Archive: The Archaeology of Principles)

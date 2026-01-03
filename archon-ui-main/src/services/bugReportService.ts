@@ -79,7 +79,7 @@ class BugReportService {
   private async getVersion(): Promise<string> {
     try {
       // Try to get version from main health endpoint
-      const response = await fetch('/api/system/version');
+      const response = await fetch('/api/version/current');
       if (response.ok) {
         const data: { version?: string } = await response.json();
         return data.version || 'v0.1.0';
