@@ -1,7 +1,7 @@
-name: "Phase 4.1 Implementation Plan: AI as a Developer Teammate (AI 即開發者隊友)"
+name: "Phase 4.1+: AI Developer Deep Dive & Business Expansion Plan"
 description: |
-  A detailed, phased, and implementation-focused plan to elevate the AI Agent into a "Developer Teammate."
-  This plan documents the full implementation of the "propose-approve-execute" workflow, including a stable testing environment, backend services, AI agent tools, and a functional frontend UI.
+  A comprehensive roadmap extending from the foundational "AI Developer" setup (Phase 4.0) to advanced capability optimization (Phase 5) and business value delivery (Phase 6).
+  This plan serves as the Single Source of Truth (SSOT) for the ongoing evolution of the Archon system.
 
 ---
 
@@ -63,16 +63,16 @@ Makefile                            # MODIFIED: Added `touch .env` to stabilize 
 
 ```yaml
 Task 1: CONFIGURE python/pytest.ini (任務 1：設定 pytest.ini)
-  - ACTION: Add `pythonpath = src` under the `[pytest]` section.
-  - WHY: Explicitly tells pytest the root of the source code, allowing it to correctly resolve absolute imports starting with `src.`.
+  - [x] ACTION: Add `pythonpath = src` under the `[pytest]` section.
+  - [x] WHY: Explicitly tells pytest the root of the source code, allowing it to correctly resolve absolute imports starting with `src.`.
 
 Task 2: UPDATE Makefile (任務 2：更新 Makefile)
-  - ACTION: Add `touch .env` to the `test-be` target before the `uv run` command.
-  - WHY: Ensures that the environment file expected by `uv run --env-file` always exists, even in clean CI/CD environments.
+  - [x] ACTION: Add `touch .env` to the `test-be` target before the `uv run` command.
+  - [x] WHY: Ensures that the environment file expected by `uv run --env-file` always exists, even in clean CI/CD environments.
 
 Task 3: VALIDATE (任務 3：驗證)
-  - ACTION: Run `make test-be`.
-  - EXPECTED: All 469 existing tests pass without import or environment errors.
+  - [x] ACTION: Run `make test-be`.
+  - [x] EXPECTED: All 469 existing tests pass without import or environment errors.
 ```
 
 ### Phase 1: Build Core Approval Backend (已完成)
@@ -80,14 +80,14 @@ Task 3: VALIDATE (任務 3：驗證)
 
 ```yaml
 Task 1: CREATE migration/005_create_proposed_changes_table.sql (任務 1：建立遷移腳本)
-  - IMPLEMENTED: A `proposed_changes` table with enums for status/type, a `jsonb` payload, and RLS enabled for security.
+  - [x] IMPLEMENTED: A `proposed_changes` table with enums for status/type, a `jsonb` payload, and RLS enabled for security.
 
 Task 2: CREATE python/src/server/services/propose_change_service.py (任務 2：建立服務)
-  - IMPLEMENTED: `ProposeChangeService` with methods `create_proposal`, `approve_proposal`, `reject_proposal`, and `execute_proposal`.
-  - IMPLEMENTED: `ActionExecutor` class with real, async execution logic using `aiofiles` and `asyncio.create_subprocess_exec` for file, git, and shell operations.
+  - [x] IMPLEMENTED: `ProposeChangeService` with methods `create_proposal`, `approve_proposal`, `reject_proposal`, and `execute_proposal`.
+  - [x] IMPLEMENTED: `ActionExecutor` class with real, async execution logic using `aiofiles` and `asyncio.create_subprocess_exec` for file, git, and shell operations.
 
 Task 3: CREATE python/src/server/api_routes/changes_api.py (任務 3：建立 API 路由)
-  - IMPLEMENTED: Endpoints `GET /changes`, `POST /changes/{id}/approve`, and `POST /changes/{id}/reject`, connected to the service layer.
+  - [x] IMPLEMENTED: Endpoints `GET /changes`, `POST /changes/{id}/approve`, and `POST /changes/{id}/reject`, connected to the service layer.
 ```
 
 ### Phase 2: Adapt Agent Tools to the Security Model (已完成)
@@ -95,13 +95,13 @@ Task 3: CREATE python/src/server/api_routes/changes_api.py (任務 3：建立 AP
 
 ```yaml
 Task 1: CREATE python/src/mcp_server/features/developer/file_operation_tools.py (任務 1：建立檔案操作工具)
-  - IMPLEMENTED: `ProposeFileChangeTool` that calls `ProposeChangeService.create_proposal` with a 'file' type payload.
+  - [x] IMPLEMENTED: `ProposeFileChangeTool` that calls `ProposeChangeService.create_proposal` with a 'file' type payload.
 
 Task 2: CREATE python/src/mcp_server/features/developer/version_control_tools.py (任務 2：建立版本控制工具)
-  - IMPLEMENTED: `ProposeGitBranchTool` and `ProposeGitCommitTool` that call the service with a 'git' type payload.
+  - [x] IMPLEMENTED: `ProposeGitBranchTool` and `ProposeGitCommitTool` that call the service with a 'git' type payload.
 
 Task 3: CREATE python/src/mcp_server/features/developer/execution_tools.py (任務 3：建立指令執行工具)
-  - IMPLEMENTED: `ProposeShellCommandTool` which validates a command against a whitelist before calling the service with a 'shell' type payload.
+  - [x] IMPLEMENTED: `ProposeShellCommandTool` which validates a command against a whitelist before calling the service with a 'shell' type payload.
 ```
 
 ### Phase 3: Build Frontend Approval UI (已完成)
@@ -109,69 +109,69 @@ Task 3: CREATE python/src/mcp_server/features/developer/execution_tools.py (任�
 
 ```yaml
 Task 1: CREATE enduser-ui-fe/src/pages/ApprovalsPage.tsx (任務 1：建立審核頁面)
-  - IMPLEMENTED: A React component that fetches and displays a list of pending changes from the live backend API.
-  - IMPLEMENTED: Functional "Approve" and "Reject" buttons with loading states and error handling. UI updates optimistically upon successful actions.
+  - [x] IMPLEMENTED: A React component that fetches and displays a list of pending changes from the live backend API.
+  - [x] IMPLEMENTED: Functional "Approve" and "Reject" buttons with loading states and error handling. UI updates optimistically upon successful actions.
 
 Task 2: CREATE enduser-ui-fe/src/components/DiffViewer.tsx (任務 2：建立差異比較元件)
-  - ACTION: Add `react-diff-viewer` to `enduser-ui-fe/package.json` and install.
-  - IMPLEMENTED: A wrapper component around `ReactDiffViewer` to display code changes, now fully integrated with the backend data model.
+  - [x] ACTION: Add `react-diff-viewer` to `enduser-ui-fe/package.json` and install.
+  - [x] IMPLEMENTED: A wrapper component around `ReactDiffViewer` to display code changes, now fully integrated with the backend data model.
 
 Task 3: INTEGRATE API services in enduser-ui-fe/src/services/api.ts (任務 3：整合 API 服務)
-  - IMPLEMENTED: New functions `getPendingChanges`, `approveChange`, and `rejectChange` using `fetch`.
+  - [x] IMPLEMENTED: New functions `getPendingChanges`, `approveChange`, and `rejectChange` using `fetch`.
 
 Task 4: INTEGRATE ROUTING in enduser-ui-fe/src/App.tsx (任務 4：整合路由)
-  - IMPLEMENTED: A new protected route `/approvals` that renders the `ApprovalsPage`.
-  - IMPLEMENTED: A new navigation link in the main sidebar to the `/approvals` page, complete with an icon.
+  - [x] IMPLEMENTED: A new protected route `/approvals` that renders the `ApprovalsPage`.
+  - [x] IMPLEMENTED: A new navigation link in the main sidebar to the `/approvals` page, complete with an icon.
 ```
 
-### Phase 4: Knowledge Context Integration (Phase 4.0.i)
+### Phase 4: Knowledge Context Integration (Phase 4.0.i) (已完成)
 *Focus: Bridge the Admin Knowledge Base to the End-User Task Creation workflow.*
 
 ```yaml
 Task 1: BACKEND - Update Task Schema & API
-  - FILE: `python/src/server/api_routes/projects_api.py`
-  - ACTION: Update `CreateTaskRequest` model to include `knowledge_source_ids: list[str] | None = None`.
-  - ACTION: Update `create_task` endpoint to pass `knowledge_source_ids` to `task_service`.
-  - FILE: `python/src/server/services/projects/task_service.py`
-  - ACTION: Ensure `create_task` method accepts and persists `knowledge_source_ids` (likely in `metadata` JSONB column).
+  - [x] FILE: `python/src/server/api_routes/projects_api.py`
+  - [x] ACTION: Update `CreateTaskRequest` model to include `knowledge_source_ids: list[str] | None = None`.
+  - [x] ACTION: Update `create_task` endpoint to pass `knowledge_source_ids` to `task_service`.
+  - [x] FILE: `python/src/server/services/projects/task_service.py`
+  - [x] ACTION: Ensure `create_task` method accepts and persists `knowledge_source_ids` (likely in `metadata` JSONB column).
 
 Task 2: BACKEND - Enable Read-Access for Knowledge Items
-  - FILE: `python/src/server/api_routes/knowledge_api.py`
-  - ACTION: Modify `get_knowledge_items` dependency to allow `MEMBER` role (currently might be implicit or Admin-only).
-  - VERIFY: Ensure sensitive actions (delete/upload) remain Admin-only.
+  - [x] FILE: `python/src/server/api_routes/knowledge_api.py`
+  - [x] ACTION: Modify `get_knowledge_items` dependency to allow `MEMBER` role (currently might be implicit or Admin-only).
+  - [x] VERIFY: Ensure sensitive actions (delete/upload) remain Admin-only.
 
 Task 3: FRONTEND - Update API Client
-  - FILE: `enduser-ui-fe/src/services/api.ts`
-  - ACTION: Add `getKnowledgeItems()` method to fetch available knowledge sources (id, title, type).
-  - ACTION: Update `createTask` payload type to include `knowledge_source_ids`.
+  - [x] FILE: `enduser-ui-fe/src/services/api.ts`
+  - [x] ACTION: Add `getKnowledgeItems()` method to fetch available knowledge sources (id, title, type).
+  - [x] ACTION: Update `createTask` payload type to include `knowledge_source_ids`.
 
 Task 4: FRONTEND - Create Knowledge Selector Component
-  - FILE: `enduser-ui-fe/src/components/KnowledgeSelector.tsx`
-  - ACTION: Create a reusable dropdown/multiselect component that fetches data from `getKnowledgeItems`.
-  - UI: Should support searching by title.
+  - [x] FILE: `enduser-ui-fe/src/components/KnowledgeSelector.tsx`
+  - [x] ACTION: Create a reusable dropdown/multiselect component that fetches data from `getKnowledgeItems`.
+  - [x] UI: Should support searching by title.
 
 Task 5: FRONTEND - Integrate into Task Modal
-  - FILE: `enduser-ui-fe/src/components/TaskModal.tsx`
-  - ACTION: Import `KnowledgeSelector`.
-  - ACTION: Add state `selectedKnowledgeIds`.
-  - ACTION: Pass selected IDs to `api.createTask` on submission.
+  - [x] FILE: `enduser-ui-fe/src/components/TaskModal.tsx`
+  - [x] ACTION: Import `KnowledgeSelector`.
+  - [x] ACTION: Add state `selectedKnowledgeIds`.
+  - [x] ACTION: Pass selected IDs to `api.createTask` on submission.
 ```
 
 ## Validation Loop (驗證迴圈)
 
 ### Level 1: Syntax & Style (已執行)
-- ACTION: `make lint`
-- RESULT: All linters pass.
+- [x] ACTION: `make lint`
+- [x] RESULT: All linters pass.
 
 ### Level 2: Unit & Integration Tests (已執行)
-- ACTION: `make test-be`
-- RESULT: All 469 backend tests passed.
-- ACTION: `make test-fe`
-- RESULT: All frontend tests for both `enduser-ui-fe` and `archon-ui-main` passed.
+- [x] ACTION: `make test-be`
+- [x] RESULT: All 469 backend tests passed.
+- [x] ACTION: `make test-fe`
+- [x] RESULT: All frontend tests for both `enduser-ui-fe` and `archon-ui-main` passed.
 
 ### Level 3: Manual E2E Validation (部分執行)
-- ACTION: Manually navigated to the `/approvals` page in a local dev environment.
-- RESULT: The page loads, fetches data, and the DiffViewer successfully displays code changes for file-type proposals. Full end-to-end functionality still requires a running agent to generate proposals.
+- [x] ACTION: Manually navigated to the `/approvals` page in a local dev environment.
+- [x] RESULT: The page loads, fetches data, and the DiffViewer successfully displays code changes for file-type proposals. Full end-to-end functionality still requires a running agent to generate proposals.
 
 ## Final Validation Checklist (最終驗證清單)
 
@@ -188,3 +188,69 @@ Task 5: FRONTEND - Integrate into Task Modal
 - [x] A user's click on the "Approve" button triggers the backend to execute the change.
 - [x] A user's click on the "Reject" button updates the proposal status to "rejected".
 - [x] Manual E2E test of the full workflow (from AI proposal to execution) is successful.
+
+---
+
+## Phase 5: Agent Capability Optimization (Deep Dive of Phase 4.1)
+*Goal: To improve the autonomy and accuracy of the AI Developer Teammate, enabling "Test-Driven Self-Healing" and "Smart Git Operations".*
+
+### Rationale: Why this matters?
+Phase 4.0 established the **mechanism** (Propose -> Approve), ensuring security and control. However, without Phase 5, the Agent acts merely as a junior intern who requires constant micro-management.
+- **Problem**: The Agent may generate code that fails tests or provide vague commit messages like "update code", forcing the human to debug or rewrite descriptions.
+- **Solution**: By implementing "Smart Git" (auto-generating semantic messages from diffs) and "Test-Driven Self-Healing" (automatically retrying fixes based on test errors), we transform the Agent from a "burden" into a true "teammate" that delivers green builds and clear logs.
+
+### Use Case 1: Autonomous Bug Fixing with Feedback Loop
+> **Scenario**: A user reports a bug. The Agent writes a reproduction test which fails. It then attempts a fix.
+> **Desired Behavior**: If the fix fails the test, the Agent should **automatically** analyze the test error, refine the code, and retry, instead of giving up or asking the user immediately.
+
+### Implementation Tasks
+
+```yaml
+Task 1: Smart Git Operations (Git 操作智能化)
+  - [ ] FILE: `python/src/mcp_server/features/developer/version_control_tools.py`
+  - [ ] ACTION: Enhance `git_commit` tool to optionally accept `diff_context`.
+  - [ ] LOGIC: If the Agent provides a generic message like "update code", the tool should internally run `git diff --staged`, feed it to a lightweight LLM call, and generate a semantic commit message (e.g., "fix(auth): handle null user in login handler").
+
+Task 2: Test-Driven Self-Healing (測試驅動自癒)
+  - [ ] FILE: `python/src/server/services/agent_service.py`
+  - [ ] ACTION: Implement a feedback loop in the task execution logic.
+  - [ ] LOGIC: 
+      If `run_shell_command` returns exit code != 0:
+      1. Capture `stderr` (last 50 lines).
+      2. Append to the conversation history with a structured system prompt: "The previous command failed with the following error. Analyze why and propose a fix."
+      3. Trigger the Agent again (up to 3 retries).
+```
+
+---
+
+## Phase 6: Business Feature Expansion (Implementation of Phase 4.2)
+*Goal: To deliver tangible business value through new functional modules: HR Analytics and Job Market Integration.*
+
+### Use Case 2: Market-Driven Copywriting (行銷文案輔助)
+> **Scenario**: A marketing specialist needs to write a job description for a "Senior Python Engineer" that matches current market trends.
+> **Solution**: They input "Python Engineer" into the new Marketing tool. The system fetches real-time data from 104 Job Bank, summarizes key requirements (e.g., "FastAPI", "AWS"), and generates a draft JD.
+
+### Use Case 3: Team Performance Visibility (團隊績效透視)
+> **Scenario**: An engineering manager wants to identify bottlenecks in the current sprint.
+> **Solution**: They visit the "HR Dashboard" to see a breakdown of tasks by status and a leaderboard of completed tasks per member.
+
+### Implementation Tasks
+
+```yaml
+Task 1: 104 Job Bank Integration (104 人力銀行整合)
+  - [ ] FILE: `python/src/server/services/job_board_service.py`
+  - [ ] ACTION: Create a service to fetch job data (using official API or structured scraping if API unavailable).
+  - [ ] FILE: `python/src/mcp_server/features/marketing/job_tools.py`
+  - [ ] ACTION: Expose `search_104_jobs(keyword: str)` as a tool for the Agent.
+  - [ ] UI: Create `enduser-ui-fe/src/pages/MarketingPage.tsx` for users to trigger this workflow.
+
+Task 2: HR Analytics Dashboard (HR 統計儀表板)
+  - [ ] BACKEND: 
+      - Create `python/src/server/api_routes/stats_api.py`.
+      - Implement `GET /api/stats/tasks-by-status` (SQL: `SELECT status, COUNT(*) FROM archon_tasks GROUP BY status`).
+      - Implement `GET /api/stats/member-performance` (SQL: `SELECT assignee, COUNT(*) FROM archon_tasks WHERE status='done' GROUP BY assignee`).
+  - [ ] FRONTEND:
+      - Install `recharts`.
+      - Create `enduser-ui-fe/src/pages/StatsPage.tsx`.
+      - Implement `TaskDistributionChart` (Pie Chart) and `Leaderboard` (Bar Chart).
+```
