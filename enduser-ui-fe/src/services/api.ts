@@ -3,31 +3,59 @@ import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
 // --- SUPABASE CLIENT SETUP ---
 const getSupabaseConfig = () => {
-    // 1. Try localStorage first (user override)
-    let url = localStorage.getItem('supabaseUrl');
-    let key = localStorage.getItem('supabaseAnonKey');
+    // 1. Try Environment Variables first (Docker/Vite injection)
+    let url = import.meta.env.VITE_SUPABASE_URL;
+    let key = import.meta.env.VITE_SUPABASE_ANON_KEY;
     
-    // 2. Fallback to Environment Variables (Docker injection)
+    // 2. Fallback to localStorage (User override)
     if (!url || !key) {
-        url = (import.meta as any).env.VITE_SUPABASE_URL;
-        key = (import.meta as any).env.VITE_SUPABASE_ANON_KEY;
+        url = localStorage.getItem('supabaseUrl');
+        key = localStorage.getItem('supabaseAnonKey');
     }
 
-    if (!url || !key) {
-        console.error("Supabase credentials are not set. Please configure them in localStorage or via Docker environment variables.");
-    }
-    return { url, key };
+    return { url: url || null, key: key || null };
 };
 
 const { url: supabaseUrl, key: supabaseAnonKey } = getSupabaseConfig();
 
+// Detect if we should use mock data
+const useMockData = !supabaseUrl || !supabaseAnonKey || supabaseUrl === 'YOUR_SUPABASE_URL';
+
 export let supabase: SupabaseClient | null = null;
 
-// Unconditionally initialize Supabase client
-try {
-    supabase = createClient(supabaseUrl!, supabaseAnonKey!); 
-} catch (error) {
-    console.error("Failed to initialize Supabase client. Check credentials in localStorage.", error);
+if (useMockData) {
+    console.warn("Supabase credentials are not set. Application is running in MOCK mode.");
+} else {
+    try {
+        supabase = createClient(supabaseUrl!, supabaseAnonKey!); 
+    } catch (error) {
+        console.error("Failed to initialize Supabase client:", error);
+    }
+}
+
+// --- MOCK DATA ---
+const MOCK_USER: Employee = {
+    id: 'mock-admin-uuid',
+    employeeId: 'E1001',
+    name: 'Admin User (Mock)',
+    email: 'admin@archon.com',
+    department: 'IT',
+    position: 'System Administrator',
+    status: 'active',
+    role: EmployeeRole.SYSTEM_ADMIN,
+    avatar: 'https://i.pravatar.cc/150?u=admin@archon.com'
+};
+
+// --- MOCK API IMPLEMENTATION ---
+const mockApi: any = {
+    async login() { return MOCK_USER; },
+    async logout() { return; },
+    async getCurrentUser() { return MOCK_USER; },
+    async getTasks() { return []; },
+    async getProjects() { return []; },
+    async getAssignableAgents() { return []; },
+    async getKnowledgeItems() { return []; },
+    async getPendingChanges() { return []; }
 }
 
 
@@ -163,13 +191,30 @@ const supabaseApi = {
     const { data: { session }, error: sessionError } = await supabase!.auth.getSession();
     if (sessionError) throw new Error(sessionError.message);
     if (!session?.user) return null;
-    const { data: profile, error } = await supabase!.from('profiles').select('*').eq('id', session.user.id).single();
-    if (error) {
-      console.error('Error fetching user profile:', error.message);
-      // Fallback to auth data if profile is not ready
-      return { id: session.user.id, email: session.user.email!, name: session.user.user_metadata.name || 'New User', role: EmployeeRole.VIEWER, avatar: session.user.user_metadata.avatar_url || '', employeeId: '', department: '', position: '', status: 'active' };
+    
+    try {
+      const { data: profile, error } = await supabase!.from('profiles').select('*').eq('id', session.user.id).single();
+      
+      if (error || !profile) {
+        console.warn('Profile not found in public.profiles, using auth metadata fallback:', error?.message);
+        // Robust fallback: Return basic info from session so UI doesn't crash/hang
+        return { 
+          id: session.user.id, 
+          email: session.user.email!, 
+          name: session.user.user_metadata.name || session.user.email?.split('@')[0] || 'Authenticated User', 
+          role: EmployeeRole.MEMBER, // Default role
+          avatar: session.user.user_metadata.avatar_url || `https://i.pravatar.cc/150?u=${session.user.id}`,
+          employeeId: 'TEMP-' + session.user.id.substring(0, 5),
+          department: 'Unknown',
+          position: 'User',
+          status: 'active' 
+        } as Employee;
+      }
+      return profile as Employee;
+    } catch (e) {
+      console.error("Critical error in getCurrentUser:", e);
+      return null;
     }
-    return profile as Employee;
   },
   async getTasks(): Promise<Task[]> {
     const response = await fetch('/api/tasks');
@@ -385,5 +430,5 @@ const supabaseApi = {
   },
 };
 
-// Export the Supabase API implementation unconditionally
-export const api = supabaseApi;
+// Export the correct API implementation based on whether Supabase is configured
+export const api = useMockData ? mockApi : supabaseApi;

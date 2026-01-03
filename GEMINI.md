@@ -87,11 +87,11 @@
     3.  **預設值缺失**: 解決了 `STYLE_GUIDE_ENABLED` 在資料庫無資料時報 404 的問題，將其加入後端 `OPTIONAL_SETTINGS_WITH_DEFAULTS`。
     4.  **Phase 5 基礎設施**: 發現 `archon-mcp` 容器缺少 API Key 導致 Agent 無法執行智能操作。已更新 `docker-compose.yml` 注入 Key 並重啟容器驗證。
     5.  **前端自動初始化 (Port 5173)**: 解決了 End-User UI 在全 Docker 環境下因缺少 `localStorage` 崩潰的問題。透過在 `docker-compose.yml` 注入 `VITE_SUPABASE_...` 變數並修改 `api.ts` 實現自動 Fallback 機制。
+    6.  **解決無限 Loading**: 嘗試恢復 `mockApi` 降級機制以解決 Loading 卡死問題。**【注意】**: 經使用者驗證，Port 5173 仍會出現無限 Loading，此問題尚未完全根除，需進一步排查 Vite 環境變數在全 Docker 模式下的注入時機。
 *   **關鍵學習**: 
-    *   **環境一致性**: 在全 Docker 模式下，環境變數 (`.env`) 不會自動傳遞給所有服務，必須在 `docker-compose.yml` 中明確宣告。
-    *   **對齊預期**: 後端對於選用設定應提供預設值（Fallback），而非嚴格回傳 404，以提高前端渲染的健壯性。
-    *   **零配置啟動 (Zero-Config)**: 對於開發環境，前端應具備讀取環境變數的能力，減少對瀏覽器 `localStorage` 的依賴，以達成「一鍵啟動」的體驗。
-*   **結論**: 成功清除了環境雜訊，並在 `AgentService` 中打通了「分析錯誤 -> 建議修復」的反饋閉環，標誌著 Phase 5 核心邏輯已就緒並制度化 (CONTRIBUTING_tw.md)。
+    *   **環境複雜性**: Vite 的環境變數注入在全 Docker 模式下比預期更複雜，單純的變數傳遞可能不足以解決客戶端初始化時序問題。
+    *   **歷史是最好的教材**: 當遇到「以前似乎發生過」的問題時，應優先執行 `git log -p -S` 追蹤相關代碼的演進。
+*   **結論**: 成功清除了 Admin UI 環境雜訊，並在 `AgentService` 中打通了自癒閉環。Port 5173 的 Loading 問題列為後續技術債處理。
 
 ---
 

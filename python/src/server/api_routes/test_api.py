@@ -50,16 +50,16 @@ else:
         Required fields: task_id, agent_id, command
         """
         from ..services.agent_service import agent_service
-        
+
         task_id = payload.get("task_id")
         agent_id = payload.get("agent_id")
         command = payload.get("command")
-        
+
         if not task_id or not agent_id:
             raise HTTPException(status_code=400, detail="Missing task_id or agent_id")
-            
+
         # Run the task in the background
         import asyncio
         asyncio.create_task(agent_service.run_agent_task(task_id, agent_id, command))
-        
+
         return {"message": f"Task {task_id} triggered for agent {agent_id}", "command": command}

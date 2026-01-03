@@ -120,15 +120,15 @@ If it's an environment issue, suggest how to fix the environment.
         # 2. Execute command with self-healing if provided
         if command:
             success, output_or_analysis = await self.run_command_with_self_healing(command)
-            
+
             # 3. Feed the results back into the task output/description
             final_status = "done" if success else "failed"
             update_data = {
                 "status": final_status,
                 "output": output_or_analysis
             }
-            
-            # If failed, we keep it in 'failed' status but provide the AI analysis 
+
+            # If failed, we keep it in 'failed' status but provide the AI analysis
             # as a hint for the next manual or automated retry.
             await task_service.update_task(task_id, update_data)
             logger.info(f"Task '{task_id}' finished with status '{final_status}'. Output/Analysis provided.")
