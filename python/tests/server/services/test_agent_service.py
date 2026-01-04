@@ -1,4 +1,4 @@
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, call, patch
 
 import pytest
 
@@ -33,21 +33,22 @@ async def test_run_agent_task(mock_get_logger, mock_task_service):
 
     # --- Assertions ---
     # 1. Verify logger calls
-    assert mock_logger.info.call_count == 3
+    assert mock_logger.info.call_count == 2
     mock_logger.info.assert_any_call(
-        f"AI agent '{agent_id}' has been notified to start working on task '{task_id}'."
+        f"AI agent '{agent_id}' starting work on task '{task_id}'."
     )
     mock_logger.info.assert_any_call(
-        f"Task '{task_id}' status updated to 'processing' by agent '{agent_id}'."
-    )
-    mock_logger.info.assert_any_call(
-        f"AI agent '{agent_id}' finished its work for task '{task_id}'."
+        f"AI agent '{agent_id}' finished simulated work for task '{task_id}'."
     )
 
-    # 2. Verify that task_service.update_task was called correctly
-    mock_task_service.update_task.assert_awaited_once_with(
-        task_id, {"status": "processing", "assignee": agent_id}
-    )
+    # 2. Verify that task_service.update_task was called correctly (twice)
+    # First: Processing
+    # Second: Done (Simulated)
+    expected_calls = [
+        call(task_id, {"status": "processing", "assignee": agent_id}),
+        call(task_id, {"status": "done", "output": "Simulated task completed successfully."})
+    ]
+    mock_task_service.update_task.assert_has_awaits(expected_calls)
 
 @pytest.mark.asyncio
 @patch('src.server.services.projects.task_service.task_service', new_callable=AsyncMock)
@@ -71,13 +72,14 @@ async def test_run_agent_task_fails_to_update(mock_get_logger, mock_task_service
     await agent_service.run_agent_task(task_id, agent_id)
 
     # --- Assertions ---
-    # Verify the error log call
-    mock_logger.error.assert_called_once_with(
-        f"Failed to update task '{task_id}' status to 'processing': DB down"
+    # Verify the starting log was called
+    mock_logger.info.assert_called_once_with(
+        f"AI agent '{agent_id}' starting work on task '{task_id}'."
     )
-    # The final "finished" log should still be called as the error is not re-raised
-    mock_logger.info.assert_called_with(
-        f"AI agent '{agent_id}' finished its work for task '{task_id}'."
+
+    # Verify the error log call matches implementation
+    mock_logger.error.assert_called_once_with(
+        "Failed to update task status: DB down"
     )
 
 

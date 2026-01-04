@@ -1,7 +1,4 @@
-from typing import Any, List, Optional
 import httpx
-import json
-import asyncio
 from pydantic import BaseModel
 
 from ..config.logfire_config import get_logger, logfire
@@ -11,11 +8,11 @@ logger = get_logger(__name__)
 class JobData(BaseModel):
     title: str
     company: str
-    location: Optional[str] = None
-    salary: Optional[str] = None
-    url: Optional[str] = None
-    description: Optional[str] = None
-    skills: Optional[List[str]] = None
+    location: str | None = None
+    salary: str | None = None
+    url: str | None = None
+    description: str | None = None
+    skills: list[str] | None = None
     source: str = "104"
 
 class JobBoardService:
@@ -23,14 +20,14 @@ class JobBoardService:
     Service to interact with external job boards (specifically 104.com.tw).
     Uses direct AJAX simulation for performance, with a Mock fallback for reliability.
     """
-    
+
     BASE_URL = "https://www.104.com.tw/jobs/search/list"
     HEADERS = {
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
         "Referer": "https://www.104.com.tw/jobs/search/",
         "Accept": "application/json, text/javascript, */*; q=0.01",
     }
-    
+
     # Static Mock Data for Fallback
     MOCK_JOBS = [
         JobData(
@@ -56,13 +53,13 @@ class JobBoardService:
     ]
 
     @classmethod
-    async def search_jobs(cls, keyword: str, limit: int = 10) -> List[JobData]:
+    async def search_jobs(cls, keyword: str, limit: int = 10) -> list[JobData]:
         """
         Search for jobs using keyword.
         Attempts to fetch from 104 API first. If it fails (network/blocking), returns Mock data.
         """
         logfire.info(f"Searching jobs | keyword={keyword} | limit={limit}")
-        
+
         try:
             jobs = await cls._fetch_from_104(keyword, limit)
             if jobs:
@@ -71,13 +68,13 @@ class JobBoardService:
             else:
                 logfire.warning("104 API returned empty list, falling back to mock")
                 return cls.MOCK_JOBS
-                
+
         except Exception as e:
             logfire.error(f"Job search failed | error={str(e)} | switching_to_fallback=True")
             return cls.MOCK_JOBS
 
     @classmethod
-    async def _fetch_from_104(cls, keyword: str, limit: int) -> List[JobData]:
+    async def _fetch_from_104(cls, keyword: str, limit: int) -> list[JobData]:
         params = {
             "ro": "0",
             "kwop": "7",
@@ -93,22 +90,22 @@ class JobBoardService:
             "recommendJob": "1",
             "hotJob": "1",
         }
-        
+
         async with httpx.AsyncClient(timeout=10.0) as client:
             response = await client.get(cls.BASE_URL, headers=cls.HEADERS, params=params)
-            
+
             if response.status_code != 200:
                 raise Exception(f"API Error: {response.status_code}")
-                
+
             data = response.json()
-            
+
             # Validation
             if "data" not in data or "list" not in data["data"]:
                 raise Exception("Invalid API Response Structure")
-                
+
             raw_jobs = data["data"]["list"]
             parsed_jobs = []
-            
+
             for item in raw_jobs[:limit]:
                 # Safe Extraction
                 title = item.get("jobName", "Unknown Title")
@@ -117,17 +114,17 @@ class JobBoardService:
                 # Construct URL: https://www.104.com.tw/job/{jobNo}
                 job_no = item.get("jobNo")
                 url = f"https://www.104.com.tw/job/{job_no}" if job_no else None
-                
+
                 # Description often comes as 'jobDesc' or needs to be fetched separately.
                 # In the list view, 'jobDesc' is a snippet.
                 desc = item.get("jobDesc", "")  # Often truncated in list view
-                
+
                 # Location
                 location = item.get("jobAddrNoDesc") or item.get("jobAddress")
-                
+
                 # Salary
                 salary = item.get("salaryDesc")
-                
+
                 # Tags/Skills (Parsing from tags or desc)
                 skills = []
                 tags = item.get("tags", [])
@@ -144,5 +141,5 @@ class JobBoardService:
                     skills=skills,
                     source="104"
                 ))
-                
+
             return parsed_jobs

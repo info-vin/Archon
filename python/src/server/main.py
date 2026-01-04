@@ -26,7 +26,7 @@ from .api_routes.files_api import router as files_router
 from .api_routes.internal_api import router as internal_router
 from .api_routes.knowledge_api import router as knowledge_router
 from .api_routes.log_api import router as log_router
-from .api_routes.marketing_api import router as marketing_router # NEW IMPORT
+from .api_routes.marketing_api import router as marketing_router  # NEW IMPORT
 from .api_routes.mcp_api import router as mcp_router
 from .api_routes.migration_api import router as migration_router
 from .api_routes.ollama_api import router as ollama_router

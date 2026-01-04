@@ -1,5 +1,7 @@
 from pydantic import BaseModel, Field
+
 from .....server.services.job_board_service import JobBoardService
+
 
 class SearchJobMarketTool(BaseModel):
     """
@@ -14,10 +16,10 @@ class SearchJobMarketTool(BaseModel):
         try:
             # Call the service
             jobs = await JobBoardService.search_jobs(keyword=self.keyword, limit=self.limit)
-            
+
             if not jobs:
                 return f"No jobs found for keyword '{self.keyword}'."
-            
+
             # Format the output for the Agent
             result_str = f"Found {len(jobs)} jobs for '{self.keyword}':\n\n"
             for i, job in enumerate(jobs, 1):
@@ -27,9 +29,9 @@ class SearchJobMarketTool(BaseModel):
                 result_str += f"   Salary: {job.salary}\n"
                 result_str += f"   Skills: {skills_str}\n"
                 result_str += f"   URL: {job.url}\n\n"
-                
+
             return result_str
-            
+
         except Exception as e:
             return f"Error searching job market: {str(e)}"
 
