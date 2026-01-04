@@ -211,6 +211,7 @@ Task 1: Smart Git Operations (Git 操作智能化)
   - [x] ACTION: Enhance `git_commit` tool to optionally accept `diff_context`.
   - [x] LOGIC: If the Agent provides a generic message like "update code", the tool should internally run `git diff --staged`, feed it to a lightweight LLM call, and generate a semantic commit message (e.g., "fix(auth): handle null user in login handler").
   - [x] INFRA: Injected `OPENAI_API_KEY` into `archon-mcp` container via `docker-compose.yml` to enable LLM calls from Agent.
+  - [x] VERIFICATION: Verified in commit `a3397db` (Implementation) and `8c36fab` (Infra injection).
 
 Task 2: Test-Driven Self-Healing (測試驅動自癒)
   - [x] FILE: `python/src/server/services/agent_service.py`
@@ -220,6 +221,12 @@ Task 2: Test-Driven Self-Healing (測試驅動自癒)
       1. Capture `stderr` (last 2000 characters).
       2. Call LLM to analyze the error and provide a fix suggestion.
       3. Update the task `output` with the AI analysis to provide a hint for the next attempt.
+  - [x] VERIFICATION: Implemented in commit `55e6bb7` and `ec14f2c`.
+
+Task 3: Environment Stabilization (環境穩定化)
+  - [x] ISSUE: Injecting `SUPABASE_URL` into frontend caused infinite loading in Docker (Browser cannot resolve internal DNS `supabase_kong`).
+  - [x] FIX: Implemented "Proactive Guard" in `enduser-ui-fe/src/services/api.ts`. Static detection of internal Docker URLs immediately forces Mock Mode.
+  - [x] VERIFICATION: Fixed in commit `c05627f`.
 ```
 
 ---
