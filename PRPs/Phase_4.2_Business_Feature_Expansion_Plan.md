@@ -28,6 +28,8 @@ description: |
   why: The parent roadmap that defined the architectural foundation for agents and RBAC. (定義了 Agent 與 RBAC 架構基礎的父計畫。)
 - file: api-uml-diagrams.md
   why: Reference for defining new API endpoints consistent with existing patterns. (用於定義與現有模式一致的新 API 端點的參考。)
+- url: https://github.com/it-jia/job104_spider
+  why: Technical reference for reverse-engineering 104 Job Bank's internal AJAX API and headers. (用於逆向分析 104 內部 AJAX API 與 Headers 的技術參考。)
 ```
 
 ### Proposed Codebase Changes (預計變更的檔案結構)
@@ -39,7 +41,7 @@ python/
 │   │   ├── api_routes/
 │   │   │   └── stats_api.py        # ADDED: Endpoints for HR analytics (aggregation queries). (新增：HR 分析的端點，處理聚合查詢)
 │   │   └── services/
-│   │       └── job_board_service.py # ADDED: Service to handle external job board fetching/scraping. (新增：處理外部求職網數據抓取/爬蟲的服務)
+│   │       └── job_board_service.py # ADDED: Service to handle external job board AJAX simulation. (新增：處理外部求職網 AJAX 模擬的服務)
 │   └── mcp_server/
 │       └── features/
 │           └── marketing/          # ADDED: New feature category. (新增：新的功能類別)
@@ -57,6 +59,10 @@ enduser-ui-fe/
 │       └── api.ts                  # MODIFIED: Added client methods for stats and job search. (修改：新增用於統計與職缺搜尋的客戶端方法)
 ├── package.json                    # MODIFIED: Add `recharts` dependency. (修改：新增 `recharts` 依賴)
 ```
+
+### Tech Stack Note (技術堆疊註記)
+- **Backend HTTP Client**: Use `httpx` (Async) instead of `requests` to prevent blocking the FastAPI event loop during external API calls. (後端 HTTP 客戶端：使用 `httpx` (非同步) 取代 `requests`，以防止在呼叫外部 API 時阻塞 FastAPI 事件迴圈。)
+
 
 ## Implementation Blueprint (實作藍圖)
 
@@ -98,11 +104,15 @@ Task 4: FRONTEND - Implement Chart Components (前端 - 實作圖表元件)
 ```yaml
 Task 1: BACKEND - Job Board Service (後端 - 求職網服務)
   - [ ] FILE: `python/src/server/services/job_board_service.py`
-  - [ ] ACTION: Create class `JobBoardService`. (建立 `JobBoardService` 類別)
-  - [ ] METHOD: `search_jobs(keyword: str) -> list[JobData]`
-  - [ ] IMPLEMENTATION: 
-      - Initially implement a structured mock or use a lightweight scraper (BeautifulSoup/Playwright) if 104 API is unavailable. (初期若 104 API 不可用，先實作結構化的 Mock 或使用輕量爬蟲 BeautifulSoup/Playwright。)
-      - *Constraint*: Must handle network timeouts and rate limiting gracefully. (限制：必須優雅地處理網路超時與速率限制。)
+  - [ ] ACTION: Create class `JobBoardService`.
+  - [ ] TECHNICAL REFERENCE (技術參考):
+      - **Inspiration**: Reference patterns from `job104_spider` (GitHub). (參考 GitHub 上的 `job104_spider` 模式。)
+      - **Target**: Simulate the internal 104 AJAX search API (`/jobs/search/list`) instead of HTML scraping. (目標：模擬 104 內部 AJAX 搜尋 API 而非直接進行 HTML 爬取。)
+      - **Key Requirements**: Must include mandatory headers (`Referer`, `User-Agent`) identified in recent open-source research. (關鍵需求：必須包含在近期開源研究中識別出的必要 Headers。)
+  - [ ] IMPLEMENTATION STEPS:
+      - 1. **Probing**: Test the endpoint with `requests` to verify if 104 has added new anti-bot signatures (e.g., `_sig` parameters). (測試端點以驗證 104 是否新增了簽名驗證。)
+      - 2. **Service Logic**: Map the returned JSON fields (`jobName`, `description`, `jobDescription`) to our internal `JobData` schema. (將回傳的 JSON 欄位映射至內部的 `JobData` 架構。)
+      - 3. **Fallback**: If the API is blocked by dynamic signature logic, use **Structured Mock Data** to prevent blocking Phase 2. (若 API 被動態簽名邏輯攔截，則降級為模擬數據以避免阻塞 Phase 2。)
 
 Task 2: MCP - Expose Tool to Agent (MCP - 暴露工具給 Agent)
   - [ ] FILE: `python/src/mcp_server/features/marketing/job_tools.py`
