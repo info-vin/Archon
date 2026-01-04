@@ -75,9 +75,22 @@
 *   **6. 全生命週期視角：從願景到部署後驗證 (Full Lifecycle View: From Vision to Post-Deployment Validation)**
     *   **核心**: 開發不僅僅是寫程式碼。它始於透過分析假資料 (`MOCK_DATA`) 或文件來理解真實的專案願景，並終結於 `push`、部署、以及最重要的——由終端使用者在瀏覽器（注意快取）驗證無誤。一個修復只有在被使用者確認後才算完成。
 
+*   **7. 內外網隔離原則：主動防禦環境變數污染 (Internal/External Isolation: Proactive Guard against Env Pollution)**
+    *   **核心**: 在 Docker 化環境中，後端傳遞給前端的環境變數（如 `SUPABASE_URL`）可能包含內部 Docker DNS（如 `supabase_kong`）。這對瀏覽器是無效的。前端代碼必須具備「主動防禦」邏輯，透過靜態特徵檢測（如檢查 URL 是否包含 `_kong`），在請求發出前攔截並切換至 Mock 模式，避免瀏覽器因 DNS 解析失敗而陷入無限 Loading。
+
 ---
 
 # 第三章：近期工作日誌 (Recent Journal Entries)
+
+### 2026-01-04: 用「主動防禦」邏輯根治前端無限 Loading
+*   **核心任務**: 徹底解決 `enduser-ui-fe` (Port 5173) 在全 Docker 環境下的無限 Loading 問題。
+*   **偵錯歷程**: 
+    *   **問題確認**: `make dev-docker` 注入了 `SUPABASE_URL` 環境變數，其值為 Docker 內部 DNS (`http://supabase_kong:8000`)。瀏覽器無法解析此地址，導致 API 請求一直 Pending 直到超時。
+    *   **方案演進**: 最初的修復 (`fix/fe-api`) 採用被動的 `try-catch` 和 2 秒超時。這雖然能運作，但使用者體驗差（必等的 2 秒延遲）。
+    *   **最終解法**: 在 `api.ts` 中引入「主動防禦 (Proactive Guard)」邏輯。透過靜態檢查 URL 是否包含 `supabase_kong` 等內部關鍵字，直接判定為 Docker 內部環境並立即切換至 Mock 模式，實現 0 延遲體驗。
+*   **關鍵學習**: 
+    *   **不要讓使用者等待必敗的請求**: 當環境變數明顯無效時（如內部 DNS），程式應有能力識別並立即 Failover，而不是盲目發送請求。
+    *   **合併前的優化**: 修復分支合併前，應再次審視邏輯是否足夠「主動」和「防禦性」。
 
 ### 2026-01-03: 穩定全 Docker 開發環境與啟動 Phase 5 自癒能力
 *   **核心任務**: 1. 修復 `archon-ui-main` (Port 3737) 設定頁面崩潰。 2. 實作 Phase 5 智能 Git 與自癒反饋。

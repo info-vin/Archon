@@ -495,6 +495,23 @@ let connectionChecked = false;
 
 // Create a wrapper that dynamically falls back to mockApi on network failures
 const createSmartApi = () => {
+    // 0. Proactive Guard: Static Detection of Internal Docker URLs
+    // If the URL contains internal docker service names that the browser (host) definitely cannot resolve,
+    // switch to fallback mode immediately to avoid the 2s timeout delay.
+    if (!isFallbackMode && supabaseUrl) {
+        const internalDockerHosts = ['supabase_kong', 'supabase-wrapper', 'archon_db', 'archon-server'];
+        try {
+            const urlObj = new URL(supabaseUrl);
+            if (internalDockerHosts.some(host => urlObj.hostname.includes(host))) {
+                console.warn(`[SmartAPI] Detected internal Docker URL (${supabaseUrl}). Browser cannot resolve this. Switching to Mock Mode immediately.`);
+                isFallbackMode = true;
+                connectionChecked = true; // Skip the network check
+            }
+        } catch (e) {
+            // Invalid URL, let the connection check handle it or fail later
+        }
+    }
+
     // Collect all unique method names from both APIs
     const allMethods = new Set([...Object.keys(supabaseApi), ...Object.keys(mockApi)]);
     const smartApi: any = {};
