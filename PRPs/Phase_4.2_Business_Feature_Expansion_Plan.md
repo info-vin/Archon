@@ -151,3 +151,18 @@ Task 3: FRONTEND - Marketing Workflow UI (前端 - 行銷工作流介面)
 - **Testing Strategy**:
     - **E2E**: No automated E2E tests for charts/external API (Visual/Manual verification only). (無自動化 E2E 測試，依賴視覺與手動驗證。)
     - **Regression**: Fixed `AgentService` tests that were failing due to logging changes.
+
+### 補充：情境釐清與技術缺口 (Refinement on Scenario & Technical Gaps)
+
+1.  **情境比對與修正 (Scenario Alignment)**:
+    *   **Phase 4.0 提案**: 原本設想為「行銷練習場景」，重點在於文案撰寫練習。
+    *   **Phase 4.2 現況**: 原本流程設計為「生成 JD」，這偏向 HR 招募功能，與「行銷」分類有語意衝突。
+    *   **修正後情境 (Sales Intelligence)**:
+        *   **角色**: B2B 業務/行銷人員。
+        *   **流程**: 搜尋特定職缺 (如「商業分析師」) -> 找出正在招募該職位的公司 -> 識別潛在客戶 (Leads)。
+        *   **價值**: 透過職缺需求反推公司的軟體/服務採購需求 (例如：招募數據分析師的公司可能需要 BI 工具)。
+        *   **調整**: 產出結果不應僅是 JD，而應包含「潛在客戶列表」或「業務開發切入點分析」。
+
+2.  **技術與流程缺口 (Technical Gaps)**:
+    *   **端對端驗證 (E2E Verification)**: 目前專案缺乏針對「前端 -> 後端 -> 外部 API」的自動化 E2E 測試。引入外部數據源 (104) 後，此驗證機制的薄弱將成為穩定性風險。
+    *   **資料庫 schema 討論 (Supabase SQL)**: 若要落實上述「潛在客戶」情境，目前的 `archon_tasks` 表不足以支撐。需要規劃新的資料表 (如 `leads`, `market_insights`) 來儲存搜尋結果與分析數據，這部分需要整體的 SQL 架構討論。
