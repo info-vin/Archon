@@ -8,6 +8,8 @@ import AdminPage from './pages/AdminPage.tsx';
 import BlogPage from './pages/BlogPage.tsx';
 import SettingsPage from './pages/SettingsPage.tsx';
 import ApprovalsPage from './pages/ApprovalsPage.tsx'; // Import the new page
+import StatsPage from './pages/StatsPage.tsx'; // Import StatsPage
+import MarketingPage from './pages/MarketingPage.tsx'; // Import MarketingPage
 import { LogOutIcon, SettingsIcon, UserIcon, MenuIcon, XIcon, ShieldCheckIcon } from './components/Icons.tsx'; // Add new Icon
 import ThemeToggle from './components/ThemeToggle.tsx';
 import UserAvatar from './components/UserAvatar.tsx';
@@ -55,6 +57,26 @@ export const AppRoutes: React.FC = () => {
           <ProtectedRoute>
             <MainLayout>
               <DashboardPage />
+            </MainLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/stats"
+        element={
+          <ProtectedRoute>
+            <MainLayout>
+              <StatsPage />
+            </MainLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/marketing"
+        element={
+          <ProtectedRoute>
+            <MainLayout>
+              <MarketingPage />
             </MainLayout>
           </ProtectedRoute>
         }
@@ -234,6 +256,18 @@ const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                         <Link to="/dashboard" className={`flex items-center p-2 rounded-md hover:bg-secondary ${location.pathname.startsWith('/dashboard') ? 'bg-secondary' : ''}`}>
                             <UserIcon className="w-5 h-5 mr-3" />
                             My Tasks
+                        </Link>
+                    </li>
+                    <li className="mb-2">
+                        <Link to="/stats" className={`flex items-center p-2 rounded-md hover:bg-secondary ${location.pathname.startsWith('/stats') ? 'bg-secondary' : ''}`}>
+                            <SettingsIcon className="w-5 h-5 mr-3" />
+                            HR Dashboard
+                        </Link>
+                    </li>
+                    <li className="mb-2">
+                        <Link to="/marketing" className={`flex items-center p-2 rounded-md hover:bg-secondary ${location.pathname.startsWith('/marketing') ? 'bg-secondary' : ''}`}>
+                            <ShieldCheckIcon className="w-5 h-5 mr-3" />
+                            Market Intel
                         </Link>
                     </li>
                     <li className="mb-2">

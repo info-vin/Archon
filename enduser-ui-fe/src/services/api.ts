@@ -1,4 +1,4 @@
-import { Employee, EmployeeRole, Task, TaskStatus, TaskPriority, DocumentVersion, Project, BlogPost, AssignableUser } from '../types.ts';
+import { Employee, EmployeeRole, Task, TaskStatus, TaskPriority, DocumentVersion, Project, BlogPost, AssignableUser, TaskStats, MemberPerformance, JobData } from '../types.ts';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
 // --- SUPABASE CLIENT SETUP ---
@@ -110,7 +110,38 @@ const mockApi: any = {
     async updateUserEmail() { return; },
     async updateUserPassword() { return; },
     async approveChange() { return { success: true }; },
-    async rejectChange() { return { success: true }; }
+    async rejectChange() { return { success: true }; },
+    
+    // Stats & Marketing Mock
+    async getTaskDistribution() { 
+        return [
+            { name: 'todo', value: 5 }, 
+            { name: 'doing', value: 3 },
+            { name: 'review', value: 2 },
+            { name: 'done', value: 10 }
+        ]; 
+    },
+    async getMemberPerformance() { 
+        return [
+            { name: 'Admin User', completed_tasks: 15 }, 
+            { name: 'AI Assistant', completed_tasks: 8 },
+            { name: 'New Hire', completed_tasks: 2 }
+        ]; 
+    },
+    async searchJobs(keyword: string) { 
+        return [
+            { 
+                title: 'Mock Python Engineer', 
+                company: 'Mock Corp', 
+                location: 'Taipei',
+                salary: '1M+',
+                url: 'https://example.com',
+                description: 'Mock description for ' + keyword,
+                skills: ['Python', 'Django'],
+                source: 'mock'
+            }
+        ]; 
+    }
 }
 
 
@@ -481,6 +512,25 @@ const supabaseApi = {
         const errorData = await response.json();
         throw new Error(errorData.detail || 'Failed to reject change.');
     }
+    return response.json();
+  },
+
+  // --- STATS & MARKETING API ---
+  async getTaskDistribution(): Promise<TaskStats[]> {
+    const response = await fetch('/api/stats/tasks-by-status');
+    if (!response.ok) throw new Error('Failed to fetch task stats');
+    return response.json();
+  },
+
+  async getMemberPerformance(): Promise<MemberPerformance[]> {
+    const response = await fetch('/api/stats/member-performance');
+    if (!response.ok) throw new Error('Failed to fetch performance stats');
+    return response.json();
+  },
+
+  async searchJobs(keyword: string): Promise<JobData[]> {
+    const response = await fetch(`/api/marketing/jobs?keyword=${encodeURIComponent(keyword)}`);
+    if (!response.ok) throw new Error('Failed to search jobs');
     return response.json();
   },
 };

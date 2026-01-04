@@ -26,6 +26,7 @@ from .api_routes.files_api import router as files_router
 from .api_routes.internal_api import router as internal_router
 from .api_routes.knowledge_api import router as knowledge_router
 from .api_routes.log_api import router as log_router
+from .api_routes.marketing_api import router as marketing_router # NEW IMPORT
 from .api_routes.mcp_api import router as mcp_router
 from .api_routes.migration_api import router as migration_router
 from .api_routes.ollama_api import router as ollama_router
@@ -33,6 +34,7 @@ from .api_routes.progress_api import router as progress_router
 from .api_routes.projects_api import router as projects_router
 from .api_routes.providers_api import router as providers_router
 from .api_routes.settings_api import router as settings_router
+from .api_routes.stats_api import router as stats_router
 from .api_routes.test_api import router as test_api_router  # NEW IMPORT
 from .api_routes.version_api import router as version_router
 
@@ -223,6 +225,8 @@ app.include_router(providers_router)
 app.include_router(ollama_router)
 app.include_router(migration_router)
 app.include_router(agents_router)
+app.include_router(stats_router)
+app.include_router(marketing_router)
 
 
 # Root endpoint

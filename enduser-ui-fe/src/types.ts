@@ -97,7 +97,53 @@ export interface BlogPost {
 }
 
 export interface AssignableUser {
+
   id: string;
+
   name: string;
+
   role: string;
+
+}
+
+
+
+export interface TaskStats {
+
+    name: string;
+
+    value: number;
+
+}
+
+
+
+export interface MemberPerformance {
+
+    name: string;
+
+    completed_tasks: number;
+
+}
+
+
+
+export interface JobData {
+
+    title: string;
+
+    company: string;
+
+    location?: string;
+
+    salary?: string;
+
+    url?: string;
+
+    description?: string;
+
+    skills?: string[];
+
+    source: string;
+
 }
