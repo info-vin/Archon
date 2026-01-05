@@ -50,3 +50,7 @@ CREATE POLICY "Allow authenticated users to view leads" ON leads
 
 CREATE POLICY "Allow authenticated users to view insights" ON market_insights
     FOR SELECT USING (auth.role() = 'authenticated');
+
+-- 註冊此遷移腳本的版本
+INSERT INTO schema_migrations (version) VALUES ('006_create_sales_intel_tables') ON CONFLICT (version) DO NOTHING;
+

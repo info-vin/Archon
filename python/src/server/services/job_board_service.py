@@ -2,6 +2,7 @@ import httpx
 from pydantic import BaseModel
 
 from ..config.logfire_config import get_logger, logfire
+from ..utils import get_supabase_client
 
 logger = get_logger(__name__)
 
@@ -14,6 +15,7 @@ class JobData(BaseModel):
     description: str | None = None
     skills: list[str] | None = None
     source: str = "104"
+    identified_need: str | None = None  # ADDED: AI/Logic inferred need
 
 class JobBoardService:
     """
@@ -31,47 +33,108 @@ class JobBoardService:
     # Static Mock Data for Fallback
     MOCK_JOBS = [
         JobData(
-            title="Senior Python Backend Engineer",
-            company="Archon Tech Inc.",
+            title="Senior Data Analyst",
+            company="Retail Corp",
             location="Taipei City",
             salary="1.5M - 2.5M TWD/Year",
-            url="https://www.104.com.tw/job/mock1",
-            description="We are looking for an expert in FastAPI, AsyncIO, and AI Agents.",
-            skills=["Python", "FastAPI", "Docker", "PostgreSQL"],
-            source="mock"
+            url="https://www.104.com.tw/job/mock-retail-1",
+            description="We are looking for an expert in BI tools and SQL.",
+            skills=["SQL", "Tableau", "Python"],
+            source="mock",
+            identified_need="Hiring Data Analyst -> Potential BI Tool Customer"
         ),
         JobData(
-            title="AI Fullstack Developer",
+            title="AI Solutions Engineer",
             company="Future Systems",
             location="Remote",
             salary="Negotiable",
-            url="https://www.104.com.tw/job/mock2",
-            description="Build the next generation of AI tools using React and Python.",
-            skills=["React", "TypeScript", "Python", "LangChain"],
-            source="mock"
+            url="https://www.104.com.tw/job/mock-ai-1",
+            description="Build the next generation of AI tools using LLMs.",
+            skills=["Python", "LangChain", "OpenAI"],
+            source="mock",
+            identified_need="Developing AI Features -> Needs LLM Ops / Archon"
         )
     ]
 
     @classmethod
     async def search_jobs(cls, keyword: str, limit: int = 10) -> list[JobData]:
         """
-        Search for jobs using keyword.
-        Attempts to fetch from 104 API first. If it fails (network/blocking), returns Mock data.
+        Search for jobs using keyword and identify potential leads.
         """
         logfire.info(f"Searching jobs | keyword={keyword} | limit={limit}")
 
         try:
             jobs = await cls._fetch_from_104(keyword, limit)
-            if jobs:
-                logfire.info(f"Successfully fetched jobs from 104 | count={len(jobs)}")
-                return jobs
-            else:
+            if not jobs:
                 logfire.warning("104 API returned empty list, falling back to mock")
-                return cls.MOCK_JOBS
+                jobs = cls.MOCK_JOBS
+
+            # Analyze needs for each job
+            for job in jobs:
+                job.identified_need = cls._infer_need(job)
+
+            logfire.info(f"Job search completed | count={len(jobs)}")
+            return jobs
 
         except Exception as e:
             logfire.error(f"Job search failed | error={str(e)} | switching_to_fallback=True")
+            # Ensure mock jobs also have inferred needs
+            for job in cls.MOCK_JOBS:
+                if not job.identified_need:
+                    job.identified_need = cls._infer_need(job)
             return cls.MOCK_JOBS
+
+    @classmethod
+    async def identify_leads_and_save(cls, jobs: list[JobData]) -> int:
+        """
+        Filters jobs into leads and saves them to the 'leads' database table.
+        Returns the number of new leads saved.
+        """
+        supabase = get_supabase_client()
+        new_leads_count = 0
+
+        for job in jobs:
+            try:
+                # 1. Check if lead already exists (by company name and source URL)
+                existing = supabase.table("leads").select("id").eq("company_name", job.company).eq("source_job_url", job.url).execute()
+
+                if existing.data:
+                    continue
+
+                # 2. Save new lead
+                lead_data = {
+                    "company_name": job.company,
+                    "source_job_url": job.url,
+                    "status": "new",
+                    "identified_need": job.identified_need or cls._infer_need(job)
+                }
+
+                supabase.table("leads").insert(lead_data).execute()
+                new_leads_count += 1
+                logfire.info(f"New lead identified and saved | company={job.company}")
+
+            except Exception as e:
+                logfire.error(f"Failed to save lead | company={job.company} | error={str(e)}")
+
+        return new_leads_count
+
+    @staticmethod
+    def _infer_need(job: JobData) -> str:
+        """
+        Simple heuristic logic to infer business need from job title/description.
+        In a real scenario, this could be an LLM-powered analysis.
+        """
+        title = job.title.lower()
+        desc = (job.description or "").lower()
+
+        if "analyst" in title or "data" in title or "tableau" in desc:
+            return "Hiring Data Talent -> High potential for BI/Data Tooling."
+        elif "ai" in title or "ml" in title or "llm" in desc:
+            return "Building AI Capabilities -> Target for Archon/Agent framework."
+        elif "marketing" in title or "sales" in title:
+            return "Expanding Growth Team -> Needs Sales Intelligence/Lead Gen tools."
+        else:
+            return f"Hiring for {job.title} -> General digital transformation lead."
 
     @classmethod
     async def _fetch_from_104(cls, keyword: str, limit: int) -> list[JobData]:

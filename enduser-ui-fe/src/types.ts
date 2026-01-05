@@ -130,20 +130,42 @@ export interface MemberPerformance {
 
 export interface JobData {
 
+
+
     title: string;
+
+
 
     company: string;
 
+
+
     location?: string;
+
+
 
     salary?: string;
 
+
+
     url?: string;
+
+
 
     description?: string;
 
+
+
     skills?: string[];
 
+
+
     source: string;
+
+
+
+    identified_need?: string; // AI inferred business need
+
+
 
 }
