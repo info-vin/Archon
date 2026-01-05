@@ -4,7 +4,7 @@ Ensures backward compatibility and validates token reduction.
 """
 
 import json
-from unittest.mock import AsyncMock, Mock, patch
+from unittest.mock import Mock, patch
 
 import pytest
 
@@ -41,7 +41,7 @@ class TestProjectServiceOptimization:
         mock_table = Mock()
         mock_select = Mock()
         mock_order = Mock()
-        mock_order.execute = AsyncMock(return_value=mock_response)
+        mock_order.execute = Mock(return_value=mock_response)
         mock_select.order.return_value = mock_order
         mock_table.select.return_value = mock_select
         mock_client.table.return_value = mock_table
@@ -91,7 +91,7 @@ class TestProjectServiceOptimization:
         mock_select = Mock()
         mock_order = Mock()
 
-        mock_order.execute = AsyncMock(return_value=mock_response)
+        mock_order.execute = Mock(return_value=mock_response)
         mock_select.order.return_value = mock_order
         mock_table.select.return_value = mock_select
         mock_client.table.return_value = mock_table
@@ -190,7 +190,7 @@ class TestTaskServiceOptimization:
         mock_order1 = Mock()
         mock_order2 = Mock()
 
-        mock_order2.execute = AsyncMock(return_value=mock_response)
+        mock_order2.execute = Mock(return_value=mock_response)
         mock_order1.order.return_value = mock_order2
         mock_or.order.return_value = mock_order1
         mock_select.neq().or_.return_value = mock_or
@@ -233,7 +233,7 @@ class TestTaskServiceOptimization:
         mock_order1 = Mock()
         mock_order2 = Mock()
 
-        mock_order2.execute = AsyncMock(return_value=mock_response)
+        mock_order2.execute = Mock(return_value=mock_response)
         mock_order1.order.return_value = mock_order2
         mock_or.order.return_value = mock_order1
         mock_select.neq().or_.return_value = mock_or

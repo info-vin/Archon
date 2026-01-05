@@ -52,7 +52,7 @@ class ProjectService:
                 project_data["github_repo"] = github_repo.strip()
 
             # Insert project
-            response = await self.supabase_client.table("archon_projects").insert(project_data).execute()
+            response = self.supabase_client.table("archon_projects").insert(project_data).execute()
 
             if not response.data:
                 logger.error("Supabase returned empty data for project creation")
@@ -102,7 +102,7 @@ class ProjectService:
         """
         try:
             # Always fetch all fields for simplicity, as we might need them for stats or status
-            response = await (
+            response = (
                 self.supabase_client.table("archon_projects")
                 .select("*")
                 .order("created_at", desc=True)
@@ -172,7 +172,7 @@ class ProjectService:
             Tuple of (success, result_dict)
         """
         try:
-            response = await (
+            response = (
                 self.supabase_client.table("archon_projects")
                 .select("*")
                 .eq("id", project_id)
@@ -188,7 +188,7 @@ class ProjectService:
 
                 try:
                     # Get source IDs from project_sources table
-                    sources_response = await (
+                    sources_response = (
                         self.supabase_client.table("archon_project_sources")
                         .select("source_id, notes")
                         .eq("project_id", project["id"])
@@ -207,7 +207,7 @@ class ProjectService:
 
                     # Fetch full source objects
                     if technical_source_ids:
-                        tech_sources_response = await (
+                        tech_sources_response = (
                             self.supabase_client.table("archon_sources")
                             .select("*")
                             .in_("source_id", technical_source_ids)
@@ -216,7 +216,7 @@ class ProjectService:
                         technical_sources = tech_sources_response.data
 
                     if business_source_ids:
-                        biz_sources_response = await (
+                        biz_sources_response = (
                             self.supabase_client.table("archon_sources")
                             .select("*")
                             .in_("source_id", business_source_ids)
@@ -250,7 +250,7 @@ class ProjectService:
         """
         try:
             # First, check if project exists
-            check_response = await (
+            check_response = (
                 self.supabase_client.table("archon_projects")
                 .select("id")
                 .eq("id", project_id)
@@ -260,7 +260,7 @@ class ProjectService:
                 return False, {"error": f"Project with ID {project_id} not found"}
 
             # Get task count for reporting
-            tasks_response = await (
+            tasks_response = (
                 self.supabase_client.table("archon_tasks")
                 .select("id")
                 .eq("project_id", project_id)
@@ -269,7 +269,7 @@ class ProjectService:
             tasks_count = len(tasks_response.data) if tasks_response.data else 0
 
             # Delete the project (tasks will be deleted by cascade)
-            await self.supabase_client.table("archon_projects").delete().eq(
+            self.supabase_client.table("archon_projects").delete().eq(
                 "id", project_id
             ).execute()
 
@@ -293,7 +293,7 @@ class ProjectService:
             Tuple of (success, result_dict)
         """
         try:
-            response = await (
+            response = (
                 self.supabase_client.table("archon_projects")
                 .select("features")
                 .eq("id", project_id)
@@ -361,7 +361,7 @@ class ProjectService:
             # Handle pinning logic - only one project can be pinned at a time
             if update_fields.get("pinned") is True:
                 # Unpin any other pinned projects first
-                unpin_response = await (
+                unpin_response = (
                     self.supabase_client.table("archon_projects")
                     .update({"pinned": False})
                     .neq("id", project_id)
@@ -371,7 +371,7 @@ class ProjectService:
                 logger.debug(f"Unpinned {len(unpin_response.data or [])} other projects before pinning {project_id}")
 
             # Update the target project
-            response = await (
+            response = (
                 self.supabase_client.table("archon_projects")
                 .update(update_data)
                 .eq("id", project_id)
@@ -383,7 +383,7 @@ class ProjectService:
                 return True, {"project": project, "message": "Project updated successfully"}
             else:
                 # If update didn't return data, fetch the project to ensure it exists and get current state
-                get_response = await (
+                get_response = (
                     self.supabase_client.table("archon_projects")
                     .select("*")
                     .eq("id", project_id)

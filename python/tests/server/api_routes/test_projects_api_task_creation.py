@@ -5,10 +5,10 @@ from fastapi.testclient import TestClient
 
 # To test the API routes in isolation, we patch the services they depend on.
 # These patches target the namespaces where the services are imported and used.
-@patch('src.server.api_routes.projects_api.task_service', new_callable=AsyncMock)
+@patch('src.server.api_routes.projects_api.TaskService', new_callable=MagicMock)
 @patch('src.server.api_routes.projects_api.RBACService', new_callable=MagicMock)
 @patch('src.server.api_routes.projects_api.ProfileService', new_callable=MagicMock)
-def test_create_task_with_ai_assignee_success(mock_profile_class, mock_rbac_class, mock_task_service):
+def test_create_task_with_ai_assignee_success(mock_profile_class, mock_rbac_class, mock_task_service_class):
     """
     Unit test for the POST /tasks endpoint.
     Verifies that with correct permissions, the endpoint correctly calls the task_service.
@@ -23,7 +23,8 @@ def test_create_task_with_ai_assignee_success(mock_profile_class, mock_rbac_clas
     mock_profile_instance.get_user_role.return_value = (True, "ai-researcher-1")
 
     # 3. Task service mock: Configure create_task to be an AsyncMock.
-    mock_task_service.create_task = AsyncMock(return_value=(True, {"task": {"id": "new-task-id"}}))
+    mock_task_service_instance = mock_task_service_class.return_value
+    mock_task_service_instance.create_task = AsyncMock(return_value=(True, {"task": {"id": "new-task-id"}}))
 
     # --- Test Execution ---
     from src.server.main import app
@@ -43,17 +44,17 @@ def test_create_task_with_ai_assignee_success(mock_profile_class, mock_rbac_clas
     assert response.json()["task"]["id"] == "new-task-id"
 
     # Verify that the API route logic correctly called the task service
-    mock_task_service.create_task.assert_awaited_once()
-    _, called_kwargs = mock_task_service.create_task.call_args
+    mock_task_service_instance.create_task.assert_awaited_once()
+    _, called_kwargs = mock_task_service_instance.create_task.call_args
     assert called_kwargs["project_id"] == "proj-123"
     assert called_kwargs["title"] == "Test AI Task"
     assert called_kwargs["assignee"] == "ai-researcher-1"
 
 
-@patch('src.server.api_routes.projects_api.task_service', new_callable=MagicMock)
+@patch('src.server.api_routes.projects_api.TaskService', new_callable=MagicMock)
 @patch('src.server.api_routes.projects_api.RBACService', new_callable=MagicMock)
 @patch('src.server.api_routes.projects_api.ProfileService', new_callable=MagicMock)
-def test_create_task_with_ai_assignee_permission_denied(mock_profile_class, mock_rbac_class, mock_task_service):
+def test_create_task_with_ai_assignee_permission_denied(mock_profile_class, mock_rbac_class, mock_task_service_class):
     """
     Unit test for the POST /tasks endpoint.
     Verifies that if the RBAC check fails, the endpoint returns a 403 Forbidden.
@@ -66,6 +67,8 @@ def test_create_task_with_ai_assignee_permission_denied(mock_profile_class, mock
     # 2. Profile service mock
     mock_profile_instance = mock_profile_class.return_value
     mock_profile_instance.get_user_role.return_value = (True, "ai-researcher-1")
+
+    mock_task_service_instance = mock_task_service_class.return_value
 
     # --- Test Execution ---
     from src.server.main import app
@@ -85,13 +88,13 @@ def test_create_task_with_ai_assignee_permission_denied(mock_profile_class, mock
     assert "you cannot assign tasks" in response.json()["detail"]
 
     # Verify the task service was NOT called because the permission check failed first.
-    mock_task_service.create_task.assert_not_called()
+    mock_task_service_instance.create_task.assert_not_called()
 
 
-@patch('src.server.api_routes.projects_api.task_service', new_callable=AsyncMock)
+@patch('src.server.api_routes.projects_api.TaskService', new_callable=MagicMock)
 @patch('src.server.api_routes.projects_api.RBACService', new_callable=MagicMock)
 @patch('src.server.api_routes.projects_api.ProfileService', new_callable=MagicMock)
-def test_create_task_with_knowledge_sources(mock_profile_class, mock_rbac_class, mock_task_service):
+def test_create_task_with_knowledge_sources(mock_profile_class, mock_rbac_class, mock_task_service_class):
     """
     Unit test for the POST /tasks endpoint with knowledge_source_ids.
     Verifies that knowledge_source_ids are passed to the task service.
@@ -100,7 +103,8 @@ def test_create_task_with_knowledge_sources(mock_profile_class, mock_rbac_class,
     mock_rbac_instance = mock_rbac_class.return_value
     mock_rbac_instance.has_permission_to_assign.return_value = True
 
-    mock_task_service.create_task = AsyncMock(return_value=(True, {"task": {"id": "new-task-id"}}))
+    mock_task_service_instance = mock_task_service_class.return_value
+    mock_task_service_instance.create_task = AsyncMock(return_value=(True, {"task": {"id": "new-task-id"}}))
 
     # --- Test Execution ---
     from src.server.main import app
@@ -119,8 +123,8 @@ def test_create_task_with_knowledge_sources(mock_profile_class, mock_rbac_class,
     assert response.json()["task"]["id"] == "new-task-id"
 
     # Verify that the API route logic correctly called the task service with knowledge_source_ids
-    mock_task_service.create_task.assert_awaited_once()
-    _, called_kwargs = mock_task_service.create_task.call_args
+    mock_task_service_instance.create_task.assert_awaited_once()
+    _, called_kwargs = mock_task_service_instance.create_task.call_args
     assert called_kwargs["project_id"] == "proj-123"
     assert called_kwargs["title"] == "Task with Knowledge"
     assert called_kwargs["knowledge_source_ids"] == ["source-1", "source-2"]

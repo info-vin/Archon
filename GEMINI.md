@@ -92,6 +92,18 @@
     *   **MSW 衝突**: 在 E2E 測試中試圖 `setupServer` 導致攔截失敗。**關鍵學習**：在已全域啟動 MSW 的環境下，個別測試應引用全域 `server` 並使用 `server.use()`，而非重啟 Server。
 *   **結論**: 成功交付了具備「搜尋即建檔」能力的業務開發工具，並為前端整合測試建立了新的範本 (`sales-intelligence.spec.tsx`)。
 
+### 2026-01-05 (Part 2): 後端 API 回歸錯誤修復 (Regression Fix)
+*   **症狀**: `make dev-docker` 後，前端 Projects 頁面與 Task Counts 報 500 Internal Server Error。
+*   **根源分析**:
+    1.  **Sync/Async 類型不匹配**: `projects_api.py` 呼叫了 `await`，且 Service 內部也 `await` 了 `supabase.table(...).execute()`。但底層的 `get_supabase_client` 回傳的是**同步**客戶端。導致 `await` 一個非 Coroutine 物件 (`APIResponse`) 而報錯。
+    2.  **導入與實例化混淆**: `projects_api.py` 導入了 `task_service` (實例) 但使用方式導致 `AttributeError`。
+*   **解決方案**:
+    *   **代碼層**: 將 `ProjectService` 與 `TaskService` 中所有對 `execute()` 的 `await` 移除（回歸同步呼叫，保持與 Client 行為一致）。將 `projects_api.py` 改為導入 `TaskService` 類別並在函數內實例化。
+    *   **測試層**: 因為代碼結構改變（全域變數 -> 局部變數），原本對 `projects_api.task_service` 的 `patch` 失效。修正為 `patch('...projects_api.TaskService')` 並正確配置 Mock Class 回傳 Mock Instance。同時將測試中的 `AsyncMock` 降級為 `Mock` 以匹配同步行為。
+*   **關鍵教訓**:
+    *   **不要盲目 await**: 看到 `async def` 不代表每一行都要 `await`。必須確認底層 Library (如 `supabase-py`) 的行為模式。
+    *   **Patch 的黃金法則**: Patch 必須針對「使用該物件的地方」且要區分是 Patch 類別還是實例。
+
 ### 2026-01-04: 用「主動防禦」邏輯根治前端無限 Loading
 *   **核心任務**: 徹底解決 `enduser-ui-fe` (Port 5173) 在全 Docker 環境下的無限 Loading 問題。
 *   **偵錯歷程**: 

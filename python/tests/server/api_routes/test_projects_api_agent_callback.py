@@ -1,25 +1,21 @@
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 from fastapi.testclient import TestClient
 
 # 1. Create mocks BEFORE app import
 mock_task_service = AsyncMock()
+mock_task_service_class = MagicMock(return_value=mock_task_service)
 
-# 2. Define patch target where the service is USED
-task_service_patch = patch('src.server.api_routes.projects_api.task_service', mock_task_service)
+# Patch the TaskService class used in the API module
+task_service_patch = patch('src.server.api_routes.projects_api.TaskService', mock_task_service_class)
 
-# 3. Now import the app
-from src.server.main import app  # noqa: E402
-
-
-# 4. Setup and Teardown for the module to control patch lifecycle
 def setup_module(module):
-    """Start all patches."""
     task_service_patch.start()
 
 def teardown_module(module):
-    """Stop all patches."""
     task_service_patch.stop()
+
+from src.server.main import app  # noqa: E402
 
 # 5. Create a single, shared TestClient
 client = TestClient(app)
