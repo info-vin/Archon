@@ -12,11 +12,11 @@ description: |
 **Feature Goal (功能目標)**: To expand Archon's capabilities beyond code generation into business operations, specifically by integrating real-time market data for recruiting and visualizing internal team performance. (將 Archon 的能力從代碼生成擴展至商業運營，具體而言，是透過整合即時的市場招聘數據以及視覺化內部團隊的績效表現。)
 
 **Deliverable (交付成果)**: 
-1.  **Marketing Intelligence Module (市場情報模組)**: A workflow to fetch job market data (e.g., 104 Job Bank) and generate market-aligned job descriptions. (一個用來獲取就業市場數據（如 104 人力銀行）並生成符合市場需求的職位描述的工作流。)
+1.  **Marketing Intelligence Module (市場情報模組)**: A workflow to fetch job market data (e.g., 104 Job Bank) to identify potential B2B leads and generate sales pitches. (一個用來獲取就業市場數據（如 104 人力銀行）以識別潛在 B2B 客戶並生成銷售話術的工作流。)
 2.  **HR Analytics Dashboard (HR 分析儀表板)**: A visualization page displaying task distribution and team velocity metrics using charts. (一個使用圖表來顯示任務分佈與團隊速度指標的視覺化頁面。)
 
 **Success Definition (成功定義)**: 
-- A user can input a job title, retrieve valid market skills/keywords, and generate a draft JD. (使用者輸入職稱後，能檢索到有效的市場技能關鍵字，並生成職位描述草稿。)
+- A user can input a job title, retrieve valid market skills/keywords, identify a potential lead, and generate a sales pitch. (使用者輸入職稱後，能檢索到有效的市場技能關鍵字，識別潛在客戶，並生成銷售話術。)
 - A manager can view a "Tasks by Status" pie chart and "Member Performance" bar chart populated with real database data. (管理者能看到由真實資料庫數據填充的「任務狀態分佈」圓餅圖與「成員績效」長條圖。)
 
 ## All Needed Context (所有需要的上下文)
@@ -117,11 +117,11 @@ Task 1: BACKEND - Job Board Service (後端 - 求職網服務)
 Task 2: MCP - Expose Tool to Agent (MCP - 暴露工具給 Agent)
   - [x] FILE: `python/src/mcp_server/features/marketing/job_tools.py`
   - [x] ACTION: Create `SearchJobMarketTool` utilizing `JobBoardService`. (建立使用 `JobBoardService` 的 `SearchJobMarketTool`。)
-  - [x] PROMPT: "Use this tool to find current market requirements for a specific job title." (提示詞：「使用此工具查找特定職稱的當前市場需求。」)
+  - [x] PROMPT: "Use this tool to find companies hiring for a specific job title to identify potential B2B leads." (提示詞：「使用此工具查找正在招募特定職稱的公司，以識別潛在的 B2B 客戶。」)
 
 Task 3: FRONTEND - Marketing Workflow UI (前端 - 行銷工作流介面)
   - [x] FILE: `enduser-ui-fe/src/pages/MarketingPage.tsx`
-  - [x] ACTION: Create a simple form: Input "Job Title" -> Button "Analyze Market" -> Display "Key Skills Found" -> Button "Generate JD". (建立簡易表單：輸入「職稱」-> 按鈕「分析市場」-> 顯示「關鍵技能」-> 按鈕「生成 JD」。)
+  - [x] ACTION: Create a simple form: Input "Job Title" -> Button "Analyze Market" -> Display "Key Skills/Companies Found" -> Button "Generate Pitch". (建立簡易表單：輸入「職稱」-> 按鈕「分析市場」-> 顯示「關鍵技能/公司」-> 按鈕「生成話術」。)
   - [x] ROUTING: Add `/marketing` route in `App.tsx`. (在 `App.tsx` 新增 `/marketing` 路由。)
 ```
 
