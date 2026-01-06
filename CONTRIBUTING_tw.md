@@ -64,32 +64,34 @@
 **最終驗證**:
 當所有服務都成功啟動後，您可以在瀏覽器中分別打開 `http://localhost:3737` (管理後台) 和 `http://localhost:5173` (使用者介面)。
 
+> **💡 主動防禦 (Proactive Guard) 註記**:
+> 若在全 Docker (`dev-docker`) 環境下啟動，前端 `api.ts` 會自動偵測 `SUPABASE_URL` 是否為無法解析的內部 DNS。若偵測到連線異常，系統會自動切換至 **Mock 模式** 以避免無限 Loading，這屬於正常預期行為。
+
 ### 2.2 後端依賴與環境管理
 
-- **`uv.lock` 管理**: `python/uv.lock` **必須**被加入到 `.gitignore`。每位開發者應在本地生成，不應提交共享。
+- **`uv.lock` 管理**: `python/uv.lock` **應被提交**至版本控制系統。這是為了確保所有團隊成員以及 CI/CD 環境在安裝依賴時，所使用的套件版本完全一致，避免「我的電腦可以跑，但你的不行」之問題。
 - **依賴組安裝**: `Makefile` 中的 `make test-be` 和 `make lint-be` 會自動使用 `--group` 參數安裝 `test` 和 `dev` 的依賴，無需手動操作。
 
 ### 2.3 全 Docker 環境手動驗證 SOP
 
-**原因**：此流程旨在提供一個最徹底、最乾淨的本地驗證方法，模擬生產環境，適用於偵錯複雜的啟動問題或驗證重大變更。它能完全排除舊容器、資料卷或建置快取的干擾，確保測試的準確性。
+當遇到複雜的啟動問題時，請依序執行以下步驟以確保環境乾淨：
 
-**詳細步驟**：
+1.  **徹底清理 (Clean Slate)**
+    *   **指令**: `make clean`
+    *   **目的**: 移除所有容器、網路和**資料卷** (Volumes)。
+    *   **注意**: 執行時需輸入 `y` 確認。
 
-1.  **徹底清理 (Clean Slate)**：
-    *   **指令**：`make clean`
-    *   **說明**：此指令會徹底移除所有容器、網路和**資料卷**。執行時會出現 `(y/N)` 確認提示，請務必輸入 `y`。這是確保完全乾淨狀態的關鍵。
+2.  **驗證清理狀態**
+    *   **指令**: `docker ps -a`
+    *   **檢查**: 確保列表為空，無殘留容器。
 
-2.  **驗證清理 (Verify Cleanup)**：
-    *   **指令**：`docker ps -a`
-    *   **說明**：執行此指令後，應看不到任何與本專案相關的容器，列表應為空。
+3.  **重新建置映像檔 (Rebuild)**
+    *   **指令**: `docker compose --profile backend --profile frontend --profile enduser --profile agents build`
+    *   **目的**: 確保使用最新的程式碼進行構建。
 
-3.  **重新建置 (Rebuild)**：
-    *   **指令**：`docker compose --profile backend --profile frontend --profile enduser --profile agents build`
-    *   **說明**：此指令會根據最新的程式碼，為所有服務建立全新的 Docker 映像檔。
-
-4.  **前景啟動與觀察 (Foreground & Observe)**：
-    *   **指令**：`docker compose --profile backend --profile frontend --profile enduser --profile agents up`
-    *   **說明**：在前景啟動所有服務 (注意**沒有** `-d` 旗標)。所有服務的日誌將會即時輸出到目前的終端機，讓您可以直接觀察啟動順序和任何潛在的錯誤訊息。
+4.  **前景啟動與觀察 (Foreground Start)**
+    *   **指令**: `docker compose --profile backend --profile frontend --profile enduser --profile agents up`
+    *   **檢查**: 觀察終端機輸出的啟動日誌，確認無報錯且服務就緒。
 
 ---
 
@@ -143,6 +145,16 @@ def test_some_endpoint():
     # ... 您的測試邏輯 ...
 ```
 
+#### 3.2.3 Supabase Mocking 與非同步陷阱 (⚠️ 重要)
+
+在為涉及 Supabase 的 Service 撰寫測試時，必須注意以下陷阱：
+
+*   **同步客戶端特性**: 目前 `get_supabase_client` 回傳的是**同步**客戶端。因此，Service 中不應 `await` 其 `.execute()` 方法。
+*   **Mock 類型匹配**:
+    *   **錯誤**: 在測試中使用 `AsyncMock` 來模擬 `execute()` 方法。這會導致 Service 收到 Coroutine 而非數據，報錯 `AttributeError: 'coroutine' object has no attribute 'data'`。
+    *   **正確**: 應使用普通的 `Mock` 或配置 `execute` 的 `return_value` 為直接的結果。
+*   **Patch 路徑原則**: 應 Patch Service 的 **Class** (例如 `patch('...TaskService')`) 而非全域實例，以確保在 API 函數內部實例化時能正確被 Mock 取代。
+
 ### 3.3 前端 E2E 測試 (`enduser-ui-fe`)
 
 #### 3.3.1 E2E 測試核心架構
@@ -170,12 +182,27 @@ def test_some_endpoint():
 
 ### 3.4 前端測試常見問題 (FAQ)
 
-| 問題 | 原因 | 解決方案 |
+| 問題 | 症狀 | 解決方案 |
 | :--- | :--- | :--- |
-| **`Failed to resolve import`** | `package.json` 中缺少開發依賴。 | 在該專案目錄下執行 `pnpm install --save-dev <package-name>`。 |
-| **找不到純圖示按鈕** | 按鈕缺少無障礙文字描述。 | 為按鈕加上 `aria-label="描述"` 屬性。 |
-| **`required` 表單提交測試** | `userEvent.click` 會被瀏覽器預設行為攔截。 | 使用 `fireEvent.submit(submitButton)` 直接觸發提交事件。 |
-| **`vi.mock` 變數提升錯誤** | `vi.mock` 的工廠函式使用了在頂層宣告的變數。 | 將 `vi.mock` 需要的變數直接定義在工廠函式**內部**。 |
+| **Import Error** | `Failed to resolve import` | `package.json` 中缺少開發依賴。執行 `pnpm install --save-dev <package>`。 |
+| **Aria Label** | 找不到純圖示按鈕 | 為按鈕加上 `aria-label="描述"` 屬性。 |
+| **Event Click** | `required` 表單提交無反應 | 使用 `fireEvent.submit(submitButton)` 直接觸發提交。 |
+| **Hoisting** | `vi.mock` 變數提升錯誤 | 將 `vi.mock` 需要的變數直接定義在工廠函式**內部**。 |
+| **MSW Intercept** | `intercepted a request without a matching request handler` | 檢查測試中的 URL 參數是否與 Handler 定義完全匹配。動態注入請用 `server.use()`。 |
+| **Timeout** | `Test timed out` | 檢查 `await waitFor` 是否在等待一個永遠不會出現的元素，或 API Mock 未正確回傳。 |
+| **Async State** | `act(...) warning` | 確保所有觸發狀態更新的操作都被 `await`，或包在 `act(() => ...)` 中。 |
+
+### 3.5 AI Agent 自癒能力驗證 (Self-Healing Verification)
+
+本節介紹如何手動驗證 Archon 系統的 AI 自癒與智能分析能力。
+
+**演練場景：自動分析語法錯誤**
+
+當 Agent 執行的指令失敗時，系統應自動呼叫 LLM 分析錯誤並提供修復建議。
+
+1.  **製造錯誤**: 在根目錄建立一個包含語法錯誤的 `broken_script.py` (例如漏掉右括號)。
+2.  **觸發任務**: 使用 `curl` 呼叫 `/api/test/trigger-agent-task` (需開啟 `ENABLE_TEST_ENDPOINTS`)。
+3.  **觀察結果**: 訪問 UI 任務詳情頁，確認狀態變為 `failed` 且 `output` 欄位包含 AI 的診斷建議。
 
 ---
 
@@ -226,15 +253,11 @@ def test_some_endpoint():
 
         **本地開發首次設定SOP (從零開始)**:
 
-    
-
         > **⚠️ 注意：此為手動流程**
-
         >
-
-        > 本地首次設定資料庫需要**手動**在 Supabase SQL Editor 中依序執行以下 6 個腳本。專案目前**沒有**提供 `make db-reset` 等快捷指令。
-
-    
+        > **為什麼需要執行這麼多檔案？** 本專案採用「增量遷移 (Incremental Migration)」策略，以確保資料庫架構的每次變更都可追蹤且可回滾。我們不使用單一的大型 SQL 檔案，以免喪失演進歷史。
+        >
+        > 未來將引入 `make db-init` 指令來自動化此步驟。在此之前，請耐心手動執行。
 
         當您需要在本地建立一個全新的、乾淨的資料庫時，請遵循此流程。**此流程會刪除所有資料**。
     1.  登入 Supabase 儀表板並進入 **SQL Editor**。
@@ -321,166 +344,36 @@ def test_some_endpoint():
 - AI 提交的變更，在被批准和執行後，最終會以一個 `commit` 的形式出現在該 `feature/` 分支上。
 - 開發者後續可以像對待任何人類開發者提交的 `commit` 一樣，對其進行 code review、合併或進一步修改。
 
-## 第五章：AI Agent 自癒能力驗證 (Self-Healing Verification)
+## 第五章：Git 歷史追溯指南 (Git Archaeology Guide)
 
-本章節介紹如何手動驗證 Archon 系統的 AI 自癒與智能分析能力。
+> **原則**: 當文件與程式碼出現矛盾，或不確定某個功能的設計初衷時，Git Log 是唯一的真相來源。
 
-### 5.1 演練場景：自動分析語法錯誤
+### 5.1 常用考古指令
 
-當 Agent 執行的指令失敗時，系統應自動呼叫 LLM 分析錯誤並提供修復建議。
-
-**步驟 1：製造錯誤檔案**
-在專案根目錄建立一個包含 Python 語法錯誤的檔案：
-```python
-# broken_script.py
-print("Hello World" # 故意漏掉右括號
-```
-
-**步驟 2：手動觸發 Agent 任務**
-使用以下 `curl` 指令模擬系統派發任務給 Agent。請確保後端已開啟 `ENABLE_TEST_ENDPOINTS=true`。
-```bash
-curl -X POST http://localhost:8181/api/test/trigger-agent-task \
-     -H "Content-Type: application/json" \
-     -d '{
-       "task_id": "00000000-0000-0000-0000-000000000000", # 請替換為真實的 Task UUID
-       "agent_id": "Developer AI",
-       "command": "python3 broken_script.py"
-     }'
-```
-
-**步驟 3：觀察診斷結果**
-1.  **UI 觀察**: 訪問 `http://localhost:5173`，進入對應任務的詳情頁。
-2.  **預期結果**: 任務狀態變為 `failed`，且在 `output` 欄位中會出現 AI 的診斷建議（例如：「偵測到 SyntaxError，建議修正 broken_script.py 第 2 行...」）。
+| 情境 | 指令範例 | 說明 |
+| :--- | :--- | :--- |
+| **查閱檔案變更歷史** | `git log -p -- Makefile` | 顯示該檔案每次提交的具體差異 (Diff)。 |
+| **搜尋代碼何時被加入** | `git log -S "await task_service"` | 找出包含特定字串的新增或刪除的提交。 |
+| **查看特定提交的內容** | `git show <commit_hash>` | 檢視某個 Commit 的完整變更。 |
+| **比較兩個分支的差異** | `git diff main...feature/new-ui` | 檢視 Feature 分支相對於 Main 分支的變更。 |
 
 ---
 
-## 附錄 A：重要架構決策與歷史紀錄
+## 附錄 A：系統分析 (System Analysis)
 
-本附錄記載了專案開發過程中的關鍵決策背景與歷史教訓，以時間順序排列。
+> **注意**: 關於「環境比較 (`make dev` vs `docker`)」與「歷史架構決策」的內容，已歸檔至 `PRPs/Phase_3.8_System_Grafting_and_Deployment.md`，以保持本文件聚焦於當前操作。
 
-### 2025-10-07: 首次部署的歷史調查
+### 系統架構演進：從基礎設施 (Phase 3.8) 到商業智能 (Phase 4.2)
 
-- **情境**: 為了釐清首次部署時，為何 `enduser-ui-fe` 成功，而 `archon-ui-main` 失敗。
-- **調查結論**: 兩個獨立事件同時發生：
-    1.  **成功的 `enduser-ui-fe`**: 當時的部署目標只有 `enduser-ui-fe`。雖然遇到了 `pnpm-lock.yaml` 缺失的問題（並透過 `--no-frozen-lockfile` 臨時繞過），但最終成功部署並設定了正確的 API URL。
-    2.  **失敗的 `archon-ui-main`**: `archon-ui-main` 的程式碼當時寫死了一個已被後端重構移除的 API 端點 (`/api/projects/health`)，導致其本地和線上都無法連線，這與部署流程本身無關。
-- **確立原則**: 此調查確立了在除錯時，必須區分「部署流程問題」與「應用程式自身 Bug」的重要性。
+本表格展示了專案從基礎建設期到商業擴展期的關鍵架構變化，幫助開發者理解新功能的定位。
 
-### 2025-09-30: Render 部署流程確立
-
-- **情境**: 在部署演練中，`git push render` 指令失敗，回報 `repository not found`。
-- **決策理由**: 經查證，Render 提供的 URL 是一個「Deploy Hook」，只能被 `curl` 等工具觸發，而不能作為 Git remote。因此，專案的部署流程**不應**使用 `git push render`。
-- **確立原則**: 確立了正確的部署流程：將程式碼 `push` 到 Render 所監控的 `origin` (GitHub) 分支，依靠 Render 的 GitHub App 自動觸發部署。
-
-### 2025-09-29: `Makefile` 意圖的最終仲裁
-
-- **情境**: `make test` 指令緩慢且包含所有前後端測試，與 `ci.yml` 中僅測試後端的行為產生矛盾。
-- **決策理由**: 直接修改 `Makefile` 是危險的。透過 `git log -p -- Makefile` 深入分析提交歷史，發現開發者曾短暫嘗試過快慢測試分離，但很快就手動還原了該修改。這證明了 `make test` 的「緩慢但完整」是**刻意為之**的選擇。
-- **確立原則**: 當文件、程式碼、CI/CD 腳本之間出現矛盾時，`git log -p` 是揭示真實意圖的最終仲裁者。
-
-### 2025-09-27: 測試背景任務的 API
-
-- **情境**: 為 `/documents/upload` 這個啟動背景任務的端點編寫單元測試時，不知如何斷言。
-- **決策理由**: 單元測試應專注於被測單元的「職責」，而非其「依賴的實作細節」。此端點的職責是「接收請求並正確啟動任務」，而不是「完成任務」。
-- **確立原則**: 確立了測試此類端點的最佳實踐：模擬 (Mock) `asyncio.create_task` 本身，並驗證它是否被以正確的參數呼叫。測試中出現的 `RuntimeWarning: coroutine ... was never awaited` 是此策略下預期內且無害的副作用。
-
-### 2025-09-23: 「自動修復」的陷阱
-
-- **情境**: 執行 `make lint-be` 驗證程式碼，卻導致大量不相關的檔案被自動修改，汙染了工作區。
-- **決策理由**: 閱讀 `Makefile` 後發現，`lint-be` 指令包含了 `--fix` 參數，使其從一個「檢查工具」變成了「修改工具」。
-- **確立原則**: 確立了處理此類工具的安全工作流程：「先用唯讀模式 (`ruff check`) 分析 -> 將所有修改一次性用 `write_file` 寫入 -> 最後再用原指令 (`make lint-be`) 進行純粹的驗證」。
-
-### 2025-09-22: `Makefile` 與 `pyproject.toml` 的矛盾
-
-- **情境**: `make test-be` 失敗，因為 `Makefile` 中的 `uv sync --extra` 指令與 `pyproject.toml` 的 `[dependency-groups]` 結構不符。
-- **決策理由**: 透過 `git log -p -- Makefile` 追溯歷史，發現專案曾刻意選擇 `[dependency-groups]` 結構，從而確認了 `Makefile` 需要被修正以使用 `--group` 參數，而不是反過來修改 `pyproject.toml`。
-- **確立原則**: 再次印證了「追溯 `git log` 以理解歷史意圖」的重要性。
-
-### 2025-12-27: 合併後完整性驗證的重要性
-
-- **情境**: 將一個修復 E2E 測試的 `fix/...` 分支合併回 `feature/...` 分支後，儘管程式碼邏輯正確，但 CI/CD 流程中的 `lint` 和 `test` 檢查依然失敗。
-- **決策理由**: 調查發現，合併後產生了新的、非程式碼邏輯的錯誤，包括 `import` 語句遺漏和 Lint 格式問題。這證明了即使是看似安全的合併，也可能引入預期外的副作用。
-- **確立原則**: 在任何 `git merge` 或 `git cherry-pick` 操作完成後，**必須**立即在本地執行完整的、端到端的驗證流程（至少包含 `make lint` 和 `make test`）。這確保了程式碼的「邏輯正確性」和「工程完整性」都得到保障，避免將破碎的提交推送到遠端。
-
-### 2025-09-27: 後端端到端 (E2E) Agent 工作流測試模式
-
-- **情境**: 需要為一個完整的、非同步的「AI as a Teammate」工作流（從 API 觸發到 Agent 回呼）建立一個可靠的後端整合測試。
-- **決策理由**: 此類測試的挑戰在於，它跨越多個非同步服務和 API 回呼，直接測試的複雜度和不穩定性都很高。因此，需要一個清晰、可重複的模式來模擬工作流的各個階段。
-- **確立原則**: 確立了後端 E2E Agent 工作流的測試模式，其核心要素包括：
-    1.  **遵循服務模擬黃金模式**: 使用 `setup_module` 在 `app` 導入前 `patch` 核心的 `AgentService`。
-    2.  **分階段驗證**: 測試必須清晰地分為三個階段：
-        *   **任務指派**: 呼叫 `POST /api/tasks`，並斷言 `agent_service.run_agent_task` 被 `await`。
-        *   **模擬 Agent 回呼**: Mock `run_agent_task` 的實作，讓它使用 `TestClient` 反向呼叫 `archon-server` 的狀態更新和結果回傳 API（`/api/tasks/{id}/agent-status` 和 `/api/tasks/{id}/agent-output`）。
-        *   **結果驗證**: 斷言 `task_service` 的相應方法被正確呼叫，以確認回呼已成功觸發了核心業務邏輯。
-
-### 2025-09-21: 資料庫腳本的冪等性
-
-- **情境**: 執行資料庫遷移腳本 `000_unified_schema.sql` 時，因 `policy ... already exists` 錯誤而中斷。
-- **決策理由**: 遷移腳本的穩定性與可重複執行性，比微不足道的效能更重要。
-- **確立原則**: 所有資料庫遷移腳本都必須具備「冪等性」。對於不支援 `CREATE ... IF NOT EXISTS` 的物件（如 `POLICY`），在 `CREATE` 之前必須先使用 `DROP ... IF EXISTS`。
-
-### 2025-09-19: `Makefile` 作為單一事實來源
-
-- **情境**: 專案中的 `README.md` 記載了與 `Makefile` 不一致的啟動指令，導致開發者遵循文件操作時發生錯誤。
-- **決策理由**: 可執行的腳本是指令的最終真理，文件應作為其說明而存在。
-- **確立原則**: 確立了 `Makefile` 作為所有專案指令的「單一事實來源」。所有 `.md` 文件在指導操作時，都應引用 `make <command>`，而不是複製貼上其底層指令。
-
----
-
-## 附錄 B：系統分析與比較 (System Analysis & Comparison)
-
-### `make dev` vs `make dev-docker` 比較分析
-
-這份表格是基於對 `Makefile` 內容的直接分析得出的「單一事實」。
-
-| 特性 | `make dev` (混合開發) | `make dev-docker` (全 Docker 開發) | 差異原因分析 |
+| 構面 | Phase 3.8 (基礎建設期) | Phase 4.2 (商業擴展期) | 差異與演進 |
 | :--- | :--- | :--- | :--- |
-| **啟動模式** | 混合模式 | 全 Docker 模式 | `dev` 模式旨在為前端開發提供最佳體驗，因此只在 Docker 中運行後端，而在本地直接運行前端以利用熱重載(Hot Reload)功能。`dev-docker` 則模擬一個更接近生產的環境，所有服務都在 Docker 容器中運行。 |
-| **Docker Profiles** | `--profile backend --profile agents` | `--profile backend --profile frontend --profile enduser --profile agents` | `dev` 模式只啟動後端相關的 `backend` 和 `agents` profiles。`dev-docker` 額外啟動了 `frontend` (archon-ui-main) 和 `enduser` (enduser-ui-fe) 兩個前端 profile，將它們也容器化。 |
-| **前端服務** | 在本地主機上通過 `pnpm run dev` 啟動 `archon-ui-main`。 | `archon-ui-main` 和 `enduser-ui-fe` 都在 Docker 容器內運行。 | `dev` 模式讓前端開發者可以直接在本地編輯器中修改程式碼，並立即在瀏覽器中看到結果，無需重新建置 Docker 映像。`dev-docker` 則將前端作為獨立的容器化服務來管理。 |
-| **`enduser-ui-fe`** | **不啟動** | 在 Docker 容器內啟動 | `dev` 模式的設計目標是專注於 `archon-ui-main` (管理後台) 的開發，因此沒有包含 `enduser-ui-fe`。而 `dev-docker` 則會啟動包括 `enduser-ui-fe` 在內的所有服務。 |
-| **主要用途** | 專注於**管理後台 (`archon-ui-main`)** 的前端開發，同時需要後端 API 支持。 | 進行**全系統整合測試**，或當開發者不需要頻繁修改前端程式碼，只想啟動一個完整的、隔離的本地環境時使用。 | 兩種模式為不同的開發場景提供了優化。`dev` 專注於效率，`dev-docker` 專注於環境一致性。 |
+| **核心目標** | 系統嫁接、部署與穩定性 | 銷售情資、市場洞察、自動化 | 從「能跑起來」轉向「產生價值」 |
+| **資料庫實體** | `tasks`, `projects` | `leads`, `market_insights` | 新增了 CRM 相關的資料表 (Schema Migration 006) |
+| **外部整合** | 無 (僅內部 Mock) | **104 Job Bank (模擬)** | 首次打通外部數據源，具備爬蟲與分析能力 |
+| **AI 角色** | 輔助編碼 (Developer) | **業務助理 (Sales Rep)** | Agent 能力從 RD 領域跨足到業務領域 |
+| **前端功能** | 基礎 CRUD (新增/修改任務) | **儀表板 (Dashboard)** | 新增了圖表與數據可視化介面 (`MarketingPage`) |
+| **文件重點** | 環境設定、部署 SOP | 業務邏輯、內容資產 (Case Study) | 文件開始包含具體的商業劇本 (`PRPs/Phase_4.2.1`) |
 
-### SQL 資料庫結構 vs. 工作時序圖 差異分析
 
-此分析基於對 `migration/000_unified_schema.sql`、`CONTRIBUTING_tw.md` 和 `TODO.md` 的交叉比對。
-
-**1. 資料庫實體盤點**
-
-*   **系統中定義的表格 (共 15 個)**:
-    *   **核心任務管理**: `archon_projects`, `archon_tasks`
-    *   **AI 協作與提案**: `proposed_changes`
-    *   **知識庫 (RAG)**: `archon_sources`, `archon_crawled_pages`, `archon_code_examples`
-    *   **系統設定**: `archon_settings`, `archon_prompts`
-    *   **使用者與內容**: `profiles`, `blog_posts`
-    *   **版本與紀錄**: `archon_project_sources`, `archon_document_versions`, `gemini_logs`
-    *   **其他業務**: `customers`, `vendors`
-*   **`TODO.md` 時序圖中隱含的實體**:
-    *   `tasks` (在步驟 3 和 10 中被更新)
-    *   `Storage` (在步驟 8 中被寫入)
-
-**2. 差異比較表**
-
-| 項目 | `000_unified_schema.sql` 中定義的表格 | `TODO.md` 時序圖中隱含的實體 | 差異分析 |
-| :--- | :--- | :--- | :--- |
-| **核心任務管理** | `archon_projects`, `archon_tasks`, `proposed_changes` | `tasks` | **部分一致**。時序圖的核心是更新任務 (`tasks`)。`proposed_changes` 是為 AI 開發者流程新增的提案機制，屬於較深層的技術實作，未在高級別業務圖中展示。 |
-| **知識庫** | `archon_sources`, `archon_crawled_pages`, `archon_code_examples` | *未提及* | **存在差異**。時序圖聚焦於「任務執行與檔案上傳」，並未描繪 Agent 執行任務時與知識庫（RAG）的互動細節。因此，與知識庫相關的表格沒有在圖中出現是合理的，這代表時序圖的抽象層級較高。 |
-| **系統設定** | `archon_settings`, `archon_prompts` | *未提及* | **存在差異**。時序圖並未包含系統讀取設定或 Prompt 的步驟，因此這些表格沒有出現。 |
-| **使用者與內容** | `profiles`, `blog_posts` | *未提及* | **存在差異**。`profiles` 和 `blog_posts` 主要由 `enduser-ui-fe` 使用，而時序圖主要描繪的是 `archon-ui-main` 的核心任務流程，因此未被提及。 |
-| **版本與紀錄** | `archon_document_versions`, `gemini_logs`, `archon_project_sources` | *未提及* | **存在差異**。這些屬於系統內部紀錄與版本控制的表格，在高級別的用戶工作流程圖中通常會被省略。 |
-| **其他業務** | `customers`, `vendors` | *未提及* | **存在差異**。這些是後來在 `feature` 分支中添加的實驗性表格，與當前的核心工作時序圖無關。 |
-| **檔案儲存** | *不適用 (由 Storage 管理)* | `Storage` | **一致**。時序圖明確區分了 `DB` 和 `Storage`。步驟 8 `將檔案上傳至 Storage` 描述的是檔案儲存，而非資料庫表格操作，這與 SQL 結構中沒有專門儲存檔案實體的設計是一致的。 |
-
-**3. 結論**
-
-資料庫的實際結構遠比時序圖複雜。這是一個**正常且健康的現象**。時序圖的目的是為了**溝通核心業務流程**，因此它會省略大量背景、設定和非核心功能的細節。主要的「差異」在於：
-
-*   **時序圖的抽象層級較高**：它只展示了與「建立任務 -> Agent 執行 -> 交付結果」這一條主線最直接相關的資料庫互動（即更新 `archon_tasks` 表）。
-*   **資料庫結構更完整**：它包含了支持所有系統功能所需的全部表格，包括時序圖中未展示的 RAG、系統設定、使用者資料等。
-
----
-
-## 附錄 C: 系統設計與歷史日誌 (System Design & Historical Logs)
-
-> **注意**: 本附錄內容已移至更完整的執行日誌中，請參閱：
-> [Phase 3.8 Execution Log](PRPs/archive/Phase_3.8_Execution_Log.md)

@@ -270,4 +270,83 @@ database-mcp --validate-schema --test-queries --check-performance
 All tasks in this PRP are derived from the `TODO.md` file, which documents the successful completion of Phase 3.8.
 This document serves as a more formal and structured representation of that completed work.
 
+---
+
+# Appendix: Historical Lessons & Environment Analysis (歷史教訓與環境分析)
+
+> **Note**: This section was migrated from `CONTRIBUTING_tw.md` to preserve the historical context of system decisions made during the grafting phase.
+
+## 1. 重要架構決策與歷史紀錄 (Key Architectural Decisions & History)
+
+### 2025-10-07: 首次部署的歷史調查
+- **情境**: 為了釐清首次部署時，為何 `enduser-ui-fe` 成功，而 `archon-ui-main` 失敗。
+- **調查結論**: 兩個獨立事件同時發生：
+    1.  **成功的 `enduser-ui-fe`**: 當時的部署目標只有 `enduser-ui-fe`。雖然遇到了 `pnpm-lock.yaml` 缺失的問題（並透過 `--no-frozen-lockfile` 臨時繞過），但最終成功部署並設定了正確的 API URL。
+    2.  **失敗的 `archon-ui-main`**: `archon-ui-main` 的程式碼當時寫死了一個已被後端重構移除的 API 端點 (`/api/projects/health`)，導致其本地和線上都無法連線，這與部署流程本身無關。
+- **確立原則**: 此調查確立了在除錯時，必須區分「部署流程問題」與「應用程式自身 Bug」的重要性。
+
+### 2025-09-30: Render 部署流程確立
+- **情境**: 在部署演練中，`git push render` 指令失敗，回報 `repository not found`。
+- **決策理由**: 經查證，Render 提供的 URL 是一個「Deploy Hook」，只能被 `curl` 等工具觸發，而不能作為 Git remote。因此，專案的部署流程**不應**使用 `git push render`。
+- **確立原則**: 確立了正確的部署流程：將程式碼 `push` 到 Render 所監控的 `origin` (GitHub) 分支，依靠 Render 的 GitHub App 自動觸發部署。
+
+### 2025-09-29: `Makefile` 意圖的最終仲裁
+- **情境**: `make test` 指令緩慢且包含所有前後端測試，與 `ci.yml` 中僅測試後端的行為產生矛盾。
+- **決策理由**: 直接修改 `Makefile` 是危險的。透過 `git log -p -- Makefile` 深入分析提交歷史，發現開發者曾短暫嘗試過快慢測試分離，但很快就手動還原了該修改。這證明了 `make test` 的「緩慢但完整」是**刻意為之**的選擇。
+- **確立原則**: 當文件、程式碼、CI/CD 腳本之間出現矛盾時，`git log -p` 是揭示真實意圖的最終仲裁者。
+
+### 2025-09-27: 測試背景任務的 API
+- **情境**: 為 `/documents/upload` 這個啟動背景任務的端點編寫單元測試時，不知如何斷言。
+- **決策理由**: 單元測試應專注於被測單元的「職責」，而非其「依賴的實作細節」。此端點的職責是「接收請求並正確啟動任務」，而不是「完成任務」。
+- **確立原則**: 確立了測試此類端點的最佳實踐：模擬 (Mock) `asyncio.create_task` 本身，並驗證它是否被以正確的參數呼叫。測試中出現的 `RuntimeWarning: coroutine ... was never awaited` 是此策略下預期內且無害的副作用。
+
+### 2025-09-23: 「自動修復」的陷阱
+- **情境**: 執行 `make lint-be` 驗證程式碼，卻導致大量不相關的檔案被自動修改，汙染了工作區。
+- **決策理由**: 閱讀 `Makefile` 後發現，`lint-be` 指令包含了 `--fix` 參數，使其從一個「檢查工具」變成了「修改工具」。
+- **確立原則**: 確立了處理此類工具的安全工作流程：「先用唯讀模式 (`ruff check`) 分析 -> 將所有修改一次性用 `write_file` 寫入 -> 最後再用原指令 (`make lint-be`) 進行純粹的驗證」。
+
+### 2025-09-22: `Makefile` 與 `pyproject.toml` 的矛盾
+- **情境**: `make test-be` 失敗，因為 `Makefile` 中的 `uv sync --extra` 指令與 `pyproject.toml` 的 `[dependency-groups]` 結構不符。
+- **決策理由**: 透過 `git log -p -- Makefile` 追溯歷史，發現專案曾刻意選擇 `[dependency-groups]` 結構，從而確認了 `Makefile` 需要被修正以使用 `--group` 參數，而不是反過來修改 `pyproject.toml`。
+- **確立原則**: 再次印證了「追溯 `git log` 以理解歷史意圖」的重要性。
+
+### 2025-12-27: 合併後完整性驗證的重要性
+- **情境**: 將一個修復 E2E 測試的 `fix/...` 分支合併回 `feature/...` 分支後，儘管程式碼邏輯正確，但 CI/CD 流程中的 `lint` 和 `test` 檢查依然失敗。
+- **決策理由**: 調查發現，合併後產生了新的、非程式碼邏輯的錯誤，包括 `import` 語句遺漏和 Lint 格式問題。這證明了即使是看似安全的合併，也可能引入預期外的副作用。
+- **確立原則**: 在任何 `git merge` 或 `git cherry-pick` 操作完成後，**必須**立即在本地執行完整的、端到端的驗證流程（至少包含 `make lint` 和 `make test`）。這確保了程式碼的「邏輯正確性」和「工程完整性」都得到保障，避免將破碎的提交推送到遠端。
+
+### 2025-09-27: 後端端到端 (E2E) Agent 工作流測試模式
+- **情境**: 需要為一個完整的、非同步的「AI as a Teammate」工作流（從 API 觸發到 Agent 回呼）建立一個可靠的後端整合測試。
+- **決策理由**: 此類測試的挑戰在於，它跨越多個非同步服務和 API 回呼，直接測試的複雜度和不穩定性都很高。因此，需要一個清晰、可重複的模式來模擬工作流的各個階段。
+- **確立原則**: 確立了後端 E2E Agent 工作流的測試模式，其核心要素包括：
+    1.  **遵循服務模擬黃金模式**: 使用 `setup_module` 在 `app` 導入前 `patch` 核心的 `AgentService`。
+    2.  **分階段驗證**: 測試必須清晰地分為三個階段：
+        *   **任務指派**: 呼叫 `POST /api/tasks`，並斷言 `agent_service.run_agent_task` 被 `await`。
+        *   **模擬 Agent 回呼**: Mock `run_agent_task` 的實作，讓它使用 `TestClient` 反向呼叫 `archon-server` 的狀態更新和結果回傳 API（`/api/tasks/{id}/agent-status` 和 `/api/tasks/{id}/agent-output`）。
+        *   **結果驗證**: 斷言 `task_service` 的相應方法被正確呼叫，以確認回呼已成功觸發了核心業務邏輯。
+
+### 2025-09-21: 資料庫腳本的冪等性
+- **情境**: 執行資料庫遷移腳本 `000_unified_schema.sql` 時，因 `policy ... already exists` 錯誤而中斷。
+- **決策理由**: 遷移腳本的穩定性與可重複執行性，比微不足道的效能更重要。
+- **確立原則**: 所有資料庫遷移腳本都必須具備「冪等性」。對於不支援 `CREATE ... IF NOT EXISTS` 的物件（如 `POLICY`），在 `CREATE` 之前必須先使用 `DROP ... IF EXISTS`。
+
+### 2025-09-19: `Makefile` 作為單一事實來源
+- **情境**: 專案中的 `README.md` 記載了與 `Makefile` 不一致的啟動指令，導致開發者遵循文件操作時發生錯誤。
+- **決策理由**: 可執行的腳本是指令的最終真理，文件應作為其說明而存在。
+- **確立原則**: 確立了 `Makefile` 作為所有專案指令的「單一事實來源」。所有 `.md` 文件在指導操作時，都應引用 `make <command>`，而不是複製貼上其底層指令。
+
+## 2. 系統比較分析 (System Comparison Analysis)
+
+### `make dev` vs `make dev-docker` 比較分析
+
+這份表格是基於對 `Makefile` 內容的直接分析得出的「單一事實」。
+
+| 特性 | `make dev` (混合開發) | `make dev-docker` (全 Docker 開發) | 差異原因分析 |
+| :--- | :--- | :--- | :--- |
+| **啟動模式** | 混合模式 | 全 Docker 模式 | `dev` 模式旨在為前端開發提供最佳體驗，因此只在 Docker 中運行後端，而在本地直接運行前端以利用熱重載(Hot Reload)功能。`dev-docker` 則模擬一個更接近生產的環境，所有服務都在 Docker 容器中運行。 |
+| **Docker Profiles** | `--profile backend --profile agents` | `--profile backend --profile frontend --profile enduser --profile agents` | `dev` 模式只啟動後端相關的 `backend` 和 `agents` profiles。`dev-docker` 額外啟動了 `frontend` (archon-ui-main) 和 `enduser` (enduser-ui-fe) 兩個前端 profile，將它們也容器化。 |
+| **前端服務** | 在本地主機上通過 `pnpm run dev` 啟動 `archon-ui-main`。 | `archon-ui-main` 和 `enduser-ui-fe` 都在 Docker 容器內運行。 | `dev` 模式讓前端開發者可以直接在本地編輯器中修改程式碼，並立即在瀏覽器中看到結果，無需重新建置 Docker 映像。`dev-docker` 則將前端作為獨立的容器化服務來管理。 |
+| **`enduser-ui-fe`** | **不啟動** | 在 Docker 容器內啟動 | `dev` 模式的設計目標是專注於 `archon-ui-main` (管理後台) 的開發，因此沒有包含 `enduser-ui-fe`。而 `dev-docker` 則會啟動包括 `enduser-ui-fe` 在內的所有服務。 |
+| **主要用途** | 專注於**管理後台 (`archon-ui-main`)** 的前端開發，同時需要後端 API 支持。 | 進行**全系統整合測試**，或當開發者不需要頻繁修改前端程式碼，只想啟動一個完整的、隔離的本地環境時使用。 | 兩種模式為不同的開發場景提供了優化。`dev` 專注於效率，`dev-docker` 專注於環境一致性。 |
+
 <!-- EOF -->
