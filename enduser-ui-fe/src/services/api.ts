@@ -274,12 +274,21 @@ const supabaseApi = {
     if (error) throw new Error(error.message);
   },
   async getCurrentUser(): Promise<Employee | null> {
-    const { data: { session }, error: sessionError } = await supabase!.auth.getSession();
-    if (sessionError) throw new Error(sessionError.message);
-    if (!session?.user) return null;
-    
+    if (!supabase) return null;
+
     try {
-      const { data: profile, error } = await supabase!.from('profiles').select('*').eq('id', session.user.id).single();
+      // Use Promise.race to enforce a strict 2s timeout on Supabase Auth session check.
+      // This prevents the entire app from hanging in Loading state if network/CORS blocks Supabase.
+      const sessionResult: any = await Promise.race([
+        supabase.auth.getSession(),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Auth timeout')), 2000))
+      ]);
+
+      const { data: { session }, error: sessionError } = sessionResult;
+      if (sessionError) throw new Error(sessionError.message);
+      if (!session?.user) return null;
+    
+      const { data: profile, error } = await supabase.from('profiles').select('*').eq('id', session.user.id).single();
       
       if (error || !profile) {
         console.warn('Profile not found in public.profiles, using auth metadata fallback:', error?.message);
@@ -298,7 +307,7 @@ const supabaseApi = {
       }
       return profile as Employee;
     } catch (e) {
-      console.error("Critical error in getCurrentUser:", e);
+      console.warn("Auth check failed or timed out, proceeding as unauthenticated:", e);
       return null;
     }
   },
@@ -308,7 +317,9 @@ const supabaseApi = {
         const errorData = await response.json();
         throw new Error(errorData.detail || 'Failed to fetch tasks.');
     }
-    return response.json();
+    const data = await response.json();
+    // Support both raw array and wrapped { tasks: [] } format from paginated backend
+    return Array.isArray(data) ? data : (data.tasks || []);
   },
   async getProjects(): Promise<Project[]> {
     const response = await fetch('/api/projects?include_computed_status=true');
@@ -317,7 +328,9 @@ const supabaseApi = {
         throw new Error(errorData.detail || 'Failed to fetch projects.');
     }
     const data = await response.json();
-    return data.projects as Project[];
+    // Support both raw array and wrapped { projects: [] } format
+    if (Array.isArray(data)) return data;
+    return (data.projects || []);
   },
   async createProject(projectData: NewProjectData): Promise<{ project: Project }> {
     const response = await fetch('/api/projects', {
@@ -576,32 +589,6 @@ const createSmartApi = () => {
                 }
                 console.warn(`[SmartAPI] Method ${key} called in Mock Mode but not implemented.`);
                 throw new Error(`Method ${key} not supported in Mock Mode.`);
-            }
-
-            // 2. Initial Connection Check (Fast-Fail)
-            // Perform this only once to avoid overhead, but do it before the first real call.
-            // We check the Backend API health instead of Supabase directly to avoid CORS issues and validate the API proxy.
-            if (!connectionChecked) {
-                connectionChecked = true;
-                try {
-                    const controller = new AbortController();
-                    const timeoutId = setTimeout(() => controller.abort(), 2000); // 2s timeout
-
-                    // Check backend health
-                    const healthUrl = '/api/health'; 
-                    await fetch(healthUrl, { method: 'GET', signal: controller.signal }).then(res => {
-                        if (!res.ok) throw new Error(`Backend returned ${res.status}`);
-                    });
-                    
-                    clearTimeout(timeoutId);
-                } catch (e: any) {
-                    console.warn(`[SmartAPI] Initial connection check to Backend API failed: ${e.message}. Switching to Mock Mode.`);
-                    isFallbackMode = true;
-                    // Retry current call in mock mode
-                    if (typeof mockApi[key] === 'function') {
-                        return mockApi[key](...args);
-                    }
-                }
             }
 
             // 3. Try Real API
