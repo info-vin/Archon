@@ -580,26 +580,22 @@ const createSmartApi = () => {
 
             // 2. Initial Connection Check (Fast-Fail)
             // Perform this only once to avoid overhead, but do it before the first real call.
-            if (!connectionChecked && supabaseUrl) {
+            // We check the Backend API health instead of Supabase directly to avoid CORS issues and validate the API proxy.
+            if (!connectionChecked) {
                 connectionChecked = true;
                 try {
-                    // Try to fetch the root URL (Kong) with a short timeout (2s)
-                    // If supabaseUrl is internal (e.g. http://supabase_kong:8000), this will fail fast in browser.
                     const controller = new AbortController();
                     const timeoutId = setTimeout(() => controller.abort(), 2000); // 2s timeout
 
-                    // We just fetch the URL. It might return 404 or 200, but as long as it connects, we are good.
-                    // If it's a network error (dns, refused), fetch throws.
-                    await fetch(supabaseUrl, { method: 'HEAD', signal: controller.signal }).catch(e => {
-                        // If HEAD fails (e.g. CORS), try GET. Or just ignore specific http errors.
-                        // We strictly care about Network/Connection errors.
-                        if (e.name === 'AbortError' || e.message.includes('Failed to fetch') || e.message.includes('Network request failed')) {
-                            throw e;
-                        }
+                    // Check backend health
+                    const healthUrl = '/api/health'; 
+                    await fetch(healthUrl, { method: 'GET', signal: controller.signal }).then(res => {
+                        if (!res.ok) throw new Error(`Backend returned ${res.status}`);
                     });
+                    
                     clearTimeout(timeoutId);
                 } catch (e: any) {
-                    console.warn(`[SmartAPI] Initial connection check to ${supabaseUrl} failed: ${e.message}. Switching to Mock Mode.`);
+                    console.warn(`[SmartAPI] Initial connection check to Backend API failed: ${e.message}. Switching to Mock Mode.`);
                     isFallbackMode = true;
                     // Retry current call in mock mode
                     if (typeof mockApi[key] === 'function') {

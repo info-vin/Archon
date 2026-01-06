@@ -7,7 +7,7 @@ SHELL := /bin/bash
 # Docker compose command - prefer newer 'docker compose' plugin over standalone 'docker-compose'
 COMPOSE ?= $(shell docker compose version >/dev/null 2>&1 && echo "docker compose" || echo "docker-compose")
 
-.PHONY: help dev dev-docker stop test test-fe test-be lint lint-fe lint-be clean install check install-ui
+.PHONY: help dev dev-docker stop test test-fe test-be lint lint-fe lint-be clean install check install-ui db-init
 
 help:
 	@echo "Archon Development Commands"
@@ -15,6 +15,7 @@ help:
 	@echo "  make dev        - Backend in Docker, frontend local (recommended)"
 	@echo "  make dev-docker - Everything in Docker"
 	@echo "  make stop       - Stop all services"
+	@echo "  make db-init    - Initialize database (idempotent)"
 	@echo "  make test       - Run all tests"
 	@echo "  make test-fe    - Run frontend tests only"
 	@echo "  make test-fe-project project=<project> - Run tests for a specific frontend project"
@@ -38,6 +39,13 @@ install:
 install-ui:
 	@echo "Installing missing monorepo UI dependencies (archon-ui)..."
 	@$(PNPM) install --filter archon-ui
+
+# Database initialization (Idempotent)
+db-init:
+	@echo "Initializing database..."
+	@cd python && $(UV) venv --python 3.12 .venv
+	@cd python && $(UV) sync --group dev
+	@cd python && $(UV) run python ../scripts/init_db.py
 
 # NOTE: The following check target uses syntax that is not compatible with Windows cmd/PowerShell.
 # It will cause an error on Windows systems.

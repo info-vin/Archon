@@ -107,6 +107,26 @@ description: "解決 `enduser-ui-fe` 功能落差、建立自動化資料庫初�
     - 確保語意化 HTML (避免 `div` soup)。
 - **驗證 (VALIDATE)**: 視覺檢查。控制台無 "unique key prop" 或 "invalid DOM nesting" 警告。
 
+### Phase 5: 架構精煉 (Architecture Refinement)
+
+> **目標**: 逐步剝離前端對 Supabase Client 的直接依賴，轉向「後端中心化」架構，以根除 Mock/Real 混合模式帶來的複雜性與 CORS 問題。
+
+### 步驟 5.1: 清理 `supabaseApi` 實作 (Clean up supabaseApi Implementation)
+
+- **目標 (GOAL)**: 確保所有已存在後端 API 的功能 (Blog, Tasks, Projects)，前端都只呼叫 `fetch('/api/...')`，不再混用 `supabase.from(...)`。
+- **行動 (ACTION)**:
+    - 審計 `enduser-ui-fe/src/services/api.ts` 中的 `supabaseApi` 物件。
+    - 將剩餘的直接 DB 操作 (如 `updateEmployee` 若尚未 API 化) 標記為待辦或遷移。
+    - 移除不再需要的 `supabase` export，封裝在 `api.ts` 內部僅供 Auth 使用。
+
+### 步驟 5.2: 移除 Mock Mode 殘渣 (Remove Legacy Mock Mode)
+
+- **目標 (GOAL)**: 既然 Mock Data 已刪除，`mockApi` 應被徹底移除，讓系統行為更單純。
+- **行動 (ACTION)**:
+    - 刪除 `api.ts` 中的 `mockApi` 物件及其定義。
+    - 刪除 `SmartAPI` wrapper 中的 Fallback 邏輯。
+    - 當 `Initial Connection Check` (ping `/api/health`) 失敗時，直接拋出明確的錯誤，讓 UI 顯示「系統維護中」或「無法連線」畫面，而不是默默切換到壞掉的 Mock。
+
 ---
 
 ## 附錄 A: 架構演進分析 (Architecture Evolution Analysis)

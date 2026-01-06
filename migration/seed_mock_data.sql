@@ -9,7 +9,15 @@ INSERT INTO profiles (id, "employeeId", name, email, department, position, statu
 ('3', 'E1003', 'Bob Williams', 'bob@archon.com', 'Engineering', 'Frontend Developer', 'active', 'Engineer', 'https://i.pravatar.cc/150?u=bob@archon.com'),
 ('4', 'E1004', 'Charlie Brown', 'charlie@archon.com', 'Marketing', 'Marketing Specialist', 'active', 'Marketer', 'https://i.pravatar.cc/150?u=charlie@archon.com'),
 ('5', 'agent-mr-001', 'Market Researcher', 'market.researcher@archon.com', 'AI', 'Market Researcher', 'active', 'Market Researcher', 'https://i.pravatar.cc/150?u=agent-mr-001')
-ON CONFLICT (id) DO NOTHING;
+ON CONFLICT (id) DO UPDATE SET
+    "employeeId" = EXCLUDED."employeeId",
+    name = EXCLUDED.name,
+    email = EXCLUDED.email,
+    department = EXCLUDED.department,
+    position = EXCLUDED.position,
+    status = EXCLUDED.status,
+    role = EXCLUDED.role,
+    avatar = EXCLUDED.avatar;
 
 -- Use a DO block to handle UUIDs programmatically and ensure idempotency
 DO $$

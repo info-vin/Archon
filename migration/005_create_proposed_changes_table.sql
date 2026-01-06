@@ -58,7 +58,7 @@ ALTER TABLE proposed_changes ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Allow full access to admins" ON proposed_changes;
 CREATE POLICY "Allow full access to admins"
     ON proposed_changes FOR ALL
-    USING (get_my_claim('user_role') = '"service_role"'); -- Using service_role as admin for now
+    USING ((auth.jwt() ->> 'role') = 'service_role'); -- Using service_role as admin for now
 
 DROP POLICY IF EXISTS "Allow authenticated users to create proposals" ON proposed_changes;
 CREATE POLICY "Allow authenticated users to create proposals"

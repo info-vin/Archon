@@ -1,8 +1,7 @@
 -- migration/seed_blog_posts.sql
 -- 向 blog_posts 資料表中插入初始文章資料
 
--- 清空現有資料以避免重複插入
-TRUNCATE TABLE blog_posts RESTART IDENTITY;
+-- 使用 ON CONFLICT (id) DO NOTHING 以實現冪等性且不影響現有手動資料
 
 INSERT INTO blog_posts (id, title, excerpt, content, author_name, publish_date, image_url) VALUES
 ('post-1', '案例一：AI 助您輕鬆完成行銷素材', '**角色**: 一位行銷專員 (User)。
@@ -55,8 +54,11 @@ INSERT INTO blog_posts (id, title, excerpt, content, author_name, publish_date, 
     *   後端更新資料庫任務：狀態改為 `待審核`，並附加檔案 URL。
 
 5.  **使用者審核 (前端)**
-    *   行銷專員的介面收到即時更新，看到狀態變更和新的附件連結，點擊審核。', 'Archon 團隊', '2025-08-29T10:00:00Z', 'https://picsum.photos/seed/usecase-1/600/400'),
-('post-2', '案例二：從技術支援到知識庫建立的自動化流程', '**角色**: 初階客服、資深後端工 程師、知識庫 AI Agent。
+    *   行銷專員的介面收到即時更新，看到狀態變更和新的附件連結，點擊審核。', 'Archon 團隊', '2025-08-29T10:00:00Z', 'https://picsum.photos/seed/usecase-1/600/400')
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO blog_posts (id, title, excerpt, content, author_name, publish_date, image_url) VALUES
+('post-2', '案例二：從技術支援到知識庫建立的自動化流程', '**角色**: 初階客服、資深後端工程師、知識庫 AI Agent。
 
 **目標**: 解決一個複雜的技術問題，並將解決方案歸檔至內部知識庫。
 
@@ -96,7 +98,10 @@ INSERT INTO blog_posts (id, title, excerpt, content, author_name, publish_date, 
     *   它呼叫工具將文件上傳至 Supabase Storage 中名為「internal_knowledge_base」的特定位置。
 
 5.  **任務完成與知識沉澱**
-    *   任務狀態變為 `已歸檔`，並附上知識庫文章連結，供團隊未來搜尋參考。', 'Archon 團隊', '2025-08-28T14:30:00Z', 'https://picsum.photos/seed/usecase-2/600/400'),
+    *   任務狀態變為 `已歸檔`，並附上知識庫文章連結，供團隊未來搜尋參考。', 'Archon 團隊', '2025-08-28T14:30:00Z', 'https://picsum.photos/seed/usecase-2/600/400')
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO blog_posts (id, title, excerpt, content, author_name, publish_date, image_url) VALUES
 ('post-3', '案例三：業務開發與客戶拜訪的智能規劃', '**角色**: 業務人員「小王」。
 
 **目標**: 蒐集潛在大客戶「ABC 科技」的完整情報，並規劃一次成功的初次拜訪。
@@ -139,7 +144,10 @@ INSERT INTO blog_posts (id, title, excerpt, content, author_name, publish_date, 
     *   所有相關人員與 AI 都在同一個任務下更新各自的進度與產出（例如，AI 附加簡報草稿、工程師回覆時間）。
 
 4.  **行程確定與完成**
-    *   小王在所有準備工作就緒後，敲定會議時間，並在父任務中記錄，完成整個規劃的閉環。', 'Archon 團隊', '2025-08-27T09:00:00Z', 'https://picsum.photos/seed/usecase-3/600/400'),
+    *   小王在所有準備工作就緒後，敲定會議時間，並在父任務中記錄，完成整個規劃的閉環。', 'Archon 團隊', '2025-08-27T09:00:00Z', 'https://picsum.photos/seed/usecase-3/600/400')
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO blog_posts (id, title, excerpt, content, author_name, publish_date, image_url) VALUES
 ('a4444444-4444-4444-4444-444444444444', '2025年商業數據分析的五大趨勢：AI 如何重塑決策流程', '隨著 AI 技術的成熟，數據分析不再是資料科學家的專利。本文探討 2025 年企業必須掌握的五大趨勢，從自動化報表到預測性分析，幫助您在競爭中保持領先。', '# 2025年商業數據分析的五大趨勢
 
 在數位轉型加速的今天，數據分析已成為企業的決策核心。以下是我們觀察到的 2025 年五大關鍵趨勢：
@@ -160,7 +168,10 @@ AI 與機器學習正在自動化數據準備與洞察發現的過程。未來�
 在保護使用者隱私的前提下進行數據共享與分析，將是合規經營的必修課。
 
 ### 結語
-掌握這些趨勢，您的企業將能更靈活地應對市場變化。Archon 的數據分析模組正是基於這些理念設計，助您輕鬆跨越技術門檻。', 'Bob (CMO)', '2025-01-10T09:00:00Z', 'https://picsum.photos/seed/trends-2025/600/400'),
+掌握這些趨勢，您的企業將能更靈活地應對市場變化。Archon 的數據分析模組正是基於這些理念設計，助您輕鬆跨越技術門檻。', 'Bob (CMO)', '2025-01-10T09:00:00Z', 'https://picsum.photos/seed/trends-2025/600/400')
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO blog_posts (id, title, excerpt, content, author_name, publish_date, image_url) VALUES
 ('a5555555-5555-5555-5555-555555555555', '零售巨頭如何利用數據分析提升 30% 營收：實戰案例分享', '一家擁有多通路的大型零售商，面臨庫存積壓與客單價停滯的挑戰。透過導入精準的客戶分群與購物籃分析，他們不僅清除了 40% 的滯銷庫存，更在三個月內實現了 30% 的營收成長。', '# 零售巨頭如何利用數據分析提升 30% 營收
 
 ## 背景與挑戰
@@ -187,4 +198,5 @@ AI 與機器學習正在自動化數據準備與洞察發現的過程。未來�
 *   **庫存優化**：滯銷庫存減少 40%。
 *   **行銷效率**：EDM 開信率提升至 25%，轉換率翻倍。
 
-此案例證明，正確的數據策略能直接轉化為具體的商業價值。', 'Alice (Sales VP)', '2025-01-12T14:00:00Z', 'https://picsum.photos/seed/case-retail/600/400');
+此案例證明，正確的數據策略能直接轉化為具體的商業價值。', 'Alice (Sales VP)', '2025-01-12T14:00:00Z', 'https://picsum.photos/seed/case-retail/600/400')
+ON CONFLICT (id) DO NOTHING;

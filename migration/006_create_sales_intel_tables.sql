@@ -4,6 +4,7 @@
 
 -- 1. 潛在客戶表 (Leads Table)
 -- Stores companies identified via job market search that have potential needs.
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE TABLE IF NOT EXISTS leads (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     company_name TEXT NOT NULL,          -- 公司名稱
@@ -21,7 +22,7 @@ CREATE TABLE IF NOT EXISTS market_insights (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     keyword TEXT NOT NULL,               -- 搜尋關鍵字 (e.g. "Business Analyst")
     insight_summary TEXT,                -- AI 生成的市場分析摘要
-    related_blog_id UUID REFERENCES blog_posts(id), -- 建議搭配的部落格文章
+    related_blog_id TEXT REFERENCES blog_posts(id), -- 建議搭配的部落格文章 (Text to match blog_posts.id)
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -34,6 +35,7 @@ BEGIN
 END;
 $$ language 'plpgsql';
 
+DROP TRIGGER IF EXISTS update_leads_updated_at ON leads;
 CREATE TRIGGER update_leads_updated_at
     BEFORE UPDATE ON leads
     FOR EACH ROW
@@ -45,9 +47,11 @@ ALTER TABLE market_insights ENABLE ROW LEVEL SECURITY;
 
 -- Simple policies (Can be refined later based on RBAC requirements)
 -- Allow authenticated users to select records
+DROP POLICY IF EXISTS "Allow authenticated users to view leads" ON leads;
 CREATE POLICY "Allow authenticated users to view leads" ON leads
     FOR SELECT USING (auth.role() = 'authenticated');
 
+DROP POLICY IF EXISTS "Allow authenticated users to view insights" ON market_insights;
 CREATE POLICY "Allow authenticated users to view insights" ON market_insights
     FOR SELECT USING (auth.role() = 'authenticated');
 

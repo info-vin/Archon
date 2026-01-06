@@ -21,6 +21,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from .api_routes.agent_chat_api import router as agent_chat_router
 from .api_routes.agents_api import router as agents_router
+from .api_routes.blog_api import router as blog_router
 from .api_routes.bug_report_api import router as bug_report_router
 from .api_routes.files_api import router as files_router
 from .api_routes.internal_api import router as internal_router
@@ -217,6 +218,8 @@ app.include_router(projects_router)
 app.include_router(progress_router)
 app.include_router(agent_chat_router)
 app.include_router(internal_router)
+app.include_router(agents_router)
+app.include_router(blog_router)
 app.include_router(bug_report_router)
 app.include_router(log_router)
 app.include_router(files_router)
