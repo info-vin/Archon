@@ -249,6 +249,8 @@ def test_some_endpoint():
         8.  `migration/seed_blog_posts.sql` (填充部落格假資料)
         9.  `migration/004_create_test_utility_functions.sql` (**E2E 測試所需**)
             > **說明**: 此腳本建立了用於自動化端對端測試的資料庫函式 (`reset_test_database`, `seed_test_database`)。如果您需要運行完整的前端 E2E 測試套件，則**必須**執行此腳本。
+        10. `migration/006_create_sales_intel_tables.sql` (**Phase 4.2 銷售情資所需**)
+            > **說明**: 建立 `leads` 與 `market_insights` 資料表，用於支援業務開發功能。
 
 3.  **階段三：執行部署**
 
