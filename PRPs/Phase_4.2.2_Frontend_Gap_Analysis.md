@@ -128,6 +128,17 @@ description: "解決 `enduser-ui-fe` 功能落差、建立自動化資料庫初�
     - 當 `Initial Connection Check` (ping `/api/health`) 失敗時，直接拋出明確的錯誤，讓 UI 顯示「系統維護中」或「無法連線」畫面，而不是默默切換到壞掉的 Mock。
 
 ---
+## COMPLETION CHECKLIST (完成檢查清單)
+
+- [x] **DB Automation**: `make db-init` script implemented.
+    - *Note*: Local execution failed due to Anaconda/Network issues. Adopted "Pragmatic Approach": Manually executed SQLs in Supabase Dashboard. Idempotency verified.
+- [x] **Seed Data**: `seed_mock_data.sql` and `seed_blog_posts.sql` refactored with `ON CONFLICT` clauses.
+- [x] **Project CRUD**: Fixed dashboard crash by unwrapping backend pagination response in `api.ts`.
+- [x] **Task CRUD**: Verified backend `TaskService` logic and frontend integration.
+- [x] **Blog**: Implemented missing `blog_api.py` and `BlogService`. Blog posts now load from DB.
+- [x] **Dashboard**: Fixed `SmartAPI` CORS issue by checking `/api/health`. Added Auth timeout to prevent infinite loading.
+- [x] **UI Standards**: Sales Intelligence UI components refactored (Phase 4).
+
 ## 🔍 待驗證項目 (Verification Checklist)
 
 > 休息過後，請依照此清單進行最後驗證，確保「改 A 壞 B」的循環已終結。
