@@ -6,6 +6,7 @@ import AuthPage from './pages/AuthPage.tsx';
 import DashboardPage from './pages/DashboardPage.tsx';
 import AdminPage from './pages/AdminPage.tsx';
 import BlogPage from './pages/BlogPage.tsx';
+import BlogDetailPage from './pages/BlogDetailPage.tsx';
 import SettingsPage from './pages/SettingsPage.tsx';
 import ApprovalsPage from './pages/ApprovalsPage.tsx'; // Import the new page
 import StatsPage from './pages/StatsPage.tsx'; // Import StatsPage
@@ -47,6 +48,7 @@ export const AppRoutes: React.FC = () => {
       <Route element={<PublicLayout />}>
         <Route path="/landing" element={<LandingPage />} />
         <Route path="/blog" element={<BlogPage />} />
+        <Route path="/blog/:id" element={<BlogDetailPage />} />
         <Route path="/auth" element={<AuthPage />} />
       </Route>
 
@@ -300,7 +302,7 @@ const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                 </div>
             </nav>
             {isSidebarOpen && <div className="fixed inset-0 bg-black/50 z-40 md:hidden" onClick={() => setIsSidebarOpen(false)}></div>}
-            <main className="flex-1 flex flex-col overflow-hidden">
+            <main className="flex-1 flex flex-col overflow-y-auto bg-gray-50/50">
                 <header className="md:hidden flex items-center justify-between p-4 border-b border-border bg-background/80 backdrop-blur">
                     <button onClick={() => setIsSidebarOpen(true)} aria-label="Open sidebar">
                         <MenuIcon className="w-6 h-6" />

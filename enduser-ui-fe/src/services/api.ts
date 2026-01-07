@@ -103,6 +103,7 @@ const mockApi: any = {
     async getAssignableUsers() { return [{ id: MOCK_USER.id, name: MOCK_USER.name, role: MOCK_USER.role }]; },
     async getDocumentVersions() { return []; },
     async getBlogPosts() { return []; },
+    async getBlogPost(id: string) { return null; },
     async createBlogPost() { throw new Error("Blog creation not supported in Mock Mode"); },
     async updateBlogPost() { throw new Error("Blog update not supported in Mock Mode"); },
     async deleteBlogPost() { return; },
@@ -201,8 +202,16 @@ const supabaseApi = {
       if (user?.role) {
         headers['X-User-Role'] = user.role;
       }
+      
+      // Attach Session Token for Backend Auth
+      if (supabase) {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (session?.access_token) {
+              headers['Authorization'] = `Bearer ${session.access_token}`;
+          }
+      }
     } catch (e) {
-      console.warn("Could not attach X-User-Role to headers", e);
+      console.warn("Could not attach auth headers", e);
     }
     return headers;
   },
@@ -276,6 +285,8 @@ const supabaseApi = {
   async getCurrentUser(): Promise<Employee | null> {
     if (!supabase) return null;
 
+    let sessionUser: any = null;
+
     try {
       // Use Promise.race to enforce a strict 2s timeout on Supabase Auth session check.
       // This prevents the entire app from hanging in Loading state if network/CORS blocks Supabase.
@@ -287,57 +298,64 @@ const supabaseApi = {
       const { data: { session }, error: sessionError } = sessionResult;
       if (sessionError) throw new Error(sessionError.message);
       if (!session?.user) return null;
-    
-      const { data: profile, error } = await supabase.from('profiles').select('*').eq('id', session.user.id).single();
-      
-      if (error || !profile) {
-        console.warn('Profile not found in public.profiles, using auth metadata fallback:', error?.message);
-        // Robust fallback: Return basic info from session so UI doesn't crash/hang
-        return { 
-          id: session.user.id, 
-          email: session.user.email!, 
-          name: session.user.user_metadata.name || session.user.email?.split('@')[0] || 'Authenticated User', 
-          role: EmployeeRole.MEMBER, // Default role
-          avatar: session.user.user_metadata.avatar_url || `https://i.pravatar.cc/150?u=${session.user.id}`,
-          employeeId: 'TEMP-' + session.user.id.substring(0, 5),
-          department: 'Unknown',
-          position: 'User',
-          status: 'active' 
-        } as Employee;
-      }
-      return profile as Employee;
+      sessionUser = session.user;
     } catch (e) {
       console.warn("Auth check failed or timed out, proceeding as unauthenticated:", e);
       return null;
     }
+
+    // Secondary Try/Catch for Profile Fetching to prevent 406/RLS errors from logging out the user
+    try {
+      const { data: profile, error } = await supabase.from('profiles').select('*').eq('id', sessionUser.id).single();
+      
+      if (error) throw error;
+      if (!profile) throw new Error("Profile missing");
+      
+      return profile as Employee;
+    } catch (e: any) {
+      console.warn('Profile not found or fetch failed (likely 406 or RLS), using auth metadata fallback:', e?.message);
+      // Robust fallback: Return basic info from session so UI doesn't crash/hang
+      return { 
+        id: sessionUser.id, 
+        email: sessionUser.email!, 
+        name: sessionUser.user_metadata.name || sessionUser.email?.split('@')[0] || 'Authenticated User', 
+        role: EmployeeRole.MEMBER, // Default role
+        avatar: sessionUser.user_metadata.avatar_url || `https://i.pravatar.cc/150?u=${sessionUser.id}`,
+        employeeId: 'TEMP-' + sessionUser.id.substring(0, 5),
+        department: 'Unknown',
+        position: 'User',
+        status: 'active' 
+      } as Employee;
+    }
   },
   async getTasks(): Promise<Task[]> {
-    const response = await fetch('/api/tasks');
+    const response = await fetch('/api/tasks', { headers: await this._getHeaders() });
     if (!response.ok) {
-        const errorData = await response.json();
+        const errorData = await response.json().catch(() => ({}));
         throw new Error(errorData.detail || 'Failed to fetch tasks.');
     }
     const data = await response.json();
-    // Support both raw array and wrapped { tasks: [] } format from paginated backend
-    return Array.isArray(data) ? data : (data.tasks || []);
+    // DEFENSIVE: Always return an array even if backend returns paginated object or null
+    if (Array.isArray(data)) return data;
+    if (data && typeof data === 'object' && Array.isArray(data.tasks)) return data.tasks;
+    return [];
   },
   async getProjects(): Promise<Project[]> {
-    const response = await fetch('/api/projects?include_computed_status=true');
+    const response = await fetch('/api/projects?include_computed_status=true', { headers: await this._getHeaders() });
     if (!response.ok) {
-        const errorData = await response.json();
+        const errorData = await response.json().catch(() => ({}));
         throw new Error(errorData.detail || 'Failed to fetch projects.');
     }
     const data = await response.json();
-    // Support both raw array and wrapped { projects: [] } format
+    // DEFENSIVE: Always return an array
     if (Array.isArray(data)) return data;
-    return (data.projects || []);
+    if (data && typeof data === 'object' && Array.isArray(data.projects)) return data.projects;
+    return [];
   },
   async createProject(projectData: NewProjectData): Promise<{ project: Project }> {
     const response = await fetch('/api/projects', {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
+        headers: await this._getHeaders(),
         body: JSON.stringify(projectData)
     });
     if (!response.ok) {
@@ -407,14 +425,14 @@ const supabaseApi = {
   },
   async getAssignableUsers(): Promise<AssignableUser[]> {
     // This function calls our own backend API, which has the RBAC logic.
-    const response = await fetch('/api/assignable-users');
+    const response = await fetch('/api/assignable-users', { headers: await this._getHeaders() });
     if (!response.ok) {
       throw new Error('Failed to fetch assignable users.');
     }
     return response.json();
   },
   async getAssignableAgents(): Promise<AssignableUser[]> {
-    const response = await fetch('/api/agents/assignable');
+    const response = await fetch('/api/agents/assignable', { headers: await this._getHeaders() });
     if (!response.ok) {
       throw new Error('Failed to fetch assignable AI agents.');
     }
@@ -426,21 +444,25 @@ const supabaseApi = {
     return data as DocumentVersion[];
   },
   async getBlogPosts(): Promise<BlogPost[]> {
-    const response = await fetch('/api/blogs');
+    const response = await fetch('/api/blogs', { headers: await this._getHeaders() });
     if (!response.ok) {
       throw new Error('Failed to fetch blog posts.');
     }
     const data = await response.json();
     return data;
   },
+  async getBlogPost(id: string): Promise<BlogPost> {
+    const response = await fetch(`/api/blogs/${id}`, { headers: await this._getHeaders() });
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.detail || 'Failed to fetch blog post.');
+    }
+    return response.json();
+  },
   async createBlogPost(postData: NewBlogPostData): Promise<BlogPost> {
     const response = await fetch('/api/blogs', {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            // Assuming a mechanism to get the user role for the header
-            'X-User-Role': 'SYSTEM_ADMIN' // Placeholder
-        },
+        headers: await this._getHeaders({ 'X-User-Role': 'SYSTEM_ADMIN' }), // Placeholder role preservation
         body: JSON.stringify(postData)
     });
     if (!response.ok) {
@@ -452,10 +474,7 @@ const supabaseApi = {
   async updateBlogPost(postId: string, postData: Partial<NewBlogPostData>): Promise<BlogPost> {
     const response = await fetch(`/api/blogs/${postId}`, {
         method: 'PUT',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-User-Role': 'SYSTEM_ADMIN' // Placeholder
-        },
+        headers: await this._getHeaders({ 'X-User-Role': 'SYSTEM_ADMIN' }),
         body: JSON.stringify(postData)
     });
     if (!response.ok) {
@@ -467,9 +486,7 @@ const supabaseApi = {
   async deleteBlogPost(postId: string): Promise<void> {
     const response = await fetch(`/api/blogs/${postId}`, {
         method: 'DELETE',
-        headers: {
-            'X-User-Role': 'SYSTEM_ADMIN' // Placeholder
-        }
+        headers: await this._getHeaders({ 'X-User-Role': 'SYSTEM_ADMIN' })
     });
     if (!response.ok) {
         const errorData = await response.json();
@@ -496,7 +513,7 @@ const supabaseApi = {
 
   // --- CHANGE PROPOSAL API ---
   async getPendingChanges(): Promise<any[]> {
-    const response = await fetch('/api/changes');
+    const response = await fetch('/api/changes', { headers: await this._getHeaders() });
     if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.detail || 'Failed to fetch pending changes.');
@@ -507,7 +524,7 @@ const supabaseApi = {
   async approveChange(changeId: string): Promise<any> {
     const response = await fetch(`/api/changes/${changeId}/approve`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: await this._getHeaders(),
     });
     if (!response.ok) {
         const errorData = await response.json();
@@ -519,7 +536,7 @@ const supabaseApi = {
   async rejectChange(changeId: string): Promise<any> {
     const response = await fetch(`/api/changes/${changeId}/reject`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: await this._getHeaders(),
     });
     if (!response.ok) {
         const errorData = await response.json();
@@ -530,19 +547,19 @@ const supabaseApi = {
 
   // --- STATS & MARKETING API ---
   async getTaskDistribution(): Promise<TaskStats[]> {
-    const response = await fetch('/api/stats/tasks-by-status');
+    const response = await fetch('/api/stats/tasks-by-status', { headers: await this._getHeaders() });
     if (!response.ok) throw new Error('Failed to fetch task stats');
     return response.json();
   },
 
   async getMemberPerformance(): Promise<MemberPerformance[]> {
-    const response = await fetch('/api/stats/member-performance');
+    const response = await fetch('/api/stats/member-performance', { headers: await this._getHeaders() });
     if (!response.ok) throw new Error('Failed to fetch performance stats');
     return response.json();
   },
 
   async searchJobs(keyword: string): Promise<JobData[]> {
-    const response = await fetch(`/api/marketing/jobs?keyword=${encodeURIComponent(keyword)}`);
+    const response = await fetch(`/api/marketing/jobs?keyword=${encodeURIComponent(keyword)}`, { headers: await this._getHeaders() });
     if (!response.ok) throw new Error('Failed to search jobs');
     return response.json();
   },

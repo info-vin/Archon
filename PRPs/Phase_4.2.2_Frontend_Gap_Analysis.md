@@ -111,33 +111,93 @@ description: "解決 `enduser-ui-fe` 功能落差、建立自動化資料庫初�
 
 > **目標**: 逐步剝離前端對 Supabase Client 的直接依賴，轉向「後端中心化」架構，以根除 Mock/Real 混合模式帶來的複雜性與 CORS 問題。
 
+### Phase 5: 架構精煉 (Architecture Refinement)
+
+> **目標**: 逐步剝離前端對 Supabase Client 的直接依賴，轉向「後端中心化」架構，以根除 Mock/Real 混合模式帶來的複雜性與 CORS 問題。
+
 ### 步驟 5.1: 清理 `supabaseApi` 實作 (Clean up supabaseApi Implementation)
 
 - **目標 (GOAL)**: 確保所有已存在後端 API 的功能 (Blog, Tasks, Projects)，前端都只呼叫 `fetch('/api/...')`，不再混用 `supabase.from(...)`。
 - **行動 (ACTION)**:
     - 審計 `enduser-ui-fe/src/services/api.ts` 中的 `supabaseApi` 物件。
-    - 將剩餘的直接 DB 操作 (如 `updateEmployee` 若尚未 API 化) 標記為待辦或遷移。
+    - **待辦**: `updateEmployee` 仍直接呼叫 Supabase，需遷移至後端 API。
     - 移除不再需要的 `supabase` export，封裝在 `api.ts` 內部僅供 Auth 使用。
 
 ### 步驟 5.2: 移除 Mock Mode 殘渣 (Remove Legacy Mock Mode)
 
 - **目標 (GOAL)**: 既然 Mock Data 已刪除，`mockApi` 應被徹底移除，讓系統行為更單純。
 - **行動 (ACTION)**:
-    - 刪除 `api.ts` 中的 `mockApi` 物件及其定義。
-    - 刪除 `SmartAPI` wrapper 中的 Fallback 邏輯。
+    - [ ] 刪除 `api.ts` 中的 `mockApi` 物件及其定義。
+    - [ ] 刪除 `SmartAPI` wrapper 中的 Fallback 邏輯。
     - 當 `Initial Connection Check` (ping `/api/health`) 失敗時，直接拋出明確的錯誤，讓 UI 顯示「系統維護中」或「無法連線」畫面，而不是默默切換到壞掉的 Mock。
 
+### Phase 7: 落差分析 - Phase 4.0 AI as Developer (Gap Analysis)
+
+
+
+> **觀察**: 經代碼審查 `ApprovalsPage.tsx`，發現當前實作與 `@PRPs/Phase_4.0_AI_as_Developer_Plan.md` 的願景存在顯著落差。
+
+
+
+1.  **即時通知缺席 (No WebSocket)**:
+
+    *   **願景**: 藍圖規劃透過 WebSocket 主動通知開發者有新提案。
+
+    *   **現狀**: 前端完全依賴 `useEffect` 進行一次性拉取 (Polling)，缺乏即時性。
+
+2.  **Git 上下文缺失 (Missing Git Context)**:
+
+    *   **願景**: Agent 應在獨立分支 (`feat/...`) 上工作，UI 應顯示分支資訊。
+
+    *   **現狀**: 前端僅顯示提案列表，缺乏分支切換或顯示當前分支的 UI 元素。
+
+3.  **執行回饋斷裂 (No Shell Output)**:
+
+    *   **願景**: Agent 執行測試 (`make test`) 的結果應回饋給開發者。
+
+    *   **現狀**: UI 僅有 Approve/Reject，無法查看測試日誌或執行結果。
+
+
+
 ---
+
 ## COMPLETION CHECKLIST (完成檢查清單)
 
+
+
 - [x] **DB Automation**: `make db-init` script implemented.
-    - *Note*: Local execution failed due to Anaconda/Network issues. Adopted "Pragmatic Approach": Manually executed SQLs in Supabase Dashboard. Idempotency verified.
-- [x] **Seed Data**: `seed_mock_data.sql` and `seed_blog_posts.sql` refactored with `ON CONFLICT` clauses.
-- [x] **Project CRUD**: Fixed dashboard crash by unwrapping backend pagination response in `api.ts`.
-- [x] **Task CRUD**: Verified backend `TaskService` logic and frontend integration.
-- [x] **Blog**: Implemented missing `blog_api.py` and `BlogService`. Blog posts now load from DB.
-- [x] **Dashboard**: Fixed `SmartAPI` CORS issue by checking `/api/health`. Added Auth timeout to prevent infinite loading.
-- [x] **UI Standards**: Sales Intelligence UI components refactored (Phase 4).
+
+- [x] **Seed Data**: `seed_mock_data.sql` and `seed_blog_posts.sql` refactored.
+
+- [x] **Project CRUD**: Fully functional dropdown and creation logic in Dashboard.
+
+- [x] **Task CRUD**: Verified backend/frontend integration.
+
+- [x] **Blog**: Detail pages implemented with Markdown rendering.
+
+- [x] **Dashboard**: Fixed 406 errors by injecting Auth Headers.
+
+- [x] **UI Standards**: Marketing and Blog UI refactored and scrollable.
+
+- [ ] **Phase 5 Refinement**: `updateEmployee` still needs API migration; `mockApi` remains in code.
+
+- [x] **Phase 6 Batch Fixes**: Auth loops, Scrolling, and Blog detail logic completed and verified via Unit Tests.
+
+
+
+---
+
+## 🔍 待驗證項目 (Verification Checklist)
+
+- [x] **自動化測試**: `api.stability.spec.ts` 與 `BlogDetailPage.spec.tsx` 全數通過。
+
+- [x] **UI/Unit 測試**: `DashboardPage.test.tsx` 經修復後通過 (Props & A11y fixes)。
+
+- [ ] **E2E 測試**: **Partial/Failed**。`sales-intelligence` 與 `ai-teammate` 測試因 MSW 環境與新的 Auth 防禦邏輯不兼容而失敗。需在 Phase 4.3 進行環境重構。
+
+- [ ] **視覺驗收**: **Known Issue**。使用者回報刷新頁面會導致短暫登出 (Session Hydration Lag)，需進一步優化 `AuthProvider`。
+
+
 
 ## 🔍 待驗證項目 (Verification Checklist)
 

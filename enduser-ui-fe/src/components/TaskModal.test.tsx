@@ -4,6 +4,21 @@ import { TaskModal } from './TaskModal';
 import userEvent from '@testing-library/user-event';
 import { Task, TaskPriority, TaskStatus } from '../types';
 
+// Mock API
+vi.mock('../services/api.ts', () => ({
+  api: {
+    getAssignableUsers: vi.fn().mockResolvedValue([
+      { id: '2', name: 'Alice Johnson', role: 'member' }
+    ]),
+    getAssignableAgents: vi.fn().mockResolvedValue([
+      { id: '3', name: 'AI Assistant', role: 'ai_agent' }
+    ]),
+    createTask: vi.fn().mockResolvedValue({ id: 'new-task' }),
+    updateTask: vi.fn().mockResolvedValue({ id: 'task-1' }),
+    getKnowledgeItems: vi.fn().mockResolvedValue([]), // Needed for KnowledgeSelector
+  }
+}));
+
 const mockTask: Task = {
   id: 'task-1',
   project_id: 'proj-123',

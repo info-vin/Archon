@@ -82,51 +82,39 @@
 
 # 第三章：近期工作日誌 (Recent Journal Entries)
 
-### 2026-01-05: 銷售情資實作與 MSW 測試架構的確立
-*   **核心任務**: 實作 Phase 4.2 "Sales Intelligence"，包含後端自動建檔與前端話術生成。
-*   **架構決策**:
-    *   **版本控制**: 拒絕開啟 Phase 4.3，改用 `Phase 4.2.1` 技術規格書來深化實作細節，保持路線圖的連貫性。
-    *   **測試轉向**: 透過環境檢查發現專案未安裝 Playwright，果斷轉向符合現狀的 **Vitest + MSW** 整合測試方案。
-*   **偵錯歷程**:
-    *   **檔案覆蓋意外**: 在追加 SQL 種子資料時誤用 `write_file` 覆蓋了原檔。教訓：對重要檔案進行「追加」操作前，必須先讀取原內容或使用更安全的工具。
-    *   **MSW 衝突**: 在 E2E 測試中試圖 `setupServer` 導致攔截失敗。**關鍵學習**：在已全域啟動 MSW 的環境下，個別測試應引用全域 `server` 並使用 `server.use()`，而非重啟 Server。
-*   **結論**: 成功交付了具備「搜尋即建檔」能力的業務開發工具，並為前端整合測試建立了新的範本 (`sales-intelligence.spec.tsx`)。
-
-### 2026-01-05 (Part 2): 後端 API 回歸錯誤修復 (Regression Fix)
-*   **症狀**: `make dev-docker` 後，前端 Projects 頁面與 Task Counts 報 500 Internal Server Error。
-*   **根源分析**:
-    1.  **Sync/Async 類型不匹配**: `projects_api.py` 呼叫了 `await`，且 Service 內部也 `await` 了 `supabase.table(...).execute()`。但底層的 `get_supabase_client` 回傳的是**同步**客戶端。導致 `await` 一個非 Coroutine 物件 (`APIResponse`) 而報錯。
-    2.  **導入與實例化混淆**: `projects_api.py` 導入了 `task_service` (實例) 但使用方式導致 `AttributeError`。
-*   **解決方案**:
-    *   **代碼層**: 將 `ProjectService` 與 `TaskService` 中所有對 `execute()` 的 `await` 移除（回歸同步呼叫，保持與 Client 行為一致）。將 `projects_api.py` 改為導入 `TaskService` 類別並在函數內實例化。
-    *   **測試層**: 因為代碼結構改變（全域變數 -> 局部變數），原本對 `projects_api.task_service` 的 `patch` 失效。修正為 `patch('...projects_api.TaskService')` 並正確配置 Mock Class 回傳 Mock Instance。同時將測試中的 `AsyncMock` 降級為 `Mock` 以匹配同步行為。
-*   **關鍵教訓**:
-    *   **不要盲目 await**: 看到 `async def` 不代表每一行都要 `await`。必須確認底層 Library (如 `supabase-py`) 的行為模式。
-    *   **Patch 的黃金法則**: Patch 必須針對「使用該物件的地方」且要區分是 Patch 類別還是實例。
-
-### 2026-01-04: 用「主動防禦」邏輯根治前端無限 Loading
-*   **核心任務**: 徹底解決 `enduser-ui-fe` (Port 5173) 在全 Docker 環境下的無限 Loading 問題。
+### 2026-01-07: 批量修復與 SOP 的再教育 (The Batch Fix & SOP Re-education)
+*   **核心任務**: 解決 Phase 4.2.2 遺留的四大 UI/通訊問題 (406 錯誤、專案操作、捲動、Markdown)。
 *   **偵錯歷程**: 
-    *   **問題確認**: `make dev-docker` 注入了 `SUPABASE_URL` 環境變數，其值為 Docker 內部 DNS (`http://supabase_kong:8000`)。瀏覽器無法解析此地址，導致 API 請求一直 Pending 直到超時。
-    *   **方案演進**: 最初的修復 (`fix/fe-api`) 採用被動的 `try-catch` 和 2 秒超時。這雖然能運作，但使用者體驗差（必等的 2 秒延遲）。
-    *   **最終解法**: 在 `api.ts` 中引入「主動防禦 (Proactive Guard)」邏輯。透過靜態檢查 URL 是否包含 `supabase_kong` 等內部關鍵字，直接判定為 Docker 內部環境並立即切換至 Mock 模式，實現 0 延遲體驗。
+    *   **SOP 違規**: 試圖通過「修改 -> 報錯 -> 再修改」的低效迴圈修復 Bug，導致舊有測試大規模崩潰。
+    *   **SOP 回歸**: 建立 `api.stability.spec.ts` 驗證核心邏輯，並根據報錯精準修復 `TaskModal.test.tsx` 的 Mock 策略。
 *   **關鍵學習**: 
-    *   **不要讓使用者等待必敗的請求**: 當環境變數明顯無效時（如內部 DNS），程式應有能力識別並立即 Failover，而不是盲目發送請求。
-    *   **合併前的優化**: 修復分支合併前，應再次審視邏輯是否足夠「主動」和「防禦性」。
+    *   **Mock 的完整性**: 修改代碼（如加入 `getAssignableAgents`）後，必須同步更新相關測試的 Mock。
+    *   **可訪問性**: 隱藏文字 (`sr-only`) 需使用 `{ hidden: true }` 抓取。
+    *   **Git 考古**: 動手前先查 `git log -p`，避免覆蓋他人的重要修復（如 Promise.race）。
 
-### 2026-01-03: 穩定全 Docker 開發環境與啟動 Phase 5 自癒能力
-*   **核心任務**: 1. 修復 `archon-ui-main` (Port 3737) 設定頁面崩潰。 2. 實作 Phase 5 智能 Git 與自癒反饋。
+### 2026-01-06: 全棧對齊與文檔化 (Full-Stack Reconciliation)
+*   **核心任務**: 解決後端分頁結構 (`{ tasks: [] }`) 與前端預期 (`Array`) 不匹配導致的崩潰。
+*   **架構決策**: 在 `api.ts` 中實作了防禦性邏輯，同時支援陣列與物件格式，確保前後端解耦。
+*   **文件**: 歸檔了 Phase 3.8 並正式啟動 Phase 4.2.2。
+
+### 2026-01-05: 銷售情資與 Async 陷阱 (Sales Intel & Async Pitfalls)
+*   **核心任務**: 實作 Phase 4.2 "Sales Intelligence" 並修復後端 API 回歸錯誤。
 *   **偵錯歷程**:
-    1.  **前端崩潰**: 日誌顯示 `useState is not defined`。根源是 `APIKeysSection.tsx` 缺少 React Hook 導入。已補上 `import React, { useState... }`。
-    2.  **API 404**: 前端收集除錯資訊時呼叫了無效路徑（`/api/system/version`）。已對齊為 `/api/version/current`，並在後端補上 `/api/agents/health`。
-    3.  **預設值缺失**: 解決了 `STYLE_GUIDE_ENABLED` 在資料庫無資料時報 404 的問題，將其加入後端 `OPTIONAL_SETTINGS_WITH_DEFAULTS`。
-    4.  **Phase 5 基礎設施**: 發現 `archon-mcp` 容器缺少 API Key 導致 Agent 無法執行智能操作。已更新 `docker-compose.yml` 注入 Key 並重啟容器驗證。
-    5.  **前端自動初始化 (Port 5173)**: 解決了 End-User UI 在全 Docker 環境下因缺少 `localStorage` 崩潰的問題。透過在 `docker-compose.yml` 注入 `VITE_SUPABASE_...` 變數並修改 `api.ts` 實現自動 Fallback 機制。
-    6.  **解決無限 Loading**: 嘗試恢復 `mockApi` 降級機制以解決 Loading 卡死問題。**【注意】**: 經使用者驗證，Port 5173 仍會出現無限 Loading，此問題尚未完全根除，需進一步排查 Vite 環境變數在全 Docker 模式下的注入時機。
-*   **關鍵學習**: 
-    *   **環境複雜性**: Vite 的環境變數注入在全 Docker 模式下比預期更複雜，單純的變數傳遞可能不足以解決客戶端初始化時序問題。
-    *   **歷史是最好的教材**: 當遇到「以前似乎發生過」的問題時，應優先執行 `git log -p -S` 追蹤相關代碼的演進。
-*   **結論**: 成功清除了 Admin UI 環境雜訊，並在 `AgentService` 中打通了自癒閉環。Port 5173 的 Loading 問題列為後續技術債處理。
+    *   **Async 混淆**: `projects_api.py` 錯誤地 `await` 了同步的 Supabase 客戶端，導致 `AttributeError`。修正為同步呼叫。
+    *   **Mock 策略**: 確立了「Patch 必須針對 Class」的黃金法則，並在測試中將 `AsyncMock` 降級為 `Mock` 以匹配行為。
+*   **結論**: 成功交付業務開發工具，並確立 Vitest + MSW 整合測試方案。
+
+### 2026-01-04: 主動防禦與無限 Loading (Proactive Defense)
+*   **核心任務**: 根治 `enduser-ui-fe` 在全 Docker 環境下的無限 Loading 問題。
+*   **架構決策**: 在 `api.ts` 引入「主動防禦 (Proactive Guard)」邏輯。透過靜態檢查 URL 是否包含 `supabase_kong` 等內部關鍵字，直接判定為 Docker 內部環境並立即切換至 Mock 模式，實現 0 延遲體驗。
+*   **關鍵學習**: 不要讓使用者等待必敗的請求；當環境變數明顯無效時，應立即 Failover。
+
+### 2026-01-03: 自癒能力基礎設施 (Self-Healing Infrastructure)
+*   **核心任務**: 穩定全 Docker 開發環境並啟動 Phase 5 自癒能力。
+*   **偵錯歷程**:
+    *   **環境修復**: 解決了 `archon-ui-main` 的崩潰 (缺少 `useState`) 與 API Key 注入問題。
+    *   **初始化**: 修復了 End-User UI 在 Docker 下因缺少 `localStorage` 崩潰的問題，透過 `docker-compose.yml` 注入變數實現自動 Fallback。
+*   **結論**: 成功清除了 Admin UI 環境雜訊，並在 `AgentService` 中打通了自癒閉環。
 
 ---
 
