@@ -124,12 +124,22 @@ describe('DashboardPage', () => {
     // Verify the "2 files" badge is visible
     expect(screen.getByText('2 files')).toBeInTheDocument();
 
-        // Find the attachment links by their text content (the filename)
-        // Use { hidden: true } because filenames are in sr-only spans for accessibility
-        const attachmentLink1 = screen.getByText('debug-log.txt', { hidden: true });
-        const attachmentLink2 = screen.getByText('screenshot-error.png', { hidden: true });
-    
-        // Assert that the links are present
-        expect(attachmentLink1).toBeInTheDocument();
-        expect(attachmentLink2).toBeInTheDocument();  });
-});
+                // Find the attachment links by their text content (the filename)
+
+                // Use a regex matcher because filenames might be combined in a single element
+
+                const attachmentsContainer = screen.getByText(/debug-log\.txt/i, { hidden: true });
+
+                
+
+                // Assert that the links are present
+
+                expect(attachmentsContainer).toBeInTheDocument();
+
+                expect(attachmentsContainer).toHaveTextContent(/screenshot-error\.png/i);
+
+            });
+
+        });
+
+        

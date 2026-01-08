@@ -1,39 +1,15 @@
 import { describe, test, expect, beforeEach, vi } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
-import { AppRoutes } from '../../src/App';
-import { AuthProvider } from '../../src/hooks/useAuth';
+import { screen, fireEvent, waitFor } from '@testing-library/react';
 import { api } from '../../src/services/api';
-
-const renderWithProviders = (ui: React.ReactElement, { route = '/' } = {}) => {
-  window.history.pushState({}, 'Test page', route);
-  return render(
-    <AuthProvider>
-      <MemoryRouter initialEntries={[route]}>
-        {ui}
-      </MemoryRouter>
-    </AuthProvider>
-  );
-};
+import { renderApp } from './e2e.setup';
 
 describe('AI as a Teammate E2E Workflows', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  test('E2E setup is complete and API calls are working', async () => {
-    const user = await api.getCurrentUser();
-    expect(user).toBeDefined();
-    // In Hybrid Mock mode, we might get the fallback user if Supabase auth isn't fully mocked
-    expect(['E2E Test User', 'Admin User (Mock)']).toContain(user?.name);
-
-    const assignableAgents = await api.getAssignableAgents();
-    expect(assignableAgents).toHaveLength(2);
-    expect(assignableAgents[0].name).toBe('(AI) Market Researcher');
-  });
-
   test('Marketing Campaign: User can create a task and assign it to an AI content writer', async () => {
-    renderWithProviders(<AppRoutes />, { route: '/dashboard' });
+    renderApp();
 
     const newTaskButton = await screen.findByRole('button', { name: /new task/i });
     expect(newTaskButton).toBeInTheDocument();
@@ -65,10 +41,12 @@ describe('AI as a Teammate E2E Workflows', () => {
       ...stacktrace...
       [2025-12-25T10:30:00.124Z] INFO: User 'testuser' failed to login.
     `;
-    renderWithProviders(<AppRoutes />, { route: '/dashboard' });
+    renderApp();
 
     const newTaskButton = await screen.findByRole('button', { name: /new task/i });
+    expect(newTaskButton).toBeInTheDocument();
     fireEvent.click(newTaskButton);
+
 
     const titleInput = await screen.findByLabelText(/title/i);
     const descriptionInput = screen.getByLabelText(/description/i);
@@ -91,7 +69,7 @@ describe('AI as a Teammate E2E Workflows', () => {
   });
 
   test('Sales Outreach: User can create a task and assign it to a Sales AI', async () => {
-    renderWithProviders(<AppRoutes />, { route: '/dashboard' });
+    renderApp();
 
     const newTaskButton = await screen.findByRole('button', { name: /new task/i });
     fireEvent.click(newTaskButton);

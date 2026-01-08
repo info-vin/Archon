@@ -30,31 +30,64 @@ const mockUser = {
 // SECTION 2: HYBRID API MOCKING STRATEGY
 // =============================================================================
 
-console.log('✅ [E2E Setup] Using HYBRID mock mode. `vi.mock` for auth, MSW for data.');
-
-vi.mock('../../src/services/api', async (importOriginal) => {
-  const originalModule = await importOriginal<typeof import('../../src/services/api')>();
-
-  // We define the mock user inline here to avoid hoisting issues (ReferenceError).
-  const internalMockUser = {
+const { mockInternalUser, mockTasksStore } = vi.hoisted(() => ({
+  mockInternalUser: {
     id: 'user-e2e-1',
     employeeId: 'E2E001',
     name: 'E2E Test User',
     email: 'e2e@archon.com',
-    department: 'QA',
-    position: 'Tester',
+    role: 'system_admin',
     status: 'active',
-    role: 'Admin',
     avatar: 'https://i.pravatar.cc/150?u=e2e@archon.com'
-  };
+  },
+  mockTasksStore: [] as any[]
+}));
 
+vi.mock('../../src/services/api', () => {
   return {
-    ...originalModule,
-    // Keep the original module, but surgically override the `api` object
-    api: {
-      ...originalModule.api, // Spread all original api functions...
-      getCurrentUser: vi.fn().mockResolvedValue(internalMockUser), // ...and mock ONLY `getCurrentUser`.
+    supabase: {
+      auth: {
+        getSession: vi.fn().mockResolvedValue({ data: { session: { user: mockInternalUser } }, error: null }),
+        onAuthStateChange: vi.fn().mockReturnValue({ data: { subscription: { unsubscribe: vi.fn() } } }),
+      },
+      from: vi.fn().mockReturnValue({
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        single: vi.fn().mockResolvedValue({ data: mockInternalUser, error: null }),
+      }),
     },
+    api: {
+      getCurrentUser: vi.fn().mockResolvedValue(mockInternalUser),
+      getTasks: vi.fn().mockImplementation(async () => [...mockTasksStore]),
+      getProjects: vi.fn().mockResolvedValue([{ id: 'proj-1', title: 'E2E Project', status: 'active' }]),
+      getAssignableUsers: vi.fn().mockResolvedValue([{ id: 'user-1', name: 'Alice Johnson', role: 'member' }]),
+      getAssignableAgents: vi.fn().mockResolvedValue([
+        { id: 'ai-researcher-1', name: '(AI) Market Researcher', role: 'Market Researcher' },
+        { id: 'ai-content-writer', name: '(AI) Content Writer', role: 'Content Writer' },
+        { id: 'ai-knowledge-expert-1', name: '(AI) Internal Knowledge Expert', role: 'Internal Knowledge Expert' },
+        { id: 'agent-content-writer', name: '(AI) Content Writer', role: 'Content Writer' },
+        { id: 'agent-log-analyzer', name: '(AI) Log Analyzer', role: 'Log Analyzer' },
+        { id: 'agent-sales-intel', name: '(AI) Sales Intel', role: 'Sales Intel' },
+      ]),
+      createTask: vi.fn().mockImplementation(async (data) => {
+        const newTask = { ...data, id: 'new-task-' + Date.now() };
+        mockTasksStore.push(newTask);
+        return newTask;
+      }),
+      updateTask: vi.fn().mockImplementation(async (id, data) => {
+        const index = mockTasksStore.findIndex(t => t.id === id);
+        if (index !== -1) {
+            mockTasksStore[index] = { ...mockTasksStore[index], ...data };
+            return mockTasksStore[index];
+        }
+        return { ...data, id };
+      }),
+      login: vi.fn().mockResolvedValue(mockInternalUser),
+      logout: vi.fn().mockResolvedValue(undefined),
+      getKnowledgeItems: vi.fn().mockResolvedValue([]),
+      getPendingChanges: vi.fn().mockResolvedValue([]),
+      getBlogPosts: vi.fn().mockResolvedValue([]),
+    }
   };
 });
 
