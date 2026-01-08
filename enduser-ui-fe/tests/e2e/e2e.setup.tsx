@@ -87,6 +87,37 @@ vi.mock('../../src/services/api', () => {
       getKnowledgeItems: vi.fn().mockResolvedValue([]),
       getPendingChanges: vi.fn().mockResolvedValue([]),
       getBlogPosts: vi.fn().mockResolvedValue([]),
+      searchJobs: vi.fn().mockImplementation(async (keyword) => {
+        console.log('🔍 [Mock API] searchJobs called with keyword:', keyword);
+        if (keyword === 'Error Test') {
+            console.log('⚠️ [Mock API] Throwing error for Error Test');
+            throw new Error('Simulated API Error');
+        }
+        return [
+        { 
+            title: 'Data Analyst', 
+            company: 'Retail Corp', 
+            location: 'Taipei',
+            salary: '1.2M',
+            url: 'https://example.com/job/1',
+            description: 'Looking for a data analyst...',
+            skills: ['Python', 'SQL'],
+            source: '104',
+            identified_need: 'Needs better data pipeline'
+        },
+        { 
+            title: 'Senior Data Engineer', 
+            company: 'Tech Solutions', 
+            location: 'Remote',
+            salary: '1.5M',
+            url: 'https://example.com/job/2',
+            description: 'Building data warehouse...',
+            skills: ['Spark', 'AWS'],
+            source: 'LinkedIn',
+            identified_need: 'Scaling infrastructure'
+        }
+      ];
+      }),
     }
   };
 });

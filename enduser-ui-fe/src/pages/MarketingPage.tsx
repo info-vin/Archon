@@ -56,7 +56,9 @@ Archon Sales Team`;
       
       // Scroll to pitch section
       setTimeout(() => {
-          document.getElementById('pitch-section')?.scrollIntoView({ behavior: 'smooth' });
+          if (typeof document !== 'undefined') {
+            document.getElementById('pitch-section')?.scrollIntoView({ behavior: 'smooth' });
+          }
       }, 100);
   };
 

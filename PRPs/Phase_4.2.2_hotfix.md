@@ -1,7 +1,7 @@
 ---
 name: "PRP Phase 4.2.2 Hotfix: Architecture Realignment & Mock Removal"
 description: "基於 Git 歷史數據分析，根除 `api.ts` 中的架構違規與 Mock 殘留，並修復基礎設施層的連線問題。"
-status: "Draft"
+status: "Completed"
 created_at: "2026-01-07"
 ---
 

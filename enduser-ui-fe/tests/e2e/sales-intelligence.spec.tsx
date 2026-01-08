@@ -1,42 +1,9 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { http, HttpResponse } from 'msw';
-import { server } from '../../src/mocks/server'; // Use global server
 import MarketingPage from '../../src/pages/MarketingPage';
 import React from 'react';
-import { describe, it, expect, beforeAll, afterEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
 
 describe('MarketingPage Sales Intelligence Flow', () => {
-    // Inject the specific handler for this test suite
-    beforeAll(() => {
-        server.use(
-            http.get('/api/marketing/jobs', ({ request }) => {
-                const url = new URL(request.url);
-                const keyword = url.searchParams.get('keyword');
-                
-                // Validate that the frontend sends the keyword
-                if (!keyword) {
-                    return new HttpResponse(null, { status: 400 });
-                }
-            
-                return HttpResponse.json([
-                    { 
-                        title: "Senior Data Analyst",
-                        company: "Retail Corp", 
-                        location: "Taipei",
-                        url: "http://mock-104/job1",
-                        source: "mock",
-                        identified_need: "Potential Need: BI Tool" 
-                    }
-                ]);
-            })
-        );
-    });
-
-    // Clean up runtime handlers after tests
-    afterEach(() => {
-        server.resetHandlers();
-    });
-
     it('Sales Rep flows: Search, Identify Lead, Generate Pitch', async () => {
         render(<MarketingPage />);
 
@@ -53,14 +20,18 @@ describe('MarketingPage Sales Intelligence Flow', () => {
         });
         
         // Check for Insight display
-        expect(screen.getByText(/Potential Need: BI Tool/i)).toBeInTheDocument();
+        expect(screen.getByText(/Needs better data pipeline/i)).toBeInTheDocument();
         
-        // Check for MOCK SOURCE tag
-        expect(screen.getByText(/MOCK SOURCE/i)).toBeInTheDocument();
+        // Check for Source tag (e.g., "104 DATA")
+        // There might be multiple results, so we check if at least one exists
+        const sourceTags = screen.getAllByText(/104 DATA/i);
+        expect(sourceTags.length).toBeGreaterThan(0);
+        expect(sourceTags[0]).toBeInTheDocument();
 
         // 4. 生成話術 (Generate Pitch)
-        const generateBtn = screen.getByText(/Generate Pitch/i);
-        fireEvent.click(generateBtn);
+        // Select the first generate button
+        const generateBtns = screen.getAllByText(/Generate Pitch/i);
+        fireEvent.click(generateBtns[0]);
 
         // 5. 驗證話術內容 (Verify Content)
         // Wait for the sticky panel to appear with the generated content
@@ -72,13 +43,7 @@ describe('MarketingPage Sales Intelligence Flow', () => {
     });
 
     it('handles search errors gracefully', async () => {
-        // Force API error for this specific test
-        server.use(
-            http.get('/api/marketing/jobs', () => {
-                return new HttpResponse(null, { status: 500 });
-            })
-        );
-
+        // Relies on e2e.setup.tsx mock logic: if keyword is 'Error Test', it throws.
         render(<MarketingPage />);
         
         const input = screen.getByPlaceholderText(/Enter job title/i);
