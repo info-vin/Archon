@@ -14,7 +14,7 @@ class ProfileService:
 
     def list_all_users(self) -> tuple[bool, list[dict] | str]:
         """
-        Retrieves all user profiles from the database.
+        Retrieves all user profiles from the database (basic info only).
 
         Returns:
             A tuple containing a success boolean and either a list of users or an error message.
@@ -28,6 +28,23 @@ class ProfileService:
         except Exception as e:
             logger.error(f"Failed to list profiles: {e}", exc_info=True)
             return False, f"Failed to retrieve profiles: {e}"
+
+    def list_full_profiles(self) -> tuple[bool, list[dict] | str]:
+        """
+        Retrieves all user profiles with all fields from the database.
+        Intended for administrative use.
+
+        Returns:
+            A tuple containing a success boolean and either a list of users or an error message.
+        """
+        try:
+            response = self.supabase_client.table("profiles").select("*").execute()
+            if response.data is None:
+                return True, []
+            return True, response.data
+        except Exception as e:
+            logger.error(f"Failed to list full profiles: {e}", exc_info=True)
+            return False, f"Failed to retrieve full profiles: {e}"
 
     def get_user_role(self, user_name: str) -> tuple[bool, str | None]:
         """

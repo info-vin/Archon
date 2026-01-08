@@ -459,3 +459,31 @@ async def update_user_profile_admin(
     except Exception as e:
         logfire.error(f"Error updating user profile (Admin) | error={str(e)}")
         raise HTTPException(status_code=500, detail={"error": str(e)}) from e
+
+
+@router.get("/users")
+async def list_users_admin(
+    x_user_role: str | None = Header(None, alias="X-User-Role")
+):
+    """
+    Admin-only endpoint to list all users with full profile details.
+    """
+    if x_user_role not in ["system_admin", "admin", "manager"]:
+        raise HTTPException(status_code=403, detail="Forbidden: Insufficient permissions")
+
+    try:
+        logfire.info(f"Admin listing all users | admin_role={x_user_role}")
+        profile_service = ProfileService()
+        
+        success, result = profile_service.list_full_profiles()
+        
+        if not success:
+            raise HTTPException(status_code=500, detail=f"Failed to list users: {result}")
+            
+        return result
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logfire.error(f"Error listing users (Admin) | error={str(e)}")
+        raise HTTPException(status_code=500, detail={"error": str(e)}) from e

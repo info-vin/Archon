@@ -299,9 +299,12 @@ const supabaseApi = {
     return data.task;
   },
   async getEmployees(): Promise<Employee[]> {
-    const { data, error } = await supabase!.from('profiles').select('*');
-    if (error) throw new Error(error.message);
-    return data as Employee[];
+    const response = await fetch('/api/users', { headers: await this._getHeaders() });
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.detail || 'Failed to fetch employees.');
+    }
+    return response.json();
   },
   async getAssignableUsers(): Promise<AssignableUser[]> {
     // This function calls our own backend API, which has the RBAC logic.
