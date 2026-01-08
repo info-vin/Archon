@@ -379,9 +379,25 @@ const supabaseApi = {
     }
   },
   async updateEmployee(employeeId: string, updates: Partial<Employee>): Promise<Employee> {
-    const { data, error } = await supabase!.from('profiles').update(updates).eq('id', employeeId).select().single();
-    if (error) throw new Error(error.message);
-    return data as Employee;
+    const currentUser = await this.getCurrentUser();
+    const isSelf = currentUser && currentUser.id === employeeId;
+    
+    // Determine endpoint based on whether we are updating ourselves or another user (as admin)
+    const endpoint = isSelf ? '/api/users/me' : `/api/users/${employeeId}`;
+    
+    const response = await fetch(endpoint, {
+        method: 'PUT',
+        headers: await this._getHeaders(),
+        body: JSON.stringify(updates)
+    });
+
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.detail?.error || errorData.detail || 'Failed to update employee profile.');
+    }
+    
+    const data = await response.json();
+    return data.profile;
   },
   async updateUserEmail(newEmail: string): Promise<void> {
     const { data, error } = await supabase!.auth.updateUser({ email: newEmail });

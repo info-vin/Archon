@@ -51,3 +51,55 @@ class ProfileService:
             # An exception here points to a more serious issue (e.g., DB connection)
             logger.error(f"An unexpected error occurred while retrieving role for user '{user_name}': {e}")
             return False, None
+
+    def get_profile(self, user_id: str) -> tuple[bool, dict | str | None]:
+        """
+        Retrieves a user profile by ID.
+
+        Args:
+            user_id: The UUID of the user.
+
+        Returns:
+            A tuple containing success boolean and the profile data (or error message/None).
+        """
+        try:
+            response = self.supabase_client.table("profiles").select("*").eq("id", user_id).single().execute()
+            # .single() raises an exception if not found in some versions, or returns data/error
+            # If response.data is populated, we have the user
+            return True, response.data
+        except Exception as e:
+            # Distinguish between not found and actual error if possible, but for now generic catch
+            # Supabase-py often raises postgrest.exceptions.APIError for 406/404
+            logger.warning(f"Failed to fetch profile for {user_id}: {e}")
+            return False, str(e)
+
+    def update_profile(self, user_id: str, updates: dict) -> tuple[bool, dict | str]:
+        """
+        Updates a user profile.
+
+        Args:
+            user_id: The UUID of the user to update.
+            updates: A dictionary of fields to update.
+
+        Returns:
+            A tuple containing success boolean and the updated profile data (or error message).
+        """
+        try:
+            # Prevent updating immutable fields if any (id should not be in updates ideally)
+            if "id" in updates:
+                del updates["id"]
+
+            logger.info(f"Updating profile for {user_id} with: {updates.keys()}")
+            
+            response = self.supabase_client.table("profiles").update(updates).eq("id", user_id).select().single().execute()
+            
+            # Check for data or error
+            if response.data:
+                return True, response.data
+            
+            # Fallback if no data returned (though select() should ensure it)
+            return False, "Update failed or returned no data."
+
+        except Exception as e:
+            logger.error(f"Failed to update profile for {user_id}: {e}", exc_info=True)
+            return False, str(e)

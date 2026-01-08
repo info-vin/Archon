@@ -111,10 +111,6 @@ description: "解決 `enduser-ui-fe` 功能落差、建立自動化資料庫初�
 
 > **目標**: 逐步剝離前端對 Supabase Client 的直接依賴，轉向「後端中心化」架構，以根除 Mock/Real 混合模式帶來的複雜性與 CORS 問題。
 
-### Phase 5: 架構精煉 (Architecture Refinement)
-
-> **目標**: 逐步剝離前端對 Supabase Client 的直接依賴，轉向「後端中心化」架構，以根除 Mock/Real 混合模式帶來的複雜性與 CORS 問題。
-
 ### 步驟 5.1: 清理 `supabaseApi` 實作 (Clean up supabaseApi Implementation)
 
 - **目標 (GOAL)**: 確保所有已存在後端 API 的功能 (Blog, Tasks, Projects)，前端都只呼叫 `fetch('/api/...')`，不再混用 `supabase.from(...)`。
@@ -131,7 +127,7 @@ description: "解決 `enduser-ui-fe` 功能落差、建立自動化資料庫初�
     - [ ] 刪除 `SmartAPI` wrapper 中的 Fallback 邏輯。
     - 當 `Initial Connection Check` (ping `/api/health`) 失敗時，直接拋出明確的錯誤，讓 UI 顯示「系統維護中」或「無法連線」畫面，而不是默默切換到壞掉的 Mock。
 
-### Phase 7: 落差分析 - Phase 4.0 AI as Developer (Gap Analysis)
+### Phase 6: 落差分析 - Phase 4.0 AI as Developer (Gap Analysis)
 
 
 
@@ -179,7 +175,11 @@ description: "解決 `enduser-ui-fe` 功能落差、建立自動化資料庫初�
 
 - [x] **UI Standards**: Marketing and Blog UI refactored and scrollable.
 
-- [ ] **Phase 5 Refinement**: `updateEmployee` still needs API migration; `mockApi` remains in code.
+- [~] **Phase 5 Refinement**: `mockApi` removed (Done). **Migration Status**:
+    - [x] `updateEmployee`: Migrated to `/api/users/me` & `/api/users/{id}` (Backend implemented).
+    - [ ] `updateTask`: Still using `supabase.from('archon_tasks').update`.
+    - [ ] `getEmployees`: Still using `supabase.from('profiles').select`.
+    - [ ] `getDocumentVersions`: Still using `supabase.from('archon_document_versions')`.
 
 - [x] **Phase 6 Batch Fixes**: Auth loops, Scrolling, and Blog detail logic completed and verified via Unit Tests.
 
@@ -193,9 +193,9 @@ description: "解決 `enduser-ui-fe` 功能落差、建立自動化資料庫初�
 
 - [x] **UI/Unit 測試**: `DashboardPage.test.tsx` 經修復後通過 (Props & A11y fixes)。
 
-- [ ] **E2E 測試**: **Partial/Failed**。`sales-intelligence` 與 `ai-teammate` 測試因 MSW 環境與新的 Auth 防禦邏輯不兼容而失敗。需在 Phase 4.3 進行環境重構。
+- [~] **E2E 測試**: **In Progress**. 環境配置已修復 (`vite.config.ts`)，但需持續驗證 `sales-intelligence` 在真實後端下的穩定性。
 
-- [ ] **視覺驗收**: **Known Issue**。使用者回報刷新頁面會導致短暫登出 (Session Hydration Lag)，需進一步優化 `AuthProvider`。
+- [ ] **視覺驗收**: **Known Issue**. 使用者回報刷新頁面會導致短暫登出 (Session Hydration Lag)，需進一步優化 `AuthProvider`。
 
 
 
