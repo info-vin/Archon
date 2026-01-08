@@ -322,9 +322,12 @@ const supabaseApi = {
     return response.json();
   },
   async getDocumentVersions(): Promise<DocumentVersion[]> {
-    const { data, error } = await supabase!.from('archon_document_versions').select('*');
-    if (error) throw new Error(error.message);
-    return data as DocumentVersion[];
+    const response = await fetch('/api/versions', { headers: await this._getHeaders() });
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.detail || 'Failed to fetch document versions.');
+    }
+    return response.json();
   },
   async getBlogPosts(): Promise<BlogPost[]> {
     const response = await fetch('/api/blogs', { headers: await this._getHeaders() });

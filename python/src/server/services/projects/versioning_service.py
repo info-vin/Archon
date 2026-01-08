@@ -88,40 +88,65 @@ class VersioningService:
             logger.error(f"Error creating version: {e}")
             return False, {"error": f"Error creating version: {str(e)}"}
 
-    def list_versions(self, project_id: str, field_name: str = None) -> tuple[bool, dict[str, Any]]:
+    def list_versions(self, project_id: str, field_name: str | None = None) -> tuple[bool, dict | str]:
         """
-        Get version history for project JSONB fields.
+        List versions for a project's JSONB field.
+
+        Args:
+            project_id: Project UUID
+            field_name: Optional specific field name (tasks, technical_specs, etc.)
 
         Returns:
-            Tuple of (success, result_dict)
+            Tuple (success, result_dict or error_message)
         """
         try:
-            # Build query
             query = (
                 self.supabase_client.table("archon_document_versions")
                 .select("*")
                 .eq("project_id", project_id)
+                .order("created_at", desc=True)
             )
 
             if field_name:
                 query = query.eq("field_name", field_name)
 
-            # Get versions ordered by version number descending
-            result = query.order("version_number", desc=True).execute()
-
-            if result.data is not None:
-                return True, {
-                    "project_id": project_id,
-                    "field_name": field_name,
-                    "versions": result.data,
-                    "total_count": len(result.data),
-                }
-            else:
-                return False, {"error": "Failed to retrieve version history"}
+            response = query.execute()
+            
+            return True, {
+                "versions": response.data,
+                "total_count": len(response.data)
+            }
 
         except Exception as e:
-            logger.error(f"Error getting version history: {e}")
-            return False, {"error": f"Error getting version history: {str(e)}"}
+            logger.error(f"Failed to list versions: {e}", exc_info=True)
+            return False, f"Failed to list versions: {e}"
+
+    def list_all_versions(self) -> tuple[bool, dict | str]:
+        """
+        List all versions across all projects.
+        Intended for administrative use.
+
+        Returns:
+            Tuple (success, result_dict or error_message)
+        """
+        try:
+            query = (
+                self.supabase_client.table("archon_document_versions")
+                .select("*")
+                .order("created_at", desc=True)
+                .limit(100) # Limit to 100 most recent for performance
+            )
+
+            response = query.execute()
+            
+            return True, {
+                "versions": response.data,
+                "total_count": len(response.data)
+            }
+
+        except Exception as e:
+            logger.error(f"Failed to list all versions: {e}", exc_info=True)
+            return False, f"Failed to list versions: {e}"
 
     def get_version_content(
         self, project_id: str, field_name: str, version_number: int

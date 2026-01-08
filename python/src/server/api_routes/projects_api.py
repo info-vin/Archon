@@ -1204,6 +1204,36 @@ async def delete_project_document(project_id: str, doc_id: str):
 # ==================== VERSION MANAGEMENT ENDPOINTS ====================
 
 
+@router.get("/versions")
+async def list_all_versions(x_user_role: str | None = Header(None, alias="X-User-Role")):
+    """
+    List all document versions globally.
+    Admin-only endpoint.
+    """
+    if x_user_role not in ["system_admin", "admin", "manager"]:
+        raise HTTPException(status_code=403, detail="Forbidden: Insufficient permissions")
+
+    try:
+        logfire.info(f"Listing all document versions | user_role={x_user_role}")
+
+        versioning_service = VersioningService()
+        success, result = versioning_service.list_all_versions()
+
+        if not success:
+            raise HTTPException(status_code=500, detail=result)
+
+        # Flatten the structure if needed, but here we return the 'versions' list
+        # result is {'versions': [...], 'total_count': ...}
+        # Frontend expects list of versions
+        return result.get("versions", [])
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logfire.error(f"Failed to list all versions | error={str(e)}")
+        raise HTTPException(status_code=500, detail={"error": str(e)}) from e
+
+
 @router.get("/projects/{project_id}/versions")
 async def list_project_versions(project_id: str, field_name: str = None):
     """List version history for a project's JSONB fields."""
