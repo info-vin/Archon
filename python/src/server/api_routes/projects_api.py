@@ -780,6 +780,7 @@ class UpdateTaskRequest(BaseModel):
     status: str | None = None
     priority: str | None = None
     assignee: str | None = None
+    assignee_id: str | None = None
     task_order: int | None = None
     feature: str | None = None
     attachments: list[Attachment] | None = None
@@ -828,13 +829,32 @@ class RestoreVersionRequest(BaseModel):
 async def update_task(task_id: str, request: UpdateTaskRequest, x_user_role: str | None = Header(None, alias="X-User-Role")):
     """Update a task."""
     try:
-        # RBAC Validation
-        if request.assignee is not None:
+        # Build update fields dictionary
+        update_fields = {}
+        
+        # Resolve assignee_id to assignee name if provided
+        target_assignee_name = request.assignee
+        
+        if request.assignee_id is not None:
+            profile_service = ProfileService()
+            if request.assignee_id == "": # Handle unassigning
+                target_assignee_name = "Unassigned"
+                update_fields["assignee_id"] = None
+            else:
+                success, profile = profile_service.get_profile(request.assignee_id)
+                if success and profile:
+                    target_assignee_name = profile.get("name")
+                    update_fields["assignee_id"] = request.assignee_id
+                else:
+                    logfire.warning(f"Failed to resolve assignee_id '{request.assignee_id}' to a name.")
+
+        # RBAC Validation (using the resolved or direct assignee name)
+        if target_assignee_name is not None:
             # TODO(Phase 2.9): Remove hardcoded role. See TODO.md.
             current_user_role = x_user_role or "User"
             profile_service = ProfileService()
             rbac_service = RBACService()
-            success, assignee_role = profile_service.get_user_role(request.assignee)
+            success, assignee_role = profile_service.get_user_role(target_assignee_name)
 
             if not success:
                 # Service failed, raise an internal server error
@@ -845,14 +865,14 @@ async def update_task(task_id: str, request: UpdateTaskRequest, x_user_role: str
                     raise HTTPException(status_code=403, detail=f"As a {current_user_role}, you cannot assign tasks to a {assignee_role}.")
             else:
                 agent_roles = {"Market Researcher", "Internal Knowledge Expert"}
-                if request.assignee in agent_roles:
-                    if not rbac_service.has_permission_to_assign(current_user_role, request.assignee):
-                        raise HTTPException(status_code=403, detail=f"As a {current_user_role}, you cannot assign tasks to a {request.assignee}.")
+                if target_assignee_name in agent_roles:
+                    if not rbac_service.has_permission_to_assign(current_user_role, target_assignee_name):
+                        raise HTTPException(status_code=403, detail=f"As a {current_user_role}, you cannot assign tasks to a {target_assignee_name}.")
                 else:
-                    logfire.warning(f"Assignee '{request.assignee}' not found in profiles and is not a known agent role. Skipping permission check.")
+                    logfire.warning(f"Assignee '{target_assignee_name}' not found in profiles and is not a known agent role. Skipping permission check.")
+            
+            update_fields["assignee"] = target_assignee_name
 
-        # Build update fields dictionary
-        update_fields = {}
         if request.title is not None:
             update_fields["title"] = request.title
         if request.description is not None:
@@ -861,8 +881,6 @@ async def update_task(task_id: str, request: UpdateTaskRequest, x_user_role: str
             update_fields["status"] = request.status
         if request.priority is not None:
             update_fields["priority"] = request.priority
-        if request.assignee is not None:
-            update_fields["assignee"] = request.assignee
         if request.task_order is not None:
             update_fields["task_order"] = request.task_order
         if request.feature is not None:

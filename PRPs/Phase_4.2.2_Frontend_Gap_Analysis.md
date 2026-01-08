@@ -177,9 +177,13 @@ description: "解決 `enduser-ui-fe` 功能落差、建立自動化資料庫初�
 
 - [~] **Phase 5 Refinement**: `mockApi` removed (Done). **Migration Status**:
     - [x] `updateEmployee`: Migrated to `/api/users/me` & `/api/users/{id}` (Backend implemented).
-    - [ ] `updateTask`: Still using `supabase.from('archon_tasks').update`.
+    - [x] `updateTask`: Migrated to `/api/tasks/{id}` (Backend upgraded to resolve ID to Name).
     - [ ] `getEmployees`: Still using `supabase.from('profiles').select`.
     - [ ] `getDocumentVersions`: Still using `supabase.from('archon_document_versions')`.
+    - [ ] **Auth/Admin Lifecycle** (New Findings):
+        - [ ] `adminCreateUser`: Uses `supabase.auth.signUp` + `profiles.insert/update`.
+        - [ ] `register`: Uses `supabase.auth.signUp` + `profiles.insert`.
+        - [ ] `updateUserEmail`: Uses `supabase.auth.updateUser` + `profiles.update`.
 
 - [x] **Phase 6 Batch Fixes**: Auth loops, Scrolling, and Blog detail logic completed and verified via Unit Tests.
 

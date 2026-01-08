@@ -284,24 +284,19 @@ const supabaseApi = {
     return data.items || [];
   },
   async updateTask(taskId: string, updates: UpdateTaskData): Promise<Task> {
-    let processedUpdates: any = { ...updates };
+    const response = await fetch(`/api/tasks/${taskId}`, {
+        method: 'PUT',
+        headers: await this._getHeaders(),
+        body: JSON.stringify(updates)
+    });
 
-    // If assignee_id is being updated, we also need to update the assignee name string.
-    if (updates.assignee_id) {
-        const { data: employee, error } = await supabase!.from('profiles').select('name').eq('id', updates.assignee_id).single();
-        if (employee) { 
-            processedUpdates.assignee = employee.name; 
-        } else if (error) { 
-            console.warn('Error fetching assignee name for update:', error.message); 
-            processedUpdates.assignee = 'Unassigned';
-        }
-    } else if (updates.assignee_id === null) {
-        processedUpdates.assignee = 'Unassigned';
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.detail || 'Failed to update task.');
     }
-
-    const { data, error } = await supabase!.from('archon_tasks').update(processedUpdates).eq('id', taskId).select().single();
-    if (error) throw new Error(error.message);
-    return data as Task;
+    
+    const data = await response.json();
+    return data.task;
   },
   async getEmployees(): Promise<Employee[]> {
     const { data, error } = await supabase!.from('profiles').select('*');
