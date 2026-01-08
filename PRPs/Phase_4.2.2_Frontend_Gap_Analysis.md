@@ -271,3 +271,49 @@ Sarah 的一天有 4 個小時在做「苦工」：上網搜尋公司、複製�
 **毫秒之間**，坐在對面的 PM 螢幕上的同一個卡片，像是有心電感應一般，滑順地滑進了「已完成」欄位。沒有 Loading，沒有重新整理，沒有衝突。
 這不是魔法，這是 Archon 的**零時差協作**。團隊的思緒是同步的，因為系統是同步的。
 **價值**：速度不只是快，更是流暢的團隊呼吸。
+
+---
+
+## 附錄 B：資料庫與認證同步指南 (Database & Auth Synchronization Guide)
+
+### B.1 問題背景：為什麼 Admin 變成了 Member？
+在開發過程中，我們遇到了「登入成功但權限錯誤 (406 Error)」的問題。這是因為 Supabase 的架構將使用者資料分成了兩部分：
+1.  **身份認證 (`auth.users`)**: 由 Supabase Auth (GoTrue) 管理，存儲 Email、密碼雜湊與 **UUID**。
+2.  **應用資料 (`public.profiles`)**: 由我們自己定義，存儲 `role`、`name` 等業務欄位。
+
+**核心衝突**: 當我們手動執行 SQL Seed (`seed_mock_data.sql`) 時，我們硬塞了一個固定的 UUID 給 `admin`。但如果您在前端使用 "Sign Up" 註冊同名帳號，Supabase Auth 會生成一個**全新的、隨機的 UUID**。這導致 `auth.users` 的 ID 與 `public.profiles` 的 ID **不匹配 (Mismatch)**，系統因此找不到該使用者的 Profile，前端只好 Fallback 為預設的 Member 角色。
+
+### B.2 解決方案：如何實現連動？
+
+#### 方法一：手動修復 (Manual Fix) - 適用於已損壞的資料
+使用 SQL 強制將 `profiles` 表的 ID 更新為 `auth.users` 的真實 ID：
+
+```sql
+-- 將 public.profiles 中的 admin ID 更新為 auth.users 中的真實 ID
+UPDATE public.profiles
+SET id = (SELECT id FROM auth.users WHERE email = 'admin@archon.com'),
+    role = 'system_admin' -- 順便修正角色權限
+WHERE email = 'admin@archon.com';
+```
+
+#### 方法二：自動連動 (PostgreSQL Trigger) - 最佳實踐 (Future Work)
+為了避免未來發生此問題，建議建立一個 Database Trigger。當使用者註冊 (`auth.users` 新增資料) 時，自動在 `public.profiles` 建立對應資料。
+
+```sql
+-- 範例 Trigger (尚未實作於本專案)
+create function public.handle_new_user()
+returns trigger as $
+begin
+  insert into public.profiles (id, email, role, status)
+  values (new.id, new.email, 'member', 'active'); -- 預設為 member
+  return new;
+end;
+$ language plpgsql security definer;
+
+create trigger on_auth_user_created
+  after insert on auth.users
+  for each row execute procedure public.handle_new_user();
+```
+
+### B.3 其他環境修正
+*   **Auth Timeout**: 由於 Docker 環境的網路延遲，原本 `api.ts` 中的 2 秒逾時限制過於嚴苛，導致登入後隨即被踢出。已放寬至 **10 秒**。

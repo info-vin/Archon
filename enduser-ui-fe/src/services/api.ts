@@ -173,11 +173,11 @@ const supabaseApi = {
     let sessionUser: any = null;
 
     try {
-      // Use Promise.race to enforce a strict 2s timeout on Supabase Auth session check.
-      // This prevents the entire app from hanging in Loading state if network/CORS blocks Supabase.
+      // Use Promise.race to enforce a strict timeout on Supabase Auth session check.
+      // Increased to 8s for Docker environments which might be slower.
       const sessionResult: any = await Promise.race([
         supabase.auth.getSession(),
-        new Promise((_, reject) => setTimeout(() => reject(new Error('Auth timeout')), 2000))
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Auth timeout')), 8000))
       ]);
 
       const { data: { session }, error: sessionError } = sessionResult;

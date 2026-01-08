@@ -78,9 +78,26 @@
 *   **7. 內外網隔離原則：主動防禦環境變數污染 (Internal/External Isolation: Proactive Guard against Env Pollution)**
     *   **核心**: 在 Docker 化環境中，後端傳遞給前端的環境變數（如 `SUPABASE_URL`）可能包含內部 Docker DNS（如 `supabase_kong`）。這對瀏覽器是無效的。前端代碼必須具備「主動防禦」邏輯，透過靜態特徵檢測（如檢查 URL 是否包含 `_kong`），在請求發出前攔截並切換至 Mock 模式，避免瀏覽器因 DNS 解析失敗而陷入無限 Loading。
 
+*   **8. 測試邊界與狀態化模擬 (Test Boundaries & Stateful Mocks)**
+    *   **核心**: 
+        1.  **配置互斥**: Unit Test (`vite.config.ts`) 與 E2E Test (`vitest.e2e.config.ts`) 的包含路徑必須互斥 (`exclude`)，避免同一測試在錯誤環境下重複執行。
+        2.  **狀態連動**: E2E 測試若涉及 CRUD 流程，Mock 必須具備狀態 (Stateful)，不能只回傳靜態空值，否則無法驗證「新增後顯示」的邏輯。
+        3.  **變數提升**: 謹記 `vi.mock` 的 Hoisting 特性，依賴的變數必須使用 `vi.hoisted` 定義。
+
 ---
 
 # 第三章：近期工作日誌 (Recent Journal Entries)
+
+### 2026-01-08: 誠實的架構與 Mock 的邊界 (Honest Architecture & The Boundaries of Mocks)
+*   **核心任務**: 執行 Phase 4.2.2 Hotfix，移除 `api.ts` 中的「自動 Mock Fallback」機制，並修復因此崩潰的測試。
+*   **架構決策**: 
+    *   **移除掩飾**: 刪除了 `SmartAPI`，讓前端在無法連線後端時直接報錯，而非靜默切換到假資料。這迫使開發者正視 `docker-compose` 的網路配置問題。
+    *   **Mock 分離**: 確立了 Mock 資料應僅存在於 `tests/` 或 `Storybook` 中，嚴禁汙染生產代碼 (`src/`)。
+*   **偵錯歷程**:
+    *   **測試重疊**: `make test` 失敗是因為 `vite.config.ts` (Unit Test) 未排除 `tests/e2e`，導致 E2E 測試在錯誤的環境下被重複執行。修正：在 `test.exclude` 中明確排除 E2E 目錄。
+    *   **變數提升 (Hoisting)**: `vi.mock` 會被提升到檔案最上方，導致無法存取外部定義的 `mockUser`。修正：使用 `vi.hoisted(() => ...)` 來定義 Mock 資料。
+    *   **狀態迷失**: E2E 測試失敗是因為 Mock API 是無狀態的（永遠回傳空陣列）。修正：在 `e2e.setup.tsx` 中實作了簡單的 `mockTasksStore` 陣列，讓 `createTask` 與 `getTasks` 能連動。
+    *   **DOM 殘留**: `MarketingPage` 的 `setTimeout` 在測試結束後仍嘗試存取 `document`。修正：加入 `typeof document !== 'undefined'` 檢查。
 
 ### 2026-01-07: 批量修復與 SOP 的再教育 (The Batch Fix & SOP Re-education)
 *   **核心任務**: 解決 Phase 4.2.2 遺留的四大 UI/通訊問題 (406 錯誤、專案操作、捲動、Markdown)。
