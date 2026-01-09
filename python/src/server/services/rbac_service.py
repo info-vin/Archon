@@ -23,6 +23,8 @@ class RBACService:
 
     def can_manage_content(self, current_user_role: str) -> bool:
         """Checks if the current user role has permission to manage content."""
-        # Define roles that can manage content
-        content_manager_roles = ["Admin", "SYSTEM_ADMIN"]
-        return current_user_role in content_manager_roles
+        if not current_user_role:
+            return False
+        # Define roles that can manage content (case-insensitive)
+        content_manager_roles = ["admin", "system_admin", "manager"]
+        return current_user_role.lower() in content_manager_roles

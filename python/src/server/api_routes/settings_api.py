@@ -370,7 +370,8 @@ class UserProfileUpdate(BaseModel):
     department: str | None = None
     position: str | None = None
     status: str | None = None
-    # Email and Role are sensitive and typically handled by specific flows (auth or admin only)
+    role: str | None = None  # Added for Admin updates
+    # Email is sensitive and typically handled by specific flows (auth or admin only)
 
 @router.put("/users/me")
 async def update_my_profile(
