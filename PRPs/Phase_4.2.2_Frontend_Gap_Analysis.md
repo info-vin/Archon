@@ -127,33 +127,12 @@ description: "解決 `enduser-ui-fe` 功能落差、建立自動化資料庫初�
     - [ ] 刪除 `SmartAPI` wrapper 中的 Fallback 邏輯。
     - 當 `Initial Connection Check` (ping `/api/health`) 失敗時，直接拋出明確的錯誤，讓 UI 顯示「系統維護中」或「無法連線」畫面，而不是默默切換到壞掉的 Mock。
 
-### Phase 6: 落差分析 - Phase 4.0 AI as Developer (Gap Analysis)
+### Phase 6: 落差分析 - Phase 4.0 AI as Developer (Gap Analysis & Scope Decision)
 
+> **觀察**: 經代碼審查 `ApprovalsPage.tsx`，發現當前實作與 `@PRPs/Phase_4.0_AI_as_Developer_Plan.md` 的願景存在顯著落差 (即時通知、Git 上下文、執行回饋)。
 
-
-> **觀察**: 經代碼審查 `ApprovalsPage.tsx`，發現當前實作與 `@PRPs/Phase_4.0_AI_as_Developer_Plan.md` 的願景存在顯著落差。
-
-
-
-1.  **即時通知缺席 (No WebSocket)**:
-
-    *   **願景**: 藍圖規劃透過 WebSocket 主動通知開發者有新提案。
-
-    *   **現狀**: 前端完全依賴 `useEffect` 進行一次性拉取 (Polling)，缺乏即時性。
-
-2.  **Git 上下文缺失 (Missing Git Context)**:
-
-    *   **願景**: Agent 應在獨立分支 (`feat/...`) 上工作，UI 應顯示分支資訊。
-
-    *   **現狀**: 前端僅顯示提案列表，缺乏分支切換或顯示當前分支的 UI 元素。
-
-3.  **執行回饋斷裂 (No Shell Output)**:
-
-    *   **願景**: Agent 執行測試 (`make test`) 的結果應回饋給開發者。
-
-    *   **現狀**: UI 僅有 Approve/Reject，無法查看測試日誌或執行結果。
-
-
+**決策 (Decision)**: 
+鑑於 Phase 4.2.2 的核心目標是「穩定基礎建設 (Foundation Stability)」，我們決定**延後 (Defer)** 上述 AI 開發者功能的實作，轉而優先解決影響當前使用者體驗的 **Batch Fixes** (Auth Loop, Scrolling, Blog Detail)。這些 UI/UX 修正將作為本階段的 "Phase 6" 交付成果。
 
 ---
 
@@ -278,7 +257,7 @@ Sarah 的一天有 4 個小時在做「苦工」：上網搜尋公司、複製�
 
 ---
 
-## 附錄 B：資料庫與認證同步指南 (Database & Auth Synchronization Guide)
+## 附錄 C：資料庫與認證同步指南 (Database & Auth Synchronization Guide)
 
 ### B.1 問題背景：為什麼 Admin 變成了 Member？
 在開發過程中，我們遇到了「登入成功但權限錯誤 (406 Error)」的問題。這是因為 Supabase 的架構將使用者資料分成了兩部分：
