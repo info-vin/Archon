@@ -89,11 +89,13 @@
 # 第三章：近期工作日誌 (Recent Journal Entries)
 
 ### 2026-01-09: 權限架構的遷移與完結 (Auth Architecture Migration & Completion)
-*   **核心任務**: 完成 Phase 4.2.2 的最後一哩路，並徹底執行 Phase 5 的 Auth 遷移，根除 Admin 操作時的 Session 異常。
+*   **核心任務**: 完成 Phase 4.2.2 的最後一哩路，並徹底執行 Phase 5 與 5.1 的修復，根除 Admin 操作時的 Session 異常與 500 錯誤。
 *   **架構決策**: 
-    *   **後端中心化 Auth**: 廢除了 `api.ts` 中直接呼叫 `supabase.auth.signUp` 的模式。改由後端 `AuthService` 使用 `service_role` key 執行 `admin.create_user`，徹底解決了 Admin 建立使用者時被強制登出的邏輯缺陷。
-    *   **雙重驗證**: 透過 `make test` 與 Gap Analysis 表格的逐項審查，確認了從資料庫自動化到 UI 功能的全面合規。
-*   **遺留項目**: 識別出「刷新頁面時的 Session Hydration Lag」為唯一的視覺瑕疵，雖不影響功能但影響體驗，列為後續優化項目。
+    *   **後端中心化 Auth**: 廢除了 `api.ts` 中直接呼叫 `supabase.auth.signUp` 的模式。改由後端 `AuthService` 使用 `service_role` key 代理執行 `admin.create_user`，徹底解決了 Admin 建立使用者時被強制登出的邏輯缺陷。
+    *   **同步客戶端適配**: 修正了 `profile`, `blog`, `auth` 服務中因混用同步/非同步 Supabase 語法導致的 `SyncQueryRequestBuilder` 錯誤。確立了同步環境下移除 `.select().single()` 的鏈式結構。
+    *   **RBAC 標準化**: 將 `rbac_service.py` 權限檢查改為不分大小寫，並加入 `manager` 角色，解決了管理員無法跨作者編輯內容的問題。
+    *   **雙重驗證**: 透過 `make test`、新增 Python 整合測試與 Vitest E2E 測試，確認了從底層語法到 UI 流程的全面合規。
+*   **遺留項目**: 識別出「刷新頁面時的 Session Hydration Lag」為唯一的視覺瑕疵，已透過 `onAuthStateChange` 狀態管理解決。
 
 ### 2026-01-08: 誠實的架構與 Mock 的邊界 (Honest Architecture & The Boundaries of Mocks)
 *   **核心任務**: 執行 Phase 4.2.2 Hotfix，移除 `api.ts` 中的「自動 Mock Fallback」機制，並修復因此崩潰的測試。
