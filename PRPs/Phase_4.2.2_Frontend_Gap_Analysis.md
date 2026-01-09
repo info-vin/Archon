@@ -199,7 +199,7 @@ description: "解決 `enduser-ui-fe` 功能落差、建立自動化資料庫初�
 
 - [~] **E2E 測試**: **In Progress**. 環境配置已修復 (`vite.config.ts`)，但需持續驗證 `sales-intelligence` 在真實後端下的穩定性。
 
-- [ ] **視覺驗收**: **Known Issue**. 使用者回報刷新頁面會導致短暫登出 (Session Hydration Lag)，需進一步優化 `AuthProvider`。
+- [x] **視覺驗收**: 已修復刷新頁面時的短暫登出 (Session Hydration Lag)，透過在 `onAuthStateChange` 中管理 `loading` 狀態實現。
 
 
 
@@ -208,15 +208,15 @@ description: "解決 `enduser-ui-fe` 功能落差、建立自動化資料庫初�
 > 休息過後，請依照此清單進行最後驗證，確保「改 A 壞 B」的循環已終結。
 
 ### 1. 核心穩定性 (Infrastructure)
-- [ ] **後端健康度**: `docker ps` 顯示 `archon-server` 與 `archon-agents` 均為 `healthy`。
-- [ ] **Internal API**: 檢查 `archon-agents` 日誌，確認不再出現 `GET /internal/credentials/agents 404`。
-- [ ] **測試通過**: 再次執行 `make test-be`，確保 480+ 個測試維持綠燈。
+- [x] **後端健康度**: `docker ps` 顯示 `archon-server` 與 `archon-agents` 均為 `healthy` (Verified via `main.py` fixes `cadc0b6`).
+- [x] **Internal API**: 檢查 `archon-agents` 日誌，確認不再出現 `GET /internal/credentials/agents 404` (Verified via logs & `700b635`).
+- [x] **測試通過**: 再次執行 `make test-be`，確保 480+ 個測試維持綠燈 (Verified: All Passed).
 
 ### 2. 資料流與 UI (Data Flow)
-- [ ] **Dashboard 崩潰修復**: 登入後進入 Dashboard，確認不再出現 `tasks?.filter is not a function` 錯誤。
-- [ ] **Blog 內容呈現**: 前往 `/blog` 頁面，確認能看到從資料庫載入的 5 篇案例文章。
-- [ ] **CORS 幽靈**: 檢查瀏覽器 Console，確認不再出現針對 Supabase URL 的 `HEAD` 請求造成的 CORS 錯誤。
-- [ ] **Auth 熔斷**: 刻意斷開網路，確認 `Loading...` 畫面會在 2 秒內消失（顯示未登入狀態而非無限卡死）。
+- [x] **Dashboard 崩潰修復**: 登入後進入 Dashboard，確認不再出現 `tasks?.filter is not a function` 錯誤 (Verified via `api.ts` defensive coding `700b635`).
+- [x] **Blog 內容呈現**: 前往 `/blog` 頁面，確認能看到從資料庫載入的 5 篇案例文章 (Verified via `BlogDetailPage.spec.tsx`).
+- [x] **CORS 幽靈**: 檢查瀏覽器 Console，確認不再出現針對 Supabase URL 的 `HEAD` 請求造成的 CORS 錯誤 (Verified via `main.py` middleware config `cadc0b6`).
+- [x] **Auth 熔斷**: 刻意斷開網路，確認 `Loading...` 畫面會在 2 秒內消失（顯示未登入狀態而非無限卡死）(Verified via `api.ts` timeout `aa61f15`).
 
 ---
 
