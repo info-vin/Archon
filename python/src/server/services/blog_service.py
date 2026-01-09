@@ -49,10 +49,10 @@ class BlogService:
     async def update_post(self, post_id: str, update_data: dict[str, Any]) -> tuple[bool, dict[str, Any]]:
         """Update an existing blog post."""
         try:
-            response = self.supabase.table("blog_posts").update(update_data).eq("id", post_id).select().single().execute()
-            if response.data is None:
-                return False, {"error": "Failed to update post or post not found."}
-            return True, {"post": response.data}
+            response = self.supabase.table("blog_posts").update(update_data).eq("id", post_id).execute()
+            if response.data:
+                return True, {"post": response.data[0] if isinstance(response.data, list) else response.data}
+            return False, {"error": "Failed to update post or post not found."}
         except Exception as e:
             logger.error(f"Error updating post {post_id}: {e}", exc_info=True)
             return False, {"error": str(e)}
