@@ -51,7 +51,7 @@ description: "解決管理員 (Admin) 權限不全、無法變更使用者角色
 
 - [x] **Role Update**: `settings_api.py` 支援 `role` 欄位更新。
 - [x] **Blog Admin Access**: 管理員可編輯/刪除任何人的文章 (透過修復 `rbac_service.py`)。
-- [ ] **Alice Migration**: `alice@archon.com` 已實體化並通過登入測試。
+- [x] **Alice Migration**: `alice@archon.com` 已透過 Admin Panel 成功創建，並驗證可登入與編輯個人檔案。 (流程：Admin 先新增帳號 -> Alice 登入 -> 變更資料)
 
 ---
 
