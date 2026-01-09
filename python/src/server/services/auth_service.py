@@ -1,7 +1,9 @@
-from typing import Dict, Any, Optional
+from typing import Any
+
 from supabase import Client
-from ..utils import get_supabase_client
+
 from ..config.logfire_config import get_logger
+from ..utils import get_supabase_client
 from .profile_service import ProfileService
 
 logger = get_logger(__name__)
@@ -12,11 +14,11 @@ class AuthService:
     Uses SUPABASE_SERVICE_KEY for privileged operations.
     """
 
-    def __init__(self, supabase_client: Optional[Client] = None, profile_service: Optional[ProfileService] = None):
+    def __init__(self, supabase_client: Client | None = None, profile_service: ProfileService | None = None):
         self.supabase = supabase_client or get_supabase_client()
         self.profile_service = profile_service or ProfileService(self.supabase)
 
-    def create_user_by_admin(self, email: str, password: str, name: str, role: str, status: str = 'active') -> Dict[str, Any]:
+    def create_user_by_admin(self, email: str, password: str, name: str, role: str, status: str = 'active') -> dict[str, Any]:
         """
         Creates a new user using the Admin API (does not log out the current user).
         Also ensures a profile is created in public.profiles.
@@ -42,13 +44,13 @@ class AuthService:
                 "email_confirm": True,
                 "user_metadata": {"name": name}
             }
-            
+
             # Use auth.admin.create_user (GoTrue Admin API)
             user_response = self.supabase.auth.admin.create_user(attributes)
-            
+
             if not user_response.user:
                 raise ValueError("Failed to create auth user: No user returned.")
-            
+
             user_id = user_response.user.id
             logger.info(f"Auth user created: {user_id}")
 
@@ -66,7 +68,7 @@ class AuthService:
             # Insert into public.profiles
             # We use upsert to be safe, though create_user should ensure new ID.
             response = self.supabase.table("profiles").upsert(profile_data).select().single().execute()
-            
+
             if response.data:
                 logger.info(f"Profile created for: {user_id}")
                 return response.data
@@ -81,28 +83,28 @@ class AuthService:
             logger.error(f"Error in create_user_by_admin: {e}", exc_info=True)
             raise e
 
-    def register_user(self, email: str, password: str, name: str) -> Dict[str, Any]:
+    def register_user(self, email: str, password: str, name: str) -> dict[str, Any]:
         """
         Public registration.
         """
         try:
             logger.info(f"Public registration for: {email}")
 
-            # For public registration, we use standard signUp (not admin), 
+            # For public registration, we use standard signUp (not admin),
             # BUT since this is server-side with Service Key, strictly speaking we are admin.
             # However, to simulate 'public' sign up, we can still use auth.sign_up
             # but that logs us in as that user on this client instance (potentially).
             # BETTER APPROACH: Use admin.create_user but with default role 'member'.
-            
+
             attributes = {
                 "email": email,
                 "password": password,
                 "email_confirm": True, # Auto-confirm for simplicity in this app context
                 "user_metadata": {"name": name}
             }
-            
+
             user_response = self.supabase.auth.admin.create_user(attributes)
-            
+
             if not user_response.user:
                 raise ValueError("Registration failed in auth.")
 
@@ -118,7 +120,7 @@ class AuthService:
             }
 
             response = self.supabase.table("profiles").insert(profile_data).select().single().execute()
-            
+
             if response.data:
                 return response.data
             raise ValueError("Profile creation failed.")
@@ -133,13 +135,13 @@ class AuthService:
         """
         try:
             logger.info(f"Updating email for {user_id} to {new_email}")
-            
+
             # 1. Update Auth
             self.supabase.auth.admin.update_user_by_id(user_id, {"email": new_email})
-            
+
             # 2. Update Profile
             self.supabase.table("profiles").update({"email": new_email}).eq("id", user_id).execute()
-            
+
         except Exception as e:
             logger.error(f"Error updating email: {e}", exc_info=True)
             raise e

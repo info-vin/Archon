@@ -88,6 +88,13 @@
 
 # 第三章：近期工作日誌 (Recent Journal Entries)
 
+### 2026-01-09: 權限架構的遷移與完結 (Auth Architecture Migration & Completion)
+*   **核心任務**: 完成 Phase 4.2.2 的最後一哩路，並徹底執行 Phase 5 的 Auth 遷移，根除 Admin 操作時的 Session 異常。
+*   **架構決策**: 
+    *   **後端中心化 Auth**: 廢除了 `api.ts` 中直接呼叫 `supabase.auth.signUp` 的模式。改由後端 `AuthService` 使用 `service_role` key 執行 `admin.create_user`，徹底解決了 Admin 建立使用者時被強制登出的邏輯缺陷。
+    *   **雙重驗證**: 透過 `make test` 與 Gap Analysis 表格的逐項審查，確認了從資料庫自動化到 UI 功能的全面合規。
+*   **遺留項目**: 識別出「刷新頁面時的 Session Hydration Lag」為唯一的視覺瑕疵，雖不影響功能但影響體驗，列為後續優化項目。
+
 ### 2026-01-08: 誠實的架構與 Mock 的邊界 (Honest Architecture & The Boundaries of Mocks)
 *   **核心任務**: 執行 Phase 4.2.2 Hotfix，移除 `api.ts` 中的「自動 Mock Fallback」機制，並修復因此崩潰的測試。
 *   **架構決策**: 

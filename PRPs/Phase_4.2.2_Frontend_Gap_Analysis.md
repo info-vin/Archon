@@ -33,47 +33,26 @@ description: "解決 `enduser-ui-fe` 功能落差、建立自動化資料庫初�
 ### 全面審計所有 migration SQL 檔案 (AUDIT All migration/*.sql Files):
 
 - **目標 (GOAL)**: 在自動化之前，確保**所有 10+ 個** SQL 腳本（包含 Schema 定義與種子資料）都嚴格遵守 `CONTRIBUTING_tw.md` 的冪等性規則。
-- **範圍 (SCOPE)**: `migration/000_*.sql` 到 `migration/006_*.sql` 以及所有 `migration/seed_*.sql`。
-- **分析 (ANALYSIS)**:
-    - **結構檢查 (Schema)**: 檢查 `CREATE TABLE`, `ADD COLUMN`, `CREATE FUNCTION` 是否都加上了 `IF NOT EXISTS` 或 `OR REPLACE`。
-    - **資料檢查 (Data)**: 檢查 `seed` 檔案中的 `INSERT` 語句。
-    - **違規偵測**: 尋找缺乏 `ON CONFLICT DO NOTHING` 或 `ON CONFLICT DO UPDATE` 的裸 `INSERT` 語句。
-- **行動 (ACTION)**: 重構所有不合規的 SQL 檔案，確保重複執行也不會報錯或產生重複資料。
+- **行動 (ACTION)**: [x] 重構所有不合規的 SQL 檔案，確保重複執行也不會報錯或產生重複資料。
 - **驗證 (VALIDATE)**: 連續執行兩次 `psql < migration/00x_...sql`。第二次執行必須完全無錯且不改變資料狀態。
 
 ### 實作 scripts/init_db.py 與更新 Makefile (IMPLEMENT scripts/init_db.py & UPDATE Makefile):
 
 - **目標 (GOAL)**: 用一個穩健的 Python 腳本取代手動、易錯的 SQL 執行過程，作為資料庫狀態的「單一事實來源」。
-- **邏輯 (LOGIC)**:
-    1.  **等待連線**: 實作資料庫連線重試機制 (Wait-for-IT)。
-    2.  **基建檢查**: 檢查 `schema_migrations` 表是否存在（若無則優先執行 `002` 腳本建立）。
-    3.  **依序執行**: 按照字母/數字順序掃描 `migration/*.sql`（排除 `backup` 與 `RESET` 等工具腳本）。
-    4.  **版本比對**: 檢查檔案版本號是否已存在於 `schema_migrations`。
-    5.  **執行與註冊**: 若未套用則執行 SQL -> 成功後 `INSERT INTO schema_migrations`。
-- **MAKEFILE**: 新增 `db-init` 目標，執行 `uv run python scripts/init_db.py`。
-- **驗證 (VALIDATE)**:
-    - `make clean` (徹底清理環境)
-    - `make dev-docker` (啟動空資料庫)
-    - `make db-init` (應套用所有腳本)
-    - `make db-init` (再次執行，應全部跳過或無變更)
+- **行動 (ACTION)**: [x] 實作資料庫連線重試、版本比對與自動註冊邏輯。
+- **MAKEFILE**: [x] 新增 `db-init` 目標。
+- **驗證 (VALIDATE)**: `make clean` -> `make dev-docker` -> `make db-init` (Idempotent check).
 
 ### Phase 2: 關鍵 UI 與狀態修復 (Critical UI/State Fixes)
 
 ### 除錯與修復專案/任務建立 (DEBUG & FIX Project/Task Creation):
 
 - **問題 (PROBLEM)**: 「新增專案」按鈕消失或無反應；任務列表未刷新。
-- **調查 (INVESTIGATION)**:
-    - **主動防禦檢查**: 檢查 `api.ts`。是否因為 `GET /api/projects` 回傳空列表 (有效狀態) 或 404 (錯誤) 而導致系統錯誤地降級為 Mock 模式？
-    - **TanStack Query**: 檢查 `useCreateProject` mutation。成功後是否呼叫了 `queryClient.invalidateQueries({ queryKey: ['projects'] })`？
 - **行動 (ACTION)**:
-    - 確保 `api.ts` 能區分「網路錯誤」(觸發 Mock) 與「空資料」(有效狀態)。
-    - 修復 `useProjects.ts` / `useTasks.ts` mutations 中的 `onSuccess` 回呼。
-    - 如果「新增專案」按鈕是根據權限渲染的，確保預設權限設定正確。
-- **驗證 (VALIDATE)**:
-    1.  打開 `http://localhost:5173`。
-    2.  點擊 "New Project"。
-    3.  填寫表單 -> 提交。
-    4.  **預期結果**: Network tab 顯示 `POST /api/projects` 200 OK。列表立即更新，無需重新整理頁面。
+    - [x] 確保 `api.ts` 能區分「網路錯誤」(觸發 Mock) 與「空資料」(有效狀態)。
+    - [x] 修復 `useProjects.ts` / `useTasks.ts` mutations 中的 `onSuccess` 回呼。
+    - [x] 如果「新增專案」按鈕是根據權限渲染的，確保預設權限設定正確。
+- **驗證 (VALIDATE)**: `POST /api/projects` 200 OK，列表立即更新。
 
 ### Phase 3: 資料完整性與視覺化 (Data Integrity & Visualization)
 
@@ -81,31 +60,29 @@ description: "解決 `enduser-ui-fe` 功能落差、建立自動化資料庫初�
 
 - **問題 (PROBLEM)**: 儘管有 `seed_blog_posts.sql`，部落格頁面仍然空白。
 - **行動 (ACTION)**:
-    - 確認 `Phase 1` 已成功寫入 `blog_posts` 資料表。
-    - 檢查 `enduser-ui-fe/src/pages/BlogPage.tsx`。確保它呼叫的是 `api.getBlogPosts()` 而不是已移除的 `MOCK_BLOG_POSTS`。
-    - 檢查後端 `blog_api.py`。確認它是否正確查詢了 `blog_posts` 表。
-- **驗證 (VALIDATE)**: `curl http://localhost:8000/api/blog` 回傳非空 JSON 陣列。瀏覽器正確顯示 Case 1-5 卡片。
+    - [x] 確認 `Phase 1` 已成功寫入 `blog_posts` 資料表。
+    - [x] 檢查並更新 `BlogPage.tsx` 使用 `api.getBlogPosts()`。
+    - [x] 實作 `BlogDetailPage.tsx` 與 Markdown 渲染。
+- **驗證 (VALIDATE)**: `/api/blog` 回傳非空，瀏覽器正確顯示案例卡片。
 
 ### 連接 HR 分析儀表板 (CONNECT HR Analytics Dashboard):
 
 - **問題 (PROBLEM)**: Dashboard 統計數據是靜態的或損壞的。
 - **行動 (ACTION)**:
-    - 審計 `stats_api.py`。確保端點在資料表為空時能正確處理 `COUNT(*)`（回傳 0，而不是 500）。
-    - 將前端 Dashboard 元件連接到 `useStats` hook (包裝 `api.getStats`)。
-- **驗證 (VALIDATE)**: 建立一個新任務。檢查 Dashboard 中的 "Active Tasks" 數字是否自動 +1。
+    - [x] 審計 `stats_api.py` 處理空表計數。
+    - [x] 將 Dashboard 元件連接到 `useStats` hook。
+- **驗證 (VALIDATE)**: 建立新任務後，Dashboard 數字自動更新。
 
 ### Phase 4: 銷售情資 UI 優化 (Sales Intelligence UI Polish)
 
 ### 標準化銷售情資元件 (STANDARDIZE Sales Intelligence Components):
 
 - **目標 (GOAL)**: 將粗糙的 UI 與 `UI_STANDARDS.md` 對齊。
-- **參考 (REFERENCE)**: `PRPs/ai_docs/UI_STANDARDS.md` (Tailwind v4, Radix UI).
 - **行動 (ACTION)**:
-    - 重構 `LeadsList` 與 `MarketInsights` 元件。
-    - 使用 `grid` 佈局卡片。
-    - 為非同步資料狀態添加骨架屏 (`<Skeleton className="..." />`)。
-    - 確保語意化 HTML (避免 `div` soup)。
-- **驗證 (VALIDATE)**: 視覺檢查。控制台無 "unique key prop" 或 "invalid DOM nesting" 警告。
+    - [x] 重構 `LeadsList` 與 `MarketInsights` 元件。
+    - [x] 使用 `grid` 佈局與 Tailwind v4 標準。
+    - [x] 為非同步狀態添加骨架屏。
+- **驗證 (VALIDATE)**: 視覺檢查一致，無 Console 錯誤。
 
 ### Phase 5: 架構精煉 (Architecture Refinement)
 
@@ -115,17 +92,17 @@ description: "解決 `enduser-ui-fe` 功能落差、建立自動化資料庫初�
 
 - **目標 (GOAL)**: 確保所有已存在後端 API 的功能 (Blog, Tasks, Projects)，前端都只呼叫 `fetch('/api/...')`，不再混用 `supabase.from(...)`。
 - **行動 (ACTION)**:
-    - 審計 `enduser-ui-fe/src/services/api.ts` 中的 `supabaseApi` 物件。
-    - **待辦**: `updateEmployee` 仍直接呼叫 Supabase，需遷移至後端 API。
-    - 移除不再需要的 `supabase` export，封裝在 `api.ts` 內部僅供 Auth 使用。
+    - [x] 審計 `enduser-ui-fe/src/services/api.ts` 中的 `supabaseApi` 物件。
+    - [x] 遷移 `updateEmployee` 至後端 API。
+    - [x] 限制 `supabase` 匯出僅供 Auth Session 監聽使用。
 
 ### 步驟 5.2: 移除 Mock Mode 殘渣 (Remove Legacy Mock Mode)
 
 - **目標 (GOAL)**: 既然 Mock Data 已刪除，`mockApi` 應被徹底移除，讓系統行為更單純。
 - **行動 (ACTION)**:
-    - [ ] 刪除 `api.ts` 中的 `mockApi` 物件及其定義。
-    - [ ] 刪除 `SmartAPI` wrapper 中的 Fallback 邏輯。
-    - 當 `Initial Connection Check` (ping `/api/health`) 失敗時，直接拋出明確的錯誤，讓 UI 顯示「系統維護中」或「無法連線」畫面，而不是默默切換到壞掉的 Mock。
+    - [x] 刪除 `api.ts` 中的 `mockApi` 物件及其定義。
+    - [x] 刪除 `SmartAPI` wrapper 中的 Fallback 邏輯。
+    - [x] 當 `Initial Connection Check` (ping `/api/health`) 失敗時，直接拋出明確的錯誤，讓 UI 顯示「系統維護中」或「無法連線」畫面，而不是默默切換到壞掉的 Mock。
 
 ### Phase 6: 落差分析 - Phase 4.0 AI as Developer (Gap Analysis & Scope Decision)
 
@@ -154,7 +131,7 @@ description: "解決 `enduser-ui-fe` 功能落差、建立自動化資料庫初�
 
 - [x] **UI Standards**: Marketing and Blog UI refactored and scrollable.
 
-- [~] **Phase 5 Refinement**: `mockApi` removed (Done). **Migration Status**:
+- [x] **Phase 5 Refinement**: `mockApi` removed & Auth migrated to Backend. **Migration Status**:
     - [x] `updateEmployee`: Migrated to `/api/users/me` & `/api/users/{id}` (Backend implemented).
     - [x] `updateTask`: Migrated to `/api/tasks/{id}` (Backend upgraded to resolve ID to Name).
     - [x] `getEmployees`: Migrated to `/api/users` (Admin Only, backend implemented).
@@ -176,7 +153,7 @@ description: "解決 `enduser-ui-fe` 功能落差、建立自動化資料庫初�
 
 - [x] **UI/Unit 測試**: `DashboardPage.test.tsx` 經修復後通過 (Props & A11y fixes)。
 
-- [~] **E2E 測試**: **In Progress**. 環境配置已修復 (`vite.config.ts`)，但需持續驗證 `sales-intelligence` 在真實後端下的穩定性。
+- [x] **E2E 測試**: **Verified**. 已執行 `make test-fe` 確認 `sales-intelligence` 與核心工作流在真實後端環境下穩定。
 
 - [x] **視覺驗收**: 已修復刷新頁面時的短暫登出 (Session Hydration Lag)，透過在 `onAuthStateChange` 中管理 `loading` 狀態實現。
 

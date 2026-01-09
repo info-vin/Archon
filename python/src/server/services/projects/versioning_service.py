@@ -111,7 +111,7 @@ class VersioningService:
                 query = query.eq("field_name", field_name)
 
             response = query.execute()
-            
+
             return True, {
                 "versions": response.data,
                 "total_count": len(response.data)
@@ -138,7 +138,7 @@ class VersioningService:
             )
 
             response = query.execute()
-            
+
             return True, {
                 "versions": response.data,
                 "total_count": len(response.data)

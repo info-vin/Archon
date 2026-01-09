@@ -1,6 +1,7 @@
-from fastapi import APIRouter, HTTPException, Depends, Header
+
+from fastapi import APIRouter, Depends, Header, HTTPException
 from pydantic import BaseModel
-from typing import Optional, Dict, Any
+
 from ..services.auth_service import AuthService
 from ..utils import get_supabase_client
 
@@ -24,7 +25,7 @@ class UpdateEmailRequest(BaseModel):
 def get_auth_service():
     return AuthService()
 
-def verify_admin_role(x_user_role: Optional[str] = Header(None, alias="X-User-Role")):
+def verify_admin_role(x_user_role: str | None = Header(None, alias="X-User-Role")):
     """
     Simple RBAC check based on trusted header from API Gateway / Client.
     In a real prod env, we would verify the JWT token claims.
@@ -50,7 +51,7 @@ async def admin_create_user(
         )
         return {"profile": profile}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 @router.post("/auth/register")
 async def register_user(
@@ -65,12 +66,12 @@ async def register_user(
         )
         return {"profile": profile}
     except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e)) from e
 
 @router.put("/auth/email")
 async def update_email(
     request: UpdateEmailRequest,
-    authorization: Optional[str] = Header(None),
+    authorization: str | None = Header(None),
     service: AuthService = Depends(get_auth_service)
 ):
     """
@@ -79,9 +80,9 @@ async def update_email(
     """
     if not authorization or not authorization.startswith("Bearer "):
         raise HTTPException(status_code=401, detail="Missing or invalid Authorization header")
-    
+
     token = authorization.split(" ")[1]
-    
+
     try:
         # Get User ID from Supabase using the token
         # We use a non-admin client for this check to verify the token is valid for a user
@@ -89,14 +90,14 @@ async def update_email(
         # Safer: Use supabase.auth.get_user(token)
         supabase = get_supabase_client()
         user_response = supabase.auth.get_user(token)
-        
+
         if not user_response.user:
             raise HTTPException(status_code=401, detail="Invalid token")
-            
+
         user_id = user_response.user.id
-        
+
         service.update_user_email(user_id, request.new_email)
         return {"success": True}
-        
+
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e

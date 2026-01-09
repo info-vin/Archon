@@ -1,8 +1,10 @@
-import pytest
 from unittest.mock import MagicMock
+
+import pytest
 from fastapi.testclient import TestClient
-from src.server.main import app
+
 from src.server.api_routes.auth_api import get_auth_service
+from src.server.main import app
 from src.server.services.auth_service import AuthService
 
 # Create a mock service
@@ -33,7 +35,7 @@ def test_admin_create_user_success():
     }
 
     response = client.post("/api/admin/users", json=payload, headers=headers)
-    
+
     assert response.status_code == 200
     assert response.json()["profile"]["email"] == "test@example.com"
     mock_service.create_user_by_admin.assert_called_once()
@@ -49,7 +51,7 @@ def test_admin_create_user_forbidden():
     }
 
     response = client.post("/api/admin/users", json=payload, headers=headers)
-    
+
     assert response.status_code == 403
 
 def test_register_user_success():
@@ -64,10 +66,10 @@ def test_register_user_success():
     }
 
     response = client.post("/api/auth/register", json=payload)
-    
+
     # Check if 400 is returned (maybe validation error?)
     if response.status_code != 200:
         print(response.json())
-    
+
     assert response.status_code == 200
     mock_service.register_user.assert_called_once()

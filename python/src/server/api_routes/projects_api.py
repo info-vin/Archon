@@ -831,10 +831,10 @@ async def update_task(task_id: str, request: UpdateTaskRequest, x_user_role: str
     try:
         # Build update fields dictionary
         update_fields = {}
-        
+
         # Resolve assignee_id to assignee name if provided
         target_assignee_name = request.assignee
-        
+
         if request.assignee_id is not None:
             profile_service = ProfileService()
             if request.assignee_id == "": # Handle unassigning
@@ -870,7 +870,7 @@ async def update_task(task_id: str, request: UpdateTaskRequest, x_user_role: str
                         raise HTTPException(status_code=403, detail=f"As a {current_user_role}, you cannot assign tasks to a {target_assignee_name}.")
                 else:
                     logfire.warning(f"Assignee '{target_assignee_name}' not found in profiles and is not a known agent role. Skipping permission check.")
-            
+
             update_fields["assignee"] = target_assignee_name
 
         if request.title is not None:

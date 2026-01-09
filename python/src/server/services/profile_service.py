@@ -107,13 +107,13 @@ class ProfileService:
                 del updates["id"]
 
             logger.info(f"Updating profile for {user_id} with: {updates.keys()}")
-            
+
             response = self.supabase_client.table("profiles").update(updates).eq("id", user_id).select().single().execute()
-            
+
             # Check for data or error
             if response.data:
                 return True, response.data
-            
+
             # Fallback if no data returned (though select() should ensure it)
             return False, "Update failed or returned no data."
 

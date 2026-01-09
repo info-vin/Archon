@@ -10,14 +10,14 @@ Handles:
 from datetime import datetime
 from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException, Header
+from fastapi import APIRouter, Depends, Header, HTTPException
 from pydantic import BaseModel
 
 # Import logging
 from ..config.logfire_config import logfire
 from ..services.credential_service import CredentialService, credential_service, initialize_credentials
-from ..services.settings_service import SettingsService
 from ..services.profile_service import ProfileService
+from ..services.settings_service import SettingsService
 from ..utils import get_supabase_client
 
 router = APIRouter(prefix="/api", tags=["settings"])
@@ -383,7 +383,7 @@ async def update_my_profile(
     Prioritizes Supabase Auth Token for ID extraction.
     """
     user_id = None
-    
+
     # 1. Try to get ID from Supabase Auth Token (Most Secure)
     if authorization and authorization.startswith("Bearer "):
         token = authorization.split(" ")[1]
@@ -407,20 +407,20 @@ async def update_my_profile(
     try:
         logfire.info(f"Updating profile for user: {user_id}")
         profile_service = ProfileService()
-        
+
         # Filter out None values
         update_data = {k: v for k, v in updates.model_dump().items() if v is not None}
-        
+
         if not update_data:
             return {"success": True, "message": "No changes provided"}
 
         success, result = profile_service.update_profile(user_id, update_data)
-        
+
         if not success:
             raise HTTPException(status_code=500, detail=f"Failed to update profile: {result}")
-            
+
         return {"success": True, "profile": result}
-        
+
     except HTTPException:
         raise
     except Exception as e:
@@ -444,16 +444,16 @@ async def update_user_profile_admin(
     try:
         logfire.info(f"Admin updating profile for user: {user_id} | admin_role={x_user_role}")
         profile_service = ProfileService()
-        
+
         update_data = {k: v for k, v in updates.model_dump().items() if v is not None}
-        
+
         success, result = profile_service.update_profile(user_id, update_data)
-        
+
         if not success:
             raise HTTPException(status_code=500, detail=f"Failed to update profile: {result}")
-            
+
         return {"success": True, "profile": result}
-        
+
     except HTTPException:
         raise
     except Exception as e:
@@ -474,14 +474,14 @@ async def list_users_admin(
     try:
         logfire.info(f"Admin listing all users | admin_role={x_user_role}")
         profile_service = ProfileService()
-        
+
         success, result = profile_service.list_full_profiles()
-        
+
         if not success:
             raise HTTPException(status_code=500, detail=f"Failed to list users: {result}")
-            
+
         return result
-        
+
     except HTTPException:
         raise
     except Exception as e:
