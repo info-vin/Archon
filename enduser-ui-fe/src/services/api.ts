@@ -111,57 +111,39 @@ const supabaseApi = {
     throw new Error("Login failed. Please check your credentials.");
   },
   async register(credentials: RegistrationData): Promise<Employee | null> {
-    const { data, error } = await supabase!.auth.signUp({
-      email: credentials.email,
-      password: credentials.password!,
-      options: { data: { name: credentials.name, avatar_url: `https://i.pravatar.cc/150?u=${credentials.email}` } }
+    const response = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(credentials)
     });
-    if (error) throw new Error(error.message);
-    if (data.user) {
-      const { error: profileError } = await supabase!.from('profiles').insert({ id: data.user.id, name: credentials.name, email: credentials.email, avatar: `https://i.pravatar.cc/150?u=${data.user.id}`, role: EmployeeRole.MEMBER, status: 'active' });
-      if (profileError) throw new Error(profileError.message);
-      return this.getCurrentUser();
+
+    if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Registration failed.');
     }
-    throw new Error("Registration failed.");
+
+    const data = await response.json();
+    
+    // Auto-login after registration is tricky without password transmission again.
+    // Ideally backend registers AND logs in, returning a session token.
+    // For now, we assume user needs to login manually or we auto-login with credentials provided.
+    // To match previous behavior:
+    return this.login({ email: credentials.email, password: credentials.password });
   },
   async adminCreateUser(userData: AdminNewUserData): Promise<Employee> {
-    const { data: authData, error: signUpError } = await supabase!.auth.signUp({
-        email: userData.email,
-        password: userData.password,
-        options: { data: { name: userData.name } }
+    const response = await fetch('/api/admin/users', {
+        method: 'POST',
+        headers: await this._getHeaders(), // Admin role header will be attached if current user is admin
+        body: JSON.stringify(userData)
     });
 
-    if (signUpError) throw new Error(signUpError.message);
-    if (!authData.user) throw new Error("User creation failed in auth.");
-
-    const profileData = {
-        id: authData.user.id,
-        name: userData.name,
-        email: userData.email,
-        role: userData.role,
-        status: userData.status,
-        avatar: `https://i.pravatar.cc/150?u=${authData.user.id}`
-    };
-
-    const { data: newProfile, error: profileError } = await supabase! 
-        .from('profiles')
-        .insert(profileData)
-        .select()
-        .single();
-
-    if (profileError) {
-        console.error("Failed to insert profile, trying to update as a fallback...", profileError);
-        const { data: updatedProfile, error: updateError } = await supabase! 
-            .from('profiles')
-            .update(profileData)
-            .eq('id', authData.user.id)
-            .select()
-            .single();
-        if (updateError) throw new Error(`Failed to create or update profile: ${updateError.message}`);
-        return updatedProfile as Employee;
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.detail || 'Failed to create user.');
     }
 
-    return newProfile as Employee;
+    const data = await response.json();
+    return data.profile;
   },
   async logout(): Promise<void> {
     const { error } = await supabase!.auth.signOut();
@@ -401,11 +383,15 @@ const supabaseApi = {
     return data.profile;
   },
   async updateUserEmail(newEmail: string): Promise<void> {
-    const { data, error } = await supabase!.auth.updateUser({ email: newEmail });
-    if (error) throw new Error(error.message);
-    if (data.user) {
-        const { error: profileError } = await supabase!.from('profiles').update({ email: newEmail }).eq('id', data.user.id);
-        if (profileError) console.warn('Auth email updated, but profile email failed to update:', profileError.message);
+    const response = await fetch('/api/auth/email', {
+        method: 'PUT',
+        headers: await this._getHeaders(),
+        body: JSON.stringify({ new_email: newEmail })
+    });
+
+    if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Failed to update email.');
     }
   },
   async updateUserPassword(newPassword: string): Promise<void> {

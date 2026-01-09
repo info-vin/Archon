@@ -180,10 +180,10 @@ description: "解決 `enduser-ui-fe` 功能落差、建立自動化資料庫初�
     - [x] `updateTask`: Migrated to `/api/tasks/{id}` (Backend upgraded to resolve ID to Name).
     - [x] `getEmployees`: Migrated to `/api/users` (Admin Only, backend implemented).
     - [x] `getDocumentVersions`: Migrated to `/api/versions` (Admin Only, backend implemented).
-    - [ ] **Auth/Admin Lifecycle** (In Progress):
-        - [ ] `adminCreateUser`: Uses `supabase.auth.signUp` + `profiles.insert/update`.
-        - [ ] `register`: Uses `supabase.auth.signUp` + `profiles.insert`.
-        - [ ] `updateUserEmail`: Uses `supabase.auth.updateUser` + `profiles.update`.
+    - [x] **Auth/Admin Lifecycle** (Completed):
+        - [x] `adminCreateUser`: Uses `POST /api/admin/users` (Backend Admin Auth).
+        - [x] `register`: Uses `POST /api/auth/register` (Backend Auth).
+        - [x] `updateUserEmail`: Uses `PUT /api/auth/email` (Backend Auth).
 
 - [x] **Phase 6 Batch Fixes**: Auth loops, Scrolling, and Blog detail logic completed and verified via Unit Tests.
 
