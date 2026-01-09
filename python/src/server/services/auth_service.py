@@ -65,17 +65,18 @@ class AuthService:
                 "avatar": f"https://i.pravatar.cc/150?u={user_id}"
             }
 
-                        # Insert into public.profiles
-                        # We use upsert to be safe, though create_user should ensure new ID.
-                        # Fix: Simplify query chain for sync client compatibility
-                        response = self.supabase.table("profiles").upsert(profile_data).execute()
-                        
-                        # For upsert, if we want data back, we might need to fetch it or rely on execute returning it if configured
-                        if response.data:
-                            logger.info(f"Profile created for: {user_id}")
-                            # Return the first item if list
-                            return response.data[0] if isinstance(response.data, list) and response.data else response.data
-                        else:                # Fallback: If upsert returns nothing (rare), fetch it
+            # Insert into public.profiles
+            # We use upsert to be safe, though create_user should ensure new ID.
+            # Fix: Simplify query chain for sync client compatibility
+            response = self.supabase.table("profiles").upsert(profile_data).execute()
+
+            # For upsert, if we want data back, we might need to fetch it or rely on execute returning it if configured
+            if response.data:
+                logger.info(f"Profile created for: {user_id}")
+                # Return the first item if list
+                return response.data[0] if isinstance(response.data, list) and response.data else response.data
+            else:
+                # Fallback: If upsert returns nothing (rare), fetch it
                 success, profile = self.profile_service.get_profile(user_id)
                 if success and profile:
                     return profile
@@ -112,20 +113,20 @@ class AuthService:
 
             user_id = user_response.user.id
 
-                        profile_data = {
-                            "id": user_id,
-                            "email": email,
-                            "name": name,
-                            "role": "member", # Default role
-                            "status": "active",
-                            "avatar": f"https://i.pravatar.cc/150?u={user_id}"
-                        }
-            
-                        response = self.supabase.table("profiles").insert(profile_data).execute()
-                        
-                        if response.data:
-                            return response.data[0] if isinstance(response.data, list) else response.data
-                        raise ValueError("Profile creation failed.")
+            profile_data = {
+                "id": user_id,
+                "email": email,
+                "name": name,
+                "role": "member", # Default role
+                "status": "active",
+                "avatar": f"https://i.pravatar.cc/150?u={user_id}"
+            }
+
+            response = self.supabase.table("profiles").insert(profile_data).execute()
+
+            if response.data:
+                return response.data[0] if isinstance(response.data, list) else response.data
+            raise ValueError("Profile creation failed.")
         except Exception as e:
             logger.error(f"Error in register_user: {e}", exc_info=True)
             raise e

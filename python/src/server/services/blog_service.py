@@ -38,10 +38,11 @@ class BlogService:
     async def create_post(self, post_data: dict[str, Any]) -> tuple[bool, dict[str, Any]]:
         """Create a new blog post."""
         try:
-            response = self.supabase.table("blog_posts").insert(post_data).select().single().execute()
-            if response.data is None:
-                return False, {"error": "Failed to create post."}
-            return True, {"post": response.data}
+            # Fix: Simplify query chain for sync client compatibility
+            response = self.supabase.table("blog_posts").insert(post_data).execute()
+            if response.data:
+                return True, {"post": response.data[0] if isinstance(response.data, list) else response.data}
+            return False, {"error": "Failed to create post."}
         except Exception as e:
             logger.error(f"Error creating post: {e}", exc_info=True)
             return False, {"error": str(e)}

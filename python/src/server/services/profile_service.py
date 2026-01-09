@@ -108,11 +108,13 @@ class ProfileService:
 
             logger.info(f"Updating profile for {user_id} with: {updates.keys()}")
 
-            response = self.supabase_client.table("profiles").update(updates).eq("id", user_id).select().single().execute()
+            # Fix: Simplify query chain for sync client compatibility (remove .select().single())
+            response = self.supabase_client.table("profiles").update(updates).eq("id", user_id).execute()
 
             # Check for data or error
             if response.data:
-                return True, response.data
+                # Return first item if list, else item
+                return True, response.data[0] if isinstance(response.data, list) else response.data
 
             # Fallback if no data returned (though select() should ensure it)
             return False, "Update failed or returned no data."

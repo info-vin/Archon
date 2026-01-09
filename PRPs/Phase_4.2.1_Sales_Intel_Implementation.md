@@ -134,8 +134,16 @@ test('Sales Rep flows: Search, Identify Lead, Generate Pitch', async () => {
 
 # 3. 執行檢查清單 (Execution Checklist)
 
-- [ ] **DB Migration**: 建立 `006_create_sales_intel_tables.sql` 並執行遷移。
-- [ ] **Seed Data**: 更新 `seed_blog_posts.sql` 並重新注入資料。
-- [ ] **Backend API**: 更新 `job_board_service.py` 以實作資料寫入邏輯 (寫入 `leads` 表)。
-- [ ] **Frontend UI**: 更新 `MarketingPage.tsx` 以顯示識別出的 Leads 並觸發話術生成。
-- [ ] **E2E Test**: 撰寫並通過 `sales-intelligence.spec.tsx`。
+- [x] **DB Migration**: 建立 `006_create_sales_intel_tables.sql` 並執行遷移。
+- [x] **Seed Data**: 更新 `seed_blog_posts.sql` 並重新注入資料。
+- [x] **Backend API**: 更新 `job_board_service.py` 以實作資料寫入邏輯 (寫入 `leads` 表)。
+- [x] **Frontend UI**: 更新 `MarketingPage.tsx` 以顯示識別出的 Leads 並觸發話術生成。
+- [x] **E2E Test**: 撰寫並通過 `sales-intelligence.spec.tsx`。
+
+---
+
+# 4. 附錄 (Appendices)
+
+## 附錄 D：後續維護與權限說明 (Role & Maintenance)
+本階段功能雖已全數交付，但在整合測試中發現管理員 (Admin) 存在權限缺口（如無法變更使用者角色、無法跨作者編輯部落格）。相關修復與使用者身份「實體化」流程（如 Alice 帳號激活）已移至 **PRP 5.1 (Admin Capability & Identity Synchronization Fixes)** 統一處理。
+

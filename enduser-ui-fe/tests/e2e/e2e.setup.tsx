@@ -87,6 +87,9 @@ vi.mock('../../src/services/api', () => {
       getKnowledgeItems: vi.fn().mockResolvedValue([]),
       getPendingChanges: vi.fn().mockResolvedValue([]),
       getBlogPosts: vi.fn().mockResolvedValue([]),
+      getEmployees: vi.fn().mockResolvedValue([mockInternalUser]),
+      adminCreateUser: vi.fn().mockImplementation(async (data) => ({ ...data, id: 'alice-id' })),
+      updateEmployee: vi.fn().mockImplementation(async (id, data) => ({ id, ...data })),
       searchJobs: vi.fn().mockImplementation(async (keyword) => {
         console.log('🔍 [Mock API] searchJobs called with keyword:', keyword);
         if (keyword === 'Error Test') {
