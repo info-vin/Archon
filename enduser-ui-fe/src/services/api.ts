@@ -159,7 +159,7 @@ const supabaseApi = {
       // Increased to 8s for Docker environments which might be slower.
       const sessionResult: any = await Promise.race([
         supabase.auth.getSession(),
-        new Promise((_, reject) => setTimeout(() => reject(new Error('Auth timeout')), 8000))
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Auth timeout')), 3000))
       ]);
 
       const { data: { session }, error: sessionError } = sessionResult;

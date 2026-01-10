@@ -15,6 +15,7 @@ import { LogOutIcon, SettingsIcon, UserIcon, MenuIcon, XIcon, ShieldCheckIcon } 
 import ThemeToggle from './components/ThemeToggle.tsx';
 import UserAvatar from './components/UserAvatar.tsx';
 import LiveClock from './components/LiveClock.tsx';
+import { usePermission } from './features/auth/hooks/usePermission';
 
 const App: React.FC = () => {
   return (
@@ -238,6 +239,7 @@ const AdminRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
 const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const { user, logout, isAdmin } = useAuth();
+    const { hasPermission } = usePermission();
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const location = useLocation();
 
@@ -260,18 +262,22 @@ const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                             My Tasks
                         </Link>
                     </li>
-                    <li className="mb-2">
-                        <Link to="/stats" className={`flex items-center p-2 rounded-md hover:bg-secondary ${location.pathname.startsWith('/stats') ? 'bg-secondary' : ''}`}>
-                            <SettingsIcon className="w-5 h-5 mr-3" />
-                            HR Dashboard
-                        </Link>
-                    </li>
-                    <li className="mb-2">
-                        <Link to="/marketing" className={`flex items-center p-2 rounded-md hover:bg-secondary ${location.pathname.startsWith('/marketing') ? 'bg-secondary' : ''}`}>
-                            <ShieldCheckIcon className="w-5 h-5 mr-3" />
-                            Market Intel
-                        </Link>
-                    </li>
+                    {hasPermission('stats:view:own') && (
+                        <li className="mb-2">
+                            <Link to="/stats" className={`flex items-center p-2 rounded-md hover:bg-secondary ${location.pathname.startsWith('/stats') ? 'bg-secondary' : ''}`}>
+                                <SettingsIcon className="w-5 h-5 mr-3" />
+                                HR Dashboard
+                            </Link>
+                        </li>
+                    )}
+                    {hasPermission('leads:view:all') && (
+                        <li className="mb-2">
+                            <Link to="/marketing" className={`flex items-center p-2 rounded-md hover:bg-secondary ${location.pathname.startsWith('/marketing') ? 'bg-secondary' : ''}`}>
+                                <ShieldCheckIcon className="w-5 h-5 mr-3" />
+                                Market Intel
+                            </Link>
+                        </li>
+                    )}
                     <li className="mb-2">
                         <Link to="/settings" className={`flex items-center p-2 rounded-md hover:bg-secondary ${location.pathname.startsWith('/settings') ? 'bg-secondary' : ''}`}>
                             <SettingsIcon className="w-5 h-5 mr-3" />

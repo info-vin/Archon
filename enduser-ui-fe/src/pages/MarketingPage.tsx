@@ -1,8 +1,11 @@
 import React, { useState } from 'react';
 import { api } from '../services/api';
 import { JobData } from '../types';
+import { useAuth } from '../hooks/useAuth';
+import { PermissionGuard } from '../features/auth/components/PermissionGuard';
 
 const MarketingPage: React.FC = () => {
+  const { user } = useAuth();
   const [keyword, setKeyword] = useState('Data Analyst');
   const [jobs, setJobs] = useState<JobData[]>([]);
   const [loading, setLoading] = useState(false);
@@ -63,6 +66,7 @@ Archon Sales Team`;
   };
 
   return (
+    <PermissionGuard permission="leads:view:all" userRole={user?.role} fallback={<div className="p-8 text-center text-gray-500">Access Denied: This feature is for Sales & Marketing roles only.</div>}>
     <div className="p-6 max-w-7xl mx-auto space-y-8">
       <header>
         <h1 className="text-3xl font-bold text-gray-800">Sales Intelligence</h1>
@@ -182,6 +186,7 @@ Archon Sales Team`;
         )}
       </div>
     </div>
+    </PermissionGuard>
   );
 };
 

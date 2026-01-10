@@ -22,7 +22,7 @@ const mockUser = {
     department: 'QA',
     position: 'Tester',
     status: 'active',
-    role: 'Admin',
+    role: 'system_admin',
     avatar: 'https://i.pravatar.cc/150?u=e2e@archon.com'
 };
 

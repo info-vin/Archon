@@ -1,8 +1,13 @@
 export enum EmployeeRole {
   SYSTEM_ADMIN = 'system_admin',
-  PROJECT_MANAGER = 'project_manager',
-  SENIOR_MEMBER = 'senior_member',
+  ADMIN = 'admin',
+  MANAGER = 'manager',
+  PROJECT_MANAGER = 'project_manager', // Legacy, treat as MANAGER
+  SENIOR_MEMBER = 'senior_member', // Legacy, treat as MEMBER
   MEMBER = 'member',
+  EMPLOYEE = 'employee', // Alias for MEMBER
+  SALES = 'sales',
+  MARKETING = 'marketing',
   VIEWER = 'viewer',
   AI_AGENT = 'ai_agent'
 }

@@ -2,10 +2,18 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import MarketingPage from '../../src/pages/MarketingPage';
 import React from 'react';
 import { describe, it, expect } from 'vitest';
+import { AuthProvider } from '../../src/hooks/useAuth';
 
 describe('MarketingPage Sales Intelligence Flow', () => {
     it('Sales Rep flows: Search, Identify Lead, Generate Pitch', async () => {
-        render(<MarketingPage />);
+        render(
+            <AuthProvider>
+                <MarketingPage />
+            </AuthProvider>
+        );
+
+        // Wait for auth to load
+        await screen.findByText(/Sales Intelligence/i);
 
         // 2. 執行搜尋
         const input = screen.getByPlaceholderText(/Enter job title/i);
@@ -44,8 +52,14 @@ describe('MarketingPage Sales Intelligence Flow', () => {
 
     it('handles search errors gracefully', async () => {
         // Relies on e2e.setup.tsx mock logic: if keyword is 'Error Test', it throws.
-        render(<MarketingPage />);
+        render(
+            <AuthProvider>
+                <MarketingPage />
+            </AuthProvider>
+        );
         
+        await screen.findByText(/Sales Intelligence/i);
+
         const input = screen.getByPlaceholderText(/Enter job title/i);
         fireEvent.change(input, { target: { value: 'Error Test' } });
         fireEvent.click(screen.getByText(/Find Leads/i));

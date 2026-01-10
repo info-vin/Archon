@@ -1,5 +1,7 @@
 ---
 name: "Phase 4.2.1: Sales Intelligence Implementation Detail (銷售情資實作技術規格)"
+status: "Completed"
+completed_at: "2026-01-09"
 description: |
   A detailed technical specification for the Sales Intelligence module, bridging the gap between high-level business goals and actual code implementation.
   (銷售情資模組的詳細技術規格書，旨在填補高層商業目標與實際程式碼實作之間的落差。)

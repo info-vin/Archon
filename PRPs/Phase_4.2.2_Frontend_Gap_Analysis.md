@@ -1,6 +1,8 @@
 ---
 name: "PRP 4.2.2: Frontend Gap Analysis & Remediation Implementation Tasks (前端落差分析與修復實作任務)"
 description: "解決 `enduser-ui-fe` 功能落差、建立自動化資料庫初始化標準，並為銷售情資功能穩固基礎的詳細實作計畫。"
+status: "Completed"
+completed_at: "2026-01-09"
 ---
 
 ## 原始故事 (Original Story)
