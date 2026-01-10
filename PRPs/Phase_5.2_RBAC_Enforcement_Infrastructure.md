@@ -52,7 +52,7 @@ completed_at: "2026-01-09"
 ### 3.2 Frontend Implementation (React)
 
 *   **Task 1: 建立 Admin UI Auth (archon-ui-main)** (Completed)
-    *   [x] 建立 `features/auth` 模組。
+    *   [x] 建立 `features/auth`模組。
     *   [x] 實作 `AuthContext` (Dev Auto-Login) 與 `apiClient` 整合。
 
 *   **Task 2: 移植 End-User UI Auth (enduser-ui-fe)** (Completed)
@@ -61,23 +61,38 @@ completed_at: "2026-01-09"
     *   [x] **Action**: 修改 `MainLayout` (Sidebar)，使用 `usePermission` 隱藏無權限連結。
     *   [x] **Action**: 修改 `App.tsx` 與 `MarketingPage`/`StatsPage`，使用 `PermissionGuard` 保護路由與內容。
 
-### 3.3 Automated Verification Strategy (自動化驗收策略)
+---
 
-1.  **Backend Tests**: 
-    *   **Result**: `make test-be` 全數通過 (485 passed)。
-    *   **Verified**: 新的 Auth 依賴並未破壞現有 API 邏輯。
-2.  **Frontend E2E Tests**:
-    *   **Result**: `make test-fe` 全數通過 (8 passed)。
-    *   **Verified**: `sales-intelligence.spec.tsx` 證明 `PermissionGuard` 正確放行了擁有權限的 `system_admin`，且在 Loading 狀態下有正確等待。
+## 4. 手動驗證協議 (Manual Verification Scripts)
+
+請複製以下 Shell 指令並在終端機執行，以驗證資料庫狀態：
+
+### 流程 A：驗證角色變更 (Verify Role Change)
+**操作**: 在 `localhost:3737` 變更員工角色後執行。
+```bash
+# 預期輸出: role 應更新為您設定的新角色 (如 manager)
+docker exec -i supabase-db psql -U postgres -d postgres <<EOF
+SELECT email, role FROM public.profiles WHERE email = 'alice@archon.com';
+EOF
+```
+
+### 流程 B：驗證密碼更新 (Verify Password Update)
+**操作**: 在 `localhost:5173` 更新密碼後執行。
+```bash
+# 預期輸出: updated_at 應顯示為剛剛的操作時間
+docker exec -i supabase-db psql -U postgres -d postgres <<EOF
+SELECT email, updated_at FROM auth.users WHERE email = 'alice@archon.com';
+EOF
+```
+
+### 流程 C：驗證導航權限 (Navigation Check)
+*   **Sales (Alice)**: 登入後應看到側邊欄有 "Market Intel"，無 "Admin Panel"。
+*   **Manager (Charlie)**: 登入後應看到 "HR Dashboard" (全隊數據) 與 "Approvals"。
 
 ---
 
-## 4. 執行順序 (Execution Order)
+## 5. 實作細節與設計決策 (Design Decisions)
 
-1.  **Backend Phase**: Complete all backend tasks (Done).
-2.  **Admin UI Phase**: Complete `archon-ui-main` auth (Done).
-3.  **End-User UI Phase**:
-    *   Port Auth module to `enduser-ui-fe` (Done).
-    *   Update `App.tsx` routing (Done).
-    *   Update `MainLayout` navigation (Done).
-4.  **Final Verification**: Run `make test-fe` (Done).
+*   **不開發 Admin 登入頁面**: 為了維持極致的 DX (開發者體驗)，我們在開發環境使用 `dev-token` 機制實現無感登入，而非強迫開發者手動登入。
+*   **數據透明度 vs 隱私**: 在 `StatsPage` 中，我們決定讓所有員工都能看到「團隊任務狀態分佈」，但「成員個人績效」僅限 Manager 以上可見。
+*   **路徑別名限制**: 由於 `enduser-ui-fe` 目前不支持 `@` 路徑別名，所有移植的 Auth 元件皆使用相對路徑 (`../../`) 以確保編譯成功。

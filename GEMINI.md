@@ -88,20 +88,15 @@
 
 # 第三章：近期工作日誌 (Recent Journal Entries)
 
-### 2026-01-09: RBAC 基礎設施與 Dev Auto-Login (Phase 5.2 & 4.2 Integration)
-*   **核心任務**: 完成了 `PRPs/Phase_5.2_RBAC_Enforcement_Infrastructure.md` 的所有任務。我們從零建立了 `python/src/server/auth` 模組，並在 `enduser-ui-fe` 中移植了 Auth 邏輯。
-*   **架構決策**: 
-    *   **安全性提升**: 徹底移除了不安全的 `X-User-Role` Header 依賴。現在所有敏感操作 (如 `update_user_profile_admin`) 都由後端 `dependencies.py` 強制驗證 JWT Token 與 DB Role。
-    *   **開發體驗優化 (DX)**: 為了解決 `archon-ui-main` 無登入頁面的問題，我們實作了 **Dev Auto-Login** 機制。後端提供 `/api/auth/dev-token`，前端 `AuthContext` 自動換取 Token，實現無感登入。
-    *   **商業功能整合**: 將 `PermissionGuard` 成功應用於 `MarketingPage` 與 `StatsPage`，確保只有授權角色 (Sales/Manager) 能訪問。
-*   **關鍵決策**: 
-    *   **Enum 擴充**: 在 `src/types.ts` 中擴充了 `EmployeeRole` (新增 SALES, MARKETING 等)，並保留舊值以維持兼容性。
-    *   **Dev Token**: 決定不為 Admin UI 開發完整的登入頁面，而是使用 Dev Token 維持現有的操作流暢度。
-    *   **Loading 縮短**: 將 `api.ts` 的 Auth Timeout 從 8 秒縮短至 3 秒，提升 UX。
-*   **驗收結果**: 
-    *   **Lint**: 全系統通過 (Backend + Frontend)。
-    *   **Backend Test**: 485 通過, 16 跳過 (100% Pass Rate for active tests)。
-    *   **Frontend Test**: 20 Unit Tests + 8 E2E Tests 全數通過。
+### 2026-01-09: RBAC 基礎設施深度加固與商業功能整合 (Phase 5.2 & 4.2)
+*   **核心任務**: 徹底消滅不安全的 `X-User-Role` Header 依賴。建立了標準化的 `src/server/auth` (後端) 與 `src/features/auth` (前端) 模組。
+*   **技術實作**: 
+    *   **後端**: 實作 `get_current_user` 依賴，強制驗證 Supabase JWT Token。
+    *   **前端**: 實作 `PermissionGuard` 與 `usePermission` Hook，採用 "Render Nothing" 策略處理無權限 UI。
+    *   **DX 優化**: 為 Admin UI 實作 **Dev Auto-Login** (後端 `/api/auth/dev-token`)，維持無感操作體驗。
+    *   **UX 優化**: 縮短 Auth Timeout 至 3 秒，並整合 Sidebar 導航 RBAC。
+*   **偵錯歷程**: 解決了 `enduser-ui-fe` 的路徑別名解析問題、E2E 測試中的 Mock Role 大小寫不一致問題，以及 AuthProvider 非同步加載導致的測試競態 (Race Condition)。
+*   **驗收結果**: 通過 501 個後端測試、150+ 個前端測試與全系統 Lint 檢查。更新了實作計畫，包含可供複製執行的 Bash 驗證指令。
 
 ### 2026-01-09: 權限架構的遷移與完結 (Auth Architecture Migration & Completion)
 *   **核心任務**: 完成 Phase 4.2.2 的最後一哩路，並徹底執行 Phase 5 與 5.1 的修復，根除 Admin 操作時的 Session 異常與 500 錯誤。
