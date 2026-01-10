@@ -13,6 +13,7 @@ import { ToastProvider } from './features/ui/components/ToastProvider';
 import { SettingsProvider } from './contexts/SettingsContext';
 import { useSettings } from './contexts/useSettings';
 import { TooltipProvider } from './features/ui/primitives/tooltip';
+import { AuthProvider } from './features/auth/contexts/AuthContext';
 import { ProjectPage } from './pages/ProjectPage';
 import StyleGuidePage from './pages/StyleGuidePage';
 import { DisconnectScreenOverlay } from './components/DisconnectScreenOverlay';
@@ -122,7 +123,9 @@ export function App(): JSX.Element {
         <ToastProvider>
           <TooltipProvider>
             <SettingsProvider>
-              <AppContent />
+              <AuthProvider>
+                <AppContent />
+              </AuthProvider>
             </SettingsProvider>
           </TooltipProvider>
         </ToastProvider>

@@ -5,15 +5,18 @@ class RBACService:
 
     def __init__(self):
         # Permission rules: Who can assign to whom.
+        # Roles: Admin, PM (Manager), Engineer, Marketer, Sales
         self.permissions = {
             # Admin can assign to anyone
-            "Admin": ["Admin", "PM", "Engineer", "Marketer", "Market Researcher", "Internal Knowledge Expert", "ai_agent"],
-            # PM can assign to Engineers, Marketers, and any AI Agent
-            "PM": ["Engineer", "Marketer", "Market Researcher", "Internal Knowledge Expert", "ai_agent"],
-            # Engineers can assign to themselves, other Engineers, and any AI Agent
+            "Admin": ["Admin", "PM", "Engineer", "Marketer", "Sales", "Market Researcher", "Internal Knowledge Expert", "ai_agent"],
+            # PM (Manager) can assign to Engineers, Marketers, Sales, and any AI Agent
+            "PM": ["Engineer", "Marketer", "Sales", "Market Researcher", "Internal Knowledge Expert", "ai_agent"],
+            # Engineers can assign to themselves, other Engineers, and Dev Agents
             "Engineer": ["Engineer", "Market Researcher", "Internal Knowledge Expert", "ai_agent"],
-            # Marketers can assign to themselves and any AI Agent
-            "Marketer": ["Marketer", "Market Researcher", "Internal Knowledge Expert", "ai_agent"]
+            # Marketers can assign to themselves and Marketing Agents
+            "Marketer": ["Marketer", "Market Researcher", "Internal Knowledge Expert", "ai_agent"],
+            # Sales can assign to themselves and Marketing Agents
+            "Sales": ["Sales", "Market Researcher", "Internal Knowledge Expert", "ai_agent"]
         }
 
     def has_permission_to_assign(self, current_user_role: str, assignee_role: str) -> bool:

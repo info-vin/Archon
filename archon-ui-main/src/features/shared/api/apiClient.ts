@@ -59,8 +59,17 @@ export async function callAPIWithETag<T = unknown>(endpoint: string, options: Re
     // NOTE: We do NOT add If-None-Match headers; the browser handles ETag revalidation automatically
     const headers: Record<string, string> = {
       ...((options.headers as Record<string, string>) || {}),
-      "X-User-Role": "Admin", // Default role for Admin UI to comply with backend RBAC
     };
+
+    // Attach Authorization Token if available
+    const token = localStorage.getItem('archon_token');
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    } else {
+        // Fallback for initial bootstrap or dev environment before auth is ready
+        // TODO: Remove this once AuthContext is fully integrated everywhere
+        // headers["X-User-Role"] = "Admin"; 
+    }
 
     // Only set Content-Type for requests that have a body (POST, PUT, PATCH, etc.)
     // GET and DELETE requests should not have Content-Type header

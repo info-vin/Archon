@@ -1,8 +1,13 @@
-# Backend Services API & Interaction Diagrams
+# Backend API Architecture
 
-This file contains API structure diagrams for the three backend microservices, as well as a diagram illustrating their interactions.
+**Audience**: Developers, AI Agents
+**Purpose**: Single source of truth for Backend API structure and service interactions
+**Usage**: Reference for implementing clients and understanding system boundaries
+**Last Updated**: 2026-01-09
 
-## 1. Backend Service Interaction Diagram
+---
+
+## 1. Service Interaction Diagram
 
 This diagram shows how the backend services call each other to perform complex tasks.
 
@@ -18,9 +23,9 @@ graph TD
         A[archon-agents]
     end
 
-    U -- REST API Calls --> S
-    S -- Triggers Agent --> A
-    A -- Uses MCP Tools --> M
+    U -- REST API Calls (Port 8181) --> S
+    S -- Triggers Agent (Port 8052) --> A
+    A -- Uses MCP Tools (Port 8051) --> M
     M -- HTTP Calls to --> S
 ```
 
@@ -33,6 +38,12 @@ This is the main API gateway with a rich set of endpoints for managing the entir
 ```mermaid
 classDiagram
     direction LR
+    class auth_api {
+        <<router: /api>>
+        POST /admin/users
+        POST /auth/register
+        PUT /auth/email
+    }
     class agent_chat_api {
         <<router: /api/agent-chat>>
         POST /sessions
@@ -44,6 +55,13 @@ classDiagram
         <<router: /api/bug-report>>
         POST /github
         GET /health
+    }
+    class changes_api {
+        <<router: /changes>>
+        GET /changes
+        GET /changes/[change_id]
+        POST /changes/[change_id]/approve
+        POST /changes/[change_id]/reject
     }
     class files_api {
         <<router: /api/files>>
@@ -86,6 +104,10 @@ classDiagram
     class log_api {
         <<router: /api>>
         POST /record-gemini-log
+    }
+    class marketing_api {
+        <<router: /api/marketing>>
+        GET /jobs
     }
     class mcp_api {
         <<router: /api/mcp>>
@@ -161,6 +183,11 @@ classDiagram
         POST /credentials/initialize
         GET /database/metrics
         GET /settings/health
+    }
+    class stats_api {
+        <<router: /api/stats>>
+        GET /tasks-by-status
+        GET /member-performance
     }
     class version_api {
         <<router: /api/version>>

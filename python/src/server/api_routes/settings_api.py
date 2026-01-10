@@ -10,15 +10,16 @@ Handles:
 from datetime import datetime
 from typing import Any
 
-from fastapi import APIRouter, Depends, Header, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
+
+from ..auth.dependencies import get_current_admin, get_current_user
 
 # Import logging
 from ..config.logfire_config import logfire
 from ..services.credential_service import CredentialService, credential_service, initialize_credentials
 from ..services.profile_service import ProfileService
 from ..services.settings_service import SettingsService
-from ..utils import get_supabase_client
 
 router = APIRouter(prefix="/api", tags=["settings"])
 
@@ -376,31 +377,13 @@ class UserProfileUpdate(BaseModel):
 @router.put("/users/me")
 async def update_my_profile(
     updates: UserProfileUpdate,
-    authorization: str | None = Header(None),
-    x_user_id: str | None = Header(None, alias="X-User-Id")
+    current_user: dict = Depends(get_current_user)
 ):
     """
     Update the currently authenticated user's profile.
-    Prioritizes Supabase Auth Token for ID extraction.
+    Uses secure JWT token verification via get_current_user dependency.
     """
-    user_id = None
-
-    # 1. Try to get ID from Supabase Auth Token (Most Secure)
-    if authorization and authorization.startswith("Bearer "):
-        token = authorization.split(" ")[1]
-        try:
-            supabase = get_supabase_client()
-            user_response = supabase.auth.get_user(token)
-            if user_response and user_response.user:
-                user_id = user_response.user.id
-        except Exception as e:
-            logfire.warning(f"Failed to validate token for /users/me: {e}")
-
-    # 2. Fallback to X-User-Id (Internal/Dev use only)
-    if not user_id and x_user_id:
-        # TODO: In production, verify this is an internal request or trusted source
-        user_id = x_user_id
-        logfire.info(f"Using X-User-Id header for profile update: {user_id}")
+    user_id = current_user.get("id")
 
     if not user_id:
         raise HTTPException(status_code=401, detail="Unauthorized: Could not determine user identity")
@@ -433,17 +416,16 @@ async def update_my_profile(
 async def update_user_profile_admin(
     user_id: str,
     updates: UserProfileUpdate,
-    x_user_role: str | None = Header(None, alias="X-User-Role")
+    current_admin: dict = Depends(get_current_admin)
 ):
     """
     Admin-only endpoint to update any user's profile.
+    Secured by get_current_admin dependency.
     """
-    # Simple RBAC check based on header (Phase 1 standard)
-    if x_user_role not in ["system_admin", "admin", "manager"]:
-        raise HTTPException(status_code=403, detail="Forbidden: Insufficient permissions")
+    admin_role = current_admin.get("role")
 
     try:
-        logfire.info(f"Admin updating profile for user: {user_id} | admin_role={x_user_role}")
+        logfire.info(f"Admin updating profile for user: {user_id} | admin_role={admin_role}")
         profile_service = ProfileService()
 
         update_data = {k: v for k, v in updates.model_dump().items() if v is not None}
@@ -464,16 +446,16 @@ async def update_user_profile_admin(
 
 @router.get("/users")
 async def list_users_admin(
-    x_user_role: str | None = Header(None, alias="X-User-Role")
+    current_admin: dict = Depends(get_current_admin)
 ):
     """
     Admin-only endpoint to list all users with full profile details.
+    Secured by get_current_admin dependency.
     """
-    if x_user_role not in ["system_admin", "admin", "manager"]:
-        raise HTTPException(status_code=403, detail="Forbidden: Insufficient permissions")
+    admin_role = current_admin.get("role")
 
     try:
-        logfire.info(f"Admin listing all users | admin_role={x_user_role}")
+        logfire.info(f"Admin listing all users | admin_role={admin_role}")
         profile_service = ProfileService()
 
         success, result = profile_service.list_full_profiles()

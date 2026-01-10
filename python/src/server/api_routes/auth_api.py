@@ -101,3 +101,73 @@ async def update_email(
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e)) from e
+
+@router.post("/auth/dev-token")
+async def get_dev_token():
+    """
+    Development-only endpoint to auto-login as System Admin.
+    Used by Admin UI (archon-ui-main) to maintain seamless DX.
+    """
+    # TODO: Add strict environment check (e.g. if os.getenv("ENV") != "dev": raise 403)
+
+    try:
+        supabase = get_supabase_client()
+        email = "admin@archon.ai"
+        password = "admin_password_123"
+
+        # 1. Try to sign in
+        try:
+            auth_response = supabase.auth.sign_in_with_password({
+                "email": email,
+                "password": password
+            })
+            if auth_response.session:
+                return {
+                    "access_token": auth_response.session.access_token,
+                    "user": {
+                        "id": auth_response.user.id,
+                        "email": auth_response.user.email,
+                        "role": "system_admin" # Enforced by ProfileService logic later
+                    }
+                }
+        except Exception:
+            # Sign in failed (likely user doesn't exist), proceed to create
+            pass
+
+        # 2. Create Admin User if not exists
+        # Use service_role to create user
+        service = AuthService()
+        try:
+            # Check if user exists but with wrong password?
+            # Ideally we'd reset password here but for now just try create
+            service.create_user_by_admin(
+                email=email,
+                password=password,
+                name="System Admin",
+                role="system_admin",
+                status="active"
+            )
+
+            # 3. Sign in again
+            auth_response = supabase.auth.sign_in_with_password({
+                "email": email,
+                "password": password
+            })
+
+            if auth_response.session:
+                return {
+                    "access_token": auth_response.session.access_token,
+                    "user": {
+                        "id": auth_response.user.id,
+                        "email": auth_response.user.email,
+                        "role": "system_admin"
+                    }
+                }
+
+        except Exception as create_error:
+             raise HTTPException(status_code=500, detail=f"Failed to create dev admin: {str(create_error)}") from create_error
+
+        raise HTTPException(status_code=500, detail="Failed to obtain dev token")
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e)) from e
