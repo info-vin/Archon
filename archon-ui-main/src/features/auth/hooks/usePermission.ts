@@ -1,6 +1,6 @@
 // archon-ui-main/src/features/auth/hooks/usePermission.ts
 
-import { EmployeeRole, PermissionScope } from '../types';
+import { EmployeeRole, PermissionScope } from '@/features/auth/types';
 
 /**
  * Frontend Role-to-Permission Mapping.

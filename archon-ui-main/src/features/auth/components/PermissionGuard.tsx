@@ -1,8 +1,8 @@
 // archon-ui-main/src/features/auth/components/PermissionGuard.tsx
 
 import React from 'react';
-import { PermissionScope, EmployeeRole } from '../types';
-import { usePermission } from '../hooks/usePermission';
+import { PermissionScope, EmployeeRole } from '@/features/auth/types';
+import { usePermission } from '@/features/auth/hooks/usePermission';
 
 interface PermissionGuardProps {
   permission: PermissionScope;

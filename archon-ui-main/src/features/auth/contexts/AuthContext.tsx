@@ -1,8 +1,8 @@
 // archon-ui-main/src/features/auth/contexts/AuthContext.tsx
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { UserProfile, EmployeeRole } from '../types';
-import { API_BASE_URL } from '../../shared/config/api';
+import { UserProfile, EmployeeRole } from '@/features/auth/types';
+import { API_BASE_URL } from '@/config/api';
 
 interface AuthContextType {
   user: UserProfile | null;
