@@ -85,6 +85,35 @@ def run_migration_file(conn, cursor, file_path):
         print(f"❌ Failed to apply {filename}: {e}")
         raise e
 
+def find_auth_user_by_email(supabase, email):
+    """
+    Finds a user's UUID in the Auth system by email.
+    Note: 'list_users' might return pagination objects depending on client version.
+    """
+    try:
+        page = 1
+        per_page = 50
+        while True:
+            # Depending on the supabase-py/gotrue-py version, this might return a list or an object
+            response = supabase.auth.admin.list_users(page=page, per_page=per_page)
+
+            # Handle different response structures gracefully
+            users = response if isinstance(response, list) else getattr(response, 'users', [])
+
+            if not users:
+                break
+
+            for user in users:
+                if user.email == email:
+                    return user.id
+
+            if len(users) < per_page:
+                break
+            page += 1
+    except Exception as e:
+        print(f"⚠️ Error listing users to find {email}: {e}")
+    return None
+
 def sync_profiles_to_auth(conn):
     """
     Reads profiles and ensures they exist in auth.users.
@@ -125,7 +154,23 @@ def sync_profiles_to_auth(conn):
                 print(f"✅ Synced: {email}")
             except Exception as e:
                 if "already registered" in str(e) or "already exists" in str(e):
-                    pass
+                    # Strategy A: Resolve ID and Force Update
+                    print(f"ℹ️ User {email} exists. Attempting to sync metadata...")
+                    auth_uid = find_auth_user_by_email(supabase, email)
+                    if auth_uid:
+                        try:
+                            print(f"🔍 Resolved Auth ID for {email}: {auth_uid}")
+                            update_payload = {
+                                "password": "password123",
+                                "email_confirm": True,
+                                "user_metadata": {"name": name, "role": role}
+                            }
+                            supabase.auth.admin.update_user_by_id(auth_uid, update_payload)
+                            print(f"✅ Updated existing user: {email} (Role: {role})")
+                        except Exception as update_err:
+                            print(f"❌ Failed to update user {email}: {update_err}")
+                    else:
+                        print(f"⚠️ Could not find Auth ID for {email} despite 'already registered' error.")
                 else:
                     print(f"⚠️ {email} sync failed: {e}")
         print("✅ Auth Sync Complete.")
