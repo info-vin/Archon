@@ -29,7 +29,6 @@ dev = [
     "ruff>=0.12.5",
     "requests>=2.31.0",
     "factory-boy>=3.3.0",
-    "psycopg2-binary>=2.9.9",
 ]
 
 # Server container dependencies
@@ -44,6 +43,7 @@ server = [
     # Database and storage
     "supabase==2.15.1",
     "asyncpg>=0.29.0",
+    "psycopg2-binary>=2.9.9",
     # AI/ML libraries
     "openai==1.71.0",
     # Document processing

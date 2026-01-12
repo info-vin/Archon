@@ -2,13 +2,64 @@
 -- This script uses PL/pgSQL to correctly handle UUID generation, foreign keys, and idempotency.
 
 -- Seed for profiles table (MOCK_EMPLOYEES)
--- This table uses TEXT for id, so direct insertion is fine.
+-- We use subqueries to find existing IDs by email to avoid ID/Email mismatch conflicts.
+
+-- 1. Admin User (Preserve existing ID or use '1')
+INSERT INTO profiles (id, "employeeId", name, email, department, position, status, role, avatar)
+VALUES (
+    COALESCE((SELECT id FROM profiles WHERE email = 'admin@archon.com'), '1'),
+    'E1001', 'Admin User', 'admin@archon.com', 'IT', 'System Administrator', 'active', 'system_admin', 'https://i.pravatar.cc/150?u=admin@archon.com'
+)
+ON CONFLICT (id) DO UPDATE SET
+    name = EXCLUDED.name,
+    department = EXCLUDED.department,
+    position = EXCLUDED.position,
+    status = EXCLUDED.status,
+    role = EXCLUDED.role,
+    avatar = EXCLUDED.avatar;
+
+-- 2. Alice Johnson (Sales)
+INSERT INTO profiles (id, "employeeId", name, email, department, position, status, role, avatar)
+VALUES (
+    COALESCE((SELECT id FROM profiles WHERE email = 'alice@archon.com'), '2'),
+    'E1002', 'Alice Johnson', 'alice@archon.com', 'Sales', 'Sales Representative', 'active', 'member', 'https://i.pravatar.cc/150?u=alice@archon.com'
+)
+ON CONFLICT (id) DO UPDATE SET
+    name = EXCLUDED.name,
+    department = EXCLUDED.department,
+    position = EXCLUDED.position,
+    role = EXCLUDED.role;
+
+-- 3. Bob Williams (Marketing)
+INSERT INTO profiles (id, "employeeId", name, email, department, position, status, role, avatar)
+VALUES (
+    COALESCE((SELECT id FROM profiles WHERE email = 'bob@archon.com'), '3'),
+    'E1003', 'Bob Williams', 'bob@archon.com', 'Marketing', 'Marketing Specialist', 'active', 'member', 'https://i.pravatar.cc/150?u=bob@archon.com'
+)
+ON CONFLICT (id) DO UPDATE SET
+    name = EXCLUDED.name,
+    department = EXCLUDED.department,
+    position = EXCLUDED.position,
+    role = EXCLUDED.role;
+
+-- 4. Charlie Brown (Marketing Manager)
+INSERT INTO profiles (id, "employeeId", name, email, department, position, status, role, avatar)
+VALUES (
+    COALESCE((SELECT id FROM profiles WHERE email = 'charlie@archon.com'), '4'),
+    'E1004', 'Charlie Brown', 'charlie@archon.com', 'Marketing', 'Marketing Manager', 'active', 'manager', 'https://i.pravatar.cc/150?u=charlie@archon.com'
+)
+ON CONFLICT (id) DO UPDATE SET
+    name = EXCLUDED.name,
+    department = EXCLUDED.department,
+    position = EXCLUDED.position,
+    role = EXCLUDED.role;
+
+-- 5. Agents (Using fixed IDs as they are system-controlled)
 INSERT INTO profiles (id, "employeeId", name, email, department, position, status, role, avatar) VALUES
-('1', 'E1001', 'Admin User', 'admin@archon.com', 'IT', 'System Administrator', 'active', 'system_admin', 'https://i.pravatar.cc/150?u=admin@archon.com'),
-('2', 'E1002', 'Alice Johnson', 'alice@archon.com', 'Engineering', 'Project Manager', 'active', 'project_manager', 'https://i.pravatar.cc/150?u=alice@archon.com'),
-('3', 'E1003', 'Bob Williams', 'bob@archon.com', 'Engineering', 'Frontend Developer', 'active', 'member', 'https://i.pravatar.cc/150?u=bob@archon.com'),
-('4', 'E1004', 'Charlie Brown', 'charlie@archon.com', 'Marketing', 'Marketing Specialist', 'active', 'member', 'https://i.pravatar.cc/150?u=charlie@archon.com'),
-('5', 'agent-mr-001', 'Market Researcher', 'market.researcher@archon.com', 'AI', 'Market Researcher', 'active', 'ai_agent', 'https://i.pravatar.cc/150?u=agent-mr-001')
+('agent-dev-001', 'A1001', 'DevBot', 'dev.bot@archon.com', 'AI', 'Code Assistant', 'active', 'ai_agent', 'https://api.dicebear.com/7.x/bottts/svg?seed=DevBot'),
+('agent-mr-001', 'A1002', 'MarketBot', 'market.bot@archon.com', 'AI', 'Market Researcher', 'active', 'ai_agent', 'https://api.dicebear.com/7.x/bottts/svg?seed=MarketBot'),
+('agent-lib-001', 'A1003', 'Librarian', 'lib.bot@archon.com', 'AI', 'Knowledge Manager', 'active', 'ai_agent', 'https://api.dicebear.com/7.x/bottts/svg?seed=Librarian'),
+('agent-sys-001', 'A1004', 'Clockwork', 'sys.bot@archon.com', 'AI', 'Workflow Automation', 'active', 'ai_agent', 'https://api.dicebear.com/7.x/bottts/svg?seed=Clockwork')
 ON CONFLICT (id) DO UPDATE SET
     "employeeId" = EXCLUDED."employeeId",
     name = EXCLUDED.name,

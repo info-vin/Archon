@@ -23,6 +23,7 @@ services:
     environment:
       - SUPABASE_URL=${SUPABASE_URL}
       - SUPABASE_SERVICE_KEY=${SUPABASE_SERVICE_KEY}
+      - SUPABASE_DB_URL=${SUPABASE_DB_URL}
       - OPENAI_API_KEY=${OPENAI_API_KEY:-}
       - LOGFIRE_TOKEN=${LOGFIRE_TOKEN:-}
       - SERVICE_DISCOVERY_MODE=docker_compose
@@ -37,6 +38,8 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock # Docker socket for MCP container control
       - ./python/src:/app/src # Mount source code for hot reload
       - ./python/tests:/app/tests # Mount tests for UI test execution
+      - ./scripts:/app/scripts # Mount utility scripts
+      - ./migration:/app/migration # Mount SQL migrations
     extra_hosts:
       - "host.docker.internal:host-gateway"
     command:

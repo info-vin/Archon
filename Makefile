@@ -42,10 +42,13 @@ install-ui:
 
 # Database initialization (Idempotent)
 db-init:
-	@echo "Initializing database..."
-	@cd python && $(UV) venv --python 3.12 .venv
-	@cd python && $(UV) sync --group dev
-	@cd python && $(UV) run python ../scripts/init_db.py
+	@echo "Initializing database inside archon-server container..."
+	@docker exec -i archon-server /venv/bin/python scripts/init_db.py
+
+# Verify database seed data
+verify-data:
+	@echo "Verifying database state inside docker container..."
+	@docker exec -i archon-server /venv/bin/python - < scripts/verify_seed.py
 
 # NOTE: The following check target uses syntax that is not compatible with Windows cmd/PowerShell.
 # It will cause an error on Windows systems.

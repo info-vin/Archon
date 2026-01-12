@@ -208,7 +208,6 @@ all = [
 dev = [
     { name = "factory-boy" },
     { name = "mypy" },
-    { name = "psycopg2-binary" },
     { name = "pytest" },
     { name = "pytest-asyncio" },
     { name = "pytest-cov" },
@@ -240,6 +239,7 @@ server = [
     { name = "markdown" },
     { name = "openai" },
     { name = "pdfplumber" },
+    { name = "psycopg2-binary" },
     { name = "pydantic" },
     { name = "pypdf2" },
     { name = "pytest" },
@@ -307,7 +307,6 @@ all = [
 dev = [
     { name = "factory-boy", specifier = ">=3.3.0" },
     { name = "mypy", specifier = ">=1.17.0" },
-    { name = "psycopg2-binary", specifier = ">=2.9.9" },
     { name = "pytest", specifier = ">=8.0.0" },
     { name = "pytest-asyncio", specifier = ">=0.21.0" },
     { name = "pytest-cov", specifier = ">=6.2.1" },
@@ -339,6 +338,7 @@ server = [
     { name = "markdown", specifier = ">=3.8" },
     { name = "openai", specifier = "==1.71.0" },
     { name = "pdfplumber", specifier = ">=0.11.6" },
+    { name = "psycopg2-binary", specifier = ">=2.9.9" },
     { name = "pydantic", specifier = ">=2.0.0" },
     { name = "pypdf2", specifier = ">=3.0.1" },
     { name = "pytest", specifier = ">=8.0.0" },

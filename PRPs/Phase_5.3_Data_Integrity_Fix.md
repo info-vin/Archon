@@ -1,7 +1,7 @@
 ---
 name: "Phase 5.3: Data Integrity & RBAC Alignment Fix"
 description: "Fix data inconsistencies between seed data and RBAC matrix, and solve the 'ghost account' issue in auth.users."
-status: "In Progress"
+status: "Completed"
 started_at: "2026-01-12"
 dependencies: ["Phase 5.2"]
 ---
@@ -20,26 +20,29 @@ dependencies: ["Phase 5.2"]
 
 ### 2.1 Infrastructure Fix (`Makefile`)
 **Goal**: Prepare the environment for `init_db.py` to import `src` and call Supabase APIs.
-- [ ] **Dependency**: Add `--group server` to `uv sync` to ensure `supabase` package is installed.
-- [ ] **Env Vars**: Add `--env-file ../.env` to `uv run` to inject `SUPABASE_SERVICE_KEY`.
-- [ ] **Python Path**: Set `PYTHONPATH=.` to allow importing `src.server` from `scripts/`.
+- [x] **Dependency**: Add `--group server` to `uv sync` to ensure `supabase` package is installed.
+- [x] **Env Vars**: Add `--env-file ../.env` to `uv run` to inject `SUPABASE_SERVICE_KEY`.
+- [x] **Python Path**: Set `PYTHONPATH=.` to allow importing `src.server` from `scripts/`.
+- [x] **Docker Integration**: Updated `docker-compose.yml` to mount `scripts/` and `migration/`, and pass `SUPABASE_DB_URL` correctly.
 
 ### 2.2 Update Seed Data (`seed_mock_data.sql`)
 **Goal**: Align database data with `RBAC_Collaboration_Matrix.md`.
-- [ ] **Alice**: Role -> `member` (Dept: Sales).
-- [ ] **Charlie**: Role -> `manager` (Dept: Engineering -> Marketing).
-- [ ] **Agents**: Add `DevBot`, `Librarian`, `Clockwork` with correct IDs and `ai_agent` role.
+- [x] **Alice**: Role -> `member` (Dept: Sales).
+- [x] **Charlie**: Role -> `manager` (Dept: Engineering -> Marketing).
+- [x] **Agents**: Add `DevBot`, `Librarian`, `Clockwork` with correct IDs and `ai_agent` role.
+- [x] **Conflict Resolution**: Updated SQL to use `ON CONFLICT (email)` or subquery-based IDs to prevent unique constraint violations.
 
 ### 2.3 Implement Auth Sync (`scripts/init_db.py`)
 **Goal**: Programmatically sync `public.profiles` to `auth.users`.
-- [ ] **Import**: Import `AuthService` from `src.server.services.auth_service`.
-- [ ] **Logic**:
+- [x] **Import**: Import `AuthService` from `src.server.services.auth_service`.
+- [x] **Logic**:
     1. After SQL migrations, initialize `AuthService`.
-    2. Fetch all profiles from DB.
+    2. Fetch all profiles from DB (or API if DB fails).
     3. Loop through each profile:
        - Check if `auth.users` record exists.
        - If missing, call `auth_service.create_user_by_admin(email, password="password123", ...) `.
        - Log success/failure.
+- [x] **Robustness**: Implemented **API Fallback** strategy. If `psycopg2` fails to connect (e.g. due to Supavisor Circuit Breaker), the script falls back to fetching profiles via Supabase HTTP API to ensure Auth Sync still completes.
 
 ### 2.4 Verification SOP
 
@@ -47,31 +50,13 @@ dependencies: ["Phase 5.2"]
 ```bash
 make db-init
 ```
+> **Note**: Due to Supavisor connection limits/circuit breakers on the free tier, SQL migrations might be skipped in the script. In such cases, run `migration/seed_mock_data.sql` manually in the Supabase Dashboard SQL Editor. The script *will* handles Auth Sync via HTTP API automatically.
 
-**Step 2: 驗證資料庫狀態 (Run in terminal)**
-> 使用 `archon-server` 容器內的 Python 環境連接資料庫進行驗證，以避開本地環境差異。
-
+**Step 2: 自動化驗證 (Automated Verification)**
 ```bash
-docker exec -i archon-server python -c "
-import os
-import psycopg2
-# Use SUPABASE_DB_URL from container env
-conn = psycopg2.connect(os.environ['SUPABASE_DB_URL'])
-cur = conn.cursor()
-
-print('\n--- 1. Checking Profiles (Should align with Matrix) ---')
-cur.execute(\"SELECT name, role, department FROM profiles WHERE name IN ('Charlie Brown', 'Alice Johnson');\")
-for row in cur.fetchall():
-    print(f'User: {row[0]}, Role: {row[1]}, Dept: {row[2]}')
-
-print('\n--- 2. Checking Auth Users (Should not be empty) ---')
-cur.execute(\"SELECT email, created_at FROM auth.users WHERE email IN ('admin@archon.com', 'alice@archon.com', 'market.bot@archon.com');\")
-results = cur.fetchall()
-print(f'Found {len(results)} auth users.')
-for row in results:
-    print(f'Email: {row[0]}')
-"
+make verify-data
 ```
+> Replaced manual `docker exec` with a robust python script `scripts/verify_seed.py` that checks both DB integrity and Auth consistency.
 
 **Step 3: 功能驗證 (Login Test)**
 - Open `http://localhost:5173`

@@ -4,8 +4,24 @@ import glob
 import psycopg2
 from urllib.parse import urlparse
 
+# Import AuthService for account synchronization
+# Note: PYTHONPATH must be set to '.' when running this script
+try:
+    from src.server.services.auth_service import AuthService
+    from src.server.utils import get_supabase_client
+    HAS_SERVER_DEPS = True
+except ImportError:
+    print("Warning: Could not import server dependencies. Auth sync will be skipped.")
+    HAS_SERVER_DEPS = False
+
 # Database connection parameters from environment variables
-DB_URL = os.getenv("SUPABASE_DB_URL", "postgresql://postgres:postgres@localhost:54322/postgres")
+DB_URL = os.getenv("SUPABASE_DB_URL")
+
+if not DB_URL:
+    print("❌ Error: SUPABASE_DB_URL environment variable is not set.")
+    print("Please add it to your .env file. Example:")
+    print("SUPABASE_DB_URL=postgresql://postgres:[PASSWORD]@[HOST]:[PORT]/postgres")
+    exit(1)
 
 def get_db_connection():
     """Establishes a connection to the database with retry logic."""
@@ -69,63 +85,82 @@ def run_migration_file(conn, cursor, file_path):
         print(f"❌ Failed to apply {filename}: {e}")
         raise e
 
-def main():
-    conn = get_db_connection()
-    conn.autocommit = False # We manage transactions manually
-    cursor = conn.cursor()
+def sync_profiles_to_auth(conn):
+    """
+    Reads profiles and ensures they exist in auth.users.
+    Fallback to Supabase HTTP API if DB connection is unavailable.
+    """
+    if not HAS_SERVER_DEPS:
+        print("Skipping Auth sync (dependencies missing).")
+        return
 
+    print("\n🔄 Starting Auth Synchronization...")
+    
     try:
-        # 1. Bootstrap migration tracking
+        supabase = get_supabase_client()
+        auth_service = AuthService(supabase)
+        profiles = []
+        
+        if conn:
+            try:
+                cursor = conn.cursor()
+                cursor.execute("SELECT id, email, name, role FROM profiles WHERE status = 'active'")
+                profiles = cursor.fetchall()
+                cursor.close()
+                print(f"Fetched {len(profiles)} profiles via DB.")
+            except Exception as e:
+                print(f"⚠️ DB fetch failed: {e}. Falling back to API...")
+                conn = None
+        
+        if not conn:
+            print("Fetching profiles via Supabase HTTP API...")
+            response = supabase.table("profiles").select("id, email, name, role").eq("status", "active").execute()
+            if response.data:
+                profiles = [(p['id'], p['email'], p['name'], p['role']) for p in response.data]
+                print(f"Fetched {len(profiles)} profiles via API.")
+
+        for p_id, email, name, role in profiles:
+            try:
+                auth_service.create_user_by_admin(email=email, password="password123", name=name, role=role)
+                print(f"✅ Synced: {email}")
+            except Exception as e:
+                if "already registered" in str(e) or "already exists" in str(e):
+                    pass
+                else:
+                    print(f"⚠️ {email} sync failed: {e}")
+        print("✅ Auth Sync Complete.")
+    except Exception as e:
+        print(f"❌ Auth Sync Fatal Error: {e}")
+
+def main():
+    conn = None
+    try:
+        print("Attempting DB connection for migrations...")
+        conn = get_db_connection()
+        conn.autocommit = False
+        cursor = conn.cursor()
         ensure_schema_migrations_table(cursor)
         conn.commit()
-
-        # 2. Get current state
-        applied_versions = get_applied_migrations(cursor)
-        print(f"Found {len(applied_versions)} applied migrations.")
-
-        # 3. Scan for SQL files
-        # We sort alphabetically to ensure 000 runs before 001, etc.
+        
+        applied = get_applied_migrations(cursor)
         migration_files = sorted(glob.glob("migration/*.sql"))
+        EXCLUDED = ['RESET_DB.sql', 'backup_database.sql', 'complete_setup.sql']
+
+        for f in migration_files:
+            fname = os.path.basename(f)
+            if fname in EXCLUDED: continue
+            vid = os.path.splitext(fname)[0]
+            if vid in applied: continue
+            run_migration_file(conn, cursor, f)
         
-        # Filter out utility scripts that shouldn't be run automatically if any
-        # For now, we assume all .sql in migration/ are valid migrations or seeds
-        # Except maybe backup/reset scripts if they exist and match *.sql
-        # Let's filter out specific ones if needed.
-        # Based on file list: RESET_DB.sql, backup_database.sql, complete_setup.sql might be dangerous.
-        
-        EXCLUDED_FILES = [
-            'RESET_DB.sql', 
-            'backup_database.sql', 
-            'complete_setup.sql' # This seems to be a legacy mega-script
-        ]
+        conn.commit()
+        print("\n🎉 SQL migrations applied!")
+    except Exception as e:
+        print(f"\n⚠️ SQL Migrations SKIPPED: {e}")
+        print("Please run migrations manually in Supabase SQL Editor.")
 
-        for file_path in migration_files:
-            filename = os.path.basename(file_path)
-            
-            if filename in EXCLUDED_FILES:
-                print(f"Skipping excluded file: {filename}")
-                continue
-
-            version_id = os.path.splitext(filename)[0]
-
-            if version_id in applied_versions:
-                print(f"Skipping already applied: {filename}")
-                continue
-            
-            # Special handling for seed files: 
-            # If we want seeds to run ALWAYS (to update data), we might check logic here.
-            # But per our SOP, seeds should be idempotent and tracked by version.
-            # If seed_mock_data.sql changes, we usually rename it or assume it's a one-time thing.
-            # However, if user wants to re-run seeds, they should probably clear the migration entry manually?
-            # For now, we treat seeds like normal migrations: run once.
-            
-            run_migration_file(conn, cursor, file_path)
-
-        print("\n🎉 All migrations applied successfully!")
-
-    finally:
-        cursor.close()
-        conn.close()
+    sync_profiles_to_auth(conn)
+    if conn: conn.close()
 
 if __name__ == "__main__":
     main()
