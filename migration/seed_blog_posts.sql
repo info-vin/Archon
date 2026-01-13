@@ -200,3 +200,34 @@ INSERT INTO blog_posts (id, title, excerpt, content, author_name, publish_date, 
 
 此案例證明，正確的數據策略能直接轉化為具體的商業價值。', 'Alice (Sales VP)', '2025-01-12T14:00:00Z', 'https://picsum.photos/seed/case-retail/600/400')
 ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO blog_posts (id, title, excerpt, content, author_name, publish_date, image_url) VALUES
+('a6666666-6666-6666-6666-666666666666', '案例六：從 iframe 到 React 元件：現代化企業網站的重構之路', '在 Phase 4.3 中，我們面對的是一個歷史悠久但結構混亂的「行銷資產考古遺址」。本文記錄了我們如何將散落在 public/ai 的舊 HTML 轉化為現代化單頁應用 (SPA) 元件，並解決使用者登入後「導航迷路」的 UX 挑戰。', '# 案例六：從 iframe 到 React 元件：現代化企業網站的重構之路
+
+**作者**: Bob (Content Lead)
+
+## 1. 考古現場：public/ai 的混亂現狀
+重構的第一步是面對現實。我們的 `public/ai` 資料夾裡堆滿了各種時期的行銷素材、技術文件和提案草稿。雖然內容豐富，但存在以下致命傷：
+*   **Site-within-site**: 使用 `home.html` 配合 `iframe` 嵌入其他頁面，這在現代 SPA 架構中顯得格格不入。
+*   **體驗斷裂**: 嵌入的舊頁面樣式不一，使用者像是穿梭在不同的平行時空中。
+*   **導航黑洞**: 使用者登入 Dashboard 後，往往無法順利返回首頁或部落格，形成導航死角。
+
+## 2. 策略：是「重構」，更是「策展」
+我們不只是搬運 HTML，而是進行一次深度的數位策展。
+
+### A. 資料夾結構元件化
+我們廢除了 iframe 架構，將 `contents/` 下的靜態內容轉化為 `src/features/marketing/` 下的 React 元件。
+*   `summary.html` -> `<ProjectSummary />`
+*   `requirements.html` -> `<TechRequirements />`
+
+### B. 路由與佈局的解耦
+我們重新設計了 `AppRoutes.tsx`，區分了 **Public Layout** (官網、解決方案、部落格) 與 **Dashboard Layout** (個人任務、統計圖表)。
+這解決了「登入後回不去」的問題：我們確保 Header 能感知登入狀態，讓已登入的使用者在瀏覽官網時，能透過按鈕一鍵跳轉回 Dashboard。
+
+## 3. 技術收穫
+1.  **效能優化**: 透過 React 的 Lazy Loading 與 Webpack/Vite 的優化，原本沈重的 iframe 載入變得輕盈且流暢。
+2.  **維護性提升**: 所有的文字與圖片現在都與 UI 分離，行銷團隊可以更專注於內容創作，而不必擔心破壞排版。
+
+## 4. 結語：品牌的一致性
+重構不僅是技術債的償還，更是品牌形象的重塑。一個現代化的企業網站，應該在每一個細節都展現出其對技術與使用者體驗的極致追求。這就是我們在 Phase 4.3 努力的方向。', 'Bob (Content Lead)', '2025-01-13T10:00:00Z', 'https://picsum.photos/seed/refactor-path/600/400')
+ON CONFLICT (id) DO NOTHING;
