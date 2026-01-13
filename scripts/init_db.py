@@ -25,7 +25,7 @@ if not DB_URL:
 
 def get_db_connection():
     """Establishes a connection to the database with retry logic."""
-    retries = 30
+    retries = 5
     while retries > 0:
         try:
             print(f"Attempting to connect to database... ({retries} retries left)")
@@ -153,13 +153,32 @@ def sync_profiles_to_auth(conn):
                 auth_service.create_user_by_admin(email=email, password="password123", name=name, role=role)
                 print(f"✅ Synced: {email}")
             except Exception as e:
-                if "already registered" in str(e) or "already exists" in str(e):
+                # DEBUG: Inspect the exception raw string
+                raw_err = str(e)
+                # print(f"DEBUG: Error Raw Repr: {repr(raw_err)}")
+                
+                err_msg_lower = raw_err.lower()
+                
+                # Robust matching based on Supabase logs and Python exception string
+                # 1. Check for explicit "already registered" phrase
+                # 2. Check for "422" status code which Supabase uses for duplicates
+                # 3. Check for loose words "already" AND ("registered" or "exists")
+                
+                has_phrase = "already registered" in err_msg_lower or "already exists" in err_msg_lower
+                has_422 = "422" in err_msg_lower
+                has_loose_words = "already" in err_msg_lower and ("registered" in err_msg_lower or "exists" in err_msg_lower)
+
+                is_duplicate = has_phrase or has_422 or has_loose_words
+                
+                # print(f"DEBUG: Is Duplicate? {is_duplicate}")
+
+                if is_duplicate:
                     # Strategy A: Resolve ID and Force Update
                     print(f"ℹ️ User {email} exists. Attempting to sync metadata...")
                     auth_uid = find_auth_user_by_email(supabase, email)
                     if auth_uid:
                         try:
-                            print(f"🔍 Resolved Auth ID for {email}: {auth_uid}")
+                            # print(f"🔍 Resolved Auth ID for {email}: {auth_uid}")
                             update_payload = {
                                 "password": "password123",
                                 "email_confirm": True,
@@ -167,12 +186,36 @@ def sync_profiles_to_auth(conn):
                             }
                             supabase.auth.admin.update_user_by_id(auth_uid, update_payload)
                             print(f"✅ Updated existing user: {email} (Role: {role})")
+                            
+                            # Strategy B: Sync Profile ID to match Auth UUID
+                            # Verified safe: No tables reference profiles(id) as FK
+                            if conn:
+                                try:
+                                    cursor = conn.cursor()
+                                    # Update the ID directly. Since no FKs exist, this is safe.
+                                    cursor.execute("UPDATE profiles SET id = %s WHERE email = %s", (auth_uid, email))
+                                    conn.commit()
+                                    cursor.close()
+                                    print(f"✅ Synced Profile ID for {email} to match Auth UUID")
+                                except Exception as db_err:
+                                    conn.rollback()
+                                    print(f"⚠️ Failed to sync Profile ID for {email}: {db_err}")
+                            else:
+                                # Fallback via API if direct DB conn is not available
+                                try:
+                                    # Note: Updating ID via API might be restricted by RLS, 
+                                    # but we are using service_role key so it should pass.
+                                    supabase.table("profiles").update({"id": auth_uid}).eq("email", email).execute()
+                                    print(f"✅ Synced Profile ID for {email} to match Auth UUID (via API)")
+                                except Exception as api_err:
+                                    print(f"⚠️ Failed to sync Profile ID for {email} via API: {api_err}")
+
                         except Exception as update_err:
                             print(f"❌ Failed to update user {email}: {update_err}")
                     else:
                         print(f"⚠️ Could not find Auth ID for {email} despite 'already registered' error.")
                 else:
-                    print(f"⚠️ {email} sync failed: {e}")
+                    print(f"⚠️ {email} sync failed: {str(e)}")
         print("✅ Auth Sync Complete.")
     except Exception as e:
         print(f"❌ Auth Sync Fatal Error: {e}")

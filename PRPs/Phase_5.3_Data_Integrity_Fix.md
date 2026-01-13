@@ -1,72 +1,46 @@
 ---
 name: "Phase 5.3: Data Integrity & RBAC Alignment Fix"
 description: "Fix data inconsistencies between seed data and RBAC matrix, and solve the 'ghost account' issue in auth.users."
-status: "In Progress"
+status: "Completed"
 started_at: "2026-01-12"
+completed_at: "2026-01-13"
 dependencies: ["Phase 5.2"]
 ---
 
 ## 1. 核心問題與數據分析 (Core Issues & Data Analysis)
+(已歸檔)
 
-經過 `git log` 分析、Log 查證與架構審查，我們確認了導致 End-User UI (5173) 登入失敗的根本原因。
+## 2. 實作結果 (Implementation Results)
 
-### 1.1 現狀數據分析 (Current Data State)
+### 2.1 雙重同步策略 (Dual Sync Strategy)
 
-| 組件 | 狀態 | 證據/詳情 | 影響 |
-| :--- | :--- | :--- | :--- |
-| **Profile Data** | ✅ 正確 | `seed_mock_data.sql` 已更新 (Alice=Sales, Charlie=Manager)。 | DB 中的角色定義正確。 |
-| **Auth Account** | ⚠️ 存在但脫節 | `init_db.py` 報錯 `already registered`。 | 帳號存在但密碼未知，且 Metadata 滯後。 |
-| **Metadata** | 🔴 **未同步** | 舊帳號的 `user_metadata` 缺少 `role` 欄位。 | **關鍵失效點**: 5173 前端依賴 JWT 中的 Metadata 判斷權限。 |
-| **ID Mismatch** | 🔴 **潛在風險** | Profile ID 可能為文字 (如 `'2'`)，而 Auth ID 必為 UUID。 | 若直接用 Profile ID 更新 Auth，可能導致 `User not found` 錯誤。 |
-| **DB 連線** | 🔴 受限 | `psycopg2` 連線失敗 (Supavisor 限制/密碼錯誤)。 | 必須依賴 API 模式進行修復 (Strategy A)。 |
+我們最終採用了 **Strategy A + B** 的混合策略，成功解決了所有問題：
 
-### 1.2 根本原因 (Root Cause)
-1.  **Metadata 缺失**: 5173 需要 JWT 內含 `role` 才能放行，但目前的 `init_db.py` 未同步 Metadata。
-2.  **邏輯漏洞**: 腳本遇到重複帳號時選擇 `pass`。
-3.  **ID 匹配風險**: 腳本假設 Profile ID == Auth User ID，這在 Mock Data 混用文字 ID 與 UUID 的情況下不可靠。
+1.  **Strategy A (Metadata Sync)**:
+    -   透過 `init_db.py` 偵測重複使用者 (Handle 422/Already Registered)。
+    -   強制更新 Auth User 的 Metadata (`role`, `name`)，確保 JWT 包含權限資訊。
 
-## 2. 修復計畫 (Remediation Plan - Strategy A)
+2.  **Strategy B (ID Alignment - 關鍵修復)**:
+    -   **發現**: 前端出現 `406 Not Acceptable` 錯誤。
+    -   **原因**: 前端使用 Auth UUID 查詢 `profiles` 表，但 Mock Data 的 Profile ID 與 Auth UUID 不一致。
+    -   **解法**: 在 `init_db.py` 中，當偵測到重複使用者時，執行 `UPDATE profiles SET id = auth_uuid WHERE email = ...`。
+    -   **安全性**: 經查證 Schema，`profiles` 表無 FK 依賴，此操作是安全的。
 
-**Strategy A**: Bypass DB connection issues and focus on robust API-based synchronization.
+### 2.2 程式碼改進
+-   **init_db.py**: 加入了強健的錯誤判定邏輯 (同時檢查 Status Code 422 與關鍵字)，並實作了上述的 ID 同步邏輯。
+-   **auth_service.py**: 優化了日誌輸出，壓制了預期內的 "Already Registered" Traceback，保持終端機整潔。
 
-### 2.1 Refined Implementation (`scripts/init_db.py`)
-**Goal**: Perform a **Full Sync** (Password + Metadata) for existing users via Supabase Admin API, handling ID resolution correctly.
-
-**Logic Change**:
-在 `sync_profiles_to_auth` 函式中，當捕獲 `already registered` 異常時：
-1.  **Resolve Auth ID**: 不直接使用 Profile ID。先呼叫 `supabase.auth.admin.list_users()` (或過濾查詢) 透過 `email` 找到正確的 **Auth User UUID**。
-2.  **Full Update**: 呼叫 `update_user_by_id(auth_user_id, payload)`。
-    *   Payload: `password="password123"`, `email_confirm=True`, `user_metadata={"name":..., "role":...}`。
-3.  **Logging**: 記錄明確的成功訊息。
-
-### 2.2 Infrastructure Fix (`Makefile`) - [已完成]
-- [x] **Dependency**: Add `--group server` to `uv sync`.
-- [x] **Env Vars**: Inject `SUPABASE_SERVICE_KEY` and `SUPABASE_DB_URL`.
-
-## 3. 驗收標準 (Acceptance Criteria) - Step-by-Step
+## 3. 驗收標準 (Acceptance Criteria) - 測試紀錄
 
 ### Step 1: 執行修復腳本
-執行指令：
-```bash
-make db-init
-```
+- [x] **API Mode Active**: 成功連線至 Supabase Cloud。
+- [x] **Auth Sync**: Log 顯示 `✅ Updated existing user: alice@archon.com`。
+- [x] **ID Sync**: Log 顯示 `✅ Synced Profile ID for alice@archon.com to match Auth UUID`。
 
-**驗收檢查點 (Checklist)**:
-- [ ] **API Mode Active**: Log 顯示 `Fetching profiles via Supabase HTTP API...`。
-- [ ] **ID Resolution**: Log 顯示類似 `🔍 Resolved Auth ID for alice@archon.com: <UUID>` (證明 ID 查找邏輯生效)。
-- [ ] **Update Success**: Log 顯示 `✅ Updated existing user: alice@archon.com (Role: member)`。
-- [ ] **No Crash**: 腳本完整執行完畢，顯示 `✅ Auth Sync Complete.`。
-
-### Step 2: 前端登入驗證 (End-User UI - Port 5173)
-打開瀏覽器訪問 `http://localhost:5173`。
-
-**驗收檢查點 (Checklist)**:
-- [ ] **Login Success**: 使用 `alice@archon.com` / `password123` 登入，無紅字錯誤。
-- [ ] **Redirect**: 成功跳轉至 `/dashboard` 或首頁。
-- [ ] **Role Verification**:
-    - 右上角頭像顯示 Alice 的名字。
-    - 側邊欄顯示 "Sales" 相關功能 (如 `Leads`, `Stats`)。
-    - **關鍵**: 不應出現 "Permission Denied" 或 "403" 畫面。
+### Step 2: 前端登入驗證 (End-User UI)
+- [x] **Login Success**: Alice 成功登入。
+- [x] **No 406 Error**: Profile API 請求成功 (因為 ID 已對齊)。
+- [x] **Role Verification**: 成功進入 Dashboard 並看到 Sales 相關功能。
 
 ## 4. Revised Data Specification
 

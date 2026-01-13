@@ -359,6 +359,27 @@ def test_some_endpoint():
 
 ---
 
+## 第六章：常見問題排查 (Troubleshooting SOP)
+
+### 6.1 Supabase Auth 406 Error (Not Acceptable)
+
+**症狀**: 前端登入成功，但呼叫 `/profiles` API 時收到 `406 Not Acceptable` 錯誤，且回傳 Body 為空。
+
+**根源**: **ID 不匹配 (ID Mismatch)**。
+- 前端使用 `.single()` 查詢 `profiles` 表，期望獲得單筆資料。
+- `auth.users` 中的 `id` (UUID) 與 `public.profiles` 表中的 `id` 不同步（例如 Profile ID 是 mock data 寫死的字串，而 Auth ID 是自動生成的 UUID）。
+- 資料庫查詢找不到資料，導致 `.single()` 失敗並拋出 406。
+
+**解法**: 採用 **雙重同步策略 (Dual Sync Strategy)**。
+1.  **Metadata Sync**: 確保 Auth User 的 Metadata 包含 `role`。
+2.  **ID Sync (關鍵)**: 在偵測到使用者重複時，務必將 `profiles` 表的 ID 更新為 `auth.users` 的 UUID。
+    ```python
+    # 範例邏輯 (init_db.py)
+    cursor.execute("UPDATE profiles SET id = %s WHERE email = %s", (auth_uid, email))
+    ```
+
+---
+
 ## 附錄 A：系統分析 (System Analysis)
 
 > **注意**: 關於「環境比較 (`make dev` vs `docker`)」與「歷史架構決策」的內容，已歸檔至 `PRPs/Phase_3.8_System_Grafting_and_Deployment.md`，以保持本文件聚焦於當前操作。
