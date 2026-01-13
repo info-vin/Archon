@@ -53,7 +53,13 @@
     cd archon-ui-main && pnpm run dev
     ```
 
-4.  **啟動使用者介面 (終端機 3)**:
+4.  **初始化資料庫 (重要)**:
+    ```bash
+    # 執行資料庫遷移與 Mock Data 初始化 (包含 ID 同步修復)
+    make db-init
+    ```
+
+5.  **啟動使用者介面 (終端機 3)**:
     ```bash
     # 首次執行或依賴變更時，需先安裝依賴
     make install
@@ -63,6 +69,11 @@
 
 **最終驗證**:
 當所有服務都成功啟動後，您可以在瀏覽器中分別打開 `http://localhost:3737` (管理後台) 和 `http://localhost:5173` (使用者介面)。
+
+> **💡 資料庫設定小撇步 (Database Config Tip)**:
+> 設定 `.env` 時，請留意 `SUPABASE_DB_URL` 的連接埠差異：
+> *   **Port 5432 (Session Mode)**: 必須用於 **Migration** 與 **Init** 腳本 (`init_db.py`)，避免 Transaction Mode 不支援預備語句 (Prepared Statements) 導致的錯誤。
+> *   **Port 6543 (Transaction Mode)**: 建議用於 **Production** 應用程式流量，以支援高併發連線。
 
 > **💡 主動防禦 (Proactive Guard) 註記**:
 > 若在全 Docker (`dev-docker`) 環境下啟動，前端 `api.ts` 會自動偵測 `SUPABASE_URL` 是否為無法解析的內部 DNS。若偵測到連線異常，系統會自動切換至 **Mock 模式** 以避免無限 Loading，這屬於正常預期行為。
@@ -247,21 +258,27 @@ def test_some_endpoint():
     - [ ] **資料保留**: 如果是修改種子資料 (`seed_*.sql`)，是否確認了是 `APPEND` (追加) 還是 `OVERWRITE` (覆蓋)？**嚴禁**在未讀取原內容的情況下直接覆蓋。
 
     **執行遷移的SOP (部署時)**:
+
+    **本地開發首次設定SOP (從零開始)**:
+
+    > **⚡ 自動化指令 (推薦)**:
+    > 專案已支援 `make db-init` 指令，它會自動執行以下所有步驟（遷移 + 種子資料 + ID 同步）。
+    > 僅在自動化指令失敗時，才需要參考下方的檔案列表進行手動除錯。
+
+    當您需要在本地建立一個全新的、乾淨的資料庫時：
+    1.  確保 Docker 後端已啟動 (`make dev`)。
+    2.  執行指令：
+        ```bash
+        make db-init
+        ```
+    3.  腳本會自動完成：清空舊資料、建立 Schema、寫入 Mock Data、並修復 Auth ID 不一致的問題。
+
+    **🚑 緊急備案：手動初始化流程 (Manual Fallback)**
+    > **僅當 `make db-init` 失敗時使用**
+    > 若自動腳本無法執行，請依序手動執行以下 SQL 檔案：
+
     1.  登入 Supabase 儀表板並進入 **SQL Editor**。
-    2.  **首次設定**: 若 `schema_migrations` 表不存在，請先執行 `migration/002_create_schema_migrations_table.sql` 以建立遷移紀錄表。
-    3.  **依序執行**: 依序手動執行所有本次部署涉及的**新**遷移腳本。由於冪等性與版本註冊，重複執行舊腳本是安全的，但為了清晰起見，建議只執行新的。
-
-        **本地開發首次設定SOP (從零開始)**:
-
-        > **⚠️ 注意：此為手動流程**
-        >
-        > **為什麼需要執行這麼多檔案？** 本專案採用「增量遷移 (Incremental Migration)」策略，以確保資料庫架構的每次變更都可追蹤且可回滾。我們不使用單一的大型 SQL 檔案，以免喪失演進歷史。
-        >
-        > 未來將引入 `make db-init` 指令來自動化此步驟。在此之前，請耐心手動執行。
-
-        當您需要在本地建立一個全新的、乾淨的資料庫時，請遵循此流程。**此流程會刪除所有資料**。
-    1.  登入 Supabase 儀表板並進入 **SQL Editor**。
-    2.  將下列腳本的內容，**依序**複製貼上並執行：
+    2.  依序複製貼上並執行：
         1.  `migration/RESET_DB.sql` (清空所有舊資料)
         2.  `migration/000_unified_schema.sql` (建立基礎結構)
         3.  `migration/001_add_due_date_to_tasks.sql` (追加欄位更新)
@@ -367,16 +384,13 @@ def test_some_endpoint():
 
 **根源**: **ID 不匹配 (ID Mismatch)**。
 - 前端使用 `.single()` 查詢 `profiles` 表，期望獲得單筆資料。
-- `auth.users` 中的 `id` (UUID) 與 `public.profiles` 表中的 `id` 不同步（例如 Profile ID 是 mock data 寫死的字串，而 Auth ID 是自動生成的 UUID）。
-- 資料庫查詢找不到資料，導致 `.single()` 失敗並拋出 406。
+- `auth.users` 中的 `id` (UUID) 與 `public.profiles` 表中的 `id` 不同步。
 
-**解法**: 採用 **雙重同步策略 (Dual Sync Strategy)**。
-1.  **Metadata Sync**: 確保 Auth User 的 Metadata 包含 `role`。
-2.  **ID Sync (關鍵)**: 在偵測到使用者重複時，務必將 `profiles` 表的 ID 更新為 `auth.users` 的 UUID。
-    ```python
-    # 範例邏輯 (init_db.py)
-    cursor.execute("UPDATE profiles SET id = %s WHERE email = %s", (auth_uid, email))
-    ```
+**標準解法**:
+此問題已在 Phase 5.3 透過 `init_db.py` 的自動化修復邏輯解決。
+
+1.  **請執行**: `make db-init`
+2.  **原理**: 腳本內建了「雙重同步策略 (Dual Sync Strategy)」，會自動偵測重複使用者並執行 `UPDATE profiles SET id = auth_uuid`，強制對齊資料庫 ID。
 
 ---
 
@@ -396,5 +410,3 @@ def test_some_endpoint():
 | **AI 角色** | 輔助編碼 (Developer) | **業務助理 (Sales Rep)** | Agent 能力從 RD 領域跨足到業務領域 |
 | **前端功能** | 基礎 CRUD (新增/修改任務) | **儀表板 (Dashboard)** | 新增了圖表與數據可視化介面 (`MarketingPage`) |
 | **文件重點** | 環境設定、部署 SOP | 業務邏輯、內容資產 (Case Study) | 文件開始包含具體的商業劇本 (`PRPs/Phase_4.2.1`) |
-
-

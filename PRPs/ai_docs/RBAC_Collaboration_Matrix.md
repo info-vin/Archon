@@ -2,8 +2,8 @@
 
 **Audience**: Archon Developers, System Admins, AI Agents
 **Purpose**: Define the Role-Based Access Control (RBAC) matrix for Human-AI collaboration ecosystem
-**Source**: Derived from `frontend-architecture.md`, `PRPs/Phase_5.1`, `PRPs/Phase_4.2`
-**Last Updated**: 2026-01-09
+**Source**: Derived from `frontend-architecture.md`, `PRPs/Phase_5_RBAC_Infrastructure_and_Identity`
+**Last Updated**: 2026-01-13
 
 ---
 
@@ -15,14 +15,14 @@ Archon 是一個「使用者角色的人機協作平台」。在此生態系中�
 
 ## 2. HUMAN ROLE SPECIFICATIONS (人類角色規格)
 
-參考專案 Blog Case 與實際業務場景，定義以下具體角色：
+參考專案 Blog Case 與 Phase 5 實作，定義以下具體角色與 DB 欄位映射：
 
-| 層級 | 角色代碼 (Role Key) | 代表人物 (Persona) | 具體職責 (Responsibilities) |
-| :--- | :--- | :--- | :--- |
-| **L1** | `SYSTEM_ADMIN` | **Admin** (You) | **系統造物主**。<br>1. 基礎設施維護 (Docker, DB)。<br>2. 實體化 Alice/Bob 等帳號。<br>3. 配置 Agent 工具箱 (MCP)。 |
-| **L2** | `MANAGER` | **Charlie** (Dev Lead) | **團隊管理者**。<br>1. 審核 AI 寫入的程式碼 (Approvals)。<br>2. 查看團隊 HR 儀表板。<br>3. 分配專案資源。 |
-| **L3** | `EMPLOYEE` (Sales) | **Alice** (Sales Rep) | **業務代表**。<br>1. 記錄客戶聯繫進度 (手動)。<br>2. 呼叫 `Marketing Agent` 搜尋潛在客戶。<br>3. 檢視行銷情資列表。 |
-| **L3** | `EMPLOYEE` (Marketing)| **Bob** (Content Lead)| **行銷人員**。<br>1. 撰寫部落格草稿 (手動)。<br>2. 呼叫 `Knowledge Agent` 歸檔文章。<br>3. 分析市場趨勢。 |
+| 層級 | DB Role 欄位 | 判斷依據 (Role + Dept) | 代表人物 (Persona) | 具體職責 (Responsibilities) |
+| :--- | :--- | :--- | :--- | :--- |
+| **L1** | `system_admin` | N/A | **Admin** (You) | **系統造物主**。<br>1. 基礎設施維護 (Docker, DB)。<br>2. 實體化 Alice/Bob 等帳號。<br>3. 配置 Agent 工具箱 (MCP)。 |
+| **L2** | `manager` | N/A | **Charlie** (Dev Lead) | **團隊管理者**。<br>1. 審核 AI 寫入的程式碼 (Approvals)。<br>2. 查看團隊 HR 儀表板。<br>3. 分配專案資源。 |
+| **L3** | `member` | Dept: **Sales** | **Alice** (Sales Rep) | **業務代表**。<br>1. 記錄客戶聯繫進度 (手動)。<br>2. 呼叫 `Marketing Agent` 搜尋潛在客戶。<br>3. 檢視行銷情資列表。 |
+| **L3** | `member` | Dept: **Marketing**| **Bob** (Content Lead)| **行銷人員**。<br>1. 撰寫部落格草稿 (手動)。<br>2. 呼叫 `Knowledge Agent` 歸檔文章。<br>3. 分析市場趨勢。 |
 
 ---
 
@@ -68,11 +68,12 @@ Archon 是一個「使用者角色的人機協作平台」。在此生態系中�
 - 🔴 **無權限**: UI 隱藏 / API 403。
 - 🟢 **個人權限**: 僅限操作自己的資料。
 - 🔵 **團隊權限**: 可操作團隊資料。
-- 🟣 **全域強制**: Admin 最高權限。
+- 🟣 **全域強制**: Admin 最高權限 (可無視擁有者規則)。
 
 | 功能模組 | 資源/動作 | SYSTEM_ADMIN (You) | MANAGER (Charlie) | SALES (Alice) | MKT (Bob) |
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | **手動管理** | **更新任務進度/留言** | 🟣 任意任務 | 🔵 團隊任務 | 🟢 指派給我的 | 🟢 指派給我的 |
+| | **編輯/刪除 Blog** | 🟣 **全域強制 (Blog Override)** | 🔵 團隊文章 | 🟢 僅限本人 | 🟢 僅限本人 |
 | **AI 協作** | **指派 DevBot** | ✅ 允許 | ✅ 允許 | 🔴 禁止 (不懂Code) | 🔴 禁止 |
 | | **指派 MarketBot** | ✅ 允許 | ✅ 允許 | ✅ 允許 | ✅ 允許 |
 | | **批准代碼變更** | ✅ 允許 | ✅ 允許 | 🔴 禁止 | 🔴 禁止 |
