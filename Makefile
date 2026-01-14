@@ -125,7 +125,11 @@ test-fe-project:
 #    範例 (Example): make test-fe-single project=enduser-ui-fe test="TaskModal"
 test-fe-single:
 	@echo "Running single frontend test '$(test)' in $(project)..."
-	@cd $(project) && $(PNPM) test -- -t "$(test)"
+	@if [ "$(project)" = "enduser-ui-fe" ]; then \
+		cd $(project) && $(PNPM) run test:e2e -- -t "$(test)"; \
+	else \
+		cd $(project) && $(PNPM) test -- -t "$(test)"; \
+	fi
 
 # Run backend tests
 test-be:

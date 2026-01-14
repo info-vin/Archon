@@ -86,14 +86,14 @@ class AuthService:
             # Optimize logging: Avoid huge tracebacks for "already registered" errors which are handled by caller
             err_str = str(e).lower()
             is_duplicate = "already registered" in err_str or "already exists" in err_str or "422" in err_str
-            
+
             if is_duplicate:
                 # Log as warning without stack trace
                 logger.warning(f"User creation skipped (already registered): {email}")
             else:
                 # Log full error for unexpected issues
                 logger.error(f"Error in create_user_by_admin: {e}", exc_info=True)
-            
+
             raise e
 
     def register_user(self, email: str, password: str, name: str) -> dict[str, Any]:
