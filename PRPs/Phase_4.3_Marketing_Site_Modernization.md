@@ -36,14 +36,48 @@ dependencies: ["Phase 4.2"]
     *   修改 `AppRoutes.tsx`，確保 Public Routes 不會被 `RequireAuth` 攔截（或者 `RequireAuth` 只針對 Dashboard 路由）。
     *   在 Public Header 加入邏輯：若 `isAuthenticated` 為真，顯示 "Go to Dashboard" 按鈕；否則顯示 "Login"。
 
-### 3.2 內容遷移 (Content Migration: `public/ai` -> `src/features/marketing`)
+### 3.2 內容遷移策略 (Content Migration Strategy)
 
-*   **建立模組**: `src/features/marketing/`
-*   **元件開發**:
-    *   `SolutionsPage.tsx`: 新的入口頁，對應原 `home.html` 的導航功能，但使用 React Router `Link`。
-    *   `SmartManufacturing.tsx`: 整合原 `summary.html`, `linkage.html` 的內容。
-    *   `TechSpecs.tsx`: 將原 `requirements.html` 的表格轉為 Tailwind 樣式。
-    *   `LegacyViewer.tsx`: 用於嵌入那些實在難以重構的舊 HTML (作為 iframe 降級方案)，但需加上 "Legacy Content" 標示。
+我們採取 **混合模式 (Hybrid Approach)**：核心文字內容轉為 React 元件，複雜圖表與舊版報告保留為 iframe 嵌入。
+
+#### 3.2.1 配置驅動 UI (Configuration-Driven UI)
+
+為了管理大量且多層級的舊版內容，並整合 RBAC 權限，將建立 `src/features/marketing/solutionsConfig.ts` 作為單一真理來源。
+
+**導航結構規劃**:
+
+1.  **Overview (總覽)**
+    *   **Project Summary** (Native React): 來源 `contents/summary.html`
+    *   **Tech Specs** (Native React): 來源 `contents/requirements.html`
+    *   **Linkage Analysis** (LegacyViewer): 來源 `contents/linkage.html`
+
+2.  **Core Technology (核心技術)**
+    *   **SAS Viya Architecture** (LegacyViewer): 來源 `original_files/sas_viya_arc.html`
+    *   **RPA Workflow** (LegacyViewer): 來源 `original_files/RPA_canvas.html`
+    *   **Full RPA Detail** (LegacyViewer): 來源 `original_files/RPA_sas.html`
+
+3.  **High-Tech Manufacturing (高科技製造)**
+    *   **OEE Maximization** (LegacyViewer): 來源 `hightech/...OEE.html`
+    *   **Yield & Quality** (LegacyViewer): 來源 `hightech/...Yield.html`
+    *   **Supply Chain** (LegacyViewer): 來源 `hightech/...Supply Chains.html`
+    *   **Architecture Diagram** (LegacyViewer): 來源 `hightech/...architecture diagram.html`
+
+4.  **Process & Benefits (流程與效益)**
+    *   **Process Details** (LegacyViewer): 來源 `original_files/互動資料機制列表.html` (Protected)
+    *   **Adoption Benefits** (LegacyViewer): 來源 `original_files/adoption_process_chart.html`
+    *   **Employee Well-being** (LegacyViewer): 來源 `original_files/Employee Well-being...html`
+
+5.  **Reports & Proposals (報告與提案)** (需登入)
+    *   **Solution Proposal** (LegacyViewer): 來源 `original_files/NBllm.html` (Protected)
+    *   **Smart Scheduling Report** (LegacyViewer): 來源 `original_files/製造業智慧排程...提案.html` (Protected)
+    *   **BioTech Platform** (LegacyViewer): 來源 `original_files/生技醫藥資訊整合平台.html` (Protected)
+
+#### 3.2.2 元件開發
+
+*   **`solutionsConfig.ts`**: 定義選單結構、圖示、內容類型 (`component` vs `legacy`) 以及權限標記 (`protected: true`)。
+*   **`SolutionsPage.tsx`**: 重構為讀取 Config 並遞迴渲染左側選單 (支援兩層結構)。
+*   **`ContentRenderer.tsx`**: 根據 Config 自動切換 `SmartManufacturing` (React) 或 `LegacyViewer` (iframe)。若內容標記為 `protected` 且使用者未登入，顯示 "Login to View" 遮罩。
+*   **`LegacyViewer.tsx`**: 優化樣式，加入 "Open in New Tab" 按鈕以解決潛在的 RWD 問題。
 
 ### 3.3 案例六：重構之路 (Case Study 6)
 
@@ -54,10 +88,14 @@ dependencies: ["Phase 4.2"]
 ## 4. 驗收標準 (Acceptance Criteria)
 
 - [ ] **Solutions 入口**: 首頁 Header 出現 "Solutions" 連結，點擊後進入新的解決方案頁面。
-- [ ] **內容呈現**: 至少將 `summary` 和 `requirements` 成功轉化為 React 頁面，無跑版。
-- [ ] **導航自由**: 登入狀態下，可以從 Dashboard 點擊連結返回 Home，也能從 Home 點擊按鈕回到 Dashboard，無窮迴圈重導向消失。
-- [ ] **Legacy 支援**: 舊的複雜圖表 (如 SAS 架構圖) 能透過 Legacy Viewer 正常顯示。
-- [ ] **Blog 更新**: 資料庫中出現第六篇 Blog 文章。
+- [ ] **完整導航覆蓋**: 左側選單必須包含上述 5 大類別、共 14 個子項目，且點擊後皆能正確載入內容。
+- [ ] **權限控管 (RBAC Integration)**:
+    *   訪客點擊 "Reports & Proposals" 下的項目時，應看到「請登入以查看完整方案細節」的提示，且無法看到內容。
+    *   登入後 (Member/Admin)，該遮罩消失，內容正常顯示。
+- [ ] **Legacy 內容顯示**: 所有 HTML 檔案 (含 High-Tech 與 Reports) 皆能透過 LegacyViewer 正常顯示，並提供 "Open in New Tab" 按鈕。
+- [ ] **導航自由**: 登入狀態下，可以從 Dashboard 點擊連結返回 Home，也能從 Home 點擊按鈕回到 Dashboard。
+
+
 
 ## 5. 技術注意事項 (Technical Notes)
 
