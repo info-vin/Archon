@@ -13,27 +13,7 @@ export interface SolutionItem {
     component?: React.FC<any>;
     src?: string;
     protected?: boolean;
-    items?: SolutionItem[]; // For nested sub-items
 }
-
-export const solutionsConfig: SolutionItem[] = [
-    {
-        id: 'overview',
-        label: 'Overview',
-        type: 'component', // This is actually a group header in the UI, but we can treat the first item as default? No, let's make it a section.
-        // Actually, the plan calls for sections like "Overview", "Core Technology".
-        // Let's structure it as sections.
-        icon: <LayoutGridIcon className="w-4 h-4" />,
-        items: [
-            { id: 'summary', label: 'Project Summary', type: 'component', component: SmartManufacturing },
-            { id: 'tech-specs', label: 'Tech Specs', type: 'component', component: TechSpecs },
-            { id: 'linkage', label: 'Linkage Analysis', type: 'legacy', src: '/ai/contents/linkage.html' },
-        ]
-    } as any, // Using 'any' briefly to bypass strict type checking for the group structure if we change it.
-    // Wait, the plan says "Navigation Structure". Let's flatten it or use a nested structure that `SolutionsPage` can iterate.
-    // The previous `navItems` was flat. The new plan implies categories.
-    // Let's define `solutionsConfig` as categories.
-];
 
 export interface SolutionCategory {
     title: string;
@@ -80,6 +60,19 @@ export const solutionsCategories: SolutionCategory[] = [
             { id: 'proposal', label: 'Solution Proposal', type: 'legacy', src: '/ai/original_files/NBllm.html', protected: true, icon: <FileTextIcon className="w-4 h-4" /> },
             { id: 'smart-sched', label: 'Smart Scheduling Report', type: 'legacy', src: '/ai/original_files/製造業智慧排程與人力資源管理解決方案提案.html', protected: true, icon: <FileTextIcon className="w-4 h-4" /> },
             { id: 'biotech', label: 'BioTech Platform', type: 'legacy', src: '/ai/original_files/生技醫藥資訊整合平台.html', protected: true, icon: <ActivityIcon className="w-4 h-4" /> },
+        ]
+    },
+    {
+        title: 'Strategic Client POCs',
+        items: [
+            { id: 'fujitec-handbook', label: 'Fujitec Handbook', type: 'legacy', src: '/ai/aus/153_testCase/Fujitec_Intelligent_Scheduling_Project.html', protected: true, icon: <FileTextIcon className="w-4 h-4" /> },
+            { id: 'poc-metrics', label: 'POC Success Metrics', type: 'legacy', src: '/ai/aus/153_testCase/v.0.1.2.html', protected: true, icon: <BarChartIcon className="w-4 h-4" /> },
+        ]
+    },
+    {
+        title: 'Architecture Tools',
+        items: [
+            { id: 'cloud-config', label: 'Cloud Configurator', type: 'legacy', src: '/ai/aus/152_SA/resource_locate.html', icon: <SettingsIcon className="w-4 h-4" /> },
         ]
     }
 ];

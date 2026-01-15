@@ -1,8 +1,8 @@
 ---
 name: "Phase 4.3: Marketing Site Modernization (行銷網站現代化重構)"
 description: "將舊有的靜態 HTML (public/ai) 重構為現代化 React 元件，建立獨立的解決方案入口，並修復登入後的導航體驗問題。"
-status: "Completed"
-completed_at: "2026-01-14"
+status: "In Progress"
+last_updated: "2026-01-14"
 dependencies: ["Phase 4.2"]
 ---
 
@@ -15,12 +15,14 @@ dependencies: ["Phase 4.2"]
 2.  **React Components**: 將 `summary.html`, `requirements.html` 等靜態內容轉化為可重用的 React 元件。
 3.  **Navigation Fix**: 優化路由與導航，確保使用者登入後仍能自由往返 Dashboard 與 Public Site (Home/Blog)。
 4.  **Blog Content**: 新增一篇關於「網站重構」的技術文章 (案例六)。
+5.  **Strategic Assets**: 整合高價值的客戶提案手冊 (`153_testCase`) 至受保護的閱覽區。
 
 ## 2. 使用者故事 (User Stories)
 
 *   **作為訪客 (Visitor)**: 我想在首頁點擊 "Solutions"，在一個現代、美觀的頁面中瀏覽智慧製造方案，而不是看到一個過時的 iframe 網頁。
 *   **作為使用者 (User)**: 當我登入 Dashboard 後，我想隨時切換回官網首頁查看最新消息，而不必登出或手動輸入網址。
 *   **作為行銷人員 (Bob)**: 我希望網頁內容是模組化的，未來修改文字或圖片時，不必擔心破壞整體版型。
+*   **作為業務代表 (Alice)**: 我希望能在系統中直接展示針對特定客戶 (如 Fujitec) 的完整 POC 規劃手冊，而不需要另外找檔案。
 
 ## 3. 實作藍圖 (Implementation Blueprint)
 
@@ -43,7 +45,7 @@ dependencies: ["Phase 4.2"]
 
 #### 3.2.1 配置驅動 UI (Configuration-Driven UI)
 
-為了管理大量且多層級的舊版內容，並整合 RBAC 權限，將建立 `src/features/marketing/solutionsConfig.ts` 作為單一真理來源。
+為了管理大量且多層級的舊版內容，並整合 RBAC 權限，將建立 `src/features/marketing/solutionsConfig.tsx` 作為單一真理來源。
 
 **導航結構規劃**:
 
@@ -73,6 +75,13 @@ dependencies: ["Phase 4.2"]
     *   **Smart Scheduling Report** (LegacyViewer): 來源 `original_files/製造業智慧排程...提案.html` (Protected)
     *   **BioTech Platform** (LegacyViewer): 來源 `original_files/生技醫藥資訊整合平台.html` (Protected)
 
+6.  **Strategic Client POCs (策略客戶案例)** (需登入)
+    *   **Fujitec Handbook** (LegacyViewer): 來源 `aus/153_testCase/Fujitec_Intelligent_Scheduling_Project.html` (Protected)
+    *   **POC Success Metrics** (LegacyViewer): 來源 `aus/153_testCase/v.0.1.2.html` (Protected)
+
+7.  **Architecture Tools (架構規劃工具)**
+    *   **Cloud Configurator** (LegacyViewer): 來源 `aus/152_SA/resource_locate.html` (Public)
+
 #### 3.2.2 元件開發
 
 *   **`solutionsConfig.tsx`**: 定義選單結構、圖示、內容類型 (`component` vs `legacy`) 以及權限標記 (`protected: true`)。
@@ -89,11 +98,11 @@ dependencies: ["Phase 4.2"]
 ## 4. 驗收標準 (Acceptance Criteria)
 
 - [x] **Solutions 入口**: 首頁 Header 出現 "Solutions" 連結，點擊後進入新的解決方案頁面。
-- [x] **完整導航覆蓋**: 左側選單必須包含上述 5 大類別、共 14 個子項目，且點擊後皆能正確載入內容。
+- [x] **完整導航覆蓋**: 左側選單必須包含上述 7 大類別 (新增 Architecture Tools)、共 17 個子項目，且點擊後皆能正確載入內容。
 - [x] **權限控管 (RBAC Integration)**:
-    *   訪客點擊 "Reports & Proposals" 下的項目時，應看到「請登入以查看完整方案細節」的提示，且無法看到內容。
+    *   訪客點擊 "Reports & Proposals" 或 "Strategic Client POCs" 下的項目時，應看到「請登入以查看完整方案細節」的提示，且無法看到內容。
     *   登入後 (Member/Admin)，該遮罩消失，內容正常顯示。
-- [x] **Legacy 內容顯示**: 所有 HTML 檔案 (含 High-Tech 與 Reports) 皆能透過 LegacyViewer 正常顯示，並提供 "Open in New Tab" 按鈕。
+- [x] **Legacy 內容顯示**: 所有 HTML 檔案 (含 High-Tech, Reports, Fujitec POC 與 Cloud Configurator) 皆能透過 LegacyViewer 正常顯示，並提供 "Open in New Tab" 按鈕。
 - [x] **導航自由**: 登入狀態下，可以從 Dashboard 點擊連結返回 Home，也能從 Home 點擊按鈕回到 Dashboard。
 
 
