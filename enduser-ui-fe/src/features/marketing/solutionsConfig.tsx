@@ -65,14 +65,14 @@ export const solutionsCategories: SolutionCategory[] = [
     {
         title: 'Strategic Client POCs',
         items: [
-            { id: 'fujitec-handbook', label: 'Fujitec Handbook', type: 'legacy', src: '/ai/aus/153_testCase/Fujitec_Intelligent_Scheduling_Project.html', protected: true, icon: <FileTextIcon className="w-4 h-4" /> },
-            { id: 'poc-metrics', label: 'POC Success Metrics', type: 'legacy', src: '/ai/aus/153_testCase/v.0.1.2.html', protected: true, icon: <BarChartIcon className="w-4 h-4" /> },
+            { id: 'fujitec-handbook', label: 'Fujitec Handbook', type: 'legacy', src: '/aus/153_testCase/Fujitec_Intelligent_Scheduling_Project.html', protected: true, icon: <FileTextIcon className="w-4 h-4" /> },
+            { id: 'poc-metrics', label: 'POC Success Metrics', type: 'legacy', src: '/aus/153_testCase/v.0.1.2.html', protected: true, icon: <BarChartIcon className="w-4 h-4" /> },
         ]
     },
     {
         title: 'Architecture Tools',
         items: [
-            { id: 'cloud-config', label: 'Cloud Configurator', type: 'legacy', src: '/ai/aus/152_SA/resource_locate.html', icon: <SettingsIcon className="w-4 h-4" /> },
+            { id: 'cloud-config', label: 'Cloud Configurator', type: 'legacy', src: '/aus/152_SA/resource_locate.html', icon: <SettingsIcon className="w-4 h-4" /> },
         ]
     }
 ];

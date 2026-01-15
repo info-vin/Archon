@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import ContentRenderer from './ContentRenderer.tsx';
 import { solutionsCategories, SolutionItem } from './solutionsConfig';
 
@@ -6,6 +6,11 @@ const SolutionsPage: React.FC = () => {
     // Default to the first item of the first category
     const defaultItem = solutionsCategories[0].items[0];
     const [activeItemId, setActiveItemId] = useState<string>(defaultItem.id);
+
+    // Scroll to top when active item changes
+    useEffect(() => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, [activeItemId]);
 
     // Helper to find the active item object
     const getActiveItem = (): SolutionItem | undefined => {
