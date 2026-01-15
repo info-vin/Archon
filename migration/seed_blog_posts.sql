@@ -180,17 +180,14 @@ INSERT INTO blog_posts (id, title, excerpt, content, author_name, publish_date, 
 2.  **行銷亂槍打鳥**：缺乏對客戶偏好的了解，導致 EDM 開信率低於 10%。
 
 ## 解決方案：數據驅動的精準行銷
+我們協助該客戶導入了全通路的數據整合平台，實施了購物籃分析、動態庫存調撥與 RFM 模型客戶分群等策略。
 
-我們協助該客戶導入了全通路的數據整合平台，實施了以下策略：
+## 實戰紀錄：Archon 人機協作流程
+本案的成功關鍵在於業務團隊利用 Archon 系統進行的高效情資整合：
 
-### 1. 購物籃分析 (Market Basket Analysis)
-透過分析歷史交易數據，我們發現了許多意想不到的商品關聯（例如：購買高單價咖啡機的客戶，常會同時購買特定品牌的燕麥奶）。基於此，我們重新設計了門市陳列與線上推薦引擎。
-
-### 2. 動態庫存調撥
-建立了預測模型，根據各地區的天氣、節慶與歷史銷售趨勢，提前一週自動建議各門市的進貨量，大幅降低了缺貨率與庫存成本。
-
-### 3. RFM 模型客戶分群
-將客戶依據最近購買日 (Recency)、購買頻率 (Frequency) 與金額 (Monetary) 分成 8 類。針對「高價值流失風險客群」發送專屬優惠券，成功挽回了 15% 的流失客戶。
+1. **行銷端建置知識庫**: 行銷經理 Bob 將公司過往處理過的「南非鋰電池市場報告 (156_resource)」與「Fujitec 排程優化案」導入系統知識庫。
+2. **業務端精準開發**: 業務代表 Alice 在搜尋市場情資時，發現潛在客戶 `Retail Corp` 正在招募具備能源轉型背景的數據專家。
+3. **RAG 自動生成 Pitch**: Alice 呼叫 **Generate Pitch** 功能，系統自動檢索出 Bob 導入的南非市場深度報告，並生成一份高度客製化的開發信，成功協助 Alice 約到對方的 CTO。
 
 ## 成果
 在導入系統後的三個月內，該客戶達成了以下具體成效：
@@ -198,7 +195,7 @@ INSERT INTO blog_posts (id, title, excerpt, content, author_name, publish_date, 
 *   **庫存優化**：滯銷庫存減少 40%。
 *   **行銷效率**：EDM 開信率提升至 25%，轉換率翻倍。
 
-此案例證明，正確的數據策略能直接轉化為具體的商業價值。', 'Alice (Sales VP)', '2025-01-12T14:00:00Z', 'https://picsum.photos/seed/case-retail/600/400')
+此案例證明，透過 Archon 的 RAG 協作模式，正確的數據策略能直接轉化為具體的商業價值。', 'Alice (Sales VP)', '2025-01-12T14:00:00Z', 'https://picsum.photos/seed/case-retail/600/400')
 ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO blog_posts (id, title, excerpt, content, author_name, publish_date, image_url) VALUES

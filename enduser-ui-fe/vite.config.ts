@@ -51,8 +51,11 @@ export default defineConfig(({ mode }) => {
           }
         }
       },
-            test: {
-              globals: true,
+      build: {
+        emptyOutDir: true,
+      },
+      test: {
+        globals: true,
               environment: 'jsdom',
               setupFiles: './test/setup.ts',
               exclude: ['tests/e2e/**', 'node_modules'],

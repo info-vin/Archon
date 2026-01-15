@@ -230,12 +230,14 @@ mcp = [
 ]
 server = [
     { name = "asyncpg" },
+    { name = "beautifulsoup4" },
     { name = "crawl4ai" },
     { name = "cryptography" },
     { name = "docker" },
     { name = "fastapi" },
     { name = "httpx" },
     { name = "logfire" },
+    { name = "lxml" },
     { name = "markdown" },
     { name = "openai" },
     { name = "pdfplumber" },
@@ -329,12 +331,14 @@ mcp = [
 ]
 server = [
     { name = "asyncpg", specifier = ">=0.29.0" },
+    { name = "beautifulsoup4", specifier = ">=4.13.4" },
     { name = "crawl4ai", specifier = "==0.7.4" },
     { name = "cryptography", specifier = ">=41.0.0" },
     { name = "docker", specifier = ">=6.1.0" },
     { name = "fastapi", specifier = ">=0.104.0" },
     { name = "httpx", specifier = ">=0.24.0" },
     { name = "logfire", specifier = ">=0.30.0" },
+    { name = "lxml", specifier = ">=5.4.0" },
     { name = "markdown", specifier = ">=3.8" },
     { name = "openai", specifier = "==1.71.0" },
     { name = "pdfplumber", specifier = ">=0.11.6" },

@@ -95,6 +95,71 @@ dependencies: ["Phase 4.2"]
 *   **作者**: Bob (Content Lead)
 *   **內容**: 記錄從 `public/ai` 的混亂現狀，到採用 Component-based 架構的思考過程。強調「策展」與「使用者體驗」的重要性。
 
+### 3.4 知識庫增強 (Knowledge Base Enhancement)
+
+為了讓 Archon 不僅是「內容展示者」，更是「內容解讀者」，我們將導入歷史累積的高價值非結構化數據。
+
+*   **目標**: 將 `enduser-ui-fe/public/aus/156_resource/` 下的舊合約、市場研究報告與技術白皮書，轉化為可被語義檢索的知識向量。
+*   **執行策略**:
+    1.  **資料盤點**: 來源包含 `.docx` (合約、研究報告) 與 `.pdf` (技術文件)。
+    2.  **Agent 協作**: 使用 `POBot` (負責合約需求分析) 或 `Librarian` (負責技術研究歸檔) 透過 `knowledge_api` 進行批量上傳與解析。
+    3.  **RAG 整合**: 驗證這些文件能被「行銷情資 (Sales Intel)」或「合約分析」場景所引用。
+*   **預期效益**: 業務人員 (Alice) 可直接詢問「南非鋰電池市場的關鍵數據為何？」，系統將引用 `160_south_africa_lithium_battery_market_bp.docx` 回答。
+
+### 3.5 銷售情資驗證 (Sales Intelligence E2E)
+
+為了確保業務流程的穩定性，我們將建立嚴格的端對端測試。
+
+*   **測試檔案**: `enduser-ui-fe/tests/e2e/sales-intelligence.spec.tsx`
+*   **實作細節 (Implementation Details)**:
+    1.  **Mock 策略 (MSW)**:
+        *   攔截 `GET /api/marketing/jobs`。
+        *   回傳 Fixture Data: 包含 `description_full: "Requires specific BI tool knowledge (Tableau)..."` 的特徵字串。
+    2.  **角色模擬**:
+        *   使用 `e2e.setup.ts` 中的 `mockUser` 模擬 Alice 登入狀態。
+    3.  **關鍵斷言 (Assertions)**:
+        *   **列表渲染**: 確認 `Retail Corp` 卡片出現。
+        *   **詳情展開**: 模擬點擊 `View Full JD` (或類似觸發點)，驗證 DOM 中出現 "Requires specific BI tool knowledge"。
+        *   **Pitch 生成**: 點擊 `Generate Pitch`，驗證生成的文字框中包含公司名稱與 Mock 的職缺關鍵字。
+
+### 3.6 知識庫導入驗證 (Knowledge Ingestion E2E)
+
+*   **測試檔案**: `enduser-ui-fe/tests/e2e/rag-ingestion.spec.tsx` (New)
+*   **劇本**: "Admin Ingests Legacy Documents"
+    1.  **Login**: 以 `Admin` 身份登入 (因為 Alice 無權上傳)。
+    2.  **Upload**: 模擬檔案上傳 `test-contract.pdf`。
+    3.  **Verify**: 確認上傳成功 toast 出現，且列表新增一筆資料。
+    4.  **RAG Check**: (Optional) 透過 `Mock Service Worker` 模擬 RAG 檢索 API 回傳該文件的片段，驗證前端顯示。
+
+- [ ] **自動化測試覆蓋**:
+    - `sales-intelligence.spec.tsx` 通過，且明確驗證了 `description_full` 欄位的顯示。
+    - `rag-ingestion.spec.tsx` 通過，驗證檔案上傳 UI 流程。
+
+### 3.7 前端技術對齊 (Frontend Technical Alignment)
+
+為了支撐後端升級後的職缺爬蟲功能，前端需執行以下精確變更：
+
+1.  **類型系統定義 (Type Definition)**:
+    *   **檔案**: `enduser-ui-fe/src/types.ts`
+    *   **變更**: 在 `JobData` 介面新增 `description_full?: string` 欄位。
+2.  **UI 渲染邏輯 (UI Component)**:
+    *   **檔案**: `enduser-ui-fe/src/pages/MarketingPage.tsx`
+    *   **實作細節**: 
+        *   新增 React State: `expandedJobIdx` 用於追蹤展開的職缺索引。
+        *   在 `lead-card` 中新增切換按鈕 `[View Full JD]`。
+        *   條件渲染: 顯示 `job.description_full` (若無則顯示摘要)。
+3.  **E2E 數據模擬 (Mocking)**:
+    *   **檔案**: `enduser-ui-fe/tests/e2e/e2e.setup.tsx`
+    *   **變更**: 升級 `searchJobs` 的 mock 回傳值，加入包含關鍵字（如 "BI tools", "Spark"）的 `description_full` 欄位。
+
+### 3.8 環境與依賴檢查 (Infrastructure Verification)
+
+1.  **後端依賴**: 確保 `beautifulsoup4` 與 `lxml` 已加入 `python/pyproject.toml` 的 `server` group。
+2.  **環境變數**: 爬蟲服務使用 AJAX 模擬，無需額外外部 API Key。
+3.  **建置清理**: 
+    *   `Makefile` 的 `install` target 必須清空 `dist/`。
+    *   `enduser-ui-fe/vite.config.ts` 必須啟用 `build.emptyOutDir: true`。
+
 ## 4. 驗收標準 (Acceptance Criteria)
 
 - [x] **Solutions 入口**: 首頁 Header 出現 "Solutions" 連結，點擊後進入新的解決方案頁面。
@@ -104,10 +169,24 @@ dependencies: ["Phase 4.2"]
     *   登入後 (Member/Admin)，該遮罩消失，內容正常顯示。
 - [x] **Legacy 內容顯示**: 所有 HTML 檔案 (含 High-Tech, Reports, Fujitec POC 與 Cloud Configurator) 皆能透過 LegacyViewer 正常顯示，並提供 "Open in New Tab" 按鈕。
 - [x] **導航自由**: 登入狀態下，可以從 Dashboard 點擊連結返回 Home，也能從 Home 點擊按鈕回到 Dashboard。
-
-
+- [ ] **RAG 資料導入**: `public/aus/156_resource/` 下至少 3 份關鍵文件 (如鋰電池市場報告、整合策略) 已成功存入向量資料庫。
+- [ ] **語義檢索驗證**: 在 RAG 測試介面輸入 "South Africa Lithium Market"，能準確召回相關文件片段。
+- [ ] **格式支援**: 確認 `.docx` 與 `.pdf` 格式皆能被正確解析文字內容。
 
 ## 5. 技術注意事項 (Technical Notes)
 
 *   **圖片資源**: 將 `public/ai/hightech` 等目錄下的圖片移至 `src/assets/images/solutions/` 並透過 `import` 引用，確保 Build 時期能被優化。
 *   **樣式隔離**: 確保新頁面的 CSS 不會汙染 Dashboard，反之亦然 (Tailwind 的 `prose` plugin 可用於處理大量文字內容)。
+*   **RAG 解析器依賴**: 確保後端環境已正確安裝並配置 `python-docx`, `pdfplumber`, `beautifulsoup4` 以支援多格式解析。
+*   **靜態資源路徑**: 需注意 Docker 環境下 `public/` 目錄的掛載路徑，確保後端 API 能讀取到這些靜態檔案，或透過 Agent 模擬上傳流程。
+
+## 6. 最終執行計畫 (Final Execution Plan)
+
+### Action Items
+- [ ] **Action A**: 修改 `enduser-ui-fe/src/types.ts`，加入 `description_full`。
+- [ ] **Action B**: 修改 `enduser-ui-fe/src/pages/MarketingPage.tsx`，加入 `expandedJobIdx` state 與 `[View Full JD]` 按鈕。
+- [ ] **Action C**: 修改 `enduser-ui-fe/tests/e2e/e2e.setup.tsx`，更新 Mock 資料。
+- [ ] **Action D**: 修改 `enduser-ui-fe/tests/e2e/sales-intelligence.spec.tsx`，加入對應斷言。
+- [ ] **Action E**: 修改 `job_board_service.py`，實作 `BeautifulSoup` 邏輯。
+- [ ] **Action F**: 修改 `vite.config.ts` (`emptyOutDir`)。
+- [ ] **Action G**: 修改 `Makefile` (`rm -rf dist`)。

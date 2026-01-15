@@ -31,6 +31,8 @@ help:
 
 # Install dependencies
 install:
+	@echo "Cleaning old build artifacts..."
+	@rm -rf enduser-ui-fe/dist archon-ui-main/dist
 	@echo "Installing dependencies..."
 	@cd enduser-ui-fe && $(PNPM) install
 	@cd python && $(UV) sync --group all --group dev

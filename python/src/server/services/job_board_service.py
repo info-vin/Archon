@@ -1,4 +1,5 @@
 import httpx
+from bs4 import BeautifulSoup
 from pydantic import BaseModel
 
 from ..config.logfire_config import get_logger, logfire
@@ -13,6 +14,7 @@ class JobData(BaseModel):
     salary: str | None = None
     url: str | None = None
     description: str | None = None
+    description_full: str | None = None # ADDED: Full Job Description
     skills: list[str] | None = None
     source: str = "104"
     identified_need: str | None = None  # ADDED: AI/Logic inferred need
@@ -39,6 +41,7 @@ class JobBoardService:
             salary="1.5M - 2.5M TWD/Year",
             url="https://www.104.com.tw/job/mock-retail-1",
             description="We are looking for an expert in BI tools and SQL.",
+            description_full="Full job description: We are looking for an expert in BI tools and SQL. Responsibilities include...",
             skills=["SQL", "Tableau", "Python"],
             source="mock",
             identified_need="Hiring Data Analyst -> Potential BI Tool Customer"
@@ -50,6 +53,7 @@ class JobBoardService:
             salary="Negotiable",
             url="https://www.104.com.tw/job/mock-ai-1",
             description="Build the next generation of AI tools using LLMs.",
+            description_full="Full job description: Build the next generation of AI tools using LLMs. Requirements: 5+ years exp...",
             skills=["Python", "LangChain", "OpenAI"],
             source="mock",
             identified_need="Developing AI Features -> Needs LLM Ops / Archon"
@@ -60,6 +64,7 @@ class JobBoardService:
     async def search_jobs(cls, keyword: str, limit: int = 10) -> list[JobData]:
         """
         Search for jobs using keyword and identify potential leads.
+        Now also fetches full job details for each result.
         """
         logfire.info(f"Searching jobs | keyword={keyword} | limit={limit}")
 
@@ -69,9 +74,19 @@ class JobBoardService:
                 logfire.warning("104 API returned empty list, falling back to mock")
                 jobs = cls.MOCK_JOBS
 
-            # Analyze needs for each job
+            # Analyze needs for each job & Fetch Details
             for job in jobs:
+                # Infer need
                 job.identified_need = cls._infer_need(job)
+
+                # Fetch full details if URL is present and it's not a mock
+                if job.url and "104.com.tw" in job.url:
+                    try:
+                        detail = await cls._fetch_job_detail(job.url)
+                        if detail:
+                            job.description_full = detail
+                    except Exception as e:
+                        logfire.warning(f"Failed to fetch job detail | url={job.url} | error={e}")
 
             logfire.info(f"Job search completed | count={len(jobs)}")
             return jobs
@@ -108,6 +123,9 @@ class JobBoardService:
                     "status": "new",
                     "identified_need": job.identified_need or cls._infer_need(job)
                 }
+
+                # Store full description in metadata if possible, or extend table later.
+                # For now, we just stick to the existing schema.
 
                 supabase.table("leads").insert(lead_data).execute()
                 new_leads_count += 1
@@ -206,3 +224,36 @@ class JobBoardService:
                 ))
 
             return parsed_jobs
+
+    @classmethod
+    async def _fetch_job_detail(cls, url: str) -> str | None:
+        """
+        Fetches the full job description from the 104 job detail page.
+        """
+        try:
+            async with httpx.AsyncClient(timeout=5.0) as client:
+                response = await client.get(url, headers=cls.HEADERS)
+                if response.status_code != 200:
+                    return None
+
+                soup = BeautifulSoup(response.text, "lxml")
+
+                # Try to find the job description container
+                # Note: 104 structure changes, usually it's in p tags class 'mb-5' inside job-description
+                # Or simply extract all text from the main content area
+
+                content = soup.find("p", class_="mb-5")
+                if content:
+                    return content.get_text(strip=True)
+
+                # Fallback: finding generic description class
+                desc_div = soup.find("div", class_="job-description__content")
+                if desc_div:
+                    return desc_div.get_text(strip=True)
+
+                return None
+
+        except Exception as e:
+            logfire.warning(f"Error parsing job detail: {e}")
+            return None
+
