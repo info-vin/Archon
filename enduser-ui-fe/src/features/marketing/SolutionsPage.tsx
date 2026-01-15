@@ -1,47 +1,22 @@
 import React, { useState } from 'react';
-import SmartManufacturing from './SmartManufacturing.tsx';
-import TechSpecs from './TechSpecs.tsx';
-import LegacyViewer from './LegacyViewer.tsx';
-import { LayoutGridIcon, ShieldCheckIcon, BarChartIcon, SettingsIcon } from '../../components/Icons.tsx';
-
-type Tab = 'overview' | 'tech-specs' | 'architecture' | 'legacy-demo';
+import ContentRenderer from './ContentRenderer.tsx';
+import { solutionsCategories, SolutionItem } from './solutionsConfig';
 
 const SolutionsPage: React.FC = () => {
-    const [activeTab, setActiveTab] = useState<Tab>('overview');
+    // Default to the first item of the first category
+    const defaultItem = solutionsCategories[0].items[0];
+    const [activeItemId, setActiveItemId] = useState<string>(defaultItem.id);
 
-    const renderContent = () => {
-        switch (activeTab) {
-            case 'overview':
-                return <SmartManufacturing />;
-            case 'tech-specs':
-                return <TechSpecs />;
-            case 'architecture':
-                return (
-                    <LegacyViewer 
-                        src="/ai/hightech/SAS in hightech manufacturing_ architecture diagram.html" 
-                        title="Architecture Diagram" 
-                    />
-                );
-            case 'legacy-demo':
-                return (
-                    <div className="space-y-8">
-                         <LegacyViewer 
-                            src="/ai/original_files/RPA_canvas.html" 
-                            title="RPA Flow Demo" 
-                        />
-                    </div>
-                );
-            default:
-                return <SmartManufacturing />;
+    // Helper to find the active item object
+    const getActiveItem = (): SolutionItem | undefined => {
+        for (const category of solutionsCategories) {
+            const found = category.items.find(item => item.id === activeItemId);
+            if (found) return found;
         }
+        return undefined;
     };
 
-    const navItems: { id: Tab; label: string; icon: React.ReactNode }[] = [
-        { id: 'overview', label: 'Overview', icon: <LayoutGridIcon className="w-4 h-4" /> },
-        { id: 'tech-specs', label: 'Tech Specs', icon: <ShieldCheckIcon className="w-4 h-4" /> },
-        { id: 'architecture', label: 'Architecture', icon: <SettingsIcon className="w-4 h-4" /> },
-        { id: 'legacy-demo', label: 'Live Demo', icon: <BarChartIcon className="w-4 h-4" /> },
-    ];
+    const activeItem = getActiveItem() || defaultItem;
 
     return (
         <div className="min-h-screen bg-secondary/30">
@@ -57,34 +32,45 @@ const SolutionsPage: React.FC = () => {
 
             <div className="container mx-auto px-4 py-8 flex flex-col md:flex-row gap-8">
                 {/* Left Navigation */}
-                <aside className="w-full md:w-64 flex-shrink-0">
+                <aside className="w-full md:w-72 flex-shrink-0">
                     <nav className="bg-card rounded-lg shadow-sm border border-border overflow-hidden sticky top-20">
-                        <div className="p-4 bg-secondary border-b border-border">
-                            <h2 className="font-semibold">Contents</h2>
-                        </div>
-                        <ul className="divide-y divide-border">
-                            {navItems.map((item) => (
-                                <li key={item.id}>
-                                    <button
-                                        onClick={() => setActiveTab(item.id)}
-                                        className={`w-full flex items-center gap-3 px-4 py-3 text-sm transition-colors hover:bg-secondary/50 ${
-                                            activeTab === item.id 
-                                                ? 'bg-secondary text-primary font-medium border-l-4 border-l-primary' 
-                                                : 'text-muted-foreground border-l-4 border-l-transparent'
-                                        }`}
-                                    >
-                                        {item.icon}
-                                        {item.label}
-                                    </button>
-                                </li>
-                            ))}
-                        </ul>
+                        {solutionsCategories.map((category) => (
+                            <div key={category.title} className="border-b border-border last:border-b-0">
+                                <div className="px-4 py-3 bg-secondary/50 font-semibold text-xs text-muted-foreground uppercase tracking-wider">
+                                    {category.title}
+                                </div>
+                                <ul>
+                                    {category.items.map((item) => (
+                                        <li key={item.id}>
+                                            <button
+                                                onClick={() => setActiveItemId(item.id)}
+                                                className={`w-full flex items-center gap-3 px-4 py-3 text-sm transition-colors text-left ${
+                                                    activeItemId === item.id 
+                                                        ? 'bg-secondary text-primary font-medium border-l-4 border-l-primary' 
+                                                        : 'text-muted-foreground border-l-4 border-l-transparent hover:bg-secondary/30'
+                                                }`}
+                                            >
+                                                <span className={`${activeItemId === item.id ? 'text-primary' : 'text-muted-foreground/70'}`}>
+                                                    {item.icon}
+                                                </span>
+                                                {item.label}
+                                                {item.protected && (
+                                                    <span className="ml-auto text-[10px] bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded border border-amber-200">
+                                                        LOCK
+                                                    </span>
+                                                )}
+                                            </button>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                        ))}
                     </nav>
                 </aside>
 
                 {/* Main Content Area */}
-                <main className="flex-1">
-                    {renderContent()}
+                <main className="flex-1 min-w-0">
+                    <ContentRenderer item={activeItem} />
                 </main>
             </div>
         </div>

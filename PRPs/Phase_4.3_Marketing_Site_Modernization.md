@@ -1,7 +1,8 @@
 ---
 name: "Phase 4.3: Marketing Site Modernization (行銷網站現代化重構)"
 description: "將舊有的靜態 HTML (public/ai) 重構為現代化 React 元件，建立獨立的解決方案入口，並修復登入後的導航體驗問題。"
-status: "Planned"
+status: "Completed"
+completed_at: "2026-01-14"
 dependencies: ["Phase 4.2"]
 ---
 
@@ -74,7 +75,7 @@ dependencies: ["Phase 4.2"]
 
 #### 3.2.2 元件開發
 
-*   **`solutionsConfig.ts`**: 定義選單結構、圖示、內容類型 (`component` vs `legacy`) 以及權限標記 (`protected: true`)。
+*   **`solutionsConfig.tsx`**: 定義選單結構、圖示、內容類型 (`component` vs `legacy`) 以及權限標記 (`protected: true`)。
 *   **`SolutionsPage.tsx`**: 重構為讀取 Config 並遞迴渲染左側選單 (支援兩層結構)。
 *   **`ContentRenderer.tsx`**: 根據 Config 自動切換 `SmartManufacturing` (React) 或 `LegacyViewer` (iframe)。若內容標記為 `protected` 且使用者未登入，顯示 "Login to View" 遮罩。
 *   **`LegacyViewer.tsx`**: 優化樣式，加入 "Open in New Tab" 按鈕以解決潛在的 RWD 問題。
@@ -87,13 +88,13 @@ dependencies: ["Phase 4.2"]
 
 ## 4. 驗收標準 (Acceptance Criteria)
 
-- [ ] **Solutions 入口**: 首頁 Header 出現 "Solutions" 連結，點擊後進入新的解決方案頁面。
-- [ ] **完整導航覆蓋**: 左側選單必須包含上述 5 大類別、共 14 個子項目，且點擊後皆能正確載入內容。
-- [ ] **權限控管 (RBAC Integration)**:
+- [x] **Solutions 入口**: 首頁 Header 出現 "Solutions" 連結，點擊後進入新的解決方案頁面。
+- [x] **完整導航覆蓋**: 左側選單必須包含上述 5 大類別、共 14 個子項目，且點擊後皆能正確載入內容。
+- [x] **權限控管 (RBAC Integration)**:
     *   訪客點擊 "Reports & Proposals" 下的項目時，應看到「請登入以查看完整方案細節」的提示，且無法看到內容。
     *   登入後 (Member/Admin)，該遮罩消失，內容正常顯示。
-- [ ] **Legacy 內容顯示**: 所有 HTML 檔案 (含 High-Tech 與 Reports) 皆能透過 LegacyViewer 正常顯示，並提供 "Open in New Tab" 按鈕。
-- [ ] **導航自由**: 登入狀態下，可以從 Dashboard 點擊連結返回 Home，也能從 Home 點擊按鈕回到 Dashboard。
+- [x] **Legacy 內容顯示**: 所有 HTML 檔案 (含 High-Tech 與 Reports) 皆能透過 LegacyViewer 正常顯示，並提供 "Open in New Tab" 按鈕。
+- [x] **導航自由**: 登入狀態下，可以從 Dashboard 點擊連結返回 Home，也能從 Home 點擊按鈕回到 Dashboard。
 
 
 
