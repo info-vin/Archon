@@ -43,7 +43,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
               setLoading(true);
               try {
                 const currentUser = await api.getCurrentUser();
-                setUser(currentUser);
+                // ONLY update if we got a valid user. If null (timeout/network error), 
+                // keep the existing user state to avoid unexpected logouts.
+                if (currentUser) {
+                    setUser(currentUser);
+                } else {
+                    console.warn(`[useAuth] ${event} occurred but getCurrentUser returned null. Retaining existing session.`);
+                }
               } catch (error) {
                 console.error("Failed to refresh user on auth change:", error);
               } finally {
