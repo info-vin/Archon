@@ -229,7 +229,7 @@ class JobBoardService:
     async def _fetch_job_detail(cls, url: str) -> str | None:
         """
         Fetches the full job description from the 104 job detail page.
-        Uses a multi-layer fallback strategy (Main content -> Meta description) 
+        Uses a multi-layer fallback strategy (Main content -> Meta description)
         and enhanced headers to increase success rate.
         """
         try:
@@ -253,7 +253,7 @@ class JobBoardService:
                 desc_div = soup.find("div", class_="job-description__content")
                 if desc_div:
                     return desc_div.get_text(strip=True)
-                
+
                 # Try table data (requirements)
                 req_div = soup.find("div", class_="job-description-table__data")
                 if req_div:

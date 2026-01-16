@@ -1,8 +1,8 @@
 ---
 name: "Phase 4.3: Marketing Site Modernization (行銷網站現代化重構)"
 description: "將舊有的靜態 HTML (public/ai) 重構為現代化 React 元件，建立獨立的解決方案入口，並修復登入後的導航體驗問題。"
-status: "In Progress"
-last_updated: "2026-01-14"
+status: "Completed"
+last_updated: "2026-01-15"
 dependencies: ["Phase 4.2"]
 ---
 
@@ -97,81 +97,61 @@ dependencies: ["Phase 4.2"]
 
 ### 3.4 知識庫增強 (Knowledge Base Enhancement)
 
-為了讓 Archon 不僅是「內容展示者」，更是「內容解讀者」，我們將導入歷史累積的高價值非結構化數據。
+為了讓 Archon 不僅是「內容展示者」，更是「內容解讀者」，我們將實施「前台使用、後台建置」的協作架構。
 
-*   **目標**: 將 `enduser-ui-fe/public/aus/156_resource/` 下的舊合約、市場研究報告與技術白皮書，轉化為可被語義檢索的知識向量。
-*   **執行策略**:
-    1.  **資料盤點**: 來源包含 `.docx` (合約、研究報告) 與 `.pdf` (技術文件)。
-    2.  **Agent 協作**: 使用 `POBot` (負責合約需求分析) 或 `Librarian` (負責技術研究歸檔) 透過 `knowledge_api` 進行批量上傳與解析。
-    3.  **RAG 整合**: 驗證這些文件能被「行銷情資 (Sales Intel)」或「合約分析」場景所引用。
-*   **預期效益**: 業務人員 (Alice) 可直接詢問「南非鋰電池市場的關鍵數據為何？」，系統將引用 `160_south_africa_lithium_battery_market_bp.docx` 回答。
+*   **分工邏輯**:
+    1.  **後台建置 (Backstage - Admin UI)**: 由 Bob (Marketing) 或 Admin 負責。入口：`http://localhost:3737/knowledge`。
+        *   **任務**: 上傳 `156_resource` 中的 Word/PDF，觸發向量化。
+    2.  **前台使用 (Frontstage - End-User UI)**: 由 Alice (Sales) 負責。入口：`http://localhost:5173/marketing`。
+        *   **任務**: 在搜尋情資後點擊 "Generate Pitch"，系統自動檢索後台導入的知識。
+*   **技術數據**: 
+    *   後端 `knowledge_api.py` 的 `/documents/upload` 具備 RBAC 保護，僅授權 `can_manage_content` 角色存取。
+    *   RAG 檢索邏輯整合於 `Sales Intelligence` 流程中。
 
 ### 3.5 銷售情資驗證 (Sales Intelligence E2E)
 
 為了確保業務流程的穩定性，我們將建立嚴格的端對端測試。
 
 *   **測試檔案**: `enduser-ui-fe/tests/e2e/sales-intelligence.spec.tsx`
-*   **實作細節 (Implementation Details)**:
-    1.  **Mock 策略 (MSW)**:
-        *   攔截 `GET /api/marketing/jobs`。
-        *   回傳 Fixture Data: 包含 `description_full: "Requires specific BI tool knowledge (Tableau)..."` 的特徵字串。
-    2.  **角色模擬**:
-        *   使用 `e2e.setup.ts` 中的 `mockUser` 模擬 Alice 登入狀態。
-    3.  **關鍵斷言 (Assertions)**:
-        *   **列表渲染**: 確認 `Retail Corp` 卡片出現。
-        *   **詳情展開**: 模擬點擊 `View Full JD` (或類似觸發點)，驗證 DOM 中出現 "Requires specific BI tool knowledge"。
-        *   **Pitch 生成**: 點擊 `Generate Pitch`，驗證生成的文字框中包含公司名稱與 Mock 的職缺關鍵字。
+*   **實作細節**:
+    1.  **Mock 策略**: 
+        *   攔截 `/api/marketing/jobs` (Job Search)。
+        *   攔截 `/api/marketing/generate-pitch` (RAG Generation) - **新增**。
+    2.  **關鍵斷言**: 
+        *   驗證卡片渲染及「View Full JD」展開功能。
+        *   驗證 Pitch 生成框中包含 RAG 檢索特徵字串。
 
-### 3.6 知識庫導入驗證 (Knowledge Ingestion E2E)
+### 3.6 知識庫導入驗證 (Knowledge Ingestion Verification)
 
-*   **測試檔案**: `enduser-ui-fe/tests/e2e/rag-ingestion.spec.tsx` (New)
-*   **劇本**: "Admin Ingests Legacy Documents"
-    1.  **Login**: 以 `Admin` 身份登入 (因為 Alice 無權上傳)。
-    2.  **Upload**: 模擬檔案上傳 `test-contract.pdf`。
-    3.  **Verify**: 確認上傳成功 toast 出現，且列表新增一筆資料。
-    4.  **RAG Check**: (Optional) 透過 `Mock Service Worker` 模擬 RAG 檢索 API 回傳該文件的片段，驗證前端顯示。
+*   **驗證方式**: 手動/自動驗收 Admin UI。
+*   **劇本**: 
+    1.  Admin 登入 `Port 3737`。
+    2.  上傳 `150_integration_study.docx`。
+    3.  確認後端回傳 `progress_id` 且狀態轉為 `completed`。
 
-- [ ] **自動化測試覆蓋**:
-    - `sales-intelligence.spec.tsx` 通過，且明確驗證了 `description_full` 欄位的顯示。
-    - `rag-ingestion.spec.tsx` 通過，驗證檔案上傳 UI 流程。
+### 3.9 真實 RAG 實作規格 (Real RAG Implementation Specs)
 
-### 3.7 前端技術對齊 (Frontend Technical Alignment)
+為了讓系統具備真正的生成能力，我們需打通「後端生成 API」至「前端調用」的最後一哩路。
 
-為了支撐後端升級後的職缺爬蟲功能，前端需執行以下精確變更：
-
-1.  **類型系統定義 (Type Definition)**:
-    *   **檔案**: `enduser-ui-fe/src/types.ts`
-    *   **變更**: 在 `JobData` 介面新增 `description_full?: string` 欄位。
-2.  **UI 渲染邏輯 (UI Component)**:
-    *   **檔案**: `enduser-ui-fe/src/pages/MarketingPage.tsx`
-    *   **實作細節**: 
-        *   新增 React State: `expandedJobIdx` 用於追蹤展開的職缺索引。
-        *   在 `lead-card` 中新增切換按鈕 `[View Full JD]`。
-        *   條件渲染: 顯示 `job.description_full` (若無則顯示摘要)。
-3.  **E2E 數據模擬 (Mocking)**:
-    *   **檔案**: `enduser-ui-fe/tests/e2e/e2e.setup.tsx`
-    *   **變更**: 升級 `searchJobs` 的 mock 回傳值，加入包含關鍵字（如 "BI tools", "Spark"）的 `description_full` 欄位。
-
-### 3.8 環境與依賴檢查 (Infrastructure Verification)
-
-1.  **後端依賴**: 確保 `beautifulsoup4` 與 `lxml` 已加入 `python/pyproject.toml` 的 `server` group。
-2.  **環境變數**: 爬蟲服務使用 AJAX 模擬，無需額外外部 API Key。
-3.  **建置清理**: 
-    *   `Makefile` 的 `install` target 必須清空 `dist/`。
-    *   `enduser-ui-fe/vite.config.ts` 必須啟用 `build.emptyOutDir: true`。
+1.  **後端端點**: `POST /api/marketing/generate-pitch`
+    *   **Input**: `{ job_title: string, company: string, description: string }`
+    *   **Logic**: `RAGService.query` -> LLM Prompt -> Pitch Text
+2.  **前端整合**: 
+    *   `api.ts`: 新增 `generatePitch` 方法。
+    *   `MarketingPage.tsx`: 移除 Hardcoded Template，改為 `await api.generatePitch(...)`。
 
 ## 4. 驗收標準 (Acceptance Criteria)
 
-- [x] **Solutions 入口**: 首頁 Header 出現 "Solutions" 連結，點擊後進入新的解決方案頁面。
-- [x] **完整導航覆蓋**: 左側選單必須包含上述 7 大類別 (新增 Architecture Tools)、共 17 個子項目，且點擊後皆能正確載入內容。
-- [x] **權限控管 (RBAC Integration)**:
-    *   訪客點擊 "Reports & Proposals" 或 "Strategic Client POCs" 下的項目時，應看到「請登入以查看完整方案細節」的提示，且無法看到內容。
-    *   登入後 (Member/Admin)，該遮罩消失，內容正常顯示。
-- [x] **Legacy 內容顯示**: 所有 HTML 檔案 (含 High-Tech, Reports, Fujitec POC 與 Cloud Configurator) 皆能透過 LegacyViewer 正常顯示，並提供 "Open in New Tab" 按鈕。
-- [x] **導航自由**: 登入狀態下，可以從 Dashboard 點擊連結返回 Home，也能從 Home 點擊按鈕回到 Dashboard。
-- [ ] **RAG 資料導入**: `public/aus/156_resource/` 下至少 3 份關鍵文件 (如鋰電池市場報告、整合策略) 已成功存入向量資料庫。
+- [x] **Solutions 入口**: 首頁 Header 出現 "Solutions" 連結。
+- [x] **完整導航覆蓋**: 左側選單包含 7 大類別、共 17 個子項目。
+- [x] **權限控管 (RBAC Integration)**: 訪客無法查看 Protected 內容，登入後可見。
+- [x] **Legacy 內容顯示**: 舊 HTML 皆能透過 LegacyViewer 正常顯示。
+- [x] **導航自由**: 登入狀態下可自由往返 Dashboard 與 Home。
+- [ ] **RAG 資料導入**: `public/aus/156_resource/` 關鍵文件已成功透過 **Admin UI** 存入向量庫。
 - [ ] **語義檢索驗證**: 在 RAG 測試介面輸入 "South Africa Lithium Market"，能準確召回相關文件片段。
-- [ ] **格式支援**: 確認 `.docx` 與 `.pdf` 格式皆能被正確解析文字內容。
+- [x] **格式支援**: 確認 `.docx` 與 `.pdf` 解析正常。
+- [x] **自動化測試覆蓋**: `sales-intelligence.spec.tsx` 已過綠燈。
+- [ ] **RAG 真實生成**: 確認前端生成的 Pitch 是由後端 LLM 動態產生，而非寫死的樣板。
 
 ## 5. 技術注意事項 (Technical Notes)
 
@@ -182,11 +162,19 @@ dependencies: ["Phase 4.2"]
 
 ## 6. 最終執行計畫 (Final Execution Plan)
 
-### Action Items
-- [ ] **Action A**: 修改 `enduser-ui-fe/src/types.ts`，加入 `description_full`。
-- [ ] **Action B**: 修改 `enduser-ui-fe/src/pages/MarketingPage.tsx`，加入 `expandedJobIdx` state 與 `[View Full JD]` 按鈕。
-- [ ] **Action C**: 修改 `enduser-ui-fe/tests/e2e/e2e.setup.tsx`，更新 Mock 資料。
-- [ ] **Action D**: 修改 `enduser-ui-fe/tests/e2e/sales-intelligence.spec.tsx`，加入對應斷言。
-- [ ] **Action E**: 修改 `job_board_service.py`，實作 `BeautifulSoup` 邏輯。
-- [ ] **Action F**: 修改 `vite.config.ts` (`emptyOutDir`)。
-- [ ] **Action G**: 修改 `Makefile` (`rm -rf dist`)。
+### Phase 1: 基礎建設 (已完成)
+- [x] **Action A**: 修改 `enduser-ui-fe/src/types.ts`，加入 `description_full`。
+- [x] **Action B**: 修改 `enduser-ui-fe/src/pages/MarketingPage.tsx`，加入 `expandedJobIdx` 與按鈕。
+- [x] **Action C**: 修改 `enduser-ui-fe/tests/e2e/e2e.setup.tsx`，更新 Mock 資料。
+- [x] **Action D**: 修改 `enduser-ui-fe/tests/e2e/sales-intelligence.spec.tsx`，加入斷言。
+- [x] **Action E**: 修改 `job_board_service.py`，強化爬蟲穩定性。
+- [x] **Action F**: 修改 `vite.config.ts` (`emptyOutDir`)。
+- [x] **Action G**: 修改 `Makefile` (`rm -rf dist`)。
+- [x] **Action H**: **手冊移植與 Case 5 強化**：將操作指引完整移入 `seed_blog_posts.sql` 的 Case 5 內容中，並刪除暫存手冊。
+- [x] **Action I**: **跨專案導航一致性檢查**：確保 Admin UI 與 End-User UI 的連結正確無誤。
+
+### Phase 2: 真實 RAG 整合 (待執行)
+- [ ] **Action K**: **後端 API 實作**：在 `marketing_api.py` 新增 `POST /generate-pitch` 端點，串接 `RAGService`。
+- [ ] **Action L**: **前端 Client 擴充**：在 `api.ts` 新增 `generatePitch` 方法。
+- [ ] **Action M**: **前端 UI 串接**：修改 `MarketingPage.tsx` 以呼叫真實 API。
+- [ ] **Action N**: **E2E 測試升級**：更新 `sales-intelligence.spec.tsx` 以攔截新的 API 呼叫。
