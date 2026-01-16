@@ -9,6 +9,7 @@ const MarketingPage: React.FC = () => {
   const [keyword, setKeyword] = useState('Data Analyst');
   const [jobs, setJobs] = useState<JobData[]>([]);
   const [loading, setLoading] = useState(false);
+  const [generating, setGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [expandedJobIdx, setExpandedJobIdx] = useState<number | null>(null);
   
@@ -33,37 +34,34 @@ const MarketingPage: React.FC = () => {
     }
   };
 
-  const handleGeneratePitch = (job: JobData) => {
-      // In a real app, this would call an LLM Agent endpoint.
-      // Here we simulate the output based on our "Case 5" seed data.
+  const handleGeneratePitch = async (job: JobData) => {
+      setGenerating(true);
+      setError(null);
       
-      const pitchTemplate = `Subject: Collaboration Opportunity: Solving data challenges at ${job.company}
+      try {
+          const result = await api.generatePitch(
+              job.title, 
+              job.company, 
+              job.description_full || job.description || ""
+          );
 
-Dear Hiring Manager,
-
-I noticed that ${job.company} is currently expanding its data team and looking for a ${job.title}. This suggests you might be tackling challenges related to data integration or analytics scaling.
-
-At Archon, we specialize in helping companies like yours leverage data for tangible growth. For instance, we recently helped a major retail chain reduce inventory costs by 40% and increase revenue by 30% through our automated analytics platform.
-
-You can read the full case study here: "零售巨頭如何利用數據分析提升 30% 營收" (Attached).
-
-I would love to share more about how our "Sales Intelligence" module could support your new ${job.title} in hitting the ground running.
-
-Best regards,
-[Your Name]
-Archon Sales Team`;
-
-      setGeneratedPitch({
-          forCompany: job.company,
-          content: pitchTemplate
-      });
-      
-      // Scroll to pitch section
-      setTimeout(() => {
-          if (typeof document !== 'undefined') {
-            document.getElementById('pitch-section')?.scrollIntoView({ behavior: 'smooth' });
-          }
-      }, 100);
+          setGeneratedPitch({
+              forCompany: job.company,
+              content: result.content
+          });
+          
+          // Scroll to pitch section
+          setTimeout(() => {
+              if (typeof document !== 'undefined') {
+                document.getElementById('pitch-section')?.scrollIntoView({ behavior: 'smooth' });
+              }
+          }, 100);
+      } catch (err: any) {
+          console.error("Pitch generation failed:", err);
+          setError("Failed to generate pitch. Please try again.");
+      } finally {
+          setGenerating(false);
+      }
   };
 
   return (
@@ -147,9 +145,10 @@ Archon Sales Team`;
                             </div>
                             <button 
                                 onClick={() => handleGeneratePitch(job)}
-                                className="text-sm bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 shadow-sm transition-transform active:scale-95"
+                                disabled={generating}
+                                className="text-sm bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 shadow-sm transition-transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                                Generate Pitch
+                                {generating ? 'Generating...' : 'Generate Pitch'}
                             </button>
                         </div>
 

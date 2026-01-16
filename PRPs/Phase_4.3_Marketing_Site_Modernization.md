@@ -173,8 +173,8 @@ dependencies: ["Phase 4.2"]
 - [x] **Action H**: **手冊移植與 Case 5 強化**：將操作指引完整移入 `seed_blog_posts.sql` 的 Case 5 內容中，並刪除暫存手冊。
 - [x] **Action I**: **跨專案導航一致性檢查**：確保 Admin UI 與 End-User UI 的連結正確無誤。
 
-### Phase 2: 真實 RAG 整合 (待執行)
-- [ ] **Action K**: **後端 API 實作**：在 `marketing_api.py` 新增 `POST /generate-pitch` 端點，串接 `RAGService`。
-- [ ] **Action L**: **前端 Client 擴充**：在 `api.ts` 新增 `generatePitch` 方法。
-- [ ] **Action M**: **前端 UI 串接**：修改 `MarketingPage.tsx` 以呼叫真實 API。
-- [ ] **Action N**: **E2E 測試升級**：更新 `sales-intelligence.spec.tsx` 以攔截新的 API 呼叫。
+### Phase 2: 真實 RAG 整合 (已完成)
+- [x] **Action K**: **後端 API 實作**：在 `marketing_api.py` 新增 `POST /generate-pitch` 端點，串接 `RAGService`。
+- [x] **Action L**: **前端 Client 擴充**：在 `api.ts` 新增 `generatePitch` 方法。
+- [x] **Action M**: **前端 UI 串接**：修改 `MarketingPage.tsx` 以呼叫真實 API。
+- [x] **Action N**: **E2E 測試升級**：更新 `sales-intelligence.spec.tsx` (via `e2e.setup.tsx`) 以攔截新的 API 呼叫。

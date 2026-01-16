@@ -451,6 +451,18 @@ const supabaseApi = {
     if (!response.ok) throw new Error('Failed to search jobs');
     return response.json();
   },
+
+  async generatePitch(jobTitle: string, company: string, description: string): Promise<{ content: string; references: string[] }> {
+    const response = await fetch('/api/marketing/generate-pitch', {
+        method: 'POST',
+        headers: await this._getHeaders(),
+        body: JSON.stringify({ job_title: jobTitle, company, description })
+    });
+    if (!response.ok) {
+         throw new Error('Failed to generate pitch');
+    }
+    return response.json();
+  },
 };
 
 // Export the API
