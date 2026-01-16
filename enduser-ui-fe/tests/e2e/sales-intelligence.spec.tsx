@@ -36,6 +36,13 @@ describe('MarketingPage Sales Intelligence Flow', () => {
         expect(sourceTags.length).toBeGreaterThan(0);
         expect(sourceTags[0]).toBeInTheDocument();
 
+        // 3.5 驗證完整職缺描述展開 (Verify Full JD Expansion)
+        const viewDetailsBtn = screen.getAllByText(/View Full JD/i)[0];
+        fireEvent.click(viewDetailsBtn);
+        
+        expect(screen.getByText(/Full description: Needs someone who knows BI tools/i)).toBeInTheDocument();
+        expect(screen.getByText(/Tableau and PowerBI/i)).toBeInTheDocument();
+
         // 4. 生成話術 (Generate Pitch)
         // Select the first generate button
         const generateBtns = screen.getAllByText(/Generate Pitch/i);

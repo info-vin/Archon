@@ -229,31 +229,44 @@ class JobBoardService:
     async def _fetch_job_detail(cls, url: str) -> str | None:
         """
         Fetches the full job description from the 104 job detail page.
+        Uses a multi-layer fallback strategy (Main content -> Meta description) 
+        and enhanced headers to increase success rate.
         """
         try:
+            # 1. Enhance Headers
+            headers = cls.HEADERS.copy()
+            headers["Referer"] = url  # Self-referencing often helps bypass basic checks
+
             async with httpx.AsyncClient(timeout=5.0) as client:
-                response = await client.get(url, headers=cls.HEADERS)
+                response = await client.get(url, headers=headers)
                 if response.status_code != 200:
+                    logfire.warning(f"Job detail fetch failed | status={response.status_code} | url={url}")
                     return None
 
                 soup = BeautifulSoup(response.text, "lxml")
 
-                # Try to find the job description container
-                # Note: 104 structure changes, usually it's in p tags class 'mb-5' inside job-description
-                # Or simply extract all text from the main content area
-
+                # 2. Level 1: Standard Content Selectors
                 content = soup.find("p", class_="mb-5")
                 if content:
                     return content.get_text(strip=True)
 
-                # Fallback: finding generic description class
                 desc_div = soup.find("div", class_="job-description__content")
                 if desc_div:
                     return desc_div.get_text(strip=True)
+                
+                # Try table data (requirements)
+                req_div = soup.find("div", class_="job-description-table__data")
+                if req_div:
+                    return req_div.get_text(strip=True)
+
+                # 3. Level 2: Meta Description (Stable Fallback)
+                meta_desc = soup.find("meta", attrs={"name": "description"})
+                if meta_desc and meta_desc.get("content"):
+                    return f"[Meta Summary] {meta_desc['content']}"
 
                 return None
 
         except Exception as e:
-            logfire.warning(f"Error parsing job detail: {e}")
+            logfire.warning(f"Error parsing job detail | url={url} | error={e}")
             return None
 

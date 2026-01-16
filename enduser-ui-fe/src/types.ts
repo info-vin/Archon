@@ -159,7 +159,7 @@ export interface JobData {
 
     description?: string;
 
-
+    description_full?: string;
 
     skills?: string[];
 

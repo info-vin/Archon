@@ -104,6 +104,7 @@ vi.mock('../../src/services/api', () => {
             salary: '1.2M',
             url: 'https://example.com/job/1',
             description: 'Looking for a data analyst...',
+            description_full: 'Full description: Needs someone who knows BI tools like Tableau and PowerBI.',
             skills: ['Python', 'SQL'],
             source: '104',
             identified_need: 'Needs better data pipeline'
@@ -115,6 +116,7 @@ vi.mock('../../src/services/api', () => {
             salary: '1.5M',
             url: 'https://example.com/job/2',
             description: 'Building data warehouse...',
+            description_full: 'Full description: Scaling infrastructure with Spark and AWS.',
             skills: ['Spark', 'AWS'],
             source: 'LinkedIn',
             identified_need: 'Scaling infrastructure'

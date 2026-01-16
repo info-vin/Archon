@@ -10,6 +10,7 @@ const MarketingPage: React.FC = () => {
   const [jobs, setJobs] = useState<JobData[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [expandedJobIdx, setExpandedJobIdx] = useState<number | null>(null);
   
   // State for generated pitch modal/display
   const [generatedPitch, setGeneratedPitch] = useState<{ forCompany: string; content: string } | null>(null);
@@ -128,14 +129,22 @@ Archon Sales Team`;
                         </div>
                         
                         <div className="flex justify-between items-center mt-4 pt-4 border-t border-gray-100">
-                            <a 
-                                href={job.url || '#'}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="text-gray-500 hover:text-gray-700 text-sm flex items-center gap-1"
-                            >
-                                View Job
-                            </a>
+                            <div className="flex gap-3">
+                                <a 
+                                    href={job.url || '#'}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="text-gray-500 hover:text-gray-700 text-sm flex items-center gap-1"
+                                >
+                                    View Link
+                                </a>
+                                <button 
+                                    onClick={() => setExpandedJobIdx(expandedJobIdx === idx ? null : idx)}
+                                    className="text-indigo-600 hover:text-indigo-800 text-sm font-medium transition-colors"
+                                >
+                                    {expandedJobIdx === idx ? 'Hide Details' : 'View Full JD'}
+                                </button>
+                            </div>
                             <button 
                                 onClick={() => handleGeneratePitch(job)}
                                 className="text-sm bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 shadow-sm transition-transform active:scale-95"
@@ -143,6 +152,14 @@ Archon Sales Team`;
                                 Generate Pitch
                             </button>
                         </div>
+
+                        {/* Full Description Section */}
+                        {expandedJobIdx === idx && (
+                            <div className="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200 text-sm text-gray-700 whitespace-pre-line animate-in fade-in slide-in-from-top-2 duration-200 full-description">
+                                <h4 className="font-bold mb-2 text-gray-900 border-b pb-1">Full Job Description</h4>
+                                {job.description_full || job.description || "No detailed description available."}
+                            </div>
+                        )}
                     </div>
                     ))}
                 </div>
