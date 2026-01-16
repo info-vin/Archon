@@ -29,7 +29,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       try {
         // Attempt Dev Auto-Login
         // NOTE: In production, this would check for existing session or redirect to /login
-        const response = await fetch(`${API_BASE_URL}/api/auth/dev-token`, {
+        const response = await fetch(`${API_BASE_URL}/auth/dev-token`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' }
         });
