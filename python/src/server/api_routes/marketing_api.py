@@ -3,10 +3,10 @@ from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
 
 from ..config.logfire_config import get_logger, logfire
-from ..services.job_board_service import JobBoardService, JobData
-from ..services.search.rag_service import RAGService
-from ..services.llm_provider_service import get_llm_client
 from ..services.credential_service import credential_service
+from ..services.job_board_service import JobBoardService, JobData
+from ..services.llm_provider_service import get_llm_client
+from ..services.search.rag_service import RAGService
 
 logger = get_logger(__name__)
 
@@ -46,29 +46,29 @@ async def generate_pitch(request: PitchRequest):
     """
     try:
         logfire.info(f"API: Generating pitch | company={request.company} | title={request.job_title}")
-        
+
         # 1. RAG Search: Find relevant case studies or capabilities based on the job description
         # We combine title and description for better context
         search_query = f"{request.job_title} {request.description[:500]}"
         rag_service = RAGService()
-        
+
         # Search specifically in 'case_studies' or generic documents
         # For now, we search everything as 'source' filtering might be too restrictive if data isn't tagged perfectly
         success, search_result = await rag_service.perform_rag_query(query=search_query, match_count=3)
-        
+
         context_text = ""
         references = []
-        
+
         if success and "results" in search_result:
             for res in search_result["results"]:
                 # Safely access metadata
                 meta = res.get("metadata", {})
                 source = meta.get("source", "Unknown Source")
                 content = res.get("content", "").strip()
-                
+
                 context_text += f"\n[Source: {source}]\n{content}\n"
                 references.append(source)
-        
+
         if not context_text:
             context_text = "No specific case studies found. Use general Archon capabilities: AI automation, data analytics, and efficiency improvement."
 
@@ -76,8 +76,8 @@ async def generate_pitch(request: PitchRequest):
         # Get active provider configuration to respect system settings (e.g. Gemini)
         provider_config = await credential_service.get_active_provider("llm")
         model_name = provider_config.get("chat_model") or "gpt-4o" # Fallback if not set
-        
-        system_prompt = """You are a top-tier Sales Representative for Archon, an AI & Data consultancy. 
+
+        system_prompt = """You are a top-tier Sales Representative for Archon, an AI & Data consultancy.
 Your goal is to write a personalized, professional, and compelling email pitch to a hiring manager.
 Use the provided Context (Case Studies/Capabilities) to prove we can solve their likely problems.
 
@@ -108,9 +108,9 @@ Draft the email content (Subject line included).
                 ],
                 temperature=0.7
             )
-            
+
             content = response.choices[0].message.content
-            
+
         return PitchResponse(content=content, references=references)
 
     except Exception as e:
