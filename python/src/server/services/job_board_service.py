@@ -1,5 +1,4 @@
 import httpx
-from bs4 import BeautifulSoup
 from pydantic import BaseModel
 
 from ..config.logfire_config import get_logger, logfire
@@ -196,12 +195,12 @@ class JobBoardService:
                 # Safe Extraction
                 title = item.get("jobName", "Unknown Title")
                 company = item.get("custName", "Unknown Company")
-                
+
                 # Extract URL securely and get the real Job ID (alphanumeric)
                 # 104 returns link dictionary with 'job' key like "//www.104.com.tw/job/8u3r5?jobsource=..."
                 raw_link = item.get("link", {}).get("job")
                 job_id = None
-                
+
                 if raw_link:
                     url = f"https:{raw_link}" if raw_link.startswith("//") else raw_link
                     # Extract ID: /job/8u3r5? -> 8u3r5
@@ -266,34 +265,34 @@ class JobBoardService:
                 job_id = url.split("real_id=")[1].split("&")[0]
             elif "/job/" in url:
                 job_id = url.split("/job/")[1].split("?")[0]
-            
+
             if not job_id:
                 logfire.warning(f"Could not extract job ID from URL: {url}")
                 return None
 
             # Construct the internal AJAX endpoint
             ajax_url = f"https://www.104.com.tw/job/ajax/content/{job_id}"
-            
+
             # Headers must have Referer matching the job page
             headers = cls.HEADERS.copy()
             headers["Referer"] = f"https://www.104.com.tw/job/{job_id}"
 
             async with httpx.AsyncClient(timeout=5.0) as client:
                 response = await client.get(ajax_url, headers=headers)
-                
+
                 if response.status_code != 200:
                     logfire.warning(f"Job AJAX fetch failed | status={response.status_code} | url={ajax_url}")
                     return None
 
                 data = response.json()
-                
+
                 # Extract description from JSON structure
                 # Path: data -> jobDetail -> jobDescription
                 job_desc = data.get("data", {}).get("jobDetail", {}).get("jobDescription")
-                
+
                 if job_desc:
                     return job_desc
-                
+
                 return None
 
         except Exception as e:

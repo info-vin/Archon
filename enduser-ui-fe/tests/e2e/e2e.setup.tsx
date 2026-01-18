@@ -129,7 +129,7 @@ vi.mock('../../src/services/api', () => {
       generatePitch: vi.fn().mockImplementation(async (jobTitle, company, description) => {
           console.log('🤖 [Mock API] generatePitch called for:', company);
           return {
-              content: `Subject: Collaboration Opportunity: Solving data challenges at ${company}\n\nDear Hiring Manager,\n\nI noticed that ${company} is currently expanding its data team and looking for a ${jobTitle}. This suggests you might be tackling challenges related to data integration or analytics scaling.\n\nAt Archon, we specialize in helping companies like yours leverage data for tangible growth. For instance, we recently helped a major retail chain reduce inventory costs by 40% and increase revenue by 30% through our automated analytics platform.\n\nYou can read the full case study here: "零售巨頭如何利用數據分析提升 30% 營收" (Attached).\n\nI would love to share more about how our "Sales Intelligence" module could support your new ${jobTitle} in hitting the ground running.\n\nBest regards,\n[Your Name]\nArchon Sales Team`,
+              content: `Subject: Collaboration regarding ${jobTitle}\n\nDear Hiring Manager at ${company},\n\nI noticed you are looking for someone to handle: "${description.substring(0, 50)}...". We can help.`,
               references: ['Case Study A', 'Capability B']
           };
       }),

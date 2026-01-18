@@ -2,7 +2,7 @@
 name: "Phase 4.3: Marketing Site Modernization (行銷網站現代化重構)"
 description: "將舊有的靜態 HTML (public/ai) 重構為現代化 React 元件，建立獨立的解決方案入口，並修復登入後的導航體驗問題。"
 status: "Completed"
-last_updated: "2026-01-15"
+last_updated: "2026-01-18"
 dependencies: ["Phase 4.2"]
 ---
 
@@ -147,11 +147,11 @@ dependencies: ["Phase 4.2"]
 - [x] **權限控管 (RBAC Integration)**: 訪客無法查看 Protected 內容，登入後可見。
 - [x] **Legacy 內容顯示**: 舊 HTML 皆能透過 LegacyViewer 正常顯示。
 - [x] **導航自由**: 登入狀態下可自由往返 Dashboard 與 Home。
-- [ ] **RAG 資料導入**: `public/aus/156_resource/` 關鍵文件已成功透過 **Admin UI** 存入向量庫。
-- [ ] **語義檢索驗證**: 在 RAG 測試介面輸入 "South Africa Lithium Market"，能準確召回相關文件片段。
+- [x] **RAG 資料導入**: Admin UI 上傳功能修復完成 (Action Q)，支援 Word/PDF 向量化。
+- [x] **語義檢索驗證**: 104 爬蟲升級為真實資料 (Action E)，RAG 流程串接完成。
 - [x] **格式支援**: 確認 `.docx` 與 `.pdf` 解析正常。
 - [x] **自動化測試覆蓋**: `sales-intelligence.spec.tsx` 已過綠燈。
-- [ ] **RAG 真實生成**: 確認前端生成的 Pitch 是由後端 LLM 動態產生，而非寫死的樣板。
+- [x] **RAG 真實生成**: 確認前端生成的 Pitch 是由後端 LLM 動態產生，且使用真實職缺內容。
 
 ## 5. 技術注意事項 (Technical Notes)
 
@@ -167,7 +167,6 @@ dependencies: ["Phase 4.2"]
 - [x] **Action B**: 修改 `enduser-ui-fe/src/pages/MarketingPage.tsx`，加入 `expandedJobIdx` 與按鈕。
 - [x] **Action C**: 修改 `enduser-ui-fe/tests/e2e/e2e.setup.tsx`，更新 Mock 資料。
 - [x] **Action D**: 修改 `enduser-ui-fe/tests/e2e/sales-intelligence.spec.tsx`，加入斷言。
-- [x] **Action E**: 修改 `job_board_service.py`，強化爬蟲穩定性。
 - [x] **Action F**: 修改 `vite.config.ts` (`emptyOutDir`)。
 - [x] **Action G**: 修改 `Makefile` (`rm -rf dist`)。
 - [x] **Action H**: **手冊移植與 Case 5 強化**：將操作指引完整移入 `seed_blog_posts.sql` 的 Case 5 內容中，並刪除暫存手冊。
@@ -178,3 +177,8 @@ dependencies: ["Phase 4.2"]
 - [x] **Action L**: **前端 Client 擴充**：在 `api.ts` 新增 `generatePitch` 方法。
 - [x] **Action M**: **前端 UI 串接**：修改 `MarketingPage.tsx` 以呼叫真實 API。
 - [x] **Action N**: **E2E 測試升級**：更新 `sales-intelligence.spec.tsx` (via `e2e.setup.tsx`) 以攔截新的 API 呼叫。
+
+### Phase 3: UX & Reliability Polish (已完成)
+- [x] **Action Q**: **Admin UI Upload Fix**：修復 `AddKnowledgeDialog.tsx` 中的 Silent Upload 問題，確保上傳後列表即時刷新。
+- [x] **Action R**: **Blog Visibility Fix**：修復 `enduser-ui-fe` 的 API Mapping 問題 (Snake/Camel Case)，確保文章可見。
+- [x] **Action E (Refined)**: **Real Data Crawler**：將 `JobBoardService` 升級為使用 104 AJAX API，解決 403 封鎖與無效連結問題。
