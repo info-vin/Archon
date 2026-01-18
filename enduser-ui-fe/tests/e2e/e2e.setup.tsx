@@ -14,6 +14,9 @@ import { AuthProvider } from '../../src/hooks/useAuth';
 // Note: LocalStorage initialization is now handled in `pre-setup.ts` to ensure
 // it runs before any hoisted `vi.mock` calls.
 
+// Mock scrollIntoView for jsdom
+window.HTMLElement.prototype.scrollIntoView = vi.fn();
+
 const mockUser = {
     id: 'user-e2e-1',
     employeeId: 'E2E001',

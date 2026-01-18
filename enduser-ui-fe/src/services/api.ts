@@ -459,7 +459,8 @@ const supabaseApi = {
         body: JSON.stringify({ job_title: jobTitle, company, description })
     });
     if (!response.ok) {
-         throw new Error('Failed to generate pitch');
+         const error = await response.json().catch(() => ({}));
+         throw new Error(error.detail?.error || 'Failed to generate pitch');
     }
     return response.json();
   },

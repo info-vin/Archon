@@ -51,9 +51,10 @@ describe('MarketingPage Sales Intelligence Flow', () => {
         // 5. 驗證話術內容 (Verify Content)
         // Wait for the sticky panel to appear with the generated content
         await waitFor(() => {
-            const textarea = screen.getByDisplayValue(/零售巨頭如何利用數據分析/i);
+            const textarea = screen.getByDisplayValue(/Subject: Collaboration regarding/i);
             expect(textarea).toBeInTheDocument();
-            expect(textarea.textContent).toContain('Retail Corp'); // Should inject company name
+            expect(textarea.textContent).toContain('Retail Corp');
+            expect(textarea.textContent).toContain('Needs someone who knows BI tools'); // Check if job description was injected
         });
     });
 

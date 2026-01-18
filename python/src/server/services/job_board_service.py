@@ -29,7 +29,8 @@ class JobBoardService:
     HEADERS = {
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
         "Referer": "https://www.104.com.tw/jobs/search/",
-        "Accept": "application/json, text/javascript, */*; q=0.01",
+        "Accept": "application/json, text/plain, */*",
+        "Accept-Language": "en-US,en;q=0.9,zh-TW;q=0.8,zh;q=0.7"
     }
 
     # Static Mock Data for Fallback
@@ -85,8 +86,12 @@ class JobBoardService:
                         detail = await cls._fetch_job_detail(job.url)
                         if detail:
                             job.description_full = detail
+                        else:
+                            # Fallback: Use snippet if detail fetch fails
+                            job.description_full = f"[Snippet Only] {job.description}"
                     except Exception as e:
                         logfire.warning(f"Failed to fetch job detail | url={job.url} | error={e}")
+                        job.description_full = f"[Snippet Only] {job.description}"
 
             logfire.info(f"Job search completed | count={len(jobs)}")
             return jobs
@@ -191,10 +196,24 @@ class JobBoardService:
                 # Safe Extraction
                 title = item.get("jobName", "Unknown Title")
                 company = item.get("custName", "Unknown Company")
-                # 104 returns link dictionary or constructed ID
-                # Construct URL: https://www.104.com.tw/job/{jobNo}
-                job_no = item.get("jobNo")
-                url = f"https://www.104.com.tw/job/{job_no}" if job_no else None
+                
+                # Extract URL securely and get the real Job ID (alphanumeric)
+                # 104 returns link dictionary with 'job' key like "//www.104.com.tw/job/8u3r5?jobsource=..."
+                raw_link = item.get("link", {}).get("job")
+                job_id = None
+                
+                if raw_link:
+                    url = f"https:{raw_link}" if raw_link.startswith("//") else raw_link
+                    # Extract ID: /job/8u3r5? -> 8u3r5
+                    try:
+                        if "/job/" in url:
+                            job_id = url.split("/job/")[1].split("?")[0]
+                    except Exception:
+                        pass
+                else:
+                    # Fallback construction (usually won't work for AJAX but keeps URL valid)
+                    job_no = item.get("jobNo")
+                    url = f"https://www.104.com.tw/job/{job_no}" if job_no else None
 
                 # Description often comes as 'jobDesc' or needs to be fetched separately.
                 # In the list view, 'jobDesc' is a snippet.
@@ -212,6 +231,14 @@ class JobBoardService:
                 if tags:
                     skills = [t.get("desc") for t in tags if "desc" in t]
 
+                # Store the real job_id in the URL for _fetch_job_detail to use
+                # We append it as a custom query param if we extracted it, to ensure it's passed correctly
+                if job_id and url:
+                    if "?" in url:
+                        url += f"&real_id={job_id}"
+                    else:
+                        url += f"?real_id={job_id}"
+
                 parsed_jobs.append(JobData(
                     title=title,
                     company=company,
@@ -228,45 +255,47 @@ class JobBoardService:
     @classmethod
     async def _fetch_job_detail(cls, url: str) -> str | None:
         """
-        Fetches the full job description from the 104 job detail page.
-        Uses a multi-layer fallback strategy (Main content -> Meta description)
-        and enhanced headers to increase success rate.
+        Fetches the full job description from the 104 AJAX API.
+        This provides the real, complete content needed for RAG.
         """
         try:
-            # 1. Enhance Headers
+            # Extract the real alphanumeric ID from the URL we constructed
+            # It might be in the path or the 'real_id' param
+            job_id = None
+            if "real_id=" in url:
+                job_id = url.split("real_id=")[1].split("&")[0]
+            elif "/job/" in url:
+                job_id = url.split("/job/")[1].split("?")[0]
+            
+            if not job_id:
+                logfire.warning(f"Could not extract job ID from URL: {url}")
+                return None
+
+            # Construct the internal AJAX endpoint
+            ajax_url = f"https://www.104.com.tw/job/ajax/content/{job_id}"
+            
+            # Headers must have Referer matching the job page
             headers = cls.HEADERS.copy()
-            headers["Referer"] = url  # Self-referencing often helps bypass basic checks
+            headers["Referer"] = f"https://www.104.com.tw/job/{job_id}"
 
             async with httpx.AsyncClient(timeout=5.0) as client:
-                response = await client.get(url, headers=headers)
+                response = await client.get(ajax_url, headers=headers)
+                
                 if response.status_code != 200:
-                    logfire.warning(f"Job detail fetch failed | status={response.status_code} | url={url}")
+                    logfire.warning(f"Job AJAX fetch failed | status={response.status_code} | url={ajax_url}")
                     return None
 
-                soup = BeautifulSoup(response.text, "lxml")
-
-                # 2. Level 1: Standard Content Selectors
-                content = soup.find("p", class_="mb-5")
-                if content:
-                    return content.get_text(strip=True)
-
-                desc_div = soup.find("div", class_="job-description__content")
-                if desc_div:
-                    return desc_div.get_text(strip=True)
-
-                # Try table data (requirements)
-                req_div = soup.find("div", class_="job-description-table__data")
-                if req_div:
-                    return req_div.get_text(strip=True)
-
-                # 3. Level 2: Meta Description (Stable Fallback)
-                meta_desc = soup.find("meta", attrs={"name": "description"})
-                if meta_desc and meta_desc.get("content"):
-                    return f"[Meta Summary] {meta_desc['content']}"
-
+                data = response.json()
+                
+                # Extract description from JSON structure
+                # Path: data -> jobDetail -> jobDescription
+                job_desc = data.get("data", {}).get("jobDetail", {}).get("jobDescription")
+                
+                if job_desc:
+                    return job_desc
+                
                 return None
 
         except Exception as e:
-            logfire.warning(f"Error parsing job detail | url={url} | error={e}")
+            logfire.warning(f"Error fetching job detail via AJAX | url={url} | error={e}")
             return None
-
