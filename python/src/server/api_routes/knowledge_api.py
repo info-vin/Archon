@@ -15,8 +15,10 @@ import json
 import uuid
 from urllib.parse import quote
 
-from fastapi import APIRouter, File, Form, Header, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, File, Form, Header, HTTPException, UploadFile
 from pydantic import BaseModel
+
+from ..auth.dependencies import get_current_user
 
 # Import unified logging
 from ..config.logfire_config import get_logger, safe_logfire_error, safe_logfire_info
@@ -906,7 +908,10 @@ async def _perform_upload_with_progress(
 
 
 @router.post("/knowledge-items/search")
-async def search_knowledge_items(request: RagQueryRequest):
+async def search_knowledge_items(
+    request: RagQueryRequest,
+    current_user: dict = Depends(get_current_user)
+):
     """Search knowledge items - alias for RAG query."""
     # Validate query
     if not request.query:
@@ -916,11 +921,14 @@ async def search_knowledge_items(request: RagQueryRequest):
         raise HTTPException(status_code=422, detail="Query cannot be empty")
 
     # Delegate to the RAG query handler
-    return await perform_rag_query(request)
+    return await perform_rag_query(request, current_user)
 
 
 @router.post("/rag/query")
-async def perform_rag_query(request: RagQueryRequest):
+async def perform_rag_query(
+    request: RagQueryRequest,
+    current_user: dict = Depends(get_current_user)
+):
     """Perform a RAG query on the knowledge base using service layer."""
     # Validate query
     if not request.query:

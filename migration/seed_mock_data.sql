@@ -75,7 +75,13 @@ DO $$
 DECLARE
     proj1_id UUID;
     proj2_id UUID;
+    alice_id TEXT;
+    bob_id TEXT;
 BEGIN
+    -- Fetch Profile IDs for Task Assignment
+    SELECT id INTO alice_id FROM profiles WHERE email = 'alice@archon.com';
+    SELECT id INTO bob_id FROM profiles WHERE email = 'bob@archon.com';
+
     -- Seed for archon_projects table, ensuring idempotency
     -- Project 1: Archon Core Platform
     IF NOT EXISTS (SELECT 1 FROM archon_projects WHERE title = 'Archon Core Platform') THEN
@@ -98,26 +104,26 @@ BEGIN
     -- Seed for archon_tasks table using the captured project UUIDs, ensuring idempotency
     -- Task 1
     IF NOT EXISTS (SELECT 1 FROM archon_tasks WHERE project_id = proj1_id AND title = 'Implement Supabase Integration') THEN
-        INSERT INTO archon_tasks (project_id, title, description, status, assignee, task_order, created_at, updated_at) VALUES
-        (proj1_id, 'Implement Supabase Integration', '', 'done', 'Alice Johnson', 1, '2024-09-01T10:00:00Z', '2024-09-05T10:00:00Z');
+        INSERT INTO archon_tasks (project_id, title, description, status, assignee, assignee_id, task_order, created_at, updated_at) VALUES
+        (proj1_id, 'Implement Supabase Integration', '', 'done', 'Alice Johnson', alice_id, 1, '2024-09-01T10:00:00Z', '2024-09-05T10:00:00Z');
     END IF;
 
     -- Task 2
     IF NOT EXISTS (SELECT 1 FROM archon_tasks WHERE project_id = proj1_id AND title = 'Develop Kanban View') THEN
-        INSERT INTO archon_tasks (project_id, title, description, status, assignee, task_order, created_at, updated_at) VALUES
-        (proj1_id, 'Develop Kanban View', '', 'doing', 'Bob Williams', 2, '2024-09-02T10:00:00Z', '2024-09-06T10:00:00Z');
+        INSERT INTO archon_tasks (project_id, title, description, status, assignee, assignee_id, task_order, created_at, updated_at) VALUES
+        (proj1_id, 'Develop Kanban View', '', 'doing', 'Bob Williams', bob_id, 2, '2024-09-02T10:00:00Z', '2024-09-06T10:00:00Z');
     END IF;
 
     -- Task 3
     IF NOT EXISTS (SELECT 1 FROM archon_tasks WHERE project_id = proj2_id AND title = 'Design new landing page mockups') THEN
-        INSERT INTO archon_tasks (project_id, title, description, status, assignee, task_order, created_at, updated_at) VALUES
-        (proj2_id, 'Design new landing page mockups', '', 'todo', 'Unassigned', 1, '2024-09-03T10:00:00Z', '2024-09-03T10:00:00Z');
+        INSERT INTO archon_tasks (project_id, title, description, status, assignee, assignee_id, task_order, created_at, updated_at) VALUES
+        (proj2_id, 'Design new landing page mockups', '', 'todo', 'Unassigned', NULL, 1, '2024-09-03T10:00:00Z', '2024-09-03T10:00:00Z');
     END IF;
 
     -- Task 4
     IF NOT EXISTS (SELECT 1 FROM archon_tasks WHERE project_id = proj1_id AND title = 'Fix authentication bug') THEN
-        INSERT INTO archon_tasks (project_id, title, description, status, assignee, task_order, created_at, updated_at) VALUES
-        (proj1_id, 'Fix authentication bug', 'Users are reporting intermittent login failures.', 'review', 'Alice Johnson', 3, '2024-09-04T10:00:00Z', '2024-09-08T10:00:00Z');
+        INSERT INTO archon_tasks (project_id, title, description, status, assignee, assignee_id, task_order, created_at, updated_at) VALUES
+        (proj1_id, 'Fix authentication bug', 'Users are reporting intermittent login failures.', 'review', 'Alice Johnson', alice_id, 3, '2024-09-04T10:00:00Z', '2024-09-08T10:00:00Z');
     END IF;
 END $$;
 

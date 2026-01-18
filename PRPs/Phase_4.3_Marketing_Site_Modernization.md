@@ -160,6 +160,11 @@ dependencies: ["Phase 4.2"]
 *   **RAG 解析器依賴**: 確保後端環境已正確安裝並配置 `python-docx`, `pdfplumber`, `beautifulsoup4` 以支援多格式解析。
 *   **靜態資源路徑**: 需注意 Docker 環境下 `public/` 目錄的掛載路徑，確保後端 API 能讀取到這些靜態檔案，或透過 Agent 模擬上傳流程。
 
+### Post-Implementation Fixes (2026-01-18)
+*   **RBAC Data Scoping**: Implemented strict backend filtering for `/api/tasks` using Name Resolution (Plan B+) to map Auth UUIDs to legacy assignee names. This fixes the data leak where all users could see all tasks.
+*   **Admin UI Upload**: Fixed silent failures in `AddKnowledgeDialog.tsx` by injecting `Authorization` headers in `knowledgeService.ts` and restoring proper progress polling.
+*   **RAG Security**: Secured RAG query endpoints (`/rag/query`) with `get_current_user` dependency.
+
 ## 6. 最終執行計畫 (Final Execution Plan)
 
 ### Phase 1: 基礎建設 (已完成)
@@ -179,6 +184,7 @@ dependencies: ["Phase 4.2"]
 - [x] **Action N**: **E2E 測試升級**：更新 `sales-intelligence.spec.tsx` (via `e2e.setup.tsx`) 以攔截新的 API 呼叫。
 
 ### Phase 3: UX & Reliability Polish (已完成)
-- [x] **Action Q**: **Admin UI Upload Fix**：修復 `AddKnowledgeDialog.tsx` 中的 Silent Upload 問題，確保上傳後列表即時刷新。
+- [x] **Action Q (Refined)**: **Admin UI Upload Fix**：修復 Header 缺失導致的 403 錯誤，並恢復真實進度輪詢。
 - [x] **Action R**: **Blog Visibility Fix**：修復 `enduser-ui-fe` 的 API Mapping 問題 (Snake/Camel Case)，確保文章可見。
 - [x] **Action E (Refined)**: **Real Data Crawler**：將 `JobBoardService` 升級為使用 104 AJAX API，解決 403 封鎖與無效連結問題。
+- [x] **Action S**: **Backend RBAC Enforcement**：在 `projects_api.py` 與 `knowledge_api.py` 中強制執行資料範疇過濾。

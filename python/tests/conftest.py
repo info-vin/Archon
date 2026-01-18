@@ -170,6 +170,7 @@ def client(mock_supabase_client):
                     from unittest.mock import AsyncMock
 
                     import server.main as server_main
+                    from server.auth.dependencies import get_current_user
 
                     # Mark initialization as complete for testing (before accessing app)
                     server_main._initialization_complete = True
@@ -177,6 +178,10 @@ def client(mock_supabase_client):
 
                     # Mock the schema check to always return valid
                     mock_schema_check = AsyncMock(return_value={"valid": True, "message": "Schema is up to date"})
+
+                    # Global Auth Mock for tests
+                    app.dependency_overrides[get_current_user] = lambda: {"id": "test-admin", "role": "admin", "email": "admin@test.com"}
+
                     with patch("server.main._check_database_schema", new=mock_schema_check):
                         return TestClient(app)
 

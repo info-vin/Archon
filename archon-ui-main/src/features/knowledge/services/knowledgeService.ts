@@ -126,8 +126,16 @@ export const knowledgeService = {
       uploadUrl = `http://${testHost}:${testPort}${uploadUrl}`;
     }
 
+    // Explicitly add Authorization header since we're bypassing callAPIWithETag
+    const headers: Record<string, string> = {};
+    const token = localStorage.getItem('archon_token');
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
     const response = await fetch(uploadUrl, {
       method: "POST",
+      headers, // Pass headers with auth token
       body: formData,
       signal: AbortSignal.timeout(30000), // 30 second timeout for file uploads
     });

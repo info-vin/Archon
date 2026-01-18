@@ -174,7 +174,9 @@ class TaskService:
         status: str = None,
         include_closed: bool = False,
         exclude_large_fields: bool = False,
-        include_archived: bool = False
+        include_archived: bool = False,
+        assignee_id: str = None, # Keep for future use
+        assignee_name: str = None, # For current name-based RBAC
     ) -> tuple[bool, dict[str, Any]]:
         """
         List tasks with various filters.
@@ -185,6 +187,8 @@ class TaskService:
             include_closed: Include done tasks
             exclude_large_fields: If True, excludes sources and code_examples fields
             include_archived: If True, includes archived tasks
+            assignee_id: Filter by assignee user ID (future proofing)
+            assignee_name: Filter by assignee name (current RBAC implementation)
 
         Returns:
             Tuple of (success, result_dict)
@@ -195,7 +199,7 @@ class TaskService:
                 # Select all fields except large JSONB ones
                 query = self.supabase_client.table("archon_tasks").select(
                     "id, project_id, parent_task_id, title, description, "
-                    "status, assignee, task_order, feature, archived, "
+                    "status, assignee, assignee_id, task_order, feature, archived, "
                     "archived_at, archived_by, created_at, updated_at, due_date, "
                     "sources, code_examples"  # Still fetch for counting, but will process differently
                 )
@@ -209,6 +213,14 @@ class TaskService:
             if project_id:
                 query = query.eq("project_id", project_id)
                 filters_applied.append(f"project_id={project_id}")
+
+            if assignee_id:
+                query = query.eq("assignee_id", assignee_id)
+                filters_applied.append(f"assignee_id={assignee_id}")
+
+            if assignee_name:
+                query = query.eq("assignee", assignee_name)
+                filters_applied.append(f"assignee={assignee_name}")
 
             if status:
                 # Validate status

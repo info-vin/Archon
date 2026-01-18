@@ -12,10 +12,11 @@ import json
 from datetime import datetime
 from typing import Any
 
-from fastapi import APIRouter, Header, HTTPException, Request, Response
+from fastapi import APIRouter, Depends, Header, HTTPException, Request, Response
 from fastapi import status as http_status
 from pydantic import BaseModel
 
+from ..auth.dependencies import get_current_user
 from ..config.logfire_config import get_logger, logfire
 from ..services.profile_service import ProfileService
 from ..services.projects import (
@@ -669,11 +670,30 @@ async def list_tasks(
     page: int = 1,
     per_page: int = 50,
     exclude_large_fields: bool = False,
+    current_user: dict = Depends(get_current_user),
 ):
     """List tasks with optional filters including status and project."""
     try:
+        # RBAC: Determine assignee filter
+        assignee_name_filter = None
+        user_role = current_user.get("role")
+        user_id = current_user.get("id")
+
+        # Only Admin and Manager can see all tasks. Others see only their own.
+        if user_role not in ["system_admin", "admin", "manager"]:
+            # Plan B+: Resolve UUID to Name for filtering
+            profile_service = ProfileService()
+            success, profile = profile_service.get_profile(user_id)
+            if success and profile:
+                assignee_name_filter = profile.get("name")
+            else:
+                # Fallback: if profile not found, maybe use ID or some safe default
+                # For now, if we can't find the name, we filter by something that likely yields empty result to be safe
+                assignee_name_filter = "UNKNOWN_USER"
+
         logfire.info(
-            f"Listing tasks | status={status} | project_id={project_id} | include_closed={include_closed} | page={page} | per_page={per_page}"
+            f"Listing tasks | status={status} | project_id={project_id} | include_closed={include_closed} | "
+            f"page={page} | per_page={per_page} | user={user_id} | role={user_role} | filter_assignee_name={assignee_name_filter}"
         )
 
         # Use TaskService to list tasks
@@ -683,6 +703,7 @@ async def list_tasks(
             status=status,
             include_closed=include_closed,
             exclude_large_fields=exclude_large_fields,
+            assignee_name=assignee_name_filter,
         )
 
         if not success:

@@ -3,6 +3,16 @@ import { describe, it, expect, vi } from 'vitest';
 import DashboardPage from './DashboardPage';
 import React from 'react';
 
+// Mock useAuth to avoid AuthProvider error
+vi.mock('../hooks/useAuth.tsx', () => ({
+  useAuth: vi.fn().mockReturnValue({
+    user: { id: 'admin-1', name: 'Admin User' },
+    isAdmin: true,
+    isAuthenticated: true,
+    loading: false
+  })
+}));
+
 // Mock the api module to avoid real API calls
 vi.mock('../services/api', () => {
   const mockUsers = [
