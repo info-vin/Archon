@@ -317,7 +317,17 @@ const supabaseApi = {
       throw new Error('Failed to fetch blog posts.');
     }
     const data = await response.json();
-    return data;
+    
+    // Defensive mapping to ensure camelCase
+    return data.map((post: any) => ({
+        ...post,
+        id: post.id,
+        title: post.title,
+        excerpt: post.excerpt,
+        authorName: post.authorName || post.author_name,
+        publishDate: post.publishDate || post.publish_date,
+        imageUrl: post.imageUrl || post.image_url
+    }));
   },
   async getBlogPost(id: string): Promise<BlogPost> {
     const response = await fetch(`/api/blogs/${id}`, { headers: await this._getHeaders() });

@@ -13,6 +13,7 @@ const BlogPage: React.FC = () => {
             try {
                 setLoading(true);
                 const blogPosts = await api.getBlogPosts();
+                console.log("Blog posts fetched:", blogPosts);
                 setPosts(blogPosts);
             } catch (error) {
                 console.error("Failed to fetch blog posts:", error);

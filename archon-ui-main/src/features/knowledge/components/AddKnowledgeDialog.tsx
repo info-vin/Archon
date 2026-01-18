@@ -113,8 +113,9 @@ export const AddKnowledgeDialog: React.FC<AddKnowledgeDialogProps> = ({
       // Upload happens in background - show appropriate message
       showToast(`Upload started for ${selectedFile.name}. Processing in background...`, "info");
       resetForm();
-      // Don't call onSuccess here - the upload hasn't actually succeeded yet
-      // onSuccess should be called when polling shows completion
+      
+      // Force refresh to show processing status immediately - Fixes silent upload issue
+      onSuccess();
       onOpenChange(false);
     } catch (error) {
       // Display the actual error message from backend
