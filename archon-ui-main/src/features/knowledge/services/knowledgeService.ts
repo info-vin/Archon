@@ -156,7 +156,7 @@ export const knowledgeService = {
       method: "POST",
       headers, // Pass headers with auth token
       body: formData,
-      signal: AbortSignal.timeout(30000), // 30 second timeout for file uploads
+      signal: AbortSignal.timeout(300000), // 5 minute timeout for large file uploads
     });
 
     if (!response.ok) {
