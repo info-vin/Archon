@@ -58,7 +58,7 @@ test('User can select knowledge items when creating a task', async () => {
   // Directly mock the service method to bypass potential network/MSW issues
   const serviceSpy = vi.spyOn(api, 'getKnowledgeItems').mockResolvedValue(MOCK_KNOWLEDGE_ITEMS);
 
-  renderApp();
+  renderApp(['/dashboard']);
 
   // 1. Open the "New Task" modal
   const newTaskBtn = await screen.findByRole('button', { name: /new task/i });

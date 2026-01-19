@@ -173,9 +173,9 @@ afterAll(() => {
 // SECTION 4: TEST UTILITIES
 // =============================================================================
 
-export const renderApp = () => {
+export const renderApp = (initialEntries = ['/']) => {
   return render(
-    <MemoryRouter>
+    <MemoryRouter initialEntries={initialEntries}>
       <AuthProvider>
         <AppRoutes />
       </AuthProvider>
