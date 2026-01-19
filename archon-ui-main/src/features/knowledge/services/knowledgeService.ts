@@ -141,7 +141,7 @@ export const knowledgeService = {
               token = sessionData.access_token;
               break;
             }
-          } catch (e) {
+          } catch {
             // Ignore parse errors
           }
         }

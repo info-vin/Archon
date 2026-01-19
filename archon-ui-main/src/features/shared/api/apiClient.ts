@@ -75,7 +75,7 @@ export async function callAPIWithETag<T = unknown>(endpoint: string, options: Re
               token = sessionData.access_token;
               break;
             }
-          } catch (e) {
+          } catch {
             // Ignore parse errors
           }
         }
