@@ -64,6 +64,7 @@ describe('TaskModal', () => {
     expect(screen.getByLabelText('Priority')).toHaveValue(TaskPriority.HIGH);
     
     // Wait for users to load to check assignee
+    await screen.findByRole('option', { name: 'Alice Johnson' });
     const assigneeSelect = await screen.findByLabelText('Assignee');
     expect(assigneeSelect).toHaveValue(mockTask.assignee_id);
   });

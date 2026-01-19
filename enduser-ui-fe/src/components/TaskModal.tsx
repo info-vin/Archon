@@ -107,7 +107,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({ task, onClose, onTaskCreat
           project_id: finalProjectId,
           title,
           description,
-          assignee_id: assigneeId || undefined,
+          assigneeId: assigneeId || undefined,
           due_date: new Date(dueDate).toISOString(),
           priority,
           knowledge_source_ids: selectedKnowledgeIds,

@@ -68,6 +68,11 @@ vi.mock('lucide-react', () => ({
   Pin: () => 'Pin',
   PinOff: () => 'PinOff',
   Clipboard: () => 'Clipboard',
+  FileSearch: () => 'FileSearch',
+  FileText: () => 'FileText',
+  Code: () => 'Code',
+  ExternalLink: () => 'ExternalLink',
+  Eye: () => 'Eye',
   // Add more icons as needed
 }))
 

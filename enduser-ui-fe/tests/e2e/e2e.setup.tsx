@@ -73,14 +73,22 @@ vi.mock('../../src/services/api', () => {
         { id: 'agent-sales-intel', name: '(AI) Sales Intel', role: 'Sales Intel' },
       ]),
       createTask: vi.fn().mockImplementation(async (data) => {
-        const newTask = { ...data, id: 'new-task-' + Date.now() };
+        // Behaves like api.ts: maps assigneeId to assignee
+        const assignee = data.assigneeId === 'user-1' ? 'Alice Johnson' : data.assigneeId;
+        const newTask = { 
+            ...data, 
+            id: 'new-task-' + Date.now(),
+            assignee: assignee // Ensure UI can render Avatar
+        };
         mockTasksStore.push(newTask);
         return newTask;
       }),
       updateTask: vi.fn().mockImplementation(async (id, data) => {
         const index = mockTasksStore.findIndex(t => t.id === id);
         if (index !== -1) {
-            mockTasksStore[index] = { ...mockTasksStore[index], ...data };
+            // Resolve name if ID is provided
+            const assignee = data.assignee_id === 'user-1' ? 'Alice Johnson' : (data.assignee || mockTasksStore[index].assignee);
+            mockTasksStore[index] = { ...mockTasksStore[index], ...data, assignee };
             return mockTasksStore[index];
         }
         return { ...data, id };

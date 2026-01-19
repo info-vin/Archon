@@ -7,11 +7,11 @@ import os
 sys.path.append(os.getcwd())
 
 from python.src.server.services.job_board_service import JobBoardService
-from python.src.server.config.logfire_config import configure_logging
+from python.src.server.config.logfire_config import setup_logfire
 
 async def test_crawl():
     print("🚀 Starting crawler test...")
-    configure_logging()
+    setup_logfire()
     
     # Use a specific keyword likely to have results
     keyword = "Python Engineer"

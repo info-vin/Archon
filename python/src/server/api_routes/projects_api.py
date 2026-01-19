@@ -69,6 +69,7 @@ class CreateTaskRequest(BaseModel):
     description: str | None = None
     status: str | None = "todo"
     assignee: str | None = "User"
+    assignee_id: str | None = None  # Added to support ID-based assignment
     task_order: int | None = 0
     feature: str | None = None
     due_date: datetime | None = None
@@ -608,13 +609,26 @@ async def list_project_tasks(
 async def create_task(request: CreateTaskRequest, x_user_role: str | None = Header(None, alias="X-User-Role")):
     """Create a new task with automatic reordering."""
     try:
+        # Resolve assignee_id to assignee name if provided
+        target_assignee_name = request.assignee
+        resolved_assignee_id = request.assignee_id
+
+        if request.assignee_id:
+            profile_service = ProfileService()
+            success, profile = profile_service.get_profile(request.assignee_id)
+            if success and profile:
+                target_assignee_name = profile.get("name")
+                logfire.info(f"Resolved assignee_id '{request.assignee_id}' to '{target_assignee_name}'")
+            else:
+                logfire.warning(f"Failed to resolve assignee_id '{request.assignee_id}' to a name.")
+
         # RBAC Validation
-        if request.assignee and request.assignee != "User":
+        if target_assignee_name and target_assignee_name != "User":
             # TODO(Phase 2.9): Remove hardcoded role. See TODO.md.
             current_user_role = x_user_role or "User"
             profile_service = ProfileService()
             rbac_service = RBACService()
-            success, assignee_role = profile_service.get_user_role(request.assignee)
+            success, assignee_role = profile_service.get_user_role(target_assignee_name)
 
             if not success:
                 # Service failed, raise an internal server error
@@ -625,11 +639,11 @@ async def create_task(request: CreateTaskRequest, x_user_role: str | None = Head
                     raise HTTPException(status_code=403, detail=f"As a {current_user_role}, you cannot assign tasks to a {assignee_role}.")
             else:
                 agent_roles = {"Market Researcher", "Internal Knowledge Expert"}
-                if request.assignee in agent_roles:
-                    if not rbac_service.has_permission_to_assign(current_user_role, request.assignee):
-                        raise HTTPException(status_code=403, detail=f"As a {current_user_role}, you cannot assign tasks to a {request.assignee}.")
+                if target_assignee_name in agent_roles:
+                    if not rbac_service.has_permission_to_assign(current_user_role, target_assignee_name):
+                        raise HTTPException(status_code=403, detail=f"As a {current_user_role}, you cannot assign tasks to a {target_assignee_name}.")
                 else:
-                    logfire.warning(f"Assignee '{request.assignee}' not found in profiles and is not a known agent role. Skipping permission check.")
+                    logfire.warning(f"Assignee '{target_assignee_name}' not found in profiles and is not a known agent role. Skipping permission check.")
 
         # Use TaskService to create the task
         task_service = TaskService()
@@ -637,11 +651,12 @@ async def create_task(request: CreateTaskRequest, x_user_role: str | None = Head
             project_id=request.project_id,
             title=request.title,
             description=request.description or "",
-            assignee=request.assignee or "User",
+            assignee=target_assignee_name or "User",
             task_order=request.task_order or 0,
             feature=request.feature,
             due_date=request.due_date,
             knowledge_source_ids=request.knowledge_source_ids,
+            assignee_id=resolved_assignee_id,
         )
 
         if not success:
