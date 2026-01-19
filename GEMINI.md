@@ -88,6 +88,35 @@
 
 # 第三章：近期工作日誌 (Recent Journal Entries)
 
+### 2026-01-18: Phase 4.3 完結與爬蟲進化 (Phase 4.3 Completion & Crawler Evolution)
+*   **核心任務**: 完成 Phase 4.3 行銷網站現代化，並解決爬蟲數據品質問題，標誌著系統從「功能驗證」邁向「真實運作」。
+*   **技術突破**:
+    *   **爬蟲重構**: 放棄易受阻擋的靜態爬取，逆向工程並改用 **104 AJAX API**。這不僅繞過了 403 Forbidden 防護，更解決了 GIGO (Garbage In, Garbage Out) 問題，確保 RAG 系統接收到的是結構化的高品質職缺數據。
+    *   **UX 完善**: 修復了 Admin UI 中的「靜默上傳失敗」與使用者端部落格的可見性問題，提升了管理員與訪客的體驗。
+*   **驗收結果**: 確認全系統 RBAC 範圍界定正確，RAG 提案生成功能運作正常。Phase 4.3 正式結案。
+
+### 2026-01-16: 真實 RAG 與 Gemini 整合 (Real RAG & Gemini Integration)
+*   **核心任務**: 將 "Mock" RAG 升級為基於真實數據與 LLM 的 "Real" RAG 系統。
+*   **架構決策**:
+    *   **LLM 整合**: 實作了與 **Gemini API** 的對接，用於動態生成針對特定職缺的業務提案 (Pitch)。
+    *   **數據管道**: 打通了從「職缺爬取」到「向量檢索」再到「內容生成」的完整管道。
+*   **環境加固**: 修復了 Dev-Token 404 錯誤，確保開發環境的 Auth 流程在各種情境下皆能穩定運作。
+
+### 2026-01-15: 行銷網站現代化與組態驅動 UI (Marketing Site Modernization & Config-Driven UI)
+*   **核心任務**: 執行 Phase 4.3，構建現代化、內容豐富且易於維護的行銷官網。
+*   **架構決策**:
+    *   **Config-Driven UI**: 採用組態驅動 (Configuration-Driven) 模式構建 UI，大幅降低了後續維護與內容更新的成本，讓非工程人員也能透過設定檔調整版面。
+    *   **RBAC 導航整合**: 將權限控管直接整合至網站導航結構中，根據使用者角色動態顯示/隱藏選單，實現了無縫的體驗。
+*   **內容擴充**: 新增了 Fujitec POC 等高價值案例研究 (Case Study)，強化產品說服力。
+*   **穩定性**: 針對 Auth Session 不穩定的問題進行了優化，延長 Timeout 時間以減少意外登出的干擾。
+
+### 2026-01-12: 資料完整性與雙重同步策略 (Data Integrity & Dual Sync Strategy)
+*   **核心任務**: 執行 Phase 5.3，根治 RBAC 資料不一致導致的 406 錯誤與權限異常。
+*   **技術實作**:
+    *   **雙重同步 (Dual Sync)**: 在 `init_db.py` 中實作了智慧同步邏輯。不再只是簡單地「跳過」現有使用者，而是檢查並**更新**其 ID，強制對齊 `auth.users` 與 `public.profiles` 表。
+    *   **自動化修復**: 此機制建立了一道安全網，確保即使資料庫與 Auth 服務狀態暫時脫鉤，也能在下次初始化時自動自癒。
+*   **驗收結果**: 通過 `make db-init` 驗證了資料庫的冪等性與完整性，徹底消除了 ID Mismatch 隱患。
+
 ### 2026-01-09: RBAC 基礎設施深度加固與商業功能整合 (Phase 5.2 & 4.2)
 *   **核心任務**: 徹底消滅不安全的 `X-User-Role` Header 依賴。建立了標準化的 `src/server/auth` (後端) 與 `src/features/auth` (前端) 模組。
 *   **技術實作**: 

@@ -70,6 +70,7 @@ class TaskService:
         code_examples: list[dict[str, Any]] = None,
         due_date: datetime | None = None,
         knowledge_source_ids: list[str] | None = None,
+        assignee_id: str | None = None,
     ) -> tuple[bool, dict[str, Any]]:
         """
         Create a new task under a project with automatic reordering.
@@ -126,6 +127,7 @@ class TaskService:
                 "description": description,
                 "status": task_status,
                 "assignee": assignee,
+                "assignee_id": assignee_id,
                 "task_order": task_order,
                 "sources": final_sources,
                 "code_examples": code_examples or [],
@@ -291,6 +293,7 @@ class TaskService:
                     "description": task["description"],
                     "status": task["status"],
                     "assignee": task.get("assignee", "User"),
+                    "assignee_id": task.get("assignee_id"),
                     "task_order": task.get("task_order", 0),
                     "feature": task.get("feature"),
                     "created_at": task["created_at"],
@@ -398,6 +401,9 @@ class TaskService:
                 if not is_valid:
                     return False, {"error": error_msg}
                 update_data["assignee"] = update_fields["assignee"]
+
+            if "assignee_id" in update_fields:
+                update_data["assignee_id"] = update_fields["assignee_id"]
 
             if "task_order" in update_fields:
                 update_data["task_order"] = update_fields["task_order"]

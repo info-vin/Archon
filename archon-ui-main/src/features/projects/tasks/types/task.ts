@@ -51,6 +51,7 @@ export interface Task {
   description: string;
   status: DatabaseTaskStatus;
   assignee: Assignee; // Can be any string - agent names, "User", etc.
+  assignee_id?: string;
   task_order: number;
   feature?: string;
   sources?: TaskSource[];
@@ -77,6 +78,7 @@ export interface CreateTaskRequest {
   description: string;
   status?: DatabaseTaskStatus;
   assignee?: Assignee; // Optional assignee string
+  assignee_id?: string;
   task_order?: number;
   feature?: string;
   featureColor?: string;
@@ -90,6 +92,7 @@ export interface UpdateTaskRequest {
   description?: string;
   status?: DatabaseTaskStatus;
   assignee?: Assignee; // Optional assignee string
+  assignee_id?: string;
   task_order?: number;
   feature?: string;
   featureColor?: string;

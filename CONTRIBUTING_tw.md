@@ -291,6 +291,8 @@ def test_some_endpoint():
             > **說明**: 此腳本建立了用於自動化端對端測試的資料庫函式 (`reset_test_database`, `seed_test_database`)。如果您需要運行完整的前端 E2E 測試套件，則**必須**執行此腳本。
         10. `migration/006_create_sales_intel_tables.sql` (**Phase 4.2 銷售情資所需**)
             > **說明**: 建立 `leads` 與 `market_insights` 資料表，用於支援業務開發功能。
+        11. `migration/007_add_assignee_id_to_tasks.sql` (**RBAC 補完計畫**)
+            > **說明**: 建立 `assignee_id` 欄位並與 `profiles` 表關聯，確保任務指派具備強大的 RBAC 基礎。
 
 3.  **階段三：執行部署**
 

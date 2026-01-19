@@ -62,13 +62,28 @@ export async function callAPIWithETag<T = unknown>(endpoint: string, options: Re
     };
 
     // Attach Authorization Token if available
-    const token = localStorage.getItem('archon_token');
+    let token = localStorage.getItem('archon_token');
+    
+    // Fallback: Try to find Supabase token in localStorage (standard format: sb-<project-ref>-auth-token)
+    if (!token) {
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith('sb-') && key.endsWith('-auth-token')) {
+          try {
+            const sessionData = JSON.parse(localStorage.getItem(key) || '{}');
+            if (sessionData.access_token) {
+              token = sessionData.access_token;
+              break;
+            }
+          } catch (e) {
+            // Ignore parse errors
+          }
+        }
+      }
+    }
+
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;
-    } else {
-        // Fallback for initial bootstrap or dev environment before auth is ready
-        // TODO: Remove this once AuthContext is fully integrated everywhere
-        // headers["X-User-Role"] = "Admin"; 
     }
 
     // Only set Content-Type for requests that have a body (POST, PUT, PATCH, etc.)

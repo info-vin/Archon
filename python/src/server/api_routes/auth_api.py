@@ -112,7 +112,7 @@ async def get_dev_token():
 
     try:
         supabase = get_supabase_client()
-        email = "admin@archon.ai"
+        email = "admin@archon.com"
         password = "admin_password_123"
 
         # 1. Try to sign in

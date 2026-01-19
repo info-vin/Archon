@@ -15,7 +15,7 @@ const server = setupServer(
       access_token: 'mock-dev-token',
       user: {
         id: 'dev-admin-id',
-        email: 'admin@archon.ai',
+        email: 'admin@archon.com',
         role: 'system_admin'
       }
     });
@@ -56,7 +56,7 @@ describe('Dev Auto-Login Integration', () => {
 
     // Should eventually show user data
     await waitFor(() => {
-      expect(screen.getByTestId('user-email')).toHaveTextContent('admin@archon.ai');
+      expect(screen.getByTestId('user-email')).toHaveTextContent('admin@archon.com');
       expect(screen.getByTestId('user-role')).toHaveTextContent('system_admin');
       expect(screen.getByTestId('auth-token')).toHaveTextContent('mock-dev-token');
     });

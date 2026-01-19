@@ -128,7 +128,26 @@ export const knowledgeService = {
 
     // Explicitly add Authorization header since we're bypassing callAPIWithETag
     const headers: Record<string, string> = {};
-    const token = localStorage.getItem('archon_token');
+    
+    let token = localStorage.getItem('archon_token');
+    // Fallback: Try to find Supabase token in localStorage
+    if (!token) {
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith('sb-') && key.endsWith('-auth-token')) {
+          try {
+            const sessionData = JSON.parse(localStorage.getItem(key) || '{}');
+            if (sessionData.access_token) {
+              token = sessionData.access_token;
+              break;
+            }
+          } catch (e) {
+            // Ignore parse errors
+          }
+        }
+      }
+    }
+
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;
     }
