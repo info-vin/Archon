@@ -558,6 +558,23 @@ def register_modules():
         logger.error(f"✗ Failed to register marketing tools: {e}")
         logger.error(traceback.format_exc())
 
+    # Design Tools (Logo Generation, etc.)
+    try:
+        from src.mcp_server.features.design import register_design_tools
+
+        register_design_tools(mcp)
+        modules_registered += 1
+        logger.info("✓ Design tools registered")
+    except ImportError as e:
+        logger.warning(f"⚠ Design tools module not available (optional): {e}")
+    except (SyntaxError, NameError, AttributeError) as e:
+        logger.error(f"✗ Code error in design tools - MUST FIX: {e}")
+        logger.error(traceback.format_exc())
+        raise
+    except Exception as e:
+        logger.error(f"✗ Failed to register design tools: {e}")
+        logger.error(traceback.format_exc())
+
     logger.info(f"📦 Total modules registered: {modules_registered}")
 
     if modules_registered == 0:

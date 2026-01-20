@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { MenuIcon, XIcon, UserIcon, SettingsIcon, LogOutIcon, ShieldCheckIcon, LayoutGridIcon } from '../../components/Icons.tsx';
 import LiveClock from '../../components/LiveClock.tsx';
 import UserAvatar from '../../components/UserAvatar.tsx';
+import { BrandLogo } from '../../components/BrandLogo.tsx';
 import { useAuth } from '../../hooks/useAuth.tsx';
 import { usePermission } from '../../features/auth/hooks/usePermission.ts';
 
@@ -16,7 +17,9 @@ const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         <div className="flex h-screen bg-background text-foreground">
              <nav className={`fixed inset-y-0 left-0 z-50 w-64 bg-card border-r border-border flex flex-col transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} transition-transform duration-300 ease-in-out md:relative md:translate-x-0`}>
                 <div className="p-4 border-b border-border flex justify-between items-center gap-2">
-                    <Link to="/dashboard" className="text-2xl font-bold">Archon</Link>
+                    <Link to="/dashboard" className="flex items-center">
+                        <BrandLogo className="w-8 h-8" />
+                    </Link>
                      <div className="hidden md:block">
                         <LiveClock />
                      </div>

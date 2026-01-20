@@ -40,6 +40,61 @@ description: |
   why: DEFINITIVE SOURCE for Role-Machine collaboration logic.
 ```
 
+### AI Architecture Analysis: Current vs. New (AI 架構差異分析)
+
+| Feature | Current Archon Agents (Phase 4.0) | New AI Factory (Phase 4.4 - Jules/AutoGen) | Difference (差異點) |
+| :--- | :--- | :--- | :--- |
+| **Role (角色)** | **Executor (執行者)** | **Specialist (專家)** | 現有 Agent 像是通才，Jules/AutoGen 是專才。 |
+| **Framework (框架)** | PydanticAI (Single Agent) | Google Vertex AI / MS AutoGen (Multi-Agent) | 從單一代理人轉向多代理人協作系統。 |
+| **Trigger (觸發)** | User Manual Click (使用者點擊) | Event-Driven (CI/Webhook/API) | Jules 由程式碼提交觸發；AutoGen 由複雜規劃請求觸發。 |
+| **Integration** | MCP Tools (Internal) | **Adapter & CLI Wrapper** | Jules 透過 CLI 工具整合；AutoGen 需要 Docker 沙盒執行。 |
+
+---
+
+## 2. Q&A and Proposed Solutions (詳細 Q&A 與解決方案)
+
+> 此章節記錄了針對用戶回饋的深度分析與解決方案，確保所有決策皆有跡可循。
+
+### Q1: 管理與權限 (Management & RBAC)
+**Question**: 只有開單沒有結案日，如何評估效率？Charlie 也要管理 User Management 吧？
+**Solution**:
+1.  **Time Tracking**: 在 `tasks` 表中新增 `estimated_hours` 與 `actual_hours`，並在 Dashboard 實作燃盡圖。
+2.  **Team Management Panel**: 打造專屬的 `TeamManagementPage`，開放給 `manager` 角色使用。允許管理同一部門 (`department`) 的員工帳號，但隔離 System Admin 的敏感設定。
+
+### Q2: 銷售與爬蟲 (Sales & Crawler)
+**Question**: Alice 如何收集資料？資料庫缺欄位，如何跟進？104 爬蟲重複資料怎麼辦？
+**Solution**:
+1.  **Schema Expansion**: 擴充 `leads` 表，新增 `contact_name`, `contact_email`, `contact_phone`, `next_followup_date`。
+2.  **Crawler Uniqueness**: 在 `leads.source_job_url` 建立 UNIQUE 索引。
+3.  **Human-in-the-loop**: 定義流程：MarketBot 廣撒網 -> 系統存入 `leads` -> Alice 人工補全聯絡人資料 -> 系統排程跟進。
+
+### Q3: 測試與品質 (Testing & Quality)
+**Question**: Phase 4.3 還在 debug，測試不完全。
+**Solution**:
+1.  **Stop & Fix**: 暫停新功能開發，優先修復 E2E 測試。
+2.  **Automated Scenarios**: 將「建立任務 -> 指派給 Alice -> Alice 完成任務」的完整路徑寫入 `tests/e2e`，確保核心業務邏輯不再回歸。
+
+### Q4: 任務指派 (Task Assignment)
+**Question**: Task 可以指定的 Agent 只有兩個？可以指定的人員名單呢？
+**Solution**:
+1.  **UI Fix**: 修正 `TaskModal.tsx`，使其呼叫正確的 API 端點 (`/api/assignable-users` + `/api/agents/assignable`) 並合併顯示。
+2.  **UX Improvement**: 在下拉選單中加入圖示區分 🤖 (Bot) 與 👤 (Human)。
+3.  **Assignee Logic**: 採用單一分組選單，但內容根據角色動態過濾 (Manager 看團隊 + Agents，Member 看自己 + 相關 Agent)。
+
+### Q5: 內容更新 (Content Updates)
+**Question**: Blog 內容改了種子檔，但網頁還是舊的？
+**Solution**:
+1.  **UPSERT Logic**: 修改 `seed_blog_posts.sql`，將 `ON CONFLICT DO NOTHING` 改為 `ON CONFLICT (id) DO UPDATE SET ...`。這確保了每次 `make db-init` 後，資料庫內容絕對與檔案同步。
+
+### Q6: AI 協作 (AI Collaboration)
+**Question**: 如何利用 Jules (100 credits) + AutoGen？
+**Solution**:
+1.  **Jules (The Janitor)**: 負責高頻低腦力的 Lint fix 與 Unit Test 補全。透過 CLI Wrapper 整合。
+2.  **AutoGen (The Architect)**: 負責複雜 Schema 設計與 refactoring。透過 Docker-in-Docker 執行。
+3.  **Metrics**: 建立「AI 貢獻儀表板」追蹤 Jules 的產出量與通過率。
+
+---
+
 ## Implementation Blueprint (實作藍圖)
 
 ### Phase 4.4.1: Project ECITON - The Living Brand (遊蟻計畫 - 活體品牌)
