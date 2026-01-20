@@ -3,7 +3,7 @@
 **Audience**: Archon Developers, System Admins, AI Agents
 **Purpose**: Define the Role-Based Access Control (RBAC) matrix for Human-AI collaboration ecosystem
 **Source**: Derived from `frontend-architecture.md`, `PRPs/Phase_5_RBAC_Infrastructure_and_Identity`
-**Last Updated**: 2026-01-13
+**Last Updated**: 2026-01-20 (Phase 4.4 Update)
 
 ---
 
@@ -19,10 +19,10 @@ Archon 是一個「使用者角色的人機協作平台」。在此生態系中�
 
 | 層級 | DB Role 欄位 | 判斷依據 (Role + Dept) | 代表人物 (Persona) | 具體職責 (Responsibilities) |
 | :--- | :--- | :--- | :--- | :--- |
-| **L1** | `system_admin` | N/A | **Admin** (You) | **系統造物主**。<br>1. 基礎設施維護 (Docker, DB)。<br>2. 實體化 Alice/Bob 等帳號。<br>3. 配置 Agent 工具箱 (MCP)。 |
-| **L2** | `manager` | N/A | **Charlie** (Dev Lead / PO) | **團隊管理者/產品負責人**。<br>1. 審核 AI 寫入的程式碼 (Approvals)。<br>2. 查看團隊 HR 儀表板。<br>3. **呼叫 `POBot` 分析使用者需求**。 |
-| **L3** | `member` | Dept: **Sales** | **Alice** (Sales Rep) | **業務代表**。<br>1. 記錄客戶聯繫進度 (手動)。<br>2. 呼叫 `Marketing Agent` 搜尋潛在客戶。<br>3. 檢視行銷情資列表。 |
-| **L3** | `member` | Dept: **Marketing**| **Bob** (Content Lead)| **行銷人員**。<br>1. 撰寫部落格草稿 (手動)。<br>2. 呼叫 `Knowledge Agent` 歸檔文章。<br>3. 分析市場趨勢。 |
+| **L1** | `system_admin` | N/A | **Admin** (You) | **系統造物主**。<br>1. 基礎設施維護 (Docker, DB)。<br>2. 全域預算與權限配置。 |
+| **L2** | `manager` | N/A | **Charlie** (Dev Lead / PO) | **團隊管理者/產品負責人**。<br>1. 審核 AI 寫入的程式碼 (Approvals)。<br>2. 查看團隊 HR 儀表板。<br>3. **管理團隊成員 (`USER_MANAGE_TEAM`)**。<br>4. **使用 `POBot` 優化任務規格**。 |
+| **L3** | `member` | Dept: **Sales** | **Alice** (Sales Rep) | **業務代表**。<br>1. 轉換 Leads 為專案。<br>2. 呼叫 `MarketBot` 生成開發信。<br>3. **觸發 `Librarian` 自動歸檔**。 |
+| **L3** | `member` | Dept: **Marketing**| **Bob** (Content Lead)| **行銷人員**。<br>1. 撰寫部落格草稿 (手動)。<br>2. 呼叫 `Librarian` 歸檔文章。<br>3. **品牌資產管理 (`BRAND_ASSET_MANAGE`)**。 |
 
 ---
 
@@ -32,19 +32,33 @@ Archon 是一個「使用者角色的人機協作平台」。在此生態系中�
 
 | Agent 代號 | 類型 | 對應技能/工具 (MCP Tools) | 開發定義 |
 | :--- | :--- | :--- | :--- |
-| **`DevBot`** | L4-U | **Developer Agent**<br>- `read_file`, `write_file`<br>- `git_commit`, `run_test` | **協作開發者**。負責修復 Bug、重構代碼。產出需經 Charlie 審核。 |
-| **`MarketBot`**| L4-U | **Marketing/Sales Agent**<br>- `search_job_market` (104 API)<br>- `fetch_web_content` | **業務助理**。負責搜尋職缺、分析潛在客戶需求。產出存入 `leads` 表。 |
-| **`Librarian`**| L4-U | **Knowledge Agent**<br>- `archive_to_vector_db`<br>- `semantic_search` | **知識管理員**。負責將部落格/文件向量化，或回答 RAG 問題。 |
-| **`POBot`**    | L4-U | **Product Owner Agent**<br>- `analyze_feedback`<br>- `generate_user_story` | **產品負責人**。負責收集使用者回饋 (Feedback)，並將其轉化為開發規格 (User Stories)。 |
+| **`DevBot`** | L4-U | **Developer Agent**<br>- `read_file`, `write_file`<br>- **`logo_tool` (New)** | **協作開發者**。負責修復 Bug、重構代碼，以及 **SVG 品牌資產生成**。 |
+| **`MarketBot`**| L4-U | **Marketing/Sales Agent**<br>- `search_job_market` (104 API)<br>- **`generate_sales_email`** | **業務助理**。負責搜尋職缺、分析潛在客戶需求，並撰寫開發信草稿。 |
+| **`Librarian`**| L4-U | **Knowledge Agent**<br>- `archive_to_vector_db`<br>- **`auto_index_email`** | **知識管理員**。負責將部落格/文件，以及 **Alice 的成功開發信** 向量化歸檔。 |
+| **`POBot`**    | L4-U | **Product Owner Agent**<br>- `generate_user_story`<br>- **`refine_task_spec`** | **產品負責人**。負責將回饋轉化為開發規格，並 **優化模糊的任務描述**。 |
 | **`Clockwork`**| L4-S | **System Agent**<br>- `cleanup_logs`<br>- `check_health` | **系統維運**。由 Cron Job 定期觸發，無須人類介入。 |
 
 ---
 
-## 4. HYBRID WORKFLOW (混合工作流：手動 vs AI)
+## 4. ASSIGNMENT CONTEXT LOGIC (指派上下文邏輯 - Phase 4.4 New)
+
+任務指派 (Assignee) 選單採「單一分組選單，動態過濾內容」模式：
+
+1.  **System Admin**: 可選所有人 + 所有 Agents。
+2.  **Manager (Charlie)**: 
+    *   **Users**: 可選同部門員工 (Alice, Bob)。
+    *   **Agents**: 可選所有 Agents (負責資源調度)。
+3.  **Member (Alice/Bob)**:
+    *   **Users**: 僅能指派給自己 (Self)。
+    *   **Agents**: 僅能指派與職能相關的 Agent (Alice -> MarketBot, Bob -> Librarian)。
+
+---
+
+## 5. HYBRID WORKFLOW (混合工作流：手動 vs AI)
 
 系統區分「日常專案管理」與「AI 任務指派」，兩者在同一介面並行。
 
-### 4.1 Manual Project Management (手動專案管理)
+### 5.1 Manual Project Management (手動專案管理)
 這是 Alice/Bob 80% 的日常工作，**不涉及 Agent**。
 - **介面**: `Kanban Board` (看板) & `TaskModal` (任務詳情)。
 - **場景**:
@@ -53,25 +67,18 @@ Archon 是一個「使用者角色的人機協作平台」。在此生態系中�
     - Charlie 更改會議時間 -> 修改任務 Due Date。
 - **資料流**: User Input -> API -> Database -> UI Update。
 
-### 4.2 AI Task Delegation (AI 任務指派)
+### 5.2 AI Task Delegation (AI 任務指派)
 這是 Alice/Bob 遇到重複性或需大量資料處理的工作時，主動**召喚 Agent**。
 - **介面**: `TaskModal` 中的 "Assign to AI" 按鈕或 Chat 介面。
 - **場景**:
     - Alice 需要 50 家潛在客戶名單 -> 指派 `MarketBot` 執行搜尋。
     - Charlie 需要修復一個 UI Bug -> 指派 `DevBot` 讀取代碼並提解法。
+    - Charlie 需要設計新 Logo -> 指派 `DevBot` 生成 SVG。
 - **資料流**: User Input -> Agent Service -> MCP Tools -> **Approval (If needed)** -> Database/Codebase.
-
-### 4.3 Requirements Gathering (需求分析)
-這是 Charlie (PO) 將模糊需求轉化為具體任務的流程。
-- **介面**: 聊天介面或專屬的 "Idea Box"。
-- **場景**:
-    - 來自客服的 10 份原始反饋文件 (PDF/Doc) -> Charlie 上傳並呼叫 `POBot`。
-    - `POBot` 分析後產出 3 個建議的 User Stories：「作為使用者，我希望能...」。
-    - Charlie 審核後，一鍵將其轉化為 Kanban 上的 `To-Do` 任務。
 
 ---
 
-## 5. PERMISSION MATRIX (RBAC 權限矩陣)
+## 6. PERMISSION MATRIX (RBAC 權限矩陣)
 
 ### Legend
 - 🔴 **無權限**: UI 隱藏 / API 403。
@@ -83,17 +90,19 @@ Archon 是一個「使用者角色的人機協作平台」。在此生態系中�
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | **手動管理** | **更新任務進度/留言** | 🟣 任意任務 | 🔵 團隊任務 | 🟢 指派給我的 | 🟢 指派給我的 |
 | | **編輯/刪除 Blog** | 🟣 **全域強制 (Blog Override)** | 🔵 團隊文章 | 🟢 僅限本人 | 🟢 僅限本人 |
+| **團隊管理** | **重設成員密碼** | ✅ 全域 | 🔵 (限同部門) | 🔴 | 🔴 |
+| | **分配 AI 額度** | ✅ 全域 | 🔵 (限團隊) | 🔴 | 🔴 |
+| **品牌管理** | **生成 Logo (DevBot)** | ✅ 允許 | ✅ 允許 | 🔴 禁止 | 🔴 禁止 |
+| | **微調 Logo 參數** | ✅ 允許 | ✅ 允許 | 🔴 禁止 | 🟢 (BRAND_ASSET) |
 | **AI 協作** | **指派 DevBot** | ✅ 允許 | ✅ 允許 | 🔴 禁止 (不懂Code) | 🔴 禁止 |
 | | **指派 MarketBot** | ✅ 允許 | ✅ 允許 | ✅ 允許 | ✅ 允許 |
-| | **指派 POBot** | ✅ 允許 | ✅ 允許 | 🔴 禁止 | 🔴 禁止 |
-| | **批准代碼變更** | ✅ 允許 | ✅ 允許 | 🔴 禁止 | 🔴 禁止 |
-| **資料檢視** | **HR 儀表板** | ✅ 全局 | 🔵 團隊 | 🟢 個人 | 🟢 個人 |
+| | **指派 POBot/Librarian**| ✅ 允許 | ✅ 允許 | ✅ 允許 (限職能) | ✅ 允許 (限職能) |
+| **資料檢視** | **HR 儀表板/AI 成本** | ✅ 全局 | 🔵 團隊 | 🟢 個人 | 🟢 個人 |
 | | **Leads 列表** | ✅ 全局 | ✅ 全局 | 🟢 個人負責 | ✅ 全局分析 |
-| **系統** | **MCP 配置** | ✅ 管理 | 🔴 不可見 | 🔴 不可見 | 🔴 不可見 |
 
 ---
 
-## 6. DATA & UI LOCATIONS (資料與介面位置)
+## 7. DATA & UI LOCATIONS (資料與介面位置)
 
 | 資料類型 | 產生者 | 儲存位置 | UI 呈現位置 |
 | :--- | :--- | :--- | :--- |
@@ -102,39 +111,31 @@ Archon 是一個「使用者角色的人機協作平台」。在此生態系中�
 | **市場洞察** | **MarketBot** | `knowledge_items` (Vector) | `/knowledge` 或 RAG Chat |
 | **需求故事** | **POBot** | `archon_tasks` (Draft status) | `/backlog` (未實作) 或 Chat |
 | **程式碼變更**| **DevBot** | `proposed_changes` (SQL) | `/approvals` 審核頁 & 任務卡片 |
-| **系統日誌** | **Clockwork** | `system_logs` (SQL/File) | Admin Dashboard (Port 3737) |
+| **品牌資產** | **DevBot** | `public/logo-eciton.svg` | Global Header & Branding Settings |
+| **AI 消耗** | **System** | `daily_ai_usage` (SQL) | Team Management Panel |
 
 ---
 
-## 7. TECHNICAL IMPLEMENTATION GUIDELINES (技術實作指引)
+## 8. TECHNICAL IMPLEMENTATION GUIDELINES (技術實作指引)
 
 為確保 RBAC 策略與系統架構一致，請遵循以下實作標準：
 
-### 7.1 UI Rendering Strategy (UI 渲染策略)
+### 8.1 UI Rendering Strategy (UI 渲染策略)
 *Ref: `UI_STANDARDS.md`*
-- **無權限 (🔴)**: 採用 **Render Nothing** (不渲染)。不要使用 `disabled` 屬性，直接不輸出 DOM 元素。這能降低認知負擔並提升安全性。
+- **無權限 (🔴)**: 採用 **Render Nothing** (不渲染)。不要使用 `disabled` 屬性，直接不輸出 DOM 元素。
 - **Hook 範例**:
   ```tsx
-  if (!user.hasPermission('approve_code')) return null;
-  return <Button>Approve</Button>;
+  if (!user.hasPermission('brand_asset_manage')) return null;
+  return <Button>Brand Settings</Button>;
   ```
 
-### 7.2 Data Fetching & Scoping (資料獲取與範疇)
+### 8.2 Data Fetching & Scoping (資料獲取與範疇)
 *Ref: `QUERY_PATTERNS.md`*
 - **團隊視角 (🔵)**: 使用標準 List Query Key。
   - `queryKey: taskKeys.byProject(projectId)`
-- **個人視角 (🟢)**: 必須在 API 層級強制過濾。
-  - 前端: `queryKey: taskKeys.assignedTo(userId)`
-  - 後端: API 必須驗證 `request.user.id` 與查詢參數一致，否則拒絕。
+- **指派選單過濾**: 後端 `/api/assignable-users` 必須根據 `JWT.role` 過濾回傳清單。
 
-### 7.3 Optimistic Updates & Error Handling (樂觀更新與錯誤處理)
+### 8.3 Optimistic Updates & Error Handling (樂觀更新與錯誤處理)
 *Ref: `optimistic_updates.md`*
 - **403 Forbidden**: 當使用者試圖執行無權限操作 (如透過 API 工具)，後端回傳 403。
-- **Rollback**: 前端 Mutation 的 `onError` 必須捕捉 403 錯誤，觸發 UI 回滾 (Rollback)，並顯示明確的 Toast 錯誤訊息：「權限不足」。
-
-### 7.4 API Endpoint Mapping (API 端點映射)
-*Ref: `API_NAMING_CONVENTIONS.md`*
-- **指派 Agent**: `POST /api/tasks/{id}/assign_agent`
-- **批准變更**: `POST /api/approvals/{id}/execute`
-- **HR 數據**: `GET /api/stats/member-performance` (後端需根據 Role 過濾回傳資料)
-- **需求分析**: `POST /api/po/analyze-feedback` (POBot 專用)
+- **Rollback**: 前端 Mutation 的 `onError` 必須捕捉 403 錯誤，觸發 UI 回滾 (Rollback)。

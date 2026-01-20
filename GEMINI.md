@@ -88,6 +88,22 @@
 
 # 第三章：近期工作日誌 (Recent Journal Entries)
 
+### 2026-01-20: Phase 4.4 啟動與系統修正 (Phase 4.4 Kickoff & System Correction)
+*   **核心任務**: 啟動 Phase 4.4 "System Correction & Business Value"，針對管理盲點、銷售流程斷點與 AI 協作架構進行修正。
+*   **決策變更**:
+    *   **Project MYRMIDON (蟻人計畫)**: 品牌重塑為「蟻人 (Myrmidon)」，象徵集體智慧與分工。Logo 將採用幾何螞蟻風格。
+    *   **RBAC 修復**: 放棄「開副本」做新頁面的想法。決定直接修正 `permissions.py` 與 `rbac_service.py`，賦予 `manager` 角色對同部門員工的管理權限 (`USER_MANAGE_TEAM`)。
+    *   **銷售閉環**: 確認 `leads` 表需擴充聯絡人欄位，並實作 UNIQUE 索引以防止爬蟲重複資料。
+    *   **AI Factory**: 定義了 Jules (Lint/Test) 與 AutoGen (Schema Architect) 的分工架構與額度分配。
+*   **關鍵發現**: 透過查證 `projects_api.py`，證實任務指派問題源於後端 `list_assignable_users` 的 RBAC 邏輯缺陷，而非前端問題。
+
+### 2026-01-19: Admin UI 回歸修復與文件預覽 (Admin UI Regression & Doc Preview)
+*   **核心任務**: 修復 Phase 4.3.1 遺留的 Admin UI 問題，並完成文件預覽功能。
+*   **技術實作**:
+    *   **Unicode 支援**: 解決了文件名包含特殊字符時的上傳錯誤。
+    *   **Task ID**: 在全棧實現了 Task ID 的顯示與搜尋支援。
+    *   **Dev Token**: 修復了 `dev-token` 的網域設定問題，確保本地開發體驗流暢。
+
 ### 2026-01-18: Phase 4.3 完結與爬蟲進化 (Phase 4.3 Completion & Crawler Evolution)
 *   **核心任務**: 完成 Phase 4.3 行銷網站現代化，並解決爬蟲數據品質問題，標誌著系統從「功能驗證」邁向「真實運作」。
 *   **技術突破**:
