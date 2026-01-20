@@ -61,7 +61,7 @@ class GenerateBrandAssetTool(BaseModel):
                     </feMerge>
                 </filter>
             </defs>
-            
+
             <g filter="url(#glow)">
         '''
 

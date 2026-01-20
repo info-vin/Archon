@@ -10,12 +10,12 @@ def register_design_tools(mcp: FastMCP):
     async def generate_brand_asset(style: str = "eciton", format: str = "svg") -> str:
         """
         Generates a brand asset (logo) based on the specified style.
-        
+
         Args:
             style: The visual style of the asset (default: "eciton").
                    "eciton" = Geometric Ant Node-Link style.
             format: The output format (default: "svg").
-            
+
         Returns:
             The generated SVG code as a string.
         """
