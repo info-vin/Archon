@@ -10,6 +10,7 @@ import BlogDetailPage from './pages/BlogDetailPage.tsx';
 import SettingsPage from './pages/SettingsPage.tsx';
 import StatsPage from './pages/StatsPage.tsx';
 import MarketingPage from './pages/MarketingPage.tsx';
+import TeamManagementPage from './pages/TeamManagementPage.tsx';
 import PublicLayout from './components/layout/PublicLayout.tsx';
 import MainLayout from './components/layout/MainLayout.tsx';
 import SolutionsPage from './features/marketing/SolutionsPage.tsx';
@@ -78,6 +79,16 @@ export const AppRoutes: React.FC = () => {
           <ProtectedRoute>
             <MainLayout>
               <MarketingPage />
+            </MainLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/team"
+        element={
+          <ProtectedRoute>
+            <MainLayout>
+              <TeamManagementPage />
             </MainLayout>
           </ProtectedRoute>
         }

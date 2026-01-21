@@ -29,6 +29,7 @@ export const PermissionGuard: React.FC<PermissionGuardProps> = ({
     return <div className="p-4 text-center text-gray-400">Verifying access...</div>;
   }
 
+  console.log('PermissionGuard check:', { permission, has: hasPermission(permission), user: 'unavailable_here' });
   if (!hasPermission(permission)) {
     return <>{fallback}</>;
   }

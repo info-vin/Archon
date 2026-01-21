@@ -36,4 +36,5 @@ export type PermissionScope =
   | 'stats:view:all'
   | 'leads:view:all'
   | 'user:manage'
+  | 'user:manage:team'
   | 'mcp:manage';

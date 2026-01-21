@@ -7,6 +7,7 @@ shared between MCP tools and FastAPI endpoints.
 
 # Removed direct logging import - using unified config
 import asyncio
+import textwrap
 from datetime import datetime
 from typing import Any
 
@@ -206,7 +207,7 @@ class TaskService:
                     "sources, code_examples"  # Still fetch for counting, but will process differently
                 )
             else:
-                query = self.supabase_client.table("archon_tasks").select("*")
+                query = self.supabase_client.table("archon_tasks").select("* ")
 
             # Track filters for debugging
             filters_applied = []
@@ -343,7 +344,7 @@ class TaskService:
         """
         try:
             response = (
-                self.supabase_client.table("archon_tasks").select("*").eq("id", task_id).execute()
+                self.supabase_client.table("archon_tasks").select("* ").eq("id", task_id).execute()
             )
 
             if response.data:
@@ -460,7 +461,7 @@ class TaskService:
         try:
             # First, check if task exists and is not already archived
             task_response = (
-                self.supabase_client.table("archon_tasks").select("*").eq("id", task_id).execute()
+                self.supabase_client.table("archon_tasks").select("* ").eq("id", task_id).execute()
             )
             if not task_response.data:
                 return False, {"error": f"Task with ID {task_id} not found"}
@@ -560,6 +561,55 @@ class TaskService:
         except Exception as e:
             logger.error(f"Error saving agent output: {e}")
             return False, {"error": f"Error saving agent output: {str(e)}"}
+
+    async def refine_task_description(self, title: str, description: str) -> str:
+        """
+        Uses POBot (RAG-enhanced) to transform a raw description into
+        a structured product spec with User Stories and Technical Requirements.
+        """
+        try:
+            from ..llm_provider_service import llm_provider_service
+            from ..search.rag_service import RAGService
+
+            # 1. Fetch relevant context using RAG
+            rag_service = RAGService(self.supabase_client)
+            rag_success, rag_result = await rag_service.perform_rag_query(
+                query=f"{title} {description}",
+                match_count=3
+            )
+
+            context_str = ""
+            if rag_success and "results" in rag_result:
+                snippets = [res.get("content", "")[:300] for res in rag_result["results"]]
+                context_str = "\n".join(snippets)
+                logger.info(f"POBot RAG found {len(snippets)} context snippets")
+
+            # 2. Construct Prompt with Context
+            prompt = textwrap.dedent(f"""
+                You are POBot, an expert Product Owner.
+                Refine the following task into a professional, structured specification.
+
+                TASK TITLE: {title}
+                RAW DESCRIPTION: {description}
+
+                RELEVANT PROJECT CONTEXT (from RAG):
+                {context_str}
+
+                FORMAT:
+                1. **Goal**: One sentence high-level goal.
+                2. **User Stories**: At least 2-3 stories in "As a... I want to... so that..." format.
+                3. **Acceptance Criteria**: Detailed bullet points.
+                4. **Technical Considerations**: Constraints or hints (based on context if applicable).
+
+                KEEP IT CONCISE AND ACTIONABLE.
+            """).strip()
+
+            # 3. Generate Content
+            content, _ = await llm_provider_service.generate_content(prompt)
+            return content
+        except Exception as e:
+            logger.error(f"POBot refinement failed: {e}")
+            return f"{description}\n\n[POBot Note: Refinement failed ({str(e)}), using original description.]"
 
     async def get_all_project_task_counts(self) -> tuple[bool, dict[str, dict[str, int]]]:
         """

@@ -50,6 +50,14 @@ const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                             </Link>
                         </li>
                     )}
+                    {hasPermission('user:manage:team') && (
+                        <li className="mb-2">
+                            <Link to="/team" className={`flex items-center p-2 rounded-md hover:bg-secondary ${location.pathname.startsWith('/team') ? 'bg-secondary' : ''}`}>
+                                <UserIcon className="w-5 h-5 mr-3" />
+                                Team Management
+                            </Link>
+                        </li>
+                    )}
                     <li className="mb-2">
                         <Link to="/settings" className={`flex items-center p-2 rounded-md hover:bg-secondary ${location.pathname.startsWith('/settings') ? 'bg-secondary' : ''}`}>
                             <SettingsIcon className="w-5 h-5 mr-3" />

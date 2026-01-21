@@ -605,6 +605,28 @@ async def list_project_tasks(
 # Remove the complex /tasks endpoint - it's not needed and breaks things
 
 
+class RefineTaskRequest(BaseModel):
+    title: str
+    description: str
+
+
+@router.post("/tasks/refine-description")
+async def refine_task_description(request: RefineTaskRequest, x_user_role: str | None = Header(None, alias="X-User-Role")):
+    """
+    Refine a task description using POBot (RAG-enhanced).
+    """
+    # Optional: Check if user has permission to use AI (e.g., manager/admin only, or quota check)
+    # For now, allow all authenticated users
+    try:
+        logfire.info(f"Refining task description | title={request.title}")
+        task_service = TaskService()
+        refined_description = await task_service.refine_task_description(request.title, request.description)
+        return {"refined_description": refined_description}
+    except Exception as e:
+        logfire.error(f"Failed to refine task description | error={str(e)}")
+        raise HTTPException(status_code=500, detail={"error": str(e)}) from e
+
+
 @router.post("/tasks")
 async def create_task(request: CreateTaskRequest, x_user_role: str | None = Header(None, alias="X-User-Role")):
     """Create a new task with automatic reordering."""

@@ -13,13 +13,14 @@ const PERMISSION_SETS: Record<string, Set<PermissionScope>> = {
     'agent:trigger:dev', 'agent:trigger:mkt', 'agent:trigger:know',
     'code:approve', 'content:publish',
     'stats:view:all', 'leads:view:all',
-    'user:manage', 'mcp:manage'
+    'user:manage', 'user:manage:team', 'mcp:manage'
   ]),
   manager: new Set([
     'task:create', 'task:read:team', 'task:update:own',
     'agent:trigger:dev', 'agent:trigger:mkt', 'agent:trigger:know',
     'code:approve', 'content:publish',
-    'stats:view:team', 'leads:view:all'
+    'stats:view:team', 'leads:view:all',
+    'user:manage:team'
   ]),
   employee: new Set([
     'task:create', 'task:read:own', 'task:update:own',

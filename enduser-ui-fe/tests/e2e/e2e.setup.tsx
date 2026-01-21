@@ -142,6 +142,9 @@ vi.mock('../../src/services/api', () => {
               source_id: 'pitch-mock-source-123'
           };
       }),
+      refineTaskDescription: vi.fn().mockImplementation(async (title, description) => {
+          return `User Story: As a user, I want ${title} so that I can be happy.\n\nAcceptance Criteria:\n- Done.`;
+      }),
     }
   };
 });

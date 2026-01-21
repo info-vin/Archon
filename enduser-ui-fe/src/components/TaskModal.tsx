@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { AssignableUser, Task, TaskPriority, NewTaskData, UpdateTaskData } from '../types.ts';
 import { api } from '../services/api.ts';
-import { XIcon } from './Icons.tsx';
+import { XIcon, SparklesIcon } from './Icons.tsx';
 import { KnowledgeSelector } from './KnowledgeSelector.tsx';
 
 interface TaskModalProps {
@@ -21,6 +21,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({ task, onClose, onTaskCreat
   const [dueDate, setDueDate] = useState('');
   const [priority, setPriority] = useState<TaskPriority>(TaskPriority.MEDIUM);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isRefining, setIsRefining] = useState(false);
   const [assignableUsers, setAssignableUsers] = useState<AssignableUser[]>([]);
   const [isLoadingUsers, setIsLoadingUsers] = useState(true);
   const [selectedKnowledgeIds, setSelectedKnowledgeIds] = useState<string[]>([]);
@@ -73,6 +74,25 @@ export const TaskModal: React.FC<TaskModalProps> = ({ task, onClose, onTaskCreat
       }
     }
   }, [task, isEditMode]);
+
+  const handleRefineWithAI = async () => {
+    if (!title) {
+        alert("Please enter a title first.");
+        return;
+    }
+    setIsRefining(true);
+        console.log('POBot refining with:', title, description);
+    try {
+        const refined = await api.refineTaskDescription(title, description);
+        console.log('POBot result:', refined);
+        setDescription(refined);
+    } catch (error) {
+        console.error("POBot failed:", error);
+        alert("Failed to refine description with AI.");
+    } finally {
+        setIsRefining(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -127,7 +147,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({ task, onClose, onTaskCreat
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center" aria-modal="true" role="dialog">
-      <div className="bg-card rounded-lg shadow-xl w-full max-w-lg p-6 relative">
+      <div className="bg-card rounded-lg shadow-xl w-full max-w-lg p-6 relative max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-2xl font-bold">{isEditMode ? 'Edit Task' : 'Create New Task'}</h2>
           <button onClick={onClose} className="p-1 rounded-full hover:bg-secondary" aria-label="Close">
@@ -140,8 +160,19 @@ export const TaskModal: React.FC<TaskModalProps> = ({ task, onClose, onTaskCreat
             <input id="title" type="text" value={title} onChange={(e) => setTitle(e.target.value)} className={inputClass} required />
           </div>
           <div>
-            <label htmlFor="description" className="block text-sm font-medium mb-1">Description</label>
-            <textarea id="description" value={description} onChange={(e) => setDescription(e.target.value)} className={inputClass} rows={3}></textarea>
+            <div className="flex justify-between items-center mb-1">
+                <label htmlFor="description" className="block text-sm font-medium">Description</label>
+                <button 
+                    type="button" 
+                    onClick={handleRefineWithAI} 
+                    disabled={isRefining || !title}
+                    className="text-xs flex items-center gap-1 text-indigo-600 hover:text-indigo-800 disabled:opacity-50 transition-colors font-medium"
+                >
+                    <SparklesIcon className="w-3 h-3" />
+                    {isRefining ? 'POBot is thinking...' : 'Refine with AI'}
+                </button>
+            </div>
+            <textarea id="description" value={description} onChange={(e) => setDescription(e.target.value)} className={inputClass} rows={6} placeholder="Enter a brief description, then click 'Refine with AI' to generate a spec..."></textarea>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>

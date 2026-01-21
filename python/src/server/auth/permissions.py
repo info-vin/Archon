@@ -28,7 +28,9 @@ LEADS_VIEW_ALL = "leads:view:all"
 
 # System Management
 USER_MANAGE = "user:manage" # Create user, change role
+USER_MANAGE_TEAM = "user:manage:team" # Manage users in same department
 MCP_MANAGE = "mcp:manage"   # Configure tools
+BRAND_ASSET_MANAGE = "brand:manage" # Manage logos, colors, assets
 
 # --- Role Definition ---
 
@@ -38,20 +40,21 @@ ROLE_PERMISSIONS: dict[str, set[str]] = {
         AGENT_TRIGGER_DEV, AGENT_TRIGGER_MKT, AGENT_TRIGGER_KNOW,
         CODE_APPROVE, CONTENT_PUBLISH,
         STATS_VIEW_ALL, LEADS_VIEW_ALL,
-        USER_MANAGE, MCP_MANAGE
+        USER_MANAGE, MCP_MANAGE, BRAND_ASSET_MANAGE, USER_MANAGE_TEAM
     },
     "admin": {  # Alias for system_admin for backward compatibility
         TASK_CREATE, TASK_READ_ALL, TASK_UPDATE_ALL,
         AGENT_TRIGGER_DEV, AGENT_TRIGGER_MKT, AGENT_TRIGGER_KNOW,
         CODE_APPROVE, CONTENT_PUBLISH,
         STATS_VIEW_ALL, LEADS_VIEW_ALL,
-        USER_MANAGE, MCP_MANAGE
+        USER_MANAGE, MCP_MANAGE, BRAND_ASSET_MANAGE, USER_MANAGE_TEAM
     },
     "manager": { # Charlie
         TASK_CREATE, TASK_READ_TEAM, TASK_UPDATE_OWN,
         AGENT_TRIGGER_DEV, AGENT_TRIGGER_MKT, AGENT_TRIGGER_KNOW,
         CODE_APPROVE, CONTENT_PUBLISH,
-        STATS_VIEW_TEAM, LEADS_VIEW_ALL
+        STATS_VIEW_TEAM, LEADS_VIEW_ALL,
+        USER_MANAGE_TEAM
     },
     "employee": { # Generic Employee
         TASK_CREATE, TASK_READ_OWN, TASK_UPDATE_OWN,
@@ -66,7 +69,8 @@ ROLE_PERMISSIONS: dict[str, set[str]] = {
     "marketing": { # Bob
         TASK_CREATE, TASK_READ_OWN, TASK_UPDATE_OWN,
         AGENT_TRIGGER_MKT, AGENT_TRIGGER_KNOW,
-        STATS_VIEW_OWN, LEADS_VIEW_ALL
+        STATS_VIEW_OWN, LEADS_VIEW_ALL,
+        BRAND_ASSET_MANAGE
     }
 }
 

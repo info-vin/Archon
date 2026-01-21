@@ -280,6 +280,18 @@ const supabaseApi = {
     const data = await response.json();
     return data.task;
   },
+  async refineTaskDescription(title: string, description: string): Promise<string> {
+    const response = await fetch('/api/tasks/refine-description', {
+        method: 'POST',
+        headers: await this._getHeaders(),
+        body: JSON.stringify({ title, description })
+    });
+    if (!response.ok) {
+        throw new Error('Failed to refine task description.');
+    }
+    const data = await response.json();
+    return data.refined_description;
+  },
   async getEmployees(): Promise<Employee[]> {
     const response = await fetch('/api/users', { headers: await this._getHeaders() });
     if (!response.ok) {
