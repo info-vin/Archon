@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useLocation, Outlet } from 'react-router-dom';
 import { MenuIcon, XIcon } from '../../components/Icons.tsx';
 import ThemeToggle from '../../components/ThemeToggle.tsx';
+import { BrandLogo } from '../../components/BrandLogo.tsx';
 import { useAuth } from '../../hooks/useAuth.tsx';
 
 const PublicLayout: React.FC = () => {
@@ -31,7 +32,7 @@ const PublicLayout: React.FC = () => {
       <header className="sticky top-0 z-40 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container mx-auto flex h-14 max-w-screen-2xl items-center justify-between px-4">
           <Link to="/landing" className="mr-6 flex items-center space-x-2">
-            <span className="font-bold text-lg">Archon</span>
+            <BrandLogo className="w-8 h-8" />
           </Link>
           <nav className="hidden md:flex items-center space-x-6 text-sm font-medium">
             {navLinks.map(link => (
@@ -86,7 +87,7 @@ const PublicLayout: React.FC = () => {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-6">
-              <span className="font-bold text-lg">Archon</span>
+              <BrandLogo className="w-8 h-8" />
               <button onClick={() => setIsMobileMenuOpen(false)} className="p-1 -mr-1" aria-label="Close menu">
                 <XIcon className="h-6 w-6" />
               </button>

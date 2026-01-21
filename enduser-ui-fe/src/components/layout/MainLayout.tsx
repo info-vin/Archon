@@ -16,14 +16,11 @@ const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     return (
         <div className="flex h-screen bg-background text-foreground">
              <nav className={`fixed inset-y-0 left-0 z-50 w-64 bg-card border-r border-border flex flex-col transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} transition-transform duration-300 ease-in-out md:relative md:translate-x-0`}>
-                <div className="p-4 border-b border-border flex justify-between items-center gap-2">
-                    <Link to="/dashboard" className="flex items-center">
+                <div className="p-4 border-b border-border flex justify-between items-center bg-card/50 backdrop-blur">
+                    <Link to="/dashboard" className="flex items-center transition-transform hover:scale-105 active:scale-95">
                         <BrandLogo className="w-8 h-8" />
                     </Link>
-                     <div className="hidden md:block">
-                        <LiveClock />
-                     </div>
-                     <button onClick={() => setIsSidebarOpen(false)} className="md:hidden p-1">
+                     <button onClick={() => setIsSidebarOpen(false)} className="md:hidden p-1 hover:bg-secondary rounded-md" aria-label="Close sidebar">
                         <XIcon className="w-6 h-6" />
                     </button>
                 </div>
@@ -46,7 +43,7 @@ const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                         <li className="mb-2">
                             <Link to="/marketing" className={`flex items-center p-2 rounded-md hover:bg-secondary ${location.pathname.startsWith('/marketing') ? 'bg-secondary' : ''}`}>
                                 <ShieldCheckIcon className="w-5 h-5 mr-3" />
-                                Market Intel
+                                Sales Intel
                             </Link>
                         </li>
                     )}
@@ -95,13 +92,22 @@ const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
             </nav>
             {isSidebarOpen && <div className="fixed inset-0 bg-black/50 z-40 md:hidden" onClick={() => setIsSidebarOpen(false)}></div>}
             <main className="flex-1 flex flex-col overflow-y-auto bg-gray-50/50">
+                {/* Mobile Header */}
                 <header className="md:hidden flex items-center justify-between p-4 border-b border-border bg-background/80 backdrop-blur">
                     <button onClick={() => setIsSidebarOpen(true)} aria-label="Open sidebar">
-                        <MenuIcon className="w-6 h-6" />
+                        <MenuIcon className="h-6 w-6" />
                     </button>
                     <LiveClock />
                 </header>
-                {children}
+
+                {/* Desktop Top Bar (New) */}
+                <header className="hidden md:flex items-center justify-end p-4 border-b border-border bg-background/60 backdrop-blur sticky top-0 z-30 h-16">
+                    <LiveClock />
+                </header>
+                
+                <div className="flex-1 p-4 md:p-8">
+                    {children}
+                </div>
             </main>
         </div>
     );
