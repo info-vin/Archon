@@ -138,7 +138,8 @@ vi.mock('../../src/services/api', () => {
           console.log('🤖 [Mock API] generatePitch called for:', company);
           return {
               content: `Subject: Collaboration regarding ${jobTitle}\n\nDear Hiring Manager at ${company},\n\nI noticed you are looking for someone to handle: "${description.substring(0, 50)}...". We can help.`,
-              references: ['Case Study A', 'Capability B']
+              references: ['Case Study A', 'Capability B'],
+              source_id: 'pitch-mock-source-123'
           };
       }),
     }

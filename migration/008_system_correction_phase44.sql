@@ -22,7 +22,8 @@ ADD COLUMN IF NOT EXISTS contact_email TEXT,
 ADD COLUMN IF NOT EXISTS contact_phone TEXT,
 ADD COLUMN IF NOT EXISTS linked_project_id UUID REFERENCES archon_projects(id),
 ADD COLUMN IF NOT EXISTS last_contacted_at TIMESTAMPTZ,
-ADD COLUMN IF NOT EXISTS next_followup_date TIMESTAMPTZ;
+ADD COLUMN IF NOT EXISTS next_followup_date TIMESTAMPTZ,
+ADD COLUMN IF NOT EXISTS company_website TEXT; -- ADDED: Official Company Website
 
 -- Ensure no duplicate leads from same URL
 CREATE UNIQUE INDEX IF NOT EXISTS idx_leads_source_url ON leads(source_job_url);

@@ -16,6 +16,7 @@ class JobData(BaseModel):
     description_full: str | None = None # ADDED: Full Job Description
     skills: list[str] | None = None
     source: str = "104"
+    company_website: str | None = None # ADDED: Official Company Website
     identified_need: str | None = None  # ADDED: AI/Logic inferred need
 
 class JobBoardService:
