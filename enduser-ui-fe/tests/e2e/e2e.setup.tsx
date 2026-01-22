@@ -101,6 +101,7 @@ vi.mock('../../src/services/api', () => {
       getEmployees: vi.fn().mockResolvedValue([mockInternalUser]),
       adminCreateUser: vi.fn().mockImplementation(async (data) => ({ ...data, id: 'alice-id' })),
       updateEmployee: vi.fn().mockImplementation(async (id, data) => ({ id, ...data })),
+      getAiUsage: vi.fn().mockResolvedValue({ total_budget: 1000, total_used: 0, usage_percentage: 0, usage_by_user: [] }),
       searchJobs: vi.fn().mockImplementation(async (keyword) => {
         console.log('🔍 [Mock API] searchJobs called with keyword:', keyword);
         if (keyword === 'Error Test') {

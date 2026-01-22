@@ -518,6 +518,12 @@ const supabaseApi = {
     return response.json();
   },
 
+  async getAiUsage(): Promise<{ total_budget: number; total_used: number; usage_percentage: number }> {
+    const response = await fetch('/api/stats/ai-usage', { headers: await this._getHeaders() });
+    if (!response.ok) throw new Error('Failed to fetch AI usage');
+    return response.json();
+  },
+
   async getMemberPerformance(): Promise<MemberPerformance[]> {
     const response = await fetch('/api/stats/member-performance', { headers: await this._getHeaders() });
     if (!response.ok) throw new Error('Failed to fetch performance stats');

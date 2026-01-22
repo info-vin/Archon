@@ -12,18 +12,23 @@ const TeamManagementPage: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [editingMember, setEditingMember] = useState<Employee | null>(null);
+    const [aiUsage, setAiUsage] = useState<any>(null);
 
     useEffect(() => {
-        fetchTeam();
+        fetchData();
     }, []);
 
-    const fetchTeam = async () => {
+    const fetchData = async () => {
         setLoading(true);
         try {
-            const data = await api.getEmployees();
-            setTeam(data);
+            const [teamData, usageData] = await Promise.all([
+                api.getEmployees(),
+                api.getAiUsage()
+            ]);
+            setTeam(teamData);
+            setAiUsage(usageData);
         } catch (err: any) {
-            setError(err.message || "Failed to fetch team data.");
+            setError(err.message || "Failed to fetch data.");
         } finally {
             setLoading(false);
         }
@@ -37,15 +42,17 @@ const TeamManagementPage: React.FC = () => {
                         <h1 className="text-3xl font-bold text-gray-800">Team Management</h1>
                         <p className="text-gray-500 mt-2">Manage your team members and oversee AI resource allocation.</p>
                     </div>
-                    <div className="bg-white px-4 py-2 rounded-lg border border-gray-100 shadow-sm flex items-center gap-4">
-                        <div className="text-right">
-                            <p className="text-xs text-gray-400 uppercase font-bold tracking-wider">Team AI Budget</p>
-                            <p className="text-xl font-mono font-bold text-indigo-600">842 / 1,000</p>
+                    {aiUsage && (
+                        <div className="bg-white px-4 py-2 rounded-lg border border-gray-100 shadow-sm flex items-center gap-4">
+                            <div className="text-right">
+                                <p className="text-xs text-gray-400 uppercase font-bold tracking-wider">Team AI Budget</p>
+                                <p className="text-xl font-mono font-bold text-indigo-600">{aiUsage.total_used.toLocaleString()} / {aiUsage.total_budget.toLocaleString()}</p>
+                            </div>
+                            <div className={`w-12 h-12 rounded-full border-4 flex items-center justify-center text-xs font-bold ${aiUsage.usage_percentage > 80 ? 'border-red-100 border-t-red-600 text-red-600' : 'border-indigo-100 border-t-indigo-600 text-indigo-600'}`}>
+                                {aiUsage.usage_percentage}%
+                            </div>
                         </div>
-                        <div className="w-12 h-12 rounded-full border-4 border-indigo-100 border-t-indigo-600 flex items-center justify-center text-xs font-bold">
-                            84%
-                        </div>
-                    </div>
+                    )}
                 </header>
 
                 {error && (
@@ -155,7 +162,7 @@ const TeamManagementPage: React.FC = () => {
                     <ManageMemberModal 
                         member={editingMember} 
                         onClose={() => setEditingMember(null)} 
-                        onSuccess={() => { setEditingMember(null); fetchTeam(); }}
+                        onSuccess={() => { setEditingMember(null); fetchData(); }}
                     />
                 )}
             </div>

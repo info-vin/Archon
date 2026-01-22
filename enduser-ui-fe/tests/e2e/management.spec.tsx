@@ -29,6 +29,14 @@ const server = setupServer(
     http.get('*/api/agents/assignable', () => {
         return HttpResponse.json(MOCK_AGENTS);
     }),
+    http.get('*/api/stats/ai-usage', () => {
+        return HttpResponse.json({
+            total_budget: 1000,
+            total_used: 500,
+            usage_percentage: 50,
+            usage_by_user: []
+        });
+    }),
     http.post('*/api/tasks/refine-description', async ({ request }) => {
         const body = await request.json() as any;
         return HttpResponse.json({
@@ -53,6 +61,12 @@ test('Manager (Charlie) can access Team Management Panel', async () => {
     // Mock Charlie
     vi.mocked(api.getCurrentUser).mockResolvedValue(MOCK_EMPLOYEES[2] as any);
     vi.mocked(api.getEmployees).mockResolvedValue(MOCK_EMPLOYEES as any);
+    vi.mocked(api.getAiUsage).mockResolvedValue({
+        total_budget: 1000,
+        total_used: 500,
+        usage_percentage: 50,
+        usage_by_user: []
+    });
 
     renderApp(['/team']);
 
