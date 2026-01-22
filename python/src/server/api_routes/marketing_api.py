@@ -32,6 +32,11 @@ class LogoResponse(BaseModel):
     svg_content: str
     style: str
 
+class PromoteLeadRequest(BaseModel):
+    vendor_name: str
+    contact_email: str | None = None
+    notes: str | None = None
+
 @router.get("/jobs", response_model=list[JobData])
 async def search_jobs(keyword: str = Query(..., min_length=1), limit: int = 10):
     """
@@ -49,6 +54,50 @@ async def search_jobs(keyword: str = Query(..., min_length=1), limit: int = 10):
     except Exception as e:
         logfire.error(f"API: Job search failed | error={str(e)}")
         raise HTTPException(status_code=500, detail={"error": str(e)}) from e
+
+@router.get("/leads")
+async def get_leads():
+    """
+    Fetch all saved leads from the database.
+    """
+    try:
+        supabase = get_supabase_client()
+        response = supabase.table("leads").select("*").order("created_at", desc=True).execute()
+        return response.data
+    except Exception as e:
+        logfire.error(f"API: Failed to fetch leads | error={str(e)}")
+        raise HTTPException(status_code=500, detail=str(e)) from e
+
+@router.post("/leads/{lead_id}/promote")
+async def promote_lead_to_vendor(lead_id: str, request: PromoteLeadRequest):
+    """
+    Promote a Lead to a Vendor.
+    """
+    try:
+        supabase = get_supabase_client()
+
+        # 1. Create Vendor
+        vendor_data = {
+            "name": request.vendor_name,
+            "contact_email": request.contact_email,
+            "description": request.notes or "Promoted from 104 Lead",
+            "status": "active"
+        }
+        vendor_res = supabase.table("vendors").insert(vendor_data).execute()
+
+        if not vendor_res.data:
+            raise Exception("Failed to create vendor record")
+
+        # 2. Update Lead Status
+        supabase.table("leads").update({
+            "status": "converted",
+            "contact_email": request.contact_email
+        }).eq("id", lead_id).execute()
+
+        return {"success": True, "vendor": vendor_res.data[0]}
+    except Exception as e:
+        logfire.error(f"API: Lead promotion failed | id={lead_id} | error={str(e)}")
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 @router.post("/generate-pitch", response_model=PitchResponse)
 async def generate_pitch(request: PitchRequest):

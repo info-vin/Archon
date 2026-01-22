@@ -369,6 +369,21 @@ const supabaseApi = {
     if (!response.ok) throw new Error('Failed to fetch market stats');
     return response.json();
   },
+
+  async getLeads(): Promise<any[]> {
+    const response = await fetch('/api/marketing/leads', { headers: await this._getHeaders() });
+    if (!response.ok) throw new Error('Failed to fetch leads');
+    return response.json();
+  },
+
+  async promoteLead(leadId: string, data: { vendor_name: string; contact_email?: string; notes?: string }): Promise<void> {
+    const response = await fetch(`/api/marketing/leads/${leadId}/promote`, {
+        method: 'POST',
+        headers: await this._getHeaders(),
+        body: JSON.stringify(data)
+    });
+    if (!response.ok) throw new Error('Failed to promote lead');
+  },
   async getBlogPost(id: string): Promise<BlogPost> {
     const response = await fetch(`/api/blogs/${id}`, { headers: await this._getHeaders() });
     if (!response.ok) {
