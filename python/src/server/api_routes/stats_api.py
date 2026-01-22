@@ -105,21 +105,21 @@ async def get_ai_usage():
     try:
         logfire.info("Fetching AI usage stats")
         supabase = get_supabase_client()
-        
+
         # 1. Fetch logs
         # Note: In production, use count() or a dedicated stats table
         response = supabase.table("gemini_logs").select("user_name").execute()
-        
+
         logs = response.data
         total_calls = len(logs)
         estimated_used = total_calls * 500
-        
+
         # 2. Breakdown by User
         user_counts = {}
         for log in logs:
             user = log.get("user_name") or "Unknown"
             user_counts[user] = user_counts.get(user, 0) + 1
-            
+
         breakdown = [
             {"name": user, "calls": count, "tokens": count * 500}
             for user, count in user_counts.items()

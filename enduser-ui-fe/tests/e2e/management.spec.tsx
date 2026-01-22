@@ -29,6 +29,9 @@ const server = setupServer(
     http.get('*/api/agents/assignable', () => {
         return HttpResponse.json(MOCK_AGENTS);
     }),
+    http.get('*/api/marketing/approvals', () => {
+        return HttpResponse.json({ blogs: [], leads: [] });
+    }),
     http.get('*/api/stats/ai-usage', () => {
         return HttpResponse.json({
             total_budget: 1000,
@@ -67,6 +70,7 @@ test('Manager (Charlie) can access Team Management Panel', async () => {
         usage_percentage: 50,
         usage_by_user: []
     });
+    vi.mocked(api.getPendingApprovals).mockResolvedValue({ blogs: [], leads: [] });
 
     renderApp(['/team']);
 

@@ -201,3 +201,43 @@ async def update_blog_status(post_id: str, status: str):
     except Exception as e:
         logfire.error(f"API: Blog status update failed | post_id={post_id} | error={str(e)}")
         raise HTTPException(status_code=500, detail=str(e)) from e
+
+@router.get("/approvals")
+async def get_pending_approvals():
+    """
+    Get all items requiring approval (currently Blog Posts in 'review').
+    """
+    try:
+        supabase = get_supabase_client()
+        response = supabase.table("blog_posts").select("*").eq("status", "review").execute()
+
+        # In the future, we can merge with Leads requiring approval
+        return {
+            "blogs": response.data,
+            "leads": []
+        }
+    except Exception as e:
+        logfire.error(f"API: Failed to fetch approvals | error={str(e)}")
+        raise HTTPException(status_code=500, detail=str(e)) from e
+
+@router.post("/approvals/{item_type}/{item_id}/{action}")
+async def process_approval(item_type: str, item_id: str, action: str):
+    """
+    Process approval action (approve/reject).
+    """
+    if action not in ["approve", "reject"]:
+        raise HTTPException(status_code=400, detail="Invalid action")
+
+    try:
+        supabase = get_supabase_client()
+
+        if item_type == "blog":
+            new_status = "published" if action == "approve" else "draft"
+            supabase.table("blog_posts").update({"status": new_status}).eq("id", item_id).execute()
+            return {"success": True, "status": new_status}
+
+        raise HTTPException(status_code=400, detail="Unknown item type")
+
+    except Exception as e:
+        logfire.error(f"API: Approval process failed | type={item_type} | id={item_id} | error={str(e)}")
+        raise HTTPException(status_code=500, detail=str(e)) from e

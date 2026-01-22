@@ -396,6 +396,20 @@ const supabaseApi = {
         throw new Error(error.detail || 'Failed to reset password');
     }
   },
+
+  async getPendingApprovals(): Promise<{ blogs: BlogPost[]; leads: any[] }> {
+    const response = await fetch('/api/marketing/approvals', { headers: await this._getHeaders() });
+    if (!response.ok) throw new Error('Failed to fetch approvals');
+    return response.json();
+  },
+
+  async processApproval(type: 'blog' | 'lead', id: string, action: 'approve' | 'reject'): Promise<void> {
+    const response = await fetch(`/api/marketing/approvals/${type}/${id}/${action}`, {
+        method: 'POST',
+        headers: await this._getHeaders()
+    });
+    if (!response.ok) throw new Error('Approval action failed');
+  },
 };
   async getBlogPost(id: string): Promise<BlogPost> {
     const response = await fetch(`/api/blogs/${id}`, { headers: await this._getHeaders() });
