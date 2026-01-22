@@ -384,6 +384,19 @@ const supabaseApi = {
     });
     if (!response.ok) throw new Error('Failed to promote lead');
   },
+
+  async resetPassword(userId: string, newPassword: string): Promise<void> {
+    const response = await fetch(`/api/users/${userId}/reset-password`, {
+        method: 'POST',
+        headers: await this._getHeaders(),
+        body: JSON.stringify({ new_password: newPassword })
+    });
+    if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.detail || 'Failed to reset password');
+    }
+  },
+};
   async getBlogPost(id: string): Promise<BlogPost> {
     const response = await fetch(`/api/blogs/${id}`, { headers: await this._getHeaders() });
     if (!response.ok) {
