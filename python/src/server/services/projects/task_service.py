@@ -96,25 +96,28 @@ class TaskService:
 
             # REORDERING LOGIC: If inserting at a specific position, increment existing tasks
             if task_order > 0:
-                # Get all tasks in the same project and status with task_order >= new task's order
-                existing_tasks_response = (
-                    self.supabase_client.table("archon_tasks")
-                    .select("id, task_order")
-                    .eq("project_id", project_id)
-                    .eq("status", task_status)
-                    .gte("task_order", task_order)
-                    .execute()
-                )
+                try:
+                    # Get all tasks in the same project and status with task_order >= new task's order
+                    existing_tasks_response = (
+                        self.supabase_client.table("archon_tasks")
+                        .select("id, task_order")
+                        .eq("project_id", project_id)
+                        .eq("status", task_status)
+                        .gte("task_order", task_order)
+                        .execute()
+                    )
 
-                if existing_tasks_response.data:
-                    logger.info(f"Reordering {len(existing_tasks_response.data)} existing tasks")
+                    if existing_tasks_response.data:
+                        logger.info(f"Reordering {len(existing_tasks_response.data)} existing tasks")
 
-                    # Increment task_order for all affected tasks
-                    for existing_task in existing_tasks_response.data:
-                        self.supabase_client.table("archon_tasks").update({
-                            "task_order": existing_task["task_order"] + 1,
-                            "updated_at": datetime.now().isoformat(),
-                        }).eq("id", existing_task["id"]).execute()
+                        # Increment task_order for all affected tasks
+                        for existing_task in existing_tasks_response.data:
+                            self.supabase_client.table("archon_tasks").update({
+                                "task_order": existing_task["task_order"] + 1,
+                                "updated_at": datetime.now().isoformat(),
+                            }).eq("id", existing_task["id"]).execute()
+                except Exception as e:
+                    logger.warning(f"Reordering tasks failed: {e}. Proceeding with task creation.")
 
             # Process knowledge_source_ids if provided
             final_sources = sources or []
@@ -606,10 +609,13 @@ class TaskService:
 
             # 3. Generate Content
             content, _ = await llm_provider_service.generate_content(prompt)
+            if not content:
+                raise ValueError("LLM provider returned empty content")
             return content
         except Exception as e:
-            logger.error(f"POBot refinement failed: {e}")
-            return f"{description}\n\n[POBot Note: Refinement failed ({str(e)}), using original description.]"
+            logger.error(f"POBot refinement failed: {e}", exc_info=True)
+            # Return a clearer error message that the user can see in the text area
+            return f"{description}\n\n[System Error: AI Refinement failed. Reason: {str(e)}]"
 
     async def get_all_project_task_counts(self) -> tuple[bool, dict[str, dict[str, int]]]:
         """

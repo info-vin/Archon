@@ -1,5 +1,5 @@
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Header, HTTPException, Query
 from pydantic import BaseModel
 
 from ..config.logfire_config import get_logger, logfire
@@ -70,35 +70,53 @@ async def get_leads():
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 @router.post("/leads/{lead_id}/promote")
-async def promote_lead_to_vendor(lead_id: str, request: PromoteLeadRequest):
+async def promote_lead_to_vendor(
+    lead_id: str,
+    request: PromoteLeadRequest,
+    x_user_role: str | None = Header(None, alias="X-User-Role")
+):
     """
     Promote a Lead to a Vendor.
     """
+    # Basic Role Check (Alice/User should be allowed, but maybe Viewer shouldn't)
+    if x_user_role and x_user_role.lower() == "viewer":
+        raise HTTPException(status_code=403, detail="Viewers cannot promote leads.")
+
     try:
         supabase = get_supabase_client()
 
         # 1. Create Vendor
+        # Ensure contact_email is not None if DB requires it, or rely on DB default.
+        # Assuming DB allows NULL.
         vendor_data = {
             "name": request.vendor_name,
             "contact_email": request.contact_email,
             "description": request.notes or "Promoted from 104 Lead",
-            "status": "active"
+            "status": "active",
+            "created_at": "now()", # Ensure timestamp is set
+            "updated_at": "now()"
         }
+
+        # Log the attempt
+        logfire.info(f"API: Promoting lead to vendor | lead_id={lead_id} | vendor={request.vendor_name} | user_role={x_user_role}")
+
         vendor_res = supabase.table("vendors").insert(vendor_data).execute()
 
         if not vendor_res.data:
-            raise Exception("Failed to create vendor record")
+            raise Exception("Failed to create vendor record - Database returned no data")
 
         # 2. Update Lead Status
-        supabase.table("leads").update({
-            "status": "converted",
-            "contact_email": request.contact_email
-        }).eq("id", lead_id).execute()
+        update_payload = {"status": "converted"}
+        if request.contact_email:
+             update_payload["contact_email"] = request.contact_email
+
+        supabase.table("leads").update(update_payload).eq("id", lead_id).execute()
 
         return {"success": True, "vendor": vendor_res.data[0]}
     except Exception as e:
-        logfire.error(f"API: Lead promotion failed | id={lead_id} | error={str(e)}")
-        raise HTTPException(status_code=500, detail=str(e)) from e
+        logfire.error(f"API: Lead promotion failed | id={lead_id} | error={str(e)}", exc_info=True)
+        # Return clearer error detail
+        raise HTTPException(status_code=500, detail=f"Promotion failed: {str(e)}") from e
 
 @router.post("/generate-pitch", response_model=PitchResponse)
 async def generate_pitch(request: PitchRequest):
@@ -157,11 +175,11 @@ async def generate_logo(request: LogoRequest):
     """
     try:
         logfire.info(f"API: Generating logo | style={request.style}")
-        
+
         # TODO(Phase 5): Implement proper Agent/MCP communication here.
         # Direct import of mcp_server is not allowed in this microservice architecture.
         # For now, we return a mock SVG based on the style to unblock the UI.
-        
+
         mock_svg = f"""
         <svg width="200" height="200" xmlns="http://www.w3.org/2000/svg">
             <rect width="100%" height="100%" fill="{request.primary_color or '#f0f0f0'}" />
@@ -171,7 +189,7 @@ async def generate_logo(request: LogoRequest):
             </text>
         </svg>
         """
-        
+
         return LogoResponse(svg_content=mock_svg.strip(), style=request.style)
 
     except Exception as e:

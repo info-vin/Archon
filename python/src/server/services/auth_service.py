@@ -88,8 +88,8 @@ class AuthService:
             # Check for GoTrue/Supabase specific error messages
             # "AuthApiError" might be the class name, but we check message content primarily
             is_duplicate = (
-                "already registered" in err_str or 
-                "already exists" in err_str or 
+                "already registered" in err_str or
+                "already exists" in err_str or
                 "422" in err_str
             )
 
