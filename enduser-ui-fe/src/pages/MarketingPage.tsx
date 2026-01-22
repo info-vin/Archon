@@ -3,6 +3,7 @@ import { api } from '../services/api';
 import { JobData } from '../types';
 import { useAuth } from '../hooks/useAuth';
 import { PermissionGuard } from '../features/auth/components/PermissionGuard';
+import { SourceBadge } from '../components/SourceBadge';
 
 const MarketingPage: React.FC = () => {
   const { user } = useAuth();
@@ -15,6 +16,8 @@ const MarketingPage: React.FC = () => {
   
   // State for generated pitch modal/display
   const [generatedPitch, setGeneratedPitch] = useState<{ forCompany: string; content: string } | null>(null);
+
+  const hasMockData = jobs.some(job => job.source === 'mock');
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -100,6 +103,21 @@ const MarketingPage: React.FC = () => {
                 {error}
                 </div>
             )}
+            
+            {hasMockData && (
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 flex items-start gap-3">
+                    <svg className="h-5 w-5 text-amber-500 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                    <div>
+                        <h4 className="text-sm font-semibold text-amber-800">Connection Limited</h4>
+                        <p className="text-xs text-amber-700 mt-1">
+                            Direct connection to 104 is currently restricted. Displaying simulated data for demonstration. 
+                            The system will automatically retry live fetching later.
+                        </p>
+                    </div>
+                </div>
+            )}
 
             {jobs.length > 0 && (
                 <>
@@ -115,9 +133,7 @@ const MarketingPage: React.FC = () => {
                                 <h3 className="text-lg font-bold text-gray-900">{job.company}</h3>
                                 <p className="text-sm text-gray-600">Hiring: {job.title}</p>
                             </div>
-                            <span className={`px-2 py-1 rounded text-xs font-medium ${job.source === 'mock' ? 'bg-gray-100 text-gray-600' : 'bg-green-100 text-green-700'}`}>
-                                {job.source === 'mock' ? 'MOCK SOURCE' : '104 DATA'}
-                            </span>
+                            <SourceBadge source={job.source} />
                         </div>
                         
                         {/* Insight Section */}

@@ -1,3 +1,6 @@
+import asyncio
+import random
+import re
 import httpx
 from pydantic import BaseModel
 
@@ -18,6 +21,7 @@ class JobData(BaseModel):
     source: str = "104"
     company_website: str | None = None # ADDED: Official Company Website
     identified_need: str | None = None  # ADDED: AI/Logic inferred need
+    real_id: str | None = None # Internal Use: For AJAX fetching
 
 class JobBoardService:
     """
@@ -25,12 +29,15 @@ class JobBoardService:
     Uses direct AJAX simulation for performance, with a Mock fallback for reliability.
     """
 
-    BASE_URL = "https://www.104.com.tw/jobs/search/list"
+    # UPDATED: Valid Endpoint as of Jan 2026
+    BASE_URL = "https://www.104.com.tw/jobs/search/api/jobs"
+    DETAIL_BASE_URL = "https://www.104.com.tw/job/ajax/content/"
+    
     HEADERS = {
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
         "Referer": "https://www.104.com.tw/jobs/search/",
         "Accept": "application/json, text/plain, */*",
-        "Accept-Language": "en-US,en;q=0.9,zh-TW;q=0.8,zh;q=0.7"
+        "X-Requested-With": "XMLHttpRequest"
     }
 
     # Static Mock Data for Fallback
@@ -69,40 +76,50 @@ class JobBoardService:
         """
         logfire.info(f"Searching jobs | keyword={keyword} | limit={limit}")
 
-        try:
-            jobs = await cls._fetch_from_104(keyword, limit)
-            if not jobs:
-                logfire.warning("104 API returned empty list, falling back to mock")
-                jobs = cls.MOCK_JOBS
+        # Use a single session for the entire lifecycle to maintain cookies (Anti-Scraping)
+        async with httpx.AsyncClient(timeout=20.0, headers=cls.HEADERS, follow_redirects=True) as client:
+            try:
+                # 1. Fetch List
+                jobs = await cls._fetch_from_104(client, keyword, limit)
+                
+                if not jobs:
+                    logfire.warning("104 API returned empty list, falling back to mock")
+                    jobs = cls.MOCK_JOBS
+                else:
+                    # 2. Fetch Details (Only if we have real jobs)
+                    for i, job in enumerate(jobs):
+                        # Infer need first
+                        job.identified_need = cls._infer_need(job)
 
-            # Analyze needs for each job & Fetch Details
-            for job in jobs:
-                # Infer need
-                job.identified_need = cls._infer_need(job)
+                        if job.real_id:
+                            # Throttling: Random delay to mimic human behavior
+                            if i > 0:
+                                delay = random.uniform(1.5, 3.0)
+                                await asyncio.sleep(delay)
 
-                # Fetch full details if URL is present and it's not a mock
-                if job.url and "104.com.tw" in job.url:
-                    try:
-                        detail = await cls._fetch_job_detail(job.url)
-                        if detail:
-                            job.description_full = detail
+                            try:
+                                detail = await cls._fetch_job_detail(client, job.real_id, job.url)
+                                if detail:
+                                    job.description_full = detail
+                                    logfire.info(f"Fetched detail | id={job.real_id} | len={len(detail)}")
+                                else:
+                                    job.description_full = f"[Snippet Only] {job.description}"
+                            except Exception as e:
+                                logfire.warning(f"Failed to fetch job detail | url={job.url} | error={e}")
+                                job.description_full = f"[Snippet Only] {job.description}"
                         else:
-                            # Fallback: Use snippet if detail fetch fails
                             job.description_full = f"[Snippet Only] {job.description}"
-                    except Exception as e:
-                        logfire.warning(f"Failed to fetch job detail | url={job.url} | error={e}")
-                        job.description_full = f"[Snippet Only] {job.description}"
 
-            logfire.info(f"Job search completed | count={len(jobs)}")
-            return jobs
+                logfire.info(f"Job search completed | count={len(jobs)}")
+                return jobs
 
-        except Exception as e:
-            logfire.error(f"Job search failed | error={str(e)} | switching_to_fallback=True")
-            # Ensure mock jobs also have inferred needs
-            for job in cls.MOCK_JOBS:
-                if not job.identified_need:
-                    job.identified_need = cls._infer_need(job)
-            return cls.MOCK_JOBS
+            except Exception as e:
+                logfire.error(f"Job search failed | error={str(e)} | switching_to_fallback=True")
+                # Ensure mock jobs also have inferred needs
+                for job in cls.MOCK_JOBS:
+                    if not job.identified_need:
+                        job.identified_need = cls._infer_need(job)
+                return cls.MOCK_JOBS
 
     @classmethod
     async def identify_leads_and_save(cls, jobs: list[JobData]) -> int:
@@ -160,7 +177,11 @@ class JobBoardService:
             return f"Hiring for {job.title} -> General digital transformation lead."
 
     @classmethod
-    async def _fetch_from_104(cls, keyword: str, limit: int) -> list[JobData]:
+    async def _fetch_from_104(cls, client: httpx.AsyncClient, keyword: str, limit: int) -> list[JobData]:
+        """
+        Internal method to fetch job list. 
+        Now uses the passed client to share session cookies.
+        """
         params = {
             "ro": "0",
             "kwop": "7",
@@ -171,131 +192,112 @@ class JobBoardService:
             "page": "1",
             "mode": "s",
             "jobsource": "2018indexpoc",
-            "langFlag": "0",
-            "langStatus": "0",
-            "recommendJob": "1",
-            "hotJob": "1",
         }
 
-        async with httpx.AsyncClient(timeout=10.0) as client:
-            response = await client.get(cls.BASE_URL, headers=cls.HEADERS, params=params)
+        # Visit search home first to set cookies (Important!)
+        await client.get("https://www.104.com.tw/jobs/search/", params={"keyword": keyword})
 
-            if response.status_code != 200:
-                raise Exception(f"API Error: {response.status_code}")
+        response = await client.get(cls.BASE_URL, params=params)
 
-            data = response.json()
+        if response.status_code != 200:
+            raise Exception(f"API Error: {response.status_code}")
 
-            # Validation
-            if "data" not in data or "list" not in data["data"]:
-                raise Exception("Invalid API Response Structure")
+        data = response.json()
 
-            raw_jobs = data["data"]["list"]
-            parsed_jobs = []
+        # Validation
+        if "data" not in data:
+            raise Exception("Invalid API Response Structure")
 
-            for item in raw_jobs[:limit]:
-                # Safe Extraction
-                title = item.get("jobName", "Unknown Title")
-                company = item.get("custName", "Unknown Company")
+        raw_jobs = data.get("data", [])
+        parsed_jobs = []
 
-                # Extract URL securely and get the real Job ID (alphanumeric)
-                # 104 returns link dictionary with 'job' key like "//www.104.com.tw/job/8u3r5?jobsource=..."
-                raw_link = item.get("link", {}).get("job")
-                job_id = None
+        for item in raw_jobs[:limit]:
+            # Safe Extraction
+            title = item.get("jobName", "Unknown Title")
+            company = item.get("custName", "Unknown Company")
 
-                if raw_link:
-                    url = f"https:{raw_link}" if raw_link.startswith("//") else raw_link
-                    # Extract ID: /job/8u3r5? -> 8u3r5
-                    try:
-                        if "/job/" in url:
-                            job_id = url.split("/job/")[1].split("?")[0]
-                    except Exception:
-                        pass
-                else:
-                    # Fallback construction (usually won't work for AJAX but keeps URL valid)
-                    job_no = item.get("jobNo")
-                    url = f"https://www.104.com.tw/job/{job_no}" if job_no else None
+            # Extract URL securely and get the real Job ID (alphanumeric)
+            # 104 returns link dictionary with 'job' key like "//www.104.com.tw/job/8u3r5?jobsource=..."
+            raw_link = item.get("link", {}).get("job", "")
+            
+            real_id = None
+            url = None
 
-                # Description often comes as 'jobDesc' or needs to be fetched separately.
-                # In the list view, 'jobDesc' is a snippet.
-                desc = item.get("jobDesc", "")  # Often truncated in list view
+            if raw_link:
+                url = f"https:{raw_link}" if raw_link.startswith("//") else raw_link
+                # Extract ID: /job/8u3r5? -> 8u3r5
+                try:
+                    if "/job/" in url:
+                        # Extract the segment after /job/ and before any ?
+                        real_id = url.split("?")[0].split("/job/")[1]
+                except Exception:
+                    pass
+            else:
+                # Fallback construction (usually won't work for AJAX but keeps URL valid)
+                job_no = item.get("jobNo")
+                url = f"https://www.104.com.tw/job/{job_no}" if job_no else None
 
-                # Location
-                location = item.get("jobAddrNoDesc") or item.get("jobAddress")
+            # Description snippet
+            desc = item.get("jobDesc", "") 
 
-                # Salary
-                salary = item.get("salaryDesc")
+            # Location & Salary
+            location = item.get("jobAddrNoDesc") or item.get("jobAddress")
+            salary = item.get("salaryDesc")
 
-                # Tags/Skills (Parsing from tags or desc)
-                skills = []
-                tags = item.get("tags", [])
-                if tags:
-                    skills = [t.get("desc") for t in tags if "desc" in t]
+            # Tags/Skills
+            skills = []
+            tags = item.get("tags", [])
+            if tags:
+                skills = [t.get("desc") for t in tags if "desc" in t]
 
-                # Store the real job_id in the URL for _fetch_job_detail to use
-                # We append it as a custom query param if we extracted it, to ensure it's passed correctly
-                if job_id and url:
-                    if "?" in url:
-                        url += f"&real_id={job_id}"
-                    else:
-                        url += f"?real_id={job_id}"
+            parsed_jobs.append(JobData(
+                title=title,
+                company=company,
+                location=location,
+                salary=salary,
+                url=url,
+                description=desc,
+                skills=skills,
+                source="104",
+                real_id=real_id # Stored for next step
+            ))
 
-                parsed_jobs.append(JobData(
-                    title=title,
-                    company=company,
-                    location=location,
-                    salary=salary,
-                    url=url,
-                    description=desc,
-                    skills=skills,
-                    source="104"
-                ))
-
-            return parsed_jobs
+        return parsed_jobs
 
     @classmethod
-    async def _fetch_job_detail(cls, url: str) -> str | None:
+    async def _fetch_job_detail(cls, client: httpx.AsyncClient, job_id: str, job_url: str | None) -> str | None:
         """
-        Fetches the full job description from the 104 AJAX API.
-        This provides the real, complete content needed for RAG.
+        Fetches the full job description using the shared client.
+        Requires valid job_id (alphanumeric) and job_url (for Referer).
         """
         try:
-            # Extract the real alphanumeric ID from the URL we constructed
-            # It might be in the path or the 'real_id' param
-            job_id = None
-            if "real_id=" in url:
-                job_id = url.split("real_id=")[1].split("&")[0]
-            elif "/job/" in url:
-                job_id = url.split("/job/")[1].split("?")[0]
-
             if not job_id:
-                logfire.warning(f"Could not extract job ID from URL: {url}")
                 return None
 
-            # Construct the internal AJAX endpoint
-            ajax_url = f"https://www.104.com.tw/job/ajax/content/{job_id}"
+            ajax_url = f"{cls.DETAIL_BASE_URL}{job_id}"
 
             # Headers must have Referer matching the job page
             headers = cls.HEADERS.copy()
-            headers["Referer"] = f"https://www.104.com.tw/job/{job_id}"
+            if job_url:
+                headers["Referer"] = job_url
 
-            async with httpx.AsyncClient(timeout=5.0) as client:
-                response = await client.get(ajax_url, headers=headers)
+            response = await client.get(ajax_url, headers=headers)
 
-                if response.status_code != 200:
-                    logfire.warning(f"Job AJAX fetch failed | status={response.status_code} | url={ajax_url}")
-                    return None
-
-                data = response.json()
-
-                # Extract description from JSON structure
-                # Path: data -> jobDetail -> jobDescription
-                job_desc = data.get("data", {}).get("jobDetail", {}).get("jobDescription")
-
-                if job_desc:
-                    return job_desc
-
+            if response.status_code != 200:
+                logfire.warning(f"Job AJAX fetch failed | status={response.status_code} | url={ajax_url}")
                 return None
 
+            data = response.json()
+
+            # Extract description from JSON structure
+            # Path: data -> jobDetail -> jobDescription
+            job_desc = data.get("data", {}).get("jobDetail", {}).get("jobDescription")
+
+            if job_desc:
+                return job_desc
+
+            return None
+
         except Exception as e:
-            logfire.warning(f"Error fetching job detail via AJAX | url={url} | error={e}")
+            logfire.warning(f"Error fetching job detail via AJAX | id={job_id} | error={e}")
             return None
