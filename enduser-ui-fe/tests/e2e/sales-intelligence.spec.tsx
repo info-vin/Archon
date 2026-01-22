@@ -30,9 +30,9 @@ describe('MarketingPage Sales Intelligence Flow', () => {
         // Check for Insight display
         expect(screen.getByText(/Needs better data pipeline/i)).toBeInTheDocument();
         
-        // Check for Source tag (e.g., "104 DATA")
+        // Check for Source tag (e.g., "104 Live Data")
         // There might be multiple results, so we check if at least one exists
-        const sourceTags = screen.getAllByText(/104 DATA/i);
+        const sourceTags = screen.getAllByText(/104 Live Data/i);
         expect(sourceTags.length).toBeGreaterThan(0);
         expect(sourceTags[0]).toBeInTheDocument();
 

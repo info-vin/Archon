@@ -1,14 +1,13 @@
-import asyncio
-import httpx
-import random
-import time
-import re
-import json
 import argparse
+import asyncio
+import random
 import sys
-from pathlib import Path
+import time
 from datetime import datetime
-from pydantic import BaseModel, Field
+from pathlib import Path
+
+import httpx
+from pydantic import BaseModel
 
 # --- 配置區 ---
 USER_AGENTS = [
@@ -73,26 +72,27 @@ class CrawlerTestRunner:
 
     async def run(self):
         print(f"🚀 [CrawlerTest] Starting... Keyword='{self.keyword}', Limit={self.limit}")
-        
+
         # 使用 Session 保持 Cookies
         headers = self.base_headers.copy()
         headers["User-Agent"] = self._get_random_ua()
         headers["Referer"] = "https://www.104.com.tw/jobs/search/"
 
         async with httpx.AsyncClient(timeout=20.0, headers=headers, follow_redirects=True) as client:
-            
+
             # --- Phase 1: Search List ---
             search_url = "https://www.104.com.tw/jobs/search/api/jobs"
             params = {
-                "ro": "0", "kwop": "7", "keyword": self.keyword, 
+                "ro": "0", "kwop": "7", "keyword": self.keyword,
                 "expansionType": "area,spec,com,job,wf,wktm",
                 "order": "1", "asc": "0", "page": "1", "mode": "s", "jobsource": "2018indexpoc"
             }
-            
+
             try:
-                if self.verbose: print(f"📡 Fetching list from {search_url}...")
+                if self.verbose:
+                    print(f"📡 Fetching list from {search_url}...")
                 resp = await client.get(search_url, params=params)
-                
+
                 if resp.status_code != 200:
                     print(f"❌ List Fetch Failed (Status: {resp.status_code})")
                     self._save_error_snapshot(resp.text, "list_fail")
@@ -100,13 +100,13 @@ class CrawlerTestRunner:
 
                 data = resp.json().get("data", [])
                 self.report.total_found = len(data)
-                
+
                 if not data:
                     print("⚠️ No jobs found.")
                     return True # Empty but successful technically
 
                 print(f"✅ List fetched. Total: {len(data)}. Processing top {self.limit}...")
-                
+
                 # --- Phase 2: Process Details ---
                 target_jobs = data[:self.limit]
                 self.report.processed = len(target_jobs)
@@ -116,16 +116,16 @@ class CrawlerTestRunner:
                         title=item.get("jobName", "Unknown"),
                         company=item.get("custName", "Unknown")
                     )
-                    
+
                     # ID Extraction Logic
                     raw_link = item.get("link", {}).get("job", "")
                     real_id = None
                     if "/job/" in raw_link:
                         try:
                             real_id = raw_link.split("?")[0].split("/job/")[1]
-                        except:
+                        except Exception:
                             pass
-                    
+
                     job_entry.real_id = real_id
                     job_entry.url = f"https://www.104.com.tw/job/{real_id}" if real_id else raw_link
 
@@ -138,16 +138,18 @@ class CrawlerTestRunner:
                     # Throttling
                     if i > 0:
                         delay = random.uniform(1.5, 3.0)
-                        if self.verbose: print(f"⏳ Waiting {delay:.2f}s...")
+                        if self.verbose:
+                            print(f"⏳ Waiting {delay:.2f}s...")
                         await asyncio.sleep(delay)
 
                     # Fetch Detail
                     ajax_url = f"https://www.104.com.tw/job/ajax/content/{real_id}"
                     detail_headers = headers.copy()
                     detail_headers["Referer"] = job_entry.url
-                    
-                    if self.verbose: print(f"📡 Fetching details for {real_id}...")
-                    
+
+                    if self.verbose:
+                        print(f"📡 Fetching details for {real_id}...")
+
                     try:
                         d_resp = await client.get(ajax_url, headers=detail_headers)
                         if d_resp.status_code == 200:
@@ -169,7 +171,7 @@ class CrawlerTestRunner:
                         job_entry.status = "Error"
                         job_entry.error_msg = str(e)
                         self.report.fail_count += 1
-                    
+
                     self.report.jobs.append(job_entry)
 
             except Exception as e:
@@ -204,22 +206,22 @@ async def main():
     parser.add_argument("--limit", type=int, default=5, help="Number of jobs to fetch")
     parser.add_argument("--output", default="crawler_report.json", help="Path to save JSON report")
     parser.add_argument("--verbose", action="store_true", help="Enable verbose logging")
-    
+
     args = parser.parse_args()
-    
+
     runner = CrawlerTestRunner(args.keyword, args.limit, args.verbose)
     success = await runner.run()
-    
+
     runner.print_summary()
     runner.save_report(args.output)
-    
+
     # CI Integration: Fail if success rate < 80% (and we processed something)
     if runner.report.processed > 0:
         rate = runner.report.success_count / runner.report.processed
         if rate < 0.8:
             print(f"❌ Success rate ({rate:.1%}) below threshold (80%). Failing CI.")
             sys.exit(1)
-    
+
     if not success:
         sys.exit(1)
 

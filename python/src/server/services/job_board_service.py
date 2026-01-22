@@ -1,6 +1,6 @@
 import asyncio
 import random
-import re
+
 import httpx
 from pydantic import BaseModel
 
@@ -32,7 +32,7 @@ class JobBoardService:
     # UPDATED: Valid Endpoint as of Jan 2026
     BASE_URL = "https://www.104.com.tw/jobs/search/api/jobs"
     DETAIL_BASE_URL = "https://www.104.com.tw/job/ajax/content/"
-    
+
     HEADERS = {
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
         "Referer": "https://www.104.com.tw/jobs/search/",
@@ -81,7 +81,7 @@ class JobBoardService:
             try:
                 # 1. Fetch List
                 jobs = await cls._fetch_from_104(client, keyword, limit)
-                
+
                 if not jobs:
                     logfire.warning("104 API returned empty list, falling back to mock")
                     jobs = cls.MOCK_JOBS
@@ -179,7 +179,7 @@ class JobBoardService:
     @classmethod
     async def _fetch_from_104(cls, client: httpx.AsyncClient, keyword: str, limit: int) -> list[JobData]:
         """
-        Internal method to fetch job list. 
+        Internal method to fetch job list.
         Now uses the passed client to share session cookies.
         """
         params = {
@@ -219,7 +219,7 @@ class JobBoardService:
             # Extract URL securely and get the real Job ID (alphanumeric)
             # 104 returns link dictionary with 'job' key like "//www.104.com.tw/job/8u3r5?jobsource=..."
             raw_link = item.get("link", {}).get("job", "")
-            
+
             real_id = None
             url = None
 
@@ -238,7 +238,7 @@ class JobBoardService:
                 url = f"https://www.104.com.tw/job/{job_no}" if job_no else None
 
             # Description snippet
-            desc = item.get("jobDesc", "") 
+            desc = item.get("jobDesc", "")
 
             # Location & Salary
             location = item.get("jobAddrNoDesc") or item.get("jobAddress")

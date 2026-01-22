@@ -11,6 +11,9 @@ describe('AI as a Teammate E2E Workflows', () => {
   test('Marketing Campaign: User can create a task and assign it to an AI content writer', async () => {
     renderApp();
 
+    // Ensure Dashboard loads first
+    await screen.findByText(/My Tasks/i);
+
     const newTaskButton = await screen.findByRole('button', { name: /new task/i });
     expect(newTaskButton).toBeInTheDocument();
     fireEvent.click(newTaskButton);
@@ -43,6 +46,9 @@ describe('AI as a Teammate E2E Workflows', () => {
     `;
     renderApp();
 
+    // Ensure Dashboard loads first
+    await screen.findByText(/My Tasks/i);
+
     const newTaskButton = await screen.findByRole('button', { name: /new task/i });
     expect(newTaskButton).toBeInTheDocument();
     fireEvent.click(newTaskButton);
@@ -71,8 +77,14 @@ describe('AI as a Teammate E2E Workflows', () => {
   test('Sales Outreach: User can create a task and assign it to a Sales AI', async () => {
     renderApp();
 
+    // Ensure Dashboard loads first
+    await screen.findByText(/My Tasks/i);
+
     const newTaskButton = await screen.findByRole('button', { name: /new task/i });
     fireEvent.click(newTaskButton);
+
+    // Explicitly wait for the modal to appear
+    await screen.findByRole('dialog');
 
     const titleInput = await screen.findByLabelText(/title/i);
     const dueDateInput = screen.getByLabelText(/due date/i);

@@ -96,9 +96,11 @@ export interface BlogPost {
     id: string;
     title: string;
     excerpt: string;
+    content?: string;
     authorName: string;
     publishDate: string; // ISO String
     imageUrl: string;
+    status: 'draft' | 'review' | 'published';
 }
 
 export interface AssignableUser {

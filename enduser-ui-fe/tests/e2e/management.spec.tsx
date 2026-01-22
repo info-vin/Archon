@@ -56,8 +56,10 @@ test('Manager (Charlie) can access Team Management Panel', async () => {
 
     renderApp(['/team']);
 
+    // Ensure Dashboard/Page loads first
+    await screen.findByRole('heading', { name: /Team Management/i });
+
     // Check Header and AI Fleet
-    expect(await screen.findByRole('heading', { name: 'Team Management' })).toBeInTheDocument();
     expect(await screen.findByText('AI Fleet')).toBeInTheDocument();
     
     // Check Team Members

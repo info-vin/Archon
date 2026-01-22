@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { MenuIcon, XIcon, UserIcon, SettingsIcon, LogOutIcon, ShieldCheckIcon, LayoutGridIcon } from '../../components/Icons.tsx';
+import { MenuIcon, XIcon, UserIcon, SettingsIcon, LogOutIcon, ShieldCheckIcon, LayoutGridIcon, PaletteIcon } from '../../components/Icons.tsx';
 import LiveClock from '../../components/LiveClock.tsx';
 import UserAvatar from '../../components/UserAvatar.tsx';
 import { BrandLogo } from '../../components/BrandLogo.tsx';
@@ -44,6 +44,14 @@ const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                             <Link to="/marketing" className={`flex items-center p-2 rounded-md hover:bg-secondary ${location.pathname.startsWith('/marketing') ? 'bg-secondary' : ''}`}>
                                 <ShieldCheckIcon className="w-5 h-5 mr-3" />
                                 Sales Intel
+                            </Link>
+                        </li>
+                    )}
+                    {hasPermission('leads:view:all') && (
+                        <li className="mb-2">
+                            <Link to="/brand" className={`flex items-center p-2 rounded-md hover:bg-secondary ${location.pathname.startsWith('/brand') ? 'bg-secondary' : ''}`}>
+                                <PaletteIcon className="w-5 h-5 mr-3" />
+                                Brand Hub
                             </Link>
                         </li>
                     )}

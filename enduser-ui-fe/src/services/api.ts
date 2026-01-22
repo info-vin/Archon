@@ -330,16 +330,44 @@ const supabaseApi = {
     }
     const data = await response.json();
     
-    // Defensive mapping to ensure camelCase
+    // Defensive mapping to ensure camelCase and status inclusion
     return data.map((post: any) => ({
         ...post,
         id: post.id,
         title: post.title,
         excerpt: post.excerpt,
+        content: post.content,
         authorName: post.authorName || post.author_name,
         publishDate: post.publishDate || post.publish_date,
-        imageUrl: post.imageUrl || post.image_url
+        imageUrl: post.imageUrl || post.image_url,
+        status: post.status || 'published' // Default if missing
     }));
+  },
+
+  async updateBlogPostStatus(postId: string, status: string): Promise<void> {
+    const response = await fetch(`/api/marketing/blog/${postId}/status?status=${status}`, {
+        method: 'PATCH',
+        headers: await this._getHeaders()
+    });
+    if (!response.ok) throw new Error('Failed to update blog status');
+  },
+
+  async generateLogo(style: string): Promise<{ svg_content: string }> {
+    const response = await fetch('/api/marketing/logo', {
+        method: 'POST',
+        headers: await this._getHeaders(),
+        body: JSON.stringify({ style })
+    });
+    if (!response.ok) throw new Error('Failed to generate logo');
+    return response.json();
+  },
+
+  async getMarketStats(): Promise<any> {
+    const response = await fetch('/api/marketing/market-stats', {
+        headers: await this._getHeaders()
+    });
+    if (!response.ok) throw new Error('Failed to fetch market stats');
+    return response.json();
   },
   async getBlogPost(id: string): Promise<BlogPost> {
     const response = await fetch(`/api/blogs/${id}`, { headers: await this._getHeaders() });
