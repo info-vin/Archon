@@ -94,7 +94,7 @@ export function ProjectsView({ className = "", "data-id": dataId }: ProjectsView
     [selectedProject?.id, navigate],
   );
 
-  // Auto-select project based on URL or default to leftmost
+  // Auto-select project based on URL
   useEffect(() => {
     if (!sortedProjects.length) return;
 
@@ -106,14 +106,9 @@ export function ProjectsView({ className = "", "data-id": dataId }: ProjectsView
         return;
       }
     }
-
-    // Otherwise, select the first (leftmost) project
-    if (!selectedProject || !sortedProjects.find((p) => p.id === selectedProject.id)) {
-      const defaultProject = sortedProjects[0];
-      setSelectedProject(defaultProject);
-      navigate(`/projects/${defaultProject.id}`, { replace: true });
-    }
-  }, [sortedProjects, projectId, selectedProject, navigate]);
+    // Note: We no longer auto-select the first project to allow the "All Projects" view (Dashboard)
+    // when no specific project is selected.
+  }, [sortedProjects, projectId]);
 
   // Refetch task counts when projects change
   useEffect(() => {
@@ -205,7 +200,7 @@ export function ProjectsView({ className = "", "data-id": dataId }: ProjectsView
           />
 
           {/* Project Details Section */}
-          {selectedProject && (
+          {selectedProject ? (
             <motion.div variants={itemVariants} className="relative">
               {/* PillNavigation centered, View Toggle on right */}
               <div className="flex items-center justify-between mb-6">
@@ -231,6 +226,14 @@ export function ProjectsView({ className = "", "data-id": dataId }: ProjectsView
                 {activeTab === "docs" && <DocsTab project={selectedProject} />}
                 {activeTab === "tasks" && <TasksTab projectId={selectedProject.id} />}
               </div>
+            </motion.div>
+          ) : (
+            /* Empty State / Dashboard Placeholder */
+            <motion.div variants={itemVariants} className="text-center py-20 bg-gray-50/50 dark:bg-gray-900/50 rounded-xl border border-dashed border-gray-200 dark:border-gray-800">
+                <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">Select a project to view details</h3>
+                <p className="text-gray-500 dark:text-gray-400 max-w-md mx-auto">
+                    Click on any project card above to open its dashboard, or create a new project to get started.
+                </p>
             </motion.div>
           )}
         </>
@@ -269,7 +272,7 @@ export function ProjectsView({ className = "", "data-id": dataId }: ProjectsView
 
           {/* Main Content Area - CRITICAL: min-w-0 prevents page expansion */}
           <div className="flex-1 min-w-0">
-            {selectedProject && (
+            {selectedProject ? (
               <>
                 {/* Header with project name, tabs, view toggle inline */}
                 <div className="flex items-center gap-4 mb-4">
@@ -312,6 +315,14 @@ export function ProjectsView({ className = "", "data-id": dataId }: ProjectsView
                   {activeTab === "tasks" && <TasksTab projectId={selectedProject.id} />}
                 </div>
               </>
+            ) : (
+                <div className="h-full flex items-center justify-center bg-gray-50/50 dark:bg-gray-900/50 rounded-xl border border-dashed border-gray-200 dark:border-gray-800 p-12">
+                     <div className="text-center">
+                        <ListTodo className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+                        <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">No project selected</h3>
+                        <p className="text-gray-500 dark:text-gray-400">Select a project from the sidebar to view details.</p>
+                     </div>
+                </div>
             )}
           </div>
         </div>

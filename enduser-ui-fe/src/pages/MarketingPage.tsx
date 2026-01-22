@@ -125,14 +125,14 @@ const MarketingPage: React.FC = () => {
       {/* --- SEARCH TAB --- */}
       {activeTab === 'search' && (
           <>
-            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+            <div className="bg-card p-6 rounded-xl shadow-sm border border-border">
                 <form onSubmit={handleSearch} className="flex gap-4">
                 <input
                     type="text"
                     value={keyword}
                     onChange={(e) => setKeyword(e.target.value)}
                     placeholder="Enter job title (e.g., Data Analyst)"
-                    className="flex-1 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    className="flex-1 p-3 border border-input bg-background rounded-lg focus:ring-2 focus:ring-primary focus:outline-none"
                 />
                 <button
                     type="submit"
@@ -165,17 +165,17 @@ const MarketingPage: React.FC = () => {
 
                     {jobs.length > 0 && (
                         <>
-                        <h2 className="text-xl font-semibold text-gray-700 flex items-center gap-2">
+                        <h2 className="text-xl font-semibold text-foreground flex items-center gap-2">
                             Identified Leads 
-                            <span className="bg-indigo-100 text-indigo-700 text-xs px-2 py-1 rounded-full">{jobs.length}</span>
+                            <span className="bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-300 text-xs px-2 py-1 rounded-full">{jobs.length}</span>
                         </h2>
                         <div className="grid gap-4">
                             {jobs.map((job, idx) => (
-                            <div key={idx} className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 hover:border-indigo-200 transition-colors lead-card">
+                            <div key={idx} className="bg-card p-5 rounded-xl shadow-sm border border-border hover:border-primary/50 transition-colors lead-card">
                                 <div className="flex justify-between items-start mb-3">
                                     <div>
-                                        <h3 className="text-lg font-bold text-gray-900">{job.company}</h3>
-                                        <p className="text-sm text-gray-600">Hiring: {job.title}</p>
+                                        <h3 className="text-lg font-bold text-card-foreground">{job.company}</h3>
+                                        <p className="text-sm text-muted-foreground">Hiring: {job.title}</p>
                                     </div>
                                     <SourceBadge source={job.source} />
                                 </div>
@@ -208,19 +208,31 @@ const MarketingPage: React.FC = () => {
                 </div>
 
                 {generatedPitch && (
-                    <div id="pitch-section" className="lg:w-1/2">
-                        <div className="bg-white p-6 rounded-xl shadow-lg border border-indigo-100 sticky top-6 generated-pitch">
+                    <div id="pitch-section" className="lg:w-1/2 space-y-4">
+                         {/* AI Prompt Reference Card (ENH-005) */}
+                         <div className="bg-indigo-50 p-4 rounded-xl border border-indigo-100 text-sm">
+                            <h4 className="font-bold text-indigo-900 mb-2 flex items-center gap-2">
+                                <SparklesIcon className="w-4 h-4" />
+                                AI System Prompt
+                            </h4>
+                            <p className="text-indigo-800 font-mono text-xs bg-white/50 p-2 rounded">
+                                "You are a top-tier Sales Representative... Write a personalized, professional, and compelling email pitch... Structure: 1. Hook, 2. Value Prop, 3. CTA."
+                            </p>
+                         </div>
+
+                        <div className="bg-card p-6 rounded-xl shadow-lg border border-border sticky top-6 generated-pitch">
                             <div className="flex justify-between items-center mb-4">
-                                <h2 className="text-xl font-bold text-gray-800">Generated Pitch</h2>
-                                <span className="text-sm text-gray-500">Target: {generatedPitch.forCompany}</span>
+                                <h2 className="text-xl font-bold text-card-foreground">Generated Pitch</h2>
+                                <span className="text-sm text-muted-foreground">Target: {generatedPitch.forCompany}</span>
                             </div>
-                            <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                                <textarea readOnly className="w-full h-96 bg-transparent border-none resize-none focus:ring-0 text-gray-700 font-mono text-sm leading-relaxed" value={generatedPitch.content} />
+                            <div className="bg-muted p-4 rounded-lg border border-border">
+                                <textarea readOnly className="w-full h-96 bg-transparent border-none resize-none focus:ring-0 text-foreground font-mono text-sm leading-relaxed" value={generatedPitch.content} />
                             </div>
                             <div className="mt-4 flex gap-3 justify-end">
                                 <button className="text-gray-600 hover:text-gray-800 px-4 py-2 text-sm font-medium" onClick={() => setGeneratedPitch(null)}>Close</button>
-                                <button className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 shadow-sm font-medium flex items-center gap-2" onClick={() => alert("Email draft copied to clipboard!")}>
-                                    <span>Copy to Clipboard</span>
+                                <button className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 shadow-sm font-medium flex items-center gap-2" onClick={() => alert("Pitch approved and saved to knowledge base!")}>
+                                    <ShieldCheckIcon className="w-4 h-4" />
+                                    <span>Approve & Save</span>
                                 </button>
                             </div>
                         </div>

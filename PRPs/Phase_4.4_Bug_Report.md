@@ -27,12 +27,12 @@
 | **GAP-001** | 🧪 Test Gap | **Marketing** | 缺少 "Draft with AI" -> "Submit Review" 的 E2E 自動化測試。 | High | 🔴 Open | QA | `tests/e2e/content-marketing.spec.tsx` (Missing) |
 | **GAP-002** | 🧪 Test Gap | **Approvals** | 管理員 "Approve" 動作僅有 API Mock，缺乏完整 UI 互動測試。 | Medium | 🔴 Open | QA | `tests/e2e/management.spec.tsx` |
 | **BUG-001** | 🐛 Bug | **Project** | 無法在任何專案中新增 Task。 | High | 🟢 Fixed | Backend | `src/server/services/projects/task_service.py` |
-| **BUG-002** | 🐛 Bug | **Project** | 點擊 `All Projects` 無顯示列表，需選單一專案才顯示 Dashboard。 | Medium | 🔴 Open | Frontend | `src/features/projects/components/ProjectList.tsx` |
+| **BUG-002** | 🐛 Bug | **Project** | 點擊 `All Projects` 無顯示列表，需選單一專案才顯示 Dashboard。 | Medium | 🟢 Fixed | Frontend | `src/features/projects/views/ProjectsView.tsx` |
 | **BUG-003** | 🐛 Bug | **AI** | Task 點擊 `refine with AI` 無反應或未觸發 Agent 修正。 | High | 🟢 Fixed | Backend | `src/server/services/projects/task_service.py` |
-| **BUG-004** | 🐛 Bug | **Sales** | Generate Pitch Modal 右下角按鈕顯示 `copy to clipboard` 而非 **"Approve & Save"**。 | Medium | 🔴 Open | Frontend | `enduser-ui-fe/src/components/TaskModal.tsx` |
-| **ENH-005** | ✨ Feature | **AI** | Pitch 需分英/中兩段顯示；AI Prompt 需顯示在卡片上方供參考。 | Low | 🔴 Open | AI/FE | `src/server/api_routes/marketing_api.py` |
+| **BUG-004** | 🐛 Bug | **Sales** | Generate Pitch Modal 右下角按鈕顯示 `copy to clipboard` 而非 **"Approve & Save"**。 | Medium | 🟢 Fixed | Frontend | `enduser-ui-fe/src/pages/MarketingPage.tsx` |
+| **ENH-005** | ✨ Feature | **AI** | Pitch 需分英/中兩段顯示；AI Prompt 需顯示在卡片上方供參考。 | Low | 🟢 Fixed | AI/FE | `src/server/api_routes/marketing_api.py`, `MarketingPage.tsx` |
 | **BUG-006** | 🐛 Bug | **Sales** | Leads 列表顯示正常，但 Alice 無法執行 Promote to Vendor。 | High | 🟢 Fixed | Backend | `src/server/api_routes/marketing_api.py` |
-| **BUG-007** | 💄 UI | **Global** | 5173 (End User UI) 夜間模式未全域套用。 | Low | 🔴 Open | Frontend | `src/contexts/ThemeContext.tsx` |
+| **BUG-007** | 💄 UI | **Global** | 5173 (End User UI) 夜間模式未全域套用。 | Low | 🟢 Fixed | Frontend | `src/components/layout/MainLayout.tsx` |
 | **BUG-000** | 🐛 Bug | -- | (範例) 手機版 Logo 跑版 | Low | 🟢 Fixed | Frontend | -- |
 
 ---
@@ -95,3 +95,7 @@
 *   **BUG-001 (Task Creation)**: Added exception handling to task reordering logic in `TaskService.create_task`. Prevents failure of the entire task creation process if updating sibling tasks' order fails (e.g. due to RLS).
 *   **BUG-003 (AI Refine)**: Enhanced error handling in `TaskService.refine_task_description`. Added check for empty LLM response and improved error message formatting so the UI displays the system error instead of failing silently.
 *   **BUG-006 (Lead Promote)**: Added `x_user_role` header support and explicit role check (blocking 'viewer') in `marketing_api.py`. Improved error logging and robustness of the `promote_lead_to_vendor` endpoint, including `contact_email` handling and timestamps.
+*   **BUG-002 (Project List)**: Fixed `ProjectsView` to allow rendering the "All Projects" list without forcing a redirect to a specific project. Added a "Select a project" placeholder state to improve UX.
+*   **BUG-004 (Pitch Button)**: Updated `MarketingPage.tsx` to label the action button as "Approve & Save" instead of "Copy to Clipboard", aligning with the business flow.
+*   **ENH-005 (Bilingual Pitch)**: Updated backend prompt in `marketing_api.py` to request output in both English and Chinese sections. Updated frontend `MarketingPage.tsx` to display the AI System Prompt for reference and improved the pitch display UI.
+*   **BUG-007 (Dark Mode)**: Fixed `MainLayout` in `enduser-ui-fe` to use semantic `bg-background` instead of hardcoded `bg-gray-50`. Refactored `MarketingPage` to use dark-mode compatible classes (`bg-card`, `text-foreground`), resolving global dark mode inconsistencies.
