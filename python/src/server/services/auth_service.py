@@ -83,9 +83,15 @@ class AuthService:
                 raise ValueError("Profile creation failed: No data returned.")
 
         except Exception as e:
-            # Optimize logging: Avoid huge tracebacks for "already registered" errors which are handled by caller
+            # Optimize logging: Avoid huge tracebacks for "already registered" errors
             err_str = str(e).lower()
-            is_duplicate = "already registered" in err_str or "already exists" in err_str or "422" in err_str
+            # Check for GoTrue/Supabase specific error messages
+            # "AuthApiError" might be the class name, but we check message content primarily
+            is_duplicate = (
+                "already registered" in err_str or 
+                "already exists" in err_str or 
+                "422" in err_str
+            )
 
             if is_duplicate:
                 # Log as warning without stack trace

@@ -224,5 +224,23 @@ def main():
     sync_profiles_to_auth(conn)
     if conn: conn.close()
 
+    # Generate Dev Token URL for convenience (if dependencies available)
+    if HAS_SERVER_DEPS:
+        try:
+            supabase = get_supabase_client()
+            # Sign in as admin to get a fresh token
+            res = supabase.auth.sign_in_with_password({"email": "admin@archon.com", "password": "password123"})
+            if res.session:
+                token = res.session.access_token
+                print(f"\n✅ Database initialized successfully.")
+                print(f"🔑 Dev Auto-Login URL: http://localhost:3737/dev-token?token={token}")
+            else:
+                print("\n✅ Database initialized successfully.")
+        except Exception:
+            # Silently ignore token generation errors to avoid confusing users if Auth isn't fully ready
+            print("\n✅ Database initialized successfully.")
+    else:
+        print("\n✅ Database initialized successfully.")
+
 if __name__ == "__main__":
     main()
