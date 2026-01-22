@@ -4,7 +4,7 @@ import { JobData } from '../types';
 import { useAuth } from '../hooks/useAuth';
 import { PermissionGuard } from '../features/auth/components/PermissionGuard';
 import { SourceBadge } from '../components/SourceBadge';
-import { SearchIcon, TableIcon, ShieldCheckIcon, XIcon, PlusIcon } from '../components/Icons';
+import { SearchIcon, TableIcon, ShieldCheckIcon, XIcon, PlusIcon, SparklesIcon } from '../components/Icons';
 
 const MarketingPage: React.FC = () => {
   const { user } = useAuth();

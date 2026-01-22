@@ -88,4 +88,58 @@ export const handlers = [
     mockTasks.push(newTask); // Add to our mock database
     return HttpResponse.json(newTask, { status: 201 });
   }),
+
+  // --- Marketing & Approvals Handlers ---
+
+  // Search Jobs
+  http.get('/api/marketing/jobs', ({ request }) => {
+    const url = new URL(request.url);
+    const keyword = url.searchParams.get('keyword');
+
+    if (keyword === 'Error Test') {
+        return new HttpResponse(null, { status: 500, statusText: 'Internal Server Error' });
+    }
+
+    return HttpResponse.json([
+        {
+            id: 'job-1',
+            title: 'Senior Data Analyst',
+            company: 'Retail Corp',
+            source: '104 Live Data',
+            description: 'Needs someone who knows BI tools like Tableau and PowerBI.',
+            description_full: 'Full description: Needs someone who knows BI tools like Tableau and PowerBI.',
+            url: 'http://example.com/job/1',
+            identified_need: 'Needs better data pipeline'
+        }
+    ]);
+  }),
+
+  // Generate Pitch
+  http.post('/api/marketing/generate-pitch', async () => {
+    return HttpResponse.json({
+        content: `Subject: Collaboration regarding your Data needs\n\nDear Manager,\n\nI noticed Retail Corp is hiring...`,
+        references: ['Source A']
+    });
+  }),
+
+  // Get Pending Approvals
+  http.get('/api/marketing/approvals', () => {
+    return HttpResponse.json({
+        blogs: [
+            {
+                id: 'blog-approval-1',
+                title: 'Q3 Market Analysis',
+                authorName: 'Bob Williams',
+                publishDate: new Date().toISOString(),
+                status: 'review'
+            }
+        ],
+        leads: []
+    });
+  }),
+
+  // Approve/Reject Action
+  http.post('/api/marketing/approvals/:type/:id/:action', ({ params }) => {
+    return HttpResponse.json({ success: true, status: params.action === 'approve' ? 'published' : 'draft' });
+  }),
 ];
