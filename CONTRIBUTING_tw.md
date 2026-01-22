@@ -54,6 +54,7 @@
     ```
 
 4.  **初始化資料庫 (重要)**:
+    > **⚠️ 重要順序**: 必須先執行 `make dev` (或 `make dev-docker`) 確保容器正在運行後，才能執行此指令。
     ```bash
     # 執行資料庫遷移與 Mock Data 初始化 (包含 ID 同步修復)
     make db-init
@@ -202,6 +203,7 @@ def test_some_endpoint():
 | **MSW Intercept** | `intercepted a request without a matching request handler` | 檢查測試中的 URL 參數是否與 Handler 定義完全匹配。動態注入請用 `server.use()`。 |
 | **Timeout** | `Test timed out` | 檢查 `await waitFor` 是否在等待一個永遠不會出現的元素，或 API Mock 未正確回傳。 |
 | **Async State** | `act(...) warning` | 確保所有觸發狀態更新的操作都被 `await`，或包在 `act(() => ...)` 中。 |
+| **Element type is invalid** | `check the render method of ...` | 通常是 Import 錯誤。檢查是否混淆了 `default export` 與 `named export`，或引用了不存在的元件。 |
 
 ### 3.5 AI Agent 自癒能力驗證 (Self-Healing Verification)
 
@@ -263,6 +265,7 @@ def test_some_endpoint():
 
     > **⚡ 自動化指令 (推薦)**:
     > 專案已支援 `make db-init` 指令，它會自動執行以下所有步驟（遷移 + 種子資料 + ID 同步）。
+    > **⚠️ 注意**: 執行前請確保後端服務已啟動 (`make dev`)，否則會報錯找不到容器。
     > 僅在自動化指令失敗時，才需要參考下方的檔案列表進行手動除錯。
 
     當您需要在本地建立一個全新的、乾淨的資料庫時：
@@ -293,6 +296,12 @@ def test_some_endpoint():
             > **說明**: 建立 `leads` 與 `market_insights` 資料表，用於支援業務開發功能。
         11. `migration/007_add_assignee_id_to_tasks.sql` (**RBAC 補完計畫**)
             > **說明**: 建立 `assignee_id` 欄位並與 `profiles` 表關聯，確保任務指派具備強大的 RBAC 基礎。
+        12. `migration/008_system_correction_phase44.sql` (**Phase 4.4 系統修正**)
+            > **說明**: 針對任務分配與 Agent 狀態邏輯進行修正，確保 Phase 4.4 流程穩定。
+        13. `migration/009_fix_rbac_roles_and_permissions.sql` (**RBAC 權限修復**)
+            > **說明**: 修正 Manager 角色對部門成員的管理權限，並釐清與 System Admin 的權限邊界。
+        14. `migration/010_bob_and_alice_schema_updates.sql` (**Phase 4.4 戰情室基礎**)
+            > **說明**: 為 `blog_posts` 新增狀態欄位，並擴充 `leads` 表以支援 CRM 功能。
 
 3.  **階段三：執行部署**
 

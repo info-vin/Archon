@@ -8,7 +8,7 @@
 >
 > *   **第一章：核心工作習慣**: 定義了 Gemini 不可動搖的、必須在所有行動前遵守的思維框架與SOP。
 > *   **第二章：關鍵學習與偵錯模式**: 提煉了從大量歷史日誌中反覆出現的、最有價值的經驗教訓，並將其歸納為可複用的偵錯模式。
-> *   **第三章：近期工作日誌**: 保留最近的、最相關的幾份日誌，以供快速回溯上下文。
+> *   **第三章：近期工作日誌**: 保留最近的、最相關的一週日誌，以供快速回溯上下文。
 > *   **第四章：歷史檔案**: 完整存檔所有過去的日誌，作為深入研究特定問題時的「考古資料」。
 
 ---
@@ -88,122 +88,111 @@
 
 # 第三章：近期工作日誌 (Recent Journal Entries)
 
+### 2026-01-22: Phase 4.4 完結與全角色戰情室 (Phase 4.4 Completion & All-Role War Rooms)
+
+*   **核心任務**: 徹底實現 Phase 4.4 "System Correction & Business Value"，為 Alice, Bob, Charlie 打造專屬戰情室，並打通「人機協作 SOP」閉環。
+
+*   **技術實作**:
+
+    *   **爬蟲重生**: 修復了 `JobBoardService`，解決了 104 爬蟲的 403 (Session Reuse) 與 404 (Hash ID Extraction) 問題，並實作了前端 **Source Badge** (Live/Simulated)。
+
+    *   **Bob's Brand Hub**: 建立了 `BrandPage.tsx`，整合了 DevBot 的 Logo 生成 API (`/api/marketing/logo`) 與 Blog 看板管理。
+
+    *   **Alice's Sales Nexus**: 在 `MarketingPage.tsx` 實作了 Tabs (Search/Leads)，打通了從爬蟲搜尋到 CRM 管理 (`leads` 表) 再到 Vendor Promotion 的完整流程。
+
+    *   **Charlie's War Room**: 強化了 `TeamManagementPage.tsx`，實作了真實的 **AI Budget** 監控 (基於 `gemini_logs` 統計) 與 **Approvals Dashboard** (審核 Blog/Leads)。
+
+    *   **RBAC 深度加固**: 在後端 `settings_api.py` 中實作了 **部門隔離 (Department Isolation)** 邏輯，確保 Manager 只能管理同部門成員，且無法篡改 Admin 權限。
+
+*   **測試突破**:
+
+    *   **E2E 穩定性**: 解決了大量因非同步渲染 (Async Rendering) 與 UI 文字變更 (`104 DATA` -> `104 Live Data`) 導致的測試失敗。建立了「等待 Dashboard 載入」的標準測試模式。
+
+    *   **Mock 完整性**: 在 `management.spec.tsx` 與 `e2e.setup.tsx` 中補齊了所有新 API (`getAiUsage`, `getPendingApprovals`) 的 Mock，消除了 `undefined` 錯誤。
+
+*   **結論**: 系統已具備完整的商業運作能力，從數據獲取、內容生產、銷售轉化到管理審核，形成了一個有機的閉環。
+
 ### 2026-01-20: Phase 4.4 啟動與系統修正 (Phase 4.4 Kickoff & System Correction)
+
 *   **核心任務**: 啟動 Phase 4.4 "System Correction & Business Value"，針對管理盲點、銷售流程斷點與 AI 協作架構進行修正。
+
 *   **決策變更**:
+
     *   **Project MYRMIDON (蟻人計畫)**: 品牌重塑為「蟻人 (Myrmidon)」，象徵集體智慧與分工。Logo 將採用幾何螞蟻風格。
+
     *   **RBAC 修復**: 放棄「開副本」做新頁面的想法。決定直接修正 `permissions.py` 與 `rbac_service.py`，賦予 `manager` 角色對同部門員工的管理權限 (`USER_MANAGE_TEAM`)。
+
     *   **銷售閉環**: 確認 `leads` 表需擴充聯絡人欄位，並實作 UNIQUE 索引以防止爬蟲重複資料。
+
     *   **AI Factory**: 定義了 Jules (Lint/Test) 與 AutoGen (Schema Architect) 的分工架構與額度分配。
+
 *   **關鍵發現**: 透過查證 `projects_api.py`，證實任務指派問題源於後端 `list_assignable_users` 的 RBAC 邏輯缺陷，而非前端問題。
 
 ### 2026-01-19: Admin UI 回歸修復與文件預覽 (Admin UI Regression & Doc Preview)
+
 *   **核心任務**: 修復 Phase 4.3.1 遺留的 Admin UI 問題，並完成文件預覽功能。
+
 *   **技術實作**:
+
     *   **Unicode 支援**: 解決了文件名包含特殊字符時的上傳錯誤。
+
     *   **Task ID**: 在全棧實現了 Task ID 的顯示與搜尋支援。
+
     *   **Dev Token**: 修復了 `dev-token` 的網域設定問題，確保本地開發體驗流暢。
 
 ### 2026-01-18: Phase 4.3 完結與爬蟲進化 (Phase 4.3 Completion & Crawler Evolution)
+
 *   **核心任務**: 完成 Phase 4.3 行銷網站現代化，並解決爬蟲數據品質問題，標誌著系統從「功能驗證」邁向「真實運作」。
+
 *   **技術突破**:
+
     *   **爬蟲重構**: 放棄易受阻擋的靜態爬取，逆向工程並改用 **104 AJAX API**。這不僅繞過了 403 Forbidden 防護，更解決了 GIGO (Garbage In, Garbage Out) 問題，確保 RAG 系統接收到的是結構化的高品質職缺數據。
+
     *   **UX 完善**: 修復了 Admin UI 中的「靜默上傳失敗」與使用者端部落格的可見性問題，提升了管理員與訪客的體驗。
+
 *   **驗收結果**: 確認全系統 RBAC 範圍界定正確，RAG 提案生成功能運作正常。Phase 4.3 正式結案。
-
-### 2026-01-16: 真實 RAG 與 Gemini 整合 (Real RAG & Gemini Integration)
-*   **核心任務**: 將 "Mock" RAG 升級為基於真實數據與 LLM 的 "Real" RAG 系統。
-*   **架構決策**:
-    *   **LLM 整合**: 實作了與 **Gemini API** 的對接，用於動態生成針對特定職缺的業務提案 (Pitch)。
-    *   **數據管道**: 打通了從「職缺爬取」到「向量檢索」再到「內容生成」的完整管道。
-*   **環境加固**: 修復了 Dev-Token 404 錯誤，確保開發環境的 Auth 流程在各種情境下皆能穩定運作。
-
-### 2026-01-15: 行銷網站現代化與組態驅動 UI (Marketing Site Modernization & Config-Driven UI)
-*   **核心任務**: 執行 Phase 4.3，構建現代化、內容豐富且易於維護的行銷官網。
-*   **架構決策**:
-    *   **Config-Driven UI**: 採用組態驅動 (Configuration-Driven) 模式構建 UI，大幅降低了後續維護與內容更新的成本，讓非工程人員也能透過設定檔調整版面。
-    *   **RBAC 導航整合**: 將權限控管直接整合至網站導航結構中，根據使用者角色動態顯示/隱藏選單，實現了無縫的體驗。
-*   **內容擴充**: 新增了 Fujitec POC 等高價值案例研究 (Case Study)，強化產品說服力。
-*   **穩定性**: 針對 Auth Session 不穩定的問題進行了優化，延長 Timeout 時間以減少意外登出的干擾。
-
-### 2026-01-12: 資料完整性與雙重同步策略 (Data Integrity & Dual Sync Strategy)
-*   **核心任務**: 執行 Phase 5.3，根治 RBAC 資料不一致導致的 406 錯誤與權限異常。
-*   **技術實作**:
-    *   **雙重同步 (Dual Sync)**: 在 `init_db.py` 中實作了智慧同步邏輯。不再只是簡單地「跳過」現有使用者，而是檢查並**更新**其 ID，強制對齊 `auth.users` 與 `public.profiles` 表。
-    *   **自動化修復**: 此機制建立了一道安全網，確保即使資料庫與 Auth 服務狀態暫時脫鉤，也能在下次初始化時自動自癒。
-*   **驗收結果**: 通過 `make db-init` 驗證了資料庫的冪等性與完整性，徹底消除了 ID Mismatch 隱患。
-
-### 2026-01-09: RBAC 基礎設施深度加固與商業功能整合 (Phase 5.2 & 4.2)
-*   **核心任務**: 徹底消滅不安全的 `X-User-Role` Header 依賴。建立了標準化的 `src/server/auth` (後端) 與 `src/features/auth` (前端) 模組。
-*   **技術實作**: 
-    *   **後端**: 實作 `get_current_user` 依賴，強制驗證 Supabase JWT Token。
-    *   **前端**: 實作 `PermissionGuard` 與 `usePermission` Hook，採用 "Render Nothing" 策略處理無權限 UI。
-    *   **DX 優化**: 為 Admin UI 實作 **Dev Auto-Login** (後端 `/api/auth/dev-token`)，維持無感操作體驗。
-    *   **UX 優化**: 縮短 Auth Timeout 至 3 秒，並整合 Sidebar 導航 RBAC。
-*   **偵錯歷程**: 解決了 `enduser-ui-fe` 的路徑別名解析問題、E2E 測試中的 Mock Role 大小寫不一致問題，以及 AuthProvider 非同步加載導致的測試競態 (Race Condition)。
-*   **驗收結果**: 通過 501 個後端測試、150+ 個前端測試與全系統 Lint 檢查。更新了實作計畫，包含可供複製執行的 Bash 驗證指令。
-
-### 2026-01-09: 權限架構的遷移與完結 (Auth Architecture Migration & Completion)
-*   **核心任務**: 完成 Phase 4.2.2 的最後一哩路，並徹底執行 Phase 5 與 5.1 的修復，根除 Admin 操作時的 Session 異常與 500 錯誤。
-*   **架構決策**: 
-    *   **後端中心化 Auth**: 廢除了 `api.ts` 中直接呼叫 `supabase.auth.signUp` 的模式。改由後端 `AuthService` 使用 `service_role` key 代理執行 `admin.create_user`，徹底解決了 Admin 建立使用者時被強制登出的邏輯缺陷。
-    *   **同步客戶端適配**: 修正了 `profile`, `blog`, `auth` 服務中因混用同步/非同步 Supabase 語法導致的 `SyncQueryRequestBuilder` 錯誤。確立了同步環境下移除 `.select().single()` 的鏈式結構。
-    *   **RBAC 標準化**: 將 `rbac_service.py` 權限檢查改為不分大小寫，並加入 `manager` 角色，解決了管理員無法跨作者編輯內容的問題。
-    *   **雙重驗證**: 透過 `make test`、新增 Python 整合測試與 Vitest E2E 測試，確認了從底層語法到 UI 流程的全面合規。
-*   **遺留項目**: 識別出「刷新頁面時的 Session Hydration Lag」為唯一的視覺瑕疵，已透過 `onAuthStateChange` 狀態管理解決。
-
-### 2026-01-08: 誠實的架構與 Mock 的邊界 (Honest Architecture & The Boundaries of Mocks)
-*   **核心任務**: 執行 Phase 4.2.2 Hotfix，移除 `api.ts` 中的「自動 Mock Fallback」機制，並修復因此崩潰的測試。
-*   **架構決策**: 
-    *   **移除掩飾**: 刪除了 `SmartAPI`，讓前端在無法連線後端時直接報錯，而非靜默切換到假資料。這迫使開發者正視 `docker-compose` 的網路配置問題。
-    *   **Mock 分離**: 確立了 Mock 資料應僅存在於 `tests/` 或 `Storybook` 中，嚴禁汙染生產代碼 (`src/`)。
-*   **偵錯歷程**:
-    *   **測試重疊**: `make test` 失敗是因為 `vite.config.ts` (Unit Test) 未排除 `tests/e2e`，導致 E2E 測試在錯誤的環境下被重複執行。修正：在 `test.exclude` 中明確排除 E2E 目錄。
-    *   **變數提升 (Hoisting)**: `vi.mock` 會被提升到檔案最上方，導致無法存取外部定義的 `mockUser`。修正：使用 `vi.hoisted(() => ...)` 來定義 Mock 資料。
-    *   **狀態迷失**: E2E 測試失敗是因為 Mock API 是無狀態的（永遠回傳空陣列）。修正：在 `e2e.setup.tsx` 中實作了簡單的 `mockTasksStore` 陣列，讓 `createTask` 與 `getTasks` 能連動。
-    *   **DOM 殘留**: `MarketingPage` 的 `setTimeout` 在測試結束後仍嘗試存取 `document`。修正：加入 `typeof document !== 'undefined'` 檢查。
-
-### 2026-01-07: 批量修復與 SOP 的再教育 (The Batch Fix & SOP Re-education)
-*   **核心任務**: 解決 Phase 4.2.2 遺留的四大 UI/通訊問題 (406 錯誤、專案操作、捲動、Markdown)。
-*   **偵錯歷程**: 
-    *   **SOP 違規**: 試圖通過「修改 -> 報錯 -> 再修改」的低效迴圈修復 Bug，導致舊有測試大規模崩潰。
-    *   **SOP 回歸**: 建立 `api.stability.spec.ts` 驗證核心邏輯，並根據報錯精準修復 `TaskModal.test.tsx` 的 Mock 策略。
-*   **關鍵學習**: 
-    *   **Mock 的完整性**: 修改代碼（如加入 `getAssignableAgents`）後，必須同步更新相關測試的 Mock。
-    *   **可訪問性**: 隱藏文字 (`sr-only`) 需使用 `{ hidden: true }` 抓取。
-    *   **Git 考古**: 動手前先查 `git log -p`，避免覆蓋他人的重要修復（如 Promise.race）。
-
-### 2026-01-06: 全棧對齊與文檔化 (Full-Stack Reconciliation)
-*   **核心任務**: 解決後端分頁結構 (`{ tasks: [] }`) 與前端預期 (`Array`) 不匹配導致的崩潰。
-*   **架構決策**: 在 `api.ts` 中實作了防禦性邏輯，同時支援陣列與物件格式，確保前後端解耦。
-*   **文件**: 歸檔了 Phase 3.8 並正式啟動 Phase 4.2.2。
-
-### 2026-01-05: 銷售情資與 Async 陷阱 (Sales Intel & Async Pitfalls)
-*   **核心任務**: 實作 Phase 4.2 "Sales Intelligence" 並修復後端 API 回歸錯誤。
-*   **偵錯歷程**:
-    *   **Async 混淆**: `projects_api.py` 錯誤地 `await` 了同步的 Supabase 客戶端，導致 `AttributeError`。修正為同步呼叫。
-    *   **Mock 策略**: 確立了「Patch 必須針對 Class」的黃金法則，並在測試中將 `AsyncMock` 降級為 `Mock` 以匹配行為。
-*   **結論**: 成功交付業務開發工具，並確立 Vitest + MSW 整合測試方案。
-
-### 2026-01-04: 主動防禦與無限 Loading (Proactive Defense)
-*   **核心任務**: 根治 `enduser-ui-fe` 在全 Docker 環境下的無限 Loading 問題。
-*   **架構決策**: 在 `api.ts` 引入「主動防禦 (Proactive Guard)」邏輯。透過靜態檢查 URL 是否包含 `supabase_kong` 等內部關鍵字，直接判定為 Docker 內部環境並立即切換至 Mock 模式，實現 0 延遲體驗。
-*   **關鍵學習**: 不要讓使用者等待必敗的請求；當環境變數明顯無效時，應立即 Failover。
-
-### 2026-01-03: 自癒能力基礎設施 (Self-Healing Infrastructure)
-*   **核心任務**: 穩定全 Docker 開發環境並啟動 Phase 5 自癒能力。
-*   **偵錯歷程**:
-    *   **環境修復**: 解決了 `archon-ui-main` 的崩潰 (缺少 `useState`) 與 API Key 注入問題。
-    *   **初始化**: 修復了 End-User UI 在 Docker 下因缺少 `localStorage` 崩潰的問題，透過 `docker-compose.yml` 注入變數實現自動 Fallback。
-*   **結論**: 成功清除了 Admin UI 環境雜訊，並在 `AgentService` 中打通了自癒閉環。
 
 ---
 
 # 第四章：歷史檔案：原則的考古學 (Historical Archive: The Archaeology of Principles)
 
 > **【封存說明】**
+
 >
+
 > 本章節存放了所有歷史日誌。當你需要深入了解某個特定問題的完整偵錯背景時，可以在此查閱最原始的紀錄。
+
+### 2026年1月：權限重構、自癒機制與商業功能落地
+
+一月是專案從「技術驗證」邁向「商業運作」的關鍵轉折點。我們在前半月集中解決了深層的架構債（特別是 Auth 與 Docker 環境），後半月則全力衝刺商業功能的實作。
+
+**核心主題歸類**：
+
+1.  **RBAC 權限架構的完備與標準化 (Ref: 01-09, 01-12)**:
+
+    *   **挑戰**: 舊有 `X-User-Role` Header 存在安全漏洞，且 `auth.users` 與 `public.profiles` ID 不一致導致 406 錯誤。
+
+    *   **解決**: 建立 `src/server/auth` 模組，強制後端驗證 JWT。實作 `init_db.py` 中的「雙重同步策略 (Dual Sync)」，自動修復 ID 不一致。
+
+    *   **DX 優化**: 為解決 Admin UI 無登入頁痛點，實作了 `Dev Auto-Login` 機制。
+
+2.  **環境自癒與主動防禦 (Ref: 01-03, 01-04, 01-08)**:
+
+    *   **主動防禦**: 針對 Docker 內部網路 (DNS) 與瀏覽器外部網路的差異，在前端 `api.ts` 實作了「主動防禦」邏輯，偵測到無法連線時自動切換 Mock，解決無限 Loading。
+
+    *   **誠實架構**: 移除了 `SmartAPI` 的隱式 Mock Fallback，強迫開發者正視網路配置問題。
+
+3.  **商業功能與 RAG 進化 (Ref: 01-05, 01-15, 01-16)**:
+
+    *   **銷售情資**: 實作 Phase 4.2，包含 Leads 管理與市場洞察。
+
+    *   **真實 RAG**: 將 Mock RAG 升級為接軌 Gemini API 的真實系統，打通了「爬蟲 -> 向量 -> 生成」的數據管道。
+
+    *   **行銷官網**: 導入 Config-Driven UI 模式，降低非技術人員維護門檻。
+
+4.  **SOP 與除錯紀律的再強化 (Ref: 01-06, 01-07)**:
+
+    *   **教訓**: 在修復 UI/通訊問題時，因違背 SOP 導致測試崩潰。重新確立了「修改代碼必須同步更新 Mock」與「Patch 必須針對 Class」的鐵律。
 
 ### 2025年12月：Async 重構、前端規範與 AI 開發者奠基
 
