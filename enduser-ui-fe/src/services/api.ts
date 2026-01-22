@@ -410,7 +410,7 @@ const supabaseApi = {
     });
     if (!response.ok) throw new Error('Approval action failed');
   },
-};
+
   async getBlogPost(id: string): Promise<BlogPost> {
     const response = await fetch(`/api/blogs/${id}`, { headers: await this._getHeaders() });
     if (!response.ok) {

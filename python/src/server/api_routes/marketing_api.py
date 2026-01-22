@@ -2,14 +2,15 @@
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
 
-from mcp_server.features.design.logo_tool import GenerateBrandAssetTool
-
 from ..config.logfire_config import get_logger, logfire
 from ..services.credential_service import credential_service
 from ..services.job_board_service import JobBoardService, JobData
 from ..services.llm_provider_service import get_llm_client
 from ..services.search.rag_service import RAGService
 from ..utils import get_supabase_client
+
+# TODO(Phase 5): Re-enable this when MCP Server is properly integrated as a package or service
+# from mcp_server.features.design.logo_tool import GenerateBrandAssetTool
 
 logger = get_logger(__name__)
 
@@ -156,11 +157,23 @@ async def generate_logo(request: LogoRequest):
     """
     try:
         logfire.info(f"API: Generating logo | style={request.style}")
-        # Initialize the existing tool logic
-        tool = GenerateBrandAssetTool(style=request.style)
-        svg_content = await tool.execute()
+        
+        # TODO(Phase 5): Implement proper Agent/MCP communication here.
+        # Direct import of mcp_server is not allowed in this microservice architecture.
+        # For now, we return a mock SVG based on the style to unblock the UI.
+        
+        mock_svg = f"""
+        <svg width="200" height="200" xmlns="http://www.w3.org/2000/svg">
+            <rect width="100%" height="100%" fill="{request.primary_color or '#f0f0f0'}" />
+            <circle cx="100" cy="100" r="50" fill="#6366f1" />
+            <text x="100" y="105" font-family="Arial" font-size="24" fill="white" text-anchor="middle">
+                {request.style.upper()}
+            </text>
+        </svg>
+        """
+        
+        return LogoResponse(svg_content=mock_svg.strip(), style=request.style)
 
-        return LogoResponse(svg_content=svg_content, style=request.style)
     except Exception as e:
         logfire.error(f"API: Logo generation failed | error={str(e)}")
         raise HTTPException(status_code=500, detail={"error": str(e)}) from e
