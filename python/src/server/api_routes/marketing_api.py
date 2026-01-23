@@ -1,7 +1,8 @@
 
-from fastapi import APIRouter, Header, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
 
+from ..auth.dependencies import get_current_user
 from ..config.logfire_config import get_logger, logfire
 from ..services.credential_service import credential_service
 from ..services.job_board_service import JobBoardService, JobData
@@ -73,13 +74,15 @@ async def get_leads():
 async def promote_lead_to_vendor(
     lead_id: str,
     request: PromoteLeadRequest,
-    x_user_role: str | None = Header(None, alias="X-User-Role")
+    current_user: dict = Depends(get_current_user)
 ):
     """
     Promote a Lead to a Vendor.
     """
-    # Basic Role Check (Alice/User should be allowed, but maybe Viewer shouldn't)
-    if x_user_role and x_user_role.lower() == "viewer":
+    # Secure Role Check using Authenticated User Context
+    user_role = current_user.get("role", "viewer").lower()
+
+    if user_role == "viewer":
         raise HTTPException(status_code=403, detail="Viewers cannot promote leads.")
 
     try:
@@ -98,7 +101,7 @@ async def promote_lead_to_vendor(
         }
 
         # Log the attempt
-        logfire.info(f"API: Promoting lead to vendor | lead_id={lead_id} | vendor={request.vendor_name} | user_role={x_user_role}")
+        logfire.info(f"API: Promoting lead to vendor | lead_id={lead_id} | vendor={request.vendor_name} | user_role={user_role} | user_id={current_user.get('id')}")
 
         vendor_res = supabase.table("vendors").insert(vendor_data).execute()
 

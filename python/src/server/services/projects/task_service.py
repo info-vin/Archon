@@ -216,15 +216,11 @@ class TaskService:
             filters_applied = []
 
             # Apply filters
-            if project_id:
-                query = query.eq("project_id", project_id)
-                filters_applied.append(f"project_id={project_id}")
-
             if assignee_id:
                 query = query.eq("assignee_id", assignee_id)
                 filters_applied.append(f"assignee_id={assignee_id}")
 
-            if assignee_name:
+            if assignee_name and not assignee_id: # Only fallback to name if ID is not provided
                 query = query.eq("assignee", assignee_name)
                 filters_applied.append(f"assignee={assignee_name}")
 
@@ -419,13 +415,22 @@ class TaskService:
                 update_data["attachments"] = update_fields["attachments"]
 
             if "due_date" in update_fields:
-                update_data["due_date"] = update_fields["due_date"]
+                # Ensure datetime is serialized to string for Supabase
+                due_val = update_fields["due_date"]
+                if hasattr(due_val, 'isoformat'):
+                    update_data["due_date"] = due_val.isoformat()
+                else:
+                    update_data["due_date"] = due_val
 
             if "priority" in update_fields:
                 update_data["priority"] = update_fields["priority"]
 
             if "completed_at" in update_fields:
-                update_data["completed_at"] = update_fields["completed_at"]
+                comp_val = update_fields["completed_at"]
+                if hasattr(comp_val, 'isoformat'):
+                    update_data["completed_at"] = comp_val.isoformat()
+                else:
+                    update_data["completed_at"] = comp_val
 
             # Update task
             response = (
@@ -571,9 +576,10 @@ class TaskService:
         a structured product spec with User Stories and Technical Requirements.
         """
         try:
-            # Use absolute import to avoid relative import issues in circular dependency scenarios
-            from src.server.services.llm_provider_service import llm_provider_service
+            # Use absolute import for the client factory
+            from src.server.services.llm_provider_service import get_llm_client
             from ..search.rag_service import RAGService
+            from ..credential_service import credential_service
 
             # 1. Fetch relevant context using RAG
             rag_service = RAGService(self.supabase_client)
@@ -608,8 +614,22 @@ class TaskService:
                 KEEP IT CONCISE AND ACTIONABLE.
             """).strip()
 
-            # 3. Generate Content
-            content, _ = await llm_provider_service.generate_content(prompt)
+            # 3. Generate Content using the correct client pattern
+            # Get active model from config
+            provider_config = await credential_service.get_active_provider("llm")
+            model_name = provider_config.get("chat_model") or "gpt-4o"
+
+            async with get_llm_client() as client:
+                response = await client.chat.completions.create(
+                    model=model_name,
+                    messages=[
+                        {"role": "system", "content": "You are POBot, a helpful Product Owner assistant."},
+                    {"role": "user", "content": prompt}
+                    ],
+                    temperature=0.7
+                )
+                content = response.choices[0].message.content
+
             if not content:
                 raise ValueError("LLM provider returned empty content")
             return content

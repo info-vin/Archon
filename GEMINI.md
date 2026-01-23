@@ -88,6 +88,23 @@
 
 # 第三章：近期工作日誌 (Recent Journal Entries)
 
+### 2026-01-23: Phase 4.4 任務系統穩定化與可見性修復 (Task System Stabilization & Visibility Fix)
+
+*   **核心任務**: 解決 Alice/Bob 的 "Ghost Task" 問題，修復 AI Refinement 的 Import 錯誤，並打通「自己開單自己關」的完整工作流。
+
+*   **技術實作**:
+
+    *   **RBAC 修正**: 發現 `projects_api.py` 錯誤使用 `assignee_name` 進行過濾，導致 User 與 Profile 名稱不一致時任務消失。已修正為使用 **`assignee_id` (UUID)** 進行精確過濾。
+    *   **Refine Error**: 發現 `task_service.py` 試圖從 `llm_provider_service` 模組導入不存在的物件。已重寫 `refine_task_description`，改用正確的 `get_llm_client` context manager 模式。
+    *   **Datetime Serialization**: 修復 `task_service.py` 在 `update_task` 中直接傳遞 `datetime` 物件給 Supabase client 導致的 JSON 序列化錯誤，統一轉換為 ISO 字串。
+    *   **Dashboard 可見性**: 發現 `list_tasks` API 預設 `include_closed=False`，導致任務拖曳至 Done 後「消失」。已更新 `api.ts` 與 `DashboardPage.tsx`，明確傳遞 `include_closed=true`。
+    *   **封存功能**: 在 `TaskModal.tsx` 中為 Assignee 與 Manager 新增了 **"Archive Task"** 按鈕，補足了 UI 操作缺口。
+
+*   **測試結果**:
+    *   Alice 能正常新增、查看、更新、完成並封存任務。
+    *   Refine with AI 功能恢復正常。
+    *   Dashboard 計數器與欄位顯示正確同步。
+
 ### 2026-01-22: Phase 4.4 完結與全角色戰情室 (Phase 4.4 Completion & All-Role War Rooms)
 
 *   **核心任務**: 徹底實現 Phase 4.4 "System Correction & Business Value"，為 Alice, Bob, Charlie 打造專屬戰情室，並打通「人機協作 SOP」閉環。

@@ -250,7 +250,7 @@ sequenceDiagram
     - **Approvals**: `management.spec.tsx` (Step 3 - Approval action is mocked but not fully tested).
 
 ### Level 3: Business Scenarios (Manual)
-- [ ] **Alice (Sales)**: 可以生成開發信，並看到 Librarian 自動歸檔的標記。
+- [x] **Alice (Sales)**: 可以生成開發信，並看到 Librarian 自動歸檔的標記。能建立任務、拖曳至 Done 並自行封存 (Archive)。
 - [ ] **Charlie (Manager)**: 可以使用 POBot 優化任務描述，並指派給 DevBot。
 - [ ] **Bob (Marketing)**: 看到 Blog 更新且能管理品牌資產。
 
@@ -356,98 +356,43 @@ sequenceDiagram
 ---
 
 ## Appendix A: AI Factory & Cost Governance
-*Detailed architecture moved here to focus on business value.*
+*Detailed architecture focusing on business value and resource control.*
 
-**Governance**: Charlie allocates token budgets to Alice/Bob.
-**Jules (CLI Wrapper)**: Automated maintenance and bug fixing.
-**AutoGen (DIND Sandbox)**: Multi-agent architectural planning.
-
----
-
-## Appendix B: User Guide (Simplified SOP)
-
-### 人機協作標準作業程序 (SOP) - 簡易版
-
-> **核心目標**：讓 AI 成為你的神隊友，將傳統兩天的工作量，壓縮在 **一小時** 內完成。
-> **適用對象**：無論您幾歲，只要會按滑鼠，就能輕鬆指揮 AI 團隊。
-
-#### 🚀 七步工作法 (The 7-Step Workflow)
-
-**第一步：【廠長啟動】一鍵開工 (Admin)**
-1.  **動作**：按下一個神奇按鈕（執行初始化指令），就像打開工廠的總電源，並點擊「快速通關連結」(Dev Token)。
-2.  **結果**：工廠燈火通明，所有機械手臂就定位，準備開工！
-
-**第二步：【業務情蒐】AI 獵犬出動 (Alice)**
-1.  **場景**：Sales Nexus (業務情報室)
-2.  **動作**：點擊「搜𡦃」，AI 自動爬取 104 客戶名單，MarketBot 自動撰寫開發信草稿。
-3.  **結果**：一分鐘內，桌面已放滿整理好的客戶名單與信件。
-
-**第三步：【行銷宣傳】AI 文案大師 (Bob)**
-1.  **場景**：Brand Hub (品牌中心)
-2.  **動作**：指示 AI 根據資料撰寫文章，AI 瞬間產出圖文並茂的部落格文章，您只需審核提交。
-3.  **結果**：喝口茶的時間，一整天的寫作工作已完成。
-
-**第四步：【經理決策】指揮大腦運作 (Charlie)**
-1.  **場景**：War Room (戰情室)
-2.  **動作**：呼叫 AI 秘書 (POBot) 整理待辦事項並自動分派任務給對應的工程師或業務。
-3.  **結果**：無須冗長會議，任務自動分配完畢。
-
-**第五步：【工程製造】無人自動化產線 (DevBot)**
-1.  **動作**：AI 工程師DevBot 自動接單，編寫程式碼或設計 Logo，全自動執行。
-2.  **結果**：熱騰騰的「完成品草稿」直接送達審核區。
-
-**第六步：【最終驗收】一鍵發布 (Charlie/Admin)**
-1.  **場景**：Approvals (審核台)
-2.  **動作**：滿意成品則按下「批准 (Approve)」。
-3.  **結果**：新功能立刻上線。
-
-**第七步：【安全下班】自動健檢 (Admin)**
-1.  **動作**：工作結束時修改密碼，系統自動進行健康檢查。
-2.  **結果**：安心下班，系統已準備好迎接明天。
-
-> 🎉 **恭喜！您剛剛在一个小時內，完成了傳統團隊需要兩天才能做完的工作。**
+**Governance**: Charlie allocates token budgets to Alice/Bob. AI usage is tracked via `gemini_logs` and visualized in the Team War Room.
+**Jules (CLI Wrapper)**: Automated maintenance, Lint fixing, and Unit Test generation to maintain codebase health.
+**AutoGen (DIND Sandbox)**: High-level architectural planning and multi-agent simulation for complex feature design.
 
 ---
 
 ## Appendix B: User Guide (Simplified SOP)
 
-### 人機協作標準作業程序 (SOP) - 簡易版
+### 人機協作標準作業程序 (SOP) - 業務實戰版
 
 > **核心目標**：讓 AI 成為你的神隊友，將傳統兩天的工作量，壓縮在 **一小時** 內完成。
-> **適用對象**：無論您幾歲，只要會按滑鼠，就能輕鬆指揮 AI 團隊。
 
-#### 🚀 七步工作法 (The 7-Step Workflow)
+#### 🚀 核心工作流程 (The Core Workflow)
 
-**第一步：【廠長啟動】一鍵開工 (Admin)**
-1.  **動作**：按下一個神奇按鈕（執行初始化指令），就像打開工廠的總電源，並點擊「快速通關連結」(Dev Token)。
-2.  **結果**：工廠燈火通明，所有機械手臂就定位，準備開工！
+1.  **【業務情蒐】AI 獵犬出動 (Alice)**: 進入 Sales Nexus，由 MarketBot 爬取資料並生成開發信，Librarian 自動歸檔。
+2.  **【行銷推廣】內容生產 (Bob)**: 在 Brand Hub 使用 "Draft with AI" 產出部落格，提交審核。
+3.  **【管理決策】任務分派 (Charlie)**: 在 War Room 審核產出，使用 POBot 優化任務規格，並指派給 DevBot 執行。
+4.  **【自主封存】結案工作流 (Alice)**: 完成後將任務拖至 Done，點擊卡片並按下「Archive Task」完成結案。
 
-**第二步：【業務情蒐】AI 獵犬出動 (Alice)**
-1.  **場景**：Sales Nexus (業務情報室)
-2.  **動作**：點擊「搜𡦃」，AI 自動爬取 104 客戶名單，MarketBot 自動撰寫開發信草稿。
-3.  **結果**：一分鐘內，桌面已放滿整理好的客戶名單與信件。
+---
 
-**第三步：【行銷宣傳】AI 文案大師 (Bob)**
-1.  **場景**：Brand Hub (品牌中心)
-2.  **動作**：指示 AI 根據資料撰寫文章，AI 瞬間產出圖文並茂的部落格文章，您只需審核提交。
-3.  **結果**：喝口茶的時間，一整天的寫作工作已完成。
+## Appendix C: 人機協作深度討論 (Human-Machine Collaboration Discussion)
 
-**第四步：【經理決策】指揮大腦運作 (Charlie)**
-1.  **場景**：War Room (戰情室)
-2.  **動作**：呼叫 AI 秘書 (POBot) 整理待辦事項並自動分派任務給對應的工程師或業務。
-3.  **結果**：無須冗長會議，任務自動分配完畢。
+> **「AI 不會取代人類，但使用 AI 的人會取代不使用 AI 的人。」**
 
-**第五步：【工程製造】無人自動化產線 (DevBot)**
-1.  **動作**：AI 工程師DevBot 自動接單，編寫程式碼或設計 Logo，全自動執行。
-2.  **結果**：熱騰騰的「完成品草稿」直接送達審核區。
+### 1. 角色分工的轉變 (Shift in Roles)
+在 Archon 系統中，我們定義了明確的「人機邊界」：
+*   **人類 (The Driver)**: 負責定義價值（Value）、設立目標（Goal）與最終審核（Verify）。人類是工廠的「廠長」與「品質守門員」。
+*   **AI (The Engine)**: 負責處理重複勞動、數據挖掘（Crawling）與結構化產出（Coding/Writing）。AI 是 24/7 不眠不休的「超級執行者」。
 
-**第六步：【最終驗收】一鍵發布 (Charlie/Admin)**
-1.  **場景**：Approvals (審核台)
-2.  **動作**：滿意成品則按下「批准 (Approve)」。
-3.  **結果**：新功能立刻上線。
+### 2. 協作的核心：POBot 的過渡作用
+POBot 的引入是為了解決人機溝通的「語義鴻溝」。人類傾向於模糊指令（例如：做一個 Logo），而機器需要精確規格。POBot 扮演了**翻譯官**的角色，將人類的直覺轉化為 AI Agent 可執行的結構化任務。
 
-**第七步：【安全下班】自動健檢 (Admin)**
-1.  **動作**：工作結束時修改密碼，系統自動進行健康檢查。
-2.  **結果**：安心下班，系統已準備好迎接明天。
+### 3. 信任但驗證 (Trust but Verify)
+系統設計的核心原則是 **Human-in-the-loop**。無論是 MarketBot 生成的開發信，還是 DevBot 產生的程式碼，都必須經過人類（Alice/Charlie）的點擊「批准」才能生效。這確保了技術的強大能力始終處於人類的倫理與商業邏輯管控之下。
 
-> 🎉 **恭喜！您剛剛在一个小時內，完成了傳統團隊需要兩天才能做完的工作。**
+### 4. 未來展望：共生進化
+隨著系統進入 Phase 5，AI 將不再只是「工具」，而是具備身份（Identity）的「虛擬員工」。人類與虛擬員工的協作將從單向指派轉向雙向對話，共同驅動企業的數位轉型。

@@ -25,18 +25,21 @@ export const TaskModal: React.FC<TaskModalProps> = ({ task, onClose, onTaskCreat
   const [assignableUsers, setAssignableUsers] = useState<AssignableUser[]>([]);
   const [isLoadingUsers, setIsLoadingUsers] = useState(true);
   const [selectedKnowledgeIds, setSelectedKnowledgeIds] = useState<string[]>([]);
+  const [currentUser, setCurrentUser] = useState<any>(null);
 
   const isEditMode = task != null && task.id;
 
   useEffect(() => {
-    const fetchAssignableOptions = async () => {
+    const fetchInitialData = async () => {
       try {
         setIsLoadingUsers(true);
-        const [users, aiAgents] = await Promise.all([
+        const [users, aiAgents, user] = await Promise.all([
           api.getAssignableUsers(),
-          api.getAssignableAgents()
+          api.getAssignableAgents(),
+          api.getCurrentUser()
         ]);
         
+        setCurrentUser(user);
         const formattedAiAgents = aiAgents.map(agent => ({
           ...agent,
           name: `(AI) ${agent.name}`
@@ -44,15 +47,13 @@ export const TaskModal: React.FC<TaskModalProps> = ({ task, onClose, onTaskCreat
 
         setAssignableUsers([...users, ...formattedAiAgents]);
       } catch (error) {
-        console.error("Failed to fetch assignable users or agents:", error);
-        // Even if one fails, we might want to show the other. For now, we fail together.
-        // Or, handle partial data loading.
+        console.error("Failed to fetch data:", error);
       } finally {
         setIsLoadingUsers(false);
       }
     };
 
-    fetchAssignableOptions();
+    fetchInitialData();
   }, []);
 
   useEffect(() => {
@@ -145,6 +146,30 @@ export const TaskModal: React.FC<TaskModalProps> = ({ task, onClose, onTaskCreat
     }
   };
 
+  const handleDelete = async () => {
+    if (!task || !task.id) return;
+    if (!window.confirm('Are you sure you want to archive this task? It will be hidden from all views.')) return;
+
+    setIsSubmitting(true);
+    try {
+      await api.deleteTask(task.id);
+      onTaskUpdated(); // Reuse update trigger to refresh list
+      alert('Task archived successfully!');
+      onClose();
+    } catch (error: any) {
+      console.error("Failed to archive task:", error);
+      alert(`Failed to archive task: ${error.message}`);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const canArchive = isEditMode && currentUser && (
+    currentUser.role === 'system_admin' || 
+    currentUser.role === 'manager' || 
+    currentUser.id === task?.assignee_id
+  );
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center" aria-modal="true" role="dialog">
       <div className="bg-card rounded-lg shadow-xl w-full max-w-lg p-6 relative max-h-[90vh] overflow-y-auto">
@@ -200,13 +225,27 @@ export const TaskModal: React.FC<TaskModalProps> = ({ task, onClose, onTaskCreat
             disabled={isSubmitting}
           />
 
-          <div className="flex justify-end space-x-3 pt-4">
-            <button type="button" onClick={onClose} className="px-4 py-2 rounded-md bg-secondary text-secondary-foreground hover:bg-secondary/80">
-              Cancel
-            </button>
-            <button type="submit" disabled={isSubmitting} className="px-4 py-2 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50">
-              {isSubmitting ? 'Saving...' : (isEditMode ? 'Save Changes' : 'Create Task')}
-            </button>
+          <div className="flex justify-between items-center pt-4">
+            <div>
+              {canArchive && (
+                <button 
+                  type="button" 
+                  onClick={handleDelete} 
+                  disabled={isSubmitting}
+                  className="px-4 py-2 rounded-md bg-destructive text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50 text-sm"
+                >
+                  Archive Task
+                </button>
+              )}
+            </div>
+            <div className="flex space-x-3">
+              <button type="button" onClick={onClose} className="px-4 py-2 rounded-md bg-secondary text-secondary-foreground hover:bg-secondary/80">
+                Cancel
+              </button>
+              <button type="submit" disabled={isSubmitting} className="px-4 py-2 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50">
+                {isSubmitting ? 'Saving...' : (isEditMode ? 'Save Changes' : 'Create Task')}
+              </button>
+            </div>
           </div>
         </form>
       </div>

@@ -42,7 +42,11 @@ const ListView: React.FC<{ tasks: Task[]; setEditingTask: (task: Task) => void }
           <div className="flex items-center space-x-4">
             {/* Assignee Avatar */}
             {task.assignee && (
-                <UserAvatar name={task.assignee} isAI={task.assignee_id === '3' || task.assignee.toLowerCase().includes('ai')} size={24} />
+                <UserAvatar 
+                    name={task.assignee} 
+                    isAI={task.assignee_id?.startsWith('agent-') || task.assignee.toLowerCase().includes('bot')} 
+                    size={24} 
+                />
             )}
             {/* Attachment Badge */}
             {task.attachments && task.attachments.length > 0 && (
@@ -233,17 +237,15 @@ const DashboardPage: React.FC = () => {
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
-      const [tasksData, employeesData, projectsData] = await Promise.all([
-        api.getTasks(),
-        api.getAssignableUsers(),
+      const [tasksData, projectsData, employeesData] = await Promise.all([
+        api.getTasks(true), // Include closed tasks so users can see/archive them
         api.getProjects(),
+        api.getAssignableUsers()
       ]);
       setTasks(tasksData || []);
       setEmployees(employeesData || []);
       setProjects(projectsData || []);
-      if (projectsData && projectsData.length > 0 && selectedProjectId === 'all') {
-        setSelectedProjectId(projectsData[0].id);
-      }
+      // Auto-selection of the first project removed to support the "All Projects" dashboard view.
     } catch (error: any) {
       console.error("Failed to fetch data:", error);
       // In a real app, you might use a toast notification library here

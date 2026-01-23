@@ -195,8 +195,8 @@ const supabaseApi = {
       } as Employee;
     }
   },
-  async getTasks(): Promise<Task[]> {
-    const response = await fetch('/api/tasks', { headers: await this._getHeaders() });
+  async getTasks(includeClosed: boolean = false): Promise<Task[]> {
+    const response = await fetch(`/api/tasks?include_closed=${includeClosed}`, { headers: await this._getHeaders() });
     if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         throw new Error(errorData.detail || 'Failed to fetch tasks.');
@@ -206,6 +206,16 @@ const supabaseApi = {
     if (Array.isArray(data)) return data;
     if (data && typeof data === 'object' && Array.isArray(data.tasks)) return data.tasks;
     return [];
+  },
+  async deleteTask(taskId: string): Promise<void> {
+    const response = await fetch(`/api/tasks/${taskId}`, {
+        method: 'DELETE',
+        headers: await this._getHeaders()
+    });
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.detail || 'Failed to archive task.');
+    }
   },
   async getProjects(): Promise<Project[]> {
     const response = await fetch('/api/projects?include_computed_status=true', { headers: await this._getHeaders() });
@@ -232,12 +242,12 @@ const supabaseApi = {
     return response.json();
   },
   async createTask(task_data: NewTaskData): Promise<Task> {
-    // Map frontend field 'assigneeId' to backend expected 'assignee' if needed, 
-    // but the backend CreateTaskRequest expects 'assignee' as a string (name or id).
-    // Based on projects_api.py, it takes 'assignee' string.
+    // Map frontend camelCase to backend snake_case
+    const { assigneeId, ...rest } = task_data;
     const payload = {
-      ...task_data,
-      assignee: task_data.assigneeId // Backend expects 'assignee'
+      ...rest,
+      assignee_id: assigneeId,
+      assignee: "User" // Default fallback name, backend will overwrite with real name if assignee_id is found
     };
 
     const response = await fetch('/api/tasks', {
@@ -274,7 +284,8 @@ const supabaseApi = {
 
     if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.detail || 'Failed to update task.');
+        const errorMessage = errorData.detail?.error || errorData.detail || errorData.message || 'Failed to update task.';
+        throw new Error(typeof errorMessage === 'object' ? JSON.stringify(errorMessage) : errorMessage);
     }
     
     const data = await response.json();
