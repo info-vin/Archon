@@ -280,11 +280,17 @@ def test_some_endpoint():
     >
     > **症狀**: 執行完 `make test` 後，發現資料庫變空，或某些功能面板（如 Sales Intel）消失。
     > **原因**: E2E 測試會重置資料庫，但可能未正確還原所有種子資料。且若遷移紀錄 (`schema_migrations`) 未被清除，`make db-init` 會誤以為資料已存在而跳過播種。
-    > **解法**: 請依序執行以下步驟，強制重置環境：
-    > 1.  **手動執行重置**: 在 Supabase SQL Editor 或透過工具執行 `migration/RESET_DB.sql`。此腳本現在會**刪除** `schema_migrations` 表，確保系統「失憶」。
-    > 2.  **重新初始化**: 執行 `make db-init`。系統會發現沒有遷移紀錄，從而乖乖地從頭執行所有腳本，包含正確的種子資料。
-
-    **🚑 緊急備案：手動初始化流程 (Manual Fallback)**
+        > **解法**: 請依序執行以下步驟，強制重置環境：
+        > 1.  **手動執行重置**: 在 Supabase SQL Editor 或透過工具執行 `migration/RESET_DB.sql`。此腳本現在會**刪除** `schema_migrations` 表，確保系統「失憶」。
+        > 2.  **重新初始化**: 執行 `make db-init`。系統會發現沒有遷移紀錄，從而乖乖地從頭執行所有腳本，包含 正確的種子資料。
+        >
+        > **💡 快速救災指令 (Docker環境專用)**:
+        > 若您無法直接連線資料庫，可使用以下單行指令透過容器執行重置：
+        > ```bash
+        > docker exec -i archon-server /venv/bin/python -c "import os, psycopg2; DB=os.getenv('SUPABASE_DB_URL'); conn=psycopg2.connect(DB); cur=conn.cursor(); f=open('migration/RESET_DB.sql'); cur.execute(f.read()); conn.commit(); conn.close(); print('✅ Reset Complete')" && make db-init
+        > ```
+    
+        **🚑 緊急備案：手動初始化流程 (Manual Fallback)**
     > **僅當 `make db-init` 失敗時使用**
     > 若自動腳本無法執行，請依序手動執行以下 SQL 檔案：
 
