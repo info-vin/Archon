@@ -82,8 +82,13 @@ async def promote_lead_to_vendor(
     # Secure Role Check using Authenticated User Context
     user_role = current_user.get("role", "viewer").lower()
 
-    if user_role == "viewer":
-        raise HTTPException(status_code=403, detail="Viewers cannot promote leads.")
+    user_role = current_user.get("role", "viewer").lower()
+
+    # Allow: admin, manager, sales, marketing, member
+    # Deny: viewer, guest
+    if user_role in ["viewer", "guest"]:
+        logfire.warn(f"API: Access denied for promotion | user={current_user.get('email')} | role={user_role}")
+        raise HTTPException(status_code=403, detail="Insufficient permissions to promote leads.")
 
     try:
         supabase = get_supabase_client()
@@ -122,12 +127,20 @@ async def promote_lead_to_vendor(
         raise HTTPException(status_code=500, detail=f"Promotion failed: {str(e)}") from e
 
 @router.post("/generate-pitch", response_model=PitchResponse)
-async def generate_pitch(request: PitchRequest):
+async def generate_pitch(request: PitchRequest, current_user: dict = Depends(get_current_user)):
     """
     Generate a tailored sales pitch using RAG to find relevant case studies.
     """
     try:
-        logfire.info(f"API: Generating pitch | company={request.company} | title={request.job_title}")
+        logfire.info(f"API: Generating pitch | company={request.company} | user={current_user.get('email')}")
+
+        # Secure Role Check
+        user_role = current_user.get("role", "viewer").lower()
+        if user_role not in ["admin", "manager", "sales", "marketing", "member"]:
+             # Broaden access for now, but block pure viewers if needed.
+             # For Phase 4.4, we assume signed-in users (except strict viewers) can use this.
+             if user_role == "viewer":
+                 raise HTTPException(status_code=403, detail="Access restricted to active employees.")
 
         # 1. RAG Search
         search_query = f"{request.job_title} {request.description[:500]}"

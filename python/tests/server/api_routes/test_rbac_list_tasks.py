@@ -37,19 +37,14 @@ def test_list_tasks_admin_access(mock_task_service_class):
     # Cleanup
     app.dependency_overrides = {}
 
-@patch('src.server.api_routes.projects_api.ProfileService', new_callable=MagicMock)
 @patch('src.server.api_routes.projects_api.TaskService', new_callable=MagicMock)
-def test_list_tasks_member_access(mock_task_service_class, mock_profile_service_class):
+def test_list_tasks_member_access(mock_task_service_class):
     """
-    Test that regular members can only list their own tasks (assignee_name filter applied).
+    Test that regular members can only list their own tasks (assignee_id filter applied).
     """
     # Setup
     mock_task_service = mock_task_service_class.return_value
     mock_task_service.list_tasks = AsyncMock(return_value=(True, {"tasks": []}))
-
-    # Mock Profile Service to resolve UUID to Name
-    mock_profile_service = mock_profile_service_class.return_value
-    mock_profile_service.get_profile.return_value = (True, {"name": "Alice Johnson"})
 
     # Mock authentication as Member
     mock_member_user = {"id": "user-123", "role": "member", "email": "user@test.com"}
@@ -70,8 +65,10 @@ def test_list_tasks_member_access(mock_task_service_class, mock_profile_service_
     mock_task_service.list_tasks.assert_awaited_once()
     _, kwargs = mock_task_service.list_tasks.call_args
 
-    # Member MUST have assignee_name filter resolved from their profile
-    assert kwargs.get("assignee_name") == "Alice Johnson"
+    # Member MUST have assignee_id filter matching their user ID
+    assert kwargs.get("assignee_id") == "user-123"
+    # Ensure assignee_name is NOT passed (deprecated)
+    assert kwargs.get("assignee_name") is None
 
     # Cleanup
     app.dependency_overrides = {}

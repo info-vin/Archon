@@ -11,8 +11,13 @@ vi.mock('../services/api.ts', () => ({
       { id: '2', name: 'Alice Johnson', role: 'member' }
     ]),
     getAssignableAgents: vi.fn().mockResolvedValue([
-      { id: '3', name: 'AI Assistant', role: 'ai_agent' }
+      { id: '3', name: 'Assistant', role: 'ai_agent' }
     ]),
+    getCurrentUser: vi.fn().mockResolvedValue({
+      id: '1',
+      name: 'Test User',
+      role: 'system_admin'
+    }),
     createTask: vi.fn().mockResolvedValue({ id: 'new-task' }),
     updateTask: vi.fn().mockResolvedValue({ id: 'task-1' }),
     getKnowledgeItems: vi.fn().mockResolvedValue([]), // Needed for KnowledgeSelector
@@ -53,6 +58,7 @@ describe('TaskModal', () => {
     expect(screen.getByRole('button', { name: 'Create Task' })).toBeInTheDocument();
     // Wait for users to load
     await screen.findByRole('option', { name: 'Alice Johnson' });
+    await screen.findByRole('option', { name: '(AI) Assistant' });
   });
 
   it('should render in edit mode and populate fields', async () => {

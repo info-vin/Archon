@@ -578,8 +578,9 @@ class TaskService:
         try:
             # Use absolute import for the client factory
             from src.server.services.llm_provider_service import get_llm_client
-            from ..search.rag_service import RAGService
+
             from ..credential_service import credential_service
+            from ..search.rag_service import RAGService
 
             # 1. Fetch relevant context using RAG
             rag_service = RAGService(self.supabase_client)

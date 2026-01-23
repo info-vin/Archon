@@ -22,7 +22,7 @@ ON CONFLICT (id) DO UPDATE SET
 INSERT INTO profiles (id, "employeeId", name, email, department, position, status, role, avatar)
 VALUES (
     COALESCE((SELECT id FROM profiles WHERE email = 'alice@archon.com'), '2'),
-    'E1002', 'Alice Johnson', 'alice@archon.com', 'Sales', 'Sales Representative', 'active', 'member', 'https://i.pravatar.cc/150?u=alice@archon.com'
+    'E1002', 'Alice Johnson', 'alice@archon.com', 'Sales', 'Sales Representative', 'active', 'sales', 'https://i.pravatar.cc/150?u=alice@archon.com'
 )
 ON CONFLICT (id) DO UPDATE SET
     name = EXCLUDED.name,
@@ -34,7 +34,7 @@ ON CONFLICT (id) DO UPDATE SET
 INSERT INTO profiles (id, "employeeId", name, email, department, position, status, role, avatar)
 VALUES (
     COALESCE((SELECT id FROM profiles WHERE email = 'bob@archon.com'), '3'),
-    'E1003', 'Bob Williams', 'bob@archon.com', 'Marketing', 'Marketing Specialist', 'active', 'member', 'https://i.pravatar.cc/150?u=bob@archon.com'
+    'E1003', 'Bob Williams', 'bob@archon.com', 'Marketing', 'Marketing Specialist', 'active', 'marketing', 'https://i.pravatar.cc/150?u=bob@archon.com'
 )
 ON CONFLICT (id) DO UPDATE SET
     name = EXCLUDED.name,

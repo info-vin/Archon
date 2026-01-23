@@ -132,7 +132,7 @@ const MarketingPage: React.FC = () => {
                     value={keyword}
                     onChange={(e) => setKeyword(e.target.value)}
                     placeholder="Enter job title (e.g., Data Analyst)"
-                    className="flex-1 p-3 border border-input bg-background rounded-lg focus:ring-2 focus:ring-primary focus:outline-none"
+                    className="flex-1 p-3 border border-input bg-background text-gray-900 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-primary focus:outline-none"
                 />
                 <button
                     type="submit"
@@ -185,7 +185,15 @@ const MarketingPage: React.FC = () => {
                                 </div>
                                 <div className="flex justify-between items-center mt-4 pt-4 border-t border-gray-100">
                                     <div className="flex gap-3">
-                                        <a href={job.url || '#'} target="_blank" rel="noreferrer" className="text-gray-500 hover:text-gray-700 text-sm flex items-center gap-1">View Link</a>
+                                        <a 
+                                            href={job.url || '#'} 
+                                            target="_blank" 
+                                            rel="noreferrer" 
+                                            onClick={(e) => !job.url && e.preventDefault()}
+                                            className={`text-sm flex items-center gap-1 ${!job.url ? 'text-gray-400 cursor-not-allowed' : 'text-gray-500 hover:text-gray-700'}`}
+                                        >
+                                            View Link
+                                        </a>
                                         <button onClick={() => setExpandedJobIdx(expandedJobIdx === idx ? null : idx)} className="text-indigo-600 hover:text-indigo-800 text-sm font-medium transition-colors">
                                             {expandedJobIdx === idx ? 'Hide Details' : 'View Full JD'}
                                         </button>
@@ -357,7 +365,7 @@ const PromoteForm: React.FC<{ lead: any; onClose: () => void; onSuccess: () => v
                     type="email" 
                     value={email} 
                     onChange={e => setEmail(e.target.value)} 
-                    className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                    className="w-full p-2 border border-gray-300 bg-white text-gray-900 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none"
                     placeholder="contact@company.com" 
                 />
             </div>
@@ -366,7 +374,7 @@ const PromoteForm: React.FC<{ lead: any; onClose: () => void; onSuccess: () => v
                 <textarea 
                     value={notes} 
                     onChange={e => setNotes(e.target.value)} 
-                    className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                    className="w-full p-2 border border-gray-300 bg-white text-gray-900 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none"
                     rows={3} 
                     placeholder="Details about this lead..."
                 />

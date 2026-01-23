@@ -276,6 +276,14 @@ def test_some_endpoint():
         ```
     3.  腳本會自動完成：清空舊資料、建立 Schema、寫入 Mock Data、並修復 Auth ID 不一致的問題。
 
+    > **🚑 資料庫救災指南 (Database Recovery SOP)**
+    >
+    > **症狀**: 執行完 `make test` 後，發現資料庫變空，或某些功能面板（如 Sales Intel）消失。
+    > **原因**: E2E 測試會重置資料庫，但可能未正確還原所有種子資料。且若遷移紀錄 (`schema_migrations`) 未被清除，`make db-init` 會誤以為資料已存在而跳過播種。
+    > **解法**: 請依序執行以下步驟，強制重置環境：
+    > 1.  **手動執行重置**: 在 Supabase SQL Editor 或透過工具執行 `migration/RESET_DB.sql`。此腳本現在會**刪除** `schema_migrations` 表，確保系統「失憶」。
+    > 2.  **重新初始化**: 執行 `make db-init`。系統會發現沒有遷移紀錄，從而乖乖地從頭執行所有腳本，包含正確的種子資料。
+
     **🚑 緊急備案：手動初始化流程 (Manual Fallback)**
     > **僅當 `make db-init` 失敗時使用**
     > 若自動腳本無法執行，請依序手動執行以下 SQL 檔案：
@@ -302,6 +310,8 @@ def test_some_endpoint():
             > **說明**: 修正 Manager 角色對部門成員的管理權限，並釐清與 System Admin 的權限邊界。
         14. `migration/010_bob_and_alice_schema_updates.sql` (**Phase 4.4 戰情室基礎**)
             > **說明**: 為 `blog_posts` 新增狀態欄位，並擴充 `leads` 表以支援 CRM 功能。
+        15. `migration/011_update_alice_bob_roles.sql` (**Persona 權限修正**)
+            > **說明**: 將 Alice 與 Bob 的角色分別升級為 `sales` 與 `marketing`，確保其具備存取 Sales Intel 與 Brand Hub 的權限。
 
 3.  **階段三：執行部署**
 

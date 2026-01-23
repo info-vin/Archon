@@ -188,6 +188,9 @@ BEGIN
     DROP TABLE IF EXISTS sources CASCADE;
     DROP TABLE IF EXISTS settings CASCADE;
     
+    -- Drop migration history to force re-run of all migrations/seeds on next init
+    DROP TABLE IF EXISTS schema_migrations CASCADE;
+    
     RAISE NOTICE 'Tables dropped successfully.';
     
 EXCEPTION WHEN OTHERS THEN

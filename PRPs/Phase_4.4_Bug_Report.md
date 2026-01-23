@@ -32,7 +32,10 @@
 | **ENH-005** | ✨ Feature | **AI** | Pitch 需分英/中兩段顯示；AI Prompt 需顯示在卡片上方供參考。 | Low | 🟢 Fixed (Validated) | AI/FE | `marketing_api.py`, `MarketingPage.tsx` |
 | **BUG-006** | 🐛 Bug | **Sales** | Leads 列表顯示正常，但 Alice 無法執行 Promote to Vendor。 | High | 🟢 Fixed (Validated) | Backend | `marketing_api.py` |
 | **BUG-007** | 💄 UI | **Global** | 5173 (End User UI) 夜間模式未全域套用。 | Low | 🟢 Fixed (Validated) | Frontend | `MainLayout.tsx` |
-| **BUG-000** | 🐛 Bug | -- | (範例) 手機版 Logo 跑版 | Low | 🟢 Fixed | Frontend | -- |
+| **BUG-008** | 🐛 Bug | **Marketing** | Job Search 點擊 View Link 後列表清空 (State Reset)。 | Low | 🟢 Fixed (Validated) | Frontend | `MarketingPage.tsx` |
+| **BUG-009** | 🐛 Bug | **Brand** | Brand Hub 缺少 "New Post" 按鈕，無法執行 Draft 流程。 | High | 🟢 Fixed (Validated) | Frontend | `BrandPage.tsx` |
+| **BUG-010** | 🛡️ Sec | **Marketing** | Pitch Generation API 缺乏 Server-side RBAC 檢查。 | Medium | 🟢 Fixed (Validated) | Backend | `marketing_api.py` |
+| **BUG-011** | 💄 UI | **Global** | Input/Textarea 在夜間模式下文字顏色不明顯 (Low Contrast)。 | Low | 🟢 Fixed (Validated) | Frontend | `MarketingPage.tsx` |
 
 ---
 

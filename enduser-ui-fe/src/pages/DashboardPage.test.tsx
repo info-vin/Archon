@@ -42,8 +42,8 @@ vi.mock('../services/api', () => {
           title: 'AI task',
           description: '',
           status: 'doing',
-          assignee: 'AI Assistant',
-          assignee_id: '3', // This was missing
+          assignee: 'AI Bot Assistant',
+          assignee_id: 'agent-3',
           task_order: 2,
           priority: 'low',
           due_date: '2025-09-11T23:59:59Z',
@@ -76,9 +76,15 @@ vi.mock('../services/api', () => {
       getProjects: vi.fn().mockResolvedValue([{ id: 'proj-1', title: 'Test Project' }]),
       getAssignableUsers: vi.fn().mockResolvedValue(mockUsers),
       getAssignableAgents: vi.fn().mockResolvedValue([
-        { id: 'ai-asst-1', name: 'AI Assistant', role: 'ai_agent' }
+        { id: 'ai-asst-1', name: 'Assistant', role: 'ai_agent' }
       ]),
+      getCurrentUser: vi.fn().mockResolvedValue({
+        id: 'admin-1',
+        name: 'Admin User',
+        role: 'system_admin'
+      }),
       createTask: vi.fn().mockResolvedValue({ id: 'new-task-1' }),
+      updateTask: vi.fn().mockResolvedValue({ id: 'task-1' }),
     },
   };
 });
@@ -87,7 +93,7 @@ describe('DashboardPage', () => {
   it('should open TaskModal and show assignable users in dropdown', async () => {
     render(<DashboardPage />);
     await waitFor(() => {
-      expect(screen.getByText('Test Project Tasks')).toBeInTheDocument();
+      expect(screen.getByText('All Tasks')).toBeInTheDocument();
     });
 
     fireEvent.click(screen.getByRole('button', { name: /new task/i }));
@@ -96,7 +102,7 @@ describe('DashboardPage', () => {
     });
 
     expect(await screen.findByRole('option', { name: 'Alice Johnson' })).toBeInTheDocument();
-    expect(await screen.findByRole('option', { name: 'AI Assistant' })).toBeInTheDocument();
+    expect(await screen.findByRole('option', { name: '(AI) Assistant' })).toBeInTheDocument();
   });
 
   it('should display user avatars correctly for humans and AI', async () => {
@@ -111,8 +117,8 @@ describe('DashboardPage', () => {
     const humanTaskItem = screen.getByText('Human task').closest('.p-4');
     const aiTaskItem = screen.getByText('AI task').closest('.p-4');
 
-    const humanAvatar = within(humanTaskItem).getByTitle('Alice Johnson');
-    const aiAvatar = within(aiTaskItem).getByTitle('AI Assistant');
+    const humanAvatar = within(humanTaskItem!).getByTitle('Alice Johnson');
+    const aiAvatar = within(aiTaskItem!).getByTitle('AI Bot Assistant');
 
     expect(humanAvatar).toBeInTheDocument();
     expect(aiAvatar).toBeInTheDocument();

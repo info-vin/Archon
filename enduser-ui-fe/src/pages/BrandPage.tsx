@@ -229,7 +229,20 @@ const BrandPage: React.FC = () => {
                             <PlusIcon className="w-5 h-5 text-indigo-500" />
                             Content Pipeline
                         </h2>
-                        <span className="text-xs text-gray-400">Drag-and-drop support coming soon</span>
+                        <div className="flex gap-3 items-center">
+                            <span className="text-xs text-gray-400">Drag-and-drop coming soon</span>
+                            <button 
+                                onClick={() => {
+                                    // Trigger Modal
+                                    const modal = document.getElementById('create-post-modal') as HTMLDialogElement;
+                                    if (modal) modal.showModal();
+                                }}
+                                className="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-indigo-700 flex items-center gap-2 shadow-sm transition-transform active:scale-95"
+                            >
+                                <PlusIcon className="w-4 h-4" />
+                                New Post
+                            </button>
+                        </div>
                     </div>
                     
                     <div className="flex flex-col md:flex-row gap-6 overflow-x-auto pb-4">
@@ -239,7 +252,86 @@ const BrandPage: React.FC = () => {
                     </div>
                 </section>
             </div>
+
+            {/* Create Post Modal */}
+            <dialog id="create-post-modal" className="rounded-xl shadow-xl p-0 w-full max-w-lg backdrop:bg-black/50">
+                <div className="bg-white p-6 space-y-4">
+                    <div className="flex justify-between items-center mb-2">
+                        <h3 className="text-xl font-bold text-gray-800">New Brand Post</h3>
+                        <button onClick={() => (document.getElementById('create-post-modal') as HTMLDialogElement).close()} className="text-gray-400 hover:text-gray-600">
+                            ✕
+                        </button>
+                    </div>
+                    <CreatePostForm onSuccess={() => {
+                        (document.getElementById('create-post-modal') as HTMLDialogElement).close();
+                        loadData();
+                    }} />
+                </div>
+            </dialog>
         </PermissionGuard>
+    );
+};
+
+const CreatePostForm: React.FC<{ onSuccess: () => void }> = ({ onSuccess }) => {
+    const [title, setTitle] = useState('');
+    const [content, setContent] = useState('');
+    const [loading, setLoading] = useState(false);
+    
+    // Simple draft with AI simulation if needed, but for now standard form
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setLoading(true);
+        try {
+            await api.createBlogPost({
+                title,
+                content,
+                status: 'draft',
+                excerpt: content.slice(0, 100) + '...',
+                imageUrl: '/placeholder-blog.jpg'
+            });
+            setTitle('');
+            setContent('');
+            onSuccess();
+        } catch (err) {
+            alert("Failed to create post");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return (
+        <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
+                <input 
+                    type="text" 
+                    required
+                    value={title} 
+                    onChange={e => setTitle(e.target.value)} 
+                    className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none text-gray-900"
+                    placeholder="e.g. 5 Ways AI Transforms Manufacturing" 
+                />
+            </div>
+            <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Content / Draft Idea</label>
+                <textarea 
+                    required
+                    value={content} 
+                    onChange={e => setContent(e.target.value)} 
+                    className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none text-gray-900 min-h-[150px]"
+                    placeholder="Write you content here..."
+                />
+            </div>
+            <div className="flex justify-end pt-2">
+                <button 
+                    type="submit" 
+                    disabled={loading}
+                    className="px-6 py-2 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 disabled:opacity-50 flex items-center gap-2"
+                >
+                    {loading ? 'Saving...' : 'Create Draft'}
+                </button>
+            </div>
+        </form>
     );
 };
 
