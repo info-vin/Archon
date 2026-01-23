@@ -194,6 +194,55 @@ def sync_profiles_to_auth(conn):
     except Exception as e:
         print(f"❌ Auth Sync Fatal Error: {e}")
 
+def seed_api_keys_from_env(conn):
+    """
+    Reads API keys from environment variables and seeds them into archon_settings.
+    This ensures development keys persist after database resets.
+    """
+    print("\n🔑 Seeding API keys from environment...")
+    
+    # Map env vars to database keys
+    # Format: (Env Var Name, DB Key, Category, Description)
+    api_key_map = [
+        ("OPENAI_API_KEY", "OPENAI_API_KEY", "ai", "OpenAI API Key for embeddings and LLM"),
+        ("ANTHROPIC_API_KEY", "ANTHROPIC_API_KEY", "ai", "Anthropic API Key for Claude models"),
+        ("GOOGLE_API_KEY", "GOOGLE_API_KEY", "ai", "Google AI/Gemini API Key"),
+        ("GEMINI_API_KEY", "GEMINI_API_KEY", "ai", "Gemini API Key (Frontend/Backend)"),
+        ("LOGFIRE_TOKEN", "LOGFIRE_TOKEN", "observability", "Logfire Token for tracing"),
+    ]
+    
+    if not conn:
+        print("⚠️ No DB connection available for seeding API keys.")
+        return
+
+    cursor = conn.cursor()
+    count = 0
+    
+    try:
+        for env_var, db_key, category, description in api_key_map:
+            value = os.getenv(env_var)
+            if value:
+                # We store keys as 'encrypted' false for dev convenience, 
+                # but in prod they should be encrypted.
+                cursor.execute("""
+                    INSERT INTO archon_settings (key, value, is_encrypted, category, description, updated_at)
+                    VALUES (%s, %s, false, %s, %s, NOW())
+                    ON CONFLICT (key) DO UPDATE SET
+                        value = EXCLUDED.value,
+                        updated_at = NOW();
+                """, (db_key, value, category, description))
+                count += 1
+                # print(f"   Synced {db_key}") # Don't print value for security
+        
+        conn.commit()
+        print(f"✅ Seeded {count} API keys/tokens from environment.")
+        
+    except Exception as e:
+        conn.rollback()
+        print(f"❌ Failed to seed API keys: {e}")
+    finally:
+        cursor.close()
+
 def main():
     conn = None
     try:
@@ -217,6 +266,10 @@ def main():
         
         conn.commit()
         print("\n🎉 SQL migrations applied!")
+        
+        # Seed API Keys immediately after migrations
+        seed_api_keys_from_env(conn)
+        
     except Exception as e:
         print(f"\n⚠️ SQL Migrations SKIPPED: {e}")
         print("Please run migrations manually in Supabase SQL Editor.")
