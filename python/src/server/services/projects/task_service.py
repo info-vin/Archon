@@ -571,7 +571,8 @@ class TaskService:
         a structured product spec with User Stories and Technical Requirements.
         """
         try:
-            from ..llm_provider_service import llm_provider_service
+            # Use absolute import to avoid relative import issues in circular dependency scenarios
+            from src.server.services.llm_provider_service import llm_provider_service
             from ..search.rag_service import RAGService
 
             # 1. Fetch relevant context using RAG
