@@ -276,8 +276,28 @@ const CreatePostForm: React.FC<{ onSuccess: () => void }> = ({ onSuccess }) => {
     const [title, setTitle] = useState('');
     const [content, setContent] = useState('');
     const [loading, setLoading] = useState(false);
+    const [isDrafting, setIsDrafting] = useState(false);
     
-    // Simple draft with AI simulation if needed, but for now standard form
+    const handleDraft = async () => {
+        if (!title) {
+            alert("Please enter a title or topic first.");
+            return;
+        }
+        setIsDrafting(true);
+        try {
+            const result = await api.draftBlogPost({
+                topic: title, 
+                tone: 'professional'
+            });
+            setTitle(result.title);
+            setContent(result.content);
+        } catch (err: any) {
+            alert(err.message || "Failed to generate draft");
+        } finally {
+            setIsDrafting(false);
+        }
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
@@ -302,30 +322,46 @@ const CreatePostForm: React.FC<{ onSuccess: () => void }> = ({ onSuccess }) => {
     return (
         <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
-                <input 
-                    type="text" 
-                    required
-                    value={title} 
-                    onChange={e => setTitle(e.target.value)} 
-                    className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none text-gray-900"
-                    placeholder="e.g. 5 Ways AI Transforms Manufacturing" 
-                />
+                <label className="block text-sm font-medium text-gray-700 mb-1">Title / Topic</label>
+                <div className="flex gap-2">
+                    <input 
+                        type="text" 
+                        required
+                        value={title} 
+                        onChange={e => setTitle(e.target.value)} 
+                        className="flex-1 p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none text-gray-900"
+                        placeholder="e.g. 5 Ways AI Transforms Manufacturing" 
+                    />
+                    <button 
+                        type="button"
+                        onClick={handleDraft}
+                        disabled={isDrafting}
+                        className="px-3 py-2 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 text-sm font-bold flex items-center gap-1 disabled:opacity-50"
+                        title="Generate draft with AI"
+                    >
+                        {isDrafting ? (
+                            <RefreshCwIcon className="w-4 h-4 animate-spin" />
+                        ) : (
+                            <TrendingUpIcon className="w-4 h-4" />
+                        )}
+                        Magic Draft
+                    </button>
+                </div>
             </div>
             <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Content / Draft Idea</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Content</label>
                 <textarea 
                     required
                     value={content} 
                     onChange={e => setContent(e.target.value)} 
-                    className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none text-gray-900 min-h-[150px]"
-                    placeholder="Write you content here..."
+                    className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none text-gray-900 min-h-[200px] font-mono text-sm leading-relaxed"
+                    placeholder="Write your content here or use Magic Draft..."
                 />
             </div>
             <div className="flex justify-end pt-2">
                 <button 
                     type="submit" 
-                    disabled={loading}
+                    disabled={loading || isDrafting}
                     className="px-6 py-2 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 disabled:opacity-50 flex items-center gap-2"
                 >
                     {loading ? 'Saving...' : 'Create Draft'}

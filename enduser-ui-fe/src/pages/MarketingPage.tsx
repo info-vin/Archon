@@ -185,15 +185,20 @@ const MarketingPage: React.FC = () => {
                                 </div>
                                 <div className="flex justify-between items-center mt-4 pt-4 border-t border-gray-100">
                                     <div className="flex gap-3">
-                                        <a 
-                                            href={job.url || '#'} 
-                                            target="_blank" 
-                                            rel="noreferrer" 
-                                            onClick={(e) => !job.url && e.preventDefault()}
-                                            className={`text-sm flex items-center gap-1 ${!job.url ? 'text-gray-400 cursor-not-allowed' : 'text-gray-500 hover:text-gray-700'}`}
-                                        >
-                                            View Link
-                                        </a>
+                                        {job.url ? (
+                                            <a 
+                                                href={job.url} 
+                                                target="_blank" 
+                                                rel="noreferrer" 
+                                                className="text-gray-500 hover:text-gray-700 text-sm flex items-center gap-1"
+                                            >
+                                                View Link
+                                            </a>
+                                        ) : (
+                                            <span className="text-gray-400 text-sm flex items-center gap-1 cursor-not-allowed" title="No link available">
+                                                View Link
+                                            </span>
+                                        )}
                                         <button onClick={() => setExpandedJobIdx(expandedJobIdx === idx ? null : idx)} className="text-indigo-600 hover:text-indigo-800 text-sm font-medium transition-colors">
                                             {expandedJobIdx === idx ? 'Hide Details' : 'View Full JD'}
                                         </button>
@@ -350,8 +355,8 @@ const PromoteForm: React.FC<{ lead: any; onClose: () => void; onSuccess: () => v
                 notes: notes
             });
             onSuccess();
-        } catch (err) {
-            alert("Failed to promote vendor.");
+        } catch (err: any) {
+            alert(err.message || "Failed to promote vendor.");
         } finally {
             setLoading(false);
         }

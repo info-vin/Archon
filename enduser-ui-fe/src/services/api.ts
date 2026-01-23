@@ -442,6 +442,18 @@ const supabaseApi = {
     }
     return response.json();
   },
+  async draftBlogPost(data: { topic: string; keywords?: string; tone?: string }): Promise<{ title: string; content: string; excerpt: string }> {
+      const response = await fetch('/api/marketing/blog/draft', {
+          method: 'POST',
+          headers: await this._getHeaders(),
+          body: JSON.stringify(data)
+      });
+      if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.detail || 'Failed to generate draft.');
+      }
+      return response.json();
+  },
   async updateBlogPost(postId: string, postData: Partial<NewBlogPostData>): Promise<BlogPost> {
     const response = await fetch(`/api/blogs/${postId}`, {
         method: 'PUT',

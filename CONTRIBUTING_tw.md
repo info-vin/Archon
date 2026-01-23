@@ -111,12 +111,20 @@
 
 ### 3.1 通用測試指令
 
-| 目的 | 指令 | 範例 |
+| 目的 | 指令 | 資料庫狀態 |
 | :--- | :--- | :--- |
-| **執行所有測試** | `make test` | `make test` |
-| **僅執行後端測試** | `make test-be` | `make test-be` |
-| **測試特定前端專案** | `make test-fe-project project=<name>` | `make test-fe-project project=enduser-ui-fe` |
-| **測試特定前端檔案** | `make test-fe-single project=<name> test=<pattern>` | `make test-fe-single project=enduser-ui-fe test="TaskModal"` |
+| **執行所有測試** | `make test` | ⚠️ **重置** (Reset) |
+| **僅執行後端測試** | `make test-be` | ✅ **安全** (Safe) |
+| **測試前端元件 (Unit)** | `cd enduser-ui-fe && pnpm run test:unit` | ✅ **安全** (Safe) |
+| **測試前端流程 (E2E)** | `cd enduser-ui-fe && pnpm run test:e2e` | ⚠️ **重置** (Reset) |
+
+> **⚠️ 重要警告 (Data Safety Warning)**:
+> 凡是涉及 **E2E 測試** 的指令（如 `make test`, `make test-fe`），為了確保測試環境的一致性，**都會自動呼叫 API 清空並重置資料庫**。
+>
+> **日常開發建議流程**:
+> 1.  **驗證後端邏輯**: 使用 `make test-be`。
+> 2.  **驗證前端元件**: 使用 `pnpm run test:unit`。
+> 3.  **整合測試**: 僅在您準備提交代碼，且**不介意資料被清空**時，才執行完整的 `make test`。
 
 ### 3.2 後端 API 測試：模擬資料庫與服務
 

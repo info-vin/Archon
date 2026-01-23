@@ -39,6 +39,16 @@ class PromoteLeadRequest(BaseModel):
     contact_email: str | None = None
     notes: str | None = None
 
+class DraftBlogRequest(BaseModel):
+    topic: str
+    keywords: str | None = None
+    tone: str = "professional"
+
+class DraftBlogResponse(BaseModel):
+    title: str
+    content: str
+    excerpt: str
+
 @router.get("/jobs", response_model=list[JobData])
 async def search_jobs(keyword: str = Query(..., min_length=1), limit: int = 10):
     """
@@ -296,4 +306,51 @@ async def process_approval(item_type: str, item_id: str, action: str):
 
     except Exception as e:
         logfire.error(f"API: Approval process failed | type={item_type} | id={item_id} | error={str(e)}")
+        raise HTTPException(status_code=500, detail=str(e)) from e
+
+@router.post("/blog/draft", response_model=DraftBlogResponse)
+async def draft_blog_post(request: DraftBlogRequest, current_user: dict = Depends(get_current_user)):
+    """
+    Generate a blog post draft using AI.
+    """
+    try:
+        logfire.info(f"API: Drafting blog | topic={request.topic} | user={current_user.get('email')}")
+
+        # Role check
+        user_role = current_user.get("role", "viewer").lower()
+        if user_role == "viewer":
+            raise HTTPException(status_code=403, detail="Viewers cannot generate content.")
+
+        provider_config = await credential_service.get_active_provider("llm")
+        model_name = provider_config.get("chat_model") or "gpt-4o"
+
+        system_prompt = """You are an expert Content Writer for Archon.
+Goal: Write a structured blog post based on the topic.
+Format:
+- Title: Catchy and relevant
+- Content: Markdown formatted, with Introduction, Key Points, and Conclusion.
+- Excerpt: A 2-sentence summary.
+
+Return JSON format: { "title": "...", "content": "...", "excerpt": "..." }
+"""
+        user_prompt = f"Topic: {request.topic}\nKeywords: {request.keywords}\nTone: {request.tone}"
+
+        async with get_llm_client() as client:
+            response = await client.chat.completions.create(
+                model=model_name,
+                messages=[{"role": "system", "content": system_prompt}, {"role": "user", "content": user_prompt}],
+                response_format={ "type": "json_object" },
+                temperature=0.7
+            )
+            import json
+            result = json.loads(response.choices[0].message.content)
+
+        return DraftBlogResponse(
+            title=result.get("title", "Untitled Draft"),
+            content=result.get("content", ""),
+            excerpt=result.get("excerpt", "")
+        )
+
+    except Exception as e:
+        logfire.error(f"API: Blog drafting failed | error={str(e)}")
         raise HTTPException(status_code=500, detail=str(e)) from e
