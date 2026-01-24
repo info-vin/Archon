@@ -39,8 +39,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         const { data: authListener } = supabase.auth.onAuthStateChange(
           async (event, session) => {
             if (event === 'SIGNED_IN' || event === 'USER_UPDATED' || event === 'TOKEN_REFRESHED') {
-              // Set loading to true to prevent "flash of logged out content" if this happens after initial load
-              setLoading(true);
+              // Only set loading if we don't have a user yet (initial load) or it's an explicit sign-in.
+              // Background refreshes should not block the UI or cause unmounting.
+              const shouldSetLoading = event === 'SIGNED_IN' || !user;
+              
+              if (shouldSetLoading) setLoading(true);
+              
               try {
                 const currentUser = await api.getCurrentUser();
                 // ONLY update if we got a valid user. If null (timeout/network error), 
@@ -53,7 +57,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
               } catch (error) {
                 console.error("Failed to refresh user on auth change:", error);
               } finally {
-                setLoading(false);
+                if (shouldSetLoading) setLoading(false);
               }
             }
             if (event === 'SIGNED_OUT') {

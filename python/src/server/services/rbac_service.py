@@ -62,5 +62,6 @@ class RBACService:
         if not current_user_role:
             return False
         # Define roles that can manage content (case-insensitive)
-        content_manager_roles = ["admin", "system_admin", "manager"]
+        # Updated Phase 4.4: Sales and Marketing are content creators too.
+        content_manager_roles = ["admin", "system_admin", "manager", "marketing", "sales"]
         return current_user_role.lower() in content_manager_roles

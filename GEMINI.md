@@ -88,6 +88,15 @@
 
 # 第三章：近期工作日誌 (Recent Journal Entries)
 
+### 2026-01-24: Phase 4.4 穩定化與架構歸併 (Stabilization & Architecture Consolidation)
+*   **核心任務**: 修復 Phase 4.4 剩餘功能缺陷 (BUG-006, 008, 012)，優化 Sales Nexus 工作流，統一 Blog API 的 RBAC 安全架構。
+*   **技術實作**:
+    *   **Auth 狀態保護 (BUG-008)**: 修正 `useAuth.tsx` 監聽邏輯，防止背景 Token 刷新導致 App Unmount 並重置搜尋狀態。
+    *   **Sales Nexus 修復 (BUG-006)**: 補齊 `vendors` 表必填的 `owner_id`，解決 Promote 失敗問題；確立 "Leads as Inbox" 優化方向。
+    *   **Blog API 歸併 (BUG-012)**: 將 Blog CUD 邏輯從 `knowledge_api.py` 移至 `blog_api.py`，改用 JWT 安全檢查並授權 `marketing` 角色。
+    *   **前端清理**: 移除 `api.ts` 中過時的 `X-User-Role` 硬編碼 Hack。
+*   **文件同步**: `Phase_4.4_Bug_Report.md` 已標記 BUG-001 ~ BUG-012 全數修復；`System_Correction_and_Business_Value.md` 已加入優化藍圖。
+
 ### 2026-01-23: Phase 4.4 任務系統穩定化與可見性修復 (Task System Stabilization & Visibility Fix)
 
 *   **核心任務**: 解決 Alice/Bob 的 "Ghost Task" 問題，修復 AI Refinement 的 Import 錯誤，並打通「自己開單自己關」的完整工作流。

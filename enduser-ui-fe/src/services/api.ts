@@ -433,7 +433,7 @@ const supabaseApi = {
   async createBlogPost(postData: NewBlogPostData): Promise<BlogPost> {
     const response = await fetch('/api/blogs', {
         method: 'POST',
-        headers: await this._getHeaders({ 'X-User-Role': 'SYSTEM_ADMIN' }), // Placeholder role preservation
+        headers: await this._getHeaders(),
         body: JSON.stringify(postData)
     });
     if (!response.ok) {
@@ -457,7 +457,7 @@ const supabaseApi = {
   async updateBlogPost(postId: string, postData: Partial<NewBlogPostData>): Promise<BlogPost> {
     const response = await fetch(`/api/blogs/${postId}`, {
         method: 'PUT',
-        headers: await this._getHeaders({ 'X-User-Role': 'SYSTEM_ADMIN' }),
+        headers: await this._getHeaders(),
         body: JSON.stringify(postData)
     });
     if (!response.ok) {
@@ -469,7 +469,7 @@ const supabaseApi = {
   async deleteBlogPost(postId: string): Promise<void> {
     const response = await fetch(`/api/blogs/${postId}`, {
         method: 'DELETE',
-        headers: await this._getHeaders({ 'X-User-Role': 'SYSTEM_ADMIN' })
+        headers: await this._getHeaders()
     });
     if (!response.ok) {
         const errorData = await response.json();

@@ -111,6 +111,7 @@ async def promote_lead_to_vendor(
             "contact_email": request.contact_email,
             "description": request.notes or "Promoted from 104 Lead",
             "status": "active",
+            "owner_id": current_user.get("id"), # Set current user as owner
             "created_at": "now()", # Ensure timestamp is set
             "updated_at": "now()"
         }

@@ -13,11 +13,11 @@
 | **Critical Gaps** | 0 | All E2E Coverage Gaps addressed. |
 | **Total Issues** | 10 | Sum of all active items (Gaps + Bugs + UI + Feature). |
 | **Critical Gaps** | 0 | All E2E Coverage Gaps addressed. |
-| **Functional Bugs**| 3 | BUG-006, BUG-008, BUG-012. |
+| **Functional Bugs**| 0 | All identified bugs resolved. |
 
 *Calculation Logic:*
 *   **Total Issues (9)**: All previous issues are now resolved or covered.
-*   **Fixed**: GAP-001, GAP-002, BUG-001, BUG-002, BUG-003, BUG-004, BUG-006, BUG-007, ENH-005.
+*   **Fixed**: GAP-001, GAP-002, BUG-001, BUG-002, BUG-003, BUG-004, BUG-006, BUG-007, BUG-008, BUG-009, BUG-010, BUG-011, BUG-012, ENH-005.
 
 ---
 
@@ -32,13 +32,13 @@
 | **BUG-003** | 🐛 Bug | **AI** | Task 點擊 `refine with AI` 無反應或報 Import Error。 | High | 🟢 Fixed (Validated) | Backend | `task_service.py` |
 | **BUG-004** | 🐛 Bug | **Sales** | Generate Pitch Modal 右下角按鈕顯示 `copy to clipboard` 而非 **"Approve & Save"**。 | Medium | 🟢 Fixed (Validated) | Frontend | `MarketingPage.tsx` |
 | **ENH-005** | ✨ Feature | **AI** | Pitch 需分英/中兩段顯示；AI Prompt 需顯示在卡片上方供參考。 | Low | 🟢 Fixed (Validated) | AI/FE | `marketing_api.py`, `MarketingPage.tsx` |
-| **BUG-006** | 🐛 Bug | **Sales** | Leads 列表顯示正常，但 Alice 無法執行 Promote to Vendor。 | High | 🔴 Open | Backend | `marketing_api.py` |
+| **BUG-006** | 🐛 Bug | **Sales** | Leads 列表顯示正常，但 Alice 無法執行 Promote to Vendor。 | High | 🟢 Fixed (Validated) | Backend | `marketing_api.py` |
 | **BUG-007** | 💄 UI | **Global** | 5173 (End User UI) 夜間模式未全域套用。 | Low | 🟢 Fixed (Validated) | Frontend | `MainLayout.tsx` |
-| **BUG-008** | 🐛 Bug | **Marketing** | Job Search 點擊 View Link 開啟新分頁後，原頁面列表清空 (State Reset)。 | Low | 🔴 Open | Frontend | `MarketingPage.tsx` |
+| **BUG-008** | 🐛 Bug | **Marketing** | Job Search 點擊 View Link 開啟新分頁後，原頁面列表清空 (State Reset)。 | Low | 🟢 Fixed (Validated) | Frontend | `MarketingPage.tsx` |
 | **BUG-009** | 🐛 Bug | **Brand** | Brand Hub 缺少 "Draft with AI" 功能 (原僅有手動)。 | High | 🟢 Fixed (Implemented) | Full Stack | `BrandPage.tsx`, `marketing_api.py` |
 | **BUG-010** | 🛡️ Sec | **Marketing** | Pitch Generation API 缺乏 Server-side RBAC 檢查。 | Medium | 🟢 Fixed (Validated) | Backend | `marketing_api.py` |
 | **BUG-011** | 💄 UI | **Global** | Input/Textarea 在夜間模式下文字顏色不明顯 (Low Contrast)。 | Low | 🟢 Fixed (Validated) | Frontend | `MarketingPage.tsx` |
-| **BUG-012** | 🐛 Bug | **Brand** | Bob 建立貼文失敗 ({bob} : Failed to create post)。 | High | 🔴 Open | Full Stack | `BrandPage.tsx` |
+| **BUG-012** | 🐛 Bug | **Brand** | Bob 建立貼文失敗 ({bob} : Failed to create post)。 | High | 🟢 Fixed (Validated) | Full Stack | `BrandPage.tsx` |
 
 ---
 
@@ -72,13 +72,16 @@
 *   **Status**: **Validated**. POBot now correctly calls LLM and returns refined text.
 
 ### BUG-006: Lead Promotion Security (供應商推廣安全機制)
-*   **Fix**: Migrated to `Depends(get_current_user)` in `marketing_api.py`. Enhanced backend logic to return specific errors.
-*   **Status**: **Validated**. Secure role-based authorization is enforced.
-*   **Traditional Chinese**: 修正了 Alice 無法將潛在客戶 (Data Analyst) 晉升為供應商的問題。後端 `marketing_api.py` 移除了不安全的 Header 依賴，改用 `get_current_user` 進行嚴格的伺服器端角色檢查，並增加了詳細的錯誤日誌與回傳訊息。
+*   **Fix**: 
+    1.  Migrated to `Depends(get_current_user)` in `marketing_api.py`. 
+    2.  **Missing Field**: Explicitly added `owner_id: current_user.get("id")` to the vendor creation payload. This was causing DB inserts to fail as the schema requires a non-null owner.
+*   **Status**: **Validated**. Secure role-based authorization is enforced, and vendor creation now succeeds with proper ownership assignment.
+*   **Traditional Chinese**: 修正了 Alice 無法將潛在客戶 (Data Analyst) 晉升為供應商的問題。除了解決權限檢查問題外，核心修復在於在建立供應商資料時，明確填入了 `owner_id` (即操作者 Alice 的 ID)，解決了因資料庫缺少必填欄位而導致的寫入失敗。
 
-### BUG-008: Job Search View Link (職缺搜尋連結)
-*   **Fix**: Hardened link logic in `MarketingPage.tsx`.
-*   **Traditional Chinese**: 修正了點擊 "View Link" 導致職缺列表空白 (State Reset) 的問題。現在當職缺缺乏有效 URL 時，系統會顯示為灰色不可點擊的文字 (Disabled Span)，防止瀏覽器錯誤導航或重新載入頁面。
+### BUG-008: Job Search State Reset on Tab Focus (搜尋狀態重置)
+*   **Root Cause**: The `useAuth` hook's `onAuthStateChange` listener unconditionally set a global `loading` state to `true` whenever Supabase performed a background token refresh (e.g., on tab focus). This caused the entire React app to unmount and remount, wiping all component-level state like search results.
+*   **Fix**: Modified `enduser-ui-fe/src/hooks/useAuth.tsx` to distinguish between an initial login and a background refresh. The global loading state is now only triggered on initial sign-in, preventing background events from disrupting the UI and preserving page state.
+*   **Traditional Chinese**: 修正了切換瀏覽器分頁再切回來後，搜尋結果會被清空的問題。根本原因在於 `useAuth` 監聽器在背景更新 Session 時，錯誤地觸發了全域 Loading，導致整個 App 被卸載後再重新掛載。已修改監聽器邏輯，使其在背景刷新時保持靜默，從而保留了頁面狀態。
 
 ### BUG-009: Brand Hub AI Drafting (品牌中心 AI 草稿)
 *   **Fix**: Implemented `Draft with AI` endpoint and UI integration.
@@ -91,6 +94,14 @@
 ### BUG-011: UI Contrast (介面文字對比度)
 *   **Fix**: Updated Tailwind classes for form inputs.
 *   **Traditional Chinese**: 改進了夜間模式下的表單可讀性。針對 `Input` 和 `Textarea` 元素，強制設定了高對比度的文字顏色 (`text-gray-900`/`dark:text-gray-100`)，解決了文字在特定背景下「隱形」的問題。
+
+### BUG-012: Bob Create Post Failure (發文權限錯誤)
+*   **Root Cause**: 
+    1.  **Backend Split**: Blog creation logic was misplaced in `knowledge_api.py` while reading was in `blog_api.py`.
+    2.  **RBAC Gap**: `RBACService` did not explicitly allow `marketing` role to manage content.
+    3.  **Frontend Hack**: `api.ts` used an insecure `X-User-Role` header which conflicted with the backend's new JWT-based checks.
+*   **Fix**: Consolidate all blog CRUD operations into `blog_api.py` using `Depends(get_current_user)`. Updated `RBACService` to include `marketing` and `sales` in content management. Cleaned up frontend API to remove insecure headers.
+*   **Status**: **Validated**. Bob can now create, update, and delete blog posts securely.
 
 ---
 

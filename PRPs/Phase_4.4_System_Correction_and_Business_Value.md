@@ -213,6 +213,11 @@ sequenceDiagram
     *   **UI**: `MarketingPage.tsx` gets a "Promotion & Enrichment" toolbar for each card.
     *   **Indicator**: Add "Knowledge Indexed" badge when Librarian completes archiving.
 
+4.  **Workflow Optimizations (BUG-006 Follow-up)**:
+    *   **Leads as Inbox**: The "My Leads" tab should function as Alice's primary workspace (Inbox). Captured leads from MarketBot are queued here for "Qualification".
+    *   **Richer Context**: Enhance `JobBoardService` to store `job_title` and `description_snippet` in the `leads` table. This allows Alice to qualify leads directly from the list without re-visiting the external 104 link.
+    *   **Automated Carry-over**: During the "Promote to Vendor" action, automatically map existing data (website, notes, identified needs) from the Lead record to the new Vendor record to minimize manual data entry.
+
 ### Phase 4.4.3: The Hive - Management (蜂巢 - 管理)
 *Focus: Addressing Q1 (Admin Panel) & Q4 (Assignment) with POBot support.*
 
