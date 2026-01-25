@@ -141,6 +141,8 @@ class JobBoardService:
                 # 2. Save new lead
                 lead_data = {
                     "company_name": job.company,
+                    "job_title": job.title,
+                    "description_snippet": job.description[:500] if job.description else None,
                     "source_job_url": job.url,
                     "status": "new",
                     "identified_need": job.identified_need or cls._infer_need(job)

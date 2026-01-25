@@ -267,6 +267,7 @@ const MarketingPage: React.FC = () => {
                       <thead className="bg-gray-50 text-gray-500 font-medium">
                           <tr>
                               <th className="px-6 py-3">Company</th>
+                              <th className="px-6 py-3">Position</th>
                               <th className="px-6 py-3">Status</th>
                               <th className="px-6 py-3">Source</th>
                               <th className="px-6 py-3">Follow Up</th>
@@ -275,13 +276,14 @@ const MarketingPage: React.FC = () => {
                       </thead>
                       <tbody className="divide-y divide-gray-100">
                           {isLeadsLoading ? (
-                              <tr><td colSpan={5} className="p-8 text-center text-gray-500">Loading leads...</td></tr>
+                              <tr><td colSpan={6} className="p-8 text-center text-gray-500">Loading leads...</td></tr>
                           ) : leads.length === 0 ? (
-                              <tr><td colSpan={5} className="p-8 text-center text-gray-500">No leads found. Start by searching for jobs.</td></tr>
+                              <tr><td colSpan={6} className="p-8 text-center text-gray-500">No leads found. Start by searching for jobs.</td></tr>
                           ) : (
                               leads.map(lead => (
                                   <tr key={lead.id} className="hover:bg-gray-50 transition-colors">
                                       <td className="px-6 py-4 font-medium text-gray-900">{lead.company_name}</td>
+                                      <td className="px-6 py-4 text-gray-700">{lead.job_title || 'N/A'}</td>
                                       <td className="px-6 py-4">
                                           <span className={`px-2 py-1 rounded-full text-xs font-bold ${
                                               lead.status === 'new' ? 'bg-blue-100 text-blue-700' :

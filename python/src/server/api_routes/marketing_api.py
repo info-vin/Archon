@@ -1,4 +1,6 @@
 
+import asyncio
+
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
 
@@ -132,6 +134,29 @@ async def promote_lead_to_vendor(
              update_payload["contact_email"] = request.contact_email
 
         supabase.table("leads").update(update_payload).eq("id", lead_id).execute()
+
+        # 3. Trigger Librarian (Fire-and-forget archiving)
+        try:
+            # Fetch lead details for better context (job_title, etc.)
+            lead_res = supabase.table("leads").select("*").eq("id", lead_id).single().execute()
+            lead_data = lead_res.data
+
+            if lead_data:
+                from ..services.librarian_service import LibrarianService
+                librarian = LibrarianService()
+
+                # Use notes as content or fallback to basic info
+                content_to_archive = request.notes or f"Lead promoted: {lead_data.get('company_name')}"
+
+                asyncio.create_task(librarian.archive_sales_pitch(
+                    company=request.vendor_name,
+                    job_title=lead_data.get("job_title", "General"),
+                    content=content_to_archive,
+                    references=[f"lead:{lead_id}", lead_data.get("source_job_url")]
+                ))
+                logfire.info(f"API: Librarian triggered for lead_id={lead_id}")
+        except Exception as lib_err:
+            logfire.warning(f"API: Librarian trigger failed | lead_id={lead_id} | error={lib_err}")
 
         return {"success": True, "vendor": vendor_res.data[0]}
     except Exception as e:

@@ -17,6 +17,8 @@ ADD COLUMN IF NOT EXISTS actual_hours FLOAT DEFAULT 0;
 -- 3. Enhance Leads Table (Sales Nexus)
 -- Adding link to projects and contact details
 ALTER TABLE leads
+ADD COLUMN IF NOT EXISTS job_title TEXT,           -- ADDED: The hiring position title
+ADD COLUMN IF NOT EXISTS description_snippet TEXT,  -- ADDED: Short summary of the job
 ADD COLUMN IF NOT EXISTS contact_name TEXT,
 ADD COLUMN IF NOT EXISTS contact_email TEXT,
 ADD COLUMN IF NOT EXISTS contact_phone TEXT,
