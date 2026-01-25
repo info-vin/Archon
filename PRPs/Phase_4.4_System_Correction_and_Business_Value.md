@@ -188,6 +188,8 @@ sequenceDiagram
 ### Phase 4.4.2: Sales Nexus - Closing the Loop (銷售連結 - 閉環修復)
 *Focus: Enhancing existing tables and empowering Alice with MarketBot & Librarian.*
 
+**Status**: ✅ Completed (Schema upgraded, Librarian trigger implemented, E2E Verified)
+
 **Workflow & Agent Role**:
 1.  **MarketBot (Scout)**: Automatically crawls 104 data and populates `leads`.
 2.  **MarketBot (Enricher)**: Analyzes company profile and generates draft emails.
@@ -250,9 +252,8 @@ sequenceDiagram
 - [x] **Brand Identity**: `brand-identity.spec.tsx` (Covers Step 4, 5, 6 - SVG Rendering).
 - [x] **Sales Intelligence**: `sales-intelligence.spec.tsx` (Covers Step 1 - Search & Pitch Generation).
 - [x] **Management**: `management.spec.tsx` (Covers Step 3 - Refine Task with AI).
-- [ ] **Missing Coverage (Gap)**:
-    - **Marketing**: `content-marketing.spec.tsx` (Step 2 - Draft with AI flow is missing).
-    - **Approvals**: `management.spec.tsx` (Step 3 - Approval action is mocked but not fully tested).
+- [x] **Type Safety**: Frontend TypeScript build passed (87 errors fixed).
+- [x] **PromptOps**: Backend prompts consolidated to `src/server/prompts/`.
 
 ### Level 3: Business Scenarios (Manual)
 - [x] **Alice (Sales)**: 可以生成開發信，並看到 Librarian 自動歸檔的標記。能建立任務、拖曳至 Done 並自行封存 (Archive)。

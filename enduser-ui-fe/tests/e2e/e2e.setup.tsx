@@ -136,6 +136,25 @@ vi.mock('../../src/services/api', () => {
         }
       ];
       }),
+      getLeads: vi.fn().mockResolvedValue([
+          {
+            id: 'lead-1',
+            company_name: 'Retail Corp',
+            job_title: 'Senior Data Analyst',
+            status: 'new',
+            source_job_url: 'https://example.com/job/1',
+            next_followup_date: new Date().toISOString()
+          },
+          {
+            id: 'lead-2',
+            company_name: 'Tech Solutions',
+            job_title: 'Senior Data Engineer',
+            status: 'converted',
+            source_job_url: 'https://example.com/job/2',
+            next_followup_date: null
+          }
+      ]),
+      promoteLead: vi.fn().mockResolvedValue({ success: true }),
       generatePitch: vi.fn().mockImplementation(async (jobTitle, company, description) => {
           console.log('🤖 [Mock API] generatePitch called for:', company);
           return {

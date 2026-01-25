@@ -110,7 +110,39 @@ export const handlers = [
             description_full: 'Full description: Needs someone who knows BI tools like Tableau and PowerBI.',
             url: 'http://example.com/job/1',
             identified_need: 'Needs better data pipeline'
+        },
+        {
+            id: 'job-2',
+            title: 'Senior Data Engineer',
+            company: 'Tech Solutions',
+            source: '104 Live Data',
+            description: 'Scaling infrastructure.',
+            description_full: 'Full description: Scaling infrastructure.',
+            url: 'http://example.com/job/2',
+            identified_need: 'Scaling infrastructure'
         }
+    ]);
+  }),
+
+  // Get Leads (My Leads Tab)
+  http.get('/api/marketing/leads', () => {
+    return HttpResponse.json([
+      {
+        id: 'lead-1',
+        company_name: 'Retail Corp',
+        job_title: 'Senior Data Analyst',
+        status: 'new',
+        source_job_url: 'http://example.com/job/1',
+        next_followup_date: new Date().toISOString()
+      },
+      {
+        id: 'lead-2',
+        company_name: 'Tech Solutions',
+        job_title: 'Senior Data Engineer',
+        status: 'converted',
+        source_job_url: 'http://example.com/job/2',
+        next_followup_date: null
+      }
     ]);
   }),
 
