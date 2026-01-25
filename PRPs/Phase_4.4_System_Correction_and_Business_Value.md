@@ -367,6 +367,41 @@ sequenceDiagram
 **Jules (CLI Wrapper)**: Automated maintenance, Lint fixing, and Unit Test generation to maintain codebase health.
 **AutoGen (DIND Sandbox)**: High-level architectural planning and multi-agent simulation for complex feature design.
 
+### Prompt Engineering & Management (PromptOps)
+
+To manage the "Brain" of our agents (Pitch, Logo, Blog, Refine), we define a clear evolution path from code-based to data-based management.
+
+#### 1. Current Phase 4.4: Git-based (Transitional)
+**Status**: Active Implementation
+**Reason**: To ensure version control and regression testing during system stabilization.
+
+*   **Location**: `python/src/server/prompts/*.py`
+*   **Authority**: Strictly managed by **Admin/Tech Lead** via Git.
+*   **Modules**: `sales_prompts.py`, `marketing_prompts.py`, `design_prompts.py`, `pm_prompts.py`.
+*   **Process**: Changes require PR + E2E Test.
+
+#### 2. Mature System: Prompt as Data (Target Strategy)
+**Status**: Architecture Design (To be implemented)
+**Philosophy**: "Modular Assembly" instead of "Forking".
+
+*   **Architecture (架構面)**:
+    *   **Storage**: `system_prompts` table (`key`, `content`, `version`, `last_updated_by`).
+    *   **Runtime**: Agents fetch prompts dynamically from DB at runtime.
+    *   **Management**: Admin updates via **Admin UI (3737)**. No server restart required.
+
+*   **Collaboration Scenarios (協作面 - 拼湊應用場景)**:
+    *   **Scenario A: The Feedback Loop (Alice & POBot)**
+        1.  **Trigger**: Alice downvotes a MarketBot email ("Too formal").
+        2.  **Analysis**: **POBot** analyzes feedback and generates a *Change Proposal* for `sales_prompts`.
+        3.  **Approval**: Charlie reviews and approves.
+        4.  **Result**: System updates prompt; next email reflects the change.
+    *   **Scenario B: The Configuration (Charlie & DevBot)**
+        1.  **Action**: Charlie updates `design_prompts` parameters (e.g., style="Neon Cyberpunk") in `system_prompts`.
+        2.  **Execution**: **DevBot** reads new config in next run.
+        3.  **Result**: New assets generated without code changes.
+
+**Conclusion**: While Prompt Authority belongs to **Admin/Manager**, the maintenance burden is offloaded to **POBot** (Analysis) and **DevBot** (Implementation).
+
 ---
 
 ## Appendix B: User Guide (Simplified SOP)
@@ -378,7 +413,7 @@ sequenceDiagram
 #### 🚀 核心工作流程 (The Core Workflow)
 
 1.  **【業務情蒐】AI 獵犬出動 (Alice)**: 進入 Sales Nexus，由 MarketBot 爬取資料並生成開發信，Librarian 自動歸檔。
-2.  **【行銷推廣】內容生產 (Bob)**: 在 Brand Hub 使用 "Draft with AI" 產出部落格，提交審核。
+2.  **【行銷推廣】內容生產 (Bob)**: 在 Brand Hub 先詢問 Librarian 獲取靈感，再使用 "Draft with AI" 產出部落格，提交審核。
 3.  **【管理決策】任務分派 (Charlie)**: 在 War Room 審核產出，使用 POBot 優化任務規格，並指派給 DevBot 執行。
 4.  **【自主封存】結案工作流 (Alice)**: 完成後將任務拖至 Done，點擊卡片並按下「Archive Task」完成結案。
 
@@ -401,3 +436,16 @@ POBot 的引入是為了解決人機溝通的「語義鴻溝」。人類傾向�
 
 ### 4. 未來展望：共生進化
 隨著系統進入 Phase 5，AI 將不再只是「工具」，而是具備身份（Identity）的「虛擬員工」。人類與虛擬員工的協作將從單向指派轉向雙向對話，共同驅動企業的數位轉型。
+
+---
+
+## Appendix D: The Symphony of Roles (Visual Workflow)
+
+> **VISUAL WORKFLOW MOVED**: To ensure a Single Source of Truth, the detailed Mermaid diagram has been consolidated into the RBAC Matrix documentation.
+
+Please refer to:
+👉 **[PRPs/ai_docs/RBAC_Collaboration_Matrix.md#9-visual-workflow-reference-視覺化工作流參考]**
+
+This diagram illustrates the complete daily workflow of:
+- **4 Human Roles**: Alice (Sales), Bob (Marketing), Charlie (Management), Admin (Ops)
+- **5 AI Agents**: MarketBot, Librarian, DevBot, POBot, Clockwork

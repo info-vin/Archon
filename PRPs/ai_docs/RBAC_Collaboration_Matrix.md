@@ -3,7 +3,7 @@
 **Audience**: Archon Developers, System Admins, AI Agents
 **Purpose**: Define the Role-Based Access Control (RBAC) matrix for Human-AI collaboration ecosystem
 **Source**: Derived from `frontend-architecture.md`, `PRPs/Phase_5_RBAC_Infrastructure_and_Identity`
-**Last Updated**: 2026-01-20 (Phase 4.4 Update)
+**Last Updated**: 2026-01-25 (Phase 4.4 Update)
 
 ---
 
@@ -19,10 +19,10 @@ Archon 是一個「使用者角色的人機協作平台」。在此生態系中�
 
 | 層級 | DB Role 欄位 | 判斷依據 (Role + Dept) | 代表人物 (Persona) | 具體職責 (Responsibilities) |
 | :--- | :--- | :--- | :--- | :--- |
-| **L1** | `system_admin` | N/A | **Admin** (You) | **系統造物主**。<br>1. 基礎設施維護 (Docker, DB)。<br>2. 全域預算與權限配置。 |
-| **L2** | `manager` | N/A | **Charlie** (Dev Lead / PO) | **團隊管理者/產品負責人**。<br>1. 審核 AI 寫入的程式碼 (Approvals)。<br>2. 查看團隊 HR 儀表板。<br>3. **管理團隊成員 (`USER_MANAGE_TEAM`)**。<br>4. **使用 `POBot` 優化任務規格**。 |
-| **L3** | `member` | Dept: **Sales** | **Alice** (Sales Rep) | **業務代表**。<br>1. 轉換 Leads 為專案。<br>2. 呼叫 `MarketBot` 生成開發信。<br>3. **觸發 `Librarian` 自動歸檔**。 |
-| **L3** | `member` | Dept: **Marketing**| **Bob** (Content Lead)| **行銷人員**。<br>1. 撰寫部落格草稿 (手動)。<br>2. 呼叫 `Librarian` 歸檔文章。<br>3. **品牌資產管理 (`BRAND_ASSET_MANAGE`)**。 |
+| **L1** | `system_admin` | N/A | **Admin** (You) | **系統造物主**。<br>1. 基礎設施維護 (Docker, DB)。<br>2. **全域 Prompt 管理與配置 (Admin UI)**。 |
+| **L2** | `manager` | N/A | **Charlie** (Dev Lead / PO) | **團隊管理者/產品負責人**。<br>1. 審核 AI 寫入的程式碼 (Approvals)。<br>2. **檢視由 Clockwork 生成的成本與健康報告**。<br>3. 管理團隊成員 (`USER_MANAGE_TEAM`)。<br>4. 使用 `POBot` 優化任務規格。 |
+| **L3** | `member` | Dept: **Sales** | **Alice** (Sales Rep) | **業務代表**。<br>1. 轉換 Leads 為專案。<br>2. 呼叫 `MarketBot` 生成開發信。<br>3. 觸發 `Librarian` 自動歸檔。 |
+| **L3** | `member` | Dept: **Marketing**| **Bob** (Content Lead)| **行銷人員**。<br>1. **向 `Librarian` 查詢靈感 (RAG)**。<br>2. 撰寫部落格草稿 (手動或 AI 協助)。<br>3. 品牌資產管理 (`BRAND_ASSET_MANAGE`)。 |
 
 ---
 
@@ -32,11 +32,11 @@ Archon 是一個「使用者角色的人機協作平台」。在此生態系中�
 
 | Agent 代號 | 類型 | 對應技能/工具 (MCP Tools) | 開發定義 |
 | :--- | :--- | :--- | :--- |
-| **`DevBot`** | L4-U | **Developer Agent**<br>- `read_file`, `write_file`<br>- **`logo_tool` (New)** | **協作開發者**。負責修復 Bug、重構代碼，以及 **SVG 品牌資產生成**。 |
-| **`MarketBot`**| L4-U | **Marketing/Sales Agent**<br>- `search_job_market` (104 API)<br>- **`generate_sales_email`** | **業務助理**。負責搜尋職缺、分析潛在客戶需求，並撰寫開發信草稿。 |
-| **`Librarian`**| L4-U | **Knowledge Agent**<br>- `archive_to_vector_db`<br>- **`auto_index_email`** | **知識管理員**。負責將部落格/文件，以及 **Alice 的成功開發信** 向量化歸檔。 |
-| **`POBot`**    | L4-U | **Product Owner Agent**<br>- `generate_user_story`<br>- **`refine_task_spec`** | **產品負責人**。負責將回饋轉化為開發規格，並 **優化模糊的任務描述**。 |
-| **`Clockwork`**| L4-S | **System Agent**<br>- `cleanup_logs`<br>- `check_health` | **系統維運**。由 Cron Job 定期觸發，無須人類介入。 |
+| **`DevBot`** | L4-U | **Developer Agent**<br>- `read_file`, `write_file`<br>- **`logo_tool`** | **工匠 (Builder)**。負責修復 Bug、重構代碼，以及 **SVG 品牌資產生成**。由 Admin 指派執行 Prompt 更新任務。 |
+| **`MarketBot`**| L4-U | **Marketing/Sales Agent**<br>- `search_job_market`<br>- **`generate_sales_email`** | **獵犬/寫手 (Scout/Writer)**。負責搜尋職缺、分析需求，並**參考 Librarian 的知識**撰寫開發信/部落格草稿。 |
+| **`Librarian`**| L4-U | **Knowledge Agent**<br>- `archive_to_vector_db`<br>- **`rag_retrieval`** | **記憶庫 (Memory)**。負責將部落格/文件/成功信件向量化歸檔，並**提供檢索服務給 Bob 與 MarketBot**。 |
+| **`POBot`**    | L4-U | **Product Owner Agent**<br>- `generate_user_story`<br>- **`refine_task_spec`** | **策劃 (Planner)**。負責將回饋轉化為開發規格，並優化模糊的任務描述。 |
+| **`Clockwork`**| L4-S | **System Agent**<br>- `cleanup_logs`<br>- `analyze_token_usage` | **維運 (Ops)**。由 Cron Job 定期觸發，**負責計算 AI 消耗、分析 Logs 並生成儀表板資料**。 |
 
 ---
 
@@ -50,7 +50,7 @@ Archon 是一個「使用者角色的人機協作平台」。在此生態系中�
     *   **Agents**: 可選所有 Agents (負責資源調度)。
 3.  **Member (Alice/Bob)**:
     *   **Users**: 僅能指派給自己 (Self)。
-    *   **Agents**: 僅能指派與職能相關的 Agent (Alice -> MarketBot, Bob -> Librarian)。
+    *   **Agents**: 僅能指派與職能相關的 Agent (Alice -> MarketBot, Bob -> Librarian/MarketBot)。
 
 ---
 
@@ -89,15 +89,16 @@ Archon 是一個「使用者角色的人機協作平台」。在此生態系中�
 | 功能模組 | 資源/動作 | SYSTEM_ADMIN (You) | MANAGER (Charlie) | SALES (Alice) | MKT (Bob) |
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | **手動管理** | **更新任務進度/留言** | 🟣 任意任務 | 🔵 團隊任務 | 🟢 指派給我的 | 🟢 指派給我的 |
-| | **編輯/刪除 Blog** | 🟣 **全域強制 (Blog Override)** | 🔵 團隊文章 | 🟢 僅限本人 | 🟢 僅限本人 |
+| | **編輯/刪除 Blog** | 🟣 **全域強制** | 🔵 團隊文章 | 🟢 僅限本人 | 🟢 僅限本人 |
 | **團隊管理** | **重設成員密碼** | ✅ 全域 | 🔵 (限同部門) | 🔴 | 🔴 |
-| | **分配 AI 額度** | ✅ 全域 | 🔵 (限團隊) | 🔴 | 🔴 |
+| | **檢視系統健康/Logs** | ✅ 全域 | 🔵 (Clockwork 報告) | 🔴 | 🔴 |
 | **品牌管理** | **生成 Logo (DevBot)** | ✅ 允許 | ✅ 允許 | 🔴 禁止 | 🔴 禁止 |
 | | **微調 Logo 參數** | ✅ 允許 | ✅ 允許 | 🔴 禁止 | 🟢 (BRAND_ASSET) |
-| **AI 協作** | **指派 DevBot** | ✅ 允許 | ✅ 允許 | 🔴 禁止 (不懂Code) | 🔴 禁止 |
+| **AI 協作** | **指派 DevBot** | ✅ 允許 | ✅ 允許 | 🔴 禁止 | 🔴 禁止 |
 | | **指派 MarketBot** | ✅ 允許 | ✅ 允許 | ✅ 允許 | ✅ 允許 |
-| | **指派 POBot/Librarian**| ✅ 允許 | ✅ 允許 | ✅ 允許 (限職能) | ✅ 允許 (限職能) |
-| **資料檢視** | **HR 儀表板/AI 成本** | ✅ 全局 | 🔵 團隊 | 🟢 個人 | 🟢 個人 |
+| | **指派 POBot/Librarian**| ✅ 允許 | ✅ 允許 | ✅ 允許 | ✅ 允許 |
+| **Prompt 管理** | **修改 System Prompts**| ✅ (Git/Admin UI) | ✅ (限部分管理) | 🔴 禁止 | 🔴 禁止 |
+| **資料檢視** | **AI 成本儀表板** | ✅ 全局 | 🔵 團隊 | 🟢 個人 | 🟢 個人 |
 | | **Leads 列表** | ✅ 全局 | ✅ 全局 | 🟢 個人負責 | ✅ 全局分析 |
 
 ---
@@ -112,7 +113,8 @@ Archon 是一個「使用者角色的人機協作平台」。在此生態系中�
 | **需求故事** | **POBot** | `archon_tasks` (Draft status) | `/backlog` (未實作) 或 Chat |
 | **程式碼變更**| **DevBot** | `proposed_changes` (SQL) | `/approvals` 審核頁 & 任務卡片 |
 | **品牌資產** | **DevBot** | `public/logo-eciton.svg` | Global Header & Branding Settings |
-| **AI 消耗** | **System** | `daily_ai_usage` (SQL) | Team Management Panel |
+| **AI 消耗與分析**| **Clockwork** | `daily_ai_usage` (SQL) | Team Management Panel / Dashboard |
+| **系統提示** | **Admin** | `server/prompts/*.py` | Admin UI (3737) |
 
 ---
 
@@ -135,7 +137,121 @@ Archon 是一個「使用者角色的人機協作平台」。在此生態系中�
   - `queryKey: taskKeys.byProject(projectId)`
 - **指派選單過濾**: 後端 `/api/assignable-users` 必須根據 `JWT.role` 過濾回傳清單。
 
-### 8.3 Optimistic Updates & Error Handling (樂觀更新與錯誤處理)
-*Ref: `optimistic_updates.md`*
-- **403 Forbidden**: 當使用者試圖執行無權限操作 (如透過 API 工具)，後端回傳 403。
-- **Rollback**: 前端 Mutation 的 `onError` 必須捕捉 403 錯誤，觸發 UI 回滾 (Rollback)。
+---
+
+## 9. VISUAL WORKFLOW REFERENCE (視覺化工作流參考)
+
+> **The Symphony of Roles**: 此圖展示了 **4 位人類角色** 與 **5 位數位員工** 在一個工作天內的完整協作。
+> **圖例**: 🟦 **Alice** (業務) | 🟪 **Bob** (行銷) | 🟩 **Charlie** (管理) | 🟧 **Admin** (維運)
+
+```mermaid
+sequenceDiagram
+    autonumber
+    
+    %% Humans Setup
+    box "Sales (Alice)" #e3f2fd
+        actor Alice as 👤 Alice
+    end
+    box "Marketing (Bob)" #f3e5f5
+        actor Bob as 👤 Bob
+    end
+    box "Management (Charlie)" #e8f5e9
+        actor Charlie as 👤 Charlie
+    end
+    box "Admin (System)" #fff3e0
+        actor Admin as 👤 Admin
+    end
+    
+    %% Agents Setup
+    box "AI Workforce (Agents)" #eceff1
+        participant MarketBot as 🤖 MarketBot<br>(獵犬/寫手)
+        participant Librarian as 📚 Librarian<br>(記憶庫)
+        participant DevBot as 🛠️ DevBot<br>(工匠)
+        participant POBot as 🧠 POBot<br>(策劃)
+        participant Clockwork as ⚙️ Clockwork<br>(維運/分析)
+    end
+
+    %% Infrastructure Setup
+    box "Infrastructure" #cfd8dc
+        participant DB as 🗄️ CoreDB<br>(SQL+Vector)
+    end
+
+    %% ALICE'S FLOW (BLUE) - The Sales Nexus
+    rect rgb(227, 242, 253)
+        Note over Alice, DB: 🌅 ALICE: Sales Nexus Loop (業務情蒐閉環)
+        
+        Alice->>MarketBot: 1. 點擊 "獲取 104 資料" (Fetch)
+        activate MarketBot
+        MarketBot->>MarketBot: 執行 AJAX 爬蟲
+        MarketBot-->>Alice: 回傳 10 筆新名單 (Live Data)
+        deactivate MarketBot
+        
+        Alice->>MarketBot: 2. 點擊 "⚡ 生成開發信" (Enrich)
+        activate MarketBot
+        MarketBot->>DB: 讀取公司簡介與痛點
+        MarketBot-->>Alice: 生成客製化信件草稿
+        deactivate MarketBot
+        
+        Alice->>DB: 3. 點擊 "批准並儲存" (Approve)
+        
+        par 背景歸檔 (Knowledge Loop)
+            DB->>Librarian: 觸發自動索引 (Auto-Index)
+            Librarian->>DB: 寫入向量資料庫 (Vector DB)
+        and 使用者回饋
+            DB-->>Alice: 顯示 "成功歸檔" 綠色標記
+        end
+    end
+
+    %% BOB'S FLOW (PURPLE) - Brand Voice
+    rect rgb(243, 229, 245)
+        Note over Bob, DB: ☀️ BOB: Brand Voice (行銷內容生產)
+        
+        Bob->>DB: 4. 查看 "熱門關鍵字" (來自 Alice 的名單)
+        
+        Bob->>Librarian: 5. 搜尋知識庫 (RAG Retrieval)
+        activate Librarian
+        Librarian->>DB: 查詢相似文章/風格
+        Librarian-->>Bob: 回傳參考素材 (Context)
+        deactivate Librarian
+
+        Bob->>MarketBot: 6. 點擊 "用 AI 寫草稿" (Draft with AI)
+        activate MarketBot
+        MarketBot->>Librarian: 參考上述 RAG 上下文
+        MarketBot-->>Bob: 回傳 SEO 部落格草稿
+        deactivate MarketBot
+        
+        Bob->>DB: 7. 點擊 "提交審核" (Status: Pending)
+    end
+
+    %% CHARLIE'S FLOW (GREEN) - Decision & Dev
+    rect rgb(232, 245, 233)
+        Note over Charlie, DB: 🕑 CHARLIE: Management (決策與分派)
+        
+        Charlie->>DB: 8. 批准 Bob 的文章 (Publish)
+        
+        Charlie->>POBot: 9. 輸入 "製作幾何螞蟻 Logo" 並點擊 "✨ Refine"
+        activate POBot
+        POBot-->>Charlie: 回傳結構化規格 (User Story)
+        deactivate POBot
+        
+        Charlie->>DevBot: 10. 選擇 DevBot 並點擊 "建立任務" (Assign)
+        activate DevBot
+        DevBot->>DevBot: 計算幾何路徑 -> 生成 SVG
+        DevBot->>DB: 上傳至公開資產庫 (Public Assets)
+        DevBot-->>Charlie: 任務完成 (顯示預覽圖)
+        deactivate DevBot
+    end
+
+    %% ADMIN'S FLOW (ORANGE) - Ops
+    rect rgb(255, 243, 224)
+        Note over Admin, DB: 🌙 ADMIN & CLOCKWORK: System Health (維運)
+        
+        Admin->>DB: 11. 驗證新 Logo 是否上線
+        
+        par 定期維運循環 (Cron Job)
+            Clockwork->>DB: 12. 清理過期 Log
+            Clockwork->>DB: 13. 分析 Token 用量並生成報告
+            DB-->>Admin: 顯示成本儀表板 (Cost Dashboard)
+        end
+    end
+```
