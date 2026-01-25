@@ -27,6 +27,11 @@ ADD COLUMN IF NOT EXISTS last_contacted_at TIMESTAMPTZ,
 ADD COLUMN IF NOT EXISTS next_followup_date TIMESTAMPTZ,
 ADD COLUMN IF NOT EXISTS company_website TEXT; -- ADDED: Official Company Website
 
+-- 4. RAG Enhancement (Librarian)
+-- Adding title column for better search result display
+ALTER TABLE archon_crawled_pages
+ADD COLUMN IF NOT EXISTS title TEXT;
+
 -- Ensure no duplicate leads from same URL
 CREATE UNIQUE INDEX IF NOT EXISTS idx_leads_source_url ON leads(source_job_url);
 

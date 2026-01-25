@@ -257,7 +257,7 @@ async def create_embeddings_batch(
                         raise
                 finally:
                     if client:
-                        await client.aclose()
+                        await client.close()
 
             raise last_exception or ValueError("All providers failed without a specific exception.")
 
