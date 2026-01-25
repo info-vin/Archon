@@ -32,14 +32,20 @@ async def test_openai_connection(api_key: str) -> bool:
 async def test_google_connection(api_key: str) -> bool:
     """Test Google AI API connectivity"""
     try:
+        masked_key = f"{api_key[:4]}...{api_key[-4:]}" if api_key else "None"
+        logfire.info(f"Checking Google connectivity with key: {masked_key} (len={len(api_key)})")
+        
         async with httpx.AsyncClient(timeout=10.0) as client:
             response = await client.get(
                 "https://generativelanguage.googleapis.com/v1beta/models",
-                headers={"x-goog-api-key": api_key}
+                headers={"x-goog-api-key": api_key.strip()} # Ensure stripped
             )
+            logfire.info(f"Google API response: {response.status_code}")
+            if response.status_code != 200:
+                logfire.warning(f"Google API Error Body: {response.text[:200]}")
             return response.status_code == 200
-    except Exception:
-        logfire.warning("Google AI connectivity test failed")
+    except Exception as e:
+        logfire.warning(f"Google AI connectivity test failed: {e}")
         return False
 
 
@@ -129,6 +135,11 @@ async def get_provider_status(
         # Get API key server-side (never expose to client)
         key_name = f"{provider.upper()}_API_KEY"
         api_key = await credential_service.get_credential(key_name, decrypt=True)
+
+        # Handle naming inconsistency between GOOGLE_API_KEY and GEMINI_API_KEY
+        if provider == "google" and (not api_key or not str(api_key).strip()):
+            logfire.info("GOOGLE_API_KEY not found, falling back to GEMINI_API_KEY for status check")
+            api_key = await credential_service.get_credential("GEMINI_API_KEY", decrypt=True)
 
         if not api_key or not isinstance(api_key, str) or not api_key.strip():
             logfire.info(f"No API key configured for {safe_provider}")

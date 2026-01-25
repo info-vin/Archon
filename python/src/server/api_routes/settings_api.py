@@ -243,6 +243,26 @@ async def update_credential(
         raise HTTPException(status_code=500, detail={"error": str(e)}) from e
 
 
+@router.delete("/credentials/{key}")
+async def delete_credential(
+    key: str,
+    cred_service: CredentialService = Depends(get_credential_service),
+):
+    """Delete a credential."""
+    try:
+        logfire.info(f"Deleting credential | key={key}")
+        success = await cred_service.delete_credential(key)
+
+        if success:
+            logfire.info(f"Credential deleted successfully | key={key}")
+            return {"success": True, "message": f"Credential {key} deleted successfully"}
+
+        raise HTTPException(status_code=404, detail={"error": "Credential not found"})
+    except Exception as e:
+        logfire.error(f"Error deleting credential | key={key} | error={str(e)}")
+        raise HTTPException(status_code=500, detail={"error": str(e)}) from e
+
+
 @router.get("/database/metrics")
 async def database_metrics():
     """Get database metrics and statistics."""

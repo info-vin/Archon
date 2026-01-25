@@ -206,7 +206,7 @@ def seed_api_keys_from_env(conn):
     api_key_map = [
         ("OPENAI_API_KEY", "OPENAI_API_KEY", "ai", "OpenAI API Key for embeddings and LLM"),
         ("ANTHROPIC_API_KEY", "ANTHROPIC_API_KEY", "ai", "Anthropic API Key for Claude models"),
-        ("GOOGLE_API_KEY", "GOOGLE_API_KEY", "ai", "Google AI/Gemini API Key"),
+        ("GEMINI_API_KEY", "GOOGLE_API_KEY", "ai", "Google AI API Key (from GEMINI_API_KEY)"),
         ("GEMINI_API_KEY", "GEMINI_API_KEY", "ai", "Gemini API Key (Frontend/Backend)"),
         ("LOGFIRE_TOKEN", "LOGFIRE_TOKEN", "observability", "Logfire Token for tracing"),
     ]

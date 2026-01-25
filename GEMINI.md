@@ -88,6 +88,17 @@
 
 # 第三章：近期工作日誌 (Recent Journal Entries)
 
+### 2026-01-25: Phase 4.4 銷售閉環與 DX 大修復 (Sales Nexus Closure & DX Overhaul)
+*   **核心任務**: 完成 Sales Nexus 的資料與知識閉環，並徹底修復開發環境 (DX) 的 API Key 自動化流程。
+*   **Sales Nexus 閉環**:
+    *   **Schema 補完**: 在 `leads` 表補上 `job_title` 與 `description_snippet`，消除了 Alice 的資訊盲點。
+    *   **知識歸檔**: 實作了 `promote_lead` API 中的 `Librarian` 非同步觸發，打通了「業務 -> 知識庫」的自動化路徑。
+    *   **E2E 修復**: 修正了 `sales-nexus-closure.spec.tsx` 與 Mock Data 的斷層，成功驗證了從搜尋到晉升的完整流程。
+*   **DX (開發體驗) 修復**:
+    *   **Env 注入**: 修復 `docker-compose.yml` 漏傳 `GEMINI_API_KEY` 的問題，現在 `make db-init` 能正確自動填入 Key。
+    *   **紅圈之謎**: 解決了 RAG Settings 中 Google Provider 顯示紅圈的頑固問題。根源是 `.env` 中的 Key 帶有隱形換行符號，透過在後端 `providers_api.py` 加入 `.strip()` 修復。
+    *   **API 還原**: 找回並還原了被意外刪除的 `DELETE /credentials/{key}` 路由，恢復了 Key 的刪除功能。
+
 ### 2026-01-24: Phase 4.4 穩定化與架構歸併 (Stabilization & Architecture Consolidation)
 *   **核心任務**: 修復 Phase 4.4 剩餘功能缺陷 (BUG-006, 008, 012)，優化 Sales Nexus 工作流，統一 Blog API 的 RBAC 安全架構。
 *   **技術實作**:
