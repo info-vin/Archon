@@ -290,6 +290,7 @@ sequenceDiagram
         *   找到右上角的 **"Fetch 104 Data"** 按鈕 (藍色)。
         *   **點擊** 並等待約 3-5 秒。
         *   **驗證**: 觀察頁面中央的表格是否新增了 3-5 筆公司資料 (如 "台積電", "聯發科")。
+        *   **關鍵驗證**: 確認每一列都清楚顯示了 **"Position" (職缺名稱)**，例如 "AI 工程師"，這是判斷 Lead 價值的關鍵。
         *   **驗證**: 確認每一列的 "Source" 欄位顯示綠色的 **"104 Live"** 標籤 (若顯示黃色 "Mock"，代表 IP 被擋，但流程仍可繼續)。
     4.  **生成開發信**:
         *   在第一筆資料的右側，點擊 **"⚡ Generate Pitch"** 按鈕 (閃電圖示)。
@@ -297,7 +298,8 @@ sequenceDiagram
         *   **結果**: 約 2 秒後，Modal 內會顯示 AI 寫好的信件草稿。
     5.  **保存與歸檔**:
         *   點擊 Modal 右下角的 **"Approve & Save"** (綠色按鈕)。
-        *   **驗證**: 右上角跳出綠色 Toast 通知 **"Success: Lead saved and indexed by Librarian"**。
+        *   **驗證**: 右上角跳出綠色 Toast 通知 **"Success: Lead saved"**。
+        *   **背景運作**: 此時 **Librarian** 會在後台自動啟動，將此 Pitch 歸檔至向量資料庫 (無需人工介入)。
 
 ### Step 2: Content Marketing (行銷內容)
 *   **Actor**: Bob (Marketing)
@@ -306,7 +308,8 @@ sequenceDiagram
     1.  **切換帳號**: 登出 Alice，改用 Bob 登入 `http://localhost:5173`。
     2.  **進入頁面**: 點擊左側導航列的 **"Brand Hub"** (圖示: 📢)。
     3.  **查看靈感**:
-        *   頁面左側會顯示 **"Trending Keywords"**，確認是否有剛才 Alice 抓取到的公司相關關鍵字 (e.g., "Semiconductor", "AI").
+        *   頁面左側會顯示 **"Trending Keywords"** (基於 Alice 收集的 Leads 統計)。
+        *   (Future: 可在此處呼叫 Librarian 搜尋相關文章，目前版本請直接進行 AI 寫作)。
     4.  **AI 寫作**:
         *   點擊右上角 **"New Post"** 按鈕。
         *   在彈出選單中選擇 **"Draft with AI"**。
