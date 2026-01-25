@@ -327,11 +327,13 @@ class TestAsyncEmbeddingService:
         ]
         mock_success_embeddings.create = AsyncMock(return_value=mock_success_response)
         mock_success_client.embeddings = mock_success_embeddings
+        mock_success_client.close = AsyncMock()
         mock_success_client.aclose = AsyncMock()
 
         # This client will be returned for the failing provider
         mock_fail_client = MagicMock()
         mock_fail_client.embeddings.create = AsyncMock(side_effect=openai.AuthenticationError(message="Invalid API Key", response=MagicMock(), body=None))
+        mock_fail_client.close = AsyncMock()
         mock_fail_client.aclose = AsyncMock()
 
         # Stateful side effect for creating clients
@@ -371,5 +373,5 @@ class TestAsyncEmbeddingService:
             mock_success_client.embeddings.create.assert_awaited_once()
 
             # Check clients were closed
-            mock_fail_client.aclose.assert_awaited_once()
-            mock_success_client.aclose.assert_awaited_once()
+            mock_fail_client.close.assert_awaited_once()
+            mock_success_client.close.assert_awaited_once()

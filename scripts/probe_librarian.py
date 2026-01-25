@@ -20,7 +20,14 @@ async def main():
     print(f"🔍 Query: '{query}'")
 
     try:
-        # Step 0: Seed Data (Simulate Alice)
+        # Force model for diagnosis
+        model_name = "gemini-embedding-001"
+        print(f"DEBUG: FORCING Google embedding model to: '{model_name}'")
+        
+        # We need to monkeypatch the RAGService or its config temporarily for this probe
+        # but a cleaner way is just to test the Librarian archiving directly first.
+        
+        # Step 0: Seed Data (Simulating Alice)
         print("\n--- Step 0: Seeding Data (Simulating Alice) ---")
         from src.server.services.librarian_service import LibrarianService
         librarian = LibrarianService()

@@ -36,6 +36,7 @@ class TestAsyncLLMProviderService:
     @staticmethod
     def _make_mock_client():
         client = MagicMock()
+        client.close = AsyncMock()
         client.aclose = AsyncMock()
         return client
 
@@ -162,6 +163,7 @@ class TestAsyncLLMProviderService:
                     mock_openai.assert_called_once_with(
                         api_key="test-google-key",
                         base_url="https://generativelanguage.googleapis.com/v1beta/openai/",
+                        default_headers={"x-goog-api-key": "test-google-key"}
                     )
 
     @pytest.mark.asyncio
@@ -562,6 +564,10 @@ class TestAsyncLLMProviderService:
             expected_call_args = {"api_key": config["api_key"]}
             if config.get("base_url"):
                 expected_call_args["base_url"] = config["base_url"]
+
+            # Google provider now adds default_headers
+            if provider_name == "google":
+                expected_call_args["default_headers"] = {"x-goog-api-key": config["api_key"].strip()}
 
             mock_openai.assert_called_once_with(**expected_call_args)
 

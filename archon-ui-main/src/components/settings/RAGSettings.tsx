@@ -40,7 +40,7 @@ const getDefaultModels = (provider: ProviderKey): ProviderModels => {
   const embeddingDefaults: Record<ProviderKey, string> = {
     openai: 'text-embedding-3-small',
     anthropic: 'text-embedding-3-small', // Fallback to OpenAI
-    google: 'text-embedding-004',
+    google: 'gemini-embedding-001',
     grok: 'text-embedding-3-small', // Fallback to OpenAI
     openrouter: 'text-embedding-3-small',
     ollama: 'nomic-embed-text'

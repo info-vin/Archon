@@ -84,9 +84,9 @@ class LibrarianService:
             page_data = {
                 "source_id": source_id,
                 "url": f"generated://pitch/{source_id}",
-                "title": title,
+                "chunk_number": 0, # Required field
                 "content": content,
-                "metadata": metadata
+                "metadata": {**metadata, "title": title} # Store title in metadata
             }
 
             self.supabase.table("archon_crawled_pages").insert(page_data).execute()

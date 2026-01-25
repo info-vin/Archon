@@ -34,7 +34,7 @@ async def test_google_connection(api_key: str) -> bool:
     try:
         masked_key = f"{api_key[:4]}...{api_key[-4:]}" if api_key else "None"
         logfire.info(f"Checking Google connectivity with key: {masked_key} (len={len(api_key)})")
-        
+
         async with httpx.AsyncClient(timeout=10.0) as client:
             response = await client.get(
                 "https://generativelanguage.googleapis.com/v1beta/models",
@@ -133,15 +133,16 @@ async def get_provider_status(
             )
 
         # Get API key server-side (never expose to client)
-        key_name = f"{provider.upper()}_API_KEY"
-        api_key = await credential_service.get_credential(key_name, decrypt=True)
+        # We always try GEMINI_API_KEY first as it's the preferred name in our environment
+        api_key = await credential_service.get_credential("GEMINI_API_KEY", decrypt=True)
 
-        # Handle naming inconsistency between GOOGLE_API_KEY and GEMINI_API_KEY
-        if provider == "google" and (not api_key or not str(api_key).strip()):
-            logfire.info("GOOGLE_API_KEY not found, falling back to GEMINI_API_KEY for status check")
-            api_key = await credential_service.get_credential("GEMINI_API_KEY", decrypt=True)
+        # Fallback to GOOGLE_API_KEY if needed
+        if not api_key or not str(api_key).strip():
+            api_key = await credential_service.get_credential("GOOGLE_API_KEY", decrypt=True)
 
         if not api_key or not isinstance(api_key, str) or not api_key.strip():
+            logfire.info(f"No API key configured for {safe_provider}")
+            return {"ok": False, "reason": "no_key"}
             logfire.info(f"No API key configured for {safe_provider}")
             return {"ok": False, "reason": "no_key"}
 

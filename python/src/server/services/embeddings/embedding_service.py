@@ -5,10 +5,12 @@ Handles all OpenAI embedding operations with proper rate limiting and error hand
 """
 
 import asyncio
+import inspect
 import os
 from dataclasses import dataclass, field
 from typing import Any
 
+import httpx
 import openai
 
 from ...config.logfire_config import safe_span, search_logger
@@ -174,6 +176,7 @@ async def create_embeddings_batch(
             for idx, config in enumerate(configs):
                 client: openai.AsyncOpenAI | None = None
                 provider_name = config.get("provider", "unknown")
+                print(f"DEBUG: Processing provider: '{provider_name}'")
                 is_last_provider = (idx == len(configs) - 1)
 
                 try:
@@ -193,8 +196,8 @@ async def create_embeddings_batch(
                             batch_tokens = sum(len(text.split()) for text in batch) * 1.3
                             rate_limit_callback = None
                             if progress_callback:
-                                async def rate_limit_callback(data: dict):
-                                    processed = result.success_count + result.failure_count
+                                async def rate_limit_callback(data: dict, res=result):
+                                    processed = res.success_count + res.failure_count
                                     message = f"Rate limited: {data.get('message', 'Waiting...')}"
                                     await progress_callback(message, (processed / len(texts)) * 100)
 
@@ -204,13 +207,40 @@ async def create_embeddings_batch(
                                 while retry_count < max_retries:
                                     try:
                                         embedding_model = config.get("embedding_model")
-                                        response = await client.embeddings.create(
-                                            model=embedding_model,
-                                            input=batch,
-                                            dimensions=embedding_dimensions,
-                                        )
-                                        for item, text_item in zip(response.data, batch, strict=False):
-                                            result.add_success(item.embedding, text_item)
+
+                                        if provider_name == "google":
+                                            # Native Google API call (using proven v1beta + header variant)
+                                            async with httpx.AsyncClient(timeout=20.0) as http_client:
+                                                # Use gemini-embedding-001 which is proven stable
+                                                stable_model = "gemini-embedding-001"
+                                                api_key_to_use = (config.get("api_key") or os.getenv("GEMINI_API_KEY") or "").strip().strip('"').strip("'")
+
+                                                url = f"https://generativelanguage.googleapis.com/v1beta/models/{stable_model}:embedContent"
+                                                headers = {"x-goog-api-key": api_key_to_use}
+
+                                                for text_item in batch:
+                                                    payload = {"content": {"parts": [{"text": text_item}]}}
+                                                    resp = await http_client.post(url, headers=headers, json=payload)
+
+                                                    if resp.status_code == 200:
+                                                        data = resp.json()
+                                                        result.add_success(data["embedding"]["values"], text_item)
+                                                    else:
+                                                        search_logger.error(f"Google native API failed: Status {resp.status_code}, Body: {resp.text}")
+                                                        raise EmbeddingAPIError(f"Google error {resp.status_code}: {resp.text}")
+                                        else:
+                                            # Standard OpenAI-compatible call
+                                            api_params = {
+                                                "model": embedding_model,
+                                                "input": batch,
+                                            }
+                                            # OpenAI-specific: only add dimensions for compatible models
+                                            if provider_name != "google":
+                                                api_params["dimensions"] = embedding_dimensions
+
+                                            response = await client.embeddings.create(**api_params)
+                                            for item, text_item in zip(response.data, batch, strict=False):
+                                                result.add_success(item.embedding, text_item)
                                         break
                                     except openai.RateLimitError as e:
                                         error_message = str(e)
@@ -257,7 +287,19 @@ async def create_embeddings_batch(
                         raise
                 finally:
                     if client:
-                        await client.close()
+                        # Safe close that handles both real AsyncOpenAI clients and MagicMocks
+                        try:
+                            # Try standard close method
+                            close_method = getattr(client, "close", None)
+                            if callable(close_method):
+                                close_res = close_method() # RENAMED to avoid shadowing result
+                                if inspect.isawaitable(close_res):
+                                    await close_res
+                            # Fallback for older clients or mocks
+                            elif hasattr(client, "aclose"):
+                                await client.aclose()
+                        except Exception as cleanup_err:
+                            search_logger.warning(f"Error closing client: {cleanup_err}")
 
             raise last_exception or ValueError("All providers failed without a specific exception.")
 

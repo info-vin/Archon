@@ -243,11 +243,14 @@ async def get_llm_client(
             if not api_key:
                 raise ValueError("Google API key not found")
 
+            # Google's OpenAI-compatible endpoint requires the key in a specific header
+            # rather than the standard Authorization: Bearer header.
             client = openai.AsyncOpenAI(
                 api_key=api_key,
                 base_url=base_url or "https://generativelanguage.googleapis.com/v1beta/openai/",
+                default_headers={"x-goog-api-key": api_key.strip()}
             )
-            logger.info("Google Gemini client created successfully")
+            logger.info("Google Gemini client created successfully (OpenAI-compatible)")
 
         elif provider_name == "openrouter":
             if not api_key:
@@ -377,7 +380,11 @@ async def create_embedding_client(config: dict[str, Any]) -> openai.AsyncOpenAI:
     elif provider_name == "google":
         if not api_key:
             raise ValueError("Google API key not found for embedding client")
-        return openai.AsyncOpenAI(api_key=api_key, base_url=base_url)
+        return openai.AsyncOpenAI(
+            api_key=api_key,
+            base_url=base_url or "https://generativelanguage.googleapis.com/v1beta/openai/",
+            default_headers={"x-goog-api-key": api_key.strip()}
+        )
 
     # Extend with other providers as needed, mirroring get_llm_client logic
     elif provider_name in ["openrouter", "anthropic", "grok"]:

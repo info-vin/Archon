@@ -67,7 +67,7 @@ class BaseSearchStrategy:
                 filtered_results = []
                 if response.data:
                     for result in response.data:
-                        similarity = float(result.get("similarity", 0.0))
+                        similarity = float(result.get("similarity") or 0.0)
                         if similarity >= SIMILARITY_THRESHOLD:
                             filtered_results.append(result)
 
