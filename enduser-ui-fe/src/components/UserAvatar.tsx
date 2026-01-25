@@ -5,9 +5,10 @@ interface UserAvatarProps {
   name: string;
   size?: number; // 頭像的大小（可選）
   isAI?: boolean; // 是否為 AI Agent
+  className?: string; // 允許傳入自定義樣式
 }
 
-const UserAvatar: React.FC<UserAvatarProps> = ({ name, size = 40, isAI = false }) => {
+const UserAvatar: React.FC<UserAvatarProps> = ({ name, size = 40, isAI = false, className = '' }) => {
   const initial = name ? name.charAt(0).toUpperCase() : '?';
   const color = name ? stringToColor(name) : '#888888';
 
@@ -15,8 +16,9 @@ const UserAvatar: React.FC<UserAvatarProps> = ({ name, size = 40, isAI = false }
     display: 'inline-flex',
     alignItems: 'center',
     justifyContent: 'center',
-    width: `${size}px`,
-    height: `${size}px`,
+    // 如果 className 中沒有指定寬高，則使用 size
+    width: className.includes('w-') ? undefined : `${size}px`,
+    height: className.includes('h-') ? undefined : `${size}px`,
     color: '#ffffff',
     fontSize: `${size * 0.5}px`,
     fontWeight: 'bold',
@@ -36,7 +38,7 @@ const UserAvatar: React.FC<UserAvatarProps> = ({ name, size = 40, isAI = false }
   };
 
   return (
-    <div style={isAI ? aiStyle : userStyle} title={name}>
+    <div className={className} style={isAI ? aiStyle : userStyle} title={name}>
       {isAI ? 'A' : initial}
     </div>
   );

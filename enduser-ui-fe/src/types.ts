@@ -70,12 +70,33 @@ export interface Task {
   created_at: string; // ISO string
   updated_at: string; // ISO string
   completed_at?: string; // ISO string
+  sources?: {
+    source_id: string;
+    type: string;
+    title?: string;
+    url?: string;
+  }[];
   attachments?: {
     file_name: string;
     url: string;
     description?: string;
     uploaded_at?: string;
   }[];
+}
+
+export interface NewTaskData {
+  title: string;
+  description: string;
+  status: TaskStatus;
+  priority: TaskPriority;
+  assignee_id: string | null;
+  due_date: string;
+  project_id: string;
+  knowledge_source_ids?: string[];
+}
+
+export interface UpdateTaskData extends Partial<NewTaskData> {
+  id: string;
 }
 
 // Replaced AuditLog with DocumentVersion to match the provided SQL schema

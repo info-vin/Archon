@@ -4,6 +4,8 @@ from pydantic import BaseModel
 
 from ..auth.dependencies import get_current_user
 from ..config.logfire_config import get_logger, logfire
+from ..prompts.marketing_prompts import BLOG_DRAFT_SYSTEM_PROMPT
+from ..prompts.sales_prompts import SALES_PITCH_SYSTEM_PROMPT
 from ..services.credential_service import credential_service
 from ..services.job_board_service import JobBoardService, JobData
 from ..services.llm_provider_service import get_llm_client
@@ -176,18 +178,7 @@ async def generate_pitch(request: PitchRequest, current_user: dict = Depends(get
         provider_config = await credential_service.get_active_provider("llm")
         model_name = provider_config.get("chat_model") or "gpt-4o"
 
-        system_prompt = """You are a top-tier Sales Representative for Archon, an AI & Data consultancy.
-Your goal is to write a personalized, professional, and compelling email pitch to a hiring manager.
-Structure: 1. Hook, 2. Value Prop (reference case study), 3. CTA.
-
-OUTPUT FORMAT:
-Please provide the output in two sections:
-[ENGLISH PITCH]
-(English version here)
-
-[CHINESE PITCH]
-(Chinese version here, culturally adapted for Taiwan market)
-"""
+        system_prompt = SALES_PITCH_SYSTEM_PROMPT
 
         user_prompt = f"Target Company: {request.company}\nHiring For: {request.job_title}\n\nContext:\n{context_text}"
 
@@ -325,15 +316,7 @@ async def draft_blog_post(request: DraftBlogRequest, current_user: dict = Depend
         provider_config = await credential_service.get_active_provider("llm")
         model_name = provider_config.get("chat_model") or "gpt-4o"
 
-        system_prompt = """You are an expert Content Writer for Archon.
-Goal: Write a structured blog post based on the topic.
-Format:
-- Title: Catchy and relevant
-- Content: Markdown formatted, with Introduction, Key Points, and Conclusion.
-- Excerpt: A 2-sentence summary.
-
-Return JSON format: { "title": "...", "content": "...", "excerpt": "..." }
-"""
+        system_prompt = BLOG_DRAFT_SYSTEM_PROMPT
         user_prompt = f"Topic: {request.topic}\nKeywords: {request.keywords}\nTone: {request.tone}"
 
         async with get_llm_client() as client:

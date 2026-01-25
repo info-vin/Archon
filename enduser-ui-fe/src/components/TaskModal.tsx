@@ -113,8 +113,10 @@ export const TaskModal: React.FC<TaskModalProps> = ({ task, onClose, onTaskCreat
     try {
       if (isEditMode) {
         const updatedData: UpdateTaskData = {
+          id: task.id,
           title,
           description,
+          status: task.status,
           assignee_id: assigneeId || null,
           due_date: new Date(dueDate).toISOString(),
           priority,
@@ -128,7 +130,8 @@ export const TaskModal: React.FC<TaskModalProps> = ({ task, onClose, onTaskCreat
           project_id: finalProjectId,
           title,
           description,
-          assigneeId: assigneeId || undefined,
+          status: 'todo' as any, // Default status
+          assignee_id: assigneeId || null,
           due_date: new Date(dueDate).toISOString(),
           priority,
           knowledge_source_ids: selectedKnowledgeIds,

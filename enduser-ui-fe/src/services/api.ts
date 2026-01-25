@@ -9,8 +9,8 @@ const getSupabaseConfig = () => {
     
     // 2. Fallback to localStorage (User override)
     if (!url || !key) {
-        url = localStorage.getItem('supabaseUrl');
-        key = localStorage.getItem('supabaseAnonKey');
+        url = localStorage.getItem('supabaseUrl') || "";
+        key = localStorage.getItem('supabaseAnonKey') || "";
     }
 
     return { url: url || null, key: key || null };
