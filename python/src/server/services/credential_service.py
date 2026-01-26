@@ -174,7 +174,7 @@ class CredentialService:
 
         if isinstance(value, str):
             return value.strip()
-            
+
         return value
 
     async def get_encrypted_credential_raw(self, key: str) -> str | None:

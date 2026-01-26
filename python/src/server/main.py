@@ -108,7 +108,7 @@ async def lifespan(app: FastAPI):
 
         api_logger.info("✅ Using polling for real-time updates")
 
-        # Initialize prompt service
+        # Initialize Prompt Service
         try:
             from .services.prompt_service import prompt_service
 
@@ -116,6 +116,14 @@ async def lifespan(app: FastAPI):
             api_logger.info("✅ Prompt service initialized")
         except Exception as e:
             api_logger.warning(f"Could not initialize prompt service: {e}")
+
+        # Initialize Clockwork (Scheduler Service)
+        try:
+            from .services.scheduler_service import scheduler_service
+            scheduler_service.start()
+            api_logger.info("✅ Clockwork (Scheduler) initialized")
+        except Exception as e:
+            api_logger.error(f"❌ Failed to start Clockwork: {e}")
 
         # Set the main event loop for background tasks
         try:
@@ -146,6 +154,13 @@ async def lifespan(app: FastAPI):
     api_logger.info("🛑 Shutting down Archon backend...")
 
     try:
+        # Shutdown Clockwork
+        try:
+            from .services.scheduler_service import scheduler_service
+            scheduler_service.shutdown()
+        except Exception as e:
+            api_logger.warning(f"Could not shutdown Clockwork: {e}")
+
         # MCP Client cleanup not needed
 
         # Cleanup crawling context

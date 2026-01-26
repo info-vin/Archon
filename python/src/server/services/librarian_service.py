@@ -82,7 +82,7 @@ class LibrarianService:
             # 4. Insert Content (archon_crawled_pages)
             # This makes it searchable by RAG.
             # We treat the pitch as a single "page".
-            
+
             # Generate embedding for the pitch content to enable RAG discovery
             try:
                 embedding_vector = await create_embedding(content)
@@ -96,7 +96,7 @@ class LibrarianService:
                 "chunk_number": 0, # Required field
                 "content": content,
                 "embedding": embedding_vector,
-                # WORKAROUND: We store the title in metadata to bypass the schema cache 
+                # WORKAROUND: We store the title in metadata to bypass the schema cache
                 # and ensure it's available even if the 'title' column isn't fully synced yet.
                 "metadata": {**metadata, "title": title} # Store title in metadata
             }

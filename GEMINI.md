@@ -88,7 +88,17 @@
 
 # 第三章：近期工作日誌 (Recent Journal Entries)
 
-### 2026-01-25: Phase 4.4 銷售閉環與 DX 大修復 (Sales Nexus Closure & DX Overhaul)
+### 2026-01-25: Phase 4.4.4 探針制度化與技術債清理 (Sentinel Institutionalization & Debt Cleanup)
+*   **核心任務**: 將 `scripts/probe_librarian.py` 升級為標準化健康檢查工具 (`make probe`)，並清理 Google RAG 修復過程中引入的硬編碼技術債。
+*   **技術實作**:
+    *   **探針升級**: 實作了「維度完整性檢查 (Integrity Check)」，能自動偵測 768 (Gemini) vs 1536 (OpenAI) 的維度衝突，並加入資料庫重試邏輯以排除索引延遲導致的誤報。
+    *   **Librarian 修復**: 發現並修復了 `LibrarianService` 漏掉呼叫 `create_embedding` 導致資料庫向量欄位為空的嚴重 Bug。
+    *   **配置對齊**: 新增 `scripts/force_google_config.py` 工具，確保測試環境與代碼預期的一致性。
+    *   **去硬編碼**: 重構 `embedding_service.py`，移除寫死的模型名稱與維度判斷，改為動態讀取資料庫配置，並修復了 `batch` 處理邏輯潛在的維度疊加風險。
+*   **標準化**: 將探針封裝為 `make probe` 指令，成為 CI/CD 的 Smoke Test 標準。
+*   **測試成果**: 探針通過全流程驗證 (Alice Seeding -> Dimension Check -> Bob Retrieval)。
+
+### 2026-01-25: Phase 4.4 Google RAG 穩定化與 DX 突破 (Stability & DX Breakthrough)
 *   **核心任務**: 完成 Sales Nexus 的資料與知識閉環，並徹底修復開發環境 (DX) 的 API Key 自動化流程。
 *   **Sales Nexus 閉環**:
     *   **Schema 補完**: 在 `leads` 表補上 `job_title` 與 `description_snippet`，消除了 Alice 的資訊盲點。

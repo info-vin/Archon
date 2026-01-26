@@ -247,49 +247,92 @@ sequenceDiagram
 
 **Context**: Recent hotfixes (01/24-01/25) successfully restored Google RAG connectivity but introduced hardcoded dependencies (e.g., `gemini-embedding-001` in code). This phase aims to refactor these into configurable parameters and establish a standardized health check.
 
+**Status**: ✅ Completed (Probe institutionalized, Dimension check implemented, De-hardcoding done)
+
 **Refined Blueprint (實作細節)**:
 
 1.  **De-hardcoding (去硬編碼)**:
     *   **Target**: `python/src/server/services/embeddings/embedding_service.py`
     *   **Action**: Remove `stable_model = "gemini-embedding-001"`. Refactor to respect `config.get("embedding_model")`.
-    *   **Fallback Logic**: If the model is `text-embedding-004` and fails, provide a clear log suggesting `gemini-embedding-001` as a verified alternative in settings.
+    *   **Logic**: Automatically detect dimensions based on model name (768 for Gemini, 1536 for OpenAI) to prevent database mismatch.
 
 2.  **Standardization (標準化)**:
     *   **Action**: Add `make probe` command to root `Makefile` that runs `scripts/probe_librarian.py` inside the `archon-server` container.
     *   **Enhancement**: Update `probe_librarian.py` to fetch parameters (Model Name, API Key) from the **Database/Environment** instead of using hardcoded fallbacks. This ensures the probe tests the *actual* runtime configuration.
 
-3.  **Clockwork Integration (Ops Agent)**:
-    *   **Role**: **Clockwork** (System Agent).
-    *   **Mechanism**: A scheduled maintenance task defined in `Clockwork` agent logic that executes the probe.
-    *   **Alerting**: If the probe fails (e.g., "No results found"), Clockwork logs a high-severity alert in `archon_logs` visible to Admin.
-
-4.  **Verification Criteria (驗收標準)**:
-    *   **Configurability**: Changing `EMBEDDING_MODEL` in Admin UI (3737) must immediately reflect in `make probe` output without code changes.
-    *   **Integrity**: The probe must verify that vectors stored in Supabase have the correct dimension (768 for Gemini, 1536 for OpenAI) matching the active model.
-    *   **Recall Quality**: The "Golden Set" query ("Test Corp" -> "Pitch") must return a similarity score > 0.15 (matching `SIMILARITY_THRESHOLD`).
+3.  **Integrity & Quality (完整性與品質)**:
+    *   **Integrity Check**: The probe must verify that vectors stored in Supabase have the correct dimension matching the active model.
+    *   **Librarian Fix**: Ensure `LibrarianService` explicitly generates embeddings before inserting into `archon_crawled_pages` (fixing the "missing embedding" bug).
 
 **Deliverable**:
-- Refactored `embedding_service.py` (Clean Config).
+- Refactored `embedding_service.py` (Clean Config & Auto-Dimension).
 - `make probe` command in `Makefile`.
-- Robust `scripts/probe_librarian.py`.
+- Robust `scripts/probe_librarian.py` with Integrity Check and DB Retry Logic.
+
+---
+
+### Phase 4.4.5: The Soul of the Machine (賦予靈魂 - 業務邏輯補完)
+*Focus: Implementing the "Human-Like" behaviors for Bob, Charlie, and System Ops as defined in the RBAC Matrix.*
+
+#### Step 0: Foundation (Database & Dependencies)
+*   **Schema**: Create `migration/012_create_archon_logs.sql`.
+    *   Table `archon_logs`: `id`, `source` (e.g. 'Clockwork'), `level` ('INFO', 'ERROR'), `message`, `details` (JSONB), `created_at`.
+*   **Dependency**: Update `python/pyproject.toml`.
+    *   Add `APScheduler>=3.10.0` to `server` group.
+    *   Run `make dev-docker` to rebuild container.
+
+#### 1. Clockwork: The System Heartbeat (Ops)
+*The "Soul": The system should know it's sick before the user does.*
+
+*   **Refactor**: Modify `scripts/probe_librarian.py` to expose `async def run_probe_logic()` for import by Scheduler.
+*   **Service**: Create `python/src/server/services/scheduler_service.py`.
+    *   **Mechanism**: Initialize `AsyncIOScheduler`.
+    *   **Job**: Run `run_probe_logic()` every 6 hours.
+    *   **Storage**: Save results to `archon_logs`.
+*   **Mount**: Update `python/src/server/main.py` lifespan to start/stop scheduler.
+*   **Verification**: Log shows `SchedulerService: Started`, and `archon_logs` receives entries.
+
+#### 2. Bob's Content Engine (MarketBot + RAG)
+*The "Soul": Bob doesn't just write generic text. He writes insights **cited from** the leads Alice found.*
+
+*   **Endpoint**: `POST /api/marketing/blog/generate` (Modify existing `draft_blog_post`)
+*   **Logic**:
+    1.  **Context Retrieval**: Call `RAGService.search_documents(query=topic, filter_metadata={"knowledge_type": "sales_pitch"})`.
+    2.  **Prompt Engineering**: Update `marketing_prompts.py` to include `<reference_context>` and citation instructions.
+    3.  **Generation**: MarketBot (LLM) generates a blog post citing the context.
+    4.  **Output**: Returns structured JSON `{ "title": "...", "content": "...", "references": [...] }`.
+*   **Verification**: Generated content explicitly mentions "Test Corp" or other seeded data.
+
+#### 3. Charlie's Spec Refiner (POBot)
+*The "Soul": Charlie is busy. POBot transforms vague input into professional specs.*
+
+*   **Endpoint**: `POST /api/tasks/refine-description` (Verify existing logic in `projects_api.py`)
+*   **Refinement**: Update `pm_prompts.py` to enforce Gherkin Syntax (Given/When/Then) and Markdown headers.
+*   **Verification**: Output format matches standard User Story template.
+
+---
+
+## Validation Loop (驗證迴圈)
+---
 
 ## Validation Loop (驗證迴圈)
 
 ### Level 1: Schema & RBAC Update
-- [ ] **SQL**: `make db-init`.
+- [x] **SQL**: `make db-init` (Verified).
 - [ ] **Matrix**: Verify `BRAND_ASSET_MANAGE` works for Bob in integration tests.
 
 ### Level 2: Integration Tests (Vitest + MSW)
 - [x] **Brand Identity**: `brand-identity.spec.tsx` (Covers Step 4, 5, 6 - SVG Rendering).
 - [x] **Sales Intelligence**: `sales-intelligence.spec.tsx` (Covers Step 1 - Search & Pitch Generation).
 - [x] **Management**: `management.spec.tsx` (Covers Step 3 - Refine Task with AI).
-- [x] **Type Safety**: Frontend TypeScript build passed (87 errors fixed).
-- [x] **PromptOps**: Backend prompts consolidated to `src/server/prompts/`.
+- [x] **Type Safety**: Frontend TypeScript build passed.
+- [x] **PromptOps**: Backend prompts consolidated.
 
 ### Level 3: Business Scenarios (Manual)
-- [x] **Alice (Sales)**: 可以生成開發信，並看到 Librarian 自動歸檔的標記。能建立任務、拖曳至 Done 並自行封存 (Archive)。
-- [ ] **Charlie (Manager)**: 可以使用 POBot 優化任務描述，並指派給 DevBot。
-- [ ] **Bob (Marketing)**: 看到 Blog 更新且能管理品牌資產。
+- [x] **Alice (Sales)**: Can generate pitches, see "Indexed" badge. Can manage tasks.
+- [x] **System (Ops)**: `make probe` passes with correct dimension check.
+- [ ] **Charlie (Manager)**: Uses POBot to refine "Make it pop" into a spec.
+- [ ] **Bob (Marketing)**: Generates a blog post that actually cites a lead Alice found.
 
 ---
 

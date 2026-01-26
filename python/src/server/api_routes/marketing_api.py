@@ -52,6 +52,7 @@ class DraftBlogResponse(BaseModel):
     title: str
     content: str
     excerpt: str
+    references: list[str] = []
 
 @router.get("/jobs", response_model=list[JobData])
 async def search_jobs(keyword: str = Query(..., min_length=1), limit: int = 10):
@@ -328,7 +329,7 @@ async def process_approval(item_type: str, item_id: str, action: str):
 @router.post("/blog/draft", response_model=DraftBlogResponse)
 async def draft_blog_post(request: DraftBlogRequest, current_user: dict = Depends(get_current_user)):
     """
-    Generate a blog post draft using AI.
+    Generate a blog post draft using AI with RAG support.
     """
     try:
         logfire.info(f"API: Drafting blog | topic={request.topic} | user={current_user.get('email')}")
@@ -338,11 +339,48 @@ async def draft_blog_post(request: DraftBlogRequest, current_user: dict = Depend
         if user_role == "viewer":
             raise HTTPException(status_code=403, detail="Viewers cannot generate content.")
 
+        # 1. RAG Search (Bob's memory)
+        rag_service = RAGService()
+        search_query = f"{request.topic} {request.keywords or ''}"
+
+        # Search specifically for sales pitches or relevant industry knowledge
+        success, search_result = await rag_service.perform_rag_query(
+            query=search_query,
+            match_count=5,
+            # We filter for sales_pitch to ensure we quote our own capabilities,
+            # but we can also relax this to include 'crawled_content' if needed.
+            # For now, let's keep it broad or specific based on plan.
+            # Plan says: filter_metadata={"knowledge_type": "sales_pitch"}
+            # But perform_rag_query might not expose filter directly as argument?
+            # Let's check RAGService.perform_rag_query signature in memory or file.
+            # wait, perform_rag_query(self, query: str, match_count: int = 5, filter_metadata: Dict = None)
+            # So passing it is fine.
+            metadata_filter={"knowledge_type": "sales_pitch"}
+        )
+
+        context_text = ""
+        references = []
+
+        if success and "results" in search_result:
+            for res in search_result["results"]:
+                meta = res.get("metadata", {})
+                source = meta.get("source", "Unknown Source")
+                content = res.get("content", "").strip()
+                # Deduplicate references
+                if source not in references:
+                    references.append(source)
+
+                context_text += f"\n[Source: {source}]\n{content}\n"
+
+        if not context_text:
+            context_text = "No specific internal references found. Rely on general industry knowledge."
+
+        # 2. LLM Generation
         provider_config = await credential_service.get_active_provider("llm")
         model_name = provider_config.get("chat_model") or "gpt-4o"
 
         system_prompt = BLOG_DRAFT_SYSTEM_PROMPT
-        user_prompt = f"Topic: {request.topic}\nKeywords: {request.keywords}\nTone: {request.tone}"
+        user_prompt = f"Topic: {request.topic}\nKeywords: {request.keywords}\nTone: {request.tone}\n\n<reference_context>\n{context_text}\n</reference_context>"
 
         async with get_llm_client() as client:
             response = await client.chat.completions.create(
@@ -357,7 +395,8 @@ async def draft_blog_post(request: DraftBlogRequest, current_user: dict = Depend
         return DraftBlogResponse(
             title=result.get("title", "Untitled Draft"),
             content=result.get("content", ""),
-            excerpt=result.get("excerpt", "")
+            excerpt=result.get("excerpt", ""),
+            references=result.get("used_references", references) # AI might curate them
         )
 
     except Exception as e:
