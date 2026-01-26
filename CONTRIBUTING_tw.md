@@ -125,10 +125,14 @@
 > **💡 RAG 診斷 (System Probe)**:
 > 若您遇到搜尋不到資料或 400 錯誤，請執行 `make probe`。它會模擬一個完整的 Alice (寫入) -> Librarian (索引) -> Bob (讀取) 流程，並檢查向量維度是否匹配 (768 vs 1536)。
 
-> **日常開發建議流程**:
-> 1.  **驗證後端邏輯**: 使用 `make test-be`。
-> 2.  **驗證前端元件**: 使用 `pnpm run test:unit`。
-> 3.  **整合測試**: 僅在您準備提交代碼，且**不介意資料被清空**時，才執行完整的 `make test`。
+### 3.6 Clockwork 與排程除錯 (Clockwork Debugging)
+
+Phase 4.4.5 引入了 **Clockwork** 進行系統自動檢測。
+*   **查看執行紀錄**: 查詢資料庫中的 `archon_logs` 表。
+    ```sql
+    SELECT * FROM archon_logs WHERE source = 'clockwork-scheduler' ORDER BY created_at DESC;
+    ```
+*   **手動觸發**: 目前 Clockwork 隨 Server 啟動 (每 6 小時一次)。若需立即測試探針邏輯，請直接執行 `make probe`。
 
 ### 3.2 後端 API 測試：模擬資料庫與服務
 
@@ -330,6 +334,8 @@ def test_some_endpoint():
             > **說明**: 為 `blog_posts` 新增狀態欄位，並擴充 `leads` 表以支援 CRM 功能。
         15. `migration/011_update_alice_bob_roles.sql` (**Persona 權限修正**)
             > **說明**: 將 Alice 與 Bob 的角色分別升級為 `sales` 與 `marketing`，確保其具備存取 Sales Intel 與 Brand Hub 的權限。
+        16. `migration/012_create_archon_logs.sql` (**Phase 4.4.5 系統日誌**)
+            > **說明**: 建立 `archon_logs` 表，供 Clockwork 與其他系統服務記錄健康檢查與稽核事件。
 
 3.  **階段三：執行部署**
 
