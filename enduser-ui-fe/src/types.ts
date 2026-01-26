@@ -36,6 +36,7 @@ export interface Employee {
   status: 'active' | 'inactive' | 'suspended';
   role: EmployeeRole;
   avatar: string;
+  permissions?: string[];
 }
 
 export interface Project {

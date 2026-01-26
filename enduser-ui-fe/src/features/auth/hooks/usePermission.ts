@@ -62,14 +62,23 @@ export function usePermission() {
   const { user } = useAuth();
   
   const hasPermission = (permission: PermissionScope): boolean => {
-    if (!user?.role) {
+    console.log(`[usePermission] Checking ${permission}. User:`, user ? `${user.name} (${user.role}) [${user.permissions?.join(',')}]` : 'NULL');
+    if (!user) {
         return false;
     }
+
+    // 1. Priority: Dynamic Permissions from DB/API (or Mock)
+    if (user.permissions && Array.isArray(user.permissions) && user.permissions.length > 0) {
+        return (user.permissions as string[]).includes(permission);
+    }
     
-    const permissions = ROLE_MAP[user.role];
-    const allowed = permissions?.has(permission) ?? false;
-    
-    return allowed;
+    // 2. Fallback: Static Role-based Permissions
+    if (user.role) {
+        const rolePermissions = ROLE_MAP[user.role];
+        return rolePermissions?.has(permission) ?? false;
+    }
+
+    return false;
   };
 
   return { hasPermission };

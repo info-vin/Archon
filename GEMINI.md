@@ -88,6 +88,17 @@
 
 # 第三章：近期工作日誌 (Recent Journal Entries)
 
+### 2026-01-26: Phase 4.4 Completion & Phase 4.5 Kickoff (Validation Victory)
+*   **核心任務**: 徹底驗收 Phase 4.4 的剩餘缺口 (RBAC 權限與 Marketing RAG 流程)，並啟動 Phase 4.5 "System Institutionalization"。
+*   **技術突圍**:
+    *   **E2E 基礎設施修復**: 發現並修復了 `tests/e2e/e2e.setup.tsx` 中的致命錯誤——`renderApp` 是一個空殼，導致所有測試都在測空頁面。修復後正確渲染了 `<AppRoutes />`。
+    *   **Mock 架構重構**: 放棄了脆弱的 `vi.spyOn`，改用全模組 `vi.mock` 加上 `importOriginal` 模式，保留了 `supabase` 實例但攔截了 `api` 物件，解決了 Auth Hook 崩潰與 "not a function" 的錯誤。
+    *   **環境補丁**: 在 `e2e.setup.tsx` 頂層加入了 `window.matchMedia` 的 Polyfill，解決了 `App.tsx` 主題偵測導致的測試崩潰。
+*   **驗收成果**:
+    *   **RBAC 驗證**: `rbac-brand-manage.spec.tsx` 通過，確認 Bob (Marketing) 可見 Brand Hub 管理介面，而 Alice (Sales) 被拒絕訪問。
+    *   **業務閉環**: `content-marketing.spec.tsx` 通過，確認 Bob 能執行 "Magic Draft" 並獲得帶有引用的 AI 草稿。
+*   **下一步**: 啟動 Phase 4.5，將 `scripts/` 下的工具轉化為正規 API，並統一 Team Management UI 風險。
+
 ### 2026-01-25: Phase 4.4.4 探針制度化與技術債清理 (Sentinel Institutionalization & Debt Cleanup)
 *   **核心任務**: 將 `scripts/probe_librarian.py` 升級為標準化健康檢查工具 (`make probe`)，並清理 Google RAG 修復過程中引入的硬編碼技術債。
 *   **技術實作**:

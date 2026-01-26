@@ -181,7 +181,7 @@ description: |
 
 ### Level 1: Schema & RBAC Update
 - [x] **SQL**: `make db-init` (Verified).
-- [ ] **Matrix**: Verify `BRAND_ASSET_MANAGE` works for Bob in integration tests.
+- [x] **Matrix**: Verify `BRAND_ASSET_MANAGE` works for Bob in integration tests (Verified in `rbac-brand-manage.spec.tsx`).
 
 ### Level 2: Integration Tests (Vitest + MSW)
 - [x] **Brand Identity**: `brand-identity.spec.tsx` (Covers Step 4, 5, 6 - SVG Rendering).
@@ -193,8 +193,8 @@ description: |
 ### Level 3: Business Scenarios (Manual)
 - [x] **Alice (Sales)**: Can generate pitches, see "Indexed" badge. Can manage tasks.
 - [x] **System (Ops)**: `make probe` passes with correct dimension check.
-- [ ] **Charlie (Manager)**: Uses POBot to refine "Make it pop" into a spec.
-- [ ] **Bob (Marketing)**: Generates a blog post that actually cites a lead Alice found.
+- [x] **Charlie (Manager)**: Uses POBot to refine "Make it pop" into a spec (Verified in `management.spec.tsx`).
+- [x] **Bob (Marketing)**: Generates a blog post that actually cites a lead Alice found (Verified in `content-marketing.spec.tsx`).
 
 ---
 

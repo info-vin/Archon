@@ -119,7 +119,7 @@ const BrandPage: React.FC = () => {
     );
 
     return (
-        <PermissionGuard permission="leads:view:all" userRole={user?.role} fallback={<div className="p-12 text-center text-gray-500">Access Denied: Brand Hub is for Marketing roles only.</div>}>
+        <PermissionGuard permission="brand_asset_manage" userRole={user?.role} fallback={<div className="p-12 text-center text-gray-500">Access Denied: Brand Hub is for Marketing roles only.</div>}>
             <div className="p-6 max-w-7xl mx-auto space-y-8">
                 <header className="flex justify-between items-start">
                     <div>

@@ -1,217 +1,76 @@
-// enduser-ui-fe/tests/e2e/e2e.setup.tsx
-import { beforeAll, afterEach, afterAll, vi } from 'vitest';
-import { server } from '../../src/mocks/server';
+import { vi } from 'vitest';
+
+// Polyfill window.matchMedia for JSDOM - MUST BE AT TOP LEVEL
+if (typeof window !== 'undefined') {
+  Object.defineProperty(window, 'matchMedia', {
+    writable: true,
+    value: vi.fn().mockImplementation(query => ({
+      matches: false,
+      media: query,
+      onchange: null,
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    })),
+  });
+}
+
+// 1. Mock the API module partially to retain supabase instance but mock the api object
+vi.mock('../../src/services/api', async (importOriginal) => {
+    const actual = await importOriginal() as any;
+    return {
+        ...actual,
+        api: {
+            ...actual.api,
+            getCurrentUser: vi.fn().mockResolvedValue({ 
+                id: 'def-1', 
+                role: 'admin', 
+                permissions: ['leads:view:all', 'brand_asset_manage', 'user:manage:team'] 
+            }),
+            getBlogPosts: vi.fn().mockResolvedValue([]),
+            getMarketStats: vi.fn().mockResolvedValue({ "AI/LLM": 10, "Total Leads": 20, "Data/BI": 5 }),
+            searchJobs: vi.fn().mockResolvedValue([]),
+            draftBlogPost: vi.fn().mockResolvedValue({ title: 'Draft', content: 'Content with References: [Ref]' }),
+            getLeads: vi.fn().mockResolvedValue([]),
+            getEmployees: vi.fn().mockResolvedValue([]),
+            getAiUsage: vi.fn().mockResolvedValue({ total_budget: 1000, total_used: 0 }),
+            getPendingApprovals: vi.fn().mockResolvedValue({ blogs: [], leads: [] }),
+            getProjects: vi.fn().mockResolvedValue([]), // Fixed: Return array, not object
+            getTasks: vi.fn().mockResolvedValue([]),
+            getKnowledgeItems: vi.fn().mockResolvedValue([]),
+        }
+    };
+});
+
 import React from 'react';
 import { render } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import { AppRoutes } from '../../src/App';
 import { AuthProvider } from '../../src/hooks/useAuth';
+import { api } from '../../src/services/api';
+import { AppRoutes } from '../../src/App'; // Import the actual routes
 
-// =============================================================================
-// SECTION 1: TOP-LEVEL SETUP
-// =============================================================================
-
-// Note: LocalStorage initialization is now handled in `pre-setup.ts` to ensure
-// it runs before any hoisted `vi.mock` calls.
-
-// Mock scrollIntoView for jsdom
-window.HTMLElement.prototype.scrollIntoView = vi.fn();
-
-const mockUser = {
-    id: 'user-e2e-1',
-    employeeId: 'E2E001',
-    name: 'E2E Test User',
-    email: 'e2e@archon.com',
-    department: 'QA',
-    position: 'Tester',
-    status: 'active',
-    role: 'system_admin',
-    avatar: 'https://i.pravatar.cc/150?u=e2e@archon.com'
-};
-
-// =============================================================================
-// SECTION 2: HYBRID API MOCKING STRATEGY
-// =============================================================================
-
-const { mockInternalUser, mockTasksStore } = vi.hoisted(() => ({
-  mockInternalUser: {
-    id: 'user-e2e-1',
-    employeeId: 'E2E001',
-    name: 'E2E Test User',
-    email: 'e2e@archon.com',
-    role: 'system_admin',
-    status: 'active',
-    avatar: 'https://i.pravatar.cc/150?u=e2e@archon.com'
-  },
-  mockTasksStore: [] as any[]
-}));
-
-vi.mock('../../src/services/api', () => {
-  return {
-    supabase: {
-      auth: {
-        getSession: vi.fn().mockResolvedValue({ data: { session: { user: mockInternalUser } }, error: null }),
-        onAuthStateChange: vi.fn().mockReturnValue({ data: { subscription: { unsubscribe: vi.fn() } } }),
-      },
-      from: vi.fn().mockReturnValue({
-        select: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnThis(),
-        single: vi.fn().mockResolvedValue({ data: mockInternalUser, error: null }),
-      }),
-    },
-    api: {
-      getCurrentUser: vi.fn().mockResolvedValue(mockInternalUser),
-      getTasks: vi.fn().mockImplementation(async () => [...mockTasksStore]),
-      getProjects: vi.fn().mockResolvedValue([{ id: 'proj-1', title: 'E2E Project', status: 'active' }]),
-      getAssignableUsers: vi.fn().mockResolvedValue([{ id: 'user-1', name: 'Alice Johnson', role: 'member' }]),
-      getAssignableAgents: vi.fn().mockResolvedValue([
-        { id: 'ai-researcher-1', name: '(AI) Market Researcher', role: 'Market Researcher' },
-        { id: 'ai-content-writer', name: '(AI) Content Writer', role: 'Content Writer' },
-        { id: 'ai-knowledge-expert-1', name: '(AI) Internal Knowledge Expert', role: 'Internal Knowledge Expert' },
-        { id: 'agent-content-writer', name: '(AI) Content Writer', role: 'Content Writer' },
-        { id: 'agent-log-analyzer', name: '(AI) Log Analyzer', role: 'Log Analyzer' },
-        { id: 'agent-sales-intel', name: '(AI) Sales Intel', role: 'Sales Intel' },
-      ]),
-      createTask: vi.fn().mockImplementation(async (data) => {
-        // Behaves like api.ts: maps assigneeId to assignee
-        const assignee = data.assigneeId === 'user-1' ? 'Alice Johnson' : data.assigneeId;
-        const newTask = { 
-            ...data, 
-            id: 'new-task-' + Date.now(),
-            assignee: assignee // Ensure UI can render Avatar
-        };
-        mockTasksStore.push(newTask);
-        return newTask;
-      }),
-      updateTask: vi.fn().mockImplementation(async (id, data) => {
-        const index = mockTasksStore.findIndex(t => t.id === id);
-        if (index !== -1) {
-            // Resolve name if ID is provided
-            const assignee = data.assignee_id === 'user-1' ? 'Alice Johnson' : (data.assignee || mockTasksStore[index].assignee);
-            mockTasksStore[index] = { ...mockTasksStore[index], ...data, assignee };
-            return mockTasksStore[index];
-        }
-        return { ...data, id };
-      }),
-      login: vi.fn().mockResolvedValue(mockInternalUser),
-      logout: vi.fn().mockResolvedValue(undefined),
-      getKnowledgeItems: vi.fn().mockResolvedValue([]),
-      getPendingChanges: vi.fn().mockResolvedValue([]),
-      getBlogPosts: vi.fn().mockResolvedValue([]),
-      getEmployees: vi.fn().mockResolvedValue([mockInternalUser]),
-      adminCreateUser: vi.fn().mockImplementation(async (data) => ({ ...data, id: 'alice-id' })),
-      updateEmployee: vi.fn().mockImplementation(async (id, data) => ({ id, ...data })),
-      getAiUsage: vi.fn().mockResolvedValue({ total_budget: 1000, total_used: 0, usage_percentage: 0, usage_by_user: [] }),
-      getPendingApprovals: vi.fn().mockResolvedValue({ blogs: [], leads: [] }),
-      searchJobs: vi.fn().mockImplementation(async (keyword) => {
-        console.log('🔍 [Mock API] searchJobs called with keyword:', keyword);
-        if (keyword === 'Error Test') {
-            console.log('⚠️ [Mock API] Throwing error for Error Test');
-            throw new Error('Simulated API Error');
-        }
-        return [
-        { 
-            title: 'Data Analyst', 
-            company: 'Retail Corp', 
-            location: 'Taipei',
-            salary: '1.2M',
-            url: 'https://example.com/job/1',
-            description: 'Looking for a data analyst...',
-            description_full: 'Full description: Needs someone who knows BI tools like Tableau and PowerBI.',
-            skills: ['Python', 'SQL'],
-            source: '104',
-            identified_need: 'Needs better data pipeline'
-        },
-        { 
-            title: 'Senior Data Engineer', 
-            company: 'Tech Solutions', 
-            location: 'Remote',
-            salary: '1.5M',
-            url: 'https://example.com/job/2',
-            description: 'Building data warehouse...',
-            description_full: 'Full description: Scaling infrastructure with Spark and AWS.',
-            skills: ['Spark', 'AWS'],
-            source: 'LinkedIn',
-            identified_need: 'Scaling infrastructure'
-        }
-      ];
-      }),
-      getLeads: vi.fn().mockResolvedValue([
-          {
-            id: 'lead-1',
-            company_name: 'Retail Corp',
-            job_title: 'Senior Data Analyst',
-            status: 'new',
-            source_job_url: 'https://example.com/job/1',
-            next_followup_date: new Date().toISOString()
-          },
-          {
-            id: 'lead-2',
-            company_name: 'Tech Solutions',
-            job_title: 'Senior Data Engineer',
-            status: 'converted',
-            source_job_url: 'https://example.com/job/2',
-            next_followup_date: null
-          }
-      ]),
-      promoteLead: vi.fn().mockResolvedValue({ success: true }),
-      generatePitch: vi.fn().mockImplementation(async (jobTitle, company, description) => {
-          console.log('🤖 [Mock API] generatePitch called for:', company);
-          return {
-              content: `Subject: Collaboration regarding ${jobTitle}\n\nDear Hiring Manager at ${company},\n\nI noticed you are looking for someone to handle: "${description.substring(0, 50)}...". We can help.`,
-              references: ['Case Study A', 'Capability B'],
-              source_id: 'pitch-mock-source-123'
-          };
-      }),
-      refineTaskDescription: vi.fn().mockImplementation(async (title, description) => {
-          return `User Story: As a user, I want ${title} so that I can be happy.\n\nAcceptance Criteria:\n- Done.`;
-      }),
-    }
-  };
-});
-
-
-// =============================================================================
-// SECTION 3: TEST LIFECYCLE HOOKS
-// =============================================================================
-
-// Unconditionally start the MSW server for all E2E tests.
-beforeAll(() => {
-  server.listen({ onUnhandledRequest: 'error' }); // Use 'error' to catch any unmocked requests
-});
-
-// Reset MSW handlers and clear localStorage after each test.
-afterEach(() => {
-  server.resetHandlers();
-  localStorage.clear();
-
-  // Re-inject necessary credentials for the next test.
-  // We repeat logic from pre-setup.ts here because localStorage is cleared.
-  const supabaseUrl = process.env.VITE_SUPABASE_URL || 'https://mock.supabase.co';
-  const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY || 'mock-key';
-
-  if (supabaseUrl && supabaseAnonKey) {
-      localStorage.setItem('supabaseUrl', supabaseUrl);
-      localStorage.setItem('supabaseAnonKey', supabaseAnonKey);
-  }
-  localStorage.setItem('user', JSON.stringify(mockUser));
-});
-
-// Clean up by closing the MSW server after all tests are done.
-afterAll(() => {
-  server.close();
-});
-
-// =============================================================================
-// SECTION 4: TEST UTILITIES
-// =============================================================================
-
+// Standard render wrapper
 export const renderApp = (initialEntries = ['/']) => {
   return render(
     <MemoryRouter initialEntries={initialEntries}>
       <AuthProvider>
-        <AppRoutes />
+        <AppRoutes /> 
       </AuthProvider>
     </MemoryRouter>
   );
 };
+
+// Global Mocks for common browser APIs
+if (typeof window !== 'undefined') {
+    window.scrollTo = vi.fn();
+    if (!HTMLDialogElement.prototype.showModal) {
+        HTMLDialogElement.prototype.showModal = vi.fn(function(this: HTMLDialogElement) {
+            this.setAttribute('open', '');
+        });
+        HTMLDialogElement.prototype.close = vi.fn(function(this: HTMLDialogElement) {
+            this.removeAttribute('open');
+        });
+    }
+}
