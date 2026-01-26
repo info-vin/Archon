@@ -1,5 +1,6 @@
 import os
 import sys
+from datetime import datetime, timedelta
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.interval import IntervalTrigger
@@ -9,20 +10,6 @@ from ..config.logfire_config import get_logger
 logger = get_logger(__name__)
 
 # Logic to find 'scripts' folder which is at Archon/scripts
-# this file is at Archon/python/src/server/services/scheduler_service.py
-# So we go up 4 levels: services -> server -> src -> python -> Archon
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
-SCRIPTS_DIR = os.path.join(BASE_DIR, '../scripts') # Wait, BASE_DIR is python/ ? No.
-# Let's be safer.
-# Current file: .../python/src/server/services/scheduler_service.py
-# os.path.dirname(__file__) = services
-# .../server
-# .../src
-# .../python
-# .../Archon (Project Root)
-
-# Actually, let's just find the project root relative to this file.
-# file: python/src/server/services/scheduler_service.py
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../../"))
 scripts_path = os.path.join(project_root, "scripts")
 
@@ -32,12 +19,10 @@ if scripts_path not in sys.path:
 try:
     from probe_librarian import run_probe_logic
 except ImportError:
-    # Try importing as package if scripts is in path
     try:
         from scripts.probe_librarian import run_probe_logic
     except ImportError:
         logger.error(f"❌ scheduler_service: Could not import probe_librarian from {scripts_path}")
-        # dummy fallback to prevent crash
         async def run_probe_logic():
             logger.error("❌ Probe logic not found")
             return False
@@ -75,10 +60,77 @@ class SchedulerService:
         )
         logger.info("✅ Scheduled Job: System Probe (Every 6 hours)")
 
+        # Job 2: The Accountant - Token Analysis (Every 24 hours)
+        self._scheduler.add_job(
+            self._analyze_token_usage,
+            trigger=IntervalTrigger(hours=24),
+            id="token_analysis",
+            replace_existing=True
+        )
+        logger.info("✅ Scheduled Job: Token Analysis (Every 24 hours)")
+
+    async def _analyze_token_usage(self):
+        logger.info("🤖 Clockwork: Starting Token Usage Analysis...")
+        try:
+            from ..utils import get_supabase_client
+            supabase = get_supabase_client()
+
+            one_day_ago = (datetime.utcnow() - timedelta(hours=24)).isoformat()
+
+            # Using parentheses for multi-line chaining (standard Python practice)
+            res = (
+                supabase.table("gemini_logs")
+                .select("user_name, gemini_response")
+                .gt("created_at", one_day_ago)
+                .execute()
+            )
+
+            data = res.data or []
+            usage_map = {}
+            total_tokens = 0
+
+            for entry in data:
+                user = entry.get("user_name", "Unknown")
+                content = entry.get("gemini_response", "")
+                if not content:
+                    continue
+
+                est_tokens = len(content) // 4
+                usage_map[user] = usage_map.get(user, 0) + est_tokens
+                total_tokens += est_tokens
+
+            logger.info(f"📊 Daily Token Analysis: {total_tokens} tokens estimated across {len(usage_map)} users.")
+
+            details = {
+                "type": "token_analysis",
+                "period": "24h",
+                "usage_breakdown": usage_map,
+                "total_estimated": total_tokens
+            }
+
+            supabase.table("archon_logs").insert({
+                "source": "clockwork-scheduler",
+                "level": "INFO",
+                "message": f"Daily Token Analysis: {total_tokens} tokens",
+                "details": details
+            }).execute()
+
+        except Exception as e:
+            logger.error(f"💥 Clockwork: Token Analysis Failed: {e}")
+            try:
+                from ..utils import get_supabase_client
+                get_supabase_client().table("archon_logs").insert({
+                    "source": "clockwork-scheduler",
+                    "level": "ERROR",
+                    "message": f"Token Analysis Failed: {str(e)}",
+                    "details": {"error": str(e)}
+                }).execute()
+            except Exception:
+                pass
+
     async def _run_system_probe(self):
         logger.info("🤖 Clockwork: Triggering System Probe...")
         try:
-            # Import dependency inside method to avoid circular imports or early init issues
             from ..utils import get_supabase_client
             supabase = get_supabase_client()
 
@@ -88,13 +140,11 @@ class SchedulerService:
             msg = "System Probe Passed" if success else "System Probe FAILED"
             details = {"type": "probe_librarian", "success": success}
 
-            # Log to Console
             if success:
                 logger.info(f"✅ Clockwork: {msg}")
             else:
                 logger.error(f"❌ Clockwork: {msg}")
 
-            # Log to DB (archon_logs)
             try:
                 supabase.table("archon_logs").insert({
                     "source": "clockwork-scheduler",
@@ -107,7 +157,6 @@ class SchedulerService:
 
         except Exception as e:
             logger.error(f"💥 Clockwork: System Probe Crashed: {e}")
-            # Try to log crash to DB if possible
             try:
                 from ..utils import get_supabase_client
                 supabase = get_supabase_client()

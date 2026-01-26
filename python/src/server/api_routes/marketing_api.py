@@ -305,10 +305,21 @@ async def get_pending_approvals():
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 @router.post("/approvals/{item_type}/{item_id}/{action}")
-async def process_approval(item_type: str, item_id: str, action: str):
+async def process_approval(
+    item_type: str,
+    item_id: str,
+    action: str,
+    current_user: dict = Depends(get_current_user)
+):
     """
     Process approval action (approve/reject).
+    Restricted to Admin and Manager.
     """
+    user_role = current_user.get("role", "viewer").lower()
+    if user_role not in ["system_admin", "admin", "manager"]:
+        logfire.warn(f"API: Approval denied | user={current_user.get('email')} | role={user_role}")
+        raise HTTPException(status_code=403, detail="Only Managers can approve items.")
+
     if action not in ["approve", "reject"]:
         raise HTTPException(status_code=400, detail="Invalid action")
 
