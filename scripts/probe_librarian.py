@@ -21,11 +21,24 @@ async def main():
 
     try:
         # Force model for diagnosis
-        model_name = "gemini-embedding-001"
-        print(f"DEBUG: FORCING Google embedding model to: '{model_name}'")
+        # Smart Probe: Fetch actual config from DB
+        from src.server.services.credential_service import credential_service
         
-        # We need to monkeypatch the RAGService or its config temporarily for this probe
-        # but a cleaner way is just to test the Librarian archiving directly first.
+        print("🔍 probing system configuration...")
+        rag_settings = await credential_service.get_credentials_by_category("rag_strategy")
+        
+        provider = rag_settings.get("EMBEDDING_PROVIDER") or rag_settings.get("LLM_PROVIDER") or "openai"
+        model_name = rag_settings.get("EMBEDDING_MODEL") or "text-embedding-3-small"
+        dimensions_str = rag_settings.get("EMBEDDING_DIMENSIONS", "1536")
+        
+        print(f"DEBUG: System Configured Model: '{model_name}' (Provider: {provider}, Dimensions: {dimensions_str})")
+        
+        expected_dim = int(dimensions_str)
+        # Verify assumptions
+        if "gemini" in model_name and expected_dim != 768:
+             print(f"⚠️ WARNING: Model is '{model_name}' but dimensions set to {expected_dim}. Gemini usually uses 768.")
+        if "large" in model_name and expected_dim != 3072:
+             print(f"⚠️ WARNING: Model is '{model_name}' but dimensions set to {expected_dim}. OpenAI Large usually uses 3072.")
         
         # Step 0: Seed Data (Simulating Alice)
         print("\n--- Step 0: Seeding Data (Simulating Alice) ---")
@@ -39,9 +52,47 @@ async def main():
         )
         print(f"✅ Seeded document: {source_id}")
         
+        # Integrity Check: Verify Embedding Dimensions
+        print("\n--- Step 0.5: Integrity Check (Dimensions) ---")
+        
+        # Check DB directly first to see if embedding exists (it might be async)
+        max_retries = 5
+        print(f"⏳ Waiting for embedding generation (max {max_retries * 2}s)...")
+        
+        raw_embedding = None
+        for i in range(max_retries):
+            db_item = librarian.supabase.table("archon_crawled_pages").select("embedding").eq("source_id", source_id).limit(1).execute()
+            if db_item.data and db_item.data[0].get("embedding"):
+                raw_embedding = db_item.data[0].get("embedding")
+                print(f"✅ Embedding found in DB (Attempt {i+1})")
+                break
+            print(f"   Attempt {i+1}: Embedding not ready yet...")
+            await asyncio.sleep(2)
+            
+        if raw_embedding:
+            # Parse string '[...]' or list if it's already JSON parsed
+            if isinstance(raw_embedding, str):
+                import json
+                vec = json.loads(raw_embedding)
+            else:
+                vec = raw_embedding
+                
+            dim = len(vec)
+            print(f"📊 Detected Vector Dimension: {dim}")
+            
+            print(f"📊 Detected Vector Dimension: {dim}")
+            
+            if dim != expected_dim:
+                print(f"❌ CRITICAL WARNING: Dimension Mismatch! Config expects {expected_dim}, but database has {dim}.")
+                print("   This indicates data pollution or model configuration error.")
+            else:
+                print(f"✅ Dimension Check Passed: {dim} matches expected for '{model_name}'")
+        else:
+             print("❌ CRITICAL: Embedding was never generated in the DB. Check DB triggers or background workers.")
+
         rag = RAGService()
         
-        # Test 1: Basic Retrieval (What does the Vector DB actually see?)
+        # Test 1: Context Retrieval (What does the Vector DB actually see?)
         # We search specifically for 'sales_pitch' to verify Alice's contribution
         print("\n--- Test 1: Context Retrieval ---")
         results = await rag.search_documents(
@@ -56,8 +107,14 @@ async def main():
         else:
             print(f"✅ Found {len(results)} relevant items:")
             for item in results:
-                print(f"   - [{item.metadata.get('knowledge_type', 'unknown')}] {item.title} (Score: {item.score:.4f})")
-                print(f"     Preview: {item.content[:100]}...")
+                # Results are dicts from search_documents
+                m = item.get("metadata", {})
+                t = item.get("title", "No Title")
+                s = item.get("score", 0.0)
+                print(f"   - [{m.get('knowledge_type', 'unknown')}] {t} (Score: {s:.4f})")
+                # Print snippet
+                content = item.get("content", "")
+                print(f"     Preview: {content[:100]}...")
 
         # Test 2: Full RAG Generation (Can it write?)
         # This tests if the LLM can actually read the retrieved context

@@ -176,7 +176,6 @@ async def create_embeddings_batch(
             for idx, config in enumerate(configs):
                 client: openai.AsyncOpenAI | None = None
                 provider_name = config.get("provider", "unknown")
-                print(f"DEBUG: Processing provider: '{provider_name}'")
                 is_last_provider = (idx == len(configs) - 1)
 
                 try:
@@ -212,14 +211,18 @@ async def create_embeddings_batch(
                                             # Native Google API call (using proven v1beta + header variant)
                                             async with httpx.AsyncClient(timeout=20.0) as http_client:
                                                 # Use gemini-embedding-001 which is proven stable
-                                                stable_model = "gemini-embedding-001"
+                                                # Fallback to config model if not explicit, then to a stable default
+                                                stable_model = config.get("embedding_model") or "gemini-embedding-001"
                                                 api_key_to_use = (config.get("api_key") or os.getenv("GEMINI_API_KEY") or "").strip().strip('"').strip("'")
 
                                                 url = f"https://generativelanguage.googleapis.com/v1beta/models/{stable_model}:embedContent"
                                                 headers = {"x-goog-api-key": api_key_to_use}
 
                                                 for text_item in batch:
-                                                    payload = {"content": {"parts": [{"text": text_item}]}}
+                                                    payload = {
+                                                        "content": {"parts": [{"text": text_item}]},
+                                                        "outputDimensionality": 768
+                                                    }
                                                     resp = await http_client.post(url, headers=headers, json=payload)
 
                                                     if resp.status_code == 200:
@@ -292,9 +295,11 @@ async def create_embeddings_batch(
                             # Try standard close method
                             close_method = getattr(client, "close", None)
                             if callable(close_method):
-                                close_res = close_method() # RENAMED to avoid shadowing result
-                                if inspect.isawaitable(close_res):
-                                    await close_res
+                                is_coroutine = inspect.iscoroutinefunction(close_method) or inspect.isawaitable(close_method)
+                                if is_coroutine:
+                                    await close_method()
+                                else:
+                                    close_method()
                             # Fallback for older clients or mocks
                             elif hasattr(client, "aclose"):
                                 await client.aclose()

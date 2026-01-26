@@ -242,6 +242,37 @@ sequenceDiagram
     *   **Backend**: Add endpoint `/api/tasks/refine-description` using **POBot**.
     *   **Logic**: Convert short input to structured User Stories.
 
+### Phase 4.4.4: The Sentinel - Operational Health (哨兵 - 維運健康)
+*Focus: Institutionalizing the "Probe" as a permanent system health monitor and eliminating technical debt introduced during hotfixes.*
+
+**Context**: Recent hotfixes (01/24-01/25) successfully restored Google RAG connectivity but introduced hardcoded dependencies (e.g., `gemini-embedding-001` in code). This phase aims to refactor these into configurable parameters and establish a standardized health check.
+
+**Refined Blueprint (實作細節)**:
+
+1.  **De-hardcoding (去硬編碼)**:
+    *   **Target**: `python/src/server/services/embeddings/embedding_service.py`
+    *   **Action**: Remove `stable_model = "gemini-embedding-001"`. Refactor to respect `config.get("embedding_model")`.
+    *   **Fallback Logic**: If the model is `text-embedding-004` and fails, provide a clear log suggesting `gemini-embedding-001` as a verified alternative in settings.
+
+2.  **Standardization (標準化)**:
+    *   **Action**: Add `make probe` command to root `Makefile` that runs `scripts/probe_librarian.py` inside the `archon-server` container.
+    *   **Enhancement**: Update `probe_librarian.py` to fetch parameters (Model Name, API Key) from the **Database/Environment** instead of using hardcoded fallbacks. This ensures the probe tests the *actual* runtime configuration.
+
+3.  **Clockwork Integration (Ops Agent)**:
+    *   **Role**: **Clockwork** (System Agent).
+    *   **Mechanism**: A scheduled maintenance task defined in `Clockwork` agent logic that executes the probe.
+    *   **Alerting**: If the probe fails (e.g., "No results found"), Clockwork logs a high-severity alert in `archon_logs` visible to Admin.
+
+4.  **Verification Criteria (驗收標準)**:
+    *   **Configurability**: Changing `EMBEDDING_MODEL` in Admin UI (3737) must immediately reflect in `make probe` output without code changes.
+    *   **Integrity**: The probe must verify that vectors stored in Supabase have the correct dimension (768 for Gemini, 1536 for OpenAI) matching the active model.
+    *   **Recall Quality**: The "Golden Set" query ("Test Corp" -> "Pitch") must return a similarity score > 0.15 (matching `SIMILARITY_THRESHOLD`).
+
+**Deliverable**:
+- Refactored `embedding_service.py` (Clean Config).
+- `make probe` command in `Makefile`.
+- Robust `scripts/probe_librarian.py`.
+
 ## Validation Loop (驗證迴圈)
 
 ### Level 1: Schema & RBAC Update

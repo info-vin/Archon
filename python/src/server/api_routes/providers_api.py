@@ -38,7 +38,7 @@ async def test_google_connection(api_key: str) -> bool:
         async with httpx.AsyncClient(timeout=10.0) as client:
             response = await client.get(
                 "https://generativelanguage.googleapis.com/v1beta/models",
-                headers={"x-goog-api-key": api_key.strip()} # Ensure stripped
+                headers={"x-goog-api-key": api_key} # Service handles stripping now
             )
             logfire.info(f"Google API response: {response.status_code}")
             if response.status_code != 200:

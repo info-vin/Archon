@@ -8,6 +8,7 @@ import uuid
 from datetime import datetime
 
 from ..config.logfire_config import get_logger, logfire
+from ..services.embeddings.embedding_service import create_embedding
 from ..services.source_management_service import SourceManagementService, update_source_info
 from ..utils import get_supabase_client
 
@@ -81,11 +82,22 @@ class LibrarianService:
             # 4. Insert Content (archon_crawled_pages)
             # This makes it searchable by RAG.
             # We treat the pitch as a single "page".
+            
+            # Generate embedding for the pitch content to enable RAG discovery
+            try:
+                embedding_vector = await create_embedding(content)
+            except Exception as e:
+                logfire.error(f"Librarian: Failed to generate embedding for pitch {source_id} | error={str(e)}")
+                embedding_vector = None
+
             page_data = {
                 "source_id": source_id,
                 "url": f"generated://pitch/{source_id}",
                 "chunk_number": 0, # Required field
                 "content": content,
+                "embedding": embedding_vector,
+                # WORKAROUND: We store the title in metadata to bypass the schema cache 
+                # and ensure it's available even if the 'title' column isn't fully synced yet.
                 "metadata": {**metadata, "title": title} # Store title in metadata
             }
 

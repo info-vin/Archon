@@ -52,6 +52,11 @@ verify-data:
 	@echo "Verifying database state inside docker container..."
 	@docker exec -i archon-server /venv/bin/python - < scripts/verify_seed.py
 
+# Run Librarian Probe (Diagnostics)
+probe:
+	@echo "Running Librarian Probe inside archon-server..."
+	@docker exec -i archon-server /venv/bin/python scripts/probe_librarian.py
+
 # NOTE: The following check target uses syntax that is not compatible with Windows cmd/PowerShell.
 # It will cause an error on Windows systems.
 # Check environment

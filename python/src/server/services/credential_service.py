@@ -172,6 +172,9 @@ class CredentialService:
                     logger.error(f"Failed to decrypt credential {key}: {e}")
                     return default
 
+        if isinstance(value, str):
+            return value.strip()
+            
         return value
 
     async def get_encrypted_credential_raw(self, key: str) -> str | None:
