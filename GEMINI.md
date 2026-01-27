@@ -88,6 +88,18 @@
 
 # 第三章：近期工作日誌 (Recent Journal Entries)
 
+### 2026-01-27: Phase 4.5 RBAC Deep Dive (Visible vs Hidden Truth)
+*   **核心任務**: 修復 Phase 4.5 的深層權限邏輯 (RBAC) 與前端語法損毀問題 (BUG-013, BUG-014)。
+*   **致命教訓 (The Silent Syntax Killer)**:
+    *   **現象**: `MarketingPage.tsx` 在 IDE 中看起來完美無缺，但 Vite 持續報錯 `Missing semicolon` 與 `Invalid token`。
+    *   **真相**: 之前的 AI 編輯不小心將 Markdown 的 ` ``` ` (Backticks) 寫入了 `.tsx` 檔案開頭，且因為編輯器渲染問題而被忽視。
+    *   **對策**: 當檔案持續報錯且無法肉眼排查時，果斷執行「全檔案乾淨重寫 (Clean Rewrite)」，而非試圖進行 Patch。
+*   **權限邏輯 (RBAC as Acceptance Criteria)**:
+    *   **轉變**: 將 BUG-013 (導覽列權限錯誤) 從「Bug 修復」提升為「驗收標準」。
+    *   **實作**: 在 `Phase_4_Acceptance_Guide.md` 中明確定義了 Alice (Sales Only) vs Bob (Brand Only) vs Charlie (Cross-Functional) 的 UI 可見性矩陣。
+*   **技術債清理**:
+    *   發現 `init_db.py` 之前錯誤地將 `seed_mock_data.sql` 視為一次性遷移。已重構為 `always-run` 模式，確保本地開發環境的角色與種子資料永遠同步。
+
 ### 2026-01-27: E2E Regression Fixes (Hybrid Architecture Stabilization)
 *   **Problem**: E2E tests failed due to lost `this` context in API spies, missing MSW handlers, and timing issues in `knowledge-selector`.
 *   **Solution**:

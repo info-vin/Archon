@@ -1,13 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../services/api';
 import { JobData } from '../types';
-import { useAuth } from '../hooks/useAuth';
 import { PermissionGuard } from '../features/auth/components/PermissionGuard';
 import { SourceBadge } from '../components/SourceBadge';
-import { SearchIcon, TableIcon, ShieldCheckIcon, XIcon, PlusIcon, SparklesIcon } from '../components/Icons';
+import { SearchIcon, TableIcon, ShieldCheckIcon, XIcon, SparklesIcon } from '../components/Icons';
 
 const MarketingPage: React.FC = () => {
-  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<'search' | 'leads'>('search');
   
   // Search State
@@ -95,7 +93,7 @@ const MarketingPage: React.FC = () => {
   };
 
   return (
-    <PermissionGuard permission="leads:view:all" userRole={user?.role} fallback={<div className="p-8 text-center text-gray-500">Access Denied: This feature is for Sales & Marketing roles only.</div>}>
+    <PermissionGuard permission="leads:view:sales" fallback={<div className="p-8 text-center text-gray-500">Access Denied: This feature is for Sales & Marketing roles only.</div>}>
     <div className="p-6 max-w-7xl mx-auto space-y-8">
       <header className="flex justify-between items-end">
         <div>

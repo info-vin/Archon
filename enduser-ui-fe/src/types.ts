@@ -26,6 +26,15 @@ export enum TaskPriority {
   CRITICAL = 'critical'
 }
 
+export type PermissionScope =
+  | 'task:create' | 'task:read:own' | 'task:read:team' | 'task:read:all'
+  | 'task:update:own' | 'task:update:team' | 'task:update:all'
+  | 'agent:trigger:dev' | 'agent:trigger:mkt' | 'agent:trigger:know'
+  | 'code:approve' | 'content:publish'
+  | 'stats:view:own' | 'stats:view:team' | 'stats:view:all'
+  | 'leads:view:all' | 'leads:view:sales' | 'leads:view:marketing'
+  | 'user:manage' | 'user:manage:team' | 'mcp:manage';
+
 export interface Employee {
   id: string;
   employeeId: string;

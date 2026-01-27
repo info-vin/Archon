@@ -1,237 +1,301 @@
-# Backend API Architecture
+# 後端 API 架構設計文件 (Backend API Architecture)
 
-**Audience**: Developers, AI Agents
-**Purpose**: Single source of truth for Backend API structure and service interactions
-**Usage**: Reference for implementing clients and understanding system boundaries
-**Last Updated**: 2026-01-09
+**適用對象**: 系統分析師 (SA)、後端開發者、AI Agent 架構師
+**目的**: 作為後端 API 結構、服務交互與數據流的單一真理來源
+**最後更新**: 2026-01-27
+**語言**: 繁體中文 (Traditional Chinese)
 
 ---
 
-## 1. Service Interaction Diagram
+## 1. 系統架構概觀 (System Overview)
 
-This diagram shows how the backend services call each other to perform complex tasks.
+Archon 的後端採用微服務化 (Microservice-like) 的模組設計，基於 **FastAPI** 框架，並深度整合 **Supabase** (PostgreSQL + Auth + Vector) 作為核心資料與身份驗證層。
+
+### 核心服務交互圖 (Service Interaction)
 
 ```mermaid
 graph TD
-    subgraph User/Client
-        U[User/Frontend]
+    subgraph ClientLayer ["Client Layer"]
+        U["前端應用 (Archon UI)"]
+        Client["外部 API Client"]
     end
 
-    subgraph Backend Services
-        S[archon-server]
-        M[archon-mcp]
-        A[archon-agents]
+    subgraph BackendLayer ["Backend Layer (Port 8181)"]
+        Gateway["API Gateway / Router"]
+        Auth["Auth Service"]
+        Projects["Project Service"]
+        Know["Knowledge Service"]
+        Mkt["Marketing Service"]
+        Agents["Agent Service"]
     end
 
-    U -- REST API Calls (Port 8181) --> S
-    S -- Triggers Agent (Port 8052) --> A
-    A -- Uses MCP Tools (Port 8051) --> M
-    M -- HTTP Calls to --> S
+    subgraph Infrastructure ["Infrastructure"]
+        DB[("Supabase (PostgreSQL)")]
+        Vector[("Supabase (Vector)")]
+        LLM["LLM Providers (OpenAI/Gemini)"]
+        Crawlers["Crawler Service"]
+    end
+
+    U -- HTTPS/REST --> Gateway
+    Client --> Gateway
+    Gateway -- JWT/RBAC --> Auth
+    Gateway --> Projects
+    Gateway --> Know
+    Gateway --> Mkt
+    
+    Projects -- Async --> Agents
+    Know -- Queue --> Crawlers
+    Mkt -- RAG --> Vector
+    Agents -- Tools --> LLM
+    
+    %% Database Connections
+    Auth --> DB
+    Projects --> DB
+    Know --> DB
+    Mkt --> DB
 ```
 
 ---
 
-## 2. `archon-server` API UML
+## 2. 身份驗證與安全規範 (Authentication & Security)
 
-This is the main API gateway with a rich set of endpoints for managing the entire application.
+系統採用 **雙重驗證機制 (Dual Authorization Strategy)**，結合 JWT 標準與角色存取控制 (RBAC)。
+
+### 2.1 驗證流程 (Auth Flow)
+*   **Token**: 使用 Supabase 簽發的 JWT (`access_token`)。
+*   **傳遞方式**: HTTP Header `Authorization: Bearer <token>`。
+*   **開發後門**: 本地開發環境可使用 `/api/auth/dev-token` 快速獲取 Admin 權限。
+
+### 2.2 角色存取控制 (RBAC)
+系統定義了以下核心角色，權限矩陣由 `RBACService` 統一管理：
+
+*   **System Admin**: 全系統最高權限。
+*   **Admin**: 組織管理員，可管理使用者。
+*   **Manager**: 部門主管，可審核內容與指派任務。
+*   **Member**: 一般成員 (Sales, Marketing, Content Creator)。
+*   **Viewer**: 僅讀權限。
+
+**SA 注意事項**:
+*   API 層會在 Header 注入 `X-User-Role` (來自 Gateway 或 Middleware) 輔助判斷，但核心邏輯必須驗證 `current_user` 的 JWT claim。
+*   敏感操作 (如 `promote_lead`, `approve_blog`) 必須在 Service 層進行二次 RBAC 檢查。
+
+---
+
+## 3. 核心業務流程 (Core Business Workflows)
+
+### 3.1 銷售線索轉化流程 (Sales-to-Vendor)
+
+描述從外部職缺看板爬取資料，轉化為銷售線索，最終晉升為供應商的過程。
 
 ```mermaid
-classDiagram
-    direction LR
-    class auth_api {
-        <<router: /api>>
-        POST /admin/users
-        POST /auth/register
-        PUT /auth/email
-    }
-    class agent_chat_api {
-        <<router: /api/agent-chat>>
-        POST /sessions
-        GET /sessions/[session_id]
-        GET /sessions/[session_id]/messages
-        POST /sessions/[session_id]/messages
-    }
-    class bug_report_api {
-        <<router: /api/bug-report>>
-        POST /github
-        GET /health
-    }
-    class changes_api {
-        <<router: /changes>>
-        GET /changes
-        GET /changes/[change_id]
-        POST /changes/[change_id]/approve
-        POST /changes/[change_id]/reject
-    }
-    class files_api {
-        <<router: /api/files>>
-        POST /upload
-    }
-    class internal_api {
-        <<router: /internal>>
-        GET /health
-        GET /credentials/agents
-        GET /credentials/mcp
-    }
-    class knowledge_api {
-        <<router: /api>>
-        GET /blogs
-        GET /blogs/[post_id]
-        POST /blogs
-        PUT /blogs/[post_id]
-        DELETE /blogs/[post_id]
-        GET /crawl-progress/[progress_id]
-        GET /knowledge-items/sources
-        GET /knowledge-items
-        PUT /knowledge-items/[source_id]
-        DELETE /knowledge-items/[source_id]
-        GET /knowledge-items/[source_id]/chunks
-        GET /knowledge-items/[source_id]/code-examples
-        POST /knowledge-items/[source_id]/refresh
-        POST /knowledge-items/crawl
-        POST /documents/upload
-        POST /knowledge-items/search
-        POST /rag/query
-        POST /rag/code-examples
-        POST /code-examples
-        GET /rag/sources
-        DELETE /sources/[source_id]
-        GET /database/metrics
-        GET /health
-        GET /knowledge-items/task/[task_id]
-        POST /knowledge-items/stop/[progress_id]
-    }
-    class log_api {
-        <<router: /api>>
-        POST /record-gemini-log
-    }
-    class marketing_api {
-        <<router: /api/marketing>>
-        GET /jobs
-    }
-    class mcp_api {
-        <<router: /api/mcp>>
-        GET /status
-        GET /config
-        GET /clients
-        GET /sessions
-        GET /health
-    }
-    class migration_api {
-        <<router: /api/migrations>>
-        GET /status
-        GET /history
-        GET /pending
-    }
-    class ollama_api {
-        <<router: /api/ollama>>
-        GET /models
-        GET /instances/health
-        POST /validate
-        POST /embedding/route
-        GET /embedding/routes
-        DELETE /cache
-        POST /models/discover-and-store
-        GET /models/stored
-        POST /models/test-capabilities
-        POST /models/discover-with-details
-    }
-    class progress_api {
-        <<router: /api/progress>>
-        GET /[operation_id]
-        GET /
-    }
-    class projects_api {
-        <<router: /api>>
-        GET /assignable-users
-        GET /projects
-        POST /projects
-        GET /projects/task-counts
-        GET /projects/[project_id]
-        PUT /projects/[project_id]
-        DELETE /projects/[project_id]
-        GET /projects/[project_id]/features
-        GET /projects/[project_id]/tasks
-        POST /tasks
-        GET /tasks
-        GET /tasks/[task_id]
-        PUT /tasks/[task_id]
-        DELETE /tasks/[task_id]
-        PUT /mcp/tasks/[task_id]/status
-        GET /projects/[project_id]/docs
-        POST /projects/[project_id]/docs
-        GET /projects/[project_id]/docs/[doc_id]
-        PUT /projects/[project_id]/docs/[doc_id]
-        DELETE /projects/[project_id]/docs/[doc_id]
-        GET /projects/[project_id]/versions
-        POST /projects/[project_id]/versions
-        GET /projects/[project_id]/versions/[field_name]/[version_number]
-        POST /projects/[project_id]/versions/[field_name]/[version_number]/restore
-    }
-    class providers_api {
-        <<router: /api/providers>>
-        GET /[provider]/status
-    }
-    class settings_api {
-        <<router: /api>>
-        GET /credentials
-        GET /credentials/categories/[category]
-        POST /credentials
-        GET /credentials/[key]
-        PUT /credentials/[key]
-        DELETE /credentials/[key]
-        POST /credentials/initialize
-        GET /database/metrics
-        GET /settings/health
-    }
-    class stats_api {
-        <<router: /api/stats>>
-        GET /tasks-by-status
-        GET /member-performance
-    }
-    class version_api {
-        <<router: /api/version>>
-        GET /check
-        GET /current
-        POST /clear-cache
-    }
+sequenceDiagram
+    participant Sales as Alice (Sales)
+    participant API as Marketing API
+    participant Job as JobBoard Service
+    participant DB as Supabase (Leads)
+    participant Lib as Librarian (RAG)
+    participant Vendor as Supabase (Vendors)
+
+    Sales->>API: GET /api/marketing/jobs?keyword=AI
+    API->>Job: search_jobs("AI")
+    Job-->>API: Job List (104/LinkedIn)
+    API->>DB: identify_leads_and_save() (Auto)
+    DB-->>Sales: Return Job List (Preview)
+
+    Sales->>API: POST /leads/{id}/promote
+    Note over Sales, API: 決定開發此客戶
+    API->>DB: Check RBAC (Can Promote?)
+    
+    par Async Processing
+        API->>Vendor: INSERT into vendors
+        API->>DB: UPDATE leads SET status='converted'
+        API->>Lib: archive_sales_pitch()
+        Lib->>DB: Create Vector Embeddings (RAG Knowledge)
+    end
+    
+    API-->>Sales: Success (Vendor Created)
 ```
 
-## 3. `archon-agents` API UML
+### 3.2 知識庫構建與 RAG 流程 (Knowledge Pipeline)
 
-A specialized service for running AI agents.
+描述如何從 URL 爬取並建立向量索引。
 
 ```mermaid
-classDiagram
-    direction LR
-    class agents_service {
-        <<router: />>
-        GET /health
-        POST /agents/run
-        GET /agents/list
-        POST /agents/[agent_type]/stream
-    }
+sequenceDiagram
+    participant User
+    participant API as Knowledge API
+    participant Crawler as Crawler Service
+    participant Tracker as Progress Tracker
+    participant Storage as Document Storage
+    participant Vector as Vector Store
+
+    User->>API: POST /knowledge-items/crawl
+    API->>Tracker: Initialize Progress (ID: uuid)
+    API->>Crawler: Async Dispatch (Semaphore Controlled)
+    API-->>User: Returns { progressId: "..." }
+
+    loop Polling
+        User->>API: GET /crawl-progress/{id}
+        API->>Tracker: Get Status
+        Tracker-->>User: { status: "crawling", progress: 45% }
+    end
+
+    Note over Crawler, Vector: Background Task
+    Crawler->>Crawler: Fetch Pages (Max Depth)
+    Crawler->>Storage: Store Raw HTML
+    Crawler->>Storage: Extract Text & Code
+    Storage->>Vector: Generate Embeddings (OpenAI/Gemini)
+    Storage->>Tracker: Update Progress (100%)
 ```
 
-## 4. `archon-mcp` API UML
+---
 
-An orchestration service that exposes its capabilities as "tools" rather than standard REST endpoints.
+## 4. API 詳細規格 (Detailed API Specification)
+
+### 4.1 專案管理模組 (Projects Module)
+**Base Path**: `/api`
+
+| Method | Endpoint | Description | Request Body | Response Model |
+| :--- | :--- | :--- | :--- | :--- |
+| **GET** | `/projects` | 列出專案 (支援 ETag) | - | `List[Project]` |
+| **POST** | `/projects` | 建立專案 (AI 輔助) | `CreateProjectRequest` | `Project` |
+| **GET** | `/tasks` | 列出任務 (過濾器) | - | `Paginated[Task]` |
+| **POST** | `/tasks` | 建立/指派任務 | `CreateTaskRequest` | `Task` |
+
+#### 關鍵資料模型 (Data Models)
+
+**CreateProjectRequest**
+```json
+{
+  "title": "string (required)",
+  "description": "string",
+  "github_repo": "string",
+  "pinned": "boolean",
+  "technical_sources": ["source_id_1"],
+  "business_sources": ["source_id_2"]
+}
+```
+
+**CreateTaskRequest**
+```json
+{
+  "project_id": "uuid (required)",
+  "title": "string (required)",
+  "assignee_id": "uuid (optional)",
+  "due_date": "ISO8601",
+  "priority": "high|medium|low",
+  "knowledge_source_ids": ["source_ids"]
+}
+```
+
+### 4.2 行銷與內容模組 (Marketing Module)
+**Base Path**: `/api/marketing`
+
+| Method | Endpoint | Description | Request Body | Response Model |
+| :--- | :--- | :--- | :--- | :--- |
+| **GET** | `/jobs` | 搜尋職缺 (自動存 Lead) | `?keyword=...` | `List[JobData]` |
+| **GET** | `/leads` | 獲取已存銷售線索 | - | `List[Lead]` |
+| **POST** | `/leads/{id}/promote` | 晉升 Lead 為供應商 | `PromoteLeadRequest` | `Vendor` |
+| **POST** | `/blog/draft` | AI 撰寫部落格草稿 | `DraftBlogRequest` | `DraftBlogResponse` |
+| **POST** | `/approvals/{type}/{id}/{action}` | 審核內容 (Admin Only) | - | `Status` |
+
+#### 關鍵資料模型 (Data Models)
+
+**PromoteLeadRequest**
+```json
+{
+  "vendor_name": "string (company name)",
+  "contact_email": "string@example.com",
+  "notes": "業務備註"
+}
+```
+
+**DraftBlogRequest**
+```json
+{
+  "topic": "string",
+  "keywords": "string (comma separated)",
+  "tone": "professional|casual"
+}
+```
+
+### 4.3 知識管理模組 (Knowledge Module)
+**Base Path**: `/api`
+
+| Method | Endpoint | Description | Request Body | Response Model |
+| :--- | :--- | :--- | :--- | :--- |
+| **POST** | `/knowledge-items/crawl` | 觸發爬蟲 | `KnowledgeItemRequest` | `CrawlStartResponse` |
+| **GET** | `/crawl-progress/{id}` | 查詢爬蟲進度 | - | `BaseProgressResponse` |
+| **POST** | `/documents/upload` | 上傳文件 | `FormData` | `UploadProgress` |
+| **POST** | `/rag/query` | 執行 RAG 檢索 | `RagQueryRequest` | `RagResult` |
+
+#### 關鍵資料模型 (Data Models)
+
+**KnowledgeItemRequest**
+```json
+{
+  "url": "https://example.com",
+  "knowledge_type": "technical|marketing",
+  "tags": ["tag1", "tag2"],
+  "max_depth": 2,
+  "extract_code_examples": true
+}
+```
+
+**ProgressResponse**
+```json
+{
+  "progressId": "uuid",
+  "status": "crawling|processing|completed",
+  "progress": 45.5,
+  "message": "Processing page 5/10...",
+  "details": {
+    "pagesCrawled": 5,
+    "totalPages": 10
+  }
+}
+```
+
+---
+
+## 5. 前端整合架構 (Frontend Integration)
+
+此圖說明前端 (`api.ts` Service Layer) 如何對應後端路由。
 
 ```mermaid
 classDiagram
     direction LR
-    class mcp_service {
-        <<tools>>
-        health_check()
-        session_info()
-        list_tasks()
-        manage_task()
-        list_projects()
-        manage_project()
-        list_documents()
-        manage_document()
-        register_rag_tools()
-        register_version_tools()
-        register_feature_tools()
+
+    %% Frontend Service Layer
+    class FrontendService {
+        <<api.ts>>
+        getTasks()
+        promoteLead()
+        draftBlogPost()
+        crawlKnowledgeItem()
+    }
+
+    %% Functional Dependencies
+    FrontendService ..> Auth_API : /api/auth
+    FrontendService ..> Projects_API : /api/projects
+    FrontendService ..> Marketing_API : /api/marketing
+    FrontendService ..> Knowledge_API : /api/knowledge-items
+
+    %% Classes for Context
+    class Auth_API {
+        verify_token()
+        check_rbac()
+    }
+    class Projects_API {
+        manage_kanban()
+        handle_updates()
+    }
+    class Marketing_API {
+        run_rag_generation()
+        auto_save_leads()
+    }
+    class Knowledge_API {
+        orchestrate_crawl()
+        manage_vectors()
     }
 ```

@@ -12,15 +12,17 @@ const PERMISSION_SETS: Record<string, Set<PermissionScope>> = {
     'task:create', 'task:read:all', 'task:update:all',
     'agent:trigger:dev', 'agent:trigger:mkt', 'agent:trigger:know',
     'code:approve', 'content:publish',
-    'stats:view:all', 'leads:view:all',
+    'stats:view:all',
+    'leads:view:sales', 'leads:view:marketing', // Admin sees all
     'user:manage', 'user:manage:team', 'mcp:manage'
   ]),
   manager: new Set([
-    'task:create', 'task:read:team', 'task:update:own',
-    'agent:trigger:dev', 'agent:trigger:mkt', 'agent:trigger:know',
-    'code:approve', 'content:publish',
-    'stats:view:team', 'leads:view:all',
-    'user:manage:team'
+     'task:create', 'task:read:team', 'task:update:own',
+     'agent:trigger:dev', 'agent:trigger:mkt', 'agent:trigger:know',
+     'code:approve', 'content:publish',
+     'stats:view:team', 
+     'leads:view:sales', 'leads:view:marketing', // Manager sees all
+     'user:manage:team'
   ]),
   employee: new Set([
     'task:create', 'task:read:own', 'task:update:own',
@@ -30,21 +32,25 @@ const PERMISSION_SETS: Record<string, Set<PermissionScope>> = {
   sales: new Set([
     'task:create', 'task:read:own', 'task:update:own',
     'agent:trigger:mkt',
-    'stats:view:own', 'leads:view:all'
+    'stats:view:own', 
+    'leads:view:sales' // Sales only sees Sales Nexus
   ]),
   marketing: new Set([
     'task:create', 'task:read:own', 'task:update:own',
     'agent:trigger:mkt', 'agent:trigger:know',
-    'stats:view:own', 'leads:view:all'
+    'stats:view:own', 
+    'leads:view:marketing' // Marketing only sees Brand Hub
   ])
 };
+
 
 // Map actual EmployeeRole enum values to Permission Sets
 const ROLE_MAP: Record<EmployeeRole, Set<PermissionScope>> = {
   [EmployeeRole.SYSTEM_ADMIN]: PERMISSION_SETS.admin,
   [EmployeeRole.ADMIN]: PERMISSION_SETS.admin,
   [EmployeeRole.MANAGER]: PERMISSION_SETS.manager,
-  [EmployeeRole.PROJECT_MANAGER]: PERMISSION_SETS.manager, // Legacy mapping
+  [EmployeeRole.PROJECT_MANAGER]: PERMISSION_SETS.manager,
+  ['PM' as any]: PERMISSION_SETS.manager, // Support raw 'PM' string from DB
   [EmployeeRole.SENIOR_MEMBER]: PERMISSION_SETS.employee, // Legacy mapping
   [EmployeeRole.MEMBER]: PERMISSION_SETS.employee,
   [EmployeeRole.EMPLOYEE]: PERMISSION_SETS.employee,

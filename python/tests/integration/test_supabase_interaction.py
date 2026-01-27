@@ -35,12 +35,11 @@ class TestSupabaseIntegration:
         # The error was: table(...).upsert(...).select().single().execute()
 
         # We'll try to query public.profiles with the corrected syntax
+        # Using a deterministic UUID for cleanup
+        dummy_id = "00000000-0000-0000-0000-000000000000"
+        
         try:
-            # Try to fetch a known profile (e.g., admin) just to test the client
-            # But the real test is the INSERT syntax.
-
             # Let's try to upsert a dummy profile (id must be valid uuid)
-            dummy_id = "00000000-0000-0000-0000-000000000000"
             profile_data = {
                 "id": dummy_id,
                 "email": "integration_test@example.com",
@@ -56,22 +55,28 @@ class TestSupabaseIntegration:
             assert response is not None
             # assert response.data is not None # Data might be None if no returning
 
-            # Cleanup
-            auth_service.supabase.table("profiles").delete().eq("id", dummy_id).execute()
-
         except AttributeError as e:
             pytest.fail(f"Supabase client syntax error: {e}")
         except Exception as e:
             # Ignore other errors (like row constraints) as we just want to verify client syntax
             print(f"Operational error (expected): {e}")
+        
+        finally:
+            # Cleanup - Always run this block
+            try:
+                print(f"Cleaning up test profile {dummy_id}")
+                auth_service.supabase.table("profiles").delete().eq("id", dummy_id).execute()
+            except Exception as cleanup_error:
+                print(f"Failed to cleanup test data: {cleanup_error}")
 
     def test_blog_service_update_syntax(self, blog_service):
         """
         Verifies the update syntax for blog posts.
         """
+        dummy_id = "00000000-0000-0000-0000-000000000000"
+        
         try:
             # Dummy update
-            dummy_id = "00000000-0000-0000-0000-000000000000"
             update_data = {"title": "Updated Title"}
 
             # This line caused "SyncFilterRequestBuilder object has no attribute select"
@@ -83,3 +88,5 @@ class TestSupabaseIntegration:
         except Exception:
             # We expect it might fail to find the row, but not AttributeError on the client
             pass
+        
+        # No cleanup needed for blog service test as it doesn't create data, only attempts update on non-existent row

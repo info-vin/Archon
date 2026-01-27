@@ -255,7 +255,7 @@ def main():
         
         applied = get_applied_migrations(cursor)
         migration_files = sorted(glob.glob("migration/*.sql"))
-        EXCLUDED = ['RESET_DB.sql', 'backup_database.sql', 'complete_setup.sql']
+        EXCLUDED = ['RESET_DB.sql', 'backup_database.sql', 'complete_setup.sql', 'seed_mock_data.sql']
 
         for f in migration_files:
             fname = os.path.basename(f)
@@ -266,13 +266,21 @@ def main():
         
         conn.commit()
         print("\n🎉 SQL migrations applied!")
+
+        # Explicitly run seed data to ensure environment consistency (idempotent)
+        seed_file = "migration/seed_mock_data.sql"
+        if os.path.exists(seed_file):
+            print(f"\n🌱 Seeding mock data: {seed_file} ...")
+            run_migration_file(conn, cursor, seed_file)
+            conn.commit()
+            print("✅ Mock data seeded.")
         
-        # Seed API Keys immediately after migrations
+        # Seed API Keys immediately after migrations and mock data
         seed_api_keys_from_env(conn)
         
     except Exception as e:
-        print(f"\n⚠️ SQL Migrations SKIPPED: {e}")
-        print("Please run migrations manually in Supabase SQL Editor.")
+        print(f"\n⚠️ SQL Migrations/Seeding failed: {e}")
+        # print("Please run migrations manually in Supabase SQL Editor.")
 
     sync_profiles_to_auth(conn)
     if conn: conn.close()
