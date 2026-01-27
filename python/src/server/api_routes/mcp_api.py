@@ -9,11 +9,13 @@ import os
 from typing import Any
 
 import docker
+import httpx
 from docker.errors import NotFound
 from fastapi import APIRouter, HTTPException
 
 # Import unified logging
 from ..config.logfire_config import api_logger, safe_set_attribute, safe_span
+from ..config.service_discovery import get_mcp_url
 
 router = APIRouter(prefix="/api/mcp", tags=["mcp"])
 
@@ -186,8 +188,23 @@ async def get_mcp_sessions():
             # Basic session info for now
             status = get_container_status()
 
+            # Fetch active sessions from MCP server
+            active_sessions = 0
+            if status.get("status") == "running":
+                try:
+                    mcp_url = get_mcp_url()
+                    # Use a short timeout since this is a UI-blocking call
+                    async with httpx.AsyncClient(timeout=2.0) as client:
+                        response = await client.get(f"{mcp_url}/sessions")
+                        if response.status_code == 200:
+                            data = response.json()
+                            active_sessions = data.get("active_sessions", 0)
+                except Exception as e:
+                    # Log but don't fail the request - just show 0 sessions
+                    api_logger.warning(f"Failed to fetch sessions from MCP server: {e}")
+
             session_info = {
-                "active_sessions": 0,  # TODO: Implement real session tracking
+                "active_sessions": active_sessions,
                 "session_timeout": 3600,  # 1 hour default
             }
 
