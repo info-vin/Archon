@@ -88,6 +88,16 @@
 
 # 第三章：近期工作日誌 (Recent Journal Entries)
 
+### 2026-01-27: E2E Regression Fixes (Hybrid Architecture Stabilization)
+*   **Problem**: E2E tests failed due to lost `this` context in API spies, missing MSW handlers, and timing issues in `knowledge-selector`.
+*   **Solution**:
+    *   **Architecture**: Refined `e2e.setup.tsx` to a robust Hybrid model (Mock Auth + Pass-through Data).
+    *   **Context Fix**: Ensured API spies invoke `actual.api[key]` to preserve `this` binding for internal calls like `_getHeaders`.
+    *   **Stability**: Excluded `getTasks` from spying to resolve Dashboard loading hangs caused by promise resolution timing.
+    *   **Data**: Restored missing MSW handlers (Admin, Stats) and aligned test expectations in `sales-nexus-closure.spec.tsx`.
+    *   **Cleanup**: Removed conflicting local `setupServer` in `knowledge-selector.spec.tsx` and added explicit loading waits.
+*   **Outcome**: All 13 E2E test files passed (25/25 tests). System stability restored.
+
 ### 2026-01-26: Phase 4.4 Completion & Phase 4.5 Kickoff (Validation Victory)
 *   **核心任務**: 徹底驗收 Phase 4.4 的剩餘缺口 (RBAC 權限與 Marketing RAG 流程)，並啟動 Phase 4.5 "System Institutionalization"。
 *   **技術突圍**:

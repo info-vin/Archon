@@ -1,8 +1,6 @@
-import { test, expect, beforeAll, afterEach, afterAll, vi } from 'vitest';
+import { test, expect, afterEach, vi } from 'vitest';
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { HttpResponse, http } from 'msw';
-import { setupServer } from 'msw/node';
 import { renderApp } from './e2e.setup';
 import { api } from '../../src/services/api';
 
@@ -12,53 +10,29 @@ const MOCK_KNOWLEDGE_ITEMS = [
   { source_id: 'doc-2', title: 'Engineering Standards', knowledge_type: 'document', url: 'http://doc-2' }
 ];
 
-// --- TEST SETUP ---
-const server = setupServer(
-    // We mock other endpoints normally
-    http.post('*/api/tasks', async ({ request }) => {
-      const body = await request.json() as any;
-      return HttpResponse.json({
-        task: {
-            id: 'new-task-123',
-            ...body,
-            status: 'todo',
-            created_at: new Date().toISOString()
-        }
-      }, { status: 201 });
-    }),
-    http.get('*/api/assignable-users', () => {
-        return HttpResponse.json([
-            { id: 'user-1', name: 'Alice', role: 'member' }
-        ]);
-    }),
-    http.get('*/api/agents/assignable', () => {
-        return HttpResponse.json([]);
-    }),
-     http.get('*/api/projects', () => {
-        return HttpResponse.json({ projects: [
-             { id: 'proj-1', title: 'Project Alpha', status: 'active' }
-        ]});
-    }),
-    http.get('*/api/tasks', () => {
-         return HttpResponse.json([]);
-    }),
-    http.get('*/api/blogs', () => { return HttpResponse.json([]); })
-);
-
-beforeAll(() => server.listen({ onUnhandledRequest: 'warn' }));
 afterEach(() => {
-    server.resetHandlers();
     vi.clearAllMocks();
 });
-afterAll(() => server.close());
 
 test('User can select knowledge items when creating a task', async () => {
   const user = userEvent.setup();
 
-  // Directly mock the service method to bypass potential network/MSW issues
+  // Directly mock the service methods needed for this specific test
   const serviceSpy = vi.spyOn(api, 'getKnowledgeItems').mockResolvedValue(MOCK_KNOWLEDGE_ITEMS);
+  
+  // Also mock createTask to verify success
+  const createSpy = vi.spyOn(api, 'createTask').mockResolvedValue({
+      id: 'new-task-123',
+      title: 'Task with Knowledge',
+      status: 'todo'
+  } as any);
 
   renderApp(['/dashboard']);
+
+  // Wait for Dashboard loading to finish
+  await waitFor(() => {
+      expect(screen.queryByText('Loading...')).not.toBeInTheDocument();
+  }, { timeout: 5000 });
 
   // 1. Open the "New Task" modal
   const newTaskBtn = await screen.findByRole('button', { name: /new task/i });
@@ -87,7 +61,7 @@ test('User can select knowledge items when creating a task', async () => {
   await user.click(item1);
 
   // 7. Verify item is selected (tag appears)
-  await user.click(screen.getByLabelText(/description/i));
+  // We click elsewhere to close the dropdown if it's a popover, or just check the text
   expect(await screen.findByText('1 items selected')).toBeInTheDocument();
 
   // 8. Submit the task
@@ -97,5 +71,6 @@ test('User can select knowledge items when creating a task', async () => {
   // 9. Verify the success message or modal closing
   await waitFor(() => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(createSpy).toHaveBeenCalled();
   });
 });

@@ -138,6 +138,20 @@ description: |
 
 ---
 
+## Phase 4.5.3: Regression Stabilization (回歸穩定化)
+
+> **Goal**: Fix E2E test regressions caused by Phase 4.4 speed development and ensure a stable baseline for future changes.
+
+**Status**: ✅ Completed (2026-01-27)
+
+**Key Fixes**:
+*   **MSW Handlers**: Restored missing handlers for Admin, Stats, and Marketing flows in `handlers.ts`.
+*   **API Spying**: Fixed `this` context loss in `e2e.setup.tsx` by correctly binding actual API implementation.
+*   **Loading Hangs**: Excluded `getTasks` from spying to prevent Dashboard loading locks in tests.
+*   **Test Suite**: All 13 E2E test files (25 tests) are passing.
+
+---
+
 ## Q&A (針對您的疑慮)
 
 ### Q1: Why was the Agent panel dark?

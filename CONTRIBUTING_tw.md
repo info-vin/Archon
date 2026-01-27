@@ -193,7 +193,21 @@ def test_some_endpoint():
     *   **數據 (Data)**: 使用 **Mock Service Worker (MSW)** 攔截所有數據相關的 `fetch` 請求。請確保 `src/mocks/handlers.ts` 中的模擬資料結構與前端 `types.ts` 中的類型定義**完全一致**。
     *   **全域 Server 共用原則**: 在個別測試檔案中，**嚴禁**使用 `setupServer` 建立新的實例。必須引用 `src/mocks/server` 中的全域 `server` 物件，並使用 `server.use()` 來注入該測試專屬的 Handler。這能避免與 `e2e.setup.ts` 中的全域設定發生衝突。
 
-#### 3.3.2 完整整合測試的準備工作
+#### 3.3.3 E2E 架構深度解析 (Architecture Deep Dive)
+
+*   **Hybrid Strategy (混合策略)**:
+    *   **Auth**: `e2e.setup.tsx` 使用 `vi.mock` 攔截 `api.getCurrentUser`，提供穩定的測試用戶身份。
+    *   **Data**: 其他 API 方法預設為 **Pass-through** (透傳)，直接呼叫真實 `api.ts` 代碼，由底層 `fetch` 觸發 MSW 攔截。這確保了測試與真實運作的高度一致性。
+*   **Spying 與 `this` 綁定**:
+    *   為了讓測試能使用 `expect(api.method).toHaveBeenCalled()`，我們在 setup 中對 API 方法進行了 Spy 包裝。
+    *   **關鍵細節**: 包裝時必須使用 `actual.api[key](...args)` 形式呼叫，以確保 `api.ts` 內部的 `this._getHeaders()` 上下文正確綁定。
+*   **豁免機制 (Exclusion)**:
+    *   某些關鍵方法（如 `getTasks`）因涉及複雜的 Promise 狀態或 Loading 邏輯，若被 `vi.fn` 包裝可能導致時序問題（如 Dashboard 卡在 Loading）。這些方法被明確豁免於 Spy 之外，直接執行真實代碼。
+*   **MSW 最佳實踐**:
+    *   **全域唯一**: 嚴禁在個別測試檔案中 `setupServer`。必須依賴全域 `handlers.ts`。
+    *   **Loading 等待**: 測試 UI 時，務必先 `await waitFor(() => expect(loading).not.toBeInTheDocument())`，再進行元素查找。
+
+#### 3.3.4 完整整合測試的準備工作
 
 為了讓 E2E 測試能針對真實後端運行，專案提供了以下機制：
 

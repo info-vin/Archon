@@ -62,7 +62,7 @@ export const handlers = [
     return HttpResponse.json({ projects: mockProjects });
   }),
 
-  // Handler for tasks, now returns the corrected task structure
+  // Handler for tasks, returning array as frontend expects
   http.get('/api/tasks', () => {
     return HttpResponse.json(mockTasks);
   }),
@@ -86,7 +86,7 @@ export const handlers = [
       attachments: [],
     };
     mockTasks.push(newTask); // Add to our mock database
-    return HttpResponse.json(newTask, { status: 201 });
+    return HttpResponse.json({ task: newTask }, { status: 201 });
   }),
 
   // --- Marketing & Approvals Handlers ---
@@ -186,5 +186,38 @@ export const handlers = [
   http.post('/api/system/prompts/:name', async ({ request }) => {
     const body = await request.json() as any;
     return HttpResponse.json({ success: true, prompt: body.prompt });
+  }),
+
+  // --- Missing Handlers for E2E (Restored) ---
+  http.post('/api/admin/users', async ({ request }) => {
+      const body = await request.json() as any;
+      return HttpResponse.json({ profile: { ...body, id: 'new-user-123' } }, { status: 201 });
+  }),
+
+  http.get('/api/users', () => {
+      return HttpResponse.json([
+          { id: 'user-1', name: 'Alice', role: 'sales', email: 'alice@archon.com', status: 'active' },
+          { id: 'user-2', name: 'Bob', role: 'marketing', email: 'bob@archon.com', status: 'active' },
+          { id: 'user-3', name: 'Charlie', role: 'manager', email: 'charlie@archon.com', status: 'active' }
+      ]);
+  }),
+
+  http.get('/api/stats/ai-usage', () => {
+      return HttpResponse.json({ total_budget: 1000, total_used: 150, usage_percentage: 15 });
+  }),
+
+  http.get('/api/marketing/market-stats', () => {
+      return HttpResponse.json({ "AI/LLM": 10, "Total Leads": 20, "Data/BI": 5 });
+  }),
+
+  http.get('/api/blogs', () => {
+      return HttpResponse.json([]);
+  }),
+
+  http.post('/api/tasks/refine-description', async ({ request }) => {
+      const body = await request.json() as any;
+      return HttpResponse.json({ 
+          refined_description: `User Story: As a user, I want ${body.title} so that I can be happy.\n\nAcceptance Criteria:\n- Done.` 
+      });
   })
 ];

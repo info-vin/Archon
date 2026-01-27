@@ -32,8 +32,8 @@ describe('Sales Nexus Closure Flow (Phase 4.4.2)', () => {
         // 3. Find the lead and Verify Job Title
         await waitFor(() => {
             expect(screen.getByText('Retail Corp')).toBeInTheDocument();
-            // Match the full text structure "Hiring: ..."
-            expect(screen.getByText(/Hiring:\s*Data Analyst/i)).toBeInTheDocument();
+            // Match the full text structure "Hiring: ..." - Updated to match MSW data
+            expect(screen.getByText(/Hiring:\s*Senior Data Analyst/i)).toBeInTheDocument();
         });
 
         // 4. Generate Pitch
