@@ -1,31 +1,14 @@
 import os
 import sys
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 
 from ..config.logfire_config import get_logger
+from .health_service import HealthService
 
 logger = get_logger(__name__)
-
-# Logic to find 'scripts' folder which is at Archon/scripts
-project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../../"))
-scripts_path = os.path.join(project_root, "scripts")
-
-if scripts_path not in sys.path:
-    sys.path.append(scripts_path)
-
-try:
-    from probe_librarian import run_probe_logic
-except ImportError:
-    try:
-        from scripts.probe_librarian import run_probe_logic
-    except ImportError:
-        logger.error(f"❌ scheduler_service: Could not import probe_librarian from {scripts_path}")
-        async def run_probe_logic():
-            logger.error("❌ Probe logic not found")
-            return False
 
 class SchedulerService:
     _instance = None
@@ -75,7 +58,7 @@ class SchedulerService:
             from ..utils import get_supabase_client
             supabase = get_supabase_client()
 
-            one_day_ago = (datetime.utcnow() - timedelta(hours=24)).isoformat()
+            one_day_ago = (datetime.now(timezone.utc) - timedelta(hours=24)).isoformat()
 
             # Using parentheses for multi-line chaining (standard Python practice)
             res = (
@@ -129,28 +112,30 @@ class SchedulerService:
                 pass
 
     async def _run_system_probe(self):
-        logger.info("🤖 Clockwork: Triggering System Probe...")
+        logger.info("🤖 Clockwork: Triggering System Probe via HealthService...")
         try:
             from ..utils import get_supabase_client
             supabase = get_supabase_client()
 
-            success = await run_probe_logic()
-
+            # Use the integrated HealthService
+            health_service = HealthService()
+            result = await health_service.check_rag_integrity()
+            
+            success = result.get("status") == "healthy"
             log_level = "INFO" if success else "ERROR"
             msg = "System Probe Passed" if success else "System Probe FAILED"
-            details = {"type": "probe_librarian", "success": success}
-
+            
             if success:
                 logger.info(f"✅ Clockwork: {msg}")
             else:
-                logger.error(f"❌ Clockwork: {msg}")
+                logger.error(f"❌ Clockwork: {msg} | Details: {result.get('details', {}).get('errors')}")
 
             try:
                 supabase.table("archon_logs").insert({
                     "source": "clockwork-scheduler",
                     "level": log_level,
                     "message": msg,
-                    "details": details
+                    "details": result
                 }).execute()
             except Exception as db_err:
                 logger.error(f"❌ Clockwork: Failed to write to archon_logs: {db_err}")

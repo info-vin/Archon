@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { api, AdminNewUserData } from '../services/api.ts';
 import { Employee, DocumentVersion, BlogPost, EmployeeRole } from '../types.ts';
-import { CheckCircleIcon, XCircleIcon, ClockIcon, PlusIcon, XIcon } from '../components/Icons.tsx';
+import { CheckCircleIcon, XCircleIcon, ClockIcon, PlusIcon, XIcon, RefreshCwIcon, SaveIcon, KeyIcon } from '../components/Icons.tsx';
 import { useAuth } from '../hooks/useAuth.tsx';
 import UserAvatar from '../components/UserAvatar.tsx';
 
@@ -10,22 +10,27 @@ const AdminPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState('users');
 
   return (
-    <div className="flex-1 flex flex-col h-full overflow-hidden p-6 bg-background">
-      <h1 className="text-3xl font-bold mb-6">Admin Panel</h1>
+    <div className="flex-1 flex flex-col h-full overflow-hidden p-6 bg-background text-foreground">
+      <header className="mb-6">
+        <h1 className="text-3xl font-bold">Admin Control Center</h1>
+        <p className="text-muted-foreground">System-wide configuration and personnel management for L1 Administrators.</p>
+      </header>
+
       <div className="border-b border-border mb-6">
         <nav className="-mb-px flex space-x-8 overflow-x-auto" aria-label="Tabs">
           <TabButton title="User Management" isActive={activeTab === 'users'} onClick={() => setActiveTab('users')} />
-          <TabButton title="Document Versions" isActive={activeTab === 'versions'} onClick={() => setActiveTab('versions')} />
+          <TabButton title="System Prompts" isActive={activeTab === 'prompts'} onClick={() => setActiveTab('prompts')} />
           <TabButton title="Blog Management" isActive={activeTab === 'blog'} onClick={() => setActiveTab('blog')} />
-          <TabButton title="Admin Transfer" isActive={activeTab === 'transfer'} onClick={() => setActiveTab('transfer')} />
+          <TabButton title="Document Versions" isActive={activeTab === 'versions'} onClick={() => setActiveTab('versions')} />
           <TabButton title="Settings" isActive={activeTab === 'settings'} onClick={() => setActiveTab('settings')} />
         </nav>
       </div>
+
       <div className="flex-1 overflow-auto">
         {activeTab === 'users' && <UserManagement />}
-        {activeTab === 'versions' && <DocumentVersionsLog />}
+        {activeTab === 'prompts' && <PromptManagement />}
         {activeTab === 'blog' && <BlogManagement />}
-        {activeTab === 'transfer' && <AdminTransfer />}
+        {activeTab === 'versions' && <DocumentVersionsLog />}
         {activeTab === 'settings' && <SettingsComponent />}
       </div>
     </div>
@@ -39,11 +44,123 @@ const TabButton: React.FC<{ title: string; isActive: boolean; onClick: () => voi
       isActive
         ? 'border-primary text-primary'
         : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
-    } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+    } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-all`}
   >
     {title}
   </button>
 );
+
+// --- NEW COMPONENT: PROMPT MANAGEMENT ---
+const PromptManagement: React.FC = () => {
+    const [prompts, setPrompts] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [selectedPrompt, setSelectedEmployee] = useState<any>(null);
+    const [editValue, setEditValue] = useState('');
+    const [isSaving, setIsSaving] = useState(false);
+
+    useEffect(() => {
+        fetchPrompts();
+    }, []);
+
+    const fetchPrompts = async () => {
+        setLoading(true);
+        try {
+            const data = await api.getSystemPrompts();
+            setPrompts(data);
+            if (data.length > 0 && !selectedPrompt) {
+                setSelectedEmployee(data[0]);
+                setEditValue(data[0].prompt);
+            }
+        } catch (err: any) {
+            alert("Failed to load prompts: " + err.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleSelect = (p: any) => {
+        setSelectedEmployee(p);
+        setEditValue(p.prompt);
+    };
+
+    const handleSave = async () => {
+        if (!selectedPrompt) return;
+        setIsSaving(true);
+        try {
+            await api.updateSystemPrompt(selectedPrompt.prompt_name, { prompt: editValue });
+            alert("Prompt updated and cache reloaded successfully!");
+            fetchPrompts(); // Refresh list to get updated_at
+        } catch (err: any) {
+            alert("Save failed: " + err.message);
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    if (loading) return <div className="flex justify-center p-12"><RefreshCwIcon className="animate-spin w-8 h-8 text-primary" /></div>;
+
+    return (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-full min-h-[600px]">
+            {/* List Sidebar */}
+            <div className="lg:col-span-1 space-y-2 overflow-y-auto pr-2">
+                <h3 className="text-xs font-bold uppercase text-muted-foreground tracking-wider mb-4">Available Prompts</h3>
+                {prompts.map(p => (
+                    <button 
+                        key={p.prompt_name}
+                        onClick={() => handleSelect(p)}
+                        className={`w-full text-left p-4 rounded-xl border transition-all ${selectedPrompt?.prompt_name === p.prompt_name ? 'border-primary bg-primary/5 shadow-sm' : 'border-border bg-card hover:border-primary/50'}`}
+                    >
+                        <div className="font-bold text-sm truncate">{p.prompt_name.replace(/_/g, ' ').toUpperCase()}</div>
+                        <div className="text-xs text-muted-foreground mt-1 line-clamp-1">{p.description || 'No description'}</div>
+                    </button>
+                ))}
+            </div>
+
+            {/* Editor Area */}
+            <div className="lg:col-span-2 flex flex-col bg-card rounded-2xl border border-border overflow-hidden shadow-sm">
+                {selectedPrompt ? (
+                    <>
+                        <div className="p-4 border-b border-border bg-muted/30 flex justify-between items-center">
+                            <div>
+                                <h3 className="font-bold text-lg">{selectedPrompt.prompt_name.replace(/_/g, ' ').toUpperCase()}</h3>
+                                <p className="text-xs text-muted-foreground">Last updated: {new Date(selectedPrompt.updated_at).toLocaleString()}</p>
+                            </div>
+                            <button 
+                                onClick={handleSave}
+                                disabled={isSaving || editValue === selectedPrompt.prompt}
+                                className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg font-bold text-sm hover:bg-primary/90 disabled:opacity-50 disabled:grayscale transition-all"
+                            >
+                                {isSaving ? <RefreshCwIcon className="animate-spin w-4 h-4" /> : <SaveIcon className="w-4 h-4" />}
+                                SAVE CHANGES
+                            </button>
+                        </div>
+                        <div className="flex-1 p-4 flex flex-col space-y-4">
+                            <div className="flex-1 relative">
+                                <textarea 
+                                    value={editValue}
+                                    onChange={(e) => setEditValue(e.target.value)}
+                                    className="w-full h-full p-4 bg-background border border-border rounded-xl font-mono text-sm focus:ring-2 focus:ring-primary outline-none resize-none leading-relaxed shadow-inner"
+                                    placeholder="Enter system prompt here..."
+                                />
+                                <div className="absolute bottom-4 right-4 text-[10px] text-muted-foreground font-mono bg-background/80 px-2 py-1 rounded border border-border">
+                                    {editValue.length} characters
+                                </div>
+                            </div>
+                            <div className="bg-amber-50 dark:bg-amber-950/20 p-3 rounded-lg border border-amber-100 dark:border-amber-900/30 flex gap-3">
+                                <KeyIcon className="w-5 h-5 text-amber-600 shrink-0" />
+                                <div className="text-xs text-amber-800 dark:text-amber-400">
+                                    <strong>Caution:</strong> Changes to system prompts directly affect AI behavior. The internal memory cache will be automatically reloaded upon saving.
+                                </div>
+                            </div>
+                        </div>
+                    </>
+                ) : (
+                    <div className="flex-1 flex items-center justify-center text-muted-foreground italic">Select a prompt from the list to start editing.</div>
+                )}
+            </div>
+        </div>
+    );
+};
 
 const EditUserModal: React.FC<{ user: Employee; onClose: () => void; onSave: (updatedUser: Employee) => void; }> = ({ user, onClose, onSave }) => {
     const [role, setRole] = useState(user.role);
@@ -62,10 +179,10 @@ const EditUserModal: React.FC<{ user: Employee; onClose: () => void; onSave: (up
     };
 
     return (
-         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
-            <div className="bg-card rounded-lg shadow-xl w-full max-w-lg p-6 relative">
+         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+            <div className="bg-card rounded-2xl shadow-xl w-full max-w-lg p-6 relative animate-in fade-in zoom-in-95 duration-200">
                 <h2 className="text-2xl font-bold mb-4">Edit User: {user.name}</h2>
-                <button onClick={onClose} className="absolute top-4 right-4 p-1 rounded-full hover:bg-secondary"><XIcon className="w-6 h-6" /></button>
+                <button onClick={onClose} className="absolute top-4 right-4 p-2 rounded-full hover:bg-muted transition-colors"><XIcon className="w-6 h-6" /></button>
                 <div className="space-y-4">
                     <div>
                         <label htmlFor="role" className="block text-sm font-medium mb-1">Role</label>
@@ -81,9 +198,9 @@ const EditUserModal: React.FC<{ user: Employee; onClose: () => void; onSave: (up
                             <option value="suspended">Suspended</option>
                         </select>
                     </div>
-                    <div className="flex justify-end space-x-2 pt-2">
-                        <button onClick={onClose} className="px-4 py-2 rounded-md bg-secondary text-secondary-foreground">Cancel</button>
-                        <button onClick={handleSave} className="px-4 py-2 rounded-md bg-primary text-primary-foreground hover:bg-primary/90">Save Changes</button>
+                    <div className="flex justify-end space-x-2 pt-4 border-t border-border mt-4">
+                        <button onClick={onClose} className="px-4 py-2 rounded-md bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-colors">Cancel</button>
+                        <button onClick={handleSave} className="px-4 py-2 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-all font-bold">Save Changes</button>
                     </div>
                 </div>
             </div>
@@ -117,10 +234,10 @@ const NewUserModal: React.FC<{ onClose: () => void; onSave: (newUser: Employee) 
     };
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
-            <div className="bg-card rounded-lg shadow-xl w-full max-w-lg p-6 relative">
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+            <div className="bg-card rounded-2xl shadow-xl w-full max-w-lg p-6 relative animate-in fade-in zoom-in-95 duration-200">
                 <h2 className="text-2xl font-bold mb-4">Create New User</h2>
-                <button onClick={onClose} className="absolute top-4 right-4 p-1 rounded-full hover:bg-secondary"><XIcon className="w-6 h-6" /></button>
+                <button onClick={onClose} className="absolute top-4 right-4 p-2 rounded-full hover:bg-muted transition-colors"><XIcon className="w-6 h-6" /></button>
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <input type="text" placeholder="Full Name" value={name} onChange={e => setName(e.target.value)} className={inputClass} required />
                     <input type="email" placeholder="Email Address" value={email} onChange={e => setEmail(e.target.value)} className={inputClass} required />
@@ -139,9 +256,9 @@ const NewUserModal: React.FC<{ onClose: () => void; onSave: (newUser: Employee) 
                             <option value="suspended">Suspended</option>
                         </select>
                     </div>
-                    <div className="flex justify-end space-x-2 pt-2">
-                        <button type="button" onClick={onClose} className="px-4 py-2 rounded-md bg-secondary text-secondary-foreground">Cancel</button>
-                        <button type="submit" disabled={isLoading} className="px-4 py-2 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50">{isLoading ? 'Creating...' : 'Create User'}</button>
+                    <div className="flex justify-end space-x-2 pt-4 border-t border-border mt-4">
+                        <button type="button" onClick={onClose} className="px-4 py-2 rounded-md bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-colors">Cancel</button>
+                        <button type="submit" disabled={isLoading} className="px-4 py-2 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition-all font-bold">{isLoading ? 'Creating...' : 'Create User'}</button>
                     </div>
                 </form>
             </div>
@@ -168,44 +285,46 @@ const UserManagement: React.FC = () => {
 
     return (
         <>
-            <div className="bg-card p-4 rounded-lg">
-                <div className="flex justify-between items-center mb-4">
-                    <h2 className="text-xl font-semibold">Employees</h2>
-                     <button onClick={() => setIsNewUserModalOpen(true)} className="flex items-center px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90">
+            <div className="bg-card p-6 rounded-2xl border border-border shadow-sm">
+                <div className="flex justify-between items-center mb-6">
+                    <h2 className="text-xl font-bold">Employee Directory</h2>
+                     <button onClick={() => setIsNewUserModalOpen(true)} className="flex items-center px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 font-bold transition-all shadow-sm">
                         <PlusIcon className="w-5 h-5 mr-2" />
-                        New User
+                        NEW USER
                     </button>
                 </div>
-                <div className="overflow-x-auto">
+                <div className="overflow-x-auto -mx-6">
                     <table className="min-w-full divide-y divide-border">
-                        <thead className="bg-secondary">
+                        <thead className="bg-muted/50">
                             <tr>
-                                <th className="px-6 py-3 text-left text-xs font-medium uppercase">Name</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium uppercase">Role</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium uppercase">Status</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium uppercase">Actions</th>
+                                <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-muted-foreground">Name</th>
+                                <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-muted-foreground">Role</th>
+                                <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-muted-foreground">Status</th>
+                                <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-muted-foreground text-right">Actions</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-border">
+                        <tbody className="divide-y divide-border bg-card">
                             {employees.map(emp => (
-                                <tr key={emp.id}>
+                                <tr key={emp.id} className="hover:bg-muted/30 transition-colors">
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <div className="flex items-center">
-                                            <UserAvatar name={emp.name || ''} className="h-10 w-10" />
+                                            <UserAvatar name={emp.name || ''} className="h-10 w-10 rounded-lg shadow-sm" />
                                             <div className="ml-4">
-                                                <div className="text-sm font-medium">{emp.name}</div>
-                                                <div className="text-sm text-muted-foreground">{emp.email}</div>
+                                                <div className="text-sm font-bold">{emp.name}</div>
+                                                <div className="text-xs text-muted-foreground">{emp.email}</div>
                                             </div>
                                         </div>
                                     </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm">{emp.role}</td>
                                     <td className="px-6 py-4 whitespace-nowrap">
-                                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${emp.status === 'active' ? 'bg-green-500' : 'bg-red-500'} text-white`}>
+                                        <span className="text-xs font-mono bg-secondary px-2 py-1 rounded border border-border">{emp.role}</span>
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap">
+                                        <span className={`px-2 py-1 inline-flex text-[10px] leading-4 font-bold uppercase tracking-widest rounded-full ${emp.status === 'active' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'}`}>
                                             {emp.status}
                                         </span>
                                     </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                        <button onClick={() => setEditingUser(emp)} className="text-primary hover:text-primary/90 disabled:opacity-50 disabled:cursor-not-allowed" disabled={emp.role === EmployeeRole.SYSTEM_ADMIN}>Edit</button>
+                                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                        <button onClick={() => setEditingUser(emp)} className="text-primary hover:text-primary/90 font-bold transition-colors disabled:opacity-30" disabled={emp.role === EmployeeRole.SYSTEM_ADMIN}>Edit</button>
                                     </td>
                                 </tr>
                             ))}
@@ -226,27 +345,29 @@ const DocumentVersionsLog: React.FC = () => {
     }, []);
     
     return (
-        <div className="bg-card p-4 rounded-lg">
-            <h2 className="text-xl font-semibold mb-4">Document Version History</h2>
-             <div className="overflow-x-auto">
+        <div className="bg-card p-6 rounded-2xl border border-border shadow-sm">
+            <h2 className="text-xl font-bold mb-6">Document Version Audit Trail</h2>
+             <div className="overflow-x-auto -mx-6">
                 <table className="min-w-full divide-y divide-border">
-                    <thead className="bg-secondary">
+                    <thead className="bg-muted/50">
                         <tr>
-                            <th className="px-6 py-3 text-left text-xs font-medium uppercase">Timestamp</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium uppercase">Changed By</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium uppercase">Change Type</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium uppercase">Field</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium uppercase">Summary</th>
+                            <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-muted-foreground">Timestamp</th>
+                            <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-muted-foreground">Changed By</th>
+                            <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-muted-foreground">Type</th>
+                            <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-muted-foreground">Field</th>
+                            <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-muted-foreground">Summary</th>
                         </tr>
                     </thead>
-                    <tbody className="divide-y divide-border">
+                    <tbody className="divide-y divide-border bg-card">
                         {versions.map(log => (
-                            <tr key={log.id}>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm">{new Date(log.created_at).toLocaleString()}</td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm">{log.created_by}</td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm capitalize">{log.change_type}</td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm">{log.field_name} (v{log.version_number})</td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">{log.change_summary || 'N/A'}</td>
+                            <tr key={log.id} className="hover:bg-muted/30 transition-colors">
+                                <td className="px-6 py-4 whitespace-nowrap text-xs text-muted-foreground font-mono">{new Date(log.created_at).toLocaleString()}</td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">{log.created_by}</td>
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                    <span className="px-2 py-0.5 text-[10px] font-bold uppercase bg-muted rounded border border-border">{log.change_type}</span>
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm">{log.field_name} <span className="text-xs text-muted-foreground">v{log.version_number}</span></td>
+                                <td className="px-6 py-4 text-xs text-muted-foreground italic max-w-xs truncate">{log.change_summary || 'N/A'}</td>
                             </tr>
                         ))}
                     </tbody>
@@ -318,33 +439,37 @@ const BlogManagement: React.FC = () => {
     }
 
     return (
-        <div className="bg-card p-4 rounded-lg">
-            <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-semibold">Blog Posts</h2>
-                <button onClick={openNewPostModal} className="flex items-center px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90">
+        <div className="bg-card p-6 rounded-2xl border border-border shadow-sm">
+            <div className="flex justify-between items-center mb-6">
+                <h2 className="text-xl font-bold">Content Assets</h2>
+                <button onClick={openNewPostModal} className="flex items-center px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 font-bold transition-all shadow-sm">
                     <PlusIcon className="w-5 h-5 mr-2" />
-                    New Post
+                    NEW POST
                 </button>
             </div>
-             <div className="overflow-x-auto">
+             <div className="overflow-x-auto -mx-6">
                 <table className="min-w-full divide-y divide-border">
-                    <thead className="bg-secondary">
+                    <thead className="bg-muted/50">
                         <tr>
-                            <th className="px-6 py-3 text-left text-xs font-medium uppercase">Title</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium uppercase">Author</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium uppercase">Published Date</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium uppercase">Actions</th>
+                            <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-muted-foreground">Title</th>
+                            <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-muted-foreground">Author</th>
+                            <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-muted-foreground">Status</th>
+                            <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-muted-foreground">Date</th>
+                            <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-muted-foreground text-right">Actions</th>
                         </tr>
                     </thead>
-                    <tbody className="divide-y divide-border">
+                    <tbody className="divide-y divide-border bg-card">
                         {posts.map(post => (
-                            <tr key={post.id}>
-                                <td className="px-6 py-4 whitespace-nowrap font-medium">{post.title}</td>
-                                <td className="px-6 py-4 whitespace-nowrap">{post.authorName}</td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">{new Date(post.publishDate).toLocaleDateString()}</td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                    <button onClick={() => openEditPostModal(post)} className="text-primary hover:text-primary/90">Edit</button>
-                                    <button onClick={() => handleDeletePost(post.id)} className="text-destructive hover:text-destructive/90 ml-4">Delete</button>
+                            <tr key={post.id} className="hover:bg-muted/30 transition-colors">
+                                <td className="px-6 py-4 whitespace-nowrap font-bold text-sm">{post.title}</td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm">{post.authorName}</td>
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                    <span className={`px-2 py-0.5 text-[10px] font-bold uppercase rounded border ${post.status === 'published' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-amber-50 text-amber-700 border-amber-200'}`}>{post.status}</span>
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap text-xs text-muted-foreground">{new Date(post.publishDate).toLocaleDateString()}</td>
+                                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <button onClick={() => openEditPostModal(post)} className="text-primary hover:text-primary/90 font-bold transition-colors">Edit</button>
+                                    <button onClick={() => handleDeletePost(post.id)} className="text-destructive hover:text-destructive/90 font-bold ml-4 transition-colors">Delete</button>
                                 </td>
                             </tr>
                         ))}
@@ -359,7 +484,7 @@ const BlogManagement: React.FC = () => {
 const PostEditorModal: React.FC<{post: BlogPost | null, onClose: () => void, onSubmit: (data: any, postId?: string) => Promise<void>}> = ({ post, onClose, onSubmit }) => {
     const [title, setTitle] = useState(post?.title || '');
     const [excerpt, setExcerpt] = useState(post?.excerpt || '');
-    const [content, setContent] = useState(post?.content || ''); // Assuming content is part of the post object
+    const [content, setContent] = useState(post?.content || ''); 
     const [imageUrl, setImageUrl] = useState(post?.imageUrl || '');
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -369,16 +494,21 @@ const PostEditorModal: React.FC<{post: BlogPost | null, onClose: () => void, onS
     const inputClass = "appearance-none rounded-md relative block w-full px-3 py-2 border border-border placeholder-muted-foreground text-foreground bg-input focus:outline-none focus:ring-ring focus:border-ring focus:z-10 sm:text-sm";
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
-            <div className="bg-card rounded-lg shadow-xl w-full max-w-2xl p-6 relative">
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+            <div className="bg-card rounded-2xl shadow-xl w-full max-w-2xl p-6 relative animate-in fade-in zoom-in-95 duration-200">
                 <h2 className="text-2xl font-bold mb-4">{post ? 'Edit' : 'Create'} Blog Post</h2>
-                <button onClick={onClose} className="absolute top-4 right-4 p-1 rounded-full hover:bg-secondary"><XIcon className="w-6 h-6" /></button>
+                <button onClick={onClose} className="absolute top-4 right-4 p-2 rounded-full hover:bg-muted transition-colors"><XIcon className="w-6 h-6" /></button>
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <input type="text" placeholder="Title" value={title} onChange={e => setTitle(e.target.value)} className={inputClass} required/>
                     <textarea placeholder="Excerpt" value={excerpt} onChange={e => setExcerpt(e.target.value)} className={inputClass} rows={3} required></textarea>
                     <textarea placeholder="Main Content (Markdown)" value={content} onChange={e => setContent(e.target.value)} className={inputClass} rows={10} required></textarea>
                     <input type="url" placeholder="Image URL" value={imageUrl} onChange={e => setImageUrl(e.target.value)} className={inputClass} required/>
-                    <div className="flex justify-end space-x-2"><button type="submit" className="px-4 py-2 rounded-md bg-primary text-primary-foreground hover:bg-primary/90">{post ? 'Save Changes' : 'Create'}</button></div>
+                    <div className="flex justify-end space-x-2 pt-4 border-t border-border mt-4">
+                        <button type="button" onClick={onClose} className="px-4 py-2 rounded-md bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-colors">Cancel</button>
+                        <button type="submit" className="px-4 py-2 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 font-bold transition-all">
+                            {post ? 'SAVE CHANGES' : 'CREATE ASSET'}
+                        </button>
+                    </div>
                 </form>
             </div>
         </div>

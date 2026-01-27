@@ -365,7 +365,51 @@ Phase 4.4.5 引入了 **Clockwork** 進行系統自動檢測。
     > **注意**: 這兩條規則的**順序至關重要**。必須先設定 API 代理，再設定 SPA 回退規則。請將 `<您的後端服務網址>` 替換為您 `archon-server` 的真實公開網址。
     > 設定錯誤會導致前端無法正確與後端溝通，或頁面重新整理時出現 404 錯誤，請務必仔細檢查。
 
-    **3.2 觸發部署**
+    **3.2 上線前檢查清單 (Pre-Flight Checklist) - 經程式碼驗證版**
+
+    在按下部署按鈕前，請務必完成以下檢查。本清單已根據 `scripts/init_db.py`、`render.yaml` 與後端 `config.py` 的實際邏輯進行校對。
+
+    #### 1. 資料庫遷移驗證 (Database Migration)
+    *   **執行驗證**: 在本地執行 `make db-init`。
+    *   **底層邏輯檢查**:
+        *   確認 `scripts/init_db.py` 成功連接資料庫。
+        *   確認 `ensure_schema_migrations_table` 函式已建立 `schema_migrations` 表。
+        *   確認終端機顯示 `Running migration: ...` 且無錯誤，這代表 SQL 腳本的冪等性 (`IF NOT EXISTS`) 運作正常。
+    *   **關鍵指標**: 執行後應看到 `🎉 SQL migrations applied!` 與 `✅ Auth Sync Complete.`。若出現 `RESET_DB.sql` 相關錯誤，請先手動清空資料庫。
+
+    #### 2. 前端路由配置 (Frontend Routing)
+    *   **Render 設定檢查**: 打開 Render 儀表板的 "Redirects/Rewrites" 頁面。
+    *   **關鍵規則 (必須精確匹配)**:
+        *   **規則一 (API Proxy)**:
+            *   **Source**: `/api/*`
+            *   **Destination**: `https://<YOUR_ARCHON_SERVER_URL>/api/*`
+            *   **⚠️ 注意**: 請務必將 `<YOUR_ARCHON_SERVER_URL>` 替換為後端服務的**真實網域** (例如 `archon-server-xyz.onrender.com`)，**切勿保留 `<...>` 佔位符**。
+        *   **規則二 (SPA Fallback)**:
+            *   **Source**: `/*`
+            *   **Destination**: `/index.html`
+    *   **驗證方式**: 部署後訪問 `https://<前端網域>/api/health`。若回傳 JSON 則代表 Proxy 成功；若回傳 HTML 或 404 則代表路由配置錯誤。
+
+    #### 3. 環境變數檢查 (Environment Variables)
+    *   **金鑰類型檢查**:
+        *   根據 `python/src/server/config/config.py` 的 `validate_supabase_key` 邏輯，後端會**強制檢查** `SUPABASE_SERVICE_KEY` 的 JWT Role。
+        *   **❌ 錯誤**: 若使用 `anon` (Public) Key，後端將直接崩潰並報錯 `CRITICAL: You are using a Supabase ANON key...`。
+        *   **✅ 正確**: 必須使用 Supabase Dashboard > Settings > API > **service_role** (Secret) Key。
+    *   **必要變數**:
+        *   `SUPABASE_URL`: 必須是 `https://` 開頭 (生產環境強制 HTTPS)。
+        *   `LOGFIRE_ENABLED`: 建議設為 `true` 以啟用與 Logfire 的整合監控。
+
+    #### 4. 功能煙霧測試 (Smoke Test)
+    *   **目標 API**: `GET /api/system/health/rag`
+    *   **權限要求**: 此 API 受 `require_system_admin` 保護 (參考 `system_api.py`)。
+    *   **執行方式**:
+        *   **方法 A (推薦)**: 使用 `make db-init` 輸出中的 **Dev Token**。
+            ```bash
+            curl -H "Authorization: Bearer <DEV_TOKEN>" https://<BACKEND_URL>/api/system/health/rag
+            ```
+        *   **方法 B (CLI)**: 在本地或透過 Render Shell 執行 `make probe` (此指令實際上是呼叫 `python scripts/probe_librarian.py` 的舊別名，或新版中對應的 curl 指令)。
+    *   **成功標準**: 回傳 JSON 中包含 `"status": "healthy"` 且 `details` 中無錯誤訊息。這證明了資料庫連線、Vector Extension 與 OpenAI/Gemini Embedding API 皆運作正常。
+
+    **3.3 觸發部署**
     1.  確認 Render 儀表板監控的是正確的 `feature/...` 分支。
     2.  將本地變更推送到 GitHub: `git push origin <your-branch>`
     3.  Render 會自動偵測到新的提交並開始部署。

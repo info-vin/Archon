@@ -46,6 +46,7 @@ class PromptService:
                 self._last_loaded = datetime.now()
                 logger.info(f"Loaded {len(self._prompts)} prompts into memory")
             else:
+                self._prompts = {}
                 logger.warning("No prompts found in database")
 
         except Exception as e:

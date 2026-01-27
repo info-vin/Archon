@@ -585,6 +585,26 @@ const supabaseApi = {
     }
     return response.json();
   },
+
+  // --- SYSTEM PROMPT MANAGEMENT ---
+  async getSystemPrompts(): Promise<any[]> {
+    const response = await fetch('/api/system/prompts', { headers: await this._getHeaders() });
+    if (!response.ok) throw new Error('Failed to fetch system prompts');
+    return response.json();
+  },
+
+  async updateSystemPrompt(promptName: string, data: { prompt: string; description?: string }): Promise<any> {
+    const response = await fetch(`/api/system/prompts/${promptName}`, {
+        method: 'POST',
+        headers: await this._getHeaders(),
+        body: JSON.stringify(data)
+    });
+    if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.detail || 'Failed to update system prompt');
+    }
+    return response.json();
+  },
 };
 
 // Export the API
