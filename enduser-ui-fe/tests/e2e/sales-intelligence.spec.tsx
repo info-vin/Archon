@@ -1,11 +1,23 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import MarketingPage from '../../src/pages/MarketingPage';
 import React from 'react';
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
+import { api } from '../../src/services/api';
 import { AuthProvider } from '../../src/hooks/useAuth';
 
 describe('MarketingPage Sales Intelligence Flow', () => {
     it('Sales Rep flows: Search, Identify Lead, Generate Pitch', async () => {
+        // Mock success response
+        vi.mocked(api.searchJobs).mockResolvedValue([{
+            title: 'Data Analyst',
+            company: 'Retail Corp',
+            location: 'New York',
+            source: '104 Live Data',
+            identified_need: 'Needs better data pipeline',
+            description_full: 'Needs someone who knows BI tools like Tableau and PowerBI',
+            url: 'http://example.com'
+        }]);
+
         render(
             <AuthProvider>
                 <MarketingPage />
@@ -40,7 +52,8 @@ describe('MarketingPage Sales Intelligence Flow', () => {
         const viewDetailsBtn = screen.getAllByText(/View Full JD/i)[0];
         fireEvent.click(viewDetailsBtn);
         
-        expect(screen.getByText(/Full description: Needs someone who knows BI tools/i)).toBeInTheDocument();
+        expect(screen.getByText(/Full Job Description/i)).toBeInTheDocument();
+        expect(screen.getByText(/Needs someone who knows BI tools/i)).toBeInTheDocument();
         expect(screen.getByText(/Tableau and PowerBI/i)).toBeInTheDocument();
 
         // 4. 生成話術 (Generate Pitch)
@@ -59,7 +72,7 @@ describe('MarketingPage Sales Intelligence Flow', () => {
     });
 
     it('handles search errors gracefully', async () => {
-        // Relies on e2e.setup.tsx mock logic: if keyword is 'Error Test', it throws.
+        vi.mocked(api.searchJobs).mockRejectedValueOnce(new Error('Failed to fetch job market data'));
         render(
             <AuthProvider>
                 <MarketingPage />

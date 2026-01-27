@@ -149,7 +149,7 @@ export const handlers = [
   // Generate Pitch
   http.post('/api/marketing/generate-pitch', async () => {
     return HttpResponse.json({
-        content: `Subject: Collaboration regarding your Data needs\n\nDear Manager,\n\nI noticed Retail Corp is hiring...`,
+        content: `Subject: Collaboration regarding your Data needs\n\nDear Manager,\n\nI noticed Retail Corp is hiring and Needs someone who knows BI tools...`,
         references: ['Source A']
     });
   }),
@@ -174,4 +174,17 @@ export const handlers = [
   http.post('/api/marketing/approvals/:type/:id/:action', ({ params }) => {
     return HttpResponse.json({ success: true, status: params.action === 'approve' ? 'published' : 'draft' });
   }),
+
+  // --- System Prompts Handlers ---
+  http.get('/api/system/prompts', () => {
+    return HttpResponse.json([
+        { prompt_name: 'developer_persona', prompt: 'You are a coding expert.', updated_at: new Date().toISOString() },
+        { prompt_name: 'sales_persona', prompt: 'You are a sales expert.', updated_at: new Date().toISOString() }
+    ]);
+  }),
+
+  http.post('/api/system/prompts/:name', async ({ request }) => {
+    const body = await request.json() as any;
+    return HttpResponse.json({ success: true, prompt: body.prompt });
+  })
 ];

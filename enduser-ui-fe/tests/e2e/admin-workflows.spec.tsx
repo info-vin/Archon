@@ -1,6 +1,5 @@
 import { screen, fireEvent, waitFor } from '@testing-library/react';
-import React from 'react';
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { renderApp } from './e2e.setup';
 import { api } from '../../src/services/api';
 
@@ -12,8 +11,8 @@ describe('Admin Workflows E2E', () => {
     // 1. Navigate to Admin Panel (assuming sidebar link exists)
     // Note: renderApp starts at "/" which navigates to "/dashboard" if authenticated
     // We need to click the Admin Panel link
-    await waitFor(() => expect(screen.getByText(/Admin Panel/i)).toBeInTheDocument());
-    fireEvent.click(screen.getByText(/Admin Panel/i));
+    await waitFor(() => expect(screen.getByText(/Admin Control Center/i)).toBeInTheDocument());
+    fireEvent.click(screen.getByText(/Admin Control Center/i));
 
     // 2. Verify we are on Admin Panel
     await waitFor(() => expect(screen.getByText(/User Management/i)).toBeInTheDocument());
@@ -44,10 +43,21 @@ describe('Admin Workflows E2E', () => {
   });
 
   it('Admin can update a user role', async () => {
+    vi.mocked(api.getEmployees).mockResolvedValue([{
+        id: 'user-1',
+        name: 'E2E Test User',
+        email: 'user@test.com',
+        role: 'member',
+        status: 'active',
+        employeeId: 'EMP-002',
+        position: 'Developer',
+        department: 'Engineering'
+    } as any]);
+
     renderApp();
 
-    await waitFor(() => expect(screen.getByText(/Admin Panel/i)).toBeInTheDocument());
-    fireEvent.click(screen.getByText(/Admin Panel/i));
+    await waitFor(() => expect(screen.getByText(/Admin Control Center/i)).toBeInTheDocument());
+    fireEvent.click(screen.getByText(/Admin Control Center/i));
 
     // Wait for employee list to load
     await waitFor(() => expect(screen.getByText(/E2E Test User/i)).toBeInTheDocument());
@@ -62,6 +72,6 @@ describe('Admin Workflows E2E', () => {
     // or improve the mock if needed. 
     // To be quick, let's verify the 'Edit' button state.
     const editButtons = screen.getAllByText(/Edit/i);
-    expect(editButtons[0]).toBeDisabled(); // Because mockInternalUser is system_admin
+    expect(editButtons[0]).toBeEnabled(); // Can edit other members
   });
 });
