@@ -30,6 +30,8 @@ from typing import Any
 
 from dotenv import load_dotenv
 from mcp.server.fastmcp import Context, FastMCP
+from starlette.requests import Request
+from starlette.responses import Response, JSONResponse
 
 # Add the project root to Python path for imports
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
@@ -324,6 +326,26 @@ except Exception as e:
     logger.error(f"✗ Failed to create FastMCP server: {e}")
     logger.error(traceback.format_exc())
     raise
+
+
+# Custom route for session tracking
+@mcp.custom_route("/sessions", methods=["GET"])
+async def get_sessions(request: Request) -> Response:
+    """Get active session count from FastMCP internal state."""
+    active_sessions = 0
+    try:
+        # Access FastMCP internal session manager state if available
+        # The session manager is lazy-loaded, but since we are handling a request,
+        # it should be initialized.
+        if hasattr(mcp, "session_manager"):
+            # Access the internal _server_instances dict which tracks active connections
+            # Note: This is accessing internal state, but it's the only way to get real counts
+            if hasattr(mcp.session_manager, "_server_instances"):
+                active_sessions = len(mcp.session_manager._server_instances)
+    except Exception as e:
+        logger.error(f"Failed to get active sessions: {e}")
+
+    return JSONResponse({"active_sessions": active_sessions})
 
 
 # Health check endpoint
