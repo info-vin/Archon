@@ -87,9 +87,10 @@ describe('Sales Nexus Closure Flow (Phase 4.4.2)', () => {
         fireEvent.click(confirmBtn);
         
         // 5. Verify Success
-        // Since we don't mock the reload/toast perfectly in unit test, 
-        // we assume if no error thrown and modal closes/updates, it's good.
-        // For this test, we just ensure the button was clickable.
+        // Wait for the modal to disappear to ensure async operations are complete
+        await waitFor(() => {
+            expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+        });
     });
 
 });
