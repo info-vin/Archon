@@ -1,7 +1,11 @@
-# python/src/server/services/health_service.py
+import asyncio
+import json
 
 from ..config.logfire_config import get_logger
 from ..utils import get_supabase_client
+from .credential_service import credential_service
+from .librarian_service import LibrarianService
+from .search.rag_service import RAGService
 
 logger = get_logger(__name__)
 
@@ -66,3 +70,103 @@ class HealthService:
                 }
             }
         }
+
+    async def check_rag_integrity(self) -> dict:
+        """
+        Performs a deep integrity check of the RAG system.
+        Ported from scripts/probe_librarian.py.
+        Includes: Config check, Seeding (Test Data), DB Integrity, Retrieval Test.
+        """
+        logger.info("Starting RAG integrity check...")
+
+        details = {
+            "steps": [],
+            "config": {},
+            "errors": []
+        }
+
+        try:
+            # 1. Config Check
+            rag_settings = await credential_service.get_credentials_by_category("rag_strategy")
+            provider = rag_settings.get("EMBEDDING_PROVIDER") or rag_settings.get("LLM_PROVIDER") or "openai"
+            model_name = rag_settings.get("EMBEDDING_MODEL") or "text-embedding-3-small"
+            dimensions_str = rag_settings.get("EMBEDDING_DIMENSIONS", "1536")
+            expected_dim = int(dimensions_str)
+
+            details["config"] = {
+                "provider": provider,
+                "model": model_name,
+                "dimensions": expected_dim
+            }
+
+            # Warn on common mismatches
+            if "gemini" in model_name.lower() and expected_dim != 768:
+                 details["errors"].append(f"Config Warning: Model '{model_name}' usually uses 768 dims, but configured for {expected_dim}.")
+            if "large" in model_name.lower() and expected_dim != 3072:
+                 details["errors"].append(f"Config Warning: Model '{model_name}' usually uses 3072 dims, but configured for {expected_dim}.")
+
+            details["steps"].append("Configuration checked")
+
+            # 2. Seeding (Simulating Alice)
+            # Use 'System Probe' as company to easily identify and clean if needed (though we keep it for history)
+            librarian = LibrarianService()
+            source_id = await librarian.archive_sales_pitch(
+                company="System Probe",
+                job_title="Integrity Check",
+                content="This is a generated probe content to verify vector database integrity.",
+                references=["probe-ref"]
+            )
+            details["steps"].append(f"Seeded document: {source_id}")
+
+            # 3. DB Integrity (Wait for Embedding)
+            max_retries = 5
+            raw_embedding = None
+            for _ in range(max_retries):
+                db_item = self.supabase_client.table("archon_crawled_pages").select("embedding").eq("source_id", source_id).limit(1).execute()
+                if db_item.data and db_item.data[0].get("embedding"):
+                    raw_embedding = db_item.data[0].get("embedding")
+                    break
+                await asyncio.sleep(2)
+
+            if not raw_embedding:
+                raise Exception("Embedding generation timed out. Check background workers/triggers.")
+
+            # Parse embedding
+            if isinstance(raw_embedding, str):
+                vec = json.loads(raw_embedding)
+            else:
+                vec = raw_embedding
+
+            dim = len(vec)
+            details["detected_dimensions"] = dim
+
+            if dim != expected_dim:
+                raise Exception(f"Dimension Mismatch! Config expects {expected_dim}, DB has {dim}.")
+
+            details["steps"].append("Embedding Verification Passed")
+
+            # 4. Retrieval Test
+            rag = RAGService()
+            results = await rag.search_documents(
+                query="Integrity Check",
+                match_count=5,
+                filter_metadata={"knowledge_type": "sales_pitch"}
+            )
+
+            if not results:
+                raise Exception("Retrieval failed. Document indexed but not found by semantic search.")
+
+            details["steps"].append(f"Retrieval Passed (Found {len(results)} items)")
+
+            return {
+                "status": "healthy" if not details["errors"] else "degraded",
+                "details": details
+            }
+
+        except Exception as e:
+            logger.error(f"RAG Integrity Check Failed: {e}")
+            details["errors"].append(str(e))
+            return {
+                "status": "unhealthy",
+                "details": details
+            }
