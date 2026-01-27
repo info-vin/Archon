@@ -43,26 +43,26 @@ async def update_system_prompt(prompt_name: str, request: dict[str, Any]) -> dic
     """
     Updates a specific system prompt.
     """
-    from ..utils import get_supabase_client
     from ..services.prompt_service import prompt_service
-    
+    from ..utils import get_supabase_client
+
     new_prompt = request.get("prompt")
     description = request.get("description")
-    
+
     if not new_prompt:
         raise HTTPException(status_code=400, detail="Prompt content is required")
-        
+
     supabase = get_supabase_client()
     update_data = {"prompt": new_prompt, "updated_at": "now()"}
     if description:
         update_data["description"] = description
-        
+
     response = supabase.table("archon_prompts").update(update_data).eq("prompt_name", prompt_name).execute()
-    
+
     if not response.data:
         raise HTTPException(status_code=404, detail=f"Prompt '{prompt_name}' not found")
-        
+
     # Trigger memory cache reload
     await prompt_service.reload_prompts()
-    
+
     return response.data[0]

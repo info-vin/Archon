@@ -1,6 +1,4 @@
-import os
-import sys
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.interval import IntervalTrigger
@@ -58,7 +56,7 @@ class SchedulerService:
             from ..utils import get_supabase_client
             supabase = get_supabase_client()
 
-            one_day_ago = (datetime.now(timezone.utc) - timedelta(hours=24)).isoformat()
+            one_day_ago = (datetime.now(UTC) - timedelta(hours=24)).isoformat()
 
             # Using parentheses for multi-line chaining (standard Python practice)
             res = (
@@ -120,11 +118,11 @@ class SchedulerService:
             # Use the integrated HealthService
             health_service = HealthService()
             result = await health_service.check_rag_integrity()
-            
+
             success = result.get("status") == "healthy"
             log_level = "INFO" if success else "ERROR"
             msg = "System Probe Passed" if success else "System Probe FAILED"
-            
+
             if success:
                 logger.info(f"✅ Clockwork: {msg}")
             else:

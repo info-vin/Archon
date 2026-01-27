@@ -5,7 +5,7 @@ import { renderApp } from './e2e.setup';
 import { api } from '../../src/services/api';
 import { EmployeeRole } from '../../src/types';
 
-test.skip('Admin can view and edit system prompts', async () => {
+test('Admin can view and edit system prompts', async () => {
     // Mock Admin User (Internal)
     vi.mocked(api.getCurrentUser).mockResolvedValue({
         id: 'admin-1',
@@ -32,12 +32,18 @@ test.skip('Admin can view and edit system prompts', async () => {
 
     // 3. Verify Prompt List
     await waitFor(() => {
-        expect(screen.getByText(/DEVELOPER PERSONA/i)).toBeInTheDocument();
-        expect(screen.getByText(/SALES PERSONA/i)).toBeInTheDocument();
+        // 使用 getAllByText 因為選中的項目會同時出現在 Sidebar 和 Header
+        const devPrompts = screen.getAllByText(/DEVELOPER PERSONA/i);
+        expect(devPrompts.length).toBeGreaterThan(0);
+        expect(devPrompts[0]).toBeInTheDocument();
+        
+        const salesPrompts = screen.getAllByText(/SALES PERSONA/i);
+        expect(salesPrompts[0]).toBeInTheDocument();
     }, { timeout: 5000 });
 
-    // 4. Select a prompt
-    fireEvent.click(screen.getByText('DEVELOPER PERSONA'));
+    // 4. Select a prompt (點擊 Sidebar 中的清單項)
+    const sidebarItems = screen.getAllByText(/DEVELOPER PERSONA/i);
+    fireEvent.click(sidebarItems[0]);
 
     // 5. Verify Editor Content
     await waitFor(() => {
