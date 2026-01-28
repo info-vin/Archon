@@ -327,17 +327,7 @@ Phase 4.4.5 引入了 **Clockwork** 進行系統自動檢測。
 
     > **🚑 資料庫救災指南 (Database Recovery SOP)**
     >
-    > **症狀**: 執行完 `make test` 後，發現資料庫變空，或某些功能面板（如 Sales Intel）消失。
-    > **原因**: E2E 測試會重置資料庫，但可能未正確還原所有種子資料。且若遷移紀錄 (`schema_migrations`) 未被清除，`make db-init` 會誤以為資料已存在而跳過播種。
-        > **解法**: 請依序執行以下步驟，強制重置環境：
-        > 1.  **手動執行重置**: 在 Supabase SQL Editor 或透過工具執行 `migration/RESET_DB.sql`。此腳本現在會**刪除** `schema_migrations` 表，確保系統「失憶」。
-        > 2.  **重新初始化**: 執行 `make db-init`。系統會發現沒有遷移紀錄，從而乖乖地從頭執行所有腳本，包含 正確的種子資料。
-        >
-        > **💡 快速救災指令 (Docker環境專用)**:
-        > 若您無法直接連線資料庫，可使用以下單行指令透過容器執行重置：
-        > ```bash
-        > docker exec -i archon-server /venv/bin/python -c "import os, psycopg2; DB=os.getenv('SUPABASE_DB_URL'); conn=psycopg2.connect(DB); cur=conn.cursor(); f=open('migration/RESET_DB.sql'); cur.execute(f.read()); conn.commit(); conn.close(); print('✅ Reset Complete')" && make db-init
-        > ```
+    > 若遇到資料庫狀態錯亂或 `make db-init` 失效，請參閱 **[6.1 資料庫與遷移問題](#61-資料庫與遷移問題)** 進行強制重置。
     
         **🚑 緊急備案：手動初始化流程 (Manual Fallback)**
     > **僅當 `make db-init` 失敗時使用**
@@ -345,26 +335,26 @@ Phase 4.4.5 引入了 **Clockwork** 進行系統自動檢測。
 
     1.  登入 Supabase 儀表板並進入 **SQL Editor**。
 
-| 順序 | 檔案路徑 | 用途與說明 |
-| :--- | :--- | :--- |
-| 1 | `migration/RESET_DB.sql` | **[重置]** 清空所有資料表與 Schema，確保環境乾淨。 |
-| 2 | `migration/000_unified_schema.sql` | **[核心]** 建立基礎資料表 (`tasks`, `projects`, `users`, `employees`...)。 |
-| 3 | `migration/001_add_due_date_to_tasks.sql` | **[Schema]** 為 `tasks` 表追加 `due_date` 欄位。 |
-| 4 | `migration/002_create_schema_migrations_table.sql` | **[系統]** 建立 `schema_migrations` 表，用於追蹤遷移版本。 |
-| 5 | `migration/003_add_get_counts_by_source_function.sql` | **[函式]** 新增儀表板統計所需的資料庫函式。 |
-| 6 | `migration/005_create_proposed_changes_table.sql` | **[AI]** 建立 `proposed_changes` 表，支援 AI 開發者協作流程。 |
-| 7 | `migration/seed_mock_data.sql` | **[種子]** 填充核心假資料 (Users, Projects, Employees)。 |
-| 8 | `migration/seed_blog_posts.sql` | **[種子]** 填充部落格文章假資料 (用於 RAG 測試)。 |
-| 9 | `migration/004_create_test_utility_functions.sql` | **[測試]** 建立 `reset_test_database` 等 E2E 測試專用函式。 |
-| 10 | `migration/006_create_sales_intel_tables.sql` | **[Phase 4.2]** 建立 `leads`, `market_insights` 表，支援業務情資功能。 |
-| 11 | `migration/007_add_assignee_id_to_tasks.sql` | **[RBAC]** 新增 `assignee_id` 欄位，強化任務指派權限。 |
-| 12 | `migration/008_system_correction_phase44.sql` | **[修復]** 修正 Phase 4.4 的邏輯與狀態定義。 |
-| 13 | `migration/009_fix_rbac_roles_and_permissions.sql` | **[RBAC]** 修正 Manager 與 Admin 的權限邊界。 |
-| 14 | `migration/010_bob_and_alice_schema_updates.sql` | **[Persona]** 更新資料表以支援 Alice (Sales) 與 Bob (Marketing) 的專屬視圖。 |
-| 15 | `migration/011_update_alice_bob_roles.sql` | **[權限]** 將 Alice/Bob 升級為標準化角色 (`sales`, `marketing`)。 |
-| 16 | `migration/012_create_archon_logs.sql` | **[日誌]** 建立 `archon_logs` 以支援 Clockwork 與系統稽核。 |
-| 17 | `migration/013_seed_system_prompts.sql` | **[AI]** 將 System Prompts (POBot, DevBot...) 寫入資料庫，實現 Prompt as Data。 |
-| 18 | `migration/014_vector_rls_policy.sql` | **[安全]** 為向量庫 (`archon_sources`...) 啟用 RLS，實作部門資料隔離。 |
+        | 順序 | 檔案路徑 (migration/...) | 用途與說明 |
+        | :--- | :--- | :--- |
+        | 1 | `RESET_DB.sql` | **[重置]** 清空所有資料表與 Schema，確保環境乾淨。 |
+        | 2 | `000_unified_schema.sql` | **[核心]** 建立基礎資料表 (`tasks`, `projects`, `users`...)。 |
+        | 3 | `001_add_due_date_to_tasks.sql` | **[Schema]** 為 `tasks` 表追加 `due_date` 欄位。 |
+        | 4 | `002_create_schema_migrations_table.sql` | **[系統]** 建立 `schema_migrations` 表，追蹤版本。 |
+        | 5 | `003_add_get_counts_by_source_function.sql` | **[函式]** 新增儀表板統計所需的資料庫函式。 |
+        | 6 | `005_create_proposed_changes_table.sql` | **[AI]** 建立 `proposed_changes` 表，支援 AI 協作。 |
+        | 7 | `seed_mock_data.sql` | **[種子]** 填充核心假資料 (Users, Projects, Employees)。 |
+        | 8 | `seed_blog_posts.sql` | **[種子]** 填充部落格文章假資料 (用於 RAG 測試)。 |
+        | 9 | `004_create_test_utility_functions.sql` | **[測試]** 建立 `reset_test_database` 等 E2E 測試函式。 |
+        | 10 | `006_create_sales_intel_tables.sql` | **[Phase 4.2]** 建立 `leads`, `market_insights` 表 (業務情資)。 |
+        | 11 | `007_add_assignee_id_to_tasks.sql` | **[RBAC]** 新增 `assignee_id` 欄位，強化任務指派權限。 |
+        | 12 | `008_system_correction_phase44.sql` | **[修復]** 修正 Phase 4.4 的邏輯與狀態定義。 |
+        | 13 | `009_fix_rbac_roles_and_permissions.sql` | **[RBAC]** 修正 Manager 與 Admin 的權限邊界。 |
+        | 14 | `010_bob_and_alice_schema_updates.sql` | **[Persona]** 支援 Alice (Sales) 與 Bob (Marketing) 視圖。 |
+        | 15 | `011_update_alice_bob_roles.sql` | **[權限]** 升級 Alice/Bob 為 `sales`/`marketing` 角色。 |
+        | 16 | `012_create_archon_logs.sql` | **[日誌]** 建立 `archon_logs` 支援 Clockwork 與系統稽核。 |
+        | 17 | `013_seed_system_prompts.sql` | **[AI]** 寫入 System Prompts (Prompt as Data)。 |
+        | 18 | `014_vector_rls_policy.sql` | **[安全]** 啟用向量庫 RLS，實作部門資料隔離。 |
 
 3.  **階段三：執行部署**
 
@@ -496,7 +486,22 @@ Phase 4.4.5 引入了 **Clockwork** 進行系統自動檢測。
 
 ## 第六章：常見問題排查 (Troubleshooting SOP)
 
-### 6.1 Supabase Auth 406 Error (Not Acceptable)
+### 6.1 資料庫與遷移問題
+
+#### 重大災難復原：資料庫狀態錯亂
+**症狀**: `make db-init` 執行後資料庫仍為空，或 `make test` 後資料消失。
+**原因**: E2E 測試重置了資料庫，但 `schema_migrations` 未被清除，欺騙了 Init 腳本。
+
+**解決方案**:
+1.  **強制重置**: 手動執行 `RESET_DB.sql` (這會刪除所有表包含 `schema_migrations`)。
+2.  **重新初始化**: 再次執行 `make db-init`。
+
+**Docker 快速指令**:
+```bash
+docker exec -i archon-server /venv/bin/python -c "import os, psycopg2; DB=os.getenv('SUPABASE_DB_URL'); conn=psycopg2.connect(DB); cur=conn.cursor(); f=open('migration/RESET_DB.sql'); cur.execute(f.read()); conn.commit(); conn.close(); print('✅ Reset Complete')" && make db-init
+```
+
+### 6.2 Supabase Auth 406 Error (Not Acceptable)
 
 **症狀**: 前端登入成功，但呼叫 `/profiles` API 時收到 `406 Not Acceptable` 錯誤，且回傳 Body 為空。
 
@@ -514,17 +519,4 @@ Phase 4.4.5 引入了 **Clockwork** 進行系統自動檢測。
 
 ## 附錄 A：系統分析 (System Analysis)
 
-> **注意**: 關於「環境比較 (`make dev` vs `docker`)」與「歷史架構決策」的內容，已歸檔至 `PRPs/Phase_3.8_System_Grafting_and_Deployment.md`，以保持本文件聚焦於當前操作。
-
-### 系統架構演進：從基礎設施 (Phase 3.8) 到商業智能 (Phase 4.2)
-
-本表格展示了專案從基礎建設期到商業擴展期的關鍵架構變化，幫助開發者理解新功能的定位。
-
-| 構面 | Phase 3.8 (基礎建設期) | Phase 4.2 (商業擴展期) | 差異與演進 |
-| :--- | :--- | :--- | :--- |
-| **核心目標** | 系統嫁接、部署與穩定性 | 銷售情資、市場洞察、自動化 | 從「能跑起來」轉向「產生價值」 |
-| **資料庫實體** | `tasks`, `projects` | `leads`, `market_insights` | 新增了 CRM 相關的資料表 (Schema Migration 006) |
-| **外部整合** | 無 (僅內部 Mock) | **104 Job Bank (模擬)** | 首次打通外部數據源，具備爬蟲與分析能力 |
-| **AI 角色** | 輔助編碼 (Developer) | **業務助理 (Sales Rep)** | Agent 能力從 RD 領域跨足到業務領域 |
-| **前端功能** | 基礎 CRUD (新增/修改任務) | **儀表板 (Dashboard)** | 新增了圖表與數據可視化介面 (`MarketingPage`) |
-| **文件重點** | 環境設定、部署 SOP | 業務邏輯、內容資產 (Case Study) | 文件開始包含具體的商業劇本 (`PRPs/Phase_4.2.1`) |
+(請參閱 `PRPs/Phase_4.2_Business_Feature_Expansion_Plan.md`)

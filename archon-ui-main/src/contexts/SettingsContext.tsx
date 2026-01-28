@@ -1,7 +1,7 @@
 import React, { useState, useEffect, ReactNode } from 'react';
 import { credentialsService } from '../services/credentialsService';
 
-interface SettingsContextType {
+export interface SettingsContextType {
   projectsEnabled: boolean;
   setProjectsEnabled: (enabled: boolean) => Promise<void>;
   styleGuideEnabled: boolean;

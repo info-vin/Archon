@@ -280,7 +280,7 @@ class AgentChatService {
    * Get server status
    */
   async getServerStatus(): Promise<'online' | 'offline' | 'unknown'> {
-    const serverHealthy = await serverHealthService.isHealthy();
+    const serverHealthy = await serverHealthService.checkHealth();
     if (!serverHealthy) {
       this.serverStatus = 'offline';
       return 'offline';

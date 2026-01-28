@@ -349,4 +349,5 @@ This document serves as a more formal and structured representation of that comp
 | **`enduser-ui-fe`** | **不啟動** | 在 Docker 容器內啟動 | `dev` 模式的設計目標是專注於 `archon-ui-main` (管理後台) 的開發，因此沒有包含 `enduser-ui-fe`。而 `dev-docker` 則會啟動包括 `enduser-ui-fe` 在內的所有服務。 |
 | **主要用途** | 專注於**管理後台 (`archon-ui-main`)** 的前端開發，同時需要後端 API 支持。 | 進行**全系統整合測試**，或當開發者不需要頻繁修改前端程式碼，只想啟動一個完整的、隔離的本地環境時使用。 | 兩種模式為不同的開發場景提供了優化。`dev` 專注於效率，`dev-docker` 專注於環境一致性。 |
 
+
 <!-- EOF -->

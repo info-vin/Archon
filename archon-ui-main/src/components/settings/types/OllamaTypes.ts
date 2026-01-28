@@ -163,7 +163,7 @@ export type {
   InstanceValidationResponse,
   EmbeddingRouteResponse,
   EmbeddingRoutesResponse 
-} from '../../services/ollamaService';
+} from '../../../services/ollamaService';
 
 // Error handling types
 export interface OllamaError {

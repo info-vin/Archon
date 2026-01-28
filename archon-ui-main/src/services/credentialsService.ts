@@ -125,29 +125,25 @@ class CredentialsService {
     // The API returns {credentials: {...}} where credentials is a dict
     // Convert to array format expected by frontend
     if (result.credentials && typeof result.credentials === "object") {
-      interface CredentialValue {
-        is_encrypted?: boolean;
-        description?: string;
-      }
       return Object.entries(result.credentials).map(
-        ([key, value]: [string, string | CredentialValue]) => {
-          if (value && typeof value === "object" && value.is_encrypted) {
+        ([key, val]: [string, any]) => {
+          if (val && typeof val === "object" && val.is_encrypted) {
             return {
               key,
               value: "[ENCRYPTED]",
               encrypted_value: undefined,
               is_encrypted: true,
               category,
-              description: value.description,
+              description: val.description || "",
             };
           } else {
             return {
               key,
-              value: value,
+              value: typeof val === "object" ? (val.value || "") : String(val),
               encrypted_value: undefined,
               is_encrypted: false,
               category,
-              description: "",
+              description: (typeof val === "object" && val.description) || "",
             };
           }
         },
@@ -243,7 +239,7 @@ class CredentialsService {
             "CRAWL_WAIT_STRATEGY",
           ].includes(key)
         ) {
-          settings[key] = cred.value || "";
+          (settings as any)[key] = cred.value || "";
         }
         // Number fields
         else if (
@@ -261,16 +257,16 @@ class CredentialsService {
             "CODE_SUMMARY_MAX_WORKERS",
           ].includes(key)
         ) {
-          settings[key] =
-            parseInt(cred.value || "0", 10) || settings[key];
+          (settings as any)[key] =
+            parseInt(cred.value || "0", 10) || (settings as any)[key];
         }
         // Float fields
         else if (key === "CRAWL_DELAY_BEFORE_HTML") {
-          settings[key] = parseFloat(cred.value || "0.5") || 0.5;
+          (settings as any)[key] = parseFloat(cred.value || "0.5") || 0.5;
         }
         // Boolean fields
         else {
-          settings[key] = cred.value === "true";
+          (settings as any)[key] = cred.value === "true";
         }
       }
     });
@@ -396,15 +392,15 @@ class CredentialsService {
         const key = cred.key as keyof CodeExtractionSettings;
         if (typeof settings[key] === "number") {
           if (key === "MAX_PROSE_RATIO") {
-            settings[key] = parseFloat(cred.value || "0.15");
+            (settings as any)[key] = parseFloat(cred.value || "0.15");
           } else {
-            settings[key] = parseInt(
+            (settings as any)[key] = parseInt(
               cred.value || settings[key].toString(),
               10,
             );
           }
         } else if (typeof settings[key] === "boolean") {
-          settings[key] = cred.value === "true";
+          (settings as any)[key] = cred.value === "true";
         }
       }
     });
@@ -453,14 +449,14 @@ class CredentialsService {
           }
           
           // Parse the field value
-          let value: string | boolean | number = cred.value;
+          let value: string | boolean | number = cred.value || "";
           if (field === 'isEnabled' || field === 'isPrimary' || field === 'isHealthy') {
             value = cred.value === 'true';
           } else if (field === 'responseTimeMs' || field === 'modelsAvailable' || field === 'loadBalancingWeight') {
             value = parseInt(cred.value || '0', 10);
           }
           
-          (instanceMap[instanceId] as Partial<OllamaInstance>)[field] = value;
+          (instanceMap[instanceId] as any)[field] = value;
         }
       });
       

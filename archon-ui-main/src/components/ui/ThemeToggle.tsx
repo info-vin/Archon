@@ -18,9 +18,8 @@ export const ThemeToggle: React.FC<ThemeToggleProps> = ({
  
   return <button onClick={toggleTheme} className={`
         relative p-2 rounded-md backdrop-blur-md 
-        bg-gradient-to-b ${accentColorMap[accentColor].bg}
-        border ${accentColorMap[accentColor].border} ${accentColorMap[accentColor].hover}
-        ${accentColorMap[accentColor].text}
+        bg-gradient-to-b ${accentColorMap[accentColor].gradientFrom} ${accentColorMap[accentColor].gradientTo}
+        border ${accentColorMap[accentColor].border}
         shadow-[0_0_10px_rgba(0,0,0,0.05)] dark:shadow-[0_0_10px_rgba(0,0,0,0.3)]
         transition-all duration-300 flex items-center justify-center
       `} aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}>

@@ -235,3 +235,16 @@ INSERT INTO blog_posts (title, excerpt, author_name, content, ...) VALUES (
 2.  **技術與流程缺口 (Technical Gaps)**:
     *   **端對端驗證 (E2E Verification)**: 針對跨服務整合（特別是外部 104 數據），已規劃在 `tests/e2e/sales-intelligence.spec.tsx` 中實作 Mock 導向的 E2E 測試。
     *   **資料庫 schema 討論 (Supabase SQL)**: 已在技術實作細節中定義 `leads` 與 `market_insights` 資料表草案，將隨功能開發同步進行 Migration。
+
+## Appendix A: System Architecture Evolution (Phase 3.8 -> Phase 4.2) (系統架構演進)
+
+> **Note**: This comparison table provides context on how the system evolved from the infrastructure phase to the business phase.
+
+| 構面 | Phase 3.8 (基礎建設期) | Phase 4.2 (商業擴展期) | 差異與演進 |
+| :--- | :--- | :--- | :--- |
+| **核心目標** | 系統嫁接、部署與穩定性 | 銷售情資、市場洞察、自動化 | 從「能跑起來」轉向「產生價值」 |
+| **資料庫實體** | `tasks`, `projects` | `leads`, `market_insights` | 新增了 CRM 相關的資料表 (Schema Migration 006) |
+| **外部整合** | 無 (僅內部 Mock) | **104 Job Bank (模擬)** | 首次打通外部數據源，具備爬蟲與分析能力 |
+| **AI 角色** | 輔助編碼 (Developer) | **業務助理 (Sales Rep)** | Agent 能力從 RD 領域跨足到業務領域 |
+| **前端功能** | 基礎 CRUD (新增/修改任務) | **儀表板 (Dashboard)** | 新增了圖表與數據可視化介面 (`MarketingPage`) |
+| **文件重點** | 環境設定、部署 SOP | 業務邏輯、內容資產 (Case Study) | 文件開始包含具體的商業劇本 (`PRPs/Phase_4.2.1`) |
