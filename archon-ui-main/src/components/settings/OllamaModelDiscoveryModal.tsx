@@ -199,7 +199,7 @@ const OllamaModelDiscoveryModal: React.FC<OllamaModelDiscoveryModalProps> = ({
         // console.log('🔧 LOCALSTORAGE DEBUG: Testing localStorage functionality');
         localStorage.setItem(testKey, JSON.stringify(testData));
         
-        const _retrieved = localStorage.getItem(testKey);
+        localStorage.getItem(testKey);
         
         // console.log('🟢 LOCALSTORAGE DEBUG: localStorage test successful', {
         //   saved: testData,
@@ -269,7 +269,7 @@ const OllamaModelDiscoveryModal: React.FC<OllamaModelDiscoveryModalProps> = ({
       // console.log('🟡 DISCOVERY DEBUG: Force refresh requested, skipping cache');
     }
 
-    const _discoveryStartTime = Date.now();
+    Date.now();
     // console.log('🟡 DISCOVERY DEBUG: Starting API discovery at', new Date(_discoveryStartTime).toISOString());
 
     setLoading(true);
@@ -298,7 +298,7 @@ const OllamaModelDiscoveryModal: React.FC<OllamaModelDiscoveryModalProps> = ({
       //   timestamp: new Date().toISOString()
       // });
       
-      const _discoveryEndTime = Date.now();
+      Date.now();
       
       // console.log('🟢 DISCOVERY DEBUG: API discovery completed', {
       //   duration: discoveryDuration,
