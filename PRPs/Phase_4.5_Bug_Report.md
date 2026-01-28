@@ -31,20 +31,26 @@
 | **BUG-022** | 🐛 Bug | **QA/UI** | `PromoteForm` 測試嘗試填寫不存在的 `Vendor Name` 欄位。 | Medium | 🟢 Fixed (Aligned) | QA | `sales-nexus-closure.spec.tsx` |
 | **BUG-023** | 🐛 Bug | **UI/A11y** | `MarketingPage.tsx` 的 Label 未正確關聯 Input，導致 `findByLabelText` 失敗。 | Low | 🟢 Fixed (Implemented) | Frontend | `MarketingPage.tsx` |
 | **BUG-024** | 🐛 Bug | **QA/Mock** | `sales-nexus-closure` 缺少 `POST /promote` 的 MSW Handler。 | Medium | 🟢 Fixed (Implemented) | QA | `sales-nexus-closure.spec.tsx` |
+| **BUG-025** | 🐛 Bug | **QA/Auth** | `TestClient` 測試中 `Depends(get_current_user)` 覆蓋失效，導致 Guardrail 測試報 403。 | High | 🟢 Fixed (Implemented) | Backend | `test_marketing_guardrails.py` |
+| **BUG-026** | 🐛 Regression | **QA/E2E** | E2E 測試中 `findByText(/My Tasks/)` 因匹配導覽列且未等待 Loading 導致 "New Task" 按鈕點擊失敗。 | High | 🟢 Fixed (Implemented) | QA | `ai-teammate-workflows.spec.tsx` |
 
 ---
 
 ## 📝 Detailed Investigation Notes (詳細調查筆記)
 
 ### BUG-015 ~ 024: The Great E2E Institutionalization
-*   **Root Cause**: 測試資料與實作脫鉤 (Decoupled Truth) + 環境配置不足 + 語法/時序問題。
+*   ... (existing notes)
+
+### BUG-025: Dependency Injection Overrides
+*   **Root Cause**: FastAPI `Depends` 在測試中若使用傳統 `patch` 有時會因閉包綁定而失效。
+*   **Solution**: 改用官方推薦的 `app.dependency_overrides` 模式，確保測試環境的 `current_user` 被 100% 注入。
+
+### BUG-026: Semantic Heading Assertions
+*   **Root Cause**: 導覽列與頁面標題文字重疊，且未等待 Dashboard 資料載入完成。
 *   **Solution**: 
-    1.  **Permission Factory**: 建立 `userFactory.ts` 並導出 `PERMISSION_SETS`，實現 SSOT。
-    2.  **Hoisting Fix**: 使用 `vi.hoisted` 解決 `e2e.setup.tsx` 的引用順序問題。
-    3.  **Environment**: 補齊 `scrollIntoView` Polyfill。
-    4.  **Timing**: 優化 `waitFor` 邏輯。
-    5.  **UI Alignment**: 修正 `MarketingPage.tsx` 的 HTML 語義 (Label/Input) 並對齊測試斷言。
-*   **Outcome**: 測試套件現在具備「自動適應權限變更」的能力，全測試通過 (100% Pass)。
+    1.  **Semantic Match**: 使用 `findByRole('heading', { name: /My Tasks/i })` 精確定位頁面標題。
+    2.  **Role Injection**: 在測試中明確 Mock 業務角色 (Marketing/Sales)，確保標題顯示 "My Tasks" 而非 "All Tasks"。
+*   **Outcome**: E2E 流程現在極其穩定，不再受權限或時序影響。
 
 ---
 

@@ -3,7 +3,8 @@ import { api } from '../services/api';
 import { JobData } from '../types';
 import { PermissionGuard } from '../features/auth/components/PermissionGuard';
 import { SourceBadge } from '../components/SourceBadge';
-import { SearchIcon, TableIcon, ShieldCheckIcon, XIcon, SparklesIcon } from '../components/Icons';
+import { SearchIcon, TableIcon, ShieldCheckIcon, XIcon, SparklesIcon, RefreshCwIcon } from '../components/Icons';
+import { EmptyState } from '../components/common/EmptyState';
 
 const MarketingPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'search' | 'leads'>('search');
@@ -64,16 +65,26 @@ const MarketingPage: React.FC = () => {
   const handleGeneratePitch = async (job: JobData) => {
       setGenerating(true);
       setError(null);
+      
+      // Implement 30s Timeout Boundary
+      const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error("TIMEOUT")), 30000)
+      );
+
       try {
-          const result = await api.generatePitch(
+          const generatePromise = api.generatePitch(
               job.title, 
               job.company, 
               job.description_full || job.description || ""
           );
+
+          const result = await Promise.race([generatePromise, timeoutPromise]) as any;
+
           setGeneratedPitch({
               forCompany: job.company,
               content: result.content
           });
+          
           setTimeout(() => {
               if (typeof document !== 'undefined') {
                 document.getElementById('pitch-section')?.scrollIntoView({ behavior: 'smooth' });
@@ -81,7 +92,11 @@ const MarketingPage: React.FC = () => {
           }, 100);
       } catch (err: any) {
           console.error("Pitch generation failed:", err);
-          setError("Failed to generate pitch. Please try again.");
+          if (err.message === "TIMEOUT") {
+              setError("Generation timed out. The AI model is taking too long. Please try again.");
+          } else {
+              setError("Failed to generate pitch. Please try again.");
+          }
       } finally {
           setGenerating(false);
       }
@@ -144,7 +159,12 @@ const MarketingPage: React.FC = () => {
 
             <div className="flex gap-6 flex-col lg:flex-row">
                 <div className="flex-1 space-y-4">
-                    {error && <div className="bg-red-50 text-red-700 p-4 rounded-lg border border-red-100">{error}</div>}
+                    {error && (
+                        <div className="bg-red-50 text-red-700 p-4 rounded-lg border border-red-100 flex justify-between items-center">
+                            <span>{error}</span>
+                            <button onClick={() => setError(null)} className="p-1 hover:bg-red-100 rounded-full transition-colors"><XIcon className="w-4 h-4" /></button>
+                        </div>
+                    )}
                     
                     {hasMockData && (
                         <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 flex items-start gap-3">
@@ -161,7 +181,12 @@ const MarketingPage: React.FC = () => {
                         </div>
                     )}
 
-                    {jobs.length > 0 && (
+                    {loading ? (
+                        <div className="flex flex-col items-center justify-center p-12 space-y-4">
+                            <RefreshCwIcon className="w-12 h-12 text-indigo-600 animate-spin" />
+                            <p className="text-sm text-gray-500 font-medium">Analyzing market trends and identifying opportunities...</p>
+                        </div>
+                    ) : jobs.length > 0 ? (
                         <>
                         <h2 className="text-xl font-semibold text-foreground flex items-center gap-2">
                             Identified Leads 
@@ -215,6 +240,12 @@ const MarketingPage: React.FC = () => {
                             ))}
                         </div>
                         </>
+                    ) : (
+                        <EmptyState 
+                            title="No Leads Found" 
+                            description="Enter a job title above to start scanning the market for potential customers."
+                            icon={<SearchIcon className="w-12 h-12 text-gray-300" />}
+                        />
                     )}
                 </div>
 
@@ -261,24 +292,33 @@ const MarketingPage: React.FC = () => {
                   <button onClick={fetchLeads} className="text-indigo-600 text-sm font-medium hover:text-indigo-800">Refresh</button>
               </div>
               <div className="overflow-x-auto">
-                  <table className="w-full text-sm text-left">
-                      <thead className="bg-gray-50 text-gray-500 font-medium">
-                          <tr>
-                              <th className="px-6 py-3">Company</th>
-                              <th className="px-6 py-3">Position</th>
-                              <th className="px-6 py-3">Status</th>
-                              <th className="px-6 py-3">Source</th>
-                              <th className="px-6 py-3">Follow Up</th>
-                              <th className="px-6 py-3 text-right">Action</th>
-                          </tr>
-                      </thead>
-                      <tbody className="divide-y divide-gray-100">
-                          {isLeadsLoading ? (
-                              <tr><td colSpan={6} className="p-8 text-center text-gray-500">Loading leads...</td></tr>
-                          ) : leads.length === 0 ? (
-                              <tr><td colSpan={6} className="p-8 text-center text-gray-500">No leads found. Start by searching for jobs.</td></tr>
-                          ) : (
-                              leads.map(lead => (
+                  {isLeadsLoading ? (
+                      <div className="p-12 flex justify-center">
+                          <RefreshCwIcon className="w-8 h-8 text-indigo-600 animate-spin" />
+                      </div>
+                  ) : leads.length === 0 ? (
+                      <div className="p-12">
+                        <EmptyState 
+                            title="Your Pipeline is Empty" 
+                            description="Identify potential customers in the Job Search tab to build your lead pipeline."
+                            actionLabel="Go to Search"
+                            onAction={() => setActiveTab('search')}
+                        />
+                      </div>
+                  ) : (
+                      <table className="w-full text-sm text-left">
+                          <thead className="bg-gray-50 text-gray-500 font-medium">
+                              <tr>
+                                  <th className="px-6 py-3">Company</th>
+                                  <th className="px-6 py-3">Position</th>
+                                  <th className="px-6 py-3">Status</th>
+                                  <th className="px-6 py-3">Source</th>
+                                  <th className="px-6 py-3">Follow Up</th>
+                                  <th className="px-6 py-3 text-right">Action</th>
+                              </tr>
+                          </thead>
+                          <tbody className="divide-y divide-gray-100">
+                              {leads.map(lead => (
                                   <tr key={lead.id} className="hover:bg-gray-50 transition-colors">
                                       <td className="px-6 py-4 font-medium text-gray-900">{lead.company_name}</td>
                                       <td className="px-6 py-4 text-gray-700">{lead.job_title || 'N/A'}</td>
@@ -306,10 +346,10 @@ const MarketingPage: React.FC = () => {
                                           )}
                                       </td>
                                   </tr>
-                              ))
-                          )}
-                      </tbody>
-                  </table>
+                              ))}
+                          </tbody>
+                      </table>
+                  )}
               </div>
           </div>
       )}

@@ -2,6 +2,8 @@ import { describe, test, expect, beforeEach, vi } from 'vitest';
 import { screen, fireEvent, waitFor } from '@testing-library/react';
 import { api } from '../../src/services/api';
 import { renderApp } from './e2e.setup';
+import { createUser } from '../factories/userFactory';
+import { EmployeeRole } from '../../src/types';
 
 describe('AI as a Teammate E2E Workflows', () => {
   beforeEach(() => {
@@ -9,10 +11,14 @@ describe('AI as a Teammate E2E Workflows', () => {
   });
 
   test('Marketing Campaign: User can create a task and assign it to an AI content writer', async () => {
+    // Mock Marketing User to ensure "My Tasks" view
+    const user = createUser({ role: EmployeeRole.MARKETING });
+    vi.mocked(api.getCurrentUser).mockResolvedValue(user as any);
+
     renderApp();
 
-    // Ensure Dashboard loads first
-    await screen.findByText(/My Tasks/i);
+    // Ensure Dashboard loads first - Wait for the heading specifically to ensure page content
+    await screen.findByRole('heading', { name: /My Tasks/i });
 
     const newTaskButton = await screen.findByRole('button', { name: /new task/i });
     expect(newTaskButton).toBeInTheDocument();
@@ -39,6 +45,10 @@ describe('AI as a Teammate E2E Workflows', () => {
   });
 
   test('Technical Support: User can create a task with logs and assign it to a Log Analyzer AI', async () => {
+    // Mock Member User
+    const user = createUser({ role: EmployeeRole.MEMBER });
+    vi.mocked(api.getCurrentUser).mockResolvedValue(user as any);
+
     const mockErrorLog = `
       [2025-12-25T10:30:00.123Z] ERROR: NullPointerException at com.example.UserService:123
       ...stacktrace...
@@ -47,7 +57,7 @@ describe('AI as a Teammate E2E Workflows', () => {
     renderApp();
 
     // Ensure Dashboard loads first
-    await screen.findByText(/My Tasks/i);
+    await screen.findByRole('heading', { name: /My Tasks/i });
 
     const newTaskButton = await screen.findByRole('button', { name: /new task/i });
     expect(newTaskButton).toBeInTheDocument();
@@ -75,10 +85,14 @@ describe('AI as a Teammate E2E Workflows', () => {
   });
 
   test('Sales Outreach: User can create a task and assign it to a Sales AI', async () => {
+    // Mock Sales User
+    const user = createUser({ role: EmployeeRole.SALES });
+    vi.mocked(api.getCurrentUser).mockResolvedValue(user as any);
+
     renderApp();
 
     // Ensure Dashboard loads first
-    await screen.findByText(/My Tasks/i);
+    await screen.findByRole('heading', { name: /My Tasks/i });
 
     const newTaskButton = await screen.findByRole('button', { name: /new task/i });
     fireEvent.click(newTaskButton);
