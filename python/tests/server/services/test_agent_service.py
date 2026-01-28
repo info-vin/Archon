@@ -104,7 +104,7 @@ async def test_run_command_success(mock_get_logger, mock_subprocess):
 
     assert success is True
     assert output == "success output"
-    mock_logger.info.assert_called_with("Command 'echo test' succeeded.")
+    mock_logger.info.assert_called_with("Command 'echo test' succeeded initially.")
 
 
 @pytest.mark.asyncio
@@ -136,17 +136,18 @@ async def test_run_command_failure_triggers_healing(
     mock_get_llm.return_value.__aenter__.return_value = mock_client
 
     mock_response = MagicMock()
-    mock_response.choices = [MagicMock(message=MagicMock(content="Suggested Fix: Check syntax"))]
+    # Return valid JSON but without file_path to trigger the "Analysis only" path (line 108 in service)
+    mock_response.choices = [MagicMock(message=MagicMock(content='{"reasoning": "Check syntax"}'))]
     mock_client.chat.completions.create.return_value = mock_response
 
     agent_service = AgentService()
     success, output = await agent_service.run_command_with_self_healing("failing_cmd")
 
     assert success is False
-    assert "Self-Healing Analysis" in output
-    assert "Suggested Fix: Check syntax" in output
+    assert "Analysis: Check syntax" in output
 
     # Verify LLM was called
     mock_client.chat.completions.create.assert_awaited_once()
     # Verify logger warned about failure
-    mock_logger.warning.assert_called_with("Command 'failing_cmd' failed with exit code 1.")
+    mock_logger.warning.assert_any_call("Command 'failing_cmd' failed. Starting Active Repair Loop.")
+    mock_logger.warning.assert_any_call("LLM could not propose a valid code fix.")

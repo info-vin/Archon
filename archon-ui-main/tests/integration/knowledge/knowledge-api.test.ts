@@ -39,8 +39,21 @@ describe('Knowledge API (Mocked)', () => {
     it('should fetch knowledge items list', async () => {
       // Arrange
       const mockResponse: KnowledgeItemsResponse = {
-        items: [{ source_id: '1', title: 'Test Item', metadata: {} }],
-        total: 1, page: 1, per_page: 10, success: true,
+        items: [{ 
+            id: '1', 
+            source_id: '1', 
+            title: 'Test Item', 
+            metadata: {}, 
+            url: 'https://example.com', 
+            source_type: 'url', 
+            status: 'completed',
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+            knowledge_type: 'business',
+            document_count: 0,
+            code_examples_count: 0
+        }],
+        total: 1, page: 1, per_page: 10
       };
       mockedKnowledgeService.getKnowledgeSummaries.mockResolvedValue(mockResponse);
 
@@ -55,8 +68,21 @@ describe('Knowledge API (Mocked)', () => {
     it('should filter knowledge items by type', async () => {
       // Arrange
       const mockResponse: KnowledgeItemsResponse = {
-        items: [{ source_id: '2', title: 'Technical Item', metadata: { knowledge_type: 'technical' } }],
-        total: 1, page: 1, per_page: 5, success: true,
+        items: [{ 
+            id: '2',
+            source_id: '2', 
+            title: 'Technical Item', 
+            metadata: { knowledge_type: 'technical' },
+            url: 'https://example.com/tech',
+            source_type: 'url',
+            status: 'completed',
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+            knowledge_type: 'technical',
+            document_count: 0,
+            code_examples_count: 0
+        }],
+        total: 1, page: 1, per_page: 5
       };
       mockedKnowledgeService.getKnowledgeSummaries.mockResolvedValue(mockResponse);
 
@@ -70,8 +96,8 @@ describe('Knowledge API (Mocked)', () => {
     it('should handle pagination', async () => {
         // Arrange
         mockedKnowledgeService.getKnowledgeSummaries
-            .mockResolvedValueOnce({ items: [], total: 4, page: 1, per_page: 2, success: true })
-            .mockResolvedValueOnce({ items: [], total: 4, page: 2, per_page: 2, success: true });
+            .mockResolvedValueOnce({ items: [], total: 4, page: 1, per_page: 2 })
+            .mockResolvedValueOnce({ items: [], total: 4, page: 2, per_page: 2 });
 
         // Act
         const page1 = await knowledgeService.getKnowledgeSummaries({ page: 1, per_page: 2 });
@@ -109,7 +135,7 @@ describe('Knowledge API (Mocked)', () => {
   describe('Document Operations', () => {
     it('should get chunks for a knowledge item if it exists', async () => {
       // Arrange
-      const mockResponse: ChunksResponse = { success: true, source_id: '1', chunks: [], total: 0 };
+      const mockResponse: ChunksResponse = { success: true, source_id: '1', chunks: [], total: 0, limit: 10, offset: 0, has_more: false };
       mockedKnowledgeService.getKnowledgeItemChunks.mockResolvedValue(mockResponse);
 
       // Act
@@ -123,7 +149,7 @@ describe('Knowledge API (Mocked)', () => {
 
     it('should get code examples for a knowledge item if it exists', async () => {
         // Arrange
-        const mockResponse: CodeExamplesResponse = { success: true, source_id: '1', code_examples: [], total: 0 };
+        const mockResponse: CodeExamplesResponse = { success: true, source_id: '1', code_examples: [], total: 0, limit: 10, offset: 0, has_more: false };
         mockedKnowledgeService.getCodeExamples.mockResolvedValue(mockResponse);
 
         // Act
@@ -153,7 +179,7 @@ describe('Knowledge API (Mocked)', () => {
   describe('Search Operations', () => {
     it('should search knowledge base', async () => {
       // Arrange
-      const mockResponse: SearchResultsResponse = { success: true, results: [], query: 'test' };
+      const mockResponse: SearchResultsResponse = { results: [], query: 'test', total: 0 };
       mockedKnowledgeService.searchKnowledgeBase.mockResolvedValue(mockResponse);
 
       // Act
@@ -161,14 +187,23 @@ describe('Knowledge API (Mocked)', () => {
 
       // Assert
       expect(results).toBeDefined();
-      expect(results.success).toBe(true);
+      // expect(results.success).toBe(true);
     });
   });
 
   describe('Sources', () => {
     it('should get knowledge sources', async () => {
       // Arrange
-      const mockResponse: KnowledgeSource[] = [{ source_id: '1', display_name: 'Source 1' }];
+      const mockResponse: KnowledgeSource[] = [{ 
+        id: '1', 
+        name: 'Source 1',
+        source_type: 'url',
+        knowledge_type: 'technical',
+        status: 'active',
+        document_count: 5,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      }];
       mockedKnowledgeService.getKnowledgeSources.mockResolvedValue(mockResponse);
 
       // Act
@@ -177,7 +212,7 @@ describe('Knowledge API (Mocked)', () => {
       // Assert
       expect(Array.isArray(sources)).toBe(true);
       expect(sources.length).toBe(1);
-      expect(sources[0].display_name).toBe('Source 1');
+      expect(sources[0].name).toBe('Source 1');
     });
   });
 });

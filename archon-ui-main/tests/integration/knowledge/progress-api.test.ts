@@ -6,7 +6,8 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { progressService } from '../../../src/features/progress/services/progressService';
 import { knowledgeService } from '../../../src/features/knowledge/services';
-import type { ProgressResponse, CrawlStartResponse } from '../../../src/features/knowledge/progress/types';
+import type { ProgressResponse } from '../../../src/features/progress/types';
+import type { CrawlStartResponse } from '../../../src/features/knowledge/types';
 import type { ActiveOperationsResponse } from '../../../src/features/progress/types';
 
 
@@ -91,7 +92,15 @@ describe('Progress API (Mocked)', () => {
     it('should list active operations', async () => {
       // Arrange
       const mockResponse: ActiveOperationsResponse = {
-        operations: [{ operation_id: 'op-1', operation_type: 'crawl', status: 'processing', progress: 50 }],
+        operations: [{ 
+            operation_id: 'op-1', 
+            operation_type: 'crawl', 
+            status: 'processing', 
+            progress: 50,
+            message: 'Processing...',
+            started_at: new Date().toISOString(),
+            progressId: 'op-1'
+        }],
         count: 1,
         timestamp: new Date().toISOString(),
       };

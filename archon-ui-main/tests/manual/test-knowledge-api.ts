@@ -8,15 +8,17 @@ process.env.NODE_ENV = 'test';
 process.env.ARCHON_SERVER_PORT = '8181';
 
 import { knowledgeService } from '../../src/features/knowledge/services/knowledgeService';
-import { progressService } from '../../src/features/knowledge/progress/services/progressService';
+import { progressService } from '../../src/features/progress/services/progressService';
 
 // Ensure fetch in Node environments lacking global fetch
+/*
 if (typeof fetch === "undefined") {
   // Use dynamic import for ESM compatibility
   const { fetch: nodeFetch } = await import('node-fetch');
   // @ts-expect-error: assign global
   globalThis.fetch = nodeFetch as typeof fetch;
 }
+*/
 
 async function testKnowledgeAPI(): Promise<void> {
   try {
