@@ -1,4 +1,3 @@
-
 import asyncio
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -12,6 +11,7 @@ from ..services.credential_service import credential_service
 from ..services.job_board_service import JobBoardService, JobData
 from ..services.llm_provider_service import get_llm_client
 from ..services.search.rag_service import RAGService
+from ..services.guardrail_service import GuardrailService
 from ..utils import get_supabase_client
 
 # TODO(Phase 5): Re-enable this when MCP Server is properly integrated as a package or service
@@ -97,8 +97,6 @@ async def promote_lead_to_vendor(
     # Secure Role Check using Authenticated User Context
     user_role = current_user.get("role", "viewer").lower()
 
-    user_role = current_user.get("role", "viewer").lower()
-
     # Allow: admin, manager, sales, marketing, member
     # Deny: viewer, guest
     if user_role in ["viewer", "guest"]:
@@ -109,8 +107,6 @@ async def promote_lead_to_vendor(
         supabase = get_supabase_client()
 
         # 1. Create Vendor
-        # Ensure contact_email is not None if DB requires it, or rely on DB default.
-        # Assuming DB allows NULL.
         vendor_data = {
             "name": request.vendor_name,
             "contact_email": request.contact_email,
@@ -176,8 +172,6 @@ async def generate_pitch(request: PitchRequest, current_user: dict = Depends(get
         # Secure Role Check
         user_role = current_user.get("role", "viewer").lower()
         if user_role not in ["admin", "manager", "sales", "marketing", "member"]:
-             # Broaden access for now, but block pure viewers if needed.
-             # For Phase 4.4, we assume signed-in users (except strict viewers) can use this.
              if user_role == "viewer":
                  raise HTTPException(status_code=403, detail="Access restricted to active employees.")
 
@@ -229,10 +223,6 @@ async def generate_logo(request: LogoRequest):
     try:
         logfire.info(f"API: Generating logo | style={request.style}")
 
-        # TODO(Phase 5): Implement proper Agent/MCP communication here.
-        # Direct import of mcp_server is not allowed in this microservice architecture.
-        # For now, we return a mock SVG based on the style to unblock the UI.
-
         mock_svg = f"""
         <svg width="200" height="200" xmlns="http://www.w3.org/2000/svg">
             <rect width="100%" height="100%" fill="{request.primary_color or '#f0f0f0'}" />
@@ -256,11 +246,9 @@ async def get_market_stats():
     """
     try:
         supabase = get_supabase_client()
-        # Fetch needs to analyze common keywords
         response = supabase.table("leads").select("identified_need").execute()
 
         needs = [item.get("identified_need", "") for item in response.data]
-        # Simple frequency count (In real app, we might use a dedicated stats table)
         stats = {
             "AI/LLM": sum(1 for n in needs if "AI" in n or "LLM" in n),
             "Data/BI": sum(1 for n in needs if "Data" in n or "BI" in n),
@@ -276,7 +264,6 @@ async def get_market_stats():
 async def update_blog_status(post_id: str, status: str):
     """
     Updates the status of a blog post for Kanban flow.
-    Note: Requires 'status' column in 'blog_posts' table.
     """
     try:
         supabase = get_supabase_client()
@@ -289,13 +276,12 @@ async def update_blog_status(post_id: str, status: str):
 @router.get("/approvals")
 async def get_pending_approvals():
     """
-    Get all items requiring approval (currently Blog Posts in 'review').
+    Get all items requiring approval.
     """
     try:
         supabase = get_supabase_client()
         response = supabase.table("blog_posts").select("*").eq("status", "review").execute()
 
-        # In the future, we can merge with Leads requiring approval
         return {
             "blogs": response.data,
             "leads": []
@@ -313,7 +299,6 @@ async def process_approval(
 ):
     """
     Process approval action (approve/reject).
-    Restricted to Admin and Manager.
     """
     user_role = current_user.get("role", "viewer").lower()
     if user_role not in ["system_admin", "admin", "manager"]:
@@ -345,6 +330,11 @@ async def draft_blog_post(request: DraftBlogRequest, current_user: dict = Depend
     try:
         logfire.info(f"API: Drafting blog | topic={request.topic} | user={current_user.get('email')}")
 
+        # 0. Guardrail Input Check
+        is_valid, error_msg = GuardrailService.validate_input(f"{request.topic} {request.keywords or ''}")
+        if not is_valid:
+            raise HTTPException(status_code=400, detail=f"Guardrail Violation: {error_msg}")
+
         # Role check
         user_role = current_user.get("role", "viewer").lower()
         if user_role == "viewer":
@@ -354,18 +344,9 @@ async def draft_blog_post(request: DraftBlogRequest, current_user: dict = Depend
         rag_service = RAGService()
         search_query = f"{request.topic} {request.keywords or ''}"
 
-        # Search specifically for sales pitches or relevant industry knowledge
         success, search_result = await rag_service.perform_rag_query(
             query=search_query,
             match_count=5,
-            # We filter for sales_pitch to ensure we quote our own capabilities,
-            # but we can also relax this to include 'crawled_content' if needed.
-            # For now, let's keep it broad or specific based on plan.
-            # Plan says: filter_metadata={"knowledge_type": "sales_pitch"}
-            # But perform_rag_query might not expose filter directly as argument?
-            # Let's check RAGService.perform_rag_query signature in memory or file.
-            # wait, perform_rag_query(self, query: str, match_count: int = 5, filter_metadata: Dict = None)
-            # So passing it is fine.
             metadata_filter={"knowledge_type": "sales_pitch"}
         )
 
@@ -377,7 +358,6 @@ async def draft_blog_post(request: DraftBlogRequest, current_user: dict = Depend
                 meta = res.get("metadata", {})
                 source = meta.get("source", "Unknown Source")
                 content = res.get("content", "").strip()
-                # Deduplicate references
                 if source not in references:
                     references.append(source)
 
@@ -403,13 +383,22 @@ async def draft_blog_post(request: DraftBlogRequest, current_user: dict = Depend
             import json
             result = json.loads(response.choices[0].message.content)
 
+        # 3. Guardrail Output Audit
+        generated_content = result.get("content", "")
+        is_safe, audit_msg = GuardrailService.audit_output(generated_content, context_text)
+        if not is_safe:
+            logfire.error(f"API: Guardrail audit failed | reason={audit_msg}")
+            raise HTTPException(status_code=422, detail=f"AI Output Blocked: {audit_msg}")
+
         return DraftBlogResponse(
             title=result.get("title", "Untitled Draft"),
-            content=result.get("content", ""),
+            content=generated_content,
             excerpt=result.get("excerpt", ""),
-            references=result.get("used_references", references) # AI might curate them
+            references=result.get("used_references", references)
         )
 
+    except HTTPException:
+        raise
     except Exception as e:
         logfire.error(f"API: Blog drafting failed | error={str(e)}")
         raise HTTPException(status_code=500, detail=str(e)) from e
