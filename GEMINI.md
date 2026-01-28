@@ -88,6 +88,21 @@
 
 # 第三章：近期工作日誌 (Recent Journal Entries)
 
+### 2026-01-28: The Great Lint & Type Safety Purge (Stability Restoration)
+*   **核心任務**: 全面清掃前端 (`enduser-ui-fe`, `archon-ui-main`) 與後端 (`python`) 的 Lint 錯誤與型別損毀，將「紅色蚯蚓」歸零。
+*   **技術突圍**:
+    *   **archon-ui-main 重建**: 修復了 **171 個** 嚴重錯誤。
+        *   **Hooks 遺失**: 補回 `OllamaModelDiscoveryModal.tsx` 中遺失的 `useState`, `useEffect`。
+        *   **API 參數錯位**: 修正 `ArchonChatPanel.tsx` 對 `agentChatService` 的錯誤呼叫（`createSession` 參數順序、`sendMessage` 物件封裝）。
+        *   **服務介面同步**: 將 `getServerStatus` 中誤用的 `serverHealthService.isHealthy()` 修正為 `checkHealth()`。
+        *   **路徑地獄**: 修復 `OllamaTypes.ts` 中指向 `ollamaService` 的錯誤相對路徑 (`../../` -> `../../../`)。
+    *   **後端規範**: 修正 `code_modifier.py` 中違反 `B904` (flake8-bugbear) 的例外處理，確保 `raise ... from e` 保留堆疊追蹤。
+    *   **測試自癒**: 全面修復 `tests/integration/knowledge/` 下的測試檔案，補齊 Mock 物件 (`KnowledgeItem`, `ActiveOperation`) 缺失的屬性，並修正導入路徑。
+*   **效能優化**: 合併 `perf/sitemap-async` 分支，將 Sitemap 解析從阻塞式 `requests` 遷移至非同步 `httpx`，並通過新測試驗證。
+*   **關鍵教訓**:
+    *   **型別是最好的文件**: `tsc` 報出的 171 個錯誤精準指出了系統在快速迭代中累積的「API 漂移」。修復型別錯誤等於是強迫前端與後端介面重新對齊。
+    *   **Unused Vars 噪音**: 雖然未使用變數不影響功能，但它們會掩蓋真正的錯誤。清掃它們能讓真正的問題浮現。
+
 ### 2026-01-27: Phase 4.5 RBAC Deep Dive (Visible vs Hidden Truth)
 *   **核心任務**: 修復 Phase 4.5 的深層權限邏輯 (RBAC) 與前端語法損毀問題 (BUG-013, BUG-014)。
 *   **致命教訓 (The Silent Syntax Killer)**:
