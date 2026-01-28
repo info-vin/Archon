@@ -344,31 +344,27 @@ Phase 4.4.5 引入了 **Clockwork** 進行系統自動檢測。
     > 若自動腳本無法執行，請依序手動執行以下 SQL 檔案：
 
     1.  登入 Supabase 儀表板並進入 **SQL Editor**。
-    2.  依序複製貼上並執行：
-        1.  `migration/RESET_DB.sql` (清空所有舊資料)
-        2.  `migration/000_unified_schema.sql` (建立基礎結構)
-        3.  `migration/001_add_due_date_to_tasks.sql` (追加欄位更新)
-        4.  `migration/002_create_schema_migrations_table.sql` (建立版本追蹤表)
-        5.  `migration/003_add_get_counts_by_source_function.sql` (追加函式)
-        6.  `migration/005_create_proposed_changes_table.sql` (建立 AI 提案表)
-        7.  `migration/seed_mock_data.sql` (填充核心假資料)
-        8.  `migration/seed_blog_posts.sql` (填充部落格假資料)
-        9.  `migration/004_create_test_utility_functions.sql` (**E2E 測試所需**)
-            > **說明**: 此腳本建立了用於自動化端對端測試的資料庫函式 (`reset_test_database`, `seed_test_database`)。如果您需要運行完整的前端 E2E 測試套件，則**必須**執行此腳本。
-        10. `migration/006_create_sales_intel_tables.sql` (**Phase 4.2 銷售情資所需**)
-            > **說明**: 建立 `leads` 與 `market_insights` 資料表，用於支援業務開發功能。
-        11. `migration/007_add_assignee_id_to_tasks.sql` (**RBAC 補完計畫**)
-            > **說明**: 建立 `assignee_id` 欄位並與 `profiles` 表關聯，確保任務指派具備強大的 RBAC 基礎。
-        12. `migration/008_system_correction_phase44.sql` (**Phase 4.4 系統修正**)
-            > **說明**: 針對任務分配與 Agent 狀態邏輯進行修正，確保 Phase 4.4 流程穩定。
-        13. `migration/009_fix_rbac_roles_and_permissions.sql` (**RBAC 權限修復**)
-            > **說明**: 修正 Manager 角色對部門成員的管理權限，並釐清與 System Admin 的權限邊界。
-        14. `migration/010_bob_and_alice_schema_updates.sql` (**Phase 4.4 戰情室基礎**)
-            > **說明**: 為 `blog_posts` 新增狀態欄位，並擴充 `leads` 表以支援 CRM 功能。
-        15. `migration/011_update_alice_bob_roles.sql` (**Persona 權限修正**)
-            > **說明**: 將 Alice 與 Bob 的角色分別升級為 `sales` 與 `marketing`，確保其具備存取 Sales Intel 與 Brand Hub 的權限。
-        16. `migration/012_create_archon_logs.sql` (**Phase 4.4.5 系統日誌**)
-            > **說明**: 建立 `archon_logs` 表，供 Clockwork 與其他系統服務記錄健康檢查與稽核事件。
+
+| 順序 | 檔案路徑 | 用途與說明 |
+| :--- | :--- | :--- |
+| 1 | `migration/RESET_DB.sql` | **[重置]** 清空所有資料表與 Schema，確保環境乾淨。 |
+| 2 | `migration/000_unified_schema.sql` | **[核心]** 建立基礎資料表 (`tasks`, `projects`, `users`, `employees`...)。 |
+| 3 | `migration/001_add_due_date_to_tasks.sql` | **[Schema]** 為 `tasks` 表追加 `due_date` 欄位。 |
+| 4 | `migration/002_create_schema_migrations_table.sql` | **[系統]** 建立 `schema_migrations` 表，用於追蹤遷移版本。 |
+| 5 | `migration/003_add_get_counts_by_source_function.sql` | **[函式]** 新增儀表板統計所需的資料庫函式。 |
+| 6 | `migration/005_create_proposed_changes_table.sql` | **[AI]** 建立 `proposed_changes` 表，支援 AI 開發者協作流程。 |
+| 7 | `migration/seed_mock_data.sql` | **[種子]** 填充核心假資料 (Users, Projects, Employees)。 |
+| 8 | `migration/seed_blog_posts.sql` | **[種子]** 填充部落格文章假資料 (用於 RAG 測試)。 |
+| 9 | `migration/004_create_test_utility_functions.sql` | **[測試]** 建立 `reset_test_database` 等 E2E 測試專用函式。 |
+| 10 | `migration/006_create_sales_intel_tables.sql` | **[Phase 4.2]** 建立 `leads`, `market_insights` 表，支援業務情資功能。 |
+| 11 | `migration/007_add_assignee_id_to_tasks.sql` | **[RBAC]** 新增 `assignee_id` 欄位，強化任務指派權限。 |
+| 12 | `migration/008_system_correction_phase44.sql` | **[修復]** 修正 Phase 4.4 的邏輯與狀態定義。 |
+| 13 | `migration/009_fix_rbac_roles_and_permissions.sql` | **[RBAC]** 修正 Manager 與 Admin 的權限邊界。 |
+| 14 | `migration/010_bob_and_alice_schema_updates.sql` | **[Persona]** 更新資料表以支援 Alice (Sales) 與 Bob (Marketing) 的專屬視圖。 |
+| 15 | `migration/011_update_alice_bob_roles.sql` | **[權限]** 將 Alice/Bob 升級為標準化角色 (`sales`, `marketing`)。 |
+| 16 | `migration/012_create_archon_logs.sql` | **[日誌]** 建立 `archon_logs` 以支援 Clockwork 與系統稽核。 |
+| 17 | `migration/013_seed_system_prompts.sql` | **[AI]** 將 System Prompts (POBot, DevBot...) 寫入資料庫，實現 Prompt as Data。 |
+| 18 | `migration/014_vector_rls_policy.sql` | **[安全]** 為向量庫 (`archon_sources`...) 啟用 RLS，實作部門資料隔離。 |
 
 3.  **階段三：執行部署**
 

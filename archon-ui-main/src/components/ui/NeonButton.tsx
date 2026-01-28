@@ -47,6 +47,88 @@ export interface NeonButtonProps extends Omit<HTMLMotionProps<'button'>, 'childr
   fullWidth?: boolean;
 }
 
+// Glow intensity mappings
+export const glowSizes = {
+  none: { blur: 0, spread: 0, opacity: 0 },
+  sm: { blur: 10, spread: 5, opacity: 0.3 },
+  md: { blur: 15, spread: 10, opacity: 0.4 },
+  lg: { blur: 20, spread: 15, opacity: 0.5 },
+  xl: { blur: 30, spread: 20, opacity: 0.6 },
+  xxl: { blur: 40, spread: 30, opacity: 0.7 }
+};
+
+// Convert radius object to style
+export const getRadiusStyle = (radius: CornerRadius) => ({
+  borderTopLeftRadius: `${radius.topLeft || 0}px`,
+  borderTopRightRadius: `${radius.topRight || 0}px`,
+  borderBottomRightRadius: `${radius.bottomRight || 0}px`,
+  borderBottomLeftRadius: `${radius.bottomLeft || 0}px`,
+});
+
+// Color mappings for gradients and borders
+export const getColorConfig = (color: ColorOption) => {
+  const configs = {
+    none: {
+      border: 'border-white/20',
+      glow: 'rgba(255,255,255,0.4)',
+      glowDark: 'rgba(255,255,255,0.3)',
+      aurora: 'rgba(255,255,255,0.4)',
+      auroraDark: 'rgba(255,255,255,0.2)',
+      text: 'rgb(156 163 175)', // gray-400
+      textRgb: '156, 163, 175'
+    },
+    purple: {
+      border: 'border-purple-400/30',
+      glow: 'rgba(168,85,247,0.6)',
+      glowDark: 'rgba(168,85,247,0.5)',
+      aurora: 'rgba(168,85,247,0.8)',
+      auroraDark: 'rgba(147,51,234,0.6)',
+      text: 'rgb(168 85 247)', // purple-500
+      textRgb: '168, 85, 247'
+    },
+    pink: {
+      border: 'border-pink-400/30',
+      glow: 'rgba(236,72,153,0.6)',
+      glowDark: 'rgba(236,72,153,0.5)',
+      aurora: 'rgba(236,72,153,0.8)',
+      auroraDark: 'rgba(219,39,119,0.6)',
+      text: 'rgb(236 72 153)', // pink-500
+      textRgb: '236, 72, 153'
+    },
+    blue: {
+      border: 'border-blue-400/30',
+      glow: 'rgba(59,130,246,0.6)',
+      glowDark: 'rgba(59,130,246,0.5)',
+      aurora: 'rgba(59,130,246,0.8)',
+      auroraDark: 'rgba(37,99,235,0.6)',
+      text: 'rgb(59 130 246)', // blue-500
+      textRgb: '59, 130, 246'
+    },
+    green: {
+      border: 'border-green-400/30',
+      glow: 'rgba(34,197,94,0.6)',
+      glowDark: 'rgba(34,197,94,0.5)',
+      aurora: 'rgba(34,197,94,0.8)',
+      auroraDark: 'rgba(22,163,74,0.6)',
+      text: 'rgb(34 197 94)', // green-500
+      textRgb: '34, 197, 94'
+    },
+    red: {
+      border: 'border-red-400/30',
+      glow: 'rgba(239,68,68,0.6)',
+      glowDark: 'rgba(239,68,68,0.5)',
+      aurora: 'rgba(239,68,68,0.8)',
+      auroraDark: 'rgba(220,38,38,0.6)',
+      text: 'rgb(239 68 68)', // red-500
+      textRgb: '239, 68, 68'
+    }
+  };
+  return configs[color];
+};
+
+// Helper for getGlowConfig backward compatibility if needed
+export const getGlowConfig = (intensity: GlowIntensity) => glowSizes[intensity];
+
 export const NeonButton = React.forwardRef<HTMLButtonElement, NeonButtonProps>(({
   children,
   showLayer2 = false,
@@ -80,85 +162,6 @@ export const NeonButton = React.forwardRef<HTMLButtonElement, NeonButtonProps>((
     md: 'text-base',
     lg: 'text-lg',
     xl: 'text-xl'
-  };
-
-  // Glow intensity mappings
-  const glowSizes = {
-    none: { blur: 0, spread: 0, opacity: 0 },
-    sm: { blur: 10, spread: 5, opacity: 0.3 },
-    md: { blur: 15, spread: 10, opacity: 0.4 },
-    lg: { blur: 20, spread: 15, opacity: 0.5 },
-    xl: { blur: 30, spread: 20, opacity: 0.6 },
-    xxl: { blur: 40, spread: 30, opacity: 0.7 }
-  };
-
-  // Convert radius object to style
-  const getRadiusStyle = (radius: CornerRadius) => ({
-    borderTopLeftRadius: `${radius.topLeft || 0}px`,
-    borderTopRightRadius: `${radius.topRight || 0}px`,
-    borderBottomRightRadius: `${radius.bottomRight || 0}px`,
-    borderBottomLeftRadius: `${radius.bottomLeft || 0}px`,
-  });
-
-  // Color mappings for gradients and borders
-  const getColorConfig = (color: ColorOption) => {
-    const configs = {
-      none: {
-        border: 'border-white/20',
-        glow: 'rgba(255,255,255,0.4)',
-        glowDark: 'rgba(255,255,255,0.3)',
-        aurora: 'rgba(255,255,255,0.4)',
-        auroraDark: 'rgba(255,255,255,0.2)',
-        text: 'rgb(156 163 175)', // gray-400
-        textRgb: '156, 163, 175'
-      },
-      purple: {
-        border: 'border-purple-400/30',
-        glow: 'rgba(168,85,247,0.6)',
-        glowDark: 'rgba(168,85,247,0.5)',
-        aurora: 'rgba(168,85,247,0.8)',
-        auroraDark: 'rgba(147,51,234,0.6)',
-        text: 'rgb(168 85 247)', // purple-500
-        textRgb: '168, 85, 247'
-      },
-      pink: {
-        border: 'border-pink-400/30',
-        glow: 'rgba(236,72,153,0.6)',
-        glowDark: 'rgba(236,72,153,0.5)',
-        aurora: 'rgba(236,72,153,0.8)',
-        auroraDark: 'rgba(219,39,119,0.6)',
-        text: 'rgb(236 72 153)', // pink-500
-        textRgb: '236, 72, 153'
-      },
-      blue: {
-        border: 'border-blue-400/30',
-        glow: 'rgba(59,130,246,0.6)',
-        glowDark: 'rgba(59,130,246,0.5)',
-        aurora: 'rgba(59,130,246,0.8)',
-        auroraDark: 'rgba(37,99,235,0.6)',
-        text: 'rgb(59 130 246)', // blue-500
-        textRgb: '59, 130, 246'
-      },
-      green: {
-        border: 'border-green-400/30',
-        glow: 'rgba(34,197,94,0.6)',
-        glowDark: 'rgba(34,197,94,0.5)',
-        aurora: 'rgba(34,197,94,0.8)',
-        auroraDark: 'rgba(22,163,74,0.6)',
-        text: 'rgb(34 197 94)', // green-500
-        textRgb: '34, 197, 94'
-      },
-      red: {
-        border: 'border-red-400/30',
-        glow: 'rgba(239,68,68,0.6)',
-        glowDark: 'rgba(239,68,68,0.5)',
-        aurora: 'rgba(239,68,68,0.8)',
-        auroraDark: 'rgba(220,38,38,0.6)',
-        text: 'rgb(239 68 68)', // red-500
-        textRgb: '239, 68, 68'
-      }
-    };
-    return configs[color];
   };
 
   const layer1Config = getColorConfig(layer1Color);
@@ -332,4 +335,4 @@ export const NeonButton = React.forwardRef<HTMLButtonElement, NeonButtonProps>((
   );
 });
 
-NeonButton.displayName = 'NeonButton'; 
+NeonButton.displayName = 'NeonButton';

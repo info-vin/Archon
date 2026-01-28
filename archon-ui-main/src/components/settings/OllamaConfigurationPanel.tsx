@@ -59,7 +59,7 @@ const OllamaConfigurationPanel: React.FC<OllamaConfigurationPanelProps> = ({
       setInstances(databaseInstances);
       onConfigChange(databaseInstances);
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    } catch (_error) {
+    } catch (error) {
       console.error('Failed to load Ollama instances from database:', error);
       showToast('Failed to load Ollama configuration from database', 'error');
       
@@ -697,7 +697,7 @@ const OllamaConfigurationPanel: React.FC<OllamaConfigurationPanelProps> = ({
                 </label>
                 <div className="flex gap-2">
                   <Button
-                    variant={newInstanceType === 'chat' ? 'solid' : 'outline'}
+                    variant={newInstanceType === 'chat' ? 'primary' : 'outline'}
                     size="sm"
                     onClick={() => setNewInstanceType('chat')}
                     className={cn(
@@ -709,7 +709,7 @@ const OllamaConfigurationPanel: React.FC<OllamaConfigurationPanelProps> = ({
                     LLM Chat
                   </Button>
                   <Button
-                    variant={newInstanceType === 'embedding' ? 'solid' : 'outline'}
+                    variant={newInstanceType === 'embedding' ? 'primary' : 'outline'}
                     size="sm"
                     onClick={() => setNewInstanceType('embedding')}
                     className={cn(

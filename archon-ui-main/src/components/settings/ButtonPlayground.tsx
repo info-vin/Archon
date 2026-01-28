@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Copy, Check, Link, Unlink } from 'lucide-react';
-import { NeonButton, type CornerRadius, type GlowIntensity, type ColorOption } from '../ui/NeonButton';
+import { NeonButton, type CornerRadius, type GlowIntensity, type ColorOption, getColorConfig, getGlowConfig } from '../ui/NeonButton';
 import { motion } from 'framer-motion';
 import { cn } from '../../lib/utils';
 import { copyToClipboard } from '../../features/shared/utils/clipboard';

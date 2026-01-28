@@ -345,11 +345,11 @@ const ModelCard: React.FC<ModelCardProps> = ({ model, isSelected, onSelect }) =>
           )}
 
           {/* Format - show if available */}
-          {(model.format || model.parameters?.format) && (
+          {(model.format || (typeof model.parameters === 'object' && model.parameters?.format)) && (
             <div className="flex items-center">
               <span className="w-3 h-3 text-cyan-400 mr-1">📦</span>
               <span className="text-gray-300">Format: </span>
-              <span className="text-cyan-400 ml-1 uppercase">{model.format || model.parameters?.format}</span>
+              <span className="text-cyan-400 ml-1 uppercase">{model.format || (typeof model.parameters === 'object' && model.parameters?.format)}</span>
             </div>
           )}
 
@@ -588,7 +588,7 @@ export const OllamaModelSelectionModal: React.FC<OllamaModelSelectionModalProps>
             }
             
             // Less common but supported dimensions
-            if (dimensions >= 256 && dimensions <= 4096) {
+            if (dimensions && dimensions >= 256 && dimensions <= 4096) {
               return 'partial';
             }
             
@@ -813,7 +813,7 @@ export const OllamaModelSelectionModal: React.FC<OllamaModelSelectionModalProps>
             }
             
             // Less common but supported dimensions
-            if (dimensions >= 256 && dimensions <= 4096) {
+            if (dimensions && dimensions >= 256 && dimensions <= 4096) {
               return 'partial';
             }
             

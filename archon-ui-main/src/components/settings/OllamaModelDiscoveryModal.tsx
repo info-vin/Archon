@@ -44,7 +44,7 @@ const OllamaModelDiscoveryModal: React.FC<OllamaModelDiscoveryModalProps> = ({
   // console.log('🔴 COMPONENT DEBUG: OllamaModelDiscoveryModal component loaded/rendered', { isOpen });
   const [models, setModels] = useState<EnrichedModel[]>([]);
   const [loading, setLoading] = useState(false);
-  const [, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [discoveryComplete, setDiscoveryComplete] = useState(false);
   const [discoveryProgress, setDiscoveryProgress] = useState<string>('');
   const [lastDiscoveryTime, setLastDiscoveryTime] = useState<number | null>(null);
@@ -621,7 +621,7 @@ const OllamaModelDiscoveryModal: React.FC<OllamaModelDiscoveryModalProps> = ({
               {/* Filters */}
               <div className="flex gap-2">
                 <Button
-                  variant={selectionState.showOnlyChat ? "solid" : "outline"}
+                  variant={selectionState.showOnlyChat ? "primary" : "outline"}
                   size="sm"
                   onClick={() => setSelectionState(prev => ({ 
                     ...prev, 
@@ -634,7 +634,7 @@ const OllamaModelDiscoveryModal: React.FC<OllamaModelDiscoveryModalProps> = ({
                   Chat Only
                 </Button>
                 <Button
-                  variant={selectionState.showOnlyEmbedding ? "solid" : "outline"}
+                  variant={selectionState.showOnlyEmbedding ? "primary" : "outline"}
                   size="sm"
                   onClick={() => setSelectionState(prev => ({ 
                     ...prev, 
@@ -799,7 +799,7 @@ const OllamaModelDiscoveryModal: React.FC<OllamaModelDiscoveryModalProps> = ({
                                 {model.capabilities.includes('chat') && (
                                   <Button
                                     size="sm"
-                                    variant={isChatSelected ? "solid" : "outline"}
+                                    variant={isChatSelected ? "primary" : "outline"}
                                     onClick={() => handleModelSelect(model, 'chat')}
                                     className="text-xs"
                                   >
@@ -809,7 +809,7 @@ const OllamaModelDiscoveryModal: React.FC<OllamaModelDiscoveryModalProps> = ({
                                 {model.capabilities.includes('embedding') && (
                                   <Button
                                     size="sm"
-                                    variant={isEmbeddingSelected ? "solid" : "outline"}
+                                    variant={isEmbeddingSelected ? "primary" : "outline"}
                                     onClick={() => handleModelSelect(model, 'embedding')}
                                     className="text-xs"
                                   >

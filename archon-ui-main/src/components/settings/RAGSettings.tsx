@@ -186,8 +186,16 @@ export const RAGSettings = ({
   const [showOllamaConfig, setShowOllamaConfig] = useState(false);
   
   // Status tracking
-  const [llmStatus, setLLMStatus] = useState({ online: false, responseTime: null, checking: false });
-  const [embeddingStatus, setEmbeddingStatus] = useState({ online: false, responseTime: null, checking: false });
+  const [llmStatus, setLLMStatus] = useState<{
+    online: boolean;
+    responseTime: number | null;
+    checking: boolean;
+  }>({ online: false, responseTime: null, checking: false });
+  const [embeddingStatus, setEmbeddingStatus] = useState<{
+    online: boolean;
+    responseTime: number | null;
+    checking: boolean;
+  }>({ online: false, responseTime: null, checking: false });
 
   // API key credentials for status checking
   const [apiCredentials, setApiCredentials] = useState<{[key: string]: boolean}>({});
@@ -424,7 +432,7 @@ const manualTestConnection = useCallback(async (
         }
         return false;
       }
-    } catch (_error) {
+    } catch (error) {
       setStatus({ online: false, responseTime: null, checking: false });
 
       if (!suppressToast) {
@@ -761,12 +769,12 @@ const manualTestConnection = useCallback(async (
 
   React.useEffect(() => {
     const current = {
-      provider: ragSettings.LLM_PROVIDER,
+      provider: ragSettings.LLM_PROVIDER ?? '',
       embProvider: embeddingProvider,
-      llmUrl: normalizeBaseUrl(llmInstanceConfig.url) ?? '',
-      embUrl: normalizeBaseUrl(embeddingInstanceConfig.url) ?? '',
+      llmUrl: llmInstanceConfig.url,
+      embUrl: embeddingInstanceConfig.url,
       llmOnline: llmStatus.online,
-      embOnline: embeddingStatus.online,
+      embOnline: embeddingStatus.online
     };
     const last = lastMetricsFetchRef.current;
 
