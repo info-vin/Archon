@@ -6,7 +6,7 @@ Handles crawling of URLs from XML sitemaps.
 from collections.abc import Callable
 from xml.etree import ElementTree
 
-import requests
+import httpx
 
 from ....config.logfire_config import get_logger
 
@@ -16,7 +16,7 @@ logger = get_logger(__name__)
 class SitemapCrawlStrategy:
     """Strategy for parsing and crawling sitemaps."""
 
-    def parse_sitemap(self, sitemap_url: str, cancellation_check: Callable[[], None] | None = None) -> list[str]:
+    async def parse_sitemap(self, sitemap_url: str, cancellation_check: Callable[[], None] | None = None) -> list[str]:
         """
         Parse a sitemap and extract URLs with comprehensive error handling.
 
@@ -35,7 +35,9 @@ class SitemapCrawlStrategy:
                 cancellation_check()
 
             logger.info(f"Parsing sitemap: {sitemap_url}")
-            resp = requests.get(sitemap_url, timeout=30)
+
+            async with httpx.AsyncClient(timeout=30.0, follow_redirects=True) as client:
+                resp = await client.get(sitemap_url)
 
             if resp.status_code != 200:
                 logger.error(f"Failed to fetch sitemap: HTTP {resp.status_code}")
@@ -51,7 +53,7 @@ class SitemapCrawlStrategy:
             except Exception:
                 logger.exception(f"Unexpected error parsing sitemap from {sitemap_url}")
 
-        except requests.exceptions.RequestException:
+        except httpx.RequestError:
             logger.exception(f"Network error fetching sitemap from {sitemap_url}")
         except Exception:
             logger.exception(f"Unexpected error in sitemap parsing for {sitemap_url}")
