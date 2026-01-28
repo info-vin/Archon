@@ -7,6 +7,27 @@ import { AuthProvider } from '../../src/hooks/useAuth';
 import { api } from '../../src/services/api';
 import { AppRoutes } from '../../src/App';
 
+// 1. vi.hoisted runs BEFORE anything else (even before vi.mock hoisting)
+const { MOCK_ADMIN_USER } = vi.hoisted(() => {
+  return {
+    MOCK_ADMIN_USER: {
+        id: 'user-123',
+        email: 'admin@archon.com',
+        role: 'system_admin',
+        // SSOT: Synchronized with usePermission.ts admin set
+        permissions: [
+            'task:create', 'task:read:all', 'task:update:all',
+            'agent:trigger:dev', 'agent:trigger:mkt', 'agent:trigger:know',
+            'code:approve', 'content:publish',
+            'stats:view:all',
+            'leads:view:sales', 'leads:view:marketing',
+            'user:manage', 'user:manage:team', 'mcp:manage'
+        ],
+        user_metadata: { full_name: 'System Admin' }
+    }
+  };
+});
+
 // Polyfill window.matchMedia for JSDOM - MUST BE AT TOP LEVEL
 if (typeof window !== 'undefined') {
   Object.defineProperty(window, 'matchMedia', {
@@ -24,7 +45,7 @@ if (typeof window !== 'undefined') {
   });
 }
 
-// 1. Mock the API module partially to retain supabase instance but mock the api object
+// 2. Mock the API module partially
 vi.mock('../../src/services/api', async (importOriginal) => {
     const actual = await importOriginal() as any;
     
@@ -33,23 +54,12 @@ vi.mock('../../src/services/api', async (importOriginal) => {
 
     // --- Hybrid Strategy: Mock Auth Only, Pass-through Data ---
     
-    // 1. Mock getCurrentUser for Auth context
-    // We default to a system admin user. Tests can override this via mockImplementation.
-    mockedApi.getCurrentUser = vi.fn().mockResolvedValue({
-        id: 'user-123',
-        email: 'admin@archon.com',
-        role: 'system_admin',
-        permissions: ['leads:view:all', 'brand_asset_manage', 'user:manage:team', 'stats:view:own'],
-        user_metadata: { full_name: 'System Admin' }
-    });
+    // 1. Mock getCurrentUser using the HOISTED data
+    mockedApi.getCurrentUser = vi.fn().mockResolvedValue(MOCK_ADMIN_USER);
 
     // 2. Wrap other functions to allow spying/mocking while defaulting to pass-through
-    // This allows tests to use vi.mocked(api.method).mockResolvedValue(...)
     Object.keys(mockedApi).forEach(key => {
-        // Exclude getTasks from spying to avoid potential Promise/Loading issues in E2E tests.
-        // No tests currently mock getTasks, so direct pass-through is safer.
         if (key !== 'getCurrentUser' && key !== 'getTasks' && typeof mockedApi[key] === 'function') {
-            // Fix: Use actual.api[key] to preserve 'this' context (e.g. for _getHeaders)
             mockedApi[key] = vi.fn().mockImplementation((...args) => actual.api[key](...args));
         }
     });
@@ -107,6 +117,9 @@ export const renderApp = (initialEntries = ['/']) => {
 // Global Mocks for common browser APIs
 if (typeof window !== 'undefined') {
     window.scrollTo = vi.fn();
+    Element.prototype.scrollIntoView = vi.fn();
+    HTMLElement.prototype.scrollIntoView = vi.fn();
+    
     if (!HTMLDialogElement.prototype.showModal) {
         HTMLDialogElement.prototype.showModal = vi.fn(function(this: HTMLDialogElement) {
             this.setAttribute('open', '');

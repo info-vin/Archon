@@ -115,7 +115,7 @@
 *   **技術突圍**:
     *   **E2E 基礎設施修復**: 發現並修復了 `tests/e2e/e2e.setup.tsx` 中的致命錯誤——`renderApp` 是一個空殼，導致所有測試都在測空頁面。修復後正確渲染了 `<AppRoutes />`。
     *   **Mock 架構重構**: 放棄了脆弱的 `vi.spyOn`，改用全模組 `vi.mock` 加上 `importOriginal` 模式，保留了 `supabase` 實例但攔截了 `api` 物件，解決了 Auth Hook 崩潰與 "not a function" 的錯誤。
-    *   **環境補丁**: 在 `e2e.setup.tsx` 頂層加入了 `window.matchMedia` 的 Polyfill，解決了 `App.tsx` 主題偵測導致的測試崩潰。
+    *   **環境補丁**: 在 `e2e.setup.tsx` 頂層加入了 `window.matchMedia` 的 Polyfill，解決了 `App.tsx` 主題偵測導致的測試崩測。
 *   **驗收成果**:
     *   **RBAC 驗證**: `rbac-brand-manage.spec.tsx` 通過，確認 Bob (Marketing) 可見 Brand Hub 管理介面，而 Alice (Sales) 被拒絕訪問。
     *   **業務閉環**: `content-marketing.spec.tsx` 通過，確認 Bob 能執行 "Magic Draft" 並獲得帶有引用的 AI 草稿。
@@ -130,107 +130,6 @@
     *   **去硬編碼**: 重構 `embedding_service.py`，移除寫死的模型名稱與維度判斷，改為動態讀取資料庫配置，並修復了 `batch` 處理邏輯潛在的維度疊加風險。
 *   **標準化**: 將探針封裝為 `make probe` 指令，成為 CI/CD 的 Smoke Test 標準。
 *   **測試成果**: 探針通過全流程驗證 (Alice Seeding -> Dimension Check -> Bob Retrieval)。
-
-### 2026-01-25: Phase 4.4 Google RAG 穩定化與 DX 突破 (Stability & DX Breakthrough)
-*   **核心任務**: 完成 Sales Nexus 的資料與知識閉環，並徹底修復開發環境 (DX) 的 API Key 自動化流程。
-*   **Sales Nexus 閉環**:
-    *   **Schema 補完**: 在 `leads` 表補上 `job_title` 與 `description_snippet`，消除了 Alice 的資訊盲點。
-    *   **知識歸檔**: 實作了 `promote_lead` API 中的 `Librarian` 非同步觸發，打通了「業務 -> 知識庫」的自動化路徑。
-    *   **E2E 修復**: 修正了 `sales-nexus-closure.spec.tsx` 與 Mock Data 的斷層，成功驗證了從搜尋到晉升的完整流程。
-*   **DX (開發體驗) 修復**:
-    *   **Env 注入**: 修復 `docker-compose.yml` 漏傳 `GEMINI_API_KEY` 的問題，現在 `make db-init` 能正確自動填入 Key。
-    *   **紅圈之謎**: 解決了 RAG Settings 中 Google Provider 顯示紅圈的頑固問題。根源是 `.env` 中的 Key 帶有隱形換行符號，透過在後端 `providers_api.py` 加入 `.strip()` 修復。
-    *   **API 還原**: 找回並還原了被意外刪除的 `DELETE /credentials/{key}` 路由，恢復了 Key 的刪除功能。
-
-### 2026-01-24: Phase 4.4 穩定化與架構歸併 (Stabilization & Architecture Consolidation)
-*   **核心任務**: 修復 Phase 4.4 剩餘功能缺陷 (BUG-006, 008, 012)，優化 Sales Nexus 工作流，統一 Blog API 的 RBAC 安全架構。
-*   **技術實作**:
-    *   **Auth 狀態保護 (BUG-008)**: 修正 `useAuth.tsx` 監聽邏輯，防止背景 Token 刷新導致 App Unmount 並重置搜尋狀態。
-    *   **Sales Nexus 修復 (BUG-006)**: 補齊 `vendors` 表必填的 `owner_id`，解決 Promote 失敗問題；確立 "Leads as Inbox" 優化方向。
-    *   **Blog API 歸併 (BUG-012)**: 將 Blog CUD 邏輯從 `knowledge_api.py` 移至 `blog_api.py`，改用 JWT 安全檢查並授權 `marketing` 角色。
-    *   **前端清理**: 移除 `api.ts` 中過時的 `X-User-Role` 硬編碼 Hack。
-*   **文件同步**: `Phase_4.4_Bug_Report.md` 已標記 BUG-001 ~ BUG-012 全數修復；`System_Correction_and_Business_Value.md` 已加入優化藍圖。
-
-### 2026-01-23: Phase 4.4 任務系統穩定化與可見性修復 (Task System Stabilization & Visibility Fix)
-
-*   **核心任務**: 解決 Alice/Bob 的 "Ghost Task" 問題，修復 AI Refinement 的 Import 錯誤，並打通「自己開單自己關」的完整工作流。
-
-*   **技術實作**:
-
-    *   **RBAC 修正**: 發現 `projects_api.py` 錯誤使用 `assignee_name` 進行過濾，導致 User 與 Profile 名稱不一致時任務消失。已修正為使用 **`assignee_id` (UUID)** 進行精確過濾。
-    *   **Refine Error**: 發現 `task_service.py` 試圖從 `llm_provider_service` 模組導入不存在的物件。已重寫 `refine_task_description`，改用正確的 `get_llm_client` context manager 模式。
-    *   **Datetime Serialization**: 修復 `task_service.py` 在 `update_task` 中直接傳遞 `datetime` 物件給 Supabase client 導致的 JSON 序列化錯誤，統一轉換為 ISO 字串。
-    *   **Dashboard 可見性**: 發現 `list_tasks` API 預設 `include_closed=False`，導致任務拖曳至 Done 後「消失」。已更新 `api.ts` 與 `DashboardPage.tsx`，明確傳遞 `include_closed=true`。
-    *   **封存功能**: 在 `TaskModal.tsx` 中為 Assignee 與 Manager 新增了 **"Archive Task"** 按鈕，補足了 UI 操作缺口。
-
-*   **測試結果**:
-    *   Alice 能正常新增、查看、更新、完成並封存任務。
-    *   Refine with AI 功能恢復正常。
-    *   Dashboard 計數器與欄位顯示正確同步。
-
-### 2026-01-22: Phase 4.4 完結與全角色戰情室 (Phase 4.4 Completion & All-Role War Rooms)
-
-*   **核心任務**: 徹底實現 Phase 4.4 "System Correction & Business Value"，為 Alice, Bob, Charlie 打造專屬戰情室，並打通「人機協作 SOP」閉環。
-
-*   **技術實作**:
-
-    *   **爬蟲重生**: 修復了 `JobBoardService`，解決了 104 爬蟲的 403 (Session Reuse) 與 404 (Hash ID Extraction) 問題，並實作了前端 **Source Badge** (Live/Simulated)。
-
-    *   **Bob's Brand Hub**: 建立了 `BrandPage.tsx`，整合了 DevBot 的 Logo 生成 API (`/api/marketing/logo`) 與 Blog 看板管理。
-
-    *   **Alice's Sales Nexus**: 在 `MarketingPage.tsx` 實作了 Tabs (Search/Leads)，打通了從爬蟲搜尋到 CRM 管理 (`leads` 表) 再到 Vendor Promotion 的完整流程。
-
-    *   **Charlie's War Room**: 強化了 `TeamManagementPage.tsx`，實作了真實的 **AI Budget** 監控 (基於 `gemini_logs` 統計) 與 **Approvals Dashboard** (審核 Blog/Leads)。
-
-    *   **RBAC 深度加固**: 在後端 `settings_api.py` 中實作了 **部門隔離 (Department Isolation)** 邏輯，確保 Manager 只能管理同部門成員，且無法篡改 Admin 權限。
-
-*   **測試突破**:
-
-    *   **E2E 穩定性**: 解決了大量因非同步渲染 (Async Rendering) 與 UI 文字變更 (`104 DATA` -> `104 Live Data`) 導致的測試失敗。建立了「等待 Dashboard 載入」的標準測試模式。
-
-    *   **Mock 完整性**: 在 `management.spec.tsx` 與 `e2e.setup.tsx` 中補齊了所有新 API (`getAiUsage`, `getPendingApprovals`) 的 Mock，消除了 `undefined` 錯誤。
-
-*   **結論**: 系統已具備完整的商業運作能力，從數據獲取、內容生產、銷售轉化到管理審核，形成了一個有機的閉環。
-
-### 2026-01-20: Phase 4.4 啟動與系統修正 (Phase 4.4 Kickoff & System Correction)
-
-*   **核心任務**: 啟動 Phase 4.4 "System Correction & Business Value"，針對管理盲點、銷售流程斷點與 AI 協作架構進行修正。
-
-*   **決策變更**:
-
-    *   **Project MYRMIDON (蟻人計畫)**: 品牌重塑為「蟻人 (Myrmidon)」，象徵集體智慧與分工。Logo 將採用幾何螞蟻風格。
-
-    *   **RBAC 修復**: 放棄「開副本」做新頁面的想法。決定直接修正 `permissions.py` 與 `rbac_service.py`，賦予 `manager` 角色對同部門員工的管理權限 (`USER_MANAGE_TEAM`)。
-
-    *   **銷售閉環**: 確認 `leads` 表需擴充聯絡人欄位，並實作 UNIQUE 索引以防止爬蟲重複資料。
-
-    *   **AI Factory**: 定義了 Jules (Lint/Test) 與 AutoGen (Schema Architect) 的分工架構與額度分配。
-
-*   **關鍵發現**: 透過查證 `projects_api.py`，證實任務指派問題源於後端 `list_assignable_users` 的 RBAC 邏輯缺陷，而非前端問題。
-
-### 2026-01-19: Admin UI 回歸修復與文件預覽 (Admin UI Regression & Doc Preview)
-
-*   **核心任務**: 修復 Phase 4.3.1 遺留的 Admin UI 問題，並完成文件預覽功能。
-
-*   **技術實作**:
-
-    *   **Unicode 支援**: 解決了文件名包含特殊字符時的上傳錯誤。
-
-    *   **Task ID**: 在全棧實現了 Task ID 的顯示與搜尋支援。
-
-    *   **Dev Token**: 修復了 `dev-token` 的網域設定問題，確保本地開發體驗流暢。
-
-### 2026-01-18: Phase 4.3 完結與爬蟲進化 (Phase 4.3 Completion & Crawler Evolution)
-
-*   **核心任務**: 完成 Phase 4.3 行銷網站現代化，並解決爬蟲數據品質問題，標誌著系統從「功能驗證」邁向「真實運作」。
-
-*   **技術突破**:
-
-    *   **爬蟲重構**: 放棄易受阻擋的靜態爬取，逆向工程並改用 **104 AJAX API**。這不僅繞過了 403 Forbidden 防護，更解決了 GIGO (Garbage In, Garbage Out) 問題，確保 RAG 系統接收到的是結構化的高品質職缺數據。
-
-    *   **UX 完善**: 修復了 Admin UI 中的「靜默上傳失敗」與使用者端部落格的可見性問題，提升了管理員與訪客的體驗。
-
-*   **驗收結果**: 確認全系統 RBAC 範圍界定正確，RAG 提案生成功能運作正常。Phase 4.3 正式結案。
 
 ---
 
@@ -273,6 +172,16 @@
 4.  **SOP 與除錯紀律的再強化 (Ref: 01-06, 01-07)**:
 
     *   **教訓**: 在修復 UI/通訊問題時，因違背 SOP 導致測試崩潰。重新確立了「修改代碼必須同步更新 Mock」與「Patch 必須針對 Class」的鐵律。
+
+5.  **系統穩定化與人機協作 (Ref: 01-20, 01-22, 01-23, 01-24)**:
+    *   **任務系統修復 (Ghost Task Mystery)**: 透過精確過濾 (`assignee_id`)、修復非同步 context 錯誤 (`llm_provider` import) 以及前端 `include_closed` 參數，解決了 Alice/Bob 任務消失的問題。
+    *   **全角色戰情室 (War Rooms)**: 為 Sales, Marketing, Manager 分別打造了專屬 Dashboard (Sales Nexus, Brand Hub, Team Management)。打通了爬蟲 -> CRM -> Blog -> Approval 的完整商業流程。
+    *   **RBAC 深度加固**: 放棄「開副本」做新頁面的想法，直接在後端實作「部門隔離 (Department Isolation)」與前端權限拆分 (`leads:view:sales` vs `marketing`)，確保 Manager 只能管理同部門成員。
+
+6.  **開發體驗 (DX) 與爬蟲進化 (Ref: 01-18, 01-19, 01-25)**:
+    *   **爬蟲 AJAX 逆向**: 放棄易被擋的靜態爬蟲，改用 104 AJAX API，大幅提升資料品質與穩定性，解決 RAG GIGO 問題。
+    *   **Admin UI 完善**: 修復了檔案上傳 Unicode 錯誤、Task ID 顯示，並實作了 `Dev Auto-Login` 與 API Key 自動注入 (`db-init`)，大幅降低本地開發摩擦。
+    *   **探針制度化**: 將 `probe_librarian.py` 升級為標準化 `make probe` 指令，並加入維度完整性檢查 (768 vs 1536)，成為 CI/CD 的可靠 Smoke Test。
 
 ### 2025年12月：Async 重構、前端規範與 AI 開發者奠基
 
@@ -343,7 +252,7 @@
 
 4.  **精準偵錯與殭屍代碼 (Ref: 10-27, 10-29)**:
     *   **移除病灶**: `archon-ui-main` 啟動失敗指向 `useThemeAware.ts`，調查發現這是無用的 Dead Code，直接刪除即修復。
-    *   **釐清矛盾**: 透過釐清「UI 載入成功但 API 404」的精確場景，區分了「啟動問題」與「資料問題」。
+    *   **釐親矛盾**: 透過釐清「UI 載入成功但 API 404」的精確場景，區分了「啟動問題」與「資料問題」。
 
 ### 2025年9月：SOP、歷史追溯與偵錯紀律的建立
 

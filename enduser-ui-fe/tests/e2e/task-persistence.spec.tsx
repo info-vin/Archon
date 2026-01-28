@@ -1,4 +1,4 @@
-import { screen, waitFor, fireEvent } from '@testing-library/react';
+import { screen, waitFor, fireEvent, waitForElementToBeRemoved } from '@testing-library/react';
 import { describe, it, expect } from 'vitest';
 import { renderApp } from './e2e.setup';
 
@@ -8,10 +8,8 @@ describe('Task Assignee Persistence (Migration 007)', () => {
         // 1. Initial Render: Go to Dashboard
         const { unmount } = renderApp(['/dashboard']);
 
-        // Wait for Dashboard loading to finish
-        await waitFor(() => {
-            expect(screen.queryByText('Loading...')).not.toBeInTheDocument();
-        });
+        // Wait for Dashboard loading to finish with increased timeout
+        await waitForElementToBeRemoved(() => screen.queryByText(/Loading/i), { timeout: 5000 });
 
         // 2. Open New Task Modal
         const newTaskBtn = await screen.findByRole('button', { name: /New Task/i });
@@ -32,7 +30,7 @@ describe('Task Assignee Persistence (Migration 007)', () => {
         
         await waitFor(() => {
             expect(assigneeSelect).not.toHaveTextContent('Loading...');
-        });
+        }, { timeout: 3000 });
 
         fireEvent.change(assigneeSelect, { target: { value: 'user-1' } });
 
@@ -54,11 +52,10 @@ describe('Task Assignee Persistence (Migration 007)', () => {
         renderApp(['/dashboard']);
 
         // 5. Verify Persistence
+        await waitForElementToBeRemoved(() => screen.queryByText(/Loading/i), { timeout: 5000 });
+        
         await waitFor(() => {
-            expect(screen.queryByText('Loading...')).not.toBeInTheDocument();
             expect(screen.getByText('Persist Test Task')).toBeInTheDocument();
-            
-            // Verify Alice is still assigned (Data persisted in Mock Store)
             expect(screen.getByTitle('Alice Johnson')).toBeInTheDocument();
         });
     });

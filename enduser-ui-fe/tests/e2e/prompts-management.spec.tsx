@@ -1,86 +1,61 @@
 
 import { test, expect, vi } from 'vitest';
 import { screen, waitFor, fireEvent } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { renderApp } from './e2e.setup';
 import { api } from '../../src/services/api';
 import { EmployeeRole } from '../../src/types';
+import { createUser } from '../factories/userFactory';
 
 test('Admin can view and edit system prompts', async () => {
-    // Mock Admin User (Internal)
-    vi.mocked(api.getCurrentUser).mockResolvedValue({
-        id: 'admin-1',
-        name: 'System Admin',
-        role: EmployeeRole.SYSTEM_ADMIN,
-        permissions: ['leads:view:all', 'brand_asset_manage', 'user:manage:team'],
-        department: 'Management',
-        email: 'admin@archon.com',
-        status: 'active',
-        avatar: '',
-        employeeId: 'EMP-001',
-        position: 'Admin'
-    });
+    const user = userEvent.setup();
+    
+    // 1. Mock Data
+    const mockPrompts = [
+        { prompt_name: 'pobot', prompt: 'Original POBot prompt', description: 'Product Owner persona', updated_at: new Date().toISOString() },
+        { prompt_name: 'devbot', prompt: 'Original DevBot prompt', description: 'Engineer persona', updated_at: new Date().toISOString() }
+    ];
 
-    renderApp(['/']);
+    // 2. Mock API
+    const admin = createUser({ role: EmployeeRole.SYSTEM_ADMIN });
+    vi.mocked(api.getCurrentUser).mockResolvedValue(admin as any);
+    vi.mocked(api.getSystemPrompts).mockResolvedValue(mockPrompts);
+    vi.mocked(api.updateSystemPrompt).mockResolvedValue({ success: true } as any);
 
-    // 1. Navigate to Admin Control Center
+    renderApp(['/dashboard']);
+
+    // 3. Navigate to Admin Panel
     await waitFor(() => expect(screen.getByText(/Admin Control Center/i)).toBeInTheDocument());
     fireEvent.click(screen.getByText(/Admin Control Center/i));
 
-    // 2. Click System Prompts Tab
-    await waitFor(() => expect(screen.getByText(/System Prompts/i)).toBeInTheDocument());
-    fireEvent.click(screen.getByText(/System Prompts/i));
+    // 4. Switch to System Prompts Tab
+    const promptsTab = await screen.findByRole('button', { name: /System Prompts/i });
+    await user.click(promptsTab);
 
-    // 3. Verify Prompt List
-    await waitFor(() => {
-        // 使用 getAllByText 因為選中的項目會同時出現在 Sidebar 和 Header
-        const devPrompts = screen.getAllByText(/DEVELOPER PERSONA/i);
-        expect(devPrompts.length).toBeGreaterThan(0);
-        expect(devPrompts[0]).toBeInTheDocument();
-        
-        const salesPrompts = screen.getAllByText(/SALES PERSONA/i);
-        expect(salesPrompts[0]).toBeInTheDocument();
-    }, { timeout: 5000 });
+    // 5. Verify List Rendering (Click the button in the list)
+    const pobotListItem = await screen.findByRole('button', { name: /POBOT/i });
+    expect(pobotListItem).toBeInTheDocument();
+    
+    const devbotListItem = await screen.findByRole('button', { name: /DEVBOT/i });
+    expect(devbotListItem).toBeInTheDocument();
 
-    // 4. Select a prompt (點擊 Sidebar 中的清單項)
-    const sidebarItems = screen.getAllByText(/DEVELOPER PERSONA/i);
-    fireEvent.click(sidebarItems[0]);
+    // 6. Edit Action
+    await user.click(devbotListItem);
 
-    // 5. Verify Editor Content
-    await waitFor(() => {
-        expect(screen.getByDisplayValue('You are a coding expert.')).toBeInTheDocument();
-    });
+    // Ensure the header updates
+    const editorHeader = await screen.findByRole('heading', { name: /DEVBOT/i });
+    expect(editorHeader).toBeInTheDocument();
 
-    // 6. Edit Prompt
     const textarea = screen.getByPlaceholderText(/Enter system prompt here/i);
-    fireEvent.change(textarea, { target: { value: 'You are an advanced AI.' } });
+    expect(textarea).toHaveValue('Original DevBot prompt');
 
-    // 7. Save
-    const saveBtn = screen.getByRole('button', { name: /Save Changes/i });
-    fireEvent.click(saveBtn);
+    await user.clear(textarea);
+    await user.type(textarea, 'Updated Pirate Persona');
 
-    // 8. Verify Success (Value persisted)
-    // In a real E2E, we'd check if API was called. Here we check display value assuming state updated.
-    // The component setsPrompts(data) after save?
-    // The mock handler returns: { prompt: body.prompt }
-    // The handleSave calls fetchPrompts() again.
-    // fetchPrompts calls api.getSystemPrompts().
-    // IMPORTANT: The mock for getSystemPrompts in handlers.ts is STATIC.
-    // It always returns 'You are a coding expert.'.
-    // The POST /:name doesn't update the GET mock.
-    // So the list might NOT update in this mock setup.
-    // BUT the editor value `editValue` *might* not update if we select again?
-    // Actually, `fetchPrompts` sets `prompts`.
-    // If `prompts` replaces state, and we select it again...
-    
-    // However, the test checks `getByDisplayValue('You are an advanced AI.')`.
-    // After save, we expect `editValue` to stay or strictly, if we re-fetch, it resets to mock data?
-    // AdminPage.tsx:
-    // handleSave -> await api.update... -> fetchPrompts();
-    // fetchPrompts -> setPrompts(original_data_from_mock).
-    // The Editor `value={editValue}` in textarea.
-    // Does fetchPrompts update `editValue`? A: Only `if (!selectedPrompt)`.
-    // So `editValue` shouldn't disappear.
-    // So this assertion passes.
-    
-    expect(screen.getByDisplayValue('You are an advanced AI.')).toBeInTheDocument();
+    // 7. Save Action
+    const saveBtn = screen.getByRole('button', { name: /SAVE CHANGES/i });
+    await user.click(saveBtn);
+
+    // 8. Verify API Call
+    expect(api.updateSystemPrompt).toHaveBeenCalledWith('devbot', { prompt: 'Updated Pirate Persona' });
 });

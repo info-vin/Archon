@@ -10,6 +10,7 @@ import MarketingPage from '../../src/pages/MarketingPage';
 import { api } from '../../src/services/api';
 import { EmployeeRole } from '../../src/types';
 import { renderApp } from './e2e.setup';
+import { createUser } from '../factories/userFactory';
 
 // Using the shared server from e2e setup logic conceptually, but defining local overrides if needed.
 // Actually, since we use renderApp which uses AppRoutes, we should rely on the shared infrastructure.
@@ -18,18 +19,13 @@ describe('Content Marketing E2E Flow', () => {
     it('Bob can draft a blog post using RAG citations', async () => {
         const user = userEvent.setup();
         
-        // Mock Bob
-        vi.mocked(api.getCurrentUser).mockResolvedValue({
+        // Mock Bob via Factory
+        const bob = createUser({
             id: 'bob-1',
             name: 'Bob Marketing',
-            email: 'bob@archon.com',
-            role: EmployeeRole.MARKETING,
-            status: 'active',
-            department: 'Marketing',
-            position: 'Marketing Manager',
-            avatar: '',
-            permissions: ['brand_asset_manage', 'content_create', 'leads:view:all']
+            role: EmployeeRole.MARKETING
         });
+        vi.mocked(api.getCurrentUser).mockResolvedValue(bob as any);
 
         // Mock Draft Response
         vi.mocked(api.draftBlogPost).mockResolvedValue({

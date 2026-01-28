@@ -365,8 +365,9 @@ const PromoteForm: React.FC<{ lead: any; onClose: () => void; onSuccess: () => v
     return (
         <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Contact Email</label>
+                <label htmlFor="contact-email" className="block text-sm font-medium text-gray-700 mb-1">Contact Email</label>
                 <input 
+                    id="contact-email"
                     type="email" 
                     value={email} 
                     onChange={e => setEmail(e.target.value)} 
@@ -375,8 +376,9 @@ const PromoteForm: React.FC<{ lead: any; onClose: () => void; onSuccess: () => v
                 />
             </div>
             <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Internal Notes</label>
+                <label htmlFor="internal-notes" className="block text-sm font-medium text-gray-700 mb-1">Internal Notes</label>
                 <textarea 
+                    id="internal-notes"
                     value={notes} 
                     onChange={e => setNotes(e.target.value)} 
                     className="w-full p-2 border border-gray-300 bg-white text-gray-900 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none"

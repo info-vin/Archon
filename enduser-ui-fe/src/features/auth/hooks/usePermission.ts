@@ -7,7 +7,7 @@ import { useAuth } from '../../../hooks/useAuth';
  * Frontend Role-to-Permission Mapping.
  * SSOT: PRPs/ai_docs/RBAC_Collaboration_Matrix.md
  */
-const PERMISSION_SETS: Record<string, Set<PermissionScope>> = {
+export const PERMISSION_SETS: Record<string, Set<PermissionScope>> = {
   admin: new Set([
     'task:create', 'task:read:all', 'task:update:all',
     'agent:trigger:dev', 'agent:trigger:mkt', 'agent:trigger:know',

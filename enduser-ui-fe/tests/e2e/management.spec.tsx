@@ -6,12 +6,14 @@ import { HttpResponse, http } from 'msw';
 import { setupServer } from 'msw/node';
 import { renderApp } from './e2e.setup';
 import { api } from '../../src/services/api';
+import { EmployeeRole } from '../../src/types';
+import { createUser } from '../factories/userFactory';
 
 // --- MOCK DATA ---
 const MOCK_EMPLOYEES = [
-  { id: 'user-1', name: 'Alice', role: 'sales', department: 'Sales', email: 'alice@archon.com', permissions: ['leads:view:all'] },
-  { id: 'user-2', name: 'Bob', role: 'marketing', department: 'Marketing', email: 'bob@archon.com', permissions: ['brand_asset_manage'] },
-  { id: 'user-3', name: 'Charlie', role: 'manager', department: 'Management', email: 'charlie@archon.com', permissions: ['stats:view:own', 'user:manage:team', 'leads:view:all'] },
+  createUser({ id: 'user-1', name: 'Alice', role: EmployeeRole.SALES }),
+  createUser({ id: 'user-2', name: 'Bob', role: EmployeeRole.MARKETING }),
+  createUser({ id: 'user-3', name: 'Charlie', role: EmployeeRole.MANAGER }),
 ];
 
 const MOCK_AGENTS = [
@@ -81,9 +83,6 @@ test('Manager (Charlie) can access Team Management Panel', async () => {
     
     // Check Mock Agent Injection
     expect(await screen.findByText('DevBot')).toBeInTheDocument();
-
-    // Check Header and Shared Budget (Agent Card)
-    // expect(await screen.findByText('Shared Budget')).toBeInTheDocument();
 });
 
 test('Sales (Alice) is denied access to Team Management Panel', async () => {
