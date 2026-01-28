@@ -87,7 +87,7 @@ const PromptManagement: React.FC = () => {
         if (!selectedPrompt) return;
         setIsSaving(true);
         try {
-            await api.updateSystemPrompt(selectedPrompt.prompt_name, { prompt: editValue });
+            await api.updateSystemPrompt(selectedPrompt.prompt_name, { content: editValue });
             alert("Prompt updated and cache reloaded successfully!");
             fetchPrompts(); // Refresh list to get updated_at
         } catch (err: any) {

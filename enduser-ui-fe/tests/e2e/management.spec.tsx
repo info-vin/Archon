@@ -1,9 +1,9 @@
 
-import { test, expect, beforeAll, afterEach, afterAll, vi } from 'vitest';
+import { test, expect, beforeEach, vi } from 'vitest';
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { HttpResponse, http } from 'msw';
-import { setupServer } from 'msw/node';
+import { server } from '../../src/mocks/server';
 import { renderApp } from './e2e.setup';
 import { api } from '../../src/services/api';
 import { EmployeeRole } from '../../src/types';
@@ -21,46 +21,43 @@ const MOCK_AGENTS = [
 ];
 
 // --- TEST SETUP ---
-const server = setupServer(
-    http.get('*/api/users', () => {
-        return HttpResponse.json(MOCK_EMPLOYEES);
-    }),
-    http.get('*/api/assignable-users', () => {
-        return HttpResponse.json(MOCK_EMPLOYEES);
-    }),
-    http.get('*/api/agents/assignable', () => {
-        return HttpResponse.json(MOCK_AGENTS);
-    }),
-    http.get('*/api/marketing/approvals', () => {
-        return HttpResponse.json({ blogs: [], leads: [] });
-    }),
-    http.get('*/api/stats/ai-usage', () => {
-        return HttpResponse.json({
-            total_budget: 1000,
-            total_used: 500,
-            usage_percentage: 50,
-            usage_by_user: []
-        });
-    }),
-    http.post('*/api/tasks/refine-description', async ({ request }) => {
-        const body = await request.json() as any;
-        return HttpResponse.json({
-            refined_description: `User Story: As a user, I want ${body.title} so that I can be happy.\n\nAcceptance Criteria:\n- Done.`
-        });
-    }),
-    // Default mocks
-    http.get('*/api/projects', () => HttpResponse.json({ projects: [{ id: 'p1', title: 'Project X' }] })),
-    http.get('*/api/tasks', () => HttpResponse.json([])),
-    http.get('*/api/blogs', () => HttpResponse.json([])),
-    http.get('*/api/knowledge-items', () => HttpResponse.json([]))
-);
-
-beforeAll(() => server.listen({ onUnhandledRequest: 'warn' }));
-afterEach(() => {
-    server.resetHandlers();
+beforeEach(() => {
     vi.clearAllMocks();
+    
+    server.use(
+        http.get('*/api/users', () => {
+            return HttpResponse.json(MOCK_EMPLOYEES);
+        }),
+        http.get('*/api/assignable-users', () => {
+            return HttpResponse.json(MOCK_EMPLOYEES);
+        }),
+        http.get('*/api/agents/assignable', () => {
+            return HttpResponse.json(MOCK_AGENTS);
+        }),
+        http.get('*/api/marketing/approvals', () => {
+            return HttpResponse.json({ blogs: [], leads: [] });
+        }),
+        http.get('*/api/stats/ai-usage', () => {
+            return HttpResponse.json({
+                total_budget: 1000,
+                total_used: 500,
+                usage_percentage: 50,
+                usage_by_user: []
+            });
+        }),
+        http.post('*/api/tasks/refine-description', async ({ request }) => {
+            const body = await request.json() as any;
+            return HttpResponse.json({
+                refined_description: `User Story: As a user, I want ${body.title} so that I can be happy.\n\nAcceptance Criteria:\n- Done.`
+            });
+        }),
+        // Default mocks
+        http.get('*/api/projects', () => HttpResponse.json({ projects: [{ id: 'p1', title: 'Project X' }] })),
+        http.get('*/api/tasks', () => HttpResponse.json([])),
+        http.get('*/api/blogs', () => HttpResponse.json([])),
+        http.get('*/api/knowledge-items', () => HttpResponse.json([]))
+    );
 });
-afterAll(() => server.close());
 
 test('Manager (Charlie) can access Team Management Panel', async () => {
     // Mock Charlie
@@ -101,6 +98,14 @@ test('User can use POBot to refine task description', async () => {
     vi.mocked(api.getCurrentUser).mockResolvedValue(MOCK_EMPLOYEES[2] as any);
     
     renderApp(['/dashboard']);
+
+    // Wait for loading to finish
+    await waitFor(() => {
+        expect(screen.queryByText('Loading...')).not.toBeInTheDocument();
+    });
+
+    // Ensure Dashboard loads first
+    await screen.findByRole('heading', { name: /My Tasks/i });
 
     // Open Modal
     const newTaskBtn = await screen.findByRole('button', { name: /new task/i });

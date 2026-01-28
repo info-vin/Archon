@@ -57,5 +57,5 @@ test('Admin can view and edit system prompts', async () => {
     await user.click(saveBtn);
 
     // 8. Verify API Call
-    expect(api.updateSystemPrompt).toHaveBeenCalledWith('devbot', { prompt: 'Updated Pirate Persona' });
+    expect(api.updateSystemPrompt).toHaveBeenCalledWith('devbot', { content: 'Updated Pirate Persona' });
 });

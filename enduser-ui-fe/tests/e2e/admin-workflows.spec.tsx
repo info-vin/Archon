@@ -1,11 +1,17 @@
 import { screen, fireEvent, waitFor } from '@testing-library/react';
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { renderApp } from './e2e.setup';
 import { api } from '../../src/services/api';
+import { createUser } from '../factories/userFactory';
+import { EmployeeRole } from '../../src/types';
 
 describe('Admin Workflows E2E', () => {
   
   it('Admin can create a new user (Alice)', async () => {
+    // Explicitly mock Admin user to ensure Sidebar link renders
+    const adminUser = createUser({ role: EmployeeRole.ADMIN });
+    vi.mocked(api.getCurrentUser).mockReset().mockResolvedValue(adminUser as any);
+
     renderApp();
 
     // 1. Navigate to Admin Panel (assuming sidebar link exists)
@@ -43,6 +49,10 @@ describe('Admin Workflows E2E', () => {
   });
 
   it('Admin can update a user role', async () => {
+    // Explicitly mock Admin user
+    const adminUser = createUser({ role: EmployeeRole.ADMIN });
+    vi.mocked(api.getCurrentUser).mockReset().mockResolvedValue(adminUser as any);
+
     vi.mocked(api.getEmployees).mockResolvedValue([{
         id: 'user-1',
         name: 'E2E Test User',

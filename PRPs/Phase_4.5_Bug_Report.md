@@ -33,6 +33,9 @@
 | **BUG-024** | 🐛 Bug | **QA/Mock** | `sales-nexus-closure` 缺少 `POST /promote` 的 MSW Handler。 | Medium | 🟢 Fixed (Implemented) | QA | `sales-nexus-closure.spec.tsx` |
 | **BUG-025** | 🐛 Bug | **QA/Auth** | `TestClient` 測試中 `Depends(get_current_user)` 覆蓋失效，導致 Guardrail 測試報 403。 | High | 🟢 Fixed (Implemented) | Backend | `test_marketing_guardrails.py` |
 | **BUG-026** | 🐛 Regression | **QA/E2E** | E2E 測試中 `findByText(/My Tasks/)` 因匹配導覽列且未等待 Loading 導致 "New Task" 按鈕點擊失敗。 | High | 🟢 Fixed (Implemented) | QA | `ai-teammate-workflows.spec.tsx` |
+| **BUG-028** | 🐛 Bug | **QA/Env** | `api._getHeaders` 呼叫 `getSession()` 在 JSDOM/MSW 環境下偶發性掛起。 | Medium | 🟢 Fixed (Implemented) | QA | `e2e.setup.tsx` |
+| **BUG-029** | 🐛 Bug | **QA/RBAC** | `admin-workflows` 因模組 Mock 狀態洩漏或重置不當導致 `isAdmin` 判定失敗。 | High | 🟢 Fixed (Implemented) | QA | `admin-workflows.spec.tsx` |
+| **BUG-030** | 🐛 Bug | **QA/Logic** | `ai-teammate-workflows` 創建任務後 Dashboard 沒刷新，因 GET Mock 缺乏狀態管理。 | Medium | 🟢 Fixed (Refactored) | QA | `ai-teammate-workflows.spec.tsx` |
 
 ---
 
@@ -70,3 +73,4 @@
     *   **BUG-014 (Quality)**: 重構後端測試清理機制。
 *   **2026-01-28**:
     *   **BUG-015~024 (QA Institutionalization)**: 完成 E2E 測試的全面重構，引入 `userFactory` 與 `vi.hoisted`，解決了魔術字串與提升錯誤，並修復了 JSDOM 環境缺口與 UI 語義問題。
+    *   **BUG-028~030 (QA Stability)**: 驗證並修復了環境掛起 (Hanging)、Admin Mock 洩漏以及 Test Data 缺失問題，E2E 測試通過率 100%。

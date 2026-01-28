@@ -37,7 +37,7 @@ class TestSupabaseIntegration:
         # We'll try to query public.profiles with the corrected syntax
         # Using a deterministic UUID for cleanup
         dummy_id = "00000000-0000-0000-0000-000000000000"
-        
+
         try:
             # Let's try to upsert a dummy profile (id must be valid uuid)
             profile_data = {
@@ -60,7 +60,7 @@ class TestSupabaseIntegration:
         except Exception as e:
             # Ignore other errors (like row constraints) as we just want to verify client syntax
             print(f"Operational error (expected): {e}")
-        
+
         finally:
             # Cleanup - Always run this block
             try:
@@ -74,7 +74,7 @@ class TestSupabaseIntegration:
         Verifies the update syntax for blog posts.
         """
         dummy_id = "00000000-0000-0000-0000-000000000000"
-        
+
         try:
             # Dummy update
             update_data = {"title": "Updated Title"}
@@ -88,5 +88,5 @@ class TestSupabaseIntegration:
         except Exception:
             # We expect it might fail to find the row, but not AttributeError on the client
             pass
-        
+
         # No cleanup needed for blog service test as it doesn't create data, only attempts update on non-existent row

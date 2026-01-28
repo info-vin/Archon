@@ -8,10 +8,10 @@ from ..config.logfire_config import get_logger, logfire
 from ..prompts.marketing_prompts import BLOG_DRAFT_SYSTEM_PROMPT
 from ..prompts.sales_prompts import SALES_PITCH_SYSTEM_PROMPT
 from ..services.credential_service import credential_service
+from ..services.guardrail_service import GuardrailService
 from ..services.job_board_service import JobBoardService, JobData
 from ..services.llm_provider_service import get_llm_client
 from ..services.search.rag_service import RAGService
-from ..services.guardrail_service import GuardrailService
 from ..utils import get_supabase_client
 
 # TODO(Phase 5): Re-enable this when MCP Server is properly integrated as a package or service

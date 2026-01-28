@@ -4,10 +4,34 @@ import { api } from '../../src/services/api';
 import { renderApp } from './e2e.setup';
 import { createUser } from '../factories/userFactory';
 import { EmployeeRole } from '../../src/types';
+import { http, HttpResponse } from 'msw';
+import { server } from '../../src/mocks/server';
 
 describe('AI as a Teammate E2E Workflows', () => {
+  let tasks: any[] = [];
+
   beforeEach(() => {
     vi.clearAllMocks();
+    tasks = []; // Reset tasks
+
+    // Stateful MSW Handlers
+    server.use(
+        http.get('*/api/assignable-users', () => {
+            return HttpResponse.json([
+                { id: 'agent-content-writer', name: 'Content Writer', role: 'ai_agent' },
+                { id: 'agent-log-analyzer', name: 'Log Analyzer', role: 'ai_agent' },
+                { id: 'agent-sales-intel', name: 'Sales Intel', role: 'ai_agent' }
+            ]);
+        }),
+        http.get('*/api/projects', () => HttpResponse.json({ projects: [{ id: 'p1', title: 'Campaign Project' }] })),
+        http.get('*/api/tasks', () => HttpResponse.json(tasks)),
+        http.post('*/api/tasks', async ({ request }) => {
+            const body = await request.json() as any;
+            const newTask = { ...body, id: `task-${Date.now()}`, status: 'todo' };
+            tasks.push(newTask);
+            return HttpResponse.json({ task: newTask });
+        })
+    );
   });
 
   test('Marketing Campaign: User can create a task and assign it to an AI content writer', async () => {
@@ -16,6 +40,11 @@ describe('AI as a Teammate E2E Workflows', () => {
     vi.mocked(api.getCurrentUser).mockResolvedValue(user as any);
 
     renderApp();
+
+    // Wait for loading to finish
+    await waitFor(() => {
+        expect(screen.queryByText('Loading...')).not.toBeInTheDocument();
+    });
 
     // Ensure Dashboard loads first - Wait for the heading specifically to ensure page content
     await screen.findByRole('heading', { name: /My Tasks/i });
@@ -56,6 +85,11 @@ describe('AI as a Teammate E2E Workflows', () => {
     `;
     renderApp();
 
+    // Wait for loading to finish
+    await waitFor(() => {
+        expect(screen.queryByText('Loading...')).not.toBeInTheDocument();
+    });
+
     // Ensure Dashboard loads first
     await screen.findByRole('heading', { name: /My Tasks/i });
 
@@ -90,6 +124,11 @@ describe('AI as a Teammate E2E Workflows', () => {
     vi.mocked(api.getCurrentUser).mockResolvedValue(user as any);
 
     renderApp();
+
+    // Wait for loading to finish
+    await waitFor(() => {
+        expect(screen.queryByText('Loading...')).not.toBeInTheDocument();
+    });
 
     // Ensure Dashboard loads first
     await screen.findByRole('heading', { name: /My Tasks/i });

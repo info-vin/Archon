@@ -1,10 +1,9 @@
 import { beforeAll, afterEach, afterAll, vi } from 'vitest';
 import { server } from '../../src/mocks/server';
-import React from 'react';
 import { render } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { AuthProvider } from '../../src/hooks/useAuth';
-import { api } from '../../src/services/api';
+import React from 'react';
 import { AppRoutes } from '../../src/App';
 
 // 1. vi.hoisted runs BEFORE anything else (even before vi.mock hoisting)
@@ -57,10 +56,17 @@ vi.mock('../../src/services/api', async (importOriginal) => {
     // 1. Mock getCurrentUser using the HOISTED data
     mockedApi.getCurrentUser = vi.fn().mockResolvedValue(MOCK_ADMIN_USER);
 
-    // 2. Wrap other functions to allow spying/mocking while defaulting to pass-through
+    // 2. Mock _getHeaders to avoid hanging on supabase.auth.getSession() (Fix for BUG-028)
+    mockedApi._getHeaders = vi.fn().mockResolvedValue({
+        'Content-Type': 'application/json',
+        'X-User-Role': 'system_admin', 
+        'Authorization': 'Bearer mock-token'
+    });
+
+    // 3. Wrap other functions to allow spying/mocking while defaulting to pass-through
     Object.keys(mockedApi).forEach(key => {
-        if (key !== 'getCurrentUser' && key !== 'getTasks' && typeof mockedApi[key] === 'function') {
-            mockedApi[key] = vi.fn().mockImplementation((...args) => actual.api[key](...args));
+        if (key !== 'getCurrentUser' && key !== 'getTasks' && key !== '_getHeaders' && typeof mockedApi[key] === 'function') {
+            mockedApi[key] = vi.fn().mockImplementation((...args) => actual.api[key].call(mockedApi, ...args));
         }
     });
     

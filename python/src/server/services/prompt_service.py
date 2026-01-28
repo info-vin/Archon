@@ -91,6 +91,55 @@ class PromptService:
         """Get the timestamp of when prompts were last loaded."""
         return self._last_loaded
 
+    async def list_prompts(self) -> list[dict]:
+        """
+        List all prompts with metadata from the database.
+        """
+        try:
+            supabase = get_supabase_client()
+            response = supabase.table("archon_prompts").select("*").order("prompt_name").execute()
+            return response.data if response.data else []
+        except Exception as e:
+            logger.error(f"Failed to list prompts: {e}")
+            return []
+
+    async def update_prompt(self, prompt_name: str, content: str, description: str | None = None) -> tuple[bool, str]:
+        """
+        Update a prompt in the database and refresh the cache.
+        """
+        try:
+            supabase = get_supabase_client()
+
+            # Check if prompt exists first
+            check = supabase.table("archon_prompts").select("id").eq("prompt_name", prompt_name).execute()
+
+            data = {
+                "prompt": content,
+                "updated_at": datetime.now().isoformat()
+            }
+            if description is not None:
+                data["description"] = description
+
+            if check.data:
+                # Update existing
+                response = supabase.table("archon_prompts").update(data).eq("prompt_name", prompt_name).execute()
+            else:
+                # Create new (though usually we update existing ones)
+                data["prompt_name"] = prompt_name
+                response = supabase.table("archon_prompts").insert(data).execute()
+
+            if response.data:
+                # Update cache immediately
+                self._prompts[prompt_name] = content
+                logger.info(f"Updated prompt '{prompt_name}' and refreshed cache.")
+                return True, "Prompt updated successfully."
+
+            return False, "Database update returned no data."
+
+        except Exception as e:
+            logger.error(f"Failed to update prompt '{prompt_name}': {e}")
+            return False, str(e)
+
 
 # Global instance
 prompt_service = PromptService()

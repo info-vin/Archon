@@ -54,6 +54,7 @@ description: |
 ---
 
 ## Phase 4.5.4: E2E Test Institutionalization (E2E 測試制度化)
+*Status: ✅ Completed*
 
 > **Goal**: 優先修復測試基底，解決 `BUG-015` (Mock Data 脫鉤) 與 `BUG-016` (Timeout)，為後續功能驗收鋪路。
 
@@ -72,6 +73,7 @@ description: |
 ---
 
 ## Phase 4.5.5: Quality & Security Guardrails (品質與安全護欄)
+*Status: ✅ Completed*
 
 > **Goal**: To implement actual code barriers against bad data, hallucinations, and unauthorized access.
 
@@ -105,13 +107,14 @@ description: |
 
 
 ### Phase 4.5.6: Admin UI Completion
+*Status: ✅ Completed*
 
 > **Goal**: Provide a robust interface for managing system prompts and configurations.
 
-- [ ] **Task 5: Prompts Management UI**
-    - **Frontend**: `PromptsPage.tsx` with List/Edit view.
-    - **Backend**: `prompts_api.py` (CRUD already exists, verify RBAC).
-    - **Validation**: Ensure Admin can update system prompts and they take effect immediately.
+- [x] **Task 5: Prompts Management UI**
+    - **Frontend**: Implemented as `PromptManagement` component within `AdminPage.tsx`.
+    - **Backend**: `prompts_api.py` (CRUD verified).
+    - **Validation**: E2E Test `prompts-management.spec.tsx` passing.
 
 ### Phase 4.5.7: Autonomous DevBot Evolution (New)
 
@@ -131,13 +134,13 @@ description: |
 ## Verification & Acceptance Checklist (總體驗收清單)
 
 1.  **Test Suite Health (Priority)**:
-    *   [ ] `make test-fe` PASS (Green).
-    *   [ ] No literal permission strings (`['leads:view:all']`) found in `tests/e2e`.
+    *   [x] `make test-fe` PASS (Green).
+    *   [x] No literal permission strings (`['leads:view:all']`) found in `tests/e2e`.
 2.  **RBAC Check**:
-    *   [ ] Sales User CANNOT see Brand Hub (403 Forbidden).
-    *   [ ] Marketing User CANNOT search Sales Leads (RLS blocked).
+    *   [x] Sales User CANNOT see Brand Hub (403 Forbidden).
+    *   [x] Marketing User CANNOT search Sales Leads (RLS blocked).
 3.  **Quality Check**:
-    *   [ ] AI refuses to generate content with "BANNED_WORD".
-    *   [ ] Frontend shows specific "Timeout" error after 30s delay.
+    *   [x] AI refuses to generate content with "BANNED_WORD".
+    *   [x] Frontend shows specific "Timeout" error after 30s delay.
 4.  **Admin Function**:
-    *   [ ] Admin can successfully update a System Prompt via UI.
+    *   [x] Admin can successfully update a System Prompt via UI.

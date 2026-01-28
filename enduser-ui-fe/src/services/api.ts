@@ -593,9 +593,9 @@ const supabaseApi = {
     return response.json();
   },
 
-  async updateSystemPrompt(promptName: string, data: { prompt: string; description?: string }): Promise<any> {
+  async updateSystemPrompt(promptName: string, data: { content: string; description?: string }): Promise<any> {
     const response = await fetch(`/api/system/prompts/${promptName}`, {
-        method: 'POST',
+        method: 'PATCH',
         headers: await this._getHeaders(),
         body: JSON.stringify(data)
     });
