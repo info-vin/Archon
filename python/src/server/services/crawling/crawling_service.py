@@ -186,9 +186,9 @@ class CrawlingService:
             end_progress,
         )
 
-    def parse_sitemap(self, sitemap_url: str) -> list[str]:
+    async def parse_sitemap(self, sitemap_url: str) -> list[str]:
         """Parse a sitemap and extract URLs."""
-        return self.sitemap_strategy.parse_sitemap(sitemap_url, self._check_cancellation)
+        return await self.sitemap_strategy.parse_sitemap(sitemap_url, self._check_cancellation)
 
     async def crawl_batch_with_progress(
         self,
@@ -644,7 +644,7 @@ class CrawlingService:
                     crawl_type=crawl_type,
                     current_url=url
                 )
-            sitemap_urls = self.parse_sitemap(url)
+            sitemap_urls = await self.parse_sitemap(url)
 
             if sitemap_urls:
                 # Update progress before starting batch crawl
