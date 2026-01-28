@@ -26,12 +26,14 @@ export const createUser = (overrides: Partial<Employee> & { role: EmployeeRole }
 
   const defaultUser: Employee = {
     id: `mock-id-${role}-${Math.random().toString(36).substr(2, 9)}`,
+    employeeId: `EMP-${Math.floor(Math.random() * 1000)}`,
     name: `Mock ${role.charAt(0).toUpperCase() + role.slice(1)}`,
     email: `mock.${role}@archon.ai`,
     role: role,
     department: role === EmployeeRole.SALES ? 'Sales' : (role === EmployeeRole.MARKETING ? 'Marketing' : 'Management'),
     status: 'active',
     position: 'Automated Tester',
+    avatar: 'https://i.pravatar.cc/150',
     permissions: Array.from(permissionSet)
   };
 

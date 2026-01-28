@@ -32,9 +32,11 @@ const mockTask: Task = {
   status: TaskStatus.TODO,
   priority: TaskPriority.HIGH,
   created_at: new Date().toISOString(),
+  updated_at: new Date().toISOString(),
   due_date: '2025-11-15T00:00:00.000Z',
   assignee: 'Alice Johnson',
   assignee_id: '2',
+  task_order: 1,
   attachments: [],
 };
 

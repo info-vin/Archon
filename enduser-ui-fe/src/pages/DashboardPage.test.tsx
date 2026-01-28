@@ -114,11 +114,11 @@ describe('DashboardPage', () => {
     });
 
     // Scope queries to within the specific task item to avoid ambiguity
-    const humanTaskItem = screen.getByText('Human task').closest('.p-4');
-    const aiTaskItem = screen.getByText('AI task').closest('.p-4');
+    const humanTaskItem = screen.getByText('Human task').closest('.p-4') as HTMLElement;
+    const aiTaskItem = screen.getByText('AI task').closest('.p-4') as HTMLElement;
 
-    const humanAvatar = within(humanTaskItem!).getByTitle('Alice Johnson');
-    const aiAvatar = within(aiTaskItem!).getByTitle('AI Bot Assistant');
+    const humanAvatar = within(humanTaskItem).getByTitle('Alice Johnson');
+    const aiAvatar = within(aiTaskItem).getByTitle('AI Bot Assistant');
 
     expect(humanAvatar).toBeInTheDocument();
     expect(aiAvatar).toBeInTheDocument();
@@ -140,22 +140,14 @@ describe('DashboardPage', () => {
     // Verify the "2 files" badge is visible
     expect(screen.getByText('2 files')).toBeInTheDocument();
 
-                // Find the attachment links by their text content (the filename)
+    // Find the attachment links by their text content (the filename)
+    // Use a regex matcher because filenames might be combined in a single element
+    const attachmentsContainer = screen.getByText(/debug-log\.txt/i);
 
-                // Use a regex matcher because filenames might be combined in a single element
-
-                const attachmentsContainer = screen.getByText(/debug-log\.txt/i, { hidden: true });
-
-                
-
-                // Assert that the links are present
-
-                expect(attachmentsContainer).toBeInTheDocument();
-
-                expect(attachmentsContainer).toHaveTextContent(/screenshot-error\.png/i);
-
-            });
-
-        });
+    // Assert that the links are present
+    expect(attachmentsContainer).toBeInTheDocument();
+    expect(attachmentsContainer).toHaveTextContent(/screenshot-error\.png/i);
+  });
+});
 
         

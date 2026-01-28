@@ -56,6 +56,7 @@ export type NewTaskData = {
   project_id: string;
   title: string;
   description: string;
+  status: TaskStatus;
   assigneeId?: string;
   due_date: string;
   priority: TaskPriority;
@@ -67,7 +68,7 @@ export type NewProjectData = {
   description?: string;
 };
 
-export type UpdateTaskData = Partial<Omit<NewTaskData, 'project_id'> & { assignee_id: string | null }>;
+export type UpdateTaskData = Partial<Omit<NewTaskData, 'project_id'> & { assignee_id: string | null; status: TaskStatus }>;
 
 export type NewBlogPostData = Omit<BlogPost, 'id' | 'authorName' | 'publishDate'>;
 

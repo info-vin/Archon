@@ -235,14 +235,27 @@ def test_some_endpoint():
 
 本節介紹如何手動驗證 Archon 系統的 AI 自癒與智能分析能力。
 
-**現狀說明 (Phase 4.5.5)**:
-目前系統具備 **L1 級自癒能力 (Diagnostic Analysis)**。當 Agent 執行的指令失敗時，系統會自動呼叫 LLM 分析錯誤日誌 (stderr) 並提供修復建議，但**不會**自動修改代碼。真正的 **L2 級自動修復 (Autonomous Repair Loop)** ——即自動應用 Patch 並重試——已排程於 **Phase 4.5.7** 實作。
+**現狀說明 (Phase 4.5.7 Updated)**:
+目前系統已升級至 **L2 級自動修復 (Autonomous Repair Loop)**。當 Agent 執行的指令失敗時，系統會自動啟動以下安全修復迴圈：
+1.  **Analyze**: 呼叫 LLM 分析錯誤，生成結構化修復建議 (JSON)。
+2.  **Sandbox**: 自動建立臨時分支 `autosave/fix-{id}`，確保不汙染主幹。
+3.  **Apply**: 在沙箱中應用代碼修復 (`CodeModifier`)。
+4.  **Verify**: 重跑指令驗證修復結果。
+5.  **Handover**: 若驗證通過，保留分支並通知用戶進行 Merge Request。
 
-**演練場景：自動分析語法錯誤**
+**演練場景：自動修復語法錯誤**
 
-1.  **製造錯誤**: 在根目錄建立一個包含語法錯誤的 `broken_script.py` (例如漏掉右括號)。
-2.  **觸發任務**: 使用 `curl` 呼叫 `/api/test/trigger-agent-task` (需開啟 `ENABLE_TEST_ENDPOINTS`)。
-3.  **觀察結果**: 訪問 UI 任務詳情頁，確認狀態變為 `failed`且 `output` 欄位包含 AI 的診斷建議 (例如："SyntaxError detected... suggested fix: add closing parenthesis")。
+1.  **製造錯誤**: 在根目錄建立 `broken_script.py`，內容為 `print "Hello" # Python 2 syntax error`。
+2.  **觸發修復**: 呼叫 Agent Service 執行此腳本。
+3.  **觀察結果**:
+    *   Console 顯示 "Command failed. Starting Active Repair Loop."
+    *   系統自動切換至 `autosave/fix-...` 分支。
+    *   檔案被自動修正為 `print("Hello")`。
+    *   最終回傳 "Command Succeeded after Auto-Repair"。
+
+> **📝 流程總結 (Workflow Note)**:
+> *   **Current**: 目前您會在 **Task Modal** 看到修復結果 (分支名稱)，然後您需要去 Git 手動合併。
+> *   **Future**: 未來的版本會讓您在 **`/approvals`** 頁面直接點擊「批准」來合併 (視覺化 Diff)。
 
 ### 3.6 Clockwork 與排程除錯 (Clockwork Debugging)
 

@@ -45,8 +45,8 @@ class ServerHealthService {
       }
       console.error('🏥 [Health] Response not OK:', response.status);
       return false;
-    } catch {
-      console.error('🏥 [Health] Health check failed:', error);
+    } catch (err) {
+      console.error('🏥 [Health] Health check failed:', err);
       // Health check failed
       return false;
     }
@@ -149,7 +149,8 @@ class ServerHealthService {
 
   getSettings() {
     return {
-      enabled: this.disconnectScreenEnabled
+      enabled: this.disconnectScreenEnabled,
+      delay: this.checkInterval
     };
   }
 

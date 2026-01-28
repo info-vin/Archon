@@ -1,3 +1,4 @@
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { 
   X, Search, Activity, Database, Server,
   Loader, CheckCircle, AlertCircle, 

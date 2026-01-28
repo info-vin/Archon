@@ -46,7 +46,9 @@ graph TD
     Projects -- Async --> Agents
     Know -- Queue --> Crawlers
     Mkt -- RAG --> Vector
+    Mkt -- RAG --> Vector
     Agents -- Tools --> LLM
+    Agents -- GitBranch --> Agents : Self-Healing Loop (Sandboxed)
     
     %% Database Connections
     Auth --> DB

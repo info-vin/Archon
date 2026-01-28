@@ -14,16 +14,15 @@ type SortDirection = 'ascending' | 'descending';
 
 // Helper functions and components for views
 const priorityIndicator = (priority: TaskPriority) => {
-  const colors = { high: 'text-red-500', medium: 'text-yellow-500', low: 'text-green-500', none: 'text-gray-400' };
+  const colors = { high: 'text-red-500', medium: 'text-yellow-500', low: 'text-green-500', critical: 'text-purple-600' };
   return <span className={`${colors[priority]} mr-2`}>●</span>;
 };
 
 const statusIndicator = (status: TaskStatus) => {
   const styles = {
     todo: 'bg-gray-200 text-gray-800',
-    inprogress: 'bg-blue-200 text-blue-800',
+    doing: 'bg-blue-200 text-blue-800',
     done: 'bg-green-200 text-green-800',
-    backlog: 'bg-yellow-200 text-yellow-800',
     review: 'bg-purple-200 text-purple-800',
   };
   return <span className={`px-2 py-1 rounded-full text-xs font-semibold ${styles[status] || 'bg-gray-100'}`}>{status}</span>;
@@ -106,7 +105,7 @@ const KanbanView: React.FC<{
   updateTaskStatus: (taskId: string, newStatus: TaskStatus) => void;
   setEditingTask: (task: Task) => void;
 }> = ({ tasks, updateTaskStatus, setEditingTask }) => {
-  const statuses: TaskStatus[] = ['backlog', 'todo', 'inprogress', 'done'];
+  const statuses: TaskStatus[] = [TaskStatus.TODO, TaskStatus.DOING, TaskStatus.REVIEW, TaskStatus.DONE];
   const tasksByStatus = useMemo(() => {
     const grouped: { [key in TaskStatus]?: Task[] } = {};
     statuses.forEach(status => grouped[status] = []);

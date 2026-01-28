@@ -52,7 +52,7 @@ export const ArchonChatPanel: React.FC<ArchonChatPanelProps> = props => {
         
         // Create a new chat session
         try {
-          const { session_id } = await agentChatService.createSession(undefined, 'rag');
+          const { session_id } = await agentChatService.createSession('rag', undefined);
           setSessionId(session_id);
           sessionIdRef.current = session_id;
           
@@ -193,7 +193,10 @@ export const ArchonChatPanel: React.FC<ArchonChatPanelProps> = props => {
       };
       
       // Send message to agent via service
-      await agentChatService.sendMessage(sessionId, inputValue.trim(), context);
+      await agentChatService.sendMessage(sessionId, { 
+        message: inputValue.trim(),
+        context
+      });
       setInputValue('');
       setConnectionError(null);
     } catch (error) {
@@ -221,12 +224,12 @@ export const ArchonChatPanel: React.FC<ArchonChatPanelProps> = props => {
     setConnectionError('Attempting to reconnect...');
     
     try {
-      const success = await agentChatService.manualReconnect(sessionId);
+      const success = await agentChatService.validateSession(sessionId);
       if (success) {
         setConnectionError(null);
         setConnectionStatus('online');
       } else {
-        setConnectionError('Reconnection failed. Server may still be offline.');
+        setConnectionError('Reconnection failed. Session may have expired.');
         setConnectionStatus('offline');
       }
     } catch (error) {

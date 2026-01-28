@@ -6,7 +6,7 @@ import { Badge } from '../ui/Badge';
 import { useToast } from '../../features/shared/hooks/useToast';
 import { cn } from '../../lib/utils';
 import { credentialsService, OllamaInstance } from '../../services/credentialsService';
-import { OllamaModelDiscoveryModal } from './OllamaModelDiscoveryModal';
+import OllamaModelDiscoveryModal from './OllamaModelDiscoveryModal';
 
 interface OllamaConfigurationPanelProps {
   isVisible: boolean;

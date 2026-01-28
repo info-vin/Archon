@@ -109,8 +109,8 @@ const ApprovalsPage: React.FC = () => {
                 {proposal.type === 'file' && (
                   <div className="mt-4">
                     <DiffViewer
-                      oldValue={proposal.request_payload.original_content || ''}
-                      newValue={proposal.request_payload.new_content || ''}
+                      oldCode={proposal.request_payload.original_content || ''}
+                      newCode={proposal.request_payload.new_content || ''}
                     />
                   </div>
                 )}

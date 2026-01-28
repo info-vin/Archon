@@ -1,7 +1,10 @@
 
+from unittest.mock import AsyncMock, MagicMock, patch
+
 import pytest
-from unittest.mock import MagicMock, AsyncMock, patch
+
 from src.server.services.crawling.strategies.sitemap import SitemapCrawlStrategy
+
 
 @pytest.mark.asyncio
 async def test_parse_sitemap_success():

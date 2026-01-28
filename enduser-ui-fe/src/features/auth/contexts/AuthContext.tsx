@@ -1,8 +1,8 @@
 // archon-ui-main/src/features/auth/contexts/AuthContext.tsx
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { UserProfile, EmployeeRole } from '@/features/auth/types';
-import { API_BASE_URL } from '@/config/api';
+import { UserProfile, EmployeeRole } from '../types';
+import { API_BASE_URL } from '../../../config/api';
 
 interface AuthContextType {
   user: UserProfile | null;
@@ -49,7 +49,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             id: data.user.id,
             email: data.user.email,
             name: "System Admin",
-            role: "system_admin" // Enforced role for Admin UI
+            role: EmployeeRole.SYSTEM_ADMIN // Enforced role for Admin UI
           });
         }
       } catch (err) {

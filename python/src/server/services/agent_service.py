@@ -1,19 +1,34 @@
 # python/src/server/services/agent_service.py
 
 import asyncio
+import json
+import uuid
 
 from ..config.logfire_config import get_logger
+
+# Import the new CodeModifier utility
+from ..utils.code_modifier import CodeModifier
 from .credential_service import credential_service
 from .llm_provider_service import get_llm_client
-from .shared_constants import AI_AGENT_ROLES  # Import AI_AGENT_ROLES from new shared module
+from .shared_constants import AI_AGENT_ROLES
 
 
 class AgentService:
     """Service for handling business logic related to AI agents."""
 
-    async def _analyze_error_and_suggest_fix(self, command: str, stderr: str) -> str:
+    def __init__(self):
+        self.code_modifier = CodeModifier(base_path=".")
+
+    async def _analyze_error_with_structured_output(self, command: str, stderr: str) -> dict | None:
         """
-        Uses LLM to analyze the error output and suggest a fix.
+        Uses LLM to analyze the error output and suggest a fix in structured JSON.
+        Returns:
+            {
+                "file_path": "path/to/file",
+                "fixed_content": "new file content",
+                "reasoning": "explanation"
+            }
+            OR None if analysis fails or no fix is possible.
         """
         logger = get_logger(__name__)
         prompt = f"""
@@ -24,9 +39,16 @@ Command: `{command}`
 Error Output (stderr):
 {stderr}
 
-Analyze the error and provide a concise explanation of what went wrong and a suggested fix.
-If the error is a test failure, suggest how to fix the code.
-If it's an environment issue, suggest how to fix the environment.
+Analyze the error. If it is a fixable code error (e.g., SyntaxError, TypeScript error, logic bug), provide a fix.
+You MUST return a JSON object with the following structure:
+{{
+    "file_path": "The relative path of the file to fix (e.g., 'scripts/foo.py')",
+    "fixed_content": "The COMPLETE content of the fixed file (do not use diffs)",
+    "reasoning": "A brief explanation of the fix"
+}}
+
+If the error is an environment issue or you cannot fix it by modifying code, return an empty JSON object {{}}.
+Ensure the "fixed_content" is valid code for the target language.
 """
         try:
             # Get active model from config
@@ -37,58 +59,97 @@ If it's an environment issue, suggest how to fix the environment.
                 response = await client.chat.completions.create(
                     model=model,
                     messages=[{"role": "user", "content": prompt}],
-                    max_tokens=300,
-                    temperature=0.1
+                    max_tokens=4000, # Increased for full file content
+                    temperature=0.1,
+                    response_format={"type": "json_object"}
                 )
-                return response.choices[0].message.content.strip()
+                content = response.choices[0].message.content.strip()
+                if not content:
+                    return None
+                return json.loads(content)
         except Exception as e:
             logger.error(f"Failed to analyze error with LLM: {e}")
-            return "Error analysis failed due to LLM provider issue."
+            return None
 
-    async def run_command_with_self_healing(self, command: str, max_retries: int = 1) -> tuple[bool, str]:
+    async def run_command_with_self_healing(self, command: str, max_retries: int = 1, task_id: str = None) -> tuple[bool, str]:
         """
-        Executes a shell command with self-healing capabilities.
-        If the command fails, it uses an LLM to analyze the error.
-
-        Args:
-            command: The shell command to execute.
-            max_retries: Number of retries (currently used to limit analysis loop).
-                         In a full implementation, this would loop and apply fixes.
-                         For Phase 5 task 2, we focus on the analysis feedback loop.
-
-        Returns:
-            (success, output_or_analysis)
+        Executes a shell command with self-healing capabilities (DevBot L2).
+        Loop: Execute -> Fail -> Analyze -> Sandbox -> Apply -> Verify -> Success/Fail
         """
         logger = get_logger(__name__)
-        logger.info(f"Executing command with self-healing: {command}")
+        # Generate a temporary task ID if not provided, for branch naming
+        if not task_id:
+            task_id = f"auto-{uuid.uuid4().hex[:8]}"
 
+        logger.info(f"Executing command with self-healing (L2): {command}")
+
+        # --- Attempt 1: Initial Execution ---
         process = await asyncio.create_subprocess_shell(
             command,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE
         )
         stdout, stderr = await process.communicate()
-
         stdout_str = stdout.decode().strip()
         stderr_str = stderr.decode().strip()
 
         if process.returncode == 0:
-            logger.info(f"Command '{command}' succeeded.")
+            logger.info(f"Command '{command}' succeeded initially.")
             return True, stdout_str
 
-        logger.warning(f"Command '{command}' failed with exit code {process.returncode}.")
+        logger.warning(f"Command '{command}' failed. Starting Active Repair Loop.")
 
-        # Self-healing logic: Analyze error
-        analysis = await self._analyze_error_and_suggest_fix(command, stderr_str[-2000:]) # Pass last 2000 chars
+        # --- Active Repair Loop ---
+        # 1. Analyze
+        fix_proposal = await self._analyze_error_with_structured_output(command, stderr_str[-2000:])
 
-        log_message = (
-            f"Self-Healing Analysis for '{command}':\n"
-            f"Error: {stderr_str[-500:]}...\n" # Log truncated error
-            f"AI Suggestion: {analysis}"
+        if not fix_proposal or not fix_proposal.get("file_path") or not fix_proposal.get("fixed_content"):
+            logger.warning("LLM could not propose a valid code fix.")
+            return False, f"Command failed. Analysis: {fix_proposal.get('reasoning') if fix_proposal else 'No analysis available'}.\nStderr: {stderr_str}"
+
+        # 2. Sandbox
+        original_branch = self.code_modifier.get_current_branch()
+        try:
+            sandbox_branch = self.code_modifier.create_sandbox_branch(task_id)
+        except Exception as e:
+            return False, f"Failed to create sandbox: {e}"
+
+        # 3. Apply Fix
+        try:
+            self.code_modifier.apply_modification(
+                fix_proposal["file_path"],
+                fix_proposal["fixed_content"]
+            )
+            logger.info(f"Applied fix to {fix_proposal['file_path']} on branch {sandbox_branch}")
+        except Exception as e:
+            self.code_modifier.revert_sandbox(original_branch)
+            return False, f"Failed to apply fix: {e}"
+
+        # 4. Verify (Retry Command)
+        logger.info(f"Verifying fix by re-running: {command}")
+        process_retry = await asyncio.create_subprocess_shell(
+            command,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE
         )
-        logger.info(log_message)
+        stdout_retry, stderr_retry = await process_retry.communicate()
 
-        return False, log_message
+        if process_retry.returncode == 0:
+            logger.info(f"Fix verified! Task completed on branch {sandbox_branch}.")
+            msg = (
+                f"### Command Succeeded after Auto-Repair\n"
+                f"**Fix Logic**: {fix_proposal.get('reasoning')}\n"
+                f"**Sandbox Branch**: `{sandbox_branch}`\n"
+                f"**Action Required**: Please review the branch and merge via PR."
+            )
+            # Important: We stay on the sandbox branch so the user can see the result?
+            # Or should we revert? The instructions say "Handover happens via ProposeChangeService".
+            # For this MVP, we leave the branch checked out for the user to inspect.
+            return True, msg
+        else:
+            logger.warning("Fix verification failed. Reverting sandbox.")
+            self.code_modifier.revert_sandbox(original_branch)
+            return False, f"Auto-repair failed verification. Stderr: {stderr_retry.decode().strip()[-500:]}"
 
     async def get_assignable_agents(self) -> list[dict]:
         """
@@ -119,7 +180,8 @@ If it's an environment issue, suggest how to fix the environment.
 
         # 2. Execute command with self-healing if provided
         if command:
-            success, output_or_analysis = await self.run_command_with_self_healing(command)
+            # Pass task_id for branching
+            success, output_or_analysis = await self.run_command_with_self_healing(command, task_id=task_id)
 
             # 3. Feed the results back into the task output/description
             final_status = "done" if success else "failed"

@@ -32,7 +32,7 @@ Archon 是一個「使用者角色的人機協作平台」。在此生態系中�
 
 | Agent 代號 | 類型 | 對應技能/工具 (MCP Tools) | 開發定義 |
 | :--- | :--- | :--- | :--- |
-| **`DevBot`** | L4-U | **Developer Agent**<br>- `read_file`, `write_file`<br>- **`logo_tool`** | **工匠 (Builder)**。負責修復 Bug、重構代碼，以及 **SVG 品牌資產生成**。由 Admin 指派執行 Prompt 更新任務。 |
+| **`DevBot`** | L4-U | **Developer Agent**<br>- `auto_repair` (L2 Loop)<br>- `logo_tool` | **工匠 (Builder)**。負責修復 Bug、重構代碼，以及 **SVG 品牌資產生成**。具備沙箱修復能力。 |
 | **`MarketBot`**| L4-U | **Marketing/Sales Agent**<br>- `search_job_market`<br>- **`generate_sales_email`** | **獵犬/寫手 (Scout/Writer)**。負責搜尋職缺、分析需求，並**參考 Librarian 的知識**撰寫開發信/部落格草稿。 |
 | **`Librarian`**| L4-U | **Knowledge Agent**<br>- `archive_to_vector_db`<br>- **`rag_retrieval`** | **記憶庫 (Memory)**。負責將部落格/文件/成功信件向量化歸檔，並**提供檢索服務給 Bob 與 MarketBot**。 |
 | **`POBot`**    | L4-U | **Product Owner Agent**<br>- `generate_user_story`<br>- **`refine_task_spec`** | **策劃 (Planner)**。負責將回饋轉化為開發規格，並優化模糊的任務描述。 |
