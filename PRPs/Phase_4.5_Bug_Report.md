@@ -9,7 +9,7 @@
 
 | Metric | Count | Details |
 | :--- | :--- | :--- |
-| **Total Issues** | 7 | Navbar RBAC, Test Data, E2E Stability. |
+| **Total Issues** | 10 | Navbar RBAC, Test Data, E2E Stability. |
 | **Critical Gaps** | 0 | All critical regressions resolved. |
 | **Functional Bugs**| 0 | All known functional bugs fixed. |
 
@@ -26,19 +26,25 @@
 | **BUG-017** | 🐛 Regression | **QA/Setup** | `e2e.setup.tsx` 引用外部 Factory 導致 Vitest 提升錯誤 (ReferenceError)。 | Critical | 🟢 Fixed (Hoisted) | QA | `e2e.setup.tsx` |
 | **BUG-018** | 🐛 Bug | **QA/Syntax** | `sales-intelligence.spec.tsx` 存在語法錯誤 (殘留字符 'n')。 | High | 🟢 Fixed (Corrected) | QA | `sales-intelligence.spec.tsx` |
 | **BUG-019** | 🐛 Regression | **QA/Env** | JSDOM 不支援 `scrollIntoView`，導致測試執行中崩潰。 | Medium | 🟢 Fixed (Polyfilled) | QA | `e2e.setup.tsx` |
+| **BUG-020** | 🐛 Bug | **QA/Syntax** | `prompts-management.spec.tsx` 存在賦值語法錯誤 (`=` instead of `from`)。 | Low | 🟢 Fixed (Corrected) | QA | `prompts-management.spec.tsx` |
+| **BUG-021** | 🐛 Bug | **QA/UI** | `sales-nexus-closure.spec.tsx` 斷言文字 `My Potential Leads` 與實際 UI 不符。 | Low | 🟢 Fixed (Aligned) | QA | `sales-nexus-closure.spec.tsx` |
+| **BUG-022** | 🐛 Bug | **QA/UI** | `PromoteForm` 測試嘗試填寫不存在的 `Vendor Name` 欄位。 | Medium | 🟢 Fixed (Aligned) | QA | `sales-nexus-closure.spec.tsx` |
+| **BUG-023** | 🐛 Bug | **UI/A11y** | `MarketingPage.tsx` 的 Label 未正確關聯 Input，導致 `findByLabelText` 失敗。 | Low | 🟢 Fixed (Implemented) | Frontend | `MarketingPage.tsx` |
+| **BUG-024** | 🐛 Bug | **QA/Mock** | `sales-nexus-closure` 缺少 `POST /promote` 的 MSW Handler。 | Medium | 🟢 Fixed (Implemented) | QA | `sales-nexus-closure.spec.tsx` |
 
 ---
 
 ## 📝 Detailed Investigation Notes (詳細調查筆記)
 
-### BUG-015 ~ 019: The Great E2E Refactoring
+### BUG-015 ~ 024: The Great E2E Institutionalization
 *   **Root Cause**: 測試資料與實作脫鉤 (Decoupled Truth) + 環境配置不足 + 語法/時序問題。
 *   **Solution**: 
     1.  **Permission Factory**: 建立 `userFactory.ts` 並導出 `PERMISSION_SETS`，實現 SSOT。
     2.  **Hoisting Fix**: 使用 `vi.hoisted` 解決 `e2e.setup.tsx` 的引用順序問題。
     3.  **Environment**: 補齊 `scrollIntoView` Polyfill。
     4.  **Timing**: 優化 `waitFor` 邏輯。
-*   **Outcome**: 測試套件現在具備「自動適應權限變更」的能力。
+    5.  **UI Alignment**: 修正 `MarketingPage.tsx` 的 HTML 語義 (Label/Input) 並對齊測試斷言。
+*   **Outcome**: 測試套件現在具備「自動適應權限變更」的能力，全測試通過 (100% Pass)。
 
 ---
 
@@ -57,4 +63,4 @@
     *   **BUG-013 (RBAC)**: 完成前端權限拆分。
     *   **BUG-014 (Quality)**: 重構後端測試清理機制。
 *   **2026-01-28**:
-    *   **BUG-015~019 (QA Institutionalization)**: 完成 E2E 測試的全面重構，引入 `userFactory` 與 `vi.hoisted`，解決了魔術字串與提升錯誤，並修復了 JSDOM 環境缺口。
+    *   **BUG-015~024 (QA Institutionalization)**: 完成 E2E 測試的全面重構，引入 `userFactory` 與 `vi.hoisted`，解決了魔術字串與提升錯誤，並修復了 JSDOM 環境缺口與 UI 語義問題。
