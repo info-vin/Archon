@@ -102,18 +102,29 @@ description: |
 
 ---
 
-## Phase 4.5.6: Admin UI Completion (管理介面補完)
 
-> **Goal**: Close the loop on "Prompt as Data" architecture.
 
-**Task 6: Prompts Management UI**
-*   **Objective**: Provide a UI for `system_admin` to tune AI personas.
-*   **Implementation**:
-    *   Update `enduser-ui-fe/src/pages/AdminPage.tsx`.
-    *   Add "Prompt Engineering" Tab.
-    *   Fetch data from `GET /api/system/prompts`.
-    *   Allow editing `template_text` via `PUT /api/system/prompts/{id}`.
-*   **Validation**: Admin updates prompt -> Chatbot behavior changes immediately.
+### Phase 4.5.6: Admin UI Completion
+
+> **Goal**: Provide a robust interface for managing system prompts and configurations.
+
+- [ ] **Task 5: Prompts Management UI**
+    - **Frontend**: `PromptsPage.tsx` with List/Edit view.
+    - **Backend**: `prompts_api.py` (CRUD already exists, verify RBAC).
+    - **Validation**: Ensure Admin can update system prompts and they take effect immediately.
+
+### Phase 4.5.7: Autonomous DevBot Evolution (New)
+
+> **Goal**: Upgrade the AI Agent from "Diagnostic" (L1) to "Active Repair" (L2), enabling the system to fix its own code errors autonomously.
+
+- [ ] **Task 6: Autonomous Repair Loop (DevBot L2)**
+    - **Context**: Currently, `AgentService` only analyzes errors. We need it to apply fixes.
+    - **Implementation**:
+        - Extend `AgentService.run_command_with_self_healing` to accept a `fix_strategy` (e.g., `apply_patch`).
+        - Implement `CodeModifier` utility to safely apply LLM-generated diffs.
+        - Create a `RetryLoop` that: Exec -> Fail -> Analyze -> Fix -> Exec -> Success.
+    - **Safety**: Implement a "Sandbox Mode" where fixes are applied to a temp branch first.
+
 
 ---
 

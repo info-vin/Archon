@@ -235,13 +235,14 @@ def test_some_endpoint():
 
 本節介紹如何手動驗證 Archon 系統的 AI 自癒與智能分析能力。
 
-**演練場景：自動分析語法錯誤**
+**現狀說明 (Phase 4.5.5)**:
+目前系統具備 **L1 級自癒能力 (Diagnostic Analysis)**。當 Agent 執行的指令失敗時，系統會自動呼叫 LLM 分析錯誤日誌 (stderr) 並提供修復建議，但**不會**自動修改代碼。真正的 **L2 級自動修復 (Autonomous Repair Loop)** ——即自動應用 Patch 並重試——已排程於 **Phase 4.5.7** 實作。
 
-當 Agent 執行的指令失敗時，系統應自動呼叫 LLM 分析錯誤並提供修復建議。
+**演練場景：自動分析語法錯誤**
 
 1.  **製造錯誤**: 在根目錄建立一個包含語法錯誤的 `broken_script.py` (例如漏掉右括號)。
 2.  **觸發任務**: 使用 `curl` 呼叫 `/api/test/trigger-agent-task` (需開啟 `ENABLE_TEST_ENDPOINTS`)。
-3.  **觀察結果**: 訪問 UI 任務詳情頁，確認狀態變為 `failed`且 `output` 欄位包含 AI 的診斷建議。
+3.  **觀察結果**: 訪問 UI 任務詳情頁，確認狀態變為 `failed`且 `output` 欄位包含 AI 的診斷建議 (例如："SyntaxError detected... suggested fix: add closing parenthesis")。
 
 ### 3.6 Clockwork 與排程除錯 (Clockwork Debugging)
 
