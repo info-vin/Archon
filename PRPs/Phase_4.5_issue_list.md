@@ -13,7 +13,7 @@
 | **CL-05** | RAG 預設模型 (Google) | ✅ Resolved | **結論**: `seed_mock_data.sql` 設定 `LLM_PROVIDER` 預設為 `'google'`。若目前行為是 OpenAI 優先，請檢查 `.env` 或 `archon_settings` 資料庫值。 |
 | **CL-06** | OpenAI 429 Error | ✅ Resolved | **結論**: 錯誤訊息明確指出 OpenAI Quota 不足。短期解決方案是切換 `LLM_PROVIDER` 至 `google` (Gemini)。 |
 | **CL-07** | 環境重置順序 | ✅ Resolved | **結論**: 您的理解正確：`make clean` (清除 Volume) -> `make dev-docker` (啟動服務) -> `make db-init` (重建 Schema 與 Seed Data)。這會產生最乾淨的環境。 |
-| **CL-08** | Knowledge Persistence (Cloud DB) | ✅ Resolved | **結論**: `make clean` 僅清除本地 Docker Volume。若使用 **Supabase Cloud (遠端 DB)**，資料不會被清除。**解法**: 需使用 `TRUNCATE` 指令 (e.g. `docker exec ...`) 或 SQL Editor 手動清除雲端資料。 |
+| **CL-08** | Knowledge Persistence (Cloud DB) | ✅ Resolved | **結論**: `make clean` 僅清除本地 Docker Volume。若使用 **Supabase Cloud (遠端 DB)**，資料不會被清除。**解法**: 已實作 `make db-reset` 指令，可強制執行 `init_db.py --clean` 來清空雲端資料庫並重新初始化。 |
 
 
 

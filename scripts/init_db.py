@@ -55,7 +55,7 @@ def get_applied_migrations(cursor):
     cursor.execute("SELECT version FROM schema_migrations")
     return {row[0] for row in cursor.fetchall()}
 
-def run_migration_file(conn, cursor, file_path):
+def run_migration_file(conn, cursor, file_path, record_version=True):
     """Reads and executes a single SQL migration file."""
     filename = os.path.basename(file_path)
     version_id = os.path.splitext(filename)[0] # e.g., "000_unified_schema"
@@ -69,14 +69,13 @@ def run_migration_file(conn, cursor, file_path):
         # Execute the SQL content
         cursor.execute(sql)
         
-        # Explicitly register the version if the SQL script didn't do it
-        # (Although our SOP says SQL files should do it, we double-bag it here for safety, 
-        # using ON CONFLICT to avoid errors if the script DID do it)
-        cursor.execute("""
-            INSERT INTO schema_migrations (version) 
-            VALUES (%s) 
-            ON CONFLICT (version) DO NOTHING
-        """, (version_id,))
+        # Explicitly register the version if requested
+        if record_version:
+            cursor.execute("""
+                INSERT INTO schema_migrations (version) 
+                VALUES (%s) 
+                ON CONFLICT (version) DO NOTHING
+            """, (version_id,))
         
         conn.commit()
         print(f"✅ Successfully applied: {filename}")
@@ -84,6 +83,8 @@ def run_migration_file(conn, cursor, file_path):
         conn.rollback()
         print(f"❌ Failed to apply {filename}: {e}")
         raise e
+
+# ... (omitted parts) ...
 
 def find_auth_user_by_email(supabase, email):
     """
@@ -250,6 +251,20 @@ def main():
         conn = get_db_connection()
         conn.autocommit = False
         cursor = conn.cursor()
+
+        # Handle --clean flag for full reset
+        import sys
+        if "--clean" in sys.argv:
+             print("\n⚠️  CLEAN MODE: Resetting database (Executing RESET_DB.sql)...")
+             reset_file = "migration/RESET_DB.sql"
+             if os.path.exists(reset_file):
+                 run_migration_file(conn, cursor, reset_file, record_version=False)
+                 conn.commit()
+                 print("✅ Database reset complete. Proceeding with initialization...\n")
+             else:
+                 print(f"❌ Error: {reset_file} not found. Cannot reset.")
+                 exit(1)
+
         ensure_schema_migrations_table(cursor)
         conn.commit()
         

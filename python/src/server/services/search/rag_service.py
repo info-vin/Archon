@@ -173,7 +173,7 @@ class RAGService:
         )
 
     async def perform_rag_query(
-        self, query: str, source: str = None, match_count: int = 5
+        self, query: str, source: str = None, match_count: int = 5, filter_metadata: dict | None = None
     ) -> tuple[bool, dict[str, Any]]:
         """
         Perform a comprehensive RAG query that combines all enabled strategies.
@@ -198,7 +198,11 @@ class RAGService:
                 logger.info(f"RAG query started: {query[:100]}{'...' if len(query) > 100 else ''}")
 
                 # Build filter metadata
-                filter_metadata = {"source": source} if source else None
+                search_filter = {"source": source} if source else {}
+                if filter_metadata:
+                    search_filter.update(filter_metadata)
+                
+                final_filter = search_filter if search_filter else None
 
                 # Check which strategies are enabled
                 use_hybrid_search = self.get_bool_setting("USE_HYBRID_SEARCH", False)
@@ -217,7 +221,7 @@ class RAGService:
                 results = await self.search_documents(
                     query=query,
                     match_count=search_match_count,
-                    filter_metadata=filter_metadata,
+                    filter_metadata=final_filter,
                     use_hybrid_search=use_hybrid_search,
                 )
 

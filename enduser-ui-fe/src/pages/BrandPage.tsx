@@ -434,7 +434,6 @@ const CreatePostForm: React.FC<{ post?: BlogPost | null, onSuccess: () => void, 
                     required
                     value={content} 
                     onChange={e => setContent(e.target.value)} 
-                    onChange={e => setContent(e.target.value)} 
                     className={`${inputClass} min-h-[300px] font-sans text-sm leading-relaxed`}
                     placeholder="Write your content here or use Magic Draft..."
                 />

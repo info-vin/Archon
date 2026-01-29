@@ -354,7 +354,7 @@ async def draft_blog_post(request: DraftBlogRequest, current_user: dict = Depend
         success, search_result = await rag_service.perform_rag_query(
             query=search_query,
             match_count=5,
-            metadata_filter={"knowledge_type": "sales_pitch"}
+            filter_metadata={"knowledge_type": "sales_pitch"}
         )
 
         context_text = ""

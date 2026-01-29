@@ -247,10 +247,7 @@ const supabaseApi = {
     const { assigneeId, ...rest } = task_data;
     const payload = {
       ...rest,
-      ...rest,
       assignee_id: assigneeId,
-      // Fix: Remove hardcoded "Unassigned". Let backend handle default or rely on assigneeId resolution.
-      // assignee: "Unassigned" 
     };
 
     const response = await fetch('/api/tasks', {
@@ -279,10 +276,16 @@ const supabaseApi = {
     return data.items || [];
   },
   async updateTask(taskId: string, updates: UpdateTaskData): Promise<Task> {
+    const { assigneeId, ...rest } = updates;
+    const payload = {
+        ...rest,
+        ...(assigneeId !== undefined ? { assignee_id: assigneeId } : {})
+    };
+
     const response = await fetch(`/api/tasks/${taskId}`, {
         method: 'PUT',
         headers: await this._getHeaders(),
-        body: JSON.stringify(updates)
+        body: JSON.stringify(payload)
     });
 
     if (!response.ok) {

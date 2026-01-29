@@ -16,6 +16,7 @@ help:
 	@echo "  make dev-docker - Everything in Docker"
 	@echo "  make stop       - Stop all services"
 	@echo "  make db-init    - Initialize database (idempotent)"
+	@echo "  make db-reset   - WIPE and Re-initialize database (Destructive)"
 	@echo "  make test       - Run all tests"
 	@echo "  make test-fe    - Run frontend tests only"
 	@echo "  make test-fe-project project=<project> - Run tests for a specific frontend project"
@@ -46,6 +47,18 @@ install-ui:
 db-init:
 	@echo "Initializing database inside archon-server container..."
 	@docker exec -i archon-server /venv/bin/python scripts/init_db.py
+
+# Database reset (Clean & Re-init)
+db-reset:
+	@echo "⚠️  WARNING: This will WIPE the entire database (including Cloud data)."
+	@read -p "Are you sure? (y/N) " -n 1 -r; \
+	echo; \
+	if [[ $$REPLY =~ ^[Yy]$$ ]]; then \
+		echo "Resetting database inside archon-server container..."; \
+		docker exec -i archon-server /venv/bin/python scripts/init_db.py --clean; \
+	else \
+		echo "Cancelled"; \
+	fi
 
 # Verify database seed data
 verify-data:
@@ -167,7 +180,7 @@ clean:
 	@read -p "Are you sure? (y/N) " -n 1 -r; \
 	echo; \
 	if [[ $$REPLY =~ ^[Yy]$$ ]]; then \
-		$(COMPOSE) down -v --remove-orphans; \
+		$(COMPOSE) --profile backend --profile frontend --profile enduser --profile agents down -v --remove-orphans; \
 		echo "✓ Cleaned"; \
 	else \
 		echo "Cancelled"; \

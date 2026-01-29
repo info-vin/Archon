@@ -40,6 +40,11 @@ export const TaskModal: React.FC<TaskModalProps> = ({ task, onClose, onTaskCreat
         ]);
         
         setCurrentUser(user);
+        // FB-03: Default assignee to current user for new tasks so they are visible in "My Tasks"
+        if (!isEditMode && user) {
+          setAssigneeId(user.id);
+        }
+
         const formattedAiAgents = aiAgents.map(agent => ({
           ...agent,
           name: `(AI) ${agent.name}`
@@ -131,7 +136,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({ task, onClose, onTaskCreat
           title,
           description,
           status: 'todo' as any, // Default status
-          assignee_id: assigneeId || null,
+          assigneeId: assigneeId || undefined,
           due_date: new Date(dueDate).toISOString(),
           priority,
           knowledge_source_ids: selectedKnowledgeIds,

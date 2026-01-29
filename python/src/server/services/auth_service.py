@@ -84,13 +84,17 @@ class AuthService:
 
         except Exception as e:
             # Optimize logging: Avoid huge tracebacks for "already registered" errors
-            err_str = str(e).lower()
-            # Check for GoTrue/Supabase specific error messages
-            # "AuthApiError" might be the class name, but we check message content primarily
+            # We combine str(e) and getattr(e, 'message', '') to catch all variants (AuthApiError, HTTPStatusError)
+            err_content = str(e).lower()
+            if hasattr(e, 'message'):
+                err_content += f" {str(e.message).lower()}"
+                
             is_duplicate = (
-                "already registered" in err_str or
-                "already exists" in err_str or
-                "422" in err_str
+                "already registered" in err_content or
+                "already exists" in err_content or
+                "422" in err_content or
+                "unprocessable entity" in err_content or
+                "authapierror" in str(type(e)).lower() and "422" in err_content  # Catch GoTrue errors
             )
 
             if is_duplicate:

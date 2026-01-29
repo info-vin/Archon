@@ -50,7 +50,8 @@ async def create_blog_post(
     if not rbac_service.can_manage_content(user_role):
         raise HTTPException(status_code=403, detail="Forbidden: You do not have permission to create blog posts.")
 
-    success, result = await service.create_post(request.model_dump())
+    post_data = request.model_dump(mode='json', exclude={'id'})
+    success, result = await service.create_post(post_data)
     if not success:
         raise HTTPException(status_code=500, detail=result.get("error"))
     return result.get("post")
@@ -69,7 +70,7 @@ async def update_blog_post(
     if not rbac_service.can_manage_content(user_role):
         raise HTTPException(status_code=403, detail="Forbidden: You do not have permission to update blog posts.")
 
-    update_data = request.model_dump(exclude_unset=True)
+    update_data = request.model_dump(mode='json', exclude_unset=True)
     success, result = await service.update_post(post_id, update_data)
     if not success:
         raise HTTPException(status_code=404, detail=result.get("error"))

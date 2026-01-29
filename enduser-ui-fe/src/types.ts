@@ -99,7 +99,7 @@ export interface NewTaskData {
   description: string;
   status: TaskStatus;
   priority: TaskPriority;
-  assignee_id: string | null;
+  assigneeId: string | null;
   due_date: string;
   project_id: string;
   knowledge_source_ids?: string[];

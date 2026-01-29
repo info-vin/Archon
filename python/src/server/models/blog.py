@@ -11,7 +11,9 @@ class BlogPostBase(BaseModel):
     content: str
     author_name: str | None = Field(None, alias='authorName')
     publish_date: datetime | None = Field(None, alias='publishDate')
+    publish_date: datetime | None = Field(None, alias='publishDate')
     image_url: str | None = Field(None, alias='imageUrl')
+    status: str = 'draft'
 
     class Config:
         populate_by_name = True
