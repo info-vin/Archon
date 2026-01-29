@@ -249,9 +249,8 @@ const supabaseApi = {
       ...rest,
       ...rest,
       assignee_id: assigneeId,
-      // Fix FB-04: Don't hardcode "User". If ID is present, backend resolves it. 
-      // If no ID, use "Unassigned" or let backend default handle it.
-      assignee: "Unassigned" 
+      // Fix: Remove hardcoded "Unassigned". Let backend handle default or rely on assigneeId resolution.
+      // assignee: "Unassigned" 
     };
 
     const response = await fetch('/api/tasks', {

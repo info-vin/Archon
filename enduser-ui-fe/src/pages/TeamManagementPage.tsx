@@ -134,7 +134,7 @@ const TeamManagementPage: React.FC = () => {
                                             </div>
                                         ) : (
                                             /* IMG-04: Square Avatars for all departments */
-                                            <UserAvatar name={member.name} className="w-16 h-16 rounded-none text-xl shadow-sm border border-gray-200" />
+                                            <UserAvatar name={member.name} role={member.role} className="w-16 h-16 text-xl shadow-sm border border-gray-200" />
                                         )}
                                         
                                         <div className="flex-1">
@@ -266,7 +266,7 @@ const ManageMemberModal: React.FC<{ member: Employee; onClose: () => void; onSuc
             <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden animate-in fade-in zoom-in-95 duration-200">
                 <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
                     <div className="flex items-center gap-3">
-                        <UserAvatar name={member.name} className="w-10 h-10 rounded-lg shadow-sm" />
+                        <UserAvatar name={member.name} role={member.role} className="w-10 h-10 shadow-sm" />
                         <div>
                             <h3 className="font-bold text-gray-900">{member.name}</h3>
                             <p className="text-xs text-gray-500">{member.email}</p>
@@ -381,7 +381,7 @@ const ActivityLogModal: React.FC<{ member: Employee; onClose: () => void }> = ({
              <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[80vh]">
                 <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
                     <div className="flex items-center gap-3">
-                        <UserAvatar name={member.name} className="w-10 h-10 rounded-lg shadow-sm" />
+                        <UserAvatar name={member.name} role={member.role} className="w-10 h-10 shadow-sm" />
                         <div>
                             <h3 className="font-bold text-gray-900">{member.name}'s Activity</h3>
                             <p className="text-xs text-gray-500">Recent Assignments & Tasks</p>

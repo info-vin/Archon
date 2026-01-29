@@ -86,7 +86,7 @@ const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                         </Link>
                     </div>
                    <div className="flex items-center mb-4">
-                       <UserAvatar name={user?.name || ''} className="w-10 h-10 mr-3" />
+                       <UserAvatar name={user?.name || ''} role={user?.role} className="w-10 h-10 mr-3" />
                        <div>
                            <p className="font-semibold">{user?.name}</p>
                            <p className="text-sm text-muted-foreground">{user?.email}</p>

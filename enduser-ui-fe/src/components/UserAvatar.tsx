@@ -5,12 +5,28 @@ interface UserAvatarProps {
   name: string;
   size?: number; // 頭像的大小（可選）
   isAI?: boolean; // 是否為 AI Agent
+  role?: string; // 用於決定背景顏色
   className?: string; // 允許傳入自定義樣式
 }
 
-const UserAvatar: React.FC<UserAvatarProps> = ({ name, size = 40, isAI = false, className = '' }) => {
+const getRoleColor = (role?: string) => {
+    if (!role) return null;
+    const r = role.toLowerCase().trim();
+    if (['admin', 'system_admin'].includes(r)) return '#DC2626'; // Red-600
+    if (['sales', 'sales_rep'].includes(r)) return '#2563EB'; // Blue-600
+    if (['marketing', 'brand'].includes(r)) return '#D97706'; // Amber-600
+    if (['manager'].includes(r)) return '#7C3AED'; // Violet-600
+    if (['ai_agent', 'bot'].includes(r)) return '#4B5563'; // Gray-600
+    return null;
+};
+
+const UserAvatar: React.FC<UserAvatarProps> = ({ name, size = 40, isAI = false, role, className = '' }) => {
   const initial = name ? name.charAt(0).toUpperCase() : '?';
-  const color = name ? stringToColor(name) : '#888888';
+  
+  // Priority: Role Color > AI Color > Hash Color
+  const roleColor = getRoleColor(role);
+  const hashColor = name ? stringToColor(name) : '#888888';
+  const finalColor = roleColor || (isAI ? '#4B5563' : hashColor);
 
   const baseStyle: React.CSSProperties = {
     display: 'inline-flex',
@@ -23,22 +39,12 @@ const UserAvatar: React.FC<UserAvatarProps> = ({ name, size = 40, isAI = false, 
     fontSize: `${size * 0.5}px`,
     fontWeight: 'bold',
     fontFamily: 'sans-serif',
-  };
-
-  const aiStyle: React.CSSProperties = {
-    ...baseStyle,
-    borderRadius: '8px', // 方形帶圓角
-    backgroundColor: '#5A5A5A', // AI 固定用灰色
-  };
-
-  const userStyle: React.CSSProperties = {
-    ...baseStyle,
-    borderRadius: className.includes('rounded') ? undefined : '50%', // 預設圓形，但允許 className 覆蓋
-    backgroundColor: color,
+    borderRadius: className.includes('rounded') ? undefined : '8px', // Default to Square (8px) unless overridden
+    backgroundColor: finalColor,
   };
 
   return (
-    <div className={className} style={isAI ? aiStyle : userStyle} title={name}>
+    <div className={className} style={baseStyle} title={name}>
       {isAI ? 'A' : initial}
     </div>
   );

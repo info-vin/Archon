@@ -155,7 +155,8 @@ async def promote_lead_to_vendor(
         except Exception as lib_err:
             logfire.warning(f"API: Librarian trigger failed | lead_id={lead_id} | error={lib_err}")
 
-        return {"success": True, "vendor": vendor_res.data[0]}
+        from fastapi.encoders import jsonable_encoder
+        return {"success": True, "vendor": jsonable_encoder(vendor_res.data[0])}
     except Exception as e:
         logfire.error(f"API: Lead promotion failed | id={lead_id} | error={str(e)}", exc_info=True)
         # Detailed error for debugging (safe to expose to authenticated users)
