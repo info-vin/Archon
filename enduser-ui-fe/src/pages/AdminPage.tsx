@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { api, AdminNewUserData } from '../services/api.ts';
+import { api } from '../services/api.ts';
 import { Employee, DocumentVersion, BlogPost, EmployeeRole } from '../types.ts';
-import { CheckCircleIcon, XCircleIcon, ClockIcon, PlusIcon, XIcon, RefreshCwIcon, SaveIcon, KeyIcon } from '../components/Icons.tsx';
+import { CheckCircleIcon, PlusIcon, XIcon, RefreshCwIcon, SaveIcon, KeyIcon } from '../components/Icons.tsx';
 import { useAuth } from '../hooks/useAuth.tsx';
 import UserAvatar from '../components/UserAvatar.tsx';
 
@@ -22,7 +22,6 @@ const AdminPage: React.FC = () => {
           <TabButton title="System Prompts" isActive={activeTab === 'prompts'} onClick={() => setActiveTab('prompts')} />
           <TabButton title="Blog Management" isActive={activeTab === 'blog'} onClick={() => setActiveTab('blog')} />
           <TabButton title="Document Versions" isActive={activeTab === 'versions'} onClick={() => setActiveTab('versions')} />
-          <TabButton title="Settings" isActive={activeTab === 'settings'} onClick={() => setActiveTab('settings')} />
         </nav>
       </div>
 
@@ -31,7 +30,6 @@ const AdminPage: React.FC = () => {
         {activeTab === 'prompts' && <PromptManagement />}
         {activeTab === 'blog' && <BlogManagement />}
         {activeTab === 'versions' && <DocumentVersionsLog />}
-        {activeTab === 'settings' && <SettingsComponent />}
       </div>
     </div>
   );
@@ -42,8 +40,8 @@ const TabButton: React.FC<{ title: string; isActive: boolean; onClick: () => voi
     onClick={onClick}
     className={`${
       isActive
-        ? 'border-primary text-primary'
-        : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
+        ? 'border-indigo-500 text-indigo-500' // Updated to match Admin Brand (Violet/Indigo)
+        : 'border-transparent text-muted-foreground hover:text-foreground hover:border-gray-300'
     } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-all`}
   >
     {title}
@@ -110,7 +108,11 @@ const PromptManagement: React.FC = () => {
                         onClick={() => handleSelect(p)}
                         className={`w-full text-left p-4 rounded-xl border transition-all ${selectedPrompt?.prompt_name === p.prompt_name ? 'border-primary bg-primary/5 shadow-sm' : 'border-border bg-card hover:border-primary/50'}`}
                     >
-                        <div className="font-bold text-sm truncate">{p.prompt_name.replace(/_/g, ' ').toUpperCase()}</div>
+                        <div className="flex justify-between items-start">
+                             <div className="font-bold text-sm truncate">{p.prompt_name.replace(/_/g, ' ').toUpperCase()}</div>
+                             {/* Green Checkmark for "System Health" */}
+                             <CheckCircleIcon className="w-4 h-4 text-green-500" />
+                        </div>
                         <div className="text-xs text-muted-foreground mt-1 line-clamp-1">{p.description || 'No description'}</div>
                     </button>
                 ))}
@@ -308,7 +310,7 @@ const UserManagement: React.FC = () => {
                                 <tr key={emp.id} className="hover:bg-muted/30 transition-colors">
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <div className="flex items-center">
-                                            <UserAvatar name={emp.name || ''} className="h-10 w-10 rounded-lg shadow-sm" />
+                                            <UserAvatar name={emp.name || ''} role={emp.role} className="h-10 w-10 rounded-lg shadow-sm" />
                                             <div className="ml-4">
                                                 <div className="text-sm font-bold">{emp.name}</div>
                                                 <div className="text-xs text-muted-foreground">{emp.email}</div>
@@ -515,95 +517,4 @@ const PostEditorModal: React.FC<{post: BlogPost | null, onClose: () => void, onS
     );
 };
 
-const AdminTransfer: React.FC = () => {
-    const [employees, setEmployees] = useState<Employee[]>([]);
-    const [selectedEmployee, setSelectedEmployee] = useState('');
-    
-    useEffect(() => {
-        api.getEmployees().then(setEmployees).catch(err => alert(`Failed to load employees: ${err.message}`));
-    }, []);
-
-    const handleTransfer = () => {
-        if(selectedEmployee) {
-            alert(`Admin rights transfer to ${employees.find(e=>e.id === selectedEmployee)?.name} initiated. This is a mock action.`);
-        } else {
-            alert('Please select an employee to transfer admin rights to.');
-        }
-    };
-
-    return (
-        <div className="bg-card p-6 rounded-lg max-w-lg mx-auto">
-            <h2 className="text-xl font-semibold mb-4">Transfer System Administrator Privileges</h2>
-            <p className="text-muted-foreground mb-6">Select an employee to become the new system administrator. This action is irreversible through the UI.</p>
-            <div className="space-y-4">
-                 <div>
-                    <label htmlFor="employee" className="block text-sm font-medium mb-1">New Administrator</label>
-                    <select
-                        id="employee"
-                        value={selectedEmployee}
-                        onChange={(e) => setSelectedEmployee(e.target.value)}
-                        className="block w-full pl-3 pr-10 py-2 text-base border-border bg-input rounded-md focus:outline-none focus:ring-ring focus:border-ring sm:text-sm"
-                    >
-                        <option value="">Select an employee</option>
-                        {employees.filter(e => e.role !== 'system_admin').map(emp => (
-                            <option key={emp.id} value={emp.id}>{emp.name} ({emp.email})</option>
-                        ))}
-                    </select>
-                </div>
-                <button
-                    onClick={handleTransfer}
-                    className="w-full py-2 px-4 bg-destructive text-destructive-foreground rounded-md hover:bg-destructive/90"
-                >
-                    Transfer Admin Rights
-                </button>
-            </div>
-        </div>
-    );
-};
-
-const SettingsComponent: React.FC = () => {
-    const [supabaseUrl, setSupabaseUrl] = useState(localStorage.getItem('supabaseUrl') || '');
-    const [supabaseAnonKey, setSupabaseAnonKey] = useState(localStorage.getItem('supabaseAnonKey') || '');
-
-    const handleSave = () => {
-        try {
-            if(!supabaseUrl || !supabaseAnonKey) {
-                alert("Both Supabase URL and Anon Key are required.");
-                return;
-            }
-            localStorage.setItem('supabaseUrl', supabaseUrl);
-            localStorage.setItem('supabaseAnonKey', supabaseAnonKey);
-            alert('Settings saved successfully! The page will now reload to apply changes.');
-            window.location.reload();
-        } catch (error) {
-            alert(`Failed to save settings: ${error}`);
-        }
-    };
-    
-    const inputClass = "appearance-none rounded-md relative block w-full px-3 py-2 border border-border placeholder-muted-foreground text-foreground bg-input focus:outline-none focus:ring-ring focus:border-ring focus:z-10 sm:text-sm";
-
-    return (
-        <div className="bg-card p-6 rounded-lg max-w-lg mx-auto">
-            <h2 className="text-xl font-semibold mb-4">Supabase Settings</h2>
-            <p className="text-muted-foreground mb-6">Enter your Supabase project URL and anonymous key. The application will use these to connect to your database.</p>
-            <div className="space-y-4">
-                <div>
-                    <label htmlFor="supabaseUrl" className="block text-sm font-medium mb-1">Supabase URL</label>
-                    <input id="supabaseUrl" type="url" value={supabaseUrl} onChange={e => setSupabaseUrl(e.target.value)} className={inputClass} placeholder="https://your-project-ref.supabase.co" />
-                </div>
-                <div>
-                    <label htmlFor="supabaseAnonKey" className="block text-sm font-medium mb-1">Supabase Anon Key</label>
-                    <input id="supabaseAnonKey" type="text" value={supabaseAnonKey} onChange={e => setSupabaseAnonKey(e.target.value)} className={inputClass} placeholder="ey..." />
-                </div>
-                <button
-                    onClick={handleSave}
-                    className="w-full py-2 px-4 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
-                >
-                    Save and Reload
-                </button>
-            </div>
-        </div>
-    );
-};
-
-export default AdminPage;
+// End of AdminPage

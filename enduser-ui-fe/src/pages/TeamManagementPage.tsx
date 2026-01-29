@@ -128,14 +128,8 @@ const TeamManagementPage: React.FC = () => {
                                 <div className={`h-2 ${isAgent ? 'bg-gradient-to-r from-indigo-400 to-purple-500' : 'bg-gray-800'}`}></div>
                                 <div className="p-6">
                                     <div className="flex items-start gap-4">
-                                        {isAgent ? (
-                                            <div className="w-16 h-16 rounded-none bg-indigo-50 flex items-center justify-center text-3xl shadow-inner border border-indigo-100">
-                                                🤖
-                                            </div>
-                                        ) : (
-                                            /* IMG-04: Square Avatars for all departments */
-                                            <UserAvatar name={member.name} role={member.role} className="w-16 h-16 text-xl shadow-sm border border-gray-200" />
-                                        )}
+                                        {/* Unified Avatar Style (Square + Role Color/Hash Color) */}
+                                        <UserAvatar name={member.name} role={member.role} isAI={isAgent} className="w-16 h-16 text-xl shadow-sm border border-gray-200" />
                                         
                                         <div className="flex-1">
                                             <h3 className="font-bold text-lg text-gray-900 flex items-center gap-2">

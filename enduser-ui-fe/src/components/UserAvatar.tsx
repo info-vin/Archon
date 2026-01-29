@@ -16,7 +16,8 @@ const getRoleColor = (role?: string) => {
     if (['sales', 'sales_rep'].includes(r)) return '#2563EB'; // Blue-600
     if (['marketing', 'brand'].includes(r)) return '#D97706'; // Amber-600
     if (['manager'].includes(r)) return '#7C3AED'; // Violet-600
-    if (['ai_agent', 'bot'].includes(r)) return '#4B5563'; // Gray-600
+    if (['manager'].includes(r)) return '#7C3AED'; // Violet-600
+    // Agents now use Hash Color for distinctiveness
     return null;
 };
 
@@ -26,7 +27,9 @@ const UserAvatar: React.FC<UserAvatarProps> = ({ name, size = 40, isAI = false, 
   // Priority: Role Color > AI Color > Hash Color
   const roleColor = getRoleColor(role);
   const hashColor = name ? stringToColor(name) : '#888888';
-  const finalColor = roleColor || (isAI ? '#4B5563' : hashColor);
+  // Rule: Humans = Role Color, Bots = Hash Color (Distinct). 
+  // If roleColor exists (Humans), use it. Otherwise (Bots/Unknown), use hashColor.
+  const finalColor = roleColor || hashColor;
 
   const baseStyle: React.CSSProperties = {
     display: 'inline-flex',
