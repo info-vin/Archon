@@ -183,6 +183,7 @@ class TaskService:
         include_archived: bool = False,
         assignee_id: str = None, # Keep for future use
         assignee_name: str = None, # For current name-based RBAC
+        include_unassigned: bool = False, # Fix FB-03: Allow seeing unassigned tasks
     ) -> tuple[bool, dict[str, Any]]:
         """
         List tasks with various filters.
@@ -217,12 +218,23 @@ class TaskService:
 
             # Apply filters
             if assignee_id:
-                query = query.eq("assignee_id", assignee_id)
-                filters_applied.append(f"assignee_id={assignee_id}")
+                if include_unassigned:
+                    # Fix FB-03: Show tasks assigned to me OR unassigned
+                    # Syntax: assignee_id.eq.UUID,assignee_id.is.null
+                    query = query.or_(f"assignee_id.eq.{assignee_id},assignee_id.is.null")
+                    filters_applied.append(f"assignee_id={assignee_id} OR unassigned")
+                else:
+                    query = query.eq("assignee_id", assignee_id)
+                    filters_applied.append(f"assignee_id={assignee_id}")
 
             if assignee_name and not assignee_id: # Only fallback to name if ID is not provided
-                query = query.eq("assignee", assignee_name)
-                filters_applied.append(f"assignee={assignee_name}")
+                if include_unassigned:
+                     # Name-based fallback (less precise but needed for legacy)
+                     query = query.or_(f"assignee.eq.{assignee_name},assignee.eq.User") # Assuming 'User' is default unassigned
+                     filters_applied.append(f"assignee={assignee_name} OR User")
+                else:
+                    query = query.eq("assignee", assignee_name)
+                    filters_applied.append(f"assignee={assignee_name}")
 
             if status:
                 # Validate status

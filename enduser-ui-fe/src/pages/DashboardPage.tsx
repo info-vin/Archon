@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { api } from '../services/api.ts';
 import { Task, TaskStatus, TaskPriority, Project, AssignableUser } from '../types.ts';
-import { GanttChartIcon, KanbanIcon, ListIcon, TableIcon, PlusIcon, ChevronDownIcon, ChevronsUpDownIcon, PaperclipIcon } from '../components/Icons.tsx';
+import { GanttChartIcon, KanbanIcon, ListIcon, TableIcon, PlusIcon, ChevronDownIcon, ChevronsUpDownIcon, PaperclipIcon, ClockIcon } from '../components/Icons.tsx';
 import { TaskModal } from '../components/TaskModal.tsx';
 import { ProjectModal } from '../components/ProjectModal.tsx';
 import UserAvatar from '../components/UserAvatar.tsx';
-import { select, extent, scaleTime, scaleBand, axisTop, timeFormat, timeDay, timeWeek, timeMonth } from 'd3';
+import { select, extent, scaleTime, scaleBand, axisTop, timeFormat, timeDay, timeWeek } from 'd3';
 import { useAuth } from '../hooks/useAuth.tsx';
 
 type ViewMode = 'list' | 'table' | 'kanban' | 'gantt';
@@ -30,38 +30,61 @@ const statusIndicator = (status: TaskStatus) => {
 
 // --- View Components ---
 const ListView: React.FC<{ tasks: Task[]; setEditingTask: (task: Task) => void }> = ({ tasks, setEditingTask }) => (
-  <ul className="space-y-2">
-    {tasks.map(task => (
-      <li key={task.id} onClick={() => setEditingTask(task)} className="p-4 bg-card rounded-lg shadow-sm cursor-pointer hover:bg-card-hover transition-colors">
-        <div className="flex justify-between items-center">
-          <div className="flex items-center">
-            {priorityIndicator(task.priority)}
-            <span className="font-medium">{task.title}</span>
-          </div>
-          <div className="flex items-center space-x-4">
-            {/* Assignee Avatar */}
-            {task.assignee && (
-                <UserAvatar 
-                    name={task.assignee} 
-                    isAI={task.assignee_id?.startsWith('agent-') || task.assignee.toLowerCase().includes('bot')} 
-                    size={24} 
-                />
-            )}
-            {/* Attachment Badge */}
-            {task.attachments && task.attachments.length > 0 && (
-                <div className="flex items-center text-xs text-muted-foreground bg-secondary/30 px-2 py-1 rounded">
-                    <PaperclipIcon className="h-3 w-3 mr-1" />
-                    {task.attachments.length} {task.attachments.length === 1 ? task.attachments[0].file_name : 'files'}
-                    {/* Hidden text for tests to find filenames if needed */}
-                    <span className="sr-only">{task.attachments.map(a => a.file_name).join(', ')}</span>
+  <ul className="space-y-3">
+    {tasks.map(task => {
+        const priorityColors = { high: 'bg-red-500', medium: 'bg-amber-500', low: 'bg-green-500', critical: 'bg-purple-600' };
+        const borderColor = priorityColors[task.priority] || 'bg-gray-400';
+        
+        return (
+            <li key={task.id} onClick={() => setEditingTask(task)} className="group relative overflow-hidden bg-white/70 backdrop-blur-md rounded-xl border border-white/50 shadow-sm hover:shadow-md transition-all cursor-pointer p-4 pl-5">
+                {/* Priority Stripe */}
+                <div className={`absolute left-0 top-0 bottom-0 w-1.5 ${borderColor}`} />
+                
+                <div className="flex justify-between items-center">
+                    <div className="flex items-center gap-4">
+                        <div className="flex flex-col">
+                            <span className="font-bold text-gray-800 text-base leading-snug group-hover:text-indigo-600 transition-colors">{task.title}</span>
+                            <span className="text-xs text-gray-500 font-mono mt-0.5 opacity-0 group-hover:opacity-100 transition-opacity">Task ID: #{task.id.slice(0,6)}</span>
+                        </div>
+                    </div>
+                
+                    <div className="flex items-center gap-4">
+                        {/* Assignee Avatar */}
+                        {task.assignee && (
+                            <div className="flex items-center gap-2 bg-gray-50 px-2 py-1 rounded-lg border border-gray-100">
+                                <UserAvatar 
+                                    name={task.assignee} 
+                                    isAI={task.assignee_id?.startsWith('agent-') || task.assignee.toLowerCase().includes('bot')} 
+                                    size={20} 
+                                />
+                                <span className="text-xs font-semibold text-gray-600 max-w-[100px] truncate">{task.assignee}</span>
+                            </div>
+                        )}
+                        
+                        {/* Attachment Badge */}
+                        {task.attachments && task.attachments.length > 0 && (
+                            <div data-testid="attachment-badge" className="flex items-center text-xs text-indigo-600 bg-indigo-50 px-2 py-1 rounded-lg font-medium">
+                                <PaperclipIcon className="h-3 w-3 mr-1" />
+                                <span>{task.attachments.length}</span>
+                                <span className="sr-only"> files</span>
+                                {/* Hidden text for tests to find filenames if needed */}
+                                <span className="sr-only">{task.attachments.map(a => a.file_name).join(', ')}</span>
+                            </div>
+                        )}
+                        
+                        <div className="min-w-[80px] text-center">
+                             {statusIndicator(task.status)}
+                        </div>
+                        
+                        <div className="flex items-center gap-1 text-xs font-medium text-gray-500 bg-gray-50 px-3 py-1.5 rounded-lg">
+                            <ClockIcon className="w-3 h-3" />
+                            {task.due_date ? new Date(task.due_date).toLocaleDateString() : 'No Deadline'}
+                        </div>
+                    </div>
                 </div>
-            )}
-            {statusIndicator(task.status)}
-            <span className="text-sm text-muted-foreground">{task.due_date ? new Date(task.due_date).toLocaleDateString() : 'No due date'}</span>
-          </div>
-        </div>
-      </li>
-    ))}
+            </li>
+        );
+    })}
   </ul>
 );
 
@@ -129,19 +152,52 @@ const KanbanView: React.FC<{
   };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 h-full">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 h-full p-2">
       {statuses.map(status => (
-        <div key={status} className="bg-card rounded-lg p-3 flex flex-col" onDrop={(e) => onDrop(e, status)} onDragOver={onDragOver}>
-          <h3 className="font-semibold mb-3 capitalize">{status} ({tasksByStatus[status]?.length || 0})</h3>
-          <div className="flex-1 space-y-3 overflow-y-auto">
-            {tasksByStatus[status]?.map(task => (
-              <div key={task.id} draggable onDragStart={(e) => onDragStart(e, task.id)} onClick={() => setEditingTask(task)} className="p-3 bg-background rounded-md shadow-sm cursor-pointer">
-                <p className="font-medium text-sm">{task.title}</p>
-                 <div className="flex items-center justify-between mt-2">
-                    <span className="text-xs text-muted-foreground">{task.due_date ? new Date(task.due_date).toLocaleDateString() : ''}</span>
-                </div>
-              </div>
-            ))}
+        <div key={status} className="bg-gray-50/50 rounded-2xl p-4 flex flex-col gap-4 border border-gray-100" onDrop={(e) => onDrop(e, status)} onDragOver={onDragOver}>
+          <div className="flex justify-between items-center border-b border-gray-200 pb-3">
+             <h3 className="font-bold text-gray-700 capitalize flex items-center gap-2">
+                <span className={`w-2 h-2 rounded-full ${status === 'todo' ? 'bg-gray-400' : status === 'doing' ? 'bg-blue-400' : status === 'review' ? 'bg-purple-400' : 'bg-green-400'}`}></span>
+                {status}
+             </h3>
+             <span className="bg-white px-2 py-0.5 rounded-full text-xs font-bold text-gray-500 shadow-sm">{tasksByStatus[status]?.length || 0}</span>
+          </div>
+          
+          <div className="flex-1 space-y-3 overflow-y-auto pr-1">
+            {tasksByStatus[status]?.map(task => {
+               const priorityColors = { high: 'border-l-red-500', medium: 'border-l-yellow-500', low: 'border-l-green-500', critical: 'border-l-purple-600' };
+               const borderClass = priorityColors[task.priority] || 'border-l-gray-300';
+               
+               return (
+                  <div 
+                    key={task.id} 
+                    draggable 
+                    onDragStart={(e) => onDragStart(e, task.id)} 
+                    onClick={() => setEditingTask(task)} 
+                    className={`bg-white p-4 rounded-xl shadow-sm hover:shadow-md cursor-grab active:cursor-grabbing border-l-[3px] ${borderClass} transition-all group border-y border-r border-gray-100`}
+                  >
+                    <p className="font-semibold text-gray-800 text-sm leading-snug mb-3 group-hover:text-indigo-600 transition-colors">{task.title}</p>
+                    
+                    <div className="flex items-center justify-between mt-auto pt-2 border-t border-gray-50">
+                         {task.assignee ? (
+                            <div className="flex items-center gap-1.5 opacity-80 group-hover:opacity-100">
+                                <UserAvatar name={task.assignee} size={18} isAI={task.assignee.toLowerCase().includes('bot')} />
+                                <span className="text-[10px] font-medium text-gray-500 truncate max-w-[80px]">{task.assignee.split(' ')[0]}</span>
+                            </div>
+                         ) : (
+                             <span className="text-[10px] py-1 px-2 bg-gray-100 rounded text-gray-400 font-medium">Unassigned</span>
+                         )}
+                         
+                         {task.due_date && (
+                             <div className={`text-[10px] font-bold px-2 py-0.5 rounded flex items-center gap-1 ${new Date(task.due_date) < new Date() ? 'bg-red-50 text-red-600' : 'bg-green-50 text-green-600'}`}>
+                                 <ClockIcon className="w-3 h-3" />
+                                 {new Date(task.due_date).toLocaleDateString(undefined, {month:'short', day:'numeric'})}
+                             </div>
+                         )}
+                    </div>
+                  </div>
+               );
+            })}
           </div>
         </div>
       ))}

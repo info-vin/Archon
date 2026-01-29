@@ -704,6 +704,7 @@ async def list_tasks(
     status: str | None = None,
     project_id: str | None = None,
     include_closed: bool = False,
+    include_unassigned: bool = False, # Fix FB-03: Allow frontend to request unassigned tasks
     page: int = 1,
     per_page: int = 50,
     exclude_large_fields: bool = False,
@@ -733,6 +734,7 @@ async def list_tasks(
             include_closed=include_closed,
             exclude_large_fields=exclude_large_fields,
             assignee_id=assignee_id_filter, # Use ID for robust filtering
+            include_unassigned=include_unassigned if assignee_id_filter else False, # Only apply if filtering by user
         )
 
         if not success:

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../services/api';
-import { Employee, EmployeeRole } from '../types';
+import { Employee, EmployeeRole, Task } from '../types';
 import { useAuth } from '../hooks/useAuth';
 import { PermissionGuard } from '../features/auth/components/PermissionGuard';
 import UserAvatar from '../components/UserAvatar';
@@ -12,6 +12,7 @@ const TeamManagementPage: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [editingMember, setEditingMember] = useState<Employee | null>(null);
+    const [activityMember, setActivityMember] = useState<Employee | null>(null);
     const [aiUsage, setAiUsage] = useState<any>(null);
     const [approvals, setApprovals] = useState<{ blogs: any[]; leads: any[] }>({ blogs: [], leads: [] });
 
@@ -117,51 +118,32 @@ const TeamManagementPage: React.FC = () => {
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {/* Combine Team + Mock Agents for Unified View */}
-                        {[
-                            ...team,
-                            // MOCK AGENTS injected into the unified list
-                            {
-                                id: 'agent-dev',
-                                name: 'DevBot',
-                                email: 'dev.bot@archon.ai',
-                                role: 'ai_agent' as any, // Cast to any to bypass strict enum if needed
-                                position: 'Code Engineering',
-                                department: 'Engineering',
-                                status: 'active',
-                                isAgent: true,
-                                icon: '🛠️'
-                            },
-                            {
-                                id: 'agent-market',
-                                name: 'MarketBot',
-                                email: 'market.bot@archon.ai',
-                                role: 'ai_agent' as any,
-                                position: 'Market Research',
-                                department: 'Marketing',
-                                status: 'active',
-                                isAgent: true,
-                                icon: '📈'
-                            }
-                        ].map((member: any) => (
-                            <div key={member.id} className={`bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow relative ${member.isAgent ? 'ring-2 ring-indigo-50' : ''}`}>
-                                <div className={`h-2 ${member.isAgent ? 'bg-gradient-to-r from-indigo-400 to-purple-500' : 'bg-indigo-500'}`}></div>
+                        {/* FB-06: Using only Verified DB Data - removed hardcoded Mock Agents */}
+                        {team.map((member: any) => {
+                            // FB-06: Infer Agent status from role instead of hardcoded flag
+                            const isAgent = member.role === 'ai_agent' || member.email?.endsWith('.bot@archon.ai');
+                            
+                            return (
+                            <div key={member.id} className={`bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow relative ${isAgent ? 'ring-2 ring-indigo-50' : ''}`}>
+                                <div className={`h-2 ${isAgent ? 'bg-gradient-to-r from-indigo-400 to-purple-500' : 'bg-gray-800'}`}></div>
                                 <div className="p-6">
                                     <div className="flex items-start gap-4">
-                                        {member.isAgent ? (
-                                            <div className="w-16 h-16 rounded-xl bg-indigo-50 flex items-center justify-center text-3xl shadow-inner">
-                                                {member.icon}
+                                        {isAgent ? (
+                                            <div className="w-16 h-16 rounded-none bg-indigo-50 flex items-center justify-center text-3xl shadow-inner border border-indigo-100">
+                                                🤖
                                             </div>
                                         ) : (
-                                            <UserAvatar name={member.name} className="w-16 h-16 rounded-xl text-xl" />
+                                            /* IMG-04: Square Avatars for all departments */
+                                            <UserAvatar name={member.name} className="w-16 h-16 rounded-none text-xl shadow-sm border border-gray-200" />
                                         )}
                                         
                                         <div className="flex-1">
                                             <h3 className="font-bold text-lg text-gray-900 flex items-center gap-2">
                                                 {member.name}
-                                                {member.isAgent && <span className="text-[10px] bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full uppercase tracking-wider">Bot</span>}
+                                                {isAgent && <span className="text-[10px] bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full uppercase tracking-wider">Bot</span>}
                                             </h3>
                                             <p className="text-sm text-gray-500">{member.position}</p>
-                                            <div className={`mt-1 flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full w-fit ${member.isAgent ? 'text-purple-600 bg-purple-50' : 'text-indigo-600 bg-indigo-50'}`}>
+                                            <div className={`mt-1 flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full w-fit ${isAgent ? 'text-purple-600 bg-purple-50' : 'text-gray-600 bg-gray-100'}`}>
                                                 <BadgeCheckIcon className="w-3 h-3" />
                                                 {member.role.toUpperCase().replace('_', ' ')}
                                             </div>
@@ -169,7 +151,7 @@ const TeamManagementPage: React.FC = () => {
                                     </div>
 
                                     <div className="mt-6 space-y-3">
-                                        {member.isAgent ? (
+                                        {isAgent ? (
                                             // Agent Specific Stats (Shared Budget)
                                             <div className="bg-gray-50 rounded-lg p-3 border border-gray-100">
                                                 <div className="flex justify-between items-center text-xs mb-1">
@@ -195,7 +177,7 @@ const TeamManagementPage: React.FC = () => {
                                                 </div>
                                                 <div className="flex items-center text-sm text-gray-600 gap-3">
                                                     <ShieldCheckIcon className="w-4 h-4 text-gray-400" />
-                                                    Dept: {member.department}
+                                                    Dept: {member.department || 'General'}
                                                 </div>
                                             </>
                                         )}
@@ -204,18 +186,22 @@ const TeamManagementPage: React.FC = () => {
                                     <div className="mt-6 pt-6 border-t border-gray-50 flex gap-2">
                                         <button 
                                             onClick={() => setEditingMember(member)}
-                                            disabled={member.isAgent}
-                                            className={`flex-1 text-sm font-medium py-2 rounded-lg transition-colors ${member.isAgent ? 'bg-gray-50 text-gray-300 cursor-not-allowed' : 'bg-gray-50 text-gray-700 hover:bg-gray-100'}`}
+                                            disabled={isAgent}
+                                            className={`flex-1 text-sm font-medium py-2 rounded-lg transition-colors ${isAgent ? 'bg-gray-50 text-gray-300 cursor-not-allowed' : 'bg-gray-50 text-gray-700 hover:bg-gray-100'}`}
                                         >
                                             Manage Role
                                         </button>
-                                        <button className="flex-1 text-sm font-medium py-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors">
+                                        <button 
+                                            onClick={() => setActivityMember(member)}
+                                            className="flex-1 text-sm font-medium py-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors"
+                                        >
                                             View Activity
                                         </button>
                                     </div>
                                 </div>
                             </div>
-                        ))}
+                            );
+                        })}
                     </div>
                 )}
 
@@ -225,6 +211,14 @@ const TeamManagementPage: React.FC = () => {
                         member={editingMember} 
                         onClose={() => setEditingMember(null)} 
                         onSuccess={() => { setEditingMember(null); fetchData(); }}
+                    />
+                )}
+                
+                {/* ACTIVITY MODAL */}
+                {activityMember && (
+                    <ActivityLogModal 
+                        member={activityMember} 
+                        onClose={() => setActivityMember(null)} 
                     />
                 )}
             </div>
@@ -353,6 +347,81 @@ const ManageMemberModal: React.FC<{ member: Employee; onClose: () => void; onSuc
                     </div>
                 </div>
             </div>
+        </div>
+    );
+};
+
+const ActivityLogModal: React.FC<{ member: Employee; onClose: () => void }> = ({ member, onClose }) => {
+    const [tasks, setTasks] = useState<Task[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const loadTasks = async () => {
+            try {
+                // Fetch all tasks and filter client-side for now
+                // TODO: Add backend filter param for efficiency
+                const allTasks = await api.getTasks(true, true); 
+                const memberTasks = allTasks.filter(t => 
+                    t.assignee_id === member.id || 
+                    t.assignee === member.name ||
+                    (t.assignee === 'User' && member.role === 'marketing') // Fallback for legacy
+                ).sort((a, b) => new Date(b.created_at || '').getTime() - new Date(a.created_at || '').getTime());
+                setTasks(memberTasks);
+            } catch (e) {
+                console.error(e);
+            } finally {
+                setLoading(false);
+            }
+        };
+        loadTasks();
+    }, [member]);
+
+    return (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+             <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[80vh]">
+                <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+                    <div className="flex items-center gap-3">
+                        <UserAvatar name={member.name} className="w-10 h-10 rounded-lg shadow-sm" />
+                        <div>
+                            <h3 className="font-bold text-gray-900">{member.name}'s Activity</h3>
+                            <p className="text-xs text-gray-500">Recent Assignments & Tasks</p>
+                        </div>
+                    </div>
+                    <button onClick={onClose} className="p-2 hover:bg-gray-200 rounded-full transition-colors"><XIcon className="w-5 h-5" /></button>
+                </div>
+                
+                <div className="flex-1 overflow-y-auto p-6">
+                    {loading ? (
+                        <div className="flex justify-center py-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div></div>
+                    ) : tasks.length === 0 ? (
+                        <div className="text-center py-8 text-gray-400">No recent activity found.</div>
+                    ) : (
+                        <div className="space-y-3">
+                            {tasks.map(task => (
+                                <div key={task.id} className="p-4 bg-white border border-gray-100 rounded-xl shadow-sm hover:border-indigo-100 transition-colors">
+                                    <div className="flex justify-between items-start">
+                                        <div>
+                                            <h4 className="font-bold text-gray-800 text-sm">{task.title}</h4>
+                                            <p className="text-xs text-gray-500 mt-1 line-clamp-1">{task.description}</p>
+                                        </div>
+                                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
+                                            task.status === 'done' ? 'bg-green-100 text-green-700' :
+                                            task.status === 'doing' ? 'bg-blue-100 text-blue-700' :
+                                            'bg-gray-100 text-gray-600'
+                                        }`}>
+                                            {task.status}
+                                        </span>
+                                    </div>
+                                    <div className="mt-2 flex items-center gap-4 text-xs text-gray-400">
+                                        <span>Updated: {new Date(task.updated_at || Date.now()).toLocaleDateString()}</span>
+                                        <span>Priority: {task.priority}</span>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+             </div>
         </div>
     );
 };

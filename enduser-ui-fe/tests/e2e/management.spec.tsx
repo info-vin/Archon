@@ -62,7 +62,11 @@ beforeEach(() => {
 test('Manager (Charlie) can access Team Management Panel', async () => {
     // Mock Charlie
     vi.mocked(api.getCurrentUser).mockResolvedValue(MOCK_EMPLOYEES[2] as any);
-    vi.mocked(api.getEmployees).mockResolvedValue(MOCK_EMPLOYEES as any);
+    
+    // FB-06: API must now return Agents as part of employees list, they are not hardcoded in UI
+    const employeesWithBot = [...MOCK_EMPLOYEES, MOCK_AGENTS[0]];
+    vi.mocked(api.getEmployees).mockResolvedValue(employeesWithBot as any);
+
     vi.mocked(api.getAiUsage).mockResolvedValue({
         total_budget: 1000,
         total_used: 500,
@@ -78,7 +82,7 @@ test('Manager (Charlie) can access Team Management Panel', async () => {
     // Check Team Members (Confirm Access Granted)
     expect(await screen.findByText('Alice')).toBeInTheDocument();
     
-    // Check Mock Agent Injection
+    // Check Mock Agent Injection (From API now)
     expect(await screen.findByText('DevBot')).toBeInTheDocument();
 });
 

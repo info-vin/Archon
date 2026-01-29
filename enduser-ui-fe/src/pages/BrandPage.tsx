@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../services/api';
 import { BlogPost } from '../types';
-import { useAuth } from '../hooks/useAuth';
 import { PermissionGuard } from '../features/auth/components/PermissionGuard';
 import { 
     PlusIcon, 
@@ -54,6 +53,9 @@ const BrandPage: React.FC = () => {
         }
     };
 
+    const [editingPost, setEditingPost] = useState<BlogPost | null>(null);
+    const [isPostModalOpen, setIsPostModalOpen] = useState(false);
+
     const updatePostStatus = async (id: string, newStatus: any) => {
         try {
             await api.updateBlogPostStatus(id, newStatus);
@@ -61,6 +63,50 @@ const BrandPage: React.FC = () => {
         } catch (err) {
             alert("Status update failed");
         }
+    };
+
+    const handleSavePost = async (postData: Omit<BlogPost, 'id' | 'authorName' | 'publishDate'>, postId?: string) => {
+        try {
+            if (postId) { // Editing existing post
+                const updatedPost = await api.updateBlogPost(postId, postData);
+                setPosts(prev => prev.map(p => p.id === postId ? updatedPost : p));
+            } else { // Creating new post
+                // For new posts, we can let the backend handle author/date or pass defaults
+                 const newPostData = {
+                    ...postData,
+                    authorName: "Marketing Bot", // Or fetch current user name via API/Context if available
+                    publishDate: new Date().toISOString(),
+                };
+                const newPost = await api.createBlogPost(newPostData);
+                setPosts(prev => [newPost, ...prev]);
+            }
+            setIsPostModalOpen(false);
+            setEditingPost(null);
+            loadData(); // Refresh to be sure
+        } catch(error: any) {
+             alert(`Failed to save post: ${error.message}`);
+        }
+    };
+
+    const handleDeletePost = async (postId: string) => {
+        if (window.confirm('Are you sure you want to delete this post?')) {
+            try {
+                await api.deleteBlogPost(postId);
+                setPosts(prev => prev.filter(p => p.id !== postId));
+            } catch (error: any) {
+                alert(`Failed to delete post: ${error.message}`);
+            }
+        }
+    };
+
+    const openNewPostModal = () => {
+        setEditingPost(null);
+        setIsPostModalOpen(true);
+    };
+
+    const openEditPostModal = (post: BlogPost) => {
+        setEditingPost(post);
+        setIsPostModalOpen(true);
     };
 
     const downloadLogo = () => {
@@ -98,6 +144,12 @@ const BrandPage: React.FC = () => {
                                         <FileEditIcon className="w-4 h-4" />
                                     </button>
                                 )}
+                                <button onClick={() => openEditPostModal(post)} className="p-1 hover:bg-gray-100 rounded text-blue-500" title="Edit Content">
+                                    <FileEditIcon className="w-4 h-4" />
+                                </button>
+                                <button onClick={() => handleDeletePost(post.id)} className="p-1 hover:bg-red-50 rounded text-red-500" title="Delete">
+                                    <TrendingUpIcon className="w-4 h-4 rotate-45" /> {/* Using generic icon as XCircle is not imported, can fix later */}
+                                </button>
                                 {status !== 'review' && (
                                     <button onClick={() => updatePostStatus(post.id, 'review')} className="p-1 hover:bg-amber-50 rounded text-amber-500" title="Move to Review">
                                         <EyeIcon className="w-4 h-4" />
@@ -232,9 +284,7 @@ const BrandPage: React.FC = () => {
                             <span className="text-xs text-gray-400">Drag-and-drop coming soon</span>
                             <button 
                                 onClick={() => {
-                                    // Trigger Modal
-                                    const modal = document.getElementById('create-post-modal') as HTMLDialogElement;
-                                    if (modal) modal.showModal();
+                                    openNewPostModal();
                                 }}
                                 className="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-indigo-700 flex items-center gap-2 shadow-sm transition-transform active:scale-95"
                             >
@@ -252,28 +302,38 @@ const BrandPage: React.FC = () => {
                 </section>
             </div>
 
-            {/* Create Post Modal */}
-            <dialog id="create-post-modal" className="rounded-xl shadow-xl p-0 w-full max-w-lg backdrop:bg-black/50">
-                <div className="bg-white p-6 space-y-4">
-                    <div className="flex justify-between items-center mb-2">
-                        <h3 className="text-xl font-bold text-gray-800">New Brand Post</h3>
-                        <button onClick={() => (document.getElementById('create-post-modal') as HTMLDialogElement).close()} className="text-gray-400 hover:text-gray-600">
-                            ✕
-                        </button>
+            {/* Create/Edit Post Modal - Reusing the same modal structure but controlled by state */}
+            {isPostModalOpen && (
+                <dialog open className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm w-full h-full">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl p-6 relative animate-in fade-in zoom-in-95 duration-200 border border-gray-100">
+                        <div className="flex justify-between items-center mb-6 border-b pb-4">
+                            <h3 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
+                                <PaletteIcon className="w-6 h-6 text-indigo-600" />
+                                {editingPost ? 'Edit Brand Asset' : 'New Content Asset'}
+                            </h3>
+                            <button onClick={() => setIsPostModalOpen(false)} className="text-gray-400 hover:text-gray-600 p-2 hover:bg-gray-100 rounded-full transition-colors">
+                                ✕
+                            </button>
+                        </div>
+                        
+                        <CreatePostForm 
+                            post={editingPost} 
+                            onSuccess={() => setIsPostModalOpen(false)} 
+                            onSubmit={handleSavePost}
+                        />
                     </div>
-                    <CreatePostForm onSuccess={() => {
-                        (document.getElementById('create-post-modal') as HTMLDialogElement).close();
-                        loadData();
-                    }} />
-                </div>
-            </dialog>
+                </dialog>
+            )}
         </PermissionGuard>
     );
 };
 
-const CreatePostForm: React.FC<{ onSuccess: () => void }> = ({ onSuccess }) => {
-    const [title, setTitle] = useState('');
-    const [content, setContent] = useState('');
+const CreatePostForm: React.FC<{ post?: BlogPost | null, onSuccess: () => void, onSubmit: (data: any, id?: string) => Promise<void> }> = ({ post, onSuccess, onSubmit }) => {
+    const [title, setTitle] = useState(post?.title || '');
+    const [content, setContent] = useState(post?.content || '');
+    const [imageUrl, setImageUrl] = useState(post?.imageUrl || '');
+    const [excerpt, setExcerpt] = useState(post?.excerpt || '');
+    
     const [loading, setLoading] = useState(false);
     const [isDrafting, setIsDrafting] = useState(false);
     
@@ -290,6 +350,7 @@ const CreatePostForm: React.FC<{ onSuccess: () => void }> = ({ onSuccess }) => {
             });
             setTitle(result.title);
             setContent(result.content);
+            setExcerpt(result.excerpt);
         } catch (err: any) {
             alert(err.message || "Failed to generate draft");
         } finally {
@@ -301,69 +362,91 @@ const CreatePostForm: React.FC<{ onSuccess: () => void }> = ({ onSuccess }) => {
         e.preventDefault();
         setLoading(true);
         try {
-            await api.createBlogPost({
+            await onSubmit({
                 title,
                 content,
-                status: 'draft',
-                excerpt: content.slice(0, 100) + '...',
-                imageUrl: '/placeholder-blog.jpg'
-            });
-            setTitle('');
-            setContent('');
-            onSuccess();
+                excerpt: excerpt || content.slice(0, 100) + '...',
+                imageUrl: imageUrl || '/placeholder-blog.jpg',
+                status: post?.status || 'draft'
+            }, post?.id);
+            onSuccess(); // Ensure modal closes
         } catch (err) {
-            alert("Failed to create post");
+            // Error handling is done in parent
         } finally {
             setLoading(false);
         }
     };
 
+    const inputClass = "w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 focus:outline-none text-gray-900 shadow-sm transition-all";
+
     return (
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Title / Topic</label>
+                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Title / Topic</label>
                 <div className="flex gap-2">
                     <input 
                         type="text" 
                         required
                         value={title} 
                         onChange={e => setTitle(e.target.value)} 
-                        className="flex-1 p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none text-gray-900"
+                        className={inputClass}
                         placeholder="e.g. 5 Ways AI Transforms Manufacturing" 
                     />
                     <button 
                         type="button"
                         onClick={handleDraft}
                         disabled={isDrafting}
-                        className="px-3 py-2 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 text-sm font-bold flex items-center gap-1 disabled:opacity-50"
+                        className="px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl hover:shadow-lg text-sm font-bold flex items-center gap-2 disabled:opacity-50 transition-all hover:scale-105 active:scale-95"
                         title="Generate draft with AI"
                     >
-                        {isDrafting ? (
-                            <RefreshCwIcon className="w-4 h-4 animate-spin" />
-                        ) : (
-                            <TrendingUpIcon className="w-4 h-4" />
-                        )}
+                        {isDrafting ? <RefreshCwIcon className="w-4 h-4 animate-spin" /> : <TrendingUpIcon className="w-4 h-4" />}
                         Magic Draft
                     </button>
                 </div>
             </div>
+
+            <div className="grid grid-cols-2 gap-4">
+                <div>
+                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Cover Image URL</label>
+                    <input 
+                        type="url" 
+                        value={imageUrl} 
+                        onChange={e => setImageUrl(e.target.value)} 
+                        className={inputClass}
+                        placeholder="https://..." 
+                    />
+                </div>
+                 <div>
+                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Excerpt (SEO)</label>
+                    <input 
+                        type="text" 
+                        value={excerpt} 
+                        onChange={e => setExcerpt(e.target.value)} 
+                        className={inputClass}
+                        placeholder="Short summary..." 
+                    />
+                </div>
+            </div>
+
             <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Content</label>
+                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Content (Markdown Supported)</label>
                 <textarea 
                     required
                     value={content} 
                     onChange={e => setContent(e.target.value)} 
-                    className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none text-gray-900 min-h-[200px] font-mono text-sm leading-relaxed"
+                    className={`${inputClass} min-h-[300px] font-mono text-sm leading-relaxed`}
                     placeholder="Write your content here or use Magic Draft..."
                 />
             </div>
-            <div className="flex justify-end pt-2">
+
+            <div className="flex justify-end pt-4 border-t border-gray-100">
                 <button 
                     type="submit" 
                     disabled={loading || isDrafting}
-                    className="px-6 py-2 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 disabled:opacity-50 flex items-center gap-2"
+                    className="px-8 py-3 bg-gray-900 text-white font-bold rounded-xl hover:bg-black disabled:opacity-50 flex items-center gap-2 shadow-xl hover:shadow-2xl transition-all"
                 >
-                    {loading ? 'Saving...' : 'Create Draft'}
+                    {loading ? <RefreshCwIcon className="w-5 h-5 animate-spin" /> : <CheckCircleIcon className="w-5 h-5" />}
+                    {post ? 'SAVE CHANGES' : 'CREATE ASSET'}
                 </button>
             </div>
         </form>

@@ -1,8 +1,6 @@
 import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import DashboardPage from './DashboardPage';
-import React from 'react';
-
 // Mock useAuth to avoid AuthProvider error
 vi.mock('../hooks/useAuth.tsx', () => ({
   useAuth: vi.fn().mockReturnValue({
@@ -138,7 +136,9 @@ describe('DashboardPage', () => {
     });
 
     // Verify the "2 files" badge is visible
-    expect(screen.getByText('2 files')).toBeInTheDocument();
+    const badge = screen.getByTestId('attachment-badge');
+    expect(badge).toBeInTheDocument();
+    expect(badge).toHaveTextContent(/2/);
 
     // Find the attachment links by their text content (the filename)
     // Use a regex matcher because filenames might be combined in a single element

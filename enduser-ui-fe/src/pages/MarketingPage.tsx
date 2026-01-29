@@ -3,7 +3,7 @@ import { api } from '../services/api';
 import { JobData } from '../types';
 import { PermissionGuard } from '../features/auth/components/PermissionGuard';
 import { SourceBadge } from '../components/SourceBadge';
-import { SearchIcon, TableIcon, ShieldCheckIcon, XIcon, SparklesIcon, RefreshCwIcon } from '../components/Icons';
+import { SearchIcon, TableIcon, ShieldCheckIcon, XIcon, SparklesIcon, RefreshCwIcon, ChevronsUpDownIcon } from '../components/Icons';
 import { EmptyState } from '../components/common/EmptyState';
 
 const MarketingPage: React.FC = () => {
@@ -23,6 +23,39 @@ const MarketingPage: React.FC = () => {
   const [isLeadsLoading, setIsLeadsLoading] = useState(false);
   const [promoteModalOpen, setPromoteModalOpen] = useState(false);
   const [selectedLead, setSelectedLead] = useState<any>(null);
+  const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>({ key: 'created_at', direction: 'desc' });
+
+  const sortedLeads = React.useMemo(() => {
+    let sortableLeads = [...leads];
+    if (sortConfig !== null) {
+      sortableLeads.sort((a, b) => {
+        // Handle dates specifically
+        if (sortConfig.key === 'created_at' || sortConfig.key === 'next_followup_date') {
+             const dateA = new Date(a[sortConfig.key] || 0).getTime();
+             const dateB = new Date(b[sortConfig.key] || 0).getTime();
+             return sortConfig.direction === 'asc' ? dateA - dateB : dateB - dateA;
+        }
+        
+        // Handle strings
+        if (a[sortConfig.key] < b[sortConfig.key]) {
+          return sortConfig.direction === 'asc' ? -1 : 1;
+        }
+        if (a[sortConfig.key] > b[sortConfig.key]) {
+          return sortConfig.direction === 'asc' ? 1 : -1;
+        }
+        return 0;
+      });
+    }
+    return sortableLeads;
+  }, [leads, sortConfig]);
+
+  const requestSort = (key: string) => {
+    let direction: 'asc' | 'desc' = 'asc';
+    if (sortConfig && sortConfig.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc';
+    }
+    setSortConfig({ key, direction });
+  };
 
   const hasMockData = jobs.some(job => job.source === 'mock');
 
@@ -309,17 +342,31 @@ const MarketingPage: React.FC = () => {
                       <table className="w-full text-sm text-left">
                           <thead className="bg-gray-50 text-gray-500 font-medium">
                               <tr>
-                                  <th className="px-6 py-3">Company</th>
-                                  <th className="px-6 py-3">Position</th>
-                                  <th className="px-6 py-3">Status</th>
+                                  <th className="px-6 py-3 cursor-pointer hover:bg-gray-100 transition-colors" onClick={() => requestSort('created_at')}>
+                                      <div className="flex items-center gap-1">Date Identified {sortConfig?.key === 'created_at' && (sortConfig.direction === 'asc' ? '▲' : '▼')}</div>
+                                  </th>
+                                  <th className="px-6 py-3 cursor-pointer hover:bg-gray-100 transition-colors" onClick={() => requestSort('company_name')}>
+                                      <div className="flex items-center gap-1">Company {sortConfig?.key === 'company_name' && (sortConfig.direction === 'asc' ? '▲' : '▼')}</div>
+                                  </th>
+                                  <th className="px-6 py-3 cursor-pointer hover:bg-gray-100 transition-colors" onClick={() => requestSort('job_title')}>
+                                     <div className="flex items-center gap-1">Position {sortConfig?.key === 'job_title' && (sortConfig.direction === 'asc' ? '▲' : '▼')}</div>
+                                  </th>
+                                  <th className="px-6 py-3 cursor-pointer hover:bg-gray-100 transition-colors" onClick={() => requestSort('status')}>
+                                     <div className="flex items-center gap-1">Status {sortConfig?.key === 'status' && (sortConfig.direction === 'asc' ? '▲' : '▼')}</div>
+                                  </th>
                                   <th className="px-6 py-3">Source</th>
-                                  <th className="px-6 py-3">Follow Up</th>
+                                  <th className="px-6 py-3 cursor-pointer hover:bg-gray-100 transition-colors" onClick={() => requestSort('next_followup_date')}>
+                                     <div className="flex items-center gap-1">Follow Up {sortConfig?.key === 'next_followup_date' && (sortConfig.direction === 'asc' ? '▲' : '▼')}</div>
+                                  </th>
                                   <th className="px-6 py-3 text-right">Action</th>
                               </tr>
                           </thead>
                           <tbody className="divide-y divide-gray-100">
-                              {leads.map(lead => (
+                              {sortedLeads.map(lead => (
                                   <tr key={lead.id} className="hover:bg-gray-50 transition-colors">
+                                      <td className="px-6 py-4 text-xs text-gray-500 whitespace-nowrap">
+                                          {new Date(lead.created_at || Date.now()).toLocaleDateString()}
+                                      </td>
                                       <td className="px-6 py-4 font-medium text-gray-900">{lead.company_name}</td>
                                       <td className="px-6 py-4 text-gray-700">{lead.job_title || 'N/A'}</td>
                                       <td className="px-6 py-4">

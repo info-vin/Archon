@@ -196,8 +196,8 @@ const supabaseApi = {
       } as Employee;
     }
   },
-  async getTasks(includeClosed: boolean = false): Promise<Task[]> {
-    const response = await fetch(`/api/tasks?include_closed=${includeClosed}`, { headers: await this._getHeaders() });
+  async getTasks(includeClosed: boolean = false, includeUnassigned: boolean = false): Promise<Task[]> {
+    const response = await fetch(`/api/tasks?include_closed=${includeClosed}&include_unassigned=${includeUnassigned}`, { headers: await this._getHeaders() });
     if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         throw new Error(errorData.detail || 'Failed to fetch tasks.');
@@ -247,8 +247,11 @@ const supabaseApi = {
     const { assigneeId, ...rest } = task_data;
     const payload = {
       ...rest,
+      ...rest,
       assignee_id: assigneeId,
-      assignee: "User" // Default fallback name, backend will overwrite with real name if assignee_id is found
+      // Fix FB-04: Don't hardcode "User". If ID is present, backend resolves it. 
+      // If no ID, use "Unassigned" or let backend default handle it.
+      assignee: "Unassigned" 
     };
 
     const response = await fetch('/api/tasks', {

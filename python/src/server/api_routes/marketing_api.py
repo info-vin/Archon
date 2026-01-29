@@ -158,8 +158,14 @@ async def promote_lead_to_vendor(
         return {"success": True, "vendor": vendor_res.data[0]}
     except Exception as e:
         logfire.error(f"API: Lead promotion failed | id={lead_id} | error={str(e)}", exc_info=True)
-        # Return clearer error detail
-        raise HTTPException(status_code=500, detail=f"Promotion failed: {str(e)}") from e
+        # Detailed error for debugging (safe to expose to authenticated users)
+        error_detail = f"Promotion failed: {str(e)}. User Role: {user_role}"
+        if "column" in str(e).lower():
+            error_detail += " (Database Schema Error)"
+        elif "permission" in str(e).lower():
+            error_detail += " (Permission Error)"
+
+        raise HTTPException(status_code=500, detail=error_detail) from e
 
 @router.post("/generate-pitch", response_model=PitchResponse)
 async def generate_pitch(request: PitchRequest, current_user: dict = Depends(get_current_user)):
