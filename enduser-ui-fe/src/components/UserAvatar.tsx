@@ -33,7 +33,7 @@ const UserAvatar: React.FC<UserAvatarProps> = ({ name, size = 40, isAI = false, 
 
   const userStyle: React.CSSProperties = {
     ...baseStyle,
-    borderRadius: '50%', // 圓形
+    borderRadius: className.includes('rounded') ? undefined : '50%', // 預設圓形，但允許 className 覆蓋
     backgroundColor: color,
   };
 
