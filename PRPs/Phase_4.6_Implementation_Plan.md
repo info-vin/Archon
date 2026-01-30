@@ -85,12 +85,12 @@
 > Addressing High-Impact Gaps identified in Phase 4.8 Verification.
 
 #### [NEW] [VoiceService] (Backend & UI)
-- [ ] **Voice Logs**:
+- [x] **Voice Logs**:
     - Backend: Integrate Gemini Multimodal API for Audio -> Text.
     - Frontend: Add "Record" button in `VisitLogModal` using MediaRecorder API.
 
 #### [MODIFY] [LeadsCardStack.tsx]
-- [ ] **Mobile Pitch experience**:
+- [x] **Mobile Pitch experience**:
     - Replace `alert()` with a Fullscreen Drawer/Modal.
     - Features: Large Text, Copy Button, Share Intent.
 

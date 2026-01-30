@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, useMotionValue, useTransform, AnimatePresence } from 'framer-motion';
-import { CheckCircleIcon, XCircleIcon, UserIcon, ExternalLinkIcon, SparklesIcon, MapIcon } from '../../../components/Icons.tsx';
+import { CheckCircleIcon, XCircleIcon, UserIcon, ExternalLinkIcon, SparklesIcon, MapIcon, CopyIcon, ShareIcon, XIcon } from '../../../components/Icons.tsx';
 
 // Temporary Type Definition (Should be shared)
 export interface Lead {
@@ -20,15 +20,85 @@ interface LeadsCardStackProps {
     onSwipeLeft: (lead: Lead) => void;  // Archive
 }
 
-const Card = ({ lead, style, onDragEnd }: { lead: Lead, style: any, onDragEnd: any }) => {
+const PitchDrawer = ({ lead, onClose }: { lead: Lead, onClose: () => void }) => {
+    const pitchText = `Hi, I noticed ${lead.company_name} is looking for ${lead.job_title}. Archon can help with ${lead.identified_need}. we have helped similar companies streamline their workflow by 30%. Would you be open to a 15-min chat?`;
+    const [copied, setCopied] = useState(false);
+
+    const handleCopy = () => {
+        navigator.clipboard.writeText(pitchText);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+    };
+
+    const handleShare = async () => {
+        if (navigator.share) {
+            try {
+                await navigator.share({
+                    title: `Pitch for ${lead.company_name}`,
+                    text: pitchText,
+                });
+            } catch (err) {
+                console.error("Share failed", err);
+            }
+        } else {
+            alert("Sharing not supported on this device.");
+        }
+    };
+
+    return (
+        <div className="fixed inset-0 bg-black/60 z-[70] flex items-end justify-center sm:items-center p-0 sm:p-4 animate-in fade-in duration-200" onClick={onClose}>
+            <div 
+                className="bg-white w-full max-w-md rounded-t-2xl sm:rounded-2xl p-6 shadow-2xl animate-in slide-in-from-bottom-full sm:zoom-in-95 duration-300"
+                onClick={(e) => e.stopPropagation()}
+            >
+                <div className="flex justify-between items-center mb-4">
+                    <div className="flex items-center gap-2">
+                        <div className="bg-indigo-100 p-2 rounded-lg text-indigo-600">
+                            <SparklesIcon className="w-5 h-5" />
+                        </div>
+                        <h3 className="text-lg font-bold">AI Pitch Generator</h3>
+                    </div>
+                    <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+                        <XIcon className="w-5 h-5 text-gray-500" />
+                    </button>
+                </div>
+
+                <div className="bg-gray-50 p-4 rounded-xl border border-gray-100 mb-6">
+                    <p className="text-gray-800 leading-relaxed text-base whitespace-pre-wrap font-medium">
+                        "{pitchText}"
+                    </p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                    <button 
+                        onClick={handleCopy}
+                        className={`flex items-center justify-center gap-2 py-3 rounded-xl font-semibold transition-all ${copied ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+                    >
+                        {copied ? <CheckCircleIcon className="w-5 h-5" /> : <CopyIcon className="w-5 h-5" />}
+                        {copied ? "Copied" : "Copy Text"}
+                    </button>
+                    <button 
+                        onClick={handleShare}
+                        className="flex items-center justify-center gap-2 py-3 bg-indigo-600 text-white rounded-xl font-semibold hover:bg-indigo-700 transition-all"
+                    >
+                        <ShareIcon className="w-5 h-5" />
+                        Share
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+const Card = ({ lead, style, onDragEnd, onPitch }: { lead: Lead, style: any, onDragEnd: any, onPitch: () => void }) => {
     const handleMap = (e: React.MouseEvent) => {
         e.stopPropagation();
         window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(lead.company_name)}`, '_blank');
     };
 
-    const handlePitch = (e: React.MouseEvent) => {
+    const handlePitchClick = (e: React.MouseEvent) => {
         e.stopPropagation();
-        alert(`AI Pitch for ${lead.company_name}:\n\n"Hi, I noticed ${lead.company_name} is looking for ${lead.job_title}. Archon can help with ${lead.identified_need}..."`);
+        onPitch();
     };
 
     return (
@@ -91,7 +161,7 @@ const Card = ({ lead, style, onDragEnd }: { lead: Lead, style: any, onDragEnd: a
                         <MapIcon className="w-6 h-6" />
                     </button>
                     <button 
-                        onClick={handlePitch}
+                        onClick={handlePitchClick}
                         className="w-12 h-12 bg-indigo-600 rounded-full shadow-lg shadow-indigo-200 flex items-center justify-center text-white hover:bg-indigo-700 active:scale-95 transition-all"
                         onPointerDown={(e) => e.stopPropagation()}
                         title="Generate Pitch"
@@ -113,6 +183,7 @@ const Card = ({ lead, style, onDragEnd }: { lead: Lead, style: any, onDragEnd: a
 
 export const LeadsCardStack: React.FC<LeadsCardStackProps> = ({ leads, onSwipeRight, onSwipeLeft }) => {
     const [index, setIndex] = useState(0);
+    const [pitchLead, setPitchLead] = useState<Lead | null>(null);
 
     const activeLead = leads[index];
     const x = useMotionValue(0);
@@ -168,6 +239,7 @@ export const LeadsCardStack: React.FC<LeadsCardStackProps> = ({ leads, onSwipeRi
                     lead={activeLead}
                     style={{ x, rotate, opacity, scale }}
                     onDragEnd={handleDragEnd}
+                    onPitch={() => setPitchLead(activeLead)}
                 />
             </AnimatePresence>
 
@@ -186,6 +258,9 @@ export const LeadsCardStack: React.FC<LeadsCardStackProps> = ({ leads, onSwipeRi
                     <CheckCircleIcon className="w-8 h-8" />
                 </button>
             </div>
+
+            {/* Pitch Drawer Overlay */}
+            {pitchLead && <PitchDrawer lead={pitchLead} onClose={() => setPitchLead(null)} />}
         </div>
     );
 };

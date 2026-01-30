@@ -48,30 +48,97 @@ async def create_visit_log(
         summary = "No audio provided."
         tasks = []
 
-        # 1. Process Audio with Gemini (Mock for now or Real if Key exists)
+        # 1. Process Audio with Gemini 1.5 Flash (Multimodal)
         if audio_file:
-            # TODO(Phase 4.6): Implement actual Gemini 1.5 Flash Audio Processing
-            # For now, we simulate a transcript based on file name or dummy content
-            transcript = "Customer confirmed interest in the Enterprise plan but wants a 10% discount. Follow up with a quote next Tuesday."
+            logfire.info("Processing audio file with Gemini 1.5 Flash...")
+            
+            # Read and encode audio
+            audio_content = await audio_file.read()
+            import base64
+            # Function to determine mime type from filename or header
+            mime_type = audio_file.content_type or "audio/webm"
+            base64_audio = base64.b64encode(audio_content).decode("utf-8")
+            
+            # Get Google API Key
+            # We bypass llm_provider_service for this specific raw multimodal call because
+            # standard OpenAI client wrapper doesn't support 'inline_data' for audio easily.
+            from ..services.credential_service import credential_service
+            
+            # Try to get 'google' provider key first, or fallback to 'rag_strategy' key
+            config = await credential_service.get_active_provider("llm")
+            api_key = None
+            if config and config.get("provider") == "google":
+                api_key = config.get("api_key")
+            
+            if not api_key:
+                # Fallback: check if we have a specific Google key in env or settings
+                creds = await credential_service.get_credentials_by_category("llm_providers")
+                # This is a bit heuristic, assuming 'google' might be there even if not active
+                # But let's assume if it's not active, we might fail or use a default env var
+                import os
+                api_key = os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_API_KEY")
 
-            # 2. Extract Tasks & Summary using LLM
-            # (In real impl, we would send audio directly to Gemini 1.5 Flash)
-            async with get_llm_client() as client:
-                # Simple text extraction for now
-                response = await client.chat.completions.create(
-                    model="gpt-4o", # Or Gemini-1.5-flash
-                    messages=[
-                        {"role": "system", "content": "You are a Sales Assistant. Extract a summary and checklist of follow-up tasks from this sales visit transcript. Return JSON: {summary: str, tasks: str[]}"},
-                        {"role": "user", "content": transcript}
-                    ],
-                    response_format={ "type": "json_object" }
-                )
-                import json
-                result = json.loads(response.choices[0].message.content)
-                summary = result.get("summary", "Processed visit log.")
-                tasks = result.get("tasks", [])
+            if not api_key:
+                 # Last resort: check if 'openai' provider is actually Google (e.g. valid key)
+                 # But safer to just warn and skip if no key found.
+                 logfire.warning("No Google/Gemini API key found for audio processing. Skipping.")
+                 transcript = "[Error: No Gemini API Key found]"
+            else:
+                try:
+                    import httpx
+                    
+                    # Gemini 1.5 Flash Endpoint
+                    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
+                    
+                    prompt_text = (
+                        "You are an expert Sales Assistant. "
+                        "1. Transcribe the following sales visit audio accurately. "
+                        "2. Summarize the key points. "
+                        "3. Extract a list of follow-up tasks. "
+                        "Return JSON with keys: 'transcript', 'summary', 'tasks' (list of strings)."
+                    )
 
-        # 3. Save to DB
+                    payload = {
+                        "contents": [{
+                            "parts": [
+                                {"text": prompt_text},
+                                {
+                                    "inline_data": {
+                                        "mime_type": mime_type,
+                                        "data": base64_audio
+                                    }
+                                }
+                            ]
+                        }],
+                        "generationConfig": {
+                            "response_mime_type": "application/json"
+                        }
+                    }
+
+                    async with httpx.AsyncClient() as client:
+                        resp = await client.post(url, json=payload, timeout=60.0)
+                        if resp.status_code != 200:
+                            logfire.error(f"Gemini API Error: {resp.text}")
+                            transcript = f"[Error processing audio: {resp.status_code}]"
+                        else:
+                            data = resp.json()
+                            # Parse Gemini Response
+                            try:
+                                raw_json = data["candidates"][0]["content"]["parts"][0]["text"]
+                                import json
+                                result = json.loads(raw_json)
+                                transcript = result.get("transcript", "")
+                                summary = result.get("summary", "Audio processed.")
+                                tasks = result.get("tasks", [])
+                            except Exception as parse_error:
+                                logfire.error(f"Failed to parse Gemini JSON: {parse_error}")
+                                transcript = "[Error parsing AI response]"
+
+                except Exception as api_err:
+                    logfire.error(f"Gemini API Request failed: {api_err}")
+                    transcript = f"[Error: {str(api_err)}]"
+
+        # 3. Save to DB (Combined logic)
         log_data = {
             "user_id": user_id,
             "customer_id": customer_id if customer_id else None,

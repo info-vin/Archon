@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { api } from '../../../services/api';
-import { XIcon, MapPinIcon, CheckCircleIcon, SparklesIcon } from '../../../components/Icons';
+import { XIcon, MapPinIcon, CheckCircleIcon, SparklesIcon, MicrophoneIcon, TrashIcon } from '../../../components/Icons';
 
 interface VisitLogModalProps {
     onClose: () => void;
@@ -15,6 +15,12 @@ export const VisitLogModal: React.FC<VisitLogModalProps> = ({ onClose, onSuccess
     const [loading, setLoading] = useState(false);
     const [summary, setSummary] = useState<any>(null);
 
+    // Audio Recording State
+    const [isRecording, setIsRecording] = useState(false);
+    const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
+    const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+    const chunksRef = useRef<BlobPart[]>([]);
+
     const handleLocation = () => {
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(
@@ -22,6 +28,42 @@ export const VisitLogModal: React.FC<VisitLogModalProps> = ({ onClose, onSuccess
                 (_) => alert("Could not get location. Ensure permissions are allowed.")
             );
         }
+    };
+
+    const startRecording = async () => {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            const mediaRecorder = new MediaRecorder(stream);
+            mediaRecorderRef.current = mediaRecorder;
+            chunksRef.current = [];
+
+            mediaRecorder.ondataavailable = (e) => {
+                if (e.data.size > 0) chunksRef.current.push(e.data);
+            };
+
+            mediaRecorder.onstop = () => {
+                const blob = new Blob(chunksRef.current, { type: 'audio/webm' });
+                setAudioBlob(blob);
+                stream.getTracks().forEach(track => track.stop()); // Stop mic
+            };
+
+            mediaRecorder.start();
+            setIsRecording(true);
+        } catch (err) {
+            console.error("Microphone access denied:", err);
+            alert("Microphone access denied. Please check permissions.");
+        }
+    };
+
+    const stopRecording = () => {
+        if (mediaRecorderRef.current && isRecording) {
+            mediaRecorderRef.current.stop();
+            setIsRecording(false);
+        }
+    };
+
+    const clearAudio = () => {
+        setAudioBlob(null);
     };
 
     const handleSubmit = async () => {
@@ -33,22 +75,14 @@ export const VisitLogModal: React.FC<VisitLogModalProps> = ({ onClose, onSuccess
                 formData.append('latitude', location.lat.toString());
                 formData.append('longitude', location.lng.toString());
             }
-            // Notes can be passed as text prompt or just manual notes.
-            // Requirement says "Voice Transcript". 
-            // We'll simulate voice by just sending notes as 'transcript' if no audio, 
-            // or if audio exists, backend handles it.
             
-            // Wait, backend `create_visit_log` does NOT accept generic 'notes' field in form data?
-            // Let's check backend `visit_log_api.py`.
-            // It parses transcript from audio.
-            // If we want manual notes, we should probably add a parameter to the backend or generic 'summary' override.
-            // Backend: `summary = await llm_service.summarize(transcript)`
-            // If no audio, transcript is empty.
-            // I should add `manual_notes` to backend?
-            // Or just append notes to form data and let backend ignore or use it. 
-            // Previous plan didn't specify manual notes vs audio explicitly, but UI needs fallback.
-            
-            formData.append('notes', notes); // Hope backend uses it or we update backend later.
+            // Append audio if exists
+            if (audioBlob) {
+                // Determine extension based on blob type usually webm in Chrome
+                formData.append('audio_file', audioBlob, 'visit_recording.webm');
+            }
+
+            formData.append('notes', notes); 
 
             const res = await api.createVisitLog(formData);
             setSummary(res); // Show summary
@@ -75,6 +109,12 @@ export const VisitLogModal: React.FC<VisitLogModalProps> = ({ onClose, onSuccess
                                 <SparklesIcon className="w-4 h-4 text-purple-600" /> AI Summary
                             </p>
                             <p className="text-gray-600">{summary?.summary || "Processing..."}</p>
+                            {summary?.voice_transcript && (
+                                <div className="mt-2 pt-2 border-t border-gray-200">
+                                    <p className="font-semibold text-gray-700 mb-1 text-xs uppercase">Transcript</p>
+                                    <p className="text-gray-500 text-xs italic line-clamp-3">{summary.voice_transcript}</p>
+                                </div>
+                            )}
                         </div>
 
                         <button onClick={onSuccess} className="w-full py-3 bg-gray-900 text-white rounded-lg font-semibold">
@@ -123,19 +163,49 @@ export const VisitLogModal: React.FC<VisitLogModalProps> = ({ onClose, onSuccess
                         </div>
 
                         <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Voice Log (Optional)</label>
+                            {!audioBlob ? (
+                                <button 
+                                    onClick={isRecording ? stopRecording : startRecording}
+                                    className={`w-full p-4 rounded-xl border-2 flex items-center justify-center gap-3 transition-colors ${
+                                        isRecording 
+                                            ? 'border-red-500 bg-red-50 text-red-600 animate-pulse' 
+                                            : 'border-dashed border-gray-300 hover:border-indigo-500 hover:bg-indigo-50 text-gray-600'
+                                    }`}
+                                >
+                                    {isRecording ? <div className="w-3 h-3 bg-red-600 rounded-sm" /> : <MicrophoneIcon className="w-5 h-5" />}
+                                    <span className="font-semibold">{isRecording ? "Stop Recording" : "Tap to Record Audio"}</span>
+                                </button>
+                            ) : (
+                                <div className="flex items-center gap-2 p-3 bg-indigo-50 border border-indigo-100 rounded-xl">
+                                    <div className="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600">
+                                        <MicrophoneIcon className="w-4 h-4" />
+                                    </div>
+                                    <div className="flex-1">
+                                        <p className="text-sm font-bold text-gray-800">Audio Recorded</p>
+                                        <p className="text-xs text-gray-500">Ready to transcribe</p>
+                                    </div>
+                                    <button onClick={clearAudio} className="p-2 hover:bg-red-100 rounded-full text-red-500 transition-colors">
+                                        <TrashIcon className="w-4 h-4" />
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+
+                        <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">Notes / Transcript</label>
                             <textarea 
                                 value={notes}
                                 onChange={(e) => setNotes(e.target.value)}
                                 className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-                                rows={4}
-                                placeholder="Type summary or allow AI to listen..."
+                                rows={3}
+                                placeholder={audioBlob ? "Additional notes..." : "Type summary or record audio..."}
                             />
                         </div>
 
                         <button 
                             onClick={handleSubmit} 
-                            disabled={loading || !type}
+                            disabled={loading || !type || isRecording}
                             className="w-full py-3 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 disabled:opacity-50 flex justify-center gap-2"
                         >
                             {loading && <SparklesIcon className="w-5 h-5 animate-pulse" />}
