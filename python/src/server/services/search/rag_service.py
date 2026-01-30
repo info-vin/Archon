@@ -201,7 +201,7 @@ class RAGService:
                 search_filter = {"source": source} if source else {}
                 if filter_metadata:
                     search_filter.update(filter_metadata)
-                
+
                 final_filter = search_filter if search_filter else None
 
                 # Check which strategies are enabled

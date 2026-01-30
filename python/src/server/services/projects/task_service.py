@@ -637,7 +637,7 @@ class TaskService:
                     model=model_name,
                     messages=[
                         {"role": "system", "content": "You are POBot, a helpful Product Owner assistant."},
-                    {"role": "user", "content": prompt}
+                        {"role": "user", "content": prompt}
                     ],
                     temperature=0.7
                 )

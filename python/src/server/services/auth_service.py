@@ -88,7 +88,7 @@ class AuthService:
             err_content = str(e).lower()
             if hasattr(e, 'message'):
                 err_content += f" {str(e.message).lower()}"
-                
+
             is_duplicate = (
                 "already registered" in err_content or
                 "already exists" in err_content or

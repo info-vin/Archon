@@ -355,6 +355,11 @@ Phase 4.4.5 引入了 **Clockwork** 進行系統自動檢測。
         | 16 | `012_create_archon_logs.sql` | **[日誌]** 建立 `archon_logs` 支援 Clockwork 與系統稽核。 |
         | 17 | `013_seed_system_prompts.sql` | **[AI]** 寫入 System Prompts (Prompt as Data)。 |
         | 18 | `014_vector_rls_policy.sql` | **[安全]** 啟用向量庫 RLS，實作部門資料隔離。 |
+        | 19 | `015_fix_vendors_schema.sql` | **[修復]** 修正 `vendors` 資料表結構。 |
+        | 20 | `016_fix_vendors_rls.sql` | **[安全]** 修正 `vendors` 的 RLS 政策。 |
+        | 21 | `017_add_missing_vendor_columns.sql` | **[Schema]** 補齊 `vendors` 缺失欄位 (如 `status`)。 |
+        | 22 | `018_fix_blog_posts_id_default.sql` | **[修復]** 修正 `blog_posts` ID 的 UUID 預設值。 |
+        | 23 | `019_add_prompts_rls.sql` | **[安全]** 為 `system_prompts` 加入 RLS 政策，保護 AI 提示詞。 |
 
 3.  **階段三：執行部署**
 
