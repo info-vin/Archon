@@ -62,7 +62,7 @@
 #### [MODIFY] [ApprovalsPage.tsx](file:///Users/vincenta/GoogleKwok022/Archon/enduser-ui-fe/src/pages/ApprovalsPage.tsx)
 - [x] **Card-Based Interface**: Grid layout for tablet.
 
-### 6. Phase 4.8: UX Polish & Gap Closure
+### 6. UX Polish & Gap Closure
 > [!IMPORTANT]
 > 補齊 Phase 4.6 UX Strategy 中被延後的 "Nice-to-Have" 但對 Mobile 體驗至關重要的功能。
 
@@ -80,7 +80,7 @@
 - [x] **Floating Action Button (FAB)**:
     - Actions: `Map` (Google Maps), `Pitch` (Alert/Modal).
 
-### 7. Phase 4.9: Mobile & Intelligence Completion (Gap Closure)
+### 7. Mobile & Intelligence Completion (Gap Closure)
 > [!IMPORTANT]
 > Addressing High-Impact Gaps identified in Phase 4.8 Verification.
 

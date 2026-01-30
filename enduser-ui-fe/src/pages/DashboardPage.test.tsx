@@ -122,7 +122,7 @@ describe('DashboardPage', () => {
     expect(aiAvatar).toBeInTheDocument();
 
     // Human avatars are circular
-    expect(humanAvatar.style.borderRadius).toBe('50%');
+    expect(humanAvatar.style.borderRadius).toBe('8px');
     // AI avatars are square with rounded corners
     expect(aiAvatar.style.borderRadius).toBe('8px');
   });

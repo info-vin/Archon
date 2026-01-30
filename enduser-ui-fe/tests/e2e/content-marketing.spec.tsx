@@ -9,17 +9,9 @@ import { createUser } from '../factories/userFactory';
 // Using the shared server from e2e setup logic conceptually, but defining local overrides if needed.
 // Actually, since we use renderApp which uses AppRoutes, we should rely on the shared infrastructure.
 
-vi.mock('../../src/services/api', async (importOriginal) => {
-    const actual = await importOriginal<any>();
-    return {
-        ...actual,
-        api: {
-            ...actual.api,
-            getCurrentUser: vi.fn(),
-            draftBlogPost: vi.fn(),
-        }
-    };
-});
+// Using the shared server from e2e setup logic conceptually.
+// We allow e2e.setup.tsx to handle the base module mocking.
+// We just override specific methods below.
 
 describe('Content Marketing E2E Flow', () => {
     it('Bob can draft a blog post using RAG citations', async () => {
@@ -38,6 +30,14 @@ describe('Content Marketing E2E Flow', () => {
             title: 'AI in Manufacturing',
             content: 'Draft content with References: [Lead 104]',
             excerpt: 'AI is transforming manufacturing processes...'
+        });
+
+        // Mock Data Loading (BrandPage MOUNT)
+        vi.mocked(api.getBlogPosts).mockResolvedValue([]);
+        vi.mocked(api.getMarketStats).mockResolvedValue({});
+        vi.mocked(api.getMarketingTrends).mockResolvedValue({
+            keyword_growth: [],
+            sankey_flow: { nodes: [], links: [] }
         });
 
         // Start at Dashboard or Landing
@@ -70,8 +70,11 @@ describe('Content Marketing E2E Flow', () => {
         await user.click(magicDraftBtn);
 
         // 6. Verify Citations
+        // We rely on the DOM update to confirm the action succeeded
+        const contentArea = screen.getByPlaceholderText(/Write your content/i);
         await waitFor(() => {
-            expect(screen.getByDisplayValue(/References:/)).toBeInTheDocument();
+            const val = (contentArea as HTMLTextAreaElement).value;
+            expect(val).toMatch(/References:/);
         });
     });
 });

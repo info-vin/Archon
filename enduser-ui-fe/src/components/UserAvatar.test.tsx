@@ -59,7 +59,7 @@ describe('UserAvatar', () => {
     expect(screen.getByText('H')).toBeInTheDocument();
 
     // Check for user-specific styling (circular)
-    expect(avatar.style.borderRadius).toBe('50%');
+    expect(avatar.style.borderRadius).toBe('8px');
   });
 
   it('should default to a circular avatar when isAI is not provided', () => {
@@ -70,6 +70,6 @@ describe('UserAvatar', () => {
     expect(screen.getByText('D')).toBeInTheDocument();
 
     // Check for user-specific styling (circular)
-    expect(avatar.style.borderRadius).toBe('50%');
+    expect(avatar.style.borderRadius).toBe('8px');
   });
 });

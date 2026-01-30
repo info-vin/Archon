@@ -36,7 +36,7 @@ describe('Sales Nexus Closure Flow (Phase 4.4.2)', () => {
         });
 
         // 4. Generate Pitch
-        const generateBtns = screen.getAllByText(/Generate Pitch/i);
+        const generateBtns = screen.getAllByText('Pitch');
         fireEvent.click(generateBtns[0]);
 
         // 5. Approve & Save (Triggers Librarian)
