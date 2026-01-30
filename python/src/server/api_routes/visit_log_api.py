@@ -4,7 +4,6 @@ from pydantic import BaseModel
 
 from ..auth.dependencies import get_current_user
 from ..config.logfire_config import get_logger, logfire
-from ..services.llm_provider_service import get_llm_client
 from ..utils import get_supabase_client
 
 logger = get_logger(__name__)
@@ -51,28 +50,28 @@ async def create_visit_log(
         # 1. Process Audio with Gemini 1.5 Flash (Multimodal)
         if audio_file:
             logfire.info("Processing audio file with Gemini 1.5 Flash...")
-            
+
             # Read and encode audio
             audio_content = await audio_file.read()
             import base64
             # Function to determine mime type from filename or header
             mime_type = audio_file.content_type or "audio/webm"
             base64_audio = base64.b64encode(audio_content).decode("utf-8")
-            
+
             # Get Google API Key
             # We bypass llm_provider_service for this specific raw multimodal call because
             # standard OpenAI client wrapper doesn't support 'inline_data' for audio easily.
             from ..services.credential_service import credential_service
-            
+
             # Try to get 'google' provider key first, or fallback to 'rag_strategy' key
             config = await credential_service.get_active_provider("llm")
             api_key = None
             if config and config.get("provider") == "google":
                 api_key = config.get("api_key")
-            
+
             if not api_key:
                 # Fallback: check if we have a specific Google key in env or settings
-                creds = await credential_service.get_credentials_by_category("llm_providers")
+                await credential_service.get_credentials_by_category("llm_providers")
                 # This is a bit heuristic, assuming 'google' might be there even if not active
                 # But let's assume if it's not active, we might fail or use a default env var
                 import os
@@ -86,10 +85,10 @@ async def create_visit_log(
             else:
                 try:
                     import httpx
-                    
+
                     # Gemini 1.5 Flash Endpoint
                     url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
-                    
+
                     prompt_text = (
                         "You are an expert Sales Assistant. "
                         "1. Transcribe the following sales visit audio accurately. "

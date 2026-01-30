@@ -4,6 +4,7 @@ import { Task, TaskStatus, TaskPriority, Project } from '../types.ts';
 import { GanttChartIcon, KanbanIcon, ListIcon, TableIcon, PlusIcon, ChevronDownIcon, ChevronsUpDownIcon, PaperclipIcon, ClockIcon } from '../components/Icons.tsx';
 import { TaskModal } from '../components/TaskModal.tsx';
 import { ProjectModal } from '../components/ProjectModal.tsx';
+import { ClockInWidget } from '../components/ClockInWidget.tsx';
 import UserAvatar from '../components/UserAvatar.tsx';
 import { select, extent, scaleTime, scaleBand, axisTop, timeFormat, timeDay, timeWeek } from 'd3';
 import { useAuth } from '../hooks/useAuth.tsx';
@@ -442,6 +443,7 @@ const DashboardPage: React.FC = () => {
       {/* Sorting controls remain the same */}
 
       <div className="flex-1 overflow-auto">
+        <ClockInWidget />
         {viewMode === 'list' && <ListView tasks={sortedTasks} setEditingTask={setEditingTask} />}
         {viewMode === 'table' && <TableView tasks={sortedTasks} setEditingTask={setEditingTask} requestSort={requestSort} sortConfig={sortConfig} />}
         {viewMode === 'kanban' && <KanbanView tasks={filteredTasks} updateTaskStatus={updateTaskStatus} setEditingTask={setEditingTask} />}

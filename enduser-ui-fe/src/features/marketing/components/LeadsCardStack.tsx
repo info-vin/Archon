@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, useMotionValue, useTransform, AnimatePresence } from 'framer-motion';
-import { CheckCircleIcon, XCircleIcon, UserIcon, ExternalLinkIcon, SparklesIcon, MapIcon, CopyIcon, ShareIcon, XIcon } from '../../../components/Icons.tsx';
+import { CheckCircleIcon, XCircleIcon, UserIcon, ExternalLinkIcon, SparklesIcon, MapIcon, CopyIcon, ShareIcon, XIcon, ActivityIcon } from '../../../components/Icons.tsx';
 
 // Temporary Type Definition (Should be shared)
 export interface Lead {
@@ -20,7 +20,10 @@ interface LeadsCardStackProps {
     onSwipeLeft: (lead: Lead) => void;  // Archive
 }
 
+import { LeadsTimeline } from './LeadsTimeline';
+
 const PitchDrawer = ({ lead, onClose }: { lead: Lead, onClose: () => void }) => {
+    // ... (existing PitchDrawer code)
     const pitchText = `Hi, I noticed ${lead.company_name} is looking for ${lead.job_title}. Archon can help with ${lead.identified_need}. we have helped similar companies streamline their workflow by 30%. Would you be open to a 15-min chat?`;
     const [copied, setCopied] = useState(false);
 
@@ -90,7 +93,30 @@ const PitchDrawer = ({ lead, onClose }: { lead: Lead, onClose: () => void }) => 
     );
 };
 
-const Card = ({ lead, style, onDragEnd, onPitch }: { lead: Lead, style: any, onDragEnd: any, onPitch: () => void }) => {
+const HistoryDrawer = ({ lead, onClose }: { lead: Lead, onClose: () => void }) => {
+    // Mock History Data
+    const mockEvents: any[] = [
+        { id: '1', type: 'creation', title: 'Lead Identified', description: `Sourced from ${lead.source}`, timestamp: new Date(Date.now() - 86400000 * 2).toISOString() },
+        { id: '2', type: 'status_change', title: 'Qualified', description: 'Matched ICP criteria', timestamp: new Date(Date.now() - 86400000).toISOString() },
+    ];
+
+    return (
+         <div className="fixed inset-0 bg-black/60 z-[70] flex items-end justify-center sm:items-center p-0 sm:p-4 animate-in fade-in duration-200" onClick={onClose}>
+            <div 
+                className="bg-white w-full max-w-md rounded-t-2xl sm:rounded-2xl p-6 shadow-2xl animate-in slide-in-from-bottom-full sm:zoom-in-95 duration-300 max-h-[80vh] overflow-y-auto"
+                onClick={(e) => e.stopPropagation()}
+            >
+                <div className="flex justify-between items-center mb-6">
+                    <h3 className="text-lg font-bold">Activity Timeline</h3>
+                    <button onClick={onClose}><XIcon className="w-5 h-5 text-gray-400" /></button>
+                </div>
+                <LeadsTimeline events={mockEvents} />
+            </div>
+        </div>
+    );
+};
+
+const Card = ({ lead, style, onDragEnd, onPitch, onHistory }: { lead: Lead, style: any, onDragEnd: any, onPitch: () => void, onHistory: () => void }) => {
     const handleMap = (e: React.MouseEvent) => {
         e.stopPropagation();
         window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(lead.company_name)}`, '_blank');
@@ -99,6 +125,11 @@ const Card = ({ lead, style, onDragEnd, onPitch }: { lead: Lead, style: any, onD
     const handlePitchClick = (e: React.MouseEvent) => {
         e.stopPropagation();
         onPitch();
+    };
+
+    const handleHistoryClick = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        onHistory();
     };
 
     return (
@@ -152,6 +183,14 @@ const Card = ({ lead, style, onDragEnd, onPitch }: { lead: Lead, style: any, onD
 
                 {/* FAB Actions (One-Tap) */}
                 <div className="absolute bottom-20 right-6 flex flex-col gap-3 z-20">
+                     <button 
+                        onClick={handleHistoryClick}
+                        className="w-12 h-12 bg-white rounded-full shadow-lg border border-gray-100 flex items-center justify-center text-amber-500 hover:bg-amber-50 active:scale-95 transition-all"
+                        onPointerDown={(e) => e.stopPropagation()}
+                        title="View Timeline"
+                    >
+                        <ActivityIcon className="w-6 h-6" />
+                    </button>
                     <button 
                         onClick={handleMap}
                         className="w-12 h-12 bg-white rounded-full shadow-lg border border-gray-100 flex items-center justify-center text-blue-500 hover:bg-blue-50 active:scale-95 transition-all"
@@ -184,6 +223,7 @@ const Card = ({ lead, style, onDragEnd, onPitch }: { lead: Lead, style: any, onD
 export const LeadsCardStack: React.FC<LeadsCardStackProps> = ({ leads, onSwipeRight, onSwipeLeft }) => {
     const [index, setIndex] = useState(0);
     const [pitchLead, setPitchLead] = useState<Lead | null>(null);
+    const [historyLead, setHistoryLead] = useState<Lead | null>(null);
 
     const activeLead = leads[index];
     const x = useMotionValue(0);
@@ -240,6 +280,7 @@ export const LeadsCardStack: React.FC<LeadsCardStackProps> = ({ leads, onSwipeRi
                     style={{ x, rotate, opacity, scale }}
                     onDragEnd={handleDragEnd}
                     onPitch={() => setPitchLead(activeLead)}
+                    onHistory={() => setHistoryLead(activeLead)}
                 />
             </AnimatePresence>
 
@@ -261,6 +302,9 @@ export const LeadsCardStack: React.FC<LeadsCardStackProps> = ({ leads, onSwipeRi
 
             {/* Pitch Drawer Overlay */}
             {pitchLead && <PitchDrawer lead={pitchLead} onClose={() => setPitchLead(null)} />}
+            
+            {/* History Drawer Overlay */}
+            {historyLead && <HistoryDrawer lead={historyLead} onClose={() => setHistoryLead(null)} />}
         </div>
     );
 };
