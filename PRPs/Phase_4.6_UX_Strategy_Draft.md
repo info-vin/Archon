@@ -87,3 +87,27 @@
 *   **Principle**: Data Parity, UI Divergence.
     26. **Adaptive UI**: 單一 URL，根據 Device 自動切換 Layout。
     27. **Shared Components**: Admin/Marketing 共用 Asset Generator 元件，僅更換 Config/Permissions。
+
+## 5. Cognitive Infrastructure (認知基礎設施)
+
+> **核心目標**: 實作 "The Soul of the Machine" (Clockwork L5)，讓系統具備基於數據的自我觀察與優化能力。
+
+### A. Data Foundation (資料基石)
+*   **Contextual Logging (`archon_logs` 2.0)**:
+    *   **Before/After Snapshot**: 當 Alice 修改 AI 生成的內容時，記錄 `original_text` 與 `final_text` 的差異 (Diff)，作為 "Human Correction Rate" 的計算基礎。
+    *   **Business Context**: 記錄操作當下的業務變數（如：客戶產業、Lead 分數），以便分析 "什麼情況下 AI 表現最差"。
+*   **Event Sourcing Integration**:
+    *   將 `LeadStatusChanged`, `DraftRevised` 等關鍵動作視為事件，而非單純的資料庫更新，以建立完整的行為時間軸。
+
+### B. Clockwork L5 Evolution (流程教練)
+*   **Pattern Recognition (模式識別)**:
+    *   **Workflow Analyzer**: 定期 (Weekly) 分析 Log，識別重複的人類介入模式（例如：Bob 總是在生成草稿後手動刪除某個特定段落）。
+    *   **Bottleneck Detection**: 找出 "Human Time" 消耗最高的 AI 任務環節。
+*   **Proactive Optimization (主動優化)**:
+    *   **Prompt Tuning Proposal**: Clockwork 自動生成 `proposed_changes`，建議 Admin 修改 System Prompt（例如："建議在 MarketBot Prompt 加入 'Tone: Formal' 以減少 Alice 的修改率"）。
+    *   **Macro Suggestion**: 建議將連續的高頻操作（如：搜尋 -> 篩選 -> 生成）打包為自動化 Macro。
+
+### C. Feedback Loop UX (閉環體驗)
+*   **Admin/Charlie**:
+    *   **Optimization Dashboard**: 新增 "System Insights" 面板，顯示 "Prompt Efficiency Score" (Prompt 效率分) 與 "Human Correction Rate" (人類修正率)。
+    *   **One-Click Apply**: 針對 Clockwork 的優化建議，提供 "Approve & Apply" 按鈕，一鍵更新 System Prompt。

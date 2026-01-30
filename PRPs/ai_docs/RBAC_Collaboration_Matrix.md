@@ -40,6 +40,14 @@ Archon 是一個「使用者角色的人機協作平台」。在此生態系中�
 
 ---
 
+## 3.1 AGENT ONTOLOGY (代理人本質)
+
+Agent 在系統中具有雙重性：
+1. **介面層 (The Bot)**：作為具備頭像、ID 與 `ai_agent` 角色的「虛擬員工」，存在於指派選單中，供人類協作。
+2. **執行層 (The Proxy)**：透過掛載 **MCP Tools** 與系統權限，具備真實改變系統狀態的能力（如寫入代碼、執行爬蟲、操作向量庫），是能獨立解決問題的「代理人」。
+
+---
+
 ## 4. ASSIGNMENT CONTEXT LOGIC (指派上下文邏輯 - Phase 4.4 New)
 
 任務指派 (Assignee) 選單採「單一分組選單，動態過濾內容」模式：
@@ -115,6 +123,16 @@ Archon 是一個「使用者角色的人機協作平台」。在此生態系中�
 | **品牌資產** | **DevBot** | `public/logo-eciton.svg` | Global Header & Branding Settings |
 | **AI 消耗與分析**| **Clockwork** | `daily_ai_usage` (SQL) | Team Management Panel / Dashboard |
 | **系統提示** | **Admin** | `server/prompts/*.py` | Admin UI (3737) |
+
+---
+
+## 7.1 INFRASTRUCTURE DECOUPLING (基礎設施解耦)
+
+Archon 採用「核心引擎共用，身份邏輯分流」模式：
+*   **共享引擎 (Shared Engine)**：如 `CrawlingService` 為全域唯一核心。
+*   **身份導向輸出 (Identity-Based Output)**：
+    *   **MarketBot (5173)**：調用爬蟲執行 **Transactional** 任務（如抓取 104），寫入 SQL `leads`。
+    *   **Librarian (3737)**：調用爬蟲執行 **Analytical** 任務（如抓取 Docs），寫入 Vector `knowledge_items`。
 
 ---
 
@@ -255,3 +273,13 @@ sequenceDiagram
         end
     end
 ```
+
+---
+
+## 10. COGNITIVE WORKFLOWS & SELF-REINFORCEMENT (認知工作流與自我強化)
+
+這是系統邁向 **L5 (Level 5) 自主進化** 的藍圖：
+
+1. **觀察 (Observe)**：透過 `archon_logs` 記錄人類角色 (Alice/Bob) 的操作習慣與 Agent 產出的修改率。
+2. **學習 (Learn)**：由 **Clockwork (L5 模式)** 分析模式，找出效率瓶頸。
+3. **強化 (Reinforce)**：Clockwork 主動向 L1 Admin 提交 `proposed_changes`，建議優化 Agent 的 System Prompts 或建立自動化 Macro，實現工作流的閉環強化。
