@@ -5,16 +5,57 @@
 
 ## 1. Role & Device Optimization (角色與裝置優化)
 
-### A. Alice (Sales Rep) - Mobile First
-*   **Context**: 通勤中、客戶現場、單手操作。
-*   **Issues**: 目前 Sales Hub 為 Desktop 設計，表格在手機上難以閱讀。
-*   **Proposal**:
-    1.  **Mobile Layout**: 隱藏側邊欄，改用底部導覽列 (Bottom Navigation)。
-    2.  **Card-Based Leads**: 將寬表格轉換為 "Card Stack" 視圖，適合單手滑動。
-    3.  **One-Tap Actions**: 增加快速按鈕 (Call, Map, Pitch) 於顯眼位置。
-    4.  **Sales Shopping Cart**: (New) "Tinder-style" 左滑忽略/右滑收藏 Leads，並在 "My Cart" 頁面批次處理。
-    5.  **Job Search Cards**: Job Search 結果卡片化，點擊展開。
-    6.  **One-Handed Pitch**: 生成 pitch 後全螢幕顯示，提供 "Copy/Share" 大按鈕。
+### A. Alice (Sales Rep) - Mobile First & Field Ops
+*   **Context**: 通勤中、客戶現場、單手操作 (One-Thumb Interaction)。
+*   **Issues**: 目前 Sales Hub 為 Desktop 設計，表格在手機上難以閱讀；缺乏快速紀錄拜訪結果的機制。
+*   **Proposal - Core Mobile Experience**:
+    1.  **Mobile Layout**: 隱藏側邊欄，改用底部導覽列 (Bottom Navigation: Dashboard, Leads, Tasks, Customers)。
+    2.  **Card-Based Leads (Tinder-Style)**:
+        *   **Interaction**: 將寬表格轉換為 "Card Stack"。
+        *   **Gesture**: 左滑忽略 (Archive)，右滑加入 "My Cart" (Shortlist)，上滑顯示詳情。
+    3.  **One-Tap Actions**: 針對客戶卡片增加 Floating Action Button (FAB) -> 導航 (Map)、生成話術 (Pitch)。(移除撥號功能)
+
+*   **Proposal - The "Commute" Workflow (Sales Intel)**:
+    4.  **Sales Shopping Cart**: "My Selected Leads" 頁面。Alice 在捷運上滑完 Leads 後，在此頁面進行批次操作。
+    5.  **Job Search Cards**:
+        *   **Clean UI**: 移除 "View Link" 按鈕，點擊卡片即展開摘要。
+        *   **Action**: 若感興趣直接 "Add to Leads"，進入 Leads 後系統自動抓取完整 JD。
+    6.  **One-Handed Pitch**: 生成 Pitch 後全螢幕顯示，字體放大，並提供對比色強烈的 "Copy" 與 "Line Share" 按鈕，方便在陽光下操作。
+
+*   **Proposal - Lead Follow-up & Enrichment**:
+    7.  **Lead Follow-up UI**: 新增 "Leads Timeline" 視圖，顯示 Lead 從 New -> Contacted -> Meeting -> Deal 的狀態進展。
+    8.  **Automated Enrichment Loop**:
+        *   **Strategy**:
+            *   Lead 進入 List 後，狀態標記為 `enriching`。
+            *   Agent 嘗試從 104 爬取。若失敗，啟動 **Plan B** (Google Search API / Official Website Crawler)。
+            *   若 Agent 填補資料 >= 80%，狀態轉為 `review_needed` 通知 Alice。
+        *   **Auto-Prune**: 若建立超過 3 天仍無法補全資料 (資料殘缺)，系統自動轉為 `archived` (Reason: Stale Data)，並記錄 Audit Log。
+        *   **Human Review**: Alice 審閱 Agent 填寫的資料，確認無誤後點擊 "Verify"，Lead 正式進入漏斗。
+
+*   **Proposal - Customer Management (Future)**:
+    9.  **Customer Micro-Page**: 手機版極簡頁面，僅顯示關鍵資訊 (Name, Map Link, Last Interaction Note, Next Action)。
+    10. **Voice-to-Text Visit Logs**: 拜訪結束後，透過手機麥克風口述 "Visit Summary"，利用 **Gemini Audio Capability (Multimodal)** 轉為文字並提取關鍵 Insight 存入 Log。
+    11. **Desktop-Mobile Handoff**:
+        *   **Scenario**: 在辦公室電腦 (Desktop) 規劃好 "Today's Route"。
+        *   **Sync**: 手機端 Dashboard 自動置頂 "Today's Route" (地圖模式)，無需重新搜尋。
+
+## 6. Data Architecture Impact (資料庫擴充需求)
+
+> 針對 Phase 4.6 的 UX/Feature 需求，現有 Schema 需進行以下擴充：
+
+*   **`visit_logs` (New Table)**:
+    *   用於儲存 Alice 的拜訪紀錄。
+    *   Fields: `id`, `lead_id`, `user_id`, `visit_date`, `gps_location`, `voice_note_url`, `transcript`, `summary_tags`.
+*   **`leads` (Expansion)**:
+    *   新增欄位支援 Enrichment Loop: `enrichment_status` (pending/success/failed), `enrichment_score` (0-100), `data_last_verified_at`, `auto_archived_reason`.
+*   **`audit_logs` (Expansion)**:
+    *   新增硬體環境欄位: `device_type` (mobile/desktop), `ip_address`, `gps_lat`, `gps_long` (Nullable, for high precision mode).
+*   **`marketing_trends` (New Analysis Table)**:
+    *   用於快取 Bob 的市場週報數據，避免每次即時運算。
+    *   Fields: `report_date`, `keyword`, `count`, `industry_distribution` (JSON), `growth_rate`.
+*   **`subscriptions` (New Table)**:
+    *   用於管理 `/blog` 訂閱會員。
+    *   Fields: `id`, `email`, `name`, `subscribed_at`, `converted_to_lead_id` (Link to CRM).
 
 ### B. Charlie (Manager) - Tablet First
 *   **Context**: 會議室、移動辦公、數據監控。
@@ -28,7 +69,9 @@
 *   **Context**: 創意發想、內容生產、媒體資產管理。
 *   **Issues**: AI 工具分散，缺乏工作流整合 (Time/Token tracking)。
 *   **Proposal - Asset Generation**:
-    10. **Nana Banana Integration**: 整合 "Nana Banana" 圖像生成模型 (Mock/API)。
+    10. **Nana Banana Integration**:
+        *   **Governance**: API Key 由 **System Admin** 統一管理 (建議存於 `.env` 或加密的 System Secrets 表)，Bob/Charlie 無需也無法自行設定 Key。
+        *   **Admin UI (3737)**: 僅提供 "Service Status" 檢查 (如 OpenAI/Gemini)，不暴露明碼 Key。
     11. **Abstracted Prompting**: Bob 不需要看到底層 System Prompt，僅需操作風格參數 (Style Keywords)。
     12. **UI Consistency**: Icon Generation 介面需與 Admin/Charlie 統一，但功能參數依 RBAC 區分。
 
