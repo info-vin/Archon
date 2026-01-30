@@ -20,10 +20,11 @@ const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                     <Link to="/dashboard" className="flex items-center transition-transform hover:scale-105 active:scale-95">
                         <BrandLogo className="w-8 h-8" />
                     </Link>
-                     <button onClick={() => setIsSidebarOpen(false)} className="md:hidden p-1 hover:bg-secondary rounded-md" aria-label="Close sidebar">
+                     <button onClick={() => setIsSidebarOpen(false)} className="md:hidden p-1 hover:bg-secondary rounded-md ml-auto" aria-label="Close sidebar">
                         <XIcon className="w-6 h-6" />
                     </button>
                 </div>
+                {/* Desktop Navigation */}
                 <ul className="flex-grow p-2">
                     <li className="mb-2">
                         <Link to="/dashboard" className={`flex items-center p-2 rounded-md hover:bg-secondary ${location.pathname.startsWith('/dashboard') ? 'bg-secondary' : ''}`}>
@@ -99,16 +100,14 @@ const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                 </div>
             </nav>
             {isSidebarOpen && <div className="fixed inset-0 bg-black/50 z-40 md:hidden" onClick={() => setIsSidebarOpen(false)}></div>}
-            <main className="flex-1 flex flex-col overflow-y-auto bg-background">
+            <main className="flex-1 flex flex-col overflow-y-auto bg-background pb-16 md:pb-0">
                 {/* Mobile Header */}
-                <header className="md:hidden flex items-center justify-between p-4 border-b border-border bg-background/80 backdrop-blur">
-                    <button onClick={() => setIsSidebarOpen(true)} aria-label="Open sidebar">
-                        <MenuIcon className="h-6 w-6" />
-                    </button>
+                <header className="md:hidden flex items-center justify-between p-4 border-b border-border bg-background/80 backdrop-blur z-30 sticky top-0">
                     <LiveClock />
+                    <UserAvatar name={user?.name || ''} role={user?.role} className="w-8 h-8" />
                 </header>
 
-                {/* Desktop Top Bar (New) */}
+                {/* Desktop Top Bar */}
                 <header className="hidden md:flex items-center justify-end p-4 border-b border-border bg-background/60 backdrop-blur sticky top-0 z-30 h-16">
                     <LiveClock />
                 </header>
@@ -117,6 +116,40 @@ const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                     {children}
                 </div>
             </main>
+
+            {/* Mobile Bottom Navigation Bar */}
+            <nav className="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-card border-t border-border flex justify-around items-center z-50 px-2 pb-safe">
+                <Link to="/dashboard" className={`flex flex-col items-center justify-center p-2 rounded-lg ${location.pathname === '/dashboard' ? 'text-primary' : 'text-muted-foreground'}`}>
+                    <LayoutGridIcon className="w-6 h-6" />
+                    <span className="text-[10px] mt-1">Home</span>
+                </Link>
+                
+                {hasPermission('leads:view:sales') && (
+                    <Link to="/marketing" className={`flex flex-col items-center justify-center p-2 rounded-lg ${location.pathname.startsWith('/marketing') ? 'text-primary' : 'text-muted-foreground'}`}>
+                        <ShieldCheckIcon className="w-6 h-6" />
+                        <span className="text-[10px] mt-1">Leads</span>
+                    </Link>
+                )}
+
+                {hasPermission('leads:view:sales') && (
+                    <Link to="/sales-cart" className={`flex flex-col items-center justify-center p-2 rounded-lg ${location.pathname.startsWith('/sales-cart') ? 'text-primary' : 'text-muted-foreground'}`}>
+                         {/* TODO: Add ShoppingCartIcon */}
+                        <div className="relative">
+                            <MenuIcon className="w-6 h-6 rotate-90" /> {/* Temporary Icon */}
+                            <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-[9px] w-3 h-3 flex items-center justify-center rounded-full">0</span>
+                        </div>
+                        <span className="text-[10px] mt-1">Cart</span>
+                    </Link>
+                )}
+
+                <button 
+                    onClick={() => setIsSidebarOpen(true)}
+                    className={`flex flex-col items-center justify-center p-2 rounded-lg ${isSidebarOpen ? 'text-primary' : 'text-muted-foreground'}`}
+                >
+                    <MenuIcon className="w-6 h-6" />
+                    <span className="text-[10px] mt-1">Menu</span>
+                </button>
+            </nav>
         </div>
     );
 };

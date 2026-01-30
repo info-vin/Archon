@@ -3,8 +3,9 @@ import { api } from '../services/api';
 import { JobData } from '../types';
 import { PermissionGuard } from '../features/auth/components/PermissionGuard';
 import { SourceBadge } from '../components/SourceBadge';
-import { SearchIcon, TableIcon, ShieldCheckIcon, XIcon, SparklesIcon, RefreshCwIcon } from '../components/Icons';
+import { SearchIcon, TableIcon, ShieldCheckIcon, XIcon, SparklesIcon, RefreshCwIcon, ExternalLinkIcon } from '../components/Icons';
 import { EmptyState } from '../components/common/EmptyState';
+import { LeadsCardStack } from '../features/marketing/components/LeadsCardStack';
 
 const MarketingPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'search' | 'leads'>('search');
@@ -227,7 +228,11 @@ const MarketingPage: React.FC = () => {
                         </h2>
                         <div className="grid gap-4">
                             {jobs.map((job, idx) => (
-                            <div key={idx} className="bg-card p-5 rounded-xl shadow-sm border border-border hover:border-primary/50 transition-colors lead-card">
+                            <div 
+                                key={idx} 
+                                className={`bg-card p-5 rounded-xl shadow-sm border transition-all cursor-pointer ${expandedJobIdx === idx ? 'border-indigo-500 ring-1 ring-indigo-500' : 'border-border hover:border-primary/50'}`}
+                                onClick={() => setExpandedJobIdx(expandedJobIdx === idx ? null : idx)}
+                            >
                                 <div className="flex justify-between items-start mb-3">
                                     <div>
                                         <h3 className="text-lg font-bold text-card-foreground">{job.company}</h3>
@@ -239,36 +244,66 @@ const MarketingPage: React.FC = () => {
                                     <p className="text-xs font-bold text-yellow-800 uppercase tracking-wide">AI Insight</p>
                                     <p className="text-sm text-yellow-900 mt-1">{job.identified_need || "Analyzing requirements..."}</p>
                                 </div>
-                                <div className="flex justify-between items-center mt-4 pt-4 border-t border-gray-100">
-                                    <div className="flex gap-3">
-                                        {job.url ? (
-                                            <a 
-                                                href={job.url} 
-                                                target="_blank" 
-                                                rel="noreferrer" 
-                                                className="text-gray-500 hover:text-gray-700 text-sm flex items-center gap-1"
-                                            >
-                                                View Link
-                                            </a>
-                                        ) : (
-                                            <span className="text-gray-400 text-sm flex items-center gap-1 cursor-not-allowed" title="No link available">
-                                                View Link
-                                            </span>
-                                        )}
-                                        <button onClick={() => setExpandedJobIdx(expandedJobIdx === idx ? null : idx)} className="text-indigo-600 hover:text-indigo-800 text-sm font-medium transition-colors">
-                                            {expandedJobIdx === idx ? 'Hide Details' : 'View Full JD'}
-                                        </button>
-                                    </div>
-                                    <button onClick={() => handleGeneratePitch(job)} disabled={generating} className="text-sm bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 shadow-sm transition-transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">
-                                        {generating ? 'Generating...' : 'Generate Pitch'}
-                                    </button>
-                                </div>
+                                
                                 {expandedJobIdx === idx && (
-                                    <div className="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200 text-sm text-gray-700 whitespace-pre-line animate-in fade-in slide-in-from-top-2 duration-200 full-description">
+                                    <div className="mt-4 mb-4 p-4 bg-gray-50 rounded-lg border border-gray-200 text-sm text-gray-700 whitespace-pre-line animate-in fade-in slide-in-from-top-2 duration-200 full-description cursor-auto" onClick={e => e.stopPropagation()}>
                                         <h4 className="font-bold mb-2 text-gray-900 border-b pb-1">Full Job Description</h4>
                                         {job.description_full || job.description || "No detailed description available."}
+                                        {job.url && (
+                                             <div className="mt-4 pt-2 border-t border-gray-200">
+                                                <a 
+                                                    href={job.url} 
+                                                    target="_blank" 
+                                                    rel="noreferrer" 
+                                                    className="text-indigo-600 hover:text-indigo-800 text-xs font-bold flex items-center gap-1"
+                                                >
+                                                    View Original Post on 104 <ExternalLinkIcon className="w-3 h-3" />
+                                                </a>
+                                             </div>
+                                        )}
                                     </div>
                                 )}
+
+                                <div className="flex justify-between items-center mt-4 pt-4 border-t border-gray-100" onClick={e => e.stopPropagation()}>
+                                    <div className="text-xs text-muted-foreground flex items-center gap-2">
+                                        <span className={expandedJobIdx === idx ? 'text-indigo-600 font-bold' : ''}>
+                                            {expandedJobIdx === idx ? 'Tap to collapse' : 'Tap card to details'}
+                                        </span>
+                                    </div>
+                                    <div className="flex gap-2">
+                                         <button 
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                // create lead (simulation)
+                                                api.createLead({
+                                                    company_name: job.company,
+                                                    job_title: job.title,
+                                                    source: job.source,
+                                                    source_job_url: job.url,
+                                                    identified_need: job.identified_need,
+                                                    status: 'new'
+                                                }).then(() => {
+                                                    alert("Added to Leads Pipeline!");
+                                                    setActiveTab('leads');
+                                                }).catch(() => alert("Failed to add lead"));
+                                            }}
+                                            className="text-sm bg-white border border-indigo-200 text-indigo-700 px-3 py-2 rounded-lg hover:bg-indigo-50 font-medium transition-colors"
+                                        >
+                                            Add to Leads
+                                        </button>
+                                        <button 
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleGeneratePitch(job);
+                                            }}
+                                            disabled={generating} 
+                                            className="text-sm bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 shadow-sm transition-transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+                                        >
+                                            <SparklesIcon className="w-4 h-4" />
+                                            {generating ? 'Generating...' : 'Pitch'}
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
                             ))}
                         </div>
@@ -324,7 +359,9 @@ const MarketingPage: React.FC = () => {
                   <h2 className="text-lg font-bold text-gray-800">My Leads</h2>
                   <button onClick={fetchLeads} className="text-indigo-600 text-sm font-medium hover:text-indigo-800">Refresh</button>
               </div>
-              <div className="overflow-x-auto">
+              
+              {/* Desktop Table View */}
+              <div className="hidden md:block overflow-x-auto">
                   {isLeadsLoading ? (
                       <div className="p-12 flex justify-center">
                           <RefreshCwIcon className="w-8 h-8 text-indigo-600 animate-spin" />
@@ -341,7 +378,7 @@ const MarketingPage: React.FC = () => {
                   ) : (
                       <table className="w-full text-sm text-left">
                           <thead className="bg-gray-50 text-gray-500 font-medium">
-                              <tr>
+                               <tr>
                                   <th className="px-6 py-3 cursor-pointer hover:bg-gray-100 transition-colors" onClick={() => requestSort('created_at')}>
                                       <div className="flex items-center gap-1">Date Identified {sortConfig?.key === 'created_at' && (sortConfig.direction === 'asc' ? '▲' : '▼')}</div>
                                   </th>
@@ -398,6 +435,38 @@ const MarketingPage: React.FC = () => {
                       </table>
                   )}
               </div>
+
+               {/* Mobile Card Stack View */}
+               <div className="md:hidden p-4 min-h-[600px]">
+                   {isLeadsLoading ? (
+                        <div className="flex justify-center p-12">
+                           <RefreshCwIcon className="w-8 h-8 text-indigo-600 animate-spin" />
+                       </div>
+                   ) : leads.length === 0 ? (
+                       <EmptyState 
+                            title="No Leads" 
+                            description="Search for jobs to find leads."
+                            actionLabel="Go to Search"
+                            onAction={() => setActiveTab('search')}
+                        />
+                   ) : (
+                       <LeadsCardStack 
+                            leads={sortedLeads.filter(l => l.status === 'new' || l.status === 'pending')} // Only show triage-able leads
+                            onSwipeRight={(lead) => {
+                                // Shortlist / Interested -> For now we open promote modal or just mark as 'shortlisted' ?
+                                // Plan: "Tinder-style Swipe (Archive/Cart)" -> Right = Cart/Shortlist
+                                // We update status to 'shortlisted'
+                                api.updateLead(lead.id, { status: 'shortlisted' })
+                                   .catch(err => console.error("Failed to shortlist", err));
+                            }}
+                            onSwipeLeft={(lead) => {
+                                // Archive
+                                api.updateLead(lead.id, { status: 'archived' })
+                                   .catch(err => console.error("Failed to archive", err));
+                            }}
+                       />
+                   )}
+               </div>
           </div>
       )}
 

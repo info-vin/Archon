@@ -41,6 +41,7 @@ from .api_routes.stats_api import router as stats_router
 from .api_routes.system_api import router as system_router  # NEW IMPORT
 from .api_routes.test_api import router as test_api_router  # NEW IMPORT
 from .api_routes.version_api import router as version_router
+from .api_routes.visit_log_api import router as visit_log_router  # NEW IMPORT
 
 # Import Logfire configuration
 from .config.logfire_config import api_logger, setup_logfire
@@ -251,6 +252,7 @@ app.include_router(stats_router)
 app.include_router(marketing_router)
 app.include_router(system_router)
 app.include_router(prompts_router)
+app.include_router(visit_log_router)
 
 
 # Root endpoint

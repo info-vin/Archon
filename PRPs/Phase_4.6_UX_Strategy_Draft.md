@@ -97,9 +97,11 @@
     28. **Trend Visualization (Time Series)**:
         *   **Line Chart**: 顯示關鍵字 (e.g., "AI", "ESG") 在 Leads 中出現頻率的月度趨勢，幫助 Bob 識別 "Rising Topics"。
         *   **Seasonality**: 標示行銷活動與 Lead 增長的關聯點。
+        *   **Status**: Phase 4.6.5 執行 (Frontend Implementation Pending).
     29. **Relationship Mapping (Knowledge Graph)**:
         *   **Sankey Diagram**: 視覺化流向 `Industry (from Lead) -> Identified Need -> Potential Vendor Solution`.
         *   **Network View**: 顯示 Industry, Customer, Vendor 三者之間的關聯節點，讓 Bob 理解 "哪些產業正在尋求哪類解決方案"。
+        *   **Status**: Phase 4.6.5 執行 (Frontend Implementation Pending).
     30. **Smart Filtering & Clustering**:
         *   **Semantic Clustering**: 捨棄硬編碼關鍵字，改用 LLM 將 Leads 自動分群 (e.g., "Digital Transformation", "Compliance").
         *   **Drill-down Filters**: 允許 Bob 依據 Region, Time Range, Industry 篩選 Dashboard 數據。

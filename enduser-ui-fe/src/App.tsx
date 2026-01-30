@@ -15,6 +15,7 @@ import BrandPage from './pages/BrandPage.tsx';
 import PublicLayout from './components/layout/PublicLayout.tsx';
 import MainLayout from './components/layout/MainLayout.tsx';
 import SolutionsPage from './features/marketing/SolutionsPage.tsx';
+import SalesCartPage from './pages/SalesCartPage.tsx';
 
 const App: React.FC = () => {
   return (
@@ -90,6 +91,16 @@ export const AppRoutes: React.FC = () => {
           <ProtectedRoute>
             <MainLayout>
               <BrandPage />
+            </MainLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/sales-cart"
+        element={
+          <ProtectedRoute>
+            <MainLayout>
+              <SalesCartPage />
             </MainLayout>
           </ProtectedRoute>
         }

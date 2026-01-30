@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { api } from '../services/api';
 import { BlogPost } from '../types';
 import { PermissionGuard } from '../features/auth/components/PermissionGuard';
+import { TrendLineChart } from '../features/marketing/components/TrendLineChart';
+import { SankeyDiagram } from '../features/marketing/components/SankeyDiagram';
 import { 
     PlusIcon, 
     PaletteIcon, 
@@ -17,6 +19,7 @@ import {
 const BrandPage: React.FC = () => {
     const [posts, setPosts] = useState<BlogPost[]>([]);
     const [marketStats, setMarketStats] = useState<any>(null);
+    const [trendsData, setTrendsData] = useState<any>(null);
     const [logoSvg, setLogoSvg] = useState<string | null>(null);
     const [isGenerating, setIsLogoGenerating] = useState(false);
     const [loading, setLoading] = useState(true);
@@ -28,12 +31,17 @@ const BrandPage: React.FC = () => {
     const loadData = async () => {
         setLoading(true);
         try {
-            const [postsData, stats] = await Promise.all([
+            const [postsData, stats, trends] = await Promise.all([
                 api.getBlogPosts(),
-                api.getMarketStats()
+                api.getMarketStats(),
+                api.getMarketingTrends().catch(err => {
+                    console.error("Trends fetch failed, using fallback empty state", err);
+                    return null;
+                })
             ]);
             setPosts(postsData);
             setMarketStats(stats);
+            setTrendsData(trends);
         } catch (err) {
             console.error("Failed to load brand data:", err);
         } finally {
@@ -233,38 +241,42 @@ const BrandPage: React.FC = () => {
                         <div className="relative z-10">
                             <h2 className="text-xl font-bold flex items-center gap-2">
                                 <TrendingUpIcon className="w-5 h-5 text-indigo-300" />
-                                Market Specs
+                                Market Intelligence 2.0
                             </h2>
-                            <p className="text-indigo-200 text-xs mt-1">AI-driven market trend analysis</p>
+                            <p className="text-indigo-200 text-xs mt-1">Real-time keyword trends & demand flow</p>
                             
-                            {marketStats ? (
-                                <div className="mt-8 space-y-6">
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div className="bg-white/10 p-4 rounded-xl border border-white/5">
-                                            <p className="text-[10px] uppercase font-bold text-indigo-300">AI Trends</p>
-                                            <p className="text-2xl font-mono font-bold mt-1">{Math.round((marketStats["AI/LLM"] / marketStats["Total Leads"]) * 100)}%</p>
-                                        </div>
-                                        <div className="bg-white/10 p-4 rounded-xl border border-white/5">
-                                            <p className="text-[10px] uppercase font-bold text-indigo-300">Growth</p>
-                                            <p className="text-2xl font-mono font-bold mt-1">+{marketStats["Total Leads"]}</p>
+                            {trendsData ? (
+                                <div className="mt-6 space-y-8">
+                                    {/* Trend Line Chart */}
+                                    <div className="bg-white/5 p-4 rounded-xl border border-white/10 backdrop-blur-sm">
+                                        <h3 className="text-sm font-bold text-indigo-200 mb-4 uppercase tracking-wider">Rising Topics (Monthly)</h3>
+                                        <div className="-ml-4">
+                                            <TrendLineChart data={trendsData.keyword_growth} />
                                         </div>
                                     </div>
-                                    
-                                    <div className="space-y-4">
-                                        <div className="bg-white/5 p-3 rounded-lg flex justify-between items-center">
-                                            <span className="text-sm">LLM/Agent Frame</span>
-                                            <span className="text-indigo-400 font-mono font-bold">{marketStats["AI/LLM"]}</span>
+
+                                    {/* Sankey Diagram */}
+                                    <div className="bg-white/5 p-4 rounded-xl border border-white/10 backdrop-blur-sm">
+                                        <h3 className="text-sm font-bold text-indigo-200 mb-4 uppercase tracking-wider">Demand Flow (Industry &rarr; Solution)</h3>
+                                        <SankeyDiagram data={trendsData.sankey_flow} />
+                                    </div>
+
+                                    {/* Stats Grid */}
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="bg-white/10 p-3 rounded-lg text-center">
+                                            <p className="text-[10px] uppercase text-indigo-300">Total Leads</p>
+                                            <p className="text-xl font-mono font-bold text-white">{marketStats?.["Total Leads"] || 0}</p>
                                         </div>
-                                        <div className="bg-white/5 p-3 rounded-lg flex justify-between items-center">
-                                            <span className="text-sm">Data Analytics</span>
-                                            <span className="text-indigo-400 font-mono font-bold">{marketStats["Data/BI"]}</span>
+                                        <div className="bg-white/10 p-3 rounded-lg text-center">
+                                            <p className="text-[10px] uppercase text-indigo-300">AI Interest</p>
+                                            <p className="text-xl font-mono font-bold text-white">{marketStats?.["AI/LLM"] || 0}</p>
                                         </div>
                                     </div>
                                 </div>
                             ) : (
                                 <div className="animate-pulse space-y-4 mt-8">
-                                    <div className="h-20 bg-white/5 rounded-xl"></div>
-                                    <div className="h-32 bg-white/5 rounded-xl"></div>
+                                    <div className="h-40 bg-white/5 rounded-xl"></div>
+                                    <div className="h-40 bg-white/5 rounded-xl"></div>
                                 </div>
                             )}
                         </div>

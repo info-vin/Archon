@@ -387,9 +387,27 @@ const supabaseApi = {
     return response.json();
   },
 
+  async getMarketingTrends(): Promise<any> {
+    const response = await fetch('/api/marketing/trends', {
+        headers: await this._getHeaders()
+    });
+    if (!response.ok) throw new Error('Failed to fetch marketing trends');
+    return response.json();
+  },
+
   async getLeads(): Promise<any[]> {
     const response = await fetch('/api/marketing/leads', { headers: await this._getHeaders() });
     if (!response.ok) throw new Error('Failed to fetch leads');
+    return response.json();
+  },
+
+  async createLead(leadData: any): Promise<any> {
+    const response = await fetch('/api/marketing/leads', {
+        method: 'POST',
+        headers: await this._getHeaders(),
+        body: JSON.stringify(leadData)
+    });
+    if (!response.ok) throw new Error('Failed to create lead');
     return response.json();
   },
 
@@ -400,6 +418,15 @@ const supabaseApi = {
         body: JSON.stringify(data)
     });
     if (!response.ok) throw new Error('Failed to promote lead');
+  },
+
+  async updateLead(leadId: string, updates: { status?: string; enrichment_status?: string }): Promise<void> {
+    const response = await fetch(`/api/marketing/leads/${leadId}`, {
+        method: 'PATCH',
+        headers: await this._getHeaders(),
+        body: JSON.stringify(updates)
+    });
+    if (!response.ok) throw new Error('Failed to update lead');
   },
 
   async resetPassword(userId: string, newPassword: string): Promise<void> {
@@ -608,6 +635,30 @@ const supabaseApi = {
     if (!response.ok) {
         const error = await response.json();
         throw new Error(error.detail || 'Failed to update system prompt');
+    }
+    return response.json();
+  },
+
+  async getVisitLogs(userId?: string): Promise<any[]> {
+    const query = userId ? `?user_id=${userId}` : '';
+    const response = await fetch(`/api/visit-logs/${query}`, { headers: await this._getHeaders() });
+    if (!response.ok) throw new Error('Failed to fetch visit logs');
+    return response.json();
+  },
+
+  async createVisitLog(formData: FormData): Promise<any> {
+    const headers = await this._getHeaders();
+    delete headers['Content-Type']; 
+    
+    const response = await fetch('/api/visit-logs/', {
+        method: 'POST',
+        headers: headers,
+        body: formData
+    });
+    
+    if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.detail || 'Failed to create visit log');
     }
     return response.json();
   },

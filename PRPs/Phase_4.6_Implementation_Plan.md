@@ -15,63 +15,106 @@
 
 ### 1. Database Schema (`migration/`)
 #### [NEW] [020_phase46_schema.sql](file:///Users/vincenta/GoogleKwok022/Archon/migration/020_phase46_schema.sql)
-- **Security Hardening (RLS Fixes)**:
+- [x] **Security Hardening (RLS Fixes)**:
     - **`customers`**: Enable RLS.
-        - `SELECT`: Auth Users (Alice/Bob/Charlie/Admin).
-        - `INSERT/UPDATE`: Sales (Alice), Manager, Admin. (Marketing Read-Only).
     - **`archon_logs` & `gemini_logs`**: Enable RLS.
-        - `SELECT`: Admin/System_Admin only.
-        - `INSERT`: All Auth Users (for app logging) or Service Role only.
-- **`visit_logs`**: 儲存外勤拜訪紀錄 (GPS, Voice Transcript, Summary)。
-    - RLS: Users can only see their own logs. Manager can see team logs.
-- **`leads` Expansion**:
-    - `enrichment_status` (pending, success, failed, review_needed)
-    - `enrichment_score` (0-100)
-    - `auto_archived_reason` (e.g. "stale_data")
-- **`marketing_trends`**: 儲存 Bob 的市場趨勢快照 (避免每次即時運算 heavy query)。
-- **`subscriptions`**: 儲存 Blog 訂閱者與 Lead 的關聯。
+- [x] **`visit_logs`**: 儲存外勤拜訪紀錄 (GPS, Voice Transcript, Summary)。
+- [x] **`leads` Expansion**: `enrichment_status`, `enrichment_score`, `auto_archived_reason`.
+- [x] **`marketing_trends`**: 儲存 Bob 的市場趨勢快照。
+- [x] **`subscriptions`**: 儲存 Blog 訂閱者與 Lead 的關聯。
 
 ### 2. Backend API (`python/src/server`)
 #### [NEW] [visit_log_api.py](file:///Users/vincenta/GoogleKwok022/Archon/python/src/server/api_routes/visit_log_api.py)
-- `POST /api/visits`: 上傳錄音檔與 GPS。
-    - **Logic**: 呼叫 Gemini Multimodal API 轉錄音訊 -> 提取摘要 -> 存入 DB。
-- `GET /api/visits/user/{user_id}`: Alice 的拜訪歷史。
+- [x] `POST /api/visits`: 上傳錄音檔與 GPS。(Implemented Text-only fallback)
+- [x] `GET /api/visits/user/{user_id}`: Alice 的拜訪歷史。
 
 #### [MODIFY] [marketing_api.py](file:///Users/vincenta/GoogleKwok022/Archon/python/src/server/api_routes/marketing_api.py)
-- `GET /api/marketing/trends`: 回傳時間序列與 Sankey 數據 (讀取 `marketing_trends` 表)。
-- `POST /api/marketing/nana-banana`: Backend Proxy for Image Generation.
-    - **Security**: 讀取 `os.getenv("NANA_BANANA_KEY")`。
+- [x] `GET /api/marketing/trends`: 回傳時間序列與 Sankey 數據。
+- [x] `POST /api/marketing/nana-banana`: Backend Proxy for Image Generation.
 
 #### [NEW] [enrichment_service.py](file:///Users/vincenta/GoogleKwok022/Archon/python/src/server/services/enrichment_service.py)
-- `enrich_lead(lead_id)`: 嘗試呼叫 `JobBoardService` 或 Google Search 補全資料。
-- `prune_stale_leads()`: Cron Job 邏輯，歸檔過期 Leads。
+- [x] `enrich_lead(lead_id)`: 嘗試呼叫 `JobBoardService` 或 Google Search 補全資料。
+- [x] `prune_stale_leads()`: Cron Job 邏輯，歸檔過期 Leads。
 
 ### 3. Frontend (`enduser-ui-fe`)
 #### [MODIFY] [Layout.tsx](file:///Users/vincenta/GoogleKwok022/Archon/enduser-ui-fe/src/components/Layout.tsx)
-- **Adaptive Navigation**:
-    - Desktop: 保持 Sidebar。
-    - Mobile: 自動切換為 **Bottom Navigation Bar** (Dashboard, Leads, Cart, Menu)。
+- [x] **Adaptive Navigation**: Mobile Bottom Navigation Bar.
 
 #### [NEW] [LeadsCardStack.tsx](file:///Users/vincenta/GoogleKwok022/Archon/enduser-ui-fe/src/pages/LeadsCardStack.tsx)
-- **Tinder-Style UI**:
-    - 使用 `framer-motion` 實作 Swipe Gestures。
-    - Right (Like) -> Add to "Sales Cart".
-    - Left (Pass) -> Archive.
+- [x] **Tinder-Style UI**: Swipe Gestures (Like/Pass).
 
 #### [NEW] [SalesCartPage.tsx](file:///Users/vincenta/GoogleKwok022/Archon/enduser-ui-fe/src/pages/SalesCartPage.tsx)
-- **Batch Actions**: Export to CRM, Request Content.
+- [x] **Batch Actions**: Export to CRM, Request Content.
 
 #### [MODIFY] [BrandPage.tsx](file:///Users/vincenta/GoogleKwok022/Archon/enduser-ui-fe/src/pages/BrandPage.tsx)
-- **Market Intelligence 2.0**:
-    - 整合 `Recharts` 繪製 Line Chart (Trends) 與 Sankey Diagram (Industry-Need-Solution)。
+- [x] **Market Intelligence 2.0**: Line Chart (Trends) & Sankey Diagram.
+
+### 4. Bob (Marketing) - Visualizations (Frontend Only)
+#### [MODIFY] [BrandPage.tsx](file:///Users/vincenta/GoogleKwok022/Archon/enduser-ui-fe/src/pages/BrandPage.tsx)
+- [x] **TrendLineChart Component**: `recharts` LineChart.
+- [x] **Relationship Mapping**: `d3-sankey` or SVG implementation.
+
+### 5. Charlie (Manager) - Tablet Experience
+#### [MODIFY] [TeamManagementPage.tsx](file:///Users/vincenta/GoogleKwok022/Archon/enduser-ui-fe/src/pages/TeamManagementPage.tsx)
+- [x] **AI Collaboration Widget**: Humans vs AI Task Time (Pie Chart).
+- [x] **Touch Optimization**: Large touch targets.
+
+#### [MODIFY] [ApprovalsPage.tsx](file:///Users/vincenta/GoogleKwok022/Archon/enduser-ui-fe/src/pages/ApprovalsPage.tsx)
+- [x] **Card-Based Interface**: Grid layout for tablet.
+
+### 6. Phase 4.8: UX Polish & Gap Closure
+> [!IMPORTANT]
+> 補齊 Phase 4.6 UX Strategy 中被延後的 "Nice-to-Have" 但對 Mobile 體驗至關重要的功能。
+
+#### [MODIFY] [SalesCartPage.tsx](file:///Users/vincenta/GoogleKwok022/Archon/enduser-ui-fe/src/pages/SalesCartPage.tsx)
+- [x] **Batch Actions**:
+    - 實作 "Export to CRM" (模擬) 與 "Request Content" (觸發 Magic Draft) 按鈕。
+    - 顯示目前 Cart 中的 Leads 清單。
+
+#### [MODIFY] [MarketingPage.tsx](file:///Users/vincenta/GoogleKwok022/Archon/enduser-ui-fe/src/pages/MarketingPage.tsx)
+- [x] **Clean UI**:
+    - 移除 "View Link" 跳轉按鈕，改為 **Click-to-Expand**。
+    - Action: "Add to Leads" (觸發 Lead Creation)。
+
+#### [MODIFY] [LeadsCardStack.tsx](file:///Users/vincenta/GoogleKwok022/Archon/enduser-ui-fe/src/features/marketing/components/LeadsCardStack.tsx)
+- [x] **Floating Action Button (FAB)**:
+    - Actions: `Map` (Google Maps), `Pitch` (Alert/Modal).
+
+### 7. Phase 4.9: Mobile & Intelligence Completion (Gap Closure)
+> [!IMPORTANT]
+> Addressing High-Impact Gaps identified in Phase 4.8 Verification.
+
+#### [NEW] [VoiceService] (Backend & UI)
+- [ ] **Voice Logs**:
+    - Backend: Integrate Gemini Multimodal API for Audio -> Text.
+    - Frontend: Add "Record" button in `VisitLogModal` using MediaRecorder API.
+
+#### [MODIFY] [LeadsCardStack.tsx]
+- [ ] **Mobile Pitch experience**:
+    - Replace `alert()` with a Fullscreen Drawer/Modal.
+    - Features: Large Text, Copy Button, Share Intent.
+
+#### [NEW] [LeadsTimeline.tsx]
+- [ ] **Timeline View**:
+    - Visual representation of Lead Progression (New -> Contacted -> Meeting -> Deal).
+
+#### [NEW] [ClockInWidget.tsx]
+- [ ] **Dashboard Integration**:
+    - Large "Clock In/Out" button on Mobile Dashboard.
+
+#### [MODIFY] [BrandPage.tsx]
+- [ ] **Smart Image Picker**:
+    - Auto-fetch images based on keywords (Automation).
+- [ ] **RAG Transparency**:
+    - Show Knowledge Base citation metrics (Ref Links %).
 
 ## Verification Plan
 
 ### Automated Tests
-- `test_visit_log_api.py`: 測試 Visit Log 寫入與 Gemini Mock 回傳。
-- `test_enrichment_service.py`: 測試 Leads 補全邏輯與 Auto-Prune 規則。
+- [x] `test_visit_log_api.py`: 測試 Visit Log 寫入與 Gemini Mock 回傳。
+- [x] `test_enrichment_service.py`: 測試 Leads 補全邏輯與 Auto-Prune 規則。
 
 ### Manual Verification
-1.  **Mobile View**: 使用 Chrome DevTools (iPhone 12 view) 驗證 Bottom Nav 與 Card Swipe。
-2.  **Voice Log**: 上傳測試音檔，確認 Transcript 正確存入 DB。
-3.  **Nana Banana**: Admin 設定假 Key，Bob 頁面呼叫 Proxy，驗證後端正確轉發。
+1.  [x] **Mobile View**: 使用 Chrome DevTools (iPhone 12 view) 驗證 Bottom Nav 與 Card Swipe。
+2.  [x] **Voice Log**: 上傳測試音檔 (Text Fallback)，確認存入 DB。
+3.  [x] **Nana Banana**: Admin 設定假 Key，Bob 頁面呼叫 Proxy，驗證後端正確轉發。

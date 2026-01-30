@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { api } from '../services/api.ts';
-import { Task, TaskStatus, TaskPriority, Project, AssignableUser } from '../types.ts';
+import { Task, TaskStatus, TaskPriority, Project } from '../types.ts';
 import { GanttChartIcon, KanbanIcon, ListIcon, TableIcon, PlusIcon, ChevronDownIcon, ChevronsUpDownIcon, PaperclipIcon, ClockIcon } from '../components/Icons.tsx';
 import { TaskModal } from '../components/TaskModal.tsx';
 import { ProjectModal } from '../components/ProjectModal.tsx';
@@ -273,17 +273,22 @@ const GanttView: React.FC<{ tasks: Task[] }> = ({ tasks }) => {
   );
 };
 
+// Import VisitLogModal and MapPinIcon
+import { VisitLogModal } from '../features/marketing/components/VisitLogModal.tsx';
+import { MapPinIcon } from '../components/Icons.tsx';
+
 const DashboardPage: React.FC = () => {
   const { isAdmin } = useAuth();
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [tasks, setTasks] = useState<Task[]>([]);
-  const [employees, setEmployees] = useState<AssignableUser[]>([]);
+  // const [employees, setEmployees] = useState<AssignableUser[]>([]); // Removed unused
   const [projects, setProjects] = useState<Project[]>([]);
   const [selectedProjectId, setSelectedProjectId] = useState<string>('all');
   const [loading, setLoading] = useState(true);
   const [editingTask, setEditingTask] = useState<Task | null | undefined>(undefined);
   const [isProjectModalOpen, setProjectModalOpen] = useState(false);
   const [isProjectDropdownOpen, setProjectDropdownOpen] = useState(false);
+  const [isVisitModalOpen, setVisitModalOpen] = useState(false);
   const [sortConfig, setSortConfig] = useState<{ key: SortableTaskKeys; direction: SortDirection } | null>({ key: 'created_at', direction: 'ascending' });
 
   const isTaskModalOpen = editingTask !== undefined;
@@ -292,13 +297,12 @@ const DashboardPage: React.FC = () => {
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
-      const [tasksData, projectsData, employeesData] = await Promise.all([
+      const [tasksData, projectsData] = await Promise.all([
         api.getTasks(true), // Include closed tasks so users can see/archive them
         api.getProjects(),
-        api.getAssignableUsers()
       ]);
       setTasks(tasksData || []);
-      setEmployees(employeesData || []);
+      // setEmployees(employeesData || []);
       setProjects(projectsData || []);
       // Auto-selection of the first project removed to support the "All Projects" dashboard view.
     } catch (error: any) {
@@ -460,6 +464,24 @@ const DashboardPage: React.FC = () => {
           onProjectCreated={handleProjectCreated}
         />
       )}
+
+      {isVisitModalOpen && (
+        <VisitLogModal
+            onClose={() => setVisitModalOpen(false)}
+            onSuccess={() => {
+                setVisitModalOpen(false);
+            }} 
+        />
+      )}
+      
+      {/* Mobile Visit FAB */}
+      <button 
+          onClick={() => setVisitModalOpen(true)}
+          className="md:hidden fixed bottom-20 right-4 w-14 h-14 bg-indigo-600 text-white rounded-full shadow-lg flex items-center justify-center z-40 hover:bg-indigo-700 active:scale-95 transition-all"
+          aria-label="New Visit Log"
+      >
+          <MapPinIcon className="w-6 h-6" />
+      </button>
     </div>
   );
 };

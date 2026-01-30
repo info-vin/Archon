@@ -3,8 +3,9 @@ import { api } from '../services/api';
 import { Employee, EmployeeRole, Task } from '../types';
 import { useAuth } from '../hooks/useAuth';
 import { PermissionGuard } from '../features/auth/components/PermissionGuard';
+import { AiCollaborationWidget } from '../features/team/components/AiCollaborationWidget';
 import UserAvatar from '../components/UserAvatar';
-import { ShieldCheckIcon, UserIcon, MailIcon, BadgeCheckIcon, XIcon, RefreshCwIcon, KeyIcon } from '../components/Icons';
+import { ShieldCheckIcon, MailIcon, BadgeCheckIcon, XIcon, RefreshCwIcon, KeyIcon } from '../components/Icons';
 
 const TeamManagementPage: React.FC = () => {
     const { user } = useAuth();
@@ -49,24 +50,16 @@ const TeamManagementPage: React.FC = () => {
 
     return (
         <PermissionGuard permission="user:manage:team" userRole={user?.role} fallback={<div className="p-8 text-center text-gray-500">Access Denied: Team Management is for Managers and Admins only.</div>}>
-            <div className="p-6 max-w-7xl mx-auto space-y-8">
-                <header className="flex justify-between items-end">
+            <div className="p-4 md:p-6 max-w-7xl mx-auto space-y-6 md:space-y-8">
+                <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
                     <div>
                         <h1 className="text-3xl font-bold text-gray-800">Team Management</h1>
                         <p className="text-gray-500 mt-2">Manage your team members and oversee AI resource allocation.</p>
                     </div>
-                    {aiUsage && (
-                        <div className="bg-white px-4 py-2 rounded-lg border border-gray-100 shadow-sm flex items-center gap-4">
-                            <div className="text-right">
-                                <p className="text-xs text-gray-400 uppercase font-bold tracking-wider">Team AI Budget</p>
-                                <p className="text-xl font-mono font-bold text-indigo-600">{aiUsage.total_used.toLocaleString()} / {aiUsage.total_budget.toLocaleString()}</p>
-                            </div>
-                            <div className={`w-12 h-12 rounded-full border-4 flex items-center justify-center text-xs font-bold ${aiUsage.usage_percentage > 80 ? 'border-red-100 border-t-red-600 text-red-600' : 'border-indigo-100 border-t-indigo-600 text-indigo-600'}`}>
-                                {aiUsage.usage_percentage}%
-                            </div>
-                        </div>
-                    )}
                 </header>
+
+                {/* AI COLLABORATION WIDGET (Tablet/Touch Friendly) */}
+                <AiCollaborationWidget data={aiUsage} />
 
                 {/* APPROVALS SECTION */}
                 {approvals.blogs.length > 0 && (
@@ -177,17 +170,17 @@ const TeamManagementPage: React.FC = () => {
                                         )}
                                     </div>
 
-                                    <div className="mt-6 pt-6 border-t border-gray-50 flex gap-2">
+                                    <div className="mt-6 pt-6 border-t border-gray-50 flex gap-3">
                                         <button 
                                             onClick={() => setEditingMember(member)}
                                             disabled={isAgent}
-                                            className={`flex-1 text-sm font-medium py-2 rounded-lg transition-colors ${isAgent ? 'bg-gray-50 text-gray-300 cursor-not-allowed' : 'bg-gray-50 text-gray-700 hover:bg-gray-100'}`}
+                                            className={`flex-1 text-sm font-medium py-3 rounded-xl transition-colors min-h-[44px] flex items-center justify-center ${isAgent ? 'bg-gray-50 text-gray-300 cursor-not-allowed' : 'bg-gray-50 text-gray-700 hover:bg-gray-100 active:bg-gray-200'}`}
                                         >
                                             Manage Role
                                         </button>
                                         <button 
                                             onClick={() => setActivityMember(member)}
-                                            className="flex-1 text-sm font-medium py-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors"
+                                            className="flex-1 text-sm font-medium py-3 rounded-xl border border-gray-200 text-gray-600 hover:bg-gray-50 active:bg-gray-100 transition-colors min-h-[44px] flex items-center justify-center"
                                         >
                                             View Activity
                                         </button>
