@@ -47,6 +47,20 @@
         *   **Lead Generation**: 訂閱者自動轉為 CRM Leads (Alice 可見)。
         *   **Knowledge Graph**: 讓 Bob 能透過訂閱資料理解 Industry/Vendor/Customer 關聯，反哺內容策略。
 
+### D. Bob (Marketing) - Market Intelligence 2.0 (New Revisions)
+*   **Context**: 趨勢分析、策略制定、機會識別。
+*   **Issues**: 目前 "Market Specs" 僅為靜態計次，缺乏時間維度與關聯性洞察。
+*   **Proposal**:
+    28. **Trend Visualization (Time Series)**:
+        *   **Line Chart**: 顯示關鍵字 (e.g., "AI", "ESG") 在 Leads 中出現頻率的月度趨勢，幫助 Bob 識別 "Rising Topics"。
+        *   **Seasonality**: 標示行銷活動與 Lead 增長的關聯點。
+    29. **Relationship Mapping (Knowledge Graph)**:
+        *   **Sankey Diagram**: 視覺化流向 `Industry (from Lead) -> Identified Need -> Potential Vendor Solution`.
+        *   **Network View**: 顯示 Industry, Customer, Vendor 三者之間的關聯節點，讓 Bob 理解 "哪些產業正在尋求哪類解決方案"。
+    30. **Smart Filtering & Clustering**:
+        *   **Semantic Clustering**: 捨棄硬編碼關鍵字，改用 LLM 將 Leads 自動分群 (e.g., "Digital Transformation", "Compliance").
+        *   **Drill-down Filters**: 允許 Bob 依據 Region, Time Range, Industry 篩選 Dashboard 數據。
+
 ## 2. Field Operations & Logging (外勤與紀錄)
 
 ### A. Audit & Privacy
