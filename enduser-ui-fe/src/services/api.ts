@@ -123,7 +123,7 @@ const supabaseApi = {
         throw new Error(errorData.detail || 'Registration failed.');
     }
 
-    const data = await response.json();
+    await response.json();
     
     // Auto-login after registration is tricky without password transmission again.
     // Ideally backend registers AND logs in, returning a session token.

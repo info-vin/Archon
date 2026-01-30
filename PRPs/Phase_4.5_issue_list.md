@@ -41,7 +41,7 @@
 | **Q-01** | **"Market Specs" Unclear** | Low | Info | **問題**: 使用者對 "Market Specs" 的數據定義感到困惑。<br>**分析**: 後端 `get_market_stats` 僅是統計 Leads 中 `identified_need` 包含 AI/LLM 的數量。並非嚴格的規格分析。 | **Action**: 在 UI tooltip 或文件說明此數據為 "Keyword Trend Analysis"。 |
 | **CL-04** | **Theme Discrepancy** | High | **✅ Fixed** | **問題**: Port 5173 (End User) 與 3737 (Admin) 主題不一致。<br>**分析**: Admin UI 使用自定義 Tailwind Config，End User 使用預設。需對齊。 | **Plan**: 以 Admin UI 為準，移植色彩變數至 `index.css`。 |
 | **UX-01** | **Team Management Experience** | Medium | **To Do** | **問題**: 使用者回報 Card Layout 對於管理介面感覺 "Strange (UX)"。<br>**建議**: 考慮改用 Data Table 以獲得更高的資訊密度與可掃描性。 | **Future**: 重構為 Table View。 |
-| **UX-02** | **Global UX Overhaul** | High | **To Do** | **問題**: 使用者回報 "Every page has UX issues"。目前的 UI 雖然功能正常，但在一致性、互動體驗與專業感上仍有改進空間。 | **Future**: 明日進行全域 UX 討論與優化規劃。 |
+| **UX-02** | **Global UX Overhaul** | High | **To Do** | **問題**: 使用者回報 "Every page has UX issues"。目前的 UI 雖然功能正常，但在一致性、互動體驗與專業感上仍有改進空間。 | **Future**: 已建立 [Phase 4.6 Strategy](../PRPs/Phase_4.6_UX_Strategy_Draft.md)。 |
 
 ## 3. Action Items
 

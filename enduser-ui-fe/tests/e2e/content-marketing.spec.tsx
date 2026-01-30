@@ -1,12 +1,6 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import React from 'react';
-import { describe, it, expect, vi, beforeAll, afterEach, afterAll } from 'vitest';
+import { screen, waitFor } from '@testing-library/react';
+import { describe, it, expect, vi } from 'vitest';
 import userEvent from '@testing-library/user-event';
-import { MemoryRouter } from 'react-router-dom';
-import { AuthProvider } from '../../src/hooks/useAuth';
-import { HttpResponse, http } from 'msw';
-import { setupServer } from 'msw/node';
-import MarketingPage from '../../src/pages/MarketingPage';
 import { api } from '../../src/services/api';
 import { EmployeeRole } from '../../src/types';
 import { renderApp } from './e2e.setup';
@@ -14,6 +8,18 @@ import { createUser } from '../factories/userFactory';
 
 // Using the shared server from e2e setup logic conceptually, but defining local overrides if needed.
 // Actually, since we use renderApp which uses AppRoutes, we should rely on the shared infrastructure.
+
+vi.mock('../../src/services/api', async (importOriginal) => {
+    const actual = await importOriginal<any>();
+    return {
+        ...actual,
+        api: {
+            ...actual.api,
+            getCurrentUser: vi.fn(),
+            draftBlogPost: vi.fn(),
+        }
+    };
+});
 
 describe('Content Marketing E2E Flow', () => {
     it('Bob can draft a blog post using RAG citations', async () => {

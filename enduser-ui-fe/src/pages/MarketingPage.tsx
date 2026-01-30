@@ -3,7 +3,7 @@ import { api } from '../services/api';
 import { JobData } from '../types';
 import { PermissionGuard } from '../features/auth/components/PermissionGuard';
 import { SourceBadge } from '../components/SourceBadge';
-import { SearchIcon, TableIcon, ShieldCheckIcon, XIcon, SparklesIcon, RefreshCwIcon, ChevronsUpDownIcon } from '../components/Icons';
+import { SearchIcon, TableIcon, ShieldCheckIcon, XIcon, SparklesIcon, RefreshCwIcon } from '../components/Icons';
 import { EmptyState } from '../components/common/EmptyState';
 
 const MarketingPage: React.FC = () => {

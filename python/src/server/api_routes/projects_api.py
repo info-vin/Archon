@@ -12,12 +12,19 @@ import json
 from datetime import datetime
 from typing import Any
 
-from fastapi import APIRouter, Depends, Header, HTTPException, Request, Response
+from fastapi import (
+    APIRouter,
+    Depends,
+    Header,
+    HTTPException,
+    Request,
+    Response,
+)
 from fastapi import status as http_status
 from pydantic import BaseModel
 
 from ..auth.dependencies import get_current_user
-from ..config.logfire_config import get_logger, logfire
+from ..config.logfire_config import get_logger
 from ..services.profile_service import ProfileService
 from ..services.projects import (
     ProjectCreationService,
@@ -73,7 +80,9 @@ class CreateTaskRequest(BaseModel):
     task_order: int | None = 0
     feature: str | None = None
     due_date: datetime | None = None
-    knowledge_source_ids: list[str] | None = None  # List of knowledge source IDs to be associated with the task
+    knowledge_source_ids: list[
+        str
+    ] | None = None  # List of knowledge source IDs to be associated with the task
 
 
 class AssignableUser(BaseModel):
@@ -83,7 +92,9 @@ class AssignableUser(BaseModel):
 
 
 @router.get("/assignable-users", response_model=list[AssignableUser])
-async def list_assignable_users(x_user_role: str | None = Header(None, alias="X-User-Role")):
+async def list_assignable_users(
+    x_user_role: str | None = Header(None, alias="X-User-Role")
+):
     """
     List users that can be assigned to a task based on the current user's role.
     """
@@ -91,7 +102,7 @@ async def list_assignable_users(x_user_role: str | None = Header(None, alias="X-
     current_user_role = x_user_role or "User"
 
     try:
-        logfire.info(f"Listing assignable users for role: {current_user_role}")
+        logger.info(f"Listing assignable users for role: {current_user_role}")
         profile_service = ProfileService()
         rbac_service = RBACService()
 
@@ -99,22 +110,34 @@ async def list_assignable_users(x_user_role: str | None = Header(None, alias="X-
         success, all_users = profile_service.list_all_users()
         if not success:
             # The service already logs the error, so we just return a generic failure
-            raise HTTPException(status_code=500, detail={"error": "Failed to retrieve profiles"})
+            raise HTTPException(
+                status_code=500,
+                detail={"error": "Failed to retrieve profiles"},
+            )
 
         assignable_users = []
         for user in all_users:
             user_role = user.get("role")
-            if user_role and rbac_service.has_permission_to_assign(current_user_role, user_role):
+            if user_role and rbac_service.has_permission_to_assign(
+                current_user_role, user_role
+            ):
                 assignable_users.append(
-                    AssignableUser(id=user["id"], name=user["name"], role=user["role"])
+                    AssignableUser(
+                        id=user["id"], name=user["name"], role=user["role"]
+                    )
                 )
 
-        logfire.info(f"Found {len(assignable_users)} assignable users for role {current_user_role}")
+        logger.info(
+            f"Found {len(assignable_users)} assignable users for role {current_user_role}"
+        )
         return assignable_users
 
     except Exception as e:
-        logfire.error(f"Failed to list assignable users: {e}")
-        raise HTTPException(status_code=500, detail={"error": "Failed to retrieve assignable users"}) from e
+        logger.error(f"Failed to list assignable users: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail={"error": "Failed to retrieve assignable users"},
+        ) from e
 
 
 @router.get("/projects")
@@ -133,7 +156,7 @@ async def list_projects(
         include_computed_status: If True, computes and includes project status based on tasks.
     """
     try:
-        logfire.debug(
+        logger.debug(
             f"Listing all projects | include_content={include_content} "
             f"| include_computed_status={include_computed_status}"
         )
@@ -152,7 +175,9 @@ async def list_projects(
         if include_content:
             # Use SourceLinkingService to format projects with sources
             source_service = SourceLinkingService()
-            formatted_projects = await source_service.format_projects_with_sources(result["projects"])
+            formatted_projects = await source_service.format_projects_with_sources(
+                result["projects"]
+            )
         else:
             # Lightweight response doesn't need source formatting
             formatted_projects = result["projects"]
@@ -162,14 +187,14 @@ async def list_projects(
         response_size = len(response_json)
 
         # Log response metrics
-        logfire.debug(
+        logger.debug(
             f"Projects listed successfully | count={len(formatted_projects)} | "
             f"size_bytes={response_size} | include_content={include_content}"
         )
 
         # Log large responses at debug level (>100KB is worth noting, but normal for project data)
         if response_size > 100000:
-            logfire.debug(
+            logger.debug(
                 f"Large response size | size_bytes={response_size} | "
                 f"include_content={include_content} | project_count={len(formatted_projects)}"
             )
@@ -177,7 +202,7 @@ async def list_projects(
         # Generate ETag from stable data (excluding timestamp)
         etag_data = {
             "projects": formatted_projects,
-            "count": len(formatted_projects)
+            "count": len(formatted_projects),
         }
         current_etag = generate_etag(etag_data)
 
@@ -185,7 +210,7 @@ async def list_projects(
         response_data = {
             "projects": formatted_projects,
             "timestamp": datetime.utcnow().isoformat(),
-            "count": len(formatted_projects)
+            "count": len(formatted_projects),
         }
 
         # Check if client's ETag matches
@@ -205,7 +230,7 @@ async def list_projects(
     except HTTPException:
         raise
     except Exception as e:
-        logfire.error(f"Failed to list projects | error={str(e)}")
+        logger.error(f"Failed to list projects | error={str(e)}")
         raise HTTPException(status_code=500, detail={"error": str(e)}) from e
 
 
@@ -220,7 +245,7 @@ async def create_project(request: CreateProjectRequest):
         raise HTTPException(status_code=422, detail="Title cannot be empty")
 
     try:
-        logfire.info(
+        logger.info(
             f"Creating new project | title={request.title} | github_repo={request.github_repo}"
         )
 
@@ -244,7 +269,9 @@ async def create_project(request: CreateProjectRequest):
         )
 
         if success:
-            logfire.info(f"Project created successfully | project_id={result['project_id']}")
+            logger.info(
+                f"Project created successfully | project_id={result['project_id']}"
+            )
             return {
                 "project_id": result["project_id"],
                 "project": result.get("project"),
@@ -255,14 +282,15 @@ async def create_project(request: CreateProjectRequest):
             raise HTTPException(status_code=500, detail=result)
 
     except Exception as e:
-        logfire.error(f"Failed to start project creation | error={str(e)} | title={request.title}")
+        logger.error(
+            f"Failed to start project creation | error={str(e)} | title={request.title}"
+        )
         raise HTTPException(status_code=500, detail={"error": str(e)}) from e
 
 
 @router.get("/projects/task-counts")
 async def get_all_task_counts(
-    request: Request,
-    response: Response,
+    request: Request, response: Response,
 ):
     """
     Get task counts for all projects in a single batch query.
@@ -274,21 +302,22 @@ async def get_all_task_counts(
         # Get If-None-Match header for ETag comparison
         if_none_match = request.headers.get("If-None-Match")
 
-        logfire.debug(f"Getting task counts for all projects | etag={if_none_match}")
+        logger.debug(
+            f"Getting task counts for all projects | etag={if_none_match}"
+        )
 
         # Use TaskService to get batch task counts
         task_service = TaskService()
         success, result = await task_service.get_all_project_task_counts()
 
         if not success:
-            logfire.error(f"Failed to get task counts | error={result.get('error')}")
+            logger.error(
+                f"Failed to get task counts | error={result.get('error')}"
+            )
             raise HTTPException(status_code=500, detail=result)
 
         # Generate ETag from counts data
-        etag_data = {
-            "counts": result,
-            "count": len(result)
-        }
+        etag_data = {"counts": result, "count": len(result)}
         current_etag = generate_etag(etag_data)
 
         # Check if client's ETag matches (304 Not Modified)
@@ -296,7 +325,9 @@ async def get_all_task_counts(
             response.status_code = 304
             response.headers["ETag"] = current_etag
             response.headers["Cache-Control"] = "no-cache, must-revalidate"
-            logfire.debug(f"Task counts unchanged, returning 304 | etag={current_etag}")
+            logger.debug(
+                f"Task counts unchanged, returning 304 | etag={current_etag}"
+            )
             return None
 
         # Set ETag headers for successful response
@@ -304,14 +335,14 @@ async def get_all_task_counts(
         response.headers["Cache-Control"] = "no-cache, must-revalidate"
         response.headers["Last-Modified"] = datetime.utcnow().isoformat()
 
-        logfire.debug(
+        logger.debug(
             f"Task counts retrieved | project_count={len(result)} | etag={current_etag}"
         )
 
         return result
 
     except Exception as e:
-        logfire.error(f"Failed to get task counts | error={str(e)}")
+        logger.error(f"Failed to get task counts | error={str(e)}")
         raise HTTPException(status_code=500, detail={"error": str(e)}) from e
 
 
@@ -319,7 +350,7 @@ async def get_all_task_counts(
 async def get_project(project_id: str):
     """Get a specific project."""
     try:
-        logfire.info(f"Getting project | project_id={project_id}")
+        logger.info(f"Getting project | project_id={project_id}")
 
         # Use ProjectService to get the project
         project_service = ProjectService()
@@ -327,14 +358,14 @@ async def get_project(project_id: str):
 
         if not success:
             if "not found" in result.get("error", "").lower():
-                logfire.warning(f"Project not found | project_id={project_id}")
+                logger.warning(f"Project not found | project_id={project_id}")
                 raise HTTPException(status_code=404, detail=result)
             else:
                 raise HTTPException(status_code=500, detail=result)
 
         project = result["project"]
 
-        logfire.info(
+        logger.info(
             f"Project retrieved successfully | project_id={project_id} | title={project['title']}"
         )
 
@@ -351,7 +382,9 @@ async def get_project(project_id: str):
     except HTTPException:
         raise
     except Exception as e:
-        logfire.error(f"Failed to get project | error={str(e)} | project_id={project_id}")
+        logger.error(
+            f"Failed to get project | error={str(e)} | project_id={project_id}"
+        )
         raise HTTPException(status_code=500, detail={"error": str(e)}) from e
 
 
@@ -381,13 +414,17 @@ async def update_project(project_id: str, request: UpdateProjectRequest):
         # Create version snapshots for JSONB fields before updating
         if update_fields:
             try:
-                from ..services.projects.versioning_service import VersioningService
+                from ..services.projects.versioning_service import (
+                    VersioningService,
+                )
 
                 versioning_service = VersioningService(supabase_client)
 
                 # Get current project for comparison
                 project_service = ProjectService(supabase_client)
-                success, current_result = await project_service.get_project(project_id)
+                success, current_result = await project_service.get_project(
+                    project_id
+                )
 
                 if success and current_result.get("project"):
                     current_project = current_result["project"]
@@ -396,12 +433,17 @@ async def update_project(project_id: str, request: UpdateProjectRequest):
                     # Create versions for updated JSONB fields
                     for field_name in ["docs", "features", "data"]:
                         if field_name in update_fields:
-                            current_content = current_project.get(field_name, {})
+                            current_content = current_project.get(
+                                field_name, {}
+                            )
                             new_content = update_fields[field_name]
 
                             # Only create version if content actually changed
                             if current_content != new_content:
-                                v_success, _ = versioning_service.create_version(
+                                (
+                                    v_success,
+                                    _,
+                                ) = versioning_service.create_version(
                                     project_id=project_id,
                                     field_name=field_name,
                                     content=current_content,
@@ -412,21 +454,30 @@ async def update_project(project_id: str, request: UpdateProjectRequest):
                                 if v_success:
                                     version_count += 1
 
-                    logfire.info(f"Created {version_count} version snapshots before update")
+                    logger.info(
+                        f"Created {version_count} version snapshots before update"
+                    )
             except ImportError:
-                logfire.warning("VersioningService not available - skipping version snapshots")
+                logger.warning(
+                    "VersioningService not available - skipping version snapshots"
+                )
             except Exception as e:
-                logfire.warning(f"Failed to create version snapshots: {e}")
+                logger.warning(f"Failed to create version snapshots: {e}")
                 # Don't fail the update, just log the warning
 
         # Use ProjectService to update the project
         project_service = ProjectService(supabase_client)
-        success, result = await project_service.update_project(project_id, update_fields)
+        success, result = await project_service.update_project(
+            project_id, update_fields
+        )
 
         if not success:
             if "not found" in result.get("error", "").lower():
                 raise HTTPException(
-                    status_code=404, detail={"error": f"Project with ID {project_id} not found"}
+                    status_code=404,
+                    detail={
+                        "error": f"Project with ID {project_id} not found"
+                    },
                 )
             else:
                 raise HTTPException(status_code=500, detail=result)
@@ -436,24 +487,34 @@ async def update_project(project_id: str, request: UpdateProjectRequest):
         # Handle source updates using SourceLinkingService
         source_service = SourceLinkingService(supabase_client)
 
-        if request.technical_sources is not None or request.business_sources is not None:
-            source_success, source_result = source_service.update_project_sources(
+        if (
+            request.technical_sources is not None
+            or request.business_sources is not None
+        ):
+            (
+                source_success,
+                source_result,
+            ) = source_service.update_project_sources(
                 project_id=project_id,
                 technical_sources=request.technical_sources,
                 business_sources=request.business_sources,
             )
 
             if source_success:
-                logfire.info(
+                logger.info(
                     f"Project sources updated | project_id={project_id} | technical_success={source_result.get('technical_success', 0)} | technical_failed={source_result.get('technical_failed', 0)} | business_success={source_result.get('business_success', 0)} | business_failed={source_result.get('business_failed', 0)}"
                 )
             else:
-                logfire.warning(f"Failed to update some sources: {source_result}")
+                logger.warning(
+                    f"Failed to update some sources: {source_result}"
+                )
 
         # Format project response with sources using SourceLinkingService
-        formatted_project = await source_service.format_project_with_sources(project)
+        formatted_project = await source_service.format_project_with_sources(
+            project
+        )
 
-        logfire.info(
+        logger.info(
             f"Project updated successfully | project_id={project_id} | title={project.get('title')} | technical_sources={len(formatted_project.get('technical_sources', []))} | business_sources={len(formatted_project.get('business_sources', []))}"
         )
 
@@ -462,7 +523,9 @@ async def update_project(project_id: str, request: UpdateProjectRequest):
     except HTTPException:
         raise
     except Exception as e:
-        logfire.error(f"Project update failed | project_id={project_id} | error={str(e)}")
+        logger.error(
+            f"Project update failed | project_id={project_id} | error={str(e)}"
+        )
         raise HTTPException(status_code=500, detail={"error": str(e)}) from e
 
 
@@ -470,7 +533,7 @@ async def update_project(project_id: str, request: UpdateProjectRequest):
 async def delete_project(project_id: str):
     """Delete a project and all its tasks."""
     try:
-        logfire.info(f"Deleting project | project_id={project_id}")
+        logger.info(f"Deleting project | project_id={project_id}")
 
         # Use ProjectService to delete the project
         project_service = ProjectService()
@@ -482,7 +545,7 @@ async def delete_project(project_id: str):
             else:
                 raise HTTPException(status_code=500, detail=result)
 
-        logfire.info(
+        logger.info(
             f"Project deleted successfully | project_id={project_id} | deleted_tasks={result.get('deleted_tasks', 0)}"
         )
 
@@ -494,7 +557,9 @@ async def delete_project(project_id: str):
     except HTTPException:
         raise
     except Exception as e:
-        logfire.error(f"Failed to delete project | error={str(e)} | project_id={project_id}")
+        logger.error(
+            f"Failed to delete project | error={str(e)} | project_id={project_id}"
+        )
         raise HTTPException(status_code=500, detail={"error": str(e)}) from e
 
 
@@ -502,20 +567,24 @@ async def delete_project(project_id: str):
 async def get_project_features(project_id: str):
     """Get features from a project's features JSONB field."""
     try:
-        logfire.info(f"Getting project features | project_id={project_id}")
+        logger.info(f"Getting project features | project_id={project_id}")
 
         # Use ProjectService to get features
         project_service = ProjectService()
-        success, result = await project_service.get_project_features(project_id)
+        success, result = await project_service.get_project_features(
+            project_id
+        )
 
         if not success:
             if "not found" in result.get("error", "").lower():
-                logfire.warning(f"Project not found for features | project_id={project_id}")
+                logger.warning(
+                    f"Project not found for features | project_id={project_id}"
+                )
                 raise HTTPException(status_code=404, detail=result)
             else:
                 raise HTTPException(status_code=500, detail=result)
 
-        logfire.info(
+        logger.info(
             f"Project features retrieved | project_id={project_id} | feature_count={result.get('count', 0)}"
         )
 
@@ -524,7 +593,9 @@ async def get_project_features(project_id: str):
     except HTTPException:
         raise
     except Exception as e:
-        logfire.error(f"Failed to get project features | error={str(e)} | project_id={project_id}")
+        logger.error(
+            f"Failed to get project features | error={str(e)} | project_id={project_id}"
+        )
         raise HTTPException(status_code=500, detail={"error": str(e)}) from e
 
 
@@ -534,14 +605,14 @@ async def list_project_tasks(
     request: Request,
     response: Response,
     include_archived: bool = False,
-    exclude_large_fields: bool = False
+    exclude_large_fields: bool = False,
 ):
     """List all tasks for a specific project with ETag support for efficient polling."""
     try:
         # Get If-None-Match header for ETag comparison
         if_none_match = request.headers.get("If-None-Match")
 
-        logfire.debug(
+        logger.debug(
             f"Listing project tasks | project_id={project_id} | include_archived={include_archived} | exclude_large_fields={exclude_large_fields} | etag={if_none_match}"
         )
 
@@ -561,17 +632,20 @@ async def list_project_tasks(
 
         # Generate ETag from task data (excluding timestamps for consistency)
         etag_data = {
-            "tasks": [{
-                "id": task.get("id"),
-                "title": task.get("title"),
-                "status": task.get("status"),
-                "task_order": task.get("task_order"),
-                "assignee": task.get("assignee"),
-                "priority": task.get("priority"), # <-- 新增此行
-                "feature": task.get("feature")
-            } for task in tasks],
+            "tasks": [
+                {
+                    "id": task.get("id"),
+                    "title": task.get("title"),
+                    "status": task.get("status"),
+                    "task_order": task.get("task_order"),
+                    "assignee": task.get("assignee"),
+                    "priority": task.get("priority"),  # <-- 新增此行
+                    "feature": task.get("feature"),
+                }
+                for task in tasks
+            ],
             "project_id": project_id,
-            "count": len(tasks)
+            "count": len(tasks),
         }
         current_etag = generate_etag(etag_data)
 
@@ -581,7 +655,9 @@ async def list_project_tasks(
             response.headers["ETag"] = current_etag
             response.headers["Cache-Control"] = "no-cache, must-revalidate"
             response.headers["Last-Modified"] = datetime.utcnow().isoformat()
-            logfire.debug(f"Tasks unchanged, returning 304 | project_id={project_id} | etag={current_etag}")
+            logger.debug(
+                f"Tasks unchanged, returning 304 | project_id={project_id} | etag={current_etag}"
+            )
             return None
 
         # Set ETag headers for successful response
@@ -589,7 +665,7 @@ async def list_project_tasks(
         response.headers["Cache-Control"] = "no-cache, must-revalidate"
         response.headers["Last-Modified"] = datetime.utcnow().isoformat()
 
-        logfire.debug(
+        logger.debug(
             f"Project tasks retrieved | project_id={project_id} | task_count={len(tasks)} | etag={current_etag}"
         )
 
@@ -598,7 +674,9 @@ async def list_project_tasks(
     except HTTPException:
         raise
     except Exception as e:
-        logfire.error(f"Failed to list project tasks | error={str(e)} | project_id={project_id}")
+        logger.error(
+            f"Failed to list project tasks | error={str(e)} | project_id={project_id}"
+        )
         raise HTTPException(status_code=500, detail={"error": str(e)}) from e
 
 
@@ -611,24 +689,32 @@ class RefineTaskRequest(BaseModel):
 
 
 @router.post("/tasks/refine-description")
-async def refine_task_description(request: RefineTaskRequest, x_user_role: str | None = Header(None, alias="X-User-Role")):
+async def refine_task_description(
+    request: RefineTaskRequest,
+    x_user_role: str | None = Header(None, alias="X-User-Role"),
+):
     """
     Refine a task description using POBot (RAG-enhanced).
     """
     # Optional: Check if user has permission to use AI (e.g., manager/admin only, or quota check)
     # For now, allow all authenticated users
     try:
-        logfire.info(f"Refining task description | title={request.title}")
+        logger.info(f"Refining task description | title={request.title}")
         task_service = TaskService()
-        refined_description = await task_service.refine_task_description(request.title, request.description)
+        refined_description = await task_service.refine_task_description(
+            request.title, request.description
+        )
         return {"refined_description": refined_description}
     except Exception as e:
-        logfire.error(f"Failed to refine task description | error={str(e)}")
+        logger.error(f"Failed to refine task description | error={str(e)}")
         raise HTTPException(status_code=500, detail={"error": str(e)}) from e
 
 
 @router.post("/tasks")
-async def create_task(request: CreateTaskRequest, x_user_role: str | None = Header(None, alias="X-User-Role")):
+async def create_task(
+    request: CreateTaskRequest,
+    x_user_role: str | None = Header(None, alias="X-User-Role"),
+):
     """Create a new task with automatic reordering."""
     try:
         # Resolve assignee_id to assignee name if provided
@@ -640,9 +726,13 @@ async def create_task(request: CreateTaskRequest, x_user_role: str | None = Head
             success, profile = profile_service.get_profile(request.assignee_id)
             if success and profile:
                 target_assignee_name = profile.get("name")
-                logfire.info(f"Resolved assignee_id '{request.assignee_id}' to '{target_assignee_name}'")
+                logger.info(
+                    f"Resolved assignee_id '{request.assignee_id}' to '{target_assignee_name}'"
+                )
             else:
-                logfire.warning(f"Failed to resolve assignee_id '{request.assignee_id}' to a name.")
+                logger.warning(
+                    f"Failed to resolve assignee_id '{request.assignee_id}' to a name."
+                )
 
         # RBAC Validation
         if target_assignee_name and target_assignee_name != "User":
@@ -650,22 +740,42 @@ async def create_task(request: CreateTaskRequest, x_user_role: str | None = Head
             current_user_role = x_user_role or "User"
             profile_service = ProfileService()
             rbac_service = RBACService()
-            success, assignee_role = profile_service.get_user_role(target_assignee_name)
+            success, assignee_role = profile_service.get_user_role(
+                target_assignee_name
+            )
 
             if not success:
                 # Service failed, raise an internal server error
-                raise HTTPException(status_code=500, detail={"error": "Failed to verify assignee role"})
+                raise HTTPException(
+                    status_code=500,
+                    detail={"error": "Failed to verify assignee role"},
+                )
 
             if assignee_role:
-                if not rbac_service.has_permission_to_assign(current_user_role, assignee_role):
-                    raise HTTPException(status_code=403, detail=f"As a {current_user_role}, you cannot assign tasks to a {assignee_role}.")
+                if not rbac_service.has_permission_to_assign(
+                    current_user_role, assignee_role
+                ):
+                    raise HTTPException(
+                        status_code=403,
+                        detail=f"As a {current_user_role}, you cannot assign tasks to a {assignee_role}.",
+                    )
             else:
-                agent_roles = {"Market Researcher", "Internal Knowledge Expert"}
+                agent_roles = {
+                    "Market Researcher",
+                    "Internal Knowledge Expert",
+                }
                 if target_assignee_name in agent_roles:
-                    if not rbac_service.has_permission_to_assign(current_user_role, target_assignee_name):
-                        raise HTTPException(status_code=403, detail=f"As a {current_user_role}, you cannot assign tasks to a {target_assignee_name}.")
+                    if not rbac_service.has_permission_to_assign(
+                        current_user_role, target_assignee_name
+                    ):
+                        raise HTTPException(
+                            status_code=403,
+                            detail=f"As a {current_user_role}, you cannot assign tasks to a {target_assignee_name}.",
+                        )
                 else:
-                    logfire.warning(f"Assignee '{target_assignee_name}' not found in profiles and is not a known agent role. Skipping permission check.")
+                    logger.warning(
+                        f"Assignee '{target_assignee_name}' not found in profiles and is not a known agent role. Skipping permission check."
+                    )
 
         # Use TaskService to create the task
         task_service = TaskService()
@@ -686,7 +796,7 @@ async def create_task(request: CreateTaskRequest, x_user_role: str | None = Head
 
         created_task = result["task"]
 
-        logfire.info(
+        logger.info(
             f"Task created successfully | task_id={created_task['id']} | project_id={request.project_id}"
         )
 
@@ -695,7 +805,9 @@ async def create_task(request: CreateTaskRequest, x_user_role: str | None = Head
     except HTTPException:
         raise
     except Exception as e:
-        logfire.error(f"Failed to create task | error={str(e)} | project_id={request.project_id}")
+        logger.error(
+            f"Failed to create task | error={str(e)} | project_id={request.project_id}"
+        )
         raise HTTPException(status_code=500, detail={"error": str(e)}) from e
 
 
@@ -704,7 +816,7 @@ async def list_tasks(
     status: str | None = None,
     project_id: str | None = None,
     include_closed: bool = False,
-    include_unassigned: bool = False, # Fix FB-03: Allow frontend to request unassigned tasks
+    include_unassigned: bool = False,  # Fix FB-03: Allow frontend to request unassigned tasks
     page: int = 1,
     per_page: int = 50,
     exclude_large_fields: bool = False,
@@ -721,7 +833,7 @@ async def list_tasks(
         if user_role not in ["system_admin", "admin", "manager"]:
             assignee_id_filter = user_id
 
-        logfire.info(
+        logger.info(
             f"Listing tasks | status={status} | project_id={project_id} | include_closed={include_closed} | "
             f"page={page} | per_page={per_page} | user={user_id} | role={user_role} | filter_assignee_id={assignee_id_filter}"
         )
@@ -733,8 +845,10 @@ async def list_tasks(
             status=status,
             include_closed=include_closed,
             exclude_large_fields=exclude_large_fields,
-            assignee_id=assignee_id_filter, # Use ID for robust filtering
-            include_unassigned=include_unassigned if assignee_id_filter else False, # Only apply if filtering by user
+            assignee_id=assignee_id_filter,  # Use ID for robust filtering
+            include_unassigned=include_unassigned
+            if assignee_id_filter
+            else False,  # Only apply if filtering by user
         )
 
         if not success:
@@ -771,14 +885,14 @@ async def list_tasks(
         response_size = len(response_json)
 
         # Log response metrics
-        logfire.info(
+        logger.info(
             f"Tasks listed successfully | count={len(paginated_tasks)} | "
             f"size_bytes={response_size} | exclude_large_fields={exclude_large_fields}"
         )
 
         # Warning for large responses (>10KB)
         if response_size > 10000:
-            logfire.warning(
+            logger.warning(
                 f"Large task response size | size_bytes={response_size} | "
                 f"exclude_large_fields={exclude_large_fields} | task_count={len(paginated_tasks)}"
             )
@@ -788,7 +902,7 @@ async def list_tasks(
     except HTTPException:
         raise
     except Exception as e:
-        logfire.error(f"Failed to list tasks | error={str(e)}")
+        logger.error(f"Failed to list tasks | error={str(e)}")
         raise HTTPException(status_code=500, detail={"error": str(e)}) from e
 
 
@@ -802,13 +916,15 @@ async def get_task(task_id: str):
 
         if not success:
             if "not found" in result.get("error", "").lower():
-                raise HTTPException(status_code=404, detail=result.get("error"))
+                raise HTTPException(
+                    status_code=404, detail=result.get("error")
+                )
             else:
                 raise HTTPException(status_code=500, detail=result)
 
         task = result["task"]
 
-        logfire.info(
+        logger.info(
             f"Task retrieved successfully | task_id={task_id} | project_id={task.get('project_id')}"
         )
 
@@ -817,7 +933,9 @@ async def get_task(task_id: str):
     except HTTPException:
         raise
     except Exception as e:
-        logfire.error(f"Failed to get task | error={str(e)} | task_id={task_id}")
+        logger.error(
+            f"Failed to get task | error={str(e)} | task_id={task_id}"
+        )
         raise HTTPException(status_code=500, detail={"error": str(e)}) from e
 
 
@@ -878,7 +996,11 @@ class RestoreVersionRequest(BaseModel):
 
 
 @router.put("/tasks/{task_id}")
-async def update_task(task_id: str, request: UpdateTaskRequest, x_user_role: str | None = Header(None, alias="X-User-Role")):
+async def update_task(
+    task_id: str,
+    request: UpdateTaskRequest,
+    x_user_role: str | None = Header(None, alias="X-User-Role"),
+):
     """Update a task."""
     try:
         # Build update fields dictionary
@@ -889,16 +1011,20 @@ async def update_task(task_id: str, request: UpdateTaskRequest, x_user_role: str
 
         if request.assignee_id is not None:
             profile_service = ProfileService()
-            if request.assignee_id == "": # Handle unassigning
+            if request.assignee_id == "":  # Handle unassigning
                 target_assignee_name = "Unassigned"
                 update_fields["assignee_id"] = None
             else:
-                success, profile = profile_service.get_profile(request.assignee_id)
+                success, profile = profile_service.get_profile(
+                    request.assignee_id
+                )
                 if success and profile:
                     target_assignee_name = profile.get("name")
                     update_fields["assignee_id"] = request.assignee_id
                 else:
-                    logfire.warning(f"Failed to resolve assignee_id '{request.assignee_id}' to a name.")
+                    logger.warning(
+                        f"Failed to resolve assignee_id '{request.assignee_id}' to a name."
+                    )
 
         # RBAC Validation (using the resolved or direct assignee name)
         if target_assignee_name is not None:
@@ -906,22 +1032,42 @@ async def update_task(task_id: str, request: UpdateTaskRequest, x_user_role: str
             current_user_role = x_user_role or "User"
             profile_service = ProfileService()
             rbac_service = RBACService()
-            success, assignee_role = profile_service.get_user_role(target_assignee_name)
+            success, assignee_role = profile_service.get_user_role(
+                target_assignee_name
+            )
 
             if not success:
                 # Service failed, raise an internal server error
-                raise HTTPException(status_code=500, detail={"error": "Failed to verify assignee role"})
+                raise HTTPException(
+                    status_code=500,
+                    detail={"error": "Failed to verify assignee role"},
+                )
 
             if assignee_role:
-                if not rbac_service.has_permission_to_assign(current_user_role, assignee_role):
-                    raise HTTPException(status_code=403, detail=f"As a {current_user_role}, you cannot assign tasks to a {assignee_role}.")
+                if not rbac_service.has_permission_to_assign(
+                    current_user_role, assignee_role
+                ):
+                    raise HTTPException(
+                        status_code=403,
+                        detail=f"As a {current_user_role}, you cannot assign tasks to a {assignee_role}.",
+                    )
             else:
-                agent_roles = {"Market Researcher", "Internal Knowledge Expert"}
+                agent_roles = {
+                    "Market Researcher",
+                    "Internal Knowledge Expert",
+                }
                 if target_assignee_name in agent_roles:
-                    if not rbac_service.has_permission_to_assign(current_user_role, target_assignee_name):
-                        raise HTTPException(status_code=403, detail=f"As a {current_user_role}, you cannot assign tasks to a {target_assignee_name}.")
+                    if not rbac_service.has_permission_to_assign(
+                        current_user_role, target_assignee_name
+                    ):
+                        raise HTTPException(
+                            status_code=403,
+                            detail=f"As a {current_user_role}, you cannot assign tasks to a {target_assignee_name}.",
+                        )
                 else:
-                    logfire.warning(f"Assignee '{target_assignee_name}' not found in profiles and is not a known agent role. Skipping permission check.")
+                    logger.warning(
+                        f"Assignee '{target_assignee_name}' not found in profiles and is not a known agent role. Skipping permission check."
+                    )
 
             update_fields["assignee"] = target_assignee_name
 
@@ -947,17 +1093,21 @@ async def update_task(task_id: str, request: UpdateTaskRequest, x_user_role: str
 
         # Use TaskService to update the task
         task_service = TaskService()
-        success, result = await task_service.update_task(task_id, update_fields)
+        success, result = await task_service.update_task(
+            task_id, update_fields
+        )
 
         if not success:
             if "not found" in result.get("error", "").lower():
-                raise HTTPException(status_code=404, detail=result.get("error"))
+                raise HTTPException(
+                    status_code=404, detail=result.get("error")
+                )
             else:
                 raise HTTPException(status_code=500, detail=result)
 
         updated_task = result["task"]
 
-        logfire.info(
+        logger.info(
             f"Task updated successfully | task_id={task_id} | project_id={updated_task.get('project_id')} | updated_fields={list(update_fields.keys())}"
         )
 
@@ -966,7 +1116,9 @@ async def update_task(task_id: str, request: UpdateTaskRequest, x_user_role: str
     except HTTPException:
         raise
     except Exception as e:
-        logfire.error(f"Failed to update task | error={str(e)} | task_id={task_id}")
+        logger.error(
+            f"Failed to update task | error={str(e)} | task_id={task_id}"
+        )
         raise HTTPException(status_code=500, detail={"error": str(e)}) from e
 
 
@@ -976,62 +1128,96 @@ async def delete_task(task_id: str):
     try:
         # Use TaskService to archive the task
         task_service = TaskService()
-        success, result = await task_service.archive_task(task_id, archived_by="api")
+        success, result = await task_service.archive_task(
+            task_id, archived_by="api"
+        )
 
         if not success:
             if "not found" in result.get("error", "").lower():
-                raise HTTPException(status_code=404, detail=result.get("error"))
+                raise HTTPException(
+                    status_code=404, detail=result.get("error")
+                )
             elif "already archived" in result.get("error", "").lower():
-                raise HTTPException(status_code=409, detail=result.get("error"))
+                raise HTTPException(
+                    status_code=409, detail=result.get("error")
+                )
             else:
                 raise HTTPException(status_code=500, detail=result)
 
-        logfire.info(f"Task archived successfully | task_id={task_id}")
+        logger.info(f"Task archived successfully | task_id={task_id}")
 
         return {"message": result.get("message", "Task archived successfully")}
 
     except HTTPException:
         raise
     except Exception as e:
-        logfire.error(f"Failed to archive task | error={str(e)} | task_id={task_id}")
+        logger.error(
+            f"Failed to archive task | error={str(e)} | task_id={task_id}"
+        )
         raise HTTPException(status_code=500, detail={"error": str(e)}) from e
 
 
-@router.post("/tasks/{task_id}/agent-status", status_code=200, tags=["Agent Callback"])
-async def report_task_status_from_agent(task_id: str, request: AgentStatusUpdateRequest):
+@router.post(
+    "/tasks/{task_id}/agent-status", status_code=200, tags=["Agent Callback"]
+)
+async def report_task_status_from_agent(
+    task_id: str, request: AgentStatusUpdateRequest
+):
     """Endpoint for an AI agent to report a status update for a task."""
     try:
-        logger.info(f"Agent '{request.agent_id}' reporting status '{request.status}' for task '{task_id}'")
+        logger.info(
+            f"Agent '{request.agent_id}' reporting status '{request.status}' for task '{task_id}'"
+        )
         task_service = TaskService()
         success, result = await task_service.update_task_status_from_agent(
-            task_id=task_id, new_status=request.status, agent_id=request.agent_id
+            task_id=task_id,
+            new_status=request.status,
+            agent_id=request.agent_id,
         )
         if not success:
-            raise HTTPException(status_code=400, detail=result.get("error", "Failed to update status from agent"))
+            raise HTTPException(
+                status_code=400,
+                detail=result.get(
+                    "error", "Failed to update status from agent"
+                ),
+            )
         return result
     except HTTPException:
         raise
     except Exception as e:
-        logfire.error(f"Failed to update status from agent | error={str(e)} | task_id={task_id}")
+        logger.error(
+            f"Failed to update status from agent | error={str(e)} | task_id={task_id}"
+        )
         raise HTTPException(status_code=500, detail={"error": str(e)}) from e
 
 
-@router.post("/tasks/{task_id}/agent-output", status_code=200, tags=["Agent Callback"])
-async def report_task_output_from_agent(task_id: str, request: AgentOutputUpdateRequest):
+@router.post(
+    "/tasks/{task_id}/agent-output", status_code=200, tags=["Agent Callback"]
+)
+async def report_task_output_from_agent(
+    task_id: str, request: AgentOutputUpdateRequest
+):
     """Endpoint for an AI agent to report its final output for a task."""
     try:
-        logger.info(f"Agent '{request.agent_id}' reporting output for task '{task_id}'")
+        logger.info(
+            f"Agent '{request.agent_id}' reporting output for task '{task_id}'"
+        )
         task_service = TaskService()
         success, result = await task_service.save_agent_output(
             task_id=task_id, output=request.output, agent_id=request.agent_id
         )
         if not success:
-            raise HTTPException(status_code=400, detail=result.get("error", "Failed to save agent output"))
+            raise HTTPException(
+                status_code=400,
+                detail=result.get("error", "Failed to save agent output"),
+            )
         return result
     except HTTPException:
         raise
     except Exception as e:
-        logfire.error(f"Failed to save agent output | error={str(e)} | task_id={task_id}")
+        logger.error(
+            f"Failed to save agent output | error={str(e)} | task_id={task_id}"
+        )
         raise HTTPException(status_code=500, detail={"error": str(e)}) from e
 
 
@@ -1042,7 +1228,9 @@ async def report_task_output_from_agent(task_id: str, request: AgentOutputUpdate
 async def mcp_update_task_status(task_id: str, status: str):
     """Update task status via MCP tools."""
     try:
-        logfire.info(f"MCP task status update | task_id={task_id} | status={status}")
+        logger.info(
+            f"MCP task status update | task_id={task_id} | status={status}"
+        )
 
         # Use TaskService to update the task
         task_service = TaskService()
@@ -1052,23 +1240,28 @@ async def mcp_update_task_status(task_id: str, status: str):
 
         if not success:
             if "not found" in result.get("error", "").lower():
-                raise HTTPException(status_code=404, detail=f"Task {task_id} not found")
+                raise HTTPException(
+                    status_code=404, detail=f"Task {task_id} not found"
+                )
             else:
                 raise HTTPException(status_code=500, detail=result)
 
         updated_task = result["task"]
         project_id = updated_task["project_id"]
 
-        logfire.info(
+        logger.info(
             f"Task status updated | task_id={task_id} | project_id={project_id} | status={status}"
         )
 
-        return {"message": "Task status updated successfully", "task": updated_task}
+        return {
+            "message": "Task status updated successfully",
+            "task": updated_task,
+        }
 
     except HTTPException:
         raise
     except Exception as e:
-        logfire.error(
+        logger.error(
             f"Failed to update task status | error={str(e)} | task_id={task_id}"
         )
         raise HTTPException(status_code=500, detail=str(e)) from e
@@ -1080,7 +1273,9 @@ async def mcp_update_task_status(task_id: str, status: str):
 
 
 @router.get("/projects/{project_id}/docs")
-async def list_project_documents(project_id: str, include_content: bool = False):
+async def list_project_documents(
+    project_id: str, include_content: bool = False
+):
     """
     List all documents for a specific project.
 
@@ -1090,21 +1285,25 @@ async def list_project_documents(project_id: str, include_content: bool = False)
                         If False (default), returns metadata only.
     """
     try:
-        logfire.info(
+        logger.info(
             f"Listing documents for project | project_id={project_id} | include_content={include_content}"
         )
 
         # Use DocumentService to list documents
         document_service = DocumentService()
-        success, result = document_service.list_documents(project_id, include_content=include_content)
+        success, result = document_service.list_documents(
+            project_id, include_content=include_content
+        )
 
         if not success:
             if "not found" in result.get("error", "").lower():
-                raise HTTPException(status_code=404, detail=result.get("error"))
+                raise HTTPException(
+                    status_code=404, detail=result.get("error")
+                )
             else:
                 raise HTTPException(status_code=500, detail=result)
 
-        logfire.info(
+        logger.info(
             f"Documents listed successfully | project_id={project_id} | count={result.get('total_count', 0)} | lightweight={not include_content}"
         )
 
@@ -1113,15 +1312,19 @@ async def list_project_documents(project_id: str, include_content: bool = False)
     except HTTPException:
         raise
     except Exception as e:
-        logfire.error(f"Failed to list documents | error={str(e)} | project_id={project_id}")
+        logger.error(
+            f"Failed to list documents | error={str(e)} | project_id={project_id}"
+        )
         raise HTTPException(status_code=500, detail={"error": str(e)}) from e
 
 
 @router.post("/projects/{project_id}/docs")
-async def create_project_document(project_id: str, request: CreateDocumentRequest):
+async def create_project_document(
+    project_id: str, request: CreateDocumentRequest
+):
     """Create a new document for a project."""
     try:
-        logfire.info(
+        logger.info(
             f"Creating document for project | project_id={project_id} | title={request.title}"
         )
 
@@ -1138,20 +1341,27 @@ async def create_project_document(project_id: str, request: CreateDocumentReques
 
         if not success:
             if "not found" in result.get("error", "").lower():
-                raise HTTPException(status_code=404, detail=result.get("error"))
+                raise HTTPException(
+                    status_code=404, detail=result.get("error")
+                )
             else:
                 raise HTTPException(status_code=400, detail=result)
 
-        logfire.info(
+        logger.info(
             f"Document created successfully | project_id={project_id} | doc_id={result['document']['id']}"
         )
 
-        return {"message": "Document created successfully", "document": result["document"]}
+        return {
+            "message": "Document created successfully",
+            "document": result["document"],
+        }
 
     except HTTPException:
         raise
     except Exception as e:
-        logfire.error(f"Failed to create document | error={str(e)} | project_id={project_id}")
+        logger.error(
+            f"Failed to create document | error={str(e)} | project_id={project_id}"
+        )
         raise HTTPException(status_code=500, detail={"error": str(e)}) from e
 
 
@@ -1159,7 +1369,9 @@ async def create_project_document(project_id: str, request: CreateDocumentReques
 async def get_project_document(project_id: str, doc_id: str):
     """Get a specific document from a project."""
     try:
-        logfire.info(f"Getting document | project_id={project_id} | doc_id={doc_id}")
+        logger.info(
+            f"Getting document | project_id={project_id} | doc_id={doc_id}"
+        )
 
         # Use DocumentService to get document
         document_service = DocumentService()
@@ -1167,28 +1379,36 @@ async def get_project_document(project_id: str, doc_id: str):
 
         if not success:
             if "not found" in result.get("error", "").lower():
-                raise HTTPException(status_code=404, detail=result.get("error"))
+                raise HTTPException(
+                    status_code=404, detail=result.get("error")
+                )
             else:
                 raise HTTPException(status_code=500, detail=result)
 
-        logfire.info(f"Document retrieved successfully | project_id={project_id} | doc_id={doc_id}")
+        logger.info(
+            f"Document retrieved successfully | project_id={project_id} | doc_id={doc_id}"
+        )
 
         return result["document"]
 
     except HTTPException:
         raise
     except Exception as e:
-        logfire.error(
+        logger.error(
             f"Failed to get document | error={str(e)} | project_id={project_id} | doc_id={doc_id}"
         )
         raise HTTPException(status_code=500, detail={"error": str(e)}) from e
 
 
 @router.put("/projects/{project_id}/docs/{doc_id}")
-async def update_project_document(project_id: str, doc_id: str, request: UpdateDocumentRequest):
+async def update_project_document(
+    project_id: str, doc_id: str, request: UpdateDocumentRequest
+):
     """Update a document in a project."""
     try:
-        logfire.info(f"Updating document | project_id={project_id} | doc_id={doc_id}")
+        logger.info(
+            f"Updating document | project_id={project_id} | doc_id={doc_id}"
+        )
 
         # Build update fields
         update_fields = {}
@@ -1203,22 +1423,31 @@ async def update_project_document(project_id: str, doc_id: str, request: UpdateD
 
         # Use DocumentService to update document
         document_service = DocumentService()
-        success, result = document_service.update_document(project_id, doc_id, update_fields)
+        success, result = document_service.update_document(
+            project_id, doc_id, update_fields
+        )
 
         if not success:
             if "not found" in result.get("error", "").lower():
-                raise HTTPException(status_code=404, detail=result.get("error"))
+                raise HTTPException(
+                    status_code=404, detail=result.get("error")
+                )
             else:
                 raise HTTPException(status_code=500, detail=result)
 
-        logfire.info(f"Document updated successfully | project_id={project_id} | doc_id={doc_id}")
+        logger.info(
+            f"Document updated successfully | project_id={project_id} | doc_id={doc_id}"
+        )
 
-        return {"message": "Document updated successfully", "document": result["document"]}
+        return {
+            "message": "Document updated successfully",
+            "document": result["document"],
+        }
 
     except HTTPException:
         raise
     except Exception as e:
-        logfire.error(
+        logger.error(
             f"Failed to update document | error={str(e)} | project_id={project_id} | doc_id={doc_id}"
         )
         raise HTTPException(status_code=500, detail={"error": str(e)}) from e
@@ -1228,7 +1457,9 @@ async def update_project_document(project_id: str, doc_id: str, request: UpdateD
 async def delete_project_document(project_id: str, doc_id: str):
     """Delete a document from a project."""
     try:
-        logfire.info(f"Deleting document | project_id={project_id} | doc_id={doc_id}")
+        logger.info(
+            f"Deleting document | project_id={project_id} | doc_id={doc_id}"
+        )
 
         # Use DocumentService to delete document
         document_service = DocumentService()
@@ -1236,18 +1467,22 @@ async def delete_project_document(project_id: str, doc_id: str):
 
         if not success:
             if "not found" in result.get("error", "").lower():
-                raise HTTPException(status_code=404, detail=result.get("error"))
+                raise HTTPException(
+                    status_code=404, detail=result.get("error")
+                )
             else:
                 raise HTTPException(status_code=500, detail=result)
 
-        logfire.info(f"Document deleted successfully | project_id={project_id} | doc_id={doc_id}")
+        logger.info(
+            f"Document deleted successfully | project_id={project_id} | doc_id={doc_id}"
+        )
 
         return {"message": "Document deleted successfully"}
 
     except HTTPException:
         raise
     except Exception as e:
-        logfire.error(
+        logger.error(
             f"Failed to delete document | error={str(e)} | project_id={project_id} | doc_id={doc_id}"
         )
         raise HTTPException(status_code=500, detail={"error": str(e)}) from e
@@ -1257,16 +1492,20 @@ async def delete_project_document(project_id: str, doc_id: str):
 
 
 @router.get("/versions")
-async def list_all_versions(x_user_role: str | None = Header(None, alias="X-User-Role")):
+async def list_all_versions(
+    x_user_role: str | None = Header(None, alias="X-User-Role")
+):
     """
     List all document versions globally.
     Admin-only endpoint.
     """
     if x_user_role not in ["system_admin", "admin", "manager"]:
-        raise HTTPException(status_code=403, detail="Forbidden: Insufficient permissions")
+        raise HTTPException(
+            status_code=403, detail="Forbidden: Insufficient permissions"
+        )
 
     try:
-        logfire.info(f"Listing all document versions | user_role={x_user_role}")
+        logger.info(f"Listing all document versions | user_role={x_user_role}")
 
         versioning_service = VersioningService()
         success, result = versioning_service.list_all_versions()
@@ -1282,7 +1521,7 @@ async def list_all_versions(x_user_role: str | None = Header(None, alias="X-User
     except HTTPException:
         raise
     except Exception as e:
-        logfire.error(f"Failed to list all versions | error={str(e)}")
+        logger.error(f"Failed to list all versions | error={str(e)}")
         raise HTTPException(status_code=500, detail={"error": str(e)}) from e
 
 
@@ -1290,21 +1529,25 @@ async def list_all_versions(x_user_role: str | None = Header(None, alias="X-User
 async def list_project_versions(project_id: str, field_name: str = None):
     """List version history for a project's JSONB fields."""
     try:
-        logfire.info(
+        logger.info(
             f"Listing versions for project | project_id={project_id} | field_name={field_name}"
         )
 
         # Use VersioningService to list versions
         versioning_service = VersioningService()
-        success, result = versioning_service.list_versions(project_id, field_name)
+        success, result = versioning_service.list_versions(
+            project_id, field_name
+        )
 
         if not success:
             if "not found" in result.get("error", "").lower():
-                raise HTTPException(status_code=404, detail=result.get("error"))
+                raise HTTPException(
+                    status_code=404, detail=result.get("error")
+                )
             else:
                 raise HTTPException(status_code=500, detail=result)
 
-        logfire.info(
+        logger.info(
             f"Versions listed successfully | project_id={project_id} | count={result.get('total_count', 0)}"
         )
 
@@ -1313,15 +1556,19 @@ async def list_project_versions(project_id: str, field_name: str = None):
     except HTTPException:
         raise
     except Exception as e:
-        logfire.error(f"Failed to list versions | error={str(e)} | project_id={project_id}")
+        logger.error(
+            f"Failed to list versions | error={str(e)} | project_id={project_id}"
+        )
         raise HTTPException(status_code=500, detail={"error": str(e)}) from e
 
 
 @router.post("/projects/{project_id}/versions")
-async def create_project_version(project_id: str, request: CreateVersionRequest):
+async def create_project_version(
+    project_id: str, request: CreateVersionRequest
+):
     """Create a version snapshot for a project's JSONB field."""
     try:
-        logfire.info(
+        logger.info(
             f"Creating version for project | project_id={project_id} | field_name={request.field_name}"
         )
 
@@ -1339,28 +1586,37 @@ async def create_project_version(project_id: str, request: CreateVersionRequest)
 
         if not success:
             if "not found" in result.get("error", "").lower():
-                raise HTTPException(status_code=404, detail=result.get("error"))
+                raise HTTPException(
+                    status_code=404, detail=result.get("error")
+                )
             else:
                 raise HTTPException(status_code=400, detail=result)
 
-        logfire.info(
+        logger.info(
             f"Version created successfully | project_id={project_id} | version_number={result['version_number']}"
         )
 
-        return {"message": "Version created successfully", "version": result["version"]}
+        return {
+            "message": "Version created successfully",
+            "version": result["version"],
+        }
 
     except HTTPException:
         raise
     except Exception as e:
-        logfire.error(f"Failed to create version | error={str(e)} | project_id={project_id}")
+        logger.error(
+            f"Failed to create version | error={str(e)} | project_id={project_id}"
+        )
         raise HTTPException(status_code=500, detail={"error": str(e)}) from e
 
 
 @router.get("/projects/{project_id}/versions/{field_name}/{version_number}")
-async def get_project_version(project_id: str, field_name: str, version_number: int):
+async def get_project_version(
+    project_id: str, field_name: str, version_number: int
+):
     """Get a specific version's content."""
     try:
-        logfire.info(
+        logger.info(
             f"Getting version | project_id={project_id} | field_name={field_name} | version_number={version_number}"
         )
 
@@ -1372,11 +1628,13 @@ async def get_project_version(project_id: str, field_name: str, version_number: 
 
         if not success:
             if "not found" in result.get("error", "").lower():
-                raise HTTPException(status_code=404, detail=result.get("error"))
+                raise HTTPException(
+                    status_code=404, detail=result.get("error")
+                )
             else:
                 raise HTTPException(status_code=500, detail=result)
 
-        logfire.info(
+        logger.info(
             f"Version retrieved successfully | project_id={project_id} | field_name={field_name} | version_number={version_number}"
         )
 
@@ -1385,19 +1643,24 @@ async def get_project_version(project_id: str, field_name: str, version_number: 
     except HTTPException:
         raise
     except Exception as e:
-        logfire.error(
+        logger.error(
             f"Failed to get version | error={str(e)} | project_id={project_id} | field_name={field_name} | version_number={version_number}"
         )
         raise HTTPException(status_code=500, detail={"error": str(e)}) from e
 
 
-@router.post("/projects/{project_id}/versions/{field_name}/{version_number}/restore")
+@router.post(
+    "/projects/{project_id}/versions/{field_name}/{version_number}/restore"
+)
 async def restore_project_version(
-    project_id: str, field_name: str, version_number: int, request: RestoreVersionRequest
+    project_id: str,
+    field_name: str,
+    version_number: int,
+    request: RestoreVersionRequest,
 ):
     """Restore a project's JSONB field to a specific version."""
     try:
-        logfire.info(
+        logger.info(
             f"Restoring version | project_id={project_id} | field_name={field_name} | version_number={version_number}"
         )
 
@@ -1412,11 +1675,13 @@ async def restore_project_version(
 
         if not success:
             if "not found" in result.get("error", "").lower():
-                raise HTTPException(status_code=404, detail=result.get("error"))
+                raise HTTPException(
+                    status_code=404, detail=result.get("error")
+                )
             else:
                 raise HTTPException(status_code=500, detail=result)
 
-        logfire.info(
+        logger.info(
             f"Version restored successfully | project_id={project_id} | field_name={field_name} | version_number={version_number}"
         )
 
@@ -1428,7 +1693,7 @@ async def restore_project_version(
     except HTTPException:
         raise
     except Exception as e:
-        logfire.error(
+        logger.error(
             f"Failed to restore version | error={str(e)} | project_id={project_id} | field_name={field_name} | version_number={version_number}"
         )
         raise HTTPException(status_code=500, detail={"error": str(e)}) from e
