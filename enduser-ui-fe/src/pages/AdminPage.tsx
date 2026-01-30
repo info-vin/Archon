@@ -518,3 +518,4 @@ const PostEditorModal: React.FC<{post: BlogPost | null, onClose: () => void, onS
 };
 
 // End of AdminPage
+export default AdminPage;

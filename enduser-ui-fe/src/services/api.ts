@@ -57,7 +57,7 @@ export type NewTaskData = {
   title: string;
   description: string;
   status: TaskStatus;
-  assigneeId?: string;
+  assigneeId?: string | null;
   due_date: string;
   priority: TaskPriority;
   knowledge_source_ids?: string[]; // IDs of knowledge sources to associate with the task
@@ -68,7 +68,7 @@ export type NewProjectData = {
   description?: string;
 };
 
-export type UpdateTaskData = Partial<Omit<NewTaskData, 'project_id'> & { assignee_id: string | null; status: TaskStatus }>;
+export type UpdateTaskData = Partial<Omit<NewTaskData, 'project_id'> & { assigneeId: string | null; status: TaskStatus }>;
 
 export type NewBlogPostData = Omit<BlogPost, 'id' | 'authorName' | 'publishDate'>;
 

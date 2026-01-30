@@ -122,7 +122,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({ task, onClose, onTaskCreat
           title,
           description,
           status: task.status,
-          assignee_id: assigneeId || null,
+          assigneeId: assigneeId || null,
           due_date: new Date(dueDate).toISOString(),
           priority,
           // Note: updateTask might need knowledge_source_ids too, but for now we focus on creation
@@ -136,7 +136,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({ task, onClose, onTaskCreat
           title,
           description,
           status: 'todo' as any, // Default status
-          assigneeId: assigneeId || undefined,
+          assigneeId: assigneeId || null,
           due_date: new Date(dueDate).toISOString(),
           priority,
           knowledge_source_ids: selectedKnowledgeIds,
