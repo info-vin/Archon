@@ -360,6 +360,7 @@ Phase 4.4.5 引入了 **Clockwork** 進行系統自動檢測。
         | 21 | `017_add_missing_vendor_columns.sql` | **[Schema]** 補齊 `vendors` 缺失欄位 (如 `status`)。 |
         | 22 | `018_fix_blog_posts_id_default.sql` | **[修復]** 修正 `blog_posts` ID 的 UUID 預設值。 |
         | 23 | `019_add_prompts_rls.sql` | **[安全]** 為 `system_prompts` 加入 RLS 政策，保護 AI 提示詞。 |
+        | 24 | `020_phase46_schema.sql` | **[Phase 4.6]** Mobile Ops 表 (Visit Logs), Market Intelligence, 與安全加固 (RLS)。 |
 
 3.  **階段三：執行部署**
 

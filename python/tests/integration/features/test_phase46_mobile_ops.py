@@ -82,7 +82,7 @@ def test_lead_lifecycle_mobile_ops(precise_client, mock_supabase):
         assert res.status_code == 200
 
 
-def test_visit_log_creation_no_audio(precise_client, mock_supabase, mock_llm_client):
+def test_visit_log_creation_no_audio(precise_client, mock_supabase):
     mock_visit = {
         "id": "visit-001",
         "user_id": "alice-id",
@@ -92,8 +92,7 @@ def test_visit_log_creation_no_audio(precise_client, mock_supabase, mock_llm_cli
     }
 
     # Patch VISIT LOG API import specifically
-    with patch("server.api_routes.visit_log_api.get_supabase_client", return_value=mock_supabase), \
-         patch("server.api_routes.visit_log_api.get_llm_client", return_value=mock_llm_client):
+    with patch("server.api_routes.visit_log_api.get_supabase_client", return_value=mock_supabase):
 
         # Configure Insert
         # In visit_log_api: supabase.table("visit_logs").insert(log_data).execute()

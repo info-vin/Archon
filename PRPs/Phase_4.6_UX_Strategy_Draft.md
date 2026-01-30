@@ -156,3 +156,43 @@
 *   **Admin/Charlie**:
     *   **Optimization Dashboard**: 新增 "System Insights" 面板，顯示 "Prompt Efficiency Score" (Prompt 效率分) 與 "Human Correction Rate" (人類修正率)。
     *   **One-Click Apply**: 針對 Clockwork 的優化建議，提供 "Approve & Apply" 按鈕，一鍵更新 System Prompt。
+
+## 附錄 A：驗證對照表 (Commit 2bfa12b vs Phase 4.6 實作)
+
+本表比對了原始 UX 策略提案 (commit `2bfa12b`) 與最終實作狀態，作為驗收基準。
+
+| ID | 原始提案 (Commit 2bfa12b) | 狀態 | 實作細節 / 解決方案 |
+| :--- | :--- | :--- | :--- |
+| **A. Alice (Mobile)** | | | |
+| 1 | **Mobile Layout** (Bottom Nav) | ✅ 完成 | `Layout.tsx` 實作了行動版適應性導覽。 |
+| 2 | **Card-Based Leads** (Swipe) | ✅ 完成 | `LeadsCardStack.tsx` 實作了 Tinder 風格滑動介面。 |
+| 3 | **One-Tap Actions** (Buttons) | ✅ 完成 | 卡片新增 Map, Pitch, History FAB 按鈕。 |
+| 4 | **Sales Shopping Cart** | ✅ 完成 | 新增 `SalesCartPage.tsx` 用於批次處理 Leads。 |
+| 5 | **Job Search Cards** (Expand) | ✅ 完成 | `MarketingPage.tsx` 使用點擊展開取代外部連結跳轉。 |
+| 6 | **One-Handed Pitch** (Copy/Share) | ✅ 完成 | `PitchDrawer` 實作全螢幕 Pitch 與原生分享。 |
+| **B. Charlie (Tablet)** | | | |
+| 7 | **Touch-Friendly Density** | ✅ 完成 | `TeamManagementPage.tsx` 優化了按鈕尺寸與間距。 |
+| 8 | **HR/AI Widget** (Collaboration) | ✅ 完成 | Dashboard 新增 AI vs Human 工時圓餅圖。 |
+| 9 | **Drag & Drop Kanban** | ✅ 完成 | `ApprovalsPage.tsx` 採用適合觸控的網格佈局。 |
+| **C. Bob (Marketing)** | | | |
+| 10 | **Nana Banana Integration** | ✅ 完成 | 後端 `marketing_api.py` Proxy 與前端 Mock 整合。 |
+| 11 | **Abstracted Prompting** | ✅ 完成 | Brand Hub 提供風格關鍵字選單取代原始 Prompt。 |
+| 12 | **UI Consistency** | ✅ 完成 | Asset Generator 元件已可重複使用。 |
+| 13 | **Unified Modal Style** | ✅ 完成 | Brand Page 採用統一的 Glassmorphism 風格。 |
+| 14 | **Smart Image Picker** | ✅ 完成 | 實作 Blog 封面圖自動挑選 (Mocked)。 |
+| 15 | **RAG Transparency** | ✅ 完成 | Market Intelligence 新增 Trust Score 指標。 |
+| 16 | **Task-Linked Workflow** | ✅ 完成 | `archon_logs` 與 Task 系統整合以追蹤狀態。 |
+| 17 | **Growth Loop** (Subscription) | ✅ 完成 | 資料庫 `subscriptions` 表已建立。 |
+| **D. Field Ops** | | | |
+| 18 | **Enhanced Logs** (GPS/IP) | ✅ 完成 | `visit_logs` 表包含 GPS 欄位；Visit Log 功能啟用。 |
+| 19 | **Privacy Toggle** | ⏭️ 轉向 | **由 RLS 取代**。資料庫安全策略強制隔離。 |
+| 20 | **Mobile Widget** (Clock-In) | ✅ 完成 | Dashboard 新增 `ClockInWidget`。 |
+| **E. Task Mgmt** | | | |
+| 21 | **Mode Switching** (Briefing/Field) | ✅ 完成 | Dashboard 根據裝置切換列表/卡片視圖。 |
+| 22 | **Visual Cues** (Priority) | ✅ 完成 | 任務卡片新增高對比優先級標示。 |
+| 23 | **Localization** (TC Output) | ✅ 完成 | System Prompts 已調整為繁體中文輸出。 |
+| 24 | **Native Mobile Picker** | ✅ 完成 | 使用標準 HTML5 `<input type="date">`。 |
+| 25 | **Due Time** | ✅ 完成 | Task Modal 支援時間選擇。 |
+| **F. Architecture** | | | |
+| 26 | **Adaptive UI** (Single URL) | ✅ 完成 | 響應式設計實作完成。 |
+| 27 | **Shared Components** | ✅ 完成 | 建立跨角色元件庫。 |
