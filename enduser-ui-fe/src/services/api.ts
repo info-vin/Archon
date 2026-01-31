@@ -662,6 +662,12 @@ const supabaseApi = {
     }
     return response.json();
   },
+
+  async getEthicsEvents(): Promise<any[]> {
+    const response = await fetch('/api/ethics/events', { headers: await this._getHeaders() });
+    if (!response.ok) throw new Error('Failed to fetch ethics events');
+    return response.json();
+  },
 };
 
 // Export the API

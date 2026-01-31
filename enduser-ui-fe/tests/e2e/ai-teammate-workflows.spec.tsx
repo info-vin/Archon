@@ -62,7 +62,7 @@ describe('AI as a Teammate E2E Workflows', () => {
     const taskTitle = 'Draft a blog post about our new AI features';
     fireEvent.change(titleInput, { target: { value: taskTitle } });
     fireEvent.change(descriptionInput, { target: { value: 'The blog post should cover the benefits and use cases.' } });
-    fireEvent.change(dueDateInput, { target: { value: '2025-12-31' } });
+    fireEvent.change(dueDateInput, { target: { value: '2025-12-31T09:00' } });
 
     const assigneeSelect = screen.getByLabelText(/assignee/i);
     fireEvent.change(assigneeSelect, { target: { value: 'agent-content-writer' } });
@@ -107,7 +107,7 @@ describe('AI as a Teammate E2E Workflows', () => {
     const taskTitle = 'Analyze user error logs for ticket #12345';
     fireEvent.change(titleInput, { target: { value: taskTitle } });
     fireEvent.change(descriptionInput, { target: { value: mockErrorLog } });
-    fireEvent.change(dueDateInput, { target: { value: '2025-12-28' } });
+    fireEvent.change(dueDateInput, { target: { value: '2025-12-28T09:00' } });
 
     const assigneeSelect = screen.getByLabelText(/assignee/i);
     fireEvent.change(assigneeSelect, { target: { value: 'agent-log-analyzer' } });
@@ -146,7 +146,7 @@ describe('AI as a Teammate E2E Workflows', () => {
     
     const taskTitle = 'Generate lead list for ACME Corp in the finance sector';
     fireEvent.change(titleInput, { target: { value: taskTitle } });
-    fireEvent.change(dueDateInput, { target: { value: '2025-12-29' } });
+    fireEvent.change(dueDateInput, { target: { value: '2025-12-29T09:00' } });
 
     const assigneeSelect = screen.getByLabelText(/assignee/i);
     fireEvent.change(assigneeSelect, { target: { value: 'agent-sales-intel' } });

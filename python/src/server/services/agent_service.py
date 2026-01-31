@@ -5,6 +5,7 @@ import json
 import uuid
 
 from ..config.logfire_config import get_logger
+from ..prompts.dev_ops_prompts import DEVBOT_TOOLS, get_devbot_analysis_prompt
 
 # Import the new CodeModifier utility
 from ..utils.code_modifier import CodeModifier
@@ -16,57 +17,134 @@ from .shared_constants import AI_AGENT_ROLES
 class AgentService:
     """Service for handling business logic related to AI agents."""
 
-    def __init__(self):
+    def __init__(self, mcp_client=None):
         self.code_modifier = CodeModifier(base_path=".")
+        self.mcp_client = mcp_client
+
+    async def _handle_tool_calls(self, tool_calls) -> list[dict]:
+        """
+        Executes tool calls requested by the LLM via MCP client.
+        Returns a list of tool message dictionaries for the chat context.
+        """
+        logger = get_logger(__name__)
+        tool_outputs = []
+
+        for tool_call in tool_calls:
+            function_name = tool_call.function.name
+            arguments = json.loads(tool_call.function.arguments)
+            call_id = tool_call.id
+
+            logger.info(f"[MCP] Agent requesting tool execution: {function_name} | args={arguments}")
+
+            try:
+                # Execute tool via MCP Client
+                if not self.mcp_client:
+                    raise Exception("MCP Client not initialized")
+
+                # Map LLM function names to MCP tool names if needed,
+                # but our prompt definitions match MCP tool names exactly.
+                if function_name == "search_code_examples":
+                    result = await self.mcp_client.search_code_examples(**arguments)
+                elif function_name == "rag_search_knowledge_base":
+                    result = await self.mcp_client.perform_rag_query(**arguments)
+                else:
+                    result = f"Error: Tool '{function_name}' not supported by DevBot."
+
+                tool_outputs.append({
+                    "role": "tool",
+                    "tool_call_id": call_id,
+                    "content": str(result)
+                })
+
+            except Exception as e:
+                logger.error(f"[MCP] Tool execution failed: {e}")
+                tool_outputs.append({
+                    "role": "tool",
+                    "tool_call_id": call_id,
+                    "content": f"Error executing tool: {str(e)}"
+                })
+
+        return tool_outputs
 
     async def _analyze_error_with_structured_output(self, command: str, stderr: str) -> dict | None:
         """
         Uses LLM to analyze the error output and suggest a fix in structured JSON.
-        Returns:
-            {
-                "file_path": "path/to/file",
-                "fixed_content": "new file content",
-                "reasoning": "explanation"
-            }
-            OR None if analysis fails or no fix is possible.
+        Supports L2+ Capability: Uses MCP tools (RAG/Search) to research before fixing.
         """
         logger = get_logger(__name__)
-        prompt = f"""
-You are an expert software engineer and debugger. The following shell command failed:
+        prompt = get_devbot_analysis_prompt(command, stderr)
 
-Command: `{command}`
+        # Prepare messages
+        messages = [{"role": "user", "content": prompt}]
 
-Error Output (stderr):
-{stderr}
+        # Determine if we can use tools
+        tools = DEVBOT_TOOLS if self.mcp_client else None
 
-Analyze the error. If it is a fixable code error (e.g., SyntaxError, TypeScript error, logic bug), provide a fix.
-You MUST return a JSON object with the following structure:
-{{
-    "file_path": "The relative path of the file to fix (e.g., 'scripts/foo.py')",
-    "fixed_content": "The COMPLETE content of the fixed file (do not use diffs)",
-    "reasoning": "A brief explanation of the fix"
-}}
-
-If the error is an environment issue or you cannot fix it by modifying code, return an empty JSON object {{}}.
-Ensure the "fixed_content" is valid code for the target language.
-"""
         try:
             # Get active model from config
             provider_config = await credential_service.get_active_provider()
             model = provider_config.get("chat_model") or "gpt-4o"
 
             async with get_llm_client() as client:
+                # --- Round 1: Analysis & Potential Tool Call ---
                 response = await client.chat.completions.create(
                     model=model,
-                    messages=[{"role": "user", "content": prompt}],
-                    max_tokens=4000, # Increased for full file content
+                    messages=messages,
+                    tools=tools,
+                    tool_choice="auto" if tools else None,
+                    max_tokens=4000,
                     temperature=0.1,
-                    response_format={"type": "json_object"}
+                    # We don't enforce json_object yet because it might call a tool
                 )
-                content = response.choices[0].message.content.strip()
+
+                response_message = response.choices[0].message
+                tool_calls = response_message.tool_calls
+
+                # Case A: LLM wants to use tools (Look-Before-Leap)
+                if tool_calls and self.mcp_client:
+                    logger.info(f"DevBot triggered {len(tool_calls)} tool calls for research.")
+
+                    # Append assistant's intent to history
+                    messages.append(response_message)
+
+                    # Execute tools
+                    tool_outputs = await self._handle_tool_calls(tool_calls)
+                    messages.extend(tool_outputs)
+
+                    # --- Round 2: Final Verdict with Context ---
+                    # Now we force JSON output for the final fix proposal
+                    final_response = await client.chat.completions.create(
+                        model=model,
+                        messages=messages,
+                        max_tokens=4000,
+                        temperature=0.1,
+                        response_format={"type": "json_object"}
+                    )
+                    content = final_response.choices[0].message.content.strip()
+
+                # Case B: LLM replied directly (Direct Fix)
+                else:
+                    content = response_message.content.strip()
+                    # If it's not JSON (because we didn't enforce it in R1), we might need to retry or parsing might fail
+                    # But usually for "auto", if it doesn't call tools, it follows the prompt instructions.
+                    # To be safe, let's ensure it's JSON.
+                    # Optimization: In Round 1, if we didn't force JSON, we might get text.
+                    # Ideally, we should check if content starts with '{'.
+
                 if not content:
                     return None
-                return json.loads(content)
+
+                # Parse JSON
+                try:
+                    return json.loads(content)
+                except json.JSONDecodeError:
+                    # Fallback: Try to find JSON block if LLM was chatty
+                    import re
+                    match = re.search(r'\{.*\}', content, re.DOTALL)
+                    if match:
+                        return json.loads(match.group(0))
+                    return None
+
         except Exception as e:
             logger.error(f"Failed to analyze error with LLM: {e}")
             return None

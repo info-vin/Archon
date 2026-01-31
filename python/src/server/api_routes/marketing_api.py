@@ -413,7 +413,9 @@ async def draft_blog_post(request: DraftBlogRequest, current_user: dict = Depend
 
         # 2. LLM Generation
         provider_config = await credential_service.get_active_provider("llm")
-        model_name = provider_config.get("chat_model") or "gpt-4o"
+        # Optimization: Fetch MARKETING_MODEL
+        marketing_model = await credential_service.get_credential("MARKETING_MODEL", category="rag_strategy")
+        model_name = marketing_model or provider_config.get("chat_model") or "gpt-4o"
 
         system_prompt = BLOG_DRAFT_SYSTEM_PROMPT
         user_prompt = f"Topic: {request.topic}\nKeywords: {request.keywords}\nTone: {request.tone}\n\n<reference_context>\n{context_text}\n</reference_context>"
@@ -467,7 +469,10 @@ async def nana_banana_proxy(
 
     # Mock Implementation for Plan
     # In real world: async with httpx.AsyncClient() as client: ...
-    logfire.info(f"API: Nana Banana Call | user={current_user.get('email')}")
+    # Fetch configured model (e.g. imagen-3)
+    # Fetch configured model (e.g. imagen-3)
+    nana_model = await credential_service.get_credential("NANA_BANANA_MODEL", category="rag_strategy") or "imagen-3"
+    logfire.info(f"API: Nana Banana Call ({nana_model}) | user={current_user.get('email')}")
 
     # Simulate API Call
     await asyncio.sleep(1) # Fake latency

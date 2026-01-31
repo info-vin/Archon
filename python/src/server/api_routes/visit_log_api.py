@@ -58,6 +58,19 @@ async def create_visit_log(
             mime_type = audio_file.content_type or "audio/webm"
             base64_audio = base64.b64encode(audio_content).decode("utf-8")
 
+            # Get Audio Model Config
+            from ..services.credential_service import credential_service
+            audio_model = "gemini-1.5-flash" # Fallback
+
+            # Fetch from DB settings
+            try:
+                # We reuse 'rag_strategy' category for model names as per migration 014
+                db_model = await credential_service.get_credential("AUDIO_MODEL", category="rag_strategy")
+                if db_model:
+                     audio_model = db_model
+            except Exception as e:
+                logfire.warning(f"Failed to fetch AUDIO_MODEL from settings, using default: {e}")
+
             # Get Google API Key
             # We bypass llm_provider_service for this specific raw multimodal call because
             # standard OpenAI client wrapper doesn't support 'inline_data' for audio easily.
@@ -86,8 +99,8 @@ async def create_visit_log(
                 try:
                     import httpx
 
-                    # Gemini 1.5 Flash Endpoint
-                    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
+                    # Model Endpoint (Dynamic)
+                    url = f"https://generativelanguage.googleapis.com/v1beta/models/{audio_model}:generateContent?key={api_key}"
 
                     prompt_text = (
                         "You are an expert Sales Assistant. "

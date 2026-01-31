@@ -20,7 +20,19 @@ def mock_user_dependency():
 @pytest.fixture
 def mock_services():
     with patch("src.server.api_routes.marketing_api.RAGService") as mock_rag, \
-         patch("src.server.api_routes.marketing_api.get_llm_client") as mock_llm_ctx:
+         patch("src.server.api_routes.marketing_api.get_llm_client") as mock_llm_ctx, \
+         patch("src.server.services.credential_service.credential_service.get_credential", new_callable=AsyncMock) as mock_get_cred, \
+         patch("src.server.services.credential_service.credential_service.get_active_provider", new_callable=AsyncMock) as mock_get_provider, \
+         patch("src.server.utils.get_supabase_client") as mock_get_supabase:
+
+        # Mock Credential Service
+        mock_get_cred.return_value = "gpt-4o" # Default model
+        mock_get_provider.return_value = {"chat_model": "gpt-4o"}
+
+        # Mock Supabase for Guardrail logging
+        mock_supabase = MagicMock()
+        mock_get_supabase.return_value = mock_supabase
+        mock_supabase.table.return_value.insert.return_value.execute.return_value = None
 
         # Mock RAG
         rag_instance = mock_rag.return_value

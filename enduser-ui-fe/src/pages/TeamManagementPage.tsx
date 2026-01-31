@@ -4,6 +4,7 @@ import { Employee, EmployeeRole, Task } from '../types';
 import { useAuth } from '../hooks/useAuth';
 import { PermissionGuard } from '../features/auth/components/PermissionGuard';
 import { AiCollaborationWidget } from '../features/team/components/AiCollaborationWidget';
+import { EthicsCard } from '../features/team/components/EthicsCard';
 import UserAvatar from '../components/UserAvatar';
 import { ShieldCheckIcon, MailIcon, BadgeCheckIcon, XIcon, RefreshCwIcon, KeyIcon } from '../components/Icons';
 
@@ -60,6 +61,9 @@ const TeamManagementPage: React.FC = () => {
 
                 {/* AI COLLABORATION WIDGET (Tablet/Touch Friendly) */}
                 <AiCollaborationWidget data={aiUsage} />
+
+                {/* ETHICS & COMPLIANCE LOGS (Sentinel) */}
+                <EthicsCard />
 
                 {/* APPROVALS SECTION */}
                 {approvals.blogs.length > 0 && (

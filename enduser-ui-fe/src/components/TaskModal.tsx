@@ -67,7 +67,10 @@ export const TaskModal: React.FC<TaskModalProps> = ({ task, onClose, onTaskCreat
       setDescription(task.description || '');
       setAssigneeId(task.assignee_id || '');
       if (task.due_date) {
-        setDueDate(new Date(task.due_date).toISOString().split('T')[0]);
+        // Convert ISO string to local datetime string for input
+        const date = new Date(task.due_date);
+        const localIso = new Date(date.getTime() - (date.getTimezoneOffset() * 60000)).toISOString().slice(0, 16);
+        setDueDate(localIso);
       }
       setPriority(task.priority);
       
@@ -217,7 +220,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({ task, onClose, onTaskCreat
             </div>
             <div>
               <label htmlFor="due-date" className="block text-sm font-medium mb-1">Due Date</label>
-              <input id="due-date" type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} className={inputClass} required />
+              <input id="due-date" type="datetime-local" value={dueDate} onChange={(e) => setDueDate(e.target.value)} className={inputClass} required />
             </div>
           </div>
           <div>

@@ -31,8 +31,23 @@ class EnrichmentService:
 
             logfire.info(f"Enrichment: Starting | id={lead_id} | company={lead.get('company_name')}")
 
-            # Simulate External API Call (Google / 104 Detail Crawl Plan B)
-            await asyncio.sleep(1.5)
+            # Check Toggle for Real vs Mock
+            from ..services.credential_service import credential_service
+            # We reuse 'rag_strategy' category as per migration
+            enable_real = await credential_service.get_credential("ENABLE_REAL_ENRICHMENT", category="features")
+            is_real_mode = str(enable_real).lower() == "true"
+
+            if is_real_mode:
+                logfire.info(f"Enrichment: Running in REAL mode (Simulated Real API Call) | id={lead_id}")
+                # Real Implementation Hook:
+                # 1. Get JobBoard/Google API Key
+                # 2. Call Crawler
+                # 3. Parse results
+                # For Phase 4.6, we simulate a 'Real' call taking longer or hitting a different endpoint
+                await asyncio.sleep(3.0)
+            else:
+                logfire.info(f"Enrichment: Running in MOCK mode | id={lead_id}")
+                await asyncio.sleep(1.5)
 
             # logic: If successful, update status and score
             # Real implementation would call scraping tools here.

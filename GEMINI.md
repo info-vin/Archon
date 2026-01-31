@@ -88,6 +88,28 @@
 
 # 第三章：近期工作日誌 (Recent Journal Entries)
 
+### 2026-01-30: Phase 4.6 Mobile & UX Polish (Gap Closure)
+*   **核心任務**: 完成 Section 7 行動版與情資缺口填補，並進行 UX 最終打磨。
+*   **功能落地**:
+    *   **Mobile Ops**: 實作 `Voice Logs` (語音日誌), `Pitch Drawer`, 與全域 `FAB` (懸浮按鈕)。
+    *   **UX Polish**: 優化 Search Bar 互動與 Job Search 體驗。
+*   **文件重構**:
+    *   更新 `UX Strategy` 與 `Phase 4.6 Plan`，納入 Security Hardening。
+    *   修訂 `CONTRIBUTING_tw.md`，釐清人機協作矩陣 (RBAC Matrix)。
+*   **關鍵修復 (Fixes)**:
+    *   **Type Safety**: 解決 Admin/Task Modals 的嚴重型別錯誤。
+    *   **Flaky Tests**: 修復 Content Marketing E2E 測試的不穩定斷言。
+
+### 2026-01-29: Phase 4.5 Finalization (RLS & The "Magic" Release)
+*   **核心任務**: 解決所有 Phase 4.5 剩餘的高風險 Bug，並交付 "Magic Draft" 功能。
+*   **技術突圍**:
+    *   **Magic Draft**: 打通「行銷草稿 -> 部落格持久化 -> 公開可見性」的完整鏈路。
+    *   **RLS 實戰**: 全面實作 Row Level Security，解決資料外洩隱患。
+*   **關鍵修復**:
+    *   **API 500**: 修復 Marketing 與 Blog API 的嚴重伺服器錯誤 (500 Internal Server Error)。
+    *   **UI Tweaks**: 修正 `UserAvatar` 的 `rounded` 樣式覆蓋問題。
+*   **里程碑**: 驗證並關閉 Phase 4.5 所有功能特性。
+
 ### 2026-01-28: The Great Lint & Type Safety Purge (Stability Restoration)
 *   **核心任務**: 全面清掃前端 (`enduser-ui-fe`, `archon-ui-main`) 與後端 (`python`) 的 Lint 錯誤與型別損毀，將「紅色蚯蚓」歸零。
 *   **技術突圍**:

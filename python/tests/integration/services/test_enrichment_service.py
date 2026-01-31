@@ -1,4 +1,4 @@
-from unittest.mock import MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
@@ -19,7 +19,11 @@ async def test_enrich_lead_success():
     }
 
     with patch("server.services.enrichment_service.get_supabase_client", return_value=mock_supabase), \
+         patch("server.services.credential_service.credential_service.get_credential", new_callable=AsyncMock) as mock_get_cred, \
          patch("asyncio.sleep", return_value=None): # Skip sleep
+
+        # Mock ENABLE_REAL_ENRICHMENT = False (default)
+        mock_get_cred.return_value = "false"
 
         success = await EnrichmentService.enrich_lead("lead-123")
 

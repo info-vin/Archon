@@ -23,7 +23,7 @@ describe('Task Assignee Persistence (Migration 007)', () => {
         fireEvent.change(descInput, { target: { value: 'Testing persistence' } });
 
         const dueDateInput = screen.getByLabelText(/Due Date/i);
-        fireEvent.change(dueDateInput, { target: { value: '2025-12-31' } });
+        fireEvent.change(dueDateInput, { target: { value: '2025-12-31T09:00' } });
 
         // Select Assignee "Alice Johnson" (ID: user-1)
         const assigneeSelect = screen.getByLabelText(/Assignee/i);

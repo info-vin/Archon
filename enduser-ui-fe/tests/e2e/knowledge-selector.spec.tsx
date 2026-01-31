@@ -41,7 +41,7 @@ test('User can select knowledge items when creating a task', async () => {
   // 2. Fill in basic task details
   await user.type(screen.getByLabelText(/title/i), 'Task with Knowledge');
   await user.type(screen.getByLabelText(/description/i), 'This task needs references.');
-  await user.type(screen.getByLabelText(/due date/i), '2024-12-31');
+  await user.type(screen.getByLabelText(/due date/i), '2024-12-31T09:00');
 
   // 3. Interact with KnowledgeSelector
   const selectorButton = await screen.findByText(/select internal knowledge/i);

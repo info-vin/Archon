@@ -24,6 +24,7 @@ from .api_routes.agents_api import router as agents_router
 from .api_routes.auth_api import router as auth_router  # NEW IMPORT
 from .api_routes.blog_api import router as blog_router
 from .api_routes.bug_report_api import router as bug_report_router
+from .api_routes.ethics_api import router as ethics_router  # NEW IMPORT
 from .api_routes.files_api import router as files_router
 from .api_routes.internal_api import router as internal_router
 from .api_routes.knowledge_api import router as knowledge_router
@@ -128,6 +129,20 @@ async def lifespan(app: FastAPI):
         except Exception as e:
             api_logger.error(f"❌ Failed to start Clockwork: {e}")
 
+        # Initialize Agent Neural Wiring (MCP Client Injection)
+        try:
+            from .agents.mcp_client import get_mcp_client
+            from .services.agent_service import agent_service
+
+            # Initialize the global MCP client bridge
+            mcp_bridge = await get_mcp_client()
+
+            # Inject into Agent Service (Neural Wiring)
+            agent_service.mcp_client = mcp_bridge
+            api_logger.info("🧠 Agent Neural Wiring Complete: MCP Client injected into AgentService")
+        except Exception as e:
+            api_logger.warning(f"⚠️ Failed to wire Agent to MCP (Skills disabled): {e}")
+
         # Set the main event loop for background tasks
         try:
             from .services.background_task_manager import get_task_manager
@@ -138,6 +153,7 @@ async def lifespan(app: FastAPI):
             api_logger.info("✅ Main event loop set for background tasks")
         except Exception as e:
             api_logger.warning(f"Could not set main event loop: {e}")
+
 
         # MCP Client functionality removed from architecture
         # Agents now use MCP tools directly
@@ -242,6 +258,7 @@ app.include_router(auth_router)
 app.include_router(blog_router)
 app.include_router(bug_report_router)
 app.include_router(log_router)
+app.include_router(ethics_router)
 app.include_router(files_router)
 app.include_router(version_router)
 app.include_router(providers_router)
