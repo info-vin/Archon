@@ -50,6 +50,86 @@ class SchedulerService:
         )
         logger.info("✅ Scheduled Job: Token Analysis (Every 24 hours)")
 
+        # Job 3: The Patrol - Log Analysis & Auto-Repair (Every 1 hour)
+        self._scheduler.add_job(
+            self._run_log_patrol,
+            trigger=IntervalTrigger(hours=1),
+            id="log_patrol",
+            replace_existing=True
+        )
+        logger.info("✅ Scheduled Job: Log Patrol (Every 1 hour)")
+
+    async def _run_log_patrol(self):
+        """
+        Scans logs for errors and dispatches DevBot if needed.
+        """
+        logger.info("👮 Clockwork: Starting Log Patrol...")
+        try:
+            from ..utils import get_supabase_client
+            from .projects.task_service import task_service
+            from .agent_service import agent_service
+            from .shared_constants import AI_AGENT_ROLES
+            
+            supabase = get_supabase_client()
+            one_hour_ago = (datetime.now(UTC) - timedelta(hours=1)).isoformat()
+
+            # Find recent errors
+            res = (
+                supabase.table("archon_logs")
+                .select("*")
+                .eq("level", "ERROR")
+                .gt("created_at", one_hour_ago)
+                .limit(5) # Avoid spamming tasks
+                .execute()
+            )
+            
+            errors = res.data or []
+            if not errors:
+                logger.info("👮 Clockwork: No recent errors found. All systems nominal.")
+                return
+
+            logger.info(f"👮 Clockwork: Detected {len(errors)} errors. Analyzing...")
+            
+            # Simple heuristic: If we find errors, create ONE investigation task
+            # In a real system, we would group similar errors.
+            
+            # Create a task for DevBot
+            error_summary = "\n".join([f"- [{e['source']}] {e['message']}" for e in errors])
+            task_title = f"Auto-Repair: System Errors Detected ({datetime.now().strftime('%H:%M')})"
+            task_desc = f"Clockwork detected the following errors in the last hour:\n{error_summary}\n\nPlease analyze and fix."
+            
+            # We need a project ID to attach the task to. 
+            # Ideally, there should be a 'System Maintenance' project.
+            # For now, we'll try to find one or create it? 
+            # Or just fail if no project found.
+            # Let's assume a default project or pick the first one for MVP.
+            
+            p_res = supabase.table("archon_projects").select("id").limit(1).execute()
+            if not p_res.data:
+                logger.warning("Clockwork: No projects found to attach repair task.")
+                return
+                
+            project_id = p_res.data[0]["id"]
+            
+            # Create Task
+            new_task = {
+                "project_id": project_id,
+                "title": task_title,
+                "description": task_desc,
+                "priority": "high",
+                "status": "todo",
+                "assignee_id": AI_AGENT_ROLES.get("DevBot (Engineering)") or "ai-dev-bot"
+            }
+            
+            success, task = await task_service.create_task(new_task)
+            if success:
+                logger.info(f"👮 Clockwork: Created repair task {task['id']}. Dispatching DevBot...")
+                # Dispatch DevBot immediately
+                await agent_service.run_agent_task(task['id'], new_task["assignee_id"])
+            
+        except Exception as e:
+            logger.error(f"💥 Clockwork: Log Patrol Failed: {e}")
+
     async def _analyze_token_usage(self):
         logger.info("🤖 Clockwork: Starting Token Usage Analysis...")
         try:

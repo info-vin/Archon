@@ -1,6 +1,7 @@
 
 from fastapi import APIRouter, Depends, HTTPException
 
+from ..auth.dependencies import get_current_user
 from ..config.logfire_config import logfire
 from ..services.agent_service import AgentService, agent_service
 
@@ -18,13 +19,16 @@ async def agents_health():
 
 @router.get("/assignable", response_model=list[dict])
 async def get_assignable_agents(
+    current_user: dict = Depends(get_current_user),
     service: AgentService = Depends(lambda: agent_service)
 ):
     """
     Get a list of all assignable AI agents.
+    Filtered by user role (RBAC).
     """
     try:
-        agents = await service.get_assignable_agents()
+        user_role = current_user.get("role", "employee")
+        agents = await service.get_assignable_agents(user_role=user_role)
         return agents
     except Exception as e:
         logfire.error(f"Failed to get assignable agents: {e}")

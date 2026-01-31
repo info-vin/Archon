@@ -229,14 +229,38 @@ class AgentService:
             self.code_modifier.revert_sandbox(original_branch)
             return False, f"Auto-repair failed verification. Stderr: {stderr_retry.decode().strip()[-500:]}"
 
-    async def get_assignable_agents(self) -> list[dict]:
+    async def get_assignable_agents(self, user_role: str | None = None) -> list[dict]:
         """
-        Retrieves a list of assignable AI agents.
+        Retrieves a list of assignable AI agents, filtered by user role.
+        RBAC Policy:
+        - Admin/Manager: All agents
+        - Sales: MarketBot only
+        - Marketing: MarketBot + Librarian
         """
-        assignable_agents = []
+        all_agents = []
         for role_name, agent_id in AI_AGENT_ROLES.items():
-            assignable_agents.append({"id": agent_id, "name": role_name, "role": role_name})
-        return assignable_agents
+            all_agents.append({"id": agent_id, "name": role_name, "role": role_name})
+            
+        if not user_role or user_role in ["admin", "system_admin", "manager"]:
+            return all_agents
+            
+        filtered_agents = []
+        
+        # RBAC Filtering Logic (SSOT from Matrix)
+        for agent in all_agents:
+            agent_id = agent["id"]
+            
+            if user_role == "sales":
+                # Alice sees only MarketBot
+                if agent_id == "ai-market-bot":
+                    filtered_agents.append(agent)
+                    
+            elif user_role == "marketing":
+                # Bob sees MarketBot + Librarian
+                if agent_id in ["ai-market-bot", "ai-librarian"]:
+                    filtered_agents.append(agent)
+        
+        return filtered_agents
 
     async def run_agent_task(self, task_id: str, agent_id: str, command: str | None = None):
         """
