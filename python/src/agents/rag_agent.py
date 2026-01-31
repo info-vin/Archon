@@ -59,7 +59,7 @@ class RagAgent(BaseAgent[RagDependencies, str]):
     - Explain concepts found in documentation
     """
 
-    def __init__(self, model: str = None, **kwargs):
+    def __init__(self, model: str | None = None, **kwargs):
         # Use provided model or fall back to default
         if model is None:
             model = os.getenv("RAG_AGENT_MODEL", "openai:gpt-4o-mini")
@@ -318,10 +318,10 @@ class RagAgent(BaseAgent[RagDependencies, str]):
         try:
             from ..services.prompt_service import prompt_service
 
-            return prompt_service.get_prompt(
+            return str(prompt_service.get_prompt(
                 "rag_assistant",
                 default="RAG Assistant for intelligent document search and retrieval.",
-            )
+            ))
         except Exception as e:
             logger.warning(f"Could not load prompt from service: {e}")
             return "RAG Assistant for intelligent document search and retrieval."
@@ -332,8 +332,8 @@ class RagAgent(BaseAgent[RagDependencies, str]):
         project_id: str | None = None,
         source_filter: str | None = None,
         match_count: int = 5,
-        user_id: str = None,
-        progress_callback: Any = None,
+        user_id: str | None = None,
+        progress_callback: Any | None = None,
     ) -> RagQueryResult:
         """
         Run the agent for conversational RAG queries.

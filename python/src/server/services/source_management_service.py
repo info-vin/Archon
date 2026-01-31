@@ -17,7 +17,7 @@ logger = get_logger(__name__)
 
 
 async def extract_source_summary(
-    source_id: str, content: str, max_length: int = 500, provider: str = None
+    source_id: str, content: str, max_length: int = 500, provider: str | None = None
 ) -> str:
     """
     Extract a summary for a source from its content using an LLM.
@@ -81,7 +81,7 @@ The above content is from the documentation for '{source_id}'. Please provide a 
                 search_logger.error(f"LLM returned None content for {source_id}")
                 return default_summary
 
-            summary = message_content.strip()
+            summary = str(message_content.strip())
 
             # Ensure the summary is not too long
             if len(summary) > max_length:
@@ -101,7 +101,7 @@ async def generate_source_title_and_metadata(
     content: str,
     knowledge_type: str = "technical",
     tags: list[str] | None = None,
-    provider: str = None,
+    provider: str | None = None,
     original_url: str | None = None,
     source_display_name: str | None = None,
 ) -> tuple[str, dict[str, Any]]:
@@ -309,7 +309,12 @@ async def update_source_info(
             else:
                 # Fallback to AI generation only if no display name
                 title, metadata = await generate_source_title_and_metadata(
-                    source_id, content, knowledge_type, tags, original_url, source_display_name
+                    source_id=source_id,
+                    content=content,
+                    knowledge_type=knowledge_type,
+                    tags=tags,
+                    original_url=original_url,
+                    source_display_name=source_display_name
                 )
 
                 # Override the source_type from AI with actual URL-based determination
@@ -457,11 +462,11 @@ class SourceManagementService:
     def update_source_metadata(
         self,
         source_id: str,
-        title: str = None,
-        summary: str = None,
-        word_count: int = None,
-        knowledge_type: str = None,
-        tags: list[str] = None,
+        title: str | None = None,
+        summary: str | None = None,
+        word_count: int | None = None,
+        knowledge_type: str | None = None,
+        tags: list[str] | None = None,
     ) -> tuple[bool, dict[str, Any]]:
         """
         Update source metadata.
@@ -479,13 +484,13 @@ class SourceManagementService:
         """
         try:
             # Build update data
-            update_data = {}
+            update_data: dict[str, Any] = {}
             if title is not None:
-                update_data["title"] = title
+                update_data["title"] = str(title)
             if summary is not None:
-                update_data["summary"] = summary
+                update_data["summary"] = str(summary)
             if word_count is not None:
-                update_data["total_word_count"] = word_count
+                update_data["total_word_count"] = int(word_count)
 
             # Handle metadata fields
             if knowledge_type is not None or tags is not None:
@@ -631,7 +636,7 @@ class SourceManagementService:
             logger.error(f"Error getting source details: {e}")
             return False, {"error": f"Error getting source details: {str(e)}"}
 
-    def list_sources_by_type(self, knowledge_type: str = None) -> tuple[bool, dict[str, Any]]:
+    def list_sources_by_type(self, knowledge_type: str | None = None) -> tuple[bool, dict[str, Any]]:
         """
         List sources filtered by knowledge type.
 

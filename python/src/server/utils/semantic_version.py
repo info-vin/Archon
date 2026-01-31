@@ -69,7 +69,7 @@ def compare_versions(version1: str, version2: str) -> int:
     for i in range(3):
         v1_val = int(v1[i]) if v1[i] is not None else 0
         v2_val = int(v2[i]) if v2[i] is not None else 0
-        
+
         if v1_val < v2_val:
             return -1
         elif v1_val > v2_val:

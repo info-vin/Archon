@@ -198,20 +198,20 @@ class CredentialService:
     ) -> bool:
         """
         Set a credential/setting in the database.
-        
+
         Args:
             key: Setting key
             value: Plain text value
             is_encrypted: Whether to encrypt the value before storing
             category: Optional category for grouping
             description: Optional description
-            
+
         Returns:
             True if successful, False otherwise
         """
         try:
             supabase = self._get_supabase_client()
-            
+
             data = {
                 "key": key,
                 "is_encrypted": is_encrypted,

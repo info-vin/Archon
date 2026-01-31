@@ -7,14 +7,15 @@ interface DraggableCardProps extends Omit<CardProps, "ref"> {
   itemType: string;
   itemId: string;
   index: number;
-  onDrop?: (draggedId: string, targetIndex: number) => void;
+  onReorder?: (draggedId: string, targetIndex: number) => void;
+  onDragEnd?: () => void;
 
   // Visual states
   isDragging?: boolean;
 }
 
 export const DraggableCard = React.forwardRef<HTMLDivElement, DraggableCardProps>(
-  ({ itemType, itemId, index, onDrop, onDragEnd, children, className, ...cardProps }, ref) => {
+  ({ itemType, itemId, index, onReorder, onDragEnd, children, className, ...cardProps }, ref) => {
     const [{ isDragging }, drag] = useDrag({
       type: itemType,
       item: { id: itemId, index },
@@ -32,8 +33,8 @@ export const DraggableCard = React.forwardRef<HTMLDivElement, DraggableCardProps
         if (draggedItem.id === itemId) return;
         if (draggedItem.index === index) return;
 
-        if (onDrop) {
-          onDrop(draggedItem.id, index);
+        if (onReorder) {
+          onReorder(draggedItem.id, index);
           draggedItem.index = index;
         }
       },

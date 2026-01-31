@@ -22,6 +22,7 @@ type ApiOllamaModel = {
   format?: string;
   parent_model?: string;
   dimensions?: number;
+  embedding_dimensions?: number;
   block_count?: number;
   attention_heads?: number;
   instance_url?: string;
@@ -63,6 +64,8 @@ interface ModelInfo {
   format?: string;
   parent_model?: string;
   instance_url?: string;
+  block_count?: number;
+  attention_heads?: number;
 }
 
 interface OllamaModelSelectionModalProps {
@@ -681,7 +684,7 @@ export const OllamaModelSelectionModal: React.FC<OllamaModelSelectionModalProps>
               model_type: 'embedding',
               size_mb: model.size ? Math.round(model.size / 1048576) : undefined,
               embedding_dimensions: model.dimensions,
-              dimensions: model.dimensions, // Some UI might expect this field name
+              // dimensions: model.dimensions, // Removed to fix TS2353
               capabilities: model.capabilities || ['embedding'],
               archon_compatibility: compatibility,
               compatibility_features: getCompatibilityFeatures(compatibility),
@@ -721,7 +724,11 @@ export const OllamaModelSelectionModal: React.FC<OllamaModelSelectionModalProps>
         const response = await fetch('/api/ollama/models/stored');
         if (response.ok) {
           const data = await response.json();
-          setModels(data.models || []);
+          // Fix implicit any by typing the parameter
+          setModels((data.models || []).map((model: any) => ({
+             ...model,
+             // Ensure model matches ModelInfo interface if needed
+          })));
           setLoadedFromCache(false);
         }
       }
@@ -828,7 +835,7 @@ export const OllamaModelSelectionModal: React.FC<OllamaModelSelectionModalProps>
 
         // Handle ModelDiscoveryResponse format
         const allModels = [
-          ...(data.chat_models || []).map(model => {
+          ...(data.chat_models || []).map((model: ApiOllamaModel) => {
             const compatibility = getArchonCompatibility(model, 'chat');
             
             // DEBUG: Log raw model data from API
@@ -854,7 +861,7 @@ export const OllamaModelSelectionModal: React.FC<OllamaModelSelectionModalProps>
             
             return {
               ...model, 
-              host: model.instance_url.replace('/v1', ''), // Remove /v1 suffix to match selectedInstanceUrl
+              host: (model.instance_url || '').replace('/v1', ''), // Remove /v1 suffix to match selectedInstanceUrl
               model_type: 'chat',
               archon_compatibility: compatibility,
               size_mb: model.size ? Math.round(model.size / 1048576) : undefined, // Convert bytes to MB
@@ -876,7 +883,7 @@ export const OllamaModelSelectionModal: React.FC<OllamaModelSelectionModalProps>
               parent_model: model.parent_model
             };
           }),
-          ...(data.embedding_models || []).map(model => {
+          ...(data.embedding_models || []).map((model: ApiOllamaModel) => {
             const compatibility = getArchonCompatibility(model, 'embedding');
             
             // DEBUG: Log raw embedding model data from API
@@ -900,7 +907,7 @@ export const OllamaModelSelectionModal: React.FC<OllamaModelSelectionModalProps>
             
             return {
               ...model, 
-              host: model.instance_url.replace('/v1', ''), // Remove /v1 suffix to match selectedInstanceUrl
+              host: (model.instance_url || '').replace('/v1', ''), // Remove /v1 suffix to match selectedInstanceUrl
               model_type: 'embedding',
               archon_compatibility: compatibility,
               size_mb: model.size ? Math.round(model.size / 1048576) : undefined, // Convert bytes to MB

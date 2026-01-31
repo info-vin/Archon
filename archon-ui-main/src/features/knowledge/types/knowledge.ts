@@ -27,6 +27,7 @@ export interface KnowledgeItem {
   id: string;
   title: string;
   url: string;
+  source_url?: string;
   source_id: string;
   source_type: "url" | "file";
   knowledge_type: "technical" | "business";
@@ -43,6 +44,7 @@ export interface CodeExampleMetadata {
   file_path?: string;
   summary?: string;
   relevance_score?: number;
+  url?: string;
   // No additional flexible properties - use strict typing
 }
 

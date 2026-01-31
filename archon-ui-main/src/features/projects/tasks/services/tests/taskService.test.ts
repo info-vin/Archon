@@ -41,6 +41,10 @@ describe("taskService", () => {
     const mockTask: Task = {
       id: "task-123",
       ...mockTaskData,
+      status: mockTaskData.status as DatabaseTaskStatus,
+      assignee: mockTaskData.assignee || "User",
+      task_order: mockTaskData.task_order || 0,
+      priority: mockTaskData.priority || "medium",
       created_at: "2024-01-01T00:00:00Z",
       updated_at: "2024-01-01T00:00:00Z",
     };
@@ -295,6 +299,10 @@ describe("taskService", () => {
       const fullTask: Task = {
         id: "task-full",
         ...fullTaskData,
+        status: fullTaskData.status as DatabaseTaskStatus,
+        assignee: fullTaskData.assignee || "Coding Agent",
+        task_order: fullTaskData.task_order || 100,
+        priority: fullTaskData.priority || "critical",
         created_at: "2024-01-01T00:00:00Z",
         updated_at: "2024-01-01T00:00:00Z",
         // Additional fields that might be added by backend

@@ -286,7 +286,7 @@ export const StaticCards = () => {
                   itemType="example-card"
                   itemId={card.id}
                   index={index}
-                  onDrop={handleCardDrop}
+                  onReorder={handleCardDrop}
                   size="sm"
                   className="min-h-[120px] cursor-move"
                 >
@@ -297,7 +297,7 @@ export const StaticCards = () => {
             </div>
           </DndProvider>
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-3 font-mono">
-            {'<DraggableCard itemType="..." itemId="..." index={...} onDrop={...} />'}
+            {'<DraggableCard itemType="..." itemId="..." index={...} onReorder={...} />'}
           </p>
         </div>
       </div>

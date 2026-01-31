@@ -331,7 +331,7 @@ class AgentService:
             {"type": "function", "function": {"name": "get_available_sources", "description": "List indexed docs.", "parameters": {"type": "object", "properties": {}}}},
             {"type": "function", "function": {"name": "manage_task", "description": "Create/Update tasks.", "parameters": {"type": "object", "properties": {"action": {"type": "string", "enum": ["create", "update", "delete"]}, "task_id": {"type": "string"}}, "required": ["action"]}}}
         ]
-        
+
         # Filter tools owned by this agent
         agent_tools_list = config.get("tools", [])
         agent_tools = [t for t in all_mcp_tools if t["function"]["name"] in agent_tools_list]

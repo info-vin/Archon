@@ -1,6 +1,7 @@
 # python/src/server/auth/utils.py
 
 from typing import Any
+
 from supabase.client import Client
 
 from ..config.logfire_config import get_logger

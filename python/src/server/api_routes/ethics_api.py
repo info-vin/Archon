@@ -5,7 +5,7 @@ from pydantic import BaseModel
 
 from ..auth.dependencies import get_current_user
 from ..config.logfire_config import get_logger
-from ..services.profile_service import ProfileService
+from ..utils import get_supabase_client
 
 logger = get_logger(__name__)
 

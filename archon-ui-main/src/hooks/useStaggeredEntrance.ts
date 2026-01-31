@@ -15,7 +15,7 @@ interface UseStaggeredEntranceReturn {
   titleVariants: Variants;
 }
 
-export const useStaggeredEntrance = <T,>(items: T[], staggerDelay: number = 0.15, forceReanimateCounter?: number): UseStaggeredEntranceReturn => {
+export const useStaggeredEntrance = <T,>(_items: T[], staggerDelay: number = 0.15, forceReanimateCounter?: number): UseStaggeredEntranceReturn => {
   const [isVisible, setIsVisible] = useState(false);
   useEffect(() => {
     // Set visible after component mounts for the animation to trigger

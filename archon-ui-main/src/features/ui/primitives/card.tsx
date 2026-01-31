@@ -1,7 +1,7 @@
 import React from "react";
 import { cn, glassCard } from "./styles";
 
-interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
+export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
   // Glass properties
   blur?: "none" | "sm" | "md" | "lg" | "xl" | "2xl" | "3xl";
   transparency?: "clear" | "light" | "medium" | "frosted" | "solid";

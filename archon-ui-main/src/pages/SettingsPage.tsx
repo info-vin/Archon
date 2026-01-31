@@ -232,8 +232,7 @@ export const SettingsPage = (): JSX.Element => {
             <CollapsibleSettingsCard
               title="Bug Reporting"
               icon={Bug}
-              iconColor="text-red-500"
-              borderColor="border-red-200 dark:border-red-800"
+              accentColor="orange"
               defaultExpanded={false}
             >
               <div className="space-y-4">

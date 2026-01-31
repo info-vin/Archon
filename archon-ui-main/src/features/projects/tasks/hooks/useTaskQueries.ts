@@ -116,7 +116,7 @@ export function useCreateTask() {
 
       showToast("Task created successfully", "success");
     },
-    onSettled: (_data, error, variables) => {
+    onSettled: (_data, _error, variables) => {
       // Always refetch to ensure consistency after operation completes
       queryClient.invalidateQueries({ queryKey: taskKeys.byProject(variables.project_id) });
     },

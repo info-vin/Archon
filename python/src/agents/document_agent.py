@@ -61,7 +61,7 @@ class DocumentAgent(BaseAgent[DocumentDependencies, DocumentOperation]):
     - Version control tracking
     """
 
-    def __init__(self, model: str = None, supabase_client: Any = None, **kwargs):
+    def __init__(self, model: str | None = None, supabase_client: Any = None, **kwargs):
         # Use provided model or fall back to default
         if model is None:
             model = os.getenv("DOCUMENT_AGENT_MODEL", "openai:gpt-4o")
@@ -323,22 +323,23 @@ class DocumentAgent(BaseAgent[DocumentDependencies, DocumentOperation]):
 
                 # Update the specified section
                 if section_to_update in current_content:
-                    if isinstance(current_content[section_to_update], list):
+                    section_val = current_content[section_to_update]
+                    if isinstance(section_val, list):
                         # If it's a list, append or replace based on new_content format
                         if new_content.startswith("[") and new_content.endswith("]"):
                             try:
                                 current_content[section_to_update] = json.loads(new_content)
                             except Exception:
-                                current_content[section_to_update].append(new_content)
+                                section_val.append(new_content)
                         else:
-                            current_content[section_to_update].append(new_content)
-                    elif isinstance(current_content[section_to_update], dict):
+                            section_val.append(new_content)
+                    elif isinstance(section_val, dict):
                         # If it's a dict, try to parse new_content as JSON
                         try:
                             update_dict = json.loads(new_content)
-                            current_content[section_to_update].update(update_dict)
+                            section_val.update(update_dict)
                         except Exception:
-                            current_content[section_to_update]["update"] = new_content
+                            section_val["update"] = new_content
                     else:
                         # Simple string replacement
                         current_content[section_to_update] = new_content
@@ -671,7 +672,7 @@ class DocumentAgent(BaseAgent[DocumentDependencies, DocumentOperation]):
         return str(uuid.uuid4())
 
     def _create_block(
-        self, block_type: str, content: str, properties: dict = None
+        self, block_type: str, content: str, properties: dict[str, Any] | None = None
     ) -> dict[str, Any]:
         """Create a block in the document format."""
         return {
@@ -806,10 +807,10 @@ class DocumentAgent(BaseAgent[DocumentDependencies, DocumentOperation]):
 
             # For now, use document_builder as default
             # In future, could make this configurable based on operation type
-            return prompt_service.get_prompt(
+            return str(prompt_service.get_prompt(
                 "document_builder",
                 default="Document Management Assistant for conversational document operations.",
-            )
+            ))
         except Exception as e:
             logger.warning(f"Could not load prompt from service: {e}")
             return "Document Management Assistant for conversational document operations."
@@ -818,9 +819,9 @@ class DocumentAgent(BaseAgent[DocumentDependencies, DocumentOperation]):
         self,
         user_message: str,
         project_id: str,
-        user_id: str = None,
-        current_document_id: str = None,
-        progress_callback: Any = None,
+        user_id: str | None = None,
+        current_document_id: str | None = None,
+        progress_callback: Any | None = None,
     ) -> DocumentOperation:
         """
         Run the agent for conversational document management.

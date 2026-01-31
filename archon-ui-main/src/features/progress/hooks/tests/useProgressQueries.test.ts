@@ -141,7 +141,7 @@ describe("useProgressQueries", () => {
 
   describe("useActiveOperations", () => {
     it("should fetch active operations when enabled", async () => {
-      const mockOperations: ActiveOperationsResponse = {
+      const mockOperations: any = {
         operations: [
           {
             progressId: "op-1",
@@ -187,7 +187,7 @@ describe("useProgressQueries", () => {
 
   describe("useCrawlProgressPolling", () => {
     it("should poll for active crawl operations", async () => {
-      const mockOperations: ActiveOperationsResponse = {
+      const mockOperations: any = {
         operations: [
           {
             progressId: "crawl-1",
@@ -216,6 +216,7 @@ describe("useProgressQueries", () => {
       const emptyResponse: ActiveOperationsResponse = {
         operations: [],
         count: 0,
+        timestamp: new Date().toISOString(),
       };
 
       const { progressService } = await import("../../services");
@@ -232,7 +233,7 @@ describe("useProgressQueries", () => {
     });
 
     it("should identify active operations correctly", async () => {
-      const mockOperations: ActiveOperationsResponse = {
+      const mockOperations: any = {
         operations: [
           {
             progressId: "op-1",

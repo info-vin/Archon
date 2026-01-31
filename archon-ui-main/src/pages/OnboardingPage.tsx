@@ -88,7 +88,6 @@ export const OnboardingPage = (): JSX.Element => {
                 variant="primary"
                 size="lg"
                 icon={<ArrowRight className="w-5 h-5 ml-2" />}
-                iconPosition="right"
                 onClick={() => setCurrentStep(2)}
                 className="min-w-[200px]"
               >

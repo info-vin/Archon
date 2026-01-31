@@ -1,11 +1,12 @@
 import asyncio
+import logging
 import os
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
 
 from ..auth.dependencies import get_current_user
-from ..config.logfire_config import get_logger, logfire
+from ..config.logfire_config import get_logger
 from ..prompts.marketing_prompts import BLOG_DRAFT_SYSTEM_PROMPT
 from ..prompts.sales_prompts import SALES_PITCH_SYSTEM_PROMPT
 from ..services.credential_service import credential_service
@@ -18,7 +19,7 @@ from ..utils import get_supabase_client
 # TODO(Phase 5): Re-enable this when MCP Server is properly integrated as a package or service
 # from mcp_server.features.design.logo_tool import GenerateBrandAssetTool
 
-logger = get_logger(__name__)
+logger: logging.Logger = get_logger(__name__)
 
 router = APIRouter(prefix="/api/marketing", tags=["marketing"])
 
@@ -61,16 +62,16 @@ async def search_jobs(keyword: str = Query(..., min_length=1), limit: int = 10):
     Search for jobs and automatically identify/save potential leads.
     """
     try:
-        logfire.info(f"API: Searching jobs | keyword={keyword}")
+        logger.info(f"API: Searching jobs | keyword={keyword}")
         jobs = await JobBoardService.search_jobs(keyword, limit)
 
         # Auto-save leads asynchronously
         new_leads = await JobBoardService.identify_leads_and_save(jobs)
-        logfire.info(f"API: Auto-saved leads | count={new_leads}")
+        logger.info(f"API: Auto-saved leads | count={new_leads}")
 
         return jobs
     except Exception as e:
-        logfire.error(f"API: Job search failed | error={str(e)}")
+        logger.error(f"API: Job search failed | error={str(e)}")
         raise HTTPException(status_code=500, detail={"error": str(e)}) from e
 
 @router.get("/leads")
@@ -83,7 +84,7 @@ async def get_leads():
         response = supabase.table("leads").select("*").order("created_at", desc=True).execute()
         return response.data
     except Exception as e:
-        logfire.error(f"API: Failed to fetch leads | error={str(e)}")
+        logger.error(f"API: Failed to fetch leads | error={str(e)}")
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 @router.post("/leads/{lead_id}/promote")
@@ -101,7 +102,7 @@ async def promote_lead_to_vendor(
     # Allow: admin, manager, sales, marketing, member
     # Deny: viewer, guest
     if user_role in ["viewer", "guest"]:
-        logfire.warn(f"API: Access denied for promotion | user={current_user.get('email')} | role={user_role}")
+        logger.warning(f"API: Access denied for promotion | user={current_user.get('email')} | role={user_role}")
         raise HTTPException(status_code=403, detail="Insufficient permissions to promote leads.")
 
     try:
@@ -119,7 +120,7 @@ async def promote_lead_to_vendor(
         }
 
         # Log the attempt
-        logfire.info(f"API: Promoting lead to vendor | lead_id={lead_id} | vendor={request.vendor_name} | user_role={user_role} | user_id={current_user.get('id')}")
+        logger.info(f"API: Promoting lead to vendor | lead_id={lead_id} | vendor={request.vendor_name} | user_role={user_role} | user_id={current_user.get('id')}")
 
         vendor_res = supabase.table("vendors").insert(vendor_data).execute()
 
@@ -152,14 +153,14 @@ async def promote_lead_to_vendor(
                     content=content_to_archive,
                     references=[f"lead:{lead_id}", lead_data.get("source_job_url")]
                 ))
-                logfire.info(f"API: Librarian triggered for lead_id={lead_id}")
+                logger.info(f"API: Librarian triggered for lead_id={lead_id}")
         except Exception as lib_err:
-            logfire.warning(f"API: Librarian trigger failed | lead_id={lead_id} | error={lib_err}")
+            logger.warning(f"API: Librarian trigger failed | lead_id={lead_id} | error={lib_err}")
 
         from fastapi.encoders import jsonable_encoder
         return {"success": True, "vendor": jsonable_encoder(vendor_res.data[0])}
     except Exception as e:
-        logfire.error(f"API: Lead promotion failed | id={lead_id} | error={str(e)}", exc_info=True)
+        logger.error(f"API: Lead promotion failed | id={lead_id} | error={str(e)}", exc_info=True)
         # Detailed error for debugging (safe to expose to authenticated users)
         error_detail = f"Promotion failed: {str(e)}. User Role: {user_role}"
         if "column" in str(e).lower():
@@ -203,7 +204,7 @@ async def update_lead(
         res = supabase.table("leads").update(update_data).eq("id", lead_id).execute()
         return res.data
     except Exception as e:
-        logfire.error(f"API: Lead update failed | id={lead_id} | error={str(e)}")
+        logger.error(f"API: Lead update failed | id={lead_id} | error={str(e)}")
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 @router.post("/generate-pitch", response_model=PitchResponse)
@@ -212,7 +213,7 @@ async def generate_pitch(request: PitchRequest, current_user: dict = Depends(get
     Generate a tailored sales pitch using RAG to find relevant case studies.
     """
     try:
-        logfire.info(f"API: Generating pitch | company={request.company} | user={current_user.get('email')}")
+        logger.info(f"API: Generating pitch | company={request.company} | user={current_user.get('email')}")
 
         # Secure Role Check
         user_role = current_user.get("role", "viewer").lower()
@@ -228,7 +229,7 @@ async def generate_pitch(request: PitchRequest, current_user: dict = Depends(get
         context_text = ""
         references = []
 
-        if success and "results" in search_result:
+        if success and isinstance(search_result, dict) and "results" in search_result:
             for res in search_result["results"]:
                 meta = res.get("metadata", {})
                 source = meta.get("source", "Unknown Source")
@@ -253,11 +254,11 @@ async def generate_pitch(request: PitchRequest, current_user: dict = Depends(get
                 messages=[{"role": "system", "content": system_prompt}, {"role": "user", "content": user_prompt}],
                 temperature=0.7
             )
-            content = response.choices[0].message.content
+            content = str(response.choices[0].message.content)
 
         return PitchResponse(content=content, references=references)
     except Exception as e:
-        logfire.error(f"API: Pitch generation failed | error={str(e)}")
+        logger.error(f"API: Pitch generation failed | error={str(e)}")
         raise HTTPException(status_code=500, detail={"error": str(e)}) from e
 
 @router.post("/logo", response_model=LogoResponse)
@@ -266,7 +267,7 @@ async def generate_logo(request: LogoRequest):
     Triggers DevBot to generate a dynamic SVG logo asset.
     """
     try:
-        logfire.info(f"API: Generating logo | style={request.style}")
+        logger.info(f"API: Generating logo | style={request.style}")
 
         mock_svg = f"""
         <svg width="200" height="200" xmlns="http://www.w3.org/2000/svg">
@@ -281,7 +282,7 @@ async def generate_logo(request: LogoRequest):
         return LogoResponse(svg_content=mock_svg.strip(), style=request.style)
 
     except Exception as e:
-        logfire.error(f"API: Logo generation failed | error={str(e)}")
+        logger.error(f"API: Logo generation failed | error={str(e)}")
         raise HTTPException(status_code=500, detail={"error": str(e)}) from e
 
 @router.get("/market-stats")
@@ -302,7 +303,7 @@ async def get_market_stats():
         }
         return stats
     except Exception as e:
-        logfire.error(f"API: Market stats fetch failed | error={str(e)}")
+        logger.error(f"API: Market stats fetch failed | error={str(e)}")
         return {"error": str(e)}
 
 @router.patch("/blog/{post_id}/status")
@@ -315,7 +316,7 @@ async def update_blog_status(post_id: str, status: str):
         response = supabase.table("blog_posts").update({"status": status}).eq("id", post_id).execute()
         return response.data
     except Exception as e:
-        logfire.error(f"API: Blog status update failed | post_id={post_id} | error={str(e)}")
+        logger.error(f"API: Blog status update failed | post_id={post_id} | error={str(e)}")
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 @router.get("/approvals")
@@ -332,7 +333,7 @@ async def get_pending_approvals():
             "leads": []
         }
     except Exception as e:
-        logfire.error(f"API: Failed to fetch approvals | error={str(e)}")
+        logger.error(f"API: Failed to fetch approvals | error={str(e)}")
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 @router.post("/approvals/{item_type}/{item_id}/{action}")
@@ -347,7 +348,7 @@ async def process_approval(
     """
     user_role = current_user.get("role", "viewer").lower()
     if user_role not in ["system_admin", "admin", "manager"]:
-        logfire.warn(f"API: Approval denied | user={current_user.get('email')} | role={user_role}")
+        logger.warning(f"API: Approval denied | user={current_user.get('email')} | role={user_role}")
         raise HTTPException(status_code=403, detail="Only Managers can approve items.")
 
     if action not in ["approve", "reject"]:
@@ -364,7 +365,7 @@ async def process_approval(
         raise HTTPException(status_code=400, detail="Unknown item type")
 
     except Exception as e:
-        logfire.error(f"API: Approval process failed | type={item_type} | id={item_id} | error={str(e)}")
+        logger.error(f"API: Approval process failed | type={item_type} | id={item_id} | error={str(e)}")
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 @router.post("/blog/draft", response_model=DraftBlogResponse)
@@ -373,7 +374,7 @@ async def draft_blog_post(request: DraftBlogRequest, current_user: dict = Depend
     Generate a blog post draft using AI with RAG support.
     """
     try:
-        logfire.info(f"API: Drafting blog | topic={request.topic} | user={current_user.get('email')}")
+        logger.info(f"API: Drafting blog | topic={request.topic} | user={current_user.get('email')}")
 
         # 0. Guardrail Input Check
         is_valid, error_msg = GuardrailService.validate_input(f"{request.topic} {request.keywords or ''}")
@@ -398,7 +399,7 @@ async def draft_blog_post(request: DraftBlogRequest, current_user: dict = Depend
         context_text = ""
         references = []
 
-        if success and "results" in search_result:
+        if success and isinstance(search_result, dict) and "results" in search_result:
             for res in search_result["results"]:
                 meta = res.get("metadata", {})
                 source = meta.get("source", "Unknown Source")
@@ -414,7 +415,8 @@ async def draft_blog_post(request: DraftBlogRequest, current_user: dict = Depend
         # 2. LLM Generation
         provider_config = await credential_service.get_active_provider("llm")
         # Optimization: Fetch MARKETING_MODEL
-        marketing_model = await credential_service.get_credential("MARKETING_MODEL", category="rag_strategy")
+        rag_strategy_creds = await credential_service.get_credentials_by_category("rag_strategy")
+        marketing_model = rag_strategy_creds.get("MARKETING_MODEL")
         model_name = marketing_model or provider_config.get("chat_model") or "gpt-4o"
 
         system_prompt = BLOG_DRAFT_SYSTEM_PROMPT
@@ -428,13 +430,15 @@ async def draft_blog_post(request: DraftBlogRequest, current_user: dict = Depend
                 temperature=0.7
             )
             import json
-            result = json.loads(response.choices[0].message.content)
+            # Ensure content is a string
+            message_content = response.choices[0].message.content or "{}"
+            result = json.loads(message_content)
 
         # 3. Guardrail Output Audit
         generated_content = result.get("content", "")
         is_safe, audit_msg = GuardrailService.audit_output(generated_content, context_text)
         if not is_safe:
-            logfire.error(f"API: Guardrail audit failed | reason={audit_msg}")
+            logger.error(f"API: Guardrail audit failed | reason={audit_msg}")
             raise HTTPException(status_code=422, detail=f"AI Output Blocked: {audit_msg}")
 
         return DraftBlogResponse(
@@ -447,7 +451,7 @@ async def draft_blog_post(request: DraftBlogRequest, current_user: dict = Depend
     except HTTPException:
         raise
     except Exception as e:
-        logfire.error(f"API: Blog drafting failed | error={str(e)}")
+        logger.error(f"API: Blog drafting failed | error={str(e)}")
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 @router.post("/nana-banana")
@@ -471,8 +475,9 @@ async def nana_banana_proxy(
     # In real world: async with httpx.AsyncClient() as client: ...
     # Fetch configured model (e.g. imagen-3)
     # Fetch configured model (e.g. imagen-3)
-    nana_model = await credential_service.get_credential("NANA_BANANA_MODEL", category="rag_strategy") or "imagen-3"
-    logfire.info(f"API: Nana Banana Call ({nana_model}) | user={current_user.get('email')}")
+    rag_strategy_creds = await credential_service.get_credentials_by_category("rag_strategy")
+    nana_model = rag_strategy_creds.get("NANA_BANANA_MODEL") or "imagen-3"
+    logger.info(f"API: Nana Banana Call ({nana_model}) | user={current_user.get('email')}")
 
     # Simulate API Call
     await asyncio.sleep(1) # Fake latency
@@ -507,7 +512,7 @@ async def get_marketing_trends(
         }
 
     except Exception as e:
-        logfire.error(f"API: Fetch trends failed | error={str(e)}")
+        logger.error(f"API: Fetch trends failed | error={str(e)}")
         # Fallback to mock data if table empty or error (graceful degradation)
         return {
             "keyword_growth": [
@@ -565,5 +570,5 @@ async def trigger_enrichment_loop(
             "enriched_count": enrich_count
         }
     except Exception as e:
-        logfire.error(f"Enrichment loop failed | error={str(e)}")
+        logger.error(f"Enrichment loop failed | error={str(e)}")
         raise HTTPException(status_code=500, detail=str(e)) from e

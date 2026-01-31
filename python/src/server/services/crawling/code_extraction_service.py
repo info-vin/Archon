@@ -89,47 +89,47 @@ class CodeExtractionService:
 
     async def _get_min_code_length(self) -> int:
         """Get minimum code block length setting."""
-        return await self._get_setting("MIN_CODE_BLOCK_LENGTH", 250)
+        return int(await self._get_setting("MIN_CODE_BLOCK_LENGTH", 250))
 
     async def _get_max_code_length(self) -> int:
         """Get maximum code block length setting."""
-        return await self._get_setting("MAX_CODE_BLOCK_LENGTH", 5000)
+        return int(await self._get_setting("MAX_CODE_BLOCK_LENGTH", 5000))
 
     async def _is_complete_block_detection_enabled(self) -> bool:
         """Check if complete block detection is enabled."""
-        return await self._get_setting("ENABLE_COMPLETE_BLOCK_DETECTION", True)
+        return bool(await self._get_setting("ENABLE_COMPLETE_BLOCK_DETECTION", True))
 
     async def _is_language_patterns_enabled(self) -> bool:
         """Check if language-specific patterns are enabled."""
-        return await self._get_setting("ENABLE_LANGUAGE_SPECIFIC_PATTERNS", True)
+        return bool(await self._get_setting("ENABLE_LANGUAGE_SPECIFIC_PATTERNS", True))
 
     async def _is_prose_filtering_enabled(self) -> bool:
         """Check if prose filtering is enabled."""
-        return await self._get_setting("ENABLE_PROSE_FILTERING", True)
+        return bool(await self._get_setting("ENABLE_PROSE_FILTERING", True))
 
     async def _get_max_prose_ratio(self) -> float:
         """Get maximum allowed prose ratio."""
-        return await self._get_setting("MAX_PROSE_RATIO", 0.15)
+        return float(await self._get_setting("MAX_PROSE_RATIO", 0.15))
 
     async def _get_min_code_indicators(self) -> int:
         """Get minimum required code indicators."""
-        return await self._get_setting("MIN_CODE_INDICATORS", 3)
+        return int(await self._get_setting("MIN_CODE_INDICATORS", 3))
 
     async def _is_diagram_filtering_enabled(self) -> bool:
         """Check if diagram filtering is enabled."""
-        return await self._get_setting("ENABLE_DIAGRAM_FILTERING", True)
+        return bool(await self._get_setting("ENABLE_DIAGRAM_FILTERING", True))
 
     async def _is_contextual_length_enabled(self) -> bool:
         """Check if contextual length adjustment is enabled."""
-        return await self._get_setting("ENABLE_CONTEXTUAL_LENGTH", True)
+        return bool(await self._get_setting("ENABLE_CONTEXTUAL_LENGTH", True))
 
     async def _get_context_window_size(self) -> int:
         """Get context window size for code blocks."""
-        return await self._get_setting("CONTEXT_WINDOW_SIZE", 1000)
+        return int(await self._get_setting("CONTEXT_WINDOW_SIZE", 1000))
 
     async def _is_code_summaries_enabled(self) -> bool:
         """Check if code summaries generation is enabled."""
-        return await self._get_setting("ENABLE_CODE_SUMMARIES", True)
+        return bool(await self._get_setting("ENABLE_CODE_SUMMARIES", True))
 
     async def extract_and_store_code_examples(
         self,
@@ -392,7 +392,7 @@ class CodeExtractionService:
                 safe_logfire_info(f"Pre tag {i + 1}: {pre_tag}")
 
         code_blocks = []
-        extracted_positions = set()  # Track already extracted code block positions
+        extracted_positions: set[tuple[int, int]] = set()  # Track already extracted code block positions
 
         # Comprehensive patterns for various code block formats
         # Order matters - more specific patterns first
@@ -519,9 +519,14 @@ class CodeExtractionService:
             ),
         ]
 
+        import re
+
+        # Define patterns
+        # ... patterns list ...
+
         for pattern_tuple in patterns:
             pattern_str, source_type = pattern_tuple
-            matches = list(re.finditer(pattern_str, content, re.DOTALL | re.IGNORECASE))
+            matches: list[re.Match[str]] = list(re.finditer(pattern_str, content, re.DOTALL | re.IGNORECASE))
 
             # Log pattern matches for Milkdown patterns and CodeMirror
             if matches and (
@@ -532,6 +537,10 @@ class CodeExtractionService:
                 safe_logfire_info(f"Pattern {source_type} found {len(matches)} matches")
 
             for match in matches:
+                # Ensure match is not None for MyPy
+                if match is None:
+                    continue
+
                 # Extract code content based on pattern type
                 if source_type in ["standard-lang", "prism", "vitepress", "hljs", "milkdown-typed"]:
                     # These patterns capture language in group 1, code in group 2
@@ -547,7 +556,10 @@ class CodeExtractionService:
                     # Try to extract language from the full match
                     full_match = match.group(0)
                     lang_match = re.search(r'class=["\'].*?language-(\w+)', full_match)
-                    language = lang_match.group(1) if lang_match else ""
+                    if lang_match:
+                        language = lang_match.group(1)
+                    else:
+                        language = ""
 
                 # Get the start position for complete block extraction
                 code_start_pos = match.start()
@@ -587,7 +599,8 @@ class CodeExtractionService:
 
                 # Calculate dynamic minimum length
                 context_for_length = content[max(0, code_start_pos - 500) : code_start_pos + 500]
-                min_length = await self._calculate_min_length(language, context_for_length)
+                calculated_min = await self._calculate_min_length(language, context_for_length)
+                min_length = int(calculated_min) if calculated_min is not None else 250
 
                 # Skip if initial content is too short
                 if len(code_content) < min_length:
@@ -655,7 +668,7 @@ class CodeExtractionService:
         # Pattern 2: <code>...</code> (standalone)
         if not code_blocks:  # Only if we didn't find pre/code blocks
             code_pattern = r"<code[^>]*>(.*?)</code>"
-            matches = re.finditer(code_pattern, content, re.DOTALL | re.IGNORECASE)
+            matches = list(re.finditer(code_pattern, content, re.DOTALL | re.IGNORECASE))
 
             for match in matches:
                 code_content = match.group(1).strip()
@@ -716,7 +729,7 @@ class CodeExtractionService:
             else "Content too short for mid-sample"
         )
 
-        code_blocks = []
+        code_blocks: list[dict[str, Any]] = []
 
         # Method 1: Look for triple backtick code blocks (Markdown style)
         # Pattern allows for additional text after language (e.g., "typescript TypeScript")
@@ -776,7 +789,7 @@ class CodeExtractionService:
 
         # Method 2: Look for language-labeled code blocks (e.g., "TypeScript:" or "Python example:")
         language_pattern = r"(?:^|\n)((?:typescript|javascript|python|java|c\+\+|rust|go|ruby|php|swift|kotlin|scala|r|matlab|julia|dart|elixir|erlang|haskell|clojure|lua|perl|shell|bash|sql|html|css|xml|json|yaml|toml|ini|dockerfile|makefile|cmake|gradle|maven|npm|yarn|pip|cargo|gem|pod|composer|nuget|apt|yum|brew|choco|snap|flatpak|appimage|msi|exe|dmg|pkg|deb|rpm|tar|zip|7z|rar|gz|bz2|xz|zst|lz4|lzo|lzma|lzip|lzop|compress|uncompress|gzip|gunzip|bzip2|bunzip2|xz|unxz|zstd|unzstd|lz4|unlz4|lzo|unlzo|lzma|unlzma|lzip|lunzip|lzop|unlzop)\s*(?:code|example|snippet)?)[:\s]*\n((?:(?:^[ \t]+.*\n?)+)|(?:.*\n)+?)(?=\n(?:[A-Z][a-z]+\s*:|^\s*$|\n#|\n\*|\n-|\n\d+\.))"
-        matches = re.finditer(language_pattern, content, re.IGNORECASE | re.MULTILINE)
+        matches = list(re.finditer(language_pattern, content, re.IGNORECASE | re.MULTILINE))
 
         for match in matches:
             language_info = match.group(1).lower()
@@ -934,7 +947,7 @@ class CodeExtractionService:
 
         # Return language with highest score
         if scores:
-            return max(scores, key=scores.get)
+            return max(scores, key=lambda k: scores[k])
 
         return ""
 
@@ -983,7 +996,7 @@ class CodeExtractionService:
         if language and language.lower() in self.LANGUAGE_PATTERNS:
             lang_patterns = self.LANGUAGE_PATTERNS[language.lower()]
             if "block_end" in lang_patterns:
-                boundary_patterns.insert(0, lang_patterns["block_end"])
+                boundary_patterns.insert(0, str(lang_patterns["block_end"]))
 
         # Extend until we find a boundary
         extended_pos = start_pos + min_length
@@ -1294,11 +1307,11 @@ class CodeExtractionService:
         # Language-specific validation
         if language.lower() in self.LANGUAGE_PATTERNS:
             lang_info = self.LANGUAGE_PATTERNS[language.lower()]
-            min_indicators = lang_info.get("min_indicators", [])
+            lang_indicators = lang_info.get("min_indicators", [])
 
             # Check for language-specific indicators
             found_lang_indicators = sum(
-                1 for indicator in min_indicators if indicator in code.lower()
+                1 for indicator in lang_indicators if indicator in code.lower()
             )
 
             if found_lang_indicators < 2:  # Need at least 2 language-specific indicators
@@ -1459,7 +1472,7 @@ class CodeExtractionService:
         """
         code_urls = []
         code_chunk_numbers = []
-        code_examples = []
+        code_examples: list[str] = []
         code_summaries = []
         code_metadatas = []
 

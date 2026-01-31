@@ -117,13 +117,18 @@ async def list_assignable_users(
 
         assignable_users = []
         for user in all_users:
+            if not isinstance(user, dict):
+                continue
+
             user_role = user.get("role")
             if user_role and rbac_service.has_permission_to_assign(
                 current_user_role, user_role
             ):
                 assignable_users.append(
                     AssignableUser(
-                        id=user["id"], name=user["name"], role=user["role"]
+                        id=str(user.get("id", "")),
+                        name=str(user.get("name", "Unknown")),
+                        role=str(user_role)
                     )
                 )
 
@@ -168,10 +173,11 @@ async def list_projects(
             include_computed_status=include_computed_status,
         )
 
-        if not success:
+        if not success or not isinstance(result, dict):
             raise HTTPException(status_code=500, detail=result)
 
         # Only format with sources if we have full content
+        formatted_projects: list[Any] = []
         if include_content:
             # Use SourceLinkingService to format projects with sources
             source_service = SourceLinkingService()
@@ -250,7 +256,7 @@ async def create_project(request: CreateProjectRequest):
         )
 
         # Prepare kwargs for additional project fields
-        kwargs = {}
+        kwargs: dict[str, Any] = {}
         if request.pinned is not None:
             kwargs["pinned"] = request.pinned
         if request.features:
@@ -310,9 +316,10 @@ async def get_all_task_counts(
         task_service = TaskService()
         success, result = await task_service.get_all_project_task_counts()
 
-        if not success:
+        if not success or not isinstance(result, dict):
+            error_msg = result.get("error") if isinstance(result, dict) else str(result)
             logger.error(
-                f"Failed to get task counts | error={result.get('error')}"
+                f"Failed to get task counts | error={error_msg}"
             )
             raise HTTPException(status_code=500, detail=result)
 
@@ -356,7 +363,7 @@ async def get_project(project_id: str):
         project_service = ProjectService()
         success, result = await project_service.get_project(project_id)
 
-        if not success:
+        if not success or not isinstance(result, dict):
             error_msg = result.get("error", "") if isinstance(result, dict) else str(result)
             if "not found" in error_msg.lower():
                 logger.warning(f"Project not found | project_id={project_id}")
@@ -365,9 +372,11 @@ async def get_project(project_id: str):
                 raise HTTPException(status_code=500, detail=result)
 
         project = result["project"]
+        if not isinstance(project, dict):
+             raise HTTPException(status_code=500, detail="Invalid project data structure")
 
         logger.info(
-            f"Project retrieved successfully | project_id={project_id} | title={project['title']}"
+            f"Project retrieved successfully | project_id={project_id} | title={project.get('title', 'Unknown')}"
         )
 
         # The ProjectService already includes sources, so just add any missing fields
@@ -396,7 +405,7 @@ async def update_project(project_id: str, request: UpdateProjectRequest):
         supabase_client = get_supabase_client()
 
         # Build update fields from request
-        update_fields = {}
+        update_fields: dict[str, Any] = {}
         if request.title is not None:
             update_fields["title"] = request.title
         if request.description is not None:
@@ -427,8 +436,10 @@ async def update_project(project_id: str, request: UpdateProjectRequest):
                     project_id
                 )
 
-                if success and current_result.get("project"):
+                if success and isinstance(current_result, dict) and current_result.get("project"):
                     current_project = current_result["project"]
+                    if not isinstance(current_project, dict):
+                         raise ValueError("Invalid project data")
                     version_count = 0
 
                     # Create versions for updated JSONB fields
@@ -447,7 +458,7 @@ async def update_project(project_id: str, request: UpdateProjectRequest):
                                 ) = versioning_service.create_version(
                                     project_id=project_id,
                                     field_name=field_name,
-                                    content=current_content,
+                                    content=current_content if isinstance(current_content, dict) else {},
                                     change_summary=f"Updated {field_name} via API",
                                     change_type="update",
                                     created_by="api_user",
@@ -458,9 +469,9 @@ async def update_project(project_id: str, request: UpdateProjectRequest):
                     logger.info(
                         f"Created {version_count} version snapshots before update"
                     )
-            except ImportError:
+            except (ImportError, ValueError) as e:
                 logger.warning(
-                    "VersioningService not available - skipping version snapshots"
+                    f"VersioningService error - skipping version snapshots: {e}"
                 )
             except Exception as e:
                 logger.warning(f"Failed to create version snapshots: {e}")
@@ -472,7 +483,7 @@ async def update_project(project_id: str, request: UpdateProjectRequest):
             project_id, update_fields
         )
 
-        if not success:
+        if not success or not isinstance(result, dict):
             error_msg = result.get("error", "") if isinstance(result, dict) else str(result)
             if "not found" in error_msg.lower():
                 raise HTTPException(
@@ -485,6 +496,8 @@ async def update_project(project_id: str, request: UpdateProjectRequest):
                 raise HTTPException(status_code=500, detail=result)
 
         project = result["project"]
+        if not isinstance(project, dict):
+             raise HTTPException(status_code=500, detail="Invalid project data structure")
 
         # Handle source updates using SourceLinkingService
         source_service = SourceLinkingService(supabase_client)
@@ -496,13 +509,13 @@ async def update_project(project_id: str, request: UpdateProjectRequest):
             (
                 source_success,
                 source_result,
-            ) = source_service.update_project_sources(
+            ) = await source_service.update_project_sources(
                 project_id=project_id,
                 technical_sources=request.technical_sources,
                 business_sources=request.business_sources,
             )
 
-            if source_success:
+            if source_success and isinstance(source_result, dict):
                 logger.info(
                     f"Project sources updated | project_id={project_id} | technical_success={source_result.get('technical_success', 0)} | technical_failed={source_result.get('technical_failed', 0)} | business_success={source_result.get('business_success', 0)} | business_failed={source_result.get('business_failed', 0)}"
                 )
@@ -517,7 +530,7 @@ async def update_project(project_id: str, request: UpdateProjectRequest):
         )
 
         logger.info(
-            f"Project updated successfully | project_id={project_id} | title={project.get('title')} | technical_sources={len(formatted_project.get('technical_sources', []))} | business_sources={len(formatted_project.get('business_sources', []))}"
+            f"Project updated successfully | project_id={project_id} | title={str(project.get('title', ''))} | technical_sources={len(formatted_project.get('technical_sources', []))} | business_sources={len(formatted_project.get('business_sources', []))}"
         )
 
         return formatted_project
@@ -628,10 +641,10 @@ async def list_project_tasks(
             include_archived=include_archived,  # Pass the flag down to service
         )
 
-        if not success:
+        if not success or not isinstance(result, dict):
             raise HTTPException(status_code=500, detail=result)
 
-        tasks = result.get("tasks", [])
+        tasks: list[dict[str, Any]] = result.get("tasks", [])
 
         # Generate ETag from task data (excluding timestamps for consistency)
         etag_data = {
@@ -727,8 +740,8 @@ async def create_task(
         if request.assignee_id:
             profile_service = ProfileService()
             success, profile = profile_service.get_profile(request.assignee_id)
-            if success and profile:
-                target_assignee_name = profile.get("name")
+            if success and isinstance(profile, dict):
+                target_assignee_name = str(profile.get("name"))
                 logger.info(
                     f"Resolved assignee_id '{request.assignee_id}' to '{target_assignee_name}'"
                 )
@@ -794,13 +807,15 @@ async def create_task(
             assignee_id=resolved_assignee_id,
         )
 
-        if not success:
+        if not success or not isinstance(result, dict):
             raise HTTPException(status_code=400, detail=result)
 
         created_task = result["task"]
+        if not isinstance(created_task, dict):
+             raise HTTPException(status_code=500, detail="Invalid task data structure")
 
         logger.info(
-            f"Task created successfully | task_id={created_task['id']} | project_id={request.project_id}"
+            f"Task created successfully | task_id={created_task.get('id')} | project_id={request.project_id}"
         )
 
         return {"message": "Task created successfully", "task": created_task}
@@ -843,34 +858,33 @@ async def list_tasks(
 
         # Use TaskService to list tasks
         task_service = TaskService()
+
+        # Ensure ID is a string if present, otherwise None
+        filter_id: str | None = None
+        if assignee_id_filter:
+            filter_id = str(assignee_id_filter)
+
         success, result = await task_service.list_tasks(
-            page=page,
-            per_page=per_page,
-            project_id=project_id,
-            status=status,
+            project_id=project_id or "",
+            status=status or "",
             include_closed=include_closed,
             exclude_large_fields=exclude_large_fields,
-            assignee_id=assignee_id_filter,  # Use ID for robust filtering
+            assignee_id=filter_id,  # Use ID for robust filtering
             include_unassigned=include_unassigned
             if assignee_id_filter
             else False,  # Only apply if filtering by user
         )
 
         if not success:
-            error_detail = result
-            if isinstance(result, dict):
-                error_detail = result.get("error", "Unknown error")
-            
+            error_detail = result.get("error", "Unknown error") if isinstance(result, dict) else str(result)
+
             logger.error(f"Failed to list tasks | error={error_detail}")
             raise HTTPException(status_code=500, detail=error_detail)
 
         # Pagination metadata
         if isinstance(result, dict):
-            total_count = result.get("total_count", 0)
             tasks = result.get("tasks", [])
         else:
-            # Fallback if result is not a dict (should not happen on success)
-            total_count = 0
             tasks = []
 
         # If exclude_large_fields is True, remove large fields from tasks
@@ -1022,7 +1036,7 @@ async def update_task(
     """Update a task."""
     try:
         # Build update fields dictionary
-        update_fields = {}
+        update_fields: dict[str, Any] = {}
 
         # Resolve assignee_id to assignee name if provided
         target_assignee_name = request.assignee
@@ -1036,8 +1050,8 @@ async def update_task(
                 success, profile = profile_service.get_profile(
                     request.assignee_id
                 )
-                if success and profile:
-                    target_assignee_name = profile.get("name")
+                if success and isinstance(profile, dict):
+                    target_assignee_name = str(profile.get("name"))
                     update_fields["assignee_id"] = request.assignee_id
                 else:
                     logger.warning(
@@ -1308,7 +1322,8 @@ async def list_project_documents(
             f"Listing documents for project | project_id={project_id} | include_content={include_content}"
         )
 
-        success, result = await document_service.list_documents(
+        document_service = DocumentService()
+        success, result = document_service.list_documents(
             project_id, include_content=include_content
         )
 
@@ -1348,13 +1363,13 @@ async def create_project_document(
 
         # Use DocumentService to create document
         document_service = DocumentService()
-        success, result = await document_service.add_document(
+        success, result = document_service.add_document(
             project_id=project_id,
             title=request.title,
             document_type=request.document_type,
-            content=request.content,
-            tags=request.tags,
-            author=request.author,
+            content=request.content or {},
+            tags=request.tags or [],
+            author=request.author or "",
         )
 
         if not success:
@@ -1394,9 +1409,9 @@ async def get_project_document(project_id: str, doc_id: str):
 
         # Use DocumentService to get document
         document_service = DocumentService()
-        success, result = await document_service.get_document(project_id, doc_id)
+        success, result = document_service.get_document(project_id, doc_id)
 
-        if not success:
+        if not success or not isinstance(result, dict):
             error_msg = result.get("error", "") if isinstance(result, dict) else str(result)
             if "not found" in error_msg.lower():
                 raise HTTPException(
@@ -1405,11 +1420,15 @@ async def get_project_document(project_id: str, doc_id: str):
             else:
                 raise HTTPException(status_code=500, detail=result)
 
+        document = result["document"]
+        if not isinstance(document, dict):
+             raise HTTPException(status_code=500, detail="Invalid document data structure")
+
         logger.info(
             f"Document retrieved successfully | project_id={project_id} | doc_id={doc_id}"
         )
 
-        return result["document"]
+        return document
 
     except HTTPException:
         raise
@@ -1431,7 +1450,7 @@ async def update_project_document(
         )
 
         # Build update fields
-        update_fields = {}
+        update_fields: dict[str, Any] = {}
         if request.title is not None:
             update_fields["title"] = request.title
         if request.content is not None:
@@ -1443,11 +1462,11 @@ async def update_project_document(
 
         # Use DocumentService to update document
         document_service = DocumentService()
-        success, result = await document_service.update_document(
+        success, result = document_service.update_document(
             project_id, doc_id, update_fields
         )
 
-        if not success:
+        if not success or not isinstance(result, dict):
             error_msg = result.get("error", "") if isinstance(result, dict) else str(result)
             if "not found" in error_msg.lower():
                 raise HTTPException(
@@ -1456,13 +1475,17 @@ async def update_project_document(
             else:
                 raise HTTPException(status_code=500, detail=result)
 
+        document = result["document"]
+        if not isinstance(document, dict):
+             raise HTTPException(status_code=500, detail="Invalid document data structure")
+
         logger.info(
             f"Document updated successfully | project_id={project_id} | doc_id={doc_id}"
         )
 
         return {
             "message": "Document updated successfully",
-            "document": result["document"],
+            "document": document,
         }
 
     except HTTPException:
@@ -1484,7 +1507,7 @@ async def delete_project_document(project_id: str, doc_id: str):
 
         # Use DocumentService to delete document
         document_service = DocumentService()
-        success, result = await document_service.delete_document(project_id, doc_id)
+        success, result = document_service.delete_document(project_id, doc_id)
 
         if not success:
             error_msg = result.get("error", "") if isinstance(result, dict) else str(result)
@@ -1532,7 +1555,7 @@ async def list_all_versions(
         versioning_service = VersioningService()
         success, result = versioning_service.list_all_versions()
 
-        if not success:
+        if not success or not isinstance(result, dict):
             raise HTTPException(status_code=500, detail=result)
 
         # Flatten the structure if needed, but here we return the 'versions' list
@@ -1548,7 +1571,7 @@ async def list_all_versions(
 
 
 @router.get("/projects/{project_id}/versions")
-async def list_project_versions(project_id: str, field_name: str = None):
+async def list_project_versions(project_id: str, field_name: str | None = None):
     """List version history for a project's JSONB fields."""
     try:
         logger.info(
@@ -1557,11 +1580,11 @@ async def list_project_versions(project_id: str, field_name: str = None):
 
         # Use VersioningService to list versions
         versioning_service = VersioningService()
-        success, result = await versioning_service.list_versions(
+        success, result = versioning_service.list_versions(
             project_id, field_name
         )
 
-        if not success:
+        if not success or not isinstance(result, dict):
             error_msg = result.get("error", "") if isinstance(result, dict) else str(result)
             if "not found" in error_msg.lower():
                 raise HTTPException(
@@ -1597,14 +1620,14 @@ async def create_project_version(
 
         # Use VersioningService to create version
         versioning_service = VersioningService()
-        success, result = await versioning_service.create_version(
+        success, result = versioning_service.create_version(
             project_id=project_id,
             field_name=request.field_name,
             content=request.content,
-            change_summary=request.change_summary,
-            change_type=request.change_type,
-            document_id=request.document_id,
-            created_by=request.created_by,
+            change_summary=request.change_summary or "",
+            change_type=request.change_type or "update",
+            document_id=request.document_id or "",
+            created_by=request.created_by or "system",
         )
 
         if not success:
@@ -1646,7 +1669,7 @@ async def get_project_version(
 
         # Use VersioningService to get version content
         versioning_service = VersioningService()
-        success, result = await versioning_service.get_version(
+        success, result = versioning_service.get_version_content(
             project_id, field_name, version_number
         )
 
@@ -1691,11 +1714,11 @@ async def restore_project_version(
 
         # Use VersioningService to restore version
         versioning_service = VersioningService()
-        success, result = await versioning_service.restore_version(
+        success, result = versioning_service.restore_version(
             project_id=project_id,
             field_name=field_name,
             version_number=version_number,
-            restored_by=request.restored_by,
+            restored_by=request.restored_by or "system",
         )
 
         if not success:

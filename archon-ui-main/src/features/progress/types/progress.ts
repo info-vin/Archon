@@ -81,6 +81,7 @@ export interface ActiveOperation {
   type?: string; // Same as operation_type
   url?: string; // Original URL being crawled
   source_id?: string; // Source ID for matching to knowledge items
+  sourceId?: string; // Alias for component/test compatibility
   // Additional fields that might come from backend
   current_url?: string;
   pages_crawled?: number;
@@ -133,12 +134,6 @@ export interface ProgressResponse {
   totalChunks?: number;
   logs?: string[];
   timestamp?: string;
-  startedAt?: string; // ISO date string of when operation started
-  stats?: {
-    pages_crawled?: number;
-    documents_created?: number;
-    errors?: number;
-  };
   progress_data?: {
     percentage?: number;
     pages_crawled?: number;
@@ -146,4 +141,5 @@ export interface ProgressResponse {
     code_examples_found?: number;
     current_operation?: string;
   };
+  details?: any; // For flexible response data in tests and older API versions
 }

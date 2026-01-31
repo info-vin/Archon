@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { useAuth } from '../../features/auth/hooks/useAuth';
 
 import { Moon, Sun, FileText, Palette, Flame, Monitor } from 'lucide-react';
 import { Switch } from '@/features/ui/primitives/switch';
@@ -174,7 +173,7 @@ export const FeaturesSection = () => {
       setLoading(true);
       setDisconnectScreenEnabled(checked);
 
-      await serverHealthService.updateSettings(checked);
+      await serverHealthService.updateSettings({ enabled: checked });
 
       showToast(
         checked ? 'Disconnect Screen Enabled' : 'Disconnect Screen Disabled',

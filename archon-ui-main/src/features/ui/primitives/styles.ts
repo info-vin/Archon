@@ -18,6 +18,7 @@ export const glassmorphism = {
     cyan: "backdrop-blur-xl bg-cyan-400/5 dark:bg-cyan-400/10",
     blue: "backdrop-blur-xl bg-blue-400/5 dark:bg-blue-400/10",
     purple: "backdrop-blur-xl bg-purple-400/5 dark:bg-purple-400/10",
+    yellow: "backdrop-blur-xl bg-yellow-400/5 dark:bg-yellow-400/10",
   },
 
   // Border styles for glass effect - more prominent for edge definition
@@ -26,6 +27,7 @@ export const glassmorphism = {
     cyan: "border border-cyan-400/50 dark:border-cyan-400/40",
     blue: "border border-blue-400/50 dark:border-blue-400/40",
     purple: "border border-purple-400/50 dark:border-purple-400/40",
+    yellow: "border border-yellow-400/50 dark:border-yellow-400/40",
     focus: "focus:border-cyan-400 focus:shadow-[0_0_30px_10px_rgba(34,211,238,0.6)]",
     hover: "hover:border-cyan-400/80 hover:shadow-[0_0_25px_5px_rgba(34,211,238,0.5)]",
   },

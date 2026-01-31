@@ -116,20 +116,18 @@ class SchedulerService:
 
             # Create Task
             # We explicitly define parameters to ensure type safety and match TaskService.create_task signature
-            success, task = await task_service.create_task(
+            success, task_result = await task_service.create_task(
                 project_id=project_id,
                 title=task_title,
                 description=task_desc,
-                priority="high",
-                status="todo",
                 assignee_id=AI_AGENT_ROLES.get("DevBot (Engineering)") or "ai-dev-bot"
             )
 
-            
+
             if success:
-                logger.info(f"👮 Clockwork: Created repair task {task['id']}. Dispatching DevBot...")
+                logger.info(f"👮 Clockwork: Created repair task {task_result['task']['id']}. Dispatching DevBot...")
                 # Dispatch DevBot immediately
-                await agent_service.run_agent_task(task['id'], new_task["assignee_id"])
+                await agent_service.run_agent_task(task_id=task_result['task']['id'], agent_id=task_result['task']["assignee_id"])
 
         except Exception as e:
             logger.error(f"💥 Clockwork: Log Patrol Failed: {e}")

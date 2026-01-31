@@ -10,7 +10,7 @@ describe("apiClient (callAPIWithETag)", () => {
   beforeEach(() => {
     vi.resetAllMocks();
     // Reset fetch to undefined to ensure clean state
-    if (global.fetch) {
+    if (typeof global.fetch !== 'undefined') {
       delete (global as any).fetch;
     }
 
@@ -32,7 +32,7 @@ describe("apiClient (callAPIWithETag)", () => {
     global.AbortSignal = originalAbortSignal;
     if (originalFetch) {
       global.fetch = originalFetch;
-    } else if (global.fetch) {
+    } else if (typeof global.fetch !== 'undefined') {
       delete (global as any).fetch;
     }
   });
@@ -395,7 +395,7 @@ describe("apiClient (callAPIWithETag)", () => {
         headers: new Headers({ ETag: 'W/"v1"' }),
       });
 
-      const result1 = await callAPIWithETag("/api/content");
+      const result1: any = await callAPIWithETag("/api/content");
       expect(result1).toEqual(v1Data);
 
       // Data changes on server...
@@ -409,7 +409,7 @@ describe("apiClient (callAPIWithETag)", () => {
         headers: new Headers({ ETag: 'W/"v2"' }), // New ETag
       });
 
-      const result2 = await callAPIWithETag("/api/content");
+      const result2: any = await callAPIWithETag("/api/content");
       expect(result2).toEqual(v2Data); // We get fresh data automatically
 
       // No special handling needed - it just works

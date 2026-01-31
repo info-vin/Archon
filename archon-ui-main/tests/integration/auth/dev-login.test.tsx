@@ -3,7 +3,6 @@ import { describe, it, expect, beforeAll, afterEach, afterAll } from 'vitest';
 import { setupServer } from 'msw/node';
 import { http, HttpResponse } from 'msw';
 import { AuthProvider, useAuth } from '../../../src/features/auth/contexts/AuthContext';
-import React from 'react';
 
 // Define the API URL based on the config we expect
 // We use the relative path because the AuthContext uses API_BASE_URL which is '/api'
