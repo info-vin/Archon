@@ -536,7 +536,7 @@ class SourceManagementService:
         content_sample: str,
         word_count: int = 0,
         knowledge_type: str = "technical",
-        tags: list[str] = None,
+        tags: list[str] | None = None,
         update_frequency: int = 7,
     ) -> tuple[bool, dict[str, Any]]:
         """

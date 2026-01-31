@@ -48,7 +48,7 @@ async def add_documents_to_supabase(
         "add_documents_to_supabase", total_documents=len(contents), batch_size=batch_size
     ) as span:
         # Simple progress reporting helper with batch info support
-        async def report_progress(message: str, progress: int, batch_info: dict = None):
+        async def report_progress(message: str, progress: int, batch_info: dict[str, Any] | None = None):
             if progress_callback and asyncio.iscoroutinefunction(progress_callback):
                 try:
                     if batch_info:
@@ -258,7 +258,6 @@ async def add_documents_to_supabase(
             # Pass progress callback for rate limiting updates
             result = await create_embeddings_batch(
                 contextual_contents,
-                provider=provider,
                 progress_callback=embedding_progress_wrapper if progress_callback else None
             )
 

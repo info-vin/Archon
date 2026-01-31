@@ -28,9 +28,9 @@ class VersioningService:
         project_id: str,
         field_name: str,
         content: dict[str, Any],
-        change_summary: str = None,
+        change_summary: str | None = None,
         change_type: str = "update",
-        document_id: str = None,
+        document_id: str | None = None,
         created_by: str = "system",
     ) -> tuple[bool, dict[str, Any]]:
         """

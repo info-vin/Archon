@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from pydantic import BaseModel
 
 from ..auth.dependencies import get_current_user
-from ..config.logfire_config import get_logger, logfire
+from ..config.logfire_config import get_logger
 from ..utils import get_supabase_client
 
 logger = get_logger(__name__)
@@ -39,7 +39,7 @@ async def create_visit_log(
     Uses Gemini Multimodal to transcribe and summarize.
     """
     user_id = current_user.get("id")
-    logfire.info(f"API: Creating visit log | user={current_user.get('email')} | has_audio={audio_file is not None}")
+    logger.info(f"API: Creating visit log | user={current_user.get('email')} | has_audio={audio_file is not None}")
 
     try:
         supabase = get_supabase_client()
@@ -49,7 +49,7 @@ async def create_visit_log(
 
         # 1. Process Audio with Gemini 1.5 Flash (Multimodal)
         if audio_file:
-            logfire.info("Processing audio file with Gemini 1.5 Flash...")
+            logger.info("Processing audio file with Gemini 1.5 Flash...")
 
             # Read and encode audio
             audio_content = await audio_file.read()
@@ -65,11 +65,13 @@ async def create_visit_log(
             # Fetch from DB settings
             try:
                 # We reuse 'rag_strategy' category for model names as per migration 014
-                db_model = await credential_service.get_credential("AUDIO_MODEL", category="rag_strategy")
+                # Use get_credentials_by_category to find the setting
+                settings = await credential_service.get_credentials_by_category("rag_strategy")
+                db_model = settings.get("AUDIO_MODEL")
                 if db_model:
                      audio_model = db_model
             except Exception as e:
-                logfire.warning(f"Failed to fetch AUDIO_MODEL from settings, using default: {e}")
+                logger.warning(f"Failed to fetch AUDIO_MODEL from settings, using default: {e}")
 
             # Get Google API Key
             # We bypass llm_provider_service for this specific raw multimodal call because
@@ -93,7 +95,7 @@ async def create_visit_log(
             if not api_key:
                  # Last resort: check if 'openai' provider is actually Google (e.g. valid key)
                  # But safer to just warn and skip if no key found.
-                 logfire.warning("No Google/Gemini API key found for audio processing. Skipping.")
+                 logger.warning("No Google/Gemini API key found for audio processing. Skipping.")
                  transcript = "[Error: No Gemini API Key found]"
             else:
                 try:
@@ -130,7 +132,7 @@ async def create_visit_log(
                     async with httpx.AsyncClient() as client:
                         resp = await client.post(url, json=payload, timeout=60.0)
                         if resp.status_code != 200:
-                            logfire.error(f"Gemini API Error: {resp.text}")
+                            logger.error(f"Gemini API Error: {resp.text}")
                             transcript = f"[Error processing audio: {resp.status_code}]"
                         else:
                             data = resp.json()
@@ -143,11 +145,11 @@ async def create_visit_log(
                                 summary = result.get("summary", "Audio processed.")
                                 tasks = result.get("tasks", [])
                             except Exception as parse_error:
-                                logfire.error(f"Failed to parse Gemini JSON: {parse_error}")
+                                logger.error(f"Failed to parse Gemini JSON: {parse_error}")
                                 transcript = "[Error parsing AI response]"
 
                 except Exception as api_err:
-                    logfire.error(f"Gemini API Request failed: {api_err}")
+                    logger.error(f"Gemini API Request failed: {api_err}")
                     transcript = f"[Error: {str(api_err)}]"
 
         # 3. Save to DB (Combined logic)
@@ -180,7 +182,7 @@ async def create_visit_log(
         )
 
     except Exception as e:
-        logfire.error(f"API: Visit log creation failed | error={str(e)}")
+        logger.error(f"API: Visit log creation failed | error={str(e)}")
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 @router.get("/user/{user_id}", response_model=list[VisitLogResponse])
@@ -206,5 +208,5 @@ async def get_user_visit_logs(user_id: str, current_user: dict = Depends(get_cur
             ))
         return logs
     except Exception as e:
-        logfire.error(f"API: Fetch visit logs failed | error={str(e)}")
+        logger.error(f"API: Fetch visit logs failed | error={str(e)}")
         raise HTTPException(status_code=500, detail=str(e)) from e

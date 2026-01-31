@@ -39,7 +39,7 @@ class SummaryAgent(BaseAgent[SummaryDependencies, SummaryOperation]):
     A simple agent that summarizes text content.
     """
 
-    def __init__(self, model: str = None, **kwargs):
+    def __init__(self, model: str | None = None, **kwargs):
         if model is None:
             model = os.getenv("SUMMARY_AGENT_MODEL", "openai:gpt-4o-mini") # Use a cheaper model for summary
 

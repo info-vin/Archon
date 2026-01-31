@@ -7,7 +7,7 @@ Handles the seamless transition from "Generated Content" to "Knowledge Base".
 import uuid
 from datetime import datetime
 
-from ..config.logfire_config import get_logger, logfire
+from ..config.logfire_config import get_logger
 from ..services.embeddings.embedding_service import create_embedding
 from ..services.source_management_service import SourceManagementService, update_source_info
 from ..utils import get_supabase_client
@@ -64,7 +64,7 @@ class LibrarianService:
                 "created_at": datetime.now().isoformat()
             }
 
-            logfire.info(f"Librarian: Archiving pitch | source_id={source_id} | company={company}")
+            logger.info(f"Librarian: Archiving pitch | source_id={source_id} | company={company}")
 
             # 3. Create Source Info (archon_sources)
             # We use the lower-level update_source_info to manually set metadata
@@ -87,7 +87,7 @@ class LibrarianService:
             try:
                 embedding_vector = await create_embedding(content)
             except Exception as e:
-                logfire.error(f"Librarian: Failed to generate embedding for pitch {source_id} | error={str(e)}")
+                logger.error(f"Librarian: Failed to generate embedding for pitch {source_id} | error={str(e)}")
                 embedding_vector = None
 
             page_data = {
@@ -103,11 +103,11 @@ class LibrarianService:
 
             self.supabase.table("archon_crawled_pages").insert(page_data).execute()
 
-            logfire.info(f"Librarian: Pitch archived successfully | source_id={source_id}")
+            logger.info(f"Librarian: Pitch archived successfully | source_id={source_id}")
             return source_id
 
         except Exception as e:
-            logfire.error(f"Librarian: Failed to archive pitch | error={str(e)}")
+            logger.error(f"Librarian: Failed to archive pitch | error={str(e)}")
             # We don't want to break the user flow if archiving fails, but we should log it.
             # In a critical system, we might retry or raise.
             # For now, we return empty string to indicate failure but allow flow to continue.

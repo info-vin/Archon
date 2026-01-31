@@ -31,7 +31,7 @@ try:
 except ImportError:
     DOCX_AVAILABLE = False
 
-from ..config.logfire_config import get_logger, logfire
+from ..config.logfire_config import get_logger
 
 logger = get_logger(__name__)
 
@@ -77,12 +77,7 @@ def extract_text_from_document(file_content: bytes, filename: str, content_type:
             raise ValueError(f"Unsupported file format: {content_type} ({filename})")
 
     except Exception as e:
-        logfire.error(
-            "Document text extraction failed",
-            filename=filename,
-            content_type=content_type,
-            error=str(e),
-        )
+        logger.error(f"Document text extraction failed | filename={filename} | content_type={content_type} | error={str(e)}")
         raise Exception(f"Failed to extract text from {filename}: {str(e)}") from e
 
 
@@ -113,7 +108,7 @@ def extract_text_from_pdf(file_content: bytes) -> str:
                         if page_text:
                             text_content.append(f"--- Page {page_num + 1} ---\n{page_text}")
                     except Exception as e:
-                        logfire.warning(f"pdfplumber failed on page {page_num + 1}: {e}")
+                        logger.warning(f"pdfplumber failed on page {page_num + 1}: {e}")
                         continue
 
             # If pdfplumber got good results, use them
@@ -121,7 +116,7 @@ def extract_text_from_pdf(file_content: bytes) -> str:
                 return "\n\n".join(text_content)
 
         except Exception as e:
-            logfire.warning(f"pdfplumber extraction failed: {e}, trying PyPDF2")
+            logger.warning(f"pdfplumber extraction failed: {e}, trying PyPDF2")
 
     # Fallback to PyPDF2
     if PYPDF2_AVAILABLE:
@@ -135,7 +130,7 @@ def extract_text_from_pdf(file_content: bytes) -> str:
                     if page_text:
                         text_content.append(f"--- Page {page_num + 1} ---\n{page_text}")
                 except Exception as e:
-                    logfire.warning(f"PyPDF2 failed on page {page_num + 1}: {e}")
+                    logger.warning(f"PyPDF2 failed on page {page_num + 1}: {e}")
                     continue
 
             if text_content:

@@ -1,9 +1,10 @@
 import asyncio
 from datetime import datetime, timedelta
 
-from ..config.logfire_config import logfire
+from ..config.logfire_config import get_logger
 from ..utils import get_supabase_client
 
+logger = get_logger(__name__)
 
 class EnrichmentService:
     """
@@ -22,23 +23,23 @@ class EnrichmentService:
             # Fetch lead
             res = supabase.table("leads").select("*").eq("id", lead_id).single().execute()
             if not res.data:
-                logfire.warn(f"Enrichment: Lead not found | id={lead_id}")
+                logger.warning(f"Enrichment: Lead not found | id={lead_id}")
                 return False
 
             lead = res.data
             if lead.get("enrichment_status") == "success":
                 return True
 
-            logfire.info(f"Enrichment: Starting | id={lead_id} | company={lead.get('company_name')}")
+            logger.info(f"Enrichment: Starting | id={lead_id} | company={lead.get('company_name')}")
 
             # Check Toggle for Real vs Mock
             from ..services.credential_service import credential_service
             # We reuse 'rag_strategy' category as per migration
-            enable_real = await credential_service.get_credential("ENABLE_REAL_ENRICHMENT", category="features")
+            enable_real = await credential_service.get_credential("ENABLE_REAL_ENRICHMENT")
             is_real_mode = str(enable_real).lower() == "true"
 
             if is_real_mode:
-                logfire.info(f"Enrichment: Running in REAL mode (Simulated Real API Call) | id={lead_id}")
+                logger.info(f"Enrichment: Running in REAL mode (Simulated Real API Call) | id={lead_id}")
                 # Real Implementation Hook:
                 # 1. Get JobBoard/Google API Key
                 # 2. Call Crawler
@@ -46,7 +47,7 @@ class EnrichmentService:
                 # For Phase 4.6, we simulate a 'Real' call taking longer or hitting a different endpoint
                 await asyncio.sleep(3.0)
             else:
-                logfire.info(f"Enrichment: Running in MOCK mode | id={lead_id}")
+                logger.info(f"Enrichment: Running in MOCK mode | id={lead_id}")
                 await asyncio.sleep(1.5)
 
             # logic: If successful, update status and score
@@ -59,11 +60,11 @@ class EnrichmentService:
             }
 
             supabase.table("leads").update(enrichment_data).eq("id", lead_id).execute()
-            logfire.info(f"Enrichment: Success | id={lead_id}")
+            logger.info(f"Enrichment: Success | id={lead_id}")
             return True
 
         except Exception as e:
-            logfire.error(f"Enrichment: Failed | id={lead_id} | error={str(e)}")
+            logger.error(f"Enrichment: Failed | id={lead_id} | error={str(e)}")
             supabase.table("leads").update({"enrichment_status": "failed"}).eq("id", lead_id).execute()
             return False
 
@@ -96,7 +97,7 @@ class EnrichmentService:
                 status = lead.get("enrichment_status")
 
                 if status == "failed" or score < 50:
-                    logfire.info(f"Pruning stale lead | id={lead['id']} | reason=stale_low_quality")
+                    logger.info(f"Pruning stale lead | id={lead['id']} | reason=stale_low_quality")
                     supabase.table("leads").update({
                         "status": "archived",
                         "auto_archived_reason": "stale_low_quality"
@@ -106,5 +107,5 @@ class EnrichmentService:
             return pruned_count
 
         except Exception as e:
-            logfire.error(f"Pruning failed | error={str(e)}")
+            logger.error(f"Pruning failed | error={str(e)}")
             return 0

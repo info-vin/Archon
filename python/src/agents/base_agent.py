@@ -9,7 +9,7 @@ import logging
 import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Any, TypeVar
+from typing import Any, TypeVar, cast
 
 from pydantic import BaseModel
 from pydantic_ai import Agent
@@ -153,7 +153,7 @@ class BaseAgent[DepsT, OutputT](ABC):
     def __init__(
         self,
         model: str = "openai:gpt-4o",
-        name: str = None,
+        name: str | None = None,
         retries: int = 3,
         enable_rate_limiting: bool = True,
         **agent_kwargs,
@@ -164,6 +164,7 @@ class BaseAgent[DepsT, OutputT](ABC):
         self.enable_rate_limiting = enable_rate_limiting
 
         # Initialize rate limiting
+        self.rate_limiter: RateLimitHandler | None
         if self.enable_rate_limiting:
             self.rate_limiter = RateLimitHandler(max_retries=retries)
         else:
@@ -215,7 +216,7 @@ class BaseAgent[DepsT, OutputT](ABC):
             )
             self.logger.info(f"Agent {self.name} completed successfully")
             # PydanticAI returns a RunResult with data attribute
-            return result.data
+            return cast(OutputT, result.data)
         except TimeoutError as e:
             self.logger.error(f"Agent {self.name} timed out after 120 seconds")
             raise Exception(f"Agent {self.name} operation timed out - taking too long to respond") from e

@@ -15,6 +15,7 @@ import asyncio
 import logging
 import os
 from contextlib import asynccontextmanager
+from typing import Any
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -186,14 +187,14 @@ async def lifespan(app: FastAPI):
         try:
             await cleanup_crawler()
         except Exception as e:
-            api_logger.warning("Could not cleanup crawling context", error=str(e))
+            api_logger.warning(f"Could not cleanup crawling context: {str(e)}")
 
         # Cleanup background task manager
         try:
             await cleanup_task_manager()
             api_logger.info("Background task manager cleaned up")
         except Exception as e:
-            api_logger.warning("Could not cleanup background task manager", error=str(e))
+            api_logger.warning(f"Could not cleanup background task manager: {str(e)}")
 
         api_logger.info("✅ Cleanup completed")
 
@@ -333,7 +334,7 @@ async def api_health_check():
 
 
 # Cache schema check result to avoid repeated database queries
-_schema_check_cache = {"valid": None, "checked_at": 0}
+_schema_check_cache: dict[str, Any] = {"valid": None, "checked_at": 0.0}
 
 async def _check_database_schema():
     """Check if the projects table exists to determine schema validity."""
@@ -345,8 +346,9 @@ async def _check_database_schema():
 
     # If we recently failed, don't spam the database (wait at least 30 seconds)
     current_time = time.time()
+    last_checked = float(_schema_check_cache.get("checked_at", 0.0))
     if (_schema_check_cache.get("valid") is False and
-        current_time - _schema_check_cache.get("checked_at", 0) < 30):
+        current_time - last_checked < 30):
         return _schema_check_cache.get("result", {"valid": False, "message": "Schema check recently failed."})
 
     try:

@@ -5,7 +5,7 @@ from datetime import datetime
 from fastapi import APIRouter, Header, HTTPException, Response
 from fastapi import status as http_status
 
-from ..config.logfire_config import get_logger, logfire
+from ..config.logfire_config import get_logger
 from ..models.progress_models import create_progress_response
 from ..utils.etag_utils import check_etag, generate_etag
 from ..utils.progress import ProgressTracker
@@ -28,13 +28,13 @@ async def get_progress(
     Clients should poll this endpoint to track long-running operations.
     """
     try:
-        logfire.info(f"Getting progress for operation | operation_id={operation_id}")
+        logger.info(f"Getting progress for operation | operation_id={operation_id}")
 
         # Get operation progress from ProgressTracker
         operation = ProgressTracker.get_progress(operation_id)
 
         if not operation:
-            logfire.warning(f"Operation not found | operation_id={operation_id}")
+            logger.warning(f"Operation not found | operation_id={operation_id}")
             raise HTTPException(
                 status_code=404,
                 detail={"error": f"Operation {operation_id} not found"}
@@ -82,14 +82,14 @@ async def get_progress(
             # No need to poll completed/failed operations
             response.headers["X-Poll-Interval"] = "0"
 
-        logfire.info(f"Progress retrieved | operation_id={operation_id} | status={response_data.get('status')} | progress={response_data.get('progress')}")
+        logger.info(f"Progress retrieved | operation_id={operation_id} | status={response_data.get('status')} | progress={response_data.get('progress')}")
 
         return response_data
 
     except HTTPException:
         raise
     except Exception as e:
-        logfire.error(f"Failed to get progress | error={str(e)} | operation_id={operation_id}")
+        logger.error(f"Failed to get progress | error={str(e)} | operation_id={operation_id}")
         raise HTTPException(status_code=500, detail={"error": str(e)}) from e
 
 
@@ -101,7 +101,7 @@ async def list_active_operations():
     This endpoint is useful for debugging and monitoring active operations.
     """
     try:
-        logfire.info("Listing active operations")
+        logger.info("Listing active operations")
 
         # Get all active operations from ProgressTracker
         active_operations = []
@@ -118,7 +118,7 @@ async def list_active_operations():
                     "started_at": operation.get("start_time"),
                 })
 
-        logfire.info(f"Active operations listed | count={len(active_operations)}")
+        logger.info(f"Active operations listed | count={len(active_operations)}")
 
         return {
             "operations": active_operations,
@@ -127,5 +127,5 @@ async def list_active_operations():
         }
 
     except Exception as e:
-        logfire.error(f"Failed to list active operations | error={str(e)}")
+        logger.error(f"Failed to list active operations | error={str(e)}")
         raise HTTPException(status_code=500, detail={"error": str(e)}) from e

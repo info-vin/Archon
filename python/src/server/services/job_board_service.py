@@ -4,7 +4,7 @@ import random
 import httpx
 from pydantic import BaseModel
 
-from ..config.logfire_config import get_logger, logfire
+from ..config.logfire_config import get_logger
 from ..utils import get_supabase_client
 
 logger = get_logger(__name__)
@@ -74,7 +74,7 @@ class JobBoardService:
         Search for jobs using keyword and identify potential leads.
         Now also fetches full job details for each result.
         """
-        logfire.info(f"Searching jobs | keyword={keyword} | limit={limit}")
+        logger.info(f"Searching jobs | keyword={keyword} | limit={limit}")
 
         # Use a single session for the entire lifecycle to maintain cookies (Anti-Scraping)
         async with httpx.AsyncClient(timeout=20.0, headers=cls.HEADERS, follow_redirects=True) as client:
@@ -83,7 +83,7 @@ class JobBoardService:
                 jobs = await cls._fetch_from_104(client, keyword, limit)
 
                 if not jobs:
-                    logfire.warning("104 API returned empty list, falling back to mock")
+                    logger.warning("104 API returned empty list, falling back to mock")
                     jobs = cls.MOCK_JOBS
                 else:
                     # 2. Fetch Details (Only if we have real jobs)
@@ -101,20 +101,20 @@ class JobBoardService:
                                 detail = await cls._fetch_job_detail(client, job.real_id, job.url)
                                 if detail:
                                     job.description_full = detail
-                                    logfire.info(f"Fetched detail | id={job.real_id} | len={len(detail)}")
+                                    logger.info(f"Fetched detail | id={job.real_id} | len={len(detail)}")
                                 else:
                                     job.description_full = f"[Snippet Only] {job.description}"
                             except Exception as e:
-                                logfire.warning(f"Failed to fetch job detail | url={job.url} | error={e}")
+                                logger.warning(f"Failed to fetch job detail | url={job.url} | error={e}")
                                 job.description_full = f"[Snippet Only] {job.description}"
                         else:
                             job.description_full = f"[Snippet Only] {job.description}"
 
-                logfire.info(f"Job search completed | count={len(jobs)}")
+                logger.info(f"Job search completed | count={len(jobs)}")
                 return jobs
 
             except Exception as e:
-                logfire.error(f"Job search failed | error={str(e)} | switching_to_fallback=True")
+                logger.error(f"Job search failed | error={str(e)} | switching_to_fallback=True")
                 # Ensure mock jobs also have inferred needs
                 for job in cls.MOCK_JOBS:
                     if not job.identified_need:
@@ -153,10 +153,10 @@ class JobBoardService:
 
                 supabase.table("leads").insert(lead_data).execute()
                 new_leads_count += 1
-                logfire.info(f"New lead identified and saved | company={job.company}")
+                logger.info(f"New lead identified and saved | company={job.company}")
 
             except Exception as e:
-                logfire.error(f"Failed to save lead | company={job.company} | error={str(e)}")
+                logger.error(f"Failed to save lead | company={job.company} | error={str(e)}")
 
         return new_leads_count
 
@@ -286,7 +286,7 @@ class JobBoardService:
             response = await client.get(ajax_url, headers=headers)
 
             if response.status_code != 200:
-                logfire.warning(f"Job AJAX fetch failed | status={response.status_code} | url={ajax_url}")
+                logger.warning(f"Job AJAX fetch failed | status={response.status_code} | url={ajax_url}")
                 return None
 
             data = response.json()
@@ -301,5 +301,5 @@ class JobBoardService:
             return None
 
         except Exception as e:
-            logfire.warning(f"Error fetching job detail via AJAX | id={job_id} | error={e}")
+            logger.warning(f"Error fetching job detail via AJAX | id={job_id} | error={e}")
             return None

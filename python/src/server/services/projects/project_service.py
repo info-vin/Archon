@@ -26,7 +26,7 @@ class ProjectService:
         self.supabase_client = supabase_client or get_supabase_client()
         self.task_service = TaskService(self.supabase_client)
 
-    async def create_project(self, title: str, github_repo: str = None) -> tuple[bool, dict[str, Any]]:
+    async def create_project(self, title: str, github_repo: str | None = None) -> tuple[bool, dict[str, Any]]:
         """
         Create a new project with optional PRD and GitHub repo.
 
@@ -113,7 +113,7 @@ class ProjectService:
                 return True, {"projects": [], "total_count": 0}
 
             # Get task counts if needed for computed status
-            task_counts = {}
+            task_counts: dict[str, dict[str, int]] = {}
             if include_computed_status:
                 # TODO: This call hangs under load and needs investigation. Temporarily bypassed for E2E tests.
                 # See ticket #XXX / TODO.md for details.

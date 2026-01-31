@@ -22,14 +22,13 @@ from typing import Any
 
 # Try to import logfire (optional dependency)
 LOGFIRE_AVAILABLE = False
-logfire = None
+logfire: Any = None
 
 try:
-    import logfire
-
+    import logfire  # type: ignore
     LOGFIRE_AVAILABLE = True
 except ImportError:
-    logfire = None
+    pass
 
 # Global state
 _logfire_configured = False
@@ -73,7 +72,7 @@ def setup_logfire(
     _logfire_enabled = is_logfire_enabled()
     handlers = []
 
-    if _logfire_enabled:
+    if _logfire_enabled and logfire:
         # Get logfire token
         logfire_token = token or os.getenv("LOGFIRE_TOKEN")
 
@@ -98,7 +97,7 @@ def setup_logfire(
             logging.info("❌ LOGFIRE_TOKEN not found. Using standard logging.")
             _logfire_enabled = False
 
-    if not _logfire_enabled and LOGFIRE_AVAILABLE:
+    if not _logfire_enabled and LOGFIRE_AVAILABLE and logfire:
         try:
             # Configure logfire but disable sending to remote
             logfire.configure(send_to_logfire=False)

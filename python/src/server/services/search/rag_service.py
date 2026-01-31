@@ -173,7 +173,7 @@ class RAGService:
         )
 
     async def perform_rag_query(
-        self, query: str, source: str = None, match_count: int = 5, filter_metadata: dict | None = None
+        self, query: str, source: str | None = None, match_count: int = 5, filter_metadata: dict | None = None
     ) -> tuple[bool, dict[str, Any]]:
         """
         Perform a comprehensive RAG query that combines all enabled strategies.

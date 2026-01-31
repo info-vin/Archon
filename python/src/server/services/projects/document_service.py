@@ -30,9 +30,9 @@ class DocumentService:
         project_id: str,
         document_type: str,
         title: str,
-        content: dict[str, Any] = None,
-        tags: list[str] = None,
-        author: str = None,
+        content: dict[str, Any] | None = None,
+        tags: list[str] | None = None,
+        author: str | None = None,
     ) -> tuple[bool, dict[str, Any]]:
         """
         Add a new document to a project's docs JSONB field.

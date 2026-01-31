@@ -15,7 +15,7 @@ from ..threading_service import get_threading_service
 
 
 async def generate_contextual_embedding(
-    full_document: str, chunk: str, provider: str = None
+    full_document: str, chunk: str, provider: str | None = None
 ) -> tuple[str, bool]:
     """
     Generate contextual information for a chunk with proper rate limiting.
@@ -124,7 +124,7 @@ async def _get_model_choice(provider: str | None = None) -> str:
 
 
 async def generate_contextual_embeddings_batch(
-    full_documents: list[str], chunks: list[str], provider: str = None
+    full_documents: list[str], chunks: list[str], provider: str | None = None
 ) -> list[tuple[str, bool]]:
     """
     Generate contextual information for multiple chunks in a single API call to avoid rate limiting.
