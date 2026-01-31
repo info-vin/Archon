@@ -3,13 +3,14 @@
 import asyncio
 import json
 import uuid
+from typing import Any
 
 from ..config.logfire_config import get_logger
 from ..prompts.dev_ops_prompts import DEVBOT_TOOLS, get_devbot_analysis_prompt
-from .agent_registry import AGENT_CONFIG, get_agent_config
 
 # Import the new CodeModifier utility
 from ..utils.code_modifier import CodeModifier
+from .agent_registry import get_agent_config
 from .credential_service import credential_service
 from .llm_provider_service import get_llm_client
 from .shared_constants import AI_AGENT_ROLES
@@ -63,10 +64,10 @@ class AgentService:
                     "tool_call_id": call_id,
                     "content": f"Error executing tool '{function_name}': {str(e)}"
                 })
-        
+
         return tool_outputs
 
-    async def _analyze_error_with_structured_output(self, command: str, stderr: str) -> dict | None:
+    async def _analyze_error_with_structured_output(self, command: str, stderr: str) -> dict[str, Any] | None:
         """
         Uses LLM to analyze the error output and suggest a fix in structured JSON.
         Supports L2+ Capability: Uses MCP tools (RAG/Search) to research before fixing.
@@ -149,7 +150,7 @@ class AgentService:
             logger.error(f"Failed to analyze error with LLM: {e}")
             return None
 
-    async def run_command_with_self_healing(self, command: str, max_retries: int = 1, task_id: str = None) -> tuple[bool, str]:
+    async def run_command_with_self_healing(self, command: str, max_retries: int = 1, task_id: str | None = None) -> tuple[bool, str]:
         """
         Executes a shell command with self-healing capabilities (DevBot L2).
         Loop: Execute -> Fail -> Analyze -> Sandbox -> Apply -> Verify -> Success/Fail
@@ -240,26 +241,26 @@ class AgentService:
         all_agents = []
         for role_name, agent_id in AI_AGENT_ROLES.items():
             all_agents.append({"id": agent_id, "name": role_name, "role": role_name})
-            
+
         if not user_role or user_role in ["admin", "system_admin", "manager"]:
             return all_agents
-            
+
         filtered_agents = []
-        
+
         # RBAC Filtering Logic (SSOT from Matrix)
         for agent in all_agents:
             agent_id = agent["id"]
-            
+
             if user_role == "sales":
                 # Alice sees only MarketBot
                 if agent_id == "ai-market-bot":
                     filtered_agents.append(agent)
-                    
+
             elif user_role == "marketing":
                 # Bob sees MarketBot + Librarian
                 if agent_id in ["ai-market-bot", "ai-librarian"]:
                     filtered_agents.append(agent)
-        
+
         return filtered_agents
 
     async def run_agent_task(self, task_id: str, agent_id: str, command: str | None = None):
@@ -286,7 +287,7 @@ class AgentService:
             success, output_or_analysis = await self.run_command_with_self_healing(command, task_id=task_id)
             final_status = "done" if success else "failed"
             await task_service.update_task(task_id, {"status": final_status, "output": output_or_analysis})
-        
+
         # 3. Wake up other bots (General Agent Mode)
         else:
             await self._run_general_agent_task(task_id, agent_id)
@@ -298,7 +299,7 @@ class AgentService:
         """
         from ..services.projects.task_service import task_service
         logger = get_logger(__name__)
-        
+
         # 1. Get Agent Configuration
         config = get_agent_config(agent_id)
         if not config:
@@ -311,15 +312,15 @@ class AgentService:
         if not success or not task_data:
             logger.error(f"Failed to fetch task {task_id}")
             return
-        
+
         user_input = f"Task: {task_data['title']}\nDescription: {task_data.get('description', 'No description provided.')}"
-        
+
         # 3. Initialize Loop Context
         messages = [
             {"role": "system", "content": config["system_prompt"]},
             {"role": "user", "content": user_input}
         ]
-        
+
         # Determine available tools
         # For simplicity, we define basic tool skeletons here based on the registry.
         # Ideally, we should import these from dev_ops_prompts or similar.
@@ -330,7 +331,7 @@ class AgentService:
             {"type": "function", "function": {"name": "get_available_sources", "description": "List indexed docs.", "parameters": {"type": "object", "properties": {}}}},
             {"type": "function", "function": {"name": "manage_task", "description": "Create/Update tasks.", "parameters": {"type": "object", "properties": {"action": {"type": "string", "enum": ["create", "update", "delete"]}, "task_id": {"type": "string"}}, "required": ["action"]}}}
         ]
-        
+
         # Filter tools owned by this agent
         agent_tools = [t for t in all_mcp_tools if t["function"]["name"] in config.get("tools", [])]
         tools_param = agent_tools if (agent_tools and self.mcp_client) else None
@@ -348,7 +349,7 @@ class AgentService:
                     tool_choice="auto" if tools_param else None,
                     temperature=0.3
                 )
-                
+
                 res_msg = response.choices[0].message
                 tool_calls = res_msg.tool_calls
 
@@ -358,7 +359,7 @@ class AgentService:
                     messages.append(res_msg)
                     tool_results = await self._handle_tool_calls(tool_calls)
                     messages.extend(tool_results)
-                    
+
                     # Get final answer after tool execution
                     final_response = await client.chat.completions.create(
                         model=model,

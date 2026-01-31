@@ -19,19 +19,22 @@ class SchedulerService:
         return cls._instance
 
     def start(self):
-        if not self._scheduler.running:
+        if self._scheduler and not self._scheduler.running:
             logger.info("🕒 Clockwork: Starting Scheduler Service...")
             self._scheduler.start()
             self._schedule_jobs()
         else:
-            logger.warning("Clockwork: Scheduler already running.")
+            logger.warning("Clockwork: Scheduler already running or not initialized.")
 
     def shutdown(self):
-        if self._scheduler.running:
+        if self._scheduler and self._scheduler.running:
             logger.info("🛑 Clockwork: Shutting down Scheduler...")
             self._scheduler.shutdown()
 
     def _schedule_jobs(self):
+        if not self._scheduler:
+            return
+
         # Job 1: System Heartbeat Probe (Every 6 hours)
         self._scheduler.add_job(
             self._run_system_probe,
@@ -66,10 +69,10 @@ class SchedulerService:
         logger.info("👮 Clockwork: Starting Log Patrol...")
         try:
             from ..utils import get_supabase_client
-            from .projects.task_service import task_service
             from .agent_service import agent_service
+            from .projects.task_service import task_service
             from .shared_constants import AI_AGENT_ROLES
-            
+
             supabase = get_supabase_client()
             one_hour_ago = (datetime.now(UTC) - timedelta(hours=1)).isoformat()
 
@@ -82,35 +85,35 @@ class SchedulerService:
                 .limit(5) # Avoid spamming tasks
                 .execute()
             )
-            
+
             errors = res.data or []
             if not errors:
                 logger.info("👮 Clockwork: No recent errors found. All systems nominal.")
                 return
 
             logger.info(f"👮 Clockwork: Detected {len(errors)} errors. Analyzing...")
-            
+
             # Simple heuristic: If we find errors, create ONE investigation task
             # In a real system, we would group similar errors.
-            
+
             # Create a task for DevBot
             error_summary = "\n".join([f"- [{e['source']}] {e['message']}" for e in errors])
             task_title = f"Auto-Repair: System Errors Detected ({datetime.now().strftime('%H:%M')})"
             task_desc = f"Clockwork detected the following errors in the last hour:\n{error_summary}\n\nPlease analyze and fix."
-            
-            # We need a project ID to attach the task to. 
+
+            # We need a project ID to attach the task to.
             # Ideally, there should be a 'System Maintenance' project.
-            # For now, we'll try to find one or create it? 
+            # For now, we'll try to find one or create it?
             # Or just fail if no project found.
             # Let's assume a default project or pick the first one for MVP.
-            
+
             p_res = supabase.table("archon_projects").select("id").limit(1).execute()
             if not p_res.data:
                 logger.warning("Clockwork: No projects found to attach repair task.")
                 return
-                
+
             project_id = p_res.data[0]["id"]
-            
+
             # Create Task
             new_task = {
                 "project_id": project_id,
@@ -121,12 +124,15 @@ class SchedulerService:
                 "assignee_id": AI_AGENT_ROLES.get("DevBot (Engineering)") or "ai-dev-bot"
             }
             
-            success, task = await task_service.create_task(new_task)
+            # Unpack task dictionary to match TaskService.create_task signature
+            success, task = await task_service.create_task(**new_task)
+
+            
             if success:
                 logger.info(f"👮 Clockwork: Created repair task {task['id']}. Dispatching DevBot...")
                 # Dispatch DevBot immediately
                 await agent_service.run_agent_task(task['id'], new_task["assignee_id"])
-            
+
         except Exception as e:
             logger.error(f"💥 Clockwork: Log Patrol Failed: {e}")
 

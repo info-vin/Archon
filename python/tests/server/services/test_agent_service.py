@@ -29,26 +29,21 @@ async def test_run_agent_task(mock_get_logger, mock_task_service):
     agent_id = "ai-test-agent"
 
     # --- Test Execution ---
-    await agent_service.run_agent_task(task_id, agent_id)
+    # We mock _run_general_agent_task to avoid LLM calls in this unit test
+    with patch.object(AgentService, '_run_general_agent_task', new_callable=AsyncMock) as mock_general_loop:
+        await agent_service.run_agent_task(task_id, agent_id)
+        mock_general_loop.assert_awaited_once_with(task_id, agent_id)
 
     # --- Assertions ---
-    # 1. Verify logger calls
-    assert mock_logger.info.call_count == 2
+    # 1. Verify starting logger call
     mock_logger.info.assert_any_call(
         f"AI agent '{agent_id}' starting work on task '{task_id}'."
     )
-    mock_logger.info.assert_any_call(
-        f"AI agent '{agent_id}' finished simulated work for task '{task_id}'."
-    )
 
-    # 2. Verify that task_service.update_task was called correctly (twice)
-    # First: Processing
-    # Second: Done (Simulated)
-    expected_calls = [
-        call(task_id, {"status": "processing", "assignee": agent_id}),
-        call(task_id, {"status": "done", "output": "Simulated task completed successfully."})
-    ]
-    mock_task_service.update_task.assert_has_awaits(expected_calls)
+    # 2. Verify that task_service.update_task was called correctly (Processing)
+    mock_task_service.update_task.assert_has_awaits([
+        call(task_id, {"status": "processing", "assignee": agent_id})
+    ])
 
 @pytest.mark.asyncio
 @patch('src.server.services.projects.task_service.task_service', new_callable=AsyncMock)

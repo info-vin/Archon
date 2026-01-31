@@ -2,6 +2,7 @@ from unittest.mock import AsyncMock, patch
 
 from fastapi.testclient import TestClient
 
+from src.server.api_routes.agents_api import get_current_user
 from src.server.services.agent_service import AI_AGENT_ROLES  # Import the actual roles
 
 # It's important to patch the service BEFORE it's imported by the app
@@ -26,11 +27,13 @@ module_patch.start()
 
 client = TestClient(app)
 
-
 def test_get_assignable_agents_success():
     """
     Test successfully fetching the list of assignable agents.
     """
+    # Mock authentication for admin
+    app.dependency_overrides[get_current_user] = lambda: {"id": "admin-1", "role": "system_admin"}
+
     response = client.get("/api/agents/assignable")
 
     # Assertions
@@ -51,6 +54,9 @@ def test_get_assignable_agents_service_error():
     """
     Test handling of an error from the agent service.
     """
+    # Mock authentication
+    app.dependency_overrides[get_current_user] = lambda: {"id": "admin-1", "role": "system_admin"}
+
     # Reset and configure the mock for this specific test
     mock_agent_service.reset_mock()
     mock_agent_service.get_assignable_agents.side_effect = Exception("Service unavailable")

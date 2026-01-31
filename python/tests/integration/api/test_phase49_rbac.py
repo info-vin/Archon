@@ -1,7 +1,8 @@
 import pytest
 from fastapi.testclient import TestClient
-from server.main import app
+
 from server.api_routes.agents_api import get_current_user
+from server.main import app
 
 client = TestClient(app)
 
@@ -29,7 +30,7 @@ async def test_get_assignable_agents_admin():
 
     app.dependency_overrides[get_current_user] = lambda: {"id": "admin-1", "role": "system_admin"}
 
-    
+
 
     response = client.get("/api/agents/assignable")
 
@@ -37,7 +38,7 @@ async def test_get_assignable_agents_admin():
 
     agents = response.json()
 
-    
+
 
     agent_names = [a["name"] for a in agents]
 
@@ -61,7 +62,7 @@ async def test_get_assignable_agents_sales_alice():
 
     app.dependency_overrides[get_current_user] = lambda: {"id": "alice-1", "role": "sales"}
 
-    
+
 
     response = client.get("/api/agents/assignable")
 
@@ -71,13 +72,13 @@ async def test_get_assignable_agents_sales_alice():
 
     agent_names = [a["name"] for a in agents]
 
-    
+
 
     # Requirement: Alice sees MarketBot
 
     assert "MarketBot (Sales)" in agent_names
 
-    
+
 
     # Requirement: Alice DOES NOT see DevBot or Librarian
 

@@ -1,7 +1,5 @@
 from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
-from datetime import datetime
-
 from server.services.scheduler_service import scheduler_service
 
 @pytest.mark.asyncio
@@ -32,9 +30,9 @@ async def test_run_log_patrol_creates_task():
         
         # Verify
         mock_task_service.create_task.assert_called_once()
-        args, _ = mock_task_service.create_task.call_args
-        assert args[0]["title"].startswith("Auto-Repair")
-        assert "500 Error" in args[0]["description"]
+        _, kwargs = mock_task_service.create_task.call_args
+        assert kwargs["title"].startswith("Auto-Repair")
+        assert "500 Error" in kwargs["description"]
         
         mock_agent_service.run_agent_task.assert_called_once()
         assert mock_agent_service.run_agent_task.call_args[0][0] == "task-repair-1"
