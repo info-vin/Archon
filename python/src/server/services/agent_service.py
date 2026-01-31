@@ -6,6 +6,7 @@ import uuid
 
 from ..config.logfire_config import get_logger
 from ..prompts.dev_ops_prompts import DEVBOT_TOOLS, get_devbot_analysis_prompt
+from .agent_registry import AGENT_CONFIG, get_agent_config
 
 # Import the new CodeModifier utility
 from ..utils.code_modifier import CodeModifier
@@ -24,7 +25,7 @@ class AgentService:
     async def _handle_tool_calls(self, tool_calls) -> list[dict]:
         """
         Executes tool calls requested by the LLM via MCP client.
-        Returns a list of tool message dictionaries for the chat context.
+        Supports dynamic tool mapping based on function name.
         """
         logger = get_logger(__name__)
         tool_outputs = []
@@ -37,18 +38,17 @@ class AgentService:
             logger.info(f"[MCP] Agent requesting tool execution: {function_name} | args={arguments}")
 
             try:
-                # Execute tool via MCP Client
                 if not self.mcp_client:
                     raise Exception("MCP Client not initialized")
 
-                # Map LLM function names to MCP tool names if needed,
-                # but our prompt definitions match MCP tool names exactly.
-                if function_name == "search_code_examples":
-                    result = await self.mcp_client.search_code_examples(**arguments)
-                elif function_name == "rag_search_knowledge_base":
-                    result = await self.mcp_client.perform_rag_query(**arguments)
+                # Dynamic Tool Execution: Try to find the method on mcp_client
+                # This handles search_code_examples, search_job_market, perform_rag_query, etc.
+                if hasattr(self.mcp_client, function_name):
+                    method = getattr(self.mcp_client, function_name)
+                    result = await method(**arguments)
                 else:
-                    result = f"Error: Tool '{function_name}' not supported by DevBot."
+                    # Fallback to generic call_tool if specific method doesn't exist
+                    result = await self.mcp_client.call_tool(function_name, **arguments)
 
                 tool_outputs.append({
                     "role": "tool",
@@ -57,13 +57,13 @@ class AgentService:
                 })
 
             except Exception as e:
-                logger.error(f"[MCP] Tool execution failed: {e}")
+                logger.error(f"[MCP] Tool execution failed ({function_name}): {e}")
                 tool_outputs.append({
                     "role": "tool",
                     "tool_call_id": call_id,
-                    "content": f"Error executing tool: {str(e)}"
+                    "content": f"Error executing tool '{function_name}': {str(e)}"
                 })
-
+        
         return tool_outputs
 
     async def _analyze_error_with_structured_output(self, command: str, stderr: str) -> dict | None:
@@ -256,27 +256,105 @@ class AgentService:
             logger.error(f"Failed to update task status: {result.get('error')}")
             return
 
-        # 2. Execute command with self-healing if provided
+        # 2. Execute command with self-healing if provided (DevBot Mode)
         if command:
             # Pass task_id for branching
             success, output_or_analysis = await self.run_command_with_self_healing(command, task_id=task_id)
-
-            # 3. Feed the results back into the task output/description
             final_status = "done" if success else "failed"
-            update_data = {
-                "status": final_status,
-                "output": output_or_analysis
-            }
-
-            # If failed, we keep it in 'failed' status but provide the AI analysis
-            # as a hint for the next manual or automated retry.
-            await task_service.update_task(task_id, update_data)
-            logger.info(f"Task '{task_id}' finished with status '{final_status}'. Output/Analysis provided.")
+            await task_service.update_task(task_id, {"status": final_status, "output": output_or_analysis})
+        
+        # 3. Wake up other bots (General Agent Mode)
         else:
-            # Fallback for tasks without explicit shell commands (simulated work)
-            await asyncio.sleep(1)
-            await task_service.update_task(task_id, {"status": "done", "output": "Simulated task completed successfully."})
-            logger.info(f"AI agent '{agent_id}' finished simulated work for task '{task_id}'.")
+            await self._run_general_agent_task(task_id, agent_id)
+
+    async def _run_general_agent_task(self, task_id: str, agent_id: str):
+        """
+        Executes a non-command task using the General MCP Agent Loop.
+        Applies to MarketBot, Librarian, POBot, etc.
+        """
+        from ..services.projects.task_service import task_service
+        logger = get_logger(__name__)
+        
+        # 1. Get Agent Configuration
+        config = get_agent_config(agent_id)
+        if not config:
+            logger.error(f"Agent '{agent_id}' not found in registry. Failing task.")
+            await task_service.update_task(task_id, {"status": "failed", "output": f"Unknown agent: {agent_id}"})
+            return
+
+        # 2. Fetch Task Details
+        success, task_data = await task_service.get_task(task_id)
+        if not success or not task_data:
+            logger.error(f"Failed to fetch task {task_id}")
+            return
+        
+        user_input = f"Task: {task_data['title']}\nDescription: {task_data.get('description', 'No description provided.')}"
+        
+        # 3. Initialize Loop Context
+        messages = [
+            {"role": "system", "content": config["system_prompt"]},
+            {"role": "user", "content": user_input}
+        ]
+        
+        # Determine available tools
+        # For simplicity, we define basic tool skeletons here based on the registry.
+        # Ideally, we should import these from dev_ops_prompts or similar.
+        all_mcp_tools = [
+            {"type": "function", "function": {"name": "search_job_market", "description": "Find jobs on 104/LinkedIn.", "parameters": {"type": "object", "properties": {"query": {"type": "string"}}, "required": ["query"]}}},
+            {"type": "function", "function": {"name": "generate_sales_email", "description": "Write a sales email.", "parameters": {"type": "object", "properties": {"company": {"type": "string"}, "pitch": {"type": "string"}}, "required": ["company", "pitch"]}}},
+            {"type": "function", "function": {"name": "perform_rag_query", "description": "Search knowledge base.", "parameters": {"type": "object", "properties": {"query": {"type": "string"}}, "required": ["query"]}}},
+            {"type": "function", "function": {"name": "get_available_sources", "description": "List indexed docs.", "parameters": {"type": "object", "properties": {}}}},
+            {"type": "function", "function": {"name": "manage_task", "description": "Create/Update tasks.", "parameters": {"type": "object", "properties": {"action": {"type": "string", "enum": ["create", "update", "delete"]}, "task_id": {"type": "string"}}, "required": ["action"]}}}
+        ]
+        
+        # Filter tools owned by this agent
+        agent_tools = [t for t in all_mcp_tools if t["function"]["name"] in config.get("tools", [])]
+        tools_param = agent_tools if (agent_tools and self.mcp_client) else None
+
+        try:
+            provider_config = await credential_service.get_active_provider()
+            model = provider_config.get("chat_model") or "gpt-4o"
+
+            async with get_llm_client() as client:
+                # --- Round 1: Thinking ---
+                response = await client.chat.completions.create(
+                    model=model,
+                    messages=messages,
+                    tools=tools_param,
+                    tool_choice="auto" if tools_param else None,
+                    temperature=0.3
+                )
+                
+                res_msg = response.choices[0].message
+                tool_calls = res_msg.tool_calls
+
+                # --- Round 2: Action (Optional) ---
+                if tool_calls and self.mcp_client:
+                    logger.info(f"Agent '{agent_id}' is performing {len(tool_calls)} actions...")
+                    messages.append(res_msg)
+                    tool_results = await self._handle_tool_calls(tool_calls)
+                    messages.extend(tool_results)
+                    
+                    # Get final answer after tool execution
+                    final_response = await client.chat.completions.create(
+                        model=model,
+                        messages=messages
+                    )
+                    final_output = final_response.choices[0].message.content
+                else:
+                    final_output = res_msg.content
+
+                # 4. Finalize Task
+                await task_service.update_task(task_id, {
+                    "status": "done",
+                    "output": final_output or "Task completed with no text output."
+                })
+                logger.info(f"Task {task_id} completed by {agent_id}.")
+
+        except Exception as e:
+            logger.error(f"Agent Loop Failed: {e}")
+            await task_service.update_task(task_id, {"status": "failed", "output": f"Error: {str(e)}"})
+
 
 # Create a singleton instance of the service
 agent_service = AgentService()

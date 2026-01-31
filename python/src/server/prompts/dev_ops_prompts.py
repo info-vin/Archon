@@ -71,5 +71,28 @@ DEVBOT_TOOLS = [
                 "required": ["query"]
             }
         }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "generate_logo",
+            "description": "Generate an SVG logo based on descriptive keywords.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "prompt": {
+                        "type": "string",
+                        "description": "Detailed description of the logo (e.g., 'A minimalist geometric ant')."
+                    },
+                    "style": {
+                        "type": "string",
+                        "enum": ["minimalist", "neon", "corporate", "geometric"],
+                        "description": "The visual style of the logo."
+                    }
+                },
+                "required": ["prompt"]
+            }
+        }
     }
 ]
+
