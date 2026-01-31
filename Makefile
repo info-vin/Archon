@@ -164,15 +164,16 @@ lint: lint-fe lint-be
 lint-fe:
 	@echo "Linting all frontend projects..."
 	@echo "--- Linting End-User UI (enduser-ui-fe) ---"
-	@cd enduser-ui-fe && $(PNPM) run --if-present lint
+	@cd enduser-ui-fe && $(PNPM) run --if-present lint && $(PNPM) tsc --noEmit
 	@echo "--- Linting Admin UI (archon-ui-main) ---"
-	@cd archon-ui-main && $(PNPM) run --if-present lint
+	@cd archon-ui-main && $(PNPM) run --if-present lint && $(PNPM) tsc --noEmit
 
 # Run backend linter
 lint-be:
 	@echo "Linting backend..."
 	@cd python && $(UV) sync --group dev
 	@cd python && $(UV) run ruff check --fix
+	@cd python && $(UV) run mypy src --ignore-missing-imports
 
 # Clean everything (with confirmation)
 clean:
