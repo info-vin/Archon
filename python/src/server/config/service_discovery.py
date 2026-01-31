@@ -121,7 +121,7 @@ class ServiceDiscovery:
         """Get host and port separately for a service"""
         url = self.get_service_url(service)
         parsed = urlparse(url)
-        return parsed.hostname, parsed.port or 80
+        return parsed.hostname or "", parsed.port or 80
 
     async def health_check(self, service: str, timeout: float = 5.0) -> bool:
         """
@@ -140,7 +140,7 @@ class ServiceDiscovery:
         try:
             async with httpx.AsyncClient(timeout=timeout) as client:
                 response = await client.get(health_endpoint)
-                return response.status_code == 200
+                return bool(response.status_code == 200)
         except Exception:
             return False
 

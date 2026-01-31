@@ -324,16 +324,17 @@ class AgentService:
         # Determine available tools
         # For simplicity, we define basic tool skeletons here based on the registry.
         # Ideally, we should import these from dev_ops_prompts or similar.
-        all_mcp_tools = [
+        all_mcp_tools: list[dict[str, Any]] = [
             {"type": "function", "function": {"name": "search_job_market", "description": "Find jobs on 104/LinkedIn.", "parameters": {"type": "object", "properties": {"query": {"type": "string"}}, "required": ["query"]}}},
             {"type": "function", "function": {"name": "generate_sales_email", "description": "Write a sales email.", "parameters": {"type": "object", "properties": {"company": {"type": "string"}, "pitch": {"type": "string"}}, "required": ["company", "pitch"]}}},
             {"type": "function", "function": {"name": "perform_rag_query", "description": "Search knowledge base.", "parameters": {"type": "object", "properties": {"query": {"type": "string"}}, "required": ["query"]}}},
             {"type": "function", "function": {"name": "get_available_sources", "description": "List indexed docs.", "parameters": {"type": "object", "properties": {}}}},
             {"type": "function", "function": {"name": "manage_task", "description": "Create/Update tasks.", "parameters": {"type": "object", "properties": {"action": {"type": "string", "enum": ["create", "update", "delete"]}, "task_id": {"type": "string"}}, "required": ["action"]}}}
         ]
-
+        
         # Filter tools owned by this agent
-        agent_tools = [t for t in all_mcp_tools if t["function"]["name"] in config.get("tools", [])]
+        agent_tools_list = config.get("tools", [])
+        agent_tools = [t for t in all_mcp_tools if t["function"]["name"] in agent_tools_list]
         tools_param = agent_tools if (agent_tools and self.mcp_client) else None
 
         try:

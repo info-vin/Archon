@@ -1,5 +1,6 @@
 # python/src/server/auth/utils.py
 
+from typing import Any
 from supabase.client import Client
 
 from ..config.logfire_config import get_logger
@@ -7,7 +8,7 @@ from ..utils import get_supabase_client
 
 logger = get_logger(__name__)
 
-async def get_user_from_token(token: str) -> dict | None:
+async def get_user_from_token(token: str) -> Any | None:
     """
     Verifies the JWT token by calling Supabase Auth API.
     Returns the user object if valid, None otherwise.

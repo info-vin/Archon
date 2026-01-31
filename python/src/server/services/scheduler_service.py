@@ -115,17 +115,15 @@ class SchedulerService:
             project_id = p_res.data[0]["id"]
 
             # Create Task
-            new_task = {
-                "project_id": project_id,
-                "title": task_title,
-                "description": task_desc,
-                "priority": "high",
-                "status": "todo",
-                "assignee_id": AI_AGENT_ROLES.get("DevBot (Engineering)") or "ai-dev-bot"
-            }
-            
-            # Unpack task dictionary to match TaskService.create_task signature
-            success, task = await task_service.create_task(**new_task)
+            # We explicitly define parameters to ensure type safety and match TaskService.create_task signature
+            success, task = await task_service.create_task(
+                project_id=project_id,
+                title=task_title,
+                description=task_desc,
+                priority="high",
+                status="todo",
+                assignee_id=AI_AGENT_ROLES.get("DevBot (Engineering)") or "ai-dev-bot"
+            )
 
             
             if success:

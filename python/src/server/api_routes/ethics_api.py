@@ -4,8 +4,8 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
 from ..auth.dependencies import get_current_user
-from ..config.logfire_config import get_logger, logfire
-from ..utils import get_supabase_client
+from ..config.logfire_config import get_logger
+from ..services.profile_service import ProfileService
 
 logger = get_logger(__name__)
 
@@ -39,5 +39,5 @@ async def get_ethics_events(
 
         return res.data
     except Exception as e:
-        logfire.error(f"API: Failed to fetch ethics events | error={str(e)}")
+        logger.error(f"API: Failed to fetch ethics events | error={str(e)}")
         raise HTTPException(status_code=500, detail=str(e)) from e

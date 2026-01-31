@@ -27,7 +27,7 @@ class SitemapCrawlStrategy:
         Returns:
             List of URLs extracted from the sitemap
         """
-        urls = []
+        urls: list[str] = []
 
         try:
             # Check for cancellation before making the request

@@ -1,0 +1,510 @@
+src/server/utils/semantic_version.py:70: error: Argument 1 to "int" has incompatible type "int | str | None"; expected "str | Buffer | SupportsInt | SupportsIndex | SupportsTrunc"  [arg-type]
+src/server/utils/semantic_version.py:71: error: Argument 1 to "int" has incompatible type "int | str | None"; expected "str | Buffer | SupportsInt | SupportsIndex | SupportsTrunc"  [arg-type]
+src/mcp_server/models.py:230: error: Missing named argument "created_at" for "GeneralDocument"  [call-arg]
+src/mcp_server/models.py:230: error: Missing named argument "updated_at" for "GeneralDocument"  [call-arg]
+src/server/services/propose_change_service.py:8: error: Library stubs not installed for "aiofiles"  [import-untyped]
+src/server/services/propose_change_service.py:8: note: Hint: "python3 -m pip install types-aiofiles"
+src/server/services/propose_change_service.py:8: note: (or run "mypy --install-types" to install all missing stub packages)
+src/server/services/propose_change_service.py:8: note: See https://mypy.readthedocs.io/en/stable/running_mypy.html#missing-imports
+src/server/services/propose_change_service.py:110: error: Returning Any from function declared to return "dict[str, Any]"  [no-any-return]
+src/server/services/propose_change_service.py:122: error: Returning Any from function declared to return "list[dict[str, Any]]"  [no-any-return]
+src/server/services/propose_change_service.py:130: error: Returning Any from function declared to return "dict[str, Any] | None"  [no-any-return]
+src/server/services/propose_change_service.py:145: error: Returning Any from function declared to return "dict[str, Any]"  [no-any-return]
+src/server/services/propose_change_service.py:160: error: Returning Any from function declared to return "dict[str, Any]"  [no-any-return]
+src/server/services/propose_change_service.py:194: error: Returning Any from function declared to return "dict[str, Any]"  [no-any-return]
+src/mcp_server/features/developer/version_control_tools.py:72: error: Returning Any from function declared to return "str"  [no-any-return]
+src/mcp_server/features/developer/version_control_tools.py:148: error: List item 0 has incompatible type "type[ProposeGitBranchTool]"; expected "type[BaseModel]"  [list-item]
+src/server/config/service_discovery.py:124: error: Incompatible return value type (got "tuple[str | None, int]", expected "tuple[str, int]")  [return-value]
+src/agents/mcp_client.py:21: error: Incompatible default for argument "mcp_url" (default has type "None", argument has type "str")  [assignment]
+src/agents/mcp_client.py:21: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+src/agents/mcp_client.py:21: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+src/agents/mcp_client.py:90: error: Returning Any from function declared to return "dict[str, Any]"  [no-any-return]
+src/agents/mcp_client.py:101: error: Incompatible default for argument "source" (default has type "None", argument has type "str")  [assignment]
+src/agents/mcp_client.py:101: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+src/agents/mcp_client.py:101: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+src/agents/mcp_client.py:114: error: Incompatible default for argument "source_id" (default has type "None", argument has type "str")  [assignment]
+src/agents/mcp_client.py:114: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+src/agents/mcp_client.py:114: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+src/mcp_server/features/tasks/task_tools.py:307: error: Incompatible types in assignment (expression has type "int", target has type "str")  [assignment]
+src/mcp_server/features/documents/document_tools.py:221: error: Incompatible types in assignment (expression has type "dict[str, Any]", target has type "str")  [assignment]
+src/mcp_server/features/documents/document_tools.py:223: error: Incompatible types in assignment (expression has type "list[str]", target has type "str")  [assignment]
+src/mcp_server/features/developer/__init__.py:16: error: Incompatible types in assignment (expression has type "type[BaseModel]", variable has type "type[ProposeFileChangeTool]")  [assignment]
+src/mcp_server/features/developer/__init__.py:20: error: Incompatible types in assignment (expression has type "type[ProposeShellCommandTool]", variable has type "type[ProposeFileChangeTool]")  [assignment]
+src/server/services/version_service.py:68: error: Returning Any from function declared to return "dict[str, Any] | None"  [no-any-return]
+src/server/config/logfire_config.py:28: error: Incompatible import of "logfire" (imported name has type Module, local name has type "object")  [assignment]
+src/server/config/logfire_config.py:83: error: "None" has no attribute "configure"  [attr-defined]
+src/server/config/logfire_config.py:91: error: "None" has no attribute "LogfireLoggingHandler"  [attr-defined]
+src/server/config/logfire_config.py:104: error: "None" has no attribute "configure"  [attr-defined]
+src/agents/base_agent.py:64: error: Incompatible types in assignment (expression has type "float", variable has type "int")  [assignment]
+src/agents/base_agent.py:156: error: Incompatible default for argument "name" (default has type "None", argument has type "str")  [assignment]
+src/agents/base_agent.py:156: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+src/agents/base_agent.py:156: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+src/agents/base_agent.py:170: error: Incompatible types in assignment (expression has type "None", variable has type "RateLimitHandler")  [assignment]
+src/agents/base_agent.py:202: error: Returning Any from function declared to return "OutputT"  [no-any-return]
+src/agents/base_agent.py:213: error: No overload variant of "run" of "Agent" matches argument types "str", "DepsT"  [call-overload]
+src/agents/base_agent.py:213: note: Possible overload variants:
+src/agents/base_agent.py:213: note:     def run(self, user_prompt: str | Sequence[str | ImageUrl | AudioUrl | DocumentUrl | BinaryContent] | None = ..., *, result_type: None = ..., message_history: list[ModelRequest | ModelResponse] | None = ..., model: Literal['anthropic:claude-3-7-sonnet-latest', 'anthropic:claude-3-5-haiku-latest', 'anthropic:claude-3-5-sonnet-latest', 'anthropic:claude-3-opus-latest', 'claude-3-7-sonnet-latest', 'claude-3-5-haiku-latest', 'bedrock:amazon.titan-tg1-large', 'bedrock:amazon.titan-text-lite-v1', 'bedrock:amazon.titan-text-express-v1', 'bedrock:us.amazon.nova-pro-v1:0', 'bedrock:us.amazon.nova-lite-v1:0', 'bedrock:us.amazon.nova-micro-v1:0', 'bedrock:anthropic.claude-3-5-sonnet-20241022-v2:0', 'bedrock:us.anthropic.claude-3-5-sonnet-20241022-v2:0', 'bedrock:anthropic.claude-3-5-haiku-20241022-v1:0', 'bedrock:us.anthropic.claude-3-5-haiku-20241022-v1:0', 'bedrock:anthropic.claude-instant-v1', 'bedrock:anthropic.claude-v2:1', 'bedrock:anthropic.claude-v2', 'bedrock:anthropic.claude-3-sonnet-20240229-v1:0', 'bedrock:us.anthropic.claude-3-sonnet-20240229-v1:0', 'bedrock:anthropic.claude-3-haiku-20240307-v1:0', 'bedrock:us.anthropic.claude-3-haiku-20240307-v1:0', 'bedrock:anthropic.claude-3-opus-20240229-v1:0', 'bedrock:us.anthropic.claude-3-opus-20240229-v1:0', 'bedrock:anthropic.claude-3-5-sonnet-20240620-v1:0', 'bedrock:us.anthropic.claude-3-5-sonnet-20240620-v1:0', 'bedrock:anthropic.claude-3-7-sonnet-20250219-v1:0', 'bedrock:us.anthropic.claude-3-7-sonnet-20250219-v1:0', 'bedrock:cohere.command-text-v14', 'bedrock:cohere.command-r-v1:0', 'bedrock:cohere.command-r-plus-v1:0', 'bedrock:cohere.command-light-text-v14', 'bedrock:meta.llama3-8b-instruct-v1:0', 'bedrock:meta.llama3-70b-instruct-v1:0', 'bedrock:meta.llama3-1-8b-instruct-v1:0', 'bedrock:us.meta.llama3-1-8b-instruct-v1:0', 'bedrock:meta.llama3-1-70b-instruct-v1:0', 'bedrock:us.meta.llama3-1-70b-instruct-v1:0', 'bedrock:meta.llama3-1-405b-instruct-v1:0', 'bedrock:us.meta.llama3-2-11b-instruct-v1:0', 'bedrock:us.meta.llama3-2-90b-instruct-v1:0', 'bedrock:us.meta.llama3-2-1b-instruct-v1:0', 'bedrock:us.meta.llama3-2-3b-instruct-v1:0', 'bedrock:us.meta.llama3-3-70b-instruct-v1:0', 'bedrock:mistral.mistral-7b-instruct-v0:2', 'bedrock:mistral.mixtral-8x7b-instruct-v0:1', 'bedrock:mistral.mistral-large-2402-v1:0', 'bedrock:mistral.mistral-large-2407-v1:0', 'claude-3-5-sonnet-latest', 'claude-3-opus-latest', 'cohere:c4ai-aya-expanse-32b', 'cohere:c4ai-aya-expanse-8b', 'cohere:command', 'cohere:command-light', 'cohere:command-light-nightly', 'cohere:command-nightly', 'cohere:command-r', 'cohere:command-r-03-2024', 'cohere:command-r-08-2024', 'cohere:command-r-plus', 'cohere:command-r-plus-04-2024', 'cohere:command-r-plus-08-2024', 'cohere:command-r7b-12-2024', 'deepseek:deepseek-chat', 'deepseek:deepseek-reasoner', 'google-gla:gemini-1.0-pro', 'google-gla:gemini-1.5-flash', 'google-gla:gemini-1.5-flash-8b', 'google-gla:gemini-1.5-pro', 'google-gla:gemini-2.0-flash-exp', 'google-gla:gemini-2.0-flash-thinking-exp-01-21', 'google-gla:gemini-exp-1206', 'google-gla:gemini-2.0-flash', 'google-gla:gemini-2.0-flash-lite-preview-02-05', 'google-gla:gemini-2.0-pro-exp-02-05', 'google-gla:gemini-2.5-pro-exp-03-25', 'google-vertex:gemini-1.0-pro', 'google-vertex:gemini-1.5-flash', 'google-vertex:gemini-1.5-flash-8b', 'google-vertex:gemini-1.5-pro', 'google-vertex:gemini-2.0-flash-exp', 'google-vertex:gemini-2.0-flash-thinking-exp-01-21', 'google-vertex:gemini-exp-1206', 'google-vertex:gemini-2.0-flash', 'google-vertex:gemini-2.0-flash-lite-preview-02-05', 'google-vertex:gemini-2.0-pro-exp-02-05', 'google-vertex:gemini-2.5-pro-exp-03-25', 'gpt-3.5-turbo', 'gpt-3.5-turbo-0125', 'gpt-3.5-turbo-0301', 'gpt-3.5-turbo-0613', 'gpt-3.5-turbo-1106', 'gpt-3.5-turbo-16k', 'gpt-3.5-turbo-16k-0613', 'gpt-4', 'gpt-4-0125-preview', 'gpt-4-0314', 'gpt-4-0613', 'gpt-4-1106-preview', 'gpt-4-32k', 'gpt-4-32k-0314', 'gpt-4-32k-0613', 'gpt-4-turbo', 'gpt-4-turbo-2024-04-09', 'gpt-4-turbo-preview', 'gpt-4-vision-preview', 'gpt-4o', 'gpt-4o-2024-05-13', 'gpt-4o-2024-08-06', 'gpt-4o-2024-11-20', 'gpt-4o-audio-preview', 'gpt-4o-audio-preview-2024-10-01', 'gpt-4o-audio-preview-2024-12-17', 'gpt-4o-mini', 'gpt-4o-mini-2024-07-18', 'gpt-4o-mini-audio-preview', 'gpt-4o-mini-audio-preview-2024-12-17', 'gpt-4o-mini-search-preview', 'gpt-4o-mini-search-preview-2025-03-11', 'gpt-4o-search-preview', 'gpt-4o-search-preview-2025-03-11', 'groq:distil-whisper-large-v3-en', 'groq:gemma2-9b-it', 'groq:llama-3.3-70b-versatile', 'groq:llama-3.1-8b-instant', 'groq:llama-guard-3-8b', 'groq:llama3-70b-8192', 'groq:llama3-8b-8192', 'groq:whisper-large-v3', 'groq:whisper-large-v3-turbo', 'groq:playai-tts', 'groq:playai-tts-arabic', 'groq:qwen-qwq-32b', 'groq:mistral-saba-24b', 'groq:qwen-2.5-coder-32b', 'groq:qwen-2.5-32b', 'groq:deepseek-r1-distill-qwen-32b', 'groq:deepseek-r1-distill-llama-70b', 'groq:llama-3.3-70b-specdec', 'groq:llama-3.2-1b-preview', 'groq:llama-3.2-3b-preview', 'groq:llama-3.2-11b-vision-preview', 'groq:llama-3.2-90b-vision-preview', 'mistral:codestral-latest', 'mistral:mistral-large-latest', 'mistral:mistral-moderation-latest', 'mistral:mistral-small-latest', 'o1', 'o1-2024-12-17', 'o1-mini', 'o1-mini-2024-09-12', 'o1-preview', 'o1-preview-2024-09-12', 'o3-mini', 'o3-mini-2025-01-31', 'openai:chatgpt-4o-latest', 'openai:gpt-3.5-turbo', 'openai:gpt-3.5-turbo-0125', 'openai:gpt-3.5-turbo-0301', 'openai:gpt-3.5-turbo-0613', 'openai:gpt-3.5-turbo-1106', 'openai:gpt-3.5-turbo-16k', 'openai:gpt-3.5-turbo-16k-0613', 'openai:gpt-4', 'openai:gpt-4-0125-preview', 'openai:gpt-4-0314', 'openai:gpt-4-0613', 'openai:gpt-4-1106-preview', 'openai:gpt-4-32k', 'openai:gpt-4-32k-0314', 'openai:gpt-4-32k-0613', 'openai:gpt-4-turbo', 'openai:gpt-4-turbo-2024-04-09', 'openai:gpt-4-turbo-preview', 'openai:gpt-4-vision-preview', 'openai:gpt-4o', 'openai:gpt-4o-2024-05-13', 'openai:gpt-4o-2024-08-06', 'openai:gpt-4o-2024-11-20', 'openai:gpt-4o-audio-preview', 'openai:gpt-4o-audio-preview-2024-10-01', 'openai:gpt-4o-audio-preview-2024-12-17', 'openai:gpt-4o-mini', 'openai:gpt-4o-mini-2024-07-18', 'openai:gpt-4o-mini-audio-preview', 'openai:gpt-4o-mini-audio-preview-2024-12-17', 'openai:gpt-4o-mini-search-preview', 'openai:gpt-4o-mini-search-preview-2025-03-11', 'openai:gpt-4o-search-preview', 'openai:gpt-4o-search-preview-2025-03-11', 'openai:o1', 'openai:o1-2024-12-17', 'openai:o1-mini', 'openai:o1-mini-2024-09-12', 'openai:o1-preview', 'openai:o1-preview-2024-09-12', 'openai:o3-mini', 'openai:o3-mini-2025-01-31', 'test'] | Model | str | None = ..., deps: None = ..., model_settings: ModelSettings | None = ..., usage_limits: UsageLimits | None = ..., usage: Usage | None = ..., infer_name: bool = ...) -> Coroutine[Any, Any, AgentRunResult[str]]
+src/agents/base_agent.py:213: note:     def [RunResultDataT] run(self, user_prompt: str | Sequence[str | ImageUrl | AudioUrl | DocumentUrl | BinaryContent] | None = ..., *, result_type: type[RunResultDataT], message_history: list[ModelRequest | ModelResponse] | None = ..., model: Literal['anthropic:claude-3-7-sonnet-latest', 'anthropic:claude-3-5-haiku-latest', 'anthropic:claude-3-5-sonnet-latest', 'anthropic:claude-3-opus-latest', 'claude-3-7-sonnet-latest', 'claude-3-5-haiku-latest', 'bedrock:amazon.titan-tg1-large', 'bedrock:amazon.titan-text-lite-v1', 'bedrock:amazon.titan-text-express-v1', 'bedrock:us.amazon.nova-pro-v1:0', 'bedrock:us.amazon.nova-lite-v1:0', 'bedrock:us.amazon.nova-micro-v1:0', 'bedrock:anthropic.claude-3-5-sonnet-20241022-v2:0', 'bedrock:us.anthropic.claude-3-5-sonnet-20241022-v2:0', 'bedrock:anthropic.claude-3-5-haiku-20241022-v1:0', 'bedrock:us.anthropic.claude-3-5-haiku-20241022-v1:0', 'bedrock:anthropic.claude-instant-v1', 'bedrock:anthropic.claude-v2:1', 'bedrock:anthropic.claude-v2', 'bedrock:anthropic.claude-3-sonnet-20240229-v1:0', 'bedrock:us.anthropic.claude-3-sonnet-20240229-v1:0', 'bedrock:anthropic.claude-3-haiku-20240307-v1:0', 'bedrock:us.anthropic.claude-3-haiku-20240307-v1:0', 'bedrock:anthropic.claude-3-opus-20240229-v1:0', 'bedrock:us.anthropic.claude-3-opus-20240229-v1:0', 'bedrock:anthropic.claude-3-5-sonnet-20240620-v1:0', 'bedrock:us.anthropic.claude-3-5-sonnet-20240620-v1:0', 'bedrock:anthropic.claude-3-7-sonnet-20250219-v1:0', 'bedrock:us.anthropic.claude-3-7-sonnet-20250219-v1:0', 'bedrock:cohere.command-text-v14', 'bedrock:cohere.command-r-v1:0', 'bedrock:cohere.command-r-plus-v1:0', 'bedrock:cohere.command-light-text-v14', 'bedrock:meta.llama3-8b-instruct-v1:0', 'bedrock:meta.llama3-70b-instruct-v1:0', 'bedrock:meta.llama3-1-8b-instruct-v1:0', 'bedrock:us.meta.llama3-1-8b-instruct-v1:0', 'bedrock:meta.llama3-1-70b-instruct-v1:0', 'bedrock:us.meta.llama3-1-70b-instruct-v1:0', 'bedrock:meta.llama3-1-405b-instruct-v1:0', 'bedrock:us.meta.llama3-2-11b-instruct-v1:0', 'bedrock:us.meta.llama3-2-90b-instruct-v1:0', 'bedrock:us.meta.llama3-2-1b-instruct-v1:0', 'bedrock:us.meta.llama3-2-3b-instruct-v1:0', 'bedrock:us.meta.llama3-3-70b-instruct-v1:0', 'bedrock:mistral.mistral-7b-instruct-v0:2', 'bedrock:mistral.mixtral-8x7b-instruct-v0:1', 'bedrock:mistral.mistral-large-2402-v1:0', 'bedrock:mistral.mistral-large-2407-v1:0', 'claude-3-5-sonnet-latest', 'claude-3-opus-latest', 'cohere:c4ai-aya-expanse-32b', 'cohere:c4ai-aya-expanse-8b', 'cohere:command', 'cohere:command-light', 'cohere:command-light-nightly', 'cohere:command-nightly', 'cohere:command-r', 'cohere:command-r-03-2024', 'cohere:command-r-08-2024', 'cohere:command-r-plus', 'cohere:command-r-plus-04-2024', 'cohere:command-r-plus-08-2024', 'cohere:command-r7b-12-2024', 'deepseek:deepseek-chat', 'deepseek:deepseek-reasoner', 'google-gla:gemini-1.0-pro', 'google-gla:gemini-1.5-flash', 'google-gla:gemini-1.5-flash-8b', 'google-gla:gemini-1.5-pro', 'google-gla:gemini-2.0-flash-exp', 'google-gla:gemini-2.0-flash-thinking-exp-01-21', 'google-gla:gemini-exp-1206', 'google-gla:gemini-2.0-flash', 'google-gla:gemini-2.0-flash-lite-preview-02-05', 'google-gla:gemini-2.0-pro-exp-02-05', 'google-gla:gemini-2.5-pro-exp-03-25', 'google-vertex:gemini-1.0-pro', 'google-vertex:gemini-1.5-flash', 'google-vertex:gemini-1.5-flash-8b', 'google-vertex:gemini-1.5-pro', 'google-vertex:gemini-2.0-flash-exp', 'google-vertex:gemini-2.0-flash-thinking-exp-01-21', 'google-vertex:gemini-exp-1206', 'google-vertex:gemini-2.0-flash', 'google-vertex:gemini-2.0-flash-lite-preview-02-05', 'google-vertex:gemini-2.0-pro-exp-02-05', 'google-vertex:gemini-2.5-pro-exp-03-25', 'gpt-3.5-turbo', 'gpt-3.5-turbo-0125', 'gpt-3.5-turbo-0301', 'gpt-3.5-turbo-0613', 'gpt-3.5-turbo-1106', 'gpt-3.5-turbo-16k', 'gpt-3.5-turbo-16k-0613', 'gpt-4', 'gpt-4-0125-preview', 'gpt-4-0314', 'gpt-4-0613', 'gpt-4-1106-preview', 'gpt-4-32k', 'gpt-4-32k-0314', 'gpt-4-32k-0613', 'gpt-4-turbo', 'gpt-4-turbo-2024-04-09', 'gpt-4-turbo-preview', 'gpt-4-vision-preview', 'gpt-4o', 'gpt-4o-2024-05-13', 'gpt-4o-2024-08-06', 'gpt-4o-2024-11-20', 'gpt-4o-audio-preview', 'gpt-4o-audio-preview-2024-10-01', 'gpt-4o-audio-preview-2024-12-17', 'gpt-4o-mini', 'gpt-4o-mini-2024-07-18', 'gpt-4o-mini-audio-preview', 'gpt-4o-mini-audio-preview-2024-12-17', 'gpt-4o-mini-search-preview', 'gpt-4o-mini-search-preview-2025-03-11', 'gpt-4o-search-preview', 'gpt-4o-search-preview-2025-03-11', 'groq:distil-whisper-large-v3-en', 'groq:gemma2-9b-it', 'groq:llama-3.3-70b-versatile', 'groq:llama-3.1-8b-instant', 'groq:llama-guard-3-8b', 'groq:llama3-70b-8192', 'groq:llama3-8b-8192', 'groq:whisper-large-v3', 'groq:whisper-large-v3-turbo', 'groq:playai-tts', 'groq:playai-tts-arabic', 'groq:qwen-qwq-32b', 'groq:mistral-saba-24b', 'groq:qwen-2.5-coder-32b', 'groq:qwen-2.5-32b', 'groq:deepseek-r1-distill-qwen-32b', 'groq:deepseek-r1-distill-llama-70b', 'groq:llama-3.3-70b-specdec', 'groq:llama-3.2-1b-preview', 'groq:llama-3.2-3b-preview', 'groq:llama-3.2-11b-vision-preview', 'groq:llama-3.2-90b-vision-preview', 'mistral:codestral-latest', 'mistral:mistral-large-latest', 'mistral:mistral-moderation-latest', 'mistral:mistral-small-latest', 'o1', 'o1-2024-12-17', 'o1-mini', 'o1-mini-2024-09-12', 'o1-preview', 'o1-preview-2024-09-12', 'o3-mini', 'o3-mini-2025-01-31', 'openai:chatgpt-4o-latest', 'openai:gpt-3.5-turbo', 'openai:gpt-3.5-turbo-0125', 'openai:gpt-3.5-turbo-0301', 'openai:gpt-3.5-turbo-0613', 'openai:gpt-3.5-turbo-1106', 'openai:gpt-3.5-turbo-16k', 'openai:gpt-3.5-turbo-16k-0613', 'openai:gpt-4', 'openai:gpt-4-0125-preview', 'openai:gpt-4-0314', 'openai:gpt-4-0613', 'openai:gpt-4-1106-preview', 'openai:gpt-4-32k', 'openai:gpt-4-32k-0314', 'openai:gpt-4-32k-0613', 'openai:gpt-4-turbo', 'openai:gpt-4-turbo-2024-04-09', 'openai:gpt-4-turbo-preview', 'openai:gpt-4-vision-preview', 'openai:gpt-4o', 'openai:gpt-4o-2024-05-13', 'openai:gpt-4o-2024-08-06', 'openai:gpt-4o-2024-11-20', 'openai:gpt-4o-audio-preview', 'openai:gpt-4o-audio-preview-2024-10-01', 'openai:gpt-4o-audio-preview-2024-12-17', 'openai:gpt-4o-mini', 'openai:gpt-4o-mini-2024-07-18', 'openai:gpt-4o-mini-audio-preview', 'openai:gpt-4o-mini-audio-preview-2024-12-17', 'openai:gpt-4o-mini-search-preview', 'openai:gpt-4o-mini-search-preview-2025-03-11', 'openai:gpt-4o-search-preview', 'openai:gpt-4o-search-preview-2025-03-11', 'openai:o1', 'openai:o1-2024-12-17', 'openai:o1-mini', 'openai:o1-mini-2024-09-12', 'openai:o1-preview', 'openai:o1-preview-2024-09-12', 'openai:o3-mini', 'openai:o3-mini-2025-01-31', 'test'] | Model | str | None = ..., deps: None = ..., model_settings: ModelSettings | None = ..., usage_limits: UsageLimits | None = ..., usage: Usage | None = ..., infer_name: bool = ...) -> Coroutine[Any, Any, AgentRunResult[RunResultDataT]]
+src/agents/base_agent.py:218: error: Returning Any from function declared to return "OutputT"  [no-any-return]
+src/agents/base_agent.py:241: error: No overload variant of "run_stream" of "Agent" matches argument types "str", "DepsT"  [call-overload]
+src/agents/base_agent.py:241: note: Possible overload variants:
+src/agents/base_agent.py:241: note:     def run_stream(self, user_prompt: str | Sequence[str | ImageUrl | AudioUrl | DocumentUrl | BinaryContent] | None = ..., *, result_type: None = ..., message_history: list[ModelRequest | ModelResponse] | None = ..., model: Literal['anthropic:claude-3-7-sonnet-latest', 'anthropic:claude-3-5-haiku-latest', 'anthropic:claude-3-5-sonnet-latest', 'anthropic:claude-3-opus-latest', 'claude-3-7-sonnet-latest', 'claude-3-5-haiku-latest', 'bedrock:amazon.titan-tg1-large', 'bedrock:amazon.titan-text-lite-v1', 'bedrock:amazon.titan-text-express-v1', 'bedrock:us.amazon.nova-pro-v1:0', 'bedrock:us.amazon.nova-lite-v1:0', 'bedrock:us.amazon.nova-micro-v1:0', 'bedrock:anthropic.claude-3-5-sonnet-20241022-v2:0', 'bedrock:us.anthropic.claude-3-5-sonnet-20241022-v2:0', 'bedrock:anthropic.claude-3-5-haiku-20241022-v1:0', 'bedrock:us.anthropic.claude-3-5-haiku-20241022-v1:0', 'bedrock:anthropic.claude-instant-v1', 'bedrock:anthropic.claude-v2:1', 'bedrock:anthropic.claude-v2', 'bedrock:anthropic.claude-3-sonnet-20240229-v1:0', 'bedrock:us.anthropic.claude-3-sonnet-20240229-v1:0', 'bedrock:anthropic.claude-3-haiku-20240307-v1:0', 'bedrock:us.anthropic.claude-3-haiku-20240307-v1:0', 'bedrock:anthropic.claude-3-opus-20240229-v1:0', 'bedrock:us.anthropic.claude-3-opus-20240229-v1:0', 'bedrock:anthropic.claude-3-5-sonnet-20240620-v1:0', 'bedrock:us.anthropic.claude-3-5-sonnet-20240620-v1:0', 'bedrock:anthropic.claude-3-7-sonnet-20250219-v1:0', 'bedrock:us.anthropic.claude-3-7-sonnet-20250219-v1:0', 'bedrock:cohere.command-text-v14', 'bedrock:cohere.command-r-v1:0', 'bedrock:cohere.command-r-plus-v1:0', 'bedrock:cohere.command-light-text-v14', 'bedrock:meta.llama3-8b-instruct-v1:0', 'bedrock:meta.llama3-70b-instruct-v1:0', 'bedrock:meta.llama3-1-8b-instruct-v1:0', 'bedrock:us.meta.llama3-1-8b-instruct-v1:0', 'bedrock:meta.llama3-1-70b-instruct-v1:0', 'bedrock:us.meta.llama3-1-70b-instruct-v1:0', 'bedrock:meta.llama3-1-405b-instruct-v1:0', 'bedrock:us.meta.llama3-2-11b-instruct-v1:0', 'bedrock:us.meta.llama3-2-90b-instruct-v1:0', 'bedrock:us.meta.llama3-2-1b-instruct-v1:0', 'bedrock:us.meta.llama3-2-3b-instruct-v1:0', 'bedrock:us.meta.llama3-3-70b-instruct-v1:0', 'bedrock:mistral.mistral-7b-instruct-v0:2', 'bedrock:mistral.mixtral-8x7b-instruct-v0:1', 'bedrock:mistral.mistral-large-2402-v1:0', 'bedrock:mistral.mistral-large-2407-v1:0', 'claude-3-5-sonnet-latest', 'claude-3-opus-latest', 'cohere:c4ai-aya-expanse-32b', 'cohere:c4ai-aya-expanse-8b', 'cohere:command', 'cohere:command-light', 'cohere:command-light-nightly', 'cohere:command-nightly', 'cohere:command-r', 'cohere:command-r-03-2024', 'cohere:command-r-08-2024', 'cohere:command-r-plus', 'cohere:command-r-plus-04-2024', 'cohere:command-r-plus-08-2024', 'cohere:command-r7b-12-2024', 'deepseek:deepseek-chat', 'deepseek:deepseek-reasoner', 'google-gla:gemini-1.0-pro', 'google-gla:gemini-1.5-flash', 'google-gla:gemini-1.5-flash-8b', 'google-gla:gemini-1.5-pro', 'google-gla:gemini-2.0-flash-exp', 'google-gla:gemini-2.0-flash-thinking-exp-01-21', 'google-gla:gemini-exp-1206', 'google-gla:gemini-2.0-flash', 'google-gla:gemini-2.0-flash-lite-preview-02-05', 'google-gla:gemini-2.0-pro-exp-02-05', 'google-gla:gemini-2.5-pro-exp-03-25', 'google-vertex:gemini-1.0-pro', 'google-vertex:gemini-1.5-flash', 'google-vertex:gemini-1.5-flash-8b', 'google-vertex:gemini-1.5-pro', 'google-vertex:gemini-2.0-flash-exp', 'google-vertex:gemini-2.0-flash-thinking-exp-01-21', 'google-vertex:gemini-exp-1206', 'google-vertex:gemini-2.0-flash', 'google-vertex:gemini-2.0-flash-lite-preview-02-05', 'google-vertex:gemini-2.0-pro-exp-02-05', 'google-vertex:gemini-2.5-pro-exp-03-25', 'gpt-3.5-turbo', 'gpt-3.5-turbo-0125', 'gpt-3.5-turbo-0301', 'gpt-3.5-turbo-0613', 'gpt-3.5-turbo-1106', 'gpt-3.5-turbo-16k', 'gpt-3.5-turbo-16k-0613', 'gpt-4', 'gpt-4-0125-preview', 'gpt-4-0314', 'gpt-4-0613', 'gpt-4-1106-preview', 'gpt-4-32k', 'gpt-4-32k-0314', 'gpt-4-32k-0613', 'gpt-4-turbo', 'gpt-4-turbo-2024-04-09', 'gpt-4-turbo-preview', 'gpt-4-vision-preview', 'gpt-4o', 'gpt-4o-2024-05-13', 'gpt-4o-2024-08-06', 'gpt-4o-2024-11-20', 'gpt-4o-audio-preview', 'gpt-4o-audio-preview-2024-10-01', 'gpt-4o-audio-preview-2024-12-17', 'gpt-4o-mini', 'gpt-4o-mini-2024-07-18', 'gpt-4o-mini-audio-preview', 'gpt-4o-mini-audio-preview-2024-12-17', 'gpt-4o-mini-search-preview', 'gpt-4o-mini-search-preview-2025-03-11', 'gpt-4o-search-preview', 'gpt-4o-search-preview-2025-03-11', 'groq:distil-whisper-large-v3-en', 'groq:gemma2-9b-it', 'groq:llama-3.3-70b-versatile', 'groq:llama-3.1-8b-instant', 'groq:llama-guard-3-8b', 'groq:llama3-70b-8192', 'groq:llama3-8b-8192', 'groq:whisper-large-v3', 'groq:whisper-large-v3-turbo', 'groq:playai-tts', 'groq:playai-tts-arabic', 'groq:qwen-qwq-32b', 'groq:mistral-saba-24b', 'groq:qwen-2.5-coder-32b', 'groq:qwen-2.5-32b', 'groq:deepseek-r1-distill-qwen-32b', 'groq:deepseek-r1-distill-llama-70b', 'groq:llama-3.3-70b-specdec', 'groq:llama-3.2-1b-preview', 'groq:llama-3.2-3b-preview', 'groq:llama-3.2-11b-vision-preview', 'groq:llama-3.2-90b-vision-preview', 'mistral:codestral-latest', 'mistral:mistral-large-latest', 'mistral:mistral-moderation-latest', 'mistral:mistral-small-latest', 'o1', 'o1-2024-12-17', 'o1-mini', 'o1-mini-2024-09-12', 'o1-preview', 'o1-preview-2024-09-12', 'o3-mini', 'o3-mini-2025-01-31', 'openai:chatgpt-4o-latest', 'openai:gpt-3.5-turbo', 'openai:gpt-3.5-turbo-0125', 'openai:gpt-3.5-turbo-0301', 'openai:gpt-3.5-turbo-0613', 'openai:gpt-3.5-turbo-1106', 'openai:gpt-3.5-turbo-16k', 'openai:gpt-3.5-turbo-16k-0613', 'openai:gpt-4', 'openai:gpt-4-0125-preview', 'openai:gpt-4-0314', 'openai:gpt-4-0613', 'openai:gpt-4-1106-preview', 'openai:gpt-4-32k', 'openai:gpt-4-32k-0314', 'openai:gpt-4-32k-0613', 'openai:gpt-4-turbo', 'openai:gpt-4-turbo-2024-04-09', 'openai:gpt-4-turbo-preview', 'openai:gpt-4-vision-preview', 'openai:gpt-4o', 'openai:gpt-4o-2024-05-13', 'openai:gpt-4o-2024-08-06', 'openai:gpt-4o-2024-11-20', 'openai:gpt-4o-audio-preview', 'openai:gpt-4o-audio-preview-2024-10-01', 'openai:gpt-4o-audio-preview-2024-12-17', 'openai:gpt-4o-mini', 'openai:gpt-4o-mini-2024-07-18', 'openai:gpt-4o-mini-audio-preview', 'openai:gpt-4o-mini-audio-preview-2024-12-17', 'openai:gpt-4o-mini-search-preview', 'openai:gpt-4o-mini-search-preview-2025-03-11', 'openai:gpt-4o-search-preview', 'openai:gpt-4o-search-preview-2025-03-11', 'openai:o1', 'openai:o1-2024-12-17', 'openai:o1-mini', 'openai:o1-mini-2024-09-12', 'openai:o1-preview', 'openai:o1-preview-2024-09-12', 'openai:o3-mini', 'openai:o3-mini-2025-01-31', 'test'] | Model | str | None = ..., deps: None = ..., model_settings: ModelSettings | None = ..., usage_limits: UsageLimits | None = ..., usage: Usage | None = ..., infer_name: bool = ...) -> AbstractAsyncContextManager[StreamedRunResult[None, str], bool | None]
+src/agents/base_agent.py:241: note:     def [RunResultDataT] run_stream(self, user_prompt: str | Sequence[str | ImageUrl | AudioUrl | DocumentUrl | BinaryContent] | None = ..., *, result_type: type[RunResultDataT], message_history: list[ModelRequest | ModelResponse] | None = ..., model: Literal['anthropic:claude-3-7-sonnet-latest', 'anthropic:claude-3-5-haiku-latest', 'anthropic:claude-3-5-sonnet-latest', 'anthropic:claude-3-opus-latest', 'claude-3-7-sonnet-latest', 'claude-3-5-haiku-latest', 'bedrock:amazon.titan-tg1-large', 'bedrock:amazon.titan-text-lite-v1', 'bedrock:amazon.titan-text-express-v1', 'bedrock:us.amazon.nova-pro-v1:0', 'bedrock:us.amazon.nova-lite-v1:0', 'bedrock:us.amazon.nova-micro-v1:0', 'bedrock:anthropic.claude-3-5-sonnet-20241022-v2:0', 'bedrock:us.anthropic.claude-3-5-sonnet-20241022-v2:0', 'bedrock:anthropic.claude-3-5-haiku-20241022-v1:0', 'bedrock:us.anthropic.claude-3-5-haiku-20241022-v1:0', 'bedrock:anthropic.claude-instant-v1', 'bedrock:anthropic.claude-v2:1', 'bedrock:anthropic.claude-v2', 'bedrock:anthropic.claude-3-sonnet-20240229-v1:0', 'bedrock:us.anthropic.claude-3-sonnet-20240229-v1:0', 'bedrock:anthropic.claude-3-haiku-20240307-v1:0', 'bedrock:us.anthropic.claude-3-haiku-20240307-v1:0', 'bedrock:anthropic.claude-3-opus-20240229-v1:0', 'bedrock:us.anthropic.claude-3-opus-20240229-v1:0', 'bedrock:anthropic.claude-3-5-sonnet-20240620-v1:0', 'bedrock:us.anthropic.claude-3-5-sonnet-20240620-v1:0', 'bedrock:anthropic.claude-3-7-sonnet-20250219-v1:0', 'bedrock:us.anthropic.claude-3-7-sonnet-20250219-v1:0', 'bedrock:cohere.command-text-v14', 'bedrock:cohere.command-r-v1:0', 'bedrock:cohere.command-r-plus-v1:0', 'bedrock:cohere.command-light-text-v14', 'bedrock:meta.llama3-8b-instruct-v1:0', 'bedrock:meta.llama3-70b-instruct-v1:0', 'bedrock:meta.llama3-1-8b-instruct-v1:0', 'bedrock:us.meta.llama3-1-8b-instruct-v1:0', 'bedrock:meta.llama3-1-70b-instruct-v1:0', 'bedrock:us.meta.llama3-1-70b-instruct-v1:0', 'bedrock:meta.llama3-1-405b-instruct-v1:0', 'bedrock:us.meta.llama3-2-11b-instruct-v1:0', 'bedrock:us.meta.llama3-2-90b-instruct-v1:0', 'bedrock:us.meta.llama3-2-1b-instruct-v1:0', 'bedrock:us.meta.llama3-2-3b-instruct-v1:0', 'bedrock:us.meta.llama3-3-70b-instruct-v1:0', 'bedrock:mistral.mistral-7b-instruct-v0:2', 'bedrock:mistral.mixtral-8x7b-instruct-v0:1', 'bedrock:mistral.mistral-large-2402-v1:0', 'bedrock:mistral.mistral-large-2407-v1:0', 'claude-3-5-sonnet-latest', 'claude-3-opus-latest', 'cohere:c4ai-aya-expanse-32b', 'cohere:c4ai-aya-expanse-8b', 'cohere:command', 'cohere:command-light', 'cohere:command-light-nightly', 'cohere:command-nightly', 'cohere:command-r', 'cohere:command-r-03-2024', 'cohere:command-r-08-2024', 'cohere:command-r-plus', 'cohere:command-r-plus-04-2024', 'cohere:command-r-plus-08-2024', 'cohere:command-r7b-12-2024', 'deepseek:deepseek-chat', 'deepseek:deepseek-reasoner', 'google-gla:gemini-1.0-pro', 'google-gla:gemini-1.5-flash', 'google-gla:gemini-1.5-flash-8b', 'google-gla:gemini-1.5-pro', 'google-gla:gemini-2.0-flash-exp', 'google-gla:gemini-2.0-flash-thinking-exp-01-21', 'google-gla:gemini-exp-1206', 'google-gla:gemini-2.0-flash', 'google-gla:gemini-2.0-flash-lite-preview-02-05', 'google-gla:gemini-2.0-pro-exp-02-05', 'google-gla:gemini-2.5-pro-exp-03-25', 'google-vertex:gemini-1.0-pro', 'google-vertex:gemini-1.5-flash', 'google-vertex:gemini-1.5-flash-8b', 'google-vertex:gemini-1.5-pro', 'google-vertex:gemini-2.0-flash-exp', 'google-vertex:gemini-2.0-flash-thinking-exp-01-21', 'google-vertex:gemini-exp-1206', 'google-vertex:gemini-2.0-flash', 'google-vertex:gemini-2.0-flash-lite-preview-02-05', 'google-vertex:gemini-2.0-pro-exp-02-05', 'google-vertex:gemini-2.5-pro-exp-03-25', 'gpt-3.5-turbo', 'gpt-3.5-turbo-0125', 'gpt-3.5-turbo-0301', 'gpt-3.5-turbo-0613', 'gpt-3.5-turbo-1106', 'gpt-3.5-turbo-16k', 'gpt-3.5-turbo-16k-0613', 'gpt-4', 'gpt-4-0125-preview', 'gpt-4-0314', 'gpt-4-0613', 'gpt-4-1106-preview', 'gpt-4-32k', 'gpt-4-32k-0314', 'gpt-4-32k-0613', 'gpt-4-turbo', 'gpt-4-turbo-2024-04-09', 'gpt-4-turbo-preview', 'gpt-4-vision-preview', 'gpt-4o', 'gpt-4o-2024-05-13', 'gpt-4o-2024-08-06', 'gpt-4o-2024-11-20', 'gpt-4o-audio-preview', 'gpt-4o-audio-preview-2024-10-01', 'gpt-4o-audio-preview-2024-12-17', 'gpt-4o-mini', 'gpt-4o-mini-2024-07-18', 'gpt-4o-mini-audio-preview', 'gpt-4o-mini-audio-preview-2024-12-17', 'gpt-4o-mini-search-preview', 'gpt-4o-mini-search-preview-2025-03-11', 'gpt-4o-search-preview', 'gpt-4o-search-preview-2025-03-11', 'groq:distil-whisper-large-v3-en', 'groq:gemma2-9b-it', 'groq:llama-3.3-70b-versatile', 'groq:llama-3.1-8b-instant', 'groq:llama-guard-3-8b', 'groq:llama3-70b-8192', 'groq:llama3-8b-8192', 'groq:whisper-large-v3', 'groq:whisper-large-v3-turbo', 'groq:playai-tts', 'groq:playai-tts-arabic', 'groq:qwen-qwq-32b', 'groq:mistral-saba-24b', 'groq:qwen-2.5-coder-32b', 'groq:qwen-2.5-32b', 'groq:deepseek-r1-distill-qwen-32b', 'groq:deepseek-r1-distill-llama-70b', 'groq:llama-3.3-70b-specdec', 'groq:llama-3.2-1b-preview', 'groq:llama-3.2-3b-preview', 'groq:llama-3.2-11b-vision-preview', 'groq:llama-3.2-90b-vision-preview', 'mistral:codestral-latest', 'mistral:mistral-large-latest', 'mistral:mistral-moderation-latest', 'mistral:mistral-small-latest', 'o1', 'o1-2024-12-17', 'o1-mini', 'o1-mini-2024-09-12', 'o1-preview', 'o1-preview-2024-09-12', 'o3-mini', 'o3-mini-2025-01-31', 'openai:chatgpt-4o-latest', 'openai:gpt-3.5-turbo', 'openai:gpt-3.5-turbo-0125', 'openai:gpt-3.5-turbo-0301', 'openai:gpt-3.5-turbo-0613', 'openai:gpt-3.5-turbo-1106', 'openai:gpt-3.5-turbo-16k', 'openai:gpt-3.5-turbo-16k-0613', 'openai:gpt-4', 'openai:gpt-4-0125-preview', 'openai:gpt-4-0314', 'openai:gpt-4-0613', 'openai:gpt-4-1106-preview', 'openai:gpt-4-32k', 'openai:gpt-4-32k-0314', 'openai:gpt-4-32k-0613', 'openai:gpt-4-turbo', 'openai:gpt-4-turbo-2024-04-09', 'openai:gpt-4-turbo-preview', 'openai:gpt-4-vision-preview', 'openai:gpt-4o', 'openai:gpt-4o-2024-05-13', 'openai:gpt-4o-2024-08-06', 'openai:gpt-4o-2024-11-20', 'openai:gpt-4o-audio-preview', 'openai:gpt-4o-audio-preview-2024-10-01', 'openai:gpt-4o-audio-preview-2024-12-17', 'openai:gpt-4o-mini', 'openai:gpt-4o-mini-2024-07-18', 'openai:gpt-4o-mini-audio-preview', 'openai:gpt-4o-mini-audio-preview-2024-12-17', 'openai:gpt-4o-mini-search-preview', 'openai:gpt-4o-mini-search-preview-2025-03-11', 'openai:gpt-4o-search-preview', 'openai:gpt-4o-search-preview-2025-03-11', 'openai:o1', 'openai:o1-2024-12-17', 'openai:o1-mini', 'openai:o1-mini-2024-09-12', 'openai:o1-preview', 'openai:o1-preview-2024-09-12', 'openai:o3-mini', 'openai:o3-mini-2025-01-31', 'test'] | Model | str | None = ..., deps: None = ..., model_settings: ModelSettings | None = ..., usage_limits: UsageLimits | None = ..., usage: Usage | None = ..., infer_name: bool = ...) -> AbstractAsyncContextManager[StreamedRunResult[None, RunResultDataT], bool | None]
+src/server/utils/document_processing.py:80: error: "None" has no attribute "error"  [attr-defined]
+src/server/utils/document_processing.py:116: error: "None" has no attribute "warning"  [attr-defined]
+src/server/utils/document_processing.py:124: error: "None" has no attribute "warning"  [attr-defined]
+src/server/utils/document_processing.py:132: error: Incompatible types in assignment (expression has type "PageObject", variable has type "Page")  [assignment]
+src/server/utils/document_processing.py:138: error: "None" has no attribute "warning"  [attr-defined]
+src/server/utils/progress/progress_tracker.py:88: error: Unsupported operand types for < ("int" and "object")  [operator]
+src/server/utils/progress/progress_tracker.py:108: error: "object" has no attribute "append"  [attr-defined]
+src/server/utils/progress/progress_tracker.py:138: error: Argument 1 to "fromisoformat" of "date" has incompatible type "object"; expected "str"  [arg-type]
+src/server/utils/progress/progress_tracker.py:139: error: Argument 1 to "fromisoformat" of "date" has incompatible type "object"; expected "str"  [arg-type]
+src/server/services/threading_service.py:80: error: Need type annotation for "request_times"  [var-annotated]
+src/server/services/threading_service.py:81: error: Need type annotation for "token_usage"  [var-annotated]
+src/server/services/threading_service.py:130: error: Function "progress_callback" could always be true in boolean context  [truthy-function]
+src/server/services/threading_service.py:175: error: Returning Any from function declared to return "float"  [no-any-return]
+src/server/services/threading_service.py:214: error: Incompatible types in assignment (expression has type "SystemMetrics", variable has type "None")  [assignment]
+src/server/services/threading_service.py:255: error: Returning Any from function declared to return "int"  [no-any-return]
+src/server/services/threading_service.py:279: error: "None" has no attribute "memory_percent"  [attr-defined]
+src/server/services/threading_service.py:280: error: "None" has no attribute "cpu_percent"  [attr-defined]
+src/server/services/threading_service.py:435: error: Incompatible types in assignment (expression has type "Task[Any]", variable has type "None")  [assignment]
+src/server/services/credential_service.py:518: error: Returning Any from function declared to return "str | None"  [no-any-return]
+src/server/services/credential_service.py:524: error: Returning Any from function declared to return "str | None"  [no-any-return]
+src/server/services/knowledge/knowledge_item_service.py:330: error: Returning Any from function declared to return "list[dict[str, Any]]"  [no-any-return]
+src/server/services/knowledge/knowledge_item_service.py:396: error: Returning Any from function declared to return "str"  [no-any-return]
+src/server/services/knowledge/knowledge_item_service.py:422: error: Returning Any from function declared to return "str"  [no-any-return]
+src/server/services/knowledge/database_metrics_service.py:99: error: Need type annotation for "type_counts" (hint: "type_counts: dict[<type>, <type>] = ...")  [var-annotated]
+src/server/services/knowledge/database_metrics_service.py:114: error: Incompatible types in assignment (expression has type "list[dict[str, Any]]", target has type "dict[Any, Any]")  [assignment]
+src/server/services/embeddings/multi_dimensional_embedding_service.py:17: error: Need type annotation for "SUPPORTED_DIMENSIONS"  [var-annotated]
+src/server/services/crawling/strategies/sitemap.py:30: error: Need type annotation for "urls" (hint: "urls: list[<type>] = ...")  [var-annotated]
+src/server/models/progress_models.py:239: error: Returning Any from function declared to return "BaseProgressResponse"  [no-any-return]
+src/server/middleware/logging_middleware.py:34: error: Returning Any from function declared to return "Response"  [no-any-return]
+src/server/middleware/logging_middleware.py:56: error: Returning Any from function declared to return "Response"  [no-any-return]
+src/server/middleware/logging_middleware.py:108: error: Function "endpoint" could always be true in boolean context  [truthy-function]
+src/agents/summary_agent.py:42: error: Incompatible default for argument "model" (default has type "None", argument has type "str")  [assignment]
+src/agents/summary_agent.py:42: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+src/agents/summary_agent.py:42: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+src/agents/summary_agent.py:121: error: Incompatible return value type (got "Agent[SummaryDependencies, SummaryOperation]", expected "Agent[None, str]")  [return-value]
+src/agents/rag_agent.py:62: error: Incompatible default for argument "model" (default has type "None", argument has type "str")  [assignment]
+src/agents/rag_agent.py:62: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+src/agents/rag_agent.py:62: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+src/agents/rag_agent.py:145: error: Argument "source" to "perform_rag_query" of "MCPClient" has incompatible type "str | None"; expected "str"  [arg-type]
+src/agents/rag_agent.py:241: error: Argument "source_id" to "search_code_examples" of "MCPClient" has incompatible type "str | None"; expected "str"  [arg-type]
+src/agents/rag_agent.py:314: error: Incompatible return value type (got "Agent[RagDependencies, Any]", expected "Agent[None, str]")  [return-value]
+src/agents/rag_agent.py:321: error: Returning Any from function declared to return "str"  [no-any-return]
+src/agents/rag_agent.py:335: error: Incompatible default for argument "user_id" (default has type "None", argument has type "str")  [assignment]
+src/agents/rag_agent.py:335: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+src/agents/rag_agent.py:335: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+src/agents/document_agent.py:64: error: Incompatible default for argument "model" (default has type "None", argument has type "str")  [assignment]
+src/agents/document_agent.py:64: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+src/agents/document_agent.py:64: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+src/agents/document_agent.py:526: error: "Sequence[str]" has no attribute "append"  [attr-defined]
+src/agents/document_agent.py:536: error: "Sequence[str]" has no attribute "lower"  [attr-defined]
+src/agents/document_agent.py:540: error: Invalid index type "str" for "str"; expected type "SupportsIndex | slice[Any, Any, Any]"  [index]
+src/agents/document_agent.py:541: error: Invalid index type "str" for "str"; expected type "SupportsIndex | slice[Any, Any, Any]"  [index]
+src/agents/document_agent.py:667: error: Incompatible return value type (got "Agent[DocumentDependencies, DocumentOperation]", expected "Agent[None, str]")  [return-value]
+src/agents/document_agent.py:674: error: Incompatible default for argument "properties" (default has type "None", argument has type "dict[Any, Any]")  [assignment]
+src/agents/document_agent.py:674: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+src/agents/document_agent.py:674: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+src/agents/document_agent.py:809: error: Returning Any from function declared to return "str"  [no-any-return]
+src/agents/document_agent.py:821: error: Incompatible default for argument "user_id" (default has type "None", argument has type "str")  [assignment]
+src/agents/document_agent.py:821: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+src/agents/document_agent.py:821: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+src/agents/document_agent.py:822: error: Incompatible default for argument "current_document_id" (default has type "None", argument has type "str")  [assignment]
+src/agents/document_agent.py:822: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+src/agents/document_agent.py:822: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+src/server/services/storage_service.py:33: error: Argument 1 to "guess_type" has incompatible type "str | None"; expected "str | PathLike[str]"  [arg-type]
+src/server/services/storage_service.py:57: error: Returning Any from function declared to return "str"  [no-any-return]
+src/server/services/provider_discovery_service.py:63: error: Incompatible types in assignment (expression has type "None", variable has type "list[str]")  [assignment]
+src/server/services/provider_discovery_service.py:153: error: Incompatible types (expression has type "dict[str, Collection[str]]", TypedDict item "function" has type "FunctionDefinition")  [typeddict-item]
+src/server/services/provider_discovery_service.py:182: error: Returning Any from function declared to return "list[ModelSpec]"  [no-any-return]
+src/server/services/provider_discovery_service.py:225: error: Returning Any from function declared to return "list[ModelSpec]"  [no-any-return]
+src/server/services/provider_discovery_service.py:337: error: Returning Any from function declared to return "list[ModelSpec]"  [no-any-return]
+src/server/services/provider_discovery_service.py:367: error: Returning Any from function declared to return "list[ModelSpec]"  [no-any-return]
+src/server/services/migration_service.py:93: error: Returning Any from function declared to return "bool"  [no-any-return]
+src/server/services/migration_service.py:135: error: Need type annotation for "migrations" (hint: "migrations: list[<type>] = ...")  [var-annotated]
+src/server/services/llm_provider_service.py:189: error: Unsupported right operand type for in ("str | None")  [operator]
+src/server/services/llm_provider_service.py:489: error: Returning Any from function declared to return "str"  [no-any-return]
+src/server/services/llm_provider_service.py:795: error: Returning Any from function declared to return "str"  [no-any-return]
+src/server/services/llm_provider_service.py:808: error: Returning Any from function declared to return "str"  [no-any-return]
+src/server/api_routes/providers_api.py:28: error: "None" has no attribute "warning"  [attr-defined]
+src/server/api_routes/providers_api.py:36: error: "None" has no attribute "info"  [attr-defined]
+src/server/api_routes/providers_api.py:43: error: "None" has no attribute "info"  [attr-defined]
+src/server/api_routes/providers_api.py:45: error: "None" has no attribute "warning"  [attr-defined]
+src/server/api_routes/providers_api.py:48: error: "None" has no attribute "warning"  [attr-defined]
+src/server/api_routes/providers_api.py:65: error: "None" has no attribute "warning"  [attr-defined]
+src/server/api_routes/providers_api.py:79: error: "None" has no attribute "warning"  [attr-defined]
+src/server/api_routes/providers_api.py:93: error: "None" has no attribute "warning"  [attr-defined]
+src/server/api_routes/providers_api.py:127: error: "None" has no attribute "info"  [attr-defined]
+src/server/api_routes/providers_api.py:144: error: "None" has no attribute "info"  [attr-defined]
+src/server/api_routes/providers_api.py:153: error: "None" has no attribute "info"  [attr-defined]
+src/server/api_routes/providers_api.py:166: error: "None" has no attribute "error"  [attr-defined]
+src/server/api_routes/internal_api.py:70: error: Item "None" of "Address | None" has no attribute "host"  [union-attr]
+src/server/api_routes/internal_api.py:109: error: Item "None" of "Address | None" has no attribute "host"  [union-attr]
+src/server/api_routes/internal_api.py:126: error: Item "None" of "Address | None" has no attribute "host"  [union-attr]
+src/server/api_routes/internal_api.py:135: error: Item "None" of "Address | None" has no attribute "host"  [union-attr]
+src/mcp_server/mcp_server.py:87: error: Incompatible types in assignment (expression has type "None", variable has type "dict[Any, Any]")  [assignment]
+src/mcp_server/mcp_server.py:88: error: Incompatible types in assignment (expression has type "None", variable has type "float")  [assignment]
+src/agents/server.py:242: error: Incompatible types in assignment (expression has type "DocumentDependencies", variable has type "RagDependencies")  [assignment]
+src/agents/server.py:243: error: Argument "project_id" to "DocumentDependencies" has incompatible type "Any | None"; expected "str"  [arg-type]
+src/agents/server.py:250: error: Incompatible types in assignment (expression has type "ArchonDependencies", variable has type "RagDependencies")  [assignment]
+src/server/services/source_management_service.py:20: error: Incompatible default for argument "provider" (default has type "None", argument has type "str")  [assignment]
+src/server/services/source_management_service.py:20: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+src/server/services/source_management_service.py:20: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+src/server/services/source_management_service.py:90: error: Returning Any from function declared to return "str"  [no-any-return]
+src/server/services/source_management_service.py:104: error: Incompatible default for argument "provider" (default has type "None", argument has type "str")  [assignment]
+src/server/services/source_management_service.py:104: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+src/server/services/source_management_service.py:104: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+src/server/services/source_management_service.py:312: error: Argument 5 to "generate_source_title_and_metadata" has incompatible type "str | None"; expected "str"  [arg-type]
+src/server/services/source_management_service.py:460: error: Incompatible default for argument "title" (default has type "None", argument has type "str")  [assignment]
+src/server/services/source_management_service.py:460: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+src/server/services/source_management_service.py:460: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+src/server/services/source_management_service.py:461: error: Incompatible default for argument "summary" (default has type "None", argument has type "str")  [assignment]
+src/server/services/source_management_service.py:461: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+src/server/services/source_management_service.py:461: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+src/server/services/source_management_service.py:462: error: Incompatible default for argument "word_count" (default has type "None", argument has type "int")  [assignment]
+src/server/services/source_management_service.py:462: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+src/server/services/source_management_service.py:462: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+src/server/services/source_management_service.py:463: error: Incompatible default for argument "knowledge_type" (default has type "None", argument has type "str")  [assignment]
+src/server/services/source_management_service.py:463: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+src/server/services/source_management_service.py:463: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+src/server/services/source_management_service.py:464: error: Incompatible default for argument "tags" (default has type "None", argument has type "list[str]")  [assignment]
+src/server/services/source_management_service.py:464: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+src/server/services/source_management_service.py:464: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+src/server/services/source_management_service.py:488: error: Incompatible types in assignment (expression has type "int", target has type "str")  [assignment]
+src/server/services/source_management_service.py:506: error: Incompatible types in assignment (expression has type "Any | dict[Any, Any]", target has type "str")  [assignment]
+src/server/services/source_management_service.py:534: error: Incompatible default for argument "tags" (default has type "None", argument has type "list[str]")  [assignment]
+src/server/services/source_management_service.py:534: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+src/server/services/source_management_service.py:534: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+src/server/services/source_management_service.py:634: error: Incompatible default for argument "knowledge_type" (default has type "None", argument has type "str")  [assignment]
+src/server/services/source_management_service.py:634: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+src/server/services/source_management_service.py:634: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+src/server/services/embeddings/embedding_service.py:203: error: Argument 1 to "rate_limited_operation" of "ThreadingService" has incompatible type "float"; expected "int"  [arg-type]
+src/server/services/embeddings/embedding_service.py:244: error: Argument 1 to "create" of "AsyncEmbeddings" has incompatible type "**dict[str, list[str] | Any | None]"; expected "str | list[str] | Iterable[int] | Iterable[Iterable[int]]"  [arg-type]
+src/server/services/embeddings/embedding_service.py:244: error: Argument 1 to "create" of "AsyncEmbeddings" has incompatible type "**dict[str, list[str] | Any | None]"; expected "str | Literal['text-embedding-ada-002', 'text-embedding-3-small', 'text-embedding-3-large']"  [arg-type]
+src/server/services/embeddings/embedding_service.py:244: error: Argument 1 to "create" of "AsyncEmbeddings" has incompatible type "**dict[str, list[str] | Any | None]"; expected "int | NotGiven"  [arg-type]
+src/server/services/embeddings/embedding_service.py:244: error: Argument 1 to "create" of "AsyncEmbeddings" has incompatible type "**dict[str, list[str] | Any | None]"; expected "Literal['float', 'base64'] | NotGiven"  [arg-type]
+src/server/services/embeddings/embedding_service.py:244: error: Argument 1 to "create" of "AsyncEmbeddings" has incompatible type "**dict[str, list[str] | Any | None]"; expected "str | NotGiven"  [arg-type]
+src/server/services/embeddings/embedding_service.py:244: error: Argument 1 to "create" of "AsyncEmbeddings" has incompatible type "**dict[str, list[str] | Any | None]"; expected "Mapping[str, str | Omit] | None"  [arg-type]
+src/server/services/embeddings/embedding_service.py:244: error: Argument 1 to "create" of "AsyncEmbeddings" has incompatible type "**dict[str, list[str] | Any | None]"; expected "Mapping[str, object] | None"  [arg-type]
+src/server/services/embeddings/embedding_service.py:244: error: Argument 1 to "create" of "AsyncEmbeddings" has incompatible type "**dict[str, list[str] | Any | None]"; expected "float | Timeout | NotGiven | None"  [arg-type]
+src/server/services/embeddings/contextual_embedding_service.py:18: error: Incompatible default for argument "provider" (default has type "None", argument has type "str")  [assignment]
+src/server/services/embeddings/contextual_embedding_service.py:18: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+src/server/services/embeddings/contextual_embedding_service.py:18: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+src/server/services/embeddings/contextual_embedding_service.py:123: error: Returning Any from function declared to return "str"  [no-any-return]
+src/server/services/embeddings/contextual_embedding_service.py:127: error: Incompatible default for argument "provider" (default has type "None", argument has type "str")  [assignment]
+src/server/services/embeddings/contextual_embedding_service.py:127: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+src/server/services/embeddings/contextual_embedding_service.py:127: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+src/server/api_routes/progress_api.py:31: error: "None" has no attribute "info"  [attr-defined]
+src/server/api_routes/progress_api.py:37: error: "None" has no attribute "warning"  [attr-defined]
+src/server/api_routes/progress_api.py:85: error: "None" has no attribute "info"  [attr-defined]
+src/server/api_routes/progress_api.py:92: error: "None" has no attribute "error"  [attr-defined]
+src/server/api_routes/progress_api.py:104: error: "None" has no attribute "info"  [attr-defined]
+src/server/api_routes/progress_api.py:121: error: "None" has no attribute "info"  [attr-defined]
+src/server/api_routes/progress_api.py:130: error: "None" has no attribute "error"  [attr-defined]
+src/server/api_routes/migration_api.py:113: error: Argument "version" to "MigrationRecord" has incompatible type "Any | None"; expected "str"  [arg-type]
+src/server/api_routes/migration_api.py:114: error: Argument "migration_name" to "MigrationRecord" has incompatible type "Any | None"; expected "str"  [arg-type]
+src/server/api_routes/migration_api.py:115: error: Argument "applied_at" to "MigrationRecord" has incompatible type "Any | None"; expected "datetime"  [arg-type]
+src/server/api_routes/migration_api.py:138: error: Argument 1 to "MigrationHistoryResponse" has incompatible type "**dict[str, object]"; expected "list[MigrationRecord]"  [arg-type]
+src/server/api_routes/migration_api.py:138: error: Argument 1 to "MigrationHistoryResponse" has incompatible type "**dict[str, object]"; expected "int"  [arg-type]
+src/server/api_routes/migration_api.py:138: error: Argument 1 to "MigrationHistoryResponse" has incompatible type "**dict[str, object]"; expected "str"  [arg-type]
+src/server/services/storage/document_storage_service.py:51: error: Incompatible default for argument "batch_info" (default has type "None", argument has type "dict[Any, Any]")  [assignment]
+src/server/services/storage/document_storage_service.py:51: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+src/server/services/storage/document_storage_service.py:51: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+src/server/services/storage/document_storage_service.py:259: error: Unexpected keyword argument "provider" for "create_embeddings_batch"  [call-arg]
+src/server/services/embeddings/embedding_service.py:132: note: "create_embeddings_batch" defined here
+src/server/services/storage/code_storage_service.py:34: error: Returning Any from function declared to return "str"  [no-any-return]
+src/server/services/storage/code_storage_service.py:125: error: Incompatible types in assignment (expression has type "float", variable has type "int")  [assignment]
+src/server/services/storage/code_storage_service.py:130: error: Incompatible types in assignment (expression has type "float", variable has type "int")  [assignment]
+src/server/services/storage/code_storage_service.py:157: error: Incompatible default for argument "min_length" (default has type "None", argument has type "int")  [assignment]
+src/server/services/storage/code_storage_service.py:157: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+src/server/services/storage/code_storage_service.py:157: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+src/server/services/storage/code_storage_service.py:174: error: Returning Any from function declared to return "str"  [no-any-return]
+src/server/services/storage/code_storage_service.py:315: error: Unsupported operand types for in ("Sequence[str]" and "str")  [operator]
+src/server/services/storage/code_storage_service.py:489: error: Incompatible default for argument "provider" (default has type "None", argument has type "str")  [assignment]
+src/server/services/storage/code_storage_service.py:489: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+src/server/services/storage/code_storage_service.py:489: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+src/server/services/storage/code_storage_service.py:586: error: Item "None" of "str | None" has no attribute "strip"  [union-attr]
+src/server/services/storage/code_storage_service.py:624: error: Incompatible default for argument "max_workers" (default has type "None", argument has type "int")  [assignment]
+src/server/services/storage/code_storage_service.py:624: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+src/server/services/storage/code_storage_service.py:624: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+src/server/services/storage/code_storage_service.py:717: error: Argument 1 to "append" of "list" has incompatible type "dict[str, str] | BaseException"; expected "dict[str, str]"  [arg-type]
+src/server/services/storage/code_storage_service.py:850: error: Unexpected keyword argument "provider" for "create_embeddings_batch"  [call-arg]
+src/server/services/embeddings/embedding_service.py:132: note: "create_embeddings_batch" defined here
+src/server/services/search/hybrid_search_strategy.py:91: error: Need type annotation for "match_types" (hint: "match_types: dict[<type>, <type>] = ...")  [var-annotated]
+src/server/services/search/hybrid_search_strategy.py:179: error: Need type annotation for "match_types" (hint: "match_types: dict[<type>, <type>] = ...")  [var-annotated]
+src/server/services/search/agentic_rag_strategy.py:68: note: "search_code_examples" of "AgenticRAGStrategy" defined here
+src/server/services/search/agentic_rag_strategy.py:117: error: Returning Any from function declared to return "list[dict[str, Any]]"  [no-any-return]
+src/server/services/search/agentic_rag_strategy.py:163: error: Unexpected keyword argument "use_enhancement" for "search_code_examples" of "AgenticRAGStrategy"  [call-arg]
+src/server/services/search/agentic_rag_strategy.py:370: error: Missing positional argument "base_strategy" in call to "AgenticRAGStrategy"  [call-arg]
+src/server/services/search/agentic_rag_strategy.py:393: error: Missing positional argument "base_strategy" in call to "AgenticRAGStrategy"  [call-arg]
+src/server/services/search/agentic_rag_strategy.py:394: error: Returning Any from function declared to return "list[dict[str, Any]]"  [no-any-return]
+src/server/services/search/agentic_rag_strategy.py:394: error: "AgenticRAGStrategy" has no attribute "search_code_examples_async"; maybe "search_code_examples"?  [attr-defined]
+src/server/services/search/agentic_rag_strategy.py:407: error: Missing positional argument "base_strategy" in call to "AgenticRAGStrategy"  [call-arg]
+src/server/services/search/agentic_rag_strategy.py:407: error: Argument 1 to "AgenticRAGStrategy" has incompatible type "None"; expected "SyncClient"  [arg-type]
+src/server/services/crawling/code_extraction_service.py:92: error: Returning Any from function declared to return "int"  [no-any-return]
+src/server/services/crawling/code_extraction_service.py:96: error: Returning Any from function declared to return "int"  [no-any-return]
+src/server/services/crawling/code_extraction_service.py:100: error: Returning Any from function declared to return "bool"  [no-any-return]
+src/server/services/crawling/code_extraction_service.py:104: error: Returning Any from function declared to return "bool"  [no-any-return]
+src/server/services/crawling/code_extraction_service.py:108: error: Returning Any from function declared to return "bool"  [no-any-return]
+src/server/services/crawling/code_extraction_service.py:112: error: Returning Any from function declared to return "float"  [no-any-return]
+src/server/services/crawling/code_extraction_service.py:116: error: Returning Any from function declared to return "int"  [no-any-return]
+src/server/services/crawling/code_extraction_service.py:120: error: Returning Any from function declared to return "bool"  [no-any-return]
+src/server/services/crawling/code_extraction_service.py:124: error: Returning Any from function declared to return "bool"  [no-any-return]
+src/server/services/crawling/code_extraction_service.py:128: error: Returning Any from function declared to return "int"  [no-any-return]
+src/server/services/crawling/code_extraction_service.py:132: error: Returning Any from function declared to return "bool"  [no-any-return]
+src/server/services/crawling/code_extraction_service.py:395: error: Need type annotation for "extracted_positions" (hint: "extracted_positions: set[<type>] = ...")  [var-annotated]
+src/server/services/crawling/code_extraction_service.py:658: error: Incompatible types in assignment (expression has type "Iterator[Match[str]]", variable has type "list[Match[str]]")  [assignment]
+src/server/services/crawling/code_extraction_service.py:779: error: Incompatible types in assignment (expression has type "Iterator[Match[str]]", variable has type "list[Match[str]]")  [assignment]
+src/server/services/crawling/code_extraction_service.py:785: error: Item "None" of "Match[str] | None" has no attribute "group"  [union-attr]
+src/server/services/crawling/code_extraction_service.py:840: error: Unsupported operand types for >= ("int" and "None")  [operator]
+src/server/services/crawling/code_extraction_service.py:840: note: Right operand is of type "int | None"
+src/server/services/crawling/code_extraction_service.py:937: error: Argument "key" to "max" has incompatible type overloaded function; expected "Callable[[str], SupportsDunderLT[Any] | SupportsDunderGT[Any]]"  [arg-type]
+src/server/services/crawling/code_extraction_service.py:986: error: Argument 2 to "insert" of "list" has incompatible type "Sequence[str]"; expected "str"  [arg-type]
+src/server/services/crawling/code_extraction_service.py:1297: error: Incompatible types in assignment (expression has type "Sequence[str]", variable has type "int")  [assignment]
+src/server/services/crawling/code_extraction_service.py:1301: error: Generator has incompatible item type "int"; expected "bool"  [misc]
+src/server/services/crawling/code_extraction_service.py:1301: error: "int" has no attribute "__iter__"; maybe "__int__"? (not iterable)  [attr-defined]
+src/server/services/crawling/code_extraction_service.py:1462: error: Need type annotation for "code_examples" (hint: "code_examples: list[<type>] = ...")  [var-annotated]
+src/server/services/librarian_service.py:67: error: "None" has no attribute "info"  [attr-defined]
+src/server/services/librarian_service.py:90: error: "None" has no attribute "error"  [attr-defined]
+src/server/services/librarian_service.py:106: error: "None" has no attribute "info"  [attr-defined]
+src/server/services/librarian_service.py:110: error: "None" has no attribute "error"  [attr-defined]
+src/server/services/job_board_service.py:77: error: "None" has no attribute "info"  [attr-defined]
+src/server/services/job_board_service.py:86: error: "None" has no attribute "warning"  [attr-defined]
+src/server/services/job_board_service.py:104: error: "None" has no attribute "info"  [attr-defined]
+src/server/services/job_board_service.py:108: error: "None" has no attribute "warning"  [attr-defined]
+src/server/services/job_board_service.py:113: error: "None" has no attribute "info"  [attr-defined]
+src/server/services/job_board_service.py:117: error: "None" has no attribute "error"  [attr-defined]
+src/server/services/job_board_service.py:156: error: "None" has no attribute "info"  [attr-defined]
+src/server/services/job_board_service.py:159: error: "None" has no attribute "error"  [attr-defined]
+src/server/services/job_board_service.py:289: error: "None" has no attribute "warning"  [attr-defined]
+src/server/services/job_board_service.py:299: error: Returning Any from function declared to return "str | None"  [no-any-return]
+src/server/services/job_board_service.py:304: error: "None" has no attribute "warning"  [attr-defined]
+src/server/services/enrichment_service.py:25: error: "None" has no attribute "warn"  [attr-defined]
+src/server/services/enrichment_service.py:32: error: "None" has no attribute "info"  [attr-defined]
+src/server/services/enrichment_service.py:37: error: Unexpected keyword argument "category" for "get_credential" of "CredentialService"  [call-arg]
+src/server/services/credential_service.py:158: note: "get_credential" of "CredentialService" defined here
+src/server/services/enrichment_service.py:41: error: "None" has no attribute "info"  [attr-defined]
+src/server/services/enrichment_service.py:49: error: "None" has no attribute "info"  [attr-defined]
+src/server/services/enrichment_service.py:62: error: "None" has no attribute "info"  [attr-defined]
+src/server/services/enrichment_service.py:66: error: "None" has no attribute "error"  [attr-defined]
+src/server/services/enrichment_service.py:99: error: "None" has no attribute "info"  [attr-defined]
+src/server/services/enrichment_service.py:109: error: "None" has no attribute "error"  [attr-defined]
+src/server/services/storage/base_storage_service.py:141: error: Returning Any from function declared to return "list[str]"  [no-any-return]
+src/server/services/search/rag_service.py:167: error: Unexpected keyword argument "use_enhancement" for "search_code_examples" of "AgenticRAGStrategy"  [call-arg]
+src/server/services/search/agentic_rag_strategy.py:68: note: "search_code_examples" of "AgenticRAGStrategy" defined here
+src/server/services/search/rag_service.py:176: error: Incompatible default for argument "source" (default has type "None", argument has type "str")  [assignment]
+src/server/services/search/rag_service.py:176: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+src/server/services/search/rag_service.py:176: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+src/server/services/projects/versioning_service.py:31: error: Incompatible default for argument "change_summary" (default has type "None", argument has type "str")  [assignment]
+src/server/services/projects/versioning_service.py:31: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+src/server/services/projects/versioning_service.py:31: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+src/server/services/projects/versioning_service.py:33: error: Incompatible default for argument "document_id" (default has type "None", argument has type "str")  [assignment]
+src/server/services/projects/versioning_service.py:33: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+src/server/services/projects/versioning_service.py:33: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+src/server/services/projects/source_linking_service.py:57: error: Dict entry 0 has incompatible type "str": "str"; expected "str": "list[str]"  [dict-item]
+src/server/auth/utils.py:29: error: Returning Any from function declared to return "dict[Any, Any] | None"  [no-any-return]
+src/server/api_routes/stats_api.py:27: error: "None" has no attribute "info"  [attr-defined]
+src/server/api_routes/stats_api.py:35: error: Need type annotation for "status_counts" (hint: "status_counts: dict[<type>, <type>] = ...")  [var-annotated]
+src/server/api_routes/stats_api.py:46: error: "None" has no attribute "info"  [attr-defined]
+src/server/api_routes/stats_api.py:50: error: "None" has no attribute "error"  [attr-defined]
+src/server/api_routes/stats_api.py:64: error: "None" has no attribute "info"  [attr-defined]
+src/server/api_routes/stats_api.py:74: error: Need type annotation for "member_counts" (hint: "member_counts: dict[<type>, <type>] = ...")  [var-annotated]
+src/server/api_routes/stats_api.py:89: error: "None" has no attribute "info"  [attr-defined]
+src/server/api_routes/stats_api.py:93: error: "None" has no attribute "error"  [attr-defined]
+src/server/api_routes/stats_api.py:106: error: "None" has no attribute "info"  [attr-defined]
+src/server/api_routes/stats_api.py:118: error: Need type annotation for "user_counts" (hint: "user_counts: dict[<type>, <type>] = ...")  [var-annotated]
+src/server/api_routes/stats_api.py:137: error: "None" has no attribute "error"  [attr-defined]
+src/server/api_routes/ollama_api.py:88: error: Incompatible default for argument "background_tasks" (default has type "None", argument has type "BackgroundTasks")  [assignment]
+src/server/api_routes/ollama_api.py:88: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+src/server/api_routes/ollama_api.py:88: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+src/server/api_routes/ollama_api.py:189: error: Argument 1 to "sum" has incompatible type "list[float | int | str]"; expected "Iterable[bool]"  [arg-type]
+src/server/api_routes/ollama_api.py:328: error: Unsupported operand types for + ("object" and "int")  [operator]
+src/server/api_routes/ollama_api.py:329: error: "object" has no attribute "append"  [attr-defined]
+src/server/api_routes/ollama_api.py:330: error: Unsupported operand types for + ("object" and "float")  [operator]
+src/server/api_routes/ollama_api.py:334: error: Unsupported operand types for < ("int" and "object")  [operator]
+src/server/api_routes/ollama_api.py:335: error: Unsupported left operand type for / ("object")  [operator]
+src/server/api_routes/ollama_api.py:491: error: Argument "last_discovery" to "ModelListResponse" has incompatible type "object"; expected "str | None"  [arg-type]
+src/server/api_routes/ollama_api.py:552: error: Argument "host" to "StoredModelInfo" has incompatible type "Any | None"; expected "str"  [arg-type]
+src/server/api_routes/ollama_api.py:1002: error: Need type annotation for "model_info" (hint: "model_info: dict[<type>, <type>] = ...")  [var-annotated]
+src/server/api_routes/ollama_api.py:1003: error: Need type annotation for "capabilities" (hint: "capabilities: list[<type>] = ...")  [var-annotated]
+src/server/api_routes/ollama_api.py:1061: error: Need type annotation for "limitations" (hint: "limitations: list[<type>] = ...")  [var-annotated]
+src/server/api_routes/ollama_api.py:1081: error: Argument "archon_compatibility" to "StoredModelInfo" has incompatible type "Sequence[Any]"; expected "str"  [arg-type]
+src/server/api_routes/ollama_api.py:1082: error: Argument "compatibility_features" to "StoredModelInfo" has incompatible type "Sequence[Any]"; expected "list[str]"  [arg-type]
+src/server/api_routes/ollama_api.py:1083: error: Argument "limitations" to "StoredModelInfo" has incompatible type "Sequence[Any]"; expected "list[str]"  [arg-type]
+src/server/services/health_service.py:82: error: Need type annotation for "details"  [var-annotated]
+src/server/services/health_service.py:104: error: "Collection[Any]" has no attribute "append"  [attr-defined]
+src/server/services/health_service.py:106: error: "Collection[Any]" has no attribute "append"  [attr-defined]
+src/server/services/health_service.py:108: error: "Collection[Any]" has no attribute "append"  [attr-defined]
+src/server/services/health_service.py:119: error: "Collection[Any]" has no attribute "append"  [attr-defined]
+src/server/services/health_service.py:141: error: Incompatible types in assignment (expression has type "int", target has type "Collection[Any]")  [assignment]
+src/server/services/health_service.py:146: error: "Collection[Any]" has no attribute "append"  [attr-defined]
+src/server/services/health_service.py:159: error: "Collection[Any]" has no attribute "append"  [attr-defined]
+src/server/services/health_service.py:168: error: "Collection[Any]" has no attribute "append"  [attr-defined]
+src/server/services/auth_service.py:77: error: Returning Any from function declared to return "dict[str, Any]"  [no-any-return]
+src/server/services/auth_service.py:82: error: Incompatible return value type (got "dict[Any, Any] | str", expected "dict[str, Any]")  [return-value]
+src/server/services/auth_service.py:148: error: Returning Any from function declared to return "dict[str, Any]"  [no-any-return]
+src/server/services/storage/storage_services.py:54: error: Incompatible default for argument "batch_info" (default has type "None", argument has type "dict[Any, Any]")  [assignment]
+src/server/services/storage/storage_services.py:54: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+src/server/services/storage/storage_services.py:54: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+src/server/services/storage/storage_services.py:65: error: Argument 2 to "report_progress" has incompatible type "float"; expected "int"  [arg-type]
+src/server/services/agent_service.py:140: error: Returning Any from function declared to return "dict[str, Any] | None"  [no-any-return]
+src/server/services/agent_service.py:146: error: Returning Any from function declared to return "dict[str, Any] | None"  [no-any-return]
+src/server/services/projects/task_service.py:70: error: Incompatible default for argument "sources" (default has type "None", argument has type "list[dict[str, Any]]")  [assignment]
+src/server/services/projects/task_service.py:70: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+src/server/services/projects/task_service.py:70: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+src/server/services/projects/task_service.py:71: error: Incompatible default for argument "code_examples" (default has type "None", argument has type "list[dict[str, Any]]")  [assignment]
+src/server/services/projects/task_service.py:71: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+src/server/services/projects/task_service.py:71: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+src/server/services/projects/task_service.py:179: error: Incompatible default for argument "project_id" (default has type "None", argument has type "str")  [assignment]
+src/server/services/projects/task_service.py:179: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+src/server/services/projects/task_service.py:179: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+src/server/services/projects/task_service.py:180: error: Incompatible default for argument "status" (default has type "None", argument has type "str")  [assignment]
+src/server/services/projects/task_service.py:180: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+src/server/services/projects/task_service.py:180: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+src/server/services/projects/task_service.py:184: error: Incompatible default for argument "assignee_id" (default has type "None", argument has type "str")  [assignment]
+src/server/services/projects/task_service.py:184: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+src/server/services/projects/task_service.py:184: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+src/server/services/projects/task_service.py:185: error: Incompatible default for argument "assignee_name" (default has type "None", argument has type "str")  [assignment]
+src/server/services/projects/task_service.py:185: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+src/server/services/projects/task_service.py:185: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+src/server/services/projects/task_service.py:269: error: Need type annotation for "status_counts" (hint: "status_counts: dict[<type>, <type>] = ...")  [var-annotated]
+src/server/services/projects/task_service.py:409: error: Incompatible types in assignment (expression has type "None", target has type "str")  [assignment]
+src/server/services/projects/task_service.py:648: error: Returning Any from function declared to return "str"  [no-any-return]
+src/server/services/projects/task_service.py:710: error: Dict entry 0 has incompatible type "str": "str"; expected "str": "dict[str, int]"  [dict-item]
+src/server/services/projects/document_service.py:33: error: Incompatible default for argument "content" (default has type "None", argument has type "dict[str, Any]")  [assignment]
+src/server/services/projects/document_service.py:33: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+src/server/services/projects/document_service.py:33: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+src/server/services/projects/document_service.py:34: error: Incompatible default for argument "tags" (default has type "None", argument has type "list[str]")  [assignment]
+src/server/services/projects/document_service.py:34: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+src/server/services/projects/document_service.py:34: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+src/server/services/projects/document_service.py:35: error: Incompatible default for argument "author" (default has type "None", argument has type "str")  [assignment]
+src/server/services/projects/document_service.py:35: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+src/server/services/projects/document_service.py:35: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+src/server/auth/dependencies.py:35: error: "dict[Any, Any]" has no attribute "id"  [attr-defined]
+src/server/auth/dependencies.py:47: error: "dict[Any, Any]" has no attribute "email"  [attr-defined]
+src/server/auth/dependencies.py:51: error: Incompatible return value type (got "dict[Any, Any] | str", expected "dict[Any, Any]")  [return-value]
+src/server/services/scheduler_service.py:119: error: Unexpected keyword argument "priority" for "create_task" of "TaskService"  [call-arg]
+src/server/services/scheduler_service.py:132: error: Name "new_task" is not defined  [name-defined]
+src/server/services/projects/task_service.py:62: note: "create_task" of "TaskService" defined here
+src/server/services/scheduler_service.py:119: error: Unexpected keyword argument "status" for "create_task" of "TaskService"  [call-arg]
+src/server/services/scheduler_service.py:154: error: Need type annotation for "usage_map" (hint: "usage_map: dict[<type>, <type>] = ...")  [var-annotated]
+src/server/services/projects/project_service.py:29: error: Incompatible default for argument "github_repo" (default has type "None", argument has type "str")  [assignment]
+src/server/services/projects/project_service.py:29: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+src/server/services/projects/project_service.py:29: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+src/server/services/projects/project_service.py:116: error: Need type annotation for "task_counts" (hint: "task_counts: dict[<type>, <type>] = ...")  [var-annotated]
+src/server/services/crawling/document_storage_operations.py:72: error: Need type annotation for "source_word_counts" (hint: "source_word_counts: dict[<type>, <type>] = ...")  [var-annotated]
+src/server/services/crawling/document_storage_operations.py:202: error: Need type annotation for "source_id_contents" (hint: "source_id_contents: dict[<type>, <type>] = ...")  [var-annotated]
+src/server/api_routes/visit_log_api.py:42: error: "None" has no attribute "info"  [attr-defined]
+src/server/api_routes/visit_log_api.py:52: error: "None" has no attribute "info"  [attr-defined]
+src/server/api_routes/visit_log_api.py:68: error: Unexpected keyword argument "category" for "get_credential" of "CredentialService"  [call-arg]
+src/server/services/credential_service.py:158: note: "get_credential" of "CredentialService" defined here
+src/server/api_routes/visit_log_api.py:72: error: "None" has no attribute "warning"  [attr-defined]
+src/server/api_routes/visit_log_api.py:96: error: "None" has no attribute "warning"  [attr-defined]
+src/server/api_routes/visit_log_api.py:133: error: "None" has no attribute "error"  [attr-defined]
+src/server/api_routes/visit_log_api.py:146: error: "None" has no attribute "error"  [attr-defined]
+src/server/api_routes/visit_log_api.py:150: error: "None" has no attribute "error"  [attr-defined]
+src/server/api_routes/visit_log_api.py:183: error: "None" has no attribute "error"  [attr-defined]
+src/server/api_routes/visit_log_api.py:209: error: "None" has no attribute "error"  [attr-defined]
+src/server/api_routes/system_api.py:68: error: Returning Any from function declared to return "dict[str, Any]"  [no-any-return]
+src/server/api_routes/settings_api.py:282: error: Item "str" of "dict[Any, Any] | str" has no attribute "values"  [union-attr]
+src/server/api_routes/settings_api.py:340: error: Item "str" of "dict[Any, Any] | str" has no attribute "get"  [union-attr]
+src/server/api_routes/settings_api.py:340: error: Invalid index type "str" for "str"; expected type "SupportsIndex | slice[Any, Any, Any]"  [index]
+src/server/api_routes/settings_api.py:363: error: Item "str" of "dict[Any, Any] | str" has no attribute "get"  [union-attr]
+src/server/api_routes/settings_api.py:365: error: Item "str" of "dict[Any, Any] | str" has no attribute "get"  [union-attr]
+src/server/api_routes/settings_api.py:365: error: Unsupported operand types for in ("Any | None" and "list[str]")  [operator]
+src/server/api_routes/settings_api.py:397: error: Item "str" of "dict[Any, Any] | str" has no attribute "get"  [union-attr]
+src/server/api_routes/settings_api.py:399: error: Item "str" of "dict[Any, Any] | str" has no attribute "get"  [union-attr]
+src/server/api_routes/settings_api.py:399: error: Unsupported operand types for in ("Any | None" and "list[str]")  [operator]
+src/server/api_routes/marketing_api.py:64: error: "None" has no attribute "info"  [attr-defined]
+src/server/api_routes/marketing_api.py:69: error: "None" has no attribute "info"  [attr-defined]
+src/server/api_routes/marketing_api.py:73: error: "None" has no attribute "error"  [attr-defined]
+src/server/api_routes/marketing_api.py:86: error: "None" has no attribute "error"  [attr-defined]
+src/server/api_routes/marketing_api.py:104: error: "None" has no attribute "warn"  [attr-defined]
+src/server/api_routes/marketing_api.py:122: error: "None" has no attribute "info"  [attr-defined]
+src/server/api_routes/marketing_api.py:155: error: "None" has no attribute "info"  [attr-defined]
+src/server/api_routes/marketing_api.py:157: error: "None" has no attribute "warning"  [attr-defined]
+src/server/api_routes/marketing_api.py:162: error: "None" has no attribute "error"  [attr-defined]
+src/server/api_routes/marketing_api.py:206: error: "None" has no attribute "error"  [attr-defined]
+src/server/api_routes/marketing_api.py:215: error: "None" has no attribute "info"  [attr-defined]
+src/server/api_routes/marketing_api.py:260: error: "None" has no attribute "error"  [attr-defined]
+src/server/api_routes/marketing_api.py:269: error: "None" has no attribute "info"  [attr-defined]
+src/server/api_routes/marketing_api.py:284: error: "None" has no attribute "error"  [attr-defined]
+src/server/api_routes/marketing_api.py:305: error: "None" has no attribute "error"  [attr-defined]
+src/server/api_routes/marketing_api.py:318: error: "None" has no attribute "error"  [attr-defined]
+src/server/api_routes/marketing_api.py:335: error: "None" has no attribute "error"  [attr-defined]
+src/server/api_routes/marketing_api.py:350: error: "None" has no attribute "warn"  [attr-defined]
+src/server/api_routes/marketing_api.py:367: error: "None" has no attribute "error"  [attr-defined]
+src/server/api_routes/marketing_api.py:376: error: "None" has no attribute "info"  [attr-defined]
+src/server/api_routes/marketing_api.py:417: error: Unexpected keyword argument "category" for "get_credential" of "CredentialService"  [call-arg]
+src/server/services/credential_service.py:158: note: "get_credential" of "CredentialService" defined here
+src/server/api_routes/marketing_api.py:437: error: "None" has no attribute "error"  [attr-defined]
+src/server/api_routes/marketing_api.py:450: error: "None" has no attribute "error"  [attr-defined]
+src/server/api_routes/marketing_api.py:474: error: Unexpected keyword argument "category" for "get_credential" of "CredentialService"  [call-arg]
+src/server/api_routes/marketing_api.py:475: error: "None" has no attribute "info"  [attr-defined]
+src/server/api_routes/marketing_api.py:510: error: "None" has no attribute "error"  [attr-defined]
+src/server/api_routes/marketing_api.py:568: error: "None" has no attribute "error"  [attr-defined]
+src/server/api_routes/ethics_api.py:42: error: "None" has no attribute "error"  [attr-defined]
+src/server/api_routes/agents_api.py:34: error: "None" has no attribute "error"  [attr-defined]
+src/server/api_routes/projects_api.py:120: error: Item "str" of "dict[Any, Any] | str" has no attribute "get"  [union-attr]
+src/server/api_routes/projects_api.py:126: error: Invalid index type "str" for "str"; expected type "SupportsIndex | slice[Any, Any, Any]"  [index]
+src/server/api_routes/projects_api.py:257: error: Incompatible types in assignment (expression has type "list[Any]", target has type "bool")  [assignment]
+src/server/api_routes/projects_api.py:259: error: Incompatible types in assignment (expression has type "list[Any]", target has type "bool")  [assignment]
+src/server/api_routes/projects_api.py:407: error: Incompatible types in assignment (expression has type "list[Any]", target has type "str")  [assignment]
+src/server/api_routes/projects_api.py:409: error: Incompatible types in assignment (expression has type "list[Any]", target has type "str")  [assignment]
+src/server/api_routes/projects_api.py:411: error: Incompatible types in assignment (expression has type "list[Any]", target has type "str")  [assignment]
+src/server/api_routes/projects_api.py:413: error: Incompatible types in assignment (expression has type "bool", target has type "str")  [assignment]
+src/server/api_routes/projects_api.py:499: error: "Coroutine[Any, Any, tuple[bool, dict[str, Any]]]" object is not iterable  [misc]
+src/server/api_routes/projects_api.py:731: error: Item "str" of "dict[Any, Any] | str" has no attribute "get"  [union-attr]
+src/server/api_routes/projects_api.py:846: error: Unexpected keyword argument "page" for "list_tasks" of "TaskService"  [call-arg]
+src/server/api_routes/projects_api.py:1311: error: Name "document_service" is not defined  [name-defined]
+src/server/services/projects/task_service.py:177: note: "list_tasks" of "TaskService" defined here
+src/server/api_routes/projects_api.py:846: error: Unexpected keyword argument "per_page" for "list_tasks" of "TaskService"  [call-arg]
+src/server/api_routes/projects_api.py:849: error: Argument "project_id" to "list_tasks" of "TaskService" has incompatible type "str | None"; expected "str"  [arg-type]
+src/server/api_routes/projects_api.py:850: error: Argument "status" to "list_tasks" of "TaskService" has incompatible type "str | None"; expected "str"  [arg-type]
+src/server/api_routes/projects_api.py:853: error: Argument "assignee_id" to "list_tasks" of "TaskService" has incompatible type "Any | None"; expected "str"  [arg-type]
+src/server/api_routes/projects_api.py:505: error: Cannot determine type of "source_success"  [has-type]
+src/server/api_routes/projects_api.py:507: error: Cannot determine type of "source_result"  [has-type]
+src/server/api_routes/projects_api.py:511: error: Cannot determine type of "source_result"  [has-type]
+src/server/api_routes/projects_api.py:1025: error: Need type annotation for "update_fields" (hint: "update_fields: dict[<type>, <type>] = ...")  [var-annotated]
+src/server/api_routes/projects_api.py:1040: error: Item "str" of "dict[Any, Any] | str" has no attribute "get"  [union-attr]
+src/server/api_routes/projects_api.py:1101: error: Incompatible types in assignment (expression has type "int", target has type "str")  [assignment]
+src/server/api_routes/projects_api.py:1106: error: Incompatible types in assignment (expression has type "list[dict[str, Any]]", target has type "str")  [assignment]
+src/server/api_routes/projects_api.py:1110: error: Incompatible types in assignment (expression has type "datetime", target has type "str")  [assignment]
+src/server/api_routes/projects_api.py:1351: error: Incompatible types in "await" (actual type "tuple[bool, dict[str, Any]]", expected type "Awaitable[Any]")  [misc]
+src/server/api_routes/projects_api.py:1355: error: Argument "content" to "add_document" of "DocumentService" has incompatible type "dict[str, Any] | None"; expected "dict[str, Any]"  [arg-type]
+src/server/api_routes/projects_api.py:1356: error: Argument "tags" to "add_document" of "DocumentService" has incompatible type "list[str] | None"; expected "list[str]"  [arg-type]
+src/server/api_routes/projects_api.py:1357: error: Argument "author" to "add_document" of "DocumentService" has incompatible type "str | None"; expected "str"  [arg-type]
+src/server/api_routes/projects_api.py:1397: error: Incompatible types in "await" (actual type "tuple[bool, dict[str, Any]]", expected type "Awaitable[Any]")  [misc]
+src/server/api_routes/projects_api.py:1438: error: Incompatible types in assignment (expression has type "dict[str, Any]", target has type "str")  [assignment]
+src/server/api_routes/projects_api.py:1440: error: Incompatible types in assignment (expression has type "list[str]", target has type "str")  [assignment]
+src/server/api_routes/projects_api.py:1446: error: Incompatible types in "await" (actual type "tuple[bool, dict[str, Any]]", expected type "Awaitable[Any]")  [misc]
+src/server/api_routes/projects_api.py:1487: error: Incompatible types in "await" (actual type "tuple[bool, dict[str, Any]]", expected type "Awaitable[Any]")  [misc]
+src/server/api_routes/projects_api.py:1541: error: Item "str" of "dict[Any, Any] | str" has no attribute "get"  [union-attr]
+src/server/api_routes/projects_api.py:1551: error: Incompatible default for argument "field_name" (default has type "None", argument has type "str")  [assignment]
+src/server/api_routes/projects_api.py:1551: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+src/server/api_routes/projects_api.py:1551: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+src/server/api_routes/projects_api.py:1560: error: Incompatible types in "await" (actual type "tuple[bool, dict[Any, Any] | str]", expected type "Awaitable[Any]")  [misc]
+src/server/api_routes/projects_api.py:1600: error: Incompatible types in "await" (actual type "tuple[bool, dict[str, Any]]", expected type "Awaitable[Any]")  [misc]
+src/server/api_routes/projects_api.py:1604: error: Argument "change_summary" to "create_version" of "VersioningService" has incompatible type "str | None"; expected "str"  [arg-type]
+src/server/api_routes/projects_api.py:1605: error: Argument "change_type" to "create_version" of "VersioningService" has incompatible type "str | None"; expected "str"  [arg-type]
+src/server/api_routes/projects_api.py:1606: error: Argument "document_id" to "create_version" of "VersioningService" has incompatible type "str | None"; expected "str"  [arg-type]
+src/server/api_routes/projects_api.py:1607: error: Argument "created_by" to "create_version" of "VersioningService" has incompatible type "str | None"; expected "str"  [arg-type]
+src/server/api_routes/projects_api.py:1649: error: "VersioningService" has no attribute "get_version"; maybe "create_version" or "restore_version"?  [attr-defined]
+src/server/api_routes/projects_api.py:1694: error: Incompatible types in "await" (actual type "tuple[bool, dict[str, Any]]", expected type "Awaitable[Any]")  [misc]
+src/server/api_routes/projects_api.py:1698: error: Argument "restored_by" to "restore_version" of "VersioningService" has incompatible type "str | None"; expected "str"  [arg-type]
+src/server/api_routes/knowledge_api.py:524: error: Unexpected keyword argument "progress_id" for "CrawlStartResponse"; did you mean "progressId"?  [call-arg]
+src/server/api_routes/knowledge_api.py:524: error: Unexpected keyword argument "estimated_duration" for "CrawlStartResponse"; did you mean "estimatedDuration"?  [call-arg]
+src/server/api_routes/knowledge_api.py:770: error: Incompatible default for argument "batch_info" (default has type "None", argument has type "dict[Any, Any]")  [assignment]
+src/server/api_routes/knowledge_api.py:770: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+src/server/api_routes/knowledge_api.py:770: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+src/server/api_routes/knowledge_api.py:872: error: Argument "source" to "perform_rag_query" of "RAGService" has incompatible type "str | None"; expected "str"  [arg-type]
+src/server/main.py:189: error: Unexpected keyword argument "error" for "warning" of "Logger"  [call-arg]
+src/server/main.py:196: error: Unexpected keyword argument "error" for "warning" of "Logger"  [call-arg]
+src/server/main.py:349: error: Unsupported operand types for - ("float" and "None")  [operator]
+src/server/main.py:349: note: Right operand is of type "int | None"
+src/server/main.py:361: error: Incompatible types in assignment (expression has type "float", target has type "int | None")  [assignment]
+src/server/main.py:362: error: Incompatible types in assignment (expression has type "dict[str, object]", target has type "int | None")  [assignment]
+src/server/main.py:378: error: Incompatible types in assignment (expression has type "float", target has type "int | None")  [assignment]
+src/server/main.py:379: error: Incompatible types in assignment (expression has type "dict[str, object]", target has type "int | None")  [assignment]
+Found 403 errors in 72 files (checked 168 source files)

@@ -65,4 +65,4 @@ async def update_system_prompt(prompt_name: str, request: dict[str, Any]) -> dic
     # Trigger memory cache reload
     await prompt_service.reload_prompts()
 
-    return response.data[0]
+    return dict(response.data[0])

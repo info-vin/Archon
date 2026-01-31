@@ -14,7 +14,7 @@ logger = get_logger(__name__)
 
 # Supported embedding dimensions based on tested database schema
 # Note: Model lists are dynamically determined by providers, not hardcoded
-SUPPORTED_DIMENSIONS = {
+SUPPORTED_DIMENSIONS: dict[int, list[str]] = {
     768: [],   # Common dimensions for various providers (Google, etc.)
     1024: [],  # Ollama and other providers
     1536: [],  # OpenAI models (text-embedding-3-small, ada-002)

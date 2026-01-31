@@ -75,7 +75,7 @@ def get_cache_security_report() -> dict[str, Any]:
     global _cache_access_log
     current_time = time.time()
 
-    report = {
+    report: dict[str, Any] = {
         "timestamp": current_time,
         "analysis_period_hours": 1,
         "security_events": [],
@@ -967,7 +967,7 @@ def prepare_chat_completion_params(model: str, params: dict) -> dict:
     return updated_params
 
 
-async def get_embedding_model_with_routing(provider: str | None = None, instance_url: str | None = None) -> tuple[str, str]:
+async def get_embedding_model_with_routing(provider: str | None = None, instance_url: str | None = None) -> tuple[str, str | None]:
     """
     Get the embedding model with intelligent routing for multi-instance setups.
 
@@ -1003,7 +1003,7 @@ async def get_embedding_model_with_routing(provider: str | None = None, instance
         return "text-embedding-3-small", None
 
 
-async def validate_provider_instance(provider: str, instance_url: str | None = None) -> dict[str, any]:
+async def validate_provider_instance(provider: str, instance_url: str | None = None) -> dict[str, Any]:
     """
     Validate a provider instance and return health information.
 

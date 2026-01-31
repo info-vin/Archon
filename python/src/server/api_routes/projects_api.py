@@ -357,7 +357,8 @@ async def get_project(project_id: str):
         success, result = await project_service.get_project(project_id)
 
         if not success:
-            if "not found" in result.get("error", "").lower():
+            error_msg = result.get("error", "") if isinstance(result, dict) else str(result)
+            if "not found" in error_msg.lower():
                 logger.warning(f"Project not found | project_id={project_id}")
                 raise HTTPException(status_code=404, detail=result)
             else:
@@ -472,7 +473,8 @@ async def update_project(project_id: str, request: UpdateProjectRequest):
         )
 
         if not success:
-            if "not found" in result.get("error", "").lower():
+            error_msg = result.get("error", "") if isinstance(result, dict) else str(result)
+            if "not found" in error_msg.lower():
                 raise HTTPException(
                     status_code=404,
                     detail={
@@ -576,7 +578,8 @@ async def get_project_features(project_id: str):
         )
 
         if not success:
-            if "not found" in result.get("error", "").lower():
+            error_msg = result.get("error", "") if isinstance(result, dict) else str(result)
+            if "not found" in error_msg.lower():
                 logger.warning(
                     f"Project not found for features | project_id={project_id}"
                 )
@@ -841,6 +844,8 @@ async def list_tasks(
         # Use TaskService to list tasks
         task_service = TaskService()
         success, result = await task_service.list_tasks(
+            page=page,
+            per_page=per_page,
             project_id=project_id,
             status=status,
             include_closed=include_closed,
@@ -852,9 +857,21 @@ async def list_tasks(
         )
 
         if not success:
-            raise HTTPException(status_code=500, detail=result)
+            error_detail = result
+            if isinstance(result, dict):
+                error_detail = result.get("error", "Unknown error")
+            
+            logger.error(f"Failed to list tasks | error={error_detail}")
+            raise HTTPException(status_code=500, detail=error_detail)
 
-        tasks = result.get("tasks", [])
+        # Pagination metadata
+        if isinstance(result, dict):
+            total_count = result.get("total_count", 0)
+            tasks = result.get("tasks", [])
+        else:
+            # Fallback if result is not a dict (should not happen on success)
+            total_count = 0
+            tasks = []
 
         # If exclude_large_fields is True, remove large fields from tasks
         if exclude_large_fields:
@@ -915,9 +932,10 @@ async def get_task(task_id: str):
         success, result = await task_service.get_task(task_id)
 
         if not success:
-            if "not found" in result.get("error", "").lower():
+            error_msg = result.get("error", "") if isinstance(result, dict) else str(result)
+            if "not found" in error_msg.lower():
                 raise HTTPException(
-                    status_code=404, detail=result.get("error")
+                    status_code=404, detail=error_msg
                 )
             else:
                 raise HTTPException(status_code=500, detail=result)
@@ -1098,9 +1116,10 @@ async def update_task(
         )
 
         if not success:
-            if "not found" in result.get("error", "").lower():
+            error_msg = result.get("error", "") if isinstance(result, dict) else str(result)
+            if "not found" in error_msg.lower():
                 raise HTTPException(
-                    status_code=404, detail=result.get("error")
+                    status_code=404, detail=error_msg
                 )
             else:
                 raise HTTPException(status_code=500, detail=result)
@@ -1133,13 +1152,14 @@ async def delete_task(task_id: str):
         )
 
         if not success:
-            if "not found" in result.get("error", "").lower():
+            error_msg = result.get("error", "") if isinstance(result, dict) else str(result)
+            if "not found" in error_msg.lower():
                 raise HTTPException(
-                    status_code=404, detail=result.get("error")
+                    status_code=404, detail=error_msg
                 )
-            elif "already archived" in result.get("error", "").lower():
+            elif "already archived" in error_msg.lower():
                 raise HTTPException(
-                    status_code=409, detail=result.get("error")
+                    status_code=409, detail=error_msg
                 )
             else:
                 raise HTTPException(status_code=500, detail=result)
@@ -1234,18 +1254,17 @@ async def mcp_update_task_status(task_id: str, status: str):
 
         # Use TaskService to update the task
         task_service = TaskService()
-        success, result = await task_service.update_task(
-            task_id=task_id, update_fields={"status": status}
-        )
+        update_fields = {"status": status}
+        success, result = await task_service.update_task(task_id, update_fields)
 
         if not success:
-            if "not found" in result.get("error", "").lower():
+            error_msg = result.get("error", "") if isinstance(result, dict) else str(result)
+            if "not found" in error_msg.lower():
                 raise HTTPException(
                     status_code=404, detail=f"Task {task_id} not found"
                 )
             else:
                 raise HTTPException(status_code=500, detail=result)
-
         updated_task = result["task"]
         project_id = updated_task["project_id"]
 
@@ -1289,16 +1308,15 @@ async def list_project_documents(
             f"Listing documents for project | project_id={project_id} | include_content={include_content}"
         )
 
-        # Use DocumentService to list documents
-        document_service = DocumentService()
-        success, result = document_service.list_documents(
+        success, result = await document_service.list_documents(
             project_id, include_content=include_content
         )
 
         if not success:
-            if "not found" in result.get("error", "").lower():
+            error_msg = result.get("error", "") if isinstance(result, dict) else str(result)
+            if "not found" in error_msg.lower():
                 raise HTTPException(
-                    status_code=404, detail=result.get("error")
+                    status_code=404, detail=error_msg
                 )
             else:
                 raise HTTPException(status_code=500, detail=result)
@@ -1330,19 +1348,20 @@ async def create_project_document(
 
         # Use DocumentService to create document
         document_service = DocumentService()
-        success, result = document_service.add_document(
+        success, result = await document_service.add_document(
             project_id=project_id,
-            document_type=request.document_type,
             title=request.title,
+            document_type=request.document_type,
             content=request.content,
             tags=request.tags,
             author=request.author,
         )
 
         if not success:
-            if "not found" in result.get("error", "").lower():
+            error_msg = result.get("error", "") if isinstance(result, dict) else str(result)
+            if "not found" in error_msg.lower():
                 raise HTTPException(
-                    status_code=404, detail=result.get("error")
+                    status_code=404, detail=error_msg
                 )
             else:
                 raise HTTPException(status_code=400, detail=result)
@@ -1375,12 +1394,13 @@ async def get_project_document(project_id: str, doc_id: str):
 
         # Use DocumentService to get document
         document_service = DocumentService()
-        success, result = document_service.get_document(project_id, doc_id)
+        success, result = await document_service.get_document(project_id, doc_id)
 
         if not success:
-            if "not found" in result.get("error", "").lower():
+            error_msg = result.get("error", "") if isinstance(result, dict) else str(result)
+            if "not found" in error_msg.lower():
                 raise HTTPException(
-                    status_code=404, detail=result.get("error")
+                    status_code=404, detail=error_msg
                 )
             else:
                 raise HTTPException(status_code=500, detail=result)
@@ -1423,14 +1443,15 @@ async def update_project_document(
 
         # Use DocumentService to update document
         document_service = DocumentService()
-        success, result = document_service.update_document(
+        success, result = await document_service.update_document(
             project_id, doc_id, update_fields
         )
 
         if not success:
-            if "not found" in result.get("error", "").lower():
+            error_msg = result.get("error", "") if isinstance(result, dict) else str(result)
+            if "not found" in error_msg.lower():
                 raise HTTPException(
-                    status_code=404, detail=result.get("error")
+                    status_code=404, detail=error_msg
                 )
             else:
                 raise HTTPException(status_code=500, detail=result)
@@ -1463,12 +1484,13 @@ async def delete_project_document(project_id: str, doc_id: str):
 
         # Use DocumentService to delete document
         document_service = DocumentService()
-        success, result = document_service.delete_document(project_id, doc_id)
+        success, result = await document_service.delete_document(project_id, doc_id)
 
         if not success:
-            if "not found" in result.get("error", "").lower():
+            error_msg = result.get("error", "") if isinstance(result, dict) else str(result)
+            if "not found" in error_msg.lower():
                 raise HTTPException(
-                    status_code=404, detail=result.get("error")
+                    status_code=404, detail=error_msg
                 )
             else:
                 raise HTTPException(status_code=500, detail=result)
@@ -1535,14 +1557,15 @@ async def list_project_versions(project_id: str, field_name: str = None):
 
         # Use VersioningService to list versions
         versioning_service = VersioningService()
-        success, result = versioning_service.list_versions(
+        success, result = await versioning_service.list_versions(
             project_id, field_name
         )
 
         if not success:
-            if "not found" in result.get("error", "").lower():
+            error_msg = result.get("error", "") if isinstance(result, dict) else str(result)
+            if "not found" in error_msg.lower():
                 raise HTTPException(
-                    status_code=404, detail=result.get("error")
+                    status_code=404, detail=error_msg
                 )
             else:
                 raise HTTPException(status_code=500, detail=result)
@@ -1574,7 +1597,7 @@ async def create_project_version(
 
         # Use VersioningService to create version
         versioning_service = VersioningService()
-        success, result = versioning_service.create_version(
+        success, result = await versioning_service.create_version(
             project_id=project_id,
             field_name=request.field_name,
             content=request.content,
@@ -1585,9 +1608,10 @@ async def create_project_version(
         )
 
         if not success:
-            if "not found" in result.get("error", "").lower():
+            error_msg = result.get("error", "") if isinstance(result, dict) else str(result)
+            if "not found" in error_msg.lower():
                 raise HTTPException(
-                    status_code=404, detail=result.get("error")
+                    status_code=404, detail=error_msg
                 )
             else:
                 raise HTTPException(status_code=400, detail=result)
@@ -1622,14 +1646,15 @@ async def get_project_version(
 
         # Use VersioningService to get version content
         versioning_service = VersioningService()
-        success, result = versioning_service.get_version_content(
+        success, result = await versioning_service.get_version(
             project_id, field_name, version_number
         )
 
         if not success:
-            if "not found" in result.get("error", "").lower():
+            error_msg = result.get("error", "") if isinstance(result, dict) else str(result)
+            if "not found" in error_msg.lower():
                 raise HTTPException(
-                    status_code=404, detail=result.get("error")
+                    status_code=404, detail=error_msg
                 )
             else:
                 raise HTTPException(status_code=500, detail=result)
@@ -1666,7 +1691,7 @@ async def restore_project_version(
 
         # Use VersioningService to restore version
         versioning_service = VersioningService()
-        success, result = versioning_service.restore_version(
+        success, result = await versioning_service.restore_version(
             project_id=project_id,
             field_name=field_name,
             version_number=version_number,
@@ -1674,9 +1699,10 @@ async def restore_project_version(
         )
 
         if not success:
-            if "not found" in result.get("error", "").lower():
+            error_msg = result.get("error", "") if isinstance(result, dict) else str(result)
+            if "not found" in error_msg.lower():
                 raise HTTPException(
-                    status_code=404, detail=result.get("error")
+                    status_code=404, detail=error_msg
                 )
             else:
                 raise HTTPException(status_code=500, detail=result)

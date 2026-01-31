@@ -17,10 +17,12 @@ from pydantic import BaseModel
 from ..auth.dependencies import get_current_user
 
 # Import logging
-from ..config.logfire_config import logfire
+from ..config.logfire_config import get_logger
 from ..services.credential_service import CredentialService, credential_service
 from ..services.profile_service import ProfileService
 from ..services.settings_service import SettingsService
+
+logger = get_logger(__name__)
 
 router = APIRouter(prefix="/api", tags=["settings"])
 
@@ -60,12 +62,12 @@ async def check_credential_status(
 ):
     """Check if a list of credentials have values."""
     try:
-        logfire.info(f"Checking status for {len(request.keys)} credentials")
+        logger.info(f"Checking status for {len(request.keys)} credentials")
         statuses = await cred_service.check_credentials_exist(request.keys)
-        logfire.info(f"Credential status check successful | count={len(statuses)}")
+        logger.info(f"Credential status check successful | count={len(statuses)}")
         return statuses
     except Exception as e:
-        logfire.error(f"Error checking credential status | error={str(e)}")
+        logger.error(f"Error checking credential status | error={str(e)}")
         raise HTTPException(status_code=500, detail={"error": str(e)}) from e
 
 
@@ -77,7 +79,7 @@ async def list_credentials(
 ):
     """List all credentials and their categories."""
     try:
-        logfire.info(f"Listing credentials | category={category}")
+        logger.info(f"Listing credentials | category={category}")
         credentials = await cred_service.list_all_credentials()
 
         if category:
@@ -85,7 +87,7 @@ async def list_credentials(
             credentials = [cred for cred in credentials if cred.category == category]
 
         result_count = len(credentials)
-        logfire.info(
+        logger.info(
             f"Credentials listed successfully | count={result_count} | category={category}"
         )
 
@@ -101,7 +103,7 @@ async def list_credentials(
             for cred in credentials
         ]
     except Exception as e:
-        logfire.error(f"Error listing credentials | category={category} | error={str(e)}")
+        logger.error(f"Error listing credentials | category={category} | error={str(e)}")
         raise HTTPException(status_code=500, detail={"error": str(e)}) from e
 
 
@@ -112,16 +114,16 @@ async def get_credentials_by_category(
 ):
     """Get all credentials for a specific category."""
     try:
-        logfire.info(f"Getting credentials by category | category={category}")
+        logger.info(f"Getting credentials by category | category={category}")
         credentials = await cred_service.get_credentials_by_category(category)
 
-        logfire.info(
+        logger.info(
             f"Credentials retrieved by category | category={category} | count={len(credentials)}"
         )
 
         return {"credentials": credentials}
     except Exception as e:
-        logfire.error(
+        logger.error(
             f"Error getting credentials by category | category={category} | error={str(e)}"
         )
         raise HTTPException(status_code=500, detail={"error": str(e)}) from e
@@ -134,7 +136,7 @@ async def create_credential(
 ):
     """Create or update a credential."""
     try:
-        logfire.info(
+        logger.info(
             f"Creating/updating credential | key={request.key} | is_encrypted={request.is_encrypted} | category={request.category}"
         )
 
@@ -147,7 +149,7 @@ async def create_credential(
         )
 
         if success:
-            logfire.info(
+            logger.info(
                 f"Credential saved successfully | key={request.key} | is_encrypted={request.is_encrypted}"
             )
 
@@ -156,11 +158,11 @@ async def create_credential(
                 "message": f"Credential {request.key} {'encrypted and ' if request.is_encrypted else ''}saved successfully",
             }
         else:
-            logfire.error(f"Failed to save credential | key={request.key}")
+            logger.error(f"Failed to save credential | key={request.key}")
             raise HTTPException(status_code=500, detail={"error": "Failed to save credential"})
 
     except Exception as e:
-        logfire.error(f"Error creating credential | key={request.key} | error={str(e)}")
+        logger.error(f"Error creating credential | key={request.key} | error={str(e)}")
         raise HTTPException(status_code=500, detail={"error": str(e)}) from e
 
 
@@ -180,7 +182,7 @@ async def get_credential(
 ):
     """Get a specific credential by key."""
     try:
-        logfire.info(f"Getting credential | key={key}")
+        logger.info(f"Getting credential | key={key}")
         value = await cred_service.get_credential(key, decrypt=False)
 
         if value is None:
@@ -209,7 +211,7 @@ async def get_credential(
     except HTTPException:
         raise
     except Exception as e:
-        logfire.error(f"Error getting credential | key={key} | error={str(e)}")
+        logger.error(f"Error getting credential | key={key} | error={str(e)}")
         raise HTTPException(status_code=500, detail={"error": str(e)}) from e
 
 
@@ -221,11 +223,12 @@ async def update_credential(
 ):
     """Update an existing credential."""
     try:
-        logfire.info(f"Updating credential | key={key}")
-        value = request.get("value", "")
-        is_encrypted = request.get("is_encrypted")
-        category = request.get("category")
-        description = request.get("description")
+        logger.info(f"Updating credential | key={key}")
+        # Explicitly typed in signature, so request is guaranteed to be a dict
+        value = str(request.get("value", ""))
+        is_encrypted = bool(request.get("is_encrypted", False))
+        category = str(request.get("category")) if request.get("category") else None
+        description = str(request.get("description")) if request.get("description") else None
 
         success = await cred_service.set_credential(
             key=key,
@@ -239,7 +242,7 @@ async def update_credential(
             return {"success": True, "message": f"Credential {key} updated successfully"}
         raise HTTPException(status_code=500, detail={"error": "Failed to update credential"})
     except Exception as e:
-        logfire.error(f"Error updating credential | key={key} | error={str(e)}")
+        logger.error(f"Error updating credential | key={key} | error={str(e)}")
         raise HTTPException(status_code=500, detail={"error": str(e)}) from e
 
 
@@ -250,16 +253,16 @@ async def delete_credential(
 ):
     """Delete a credential."""
     try:
-        logfire.info(f"Deleting credential | key={key}")
+        logger.info(f"Deleting credential | key={key}")
         success = await cred_service.delete_credential(key)
 
         if success:
-            logfire.info(f"Credential deleted successfully | key={key}")
+            logger.info(f"Credential deleted successfully | key={key}")
             return {"success": True, "message": f"Credential {key} deleted successfully"}
 
         raise HTTPException(status_code=404, detail={"error": "Credential not found"})
     except Exception as e:
-        logfire.error(f"Error deleting credential | key={key} | error={str(e)}")
+        logger.error(f"Error deleting credential | key={key} | error={str(e)}")
         raise HTTPException(status_code=500, detail={"error": str(e)}) from e
 
 
@@ -267,7 +270,7 @@ async def delete_credential(
 async def database_metrics():
     """Get database metrics and statistics."""
     try:
-        logfire.info("Getting database metrics")
+        logger.info("Getting database metrics")
         settings_service = SettingsService()
         success, tables_info = settings_service.get_database_statistics()
         if not success:
@@ -280,7 +283,7 @@ async def database_metrics():
             "timestamp": datetime.now().isoformat(),
         }
     except Exception as e:
-        logfire.error(f"Error getting database metrics | error={str(e)}")
+        logger.error(f"Error getting database metrics | error={str(e)}")
         raise HTTPException(status_code=500, detail={"error": str(e)}) from e
 
 
@@ -314,7 +317,7 @@ async def update_my_profile(
             raise HTTPException(status_code=500, detail=f"Failed to update profile: {result}")
         return {"success": True, "profile": result}
     except Exception as e:
-        logfire.error(f"Error updating profile | error={str(e)}")
+        logger.error(f"Error updating profile | error={str(e)}")
         raise HTTPException(status_code=500, detail={"error": str(e)}) from e
 
 @router.get("/users")
@@ -337,7 +340,7 @@ async def list_users_admin(
             return [u for u in all_users if u.get('department') == dept] if dept else [u for u in all_users if u['id'] == current_user['id']]
         return []
     except Exception as e:
-        logfire.error(f"Error listing users | error={str(e)}")
+        logger.error(f"Error listing users | error={str(e)}")
         raise HTTPException(status_code=500, detail={"error": str(e)}) from e
 
 @router.put("/users/{user_id}")
@@ -371,7 +374,7 @@ async def update_user_profile_admin(
     except HTTPException:
         raise
     except Exception as e:
-        logfire.error(f"Error updating user profile | error={str(e)}")
+        logger.error(f"Error updating user profile | error={str(e)}")
         raise HTTPException(status_code=500, detail={"error": str(e)}) from e
 
 @router.post("/users/{user_id}/reset-password")
@@ -400,5 +403,5 @@ async def reset_user_password(
         supabase.auth.admin.update_user_by_id(user_id, {"password": request.new_password})
         return {"success": True, "message": "Password reset successfully"}
     except Exception as e:
-        logfire.error(f"Password reset failed | error={str(e)}")
+        logger.error(f"Password reset failed | error={str(e)}")
         raise HTTPException(status_code=500, detail=str(e)) from e

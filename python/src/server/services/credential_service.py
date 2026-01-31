@@ -116,7 +116,7 @@ class CredentialService:
             fernet = Fernet(self._get_encryption_key())
             encrypted_bytes = base64.urlsafe_b64decode(encrypted_value.encode("utf-8"))
             decrypted_bytes = fernet.decrypt(encrypted_bytes)
-            return decrypted_bytes.decode("utf-8")
+            return str(decrypted_bytes.decode("utf-8"))
         except Exception as e:
             logger.error(f"Error decrypting value: {e}")
             raise
@@ -193,41 +193,31 @@ class CredentialService:
         key: str,
         value: str,
         is_encrypted: bool = False,
-        category: str = None,
-        description: str = None,
+        category: str | None = None,
+        description: str | None = None,
     ) -> bool:
-        """Set a credential value."""
+        """
+        Set a credential/setting in the database.
+        
+        Args:
+            key: Setting key
+            value: Plain text value
+            is_encrypted: Whether to encrypt the value before storing
+            category: Optional category for grouping
+            description: Optional description
+            
+        Returns:
+            True if successful, False otherwise
+        """
         try:
             supabase = self._get_supabase_client()
-
-            if is_encrypted:
-                encrypted_value = self._encrypt_value(value)
-                data = {
-                    "key": key,
-                    "encrypted_value": encrypted_value,
-                    "value": None,
-                    "is_encrypted": True,
-                    "category": category,
-                    "description": description,
-                }
-                # Update cache with encrypted info
-                self._cache[key] = {
-                    "encrypted_value": encrypted_value,
-                    "is_encrypted": True,
-                    "category": category,
-                    "description": description,
-                }
-            else:
-                data = {
-                    "key": key,
-                    "value": value,
-                    "encrypted_value": None,
-                    "is_encrypted": False,
-                    "category": category,
-                    "description": description,
-                }
-                # Update cache with plain value
-                self._cache[key] = value
+            
+            data = {
+                "key": key,
+                "is_encrypted": is_encrypted,
+                "category": category,
+                "description": description
+            }
 
             # Upsert to database with proper conflict handling
             # Since we validate service key at startup, permission errors here indicate actual database issues
@@ -561,7 +551,7 @@ async def get_credential(key: str, default: Any = None) -> Any:
 
 
 async def set_credential(
-    key: str, value: str, is_encrypted: bool = False, category: str = None, description: str = None
+    key: str, value: str, is_encrypted: bool = False, category: str | None = None, description: str | None = None
 ) -> bool:
     """Convenience function to set a credential."""
     return await credential_service.set_credential(key, value, is_encrypted, category, description)
