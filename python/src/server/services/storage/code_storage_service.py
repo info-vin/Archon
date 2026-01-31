@@ -10,7 +10,7 @@ import os
 import re
 from collections.abc import Callable
 from difflib import SequenceMatcher
-from typing import Any
+from typing import Any, cast
 from urllib.parse import urlparse
 
 from supabase import Client
@@ -31,7 +31,7 @@ def _get_model_choice() -> str:
         else:
             model = os.getenv("MODEL_CHOICE", "gpt-4.1-nano")
         search_logger.debug(f"Using model choice: {model}")
-        return model
+        return cast(str, model)
     except Exception as e:
         search_logger.warning(f"Error getting model choice: {e}, using default")
         return "gpt-4.1-nano"
@@ -115,7 +115,7 @@ def _select_best_code_variant(similar_blocks: list[dict[str, Any]]) -> dict[str,
         return similar_blocks[0]
 
     def score_block(block):
-        score = 0
+        score = 0.0
 
         # Prefer blocks with explicit language specification
         if block.get("language") and block["language"] not in ["", "text", "plaintext"]:
@@ -171,7 +171,7 @@ def extract_code_blocks(markdown_content: str, min_length: int | None = None) ->
 
         def _get_setting_fallback(key: str, default: str) -> str:
             if credential_service._cache_initialized and key in credential_service._cache:
-                return credential_service._cache[key]
+                return cast(str, credential_service._cache[key])
             return os.getenv(key, default)
 
         # Get all relevant settings with defaults
@@ -310,9 +310,10 @@ def extract_code_blocks(markdown_content: str, min_length: int | None = None) ->
             for indicator in doc_indicators:
                 if isinstance(indicator, tuple):
                     # Check if multiple words from tuple appear
-                    doc_score += sum(1 for word in indicator if word in code_lower)
+                    doc_score += sum(1 for word in indicator if cast(str, word) in code_lower)
                 else:
-                    if indicator in code_lower:
+                    indicator_str = cast(str, indicator)
+                    if indicator_str in code_lower:
                         doc_score += 2
 
             # Calculate lines and check structure
@@ -714,7 +715,7 @@ async def generate_code_summaries_batch(
                 }
                 final_summaries.append(fallback)
             else:
-                final_summaries.append(summary)
+                final_summaries.append(cast(dict[str, str], summary))
 
         search_logger.info(f"Successfully generated {len(final_summaries)} code summaries")
         return final_summaries

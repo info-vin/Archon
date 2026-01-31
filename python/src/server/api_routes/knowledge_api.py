@@ -13,6 +13,7 @@ import asyncio
 import io
 import json
 import uuid
+from typing import Any
 from urllib.parse import quote
 
 from fastapi import APIRouter, Depends, File, Form, Header, HTTPException, UploadFile
@@ -767,7 +768,7 @@ async def _perform_upload_with_progress(
         # Step 3: Store document chunks
         doc_storage_service = DocumentStorageService(get_supabase_client())
 
-        async def document_progress_callback(message: str, percentage: int, batch_info: dict = None):
+        async def document_progress_callback(message: str, percentage: int, batch_info: dict[str, Any] | None = None):
             mapped_percentage = progress_mapper.map_progress("document_storage", percentage)
             await tracker.update(status="document_storage", progress=mapped_percentage, log=message, **(batch_info or {}))
 

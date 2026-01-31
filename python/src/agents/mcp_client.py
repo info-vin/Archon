@@ -8,7 +8,7 @@ instead of direct database access or service imports.
 
 import json
 import logging
-from typing import Any
+from typing import Any, cast
 
 import httpx
 
@@ -87,7 +87,7 @@ class MCPClient:
                 error = result["error"]
                 raise Exception(f"MCP tool error: {error.get('message', 'Unknown error')}")
 
-            return result.get("result", {})
+            return cast(dict[str, Any], result.get("result", {}))
 
         except httpx.HTTPError as e:
             logger.error(f"HTTP error calling MCP tool {tool_name}: {e}")

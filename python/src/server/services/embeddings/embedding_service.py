@@ -192,7 +192,7 @@ async def create_embeddings_batch(
                         batch_index = i // batch_size # Variable used now
 
                         try:
-                            batch_tokens = sum(len(text.split()) for text in batch) * 1.3
+                            batch_tokens = int(sum(len(text.split()) for text in batch) * 1.3)
                             rate_limit_callback = None
                             if progress_callback:
                                 async def rate_limit_callback(data: dict, res=result):

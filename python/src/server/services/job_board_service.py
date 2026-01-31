@@ -1,5 +1,6 @@
 import asyncio
 import random
+from typing import cast
 
 import httpx
 from pydantic import BaseModel
@@ -296,7 +297,7 @@ class JobBoardService:
             job_desc = data.get("data", {}).get("jobDetail", {}).get("jobDescription")
 
             if job_desc:
-                return job_desc
+                return cast(str, job_desc)
 
             return None
 

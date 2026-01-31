@@ -11,7 +11,7 @@ Provides common functionality for all document storage operations including:
 import re
 from abc import ABC, abstractmethod
 from collections.abc import Callable
-from typing import Any
+from typing import Any, cast
 from urllib.parse import urlparse
 
 from ...config.logfire_config import get_logger, safe_span
@@ -138,7 +138,7 @@ class BaseStorageService(ABC):
                     f"Successfully chunked text: original_length={len(text)}, chunks_created={len(chunks)}"
                 )
 
-                return chunks
+                return cast(list[str], chunks)
 
             except Exception as e:
                 span.set_attribute("success", False)

@@ -23,7 +23,7 @@ class SourceLinkingService:
         """Initialize with optional supabase client"""
         self.supabase_client = supabase_client or get_supabase_client()
 
-    async def get_project_sources(self, project_id: str) -> tuple[bool, dict[str, list[str]]]:
+    async def get_project_sources(self, project_id: str) -> tuple[bool, dict[str, Any]]:
         """
         Get all linked sources for a project, separated by type.
 

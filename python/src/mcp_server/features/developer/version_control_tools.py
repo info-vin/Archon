@@ -1,6 +1,7 @@
 # python/src/mcp_server/features/developer/version_control_tools.py
 import asyncio
 import logging
+from typing import cast
 
 from pydantic import BaseModel, Field
 
@@ -62,7 +63,7 @@ Instructions:
                 max_tokens=150,
                 temperature=0.3
             )
-            generated_message = response.choices[0].message.content.strip()
+            generated_message = cast(str, response.choices[0].message.content.strip())
             # Remove any surrounding quotes if present
             if (generated_message.startswith('"') and generated_message.endswith('"')) or \
                (generated_message.startswith("'") and generated_message.endswith("'")):

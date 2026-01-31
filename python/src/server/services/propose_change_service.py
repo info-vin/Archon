@@ -2,10 +2,10 @@
 import asyncio
 import logging
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 from uuid import UUID
 
-import aiofiles
+import aiofiles  # type: ignore
 from supabase_py_async import AsyncClient
 
 
@@ -107,7 +107,7 @@ class ProposeChangeService:
         if not response.data:
             raise Exception("Failed to create proposal in database.")
 
-        return response.data[0]
+        return cast(dict[str, Any], response.data[0])
 
     async def list_proposals(self, status: str | None = 'pending') -> list[dict[str, Any]]:
         """Lists all proposals, optionally filtered by status."""
@@ -119,7 +119,7 @@ class ProposeChangeService:
 
         response = await query.order("created_at", desc=True).execute()
 
-        return response.data
+        return cast(list[dict[str, Any]], response.data)
 
     async def get_proposal(self, proposal_id: UUID) -> dict[str, Any] | None:
         """Retrieves a single proposal by its ID."""
@@ -127,7 +127,7 @@ class ProposeChangeService:
 
         response = await self.db_client.table("proposed_changes").select("*").eq("id", proposal_id).maybe_single().execute()
 
-        return response.data
+        return cast(dict[str, Any] | None, response.data)
 
     async def approve_proposal(self, proposal_id: UUID, user_id: UUID) -> dict[str, Any]:
         """Marks a proposal as approved."""
@@ -142,7 +142,7 @@ class ProposeChangeService:
         if not response.data:
             raise Exception(f"Proposal with ID {proposal_id} not found or could not be updated.")
 
-        return response.data[0]
+        return cast(dict[str, Any], response.data[0])
 
     async def reject_proposal(self, proposal_id: UUID, user_id: UUID) -> dict[str, Any]:
         """Marks a proposal as rejected."""
@@ -157,7 +157,7 @@ class ProposeChangeService:
         if not response.data:
             raise Exception(f"Proposal with ID {proposal_id} not found or could not be updated.")
 
-        return response.data[0]
+        return cast(dict[str, Any], response.data[0])
 
     async def execute_proposal(self, proposal_id: UUID) -> dict[str, Any]:
         """Executes an approved proposal and updates its status."""
@@ -191,7 +191,7 @@ class ProposeChangeService:
                 "execution_log": execution_log
             }).eq("id", proposal_id).execute()
 
-            return update_response.data[0]
+            return cast(dict[str, Any], update_response.data[0])
 
         except Exception as e:
             self.logger.error(f"Execution failed for proposal {proposal_id}: {e}", exc_info=True)

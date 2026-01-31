@@ -15,7 +15,7 @@ import logging
 import os
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
-from typing import Any
+from typing import Any, cast
 
 import httpx
 import uvicorn
@@ -228,25 +228,26 @@ async def stream_agent(agent_type: str, request: AgentRequest):
         try:
             # Prepare dependencies based on agent type
             # Import dependency classes
+            from .base_agent import ArchonDependencies
+            deps: ArchonDependencies
+
             if agent_type == "rag":
                 from .rag_agent import RagDependencies
 
                 deps = RagDependencies(
                     source_filter=request.context.get("source_filter") if request.context else None,
                     match_count=request.context.get("match_count", 5) if request.context else 5,
-                    project_id=request.context.get("project_id") if request.context else None,
+                    project_id=cast(str, request.context.get("project_id")) if request.context else None,
                 )
             elif agent_type == "document":
                 from .document_agent import DocumentDependencies
 
                 deps = DocumentDependencies(
-                    project_id=request.context.get("project_id") if request.context else None,
-                    user_id=request.context.get("user_id") if request.context else None,
+                    project_id=cast(str, (request.context.get("project_id") if request.context else "") or ""),
+                    user_id=cast(str, request.context.get("user_id")) if request.context else None,
                 )
             else:
                 # Default dependencies
-                from .base_agent import ArchonDependencies
-
                 deps = ArchonDependencies()
 
             # Use PydanticAI's run_stream method

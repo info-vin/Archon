@@ -6,6 +6,8 @@ Handles:
 - Team performance metrics (Member Performance)
 """
 
+from typing import Any
+
 from fastapi import APIRouter, HTTPException
 from fastapi import status as http_status
 
@@ -77,7 +79,7 @@ async def get_member_performance():
             member_counts[assignee] = member_counts.get(assignee, 0) + 1
 
         # Format and Sort (Top performers first)
-        result = [
+        result: list[dict[str, Any]] = [
             {"name": assignee, "completed_tasks": count}
             for assignee, count in member_counts.items()
         ]
@@ -120,7 +122,7 @@ async def get_ai_usage():
             user = log.get("user_name") or "Unknown"
             user_counts[user] = user_counts.get(user, 0) + 1
 
-        breakdown = [
+        breakdown: list[dict[str, Any]] = [
             {"name": user, "calls": count, "tokens": count * 500}
             for user, count in user_counts.items()
         ]

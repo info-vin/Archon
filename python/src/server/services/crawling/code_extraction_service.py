@@ -715,21 +715,12 @@ class CodeExtractionService:
             min_length: Minimum length for code blocks
 
         Returns:
-            List of code blocks with metadata
+            List of dictionaries containing code blocks and their context
         """
-        import re
+        if min_length is None:
+            min_length = 250
 
-        safe_logfire_info(
-            f"🔍 TEXT FILE EXTRACTION START | url={url} | content_length={len(content)}"
-        )
-        safe_logfire_info(f"📄 First 1000 chars: {repr(content[:1000])}...")
-        safe_logfire_info(
-            f"📄 Sample showing backticks: {repr(content[5000:6000])}..."
-            if len(content) > 6000
-            else "Content too short for mid-sample"
-        )
-
-        code_blocks: list[dict[str, Any]] = []
+        code_blocks = []
 
         # Method 1: Look for triple backtick code blocks (Markdown style)
         # Pattern allows for additional text after language (e.g., "typescript TypeScript")
@@ -794,11 +785,9 @@ class CodeExtractionService:
         for match in matches:
             language_info = match.group(1).lower()
             # Extract just the language name
-            language = (
-                re.match(r"(\w+)", language_info).group(1)
-                if re.match(r"(\w+)", language_info)
-                else ""
-            )
+            lang_match = re.match(r"(\w+)", language_info)
+            language = lang_match.group(1) if lang_match else ""
+
             code_content = match.group(2).strip()
 
             # Calculate dynamic minimum length for language-labeled blocks

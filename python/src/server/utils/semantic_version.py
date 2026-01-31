@@ -65,11 +65,13 @@ def compare_versions(version1: str, version2: str) -> int:
     v1 = parse_version(version1)
     v2 = parse_version(version2)
 
-    # Compare major, minor, patch
-    for i in range(3):
-        v1_val = int(v1[i]) if v1[i] is not None else 0
-        v2_val = int(v2[i]) if v2[i] is not None else 0
+    # Destructure to avoid dynamic indexing issues
+    major1, minor1, patch1, pre1 = v1
+    major2, minor2, patch2, pre2 = v2
 
+    # Compare major, minor, patch
+    pairs = [(major1, major2), (minor1, minor2), (patch1, patch2)]
+    for v1_val, v2_val in pairs:
         if v1_val < v2_val:
             return -1
         elif v1_val > v2_val:
@@ -77,17 +79,17 @@ def compare_versions(version1: str, version2: str) -> int:
 
     # If main versions are equal, check prerelease
     # No prerelease is considered newer than any prerelease
-    if v1[3] is None and v2[3] is None:
+    if pre1 is None and pre2 is None:
         return 0
-    elif v1[3] is None:
+    elif pre1 is None:
         return 1  # v1 is release, v2 is prerelease
-    elif v2[3] is None:
+    elif pre2 is None:
         return -1  # v1 is prerelease, v2 is release
     else:
         # Both have prereleases, compare lexicographically
-        if v1[3] < v2[3]:
+        if pre1 < pre2:
             return -1
-        elif v1[3] > v2[3]:
+        elif pre1 > pre2:
             return 1
         return 0
 

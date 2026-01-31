@@ -1,5 +1,6 @@
 import asyncio
 import json
+from typing import Any, cast
 
 from ..config.logfire_config import get_logger
 from ..utils import get_supabase_client
@@ -79,7 +80,7 @@ class HealthService:
         """
         logger.info("Starting RAG integrity check...")
 
-        details = {
+        details: dict[str, Any] = {
             "steps": [],
             "config": {},
             "errors": []
@@ -132,10 +133,11 @@ class HealthService:
                 raise Exception("Embedding generation timed out. Check background workers/triggers.")
 
             # Parse embedding
+            vec = []
             if isinstance(raw_embedding, str):
-                vec = json.loads(raw_embedding)
+                vec = cast(list[float], json.loads(raw_embedding))
             else:
-                vec = raw_embedding
+                vec = cast(list[float], raw_embedding)
 
             dim = len(vec)
             details["detected_dimensions"] = dim

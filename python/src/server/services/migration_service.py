@@ -4,7 +4,7 @@ Database migration tracking and management service.
 
 import hashlib
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import logfire
 from supabase import Client
@@ -90,7 +90,7 @@ class MigrationService:
 
             # Check if result indicates table exists
             if result.data and len(result.data) > 0:
-                return result.data[0].get("exists", False)
+                return cast(bool, result.data[0].get("exists", False))
             return False
         except Exception:
             # If the SQL function doesn't exist or query fails, try direct query
@@ -132,7 +132,7 @@ class MigrationService:
         Returns:
             List of PendingMigration objects
         """
-        migrations = []
+        migrations: list[PendingMigration] = []
 
         if not self._migrations_dir.exists():
             logfire.warning(f"Migration directory does not exist: {self._migrations_dir}")

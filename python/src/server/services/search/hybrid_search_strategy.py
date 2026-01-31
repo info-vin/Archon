@@ -88,7 +88,7 @@ class HybridSearchStrategy:
                 span.set_attribute("results_count", len(results))
 
                 # Log match type distribution for debugging
-                match_types = {}
+                match_types: dict[str, int] = {}
                 for r in results:
                     mt = r.get("match_type", "unknown")
                     match_types[mt] = match_types.get(mt, 0) + 1
@@ -176,7 +176,7 @@ class HybridSearchStrategy:
                 span.set_attribute("results_count", len(results))
 
                 # Log match type distribution for debugging
-                match_types = {}
+                match_types: dict[str, int] = {}
                 for r in results:
                     mt = r.get("match_type", "unknown")
                     match_types[mt] = match_types.get(mt, 0) + 1

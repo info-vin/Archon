@@ -46,7 +46,7 @@ class RateLimitHandler:
     def __init__(self, max_retries: int = 5, base_delay: float = 1.0):
         self.max_retries = max_retries
         self.base_delay = base_delay
-        self.last_request_time = 0
+        self.last_request_time: float = 0.0
         self.min_request_interval = 0.1  # Minimum 100ms between requests
 
     async def execute_with_rate_limit(self, func, *args, progress_callback=None, **kwargs):
@@ -200,9 +200,9 @@ class BaseAgent[DepsT, OutputT](ABC):
         if self.rate_limiter:
             # Extract progress callback from deps if available
             progress_callback = getattr(deps, "progress_callback", None)
-            return await self.rate_limiter.execute_with_rate_limit(
+            return cast(OutputT, await self.rate_limiter.execute_with_rate_limit(
                 self._run_agent, user_prompt, deps, progress_callback=progress_callback
-            )
+            ))
         else:
             return await self._run_agent(user_prompt, deps)
 

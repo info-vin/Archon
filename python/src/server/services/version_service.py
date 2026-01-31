@@ -3,7 +3,7 @@ Version checking service with GitHub API integration.
 """
 
 from datetime import datetime, timedelta
-from typing import Any
+from typing import Any, cast
 
 import httpx
 import logfire
@@ -59,7 +59,7 @@ class VersionService:
                     return None
 
                 response.raise_for_status()
-                data = response.json()
+                data = cast(dict[str, Any], response.json())
 
                 # Cache the successful response
                 self._cache = data

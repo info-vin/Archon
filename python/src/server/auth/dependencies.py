@@ -1,6 +1,6 @@
 # python/src/server/auth/dependencies.py
 
-from typing import Annotated
+from typing import Annotated, Any, cast
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -14,7 +14,7 @@ security = HTTPBearer()
 
 async def get_token(credentials: Annotated[HTTPAuthorizationCredentials, Depends(security)]) -> str:
     """Extracts the Bearer token from the Authorization header."""
-    return credentials.credentials
+    return cast(str, credentials.credentials)
 
 async def get_current_user(
     token: Annotated[str, Depends(get_token)]
@@ -48,7 +48,7 @@ async def get_current_user(
             "role": "employee" # Default safe role
         }
 
-    return profile # Should contain 'role' field
+    return cast(dict[str, Any], profile) # Should contain 'role' field
 
 async def get_current_admin(
     current_user: Annotated[dict, Depends(get_current_user)]

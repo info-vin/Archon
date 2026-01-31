@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, cast
 
 from supabase import Client
 
@@ -74,12 +74,14 @@ class AuthService:
             if response.data:
                 logger.info(f"Profile created for: {user_id}")
                 # Return the first item if list
-                return response.data[0] if isinstance(response.data, list) and response.data else response.data
+                if isinstance(response.data, list) and response.data:
+                    return cast(dict[str, Any], response.data[0])
+                return cast(dict[str, Any], response.data)
             else:
                 # Fallback: If upsert returns nothing (rare), fetch it
                 success, profile = self.profile_service.get_profile(user_id)
-                if success and profile:
-                    return profile
+                if success and isinstance(profile, dict):
+                    return cast(dict[str, Any], profile)
                 raise ValueError("Profile creation failed: No data returned.")
 
         except Exception as e:
@@ -145,7 +147,9 @@ class AuthService:
             response = self.supabase.table("profiles").insert(profile_data).execute()
 
             if response.data:
-                return response.data[0] if isinstance(response.data, list) else response.data
+                if isinstance(response.data, list):
+                    return cast(dict[str, Any], response.data[0])
+                return cast(dict[str, Any], response.data)
             raise ValueError("Profile creation failed.")
         except Exception as e:
             logger.error(f"Error in register_user: {e}", exc_info=True)

@@ -294,7 +294,7 @@ def register_task_tools(mcp: FastMCP):
                         )
 
                     # Build update fields
-                    update_fields = {}
+                    update_fields: dict[str, Any] = {}
                     if title is not None:
                         update_fields["title"] = title
                     if description is not None:

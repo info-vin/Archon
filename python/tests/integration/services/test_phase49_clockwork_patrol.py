@@ -20,7 +20,12 @@ async def test_run_log_patrol_creates_task():
     mock_supabase.table().select().limit().execute.return_value.data = [{"id": "proj-1"}]
 
     mock_task_service = AsyncMock()
-    mock_task_service.create_task.return_value = (True, {"id": "task-repair-1"})
+    mock_task_service.create_task.return_value = (True, {
+        "task": {
+            "id": "task-repair-1",
+            "assignee_id": "ai-dev-bot"
+        }
+    })
 
     mock_agent_service = AsyncMock()
 
@@ -38,7 +43,10 @@ async def test_run_log_patrol_creates_task():
         assert "500 Error" in kwargs["description"]
 
         mock_agent_service.run_agent_task.assert_called_once()
-        assert mock_agent_service.run_agent_task.call_args[0][0] == "task-repair-1"
+        # Verify call arguments - task_id and agent_id
+        _, call_kwargs = mock_agent_service.run_agent_task.call_args
+        assert call_kwargs.get("task_id") == "task-repair-1"
+        assert call_kwargs.get("agent_id") == "ai-dev-bot"
 
 @pytest.mark.asyncio
 async def test_run_log_patrol_no_errors():

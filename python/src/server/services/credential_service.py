@@ -12,7 +12,7 @@ import time
 from dataclasses import dataclass
 
 # Removed direct logging import - using unified config
-from typing import Any
+from typing import Any, cast
 
 from cryptography.fernet import Fernet
 from cryptography.hazmat.primitives import hashes
@@ -212,12 +212,19 @@ class CredentialService:
         try:
             supabase = self._get_supabase_client()
 
-            data = {
+            data: dict[str, Any] = {
                 "key": key,
                 "is_encrypted": is_encrypted,
                 "category": category,
                 "description": description
             }
+
+            if is_encrypted:
+                data["encrypted_value"] = self._encrypt_value(value)
+                data["value"] = None
+            else:
+                data["value"] = value
+                data["encrypted_value"] = None
 
             # Upsert to database with proper conflict handling
             # Since we validate service key at startup, permission errors here indicate actual database issues
@@ -515,13 +522,13 @@ class CredentialService:
 
         key_name = key_mapping.get(provider)
         if key_name:
-            return await self.get_credential(key_name)
+            return cast(str | None, await self.get_credential(key_name))
         return "ollama" if provider == "ollama" else None
 
     def _get_provider_base_url(self, provider: str, rag_settings: dict) -> str | None:
         """Get base URL for provider."""
         if provider == "ollama":
-            return rag_settings.get("LLM_BASE_URL", "http://localhost:11434/v1")
+            return cast(str | None, rag_settings.get("LLM_BASE_URL", "http://localhost:11434/v1"))
         elif provider == "google":
             return "https://generativelanguage.googleapis.com/v1beta/openai/"
         return None  # Use default for OpenAI

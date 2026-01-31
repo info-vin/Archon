@@ -236,8 +236,7 @@ def create_progress_response(
             logger = get_logger(__name__)
             logger.info(f"Code extraction progress fields present: completed_summaries={progress_data.get('completed_summaries')}, total_summaries={progress_data.get('total_summaries')}")
 
-        from typing import cast
-        return cast(BaseProgressResponse, model_class(**progress_data))
+        return model_class(**progress_data)
     except Exception as e:
         # Log validation errors for debugging
         from ..config.logfire_config import get_logger

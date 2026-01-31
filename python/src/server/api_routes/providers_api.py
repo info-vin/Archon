@@ -4,6 +4,8 @@ Provider status API endpoints for testing connectivity
 Handles server-side provider connectivity testing without exposing API keys to frontend.
 """
 
+from typing import cast
+
 import httpx
 from fastapi import APIRouter, HTTPException, Path
 
@@ -24,7 +26,7 @@ async def test_openai_connection(api_key: str) -> bool:
                 "https://api.openai.com/v1/models",
                 headers={"Authorization": f"Bearer {api_key}"}
             )
-            return response.status_code == 200
+            return cast(bool, response.status_code == 200)
     except Exception as e:
         logger.warning(f"OpenAI connectivity test failed: {e}")
         return False
@@ -44,7 +46,7 @@ async def test_google_connection(api_key: str) -> bool:
             logger.info(f"Google API response: {response.status_code}")
             if response.status_code != 200:
                 logger.warning(f"Google API Error Body: {response.text[:200]}")
-            return response.status_code == 200
+            return cast(bool, response.status_code == 200)
     except Exception as e:
         logger.warning(f"Google AI connectivity test failed: {e}")
         return False
@@ -61,7 +63,7 @@ async def test_anthropic_connection(api_key: str) -> bool:
                     "anthropic-version": "2023-06-01"
                 }
             )
-            return response.status_code == 200
+            return cast(bool, response.status_code == 200)
     except Exception as e:
         logger.warning(f"Anthropic connectivity test failed: {e}")
         return False
@@ -75,7 +77,7 @@ async def test_openrouter_connection(api_key: str) -> bool:
                 "https://openrouter.ai/api/v1/models",
                 headers={"Authorization": f"Bearer {api_key}"}
             )
-            return response.status_code == 200
+            return cast(bool, response.status_code == 200)
     except Exception as e:
         logger.warning(f"OpenRouter connectivity test failed: {e}")
         return False
@@ -89,7 +91,7 @@ async def test_grok_connection(api_key: str) -> bool:
                 "https://api.x.ai/v1/models",
                 headers={"Authorization": f"Bearer {api_key}"}
             )
-            return response.status_code == 200
+            return cast(bool, response.status_code == 200)
     except Exception as e:
         logger.warning(f"Grok connectivity test failed: {e}")
         return False

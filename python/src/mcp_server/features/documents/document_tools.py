@@ -214,7 +214,7 @@ def register_document_tools(mcp: FastMCP):
                             "document_id required for update"
                         )
 
-                    update_data = {}
+                    update_data: dict[str, Any] = {}
                     if title is not None:
                         update_data["title"] = title
                     if content is not None:

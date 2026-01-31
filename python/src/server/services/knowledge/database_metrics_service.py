@@ -88,7 +88,7 @@ class DatabaseMetricsService:
             Dictionary containing storage statistics
         """
         try:
-            stats = {}
+            stats: dict[str, Any] = {}
 
             # Get knowledge type distribution
             knowledge_types_result = (
@@ -96,7 +96,7 @@ class DatabaseMetricsService:
             )
 
             if knowledge_types_result.data:
-                type_counts = {}
+                type_counts: dict[str, int] = {}
                 for row in knowledge_types_result.data:
                     ktype = row.get("knowledge_type", "unknown")
                     type_counts[ktype] = type_counts.get(ktype, 0) + 1

@@ -1,5 +1,6 @@
 
 import mimetypes
+from typing import cast
 
 from fastapi import UploadFile
 from supabase import Client
@@ -54,7 +55,7 @@ class StorageService:
                 raise StorageUploadError(f"Failed to create signed URL for {file_path}. Response: {signed_url_response}")
 
             logger.info(f"Successfully uploaded file '{file.filename}' and created signed URL.")
-            return public_url
+            return cast(str, public_url)
 
         except Exception as e:
             detailed_error_message = f"Storage upload failed: {e}"

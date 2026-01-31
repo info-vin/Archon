@@ -8,7 +8,7 @@ Supports OpenAI, Ollama, and Google Gemini.
 import inspect
 import time
 from contextlib import asynccontextmanager
-from typing import Any
+from typing import Any, cast
 
 import openai
 
@@ -185,8 +185,9 @@ async def get_llm_client(
                 api_key = None  # Treat empty strings as None
             elif len(api_key) > 500:  # Reasonable API key length limit
                 raise ValueError("API key length exceeds security limits")
-            # Additional security: check for suspicious patterns
-            if any(char in api_key for char in ['\n', '\r', '\t', '\0']):
+
+            # Re-check api_key after strip potential None-ification
+            if api_key and any(char in api_key for char in ['\n', '\r', '\t', '\0']):
                 raise ValueError("API key contains invalid characters")
 
         # Sanitize provider name for logging
@@ -482,8 +483,8 @@ async def get_embedding_model(provider: str | None = None) -> str:
             logger.warning(f"Invalid embedding provider: {safe_provider}, falling back to OpenAI")
             provider_name = "openai"
         # Use custom model if specified (with validation)
-        if custom_model and len(custom_model.strip()) > 0:
-            custom_model = custom_model.strip()
+        if custom_model and len(str(custom_model).strip()) > 0:
+            custom_model = str(custom_model).strip()
             # Basic model name validation (check length and basic characters)
             if len(custom_model) <= 100 and not any(char in custom_model for char in ['\n', '\r', '\t', '\0']):
                 return custom_model
@@ -792,7 +793,7 @@ def extract_json_from_reasoning(reasoning_text: str, context_code: str = "", lan
         try:
             # Validate it's proper JSON
             json.loads(match.strip())
-            return match.strip()
+            return cast(str, match.strip())
         except json.JSONDecodeError:
             continue
 
@@ -805,7 +806,7 @@ def extract_json_from_reasoning(reasoning_text: str, context_code: str = "", lan
             parsed = json.loads(match.strip())
             # Ensure it has expected structure
             if isinstance(parsed, dict) and any(key in parsed for key in ["example_name", "summary", "name", "title"]):
-                return match.strip()
+                return cast(str, match.strip())
         except json.JSONDecodeError:
             continue
 

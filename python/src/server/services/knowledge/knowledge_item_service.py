@@ -4,7 +4,7 @@ Knowledge Item Service
 Handles all knowledge item CRUD operations and data transformations.
 """
 
-from typing import Any
+from typing import Any, cast
 
 from ...config.logfire_config import safe_logfire_error, safe_logfire_info
 
@@ -327,7 +327,7 @@ class KnowledgeItemService:
     async def _get_all_sources(self) -> list[dict[str, Any]]:
         """Get all sources from the database."""
         result = await self.get_available_sources()
-        return result.get("sources", [])
+        return cast(list[dict[str, Any]], result.get("sources", []))
 
     async def _transform_source_to_item(self, source: dict[str, Any]) -> dict[str, Any]:
         """
@@ -393,7 +393,7 @@ class KnowledgeItemService:
             )
 
             if pages_response.data:
-                return pages_response.data[0].get("url", f"source://{source_id}")
+                return cast(str, pages_response.data[0].get("url", f"source://{source_id}"))
 
         except Exception:
             pass
@@ -419,7 +419,7 @@ class KnowledgeItemService:
         """Determine the source type from metadata or URL pattern."""
         stored_source_type = metadata.get("source_type")
         if stored_source_type:
-            return stored_source_type
+            return cast(str, stored_source_type)
 
         # Legacy fallback - check URL pattern
         return "file" if url.startswith("file://") else "url"

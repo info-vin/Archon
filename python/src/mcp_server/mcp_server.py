@@ -84,8 +84,8 @@ class ArchonContext:
     """
 
     service_client: Any
-    health_status: dict = None
-    startup_time: float = None
+    health_status: dict | None = None
+    startup_time: float | None = None
 
     def __post_init__(self):
         if self.health_status is None:
@@ -105,24 +105,26 @@ async def perform_health_checks(context: ArchonContext):
         # Check dependent services
         service_health = await context.service_client.health_check()
 
-        context.health_status["api_service"] = service_health.get("api_service", False)
-        context.health_status["agents_service"] = service_health.get("agents_service", False)
+        if context.health_status is not None:
+            context.health_status["api_service"] = service_health.get("api_service", False)
+            context.health_status["agents_service"] = service_health.get("agents_service", False)
 
-        # Overall status
-        all_critical_ready = context.health_status["api_service"]
+            # Overall status
+            all_critical_ready = context.health_status["api_service"]
 
-        context.health_status["status"] = "healthy" if all_critical_ready else "degraded"
-        context.health_status["last_health_check"] = datetime.now().isoformat()
+            context.health_status["status"] = "healthy" if all_critical_ready else "degraded"
+            context.health_status["last_health_check"] = datetime.now().isoformat()
 
-        if not all_critical_ready:
-            logger.warning(f"Health check failed: {context.health_status}")
-        else:
-            logger.info("Health check passed - dependent services healthy")
+            if not all_critical_ready:
+                logger.warning(f"Health check failed: {context.health_status}")
+            else:
+                logger.info("Health check passed - dependent services healthy")
 
     except Exception as e:
         logger.error(f"Health check error: {e}")
-        context.health_status["status"] = "unhealthy"
-        context.health_status["last_health_check"] = datetime.now().isoformat()
+        if context.health_status is not None:
+            context.health_status["status"] = "unhealthy"
+            context.health_status["last_health_check"] = datetime.now().isoformat()
 
 
 @asynccontextmanager

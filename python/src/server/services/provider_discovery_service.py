@@ -7,7 +7,7 @@ for OpenAI, Google Gemini, Ollama, Anthropic, and Grok providers.
 
 import time
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, cast
 from urllib.parse import urlparse
 
 import aiohttp
@@ -60,7 +60,7 @@ class ModelSpec:
     pricing_input: float | None = None  # Per million tokens
     pricing_output: float | None = None  # Per million tokens
     description: str = ""
-    aliases: list[str] = None
+    aliases: list[str] | None = None
 
     def __post_init__(self):
         if self.aliases is None:
@@ -179,7 +179,7 @@ class ProviderDiscoveryService:
         cache_key = f"openai_models_{hash(api_key)}"
         cached = self._get_cached_result(cache_key)
         if cached:
-            return cached
+            return cast(list[ModelSpec], cached)
 
         models = []
         try:
@@ -222,7 +222,7 @@ class ProviderDiscoveryService:
         cache_key = f"google_models_{hash(api_key)}"
         cached = self._get_cached_result(cache_key)
         if cached:
-            return cached
+            return cast(list[ModelSpec], cached)
 
         models = []
         try:
@@ -260,7 +260,7 @@ class ProviderDiscoveryService:
             cache_key = f"ollama_models_{base_url}"
             cached = self._get_cached_result(cache_key)
             if cached:
-                all_models.extend(cached)
+                all_models.extend(cast(list[ModelSpec], cached))
                 continue
 
             try:
@@ -334,7 +334,7 @@ class ProviderDiscoveryService:
         cache_key = f"anthropic_models_{hash(api_key)}"
         cached = self._get_cached_result(cache_key)
         if cached:
-            return cached
+            return cast(list[ModelSpec], cached)
 
         models = []
         try:
@@ -364,7 +364,7 @@ class ProviderDiscoveryService:
         cache_key = f"grok_models_{hash(api_key)}"
         cached = self._get_cached_result(cache_key)
         if cached:
-            return cached
+            return cast(list[ModelSpec], cached)
 
         models = []
         try:

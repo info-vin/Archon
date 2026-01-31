@@ -149,7 +149,7 @@ class SchedulerService:
             )
 
             data = res.data or []
-            usage_map = {}
+            usage_map: dict[str, int] = {}
             total_tokens = 0
 
             for entry in data:

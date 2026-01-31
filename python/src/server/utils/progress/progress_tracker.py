@@ -5,7 +5,7 @@ Tracks operation progress in memory for HTTP polling access.
 """
 
 from datetime import datetime
-from typing import Any
+from typing import Any, cast
 
 from ...config.logfire_config import safe_logfire_error, safe_logfire_info
 
@@ -29,7 +29,7 @@ class ProgressTracker:
         """
         self.progress_id = progress_id
         self.operation_type = operation_type
-        self.state = {
+        self.state: dict[str, Any] = {
             "progress_id": progress_id,
             "type": operation_type,  # Store operation type for progress model selection
             "start_time": datetime.now().isoformat(),
@@ -80,7 +80,7 @@ class ProgressTracker:
             **kwargs: Additional data to include in update
         """
         # CRITICAL: Never allow progress to go backwards
-        current_progress = self.state.get("progress", 0)
+        current_progress = cast(int, self.state.get("progress", 0))
         new_progress = min(100, max(0, progress))  # Ensure 0-100
 
         # Only update if new progress is greater than or equal to current
@@ -105,7 +105,9 @@ class ProgressTracker:
         # Add log entry
         if "logs" not in self.state:
             self.state["logs"] = []
-        self.state["logs"].append({
+
+        logs_list = cast(list[dict[str, Any]], self.state["logs"])
+        logs_list.append({
             "timestamp": datetime.now().isoformat(),
             "message": log,
             "status": status,
@@ -135,8 +137,10 @@ class ProgressTracker:
 
         # Calculate duration
         if "start_time" in self.state:
-            start = datetime.fromisoformat(self.state["start_time"])
-            end = datetime.fromisoformat(self.state["end_time"])
+            start_str = cast(str, self.state["start_time"])
+            end_str = cast(str, self.state["end_time"])
+            start = datetime.fromisoformat(start_str)
+            end = datetime.fromisoformat(end_str)
             duration = (end - start).total_seconds()
             self.state["duration"] = str(duration)  # Convert to string for Pydantic model
             self.state["duration_formatted"] = self._format_duration(duration)

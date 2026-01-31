@@ -6,6 +6,7 @@ Includes proper rate limiting for OpenAI API calls.
 """
 
 import os
+from typing import cast
 
 import openai
 
@@ -116,7 +117,7 @@ async def _get_model_choice(provider: str | None = None) -> str:
 
     # Get the active provider configuration
     provider_config = await credential_service.get_active_provider("llm")
-    model = provider_config.get("chat_model", "gpt-4.1-nano")
+    model = cast(str, provider_config.get("chat_model", "gpt-4.1-nano"))
 
     search_logger.debug(f"Using model from credential service: {model}")
 

@@ -12,7 +12,7 @@ import os
 import uuid
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-from typing import Any
+from typing import Any, cast
 
 from pydantic import BaseModel, Field
 from pydantic_ai import Agent, RunContext
@@ -488,10 +488,10 @@ class DocumentAgent(BaseAgent[DocumentDependencies, DocumentOperation]):
             """Create an Entity Relationship Diagram description and schema."""
             try:
                 # Parse entity descriptions to create database schema
-                entities = []
+                entities: list[dict[str, Any]] = []
                 entity_lines = entity_descriptions.split("\n")
 
-                current_entity = None
+                current_entity: dict[str, Any] | None = None
                 for line in entity_lines:
                     line = line.strip()
                     if line and not line.startswith("-"):
@@ -534,12 +534,12 @@ class DocumentAgent(BaseAgent[DocumentDependencies, DocumentOperation]):
                 # Generate SQL schema
                 sql_schema = []
                 for entity in entities:
-                    table_sql = f"CREATE TABLE {entity['name'].lower().replace(' ', '_')} (\n"
+                    table_sql = f"CREATE TABLE {cast(str, entity['name']).lower().replace(' ', '_')} (\n"
                     table_sql += "    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),\n"
 
-                    for attr in entity["attributes"]:
+                    for attr in cast(list[dict[str, Any]], entity["attributes"]):
                         nullable = "NULL" if attr["nullable"] else "NOT NULL"
-                        table_sql += f"    {attr['name'].lower().replace(' ', '_')} {attr['type']} {nullable},\n"
+                        table_sql += f"    {cast(str, attr['name']).lower().replace(' ', '_')} {attr['type']} {nullable},\n"
 
                     table_sql += "    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,\n"
                     table_sql += "    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP\n"

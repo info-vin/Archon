@@ -12,7 +12,7 @@ Key features:
 - Programming language and framework-aware search
 """
 
-from typing import Any
+from typing import Any, cast
 
 from supabase import Client
 
@@ -71,6 +71,7 @@ class AgenticRAGStrategy:
         match_count: int = 10,
         filter_metadata: dict[str, Any] | None = None,
         source_id: str | None = None,
+        use_enhancement: bool = False,
     ) -> list[dict[str, Any]]:
         """
         Search for code examples using vector similarity.
@@ -101,12 +102,12 @@ class AgenticRAGStrategy:
                     combined_filter["source"] = source_id
 
                 # Use base strategy for vector search
-                results = await self.base_strategy.vector_search(
+                results = cast(list[dict[str, Any]], await self.base_strategy.vector_search(
                     query_embedding=query_embedding,
                     match_count=match_count,
                     filter_metadata=combined_filter,
                     table_rpc="match_archon_code_examples",
-                )
+                ))
 
                 span.set_attribute("results_found", len(results))
 
@@ -367,7 +368,9 @@ class AgenticRAGStrategy:
 # Utility functions for standalone usage
 def create_agentic_rag_strategy(supabase_client: Client) -> AgenticRAGStrategy:
     """Create an agentic RAG strategy instance."""
-    return AgenticRAGStrategy(supabase_client)
+    from .base_search_strategy import BaseSearchStrategy
+    base_strategy = BaseSearchStrategy(supabase_client)
+    return AgenticRAGStrategy(supabase_client, base_strategy)
 
 
 async def search_code_examples_agentic(
@@ -390,8 +393,8 @@ async def search_code_examples_agentic(
     Returns:
         List of code example results
     """
-    strategy = AgenticRAGStrategy(client)
-    return await strategy.search_code_examples_async(query, match_count, filter_metadata, source_id)
+    strategy = create_agentic_rag_strategy(client)
+    return await strategy.search_code_examples(query, match_count, filter_metadata, source_id)
 
 
 def analyze_query_for_code_search(query: str) -> dict[str, Any]:
@@ -404,5 +407,5 @@ def analyze_query_for_code_search(query: str) -> dict[str, Any]:
     Returns:
         Analysis results
     """
-    strategy = AgenticRAGStrategy(None)  # Don't need client for analysis
+    strategy = AgenticRAGStrategy(cast(Client, None), None)  # Don't need client for analysis
     return strategy.analyze_code_query(query)

@@ -9,7 +9,7 @@ Handles:
 """
 
 from datetime import datetime
-from typing import Any
+from typing import Any, cast
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
@@ -273,13 +273,15 @@ async def database_metrics():
         logger.info("Getting database metrics")
         settings_service = SettingsService()
         success, tables_info = settings_service.get_database_statistics()
-        if not success:
+        if not success or not isinstance(tables_info, dict):
             raise HTTPException(status_code=500, detail={"error": tables_info})
+
+        tables_dict = cast(dict[str, int], tables_info)
         return {
             "status": "healthy",
             "database": "supabase",
-            "tables": tables_info,
-            "total_records": sum(tables_info.values()),
+            "tables": tables_dict,
+            "total_records": sum(tables_dict.values()),
             "timestamp": datetime.now().isoformat(),
         }
     except Exception as e:
@@ -332,12 +334,14 @@ async def list_users_admin(
     try:
         profile_service = ProfileService()
         success, all_users = profile_service.list_full_profiles()
-        if not success:
+        if not success or not isinstance(all_users, list):
             raise HTTPException(status_code=500, detail=f"Failed to list users: {all_users}")
+
+        users_list = cast(list[dict[str, Any]], all_users)
         if role in ["admin", "system_admin"]:
-            return all_users
+            return users_list
         if role == "manager":
-            return [u for u in all_users if u.get('department') == dept] if dept else [u for u in all_users if u['id'] == current_user['id']]
+            return [u for u in users_list if u.get('department') == dept] if dept else [u for u in users_list if u['id'] == current_user['id']]
         return []
     except Exception as e:
         logger.error(f"Error listing users | error={str(e)}")
@@ -358,11 +362,13 @@ async def update_user_profile_admin(
         profile_service = ProfileService()
         if role == "manager":
             success, target = profile_service.get_profile(user_id)
-            if not success or not target:
+            if not success or not isinstance(target, dict):
                 raise HTTPException(status_code=404, detail="User not found")
-            if target.get("department") != dept:
+
+            target_dict = cast(dict[str, Any], target)
+            if target_dict.get("department") != dept:
                 raise HTTPException(status_code=403, detail="Out of department")
-            if target.get("role") in ["admin", "system_admin"]:
+            if target_dict.get("role") in ["admin", "system_admin"]:
                 raise HTTPException(status_code=403, detail="Cannot modify Admin")
             if updates.department and updates.department != dept:
                 raise HTTPException(status_code=403, detail="Cannot transfer department")
@@ -392,11 +398,13 @@ async def reset_user_password(
         profile_service = ProfileService()
         if role == "manager":
             success, target = profile_service.get_profile(user_id)
-            if not success or not target:
+            if not success or not isinstance(target, dict):
                 raise HTTPException(status_code=404, detail="User not found")
-            if target.get("department") != dept:
+
+            target_dict = cast(dict[str, Any], target)
+            if target_dict.get("department") != dept:
                 raise HTTPException(status_code=403, detail="Out of department")
-            if target.get("role") in ["admin", "system_admin"]:
+            if target_dict.get("role") in ["admin", "system_admin"]:
                 raise HTTPException(status_code=403, detail="Cannot modify Admin")
         from ..utils import get_supabase_client
         supabase = get_supabase_client()

@@ -3,7 +3,7 @@
 import asyncio
 import json
 import uuid
-from typing import Any
+from typing import Any, cast
 
 from ..config.logfire_config import get_logger
 from ..prompts.dev_ops_prompts import DEVBOT_TOOLS, get_devbot_analysis_prompt
@@ -137,13 +137,13 @@ class AgentService:
 
                 # Parse JSON
                 try:
-                    return json.loads(content)
+                    return cast(dict[str, Any], json.loads(content))
                 except json.JSONDecodeError:
                     # Fallback: Try to find JSON block if LLM was chatty
                     import re
                     match = re.search(r'\{.*\}', content, re.DOTALL)
                     if match:
-                        return json.loads(match.group(0))
+                        return cast(dict[str, Any], json.loads(match.group(0)))
                     return None
 
         except Exception as e:

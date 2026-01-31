@@ -10,7 +10,7 @@ Provides comprehensive REST endpoints for interacting with Ollama instances:
 
 import json
 from datetime import datetime
-from typing import Any
+from typing import Any, cast
 
 from fastapi import APIRouter, BackgroundTasks, HTTPException, Query
 from pydantic import BaseModel, Field
@@ -183,8 +183,8 @@ async def health_check_endpoint(
         healthy_count = sum(1 for result in health_results.values() if result["is_healthy"])
         avg_response_time = None
         if healthy_count > 0:
-            response_times = [r["response_time_ms"] for r in health_results.values()
-                            if r["response_time_ms"] is not None]
+            response_times = cast(list[float], [r["response_time_ms"] for r in health_results.values()
+                            if r["response_time_ms"] is not None])
             if response_times:
                 avg_response_time = sum(response_times) / len(response_times)
 
@@ -196,7 +196,7 @@ async def health_check_endpoint(
                 "average_response_time_ms": avg_response_time
             },
             "instance_status": health_results,
-            "timestamp": model_discovery_service.check_instance_health.__module__  # Use current timestamp
+            "timestamp": datetime.now().isoformat()
         }
 
     except Exception as e:
@@ -320,14 +320,16 @@ async def get_available_embedding_routes_endpoint(
             })
 
         # Group by dimension for analysis
-        dimension_stats = {}
+        dimension_stats: dict[int, dict[str, Any]] = {}
         for route in routes:
             dim = route.dimensions
             if dim not in dimension_stats:
-                dimension_stats[dim] = {"count": 0, "models": [], "avg_performance": 0}
-            dimension_stats[dim]["count"] += 1
-            dimension_stats[dim]["models"].append(route.model_name)
-            dimension_stats[dim]["avg_performance"] += route.performance_score
+                dimension_stats[dim] = {"count": 0, "models": [], "avg_performance": 0.0}
+
+            stats_entry = dimension_stats[dim]
+            stats_entry["count"] += 1
+            cast(list[str], stats_entry["models"]).append(route.model_name)
+            stats_entry["avg_performance"] += float(route.performance_score)
 
         # Calculate averages
         for dim_data in dimension_stats.values():
@@ -999,8 +1001,8 @@ async def discover_models_with_real_details(request: ModelDiscoveryAndStoreReque
                         try:
                             # Extract real data from tags endpoint only
                             details = model_data.get("details", {})
-                            model_info = {}  # No model_info without /api/show
-                            capabilities = []  # No capabilities without /api/show
+                            model_info: dict[str, Any] = {}  # No model_info without /api/show
+                            capabilities: list[str] = []  # No capabilities without /api/show
 
                             # Determine model type based on name patterns (more reliable than capabilities)
                             model_type = _determine_model_type_from_name_only(model_name)
@@ -1057,8 +1059,8 @@ async def discover_models_with_real_details(request: ModelDiscoveryAndStoreReque
                             # Skip capability testing for fast discovery - assume basic capabilities
                             if model_type == 'chat':
                                 # Skip testing, assume basic chat capabilities for fast discovery
-                                features = ['Local Processing', 'Text Generation', 'Chat Support']
-                                limitations = []
+                                features: list[str] = ['Local Processing', 'Text Generation', 'Chat Support']
+                                limitations: list[str] = []
                                 compatibility_level = 'full'  # Assume full for now
 
                                 compatibility = {

@@ -77,8 +77,8 @@ class RateLimiter:
 
     def __init__(self, config: RateLimitConfig):
         self.config = config
-        self.request_times = deque()
-        self.token_usage = deque()
+        self.request_times: deque[float] = deque()
+        self.token_usage: deque[tuple[float, int]] = deque()
         self.semaphore = asyncio.Semaphore(config.max_concurrent)
         self._lock = asyncio.Lock()
 
@@ -122,12 +122,12 @@ class RateLimiter:
             # Sleep outside the lock to avoid deadlock
             if wait_time_to_sleep is not None:
                 # For long waits, break into smaller chunks with progress updates
-                if wait_time_to_sleep > 5 and progress_callback:
+                if wait_time_to_sleep > 5 and progress_callback is not None:
                     chunks = int(wait_time_to_sleep / 5)  # 5 second chunks
                     for i in range(chunks):
                         await asyncio.sleep(5)
                         remaining = wait_time_to_sleep - (i + 1) * 5
-                        if progress_callback:
+                        if progress_callback is not None:
                             await progress_callback({
                                 "type": "rate_limit_wait",
                                 "remaining_seconds": max(0, remaining),
@@ -166,7 +166,7 @@ class RateLimiter:
     def _calculate_wait_time(self, estimated_tokens: int) -> float:
         """Calculate how long to wait before retrying"""
         if not self.request_times:
-            return 0
+            return 0.0
 
         oldest_request = self.request_times[0]
         time_since_oldest = time.time() - oldest_request
@@ -174,7 +174,7 @@ class RateLimiter:
         if time_since_oldest < 60:
             return 60 - time_since_oldest + 0.1
 
-        return 0
+        return 0.0
 
     def _get_current_usage(self) -> dict[str, int]:
         """Get current usage statistics"""
@@ -193,7 +193,7 @@ class MemoryAdaptiveDispatcher:
     def __init__(self, config: ThreadingConfig):
         self.config = config
         self.current_workers = config.base_workers
-        self.last_metrics = None
+        self.last_metrics: SystemMetrics | None = None
 
     def get_system_metrics(self) -> SystemMetrics:
         """Get current system performance metrics"""
@@ -215,7 +215,7 @@ class MemoryAdaptiveDispatcher:
 
         # Base worker count depends on processing mode
         if mode == ProcessingMode.CPU_INTENSIVE:
-            base = min(self.config.base_workers, psutil.cpu_count())
+            base = min(self.config.base_workers, psutil.cpu_count() or 1)
         elif mode == ProcessingMode.IO_BOUND:
             base = self.config.base_workers * 2
         elif mode == ProcessingMode.NETWORK_BOUND:
@@ -252,7 +252,7 @@ class MemoryAdaptiveDispatcher:
             workers = base
 
         self.current_workers = workers
-        return workers
+        return int(workers)
 
     async def process_with_adaptive_concurrency(
         self,
@@ -270,25 +270,25 @@ class MemoryAdaptiveDispatcher:
         optimal_workers = self.calculate_optimal_workers(mode)
         semaphore = asyncio.Semaphore(optimal_workers)
 
-        logfire_logger.info(
-            "Starting adaptive processing",
-            extra={
-                "items_count": len(items),
-                "workers": optimal_workers,
-                "mode": mode,
-                "memory_percent": self.last_metrics.memory_percent,
-                "cpu_percent": self.last_metrics.cpu_percent,
-            }
-        )
+        if self.last_metrics:
+            logfire_logger.info(
+                "Starting adaptive processing",
+                extra={
+                    "items_count": len(items),
+                    "workers": optimal_workers,
+                    "mode": mode,
+                    "memory_percent": self.last_metrics.memory_percent,
+                    "cpu_percent": self.last_metrics.cpu_percent,
+                }
+            )
 
         # Track active workers
-        active_workers = {}
-        worker_counter = 0
+        active_workers: dict[int, int] = {}
         completed_count = 0
         lock = asyncio.Lock()
 
         async def process_single(item: Any, index: int) -> Any:
-            nonlocal worker_counter, completed_count
+            nonlocal completed_count
 
             # Assign worker ID
             worker_id = None
@@ -424,7 +424,7 @@ class ThreadingService:
         )
 
         self._running = False
-        self._health_check_task = None
+        self._health_check_task: asyncio.Task[None] | None = None
 
     async def start(self):
         """Start the threading service"""

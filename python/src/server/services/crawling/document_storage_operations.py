@@ -69,7 +69,7 @@ class DocumentStorageOperations:
         all_chunk_numbers = []
         all_contents = []
         all_metadatas = []
-        source_word_counts = {}
+        source_word_counts: dict[str, int] = {}
         url_to_full_document = {}
         processed_docs = 0
 
@@ -199,8 +199,8 @@ class DocumentStorageOperations:
         """
         # Find ALL unique source_ids in the crawl results
         unique_source_ids = set()
-        source_id_contents = {}
-        source_id_word_counts = {}
+        source_id_contents: dict[str, list[str]] = {}
+        source_id_word_counts: dict[str, int] = {}
 
         for i, metadata in enumerate(all_metadatas):
             source_id = metadata["source_id"]

@@ -162,6 +162,7 @@ class TaskService:
                         "description": task["description"],
                         "status": task["status"],
                         "assignee": task["assignee"],
+                        "assignee_id": task.get("assignee_id"),
                         "task_order": task["task_order"],
                         "created_at": task["created_at"],
                         "due_date": task.get("due_date"),
