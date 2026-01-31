@@ -1,5 +1,4 @@
 import { screen, fireEvent, waitFor } from '@testing-library/react';
-import React from 'react';
 import { describe, it, expect, vi } from 'vitest';
 import { api } from '../../src/services/api';
 import { renderApp } from './e2e.setup';

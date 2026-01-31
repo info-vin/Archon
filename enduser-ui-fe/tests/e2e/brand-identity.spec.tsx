@@ -1,10 +1,9 @@
 import { test, expect } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
-import React from 'react';
-import { MemoryRouter } from 'react-router-dom';
-import { BrandLogo } from '../../src/components/BrandLogo';
 import { http, HttpResponse } from 'msw';
 import { server } from '../../src/mocks/server';
+import { BrandLogo } from '../../src/components/BrandLogo';
+
 
 // Setup Mock for the SVG asset
 // This simulates the state AFTER DevBot has done its job

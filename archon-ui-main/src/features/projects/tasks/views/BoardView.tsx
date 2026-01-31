@@ -42,7 +42,6 @@ export const BoardView = ({
           <KanbanColumn
             key={status}
             status={status}
-            title={title}
             tasks={getTasksByStatus(status)}
             projectId={projectId}
             onTaskMove={onTaskMove}

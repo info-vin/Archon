@@ -37,8 +37,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     // Only set up the real-time listener if Supabase is configured
     if (supabase) {
         const { data: authListener } = supabase.auth.onAuthStateChange(
-          async (event, session) => {
-            if (event === 'SIGNED_IN' || event === 'USER_UPDATED' || event === 'TOKEN_REFRESHED') {
+          async (event, _session) => {
+            if (event === 'SIGNED_IN') {
               // Only set loading if we don't have a user yet (initial load) or it's an explicit sign-in.
               // Background refreshes should not block the UI or cause unmounting.
               const shouldSetLoading = event === 'SIGNED_IN' || !user;

@@ -1,6 +1,5 @@
-import { test, expect, beforeAll, afterEach, afterAll, vi } from 'vitest';
-import { screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { test, expect } from 'vitest';
+import { screen } from '@testing-library/react';
 import { renderApp } from './e2e.setup';
 import { api } from '../../src/services/api';
 import { EmployeeRole } from '../../src/types';

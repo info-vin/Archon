@@ -137,7 +137,7 @@ describe('TaskModal', () => {
   });
 
   it('should show an alert if title or due date is missing', async () => {
-    const user = userEvent.setup();
+    userEvent.setup();
     const onTaskCreated = vi.fn();
     const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {});
     setup({ onTaskCreated });

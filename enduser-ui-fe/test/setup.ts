@@ -1,9 +1,9 @@
 import '@testing-library/jest-dom';
+import { vi, beforeAll, afterEach, afterAll } from 'vitest';
 import { server } from '../src/mocks/server';
-import { vi } from 'vitest';
-import { Task, TaskStatus, TaskPriority } from '../src/types';
 
-// Mock for window.alert to prevent "Not implemented" errors in jsdom
+// 1. vi.hoisted runs BEFORE anything else (even before vi.mock hoisting)
+
 vi.stubGlobal('alert', vi.fn());
 
 // Mock for window.matchMedia, which is not implemented in jsdom

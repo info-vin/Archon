@@ -1,4 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
+import { useAuth } from '../../features/auth/hooks/useAuth';
+
 import { Moon, Sun, FileText, Palette, Flame, Monitor } from 'lucide-react';
 import { Switch } from '@/features/ui/primitives/switch';
 import { useTheme } from '../../contexts/useTheme';

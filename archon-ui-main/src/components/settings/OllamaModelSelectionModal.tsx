@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import ReactDOM from 'react-dom';
 import { X, Search, RotateCcw, Zap, Eye, Settings, Download } from 'lucide-react';
 import { Button } from '../ui/Button';

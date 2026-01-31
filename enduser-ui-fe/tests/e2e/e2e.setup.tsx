@@ -3,7 +3,6 @@ import { server } from '../../src/mocks/server';
 import { render } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { AuthProvider } from '../../src/hooks/useAuth';
-import React from 'react';
 import { AppRoutes } from '../../src/App';
 
 // 1. vi.hoisted runs BEFORE anything else (even before vi.mock hoisting)

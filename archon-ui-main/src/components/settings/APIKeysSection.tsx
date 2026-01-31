@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Plus, Trash2, Save, Lock, Unlock, Eye, EyeOff } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { Card } from '../ui/Card';
@@ -52,7 +52,7 @@ export const APIKeysSection = () => {
           is_encrypted: cred.is_encrypted || false,
           showValue: false,
           isNew: false,
-          isFromBackend: !cred.isNew, // Mark as from backend unless it's a new credential
+          isFromBackend: true, // It's from backend, so it's not new
         };
       });
       
