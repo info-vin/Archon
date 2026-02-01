@@ -634,13 +634,24 @@ class TaskService:
             # 3. Generate Content using the correct client pattern
             # Get active model from config
             provider_config = await credential_service.get_active_provider("llm")
-            model_name = provider_config.get("chat_model") or "gpt-4o"
+            # Fallback to gemini-2.5-flash (User Preference) instead of 2.0/1.5 if not set
+            model_name = provider_config.get("chat_model") or "gemini-2.5-flash"
+            
+            # DEBUG: Log the model name being used
+            logger.info(f"Refining task with model: {model_name}")
+
+            # FIX for Gemini 404: "models/gemini-1.5-flash is not found"
+            # If the provider returns "models/...", strip it because the client might be adding it again
+            # or the API expects the short name.
+            if model_name.startswith("models/"):
+                model_name = model_name.replace("models/", "")
+                logger.info(f"Stripped 'models/' prefix. New model name: {model_name}")
 
             async with get_llm_client() as client:
                 response = await client.chat.completions.create(
                     model=model_name,
                     messages=[
-                        {"role": "system", "content": "You are POBot, a helpful Product Owner assistant."},
+                        {"role": "system", "content": "You are POBot, a helpful Product Owner assistant. ALWAYS answer in Traditional Chinese (Taiwan繁體中文), regardless of the input language."},
                         {"role": "user", "content": prompt}
                     ],
                     temperature=0.7

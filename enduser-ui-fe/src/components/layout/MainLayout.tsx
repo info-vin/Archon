@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { MenuIcon, XIcon, UserIcon, SettingsIcon, LogOutIcon, ShieldCheckIcon, LayoutGridIcon, PaletteIcon } from '../../components/Icons.tsx';
 import LiveClock from '../../components/LiveClock.tsx';
@@ -13,6 +13,34 @@ const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const location = useLocation();
 
+    const [cartCount, setCartCount] = useState(0);
+
+    useEffect(() => {
+        // Simple poll for cart count (shortlisted leads)
+        const fetchCart = async () => {
+            try {
+               // We might need a lightweight API for this, but reusing getLeads for now
+               // TODO: Optimize with specific endpoint
+               // Using direct fetch to avoid circular deps if api.ts imports layout? Unlikely.
+               // Assuming api is available via imports.
+               // Actually we need to import api at top level.
+               const { api } = await import('../../services/api.ts');
+               const leads = await api.getLeads();
+               const count = leads.filter((l: any) => l.status === 'shortlisted').length;
+               setCartCount(count);
+            } catch (e) {
+                console.error("Failed to fetch cart count", e);
+            }
+        };
+        
+        if (hasPermission('leads:view:sales')) {
+            fetchCart();
+            // Poll every 10s to keep in sync
+            const interval = setInterval(fetchCart, 10000);
+            return () => clearInterval(interval);
+        }
+    }, [hasPermission]);
+
     return (
         <div className="flex h-screen bg-background text-foreground">
              <nav className={`fixed inset-y-0 left-0 z-50 w-64 bg-card border-r border-border flex flex-col transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} transition-transform duration-300 ease-in-out md:relative md:translate-x-0`}>
@@ -20,7 +48,7 @@ const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                     <Link to="/dashboard" className="flex items-center transition-transform hover:scale-105 active:scale-95">
                         <BrandLogo className="w-8 h-8" />
                     </Link>
-                     <button onClick={() => setIsSidebarOpen(false)} className="md:hidden p-1 hover:bg-secondary rounded-md ml-auto" aria-label="Close sidebar">
+                    <button onClick={() => setIsSidebarOpen(false)} className="md:hidden p-1 hover:bg-secondary rounded-md ml-auto" aria-label="Close sidebar">
                         <XIcon className="w-6 h-6" />
                     </button>
                 </div>
@@ -136,7 +164,7 @@ const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                          {/* TODO: Add ShoppingCartIcon */}
                         <div className="relative">
                             <MenuIcon className="w-6 h-6 rotate-90" /> {/* Temporary Icon */}
-                            <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-[9px] w-3 h-3 flex items-center justify-center rounded-full">0</span>
+                            {cartCount > 0 && <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-[9px] w-3 h-3 flex items-center justify-center rounded-full animate-bounce">{cartCount}</span>}
                         </div>
                         <span className="text-[10px] mt-1">Cart</span>
                     </Link>

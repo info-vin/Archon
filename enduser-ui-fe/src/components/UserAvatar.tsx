@@ -14,8 +14,7 @@ const getRoleColor = (role?: string) => {
     const r = role.toLowerCase().trim();
     if (['admin', 'system_admin'].includes(r)) return '#DC2626'; // Red-600
     if (['sales', 'sales_rep'].includes(r)) return '#2563EB'; // Blue-600
-    if (['marketing', 'brand'].includes(r)) return '#D97706'; // Amber-600
-    if (['manager'].includes(r)) return '#7C3AED'; // Violet-600
+    if (['marketing', 'brand', 'marketing_specialist'].includes(r)) return '#D97706'; // Amber-600
     if (['manager'].includes(r)) return '#7C3AED'; // Violet-600
     // Agents now use Hash Color for distinctiveness
     return null;

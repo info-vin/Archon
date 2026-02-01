@@ -15,8 +15,9 @@ type SortDirection = 'ascending' | 'descending';
 
 // Helper functions and components for views
 const priorityIndicator = (priority: TaskPriority) => {
-  const colors = { high: 'text-red-500', medium: 'text-yellow-500', low: 'text-green-500', critical: 'text-purple-600' };
-  return <span className={`${colors[priority]} mr-2`}>●</span>;
+  const p = (priority || 'low').toLowerCase();
+  const colors: Record<string, string> = { high: 'text-red-500', medium: 'text-yellow-500', low: 'text-green-500', critical: 'text-purple-600' };
+  return <span className={`${colors[p] || 'text-gray-400'} mr-2`}>●</span>;
 };
 
 const statusIndicator = (status: TaskStatus) => {
@@ -30,35 +31,55 @@ const statusIndicator = (status: TaskStatus) => {
 };
 
 // --- View Components ---
-const ListView: React.FC<{ tasks: Task[]; setEditingTask: (task: Task) => void }> = ({ tasks, setEditingTask }) => (
+const ListView: React.FC<{ tasks: Task[]; setEditingTask: (task: Task) => void; userMap: Record<string, any> }> = ({ tasks, setEditingTask, userMap }) => (
   <ul className="space-y-3">
     {tasks.map(task => {
-        const priorityColors = { high: 'bg-red-500', medium: 'bg-amber-500', low: 'bg-green-500', critical: 'bg-purple-600' };
-        const borderColor = priorityColors[task.priority] || 'bg-gray-400';
+        const p = (task.priority || 'low').toLowerCase();
+        // Priority Colors (Background for Stripe)
+        const priorityColors: Record<string, string> = { 
+            high: 'bg-red-500', 
+            medium: 'bg-amber-500', 
+            low: 'bg-green-500', 
+            critical: 'bg-purple-600' 
+        };
+        const priorityTextColors: Record<string, string> = { high: 'text-red-700 bg-red-50', medium: 'text-amber-700 bg-amber-50', low: 'text-green-700 bg-green-50', critical: 'text-purple-700 bg-purple-50' };
+        const borderColor = priorityColors[p] || 'bg-gray-400';
         
         return (
             <li key={task.id} onClick={() => setEditingTask(task)} className="group relative overflow-hidden bg-white/70 backdrop-blur-md rounded-xl border border-white/50 shadow-sm hover:shadow-md transition-all cursor-pointer p-4 pl-5">
                 {/* Priority Stripe */}
                 <div className={`absolute left-0 top-0 bottom-0 w-1.5 ${borderColor}`} />
                 
-                <div className="flex justify-between items-center">
-                    <div className="flex items-center gap-4">
-                        <div className="flex flex-col">
-                            <span className="font-bold text-gray-800 text-base leading-snug group-hover:text-indigo-600 transition-colors">{task.title}</span>
-                            <span className="text-xs text-gray-500 font-mono mt-0.5 opacity-0 group-hover:opacity-100 transition-opacity">Task ID: #{task.id.slice(0,6)}</span>
+                <div className="flex justify-between items-start">
+                    <div className="flex flex-col gap-1 max-w-[60%]">
+                        <div className="flex items-center gap-2">
+                             <span className="font-bold text-gray-800 text-base leading-snug group-hover:text-indigo-600 transition-colors">{task.title}</span>
+                             <span className={`text-[10px] uppercase font-bold px-1.5 py-0.5 rounded ${priorityTextColors[p] || 'text-gray-600 bg-gray-100'}`}>
+                                {task.priority}
+                             </span>
                         </div>
+                        {task.description && (
+                            <p className="text-sm text-gray-500 line-clamp-1">{task.description}</p>
+                        )}
+                        <span className="text-xs text-gray-400 font-mono mt-0.5 opacity-0 group-hover:opacity-100 transition-opacity">#{task.id.slice(0,6)}</span>
                     </div>
                 
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-4 mt-1">
                         {/* Assignee Avatar */}
                         {task.assignee && (
-                            <div className="flex items-center gap-2 bg-gray-50 px-2 py-1 rounded-lg border border-gray-100">
+                            <div className="flex items-center gap-2 px-2 py-1 rounded-lg hover:bg-gray-50 transition-colors">
                                 <UserAvatar 
                                     name={task.assignee} 
                                     isAI={task.assignee_id?.startsWith('agent-') || task.assignee.toLowerCase().includes('bot')} 
-                                    size={20} 
+                                    role={
+                                        // Try to find role by ID first, then Name. Ensure we fallback gracefully.
+                                        (userMap[task.assignee_id || '']?.role) || 
+                                        (userMap[task.assignee]?.role) || 
+                                        (task.assignee === 'Sales' ? 'sales' : undefined) // Temporary fallback for 'Sales' user
+                                    }
+                                    size={24} 
                                 />
-                                <span className="text-xs font-semibold text-gray-600 max-w-[100px] truncate">{task.assignee}</span>
+                                <span className="text-xs font-semibold text-gray-600 max-w-[80px] truncate hidden sm:block">{task.assignee}</span>
                             </div>
                         )}
                         
@@ -67,9 +88,6 @@ const ListView: React.FC<{ tasks: Task[]; setEditingTask: (task: Task) => void }
                             <div data-testid="attachment-badge" className="flex items-center text-xs text-indigo-600 bg-indigo-50 px-2 py-1 rounded-lg font-medium">
                                 <PaperclipIcon className="h-3 w-3 mr-1" />
                                 <span>{task.attachments.length}</span>
-                                <span className="sr-only"> files</span>
-                                {/* Hidden text for tests to find filenames if needed */}
-                                <span className="sr-only">{task.attachments.map(a => a.file_name).join(', ')}</span>
                             </div>
                         )}
                         
@@ -77,9 +95,9 @@ const ListView: React.FC<{ tasks: Task[]; setEditingTask: (task: Task) => void }
                              {statusIndicator(task.status)}
                         </div>
                         
-                        <div className="flex items-center gap-1 text-xs font-medium text-gray-500 bg-gray-50 px-3 py-1.5 rounded-lg">
+                        <div className={`flex items-center gap-1 text-xs font-medium px-3 py-1.5 rounded-lg ${task.due_date && new Date(task.due_date) < new Date() ? 'text-red-600 bg-red-50' : 'text-gray-500 bg-gray-50'}`}>
                             <ClockIcon className="w-3 h-3" />
-                            {task.due_date ? new Date(task.due_date).toLocaleDateString() : 'No Deadline'}
+                            {task.due_date ? new Date(task.due_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : '-'}
                         </div>
                     </div>
                 </div>
@@ -285,33 +303,46 @@ const DashboardPage: React.FC = () => {
   // const [employees, setEmployees] = useState<AssignableUser[]>([]); // Removed unused
   const [projects, setProjects] = useState<Project[]>([]);
   const [selectedProjectId, setSelectedProjectId] = useState<string>('all');
-  const [loading, setLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
   const [editingTask, setEditingTask] = useState<Task | null | undefined>(undefined);
   const [isProjectModalOpen, setProjectModalOpen] = useState(false);
   const [isProjectDropdownOpen, setProjectDropdownOpen] = useState(false);
   const [isVisitModalOpen, setVisitModalOpen] = useState(false);
   const [sortConfig, setSortConfig] = useState<{ key: SortableTaskKeys; direction: SortDirection } | null>({ key: 'created_at', direction: 'ascending' });
+  const [userMap, setUserMap] = useState<Record<string, any>>({}); // Map user ID/Name to User Object for Roles
 
   const isTaskModalOpen = editingTask !== undefined;
 
   // --- Data Fetching Logic with useCallback ---
   const fetchData = useCallback(async () => {
     try {
-      setLoading(true);
-      const [tasksData, projectsData] = await Promise.all([
+      setIsLoading(true);
+      const [tasksRes, projectsData, usersRes, agentsRes] = await Promise.all([
         api.getTasks(true), // Include closed tasks so users can see/archive them
         api.getProjects(),
+        api.getAssignableUsers(),
+        api.getAssignableAgents()
       ]);
-      setTasks(tasksData || []);
-      // setEmployees(employeesData || []);
+      
+      setTasks(tasksRes || []);
       setProjects(projectsData || []);
-      // Auto-selection of the first project removed to support the "All Projects" dashboard view.
+
+      // Build User Map
+      const map: Record<string, any> = {};
+      (usersRes || []).forEach((u: any) => { map[u.id] = u; map[u.name] = u; });
+      (agentsRes || []).forEach((a: any) => { 
+          const agent = { ...a, role: 'ai_agent' };
+          map[a.id] = agent; 
+          map[a.name] = agent; 
+      });
+      setUserMap(map);
+
     } catch (error: any) {
       console.error("Failed to fetch data:", error);
       // In a real app, you might use a toast notification library here
       alert(`Failed to load dashboard data: ${error.message}`);
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   }, [selectedProjectId]); // Dependency ensures re-fetch if project selection changes, might remove if not desired
 
@@ -376,7 +407,7 @@ const DashboardPage: React.FC = () => {
   }, [fetchData]);
 
 
-  if (loading) return <div className="flex items-center justify-center h-full">Loading...</div>;
+  if (isLoading) return <div className="flex items-center justify-center h-full">Loading...</div>;
 
   return (
     <div className="flex-1 flex flex-col h-full overflow-hidden p-6 bg-background">
@@ -444,7 +475,7 @@ const DashboardPage: React.FC = () => {
 
       <div className="flex-1 overflow-auto">
         <ClockInWidget />
-        {viewMode === 'list' && <ListView tasks={sortedTasks} setEditingTask={setEditingTask} />}
+        {viewMode === 'list' && <ListView tasks={sortedTasks} setEditingTask={setEditingTask} userMap={userMap} />}
         {viewMode === 'table' && <TableView tasks={sortedTasks} setEditingTask={setEditingTask} requestSort={requestSort} sortConfig={sortConfig} />}
         {viewMode === 'kanban' && <KanbanView tasks={filteredTasks} updateTaskStatus={updateTaskStatus} setEditingTask={setEditingTask} />}
         {viewMode === 'gantt' && <GanttView tasks={sortedTasks} />}

@@ -1,4 +1,5 @@
 import asyncio
+import os  # Added import
 from datetime import datetime, timedelta
 
 from ..config.logfire_config import get_logger
@@ -76,13 +77,25 @@ class EnrichmentService:
         """
         supabase = get_supabase_client()
         try:
-            # Find leads > 3 days old
-            three_days_ago = (datetime.now() - timedelta(days=3)).isoformat()
+            # Determine threshold
+            threshold_minutes = os.getenv("PRUNING_THRESHOLD_MINUTES")
+            if threshold_minutes:
+                try:
+                    delta = timedelta(minutes=int(threshold_minutes))
+                    logger.info(f"Pruning: Using configurable threshold: {threshold_minutes} minutes")
+                except ValueError:
+                    logger.warning(f"Invalid PRUNING_THRESHOLD_MINUTES '{threshold_minutes}', defaulting to 3 days")
+                    delta = timedelta(days=3)
+            else:
+                delta = timedelta(days=3)
+
+            # Find leads older than threshold
+            cutoff_time = (datetime.now() - delta).isoformat()
 
             # Fetch potential stale leads
-            # Condition: created_at < 3 days ago AND status != archived AND status != converted
+            # Condition: created_at < cutoff AND status != archived AND status != converted
             res = supabase.table("leads").select("*")\
-                .lt("created_at", three_days_ago)\
+                .lt("created_at", cutoff_time)\
                 .neq("status", "archived")\
                 .neq("status", "converted")\
                 .execute()

@@ -407,7 +407,10 @@ const supabaseApi = {
         headers: await this._getHeaders(),
         body: JSON.stringify(leadData)
     });
-    if (!response.ok) throw new Error('Failed to create lead');
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.detail || 'Failed to create lead');
+    }
     return response.json();
   },
 
@@ -427,6 +430,21 @@ const supabaseApi = {
         body: JSON.stringify(updates)
     });
     if (!response.ok) throw new Error('Failed to update lead');
+  },
+
+  async resetLeads(): Promise<void> {
+    const response = await fetch('/api/marketing/leads/reset', {
+        method: 'DELETE',
+        headers: await this._getHeaders()
+    });
+    if (!response.ok) {
+        let errorMsg = 'Failed to reset leads';
+        try {
+            const err = await response.json();
+            if (err.detail) errorMsg = err.detail;
+        } catch (e) { /* ignore parse error */ }
+        throw new Error(errorMsg);
+    }
   },
 
   async resetPassword(userId: string, newPassword: string): Promise<void> {

@@ -25,9 +25,16 @@ const MarketingPage: React.FC = () => {
   const [promoteModalOpen, setPromoteModalOpen] = useState(false);
   const [selectedLead, setSelectedLead] = useState<any>(null);
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>({ key: 'created_at', direction: 'desc' });
+  const [filterMode, setFilterMode] = useState<'all' | 'review_queue'>('all');
 
   const sortedLeads = React.useMemo(() => {
     let sortableLeads = [...leads];
+    
+    // Filter First
+    if (filterMode === 'review_queue') {
+        sortableLeads = sortableLeads.filter(l => l.status === 'new' || l.status === 'pending');
+    }
+
     if (sortConfig !== null) {
       sortableLeads.sort((a, b) => {
         // Handle dates specifically
@@ -271,7 +278,7 @@ const MarketingPage: React.FC = () => {
                                         </span>
                                     </div>
                                     <div className="flex gap-2">
-                                         <button 
+                                        <button 
                                             onClick={(e) => {
                                                 e.stopPropagation();
                                                 // create lead (simulation)
@@ -284,12 +291,12 @@ const MarketingPage: React.FC = () => {
                                                     status: 'new'
                                                 }).then(() => {
                                                     alert("Added to Leads Pipeline!");
-                                                    setActiveTab('leads');
+                                                    // setActiveTab('leads'); // Keep user in search flow
                                                 }).catch(() => alert("Failed to add lead"));
                                             }}
-                                            className="text-sm bg-white border border-indigo-200 text-indigo-700 px-3 py-2 rounded-lg hover:bg-indigo-50 font-medium transition-colors"
+                                            className="text-sm bg-white border border-gray-300 text-gray-700 px-3 py-2 rounded-lg hover:bg-gray-50 font-medium transition-colors"
                                         >
-                                            Add to Leads
+                                            Add Lead
                                         </button>
                                         <button 
                                             onClick={(e) => {
@@ -297,10 +304,10 @@ const MarketingPage: React.FC = () => {
                                                 handleGeneratePitch(job);
                                             }}
                                             disabled={generating} 
-                                            className="text-sm bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 shadow-sm transition-transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+                                            className="text-sm bg-indigo-600 text-white px-5 py-2 rounded-lg hover:bg-indigo-700 shadow-md transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 font-bold ring-2 ring-transparent hover:ring-indigo-200"
                                         >
                                             <SparklesIcon className="w-4 h-4" />
-                                            {generating ? 'Generating...' : 'Pitch'}
+                                            {generating ? 'Drafting...' : 'Generate Pitch'}
                                         </button>
                                     </div>
                                 </div>
@@ -357,11 +364,48 @@ const MarketingPage: React.FC = () => {
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
               <div className="p-6 border-b border-gray-100 flex justify-between items-center">
                   <h2 className="text-lg font-bold text-gray-800">My Leads</h2>
-                  <button onClick={fetchLeads} className="text-indigo-600 text-sm font-medium hover:text-indigo-800">Refresh</button>
+                  <div className="flex gap-3">
+                    <button 
+                        onClick={async () => {
+                            if (confirm("Are you sure you want to delete ALL leads? This cannot be undone.")) {
+                                try {
+                                    await api.resetLeads();
+                                    fetchLeads();
+                                    alert("Leads history cleared.");
+                                } catch (e: any) {
+                                    alert(e.message);
+                                }
+                            }
+                        }}
+                        className="text-red-500 text-sm font-medium hover:text-red-700"
+                    >
+                        Clear History
+                    </button>
+                    <button onClick={fetchLeads} className="text-indigo-600 text-sm font-medium hover:text-indigo-800">Refresh</button>
+                  </div>
               </div>
               
               {/* Desktop Table View */}
               <div className="hidden md:block overflow-x-auto">
+                  <div className="px-6 py-4 flex items-center justify-between border-b border-gray-100 bg-gray-50/50">
+                        <div className="flex items-center gap-4">
+                            <span className="text-sm font-medium text-gray-500">Filter:</span>
+                            <button 
+                                onClick={() => setFilterMode('all')} 
+                                className={`text-xs font-medium px-3 py-1 border rounded-full transition-colors ${filterMode === 'all' ? 'bg-gray-800 text-white border-gray-800' : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50'}`}
+                            >
+                                All Leads
+                            </button>
+                            <button 
+                                onClick={() => setFilterMode('review_queue')}
+                                className={`text-xs font-bold px-3 py-1 border rounded-full flex items-center gap-1 transition-colors ${filterMode === 'review_queue' ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-indigo-50 border-indigo-200 text-indigo-700 hover:bg-indigo-100'}`}
+                            >
+                                <span className={`w-2 h-2 rounded-full ${filterMode === 'review_queue' ? 'bg-white' : 'bg-indigo-500'} animate-pulse`}></span>
+                                Review Queue
+                            </button>
+                        </div>
+                  </div>
+
                   {isLeadsLoading ? (
                       <div className="p-12 flex justify-center">
                           <RefreshCwIcon className="w-8 h-8 text-indigo-600 animate-spin" />
@@ -380,13 +424,13 @@ const MarketingPage: React.FC = () => {
                           <thead className="bg-gray-50 text-gray-500 font-medium">
                                <tr>
                                   <th className="px-6 py-3 cursor-pointer hover:bg-gray-100 transition-colors" onClick={() => requestSort('created_at')}>
-                                      <div className="flex items-center gap-1">Date Identified {sortConfig?.key === 'created_at' && (sortConfig.direction === 'asc' ? '▲' : '▼')}</div>
+                                      <div className="flex items-center gap-1">Date {sortConfig?.key === 'created_at' && (sortConfig.direction === 'asc' ? '▲' : '▼')}</div>
                                   </th>
                                   <th className="px-6 py-3 cursor-pointer hover:bg-gray-100 transition-colors" onClick={() => requestSort('company_name')}>
                                       <div className="flex items-center gap-1">Company {sortConfig?.key === 'company_name' && (sortConfig.direction === 'asc' ? '▲' : '▼')}</div>
                                   </th>
-                                  <th className="px-6 py-3 cursor-pointer hover:bg-gray-100 transition-colors" onClick={() => requestSort('job_title')}>
-                                     <div className="flex items-center gap-1">Position {sortConfig?.key === 'job_title' && (sortConfig.direction === 'asc' ? '▲' : '▼')}</div>
+                                  <th className="px-6 py-3 w-1/4">
+                                     <div className="flex items-center gap-1">Job Summary</div>
                                   </th>
                                   <th className="px-6 py-3 cursor-pointer hover:bg-gray-100 transition-colors" onClick={() => requestSort('status')}>
                                      <div className="flex items-center gap-1">Status {sortConfig?.key === 'status' && (sortConfig.direction === 'asc' ? '▲' : '▼')}</div>
@@ -400,12 +444,19 @@ const MarketingPage: React.FC = () => {
                           </thead>
                           <tbody className="divide-y divide-gray-100">
                               {sortedLeads.map(lead => (
-                                  <tr key={lead.id} className="hover:bg-gray-50 transition-colors">
+                                  <tr key={lead.id} className="hover:bg-gray-50 transition-colors group">
                                       <td className="px-6 py-4 text-xs text-gray-500 whitespace-nowrap">
                                           {new Date(lead.created_at || Date.now()).toLocaleDateString()}
                                       </td>
-                                      <td className="px-6 py-4 font-medium text-gray-900">{lead.company_name}</td>
-                                      <td className="px-6 py-4 text-gray-700">{lead.job_title || 'N/A'}</td>
+                                      <td className="px-6 py-4">
+                                          <div className="font-medium text-gray-900">{lead.company_name}</div>
+                                          <div className="text-xs text-gray-500">{lead.job_title}</div>
+                                      </td>
+                                      <td className="px-6 py-4">
+                                          <div className="text-xs text-gray-600 line-clamp-2" title={lead.identified_need || lead.description}>
+                                              {lead.identified_need || "Pending Analysis..."}
+                                          </div>
+                                      </td>
                                       <td className="px-6 py-4">
                                           <span className={`px-2 py-1 rounded-full text-xs font-bold ${
                                               lead.status === 'new' ? 'bg-blue-100 text-blue-700' :
@@ -416,16 +467,22 @@ const MarketingPage: React.FC = () => {
                                           </span>
                                       </td>
                                       <td className="px-6 py-4 text-gray-500">
-                                          <a href={lead.source_job_url} target="_blank" rel="noreferrer" className="hover:text-indigo-600 underline decoration-dotted">104 Link</a>
+                                          <a href={lead.source_job_url} target="_blank" rel="noreferrer" className="hover:text-indigo-600 underline decoration-dotted text-xs">View Post</a>
                                       </td>
-                                      <td className="px-6 py-4 text-gray-500">{lead.next_followup_date ? new Date(lead.next_followup_date).toLocaleDateString() : '-'}</td>
+                                      <td className="px-6 py-4 text-gray-500 text-xs">
+                                          {lead.next_followup_date ? (
+                                              new Date(lead.next_followup_date).toLocaleDateString()
+                                          ) : (
+                                              <span className="text-amber-600 bg-amber-50 px-2 py-0.5 rounded cursor-pointer hover:bg-amber-100">Schedule</span>
+                                          )}
+                                      </td>
                                       <td className="px-6 py-4 text-right">
                                           {lead.status !== 'converted' && (
                                               <button 
                                                   onClick={() => openPromoteModal(lead)}
-                                                  className="text-indigo-600 hover:text-indigo-800 font-medium text-xs border border-indigo-200 px-3 py-1 rounded hover:bg-indigo-50 transition-colors"
+                                                  className="text-indigo-600 hover:text-indigo-800 font-medium text-xs border border-indigo-200 px-3 py-1 rounded hover:bg-indigo-50 transition-colors opacity-0 group-hover:opacity-100"
                                               >
-                                                  Promote to Vendor
+                                                  Promote
                                               </button>
                                           )}
                                       </td>
@@ -437,7 +494,7 @@ const MarketingPage: React.FC = () => {
               </div>
 
                {/* Mobile Card Stack View */}
-               <div className="md:hidden p-4 min-h-[600px]">
+               <div className="md:hidden p-4 h-[calc(100vh-180px)] min-h-[500px] flex flex-col justify-center">
                    {isLeadsLoading ? (
                         <div className="flex justify-center p-12">
                            <RefreshCwIcon className="w-8 h-8 text-indigo-600 animate-spin" />

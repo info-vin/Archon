@@ -10,6 +10,7 @@ const SalesCartPage: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [processing, setProcessing] = useState(false);
     const [generatingPitch, setGeneratingPitch] = useState<string | null>(null);
+    const [pitchResult, setPitchResult] = useState<{ content: string; company: string } | null>(null);
 
     useEffect(() => {
         fetchCart();
@@ -101,7 +102,8 @@ const SalesCartPage: React.FC = () => {
         setGeneratingPitch(lead.id);
         try {
              const res = await api.generatePitch(lead.job_title, lead.company_name, lead.identified_need);
-             alert(`Pitch Generated:\n\n${res.content.substring(0, 100)}...`);
+             // alert(`Pitch Generated:\n\n${res.content.substring(0, 100)}...`);
+             setPitchResult({ content: res.content, company: lead.company_name });
         } catch(err) {
             alert("Failed to generate pitch");
         } finally {
@@ -225,8 +227,60 @@ const SalesCartPage: React.FC = () => {
                         </div>
                     </div>
                 )}
+                {/* Result Modal */}
+                {pitchResult && (
+                    <PitchModal 
+                        isOpen={!!pitchResult} 
+                        onClose={() => setPitchResult(null)} 
+                        content={pitchResult.content} 
+                        company={pitchResult.company} 
+                    />
+                )}
             </div>
         </PermissionGuard>
+    );
+};
+
+// Simple Modal Component for Pitch Result
+const PitchModal: React.FC<{ isOpen: boolean; onClose: () => void; content: string; company: string }> = ({ isOpen, onClose, content, company }) => {
+    if (!isOpen) return null;
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[80vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
+                <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+                    <h3 className="font-bold text-gray-800 flex items-center gap-2">
+                        <SparklesIcon className="w-5 h-5 text-indigo-600" />
+                        AI Pitch: {company}
+                    </h3>
+                    <button onClick={onClose} className="p-1 hover:bg-gray-200 rounded-full text-gray-500 transition-colors">
+                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                    </button>
+                </div>
+                <div className="flex-1 overflow-y-auto p-6 text-gray-700 leading-relaxed space-y-4">
+                    <div className="prose prose-sm max-w-none">
+                         <div className="whitespace-pre-wrap">{content}</div>
+                    </div>
+                </div>
+                <div className="p-4 border-t border-gray-100 bg-gray-50 flex justify-end gap-3">
+                    <button 
+                        onClick={() => {
+                            navigator.clipboard.writeText(content);
+                            alert("Copied to clipboard!");
+                        }}
+                        className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors text-gray-700 shadow-sm"
+                    >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" /></svg>
+                        Copy
+                    </button>
+                    <button 
+                        onClick={onClose}
+                        className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 shadow-md shadow-indigo-200"
+                    >
+                        Done
+                    </button>
+                </div>
+            </div>
+        </div>
     );
 };
 

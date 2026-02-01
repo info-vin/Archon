@@ -87,6 +87,52 @@ async def get_leads():
         logger.error(f"API: Failed to fetch leads | error={str(e)}")
         raise HTTPException(status_code=500, detail=str(e)) from e
 
+class CreateLeadRequest(BaseModel):
+    company_name: str
+    job_title: str
+    source: str = "manual"
+    source_job_url: str | None = None
+    identified_need: str | None = None
+    status: str = "new"
+
+@router.post("/leads")
+async def create_lead(
+    request: CreateLeadRequest,
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    Manually create a new lead (e.g. from Job Search results).
+    """
+    try:
+        logger.info(f"API: Creating lead | company={request.company_name} | user={current_user.get('email')}")
+        supabase = get_supabase_client()
+        
+        lead_data = request.model_dump()
+        lead_data["created_from_user_id"] = current_user.get("id")
+        lead_data["created_at"] = "now()"
+        lead_data["updated_at"] = "now()"
+
+        # Check for duplicates? For now, we allow multiple leads for same company if different jobs.
+        # But maybe we should upsert based on source_job_url if present?
+        # Let's simple insert for now as per immediate requirement.
+
+        res = supabase.table("leads").insert(lead_data).execute()
+        
+        if not res.data:
+             raise Exception("Database returned no data after insert")
+
+        logger.info(f"API: Lead created successfully | id={res.data[0]['id']}")
+        return res.data[0]
+
+    except Exception as e:
+        logger.error(f"API: Failed to create lead | error={str(e)}")
+        # If duplicated url, handle gracefully?
+        error_detail = str(e)
+        if "unique_violation" in error_detail.lower():
+             raise HTTPException(status_code=409, detail="Lead already exists.")
+        
+        raise HTTPException(status_code=500, detail=error_detail) from e
+
 @router.post("/leads/{lead_id}/promote")
 async def promote_lead_to_vendor(
     lead_id: str,
@@ -572,3 +618,25 @@ async def trigger_enrichment_loop(
     except Exception as e:
         logger.error(f"Enrichment loop failed | error={str(e)}")
         raise HTTPException(status_code=500, detail=str(e)) from e
+
+@router.delete("/leads/reset")
+async def reset_leads(current_user: dict = Depends(get_current_user)):
+    """
+    DEV UTILITY: Delete ALL leads from the database.
+    Use with caution.
+    """
+    user_role = current_user.get("role", "viewer").lower()
+    if user_role not in ["admin", "system_admin", "manager"]:
+        raise HTTPException(status_code=403, detail="Permission denied: Only Admins can reset data.")
+
+    try:
+        supabase = get_supabase_client()
+        # Delete all rows in leads table
+        res = supabase.table("leads").delete().neq("id", "00000000-0000-0000-0000-000000000000").execute()
+        
+        logger.info(f"API: Leads reset | count={len(res.data) if res.data else 0} | user={current_user.get('email')}")
+        return {"success": True, "deleted_count": len(res.data) if res.data else 0}
+    except Exception as e:
+        logger.error(f"API: Leads reset failed | error={str(e)}")
+        # Return detailed error to help debug foreign key constraints etc.
+        raise HTTPException(status_code=500, detail=f"Failed to reset leads: {str(e)}") from e
