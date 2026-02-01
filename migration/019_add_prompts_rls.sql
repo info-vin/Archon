@@ -31,14 +31,14 @@ TO authenticated
 USING (
   exists (
     select 1 from public.profiles
-    where profiles.id = auth.uid()
+    where profiles.id = auth.uid()::text
     and profiles.role in ('system_admin', 'admin')
   )
 )
 WITH CHECK (
   exists (
     select 1 from public.profiles
-    where profiles.id = auth.uid()
+    where profiles.id = auth.uid()::text
     and profiles.role in ('system_admin', 'admin')
   )
 );

@@ -1,322 +1,209 @@
-import os
-import time
 import glob
-import psycopg2
-from urllib.parse import urlparse
+import logging
+import os
+import sys
+import time
+from collections.abc import Generator
+from contextlib import contextmanager
 
-# Import AuthService for account synchronization
-# Note: PYTHONPATH must be set to '.' when running this script
+import psycopg2
+from psycopg2.extensions import cursor as PGCursor
+
+logging.basicConfig(level=logging.INFO, format="%(message)s")
+logger = logging.getLogger("init_db")
+logging.getLogger("httpx").setLevel(logging.WARNING)
+logging.getLogger("src.server.services.auth_service").setLevel(logging.ERROR)
+
+DB_URL = os.getenv("SUPABASE_DB_URL")
+
 try:
     from src.server.services.auth_service import AuthService
     from src.server.utils import get_supabase_client
     HAS_SERVER_DEPS = True
 except ImportError:
-    print("Warning: Could not import server dependencies. Auth sync will be skipped.")
     HAS_SERVER_DEPS = False
 
-# Database connection parameters from environment variables
-DB_URL = os.getenv("SUPABASE_DB_URL")
+@contextmanager
+def db_transaction() -> Generator[PGCursor, None, None]:
+    if not DB_URL:
+        logger.error("❌ SUPABASE_DB_URL not set.")
+        sys.exit(1)
 
-if not DB_URL:
-    print("❌ Error: SUPABASE_DB_URL environment variable is not set.")
-    print("Please add it to your .env file. Example:")
-    print("SUPABASE_DB_URL=postgresql://postgres:[PASSWORD]@[HOST]:[PORT]/postgres")
-    exit(1)
-
-def get_db_connection():
-    """Establishes a connection to the database with retry logic."""
+    conn = None
     retries = 5
     while retries > 0:
         try:
-            print(f"Attempting to connect to database... ({retries} retries left)")
             conn = psycopg2.connect(DB_URL)
-            return conn
+            break
         except psycopg2.OperationalError as e:
-            print(f"Connection failed: {e}")
             retries -= 1
+            if retries == 0:
+                logger.error(f"❌ DB Connection failed: {e}")
+                sys.exit(1)
+            logger.warning(f"Connection failed, retrying... ({retries} left)")
             time.sleep(2)
-    raise Exception("Could not connect to the database after multiple attempts.")
 
-def ensure_schema_migrations_table(cursor):
-    """Ensures the schema_migrations table exists."""
-    print("Ensuring schema_migrations table exists...")
-    # We check manually or run 002 script, but to be safe and strictly follow logic,
-    # we'll just execute a safe CREATE TABLE IF NOT EXISTS here as a bootstrap.
-    # The 002 script will still run idempotently later.
+    if conn is None:
+        logger.error("❌ Failed to establish database connection.")
+        sys.exit(1)
+
+    try:
+        conn.autocommit = False
+        with conn.cursor() as cursor:
+            yield cursor
+        conn.commit()
+    except Exception as e:
+        if conn:
+            conn.rollback()
+        logger.error(f"❌ Transaction failed & rolled back: {e}")
+        raise e
+    finally:
+        if conn:
+            conn.close()
+
+def is_duplicate_user_error(e: Exception) -> bool:
+    err_str = str(e).lower()
+    if hasattr(e, 'response') and hasattr(e.response, 'text'):
+        err_str += f" {e.response.text.lower()}"
+    if hasattr(e, 'message'):
+        err_str += f" {str(e.message).lower()}"
+    if hasattr(e, 'args') and e.args:
+        for arg in e.args:
+            err_str += f" {str(arg).lower()}"
+    return any(k in err_str for k in ["already registered", "already been registered", "already exists", "422", "unprocessable entity"])
+
+def run_migrations(cursor: PGCursor, migration_dir: str = "migration", exclude: set[str] | None = None) -> None:
+    logger.info("Running schema migrations...")
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS schema_migrations (
-            version VARCHAR(255) PRIMARY KEY,
-            migrated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL
+            version VARCHAR(255) PRIMARY KEY, migrated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL
         );
     """)
-
-def get_applied_migrations(cursor):
-    """Retrieves a set of already applied migration versions."""
     cursor.execute("SELECT version FROM schema_migrations")
-    return {row[0] for row in cursor.fetchall()}
+    applied = {row[0] for row in cursor.fetchall()}
+    files = sorted(glob.glob(os.path.join(migration_dir, "*.sql")))
+    exclude = exclude or set()
+    skipped_count = 0
 
-def run_migration_file(conn, cursor, file_path, record_version=True):
-    """Reads and executes a single SQL migration file."""
-    filename = os.path.basename(file_path)
-    version_id = os.path.splitext(filename)[0] # e.g., "000_unified_schema"
+    for f_path in files:
+        fname = os.path.basename(f_path)
+        version_id = os.path.splitext(fname)[0]
+        if fname in exclude or version_id in applied:
+            skipped_count += 1
+            continue
+        logger.info(f"Applying: {fname}")
+        with open(f_path) as f:
+            cursor.execute(f.read())
+            cursor.execute("INSERT INTO schema_migrations (version) VALUES (%s) ON CONFLICT DO NOTHING", (version_id,))
+    logger.info(f"✅ Schema migrations checked. ({skipped_count} scripts skipped as already applied)")
 
-    print(f"Running migration: {filename} ...")
-    
-    with open(file_path, 'r') as f:
-        sql = f.read()
+def seed_data(cursor: PGCursor) -> None:
+    seed_file = "migration/seed_mock_data.sql"
+    if os.path.exists(seed_file):
+        logger.info(f"🌱 Seeding mock data: {seed_file}")
+        with open(seed_file) as f:
+            cursor.execute(f.read())
 
-    try:
-        # Execute the SQL content
-        cursor.execute(sql)
-        
-        # Explicitly register the version if requested
-        if record_version:
+    logger.info("🔑 Syncing API Keys from Env...")
+    api_key_map = [
+        ("OPENAI_API_KEY", "OPENAI_API_KEY", "ai", "OpenAI API Key"),
+        ("ANTHROPIC_API_KEY", "ANTHROPIC_API_KEY", "ai", "Anthropic API Key"),
+        ("GEMINI_API_KEY", "GOOGLE_API_KEY", "ai", "Google AI API Key"),
+        ("GEMINI_API_KEY", "GEMINI_API_KEY", "ai", "Gemini API Key"),
+        ("LOGFIRE_TOKEN", "LOGFIRE_TOKEN", "observability", "Logfire Token"),
+    ]
+    for env_var, db_key, category, desc in api_key_map:
+        val = os.getenv(env_var)
+        if val:
             cursor.execute("""
-                INSERT INTO schema_migrations (version) 
-                VALUES (%s) 
-                ON CONFLICT (version) DO NOTHING
-            """, (version_id,))
-        
-        conn.commit()
-        print(f"✅ Successfully applied: {filename}")
-    except Exception as e:
-        conn.rollback()
-        print(f"❌ Failed to apply {filename}: {e}")
-        raise e
+                INSERT INTO archon_settings (key, value, is_encrypted, category, description, updated_at)
+                VALUES (%s, %s, false, %s, %s, NOW())
+                ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW();
+            """, (db_key, val, category, desc))
 
-# ... (omitted parts) ...
+def sync_auth_users(cursor: PGCursor) -> None:
+    if not HAS_SERVER_DEPS:
+        logger.warning("⚠️ Skipping Auth Sync (Server dependencies missing)")
+        return
 
-def find_auth_user_by_email(supabase, email):
-    """
-    Finds a user's UUID in the Auth system by email.
-    Note: 'list_users' might return pagination objects depending on client version.
-    """
-    try:
-        page = 1
-        per_page = 50
-        while True:
-            # Depending on the supabase-py/gotrue-py version, this might return a list or an object
-            response = supabase.auth.admin.list_users(page=page, per_page=per_page)
+    logger.info("🔄 Starting Robust Auth Sync...")
+    supabase = get_supabase_client()
+    auth_service = AuthService(supabase)
+    cursor.execute("SELECT id, email, name, role FROM profiles WHERE status = 'active'")
+    profiles = cursor.fetchall()
 
-            # Handle different response structures gracefully
-            users = response if isinstance(response, list) else getattr(response, 'users', [])
+    for p_id, email, name, role in profiles:
+        try:
+            auth_service.create_user_by_admin(email=email, password="password123", name=name, role=role)
+            logger.info(f"✅ Created Auth User: {email}")
+        except Exception as e:
+            if not is_duplicate_user_error(e):
+                logger.error(f"❌ Failed to create user {email}: {e}")
+                continue
 
+        auth_uid = _find_auth_id(supabase, email)
+        if not auth_uid:
+            logger.warning(f"⚠️ Auth ID not found for {email}, skipping fix.")
+            continue
+
+        if str(p_id) != str(auth_uid):
+            logger.info(f"🛠 Fixing ID mismatch for {email} (DB: {p_id} -> Auth: {auth_uid})")
+            _fix_id_mismatch(cursor, str(p_id), str(auth_uid), email, name)
+
+    logger.info("✅ Auth Sync Complete.")
+
+def _find_auth_id(supabase, email: str) -> str | None:
+    page = 1
+    while True:
+        try:
+            res = supabase.auth.admin.list_users(page=page, per_page=50)
+            users = res if isinstance(res, list) else getattr(res, 'users', [])
             if not users:
                 break
-
-            for user in users:
-                if user.email == email:
-                    return user.id
-
-            if len(users) < per_page:
+            for u in users:
+                if u.email == email:
+                    return str(u.id)
+            if len(users) < 50:
                 break
             page += 1
-    except Exception as e:
-        print(f"⚠️ Error listing users to find {email}: {e}")
+        except Exception:
+            return None
     return None
 
-def sync_profiles_to_auth(conn):
-    """
-    Reads profiles and ensures they exist in auth.users.
-    Handles FK constraints by temporarily unlinking tasks if IDs need to be updated.
-    """
+def _fix_id_mismatch(cursor: PGCursor, old_id: str, new_id: str, email: str, name: str) -> None:
+    try:
+        cursor.execute("UPDATE archon_tasks SET assignee_id = NULL WHERE assignee_id = %s", (old_id,))
+        cursor.execute("UPDATE profiles SET id = %s WHERE email = %s", (new_id, email))
+        cursor.execute("UPDATE archon_tasks SET assignee_id = %s WHERE assignee = %s", (new_id, name))
+    except Exception as e:
+        logger.error(f"❌ Failed to fix ID for {email}: {e}")
+        raise e
+
+def print_dev_token() -> None:
     if not HAS_SERVER_DEPS:
-        print("Skipping Auth sync (dependencies missing).")
         return
-
-    print("\n🔄 Starting Robust Auth Sync...")
-    
     try:
-        supabase = get_supabase_client()
-        auth_service = AuthService(supabase)
-        
-        # We need a fresh connection if the passed one is None or closed
-        # But to be safe, we use the passed conn if valid
-        cursor = conn.cursor() if conn else None
-        
-        # Fetch profiles from DB directly to be sure about IDs
-        profiles = []
-        if cursor:
-            try:
-                cursor.execute("SELECT id, email, name, role FROM profiles WHERE status = 'active'")
-                profiles = cursor.fetchall() # List of tuples
-                print(f"Fetched {len(profiles)} profiles via DB.")
-            except Exception as e:
-                print(f"⚠️ DB fetch failed: {e}")
-        
-        # Iterate and Sync
-        for p_id, email, name, role in profiles:
-            try:
-                # 1. Create User in Auth if not exists (Idempotent call via Service)
-                try:
-                    auth_service.create_user_by_admin(email=email, password="password123", name=name, role=role)
-                    print(f"✅ Created Auth User: {email}")
-                except Exception as e:
-                    # Ignore "already registered" errors, we will sync IDs next
-                    if "already registered" not in str(e) and "already exists" not in str(e):
-                        print(f"⚠️ Creation error for {email}: {e}")
-
-                # 2. Resolve Auth UUID
-                auth_uid = find_auth_user_by_email(supabase, email)
-                if not auth_uid:
-                    print(f"⚠️ Could not find Auth UUID for {email}. Skipping ID sync.")
-                    continue
-
-                # 3. Check for ID Mismatch
-                # p_id from DB is the current primary key
-                if str(p_id) != str(auth_uid):
-                    print(f"   🛠 ID Mismatch for {email} (DB: {p_id} vs Auth: {auth_uid}). Fixing...")
-                    
-                    if cursor:
-                        try:
-                            # A. Unlink Tasks (set assignee_id to NULL)
-                            cursor.execute("UPDATE archon_tasks SET assignee_id = NULL WHERE assignee_id = %s", (str(p_id),))
-                            
-                            # B. Update Profile ID
-                            cursor.execute("UPDATE profiles SET id = %s WHERE email = %s", (auth_uid, email))
-                            
-                            # C. Relink Tasks (by Name)
-                            # We assume the profile name matches the task assignee name
-                            cursor.execute("UPDATE archon_tasks SET assignee_id = %s WHERE assignee = %s", (auth_uid, name))
-                            
-                            conn.commit()
-                            print(f"   ✅ Successfully synced ID for {email}")
-                        except Exception as db_err:
-                            conn.rollback()
-                            print(f"   ❌ Failed to sync ID for {email}: {db_err}")
-                else:
-                    print(f"   ✅ IDs match for {email}")
-
-            except Exception as e:
-                print(f"❌ Error processing {email}: {e}")
-                
-        print("✅ Auth Sync Complete.")
-        
-    except Exception as e:
-        print(f"❌ Auth Sync Fatal Error: {e}")
-
-def seed_api_keys_from_env(conn):
-    """
-    Reads API keys from environment variables and seeds them into archon_settings.
-    This ensures development keys persist after database resets.
-    """
-    print("\n🔑 Seeding API keys from environment...")
-    
-    # Map env vars to database keys
-    # Format: (Env Var Name, DB Key, Category, Description)
-    api_key_map = [
-        ("OPENAI_API_KEY", "OPENAI_API_KEY", "ai", "OpenAI API Key for embeddings and LLM"),
-        ("ANTHROPIC_API_KEY", "ANTHROPIC_API_KEY", "ai", "Anthropic API Key for Claude models"),
-        ("GEMINI_API_KEY", "GOOGLE_API_KEY", "ai", "Google AI API Key (from GEMINI_API_KEY)"),
-        ("GEMINI_API_KEY", "GEMINI_API_KEY", "ai", "Gemini API Key (Frontend/Backend)"),
-        ("LOGFIRE_TOKEN", "LOGFIRE_TOKEN", "observability", "Logfire Token for tracing"),
-    ]
-    
-    if not conn:
-        print("⚠️ No DB connection available for seeding API keys.")
-        return
-
-    cursor = conn.cursor()
-    count = 0
-    
-    try:
-        for env_var, db_key, category, description in api_key_map:
-            value = os.getenv(env_var)
-            if value:
-                # We store keys as 'encrypted' false for dev convenience, 
-                # but in prod they should be encrypted.
-                cursor.execute("""
-                    INSERT INTO archon_settings (key, value, is_encrypted, category, description, updated_at)
-                    VALUES (%s, %s, false, %s, %s, NOW())
-                    ON CONFLICT (key) DO UPDATE SET
-                        value = EXCLUDED.value,
-                        updated_at = NOW();
-                """, (db_key, value, category, description))
-                count += 1
-                # print(f"   Synced {db_key}") # Don't print value for security
-        
-        conn.commit()
-        print(f"✅ Seeded {count} API keys/tokens from environment.")
-        
-    except Exception as e:
-        conn.rollback()
-        print(f"❌ Failed to seed API keys: {e}")
-    finally:
-        cursor.close()
+        res = get_supabase_client().auth.sign_in_with_password({"email": "admin@archon.com", "password": "password123"})
+        if res.session:
+            print(f"\n🔑 Dev Auto-Login URL: http://localhost:3737/dev-token?token={res.session.access_token}")
+    except Exception:
+        pass
 
 def main():
-    conn = None
-    try:
-        print("Attempting DB connection for migrations...")
-        conn = get_db_connection()
-        conn.autocommit = False
-        cursor = conn.cursor()
+    if "--clean" in sys.argv:
+        logger.warning("⚠️  CLEAN MODE: Resetting database...")
+        with db_transaction() as cursor:
+            with open("migration/RESET_DB.sql") as f:
+                cursor.execute(f.read())
+        logger.info("✅ Database reset.")
 
-        # Handle --clean flag for full reset
-        import sys
-        if "--clean" in sys.argv:
-             print("\n⚠️  CLEAN MODE: Resetting database (Executing RESET_DB.sql)...")
-             reset_file = "migration/RESET_DB.sql"
-             if os.path.exists(reset_file):
-                 run_migration_file(conn, cursor, reset_file, record_version=False)
-                 conn.commit()
-                 print("✅ Database reset complete. Proceeding with initialization...\n")
-             else:
-                 print(f"❌ Error: {reset_file} not found. Cannot reset.")
-                 exit(1)
+    with db_transaction() as cursor:
+        run_migrations(cursor, exclude={'RESET_DB.sql', 'backup_database.sql', 'complete_setup.sql', 'seed_mock_data.sql'})
+        seed_data(cursor)
+        sync_auth_users(cursor)
 
-        ensure_schema_migrations_table(cursor)
-        conn.commit()
-        
-        applied = get_applied_migrations(cursor)
-        migration_files = sorted(glob.glob("migration/*.sql"))
-        EXCLUDED = ['RESET_DB.sql', 'backup_database.sql', 'complete_setup.sql', 'seed_mock_data.sql']
-
-        for f in migration_files:
-            fname = os.path.basename(f)
-            if fname in EXCLUDED: continue
-            vid = os.path.splitext(fname)[0]
-            if vid in applied: continue
-            run_migration_file(conn, cursor, f)
-        
-        conn.commit()
-        print("\n🎉 SQL migrations applied!")
-
-        # Explicitly run seed data to ensure environment consistency (idempotent)
-        seed_file = "migration/seed_mock_data.sql"
-        if os.path.exists(seed_file):
-            print(f"\n🌱 Seeding mock data: {seed_file} ...")
-            run_migration_file(conn, cursor, seed_file)
-            conn.commit()
-            print("✅ Mock data seeded.")
-        
-        # Seed API Keys immediately after migrations and mock data
-        seed_api_keys_from_env(conn)
-        
-    except Exception as e:
-        print(f"\n⚠️ SQL Migrations/Seeding failed: {e}")
-        # print("Please run migrations manually in Supabase SQL Editor.")
-
-    sync_profiles_to_auth(conn)
-    if conn: conn.close()
-
-    # Generate Dev Token URL for convenience (if dependencies available)
-    if HAS_SERVER_DEPS:
-        try:
-            supabase = get_supabase_client()
-            # Sign in as admin to get a fresh token
-            res = supabase.auth.sign_in_with_password({"email": "admin@archon.com", "password": "password123"})
-            if res.session:
-                token = res.session.access_token
-                print(f"\n✅ Database initialized successfully.")
-                print(f"🔑 Dev Auto-Login URL: http://localhost:3737/dev-token?token={token}")
-            else:
-                print("\n✅ Database initialized successfully.")
-        except Exception:
-            # Silently ignore token generation errors to avoid confusing users if Auth isn't fully ready
-            print("\n✅ Database initialized successfully.")
-    else:
-        print("\n✅ Database initialized successfully.")
+    print_dev_token()
+    logger.info("✅ Database initialized successfully.")
 
 if __name__ == "__main__":
     main()

@@ -95,7 +95,7 @@ class JobBoardService:
                         if job.real_id:
                             # Throttling: Random delay to mimic human behavior
                             if i > 0:
-                                delay = random.uniform(1.5, 3.0)
+                                delay = random.uniform(1.3, 2.7)
                                 await asyncio.sleep(delay)
 
                             try:

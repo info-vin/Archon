@@ -24,7 +24,7 @@ CREATE POLICY "Allow write access for sales and management" ON customers
         auth.jwt() ->> 'role' IN ('service_role') OR
         EXISTS (
             SELECT 1 FROM profiles
-            WHERE id = auth.uid()
+            WHERE id = auth.uid()::text
             AND role IN ('admin', 'manager', 'sales', 'system_admin')
         )
     );
@@ -39,7 +39,7 @@ CREATE POLICY "Allow admins to view gemini logs" ON gemini_logs
     USING (
         EXISTS (
             SELECT 1 FROM profiles
-            WHERE id = auth.uid()
+            WHERE id = auth.uid()::text
             AND role IN ('admin', 'system_admin', 'manager')
         )
     );
@@ -60,7 +60,7 @@ CREATE POLICY "Allow admins to view archon logs" ON archon_logs
     USING (
         EXISTS (
             SELECT 1 FROM profiles
-            WHERE id = auth.uid()
+            WHERE id = auth.uid()::text
             AND role IN ('admin', 'system_admin', 'manager')
         )
     );
@@ -111,7 +111,7 @@ CREATE POLICY "Users can view own visits" ON visit_logs
         auth.uid() = user_id OR
         EXISTS (
             SELECT 1 FROM profiles
-            WHERE id = auth.uid()
+            WHERE id = auth.uid()::text
             AND role IN ('admin', 'manager', 'system_admin')
         )
     );
@@ -137,7 +137,7 @@ CREATE POLICY "Allow marketing view" ON marketing_trends
     USING (
         EXISTS (
             SELECT 1 FROM profiles
-            WHERE id = auth.uid()
+            WHERE id = auth.uid()::text
             AND role IN ('marketing', 'manager', 'admin', 'system_admin')
         )
     );

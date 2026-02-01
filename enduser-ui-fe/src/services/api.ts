@@ -174,7 +174,7 @@ const supabaseApi = {
 
     // Secondary Try/Catch for Profile Fetching to prevent 406/RLS errors from logging out the user
     try {
-      const { data: profile, error } = await supabase.from('profiles').select('*').eq('id', sessionUser.id).single();
+      const { data: profile, error } = await supabase.from('profiles').select('*').eq('id', sessionUser.id).maybeSingle();
       
       if (error) throw error;
       if (!profile) throw new Error("Profile missing");

@@ -359,6 +359,18 @@ export const RAGSettings = ({
     }
   }, [embeddingInstanceConfig.url, llmInstanceConfig.url, llmStatus.online, embeddingStatus.online]);
 
+  // Refs to stabilize manualTestConnection dependencies and prevent loops
+  const ollamaMetricsRef = useRef(ollamaMetrics);
+  const fetchOllamaMetricsRef = useRef(fetchOllamaMetrics);
+
+  useEffect(() => {
+    ollamaMetricsRef.current = ollamaMetrics;
+  }, [ollamaMetrics]);
+
+  useEffect(() => {
+    fetchOllamaMetricsRef.current = fetchOllamaMetrics;
+  }, [fetchOllamaMetrics]);
+
   // Manual test function with user feedback using backend proxy
 const manualTestConnection = useCallback(async (
     url: string,
@@ -400,10 +412,10 @@ const manualTestConnection = useCallback(async (
           let modelType = 'models';
 
           if (context === 'chat') {
-            modelCount = ollamaMetrics.llmInstanceModels?.chat || 0;
+            modelCount = ollamaMetricsRef.current.llmInstanceModels?.chat || 0;
             modelType = 'chat models';
           } else if (context === 'embedding') {
-            modelCount = ollamaMetrics.embeddingInstanceModels?.embedding || 0;
+            modelCount = ollamaMetricsRef.current.embeddingInstanceModels?.embedding || 0;
             modelType = 'embedding models';
           }
 
@@ -414,7 +426,7 @@ const manualTestConnection = useCallback(async (
           // Scenario 2: Manual "Test Connection" button - refresh Ollama metrics if Ollama provider is selected
           if (ragSettings.LLM_PROVIDER === 'ollama' || embeddingProvider === 'ollama' || context === 'embedding') {
             // console.log('🔄 Fetching Ollama metrics - Test Connection button clicked');
-            fetchOllamaMetrics();
+            fetchOllamaMetricsRef.current();
           }
 
           return true;
@@ -449,7 +461,7 @@ const manualTestConnection = useCallback(async (
 
       return false;
     }
-  }, [embeddingProvider, fetchOllamaMetrics, ollamaMetrics.embeddingInstanceModels, ollamaMetrics.llmInstanceModels, ragSettings.LLM_PROVIDER, showToast]);
+  }, [embeddingProvider, ragSettings.LLM_PROVIDER, showToast]);
 
   useEffect(() => {
     const newLLMUrl = ragSettings.LLM_BASE_URL || '';
@@ -507,7 +519,7 @@ const manualTestConnection = useCallback(async (
         return updated;
       });
     }
-  }, [ragSettings.MODEL_CHOICE, chatProvider, ragSettings]);
+  }, [ragSettings.MODEL_CHOICE, chatProvider]);
 
   useEffect(() => {
     // Update embedding provider models when embedding model changes
@@ -524,7 +536,7 @@ const manualTestConnection = useCallback(async (
         return updated;
       });
     }
-  }, [ragSettings.EMBEDDING_MODEL, embeddingProvider, ragSettings]);
+  }, [ragSettings.EMBEDDING_MODEL, embeddingProvider]);
 
   const reloadApiCredentials = useCallback(async () => {
     try {
@@ -570,7 +582,8 @@ const manualTestConnection = useCallback(async (
     }, 30000);
 
     return () => clearInterval(interval);
-  }, [ragSettings.LLM_PROVIDER, reloadApiCredentials, ragSettings]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ragSettings.LLM_PROVIDER, reloadApiCredentials]);
 
   useEffect(() => {
     const needsDetection = chatProvider === 'ollama' || embeddingProvider === 'ollama';
@@ -623,16 +636,16 @@ const manualTestConnection = useCallback(async (
 
   // Sync independent provider states with ragSettings (one-way: ragSettings -> local state)
   useEffect(() => {
-    if (ragSettings.LLM_PROVIDER && ragSettings.LLM_PROVIDER !== chatProvider) {
+    if (ragSettings.LLM_PROVIDER) {
       setChatProvider(ragSettings.LLM_PROVIDER as ProviderKey);
     }
-  }, [ragSettings.LLM_PROVIDER, chatProvider]);
+  }, [ragSettings.LLM_PROVIDER]);
 
   useEffect(() => {
-    if (ragSettings.EMBEDDING_PROVIDER && ragSettings.EMBEDDING_PROVIDER !== embeddingProvider) {
+    if (ragSettings.EMBEDDING_PROVIDER) {
       setEmbeddingProvider(ragSettings.EMBEDDING_PROVIDER as ProviderKey);
     }
-  }, [ragSettings.EMBEDDING_PROVIDER, embeddingProvider]);
+  }, [ragSettings.EMBEDDING_PROVIDER]);
 
   useEffect(() => {
     setOllamaManualConfirmed(false);

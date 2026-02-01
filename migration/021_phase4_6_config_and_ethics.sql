@@ -16,7 +16,7 @@ ALTER TABLE archon_ethics_events ENABLE ROW LEVEL SECURITY;
 -- Only Managers and Admins can view ethics logs
 CREATE POLICY "Allow managers and admins to view ethics logs" ON archon_ethics_events
     FOR SELECT
-    USING (auth.role() = 'service_role' OR (SELECT role FROM profiles WHERE id = auth.uid()) IN ('manager', 'system_admin'));
+    USING (auth.role() = 'service_role' OR (SELECT role FROM profiles WHERE id = auth.uid()::text) IN ('manager', 'system_admin'));
 
 -- Service role can insert logs (backend service)
 CREATE POLICY "Allow service role to insert ethics logs" ON archon_ethics_events

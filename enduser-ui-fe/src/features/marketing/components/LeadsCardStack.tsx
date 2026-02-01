@@ -162,7 +162,7 @@ const Card = ({ lead, style, onDragEnd, onPitch, onHistory }: { lead: Lead, styl
                 <div className="flex-1 overflow-y-auto min-h-0 pr-1">
                     <span className="text-xs uppercase tracking-wider text-muted-foreground font-semibold sticky top-0 bg-card">Requirement</span>
                     <div className="text-base font-medium mt-1 leading-relaxed space-y-2 text-gray-800">
-                        {lead.identified_need.split(/(?=\s*->)/).map((segment, i) => (
+                        {(lead.identified_need || "").split(/(?=\s*->)/).map((segment, i) => (
                             <p key={i}>{segment.trim()}</p>
                         ))}
                     </div>

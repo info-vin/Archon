@@ -636,7 +636,7 @@ class TaskService:
             provider_config = await credential_service.get_active_provider("llm")
             # Fallback to gemini-2.5-flash (User Preference) instead of 2.0/1.5 if not set
             model_name = provider_config.get("chat_model") or "gemini-2.5-flash"
-            
+
             # DEBUG: Log the model name being used
             logger.info(f"Refining task with model: {model_name}")
 

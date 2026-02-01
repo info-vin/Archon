@@ -135,17 +135,35 @@ async def get_provider_status(
                 detail=f"Provider '{provider}' not supported for connectivity testing"
             )
 
-        # Get API key server-side (never expose to client)
-        # We always try GEMINI_API_KEY first as it's the preferred name in our environment
-        api_key = await credential_service.get_credential("GEMINI_API_KEY", decrypt=True)
+        # Determine which DB keys to check based on the provider
+        provider_key_map = {
+            "google": ["GEMINI_API_KEY", "GOOGLE_API_KEY"],
+            "openai": ["OPENAI_API_KEY"],
+            "anthropic": ["ANTHROPIC_API_KEY"],
+            "openrouter": ["OPENROUTER_API_KEY"],
+            "grok": ["GROK_API_KEY", "XAI_API_KEY"],
+            "ollama": [] # Ollama doesn't need a key usually, or uses LLM_BASE_URL
+        }
 
-        # Fallback to GOOGLE_API_KEY if needed
-        if not api_key or not str(api_key).strip():
-            api_key = await credential_service.get_credential("GOOGLE_API_KEY", decrypt=True)
+        keys_to_check = provider_key_map.get(provider, [])
+        api_key = None
 
-        if not api_key or not isinstance(api_key, str) or not api_key.strip():
-            logger.info(f"No API key configured for {safe_provider}")
-            return {"ok": False, "reason": "no_key"}
+        if provider == "ollama":
+             # Ollama "connection" is usually just checking the URL, but here we preserve the interface
+             # We might need to fetch the base URL instead if the tester needed it, 
+             # but the tester signature currently only takes api_key. 
+             # For now, pass a dummy key for Ollama to allow the tester to proceed (if it handles URL internally or if we update it)
+             # However, looking at the tester map, 'ollama' is NOT in PROVIDER_TESTERS in the current file state.
+             # So we just skip if it's not supported.
+             pass
+        
+        for key_name in keys_to_check:
+            api_key = await credential_service.get_credential(key_name, decrypt=True)
+            if api_key and str(api_key).strip():
+                break
+        
+        # Special handling if no key found but required (Ollama might be an exception if supported later)
+        if provider != "ollama" and (not api_key or not isinstance(api_key, str) or not api_key.strip()):
             logger.info(f"No API key configured for {safe_provider}")
             return {"ok": False, "reason": "no_key"}
 

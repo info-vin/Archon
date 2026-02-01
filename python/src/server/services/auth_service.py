@@ -88,11 +88,21 @@ class AuthService:
             # Optimize logging: Avoid huge tracebacks for "already registered" errors
             # We combine str(e) and getattr(e, 'message', '') to catch all variants (AuthApiError, HTTPStatusError)
             err_content = str(e).lower()
+            # Extract response body from httpx errors (common in Supabase/GoTrue)
+            if hasattr(e, 'response') and hasattr(e.response, 'text'):
+                err_content += f" {e.response.text.lower()}"
+
             if hasattr(e, 'message'):
                 err_content += f" {str(e.message).lower()}"
 
+            # Check args for good measure (standard Python exception msg)
+            if e.args:
+                for arg in e.args:
+                    err_content += f" {str(arg).lower()}"
+
             is_duplicate = (
                 "already registered" in err_content or
+                "already been registered" in err_content or
                 "already exists" in err_content or
                 "422" in err_content or
                 "unprocessable entity" in err_content or
@@ -100,13 +110,13 @@ class AuthService:
             )
 
             if is_duplicate:
-                # Log as warning without stack trace
+                # Log as warning without stack trace and return None to suppress exception
                 logger.warning(f"User creation skipped (already registered): {email}")
+                return {}
             else:
                 # Log full error for unexpected issues
                 logger.error(f"Error in create_user_by_admin: {e}", exc_info=True)
-
-            raise e
+                raise e
 
     def register_user(self, email: str, password: str, name: str) -> dict[str, Any]:
         """

@@ -54,10 +54,21 @@ class EnrichmentService:
             # logic: If successful, update status and score
             # Real implementation would call scraping tools here.
 
+            # Generate Mock Enriched Data
+            mock_tax_id = "12345678"
+            mock_email = f"contact@{lead.get('company_name', 'company').lower().replace(' ', '')}.com"
+            mock_news = "Recent news indicates expansion into AI sector with $10M Series B funding."
+
+            # Append to identified_need for visibility
+            current_need = lead.get("identified_need") or ""
+            enriched_summary = f"{current_need}\n\n[Auto-Enriched Data]\nTax ID: {mock_tax_id}\nEmail: {mock_email}\nNews: {mock_news}"
+
             enrichment_data = {
                 "enrichment_status": "success",
                 "enrichment_score": 85, # Mock score
                 "data_last_verified_at": datetime.now().isoformat(),
+                "identified_need": enriched_summary,
+                "contact_email": mock_email # Try saving to column if exists (based on API usage)
             }
 
             supabase.table("leads").update(enrichment_data).eq("id", lead_id).execute()

@@ -17,6 +17,9 @@
 | 5. **撰寫冪等的資料庫腳本** | 所有資料庫遷移腳本都應具備「冪等性」，確保其可以安全地重複執行。應大量使用 `DROP ... IF EXISTS` 和 `CREATE ... IF NOT EXISTS`。 |
 | 6. **`Makefile` 是唯一指令來源** | 文件應引用 `make <command>`，而不是直接複製貼上底層 shell 指令，以確保文件與腳本永遠同步。 |
 | 7. **安全地修改與復原** | 複雜修改應使用 `write_file` 一次性覆寫。當修改後測試失敗，應立即用 `git checkout -- <file>` 還原，而不是在錯誤的基礎上繼續修補。 |
+| 8. **維持「啞巴控制器」** | API 控制器應保持輕量。版本控制、來源連結等複雜商業邏輯應封裝於 Service 層。 |
+| 9. **拒絕「手動拆包」** | 嚴禁在 API 層使用連續的 `if request.field is not None`。應善用 Pydantic 的 `model_dump(exclude_unset=True)` 一行搞定。 |
+| 10. **型別是開發者的盔甲** | 使用 `cast` 進行顯式擔保，並區分 Pydantic (執行期安檢) 與 MyPy (開發期藍圖審查) 的職責。 |
 
 ---
 
@@ -83,6 +86,8 @@
 
 - **`uv.lock` 管理**: `python/uv.lock` **應被提交**至版本控制系統。這是為了確保所有團隊成員以及 CI/CD 環境在安裝依賴時，所使用的套件版本完全一致，避免「我的電腦可以跑，但你的不行」之問題。
 - **依賴組安裝**: `Makefile` 中的 `make test-be` 和 `make lint-be` 會自動使用 `--group` 參數安裝 `test` 和 `dev` 的依賴，無需手動操作。
+- **Logfire 初始化**: 若新檔案是作為獨立腳本執行 (非由 API 導入)，必須在進入點呼叫 `setup_logfire()`，否則日誌將無法上傳。
+- **Logger 引用規範**: 嚴禁使用原生 `logging`，請統一由 `src.server.config.logfire_config import get_logger` 取得實例。
 
 ### 2.3 全 Docker 環境手動驗證 SOP
 
@@ -526,3 +531,20 @@ docker exec -i archon-server /venv/bin/python -c "import os, psycopg2; DB=os.get
 ## 附錄 A：系統分析 (System Analysis)
 
 (請參閱 `PRPs/Phase_4.2_Business_Feature_Expansion_Plan.md`)
+
+---
+
+## 附錄 B：技術債監控 (Technical Debt Monitor)
+
+以下檔案行數超過 1000 行，應作為優先重構目標（數據結算至 2026-01-31）：
+
+| 檔案路徑 | 行數 | 類型 | 建議行動 |
+| :--- | :---: | :---: | :--- |
+| `archon-ui-main/src/components/settings/RAGSettings.tsx` | 2396 | Frontend | **[Critical]** 拆分為多個子元件 |
+| `python/src/server/api_routes/projects_api.py` | 1748 | Backend | **[Critical]** 拆分 Service，移除手動拆包 |
+| `python/src/server/services/crawling/code_extraction_service.py` | 1581 | Backend | **[High]** 按語言拆分為 Strategy Class |
+| `python/src/server/api_routes/ollama_api.py` | 1335 | Backend | **[High]** 抽離通訊邏輯 |
+| `archon-ui-main/src/components/settings/OllamaModelSelectionModal.tsx` | 1170 | Frontend | **[Medium]** UX 邏輯分離 |
+| `python/src/server/services/ollama/model_discovery_service.py` | 1122 | Backend | **[Medium]** 減少單檔複雜度 |
+| `python/src/server/services/llm_provider_service.py` | 1085 | Backend | **[Medium]** 抽象層重構 |
+| `python/src/server/api_routes/knowledge_api.py` | 1085 | Backend | **[Medium]** API 端點精簡 |

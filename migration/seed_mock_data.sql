@@ -55,11 +55,60 @@ ON CONFLICT (id) DO UPDATE SET
     role = EXCLUDED.role;
 
 -- 5. Agents (Using fixed IDs as they are system-controlled)
-INSERT INTO profiles (id, "employeeId", name, email, department, position, status, role, avatar) VALUES
-('agent-dev-001', 'A1001', 'DevBot', 'dev.bot@archon.com', 'AI', 'Code Assistant', 'active', 'ai_agent', 'https://api.dicebear.com/7.x/bottts/svg?seed=DevBot'),
-('agent-mr-001', 'A1002', 'MarketBot', 'market.bot@archon.com', 'AI', 'Market Researcher', 'active', 'ai_agent', 'https://api.dicebear.com/7.x/bottts/svg?seed=MarketBot'),
-('agent-lib-001', 'A1003', 'Librarian', 'lib.bot@archon.com', 'AI', 'Knowledge Manager', 'active', 'ai_agent', 'https://api.dicebear.com/7.x/bottts/svg?seed=Librarian'),
-('agent-sys-001', 'A1004', 'Clockwork', 'sys.bot@archon.com', 'AI', 'Workflow Automation', 'active', 'ai_agent', 'https://api.dicebear.com/7.x/bottts/svg?seed=Clockwork')
+-- DevBot
+INSERT INTO profiles (id, "employeeId", name, email, department, position, status, role, avatar)
+VALUES (
+    COALESCE((SELECT id FROM profiles WHERE email = 'dev.bot@archon.com'), 'agent-dev-001'),
+    'A1001', 'DevBot', 'dev.bot@archon.com', 'AI', 'Code Assistant', 'active', 'ai_agent', 'https://api.dicebear.com/7.x/bottts/svg?seed=DevBot'
+)
+ON CONFLICT (id) DO UPDATE SET
+    "employeeId" = EXCLUDED."employeeId",
+    name = EXCLUDED.name,
+    email = EXCLUDED.email,
+    department = EXCLUDED.department,
+    position = EXCLUDED.position,
+    status = EXCLUDED.status,
+    role = EXCLUDED.role,
+    avatar = EXCLUDED.avatar;
+
+-- MarketBot
+INSERT INTO profiles (id, "employeeId", name, email, department, position, status, role, avatar)
+VALUES (
+    COALESCE((SELECT id FROM profiles WHERE email = 'market.bot@archon.com'), 'agent-mr-001'),
+    'A1002', 'MarketBot', 'market.bot@archon.com', 'AI', 'Market Researcher', 'active', 'ai_agent', 'https://api.dicebear.com/7.x/bottts/svg?seed=MarketBot'
+)
+ON CONFLICT (id) DO UPDATE SET
+    "employeeId" = EXCLUDED."employeeId",
+    name = EXCLUDED.name,
+    email = EXCLUDED.email,
+    department = EXCLUDED.department,
+    position = EXCLUDED.position,
+    status = EXCLUDED.status,
+    role = EXCLUDED.role,
+    avatar = EXCLUDED.avatar;
+
+-- Librarian
+INSERT INTO profiles (id, "employeeId", name, email, department, position, status, role, avatar)
+VALUES (
+    COALESCE((SELECT id FROM profiles WHERE email = 'lib.bot@archon.com'), 'agent-lib-001'),
+    'A1003', 'Librarian', 'lib.bot@archon.com', 'AI', 'Knowledge Manager', 'active', 'ai_agent', 'https://api.dicebear.com/7.x/bottts/svg?seed=Librarian'
+)
+ON CONFLICT (id) DO UPDATE SET
+    "employeeId" = EXCLUDED."employeeId",
+    name = EXCLUDED.name,
+    email = EXCLUDED.email,
+    department = EXCLUDED.department,
+    position = EXCLUDED.position,
+    status = EXCLUDED.status,
+    role = EXCLUDED.role,
+    avatar = EXCLUDED.avatar;
+
+-- Clockwork
+INSERT INTO profiles (id, "employeeId", name, email, department, position, status, role, avatar)
+VALUES (
+    COALESCE((SELECT id FROM profiles WHERE email = 'sys.bot@archon.com'), 'agent-sys-001'),
+    'A1004', 'Clockwork', 'sys.bot@archon.com', 'AI', 'Workflow Automation', 'active', 'ai_agent', 'https://api.dicebear.com/7.x/bottts/svg?seed=Clockwork'
+)
 ON CONFLICT (id) DO UPDATE SET
     "employeeId" = EXCLUDED."employeeId",
     name = EXCLUDED.name,

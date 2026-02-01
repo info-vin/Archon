@@ -29,14 +29,11 @@ describe('Sales Nexus Closure Flow (Phase 4.4.2)', () => {
         fireEvent.click(screen.getByText(/Find Leads/i));
 
         // 3. Find the lead and Verify Job Title
-        await waitFor(() => {
-            expect(screen.getByText('Retail Corp')).toBeInTheDocument();
-            // Match the full text structure "Hiring: ..." - Updated to match MSW data
-            expect(screen.getByText(/Hiring:\s*Senior Data Analyst/i)).toBeInTheDocument();
-        });
+        await screen.findByText('Retail Corp');
+        expect(screen.getByText(/Hiring:\s*Senior Data Analyst/i)).toBeInTheDocument();
 
         // 4. Generate Pitch
-        const generateBtns = screen.getAllByText('Pitch');
+        const generateBtns = screen.getAllByText(/Generate Pitch/i);
         fireEvent.click(generateBtns[0]);
 
         // 5. Approve & Save (Triggers Librarian)
@@ -75,7 +72,7 @@ describe('Sales Nexus Closure Flow (Phase 4.4.2)', () => {
         });
 
         // 3. Promote Action
-        const promoteBtn = screen.getAllByText(/Promote to Vendor/i)[0];
+        const promoteBtn = screen.getAllByText(/Promote/i)[0];
         fireEvent.click(promoteBtn);
 
         // 4. Fill Vendor Details (Only Email and Notes exist in UI)

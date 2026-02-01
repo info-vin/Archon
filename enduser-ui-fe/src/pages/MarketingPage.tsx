@@ -16,6 +16,7 @@ const MarketingPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [searchProgress, setSearchProgress] = useState(0); // Progress Bar for Job Search
   const [expandedJobIdx, setExpandedJobIdx] = useState<number | null>(null);
   const [generatedPitch, setGeneratedPitch] = useState<{ forCompany: string; content: string } | null>(null);
 
@@ -92,13 +93,30 @@ const MarketingPage: React.FC = () => {
     setLoading(true);
     setError(null);
     setGeneratedPitch(null);
+    setSearchProgress(0);
+
+    // Progress Simulation
+    const progressInterval = setInterval(() => {
+        setSearchProgress(prev => {
+            if (prev >= 90) return prev; // Stall at 90%
+            return prev + Math.floor(Math.random() * 10) + 5;
+        });
+    }, 1500);
+
     try {
       const results = await api.searchJobs(keyword);
-      setJobs(results);
+      clearInterval(progressInterval);
+      setSearchProgress(100);
+      
+      // Short delay to show 100%
+      setTimeout(() => {
+          setJobs(results);
+          setLoading(false);
+      }, 500);
     } catch (err: any) {
+      clearInterval(progressInterval);
       console.error("Search failed:", err);
       setError("Failed to fetch job market data. Please try again.");
-    } finally {
       setLoading(false);
     }
   };
@@ -223,9 +241,22 @@ const MarketingPage: React.FC = () => {
                     )}
 
                     {loading ? (
-                        <div className="flex flex-col items-center justify-center p-12 space-y-4">
-                            <RefreshCwIcon className="w-12 h-12 text-indigo-600 animate-spin" />
-                            <p className="text-sm text-gray-500 font-medium">Analyzing market trends and identifying opportunities...</p>
+                        <div className="flex flex-col items-center justify-center p-12 space-y-6 w-full max-w-md mx-auto">
+                            <div className="w-full space-y-2">
+                                <div className="flex justify-between text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                    <span>Scanning Job Boards...</span>
+                                    <span>{searchProgress}%</span>
+                                </div>
+                                <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
+                                    <div 
+                                        className="h-full bg-indigo-600 rounded-full transition-all duration-300 ease-out"
+                                        style={{ width: `${searchProgress}%` }}
+                                    />
+                                </div>
+                                <p className="text-xs text-center text-gray-400 pt-2">
+                                    Analysing results from 104.com.tw. Please wait approx 15-20s (Anti-Blocking active).
+                                </p>
+                            </div>
                         </div>
                     ) : jobs.length > 0 ? (
                         <>
@@ -554,13 +585,14 @@ const MarketingPage: React.FC = () => {
 };
 
 const PromoteForm: React.FC<{ lead: any; onClose: () => void; onSuccess: () => void }> = ({ lead, onClose, onSuccess }) => {
-    const [email, setEmail] = useState('');
+    const [email, setEmail] = useState(lead.contact_email || '');
     const [notes, setNotes] = useState('');
     const [loading, setLoading] = useState(false);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
+        
         try {
             await api.promoteLead(lead.id, {
                 vendor_name: lead.company_name,
@@ -598,7 +630,27 @@ const PromoteForm: React.FC<{ lead: any; onClose: () => void; onSuccess: () => v
                     rows={3} 
                     placeholder="Details about this lead..."
                 />
+
             </div>
+
+            {/* AI Enriched Data Display */}
+            {lead.enrichment_status === 'success' && (
+                <div className="bg-indigo-50 p-3 rounded-lg border border-indigo-100 text-xs">
+                    <h4 className="font-bold text-indigo-700 mb-1 flex items-center gap-1">
+                        <SparklesIcon className="w-3 h-3" /> AI Insights (Auto-Enriched)
+                    </h4>
+                    <div className="space-y-1 text-indigo-900">
+                        {lead.contact_email && <p><span className="font-semibold">Email:</span> {lead.contact_email}</p>}
+                        {/* Extract fields from identified_need if captured there */}
+                        {lead.identified_need?.includes('[Auto-Enriched Data]') && (
+                            <div className="whitespace-pre-wrap font-mono text-[10px] mt-1 bg-white/50 p-1 rounded">
+                                {lead.identified_need.split('[Auto-Enriched Data]')[1]}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
+
             <div className="flex gap-3 justify-end pt-2">
                 <button type="button" onClick={onClose} className="px-4 py-2 text-gray-600 font-medium hover:bg-gray-100 rounded-lg">Cancel</button>
                 <button 

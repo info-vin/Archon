@@ -106,7 +106,7 @@ async def create_lead(
     try:
         logger.info(f"API: Creating lead | company={request.company_name} | user={current_user.get('email')}")
         supabase = get_supabase_client()
-        
+
         lead_data = request.model_dump()
         lead_data["created_from_user_id"] = current_user.get("id")
         lead_data["created_at"] = "now()"
@@ -117,7 +117,7 @@ async def create_lead(
         # Let's simple insert for now as per immediate requirement.
 
         res = supabase.table("leads").insert(lead_data).execute()
-        
+
         if not res.data:
              raise Exception("Database returned no data after insert")
 
@@ -129,8 +129,8 @@ async def create_lead(
         # If duplicated url, handle gracefully?
         error_detail = str(e)
         if "unique_violation" in error_detail.lower():
-             raise HTTPException(status_code=409, detail="Lead already exists.")
-        
+             raise HTTPException(status_code=409, detail="Lead already exists.") from e
+
         raise HTTPException(status_code=500, detail=error_detail) from e
 
 @router.post("/leads/{lead_id}/promote")
@@ -191,7 +191,26 @@ async def promote_lead_to_vendor(
                 librarian = LibrarianService()
 
                 # Use notes as content or fallback to basic info
-                content_to_archive = request.notes or f"Lead promoted: {lead_data.get('company_name')}"
+                base_content = request.notes or f"Promoted Lead: {lead_data.get('company_name')}"
+
+                # Extract Enriched Data for KB
+                identified_need = lead_data.get("identified_need", "")
+                enrichment_block = ""
+                if "[Auto-Enriched Data]" in identified_need:
+                    try:
+                        _, enriched_part = identified_need.split("[Auto-Enriched Data]")
+                        enrichment_block = f"\n\n## Market Intelligence\n{enriched_part.strip()}"
+                    except Exception:
+                        pass
+
+                # Format full content for Knowledge Base (RAG Source)
+                content_to_archive = (
+                    f"# Vendor Profile: {request.vendor_name}\n"
+                    f"**Source**: {lead_data.get('source')} | **Job Title**: {lead_data.get('job_title')}\n\n"
+                    f"## Business Need\n{identified_need.replace('[Auto-Enriched Data]', '').split('Tax ID:')[0].strip()}\n"
+                    f"{enrichment_block}\n\n"
+                    f"## Internal Notes\n{base_content}"
+                )
 
                 asyncio.create_task(librarian.archive_sales_pitch(
                     company=request.vendor_name,
@@ -633,7 +652,7 @@ async def reset_leads(current_user: dict = Depends(get_current_user)):
         supabase = get_supabase_client()
         # Delete all rows in leads table
         res = supabase.table("leads").delete().neq("id", "00000000-0000-0000-0000-000000000000").execute()
-        
+
         logger.info(f"API: Leads reset | count={len(res.data) if res.data else 0} | user={current_user.get('email')}")
         return {"success": True, "deleted_count": len(res.data) if res.data else 0}
     except Exception as e:
