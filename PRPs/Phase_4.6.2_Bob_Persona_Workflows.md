@@ -1,6 +1,6 @@
 # Phase 4.6.2 實作細節：Bob 的內容生產工作臺 (Content Workbench)
 
-> **狀態**: 待實作 (Approved for Implementation)
+> **狀態**: 已完成 (DONE)
 > **目標角色**: Bob (內容行銷主管)
 > **核心目標**: 將 Bob 的工作流從「被動看報表」轉型為「主動生產內容」，透過 **三代理人協作模型 (3-Agent Collaboration Model)** 打造一個高效率的內容工作臺。
 
@@ -81,23 +81,33 @@ sequenceDiagram
     UI->>Bob: 在右側顯示「脈絡分頁」(Context Tab)
     Note right of UI: Bob 此時閱讀逐字稿<br>並確認客戶痛點
 
-    %% 階段三：AI 協作撰寫
+    %% 階段三：AI 協作撰寫 (State Persistence & Draft)
     Note over Bob, DB: 階段 3：AI 協作撰寫 (AI Drafting)
-    Bob->>UI: 切換至「編輯分頁」 -> 點擊 "✨ 生成草稿"
+    Bob->>UI: 切換至「編輯分頁」 -> 點擊 "✨ 生成草稿" (Magic Draft)
     UI->>API: POST /api/marketing/drafts
-    Note right of API: 注入 Context 與 Prompt
+    Note right of UI: UI 進入 Loading 狀態<br>(⚠️ 目前切換分頁會遺失進度，需修復)
     API->>MarketBot: Prompt: "基於{Logs}與{Docs}撰寫案例..."
     MarketBot-->>API: Stream 回傳 Markdown 草稿
     API-->>UI: 即時串流顯示於編輯器
     Bob->>UI: 人工潤飾 (Human Polish)
+    
+    %% 存檔流程 (Save Flow)
+    Bob->>UI: 點擊 "💾 Save"
+    UI->>API: POST /api/blog (Status=DRAFT)
+    API->>DB: INSERT INTO blog_posts
+    DB-->>API: 回傳 Blog ID
+    API-->>UI: 回傳成功訊息
+    UI->>Bob: 顯示 Toast: "Draft Saved! (ID: 123)"
 
-    %% 階段四：視覺資產生成
-    Note over Bob, DB: 階段 4：視覺資產生成 (Asset Gen)
+    %% 階段四：視覺資產生成 (Nana Banana)
+    Note over Bob, DB: 階段 4：視覺資產生成 (Nana Banana)
     Bob->>UI: 點擊 "生成首圖"
     UI->>API: POST /api/marketing/nana-banana
-    API->>Nana: 生成圖片 (依據文章標題)
-    Nana-->>API: 回傳圖片 URL
-    API-->>UI: 自動插入 Markdown 圖片語法
+    API->>Nana: 生成圖片 (Gemini Vision)
+    Nana-->>API: 回傳 Base64 或 臨時 URL
+    API->>Storage: 上傳至 Supabase Storage (bucket: assets)
+    Storage-->>API: 回傳 Public URL
+    API-->>UI: 自動插入 Markdown 圖片語法 (![Cover](url))
 
     %% 階段五：發布與閉環
     Note over Bob, DB: 階段 5：發布與閉環 (Publish & Loop)
@@ -165,8 +175,8 @@ sequenceDiagram
 
 ## 6. 執行檢查清單 (Actionable Checklist)
 
-1.  [ ] **Backend**: 在 `marketing_api.py` 新增 `lead-context` 端點。
-2.  [ ] **Backend**: 更新 `drafts` 端點，支援 `context_lead_id` 注入。
-3.  [ ] **Frontend**: 建立 `VictoryFeed` 元件 (先用 Mock Data 確認樣式)。
-4.  [ ] **Frontend**: 在 `BrandPage.tsx` 實作左右分割佈局。
-5.  [ ] **Frontend**: 串接 API，實現「點擊左側 -> 載入右側 Context」的連動。
+1.  [x] **Backend**: 在 `marketing_api.py` 新增 `lead-context` 端點。
+2.  [x] **Backend**: 更新 `drafts` 端點，支援 `context_lead_id` 注入。
+3.  [x] **Frontend**: 建立 `VictoryFeed` 元件 (先用 Mock Data 確認樣式)。
+4.  [x] **Frontend**: 在 `BrandPage.tsx` 實作左右分割佈局。
+5.  [x] **Frontend**: 串接 API，實現「點擊左側 -> 載入右側 Context」的連動。

@@ -366,6 +366,8 @@ Phase 4.4.5 引入了 **Clockwork** 進行系統自動檢測。
         | 22 | `018_fix_blog_posts_id_default.sql` | **[修復]** 修正 `blog_posts` ID 的 UUID 預設值。 |
         | 23 | `019_add_prompts_rls.sql` | **[安全]** 為 `system_prompts` 加入 RLS 政策，保護 AI 提示詞。 |
         | 24 | `020_phase46_schema.sql` | **[Phase 4.6]** Mobile Ops 表 (Visit Logs), Market Intelligence, 與安全加固 (RLS)。 |
+        | 25 | `021_phase4_6_config_and_ethics.sql` | **[Phase 4.6]** 系統設定表 (`archon_settings`) 與倫理準則。 |
+        | 26 | `022_add_blog_lead_relation.sql` | **[Phase 4.6.2]** 連結 Blog 與 Leads，實現 Bob 的內容閉環。 |
 
 3.  **階段三：執行部署**
 
