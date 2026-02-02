@@ -37,22 +37,32 @@ async def test_enrich_lead_success():
 @pytest.mark.asyncio
 async def test_prune_stale_leads():
     """
-    Test that prune_stale_leads archives old leads.
+    Test that prune_stale_leads archives old leads using batch update.
     """
     mock_supabase = MagicMock()
-    # Mock finding stale leads
-    mock_supabase.table().select().lt().neq().neq().execute.return_value.data = [
-        {"id": "lead-old-1", "enrichment_status": "failed", "enrichment_score": 0},
-        {"id": "lead-old-2", "enrichment_status": "pending", "enrichment_score": 20}
+
+    # Mock the update chain and final response
+    # In batch mode, we call .update().lt().lt().neq().neq().execute()
+    mock_update_chain = mock_supabase.table().update.return_value
+    mock_update_chain.lt.return_value = mock_update_chain
+    mock_update_chain.neq.return_value = mock_update_chain
+
+    # The final .execute() returns the list of modified records
+    mock_update_chain.execute.return_value.data = [
+        {"id": "lead-old-1", "status": "archived"},
+        {"id": "lead-old-2", "status": "archived"}
     ]
 
     with patch("server.services.enrichment_service.get_supabase_client", return_value=mock_supabase):
         count = await EnrichmentService.prune_stale_leads()
 
+        # Should return 2 based on the mock data length
         assert count == 2
-        # Verify update call (called twice)
-        assert mock_supabase.table().update.call_count == 2
-        # Check argument of last call
+
+        # Verify single batch update call instead of individual ones
+        mock_supabase.table().update.assert_called_once()
+
+        # Verify parameters of the update
         args, _ = mock_supabase.table().update.call_args
         assert args[0]["status"] == "archived"
         assert args[0]["auto_archived_reason"] == "stale_low_quality"

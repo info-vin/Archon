@@ -150,18 +150,18 @@ async def get_provider_status(
 
         if provider == "ollama":
              # Ollama "connection" is usually just checking the URL, but here we preserve the interface
-             # We might need to fetch the base URL instead if the tester needed it, 
-             # but the tester signature currently only takes api_key. 
+             # We might need to fetch the base URL instead if the tester needed it,
+             # but the tester signature currently only takes api_key.
              # For now, pass a dummy key for Ollama to allow the tester to proceed (if it handles URL internally or if we update it)
              # However, looking at the tester map, 'ollama' is NOT in PROVIDER_TESTERS in the current file state.
              # So we just skip if it's not supported.
              pass
-        
+
         for key_name in keys_to_check:
             api_key = await credential_service.get_credential(key_name, decrypt=True)
             if api_key and str(api_key).strip():
                 break
-        
+
         # Special handling if no key found but required (Ollama might be an exception if supported later)
         if provider != "ollama" and (not api_key or not isinstance(api_key, str) or not api_key.strip()):
             logger.info(f"No API key configured for {safe_provider}")
@@ -169,7 +169,7 @@ async def get_provider_status(
 
         # Test connectivity using server-side key
         tester = PROVIDER_TESTERS[provider]
-        is_connected = await tester(api_key)
+        is_connected = await tester(cast(str, api_key))
 
         logger.info(f"{safe_provider} connectivity test result: {is_connected}")
         return {

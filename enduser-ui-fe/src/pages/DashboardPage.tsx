@@ -315,8 +315,8 @@ const DashboardPage: React.FC = () => {
 
   // --- Data Fetching Logic with useCallback ---
   const fetchData = useCallback(async () => {
+    setIsLoading(true);
     try {
-      setIsLoading(true);
       const [tasksRes, projectsData, usersRes, agentsRes] = await Promise.all([
         api.getTasks(true), // Include closed tasks so users can see/archive them
         api.getProjects(),
@@ -342,7 +342,8 @@ const DashboardPage: React.FC = () => {
       // In a real app, you might use a toast notification library here
       alert(`Failed to load dashboard data: ${error.message}`);
     } finally {
-      setIsLoading(false);
+      // Delay to allow state updates to flush to DOM
+      setTimeout(() => setIsLoading(false), 50);
     }
   }, [selectedProjectId]); // Dependency ensures re-fetch if project selection changes, might remove if not desired
 

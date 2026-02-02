@@ -4,7 +4,7 @@ import { ClockIcon, MapPinIcon } from './Icons';
 export const ClockInWidget: React.FC = () => {
     const [status, setStatus] = useState<'in' | 'out'>('out');
     const [lastTime, setLastTime] = useState<Date | null>(null);
-    const [locationName, setLocationName] = useState<string>("Locating...");
+    const [locationName, setLocationName] = useState<string>("Ready to Scan");
 
     useEffect(() => {
         // Mock checking initial status
@@ -13,17 +13,20 @@ export const ClockInWidget: React.FC = () => {
         
         const savedTime = localStorage.getItem('clock_time');
         if (savedTime) setLastTime(new Date(savedTime));
-
-        // Mock getting location name
-        if (navigator.geolocation) {
-             navigator.geolocation.getCurrentPosition(
-                () => setLocationName("Taipei City, TW"), // Mock
-                () => setLocationName("Unknown Location")
-            );
-        }
+        
+        // GAP-010: Removed auto-geolocation on mount to save battery
     }, []);
 
     const toggleClock = () => {
+        // GAP-010: Fetch GPS only on demand
+        if (navigator.geolocation) {
+            setLocationName("Locating...");
+            navigator.geolocation.getCurrentPosition(
+               () => setLocationName("Taipei City, TW"), // Mock success
+               () => setLocationName("GPS Error")
+           );
+       }
+
         const newStatus = status === 'in' ? 'out' : 'in';
         const now = new Date();
         

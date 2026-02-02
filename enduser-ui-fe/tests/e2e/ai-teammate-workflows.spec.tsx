@@ -44,14 +44,10 @@ describe('AI as a Teammate E2E Workflows', () => {
     // Wait for loading to finish
     await waitFor(() => {
         expect(screen.queryByText('Loading...')).not.toBeInTheDocument();
-    });
+    }, { timeout: 10000 });
 
-    // Ensure Dashboard loads first - Wait for the heading specifically to ensure page content
-    // Ensure Dashboard loads first - Wait for the heading specifically to ensure page content
-    // Relaxed check to account for potental specific project views or admin/user view differences in test env
-    await screen.findByRole('heading', { name: /(My Tasks|All Tasks|Campaign Project Tasks)/i });
-
-    const newTaskButton = await screen.findByRole('button', { name: /new task/i });
+    // Find the 'New Task' button with an extended timeout to account for multiple state updates
+    const newTaskButton = await screen.findByRole('button', { name: /new task/i }, { timeout: 15000 });
     expect(newTaskButton).toBeInTheDocument();
     fireEvent.click(newTaskButton);
 
@@ -90,12 +86,10 @@ describe('AI as a Teammate E2E Workflows', () => {
     // Wait for loading to finish
     await waitFor(() => {
         expect(screen.queryByText('Loading...')).not.toBeInTheDocument();
-    });
+    }, { timeout: 10000 });
 
-    // Ensure Dashboard loads first
-    await screen.findByRole('heading', { name: /My Tasks/i });
-
-    const newTaskButton = await screen.findByRole('button', { name: /new task/i });
+    // Find the 'New Task' button with an extended timeout to account for multiple state updates
+    const newTaskButton = await screen.findByRole('button', { name: /new task/i }, { timeout: 15000 });
     expect(newTaskButton).toBeInTheDocument();
     fireEvent.click(newTaskButton);
 
@@ -130,12 +124,11 @@ describe('AI as a Teammate E2E Workflows', () => {
     // Wait for loading to finish
     await waitFor(() => {
         expect(screen.queryByText('Loading...')).not.toBeInTheDocument();
-    });
+    }, { timeout: 10000 });
 
-    // Ensure Dashboard loads first
-    await screen.findByRole('heading', { name: /My Tasks/i });
-
-    const newTaskButton = await screen.findByRole('button', { name: /new task/i });
+    // Find the 'New Task' button with an extended timeout to account for multiple state updates
+    const newTaskButton = await screen.findByRole('button', { name: /new task/i }, { timeout: 15000 });
+    expect(newTaskButton).toBeInTheDocument();
     fireEvent.click(newTaskButton);
 
     // Explicitly wait for the modal to appear

@@ -173,12 +173,23 @@ async def promote_lead_to_vendor(
         if not vendor_res.data:
             raise Exception("Failed to create vendor record - Database returned no data")
 
+        new_vendor_id = vendor_res.data[0]["id"]
+
         # 2. Update Lead Status
         update_payload = {"status": "converted"}
         if request.contact_email:
              update_payload["contact_email"] = request.contact_email
 
         supabase.table("leads").update(update_payload).eq("id", lead_id).execute()
+
+        # --- Visit Log Inheritance ---
+        # Link historical visit logs from this lead to the new vendor/customer
+        try:
+            supabase.table("visit_logs").update({"customer_id": new_vendor_id}).eq("lead_id", lead_id).execute()
+            logger.info(f"API: Inherited visit logs from lead {lead_id} to vendor {new_vendor_id}")
+        except Exception as inherit_err:
+            logger.warning(f"API: Failed to inherit visit logs: {inherit_err}")
+        # -----------------------------
 
         # 3. Trigger Librarian (Fire-and-forget archiving)
         try:

@@ -83,50 +83,43 @@ class EnrichmentService:
     @staticmethod
     async def prune_stale_leads() -> int:
         """
-        Auto-archives leads that are > 3 days old and have low enrichment scores or remain new.
+        Auto-archives leads that are > 3 days old and have low enrichment scores.
+        Uses a single SQL-like batch update for performance.
         Returns count of pruned leads.
         """
         supabase = get_supabase_client()
         try:
-            # Determine threshold
+            # 1. Determine threshold
             threshold_minutes = os.getenv("PRUNING_THRESHOLD_MINUTES")
             if threshold_minutes:
                 try:
                     delta = timedelta(minutes=int(threshold_minutes))
                     logger.info(f"Pruning: Using configurable threshold: {threshold_minutes} minutes")
                 except ValueError:
-                    logger.warning(f"Invalid PRUNING_THRESHOLD_MINUTES '{threshold_minutes}', defaulting to 3 days")
                     delta = timedelta(days=3)
             else:
                 delta = timedelta(days=3)
 
-            # Find leads older than threshold
             cutoff_time = (datetime.now() - delta).isoformat()
 
-            # Fetch potential stale leads
-            # Condition: created_at < cutoff AND status != archived AND status != converted
-            res = supabase.table("leads").select("*")\
-                .lt("created_at", cutoff_time)\
-                .neq("status", "archived")\
-                .neq("status", "converted")\
-                .execute()
+            # 2. Execute Batch Update (Equivalent to SQL UPDATE WHERE ...)
+            # Criteria: Created < cutoff AND Score < 40 (GAP-011) AND Not already processed
+            logger.info(f"Pruning: Executing batch archive for leads created before {cutoff_time} with score < 40")
 
-            if not res.data:
-                return 0
+            res = supabase.table("leads").update({
+                "status": "archived",
+                "auto_archived_reason": "stale_low_quality"
+            })\
+            .lt("created_at", cutoff_time)\
+            .lt("enrichment_score", 40)\
+            .neq("status", "archived")\
+            .neq("status", "converted")\
+            .execute()
 
-            pruned_count = 0
-            for lead in res.data:
-                # Criteria: failed enrichment or score < 50
-                score = lead.get("enrichment_score") or 0
-                status = lead.get("enrichment_status")
+            pruned_count = len(res.data) if res.data else 0
 
-                if status == "failed" or score < 50:
-                    logger.info(f"Pruning stale lead | id={lead['id']} | reason=stale_low_quality")
-                    supabase.table("leads").update({
-                        "status": "archived",
-                        "auto_archived_reason": "stale_low_quality"
-                    }).eq("id", lead["id"]).execute()
-                    pruned_count += 1
+            if pruned_count > 0:
+                logger.info(f"Pruning: Successfully archived {pruned_count} stale leads.")
 
             return pruned_count
 
