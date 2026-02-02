@@ -121,6 +121,19 @@ def seed_data(cursor: PGCursor) -> None:
                 ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW();
             """, (db_key, val, category, desc))
 
+    # Bob Workflow Specific Settings
+    bob_settings = [
+        ("STORY_CANDIDATE_SCORE_THRESHOLD", "80", "marketing", "Minimum score for victory feed"),
+        ("NANA_BANANA_MODEL", "gemini-2.0-flash-exp", "marketing", "Image generation model for Nana Banana"),
+        ("MARKETING_MODEL", "gemini-1.5-pro", "marketing", "Primary model for blog drafting"),
+    ]
+    for key, val, category, desc in bob_settings:
+        cursor.execute("""
+            INSERT INTO archon_settings (key, value, is_encrypted, category, description, updated_at)
+            VALUES (%s, %s, false, %s, %s, NOW())
+            ON CONFLICT (key) DO NOTHING;
+        """, (key, val, category, desc))
+
 def sync_auth_users(cursor: PGCursor) -> None:
     if not HAS_SERVER_DEPS:
         logger.warning("⚠️ Skipping Auth Sync (Server dependencies missing)")

@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../services/api';
-import { BlogPost } from '../types';
+import { BlogPost, EmployeeRole } from '../types';
 import { PermissionGuard } from '../features/auth/components/PermissionGuard';
 import { TrendLineChart } from '../features/marketing/components/TrendLineChart';
 import { SankeyDiagram } from '../features/marketing/components/SankeyDiagram';
+import { VictoryFeedList, ContentSource } from '../features/marketing/components/VictoryFeedList';
+import { ContentWorkbench } from '../features/marketing/components/ContentWorkbench';
+import { useAuth } from '../hooks/useAuth';
 import { 
     PlusIcon, 
     PaletteIcon, 
@@ -13,39 +16,128 @@ import {
     RefreshCwIcon,
     CheckCircleIcon,
     FileEditIcon,
-    EyeIcon
+    EyeIcon,
+    SparklesIcon
 } from '../components/Icons';
 
 const BrandPage: React.FC = () => {
+    const { user } = useAuth();
+    const [viewMode, setViewMode] = useState<'dashboard' | 'workbench'>('workbench');
+    
+    // Dashboard State
     const [posts, setPosts] = useState<BlogPost[]>([]);
-    const [marketStats, setMarketStats] = useState<any>(null);
     const [trendsData, setTrendsData] = useState<any>(null);
     const [logoSvg, setLogoSvg] = useState<string | null>(null);
     const [isGenerating, setIsLogoGenerating] = useState(false);
     const [loading, setLoading] = useState(true);
 
+    // Workbench State
+    const [sources, setSources] = useState<ContentSource[]>([]);
+    const [activeSource, setActiveSource] = useState<ContentSource | null>(null);
+    const [contextData, setContextData] = useState<any>(null);
+    const [isLoadingSources, setIsLoadingSources] = useState(false);
+    const [isLoadingContext, setIsLoadingContext] = useState(false);
+    const [isDrafting, setIsDrafting] = useState(false);
+    const [isGeneratingImage, setIsGeneratingImage] = useState(false);
+
     useEffect(() => {
         loadData();
-    }, []);
+        if (viewMode === 'workbench') {
+            loadWorkbenchData();
+        }
+    }, [viewMode]);
 
     const loadData = async () => {
         setLoading(true);
         try {
-            const [postsData, stats, trends] = await Promise.all([
+            const [postsData, trends] = await Promise.all([
                 api.getBlogPosts(),
-                api.getMarketStats(),
                 api.getMarketingTrends().catch(err => {
                     console.error("Trends fetch failed, using fallback empty state", err);
                     return null;
                 })
             ]);
             setPosts(postsData);
-            setMarketStats(stats);
             setTrendsData(trends);
         } catch (err) {
             console.error("Failed to load brand data:", err);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const loadWorkbenchData = async () => {
+        setIsLoadingSources(true);
+        try {
+            const sourcesData = await api.getContentSources();
+            setSources(sourcesData);
+        } catch (err) {
+            console.error("Failed to load content sources:", err);
+        } finally {
+            setIsLoadingSources(false);
+        }
+    };
+
+    const handleSelectSource = async (source: ContentSource) => {
+        setActiveSource(source);
+        setIsLoadingContext(true);
+        try {
+            const context = await api.getContentContext(source.id, source.type);
+            setContextData(context);
+        } catch (err) {
+            console.error("Failed to load context:", err);
+        } finally {
+            setIsLoadingContext(false);
+        }
+    };
+
+    const handleMagicDraft = async (topic: string) => {
+        if (!activeSource) return;
+        setIsDrafting(true);
+        try {
+            const result = await api.draftBlogPost({
+                topic: topic,
+                context_source_id: activeSource.id,
+                context_type: activeSource.type,
+                tone: 'professional'
+            });
+            console.log("Magic Draft Result:", result);
+            alert("Draft generated! Use the Editor Tab to refine.");
+        } catch (err: any) {
+            alert(err.message || "Drafting failed");
+        } finally {
+            setIsDrafting(false);
+        }
+    };
+
+    const handleGenerateImage = async (title: string) => {
+        setIsGeneratingImage(true);
+        try {
+            const result = await api.nanaBananaProxy({ prompt: title });
+            alert(`Asset generated: ${result.image_url}`);
+        } catch (err: any) {
+            alert(err.message || "Image generation failed");
+        } finally {
+            setIsGeneratingImage(false);
+        }
+    };
+
+    const handlePublishWorkbench = async (postData: { title: string, content: string }) => {
+        const isManager = user?.role === EmployeeRole.MANAGER || user?.role === EmployeeRole.ADMIN;
+        const targetStatus = isManager ? 'published' : 'review';
+        
+        try {
+            await api.createBlogPost({
+                title: postData.title,
+                content: postData.content,
+                excerpt: postData.content.slice(0, 150) + '...',
+                imageUrl: '/placeholder-blog.jpg',
+                status: targetStatus
+            });
+            alert(isManager ? "Article published successfully!" : "Article submitted for review.");
+            loadData();
+        } catch (err: any) {
+            alert(`Publish failed: ${err.message}`);
         }
     };
 
@@ -75,14 +167,13 @@ const BrandPage: React.FC = () => {
 
     const handleSavePost = async (postData: Omit<BlogPost, 'id' | 'authorName' | 'publishDate'>, postId?: string) => {
         try {
-            if (postId) { // Editing existing post
+            if (postId) {
                 const updatedPost = await api.updateBlogPost(postId, postData);
                 setPosts(prev => prev.map(p => p.id === postId ? updatedPost : p));
-            } else { // Creating new post
-                // For new posts, we can let the backend handle author/date or pass defaults
+            } else {
                  const newPostData = {
                     ...postData,
-                    authorName: "Marketing Bot", // Or fetch current user name via API/Context if available
+                    authorName: user?.name || "Marketing Bot",
                     publishDate: new Date().toISOString(),
                 };
                 const newPost = await api.createBlogPost(newPostData);
@@ -90,7 +181,7 @@ const BrandPage: React.FC = () => {
             }
             setIsPostModalOpen(false);
             setEditingPost(null);
-            loadData(); // Refresh to be sure
+            loadData();
         } catch(error: any) {
              alert(`Failed to save post: ${error.message}`);
         }
@@ -156,7 +247,7 @@ const BrandPage: React.FC = () => {
                                     <FileEditIcon className="w-4 h-4" />
                                 </button>
                                 <button onClick={() => handleDeletePost(post.id)} className="p-1 hover:bg-red-50 rounded text-red-500" title="Delete">
-                                    <TrendingUpIcon className="w-4 h-4 rotate-45" /> {/* Using generic icon as XCircle is not imported, can fix later */}
+                                    <TrendingUpIcon className="w-4 h-4 rotate-45" />
                                 </button>
                                 {status !== 'review' && (
                                     <button onClick={() => updatePostStatus(post.id, 'review')} className="p-1 hover:bg-amber-50 rounded text-amber-500" title="Move to Review">
@@ -179,168 +270,176 @@ const BrandPage: React.FC = () => {
 
     return (
         <PermissionGuard permission="leads:view:marketing" fallback={<div className="p-12 text-center text-gray-500">Access Denied: Brand Hub is for Marketing roles only.</div>}>
-            <div className="p-6 max-w-7xl mx-auto space-y-8">
-                <header className="flex justify-between items-start">
-                    <div>
-                        <h1 className="text-3xl font-bold text-gray-800 flex items-center gap-3">
-                            <PaletteIcon className="w-8 h-8 text-indigo-600" />
+            <div className={`flex flex-col h-[calc(100vh-64px)] ${viewMode === 'workbench' ? 'overflow-hidden' : ''}`}>
+                <header className="px-6 py-4 flex justify-between items-center bg-white dark:bg-slate-900 border-b shrink-0 font-sans">
+                    <div className="flex items-center gap-4">
+                        <h1 className="text-2xl font-bold text-gray-800 dark:text-white flex items-center gap-3">
+                            <PaletteIcon className="w-6 h-6 text-indigo-600" />
                             Brand Hub
                         </h1>
-                        <p className="text-gray-500 mt-2">Manage brand identity, content planning, and market trends.</p>
-                    </div>
-                    <button onClick={loadData} className="p-2 hover:bg-gray-100 rounded-full transition-colors" title="Refresh data">
-                        <RefreshCwIcon className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
-                    </button>
-                </header>
-
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    {/* Brand Identity Section */}
-                    <div className="lg:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-gray-100 space-y-6">
-                        <div className="flex justify-between items-center">
-                            <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
-                                <LayoutIcon className="w-5 h-5 text-indigo-500" />
-                                Visual Identity
-                            </h2>
-                            <button 
-                                onClick={handleGenerateLogo}
-                                disabled={isGenerating}
-                                className="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-indigo-700 disabled:opacity-50 transition-all flex items-center gap-2 shadow-lg shadow-indigo-200"
+                        
+                        <nav className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-lg">
+                            <button
+                                onClick={() => setViewMode('dashboard')}
+                                className={`px-4 py-1.5 text-xs font-bold rounded-md transition-all ${
+                                    viewMode === 'dashboard' ? 'bg-white dark:bg-slate-700 shadow-sm text-indigo-600' : 'text-slate-500'
+                                }`}
                             >
-                                {isGenerating ? <RefreshCwIcon className="w-4 h-4 animate-spin" /> : <RefreshCwIcon className="w-4 h-4" />}
-                                Generate with DevBot
+                                <LayoutIcon className="w-3.5 h-3.5 inline mr-2" />
+                                Insights
                             </button>
-                        </div>
-
-                        <div className="h-64 bg-slate-900 rounded-xl flex items-center justify-center relative overflow-hidden group border-4 border-slate-800">
-                            {logoSvg ? (
-                                <div className="w-48 h-48 drop-shadow-[0_0_15px_rgba(0,242,255,0.5)]" dangerouslySetInnerHTML={{ __html: logoSvg }} />
-                            ) : (
-                                <div className="text-slate-500 flex flex-col items-center gap-2">
-                                    <PaletteIcon className="w-12 h-12 opacity-20" />
-                                    <p className="text-sm">Click generate to preview living brand assets</p>
-                                </div>
-                            )}
-                            
-                            {logoSvg && (
-                                <button 
-                                    onClick={downloadLogo}
-                                    className="absolute bottom-4 right-4 bg-white/10 backdrop-blur-md text-white p-2 rounded-lg hover:bg-white/20 transition-all opacity-0 group-hover:opacity-100"
-                                    title="Download SVG"
-                                >
-                                    <DownloadIcon className="w-5 h-5" />
-                                </button>
-                            )}
-                        </div>
-                        <p className="text-xs text-gray-400 italic text-center">
-                            Powered by **Project ECITON** Engine. Dynamic SVG generation based on collective intelligence math.
-                        </p>
-                    </div>
-
-                    {/* Market Insight Section */}
-                    <div className="bg-indigo-900 text-white p-6 rounded-2xl shadow-xl space-y-6 relative overflow-hidden">
-                        <div className="relative z-10">
-                            <h2 className="text-xl font-bold flex items-center gap-2">
-                                <TrendingUpIcon className="w-5 h-5 text-indigo-300" />
-                                Market Intelligence 2.0
-                            </h2>
-                            <p className="text-indigo-200 text-xs mt-1">Real-time keyword trends & demand flow</p>
-                            
-                            {trendsData ? (
-                                <div className="mt-6 space-y-8">
-                                    {/* Trend Line Chart */}
-                                    <div className="bg-white/5 p-4 rounded-xl border border-white/10 backdrop-blur-sm">
-                                        <h3 className="text-sm font-bold text-indigo-200 mb-4 uppercase tracking-wider">Rising Topics (Monthly)</h3>
-                                        <div className="-ml-4">
-                                            <TrendLineChart data={trendsData.keyword_growth} />
-                                        </div>
-                                    </div>
-
-                                    {/* Sankey Diagram */}
-                                    <div className="bg-white/5 p-4 rounded-xl border border-white/10 backdrop-blur-sm">
-                                        <h3 className="text-sm font-bold text-indigo-200 mb-4 uppercase tracking-wider">Demand Flow (Industry &rarr; Solution)</h3>
-                                        <SankeyDiagram data={trendsData.sankey_flow} />
-                                    </div>
-
-                                    {/* Stats Grid */}
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div className="bg-white/10 p-3 rounded-lg text-center">
-                                            <p className="text-[10px] uppercase text-indigo-300">Total Leads</p>
-                                            <p className="text-xl font-mono font-bold text-white">{marketStats?.["Total Leads"] || 0}</p>
-                                        </div>
-                                        <div className="bg-white/10 p-3 rounded-lg text-center">
-                                            <p className="text-[10px] uppercase text-indigo-300">AI Interest</p>
-                                            <p className="text-xl font-mono font-bold text-white">{marketStats?.["AI/LLM"] || 0}</p>
-                                        </div>
-                                        {/* RAG Transparency Metric */}
-                                        <div className="col-span-2 bg-white/10 p-3 rounded-lg flex justify-between items-center px-6">
-                                            <div className="text-left">
-                                                <p className="text-[10px] uppercase text-indigo-300 flex items-center gap-1">
-                                                    <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse"/>
-                                                    RAG Trust Score
-                                                </p>
-                                                <p className="text-xs text-indigo-200 mt-0.5">Based on 12 sources</p>
-                                            </div>
-                                            <div className="text-right">
-                                                <p className="text-2xl font-mono font-bold text-green-400">98.5%</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            ) : (
-                                <div className="animate-pulse space-y-4 mt-8">
-                                    <div className="h-40 bg-white/5 rounded-xl"></div>
-                                    <div className="h-40 bg-white/5 rounded-xl"></div>
-                                </div>
-                            )}
-                        </div>
-                        {/* Decorative circle */}
-                        <div className="absolute -bottom-12 -right-12 w-48 h-48 bg-indigo-500 rounded-full blur-3xl opacity-20"></div>
-                    </div>
-                </div>
-
-                {/* Blog Content Kanban */}
-                <section className="space-y-4">
-                    <div className="flex justify-between items-end">
-                        <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
-                            <PlusIcon className="w-5 h-5 text-indigo-500" />
-                            Content Pipeline
-                        </h2>
-                        <div className="flex gap-3 items-center">
-                            <span className="text-xs text-gray-400">Drag-and-drop coming soon</span>
-                            <button 
-                                onClick={() => {
-                                    openNewPostModal();
-                                }}
-                                className="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-indigo-700 flex items-center gap-2 shadow-sm transition-transform active:scale-95"
+                            <button
+                                onClick={() => setViewMode('workbench')}
+                                className={`px-4 py-1.5 text-xs font-bold rounded-md transition-all ${
+                                    viewMode === 'workbench' ? 'bg-white dark:bg-slate-700 shadow-sm text-indigo-600' : 'text-slate-500'
+                                }`}
                             >
-                                <PlusIcon className="w-4 h-4" />
-                                New Post
+                                <SparklesIcon className="w-3.5 h-3.5 inline mr-2" />
+                                Workbench
                             </button>
-                        </div>
+                        </nav>
                     </div>
                     
-                    <div className="flex flex-col md:flex-row gap-6 overflow-x-auto pb-4">
-                        <KanbanColumn status="draft" title="Ideas & Drafts" icon={FileEditIcon} colorClass="text-gray-600 border-gray-200" />
-                        <KanbanColumn status="review" title="In Review" icon={EyeIcon} colorClass="text-amber-600 border-amber-200" />
-                        <KanbanColumn status="published" title="Published" icon={CheckCircleIcon} colorClass="text-green-600 border-green-200" />
+                    <div className="flex items-center gap-3">
+                        <button onClick={loadData} className="p-2 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-full transition-colors">
+                            <RefreshCwIcon className={`w-5 h-5 text-slate-400 ${loading ? 'animate-spin' : ''}`} />
+                        </button>
                     </div>
-                </section>
+                </header>
+
+                <main className="flex-1 overflow-auto">
+                    {viewMode === 'dashboard' ? (
+                        <div className="p-6 max-w-7xl mx-auto space-y-8 font-sans">
+                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                                {/* Brand Identity Section */}
+                                <div className="lg:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-gray-100 space-y-6">
+                                    <div className="flex justify-between items-center">
+                                        <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+                                            <LayoutIcon className="w-5 h-5 text-indigo-500" />
+                                            Visual Identity
+                                        </h2>
+                                        <button 
+                                            onClick={handleGenerateLogo}
+                                            disabled={isGenerating}
+                                            className="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-indigo-700 disabled:opacity-50 transition-all flex items-center gap-2 shadow-lg shadow-indigo-200"
+                                        >
+                                            {isGenerating ? <RefreshCwIcon className="w-4 h-4 animate-spin" /> : <RefreshCwIcon className="w-4 h-4" />}
+                                            Generate with DevBot
+                                        </button>
+                                    </div>
+
+                                    <div className="h-64 bg-slate-900 rounded-xl flex items-center justify-center relative overflow-hidden group border-4 border-slate-800">
+                                        {logoSvg ? (
+                                            <div className="w-48 h-48 drop-shadow-[0_0_15px_rgba(0,242,255,0.5)]" dangerouslySetInnerHTML={{ __html: logoSvg }} />
+                                        ) : (
+                                            <div className="text-slate-500 flex flex-col items-center gap-2">
+                                                <PaletteIcon className="w-12 h-12 opacity-20" />
+                                                <p className="text-sm">Click generate to preview living brand assets</p>
+                                            </div>
+                                        )}
+                                        
+                                        {logoSvg && (
+                                            <button 
+                                                onClick={downloadLogo}
+                                                className="absolute bottom-4 right-4 bg-white/10 backdrop-blur-md text-white p-2 rounded-lg hover:bg-white/20 transition-all opacity-0 group-hover:opacity-100"
+                                                title="Download SVG"
+                                            >
+                                                <DownloadIcon className="w-5 h-5" />
+                                            </button>
+                                        )}
+                                    </div>
+                                    <p className="text-xs text-gray-400 italic text-center">
+                                        Powered by **Project ECITON** Engine. Dynamic SVG generation based on collective intelligence math.
+                                    </p>
+                                </div>
+
+                                {/* Market Insight Section */}
+                                <div className="bg-indigo-900 text-white p-6 rounded-2xl shadow-xl space-y-6 relative overflow-hidden">
+                                    <div className="relative z-10">
+                                        <h2 className="text-xl font-bold flex items-center gap-2">
+                                            <TrendingUpIcon className="w-5 h-5 text-indigo-300" />
+                                            Market Intelligence 2.0
+                                        </h2>
+                                        <p className="text-indigo-200 text-xs mt-1">Real-time keyword trends & demand flow</p>
+                                        
+                                        {trendsData ? (
+                                            <div className="mt-6 space-y-8">
+                                                <div className="bg-white/5 p-4 rounded-xl border border-white/10 backdrop-blur-sm">
+                                                    <h3 className="text-sm font-bold text-indigo-200 mb-4 uppercase tracking-wider">Rising Topics (Monthly)</h3>
+                                                    <div className="-ml-4">
+                                                        <TrendLineChart data={trendsData.keyword_growth} />
+                                                    </div>
+                                                </div>
+                                                <div className="bg-white/5 p-4 rounded-xl border border-white/10 backdrop-blur-sm">
+                                                    <h3 className="text-sm font-bold text-indigo-200 mb-4 uppercase tracking-wider">Demand Flow</h3>
+                                                    <SankeyDiagram data={trendsData.sankey_flow} />
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <div className="animate-pulse space-y-4 mt-8">
+                                                <div className="h-40 bg-white/5 rounded-xl"></div>
+                                                <div className="h-40 bg-white/5 rounded-xl"></div>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Blog Content Kanban */}
+                            <section className="space-y-4">
+                                <div className="flex justify-between items-end">
+                                    <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+                                        <PlusIcon className="w-5 h-5 text-indigo-500" />
+                                        Content Pipeline
+                                    </h2>
+                                    <button onClick={openNewPostModal} className="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-indigo-700 flex items-center gap-2">
+                                        <PlusIcon className="w-4 h-4" /> New Post
+                                    </button>
+                                </div>
+                                <div className="flex flex-col md:flex-row gap-6 overflow-x-auto pb-4">
+                                    <KanbanColumn status="draft" title="Ideas & Drafts" icon={FileEditIcon} colorClass="text-gray-600 border-gray-200" />
+                                    <KanbanColumn status="review" title="In Review" icon={EyeIcon} colorClass="text-amber-600 border-amber-200" />
+                                    <KanbanColumn status="published" title="Published" icon={CheckCircleIcon} colorClass="text-green-600 border-green-200" />
+                                </div>
+                            </section>
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-12 h-full">
+                            <div className="col-span-3 h-full border-r overflow-hidden">
+                                <VictoryFeedList 
+                                    sources={sources}
+                                    activeId={activeSource?.id}
+                                    onSelect={handleSelectSource}
+                                    isLoading={isLoadingSources}
+                                />
+                            </div>
+                            <div className="col-span-9 h-full">
+                                <ContentWorkbench 
+                                    activeSource={activeSource}
+                                    contextData={contextData}
+                                    isLoadingContext={isLoadingContext}
+                                    onDraft={handleMagicDraft}
+                                    onGenerateImage={handleGenerateImage}
+                                    onPublish={handlePublishWorkbench}
+                                    isDrafting={isDrafting}
+                                    isGeneratingImage={isGeneratingImage}
+                                />
+                            </div>
+                        </div>
+                    )}
+                </main>
             </div>
 
-            {/* Create/Edit Post Modal - Reusing the same modal structure but controlled by state */}
+            {/* Existing Modal for Dashboard Edits */}
             {isPostModalOpen && (
                 <dialog open className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm w-full h-full">
-                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl p-6 relative animate-in fade-in zoom-in-95 duration-200 border border-gray-100">
-                        <div className="flex justify-between items-center mb-6 border-b pb-4">
-                            <h3 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
-                                <PaletteIcon className="w-6 h-6 text-indigo-600" />
-                                {editingPost ? 'Edit Brand Asset' : 'New Content Asset'}
+                    <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-2xl p-6 relative font-sans border border-gray-100 dark:border-slate-800">
+                        <div className="flex justify-between items-center mb-6 border-b dark:border-slate-800 pb-4">
+                            <h3 className="text-2xl font-bold text-gray-800 dark:text-white">
+                                {editingPost ? 'Edit Asset' : 'New Asset'}
                             </h3>
-                            <button onClick={() => setIsPostModalOpen(false)} className="text-gray-400 hover:text-gray-600 p-2 hover:bg-gray-100 rounded-full transition-colors">
-                                ✕
-                            </button>
+                            <button onClick={() => setIsPostModalOpen(false)} className="text-gray-400">✕</button>
                         </div>
-                        
                         <CreatePostForm 
                             post={editingPost} 
                             onSuccess={() => setIsPostModalOpen(false)} 
@@ -356,137 +455,29 @@ const BrandPage: React.FC = () => {
 const CreatePostForm: React.FC<{ post?: BlogPost | null, onSuccess: () => void, onSubmit: (data: any, id?: string) => Promise<void> }> = ({ post, onSuccess, onSubmit }) => {
     const [title, setTitle] = useState(post?.title || '');
     const [content, setContent] = useState(post?.content || '');
-    const [imageUrl, setImageUrl] = useState(post?.imageUrl || '');
-    const [excerpt, setExcerpt] = useState(post?.excerpt || '');
+    const imageUrl = post?.imageUrl || '';
+    const excerpt = post?.excerpt || '';
     
     const [loading, setLoading] = useState(false);
-    const [isDrafting, setIsDrafting] = useState(false);
     
-    const handleDraft = async () => {
-        if (!title) {
-            alert("Please enter a title or topic first.");
-            return;
-        }
-        setIsDrafting(true);
-        try {
-            const result = await api.draftBlogPost({
-                topic: title, 
-                tone: 'professional'
-            });
-            setTitle(result.title);
-            setContent(result.content);
-            setExcerpt(result.excerpt);
-        } catch (err: any) {
-            alert(err.message || "Failed to generate draft");
-        } finally {
-            setIsDrafting(false);
-        }
-    };
-
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
         try {
-            await onSubmit({
-                title,
-                content,
-                excerpt: excerpt || content.slice(0, 100) + '...',
-                imageUrl: imageUrl || '/placeholder-blog.jpg',
-                status: post?.status || 'draft'
-            }, post?.id);
-            onSuccess(); // Ensure modal closes
-        } catch (err) {
-            // Error handling is done in parent
+            await onSubmit({ title, content, excerpt, imageUrl, status: post?.status || 'draft' }, post?.id);
+            onSuccess();
         } finally {
             setLoading(false);
         }
     };
 
-    const inputClass = "w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 focus:outline-none text-gray-900 shadow-sm transition-all";
-
     return (
-        <form onSubmit={handleSubmit} className="space-y-5">
-            <div>
-                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Title / Topic</label>
-                <div className="flex gap-2">
-                    <input 
-                        type="text" 
-                        required
-                        value={title} 
-                        onChange={e => setTitle(e.target.value)} 
-                        className={inputClass}
-                        placeholder="e.g. 5 Ways AI Transforms Manufacturing" 
-                    />
-                    <button 
-                        type="button"
-                        onClick={handleDraft}
-                        disabled={isDrafting}
-                        className="px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl hover:shadow-lg text-sm font-bold flex items-center gap-2 disabled:opacity-50 transition-all hover:scale-105 active:scale-95"
-                        title="Generate draft with AI"
-                    >
-                        {isDrafting ? <RefreshCwIcon className="w-4 h-4 animate-spin" /> : <TrendingUpIcon className="w-4 h-4" />}
-                        Magic Draft
-                    </button>
-                </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-                <div>
-                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Cover Image URL</label>
-                    <div className="flex gap-2">
-                        <input 
-                            type="url" 
-                            value={imageUrl} 
-                            onChange={e => setImageUrl(e.target.value)} 
-                            className={inputClass}
-                            placeholder="https://..." 
-                        />
-                        <button
-                            type="button"
-                            onClick={() => {
-                                // const keyword = title.split(' ')[0] || 'business'; 
-                                setImageUrl(`https://images.unsplash.com/photo-1557804506-669a67965ba0?w=800&auto=format&fit=crop&q=60`); // Mock for stability, real would use keywords
-                            }}
-                            className="px-3 bg-gray-100 rounded-xl text-xs font-bold text-gray-600 hover:bg-gray-200"
-                            title="Smart Pick (Mock)"
-                        >
-                            Auto
-                        </button>
-                    </div>
-                </div>
-                 <div>
-                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Excerpt (SEO)</label>
-                    <input 
-                        type="text" 
-                        value={excerpt} 
-                        onChange={e => setExcerpt(e.target.value)} 
-                        className={inputClass}
-                        placeholder="Short summary..." 
-                    />
-                </div>
-            </div>
-
-            <div>
-                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Content (Markdown Supported)</label>
-                <textarea 
-                    required
-                    value={content} 
-                    onChange={e => setContent(e.target.value)} 
-                    className={`${inputClass} min-h-[300px] font-sans text-sm leading-relaxed`}
-                    placeholder="Write your content here or use Magic Draft..."
-                />
-            </div>
-
-            <div className="flex justify-end pt-4 border-t border-gray-100">
-                <button 
-                    type="submit" 
-                    disabled={loading || isDrafting}
-                    className="px-8 py-3 bg-gray-900 text-white font-bold rounded-xl hover:bg-black disabled:opacity-50 flex items-center gap-2 shadow-xl hover:shadow-2xl transition-all"
-                >
-                    {loading ? <RefreshCwIcon className="w-5 h-5 animate-spin" /> : <CheckCircleIcon className="w-5 h-5" />}
-                    {post ? 'SAVE CHANGES' : 'CREATE ASSET'}
-                </button>
-            </div>
+        <form onSubmit={handleSubmit} className="space-y-5 font-sans">
+            <input type="text" value={title} onChange={e => setTitle(e.target.value)} className="w-full p-3 border dark:border-slate-700 dark:bg-slate-800 dark:text-white rounded-xl outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Title" />
+            <textarea value={content} onChange={e => setContent(e.target.value)} className="w-full p-3 border dark:border-slate-700 dark:bg-slate-800 dark:text-white rounded-xl min-h-[200px] outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Content" />
+            <button type="submit" disabled={loading} className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl transition-colors disabled:opacity-50">
+                {loading ? 'Saving...' : 'SAVE CHANGES'}
+            </button>
         </form>
     );
 };

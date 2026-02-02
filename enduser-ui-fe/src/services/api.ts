@@ -493,7 +493,7 @@ const supabaseApi = {
     }
     return response.json();
   },
-  async draftBlogPost(data: { topic: string; keywords?: string; tone?: string }): Promise<{ title: string; content: string; excerpt: string }> {
+  async draftBlogPost(data: { topic: string; keywords?: string; tone?: string; context_source_id?: string; context_type?: string }): Promise<{ title: string; content: string; excerpt: string; references: string[] }> {
       const response = await fetch('/api/marketing/blog/draft', {
           method: 'POST',
           headers: await this._getHeaders(),
@@ -504,6 +504,28 @@ const supabaseApi = {
           throw new Error(errorData.detail || 'Failed to generate draft.');
       }
       return response.json();
+  },
+
+  async getContentSources(): Promise<any[]> {
+    const response = await fetch('/api/marketing/sources', { headers: await this._getHeaders() });
+    if (!response.ok) throw new Error('Failed to fetch content sources');
+    return response.json();
+  },
+
+  async getContentContext(sourceId: string, sourceType: string = 'lead'): Promise<any> {
+    const response = await fetch(`/api/marketing/context/${sourceId}?source_type=${sourceType}`, { headers: await this._getHeaders() });
+    if (!response.ok) throw new Error('Failed to fetch content context');
+    return response.json();
+  },
+
+  async nanaBananaProxy(payload: any): Promise<{ image_url: string }> {
+    const response = await fetch('/api/marketing/nana-banana', {
+        method: 'POST',
+        headers: await this._getHeaders(),
+        body: JSON.stringify(payload)
+    });
+    if (!response.ok) throw new Error('Nana Banana generation failed');
+    return response.json();
   },
   async updateBlogPost(postId: string, postData: Partial<NewBlogPostData>): Promise<BlogPost> {
     const response = await fetch(`/api/blogs/${postId}`, {

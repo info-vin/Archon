@@ -28,8 +28,9 @@ describe('Content Marketing E2E Flow', () => {
         // Mock Draft Response
         vi.mocked(api.draftBlogPost).mockResolvedValue({
             title: 'AI in Manufacturing',
-            content: 'Draft content with References: [Lead 104]',
-            excerpt: 'AI is transforming manufacturing processes...'
+            content: 'Detailed article about AI...',
+            excerpt: 'AI is transforming manufacturing processes...',
+            references: ['internal-whitepaper-001']
         });
 
         // Mock Data Loading (BrandPage MOUNT)

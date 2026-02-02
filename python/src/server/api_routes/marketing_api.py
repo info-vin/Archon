@@ -49,6 +49,8 @@ class DraftBlogRequest(BaseModel):
     topic: str
     keywords: str | None = None
     tone: str = "professional"
+    context_source_id: str | None = None
+    context_type: str | None = "lead" # "lead" or "task"
 
 class DraftBlogResponse(BaseModel):
     title: str
@@ -382,6 +384,107 @@ async def get_market_stats():
         logger.error(f"API: Market stats fetch failed | error={str(e)}")
         return {"error": str(e)}
 
+@router.get("/sources")
+async def get_content_sources(current_user: dict = Depends(get_current_user)):
+    """
+    Bob's Victory Feed: Aggregates High-Score Leads and Assigned Tasks.
+    """
+    try:
+        supabase = get_supabase_client()
+        user_id = current_user.get("id")
+
+        # 1. Fetch High Score Leads
+        # Using the RLS policy defined in migration 022
+        lead_res = supabase.table("leads").select("id, company_name, enrichment_score, identified_need, created_at")\
+            .or_("status.eq.WON,enrichment_score.gte.80")\
+            .order("created_at", desc=True).limit(20).execute()
+
+        sources = []
+        for lead in lead_res.data:
+            sources.append({
+                "id": lead["id"],
+                "type": "lead",
+                "title": lead["company_name"],
+                "score": lead["enrichment_score"],
+                "summary": lead["identified_need"][:100] if lead["identified_need"] else "",
+                "date": lead["created_at"]
+            })
+
+        # 2. Fetch Bob's assigned tasks (Collaborating with Charlie)
+        task_res = supabase.table("archon_tasks").select("id, title, description, created_at")\
+            .eq("assignee_id", user_id)\
+            .neq("status", "done")\
+            .order("created_at", desc=True).limit(10).execute()
+
+        for task in task_res.data:
+            sources.append({
+                "id": task["id"],
+                "type": "task",
+                "title": task["title"],
+                "score": 100, # Tasks are high priority
+                "summary": task["description"][:100] if task["description"] else "",
+                "date": task["created_at"]
+            })
+
+        return sorted(sources, key=lambda x: x["date"], reverse=True)
+    except Exception as e:
+        logger.error(f"API: Failed to fetch content sources | error={str(e)}")
+        raise HTTPException(status_code=500, detail=str(e)) from e
+
+@router.get("/context/{source_id}")
+async def get_content_context(
+    source_id: str,
+    source_type: str = Query("lead"),
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    Librarian's Context Fetcher: Aggregates logs and RAG docs for a source.
+    """
+    try:
+        supabase = get_supabase_client()
+        context_text = ""
+        logs = []
+
+        if source_type == "lead":
+            # Fetch Visit Logs
+            log_res = supabase.table("visit_logs").select("*").eq("lead_id", source_id).execute()
+            logs = log_res.data
+            for log in logs:
+                context_text += f"\n[Visit Log Summary]: {log.get('summary')}\n[Transcript]: {log.get('voice_transcript')}\n"
+
+            # Fetch Lead Info for RAG
+            lead_res = supabase.table("leads").select("identified_need").eq("id", source_id).single().execute()
+            if lead_res.data:
+                context_text += f"\n[Lead Need]: {lead_res.data.get('identified_need')}\n"
+
+        elif source_type == "task":
+            # Fetch Task Details
+            task_res = supabase.table("archon_tasks").select("*").eq("id", source_id).single().execute()
+            if task_res.data:
+                context_text += f"\n[Task Title]: {task_res.data.get('title')}\n[Description]: {task_res.data.get('description')}\n"
+
+        # Call Librarian (RAG)
+        rag_service = RAGService()
+        success, search_result = await rag_service.perform_rag_query(
+            query=context_text[:1000],
+            match_count=3
+        )
+
+        rag_refs = []
+        if success and isinstance(search_result, dict) and "results" in search_result:
+            rag_refs = search_result["results"]
+
+        return {
+            "source_id": source_id,
+            "source_type": source_type,
+            "logs": logs,
+            "rag_refs": rag_refs,
+            "context_summary": context_text
+        }
+    except Exception as e:
+        logger.error(f"API: Failed to fetch context | id={source_id} | error={str(e)}")
+        raise HTTPException(status_code=500, detail=str(e)) from e
+
 @router.patch("/blog/{post_id}/status")
 async def update_blog_status(post_id: str, status: str):
     """
@@ -468,12 +571,26 @@ async def draft_blog_post(request: DraftBlogRequest, current_user: dict = Depend
 
         success, search_result = await rag_service.perform_rag_query(
             query=search_query,
-            match_count=5,
-            filter_metadata={"knowledge_type": "sales_pitch"}
+            match_count=5
         )
 
         context_text = ""
         references = []
+
+        # Workbench Integration: Fetch specific context from Lead/Task if provided
+        if request.context_source_id:
+            logger.info(f"API: Fetching specific context for {request.context_type}={request.context_source_id}")
+            supabase = get_supabase_client()
+            if request.context_type == "lead":
+                log_res = supabase.table("visit_logs").select("summary, voice_transcript").eq("lead_id", request.context_source_id).execute()
+                if log_res.data:
+                    context_text += "\n### Alice's Visit Logs (Sales Context):\n"
+                    for log in log_res.data:
+                        context_text += f"- Summary: {log['summary']}\n- Transcript: {log['voice_transcript']}\n"
+            elif request.context_type == "task":
+                task_res = supabase.table("archon_tasks").select("title, description").eq("id", request.context_source_id).single().execute()
+                if task_res.data:
+                    context_text += f"\n### Task Context:\n- Title: {task_res.data['title']}\n- Description: {task_res.data['description']}\n"
 
         if success and isinstance(search_result, dict) and "results" in search_result:
             for res in search_result["results"]:

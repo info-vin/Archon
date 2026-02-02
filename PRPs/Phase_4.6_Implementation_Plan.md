@@ -113,18 +113,18 @@
 > Based on "Policies Finalized" in `Phase_4.6.1_Alice_Persona_Workflows.md` (2026-02-02).
 
 #### [MODIFY] [visit_log_api.py](file:///Users/vincenta/GoogleKwok022/Archon/python/src/server/api_routes/visit_log_api.py)
-- [ ] **Voice-to-Task Integration (GAP-009)**:
+- [x] **Voice-to-Task Integration (GAP-009)**:
     - Automatically create a task in the **`Field Ops`** project upon successful voice log creation.
     - Task Status: `todo`.
     - Task Content: Transcript + AI Summary.
 
 #### [MODIFY] [ClockInWidget.tsx](file:///Users/vincenta/GoogleKwok022/Archon/enduser-ui-fe/src/components/ClockInWidget.tsx)
-- [ ] **On-Demand GPS (GAP-010)**:
+- [x] **On-Demand GPS (GAP-010)**:
     - Ensure GPS is **ONLY** requested when the user physically clicks "Clock In" or "Visit Log".
     - Remove any `useEffect` that triggers geolocation on component mount.
 
 #### [MODIFY] [enrichment_service.py](file:///Users/vincenta/GoogleKwok022/Archon/python/src/server/services/enrichment_service.py)
-- [ ] **Pruning Threshold Adjustment (GAP-011)**:
+- [x] **Pruning Threshold Adjustment (GAP-011)**:
     - Lower the auto-archive threshold from `score < 50` to **`score < 40`**.
     - Ensure logic respects the `PRUNING_THRESHOLD_MINUTES` env var for testing.
 
@@ -133,12 +133,12 @@
 > Ensuring data consistency and lifecycle continuity between Leads and Customers.
 
 #### [MODIFY] [marketing_api.py](file:///Users/vincenta/GoogleKwok022/Archon/python/src/server/api_routes/marketing_api.py)
-- [ ] **Visit Log Inheritance**:
+- [x] **Visit Log Inheritance**:
     - During `promote_lead_to_vendor`, update all `visit_logs` associated with the `lead_id` to link them to the new `vendor_id` (mapping to `customer_id` column).
     - Ensures Alice retains historical voice notes after a lead is converted.
 
 #### [MODIFY] [visit_log_api.py](file:///Users/vincenta/GoogleKwok022/Archon/python/src/server/api_routes/visit_log_api.py)
-- [ ] **Context-Aware Task Titles**:
+- [x] **Context-Aware Task Titles**:
     - If `customer_id` or `lead_id` is provided, fetch the company name to create more descriptive task titles (e.g., `[Field Ops] 客戶: 台積電 - 需求確認`).
 
 ## Verification Plan
