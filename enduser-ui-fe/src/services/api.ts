@@ -506,6 +506,18 @@ const supabaseApi = {
       return response.json();
   },
 
+  async submitBlogPost(postId: string): Promise<any> {
+      const response = await fetch(`/api/marketing/blog/${postId}/submit`, {
+          method: 'POST',
+          headers: await this._getHeaders()
+      });
+      if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.detail || 'Failed to submit blog post.');
+      }
+      return response.json();
+  },
+
   async getContentSources(): Promise<any[]> {
     const response = await fetch('/api/marketing/sources', { headers: await this._getHeaders() });
     if (!response.ok) throw new Error('Failed to fetch content sources');

@@ -520,10 +520,12 @@ async def process_approval(
     item_type: str,
     item_id: str,
     action: str,
+    comment: str | None = None,
     current_user: dict = Depends(get_current_user)
 ):
     """
     Process approval action (approve/reject).
+    Only Managers can perform this action.
     """
     user_role = current_user.get("role", "viewer").lower()
     if user_role not in ["system_admin", "admin", "manager"]:
@@ -537,8 +539,20 @@ async def process_approval(
         supabase = get_supabase_client()
 
         if item_type == "blog":
-            new_status = "published" if action == "approve" else "draft"
-            supabase.table("blog_posts").update({"status": new_status}).eq("id", item_id).execute()
+            # State Machine: review -> published OR changes_requested
+            new_status = "published" if action == "approve" else "changes_requested"
+            
+            update_payload = {
+                "status": new_status,
+                "updated_at": "now()"
+            }
+            
+            # TODO: Store review comments in a separate table or a JSONB column in future
+            # For now, we assume simple status update is enough for Phase 4.6.3
+            
+            supabase.table("blog_posts").update(update_payload).eq("id", item_id).execute()
+            
+            logger.info(f"API: Blog approval processed | id={item_id} | action={action} | user={current_user.get('email')}")
             return {"success": True, "status": new_status}
 
         raise HTTPException(status_code=400, detail="Unknown item type")
@@ -546,6 +560,76 @@ async def process_approval(
     except Exception as e:
         logger.error(f"API: Approval process failed | type={item_type} | id={item_id} | error={str(e)}")
         raise HTTPException(status_code=500, detail=str(e)) from e
+
+@router.post("/blog/{post_id}/submit")
+async def submit_blog_for_review(
+    post_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    Bob submits a draft for review.
+    Triggers 'Reviewer' Bot (AI) for compliance check.
+    """
+    try:
+        supabase = get_supabase_client()
+        
+        # 1. Fetch Draft Content
+        res = supabase.table("blog_posts").select("*").eq("id", post_id).single().execute()
+        if not res.data:
+            raise HTTPException(status_code=404, detail="Blog post not found")
+            
+        post = res.data
+        if post["status"] != "draft" and post["status"] != "changes_requested":
+             raise HTTPException(status_code=400, detail=f"Cannot submit post in status: {post['status']}")
+
+        # 2. Trigger AI Reviewer (Simulated for Phase 4.6.3)
+        # In a real implementation, this would call get_llm_client() with a specific prompt
+        # Here we simulate the logic:
+        # - Content length < 50 chars -> Reject (Low Quality)
+        # - Content contains "CONFIDENTIAL" -> Reject (Compliance)
+        # - Otherwise -> Pass
+        
+        content = post.get("content", "")
+        ai_score = 85 # Default high score
+        review_notes = "AI Compliance Check: Passed. Tone is consistent."
+        auto_reject = False
+        
+        if len(content) < 50:
+            ai_score = 40
+            review_notes = "AI Review: Content too short. Please expand."
+            auto_reject = True
+        elif "CONFIDENTIAL" in content.upper():
+            ai_score = 0
+            review_notes = "AI Review: Security Alert. Found sensitive keyword 'CONFIDENTIAL'."
+            auto_reject = True
+            
+        # 3. Decision Logic
+        if auto_reject:
+            new_status = "changes_requested"
+            logger.info(f"API: AI Auto-Reject | id={post_id} | score={ai_score}")
+        else:
+            new_status = "review" # PENDING_REVIEW
+            logger.info(f"API: AI Auto-Pass | id={post_id} | score={ai_score}")
+            
+        # 4. Update DB
+        supabase.table("blog_posts").update({
+            "status": new_status
+            # In future: store review_notes and ai_score in DB
+        }).eq("id", post_id).execute()
+        
+        return {
+            "success": True, 
+            "status": new_status, 
+            "ai_score": ai_score,
+            "review_notes": review_notes
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"API: Blog submission failed | id={post_id} | error={str(e)}")
+        raise HTTPException(status_code=500, detail=str(e)) from e
+
 
 @router.post("/blog/draft", response_model=DraftBlogResponse)
 async def draft_blog_post(request: DraftBlogRequest, current_user: dict = Depends(get_current_user)):

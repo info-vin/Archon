@@ -124,20 +124,32 @@ const BrandPage: React.FC = () => {
 
     const handlePublishWorkbench = async (postData: { title: string, content: string }) => {
         const isManager = user?.role === EmployeeRole.MANAGER || user?.role === EmployeeRole.ADMIN;
-        const targetStatus = isManager ? 'published' : 'review';
         
         try {
-            await api.createBlogPost({
+            // 1. Always Create/Update Draft First
+            const draft = await api.createBlogPost({
                 title: postData.title,
                 content: postData.content,
                 excerpt: postData.content.slice(0, 150) + '...',
                 imageUrl: '/placeholder-blog.jpg',
-                status: targetStatus
+                status: 'draft'
             });
-            alert(isManager ? "Article published successfully!" : "Article submitted for review.");
+
+            // 2. If Manager, Publish Directly. If Member, Submit for Review (AI Check)
+            if (isManager) {
+                await api.updateBlogPostStatus(draft.id, 'published');
+                alert("Article published successfully!");
+            } else {
+                const result = await api.submitBlogPost(draft.id);
+                if (result.status === 'changes_requested') {
+                    alert(`Submission Returned by AI Reviewer:\n${result.review_notes || 'Quality check failed.'}`);
+                } else {
+                    alert("Article submitted for review! (AI Check Passed)");
+                }
+            }
             loadData();
         } catch (err: any) {
-            alert(`Publish failed: ${err.message}`);
+            alert(`Operation failed: ${err.message}`);
         }
     };
 

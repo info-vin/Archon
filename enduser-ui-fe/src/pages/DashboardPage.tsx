@@ -342,8 +342,7 @@ const DashboardPage: React.FC = () => {
       // In a real app, you might use a toast notification library here
       alert(`Failed to load dashboard data: ${error.message}`);
     } finally {
-      // Delay to allow state updates to flush to DOM
-      setTimeout(() => setIsLoading(false), 50);
+      setIsLoading(false);
     }
   }, [selectedProjectId]); // Dependency ensures re-fetch if project selection changes, might remove if not desired
 
