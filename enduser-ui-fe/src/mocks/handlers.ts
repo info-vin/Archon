@@ -219,5 +219,40 @@ export const handlers = [
       return HttpResponse.json({ 
           refined_description: `User Story: As a user, I want ${body.title} so that I can be happy.\n\nAcceptance Criteria:\n- Done.` 
       });
+  }),
+
+  // --- Bob's Workbench Handlers ---
+  http.get('/api/marketing/sources', () => {
+    return HttpResponse.json([
+      { id: 'lead-123', type: 'lead', title: 'Mozilla', score: 95, summary: 'Privacy concern', date: new Date().toISOString() }
+    ]);
+  }),
+
+  http.get('/api/marketing/context/:id', () => {
+    return HttpResponse.json({
+      source_id: 'lead-123',
+      source_type: 'lead',
+      logs: [],
+      rag_refs: [{ content: 'Security baseline', metadata: { source: 'Whitepaper' } }],
+      context_summary: 'Alice said client wants privacy.'
+    });
+  }),
+
+  http.get('/api/marketing/trends', () => {
+    return HttpResponse.json({
+      keyword_growth: [
+        { date: '2025-01', AI: 40, Data: 24 }
+      ],
+      sankey_flow: { nodes: [], links: [] }
+    });
+  }),
+
+  http.post('/api/marketing/blog/draft', async () => {
+    return HttpResponse.json({
+      title: 'Privacy in AI',
+      content: 'Article body about Privacy...',
+      excerpt: 'AI Privacy excerpt...',
+      references: ['Whitepaper']
+    });
   })
 ];
