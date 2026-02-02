@@ -71,14 +71,13 @@ test('Manager (Charlie) can access Team Management Panel', async () => {
     
     // FB-06: API must now return Agents as part of employees list, they are not hardcoded in UI
     const employeesWithBot = [...MOCK_EMPLOYEES, MOCK_AGENTS[0]];
-    vi.mocked(api.getEmployees).mockResolvedValue(employeesWithBot as any);
 
-    vi.mocked(api.getAiUsage).mockResolvedValue({
-        total_budget: 1000,
-        total_used: 500,
-        usage_percentage: 50
-    });
-    vi.mocked(api.getPendingApprovals).mockResolvedValue({ blogs: [], leads: [] });
+    // Use MSW instead of mocking api client directly to avoid pollution
+    server.use(
+        http.get('*/api/users', () => {
+            return HttpResponse.json(employeesWithBot);
+        })
+    );
 
     renderApp(['/team']);
 
@@ -136,7 +135,7 @@ test('User can use POBot to refine task description', async () => {
     });
 });
 
-test.skip('Manager can view pending approvals and click approve', async () => {
+test('Manager can view pending approvals and click approve', async () => {
     const user = userEvent.setup();
     
     // Mock Charlie (Manager) with explicit permissions to guarantee access
