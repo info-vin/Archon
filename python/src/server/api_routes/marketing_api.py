@@ -744,7 +744,7 @@ async def nana_banana_proxy(
     if user_role not in ["marketing", "manager", "admin"]:
         raise HTTPException(status_code=403, detail="Only Marketing/Managers can generate assets.")
 
-    api_key = os.getenv("NANA_BANANA_KEY")
+    api_key = await credential_service.get_credential("NANA_BANANA_KEY")
     if not api_key:
         raise HTTPException(status_code=503, detail="Nana Banana Service Not Configured (Missing Key)")
 

@@ -319,85 +319,41 @@ const BrandPage: React.FC = () => {
                     </div>
                 </header>
 
-                <main className="flex-1 overflow-auto">
+                <main className={`flex-1 ${viewMode === 'workbench' ? 'overflow-hidden' : 'overflow-auto'}`}>
                     {viewMode === 'dashboard' ? (
                         <div className="p-6 max-w-7xl mx-auto space-y-8 font-sans">
-                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                                {/* Brand Identity Section */}
-                                <div className="lg:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-gray-100 space-y-6">
-                                    <div className="flex justify-between items-center">
-                                        <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
-                                            <LayoutIcon className="w-5 h-5 text-indigo-500" />
-                                            Visual Identity
-                                        </h2>
-                                        <button 
-                                            onClick={handleGenerateLogo}
-                                            disabled={isGenerating}
-                                            className="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-indigo-700 disabled:opacity-50 transition-all flex items-center gap-2 shadow-lg shadow-indigo-200"
-                                        >
-                                            {isGenerating ? <RefreshCwIcon className="w-4 h-4 animate-spin" /> : <RefreshCwIcon className="w-4 h-4" />}
-                                            Generate with DevBot
-                                        </button>
-                                    </div>
+                            {/* Market Insight Section (Moved Top for UX-009) */}
+                            <div className="bg-indigo-900 text-white p-6 rounded-2xl shadow-xl space-y-6 relative overflow-hidden w-full">
+                                <div className="relative z-10">
+                                    <h2 className="text-xl font-bold flex items-center gap-2">
+                                        <TrendingUpIcon className="w-5 h-5 text-indigo-300" />
+                                        Market Intelligence 2.0
+                                    </h2>
+                                    <p className="text-indigo-200 text-xs mt-1">Real-time keyword trends & demand flow</p>
 
-                                    <div className="h-64 bg-slate-900 rounded-xl flex items-center justify-center relative overflow-hidden group border-4 border-slate-800">
-                                        {logoSvg ? (
-                                            <div className="w-48 h-48 drop-shadow-[0_0_15px_rgba(0,242,255,0.5)]" dangerouslySetInnerHTML={{ __html: logoSvg }} />
-                                        ) : (
-                                            <div className="text-slate-500 flex flex-col items-center gap-2">
-                                                <PaletteIcon className="w-12 h-12 opacity-20" />
-                                                <p className="text-sm">Click generate to preview living brand assets</p>
-                                            </div>
-                                        )}
-                                        
-                                        {logoSvg && (
-                                            <button 
-                                                onClick={downloadLogo}
-                                                className="absolute bottom-4 right-4 bg-white/10 backdrop-blur-md text-white p-2 rounded-lg hover:bg-white/20 transition-all opacity-0 group-hover:opacity-100"
-                                                title="Download SVG"
-                                            >
-                                                <DownloadIcon className="w-5 h-5" />
-                                            </button>
-                                        )}
-                                    </div>
-                                    <p className="text-xs text-gray-400 italic text-center">
-                                        Powered by **Project ECITON** Engine. Dynamic SVG generation based on collective intelligence math.
-                                    </p>
-                                </div>
-
-                                {/* Market Insight Section */}
-                                <div className="bg-indigo-900 text-white p-6 rounded-2xl shadow-xl space-y-6 relative overflow-hidden">
-                                    <div className="relative z-10">
-                                        <h2 className="text-xl font-bold flex items-center gap-2">
-                                            <TrendingUpIcon className="w-5 h-5 text-indigo-300" />
-                                            Market Intelligence 2.0
-                                        </h2>
-                                        <p className="text-indigo-200 text-xs mt-1">Real-time keyword trends & demand flow</p>
-                                        
-                                        {trendsData ? (
-                                            <div className="mt-6 space-y-8">
-                                                <div className="bg-white/5 p-4 rounded-xl border border-white/10 backdrop-blur-sm">
-                                                    <h3 className="text-sm font-bold text-indigo-200 mb-4 uppercase tracking-wider">Rising Topics (Monthly)</h3>
-                                                    <div className="-ml-4">
-                                                        <TrendLineChart data={trendsData.keyword_growth} />
-                                                    </div>
-                                                </div>
-                                                <div className="bg-white/5 p-4 rounded-xl border border-white/10 backdrop-blur-sm">
-                                                    <h3 className="text-sm font-bold text-indigo-200 mb-4 uppercase tracking-wider">Demand Flow</h3>
-                                                    <SankeyDiagram data={trendsData.sankey_flow} />
+                                    {trendsData ? (
+                                        <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-8">
+                                            <div className="bg-white/5 p-4 rounded-xl border border-white/10 backdrop-blur-sm">
+                                                <h3 className="text-sm font-bold text-indigo-200 mb-4 uppercase tracking-wider">Rising Topics (Monthly)</h3>
+                                                <div className="-ml-4">
+                                                    <TrendLineChart data={trendsData.keyword_growth} />
                                                 </div>
                                             </div>
-                                        ) : (
-                                            <div className="animate-pulse space-y-4 mt-8">
-                                                <div className="h-40 bg-white/5 rounded-xl"></div>
-                                                <div className="h-40 bg-white/5 rounded-xl"></div>
+                                            <div className="bg-white/5 p-4 rounded-xl border border-white/10 backdrop-blur-sm">
+                                                <h3 className="text-sm font-bold text-indigo-200 mb-4 uppercase tracking-wider">Demand Flow</h3>
+                                                <SankeyDiagram data={trendsData.sankey_flow} />
                                             </div>
-                                        )}
-                                    </div>
+                                        </div>
+                                    ) : (
+                                        <div className="animate-pulse grid grid-cols-2 gap-8 mt-8">
+                                            <div className="h-40 bg-white/5 rounded-xl"></div>
+                                            <div className="h-40 bg-white/5 rounded-xl"></div>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
 
-                            {/* Blog Content Kanban */}
+                            {/* Blog Content Kanban (Middle) */}
                             <section className="space-y-4">
                                 <div className="flex justify-between items-end">
                                     <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
@@ -414,6 +370,48 @@ const BrandPage: React.FC = () => {
                                     <KanbanColumn status="published" title="Published" icon={CheckCircleIcon} colorClass="text-green-600 border-green-200" />
                                 </div>
                             </section>
+
+                            {/* Brand Identity Section (Moved Bottom for UX-010) */}
+                            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 space-y-6">
+                                <div className="flex justify-between items-center">
+                                    <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+                                        <LayoutIcon className="w-5 h-5 text-indigo-500" />
+                                        Visual Identity
+                                    </h2>
+                                    <button
+                                        onClick={handleGenerateLogo}
+                                        disabled={isGenerating}
+                                        className="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-indigo-700 disabled:opacity-50 transition-all flex items-center gap-2 shadow-lg shadow-indigo-200"
+                                    >
+                                        {isGenerating ? <RefreshCwIcon className="w-4 h-4 animate-spin" /> : <RefreshCwIcon className="w-4 h-4" />}
+                                        Generate with DevBot
+                                    </button>
+                                </div>
+
+                                <div className="h-64 bg-slate-900 rounded-xl flex items-center justify-center relative overflow-hidden group border-4 border-slate-800">
+                                    {logoSvg ? (
+                                        <div className="w-48 h-48 drop-shadow-[0_0_15px_rgba(0,242,255,0.5)]" dangerouslySetInnerHTML={{ __html: logoSvg }} />
+                                    ) : (
+                                        <div className="text-slate-500 flex flex-col items-center gap-2">
+                                            <PaletteIcon className="w-12 h-12 opacity-20" />
+                                            <p className="text-sm">Click generate to preview living brand assets</p>
+                                        </div>
+                                    )}
+
+                                    {logoSvg && (
+                                        <button
+                                            onClick={downloadLogo}
+                                            className="absolute bottom-4 right-4 bg-white/10 backdrop-blur-md text-white p-2 rounded-lg hover:bg-white/20 transition-all opacity-0 group-hover:opacity-100"
+                                            title="Download SVG"
+                                        >
+                                            <DownloadIcon className="w-5 h-5" />
+                                        </button>
+                                    )}
+                                </div>
+                                <p className="text-xs text-gray-400 italic text-center">
+                                    Powered by **Project ECITON** Engine. Dynamic SVG generation based on collective intelligence math.
+                                </p>
+                            </div>
                         </div>
                     ) : (
                         <div className="grid grid-cols-12 h-full">

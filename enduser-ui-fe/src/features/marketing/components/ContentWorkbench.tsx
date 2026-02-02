@@ -49,6 +49,32 @@ export const ContentWorkbench: React.FC<ContentWorkbenchProps> = ({
   const [draftContent, setDraftContent] = useState('');
   const [draftTitle, setDraftTitle] = useState('');
 
+  // BUG-025: Persistence Logic
+  React.useEffect(() => {
+    if (activeSource?.id) {
+      const savedTitle = localStorage.getItem(`draft_title_${activeSource.id}`);
+      const savedContent = localStorage.getItem(`draft_content_${activeSource.id}`);
+      if (savedTitle) setDraftTitle(savedTitle);
+      else setDraftTitle(''); // Reset if no saved data
+
+      if (savedContent) setDraftContent(savedContent);
+      else setDraftContent(''); // Reset if no saved data
+    }
+  }, [activeSource?.id]);
+
+  React.useEffect(() => {
+    if (activeSource?.id) {
+      localStorage.setItem(`draft_title_${activeSource.id}`, draftTitle);
+      localStorage.setItem(`draft_content_${activeSource.id}`, draftContent);
+    }
+  }, [draftTitle, draftContent, activeSource?.id]);
+
+  // BUG-026: Save Feedback
+  const handleSave = () => {
+    // Logic is handled by useEffect sync, but we provide user feedback
+    alert("Draft saved successfully!");
+  };
+
   if (!activeSource) {
     return (
       <div className="h-full flex items-center justify-center bg-slate-50 dark:bg-slate-950 text-slate-400">
@@ -181,7 +207,11 @@ export const ContentWorkbench: React.FC<ContentWorkbenchProps> = ({
                 {isGeneratingImage ? 'Generating...' : 'Header Image'}
               </button>
               <div className="flex-1"></div>
-              <button className="p-1.5 hover:bg-slate-200 dark:hover:bg-slate-700 rounded text-slate-400">
+              <button
+                onClick={handleSave}
+                className="p-1.5 hover:bg-slate-200 dark:hover:bg-slate-700 rounded text-slate-400 active:text-indigo-500 transition-colors"
+                title="Save Draft"
+              >
                 <SaveIcon className="w-4 h-4" />
               </button>
             </div>

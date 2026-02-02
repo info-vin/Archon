@@ -175,6 +175,12 @@ class CredentialService:
         if isinstance(value, str):
             return value.strip()
 
+        if value is None:
+            # Fallback to environment variables if not found in DB cache
+            env_value = os.getenv(key) or os.getenv(key.upper())
+            if env_value:
+                return env_value
+
         return value
 
     async def get_encrypted_credential_raw(self, key: str) -> str | None:
