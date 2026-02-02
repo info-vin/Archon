@@ -88,85 +88,15 @@
 
 # 第三章：近期工作日誌 (Recent Journal Entries)
 
-### 2026-01-30: Phase 4.6 Mobile & UX Polish (Gap Closure)
-*   **核心任務**: 完成 Section 7 行動版與情資缺口填補，並進行 UX 最終打磨。
+### 2026-02-02: Phase 4.6.1 Alice Finalization (Voice-to-Task & Quality)
+*   **核心任務**: 定案並實作 Alice 的行動端工作流政策 (Voice, GPS, Pruning)。
 *   **功能落地**:
-    *   **Mobile Ops**: 實作 `Voice Logs` (語音日誌), `Pitch Drawer`, 與全域 `FAB` (懸浮按鈕)。
-    *   **UX Polish**: 優化 Search Bar 互動與 Job Search 體驗。
-*   **文件重構**:
-    *   更新 `UX Strategy` 與 `Phase 4.6 Plan`，納入 Security Hardening。
-    *   修訂 `CONTRIBUTING_tw.md`，釐清人機協作矩陣 (RBAC Matrix)。
-*   **關鍵修復 (Fixes)**:
-    *   **Type Safety**: 解決 Admin/Task Modals 的嚴重型別錯誤。
-    *   **Flaky Tests**: 修復 Content Marketing E2E 測試的不穩定斷言。
-
-### 2026-01-29: Phase 4.5 Finalization (RLS & The "Magic" Release)
-*   **核心任務**: 解決所有 Phase 4.5 剩餘的高風險 Bug，並交付 "Magic Draft" 功能。
+    *   **Voice-to-Task**: 實作 `visit_log_api` 自動將語音轉錄為 `Field Ops` 專案的 `Todo` 任務 (Fire & Forget)。
+    *   **On-Demand GPS**: 將 GPS 抓取移至按鈕觸發，解決耗電與隱私問題。
+    *   **Logic Refinement**: 歸檔閾值下修為 `Score < 40` 並實作 SQL Batch Update 以提升效能。
 *   **技術突圍**:
-    *   **Magic Draft**: 打通「行銷草稿 -> 部落格持久化 -> 公開可見性」的完整鏈路。
-    *   **RLS 實戰**: 全面實作 Row Level Security，解決資料外洩隱患。
-*   **關鍵修復**:
-    *   **API 500**: 修復 Marketing 與 Blog API 的嚴重伺服器錯誤 (500 Internal Server Error)。
-    *   **UI Tweaks**: 修正 `UserAvatar` 的 `rounded` 樣式覆蓋問題。
-*   **里程碑**: 驗證並關閉 Phase 4.5 所有功能特性。
-
-### 2026-01-28: The Great Lint & Type Safety Purge (Stability Restoration)
-*   **核心任務**: 全面清掃前端 (`enduser-ui-fe`, `archon-ui-main`) 與後端 (`python`) 的 Lint 錯誤與型別損毀，將「紅色蚯蚓」歸零。
-*   **技術突圍**:
-    *   **archon-ui-main 重建**: 修復了 **171 個** 嚴重錯誤。
-        *   **Hooks 遺失**: 補回 `OllamaModelDiscoveryModal.tsx` 中遺失的 `useState`, `useEffect`。
-        *   **API 參數錯位**: 修正 `ArchonChatPanel.tsx` 對 `agentChatService` 的錯誤呼叫（`createSession` 參數順序、`sendMessage` 物件封裝）。
-        *   **服務介面同步**: 將 `getServerStatus` 中誤用的 `serverHealthService.isHealthy()` 修正為 `checkHealth()`。
-        *   **路徑地獄**: 修復 `OllamaTypes.ts` 中指向 `ollamaService` 的錯誤相對路徑 (`../../` -> `../../../`)。
-    *   **後端規範**: 修正 `code_modifier.py` 中違反 `B904` (flake8-bugbear) 的例外處理，確保 `raise ... from e` 保留堆疊追蹤。
-    *   **測試自癒**: 全面修復 `tests/integration/knowledge/` 下的測試檔案，補齊 Mock 物件 (`KnowledgeItem`, `ActiveOperation`) 缺失的屬性，並修正導入路徑。
-*   **效能優化**: 合併 `perf/sitemap-async` 分支，將 Sitemap 解析從阻塞式 `requests` 遷移至非同步 `httpx`，並通過新測試驗證。
-*   **關鍵教訓**:
-    *   **型別是最好的文件**: `tsc` 報出的 171 個錯誤精準指出了系統在快速迭代中累積的「API 漂移」。修復型別錯誤等於是強迫前端與後端介面重新對齊。
-    *   **Unused Vars 噪音**: 雖然未使用變數不影響功能，但它們會掩蓋真正的錯誤。清掃它們能讓真正的問題浮現。
-
-### 2026-01-27: Phase 4.5 RBAC Deep Dive (Visible vs Hidden Truth)
-*   **核心任務**: 修復 Phase 4.5 的深層權限邏輯 (RBAC) 與前端語法損毀問題 (BUG-013, BUG-014)。
-*   **致命教訓 (The Silent Syntax Killer)**:
-    *   **現象**: `MarketingPage.tsx` 在 IDE 中看起來完美無缺，但 Vite 持續報錯 `Missing semicolon` 與 `Invalid token`。
-    *   **真相**: 之前的 AI 編輯不小心將 Markdown 的 ` ``` ` (Backticks) 寫入了 `.tsx` 檔案開頭，且因為編輯器渲染問題而被忽視。
-    *   **對策**: 當檔案持續報錯且無法肉眼排查時，果斷執行「全檔案乾淨重寫 (Clean Rewrite)」，而非試圖進行 Patch。
-*   **權限邏輯 (RBAC as Acceptance Criteria)**:
-    *   **轉變**: 將 BUG-013 (導覽列權限錯誤) 從「Bug 修復」提升為「驗收標準」。
-    *   **實作**: 在 `Phase_4_Acceptance_Guide.md` 中明確定義了 Alice (Sales Only) vs Bob (Brand Only) vs Charlie (Cross-Functional) 的 UI 可見性矩陣。
-*   **技術債清理**:
-    *   發現 `init_db.py` 之前錯誤地將 `seed_mock_data.sql` 視為一次性遷移。已重構為 `always-run` 模式，確保本地開發環境的角色與種子資料永遠同步。
-
-### 2026-01-27: E2E Regression Fixes (Hybrid Architecture Stabilization)
-*   **Problem**: E2E tests failed due to lost `this` context in API spies, missing MSW handlers, and timing issues in `knowledge-selector`.
-*   **Solution**:
-    *   **Architecture**: Refined `e2e.setup.tsx` to a robust Hybrid model (Mock Auth + Pass-through Data).
-    *   **Context Fix**: Ensured API spies invoke `actual.api[key]` to preserve `this` binding for internal calls like `_getHeaders`.
-    *   **Stability**: Excluded `getTasks` from spying to resolve Dashboard loading hangs caused by promise resolution timing.
-    *   **Data**: Restored missing MSW handlers (Admin, Stats) and aligned test expectations in `sales-nexus-closure.spec.tsx`.
-    *   **Cleanup**: Removed conflicting local `setupServer` in `knowledge-selector.spec.tsx` and added explicit loading waits.
-*   **Outcome**: All 13 E2E test files passed (25/25 tests). System stability restored.
-
-### 2026-01-26: Phase 4.4 Completion & Phase 4.5 Kickoff (Validation Victory)
-*   **核心任務**: 徹底驗收 Phase 4.4 的剩餘缺口 (RBAC 權限與 Marketing RAG 流程)，並啟動 Phase 4.5 "System Institutionalization"。
-*   **技術突圍**:
-    *   **E2E 基礎設施修復**: 發現並修復了 `tests/e2e/e2e.setup.tsx` 中的致命錯誤——`renderApp` 是一個空殼，導致所有測試都在測空頁面。修復後正確渲染了 `<AppRoutes />`。
-    *   **Mock 架構重構**: 放棄了脆弱的 `vi.spyOn`，改用全模組 `vi.mock` 加上 `importOriginal` 模式，保留了 `supabase` 實例但攔截了 `api` 物件，解決了 Auth Hook 崩潰與 "not a function" 的錯誤。
-    *   **環境補丁**: 在 `e2e.setup.tsx` 頂層加入了 `window.matchMedia` 的 Polyfill，解決了 `App.tsx` 主題偵測導致的測試崩測。
-*   **驗收成果**:
-    *   **RBAC 驗證**: `rbac-brand-manage.spec.tsx` 通過，確認 Bob (Marketing) 可見 Brand Hub 管理介面，而 Alice (Sales) 被拒絕訪問。
-    *   **業務閉環**: `content-marketing.spec.tsx` 通過，確認 Bob 能執行 "Magic Draft" 並獲得帶有引用的 AI 草稿。
-*   **下一步**: 啟動 Phase 4.5，將 `scripts/` 下的工具轉化為正規 API，並統一 Team Management UI 風險。
-
-### 2026-01-25: Phase 4.4.4 探針制度化與技術債清理 (Sentinel Institutionalization & Debt Cleanup)
-*   **核心任務**: 將 `scripts/probe_librarian.py` 升級為標準化健康檢查工具 (`make probe`)，並清理 Google RAG 修復過程中引入的硬編碼技術債。
-*   **技術實作**:
-    *   **探針升級**: 實作了「維度完整性檢查 (Integrity Check)」，能自動偵測 768 (Gemini) vs 1536 (OpenAI) 的維度衝突，並加入資料庫重試邏輯以排除索引延遲導致的誤報。
-    *   **Librarian 修復**: 發現並修復了 `LibrarianService` 漏掉呼叫 `create_embedding` 導致資料庫向量欄位為空的嚴重 Bug。
-    *   **配置對齊**: 新增 `scripts/force_google_config.py` 工具，確保測試環境與代碼預期的一致性。
-    *   **去硬編碼**: 重構 `embedding_service.py`，移除寫死的模型名稱與維度判斷，改為動態讀取資料庫配置，並修復了 `batch` 處理邏輯潛在的維度疊加風險。
-*   **標準化**: 將探針封裝為 `make probe` 指令，成為 CI/CD 的 Smoke Test 標準。
-*   **測試成果**: 探針通過全流程驗證 (Alice Seeding -> Dimension Check -> Bob Retrieval)。
+    *   **E2E 穩定化**: 修復了 `DashboardPage` 因非同步數據載入導致的 "New Task" 按鈕閃爍問題 (Race Condition)。
+    *   **Customer 連動**: 實作了 Lead 晉升時的 `visit_logs` 軌跡繼承。
 
 ---
 
@@ -198,7 +128,7 @@
 
     *   **誠實架構**: 移除了 `SmartAPI` 的隱式 Mock Fallback，強迫開發者正視網路配置問題。
 
-3.  **商業功能與 RAG 進化 (Ref: 01-05, 01-15, 01-16)**:
+3.  **商業功能與 RAG 進化 (Ref: 01-15, 01-16)**:
 
     *   **銷售情資**: 實作 Phase 4.2，包含 Leads 管理與市場洞察。
 
@@ -219,6 +149,11 @@
     *   **爬蟲 AJAX 逆向**: 放棄易被擋的靜態爬蟲，改用 104 AJAX API，大幅提升資料品質與穩定性，解決 RAG GIGO 問題。
     *   **Admin UI 完善**: 修復了檔案上傳 Unicode 錯誤、Task ID 顯示，並實作了 `Dev Auto-Login` 與 API Key 自動注入 (`db-init`)，大幅降低本地開發摩擦。
     *   **探針制度化**: 將 `probe_librarian.py` 升級為標準化 `make probe` 指令，並加入維度完整性檢查 (768 vs 1536)，成為 CI/CD 的可靠 Smoke Test。
+
+7.  **系統體制化與行動端擴展 (Ref: 01-26 ~ 01-30)**:
+    *   **品質與安全**: 實作了 Row Level Security (RLS) 防止資料外洩，並進行了大規模的 Type Safety/Lint 清掃，消除了數百個潛在的運行時錯誤。
+    *   **行動優先**: 為 Alice 打造了 "Hunter Mode" 與語音日誌功能，確立了行動端 "Fire & Forget" 的設計哲學。
+    *   **測試韌性**: 面對 Dashboard 複雜的非同步載入，學會了使用 `waitFor` 配合 DOM 狀態檢查來消除 Flaky Tests，並將探針 (Probe) 升級為 CI 標準檢查。
 
 ### 2025年12月：Async 重構、前端規範與 AI 開發者奠基
 

@@ -197,10 +197,16 @@ def main():
                 cursor.execute(f.read())
         logger.info("✅ Database reset.")
 
+    migrate_only = "--migrate-only" in sys.argv
+
     with db_transaction() as cursor:
         run_migrations(cursor, exclude={'RESET_DB.sql', 'backup_database.sql', 'complete_setup.sql', 'seed_mock_data.sql'})
-        seed_data(cursor)
-        sync_auth_users(cursor)
+        
+        if not migrate_only:
+            seed_data(cursor)
+            sync_auth_users(cursor)
+        else:
+            logger.info("⏩ Skipping seed & auth sync (--migrate-only)")
 
     print_dev_token()
     logger.info("✅ Database initialized successfully.")

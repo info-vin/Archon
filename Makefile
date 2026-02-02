@@ -7,7 +7,7 @@ SHELL := /bin/bash
 # Docker compose command - prefer newer 'docker compose' plugin over standalone 'docker-compose'
 COMPOSE ?= $(shell docker compose version >/dev/null 2>&1 && echo "docker compose" || echo "docker-compose")
 
-.PHONY: help dev dev-docker stop test test-fe test-be lint lint-fe lint-be clean install check install-ui db-init
+.PHONY: help dev dev-docker stop test test-fe test-be lint lint-fe lint-be clean install check install-ui db-init db-migrate
 
 help:
 	@echo "Archon Development Commands"
@@ -15,7 +15,8 @@ help:
 	@echo "  make dev        - Backend in Docker, frontend local (recommended)"
 	@echo "  make dev-docker - Everything in Docker"
 	@echo "  make stop       - Stop all services"
-	@echo "  make db-init    - Initialize database (idempotent)"
+	@echo "  make db-init    - Initialize database (Full: Migrations + Seed + Auth)"
+	@echo "  make db-migrate - Run schema migrations ONLY"
 	@echo "  make db-reset   - WIPE and Re-initialize database (Destructive)"
 	@echo "  make test       - Run all tests"
 	@echo "  make test-fe    - Run frontend tests only"
@@ -47,6 +48,11 @@ install-ui:
 db-init:
 	@echo "Initializing database inside archon-server container..."
 	@docker exec -i archon-server /venv/bin/python scripts/init_db.py
+
+# Database Migration Only
+db-migrate:
+	@echo "Running schema migrations inside archon-server container..."
+	@docker exec -i archon-server /venv/bin/python scripts/init_db.py --migrate-only
 
 # Database reset (Clean & Re-init)
 db-reset:
