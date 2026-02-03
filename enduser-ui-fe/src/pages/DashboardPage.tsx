@@ -21,13 +21,14 @@ const priorityIndicator = (priority: TaskPriority) => {
 };
 
 const statusIndicator = (status: TaskStatus) => {
-  const styles = {
+  const s = (status || 'todo').toLowerCase();
+  const styles: Record<string, string> = {
     todo: 'bg-gray-200 text-gray-800',
     doing: 'bg-blue-200 text-blue-800',
     done: 'bg-green-200 text-green-800',
     review: 'bg-purple-200 text-purple-800',
   };
-  return <span className={`px-2 py-1 rounded-full text-xs font-semibold ${styles[status] || 'bg-gray-100'}`}>{status}</span>;
+  return <span className={`px-2 py-1 rounded-full text-xs font-semibold ${styles[s] || 'bg-gray-100'}`}>{status}</span>;
 };
 
 // --- View Components ---
@@ -176,7 +177,7 @@ const KanbanView: React.FC<{
         <div key={status} className="bg-gray-50/50 rounded-2xl p-4 flex flex-col gap-4 border border-gray-100" onDrop={(e) => onDrop(e, status)} onDragOver={onDragOver}>
           <div className="flex justify-between items-center border-b border-gray-200 pb-3">
              <h3 className="font-bold text-gray-700 capitalize flex items-center gap-2">
-                <span className={`w-2 h-2 rounded-full ${status === 'todo' ? 'bg-gray-400' : status === 'doing' ? 'bg-blue-400' : status === 'review' ? 'bg-purple-400' : 'bg-green-400'}`}></span>
+                <span className={`w-2 h-2 rounded-full ${status.toLowerCase() === 'todo' ? 'bg-gray-400' : status.toLowerCase() === 'doing' ? 'bg-blue-400' : status.toLowerCase() === 'review' ? 'bg-purple-400' : 'bg-green-400'}`}></span>
                 {status}
              </h3>
              <span className="bg-white px-2 py-0.5 rounded-full text-xs font-bold text-gray-500 shadow-sm">{tasksByStatus[status]?.length || 0}</span>

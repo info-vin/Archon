@@ -882,33 +882,33 @@ async def list_tasks(
     """List tasks with optional filters including status and project."""
     try:
         # RBAC: Determine assignee filter
-        assignee_id_filter = None
-        user_role = current_user.get("role")
+        user_role = str(current_user.get("role", "member")).lower()
         user_id = current_user.get("id")
+        assignee_id_filter = None
 
         # Only Admin and Manager can see all tasks. Others see only their own by ID.
         if user_role not in ["system_admin", "admin", "manager"]:
             assignee_id_filter = user_id
 
+        # Normalize project_id: 'all' or empty string means no project filter
+        effective_project_id = None
+        if project_id and project_id.lower() != 'all':
+            effective_project_id = project_id
+
         logger.info(
-            f"Listing tasks | status={status} | project_id={project_id} | include_closed={include_closed} | "
-            f"page={page} | per_page={per_page} | user={user_id} | role={user_role} | filter_assignee_id={assignee_id_filter}"
+            f"Listing tasks | status={status} | project_id={effective_project_id} | include_closed={include_closed} | "
+            f"user={user_id} | role={user_role} | filter_assignee_id={assignee_id_filter}"
         )
 
         # Use TaskService to list tasks
         task_service = TaskService()
 
-        # Ensure ID is a string if present, otherwise None
-        filter_id: str | None = None
-        if assignee_id_filter:
-            filter_id = str(assignee_id_filter)
-
         success, result = await task_service.list_tasks(
-            project_id=project_id or "",
+            project_id=effective_project_id,
             status=status or "",
             include_closed=include_closed,
             exclude_large_fields=exclude_large_fields,
-            assignee_id=filter_id,  # Use ID for robust filtering
+            assignee_id=assignee_id_filter,
             include_unassigned=include_unassigned
             if assignee_id_filter
             else False,  # Only apply if filtering by user

@@ -145,14 +145,24 @@ def sync_auth_users(cursor: PGCursor) -> None:
     cursor.execute("SELECT id, email, name, role FROM profiles WHERE status = 'active'")
     profiles = cursor.fetchall()
 
+    DEFAULT_PW = "qwer45tyuiop"
     for p_id, email, name, role in profiles:
         try:
-            auth_service.create_user_by_admin(email=email, password="password123", name=name, role=role)
+            auth_service.create_user_by_admin(email=email, password=DEFAULT_PW, name=name, role=role)
             logger.info(f"✅ Created Auth User: {email}")
         except Exception as e:
             if not is_duplicate_user_error(e):
                 logger.error(f"❌ Failed to create user {email}: {e}")
                 continue
+            
+            # Update password for existing users to match DX-001 requirement
+            try:
+                auth_uid = _find_auth_id(supabase, email)
+                if auth_uid:
+                    supabase.auth.admin.update_user_by_id(auth_uid, {"password": DEFAULT_PW})
+                    logger.info(f"🔑 Reset password for existing user: {email}")
+            except Exception as reset_err:
+                logger.warning(f"⚠️ Could not reset password for {email}: {reset_err}")
 
         auth_uid = _find_auth_id(supabase, email)
         if not auth_uid:
@@ -196,7 +206,7 @@ def print_dev_token() -> None:
     if not HAS_SERVER_DEPS:
         return
     try:
-        res = get_supabase_client().auth.sign_in_with_password({"email": "admin@archon.com", "password": "password123"})
+        res = get_supabase_client().auth.sign_in_with_password({"email": "admin@archon.com", "password": "qwer45tyuiop"})
         if res.session:
             print(f"\n🔑 Dev Auto-Login URL: http://localhost:3737/dev-token?token={res.session.access_token}")
     except Exception:
