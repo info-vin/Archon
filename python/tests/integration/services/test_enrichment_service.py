@@ -32,7 +32,8 @@ async def test_enrich_lead_success():
         mock_supabase.table().update.assert_called()
         args, _ = mock_supabase.table().update.call_args
         assert args[0]["enrichment_status"] == "success"
-        assert args[0]["enrichment_score"] == 85
+        # Score calculation: 20 (base) + 20 (mock_email) + 30 (funding in news) = 70
+        assert args[0]["enrichment_score"] == 70
 
 @pytest.mark.asyncio
 async def test_prune_stale_leads():

@@ -25,6 +25,93 @@ _CACHE_TTL_SECONDS = 300  # 5 minutes
 # Security event log (in-memory for simplicity)
 _cache_access_log: list[dict[str, Any]] = []
 
+# --- Mock Classes ---
+class MockMessage:
+    def __init__(self, content):
+        self.content = content
+        self.reasoning_content = None
+
+class MockChoice:
+    def __init__(self, content):
+        self.message = MockMessage(content)
+
+class MockResponse:
+    def __init__(self, content):
+        self.choices = [MockChoice(content)]
+        self.usage = None
+
+class MockCompletions:
+    def __init__(self, provider_name):
+        self.provider_name = provider_name
+
+    async def create(self, *args, **kwargs):
+        logger.info(f"MockLLMClient ({self.provider_name}) received request: {kwargs}")
+
+        # Determine mock response based on prompt context (naive heuristic)
+        messages = kwargs.get('messages', [])
+        last_user_content = ""
+        for m in reversed(messages):
+            if m.get('role') == 'user':
+                last_user_content = m.get('content', '')
+                break
+
+        response_content = f"✨ [Mock] Magic Content for: {last_user_content[:30]}..."
+
+        # Specific overrides for known features
+        if "pitch" in last_user_content.lower() or "job" in last_user_content.lower():
+            response_content = f"""
+[ENGLISH PITCH]
+Subject: Transforming {kwargs.get('company', 'your team')}'s Workflow
+Hi there, I noticed you're hiring. This is a Mock Pitch generated because no real API key is present.
+
+[CHINESE PITCH]
+主旨：提升團隊效率的關鍵
+您好，這是一份模擬的銷售信件，因為系統檢測到沒有設定真實的 LLM 金鑰。
+            """.strip()
+
+        elif "image" in last_user_content.lower() or "nana" in last_user_content.lower():
+             # Usually image gen is a different endpoint, but if chat is used for prompt refinement:
+             response_content = "A beautiful futuristic city with glowing lights"
+
+        return MockResponse(response_content)
+
+class MockChat:
+    def __init__(self, provider_name):
+        self.completions = MockCompletions(provider_name)
+
+class MockLLMClient:
+    def __init__(self, provider_name="mock"):
+        self.chat = MockChat(provider_name)
+        self.models = None # Minimal mock
+
+    async def close(self):
+        # Implement GAP-016: Mock Token Usage Logging
+        try:
+            import asyncio
+            from .token_usage_service import TokenUsageService
+
+            # Simulate usage
+            usage_data = {
+                "request_id": f"mock-{int(time.time())}",
+                "user_id": "mock-user-001",
+                "model": "mock-gpt-4",
+                "provider": "mock",
+                "input_tokens": 50,
+                "output_tokens": 100,
+                "context_type": "mock_generation"
+            }
+
+            # Fire and forget (or await if context allows)
+            # Since this is usually called at end of context manager, we schedule it
+            asyncio.create_task(TokenUsageService.log_usage(**usage_data))
+            logger.info("MockLLMClient: Logged mock token usage.")
+        except Exception as e:
+            logger.warning(f"MockLLMClient: Failed to log usage: {e}")
+
+    async def aclose(self):
+        await self.close()
+# --- End Mock Classes ---
+
 
 def _get_cached_settings(key: str) -> Any | None:
     """Get cached settings if not expired."""
@@ -235,7 +322,11 @@ async def get_llm_client(
             # For this fix, we simply check if it's missing and log a warning,
             # then yield a mock client if allowed.
             logger.warning(f"No API key found for {provider_name}. Using MockClient for testing.")
-            yield MockLLMClient(provider_name)
+            # Yield MockClient wrapped in UsageTrackingClient logic if needed, or just MockClient
+            # Since MockClient.close handles logging now, we can yield it directly or wrap it.
+            # But the context manager expects to yield 'client'.
+            mock_client = MockLLMClient(provider_name)
+            yield mock_client
             return
         # --- MOCK FALLBACK LOGIC END ---
 

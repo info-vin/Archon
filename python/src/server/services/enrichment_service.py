@@ -63,9 +63,15 @@ class EnrichmentService:
             current_need = lead.get("identified_need") or ""
             enriched_summary = f"{current_need}\n\n[Auto-Enriched Data]\nTax ID: {mock_tax_id}\nEmail: {mock_email}\nNews: {mock_news}"
 
+            # Implement GAP-015: Dynamic Scoring
+            base_score = 20
+            if mock_email: base_score += 20
+            if "funding" in mock_news.lower(): base_score += 30
+            if lead.get("source_job_url"): base_score += 15
+
             enrichment_data = {
                 "enrichment_status": "success",
-                "enrichment_score": 85, # Mock score
+                "enrichment_score": base_score,
                 "data_last_verified_at": datetime.now().isoformat(),
                 "identified_need": enriched_summary,
                 "contact_email": mock_email # Try saving to column if exists (based on API usage)

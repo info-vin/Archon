@@ -863,5 +863,39 @@ class TaskService:
             logger.error(f"Failed to generate task from alert: {e}", exc_info=True)
             return False, {"error": str(e)}
 
+    async def prune_archived_tasks(self, days_old: int = 30) -> tuple[bool, dict[str, Any]]:
+        """
+        Permanently delete archived tasks older than X days.
+        This implements GAP-011 (Auto Prune).
+        """
+        try:
+            from datetime import timedelta
+
+            cutoff_date = (datetime.now() - timedelta(days=days_old)).isoformat()
+
+            logger.info(f"Pruning archived tasks older than {days_old} days (cutoff: {cutoff_date})")
+
+            # Select IDs to delete first for logging
+            tasks_to_prune = (
+                self.supabase_client.table("archon_tasks")
+                .select("id")
+                .eq("archived", True)
+                .lt("archived_at", cutoff_date)
+                .execute()
+            )
+
+            count = len(tasks_to_prune.data) if tasks_to_prune.data else 0
+
+            if count > 0:
+                # Perform deletion
+                self.supabase_client.table("archon_tasks").delete().eq("archived", True).lt("archived_at", cutoff_date).execute()
+                logger.info(f"Successfully pruned {count} tasks")
+
+            return True, {"pruned_count": count, "cutoff_date": cutoff_date}
+
+        except Exception as e:
+            logger.error(f"Error pruning tasks: {e}")
+            return False, {"error": str(e)}
+
 
 task_service = TaskService()

@@ -284,7 +284,7 @@ class TestAsyncLLMProviderService:
 
     @pytest.mark.asyncio
     async def test_get_llm_client_missing_google_key(self, mock_credential_service):
-        """Test error handling when Google API key is missing"""
+        """Test fallback to MockClient when Google API key is missing in dev environment"""
         config_without_key = {
             "provider": "google",
             "api_key": None,
@@ -297,9 +297,11 @@ class TestAsyncLLMProviderService:
         with patch(
             "src.server.services.llm_provider_service.credential_service", mock_credential_service
         ):
-            with pytest.raises(ValueError, match="Google API key not found"):
-                async with get_llm_client():
-                    pass
+            # Now we expect it NOT to raise, but to return a MockLLMClient
+            # because we implemented the Mock Strategy for BUG-028/029
+            async with get_llm_client() as client:
+                from src.server.services.llm_provider_service import MockLLMClient
+                assert isinstance(client, MockLLMClient)
 
     @pytest.mark.asyncio
     async def test_get_llm_client_unsupported_provider_error(self, mock_credential_service):

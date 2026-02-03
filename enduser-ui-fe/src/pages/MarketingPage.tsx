@@ -4,6 +4,7 @@ import { JobData } from '../types';
 import { PermissionGuard } from '../features/auth/components/PermissionGuard';
 import { SourceBadge } from '../components/SourceBadge';
 import { SearchIcon, TableIcon, ShieldCheckIcon, XIcon, SparklesIcon, RefreshCwIcon, ExternalLinkIcon } from '../components/Icons';
+import { Button } from '../components/Button';
 import { EmptyState } from '../components/common/EmptyState';
 import { LeadsCardStack } from '../features/marketing/components/LeadsCardStack';
 
@@ -206,13 +207,16 @@ const MarketingPage: React.FC = () => {
                     placeholder="Enter job title (e.g., Data Analyst)"
                     className="flex-1 p-3 border border-input bg-background text-gray-900 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-primary focus:outline-none"
                 />
-                <button
+                <Button
                     type="submit"
                     disabled={loading}
-                    className="bg-indigo-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+                    isLoading={loading}
+                    variant="primary"
+                    accentColor="indigo"
+                    size="lg"
                 >
                     {loading ? 'Analyzing Market...' : 'Find Leads'}
-                </button>
+                </Button>
                 </form>
             </div>
 
@@ -309,7 +313,9 @@ const MarketingPage: React.FC = () => {
                                         </span>
                                     </div>
                                     <div className="flex gap-2">
-                                        <button 
+                                        <Button
+                                            variant="secondary"
+                                            size="sm"
                                             onClick={(e) => {
                                                 e.stopPropagation();
                                                 // create lead (simulation)
@@ -325,21 +331,23 @@ const MarketingPage: React.FC = () => {
                                                     // setActiveTab('leads'); // Keep user in search flow
                                                 }).catch(() => alert("Failed to add lead"));
                                             }}
-                                            className="text-sm bg-white border border-gray-300 text-gray-700 px-3 py-2 rounded-lg hover:bg-gray-50 font-medium transition-colors"
                                         >
                                             Add Lead
-                                        </button>
-                                        <button 
+                                        </Button>
+                                        <Button
+                                            variant="primary"
+                                            size="sm"
+                                            accentColor="indigo"
                                             onClick={(e) => {
                                                 e.stopPropagation();
                                                 handleGeneratePitch(job);
                                             }}
                                             disabled={generating} 
-                                            className="text-sm bg-indigo-600 text-white px-5 py-2 rounded-lg hover:bg-indigo-700 shadow-md transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 font-bold ring-2 ring-transparent hover:ring-indigo-200"
+                                            isLoading={generating}
+                                            icon={!generating && <SparklesIcon className="w-4 h-4" />}
                                         >
-                                            <SparklesIcon className="w-4 h-4" />
                                             {generating ? 'Drafting...' : 'Generate Pitch'}
-                                        </button>
+                                        </Button>
                                     </div>
                                 </div>
                             </div>
@@ -377,11 +385,15 @@ const MarketingPage: React.FC = () => {
                                 <textarea readOnly className="w-full h-96 bg-transparent border-none resize-none focus:ring-0 text-foreground font-mono text-sm leading-relaxed" value={generatedPitch.content} />
                             </div>
                             <div className="mt-4 flex gap-3 justify-end">
-                                <button className="text-gray-600 hover:text-gray-800 px-4 py-2 text-sm font-medium" onClick={() => setGeneratedPitch(null)}>Close</button>
-                                <button className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 shadow-sm font-medium flex items-center gap-2" onClick={() => alert("Pitch approved and saved to knowledge base!")}>
-                                    <ShieldCheckIcon className="w-4 h-4" />
-                                    <span>Approve & Save</span>
-                                </button>
+                                <Button variant="ghost" onClick={() => setGeneratedPitch(null)}>Close</Button>
+                                <Button
+                                    variant="primary"
+                                    accentColor="green"
+                                    icon={<ShieldCheckIcon className="w-4 h-4" />}
+                                    onClick={() => alert("Pitch approved and saved to knowledge base!")}
+                                >
+                                    Approve & Save
+                                </Button>
                             </div>
                         </div>
                     </div>
@@ -509,12 +521,15 @@ const MarketingPage: React.FC = () => {
                                       </td>
                                       <td className="px-6 py-4 text-right">
                                           {lead.status !== 'converted' && (
-                                              <button 
+                                              <Button
+                                                  variant="outline"
+                                                  size="xs"
+                                                  accentColor="indigo"
                                                   onClick={() => openPromoteModal(lead)}
-                                                  className="text-indigo-600 hover:text-indigo-800 font-medium text-xs border border-indigo-200 px-3 py-1 rounded hover:bg-indigo-50 transition-colors opacity-0 group-hover:opacity-100"
+                                                  className="opacity-0 group-hover:opacity-100 transition-opacity"
                                               >
                                                   Promote
-                                              </button>
+                                              </Button>
                                           )}
                                       </td>
                                   </tr>
@@ -652,15 +667,17 @@ const PromoteForm: React.FC<{ lead: any; onClose: () => void; onSuccess: () => v
             )}
 
             <div className="flex gap-3 justify-end pt-2">
-                <button type="button" onClick={onClose} className="px-4 py-2 text-gray-600 font-medium hover:bg-gray-100 rounded-lg">Cancel</button>
-                <button 
+                <Button type="button" variant="ghost" onClick={onClose}>Cancel</Button>
+                <Button
                     type="submit" 
                     disabled={loading}
-                    className="px-4 py-2 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 disabled:opacity-50 flex items-center gap-2"
+                    isLoading={loading}
+                    variant="primary"
+                    accentColor="indigo"
+                    icon={<ShieldCheckIcon className="w-4 h-4" />}
                 >
-                    <ShieldCheckIcon className="w-4 h-4" />
                     {loading ? 'Promoting...' : 'Confirm Promotion'}
-                </button>
+                </Button>
             </div>
         </form>
     );

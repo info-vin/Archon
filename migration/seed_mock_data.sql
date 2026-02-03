@@ -189,6 +189,30 @@ VALUES
 ('crawler-service', 'ERROR', 'Failed to parse sitemap', '{"url": "https://example.com/sitemap.xml", "error": "404 Not Found"}', NOW() - INTERVAL '20 minutes')
 ON CONFLICT DO NOTHING;
 
+-- Seed for marketing_trends (GAP-013: Command Center Data)
+INSERT INTO marketing_trends (report_date, trend_type, data)
+VALUES
+(CURRENT_DATE, 'keyword_growth', '[{"name": "AI", "value": 85}, {"name": "SaaS", "value": 60}, {"name": "Cloud", "value": 45}]'),
+(CURRENT_DATE, 'sankey_flow', '{"nodes": [{"name": "Visitors"}, {"name": "Leads"}, {"name": "Sales"}], "links": [{"source": 0, "target": 1, "value": 50}, {"source": 1, "target": 2, "value": 10}]}')
+ON CONFLICT DO NOTHING;
+
+-- Seed for additional users (GAP-014: RBAC Examples)
+-- Viewer Role
+INSERT INTO profiles (id, "employeeId", name, email, department, position, status, role, avatar)
+VALUES (
+    COALESCE((SELECT id FROM profiles WHERE email = 'viewer@archon.com'), '5'),
+    'E1005', 'Victor Viewer', 'viewer@archon.com', 'Sales', 'Junior Analyst', 'active', 'viewer', 'https://i.pravatar.cc/150?u=viewer'
+)
+ON CONFLICT (id) DO UPDATE SET role = 'viewer';
+
+-- Editor Role
+INSERT INTO profiles (id, "employeeId", name, email, department, position, status, role, avatar)
+VALUES (
+    COALESCE((SELECT id FROM profiles WHERE email = 'editor@archon.com'), '6'),
+    'E1006', 'Eddie Editor', 'editor@archon.com', 'Marketing', 'Content Editor', 'active', 'editor', 'https://i.pravatar.cc/150?u=editor'
+)
+ON CONFLICT (id) DO UPDATE SET role = 'editor';
+
 -- Seed for archon_settings table
 INSERT INTO archon_settings (key, value, is_encrypted, category, description) VALUES
 ('PROJECTS_ENABLED', 'true', false, 'features', 'Enable or disable Projects and Tasks functionality'),

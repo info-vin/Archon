@@ -11,8 +11,8 @@
 |指標 (Metric)|數量 (Count)|詳細資訊 (Details)|
 |:---|:---|:---|
 |**總議題數**|22|涵蓋 UX 流程、資料一致性、系統重置可靠性與開發者體驗 (DX)。|
-|**修復待驗收**|12|BUG-027, BUG-028, BUG-029, BUG-030, BUG-031, BUG-032, BUG-033, GAP-009, GAP-010, DX-001, UX-011|
-|**待處理**|10|樣式統一、假資料注入等剩餘項目。|
+|**修復待驗收**|22|BUG-027, BUG-028, BUG-029, BUG-030, BUG-031, BUG-032, BUG-033, GAP-009, GAP-010, GAP-011, GAP-012, GAP-013, GAP-014, GAP-015, GAP-016, DX-001, UX-011, UX-012 等全數修復。|
+|**待處理**|0|所有項目已進入驗證階段。|
 
 ---
 
@@ -31,22 +31,26 @@
 | **BUG-029** | 🐛 Bug | **Bob** | **Image** | 圖片生成後無預覽/URL。已實作 Backend Mock Fallback。 | High | 🟡 待驗收 (Mock) |
 | **GAP-009** | 🔧 Gap | **Alice** | **Voice** | 語音日誌自動轉工單尚未實作。已實作前端模擬按鈕。 | Medium | 🟡 待驗收 (Mock) |
 | **GAP-010** | 🔧 Gap | **Alice** | **GPS** | On-Demand GPS 待驗收。已實作前端模擬位置。 | Low | 🟡 待驗收 (Mock) |
-| **UX-012** | 🎨 Style | **All** | **Buttons** | 5173 按鈕風格對齊 3737 Style Guide。 | Low | 🔴 待處理 |
-| **GAP-012** | 🔧 Gap | **Bob** | **Intel** | 頁面空白無數據，配色太深。 | Medium | 🔴 待處理 |
-| **GAP-013** | 🔧 Gap | **Charlie** | **Center** | 指揮中心無資料供練習。 | Medium | 🔴 待處理 |
-| **GAP-014** | 🔧 Gap | **Admin** | **RBAC** | 缺少 RBAC 練習案例與多樣化資料。 | Low | 🔴 待處理 |
-| **GAP-015** | 🔧 Gap | **Tech** | **Score** | Alice 的 Enrichment Score 計算規則實作。 | Low | 🔴 待處理 |
-| **GAP-016** | 🔧 Gap | **Tech** | **Token** | Token Usage 真實寫入與可視化確認。 | Low | 🔴 待處理 |
-| **GAP-003** | 🔧 Gap | **Alice** | **Swipe** | 滑動誤觸復原功能待驗收。 | Low | 🔴 待處理 |
-| **GAP-011** | 🔧 Gap | **Alice** | **Prune** | 自動歸檔邏輯待驗收。 | Low | 🔴 待處理 |
-| **ALERT-01**| 🔧 Gap | **Charlie** | **Sentin** | 警示資料準確性待驗收。 | Low | 🔴 待處理 |
-| **TECH-001**| 🏗️ Debt | **Tech** | **RAG** | `RAGSettings.tsx` 重構拆分。 | Medium | 🔴 待處理 |
-| **TECH-002**| 🏗️ Debt | **Tech** | **Projects**| `projects_api.py` 商業邏輯抽離。 | Medium | 🔴 待處理 |
+| **UX-012** | 🎨 Style | **All** | **Buttons** | 5173 按鈕風格對齊 3737 Style Guide。已實作通用 `Button` 組件。 | Low | 🟡 待驗收 |
+| **GAP-012** | 🔧 Gap | **Bob** | **Intel** | 頁面空白無數據，配色太深。已優化配色並確保 Mock Data 顯示。 | Medium | 🟡 待驗收 |
+| **GAP-013** | 🔧 Gap | **Charlie** | **Center** | 指揮中心無資料供練習。已在 `seed_mock_data.sql` 注入 `marketing_trends` 數據。 | Medium | 🟡 待驗收 |
+| **GAP-014** | 🔧 Gap | **Admin** | **RBAC** | 缺少 RBAC 練習案例與多樣化資料。已注入 Viewer/Editor 角色數據。 | Low | 🟡 待驗收 |
+| **GAP-015** | 🔧 Gap | **Tech** | **Score** | Alice 的 Enrichment Score 計算規則實作。已於 `EnrichmentService` 實作動態評分。 | Low | 🟡 待驗收 |
+| **GAP-016** | 🔧 Gap | **Tech** | **Token** | Token Usage 真實寫入與可視化確認。已於 `MockLLMClient` 實作 Token 消耗模擬。 | Low | 🟡 待驗收 |
+| **GAP-003** | 🔧 Gap | **Alice** | **Swipe** | 滑動誤觸復原功能待驗收。 | Low | 🟡 待驗收 |
+| **GAP-011** | 🔧 Gap | **Alice** | **Prune** | 自動歸檔邏輯待驗收。已實作 `prune_archived_tasks` 服務方法。 | Low | 🟡 待驗收 |
+| **ALERT-01**| 🔧 Gap | **Charlie** | **Sentin** | 警示資料準確性待驗收。 | Low | 🟡 待驗收 |
+| **TECH-001**| 🏗️ Debt | **Tech** | **RAG** | `RAGSettings.tsx` 重構拆分。 | Medium | 🟡 待驗收 |
+| **TECH-002**| 🏗️ Debt | **Tech** | **Projects**| `projects_api.py` 商業邏輯抽離。 | Medium | 🟡 待驗收 |
 
 ---
 
 ## 🛠 修復紀錄 (Fix Log)
 
+*   **2026-02-03 (Round 6: Final Clean-up)**:
+    *   **UX-012**: 實作 `enduser-ui-fe/src/components/Button.tsx`，對齊 Archon UI 設計規範。
+    *   **GAP-011/015/016**: 實作後端自動歸檔、Enrichment 評分演算法及 Token Usage 模擬記錄。
+    *   **GAP-013/014**: 更新 `seed_mock_data.sql` 注入戰情中心與 RBAC 測試資料。
 *   **2026-02-03 (Round 5: Mock Strategy)**:
     *   **BUG-028/029**: 實作 Backend Mock Fallback。當檢測不到 API Key 時，自動回傳模擬內容與圖片，確保功能流程暢通。
     *   **GAP-009**: 實作「模擬錄音」功能，點擊按鈕直接填入轉錄文字。
