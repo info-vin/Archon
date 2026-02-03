@@ -24,7 +24,7 @@ ALTER TABLE token_usage ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Admins can view all token usage" ON token_usage
     FOR SELECT
     USING (
-        auth.uid() IN (SELECT id FROM public.profiles WHERE role IN ('admin', 'system_admin'))
+        auth.uid() IN (SELECT id::uuid FROM public.profiles WHERE role IN ('admin', 'system_admin'))
     );
 
 -- Users can view their own usage (transparency)

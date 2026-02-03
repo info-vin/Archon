@@ -96,68 +96,58 @@
     *   **狀態閉環**: 分派任務後自動將 Alert 標記為 `dispatched` 並連結 Task ID 至 Alert details。
 *   **品質加固**: 
     *   **基礎設施**: 修復了 `llm_provider_service` 循環引用，並校準了 `TokenUsageService` 的成本計算邏輯 (優先 Ollama)。
-    *   **測試驗收**: 通過後端 523 個測試與前端 25 個 E2E 測試。
-        *   **文件同步**: 更新了 `CONTRIBUTING_tw.md` 的資料庫遷移表與下一階段規劃文件。
-    
-    ### 2026-02-03: Phase 4.6.2 Bob Finalization (E2E Stability & Isolation)
-    *   **核心修復**: 解決了 `tests/e2e/management.spec.tsx` 中 "User can use POBot..." 測試失敗的問題。
-        *   **原因**: 前端應用啟動時的非同步資料載入在測試環境中導致 Promise 懸掛。
-        *   **解決**: 強化 MSW 配置，確保所有 API 請求 (特別是 `getCurrentUser`) 被正確攔截。
-    *   **驗證**: Backend (517 passed) 與 Frontend E2E (25 passed).
-    
-    ---
-    
-    # 第四章：歷史檔案：原則的考古學 (Historical Archive: The Archaeology of Principles)
-    
-    > **【封存說明】**
-    > 本章節存放了所有歷史日誌。當你需要深入了解某個特定問題的完整偵錯背景時，可以在此查閱最原始的紀錄。
-    
-    ### 2026年2月：全角色流程與行動端落地
-    
-    二月標誌著 Archon 從單點功能邁向全角色協作的里程碑。我們完成了 Alice (Sales), Bob (Marketing), Charlie (Manager) 的核心工作流閉環。
-    
-    **核心主題歸類**:
-    1.  **Phase 4.6.3 Charlie (Manager) (Ref: 02-03)**:
-        *   **指揮官系統**: 實作 Sentinel 哨兵自動監控 Stale Leads，並結合 RAG/LLM 智慧生成繁體中文追蹤任務。
-        *   **權限閉環**: 實作了從 Alert -> Task Dispatch -> Alert Resolved 的完整狀態流轉與 RBAC 控制。
-    
-    2.  **Phase 4.6.2 Bob (Marketing) (Ref: 02-03)**:
-        *   **測試隔離**: 解決了 E2E 測試中的 Promise Hanging 問題，確立了 MSW 必須攔截所有 Auth 請求的測試鐵律。
-    
-    3.  **Phase 4.6.1 Alice (Sales) (Ref: 02-02)**:
-        *   **行動優先**: 實作 "Fire & Forget" 的語音轉工單功能。
-        *   **效能優化**: 將 GPS 抓取改為 On-Demand，並引入 SQL Batch Update 優化歸檔效能。
-        *   **E2E 穩定化**: 修復了 Dashboard 因非同步載入導致的 Race Condition。
-    
-    ### 2026年1月：權限重構、自癒機制與商業功能落地
+*   **測試驗收**: 通過後端 523 個測試與前端 25 個 E2E 測試。
+    *   **文件同步**: 更新了 `CONTRIBUTING_tw.md` 的資料庫遷移表與下一階段規劃文件。
+
+### 2026-02-03: Phase 4.6.2 Bob Finalization (E2E Stability & Isolation)
+*   **核心修復**: 解決了 `tests/e2e/management.spec.tsx` 中 "User can use POBot..." 測試失敗的問題。
+    *   **原因**: 前端應用啟動時的非同步資料載入在測試環境中導致 Promise 懸掛。
+    *   **解決**: 強化 MSW 配置，確保所有 API 請求 (特別是 `getCurrentUser`) 被正確攔截。
+*   **驗證**: Backend (517 passed) 與 Frontend E2E (25 passed).
+
+---
+
+# 第四章：歷史檔案：原則的考古學 (Historical Archive: The Archaeology of Principles)
+
+> **【封存說明】**
+> 本章節存放了所有歷史日誌。當你需要深入了解某個特定問題的完整偵錯背景時，可以在此查閱最原始的紀錄。
+
+### 2026年2月：全角色流程與行動端落地
+二月標誌著 Archon 從單點功能邁向全角色協作的里程碑。我們完成了 Alice (Sales), Bob (Marketing), Charlie (Manager) 的核心工作流閉環。
+
+**核心主題歸類**:
+1.  **Phase 4.6.3 Charlie (Manager) (Ref: 02-03)**:
+    *   **指揮官系統**: 實作 Sentinel 哨兵自動監控 Stale Leads，並結合 RAG/LLM 智慧生成繁體中文追蹤任務。
+    *   **權限閉環**: 實作了從 Alert -> Task Dispatch -> Alert Resolved 的完整狀態流轉與 RBAC 控制。
+
+2.  **Phase 4.6.2 Bob (Marketing) (Ref: 02-03)**:
+    *   **測試隔離**: 解決了 E2E 測試中的 Promise Hanging 問題，確立了 MSW 必須攔截所有 Auth 請求的測試鐵律。
+
+3.  **Phase 4.6.1 Alice (Sales) (Ref: 02-02)**:
+    *   **行動優先**: 實作 "Fire & Forget" 的語音轉工單功能。
+    *   **效能優化**: 將 GPS 抓取改為 On-Demand，並引入 SQL Batch Update 優化歸檔效能。
+    *   **E2E 穩定化**: 修復了 Dashboard 因非同步載入導致的 Race Condition。
+
+### 2026年1月：權限重構、自癒機制與商業功能落地
 一月是專案從「技術驗證」邁向「商業運作」的關鍵轉折點。我們在前半月集中解決了深層的架構債（特別是 Auth 與 Docker 環境），後半月則全力衝刺商業功能的實作。
 
 **核心主題歸類**：
 
 1.  **RBAC 權限架構的完備與標準化 (Ref: 01-09, 01-12)**:
-
     *   **挑戰**: 舊有 `X-User-Role` Header 存在安全漏洞，且 `auth.users` 與 `public.profiles` ID 不一致導致 406 錯誤。
-
     *   **解決**: 建立 `src/server/auth` 模組，強制後端驗證 JWT。實作 `init_db.py` 中的「雙重同步策略 (Dual Sync)」，自動修復 ID 不一致。
-
     *   **DX 優化**: 為解決 Admin UI 無登入頁痛點，實作了 `Dev Auto-Login` 機制。
 
 2.  **環境自癒與主動防禦 (Ref: 01-03, 01-04, 01-08)**:
-
     *   **主動防禦**: 針對 Docker 內部網路 (DNS) 與瀏覽器外部網路的差異，在前端 `api.ts` 實作了「主動防禦」邏輯，偵測到無法連線時自動切換 Mock，解決無限 Loading。
-
     *   **誠實架構**: 移除了 `SmartAPI` 的隱式 Mock Fallback，強迫開發者正視網路配置問題。
 
 3.  **商業功能與 RAG 進化 (Ref: 01-15, 01-16)**:
-
     *   **銷售情資**: 實作 Phase 4.2，包含 Leads 管理與市場洞察。
-
     *   **真實 RAG**: 將 Mock RAG 升級為接軌 Gemini API 的真實系統，打通了「爬蟲 -> 向量 -> 生成」的數據管道。
-
     *   **行銷官網**: 導入 Config-Driven UI 模式，降低非技術人員維護門檻。
 
 4.  **SOP 與除錯紀律的再強化 (Ref: 01-06, 01-07)**:
-
     *   **教訓**: 在修復 UI/通訊問題時，因違背 SOP 導致測試崩潰。重新確立了「修改代碼必須同步更新 Mock」與「Patch 必須針對 Class」的鐵律。
 
 5.  **系統穩定化與人機協作 (Ref: 01-20, 01-22, 01-23, 01-24)**:

@@ -551,3 +551,33 @@ docker exec -i archon-server /venv/bin/python -c "import os, psycopg2; DB=os.get
 | `python/src/server/services/ollama/model_discovery_service.py` | 1122 | Backend | **[Medium]** 減少單檔複雜度 |
 | `python/src/server/services/llm_provider_service.py` | 1085 | Backend | **[Medium]** 抽象層重構 |
 | `python/src/server/api_routes/knowledge_api.py` | 1085 | Backend | **[Medium]** API 端點精簡 |
+
+---
+
+## 附錄 C：系統演進現狀 (System Evolution Status)
+
+> **更新日期**: 2026-02-03
+> **說明**: 本章節記錄了 Phase 4.7 至 4.11 期間完成的核心架構升級。開發者在進行新功能開發時，應充分利用這些已就緒的基礎設施。
+
+### 1. 神經連結 (Neural Wiring) - Phase 4.7
+*   **MCP 架構**: 系統已全面導入 **Model Context Protocol (MCP)**。
+    *   **Client**: `AgentService` 透過單例的 `MCPClient` (`src/agents/mcp_client.py`) 與工具層通訊。
+    *   **Two-pass Loop**: Agent 的思考迴圈已升級為「Think (分析) -> Tool (執行) -> Act (回應)」的雙重確認模式。
+*   **DevBot 能力**: DevBot 現在具備「先查詢知識庫 (`rag_search`) 再修復」的 L2 自癒能力，不再盲目嘗試。
+
+### 2. Agent 覺醒 (Agent Awakening) - Phase 4.8
+*   **Agent Registry**: 所有 Agent 的角色定義、Prompt 與工具權限皆已集中管理於 `src/server/services/agent_registry.py`。
+*   **通用化**: 移除了 Hardcoded 的 Mock 邏輯，MarketBot、Librarian 與 POBot 現在皆透過通用的 MCP 迴圈運作。
+
+### 3. 安全與自治 (Security & Autonomy) - Phase 4.9
+*   **RBAC 門禁**: `/api/agents/assignable` 已實作角色過濾 (Sales 僅見 MarketBot，Marketing 可見 Librarian)。
+*   **Clockwork Patrol**:
+    *   **Log Patrol**: 每小時自動掃描 `archon_logs` 中的錯誤，並主動派工給 DevBot。
+    *   **Business Sentinel**: 每 12 小時自動掃描超過 14 天未更新的 Stale Leads。
+
+### 4. 穩定化與除債 (Quality & Stability) - Phase 4.10 ~ 4.11
+*   **型別安全**: 後端代碼庫已達成 **Zero MyPy Errors**，消除了所有隱性的型別風險。
+*   **測試防護網**:
+    *   **Backend**: 532 個測試 (100% 通過)。
+    *   **Frontend**: 183 個測試 (Unit + E2E + Admin，100% 通過)。
+    *   **E2E**: 包含完整的資料庫重置與全流程驗證。

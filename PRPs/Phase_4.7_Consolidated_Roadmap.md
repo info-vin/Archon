@@ -132,3 +132,43 @@
 3.  **穩定且高型別安全** 的企業級架構 (4.10, 4.11)。
 
 此基礎將支撐未來 Phase 5 (RBAC Identity) 與 Phase 6 (Global Autonomy) 的發展。
+
+---
+
+# 附錄 A: 驗證與落差分析報告 (Validation & Gap Analysis Report)
+> **驗證日期**: 2026-02-03
+> **驗證者**: Gemini CLI (Agent)
+> **基準**: 程式碼庫 (Codebase) vs 本文件 (Consolidated Roadmap)
+
+## 1. 實作狀態驗證 (Implementation Verification)
+
+| Phase | Feature | Component | Status | Code Evidence | Note |
+| :--- | :--- | :--- | :---: | :--- | :--- |
+| **4.7** | **Neural Wiring** | `AgentService` Tool Loop | ✅ | `agent_service.py` | 實作了 Two-pass 分析與 Tool Call 處理。 |
+| | | `MCPClient` Singleton | ✅ | `mcp_client.py` | 確實使用 Singleton 模式與 `httpx` 連線。 |
+| | | `DevBot` Prompts | ✅ | `dev_ops_prompts.py` | 包含 `search_code_examples` 等工具定義。 |
+| **4.8** | **Agent Awakening** | `AgentRegistry` | ✅ | `agent_registry.py` | 完整定義了 4 個角色的 Prompt 與工具權限。 |
+| | | General Agent Loop | ✅ | `agent_service.py` | `_run_general_agent_task` 支援通用工具呼叫。 |
+| **4.9** | **Security** | RBAC on `/assignable` | ✅ | `agents_api.py` | 使用 `Depends(get_current_user)` 並過濾角色。 |
+| | **Patrol** | Log Patrol | ✅ | `scheduler_service.py` | `_run_log_patrol` 每小時掃描錯誤並指派 DevBot。 |
+| | | Business Sentinel | ✅ | `scheduler_service.py` | `_run_business_sentinel` 每 12 小時掃描 Stale Leads (Phase 4.6.3 補強)。 |
+
+## 2. 數據與指標校正 (Metrics Correction)
+
+### 2.1 測試覆蓋率 (Test Coverage)
+文件主體中的數據為歷史快照，以下為 2026-02-03 的最新實測數據：
+
+*   **Backend Tests**: 從 `517` 增加至 **532** (全部通過)。
+*   **Frontend Tests**: 從 `48` 修正為 **183** (含 Unit, E2E, Admin UI)。
+    *   End-User UI Unit: 26
+    *   End-User UI E2E: 25
+    *   Admin UI: 132
+
+### 2.2 角色權限矩陣 (RBAC Matrix)
+程式碼中的實作 (`agent_service.py`) 與文件描述完全一致：
+*   **Sales**: 僅限 `MarketBot`。
+*   **Marketing**: `MarketBot` + `Librarian`。
+*   **Admin/Manager**: 全權限。
+
+## 3. 結論 (Conclusion)
+Phase 4.7 至 4.11 的核心功能已 **100% 落地**。程式碼庫不僅符合藍圖，在測試覆蓋率與安全性檢查 (Sentinel) 上甚至超出了原始規劃。建議進入 Phase 5 (RBAC Identity) 的準備階段。

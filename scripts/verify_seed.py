@@ -41,7 +41,7 @@ def check_db_state():
 
         expected = {
             'Charlie Brown': {'role': 'manager', 'dept': 'Marketing'},
-            'Alice Johnson': {'role': 'member', 'dept': 'Sales'},
+            'Alice Johnson': {'role': 'sales', 'dept': 'Sales'},
             'DevBot': {'role': 'ai_agent', 'dept': 'AI'}
         }
         
