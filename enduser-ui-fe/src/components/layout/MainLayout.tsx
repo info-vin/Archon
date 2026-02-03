@@ -100,12 +100,14 @@ const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                             </Link>
                         </li>
                     )}
+                    {/* UX-011: Settings moved to Profile Modal
                     <li className="mb-2">
                         <Link to="/settings" className={`flex items-center p-2 rounded-md hover:bg-secondary ${location.pathname.startsWith('/settings') ? 'bg-secondary' : ''}`}>
                             <SettingsIcon className="w-5 h-5 mr-3" />
                             Settings
                         </Link>
                     </li>
+                    */}
                     {isAdmin && (
                          <li className="mb-2">
                             <Link to="/admin" className={`flex items-center p-2 rounded-md hover:bg-secondary ${location.pathname.startsWith('/admin') ? 'bg-secondary' : ''}`}>
@@ -122,13 +124,13 @@ const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                             Back to Website
                         </Link>
                     </div>
-                   <div className="flex items-center mb-4">
-                       <UserAvatar name={user?.name || ''} role={user?.role} className="w-10 h-10 mr-3" />
-                       <div>
-                           <p className="font-semibold">{user?.name}</p>
-                           <p className="text-sm text-muted-foreground">{user?.email}</p>
+                   <Link to="/settings" className="flex items-center mb-4 p-2 -mx-2 rounded-md hover:bg-secondary transition-colors group">
+                       <UserAvatar name={user?.name || ''} role={user?.role} className="w-10 h-10 mr-3 group-hover:ring-2 ring-primary/20 transition-all" />
+                       <div className="overflow-hidden">
+                           <p className="font-semibold truncate">{user?.name}</p>
+                           <p className="text-sm text-muted-foreground truncate">{user?.email}</p>
                        </div>
-                   </div>
+                   </Link>
                    <button onClick={logout} className="w-full flex items-center justify-center p-2 rounded-md bg-destructive text-destructive-foreground hover:bg-destructive/90">
                        <LogOutIcon className="w-5 h-5 mr-2" />
                        Logout

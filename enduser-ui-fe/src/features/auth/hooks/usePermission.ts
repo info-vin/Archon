@@ -80,7 +80,14 @@ export function usePermission() {
     
     // 2. Fallback: Static Role-based Permissions
     if (user.role) {
-        const rolePermissions = ROLE_MAP[user.role];
+        const normalizedRole = user.role.toLowerCase() as EmployeeRole;
+        const rolePermissions = ROLE_MAP[normalizedRole];
+        
+        // Debug fallback
+        if (!rolePermissions) {
+             console.warn(`[usePermission] No permissions found for role: ${user.role} (normalized: ${normalizedRole})`);
+        }
+        
         return rolePermissions?.has(permission) ?? false;
     }
 
