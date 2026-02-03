@@ -890,6 +890,10 @@ async def list_tasks(
         if user_role not in ["system_admin", "admin", "manager"]:
             assignee_id_filter = user_id
 
+        logger.info(
+            f"DEBUG RBAC: list_tasks | user_id={user_id} | raw_role={current_user.get('role')} | normalized_role={user_role} | assignee_filter={assignee_id_filter}"
+        )
+
         # Normalize project_id: 'all' or empty string means no project filter
         effective_project_id = None
         if project_id and project_id.lower() != 'all':

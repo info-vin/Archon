@@ -1,6 +1,6 @@
 # Phase 4.6.5 缺陷與缺口追蹤表 (Bug & Gap Tracking Report)
 
-> **文件目的**: 集中管理 Phase 4.6.5 (跨角色 UX 優化與系統補強) 的修復進度。
+> **文件狀態**: 驗證中 (Under Verification)
 > **涵蓋角色**: Alice (Sales), Bob (Marketing), Charlie (Manager), Admin
 > **最後更新**: 2026-02-03
 
@@ -11,8 +11,9 @@
 |指標 (Metric)|數量 (Count)|詳細資訊 (Details)|
 |:---|:---|:---|
 |**總議題數**|22|涵蓋 UX 流程、資料一致性、系統重置可靠性與開發者體驗 (DX)。|
-|**已完成修正**|8|完成密碼重置、任務可見性、狀態顏色、導覽列恢復 (ID 同步) 與設定頁面整併。|
-|**待處理**|14|重點轉向 Bob 的編輯器功能 (Magic Draft) 與樣式統一。|
+|**修復待驗收**|6|密碼、導覽列恢復、Reset 腳本、Seed 資料。|
+|**重啟調查**|2|Alice 任務可見性 (BUG-027)、狀態顏色失效 (BUG-030)。|
+|**待處理**|14|Bob 編輯器斷點、樣式統一、假資料注入。|
 
 ---
 
@@ -20,13 +21,13 @@
 
 | ID | 類型 (Type) | 角色 | 模組 | 問題描述 | 嚴重度 | 狀態 |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **BUG-033** | 🐛 Bug | **All** | **UI/Nav** | 導覽列消失。原因：ID 不匹配 (UUID vs '4') 導致 Profile 抓取失敗。 | Critical | 🟢 已修復 |
-| **DX-001** | 🛠️ DX | **All** | **Auth/PW** | 密碼重置為 `qwer45tyuiop`。已實作強制重置邏輯。 | Medium | 🟢 已修復 |
-| **BUG-027** | 🐛 Bug | **Charlie** | **Tasks** | Alice 任務消失。原因：後端大小寫敏感且未處理 `project_id=all`。 | High | 🟢 已修復 |
-| **BUG-030** | 🐛 Bug | **All** | **Color** | Dashboard 狀態燈色失效。原因：`statusIndicator` 未小寫化。 | Medium | 🟢 已修復 |
-| **UX-011** | 🎨 Style | **All** | **UI/Set** | 5173 `/settings` 移至使用者區塊 (頭像 + Email)。 | Medium | 🟢 已修復 |
-| **BUG-031** | 🐛 Bug | **System** | **DB/Reset**| `make db-reset` 失敗。原因：`RESET_DB.sql` 遺漏新表。 | High | 🟢 已修復 |
-| **BUG-032** | 🐛 Bug | **System** | **DB/Seed** | `seed_mock_data.sql` 報錯。原因：`leads` 插入不存在欄位。 | High | 🟢 已修復 |
+| **BUG-027** | 🐛 Bug | **Charlie** | **Team** | Charlie 在 Team Management 面板看不到 Alice 自己開的單。原因待查。 | High | 🔴 重啟調查 |
+| **BUG-030** | 🐛 Bug | **All** | **Color** | Dashboard 狀態與優先級燈色失效。修改 LOW->HIGH 後顏色無變化 (維持綠色)。 | Medium | 🔴 重啟調查 |
+| **BUG-033** | 🐛 Bug | **All** | **UI/Nav** | 導覽列消失。已修正前端大小寫判斷與 DB ID 同步。 | Critical | 🟡 待驗收 |
+| **DX-001** | 🛠️ DX | **All** | **Auth/PW** | 密碼重置為 `qwer45tyuiop`。已實作強制重置邏輯。 | Medium | 🟡 待驗收 |
+| **UX-011** | 🎨 Style | **All** | **UI/Set** | 5173 `/settings` 移至使用者區塊。 | Medium | 🟡 待驗收 |
+| **BUG-031** | 🐛 Bug | **System** | **DB/Reset**| `make db-reset` 失敗。原因：`RESET_DB.sql` 遺漏新表。 | High | 🟡 待驗收 |
+| **BUG-032** | 🐛 Bug | **System** | **DB/Seed** | `seed_mock_data.sql` 報錯。原因：`leads` 插入不存在欄位。 | High | 🟡 待驗收 |
 | **UX-012** | 🎨 Style | **All** | **Buttons** | 5173 按鈕風格對齊 3737 Style Guide。 | Low | 🔴 待處理 |
 | **BUG-028** | 🐛 Bug | **Bob** | **Magic** | 生成內容未貼入編輯器，且切換分頁後遺失。 | High | 🔴 待處理 |
 | **BUG-029** | 🐛 Bug | **Bob** | **Image** | 圖片生成後無預覽/URL。 | High | 🔴 待處理 |
@@ -47,11 +48,11 @@
 
 ## 🛠 修復紀錄 (Fix Log)
 
-*   **2026-02-03 (Round 2: 重大修復)**:
-    *   **BUG-033 (關鍵)**: 診斷出 `profiles.id` ('4') 與 `auth.users.id` (UUID) 不匹配。已執行修復腳本同步全系統 ID (包含外鍵關聯)。
-    *   **UX-011**: 修改 `MainLayout.tsx`，移除舊連結並將 Settings 跳轉入口整合至 Sidebar Footer 的 User Profile 區塊。
-    *   **BUG-031/032**: 修正 `RESET_DB.sql` (加入 `archon_ethics_events` 等) 與 `seed_mock_data.sql` (移除 leads 表非法欄位)。
+*   **2026-02-03 (Round 3: 回歸確認)**:
+    *   **BUG-027**: 確認 Charlie 在 Team Management 看不到 Alice 的單。
+    *   **BUG-030**: 確認 Dashboard 優先級/狀態顏色修復失敗 (維持綠色)。
+*   **2026-02-03 (Round 2)**:
+    *   **BUG-033**: 修復導覽列。
+    *   **UX-011**: 搬移設定入口。
 *   **2026-02-03 (Round 1)**:
-    *   **DX-001**: 更新 `init_db.py` 並強制執行雲端密碼重置腳本 (`qwer45tyuiop`)。
-    *   **BUG-027**: 後端 `projects_api.py` 角色檢查標準化 (小寫) 並修正專案過濾。
-    *   **BUG-030**: 前端 `DashboardPage.tsx` 狀態顏色匹配小寫化。
+    *   **DX-001**: 密碼重置。
