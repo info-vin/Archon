@@ -217,6 +217,26 @@ export const TaskModal: React.FC<TaskModalProps> = ({ task, onClose, onTaskCreat
                 <option value="">{isLoadingUsers ? 'Loading...' : 'Unassigned'}</option>
                 {assignableUsers.map(user => <option key={user.id} value={user.id}>{user.name}</option>)}
               </select>
+              
+              {/* Agent Capabilities Preview */}
+              {assigneeId && (() => {
+                  const selected = assignableUsers.find(u => u.id === assigneeId);
+                  if (selected?.tools && selected.tools.length > 0) {
+                      return (
+                          <div className="mt-2 p-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 rounded text-xs text-blue-700 dark:text-blue-300">
+                              <p className="font-semibold mb-1">🤖 {selected.description || 'Agent Capabilities'}</p>
+                              <div className="flex flex-wrap gap-1">
+                                  {selected.tools.map((tool) => (
+                                      <span key={tool} className="px-1.5 py-0.5 bg-blue-100 dark:bg-blue-800 rounded-full border border-blue-200 dark:border-blue-700">
+                                          {tool}
+                                      </span>
+                                  ))}
+                              </div>
+                          </div>
+                      );
+                  }
+                  return null;
+              })()}
             </div>
             <div>
               <label htmlFor="due-date" className="block text-sm font-medium mb-1">Due Date</label>

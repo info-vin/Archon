@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../services/api.ts';
-import { Employee, DocumentVersion, BlogPost, EmployeeRole } from '../types.ts';
+import { DocumentVersion, BlogPost } from '../types.ts';
 import { CheckCircleIcon, PlusIcon, XIcon, RefreshCwIcon, SaveIcon, KeyIcon } from '../components/Icons.tsx';
 import { useAuth } from '../hooks/useAuth.tsx';
-import UserAvatar from '../components/UserAvatar.tsx';
 
 import { IdentityMatrix } from '../features/admin/components/IdentityMatrix.tsx';
 

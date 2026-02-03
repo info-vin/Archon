@@ -135,13 +135,11 @@ export interface BlogPost {
 }
 
 export interface AssignableUser {
-
   id: string;
-
   name: string;
-
   role: string;
-
+  tools?: string[];
+  description?: string;
 }
 
 

@@ -1,6 +1,8 @@
 """
-Prompts for DevBot and DevOps related AI operations.
+Prompts for DevBot and DevOps / Engineering Persona Prompts
 """
+from ..schemas.tool_schemas import GenerateLogoArgs, RagSearchArgs, SearchCodeArgs
+
 
 def get_devbot_analysis_prompt(command: str, stderr: str) -> str:
     """
@@ -33,26 +35,15 @@ Ensure the "fixed_content" is valid code for the target language.
 """
 
 # Tool definitions for OpenAI/Gemini Tool Calling
+
+# Dynamic Tool Definitions using Pydantic
 DEVBOT_TOOLS = [
     {
         "type": "function",
         "function": {
             "name": "search_code_examples",
             "description": "Search the codebase for specific patterns or API usage examples.",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "query": {
-                        "type": "string",
-                        "description": "The code pattern or keyword to search for (e.g., 'get_supabase_client')."
-                    },
-                    "source_id": {
-                        "type": "string",
-                        "description": "Optional source ID to filter search."
-                    }
-                },
-                "required": ["query"]
-            }
+            "parameters": SearchCodeArgs.model_json_schema()
         }
     },
     {
@@ -60,16 +51,7 @@ DEVBOT_TOOLS = [
         "function": {
             "name": "rag_search_knowledge_base",
             "description": "Search the official documentation and knowledge base for help.",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "query": {
-                        "type": "string",
-                        "description": "Technical query (e.g., 'FastAPI middleware CORS')."
-                    }
-                },
-                "required": ["query"]
-            }
+            "parameters": RagSearchArgs.model_json_schema()
         }
     },
     {
@@ -77,21 +59,7 @@ DEVBOT_TOOLS = [
         "function": {
             "name": "generate_logo",
             "description": "Generate an SVG logo based on descriptive keywords.",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "prompt": {
-                        "type": "string",
-                        "description": "Detailed description of the logo (e.g., 'A minimalist geometric ant')."
-                    },
-                    "style": {
-                        "type": "string",
-                        "enum": ["minimalist", "neon", "corporate", "geometric"],
-                        "description": "The visual style of the logo."
-                    }
-                },
-                "required": ["prompt"]
-            }
+            "parameters": GenerateLogoArgs.model_json_schema()
         }
     }
 ]

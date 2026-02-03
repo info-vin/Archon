@@ -1,5 +1,5 @@
 # Archon Makefile - Simple, Secure, Cross-Platform
-UV := $(HOME)/.local/bin/uv
+UV := uv
 PNPM := pnpm
 SHELL := /bin/bash
 .SHELLFLAGS := -ec

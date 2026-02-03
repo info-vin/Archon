@@ -266,9 +266,16 @@ class AgentService:
         - Sales: MarketBot only
         - Marketing: MarketBot + Librarian
         """
-        all_agents = []
+        all_agents: list[dict[str, Any]] = []
         for role_name, agent_id in AI_AGENT_ROLES.items():
-            all_agents.append({"id": agent_id, "name": role_name, "role": role_name})
+            # Initialize with all keys to ensure MyPy infers correct dict types
+            all_agents.append({
+                "id": agent_id,
+                "name": role_name,
+                "role": role_name,
+                "tools": [],
+                "description": "AI Agent"
+            })
 
         if not user_role or user_role in ["admin", "system_admin", "manager"]:
             return all_agents
@@ -279,6 +286,17 @@ class AgentService:
         for agent in all_agents:
             agent_id = agent["id"]
 
+            # Enrich with capabilities from Registry
+            config = get_agent_config(agent_id)
+            if config:
+                agent["tools"] = config.get("tools", [])
+                # Use first line of system prompt or a hardcoded desc as description
+                prompt = config.get("system_prompt", "")
+                agent["description"] = prompt.split("\n")[0] if prompt else "AI Agent"
+            else:
+                agent["tools"] = []
+                agent["description"] = "AI Agent"
+
             if user_role == "sales":
                 # Alice sees only MarketBot
                 if agent_id == "ai-market-bot":
@@ -288,6 +306,10 @@ class AgentService:
                 # Bob sees MarketBot + Librarian
                 if agent_id in ["ai-market-bot", "ai-librarian"]:
                     filtered_agents.append(agent)
+
+            # Admin/Manager sees all (implicit in "else")
+            else:
+                filtered_agents.append(agent)
 
         return filtered_agents
 

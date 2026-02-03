@@ -88,34 +88,48 @@
 
 # 第三章：近期工作日誌 (Recent Journal Entries)
 
-### 2026-02-03: Phase 4.6.2 Bob Finalization (E2E Stability & Isolation)
-*   **核心修復**: 解決了 `tests/e2e/management.spec.tsx` 中 "User can use POBot..." 測試失敗的問題。
-    *   **原因**: 前端應用啟動時的非同步資料載入 (`fetchData` 中的並行 API 呼叫) 在測試環境中因為 Mock 不完整或時序問題導致 Promise 懸掛 (Hanging)，使 UI 卡在 "Loading..." 狀態。
-    *   **解決**: 透過 `fix/e2e-test-isolation` 分支的合併，在 `e2e.setup.tsx` 中強化了 MSW (Mock Service Worker) 的配置，確保所有 API 請求 (特別是 `getCurrentUser` 與 Auth 相關) 都能在測試環境中被正確且即時地攔截與回應，實現了更穩健的測試隔離。
-*   **驗證**: 全面通過 Backend Tests (517 passed) 與 Frontend E2E Tests (25 passed)。
-
-### 2026-02-02: Phase 4.6.1 Alice Finalization (Voice-to-Task & Quality)
-*   **核心任務**: 定案並實作 Alice 的行動端工作流政策 (Voice, GPS, Pruning)。
-*   **功能落地**:
-    *   **Voice-to-Task**: 實作 `visit_log_api` 自動將語音轉錄為 `Field Ops` 專案的 `Todo` 任務 (Fire & Forget)。
-    *   **On-Demand GPS**: 將 GPS 抓取移至按鈕觸發，解決耗電與隱私問題。
-    *   **Logic Refinement**: 歸檔閾值下修為 `Score < 40` 並實作 SQL Batch Update 以提升效能。
-*   **技術突圍**:
-    *   **E2E 穩定化**: 修復了 `DashboardPage` 因非同步數據載入導致的 "New Task" 按鈕閃爍問題 (Race Condition)。
-    *   **Customer 連動**: 實作了 Lead 晉升時的 `visit_logs` 軌跡繼承。
-
----
-
-# 第四章：歷史檔案：原則的考古學 (Historical Archive: The Archaeology of Principles)
-
-> **【封存說明】**
-
->
-
-> 本章節存放了所有歷史日誌。當你需要深入了解某個特定問題的完整偵錯背景時，可以在此查閱最原始的紀錄。
-
-### 2026年1月：權限重構、自癒機制與商業功能落地
-
+### 2026-02-03: Phase 4.6.3 Charlie Finalization (Sentinel & Smart Dispatch)
+*   **功能實作**: 實作了 Charlie (Manager) 指揮官工作流。
+    *   **Sentinel 哨兵**: `SchedulerService` 每 12 小時自動掃描 stale leads (14天未更新) 並產生 ALERT 級別日誌。
+    *   **Alerts API**: 提供 `GET /api/logs/alerts` 接口，支援 RBAC 過濾 (僅經理與管理員可見)，且支援排除已分派 (`dispatched`) 的警報。
+    *   **Smart Dispatch**: `TaskService` 整合 RAG 與 LLM，根據 Lead 歷史訪談紀錄自動生成繁體中文追蹤任務。
+    *   **狀態閉環**: 分派任務後自動將 Alert 標記為 `dispatched` 並連結 Task ID 至 Alert details。
+*   **品質加固**: 
+    *   **基礎設施**: 修復了 `llm_provider_service` 循環引用，並校準了 `TokenUsageService` 的成本計算邏輯 (優先 Ollama)。
+    *   **測試驗收**: 通過後端 523 個測試與前端 25 個 E2E 測試。
+        *   **文件同步**: 更新了 `CONTRIBUTING_tw.md` 的資料庫遷移表與下一階段規劃文件。
+    
+    ### 2026-02-03: Phase 4.6.2 Bob Finalization (E2E Stability & Isolation)
+    *   **核心修復**: 解決了 `tests/e2e/management.spec.tsx` 中 "User can use POBot..." 測試失敗的問題。
+        *   **原因**: 前端應用啟動時的非同步資料載入在測試環境中導致 Promise 懸掛。
+        *   **解決**: 強化 MSW 配置，確保所有 API 請求 (特別是 `getCurrentUser`) 被正確攔截。
+    *   **驗證**: Backend (517 passed) 與 Frontend E2E (25 passed).
+    
+    ---
+    
+    # 第四章：歷史檔案：原則的考古學 (Historical Archive: The Archaeology of Principles)
+    
+    > **【封存說明】**
+    > 本章節存放了所有歷史日誌。當你需要深入了解某個特定問題的完整偵錯背景時，可以在此查閱最原始的紀錄。
+    
+    ### 2026年2月：全角色流程與行動端落地
+    
+    二月標誌著 Archon 從單點功能邁向全角色協作的里程碑。我們完成了 Alice (Sales), Bob (Marketing), Charlie (Manager) 的核心工作流閉環。
+    
+    **核心主題歸類**:
+    1.  **Phase 4.6.3 Charlie (Manager) (Ref: 02-03)**:
+        *   **指揮官系統**: 實作 Sentinel 哨兵自動監控 Stale Leads，並結合 RAG/LLM 智慧生成繁體中文追蹤任務。
+        *   **權限閉環**: 實作了從 Alert -> Task Dispatch -> Alert Resolved 的完整狀態流轉與 RBAC 控制。
+    
+    2.  **Phase 4.6.2 Bob (Marketing) (Ref: 02-03)**:
+        *   **測試隔離**: 解決了 E2E 測試中的 Promise Hanging 問題，確立了 MSW 必須攔截所有 Auth 請求的測試鐵律。
+    
+    3.  **Phase 4.6.1 Alice (Sales) (Ref: 02-02)**:
+        *   **行動優先**: 實作 "Fire & Forget" 的語音轉工單功能。
+        *   **效能優化**: 將 GPS 抓取改為 On-Demand，並引入 SQL Batch Update 優化歸檔效能。
+        *   **E2E 穩定化**: 修復了 Dashboard 因非同步載入導致的 Race Condition。
+    
+    ### 2026年1月：權限重構、自癒機制與商業功能落地
 一月是專案從「技術驗證」邁向「商業運作」的關鍵轉折點。我們在前半月集中解決了深層的架構債（特別是 Auth 與 Docker 環境），後半月則全力衝刺商業功能的實作。
 
 **核心主題歸類**：
