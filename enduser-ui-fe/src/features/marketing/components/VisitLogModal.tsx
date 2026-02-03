@@ -25,9 +25,29 @@ export const VisitLogModal: React.FC<VisitLogModalProps> = ({ onClose, onSuccess
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(
                 (pos) => setLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
-                (_) => alert("Could not get location. Ensure permissions are allowed.")
+                (_) => {
+                    // GAP-010: Mock Location Fallback
+                    const useMock = confirm("Could not get location. Use mock location (Taipei 101)?");
+                    if (useMock) {
+                        setLocation({ lat: 25.0330, lng: 121.5654 });
+                    }
+                }
             );
+        } else {
+             // GAP-010: Mock Location Fallback
+             const useMock = confirm("Geolocation not supported. Use mock location (Taipei 101)?");
+             if (useMock) {
+                 setLocation({ lat: 25.0330, lng: 121.5654 });
+             }
         }
+    };
+
+    // GAP-009: Simulate Voice Input
+    const simulateVoiceInput = () => {
+        setNotes((prev) => {
+            const mockTranscript = "[Mock Voice] 客戶對新的 AI 功能非常感興趣，特別是自動化報表的部分。建議下週二安排產品演示。";
+            return prev ? prev + "\n" + mockTranscript : mockTranscript;
+        });
     };
 
     const startRecording = async () => {
@@ -163,7 +183,15 @@ export const VisitLogModal: React.FC<VisitLogModalProps> = ({ onClose, onSuccess
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Voice Log (Optional)</label>
+                            <div className="flex justify-between items-center mb-1">
+                                <label className="block text-sm font-medium text-gray-700">Voice Log (Optional)</label>
+                                <button
+                                    onClick={simulateVoiceInput}
+                                    className="text-xs text-indigo-600 hover:underline font-medium"
+                                >
+                                    Simulate Voice
+                                </button>
+                            </div>
                             {!audioBlob ? (
                                 <button 
                                     onClick={isRecording ? stopRecording : startRecording}

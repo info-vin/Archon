@@ -11,8 +11,7 @@
 |指標 (Metric)|數量 (Count)|詳細資訊 (Details)|
 |:---|:---|:---|
 |**總議題數**|22|涵蓋 UX 流程、資料一致性、系統重置可靠性與開發者體驗 (DX)。|
-|**修復待驗收**|8|BUG-027, BUG-030, BUG-031, BUG-032, BUG-033, DX-001, UX-011|
-|**環境限制**|4|GAP-009, GAP-010, BUG-028, BUG-029 (因 Sandbox 環境無硬體/API Key 支援)|
+|**修復待驗收**|12|BUG-027, BUG-028, BUG-029, BUG-030, BUG-031, BUG-032, BUG-033, GAP-009, GAP-010, DX-001, UX-011|
 |**待處理**|10|樣式統一、假資料注入等剩餘項目。|
 
 ---
@@ -28,17 +27,17 @@
 | **UX-011** | 🎨 Style | **All** | **UI/Set** | 5173 `/settings` 移至使用者區塊。 | Medium | 🟡 待驗收 |
 | **BUG-031** | 🐛 Bug | **System** | **DB/Reset**| `make db-reset` 失敗。已補齊 `RESET_DB.sql` 遺漏的新資料表。 | High | 🟡 待驗收 |
 | **BUG-032** | 🐛 Bug | **System** | **DB/Seed** | `seed_mock_data.sql` 報錯。已透過完整 DB Reset 修復 Schema 狀態。 | High | 🟡 待驗收 |
+| **BUG-028** | 🐛 Bug | **Bob** | **Magic** | 生成內容未貼入編輯器。已實作 Backend Mock Fallback。 | High | 🟡 待驗收 (Mock) |
+| **BUG-029** | 🐛 Bug | **Bob** | **Image** | 圖片生成後無預覽/URL。已實作 Backend Mock Fallback。 | High | 🟡 待驗收 (Mock) |
+| **GAP-009** | 🔧 Gap | **Alice** | **Voice** | 語音日誌自動轉工單尚未實作。已實作前端模擬按鈕。 | Medium | 🟡 待驗收 (Mock) |
+| **GAP-010** | 🔧 Gap | **Alice** | **GPS** | On-Demand GPS 待驗收。已實作前端模擬位置。 | Low | 🟡 待驗收 (Mock) |
 | **UX-012** | 🎨 Style | **All** | **Buttons** | 5173 按鈕風格對齊 3737 Style Guide。 | Low | 🔴 待處理 |
-| **BUG-028** | 🐛 Bug | **Bob** | **Magic** | 生成內容未貼入編輯器。 | High | ⚪ 環境限制 |
-| **BUG-029** | 🐛 Bug | **Bob** | **Image** | 圖片生成後無預覽/URL。 | High | ⚪ 環境限制 |
 | **GAP-012** | 🔧 Gap | **Bob** | **Intel** | 頁面空白無數據，配色太深。 | Medium | 🔴 待處理 |
 | **GAP-013** | 🔧 Gap | **Charlie** | **Center** | 指揮中心無資料供練習。 | Medium | 🔴 待處理 |
 | **GAP-014** | 🔧 Gap | **Admin** | **RBAC** | 缺少 RBAC 練習案例與多樣化資料。 | Low | 🔴 待處理 |
 | **GAP-015** | 🔧 Gap | **Tech** | **Score** | Alice 的 Enrichment Score 計算規則實作。 | Low | 🔴 待處理 |
 | **GAP-016** | 🔧 Gap | **Tech** | **Token** | Token Usage 真實寫入與可視化確認。 | Low | 🔴 待處理 |
-| **GAP-009** | 🔧 Gap | **Alice** | **Voice** | 語音日誌自動轉工單尚未實作。 | Medium | ⚪ 環境限制 |
 | **GAP-003** | 🔧 Gap | **Alice** | **Swipe** | 滑動誤觸復原功能待驗收。 | Low | 🔴 待處理 |
-| **GAP-010** | 🔧 Gap | **Alice** | **GPS** | On-Demand GPS 待驗收。 | Low | ⚪ 環境限制 |
 | **GAP-011** | 🔧 Gap | **Alice** | **Prune** | 自動歸檔邏輯待驗收。 | Low | 🔴 待處理 |
 | **ALERT-01**| 🔧 Gap | **Charlie** | **Sentin** | 警示資料準確性待驗收。 | Low | 🔴 待處理 |
 | **TECH-001**| 🏗️ Debt | **Tech** | **RAG** | `RAGSettings.tsx` 重構拆分。 | Medium | 🔴 待處理 |
@@ -48,6 +47,10 @@
 
 ## 🛠 修復紀錄 (Fix Log)
 
+*   **2026-02-03 (Round 5: Mock Strategy)**:
+    *   **BUG-028/029**: 實作 Backend Mock Fallback。當檢測不到 API Key 時，自動回傳模擬內容與圖片，確保功能流程暢通。
+    *   **GAP-009**: 實作「模擬錄音」功能，點擊按鈕直接填入轉錄文字。
+    *   **GAP-010**: 實作「模擬定位」功能，當無 GPS 訊號時使用預設座標。
 *   **2026-02-03 (Round 4: 核心缺陷修復)**:
     *   **BUG-027**: 修復 Team Management 任務可見性問題。後端 `projects_api.py` 新增 `assignee_id` 過濾支援，前端 `TeamManagementPage.tsx` 改用 Server-Side Filter 並增加分頁上限至 100。
     *   **BUG-030**: 修復 Dashboard 優先級顏色失效。後端 `task_service.py` 補回 API 回傳中遺漏的 `priority` 欄位。
@@ -61,13 +64,3 @@
     *   **UX-011**: 搬移設定入口。
 *   **2026-02-03 (Round 1)**:
     *   **DX-001**: 密碼重置。
-
----
-
-## ⚠️ 環境限制說明 (Environment Limitations)
-
-以下項目因當前 Sandbox 開發環境限制（無實體裝置、無外部 API 金鑰），無法進行有效修復或驗證，建議於整合測試環境再行處理：
-
-1.  **GAP-009 (Voice Log)**: 需要實體麥克風權限與語音轉文字服務支援。
-2.  **GAP-010 (On-Demand GPS)**: 需要行動裝置 GPS 硬體支援。
-3.  **BUG-028 (Magic Editor) / BUG-029 (Image Gen)**: 需要有效的 GenAI API Key (OpenAI/Anthropic/Google) 才能生成內容與圖片。
