@@ -97,6 +97,16 @@ afterEach(() => {
       localStorage.setItem('supabaseUrl', supabaseUrl);
       localStorage.setItem('supabaseAnonKey', supabaseAnonKey);
   }
+
+  // Restore the default user mock to prevent leaks between tests
+  // This is crucial because tests use vi.mocked(api.getCurrentUser).mockResolvedValue(...)
+  // which permanently overrides the implementation until changed again.
+  import('../../src/services/api').then(module => {
+      const { api } = module as any;
+      if (vi.isMockFunction(api.getCurrentUser)) {
+          api.getCurrentUser.mockResolvedValue(MOCK_ADMIN_USER);
+      }
+  });
 });
 
 // Stop MSW server after all tests
