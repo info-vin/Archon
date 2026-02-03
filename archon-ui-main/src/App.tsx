@@ -21,6 +21,7 @@ import { ErrorBoundaryWithBugReport } from './components/bug-report/ErrorBoundar
 import { MigrationBanner } from './components/ui/MigrationBanner';
 import { serverHealthService } from './services/serverHealthService';
 import { useMigrationStatus } from './hooks/useMigrationStatus';
+import { AdminPage } from './pages/AdminPage';
 
 
 const AppRoutes = (): JSX.Element => {
@@ -32,6 +33,7 @@ const AppRoutes = (): JSX.Element => {
       <Route path="/onboarding" element={<OnboardingPage />} />
       <Route path="/settings" element={<SettingsPage />} />
       <Route path="/mcp" element={<MCPPage />} />
+      <Route path="/admin" element={<AdminPage />} />
       {styleGuideEnabled ? (
         <Route path="/style-guide" element={<StyleGuidePage />} />
       ) : (

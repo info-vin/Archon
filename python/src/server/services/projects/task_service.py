@@ -727,5 +727,140 @@ class TaskService:
             error_data: Any = {"error": f"Error fetching task counts: {str(e)}"}
             return False, error_data
 
+    async def generate_task_from_alert(
+        self,
+        alert_id: str,
+        assignee_id: str | None = None
+    ) -> tuple[bool, dict[str, Any]]:
+        """
+        AI-powered task generation from a Sentinel alert.
+        Enriches the task with business context from the lead and RAG.
+        """
+        try:
+            from src.server.services.llm_provider_service import get_llm_client
+
+            from ..credential_service import credential_service
+            from ..search.rag_service import RAGService
+
+            # 1. Fetch Alert
+            res_alert = self.supabase_client.table("archon_logs").select("*").eq("id", alert_id).execute()
+            if not res_alert.data:
+                return False, {"error": f"Alert {alert_id} not found"}
+
+            alert = res_alert.data[0]
+            details = alert.get("details", {})
+            lead_id = details.get("lead_id")
+
+            # 2. Gather Context
+            context_str = f"ALERT: {alert['message']}\n"
+            company_name = details.get("company", "Unknown Company")
+
+            if lead_id:
+                # Fetch Lead Details
+                res_lead = self.supabase_client.table("leads").select("*").eq("id", lead_id).single().execute()
+                if res_lead.data:
+                    lead = res_lead.data
+                    context_str += f"COMPANY: {lead['company_name']}\n"
+                    context_str += f"IDENTIFIED NEED: {lead.get('identified_need', 'None')}\n"
+
+                    # Fetch Visit Logs for this lead
+                    res_logs = self.supabase_client.table("visit_logs").select("summary").eq("lead_id", lead_id).limit(3).execute()
+                    if res_logs.data:
+                        context_str += "\nPAST VISIT SUMMARIES:\n"
+                        for log in res_logs.data:
+                            context_str += f"- {log['summary']}\n"
+
+            # 3. RAG Search for similar cases or company info
+            rag_service = RAGService(self.supabase_client)
+            rag_success, rag_result = await rag_service.perform_rag_query(
+                query=f"{company_name} {details.get('type', '')}",
+                match_count=2
+            )
+            if rag_success and "results" in rag_result:
+                context_str += "\nINTERNAL KNOWLEDGE BASE SNIPPETS:\n"
+                context_str += "\n".join([res.get("content", "")[:300] for res in rag_result["results"]])
+
+            # 4. Call AI to generate Task Draft
+            provider_config = await credential_service.get_active_provider("llm")
+            model_name = provider_config.get("chat_model") or "gemini-1.5-flash"
+
+            prompt = textwrap.dedent(f"""
+                You are Charlie's Strategic Assistant.
+                Convert the following Sentinel Alert into a high-value task for Alice (Sales).
+
+                CONTEXT:
+                {context_str}
+
+                GOAL:
+                Create a specific, actionable task to recover/engage this lead.
+                Include a clear title and a structured description with 'Strategic Goal' and 'Suggested Actions'.
+
+                Format:
+                TITLE: [Action-oriented Title]
+                DESCRIPTION: [Detailed strategy]
+            """).strip()
+
+            async with get_llm_client() as client:
+                response = await client.chat.completions.create(
+                    model=model_name,
+                    messages=[
+                        {"role": "system", "content": "You are a helpful Managerial AI assistant. ALWAYS answer in Traditional Chinese (Taiwan繁體中文)."},
+                        {"role": "user", "content": prompt}
+                    ],
+                    temperature=0.7
+                )
+            ai_output = str(response.choices[0].message.content)
+
+            # Parse AI Output (Simple extraction)
+            title = f"Follow-up: {company_name}"
+            description = ai_output
+            if "TITLE:" in ai_output:
+                try:
+                    title = ai_output.split("TITLE:")[1].split("DESCRIPTION:")[0].strip()
+                    description = ai_output.split("DESCRIPTION:")[1].strip()
+                except Exception:
+                    pass
+
+            # 5. Create Task
+            # Find a default project (prefer Field Ops if exists)
+            p_res = self.supabase_client.table("archon_projects").select("id").ilike("title", "%Field%").limit(1).execute()
+            if not p_res.data:
+                p_res = self.supabase_client.table("archon_projects").select("id").limit(1).execute()
+
+            project_id = p_res.data[0]["id"] if p_res.data else "default-project"
+
+            # Resolve assignee name if ID provided
+            assignee_name = "User"
+            if assignee_id:
+                from ..profile_service import ProfileService
+                p_svc = ProfileService(self.supabase_client)
+                s, profile = p_svc.get_profile(assignee_id)
+                if s and isinstance(profile, dict):
+                    assignee_name = profile.get("name", "User")
+
+            # FB-07: Link Alert to Task via 'sources' field
+            sources = [{"type": "sentinel_alert", "source_id": alert_id, "title": alert["message"]}]
+
+            success, result = await self.create_task(
+                project_id=project_id,
+                title=title,
+                description=description,
+                assignee=assignee_name,
+                assignee_id=assignee_id,
+                due_date=datetime.now(), # Default immediate
+                sources=sources # Attach link
+            )
+
+            if success:
+                logger.info(f"Smart Dispatch: Task {result['task']['id']} created from alert {alert_id}")
+                # FB-07: Update Alert status to 'dispatched'
+                updated_details = {**details, "status": "dispatched", "dispatched_task_id": result['task']['id']}
+                self.supabase_client.table("archon_logs").update({"details": updated_details}).eq("id", alert_id).execute()
+
+            return success, result
+        except Exception as e:
+            logger.error(f"Failed to generate task from alert: {e}", exc_info=True)
+            return False, {"error": str(e)}
+
 
 task_service = TaskService()

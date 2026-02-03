@@ -113,7 +113,8 @@ class TestAsyncLLMProviderService:
                 mock_openai.return_value = mock_client
 
                 async with get_llm_client() as client:
-                    assert client == mock_client
+                    # UsageTrackingClient wraps the original OpenAI client
+                    assert client._original == mock_client
                     mock_openai.assert_called_once_with(api_key="test-openai-key")
 
                 # Verify provider config was fetched
@@ -137,7 +138,7 @@ class TestAsyncLLMProviderService:
                 mock_openai.return_value = mock_client
 
                 async with get_llm_client() as client:
-                    assert client == mock_client
+                    assert client._original == mock_client
                     mock_openai.assert_called_once_with(
                         api_key="ollama", base_url="http://host.docker.internal:11434/v1"
                     )
@@ -159,7 +160,7 @@ class TestAsyncLLMProviderService:
                 mock_openai.return_value = mock_client
 
                 async with get_llm_client() as client:
-                    assert client == mock_client
+                    assert client._original == mock_client
                     mock_openai.assert_called_once_with(
                         api_key="test-google-key",
                         base_url="https://generativelanguage.googleapis.com/v1beta/openai/",
@@ -183,7 +184,7 @@ class TestAsyncLLMProviderService:
                 mock_openai.return_value = mock_client
 
                 async with get_llm_client(provider="openai") as client:
-                    assert client == mock_client
+                    assert client._original == mock_client
                     mock_openai.assert_called_once_with(api_key="override-key")
 
                 # Verify explicit provider API key was requested
@@ -215,7 +216,7 @@ class TestAsyncLLMProviderService:
                 mock_openai.return_value = mock_client
 
                 async with get_llm_client(use_embedding_provider=True) as client:
-                    assert client == mock_client
+                    assert client._original == mock_client
                     mock_openai.assert_called_once_with(api_key="embedding-key")
 
                 # Verify embedding provider was requested
@@ -536,7 +537,7 @@ class TestAsyncLLMProviderService:
                     mock_credential_service.get_active_provider.return_value = config
 
                     async with get_llm_client() as client:
-                        assert client == mock_client
+                        assert client._original == mock_client
 
                 # Each of the 3 providers makes 1 call to get_active_provider (logic)
                 assert mock_credential_service.get_active_provider.call_count == 3

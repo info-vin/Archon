@@ -7,6 +7,7 @@ Supports OpenAI, Ollama, and Google Gemini.
 
 import inspect
 import time
+import uuid
 from contextlib import asynccontextmanager
 from typing import Any, cast
 
@@ -104,29 +105,76 @@ def get_cache_security_report() -> dict[str, Any]:
         report["recommendations"].append(f"Multiple invalid configuration attempts ({invalid_configs}) - validate data sources")
 
     return report
+class UsageTrackingCompletions:
+    def __init__(self, original_completions, context):
+        self._original = original_completions
+        self._context = context # {user_id, request_id, provider}
+
+    async def create(self, *args, **kwargs):
+        # Pass through to original
+        response = await self._original.create(*args, **kwargs)
+
+        # Log Usage if available
+        try:
+            # Handle non-streaming response
+            if hasattr(response, 'usage') and response.usage:
+                model = kwargs.get('model', 'unknown')
+                input_tokens = response.usage.prompt_tokens
+                output_tokens = response.usage.completion_tokens
+
+                # Fire and forget logging
+                import asyncio
+
+                # We use ensure_future to not block the response return
+                from .token_usage_service import TokenUsageService
+                asyncio.create_task(TokenUsageService.log_usage(
+                    request_id=self._context.get('request_id'),
+                    user_id=self._context.get('user_id'),
+                    model=model,
+                    provider=self._context.get('provider'),
+                    input_tokens=input_tokens,
+                    output_tokens=output_tokens,
+                    context_type="llm_client_call"
+                ))
+        except Exception as e:
+            logger.warning(f"Failed to log token usage: {e}")
+
+        return response
+
+class UsageTrackingChat:
+    def __init__(self, original_chat, context):
+        self._original = original_chat
+        self.completions = UsageTrackingCompletions(original_chat.completions, context)
+
+    def __getattr__(self, name):
+        return getattr(self._original, name)
+
+class UsageTrackingClient:
+    def __init__(self, original_client, user_id, request_id, provider):
+        self._original = original_client
+        self._context = {
+            "user_id": user_id,
+            "request_id": request_id,
+            "provider": provider
+        }
+        self.chat = UsageTrackingChat(original_client.chat, self._context)
+
+    def __getattr__(self, name):
+        return getattr(self._original, name)
+
 @asynccontextmanager
 async def get_llm_client(
     provider: str | None = None,
     use_embedding_provider: bool = False,
     instance_type: str | None = None,
     base_url: str | None = None,
+    user_id: str | None = None, # Added for Token Tracking
+    request_id: str | None = None, # Added for Token Tracking
 ):
     """
     Create an async OpenAI-compatible client based on the configured provider.
-
-    This context manager handles client creation for different LLM providers
-    that support the OpenAI API format, with enhanced support for multi-instance
-    Ollama configurations and intelligent instance routing.
-
-    Args:
-        provider: Override provider selection
-        use_embedding_provider: Use the embedding-specific provider if different
-        instance_type: For Ollama multi-instance: 'chat', 'embedding', or None for auto-select
-        base_url: Override base URL for specific instance routing
-
-    Yields:
-        openai.AsyncOpenAI: An OpenAI-compatible client configured for the selected provider
     """
+
     client = None
     provider_name: str | None = None
     api_key = None
@@ -307,7 +355,21 @@ async def get_llm_client(
         raise
 
     try:
-        yield client
+        if request_id is None:
+            request_id = str(uuid.uuid4())
+
+        # Wrap the client to intercept usages
+        # We only wrap if it's an OpenAI client (checking by attribute)
+        if hasattr(client, 'chat') and hasattr(client.chat, 'completions'):
+             wrapped_client = UsageTrackingClient(
+                 client,
+                 user_id=user_id,
+                 request_id=request_id,
+                 provider=provider_name or "unknown"
+             )
+             yield wrapped_client
+        else:
+             yield client
     finally:
         if client is not None:
             safe_provider = _sanitize_for_log(provider_name) if provider_name else "unknown"

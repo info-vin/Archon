@@ -2,7 +2,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { api } from '../services/api';
 import { PermissionGuard } from '../features/auth/components/PermissionGuard';
-import { Project } from '../types.ts';
 import { 
     ShieldCheckIcon, 
     CheckCircleIcon, 
@@ -40,9 +39,16 @@ interface BlogPost {
 
 interface AlertItem {
   id: string;
-  type: 'ALERT' | 'INFO';
-  content: string;
+  level: 'ALERT' | 'INFO' | 'ERROR';
+  message: string;
   created_at: string;
+  details?: {
+      type?: string;
+      company?: string;
+      days_stale?: number;
+      enrichment_score?: number;
+      [key: string]: any;
+  };
 }
 
 const ApprovalsPage: React.FC = () => {
@@ -50,28 +56,21 @@ const ApprovalsPage: React.FC = () => {
   const [codeProposals, setCodeProposals] = useState<ChangeProposal[]>([]);
   const [contentApprovals, setContentApprovals] = useState<BlogPost[]>([]);
   const [alerts, setAlerts] = useState<AlertItem[]>([]);
-  const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(false);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
       // Execute all requests but handle them with care for robustness
-      const [contentRes, codeRes, projectsRes] = await Promise.all([
+      const [contentRes, codeRes, alertsRes] = await Promise.all([
         api.getPendingApprovals().catch(e => { console.warn("Content fetch failed", e); return { blogs: [] }; }),
         api.getPendingChanges().catch(e => { console.warn("Code fetch failed", e); return []; }),
-        api.getProjects().catch(e => { console.warn("Projects fetch failed", e); return []; })
+        api.getAlerts().catch(e => { console.warn("Alerts fetch failed", e); return []; })
       ]);
 
       setContentApprovals(contentRes.blogs || []);
       setCodeProposals(codeRes || []);
-      setProjects(projectsRes || []);
-
-      // Fetch Alerts (Mock)
-      setAlerts([
-          { id: '1', type: 'ALERT', content: 'Sentinel: Alice (Field) has 3 high-value leads at risk.', created_at: new Date().toISOString() },
-          { id: '2', type: 'INFO', content: 'Librarian: Weekly knowledge indexing complete.', created_at: new Date().toISOString() }
-      ]);
+      setAlerts(alertsRes || []);
 
     } catch (err) {
       console.error("Critical error in Command Center fetch", err);
@@ -105,25 +104,19 @@ const ApprovalsPage: React.FC = () => {
     }
   };
 
-  // Dispatch Task Logic
+  // Dispatch Task Logic (Smart Dispatch)
   const handleDispatchTask = async (alertItem: AlertItem) => {
       try {
-          const targetProjectId = projects.length > 0 ? projects[0].id : 'default-project';
+          setLoading(true);
+          await api.generateTaskFromAlert(alertItem.id);
           
-          await api.createTask({
-              title: `Follow-up: ${alertItem.content}`,
-              description: `Automated task generated from Sentinel Alert. Source: ${alertItem.id}`,
-              status: 'todo' as any, 
-              priority: 'high' as any,
-              project_id: targetProjectId, 
-              due_date: new Date(Date.now() + 86400000 * 3).toISOString()
-          });
-          
-          alert(`Task dispatched to Field Team under project: ${projects[0]?.title || 'Default'}!`);
-          setAlerts(prev => prev.filter(a => a.id !== alertItem.id));
-      } catch (err) {
-          alert("Failed to dispatch task");
+          alert(`Smart Task dispatched to Alice! Context enriched by AI.`);
+          fetchData(); // Refresh to clear or update status
+      } catch (err: any) {
+          alert(`Failed to dispatch task: ${err.message}`);
           console.error(err);
+      } finally {
+          setLoading(false);
       }
   };
 
@@ -167,7 +160,7 @@ const ApprovalsPage: React.FC = () => {
           </div>
         </header>
 
-        {loading && !contentApprovals.length && !codeProposals.length ? (
+        {loading && !contentApprovals.length && !codeProposals.length && !alerts.length ? (
             <div className="p-12 text-center text-gray-500">Loading Command Center...</div>
         ) : (
             <div className="space-y-6">
@@ -190,7 +183,7 @@ const ApprovalsPage: React.FC = () => {
                                         <div className="text-sm text-gray-500 flex flex-wrap items-center gap-x-4 gap-y-2">
                                             <span className="flex items-center gap-1"><UserIcon className="w-4 h-4" /> {post.authorName || 'Marketing'}</span>
                                             <span className="flex items-center gap-1 text-indigo-600 font-bold">
-                                                <ShieldCheckIcon className="w-4 h-4" /> AI Score: 85/100
+                                                <ShieldCheckIcon className="w-4 h-4" /> AI Score: {post.ai_score || 85}/100
                                             </span>
                                         </div>
                                     </div>
@@ -231,7 +224,7 @@ const ApprovalsPage: React.FC = () => {
                                                 {prop.type}
                                             </span>
                                             <p className="mt-3 text-gray-900 font-medium font-mono text-sm bg-gray-50 p-4 rounded-xl border border-gray-100 leading-relaxed">
-                                                {prop.request_payload.description}
+                                                {prop.request_payload?.description || 'No description'}
                                             </p>
                                         </div>
                                         <div className="flex gap-3 w-full md:w-auto">
@@ -258,28 +251,52 @@ const ApprovalsPage: React.FC = () => {
                 {/* --- ALERTS TAB --- */}
                 {activeTab === 'alerts' && (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {alerts.map(alert => (
-                            <div key={alert.id} className={`p-6 rounded-2xl border-l-8 shadow-sm bg-white flex flex-col justify-between gap-6 ${alert.type === 'ALERT' ? 'border-red-500' : 'border-blue-500'}`}>
-                                <div className="flex items-start gap-4">
-                                    {alert.type === 'ALERT' ? <TrendingUpIcon className="w-6 h-6 text-red-500 mt-1" /> : <ShieldCheckIcon className="w-6 h-6 text-blue-500 mt-1" />}
-                                    <div>
-                                        <span className="text-lg text-gray-800 font-bold block leading-tight">{alert.content}</span>
-                                        <span className="text-xs text-gray-400 font-mono mt-2 flex items-center gap-1">
-                                            <ClockIcon className="w-3 h-3" />
-                                            {new Date(alert.created_at).toLocaleTimeString()}
-                                        </span>
-                                    </div>
-                                </div>
-                                {alert.type === 'ALERT' && (
-                                    <button 
-                                        onClick={() => handleDispatchTask(alert)}
-                                        className="w-full py-4 text-md bg-red-50 text-red-700 border border-red-200 rounded-xl hover:bg-red-100 font-black transition-all active:scale-95 flex items-center justify-center gap-2 min-h-[52px]"
-                                    >
-                                        ⚡ Dispatch Task to Alice
-                                    </button>
-                                )}
+                        {alerts.length === 0 ? (
+                            <div className="col-span-full p-12 bg-white rounded-xl border border-dashed border-gray-300 text-center text-gray-500">
+                                <div className="flex justify-center mb-4"><TrendingUpIcon className="w-12 h-12 text-gray-300" /></div>
+                                No active business alerts.
                             </div>
-                        ))}
+                        ) : (
+                            alerts.map(alert => (
+                                <div key={alert.id} className={`p-6 rounded-2xl border-l-8 shadow-sm bg-white flex flex-col justify-between gap-6 ${alert.level === 'ALERT' ? 'border-red-500' : 'border-blue-500'}`}>
+                                    <div className="flex items-start gap-4">
+                                        {alert.level === 'ALERT' ? <TrendingUpIcon className="w-6 h-6 text-red-500 mt-1" /> : <ShieldCheckIcon className="w-6 h-6 text-blue-500 mt-1" />}
+                                        <div className="flex-1">
+                                            <span className="text-lg text-gray-800 font-bold block leading-tight">{alert.message}</span>
+                                            
+                                            {/* Alert Context Badges */}
+                                            <div className="mt-3 flex flex-wrap gap-2">
+                                                {alert.details?.enrichment_score && (
+                                                    <span className="bg-indigo-50 text-indigo-700 text-[10px] font-bold px-2 py-0.5 rounded-full border border-indigo-100 uppercase">
+                                                        Quality: {alert.details.enrichment_score}%
+                                                    </span>
+                                                )}
+                                                {alert.details?.days_stale && (
+                                                    <span className="bg-orange-50 text-orange-700 text-[10px] font-bold px-2 py-0.5 rounded-full border border-orange-100 uppercase">
+                                                        {alert.details.days_stale} Days Idle
+                                                    </span>
+                                                )}
+                                            </div>
+
+                                            <span className="text-xs text-gray-400 font-mono mt-4 flex items-center gap-1">
+                                                <ClockIcon className="w-3 h-3" />
+                                                {new Date(alert.created_at).toLocaleString()}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    {alert.level === 'ALERT' && (
+                                        <button 
+                                            onClick={() => handleDispatchTask(alert)}
+                                            disabled={loading}
+                                            className="w-full py-4 text-md bg-red-50 text-red-700 border border-red-200 rounded-xl hover:bg-red-100 font-black transition-all active:scale-95 flex items-center justify-center gap-2 min-h-[52px] disabled:opacity-50"
+                                        >
+                                            {loading ? <RefreshCwIcon className="animate-spin w-5 h-5" /> : <TrendingUpIcon className="w-5 h-5" />}
+                                            ⚡ Dispatch Smart Task to Alice
+                                        </button>
+                                    )}
+                                </div>
+                            ))
+                        )}
                     </div>
                 )}
             </div>

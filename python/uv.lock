@@ -187,6 +187,7 @@ agents = [
     { name = "uvicorn" },
 ]
 all = [
+    { name = "apscheduler" },
     { name = "asyncpg" },
     { name = "crawl4ai" },
     { name = "cryptography" },
@@ -289,6 +290,7 @@ agents = [
     { name = "uvicorn", specifier = ">=0.24.0" },
 ]
 all = [
+    { name = "apscheduler", specifier = ">=3.10.0" },
     { name = "asyncpg", specifier = ">=0.29.0" },
     { name = "crawl4ai", specifier = "==0.7.4" },
     { name = "cryptography", specifier = ">=41.0.0" },

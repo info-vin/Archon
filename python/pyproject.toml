@@ -124,6 +124,7 @@ all = [
     "slowapi>=0.1.9",
     "docker>=6.1.0",
     "logfire>=0.30.0",
+    "APScheduler>=3.10.0",
     # MCP specific (mcp version)
     "mcp==1.12.2",
     # Agents specific

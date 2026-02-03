@@ -717,7 +717,30 @@ const supabaseApi = {
 
   async getEthicsEvents(): Promise<any[]> {
     const response = await fetch('/api/ethics/events', { headers: await this._getHeaders() });
-    if (!response.ok) throw new Error('Failed to fetch ethics events');
+    if (!response.ok) {
+      throw new Error('Failed to fetch ethics events');
+    }
+    return response.json();
+  },
+
+  async getAlerts(limit: number = 50): Promise<any[]> {
+    const response = await fetch(`/api/logs/alerts?limit=${limit}`, { headers: await this._getHeaders() });
+    if (!response.ok) {
+      throw new Error('Failed to fetch alerts');
+    }
+    return response.json();
+  },
+
+  async generateTaskFromAlert(alertId: string, assigneeId?: string): Promise<any> {
+    const response = await fetch('/api/tasks/generate-from-alert', {
+        method: 'POST',
+        headers: await this._getHeaders(),
+        body: JSON.stringify({ alert_id: alertId, assignee_id: assigneeId })
+    });
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.detail || 'Failed to generate task from alert');
+    }
     return response.json();
   },
 };

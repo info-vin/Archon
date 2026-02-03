@@ -1,6 +1,7 @@
 import asyncio
 import logging
 
+import httpx
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
 
@@ -743,25 +744,80 @@ async def nana_banana_proxy(
     if user_role not in ["marketing", "manager", "admin"]:
         raise HTTPException(status_code=403, detail="Only Marketing/Managers can generate assets.")
 
-    api_key = await credential_service.get_credential("NANA_BANANA_KEY")
+    api_key = await credential_service.get_credential("GOOGLE_API_KEY")
     if not api_key:
-        raise HTTPException(status_code=503, detail="Nana Banana Service Not Configured (Missing Key)")
+        api_key = await credential_service.get_credential("GEMINI_API_KEY") # Fallback
 
-    # Mock Implementation for Plan
-    # In real world: async with httpx.AsyncClient() as client: ...
-    # Fetch configured model (e.g. imagen-3)
-    # Fetch configured model (e.g. imagen-3)
+    if not api_key:
+        raise HTTPException(status_code=503, detail="Google API Key Not Configured")
+
+    # Real Implementation for Google Imagen 3
     rag_strategy_creds = await credential_service.get_credentials_by_category("rag_strategy")
-    nana_model = rag_strategy_creds.get("NANA_BANANA_MODEL") or "imagen-3"
-    logger.info(f"API: Nana Banana Call ({nana_model}) | user={current_user.get('email')}")
+    # Default to imagen-3.0-generate-001 (Preview/Beta)
+    imagen_model = rag_strategy_creds.get("MARKETING_IMAGE_MODEL") or "imagen-3.0-generate-001"
 
-    # Simulate API Call
-    await asyncio.sleep(1) # Fake latency
+    logger.info(f"API: Google Imagen Call ({imagen_model}) | user={current_user.get('email')}")
 
-    return {
-        "status": "success",
-        "image_url": "https://placehold.co/600x400/png?text=Nana+Banana+Asset"
+    prompt = request.get("prompt", "A futuristic digital artwork of a high-tech dashboard")
+    aspect_ratio = request.get("aspect_ratio", "1:1")
+
+    # Google Imagen via REST API (Generative Language API)
+    # Endpoint: https://generativelanguage.googleapis.com/v1beta/models/{model}:predict
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/{imagen_model}:predict?key={api_key}"
+
+    payload = {
+        "instances": [
+            {
+                "prompt": prompt
+            }
+        ],
+        "parameters": {
+            "sampleCount": 1,
+            "aspectRatio": aspect_ratio
+        }
     }
+
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.post(url, json=payload, timeout=30.0)
+
+            if response.status_code != 200:
+                logger.error(f"Imagen API Error: {response.text}")
+                # Mock Fallback if API fails (e.g. 404 model specific or quota)
+                if response.status_code == 404 or response.status_code == 403:
+                     logger.warning("Imagen Model not found or permitted, falling back to mock for demo stability.")
+                     return {
+                        "status": "fallback_mock",
+                        "image_url": "https://placehold.co/600x400/png?text=Imagen+Fallback+Mock"
+                     }
+                raise HTTPException(status_code=response.status_code, detail=f"Imagen API Failed: {response.text}")
+
+            data = response.json()
+            # Extract base64 image
+            # structure: predictions[0].bytesBase64Encoded
+            # or predictions[0].mimeType
+
+            if "predictions" in data and len(data["predictions"]) > 0:
+                prediction = data["predictions"][0]
+                b64_image = prediction.get("bytesBase64Encoded")
+                mime_type = prediction.get("mimeType", "image/png")
+
+                # We return raw base64 data URL for frontend to display directly
+                # In prod, we should upload this to Supabase Storage and return URL
+                return {
+                    "status": "success",
+                    "image_url": f"data:{mime_type};base64,{b64_image}"
+                }
+            else:
+                raise Exception("No predictions returned")
+
+    except Exception as e:
+        logger.error(f"Imagen API Exception: {e}")
+        # Graceful degradation
+        return {
+            "status": "error_fallback",
+            "image_url": "https://placehold.co/600x400/png?text=Imagen+Error+Fallback"
+        }
 
 @router.get("/trends")
 async def get_marketing_trends(

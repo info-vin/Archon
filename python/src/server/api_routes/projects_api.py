@@ -704,6 +704,11 @@ class RefineTaskRequest(BaseModel):
     description: str
 
 
+class GenerateTaskFromAlertRequest(BaseModel):
+    alert_id: str
+    assignee_id: str | None = None
+
+
 @router.post("/tasks/refine-description")
 async def refine_task_description(
     request: RefineTaskRequest,
@@ -724,6 +729,40 @@ async def refine_task_description(
     except Exception as e:
         logger.error(f"Failed to refine task description | error={str(e)}")
         raise HTTPException(status_code=500, detail={"error": str(e)}) from e
+
+
+@router.post("/tasks/generate-from-alert")
+async def generate_task_from_alert(
+    request: GenerateTaskFromAlertRequest,
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    Generate a smart task from a Sentinel alert using AI context.
+    Only Managers and Admins can trigger this.
+    """
+    try:
+        user_role = current_user.get("role", "viewer").lower()
+        if user_role not in ["manager", "admin", "system_admin"]:
+            logger.warning(f"API: Smart dispatch denied | user={current_user.get('email')} | role={user_role}")
+            raise HTTPException(status_code=403, detail="Only managers can dispatch smart tasks.")
+
+        logger.info(f"API: Generating task from alert | alert_id={request.alert_id} | user={current_user.get('email')}")
+        task_service = TaskService()
+        success, result = await task_service.generate_task_from_alert(
+            alert_id=request.alert_id,
+            assignee_id=request.assignee_id
+        )
+
+        if not success:
+            error_msg = result.get("error", "Unknown error")
+            raise HTTPException(status_code=400, detail=error_msg)
+
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"API: Smart dispatch failed | alert_id={request.alert_id} | error={str(e)}")
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.post("/tasks")

@@ -20,6 +20,7 @@ from typing import Any
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from .api_routes.admin_api import router as admin_router  # NEW IMPORT
 from .api_routes.agent_chat_api import router as agent_chat_router
 from .api_routes.agents_api import router as agents_router
 from .api_routes.auth_api import router as auth_router  # NEW IMPORT
@@ -255,6 +256,7 @@ app.include_router(progress_router)
 app.include_router(agent_chat_router)
 app.include_router(internal_router)
 app.include_router(agents_router)
+app.include_router(admin_router)  # NEW ROUTER
 app.include_router(auth_router)
 app.include_router(blog_router)
 app.include_router(bug_report_router)

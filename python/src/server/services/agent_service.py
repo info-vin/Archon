@@ -23,10 +23,11 @@ class AgentService:
         self.code_modifier = CodeModifier(base_path=".")
         self.mcp_client = mcp_client
 
+
+
     async def _handle_tool_calls(self, tool_calls) -> list[dict]:
         """
-        Executes tool calls requested by the LLM via MCP client.
-        Supports dynamic tool mapping based on function name.
+        Executes tool calls requested by the LLM via MCP client or Local Services.
         """
         logger = get_logger(__name__)
         tool_outputs = []
@@ -39,17 +40,44 @@ class AgentService:
             logger.info(f"[MCP] Agent requesting tool execution: {function_name} | args={arguments}")
 
             try:
-                if not self.mcp_client:
-                    raise Exception("MCP Client not initialized")
+                result = "Tool execution failed (Unknown)"
 
-                # Dynamic Tool Execution: Try to find the method on mcp_client
-                # This handles search_code_examples, search_job_market, perform_rag_query, etc.
-                if hasattr(self.mcp_client, function_name):
-                    method = getattr(self.mcp_client, function_name)
-                    result = await method(**arguments)
+                # --- Routing Logic ---
+
+                # 1. Code Modification (Local Service)
+                if function_name == "apply_modification":
+                    # For MVP, we apply directly. Phase 5 adds PR flow.
+                    file_path = arguments.get("file_path")
+                    content = arguments.get("content")
+                    if not file_path or not content:
+                        raise ValueError("Missing file_path or content")
+
+                    self.code_modifier.apply_modification(file_path, content)
+                    result = f"Successfully modified {file_path}"
+
+                # 2. Code Search (Local)
+                # TODO: Wire to RAGService or Grep?
+                # For now, let's assuming MCP handles it or we mock it if missing
+                elif function_name == "search_code_examples":
+                     # Redirect to MCP if available, or simple error
+                     if self.mcp_client:
+                         if hasattr(self.mcp_client, function_name):
+                             result = await getattr(self.mcp_client, function_name)(**arguments)
+                         else:
+                             result = await self.mcp_client.call_tool(function_name, **arguments)
+                     else:
+                         result = "Search not available (No MCP)"
+
+                # 3. Default MCP Pass-through
+                elif self.mcp_client:
+                    if hasattr(self.mcp_client, function_name):
+                        method = getattr(self.mcp_client, function_name)
+                        result = await method(**arguments)
+                    else:
+                        result = await self.mcp_client.call_tool(function_name, **arguments)
+
                 else:
-                    # Fallback to generic call_tool if specific method doesn't exist
-                    result = await self.mcp_client.call_tool(function_name, **arguments)
+                    raise Exception("MCP Client not initialized and no local handler found")
 
                 tool_outputs.append({
                     "role": "tool",
@@ -329,7 +357,11 @@ class AgentService:
             {"type": "function", "function": {"name": "generate_sales_email", "description": "Write a sales email.", "parameters": {"type": "object", "properties": {"company": {"type": "string"}, "pitch": {"type": "string"}}, "required": ["company", "pitch"]}}},
             {"type": "function", "function": {"name": "perform_rag_query", "description": "Search knowledge base.", "parameters": {"type": "object", "properties": {"query": {"type": "string"}}, "required": ["query"]}}},
             {"type": "function", "function": {"name": "get_available_sources", "description": "List indexed docs.", "parameters": {"type": "object", "properties": {}}}},
-            {"type": "function", "function": {"name": "manage_task", "description": "Create/Update tasks.", "parameters": {"type": "object", "properties": {"action": {"type": "string", "enum": ["create", "update", "delete"]}, "task_id": {"type": "string"}}, "required": ["action"]}}}
+            {"type": "function", "function": {"name": "manage_task", "description": "Create/Update tasks.", "parameters": {"type": "object", "properties": {"action": {"type": "string", "enum": ["create", "update", "delete"]}, "task_id": {"type": "string"}}, "required": ["action"]}}},
+            # DevBot Tools
+            {"type": "function", "function": {"name": "search_code_examples", "description": "Search codebase.", "parameters": {"type": "object", "properties": {"query": {"type": "string"}}, "required": ["query"]}}},
+            {"type": "function", "function": {"name": "apply_modification", "description": "Modify a file.", "parameters": {"type": "object", "properties": {"file_path": {"type": "string"}, "content": {"type": "string"}}, "required": ["file_path", "content"]}}},
+            {"type": "function", "function": {"name": "generate_logo", "description": "Generate SVG.", "parameters": {"type": "object", "properties": {"prompt": {"type": "string"}}, "required": ["prompt"]}}}
         ]
 
         # Filter tools owned by this agent
