@@ -16,7 +16,7 @@ export const AdminPage: React.FC = () => {
                 
                 <TabsContent value="users">
                     <div className="p-4 border rounded bg-muted/20">
-                        <p className="text-muted-foreground">User Management has been moved to the main application's Admin Portal (Port 5173).</p>
+                        <p className="text-muted-foreground">User Management has been moved to the main application&apos;s Admin Portal (Port 5173).</p>
                     </div>
                 </TabsContent>
             </Tabs>
