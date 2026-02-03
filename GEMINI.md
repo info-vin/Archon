@@ -88,6 +88,12 @@
 
 # 第三章：近期工作日誌 (Recent Journal Entries)
 
+### 2026-02-03: Phase 4.6.2 Bob Finalization (E2E Stability & Isolation)
+*   **核心修復**: 解決了 `tests/e2e/management.spec.tsx` 中 "User can use POBot..." 測試失敗的問題。
+    *   **原因**: 前端應用啟動時的非同步資料載入 (`fetchData` 中的並行 API 呼叫) 在測試環境中因為 Mock 不完整或時序問題導致 Promise 懸掛 (Hanging)，使 UI 卡在 "Loading..." 狀態。
+    *   **解決**: 透過 `fix/e2e-test-isolation` 分支的合併，在 `e2e.setup.tsx` 中強化了 MSW (Mock Service Worker) 的配置，確保所有 API 請求 (特別是 `getCurrentUser` 與 Auth 相關) 都能在測試環境中被正確且即時地攔截與回應，實現了更穩健的測試隔離。
+*   **驗證**: 全面通過 Backend Tests (517 passed) 與 Frontend E2E Tests (25 passed)。
+
 ### 2026-02-02: Phase 4.6.1 Alice Finalization (Voice-to-Task & Quality)
 *   **核心任務**: 定案並實作 Alice 的行動端工作流政策 (Voice, GPS, Pruning)。
 *   **功能落地**:
