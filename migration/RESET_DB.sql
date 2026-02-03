@@ -163,10 +163,13 @@ BEGIN
     -- New tables from Phase 4.6+
     DROP TABLE IF EXISTS archon_ethics_events CASCADE;
     DROP TABLE IF EXISTS token_usage CASCADE;
+    DROP TABLE IF EXISTS marketing_trends CASCADE;
+    DROP TABLE IF EXISTS subscriptions CASCADE;
     DROP TABLE IF EXISTS visit_logs CASCADE;
     DROP TABLE IF EXISTS market_insights CASCADE;
     DROP TABLE IF EXISTS leads CASCADE;
     DROP TABLE IF EXISTS archon_logs CASCADE;
+    DROP TABLE IF EXISTS proposed_changes CASCADE;
 
     -- Project System (complex dependencies) - new archon_ prefixed tables
     DROP TABLE IF EXISTS archon_document_versions CASCADE;
@@ -185,6 +188,9 @@ BEGIN
     
     -- Legacy tables (without archon_ prefix) - for migration purposes
     DROP TABLE IF EXISTS profiles CASCADE;
+    DROP TABLE IF EXISTS customers CASCADE;
+    DROP TABLE IF EXISTS vendors CASCADE;
+    DROP TABLE IF EXISTS gemini_logs CASCADE;
     DROP TABLE IF EXISTS blog_posts CASCADE;
     DROP TABLE IF EXISTS document_versions CASCADE;
     DROP TABLE IF EXISTS project_sources CASCADE;

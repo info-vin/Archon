@@ -872,6 +872,7 @@ async def create_task(
 async def list_tasks(
     status: str | None = None,
     project_id: str | None = None,
+    assignee_id: str | None = None,
     include_closed: bool = False,
     include_unassigned: bool = False,  # Fix FB-03: Allow frontend to request unassigned tasks
     page: int = 1,
@@ -889,6 +890,9 @@ async def list_tasks(
         # Only Admin and Manager can see all tasks. Others see only their own by ID.
         if user_role not in ["system_admin", "admin", "manager"]:
             assignee_id_filter = user_id
+        elif assignee_id:
+            # If manager/admin explicitly requests a specific assignee
+            assignee_id_filter = assignee_id
 
         logger.info(
             f"DEBUG RBAC: list_tasks | user_id={user_id} | raw_role={current_user.get('role')} | normalized_role={user_role} | assignee_filter={assignee_id_filter}"

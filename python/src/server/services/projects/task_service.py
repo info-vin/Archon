@@ -309,6 +309,7 @@ class TaskService:
                     "assignee_id": task.get("assignee_id"),
                     "task_order": task.get("task_order", 0),
                     "feature": task.get("feature"),
+                    "priority": task.get("priority", "medium"),
                     "created_at": task["created_at"],
                     "updated_at": task["updated_at"],
                     "archived": task.get("archived", False),

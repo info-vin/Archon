@@ -196,8 +196,15 @@ const supabaseApi = {
       } as Employee;
     }
   },
-  async getTasks(includeClosed: boolean = false, includeUnassigned: boolean = false): Promise<Task[]> {
-    const response = await fetch(`/api/tasks?include_closed=${includeClosed}&include_unassigned=${includeUnassigned}`, { headers: await this._getHeaders() });
+  async getTasks(includeClosed: boolean = false, includeUnassigned: boolean = false, assigneeId?: string, perPage: number = 50): Promise<Task[]> {
+    const queryParams = new URLSearchParams({
+        include_closed: includeClosed.toString(),
+        include_unassigned: includeUnassigned.toString(),
+        per_page: perPage.toString()
+    });
+    if (assigneeId) queryParams.append('assignee_id', assigneeId);
+
+    const response = await fetch(`/api/tasks?${queryParams.toString()}`, { headers: await this._getHeaders() });
     if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         throw new Error(errorData.detail || 'Failed to fetch tasks.');

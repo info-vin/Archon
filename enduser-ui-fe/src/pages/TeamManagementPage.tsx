@@ -349,14 +349,17 @@ const ActivityLogModal: React.FC<{ member: Employee; onClose: () => void }> = ({
     useEffect(() => {
         const loadTasks = async () => {
             try {
-                // Fetch all tasks and filter client-side for now
-                // TODO: Add backend filter param for efficiency
-                const allTasks = await api.getTasks(true, true); 
-                const memberTasks = allTasks.filter(t => 
+                // Fetch tasks for specific member + unassigned, with higher limit
+                // Passing member.id to backend allows efficient filtering and avoids pagination issues (BUG-027)
+                const tasks = await api.getTasks(true, true, member.id, 100);
+
+                // Client-side fallback filter for legacy name-based assignment consistency
+                const memberTasks = tasks.filter(t =>
                     t.assignee_id === member.id || 
                     t.assignee === member.name ||
-                    (t.assignee === 'User' && member.role === 'marketing') // Fallback for legacy
+                    (t.assignee === 'User' && member.role === 'marketing')
                 ).sort((a, b) => new Date(b.created_at || '').getTime() - new Date(a.created_at || '').getTime());
+
                 setTasks(memberTasks);
             } catch (e) {
                 console.error(e);
