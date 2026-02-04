@@ -41,11 +41,18 @@ async def get_current_user(
 
     if not success or not profile:
         # Fallback: If profile doesn't exist yet (rare race condition),
-        # return basic auth info with default role
+        # return basic auth info with default role.
+        # Try to get role from user_metadata first.
+        fallback_role = "employee"
+        if hasattr(auth_user, "user_metadata") and auth_user.user_metadata:
+             metadata_role = auth_user.user_metadata.get("role")
+             if metadata_role:
+                 fallback_role = metadata_role
+
         return {
             "id": user_id,
             "email": auth_user.email,
-            "role": "employee" # Default safe role
+            "role": fallback_role
         }
 
     return cast(dict[str, Any], profile) # Should contain 'role' field

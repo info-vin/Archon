@@ -12,7 +12,7 @@ export const PERMISSION_SETS: Record<string, Set<PermissionScope>> = {
     'task:create', 'task:read:all', 'task:update:all',
     'agent:trigger:dev', 'agent:trigger:mkt', 'agent:trigger:know',
     'code:approve', 'content:publish',
-    'stats:view:all',
+    'stats:view:all', 'stats:view:own',
     'leads:view:sales', 'leads:view:marketing', // Admin sees all
     'user:manage', 'user:manage:team', 'mcp:manage'
   ]),
@@ -20,7 +20,7 @@ export const PERMISSION_SETS: Record<string, Set<PermissionScope>> = {
      'task:create', 'task:read:team', 'task:update:own',
      'agent:trigger:dev', 'agent:trigger:mkt', 'agent:trigger:know',
      'code:approve', 'content:publish',
-     'stats:view:team', 
+     'stats:view:team', 'stats:view:own',
      'leads:view:sales', 'leads:view:marketing', // Manager sees all
      'user:manage:team'
   ]),
@@ -45,17 +45,23 @@ export const PERMISSION_SETS: Record<string, Set<PermissionScope>> = {
 
 
 // Map actual EmployeeRole enum values to Permission Sets
-const ROLE_MAP: Record<EmployeeRole, Set<PermissionScope>> = {
+const ROLE_MAP: Record<EmployeeRole | string, Set<PermissionScope>> = {
   [EmployeeRole.SYSTEM_ADMIN]: PERMISSION_SETS.admin,
   [EmployeeRole.ADMIN]: PERMISSION_SETS.admin,
   [EmployeeRole.MANAGER]: PERMISSION_SETS.manager,
   [EmployeeRole.PROJECT_MANAGER]: PERMISSION_SETS.manager,
   ['PM' as any]: PERMISSION_SETS.manager, // Support raw 'PM' string from DB
+  ['pm']: PERMISSION_SETS.manager,
+  ['project manager']: PERMISSION_SETS.manager,
   [EmployeeRole.SENIOR_MEMBER]: PERMISSION_SETS.employee, // Legacy mapping
   [EmployeeRole.MEMBER]: PERMISSION_SETS.employee,
   [EmployeeRole.EMPLOYEE]: PERMISSION_SETS.employee,
+  ['engineer']: PERMISSION_SETS.employee,
+  ['developer']: PERMISSION_SETS.employee,
   [EmployeeRole.SALES]: PERMISSION_SETS.sales,
   [EmployeeRole.MARKETING]: PERMISSION_SETS.marketing,
+  ['marketer']: PERMISSION_SETS.marketing,
+  ['market researcher']: PERMISSION_SETS.marketing,
   [EmployeeRole.VIEWER]: new Set(['task:read:all']), // Basic view access
   [EmployeeRole.AI_AGENT]: new Set([])
 };

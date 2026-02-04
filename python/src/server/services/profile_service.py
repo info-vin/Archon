@@ -80,14 +80,16 @@ class ProfileService:
             A tuple containing success boolean and the profile data (or error message/None).
         """
         try:
-            response = self.supabase_client.table("profiles").select("*").eq("id", user_id).single().execute()
-            # .single() raises an exception if not found in some versions, or returns data/error
-            # If response.data is populated, we have the user
-            return True, response.data
+            # Use limit(1) instead of .single() to avoid exceptions on missing data
+            response = self.supabase_client.table("profiles").select("*").eq("id", user_id).limit(1).execute()
+
+            if response.data and len(response.data) > 0:
+                return True, response.data[0]
+
+            logger.warning(f"Profile not found for {user_id}")
+            return False, "Profile not found"
         except Exception as e:
-            # Distinguish between not found and actual error if possible, but for now generic catch
-            # Supabase-py often raises postgrest.exceptions.APIError for 406/404
-            logger.warning(f"Failed to fetch profile for {user_id}: {e}")
+            logger.error(f"Failed to fetch profile for {user_id}: {e}", exc_info=True)
             return False, str(e)
 
     def update_profile(self, user_id: str, updates: dict) -> tuple[bool, dict | str]:
