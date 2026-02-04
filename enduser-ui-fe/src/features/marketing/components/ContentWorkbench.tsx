@@ -45,29 +45,33 @@ export const ContentWorkbench: React.FC<ContentWorkbenchProps> = ({
   isDrafting,
   isGeneratingImage
 }) => {
+  title: string;
+  content: string;
+  onTitleChange: (value: string) => void;
+  onContentChange: (value: string) => void;
+}
+
+export const ContentWorkbench: React.FC<ContentWorkbenchProps> = ({
+  activeSource,
+  contextData,
+  isLoadingContext,
+  onDraft,
+  onGenerateImage,
+  onPublish,
+  isDrafting,
+  isGeneratingImage,
+  title,
+  content,
+  onTitleChange,
+  onContentChange
+}) => {
   const [activeTab, setActiveTab] = useState<'context' | 'editor'>('context');
-  const [draftContent, setDraftContent] = useState('');
-  const [draftTitle, setDraftTitle] = useState('');
 
-  // BUG-025: Persistence Logic
-  React.useEffect(() => {
-    if (activeSource?.id) {
-      const savedTitle = localStorage.getItem(`draft_title_${activeSource.id}`);
-      const savedContent = localStorage.getItem(`draft_content_${activeSource.id}`);
-      if (savedTitle) setDraftTitle(savedTitle);
-      else setDraftTitle(''); // Reset if no saved data
-
-      if (savedContent) setDraftContent(savedContent);
-      else setDraftContent(''); // Reset if no saved data
-    }
-  }, [activeSource?.id]);
-
-  React.useEffect(() => {
-    if (activeSource?.id) {
-      localStorage.setItem(`draft_title_${activeSource.id}`, draftTitle);
-      localStorage.setItem(`draft_content_${activeSource.id}`, draftContent);
-    }
-  }, [draftTitle, draftContent, activeSource?.id]);
+  // BUG-025: Persistence Logic - Updated to use props
+  // Note: Parent component (BrandPage) now manages the source of truth, 
+  // but we keeping the effect here to sync activeSource changes if needed, 
+  // or better, move persistence to parent. 
+  // For this fix, let's trust the parent passes the correct state.
 
   // BUG-026: Save Feedback
   const handleSave = () => {
@@ -125,7 +129,7 @@ export const ContentWorkbench: React.FC<ContentWorkbenchProps> = ({
           </div>
           
           <button 
-            onClick={() => onPublish({ title: draftTitle, content: draftContent })}
+            onClick={() => onPublish({ title: title, content: content })}
             className="flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-bold transition-all shadow-sm"
           >
             <CheckCircleIcon className="w-4 h-4 mr-2" />
@@ -199,7 +203,7 @@ export const ContentWorkbench: React.FC<ContentWorkbenchProps> = ({
                 {isDrafting ? 'Drafting...' : 'Magic Draft'}
               </button>
               <button 
-                onClick={() => onGenerateImage(draftTitle || activeSource.title)}
+                onClick={() => onGenerateImage(title || activeSource.title)}
                 disabled={isGeneratingImage}
                 className="flex items-center px-3 py-1.5 bg-white dark:bg-slate-700 border dark:border-slate-600 rounded-md text-[10px] font-bold text-slate-700 dark:text-slate-200 hover:shadow-sm transition-all disabled:opacity-50"
               >
@@ -221,14 +225,14 @@ export const ContentWorkbench: React.FC<ContentWorkbenchProps> = ({
               <input 
                 type="text"
                 placeholder="Article Title..."
-                value={draftTitle}
-                onChange={(e) => setDraftTitle(e.target.value)}
+                value={title}
+                onChange={(e) => onTitleChange(e.target.value)}
                 className="w-full text-3xl font-bold mb-8 outline-none bg-transparent dark:text-white placeholder:text-slate-200 dark:placeholder:text-slate-700 border-none"
               />
               <textarea 
                 placeholder="Start writing or use Magic Draft..."
-                value={draftContent}
-                onChange={(e) => setDraftContent(e.target.value)}
+                value={content}
+                onChange={(e) => onContentChange(e.target.value)}
                 className="w-full h-[60vh] outline-none bg-transparent dark:text-slate-300 resize-none leading-relaxed text-lg border-none"
               />
             </div>

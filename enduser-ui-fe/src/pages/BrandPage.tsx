@@ -39,6 +39,30 @@ const BrandPage: React.FC = () => {
     const [isLoadingContext, setIsLoadingContext] = useState(false);
     const [isDrafting, setIsDrafting] = useState(false);
     const [isGeneratingImage, setIsGeneratingImage] = useState(false);
+    
+    // Workbench Editor State (Lifted Up)
+    const [workbenchTitle, setWorkbenchTitle] = useState('');
+    const [workbenchContent, setWorkbenchContent] = useState('');
+
+    // Persistence Logic (Restored from Child)
+    useEffect(() => {
+        if (activeSource?.id) {
+            const savedTitle = localStorage.getItem(`draft_title_${activeSource.id}`);
+            const savedContent = localStorage.getItem(`draft_content_${activeSource.id}`);
+            if (savedTitle) setWorkbenchTitle(savedTitle);
+            else setWorkbenchTitle(''); 
+
+            if (savedContent) setWorkbenchContent(savedContent);
+            else setWorkbenchContent(''); 
+        }
+    }, [activeSource?.id]);
+
+    useEffect(() => {
+        if (activeSource?.id) {
+            localStorage.setItem(`draft_title_${activeSource.id}`, workbenchTitle);
+            localStorage.setItem(`draft_content_${activeSource.id}`, workbenchContent);
+        }
+    }, [workbenchTitle, workbenchContent, activeSource?.id]);
 
     useEffect(() => {
         loadData();
@@ -102,7 +126,12 @@ const BrandPage: React.FC = () => {
                 tone: 'professional'
             });
             console.log("Magic Draft Result:", result);
-            alert("Draft generated! Use the Editor Tab to refine.");
+            
+            // FIX: Update Workbench State with Result
+            setWorkbenchTitle(result.title);
+            setWorkbenchContent(result.content);
+            
+            alert("Draft generated! Content has been updated in the Editor.");
         } catch (err: any) {
             alert(err.message || "Drafting failed");
         } finally {
@@ -114,7 +143,12 @@ const BrandPage: React.FC = () => {
         setIsGeneratingImage(true);
         try {
             const result = await api.nanaBananaProxy({ prompt: title });
-            alert(`Asset generated: ${result.image_url}`);
+            
+            // FIX: Append Image to Content
+            const imageMarkdown = `\n\n![Header Image](${result.image_url})\n\n`;
+            setWorkbenchContent(prev => imageMarkdown + prev); // Prepend or Append? Usually header image is at top. Let's prepend.
+            
+            alert(`Asset generated and added to editor.`);
         } catch (err: any) {
             alert(err.message || "Image generation failed");
         } finally {
@@ -433,6 +467,10 @@ const BrandPage: React.FC = () => {
                                     onPublish={handlePublishWorkbench}
                                     isDrafting={isDrafting}
                                     isGeneratingImage={isGeneratingImage}
+                                    title={workbenchTitle}
+                                    content={workbenchContent}
+                                    onTitleChange={setWorkbenchTitle}
+                                    onContentChange={setWorkbenchContent}
                                 />
                             </div>
                         </div>

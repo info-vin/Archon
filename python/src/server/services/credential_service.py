@@ -588,6 +588,7 @@ async def initialize_credentials() -> None:
     # LLM provider credentials (for sync client support)
     provider_credentials = [
         "GOOGLE_API_KEY",  # Google Gemini API key
+        "GEMINI_API_KEY",  # Marketing-specific Gemini API key
         "LLM_PROVIDER",  # Selected provider
         "LLM_BASE_URL",  # Ollama base URL
         "EMBEDDING_MODEL",  # Custom embedding model
