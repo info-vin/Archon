@@ -11,8 +11,8 @@
 |指標 (Metric)|數量 (Count)|詳細資訊 (Details)|
 |:---|:---|:---|
 |**總議題數**|22|涵蓋 UX 流程、資料一致性、系統重置可靠性與開發者體驗 (DX)。|
-|**修復待驗收**|22|BUG-027, BUG-028, BUG-029, BUG-030, BUG-031, BUG-032, BUG-033, GAP-009, GAP-010, GAP-011, GAP-012, GAP-013, GAP-014, GAP-015, GAP-016, DX-001, UX-011, UX-012 等全數修復。|
-|**待處理**|0|所有項目已進入驗證階段。|
+|**已完成修正**|4|BUG-027, BUG-031, BUG-032, BUG-033 驗證正常。|
+|**待討論**|18|其餘項目包含功能缺口、樣式優化與技術債重構。|
 
 ---
 
@@ -20,26 +20,26 @@
 
 | ID | 類型 (Type) | 角色 | 模組 | 問題描述 | 嚴重度 | 狀態 |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **BUG-027** | 🐛 Bug | **Charlie** | **Team** | Charlie 在 Team Management 面板看不到 Alice 自己開的單。已啟用後端 assigne_id 過濾與前端分頁擴增。 | High | 🟡 待驗收 |
-| **BUG-030** | 🐛 Bug | **All** | **Color** | Dashboard 狀態與優先級燈色失效。已修復 API 回傳缺少 priority 欄位的問題。 | Medium | 🟡 待驗收 |
-| **BUG-033** | 🐛 Bug | **All** | **UI/Nav** | 導覽列消失。已修正前端大小寫判斷與 DB ID 同步。 | Critical | 🟡 待驗收 |
-| **DX-001** | 🛠️ DX | **All** | **Auth/PW** | 密碼重置為 `qwer45tyuiop`。已實作強制重置邏輯。 | Medium | 🟡 待驗收 |
-| **UX-011** | 🎨 Style | **All** | **UI/Set** | 5173 `/settings` 移至使用者區塊。 | Medium | 🟡 待驗收 |
-| **BUG-031** | 🐛 Bug | **System** | **DB/Reset**| `make db-reset` 失敗。已補齊 `RESET_DB.sql` 遺漏的新資料表。 | High | 🟡 待驗收 |
-| **BUG-032** | 🐛 Bug | **System** | **DB/Seed** | `seed_mock_data.sql` 報錯。已透過完整 DB Reset 修復 Schema 狀態。 | High | 🟡 待驗收 |
-| **BUG-028** | 🐛 Bug | **Bob** | **Magic** | 生成內容未貼入編輯器。已實作 Backend Mock Fallback。 | High | 🟡 待驗收 (Mock) |
-| **BUG-029** | 🐛 Bug | **Bob** | **Image** | 圖片生成後無預覽/URL。已實作 Backend Mock Fallback。 | High | 🟡 待驗收 (Mock) |
-| **GAP-009** | 🔧 Gap | **Alice** | **Voice** | 語音日誌自動轉工單尚未實作。已實作前端模擬按鈕。 | Medium | 🟡 待驗收 (Mock) |
-| **GAP-010** | 🔧 Gap | **Alice** | **GPS** | On-Demand GPS 待驗收。已實作前端模擬位置。 | Low | 🟡 待驗收 (Mock) |
-| **UX-012** | 🎨 Style | **All** | **Buttons** | 5173 按鈕風格對齊 3737 Style Guide。已實作通用 `Button` 組件。 | Low | 🟡 待驗收 |
-| **GAP-012** | 🔧 Gap | **Bob** | **Intel** | 頁面空白無數據，配色太深。已優化配色並確保 Mock Data 顯示。 | Medium | 🟡 待驗收 |
-| **GAP-013** | 🔧 Gap | **Charlie** | **Center** | 指揮中心無資料供練習。已在 `seed_mock_data.sql` 注入 `marketing_trends` 數據。 | Medium | 🟡 待驗收 |
-| **GAP-014** | 🔧 Gap | **Admin** | **RBAC** | 缺少 RBAC 練習案例與多樣化資料。已注入 Viewer/Editor 角色數據。 | Low | 🟡 待驗收 |
-| **GAP-015** | 🔧 Gap | **Tech** | **Score** | Alice 的 Enrichment Score 計算規則實作。已於 `EnrichmentService` 實作動態評分。 | Low | 🟡 待驗收 |
-| **GAP-016** | 🔧 Gap | **Tech** | **Token** | Token Usage 真實寫入與可視化確認。已於 `MockLLMClient` 實作 Token 消耗模擬。 | Low | 🟡 待驗收 |
-| **GAP-003** | 🔧 Gap | **Alice** | **Swipe** | 滑動誤觸復原功能待驗收。 | Low | 🟡 待驗收 |
-| **GAP-011** | 🔧 Gap | **Alice** | **Prune** | 自動歸檔邏輯待驗收。已實作 `prune_archived_tasks` 服務方法。 | Low | 🟡 待驗收 |
-| **ALERT-01**| 🔧 Gap | **Charlie** | **Sentin** | 警示資料準確性待驗收。 | Low | 🟡 待驗收 |
+| **BUG-027** | 🐛 Bug | **Charlie** | **Team** | Charlie 在 Team Management 面板看不到 Alice 自己開的單。已啟用後端 assigne_id 過濾與前端分頁擴增。 | High | 🟢 已修復 |
+| **BUG-030** | 🐛 Bug | **All** | **Color** | Dashboard 狀態與優先級燈色失效。已修復 API 回傳缺少 priority 欄位的問題。 | Medium | ⚪ 待討論 |
+| **BUG-033** | 🐛 Bug | **All** | **UI/Nav** | 導覽列消失。已修正前端大小寫判斷與 DB ID 同步。 | Critical | 🟢 已修復 |
+| **DX-001** | 🛠️ DX | **All** | **Auth/PW** | 密碼重置為 `qwer45tyuiop`。已實作強制重置邏輯。 | Medium | ⚪ 待討論 |
+| **UX-011** | 🎨 Style | **All** | **UI/Set** | 5173 `/settings` 移至使用者區塊。 | Medium | ⚪ 待討論 |
+| **BUG-031** | 🐛 Bug | **System** | **DB/Reset**| `make db-reset` 失敗。已補齊 `RESET_DB.sql` 遺漏的新資料表。 | High | 🟢 已修復 |
+| **BUG-032** | 🐛 Bug | **System** | **DB/Seed** | `seed_mock_data.sql` 報錯。已透過完整 DB Reset 修復 Schema 狀態。 | High | 🟢 已修復 |
+| **BUG-028** | 🐛 Bug | **Bob** | **Magic** | 生成內容未貼入編輯器。已實作 Backend Mock Fallback。 | High | ⚪ 待討論 |
+| **BUG-029** | 🐛 Bug | **Bob** | **Image** | 圖片生成後無預覽/URL。已實作 Backend Mock Fallback。 | High | ⚪ 待討論 |
+| **GAP-009** | 🔧 Gap | **Alice** | **Voice** | 語音日誌自動轉工單尚未實作。已實作前端模擬按鈕。 | Medium | ⚪ 待討論 |
+| **GAP-010** | 🔧 Gap | **Alice** | **GPS** | On-Demand GPS 待驗收。已實作前端模擬位置。 | Low | ⚪ 待討論 |
+| **UX-012** | 🎨 Style | **All** | **Buttons** | 5173 按鈕風格對齊 3737 Style Guide。已實作通用 `Button` 組件。 | Low | ⚪ 待討論 |
+| **GAP-012** | 🔧 Gap | **Bob** | **Intel** | 頁面空白無數據，配色太深。已優化配色並確保 Mock Data 顯示。 | Medium | ⚪ 待討論 |
+| **GAP-013** | 🔧 Gap | **Charlie** | **Center** | 指揮中心無資料供練習。已在 `seed_mock_data.sql` 注入 `marketing_trends` 數據。 | Medium | ⚪ 待討論 |
+| **GAP-014** | 🔧 Gap | **Admin** | **RBAC** | 缺少 RBAC 練習案例與多樣化資料。已注入 Viewer/Editor 角色數據。 | Low | ⚪ 待討論 |
+| **GAP-015** | 🔧 Gap | **Tech** | **Score** | Alice 的 Enrichment Score 計算規則實作。已於 `EnrichmentService` 實作動態評分。 | Low | ⚪ 待討論 |
+| **GAP-016** | 🔧 Gap | **Tech** | **Token** | Token Usage 真實寫入與可視化確認。已於 `MockLLMClient` 實作 Token 消耗模擬。 | Low | ⚪ 待討論 |
+| **GAP-003** | 🔧 Gap | **Alice** | **Swipe** | 滑動誤觸復原功能待驗收。 | Low | ⚪ 待討論 |
+| **GAP-011** | 🔧 Gap | **Alice** | **Prune** | 自動歸檔邏輯待驗收。已實作 `prune_archived_tasks` 服務方法。 | Low | ⚪ 待討論 |
+| **ALERT-01**| 🔧 Gap | **Charlie** | **Sentin** | 警示資料準確性待驗收。 | Low | ⚪ 待討論 |
 | **TECH-001**| 🏗️ Debt | **Tech** | **RAG** | `RAGSettings.tsx` 重構拆分。 | Medium | ⚪ 待討論 |
 | **TECH-002**| 🏗️ Debt | **Tech** | **Projects**| `projects_api.py` 商業邏輯抽離。 | Medium | ⚪ 待討論 |
 
