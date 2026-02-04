@@ -104,6 +104,12 @@ def seed_data(cursor: PGCursor) -> None:
         with open(seed_file) as f:
             cursor.execute(f.read())
 
+    blog_seed = "migration/seed_blog_posts.sql"
+    if os.path.exists(blog_seed):
+        logger.info(f"🌱 Seeding blog posts: {blog_seed}")
+        with open(blog_seed) as f:
+            cursor.execute(f.read())
+
     logger.info("🔑 Syncing API Keys from Env...")
     api_key_map = [
         ("OPENAI_API_KEY", "OPENAI_API_KEY", "ai", "OpenAI API Key"),
@@ -222,14 +228,19 @@ def main():
 
     migrate_only = "--migrate-only" in sys.argv
 
+    # 1. Run Migrations & Seeds in one transaction
     with db_transaction() as cursor:
         run_migrations(cursor, exclude={'RESET_DB.sql', 'backup_database.sql', 'complete_setup.sql', 'seed_mock_data.sql'})
         
         if not migrate_only:
             seed_data(cursor)
+    
+    # 2. Sync Auth Users (External API calls) in a separate step/transaction
+    # Note: sync_auth_users manages its own API calls, but we need a cursor for fixing IDs.
+    # We start a NEW transaction here to ensure previous locks are released.
+    if not migrate_only:
+        with db_transaction() as cursor:
             sync_auth_users(cursor)
-        else:
-            logger.info("⏩ Skipping seed & auth sync (--migrate-only)")
 
     print_dev_token()
     logger.info("✅ Database initialized successfully.")

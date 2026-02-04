@@ -156,7 +156,7 @@ INSERT INTO blog_posts (id, title, excerpt, content, author_name, publish_date, 
 AI 與機器學習正在自動化數據準備與洞察發現的過程。未來的分析工具將主動告訴您「發生了什麼」，而不是等您去查詢。
 
 ## 2. 自然語言查詢 (NLP)
-想像一下，您只需對系統說：「告訴我上季獲利最高的產品」，報表就會自動生成。這就是 NLP 帶來的變革，讓非技術人員也能輕鬆獲取數據價值。
+想像一下，您只需對系統說：「告訴我上季獲利最高的產品」，報表就會自動生成。這就是 NLP 帶來課變革，讓非技術人員也能輕鬆獲取數據價值。
 
 ## 3. 數據民主化 (Data Democratization)
 打破數據孤島，讓行銷、業務、人資等各部門都能安全地存取所需數據，是提升組織敏捷度的關鍵。
@@ -240,3 +240,15 @@ INSERT INTO blog_posts (id, title, excerpt, content, author_name, publish_date, 
 ## 4. 結語：品牌的一致性
 重構不僅是技術債的償還，更是品牌形象的重塑。一個現代化的企業網站，應該在每一個細節都展現出其對技術與使用者體驗的極致追求。這就是我們在 Phase 4.3 努力的方向。', 'Bob (Content Lead)', '2025-01-13T10:00:00Z', 'https://picsum.photos/seed/refactor-path/600/400')
 ON CONFLICT (id) DO NOTHING;
+
+-- Update status to 'published' for seed data visibility
+UPDATE blog_posts 
+SET status = 'published' 
+WHERE id IN (
+    'post-1', 
+    'post-2', 
+    'post-3', 
+    'a4444444-4444-4444-4444-444444444444', 
+    'a5555555-5555-5555-5555-555555555555', 
+    'a6666666-6666-6666-6666-666666666666'
+);
