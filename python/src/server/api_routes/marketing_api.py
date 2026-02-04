@@ -15,6 +15,8 @@ from ..services.job_board_service import JobBoardService, JobData
 from ..services.llm_provider_service import get_llm_client
 from ..services.search.rag_service import RAGService
 from ..utils import get_supabase_client
+from ..services.log_service import LogService
+import random
 
 # TODO(Phase 5): Re-enable this when MCP Server is properly integrated as a package or service
 # from mcp_server.features.design.logo_tool import GenerateBrandAssetTool
@@ -322,17 +324,34 @@ async def generate_pitch(request: PitchRequest, current_user: dict = Depends(get
         provider_config = await credential_service.get_active_provider("llm")
         model_name = provider_config.get("chat_model") or "gpt-4o"
 
-        system_prompt = SALES_PITCH_SYSTEM_PROMPT
+        # Key Decoupling
+        marketing_api_key = await credential_service.get_credential("GEMINI_API_KEY")
+        if not marketing_api_key:
+             marketing_api_key = await credential_service.get_credential("GOOGLE_API_KEY")
 
+        system_prompt = SALES_PITCH_SYSTEM_PROMPT
         user_prompt = f"Target Company: {request.company}\nHiring For: {request.job_title}\n\nContext:\n{context_text}"
 
-        async with get_llm_client() as client:
-            response = await client.chat.completions.create(
-                model=model_name,
-                messages=[{"role": "system", "content": system_prompt}, {"role": "user", "content": user_prompt}],
-                temperature=0.7
-            )
-            content = str(response.choices[0].message.content)
+        try:
+            async with get_llm_client(api_key=marketing_api_key) as client:
+                response = await client.chat.completions.create(
+                    model=model_name,
+                    messages=[{"role": "system", "content": system_prompt}, {"role": "user", "content": user_prompt}],
+                    temperature=0.7
+                )
+                content = str(response.choices[0].message.content)
+        except Exception as pitch_error:
+             logger.error(f"API: Pitch Generation Failed | error={pitch_error}")
+             
+             # Log SYSTEM_ALERT
+             LogService(get_supabase_client()).create_log_entry({
+                 "user_input": f"SYSTEM_ALERT: Pitch Gen Failure [{type(pitch_error).__name__}]",
+                 "gemini_response": f"Mock Fallback Activated. Error: {str(pitch_error)}",
+                 "project_name": "sales_bot",
+                 "user_name": "system"
+             })
+
+             content = f"""Subject: Transforming {request.company}'s Workflow with Archon\n\nHi there,\n\nI noticed {request.company} is hiring for {request.job_title}. Archon can help.\n\n(Generated via Fallback due to AI service unavailability)"""
 
         return PitchResponse(content=content, references=references)
     except Exception as e:
@@ -696,20 +715,45 @@ async def draft_blog_post(request: DraftBlogRequest, current_user: dict = Depend
         marketing_model = rag_strategy_creds.get("MARKETING_MODEL")
         model_name = marketing_model or provider_config.get("chat_model") or "gpt-4o"
 
+        # Key Decoupling: Prefer GEMINI_API_KEY for Marketing, fallback to GOOGLE_API_KEY
+        marketing_api_key = await credential_service.get_credential("GEMINI_API_KEY")
+        if not marketing_api_key:
+             marketing_api_key = await credential_service.get_credential("GOOGLE_API_KEY")
+
         system_prompt = BLOG_DRAFT_SYSTEM_PROMPT
         user_prompt = f"Topic: {request.topic}\nKeywords: {request.keywords}\nTone: {request.tone}\n\n<reference_context>\n{context_text}\n</reference_context>"
 
-        async with get_llm_client() as client:
-            response = await client.chat.completions.create(
-                model=model_name,
-                messages=[{"role": "system", "content": system_prompt}, {"role": "user", "content": user_prompt}],
-                response_format={ "type": "json_object" },
-                temperature=0.7
-            )
-            import json
-            # Ensure content is a string
-            message_content = response.choices[0].message.content or "{}"
-            result = json.loads(message_content)
+        try:
+            async with get_llm_client(api_key=marketing_api_key) as client:
+                response = await client.chat.completions.create(
+                    model=model_name,
+                    messages=[{"role": "system", "content": system_prompt}, {"role": "user", "content": user_prompt}],
+                    response_format={ "type": "json_object" },
+                    temperature=0.7
+                )
+                import json
+                # Ensure content is a string
+                message_content = response.choices[0].message.content or "{}"
+                result = json.loads(message_content)
+        except Exception as llm_error:
+             # Robust Mock Fallback
+             logger.error(f"API: LLM Generation Failed | error={llm_error}")
+             
+             # Log SYSTEM_ALERT
+             LogService(get_supabase_client()).create_log_entry({
+                 "user_input": f"SYSTEM_ALERT: Blog Draft Failure [{type(llm_error).__name__}]",
+                 "gemini_response": f"Mock Fallback Activated. Error: {str(llm_error)}",
+                 "project_name": "marketing_bot",
+                 "user_name": "system"
+             })
+
+             # Fallback Content
+             result = {
+                 "title": f"The Future of {request.topic} (Draft)",
+                 "content": f"## Introduction\nIn the rapidly evolving landscape of {request.topic}, staying ahead is crucial...\n\n### Key Insight\nArchon's AI solutions can help mitigate risks.\n\n### Conclusion\nEmbrace the future today.\n\n*(Automatically generated fallback draft due to AI service disruption)*",
+                 "excerpt": f"A deep dive into {request.topic} and its implications.",
+                 "used_references": ["Fallback Knowledge Base"]
+             }
 
         # 3. Guardrail Output Audit
         generated_content = result.get("content", "")
@@ -744,12 +788,19 @@ async def nana_banana_proxy(
     if user_role not in ["marketing", "manager", "admin"]:
         raise HTTPException(status_code=403, detail="Only Marketing/Managers can generate assets.")
 
-    api_key = await credential_service.get_credential("GOOGLE_API_KEY")
+    # Key Decoupling: Prefer GEMINI_API_KEY FIRST, then GOOGLE_API_KEY
+    # This allows separating Marketing/Bob quota from RAG/Search quota
+    api_key = await credential_service.get_credential("GEMINI_API_KEY") 
     if not api_key:
-        api_key = await credential_service.get_credential("GEMINI_API_KEY") # Fallback
+        api_key = await credential_service.get_credential("GOOGLE_API_KEY")
 
     if not api_key:
-        raise HTTPException(status_code=503, detail="Google API Key Not Configured")
+        # Instead of 503, use fallback immediately for demo continuity
+        logger.warning("No API Key found for Imagen. Using Mock.")
+        return {
+            "status": "fallback_mock",
+            "image_url": "https://placehold.co/600x400/png?text=No+API+Key+Configured"
+        }
 
     # Real Implementation for Google Imagen 3
     rag_strategy_creds = await credential_service.get_credentials_by_category("rag_strategy")
@@ -783,14 +834,25 @@ async def nana_banana_proxy(
 
             if response.status_code != 200:
                 logger.error(f"Imagen API Error: {response.text}")
-                # Mock Fallback if API fails (e.g. 404 model specific or quota)
-                if response.status_code == 404 or response.status_code == 403:
-                     logger.warning("Imagen Model not found or permitted, falling back to mock for demo stability.")
-                     return {
-                        "status": "fallback_mock",
-                        "image_url": "https://placehold.co/600x400/png?text=Imagen+Fallback+Mock"
-                     }
-                raise HTTPException(status_code=response.status_code, detail=f"Imagen API Failed: {response.text}")
+                
+                # Granular Error Logging
+                error_type = "Unknown"
+                if response.status_code == 403: error_type = "Forbidden (Whitelist/Geo)"
+                elif response.status_code == 429: error_type = "Quota Exceeded"
+                elif response.status_code == 401: error_type = "Auth Invalid"
+
+                LogService(get_supabase_client()).create_log_entry({
+                     "user_input": f"SYSTEM_ALERT: Imagen Failure [{response.status_code}]",
+                     "gemini_response": f"Mock Fallback Activated. Reason: {error_type}. Error: {response.text[:200]}",
+                     "project_name": "marketing_bot",
+                     "user_name": "system"
+                })
+
+                # Always Fallback for stability
+                return {
+                    "status": "fallback_mock",
+                    "image_url": "https://placehold.co/600x400/png?text=Imagen+Fallback+Mock"
+                }
 
             data = response.json()
             # Extract base64 image

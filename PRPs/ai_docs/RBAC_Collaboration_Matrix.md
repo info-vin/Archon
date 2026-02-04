@@ -30,13 +30,13 @@ Archon 是一個「使用者角色的人機協作平台」。在此生態系中�
 
 為了開發明確性，Agent 不再是模糊的概念，而是具備特定 `Tools` 與 `System Prompt` 的實體。
 
-| Agent 代號 | 類型 | 對應技能/工具 (MCP Tools) | 開發定義 |
-| :--- | :--- | :--- | :--- |
-| **`DevBot`** | L4-U | **Developer Agent**<br>- `auto_repair` (L2 Loop)<br>- `logo_tool` | **工匠 (Builder)**。負責修復 Bug、重構代碼，以及 **SVG 品牌資產生成**。具備沙箱修復能力。 |
-| **`MarketBot`**| L4-U | **Marketing/Sales Agent**<br>- `search_job_market`<br>- **`generate_sales_email`** | **獵犬/寫手 (Scout/Writer)**。負責搜尋職缺、分析需求，並**參考 Librarian 的知識**撰寫開發信/部落格草稿。 |
-| **`Librarian`**| L4-U | **Knowledge Agent**<br>- `archive_to_vector_db`<br>- **`rag_retrieval`** | **記憶庫 (Memory)**。負責將部落格/文件/成功信件向量化歸檔，並**提供檢索服務給 Bob 與 MarketBot**。 |
-| **`POBot`**    | L4-U | **Product Owner Agent**<br>- `generate_user_story`<br>- **`refine_task_spec`** | **策劃 (Planner)**。負責將回饋轉化為開發規格，並優化模糊的任務描述。 |
-| **`Clockwork`**| L4-S | **System Agent**<br>- `cleanup_logs`<br>- `analyze_token_usage` | **維運 (Ops)**。由 Cron Job 定期觸發，**負責計算 AI 消耗、分析 Logs 並生成儀表板資料**。 |
+| Agent 代號 | 類型 | 對應技能/工具 (MCP Tools) | 開發定義 | 此 Role 綁定的模型與檔案來源 (Model & Source) |
+| :--- | :--- | :--- | :--- | :--- |
+| **`DevBot`** | L4-U | **Developer Agent**<br>- `auto_repair`<br>- `logo_tool` | **工匠 (Builder)**。負責修復 Bug、重構代碼，以及 **SVG 品牌資產生成**。 | **Gemini 1.5 Flash** (General) / **Imagen 3** (Logo)<br>Source: `llm_provider_service.py` (Chat)<br>Source: `marketing_api.py` (Logo, `imagen-3.0-generate-001`) |
+| **`MarketBot`**| L4-U | **Marketing/Sales Agent**<br>- `search_job_market`<br>- **`generate_sales_email`** | **獵犬/寫手 (Scout/Writer)**。負責搜尋職缺、分析需求，並**參考 Librarian 的知識**撰寫開發信。 | **Gemini 1.5 Flash** (Default)<br>Config: `RAG Settings` > `MARKETING_MODEL`<br>Source: `marketing_api.py` |
+| **`Librarian`**| L4-U | **Knowledge Agent**<br>- `archive_to_vector_db`<br>- **`rag_retrieval`** | **記憶庫 (Memory)**。負責將部落格/文件/成功信件向量化歸檔，並**提供檢索服務**。 | **Text Embedding 004** (Google) / **3-Small** (OpenAI)<br>Config: `RAG Settings` > `EMBEDDING_MODEL`<br>Source: `llm_provider_service.py` |
+| **`POBot`**    | L4-U | **Product Owner Agent**<br>- `generate_user_story`<br>- **`refine_task_spec`** | **策劃 (Planner)**。負責將回饋轉化為開發規格，並優化模糊的任務描述。 | **Gemini 1.5 Flash** (Default)<br>Config: `RAG Settings` > `LLM_PROVIDER`<br>Source: `task_service.py` |
+| **`Clockwork`**| L4-S | **System Agent**<br>- `cleanup_logs`<br>- `analyze_token_usage` | **維運 (Ops)**。由 Cron Job 定期觸發，**負責計算 AI 消耗、分析 Logs**。 | **Gemini 1.5 Flash** (Default)<br>Config: `RAG Settings`<br>Source: `scheduler_service.py` |
 
 ---
 

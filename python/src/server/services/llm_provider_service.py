@@ -266,14 +266,25 @@ async def get_llm_client(
     base_url: str | None = None,
     user_id: str | None = None, # Added for Token Tracking
     request_id: str | None = None, # Added for Token Tracking
+    api_key: str | None = None, # Added for Key Decoupling (e.g. Gemini vs Google)
 ):
     """
     Create an async OpenAI-compatible client based on the configured provider.
+    
+    Args:
+        provider: LLM provider name (openai, google, etc.)
+        use_embedding_provider: Whether to look up embedding provider config
+        instance_type: For Ollama (chat/embedding)
+        base_url: Base URL override
+        user_id: User ID for token tracking
+        request_id: Request ID for token tracking
+        api_key: Optional API key override (takes precedence over config)
     """
 
     client = None
     provider_name: str | None = None
-    api_key = None
+    # api_key variable is already defined in args, we will use it or overwrite it
+    resolved_api_key = api_key 
 
     try:
 
@@ -282,7 +293,9 @@ async def get_llm_client(
         if provider:
             # Explicit provider requested - get minimal config
             provider_name = provider
-            api_key = await credential_service._get_provider_api_key(provider)
+            # Only fetch from DB if not provided in args
+            if not resolved_api_key:
+                resolved_api_key = await credential_service._get_provider_api_key(provider)
 
             # Check cache for rag_settings
             cache_key = "rag_strategy_settings"
@@ -315,7 +328,8 @@ async def get_llm_client(
                 logger.debug(f"Using cached {service_type} provider config")
 
             provider_name = provider_config["provider"]
-            api_key = provider_config["api_key"]
+            if not resolved_api_key:
+                resolved_api_key = provider_config["api_key"]
             # For Ollama, don't use the base_url from config - let _get_optimal_ollama_instance decide
             base_url = provider_config["base_url"] if provider_name != "ollama" else None
 
@@ -326,7 +340,7 @@ async def get_llm_client(
         # --- MOCK FALLBACK LOGIC START ---
         # If no API key is provided and we are in a dev/test environment (or forced mock),
         # we can return a MockClient instead of failing.
-        if not api_key and provider_name in ["openai", "google", "anthropic", "grok", "openrouter"]:
+        if not resolved_api_key and provider_name in ["openai", "google", "anthropic", "grok", "openrouter"]:
             # Check for MOCK_LLM_FALLBACK env var or infer from context (simplified here)
             # For this fix, we simply check if it's missing and log a warning,
             # then yield a mock client if allowed.
@@ -340,14 +354,14 @@ async def get_llm_client(
         # --- MOCK FALLBACK LOGIC END ---
 
         # Validate API key format for security (prevent injection)
-        if api_key:
-            if len(api_key.strip()) == 0:
-                api_key = None  # Treat empty strings as None
-            elif len(api_key) > 500:  # Reasonable API key length limit
+        if resolved_api_key:
+            if len(resolved_api_key.strip()) == 0:
+                resolved_api_key = None  # Treat empty strings as None
+            elif len(resolved_api_key) > 500:  # Reasonable API key length limit
                 raise ValueError("API key length exceeds security limits")
 
             # Re-check api_key after strip potential None-ification
-            if api_key and any(char in api_key for char in ['\n', '\r', '\t', '\0']):
+            if resolved_api_key and any(char in resolved_api_key for char in ['\n', '\r', '\t', '\0']):
                 raise ValueError("API key contains invalid characters")
 
         # Sanitize provider name for logging
@@ -355,8 +369,8 @@ async def get_llm_client(
         logger.info(f"Creating LLM client for provider: {safe_provider_name}")
 
         if provider_name == "openai":
-            if api_key:
-                client = openai.AsyncOpenAI(api_key=api_key)
+            if resolved_api_key:
+                client = openai.AsyncOpenAI(api_key=resolved_api_key)
                 logger.info("OpenAI client created successfully")
             else:
                 logger.warning("OpenAI API key not found, attempting Ollama fallback")
@@ -378,7 +392,7 @@ async def get_llm_client(
                         f"Ollama fallback client created successfully with base URL: {ollama_base_url}"
                     )
                     provider_name = "ollama"
-                    api_key = "ollama"
+                    resolved_api_key = "ollama"
                     base_url = ollama_base_url
                 except Exception as fallback_error:
                     raise ValueError(
@@ -401,45 +415,48 @@ async def get_llm_client(
             logger.info(f"Ollama client created successfully with base URL: {ollama_base_url}")
 
         elif provider_name == "google":
-            if not api_key:
+            if not resolved_api_key:
                 raise ValueError("Google API key not found")
 
             # Google's OpenAI-compatible endpoint requires the key in a specific header
             # rather than the standard Authorization: Bearer header.
+            # FIX: Force v1beta endpoint to avoid "v1main not found" errors
+            google_base_url = base_url or "https://generativelanguage.googleapis.com/v1beta/openai/"
+            
             client = openai.AsyncOpenAI(
-                api_key=api_key,
-                base_url=base_url or "https://generativelanguage.googleapis.com/v1beta/openai/",
-                default_headers={"x-goog-api-key": api_key.strip()}
+                api_key=resolved_api_key,
+                base_url=google_base_url,
+                default_headers={"x-goog-api-key": resolved_api_key.strip()}
             )
             logger.info("Google Gemini client created successfully (OpenAI-compatible)")
 
         elif provider_name == "openrouter":
-            if not api_key:
+            if not resolved_api_key:
                 raise ValueError("OpenRouter API key not found")
 
             client = openai.AsyncOpenAI(
-                api_key=api_key,
+                api_key=resolved_api_key,
                 base_url=base_url or "https://openrouter.ai/api/v1",
             )
             logger.info("OpenRouter client created successfully")
 
         elif provider_name == "anthropic":
-            if not api_key:
+            if not resolved_api_key:
                 raise ValueError("Anthropic API key not found")
 
             client = openai.AsyncOpenAI(
-                api_key=api_key,
+                api_key=resolved_api_key,
                 base_url=base_url or "https://api.anthropic.com/v1",
             )
             logger.info("Anthropic client created successfully")
 
         elif provider_name == "grok":
-            if not api_key:
+            if not resolved_api_key:
                 raise ValueError("Grok API key not found - set GROK_API_KEY environment variable")
 
             # Enhanced Grok API key validation (secure - no key fragments logged)
-            key_format_valid = api_key.startswith("xai-")
-            key_length_valid = len(api_key) >= 20
+            key_format_valid = resolved_api_key.startswith("xai-")
+            key_length_valid = len(resolved_api_key) >= 20
 
             if not key_format_valid:
                 logger.warning("Grok API key format validation failed - should start with 'xai-'")
@@ -452,7 +469,7 @@ async def get_llm_client(
             )
 
             client = openai.AsyncOpenAI(
-                api_key=api_key,
+                api_key=resolved_api_key,
                 base_url=base_url or "https://api.x.ai/v1",
             )
             logger.info("Grok client created successfully")
