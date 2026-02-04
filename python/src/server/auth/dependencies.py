@@ -14,7 +14,7 @@ security = HTTPBearer()
 
 async def get_token(credentials: Annotated[HTTPAuthorizationCredentials, Depends(security)]) -> str:
     """Extracts the Bearer token from the Authorization header."""
-    return cast(str, credentials.credentials)
+    return credentials.credentials
 
 async def get_current_user(
     token: Annotated[str, Depends(get_token)]
