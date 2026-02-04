@@ -13,10 +13,9 @@ from ..services.credential_service import credential_service
 from ..services.guardrail_service import GuardrailService
 from ..services.job_board_service import JobBoardService, JobData
 from ..services.llm_provider_service import get_llm_client
+from ..services.log_service import LogService
 from ..services.search.rag_service import RAGService
 from ..utils import get_supabase_client
-from ..services.log_service import LogService
-import random
 
 # TODO(Phase 5): Re-enable this when MCP Server is properly integrated as a package or service
 # from mcp_server.features.design.logo_tool import GenerateBrandAssetTool
@@ -342,7 +341,7 @@ async def generate_pitch(request: PitchRequest, current_user: dict = Depends(get
                 content = str(response.choices[0].message.content)
         except Exception as pitch_error:
              logger.error(f"API: Pitch Generation Failed | error={pitch_error}")
-             
+
              # Log SYSTEM_ALERT
              LogService(get_supabase_client()).create_log_entry({
                  "user_input": f"SYSTEM_ALERT: Pitch Gen Failure [{type(pitch_error).__name__}]",
@@ -738,7 +737,7 @@ async def draft_blog_post(request: DraftBlogRequest, current_user: dict = Depend
         except Exception as llm_error:
              # Robust Mock Fallback
              logger.error(f"API: LLM Generation Failed | error={llm_error}")
-             
+
              # Log SYSTEM_ALERT
              LogService(get_supabase_client()).create_log_entry({
                  "user_input": f"SYSTEM_ALERT: Blog Draft Failure [{type(llm_error).__name__}]",
@@ -790,7 +789,7 @@ async def nana_banana_proxy(
 
     # Key Decoupling: Prefer GEMINI_API_KEY FIRST, then GOOGLE_API_KEY
     # This allows separating Marketing/Bob quota from RAG/Search quota
-    api_key = await credential_service.get_credential("GEMINI_API_KEY") 
+    api_key = await credential_service.get_credential("GEMINI_API_KEY")
     if not api_key:
         api_key = await credential_service.get_credential("GOOGLE_API_KEY")
 
@@ -834,12 +833,15 @@ async def nana_banana_proxy(
 
             if response.status_code != 200:
                 logger.error(f"Imagen API Error: {response.text}")
-                
+
                 # Granular Error Logging
                 error_type = "Unknown"
-                if response.status_code == 403: error_type = "Forbidden (Whitelist/Geo)"
-                elif response.status_code == 429: error_type = "Quota Exceeded"
-                elif response.status_code == 401: error_type = "Auth Invalid"
+                if response.status_code == 403:
+                    error_type = "Forbidden (Whitelist/Geo)"
+                elif response.status_code == 429:
+                    error_type = "Quota Exceeded"
+                elif response.status_code == 401:
+                    error_type = "Auth Invalid"
 
                 LogService(get_supabase_client()).create_log_entry({
                      "user_input": f"SYSTEM_ALERT: Imagen Failure [{response.status_code}]",

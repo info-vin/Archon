@@ -270,7 +270,7 @@ async def get_llm_client(
 ):
     """
     Create an async OpenAI-compatible client based on the configured provider.
-    
+
     Args:
         provider: LLM provider name (openai, google, etc.)
         use_embedding_provider: Whether to look up embedding provider config
@@ -284,7 +284,7 @@ async def get_llm_client(
     client = None
     provider_name: str | None = None
     # api_key variable is already defined in args, we will use it or overwrite it
-    resolved_api_key = api_key 
+    resolved_api_key = api_key
 
     try:
 
@@ -422,7 +422,7 @@ async def get_llm_client(
             # rather than the standard Authorization: Bearer header.
             # FIX: Force v1beta endpoint to avoid "v1main not found" errors
             google_base_url = base_url or "https://generativelanguage.googleapis.com/v1beta/openai/"
-            
+
             client = openai.AsyncOpenAI(
                 api_key=resolved_api_key,
                 base_url=google_base_url,

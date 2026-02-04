@@ -11,6 +11,7 @@ import textwrap
 from datetime import datetime
 from typing import Any
 
+from src.server.services.log_service import LogService  # Enhanced Logging
 from src.server.utils import get_supabase_client
 
 from ...config.logfire_config import get_logger
@@ -633,22 +634,18 @@ class TaskService:
             """).strip()
 
             # 3. Generate Content using the correct client pattern
-            # Get active model from config
-            provider_config = await credential_service.get_active_provider("llm")
-            # Fallback to gemini-2.5-flash (User Preference) instead of 2.0/1.5 if not set
-            model_name = provider_config.get("chat_model") or "gemini-2.5-flash"
+            # Upgrade to gemini-2.5-flash-lite for efficiency
+            model_name = "gemini-2.5-flash-lite"
+
+            # Key Decoupling: Prefer GEMINI_API_KEY (Manager/Marketing Resource)
+            charlie_api_key = await credential_service.get_credential("GEMINI_API_KEY")
+            if not charlie_api_key:
+                 charlie_api_key = await credential_service.get_credential("GOOGLE_API_KEY")
 
             # DEBUG: Log the model name being used
             logger.info(f"Refining task with model: {model_name}")
 
-            # FIX for Gemini 404: "models/gemini-1.5-flash is not found"
-            # If the provider returns "models/...", strip it because the client might be adding it again
-            # or the API expects the short name.
-            if model_name.startswith("models/"):
-                model_name = model_name.replace("models/", "")
-                logger.info(f"Stripped 'models/' prefix. New model name: {model_name}")
-
-            async with get_llm_client() as client:
+            async with get_llm_client(api_key=charlie_api_key) as client:
                 response = await client.chat.completions.create(
                     model=model_name,
                     messages=[
@@ -665,8 +662,20 @@ class TaskService:
             return content
         except Exception as e:
             logger.error(f"POBot refinement failed: {e}", exc_info=True)
-            # Return a clearer error message that the user can see in the text area
-            return f"{description}\n\n[System Error: AI Refinement failed. Reason: {str(e)}]"
+
+            # System Alert Logging
+            try:
+                LogService(self.supabase_client).create_log_entry({
+                    "user_input": f"SYSTEM_ALERT: POBot Failure [{type(e).__name__}]",
+                    "gemini_response": f"Refinement Skipped. Error: {str(e)}",
+                    "project_name": "manager_bot",
+                    "user_name": "system"
+                })
+            except Exception:
+                pass # Fail safe if logging fails
+
+            # Graceful Fallback: Return original description with note
+            return f"{description}\n\n[System Note: AI Refinement skipped due to service disruption. Original content preserved.]"
 
     async def get_all_project_task_counts(self) -> tuple[bool, dict[str, dict[str, int]]]:
         """
@@ -782,8 +791,13 @@ class TaskService:
                 context_str += "\n".join([res.get("content", "")[:300] for res in rag_result["results"]])
 
             # 4. Call AI to generate Task Draft
-            provider_config = await credential_service.get_active_provider("llm")
-            model_name = provider_config.get("chat_model") or "gemini-1.5-flash"
+            # Upgrade to gemini-2.5-flash-lite
+            model_name = "gemini-2.5-flash-lite"
+
+            # Key Decoupling
+            charlie_api_key = await credential_service.get_credential("GEMINI_API_KEY")
+            if not charlie_api_key:
+                 charlie_api_key = await credential_service.get_credential("GOOGLE_API_KEY")
 
             prompt = textwrap.dedent(f"""
                 You are Charlie's Strategic Assistant.
@@ -801,16 +815,41 @@ class TaskService:
                 DESCRIPTION: [Detailed strategy]
             """).strip()
 
-            async with get_llm_client() as client:
-                response = await client.chat.completions.create(
-                    model=model_name,
-                    messages=[
-                        {"role": "system", "content": "You are a helpful Managerial AI assistant. ALWAYS answer in Traditional Chinese (Taiwan繁體中文)."},
-                        {"role": "user", "content": prompt}
-                    ],
-                    temperature=0.7
-                )
-            ai_output = str(response.choices[0].message.content)
+            try:
+                async with get_llm_client(api_key=charlie_api_key) as client:
+                    response = await client.chat.completions.create(
+                        model=model_name,
+                        messages=[
+                            {"role": "system", "content": "You are a helpful Managerial AI assistant. ALWAYS answer in Traditional Chinese (Taiwan繁體中文)."},
+                            {"role": "user", "content": prompt}
+                        ],
+                        temperature=0.7
+                    )
+                ai_output = str(response.choices[0].message.content)
+            except Exception as llm_error:
+                 # Smart Dispatch Fallback: Rule-Based Logic
+                 logger.error(f"Smart Dispatch AI Failed: {llm_error}")
+
+                 # Log System Alert
+                 LogService(self.supabase_client).create_log_entry({
+                    "user_input": f"SYSTEM_ALERT: Smart Dispatch Failure [{type(llm_error).__name__}]",
+                    "gemini_response": f"Rule-Based Fallback Activated. Error: {str(llm_error)}",
+                    "project_name": "manager_bot",
+                    "user_name": "system"
+                 })
+
+                 # Rule-Based Template
+                 ai_output = f"""TITLE: Manual Follow-up: {company_name}
+DESCRIPTION: **System Generated Fallback Task**
+Target: {company_name}
+Alert: {alert['message']}
+
+Suggested Actions:
+1. Review recent visit logs.
+2. Contact the decision maker directly.
+3. Update lead status in CRM.
+
+(AI Dispatch service temporarily unavailable)"""
 
             # Parse AI Output (Simple extraction)
             title = f"Follow-up: {company_name}"
