@@ -1,10 +1,8 @@
 import asyncio
 import logging
-import uuid
 
+import httpx
 from fastapi import APIRouter, Depends, HTTPException, Query
-from google import genai
-from google.genai import types
 from pydantic import BaseModel
 
 from ..auth.dependencies import get_current_user
@@ -710,11 +708,11 @@ async def draft_blog_post(request: DraftBlogRequest, current_user: dict = Depend
             context_text = "No specific internal references found. Rely on general industry knowledge."
 
         # 2. LLM Generation
+        provider_config = await credential_service.get_active_provider("llm")
         # Optimization: Fetch MARKETING_MODEL
         rag_strategy_creds = await credential_service.get_credentials_by_category("rag_strategy")
         marketing_model = rag_strategy_creds.get("MARKETING_MODEL")
-        # REALITY CHECK (Feb 2026): Default to gemini-2.5-flash-lite for Bob
-        model_name = marketing_model or "gemini-2.5-flash-lite"
+        model_name = marketing_model or provider_config.get("chat_model") or "gpt-4o"
 
         # Key Decoupling: Prefer GEMINI_API_KEY for Marketing, fallback to GOOGLE_API_KEY
         marketing_api_key = await credential_service.get_credential("GEMINI_API_KEY")
@@ -724,45 +722,21 @@ async def draft_blog_post(request: DraftBlogRequest, current_user: dict = Depend
         system_prompt = BLOG_DRAFT_SYSTEM_PROMPT
         user_prompt = f"Topic: {request.topic}\nKeywords: {request.keywords}\nTone: {request.tone}\n\n<reference_context>\n{context_text}\n</reference_context>"
 
-        request_id = f"blog-{uuid.uuid4().hex[:8]}"
-        user_id = current_user.get("id")
-
         try:
-            # REALITY CHECK (Feb 2026): Use official GenAI Client for Bob
-            # This avoids OpenAI-compatible naming issues (404s)
-            client = genai.Client(api_key=marketing_api_key)
-
-            # JSON-mode response with Gemini 2.5 Flash Lite
-            response = client.models.generate_content(
-                model=model_name,
-                contents=[user_prompt],
-                config=types.GenerateContentConfig(
-                    system_instruction=system_prompt,
-                    response_mime_type="application/json",
-                    temperature=0.7,
-                )
-            )
-
-            import json
-            result = json.loads(response.text)
-
-            # --- GAP-016: Real Token Usage Logging ---
-            try:
-                from ..services.token_usage_service import TokenUsageService
-                asyncio.create_task(TokenUsageService.log_usage(
-                    request_id=request_id,
-                    user_id=user_id,
+            async with get_llm_client(api_key=marketing_api_key) as client:
+                response = await client.chat.completions.create(
                     model=model_name,
-                    provider="google",
-                    input_tokens=response.usage_metadata.prompt_token_count,
-                    output_tokens=response.usage_metadata.candidates_token_count,
-                    context_type="blog_draft"
-                ))
-            except Exception as log_err:
-                logger.warning(f"Failed to log blog usage: {log_err}")
+                    messages=[{"role": "system", "content": system_prompt}, {"role": "user", "content": user_prompt}],
+                    response_format={ "type": "json_object" },
+                    temperature=0.7
+                )
+                import json
+                # Ensure content is a string
+                message_content = response.choices[0].message.content or "{}"
+                result = json.loads(message_content)
         except Exception as llm_error:
              # Robust Mock Fallback
-             logger.error(f"API: LLM Generation Failed | model={model_name} | error={str(llm_error)}", exc_info=True)
+             logger.error(f"API: LLM Generation Failed | error={llm_error}")
 
              # Log SYSTEM_ALERT
              LogService(get_supabase_client()).create_log_entry({
@@ -774,8 +748,8 @@ async def draft_blog_post(request: DraftBlogRequest, current_user: dict = Depend
 
              # Fallback Content
              result = {
-                 "title": f"[OFFLINE MOCK] The Future of {request.topic}",
-                 "content": f"## Introduction\nIn the rapidly evolving landscape of {request.topic}, staying ahead is crucial...\n\n### Key Insight\nArchon's AI solutions can help mitigate risks.\n\n### Conclusion\nEmbrace the future today.\n\n*(Automatically generated fallback draft due to AI service disruption: {str(llm_error)[:100]})*",
+                 "title": f"The Future of {request.topic} (Draft)",
+                 "content": f"## Introduction\nIn the rapidly evolving landscape of {request.topic}, staying ahead is crucial...\n\n### Key Insight\nArchon's AI solutions can help mitigate risks.\n\n### Conclusion\nEmbrace the future today.\n\n*(Automatically generated fallback draft due to AI service disruption)*",
                  "excerpt": f"A deep dive into {request.topic} and its implications.",
                  "used_references": ["Fallback Knowledge Base"]
              }
@@ -806,98 +780,107 @@ async def nana_banana_proxy(
     current_user: dict = Depends(get_current_user)
 ):
     """
-    Proxy request to Nano Banana Image Generation Service.
-    Powered by Gemini 2.5 Flash Image.
+    Proxy request to Nana Banana Image Generation Service.
+    Protected by Backend Env Key.
     """
     user_role = current_user.get("role", "viewer").lower()
     if user_role not in ["marketing", "manager", "admin"]:
         raise HTTPException(status_code=403, detail="Only Marketing/Managers can generate assets.")
 
     # Key Decoupling: Prefer GEMINI_API_KEY FIRST, then GOOGLE_API_KEY
+    # This allows separating Marketing/Bob quota from RAG/Search quota
     api_key = await credential_service.get_credential("GEMINI_API_KEY")
     if not api_key:
         api_key = await credential_service.get_credential("GOOGLE_API_KEY")
 
     if not api_key:
-        logger.warning("No API Key found for Nana Banana. Using Mock.")
+        # Instead of 503, use fallback immediately for demo continuity
+        logger.warning("No API Key found for Imagen. Using Mock.")
         return {
             "status": "fallback_mock",
             "image_url": "https://placehold.co/600x400/png?text=No+API+Key+Configured"
         }
 
-    # REALITY CHECK (Feb 2026): Use Nano Banana Gemini 2.5 Flash Image
+    # Real Implementation for Google Imagen 3
     rag_strategy_creds = await credential_service.get_credentials_by_category("rag_strategy")
-    imagen_model = rag_strategy_creds.get("MARKETING_IMAGE_MODEL") or "gemini-2.5-flash-image"
+    # Default to imagen-3.0-generate-001 (Preview/Beta)
+    imagen_model = rag_strategy_creds.get("MARKETING_IMAGE_MODEL") or "imagen-3.0-generate-001"
+
+    logger.info(f"API: Google Imagen Call ({imagen_model}) | user={current_user.get('email')}")
 
     prompt = request.get("prompt", "A futuristic digital artwork of a high-tech dashboard")
-    # Mapping old aspect ratios to new SDK if needed, for now use direct
+    aspect_ratio = request.get("aspect_ratio", "1:1")
 
-    logger.info(f"API: Nano Banana Call ({imagen_model}) | user={current_user.get('email')}")
+    # Google Imagen via REST API (Generative Language API)
+    # Endpoint: https://generativelanguage.googleapis.com/v1beta/models/{model}:predict
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/{imagen_model}:predict?key={api_key}"
+
+    payload = {
+        "instances": [
+            {
+                "prompt": prompt
+            }
+        ],
+        "parameters": {
+            "sampleCount": 1,
+            "aspectRatio": aspect_ratio
+        }
+    }
 
     try:
-        # Use synchronous Client for now or wrap in thread if SDK is blocking
-        # google-genai 0.3.0 supports sync/async but let's use the pattern from docs
-        client = genai.Client(api_key=api_key)
+        async with httpx.AsyncClient() as client:
+            response = await client.post(url, json=payload, timeout=30.0)
 
-        # Call the new generate_content model for Image Modality
-        response = client.models.generate_content(
-            model=imagen_model,
-            contents=[prompt],
-            config=types.GenerateContentConfig(
-                response_modalities=['IMAGE'],
-            )
-        )
+            if response.status_code != 200:
+                logger.error(f"Imagen API Error: {response.text}")
 
-        b64_image = None
-        mime_type = "image/png"
+                # Granular Error Logging
+                error_type = "Unknown"
+                if response.status_code == 403:
+                    error_type = "Forbidden (Whitelist/Geo)"
+                elif response.status_code == 429:
+                    error_type = "Quota Exceeded"
+                elif response.status_code == 401:
+                    error_type = "Auth Invalid"
 
-        for part in response.parts:
-            if part.inline_data:
-                b64_image = part.inline_data.data # Base64 string
-                mime_type = part.inline_data.mime_type or "image/png"
-                break
+                LogService(get_supabase_client()).create_log_entry({
+                     "user_input": f"SYSTEM_ALERT: Imagen Failure [{response.status_code}]",
+                     "gemini_response": f"Mock Fallback Activated. Reason: {error_type}. Error: {response.text[:200]}",
+                     "project_name": "marketing_bot",
+                     "user_name": "system"
+                })
 
-        if not b64_image:
-            raise Exception("No image data returned from Gemini 2.5 Flash Image")
+                # Always Fallback for stability
+                return {
+                    "status": "fallback_mock",
+                    "image_url": "https://placehold.co/600x400/png?text=Imagen+Fallback+Mock"
+                }
 
-        # --- GAP-016: Real Token Usage Logging ---
-        try:
-            from ..services.token_usage_service import TokenUsageService
-            # Images usually have a fixed cost or large token equivalent
-            # For Gemini 2.5 Image, let's estimate or use actual if SDK provides
-            asyncio.create_task(TokenUsageService.log_usage(
-                request_id=f"img-{uuid.uuid4().hex[:8]}",
-                user_id=current_user.get("id"),
-                model=imagen_model,
-                provider="google",
-                input_tokens=len(prompt), # Simple heuristic
-                output_tokens=2000, # Image weight
-                context_type="image_generation"
-            ))
-        except Exception as log_err:
-            logger.warning(f"Failed to log image usage: {log_err}")
+            data = response.json()
+            # Extract base64 image
+            # structure: predictions[0].bytesBase64Encoded
+            # or predictions[0].mimeType
 
-        return {
-            "status": "success",
-            "image_url": f"data:{mime_type};base64,{b64_image}"
-        }
+            if "predictions" in data and len(data["predictions"]) > 0:
+                prediction = data["predictions"][0]
+                b64_image = prediction.get("bytesBase64Encoded")
+                mime_type = prediction.get("mimeType", "image/png")
+
+                # We return raw base64 data URL for frontend to display directly
+                # In prod, we should upload this to Supabase Storage and return URL
+                return {
+                    "status": "success",
+                    "image_url": f"data:{mime_type};base64,{b64_image}"
+                }
+            else:
+                raise Exception("No predictions returned")
 
     except Exception as e:
-        logger.error(f"Nano Banana API Error: {str(e)}")
-
-        # Granular Error Logging
-        error_msg = str(e)
-        LogService(get_supabase_client()).create_log_entry({
-             "user_input": "SYSTEM_ALERT: Nano Banana Failure",
-             "gemini_response": f"Mock Fallback Activated. Error: {error_msg[:200]}",
-             "project_name": "marketing_bot",
-             "user_name": "system"
-        })
-
-        # Graceful degradation to keep Bob working
+        logger.error(f"Imagen API Exception: {e}")
+        # Graceful degradation
         return {
-            "status": "fallback_mock",
-            "image_url": "https://placehold.co/600x400/png?text=Nana+Banana+Fallback"
+            "status": "error_fallback",
+            "image_url": "https://placehold.co/600x400/png?text=Imagen+Error+Fallback"
         }
 
 @router.get("/trends")

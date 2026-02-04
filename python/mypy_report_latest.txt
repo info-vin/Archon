@@ -1,0 +1,2 @@
+src/server/services/projects/task_service.py:639: error: '(' was never closed  [syntax]
+Found 1 error in 1 file (errors prevented further checking)
