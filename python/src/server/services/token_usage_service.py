@@ -1,21 +1,25 @@
+from datetime import UTC
 from decimal import Decimal
-from typing import Any, cast
+from typing import Any
 
 from ..config.logfire_config import get_logger
 from ..utils import get_supabase_client
 
 logger = get_logger(__name__)
 
-# Pricing Map (USD per 1M tokens) - Updated 2026-02-03
-# Values are illustrative approximations.
+# Pricing Map (USD per 1M tokens or per 1K units) - Updated Feb 2026
 PRICING_MAP = {
     "gpt-4o": {"input": 2.50, "output": 10.00},
     "gpt-4o-mini": {"input": 0.15, "output": 0.60},
-    "gemini-1.5-pro": {"input": 1.25, "output": 5.00},  # <128k context
+    "gemini-1.5-pro": {"input": 1.25, "output": 5.00},
     "gemini-1.5-flash": {"input": 0.075, "output": 0.30},
-    "gemini-2.0-flash": {"input": 0.10, "output": 0.40}, # Estimated
+    "gemini-2.0-flash": {"input": 0.10, "output": 0.40},
+    "gemini-2.5-flash": {"input": 0.10, "output": 0.40},
+    "gemini-2.5-flash-lite": {"input": 0.05, "output": 0.20}, # Nano Banana Lite
+    "gemini-2.5-flash-image": {"input": 0.00, "output": 2.00}, # $0.002 per image (heuristic)
+    "text-embedding-004": {"input": 0.02, "output": 0.00},
     "claude-3-5-sonnet": {"input": 3.00, "output": 15.00},
-    "ollama": {"input": 0.00, "output": 0.00}, # Local is free
+    "ollama": {"input": 0.00, "output": 0.00},
 }
 
 class TokenUsageService:
@@ -31,15 +35,12 @@ class TokenUsageService:
     ) -> None:
         """
         Log token usage to the database with cost calculation.
-        This is designed to be "fire and forget" - errors are logged but don't stop execution.
         """
         try:
             # calculate cost
-            rates: dict[str, float] | None = None
+            rates = PRICING_MAP.get(model, PRICING_MAP.get("gemini-2.5-flash-lite"))
             if provider == "ollama":
                 rates = PRICING_MAP["ollama"]
-            else:
-                rates = PRICING_MAP.get(model, PRICING_MAP.get("gpt-4o"))
 
             cost = Decimal(0)
             if rates:
@@ -62,19 +63,10 @@ class TokenUsageService:
                 "created_at": "now()"
             }
 
-            # Using fire-and-forget approach or await?
-            # Ideally async, but Supabase client is synchronous requests wrapped in async usually?
-            # Our get_supabase_client returns a sync client usually, but let's check.
-            # Assuming postgrest-py execute() is sync, we might want to run in thread if blocking.
-            # But for now, direct call is fine as it's critical data.
-
             supabase.table("token_usage").insert(payload).execute()
-
-            if provider != "ollama":
-                logger.debug(f"💰 Token Usage Logged: {model} | {input_tokens}/{output_tokens} | ${cost:.6f}")
+            logger.debug(f"💰 Token Usage Logged: {model} | {input_tokens}/{output_tokens} | ${cost:.6f} | User: {user_id}")
 
         except Exception as e:
-            # We don't want to break the app if logging fails, but we should know about it.
             logger.error(f"Failed to log token usage: {e}")
 
     @staticmethod
@@ -84,23 +76,38 @@ class TokenUsageService:
         """
         try:
             supabase = get_supabase_client()
-            # PostgREST doesn't support aggregate GROUP BY date easily without RPC.
-            # For now, we fetch raw data and aggregate in Python (ok for low volume).
-            # In Phase 5, we should move this to a DB View or RPC.
+            from datetime import datetime, timedelta
+            since = datetime.now(UTC) - timedelta(days=days)
 
-            # Fetch last 7 days
-            # updated_at is not on token_usage, created_at is.
-            # filter created_at > now - 7 days
+            res = supabase.table("token_usage").select("cost_usd, created_at, model, user_id")\
+                .gt("created_at", since.isoformat())\
+                .order("created_at", desc=True).limit(5000).execute()
 
-            # Using RPC is better if available, but let's stick to raw fetch for "Start Simple"
-            res = supabase.table("token_usage").select("cost_usd, created_at, model, provider")\
-                .order("created_at", desc=True).limit(2000).execute()
-
-            # Aggregate logic here...
-            # Omitted for brevity in this initial implementation, will return raw rows for Frontend to aggregate
             data = res.data if res.data else []
-            return cast(list[dict[str, Any]], data)
 
+            # Aggregate by date
+            daily_stats: dict[str, dict[str, Any]] = {}
+            for row in data:
+                date_str = row["created_at"].split("T")[0]
+                if date_str not in daily_stats:
+                    daily_stats[date_str] = {
+                        "date": date_str,
+                        "cost": 0.0,
+                        "request_count": 0,
+                        "models": set()
+                    }
+
+                daily_stats[date_str]["cost"] += row.get("cost_usd", 0)
+                daily_stats[date_str]["request_count"] += 1
+                daily_stats[date_str]["models"].add(row["model"])
+
+            result = []
+            for d in sorted(daily_stats.keys()):
+                item = daily_stats[d]
+                item["models"] = list(item["models"])
+                result.append(item)
+
+            return result
         except Exception as e:
             logger.error(f"Failed to fetch daily cost: {e}")
             return []

@@ -24,6 +24,7 @@ class EnvironmentConfig:
     supabase_service_key: str
     port: int  # Required - no default
     openai_api_key: str | None = None
+    gemini_api_key: str | None = None
     host: str = "0.0.0.0"
     transport: str = "sse"
 
@@ -141,8 +142,9 @@ def validate_supabase_url(url: str) -> bool:
 
 def load_environment_config() -> EnvironmentConfig:
     """Load and validate environment configuration."""
-    # OpenAI API key is optional at startup - can be set via API
+    # LLM API keys are optional at startup - can be set via API or DB
     openai_api_key = os.getenv("OPENAI_API_KEY")
+    gemini_api_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
 
     # Required environment variables for database access
     supabase_url = os.getenv("SUPABASE_URL")
@@ -153,7 +155,7 @@ def load_environment_config() -> EnvironmentConfig:
     if not supabase_service_key:
         raise ConfigurationError("SUPABASE_SERVICE_KEY environment variable is required")
 
-    # Validate required fields
+    # Validate provided fields
     if openai_api_key:
         validate_openai_api_key(openai_api_key)
     validate_supabase_url(supabase_url)
@@ -208,6 +210,7 @@ def load_environment_config() -> EnvironmentConfig:
 
     return EnvironmentConfig(
         openai_api_key=openai_api_key,
+        gemini_api_key=gemini_api_key,
         supabase_url=supabase_url,
         supabase_service_key=supabase_service_key,
         host=host,
