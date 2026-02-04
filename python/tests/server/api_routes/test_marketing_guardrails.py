@@ -20,14 +20,16 @@ def mock_user_dependency():
 @pytest.fixture
 def mock_services():
     with patch("src.server.api_routes.marketing_api.RAGService") as mock_rag, \
-         patch("src.server.api_routes.marketing_api.get_llm_client") as mock_llm_ctx, \
+         patch("src.server.api_routes.marketing_api.genai.Client") as mock_genai, \
          patch("src.server.services.credential_service.credential_service.get_credential", new_callable=AsyncMock) as mock_get_cred, \
          patch("src.server.services.credential_service.credential_service.get_active_provider", new_callable=AsyncMock) as mock_get_provider, \
+         patch("src.server.services.credential_service.credential_service.get_credentials_by_category", new_callable=AsyncMock) as mock_get_cat, \
          patch("src.server.utils.get_supabase_client") as mock_get_supabase:
 
         # Mock Credential Service
-        mock_get_cred.return_value = "gpt-4o" # Default model
-        mock_get_provider.return_value = {"chat_model": "gpt-4o"}
+        mock_get_cred.return_value = "fake-key"
+        mock_get_provider.return_value = {"chat_model": "gemini-2.5-flash-lite"}
+        mock_get_cat.return_value = {"MARKETING_MODEL": "gemini-2.5-flash-lite"}
 
         # Mock Supabase for Guardrail logging
         mock_supabase = MagicMock()
@@ -38,14 +40,14 @@ def mock_services():
         rag_instance = mock_rag.return_value
         rag_instance.perform_rag_query = AsyncMock(return_value=(True, {"results": []}))
 
-        # Mock LLM Client
-        mock_client = AsyncMock()
-        mock_llm_ctx.return_value.__aenter__.return_value = mock_client
-        mock_client.chat.completions.create.return_value.choices = [
-            MagicMock(message=MagicMock(content='{"title": "Safe Blog", "content": "Safe content", "excerpt": "..."}'))
-        ]
+        # Mock GenAI Client
+        mock_client = mock_genai.return_value
+        mock_client.models.generate_content.return_value = MagicMock(
+            text='{"title": "Safe Blog", "content": "Safe content", "excerpt": "..."}',
+            usage_metadata=MagicMock(prompt_token_count=10, candidates_token_count=10)
+        )
 
-        yield mock_rag, mock_llm_ctx
+        yield mock_rag, mock_genai
 
 def test_guardrail_blocks_forbidden_input(mock_user_dependency):
     # Act: Send forbidden keyword
@@ -76,11 +78,11 @@ def test_guardrail_allows_safe_input(mock_user_dependency, mock_services):
 
 def test_guardrail_blocks_ai_leakage(mock_user_dependency, mock_services):
     # Mock LLM to return leaked AI disclosure
-    _, mock_llm_ctx = mock_services
-    mock_client = mock_llm_ctx.return_value.__aenter__.return_value
-    mock_client.chat.completions.create.return_value.choices = [
-        MagicMock(message=MagicMock(content='{"title": "Oops", "content": "I am an AI language model developed by OpenAI.", "excerpt": "..."}'))
-    ]
+    _, mock_genai = mock_services
+    mock_genai.return_value.models.generate_content.return_value = MagicMock(
+        text='{"title": "Oops", "content": "I am an AI language model developed by OpenAI.", "excerpt": "..."}',
+        usage_metadata=MagicMock(prompt_token_count=10, candidates_token_count=10)
+    )
 
     # Act
     response = client.post("/api/marketing/blog/draft", json={

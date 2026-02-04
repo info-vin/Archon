@@ -24,6 +24,7 @@ class EnvironmentConfig:
     supabase_service_key: str
     port: int  # Required - no default
     openai_api_key: str | None = None
+    gemini_api_key: str | None = None
     host: str = "0.0.0.0"
     transport: str = "sse"
 

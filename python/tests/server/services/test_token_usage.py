@@ -72,5 +72,5 @@ async def test_log_usage_unknown_model_fallback():
 
         args, _ = mock_table.insert.call_args
         payload = args[0]
-        # Should use GPT-4o pricing as default fallback in current implementaiton
-        assert payload["cost_usd"] == 12.5
+        # Should use gemini-2.5-flash-lite pricing as default fallback in realized implementation
+        assert payload["cost_usd"] == 0.25

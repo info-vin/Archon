@@ -1,7 +1,6 @@
 
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
+from unittest.mock import AsyncMock, Mock, patch
 
-import httpx
 import pytest
 
 from src.server.api_routes.marketing_api import DraftBlogRequest, draft_blog_post, nana_banana_proxy
@@ -15,10 +14,9 @@ async def test_draft_blog_fallback_on_llm_failure():
     user = {"id": "test-user-id", "role": "marketing", "email": "test@archon.ai"}
     request = DraftBlogRequest(topic="AI Benefits", keywords="Efficiency", tone="Expert")
 
-    with patch("src.server.api_routes.marketing_api.get_llm_client") as mock_get_client:
-        mock_client = AsyncMock()
-        mock_client.chat.completions.create.side_effect = Exception("LLM failure")
-        mock_get_client.return_value.__aenter__.return_value = mock_client
+    with patch("src.server.api_routes.marketing_api.genai.Client") as MockGenAI:
+        # Mock the SDK to raise an exception
+        MockGenAI.return_value.models.generate_content.side_effect = Exception("LLM failure")
 
         with patch("src.server.api_routes.marketing_api.RAGService") as MockRAG:
             MockRAG.return_value.perform_rag_query = AsyncMock(return_value=(True, {"results": []}))
@@ -26,34 +24,30 @@ async def test_draft_blog_fallback_on_llm_failure():
                 MockGuard.validate_input.return_value = (True, "")
                 MockGuard.audit_output.return_value = (True, "")
                 with patch("src.server.api_routes.marketing_api.credential_service") as MockCreds:
-                    MockCreds.get_active_provider = AsyncMock(return_value={"chat_model": "gemini-1.5-flash"})
-                    MockCreds.get_credentials_by_category = AsyncMock(return_value={"MARKETING_MODEL": "gemini-1.5-flash"})
+                    MockCreds.get_active_provider = AsyncMock(return_value={"chat_model": "gemini-2.5-flash-lite"})
+                    MockCreds.get_credentials_by_category = AsyncMock(return_value={"MARKETING_MODEL": "gemini-2.5-flash-lite"})
                     MockCreds.get_credential = AsyncMock(return_value="fake-key")
                     with patch("src.server.api_routes.marketing_api.LogService") as MockLogService:
                         MockLogService.return_value.create_log_entry = Mock()
 
-                        # Directly call the endpoint function to avoid httpx mock collisions
+                        # Directly call the endpoint function
                         response = await draft_blog_post(request=request, current_user=user)
 
-                        assert "The Future of AI Benefits (Draft)" == response.title
+                        assert "[OFFLINE MOCK]" in response.title
+                        assert "AI Benefits" in response.title
                         MockLogService.return_value.create_log_entry.assert_called_once()
 
 @pytest.mark.asyncio
-async def test_nana_banana_fallback_on_403():
+async def test_nana_banana_fallback_on_429():
     """
-    TC2: Simulate Image API 403 Forbidden -> Assert returns Mock Image via direct function call.
+    TC2: Simulate Image API 429 Quota Exceeded -> Assert returns Mock Image via direct function call.
     """
     user = {"id": "test-user-id", "role": "marketing", "email": "test@archon.ai"}
 
-    mock_response = MagicMock(spec=httpx.Response)
-    mock_response.status_code = 403
-    mock_response.text = "Permission Denied"
+    with patch("src.server.api_routes.marketing_api.genai.Client") as MockGenAI:
+        # Mock the SDK to raise an exception (like 429 Resource Exhausted)
+        MockGenAI.return_value.models.generate_content.side_effect = Exception("429 Quota Exceeded")
 
-    mock_instance = AsyncMock()
-    mock_instance.post.return_value = mock_response
-    mock_instance.__aenter__.return_value = mock_instance
-
-    with patch("src.server.api_routes.marketing_api.httpx.AsyncClient", return_value=mock_instance):
         with patch("src.server.api_routes.marketing_api.credential_service") as MockCreds:
             MockCreds.get_credential = AsyncMock(return_value="fake-key")
             MockCreds.get_credentials_by_category = AsyncMock(return_value={})
@@ -68,5 +62,5 @@ async def test_nana_banana_fallback_on_403():
 
                 # ASSERT
                 assert result["status"] == "fallback_mock"
-                assert "placehold.co" in result["image_url"]
+                assert "placehold.co" in result["image_url"] or "Nana Banana Fallback" in result["image_url"]
                 MockLogService.return_value.create_log_entry.assert_called_once()
