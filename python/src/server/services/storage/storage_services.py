@@ -90,7 +90,7 @@ class DocumentStorageService(BaseStorageService):
                             "source": source_id,
                             "source_id": source_id,
                             "knowledge_type": knowledge_type,
-                            "source_type": "file",  # FIX: Mark as file upload
+                            "source_type": "file",
                             "filename": filename,
                         },
                     )
