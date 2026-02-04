@@ -1,8 +1,11 @@
 
-import pytest
-from unittest.mock import AsyncMock, Mock, patch, MagicMock
-from src.server.api_routes.marketing_api import nana_banana_proxy, draft_blog_post, DraftBlogRequest
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
+
 import httpx
+import pytest
+
+from src.server.api_routes.marketing_api import DraftBlogRequest, draft_blog_post, nana_banana_proxy
+
 
 @pytest.mark.asyncio
 async def test_draft_blog_fallback_on_llm_failure():
@@ -11,12 +14,12 @@ async def test_draft_blog_fallback_on_llm_failure():
     """
     user = {"id": "test-user-id", "role": "marketing", "email": "test@archon.ai"}
     request = DraftBlogRequest(topic="AI Benefits", keywords="Efficiency", tone="Expert")
-    
+
     with patch("src.server.api_routes.marketing_api.get_llm_client") as mock_get_client:
         mock_client = AsyncMock()
         mock_client.chat.completions.create.side_effect = Exception("LLM failure")
         mock_get_client.return_value.__aenter__.return_value = mock_client
-        
+
         with patch("src.server.api_routes.marketing_api.RAGService") as MockRAG:
             MockRAG.return_value.perform_rag_query = AsyncMock(return_value=(True, {"results": []}))
             with patch("src.server.api_routes.marketing_api.GuardrailService") as MockGuard:
@@ -41,11 +44,11 @@ async def test_nana_banana_fallback_on_403():
     TC2: Simulate Image API 403 Forbidden -> Assert returns Mock Image via direct function call.
     """
     user = {"id": "test-user-id", "role": "marketing", "email": "test@archon.ai"}
-    
+
     mock_response = MagicMock(spec=httpx.Response)
     mock_response.status_code = 403
     mock_response.text = "Permission Denied"
-    
+
     mock_instance = AsyncMock()
     mock_instance.post.return_value = mock_response
     mock_instance.__aenter__.return_value = mock_instance
@@ -56,13 +59,13 @@ async def test_nana_banana_fallback_on_403():
             MockCreds.get_credentials_by_category = AsyncMock(return_value={})
             with patch("src.server.api_routes.marketing_api.LogService") as MockLogService:
                 MockLogService.return_value.create_log_entry = Mock()
-                
+
                 # Directly call the endpoint function
                 result = await nana_banana_proxy(
                     request={"prompt": "Cyberpunk City"},
                     current_user=user
                 )
-                
+
                 # ASSERT
                 assert result["status"] == "fallback_mock"
                 assert "placehold.co" in result["image_url"]

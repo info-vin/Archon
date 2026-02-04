@@ -5,6 +5,9 @@ import json
 import uuid
 from typing import Any, cast
 
+from src.server.services.log_service import LogService  # Enhanced Logging
+from src.server.utils import get_supabase_client  # For LogService
+
 from ..config.logfire_config import get_logger
 from ..prompts.dev_ops_prompts import DEVBOT_TOOLS, get_devbot_analysis_prompt
 
@@ -110,11 +113,15 @@ class AgentService:
         tools = DEVBOT_TOOLS if self.mcp_client else None
 
         try:
-            # Get active model from config
-            provider_config = await credential_service.get_active_provider()
-            model = provider_config.get("chat_model") or "gpt-4o"
+            # Upgrade to gemini-2.5-flash-lite for DevBot (Fast & Cheap for logs)
+            model = "gemini-2.5-flash-lite"
 
-            async with get_llm_client() as client:
+            # Key Decoupling: Use GEMINI_API_KEY for Intelligence tasks
+            admin_api_key = await credential_service.get_credential("GEMINI_API_KEY")
+            if not admin_api_key:
+                 admin_api_key = await credential_service.get_credential("GOOGLE_API_KEY")
+
+            async with get_llm_client(api_key=admin_api_key) as client:
                 # --- Round 1: Analysis & Potential Tool Call ---
                 response = await client.chat.completions.create(
                     model=model,
@@ -176,7 +183,24 @@ class AgentService:
 
         except Exception as e:
             logger.error(f"Failed to analyze error with LLM: {e}")
-            return None
+
+            # System Alert Logging
+            try:
+                LogService(get_supabase_client()).create_log_entry({
+                    "user_input": f"SYSTEM_ALERT: DevBot Analysis Failed [{type(e).__name__}]",
+                    "gemini_response": f"Mock Fallback Activated. Error: {str(e)}",
+                    "project_name": "dev_bot",
+                    "user_name": "system"
+                })
+            except Exception:
+                pass
+
+            # Robust Fallback for Analysis
+            return {
+                "file_path": "manual_investigation_required.txt",
+                "fixed_content": f"# Error Analysis Failed\n\nCommand: {command}\nError: {str(e)}\n\nPlease investigate manually.",
+                "reasoning": "DevBot AI service is currently unavailable. A manual review is recommended."
+            }
 
     async def run_command_with_self_healing(self, command: str, max_retries: int = 1, task_id: str | None = None) -> tuple[bool, str]:
         """
@@ -392,10 +416,15 @@ class AgentService:
         tools_param = agent_tools if (agent_tools and self.mcp_client) else None
 
         try:
-            provider_config = await credential_service.get_active_provider()
-            model = provider_config.get("chat_model") or "gpt-4o"
+            # Upgrade to gemini-2.5-flash-lite
+            model = "gemini-2.5-flash-lite"
 
-            async with get_llm_client() as client:
+            # Key Decoupling
+            admin_api_key = await credential_service.get_credential("GEMINI_API_KEY")
+            if not admin_api_key:
+                 admin_api_key = await credential_service.get_credential("GOOGLE_API_KEY")
+
+            async with get_llm_client(api_key=admin_api_key) as client:
                 # --- Round 1: Thinking ---
                 response = await client.chat.completions.create(
                     model=model,
@@ -433,7 +462,23 @@ class AgentService:
 
         except Exception as e:
             logger.error(f"Agent Loop Failed: {e}")
-            await task_service.update_task(task_id, {"status": "failed", "output": f"Error: {str(e)}"})
+
+            # System Alert Logging
+            try:
+                LogService(get_supabase_client()).create_log_entry({
+                    "user_input": f"SYSTEM_ALERT: Agent Loop Failed [{agent_id}]",
+                    "gemini_response": f"Fallback Activated. Error: {str(e)}",
+                    "project_name": agent_id,
+                    "user_name": "system"
+                })
+            except Exception:
+                pass
+
+            # Graceful Failure (Don't leave task in processing)
+            await task_service.update_task(task_id, {
+                "status": "failed",
+                "output": f"Service Temporarily Unavailable. Error: {str(e)}\n\n(Please check System Logs for details)"
+            })
 
 
 # Create a singleton instance of the service
