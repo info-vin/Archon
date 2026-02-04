@@ -27,8 +27,8 @@
 | **UX-011** | 🎨 Style | **All** | **UI/Set** | 5173 `/settings` 移至使用者區塊。 | Medium | ⚪ 待討論 |
 | **BUG-031** | 🐛 Bug | **System** | **DB/Reset**| `make db-reset` 失敗。已補齊 `RESET_DB.sql` 遺漏的新資料表。 | High | 🟢 已修復 |
 | **BUG-032** | 🐛 Bug | **System** | **DB/Seed** | `seed_mock_data.sql` 報錯。已透過完整 DB Reset 修復 Schema 狀態。 | High | 🟢 已修復 |
-| **BUG-028** | 🐛 Bug | **Bob** | **Magic** | 生成內容未貼入編輯器。已實作 Backend Mock Fallback。 | High | ⚪ 待討論 |
-| **BUG-029** | 🐛 Bug | **Bob** | **Image** | 圖片生成後無預覽/URL。已實作 Backend Mock Fallback。 | High | ⚪ 待討論 |
+| **BUG-028** | 🐛 Bug | **Bob** | **Magic** | 生成失敗 (404)。原因：模型名稱 `gemini-1.5-flash` 無效 (需加版本號) 且 API 層缺乏 Mock Fallback。 | High | ⚪ 待討論 |
+| **BUG-029** | 🐛 Bug | **Bob** | **Image** | 圖片失敗。原因：`imagen-3.0` 需白名單權限，且 Fallback 邏輯未涵蓋所有錯誤 (如 500/Timeout)。 | High | ⚪ 待討論 |
 | **GAP-009** | 🔧 Gap | **Alice** | **Voice** | 語音日誌自動轉工單尚未實作。已實作前端模擬按鈕。 | Medium | ⚪ 待討論 |
 | **GAP-010** | 🔧 Gap | **Alice** | **GPS** | On-Demand GPS 待驗收。已實作前端模擬位置。 | Low | ⚪ 待討論 |
 | **UX-012** | 🎨 Style | **All** | **Buttons** | 5173 按鈕風格對齊 3737 Style Guide。已實作通用 `Button` 組件。 | Low | ⚪ 待討論 |
