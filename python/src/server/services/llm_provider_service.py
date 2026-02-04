@@ -88,6 +88,7 @@ class MockLLMClient:
         # Implement GAP-016: Mock Token Usage Logging
         try:
             import asyncio
+
             from .token_usage_service import TokenUsageService
 
             # Simulate usage
@@ -103,7 +104,15 @@ class MockLLMClient:
 
             # Fire and forget (or await if context allows)
             # Since this is usually called at end of context manager, we schedule it
-            asyncio.create_task(TokenUsageService.log_usage(**usage_data))
+            asyncio.create_task(TokenUsageService.log_usage(
+                request_id=str(usage_data["request_id"]),
+                user_id=str(usage_data["user_id"]),
+                model=str(usage_data["model"]),
+                provider=str(usage_data["provider"]),
+                input_tokens=int(cast(int, usage_data["input_tokens"])),
+                output_tokens=int(cast(int, usage_data["output_tokens"])),
+                context_type=str(usage_data["context_type"])
+            ))
             logger.info("MockLLMClient: Logged mock token usage.")
         except Exception as e:
             logger.warning(f"MockLLMClient: Failed to log usage: {e}")
@@ -215,12 +224,12 @@ class UsageTrackingCompletions:
                 # We use ensure_future to not block the response return
                 from .token_usage_service import TokenUsageService
                 asyncio.create_task(TokenUsageService.log_usage(
-                    request_id=self._context.get('request_id'),
-                    user_id=self._context.get('user_id'),
-                    model=model,
-                    provider=self._context.get('provider'),
-                    input_tokens=input_tokens,
-                    output_tokens=output_tokens,
+                    request_id=str(self._context.get('request_id', '')),
+                    user_id=cast(str | None, self._context.get('user_id')),
+                    model=str(model),
+                    provider=str(self._context.get('provider', 'unknown')),
+                    input_tokens=int(input_tokens),
+                    output_tokens=int(output_tokens),
                     context_type="llm_client_call"
                 ))
         except Exception as e:

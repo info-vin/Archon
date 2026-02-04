@@ -65,9 +65,12 @@ class EnrichmentService:
 
             # Implement GAP-015: Dynamic Scoring
             base_score = 20
-            if mock_email: base_score += 20
-            if "funding" in mock_news.lower(): base_score += 30
-            if lead.get("source_job_url"): base_score += 15
+            if mock_email:
+                base_score += 20
+            if "funding" in mock_news.lower():
+                base_score += 30
+            if lead.get("source_job_url"):
+                base_score += 15
 
             enrichment_data = {
                 "enrichment_status": "success",
