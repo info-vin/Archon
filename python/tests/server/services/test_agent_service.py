@@ -125,6 +125,8 @@ async def test_run_command_failure_triggers_healing(
 
     # Mock Credential Service
     mock_credential_service.get_active_provider = AsyncMock(return_value={"chat_model": "gpt-4-test"})
+    # Need to mock get_credential as it is awaited in the service
+    mock_credential_service.get_credential = AsyncMock(return_value="test-api-key")
 
     # Mock LLM Client
     mock_client = AsyncMock()

@@ -23,16 +23,16 @@
 | **BUG-027** | 🐛 Bug | **Charlie** | **Team** | Charlie 在 Team Management 面板看不到 Alice 自己開的單。已啟用後端 assigne_id 過濾與前端分頁擴增。 | High | 🟢 已修復 |
 | **BUG-030** | 🐛 Bug | **All** | **Color** | Dashboard 狀態與優先級燈色失效。已修復 API 回傳缺少 priority 欄位的問題。 | Medium | ⚪ 待討論 |
 | **BUG-033** | 🐛 Bug | **All** | **UI/Nav** | 導覽列消失。已修正前端大小寫判斷與 DB ID 同步。 | Critical | 🟢 已修復 |
-| **DX-001** | 🛠️ DX | **All** | **Auth/PW** | 密碼重置為 `qwer45tyuiop`。已實作強制重置邏輯。 | Medium | ⚪ 待討論 |
-| **UX-011** | 🎨 Style | **All** | **UI/Set** | 5173 `/settings` 移至使用者區塊。 | Medium | ⚪ 待討論 |
+| **DX-001** | 🛠️ DX | **All** | **Auth/PW** | 密碼重置為 `qwer45tyuiop`。已實作強制重置邏輯。 | Medium | 🟢 已修復 |
+| **UX-011** | 🎨 Style | **All** | **UI/Set** | 5173 `/settings` 移至使用者區塊。 | Medium | 🟢 已修復 |
 | **BUG-031** | 🐛 Bug | **System** | **DB/Reset**| `make db-reset` 失敗。已補齊 `RESET_DB.sql` 遺漏的新資料表。 | High | 🟢 已修復 |
 | **BUG-032** | 🐛 Bug | **System** | **DB/Seed** | `seed_mock_data.sql` 報錯。已透過完整 DB Reset 修復 Schema 狀態。 | High | 🟢 已修復 |
-| **BUG-034** | 🐛 Bug | **Tech** | **Agent** | `test_run_command_failure_triggers_healing` 失敗。原因：新實作的 DevBot Fallback 邏輯改變了錯誤輸出的格式，導致既有測試斷言失效。 | Medium | 🔴 待修復 |
+| **BUG-034** | 🐛 Bug | **Tech** | **Agent** | `test_run_command_failure_triggers_healing` 失敗。原因：新實作的 DevBot Fallback 邏輯改變了錯誤輸出的格式，導致既有測試斷言失效。 | Medium | 🟢 已修復 |
 | **BUG-028** | 🐛 Bug | **Bob** | **Magic** | 生成失敗 (404)。已強制 v1beta 端點並實作 API 層 Mock Fallback。 | High | 🔵 待驗收 |
 | **BUG-029** | 🐛 Bug | **Bob** | **Image** | 圖片失敗。已實作針對 403/429 錯誤的自動 Fallback 邏輯與系統警報日誌。 | High | 🔵 待驗收 |
 | **GAP-009** | 🔧 Gap | **Alice** | **Voice** | 語音日誌自動轉工單尚未實作。已實作前端模擬按鈕。 | Medium | ⚪ 待討論 |
 | **GAP-010** | 🔧 Gap | **Alice** | **GPS** | On-Demand GPS 待驗收。已實作前端模擬位置。 | Low | ⚪ 待討論 |
-| **UX-012** | 🎨 Style | **All** | **Buttons** | 5173 按鈕風格對齊 3737 Style Guide。已實作通用 `Button` 組件。 | Low | ⚪ 待討論 |
+| **UX-012** | 🎨 Style | **All** | **Buttons** | 5173 按鈕風格對齊 3737 Style Guide。已實作通用 `Button` 組件。 | Low | 🟢 已修復 |
 | **GAP-012** | 🔧 Gap | **Bob** | **Intel** | 頁面空白無數據，配色太深。已優化配色並確保 Mock Data 顯示。 | Medium | ⚪ 待討論 |
 | **GAP-013** | 🔧 Gap | **Charlie** | **Center** | 指揮中心無資料供練習。已在 `seed_mock_data.sql` 注入 `marketing_trends` 數據。 | Medium | ⚪ 待討論 |
 | **GAP-014** | 🔧 Gap | **Admin** | **RBAC** | 缺少 RBAC 練習案例與多樣化資料。已注入 Viewer/Editor 角色數據。 | Low | ⚪ 待討論 |
