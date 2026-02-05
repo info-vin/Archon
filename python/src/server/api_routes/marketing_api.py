@@ -387,7 +387,7 @@ async def generate_logo(request: LogoRequest):
         # Use dynamic seed based on request style or random
         seed_key = request.style.replace(" ", "-") if request.style else "marketing"
         return LogoResponse(
-            svg_content=f'<img src="https://picsum.photos/seed/{seed_key}/800/600" alt="Generated Asset (Fallback)" className="w-full h-full object-cover rounded-xl" />',
+            svg_content=f'<img src="https://picsum.photos/seed/{seed_key}/800/600" alt="Nana Banana Fallback Asset" className="w-full h-full object-cover rounded-xl" />',
             style="fallback"
         )
         raise HTTPException(status_code=500, detail={"error": str(e)}) from e
@@ -752,7 +752,7 @@ async def draft_blog_post(request: DraftBlogRequest, current_user: dict = Depend
             )
             import json
             result = json.loads(response.text)
-            
+
             # --- GAP-016: Real Token Usage Logging ---
             try:
                 from ..services.token_usage_service import TokenUsageService
@@ -775,7 +775,7 @@ async def draft_blog_post(request: DraftBlogRequest, current_user: dict = Depend
                 # Fallback to standard Google API Key (Search) if Marketing key is exhausted
                 fallback_key = await credential_service.get_credential("GOOGLE_API_KEY")
                 client_fallback = genai.Client(api_key=fallback_key)
-                
+
                 response = client_fallback.models.generate_content(
                     model="gemini-1.5-pro",
                     contents=[user_prompt],
@@ -789,7 +789,7 @@ async def draft_blog_post(request: DraftBlogRequest, current_user: dict = Depend
                 result = json.loads(response.text)
                 model_name = "gemini-1.5-pro (fallback)"
 
-            except Exception as fallback_error:
+            except Exception:
                 # Robust Mock Fallback
                 logger.error(f"API: ALL LLM Generation Failed | model={model_name} | error={str(llm_error)}", exc_info=True)
 
@@ -856,7 +856,7 @@ async def nana_banana_proxy(
         encoded_seed = urllib.parse.quote(request.get("prompt", "fallback")[:20])
         return {
             "status": "fallback_mock",
-            "image_url": f"https://picsum.photos/seed/{encoded_seed}/800/600"
+            "image_url": f"https://picsum.photos/seed/{encoded_seed}/800/600?text=Nana Banana Fallback"
         }
 
     # REALITY CHECK (Feb 2026): Use Nano Banana Gemini 2.0 Flash (latest stable)
@@ -933,7 +933,7 @@ async def nana_banana_proxy(
         encoded_seed = urllib.parse.quote(prompt[:20])
         return {
             "status": "fallback_mock",
-            "image_url": f"https://picsum.photos/seed/{encoded_seed}/800/600"
+            "image_url": f"https://picsum.photos/seed/{encoded_seed}/800/600?text=Nana Banana Fallback"
         }
 
 @router.get("/trends")

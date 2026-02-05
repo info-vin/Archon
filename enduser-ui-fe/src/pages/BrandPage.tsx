@@ -142,10 +142,22 @@ const BrandPage: React.FC = () => {
     };
 
     const handleSaveWorkbench = async () => {
-        // Save logic is already handled by effects (localStorage)
-        // We just need to notify and switch view
-        alert("Draft saved to workspace!");
-        setViewMode('dashboard');
+        try {
+            // Persist to DB so it shows up in Kanban "Ideas & Drafts"
+            await api.createBlogPost({
+                title: workbenchTitle || "Untitled Draft",
+                content: workbenchContent || "",
+                excerpt: workbenchContent.slice(0, 100) + "...",
+                imageUrl: "/placeholder-blog.jpg", // Default for now
+                status: 'draft',
+                authorName: user?.name || "Bob"
+            });
+            alert("Draft saved to workspace!");
+            setViewMode('dashboard');
+            loadData(); // Refresh dashboard data
+        } catch (err: any) {
+            alert(`Failed to save draft: ${err.message}`);
+        }
     };
 
     const handleGenerateImage = async (title: string) => {
@@ -175,7 +187,8 @@ const BrandPage: React.FC = () => {
                 content: postData.content,
                 excerpt: postData.content.slice(0, 150) + '...',
                 imageUrl: '/placeholder-blog.jpg',
-                status: 'draft'
+                status: 'draft',
+                authorName: user?.name || 'Unknown Author'
             });
 
             // 2. If Manager, Publish Directly. If Member, Submit for Review (AI Check)

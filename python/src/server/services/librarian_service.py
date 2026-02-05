@@ -9,7 +9,11 @@ from datetime import datetime
 
 from ..config.logfire_config import get_logger
 from ..services.embeddings.embedding_service import create_embedding
-from ..services.source_management_service import SourceManagementService, update_source_info
+from ..services.source_management_service import (
+    SourceManagementService,
+    extract_source_summary,
+    update_source_info,
+)
 from ..utils import get_supabase_client
 
 logger = get_logger(__name__)
@@ -140,14 +144,14 @@ class LibrarianService:
             title = file_name
             word_count = len(content.split())
             tags = ["file_upload", "seeded_knowledge"]
-            
+
             # Detect type from extension
-            if file_name.endswith(".md"): 
+            if file_name.endswith(".md"):
                 tags.append("markdown")
             elif file_name.endswith(".pdf"):
                 tags.append("pdf")
 
-            summary = await self.source_service.extract_source_summary(source_id, content)
+            summary = await extract_source_summary(source_id, content)
 
             logger.info(f"Librarian: Archiving file | source_id={source_id} | file={file_name}")
 
@@ -165,15 +169,15 @@ class LibrarianService:
             )
 
             # 4. Content & Embedding
-            # Chunking logic could go here, but for now we do single chunk for simplicity 
+            # Chunking logic could go here, but for now we do single chunk for simplicity
             # or rely on RAG service's chunking if we used that.
-            # To be safe with token limits, we should probably chunk larger files, 
+            # To be safe with token limits, we should probably chunk larger files,
             # but for this specific request (seed data), single chunk or simple split is okay for MVP.
-            
+
             # Simple chunking if too large (>8000 chars roughly)
             chunk_size = 4000
             chunks = [content[i:i+chunk_size] for i in range(0, len(content), chunk_size)]
-            
+
             for i, chunk in enumerate(chunks):
                 try:
                     embedding_vector = await create_embedding(chunk)

@@ -1,8 +1,12 @@
 # Phase 4.6.2 實作細節：Bob 的內容生產工作臺 (Content Workbench)
 
-> **狀態**: 已完成 (DONE)
+> **狀態**: 已完成 (DONE) - 2026/02/05
 > **目標角色**: Bob (內容行銷主管)
 > **核心目標**: 將 Bob 的工作流從「被動看報表」轉型為「主動生產內容」，透過 **三代理人協作模型 (3-Agent Collaboration Model)** 打造一個高效率的內容工作臺。
+> **最新更新**: 
+> 1.  **AI 模型升級**: 全面採用 `gemini-2.0-flash-exp` 作為主力，`gemini-1.5-pro` 作為備援。
+> 2.  **透明化機制**: 新增 Prompt Inspector，Bob 可檢視 AI 使用的原始提示詞。
+> 3.  **動態資產**: 圖片生成支援 `picsum.photos` 動態種子 Fallback，解決無 API Key 時的演示中斷。
 
 ## 1. 核心哲學：工作臺 (The Workbench)
 Bob 不需要更多圓餅圖。他需要的是一個 **內容 IDE (Integrated Development Environment)**。
@@ -28,9 +32,10 @@ Bob 不需要更多圓餅圖。他需要的是一個 **內容 IDE (Integrated De
 ### Agent 2: MarketBot (主筆 - 撰稿助手)
 *   **職責**: 編織故事 (Content Weaver)。
 *   **觸發**: 當 Bob 在編輯器點擊「✨ 生成草稿」時。
+*   **透明化**: 支援 `used_prompt` 回傳，前端可點擊 "View AI Prompt" 檢視完整上下文。
 *   **任務**: 「將素材轉化為文章。」
     *   **輸入**: `訪談摘要` + `圖書館員提供的參考資料` + `Bob 的提示詞`。
-    *   **模型**: Gemini 1.5 Pro (擅長長文本與邏輯)。
+    *   **模型**: `gemini-2.0-flash-exp` (快) -> `gemini-1.5-pro` (穩, Fallback)。
 *   **產出**: 一篇結構完整的 Markdown 草稿 (含標題、內文、Call-to-Action)。
 
 ### Agent 3: Nana Banana (美術 - 視覺助手)
@@ -38,7 +43,8 @@ Bob 不需要更多圓餅圖。他需要的是一個 **內容 IDE (Integrated De
 *   **觸發**: 當 Bob 點擊「生成首圖」時。
 *   **任務**: 「將概念具象化。」
     *   **輸入**: 草稿的標題與關鍵字。
-    *   **模型**: Gemini Flash (Image Gen) 或 SVG Tool。
+    *   **模型**: `gemini-2.0-flash-exp` (Image Mode) 或 `picsum.photos` (Dynamic Fallback)。
+    *   **Fallback 策略**: 若無 API Key 或權限不足，使用 `picsum.photos/seed/{prompt_prefix}/...` 生成穩定且相關的隨機圖。
 *   **產出**: 一張圖片 URL (或 SVG 代碼)，直接插入文章頭部。
 
 ---
@@ -51,7 +57,7 @@ sequenceDiagram
     actor Bob as 👤 Bob (行銷主管)
     participant UI as 🖥️ 內容工作臺<br>(左右分割視窗)
     participant API as ⚙️ 後端 API<br>(marketing_api)
-    participant DB as 🗄️ 資料庫<br>(PostgreSQL)
+    participant DB as 🗄️ 資料庫<br>(Supabase)
     participant Librarian as 📚 Librarian<br>(RAG Service)
     participant MarketBot as 🤖 MarketBot<br>(LLM Service)
     participant Nana as 🎨 Nana Banana<br>(Image Proxy)
@@ -85,34 +91,40 @@ sequenceDiagram
     Note over Bob, DB: 階段 3：AI 協作撰寫 (AI Drafting)
     Bob->>UI: 切換至「編輯分頁」 -> 點擊 "✨ 生成草稿" (Magic Draft)
     UI->>API: POST /api/marketing/blog/draft
-    Note right of UI: UI 進入 Loading 狀態<br>(⚠️ 目前切換分頁會遺失進度，需修復)
+    Note right of UI: UI 顯示 Loading...
     API->>MarketBot: Prompt: "基於{Logs}與{Docs}撰寫案例..."
-    MarketBot-->>API: Stream 回傳 Markdown 草稿
-    API-->>UI: 即時串流顯示於編輯器
+    MarketBot-->>API: 回傳 Markdown 草稿 + Used Prompt
+    API-->>UI: 顯示草稿與 "View AI Prompt" 按鈕
     Bob->>UI: 人工潤飾 (Human Polish)
     
     %% 存檔流程 (Save Flow)
     Bob->>UI: 點擊 "💾 Save"
-    UI->>API: POST /api/blog (Status=DRAFT)
+    UI->>API: POST /api/blogs (Status=DRAFT) (含 authorName)
     API->>DB: INSERT INTO blog_posts
     DB-->>API: 回傳 Blog ID
     API-->>UI: 回傳成功訊息
-    UI->>Bob: 顯示 Toast: "Draft Saved! (ID: 123)"
+    UI->>Bob: Redirect to Dashboard -> Kanban 顯示 "Draft"
 
     %% 階段四：視覺資產生成 (Nana Banana)
     Note over Bob, DB: 階段 4：視覺資產生成 (Nana Banana)
     Bob->>UI: 點擊 "生成首圖"
-    UI->>API: POST /api/marketing/nana-banana
-    API->>Nana: 生成圖片 (Gemini Vision)
-    Nana-->>API: 回傳 Base64 或 臨時 URL
-    API->>Storage: 上傳至 Supabase Storage (bucket: assets)
-    Storage-->>API: 回傳 Public URL
-    API-->>UI: 自動插入 Markdown 圖片語法 (![Cover](url))
+    UI->>API: POST /api/marketing/nana-banana (Prompt)
+    alt API Key Valid
+        API->>Nana: 生成圖片 (Gemini 2.0 Flash)
+        Nana-->>API: 回傳 Base64 Image
+    else Fallback Mode
+        API-->>API: Generate Dynamic Seed (URL Encode Prompt)
+        API-->>UI: Return Picsum URL (seed/{prompt})
+    end
+    UI->>Bob: 自動插入 Markdown 圖片 (![Cover](url))
 
     %% 階段五：發布與閉環
     Note over Bob, DB: 階段 5：發布與閉環 (Publish & Loop)
     Bob->>UI: 點擊 "Publish" (發布)
-    UI->>API: PATCH /api/blog/{id} (Status=PUBLISHED)
+    opt Role Check
+        Note right of UI: 若是 Admin/Manager -> 直接發布<br>若是 Member -> 進入 Review 流程
+    end
+    UI->>API: PATCH /api/blog/{id} (Status=PUBLISHED/REVIEW)
     API->>DB: 更新文章狀態
     
     par 知識回流 (Recirculation)
@@ -128,58 +140,40 @@ sequenceDiagram
 
 **原則**: 不新增 Python 檔案，僅擴充 `marketing_api.py` 的邏輯。
 
-### 4.1 擴充 `marketing_api.py`
+### 4.1 擴充 `marketing_api.py` (v2 Updated)
 
-#### Endpoint: `GET /api/marketing/sources` (戰果牆)
-*   **邏輯**: 聚合查詢 `leads` 與 `archon_tasks` 資料表。
-*   **過濾**: 
-    1. Leads: `status='WON'` OR (`status='NEGOTIATION'` AND `score >= 80`)
-    2. Tasks: Assigned to Bob & Status != DONE
-*   **回傳**: 統一格式列表 (ID, Type, Title, Score, Summary, Date)，供左側列表使用。
+#### Payload Updates
+*   `CreateBlogPostRequest`: 新增 `author_name` 欄位，確保前台傳入的作者資訊能被正確儲存 (解決 Review 列表作者空白問題)。
+*   `DraftBlogResponse`: 新增 `used_prompt` 欄位，提供 AI 透明度。
 
-#### Endpoint: `GET /api/marketing/context/{source_id}` (脈絡聚合)
-*   **New Endpoint**: 專為工作臺設計的通用聚合接口。
-*   **參數**: `source_type` (default: 'lead')
-*   **邏輯**:
-    1.  根據 type 讀取 Lead 或 Task 詳細資料。
-    2.  讀取關聯的 `visit_logs` (若為 Lead)。
-    3.  呼叫 `RAGService.perform_rag_query` 獲取 Librarian 的建議。
-*   **回傳結構**:
-    ```json
-    {
-      "lead": {"company": "Mozilla", "pain_points": "..."},
-      "visit_logs": [{"transcript": "...", "summary": "...", "created_at": "..."}],
-      "rag_refs": [{"content": "...", "source": "Security Whitepaper", "score": 0.89}]
-    }
-    ```
-
-#### Endpoint: `POST /api/marketing/blog/draft` (草稿生成)
-*   **參數**: `topic`, `keywords`, `context_source_id`, `context_type`。
-*   **邏輯**: 若有提供 `context_source_id`，後端會自動從 DB 撈取該來源的結構化資料 (Logs/Description)，並結合 RAG 檢索結果，注入到 `BLOG_DRAFT_SYSTEM_PROMPT`。
+#### Fallback Strategies (Resilience)
+1.  **LLM Fallback**: 若 `marketing_model` (Gemini 2.0) 失敗 (404/429)，自動降級至 `gemini-1.5-pro` 並使用 Backup Key。
+2.  **Image Fallback**: 若因 Free Tier (403) 或配置錯誤導致失敗，回傳與 Prompt 相關聯的 `picsum.photos` 動態連結，而非死板的 Placeholder。
 
 ---
 
 ## 5. 前端實作細節 (Frontend Implementation)
 
-### 5.1 `BrandPage.tsx` 版面重構
-*   **佈局**: 放棄目前的 Card Grid，改用 **雙欄式佈局 (Split Pane)**。
-    *   參考 Tailwind Class: `grid grid-cols-12 h-[calc(100vh-64px)]`
-    *   **左側 (col-span-3)**: `<VictoryFeedList />` (可滾動列表)。
-    *   **右側 (col-span-9)**: `<WorkbenchArea />` (包含 Tabs: Context | Editor)。
+### 5.1 `BrandPage.tsx` 狀態管理
+*   **Save Action**: 修正了 `handleSave` 僅在 LocalStorage 運作的 Bug。現在會呼叫 `api.createBlogPost` 正式寫入 DB，並將使用者導回 Dashboard 查看 Kanban。
+*   **Prompt Inspector**: 在 `ContentWorkbench` 新增 `usedPrompt` 狀態與對應 UI，允许使用者展開查看上次生成的完整 Prompt。
 
 ### 5.2 關鍵元件
-*   **`VictoryFeedList`**: 參考 Admin UI 的 Data Table，顯示高密度的資訊 (Score, Company, Last Activity)。
-*   **`ContextViewer`**: 
-    *   **Visit Log 區塊**: 唯讀的文字區，支援關鍵字高亮 (Highlight)。
-    *   **RAG 區塊**: 卡片式顯示 Librarian 推薦的文件。
-*   **`MarkdownEditor`**: 複用現有編輯器，但在 Toolbar 增加 "Magic Draft" 按鈕。
+*   **`VictoryFeedList`**: 顯示高密度的資訊 (Score, Company, Last Activity)，已串接 Real API。
+*   **`ContextViewer`**: 支援 Visit Log 與 RAG Refs 的雙欄顯示。
+*   **`MarkdownEditor`**: 
+    *   新增 `authorName` 傳遞邏輯。
+    *   新增 Image Markdown 自動插入功能。
 
 ---
 
 ## 6. 執行檢查清單 (Actionable Checklist)
 
 1.  [x] **Backend**: 在 `marketing_api.py` 新增 `lead-context` 端點。
-2.  [x] **Backend**: 更新 `drafts` 端點，支援 `context_lead_id` 注入。
-3.  [x] **Frontend**: 建立 `VictoryFeed` 元件 (先用 Mock Data 確認樣式)。
+2.  [x] **Backend**: 更新 `drafts` 端點，支援 `context_lead_id` 注入與 `used_prompt` 回傳。
+3.  [x] **Frontend**: 建立 `VictoryFeed` 元件。
 4.  [x] **Frontend**: 在 `BrandPage.tsx` 實作左右分割佈局。
 5.  [x] **Frontend**: 串接 API，實現「點擊左側 -> 載入右側 Context」的連動。
+6.  [x] **BugFix**: 修正 `gpt-2.5` 命名錯誤 (Gemini 2.0)。
+7.  [x] **BugFix**: 修正 Save 按鈕無效問題 (DB Persistence)。
+8.  [x] **BugFix**: 修正 Review 作者空白問題 (Author Name Propagation)。

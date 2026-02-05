@@ -70,7 +70,7 @@ export type NewProjectData = {
 
 export type UpdateTaskData = Partial<Omit<NewTaskData, 'project_id'> & { assigneeId: string | null; status: TaskStatus }>;
 
-export type NewBlogPostData = Omit<BlogPost, 'id' | 'authorName' | 'publishDate'>;
+export type NewBlogPostData = Omit<BlogPost, 'id' | 'publishDate'> & { authorName?: string };
 
 // --- SUPABASE API IMPLEMENTATION ---
 const supabaseApi = {
