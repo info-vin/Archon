@@ -690,8 +690,8 @@ async def get_embedding_model(provider: str | None = None) -> str:
             # Ollama default embedding model
             return "nomic-embed-text"
         elif provider_name == "google":
-            # Google's latest embedding model
-            return "text-embedding-004"
+            # Google's model (User requested 001 compliance)
+            return "text-embedding-001"
         elif provider_name == "openrouter":
             # OpenRouter supports both OpenAI and Google embedding models
             # Default to OpenAI's latest for compatibility

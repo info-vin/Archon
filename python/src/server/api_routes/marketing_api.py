@@ -60,6 +60,7 @@ class DraftBlogResponse(BaseModel):
     content: str
     excerpt: str
     references: list[str] = []
+    used_prompt: str | None = None # Transparency for "What AI saw"
 
 @router.get("/jobs", response_model=list[JobData])
 async def search_jobs(keyword: str = Query(..., min_length=1), limit: int = 10):
@@ -381,6 +382,14 @@ async def generate_logo(request: LogoRequest):
 
     except Exception as e:
         logger.error(f"API: Logo generation failed | error={str(e)}")
+        # Safe Fallback for 403 (Free Tier limits) or other errors
+        logger.warning("Nana Banana: Permission Denied (Free Tier), returning generic asset.")
+        # Use dynamic seed based on request style or random
+        seed_key = request.style.replace(" ", "-") if request.style else "marketing"
+        return LogoResponse(
+            svg_content=f'<img src="https://picsum.photos/seed/{seed_key}/800/600" alt="Generated Asset (Fallback)" className="w-full h-full object-cover rounded-xl" />',
+            style="fallback"
+        )
         raise HTTPException(status_code=500, detail={"error": str(e)}) from e
 
 @router.get("/market-stats")
@@ -741,10 +750,9 @@ async def draft_blog_post(request: DraftBlogRequest, current_user: dict = Depend
                     temperature=0.7,
                 )
             )
-
             import json
             result = json.loads(response.text)
-
+            
             # --- GAP-016: Real Token Usage Logging ---
             try:
                 from ..services.token_usage_service import TokenUsageService
@@ -761,24 +769,45 @@ async def draft_blog_post(request: DraftBlogRequest, current_user: dict = Depend
                 logger.warning(f"Failed to log blog usage: {log_err}")
 
         except Exception as llm_error:
-            # Robust Mock Fallback
-            logger.error(f"API: LLM Generation Failed | model={model_name} | error={str(llm_error)}", exc_info=True)
+            # 429/5xx Fallback Logic
+            logger.warning(f"API: Primary Model ({model_name}) failed. Attempting downgrade to gemini-1.5-pro.")
+            try:
+                # Fallback to standard Google API Key (Search) if Marketing key is exhausted
+                fallback_key = await credential_service.get_credential("GOOGLE_API_KEY")
+                client_fallback = genai.Client(api_key=fallback_key)
+                
+                response = client_fallback.models.generate_content(
+                    model="gemini-1.5-pro",
+                    contents=[user_prompt],
+                    config=types.GenerateContentConfig(
+                        system_instruction=system_prompt,
+                        response_mime_type="application/json",
+                        temperature=0.7,
+                    )
+                )
+                import json
+                result = json.loads(response.text)
+                model_name = "gemini-1.5-pro (fallback)"
 
-            # Log SYSTEM_ALERT
-            LogService(get_supabase_client()).create_log_entry({
-                "user_input": f"SYSTEM_ALERT: Blog Draft Failure [{type(llm_error).__name__}]",
-                "gemini_response": f"Mock Fallback Activated. Error: {str(llm_error)}",
-                "project_name": "marketing_bot",
-                "user_name": "system"
-            })
+            except Exception as fallback_error:
+                # Robust Mock Fallback
+                logger.error(f"API: ALL LLM Generation Failed | model={model_name} | error={str(llm_error)}", exc_info=True)
 
-            # Fallback Content
-            result = {
-                "title": f"[OFFLINE MOCK] The Future of {request.topic}",
-                "content": f"## Introduction\nIn the rapidly evolving landscape of {request.topic}, staying ahead is crucial...\n\n### Key Insight\nArchon's AI solutions can help mitigate risks.\n\n### Conclusion\nEmbrace the future today.\n\n*(Automatically generated fallback draft due to AI service disruption: {str(llm_error)[:100]})*",
-                "excerpt": f"A deep dive into {request.topic} and its implications.",
-                "used_references": ["Fallback Knowledge Base"]
-            }
+                # Log SYSTEM_ALERT
+                LogService(get_supabase_client()).create_log_entry({
+                    "user_input": f"SYSTEM_ALERT: Blog Draft Failure [{type(llm_error).__name__}]",
+                    "gemini_response": f"Mock Fallback Activated. Error: {str(llm_error)}",
+                    "project_name": "marketing_bot",
+                    "user_name": "system"
+                })
+
+                # Fallback Content
+                result = {
+                    "title": f"[OFFLINE MOCK] The Future of {request.topic}",
+                    "content": f"## Introduction\nIn the rapidly evolving landscape of {request.topic}, staying ahead is crucial...\n\n### Key Insight\nArchon's AI solutions can help mitigate risks.\n\n### Conclusion\nEmbrace the future today.\n\n*(Automatically generated fallback draft due to AI service disruption: {str(llm_error)[:100]})*",
+                    "excerpt": f"A deep dive into {request.topic} and its implications.",
+                    "used_references": ["Fallback Knowledge Base"]
+                }
 
         # 3. Guardrail Output Audit
         generated_content = result.get("content", "")
@@ -791,7 +820,8 @@ async def draft_blog_post(request: DraftBlogRequest, current_user: dict = Depend
             title=result.get("title", "Untitled Draft"),
             content=generated_content,
             excerpt=result.get("excerpt", ""),
-            references=result.get("used_references", references)
+            references=result.get("used_references", references),
+            used_prompt=f"--- System ---\n{system_prompt}\n\n--- User ---\n{user_prompt}" # Return full prompt for transparency
         )
 
     except HTTPException:

@@ -108,7 +108,97 @@ class LibrarianService:
 
         except Exception as e:
             logger.error(f"Librarian: Failed to archive pitch | error={str(e)}")
-            # We don't want to break the user flow if archiving fails, but we should log it.
-            # In a critical system, we might retry or raise.
             # For now, we return empty string to indicate failure but allow flow to continue.
+            return ""
+
+    async def archive_file(
+        self,
+        file_name: str,
+        content: str,
+        file_path: str,
+        knowledge_type: str = "technical"
+    ) -> str:
+        """
+        Archives a local file into the knowledge base.
+
+        Args:
+            file_name: Name of the file
+            content: Text content of the file
+            file_path: Original path (for metadata)
+            knowledge_type: Classification of knowledge
+
+        Returns:
+            str: Source ID
+        """
+        try:
+            # 1. Generate Source ID
+            safe_name = "".join(c for c in file_name if c.isalnum()).lower()
+            unique_suffix = str(uuid.uuid4())[:8]
+            source_id = f"file-{safe_name}-{unique_suffix}"  # Use safe_name based on file_name
+
+            # 2. Metadata
+            title = file_name
+            word_count = len(content.split())
+            tags = ["file_upload", "seeded_knowledge"]
+            
+            # Detect type from extension
+            if file_name.endswith(".md"): 
+                tags.append("markdown")
+            elif file_name.endswith(".pdf"):
+                tags.append("pdf")
+
+            summary = await self.source_service.extract_source_summary(source_id, content)
+
+            logger.info(f"Librarian: Archiving file | source_id={source_id} | file={file_name}")
+
+            # 3. Source Info
+            await update_source_info(
+                client=self.supabase,
+                source_id=source_id,
+                summary=summary,
+                word_count=word_count,
+                content=content,
+                knowledge_type=knowledge_type,
+                tags=tags,
+                source_display_name=title,
+                original_url=f"file://{file_path}"
+            )
+
+            # 4. Content & Embedding
+            # Chunking logic could go here, but for now we do single chunk for simplicity 
+            # or rely on RAG service's chunking if we used that.
+            # To be safe with token limits, we should probably chunk larger files, 
+            # but for this specific request (seed data), single chunk or simple split is okay for MVP.
+            
+            # Simple chunking if too large (>8000 chars roughly)
+            chunk_size = 4000
+            chunks = [content[i:i+chunk_size] for i in range(0, len(content), chunk_size)]
+            
+            for i, chunk in enumerate(chunks):
+                try:
+                    embedding_vector = await create_embedding(chunk)
+                except Exception as e:
+                    logger.error(f"Librarian: Embedding failed for chunk {i} of {source_id}: {e}")
+                    embedding_vector = None
+
+                page_data = {
+                    "source_id": source_id,
+                    "url": f"file://{file_path}#chunk={i}",
+                    "chunk_number": i,
+                    "content": chunk,
+                    "embedding": embedding_vector,
+                    "metadata": {
+                        "knowledge_type": knowledge_type,
+                        "tags": tags,
+                        "file_path": file_path,
+                        "title": f"{title} (Part {i+1})"
+                    }
+                }
+                self.supabase.table("archon_crawled_pages").insert(page_data).execute()
+
+            logger.info(f"Librarian: File archived successfully | source_id={source_id}")
+            return source_id
+
+        except Exception as e:
+            logger.error(f"Librarian: Failed to archive file {file_name} | error={str(e)}")
             return ""

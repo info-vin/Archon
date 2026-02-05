@@ -75,6 +75,7 @@ class CreateTaskRequest(BaseModel):
     title: str
     description: str | None = None
     status: str | None = "todo"
+    priority: str | None = "medium"
     assignee: str | None = "User"
     assignee_id: str | None = None  # Added to support ID-based assignment
     task_order: int | None = 0
@@ -844,6 +845,7 @@ async def create_task(
             due_date=request.due_date,
             knowledge_source_ids=request.knowledge_source_ids,
             assignee_id=resolved_assignee_id,
+            priority=request.priority or "medium",
         )
 
         if not success or not isinstance(result, dict):

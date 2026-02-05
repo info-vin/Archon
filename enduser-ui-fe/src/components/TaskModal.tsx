@@ -240,7 +240,14 @@ export const TaskModal: React.FC<TaskModalProps> = ({ task, onClose, onTaskCreat
             </div>
             <div>
               <label htmlFor="due-date" className="block text-sm font-medium mb-1">Due Date</label>
-              <input id="due-date" type="datetime-local" value={dueDate} onChange={(e) => setDueDate(e.target.value)} className={inputClass} required />
+              <input 
+                id="due-date" 
+                type="datetime-local" 
+                value={dueDate} 
+                onChange={(e) => setDueDate(e.target.value)} 
+                className={`${inputClass} min-h-[44px] md:min-h-[auto] cursor-pointer touch-manipulation`} 
+                required 
+              />
             </div>
           </div>
           <div>

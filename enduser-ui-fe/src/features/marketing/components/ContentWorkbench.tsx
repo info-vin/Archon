@@ -37,6 +37,7 @@ interface ContentWorkbenchProps {
   content: string;
   onTitleChange: (value: string) => void;
   onContentChange: (value: string) => void;
+  usedPrompt?: string; // New: For Transparency
 }
 
 export const ContentWorkbench: React.FC<ContentWorkbenchProps> = ({
@@ -51,9 +52,11 @@ export const ContentWorkbench: React.FC<ContentWorkbenchProps> = ({
   title,
   content,
   onTitleChange,
-  onContentChange
+  onContentChange,
+  usedPrompt
 }) => {
   const [activeTab, setActiveTab] = useState<'context' | 'editor'>('context');
+  const [showPrompt, setShowPrompt] = useState(false);
 
   // BUG-026: Save Feedback
   const handleSave = () => {
@@ -124,7 +127,7 @@ export const ContentWorkbench: React.FC<ContentWorkbenchProps> = ({
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1">
         {activeTab === 'context' ? (
           <div className="p-8 max-w-4xl mx-auto space-y-12">
             {isLoadingContext ? (
@@ -198,8 +201,23 @@ export const ContentWorkbench: React.FC<ContentWorkbenchProps> = ({
               
               <div className="flex-1" />
               
+              {usedPrompt && (
+                <button 
+                   onClick={() => setShowPrompt(!showPrompt)}
+                   className="text-[10px] text-slate-400 hover:text-indigo-600 underline mr-4"
+                >
+                   {showPrompt ? 'Hide Prompt' : 'View AI Prompt'}
+                </button>
+              )}
               <span className="text-[10px] text-slate-400">Markdown Supported</span>
             </div>
+
+            {/* Prompt Debug Viewer */}
+            {showPrompt && usedPrompt && (
+              <div className="mx-6 mt-4 p-4 bg-slate-100 dark:bg-slate-950 border rounded-lg text-xs font-mono text-slate-600 dark:text-slate-400 whitespace-pre-wrap max-h-40 overflow-y-auto shadow-inner">
+                {usedPrompt}
+              </div>
+            )}
 
             {/* Markdown Editor */}
             <div className="flex-1 p-12 max-w-4xl mx-auto w-full">

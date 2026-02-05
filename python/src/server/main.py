@@ -133,7 +133,7 @@ async def lifespan(app: FastAPI):
 
         # Initialize Agent Neural Wiring (MCP Client Injection)
         try:
-            from .agents.mcp_client import get_mcp_client
+            from ..agents.mcp_client import get_mcp_client
             from .services.agent_service import agent_service
 
             # Initialize the global MCP client bridge

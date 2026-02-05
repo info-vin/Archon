@@ -14,10 +14,27 @@ type SortableTaskKeys = 'title' | 'due_date' | 'priority' | 'status' | 'complete
 type SortDirection = 'ascending' | 'descending';
 
 // Helper functions and components for views
-const priorityIndicator = (priority: TaskPriority) => {
+const PriorityBadge: React.FC<{ priority: TaskPriority; variant?: 'badge' | 'indicator' | 'stripe' }> = ({ priority, variant = 'badge' }) => {
   const p = (priority || 'low').toLowerCase();
-  const colors: Record<string, string> = { high: 'text-red-500', medium: 'text-yellow-500', low: 'text-green-500', critical: 'text-purple-600' };
-  return <span className={`${colors[p] || 'text-gray-400'} mr-2`}>●</span>;
+  
+  const config: Record<string, { dot: string; text: string; bg: string; stripe: string }> = {
+    high: { dot: 'bg-red-500', text: 'text-red-700', bg: 'bg-red-50', stripe: 'bg-red-500' },
+    medium: { dot: 'bg-amber-500', text: 'text-amber-700', bg: 'bg-amber-50', stripe: 'bg-amber-500' },
+    low: { dot: 'bg-green-500', text: 'text-green-700', bg: 'bg-green-50', stripe: 'bg-green-500' },
+    critical: { dot: 'bg-purple-600', text: 'text-purple-700', bg: 'bg-purple-50', stripe: 'bg-purple-600' },
+  };
+
+  const style = config[p] || { dot: 'bg-gray-400', text: 'text-gray-700', bg: 'bg-gray-100', stripe: 'bg-gray-400' };
+
+  if (variant === 'stripe') return <div className={`absolute left-0 top-0 bottom-0 w-1.5 ${style.stripe}`} />;
+  if (variant === 'indicator') return <span className={`${style.text.replace('700', '500')} mr-2`}>●</span>;
+  
+  return (
+    <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-bold uppercase ${style.bg} ${style.text}`}>
+      <span className={`w-1.5 h-1.5 rounded-full ${style.dot}`} />
+      {priority}
+    </span>
+  );
 };
 
 const statusIndicator = (status: TaskStatus) => {
@@ -35,29 +52,16 @@ const statusIndicator = (status: TaskStatus) => {
 const ListView: React.FC<{ tasks: Task[]; setEditingTask: (task: Task) => void; userMap: Record<string, any> }> = ({ tasks, setEditingTask, userMap }) => (
   <ul className="space-y-3">
     {tasks.map(task => {
-        const p = (task.priority || 'low').toLowerCase();
-        // Priority Colors (Background for Stripe)
-        const priorityColors: Record<string, string> = { 
-            high: 'bg-red-500', 
-            medium: 'bg-amber-500', 
-            low: 'bg-green-500', 
-            critical: 'bg-purple-600' 
-        };
-        const priorityTextColors: Record<string, string> = { high: 'text-red-700 bg-red-50', medium: 'text-amber-700 bg-amber-50', low: 'text-green-700 bg-green-50', critical: 'text-purple-700 bg-purple-50' };
-        const borderColor = priorityColors[p] || 'bg-gray-400';
-        
         return (
             <li key={task.id} onClick={() => setEditingTask(task)} className="group relative overflow-hidden bg-white/70 backdrop-blur-md rounded-xl border border-white/50 shadow-sm hover:shadow-md transition-all cursor-pointer p-4 pl-5">
                 {/* Priority Stripe */}
-                <div className={`absolute left-0 top-0 bottom-0 w-1.5 ${borderColor}`} />
+                <PriorityBadge priority={task.priority} variant="stripe" />
                 
                 <div className="flex justify-between items-start">
                     <div className="flex flex-col gap-1 max-w-[60%]">
                         <div className="flex items-center gap-2">
                              <span className="font-bold text-gray-800 text-base leading-snug group-hover:text-indigo-600 transition-colors">{task.title}</span>
-                             <span className={`text-[10px] uppercase font-bold px-1.5 py-0.5 rounded ${priorityTextColors[p] || 'text-gray-600 bg-gray-100'}`}>
-                                {task.priority}
-                             </span>
+                             <PriorityBadge priority={task.priority} />
                         </div>
                         {task.description && (
                             <p className="text-sm text-gray-500 line-clamp-1">{task.description}</p>
@@ -134,7 +138,7 @@ const TableView: React.FC<{
           <tr key={task.id} onClick={() => setEditingTask(task)} className="bg-card border-b hover:bg-card-hover cursor-pointer">
             <td className="px-6 py-4 font-medium text-foreground whitespace-nowrap">{task.title}</td>
             <td className="px-6 py-4">{statusIndicator(task.status)}</td>
-            <td className="px-6 py-4">{priorityIndicator(task.priority)} {task.priority}</td>
+            <td className="px-6 py-4"><PriorityBadge priority={task.priority} /></td>
             <td className="px-6 py-4">{task.due_date ? new Date(task.due_date).toLocaleDateString() : 'N/A'}</td>
           </tr>
         ))}
@@ -185,18 +189,21 @@ const KanbanView: React.FC<{
           
           <div className="flex-1 space-y-3 overflow-y-auto pr-1">
             {tasksByStatus[status]?.map(task => {
-               const priorityColors = { high: 'border-l-red-500', medium: 'border-l-yellow-500', low: 'border-l-green-500', critical: 'border-l-purple-600' };
-               const borderClass = priorityColors[task.priority] || 'border-l-gray-300';
-               
                return (
                   <div 
                     key={task.id} 
                     draggable 
                     onDragStart={(e) => onDragStart(e, task.id)} 
                     onClick={() => setEditingTask(task)} 
-                    className={`bg-white p-4 rounded-xl shadow-sm hover:shadow-md cursor-grab active:cursor-grabbing border-l-[3px] ${borderClass} transition-all group border-y border-r border-gray-100`}
+                    className="relative bg-white p-4 rounded-xl shadow-sm hover:shadow-md cursor-grab active:cursor-grabbing overflow-hidden transition-all group border border-gray-100"
                   >
+                    <PriorityBadge priority={task.priority} variant="stripe" />
+                    
                     <p className="font-semibold text-gray-800 text-sm leading-snug mb-3 group-hover:text-indigo-600 transition-colors">{task.title}</p>
+                    
+                    <div className="mb-2">
+                        <PriorityBadge priority={task.priority} />
+                    </div>
                     
                     <div className="flex items-center justify-between mt-auto pt-2 border-t border-gray-50">
                          {task.assignee ? (

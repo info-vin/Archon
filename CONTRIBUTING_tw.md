@@ -529,6 +529,15 @@ docker exec -i archon-server /venv/bin/python -c "import os, psycopg2; DB=os.get
 1.  **請執行**: `make db-init`
 2.  **原理**: 腳本內建了「雙重同步策略 (Dual Sync Strategy)」，會自動偵測重複使用者並執行 `UPDATE profiles SET id = auth_uuid`，強制對齊資料庫 ID。
 
+### 6.3 開發者自動登入 (dev-token) 失敗 (500 Error)
+
+**症狀**: 存取 `localhost:3737` 時，瀏覽器控制台顯示 `POST /api/auth/dev-token 500`，導致無法自動登入。
+
+**可能根源與解決方案**:
+1.  **密碼不匹配**: 檢查 `python/src/server/api_routes/auth_api.py` 中的 `password` 變數。開發環境統一標準密碼為 **`qwer45tyuiop`** (參考 `PRPs/Phase_4.6.5_Bug_Checklist.md`)。
+2.  **模組匯入錯誤**: 若日誌顯示 `ModuleNotFoundError: No module named 'src.server.agents'`，需將 `main.py` 中的相對匯入修正為絕對路徑或正確的相對層級 (例如 `from ..agents` 而非 `from .agents`)。
+3.  **Supabase 連線異常**: 確保 `SUPABASE_SERVICE_KEY` 具備 `service_role` 權限且未過期。
+
 ---
 
 ## 附錄 A：系統分析 (System Analysis)

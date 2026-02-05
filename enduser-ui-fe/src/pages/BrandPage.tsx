@@ -43,6 +43,7 @@ const BrandPage: React.FC = () => {
     // Workbench Editor State (Lifted Up)
     const [workbenchTitle, setWorkbenchTitle] = useState('');
     const [workbenchContent, setWorkbenchContent] = useState('');
+    const [lastPrompt, setLastPrompt] = useState<string | undefined>(undefined);
 
     // Persistence Logic (Restored from Child)
     useEffect(() => {
@@ -130,6 +131,7 @@ const BrandPage: React.FC = () => {
             // FIX: Update Workbench State with Result
             setWorkbenchTitle(result.title);
             setWorkbenchContent(result.content);
+            setLastPrompt(result.used_prompt);
             
             alert("Draft generated! Content has been updated in the Editor.");
         } catch (err: any) {
@@ -316,7 +318,7 @@ const BrandPage: React.FC = () => {
 
     return (
         <PermissionGuard permission="leads:view:marketing" fallback={<div className="p-12 text-center text-gray-500">Access Denied: Brand Hub is for Marketing roles only.</div>}>
-            <div className={`flex flex-col h-[calc(100vh-64px)] ${viewMode === 'workbench' ? 'overflow-hidden' : ''}`}>
+            <div className="flex flex-col h-[calc(100vh-64px)]">
                 <header className="px-6 py-4 flex justify-between items-center bg-white dark:bg-slate-900 border-b shrink-0 font-sans">
                     <div className="flex items-center gap-4">
                         <h1 className="text-2xl font-bold text-gray-800 dark:text-white flex items-center gap-3">
@@ -353,7 +355,7 @@ const BrandPage: React.FC = () => {
                     </div>
                 </header>
 
-                <main className={`flex-1 ${viewMode === 'workbench' ? 'overflow-hidden' : 'overflow-auto'}`}>
+                <main className="flex-1 overflow-auto">
                     {viewMode === 'dashboard' ? (
                         <div className="p-6 max-w-7xl mx-auto space-y-8 font-sans">
                             {/* Market Insight Section (Moved Top for UX-009) */}
@@ -471,6 +473,7 @@ const BrandPage: React.FC = () => {
                                     content={workbenchContent}
                                     onTitleChange={setWorkbenchTitle}
                                     onContentChange={setWorkbenchContent}
+                                    usedPrompt={lastPrompt}
                                 />
                             </div>
                         </div>

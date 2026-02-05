@@ -500,7 +500,7 @@ const supabaseApi = {
     }
     return response.json();
   },
-  async draftBlogPost(data: { topic: string; keywords?: string; tone?: string; context_source_id?: string; context_type?: string }): Promise<{ title: string; content: string; excerpt: string; references: string[] }> {
+  async draftBlogPost(data: { topic: string; keywords?: string; tone?: string; context_source_id?: string; context_type?: string }): Promise<{ title: string; content: string; excerpt: string; references: string[]; used_prompt?: string }> {
       const response = await fetch('/api/marketing/blog/draft', {
           method: 'POST',
           headers: await this._getHeaders(),

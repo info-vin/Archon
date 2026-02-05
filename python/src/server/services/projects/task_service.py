@@ -73,6 +73,7 @@ class TaskService:
         due_date: datetime | None = None,
         knowledge_source_ids: list[str] | None = None,
         assignee_id: str | None = None,
+        priority: str = "medium",
     ) -> tuple[bool, dict[str, Any]]:
         """
         Create a new task under a project with automatic reordering.
@@ -134,6 +135,7 @@ class TaskService:
                 "assignee": assignee,
                 "assignee_id": assignee_id,
                 "task_order": task_order,
+                "priority": priority,
                 "sources": final_sources,
                 "code_examples": code_examples or [],
                 "created_at": datetime.now().isoformat(),
@@ -165,6 +167,7 @@ class TaskService:
                         "assignee": task["assignee"],
                         "assignee_id": task.get("assignee_id"),
                         "task_order": task["task_order"],
+                        "priority": task.get("priority"),
                         "created_at": task["created_at"],
                         "due_date": task.get("due_date"),
                     }
