@@ -59,8 +59,8 @@ sequenceDiagram
     %% 階段一：訊號偵測
     Note over Bob, DB: 階段 1：訊號偵測 (Signal Detection)
     Bob->>UI: 打開工作臺 (Brand Page)
-    UI->>API: GET /api/marketing/wins
-    Note right of UI: 過濾條件：<br>Score > 80 OR Status = WON
+    UI->>API: GET /api/marketing/sources
+    Note right of UI: 過濾條件：<br>Score > 80 OR Status = WON<br>Includes active tasks
     API->>DB: SQL Query (Leads Join VisitLogs)
     DB-->>API: 回傳高潛力名單
     API-->>UI: 渲染左側「戰果牆」(Victory Feed)
@@ -68,7 +68,7 @@ sequenceDiagram
     %% 階段二：脈絡獲取
     Note over Bob, DB: 階段 2：脈絡獲取 (Context Gathering)
     Bob->>UI: 點擊左側客戶 "Mozilla"
-    UI->>API: GET /api/marketing/lead-context/{id}
+    UI->>API: GET /api/marketing/context/{id}?type=lead
     
     par 平行處理 (Parallel Fetch)
         API->>DB: 1. 讀取 Alice 的訪談逐字稿 (Visit Logs)
@@ -84,7 +84,7 @@ sequenceDiagram
     %% 階段三：AI 協作撰寫 (State Persistence & Draft)
     Note over Bob, DB: 階段 3：AI 協作撰寫 (AI Drafting)
     Bob->>UI: 切換至「編輯分頁」 -> 點擊 "✨ 生成草稿" (Magic Draft)
-    UI->>API: POST /api/marketing/drafts
+    UI->>API: POST /api/marketing/blog/draft
     Note right of UI: UI 進入 Loading 狀態<br>(⚠️ 目前切換分頁會遺失進度，需修復)
     API->>MarketBot: Prompt: "基於{Logs}與{Docs}撰寫案例..."
     MarketBot-->>API: Stream 回傳 Markdown 草稿
@@ -130,17 +130,20 @@ sequenceDiagram
 
 ### 4.1 擴充 `marketing_api.py`
 
-#### Endpoint: `GET /api/marketing/wins` (戰果牆)
-*   **邏輯**: 查詢 `leads` 資料表。
-*   **過濾**: `status='WON'` OR (`status='NEGOTIATION'` AND `score >= 80`)。
-*   **回傳**: 輕量級列表 (ID, Company, Score, Summary, Date)，供左側列表使用。
+#### Endpoint: `GET /api/marketing/sources` (戰果牆)
+*   **邏輯**: 聚合查詢 `leads` 與 `archon_tasks` 資料表。
+*   **過濾**: 
+    1. Leads: `status='WON'` OR (`status='NEGOTIATION'` AND `score >= 80`)
+    2. Tasks: Assigned to Bob & Status != DONE
+*   **回傳**: 統一格式列表 (ID, Type, Title, Score, Summary, Date)，供左側列表使用。
 
-#### Endpoint: `GET /api/marketing/lead-context/{lead_id}` (脈絡聚合)
-*   **新 Endpoint**: 專為工作臺設計的聚合接口。
+#### Endpoint: `GET /api/marketing/context/{source_id}` (脈絡聚合)
+*   **New Endpoint**: 專為工作臺設計的通用聚合接口。
+*   **參數**: `source_type` (default: 'lead')
 *   **邏輯**:
-    1.  讀取 Lead 詳細資料。
-    2.  讀取關聯的 `visit_logs` (依據 `lead_id`)。
-    3.  呼叫 `RAGService.search(lead.identified_need)` 獲取 Librarian 的建議。
+    1.  根據 type 讀取 Lead 或 Task 詳細資料。
+    2.  讀取關聯的 `visit_logs` (若為 Lead)。
+    3.  呼叫 `RAGService.perform_rag_query` 獲取 Librarian 的建議。
 *   **回傳結構**:
     ```json
     {
@@ -150,9 +153,9 @@ sequenceDiagram
     }
     ```
 
-#### Endpoint: `POST /api/marketing/drafts` (草稿生成)
-*   **參數**: 接受 `context_lead_id` (可選)。
-*   **邏輯**: 若有提供 `lead_id`，則後端會自動從 DB 撈取該 Lead 的 Visit Logs 與 RAG Context，將其注入到 `BLOG_DRAFT_SYSTEM_PROMPT` 中，確保生成的文章「有所本」。
+#### Endpoint: `POST /api/marketing/blog/draft` (草稿生成)
+*   **參數**: `topic`, `keywords`, `context_source_id`, `context_type`。
+*   **邏輯**: 若有提供 `context_source_id`，後端會自動從 DB 撈取該來源的結構化資料 (Logs/Description)，並結合 RAG 檢索結果，注入到 `BLOG_DRAFT_SYSTEM_PROMPT`。
 
 ---
 
