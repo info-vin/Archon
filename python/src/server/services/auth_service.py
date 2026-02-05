@@ -42,7 +42,7 @@ class AuthService:
                 "email": email,
                 "password": password,
                 "email_confirm": True,
-                "user_metadata": {"name": name}
+                "user_metadata": {"name": name, "role": role}
             }
 
             # Use auth.admin.create_user (GoTrue Admin API)

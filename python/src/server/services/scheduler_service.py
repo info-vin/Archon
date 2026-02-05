@@ -243,6 +243,10 @@ class SchedulerService:
             except Exception:
                 pass
 
+    async def run_business_sentinel(self):
+        """Public wrapper for manual triggering."""
+        await self._run_business_sentinel()
+
     async def _run_business_sentinel(self):
         """
         Scans leads for staleness and other business anomalies.

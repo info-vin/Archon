@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './hooks/useAuth.tsx';
+import { EmployeeRole } from './types.ts';
 import LandingPage from './pages/LandingPage.tsx';
 import AuthPage from './pages/AuthPage.tsx';
 import DashboardPage from './pages/DashboardPage.tsx';
@@ -13,6 +14,7 @@ import MarketingPage from './pages/MarketingPage.tsx';
 import TeamManagementPage from './pages/TeamManagementPage.tsx';
 import BrandPage from './pages/BrandPage.tsx';
 import ApprovalsPage from './pages/ApprovalsPage.tsx';
+import { ManagerDashboard } from './pages/ManagerDashboard.tsx';
 import PublicLayout from './components/layout/PublicLayout.tsx';
 import MainLayout from './components/layout/MainLayout.tsx';
 import SolutionsPage from './features/marketing/SolutionsPage.tsx';
@@ -137,6 +139,16 @@ export const AppRoutes: React.FC = () => {
         }
       />
       <Route
+        path="/manager"
+        element={
+          <ManagerRoute>
+            <MainLayout>
+              <ManagerDashboard />
+            </MainLayout>
+          </ManagerRoute>
+        }
+      />
+      <Route
         path="/settings"
         element={
           <ProtectedRoute>
@@ -162,6 +174,13 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
 const AdminRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const { isAdmin } = useAuth();
     return isAdmin ? <>{children}</> : <Navigate to="/dashboard" />;
+};
+
+const ManagerRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+    const { user } = useAuth();
+    const role = user?.role?.toLowerCase();
+    const isManager = role === EmployeeRole.MANAGER || role === 'manager' || role === EmployeeRole.ADMIN || role === 'admin';
+    return isManager ? <>{children}</> : <Navigate to="/dashboard" />;
 };
 
 export default App;

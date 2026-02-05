@@ -63,14 +63,22 @@ class EnrichmentService:
             current_need = lead.get("identified_need") or ""
             enriched_summary = f"{current_need}\n\n[Auto-Enriched Data]\nTax ID: {mock_tax_id}\nEmail: {mock_email}\nNews: {mock_news}"
 
-            # Implement GAP-015: Dynamic Scoring
-            base_score = 20
+            # Implement GAP-015: Dynamic Scoring via SettingsService
+            from ..services.settings_service import SettingsService
+            settings_service = SettingsService(supabase)
+
+            # Fetch rules (with defaults)
+            score_vital = int(settings_service.get_setting("SCORING_VITAL_CONTACT", "20") or "20")
+            score_funding = int(settings_service.get_setting("SCORING_NEWS_FUNDING", "30") or "30")
+            score_job = int(settings_service.get_setting("SCORING_HAS_JOB_URL", "15") or "15")
+
+            base_score = 20 # Baseline for existing
             if mock_email:
-                base_score += 20
+                base_score += score_vital
             if "funding" in mock_news.lower():
-                base_score += 30
+                base_score += score_funding
             if lead.get("source_job_url"):
-                base_score += 15
+                base_score += score_job
 
             enrichment_data = {
                 "enrichment_status": "success",

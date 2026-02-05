@@ -1,6 +1,6 @@
 # Phase 4.6.3 Charlie Persona: The Orchestrator (指揮官工作流)
 
-> **Status**: Draft
+> **Status**: Implemented (2026-02-05)
 > **Role**: Manager / Admin
 > **Motto**: "Management by Exception" (只處理例外，不陷入細節)
 > **Goal**: 連結前線 (Alice) 與市場 (Bob)，確保組織依據數據行動。
@@ -126,16 +126,50 @@ sequenceDiagram
 
 ---
 
+### Workflow C: 知識庫初始化 (Knowledge Initialization UI)
+> **場景**: 系統初次部署或需要重置知識庫時，Charlie (Manager) 點擊儀表板按鈕觸發初始化，Admin 可透過 3737 Port 驗證結果。
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Charlie as 👨 Charlie (Manager)
+    participant UI as 🖥️ Manager Dashboard
+    participant API as ⚙️ Manager API
+    participant Librarian as 🧠 Librarian
+    participant DB as 🗄️ Vector DB
+    actor Admin as 👷 Admin
+
+    Note over Charlie, DB: 階段 1：觸發初始化 (Trigger Seeding)
+    Charlie->>UI: 點擊 "Rebuild Knowledge Base"
+    UI->>API: POST /manager/knowledge/seed
+    API->>Librarian: 掃描 docs/ 目錄
+    
+    loop 每一份文件
+        Librarian->>DB: UPSERT into knowledge_base
+    end
+
+    Librarian-->>API: Success (Count)
+    API-->>UI: 顯示 "Indexed X documents"
+    
+    Note over Admin, DB: 階段 2：驗證結果 (Verification)
+    Admin->>DB: (Port 3737) SELECT count(*) FROM knowledge_base
+    DB-->>Admin: 回傳筆數
+```
+
+---
+
 ## 4. 實作計畫 (Implementation Gap Analysis)
 
 為了落地上述流程，Phase 4.6.3 需補足以下缺口：
 
-| 模組 | 現狀 (As-Is) | 缺口 (Gap) | 實作行動 (Action Item) |
-| :--- | :--- | :--- | :--- |
-| **RBAC** | 角色有分，但 API 無強制擋權。 | Bob 可以直接 Publish，繞過 Charlie。 | **API Enforcer**: 在 `/publish` 端點強制檢查 `user.role == 'manager'`。 |
-| **UI** | 只有個人的 Dashboard。 | Charlie 沒有綜觀全域的 **"Team Dashboard"**。 | **New View**: 實作 `ManagerDashboard.tsx`，包含 `Alerts` 與 `Approval Queue` 區塊。 |
-| **Agent** | 只有單一 Chat 介面。 | 缺乏 **"背景執行"** 的 Sentinel 與 Reviewer。 | **Cron Jobs**: 實作後端排程任務 (如 `apscheduler` 或簡單的 loop)，定期掃描並寫入 `archon_logs` 作為 Alerts。 |
-| **Data** | Task 只能手動建立。 | 無法由 AI 自動生成 Task 草稿。 | **Smart Task**: 在 `task_service.py` 新增 `generate_task_from_insight()` 方法。 |
+| 模組 | 現狀 (As-Is) | 缺口 (Gap) | 實作行動 (Action Item) | 狀態 |
+| :--- | :--- | :--- | :--- | :--- |
+| **RBAC** | 角色有分，但 API 無強制擋權。 | Bob 可以直接 Publish，繞過 Charlie。 | **API Enforcer**: 在 `/approvals` 與 `/dispatch` 端點強制檢查 `user.role == 'manager'`。 | ✅ Done |
+| **UI** | 只有個人的 Dashboard。 | Charlie 沒有綜觀全域的 **"Team Dashboard"**。 | **New View**: 實作 `ManagerDashboard.tsx`，包含 Alerts Feed, Sentinel Trigger。 | ✅ Done |
+| **Agent** | 只有單一 Chat 介面。 | 缺乏 **"背景執行"** 的 Sentinel 與 Reviewer。 | **Sentinel Service**: 實作 `scheduler_service.py` 定期掃描 stale leads。 | ✅ Done |
+| **Data** | Task 只能手動建立。 | 無法由 AI 自動生成 Task 草稿。 | **Smart Dispatch**: 在 `task_service.py` 整合 RAG + LLM (`gemini-1.5-pro`) 自動生成任務。 | ✅ Done |
+| **SOP** | 需手動 SSH 進伺服器執行 CLI。| Charlie 不會用 Terminal，無法自行重置 RAG。 | **System Maintenance UI**: 在 Dashboard 新增 "Rebuild Knowledge Base" 按鈕與 API。 | ✅ Done |
+
 
 ---
 

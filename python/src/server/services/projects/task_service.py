@@ -743,7 +743,8 @@ class TaskService:
     async def generate_task_from_alert(
         self,
         alert_id: str,
-        assignee_id: str | None = None
+        assignee_id: str | None = None,
+        triggered_by: str | None = None # Added for Token Tracking
     ) -> tuple[bool, dict[str, Any]]:
         """
         AI-powered task generation from a Sentinel alert.
@@ -794,8 +795,8 @@ class TaskService:
                 context_str += "\n".join([res.get("content", "")[:300] for res in rag_result["results"]])
 
             # 4. Call AI to generate Task Draft
-            # Upgrade to gemini-2.5-flash-lite
-            model_name = "gemini-2.5-flash-lite"
+            # Use gemini-1.5-pro as per Phase 4.6.3 Plan
+            model_name = "gemini-1.5-pro"
 
             # Key Decoupling
             charlie_api_key = await credential_service.get_credential("GEMINI_API_KEY")
@@ -819,7 +820,8 @@ class TaskService:
             """).strip()
 
             try:
-                async with get_llm_client(api_key=charlie_api_key) as client:
+                # Pass triggered_by as user_id for Token Usage Attribution
+                async with get_llm_client(api_key=charlie_api_key, user_id=triggered_by, request_id=f"task-gen-{alert_id}") as client:
                     response = await client.chat.completions.create(
                         model=model_name,
                         messages=[

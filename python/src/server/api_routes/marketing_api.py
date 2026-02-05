@@ -545,46 +545,88 @@ async def get_pending_approvals():
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 @router.post("/approvals/{item_type}/{item_id}/{action}")
+
 async def process_approval(
+
     item_type: str,
+
     item_id: str,
+
     action: str,
+
     comment: str | None = None,
+
     current_user: dict = Depends(get_current_user)
+
 ):
+
     """
+
     Process approval action (approve/reject).
-    Only Managers can perform this action.
+
+    Only Managers and Admins can perform this action.
+
     """
+
     user_role = current_user.get("role", "viewer").lower()
+
     if user_role not in ["system_admin", "admin", "manager"]:
+
         logger.warning(f"API: Approval denied | user={current_user.get('email')} | role={user_role}")
-        raise HTTPException(status_code=403, detail="Only Managers can approve items.")
+
+        raise HTTPException(status_code=403, detail="Insufficient permissions for approval actions.")
+
+
 
     if action not in ["approve", "reject"]:
+
         raise HTTPException(status_code=400, detail="Invalid action")
 
+
+
     try:
+
         supabase = get_supabase_client()
 
+
+
         if item_type == "blog":
+
             # State Machine: review -> published OR changes_requested
+
             new_status = "published" if action == "approve" else "changes_requested"
 
+
+
             update_payload = {
+
                 "status": new_status,
+
                 "updated_at": "now()"
+
             }
 
+
+
             # TODO: Store review comments in a separate table or a JSONB column in future
+
             # For now, we assume simple status update is enough for Phase 4.6.3
+
+
 
             supabase.table("blog_posts").update(update_payload).eq("id", item_id).execute()
 
+
+
             logger.info(f"API: Blog approval processed | id={item_id} | action={action} | user={current_user.get('email')}")
-            return {"success": True, "status": new_status}
+
+            return {"success": True, "status": new_status, "new_state": new_status}
+
+
 
         raise HTTPException(status_code=400, detail="Unknown item type")
+
+
 
     except Exception as e:
         logger.error(f"API: Approval process failed | type={item_type} | id={item_id} | error={str(e)}")
@@ -1040,6 +1082,154 @@ async def reset_leads(current_user: dict = Depends(get_current_user)):
         logger.info(f"API: Leads reset | count={len(res.data) if res.data else 0} | user={current_user.get('email')}")
         return {"success": True, "deleted_count": len(res.data) if res.data else 0}
     except Exception as e:
-        logger.error(f"API: Leads reset failed | error={str(e)}")
-        # Return detailed error to help debug foreign key constraints etc.
-        raise HTTPException(status_code=500, detail=f"Failed to reset leads: {str(e)}") from e
+        logger.error(f"Reset leads failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e)) from e
+
+# --- Manager & Sentinel Endpoints ---
+
+@router.get("/manager/alerts")
+async def get_manager_alerts(current_user: dict = Depends(get_current_user)):
+    """Fetch high-priority alerts for the Manager Dashboard."""
+    user_role = current_user.get("role", "viewer")
+    if user_role not in ["manager", "admin"]:
+        raise HTTPException(status_code=403, detail="Access Denied")
+
+    supabase = get_supabase_client()
+    try:
+        # Fetch alerts created by Sentinel
+        res = supabase.table("archon_logs")\
+            .select("*")\
+            .eq("source", "sentinel")\
+            .eq("level", "ALERT")\
+            .order("created_at", desc=True)\
+            .limit(50)\
+            .execute()
+        return res.data or []
+    except Exception as e:
+        logger.error(f"Failed to fetch alerts: {e}")
+        raise HTTPException(status_code=500, detail=str(e)) from e
+
+@router.post("/manager/sentinel/run")
+async def trigger_sentinel(current_user: dict = Depends(get_current_user)):
+    """Manually trigger the Sentinel Service (Demo Mode)."""
+    user_role = current_user.get("role", "viewer")
+    if user_role not in ["manager", "admin"]:
+        raise HTTPException(status_code=403, detail="Access Denied")
+
+    from ..services.scheduler_service import scheduler_service
+    await scheduler_service.run_business_sentinel()
+    return {"status": "triggered", "message": "Sentinel scan started in background."}
+
+@router.post("/manager/alerts/{alert_id}/dispatch")
+async def dispatch_alert_task(
+    alert_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    Smart Dispatch: Generate a task from an Alert using RAG + LLM.
+    """
+    user_role = current_user.get("role", "viewer")
+    if user_role not in ["manager", "admin"]:
+        raise HTTPException(status_code=403, detail="Access Denied")
+
+    from ..services.projects.task_service import task_service
+
+    # Call with triggered_by = current_user.id for Token Audit
+    success, result = await task_service.generate_task_from_alert(
+        alert_id=alert_id,
+        triggered_by=current_user.get("id")
+    )
+
+    if not success:
+        raise HTTPException(status_code=500, detail=result.get("error", "Failed to dispatch task"))
+
+    return result
+
+@router.post("/manager/knowledge/seed")
+async def seed_knowledge_base(current_user: dict = Depends(get_current_user)):
+    """
+    Trigger the Knowledge Seeding process (scans docs/ and archives them).
+    """
+    user_role = current_user.get("role", "viewer")
+    if user_role not in ["manager", "admin"]:
+        raise HTTPException(status_code=403, detail="Access Denied")
+
+    import os
+
+    from ..services.librarian_service import LibrarianService
+
+    # Define target directories relative to server root
+    # Assuming standard structure: python/src/server/api_routes/../../../../enduser-ui-fe/public/aus/156_resource
+    # We need to be careful with paths in Docker vs Local.
+    # Best bet: Use relative path from this file or absolute path if known.
+    # In Docker, app is usually at /app.
+
+    # Try multiple common roots
+    roots_to_try = [
+        "../enduser-ui-fe/public/aus/156_resource", # Local relative from script location? No, from server run location.
+        "/app/enduser-ui-fe/public/aus/156_resource", # Docker
+        "../../enduser-ui-fe/public/aus/156_resource", # Relative from src/server
+        os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../../enduser-ui-fe/public/aus/156_resource")) # Absolute from file
+    ]
+
+    target_dir = None
+    for r in roots_to_try:
+        if os.path.exists(r):
+            target_dir = r
+            break
+
+    if not target_dir:
+        # Fallback for dev: try a simpler docs folder
+        fallback = "docs"
+        if os.path.exists(fallback):
+            target_dir = fallback
+
+    if not target_dir:
+        raise HTTPException(status_code=404, detail="Knowledge resource directory not found.")
+
+    librarian = LibrarianService()
+    success_count = 0
+    total_count = 0
+    errors = []
+
+    try:
+        # Scan and Archive
+        for root, _, files in os.walk(target_dir):
+            for file in files:
+                if file.startswith('.') or file == "DS_Store":
+                    continue
+
+                if not (file.endswith('.md') or file.endswith('.txt')):
+                    continue
+
+                total_count += 1
+                file_path = os.path.join(root, file)
+
+                try:
+                    with open(file_path, encoding='utf-8') as f:
+                        content = f.read()
+
+                    if not content.strip():
+                        continue
+
+                    await librarian.archive_file(
+                        file_name=file,
+                        content=content,
+                        file_path=file_path,
+                        knowledge_type="technical"
+                    )
+                    success_count += 1
+                except Exception as e:
+                    errors.append(f"{file}: {str(e)}")
+
+        return {
+            "status": "completed",
+            "scanned_dir": target_dir,
+            "total_files": total_count,
+            "indexed_count": success_count,
+            "errors": errors[:5] # Limit error return
+        }
+
+    except Exception as e:
+        logger.error(f"Seeding failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e)) from e

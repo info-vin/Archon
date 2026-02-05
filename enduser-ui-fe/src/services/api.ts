@@ -157,7 +157,6 @@ const supabaseApi = {
 
     try {
       // Use Promise.race to enforce a strict timeout on Supabase Auth session check.
-      // Increased to 5s for Docker environments which might be slower.
       const sessionResult: any = await Promise.race([
         supabase.auth.getSession(),
         new Promise((_, reject) => setTimeout(() => reject(new Error('Auth timeout')), 5000))
@@ -168,26 +167,29 @@ const supabaseApi = {
       if (!session?.user) return null;
       sessionUser = session.user;
     } catch (e) {
-      console.warn("Auth check failed or timed out, proceeding as unauthenticated:", e);
+      console.warn("[api.ts] Auth check failed or timed out:", e);
       return null;
     }
 
-    // Secondary Try/Catch for Profile Fetching to prevent 406/RLS errors from logging out the user
+    // Secondary Try/Catch for Profile Fetching
     try {
       const { data: profile, error } = await supabase.from('profiles').select('*').eq('id', sessionUser.id).maybeSingle();
       
       if (error) throw error;
-      if (!profile) throw new Error("Profile missing");
+      if (!profile) throw new Error("Profile missing in public.profiles");
       
       return profile as Employee;
     } catch (e: any) {
-      console.warn('Profile not found or fetch failed (likely 406 or RLS), using auth metadata fallback:', e?.message);
-      // Robust fallback: Return basic info from session so UI doesn't crash/hang
+      // Sync with Backend dependencies.py logic: Check user_metadata for role
+      const metadataRole = sessionUser.user_metadata?.role || EmployeeRole.MEMBER;
+      
+      console.warn(`[api.ts] Profile fetch failed (${e?.message}), falling back to metadata role: ${metadataRole}`);
+      
       return { 
         id: sessionUser.id, 
         email: sessionUser.email!, 
         name: sessionUser.user_metadata.name || sessionUser.email?.split('@')[0] || 'Authenticated User', 
-        role: EmployeeRole.MEMBER, // Default role
+        role: metadataRole as EmployeeRole, 
         avatar: sessionUser.user_metadata.avatar_url || `https://i.pravatar.cc/150?u=${sessionUser.id}`,
         employeeId: 'TEMP-' + sessionUser.id.substring(0, 5),
         department: 'Unknown',
@@ -730,10 +732,46 @@ const supabaseApi = {
     return response.json();
   },
 
-  async getAlerts(limit: number = 50): Promise<any[]> {
-    const response = await fetch(`/api/logs/alerts?limit=${limit}`, { headers: await this._getHeaders() });
+  async getAlerts(): Promise<any[]> {
+    const response = await fetch(`/api/marketing/manager/alerts`, { headers: await this._getHeaders() });
     if (!response.ok) {
       throw new Error('Failed to fetch alerts');
+    }
+    return response.json();
+  },
+
+  async getManagerAlerts(): Promise<any[]> {
+     return this.getAlerts();
+  },
+
+  async triggerSentinel(): Promise<any> {
+    const response = await fetch('/api/marketing/manager/sentinel/run', {
+        method: 'POST',
+        headers: await this._getHeaders(),
+    });
+    return response.json();
+  },
+
+  async dispatchAlertTask(alertId: string): Promise<any> {
+    const response = await fetch(`/api/marketing/manager/alerts/${alertId}/dispatch`, {
+        method: 'POST',
+        headers: await this._getHeaders(),
+    });
+    if (!response.ok) {
+         const error = await response.json();
+         throw new Error(error.detail || 'Dispatch failed');
+    }
+    return response.json();
+  },
+
+  async seedKnowledgeBase(): Promise<any> {
+    const response = await fetch('/api/marketing/manager/knowledge/seed', {
+        method: 'POST',
+        headers: await this._getHeaders(),
+    });
+    if (!response.ok) {
+         const error = await response.json();
+         throw new Error(error.detail || 'Seeding failed');
     }
     return response.json();
   },

@@ -55,3 +55,24 @@ class SettingsService:
         except Exception as e:
             logger.error(f"Error getting database statistics: {e}", exc_info=True)
             return False, f"Error getting database statistics: {e}"
+
+    def get_setting(self, key: str, default: str | None = None) -> str | None:
+        """Retrieve a specific setting value."""
+        try:
+            response = self.supabase_client.table("archon_settings").select("value").eq("key", key).single().execute()
+            if response.data and "value" in response.data:
+                return str(response.data["value"])
+            return default
+        except Exception:
+            return default
+
+    def get_all_settings(self) -> dict[str, str]:
+        """Retrieve all settings as a dictionary."""
+        try:
+            response = self.supabase_client.table("archon_settings").select("key, value").execute()
+            if response.data:
+                return {item["key"]: item["value"] for item in response.data}
+            return {}
+        except Exception as e:
+            logger.error(f"Error fetching all settings: {e}")
+            return {}
