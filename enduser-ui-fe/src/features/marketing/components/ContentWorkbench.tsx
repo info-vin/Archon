@@ -31,6 +31,7 @@ interface ContentWorkbenchProps {
   onDraft: (topic: string) => void;
   onGenerateImage: (title: string) => void;
   onPublish: (post: any) => void;
+  onSave: () => void;
   isDrafting: boolean;
   isGeneratingImage: boolean;
   title: string;
@@ -47,6 +48,7 @@ export const ContentWorkbench: React.FC<ContentWorkbenchProps> = ({
   onDraft,
   onGenerateImage,
   onPublish,
+  onSave,
   isDrafting,
   isGeneratingImage,
   title,
@@ -60,8 +62,8 @@ export const ContentWorkbench: React.FC<ContentWorkbenchProps> = ({
 
   // BUG-026: Save Feedback
   const handleSave = () => {
-    // Persistence is managed by the parent via state lifting and localStorage
-    alert("Draft saved successfully!");
+    // Call parent handler to redirect
+    onSave();
   };
 
   if (!activeSource) {

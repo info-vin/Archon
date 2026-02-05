@@ -852,14 +852,16 @@ async def nana_banana_proxy(
     if not api_key:
         # Instead of 503, use fallback immediately for demo continuity
         logger.warning("No API Key found for Imagen. Using Mock.")
+        import urllib.parse
+        encoded_seed = urllib.parse.quote(request.get("prompt", "fallback")[:20])
         return {
             "status": "fallback_mock",
-            "image_url": "https://placehold.co/600x400/png?text=No+API+Key+Configured"
+            "image_url": f"https://picsum.photos/seed/{encoded_seed}/800/600"
         }
 
-    # REALITY CHECK (Feb 2026): Use Nano Banana Gemini 2.5 Flash Image
+    # REALITY CHECK (Feb 2026): Use Nano Banana Gemini 2.0 Flash (latest stable)
     rag_strategy_creds = await credential_service.get_credentials_by_category("rag_strategy")
-    imagen_model = rag_strategy_creds.get("MARKETING_IMAGE_MODEL") or "gemini-2.5-flash-image"
+    imagen_model = rag_strategy_creds.get("MARKETING_IMAGE_MODEL") or "gemini-2.0-flash-exp"
 
     prompt = request.get("prompt", "A futuristic digital artwork of a high-tech dashboard")
     # Mapping old aspect ratios to new SDK if needed, for now use direct
@@ -927,9 +929,11 @@ async def nana_banana_proxy(
         })
 
         # Graceful degradation to keep Bob working
+        import urllib.parse
+        encoded_seed = urllib.parse.quote(prompt[:20])
         return {
             "status": "fallback_mock",
-            "image_url": "https://placehold.co/600x400/png?text=Nana+Banana+Fallback"
+            "image_url": f"https://picsum.photos/seed/{encoded_seed}/800/600"
         }
 
 @router.get("/trends")

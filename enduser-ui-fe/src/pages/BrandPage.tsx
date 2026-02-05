@@ -141,6 +141,13 @@ const BrandPage: React.FC = () => {
         }
     };
 
+    const handleSaveWorkbench = async () => {
+        // Save logic is already handled by effects (localStorage)
+        // We just need to notify and switch view
+        alert("Draft saved to workspace!");
+        setViewMode('dashboard');
+    };
+
     const handleGenerateImage = async (title: string) => {
         setIsGeneratingImage(true);
         try {
@@ -467,6 +474,7 @@ const BrandPage: React.FC = () => {
                                     onDraft={handleMagicDraft}
                                     onGenerateImage={handleGenerateImage}
                                     onPublish={handlePublishWorkbench}
+                                    onSave={handleSaveWorkbench}
                                     isDrafting={isDrafting}
                                     isGeneratingImage={isGeneratingImage}
                                     title={workbenchTitle}

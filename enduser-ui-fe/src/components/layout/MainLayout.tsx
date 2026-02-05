@@ -53,7 +53,7 @@ const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                     </button>
                 </div>
                 {/* Desktop Navigation */}
-                <ul className="flex-grow p-2">
+                <ul className="flex-grow p-2" onClick={() => setIsSidebarOpen(false)}>
                     <li className="mb-2">
                         <Link to="/dashboard" className={`flex items-center p-2 rounded-md hover:bg-secondary ${location.pathname.startsWith('/dashboard') ? 'bg-secondary' : ''}`}>
                             <UserIcon className="w-5 h-5 mr-3" />

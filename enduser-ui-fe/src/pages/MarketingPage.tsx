@@ -173,7 +173,7 @@ const MarketingPage: React.FC = () => {
       <header className="flex justify-between items-end">
         <div>
             <h1 className="text-3xl font-bold text-gray-800">Sales Intelligence</h1>
-            <p className="text-gray-500 mt-2">Identify opportunities and manage your sales pipeline.</p>
+            <p className="text-gray-500 mt-2 hidden md:block">Identify opportunities and manage your sales pipeline.</p>
         </div>
         
         {/* Tab Navigation */}
@@ -306,9 +306,9 @@ const MarketingPage: React.FC = () => {
                                     </div>
                                 )}
 
-                                <div className="flex justify-between items-center mt-4 pt-4 border-t border-gray-100" onClick={e => e.stopPropagation()}>
-                                    <div className="text-xs text-muted-foreground flex items-center gap-2">
-                                        <span className={expandedJobIdx === idx ? 'text-indigo-600 font-bold' : ''}>
+                                <div className="flex justify-between items-center mt-4 pt-4 border-t border-gray-100">
+                                    <div className="text-xs text-muted-foreground flex items-center gap-2 cursor-pointer" onClick={(e) => { e.stopPropagation(); setExpandedJobIdx(null); }}>
+                                        <span className={expandedJobIdx === idx ? 'text-indigo-600 font-bold hover:text-indigo-800' : ''}>
                                             {expandedJobIdx === idx ? 'Tap to collapse' : 'Tap card to details'}
                                         </span>
                                     </div>
