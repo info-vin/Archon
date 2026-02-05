@@ -1,5 +1,5 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
+import Markdown from 'react-markdown';
 import { api } from '../services/api';
 import { PermissionGuard } from '../features/auth/components/PermissionGuard';
 import { 
@@ -9,13 +9,15 @@ import {
     DatabaseIcon, 
     RefreshCwIcon, 
     XIcon,
-    TrendingUpIcon, // For Alert
-    ClockIcon, // For History
-    UserIcon, // Added missing
+    TrendingUpIcon, 
+    ClockIcon, 
+    UserIcon, 
+    EyeIcon,
+    LayoutGridIcon
 } from '../components/Icons';
 
 const Badge = ({ children, className }: any) => (
-    <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${className}`}>
+    <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-black uppercase tracking-tighter ${className}`}>
         {children}
     </span>
 );
@@ -32,6 +34,9 @@ interface BlogPost {
   id: string;
   title: string;
   status: string;
+  content?: string;
+  imageUrl?: string;
+  hashtags?: string;
   authorName?: string;
   created_at?: string; 
   ai_score?: number;
@@ -57,11 +62,13 @@ const ApprovalsPage: React.FC = () => {
   const [contentApprovals, setContentApprovals] = useState<BlogPost[]>([]);
   const [alerts, setAlerts] = useState<AlertItem[]>([]);
   const [loading, setLoading] = useState(false);
+  
+  // Charlie's State Hooks
+  const [previewId, setPreviewId] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      // Execute all requests but handle them with care for robustness
       const [contentRes, codeRes, alertsRes] = await Promise.all([
         api.getPendingApprovals().catch(e => { console.warn("Content fetch failed", e); return { blogs: [] }; }),
         api.getPendingChanges().catch(e => { console.warn("Code fetch failed", e); return []; }),
@@ -86,7 +93,8 @@ const ApprovalsPage: React.FC = () => {
   const handleContentAction = async (id: string, action: 'approve' | 'reject') => {
     try {
       await api.processApproval('blog', id, action);
-      alert(action === 'approve' ? 'Content Published!' : 'Returned to Draft');
+      alert(action === 'approve' ? 'Content Published!' : 'Returned to Bob');
+      setPreviewId(null);
       fetchData();
     } catch (err) {
       alert("Action failed");
@@ -104,17 +112,14 @@ const ApprovalsPage: React.FC = () => {
     }
   };
 
-  // Dispatch Task Logic (Smart Dispatch)
   const handleDispatchTask = async (alertItem: AlertItem) => {
       try {
           setLoading(true);
           await api.generateTaskFromAlert(alertItem.id);
-          
-          alert(`Smart Task dispatched to Alice! Context enriched by AI.`);
-          fetchData(); // Refresh to clear or update status
+          alert(`Smart Task dispatched! Context enriched by AI.`);
+          fetchData();
       } catch (err: any) {
           alert(`Failed to dispatch task: ${err.message}`);
-          console.error(err);
       } finally {
           setLoading(false);
       }
@@ -122,81 +127,133 @@ const ApprovalsPage: React.FC = () => {
 
   return (
     <PermissionGuard permission="user:manage:team"> 
-      <div className="p-6 max-w-7xl mx-auto space-y-8 min-h-screen bg-gray-50">
-        <header className="flex justify-between items-end border-b border-gray-200 pb-6 bg-white p-6 rounded-xl shadow-sm">
+      <div className="p-4 md:p-6 max-w-7xl mx-auto space-y-6 md:space-y-8 min-h-screen bg-gray-50/50 dark:bg-slate-950 font-sans">
+        <header className="flex flex-col md:flex-row justify-between items-start md:items-end border-b border-gray-200 dark:border-slate-800 pb-6 bg-white dark:bg-slate-900 p-6 rounded-3xl shadow-sm gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Command Center</h1>
-            <p className="text-gray-500 mt-2">Oversee operations, approve content, and manage system changes.</p>
+            <div className="flex items-center gap-2 text-indigo-600 mb-1">
+                <LayoutGridIcon className="w-4 h-4" />
+                <span className="text-[10px] font-black uppercase tracking-widest">Charlie's Workbench</span>
+            </div>
+            <h1 className="text-2xl md:text-3xl font-black text-gray-900 dark:text-white flex items-center gap-3">
+                Operations Nexus
+            </h1>
+            <p className="text-sm text-gray-500 dark:text-slate-400 mt-1 italic">Scan, Review, and Execute system-wide signals.</p>
           </div>
           
-          <div className="flex gap-2">
+          <div className="flex w-full md:w-auto gap-2 overflow-x-auto pb-2 md:pb-0 scrollbar-hide">
              <button 
                 onClick={() => setActiveTab('content')}
-                className={`px-4 py-2 text-sm font-medium rounded-lg transition-all flex items-center gap-2 ${activeTab === 'content' ? 'bg-indigo-600 text-white shadow-md' : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'}`}
+                className={`px-5 py-2.5 text-xs font-bold rounded-2xl transition-all flex items-center gap-2 shrink-0 ${activeTab === 'content' ? 'bg-indigo-600 text-white shadow-xl shadow-indigo-200' : 'bg-white dark:bg-slate-800 text-gray-600 dark:text-slate-300 border border-gray-200 dark:border-slate-700 hover:bg-gray-50'}`}
              >
                 <FileTextIcon className="w-4 h-4" />
                 Content
-                {contentApprovals.length > 0 && <span className="bg-indigo-100 text-indigo-700 px-1.5 py-0.5 rounded text-xs font-bold ml-2">{contentApprovals.length}</span>}
+                {contentApprovals.length > 0 && <span className="bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-300 px-2 py-0.5 rounded-full text-[10px] font-black ml-1">{contentApprovals.length}</span>}
              </button>
              <button 
                 onClick={() => setActiveTab('code')}
-                className={`px-4 py-2 text-sm font-medium rounded-lg transition-all flex items-center gap-2 ${activeTab === 'code' ? 'bg-indigo-600 text-white shadow-md' : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'}`}
+                className={`px-5 py-2.5 text-xs font-bold rounded-2xl transition-all flex items-center gap-2 shrink-0 ${activeTab === 'code' ? 'bg-amber-500 text-white shadow-xl shadow-amber-200' : 'bg-white dark:bg-slate-800 text-gray-600 dark:text-slate-300 border border-gray-200 dark:border-slate-700 hover:bg-gray-50'}`}
              >
                 <DatabaseIcon className="w-4 h-4" />
                 Dev Ops
-                {codeProposals.length > 0 && <span className="bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded text-xs font-bold ml-2">{codeProposals.length}</span>}
+                {codeProposals.length > 0 && <span className="bg-amber-100 dark:bg-amber-900 text-amber-700 dark:text-amber-300 px-2 py-0.5 rounded-full text-[10px] font-black ml-1">{codeProposals.length}</span>}
              </button>
              <button 
                 onClick={() => setActiveTab('alerts')}
-                className={`px-4 py-2 text-sm font-medium rounded-lg transition-all flex items-center gap-2 ${activeTab === 'alerts' ? 'bg-indigo-600 text-white shadow-md' : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'}`}
+                className={`px-5 py-2.5 text-xs font-bold rounded-2xl transition-all flex items-center gap-2 shrink-0 ${activeTab === 'alerts' ? 'bg-red-600 text-white shadow-xl shadow-red-200' : 'bg-white dark:bg-slate-800 text-gray-600 dark:text-slate-300 border border-gray-200 dark:border-slate-700 hover:bg-gray-50'}`}
              >
                 <TrendingUpIcon className="w-4 h-4" />
                 Alerts
-                {alerts.length > 0 && <span className="bg-red-100 text-red-700 px-1.5 py-0.5 rounded text-xs font-bold ml-2">{alerts.length}</span>}
+                {alerts.length > 0 && <span className="bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300 px-2 py-0.5 rounded-full text-[10px] font-black ml-1">{alerts.length}</span>}
              </button>
-             <button onClick={fetchData} className="p-2 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-500">
+             <button onClick={fetchData} className="p-2.5 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-2xl text-gray-500 hover:rotate-180 transition-transform duration-500">
                 <RefreshCwIcon className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
              </button>
           </div>
         </header>
 
         {loading && !contentApprovals.length && !codeProposals.length && !alerts.length ? (
-            <div className="p-12 text-center text-gray-500">Loading Command Center...</div>
+            <div className="p-12 text-center text-gray-500 animate-pulse">Synchronizing with Nexus...</div>
         ) : (
             <div className="space-y-6">
                 {/* --- CONTENT TAB --- */}
                 {activeTab === 'content' && (
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                         {contentApprovals.length === 0 ? (
-                            <div className="col-span-full p-12 bg-white rounded-xl border border-dashed border-gray-300 text-center text-gray-500">
-                                <div className="flex justify-center mb-4"><FileTextIcon className="w-12 h-12 text-gray-300" /></div>
-                                No content pending review.
+                            <div className="col-span-full p-12 bg-white dark:bg-slate-900 rounded-3xl border border-dashed border-gray-300 dark:border-slate-800 text-center text-gray-500">
+                                <div className="flex justify-center mb-4"><FileTextIcon className="w-12 h-12 text-gray-300 dark:text-slate-700" /></div>
+                                No content pending review. Bob is quiet today.
                             </div>
                         ) : (
                             contentApprovals.map(post => (
-                                <div key={post.id} className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between gap-6">
-                                    <div>
-                                        <div className="flex items-center gap-3 mb-3">
-                                            <h3 className="text-xl font-bold text-gray-900 leading-tight">{post.title}</h3>
+                                <div key={post.id} className="bg-white dark:bg-slate-900 p-6 rounded-[2rem] border border-gray-200 dark:border-slate-800 shadow-sm hover:shadow-2xl transition-all flex flex-col gap-6 overflow-hidden group">
+                                    <div className="flex flex-col gap-4">
+                                        <div className="flex items-start justify-between gap-4">
+                                            <h3 className="text-xl font-black text-gray-900 dark:text-white leading-tight line-clamp-2">{post.title}</h3>
                                             <Badge className="bg-amber-100 text-amber-800 shrink-0">Pending</Badge>
                                         </div>
-                                        <div className="text-sm text-gray-500 flex flex-wrap items-center gap-x-4 gap-y-2">
-                                            <span className="flex items-center gap-1"><UserIcon className="w-4 h-4" /> {post.authorName || 'Marketing'}</span>
-                                            <span className="flex items-center gap-1 text-indigo-600 font-bold">
-                                                <ShieldCheckIcon className="w-4 h-4" /> AI Score: {post.ai_score || 85}/100
+                                        
+                                        <div className="text-xs text-gray-500 flex flex-wrap items-center gap-x-4 gap-y-2 pb-4 border-b border-gray-100 dark:border-slate-800">
+                                            <span className="flex items-center gap-1 font-bold"><UserIcon className="w-3 h-3 text-indigo-500" /> {post.authorName || 'Marketing'}</span>
+                                            <span className="flex items-center gap-1 text-indigo-600 font-black uppercase tracking-tighter">
+                                                <ShieldCheckIcon className="w-3 h-3" /> AI Integrity Score: {post.ai_score || 85}%
                                             </span>
                                         </div>
+
+                                        {/* 所見即所得預覽 (WYSIWYG Preview) - Enhanced for Tablet */}
+                                        <div className={`relative bg-gray-50 dark:bg-slate-950 rounded-2xl p-5 border border-gray-100 dark:border-slate-800 overflow-hidden transition-all duration-500 ease-in-out ${previewId === post.id ? 'max-h-[1200px]' : 'max-h-48'}`}>
+                                            <div className={previewId === post.id ? 'opacity-100' : 'opacity-30 grayscale pointer-events-none'}>
+                                                {post.imageUrl && (
+                                                    <img 
+                                                        src={post.imageUrl} 
+                                                        alt="Cover" 
+                                                        className="w-full h-48 object-cover rounded-2xl mb-6 border-2 border-white dark:border-slate-800 shadow-lg" 
+                                                    />
+                                                )}
+                                                <div className="prose prose-sm dark:prose-invert max-w-none text-slate-700 dark:text-slate-300 leading-relaxed font-sans">
+                                                    <Markdown>{post.content || ''}</Markdown>
+                                                </div>
+                                                {post.hashtags && (
+                                                    <div className="flex flex-wrap gap-2 mt-8 pt-6 border-t dark:border-slate-800">
+                                                        {post.hashtags.split(' ').map((tag, i) => (
+                                                            <span key={i} className="text-[10px] font-black text-indigo-500 bg-indigo-50 dark:bg-indigo-900/30 px-3 py-1 rounded-lg border border-indigo-100 dark:border-indigo-800/50">{tag}</span>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </div>
+                                            
+                                            {previewId !== post.id && (
+                                                <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-t from-gray-50 dark:from-slate-950 via-gray-50/80 dark:via-slate-950/80 to-transparent pt-12">
+                                                    <button 
+                                                        onClick={() => setPreviewId(post.id)} 
+                                                        className="px-6 py-3 bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-full text-xs font-black shadow-xl flex items-center gap-2 hover:scale-110 active:scale-95 transition-all group-hover:bg-indigo-600 group-hover:text-white group-hover:border-indigo-600"
+                                                    >
+                                                        <EyeIcon className="w-4 h-4" /> Review Full Content
+                                                    </button>
+                                                </div>
+                                            )}
+                                            
+                                            {previewId === post.id && (
+                                                <button 
+                                                    onClick={() => setPreviewId(null)} 
+                                                    className="absolute top-4 right-4 p-2.5 bg-white/90 dark:bg-slate-800/90 backdrop-blur rounded-full shadow-lg border border-gray-100 dark:border-slate-700 active:scale-90 transition-transform"
+                                                >
+                                                    <XIcon className="w-5 h-5" />
+                                                </button>
+                                            )}
+                                        </div>
                                     </div>
+
+                                    {/* Tablet-Optimized Actions (Charlie) - Massive Targets */}
                                     <div className="grid grid-cols-2 gap-4 pt-2">
                                         <button 
                                             onClick={() => handleContentAction(post.id, 'reject')}
-                                            className="px-4 py-4 text-red-600 border border-red-200 rounded-xl hover:bg-red-50 font-bold flex items-center justify-center gap-2 min-h-[48px] active:scale-95 transition-transform"
+                                            className="py-5 text-sm text-red-600 border-2 border-red-100 dark:border-red-900/30 rounded-2xl hover:bg-red-50 dark:hover:bg-red-900/20 font-black flex items-center justify-center gap-2 active:scale-95 transition-all"
                                         >
                                             <XIcon className="w-5 h-5" /> Return
                                         </button>
                                         <button 
                                             onClick={() => handleContentAction(post.id, 'approve')}
-                                            className="px-4 py-4 bg-green-600 text-white rounded-xl hover:bg-green-700 font-bold shadow-lg shadow-green-100 flex items-center justify-center gap-2 min-h-[48px] active:scale-95 transition-transform"
+                                            className="py-5 text-sm bg-indigo-600 text-white rounded-2xl hover:bg-indigo-700 font-black shadow-xl shadow-indigo-200 dark:shadow-indigo-900/20 flex items-center justify-center gap-2 active:scale-95 transition-all"
                                         >
                                             <CheckCircleIcon className="w-5 h-5" /> Publish
                                         </button>
@@ -211,32 +268,32 @@ const ApprovalsPage: React.FC = () => {
                 {activeTab === 'code' && (
                     <div className="grid grid-cols-1 gap-4">
                         {codeProposals.length === 0 ? (
-                            <div className="p-12 bg-white rounded-xl border border-dashed border-gray-300 text-center text-gray-500">
-                                <div className="flex justify-center mb-4"><DatabaseIcon className="w-12 h-12 text-gray-300" /></div>
-                                No pending code changes.
+                            <div className="p-12 bg-white dark:bg-slate-900 rounded-3xl border border-dashed border-gray-300 dark:border-slate-800 text-center text-gray-500">
+                                <div className="flex justify-center mb-4"><DatabaseIcon className="w-12 h-12 text-gray-300 dark:text-slate-700" /></div>
+                                No pending code changes. System is stable.
                             </div>
                         ) : (
                             codeProposals.map(prop => (
-                                <div key={prop.id} className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
+                                <div key={prop.id} className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-gray-200 dark:border-slate-800 shadow-sm">
                                     <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                                         <div className="flex-1">
-                                            <span className="text-xs font-bold uppercase tracking-widest text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full">
-                                                {prop.type}
+                                            <span className="text-[10px] font-black uppercase tracking-widest text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30 px-3 py-1 rounded-full">
+                                                {prop.type} Execution Proposal
                                             </span>
-                                            <p className="mt-3 text-gray-900 font-medium font-mono text-sm bg-gray-50 p-4 rounded-xl border border-gray-100 leading-relaxed">
-                                                {prop.request_payload?.description || 'No description'}
+                                            <p className="mt-4 text-gray-900 dark:text-slate-200 font-medium font-mono text-sm bg-gray-50 dark:bg-slate-950 p-5 rounded-2xl border border-gray-100 dark:border-slate-800 leading-relaxed shadow-inner">
+                                                {prop.request_payload?.description || 'No description provided.'}
                                             </p>
                                         </div>
                                         <div className="flex gap-3 w-full md:w-auto">
                                             <button 
                                                 onClick={() => handleCodeAction(prop.id, 'reject')}
-                                                className="flex-1 px-6 py-3 text-sm text-red-600 border border-red-200 rounded-xl font-bold min-h-[44px]"
+                                                className="flex-1 px-8 py-4 text-sm text-red-600 border border-red-200 dark:border-red-900/30 rounded-2xl font-black min-h-[52px] active:scale-95 transition-all"
                                             >
                                                 Reject
                                             </button>
                                             <button 
                                                 onClick={() => handleCodeAction(prop.id, 'approve')}
-                                                className="flex-1 px-6 py-3 text-sm bg-indigo-600 text-white rounded-xl font-bold shadow-md min-h-[44px]"
+                                                className="flex-1 px-8 py-4 text-sm bg-amber-500 text-white rounded-2xl font-black shadow-lg shadow-amber-100 dark:shadow-amber-900/20 min-h-[52px] active:scale-95 transition-all"
                                             >
                                                 Approve
                                             </button>
@@ -252,33 +309,33 @@ const ApprovalsPage: React.FC = () => {
                 {activeTab === 'alerts' && (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {alerts.length === 0 ? (
-                            <div className="col-span-full p-12 bg-white rounded-xl border border-dashed border-gray-300 text-center text-gray-500">
-                                <div className="flex justify-center mb-4"><TrendingUpIcon className="w-12 h-12 text-gray-300" /></div>
+                            <div className="col-span-full p-12 bg-white dark:bg-slate-900 rounded-3xl border border-dashed border-gray-300 dark:border-slate-800 text-center text-gray-500">
+                                <div className="flex justify-center mb-4"><TrendingUpIcon className="w-12 h-12 text-gray-300 dark:text-slate-700" /></div>
                                 No active business alerts.
                             </div>
                         ) : (
                             alerts.map(alert => (
-                                <div key={alert.id} className={`p-6 rounded-2xl border-l-8 shadow-sm bg-white flex flex-col justify-between gap-6 ${alert.level === 'ALERT' ? 'border-red-500' : 'border-blue-500'}`}>
+                                <div key={alert.id} className={`p-6 rounded-[2rem] border-l-8 shadow-sm bg-white dark:bg-slate-900 flex flex-col justify-between gap-6 transition-all hover:shadow-md ${alert.level === 'ALERT' ? 'border-red-500' : 'border-blue-500'}`}>
                                     <div className="flex items-start gap-4">
                                         {alert.level === 'ALERT' ? <TrendingUpIcon className="w-6 h-6 text-red-500 mt-1" /> : <ShieldCheckIcon className="w-6 h-6 text-blue-500 mt-1" />}
                                         <div className="flex-1">
-                                            <span className="text-lg text-gray-800 font-bold block leading-tight">{alert.message}</span>
+                                            <span className="text-lg text-gray-800 dark:text-white font-black block leading-tight">{alert.message}</span>
                                             
                                             {/* Alert Context Badges */}
-                                            <div className="mt-3 flex flex-wrap gap-2">
+                                            <div className="mt-4 flex flex-wrap gap-2">
                                                 {alert.details?.enrichment_score && (
-                                                    <span className="bg-indigo-50 text-indigo-700 text-[10px] font-bold px-2 py-0.5 rounded-full border border-indigo-100 uppercase">
+                                                    <span className="bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 text-[10px] font-black px-2.5 py-1 rounded-lg border border-indigo-100 dark:border-indigo-800/50 uppercase tracking-tighter">
                                                         Quality: {alert.details.enrichment_score}%
                                                     </span>
                                                 )}
                                                 {alert.details?.days_stale && (
-                                                    <span className="bg-orange-50 text-orange-700 text-[10px] font-bold px-2 py-0.5 rounded-full border border-orange-100 uppercase">
+                                                    <span className="bg-orange-50 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 text-[10px] font-black px-2.5 py-1 rounded-lg border border-orange-100 dark:border-orange-800/50 uppercase tracking-tighter">
                                                         {alert.details.days_stale} Days Idle
                                                     </span>
                                                 )}
                                             </div>
 
-                                            <span className="text-xs text-gray-400 font-mono mt-4 flex items-center gap-1">
+                                            <span className="text-[10px] text-gray-400 font-mono mt-5 flex items-center gap-1 opacity-60">
                                                 <ClockIcon className="w-3 h-3" />
                                                 {new Date(alert.created_at).toLocaleString()}
                                             </span>
@@ -288,7 +345,7 @@ const ApprovalsPage: React.FC = () => {
                                         <button 
                                             onClick={() => handleDispatchTask(alert)}
                                             disabled={loading}
-                                            className="w-full py-4 text-md bg-red-50 text-red-700 border border-red-200 rounded-xl hover:bg-red-100 font-black transition-all active:scale-95 flex items-center justify-center gap-2 min-h-[52px] disabled:opacity-50"
+                                            className="w-full py-5 text-md bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 border border-red-100 dark:border-red-900/30 rounded-2xl hover:bg-red-100 font-black transition-all active:scale-95 flex items-center justify-center gap-2 min-h-[56px] disabled:opacity-50 shadow-sm"
                                         >
                                             {loading ? <RefreshCwIcon className="animate-spin w-5 h-5" /> : <TrendingUpIcon className="w-5 h-5" />}
                                             ⚡ Dispatch Smart Task to Alice

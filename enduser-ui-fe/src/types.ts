@@ -128,6 +128,7 @@ export interface BlogPost {
     title: string;
     excerpt: string;
     content?: string;
+    hashtags?: string;
     authorName: string;
     publishDate: string; // ISO String
     imageUrl: string;

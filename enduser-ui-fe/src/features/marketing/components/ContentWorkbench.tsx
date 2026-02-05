@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   SparklesIcon, 
   SaveIcon, 
@@ -6,7 +6,8 @@ import {
   EyeIcon, 
   FileEditIcon, 
   ExternalLinkIcon,
-  TrendingUpIcon
+  TrendingUpIcon,
+  XIcon
 } from '../../../components/Icons';
 import { ContentSource } from './VictoryFeedList';
 
@@ -60,6 +61,11 @@ export const ContentWorkbench: React.FC<ContentWorkbenchProps> = ({
   const [activeTab, setActiveTab] = useState<'context' | 'editor'>('context');
   const [showPrompt, setShowPrompt] = useState(false);
 
+  // Persistence Hook: Keep prompt visible if it exists
+  useEffect(() => {
+    if (usedPrompt) setShowPrompt(true);
+  }, [usedPrompt]);
+
   // BUG-026: Save Feedback
   const handleSave = () => {
     // Call parent handler to redirect
@@ -78,166 +84,187 @@ export const ContentWorkbench: React.FC<ContentWorkbenchProps> = ({
   }
 
   return (
-    <div className="h-full flex flex-col bg-white dark:bg-slate-900 font-sans">
+    <div className="h-full flex flex-col bg-white dark:bg-slate-900 font-sans relative overflow-hidden">
       {/* Header */}
-      <div className="px-6 py-4 border-b flex items-center justify-between">
+      <div className="px-6 py-4 border-b flex items-center justify-between bg-white dark:bg-slate-900 z-10">
         <div>
           <h1 className="text-xl font-bold text-slate-900 dark:text-white flex items-center">
             {activeSource.title}
-            <span className="ml-3 px-2 py-0.5 rounded text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-500 uppercase tracking-tighter">
+            <span className="ml-3 px-2 py-0.5 rounded text-[10px] bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 font-black uppercase tracking-widest">
               Workbench
             </span>
           </h1>
-          <p className="text-xs text-slate-500 mt-1">Source: {activeSource.type} · Score: {activeSource.score}%</p>
+          <p className="text-[10px] text-slate-500 mt-1 uppercase tracking-tighter">Source: {activeSource.type} · Integrity: {activeSource.score}%</p>
         </div>
         
         <div className="flex items-center space-x-3">
           <button 
             onClick={handleSave}
-            className="flex items-center px-4 py-2 border rounded-lg text-sm font-medium hover:bg-slate-50 transition-all dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+            className="flex items-center px-4 py-2 border rounded-xl text-sm font-bold hover:bg-slate-50 transition-all dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800 active:scale-95"
           >
-            <SaveIcon className="w-4 h-4 mr-2" />
-            Save
+            <SaveIcon className="w-4 h-4 mr-2 text-slate-400" />
+            Save Draft
           </button>
           
           <button 
             onClick={() => onPublish({ title: title, content: content })}
-            className="flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-bold transition-all shadow-sm"
+            className="flex items-center px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-black transition-all shadow-lg shadow-indigo-100 dark:shadow-none active:scale-95"
           >
             <CheckCircleIcon className="w-4 h-4 mr-2" />
-            Publish
+            Submit
           </button>
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="flex border-b">
-        <button 
-          onClick={() => setActiveTab('context')}
-          className={`px-6 py-3 text-sm font-bold border-b-2 transition-all ${activeTab === 'context' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
-        >
-          <TrendingUpIcon className="w-4 h-4 inline-block mr-2" />
-          Signal Context
-        </button>
-        <button 
-          onClick={() => setActiveTab('editor')}
-          className={`px-6 py-3 text-sm font-bold border-b-2 transition-all ${activeTab === 'editor' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
-        >
-          <FileEditIcon className="w-4 h-4 inline-block mr-2" />
-          Magic Editor
-        </button>
-      </div>
+      {/* Main Layout Area */}
+      <div className="flex-1 flex overflow-hidden">
+        {/* Left Side: Editor/Context */}
+        <div className={`flex-1 flex flex-col transition-all duration-500 ${showPrompt && usedPrompt ? 'mr-80' : 'mr-0'}`}>
+          {/* Tabs */}
+          <div className="flex border-b bg-white dark:bg-slate-900">
+            <button 
+              onClick={() => setActiveTab('context')}
+              className={`px-6 py-3 text-xs font-black uppercase tracking-widest border-b-2 transition-all ${activeTab === 'context' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-400 hover:text-slate-600'}`}
+            >
+              <TrendingUpIcon className="w-3.5 h-3.5 inline-block mr-2" />
+              Source Context
+            </button>
+            <button 
+              onClick={() => setActiveTab('editor')}
+              className={`px-6 py-3 text-xs font-black uppercase tracking-widest border-b-2 transition-all ${activeTab === 'editor' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-400 hover:text-slate-600'}`}
+            >
+              <FileEditIcon className="w-3.5 h-3.5 inline-block mr-2" />
+              AI Editor
+            </button>
+          </div>
 
-      {/* Content */}
-      <div className="flex-1">
-        {activeTab === 'context' ? (
-          <div className="p-8 max-w-4xl mx-auto space-y-12">
-            {isLoadingContext ? (
-              <div className="py-20 text-center animate-pulse text-slate-400">
-                <SparklesIcon className="w-12 h-12 mx-auto mb-4 opacity-20" />
-                <p>MarketBot is gathering intelligence...</p>
+          <div className="flex-1 overflow-y-auto">
+            {activeTab === 'context' ? (
+              <div className="p-8 max-w-4xl mx-auto space-y-12">
+                {isLoadingContext ? (
+                  <div className="py-20 text-center animate-pulse text-slate-400">
+                    <SparklesIcon className="w-12 h-12 mx-auto mb-4 opacity-20" />
+                    <p className="font-black uppercase text-[10px] tracking-widest">MarketBot is gathering intelligence...</p>
+                  </div>
+                ) : (
+                  <>
+                    <section>
+                      <h3 className="text-[10px] font-black uppercase text-slate-400 mb-4 tracking-widest flex items-center gap-2">
+                        <div className="w-1 h-4 bg-indigo-500 rounded-full" />
+                        Victory Signal Intelligence
+                      </h3>
+                      <div className="bg-slate-50 dark:bg-slate-950 p-6 rounded-2xl font-mono text-xs leading-relaxed text-slate-700 dark:text-slate-400 border dark:border-slate-800 shadow-inner">
+                        {contextData?.context_summary || "No specific transcript available."}
+                      </div>
+                    </section>
+
+                    <section>
+                      <h3 className="text-[10px] font-black uppercase text-slate-400 mb-4 tracking-widest flex items-center gap-2">
+                        <div className="w-1 h-4 bg-indigo-500 rounded-full" />
+                        Librarian Knowledge Base
+                      </h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {contextData?.rag_refs.map((ref, idx) => (
+                          <div key={idx} className="p-4 bg-white dark:bg-slate-900 border dark:border-slate-800 rounded-2xl hover:shadow-lg transition-all group border-l-4 border-l-indigo-500/20">
+                            <div className="flex justify-between items-start mb-2">
+                              <span className="text-[9px] font-black text-indigo-600 uppercase tracking-tighter">REF #{idx + 1}</span>
+                              <ExternalLinkIcon className="w-3 h-3 text-slate-300 group-hover:text-indigo-500 cursor-pointer" />
+                            </div>
+                            <p className="text-xs text-slate-600 dark:text-slate-400 line-clamp-4 leading-relaxed italic">"{ref.content}"</p>
+                            <div className="mt-3 text-[9px] font-bold text-slate-400 truncate">Source: {ref.metadata.source}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </section>
+
+                    <div className="pt-8 border-t dark:border-slate-800 text-center">
+                      <button 
+                        onClick={() => setActiveTab('editor')}
+                        className="px-10 py-4 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-2xl font-black text-sm hover:scale-105 active:scale-95 transition-all shadow-xl"
+                      >
+                        Launch Magic Editor →
+                      </button>
+                    </div>
+                  </>
+                )}
               </div>
             ) : (
-              <>
-                {/* Transcript / Raw Logs */}
-                <section>
-                  <h3 className="text-xs font-black uppercase text-slate-400 mb-4 tracking-widest">Victory Signal Intelligence</h3>
-                  <div className="bg-slate-50 dark:bg-slate-950 p-6 rounded-xl font-mono text-sm leading-relaxed text-slate-700 dark:text-slate-400 border dark:border-slate-800">
-                    {contextData?.context_summary || "No specific transcript available for this signal."}
-                  </div>
-                </section>
-
-                {/* RAG Suggestions */}
-                <section>
-                  <h3 className="text-xs font-black uppercase text-slate-400 mb-4 tracking-widest">Librarian Knowledge Base Suggestions</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {contextData?.rag_refs.map((ref, idx) => (
-                      <div key={idx} className="p-4 border dark:border-slate-800 rounded-xl hover:shadow-md transition-all group">
-                        <div className="flex justify-between items-start mb-2">
-                          <span className="text-[10px] font-bold text-indigo-600 uppercase">Context Reference #{idx + 1}</span>
-                          <ExternalLinkIcon className="w-3 h-3 text-slate-300 group-hover:text-indigo-500 cursor-pointer" />
-                        </div>
-                        <p className="text-sm text-slate-600 dark:text-slate-400 line-clamp-4 leading-relaxed italic">"{ref.content}"</p>
-                        <div className="mt-3 text-[10px] text-slate-400 truncate">Source: {ref.metadata.source}</div>
-                      </div>
-                    ))}
-                    {(!contextData || contextData.rag_refs.length === 0) && (
-                      <div className="col-span-full py-8 border-2 border-dashed dark:border-slate-800 rounded-xl text-center text-slate-400 text-xs">
-                        No related knowledge references found.
-                      </div>
-                    )}
-                  </div>
-                </section>
-
-                <div className="pt-8 border-t dark:border-slate-800 text-center">
+              <div className="h-full flex flex-col relative">
+                {/* Editor ToolBar */}
+                <div className="px-6 py-3 bg-slate-50/50 dark:bg-slate-800/30 border-b flex items-center gap-3">
                   <button 
-                    onClick={() => setActiveTab('editor')}
-                    className="px-8 py-3 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-full font-black text-sm hover:scale-105 transition-all"
+                    onClick={() => onDraft(activeSource.title)}
+                    disabled={isDrafting}
+                    className="flex items-center px-4 py-2 bg-white dark:bg-slate-800 border dark:border-slate-700 text-indigo-600 dark:text-indigo-400 rounded-xl text-[10px] font-black uppercase tracking-widest hover:shadow-md transition-all disabled:opacity-50 active:scale-95"
                   >
-                    Start Magic Draft →
+                    <SparklesIcon className={`w-3.5 h-3.5 mr-2 ${isDrafting ? 'animate-spin' : ''}`} />
+                    {isDrafting ? 'Synthesizing...' : 'Magic Draft'}
                   </button>
+                  <button 
+                    onClick={() => onGenerateImage(title || activeSource.title)}
+                    disabled={isGeneratingImage}
+                    className="flex items-center px-4 py-2 bg-white dark:bg-slate-800 border dark:border-slate-700 text-slate-700 dark:text-slate-200 rounded-xl text-[10px] font-black uppercase tracking-widest hover:shadow-md transition-all disabled:opacity-50 active:scale-95"
+                  >
+                    <EyeIcon className={`w-3.5 h-3.5 mr-2 ${isGeneratingImage ? 'animate-bounce' : ''}`} />
+                    {isGeneratingImage ? 'Generating...' : 'AI Image'}
+                  </button>
+                  
+                  <div className="flex-1" />
+                  
+                  {usedPrompt && (
+                    <button 
+                       onClick={() => setShowPrompt(!showPrompt)}
+                       className={`text-[10px] font-black uppercase tracking-tighter px-3 py-1.5 rounded-lg transition-all ${showPrompt ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:bg-slate-100'}`}
+                    >
+                       Prompt Inspector
+                    </button>
+                  )}
                 </div>
-              </>
-            )}
-          </div>
-        ) : (
-          <div className="h-full flex flex-col">
-            {/* ToolBar */}
-            <div className="px-6 py-2 bg-slate-50 dark:bg-slate-800/50 border-b flex items-center space-x-4">
-              <button 
-                onClick={() => onDraft(activeSource.title)}
-                disabled={isDrafting}
-                className="flex items-center px-3 py-1.5 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-md text-[10px] font-bold hover:shadow-sm transition-all disabled:opacity-50"
-              >
-                <SparklesIcon className={`w-3 h-3 mr-1.5 ${isDrafting ? 'animate-spin' : ''}`} />
-                {isDrafting ? 'Drafting...' : 'Magic Draft'}
-              </button>
-              <button 
-                onClick={() => onGenerateImage(title || activeSource.title)}
-                disabled={isGeneratingImage}
-                className="flex items-center px-3 py-1.5 bg-white dark:bg-slate-700 border dark:border-slate-600 rounded-md text-[10px] font-bold text-slate-700 dark:text-slate-200 hover:shadow-sm transition-all disabled:opacity-50"
-              >
-                <EyeIcon className={`w-3 h-3 mr-1.5 ${isGeneratingImage ? 'animate-bounce' : ''}`} />
-                {isGeneratingImage ? 'Generating Image...' : 'AI Cover Image'}
-              </button>
-              
-              <div className="flex-1" />
-              
-              {usedPrompt && (
-                <button 
-                   onClick={() => setShowPrompt(!showPrompt)}
-                   className="text-[10px] text-slate-400 hover:text-indigo-600 underline mr-4"
-                >
-                   {showPrompt ? 'Hide Prompt' : 'View AI Prompt'}
-                </button>
-              )}
-              <span className="text-[10px] text-slate-400">Markdown Supported</span>
-            </div>
 
-            {/* Prompt Debug Viewer */}
-            {showPrompt && usedPrompt && (
-              <div className="mx-6 mt-4 p-4 bg-slate-100 dark:bg-slate-950 border rounded-lg text-xs font-mono text-slate-600 dark:text-slate-400 whitespace-pre-wrap max-h-40 overflow-y-auto shadow-inner">
-                {usedPrompt}
+                {/* Markdown Editor */}
+                <div className="flex-1 p-8 md:p-12 max-w-4xl mx-auto w-full custom-scrollbar overflow-y-auto">
+                  <input 
+                    type="text"
+                    placeholder="Article Title..."
+                    value={title}
+                    onChange={(e) => onTitleChange(e.target.value)}
+                    className="w-full text-3xl font-black mb-8 outline-none bg-transparent dark:text-white placeholder:text-slate-200 dark:placeholder:text-slate-800 border-none"
+                  />
+                  <textarea 
+                    placeholder="Start typing or use Magic Draft to let MarketBot assist you..."
+                    value={content}
+                    onChange={(e) => onContentChange(e.target.value)}
+                    className="w-full h-full min-h-[60vh] outline-none bg-transparent dark:text-slate-300 resize-none leading-relaxed text-lg border-none font-sans"
+                  />
+                </div>
               </div>
             )}
-
-            {/* Markdown Editor */}
-            <div className="flex-1 p-12 max-w-4xl mx-auto w-full">
-              <input 
-                type="text"
-                placeholder="Article Title..."
-                value={title}
-                onChange={(e) => onTitleChange(e.target.value)}
-                className="w-full text-3xl font-bold mb-8 outline-none bg-transparent dark:text-white placeholder:text-slate-200 dark:placeholder:text-slate-700 border-none"
-              />
-              <textarea 
-                placeholder="Start writing or use Magic Draft..."
-                value={content}
-                onChange={(e) => onContentChange(e.target.value)}
-                className="w-full h-[60vh] outline-none bg-transparent dark:text-slate-300 resize-none leading-relaxed text-lg border-none"
-              />
-            </div>
           </div>
+        </div>
+
+        {/* Right Side: Persistent Prompt Inspector (Sidebar) */}
+        {showPrompt && usedPrompt && (
+          <aside className="w-80 border-l dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 backdrop-blur-xl absolute right-0 top-0 bottom-0 z-20 shadow-2xl animate-in slide-in-from-right duration-300 flex flex-col">
+            <div className="p-4 border-b dark:border-slate-800 flex items-center justify-between">
+                <span className="text-[10px] font-black uppercase tracking-widest text-indigo-600">AI Prompt Inspector</span>
+                <button onClick={() => setShowPrompt(false)} className="p-1 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-md">
+                    <XIcon className="w-4 h-4 text-slate-400" />
+                </button>
+            </div>
+            <div className="flex-1 p-6 overflow-y-auto custom-scrollbar">
+                <div className="bg-white dark:bg-slate-950 p-4 rounded-xl border dark:border-slate-800 shadow-inner">
+                    <pre className="text-[10px] font-mono text-slate-600 dark:text-slate-400 whitespace-pre-wrap leading-relaxed">
+                        {usedPrompt}
+                    </pre>
+                </div>
+                <div className="mt-6 p-4 bg-indigo-50 dark:bg-indigo-900/20 rounded-xl border border-indigo-100 dark:border-indigo-800/50">
+                    <p className="text-[10px] text-indigo-700 dark:text-indigo-300 leading-tight">
+                        <SparklesIcon className="w-3 h-3 inline mr-1" />
+                        This prompt was used by **MarketBot** to generate the current draft based on your selected context.
+                    </p>
+                </div>
+            </div>
+          </aside>
         )}
       </div>
     </div>

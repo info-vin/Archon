@@ -59,6 +59,18 @@ const BlogDetailPage: React.FC = () => {
                 <div className="markdown-content">
                     <Markdown>{post.content}</Markdown>
                 </div>
+
+                {post.hashtags && (
+                    <div className="mt-12 pt-6 border-t border-border">
+                        <div className="flex flex-wrap gap-2">
+                            {post.hashtags.split(' ').map((tag, i) => (
+                                <span key={i} className="px-3 py-1 bg-secondary text-secondary-foreground rounded-full text-sm font-medium hover:bg-secondary/80 transition-colors cursor-default">
+                                    {tag}
+                                </span>
+                            ))}
+                        </div>
+                    </div>
+                )}
             </article>
         </div>
     );

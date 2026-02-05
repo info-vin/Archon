@@ -62,5 +62,5 @@ async def test_nana_banana_fallback_on_429():
 
                 # ASSERT
                 assert result["status"] == "fallback_mock"
-                assert "placehold.co" in result["image_url"] or "Nana Banana Fallback" in result["image_url"]
+                assert "placehold.co" in result["image_url"] or "Nana+Banana+Fallback" in result["image_url"] or "Nana Banana Fallback" in result["image_url"]
                 MockLogService.return_value.create_log_entry.assert_called_once()

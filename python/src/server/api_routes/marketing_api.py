@@ -895,10 +895,10 @@ async def nana_banana_proxy(
         # Instead of 503, use fallback immediately for demo continuity
         logger.warning("No API Key found for Imagen. Using Mock.")
         import urllib.parse
-        encoded_seed = urllib.parse.quote(request.get("prompt", "fallback")[:20])
+        encoded_prompt = urllib.parse.quote_plus(request.get("prompt", "fallback")[:20])
         return {
             "status": "fallback_mock",
-            "image_url": f"https://picsum.photos/seed/{encoded_seed}/800/600?text=Nana Banana Fallback"
+            "image_url": f"https://picsum.photos/seed/{encoded_prompt}/800/600?text=Nana+Banana+Fallback"
         }
 
     # REALITY CHECK (Feb 2026): Use Nano Banana Gemini 2.0 Flash (latest stable)
@@ -972,10 +972,10 @@ async def nana_banana_proxy(
 
         # Graceful degradation to keep Bob working
         import urllib.parse
-        encoded_seed = urllib.parse.quote(prompt[:20])
+        encoded_prompt = urllib.parse.quote_plus(prompt[:20])
         return {
             "status": "fallback_mock",
-            "image_url": f"https://picsum.photos/seed/{encoded_seed}/800/600?text=Nana Banana Fallback"
+            "image_url": f"https://picsum.photos/seed/{encoded_prompt}/800/600?text=Nana+Banana+Fallback"
         }
 
 @router.get("/trends")

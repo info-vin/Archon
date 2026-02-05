@@ -8,9 +8,10 @@ Instructions:
 
 Format:
 - Title: Catchy and relevant
-- Content: Markdown formatted. Introduction -> Key Points -> Conclusion.
+- Content: Markdown formatted. Introduction -> Key Points -> Conclusion. Include relevant emojis.
 - Excerpt: A 2-sentence summary.
+- Hashtags: A string of 3-5 relevant tags (e.g., "#AI #Marketing #Automation")
 - Used References: A list of source names you actually used/referenced from the context.
 
-Return JSON format: { "title": "...", "content": "...", "excerpt": "...", "used_references": ["source1"] }
+Return JSON format: { "title": "...", "content": "...", "excerpt": "...", "hashtags": "...", "used_references": ["source1"] }
 """

@@ -43,6 +43,7 @@ const BrandPage: React.FC = () => {
     // Workbench Editor State (Lifted Up)
     const [workbenchTitle, setWorkbenchTitle] = useState('');
     const [workbenchContent, setWorkbenchContent] = useState('');
+    const [workbenchImageUrl, setWorkbenchImageUrl] = useState('/placeholder-blog.jpg');
     const [lastPrompt, setLastPrompt] = useState<string | undefined>(undefined);
 
     // Persistence Logic (Restored from Child)
@@ -50,11 +51,16 @@ const BrandPage: React.FC = () => {
         if (activeSource?.id) {
             const savedTitle = localStorage.getItem(`draft_title_${activeSource.id}`);
             const savedContent = localStorage.getItem(`draft_content_${activeSource.id}`);
+            const savedImage = localStorage.getItem(`draft_image_${activeSource.id}`);
+            
             if (savedTitle) setWorkbenchTitle(savedTitle);
             else setWorkbenchTitle(''); 
 
             if (savedContent) setWorkbenchContent(savedContent);
             else setWorkbenchContent(''); 
+
+            if (savedImage) setWorkbenchImageUrl(savedImage);
+            else setWorkbenchImageUrl('/placeholder-blog.jpg');
         }
     }, [activeSource?.id]);
 
@@ -62,8 +68,9 @@ const BrandPage: React.FC = () => {
         if (activeSource?.id) {
             localStorage.setItem(`draft_title_${activeSource.id}`, workbenchTitle);
             localStorage.setItem(`draft_content_${activeSource.id}`, workbenchContent);
+            localStorage.setItem(`draft_image_${activeSource.id}`, workbenchImageUrl);
         }
-    }, [workbenchTitle, workbenchContent, activeSource?.id]);
+    }, [workbenchTitle, workbenchContent, workbenchImageUrl, activeSource?.id]);
 
     useEffect(() => {
         loadData();
@@ -148,9 +155,10 @@ const BrandPage: React.FC = () => {
                 title: workbenchTitle || "Untitled Draft",
                 content: workbenchContent || "",
                 excerpt: workbenchContent.slice(0, 100) + "...",
-                imageUrl: "/placeholder-blog.jpg", // Default for now
+                imageUrl: workbenchImageUrl,
                 status: 'draft',
-                authorName: user?.name || "Bob"
+                authorName: user?.name || "Bob",
+                publishDate: new Date().toISOString()
             });
             alert("Draft saved to workspace!");
             setViewMode('dashboard');
@@ -165,11 +173,13 @@ const BrandPage: React.FC = () => {
         try {
             const result = await api.nanaBananaProxy({ prompt: title });
             
-            // FIX: Append Image to Content
-            const imageMarkdown = `\n\n![Header Image](${result.image_url})\n\n`;
-            setWorkbenchContent(prev => imageMarkdown + prev); // Prepend or Append? Usually header image is at top. Let's prepend.
+            // FIX: Update Cover Image AND Append to Content
+            setWorkbenchImageUrl(result.image_url);
             
-            alert(`Asset generated and added to editor.`);
+            const imageMarkdown = `\n\n![Header Image](${result.image_url})\n\n`;
+            setWorkbenchContent(prev => imageMarkdown + prev); 
+            
+            alert(`Asset generated and synced as cover image.`);
         } catch (err: any) {
             alert(err.message || "Image generation failed");
         } finally {
@@ -186,9 +196,10 @@ const BrandPage: React.FC = () => {
                 title: postData.title,
                 content: postData.content,
                 excerpt: postData.content.slice(0, 150) + '...',
-                imageUrl: '/placeholder-blog.jpg',
+                imageUrl: workbenchImageUrl,
                 status: 'draft',
-                authorName: user?.name || 'Unknown Author'
+                authorName: user?.name || 'Unknown Author',
+                publishDate: new Date().toISOString()
             });
 
             // 2. If Manager, Publish Directly. If Member, Submit for Review (AI Check)

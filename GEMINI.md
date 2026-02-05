@@ -88,6 +88,20 @@
 
 # 第三章：近期工作日誌 (Recent Journal Entries)
 
+### 2026-02-05: Auth Stability & Nexus UI Optimization
+*   **權限與導覽穩定化 (Root Cause Fix)**:
+    *   **後端**: 修正 `AuthService.py`，建立使用者時同步將 `role` 寫入 `user_metadata`。確保 `make db-init` 產出的 Token 自帶角色資訊。
+    *   **前端**: 強化 `api.ts` 的 `getCurrentUser` Fallback。當 Profile 讀取失敗時，優先從 Metadata 恢復角色，防止權限降級為 `MEMBER` 導致名單過濾錯誤。
+    *   **診斷**: 在前端增加明確的 Profile fetch 失敗日誌，提升可維護性。
+*   **Bob 工作台與部落格修復**:
+    *   **圖片連結**: 後端 `marketing_api.py` 對 Fallback URL 進行編碼（處理空格），解決 Markdown 圖片無法渲染的問題。
+    *   **內容同步**: 前端 `BrandPage.tsx` 實現封面圖與 AI 生成圖同步，並補齊發佈時的 `publishDate`。
+    *   **Prompt 側邊欄**: `ContentWorkbench.tsx` 加入常駐式 Prompt Inspector，解決提示資訊因點擊消失的問題。
+*   **Charlie (Manager) 體驗升級**:
+    *   **Operations Nexus**: 在側邊欄正式加入入口（支援 Admin/Manager）。
+    *   **平板優先預覽**: `ApprovalsPage.tsx` 實現 WYSIWYG 預覽（圖片+Markdown+Hashtags），並優化大型觸控按鈕（56px+）與視覺層次。
+*   **品質閘門**: 通過後端 535 項測試與全專案 Lint。同步修正了 `App.tsx` 的型別匯入與 `test_marketing_api_mock.py` 的編碼斷言。
+
 ### 2026-02-03: Phase 4.6.3 Charlie Finalization (Sentinel & Smart Dispatch)
 *   **功能實作**: 實作了 Charlie (Manager) 指揮官工作流。
     *   **Sentinel 哨兵**: `SchedulerService` 每 12 小時自動掃描 stale leads (14天未更新) 並產生 ALERT 級別日誌。
