@@ -41,9 +41,12 @@
 | **GAP-016** | 🔧 Gap | **Tech** | **Token** | Token Usage 真實寫入與可視化確認。已於 `MockLLMClient` 實作 Token 消耗模擬。 | Low | ⚪ 待討論 |
 | **GAP-003** | 🔧 Gap | **Alice** | **Swipe** | 滑動誤觸復原功能待驗收。 | Low | ⚪ 待討論 |
 | **GAP-011** | 🔧 Gap | **Alice** | **Prune** | 自動歸檔邏輯待驗收。已實作 `prune_archived_tasks` 服務方法。 | Low | ⚪ 待討論 |
+| **GAP-017** | 🔧 Gap | **Alice** | **Crawler**| **爬蟲參數配置化**。需整合 RBAC 設定爬蟲深度與過濾器。 | Low | ⚪ 待討論 |
 | **ALERT-01**| 🔧 Gap | **Charlie** | **Sentin** | 警示資料準確性待驗收。 | Low | ⚪ 待討論 |
+| **UX-014** | 🎨 Style | **All** | **UI/Nav** | **導航 Icon 配色化**。依職能模組 (Sales/Mkt/Admin) 區分 Icon 顏色。 | Medium | ⚪ 待討論 |
 | **TECH-001**| 🏗️ Debt | **Tech** | **RAG** | `RAGSettings.tsx` 重構拆分。 | Medium | ⚪ 待討論 |
 | **TECH-002**| 🏗️ Debt | **Tech** | **Projects**| `projects_api.py` 商業邏輯抽離。 | Medium | ⚪ 待討論 |
+| **TECH-003**| 🏗️ Debt | **Alice** | **Voice** | **語音 Files API 遷移**。棄用 Base64，改用 Google Files API 以支援長音頻。 | High | ⚪ 待討論 |
 
 ---
 

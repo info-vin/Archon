@@ -171,6 +171,19 @@ sequenceDiagram
 | **SOP** | 需手動 SSH 進伺服器執行 CLI。| Charlie 不會用 Terminal，無法自行重置 RAG。 | **System Maintenance UI**: 在 Dashboard 新增 "Rebuild Knowledge Base" 按鈕與 API。 | ✅ Done |
 | **Config** | 規則寫死在 Code 中。 | 無法動態調整 Sentinel 的權重 (e.g. Funding = 30分)。 | **Scoring Rules Grid**: 實作 `ManagerDashboard` 的動態規則編輯表格。 | ✅ Done |
 | **Admin** | 無法監控系統健康。 | 缺乏 Token Cost 與 Error Rate 監控。 | **System Health View**: 實作 Admin 專屬的 RAG/Error/Cost 監控面板。 | ✅ Done |
+| **Command Center** | | | | |
+| Operations Nexus | Unified Dashboard | ✅ Done (ApprovalsPage.tsx / ManagerDashboard.tsx) | **UI Polish**: 移除 Charlie 專屬名稱，統一使用 "Operations Nexus"。 | ✅ Done |
+
+### 3.1 閉環工作流說明 (Closed-Loop Workflow)
+**"Smart Dispatch" (智慧分派)** 是一個將戰略信號 (Alert) 轉化為戰術行動 (Task) 的關鍵流程：
+1.  **偵測 (Detect)**: Sentinel 掃描 `leads` 表，發現停滯客戶 (>14天無互動)，產生 `ALERT` 寫入 `archon_logs`。
+2.  **決策 (Decide)**: Manager 在 **Operations Nexus (Command Center)** 看到紅燈警示。
+3.  **分派 (Dispatch)**: Manager 點擊 "Dispatch Task"。
+    *   系統調用 `gemini-1.5-pro` 分析客戶背景與過往訪談。
+    *   生成具體行動建議 (e.g., "引用最近的 TechFunding 新聞進行破冰")。
+    *   **結果**: 在 **Alice (Sales)** 的任務列表 (`archon_tasks`) 中建立一個新任務，狀態為 `todo`，Assignee 為 `Alice` (若 UI 選定) 或 `User` (預設)。
+4.  **執行 (Execute)**: Alice 登入後，在 **Sales Nexus** 的任務列表看到該高優先級任務，執行並更新 CRM。
+5.  **閉環 (Resolve)**: 系統偵測到 Alice 更新了該 Lead 的狀態，自動將原始 Alert 標記為 `dispatched` 甚至 `resolved` (未來規劃)。
 
 
 ---

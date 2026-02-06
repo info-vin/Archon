@@ -369,7 +369,13 @@ Phase 4.4.5 引入了 **Clockwork** 進行系統自動檢測。
         | 25 | `021_phase4_6_config_and_ethics.sql` | **[Phase 4.6]** 系統設定表 (`archon_settings`) 與倫理準則。 |
         | 26 | `022_add_blog_lead_relation.sql` | **[Phase 4.6.2]** 連結 Blog 與 Leads，實現 Bob 的內容閉環。 |
         | 27 | `023_create_token_usage_table.sql` | **[系統]** 建立 `archon_token_usage` 表，支援成本監控。 |
-        | 28 | `seed_mock_leads.sql` | **[測試]** 填充 Stale Leads 假資料 (用於 Sentinel 測試)。 |
+        | 28 | `024_add_contact_info_to_leads.sql` | **[Schema]** 擴充 Leads 表欄位 (聯絡人、Email、來源) 以支援計分。 |
+        | 29 | `seed_mock_alerts_and_logs.sql` | **[種子]** 填充 Admin/Manager 儀表板所需的系統警報與日誌資料。 |
+
+### 2.3 前端開發規範 (End-user UI)
+
+- **React Hook 穩定性 (Critical)**: 在實作如 `RAGSettings` 等複雜組件時，**嚴禁**將「對象實例 (Object/Array)」直接放入 `useEffect` 的依賴陣列中。這會導致無限渲染循環 (Infinite Re-render)。應解構為「原始型別屬性 (Primitives)」作為依賴。
+- **型別安全性**: 必須同步更新 `src/types.ts` 並通過 `tsc --noEmit` 檢查。
 
 3.  **階段三：執行部署**
 

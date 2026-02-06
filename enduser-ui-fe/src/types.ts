@@ -132,7 +132,7 @@ export interface BlogPost {
     authorName: string;
     publishDate: string; // ISO String
     imageUrl: string;
-    status: 'draft' | 'review' | 'published';
+    status: 'draft' | 'review' | 'published' | 'changes_requested';
 }
 
 export interface AssignableUser {

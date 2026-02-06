@@ -299,7 +299,9 @@ const BrandPage: React.FC = () => {
         document.body.removeChild(link);
     };
 
-    const KanbanColumn = ({ status, title, icon: Icon, colorClass }: any) => (
+    const KanbanColumn = ({ filter, title, icon: Icon, colorClass }: any) => {
+        const columnPosts = posts.filter(filter);
+        return (
         <div className="flex-1 min-w-[300px] bg-gray-50/50 rounded-xl p-4 flex flex-col gap-4">
             <div className={`flex items-center justify-between border-b pb-2 ${colorClass}`}>
                 <h3 className="font-bold flex items-center gap-2">
@@ -307,17 +309,22 @@ const BrandPage: React.FC = () => {
                     {title}
                 </h3>
                 <span className="bg-white px-2 py-0.5 rounded-full text-xs shadow-sm font-bold">
-                    {posts.filter(p => p.status === status).length}
+                    {columnPosts.length}
                 </span>
             </div>
             <div className="space-y-3 overflow-y-auto max-h-[500px] pr-1">
-                {posts.filter(p => p.status === status).map(post => (
-                    <div key={post.id} className="bg-white p-4 rounded-lg shadow-sm border border-gray-100 hover:shadow-md transition-all group">
+                {columnPosts.map(post => (
+                    <div key={post.id} className="bg-white p-4 rounded-lg shadow-sm border border-gray-100 hover:shadow-md transition-all group relative overflow-hidden">
+                        {post.status === 'changes_requested' && (
+                            <div className="absolute top-0 right-0 bg-red-100 text-red-600 text-[10px] font-bold px-2 py-1 rounded-bl-lg">
+                                RETURNED
+                            </div>
+                        )}
                         <h4 className="font-semibold text-gray-800 line-clamp-2">{post.title}</h4>
                         <p className="text-xs text-gray-500 mt-2 italic">By {post.authorName}</p>
                         <div className="mt-4 flex justify-between items-center opacity-0 group-hover:opacity-100 transition-opacity">
                             <div className="flex gap-1">
-                                {status !== 'draft' && (
+                                {post.status !== 'draft' && post.status !== 'changes_requested' && (
                                     <button onClick={() => updatePostStatus(post.id, 'draft')} className="p-1 hover:bg-gray-100 rounded text-gray-400" title="Move to Draft">
                                         <FileEditIcon className="w-4 h-4" />
                                     </button>
@@ -328,12 +335,12 @@ const BrandPage: React.FC = () => {
                                 <button onClick={() => handleDeletePost(post.id)} className="p-1 hover:bg-red-50 rounded text-red-500" title="Delete">
                                     <TrendingUpIcon className="w-4 h-4 rotate-45" />
                                 </button>
-                                {status !== 'review' && (
+                                {post.status !== 'review' && (
                                     <button onClick={() => updatePostStatus(post.id, 'review')} className="p-1 hover:bg-amber-50 rounded text-amber-500" title="Move to Review">
                                         <EyeIcon className="w-4 h-4" />
                                     </button>
                                 )}
-                                {status !== 'published' && (
+                                {post.status !== 'published' && (
                                     <button onClick={() => updatePostStatus(post.id, 'published')} className="p-1 hover:bg-green-50 rounded text-green-600" title="Publish Now">
                                         <CheckCircleIcon className="w-4 h-4" />
                                     </button>
@@ -345,7 +352,7 @@ const BrandPage: React.FC = () => {
                 ))}
             </div>
         </div>
-    );
+    )};
 
     return (
         <PermissionGuard permission="leads:view:marketing" fallback={<div className="p-12 text-center text-gray-500">Access Denied: Brand Hub is for Marketing roles only.</div>}>
@@ -432,9 +439,24 @@ const BrandPage: React.FC = () => {
                                     </button>
                                 </div>
                                 <div className="flex flex-col md:flex-row gap-6 overflow-x-auto pb-4">
-                                    <KanbanColumn status="draft" title="Ideas & Drafts" icon={FileEditIcon} colorClass="text-gray-600 border-gray-200" />
-                                    <KanbanColumn status="review" title="In Review" icon={EyeIcon} colorClass="text-amber-600 border-amber-200" />
-                                    <KanbanColumn status="published" title="Published" icon={CheckCircleIcon} colorClass="text-green-600 border-green-200" />
+                                    <KanbanColumn 
+                                        filter={(p: BlogPost) => p.status === 'draft' || p.status === 'changes_requested'} 
+                                        title="Ideas, Drafts & Returns" 
+                                        icon={FileEditIcon} 
+                                        colorClass="text-gray-600 border-gray-200" 
+                                    />
+                                    <KanbanColumn 
+                                        filter={(p: BlogPost) => p.status === 'review'} 
+                                        title="In Review" 
+                                        icon={EyeIcon} 
+                                        colorClass="text-amber-600 border-amber-200" 
+                                    />
+                                    <KanbanColumn 
+                                        filter={(p: BlogPost) => p.status === 'published'} 
+                                        title="Published" 
+                                        icon={CheckCircleIcon} 
+                                        colorClass="text-green-600 border-green-200" 
+                                    />
                                 </div>
                             </section>
 

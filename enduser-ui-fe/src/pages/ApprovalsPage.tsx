@@ -132,7 +132,7 @@ const ApprovalsPage: React.FC = () => {
           <div>
             <div className="flex items-center gap-2 text-indigo-600 mb-1">
                 <LayoutGridIcon className="w-4 h-4" />
-                <span className="text-[10px] font-black uppercase tracking-widest">Charlie's Workbench</span>
+                <span className="text-[10px] font-black uppercase tracking-widest">Operations Workbench</span>
             </div>
             <h1 className="text-2xl md:text-3xl font-black text-gray-900 dark:text-white flex items-center gap-3">
                 Operations Nexus
