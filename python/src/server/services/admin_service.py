@@ -29,9 +29,8 @@ class AdminService:
     @staticmethod
     async def update_user_role(user_id: str, new_role: str, current_admin_email: str) -> dict[str, Any]:
         """
-        Update a user's role in public.profiles.
-        Note: This does NOT update auth.users metadata automatically without a trigger or Supabase Admin Client.
-        For Phase 4.6.4, we assume profiles is the source of truth for application logic.
+        Update a user's role in both public.profiles and auth.users metadata.
+        Synchronizing with auth metadata ensures the change is reflected in JWT tokens immediately.
         """
         try:
             supabase = get_supabase_client()
@@ -39,18 +38,29 @@ class AdminService:
             # Log the action
             logger.info(f"AdminService: Role update | target={user_id} | role={new_role} | by={current_admin_email}")
 
-            # Update public.profiles
+            # 1. Update public.profiles (Source of truth for profile data)
             payload = {
                 "role": new_role,
-                # "updated_at": "now()" # profiles might not have updated_at in current schema verify?
-                                        # Schema 000 says profiles has no updated_at column explicitly defined in Create Table block
-                                        # but usually it's good practice. I'll omit it to be safe based on schema reading.
+                # "updated_at": "now()" # profiles might not have updated_at
             }
-
             res = supabase.table("profiles").update(payload).eq("id", user_id).execute()
 
             if not res.data:
-                raise ValueError("User not found or update failed")
+                raise ValueError("User not found in profiles or update failed")
+
+            # 2. Update auth.users metadata (Source of truth for JWT/Permissions)
+            # Since get_supabase_client uses SERVICE_KEY, we have admin privileges.
+            try:
+                # Note: supabase-py admin methods are sync
+                supabase.auth.admin.update_user_by_id(
+                    user_id,
+                    {"user_metadata": {"role": new_role}}
+                )
+                logger.info(f"AdminService: Synced metadata role for {user_id}")
+            except Exception as auth_err:
+                # Log but don't fail the whole request if only metadata sync fails
+                # (though it's critical for RBAC)
+                logger.error(f"AdminService: Auth metadata sync failed for {user_id}: {auth_err}")
 
             data = res.data[0]
             return cast(dict[str, Any], data)

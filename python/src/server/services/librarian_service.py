@@ -107,6 +107,19 @@ class LibrarianService:
 
             self.supabase.table("archon_crawled_pages").insert(page_data).execute()
 
+            # 5. Record version for audit trail (Admin Insight)
+            try:
+                self.supabase.table("archon_document_versions").insert({
+                    "field_name": "sales_pitch",
+                    "change_type": "create",
+                    "change_summary": f"Archived generated pitch for {company}",
+                    "content": {"source_id": source_id, "company": company, "job": job_title},
+                    "created_by": "ai-librarian",
+                    "version_number": 1
+                }).execute()
+            except Exception as v_err:
+                logger.warning(f"Librarian: Failed to log document version: {v_err}")
+
             logger.info(f"Librarian: Pitch archived successfully | source_id={source_id}")
             return source_id
 
@@ -199,6 +212,19 @@ class LibrarianService:
                     }
                 }
                 self.supabase.table("archon_crawled_pages").insert(page_data).execute()
+
+            # 5. Record version for audit trail (Admin Insight)
+            try:
+                self.supabase.table("archon_document_versions").insert({
+                    "field_name": "knowledge_file",
+                    "change_type": "create",
+                    "change_summary": f"Indexed local file: {file_name}",
+                    "content": {"source_id": source_id, "file": file_name, "path": file_path},
+                    "created_by": "ai-librarian",
+                    "version_number": 1
+                }).execute()
+            except Exception as v_err:
+                logger.warning(f"Librarian: Failed to log document version: {v_err}")
 
             logger.info(f"Librarian: File archived successfully | source_id={source_id}")
             return source_id

@@ -206,3 +206,35 @@ export interface JobData {
 
 
 }
+
+export interface SystemOverview {
+    status: 'healthy' | 'degraded' | 'unknown';
+    rag: {
+        status: string;
+        details?: any;
+    };
+    errors_24h: number;
+    active_agents: string[];
+    cost_24h: number;
+    timestamp: string;
+}
+
+export interface AiUsageStats {
+    total_budget: number;
+    total_used: number;
+    usage_percentage: number;
+    usage_by_user: {
+        name: string;
+        calls: number;
+        tokens: number;
+    }[];
+    // New fields for Admin
+    total_cost_usd?: number;
+    daily_costs?: {
+        date: string;
+        cost: number;
+        request_count: number;
+        models: string[];
+    }[];
+    is_real_data?: boolean;
+}

@@ -369,6 +369,7 @@ Phase 4.4.5 引入了 **Clockwork** 進行系統自動檢測。
         | 25 | `021_phase4_6_config_and_ethics.sql` | **[Phase 4.6]** 系統設定表 (`archon_settings`) 與倫理準則。 |
         | 26 | `022_add_blog_lead_relation.sql` | **[Phase 4.6.2]** 連結 Blog 與 Leads，實現 Bob 的內容閉環。 |
         | 27 | `023_create_token_usage_table.sql` | **[系統]** 建立 `archon_token_usage` 表，支援成本監控。 |
+        | 28 | `seed_mock_leads.sql` | **[測試]** 填充 Stale Leads 假資料 (用於 Sentinel 測試)。 |
 
 3.  **階段三：執行部署**
 

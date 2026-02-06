@@ -55,7 +55,7 @@ describe('IdentityMatrix', () => {
         });
         
         expect(screen.getByText('bob@test.com')).toBeInTheDocument();
-        expect(screen.getByText('Identity Matrix (RBAC)')).toBeInTheDocument();
+        expect(screen.getByText('Identity Matrix')).toBeInTheDocument();
         expect(screen.getAllByText('Edit').length).toBe(2);
     });
 
@@ -70,7 +70,7 @@ describe('IdentityMatrix', () => {
         const editButtons = screen.getAllByText('Edit');
         fireEvent.click(editButtons[0]); // Click Alice's edit
 
-        expect(screen.getByText('Edit User: Alice Admin')).toBeInTheDocument();
-        expect(screen.getByRole('combobox', { name: /Role/i })).toBeInTheDocument();
+        expect(screen.getByText('Manage Access: Alice Admin')).toBeInTheDocument();
+        expect(screen.getByLabelText(/Role Assignment/i)).toBeInTheDocument();
     });
 });

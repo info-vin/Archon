@@ -342,7 +342,7 @@ const supabaseApi = {
     return response.json();
   },
   async getDocumentVersions(): Promise<DocumentVersion[]> {
-    const response = await fetch('/api/versions', { headers: await this._getHeaders() });
+    const response = await fetch('/api/version/documents', { headers: await this._getHeaders() });
     if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         throw new Error(errorData.detail || 'Failed to fetch document versions.');
@@ -649,10 +649,16 @@ const supabaseApi = {
     return response.json();
   },
 
-  async getAiUsage(): Promise<{ total_budget: number; total_used: number; usage_percentage: number }> {
+  async getAiUsage(): Promise<import('../types.ts').AiUsageStats> {
     const response = await fetch('/api/stats/ai-usage', { headers: await this._getHeaders() });
     if (!response.ok) throw new Error('Failed to fetch AI usage');
     return response.json();
+  },
+
+  async getSystemOverview(): Promise<import('../types.ts').SystemOverview> {
+      const response = await fetch('/api/stats/system-overview', { headers: await this._getHeaders() });
+      if (!response.ok) throw new Error('Failed to fetch system overview');
+      return response.json();
   },
 
   async getMemberPerformance(): Promise<MemberPerformance[]> {

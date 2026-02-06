@@ -42,6 +42,7 @@ services:
       - ./python/tests:/app/tests # Mount tests for UI test execution
       - ./scripts:/app/scripts # Mount utility scripts
       - ./migration:/app/migration # Mount SQL migrations
+      - ./enduser-ui-fe/public:/app/frontend_public # Mount frontend assets for Knowledge Seeding
     extra_hosts:
       - "host.docker.internal:host-gateway"
     command:

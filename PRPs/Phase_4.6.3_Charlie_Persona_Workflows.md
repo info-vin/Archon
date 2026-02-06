@@ -169,6 +169,8 @@ sequenceDiagram
 | **Agent** | 只有單一 Chat 介面。 | 缺乏 **"背景執行"** 的 Sentinel 與 Reviewer。 | **Sentinel Service**: 實作 `scheduler_service.py` 定期掃描 stale leads。 | ✅ Done |
 | **Data** | Task 只能手動建立。 | 無法由 AI 自動生成 Task 草稿。 | **Smart Dispatch**: 在 `task_service.py` 整合 RAG + LLM (`gemini-1.5-pro`) 自動生成任務。 | ✅ Done |
 | **SOP** | 需手動 SSH 進伺服器執行 CLI。| Charlie 不會用 Terminal，無法自行重置 RAG。 | **System Maintenance UI**: 在 Dashboard 新增 "Rebuild Knowledge Base" 按鈕與 API。 | ✅ Done |
+| **Config** | 規則寫死在 Code 中。 | 無法動態調整 Sentinel 的權重 (e.g. Funding = 30分)。 | **Scoring Rules Grid**: 實作 `ManagerDashboard` 的動態規則編輯表格。 | ✅ Done |
+| **Admin** | 無法監控系統健康。 | 缺乏 Token Cost 與 Error Rate 監控。 | **System Health View**: 實作 Admin 專屬的 RAG/Error/Cost 監控面板。 | ✅ Done |
 
 
 ---

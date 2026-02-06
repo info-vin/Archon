@@ -5,10 +5,11 @@ import { CheckCircleIcon, PlusIcon, XIcon, RefreshCwIcon, SaveIcon, KeyIcon } fr
 import { useAuth } from '../hooks/useAuth.tsx';
 
 import { IdentityMatrix } from '../features/admin/components/IdentityMatrix.tsx';
+import { SystemHealthDashboard } from '../features/admin/components/SystemHealthDashboard.tsx';
 
 
 const AdminPage: React.FC = () => {
-  const [activeTab, setActiveTab] = useState('users');
+  const [activeTab, setActiveTab] = useState('health'); // Default to System Health for Admin Persona
 
   return (
     <div className="flex-1 flex flex-col h-full overflow-hidden p-6 bg-background text-foreground">
@@ -19,6 +20,7 @@ const AdminPage: React.FC = () => {
 
       <div className="border-b border-border mb-6">
         <nav className="-mb-px flex space-x-8 overflow-x-auto" aria-label="Tabs">
+          <TabButton title="System Health" isActive={activeTab === 'health'} onClick={() => setActiveTab('health')} />
           <TabButton title="User Management" isActive={activeTab === 'users'} onClick={() => setActiveTab('users')} />
           <TabButton title="System Prompts" isActive={activeTab === 'prompts'} onClick={() => setActiveTab('prompts')} />
           <TabButton title="Blog Management" isActive={activeTab === 'blog'} onClick={() => setActiveTab('blog')} />
@@ -27,6 +29,7 @@ const AdminPage: React.FC = () => {
       </div>
 
       <div className="flex-1 overflow-auto">
+        {activeTab === 'health' && <SystemHealthDashboard />}
         {activeTab === 'users' && <IdentityMatrix />}
         {activeTab === 'prompts' && <PromptManagement />}
         {activeTab === 'blog' && <BlogManagement />}

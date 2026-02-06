@@ -139,9 +139,10 @@ sequenceDiagram
 
 | 模組 | 現狀 (As-Is) | 缺口 (Gap) | 實作行動 (Action Item) | 優先級 |
 | :--- | :--- | :--- | :--- | :--- |
-| **UI** | 基礎 CRUD。 | 缺乏 **RBAC Matrix** 與 **System Dashboard**。 | 實作 `RbacTableManager.tsx` 與 `SystemHealthDashboard.tsx`。 | **High** |
-| **Clockwork** | 僅能建 Task。 | 無法主動分析 Error Log 並呼叫 DevBot。 | 擴充 `scheduler_service.py`，新增 `log_patrol_job`。 | **High** |
-| **DevBot** | 只能被動接單。 | 無法自動建立 Branch 與 PR (Proposal)。 | 強化 `DevBot` 整合 `git_tools.create_branch` 與 `proposed_changes` 表。 | **High** |
+| **UI** | 基礎 CRUD。 | 缺乏 **RBAC Matrix** 與 **System Dashboard**。 | **System Health View**: 在 `ManagerDashboard.tsx` 實作 Admin 專屬的 RAG/Error/Cost 監控面板。 | ✅ Done (Basic) |
+| **RBAC UI** | 無法視覺化管理權限。 | Admin 需手寫 SQL 改權限。 | **Identity Matrix**: 實作 `RbacTableManager.tsx` 用表格管理 `auth.users`。 | 🚧 Todo |
+| **Clockwork** | 僅能建 Task。 | 無法主動分析 Error Log 並呼叫 DevBot。 | 擴充 `scheduler_service.py`，新增 `log_patrol_job`。 | ✅ Done (Basic) |
+| **DevBot** | 只能被動接單。 | 無法自動建立 Branch 與 PR (Proposal)。 | 強化 `DevBot` 整合 `git_tools.create_branch` 與 `proposed_changes` 表。 | 🚧 Todo |
 | **Token Ops** | 無法監控成本。 | 缺乏可視化的 Token 消耗報表。 | 實作 `TokenUsageChart` 整合 Recharts 顯示每日消耗。 | **Medium** |
 
 ---

@@ -16,6 +16,7 @@ from ..services.guardrail_service import GuardrailService
 from ..services.job_board_service import JobBoardService, JobData
 from ..services.llm_provider_service import get_llm_client
 from ..services.log_service import LogService
+from ..services.prompt_service import prompt_service
 from ..services.search.rag_service import RAGService
 from ..utils import get_supabase_client
 
@@ -331,7 +332,8 @@ async def generate_pitch(request: PitchRequest, current_user: dict = Depends(get
         if not marketing_api_key:
              marketing_api_key = await credential_service.get_credential("GOOGLE_API_KEY")
 
-        system_prompt = SALES_PITCH_SYSTEM_PROMPT
+        # Use Database-driven prompt with hardcoded fallback
+        system_prompt = prompt_service.get_prompt("SALES_PITCH", SALES_PITCH_SYSTEM_PROMPT)
         user_prompt = f"Target Company: {request.company}\nHiring For: {request.job_title}\n\nContext:\n{context_text}"
 
         try:
@@ -772,7 +774,8 @@ async def draft_blog_post(request: DraftBlogRequest, current_user: dict = Depend
         if not marketing_api_key:
              marketing_api_key = await credential_service.get_credential("GOOGLE_API_KEY")
 
-        system_prompt = BLOG_DRAFT_SYSTEM_PROMPT
+        # Use Database-driven prompt with hardcoded fallback
+        system_prompt = prompt_service.get_prompt("BLOG_DRAFT", BLOG_DRAFT_SYSTEM_PROMPT)
         user_prompt = f"Topic: {request.topic}\nKeywords: {request.keywords}\nTone: {request.tone}\n\n<reference_context>\n{context_text}\n</reference_context>"
 
         request_id = f"blog-{uuid.uuid4().hex[:8]}"
@@ -1166,10 +1169,11 @@ async def seed_knowledge_base(current_user: dict = Depends(get_current_user)):
 
     # Try multiple common roots
     roots_to_try = [
-        "../enduser-ui-fe/public/aus/156_resource", # Local relative from script location? No, from server run location.
-        "/app/enduser-ui-fe/public/aus/156_resource", # Docker
-        "../../enduser-ui-fe/public/aus/156_resource", # Relative from src/server
-        os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../../enduser-ui-fe/public/aus/156_resource")) # Absolute from file
+        "/app/frontend_public/aus/156_resource", # Docker mounted frontend assets
+        "/app/src/docs", # Docker mounted python/src/docs
+        os.path.join(os.path.dirname(__file__), "../../docs"), # Local relative to api_routes
+        "../../docs",
+        "docs"
     ]
 
     target_dir = None

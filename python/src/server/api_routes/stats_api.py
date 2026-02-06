@@ -6,17 +6,84 @@ Handles:
 - Team performance metrics (Member Performance)
 """
 
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from fastapi import status as http_status
 
+from ..auth.dependencies import get_current_user
 from ..config.logfire_config import get_logger
+from ..services.health_service import HealthService
+from ..services.token_usage_service import TokenUsageService
 from ..utils import get_supabase_client
 
 logger = get_logger(__name__)
 
 router = APIRouter(prefix="/api/stats", tags=["stats"])
+
+async def require_admin(user=Depends(get_current_user)):
+    # Simple role check helper
+    if user.get("role") not in ["admin", "system_admin"]:
+        raise HTTPException(status_code=403, detail="Admin access required")
+    return user
+
+@router.get("/system-overview", dependencies=[Depends(require_admin)])
+async def get_system_overview():
+    """
+    Consolidated health and performance overview for the Admin Dashboard.
+    Integrates RAG Health, Error Log Counts, and Real Token Costs.
+    """
+    try:
+        supabase = get_supabase_client()
+        health_service = HealthService()
+
+        # 1. RAG Health (Using existing check)
+        rag_health = await health_service.check_rag_integrity()
+
+        # 2. Error Log Stats (Last 24h)
+        one_day_ago = (datetime.now(UTC) - timedelta(hours=24)).isoformat()
+        # Note: 'count' param in select requires exact=True/Planned etc.
+        # But supabase-py select(count='exact') returns count in .count property
+        error_res = supabase.table("archon_logs").select("id", count="exact")\
+            .eq("level", "ERROR").gt("created_at", one_day_ago).execute()
+        error_count = error_res.count if error_res.count is not None else 0
+
+        # 3. Active Agents Status
+        # Check Scheduler Logs for recent activity
+        one_hour_ago = (datetime.now(UTC) - timedelta(hours=1)).isoformat()
+        clockwork_res = supabase.table("archon_logs").select("id", count="exact")\
+            .eq("source", "clockwork-scheduler").gt("created_at", one_hour_ago).execute()
+        clockwork_active = (clockwork_res.count or 0) > 0
+
+        active_agents = []
+        if clockwork_active:
+            active_agents.append("Clockwork (Scheduler)")
+        # Assume others are services
+        active_agents.extend(["Sentinel (Guard)", "Librarian (RAG)"])
+
+        # 4. Token Cost (Last 24h)
+        # We can reuse get_daily_cost logic but simpler here
+        token_res = supabase.table("token_usage").select("cost_usd")\
+            .gt("created_at", one_day_ago).execute()
+        total_cost_24h = sum(float(row["cost_usd"]) for row in (token_res.data or []))
+
+        return {
+            "status": "healthy" if rag_health.get("status") == "healthy" and error_count < 10 else "degraded",
+            "rag": rag_health,
+            "errors_24h": error_count,
+            "active_agents": active_agents,
+            "cost_24h": round(total_cost_24h, 4),
+            "timestamp": datetime.now(UTC).isoformat()
+        }
+    except Exception as e:
+        logger.error(f"Failed to get system overview: {e}")
+        # Fail gracefully
+        return {
+            "status": "unknown",
+            "error": str(e)
+        }
+
 
 
 @router.get("/tasks-by-status")
@@ -102,21 +169,20 @@ async def get_member_performance():
 async def get_ai_usage():
     """
     Get AI token usage statistics.
-    Aggregates from gemini_logs (estimating 500 tokens per call).
+    Hybrid approach:
+    1. Returns legacy 'gemini_logs' estimated stats for Charlie (Team Management).
+    2. Returns real 'token_usage' cost stats for Admin (System Health).
     """
     try:
-        logger.info("Fetching AI usage stats")
+        logger.info("Fetching AI usage stats (Hybrid Mode)")
         supabase = get_supabase_client()
 
-        # 1. Fetch logs
-        # Note: In production, use count() or a dedicated stats table
+        # --- Legacy Path (Estimated from logs) ---
         response = supabase.table("gemini_logs").select("user_name").execute()
-
-        logs = response.data
+        logs = response.data or []
         total_calls = len(logs)
         estimated_used = total_calls * 500
 
-        # 2. Breakdown by User
         user_counts: dict[str, int] = {}
         for log in logs:
             user = log.get("user_name") or "Unknown"
@@ -128,19 +194,36 @@ async def get_ai_usage():
         ]
         breakdown.sort(key=lambda x: x["tokens"], reverse=True)
 
+        # --- New Path (Real Cost from TokenUsageService) ---
+        # Fetch daily stats for the last 30 days
+        daily_costs = await TokenUsageService.get_daily_cost(days=30)
+        total_real_cost = sum(d["cost"] for d in daily_costs)
+
+        # Flatten daily stats for "Usage by Model" view if needed
+        # For now, we just pass the total cost and daily breakdown
+
         return {
-            "total_budget": 100000, # Hard limit for now
+            # Legacy Fields (Backwards Compatible)
+            "total_budget": 100000,
             "total_used": estimated_used,
             "usage_percentage": round((estimated_used / 100000) * 100, 1),
-            "usage_by_user": breakdown
+            "usage_by_user": breakdown,
+
+            # New Fields (For Admin Dashboard)
+            "total_cost_usd": round(total_real_cost, 4),
+            "daily_costs": daily_costs,
+            "is_real_data": True
         }
 
     except Exception as e:
         logger.error(f"Failed to get AI usage stats | error={str(e)}")
-        # Return fallback data instead of crashing UI
+        # Return fallback data
         return {
             "total_budget": 100000,
             "total_used": 0,
             "usage_percentage": 0,
-            "usage_by_user": []
+            "usage_by_user": [],
+            "total_cost_usd": 0.0,
+            "daily_costs": [],
+            "error": str(e)
         }

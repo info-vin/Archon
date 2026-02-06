@@ -1,5 +1,5 @@
 from decimal import Decimal
-from typing import Any, cast
+from typing import Any
 
 from ..config.logfire_config import get_logger
 from ..utils import get_supabase_client
@@ -86,22 +86,41 @@ class TokenUsageService:
         """
         try:
             supabase = get_supabase_client()
-            # PostgREST doesn't support aggregate GROUP BY date easily without RPC.
-            # For now, we fetch raw data and aggregate in Python (ok for low volume).
-            # In Phase 5, we should move this to a DB View or RPC.
+            from datetime import UTC, datetime, timedelta
+            since = datetime.now(UTC) - timedelta(days=days)
 
-            # Fetch last 7 days
-            # updated_at is not on token_usage, created_at is.
-            # filter created_at > now - 7 days
-
-            # Using RPC is better if available, but let's stick to raw fetch for "Start Simple"
+            # Fetch last N days raw data
             res = supabase.table("token_usage").select("cost_usd, created_at, model, provider")\
-                .order("created_at", desc=True).limit(2000).execute()
+                .gt("created_at", since.isoformat())\
+                .order("created_at", desc=True).limit(5000).execute()
 
-            # Aggregate logic here...
-            # Omitted for brevity in this initial implementation, will return raw rows for Frontend to aggregate
             data = res.data if res.data else []
-            return cast(list[dict[str, Any]], data)
+
+            # Aggregate by date
+            daily_stats: dict[str, dict[str, Any]] = {}
+            for row in data:
+                # created_at is ISO string e.g. "2026-02-06T12:00:00+00:00"
+                date_str = row["created_at"].split("T")[0]
+                if date_str not in daily_stats:
+                    daily_stats[date_str] = {
+                        "date": date_str,
+                        "cost": 0.0,
+                        "request_count": 0,
+                        "models": set()
+                    }
+
+                daily_stats[date_str]["cost"] += row.get("cost_usd", 0)
+                daily_stats[date_str]["request_count"] += 1
+                daily_stats[date_str]["models"].add(row["model"])
+
+            # Convert to list and sort
+            result = []
+            for d in sorted(daily_stats.keys()):
+                item = daily_stats[d]
+                item["models"] = list(item["models"]) # Convert set to list for JSON serialization
+                result.append(item)
+
+            return result
 
         except Exception as e:
             logger.error(f"Failed to fetch daily cost: {e}")
