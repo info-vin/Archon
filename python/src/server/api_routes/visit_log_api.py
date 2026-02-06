@@ -42,8 +42,13 @@ async def _upload_to_google_files_api(
     filename: str = "visit_audio.mp3"
 ) -> str:
     """Uploads audio to Google Files API and ensures it is ACTIVE."""
+    # Map common mobile audio formats to Google-compatible MIME types
     if "mpeg" in mime_type or "mp3" in mime_type:
         mime_type = "audio/mpeg"
+    elif "m4a" in mime_type or "x-m4a" in mime_type:
+        mime_type = "audio/mp4"
+    elif "wav" in mime_type:
+        mime_type = "audio/wav"
 
     upload_url = f"https://generativelanguage.googleapis.com/upload/v1beta/files?key={api_key}"
     boundary = "boundary_archon_voice"

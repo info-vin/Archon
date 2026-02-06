@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { api } from '../../../services/api';
-import { XIcon, MapPinIcon, CheckCircleIcon, SparklesIcon, MicrophoneIcon, TrashIcon } from '../../../components/Icons';
+import { XIcon, MapPinIcon, CheckCircleIcon, SparklesIcon, MicrophoneIcon, TrashIcon, UploadIcon } from '../../../components/Icons';
 
 interface VisitLogModalProps {
     onClose: () => void;
@@ -16,10 +16,9 @@ export const VisitLogModal: React.FC<VisitLogModalProps> = ({ onClose, onSuccess
     const [summary, setSummary] = useState<any>(null);
 
     // Audio Recording State
-    const [isRecording, setIsRecording] = useState(false);
-    const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
-    const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-    const chunksRef = useRef<BlobPart[]>([]);
+    // Audio Upload State (Replaces Recording)
+    const [audioFile, setAudioFile] = useState<File | null>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     const handleLocation = () => {
         if (navigator.geolocation) {
@@ -50,40 +49,15 @@ export const VisitLogModal: React.FC<VisitLogModalProps> = ({ onClose, onSuccess
         });
     };
 
-    const startRecording = async () => {
-        try {
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            const mediaRecorder = new MediaRecorder(stream);
-            mediaRecorderRef.current = mediaRecorder;
-            chunksRef.current = [];
-
-            mediaRecorder.ondataavailable = (e) => {
-                if (e.data.size > 0) chunksRef.current.push(e.data);
-            };
-
-            mediaRecorder.onstop = () => {
-                const blob = new Blob(chunksRef.current, { type: 'audio/webm' });
-                setAudioBlob(blob);
-                stream.getTracks().forEach(track => track.stop()); // Stop mic
-            };
-
-            mediaRecorder.start();
-            setIsRecording(true);
-        } catch (err) {
-            console.error("Microphone access denied:", err);
-            alert("Microphone access denied. Please check permissions.");
-        }
-    };
-
-    const stopRecording = () => {
-        if (mediaRecorderRef.current && isRecording) {
-            mediaRecorderRef.current.stop();
-            setIsRecording(false);
+    const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files[0]) {
+            setAudioFile(e.target.files[0]);
         }
     };
 
     const clearAudio = () => {
-        setAudioBlob(null);
+        setAudioFile(null);
+        if (fileInputRef.current) fileInputRef.current.value = '';
     };
 
     const handleSubmit = async () => {
@@ -97,9 +71,9 @@ export const VisitLogModal: React.FC<VisitLogModalProps> = ({ onClose, onSuccess
             }
             
             // Append audio if exists
-            if (audioBlob) {
-                // Determine extension based on blob type usually webm in Chrome
-                formData.append('audio_file', audioBlob, 'visit_recording.webm');
+            // Append audio if exists
+            if (audioFile) {
+                formData.append('audio_file', audioFile, audioFile.name);
             }
 
             formData.append('notes', notes); 
@@ -192,26 +166,30 @@ export const VisitLogModal: React.FC<VisitLogModalProps> = ({ onClose, onSuccess
                                     Simulate Voice
                                 </button>
                             </div>
-                            {!audioBlob ? (
+                            {!audioFile ? (
                                 <button 
-                                    onClick={isRecording ? stopRecording : startRecording}
-                                    className={`w-full p-4 rounded-xl border-2 flex items-center justify-center gap-3 transition-colors ${
-                                        isRecording 
-                                            ? 'border-red-500 bg-red-50 text-red-600 animate-pulse' 
-                                            : 'border-dashed border-gray-300 hover:border-indigo-500 hover:bg-indigo-50 text-gray-600'
-                                    }`}
+                                    onClick={() => fileInputRef.current?.click()}
+                                    className="w-full p-4 rounded-xl border-2 border-dashed border-gray-300 hover:border-indigo-500 hover:bg-indigo-50 text-gray-600 flex items-center justify-center gap-3 transition-colors"
                                 >
-                                    {isRecording ? <div className="w-3 h-3 bg-red-600 rounded-sm" /> : <MicrophoneIcon className="w-5 h-5" />}
-                                    <span className="font-semibold">{isRecording ? "Stop Recording" : "Tap to Record Audio"}</span>
+                                    <UploadIcon className="w-5 h-5" />
+                                    <span className="font-semibold">Upload Audio Recording</span>
+                                    <input 
+                                        type="file" 
+                                        ref={fileInputRef}
+                                        className="hidden"
+                                        accept="audio/*,.m4a,.mp3,.wav"
+                                        onChange={handleFileSelect}
+                                    />
                                 </button>
+    
                             ) : (
                                 <div className="flex items-center gap-2 p-3 bg-indigo-50 border border-indigo-100 rounded-xl">
                                     <div className="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600">
                                         <MicrophoneIcon className="w-4 h-4" />
                                     </div>
-                                    <div className="flex-1">
-                                        <p className="text-sm font-bold text-gray-800">Audio Recorded</p>
-                                        <p className="text-xs text-gray-500">Ready to transcribe</p>
+                                    <div className="flex-1 overflow-hidden">
+                                        <p className="text-sm font-bold text-gray-800 truncate">{audioFile?.name}</p>
+                                        <p className="text-xs text-gray-500">Ready to upload</p>
                                     </div>
                                     <button onClick={clearAudio} className="p-2 hover:bg-red-100 rounded-full text-red-500 transition-colors">
                                         <TrashIcon className="w-4 h-4" />
@@ -227,13 +205,13 @@ export const VisitLogModal: React.FC<VisitLogModalProps> = ({ onClose, onSuccess
                                 onChange={(e) => setNotes(e.target.value)}
                                 className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none"
                                 rows={3}
-                                placeholder={audioBlob ? "Additional notes..." : "Type summary or record audio..."}
+                                placeholder={audioFile ? "Additional notes..." : "Type summary or upload audio..."}
                             />
                         </div>
 
                         <button 
                             onClick={handleSubmit} 
-                            disabled={loading || !type || isRecording}
+                            disabled={loading || !type}
                             className="w-full py-3 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 disabled:opacity-50 flex justify-center gap-2"
                         >
                             {loading && <SparklesIcon className="w-5 h-5 animate-pulse" />}
