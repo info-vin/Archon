@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../services/api.ts';
 import { DocumentVersion, BlogPost } from '../types.ts';
-import { CheckCircleIcon, PlusIcon, XIcon, RefreshCwIcon, SaveIcon, KeyIcon } from '../components/Icons.tsx';
+import { CheckCircleIcon, PlusIcon, XIcon, RefreshCwIcon, SaveIcon, KeyIcon, ShieldCheckIcon } from '../components/Icons.tsx';
 import { useAuth } from '../hooks/useAuth.tsx';
 
 import { IdentityMatrix } from '../features/admin/components/IdentityMatrix.tsx';
@@ -22,6 +22,8 @@ const AdminPage: React.FC = () => {
         <nav className="-mb-px flex space-x-8 overflow-x-auto" aria-label="Tabs">
           <TabButton title="System Health" isActive={activeTab === 'health'} onClick={() => setActiveTab('health')} />
           <TabButton title="User Management" isActive={activeTab === 'users'} onClick={() => setActiveTab('users')} />
+          <TabButton title="System Settings" isActive={activeTab === 'settings'} onClick={() => setActiveTab('settings')} />
+          <TabButton title="Data Extraction" isActive={activeTab === 'extraction'} onClick={() => setActiveTab('extraction')} />
           <TabButton title="System Prompts" isActive={activeTab === 'prompts'} onClick={() => setActiveTab('prompts')} />
           <TabButton title="Blog Management" isActive={activeTab === 'blog'} onClick={() => setActiveTab('blog')} />
           <TabButton title="Document Versions" isActive={activeTab === 'versions'} onClick={() => setActiveTab('versions')} />
@@ -31,6 +33,8 @@ const AdminPage: React.FC = () => {
       <div className="flex-1 overflow-auto">
         {activeTab === 'health' && <SystemHealthDashboard />}
         {activeTab === 'users' && <IdentityMatrix />}
+        {activeTab === 'settings' && <SystemSettings />}
+        {activeTab === 'extraction' && <ExtractionManager />}
         {activeTab === 'prompts' && <PromptManagement />}
         {activeTab === 'blog' && <BlogManagement />}
         {activeTab === 'versions' && <DocumentVersionsLog />}
@@ -342,6 +346,288 @@ const PostEditorModal: React.FC<{post: BlogPost | null, onClose: () => void, onS
                         </button>
                     </div>
                 </form>
+            </div>
+        </div>
+    );
+};
+
+// --- NEW COMPONENT: SYSTEM SETTINGS ---
+const SystemSettings: React.FC = () => {
+    const [settings, setSettings] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [isSaving, setIsSaving] = useState<string | null>(null);
+
+    useEffect(() => {
+        fetchSettings();
+    }, []);
+
+    const fetchSettings = async () => {
+        setLoading(true);
+        try {
+            const data = await api.getSystemSettings('crawler_rbac');
+            setSettings(data);
+        } catch (err: any) {
+            alert("Failed to load settings: " + err.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleUpdate = async (key: string, newValue: string) => {
+        setIsSaving(key);
+        try {
+            await api.updateSystemSetting(key, { value: newValue });
+            setSettings(prev => prev.map(s => s.key === key ? { ...s, value: newValue } : s));
+        } catch (err: any) {
+            alert("Update failed: " + err.message);
+        } finally {
+            setIsSaving(null);
+        }
+    };
+
+    if (loading) return <div className="flex justify-center p-12"><RefreshCwIcon className="animate-spin w-8 h-8 text-primary" /></div>;
+
+    const roles = ['SALES', 'MARKETING', 'MANAGER', 'ADMIN'];
+
+    return (
+        <div className="space-y-6">
+            <div className="bg-card p-6 rounded-2xl border border-border shadow-sm">
+                <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
+                    <RefreshCwIcon className="w-5 h-5 text-indigo-500" />
+                    Crawler RBAC Limits
+                </h3>
+                <div className="overflow-x-auto">
+                    <table className="min-w-full divide-y divide-border">
+                        <thead>
+                            <tr className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                                <th className="px-4 py-2 text-left">Role</th>
+                                <th className="px-4 py-2 text-left">Max Depth</th>
+                                <th className="px-4 py-2 text-left">Concurrency</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-border">
+                            {roles.map(role => {
+                                const depthKey = `CRAWL_MAX_DEPTH_${role}`;
+                                const concurrentKey = `CRAWL_CONCURRENT_MAX_${role}`;
+                                const depthSetting = settings.find(s => s.key === depthKey);
+                                const concurrentSetting = settings.find(s => s.key === concurrentKey);
+
+                                return (
+                                    <tr key={role} className="text-sm">
+                                        <td className="px-4 py-3 font-medium">{role}</td>
+                                        <td className="px-4 py-3">
+                                            <input 
+                                                type="number" 
+                                                defaultValue={depthSetting?.value || 0}
+                                                onBlur={(e) => handleUpdate(depthKey, e.target.value)}
+                                                className="w-20 p-1 bg-background border border-border rounded focus:ring-1 ring-primary outline-none"
+                                            />
+                                            {isSaving === depthKey && <RefreshCwIcon className="inline animate-spin w-3 h-3 ml-2 text-primary" />}
+                                        </td>
+                                        <td className="px-4 py-3">
+                                            <input 
+                                                type="number" 
+                                                defaultValue={concurrentSetting?.value || 0}
+                                                onBlur={(e) => handleUpdate(concurrentKey, e.target.value)}
+                                                className="w-20 p-1 bg-background border border-border rounded focus:ring-1 ring-primary outline-none"
+                                            />
+                                            {isSaving === concurrentKey && <RefreshCwIcon className="inline animate-spin w-3 h-3 ml-2 text-primary" />}
+                                        </td>
+                                    </tr>
+                                );
+                            })}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div className="bg-card p-6 rounded-2xl border border-border shadow-sm">
+                <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
+                    <ShieldCheckIcon className="w-5 h-5 text-indigo-500" />
+                    Global Whitelist Domains
+                </h3>
+                {settings.find(s => s.key === 'CRAWL_ALLOWED_DOMAINS_RESTRICTED') && (
+                    <div className="space-y-2">
+                        <textarea 
+                            defaultValue={settings.find(s => s.key === 'CRAWL_ALLOWED_DOMAINS_RESTRICTED')?.value}
+                            onBlur={(e) => handleUpdate('CRAWL_ALLOWED_DOMAINS_RESTRICTED', e.target.value)}
+                            className="w-full p-3 bg-background border border-border rounded-xl font-mono text-xs focus:ring-2 ring-primary outline-none h-24"
+                            placeholder="comma, separated, domains.com"
+                        />
+                        <p className="text-[10px] text-muted-foreground italic">Changes are saved automatically on blur. These domains apply to all non-admin users.</p>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+};
+
+// --- NEW COMPONENT: EXTRACTION MANAGER (GAP-018) ---
+const ExtractionManager: React.FC = () => {
+    const [schemas, setSchemas] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [analyzeUrl, setAnalyzeUrl] = useState('');
+    const [isAnalyzing, setIsAnalyzing] = useState(false);
+    const [suggestions, setSuggestions] = useState<any>(null);
+    const [newSchemaName, setNewSchemaName] = useState('');
+    const [newDomainPattern, setNewDomainPattern] = useState('');
+
+    useEffect(() => {
+        fetchSchemas();
+    }, []);
+
+    const fetchSchemas = async () => {
+        setLoading(true);
+        try {
+            const data = await api.getExtractionSchemas();
+            setSchemas(data);
+        } catch (err: any) {
+            alert("Failed to load schemas: " + err.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleAnalyze = async () => {
+        if (!analyzeUrl) return;
+        setIsAnalyzing(true);
+        setSuggestions(null);
+        try {
+            const result = await api.analyzeExtractionUrl(analyzeUrl);
+            setSuggestions(result);
+            
+            // Auto-fill some defaults based on URL
+            const url = new URL(analyzeUrl);
+            setNewDomainPattern(`${url.hostname}${url.pathname.split('/').slice(0, 3).join('/')}/*`);
+        } catch (err: any) {
+            alert("Analysis failed: " + err.message);
+        } finally {
+            setIsAnalyzing(false);
+        }
+    };
+
+    const handleSaveSchema = async () => {
+        if (!newSchemaName || !newDomainPattern || !suggestions) return;
+        
+        try {
+            await api.createExtractionSchema({
+                name: newSchemaName,
+                domain_pattern: newDomainPattern,
+                schema_definition: suggestions,
+                description: `Auto-generated for ${newDomainPattern}`
+            });
+            alert("Schema saved successfully!");
+            fetchSchemas();
+            setSuggestions(null);
+            setAnalyzeUrl('');
+        } catch (err: any) {
+            alert("Save failed: " + err.message);
+        }
+    };
+
+    const handleDeleteSchema = async (id: string) => {
+        if (!window.confirm("Delete this extraction template?")) return;
+        try {
+            await api.deleteExtractionSchema(id);
+            fetchSchemas();
+        } catch (err: any) {
+            alert("Delete failed: " + err.message);
+        }
+    };
+
+    if (loading) return <div className="flex justify-center p-12"><RefreshCwIcon className="animate-spin w-8 h-8 text-primary" /></div>;
+
+    return (
+        <div className="space-y-8">
+            {/* New Schema / Analyze Tool */}
+            <div className="bg-card p-6 rounded-2xl border border-border shadow-sm">
+                <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
+                    <RefreshCwIcon className="w-5 h-5 text-indigo-500" />
+                    New Extraction Discovery (Powered by DevBot)
+                </h3>
+                <p className="text-sm text-muted-foreground mb-4">Paste a sample URL to let DevBot discover its structure and suggest data fields.</p>
+                <div className="flex gap-2 mb-6">
+                    <input 
+                        type="url" 
+                        value={analyzeUrl}
+                        onChange={(e) => setAnalyzeUrl(e.target.value)}
+                        placeholder="https://www.104.com.tw/job/..."
+                        className="flex-1 p-2 bg-background border border-border rounded-lg outline-none focus:ring-2 ring-primary/50 transition-all"
+                    />
+                    <button 
+                        onClick={handleAnalyze}
+                        disabled={isAnalyzing || !analyzeUrl}
+                        className="px-6 py-2 bg-indigo-600 text-white rounded-lg font-bold hover:bg-indigo-700 disabled:opacity-50 flex items-center gap-2 transition-all"
+                    >
+                        {isAnalyzing ? <RefreshCwIcon className="animate-spin w-4 h-4" /> : <ShieldCheckIcon className="w-4 h-4" />}
+                        ANALYZE STRUCTURE
+                    </button>
+                </div>
+
+                {suggestions && (
+                    <div className="mt-6 p-4 bg-muted/30 rounded-xl border border-dashed border-border animate-in slide-in-from-top-2 duration-300">
+                        <div className="flex justify-between items-start mb-4">
+                            <h4 className="font-bold text-indigo-500">Suggested Fields Found</h4>
+                            <div className="flex gap-2">
+                                <input 
+                                    placeholder="Template Name (e.g. 104 Job Detail)" 
+                                    value={newSchemaName}
+                                    onChange={(e) => setNewSchemaName(e.target.value)}
+                                    className="p-1 text-sm bg-background border border-border rounded"
+                                />
+                                <input 
+                                    placeholder="Domain Pattern" 
+                                    value={newDomainPattern}
+                                    onChange={(e) => setNewDomainPattern(e.target.value)}
+                                    className="p-1 text-sm bg-background border border-border rounded w-48"
+                                />
+                                <button 
+                                    onClick={handleSaveSchema}
+                                    className="px-3 py-1 bg-green-600 text-white text-xs font-bold rounded hover:bg-green-700"
+                                >
+                                    SAVE TEMPLATE
+                                </button>
+                            </div>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                            {suggestions.fields?.map((field: any, idx: number) => (
+                                <div key={idx} className="p-3 bg-card border border-border rounded-lg shadow-sm">
+                                    <div className="flex justify-between">
+                                        <span className="font-bold text-xs uppercase tracking-wider">{field.name}</span>
+                                        <span className="text-[10px] bg-muted px-1 rounded">{field.type}</span>
+                                    </div>
+                                    <p className="text-[10px] text-muted-foreground mt-1 line-clamp-2">{field.description}</p>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+            </div>
+
+            {/* Existing Schemas List */}
+            <div className="bg-card p-6 rounded-2xl border border-border shadow-sm">
+                <h3 className="text-lg font-bold mb-4">Saved Extraction Templates</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {schemas.map(s => (
+                        <div key={s.id} className="p-4 border border-border rounded-xl bg-muted/10 hover:bg-muted/20 transition-all group relative">
+                            <button 
+                                onClick={() => handleDeleteSchema(s.id)}
+                                className="absolute top-2 right-2 p-1 text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-all"
+                            >
+                                <XIcon className="w-4 h-4" />
+                            </button>
+                            <div className="font-bold text-sm mb-1">{s.name}</div>
+                            <code className="text-[10px] bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 px-1 rounded">{s.domain_pattern}</code>
+                            <div className="mt-3 flex flex-wrap gap-1">
+                                {s.schema_definition?.fields?.slice(0, 5).map((f: any, idx: number) => (
+                                    <span key={idx} className="text-[9px] bg-background border border-border px-1.5 py-0.5 rounded-full">{f.name}</span>
+                                ))}
+                                {s.schema_definition?.fields?.length > 5 && <span className="text-[9px] text-muted-foreground italic">+{s.schema_definition.fields.length - 5} more</span>}
+                            </div>
+                        </div>
+                    ))}
+                    {schemas.length === 0 && <div className="col-span-2 text-center py-12 text-muted-foreground italic">No templates defined yet. Use the tool above to discover and save your first extraction schema.</div>}
+                </div>
             </div>
         </div>
     );

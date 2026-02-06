@@ -695,15 +695,79 @@ const supabaseApi = {
 
   async updateSystemPrompt(promptName: string, data: { content: string; description?: string }): Promise<any> {
     const response = await fetch(`/api/system/prompts/${promptName}`, {
-        method: 'PATCH',
+        method: 'POST', // Backend uses POST for update to match legacy behavior
         headers: await this._getHeaders(),
-        body: JSON.stringify(data)
+        body: JSON.stringify({ prompt: data.content, description: data.description })
     });
     if (!response.ok) {
         const error = await response.json();
         throw new Error(error.detail || 'Failed to update system prompt');
     }
     return response.json();
+  },
+
+  // --- SYSTEM SETTINGS MANAGEMENT ---
+  async getSystemSettings(category?: string): Promise<any[]> {
+    const query = category ? `?category=${category}` : '';
+    const response = await fetch(`/api/system/settings${query}`, { headers: await this._getHeaders() });
+    if (!response.ok) throw new Error('Failed to fetch system settings');
+    return response.json();
+  },
+
+  async updateSystemSetting(key: string, data: { value: string; description?: string }): Promise<any> {
+    const response = await fetch(`/api/system/settings/${key}`, {
+        method: 'PATCH',
+        headers: await this._getHeaders(),
+        body: JSON.stringify(data)
+    });
+    if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.detail || 'Failed to update system setting');
+    }
+    return response.json();
+  },
+
+  // --- DATA EXTRACTION SCHEMAS (GAP-018) ---
+  async analyzeExtractionUrl(url: string): Promise<any> {
+    const response = await fetch('/api/extraction/analyze', {
+        method: 'POST',
+        headers: await this._getHeaders(),
+        body: JSON.stringify({ url })
+    });
+    if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.detail || 'Analysis failed');
+    }
+    return response.json();
+  },
+
+  async getExtractionSchemas(): Promise<any[]> {
+    const response = await fetch('/api/extraction/schemas', {
+        headers: await this._getHeaders()
+    });
+    if (!response.ok) throw new Error('Failed to fetch schemas');
+    return response.json();
+  },
+
+  async createExtractionSchema(data: any): Promise<any> {
+    const response = await fetch('/api/extraction/schemas', {
+        method: 'POST',
+        headers: await this._getHeaders(),
+        body: JSON.stringify(data)
+    });
+    if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.detail || 'Failed to create schema');
+    }
+    return response.json();
+  },
+
+  async deleteExtractionSchema(id: string): Promise<void> {
+    const response = await fetch(`/api/extraction/schemas/${id}`, {
+        method: 'DELETE',
+        headers: await this._getHeaders()
+    });
+    if (!response.ok) throw new Error('Failed to delete schema');
   },
 
   async getVisitLogs(userId?: string): Promise<any[]> {

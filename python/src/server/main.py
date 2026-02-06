@@ -27,6 +27,7 @@ from .api_routes.auth_api import router as auth_router  # NEW IMPORT
 from .api_routes.blog_api import router as blog_router
 from .api_routes.bug_report_api import router as bug_report_router
 from .api_routes.ethics_api import router as ethics_router  # NEW IMPORT
+from .api_routes.extraction_api import router as extraction_router  # NEW IMPORT (GAP-018)
 from .api_routes.files_api import router as files_router
 from .api_routes.internal_api import router as internal_router
 from .api_routes.knowledge_api import router as knowledge_router
@@ -273,6 +274,7 @@ app.include_router(marketing_router)
 app.include_router(system_router)
 app.include_router(prompts_router)
 app.include_router(visit_log_router)
+app.include_router(extraction_router) # NEW ROUTER (GAP-018)
 
 
 # Root endpoint

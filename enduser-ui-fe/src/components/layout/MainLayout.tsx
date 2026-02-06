@@ -63,7 +63,7 @@ const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                     {hasPermission('stats:view:own') && (
                         <li className="mb-2">
                             <Link to="/stats" className={`flex items-center p-2 rounded-md hover:bg-secondary ${location.pathname.startsWith('/stats') ? 'bg-secondary' : ''}`}>
-                                <SettingsIcon className="w-5 h-5 mr-3" />
+                                <SettingsIcon className="w-5 h-5 mr-3 text-cyan-500 dark:text-cyan-400" />
                                 HR Dashboard
                             </Link>
                         </li>
@@ -71,7 +71,7 @@ const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                     {hasPermission('leads:view:sales') && (
                         <li className="mb-2">
                             <Link to="/marketing" className={`flex items-center p-2 rounded-md hover:bg-secondary ${location.pathname.startsWith('/marketing') ? 'bg-secondary' : ''}`}>
-                                <ShieldCheckIcon className="w-5 h-5 mr-3" />
+                                <ShieldCheckIcon className="w-5 h-5 mr-3 text-blue-500 dark:text-blue-400" />
                                 Sales Intel
                             </Link>
                         </li>
@@ -79,7 +79,7 @@ const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                     {hasPermission('leads:view:marketing') && (
                         <li className="mb-2">
                             <Link to="/brand" className={`flex items-center p-2 rounded-md hover:bg-secondary ${location.pathname.startsWith('/brand') ? 'bg-secondary' : ''}`}>
-                                <PaletteIcon className="w-5 h-5 mr-3" />
+                                <PaletteIcon className="w-5 h-5 mr-3 text-purple-500 dark:text-purple-400" />
                                 Brand Hub
                             </Link>
                         </li>
@@ -87,7 +87,7 @@ const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                     {hasPermission('user:manage:team') && (
                         <li className="mb-2">
                             <Link to="/manager" className={`flex items-center p-2 rounded-md hover:bg-secondary ${location.pathname.startsWith('/manager') ? 'bg-secondary' : ''}`}>
-                                <LayoutGridIcon className="w-5 h-5 mr-3 text-purple-500" />
+                                <LayoutGridIcon className="w-5 h-5 mr-3 text-amber-500 dark:text-amber-400" />
                                 Operations Nexus
                             </Link>
                         </li>
@@ -95,7 +95,7 @@ const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                     {hasPermission('user:manage:team') && (
                         <li className="mb-2">
                             <Link to="/approvals" className={`flex items-center p-2 rounded-md hover:bg-secondary ${location.pathname.startsWith('/approvals') ? 'bg-secondary' : ''}`}>
-                                <FileTextIcon className="w-5 h-5 mr-3 text-indigo-500" />
+                                <FileTextIcon className="w-5 h-5 mr-3 text-amber-500 dark:text-amber-400" />
                                 Command Center
                             </Link>
                         </li>
@@ -103,7 +103,7 @@ const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                     {hasPermission('user:manage:team') && (
                         <li className="mb-2">
                             <Link to="/team" className={`flex items-center p-2 rounded-md hover:bg-secondary ${location.pathname.startsWith('/team') ? 'bg-secondary' : ''}`}>
-                                <UserIcon className="w-5 h-5 mr-3" />
+                                <UserIcon className="w-5 h-5 mr-3 text-amber-500 dark:text-amber-400" />
                                 Team Management
                             </Link>
                         </li>
@@ -119,7 +119,7 @@ const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                     {isAdmin && (
                          <li className="mb-2">
                             <Link to="/admin" className={`flex items-center p-2 rounded-md hover:bg-secondary ${location.pathname.startsWith('/admin') ? 'bg-secondary' : ''}`}>
-                                <SettingsIcon className="w-5 h-5 mr-3" />
+                                <SettingsIcon className="w-5 h-5 mr-3 text-rose-500 dark:text-rose-400" />
                                 Admin Control Center
                             </Link>
                         </li>
@@ -172,7 +172,7 @@ const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                 
                 {hasPermission('leads:view:sales') && (
                     <Link to="/marketing" className={`flex flex-col items-center justify-center p-2 rounded-lg ${location.pathname.startsWith('/marketing') ? 'text-primary' : 'text-muted-foreground'}`}>
-                        <ShieldCheckIcon className="w-6 h-6" />
+                        <ShieldCheckIcon className="w-6 h-6 text-blue-500 dark:text-blue-400" />
                         <span className="text-[10px] mt-1">Leads</span>
                     </Link>
                 )}
@@ -181,7 +181,7 @@ const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                     <Link to="/sales-cart" className={`flex flex-col items-center justify-center p-2 rounded-lg ${location.pathname.startsWith('/sales-cart') ? 'text-primary' : 'text-muted-foreground'}`}>
                          {/* TODO: Add ShoppingCartIcon */}
                         <div className="relative">
-                            <MenuIcon className="w-6 h-6 rotate-90" /> {/* Temporary Icon */}
+                            <MenuIcon className="w-6 h-6 rotate-90 text-blue-500 dark:text-blue-400" /> {/* Temporary Icon */}
                             {cartCount > 0 && <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-[9px] w-3 h-3 flex items-center justify-center rounded-full animate-bounce">{cartCount}</span>}
                         </div>
                         <span className="text-[10px] mt-1">Cart</span>

@@ -379,7 +379,21 @@ async def refresh_knowledge_item(
             )
         knowledge_type = metadata.get("knowledge_type", "technical")
         tags = metadata.get("tags", [])
+
+        # Phase 1: RBAC Parameter Enforcement for Refresh (GAP-017)
+        rbac_service = RBACService()
+        constraints = rbac_service.get_crawler_constraints(x_user_role)
+
+        # Enforce Max Depth from existing metadata vs role constraints
         max_depth = metadata.get("max_depth", 2)
+        original_depth = max_depth
+        max_depth = min(max_depth, constraints["max_depth"])
+        max_concurrent = constraints.get("max_concurrent", 3)
+
+        if original_depth > max_depth:
+            safe_logfire_info(
+                f"Refresh crawl depth clipped for role {x_user_role} | {original_depth} -> {max_depth}"
+            )
 
         # Generate unique progress ID
         progress_id = str(uuid.uuid4())
@@ -390,7 +404,7 @@ async def refresh_knowledge_item(
             "url": url,
             "status": "initializing",
             "progress": 0,
-            "log": f"Starting refresh for {url}",
+            "log": f"Starting refresh for {url} (Role: {x_user_role or 'unknown'})",
             "source_id": source_id,
             "operation": "refresh",
             "crawl_type": "refresh"
@@ -419,6 +433,7 @@ async def refresh_knowledge_item(
             "knowledge_type": knowledge_type,
             "tags": tags,
             "max_depth": max_depth,
+            "max_concurrent": max_concurrent,
             "extract_code_examples": True,
             "generate_summary": True,
         }
@@ -480,6 +495,20 @@ async def crawl_knowledge_item(
         safe_logfire_info(
             f"Starting knowledge item crawl | url={str(request.url)} | knowledge_type={request.knowledge_type} | tags={request.tags}"
         )
+
+        # Phase 1: RBAC Parameter Enforcement (GAP-017)
+        rbac_service = RBACService()
+        constraints = rbac_service.get_crawler_constraints(x_user_role)
+
+        # Enforce Max Depth
+        original_depth = request.max_depth
+        request.max_depth = min(request.max_depth, constraints["max_depth"])
+
+        if original_depth > request.max_depth:
+            safe_logfire_info(
+                f"Crawl depth clipped for role {x_user_role} | {original_depth} -> {request.max_depth}"
+            )
+
         # Generate unique progress ID
         progress_id = str(uuid.uuid4())
 
@@ -500,11 +529,11 @@ async def crawl_knowledge_item(
             "crawl_type": crawl_type,
             "status": "initializing",
             "progress": 0,
-            "log": f"Starting crawl for {request.url}"
+            "log": f"Starting crawl for {request.url} (Role: {x_user_role or 'unknown'})"
         })
 
-        # Start background task
-        task = asyncio.create_task(_perform_crawl_with_progress(progress_id, request, tracker))
+        # Start background task with injected constraints
+        task = asyncio.create_task(_perform_crawl_with_progress(progress_id, request, tracker, constraints))
         # Track the task for cancellation support
         active_crawl_tasks[progress_id] = task
         safe_logfire_info(
@@ -536,7 +565,7 @@ async def crawl_knowledge_item(
 
 
 async def _perform_crawl_with_progress(
-    progress_id: str, request: KnowledgeItemRequest, tracker: ProgressTracker
+    progress_id: str, request: KnowledgeItemRequest, tracker: ProgressTracker, constraints: dict | None = None
 ):
     """Perform the actual crawl operation with progress tracking using service layer."""
     # Acquire semaphore to limit concurrent crawls
@@ -571,12 +600,15 @@ async def _perform_crawl_with_progress(
                     f"Stored current task in active_crawl_tasks | progress_id={progress_id}"
                 )
 
-            # Convert request to dict for service
+            # Convert request to dict for service, applying RBAC constraints
+            max_concurrent = constraints.get("max_concurrent", 3) if constraints else 3
+
             request_dict = {
                 "url": str(request.url),
                 "knowledge_type": request.knowledge_type,
                 "tags": request.tags or [],
                 "max_depth": request.max_depth,
+                "max_concurrent": max_concurrent,
                 "extract_code_examples": request.extract_code_examples,
                 "generate_summary": True,
             }

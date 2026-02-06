@@ -66,3 +66,41 @@ async def update_system_prompt(prompt_name: str, request: dict[str, Any]) -> dic
     await prompt_service.reload_prompts()
 
     return dict(response.data[0])
+
+@router.get("/settings", dependencies=[Depends(require_system_admin)])
+async def list_system_settings(category: str | None = None) -> list[dict[str, Any]]:
+    """
+    Lists system settings from the database.
+    """
+    from ..utils import get_supabase_client
+    supabase = get_supabase_client()
+    query = supabase.table("archon_settings").select("*")
+    if category:
+        query = query.eq("category", category)
+    response = query.order("key").execute()
+    return response.data or []
+
+@router.patch("/settings/{key}", dependencies=[Depends(require_system_admin)])
+async def update_system_setting(key: str, request: dict[str, Any]) -> dict[str, Any]:
+    """
+    Updates a specific system setting.
+    """
+    from ..utils import get_supabase_client
+
+    value = request.get("value")
+    description = request.get("description")
+
+    if value is None:
+        raise HTTPException(status_code=400, detail="Setting value is required")
+
+    supabase = get_supabase_client()
+    update_data = {"value": str(value), "updated_at": "now()"}
+    if description:
+        update_data["description"] = description
+
+    response = supabase.table("archon_settings").update(update_data).eq("key", key).execute()
+
+    if not response.data:
+        raise HTTPException(status_code=404, detail=f"Setting '{key}' not found")
+
+    return dict(response.data[0])
