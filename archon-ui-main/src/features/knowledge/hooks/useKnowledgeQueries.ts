@@ -4,10 +4,11 @@
  */
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useSmartPolling } from "@/features/shared/hooks";
 import { useToast } from "@/features/shared/hooks/useToast";
 import { createOptimisticEntity, createOptimisticId } from "@/features/shared/utils/optimistic";
+import { useKnowledgeOptimistic } from "../context";
 import { useActiveOperations } from "../../progress/hooks";
 import { progressKeys } from "../../progress/hooks/useProgressQueries";
 import type { ActiveOperation, ActiveOperationsResponse } from "../../progress/types";
@@ -100,47 +101,24 @@ export function useCodeExamples(sourceId: string | null) {
 export function useCrawlUrl() {
   const queryClient = useQueryClient();
   const { showToast } = useToast();
+  const { addOptimisticCreate, removeOptimisticCreate } = useKnowledgeOptimistic();
 
   return useMutation<
     CrawlStartResponse,
     Error,
     CrawlRequest,
     {
-      previousKnowledge?: KnowledgeItem[];
-      previousSummaries?: Array<[readonly unknown[], KnowledgeItemsResponse | undefined]>;
       previousOperations?: ActiveOperationsResponse;
       tempProgressId: string;
-      tempItemId: string;
+      optimisticItem: KnowledgeItem;
     }
   >({
     mutationFn: (request: CrawlRequest) => knowledgeService.crawlUrl(request),
     onMutate: async (request) => {
       // Cancel any outgoing refetches to prevent race conditions
-      await queryClient.cancelQueries({ queryKey: knowledgeKeys.summariesPrefix() });
       await queryClient.cancelQueries({ queryKey: progressKeys.active() });
 
-      // TODO: Fix invisible optimistic updates
-      // ISSUE: Optimistic updates are applied to knowledgeKeys.summaries(filter) queries,
-      // but the UI component (KnowledgeView) queries with dynamic filters that we don't have access to here.
-      // This means optimistic updates only work if the filter happens to match what's being viewed.
-      //
-      // CURRENT BEHAVIOR:
-      // - We update all cached summaries queries (lines 158-179 below)
-      // - BUT if the user changes filters after mutation starts, they won't see the optimistic update
-      // - AND we have no way to know what filter the user is currently viewing
-      //
-      // PROPER FIX requires one of:
-      // 1. Pass current filter from KnowledgeView to mutation hooks (prop drilling)
-      // 2. Create KnowledgeFilterContext to share filter state
-      // 3. Restructure to have a single source of truth query key like other features
-      //
-      // IMPACT: Users don't see immediate feedback when adding knowledge items - items only
-      // appear after the server responds (usually 1-3 seconds later)
-
       // Snapshot the previous values for rollback
-      const previousSummaries = queryClient.getQueriesData<KnowledgeItemsResponse>({
-        queryKey: knowledgeKeys.summariesPrefix(),
-      });
       const previousOperations = queryClient.getQueryData<ActiveOperationsResponse>(progressKeys.active());
 
       // Generate temporary progress ID and optimistic entity
@@ -171,31 +149,8 @@ export function useCrawlUrl() {
         updated_at: new Date().toISOString(),
       } as Omit<KnowledgeItem, "id">);
 
-      // Update all summaries caches with optimistic data, respecting each cache's filter
-      const entries = queryClient.getQueriesData<KnowledgeItemsResponse>({
-        queryKey: knowledgeKeys.summariesPrefix(),
-      });
-      for (const [qk, old] of entries) {
-        const filter = qk[qk.length - 1] as KnowledgeItemsFilter | undefined;
-        const matchesType = !filter?.knowledge_type || optimisticItem.knowledge_type === filter.knowledge_type;
-        const matchesTags =
-          !filter?.tags || filter.tags.every((t) => (optimisticItem.metadata?.tags ?? []).includes(t));
-        if (!(matchesType && matchesTags)) continue;
-        if (!old) {
-          queryClient.setQueryData<KnowledgeItemsResponse>(qk, {
-            items: [optimisticItem],
-            total: 1,
-            page: 1,
-            per_page: 100,
-          });
-        } else {
-          queryClient.setQueryData<KnowledgeItemsResponse>(qk, {
-            ...old,
-            items: [optimisticItem, ...old.items],
-            total: (old.total ?? old.items.length) + 1,
-          });
-        }
-      }
+      // Add to global optimistic context (fixes invisible updates issue)
+      addOptimisticCreate(optimisticItem);
 
       // Create optimistic progress operation
       const optimisticOperation: ActiveOperation = {
@@ -228,28 +183,11 @@ export function useCrawlUrl() {
       });
 
       // Return context for rollback and replacement
-      return { previousSummaries, previousOperations, tempProgressId, tempItemId: tempProgressId };
+      return { previousOperations, tempProgressId, optimisticItem };
     },
-    onSuccess: (response, _variables, context) => {
+    onSuccess: async (response, _variables, context) => {
       // Replace temporary IDs with real ones from the server
       if (context) {
-        // Update summaries cache with real progress ID
-        queryClient.setQueriesData<KnowledgeItemsResponse>({ queryKey: knowledgeKeys.summariesPrefix() }, (old) => {
-          if (!old) return old;
-          return {
-            ...old,
-            items: old.items.map((item) => {
-              if (item.source_id === context.tempProgressId) {
-                return {
-                  ...item,
-                  source_id: response.progressId,
-                };
-              }
-              return item;
-            }),
-          };
-        });
-
         // Update progress operation with real progress ID
         queryClient.setQueryData<ActiveOperationsResponse>(progressKeys.active(), (old) => {
           if (!old) return old;
@@ -269,23 +207,28 @@ export function useCrawlUrl() {
             }),
           };
         });
+
+        // Update the optimistic item in context to use real ID
+        // This ensures deduplication works when server returns the item
+        removeOptimisticCreate(context.tempProgressId);
+        addOptimisticCreate({
+          ...context.optimisticItem,
+          source_id: response.progressId,
+        });
       }
 
       // Invalidate to get fresh data
-      queryClient.invalidateQueries({ queryKey: progressKeys.active() });
+      await queryClient.invalidateQueries({ queryKey: progressKeys.active() });
+      await queryClient.invalidateQueries({ queryKey: knowledgeKeys.summariesPrefix() });
 
       showToast(`Crawl started: ${response.message}`, "success");
 
-      // Return the response so caller can access progressId
       return response;
     },
     onError: (error, _variables, context) => {
       // Rollback optimistic updates on error
-      if (context?.previousSummaries) {
-        // Rollback all summary queries
-        for (const [queryKey, data] of context.previousSummaries) {
-          queryClient.setQueryData(queryKey, data);
-        }
+      if (context) {
+        removeOptimisticCreate(context.tempProgressId);
       }
       if (context?.previousOperations) {
         queryClient.setQueryData(progressKeys.active(), context.previousOperations);
@@ -303,28 +246,25 @@ export function useCrawlUrl() {
 export function useUploadDocument() {
   const queryClient = useQueryClient();
   const { showToast } = useToast();
+  const { addOptimisticCreate, removeOptimisticCreate } = useKnowledgeOptimistic();
 
   return useMutation<
     { progressId: string; message: string },
     Error,
     { file: File; metadata: UploadMetadata },
     {
-      previousSummaries?: Array<[readonly unknown[], KnowledgeItemsResponse | undefined]>;
       previousOperations?: ActiveOperationsResponse;
       tempProgressId: string;
+      optimisticItem: KnowledgeItem;
     }
   >({
     mutationFn: ({ file, metadata }: { file: File; metadata: UploadMetadata }) =>
       knowledgeService.uploadDocument(file, metadata),
     onMutate: async ({ file, metadata }) => {
       // Cancel any outgoing refetches to prevent race conditions
-      await queryClient.cancelQueries({ queryKey: knowledgeKeys.summariesPrefix() });
       await queryClient.cancelQueries({ queryKey: progressKeys.active() });
 
       // Snapshot the previous values for rollback
-      const previousSummaries = queryClient.getQueriesData<KnowledgeItemsResponse>({
-        queryKey: knowledgeKeys.summariesPrefix(),
-      });
       const previousOperations = queryClient.getQueryData<ActiveOperationsResponse>(progressKeys.active());
 
       const tempProgressId = createOptimisticId();
@@ -351,31 +291,8 @@ export function useUploadDocument() {
         updated_at: new Date().toISOString(),
       } as Omit<KnowledgeItem, "id">);
 
-      // Respect each cache's filter (knowledge_type, tags, etc.)
-      const entries = queryClient.getQueriesData<KnowledgeItemsResponse>({
-        queryKey: knowledgeKeys.summariesPrefix(),
-      });
-      for (const [qk, old] of entries) {
-        const filter = qk[qk.length - 1] as KnowledgeItemsFilter | undefined;
-        const matchesType = !filter?.knowledge_type || optimisticItem.knowledge_type === filter.knowledge_type;
-        const matchesTags =
-          !filter?.tags || filter.tags.every((t) => (optimisticItem.metadata?.tags ?? []).includes(t));
-        if (!(matchesType && matchesTags)) continue;
-        if (!old) {
-          queryClient.setQueryData<KnowledgeItemsResponse>(qk, {
-            items: [optimisticItem],
-            total: 1,
-            page: 1,
-            per_page: 100,
-          });
-        } else {
-          queryClient.setQueryData<KnowledgeItemsResponse>(qk, {
-            ...old,
-            items: [optimisticItem, ...old.items],
-            total: (old.total ?? old.items.length) + 1,
-          });
-        }
-      }
+      // Add to global optimistic context
+      addOptimisticCreate(optimisticItem);
 
       // Create optimistic progress operation for upload
       const optimisticOperation: ActiveOperation = {
@@ -407,28 +324,11 @@ export function useUploadDocument() {
         };
       });
 
-      return { previousSummaries, previousOperations, tempProgressId, tempItemId: tempProgressId };
+      return { previousOperations, tempProgressId, optimisticItem };
     },
-    onSuccess: (response, _variables, context) => {
+    onSuccess: async (response, _variables, context) => {
       // Replace temporary IDs with real ones from the server
       if (context && response?.progressId) {
-        // Update summaries cache with real progress ID
-        queryClient.setQueriesData<KnowledgeItemsResponse>({ queryKey: knowledgeKeys.summariesPrefix() }, (old) => {
-          if (!old) return old;
-          return {
-            ...old,
-            items: old.items.map((item) => {
-              if (item.source_id === context.tempProgressId) {
-                return {
-                  ...item,
-                  source_id: response.progressId,
-                };
-              }
-              return item;
-            }),
-          };
-        });
-
         // Update progress operation with real progress ID
         queryClient.setQueryData<ActiveOperationsResponse>(progressKeys.active(), (old) => {
           if (!old) return old;
@@ -448,21 +348,23 @@ export function useUploadDocument() {
             }),
           };
         });
+
+        // Update the optimistic item in context to use real ID
+        removeOptimisticCreate(context.tempProgressId);
+        addOptimisticCreate({
+          ...context.optimisticItem,
+          source_id: response.progressId,
+        });
       }
 
       // Only invalidate progress to start tracking the new operation
-      // The lists/summaries will refresh automatically via polling when operations are active
-      queryClient.invalidateQueries({ queryKey: progressKeys.active() });
-
-      // Don't show success here - upload is just starting in background
-      // Success/failure will be shown via progress polling
+      await queryClient.invalidateQueries({ queryKey: progressKeys.active() });
+      await queryClient.invalidateQueries({ queryKey: knowledgeKeys.summariesPrefix() });
     },
     onError: (error, _variables, context) => {
       // Rollback optimistic updates on error
-      if (context?.previousSummaries) {
-        for (const [queryKey, data] of context.previousSummaries) {
-          queryClient.setQueryData(queryKey, data);
-        }
+      if (context) {
+        removeOptimisticCreate(context.tempProgressId);
       }
       if (context?.previousOperations) {
         queryClient.setQueryData(progressKeys.active(), context.previousOperations);
@@ -510,49 +412,30 @@ export function useStopCrawl() {
 export function useDeleteKnowledgeItem() {
   const queryClient = useQueryClient();
   const { showToast } = useToast();
+  const { addOptimisticDelete, removeOptimisticDelete } = useKnowledgeOptimistic();
 
   return useMutation({
     mutationFn: (sourceId: string) => knowledgeService.deleteKnowledgeItem(sourceId),
     onMutate: async (sourceId) => {
-      // Cancel summary queries (all filters)
-      await queryClient.cancelQueries({ queryKey: knowledgeKeys.summariesPrefix() });
-
-      // Snapshot all summary caches (for all filters)
-      const summariesPrefix = knowledgeKeys.summariesPrefix();
-      const previousEntries = queryClient.getQueriesData<KnowledgeItemsResponse>({
-        queryKey: summariesPrefix,
-      });
-
-      // Optimistically remove the item from each cached summary
-      for (const [queryKey, data] of previousEntries) {
-        if (!data) continue;
-        const nextItems = data.items.filter((item) => item.source_id !== sourceId);
-        const removed = data.items.length - nextItems.length;
-        queryClient.setQueryData<KnowledgeItemsResponse>(queryKey, {
-          ...data,
-          items: nextItems,
-          total: Math.max(0, (data.total ?? data.items.length) - removed),
-        });
-      }
-
-      return { previousEntries };
+      // Add to global optimistic context
+      addOptimisticDelete(sourceId);
+      return { sourceId };
     },
-    onError: (error, _sourceId, context) => {
-      // Roll back all summaries
-      for (const [queryKey, data] of context?.previousEntries ?? []) {
-        queryClient.setQueryData(queryKey, data);
-      }
+    onError: (error, sourceId) => {
+      // Roll back
+      removeOptimisticDelete(sourceId);
 
       const errorMessage = error instanceof Error ? error.message : "Failed to delete item";
       showToast(errorMessage, "error");
     },
-    onSuccess: (data) => {
+    onSuccess: async (data, _sourceId) => {
       showToast(data.message || "Item deleted successfully", "success");
 
       // Invalidate summaries to reconcile with server
-      queryClient.invalidateQueries({ queryKey: knowledgeKeys.summariesPrefix() });
-      // Also invalidate detail views
-      queryClient.invalidateQueries({ queryKey: knowledgeKeys.all });
+      await queryClient.invalidateQueries({ queryKey: knowledgeKeys.summariesPrefix() });
+      await queryClient.invalidateQueries({ queryKey: knowledgeKeys.all });
+
+      // Cleanup is handled by useKnowledgeSummaries when it detects item is gone
     },
   });
 }
@@ -563,122 +446,84 @@ export function useDeleteKnowledgeItem() {
 export function useUpdateKnowledgeItem() {
   const queryClient = useQueryClient();
   const { showToast } = useToast();
+  const { addOptimisticUpdate, removeOptimisticUpdate } = useKnowledgeOptimistic();
 
   return useMutation({
     mutationFn: ({ sourceId, updates }: { sourceId: string; updates: Partial<KnowledgeItem> & { tags?: string[] } }) =>
       knowledgeService.updateKnowledgeItem(sourceId, updates),
     onMutate: async ({ sourceId, updates }) => {
-      // Cancel any outgoing refetches
-      await queryClient.cancelQueries({ queryKey: knowledgeKeys.detail(sourceId) });
-      await queryClient.cancelQueries({ queryKey: knowledgeKeys.summariesPrefix() });
+      // Add to global optimistic context
+      const updateData: Partial<KnowledgeItem> = {};
 
-      // Snapshot the previous values
-      const previousItem = queryClient.getQueryData<KnowledgeItem>(knowledgeKeys.detail(sourceId));
-      const previousSummaries = queryClient.getQueriesData({ queryKey: knowledgeKeys.summariesPrefix() });
+      // Map updates to KnowledgeItem structure
+      if ("title" in updates && typeof updates.title === "string") updateData.title = updates.title;
+      if ("knowledge_type" in updates && typeof updates.knowledge_type === "string") updateData.knowledge_type = updates.knowledge_type as "technical" | "business";
+
+      // Handle tags updates by constructing metadata
+      if ("tags" in updates && Array.isArray(updates.tags)) {
+        // Try to find current metadata to preserve other fields
+        let currentMetadata: any = {};
+
+        // Check detail cache
+        const detailItem = queryClient.getQueryData<KnowledgeItem>(knowledgeKeys.detail(sourceId));
+        if (detailItem?.metadata) {
+           currentMetadata = detailItem.metadata;
+        } else {
+           // Check summaries cache
+           const summaries = queryClient.getQueriesData<KnowledgeItemsResponse>({ queryKey: knowledgeKeys.summariesPrefix() });
+           for (const [_, data] of summaries) {
+             const found = data?.items.find((i) => i.source_id === sourceId);
+             if (found?.metadata) {
+               currentMetadata = found.metadata;
+               break;
+             }
+           }
+        }
+
+        updateData.metadata = {
+          ...currentMetadata,
+          tags: updates.tags,
+        };
+      }
+
+      addOptimisticUpdate(sourceId, updateData);
 
       // Optimistically update the detail item
+      await queryClient.cancelQueries({ queryKey: knowledgeKeys.detail(sourceId) });
+      const previousItem = queryClient.getQueryData<KnowledgeItem>(knowledgeKeys.detail(sourceId));
+
       if (previousItem) {
-        const updatedItem = { ...previousItem };
-
-        // Initialize metadata if missing
-        const currentMetadata = updatedItem.metadata || {};
-
-        // Handle title updates
-        if ("title" in updates && typeof updates.title === "string") {
-          updatedItem.title = updates.title;
+        const updatedItem = { ...previousItem, ...updateData };
+        // Ensure metadata is merged correctly if updateData has it
+        if (updateData.metadata) {
+          updatedItem.metadata = updateData.metadata; // We constructed full metadata in updateData
         }
-
-        // Handle tags updates - update in metadata only
-        if ("tags" in updates && Array.isArray(updates.tags)) {
-          const newTags = updates.tags as string[];
-          updatedItem.metadata = {
-            ...currentMetadata,
-            tags: newTags,
-          };
-        }
-
-        // Handle knowledge_type updates
-        if ("knowledge_type" in updates && typeof updates.knowledge_type === "string") {
-          const newType = updates.knowledge_type as "technical" | "business";
-          updatedItem.knowledge_type = newType;
-          // Also update in metadata for consistency
-          updatedItem.metadata = {
-            ...updatedItem.metadata,
-            knowledge_type: newType,
-          };
-        }
-
         queryClient.setQueryData<KnowledgeItem>(knowledgeKeys.detail(sourceId), updatedItem);
       }
 
-      // Optimistically update summaries cache
-      queryClient.setQueriesData<KnowledgeItemsResponse>({ queryKey: knowledgeKeys.summariesPrefix() }, (old) => {
-        if (!old?.items) return old;
-
-        return {
-          ...old,
-          items: old.items.map((item) => {
-            if (item.source_id === sourceId) {
-              const updatedItem = { ...item };
-
-              // Initialize metadata if missing
-              const currentMetadata = updatedItem.metadata || {};
-
-              // Update title if provided
-              if ("title" in updates && typeof updates.title === "string") {
-                updatedItem.title = updates.title;
-              }
-
-              // Update tags if provided - update in metadata only
-              if ("tags" in updates && Array.isArray(updates.tags)) {
-                const newTags = updates.tags as string[];
-                updatedItem.metadata = {
-                  ...currentMetadata,
-                  tags: newTags,
-                };
-              }
-
-              // Update knowledge_type if provided
-              if ("knowledge_type" in updates && typeof updates.knowledge_type === "string") {
-                const newType = updates.knowledge_type as "technical" | "business";
-                updatedItem.knowledge_type = newType;
-                // Also update in metadata for consistency
-                updatedItem.metadata = {
-                  ...updatedItem.metadata,
-                  knowledge_type: newType,
-                };
-              }
-
-              return updatedItem;
-            }
-            return item;
-          }),
-        };
-      });
-
-      return { previousItem, previousSummaries };
+      return { sourceId, previousItem };
     },
     onError: (error, variables, context) => {
-      // Rollback on error
+      // Rollback context
+      removeOptimisticUpdate(variables.sourceId);
+
+      // Rollback detail
       if (context?.previousItem) {
         queryClient.setQueryData(knowledgeKeys.detail(variables.sourceId), context.previousItem);
-      }
-      if (context?.previousSummaries) {
-        // Rollback all summary queries
-        for (const [queryKey, data] of context.previousSummaries) {
-          queryClient.setQueryData(queryKey, data);
-        }
       }
 
       const errorMessage = error instanceof Error ? error.message : "Failed to update item";
       showToast(errorMessage, "error");
     },
-    onSuccess: (_data, { sourceId }) => {
+    onSuccess: async (_data, { sourceId }) => {
       showToast("Item updated successfully", "success");
 
       // Invalidate all related queries
-      queryClient.invalidateQueries({ queryKey: knowledgeKeys.detail(sourceId) });
-      queryClient.invalidateQueries({ queryKey: knowledgeKeys.summariesPrefix() });
+      await queryClient.invalidateQueries({ queryKey: knowledgeKeys.detail(sourceId) });
+      await queryClient.invalidateQueries({ queryKey: knowledgeKeys.summariesPrefix() });
+
+      // Cleanup
+      removeOptimisticUpdate(sourceId);
     },
   });
 }
@@ -719,6 +564,15 @@ export function useKnowledgeSummaries(filter?: KnowledgeItemsFilter) {
   // Track active crawl IDs locally - only set when we start a crawl/refresh
   const [activeCrawlIds, setActiveCrawlIds] = useState<string[]>([]);
 
+  // Consume optimistic context
+  const {
+    optimisticCreates,
+    optimisticUpdates,
+    optimisticDeletes,
+    removeOptimisticCreate,
+    removeOptimisticDelete
+  } = useKnowledgeOptimistic();
+
   // ALWAYS poll for active operations to catch pre-existing ones
   // This ensures we discover operations that were started before page load
   const { data: activeOperationsData } = useActiveOperations(true);
@@ -750,12 +604,106 @@ export function useKnowledgeSummaries(filter?: KnowledgeItemsFilter) {
     staleTime: STALE_TIMES.normal, // Consider data stale after 30 seconds
   });
 
+  // Cleanup optimistic creates that are now in the server response
+  useEffect(() => {
+    if (!summaryQuery.data?.items) return;
+
+    // Find optimistic creates that match server items by ID
+    const serverIds = new Set(summaryQuery.data.items.map(i => i.source_id));
+
+    optimisticCreates.forEach(item => {
+      if (serverIds.has(item.source_id)) {
+        removeOptimisticCreate(item.source_id);
+      }
+    });
+
+    // Also cleanup optimistic deletes if they are gone from server
+    optimisticDeletes.forEach(id => {
+      if (!serverIds.has(id)) {
+        removeOptimisticDelete(id);
+      }
+    });
+
+  }, [summaryQuery.data, optimisticCreates, optimisticDeletes, removeOptimisticCreate, removeOptimisticDelete]);
+
+  // Merge optimistic data with server data
+  const mergedData = useMemo(() => {
+    const serverItems = summaryQuery.data?.items || [];
+    const serverTotal = summaryQuery.data?.total || 0;
+
+    // 1. Filter optimistic creates based on current filter
+    const visibleOptimisticCreates = optimisticCreates.filter(item => {
+      // Filter by knowledge_type
+      if (filter?.knowledge_type && item.knowledge_type !== filter.knowledge_type) return false;
+
+      // Filter by tags
+      if (filter?.tags && filter.tags.length > 0) {
+         const itemTags = item.metadata?.tags || [];
+         if (!filter.tags.every(tag => itemTags.includes(tag))) return false;
+      }
+
+      // Filter by source_type
+      if (filter?.source_type && item.source_type !== filter.source_type) return false;
+
+      // Filter by search query
+      if (filter?.search) {
+        const searchLower = filter.search.toLowerCase();
+        const titleMatch = item.title.toLowerCase().includes(searchLower);
+        const urlMatch = item.url.toLowerCase().includes(searchLower);
+        if (!titleMatch && !urlMatch) return false;
+      }
+
+      // Exclude if pending deletion
+      if (optimisticDeletes.has(item.source_id)) return false;
+
+      // Deduplicate: If server already has it (should be handled by useEffect, but for render safety)
+      if (serverItems.some(si => si.source_id === item.source_id)) return false;
+
+      return true;
+    });
+
+    // 2. Filter deletes from server items
+    let processedServerItems = serverItems.filter(item => !optimisticDeletes.has(item.source_id));
+
+    // 3. Apply updates to server items
+    processedServerItems = processedServerItems.map(item => {
+      if (optimisticUpdates[item.source_id]) {
+        return { ...item, ...optimisticUpdates[item.source_id] };
+      }
+      return item;
+    });
+
+    // 4. Apply updates to optimistic creates
+    const processedOptimisticCreates = visibleOptimisticCreates.map(item => {
+       if (optimisticUpdates[item.source_id]) {
+         return { ...item, ...optimisticUpdates[item.source_id] };
+       }
+       return item;
+    });
+
+    // 5. Combine: Optimistic creates first
+    // Only show optimistic creates if we are on page 1 (or no page specified)
+    const showOptimistic = !filter?.page || filter.page === 1;
+
+    const finalItems = showOptimistic
+      ? [...processedOptimisticCreates, ...processedServerItems]
+      : processedServerItems;
+
+    return {
+      ...(summaryQuery.data || { page: 1, per_page: 100, total: 0 }),
+      items: finalItems,
+      total: serverTotal + (showOptimistic ? processedOptimisticCreates.length : 0)
+    } as KnowledgeItemsResponse;
+
+  }, [summaryQuery.data, optimisticCreates, optimisticUpdates, optimisticDeletes, filter]);
+
   // When operations complete, remove them from tracking
   // Trust smart polling to handle eventual consistency - no manual invalidation needed
   // Active operations are already tracked and polling handles updates when operations complete
 
   return {
     ...summaryQuery,
+    data: mergedData, // Use the merged data
     activeCrawlIds,
     setActiveCrawlIds, // Export this so components can add IDs when starting operations
     activeOperations,
