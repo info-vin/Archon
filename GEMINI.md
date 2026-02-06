@@ -88,6 +88,18 @@
 
 # 第三章：近期工作日誌 (Recent Journal Entries)
 
+### 2026-02-06: Admin Persona Realization & RBAC Hardening
+*   **核心功能落地**:
+    *   **後端**: 修復 `TokenUsageService` 聚合邏輯，於 `stats_api.py` 實作 Hybrid 統計 (USD 成本 + Token 估算)。
+    *   **權限**: 實作 `AdminService` 的 Auth Metadata 自動同步；`marketing_api` 全面改讀資料庫驅動之 Prompt。
+    *   **版控**: 實體化 `LibrarianService` 寫入 `archon_document_versions` 審計路徑。
+*   **UI/UX 統一**:
+    *   **儀表板**: 強化 `ManagerDashboard.tsx`，Admin 登入時自動注入系統健康診斷列。
+    *   **權限矩陣**: `IdentityMatrix.tsx` 新增權限清單展開功能與 Metadata 同步按鈕。
+*   **穩定性與規範**:
+    *   **Lint/Type**: 修正 `BlogPost` 狀態型別與 Icon 引用錯誤；於 `CONTRIBUTING_tw.md` 確立 React Hook 對象依賴項禁令。
+*   **路徑演進**: 更新 `Phase_4.6.5` 議題清單，納入爬蟲設定 RBAC 化與 Files API 遷移。
+
 ### 2026-02-05: Auth Stability & Nexus UI Optimization
 *   **權限與導覽穩定化 (Root Cause Fix)**:
     *   **後端**: 修正 `AuthService.py`，建立使用者時同步將 `role` 寫入 `user_metadata`。確保 `make db-init` 產出的 Token 自帶角色資訊。
