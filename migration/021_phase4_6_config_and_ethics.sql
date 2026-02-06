@@ -26,7 +26,7 @@ CREATE POLICY "Allow service role to insert ethics logs" ON archon_ethics_events
 
 -- 2. Insert Model Configurations (Google Defaults)
 INSERT INTO archon_settings (key, value, is_encrypted, category, description) VALUES
-('AUDIO_MODEL', 'gemini-1.5-flash', false, 'rag_strategy', 'Model used for voice-to-text transcription'),
+('AUDIO_MODEL', 'gemini-2.5-flash', false, 'rag_strategy', 'Model used for voice-to-text transcription'),
 ('MARKETING_MODEL', 'gemini-1.5-flash', false, 'rag_strategy', 'Model used for generating marketing content (blogs, emails)'),
 ('NANA_BANANA_MODEL', 'imagen-3', false, 'rag_strategy', 'Model used for image generation services'),
 ('ENABLE_REAL_ENRICHMENT', 'false', false, 'features', 'Toggle to enable real external API calls for lead enrichment')

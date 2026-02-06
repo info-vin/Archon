@@ -43,6 +43,7 @@
 | **GAP-011** | 🔧 Gap | **Alice** | **Prune** | 自動歸檔邏輯待驗收。已實作 `prune_archived_tasks` 服務方法。 | Low | ⚪ 待討論 |
 | **GAP-017** | 🔧 Gap | **Alice** | **Crawler**| **爬蟲參數配置化**。需整合 RBAC 設定爬蟲深度與過濾器。 | Low | ⚪ 待討論 |
 | **GAP-018** | 🔧 Gap | **Charlie** | **Extractor**| **智慧結構化提取流程**。實作 DevBot 分析結構 -> Charlie 勾選欄位 -> Librarian 執行提取的 No-Code 流程。 | Medium | ⚪ 待討論 |
+| **GAP-019** | 🔧 Gap | **Alice** | **Mobile/UI**| **行動端語音日誌 UI 優化**。目前介面偏向桌面端，需實作符合手機操作的「錄音 -> 暫存 -> 一鍵提交」閉環流程。 | Medium | ⚪ 待討論 |
 | **ALERT-01**| 🔧 Gap | **Charlie** | **Sentin** | 警示資料準確性待驗收。 | Low | ⚪ 待討論 |
 | **UX-014** | 🎨 Style | **All** | **UI/Nav** | **導航 Icon 配色化**。依職能模組 (Sales/Mkt/Admin) 區分 Icon 顏色。 | Medium | ⚪ 待討論 |
 | **TECH-001**| 🏗️ Debt | **Tech** | **RAG** | `RAGSettings.tsx` 重構拆分。 | Medium | ⚪ 待討論 |
