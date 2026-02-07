@@ -7,6 +7,7 @@ Follows 2025 best practices for simple, automatic instrumentation.
 
 import time
 from collections.abc import Callable
+from typing import Any, cast
 
 from fastapi import Request, Response
 from fastapi.routing import APIRoute
@@ -44,6 +45,7 @@ class LoggingMiddleware(BaseHTTPMiddleware):
         try:
             # Process the request
             response = await call_next(request)
+            response = cast(Response, response)
 
             # Calculate duration
             duration = time.time() - start_time
@@ -105,7 +107,7 @@ class LoggingRoute(APIRoute):
             start_time = time.time()
 
             # Get endpoint info
-            endpoint_name = self.endpoint.__name__ if self.endpoint else "unknown"
+            endpoint_name = self.endpoint.__name__ if self.endpoint is not None else "unknown"
 
             try:
                 response = await original_route_handler(request)

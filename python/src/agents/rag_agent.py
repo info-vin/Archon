@@ -68,10 +68,10 @@ class RagAgent(BaseAgent[RagDependencies, str]):
             model=model, name="RagAgent", retries=3, enable_rate_limiting=True, **kwargs
         )
 
-    def _create_agent(self, **kwargs) -> Agent:
+    def _create_agent(self, **kwargs) -> Agent[RagDependencies, str]:
         """Create the PydanticAI agent with tools and prompts."""
 
-        agent = Agent(
+        agent: Agent[RagDependencies, str] = Agent(
             model=self.model,
             deps_type=RagDependencies,
             system_prompt="""You are a RAG (Retrieval-Augmented Generation) Assistant that helps users search and understand documentation through conversation.

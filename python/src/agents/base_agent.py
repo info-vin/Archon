@@ -171,13 +171,13 @@ class BaseAgent[DepsT, OutputT](ABC):
             self.rate_limiter = None
 
         # Initialize the PydanticAI agent
-        self._agent = self._create_agent(**agent_kwargs)
+        self._agent: Agent[DepsT, OutputT] = self._create_agent(**agent_kwargs)
 
         # Setup logging
         self.logger = logging.getLogger(f"agents.{self.name}")
 
     @abstractmethod
-    def _create_agent(self, **kwargs) -> Agent:
+    def _create_agent(self, **kwargs) -> Agent[DepsT, OutputT]:
         """Create and configure the PydanticAI agent. Must be implemented by subclasses."""
         pass
 
@@ -216,7 +216,7 @@ class BaseAgent[DepsT, OutputT](ABC):
             )
             self.logger.info(f"Agent {self.name} completed successfully")
             # PydanticAI returns a RunResult with data attribute
-            return cast(OutputT, result.data)
+            return result.data
         except TimeoutError as e:
             self.logger.error(f"Agent {self.name} timed out after 120 seconds")
             raise Exception(f"Agent {self.name} operation timed out - taking too long to respond") from e
@@ -261,6 +261,6 @@ class BaseAgent[DepsT, OutputT](ABC):
         return self._agent.system_prompt(func)
 
     @property
-    def agent(self) -> Agent:
+    def agent(self) -> Agent[DepsT, OutputT]:
         """Get the underlying PydanticAI agent instance."""
         return self._agent

@@ -71,10 +71,10 @@ class DocumentAgent(BaseAgent[DocumentDependencies, DocumentOperation]):
         )
         self.supabase_client = supabase_client
 
-    def _create_agent(self, **kwargs) -> Agent:
+    def _create_agent(self, **kwargs) -> Agent[DocumentDependencies, DocumentOperation]:
         """Create the PydanticAI agent with tools and prompts."""
 
-        agent = Agent(
+        agent: Agent[DocumentDependencies, DocumentOperation] = Agent(
             model=self.model,
             deps_type=DocumentDependencies,
             result_type=DocumentOperation,

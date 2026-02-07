@@ -150,7 +150,7 @@ class ProviderDiscoveryService:
             response = await client.chat.completions.create(
                 model=model_name,
                 messages=[{"role": "user", "content": "Call the test function with parameter 'hello'"}],
-                tools=[{"type": "function", "function": test_function}],
+                tools=cast(Any, [{"type": "function", "function": test_function}]),
                 max_tokens=50,
                 timeout=5  # Short timeout for quick testing
             )

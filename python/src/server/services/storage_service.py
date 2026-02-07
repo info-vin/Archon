@@ -31,7 +31,8 @@ class StorageService:
         supabase = self._get_client()
         try:
             content = await file.read()
-            content_type, _ = mimetypes.guess_type(file.filename)
+            filename = file.filename or "unknown"
+            content_type, _ = mimetypes.guess_type(filename)
             if content_type is None:
                 content_type = "application/octet-stream"
 

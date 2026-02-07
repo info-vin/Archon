@@ -34,7 +34,7 @@ const AdminPage: React.FC = () => {
           <TabButton title="Data Extraction" isActive={activeTab === 'extraction'} onClick={() => setActiveTab('extraction')} />
           {!isOnlyManager && <TabButton title="System Prompts" isActive={activeTab === 'prompts'} onClick={() => setActiveTab('prompts')} />}
           {!isOnlyManager && <TabButton title="Blog Management" isActive={activeTab === 'blog'} onClick={() => setActiveTab('blog')} />}
-          <TabButton title="Document Versions" isActive={activeTab === 'versions'} onClick={() => setActiveTab('versions')} />
+          {!isOnlyManager && <TabButton title="Document Versions" isActive={activeTab === 'versions'} onClick={() => setActiveTab('versions')} />}
         </nav>
       </div>
 
@@ -45,7 +45,7 @@ const AdminPage: React.FC = () => {
         {activeTab === 'extraction' && <ExtractionManager />}
         {activeTab === 'prompts' && !isOnlyManager && <PromptManagement />}
         {activeTab === 'blog' && !isOnlyManager && <BlogManagement />}
-        {activeTab === 'versions' && <DocumentVersionsLog />}
+        {activeTab === 'versions' && !isOnlyManager && <DocumentVersionsLog />}
       </div>
     </div>
   );

@@ -234,5 +234,7 @@ def create_default_document(
         title=title,
         content=content,
         tags=["default", document_type.value],
-        author=None
+        author=None,
+        created_at=datetime.now(),
+        updated_at=datetime.now()
     )

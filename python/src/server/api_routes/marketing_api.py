@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import uuid
+from typing import Any, cast
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from google import genai
@@ -776,7 +777,17 @@ async def draft_blog_post(request: DraftBlogRequest, current_user: dict = Depend
 
         # Use Database-driven prompt with hardcoded fallback
         system_prompt = prompt_service.get_prompt("BLOG_DRAFT", BLOG_DRAFT_SYSTEM_PROMPT)
-        user_prompt = f"Topic: {request.topic}\nKeywords: {request.keywords}\nTone: {request.tone}\n\n<reference_context>\n{context_text}\n</reference_context>"
+        
+        # 2.1 Language Enforcement Logic
+        # Detect Traditional Chinese characters in the topic
+        import re
+        is_tc = bool(re.search(r'[\u4e00-\u9fff]', request.topic))
+        
+        lang_instruction = ""
+        if is_tc:
+             lang_instruction = "\n\nIMPORTANT: The user has provided a topic in Traditional Chinese. You MUST write the entire blog post in Traditional Chinese (Taiwan, zh-TW)."
+
+        user_prompt = f"Topic: {request.topic}\nKeywords: {request.keywords}\nTone: {request.tone}\n\n<reference_context>\n{context_text}\n</reference_context>{lang_instruction}"
 
         request_id = f"blog-{uuid.uuid4().hex[:8]}"
         user_id = current_user.get("id")
@@ -788,7 +799,7 @@ async def draft_blog_post(request: DraftBlogRequest, current_user: dict = Depend
             # JSON-mode response with Gemini 2.5 Flash Lite
             response = client.models.generate_content(
                 model=model_name,
-                contents=[user_prompt],
+                contents=cast(Any, [user_prompt]),
                 config=types.GenerateContentConfig(
                     system_instruction=system_prompt,
                     response_mime_type="application/json",
@@ -796,7 +807,7 @@ async def draft_blog_post(request: DraftBlogRequest, current_user: dict = Depend
                 )
             )
             import json
-            raw_text = response.text
+            raw_text = response.text or ""
             if not raw_text:
                 raise ValueError("LLM returned empty response text")
             result = json.loads(raw_text)
@@ -832,7 +843,7 @@ async def draft_blog_post(request: DraftBlogRequest, current_user: dict = Depend
 
                 response = client_fallback.models.generate_content(
                     model="gemini-1.5-pro",
-                    contents=[user_prompt],
+                    contents=cast(Any, [user_prompt]),
                     config=types.GenerateContentConfig(
                         system_instruction=system_prompt,
                         response_mime_type="application/json",
@@ -930,7 +941,7 @@ async def nana_banana_proxy(
         # Call the new generate_content model for Image Modality
         response = client.models.generate_content(
             model=imagen_model,
-            contents=[prompt],
+            contents=cast(Any, [prompt]),
             config=types.GenerateContentConfig(
                 response_modalities=['IMAGE'],
             )
@@ -939,7 +950,7 @@ async def nana_banana_proxy(
         b64_image = None
         mime_type = "image/png"
 
-        for part in response.parts:
+        for part in (response.parts or []):
             if part.inline_data:
                 b64_image = part.inline_data.data # Base64 string
                 mime_type = part.inline_data.mime_type or "image/png"

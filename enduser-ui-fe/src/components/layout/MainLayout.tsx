@@ -147,7 +147,7 @@ const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                 </div>
             </nav>
             {isSidebarOpen && <div className="fixed inset-0 bg-black/50 z-40 md:hidden" onClick={() => setIsSidebarOpen(false)}></div>}
-            <main className="flex-1 flex flex-col overflow-y-auto bg-background pb-16 md:pb-0">
+            <main className={`flex-1 flex flex-col ${location.pathname === '/brand' ? 'overflow-hidden' : 'overflow-y-auto'} bg-background pb-16 md:pb-0`}>
                 {/* Mobile Header */}
                 <header className="md:hidden flex items-center justify-between p-4 border-b border-border bg-background/80 backdrop-blur z-30 sticky top-0">
                     <LiveClock />
@@ -159,7 +159,7 @@ const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                     <LiveClock />
                 </header>
                 
-                <div className="flex-1 p-4 md:p-8">
+                <div className={`flex-1 ${location.pathname === '/brand' ? 'p-0 overflow-hidden' : 'p-4 md:p-8'}`}>
                     {children}
                 </div>
             </main>

@@ -191,7 +191,7 @@ export const ContentWorkbench: React.FC<ContentWorkbenchProps> = ({
             ) : (
               <div className="h-full flex flex-col relative">
                 {/* Editor ToolBar */}
-                <div className="px-6 py-3 bg-slate-50/50 dark:bg-slate-800/30 border-b flex items-center gap-3">
+                <div className="px-6 py-3 bg-slate-50/50 dark:bg-slate-800/30 border-b flex items-center gap-3 relative z-30">
                   <button 
                     onClick={() => onDraft(activeSource.title)}
                     disabled={isDrafting}
@@ -211,18 +211,27 @@ export const ContentWorkbench: React.FC<ContentWorkbenchProps> = ({
                   
                   <div className="flex-1" />
                   
-                  {usedPrompt && (
-                    <button 
-                       onClick={() => setShowPrompt(!showPrompt)}
-                       className={`text-[10px] font-black uppercase tracking-tighter px-3 py-1.5 rounded-lg transition-all ${showPrompt ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:bg-slate-100'}`}
-                    >
-                       Prompt Inspector
-                    </button>
-                  )}
+                  <button 
+                     onClick={() => {
+                         if (!usedPrompt) {
+                             alert("No prompt data available yet. Please use Magic Draft to generate content first.");
+                             return;
+                         }
+                         setShowPrompt(!showPrompt);
+                     }}
+                     className={`flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest transition-all hover:scale-105 active:scale-95 ${
+                         showPrompt 
+                           ? 'text-indigo-600' 
+                           : 'text-slate-400 hover:text-indigo-600'
+                     }`}
+                  >
+                     <SparklesIcon className="w-3.5 h-3.5" />
+                     Prompt Inspector
+                  </button>
                 </div>
 
                 {/* Markdown Editor */}
-                <div className="flex-1 p-8 md:p-12 max-w-4xl mx-auto w-full custom-scrollbar overflow-y-auto">
+                <div className="flex-1 p-8 md:p-12 max-w-4xl mx-auto w-full custom-scrollbar overflow-y-auto relative">
                   <input 
                     type="text"
                     placeholder="Article Title..."
@@ -242,12 +251,15 @@ export const ContentWorkbench: React.FC<ContentWorkbenchProps> = ({
           </div>
         </div>
 
-        {/* Right Side: Persistent Prompt Inspector (Sidebar) */}
+        {/* Right Side: Persistent Prompt Inspector (Sidebar Overlay) */}
         {showPrompt && usedPrompt && (
-          <aside className="w-80 border-l dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 backdrop-blur-xl absolute right-0 top-0 bottom-0 z-20 shadow-2xl animate-in slide-in-from-right duration-300 flex flex-col">
-            <div className="p-4 border-b dark:border-slate-800 flex items-center justify-between">
-                <span className="text-[10px] font-black uppercase tracking-widest text-indigo-600">AI Prompt Inspector</span>
-                <button onClick={() => setShowPrompt(false)} className="p-1 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-md">
+          <aside className="w-96 border-l dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl absolute right-0 top-0 bottom-0 z-50 shadow-2xl animate-in slide-in-from-right duration-300 flex flex-col">
+            <div className="p-4 border-b dark:border-slate-800 flex items-center justify-between bg-indigo-50/50 dark:bg-indigo-900/10">
+                <span className="text-[10px] font-black uppercase tracking-widest text-indigo-600 flex items-center gap-2">
+                    <SparklesIcon className="w-3 h-3" />
+                    AI Prompt Inspector
+                </span>
+                <button onClick={() => setShowPrompt(false)} className="p-1 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-full transition-colors">
                     <XIcon className="w-4 h-4 text-slate-400" />
                 </button>
             </div>

@@ -884,9 +884,11 @@ async def add_code_examples_to_supabase(
             idx = i + orig_idx  # Get the global index
 
             # Use source_id from metadata if available, otherwise extract from URL
-            if metadatas[idx] and "source_id" in metadatas[idx]:
+            source_id = None
+            if metadatas[idx] is not None and "source_id" in metadatas[idx]:
                 source_id = metadatas[idx]["source_id"]
-            else:
+
+            if source_id is None:
                 parsed_url = urlparse(urls[idx])
                 source_id = parsed_url.netloc or parsed_url.path
 

@@ -8,7 +8,7 @@ import asyncio
 import inspect
 import os
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, cast
 
 import httpx
 import openai
@@ -233,15 +233,18 @@ async def create_embeddings_batch(
                                                         raise EmbeddingAPIError(f"Google error {resp.status_code}: {resp.text}")
                                         else:
                                             # Standard OpenAI-compatible call
-                                            api_params = {
-                                                "model": embedding_model,
-                                                "input": batch,
-                                            }
-                                            # OpenAI-specific: only add dimensions for compatible models
                                             if provider_name != "google":
-                                                api_params["dimensions"] = embedding_dimensions
+                                                response = await client.embeddings.create(
+                                                    model=cast(str, embedding_model),
+                                                    input=batch,
+                                                    dimensions=embedding_dimensions
+                                                )
+                                            else:
+                                                response = await client.embeddings.create(
+                                                    model=cast(str, embedding_model),
+                                                    input=batch
+                                                )
 
-                                            response = await client.embeddings.create(**api_params)
                                             for item, text_item in zip(response.data, batch, strict=False):
                                                 result.add_success(item.embedding, text_item)
                                         break

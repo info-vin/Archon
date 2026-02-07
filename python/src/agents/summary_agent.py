@@ -47,7 +47,7 @@ class SummaryAgent(BaseAgent[SummaryDependencies, SummaryOperation]):
             model=model, name="SummaryAgent", retries=3, enable_rate_limiting=True, **kwargs
         )
 
-    def _create_agent(self, **kwargs) -> Agent:
+    def _create_agent(self, **kwargs) -> Agent[SummaryDependencies, SummaryOperation]:
         """Create the PydanticAI agent with tools and prompts."""
         agent = Agent(
             model=self.model,

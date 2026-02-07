@@ -148,13 +148,23 @@ const BrandPage: React.FC = () => {
         }
     };
 
+    const cleanAIImageReference = (content: string, imageUrl: string) => {
+        if (!imageUrl || imageUrl === '/placeholder-blog.jpg') return content;
+        const escapedUrl = imageUrl.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        // Match ![...](url) and surrounding minimal whitespace
+        const regex = new RegExp(`\\s*!\\[.*?\\]\\(${escapedUrl}\\)\\s*`, 'g');
+        return content.replace(regex, '\n\n').trim(); // Replace with standard spacing or empty
+    };
+
     const handleSaveWorkbench = async () => {
         try {
+            const finalContent = cleanAIImageReference(workbenchContent, workbenchImageUrl);
+
             // Persist to DB so it shows up in Kanban "Ideas & Drafts"
             await api.createBlogPost({
                 title: workbenchTitle || "Untitled Draft",
-                content: workbenchContent || "",
-                excerpt: workbenchContent.slice(0, 100) + "...",
+                content: finalContent || "",
+                excerpt: finalContent.slice(0, 100) + "...",
                 imageUrl: workbenchImageUrl,
                 status: 'draft',
                 authorName: user?.name || "Bob",
@@ -191,11 +201,13 @@ const BrandPage: React.FC = () => {
         const isManager = user?.role === EmployeeRole.MANAGER || user?.role === EmployeeRole.ADMIN;
         
         try {
+            const finalContent = cleanAIImageReference(postData.content, workbenchImageUrl);
+
             // 1. Always Create/Update Draft First
             const draft = await api.createBlogPost({
                 title: postData.title,
-                content: postData.content,
-                excerpt: postData.content.slice(0, 150) + '...',
+                content: finalContent,
+                excerpt: finalContent.slice(0, 150) + '...',
                 imageUrl: workbenchImageUrl,
                 status: 'draft',
                 authorName: user?.name || 'Unknown Author',
@@ -287,6 +299,26 @@ const BrandPage: React.FC = () => {
         setIsPostModalOpen(true);
     };
 
+    // UX-014: Smart Edit - Switch to Workbench for Drafts
+    const handleEditSmart = (post: BlogPost) => {
+        if (post.status === 'draft' || post.status === 'changes_requested') {
+            setWorkbenchTitle(post.title || '');
+            setWorkbenchContent(post.content || '');
+            // Mock source to satisfy Workbench requirements
+            setActiveSource({ 
+                id: post.id, 
+                type: 'task', // Treat draft as a task context
+                title: post.title || 'Untitled Draft',
+                score: 100, // Editing is high priority
+                summary: post.excerpt || '', 
+                date: post.publishDate || new Date().toISOString()
+            });
+            setViewMode('workbench');
+        } else {
+            openEditPostModal(post);
+        }
+    };
+
     const downloadLogo = () => {
         if (!logoSvg) return;
         const blob = new Blob([logoSvg], { type: 'image/svg+xml' });
@@ -329,7 +361,7 @@ const BrandPage: React.FC = () => {
                                         <FileEditIcon className="w-4 h-4" />
                                     </button>
                                 )}
-                                <button onClick={() => openEditPostModal(post)} className="p-1 hover:bg-gray-100 rounded text-blue-500" title="Edit Content">
+                                <button onClick={() => handleEditSmart(post)} className="p-1 hover:bg-gray-100 rounded text-blue-500" title="Edit Content">
                                     <FileEditIcon className="w-4 h-4" />
                                 </button>
                                 <button onClick={() => handleDeletePost(post.id)} className="p-1 hover:bg-red-50 rounded text-red-500" title="Delete">
@@ -356,7 +388,7 @@ const BrandPage: React.FC = () => {
 
     return (
         <PermissionGuard permission="leads:view:marketing" fallback={<div className="p-12 text-center text-gray-500">Access Denied: Brand Hub is for Marketing roles only.</div>}>
-            <div className="flex flex-col h-[calc(100vh-64px)]">
+            <div className="flex flex-col h-full">
                 <header className="px-6 py-4 flex justify-between items-center bg-white dark:bg-slate-900 border-b shrink-0 font-sans">
                     <div className="flex items-center gap-4">
                         <h1 className="text-2xl font-bold text-gray-800 dark:text-white flex items-center gap-3">
@@ -393,7 +425,7 @@ const BrandPage: React.FC = () => {
                     </div>
                 </header>
 
-                <main className="flex-1 overflow-auto">
+                <main className={`flex-1 ${viewMode === 'workbench' ? 'overflow-hidden' : 'overflow-auto'}`}>
                     {viewMode === 'dashboard' ? (
                         <div className="p-6 max-w-7xl mx-auto space-y-8 font-sans">
                             {/* Market Insight Section (Moved Top for UX-009) */}

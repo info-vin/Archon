@@ -85,7 +85,7 @@ async def discover_models_endpoint(
     instance_urls: list[str] = Query(..., description="Ollama instance URLs"),
     include_capabilities: bool = Query(True, description="Include capability detection"),
     fetch_details: bool = Query(False, description="Fetch comprehensive model details via /api/show"),
-    background_tasks: BackgroundTasks = None,  # Keep for potential future use
+    background_tasks: BackgroundTasks = None,  # type: ignore # Keep for potential future use
 ) -> ModelDiscoveryResponse:
     """
     Discover models from multiple Ollama instances with capability detection.
@@ -490,7 +490,7 @@ async def discover_and_store_models_endpoint(
             models=stored_models,
             total_count=len(stored_models),
             instances_checked=instances_checked,
-            last_discovery=models_data["last_discovery"],
+            last_discovery=str(models_data.get("last_discovery", "")),
             cache_status="updated"
         )
 
@@ -539,9 +539,9 @@ async def get_stored_models_endpoint() -> ModelListResponse:
         else:
             # New format - object with models key
             models_list = models_data.get("models", [])
-            total_count = models_data.get("total_count", len(models_list))
-            instances_checked = models_data.get("instances_checked", 0)
-            last_discovery = models_data.get("last_discovery")
+            total_count = int(models_data.get("total_count", len(models_list)))
+            instances_checked = int(models_data.get("instances_checked", 0))
+            last_discovery = str(models_data.get("last_discovery", ""))
 
         # Convert to StoredModelInfo objects, handling missing fields
         stored_models = []
@@ -550,19 +550,19 @@ async def get_stored_models_endpoint() -> ModelListResponse:
                 # Ensure required fields exist
                 if isinstance(model, dict):
                     stored_model = StoredModelInfo(
-                        name=model.get('name', 'Unknown'),
-                        host=model.get('instance_url', model.get('host', 'Unknown')),
-                        model_type=model.get('model_type', 'chat'),
+                        name=str(model.get('name', 'Unknown')),
+                        host=str(model.get('instance_url', model.get('host', 'Unknown'))),
+                        model_type=str(model.get('model_type', 'chat')),
                         size_mb=model.get('size_mb'),
                         context_length=model.get('context_length'),
                         parameters=model.get('parameters'),
-                        capabilities=model.get('capabilities', []),
-                        archon_compatibility=model.get('archon_compatibility', 'unknown'),
-                        compatibility_features=model.get('compatibility_features', []),
-                        limitations=model.get('limitations', []),
+                        capabilities=cast(list[str], model.get('capabilities', [])),
+                        archon_compatibility=str(model.get('archon_compatibility', 'unknown')),
+                        compatibility_features=cast(list[str], model.get('compatibility_features', [])),
+                        limitations=cast(list[str], model.get('limitations', [])),
                         performance_rating=model.get('performance_rating'),
                         description=model.get('description'),
-                        last_updated=model.get('last_updated', datetime.utcnow().isoformat()),
+                        last_updated=str(model.get('last_updated', datetime.utcnow().isoformat())),
                         embedding_dimensions=model.get('embedding_dimensions')
                     )
                     stored_models.append(stored_model)

@@ -124,9 +124,9 @@ def extract_text_from_pdf(file_content: bytes) -> str:
             text_content = []
             pdf_reader = PyPDF2.PdfReader(io.BytesIO(file_content))
 
-            for page_num, page in enumerate(pdf_reader.pages):
+            for page_num, pdf_page in enumerate(pdf_reader.pages):
                 try:
-                    page_text = page.extract_text()
+                    page_text = pdf_page.extract_text()
                     if page_text:
                         text_content.append(f"--- Page {page_num + 1} ---\n{page_text}")
                 except Exception as e:

@@ -110,9 +110,9 @@ async def get_migration_history(response: Response, if_none_match: str | None = 
         history = {
             "migrations": [
                 MigrationRecord(
-                    version=m.version,
-                    migration_name=m.migration_name,
-                    applied_at=m.applied_at,
+                    version=str(m.version),
+                    migration_name=str(m.migration_name),
+                    applied_at=m.applied_at if isinstance(m.applied_at, datetime) else datetime.now(),
                     checksum=m.checksum,
                 )
                 for m in applied
@@ -135,7 +135,11 @@ async def get_migration_history(response: Response, if_none_match: str | None = 
             # Client needs new data
             response.headers["ETag"] = f'"{etag}"'
             response.headers["Cache-Control"] = "no-cache, must-revalidate"
-            return MigrationHistoryResponse(**history)
+            return MigrationHistoryResponse(
+                migrations=history["migrations"],
+                total_count=history["total_count"],
+                current_version=history["current_version"]
+            )
 
     except Exception as e:
         logfire.error(f"Error getting migration history: {e}")

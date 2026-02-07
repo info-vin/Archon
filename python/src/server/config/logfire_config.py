@@ -25,7 +25,7 @@ LOGFIRE_AVAILABLE = False
 logfire: Any = None
 
 try:
-    import logfire  # type: ignore
+    import logfire
     LOGFIRE_AVAILABLE = True
 except ImportError:
     pass

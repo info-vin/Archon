@@ -58,6 +58,8 @@
 
 ## 🛠 修復紀錄 (Fix Log)
 
+*   **2026-02-07 (Round 8: Bob's Content Polish)**:
+    *   **BUG-028/029**: 優化 AI 圖片生成體驗。點擊生成後，圖片連結雖會暫時顯示於編輯器供預覽，但在「儲存草稿」或「發佈」時，系統會自動移除該 Markdown 連結，僅保留作為封面圖 (`imageUrl`)，確保文章內容的整潔。
 *   **2026-02-04 (Round 7: Bob's Resilience)**:
     *   **BUG-028/029**: 實作了「金鑰解耦 (Key Decoupling)」與「Imagen 自動降級」。現在 Bob 的功能優先使用 `GEMINI_API_KEY`，且在外部 API 失敗時會自動切換至 Mock 模式並記錄系統警報。
     *   **TC-Marketing**: 新增 `test_marketing_api_mock.py` 驗證 Bob 的 Fallback 邏輯，達成 100% 覆蓋率。

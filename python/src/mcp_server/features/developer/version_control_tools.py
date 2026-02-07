@@ -145,7 +145,7 @@ class ProposeGitCommitTool(BaseModel):
             return f"Error: Could not propose git commit. Reason: {e}"
 
 # To be added to the MCP's tool registry
-developer_version_control_tools = [
+developer_version_control_tools: list[type[BaseModel]] = [
     ProposeGitBranchTool,
     ProposeGitCommitTool,
 ]

@@ -29,10 +29,9 @@ ALLOWED_INTERNAL_IPS = [
 
 def is_internal_request(request: Request) -> bool:
     """Check if request is from an internal source."""
-    client_host = request.client.host if request.client else None
-
-    if not client_host:
+    if request.client is None:
         return False
+    client_host = request.client.host
 
     # Check if it's a Docker network IP (172.16.0.0/12 range)
     if client_host.startswith("172."):
@@ -67,11 +66,12 @@ async def get_agent_credentials(request: Request) -> dict[str, Any]:
     """
     # Check if request is from internal source
     if not is_internal_request(request):
-        logger.warning(f"Unauthorized access to internal credentials from {request.client.host}")
+        logger.warning("Unauthorized access to internal credentials")
         raise HTTPException(status_code=403, detail="Access forbidden")
 
     try:
         # Get credentials needed by agents
+        client_host = request.client.host if request.client is not None else "unknown"
         credentials = {
             # OpenAI credentials
             "OPENAI_API_KEY": await credential_service.get_credential(
@@ -123,16 +123,18 @@ async def get_mcp_credentials(request: Request) -> dict[str, Any]:
     """
     # Check if request is from internal source
     if not is_internal_request(request):
-        logger.warning(f"Unauthorized access to internal credentials from {request.client.host}")
+        client_host = request.client.host if request.client else "unknown"
+        logger.warning(f"Unauthorized access to internal credentials from {client_host}")
         raise HTTPException(status_code=403, detail="Access forbidden")
 
     try:
+        client_host = request.client.host if request.client else "unknown"
         credentials = {
             # MCP might need some credentials in the future
             "LOG_LEVEL": await credential_service.get_credential("LOG_LEVEL", default="INFO"),
         }
 
-        logger.info(f"Provided credentials to MCP service from {request.client.host}")
+        logger.info(f"Provided credentials to MCP service from {client_host}")
         return credentials
 
     except Exception as e:
