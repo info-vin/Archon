@@ -806,7 +806,7 @@ async def draft_blog_post(request: DraftBlogRequest, current_user: dict = Depend
                 if response.usage_metadata:
                     input_tokens = response.usage_metadata.prompt_token_count or 0
                     output_tokens = response.usage_metadata.candidates_token_count or 0
-                
+
                 asyncio.create_task(TokenUsageService.log_usage(
                     request_id=request_id,
                     user_id=user_id,

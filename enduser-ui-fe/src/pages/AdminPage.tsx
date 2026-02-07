@@ -364,8 +364,10 @@ const SystemSettings: React.FC = () => {
     const fetchSettings = async () => {
         setLoading(true);
         try {
-            const data = await api.getSystemSettings('crawler_rbac');
-            setSettings(data);
+            // Fetch both crawler and diagnostics settings
+            const crawlerData = await api.getSystemSettings('crawler_rbac');
+            const diagnosticsData = await api.getSystemSettings('diagnostics');
+            setSettings([...crawlerData, ...diagnosticsData]);
         } catch (err: any) {
             alert("Failed to load settings: " + err.message);
         } finally {
@@ -388,9 +390,37 @@ const SystemSettings: React.FC = () => {
     if (loading) return <div className="flex justify-center p-12"><RefreshCwIcon className="animate-spin w-8 h-8 text-primary" /></div>;
 
     const roles = ['SALES', 'MARKETING', 'MANAGER', 'ADMIN'];
+    const logLevelSetting = settings.find(s => s.key === 'system.log_level');
 
     return (
         <div className="space-y-6">
+            {/* NEW: Diagnostics & Log Level Control */}
+            <div className="bg-card p-6 rounded-2xl border border-border shadow-sm border-l-4 border-l-amber-500">
+                <h3 className="text-lg font-bold mb-4 flex items-center gap-2 text-amber-600">
+                    <RefreshCwIcon className="w-5 h-5" />
+                    Server Diagnostics
+                </h3>
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 bg-muted/20 rounded-xl border border-border">
+                    <div className="flex-1">
+                        <div className="font-bold text-sm">Backend Access Log Level</div>
+                        <p className="text-xs text-muted-foreground">{logLevelSetting?.description || '控制 API 存取日誌的詳細程度'}</p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                        <select 
+                            value={logLevelSetting?.value || 'WARNING'}
+                            onChange={(e) => handleUpdate('system.log_level', e.target.value)}
+                            className="bg-background border border-border rounded-lg px-3 py-2 text-sm font-mono outline-none focus:ring-2 ring-primary/50"
+                        >
+                            <option value="DEBUG">DEBUG (Detailed)</option>
+                            <option value="INFO">INFO (Normal)</option>
+                            <option value="WARNING">WARNING (Recommended)</option>
+                            <option value="ERROR">ERROR (Critical Only)</option>
+                        </select>
+                        {isSaving === 'system.log_level' && <RefreshCwIcon className="animate-spin w-4 h-4 text-primary" />}
+                    </div>
+                </div>
+            </div>
+
             <div className="bg-card p-6 rounded-2xl border border-border shadow-sm">
                 <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
                     <RefreshCwIcon className="w-5 h-5 text-indigo-500" />
