@@ -172,30 +172,23 @@ export function useCrawlUrl() {
       } as Omit<KnowledgeItem, "id">);
 
       // Update all summaries caches with optimistic data, respecting each cache's filter
-      const entries = queryClient.getQueriesData<KnowledgeItemsResponse>({
+      const queryEntries = queryClient.getQueriesData<KnowledgeItemsResponse>({
         queryKey: knowledgeKeys.summariesPrefix(),
       });
-      for (const [qk, old] of entries) {
+
+      queryEntries.forEach(([qk, old]) => {
         const filter = qk[qk.length - 1] as KnowledgeItemsFilter | undefined;
         const matchesType = !filter?.knowledge_type || optimisticItem.knowledge_type === filter.knowledge_type;
-        const matchesTags =
-          !filter?.tags || filter.tags.every((t) => (optimisticItem.metadata?.tags ?? []).includes(t));
-        if (!(matchesType && matchesTags)) continue;
-        if (!old) {
-          queryClient.setQueryData<KnowledgeItemsResponse>(qk, {
-            items: [optimisticItem],
-            total: 1,
-            page: 1,
-            per_page: 100,
-          });
-        } else {
-          queryClient.setQueryData<KnowledgeItemsResponse>(qk, {
-            ...old,
-            items: [optimisticItem, ...old.items],
-            total: (old.total ?? old.items.length) + 1,
-          });
-        }
-      }
+        const matchesTags = !filter?.tags || filter.tags.every((t) => (optimisticItem.metadata?.tags ?? []).includes(t));
+        
+        if (!(matchesType && matchesTags)) return;
+
+        const updatedData: KnowledgeItemsResponse = !old 
+          ? { items: [optimisticItem], total: 1, page: 1, per_page: 100 }
+          : { ...old, items: [optimisticItem, ...old.items], total: (old.total ?? old.items.length) + 1 };
+        
+        queryClient.setQueryData(qk, updatedData);
+      });
 
       // Create optimistic progress operation
       const optimisticOperation: ActiveOperation = {
@@ -352,30 +345,23 @@ export function useUploadDocument() {
       } as Omit<KnowledgeItem, "id">);
 
       // Respect each cache's filter (knowledge_type, tags, etc.)
-      const entries = queryClient.getQueriesData<KnowledgeItemsResponse>({
+      const queryEntries = queryClient.getQueriesData<KnowledgeItemsResponse>({
         queryKey: knowledgeKeys.summariesPrefix(),
       });
-      for (const [qk, old] of entries) {
+
+      queryEntries.forEach(([qk, old]) => {
         const filter = qk[qk.length - 1] as KnowledgeItemsFilter | undefined;
         const matchesType = !filter?.knowledge_type || optimisticItem.knowledge_type === filter.knowledge_type;
-        const matchesTags =
-          !filter?.tags || filter.tags.every((t) => (optimisticItem.metadata?.tags ?? []).includes(t));
-        if (!(matchesType && matchesTags)) continue;
-        if (!old) {
-          queryClient.setQueryData<KnowledgeItemsResponse>(qk, {
-            items: [optimisticItem],
-            total: 1,
-            page: 1,
-            per_page: 100,
-          });
-        } else {
-          queryClient.setQueryData<KnowledgeItemsResponse>(qk, {
-            ...old,
-            items: [optimisticItem, ...old.items],
-            total: (old.total ?? old.items.length) + 1,
-          });
-        }
-      }
+        const matchesTags = !filter?.tags || filter.tags.every((t) => (optimisticItem.metadata?.tags ?? []).includes(t));
+        
+        if (!(matchesType && matchesTags)) return;
+
+        const updatedData: KnowledgeItemsResponse = !old 
+          ? { items: [optimisticItem], total: 1, page: 1, per_page: 100 }
+          : { ...old, items: [optimisticItem, ...old.items], total: (old.total ?? old.items.length) + 1 };
+        
+        queryClient.setQueryData(qk, updatedData);
+      });
 
       // Create optimistic progress operation for upload
       const optimisticOperation: ActiveOperation = {

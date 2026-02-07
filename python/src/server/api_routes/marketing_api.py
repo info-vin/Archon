@@ -801,13 +801,19 @@ async def draft_blog_post(request: DraftBlogRequest, current_user: dict = Depend
             # --- GAP-016: Real Token Usage Logging ---
             try:
                 from ..services.token_usage_service import TokenUsageService
+                input_tokens = 0
+                output_tokens = 0
+                if response.usage_metadata:
+                    input_tokens = response.usage_metadata.prompt_token_count or 0
+                    output_tokens = response.usage_metadata.candidates_token_count or 0
+                
                 asyncio.create_task(TokenUsageService.log_usage(
                     request_id=request_id,
                     user_id=user_id,
                     model=model_name,
                     provider="google",
-                    input_tokens=response.usage_metadata.prompt_token_count,
-                    output_tokens=response.usage_metadata.candidates_token_count,
+                    input_tokens=input_tokens,
+                    output_tokens=output_tokens,
                     context_type="blog_draft"
                 ))
             except Exception as log_err:

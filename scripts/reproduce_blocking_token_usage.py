@@ -61,11 +61,9 @@ async def main():
         await asyncio.sleep(0.2)
 
         # Call log_usage
-        print("
-=== Testing log_usage (Fire-and-forget check) ===")
+        print("\n=== Testing log_usage (Fire-and-forget check) ===")
         print("Calling log_usage...")
-        # Start time
-        start = time.time()
+        start_time = time.time()
         await service.log_usage(
             request_id="test",
             model="gpt-4o",
@@ -73,19 +71,18 @@ async def main():
             input_tokens=100,
             output_tokens=100
         )
-        end = time.time()
-        print(f"log_usage returned in {end - start:.3f}s")
+        end_time = time.time()
+        print(f"log_usage returned in {end_time - start_time:.3f}s")
 
         await asyncio.sleep(0.5)
 
         # Call get_daily_cost
-        print("
-=== Testing get_daily_cost (Blocking check) ===")
+        print("\n=== Testing get_daily_cost (Blocking check) ===")
         print("Calling get_daily_cost...")
-        start = time.time()
+        start_time = time.time()
         await service.get_daily_cost(days=7)
-        end = time.time()
-        print(f"get_daily_cost returned in {end - start:.3f}s")
+        end_time = time.time()
+        print(f"get_daily_cost returned in {end_time - start_time:.3f}s")
 
         # Give time for heartbeat to report blockage
         await asyncio.sleep(0.5)

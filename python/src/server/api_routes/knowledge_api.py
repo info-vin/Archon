@@ -553,9 +553,9 @@ async def crawl_knowledge_item(
 
         response = CrawlStartResponse(
             success=True,
-            progress_id=progress_id,
+            progressId=progress_id,
             message="Crawling started",
-            estimated_duration="3-5 minutes"
+            estimatedDuration="3-5 minutes"
         )
 
         return response.model_dump(by_alias=True)

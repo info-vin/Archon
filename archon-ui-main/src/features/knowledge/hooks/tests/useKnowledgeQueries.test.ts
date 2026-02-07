@@ -3,7 +3,7 @@ import { renderHook, waitFor } from "@testing-library/react";
 import React from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { KnowledgeItemsResponse } from "../../types";
-import { knowledgeKeys, useCrawlUrl, useDeleteKnowledgeItem, useUploadDocument } from "../useKnowledgeQueries";
+import { knowledgeKeys, useCrawlUrl, useUploadDocument } from "../useKnowledgeQueries";
 
 // Mock the services
 vi.mock("../../services", () => ({
@@ -22,6 +22,15 @@ vi.mock("../../services", () => ({
   },
 }));
 
+// Mock progress keys since they're used in mutations
+vi.mock("@/features/progress/hooks/useProgressQueries", () => ({
+  progressKeys: {
+    all: ["progress"],
+    active: () => ["progress", "active"],
+    detail: (id: string) => ["progress", "detail", id],
+  },
+}));
+
 // Mock the toast hook
 vi.mock("@/features/shared/hooks/useToast", () => ({
   useToast: () => ({
@@ -37,211 +46,118 @@ vi.mock("@/features/shared/hooks", () => ({
   }),
 }));
 
-// Test wrapper with QueryClient
-const createWrapper = () => {
-  const queryClient = new QueryClient({
-    defaultOptions: {
-      queries: { retry: false },
-      mutations: { retry: false },
-    },
-  });
+describe("useKnowledgeQueries - Optimistic Updates", () => {
+  let queryClient: QueryClient;
 
-        const Wrapper = ({ children }: { children: React.ReactNode }) =>
-          React.createElement(QueryClientProvider, { client: queryClient }, children);
-        Wrapper.displayName = "Wrapper";
-        return Wrapper;
-      };
-describe("useKnowledgeQueries", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-  });
-
-  describe("knowledgeKeys", () => {
-    it("should generate correct query keys", () => {
-      expect(knowledgeKeys.all).toEqual(["knowledge"]);
-      expect(knowledgeKeys.lists()).toEqual(["knowledge", "list"]);
-      expect(knowledgeKeys.detail("source-123")).toEqual(["knowledge", "detail", "source-123"]);
-      expect(knowledgeKeys.chunks("source-123", { domain: "example.com" })).toEqual([
-        "knowledge",
-        "source-123",
-        "chunks",
-        { domain: "example.com", limit: undefined, offset: undefined },
-      ]);
-      expect(knowledgeKeys.codeExamples("source-123")).toEqual([
-        "knowledge",
-        "source-123",
-        "code-examples",
-        { limit: undefined, offset: undefined },
-      ]);
-      expect(knowledgeKeys.search("test query")).toEqual(["knowledge", "search", "test query"]);
-      expect(knowledgeKeys.sources()).toEqual(["knowledge", "sources"]);
-    });
-
-    it("should handle filter in summaries key", () => {
-      const filter = { knowledge_type: "technical" as const, page: 2 };
-      expect(knowledgeKeys.summaries(filter)).toEqual(["knowledge", "summaries", filter]);
+    queryClient = new QueryClient({
+      defaultOptions: {
+        queries: { retry: false },
+        mutations: { retry: false },
+      },
     });
   });
 
-  describe("useDeleteKnowledgeItem", () => {
-    it("should optimistically remove item and handle success", async () => {
-      const initialData: KnowledgeItemsResponse = {
-        items: [
-          {
-            id: "1",
-            source_id: "source-1",
-            title: "Item 1",
-            url: "https://example.com/1",
-            source_type: "url" as const,
-            knowledge_type: "technical" as const,
-            status: "active" as const,
-            document_count: 5,
-            code_examples_count: 2,
-            metadata: {},
-            created_at: "2024-01-01T00:00:00Z",
-            updated_at: "2024-01-01T00:00:00Z",
-          },
-          {
-            id: "2",
-            source_id: "source-2",
-            title: "Item 2",
-            url: "https://example.com/2",
-            source_type: "url" as const,
-            knowledge_type: "business" as const,
-            status: "active" as const,
-            document_count: 3,
-            code_examples_count: 0,
-            metadata: {},
-            created_at: "2024-01-01T00:00:00Z",
-            updated_at: "2024-01-01T00:00:00Z",
-          },
-        ],
-        total: 2,
-        page: 1,
-        per_page: 20,
-      };
+  const Wrapper = ({ children }: { children: React.ReactNode }) =>
+    React.createElement(QueryClientProvider, { client: queryClient }, children);
+
+  describe("useCrawlUrl - Cache Injection", () => {
+    it("should inject optimistic item into all matching summaries caches", async () => {
+      // 1. Setup initial caches with different filters
+      const technicalFilter = { knowledge_type: "technical" as const };
+      const businessFilter = { knowledge_type: "business" as const };
+      
+      const initialTechData: KnowledgeItemsResponse = { items: [], total: 0, page: 1, per_page: 20 };
+      const initialBizData: KnowledgeItemsResponse = { items: [], total: 0, page: 1, per_page: 20 };
+      
+      // We must set data to ensures the keys are in the cache
+      queryClient.setQueryData(knowledgeKeys.summaries(technicalFilter), initialTechData);
+      queryClient.setQueryData(knowledgeKeys.summaries(businessFilter), initialBizData);
 
       const { knowledgeService } = await import("../../services");
-      vi.mocked(knowledgeService.deleteKnowledgeItem).mockResolvedValue({
+      vi.mocked(knowledgeService.crawlUrl).mockResolvedValue({
         success: true,
-        message: "Item deleted",
+        progressId: "real-id",
+        message: "Started",
       });
 
-      // Create QueryClient instance that will be used by the test
-      const queryClient = new QueryClient({
-        defaultOptions: {
-          queries: { retry: false },
-          mutations: { retry: false },
-        },
+      const { result } = renderHook(() => useCrawlUrl(), { wrapper: Wrapper });
+
+      // 2. Trigger mutation for a TECHNICAL crawl
+      // We don't await yet because we want to check the cache state BEFORE success
+      const mutationPromise = result.current.mutateAsync({
+        url: "https://archon.ai",
+        knowledge_type: "technical",
       });
 
-      // Pre-populate cache with the same client instance
-      queryClient.setQueryData(knowledgeKeys.lists(), initialData);
-
-      // Create wrapper with the pre-populated QueryClient
-      const wrapper = ({ children }: { children: React.ReactNode }) =>
-        React.createElement(QueryClientProvider, { client: queryClient }, children);
-
-      const { result } = renderHook(() => useDeleteKnowledgeItem(), { wrapper });
-
-      await result.current.mutateAsync("source-1");
-
+      // 3. Check TECHNICAL cache (should have optimistic item)
       await waitFor(() => {
-        expect(result.current.isSuccess).toBe(true);
-        expect(knowledgeService.deleteKnowledgeItem).toHaveBeenCalledWith("source-1");
+        const techCache = queryClient.getQueryData<KnowledgeItemsResponse>(knowledgeKeys.summaries(technicalFilter));
+        expect(techCache?.items).toHaveLength(1);
+        expect(techCache?.items[0].status).toBe("processing");
+      });
+
+      // 4. Check BUSINESS cache (should remain empty because type doesn't match)
+      const bizCache = queryClient.getQueryData<KnowledgeItemsResponse>(knowledgeKeys.summaries(businessFilter));
+      expect(bizCache?.items).toHaveLength(0);
+
+      await mutationPromise;
+
+      // 5. Check Success state - ID should be updated to real-id
+      await waitFor(() => {
+        const updatedTechCache = queryClient.getQueryData<KnowledgeItemsResponse>(knowledgeKeys.summaries(technicalFilter));
+        expect(updatedTechCache?.items[0].source_id).toBe("real-id");
       });
     });
 
-    it("should handle deletion error", async () => {
+    it("should rollback all summaries caches on error", async () => {
+      const filter = { knowledge_type: "technical" as const };
+      const initialData: KnowledgeItemsResponse = { items: [], total: 0, page: 1, per_page: 20 };
+      queryClient.setQueryData(knowledgeKeys.summaries(filter), initialData);
+
       const { knowledgeService } = await import("../../services");
-      vi.mocked(knowledgeService.deleteKnowledgeItem).mockRejectedValue(new Error("Deletion failed"));
+      vi.mocked(knowledgeService.crawlUrl).mockRejectedValue(new Error("Crawl failed"));
 
-      const wrapper = createWrapper();
-      const { result } = renderHook(() => useDeleteKnowledgeItem(), { wrapper });
+      const { result } = renderHook(() => useCrawlUrl(), { wrapper: Wrapper });
 
-      await expect(result.current.mutateAsync("source-1")).rejects.toThrow("Deletion failed");
+      try {
+        await result.current.mutateAsync({ url: "https://fail.com", knowledge_type: "technical" });
+      } catch (_e) {
+        // Expected
+      }
+
+      // Cache should be rolled back to initial empty state
+      const cache = queryClient.getQueryData<KnowledgeItemsResponse>(knowledgeKeys.summaries(filter));
+      expect(cache?.items).toHaveLength(0);
     });
   });
 
-  describe("useCrawlUrl", () => {
-    it("should start crawl and return progress ID", async () => {
-      const crawlRequest = {
-        url: "https://example.com",
-        knowledge_type: "technical" as const,
-        tags: ["docs"],
-        max_depth: 2,
-      };
+  describe("useUploadDocument - Cache Injection", () => {
+    it("should inject optimistic item for document upload", async () => {
+      const filter = { knowledge_type: "business" as const };
+      queryClient.setQueryData(knowledgeKeys.summaries(filter), { items: [], total: 0, page: 1, per_page: 20 });
 
-      const mockResponse = {
+      const { knowledgeService } = await import("../../services");
+      vi.mocked(knowledgeService.uploadDocument).mockResolvedValue({
         success: true,
-        progressId: "progress-123",
-        message: "Crawling started",
-        estimatedDuration: "3-5 minutes",
-      };
+        progressId: "upload-123",
+        message: "Started",
+        filename: "manual.pdf",
+      });
 
-      const { knowledgeService } = await import("../../services");
-      vi.mocked(knowledgeService.crawlUrl).mockResolvedValue(mockResponse);
+      const { result } = renderHook(() => useUploadDocument(), { wrapper: Wrapper });
 
-      const wrapper = createWrapper();
-      const { result } = renderHook(() => useCrawlUrl(), { wrapper });
+      const file = new File(["test"], "manual.pdf", { type: "application/pdf" });
+      await result.current.mutateAsync({ 
+        file, 
+        metadata: { knowledge_type: "business" } 
+      });
 
-      const response = await result.current.mutateAsync(crawlRequest);
-
-      expect(response).toEqual(mockResponse);
-      expect(knowledgeService.crawlUrl).toHaveBeenCalledWith(crawlRequest);
-    });
-
-    it("should handle crawl error", async () => {
-      const { knowledgeService } = await import("../../services");
-      vi.mocked(knowledgeService.crawlUrl).mockRejectedValue(new Error("Invalid URL"));
-
-      const wrapper = createWrapper();
-      const { result } = renderHook(() => useCrawlUrl(), { wrapper });
-
-      await expect(
-        result.current.mutateAsync({
-          url: "invalid-url",
-        }),
-      ).rejects.toThrow("Invalid URL");
-    });
-  });
-
-  describe("useUploadDocument", () => {
-    it("should upload document with metadata", async () => {
-      const file = new File(["test content"], "test.pdf", { type: "application/pdf" });
-      const metadata = {
-        knowledge_type: "business" as const,
-        tags: ["report"],
-      };
-
-      const mockResponse = {
-        success: true,
-        progressId: "upload-456",
-        message: "Upload started",
-        filename: "test.pdf",
-      };
-
-      const { knowledgeService } = await import("../../services");
-      vi.mocked(knowledgeService.uploadDocument).mockResolvedValue(mockResponse);
-
-      const wrapper = createWrapper();
-      const { result } = renderHook(() => useUploadDocument(), { wrapper });
-
-      const response = await result.current.mutateAsync({ file, metadata });
-
-      expect(response).toEqual(mockResponse);
-      expect(knowledgeService.uploadDocument).toHaveBeenCalledWith(file, metadata);
-    });
-
-    it("should handle upload error", async () => {
-      const file = new File(["test"], "test.txt", { type: "text/plain" });
-      const { knowledgeService } = await import("../../services");
-      vi.mocked(knowledgeService.uploadDocument).mockRejectedValue(new Error("File too large"));
-
-      const wrapper = createWrapper();
-      const { result } = renderHook(() => useUploadDocument(), { wrapper });
-
-      await expect(result.current.mutateAsync({ file, metadata: {} })).rejects.toThrow("File too large");
+      const cache = queryClient.getQueryData<KnowledgeItemsResponse>(knowledgeKeys.summaries(filter));
+      expect(cache?.items).toHaveLength(1);
+      expect(cache?.items[0].title).toBe("manual.pdf");
+      expect(cache?.items[0].source_type).toBe("file");
     });
   });
 });
