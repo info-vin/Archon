@@ -1,3 +1,4 @@
+import asyncio
 from decimal import Decimal
 from typing import Any
 
@@ -70,7 +71,10 @@ class TokenUsageService:
             # Assuming postgrest-py execute() is sync, we might want to run in thread if blocking.
             # But for now, direct call is fine as it's critical data.
 
-            supabase.table("token_usage").insert(payload).execute()
+            def _log_to_db():
+                return supabase.table("token_usage").insert(payload).execute()
+
+            await asyncio.to_thread(_log_to_db)
 
             if provider != "ollama":
                 logger.debug(f"💰 Token Usage Logged: {model} | {input_tokens}/{output_tokens} | ${cost:.6f}")
@@ -90,9 +94,12 @@ class TokenUsageService:
             since = datetime.now(UTC) - timedelta(days=days)
 
             # Fetch last N days raw data
-            res = supabase.table("token_usage").select("cost_usd, created_at, model, provider")\
-                .gt("created_at", since.isoformat())\
-                .order("created_at", desc=True).limit(5000).execute()
+            def _fetch_data():
+                return supabase.table("token_usage").select("cost_usd, created_at, model, provider")\
+                    .gt("created_at", since.isoformat())\
+                    .order("created_at", desc=True).limit(5000).execute()
+
+            res = await asyncio.to_thread(_fetch_data)
 
             data = res.data if res.data else []
 

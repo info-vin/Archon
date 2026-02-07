@@ -163,6 +163,11 @@ test-be:
 	@touch .env
 	@cd python && $(UV) sync --group dev --group mcp --group agents --group server && $(UV) run --env-file ../.env pytest
 
+# Run performance diagnostic
+test-perf:
+	@echo "Running Token Usage Performance Diagnostic..."
+	@cd python && $(UV) run python ../scripts/reproduce_blocking_token_usage.py
+
 # Run all linters
 lint: lint-fe lint-be
 
