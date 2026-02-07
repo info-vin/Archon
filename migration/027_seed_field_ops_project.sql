@@ -19,12 +19,10 @@ BEGIN
 
     -- Only create if not exists
     IF NOT EXISTS (SELECT 1 FROM archon_projects WHERE title = 'Field Ops') THEN
-        INSERT INTO archon_projects (title, description, status, created_by)
+        INSERT INTO archon_projects (title, description)
         VALUES (
             'Field Ops', 
-            '預設專案，用於接收行動端語音日誌自動生成的任務。 (Alice Persona)', 
-            'active', 
-            admin_id
+            '預設專案，用於接收行動端語音日誌自動生成的任務。 (Alice Persona)'
         ) RETURNING id INTO field_ops_id;
         
         RAISE NOTICE 'Created Field Ops project with ID %', field_ops_id;

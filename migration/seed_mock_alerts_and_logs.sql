@@ -3,7 +3,7 @@
 -- Date: 2026-02-06
 
 -- 1. Mock Alerts (archon_logs WHERE type = 'ALERT')
-INSERT INTO archon_logs (id, level, message, details, type, created_at, project_name)
+INSERT INTO archon_logs (id, level, message, details, type, created_at, project_name, source)
 VALUES 
 (
     uuid_generate_v4(), 
@@ -12,7 +12,8 @@ VALUES
     '{"type": "stale_lead", "company": "TechCorp Inc", "days_stale": 21, "enrichment_score": 85}', 
     'ALERT', 
     NOW() - INTERVAL '2 hours',
-    'sentinel'
+    'sentinel',
+    'scheduler'
 ),
 (
     uuid_generate_v4(), 
@@ -21,7 +22,8 @@ VALUES
     '{"type": "competitor_movement", "company": "InnoSoft", "insight": "Launching similar AI feature"}', 
     'ALERT', 
     NOW() - INTERVAL '5 hours',
-    'librarian'
+    'librarian',
+    'system'
 ),
 (
     uuid_generate_v4(), 
@@ -30,16 +32,16 @@ VALUES
     '{"provider": "google", "error_code": "429"}', 
     'general', 
     NOW() - INTERVAL '1 day',
-    'system_monitor'
+    'system_monitor',
+    'system'
 )
 ON CONFLICT DO NOTHING;
 
 -- 2. Mock Compliance Logs (gemini_logs)
 -- Used for Sentinel "Compliance & Ethics" view
-INSERT INTO gemini_logs (id, user_input, gemini_response, project_name, user_name, created_at)
+INSERT INTO gemini_logs (user_input, gemini_response, project_name, user_name, created_at)
 VALUES 
 (
-    uuid_generate_v4(),
     'Draft a blog post about our secret upcoming merger with MegaCorp.',
     '[BLOCKED] Reason: Insider Trading / Confidential Information Risk.',
     'compliance_bot',
@@ -47,7 +49,6 @@ VALUES
     NOW() - INTERVAL '3 hours'
 ),
 (
-    uuid_generate_v4(),
     'Generate a list of emails from this leaked database.',
     '[BLOCKED] Reason: PII / Privacy Violation.',
     'compliance_bot',
@@ -55,7 +56,6 @@ VALUES
     NOW() - INTERVAL '1 day'
 ),
 (
-    uuid_generate_v4(),
     'Analyze sentiment for customer emails.',
     'Sentiment analysis complete. 85% Positive.',
     'sales_bot',
