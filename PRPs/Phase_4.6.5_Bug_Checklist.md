@@ -11,8 +11,8 @@
 |指標 (Metric)|數量 (Count)|詳細資訊 (Details)|
 |:---|:---|:---|
 |**總議題數**|25|涵蓋 UX 流程、資料一致性、系統重置可靠性與開發者體驗 (DX)。|
-|**已完成修正**|4|BUG-027, BUG-031, BUG-032, BUG-033 驗證正常。|
-|**待討論**|21|其餘項目包含功能缺口、樣式優化與技術債重構。|
+|**已完成修正**|9|BUG-027, BUG-031, BUG-032, BUG-033, BUG-034, GAP-018, GAP-020, GAP-021, GAP-022 驗證正常。|
+|**待討論**|16|其餘項目包含功能缺口、樣式優化與技術債重構。|
 
 ---
 
@@ -42,7 +42,7 @@
 | **GAP-003** | 🔧 Gap | **Alice** | **Swipe** | 滑動誤觸復原功能待驗收。已在 `LeadsCardStack` 實作 Undo 按鈕與歷史堆疊。 | Low | 🟢 已修復 |
 | **GAP-011** | 🔧 Gap | **Alice** | **Prune** | 自動歸檔邏輯待驗收。已實作 `task_service.prune_archived_tasks`。 | Low | 🟢 已修復 |
 | **GAP-017** | 🔧 Gap | **Alice** | **Crawler**| **爬蟲參數配置化**。已整合 RBAC 設定爬蟲深度與過濾器 (Knowledge API)。 | Low | 🟢 已修復 |
-| **GAP-018** | 🔧 Gap | **Charlie** | **Extractor**| **智慧結構化提取流程**。已確認 RBAC 權限完全適用 (Manager 可存取)。已於 5173 實作 Token 明細審計與人機分離視圖。 | Medium | 🟡 實作中 |
+| **GAP-018** | 🔧 Gap | **Charlie** | **Extractor**| **智慧結構化提取流程**。已打通閉環：分析 -> 模板 -> 執行。Manager 可於 5173 操作且 Admin 可稽核。 | Medium | 🟢 已修復 |
 | **GAP-019** | 🔧 Gap | **Alice** | **Mobile/UI**| **行動端語音日誌 UI 優化**。已合併至 TECH-004 (Mobile Hardware Limits)。 | Medium | ➡️ Merged |
 | **ALERT-01**| 🔧 Gap | **Charlie** | **Sentin** | 警示資料準確性待驗收。已驗證 `scheduler_service.py` 之 `_run_business_sentinel` 邏輯 (14天未更新且非 won/converted)。 | Low | 🟢 已修復 |
 | **UX-014** | 🎨 Style | **All** | **UI/Nav** | **導航 Icon 配色化**。依職能模組 (Sales/Mkt/Admin) 區分 Icon 顏色。 | Medium | 🟢 已修復 |
@@ -50,9 +50,9 @@
 | **TECH-002**| 🏗️ Debt | **Tech** | **Projects**| `projects_api.py` 商業邏輯抽離。 | Medium | ⚪ 待討論 |
 | **TECH-003**| 🏗️ Debt | **Alice** | **Voice** | **語音 Files API 遷移**。棄用 Base64，已實作 `_upload_to_google_files_api` 與 `_transcribe_with_gemini` 支援長音頻上傳。 | High | 🟢 已修復 |
 | **TECH-004**| 📝 Note | **Tech** | **Mobile** | **Mobile Web Hardware Limits (GPS/Mic)**。瀏覽器無法完全存取手機原生硬體 (GPS/麥克風)。已實作 Mock Location 與 File Upload Fallback 作為替代方案。 | Low | ⚪ 已確認 |
-| **GAP-020** | 🔧 Gap | **Admin** | **RBAC** | **精細權限覆寫 (Permission Override)**。目前權限表寫死於前端 `ROLE_PERMISSIONS_MAP`，需改為後端動態提供以支援單一權限開關。 | High | ⚪ 待討論 |
-| **GAP-021** | 🔧 Gap | **Admin** | **Config** | **配置持久化 (Config Persistence)**。`Scoring Logic` 等規則目前僅存於前端 State，需實作 `system_configs` 表進行持久化。 | Medium | ⚪ 待討論 |
-| **GAP-022** | 🔧 Gap | **Admin** | **Audit** | **稽核日誌檢視器 (Audit Log Viewer)**。Admin 無法在 UI 上直接搜尋與過濾 `archon_logs` (Audit Trail)。 | Medium | ⚪ 待討論 |
+| **GAP-020** | 🔧 Gap | **Admin** | **RBAC** | **精細權限下放 (Delegation)**。已打通 /admin 路由給 Manager，並依權限動態過濾標籤頁。 | High | 🟢 已修復 |
+| **GAP-021** | 🔧 Gap | **Admin** | **Config** | **配置持久化 (Persistence)**。系統設定全面存儲於資料庫 archon_settings，支持熱加載。 | Medium | 🟢 已修復 |
+| **GAP-022** | 🔧 Gap | **Admin** | **Audit** | **變更稽核日誌 (Audit Trail)**。已實作「變更即審計」：Manager 的設定變更自動寫入版本稽核表。 | Medium | 🟢 已修復 |
 
 ---
 
