@@ -116,7 +116,8 @@ const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                         </Link>
                     </li>
                     */}
-                    {isAdmin && (
+                    {/* GAP-020: Enable Admin Control Center for Managers based on role */}
+                    {(isAdmin || user?.role?.toLowerCase() === 'manager') && (
                          <li className="mb-2">
                             <Link to="/admin" className={`flex items-center p-2 rounded-md hover:bg-secondary ${location.pathname.startsWith('/admin') ? 'bg-secondary' : ''}`}>
                                 <SettingsIcon className="w-5 h-5 mr-3 text-rose-500 dark:text-rose-400" />
