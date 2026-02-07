@@ -31,8 +31,8 @@
 | **BUG-034** | 🐛 Bug | **Tech** | **Agent** | `test_run_command_failure_triggers_healing` 失敗。原因：新實作的 DevBot Fallback 邏輯改變了錯誤輸出的格式，導致既有測試斷言失效。 | Medium | 🟢 已修復 |
 | **BUG-028** | 🐛 Bug | **Bob** | **Magic** | 生成失敗 (404)。已強制 v1beta 端點並實作 API 層 Mock Fallback。 | High | 🔵 待驗收 |
 | **BUG-029** | 🐛 Bug | **Bob** | **Image** | 圖片失敗。已實作針對 403/429 錯誤的自動 Fallback 邏輯與系統警報日誌。 | High | 🔵 待驗收 |
-| **GAP-009** | 🔧 Gap | **Alice** | **Voice** | 語音日誌自動轉工單尚未實作。已實作前端模擬按鈕。 | Medium | ⚪ 待討論 |
-| **GAP-010** | 🔧 Gap | **Alice** | **GPS** | On-Demand GPS 待驗收。已實作前端模擬位置。 | Low | ⚪ 待討論 |
+| **GAP-009** | 🔧 Gap | **Alice** | **Voice** | 語音日誌自動轉工單尚未實作。已實作前端模擬按鈕與語音上傳介面 (Mock Strategy)。 | Medium | 🟡 待驗收 (Mock) |
+| **GAP-010** | 🔧 Gap | **Alice** | **GPS** | On-Demand GPS 待驗收。已於 Attendance Widget 與 Visit Log 實作 Mock Fallback。 | Low | 🟡 待驗收 (Mock) |
 | **UX-012** | 🎨 Style | **All** | **Buttons** | 5173 按鈕風格對齊 3737 Style Guide。已實作通用 `Button` 組件。 | Low | 🟢 已修復 |
 | **GAP-012** | 🔧 Gap | **Bob** | **Intel** | 頁面空白無數據，配色太深。已優化配色並確保 Mock Data 顯示。 | Medium | ⚪ 待討論 |
 | **GAP-013** | 🔧 Gap | **Charlie** | **Center** | 指揮中心無資料供練習。已在 `seed_mock_data.sql` 注入 `marketing_trends` 數據。 | Medium | ⚪ 待討論 |

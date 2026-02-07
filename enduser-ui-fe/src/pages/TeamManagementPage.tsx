@@ -6,7 +6,8 @@ import { PermissionGuard } from '../features/auth/components/PermissionGuard';
 import { AiCollaborationWidget } from '../features/team/components/AiCollaborationWidget';
 import { EthicsCard } from '../features/team/components/EthicsCard';
 import UserAvatar from '../components/UserAvatar';
-import { ShieldCheckIcon, MailIcon, BadgeCheckIcon, XIcon, RefreshCwIcon, KeyIcon } from '../components/Icons';
+import TokenUsageTable from '../components/TokenUsageTable';
+import { ShieldCheckIcon, MailIcon, BadgeCheckIcon, XIcon, RefreshCwIcon, KeyIcon, BarChartIcon } from '../components/Icons';
 
 const TeamManagementPage: React.FC = () => {
     const { user } = useAuth();
@@ -15,6 +16,7 @@ const TeamManagementPage: React.FC = () => {
     const [error, setError] = useState<string | null>(null);
     const [editingMember, setEditingMember] = useState<Employee | null>(null);
     const [activityMember, setActivityMember] = useState<Employee | null>(null);
+    const [showTokenDetails, setShowTokenDetails] = useState(false);
     const [aiUsage, setAiUsage] = useState<any>(null);
     const [approvals, setApprovals] = useState<{ blogs: any[]; leads: any[] }>({ blogs: [], leads: [] });
 
@@ -60,7 +62,10 @@ const TeamManagementPage: React.FC = () => {
                 </header>
 
                 {/* AI COLLABORATION WIDGET (Tablet/Touch Friendly) */}
-                <AiCollaborationWidget data={aiUsage} />
+                <AiCollaborationWidget 
+                    data={aiUsage} 
+                    onClick={() => setShowTokenDetails(true)} 
+                />
 
                 {/* ETHICS & COMPLIANCE LOGS (Sentinel) */}
                 <EthicsCard />
@@ -211,6 +216,43 @@ const TeamManagementPage: React.FC = () => {
                         member={activityMember} 
                         onClose={() => setActivityMember(null)} 
                     />
+                )}
+
+                {/* TOKEN USAGE DETAILS MODAL */}
+                {showTokenDetails && (
+                    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+                        <div className="bg-white rounded-2xl shadow-xl w-full max-w-4xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[85vh]">
+                            <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-indigo-50/50">
+                                <div className="flex items-center gap-3">
+                                    <div className="bg-indigo-600 p-2 rounded-lg text-white">
+                                        <BarChartIcon className="w-5 h-5" />
+                                    </div>
+                                    <div>
+                                        <h3 className="font-bold text-gray-900">Token Consumption Details</h3>
+                                        <p className="text-xs text-gray-500">Real-time Human vs Machine Resource Audit (Last 7 Days)</p>
+                                    </div>
+                                </div>
+                                <button onClick={() => setShowTokenDetails(false)} className="p-2 hover:bg-gray-200 rounded-full transition-colors"><XIcon className="w-5 h-5" /></button>
+                            </div>
+                            
+                            <div className="flex-1 overflow-y-auto p-0">
+                                {aiUsage?.details ? (
+                                    <TokenUsageTable details={aiUsage.details} />
+                                ) : (
+                                    <div className="p-12 text-center text-gray-400">No usage details available.</div>
+                                )}
+                            </div>
+                            
+                            <div className="p-4 border-t border-gray-100 bg-gray-50 text-right">
+                                <button 
+                                    onClick={() => setShowTokenDetails(false)}
+                                    className="px-6 py-2 bg-white border border-gray-200 rounded-xl text-sm font-bold text-gray-600 hover:bg-gray-100 transition-colors"
+                                >
+                                    Close Audit
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 )}
             </div>
         </PermissionGuard>

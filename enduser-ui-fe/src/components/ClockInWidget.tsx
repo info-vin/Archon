@@ -1,40 +1,86 @@
 import React, { useState, useEffect } from 'react';
 import { ClockIcon, MapPinIcon } from './Icons';
 
+import { api } from '../services/api';
+
 export const ClockInWidget: React.FC = () => {
     const [status, setStatus] = useState<'in' | 'out'>('out');
     const [lastTime, setLastTime] = useState<Date | null>(null);
     const [locationName, setLocationName] = useState<string>("Ready to Scan");
+    const [loading, setLoading] = useState(false);
 
     useEffect(() => {
-        // Mock checking initial status
-        const savedStatus = localStorage.getItem('clock_status');
-        if (savedStatus) setStatus(savedStatus as 'in' | 'out');
-        
-        const savedTime = localStorage.getItem('clock_time');
-        if (savedTime) setLastTime(new Date(savedTime));
-        
-        // GAP-010: Removed auto-geolocation on mount to save battery
+        // Fetch initial status from backend
+        const fetchStatus = async () => {
+            try {
+                const res = await api.getAttendanceStatus();
+                setStatus(res.status === 'PRESENT' || res.status === 'MOCK_PRESENT' ? 'in' : 'out');
+                if (res.clock_in_time) setLastTime(new Date(res.clock_in_time));
+                if (res.location) setLocationName(res.location);
+            } catch (e) {
+                console.error("Failed to fetch attendance status", e);
+            }
+        };
+        fetchStatus();
     }, []);
 
-    const toggleClock = () => {
-        // GAP-010: Fetch GPS only on demand
-        if (navigator.geolocation) {
-            setLocationName("Locating...");
-            navigator.geolocation.getCurrentPosition(
-               () => setLocationName("Taipei City, TW"), // Mock success
-               () => setLocationName("GPS Error")
-           );
-       }
+    const handleClockIn = async (lat?: number, lng?: number, info: string = "") => {
+        try {
+            setLoading(true);
+            setLocationName("Syncing...");
+            await api.clockIn({
+                latitude: lat,
+                longitude: lng,
+                location_name: info,
+                status: info.includes("Mock") ? "MOCK_PRESENT" : "PRESENT"
+            });
+            setStatus('in');
+            setLastTime(new Date());
+            setLocationName(info || "Office");
+        } catch (e) {
+            alert("Clock In Failed");
+        } finally {
+            setLoading(false);
+        }
+    };
 
-        const newStatus = status === 'in' ? 'out' : 'in';
-        const now = new Date();
-        
-        setStatus(newStatus);
-        setLastTime(now);
-        
-        localStorage.setItem('clock_status', newStatus);
-        localStorage.setItem('clock_time', now.toISOString());
+    const handleClockOut = async () => {
+        try {
+            setLoading(true);
+            await api.clockOut();
+            setStatus('out');
+            setLastTime(new Date());
+            setLocationName("Ready to Scan");
+        } catch (e) {
+            alert("Clock Out Failed");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const toggleClock = () => {
+        if (loading) return;
+
+        if (status === 'in') {
+            handleClockOut();
+        } else {
+            // Clock In Logic with GAP-010 Fallback
+            if (navigator.geolocation) {
+                setLocationName("Locating...");
+                navigator.geolocation.getCurrentPosition(
+                    (pos) => handleClockIn(pos.coords.latitude, pos.coords.longitude, "Taipei City, TW"),
+                    () => {
+                        const useMock = confirm("GPS Unavailable. Use mock location (Taipei 101)?");
+                        if (useMock) handleClockIn(25.0330, 121.5654, "Taipei 101 (Mock)");
+                        else setLocationName("GPS Error");
+                    }
+                );
+            } else {
+                const useMock = confirm("Geolocation not supported. Use mock location (Taipei 101)?");
+                if (useMock) handleClockIn(25.0330, 121.5654, "Taipei 101 (Mock)");
+                else setLocationName("GPS Error");
+            }
+        }
     };
 
     return (
@@ -59,14 +105,15 @@ export const ClockInWidget: React.FC = () => {
 
             <button 
                 onClick={toggleClock}
-                className={`w-full mt-4 py-3 rounded-xl flex items-center justify-center gap-2 font-bold text-white shadow-md transition-all active:scale-95 ${
+                disabled={loading}
+                className={`w-full mt-4 py-3 rounded-xl flex items-center justify-center gap-2 font-bold text-white shadow-md transition-all active:scale-95 disabled:opacity-50 ${
                     status === 'out' 
                     ? 'bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 shadow-indigo-200' 
                     : 'bg-gray-800 hover:bg-gray-900 shadow-gray-200'
                 }`}
             >
                 <ClockIcon className="w-5 h-5" />
-                {status === 'out' ? 'Clock In' : 'Clock Out'}
+                {loading ? 'Syncing...' : (status === 'out' ? 'Clock In' : 'Clock Out')}
             </button>
         </div>
     );

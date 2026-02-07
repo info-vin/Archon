@@ -9,9 +9,10 @@ interface AiUsageData {
 
 interface AiCollaborationWidgetProps {
     data: AiUsageData | null;
+    onClick?: () => void;
 }
 
-export const AiCollaborationWidget: React.FC<AiCollaborationWidgetProps> = ({ data }) => {
+export const AiCollaborationWidget: React.FC<AiCollaborationWidgetProps> = ({ data, onClick }) => {
     if (!data) return <div className="h-40 bg-gray-50 rounded-xl animate-pulse"></div>;
 
     const remaining = data.total_budget - data.total_used;
@@ -23,10 +24,13 @@ export const AiCollaborationWidget: React.FC<AiCollaborationWidgetProps> = ({ da
     const COLORS = ['#6366f1', '#e5e7eb']; // Indigo-500, Gray-200
 
     return (
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col md:flex-row items-center gap-8 min-h-[200px]">
+        <div 
+            onClick={onClick}
+            className={`bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col md:flex-row items-center gap-8 min-h-[200px] ${onClick ? 'cursor-pointer hover:border-indigo-200 hover:shadow-md transition-all group' : ''}`}
+        >
             <div className="flex-1">
-                <h3 className="text-lg font-bold text-gray-900 mb-1">Human-AI Collaboration</h3>
-                <p className="text-sm text-gray-500 mb-4">Resource allocation between human tasks and AI automation agents.</p>
+                <h3 className={`text-lg font-bold text-gray-900 mb-1 ${onClick ? 'group-hover:text-indigo-600' : ''}`}>Human-AI Collaboration</h3>
+                <p className="text-sm text-gray-500 mb-4">Resource allocation between human tasks and AI automation agents. {onClick && 'Click for details.'}</p>
                 
                 <div className="space-y-4">
                     <div>

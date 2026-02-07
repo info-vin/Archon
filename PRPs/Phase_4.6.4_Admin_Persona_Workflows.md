@@ -26,7 +26,7 @@ Admin 是 Archon 系統的創造者與守護者。他擁有上帝視角 (God Mod
 
 Admin 的 Agent 團隊不是用來處理業務，是用來「修系統」的。
 
-| Agent 名稱 | 職責 (Rol) | 核心能力 (Capability) | 如何節省 Admin 工時 (Efficiency) |
+| Agent 名稱 | 職責 (Role) | 核心能力 (Capability) | 如何節省 Admin 工時 (Efficiency) |
 | :--- | :--- | :--- | :--- |
 | **Clockwork (巡邏員)** | **主動巡邏 (L5)**<br>(分析 `archon_logs`) | **不需手動查 Log**。每小時自動掃描錯誤，使用 `LLMProviderService` 分析 Traceback，區分是「偶發網路問題」還是「代碼邏輯錯誤」。 |
 | **DevBot (工匠)** | **自癒執行 (L2)**<br>(生成 Hotfix) | **不需手寫修復代碼**。接收 Clockwork 的診斷，可透過 `ProposeChangeService` 建立 `proposed_changes` 紀錄 (Diff)。 |

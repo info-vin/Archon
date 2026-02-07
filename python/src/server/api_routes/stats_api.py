@@ -28,6 +28,12 @@ async def require_admin(user=Depends(get_current_user)):
         raise HTTPException(status_code=403, detail="Admin access required")
     return user
 
+async def require_manager_or_admin(user=Depends(get_current_user)):
+    role = (user.get("role") or "").lower()
+    if role not in ["manager", "admin", "system_admin"]:
+        raise HTTPException(status_code=403, detail="Manager or Admin access required")
+    return user
+
 @router.get("/system-overview", dependencies=[Depends(require_admin)])
 async def get_system_overview():
     """
@@ -165,16 +171,16 @@ async def get_member_performance():
             detail={"error": str(e)}
         ) from e
 
-@router.get("/ai-usage")
+@router.get("/ai-usage", dependencies=[Depends(require_manager_or_admin)])
 async def get_ai_usage():
     """
     Get AI token usage statistics.
     Hybrid approach:
     1. Returns legacy 'gemini_logs' estimated stats for Charlie (Team Management).
-    2. Returns real 'token_usage' cost stats for Admin (System Health).
+    2. Returns real 'token_usage' cost stats and details.
     """
     try:
-        logger.info("Fetching AI usage stats (Hybrid Mode)")
+        logger.info("Fetching AI usage stats with details")
         supabase = get_supabase_client()
 
         # --- Legacy Path (Estimated from logs) ---
@@ -194,24 +200,50 @@ async def get_ai_usage():
         ]
         breakdown.sort(key=lambda x: x["tokens"], reverse=True)
 
-        # --- New Path (Real Cost from TokenUsageService) ---
+        # --- New Path (Real Cost & Details) ---
         # Fetch daily stats for the last 30 days
         daily_costs = await TokenUsageService.get_daily_cost(days=30)
         total_real_cost = sum(d["cost"] for d in daily_costs)
 
-        # Flatten daily stats for "Usage by Model" view if needed
-        # For now, we just pass the total cost and daily breakdown
+        # Detailed usage (last 7 days)
+        since = (datetime.now(UTC) - timedelta(days=7)).isoformat()
+        usage_res = supabase.table("token_usage")\
+            .select("*")\
+            .gt("created_at", since)\
+            .order("created_at", desc=True)\
+            .limit(100).execute()
+
+        usage_data = usage_res.data or []
+        user_ids = list({row["user_id"] for row in usage_data if row.get("user_id")})
+
+        profiles_map = {}
+        if user_ids:
+            prof_res = supabase.table("profiles").select("id, name, email")\
+                .in_("id", user_ids).execute()
+            profiles_map = {p["id"]: p for p in (prof_res.data or [])}
+
+        details = []
+        for row in usage_data:
+            user_id = row.get("user_id")
+            profile = profiles_map.get(str(user_id)) if user_id else None
+            details.append({
+                "id": row["id"],
+                "timestamp": row["created_at"],
+                "source_type": "Human" if profile else "Machine",
+                "user_name": profile["name"] if profile else f"Agent ({row['model']})",
+                "model": row["model"],
+                "tokens": row["total_tokens"],
+                "cost": float(row["cost_usd"])
+            })
 
         return {
-            # Legacy Fields (Backwards Compatible)
             "total_budget": 100000,
             "total_used": estimated_used,
             "usage_percentage": round((estimated_used / 100000) * 100, 1),
             "usage_by_user": breakdown,
-
-            # New Fields (For Admin Dashboard)
             "total_cost_usd": round(total_real_cost, 4),
             "daily_costs": daily_costs,
+            "details": details,
             "is_real_data": True
         }
 
@@ -225,5 +257,6 @@ async def get_ai_usage():
             "usage_by_user": [],
             "total_cost_usd": 0.0,
             "daily_costs": [],
+            "details": [],
             "error": str(e)
         }

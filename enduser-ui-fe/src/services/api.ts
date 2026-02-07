@@ -667,6 +667,17 @@ const supabaseApi = {
     return response.json();
   },
 
+  async getTokenUsageDetails(days: number = 7): Promise<any[]> {
+    const response = await fetch(`/api/stats/token-usage/details?days=${days}`, {
+        headers: await this._getHeaders()
+    });
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.detail || 'Failed to fetch token usage details.');
+    }
+    return response.json();
+  },
+
   async searchJobs(keyword: string): Promise<JobData[]> {
     const response = await fetch(`/api/marketing/jobs?keyword=${encodeURIComponent(keyword)}`, { headers: await this._getHeaders() });
     if (!response.ok) throw new Error('Failed to search jobs');
@@ -792,6 +803,36 @@ const supabaseApi = {
         throw new Error(error.detail || 'Failed to create visit log');
     }
     return response.json();
+  },
+
+  // --- ATTENDANCE API (Mobile Ops) ---
+  async getAttendanceStatus(): Promise<{ status: string; clock_in_time: string | null; location: string | null }> {
+      const response = await fetch('/api/visit-logs/attendance/status', { headers: await this._getHeaders() });
+      if (!response.ok) throw new Error('Failed to fetch attendance status');
+      return response.json();
+  },
+
+  async clockIn(data: { latitude?: number; longitude?: number; location_name?: string; status: string }): Promise<void> {
+      const response = await fetch('/api/visit-logs/attendance/clock-in', {
+          method: 'POST',
+          headers: await this._getHeaders(),
+          body: JSON.stringify(data)
+      });
+      if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.detail || 'Clock In failed');
+      }
+  },
+
+  async clockOut(): Promise<void> {
+      const response = await fetch('/api/visit-logs/attendance/clock-out', {
+          method: 'POST',
+          headers: await this._getHeaders()
+      });
+      if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.detail || 'Clock Out failed');
+      }
   },
 
   async getEthicsEvents(): Promise<any[]> {

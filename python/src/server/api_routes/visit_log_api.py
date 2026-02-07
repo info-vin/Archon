@@ -145,7 +145,8 @@ async def _transcribe_with_gemini(
 async def create_visit_log(
     customer_id: str | None = Form(None), lead_id: str | None = Form(None),
     latitude: float | None = Form(None), longitude: float | None = Form(None),
-    location_address: str | None = Form(None), audio_file: UploadFile = File(None),
+    location_address: str | None = Form(None), visit_type: str = Form("Client Meeting"),
+    audio_file: UploadFile = File(None),
     current_user: dict = Depends(get_current_user)
 ):
     user_id = current_user.get("id")
@@ -173,6 +174,7 @@ async def create_visit_log(
         res = supabase.table("visit_logs").insert({
             "user_id": user_id, "customer_id": customer_id, "lead_id": lead_id,
             "latitude": latitude, "longitude": longitude, "location_address": location_address,
+            "visit_type": visit_type,
             "voice_transcript": transcript, "summary": summary, "follow_up_tasks": tasks
         }).execute()
         created_log = res.data[0]
@@ -184,8 +186,8 @@ async def create_visit_log(
             p_id = proj.data[0]["id"] if proj.data else None
             if p_id:
                 await task_service.create_task(
-                    project_id=p_id, title=f"[Field Ops] 拜訪摘要: {summary[:30]}",
-                    description=f"**逐字稿:**\n{transcript}\n\n**摘要:**\n{summary}", assignee_id=user_id
+                    project_id=p_id, title=f"[{visit_type}] 拜訪摘要: {summary[:30]}",
+                    description=f"**類型:** {visit_type}\n**逐字稿:**\n{transcript}\n\n**摘要:**\n{summary}", assignee_id=user_id
                 )
         except Exception as te:
             logger.warning(f"Task creation skipped: {te}")
@@ -200,3 +202,94 @@ async def get_user_visit_logs(user_id: str, current_user: dict = Depends(get_cur
     supabase = get_supabase_client()
     res = supabase.table("visit_logs").select("*").eq("user_id", user_id).order("created_at", desc=True).execute()
     return [VisitLogResponse(id=i["id"], summary=i.get("summary", ""), voice_transcript=i.get("voice_transcript", ""), follow_up_tasks=i.get("follow_up_tasks", [])) for i in res.data]
+
+# --- Attendance Endpoints ---
+
+class ClockInRequest(BaseModel):
+    latitude: float | None = None
+    longitude: float | None = None
+    location_name: str | None = None
+    status: str = "PRESENT"
+
+class AttendanceResponse(BaseModel):
+    status: str
+    clock_in_time: str | None
+    location: str | None
+
+@router.get("/attendance/status", response_model=AttendanceResponse)
+async def get_attendance_status(current_user: dict = Depends(get_current_user)):
+    user_id = current_user.get("id")
+    supabase = get_supabase_client()
+
+    # Get latest log
+    res = supabase.table("attendance_logs")\
+        .select("*")\
+        .eq("user_id", user_id)\
+        .order("created_at", desc=True)\
+        .limit(1)\
+        .execute()
+
+    if not res.data:
+        return AttendanceResponse(status="OFF_WORK", clock_in_time=None, location=None)
+
+    latest = res.data[0]
+    # If clock_out_time is null, they are currently clocked in
+    if latest.get("clock_out_time") is None:
+        return AttendanceResponse(
+            status=latest.get("status", "PRESENT"),
+            clock_in_time=latest.get("clock_in_time"),
+            location=latest.get("location_name")
+        )
+
+    return AttendanceResponse(status="OFF_WORK", clock_in_time=None, location=None)
+
+@router.post("/attendance/clock-in")
+async def clock_in(req: ClockInRequest, current_user: dict = Depends(get_current_user)):
+    user_id = current_user.get("id")
+    supabase = get_supabase_client()
+
+    # Check if already clocked in
+    existing = supabase.table("attendance_logs")\
+        .select("id")\
+        .eq("user_id", user_id)\
+        .is_("clock_out_time", "null")\
+        .execute()
+
+    if existing.data:
+        raise HTTPException(status_code=400, detail="Already clocked in")
+
+    supabase.table("attendance_logs").insert({
+        "user_id": user_id,
+        "latitude": req.latitude,
+        "longitude": req.longitude,
+        "location_name": req.location_name,
+        "status": req.status
+    }).execute()
+    return {"message": "Clocked in successfully"}
+
+@router.post("/attendance/clock-out")
+async def clock_out(current_user: dict = Depends(get_current_user)):
+    user_id = current_user.get("id")
+    supabase = get_supabase_client()
+
+    # Find active session
+    active = supabase.table("attendance_logs")\
+        .select("id")\
+        .eq("user_id", user_id)\
+        .is_("clock_out_time", "null")\
+        .order("created_at", desc=True)\
+        .limit(1)\
+        .execute()
+
+    if not active.data:
+        raise HTTPException(status_code=400, detail="Not clocked in")
+
+    from datetime import datetime
+    now = datetime.now().isoformat()
+
+    supabase.table("attendance_logs")\
+        .update({"clock_out_time": now})\
+        .eq("id", active.data[0]["id"])\
+        .execute()
+
+    return {"message": "Clocked out successfully"}

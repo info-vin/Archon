@@ -64,13 +64,12 @@ export const VisitLogModal: React.FC<VisitLogModalProps> = ({ onClose, onSuccess
         setLoading(true);
         try {
             const formData = new FormData();
-            formData.append('visit_type', type);
+            formData.append('visit_type', type); // Ensure type is passed
             if (location) {
                 formData.append('latitude', location.lat.toString());
                 formData.append('longitude', location.lng.toString());
             }
             
-            // Append audio if exists
             // Append audio if exists
             if (audioFile) {
                 formData.append('audio_file', audioFile, audioFile.name);
@@ -144,6 +143,10 @@ export const VisitLogModal: React.FC<VisitLogModalProps> = ({ onClose, onSuccess
 
                 {step === 'details' && (
                     <div className="space-y-4">
+                        <div className="bg-indigo-50 p-3 rounded-lg border border-indigo-100 flex items-center gap-2 text-indigo-700 font-medium">
+                            <span className="bg-indigo-600 text-white text-xs px-2 py-1 rounded-full">Type</span>
+                            {type}
+                        </div>
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>
                             <div className="flex items-center gap-2">
