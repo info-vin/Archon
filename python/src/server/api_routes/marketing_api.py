@@ -777,12 +777,12 @@ async def draft_blog_post(request: DraftBlogRequest, current_user: dict = Depend
 
         # Use Database-driven prompt with hardcoded fallback
         system_prompt = prompt_service.get_prompt("BLOG_DRAFT", BLOG_DRAFT_SYSTEM_PROMPT)
-        
+
         # 2.1 Language Enforcement Logic
         # Detect Traditional Chinese characters in the topic
         import re
         is_tc = bool(re.search(r'[\u4e00-\u9fff]', request.topic))
-        
+
         lang_instruction = ""
         if is_tc:
              lang_instruction = "\n\nIMPORTANT: The user has provided a topic in Traditional Chinese. You MUST write the entire blog post in Traditional Chinese (Taiwan, zh-TW)."
@@ -851,7 +851,8 @@ async def draft_blog_post(request: DraftBlogRequest, current_user: dict = Depend
                     )
                 )
                 import json
-                result = json.loads(response.text)
+                fallback_text = response.text or "{}"
+                result = json.loads(fallback_text)
                 model_name = "gemini-1.5-pro (fallback)"
 
             except Exception:
@@ -976,9 +977,12 @@ async def nana_banana_proxy(
         except Exception as log_err:
             logger.warning(f"Failed to log image usage: {log_err}")
 
+        # Convert bytes to string if needed for JSON response
+        image_data_str = b64_image.decode('utf-8') if isinstance(b64_image, bytes) else str(b64_image)
+
         return {
             "status": "success",
-            "image_url": f"data:{mime_type};base64,{b64_image}"
+            "image_url": f"data:{mime_type};base64,{image_data_str}"
         }
 
     except Exception as e:

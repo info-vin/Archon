@@ -85,7 +85,7 @@ async def discover_models_endpoint(
     instance_urls: list[str] = Query(..., description="Ollama instance URLs"),
     include_capabilities: bool = Query(True, description="Include capability detection"),
     fetch_details: bool = Query(False, description="Fetch comprehensive model details via /api/show"),
-    background_tasks: BackgroundTasks = None,  # type: ignore # Keep for potential future use
+    background_tasks: BackgroundTasks = None,  # Keep for potential future use
 ) -> ModelDiscoveryResponse:
     """
     Discover models from multiple Ollama instances with capability detection.
@@ -1079,10 +1079,10 @@ async def discover_models_with_real_details(request: ModelDiscoveryAndStoreReque
                                 size_mb=size_mb,
                                 context_length=current_context or max_context,
                                 parameters=param_string,
-                                capabilities=capabilities if capabilities else [],
-                                archon_compatibility=compatibility['level'],
-                                compatibility_features=compatibility['features'],
-                                limitations=compatibility['limitations'],
+                                capabilities=list(capabilities) if capabilities else [],
+                                archon_compatibility=str(compatibility['level']),
+                                compatibility_features=list(compatibility['features']),
+                                limitations=list(compatibility['limitations']),
                                 performance_rating=None,
                                 description=None,
                                 last_updated=datetime.now().isoformat(),

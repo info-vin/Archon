@@ -29,8 +29,8 @@
 | **BUG-031** | 🐛 Bug | **System** | **DB/Reset**| `make db-reset` 失敗。已補齊 `RESET_DB.sql` 遺漏的新資料表。 | High | 🟢 已修復 |
 | **BUG-032** | 🐛 Bug | **System** | **DB/Seed** | `seed_mock_data.sql` 報錯。已透過完整 DB Reset 修復 Schema 狀態。 | High | 🟢 已修復 |
 | **BUG-034** | 🐛 Bug | **Tech** | **Agent** | `test_run_command_failure_triggers_healing` 失敗。原因：新實作的 DevBot Fallback 邏輯改變了錯誤輸出的格式，導致既有測試斷言失效。 | Medium | 🟢 已修復 |
-| **BUG-028** | 🐛 Bug | **Bob** | **Magic** | 生成失敗 (404)。已強制 v1beta 端點並實作 API 層 Mock Fallback。 | High | 🔵 待驗收 |
-| **BUG-029** | 🐛 Bug | **Bob** | **Image** | 圖片失敗。已實作針對 403/429 錯誤的自動 Fallback 邏輯與系統警報日誌。 | High | 🔵 待驗收 |
+| **BUG-028** | 🐛 Bug | **Bob** | **UI/Magic** | "Prompt Inspector" missing. Fixed: restored as overlay sidebar + ghost style button. | High | 🟢 已修復 |
+| **BUG-029** | 🐛 Bug | **Bob** | **UI/Scroll** | Triple scrollbars on Brand Page. Fixed: `h-full` + `overflow-hidden` logic. | High | 🟢 已修復 |
 | **GAP-009** | 🔧 Gap | **Alice** | **Voice** | 語音日誌自動轉工單尚未實作。已實作前端模擬按鈕與語音上傳介面 (Mock Strategy) 及後端整合。 | Medium | 🟢 已修復 |
 | **GAP-010** | 🔧 Gap | **Alice** | **GPS** | On-Demand GPS 待驗收。已於 Attendance Widget 與 Visit Log 實作 Mock Fallback (Taipei 101)。 | Low | 🟢 已修復 |
 | **UX-012** | 🎨 Style | **All** | **Buttons** | 5173 按鈕風格對齊 3737 Style Guide。已實作通用 `Button` 組件。 | Low | 🟢 已修復 |
@@ -53,6 +53,7 @@
 | **GAP-020** | 🔧 Gap | **Admin** | **RBAC** | **精細權限下放 (Delegation)**。已打通 /admin 路由給 Manager，並依權限動態過濾標籤頁。 | High | 🟢 已修復 |
 | **GAP-021** | 🔧 Gap | **Admin** | **Config** | **配置持久化 (Persistence)**。系統設定全面存儲於資料庫 archon_settings，支持熱加載。 | Medium | 🟢 已修復 |
 | **GAP-022** | 🔧 Gap | **Admin** | **Audit** | **變更稽核日誌 (Audit Trail)**。已實作「變更即審計」：Manager 的設定變更自動寫入版本稽核表。 | Medium | 🟢 已修復 |
+| **GAP-023** | 🔧 Gap | **Charlie** | **Return** | **退件理由介面 (Rejection Feedback)**。Charlie 退件時缺乏輸入理由的介面，Bob 無法得知退件原因。需新增 DB 欄位 `review_notes` 與前端 Feedback Modal。 | Medium | 🔴 待處理 |
 
 ---
 

@@ -177,14 +177,7 @@ export const ContentWorkbench: React.FC<ContentWorkbenchProps> = ({
                       </div>
                     </section>
 
-                    <div className="pt-8 border-t dark:border-slate-800 text-center">
-                      <button 
-                        onClick={() => setActiveTab('editor')}
-                        className="px-10 py-4 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-2xl font-black text-sm hover:scale-105 active:scale-95 transition-all shadow-xl"
-                      >
-                        Launch Magic Editor →
-                      </button>
-                    </div>
+
                   </>
                 )}
               </div>

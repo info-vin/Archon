@@ -71,7 +71,6 @@ async def get_agent_credentials(request: Request) -> dict[str, Any]:
 
     try:
         # Get credentials needed by agents
-        client_host = request.client.host if request.client is not None else "unknown"
         credentials = {
             # OpenAI credentials
             "OPENAI_API_KEY": await credential_service.get_credential(
@@ -106,7 +105,8 @@ async def get_agent_credentials(request: Request) -> dict[str, Any]:
         # Filter out None values
         credentials = {k: v for k, v in credentials.items() if v is not None}
 
-        logger.info(f"Provided credentials to agents service from {request.client.host}")
+        client_host = request.client.host if request.client is not None else "unknown"
+        logger.info(f"Provided credentials to agents service from {client_host}")
         return credentials
 
     except Exception as e:
@@ -128,7 +128,6 @@ async def get_mcp_credentials(request: Request) -> dict[str, Any]:
         raise HTTPException(status_code=403, detail="Access forbidden")
 
     try:
-        client_host = request.client.host if request.client else "unknown"
         credentials = {
             # MCP might need some credentials in the future
             "LOG_LEVEL": await credential_service.get_credential("LOG_LEVEL", default="INFO"),

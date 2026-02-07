@@ -135,10 +135,11 @@ async def get_migration_history(response: Response, if_none_match: str | None = 
             # Client needs new data
             response.headers["ETag"] = f'"{etag}"'
             response.headers["Cache-Control"] = "no-cache, must-revalidate"
+            from typing import cast
             return MigrationHistoryResponse(
-                migrations=history["migrations"],
-                total_count=history["total_count"],
-                current_version=history["current_version"]
+                migrations=cast(list[MigrationRecord], history["migrations"]),
+                total_count=cast(int, history["total_count"]),
+                current_version=cast(str, history["current_version"])
             )
 
     except Exception as e:

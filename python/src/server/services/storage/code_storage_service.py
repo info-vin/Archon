@@ -584,7 +584,12 @@ Format your response as JSON:
             response_format={"type": "json_object"},
         )
 
-        response_content = response.choices[0].message.content.strip()
+        raw_content = response.choices[0].message.content
+        response_content = raw_content.strip() if raw_content is not None else ""
+
+        if not response_content:
+             raise ValueError("LLM returned empty content")
+
         search_logger.debug(f"OpenAI API response: {repr(response_content[:200])}...")
 
         result = json.loads(response_content)

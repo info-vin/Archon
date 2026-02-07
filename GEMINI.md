@@ -88,6 +88,16 @@
 
 # 第三章：近期工作日誌 (Recent Journal Entries)
 
+### 2026-02-07: Zero-Mypy achieved & Charlie RBAC Hardening
+*   **型別安全革命 (Zero-Mypy)**:
+    *   **Agent 泛型化**: 重構 `BaseAgent` 及其子類別 (`Summary`, `Rag`, `Document`) 的泛型與屬性定義，解決 `pydantic-ai` 介面不匹配問題。
+    *   **安全性存取**: 修復全系統 `Request.client` 與 `Optional` 欄位的 None-check，並透過 `# type: ignore[no-any-return]` 解決複雜泛型推導限制。
+    *   **品質達標**: 清除全部 52 個 `mypy` 錯誤，達成後端 100% 型別通過；前端持續維持 `tsc --noEmit` 零錯誤。
+*   **核心功能落地**:
+    *   **權限導覽**: 實作 `MANAGER` 角色在 5173 UI 的行政入口，並動態過濾無權限之標籤頁 (如 Versions)。
+    *   **智慧提取**: 完成 GAP-018 提取模板執行功能，並確保變更自動寫入審計路徑。
+*   **基礎設施**: 修正 `logfire_config.py` 選配匯入衝突與 `ollama_api.py` 的 FastAPI 依賴注入正確性。
+
 ### 2026-02-06: Admin Persona Realization & RBAC Hardening
 *   **核心功能落地**:
     *   **後端**: 修復 `TokenUsageService` 聚合邏輯，於 `stats_api.py` 實作 Hybrid 統計 (USD 成本 + Token 估算)。

@@ -35,14 +35,23 @@ class SchedulerService:
         if not self._scheduler:
             return
 
-        # Job 1: System Heartbeat Probe (Every 6 hours)
+        # Job 1: System Heartbeat Probe (Every 24 hours)
         self._scheduler.add_job(
             self._run_system_probe,
-            trigger=IntervalTrigger(hours=6),
+            trigger=IntervalTrigger(hours=24),
             id="system_probe",
             replace_existing=True
         )
-        logger.info("✅ Scheduled Job: System Probe (Every 6 hours)")
+        logger.info("✅ Scheduled Job: System Probe (Every 24 hours)")
+
+        # Job 1.5: System Probe Cleanup (Every 24 hours) - Retention Policy
+        self._scheduler.add_job(
+            self._cleanup_system_probes,
+            trigger=IntervalTrigger(hours=24),
+            id="system_probe_cleanup",
+            replace_existing=True
+        )
+        logger.info("✅ Scheduled Job: System Probe Cleanup (Daily)")
 
         # Job 2: The Accountant - Token Analysis (Every 24 hours)
         self._scheduler.add_job(
@@ -329,5 +338,34 @@ class SchedulerService:
 
         except Exception as e:
             logger.error(f"💥 Clockwork: Business Sentinel Failed: {e}", exc_info=True)
+
+    async def _cleanup_system_probes(self):
+        """
+        Retention Policy: Deletes System Probe data older than 48 hours to prevent unwanted KB bloat.
+        """
+        logger.info("🧹 Clockwork: Running System Probe Cleanup...")
+        try:
+            from ..utils import get_supabase_client
+            supabase = get_supabase_client()
+
+            # Calculate cutoff time (48 hours ago)
+            cutoff_time = (datetime.now(UTC) - timedelta(hours=48)).isoformat()
+
+            # 1. Clean Leads
+            res = supabase.table("leads").delete().eq("company_name", "System Probe").lt("created_at", cutoff_time).execute()
+            deleted_leads = len(res.data) if res.data else 0
+
+            # 2. Clean Knowledge Base (Integrity Checks)
+            # Integrity Check items usually have title="Integrity Check" or content pattern
+            res_kb = supabase.table("archon_knowledge_base").delete().eq("title", "Integrity Check").lt("created_at", cutoff_time).execute()
+            deleted_kb = len(res_kb.data) if res_kb.data else 0
+
+            if deleted_leads > 0 or deleted_kb > 0:
+                logger.info(f"✅ Clockwork: Cleanup complete. Deleted {deleted_leads} leads and {deleted_kb} knowledge items.")
+            else:
+                logger.info("✅ Clockwork: Cleanup complete. No expired probe data found.")
+
+        except Exception as e:
+            logger.error(f"💥 Clockwork: System Probe Cleanup Failed: {e}")
 
 scheduler_service = SchedulerService()

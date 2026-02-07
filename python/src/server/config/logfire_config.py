@@ -21,14 +21,12 @@ from contextlib import contextmanager
 from typing import Any
 
 # Try to import logfire (optional dependency)
-LOGFIRE_AVAILABLE = False
-logfire: Any = None
-
 try:
     import logfire
     LOGFIRE_AVAILABLE = True
 except ImportError:
-    pass
+    logfire = None
+    LOGFIRE_AVAILABLE = False
 
 # Global state
 _logfire_configured = False
@@ -70,7 +68,7 @@ def setup_logfire(
         return
 
     _logfire_enabled = is_logfire_enabled()
-    handlers = []
+    handlers: list[logging.Handler] = []
 
     if _logfire_enabled and logfire:
         # Get logfire token

@@ -7,7 +7,7 @@ Follows 2025 best practices for simple, automatic instrumentation.
 
 import time
 from collections.abc import Callable
-from typing import Any, cast
+from typing import cast
 
 from fastapi import Request, Response
 from fastapi.routing import APIRoute
@@ -32,20 +32,20 @@ class LoggingMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
         # Skip logging for certain paths
         if request.url.path in self.SKIP_PATHS:
-            return await call_next(request)
+            return cast(Response, await call_next(request))
 
         # Record start time
         start_time = time.time()
 
         # Log the request
+        client_host = request.client.host if request.client is not None else "unknown"
         self.logger.info(
-            f"HTTP Request | method={request.method} | path={request.url.path} | client={request.client.host if request.client else 'unknown'}"
+            f"HTTP Request | method={request.method} | path={request.url.path} | client={client_host}"
         )
 
         try:
             # Process the request
-            response = await call_next(request)
-            response = cast(Response, response)
+            response = cast(Response, await call_next(request))
 
             # Calculate duration
             duration = time.time() - start_time
