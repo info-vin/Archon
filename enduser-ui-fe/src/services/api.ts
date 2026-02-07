@@ -781,6 +781,19 @@ const supabaseApi = {
     if (!response.ok) throw new Error('Failed to delete schema');
   },
 
+  async runExtraction(url: string, schemaId: string): Promise<any> {
+    const response = await fetch('/api/extraction/run', {
+        method: 'POST',
+        headers: await this._getHeaders(),
+        body: JSON.stringify({ url, schema_id: schemaId })
+    });
+    if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.detail || 'Extraction failed to start');
+    }
+    return response.json();
+  },
+
   async getVisitLogs(userId?: string): Promise<any[]> {
     const query = userId ? `?user_id=${userId}` : '';
     const response = await fetch(`/api/visit-logs/${query}`, { headers: await this._getHeaders() });

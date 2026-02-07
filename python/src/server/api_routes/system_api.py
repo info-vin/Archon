@@ -12,10 +12,23 @@ async def require_system_admin(user=Depends(get_current_user)):
     Dependency to ensure the user has SYSTEM_ADMIN role.
     """
     # Use string comparison as EmployeeRole enum is not yet standardized in backend
-    if user.get("role") != "system_admin":
+    role = (user.get("role") or "").lower()
+    if role not in ["system_admin", "admin"]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Access Denied: Requires System Administrator privileges."
+        )
+    return user
+
+async def require_manager_or_admin(user=Depends(get_current_user)):
+    """
+    Dependency to ensure the user has at least MANAGER role.
+    """
+    role = (user.get("role") or "").lower()
+    if role not in ["manager", "admin", "system_admin"]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access Denied: Requires Manager or Admin privileges."
         )
     return user
 
@@ -28,7 +41,7 @@ async def get_rag_health_check() -> dict[str, Any]:
     service = HealthService()
     return await service.check_rag_integrity()
 
-@router.get("/settings", dependencies=[Depends(require_system_admin)])
+@router.get("/settings", dependencies=[Depends(require_manager_or_admin)])
 async def list_system_settings(category: str | None = None) -> list[dict[str, Any]]:
     """
     Lists system settings from the database.
@@ -41,27 +54,108 @@ async def list_system_settings(category: str | None = None) -> list[dict[str, An
     response = query.order("key").execute()
     return response.data or []
 
-@router.patch("/settings/{key}", dependencies=[Depends(require_system_admin)])
-async def update_system_setting(key: str, request: dict[str, Any]) -> dict[str, Any]:
+@router.patch("/settings/{key}", dependencies=[Depends(require_manager_or_admin)])
+
+async def update_system_setting(
+
+    key: str,
+
+    request: dict[str, Any],
+
+    current_user: dict = Depends(get_current_user)
+
+) -> dict[str, Any]:
+
     """
-    Updates a specific system setting.
+
+    Updates a specific system setting and records the change in the audit trail.
+
     """
+
     from ..utils import get_supabase_client
 
-    value = request.get("value")
+    supabase = get_supabase_client()
+
+
+
+    new_value = request.get("value")
+
     description = request.get("description")
 
-    if value is None:
+
+
+    if new_value is None:
+
         raise HTTPException(status_code=400, detail="Setting value is required")
 
-    supabase = get_supabase_client()
-    update_data = {"value": str(value), "updated_at": "now()"}
+
+
+    # 1. Fetch old value for auditing
+
+    old_res = supabase.table("archon_settings").select("value").eq("key", key).execute()
+
+    old_value = old_res.data[0]["value"] if old_res.data else "N/A"
+
+
+
+    # 2. Perform Update
+
+    update_data = {"value": str(new_value), "updated_at": "now()"}
+
     if description:
+
         update_data["description"] = description
+
+
 
     response = supabase.table("archon_settings").update(update_data).eq("key", key).execute()
 
+
+
     if not response.data:
+
         raise HTTPException(status_code=404, detail=f"Setting '{key}' not found")
 
+
+
+    # 3. Create Audit Trail Entry (GAP-022)
+
+    try:
+
+        user_name = current_user.get("name", current_user.get("email", "Unknown"))
+
+        audit_payload = {
+
+            "document_id": f"setting:{key}",
+
+            "created_by": user_name,
+
+            "change_type": "UPDATE",
+
+            "field_name": key,
+
+            "old_value": str(old_value),
+
+            "new_value": str(new_value),
+
+            "change_summary": f"System setting '{key}' updated by {user_name}",
+
+            "version_number": 1
+
+        }
+
+        supabase.table("archon_document_versions").insert(audit_payload).execute()
+
+    except Exception as audit_err:
+
+        from ..config.logfire_config import get_logger
+
+        logger = get_logger(__name__)
+
+        logger.warning(f"Audit logging failed for setting {key}: {audit_err}")
+
+
+
     return dict(response.data[0])
+
+

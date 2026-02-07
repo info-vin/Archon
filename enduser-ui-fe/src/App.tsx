@@ -172,8 +172,10 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
 };
 
 const AdminRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-    const { isAdmin } = useAuth();
-    return isAdmin ? <>{children}</> : <Navigate to="/dashboard" />;
+    const { user, isAdmin } = useAuth();
+    const role = user?.role?.toLowerCase();
+    const isManagerOrAdmin = isAdmin || role === 'manager' || role === EmployeeRole.MANAGER;
+    return isManagerOrAdmin ? <>{children}</> : <Navigate to="/dashboard" />;
 };
 
 const ManagerRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {

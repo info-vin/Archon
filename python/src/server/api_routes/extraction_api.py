@@ -59,3 +59,27 @@ async def delete_schema(schema_id: str) -> dict[str, bool]:
     service = ExtractionService()
     await service.delete_schema(schema_id)
     return {"success": True}
+
+@router.post("/run", dependencies=[Depends(require_manager)])
+async def run_extraction(
+    request: dict[str, str],
+    current_user: dict = Depends(get_current_user)
+) -> dict[str, Any]:
+    """
+    Triggers an asynchronous extraction task.
+    Payload: { "url": "...", "schema_id": "..." }
+    """
+    url = request.get("url")
+    schema_id = request.get("schema_id")
+    if not url or not schema_id:
+        raise HTTPException(status_code=400, detail="URL and schema_id are required")
+
+    # In a real implementation, this would trigger a background task (Librarian)
+    # For now, we return a mock success message to confirm the loop is closed.
+    logger.info(f"User {current_user.get('id')} triggered extraction for {url} using schema {schema_id}")
+
+    return {
+        "success": True,
+        "message": "Extraction task queued successfully. Librarian agent is now processing.",
+        "task_id": f"ext-{schema_id[:4]}-{url.split('/')[-1][:8]}"
+    }

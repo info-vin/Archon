@@ -397,31 +397,31 @@ const BrandPage: React.FC = () => {
                     {viewMode === 'dashboard' ? (
                         <div className="p-6 max-w-7xl mx-auto space-y-8 font-sans">
                             {/* Market Insight Section (Moved Top for UX-009) */}
-                            <div className="bg-indigo-900 text-white p-6 rounded-2xl shadow-xl space-y-6 relative overflow-hidden w-full">
+                            <div className="bg-purple-50 text-gray-900 p-6 rounded-2xl shadow-xl space-y-6 relative overflow-hidden w-full border border-purple-100">
                                 <div className="relative z-10">
-                                    <h2 className="text-xl font-bold flex items-center gap-2">
-                                        <TrendingUpIcon className="w-5 h-5 text-indigo-300" />
+                                    <h2 className="text-xl font-bold flex items-center gap-2 text-purple-900">
+                                        <TrendingUpIcon className="w-5 h-5 text-purple-600" />
                                         Market Intelligence 2.0
                                     </h2>
-                                    <p className="text-indigo-200 text-xs mt-1">Real-time keyword trends & demand flow</p>
+                                    <p className="text-purple-700 text-xs mt-1">Real-time keyword trends & demand flow</p>
 
                                     {trendsData ? (
                                         <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-8">
-                                            <div className="bg-white/5 p-4 rounded-xl border border-white/10 backdrop-blur-sm">
-                                                <h3 className="text-sm font-bold text-indigo-200 mb-4 uppercase tracking-wider">Rising Topics (Monthly)</h3>
+                                            <div className="bg-white p-4 rounded-xl border border-purple-100 shadow-sm">
+                                                <h3 className="text-sm font-bold text-purple-800 mb-4 uppercase tracking-wider">Rising Topics (Monthly)</h3>
                                                 <div className="-ml-4">
                                                     <TrendLineChart data={trendsData.keyword_growth} />
                                                 </div>
                                             </div>
-                                            <div className="bg-white/5 p-4 rounded-xl border border-white/10 backdrop-blur-sm">
-                                                <h3 className="text-sm font-bold text-indigo-200 mb-4 uppercase tracking-wider">Demand Flow</h3>
+                                            <div className="bg-white p-4 rounded-xl border border-purple-100 shadow-sm">
+                                                <h3 className="text-sm font-bold text-purple-800 mb-4 uppercase tracking-wider">Demand Flow</h3>
                                                 <SankeyDiagram data={trendsData.sankey_flow} />
                                             </div>
                                         </div>
                                     ) : (
                                         <div className="animate-pulse grid grid-cols-2 gap-8 mt-8">
-                                            <div className="h-40 bg-white/5 rounded-xl"></div>
-                                            <div className="h-40 bg-white/5 rounded-xl"></div>
+                                            <div className="h-40 bg-purple-100 rounded-xl"></div>
+                                            <div className="h-40 bg-purple-100 rounded-xl"></div>
                                         </div>
                                     )}
                                 </div>

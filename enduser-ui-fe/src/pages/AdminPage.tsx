@@ -9,34 +9,42 @@ import { SystemHealthDashboard } from '../features/admin/components/SystemHealth
 
 
 const AdminPage: React.FC = () => {
-  const [activeTab, setActiveTab] = useState('health'); // Default to System Health for Admin Persona
+  const { user, isAdmin } = useAuth();
+  const role = user?.role?.toLowerCase();
+  const isOnlyManager = !isAdmin && (role === 'manager');
+  
+  const [activeTab, setActiveTab] = useState(isOnlyManager ? 'settings' : 'health');
 
   return (
     <div className="flex-1 flex flex-col h-full overflow-hidden p-6 bg-background text-foreground">
       <header className="mb-6">
-        <h1 className="text-3xl font-bold">Admin Control Center</h1>
-        <p className="text-muted-foreground">System-wide configuration and personnel management for L1 Administrators.</p>
+        <h1 className="text-3xl font-bold">{isOnlyManager ? 'Manager Control Center' : 'Admin Control Center'}</h1>
+        <p className="text-muted-foreground">
+          {isOnlyManager 
+            ? 'Configure extraction workflows and team-level parameters.' 
+            : 'System-wide configuration and personnel management for L1 Administrators.'}
+        </p>
       </header>
 
       <div className="border-b border-border mb-6">
         <nav className="-mb-px flex space-x-8 overflow-x-auto" aria-label="Tabs">
-          <TabButton title="System Health" isActive={activeTab === 'health'} onClick={() => setActiveTab('health')} />
-          <TabButton title="User Management" isActive={activeTab === 'users'} onClick={() => setActiveTab('users')} />
+          {!isOnlyManager && <TabButton title="System Health" isActive={activeTab === 'health'} onClick={() => setActiveTab('health')} />}
+          {!isOnlyManager && <TabButton title="User Management" isActive={activeTab === 'users'} onClick={() => setActiveTab('users')} />}
           <TabButton title="System Settings" isActive={activeTab === 'settings'} onClick={() => setActiveTab('settings')} />
           <TabButton title="Data Extraction" isActive={activeTab === 'extraction'} onClick={() => setActiveTab('extraction')} />
-          <TabButton title="System Prompts" isActive={activeTab === 'prompts'} onClick={() => setActiveTab('prompts')} />
-          <TabButton title="Blog Management" isActive={activeTab === 'blog'} onClick={() => setActiveTab('blog')} />
+          {!isOnlyManager && <TabButton title="System Prompts" isActive={activeTab === 'prompts'} onClick={() => setActiveTab('prompts')} />}
+          {!isOnlyManager && <TabButton title="Blog Management" isActive={activeTab === 'blog'} onClick={() => setActiveTab('blog')} />}
           <TabButton title="Document Versions" isActive={activeTab === 'versions'} onClick={() => setActiveTab('versions')} />
         </nav>
       </div>
 
       <div className="flex-1 overflow-auto">
-        {activeTab === 'health' && <SystemHealthDashboard />}
-        {activeTab === 'users' && <IdentityMatrix />}
+        {activeTab === 'health' && !isOnlyManager && <SystemHealthDashboard />}
+        {activeTab === 'users' && !isOnlyManager && <IdentityMatrix />}
         {activeTab === 'settings' && <SystemSettings />}
         {activeTab === 'extraction' && <ExtractionManager />}
-        {activeTab === 'prompts' && <PromptManagement />}
-        {activeTab === 'blog' && <BlogManagement />}
+        {activeTab === 'prompts' && !isOnlyManager && <PromptManagement />}
+        {activeTab === 'blog' && !isOnlyManager && <BlogManagement />}
         {activeTab === 'versions' && <DocumentVersionsLog />}
       </div>
     </div>
@@ -565,6 +573,17 @@ const ExtractionManager: React.FC = () => {
         }
     };
 
+    const handleRunNow = async (schemaId: string) => {
+        const url = prompt("Enter target URL to extract data from:");
+        if (!url) return;
+        try {
+            const res = await api.runExtraction(url, schemaId);
+            alert(res.message);
+        } catch (err: any) {
+            alert("Execution failed: " + err.message);
+        }
+    };
+
     if (loading) return <div className="flex justify-center p-12"><RefreshCwIcon className="animate-spin w-8 h-8 text-primary" /></div>;
 
     return (
@@ -653,6 +672,15 @@ const ExtractionManager: React.FC = () => {
                                     <span key={idx} className="text-[9px] bg-background border border-border px-1.5 py-0.5 rounded-full">{f.name}</span>
                                 ))}
                                 {s.schema_definition?.fields?.length > 5 && <span className="text-[9px] text-muted-foreground italic">+{s.schema_definition.fields.length - 5} more</span>}
+                            </div>
+                            <div className="mt-4 pt-3 border-t border-border flex justify-end">
+                                <button 
+                                    onClick={() => handleRunNow(s.id)}
+                                    className="text-[10px] font-bold text-indigo-600 hover:text-indigo-700 flex items-center gap-1"
+                                >
+                                    <RefreshCwIcon className="w-3 h-3" />
+                                    RUN EXTRACTION NOW
+                                </button>
                             </div>
                         </div>
                     ))}
