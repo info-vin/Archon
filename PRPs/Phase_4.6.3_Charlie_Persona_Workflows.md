@@ -33,128 +33,99 @@ Charlie 的時間最昂貴，因此他只使用經過 **RBAC 權限過濾** 的�
 
 ---
 
-## 3. 詳細工作流程 UML (Sequence Diagram)
+## 3. 詳細工作流程 UML (Day in the Life of Charlie)
 
-### Workflow A: 戰略指派 (Insight to Action)
-> **場景**: Alice 在前線忙碌，可能會漏掉某些長期沒經營的客戶。Charlie 負責補位。
+> **場景**: Charlie 的一天從「全局監控」開始，接著「處理例外」，最後進行「系統維護」。
 
 ```mermaid
 sequenceDiagram
     autonumber
     actor Alice as 👩 Alice (Field)
-    participant Cron as ⏰ 排程任務<br>(Cron Job)
-    participant Sentinel as 🛡️ Sentinel<br>(HealthService)
-    participant Librarian as 🧠 Librarian<br>(RAGService)
-    participant UI as 🖥️ 經理儀表板<br>(Admin UI)
-    actor Charlie as 👨 Charlie (Manager)
-    participant API as ⚙️ Task API<br>(task_service)
-    participant DB as 🗄️ 資料庫
-
-    %% 1. 偵測與警示 (背景自動執行)
-    Note over Alice, DB: 階段 1：異常偵測 (Anomaly Detection)
-    Cron->>Sentinel: 每日掃描 (Daily Scan)
-    Sentinel->>DB: SQL Query (Leads WHERE last_visit > 14 days)
-    DB-->>Sentinel: 回傳 3 筆 "高價值流失風險"
-    Sentinel->>DB: Insert Alert into `archon_logs`
-    
-    %% 2. 決策與分派 (人工介入)
-    Note over Charlie, DB: 階段 2：決策與分派 (Decision & Dispatch)
-    Charlie->>UI: 登入 Dashboard
-    UI->>API: GET /api/admin/alerts
-    API->>DB: SELECT * FROM archon_logs WHERE type='ALERT'
-    DB-->>UI: 回傳警示列表
-    
-    Charlie->>UI: 點擊警示 "信義區 VIP 流失"
-    UI->>Librarian: 請求 "生成任務建議" (GenAI)
-    Librarian-->>UI: 回傳任務草稿：\n"拜訪信義區 VIP，攜帶新產品 DM"
-    
-    Charlie->>UI: 點擊 "Approve & Dispatch" (一鍵分派)
-    UI->>API: POST /api/tasks (Assignee=Alice)
-    API->>DB: INSERT INTO tasks
-    
-    %% 3. 閉環
-    Note over Alice, DB: 階段 3：執行與閉環 (Execution)
-    API->>Alice: 推送新任務通知 (Push Notification)
-    Alice->>Alice: 執行任務 -> 回報 Log
-    Sentinel->>DB: Update Alert Status (Resolved)
-```
-
-### Workflow B: 出版審核 (The Approval Gate)
-> **場景**: Bob 寫了一篇新文章，需要 Charlie 批准才能上線。
-
-```mermaid
-sequenceDiagram
-    autonumber
     actor Bob as 👤 Bob (Marketing)
-    participant UI as 🖥️ 行銷工作臺
-    participant API as ⚙️ Blog API<br>(marketing_api)
+    actor Charlie as 👨 Charlie (Manager)
+    participant UI as 🖥️ Operations Nexus<br>(Command Center)
+    participant API as ⚙️ Manager API
+    participant Sentinel as 🛡️ Sentinel<br>(Background Service)
+    participant Librarian as 🧠 Librarian<br>(RAG Service)
     participant Reviewer as ⚖️ Reviewer<br>(Gemini Service)
     participant DB as 🗄️ 資料庫
-    actor Charlie as 👨 Charlie (Manager)
-    participant Pub as 🌐 公開 Blog
 
-    %% 1. 提交與預審 (機器把關)
-    Note over Bob, DB: 階段 1：提交與預審 (Submission & Pre-check)
-    Bob->>UI: 點擊 "Submit for Review"
-    UI->>API: POST /api/blog/{id}/submit
-    API->>Reviewer: 觸發合規檢查 (Check Compliance)
-    Reviewer->>Reviewer: 檢查：敏感詞、過時數據、格式
+    %% ==========================================
+    %% 晨間例行 (Morning Routine): 異常偵測與分派
+    %% ==========================================
+    rect rgb(240, 248, 255)
+    Note over Alice, DB: ☀️ Phase 1: 晨間偵測與分派 (Detection & Dispatch)
     
-    alt 分數 < 80 (低品質)
-        Reviewer-->>API: Result: Reject
-        API->>DB: Status = CHANGES_REQUESTED
-        API-->>UI: 回傳 "退回原因：分數過低"
-        UI->>Bob: 顯示 Toast: "請修正後再提交"
-    else 分數 >= 80 (高品質)
-        Reviewer-->>API: Result: Pass + Summary
-        API->>DB: Status = PENDING_REVIEW
-        API->>DB: Insert Review Note
+    %% 背景掃描
+    Sentinel->>DB: ⏰ CRON: 掃描滯留客戶 (>14天)
+    DB-->>Sentinel: 發現 "信義區 VIP 流失風險"
+    Sentinel->>DB: 寫入 Alert Log
+    
+    %% 經理介入
+    Charlie->>UI: 登入 Command Center (查看 Alerts)
+    UI->>API: GET /api/marketing/manager/alerts (Priority=High)
+    API-->>UI: 顯示警示紅燈 🔴
+    
+    Charlie->>UI: 點擊 "Dispatch Task"
+    UI->>Librarian: 請求 "生成任務建議" (Contextual AI)
+    Librarian-->>UI: 建議："攜帶新產品 DM 拜訪"
+    
+    Charlie->>UI: 確認分派 (Approve & Dispatch)
+    UI->>API: POST /api/marketing/manager/alerts/{id}/dispatch
+    API->>DB: 建立 Alice 的任務
+    API->>Alice: 📱 推送通知："收到新指派任務"
+    end
+    
+    %% ==========================================
+    %% 下午例行 (Afternoon Routine): 內容把關
+    %% ==========================================
+    rect rgb(255, 250, 240)
+    Note over Alice, DB: 🌤️ Phase 2: 出版品審核 (Content Approval)
+    
+    Bob->>UI: 提交新文章草稿
+    UI->>API: POST /api/marketing/blog/{id}/submit
+    API->>Reviewer: 自動合規檢查 (Auto-Check)
+    
+    alt 分數 < 80
+        Reviewer-->>Bob: ❌ 退回：含敏感關鍵字
+    else 分數 >= 80
+        Reviewer->>DB: 標記為 "Pending Approval"
+        Charlie->>UI: 查看 "Approvals Queue"
+        UI-->>Charlie: 顯示待審核列表 + AI 摘要
+        Charlie->>UI: 點擊 "Publish" (一鍵發布)
+        UI->>API: POST /api/marketing/approvals/blog/{id}/approve
+        UI->>DB: 更新狀態 = PUBLISHED
+        DB-->>Bob: ✅ 通知："文章已上線"
+    end
     end
 
-    %% 2. 快速決策 (人工裁決)
-    Note over Charlie, Pub: 階段 2：人工裁決 (Human Decision)
-    Charlie->>UI: 進入 "Approval Queue"
-    UI->>API: GET /api/blog?status=PENDING_REVIEW
-    API-->>UI: 回傳待審核列表 (含 AI 摘要)
+    %% ==========================================
+    %% 系統維護 (System Ops): 知識庫重置
+    %% ==========================================
+    rect rgb(240, 255, 240)
+    Note over Alice, DB: 🛠️ Phase 3: 系統維護 (Knowledge Ops)
     
-    Charlie->>UI: 閱讀 AI 摘要 (30秒) -> 點擊 "Publish"
-    UI->>API: PATCH /api/blog/{id}/publish (Check Role=Manager)
-    API->>DB: Status = PUBLISHED
-    API->>Pub: 更新公開頁面
-    Pub-->>Bob: 通知 "文章已上線"
-```
-
----
-
-### Workflow C: 知識庫初始化 (Knowledge Initialization UI)
-> **場景**: 系統初次部署或需要重置知識庫時，Charlie (Manager) 點擊儀表板按鈕觸發初始化，Admin 可透過 3737 Port 驗證結果。
-
-```mermaid
-sequenceDiagram
-    autonumber
-    actor Charlie as 👨 Charlie (Manager)
-    participant UI as 🖥️ Manager Dashboard
-    participant API as ⚙️ Manager API
-    participant Librarian as 🧠 Librarian
-    participant DB as 🗄️ Vector DB
-    actor Admin as 👷 Admin
-
-    Note over Charlie, DB: 階段 1：觸發初始化 (Trigger Seeding)
-    Charlie->>UI: 點擊 "Rebuild Knowledge Base"
-    UI->>API: POST /manager/knowledge/seed
-    API->>Librarian: 掃描 docs/ 目錄
-    
-    loop 每一份文件
-        Librarian->>DB: UPSERT into knowledge_base
+    Charlie->>UI: 發現 RAG 回答過時 -> 點擊 "Rebuild Index"
+    UI->>API: POST /api/marketing/manager/knowledge/seed
+    API->>Librarian: 觸發全面重建 (Full Re-index)
+    loop 掃描文件
+        Librarian->>DB: UPSERT 向量資料
     end
-
-    Librarian-->>API: Success (Count)
-    API-->>UI: 顯示 "Indexed X documents"
+    Librarian-->>UI: ✅ 完成：更新 152 份文件
     
-    Note over Admin, DB: 階段 2：驗證結果 (Verification)
-    Admin->>DB: (Port 3737) SELECT count(*) FROM knowledge_base
-    DB-->>Admin: 回傳筆數
+    %% 驗證
+    Charlie->>DB: (Port 3737) 驗證筆數 (Optional)
+    end
 ```
+
+### 3.1 閉環工作流設計理念 (Closed-Loop Workflow Philosophy)
+
+這張 UML 展示了 Archon 的核心設計哲學——**閉環 (Closed-Loop)**，確保從信號到行動的每一步都有反饋：
+
+1.  **偵測 (Detect)**: 系統主動發現問題 (Sentinel)。
+2.  **決策 (Decide)**: 人類管理者 (Charlie) 做高價值判斷，而非淹沒在雜訊中。
+3.  **執行 (Action)**: AI 將決策轉化為前線 (Alice) 或系統 (Librarian) 的具體行動。
+4.  **反饋 (Feedback)**: 執行結果回寫資料庫 (Alert Resolved / Blog Published)，修正下一次的偵測模型。
 
 ---
 
@@ -164,27 +135,13 @@ sequenceDiagram
 
 | 模組 | 現狀 (As-Is) | 缺口 (Gap) | 實作行動 (Action Item) | 狀態 |
 | :--- | :--- | :--- | :--- | :--- |
-| **RBAC** | 角色有分，但 API 無強制擋權。 | Bob 可以直接 Publish，繞過 Charlie。 | **API Enforcer**: 在 `/approvals` 與 `/dispatch` 端點強制檢查 `user.role == 'manager'`。 | ✅ Done |
+| **RBAC** | 角色有分，但 API 無強制擋權。 | Bob 可以直接 Publish，繞過 Charlie。 | **API Enforcer**: 在 `/approvals` 與 `/dispatch` 端點強制檢查權限。 | ✅ Done |
 | **UI** | 只有個人的 Dashboard。 | Charlie 沒有綜觀全域的 **"Team Dashboard"**。 | **New View**: 實作 `ManagerDashboard.tsx`，包含 Alerts Feed, Sentinel Trigger。 | ✅ Done |
 | **Agent** | 只有單一 Chat 介面。 | 缺乏 **"背景執行"** 的 Sentinel 與 Reviewer。 | **Sentinel Service**: 實作 `scheduler_service.py` 定期掃描 stale leads。 | ✅ Done |
-| **Data** | Task 只能手動建立。 | 無法由 AI 自動生成 Task 草稿。 | **Smart Dispatch**: 在 `task_service.py` 整合 RAG + LLM (`gemini-1.5-pro`) 自動生成任務。 | ✅ Done |
-| **SOP** | 需手動 SSH 進伺服器執行 CLI。| Charlie 不會用 Terminal，無法自行重置 RAG。 | **System Maintenance UI**: 在 Dashboard 新增 "Rebuild Knowledge Base" 按鈕與 API。 | ✅ Done |
-| **Config** | 規則寫死在 Code 中。 | 無法動態調整 Sentinel 的權重 (e.g. Funding = 30分)。 | **Scoring Rules Grid**: 實作 `ManagerDashboard` 的動態規則編輯表格。 | ✅ Done |
-| **Admin** | 無法監控系統健康。 | 缺乏 Token Cost 與 Error Rate 監控。 | **System Health View**: 實作 Admin 專屬的 RAG/Error/Cost 監控面板。 | ✅ Done |
-| **Command Center** | | | | |
-| Operations Nexus | Unified Dashboard | ✅ Done (ApprovalsPage.tsx / ManagerDashboard.tsx) | **UI Polish**: 移除 Charlie 專屬名稱，統一使用 "Operations Nexus"。 | ✅ Done |
-
-### 3.1 閉環工作流說明 (Closed-Loop Workflow)
-**"Smart Dispatch" (智慧分派)** 是一個將戰略信號 (Alert) 轉化為戰術行動 (Task) 的關鍵流程：
-1.  **偵測 (Detect)**: Sentinel 掃描 `leads` 表，發現停滯客戶 (>14天無互動)，產生 `ALERT` 寫入 `archon_logs`。
-2.  **決策 (Decide)**: Manager 在 **Operations Nexus (Command Center)** 看到紅燈警示。
-3.  **分派 (Dispatch)**: Manager 點擊 "Dispatch Task"。
-    *   系統調用 `gemini-1.5-pro` 分析客戶背景與過往訪談。
-    *   生成具體行動建議 (e.g., "引用最近的 TechFunding 新聞進行破冰")。
-    *   **結果**: 在 **Alice (Sales)** 的任務列表 (`archon_tasks`) 中建立一個新任務，狀態為 `todo`，Assignee 為 `Alice` (若 UI 選定) 或 `User` (預設)。
-4.  **執行 (Execute)**: Alice 登入後，在 **Sales Nexus** 的任務列表看到該高優先級任務，執行並更新 CRM。
-5.  **閉環 (Resolve)**: 系統偵測到 Alice 更新了該 Lead 的狀態，自動將原始 Alert 標記為 `dispatched` 甚至 `resolved` (未來規劃)。
-
+| **Data** | Task 只能手動建立。 | 無法由 AI 自動生成 Task 草稿。 | **Smart Dispatch**: 在 `task_service.py` 整合 RAG + LLM 自動生成任務。 | ✅ Done |
+| **Ops** | 需手動 SSH 進伺服器重置 DB。| 缺乏 GUI 維護工具。 | **Knowledge UI**: 新增 "Rebuild Knowledge Base" 按鈕與 API。 | ✅ Done |
+| **Config** | 規則寫死在 Code 中。 | 無法動態調整 Sentinel 的權重。 | **Scoring Rules Grid**: 實作 `ManagerDashboard` 的動態規則編輯表格。 | ✅ Done |
+| **Ops Nexus** | 分散的頁面 (Logs, Users)。 | 缺乏統一的戰情中心。 | **Operations Nexus**: 整合 Alerts, Approvals, Health 於單一儀表板 (`ApprovalsPage.tsx`)。 | ✅ Done |
 
 ---
 

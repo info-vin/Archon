@@ -63,16 +63,19 @@ sequenceDiagram
     participant Nana as 🎨 Nana Banana<br>(Image Proxy)
 
     %% 階段一：訊號偵測
-    Note over Bob, DB: 階段 1：訊號偵測 (Signal Detection)
+    rect rgb(240, 248, 255)
+    Note over Bob, Nana: 階段 1：訊號偵測 (Signal Detection)
     Bob->>UI: 打開工作臺 (Brand Page)
     UI->>API: GET /api/marketing/sources
     Note right of UI: 過濾條件：<br>Score > 80 OR Status = WON<br>Includes active tasks
     API->>DB: SQL Query (Leads Join VisitLogs)
     DB-->>API: 回傳高潛力名單
     API-->>UI: 渲染左側「戰果牆」(Victory Feed)
+    end
 
     %% 階段二：脈絡獲取
-    Note over Bob, DB: 階段 2：脈絡獲取 (Context Gathering)
+    rect rgb(255, 250, 240)
+    Note over Bob, Nana: 階段 2：脈絡獲取 (Context Gathering)
     Bob->>UI: 點擊左側客戶 "Mozilla"
     UI->>API: GET /api/marketing/context/{id}?type=lead
     
@@ -86,9 +89,11 @@ sequenceDiagram
     API-->>UI: 回傳完整 Context (Logs + Docs)
     UI->>Bob: 在右側顯示「脈絡分頁」(Context Tab)
     Note right of UI: Bob 此時閱讀逐字稿<br>並確認客戶痛點
+    end
 
     %% 階段三：AI 協作撰寫 (State Persistence & Draft)
-    Note over Bob, DB: 階段 3：AI 協作撰寫 (AI Drafting)
+    rect rgb(240, 255, 240)
+    Note over Bob, Nana: 階段 3：AI 協作撰寫 (AI Drafting)
     Bob->>UI: 切換至「編輯分頁」 -> 點擊 "✨ 生成草稿" (Magic Draft)
     UI->>API: POST /api/marketing/blog/draft
     Note right of UI: UI 顯示 Loading...
@@ -104,9 +109,11 @@ sequenceDiagram
     DB-->>API: 回傳 Blog ID
     API-->>UI: 回傳成功訊息
     UI->>Bob: Redirect to Dashboard -> Kanban 顯示 "Draft"
+    end
 
     %% 階段四：視覺資產生成 (Nana Banana)
-    Note over Bob, DB: 階段 4：視覺資產生成 (Nana Banana)
+    rect rgb(255, 240, 245)
+    Note over Bob, Nana: 階段 4：視覺資產生成 (Nana Banana)
     Bob->>UI: 點擊 "生成首圖"
     UI->>API: POST /api/marketing/nana-banana (Prompt)
     alt API Key Valid
@@ -117,21 +124,19 @@ sequenceDiagram
         API-->>UI: Return Picsum URL (seed/{prompt})
     end
     UI->>Bob: 自動插入 Markdown 圖片 (![Cover](url))
+    end
 
     %% 階段五：發布與閉環
-    Note over Bob, DB: 階段 5：發布與閉環 (Publish & Loop)
+    rect rgb(240, 248, 255)
+    Note over Bob, Nana: 階段 5：發布與閉環 (Publish & Loop)
     Bob->>UI: 點擊 "Publish" (發布)
     opt Role Check
         Note right of UI: 若是 Admin/Manager -> 直接發布<br>若是 Member -> 進入 Review 流程
     end
-    UI->>API: PATCH /api/blog/{id} (Status=PUBLISHED/REVIEW)
+    UI->>API: PATCH /api/marketing/blog/{id}/status (Status=PUBLISHED/REVIEW)
     API->>DB: 更新文章狀態
-    
-    par 知識回流 (Recirculation)
-        API->>Librarian: 觸發文件索引 (Index Document)
-        Librarian->>DB: 將新文章寫入 Vector DB
+    Note right of DB: Recirculation (Indexing) 暫緩實作<br>Pending Phase 5 Architecture
     end
-    Note right of DB: 現在 Alice 的 RAG 系統<br>也能搜尋到這篇文章了
 ```
 
 ---

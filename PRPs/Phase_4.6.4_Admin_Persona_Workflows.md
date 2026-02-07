@@ -1,6 +1,6 @@
 # Phase 4.6.4 Admin Persona: The Architect (系統架構師)
 
-> **Status**: Draft
+> **Status**: Implemented (2026-02-06)
 > **Role**: System Admin / CTO / SRE
 > **Motto**: "Stable Core, Evolving Soul" (穩固核心，進化靈魂)
 > **Goal**: 確保系統的安全性、穩定性與自我進化能力，維護 Archon 的「數位體質」。
@@ -18,7 +18,7 @@ Admin 是 Archon 系統的創造者與守護者。他擁有上帝視角 (God Mod
 | **關注點** | **Business Health** (業績、轉換率) | **System Health** (API 延遲、錯誤率、Token 消耗) |
 | **介入時機** | Alice 業績未達標時 | API 出現 500 Error 或 Agent 陷入死迴圈時 |
 | **權限邊界** | 僅能看到自己部門的資料 | 可看到所有資料 (`override_ownership`)，但受稽核紀錄監控 |
-| **核心工具** | Team Dashboard, Approval Queue | System Dashboard, Clockwork Patrol, Prompt Tuner |
+| **核心工具** | Operations Nexus, Approvals | Command Center, Identity Matrix, Config Grid |
 
 ---
 
@@ -26,133 +26,109 @@ Admin 是 Archon 系統的創造者與守護者。他擁有上帝視角 (God Mod
 
 Admin 的 Agent 團隊不是用來處理業務，是用來「修系統」的。
 
-| Agent 名稱 | 職責 (Role) | 核心能力 (Capability) | 如何節省 Admin 工時 (Efficiency) |
+| Agent 名稱 | 職責 (Rol) | 核心能力 (Capability) | 如何節省 Admin 工時 (Efficiency) |
 | :--- | :--- | :--- | :--- |
-| **Clockwork (巡邏員)** | **主動巡邏 (L5)**<br>(分析 `archon_logs` ERROR) | **不需手動查 Log**。每小時自動掃描錯誤，使用 `LLMProviderService` 分析 Traceback，區分是「偶發網路問題」還是「代碼邏輯錯誤」。 |
-| **DevBot (工匠)** | **自癒執行 (L2)**<br>(生成 Hotfix Branch) | **不需手寫修復代碼**。接收 Clockwork 的診斷，透過 `ProposeChangeService` 建立 `proposed_changes` 紀錄 (Diff)，供 Admin 一鍵批准。 |
-| **Sentinel (哨兵)** | **安全監控**<br>(API Key & RBAC 審計) | **不需手動檢查設定**。透過 `CredentialService` 定期檢查 API Key 額度，並監控 `auth.users` 異常權限變更。 |
-| **Librarian (圖書館員)** | **知識管理**<br>(RAG & Versioning) | **不需手動整理文件**。透過 `RAGService` 將 `VisitLogs` 與 `ArchonTasks` 轉化為與時俱進的參考資料。 |
+| **Clockwork (巡邏員)** | **主動巡邏 (L5)**<br>(分析 `archon_logs`) | **不需手動查 Log**。每小時自動掃描錯誤，使用 `LLMProviderService` 分析 Traceback，區分是「偶發網路問題」還是「代碼邏輯錯誤」。 |
+| **DevBot (工匠)** | **自癒執行 (L2)**<br>(生成 Hotfix) | **不需手寫修復代碼**。接收 Clockwork 的診斷，可透過 `ProposeChangeService` 建立 `proposed_changes` 紀錄 (Diff)。 |
+| **Sentinel (哨兵)** | **安全監控**<br>(API Key & RBAC 審計) | **不需手動檢查設定**。定期檢查 API Key 額度，並監控 `auth.users` 異常權限變更。 |
+| **Librarian (圖書館員)** | **知識管理**<br>(RAG Indexing) | **不需手動整理文件**。Admin 可透過 **"Rebuild Index"** 按鈕強制 Librarian 掃描所有文件並更新向量資料庫。 |
 
 ---
 
-## 3. 核心工作流程 (Admin Workflows)
+## 3. 詳細工作流程 UML (Day in the Life of Admin)
 
-### Workflow A: 系統自癒循環 (The Immune System)
-> **場景**: 系統深夜發生未預期的 500 Error，Admin 起床後處理。
+> **場景**: Admin 登入系統，首先確認系統健康度，處理權限變更要求，並監控 Token 成本。
 
 ```mermaid
 sequenceDiagram
     autonumber
-    actor Admin as Admin
-    participant UI as Admin UI
-    participant Clockwork
-    participant DB as Database
-    participant LLM as LLM Service
-    participant Git as Git/DevBot
+    actor Admin as 🛠️ Admin
+    participant UI as 🖥️ Command Center<br>(ManagerDashboard)
+    participant RBAC as 🔑 Identity Matrix<br>(IdentityMatrix.tsx)
+    participant API as ⚙️ Admin API<br>(stats_api / auth_api)
+    participant Sentinel as 🛡️ Sentinel
+    participant DB as 🗄️ Database
 
-    %% 1. 自動診斷
-    Note over Clockwork, DB: Phase 1: Diagnosis
-    Clockwork->>DB: Scan `archon_logs` (ERROR, last 1h)
-    DB-->>Clockwork: Found "ZeroDivisionError"
-    Clockwork->>LLM: Analyze Traceback & Suggest Fix
-    LLM-->>Clockwork: Suggestion: "Add check for denominator != 0"
-
-    %% 2. 方案生成
-    Note over Clockwork, Git: Phase 2: Proposal
-    Clockwork->>Git: Create Branch `fix/zero-division`
-    Git->>DB: Insert into `proposed_changes`<br>(original_content, new_content)
+    %% ==========================================
+    %% 1. 系統健康巡檢 (System Health Check)
+    %% ==========================================
+    rect rgb(240, 248, 255)
+    Note over Admin, DB: Phase 1: 系統健康巡檢 (Health Check)
     
-    %% 3. 人工批准
-    Note over Admin, UI: Phase 3: Review
-    Admin->>UI: View "System Health" Dashboard
-    UI->>DB: Fetch pending `proposed_changes`
-    UI-->>Admin: Show Diff (Monaco Editor)
-    Admin->>UI: Click "Approve & Merge"
+    Admin->>UI: 登入 Command Center
+    UI->>API: GET /api/stats/system-overview (Admin Only)
+    
+    par Health Checks
+        API->>Sentinel: Check RAG Integrity (Vectors)
+        Sentinel-->>API: Status: Healthy (Latency: 45ms)
+        API->>DB: Count ERROR Logs (Last 24h)
+        API->>DB: Sum Token Costs (Last 24h)
+    end
+    
+    API-->>UI: 回傳健康報告 (RAG Green, Errors < 5, Cost $2.50)
+    UI-->>Admin: 顯示 "System Healthy" 綠燈儀表板
+    end
+
+    %% ==========================================
+    %% 2. 身份與權限管理 (RBAC Management)
+    %% ==========================================
+    rect rgb(255, 250, 240)
+    Note over Admin, DB: Phase 2: 權限變更 (RBAC Ops)
+    
+    Admin->>RBAC: 開啟 "Identity Matrix" Tab
+    RBAC->>API: GET /api/users
+    API-->>RBAC: 回傳員工列表 + 當前角色
+    
+    Admin->>RBAC: 點擊 "New User" (e.g., 新進工程師)
+    RBAC->>API: POST /api/admin/users/create
+    API->>DB: INSERT INTO auth.users & public.profiles
+    
+    Admin->>RBAC: 編輯 User "Bob" -> 升級為 "System Admin"
+    RBAC->>API: POST /api/admin/users/{id}/update
+    
+    API->>Sentinel: 記錄稽核日誌 (Audit Log)
+    Sentinel->>DB: INSERT INTO archon_logs (Action="ROLE_CHANGE")
+    API-->>RBAC: Success (Metadata Synced)
+    end
+
+    %% ==========================================
+    %% 3. 系統配置與維護 (System Ops)
+    %% ==========================================
+    rect rgb(240, 255, 240)
+    Note over Admin, DB: Phase 3: 配置與維護 (Configuration)
+    
+    Admin->>UI: 調整 "Scoring Logic" (提升 Funding 權重)
+    UI->>UI: Update Weights (Client State)
+    Admin->>UI: 點擊 "Save Config"
+    UI->>API: POST /api/admin/config/scoring
+    API->>DB: Save New Rules Metadata
+    
+    alt 需要重置知識庫
+        Admin->>UI: 點擊 "Rebuild Index"
+        UI->>API: POST /knowledge/seed
+        API->>DB: Truncate & Re-embed
+        API-->>UI: Toast "Index Rebuilt: 1240 docs"
+    end
+    end
 ```
 
-### Workflow B: RBAC 表格管理 (RBAC Table Management)
-> **場景**: Admin 需要直接管理 `auth.users` 與 `public.profiles` 的權限矩陣，或處理特殊的權限升級要求。
-
-1.  **Table Management Tool (UI)**:
-    *   在 Admin Dashboard 新增 **"Identity Matrix"** 分頁。
-    *   提供類似 Airtable/Supabase 的表格視圖，直接操作 `users` 與 `roles`。
-    *   **Features**:
-        *   **Role Promotion**: 下拉選單快速變更 Role (Member -> Manager)。
-        *   **Permission Override**: 針對特定使用者開啟/關閉權限 (e.g., `can_delete_blog`).
-        *   **Audit Trail**: 所有的變更都會被記錄在 `archon_logs` (Who changed Whom)。
-
-### Workflow C: 資料庫活化與管理 (Database Activation)
-> **核心概念**: 資料庫不只是倉庫 (Storage)，而是工廠 (Factory)。Admin 需確保資料「流動」並產生價值。
-
-1.  **Leads 活化 (Job Board -> Leads)**:
-    *   監控 `JobBoardService` 的自動抓取頻率。
-    *   檢查 `leads` 表中 `enrichment_score > 80` 的轉換率。
-    *   **Action**: 若轉換率低，調整 `JobBoardService.search_jobs` 的關鍵字參數。
-2.  **Log 轉知識 (Visit Logs -> RAG)**:
-    *   `VisitLogs` (Alice 的語音紀錄) 是死資料。
-    *   **Action**: 觸發 `LibrarianService` 將 Log 摘要寫入 `knowledge_base` (或 RAG 索引)，讓 Bob 寫文章時能引用。
-3.  **效能維護**:
-    *   定期檢查 `pg_stat_statements` 找出慢查詢 (Slow Queries)。
-    *   檢查 `archon_tasks` 與 `notifications` 的肥大化情況，執行 `VACUUM` 或歸檔舊資料。
-
-### Workflow C: Prompt 管理與認知優化 (Prompt Tuner)
-> **現狀**: Prompt 散落在 `python/src/server/prompts/*.py` (Hardcoded)。
-> **目標**: 透過 `system_prompts` 表進行動態管理。
-
-1.  **版本控制**:
-    *   每個核心 Prompt (e.g., `BLOG_DRAFT`, `SALES_PITCH`) 在 `system_prompts` 表中應有 `version` 欄位。
-    *   Admin 可透過 UI 比較 v1.0 與 v1.1 的差異。
-2.  **A/B Testing**:
-    *   設定 `marketing_api.py` 隨機使用 v1 或 v2 Prompt。
-    *   分析兩者的 `User Correction Rate` (使用者修改 AI 產出的比例)。
-    *   **Winner Take All**: 將表現好的版本升級為 Default。
-
-### Workflow D: 文件版本控制 (Document Versioning)
-> **問題**: RAG 知識庫中的文件過時會導致 AI 產生幻覺 (Hallucination)。
-
-1.  **源頭追蹤**:
-    *   所有 RAG 文件 (`knowledge_base`) 必須有 `source_ref` (e.g., `lead:123`, `file:policy.pdf:v2`)。
-2.  **過期淘汰**:
-    *   設定 TTL (Time To Live)。例如「市場趨勢」類文件 TTL = 3 個月。
-    *   Librarian 定期標記過期文件 (`is_active = false`)，避免被 RAG 檢索。
-
 ---
 
-## 4. 模型與 Token 現況比對 (Reality Check)
+## 4. 實作計畫 (Implementation Gap Analysis)
 
-> **同步日期**: 2026-02-03
-> **目的**: 確保文件與 `config.py` 及實際程式碼一致。
-
-| 功能模組 | 理想狀態 (Plan) | 實際現況 (Reality) | 修正行動 (Action) |
-| :--- | :--- | :--- | :--- |
-| **LLM Backend** | 穩定架構 + Token 管理 | ✅ 實作於 `LLMProviderService`。已支援 Dynamic Routing。 | **維持現狀 (No New Providers)**。重點轉向 **Token 監控與配額管理 (Quota Management)**。 |
-| **RAG Strategy** | Hybrid Search + Reranking | ⚠️ `RAGService` 邏輯完整，但 `RAGStrategyConfig` 尚未完全與前端 UI 連動。 | 將 `use_hybrid_search` 開關暴露給 Admin UI。 |
-| **Image Gen** | **Google Imagen (Only)** | 🚧 **MOCKED**。`marketing_api.py` 目前回傳 Placehold.co 圖片。 | **僅串接 Google Imagen API**。使用與 Gemini 相同的 API Key 架構，不需額外架設 MCP Server，保持架構單純 (`marketing_api` 直接呼叫)。 |
-| **Prompt Storage** | DB Driven (`system_prompts`) | ⚠️ **Hybrid**。代碼多使用 `prompts/*.py` 常數，DB 僅為備用/覆蓋用。 | 逐步將 Python 常數改為 DB Default Value。 |
-| **Token Cost** | 即時監控儀表板 | ❌ 未實作。無法看到當日消耗金額。 | 實作 `TokenUsageService`，將每筆 Request 的 Usage 寫入 DB 並視覺化。 |
-
----
-
-## 5. 落地實作缺口 (Implementation Gap Analysis)
-
-要讓 Admin 真正運作，Phase 4.6.4 (Admin Persona) 需補足以下功能：
-
-| 模組 | 現狀 (As-Is) | 缺口 (Gap) | 實作行動 (Action Item) | 優先級 |
+| 模組 | 現狀 (As-Is) | 缺口 (Gap) | 實作行動 (Action Item) | 狀態 |
 | :--- | :--- | :--- | :--- | :--- |
-| **UI** | 基礎 CRUD。 | 缺乏 **RBAC Matrix** 與 **System Dashboard**。 | **System Health View**: 在 `ManagerDashboard.tsx` 實作 Admin 專屬的 RAG/Error/Cost 監控面板。 | ✅ Done (Basic) |
-| **RBAC UI** | 無法視覺化管理權限。 | Admin 需手寫 SQL 改權限。 | **Identity Matrix**: 實作 `RbacTableManager.tsx` 用表格管理 `auth.users`。 | 🚧 Todo |
-| **Clockwork** | 僅能建 Task。 | 無法主動分析 Error Log 並呼叫 DevBot。 | 擴充 `scheduler_service.py`，新增 `log_patrol_job`。 | ✅ Done (Basic) |
-| **DevBot** | 只能被動接單。 | 無法自動建立 Branch 與 PR (Proposal)。 | 強化 `DevBot` 整合 `git_tools.create_branch` 與 `proposed_changes` 表。 | 🚧 Todo |
-| **Token Ops** | 無法監控成本。 | 缺乏可視化的 Token 消耗報表。 | 實作 `TokenUsageChart` 整合 Recharts 顯示每日消耗。 | **Medium** |
+| **System Health** | `ManagerDashboard.tsx` 內建 Admin 視圖。 | 功能完整，包含 RAG/Error/Agent 監控。 | **Dashboard Integration**: Admin 登入時自動顯示 Health Cards。 | ✅ Done |
+| **RBAC** | `IdentityMatrix.tsx` 支援 CRUD 與角色升級。 | 無法針對單一權限 (Permission) 進行細粒度覆寫 (Override)。 | **Permission Override**: 目前權限表寫死於前端 (`ROLE_PERMISSIONS_MAP`)，需改為後端動態提供。 | ⚠️ Gap (Backend) |
+| **Token Ops** | `stats_api.py` 有 `get_ai_usage`。 | 支援真實成本計算 (`cost_usd`) 與 Hybrid 統計。 | **Cost Visualization**: 在 Dashboard 顯示每日成本與預算百分比。 | ✅ Done |
+| **Config** | `Scoring Logic` 這是前端 State。 | 規則設定尚未持久化到後端 DB。 | **Config Persistence**: 實作 `system_configs` 表來儲存動態規則。 | ⚠️ Gap (Persistence) |
+| **Audit** | 後端有 Log，前端無專屬介面。 | Admin 無法在 UI 上直接搜尋稽核紀錄。 | **Audit Log Viewer**: 在 `IdentityMatrix` 或 Dashboard 新增 Log 查詢介面。 | ⚠️ Gap (UI) |
 
 ---
 
-## 6. 結論
+## 5. 結論
 
-Admin 的工作流是一個 **「閉環的免疫系統」**。
-不同於 Charlie 關注「人的效率」，Admin 關注 **「機器的健康」** 與 **「成本的控制」**。
-
-> **Admin 的成功指標**：
-> 1. **MTTR (Mean Time To Repair)**: 從錯誤發生到修復的時間 < 1 小時。
-> 2. **Prompt Efficiency**: 使用者修改 AI 產出的比例 < 20%。
-> 3. **Token Governance**: 透過配額與監控，確保 API 成本在預算範圍內 (不超支)。
+Admin Persona (`Phase 4.6.4`) 的基礎架構已完成 **80%**：
+1.  **可視化 (Visibility)**: 透過 **Command Center**，系統健康度與成本一目了然。
+2.  **可控制 (Control)**: **Identity Matrix** 讓人員管理變得直觀且簡單。
+3.  **待優化 (Optimization)**: 下一步應專注於「配置持久化」與「權限細粒度管理」，以滿足更複雜的企業需求。

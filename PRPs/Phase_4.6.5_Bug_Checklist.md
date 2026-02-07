@@ -10,9 +10,9 @@
 
 |指標 (Metric)|數量 (Count)|詳細資訊 (Details)|
 |:---|:---|:---|
-|**總議題數**|22|涵蓋 UX 流程、資料一致性、系統重置可靠性與開發者體驗 (DX)。|
+|**總議題數**|25|涵蓋 UX 流程、資料一致性、系統重置可靠性與開發者體驗 (DX)。|
 |**已完成修正**|4|BUG-027, BUG-031, BUG-032, BUG-033 驗證正常。|
-|**待討論**|18|其餘項目包含功能缺口、樣式優化與技術債重構。|
+|**待討論**|21|其餘項目包含功能缺口、樣式優化與技術債重構。|
 
 ---
 
@@ -49,6 +49,9 @@
 | **TECH-001**| 🏗️ Debt | **Tech** | **RAG** | `RAGSettings.tsx` 重構拆分。 | Medium | ⚪ 待討論 |
 | **TECH-002**| 🏗️ Debt | **Tech** | **Projects**| `projects_api.py` 商業邏輯抽離。 | Medium | ⚪ 待討論 |
 | **TECH-003**| 🏗️ Debt | **Alice** | **Voice** | **語音 Files API 遷移**。棄用 Base64，改用 Google Files API 以支援長音頻。 | High | 🟡 驗證中 |
+| **GAP-020** | 🔧 Gap | **Admin** | **RBAC** | **精細權限覆寫 (Permission Override)**。目前權限表寫死於前端 `ROLE_PERMISSIONS_MAP`，需改為後端動態提供以支援單一權限開關。 | High | ⚪ 待討論 |
+| **GAP-021** | 🔧 Gap | **Admin** | **Config** | **配置持久化 (Config Persistence)**。`Scoring Logic` 等規則目前僅存於前端 State，需實作 `system_configs` 表進行持久化。 | Medium | ⚪ 待討論 |
+| **GAP-022** | 🔧 Gap | **Admin** | **Audit** | **稽核日誌檢視器 (Audit Log Viewer)**。Admin 無法在 UI 上直接搜尋與過濾 `archon_logs` (Audit Trail)。 | Medium | ⚪ 待討論 |
 
 ---
 

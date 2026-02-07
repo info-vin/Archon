@@ -4,7 +4,7 @@
  */
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useSmartPolling } from "@/features/shared/hooks";
 import { useToast } from "@/features/shared/hooks/useToast";
 import { createOptimisticEntity, createOptimisticId } from "@/features/shared/utils/optimistic";
