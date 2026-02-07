@@ -214,17 +214,21 @@ async def get_ai_usage():
             .limit(100).execute()
 
         usage_data = usage_res.data or []
-        user_ids = list({row["user_id"] for row in usage_data if row.get("user_id")})
+        # Filter out rows without user_id and convert to list of strings for Supabase .in_
+        user_ids = [str(row["user_id"]) for row in usage_data if row.get("user_id")]
+        user_ids = list(set(user_ids)) # Unique IDs
 
         profiles_map = {}
         if user_ids:
             prof_res = supabase.table("profiles").select("id, name, email")\
                 .in_("id", user_ids).execute()
-            profiles_map = {p["id"]: p for p in (prof_res.data or [])}
+            # Ensure profile IDs are also compared as strings
+            profiles_map = {str(p["id"]): p for p in (prof_res.data or [])}
 
         details = []
         for row in usage_data:
             user_id = row.get("user_id")
+            # Always convert user_id to string for reliable map lookup
             profile = profiles_map.get(str(user_id)) if user_id else None
             details.append({
                 "id": row["id"],

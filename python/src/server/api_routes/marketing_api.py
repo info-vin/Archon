@@ -796,7 +796,10 @@ async def draft_blog_post(request: DraftBlogRequest, current_user: dict = Depend
                 )
             )
             import json
-            result = json.loads(response.text)
+            raw_text = response.text
+            if not raw_text:
+                raise ValueError("LLM returned empty response text")
+            result = json.loads(raw_text)
 
             # --- GAP-016: Real Token Usage Logging ---
             try:
