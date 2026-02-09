@@ -32,7 +32,7 @@ const AdminPage: React.FC = () => {
           {!isOnlyManager && <TabButton title="User Management" isActive={activeTab === 'users'} onClick={() => setActiveTab('users')} />}
           <TabButton title="System Settings" isActive={activeTab === 'settings'} onClick={() => setActiveTab('settings')} />
           <TabButton title="Data Extraction" isActive={activeTab === 'extraction'} onClick={() => setActiveTab('extraction')} />
-          {!isOnlyManager && <TabButton title="System Prompts" isActive={activeTab === 'prompts'} onClick={() => setActiveTab('prompts')} />}
+          <TabButton title="System Prompts" isActive={activeTab === 'prompts'} onClick={() => setActiveTab('prompts')} />
           {!isOnlyManager && <TabButton title="Blog Management" isActive={activeTab === 'blog'} onClick={() => setActiveTab('blog')} />}
           {!isOnlyManager && <TabButton title="Document Versions" isActive={activeTab === 'versions'} onClick={() => setActiveTab('versions')} />}
         </nav>
@@ -43,7 +43,7 @@ const AdminPage: React.FC = () => {
         {activeTab === 'users' && !isOnlyManager && <IdentityMatrix />}
         {activeTab === 'settings' && <SystemSettings />}
         {activeTab === 'extraction' && <ExtractionManager />}
-        {activeTab === 'prompts' && !isOnlyManager && <PromptManagement />}
+        {activeTab === 'prompts' && <PromptManagement isManagerMode={isOnlyManager} />}
         {activeTab === 'blog' && !isOnlyManager && <BlogManagement />}
         {activeTab === 'versions' && !isOnlyManager && <DocumentVersionsLog />}
       </div>
@@ -65,10 +65,10 @@ const TabButton: React.FC<{ title: string; isActive: boolean; onClick: () => voi
 );
 
 // --- NEW COMPONENT: PROMPT MANAGEMENT ---
-const PromptManagement: React.FC = () => {
+const PromptManagement: React.FC<{ isManagerMode: boolean }> = ({ isManagerMode }) => {
     const [prompts, setPrompts] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
-    const [selectedPrompt, setSelectedEmployee] = useState<any>(null);
+    const [selectedPrompt, setSelectedPrompt] = useState<any>(null);
     const [editValue, setEditValue] = useState('');
     const [isSaving, setIsSaving] = useState(false);
 
@@ -82,8 +82,7 @@ const PromptManagement: React.FC = () => {
             const data = await api.getSystemPrompts();
             setPrompts(data);
             if (data.length > 0 && !selectedPrompt) {
-                setSelectedEmployee(data[0]);
-                setEditValue(data[0].prompt);
+                handleSelect(data[0]);
             }
         } catch (err: any) {
             alert("Failed to load prompts: " + err.message);
@@ -93,7 +92,7 @@ const PromptManagement: React.FC = () => {
     };
 
     const handleSelect = (p: any) => {
-        setSelectedEmployee(p);
+        setSelectedPrompt(p);
         setEditValue(p.prompt);
     };
 
@@ -111,6 +110,8 @@ const PromptManagement: React.FC = () => {
         }
     };
 
+    const isLocked = isManagerMode && selectedPrompt?.is_system_protected;
+
     if (loading) return <div className="flex justify-center p-12"><RefreshCwIcon className="animate-spin w-8 h-8 text-primary" /></div>;
 
     return (
@@ -126,8 +127,15 @@ const PromptManagement: React.FC = () => {
                     >
                         <div className="flex justify-between items-start">
                              <div className="font-bold text-sm truncate">{p.prompt_name.replace(/_/g, ' ').toUpperCase()}</div>
-                             {/* Green Checkmark for "System Health" */}
-                             <CheckCircleIcon className="w-4 h-4 text-green-500" />
+                             {p.is_system_protected ? (
+                                 <div className="flex items-center text-amber-500" title="System Protected">
+                                     <KeyIcon className="w-3.5 h-3.5" />
+                                 </div>
+                             ) : (
+                                 <div className="flex items-center text-green-500" title="Editable">
+                                     <CheckCircleIcon className="w-4 h-4" />
+                                 </div>
+                             )}
                         </div>
                         <div className="text-xs text-muted-foreground mt-1 line-clamp-1">{p.description || 'No description'}</div>
                     </button>
@@ -140,36 +148,53 @@ const PromptManagement: React.FC = () => {
                     <>
                         <div className="p-4 border-b border-border bg-muted/30 flex justify-between items-center">
                             <div>
-                                <h3 className="font-bold text-lg">{selectedPrompt.prompt_name.replace(/_/g, ' ').toUpperCase()}</h3>
+                                <h3 className="font-bold text-lg flex items-center gap-2">
+                                    {selectedPrompt.prompt_name.replace(/_/g, ' ').toUpperCase()}
+                                    {isLocked && <span className="text-[10px] px-2 py-0.5 bg-amber-100 text-amber-700 rounded border border-amber-200">READ ONLY</span>}
+                                </h3>
                                 <p className="text-xs text-muted-foreground">Last updated: {new Date(selectedPrompt.updated_at).toLocaleString()}</p>
                             </div>
-                            <button 
-                                onClick={handleSave}
-                                disabled={isSaving || editValue === selectedPrompt.prompt}
-                                className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg font-bold text-sm hover:bg-primary/90 disabled:opacity-50 disabled:grayscale transition-all"
-                            >
-                                {isSaving ? <RefreshCwIcon className="animate-spin w-4 h-4" /> : <SaveIcon className="w-4 h-4" />}
-                                SAVE CHANGES
-                            </button>
+                            {!isLocked && (
+                                <button 
+                                    onClick={handleSave}
+                                    disabled={isSaving || editValue === selectedPrompt.prompt}
+                                    className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg font-bold text-sm hover:bg-primary/90 disabled:opacity-50 disabled:grayscale transition-all"
+                                >
+                                    {isSaving ? <RefreshCwIcon className="animate-spin w-4 h-4" /> : <SaveIcon className="w-4 h-4" />}
+                                    SAVE CHANGES
+                                </button>
+                            )}
                         </div>
                         <div className="flex-1 p-4 flex flex-col space-y-4">
                             <div className="flex-1 relative">
                                 <textarea 
                                     value={editValue}
                                     onChange={(e) => setEditValue(e.target.value)}
-                                    className="w-full h-full p-4 bg-background border border-border rounded-xl font-mono text-sm focus:ring-2 focus:ring-primary outline-none resize-none leading-relaxed shadow-inner"
+                                    readOnly={isLocked}
+                                    className={`w-full h-full p-4 bg-background border border-border rounded-xl font-mono text-sm focus:ring-2 focus:ring-primary outline-none resize-none leading-relaxed shadow-inner ${isLocked ? 'opacity-70 cursor-not-allowed bg-muted/20' : ''}`}
                                     placeholder="Enter system prompt here..."
                                 />
-                                <div className="absolute bottom-4 right-4 text-[10px] text-muted-foreground font-mono bg-background/80 px-2 py-1 rounded border border-border">
-                                    {editValue.length} characters
-                                </div>
+                                {!isLocked && (
+                                    <div className="absolute bottom-4 right-4 text-[10px] text-muted-foreground font-mono bg-background/80 px-2 py-1 rounded border border-border">
+                                        {editValue.length} characters
+                                    </div>
+                                )}
                             </div>
-                            <div className="bg-amber-50 dark:bg-amber-950/20 p-3 rounded-lg border border-amber-100 dark:border-amber-900/30 flex gap-3">
-                                <KeyIcon className="w-5 h-5 text-amber-600 shrink-0" />
-                                <div className="text-xs text-amber-800 dark:text-amber-400">
-                                    <strong>Caution:</strong> Changes to system prompts directly affect AI behavior. The internal memory cache will be automatically reloaded upon saving.
+                            {isLocked ? (
+                                <div className="bg-amber-50 dark:bg-amber-950/20 p-3 rounded-lg border border-amber-100 dark:border-amber-900/30 flex gap-3">
+                                    <KeyIcon className="w-5 h-5 text-amber-600 shrink-0" />
+                                    <div className="text-xs text-amber-800 dark:text-amber-400">
+                                        <strong>System Protected:</strong> This prompt defines core compliance or security rules. Only Administrators can modify it.
+                                    </div>
                                 </div>
-                            </div>
+                            ) : (
+                                <div className="bg-blue-50 dark:bg-blue-950/20 p-3 rounded-lg border border-blue-100 dark:border-blue-900/30 flex gap-3">
+                                    <ShieldCheckIcon className="w-5 h-5 text-blue-600 shrink-0" />
+                                    <div className="text-xs text-blue-800 dark:text-blue-400">
+                                        <strong>Business Logic:</strong> You can edit this prompt to adjust tone, style, or output format. Changes apply immediately.
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </>
                 ) : (
