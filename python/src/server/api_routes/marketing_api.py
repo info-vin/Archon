@@ -62,6 +62,7 @@ class DraftBlogRequest(BaseModel):
     style: list[str] | None = None
     length: str = "standard" # compact, standard, deep
     charts: list[str] | None = None
+    enable_web_research: bool = False
 
 class MarketingRejectSuggestionRequest(BaseModel):
     blog_post_id: str
@@ -828,7 +829,8 @@ async def draft_blog_post(request: DraftBlogRequest, current_user: dict = Depend
 
         success, search_result = await rag_service.perform_rag_query(
             query=search_query,
-            match_count=5
+            match_count=5,
+            filter_metadata={"enable_web_research": request.enable_web_research}
         )
 
         context_text = ""

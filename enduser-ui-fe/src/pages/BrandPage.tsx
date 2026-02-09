@@ -39,6 +39,7 @@ const BrandPage: React.FC = () => {
     const [isLoadingContext, setIsLoadingContext] = useState(false);
     const [isDrafting, setIsDrafting] = useState(false);
     const [isGeneratingImage, setIsGeneratingImage] = useState(false);
+    const [isSidebarOpen, setIsSidebarOpen] = useState(true);
     
     // Workbench Editor State (Lifted Up)
     const [workbenchTitle, setWorkbenchTitle] = useState('');
@@ -429,7 +430,7 @@ const BrandPage: React.FC = () => {
                 <main className={`flex-1 ${viewMode === 'workbench' ? 'overflow-hidden' : 'overflow-auto'}`}>
                     {viewMode === 'dashboard' ? (
                         <div className="p-6 max-w-7xl mx-auto space-y-8 font-sans">
-                            {/* Market Insight Section (Moved Top for UX-009) */}
+                            {/* ... Dashboard Content (stays same) ... */}
                             <div className="bg-purple-50 text-gray-900 p-6 rounded-2xl shadow-xl space-y-6 relative overflow-hidden w-full border border-purple-100">
                                 <div className="relative z-10">
                                     <h2 className="text-xl font-bold flex items-center gap-2 text-purple-900">
@@ -536,8 +537,13 @@ const BrandPage: React.FC = () => {
                             </div>
                         </div>
                     ) : (
-                        <div className="grid grid-cols-12 h-full">
-                            <div className="col-span-3 h-full border-r overflow-hidden">
+                        <div className="flex h-full relative">
+                            {/* Collapsible Inbox Sidebar */}
+                            <div 
+                                className={`border-r bg-white dark:bg-slate-900 transition-all duration-300 ease-in-out overflow-hidden flex flex-col ${
+                                    isSidebarOpen ? 'w-80 opacity-100 translate-x-0' : 'w-0 opacity-0 -translate-x-full border-r-0'
+                                }`}
+                            >
                                 <VictoryFeedList 
                                     sources={sources}
                                     activeId={activeSource?.id}
@@ -545,7 +551,19 @@ const BrandPage: React.FC = () => {
                                     isLoading={isLoadingSources}
                                 />
                             </div>
-                            <div className="col-span-9 h-full">
+
+                            {/* Floating Sidebar Toggle */}
+                            <button
+                                onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                                className={`absolute bottom-10 z-40 p-2 bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-r-lg shadow-md transition-all duration-300 hover:w-8 group ${
+                                    isSidebarOpen ? 'left-80' : 'left-0'
+                                }`}
+                                title={isSidebarOpen ? "Collapse Feed" : "Expand Feed"}
+                            >
+                                <div className={`w-1 h-4 bg-slate-300 dark:bg-slate-600 rounded-full group-hover:bg-indigo-500 transition-colors ${!isSidebarOpen && 'bg-indigo-400'}`} />
+                            </button>
+
+                            <div className="flex-1 h-full min-w-0">
                                 <ContentWorkbench 
                                     activeSource={activeSource}
                                     contextData={contextData}

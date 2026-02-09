@@ -22,7 +22,7 @@
 > 1.  **回顧歷史**: 主動回想 `GEMINI.md` 和 `CONTRIBUTING_tw.md` 中與此指令相關的歷史失敗案例。
 > 2.  **檢查設定檔**: 讀取相關服務的設定檔（如 `vite.config.ts`, `docker-compose.yml`），主動識別出指令之外的「隱性依賴」，例如**環境變數、掛載卷、或特定的埠號**。
 > 3.  **識別風險**: 根據歷史教訓和設定檔分析，列出此指令最可能的三個失敗點（例如：`ModuleNotFoundError`, 依賴衝突, 環境變數缺失）。
-> 4.  **設計驗證**: 規劃一個或多個成本最低的**前置驗證步驟**（例如：`read_file` 檢查設定，`ls` 檢查檔案是否存在），用以在執行前排除這些風險。
+> 4.  **設計驗證**: 規劃一個一個或多個成本最低的**前置驗證步驟**（例如：`read_file` 檢查設定，`ls` 檢查檔案是否存在），用以在執行前排除這些風險。
 > 5.  **提出安全計畫**: 向使用者提出的第一個計畫，**必須**是包含了前置驗證的「安全計畫」。
 >
 > **嚴格禁止**在未經風險評估的情況下，直接提出「快樂路徑」的執行計畫。
@@ -67,7 +67,7 @@
     *   **核心**: 複雜的 Bug 往往是多個問題的疊加。必須系統性地隔離變因。`make test` 失敗，是根目錄 `Makefile` 的問題，還是子專案 `pnpm test` 的問題？本地正常但 Docker 異常，優先清理快取和殘留容器，並詳讀 `Dockerfile`。
 
 *   **4. 精通工具：從 Linter 配置到 Mock 類型 (Master Your Tools: From Linter Config to Mock Types)**
-    *   **核心**: 工具的行為由其配置決定。看似 Bug 的行為，往往是配置不當。Linter 警告的根源可能在 `.eslintrc`；測試失敗的根源可能在於混淆了 `Mock` 與 `AsyncMock`。在發明輪子前，先讀懂工具手冊。
+    *   **核心**: 工具的行為由其配置決定。看似 Bug 的行為，往往是配置不當。Linter 規範的根源可能在 `.eslintrc`；測試失敗的根源可能在於混淆了 `Mock` 與 `AsyncMock`。在發明輪子前，先讀懂工具手冊。
 
 *   **5. 精準測試：填補盲區，應對非同步 (Test with Precision: Fill Blind Spots, Handle Async)**
     *   **核心**: `lint` 發現但 `test` 沒發現的問題，是測試覆蓋率不足的信號。應編寫一個能精準復現問題的最小化單元測試。對於非同步或單例服務，必須使用特殊的 `patch` 模式（如 `setup_module`）才能正確隔離和測試。
@@ -87,6 +87,19 @@
 ---
 
 # 第三章：近期工作日誌 (Recent Journal Entries)
+
+### 2026-02-09: Workspace Nexus Realization & Fine-grained RBAC
+*   **UI/UX 空間革命**:
+    *   **並排編輯 (Split View)**: 重構 `ContentWorkbench.tsx` 與 `BrandPage.tsx`，實作 30/70 分割視圖與雙重收合側邊欄，解決 Context 切換造成的斷腦流問題。
+    *   **視覺即時預覽**: 實作 `VisualHeader` 橫幅，自動解析 Markdown 圖片連結並即時渲染 AI 生成圖。
+    *   **整合 AI 面板**: 實作右下角懸浮式 `AI Command Center`，整合進階配置（產業、圖表、Google Search）與 Prompt 歷史追蹤 (Inspect)。
+*   **權限與安全加固 (Fine-grained RBAC)**:
+    *   **Prompt/Settings 分級**: 建立 `035` 與 `036` Migration，導入 `is_system_protected` 旗標。
+    *   **角色解放**: 允許 Manager (Charlie) 修改業務層級 Prompt 與爬蟲設定，但透過 RLS 與 API 檢查禁止其觸碰 API Keys 與系統道德紅線。
+    *   **連通性修復**: 真正將 `enable_web_research` 參數由前端傳遞至 RAG 服務，確保 Google Search Grounding 落地。
+*   **基礎設施與資源**:
+    *   **相容性優化**: 建立靜態版 `logo-eciton-favicon.svg`，解決瀏覽器不支援動畫 SVG 作為 Favicon 的問題。
+    *   **品質達標**: 修復 `prompts_api.py` 與 `system_api.py` 的型別錯誤，通過 546 項測試。
 
 ### 2026-02-07: Zero-Mypy achieved & Charlie RBAC Hardening
 *   **型別安全革命 (Zero-Mypy)**:
@@ -127,19 +140,13 @@
 ### 2026-02-03: Phase 4.6.3 Charlie Finalization (Sentinel & Smart Dispatch)
 *   **功能實作**: 實作了 Charlie (Manager) 指揮官工作流。
     *   **Sentinel 哨兵**: `SchedulerService` 每 12 小時自動掃描 stale leads (14天未更新) 並產生 ALERT 級別日誌。
-    *   **Alerts API**: 提供 `GET /api/logs/alerts` 接口，支援 RBAC 過濾 (僅經理與管理員可見)，且支援排除已分派 (`dispatched`) 的警報。
+    *   **Alerts API**: 提供 `GET /api/logs/alerts` 接口，支援 RBAC 過濾 (僅經理與管理員可見)，且支援透過 `exclude_dispatched` 排除已分派 (`dispatched`) 的警報。
     *   **Smart Dispatch**: `TaskService` 整合 RAG 與 LLM，根據 Lead 歷史訪談紀錄自動生成繁體中文追蹤任務。
     *   **狀態閉環**: 分派任務後自動將 Alert 標記為 `dispatched` 並連結 Task ID 至 Alert details。
 *   **品質加固**: 
     *   **基礎設施**: 修復了 `llm_provider_service` 循環引用，並校準了 `TokenUsageService` 的成本計算邏輯 (優先 Ollama)。
 *   **測試驗收**: 通過後端 523 個測試與前端 25 個 E2E 測試。
     *   **文件同步**: 更新了 `CONTRIBUTING_tw.md` 的資料庫遷移表與下一階段規劃文件。
-
-### 2026-02-03: Phase 4.6.2 Bob Finalization (E2E Stability & Isolation)
-*   **核心修復**: 解決了 `tests/e2e/management.spec.tsx` 中 "User can use POBot..." 測試失敗的問題。
-    *   **原因**: 前端應用啟動時的非同步資料載入在測試環境中導致 Promise 懸掛。
-    *   **解決**: 強化 MSW 配置，確保所有 API 請求 (特別是 `getCurrentUser`) 被正確攔截。
-*   **驗證**: Backend (517 passed) 與 Frontend E2E (25 passed).
 
 ---
 
@@ -192,7 +199,7 @@
     *   **RBAC 深度加固**: 放棄「開副本」做新頁面的想法，直接在後端實作「部門隔離 (Department Isolation)」與前端權限拆分 (`leads:view:sales` vs `marketing`)，確保 Manager 只能管理同部門成員。
 
 6.  **開發體驗 (DX) 與爬蟲進化 (Ref: 01-18, 01-19, 01-25)**:
-    *   **爬蟲 AJAX 逆向**: 放棄易被擋的靜態爬蟲，改用 104 AJAX API，大幅提升資料品質與穩定性，解決 RAG GIGO 問題。
+    *   **爬蟲 AJAX 逆向**: 放棄易被擋的進階爬蟲，改用 104 AJAX API，大幅提升資料品質與穩定性，解決 RAG GIGO 問題。
     *   **Admin UI 完善**: 修復了檔案上傳 Unicode 錯誤、Task ID 顯示，並實作了 `Dev Auto-Login` 與 API Key 自動注入 (`db-init`)，大幅降低本地開發摩擦。
     *   **探針制度化**: 將 `probe_librarian.py` 升級為標準化 `make probe` 指令，並加入維度完整性檢查 (768 vs 1536)，成為 CI/CD 的可靠 Smoke Test。
 

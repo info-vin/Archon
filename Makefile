@@ -74,7 +74,7 @@ verify-data:
 # Run Librarian Probe (Diagnostics)
 probe:
 	@echo "Running Librarian Probe inside archon-server..."
-	@docker exec -i archon-server /venv/bin/python scripts/probe_librarian.py
+	@docker exec -i archon-server /venv/bin/python scripts/probe_system.py
 
 # NOTE: The following check target uses syntax that is not compatible with Windows cmd/PowerShell.
 # It will cause an error on Windows systems.

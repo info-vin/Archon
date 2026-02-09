@@ -170,5 +170,223 @@
 *   **Marketing**: `MarketBot` + `Librarian`。
 *   **Admin/Manager**: 全權限。
 
-## 3. 結論 (Conclusion)
-Phase 4.7 至 4.11 的核心功能已 **100% 落地**。程式碼庫不僅符合藍圖，在測試覆蓋率與安全性檢查 (Sentinel) 上甚至超出了原始規劃。建議進入 Phase 5 (RBAC Identity) 的準備階段。
+
+---
+
+# 附錄 B: AGENT WORKFLOW REFERENCE (Agent 視角工作流 - Phase 4.7 Expanded)
+
+本附錄補充了從 **Agent (第一人稱視角)** 出發的執行邏輯，對應 RBAC 中的四大職能角色。
+
+## B.1 The Scout: MarketBot (獵犬/寫手)
+> **職責**: 外部資料獲取 (Extract) 與 文本生成 (Transform)。
+> **權限**: 僅限讀取公開網路與 `leads` 表。
+
+```mermaid
+sequenceDiagram
+    autonumber
+    box "Trigger (Human)" #e3f2fd
+        actor User as 👤 Alice/Bob
+    end
+    box "Agent Link (Brain)" #fff9c4
+        participant MarketBot as 🤖 MarketBot
+    end
+    box "Tools (Hands)" #f5f5f5
+        participant Crawler as 🕷️ CrawlerService
+        participant RAG as 📚 Librarian
+        participant DB as 🗄️ Database
+    end
+
+    User->>MarketBot: 1. 指派任務 (e.g., "找 50 個生技業業務")
+    activate MarketBot
+    
+    rect rgb(255, 248, 225)
+        Note right of MarketBot: 🤔 Thinking / Planning
+        MarketBot->>MarketBot: 分析意圖: Tool Call (crawl_job_market)
+    end
+    
+    MarketBot->>Crawler: 2. 調用工具: crawl_job_market(keywords="Biotech")
+    activate Crawler
+    Crawler-->>MarketBot: 回傳原始 HTML/JSON (Raw Data)
+    deactivate Crawler
+    
+    MarketBot->>MarketBot: 3. 提取結構化資料 (Extract & Transform)
+    MarketBot->>DB: 4. 寫入 Leads Table (Insert)
+    
+    opt 需要豐富化 (Enrichment)
+        MarketBot->>RAG: 5. 查詢相關背景 (e.g., "Biotech Trends")
+        RAG-->>MarketBot: 回傳摘要
+        MarketBot->>MarketBot: 6. 生成分析報告 (Summary)
+    end
+    
+    MarketBot-->>User: 7. 回報結果 ("已匯入 50 筆名單，並附上產業摘要")
+    deactivate MarketBot
+```
+
+## B.2 The Builder: DevBot (工匠)
+> **職責**: 系統內部狀態變更 (Files, Config)。
+> **權限**: 檔案系統讀寫 (`write_file`) 與 測試執行 (`run_test`)。
+
+```mermaid
+sequenceDiagram
+    autonumber
+    box "Trigger" #e8f5e9
+        actor Manager as 👨 Charlie
+        participant Watchdog as 🐕 Clockwork
+    end
+    box "Agent Link (Brain)" #fff9c4
+        participant DevBot as 🛠️ DevBot
+    end
+    box "Tools (Hands)" #f5f5f5
+        participant FileSys as 📂 FileSystem
+        participant Sandbox as 📦 TestRunner
+    end
+
+    alt Manual Trigger
+        Manager->>DevBot: 1a. 指派工單 ("修復 Login Bug")
+    else Self-Healing (L2)
+        Watchdog->>DevBot: 1b. 自動觸發 ("Error detected in auth.py")
+    end
+    
+    activate DevBot
+    
+    rect rgb(255, 248, 225)
+        Note right of DevBot: 🔍 Diagnosis
+        DevBot->>FileSys: 2. 讀取相關代碼 (read_file)
+        DevBot->>DevBot: 3. 生成修復計畫 (Chain of Thought)
+    end
+    
+    loop Try Fix (Max 3 Retries)
+        DevBot->>FileSys: 4. 寫入 Patch (diff_edit)
+        DevBot->>Sandbox: 5. 執行測試 (run_test)
+        Sandbox-->>DevBot: 回傳測試結果 (Pass/Fail)
+        
+        opt Verify Fail
+            DevBot->>DevBot: 修正計畫 (Refine Plan)
+        end
+    end
+    
+    DevBot-->>Manager: 6. 提交 PR 或報告結果
+    deactivate DevBot
+```
+
+## B.3 The Memory: Librarian (記憶庫)
+> **職責**: 知識資產化 (Index) 與 檢索服務 (Retrieve)。
+> **權限**: 向量資料庫讀寫 (`vector_store`)。
+
+```mermaid
+sequenceDiagram
+    autonumber
+    box "Source" #f3e5f5
+        participant CMS as 📝 Blog/Docs
+        participant User as 👤 Human
+    end
+    box "Agent Link (Brain)" #fff9c4
+        participant Librarian as 📚 Librarian
+    end
+    box "Core Engine" #f5f5f5
+        participant Embedder as 🔢 Embedding Model
+        participant VectorDB as 🗄️ Vector DB
+    end
+
+    alt Auto-Archiving (Write)
+        CMS->>Librarian: 1a. 新文件發布 (Webhook Trigger)
+        activate Librarian
+        Librarian->>Librarian: 2. 切分文本 (Chunking)
+        Librarian->>Embedder: 3. 請求向量化 (Get Embeddings)
+        Embedder-->>Librarian: 回傳 float[] vectors
+        Librarian->>VectorDB: 4. 寫入索引 (Upsert)
+        deactivate Librarian
+    else RAG Retrieval (Read)
+        User->>Librarian: 1b. 提問 ("什麼是 Agent Archon?")
+        activate Librarian
+        Librarian->>Embedder: 2. 問題向量化
+        Embedder-->>Librarian: float[] query_vector
+        Librarian->>VectorDB: 3. 相似度搜尋 (Cosine Similarity)
+        VectorDB-->>Librarian: 回傳 Top-K Chunks
+        Librarian->>Librarian: 4. 重新排序 (Rerank) & 總結
+        Librarian-->>User: 5. 回傳精準答案 + 引用來源
+        deactivate Librarian
+    end
+```
+
+## B.4 The Watcher: Clockwork & Sentinel (巡邏員)
+> **職責**: 週期性任務 (Cron) 與 異常觸發 (Alert)。
+> **權限**: 全局讀取 (System Health, Logs, Token Usage)。
+
+```mermaid
+sequenceDiagram
+    autonumber
+    box "Infrastructure" #fff3e0
+        participant Cron as ⏰ Cron Scheduler
+        participant Logs as 📜 System Logs
+    end
+    box "Agent Link (Brain)" #fff9c4
+        participant Sentinel as 🛡️ Sentinel
+    end
+    box "Actions" #f5f5f5
+        participant AlertSys as 🚨 Notification
+        participant DevBot as 🛠️ DevBot
+    end
+
+    loop Every 1 Hour (Log Patrol)
+        Cron->>Sentinel: 1. 觸發 Log Patrol
+        activate Sentinel
+        Sentinel->>Logs: 2. 掃描 ERROR 級別日誌
+        Logs-->>Sentinel: 回傳最近 1h 錯誤
+        
+        opt 發現嚴重錯誤
+            Sentinel->>Sentinel: 3. 分析錯誤模式 (Pattern Match)
+            par Notify
+                Sentinel->>AlertSys: 4a. 發送管理員通知
+            and Heal
+                Sentinel->>DevBot: 4b. 觸發 Self-Healing 任務
+            end
+        end
+        deactivate Sentinel
+    end
+    
+    loop Every 24 Hours (Business Health)
+        Cron->>Sentinel: 1. 觸發 Business Health Check
+        activate Sentinel
+        Sentinel->>Logs: 2. 檢查 KPI (e.g., Leads Count)
+        
+        opt 數據異常 (e.g., Drop > 20%)
+            Sentinel->>AlertSys: 3. 產生 "Performance Alert" 給 Charlie
+        end
+        deactivate Sentinel
+    end
+```
+
+## B.5 The Planner: POBot (策劃)
+> **職責**: 需求轉化 (Spec) 與 任務拆解 (Subtasks)。
+> **權限**: 讀取對話上下文，寫入 Task Drafts。
+
+```mermaid
+sequenceDiagram
+    autonumber
+    box "Trigger" #e8f5e9
+        actor Manager as 👨 Charlie
+    end
+    box "Agent Link (Brain)" #fff9c4
+        participant POBot as 🧠 POBot
+    end
+    box "Tools (Hands)" #f5f5f5
+        participant LLM as 🤖 Logic Model
+        participant DB as 🗄️ Database
+    end
+
+    Manager->>POBot: 1. 輸入模糊需求 (e.g., "做一個幾何風格的螞蟻 Logo")
+    activate POBot
+    
+    POBot->>LLM: 2. 請求需求分析 (Skill: Refine Spec)
+    LLM-->>POBot: 回傳結構化 User Story & Acceptance Criteria
+    
+    POBot-->>Manager: 3. 提問與確認 ("您是指 Low-poly 風格嗎？需要 SVG 格式嗎？")
+    Manager->>POBot: 4. 確認細節 ("對，SVG，要紫色系")
+    
+    POBot->>POBot: 5. 生成最終任務規格 (Final Spec)
+    POBot->>DB: 6. 建立 Task (Status: To Do, Assignee: DevBot)
+    
+    POBot-->>Manager: 7. 任務已建立 (#T-1024)
+    deactivate POBot
+```

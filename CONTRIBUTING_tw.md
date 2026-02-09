@@ -384,7 +384,9 @@ Phase 4.4.5 引入了 **Clockwork** 進行系統自動檢測。
         | 36 | `032_allow_manager_view_team_tokens.sql` | **[RBAC]** 強化經理檢視團隊 Token 使用量權限。 |
         | 37 | `033_add_review_notes_to_blog_posts.sql` | **[修復]** 增加部落格審核註記欄位。 |
         | 38 | `034_add_blog_generation_metadata.sql` | **[進階]** 增加 AI 生成參數持久化欄位。 |
-        | 39 | `seed_mock_leads.sql` | **[種子]** 填充業務線 (Leads) 核心測試資料。 |
+        | 39 | `035_refine_prompt_rbac.sql` | **[權限]** 精細化 Prompt 管理員權限。 |
+        | 40 | `036_refine_settings_rbac.sql` | **[權限]** 精細化系統設定管理員權限。 |
+        | 41 | `seed_mock_leads.sql` | **[種子]** 填充業務線 (Leads) 核心測試資料。 |
         | 40 | `seed_mock_alerts_and_logs.sql` | **[種子]** 填充 Admin/Manager 儀表板所需的系統警報與日誌資料。 |
         
 3.  **階段三：執行部署**

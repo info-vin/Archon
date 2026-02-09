@@ -5,6 +5,7 @@ from pydantic import BaseModel
 from ..auth.dependencies import get_current_user
 from ..config.logfire_config import get_logger
 from ..services.prompt_service import prompt_service
+from ..utils import get_supabase_client
 
 logger = get_logger(__name__)
 
@@ -20,7 +21,7 @@ async def list_prompts(current_user: dict = Depends(get_current_user)):
     List all system prompts. Restricted to Admins.
     """
     role = current_user.get("role", "viewer").lower()
-    if role not in ["system_admin", "admin"]:
+    if role not in ["system_admin", "admin", "manager"]:
         raise HTTPException(status_code=403, detail="Insufficient permissions.")
 
     prompts = await prompt_service.list_prompts()
@@ -33,11 +34,19 @@ async def update_prompt(
     current_user: dict = Depends(get_current_user)
 ):
     """
-    Update a system prompt. Restricted to Admins.
+    Update a system prompt. Restricted to Admins/Managers based on protection flag.
     """
     role = current_user.get("role", "viewer").lower()
-    if role not in ["system_admin", "admin"]:
+    if role not in ["system_admin", "admin", "manager"]:
         raise HTTPException(status_code=403, detail="Insufficient permissions.")
+
+    # Business Logic: Check if protected before attempting DB update (Fast Fail)
+    # Note: RLS will also block this, but we check here for better error messaging.
+    supabase = get_supabase_client()
+    existing = supabase.table("archon_prompts").select("is_system_protected").eq("prompt_name", prompt_name).single().execute()
+
+    if existing.data and existing.data.get("is_system_protected") and role == "manager":
+        raise HTTPException(status_code=403, detail="System protected prompts can only be edited by Admins.")
 
     success, message = await prompt_service.update_prompt(
         prompt_name=prompt_name,

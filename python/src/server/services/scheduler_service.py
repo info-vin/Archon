@@ -342,6 +342,7 @@ class SchedulerService:
     async def _cleanup_system_probes(self):
         """
         Retention Policy: Deletes System Probe data older than 48 hours to prevent unwanted KB bloat.
+        Targets: archon_crawled_pages, archon_document_versions, archon_sources (cascade order).
         """
         logger.info("🧹 Clockwork: Running System Probe Cleanup...")
         try:
@@ -351,17 +352,43 @@ class SchedulerService:
             # Calculate cutoff time (48 hours ago)
             cutoff_time = (datetime.now(UTC) - timedelta(hours=48)).isoformat()
 
-            # 1. Clean Leads
+            # 1. Clean Leads (Safety net, though Probe doesn't usually create leads)
             res = supabase.table("leads").delete().eq("company_name", "System Probe").lt("created_at", cutoff_time).execute()
             deleted_leads = len(res.data) if res.data else 0
 
-            # 2. Clean Knowledge Base (Integrity Checks)
-            # Integrity Check items usually have title="Integrity Check" or content pattern
-            res_kb = supabase.table("archon_knowledge_base").delete().eq("title", "Integrity Check").lt("created_at", cutoff_time).execute()
-            deleted_kb = len(res_kb.data) if res_kb.data else 0
+            # 2. Clean Knowledge Base Items (Real Tables)
+            # The probe creates a source with ID pattern 'pitch-systemprobe-%'
+            # We must delete in order or rely on CASCADE. Explicit deletion is safer for now.
 
-            if deleted_leads > 0 or deleted_kb > 0:
-                logger.info(f"✅ Clockwork: Cleanup complete. Deleted {deleted_leads} leads and {deleted_kb} knowledge items.")
+            # A. Delete Content Pages
+            # We filter by source_id pattern since we can't do complex joins easily in simple delete calls
+            # But Supabase (PostgREST) delete supports filtering.
+            # Using 'like' filter for 'pitch-systemprobe-%'
+            res_pages = supabase.table("archon_crawled_pages").delete().like("source_id", "pitch-systemprobe-%").lt("created_at", cutoff_time).execute()
+            deleted_pages = len(res_pages.data) if res_pages.data else 0
+
+            # B. Delete Document Versions
+            # The content field is JSONB, we need to check if content->source_id starts with...
+            # This is harder to do efficiently with simple filters if not indexed, but for cleanup it's okay.
+            # Alternatively, we can just delete versions created by 'ai-librarian' with change_summary containing 'validating vector database' or similar?
+            # Or just rely on the fact that we know the ID structure.
+            # Let's try to filter by the content->source_id if possible, or maybe just matching the change_summary if consistent.
+            # LibrarianService: "change_summary": f"Archived generated pitch for {company}" -> "Archived generated pitch for System Probe"
+            res_versions = supabase.table("archon_document_versions").delete()\
+                .eq("created_by", "ai-librarian")\
+                .like("change_summary", "%System Probe%")\
+                .lt("created_at", cutoff_time)\
+                .execute()
+            deleted_versions = len(res_versions.data) if res_versions.data else 0
+
+            # C. Delete Sources (Parent)
+            res_sources = supabase.table("archon_sources").delete().like("source_id", "pitch-systemprobe-%").lt("created_at", cutoff_time).execute()
+            deleted_sources = len(res_sources.data) if res_sources.data else 0
+
+            total_deleted = deleted_leads + deleted_pages + deleted_versions + deleted_sources
+
+            if total_deleted > 0:
+                logger.info(f"✅ Clockwork: Cleanup complete. Deleted {deleted_leads} leads, {deleted_pages} pages, {deleted_versions} versions, {deleted_sources} sources.")
             else:
                 logger.info("✅ Clockwork: Cleanup complete. No expired probe data found.")
 

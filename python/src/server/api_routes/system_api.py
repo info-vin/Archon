@@ -67,36 +67,36 @@ async def update_system_setting(
 ) -> dict[str, Any]:
 
     """
-
     Updates a specific system setting and records the change in the audit trail.
-
     """
-
+    from ..config.logfire_config import get_logger  # Ensure logger is available
     from ..utils import get_supabase_client
 
+    logger = get_logger(__name__)
     supabase = get_supabase_client()
 
-
-
     new_value = request.get("value")
-
     description = request.get("description")
 
-
-
     if new_value is None:
-
         raise HTTPException(status_code=400, detail="Setting value is required")
 
+    role = current_user.get("role", "viewer").lower()
 
+    # 1. Fetch old value and protection status for auditing/RBAC
+    old_res = supabase.table("archon_settings").select("value, is_system_protected").eq("key", key).execute()
 
-    # 1. Fetch old value for auditing
+    if not old_res.data:
+        raise HTTPException(status_code=404, detail=f"Setting '{key}' not found")
 
-    old_res = supabase.table("archon_settings").select("value").eq("key", key).execute()
+    old_data = old_res.data[0]
+    old_value = old_data["value"]
+    is_protected = old_data.get("is_system_protected", False)
 
-    old_value = old_res.data[0]["value"] if old_res.data else "N/A"
-
-
+    # 1.1 Granular RBAC Check (Charlie protection)
+    if is_protected and role == "manager":
+        logger.warning(f"API: Manager attempted to edit protected setting | key={key} | user={current_user.get('email')}")
+        raise HTTPException(status_code=403, detail="System protected settings can only be edited by Admins.")
 
     # 2. Perform Update
 
