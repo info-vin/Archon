@@ -15,6 +15,10 @@ Multiple strategies can be enabled simultaneously and work together.
 import os
 from typing import Any
 
+# Google GenAI for Web Grounding
+from google import genai
+from google.genai import types
+
 from ...config.logfire_config import get_logger, safe_span
 from ...utils import get_supabase_client
 from ..embeddings.embedding_service import create_embedding
@@ -172,6 +176,88 @@ class RAGService:
             use_enhancement=True,
         )
 
+    async def perform_web_research(self, query: str) -> tuple[str, str]:
+        """
+        Executes Google Search Grounding via Gemini.
+        Returns (content, source_id).
+        """
+        try:
+            # Import dependencies locally to avoid cycles
+            from ..credential_service import credential_service
+            from ..librarian_service import LibrarianService
+
+            # 1. Get API Key
+            api_key = await credential_service.get_credential("GEMINI_API_KEY")
+            if not api_key:
+                api_key = await credential_service.get_credential("GOOGLE_API_KEY")
+
+            if not api_key:
+                logger.warning("No GEMINI_API_KEY found for web research")
+                return "", ""
+
+            # 2. Init Client
+            # client = genai.Client(api_key=api_key) # Deprecated signature?
+            # Check if we should use http_options or just pass api_key
+            # Ideally use a factory or standard client if possible
+            # But for GenAI SDK v1 (google-genai), initialization is:
+            client = genai.Client(api_key=api_key)
+
+            # 3. Define Tools
+            google_search_tool = types.Tool(
+                google_search=types.GoogleSearch()
+            )
+
+            # 4. Prompt
+            prompt = f"""
+            Research the following query and provide a comprehensive summary.
+            Focus on factual, up-to-date information.
+
+            Query: {query}
+            """
+
+            # 5. Generate with Grounding
+            model_id = "gemini-2.0-flash" # Use a capable model
+            response = client.models.generate_content(
+                model=model_id,
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    tools=[google_search_tool],
+                    response_modalities=["TEXT"],
+                )
+            )
+
+            # 6. Extract Content & References
+            content = ""
+            references = []
+
+            # Handling 2.0 SDK response structure
+            if response.candidates and response.candidates[0].content.parts:
+                for part in response.candidates[0].content.parts:
+                    if part.text:
+                        content += part.text
+
+            # Extract grounding metadata if available
+            # validation of grounding metadata structure is needed, assuming standard
+            if (response.candidates[0].grounding_metadata
+                and response.candidates[0].grounding_metadata.grounding_chunks):
+                for chunk in response.candidates[0].grounding_metadata.grounding_chunks:
+                    if chunk.web and chunk.web.uri:
+                        references.append(chunk.web.uri)
+
+            if not content:
+                logger.warning("Web research returned empty content")
+                return "", ""
+
+            # 7. Archive Result
+            librarian = LibrarianService()
+            source_id = await librarian.archive_web_research(query, content, references)
+
+            return content, source_id
+
+        except Exception as e:
+            logger.error(f"Error performing web research: {e}")
+            return "", ""
+
     async def perform_rag_query(
         self, query: str, source: str | None = None, match_count: int = 5, filter_metadata: dict | None = None
     ) -> tuple[bool, dict[str, Any]]:
@@ -208,14 +294,33 @@ class RAGService:
                 use_hybrid_search = self.get_bool_setting("USE_HYBRID_SEARCH", False)
                 use_reranking = self.get_bool_setting("USE_RERANKING", False)
 
-                # If reranking is enabled, fetch more candidates for the reranker to evaluate
-                # This allows the reranker to see a broader set of results
                 search_match_count = match_count
                 if use_reranking and self.reranking_strategy:
                     # Fetch 5x the requested amount when reranking is enabled
                     # The reranker will select the best from this larger pool
                     search_match_count = match_count * 5
                     logger.debug(f"Reranking enabled - fetching {search_match_count} candidates for {match_count} final results")
+
+                # Step 0: Web Research (if enabled)
+                # Check setting or parameter
+                enable_web_research = filter_metadata.get("enable_web_research") if filter_metadata else False
+                if not enable_web_research:
+                    enable_web_research = self.get_bool_setting("ENABLE_WEB_RESEARCH", False)
+
+                web_research_results = []
+                if enable_web_research:
+                    try:
+                        web_content, source_id = await self.perform_web_research(query)
+                        if web_content:
+                            web_research_results.append({
+                                "id": source_id,
+                                "content": web_content,
+                                "metadata": {"type": "web_research", "source_id": source_id},
+                                "similarity": 1.0 # Artificially high score to ensure visibility
+                            })
+                            logger.info(f"Web research successful: {source_id}")
+                    except Exception as e:
+                        logger.warning(f"Web research failed: {e}")
 
                 # Step 1 & 2: Get results (with hybrid search if enabled)
                 results = await self.search_documents(
@@ -225,8 +330,14 @@ class RAGService:
                     use_hybrid_search=use_hybrid_search,
                 )
 
+                # Merge web research results
+                if web_research_results:
+                    # Prepend web results
+                    results = web_research_results + results
+
                 span.set_attribute("raw_results_count", len(results))
                 span.set_attribute("hybrid_search_enabled", use_hybrid_search)
+                span.set_attribute("web_research_enabled", enable_web_research)
 
                 # Format results for processing
                 formatted_results = []

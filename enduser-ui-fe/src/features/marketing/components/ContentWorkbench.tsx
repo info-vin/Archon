@@ -29,7 +29,7 @@ interface ContentWorkbenchProps {
   activeSource: ContentSource | null;
   contextData: ContextData | null;
   isLoadingContext: boolean;
-  onDraft: (topic: string) => void;
+  onDraft: (topic: string, config?: any) => void;
   onGenerateImage: (title: string) => void;
   onPublish: (post: any) => void;
   onSave: () => void;
@@ -41,6 +41,15 @@ interface ContentWorkbenchProps {
   onContentChange: (value: string) => void;
   usedPrompt?: string; // New: For Transparency
 }
+
+const INDUSTRIES = ["製造業", "高科技", "零售業", "生技醫療", "金融科技"];
+const CHARTS = ["柱狀圖", "趨勢圖", "數據表格", "Sankey 圖", "漏斗圖"];
+const STYLES = ["專業商務", "敘事故事", "技術深挖", "輕鬆科普"];
+const LENGTHS = [
+  { id: 'compact', label: '精簡 (300字)' },
+  { id: 'standard', label: '標準 (800字)' },
+  { id: 'deep', label: '深度報導 (1500字+)' }
+];
 
 export const ContentWorkbench: React.FC<ContentWorkbenchProps> = ({
   activeSource,
@@ -60,11 +69,46 @@ export const ContentWorkbench: React.FC<ContentWorkbenchProps> = ({
 }) => {
   const [activeTab, setActiveTab] = useState<'context' | 'editor'>('context');
   const [showPrompt, setShowPrompt] = useState(false);
+  const [showSelector, setShowSelector] = useState(false);
+  
+  // Advanced Config State
+  const [config, setConfig] = useState({
+    industry: [] as string[],
+    charts: [] as string[],
+    length: 'standard',
+    style: [] as string[]
+  });
 
   // Persistence Hook: Keep prompt visible if it exists
   useEffect(() => {
     if (usedPrompt) setShowPrompt(true);
   }, [usedPrompt]);
+
+  const toggleItem = (category: 'industry' | 'charts' | 'style', item: string) => {
+    setConfig(prev => ({
+      ...prev,
+      [category]: prev[category].includes(item)
+        ? prev[category].filter(i => i !== item)
+        : [...prev[category], item]
+    }));
+  };
+
+  const handleDraftExecute = () => {
+    if (activeSource) {
+      onDraft(activeSource.title, config);
+      setShowSelector(false);
+    }
+  };
+
+  const getTempPromptPreview = () => {
+    if (!activeSource) return "";
+    const indStr = config.industry.length > 0 ? config.industry.join("與") : "通用";
+    const lenStr = LENGTHS.find(l => l.id === config.length)?.label || "標準";
+    const styleStr = config.style.length > 0 ? config.style.join("且") : "專業";
+    const chartStr = config.charts.length > 0 ? `文中會預留 ${config.charts.join("、")} 的標記與描述。` : "";
+    
+    return `我將撰寫一篇針對「${indStr}」的「${lenStr}」文章。風格採取「${styleStr}」。${chartStr}`;
+  };
 
   // BUG-026: Save Feedback
   const handleSave = () => {
@@ -186,9 +230,9 @@ export const ContentWorkbench: React.FC<ContentWorkbenchProps> = ({
                 {/* Editor ToolBar */}
                 <div className="px-6 py-3 bg-slate-50/50 dark:bg-slate-800/30 border-b flex items-center gap-3 relative z-30">
                   <button 
-                    onClick={() => onDraft(activeSource.title)}
+                    onClick={() => setShowSelector(true)}
                     disabled={isDrafting}
-                    className="flex items-center px-4 py-2 bg-white dark:bg-slate-800 border dark:border-slate-700 text-indigo-600 dark:text-indigo-400 rounded-xl text-[10px] font-black uppercase tracking-widest hover:shadow-md transition-all disabled:opacity-50 active:scale-95"
+                    className="flex items-center px-4 py-2 bg-indigo-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-700 hover:shadow-lg transition-all disabled:opacity-50 active:scale-95 shadow-md shadow-indigo-100 dark:shadow-none"
                   >
                     <SparklesIcon className={`w-3.5 h-3.5 mr-2 ${isDrafting ? 'animate-spin' : ''}`} />
                     {isDrafting ? 'Synthesizing...' : 'Magic Draft'}
@@ -222,6 +266,132 @@ export const ContentWorkbench: React.FC<ContentWorkbenchProps> = ({
                      Prompt Inspector
                   </button>
                 </div>
+
+                {/* Advanced Prompt Selector Modal */}
+                {showSelector && (
+                  <div className="absolute inset-0 z-50 flex items-center justify-center p-6 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
+                    <div className="bg-white dark:bg-slate-900 w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden flex flex-col border dark:border-slate-800 animate-in zoom-in-95 duration-200">
+                      <div className="px-8 py-6 border-b dark:border-slate-800 flex justify-between items-center bg-slate-50/50 dark:bg-slate-800/20">
+                        <div>
+                          <h2 className="text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
+                            <SparklesIcon className="w-5 h-5 text-indigo-600" />
+                            Magic Draft Configuration
+                          </h2>
+                          <p className="text-[10px] text-slate-400 uppercase tracking-widest font-bold mt-1">Configure your AI writing partner</p>
+                        </div>
+                        <button onClick={() => setShowSelector(false)} className="p-2 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-full transition-colors">
+                          <XIcon className="w-5 h-5 text-slate-400" />
+                        </button>
+                      </div>
+
+                      <div className="flex-1 p-8 space-y-8 overflow-y-auto custom-scrollbar">
+                        {/* Industry */}
+                        <section>
+                          <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3 block">Industry Category (Multi-select)</label>
+                          <div className="flex flex-wrap gap-2">
+                            {INDUSTRIES.map(ind => (
+                              <button
+                                key={ind}
+                                onClick={() => toggleItem('industry', ind)}
+                                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all border ${
+                                  config.industry.includes(ind)
+                                    ? 'bg-indigo-600 border-indigo-600 text-white shadow-md shadow-indigo-100'
+                                    : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-indigo-300'
+                                }`}
+                              >
+                                {ind}
+                              </button>
+                            ))}
+                          </div>
+                        </section>
+
+                        {/* Charts */}
+                        <section>
+                          <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3 block">Visual Insights & Charts (Multi-select)</label>
+                          <div className="flex flex-wrap gap-2">
+                            {CHARTS.map(chart => (
+                              <button
+                                key={chart}
+                                onClick={() => toggleItem('charts', chart)}
+                                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all border ${
+                                  config.charts.includes(chart)
+                                    ? 'bg-amber-500 border-amber-500 text-white shadow-md shadow-amber-100'
+                                    : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-amber-300'
+                                }`}
+                              >
+                                {chart}
+                              </button>
+                            ))}
+                          </div>
+                        </section>
+
+                        {/* Length */}
+                        <section>
+                          <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3 block">Article Length (Single-select)</label>
+                          <div className="flex gap-2">
+                            {LENGTHS.map(len => (
+                              <button
+                                key={len.id}
+                                onClick={() => setConfig({...config, length: len.id})}
+                                className={`flex-1 px-4 py-3 rounded-xl text-xs font-bold transition-all border text-center ${
+                                  config.length === len.id
+                                    ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 border-slate-900 dark:border-white'
+                                    : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-slate-400'
+                                }`}
+                              >
+                                {len.label}
+                              </button>
+                            ))}
+                          </div>
+                        </section>
+
+                        {/* Style */}
+                        <section>
+                          <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3 block">Presentation Style (Multi-select)</label>
+                          <div className="flex flex-wrap gap-2">
+                            {STYLES.map(s => (
+                              <button
+                                key={s}
+                                onClick={() => toggleItem('style', s)}
+                                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all border ${
+                                  config.style.includes(s)
+                                    ? 'bg-emerald-600 border-emerald-600 text-white shadow-md shadow-emerald-100'
+                                    : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-emerald-300'
+                                }`}
+                              >
+                                {s}
+                              </button>
+                            ))}
+                          </div>
+                        </section>
+                      </div>
+
+                      <div className="p-8 bg-slate-50 dark:bg-slate-950 border-t dark:border-slate-800 space-y-6">
+                        <div className="p-4 bg-white dark:bg-slate-900 border dark:border-slate-800 rounded-2xl shadow-inner">
+                          <p className="text-[10px] font-black uppercase tracking-widest text-indigo-600 mb-2">Temp Prompt Preview</p>
+                          <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed italic">
+                            {getTempPromptPreview()}
+                          </p>
+                        </div>
+                        
+                        <div className="flex gap-4">
+                          <button 
+                            onClick={() => setShowSelector(false)}
+                            className="flex-1 py-4 text-xs font-black uppercase tracking-widest text-slate-400 hover:text-slate-600 transition-colors"
+                          >
+                            Cancel
+                          </button>
+                          <button 
+                            onClick={handleDraftExecute}
+                            className="flex-[2] py-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl text-xs font-black uppercase tracking-widest shadow-xl shadow-indigo-100 dark:shadow-none transition-all active:scale-95"
+                          >
+                            Execute Synthesis (EXEC)
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 {/* Markdown Editor */}
                 <div className="flex-1 p-8 md:p-12 max-w-4xl mx-auto w-full custom-scrollbar overflow-y-auto relative">

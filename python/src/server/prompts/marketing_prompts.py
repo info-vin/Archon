@@ -15,3 +15,16 @@ Format:
 
 Return JSON format: { "title": "...", "content": "...", "excerpt": "...", "hashtags": "...", "used_references": ["source1"] }
 """
+
+REJECTION_REASON_PROMPT = """You are the Editor-in-Chief. The article '{title}' is being rejected.
+Analyze the content and draft a constructive rejection note to the author (Bob).
+
+Instructions:
+1. Be polite but firm.
+2. Highlight specific areas for improvement (e.g., tone, accuracy, missing references).
+3. Suggest concrete next steps.
+4. Keep it concise (under 100 words).
+
+Article Content:
+{content}
+"""

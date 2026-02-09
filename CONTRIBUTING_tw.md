@@ -198,7 +198,7 @@ def test_some_endpoint():
     *   **數據 (Data)**: 使用 **Mock Service Worker (MSW)** 攔截所有數據相關的 `fetch` 請求。請確保 `src/mocks/handlers.ts` 中的模擬資料結構與前端 `types.ts` 中的類型定義**完全一致**。
     *   **全域 Server 共用原則**: 在個別測試檔案中，**嚴禁**使用 `setupServer` 建立新的實例。必須引用 `src/mocks/server` 中的全域 `server` 物件，並使用 `server.use()` 來注入該測試專屬的 Handler。這能避免與 `e2e.setup.ts` 中的全域設定發生衝突。
 
-#### 3.3.3 E2E 架構深度解析 (Architecture Deep Dive)
+#### 3.3.2 E2E 架構深度解析 (Architecture Deep Dive)
 
 *   **Hybrid Strategy (混合策略)**:
     *   **Auth**: `e2e.setup.tsx` 使用 `vi.mock` 攔截 `api.getCurrentUser`，提供穩定的測試用戶身份。
@@ -212,7 +212,7 @@ def test_some_endpoint():
     *   **全域唯一**: 嚴禁在個別測試檔案中 `setupServer`。必須依賴全域 `handlers.ts`。
     *   **Loading 等待**: 測試 UI 時，務必先 `await waitFor(() => expect(loading).not.toBeInTheDocument())`，再進行元素查找。
 
-#### 3.3.4 完整整合測試的準備工作
+#### 3.3.3 完整整合測試的準備工作
 
 為了讓 E2E 測試能針對真實後端運行，專案提供了以下機制：
 
@@ -275,12 +275,16 @@ Phase 4.4.5 引入了 **Clockwork** 進行系統自動檢測。
 
 ## 第四章：貢獻與部署流程 (Contribution & Deployment)
 
-### 4.1 Git 工作流程
+### 4.1 前端開發規範 (End-user UI)
+- **React Hook 穩定性 (Critical)**: 在實作如 `RAGSettings` 等複雜組件時，**嚴禁**將「對象實例 (Object/Array)」直接放入 `useEffect` 的依賴陣列中。這會導致無限渲染循環 (Infinite Re-render)。應解構為「原始型別屬性 (Primitives)」作為依賴。
+- **型別安全性**: 必須同步更新 `src/types.ts` 並通過 `tsc --noEmit` 檢查。
+
+### 4.2 Git 工作流程
 
 - **分支策略**: 所有工作都**必須**在 `feature/...` 分支上進行。部署也**必須**從 `feature/...` 分支進行。`main` 分支請勿使用。
 - **`cherry-pick` 卡住**: 若 `git cherry-pick --continue` 卡住，請改用 `git cherry-pick --continue --no-edit --no-gpg-sign`。
 
-### 4.2 部署標準作業流程 (SOP)
+### 4.3 部署標準作業流程 (SOP)
 
 此流程的最終目標，是成功將一個穩定的 `feature/...` 分支部署到 **Render**。
 
@@ -328,7 +332,7 @@ Phase 4.4.5 引入了 **Clockwork** 進行系統自動檢測。
         ```bash
         make db-init
         ```
-    3.  腳本會自動完成：清空舊資料、建立 Schema、寫入 Mock Data、並修復 Auth ID 不一致的問題。
+    3.  **核心功能**: 此指令會自動完成「資料庫重置 (`RESET_DB`) -> 按序執行所有 `migration/*.sql` -> 填充 Mock Data -> 修復 Auth ID 同步」。這是本地開發最快恢復環境的方法。
 
     > **🚑 資料庫救災指南 (Database Recovery SOP)**
     >
@@ -347,10 +351,10 @@ Phase 4.4.5 引入了 **Clockwork** 進行系統自動檢測。
         | 3 | `001_add_due_date_to_tasks.sql` | **[Schema]** 為 `tasks` 表追加 `due_date` 欄位。 |
         | 4 | `002_create_schema_migrations_table.sql` | **[系統]** 建立 `schema_migrations` 表，追蹤版本。 |
         | 5 | `003_add_get_counts_by_source_function.sql` | **[函式]** 新增儀表板統計所需的資料庫函式。 |
-        | 6 | `005_create_proposed_changes_table.sql` | **[AI]** 建立 `proposed_changes` 表，支援 AI 協作。 |
-        | 7 | `seed_mock_data.sql` | **[種子]** 填充核心假資料 (Users, Projects, Employees)。 |
-        | 8 | `seed_blog_posts.sql` | **[種子]** 填充部落格文章假資料 (用於 RAG 測試)。 |
-        | 9 | `004_create_test_utility_functions.sql` | **[測試]** 建立 `reset_test_database` 等 E2E 測試函式。 |
+        | 6 | `004_create_test_utility_functions.sql` | **[測試]** 建立 `reset_test_database` 等 E2E 測試函式。 |
+        | 7 | `005_create_proposed_changes_table.sql` | **[AI]** 建立 `proposed_changes` 表，支援 AI 協作。 |
+        | 8 | `seed_mock_data.sql` | **[種子]** 填充核心假資料 (Users, Projects, Employees)。 |
+        | 9 | `seed_blog_posts.sql` | **[種子]** 填充部落格文章假資料 (用於 RAG 測試)。 |
         | 10 | `006_create_sales_intel_tables.sql` | **[Phase 4.2]** 建立 `leads`, `market_insights` 表 (業務情資)。 |
         | 11 | `007_add_assignee_id_to_tasks.sql` | **[RBAC]** 新增 `assignee_id` 欄位，強化任務指派權限。 |
         | 12 | `008_system_correction_phase44.sql` | **[修復]** 修正 Phase 4.4 的邏輯與狀態定義。 |
@@ -375,12 +379,14 @@ Phase 4.4.5 引入了 **Clockwork** 進行系統自動檢測。
         | 31 | `027_seed_field_ops_project.sql` | **[種子]** 預載 Alice (Sales) 所需的 Field Ops 專案與範例任務。 |
         | 32 | `028_seed_voice_prompt.sql` | **[AI]** 寫入語音轉工單專用的 System Prompt (Alice 核心功能)。 |
         | 33 | `029_fix_archon_logs_schema.sql` | **[修復]** 補齊 `archon_logs` 缺失欄位，支援經理儀表板。 |
-        | 34 | `seed_mock_alerts_and_logs.sql` | **[種子]** 填充 Admin/Manager 儀表板所需的系統警報與日誌資料。 |
+        | 34 | `030_add_system_log_setting.sql` | **[系統]** 實作經理儀表板日誌設定。 |
+        | 35 | `031_create_attendance_table.sql` | **[Schema]** 建立 Charlie 的考勤功能資料表。 |
+        | 36 | `032_allow_manager_view_team_tokens.sql` | **[RBAC]** 強化經理檢視團隊 Token 使用量權限。 |
+        | 37 | `033_add_review_notes_to_blog_posts.sql` | **[修復]** 增加部落格審核註記欄位。 |
+        | 38 | `034_add_blog_generation_metadata.sql` | **[進階]** 增加 AI 生成參數持久化欄位。 |
+        | 39 | `seed_mock_leads.sql` | **[種子]** 填充業務線 (Leads) 核心測試資料。 |
+        | 40 | `seed_mock_alerts_and_logs.sql` | **[種子]** 填充 Admin/Manager 儀表板所需的系統警報與日誌資料。 |
         
-        ### 2.3 前端開發規範 (End-user UI)
-- **React Hook 穩定性 (Critical)**: 在實作如 `RAGSettings` 等複雜組件時，**嚴禁**將「對象實例 (Object/Array)」直接放入 `useEffect` 的依賴陣列中。這會導致無限渲染循環 (Infinite Re-render)。應解構為「原始型別屬性 (Primitives)」作為依賴。
-- **型別安全性**: 必須同步更新 `src/types.ts` 並通過 `tsc --noEmit` 檢查。
-
 3.  **階段三：執行部署**
 
     **3.1 前端服務的路由設定 (重要)**
@@ -389,7 +395,7 @@ Phase 4.4.5 引入了 **Clockwork** 進行系統自動檢測。
 
     1.  在 Render 儀表板，進入您的前端服務設定頁面。
     2.  找到 **"Redirects/Rewrites"** 區塊。
-    3.  **依序**新增以下兩條**重寫 (Rewrite)** 規則：
+    3.  **依序**新增以下兩條**重寫 (Rewrite)**規則：
 
         **規則一：API 代理規則 (優先級最高)**
         *   **Source (來源路徑):** `/api/:path*`
@@ -431,7 +437,7 @@ Phase 4.4.5 引入了 **Clockwork** 進行系統自動檢測。
     #### 3. 環境變數檢查 (Environment Variables)
     *   **金鑰類型檢查**:
         *   根據 `python/src/server/config/config.py` 的 `validate_supabase_key` 邏輯，後端會**強制檢查** `SUPABASE_SERVICE_KEY` 的 JWT Role。
-        *   **❌ 錯誤**: 若使用 `anon` (Public) Key，後端將直接崩潰並報錯 `CRITICAL: You are using a Supabase ANON key...`。
+        *   **❌ 錯誤**: 若使用 `anon` (Public) Key，後端將直接崩潰並報測 `CRITICAL: You are using a Supabase ANON key...`。
         *   **✅ 正確**: 必須使用 Supabase Dashboard > Settings > API > **service_role** (Secret) Key。
     *   **必要變數**:
         *   `SUPABASE_URL`: 必須是 `https://` 開頭 (生產環境強制 HTTPS)。
@@ -458,11 +464,11 @@ Phase 4.4.5 引入了 **Clockwork** 進行系統自動檢測。
     2.  存取後端服務的 `/health` 端點，確認回傳 `{"status":"ok"}`。
     3.  打開前端服務的公開網址，進行功能驗證 (Smoke Test)。
 
-### 4.3 AI 開發者協作流程 (AI Developer Workflow)
+### 4.4 AI 開發者協作流程 (AI Developer Workflow)
 
 隨著 `Phase_4.1` 的完成，專案引入了一套由 AI Agent 輔助開發的全新工作流程。此流程的核心是「**提議 -> 審核 -> 執行**」，旨在確保 AI 在安全、可控的環境下為程式碼庫做出貢獻。
 
-#### 4.3.1 資料庫基礎：`proposed_changes` 資料表
+#### 4.4.1 資料庫基礎：`proposed_changes` 資料表
 
 此工作流程由 `migration/005_create_proposed_changes_table.sql` 所建立的 `proposed_changes` 資料表支撐。
 
@@ -472,7 +478,7 @@ Phase 4.4.5 引入了 **Clockwork** 進行系統自動檢測。
     - `status`: 提案狀態（`pending`, `approved`, `rejected`, `executed`, `failed`）。
     - `request_payload`: 一個 `jsonb` 欄位，儲存了提案的具體內容。例如，對於一個 `file` 類型的提案，這裡會包含 `file_path`, `new_content`, 以及用於 Diff 顯示的 `original_content`。
 
-#### 4.3.2 開發者審核工作流程
+#### 4.4.2 開發者審核工作流程
 
 開發者的主要職責是**審核** AI 提出的程式碼變更。
 
@@ -488,7 +494,7 @@ Phase 4.4.5 引入了 **Clockwork** 進行系統自動檢測。
     *   **批准 (Approve)**: 如果您認為變更是正確且安全的，點擊「Approve」按鈕。後端將會執行此變更（例如，覆寫檔案），並將提案狀態更新為 `executed`。
     *   **拒絕 (Reject)**: 如果變更不符合要求，點擊「Reject」按鈕。該提案的狀態將會變為 `rejected`，不會對程式碼庫產生任何影響。
 
-#### 4.3.3 與 Git 流程的結合
+#### 4.4.3 與 Git 流程的結合
 
 - AI 的所有工作都會在一個獨立的 `feature/` 分支上進行。
 - AI 提交的變更，在被批准和執行後，最終會以一個 `commit` 的形式出現在該 `feature/` 分支上。
@@ -505,7 +511,7 @@ Phase 4.4.5 引入了 **Clockwork** 進行系統自動檢測。
 | **查閱檔案變更歷史** | `git log -p -- Makefile` | 顯示該檔案每次提交的具體差異 (Diff)。 |
 | **搜尋代碼何時被加入** | `git log -S "await task_service"` | 找出包含特定字串的新增或刪除的提交。 |
 | **查看特定提交的內容** | `git show <commit_hash>` | 檢視某個 Commit 的完整變更。 |
-| **比較兩個分支的差異** | `git diff main...feature/new-ui` | 檢視 Feature 分支相對於 Main 分支的變更。 |
+| **比較兩個分支的差異** | `git diff main...feature/new-ui" | 檢視 Feature 分支相對於 Main 分支的變更。 |
 
 ---
 
@@ -562,15 +568,15 @@ docker exec -i archon-server /venv/bin/python -c "import os, psycopg2; DB=os.get
 以下檔案行數超過 1000 行，應作為優先重構目標（數據結算至 2026-01-31）：
 
 | 檔案路徑 | 行數 | 類型 | 建議行動 |
-| :--- | :---: | :---: | :--- |
+| :--- | :--- | :--- | :--- |
 | `archon-ui-main/src/components/settings/RAGSettings.tsx` | 2396 | Frontend | **[Critical]** 拆分為多個子元件 |
 | `python/src/server/api_routes/projects_api.py` | 1748 | Backend | **[Critical]** 拆分 Service，移除手動拆包 |
-| `python/src/server/services/crawling/code_extraction_service.py` | 1581 | Backend | **[High]** 按語言拆分為 Strategy Class |
-| `python/src/server/api_routes/ollama_api.py` | 1335 | Backend | **[High]** 抽離通訊邏輯 |
-| `archon-ui-main/src/components/settings/OllamaModelSelectionModal.tsx` | 1170 | Frontend | **[Medium]** UX 邏輯分離 |
-| `python/src/server/services/ollama/model_discovery_service.py` | 1122 | Backend | **[Medium]** 減少單檔複雜度 |
-| `python/src/server/services/llm_provider_service.py` | 1085 | Backend | **[Medium]** 抽象層重構 |
-| `python/src/server/api_routes/knowledge_api.py` | 1085 | Backend | **[Medium]** API 端點精簡 |
+| `python/src/server/services/crawling/code_extraction_service.py" | 1581 | Backend | **[High]** 按語言拆分為 Strategy Class |
+| `python/src/server/api_routes/ollama_api.py" | 1335 | Backend | **[High]** 抽離通訊邏輯 |
+| `archon-ui-main/src/components/settings/OllamaModelSelectionModal.tsx" | 1170 | Frontend | **[Medium]** UX 邏輯分離 |
+| `python/src/server/services/ollama/model_discovery_service.py" | 1122 | Backend | **[Medium]** 減少單檔複雜度 |
+| `python/src/server/services/llm_provider_service.py" | 1085 | Backend | **[Medium]** 抽象層重構 |
+| `python/src/server/api_routes/knowledge_api.py" | 1085 | Backend | **[Medium]** API 端點精簡 |
 
 ---
 
@@ -579,25 +585,18 @@ docker exec -i archon-server /venv/bin/python -c "import os, psycopg2; DB=os.get
 > **更新日期**: 2026-02-03
 > **說明**: 本章節記錄了 Phase 4.7 至 4.11 期間完成的核心架構升級。開發者在進行新功能開發時，應充分利用這些已就緒的基礎設施。
 
-### 1. 神經連結 (Neural Wiring) - Phase 4.7
-*   **MCP 架構**: 系統已全面導入 **Model Context Protocol (MCP)**。
-    *   **Client**: `AgentService` 透過單例的 `MCPClient` (`src/agents/mcp_client.py`) 與工具層通訊。
-    *   **Two-pass Loop**: Agent 的思考迴圈已升級為「Think (分析) -> Tool (執行) -> Act (回應)」的雙重確認模式。
-*   **DevBot 能力**: DevBot 現在具備「先查詢知識庫 (`rag_search`) 再修復」的 L2 自癒能力，不再盲目嘗試。
-
-### 2. Agent 覺醒 (Agent Awakening) - Phase 4.8
-*   **Agent Registry**: 所有 Agent 的角色定義、Prompt 與工具權限皆已集中管理於 `src/server/services/agent_registry.py`。
-*   **通用化**: 移除了 Hardcoded 的 Mock 邏輯，MarketBot、Librarian 與 POBot 現在皆透過通用的 MCP 迴圈運作。
-
-### 3. 安全與自治 (Security & Autonomy) - Phase 4.9
-*   **RBAC 門禁**: `/api/agents/assignable` 已實作角色過濾 (Sales 僅見 MarketBot，Marketing 可見 Librarian)。
-*   **Clockwork Patrol**:
-    *   **Log Patrol**: 每小時自動掃描 `archon_logs` 中的錯誤，並主動派工給 DevBot。
-    *   **Business Sentinel**: 每 12 小時自動掃描超過 14 天未更新的 Stale Leads。
-
-### 4. 穩定化與除債 (Quality & Stability) - Phase 4.10 ~ 4.11
-*   **型別安全**: 後端代碼庫已達成 **Zero MyPy Errors**，消除了所有隱性的型別風險。
-*   **測試防護網**:
-    *   **Backend**: 532 個測試 (100% 通過)。
-    *   **Frontend**: 183 個測試 (Unit + E2E + Admin，100% 通過)。
-    *   **E2E**: 包含完整的資料庫重置與全流程驗證。
+- **1. 神經連結 (Neural Wiring) - Phase 4.7**: 系統已全面導入 **Model Context Protocol (MCP)**。
+    - **Client**: `AgentService` 透過單例的 `MCPClient` (`src/agents/mcp_client.py`) 與工具層通訊。
+    - **Two-pass Loop**: Agent 的思考迴圈已升級為「Think (分析) -> Tool (執行) -> Act (回應)」的雙重確認模式。
+    - **DevBot 能力**: DevBot 現在具備「先查詢知識庫 (`rag_search`) 再修復」的 L2 自癒能力，不再盲目嘗試。
+- **2. Agent 覺醒 (Agent Awakening) - Phase 4.8**: 所有 Agent 的角色定義、Prompt 與工具權限皆已集中管理於 `src/server/services/agent_registry.py`。
+    - **通用化**: 移除了 Hardcoded 的 Mock 邏輯，MarketBot、Librarian 與 POBot 現在皆透過通用的 MCP 迴圈運作。
+- **3. 安全與自治 (Security & Autonomy) - Phase 4.9**: `/api/agents/assignable` 已實作角色過濾 (Sales 僅見 MarketBot，Marketing 可見 Librarian)。
+    - **Clockwork Patrol**:
+        - **Log Patrol**: 每小時自動掃描 `archon_logs` 中的錯誤，並主動派工給 DevBot。
+        - **Business Sentinel**: 每 12 小時自動掃描超過 14 天未更新的 Stale Leads。
+- **4. 穩定化與除債 (Quality & Stability) - Phase 4.10 ~ 4.11**: 後端代碼庫已達成 **Zero MyPy Errors**，消除了所有隱性的型別風險。
+    - **測試防護網**:
+        - **Backend**: 532 個測試 (100% 通過)。
+        - **Frontend**: 183 個測試 (Unit + E2E + Admin，100% 通過)。
+        - **E2E**: 包含完整的資料庫重置與全流程驗證。

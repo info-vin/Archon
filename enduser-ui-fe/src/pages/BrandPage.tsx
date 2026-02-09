@@ -123,7 +123,7 @@ const BrandPage: React.FC = () => {
         }
     };
 
-    const handleMagicDraft = async (topic: string) => {
+    const handleMagicDraft = async (topic: string, config?: any) => {
         if (!activeSource) return;
         setIsDrafting(true);
         try {
@@ -131,7 +131,8 @@ const BrandPage: React.FC = () => {
                 topic: topic,
                 context_source_id: activeSource.id,
                 context_type: activeSource.type,
-                tone: 'professional'
+                tone: 'professional',
+                ...config
             });
             console.log("Magic Draft Result:", result);
             

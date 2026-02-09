@@ -134,12 +134,23 @@ sequenceDiagram
 
     %% Scenario D: Pruning Loop (No Agent)
     rect rgb(255, 240, 245)
-    note over Alice, DB: D. 自動歸檔 (系統背景)
+    Note over Alice, DB: D. 自動歸檔 (系統背景)
     loop Scheduler (Every Hour)
         Backend->>Service: prune_stale_leads()
         Service->>DB: UPDATE leads SET status='archived'<br/>WHERE created < 3d AND score < 40
         DB-->>Service: Updated Count
     end
+    end
+
+    %% Scenario E: Data Request Loop (Closed Loop)
+    rect rgb(230, 230, 250)
+    Note over Alice, DB: E. 資料補件 (來自 Bob 的請求)
+    Backend->>Alice: 📱 推送通知："Bob 需要 [客戶] 的訪談紀錄"
+    Alice->>App: 點擊通知 -> 開啟 Task Modal
+    Alice->>App: 輸入/錄音補件內容
+    App->>Backend: PATCH /api/tasks/{id} (Status: Done)
+    Backend->>Service: Notify Charlie/Bob
+    Service->>DB: Update Context & Knowledge Base
     end
 ```
 

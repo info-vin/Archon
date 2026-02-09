@@ -474,10 +474,24 @@ const supabaseApi = {
     return response.json();
   },
 
-  async processApproval(type: 'blog' | 'lead', id: string, action: 'approve' | 'reject'): Promise<void> {
+  async rejectSuggestion(blogPostId: string): Promise<{ suggested_reason: string }> {
+      const response = await fetch('/api/marketing/approvals/reject-suggestion', {
+          method: 'POST',
+          headers: await this._getHeaders(),
+          body: JSON.stringify({ blog_post_id: blogPostId })
+      });
+      if (!response.ok) throw new Error('Failed to generate rejection suggestion');
+      return response.json();
+  },
+
+  async processApproval(type: 'blog' | 'lead', id: string, action: 'approve' | 'reject', reviewNotes?: string): Promise<void> {
+    const payload: any = {};
+    if (reviewNotes) payload.review_notes = reviewNotes;
+
     const response = await fetch(`/api/marketing/approvals/${type}/${id}/${action}`, {
         method: 'POST',
-        headers: await this._getHeaders()
+        headers: await this._getHeaders(),
+        body: Object.keys(payload).length > 0 ? JSON.stringify(payload) : undefined
     });
     if (!response.ok) throw new Error('Approval action failed');
   },
@@ -502,7 +516,17 @@ const supabaseApi = {
     }
     return response.json();
   },
-  async draftBlogPost(data: { topic: string; keywords?: string; tone?: string; context_source_id?: string; context_type?: string }): Promise<{ title: string; content: string; excerpt: string; references: string[]; used_prompt?: string }> {
+  async draftBlogPost(data: { 
+    topic: string; 
+    keywords?: string; 
+    tone?: string; 
+    context_source_id?: string; 
+    context_type?: string;
+    industry?: string[];
+    style?: string[];
+    length?: string;
+    charts?: string[];
+  }): Promise<{ title: string; content: string; excerpt: string; references: string[]; used_prompt?: string }> {
       const response = await fetch('/api/marketing/blog/draft', {
           method: 'POST',
           headers: await this._getHeaders(),

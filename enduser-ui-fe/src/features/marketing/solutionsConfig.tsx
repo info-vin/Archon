@@ -40,6 +40,7 @@ export const solutionsCategories: SolutionCategory[] = [
     {
         title: 'High-Tech Manufacturing',
         items: [
+            { id: 'sas-smart-mfg', label: 'SAS Smart Manufacturing', type: 'legacy', src: '/ai/BCD.html', icon: <LayoutGridIcon className="w-4 h-4" /> },
             { id: 'oee', label: 'OEE Maximization', type: 'legacy', src: '/ai/hightech/SAS in hightech manufacturing_ Maximizing OEE.html', icon: <BarChartIcon className="w-4 h-4" /> },
             { id: 'yield', label: 'Yield & Quality', type: 'legacy', src: '/ai/hightech/SAS in hightech manufacturing_ Yield & Quality.html', icon: <ActivityIcon className="w-4 h-4" /> },
             { id: 'supply-chain', label: 'Supply Chain', type: 'legacy', src: '/ai/hightech/SAS in hightech manufacturing_ Transforming High-Tech Supply Chains.html', icon: <DatabaseIcon className="w-4 h-4" /> },

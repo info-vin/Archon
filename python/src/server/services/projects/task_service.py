@@ -60,6 +60,47 @@ class TaskService:
             return False, "Assignee must be a non-empty string"
         return True, ""
 
+    async def create_info_request_task(
+        self,
+        requester_id: str,
+        subject: str,
+        context: str,
+        lead_id: str | None = None
+    ) -> tuple[bool, dict[str, Any]]:
+        """
+        Creates a specialized task for requesting information (Alice Loop).
+        Flow: Bob requests -> Charlie Approves -> Alice executes.
+        """
+        try:
+            # 1. Generate Description with AI (POBot) - Simplified for robustness
+            # In a real scenario, this would call POBot to format the request nicely.
+            # For now, we use a template to ensure reliability.
+            description = (
+                f"**Information Request**: {subject}\n\n"
+                f"**Context**: {context}\n\n"
+                f"**Action Required**: Please provide the missing information (e.g., Visit Logs, Client preferences).\n"
+                f"**Requester**: {requester_id}\n"
+            )
+            if lead_id:
+                description += f"**Related Lead**: {lead_id}"
+
+            # 2. Create Task
+            # Status: pending_approval (This effectively assigns it to Manager's queue)
+            # Assignee: "Charlie" (Manager) for approval
+            return await self.create_task(
+                project_id="field_ops_001", # TODO: Defaults to Field Ops or a generic "Requests" project?
+                title=f"Info Request: {subject}",
+                description=description,
+                assignee="Charlie", # Initial assignee is Manager for approval
+                priority="high",
+                feature="information_request",
+                task_order=0
+            )
+
+        except Exception as e:
+            logger.error(f"Error creating info request task: {e}")
+            return False, {"error": str(e)}
+
     async def create_task(
         self,
         project_id: str,

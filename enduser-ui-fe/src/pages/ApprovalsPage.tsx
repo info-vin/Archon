@@ -13,7 +13,9 @@ import {
     ClockIcon, 
     UserIcon, 
     EyeIcon,
-    LayoutGridIcon
+    LayoutGridIcon,
+    SparklesIcon,
+    XCircleIcon
 } from '../components/Icons';
 
 const Badge = ({ children, className }: any) => (
@@ -65,6 +67,10 @@ const ApprovalsPage: React.FC = () => {
   
   // Charlie's State Hooks
   const [previewId, setPreviewId] = useState<string | null>(null);
+  const [rejectModalOpen, setRejectModalOpen] = useState(false);
+  const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
+  const [rejectionReason, setRejectionReason] = useState("");
+  const [isGenerating, setIsGenerating] = useState(false);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -91,14 +97,49 @@ const ApprovalsPage: React.FC = () => {
   }, [fetchData]);
 
   const handleContentAction = async (id: string, action: 'approve' | 'reject') => {
+    if (action === 'reject') {
+        setSelectedPostId(id);
+        setRejectionReason("");
+        setRejectModalOpen(true);
+        return;
+    }
+
     try {
       await api.processApproval('blog', id, action);
-      alert(action === 'approve' ? 'Content Published!' : 'Returned to Bob');
+      alert('Content Published!');
       setPreviewId(null);
       fetchData();
     } catch (err) {
       alert("Action failed");
     }
+  };
+
+  const handleConfirmReject = async () => {
+    if (!selectedPostId) return;
+    try {
+        await api.processApproval('blog', selectedPostId, 'reject', rejectionReason);
+        alert('Returned to Bob with Feedback');
+        setRejectModalOpen(false);
+        setPreviewId(null);
+        fetchData();
+    } catch (err) {
+        console.error(err);
+        alert("Action failed");
+    }
+  };
+
+  const handleGenerateReason = async () => {
+      if (!selectedPostId) return;
+      setIsGenerating(true);
+      try {
+          const res = await api.rejectSuggestion(selectedPostId);
+          setRejectionReason(res.suggested_reason);
+      } catch (e) {
+          console.error(e);
+          alert("AI Generation failed");
+      } finally {
+          setIsGenerating(false);
+      }
   };
 
   const handleCodeAction = async (id: string, action: 'approve' | 'reject') => {
@@ -358,6 +399,66 @@ const ApprovalsPage: React.FC = () => {
                 )}
             </div>
         )}
+        
+        {/* REJECTION MODAL */}
+        {rejectModalOpen && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+                <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden border border-gray-200 dark:border-slate-800">
+                    <div className="p-6 border-b border-gray-100 dark:border-slate-800 flex justify-between items-center bg-gray-50 dark:bg-slate-950">
+                        <h3 className="text-lg font-black text-gray-900 dark:text-white flex items-center gap-2">
+                            <XCircleIcon className="w-5 h-5 text-red-500" />
+                            Return to Bob
+                        </h3>
+                        <button onClick={() => setRejectModalOpen(false)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+                            <XIcon className="w-5 h-5" />
+                        </button>
+                    </div>
+                    <div className="p-6 space-y-4">
+                        <div className="bg-amber-50 dark:bg-amber-900/20 p-4 rounded-xl border border-amber-100 dark:border-amber-900/30 text-xs text-amber-800 dark:text-amber-200 flex gap-2">
+                             <SparklesIcon className="w-4 h-4 shrink-0 mt-0.5" />
+                             <div>
+                                <p className="font-bold mb-1">Coach, not Cop.</p>
+                                Provide constructive feedback so Bob can improve the content.
+                             </div>
+                        </div>
+                        
+                        <div className="flex justify-end">
+                            <button 
+                                onClick={handleGenerateReason}
+                                disabled={isGenerating}
+                                className="text-xs font-black text-indigo-600 dark:text-indigo-400 flex items-center gap-1 hover:underline disabled:opacity-50"
+                            >
+                                <SparklesIcon className={`w-3 h-3 ${isGenerating ? 'animate-spin' : ''}`} />
+                                {isGenerating ? 'Analyzing Draft...' : 'Generate with AI'}
+                            </button>
+                        </div>
+                        
+                        <textarea
+                            className="w-full h-40 p-4 rounded-xl bg-gray-50 dark:bg-slate-950 border border-gray-200 dark:border-slate-800 focus:ring-2 focus:ring-red-500 focus:border-red-500 text-sm resize-none outline-none transition-all"
+                            placeholder="Explain why this is being returned..."
+                            value={rejectionReason}
+                            onChange={(e) => setRejectionReason(e.target.value)}
+                        />
+                    </div>
+                    <div className="p-4 bg-gray-50 dark:bg-slate-950 border-t border-gray-100 dark:border-slate-800 flex justify-end gap-3">
+                        <button 
+                            onClick={() => setRejectModalOpen(false)}
+                            className="px-5 py-2.5 rounded-xl font-bold text-sm text-gray-600 hover:bg-gray-200 dark:text-gray-300 dark:hover:bg-slate-800 transition-colors"
+                        >
+                            Cancel
+                        </button>
+                        <button 
+                            onClick={handleConfirmReject}
+                            disabled={!rejectionReason.trim()}
+                            className="px-5 py-2.5 rounded-xl font-black text-sm bg-red-600 text-white hover:bg-red-700 shadow-lg shadow-red-200 dark:shadow-red-900/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                        >
+                            Confirm Return
+                        </button>
+                    </div>
+                </div>
+            </div>
+        )}
+
       </div>
     </PermissionGuard>
   );

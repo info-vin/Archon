@@ -128,6 +128,84 @@ class LibrarianService:
             # For now, we return empty string to indicate failure but allow flow to continue.
             return ""
 
+    async def archive_web_research(
+        self,
+        query: str,
+        content: str,
+        references: list[str]
+    ) -> str:
+        """
+        Archives web research results into the knowledge base.
+        """
+        try:
+            # 1. Generate unique Source ID
+            safe_query = "".join(c for c in query if c.isalnum())[:20].lower()
+            unique_suffix = str(uuid.uuid4())[:8]
+            source_id = f"web-{safe_query}-{unique_suffix}"
+
+            # 2. Prepare Metadata
+            title = f"Research: {query}"
+            summary = f"Web research results for: {query}"
+            word_count = len(content.split())
+            tags = ["web_research", "external_knowledge", "google_grounding"]
+
+            logger.info(f"Librarian: Archiving web research | source_id={source_id} | query={query}")
+
+            # 3. Create Source Info
+            await update_source_info(
+                client=self.supabase,
+                source_id=source_id,
+                summary=summary,
+                word_count=word_count,
+                content=content,
+                knowledge_type="web_research",
+                tags=tags,
+                source_display_name=title
+            )
+
+            # 4. Insert Content & Embedding
+            try:
+                embedding_vector = await create_embedding(content[:8000]) # Limit for embedding
+            except Exception as e:
+                logger.error(f"Librarian: Failed to generate embedding for research {source_id}: {e}")
+                embedding_vector = None
+
+            page_data = {
+                "source_id": source_id,
+                "url": f"generated://research/{source_id}",
+                "chunk_number": 0,
+                "content": content,
+                "embedding": embedding_vector,
+                "metadata": {
+                    "knowledge_type": "web_research",
+                    "tags": tags,
+                    "query": query,
+                    "references": references,
+                    "title": title
+                }
+            }
+
+            self.supabase.table("archon_crawled_pages").insert(page_data).execute()
+
+            # 5. Record version
+            try:
+                self.supabase.table("archon_document_versions").insert({
+                    "field_name": "web_research",
+                    "change_type": "create",
+                    "change_summary": f"Archived research for: {query}",
+                    "content": {"source_id": source_id, "query": query, "refs_count": len(references)},
+                    "created_by": "ai-librarian",
+                    "version_number": 1
+                }).execute()
+            except Exception as v_err:
+                logger.warning(f"Librarian: Failed to log document version: {v_err}")
+
+            return source_id
+
+        except Exception as e:
+            logger.error(f"Librarian: Failed to archive web research | error={str(e)}")
+            return ""
+
     async def archive_file(
         self,
         file_name: str,

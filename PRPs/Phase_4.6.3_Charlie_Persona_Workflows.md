@@ -86,16 +86,25 @@ sequenceDiagram
     UI->>API: POST /api/marketing/blog/{id}/submit
     API->>Reviewer: 自動合規檢查 (Auto-Check)
     
-    alt 分數 < 80
+    alt 分數 < 80 (Auto-Reject)
         Reviewer-->>Bob: ❌ 退回：含敏感關鍵字
-    else 分數 >= 80
+    else 分數 >= 80 (Human Review)
         Reviewer->>DB: 標記為 "Pending Approval"
         Charlie->>UI: 查看 "Approvals Queue"
         UI-->>Charlie: 顯示待審核列表 + AI 摘要
-        Charlie->>UI: 點擊 "Publish" (一鍵發布)
-        UI->>API: POST /api/marketing/approvals/blog/{id}/approve
-        UI->>DB: 更新狀態 = PUBLISHED
-        DB-->>Bob: ✅ 通知："文章已上線"
+        
+        alt 批准 (Approve)
+            Charlie->>UI: 點擊 "Publish"
+            UI->>API: POST .../approve -> DB Update
+            DB-->>Bob: ✅ 通知："文章已上線"
+        else 拒絕 (Reject with AI)
+            Charlie->>UI: 點擊 "Reject" -> "Generate AI Reason"
+            UI->>API: POST /api/marketing/approvals/reject-suggestion
+            API-->>UI: 回傳 "建設性修改建議"
+            Charlie->>UI: 編輯建議 -> 確認退回
+            UI->>API: POST .../reject -> DB Update
+            DB-->>Bob: ⚠️ 通知："請依建議修改"
+        end
     end
     end
 

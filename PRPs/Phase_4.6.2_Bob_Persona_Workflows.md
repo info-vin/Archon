@@ -73,7 +73,7 @@ sequenceDiagram
     API-->>UI: 渲染左側「戰果牆」(Victory Feed)
     end
 
-    %% 階段二：脈絡獲取
+    %% 階段二：脈絡獲取 (Context Gathering & Gap Analysis)
     rect rgb(255, 250, 240)
     Note over Bob, Nana: 階段 2：脈絡獲取 (Context Gathering)
     Bob->>UI: 點擊左側客戶 "Mozilla"
@@ -83,12 +83,22 @@ sequenceDiagram
         API->>DB: 1. 讀取 Alice 的訪談逐字稿 (Visit Logs)
         API->>Librarian: 2. 檢索相關知識 (RAG Search)
         Librarian->>DB: Vector Similarity Search
-        Librarian-->>API: 回傳相關文件片段
+        alt Low Confidence / Missing Info
+            Librarian->>Librarian: 觸發 Google Search (External)
+            Librarian->>DB: 存入新 Knowledge (On-the-fly)
+        end
+        Librarian-->>API: 回傳擴充後的素材
     end
     
     API-->>UI: 回傳完整 Context (Logs + Docs)
-    UI->>Bob: 在右側顯示「脈絡分頁」(Context Tab)
-    Note right of UI: Bob 此時閱讀逐字稿<br>並確認客戶痛點
+    UI->>Bob: 在右側顯示「脈絡分頁」
+    
+    alt 資料仍不足 (Request Info Loop)
+        Bob->>UI: 點擊 "Request Missing Info"
+        UI->>API: POST /api/marketing/request-info
+        API->>DB: 建立任務 -> 指派給 Charlie/Alice
+        API-->>UI: 顯示 "Request Sent"
+    end
     end
 
     %% 階段三：AI 協作撰寫 (State Persistence & Draft)

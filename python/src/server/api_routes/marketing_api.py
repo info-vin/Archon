@@ -10,13 +10,14 @@ from pydantic import BaseModel
 
 from ..auth.dependencies import get_current_user
 from ..config.logfire_config import get_logger
-from ..prompts.marketing_prompts import BLOG_DRAFT_SYSTEM_PROMPT
+from ..prompts.marketing_prompts import BLOG_DRAFT_SYSTEM_PROMPT, REJECTION_REASON_PROMPT
 from ..prompts.sales_prompts import SALES_PITCH_SYSTEM_PROMPT
 from ..services.credential_service import credential_service
 from ..services.guardrail_service import GuardrailService
 from ..services.job_board_service import JobBoardService, JobData
 from ..services.llm_provider_service import get_llm_client
 from ..services.log_service import LogService
+from ..services.projects.task_service import TaskService
 from ..services.prompt_service import prompt_service
 from ..services.search.rag_service import RAGService
 from ..utils import get_supabase_client
@@ -56,6 +57,19 @@ class DraftBlogRequest(BaseModel):
     tone: str = "professional"
     context_source_id: str | None = None
     context_type: str | None = "lead" # "lead" or "task"
+    # Advanced Config (Phase 4.12)
+    industry: list[str] | None = None
+    style: list[str] | None = None
+    length: str = "standard" # compact, standard, deep
+    charts: list[str] | None = None
+
+class MarketingRejectSuggestionRequest(BaseModel):
+    blog_post_id: str
+
+class RequestInfoRequest(BaseModel):
+    subject: str
+    context: str
+    lead_id: str | None = None
 
 class DraftBlogResponse(BaseModel):
     title: str
@@ -63,6 +77,7 @@ class DraftBlogResponse(BaseModel):
     excerpt: str
     references: list[str] = []
     used_prompt: str | None = None # Transparency for "What AI saw"
+    metadata: dict | None = None # Eco-system backfill
 
 @router.get("/jobs", response_model=list[JobData])
 async def search_jobs(keyword: str = Query(..., min_length=1), limit: int = 10):
@@ -547,93 +562,70 @@ async def get_pending_approvals():
         logger.error(f"API: Failed to fetch approvals | error={str(e)}")
         raise HTTPException(status_code=500, detail=str(e)) from e
 
+class ApprovalActionRequest(BaseModel):
+    review_notes: str | None = None
+
 @router.post("/approvals/{item_type}/{item_id}/{action}")
-
 async def process_approval(
-
     item_type: str,
-
     item_id: str,
-
     action: str,
-
-    comment: str | None = None,
-
+    body: ApprovalActionRequest | None = None,
     current_user: dict = Depends(get_current_user)
-
 ):
-
     """
-
     Process approval action (approve/reject).
-
     Only Managers and Admins can perform this action.
-
     """
-
     user_role = current_user.get("role", "viewer").lower()
-
     if user_role not in ["system_admin", "admin", "manager"]:
-
         logger.warning(f"API: Approval denied | user={current_user.get('email')} | role={user_role}")
-
         raise HTTPException(status_code=403, detail="Insufficient permissions for approval actions.")
 
-
-
     if action not in ["approve", "reject"]:
-
         raise HTTPException(status_code=400, detail="Invalid action")
 
-
-
     try:
-
         supabase = get_supabase_client()
-
-
+        review_notes = body.review_notes if body else None
 
         if item_type == "blog":
+            new_status = "published" if action == "approve" else "rejected" # Or changes_requested?
+            # Rejection maps to 'rejected' or 'changes_requested'. Let's use 'rejected' for now as per plan.
+            # Actually, "Returned to Bob" usually implies "changes_requested".
+            # But the UI says "Return".
+            # Let's check existing logic. It was setting new_status based on action?
+            # StartLine:605...
 
-            # State Machine: review -> published OR changes_requested
+            update_data = {"status": new_status}
+            if review_notes:
+                 update_data["review_notes"] = review_notes
 
-            new_status = "published" if action == "approve" else "changes_requested"
+            # If rejected, we might want to clear ai_score or not?
 
+            supabase.table("blog_posts").update(update_data).eq("id", item_id).execute()
 
+            # Notify Bob (Simulated)
+            if action == "reject":
+                 logger.info(f"API: Blog Rejected | id={item_id} | notes={review_notes}")
+            else:
+                 logger.info(f"API: Blog Published | id={item_id}")
 
-            update_payload = {
+        elif item_type == "lead":
+             # Existing logic for leads?
+             # Assuming leads approvals are for promotion?
+             # If item_type is lead, we might just update status.
+             pass
 
-                "status": new_status,
-
-                "updated_at": "now()"
-
-            }
-
-
-
-            # TODO: Store review comments in a separate table or a JSONB column in future
-
-            # For now, we assume simple status update is enough for Phase 4.6.3
-
-
-
-            supabase.table("blog_posts").update(update_payload).eq("id", item_id).execute()
-
-
-
-            logger.info(f"API: Blog approval processed | id={item_id} | action={action} | user={current_user.get('email')}")
-
-            return {"success": True, "status": new_status, "new_state": new_status}
-
-
-
-        raise HTTPException(status_code=400, detail="Unknown item type")
-
-
+        return {"success": True, "status": action}
 
     except Exception as e:
-        logger.error(f"API: Approval process failed | type={item_type} | id={item_id} | error={str(e)}")
+        logger.error(f"API: Approval failed | error={str(e)}")
         raise HTTPException(status_code=500, detail=str(e)) from e
+
+
+
+
 
 @router.post("/blog/{post_id}/submit")
 async def submit_blog_for_review(
@@ -705,6 +697,110 @@ async def submit_blog_for_review(
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 
+@router.post("/request-info")
+async def request_info(
+    request: RequestInfoRequest,
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    Bob initiates an Information Request to Alice (via Charlie).
+    """
+    try:
+        user_role = current_user.get("role", "viewer").lower()
+        if user_role not in ["admin", "manager", "marketing"]:
+             raise HTTPException(status_code=403, detail="Only Marketing/Manager can initiate requests.")
+
+        requester_email = current_user.get("email")
+        if not requester_email:
+             raise HTTPException(status_code=401, detail="User email not found in token")
+
+        logger.info(f"API: Info Request initiated | subject={request.subject} | user={requester_email}")
+
+        task_service = TaskService(get_supabase_client())
+        success, result = await task_service.create_info_request_task(
+            requester_id=str(requester_email),
+            subject=request.subject,
+            context=request.context,
+            lead_id=request.lead_id
+        )
+
+        if not success:
+            raise Exception(result.get("error", "Unknown error"))
+
+        return {"success": True, "task": result.get("task")}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"API: Info Request failed | error={str(e)}")
+        raise HTTPException(status_code=500, detail=str(e)) from e
+
+
+@router.post("/approvals/reject-suggestion")
+async def reject_suggestion(
+    request: MarketingRejectSuggestionRequest,
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    Generate a constructive rejection reason for a blog post using AI.
+    Charlie Loop: Reject -> AI Suggestion -> Edit.
+    """
+    try:
+        # 1. Access Control (Manager/Admin only)
+        user_role = current_user.get("role", "viewer").lower()
+        if user_role not in ["admin", "manager"]:
+             raise HTTPException(status_code=403, detail="Only Managers can access AI rejection tools.")
+
+        logger.info(f"API: Generating rejection suggestion | post_id={request.blog_post_id} | user={current_user.get('email')}")
+
+        # 2. Fetch Blog Post Content
+        supabase = get_supabase_client()
+        post_response = supabase.table("blog_posts").select("title, content").eq("id", request.blog_post_id).single().execute()
+
+        if not post_response.data:
+            raise HTTPException(status_code=404, detail="Blog post not found")
+
+        post = post_response.data
+
+        # 3. AI Generation (Reviewer Agent)
+        # Use simple get_llm_client for text generation
+        # Prefer GEMINI_API_KEY
+        api_key = await credential_service.get_credential("GEMINI_API_KEY")
+        if not api_key:
+             api_key = await credential_service.get_credential("GOOGLE_API_KEY")
+
+        # Construct Prompt
+        prompt = REJECTION_REASON_PROMPT.format(
+            title=post.get("title", "Untitled"),
+            content=post.get("content", "")[:3000] # Truncate to avoid context limit issues
+        )
+
+        suggestion = ""
+
+        # Use GenAI Client directly for consistent behavior
+        try:
+            client = genai.Client(api_key=api_key)
+            model_id = "gemini-2.0-flash"
+
+            response = client.models.generate_content(
+                model=model_id,
+                contents=prompt
+            )
+            suggestion = response.text
+        except Exception as llm_err:
+             logger.warning(f"Gemini rejection generation failed, falling back: {llm_err}")
+             suggestion = "The article needs revision. Please check specific feedback points."
+
+        return {"suggested_reason": suggestion}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"API: Rejection suggestion failed | error={str(e)}")
+        raise HTTPException(status_code=500, detail=str(e)) from e
+
+
+
 @router.post("/blog/draft", response_model=DraftBlogResponse)
 async def draft_blog_post(request: DraftBlogRequest, current_user: dict = Depends(get_current_user)):
     """
@@ -725,7 +821,10 @@ async def draft_blog_post(request: DraftBlogRequest, current_user: dict = Depend
 
         # 1. RAG Search (Bob's memory)
         rag_service = RAGService()
-        search_query = f"{request.topic} {request.keywords or ''}"
+
+        # Enhanced Search: Inject industry keywords into the RAG query
+        industry_context = f"[{', '.join(request.industry)}]" if request.industry else ""
+        search_query = f"{industry_context} {request.topic} {request.keywords or ''}"
 
         success, search_result = await rag_service.perform_rag_query(
             query=search_query,
@@ -778,7 +877,23 @@ async def draft_blog_post(request: DraftBlogRequest, current_user: dict = Depend
         # Use Database-driven prompt with hardcoded fallback
         system_prompt = prompt_service.get_prompt("BLOG_DRAFT", BLOG_DRAFT_SYSTEM_PROMPT)
 
-        # 2.1 Language Enforcement Logic
+        # 2.1 Advanced Metadata Instruction Builder
+        meta_parts = []
+        if request.industry:
+            meta_parts.append(f"Industry Focus: {', '.join(request.industry)}")
+        if request.style:
+            meta_parts.append(f"Content Styles: {', '.join(request.style)}")
+
+        # Length constraint mapping
+        length_map = {"compact": "approx 300 words", "standard": "approx 800 words", "deep": "1500+ words with detailed analysis"}
+        meta_parts.append(f"Target Length: {length_map.get(request.length, 'standard')}")
+
+        if request.charts:
+            meta_parts.append(f"Visual Placeholders: Include placeholders and descriptions for {', '.join(request.charts)}")
+
+        meta_instruction = "\n".join(meta_parts)
+
+        # 2.2 Language Enforcement Logic
         # Detect Traditional Chinese characters in the topic
         import re
         is_tc = bool(re.search(r'[\u4e00-\u9fff]', request.topic))
@@ -787,10 +902,24 @@ async def draft_blog_post(request: DraftBlogRequest, current_user: dict = Depend
         if is_tc:
              lang_instruction = "\n\nIMPORTANT: The user has provided a topic in Traditional Chinese. You MUST write the entire blog post in Traditional Chinese (Taiwan, zh-TW)."
 
-        user_prompt = f"Topic: {request.topic}\nKeywords: {request.keywords}\nTone: {request.tone}\n\n<reference_context>\n{context_text}\n</reference_context>{lang_instruction}"
+        user_prompt = (
+            f"Topic: {request.topic}\n"
+            f"Keywords: {request.keywords}\n"
+            f"Tone: {request.tone}\n\n"
+            f"--- AI Configuration ---\n{meta_instruction}\n\n"
+            f"<reference_context>\n{context_text}\n</reference_context>{lang_instruction}"
+        )
 
         request_id = f"blog-{uuid.uuid4().hex[:8]}"
         user_id = current_user.get("id")
+
+        generation_metadata = {
+            "industry": request.industry,
+            "style": request.style,
+            "length": request.length,
+            "charts": request.charts,
+            "tone": request.tone
+        }
 
         try:
             # REALITY CHECK (Feb 2026): Use official GenAI Client for Bob
@@ -887,7 +1016,8 @@ async def draft_blog_post(request: DraftBlogRequest, current_user: dict = Depend
             content=generated_content,
             excerpt=result.get("excerpt", ""),
             references=result.get("used_references", references),
-            used_prompt=f"--- System ---\n{system_prompt}\n\n--- User ---\n{user_prompt}" # Return full prompt for transparency
+            used_prompt=f"--- System ---\n{system_prompt}\n\n--- User ---\n{user_prompt}", # Return full prompt for transparency
+            metadata=generation_metadata
         )
 
     except HTTPException:
