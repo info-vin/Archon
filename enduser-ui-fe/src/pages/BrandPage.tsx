@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../services/api';
-import { BlogPost, EmployeeRole } from '../types';
+import { BlogPost, EmployeeRole, TaskStatus } from '../types';
 import { PermissionGuard } from '../features/auth/components/PermissionGuard';
 import { TrendLineChart } from '../features/marketing/components/TrendLineChart';
 import { SankeyDiagram } from '../features/marketing/components/SankeyDiagram';
@@ -34,6 +34,7 @@ const BrandPage: React.FC = () => {
     // Workbench State
     const [sources, setSources] = useState<ContentSource[]>([]);
     const [activeSource, setActiveSource] = useState<ContentSource | null>(null);
+    const [activeTaskId, setActiveTaskId] = useState<string | null>(null);
     const [contextData, setContextData] = useState<any>(null);
     const [isLoadingSources, setIsLoadingSources] = useState(false);
     const [isLoadingContext, setIsLoadingContext] = useState(false);
@@ -113,6 +114,10 @@ const BrandPage: React.FC = () => {
 
     const handleSelectSource = async (source: ContentSource) => {
         setActiveSource(source);
+        // Identify associated Task ID from metadata if present
+        const taskId = (source as any).metadata?.task_id || (source as any).task_id;
+        setActiveTaskId(taskId || null);
+        
         setIsLoadingContext(true);
         try {
             const context = await api.getContentContext(source.id, source.type);
@@ -172,6 +177,12 @@ const BrandPage: React.FC = () => {
                 authorName: user?.name || "Bob",
                 publishDate: new Date().toISOString()
             });
+
+            // GAP-023: Sync Task Status to 'doing'
+            if (activeTaskId) {
+                await api.updateTask(activeTaskId, { status: TaskStatus.DOING });
+            }
+
             alert("Draft saved to workspace!");
             setViewMode('dashboard');
             loadData(); // Refresh dashboard data
@@ -225,6 +236,10 @@ const BrandPage: React.FC = () => {
                 if (result.status === 'changes_requested') {
                     alert(`Submission Returned by AI Reviewer:\n${result.review_notes || 'Quality check failed.'}`);
                 } else {
+                    // GAP-023: Sync Task Status to 'review'
+                    if (activeTaskId) {
+                        await api.updateTask(activeTaskId, { status: TaskStatus.REVIEW });
+                    }
                     alert("Article submitted for review! (AI Check Passed)");
                 }
             }
@@ -317,6 +332,11 @@ const BrandPage: React.FC = () => {
                 date: post.publishDate || new Date().toISOString(),
                 review_notes: (post as any).review_notes // Preserve Charlie's feedback
             } as any);
+            
+            // Link Task ID for status sync
+            const associatedTaskId = (post as any).generation_metadata?.task_id || (post as any).task_id;
+            setActiveTaskId(associatedTaskId || null);
+
             setViewMode('workbench');
         } else {
             openEditPostModal(post);

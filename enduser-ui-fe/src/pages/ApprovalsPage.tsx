@@ -240,16 +240,19 @@ const ApprovalsPage: React.FC = () => {
                                             </span>
                                         </div>
 
-                                        {/* 所見即所得預覽 (WYSIWYG Preview) - Enhanced for Tablet */}
-                                        <div className={`relative bg-gray-50 dark:bg-slate-950 rounded-2xl p-5 border border-gray-100 dark:border-slate-800 overflow-hidden transition-all duration-500 ease-in-out ${previewId === post.id ? 'max-h-[1200px]' : 'max-h-48'}`}>
+                                        <div className={`relative bg-gray-50 dark:bg-slate-950 rounded-2xl p-5 border border-gray-100 dark:border-slate-800 transition-all duration-700 ease-in-out ${previewId === post.id ? 'max-h-[8000px] overflow-visible' : 'max-h-48 overflow-hidden'}`}>
                                             <div className={previewId === post.id ? 'opacity-100' : 'opacity-30 grayscale pointer-events-none'}>
-                                                {post.imageUrl && (
-                                                    <img 
-                                                        src={post.imageUrl} 
-                                                        alt="Cover" 
-                                                        className="w-full h-48 object-cover rounded-2xl mb-6 border-2 border-white dark:border-slate-800 shadow-lg" 
-                                                    />
-                                                )}
+                                                {(() => {
+                                                    // Dynamic Image Preview: Use imageUrl if present, else parse Markdown for first image
+                                                    const displayImage = post.imageUrl || post.content?.match(/!\[.*?\]\((.*?)\)/)?.[1];
+                                                    return displayImage && (
+                                                        <img 
+                                                            src={displayImage} 
+                                                            alt="Cover" 
+                                                            className="w-full h-48 object-cover rounded-2xl mb-6 border-2 border-white dark:border-slate-800 shadow-lg" 
+                                                        />
+                                                    );
+                                                })()}
                                                 <div className="prose prose-sm dark:prose-invert max-w-none text-slate-700 dark:text-slate-300 leading-relaxed font-sans">
                                                     <Markdown>{post.content || ''}</Markdown>
                                                 </div>

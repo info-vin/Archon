@@ -55,7 +55,7 @@
 | **GAP-020** | 🔧 Gap | **Admin** | **RBAC** | **精細權限下放 (Delegation)**。已打通 /admin 路由給 Manager，並依權限動態過濾標籤頁。 | High | 🟢 已修復 |
 | **GAP-021** | 🔧 Gap | **Admin** | **Config** | **配置持久化 (Persistence)**。系統設定全面存儲於資料庫 archon_settings，支持熱加載。 | Medium | 🟢 已修復 |
 | **GAP-022** | 🔧 Gap | **Admin** | **Audit** | **變更稽核日誌 (Audit Trail)**。已實作「變更即審計」：Manager 的設定變更自動寫入版本稽核表。 | Medium | 🟢 已修復 |
-| **GAP-023** | 🔧 Gap | **Charlie** | **Return** | **退件反饋與狀態流轉閉環**。1. Bob 在 Workbench 看不到理由 (UI 誤設 lead 類型限定)；2. Charlie 審核頁預覽高度鎖死 (1200px) 且圖片顯示不穩；3. 內容儲存/提交時未連動任務狀態變更 (Doing/Review)。 | High | 🟡 執行中 |
+| **GAP-023** | 🔧 Gap | **Charlie** | **Return** | **退件反饋與狀態流轉閉環**。已完成：1. 移除 Workbench 顯示限制；2. 解鎖 Charlie 預覽高度與圖片自動識別；3. 實作儲存/提交時自動連動任務狀態 (Doing/Review)。 | High | 🟡 待驗證 |
 | **GAP-024** | 🔧 Gap | **Alice** | **Pitch** | **Pitch View UI**。My Leads 列表已儲存 pitch_content 但無查看介面。需新增 "View Pitch" 按鈕與 Modal。 | Medium | 🔴 待處理 |
 
 ---

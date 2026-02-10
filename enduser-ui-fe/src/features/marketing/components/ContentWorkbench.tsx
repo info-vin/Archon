@@ -237,7 +237,7 @@ export const ContentWorkbench: React.FC<ContentWorkbenchProps> = ({
         <div className="flex-1 flex flex-col relative bg-white dark:bg-slate-900 overflow-y-auto custom-scrollbar">
           
           {/* GAP-023: Charlie's Rejection Feedback Banner */}
-          {activeSource?.type === 'lead' && (activeSource as any).review_notes && (
+          {activeSource && (activeSource as any).review_notes && (
             <div className="mx-8 mt-8 p-6 bg-red-50 dark:bg-red-900/20 border-2 border-red-100 dark:border-red-900/30 rounded-[2rem] shadow-sm animate-in slide-in-from-top duration-500">
                 <div className="flex items-start gap-4">
                     <div className="p-3 bg-red-100 dark:bg-red-900/40 rounded-2xl">
