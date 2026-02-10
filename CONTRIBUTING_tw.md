@@ -276,6 +276,10 @@ Phase 4.4.5 引入了 **Clockwork** 進行系統自動檢測。
 ## 第四章：貢獻與部署流程 (Contribution & Deployment)
 
 ### 4.1 前端開發規範 (End-user UI)
+- **捲動安全性 (Mobile Scroll Safety - Critical)**: 嚴禁在頁面最外層容器使用 `min-h-screen`、`h-screen` 或 `h-full` 搭配 `overflow-hidden`。這會導致在手機瀏覽器中，內容高度無法正確向外傳遞至 `MainLayout`，進而鎖死垂直捲動。應保持容器高度為 `auto`，並使用底部間距 (`pb-32`) 確保內容不被導覽列遮擋。
+- **AI 反饋與超時 (UX Strategy)**: 
+    - 任何預期執行時間超過 15 秒的 AI 任務（如 RAG 檢索、Pro 模型生成），**必須**實作動態狀態訊息（每 10-15 秒切換一次文字），讓使用者知道系統仍在運行。
+    - 前端超時門檻應統一提升至 60 秒，以應對複雜的 RAG 推理。
 - **React Hook 穩定性 (Critical)**: 在實作如 `RAGSettings` 等複雜組件時，**嚴禁**將「對象實例 (Object/Array)」直接放入 `useEffect` 的依賴陣列中。這會導致無限渲染循環 (Infinite Re-render)。應解構為「原始型別屬性 (Primitives)」作為依賴。
 - **型別安全性**: 必須同步更新 `src/types.ts` 並通過 `tsc --noEmit` 檢查。
 

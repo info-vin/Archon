@@ -118,6 +118,7 @@ class CreateLeadRequest(BaseModel):
     source_job_url: str | None = None
     identified_need: str | None = None
     status: str = "new"
+    pitch_content: str | None = None
 
 @router.post("/leads")
 async def create_lead(
@@ -136,9 +137,20 @@ async def create_lead(
         lead_data["created_at"] = "now()"
         lead_data["updated_at"] = "now()"
 
-        # Check for duplicates? For now, we allow multiple leads for same company if different jobs.
-        # But maybe we should upsert based on source_job_url if present?
-        # Let's simple insert for now as per immediate requirement.
+        # Check for duplicates based on source_job_url if present
+        if request.source_job_url:
+            existing = supabase.table("leads").select("id").eq("source_job_url", request.source_job_url).execute()
+            if existing.data and len(existing.data) > 0:
+                 # Update existing lead with new pitch if needed, or just return it
+                 logger.info(f"API: Lead already exists for job | id={existing.data[0]['id']}")
+
+                 # Optional: Update pitch if new one is generated?
+                 # For now, let's just return the existing one to avoid overwriting user edits
+                 # OR: Update pitch_content if it was empty
+                 if request.pitch_content:
+                     supabase.table("leads").update({"pitch_content": request.pitch_content}).eq("id", existing.data[0]['id']).execute()
+
+                 return existing.data[0]
 
         res = supabase.table("leads").insert(lead_data).execute()
 
@@ -500,14 +512,14 @@ async def get_content_context(
             for log in logs:
                 context_text += f"\n[Visit Log Summary]: {log.get('summary')}\n[Transcript]: {log.get('voice_transcript')}\n"
 
-            # Fetch Lead Info for RAG
-            lead_res = supabase.table("leads").select("identified_need").eq("id", source_id).single().execute()
+            # Fetch Lead Info for RAG - Use maybeSingle to prevent PGRST116
+            lead_res = supabase.table("leads").select("identified_need").eq("id", source_id).maybeSingle().execute()
             if lead_res.data:
                 context_text += f"\n[Lead Need]: {lead_res.data.get('identified_need')}\n"
 
         elif source_type == "task":
-            # Fetch Task Details
-            task_res = supabase.table("archon_tasks").select("*").eq("id", source_id).single().execute()
+            # Fetch Task Details - Use maybeSingle to prevent PGRST116
+            task_res = supabase.table("archon_tasks").select("*").eq("id", source_id).maybeSingle().execute()
             if task_res.data:
                 context_text += f"\n[Task Title]: {task_res.data.get('title')}\n[Description]: {task_res.data.get('description')}\n"
 
@@ -847,7 +859,8 @@ async def draft_blog_post(request: DraftBlogRequest, current_user: dict = Depend
                     for log in log_res.data:
                         context_text += f"- Summary: {log['summary']}\n- Transcript: {log['voice_transcript']}\n"
             elif request.context_type == "task":
-                task_res = supabase.table("archon_tasks").select("title, description").eq("id", request.context_source_id).single().execute()
+                # Use maybeSingle to prevent crash if ID is from different table (Dirty Data/Frontend mismatch)
+                task_res = supabase.table("archon_tasks").select("title, description").eq("id", request.context_source_id).maybeSingle().execute()
                 if task_res.data:
                     context_text += f"\n### Task Context:\n- Title: {task_res.data['title']}\n- Description: {task_res.data['description']}\n"
 

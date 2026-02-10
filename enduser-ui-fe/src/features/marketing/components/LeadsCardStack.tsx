@@ -146,25 +146,42 @@ const Card = ({ lead, style, onDragEnd, onPitch, onHistory }: { lead: Lead, styl
             className="absolute top-0 left-0 w-full h-full bg-card rounded-2xl shadow-xl border border-border overflow-hidden flex flex-col"
             whileTap={{ cursor: "grabbing" }}
         >
-            {/* Header / Image Area - Reduced height < 25% */}
-            <div className="h-[22%] bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center p-4 relative shrink-0">
-                <div className="absolute top-4 right-4 bg-background/50 backdrop-blur px-2 py-1 rounded text-xs font-mono">
+            {/* Header / Image Area - Reduced height for efficiency */}
+            <div className="h-[18%] bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center p-3 relative shrink-0">
+                <div className="absolute top-3 right-3 bg-background/50 backdrop-blur px-2 py-1 rounded text-[10px] font-mono">
                     {lead.match_score ? `${lead.match_score}% MATCH` : 'NEW'}
                 </div>
                 <div className="text-center w-full px-2">
-                    <h2 className="text-xl md:text-2xl font-bold leading-tight break-words">{lead.company_name}</h2>
-                    <p className="text-sm text-muted-foreground mt-1 line-clamp-1">{lead.source}</p>
+                    <h2 className="text-lg md:text-xl font-black leading-tight break-words">{lead.company_name}</h2>
+                    <p className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-widest mt-0.5">
+                      {lead.source !== 'manual' ? lead.source : 'DIRECT'}
+                    </p>
                 </div>
             </div>
 
-            {/* Body */}
-            <div className="p-6 flex-1 flex flex-col gap-4 relative overflow-y-auto">
-                <div className="flex-1 overflow-y-auto min-h-0 pr-1">
-                    <span className="text-xs uppercase tracking-wider text-muted-foreground font-semibold sticky top-0 bg-card">Requirement</span>
-                    <div className="text-base font-medium mt-1 leading-relaxed space-y-2 text-gray-800">
-                        {(lead.identified_need || "").split(/(?=\s*->)/).map((segment, i) => (
-                            <p key={i}>{segment.trim()}</p>
-                        ))}
+            {/* Body - Compact layout */}
+            <div className="p-4 flex-1 flex flex-col gap-2 relative">
+                <div className="flex-1 min-h-0 pr-1">
+                    <span className="text-[9px] font-black text-amber-600 dark:text-amber-400 uppercase tracking-widest mb-1 flex items-center gap-1">
+                        <SparklesIcon className="w-3 h-3" />
+                        AI Prediction
+                    </span>
+                    <div className="space-y-1 mt-0.5 bg-amber-50/50 dark:bg-amber-900/10 p-3 rounded-xl border border-amber-100/50 dark:border-amber-900/20 mb-1">
+                        {(() => {
+                            const text = lead.identified_need || "";
+                            if (text.includes(" -> ")) {
+                                const [line1, line2] = text.split(" -> ");
+                                return (
+                                    <>
+                                        <p className="text-xs text-slate-600 dark:text-slate-400 leading-tight italic">"{line1}"</p>
+                                        <p className="text-base font-black text-indigo-600 dark:text-indigo-300 leading-tight">
+                                            {line2}
+                                        </p>
+                                    </>
+                                );
+                            }
+                            return <p className="text-sm text-slate-700 dark:text-slate-300 font-medium leading-relaxed">{text}</p>;
+                        })()}
                     </div>
                 </div>
 
@@ -293,7 +310,7 @@ export const LeadsCardStack: React.FC<LeadsCardStackProps> = ({ leads, onSwipeRi
     }
 
     return (
-        <div className="relative w-full max-w-sm mx-auto h-[600px] flex items-center justify-center mt-4">
+        <div className="relative w-full max-w-sm mx-auto h-[520px] flex items-center justify-center mt-0">
             <AnimatePresence>
                  {/* Next Card (Background) */}
                  {leads[index + 1] && (
@@ -314,8 +331,8 @@ export const LeadsCardStack: React.FC<LeadsCardStackProps> = ({ leads, onSwipeRi
                 />
             </AnimatePresence>
 
-            {/* Controls */}
-            <div className="absolute -bottom-20 flex gap-6 items-center">
+            {/* Controls - Tighter Spacing */}
+            <div className="absolute -bottom-12 flex gap-6 items-center">
                  <button 
                     onClick={handleUndo}
                     disabled={history.length === 0}

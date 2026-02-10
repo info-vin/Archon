@@ -29,6 +29,8 @@
 | **BUG-031** | 🐛 Bug | **System** | **DB/Reset**| `make db-reset` 失敗。已補齊 `RESET_DB.sql` 遺漏的新資料表。 | High | 🟢 已修復 |
 | **BUG-032** | 🐛 Bug | **System** | **DB/Seed** | `seed_mock_data.sql` 報錯。已透過完整 DB Reset 修復 Schema 狀態。 | High | 🟢 已修復 |
 | **BUG-034** | 🐛 Bug | **Tech** | **Agent** | `test_run_command_failure_triggers_healing` 失敗。原因：新實作的 DevBot Fallback 邏輯改變了錯誤輸出的格式，導致既有測試斷言失效。 | Medium | 🟢 已修復 |
+| **BUG-035** | 🐛 Bug | **System** | **Probe** | **Probe Cleanup**。沒有自動刪除 probe 在 knowledge 的過期檔案。已將排程從 24hr 調整為 1hr (Cleanup) 與 6hr (Probe) 以應對頻繁重啟。 | High | 🟢 已修復 |
+| **BUG-036** | 🐛 Bug | **Alice** | **UI/Scroll**| **Job Search Scroll**。Job Search > Find Leads (10筆) 無法上下滑動。Fix: Switched mobile to Window Scrolling (`min-h-[100dvh]`). | High | 🟢 已修復 |
 | **BUG-028** | 🐛 Bug | **Bob** | **UI/Magic** | "Prompt Inspector" missing. Fixed: restored as overlay sidebar + ghost style button. | High | 🟢 已修復 |
 | **BUG-029** | 🐛 Bug | **Bob** | **UI/Scroll** | Triple scrollbars on Brand Page. Fixed: `h-full` + `overflow-hidden` logic. | High | 🟢 已修復 |
 | **GAP-009** | 🔧 Gap | **Alice** | **Voice** | 語音日誌自動轉工單尚未實作。已實作前端模擬按鈕與語音上傳介面 (Mock Strategy) 及後端整合。 | Medium | 🟢 已修復 |
@@ -54,6 +56,7 @@
 | **GAP-021** | 🔧 Gap | **Admin** | **Config** | **配置持久化 (Persistence)**。系統設定全面存儲於資料庫 archon_settings，支持熱加載。 | Medium | 🟢 已修復 |
 | **GAP-022** | 🔧 Gap | **Admin** | **Audit** | **變更稽核日誌 (Audit Trail)**。已實作「變更即審計」：Manager 的設定變更自動寫入版本稽核表。 | Medium | 🟢 已修復 |
 | **GAP-023** | 🔧 Gap | **Charlie** | **Return** | **退件理由介面 (Rejection Feedback)**。Charlie 退件時缺乏輸入理由的介面，Bob 無法得知退件原因。需新增 DB 欄位 `review_notes` 與前端 Feedback Modal。 | Medium | 🔴 待處理 |
+| **GAP-024** | 🔧 Gap | **Alice** | **Pitch** | **Pitch View UI**。My Leads 列表已儲存 pitch_content 但無查看介面。需新增 "View Pitch" 按鈕與 Modal。 | Medium | 🔴 待處理 |
 
 ---
 

@@ -117,33 +117,63 @@ const TableView: React.FC<{
   setEditingTask: (task: Task) => void;
   requestSort: (key: SortableTaskKeys) => void;
   sortConfig: { key: SortableTaskKeys; direction: SortDirection } | null;
-}> = ({ tasks, setEditingTask, requestSort, sortConfig }) => {
+  userMap: Record<string, any>;
+  projectMap: Record<string, string>;
+}> = ({ tasks, setEditingTask, requestSort, sortConfig, userMap, projectMap }) => {
   const getSortIcon = (key: SortableTaskKeys) => {
     if (!sortConfig || sortConfig.key !== key) return <ChevronsUpDownIcon className="h-4 w-4" />;
     return sortConfig.direction === 'ascending' ? '🔼' : '🔽';
   };
 
   return (
-    <table className="w-full text-sm text-left">
-      <thead className="text-xs text-muted-foreground uppercase bg-card">
-        <tr>
-          <th scope="col" className="px-6 py-3 cursor-pointer" onClick={() => requestSort('title')}>Title {getSortIcon('title')}</th>
-          <th scope="col" className="px-6 py-3 cursor-pointer" onClick={() => requestSort('status')}>Status {getSortIcon('status')}</th>
-          <th scope="col" className="px-6 py-3 cursor-pointer" onClick={() => requestSort('priority')}>Priority {getSortIcon('priority')}</th>
-          <th scope="col" className="px-6 py-3 cursor-pointer" onClick={() => requestSort('due_date')}>Due Date {getSortIcon('due_date')}</th>
-        </tr>
-      </thead>
-      <tbody>
-        {tasks.map(task => (
-          <tr key={task.id} onClick={() => setEditingTask(task)} className="bg-card border-b hover:bg-card-hover cursor-pointer">
-            <td className="px-6 py-4 font-medium text-foreground whitespace-nowrap">{task.title}</td>
-            <td className="px-6 py-4">{statusIndicator(task.status)}</td>
-            <td className="px-6 py-4"><PriorityBadge priority={task.priority} /></td>
-            <td className="px-6 py-4">{task.due_date ? new Date(task.due_date).toLocaleDateString() : 'N/A'}</td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
+    <div className="bg-white/50 backdrop-blur-sm rounded-2xl border border-white/50 shadow-sm overflow-x-auto font-sans text-xs custom-scrollbar">
+        <table className="w-full text-left border-collapse min-w-[800px]">
+          <thead className="bg-slate-50/50 dark:bg-slate-900/50 border-b dark:border-slate-800">
+            <tr>
+              <th scope="col" className="px-6 py-4 font-black uppercase tracking-widest text-slate-400 text-[10px] cursor-pointer" onClick={() => requestSort('status')}>
+                Status {getSortIcon('status')}
+              </th>
+              <th scope="col" className="px-6 py-4 font-black uppercase tracking-widest text-slate-400 text-[10px]">Project</th>
+              <th scope="col" className="px-6 py-4 font-black uppercase tracking-widest text-slate-400 text-[10px]">Title</th>
+              <th scope="col" className="px-6 py-4 font-black uppercase tracking-widest text-slate-400 text-[10px]">Assignee</th>
+              <th scope="col" className="px-6 py-4 font-black uppercase tracking-widest text-slate-400 text-[10px] cursor-pointer" onClick={() => requestSort('priority')}>
+                Priority {getSortIcon('priority')}
+              </th>
+              <th scope="col" className="px-6 py-4 font-black uppercase tracking-widest text-slate-400 text-[10px] cursor-pointer" onClick={() => requestSort('due_date')}>
+                Due {getSortIcon('due_date')}
+              </th>
+            </tr>
+          </thead>
+          <tbody className="divide-y dark:divide-slate-800">
+            {tasks.map(task => (
+              <tr key={task.id} onClick={() => setEditingTask(task)} className="hover:bg-white dark:hover:bg-slate-800/50 transition-colors cursor-pointer group">
+                <td className="px-6 py-4">{statusIndicator(task.status)}</td>
+                <td className="px-6 py-4 text-slate-500 font-medium">
+                    <span className="px-2 py-1 bg-slate-100 dark:bg-slate-800 rounded-lg truncate block max-w-[120px]">
+                        {projectMap[task.project_id] || 'General'}
+                    </span>
+                </td>
+                <td className="px-6 py-4 font-bold text-slate-700 dark:text-slate-200 group-hover:text-indigo-600 transition-colors">{task.title}</td>
+                <td className="px-6 py-4">
+                    <div className="flex items-center gap-2">
+                        <UserAvatar 
+                            name={task.assignee || 'Unassigned'} 
+                            size={20} 
+                            isAI={task.assignee?.toLowerCase().includes('bot')}
+                            role={userMap[task.assignee_id || '']?.role || userMap[task.assignee || '']?.role}
+                        />
+                        <span className="text-slate-600 dark:text-slate-400 font-medium">{task.assignee || 'None'}</span>
+                    </div>
+                </td>
+                <td className="px-6 py-4"><PriorityBadge priority={task.priority} /></td>
+                <td className="px-6 py-4 font-mono text-slate-400">
+                    {task.due_date ? new Date(task.due_date).toLocaleDateString() : '-'}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+    </div>
   );
 };
 
@@ -176,7 +206,7 @@ const KanbanView: React.FC<{
   };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 h-full p-2">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 h-full p-2">
       {statuses.map(status => (
         <div key={status} className="bg-gray-50/50 rounded-2xl p-4 flex flex-col gap-4 border border-gray-100" onDrop={(e) => onDrop(e, status)} onDragOver={onDragOver}>
           <div className="flex justify-between items-center border-b border-gray-200 pb-3">
@@ -265,6 +295,9 @@ const GanttView: React.FC<{ tasks: Task[] }> = ({ tasks }) => {
 
     g.append("g").attr("class", "x-axis").call(axisTop(x).ticks(timeWeek).tickFormat(timeFormat("%b %d") as any));
 
+    const isDark = document.documentElement.classList.contains('dark');
+    const textColor = isDark ? "#cbd5e1" : "#475569";
+
     g.append("g")
         .attr("class", "y-axis")
         .call(axis => axis.selectAll("text").remove())
@@ -278,7 +311,8 @@ const GanttView: React.FC<{ tasks: Task[] }> = ({ tasks }) => {
         .attr("y", d => y(d.title)! + y.bandwidth() / 2)
         .attr("dy", "0.35em")
         .attr("text-anchor", "end")
-        .style("font-size", "12px");
+        .style("font-size", "12px")
+        .attr("fill", textColor);
 
     g.selectAll(".bar")
       .data(validTasks)
@@ -365,12 +399,33 @@ const DashboardPage: React.FC = () => {
     return tasks?.filter(task => task.project_id === selectedProjectId) || [];
   }, [tasks, selectedProjectId]);
 
+  const projectMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    projects.forEach(p => { map[p.id] = p.title; });
+    return map;
+  }, [projects]);
+
+  const STATUS_WEIGHTS: Record<string, number> = { 'todo': 1, 'doing': 2, 'review': 3, 'done': 4 };
+  const PRIORITY_WEIGHTS: Record<string, number> = { 'critical': 4, 'high': 3, 'medium': 2, 'low': 1 };
+
   const sortedTasks = useMemo(() => {
     let sortableTasks = [...filteredTasks];
     if (sortConfig !== null) {
       sortableTasks.sort((a, b) => {
-        if (a[sortConfig.key]! < b[sortConfig.key]!) return sortConfig.direction === 'ascending' ? -1 : 1;
-        if (a[sortConfig.key]! > b[sortConfig.key]!) return sortConfig.direction === 'ascending' ? 1 : -1;
+        let valA: any = a[sortConfig.key] || '';
+        let valB: any = b[sortConfig.key] || '';
+
+        // Custom weights for Status and Priority
+        if (sortConfig.key === 'status') {
+            valA = STATUS_WEIGHTS[valA.toLowerCase()] || 0;
+            valB = STATUS_WEIGHTS[valB.toLowerCase()] || 0;
+        } else if (sortConfig.key === 'priority') {
+            valA = PRIORITY_WEIGHTS[valA.toLowerCase()] || 0;
+            valB = PRIORITY_WEIGHTS[valB.toLowerCase()] || 0;
+        }
+
+        if (valA < valB) return sortConfig.direction === 'ascending' ? -1 : 1;
+        if (valA > valB) return sortConfig.direction === 'ascending' ? 1 : -1;
         return 0;
       });
     }
@@ -484,7 +539,7 @@ const DashboardPage: React.FC = () => {
       <div className="flex-1 overflow-auto">
         <ClockInWidget />
         {viewMode === 'list' && <ListView tasks={sortedTasks} setEditingTask={setEditingTask} userMap={userMap} />}
-        {viewMode === 'table' && <TableView tasks={sortedTasks} setEditingTask={setEditingTask} requestSort={requestSort} sortConfig={sortConfig} />}
+        {viewMode === 'table' && <TableView tasks={sortedTasks} setEditingTask={setEditingTask} requestSort={requestSort} sortConfig={sortConfig} userMap={userMap} projectMap={projectMap} />}
         {viewMode === 'kanban' && <KanbanView tasks={filteredTasks} updateTaskStatus={updateTaskStatus} setEditingTask={setEditingTask} />}
         {viewMode === 'gantt' && <GanttView tasks={sortedTasks} />}
       </div>

@@ -306,15 +306,17 @@ const BrandPage: React.FC = () => {
         if (post.status === 'draft' || post.status === 'changes_requested') {
             setWorkbenchTitle(post.title || '');
             setWorkbenchContent(post.content || '');
-            // Mock source to satisfy Workbench requirements
+            
+            // Resolve source context association
             setActiveSource({ 
                 id: post.id, 
-                type: 'task', // Treat draft as a task context
+                type: 'lead', 
                 title: post.title || 'Untitled Draft',
-                score: 100, // Editing is high priority
+                score: 100, 
                 summary: post.excerpt || '', 
-                date: post.publishDate || new Date().toISOString()
-            });
+                date: post.publishDate || new Date().toISOString(),
+                review_notes: (post as any).review_notes // Preserve Charlie's feedback
+            } as any);
             setViewMode('workbench');
         } else {
             openEditPostModal(post);

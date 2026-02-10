@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { api } from '../services/api';
 import { JobData } from '../types';
 import { PermissionGuard } from '../features/auth/components/PermissionGuard';
@@ -16,20 +16,43 @@ const MarketingPage: React.FC = () => {
   const [jobs, setJobs] = useState<JobData[]>([]);
   const [loading, setLoading] = useState(false);
   const [generating, setGenerating] = useState(false);
+  const [generatingStatus, setGeneratingStatus] = useState("");
+  const [statusTimer, setStatusTimer] = useState<NodeJS.Timeout | null>(null);
+
+  // Cleanup effect
+  useEffect(() => {
+    return () => {
+      if (statusTimer) clearInterval(statusTimer);
+    };
+  }, [statusTimer]);
   const [error, setError] = useState<string | null>(null);
   const [searchProgress, setSearchProgress] = useState(0); // Progress Bar for Job Search
   const [expandedJobIdx, setExpandedJobIdx] = useState<number | null>(null);
-  const [generatedPitch, setGeneratedPitch] = useState<{ forCompany: string; content: string } | null>(null);
+  const [generatedPitch, setGeneratedPitch] = useState<{ job: JobData; content: string } | null>(null);
 
   // Leads State
   const [leads, setLeads] = useState<any[]>([]);
   const [isLeadsLoading, setIsLeadsLoading] = useState(false);
   const [promoteModalOpen, setPromoteModalOpen] = useState(false);
   const [selectedLead, setSelectedLead] = useState<any>(null);
+  const [viewPitchModalOpen, setViewPitchModalOpen] = useState(false);
+  const [selectedPitchLead, setSelectedPitchLead] = useState<any>(null);
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>({ key: 'created_at', direction: 'desc' });
   const [filterMode, setFilterMode] = useState<'all' | 'review_queue'>('all');
 
-  const sortedLeads = React.useMemo(() => {
+  // ... (existing code)
+
+  const openPromoteModal = (lead: any) => {
+      setSelectedLead(lead);
+      setPromoteModalOpen(true);
+  };
+
+  const openViewPitchModal = (lead: any) => {
+      setSelectedPitchLead(lead);
+      setViewPitchModalOpen(true);
+  };
+
+  const sortedLeads = useMemo(() => {
     let sortableLeads = [...leads];
     
     // Filter First
@@ -125,10 +148,22 @@ const MarketingPage: React.FC = () => {
   const handleGeneratePitch = async (job: JobData) => {
       setGenerating(true);
       setError(null);
+      setGeneratingStatus("Analyzing job requirements...");
       
-      // Implement 30s Timeout Boundary
+      // Dynamic Status Updates for long-running RAG tasks
+      const interval = setInterval(() => {
+          setGeneratingStatus(prev => {
+              if (prev.includes("Analyzing")) return "Consulting Archon RAG knowledge base...";
+              if (prev.includes("Consulting")) return "Synthesizing personalized pitch with Pro model...";
+              if (prev.includes("Synthesizing")) return "Finalizing polish, almost there...";
+              return prev;
+          });
+      }, 15000);
+      setStatusTimer(interval);
+
+      // Implement 60s Timeout Boundary for complex RAG + Pro models
       const timeoutPromise = new Promise((_, reject) => 
-          setTimeout(() => reject(new Error("TIMEOUT")), 30000)
+          setTimeout(() => reject(new Error("TIMEOUT")), 60000)
       );
 
       try {
@@ -139,9 +174,11 @@ const MarketingPage: React.FC = () => {
           );
 
           const result = await Promise.race([generatePromise, timeoutPromise]) as any;
+          if (interval) clearInterval(interval);
+          setStatusTimer(null);
 
           setGeneratedPitch({
-              forCompany: job.company,
+              job: job,
               content: result.content
           });
           
@@ -151,6 +188,8 @@ const MarketingPage: React.FC = () => {
               }
           }, 100);
       } catch (err: any) {
+          if (interval) clearInterval(interval);
+          setStatusTimer(null);
           console.error("Pitch generation failed:", err);
           if (err.message === "TIMEOUT") {
               setError("Generation timed out. The AI model is taking too long. Please try again.");
@@ -159,17 +198,15 @@ const MarketingPage: React.FC = () => {
           }
       } finally {
           setGenerating(false);
+          setGeneratingStatus("");
       }
   };
 
-  const openPromoteModal = (lead: any) => {
-      setSelectedLead(lead);
-      setPromoteModalOpen(true);
-  };
+
 
   return (
     <PermissionGuard permission="leads:view:sales" fallback={<div className="p-8 text-center text-gray-500">Access Denied: This feature is for Sales & Marketing roles only.</div>}>
-    <div className="p-6 max-w-7xl mx-auto space-y-8">
+    <div className="p-4 md:p-6 max-w-7xl mx-auto space-y-8">
       <header className="flex justify-between items-end">
         <div>
             <h1 className="text-3xl font-bold text-gray-800">Sales Intelligence</h1>
@@ -240,6 +277,16 @@ const MarketingPage: React.FC = () => {
                                     Direct connection to 104 is currently restricted. Displaying simulated data for demonstration. 
                                     The system will automatically retry live fetching later.
                                 </p>
+                            </div>
+                        </div>
+                    )}
+
+                    {generating && (
+                        <div className="bg-indigo-50 border border-indigo-100 rounded-lg p-4 flex items-center gap-3 animate-pulse">
+                            <RefreshCwIcon className="w-5 h-5 text-indigo-600 animate-spin" />
+                            <div className="flex-1">
+                                <p className="text-sm font-bold text-indigo-900">{generatingStatus}</p>
+                                <p className="text-xs text-indigo-700">Archon is crafting a high-impact response for this lead.</p>
                             </div>
                         </div>
                     )}
@@ -352,6 +399,8 @@ const MarketingPage: React.FC = () => {
                                 </div>
                             </div>
                             ))}
+                            {/* Extra physical space to ensure mobile scrolling clears navigation bars */}
+                            <div className="h-40 md:hidden pb-20"></div>
                         </div>
                         </>
                     ) : (
@@ -379,7 +428,7 @@ const MarketingPage: React.FC = () => {
                         <div className="bg-card p-6 rounded-xl shadow-lg border border-border sticky top-6 generated-pitch">
                             <div className="flex justify-between items-center mb-4">
                                 <h2 className="text-xl font-bold text-card-foreground">Generated Pitch</h2>
-                                <span className="text-sm text-muted-foreground">Target: {generatedPitch.forCompany}</span>
+                                <span className="text-sm text-muted-foreground">Target: {generatedPitch.job.company}</span>
                             </div>
                             <div className="bg-muted p-4 rounded-lg border border-border">
                                 <textarea readOnly className="w-full h-96 bg-transparent border-none resize-none focus:ring-0 text-foreground font-mono text-sm leading-relaxed" value={generatedPitch.content} />
@@ -390,7 +439,26 @@ const MarketingPage: React.FC = () => {
                                     variant="primary"
                                     accentColor="green"
                                     icon={<ShieldCheckIcon className="w-4 h-4" />}
-                                    onClick={() => alert("Pitch approved and saved to knowledge base!")}
+                                    onClick={() => {
+                                        // Save Pitch using stored full job context
+                                        const job = generatedPitch.job;
+
+                                        api.createLead({
+                                            company_name: job.company,
+                                            job_title: job.title,
+                                            source: job.source,
+                                            source_job_url: job.url,
+                                            identified_need: job.identified_need,
+                                            status: 'new',
+                                            pitch_content: generatedPitch.content
+                                        }).then(() => {
+                                            alert("Pitch saved and Lead created!");
+                                            setGeneratedPitch(null);
+                                        }).catch((err) => {
+                                            console.error(err);
+                                            alert("Failed to save pitch: " + err.message);
+                                        });
+                                    }}
                                 >
                                     Approve & Save
                                 </Button>
@@ -404,7 +472,7 @@ const MarketingPage: React.FC = () => {
 
       {/* --- LEADS TAB --- */}
       {activeTab === 'leads' && (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100">
               <div className="p-6 border-b border-gray-100 flex justify-between items-center">
                   <h2 className="text-lg font-bold text-gray-800">My Leads</h2>
                   <div className="flex gap-3">
@@ -520,17 +588,33 @@ const MarketingPage: React.FC = () => {
                                           )}
                                       </td>
                                       <td className="px-6 py-4 text-right">
-                                          {lead.status !== 'converted' && (
-                                              <Button
-                                                  variant="outline"
-                                                  size="xs"
-                                                  accentColor="indigo"
-                                                  onClick={() => openPromoteModal(lead)}
-                                                  className="opacity-0 group-hover:opacity-100 transition-opacity"
-                                              >
-                                                  Promote
-                                              </Button>
-                                          )}
+                                          <div className="flex justify-end gap-2">
+                                            {/* Pitch View Button (Shared) */}
+                                            {lead.pitch_content && (
+                                                <Button
+                                                    variant="ghost"
+                                                    size="xs"
+                                                    onClick={() => openViewPitchModal(lead)}
+                                                    className="text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50"
+                                                    title="View Generated Pitch"
+                                                >
+                                                    View
+                                                </Button>
+                                            )}
+
+                                            {/* Promote Button */}
+                                            {lead.status !== 'converted' && (
+                                                <Button
+                                                    variant="outline"
+                                                    size="xs"
+                                                    accentColor="indigo"
+                                                    onClick={() => openPromoteModal(lead)}
+                                                    className="opacity-0 group-hover:opacity-100 transition-opacity"
+                                                >
+                                                    Promote
+                                                </Button>
+                                            )}
+                                          </div>
                                       </td>
                                   </tr>
                               ))}
@@ -539,8 +623,8 @@ const MarketingPage: React.FC = () => {
                   )}
               </div>
 
-               {/* Mobile Card Stack View */}
-               <div className="md:hidden p-4 h-[calc(100vh-180px)] min-h-[500px] flex flex-col justify-center">
+               {/* Mobile Card Stack View (Tinder Mode) - Natural Page Scrolling */}
+               <div className="md:hidden p-2 min-h-[550px] flex flex-col justify-start">
                    {isLeadsLoading ? (
                         <div className="flex justify-center p-12">
                            <RefreshCwIcon className="w-8 h-8 text-indigo-600 animate-spin" />
@@ -554,16 +638,12 @@ const MarketingPage: React.FC = () => {
                         />
                    ) : (
                        <LeadsCardStack 
-                            leads={sortedLeads.filter(l => l.status === 'new' || l.status === 'pending')} // Only show triage-able leads
+                            leads={sortedLeads.filter(l => l.status === 'new' || l.status === 'pending')} 
                             onSwipeRight={(lead) => {
-                                // Shortlist / Interested -> For now we open promote modal or just mark as 'shortlisted' ?
-                                // Plan: "Tinder-style Swipe (Archive/Cart)" -> Right = Cart/Shortlist
-                                // We update status to 'shortlisted'
                                 api.updateLead(lead.id, { status: 'shortlisted' })
                                    .catch(err => console.error("Failed to shortlist", err));
                             }}
                             onSwipeLeft={(lead) => {
-                                // Archive
                                 api.updateLead(lead.id, { status: 'archived' })
                                    .catch(err => console.error("Failed to archive", err));
                             }}
@@ -593,6 +673,14 @@ const MarketingPage: React.FC = () => {
                   />
               </div>
           </div>
+      )}
+
+      {/* View Pitch Modal (GAP-024) */}
+      {viewPitchModalOpen && selectedPitchLead && (
+          <PitchViewModal 
+              lead={selectedPitchLead} 
+              onClose={() => setViewPitchModalOpen(false)} 
+          />
       )}
     </div>
     </PermissionGuard>
@@ -680,6 +768,59 @@ const PromoteForm: React.FC<{ lead: any; onClose: () => void; onSuccess: () => v
                 </Button>
             </div>
         </form>
+    );
+};
+
+const PitchViewModal: React.FC<{ lead: any; onClose: () => void }> = ({ lead, onClose }) => {
+    const [copied, setCopied] = useState(false);
+
+    const handleCopy = () => {
+        navigator.clipboard.writeText(lead.pitch_content || "");
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+    };
+
+    return (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl p-6 relative animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
+                <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600">
+                    <XIcon className="w-5 h-5" />
+                </button>
+                <div className="mb-4">
+                    <h3 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+                        <SparklesIcon className="w-5 h-5 text-indigo-600" />
+                        Generated Pitch
+                    </h3>
+                    <p className="text-sm text-gray-500">Target: {lead.company_name}</p>
+                </div>
+                
+                <div className="flex-1 overflow-y-auto bg-gray-50 p-4 rounded-lg border border-gray-200 mb-4">
+                    {lead.pitch_content ? (
+                        <div className="whitespace-pre-wrap font-mono text-sm text-gray-800 leading-relaxed">
+                            {lead.pitch_content}
+                        </div>
+                    ) : (
+                        <div className="flex flex-col items-center justify-center h-40 text-gray-400">
+                            <p>No pitch content available for this lead.</p>
+                        </div>
+                    )}
+                </div>
+
+                <div className="flex justify-end gap-3 pt-2 border-t border-gray-100">
+                    <Button variant="ghost" onClick={onClose}>Close</Button>
+                    {lead.pitch_content && (
+                        <Button
+                            variant="primary"
+                            accentColor="indigo"
+                            onClick={handleCopy}
+                            icon={copied ? <ShieldCheckIcon className="w-4 h-4" /> : undefined}
+                        >
+                            {copied ? 'Copied!' : 'Copy to Clipboard'}
+                        </Button>
+                    )}
+                </div>
+            </div>
+        </div>
     );
 };
 

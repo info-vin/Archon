@@ -84,9 +84,23 @@
         2.  **狀態連動**: E2E 測試若涉及 CRUD 流程，Mock 必須具備狀態 (Stateful)，不能只回傳靜態空值，否則無法驗證「新增後顯示」的邏輯。
         3.  **變數提升**: 謹記 `vi.mock` 的 Hoisting 特性，依賴的變數必須使用 `vi.hoisted` 定義。
 
+*   **9. 巢狀捲動死鎖防禦 (Nested Scroll Lockup Defense)**
+    *   **核心**: 在巢狀 Flex 佈局中，子層若使用 `min-h-screen` 會鎖死父層的 `overflow-y-auto` 捲動軸。解決方案是「釋放子層高度」，讓內容自然撐開父層，並輔以底部物理緩衝 (`div.h-32`) 避開手機導覽列。
+
 ---
 
 # 第三章：近期工作日誌 (Recent Journal Entries)
+
+### 2026-02-10: Search Nexus Optimization & Mobile Resilience
+*   **捲動革命**: 徹底解決了 `MarketingPage` (Search Tab) 在手機版滑不動的問題。透過移除 `min-h-screen` 與 `flex-1` 限制，釋放垂直捲動權給 Layout。
+*   **UX 反饋增強**: 針對 Pitch 生成流程，實作了 60s 超時邊界與每 15s 切換的「動態進度訊息」，大幅降低 Alice 等待時的焦慮感。
+*   **Alice 視覺優化**: 
+    *   Leads 卡片實作「大字粗體」預測內容呈現。
+    *   壓縮卡片內部間距（Body P6 -> P4, Header 22% -> 18%），提升資訊密度。
+*   **Dashboard 邏輯加固**:
+    *   實作 `projectMap` 映射與 TableView 的邏輯權重排序（Status: Todo->Done, Priority: Low->Critical）。
+    *   修復了 Bob 工作台 ID 錯配導致的 ReferenceError。
+*   **API 韌性**: 全面導入 `.maybeSingle()` 替代 `.single()`，使系統能優雅處理髒資料或 ID 誤判，不再崩潰。
 
 ### 2026-02-09: Workspace Nexus Realization & Fine-grained RBAC
 *   **UI/UX 空間革命**:

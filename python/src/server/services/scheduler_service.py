@@ -35,23 +35,23 @@ class SchedulerService:
         if not self._scheduler:
             return
 
-        # Job 1: System Heartbeat Probe (Every 24 hours)
+        # Job 1: System Heartbeat Probe (Every 6 hours)
         self._scheduler.add_job(
             self._run_system_probe,
-            trigger=IntervalTrigger(hours=24),
+            trigger=IntervalTrigger(hours=6),
             id="system_probe",
             replace_existing=True
         )
-        logger.info("✅ Scheduled Job: System Probe (Every 24 hours)")
+        logger.info("✅ Scheduled Job: System Probe (Every 6 hours)")
 
-        # Job 1.5: System Probe Cleanup (Every 24 hours) - Retention Policy
+        # Job 1.5: System Probe Cleanup (Every 1 hour) - Retention Policy
         self._scheduler.add_job(
             self._cleanup_system_probes,
-            trigger=IntervalTrigger(hours=24),
+            trigger=IntervalTrigger(hours=1),
             id="system_probe_cleanup",
             replace_existing=True
         )
-        logger.info("✅ Scheduled Job: System Probe Cleanup (Daily)")
+        logger.info("✅ Scheduled Job: System Probe Cleanup (Hourly)")
 
         # Job 2: The Accountant - Token Analysis (Every 24 hours)
         self._scheduler.add_job(

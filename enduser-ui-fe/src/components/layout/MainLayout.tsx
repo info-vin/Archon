@@ -42,7 +42,7 @@ const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     }, [hasPermission]);
 
     return (
-        <div className="flex h-screen bg-background text-foreground">
+        <div className="flex flex-col md:flex-row h-[100dvh] md:h-screen bg-background text-foreground overflow-hidden">
              <nav className={`fixed inset-y-0 left-0 z-50 w-64 bg-card border-r border-border flex flex-col transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} transition-transform duration-300 ease-in-out md:relative md:translate-x-0`}>
                 <div className="p-4 border-b border-border flex justify-between items-center bg-card/50 backdrop-blur">
                     <Link to="/dashboard" className="flex items-center transition-transform hover:scale-105 active:scale-95">
@@ -147,7 +147,7 @@ const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                 </div>
             </nav>
             {isSidebarOpen && <div className="fixed inset-0 bg-black/50 z-40 md:hidden" onClick={() => setIsSidebarOpen(false)}></div>}
-            <main className={`flex-1 flex flex-col ${location.pathname === '/brand' ? 'overflow-hidden' : 'overflow-y-auto'} bg-background pb-16 md:pb-0`}>
+            <main className={`flex-1 flex flex-col ${location.pathname === '/brand' ? 'h-screen overflow-hidden' : 'overflow-y-auto overscroll-contain'} bg-background pb-16 md:pb-0`}>
                 {/* Mobile Header */}
                 <header className="md:hidden flex items-center justify-between p-4 border-b border-border bg-background/80 backdrop-blur z-30 sticky top-0">
                     <LiveClock />

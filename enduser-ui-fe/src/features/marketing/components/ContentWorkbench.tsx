@@ -5,7 +5,6 @@ import {
   CheckCircleIcon, 
   EyeIcon, 
   ExternalLinkIcon,
-  TrendingUpIcon,
   XIcon,
   RefreshCwIcon,
   SettingsIcon
@@ -147,13 +146,6 @@ export const ContentWorkbench: React.FC<ContentWorkbenchProps> = ({
       {/* Header */}
       <div className="px-6 py-4 border-b flex items-center justify-between bg-white dark:bg-slate-900 z-10">
         <div className="flex items-center gap-4">
-          <button 
-            onClick={() => setIsContextOpen(!isContextOpen)}
-            className={`p-2 rounded-xl transition-all ${isContextOpen ? 'bg-indigo-50 text-indigo-600' : 'bg-slate-100 text-slate-400 hover:bg-indigo-50 hover:text-indigo-600'}`}
-            title="Toggle Context View"
-          >
-            <TrendingUpIcon className="w-5 h-5" />
-          </button>
           <div>
             <h1 className="text-xl font-bold text-slate-900 dark:text-white flex items-center">
               {activeSource.title}
@@ -230,9 +222,39 @@ export const ContentWorkbench: React.FC<ContentWorkbenchProps> = ({
           </div>
         </div>
 
+        {/* Floating Sidebar Toggle [2] - Local Context Control */}
+        <button
+            onClick={() => setIsContextOpen(!isContextOpen)}
+            className={`absolute bottom-10 z-40 p-2 bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-r-lg shadow-md transition-all duration-500 hover:w-8 group ${
+                isContextOpen ? 'left-[33.333333%]' : 'left-0'
+            }`}
+            title={isContextOpen ? "Collapse Context" : "Expand Context"}
+        >
+            <div className={`w-1 h-4 bg-slate-300 dark:bg-slate-600 rounded-full group-hover:bg-indigo-500 transition-colors ${!isContextOpen && 'bg-indigo-400'}`} />
+        </button>
+
         {/* Right Pane: Editor战場 */}
         <div className="flex-1 flex flex-col relative bg-white dark:bg-slate-900 overflow-y-auto custom-scrollbar">
           
+          {/* GAP-023: Charlie's Rejection Feedback Banner */}
+          {activeSource?.type === 'lead' && (activeSource as any).review_notes && (
+            <div className="mx-8 mt-8 p-6 bg-red-50 dark:bg-red-900/20 border-2 border-red-100 dark:border-red-900/30 rounded-[2rem] shadow-sm animate-in slide-in-from-top duration-500">
+                <div className="flex items-start gap-4">
+                    <div className="p-3 bg-red-100 dark:bg-red-900/40 rounded-2xl">
+                        <XIcon className="w-6 h-6 text-red-600 dark:text-red-400" />
+                    </div>
+                    <div className="flex-1">
+                        <h4 className="text-sm font-black text-red-900 dark:text-red-200 uppercase tracking-widest flex items-center gap-2">
+                            Feedback from Charlie (Manager)
+                        </h4>
+                        <p className="mt-2 text-sm text-red-700 dark:text-red-300 leading-relaxed font-medium italic">
+                            "{(activeSource as any).review_notes}"
+                        </p>
+                    </div>
+                </div>
+            </div>
+          )}
+
           {/* Visual Header (Image Preview) */}
           {previewUrl && (
             <div className="w-full h-64 md:h-80 relative group overflow-hidden bg-slate-900 shrink-0">
