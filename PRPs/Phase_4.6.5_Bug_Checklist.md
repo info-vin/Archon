@@ -62,6 +62,9 @@
 
 ## 🛠 修復紀錄 (Fix Log)
 
+*   **2026-02-10 (Round 9: System-wide Robust JSON Parsing)**:
+    *   **核心加固**: 實作 `python/src/server/utils/json_utils.py` 中的 `safe_json_loads`。透過「Markdown 移除」、「控制字元清理」與「非嚴格模式解析 (`strict=False`)」三重防禦，解決 Gemini 2.0 在長文生成時因原始換行符導致的解析崩潰問題。
+    *   **全面部署**: 已將此邏輯同步至 `marketing_api.py` (Bob)、`visit_log_api.py` (Alice) 與 `extraction_service.py` (Librarian)。
 *   **2026-02-07 (Round 8: Bob's Content Polish)**:
     *   **BUG-028/029**: 優化 AI 圖片生成體驗。點擊生成後，圖片連結雖會暫時顯示於編輯器供預覽，但在「儲存草稿」或「發佈」時，系統會自動移除該 Markdown 連結，僅保留作為封面圖 (`imageUrl`)，確保文章內容的整潔。
 *   **2026-02-04 (Round 7: Bob's Resilience)**:

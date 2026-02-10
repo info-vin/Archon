@@ -12,6 +12,7 @@ export interface Lead {
     status: string;
     source_job_url?: string;
     match_score?: number; // 0-100
+    pitch_content?: string;
 }
 
 interface LeadsCardStackProps {
@@ -23,8 +24,8 @@ interface LeadsCardStackProps {
 import { LeadsTimeline } from './LeadsTimeline';
 
 const PitchDrawer = ({ lead, onClose }: { lead: Lead, onClose: () => void }) => {
-    // ... (existing PitchDrawer code)
-    const pitchText = `Hi, I noticed ${lead.company_name} is looking for ${lead.job_title}. Archon can help with ${lead.identified_need}. we have helped similar companies streamline their workflow by 30%. Would you be open to a 15-min chat?`;
+    // P3: Use saved pitch content if available, else fallback to template
+    const pitchText = lead.pitch_content || `Hi, I noticed ${lead.company_name} is looking for ${lead.job_title}. Archon can help with ${lead.identified_need}. we have helped similar companies streamline their workflow by 30%. Would you be open to a 15-min chat?`;
     const [copied, setCopied] = useState(false);
 
     const handleCopy = () => {
@@ -64,16 +65,16 @@ const PitchDrawer = ({ lead, onClose }: { lead: Lead, onClose: () => void }) => 
                         <div className="bg-indigo-100 p-2 rounded-lg text-indigo-600">
                             <SparklesIcon className="w-5 h-5" />
                         </div>
-                        <h3 className="text-lg font-bold">AI Pitch Generator</h3>
+                        <h3 className="text-lg font-bold">{lead.pitch_content ? 'Saved Pitch' : 'AI Pitch Generator'}</h3>
                     </div>
                     <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
                         <XIcon className="w-5 h-5 text-gray-500" />
                     </button>
                 </div>
 
-                <div className="bg-gray-50 p-4 rounded-xl border border-gray-100 mb-6">
-                    <p className="text-gray-800 leading-relaxed text-base whitespace-pre-wrap font-medium">
-                        "{pitchText}"
+                <div className="bg-gray-50 p-4 rounded-xl border border-gray-100 mb-6 max-h-[50vh] overflow-y-auto">
+                    <p className="text-gray-800 leading-relaxed text-base whitespace-pre-wrap font-medium font-mono text-sm">
+                        {pitchText}
                     </p>
                 </div>
 
@@ -228,9 +229,9 @@ const Card = ({ lead, style, onDragEnd, onPitch, onHistory }: { lead: Lead, styl
                     </button>
                     <button 
                         onClick={handlePitchClick}
-                        className="w-12 h-12 bg-indigo-600 rounded-full shadow-lg shadow-indigo-200 flex items-center justify-center text-white hover:bg-indigo-700 active:scale-95 transition-all"
+                        className={`w-12 h-12 rounded-full shadow-lg flex items-center justify-center text-white active:scale-95 transition-all ${lead.pitch_content ? 'bg-green-600 hover:bg-green-700 shadow-green-200' : 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-200'}`}
                         onPointerDown={(e) => e.stopPropagation()}
-                        title="Generate Pitch"
+                        title={lead.pitch_content ? "View Saved Pitch" : "Generate AI Pitch"}
                     >
                         <SparklesIcon className="w-6 h-6" />
                     </button>

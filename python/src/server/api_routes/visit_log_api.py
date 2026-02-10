@@ -10,6 +10,7 @@ from pydantic import BaseModel
 from ..auth.dependencies import get_current_user
 from ..config.logfire_config import get_logger
 from ..utils import get_supabase_client
+from ..utils.json_utils import safe_json_loads
 
 logger = get_logger(__name__)
 
@@ -134,7 +135,7 @@ async def _transcribe_with_gemini(
 
             data = resp.json()
             raw_text = data["candidates"][0]["content"]["parts"][0]["text"]
-            res_json = json.loads(raw_text)
+            res_json = safe_json_loads(raw_text)
             return res_json.get("transcript", ""), res_json.get("summary", ""), res_json.get("tasks", [])
 
     except Exception as e:

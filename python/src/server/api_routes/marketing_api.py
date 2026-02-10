@@ -21,6 +21,7 @@ from ..services.projects.task_service import TaskService
 from ..services.prompt_service import prompt_service
 from ..services.search.rag_service import RAGService
 from ..utils import get_supabase_client
+from ..utils.json_utils import safe_json_loads
 
 # TODO(Phase 5): Re-enable this when MCP Server is properly integrated as a package or service
 # from mcp_server.features.design.logo_tool import GenerateBrandAssetTool
@@ -512,16 +513,16 @@ async def get_content_context(
             for log in logs:
                 context_text += f"\n[Visit Log Summary]: {log.get('summary')}\n[Transcript]: {log.get('voice_transcript')}\n"
 
-            # Fetch Lead Info for RAG - Use maybeSingle to prevent PGRST116
-            lead_res = supabase.table("leads").select("identified_need").eq("id", source_id).maybeSingle().execute()
-            if lead_res.data:
-                context_text += f"\n[Lead Need]: {lead_res.data.get('identified_need')}\n"
+            # Fetch Lead Info for RAG - Use limit(1) to prevent PGRST116
+            lead_res = supabase.table("leads").select("identified_need").eq("id", source_id).limit(1).execute()
+            if lead_res.data and len(lead_res.data) > 0:
+                context_text += f"\n[Lead Need]: {lead_res.data[0].get('identified_need')}\n"
 
         elif source_type == "task":
-            # Fetch Task Details - Use maybeSingle to prevent PGRST116
-            task_res = supabase.table("archon_tasks").select("*").eq("id", source_id).maybeSingle().execute()
-            if task_res.data:
-                context_text += f"\n[Task Title]: {task_res.data.get('title')}\n[Description]: {task_res.data.get('description')}\n"
+            # Fetch Task Details - Use limit(1) to prevent PGRST116
+            task_res = supabase.table("archon_tasks").select("*").eq("id", source_id).limit(1).execute()
+            if task_res.data and len(task_res.data) > 0:
+                context_text += f"\n[Task Title]: {task_res.data[0].get('title')}\n[Description]: {task_res.data[0].get('description')}\n"
 
         # Call Librarian (RAG)
         rag_service = RAGService()
@@ -859,10 +860,10 @@ async def draft_blog_post(request: DraftBlogRequest, current_user: dict = Depend
                     for log in log_res.data:
                         context_text += f"- Summary: {log['summary']}\n- Transcript: {log['voice_transcript']}\n"
             elif request.context_type == "task":
-                # Use maybeSingle to prevent crash if ID is from different table (Dirty Data/Frontend mismatch)
-                task_res = supabase.table("archon_tasks").select("title, description").eq("id", request.context_source_id).maybeSingle().execute()
-                if task_res.data:
-                    context_text += f"\n### Task Context:\n- Title: {task_res.data['title']}\n- Description: {task_res.data['description']}\n"
+                # Use limit(1) to prevent crash if ID is from different table (Dirty Data/Frontend mismatch)
+                task_res = supabase.table("archon_tasks").select("title, description").eq("id", request.context_source_id).limit(1).execute()
+                if task_res.data and len(task_res.data) > 0:
+                    context_text += f"\n### Task Context:\n- Title: {task_res.data[0]['title']}\n- Description: {task_res.data[0]['description']}\n"
 
         if success and isinstance(search_result, dict) and "results" in search_result:
             for res in search_result["results"]:
@@ -888,6 +889,12 @@ async def draft_blog_post(request: DraftBlogRequest, current_user: dict = Depend
         marketing_api_key = await credential_service.get_credential("GEMINI_API_KEY")
         if not marketing_api_key:
              marketing_api_key = await credential_service.get_credential("GOOGLE_API_KEY")
+
+        if not marketing_api_key:
+            logger.warning("API: No GenAI API Key found. Forcing Mock Fallback.")
+            # We can't proceed with real generation, so we trigger the mock flow
+            # by raising an exception that will be caught by the fallback handler
+            raise ValueError("Missing GEMINI_API_KEY and GOOGLE_API_KEY")
 
         # Use Database-driven prompt with hardcoded fallback
         system_prompt = prompt_service.get_prompt("BLOG_DRAFT", BLOG_DRAFT_SYSTEM_PROMPT)
@@ -950,11 +957,10 @@ async def draft_blog_post(request: DraftBlogRequest, current_user: dict = Depend
                     temperature=0.7,
                 )
             )
-            import json
             raw_text = response.text or ""
             if not raw_text:
                 raise ValueError("LLM returned empty response text")
-            result = json.loads(raw_text)
+            result = safe_json_loads(raw_text)
 
             # --- GAP-016: Real Token Usage Logging ---
             try:
@@ -994,9 +1000,8 @@ async def draft_blog_post(request: DraftBlogRequest, current_user: dict = Depend
                         temperature=0.7,
                     )
                 )
-                import json
                 fallback_text = response.text or "{}"
-                result = json.loads(fallback_text)
+                result = safe_json_loads(fallback_text)
                 model_name = "gemini-1.5-pro (fallback)"
 
             except Exception:
@@ -1021,16 +1026,29 @@ async def draft_blog_post(request: DraftBlogRequest, current_user: dict = Depend
 
         # 3. Guardrail Output Audit
         generated_content = result.get("content", "")
+        if not isinstance(generated_content, str):
+            generated_content = str(generated_content)
+
         is_safe, audit_msg = GuardrailService.audit_output(generated_content, context_text)
         if not is_safe:
             logger.error(f"API: Guardrail audit failed | reason={audit_msg}")
             raise HTTPException(status_code=422, detail=f"AI Output Blocked: {audit_msg}")
 
+        # Safe Reference Handling
+        raw_refs = result.get("used_references", references)
+        final_refs = []
+        if isinstance(raw_refs, list):
+            final_refs = [str(r) for r in raw_refs]
+        elif isinstance(raw_refs, str):
+             final_refs = [raw_refs]
+        else:
+             final_refs = [str(r) for r in references] # Fallback to RAG sources
+
         return DraftBlogResponse(
-            title=result.get("title", "Untitled Draft"),
+            title=str(result.get("title", "Untitled Draft")),
             content=generated_content,
-            excerpt=result.get("excerpt", ""),
-            references=result.get("used_references", references),
+            excerpt=str(result.get("excerpt", "")),
+            references=final_refs,
             used_prompt=f"--- System ---\n{system_prompt}\n\n--- User ---\n{user_prompt}", # Return full prompt for transparency
             metadata=generation_metadata
         )

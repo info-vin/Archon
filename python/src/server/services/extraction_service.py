@@ -1,8 +1,8 @@
-import json
 from typing import Any, cast
 
 from ..config.logfire_config import get_logger, safe_logfire_error, safe_logfire_info
 from ..utils import get_supabase_client
+from ..utils.json_utils import safe_json_loads
 from .crawler_manager import get_crawler
 from .llm_provider_service import extract_message_text, get_llm_client
 
@@ -66,8 +66,8 @@ class ExtractionService:
 
                 # Extract text using utility
                 content_text, _, _ = extract_message_text(response.choices[0])
-                schema_suggestion = json.loads(content_text)
-                return cast(dict[str, Any], schema_suggestion)
+                schema_suggestion = safe_json_loads(content_text)
+                return schema_suggestion
 
         except Exception as e:
             safe_logfire_error(f"LLM analysis failed: {e}")

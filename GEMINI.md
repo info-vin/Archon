@@ -100,7 +100,7 @@
 *   **Dashboard 邏輯加固**:
     *   實作 `projectMap` 映射與 TableView 的邏輯權重排序（Status: Todo->Done, Priority: Low->Critical）。
     *   修復了 Bob 工作台 ID 錯配導致的 ReferenceError。
-*   **API 韌性**: 全面導入 `.maybeSingle()` 替代 `.single()`，使系統能優雅處理髒資料或 ID 誤判，不再崩潰。
+*   **API 韌性**: 修正了 `maybeSingle()` 在同步客戶端 (`SyncSelectRequestBuilder`) 導致 `AttributeError` 的問題。確立原則：同步路徑必須使用 `.limit(1).execute()` 並配合長度檢查，非同步路徑才可使用 `.maybeSingle()`。這能優雅處理髒資料或 ID 誤判，不再崩潰。
 
 ### 2026-02-09: Workspace Nexus Realization & Fine-grained RBAC
 *   **UI/UX 空間革命**:

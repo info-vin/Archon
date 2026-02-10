@@ -390,8 +390,9 @@ Phase 4.4.5 引入了 **Clockwork** 進行系統自動檢測。
         | 38 | `034_add_blog_generation_metadata.sql` | **[進階]** 增加 AI 生成參數持久化欄位。 |
         | 39 | `035_refine_prompt_rbac.sql` | **[權限]** 精細化 Prompt 管理員權限。 |
         | 40 | `036_refine_settings_rbac.sql` | **[權限]** 精細化系統設定管理員權限。 |
-        | 41 | `seed_mock_leads.sql` | **[種子]** 填充業務線 (Leads) 核心測試資料。 |
-        | 40 | `seed_mock_alerts_and_logs.sql` | **[種子]** 填充 Admin/Manager 儀表板所需的系統警報與日誌資料。 |
+        | 41 | `037_add_pitch_to_leads.sql` | **[Phase 4.6.5]** 增加 Leads 表的 AI 生成提案內容欄位。 |
+        | 42 | `seed_mock_leads.sql` | **[種子]** 填充業務線 (Leads) 核心測試資料。 |
+        | 43 | `seed_mock_alerts_and_logs.sql` | **[種子]** 填充 Admin/Manager 儀表板所需的系統警報與日誌資料。 |
         
 3.  **階段三：執行部署**
 
