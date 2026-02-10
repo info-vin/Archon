@@ -604,12 +604,9 @@ async def process_approval(
         review_notes = body.review_notes if body else None
 
         if item_type == "blog":
-            new_status = "published" if action == "approve" else "rejected" # Or changes_requested?
-            # Rejection maps to 'rejected' or 'changes_requested'. Let's use 'rejected' for now as per plan.
-            # Actually, "Returned to Bob" usually implies "changes_requested".
-            # But the UI says "Return".
-            # Let's check existing logic. It was setting new_status based on action?
-            # StartLine:605...
+            new_status = "published" if action == "approve" else "changes_requested"
+            # Rejection maps to 'changes_requested' to stay visible in Bob's draft queue.
+            # The UI identifies this as 'RETURNED'.
 
             update_data = {"status": new_status}
             if review_notes:

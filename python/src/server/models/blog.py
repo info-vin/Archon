@@ -13,6 +13,7 @@ class BlogPostBase(BaseModel):
     publish_date: datetime | None = Field(None, alias='publishDate')
     image_url: str | None = Field(None, alias='imageUrl')
     status: str = 'draft'
+    review_notes: str | None = Field(None, alias='reviewNotes')
 
     class Config:
         populate_by_name = True
