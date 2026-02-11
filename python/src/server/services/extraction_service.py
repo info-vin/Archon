@@ -4,7 +4,7 @@ from ..config.logfire_config import get_logger, safe_logfire_error, safe_logfire
 from ..utils import get_supabase_client
 from ..utils.json_utils import safe_json_loads
 from .crawler_manager import get_crawler
-from .llm_provider_service import extract_message_text, get_llm_client
+from .llm_provider_service import extract_message_text
 
 logger = get_logger(__name__)
 
@@ -26,13 +26,24 @@ class ExtractionService:
         # 1. Fetch content (Lightweight fetch)
         content = ""
         try:
+            # Normalize URL (add https:// if missing)
+            if not url.startswith(("http://", "https://")):
+                url = f"https://{url}"
+
             crawler = await get_crawler()
             if not crawler:
                 raise Exception("Crawler unavailable")
 
             # Use crawl4ai to get markdown directly
             result = await crawler.arun(url)
-            content = result.markdown
+            content = result.markdown if hasattr(result, 'markdown') and result.markdown else ""
+
+            if not content:
+                # Fallback: Try raw HTML if markdown extraction failed
+                content = result.html if hasattr(result, 'html') and result.html else ""
+
+            if not content:
+                raise Exception(f"URL returned empty content. Status: {getattr(result, 'status_code', 'unknown')}")
 
             # Truncate content to avoid context limit issues
             if len(content) > 15000:
@@ -54,9 +65,12 @@ class ExtractionService:
 
             user_prompt = f"Analyze this content:\n\n{content}"
 
+            # Phase 4.7 Optimization: Use standard LLM client pattern
+            from .llm_provider_service import get_llm_client
             async with get_llm_client() as client:
+                # Use Gemini 2.0 Flash for stability and long context
                 response = await client.chat.completions.create(
-                    model="gemini-1.5-flash", # Use a stable default
+                    model="gemini-2.0-flash",
                     messages=[
                         {"role": "system", "content": system_prompt},
                         {"role": "user", "content": user_prompt}

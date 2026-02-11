@@ -42,7 +42,7 @@ class JobBoardService:
         try:
             from ..services.settings_service import SettingsService
             settings = SettingsService(self.supabase)
-            return await settings.get_setting("CRAWLER_104_SEARCH_API", self.DEFAULT_BASE_URL) or self.DEFAULT_BASE_URL
+            return settings.get_setting("CRAWLER_104_SEARCH_API", self.DEFAULT_BASE_URL) or self.DEFAULT_BASE_URL
         except Exception:
             return self.DEFAULT_BASE_URL
 
@@ -51,7 +51,7 @@ class JobBoardService:
         try:
             from ..services.settings_service import SettingsService
             settings = SettingsService(self.supabase)
-            return await settings.get_setting("CRAWLER_104_DETAIL_API", self.DEFAULT_DETAIL_BASE_URL) or self.DEFAULT_DETAIL_BASE_URL
+            return settings.get_setting("CRAWLER_104_DETAIL_API", self.DEFAULT_DETAIL_BASE_URL) or self.DEFAULT_DETAIL_BASE_URL
         except Exception:
             return self.DEFAULT_DETAIL_BASE_URL
 
@@ -137,24 +137,22 @@ class JobBoardService:
             except Exception as e:
                 logger.error(f"Job search failed | error={str(e)} | switching_to_fallback=True")
                 # Ensure mock jobs also have inferred needs
-                for job in cls.MOCK_JOBS:
+                for job in self.MOCK_JOBS:
                     if not job.identified_need:
-                        job.identified_need = cls._infer_need(job)
-                return cls.MOCK_JOBS
+                        job.identified_need = self._infer_need(job)
+                return self.MOCK_JOBS
 
-    @classmethod
-    async def identify_leads_and_save(cls, jobs: list[JobData]) -> int:
+    async def identify_leads_and_save(self, jobs: list[JobData]) -> int:
         """
         Filters jobs into leads and saves them to the 'leads' database table.
         Returns the number of new leads saved.
         """
-        supabase = get_supabase_client()
         new_leads_count = 0
 
         for job in jobs:
             try:
                 # 1. Check if lead already exists (by company name and source URL)
-                existing = supabase.table("leads").select("id").eq("company_name", job.company).eq("source_job_url", job.url).execute()
+                existing = self.supabase.table("leads").select("id").eq("company_name", job.company).eq("source_job_url", job.url).execute()
 
                 if existing.data:
                     continue
@@ -166,13 +164,13 @@ class JobBoardService:
                     "description_snippet": job.description[:500] if job.description else None,
                     "source_job_url": job.url,
                     "status": "new",
-                    "identified_need": job.identified_need or cls._infer_need(job)
+                    "identified_need": job.identified_need or self._infer_need(job)
                 }
 
                 # Store full description in metadata if possible, or extend table later.
                 # For now, we just stick to the existing schema.
 
-                supabase.table("leads").insert(lead_data).execute()
+                self.supabase.table("leads").insert(lead_data).execute()
                 new_leads_count += 1
                 logger.info(f"New lead identified and saved | company={job.company}")
 
@@ -181,8 +179,7 @@ class JobBoardService:
 
         return new_leads_count
 
-    @staticmethod
-    def _infer_need(job: JobData) -> str:
+    def _infer_need(self, job: JobData) -> str:
         """
         Simple heuristic logic to infer business need from job title/description.
         In a real scenario, this could be an LLM-powered analysis.
@@ -199,8 +196,7 @@ class JobBoardService:
         else:
             return f"Hiring for {job.title} -> General digital transformation lead."
 
-    @classmethod
-    async def _fetch_from_104(cls, client: httpx.AsyncClient, keyword: str, limit: int) -> list[JobData]:
+    async def _fetch_from_104(self, client: httpx.AsyncClient, keyword: str, limit: int) -> list[JobData]:
         """
         Internal method to fetch job list.
         Now uses the passed client to share session cookies.
@@ -220,7 +216,8 @@ class JobBoardService:
         # Visit search home first to set cookies (Important!)
         await client.get("https://www.104.com.tw/jobs/search/", params={"keyword": keyword})
 
-        response = await client.get(cls.BASE_URL, params=params)
+        base_url = await self._get_base_url()
+        response = await client.get(base_url, params=params)
 
         if response.status_code != 200:
             raise Exception(f"API Error: {response.status_code}")

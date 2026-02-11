@@ -1,23 +1,15 @@
 from typing import Any
 
-from fastapi import APIRouter, Depends, Header, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 
-from ..auth.dependencies import get_current_user
+from ..auth.dependencies import get_current_user, verify_manager_role
 from ..config.logfire_config import get_logger
 from ..services.extraction_service import ExtractionService
-from ..services.rbac_service import RBACService
 
 logger = get_logger(__name__)
 router = APIRouter(prefix="/api/extraction", tags=["Extraction"])
 
-async def require_manager(x_user_role: str | None = Header(None, alias="X-User-Role")):
-    """Dependency to ensure user is at least a Manager."""
-    rbac = RBACService()
-    if not x_user_role or not rbac.can_manage_content(x_user_role):
-        raise HTTPException(status_code=403, detail="Access Denied: Requires Manager privileges.")
-    return x_user_role
-
-@router.post("/analyze", dependencies=[Depends(require_manager)])
+@router.post("/analyze", dependencies=[Depends(verify_manager_role)])
 async def analyze_url(request: dict[str, str]) -> dict[str, Any]:
     """
     Analyze a URL to discover potential data fields.
@@ -34,13 +26,13 @@ async def analyze_url(request: dict[str, str]) -> dict[str, Any]:
         logger.error(f"Analysis failed: {e}")
         raise HTTPException(status_code=500, detail=str(e)) from e
 
-@router.get("/schemas", dependencies=[Depends(require_manager)])
+@router.get("/schemas", dependencies=[Depends(verify_manager_role)])
 async def list_schemas() -> list[dict[str, Any]]:
     """List all extraction schemas."""
     service = ExtractionService()
     return await service.list_schemas()
 
-@router.post("/schemas", dependencies=[Depends(require_manager)])
+@router.post("/schemas", dependencies=[Depends(verify_manager_role)])
 async def create_schema(
     request: dict[str, Any],
     current_user: dict = Depends(get_current_user)
@@ -53,14 +45,14 @@ async def create_schema(
         logger.error(f"Create schema failed: {e}")
         raise HTTPException(status_code=500, detail=str(e)) from e
 
-@router.delete("/schemas/{schema_id}", dependencies=[Depends(require_manager)])
+@router.delete("/schemas/{schema_id}", dependencies=[Depends(verify_manager_role)])
 async def delete_schema(schema_id: str) -> dict[str, bool]:
     """Delete a schema."""
     service = ExtractionService()
     await service.delete_schema(schema_id)
     return {"success": True}
 
-@router.post("/run", dependencies=[Depends(require_manager)])
+@router.post("/run", dependencies=[Depends(verify_manager_role)])
 async def run_extraction(
     request: dict[str, str],
     current_user: dict = Depends(get_current_user)

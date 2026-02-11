@@ -2,6 +2,7 @@
 from fastapi import APIRouter, Depends, Header, HTTPException
 from pydantic import BaseModel
 
+from ..auth.dependencies import verify_admin_role
 from ..services.auth_service import AuthService
 from ..utils import get_supabase_client
 
@@ -30,16 +31,8 @@ class AdminUpdateUserRequest(BaseModel):
 def get_auth_service():
     return AuthService()
 
-def verify_admin_role(x_user_role: str | None = Header(None, alias="X-User-Role")):
-    """
-    Simple RBAC check based on trusted header from API Gateway / Client.
-    """
-    if x_user_role not in ["system_admin", "admin"]:
-        raise HTTPException(status_code=403, detail="Insufficient permissions")
-    return x_user_role
-
 @router.get("/auth/permissions")
-async def list_permissions(_: str = Depends(verify_admin_role)):
+async def list_permissions(_: bool = Depends(verify_admin_role)):
     """
     Returns a list of all available system permissions for the UI Matrix.
     """
@@ -50,7 +43,7 @@ async def list_permissions(_: str = Depends(verify_admin_role)):
 async def admin_create_user(
     request: AdminCreateUserRequest,
     service: AuthService = Depends(get_auth_service),
-    _: str = Depends(verify_admin_role)
+    _: bool = Depends(verify_admin_role)
 ):
     try:
         profile = service.create_user_by_admin(
@@ -69,7 +62,7 @@ async def admin_update_user(
     user_id: str,
     request: AdminUpdateUserRequest,
     service: AuthService = Depends(get_auth_service),
-    _: str = Depends(verify_admin_role)
+    _: bool = Depends(verify_admin_role)
 ):
     try:
         updates = request.model_dump(exclude_unset=True)

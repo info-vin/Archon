@@ -18,9 +18,10 @@ async def test_search_jobs_fallback_to_mock():
     Test that search_jobs falls back to mock data when API fails or returns empty,
     and correctly infers needs.
     """
+    service = JobBoardService()
     # Mock _fetch_from_104 to raise an exception
     with patch.object(JobBoardService, "_fetch_from_104", side_effect=Exception("Network Error")):
-        jobs = await JobBoardService.search_jobs("Data Analyst")
+        jobs = await service.search_jobs("Data Analyst")
 
         assert len(jobs) > 0
         assert jobs[0].company == "Retail Corp"  # Should use updated mock data
@@ -32,6 +33,7 @@ async def test_identify_leads_and_save(mock_supabase):
     """
     Test that identify_leads_and_save attempts to insert new leads into Supabase.
     """
+    service = JobBoardService()
     # Setup mock jobs
     jobs = [
         JobData(
@@ -61,7 +63,7 @@ async def test_identify_leads_and_save(mock_supabase):
     mock_table.insert.return_value = mock_insert_builder
 
     # Execute
-    count = await JobBoardService.identify_leads_and_save(jobs)
+    count = await service.identify_leads_and_save(jobs)
 
     # Assert
     assert count == 1
@@ -78,6 +80,7 @@ async def test_identify_leads_skips_existing(mock_supabase):
     """
     Test that duplicates are skipped.
     """
+    service = JobBoardService()
     jobs = [JobData(title="Data Scientist", company="Test Corp", url="http://test/1")]
 
     # Mock finding an existing lead
@@ -89,7 +92,7 @@ async def test_identify_leads_skips_existing(mock_supabase):
     mock_table.select.return_value = mock_select_builder
 
     # Execute
-    count = await JobBoardService.identify_leads_and_save(jobs)
+    count = await service.identify_leads_and_save(jobs)
 
     # Assert
     assert count == 0

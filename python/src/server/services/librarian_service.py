@@ -1,9 +1,4 @@
-"""
-Librarian Service
 
-Encapsulates "Librarian" agent behaviors: Archiving and Indexing.
-Handles the seamless transition from "Generated Content" to "Knowledge Base".
-"""
 import uuid
 from datetime import datetime
 
@@ -22,6 +17,59 @@ class LibrarianService:
     def __init__(self):
         self.supabase = get_supabase_client()
         self.source_service = SourceManagementService(self.supabase)
+
+    async def archive_any_url(
+        self,
+        url: str,
+        user_role: str = "member"
+    ) -> str:
+        """
+        New (Phase 4.7): Dynamically crawls ANY authorized URL and indexes it.
+        Supports HTML and recursive Sitemap ingestion.
+        """
+        try:
+            from .crawler_service import CrawlerService
+            crawler = CrawlerService(user_role=user_role)
+
+            # 1. Fetch and Analyze
+            result = await crawler.fetch_and_analyze(url)
+            if result.get("status") == "error":
+                raise Exception(result.get("message", "Crawler failed."))
+
+            # 2. Route based on Type (Page vs Sitemap)
+            if result.get("type") == "sitemap":
+                links = result.get("discovered_links", [])
+                logger.info(f"Librarian: Processing Sitemap | discovered={len(links)} links")
+
+                # Batch processing: Ingest the first 10 links to avoid overwhelming the system
+                ingested_count = 0
+                for link in links[:10]:
+                    try:
+                        if not link.endswith(".xml"):
+                            await self.archive_any_url(link, user_role=user_role)
+                            ingested_count += 1
+                    except Exception as sub_e:
+                        logger.warning(f"Librarian: Failed to sub-ingest {link} | error={sub_e}")
+
+                return f"batch-processed-{ingested_count}-items"
+
+            # 3. Standard Page Ingestion
+            content = result["content"]
+            title = result["title"]
+
+            source_id = await self.archive_file(
+                file_name=f"External: {title[:50]}",
+                content=content,
+                file_path=url,
+                knowledge_type="external_knowledge"
+            )
+
+            logger.info(f"Librarian: Successfully ingested external URL | url={url} | id={source_id}")
+            return source_id
+
+        except Exception as e:
+            logger.error(f"Librarian: Failed to archive URL {url} | error={str(e)}")
+            return ""
 
     async def archive_sales_pitch(
         self,
@@ -85,7 +133,6 @@ class LibrarianService:
 
             # 4. Insert Content (archon_crawled_pages)
             # This makes it searchable by RAG.
-            # We treat the pitch as a single "page".
 
             # Generate embedding for the pitch content to enable RAG discovery
             try:
@@ -100,8 +147,6 @@ class LibrarianService:
                 "chunk_number": 0, # Required field
                 "content": content,
                 "embedding": embedding_vector,
-                # WORKAROUND: We store the title in metadata to bypass the schema cache
-                # and ensure it's available even if the 'title' column isn't fully synced yet.
                 "metadata": {**metadata, "title": title} # Store title in metadata
             }
 
@@ -217,28 +262,18 @@ class LibrarianService:
     ) -> str:
         """
         Archives a local file into the knowledge base.
-
-        Args:
-            file_name: Name of the file
-            content: Text content of the file
-            file_path: Original path (for metadata)
-            knowledge_type: Classification of knowledge
-
-        Returns:
-            str: Source ID
         """
         try:
             # 1. Generate Source ID
             safe_name = "".join(c for c in file_name if c.isalnum()).lower()
             unique_suffix = str(uuid.uuid4())[:8]
-            source_id = f"file-{safe_name}-{unique_suffix}"  # Use safe_name based on file_name
+            source_id = f"file-{safe_name}-{unique_suffix}"
 
             # 2. Metadata
             title = file_name
             word_count = len(content.split())
             tags = ["file_upload", "seeded_knowledge"]
 
-            # Detect type from extension
             if file_name.endswith(".md"):
                 tags.append("markdown")
             elif file_name.endswith(".pdf"):
@@ -262,12 +297,6 @@ class LibrarianService:
             )
 
             # 4. Content & Embedding
-            # Chunking logic could go here, but for now we do single chunk for simplicity
-            # or rely on RAG service's chunking if we used that.
-            # To be safe with token limits, we should probably chunk larger files,
-            # but for this specific request (seed data), single chunk or simple split is okay for MVP.
-
-            # Simple chunking if too large (>8000 chars roughly)
             chunk_size = 4000
             chunks = [content[i:i+chunk_size] for i in range(0, len(content), chunk_size)]
 

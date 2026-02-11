@@ -60,7 +60,7 @@ async def get_current_user(
 async def get_current_admin(
     current_user: Annotated[dict, Depends(get_current_user)]
 ) -> dict:
-    """Dependency that enforces Admin role."""
+    """Dependency that enforces Admin role and returns the user object."""
     role = current_user.get("role", "").lower()
     if role not in ["admin", "system_admin"]:
         raise HTTPException(
@@ -68,6 +68,30 @@ async def get_current_admin(
             detail="Admin privileges required"
         )
     return current_user
+
+async def verify_admin_role(
+    current_user: Annotated[dict, Depends(get_current_user)]
+):
+    """Secure boolean-style dependency for Admin enforcement via JWT."""
+    role = current_user.get("role", "").lower()
+    if role not in ["admin", "system_admin"]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin privileges required"
+        )
+    return True
+
+async def verify_manager_role(
+    current_user: Annotated[dict, Depends(get_current_user)]
+):
+    """Secure dependency ensuring the user is at least a Manager or Admin."""
+    role = current_user.get("role", "").lower()
+    if role not in ["admin", "system_admin", "manager"]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Manager privileges or higher required"
+        )
+    return True
 
 def requires_permission(permission: str):
     """

@@ -8,13 +8,14 @@ from google import genai
 from google.genai import types
 from pydantic import BaseModel
 
-from ..auth.dependencies import get_current_user
+from ..auth.dependencies import get_current_user, verify_manager_role
 from ..config.logfire_config import get_logger
 from ..prompts.marketing_prompts import BLOG_DRAFT_SYSTEM_PROMPT, REJECTION_REASON_PROMPT
 from ..prompts.sales_prompts import SALES_PITCH_SYSTEM_PROMPT
 from ..services.credential_service import credential_service
 from ..services.guardrail_service import GuardrailService
 from ..services.job_board_service import JobBoardService, JobData
+from ..services.librarian_service import LibrarianService
 from ..services.llm_provider_service import get_llm_client
 from ..services.log_service import LogService
 from ..services.projects.task_service import TaskService
@@ -88,16 +89,44 @@ async def search_jobs(keyword: str = Query(..., min_length=1), limit: int = 10):
     """
     try:
         logger.info(f"API: Searching jobs | keyword={keyword}")
-        jobs = await JobBoardService.search_jobs(keyword, limit)
+        service = JobBoardService()
+        jobs = await service.search_jobs(keyword, limit)
 
         # Auto-save leads asynchronously
-        new_leads = await JobBoardService.identify_leads_and_save(jobs)
+        new_leads = await service.identify_leads_and_save(jobs)
         logger.info(f"API: Auto-saved leads | count={new_leads}")
 
         return jobs
     except Exception as e:
         logger.error(f"API: Job search failed | error={str(e)}")
         raise HTTPException(status_code=500, detail={"error": str(e)}) from e
+
+@router.post("/manager/ingest-url", dependencies=[Depends(verify_manager_role)])
+async def ingest_external_url(
+    body: dict,
+    user: dict = Depends(get_current_user)
+):
+    """
+    Charlie's Portal: Inject any external URL into the RAG Knowledge Base.
+    Used for WLB, Sitemap, or other business intelligence sources.
+    """
+    url = body.get("url")
+    if not url:
+        raise HTTPException(status_code=400, detail="URL is required.")
+
+    logger.info(f"API: Manager Injecting URL | user={user['email']} | url={url}")
+
+    librarian = LibrarianService()
+    source_id = await librarian.archive_any_url(url, user_role=user.get("role", "member"))
+
+    if not source_id:
+        raise HTTPException(status_code=500, detail="Failed to crawl or archive the URL.")
+
+    return {
+        "status": "success",
+        "source_id": source_id,
+        "message": f"Successfully ingested knowledge from {url}"
+    }
 
 @router.get("/leads")
 async def get_leads():
