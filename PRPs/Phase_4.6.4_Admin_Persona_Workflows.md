@@ -1,6 +1,6 @@
 # Phase 4.6.4 Admin Persona: The Architect (系統架構師)
 
-> **Status**: Implemented (2026-02-06)
+> **Status**: Implemented (2026-02-11)
 > **Role**: System Admin / CTO / SRE
 > **Motto**: "Stable Core, Evolving Soul" (穩固核心，進化靈魂)
 > **Goal**: 確保系統的安全性、穩定性與自我進化能力，維護 Archon 的「數位體質」。
@@ -118,17 +118,17 @@ sequenceDiagram
 
 | 模組 | 現狀 (As-Is) | 缺口 (Gap) | 實作行動 (Action Item) | 狀態 |
 | :--- | :--- | :--- | :--- | :--- |
-| **System Health** | `ManagerDashboard.tsx` 內建 Admin 視圖。 | 功能完整，包含 RAG/Error/Agent 監控。 | **Dashboard Integration**: Admin 登入時自動顯示 Health Cards。 | ✅ Done |
-| **RBAC** | `IdentityMatrix.tsx` 支援 CRUD 與角色升級。 | 無法針對單一權限 (Permission) 進行細粒度覆寫 (Override)。 | **Permission Override**: 目前權限表寫死於前端 (`ROLE_PERMISSIONS_MAP`)，需改為後端動態提供。 | ⚠️ Gap (Backend) |
-| **Token Ops** | `stats_api.py` 有 `get_ai_usage`。 | 支援真實成本計算 (`cost_usd`) 與 Hybrid 統計。 | **Cost Visualization**: 在 Dashboard 顯示每日成本與預算百分比。 | ✅ Done |
-| **Config** | `Scoring Logic` 這是前端 State。 | 規則設定尚未持久化到後端 DB。 | **Config Persistence**: 實作 `system_configs` 表來儲存動態規則。 | ⚠️ Gap (Persistence) |
-| **Audit** | 後端有 Log，前端無專屬介面。 | Admin 無法在 UI 上直接搜尋稽核紀錄。 | **Audit Log Viewer**: 在 `IdentityMatrix` 或 Dashboard 新增 Log 查詢介面。 | ⚠️ Gap (UI) |
+| **System Health** | `ManagerDashboard.tsx` 整合後台。 | 功能完整，包含 RAG/Error/Agent 監控。 | **Dashboard Integration**: Admin 登入時自動顯示 Health Cards。 | ✅ Done |
+| **RBAC** | `IdentityMatrix.tsx` 支援細粒度覆寫。 | 已實作 `permission_overrides` 覆寫機制。 | **Permission Override**: 實作交互式權限矩陣，支援三態授權 (Inherit/Grant/Revoke)。 | ✅ Done |
+| **Token Ops** | `stats_api.py` 支援 Hybrid 統計。 | 支援真實成本計算 (`cost_usd`) 與預算監控。 | **Cost Visualization**: 在 Dashboard 顯示每日成本與預算百分比。 | ✅ Done |
+| **Config** | `Scoring Logic` 已持久化。 | 評分規則已存入 `archon_settings` 資料庫。 | **Config Persistence**: 實作 Lead Scoring Weights 配置區塊，支援即時微調。 | ✅ Done |
+| **Audit** | 前端具備搜尋與過濾介面。 | 已實作多維度即時過濾稽核紀錄。 | **Audit Log Viewer**: 在 `DocumentVersionsLog` 增加 Search UI 與 Sticky Header。 | ✅ Done |
 
 ---
 
 ## 5. 結論
 
-Admin Persona (`Phase 4.6.4`) 的基礎架構已完成 **80%**：
-1.  **可視化 (Visibility)**: 透過 **Command Center**，系統健康度與成本一目了然。
-2.  **可控制 (Control)**: **Identity Matrix** 讓人員管理變得直觀且簡單。
-3.  **待優化 (Optimization)**: 下一步應專注於「配置持久化」與「權限細粒度管理」，以滿足更複雜的企業需求。
+Admin Persona (`Phase 4.6.4`) 的基礎架構已完成 **100%**：
+1.  **可視化 (Visibility)**: 透過 **Command Center**，系統健康度、成本與稽核紀錄一目了然。
+2.  **可控制 (Control)**: **Identity Matrix** 讓細粒度權限管理變得極致靈活。
+3.  **持久化 (Persistence)**: 所有業務規則（如評分權重）均已資料庫化，確保系統具備真正的「數位體質」。
