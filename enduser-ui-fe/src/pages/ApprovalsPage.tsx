@@ -240,17 +240,22 @@ const ApprovalsPage: React.FC = () => {
                                             </span>
                                         </div>
 
-                                        <div className={`relative bg-gray-50 dark:bg-slate-950 rounded-2xl p-5 border border-gray-100 dark:border-slate-800 transition-all duration-700 ease-in-out ${previewId === post.id ? 'max-h-[8000px] overflow-visible' : 'max-h-48 overflow-hidden'}`}>
+                                        {/* 所見即所得預覽 (WYSIWYG Preview) - Fully Unlocked for Review */}
+                                        <div className={`relative bg-gray-50 dark:bg-slate-950 rounded-2xl p-5 border border-gray-100 dark:border-slate-800 transition-all duration-700 ease-in-out ${previewId === post.id ? 'h-auto opacity-100' : 'max-h-48 overflow-hidden'}`}>
                                             <div className={previewId === post.id ? 'opacity-100' : 'opacity-30 grayscale pointer-events-none'}>
                                                 {(() => {
-                                                    // Dynamic Image Preview: Use imageUrl if present, else parse Markdown for first image
-                                                    const displayImage = post.imageUrl || post.content?.match(/!\[.*?\]\((.*?)\)/)?.[1];
+                                                    // Robust Markdown Image Scanning: Search for images anywhere in text, ignoring whitespace
+                                                    const imgMatch = post.content?.match(/!\[.*?\]\(\s*(.*?)\s*\)/);
+                                                    const displayImage = post.imageUrl || imgMatch?.[1];
+                                                    
                                                     return displayImage && (
-                                                        <img 
-                                                            src={displayImage} 
-                                                            alt="Cover" 
-                                                            className="w-full h-48 object-cover rounded-2xl mb-6 border-2 border-white dark:border-slate-800 shadow-lg" 
-                                                        />
+                                                        <div className="w-full aspect-video mb-6 overflow-hidden rounded-2xl border-2 border-white dark:border-slate-800 shadow-lg bg-slate-200 dark:bg-slate-800">
+                                                            <img 
+                                                                src={displayImage} 
+                                                                alt="Article Cover" 
+                                                                className="w-full h-full object-cover" 
+                                                            />
+                                                        </div>
                                                     );
                                                 })()}
                                                 <div className="prose prose-sm dark:prose-invert max-w-none text-slate-700 dark:text-slate-300 leading-relaxed font-sans">

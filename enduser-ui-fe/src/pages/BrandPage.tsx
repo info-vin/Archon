@@ -113,9 +113,17 @@ const BrandPage: React.FC = () => {
     };
 
     const handleSelectSource = async (source: ContentSource) => {
-        setActiveSource(source);
-        // Identify associated Task ID from metadata if present
-        const taskId = (source as any).metadata?.task_id || (source as any).task_id;
+        // Fix: Map API alias back to expected UI key for feedback visibility
+        const sourceData = { ...source };
+        if ((sourceData as any).reviewNotes && !(sourceData as any).review_notes) {
+            (sourceData as any).review_notes = (sourceData as any).reviewNotes;
+        }
+        setActiveSource(sourceData);
+
+        // Identify associated Task ID from metadata variants
+        const taskId = (sourceData as any).metadata?.task_id || 
+                       (sourceData as any).task_id || 
+                       (sourceData as any).metadata?.taskId;
         setActiveTaskId(taskId || null);
         
         setIsLoadingContext(true);
@@ -330,11 +338,12 @@ const BrandPage: React.FC = () => {
                 score: 100, 
                 summary: post.excerpt || '', 
                 date: post.publishDate || new Date().toISOString(),
-                review_notes: (post as any).review_notes // Preserve Charlie's feedback
+                // Handle both snake_case and camelCase from API aliases
+                review_notes: (post as any).reviewNotes || (post as any).review_notes 
             } as any);
             
             // Link Task ID for status sync
-            const associatedTaskId = (post as any).generation_metadata?.task_id || (post as any).task_id;
+            const associatedTaskId = (post as any).generationMetadata?.task_id || (post as any).generation_metadata?.task_id || (post as any).task_id;
             setActiveTaskId(associatedTaskId || null);
 
             setViewMode('workbench');

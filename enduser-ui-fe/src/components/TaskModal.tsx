@@ -3,6 +3,7 @@ import { AssignableUser, Task, TaskPriority, NewTaskData, UpdateTaskData } from 
 import { api } from '../services/api.ts';
 import { XIcon, SparklesIcon } from './Icons.tsx';
 import { KnowledgeSelector } from './KnowledgeSelector.tsx';
+import { MobileDateTimePicker } from './common/MobileDateTimePicker';
 
 interface TaskModalProps {
   task?: Task | null;
@@ -238,15 +239,11 @@ export const TaskModal: React.FC<TaskModalProps> = ({ task, onClose, onTaskCreat
                   return null;
               })()}
             </div>
-            <div>
-              <label htmlFor="due-date" className="block text-sm font-medium mb-1">Due Date</label>
-              <input 
-                id="due-date" 
-                type="datetime-local" 
-                value={dueDate} 
-                onChange={(e) => setDueDate(e.target.value)} 
-                className={`${inputClass} min-h-[44px] md:min-h-[auto] cursor-pointer touch-manipulation`} 
-                required 
+            <div className="flex-1">
+              <MobileDateTimePicker 
+                label="Due Date"
+                value={dueDate}
+                onChange={setDueDate}
               />
             </div>
           </div>

@@ -21,8 +21,8 @@
 | ID | 類型 (Type) | 角色 | 模組 | 問題描述 | 嚴重度 | 狀態 |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
 | **BUG-027** | 🐛 Bug | **Charlie** | **Team** | Charlie 在 Team Management 面板看不到 Alice 自己開的單。已啟用後端 assigne_id 過濾與前端分頁擴增。 | High | 🟢 已修復 |
-| **BUG-030** | 🐛 Bug | **All** | **Color** | Dashboard 狀態與優先級燈色失效。已修復 API 回傳缺少 priority 欄位與 ETag 計算問題。需確保 List, Table, Kanban, Gantt 所有視圖同步反應。 | High | 🟡 驗證中 |
-| **UX-013** | 🎨 Style | **Alice** | **UI/Date**| 日期時間選擇器更換。Alice 手機無法設定時間，需更換為手機/平板/電腦通用的 UI 組件。 | High | 🔴 待處理 |
+| **BUG-030** | 🐛 Bug | **All** | **Color** | Dashboard 狀態與優先級燈色失效。已修復 API 回傳缺少 priority 欄位與 ETag 計算問題。已驗證 List, Table, Kanban 所有視圖同步反應。 | High | 🟢 已修復 |
+| **UX-013** | 🎨 Style | **Alice** | **UI/Date**| 日期時間選擇器更換。已實作 `MobileDateTimePicker` 大目標觸控組件，解決手機選取困難並新增業務快捷鍵 (明天/三天後)。已修復單元測試定位問題。 | High | 🟢 已修復 |
 | **BUG-033** | 🐛 Bug | **All** | **UI/Nav** | 導覽列消失。已修正前端大小寫判斷與 DB ID 同步。 | Critical | 🟢 已修復 |
 | **DX-001** | 🛠️ DX | **All** | **Auth/PW** | 密碼重置為 `qwer45tyuiop`。已實作強制重置邏輯。 | Medium | 🟢 已修復 |
 | **UX-011** | 🎨 Style | **All** | **UI/Set** | 5173 `/settings` 移至使用者區塊。 | Medium | 🟢 已修復 |
@@ -56,7 +56,7 @@
 | **GAP-021** | 🔧 Gap | **Admin** | **Config** | **配置持久化 (Persistence)**。系統設定全面存儲於資料庫 archon_settings，支持熱加載。 | Medium | 🟢 已修復 |
 | **GAP-022** | 🔧 Gap | **Admin** | **Audit** | **變更稽核日誌 (Audit Trail)**。已實作「變更即審計」：Manager 的設定變更自動寫入版本稽核表。 | Medium | 🟢 已修復 |
 | **GAP-023** | 🔧 Gap | **Charlie** | **Return** | **退件反饋與狀態流轉閉環**。已完成：1. 移除 Workbench 顯示限制；2. 解鎖 Charlie 預覽高度與圖片自動識別；3. 實作儲存/提交時自動連動任務狀態 (Doing/Review)。 | High | 🟡 待驗證 |
-| **GAP-024** | 🔧 Gap | **Alice** | **Pitch** | **Pitch View UI**。My Leads 列表已儲存 pitch_content 但無查看介面。需新增 "View Pitch" 按鈕與 Modal。 | Medium | 🔴 待處理 |
+| **GAP-024** | 🔧 Gap | **Alice** | **Pitch** | **Pitch View UI**。已完成：1. 桌面端 Table View 增加 View 按鈕與 Modal；2. 手機端 LeadsCardStack 增加動態 PitchDrawer，支援已生成內容的翻閱與複製。 | Medium | 🟡 待驗證 |
 
 ---
 
