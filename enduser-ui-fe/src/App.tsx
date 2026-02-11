@@ -15,6 +15,7 @@ import TeamManagementPage from './pages/TeamManagementPage.tsx';
 import BrandPage from './pages/BrandPage.tsx';
 import ApprovalsPage from './pages/ApprovalsPage.tsx';
 import { ManagerDashboard } from './pages/ManagerDashboard.tsx';
+import ManagerNexus from './pages/ManagerNexus.tsx';
 import PublicLayout from './components/layout/PublicLayout.tsx';
 import MainLayout from './components/layout/MainLayout.tsx';
 import SolutionsPage from './features/marketing/SolutionsPage.tsx';
@@ -144,6 +145,16 @@ export const AppRoutes: React.FC = () => {
           <ManagerRoute>
             <MainLayout>
               <ManagerDashboard />
+            </MainLayout>
+          </ManagerRoute>
+        }
+      />
+      <Route
+        path="/nexus"
+        element={
+          <ManagerRoute>
+            <MainLayout>
+              <ManagerNexus />
             </MainLayout>
           </ManagerRoute>
         }

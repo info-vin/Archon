@@ -60,6 +60,14 @@ const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                             My Tasks
                         </Link>
                     </li>
+                    {hasPermission('user:manage:team') && (
+                        <li className="mb-2">
+                            <Link to="/nexus" className={`flex items-center p-2 rounded-md hover:bg-secondary ${location.pathname.startsWith('/nexus') ? 'bg-secondary' : ''}`}>
+                                <LayoutGridIcon className="w-5 h-5 mr-3 text-primary" />
+                                Managerial Nexus
+                            </Link>
+                        </li>
+                    )}
                     {hasPermission('stats:view:own') && (
                         <li className="mb-2">
                             <Link to="/stats" className={`flex items-center p-2 rounded-md hover:bg-secondary ${location.pathname.startsWith('/stats') ? 'bg-secondary' : ''}`}>

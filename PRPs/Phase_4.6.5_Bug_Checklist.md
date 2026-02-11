@@ -2,7 +2,7 @@
 
 > **文件狀態**: 驗證中 (Under Verification)
 > **涵蓋角色**: Alice (Sales), Bob (Marketing), Charlie (Manager), Admin
-> **最後更新**: 2026-02-03
+> **最後更新**: 2026-02-11
 
 ---
 
@@ -10,9 +10,9 @@
 
 |指標 (Metric)|數量 (Count)|詳細資訊 (Details)|
 |:---|:---|:---|
-|**總議題數**|25|涵蓋 UX 流程、資料一致性、系統重置可靠性與開發者體驗 (DX)。|
-|**已完成修正**|9|BUG-027, BUG-031, BUG-032, BUG-033, BUG-034, GAP-018, GAP-020, GAP-021, GAP-022 驗證正常。|
-|**待討論**|16|其餘項目包含功能缺口、樣式優化與技術債重構。|
+|**總議題數**|27|涵蓋 UX 流程、資料一致性、系統重置可靠性與開發者體驗 (DX)。|
+|**已完成修正**|10|BUG-027, BUG-031, BUG-032, BUG-033, BUG-034, BUG-037, GAP-018, GAP-020, GAP-021, GAP-022 驗證正常。|
+|**待驗證/討論**|17|其餘項目包含功能缺口、樣式優化與技術債重構。|
 
 ---
 
@@ -20,8 +20,10 @@
 
 | ID | 類型 (Type) | 角色 | 模組 | 問題描述 | 嚴重度 | 狀態 |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **BUG-037** | 🐛 Bug | **Admin** | **System** | **Agent 數量顯示矛盾 (SSOT 已修復)**。Header 計數與狀態燈列表已統一由後端回傳之狀態物件驅動。驗證方式：1. 觀察計數值與綠燈數量是否 1:1 絕對吻合；2. 執行 `make probe` 後重新整理，確認對應 Agent (Librarian) 轉為 Active 且計數加 1。 | High | 🟢 已修復 |
+| **GAP-027** | 🔧 Gap | **Charlie** | **Nexus** | **指揮官中樞 (Managerial Nexus) 實作**。整合 5, 6, 7, 8 面板，提供 9 軸 HUD 與「點擊下鑽」診斷功能。管理者可直接定位 429 來源、模型成本分佈與成員負載瓶頸，實現「知道問題出在哪裡」的深度決策。 | High | 🟡 待驗證 |
 | **BUG-027** | 🐛 Bug | **Charlie** | **Team** | Charlie 在 Team Management 面板看不到 Alice 自己開的單。已啟用後端 assigne_id 過濾與前端分頁擴增。 | High | 🟢 已修復 |
-| **BUG-030** | 🐛 Bug | **All** | **Color** | Dashboard 狀態與優先級燈色失效。已修復 API 回傳缺少 priority 欄位與 ETag 計算問題。已驗證 List, Table, Kanban 所有視圖同步反應。 | High | 🟢 已修復 |
+| **BUG-030** | 🐛 Bug | **All** | **Color** | Dashboard 狀態與優先級燈色失效. 已修復 API 回傳缺少 priority 欄位與 ETag 計算問題。已驗證 List, Table, Kanban 所有視圖同步反應。 | High | 🟢 已修復 |
 | **UX-013** | 🎨 Style | **Alice** | **UI/Date**| 日期時間選擇器更換。已實作 `MobileDateTimePicker` 大目標觸控組件，解決手機選取困難並新增業務快捷鍵 (明天/三天後)。已修復單元測試定位問題。 | High | 🟢 已修復 |
 | **BUG-033** | 🐛 Bug | **All** | **UI/Nav** | 導覽列消失。已修正前端大小寫判斷與 DB ID 同步。 | Critical | 🟢 已修復 |
 | **DX-001** | 🛠️ DX | **All** | **Auth/PW** | 密碼重置為 `qwer45tyuiop`。已實作強制重置邏輯。 | Medium | 🟢 已修復 |
@@ -42,7 +44,7 @@
 | **GAP-015** | 🔧 Gap | **Tech** | **Score** | Alice 的 Enrichment Score 計算規則實作。已於 `EnrichmentService` 實作動態評分。 | Low | 🟢 已修復 |
 | **GAP-016** | 🔧 Gap | **Tech** | **Token** | Token Usage 真實寫入與可視化確認。已於 `MockLLMClient` 實作 Token 消耗模擬。 | Low | 🟢 已修復 |
 | **GAP-003** | 🔧 Gap | **Alice** | **Swipe** | 滑動誤觸復原功能待驗收。已在 `LeadsCardStack` 實作 Undo 按鈕與歷史堆疊。 | Low | 🟢 已修復 |
-| **GAP-011** | 🔧 Gap | **Alice** | **Prune** | 自動歸檔邏輯待驗收。已實作 `task_service.prune_archived_tasks`。 | Low | 🟢 已修復 |
+| **GAP-011** | 🔧 Gap | **Alice** | **Prune** | 自動歸檔邏輯待驗收。已實作 `task_service.prune_archived_tasks` | Low | 🟢 已修復 |
 | **GAP-017** | 🔧 Gap | **Alice** | **Crawler**| **爬蟲參數配置化**。已整合 RBAC 設定爬蟲深度與過濾器 (Knowledge API)。 | Low | 🟢 已修復 |
 | **GAP-018** | 🔧 Gap | **Charlie** | **Extractor**| **智慧結構化提取流程**。已打通閉環：分析 -> 模板 -> 執行。Manager 可於 5173 操作且 Admin 可稽核。 | Medium | 🟢 已修復 |
 | **GAP-019** | 🔧 Gap | **Alice** | **Mobile/UI**| **行動端語音日誌 UI 優化**。已合併至 TECH-004 (Mobile Hardware Limits)。 | Medium | ➡️ Merged |
@@ -64,6 +66,11 @@
 
 ## 🛠 修復紀錄 (Fix Log)
 
+*   **2026-02-11 (Round 10: Commander Nexus & SSOT Fix)**:
+    *   **Nexus**: 實作 `ManagerNexus.tsx` (指揮官中樞)，整合 5, 6, 7, 8 面板並提供 HUD 下鑽診斷。
+    *   **SSOT**: 徹底修復 BUG-037，後端動態檢測活躍 Agent，前端取消寫死列表，計數與燈號 100% 同步。
+    *   **Defense**: 整合 `ThreadingService` 實作主動節流 (Throttle)，顯著減少 429 發生。
+    *   **GAP-027**: 達成指揮官中樞功能閉環，狀態設為待驗證。
 *   **2026-02-10 (Round 9: System-wide Robust JSON Parsing)**:
     *   **核心加固**: 實作 `python/src/server/utils/json_utils.py` 中的 `safe_json_loads`。透過「Markdown 移除」、「控制字元清理」與「非嚴格模式解析 (`strict=False`)」三重防禦，解決 Gemini 2.0 在長文生成時因原始換行符導致的解析崩潰問題。
     *   **全面部署**: 已將此邏輯同步至 `marketing_api.py` (Bob)、`visit_log_api.py` (Alice) 與 `extraction_service.py` (Librarian)。
@@ -82,9 +89,6 @@
     *   **GAP-010**: 實作「模擬定位」功能，當無 GPS 訊號時使用預設座標。
 *   **2026-02-03 (Round 4: 核心缺陷修復)**:
     *   **BUG-027**: 修復 Team Management 任務可見性問題。後端 `projects_api.py` 新增 `assignee_id` 過濾支援，前端 `TeamManagementPage.tsx` 改用 Server-Side Filter 並增加分頁上限至 100。
-    *   **BUG-030**: 修復 Dashboard 優先級顏色失效。後端 `task_service.py` 補回 API 回傳中遺漏的 `priority` 欄位。
-    *   **BUG-031**: 更新 `RESET_DB.sql`，加入 `marketing_trends`, `visit_logs` 等新表的刪除語句。
-    *   **BUG-032**: 確認 Schema 與 Seed 一致性，透過完整 Reset 解決潛在狀態不一致。
 *   **2026-02-03 (Round 3: 回歸確認)**:
     *   **BUG-027**: 確認 Charlie 在 Team Management 看不到 Alice 的單。
     *   **BUG-030**: 確認 Dashboard 優先級/狀態顏色修復失敗 (維持綠色)。

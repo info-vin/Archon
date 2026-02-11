@@ -69,8 +69,8 @@ export const SystemHealthDashboard: React.FC = () => {
                 <StatusCard 
                     title="Active Agents" 
                     status="neutral"
-                    value={overview.active_agents.length.toString()}
-                    subtext={overview.active_agents.join(', ')}
+                    value={overview.active_agents.filter((a: any) => a.status === 'active').length.toString()}
+                    subtext={`${overview.active_agents.length} registered system entities`}
                 />
                 <StatusCard 
                     title="Token Cost (24h)" 
@@ -104,14 +104,18 @@ export const SystemHealthDashboard: React.FC = () => {
                     )}
                 </div>
 
-                {/* Agent Status */}
+                {/* Agent Status (SSOT Driven) */}
                 <div className="bg-card p-6 rounded-2xl border border-border shadow-sm">
                     <h3 className="text-lg font-bold mb-4">Agent Status</h3>
                     <div className="space-y-4">
-                        <AgentRow name="Clockwork" role="Scheduler & Log Patrol" status="active" />
-                        <AgentRow name="Sentinel" role="Business Logic Guard" status="active" />
-                        <AgentRow name="Librarian" role="RAG Indexer" status="active" />
-                        <AgentRow name="DevBot" role="Auto-Repair" status="standby" />
+                        {overview.active_agents.map((agent: any) => (
+                            <AgentRow 
+                                key={agent.id}
+                                name={agent.name} 
+                                role={agent.role} 
+                                status={agent.status} 
+                            />
+                        ))}
                     </div>
                 </div>
             </div>

@@ -34,51 +34,78 @@ async def require_manager_or_admin(user=Depends(get_current_user)):
         raise HTTPException(status_code=403, detail="Manager or Admin access required")
     return user
 
-@router.get("/system-overview", dependencies=[Depends(require_admin)])
+@router.get("/system-overview", dependencies=[Depends(require_manager_or_admin)])
 async def get_system_overview():
     """
-    Consolidated health and performance overview for the Admin Dashboard.
-    Integrates RAG Health, Error Log Counts, and Real Token Costs.
+    Consolidated health and performance overview.
+    Now accessible to Managers and provides a complete view of registered agents.
     """
     try:
         supabase = get_supabase_client()
         health_service = HealthService()
 
-        # 1. RAG Health (Using existing check)
+        # 1. RAG Health
         rag_health = await health_service.check_rag_integrity()
 
         # 2. Error Log Stats (Last 24h)
         one_day_ago = (datetime.now(UTC) - timedelta(hours=24)).isoformat()
-        # Note: 'count' param in select requires exact=True/Planned etc.
-        # But supabase-py select(count='exact') returns count in .count property
         error_res = supabase.table("archon_logs").select("id", count="exact")\
             .eq("level", "ERROR").gt("created_at", one_day_ago).execute()
         error_count = error_res.count if error_res.count is not None else 0
 
-        # 3. Active Agents Status
-        # Check Scheduler Logs for recent activity
+        # 3. Dynamic Agent Status (SSOT Fix - BUG-037)
+        from ..services.agent_registry import AGENT_CONFIG
         one_hour_ago = (datetime.now(UTC) - timedelta(hours=1)).isoformat()
-        clockwork_res = supabase.table("archon_logs").select("id", count="exact")\
-            .eq("source", "clockwork-scheduler").gt("created_at", one_hour_ago).execute()
-        clockwork_active = (clockwork_res.count or 0) > 0
 
-        active_agents = []
-        if clockwork_active:
-            active_agents.append("Clockwork (Scheduler)")
-        # Assume others are services
-        active_agents.extend(["Sentinel (Guard)", "Librarian (RAG)"])
+        # Define all expected system agents
+        all_agents_def = [
+            {"id": "clockwork", "name": "Clockwork", "role": "Scheduler"},
+            {"id": "sentinel", "name": "Sentinel", "role": "Business Guard"}
+        ]
+        # Add registered AI agents
+        for agent_id, config in AGENT_CONFIG.items():
+            all_agents_def.append({
+                "id": str(agent_id),
+                "name": str(config["name"]),
+                "role": "AI Assistant"
+            })
+
+        # Get recent activity from logs
+        logs_res = supabase.table("archon_logs").select("source, message")\
+            .gt("created_at", one_hour_ago).execute()
+        active_sources = {log["source"].lower() for log in (logs_res.data or [])}
+
+        # Get recent activity from tokens
+        token_res = supabase.table("token_usage").select("context_type")\
+            .gt("created_at", one_hour_ago).execute()
+        active_contexts = {t["context_type"].lower() for t in (token_res.data or []) if t.get("context_type")}
+
+        active_agents_details = []
+        for agent in all_agents_def:
+            # Heuristic for activity: Match source ID or context type
+            is_active = (
+                agent["id"].lower() in active_sources or
+                "clockwork" in active_sources and agent["id"] == "clockwork" or
+                any(agent["id"].lower() in ctx for ctx in active_contexts) or
+                (agent["id"] == "market-bot" and any("blog" in ctx for ctx in active_contexts))
+            )
+            active_agents_details.append({
+                "id": agent["id"],
+                "name": agent["name"],
+                "role": agent["role"],
+                "status": "active" if is_active else "standby"
+            })
 
         # 4. Token Cost (Last 24h)
-        # We can reuse get_daily_cost logic but simpler here
-        token_res = supabase.table("token_usage").select("cost_usd")\
+        token_res_cost = supabase.table("token_usage").select("cost_usd")\
             .gt("created_at", one_day_ago).execute()
-        total_cost_24h = sum(float(row["cost_usd"]) for row in (token_res.data or []))
+        total_cost_24h = sum(float(row["cost_usd"]) for row in (token_res_cost.data or []))
 
         return {
             "status": "healthy" if rag_health.get("status") == "healthy" and error_count < 10 else "degraded",
             "rag": rag_health,
             "errors_24h": error_count,
-            "active_agents": active_agents,
+            "active_agents": active_agents_details, # Structured objects: [{id, name, status}]
             "cost_24h": round(total_cost_24h, 4),
             "timestamp": datetime.now(UTC).isoformat()
         }
