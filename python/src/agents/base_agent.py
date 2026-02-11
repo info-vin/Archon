@@ -41,13 +41,33 @@ class BaseAgentOutput(BaseModel):
 
 
 class RateLimitHandler:
-    """Handles OpenAI rate limiting with exponential backoff."""
+    """Handles OpenAI rate limiting with exponential backoff and proactive throttling."""
 
     def __init__(self, max_retries: int = 5, base_delay: float = 1.0):
         self.max_retries = max_retries
         self.base_delay = base_delay
         self.last_request_time: float = 0.0
-        self.min_request_interval = 0.1  # Minimum 100ms between requests
+        self.min_request_interval = 0.5  # Increased from 0.1 to 0.5s (2 requests/sec max) for stability
+
+    async def _log_rate_limit_alert(self, error_message: str, retry_count: int, wait_time: float):
+        """Log the rate limit hit as a system ALERT in archon_logs."""
+        try:
+            from ..utils import get_supabase_client
+            supabase = get_supabase_client()
+            supabase.table("archon_logs").insert({
+                "level": "ALERT",
+                "source": "RateLimitHandler",
+                "type": "system",
+                "message": f"Rate limit hit: {error_message[:200]}",
+                "details": {
+                    "retry_count": retry_count,
+                    "max_retries": self.max_retries,
+                    "wait_time": wait_time,
+                    "error": error_message
+                }
+            }).execute()
+        except Exception as e:
+            logger.warning(f"Failed to log rate limit alert to DB: {e}")
 
     async def execute_with_rate_limit(self, func, *args, progress_callback=None, **kwargs):
         """Execute a function with rate limiting protection."""
@@ -55,11 +75,12 @@ class RateLimitHandler:
 
         while retries <= self.max_retries:
             try:
-                # Ensure minimum interval between requests
+                # Proactive Throttling: Ensure minimum interval between requests
                 current_time = time.time()
                 time_since_last = current_time - self.last_request_time
                 if time_since_last < self.min_request_interval:
-                    await asyncio.sleep(self.min_request_interval - time_since_last)
+                    delay = self.min_request_interval - time_since_last
+                    await asyncio.sleep(delay)
 
                 self.last_request_time = time.time()
                 return await func(*args, **kwargs)
@@ -69,21 +90,21 @@ class RateLimitHandler:
                 full_error = str(e)
 
                 logger.debug(f"Agent error caught: {full_error}")
-                logger.debug(f"Error type: {type(e).__name__}")
-                logger.debug(f"Error class: {e.__class__.__module__}.{e.__class__.__name__}")
 
                 # Check for different types of rate limits
                 is_rate_limit = (
                     "rate limit" in error_str
                     or "429" in error_str
-                    or "request_limit" in error_str  # New: catch PydanticAI limits
+                    or "request_limit" in error_str
                     or "exceed" in error_str
+                    or "resource_exhausted" in error_str
                 )
 
                 if is_rate_limit:
                     retries += 1
                     if retries > self.max_retries:
                         logger.debug(f"Max retries exceeded for rate limit: {full_error}")
+                        await self._log_rate_limit_alert(full_error, retries, 0)
                         if progress_callback:
                             await progress_callback({
                                 "step": "ai_generation",
@@ -99,9 +120,12 @@ class RateLimitHandler:
                         # Use exponential backoff
                         wait_time = self.base_delay * (2 ** (retries - 1))
 
-                    logger.info(
-                        f"Rate limit hit. Type: {type(e).__name__}, Waiting {wait_time:.2f}s before retry {retries}/{self.max_retries}"
+                    logger.warning(
+                        f"Rate limit hit. Waiting {wait_time:.2f}s before retry {retries}/{self.max_retries}"
                     )
+
+                    # Log to Database as ALERT for Charlie (Manager) to see
+                    await self._log_rate_limit_alert(full_error, retries, wait_time)
 
                     # Send progress update if callback provided
                     if progress_callback:

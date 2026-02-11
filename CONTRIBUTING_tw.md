@@ -390,11 +390,13 @@ Phase 4.4.5 引入了 **Clockwork** 進行系統自動檢測。
         | 38 | `034_add_blog_generation_metadata.sql` | **[進階]** 增加 AI 生成參數持久化欄位。 |
         | 39 | `035_refine_prompt_rbac.sql` | **[權限]** 精細化 Prompt 管理員權限。 |
         | 40 | `036_refine_settings_rbac.sql` | **[權限]** 精細化系統設定管理員權限。 |
-                | 41 | `037_add_pitch_to_leads.sql` | **[Phase 4.6.5]** 增加 Leads 表的 AI 生成提案內容欄位。 |
+        | 41 | `037_add_pitch_to_leads.sql` | **[Phase 4.6.5]** 增加 Leads 表的 AI 生成提案內容欄位。 |
         | 42 | `038_seed_scoring_settings.sql` | **[Admin]** 實作線索評分權重持久化，支援 Admin 即時調整業務規則。 |
         | 43 | `039_add_permission_overrides_to_profiles.sql` | **[RBAC]** 在 `profiles` 表增加 `permission_overrides` 欄位，支援按人授權。 |
-        | 44 | `seed_mock_leads.sql` | **[種子]** 填充業務線 (Leads) 核心測試資料。 |
-        | 45 | `seed_mock_alerts_and_logs.sql` | **[種子]** 填充 Admin/Manager 儀表板所需的系統警報與日誌資料。 |
+        | 44 | `040_modernize_document_versions_constraint.sql` | **[系統]** 現代化稽核日誌約束，支援全系統（如 Librarian）的變更追蹤。 |
+        | 45 | `041_restore_crawler_settings.sql` | **[爬蟲]** 恢復爬蟲 RBAC 限制數據，並將 104 Crawler 網址持久化至資料庫。 |
+        | 46 | `seed_mock_leads.sql` | **[種子]** 填充業務線 (Leads) 核心測試資料。 |
+        | 47 | `seed_mock_alerts_and_logs.sql` | **[種子]** 填充 Admin/Manager 儀表板所需的系統警報與日誌資料。 |
         
 3.  **階段三：執行部署**
 

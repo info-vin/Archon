@@ -21,15 +21,24 @@ class LibrarianService:
     async def archive_any_url(
         self,
         url: str,
-        user_role: str = "member"
+        user_role: str = "member",
+        depth: int = 0,
+        max_depth: int = 1
     ) -> str:
         """
         New (Phase 4.7): Dynamically crawls ANY authorized URL and indexes it.
         Supports HTML and recursive Sitemap ingestion.
         """
+        if depth > max_depth:
+            logger.info(f"Librarian: Max depth reached ({max_depth}) | skipping {url}")
+            return "depth-limit-reached"
+
         try:
             from .crawler_service import CrawlerService
+            from .threading_service import ProcessingMode, get_threading_service
+
             crawler = CrawlerService(user_role=user_role)
+            threading_service = get_threading_service()
 
             # 1. Fetch and Analyze
             result = await crawler.fetch_and_analyze(url)
@@ -39,19 +48,24 @@ class LibrarianService:
             # 2. Route based on Type (Page vs Sitemap)
             if result.get("type") == "sitemap":
                 links = result.get("discovered_links", [])
-                logger.info(f"Librarian: Processing Sitemap | discovered={len(links)} links")
+                logger.info(f"Librarian: Processing Sitemap | discovered={len(links)} links | depth={depth}")
 
-                # Batch processing: Ingest the first 10 links to avoid overwhelming the system
-                ingested_count = 0
-                for link in links[:10]:
-                    try:
-                        if not link.endswith(".xml"):
-                            await self.archive_any_url(link, user_role=user_role)
-                            ingested_count += 1
-                    except Exception as sub_e:
-                        logger.warning(f"Librarian: Failed to sub-ingest {link} | error={sub_e}")
+                # Use ThreadingService to process links with rate limiting protection
+                # We limit to first 5 links to avoid runaway costs/load
+                target_links = links[:5]
 
-                return f"batch-processed-{ingested_count}-items"
+                async def process_link(link: str):
+                    if not link.endswith(".xml"):
+                        return await self.archive_any_url(link, user_role=user_role, depth=depth + 1, max_depth=max_depth)
+                    return None
+
+                await threading_service.batch_process(
+                    items=target_links,
+                    process_func=process_link,
+                    mode=ProcessingMode.NETWORK_BOUND
+                )
+
+                return f"batch-processed-{len(target_links)}-items"
 
             # 3. Standard Page Ingestion
             content = result["content"]
