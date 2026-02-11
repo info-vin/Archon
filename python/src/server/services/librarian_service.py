@@ -110,6 +110,7 @@ class LibrarianService:
             # 5. Record version for audit trail (Admin Insight)
             try:
                 self.supabase.table("archon_document_versions").insert({
+                    "document_id": source_id,
                     "field_name": "sales_pitch",
                     "change_type": "create",
                     "change_summary": f"Archived generated pitch for {company}",
@@ -190,6 +191,7 @@ class LibrarianService:
             # 5. Record version
             try:
                 self.supabase.table("archon_document_versions").insert({
+                    "document_id": source_id,
                     "field_name": "web_research",
                     "change_type": "create",
                     "change_summary": f"Archived research for: {query}",
@@ -294,6 +296,7 @@ class LibrarianService:
             # 5. Record version for audit trail (Admin Insight)
             try:
                 self.supabase.table("archon_document_versions").insert({
+                    "document_id": source_id,
                     "field_name": "knowledge_file",
                     "change_type": "create",
                     "change_summary": f"Indexed local file: {file_name}",

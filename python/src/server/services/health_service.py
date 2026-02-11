@@ -91,7 +91,16 @@ class HealthService:
             rag_settings = await credential_service.get_credentials_by_category("rag_strategy")
             provider = rag_settings.get("EMBEDDING_PROVIDER") or rag_settings.get("LLM_PROVIDER") or "openai"
             model_name = rag_settings.get("EMBEDDING_MODEL") or "text-embedding-3-small"
-            dimensions_str = rag_settings.get("EMBEDDING_DIMENSIONS", "1536")
+            
+            # Intelligent Dimension Detection (GAP-024 Optimization)
+            # Default to 768 to match 000_unified_schema.sql
+            default_dim = "768"
+            if "text-embedding-3" in model_name.lower():
+                default_dim = "1536"
+            elif "large" in model_name.lower():
+                default_dim = "3072"
+                
+            dimensions_str = rag_settings.get("EMBEDDING_DIMENSIONS", default_dim)
             expected_dim = int(dimensions_str)
 
             details["config"] = {
