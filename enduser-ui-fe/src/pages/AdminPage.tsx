@@ -466,11 +466,12 @@ const SystemSettings: React.FC = () => {
     const fetchSettings = async () => {
         setLoading(true);
         try {
-            // Fetch crawler, diagnostics, and lead scoring settings
+            // Fetch crawler, config, diagnostics, and lead scoring settings
             const crawlerData = await api.getSystemSettings('crawler_rbac');
+            const crawlerConfig = await api.getSystemSettings('crawler_config');
             const diagnosticsData = await api.getSystemSettings('diagnostics');
             const scoringData = await api.getSystemSettings('lead_scoring');
-            setSettings([...crawlerData, ...diagnosticsData, ...scoringData]);
+            setSettings([...crawlerData, ...crawlerConfig, ...diagnosticsData, ...scoringData]);
         } catch (err: any) {
             alert("Failed to load settings: " + err.message);
         } finally {
@@ -495,9 +496,37 @@ const SystemSettings: React.FC = () => {
     const roles = ['SALES', 'MARKETING', 'MANAGER', 'ADMIN'];
     const logLevelSetting = settings.find(s => s.key === 'system.log_level');
     const scoringSettings = settings.filter(s => s.category === 'lead_scoring');
+    const crawlerConfigSettings = settings.filter(s => s.category === 'crawler_config');
 
     return (
         <div className="space-y-6 pb-20">
+            {/* NEW: Crawler Endpoint Configuration (GAP-024) */}
+            <div className="bg-card p-6 rounded-2xl border border-border shadow-sm border-l-4 border-l-blue-500">
+                <h3 className="text-lg font-bold mb-4 flex items-center gap-2 text-blue-600">
+                    <SearchIcon className="w-5 h-5" />
+                    Crawler Endpoint Configuration (104.com.tw)
+                </h3>
+                <div className="space-y-4">
+                    {crawlerConfigSettings.map(setting => (
+                        <div key={setting.key} className="p-4 bg-muted/20 rounded-xl border border-border flex flex-col md:flex-row md:items-center justify-between gap-4">
+                            <div className="flex-1">
+                                <div className="font-bold text-xs uppercase tracking-widest text-blue-600/70">{setting.key.replace(/CRAWLER_104_/g, '').replace(/_/g, ' ')}</div>
+                                <p className="text-[10px] text-muted-foreground mt-0.5">{setting.description}</p>
+                            </div>
+                            <div className="flex items-center gap-3 w-full md:w-2/3">
+                                <input 
+                                    type="text" 
+                                    defaultValue={setting.value}
+                                    onBlur={(e) => handleUpdate(setting.key, e.target.value)}
+                                    className="flex-1 p-2 bg-background border border-border rounded-lg text-xs font-mono outline-none focus:ring-2 ring-blue-500/50 transition-all"
+                                />
+                                {isSaving === setting.key && <RefreshCwIcon className="animate-spin w-4 h-4 text-blue-600" />}
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+
             {/* NEW: Lead Scoring Weights (GAP-024 Optimization) */}
             <div className="bg-card p-6 rounded-2xl border border-border shadow-sm border-l-4 border-l-indigo-600">
                 <div className="flex justify-between items-start mb-4">

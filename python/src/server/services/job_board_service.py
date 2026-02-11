@@ -30,9 +30,30 @@ class JobBoardService:
     Uses direct AJAX simulation for performance, with a Mock fallback for reliability.
     """
 
-    # UPDATED: Valid Endpoint as of Jan 2026
-    BASE_URL = "https://www.104.com.tw/jobs/search/api/jobs"
-    DETAIL_BASE_URL = "https://www.104.com.tw/job/ajax/content/"
+    # UPDATED: Valid Endpoint as of Jan 2026 (Now configurable in Settings)
+    DEFAULT_BASE_URL = "https://www.104.com.tw/jobs/search/api/jobs"
+    DEFAULT_DETAIL_BASE_URL = "https://www.104.com.tw/job/ajax/content/"
+
+    def __init__(self):
+        self.supabase = get_supabase_client()
+
+    async def _get_base_url(self) -> str:
+        """Retrieves the 104 Search API URL from settings, falling back to default."""
+        try:
+            from ..services.settings_service import SettingsService
+            settings = SettingsService(self.supabase)
+            return await settings.get_setting("CRAWLER_104_SEARCH_API", self.DEFAULT_BASE_URL) or self.DEFAULT_BASE_URL
+        except Exception:
+            return self.DEFAULT_BASE_URL
+
+    async def _get_detail_url(self) -> str:
+        """Retrieves the 104 Detail API URL from settings, falling back to default."""
+        try:
+            from ..services.settings_service import SettingsService
+            settings = SettingsService(self.supabase)
+            return await settings.get_setting("CRAWLER_104_DETAIL_API", self.DEFAULT_DETAIL_BASE_URL) or self.DEFAULT_DETAIL_BASE_URL
+        except Exception:
+            return self.DEFAULT_DETAIL_BASE_URL
 
     HEADERS = {
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
@@ -69,8 +90,7 @@ class JobBoardService:
         )
     ]
 
-    @classmethod
-    async def search_jobs(cls, keyword: str, limit: int = 10) -> list[JobData]:
+    async def search_jobs(self, keyword: str, limit: int = 10) -> list[JobData]:
         """
         Search for jobs using keyword and identify potential leads.
         Now also fetches full job details for each result.
@@ -78,19 +98,19 @@ class JobBoardService:
         logger.info(f"Searching jobs | keyword={keyword} | limit={limit}")
 
         # Use a single session for the entire lifecycle to maintain cookies (Anti-Scraping)
-        async with httpx.AsyncClient(timeout=20.0, headers=cls.HEADERS, follow_redirects=True) as client:
+        async with httpx.AsyncClient(timeout=20.0, headers=self.HEADERS, follow_redirects=True) as client:
             try:
                 # 1. Fetch List
-                jobs = await cls._fetch_from_104(client, keyword, limit)
+                jobs = await self._fetch_from_104(client, keyword, limit)
 
                 if not jobs:
                     logger.warning("104 API returned empty list, falling back to mock")
-                    jobs = cls.MOCK_JOBS
+                    jobs = self.MOCK_JOBS
                 else:
                     # 2. Fetch Details (Only if we have real jobs)
                     for i, job in enumerate(jobs):
                         # Infer need first
-                        job.identified_need = cls._infer_need(job)
+                        job.identified_need = self._infer_need(job)
 
                         if job.real_id:
                             # Throttling: Random delay to mimic human behavior
@@ -99,7 +119,7 @@ class JobBoardService:
                                 await asyncio.sleep(delay)
 
                             try:
-                                detail = await cls._fetch_job_detail(client, job.real_id, job.url)
+                                detail = await self._fetch_job_detail(client, job.real_id, job.url)
                                 if detail:
                                     job.description_full = detail
                                     logger.info(f"Fetched detail | id={job.real_id} | len={len(detail)}")
@@ -267,8 +287,7 @@ class JobBoardService:
 
         return parsed_jobs
 
-    @classmethod
-    async def _fetch_job_detail(cls, client: httpx.AsyncClient, job_id: str, job_url: str | None) -> str | None:
+    async def _fetch_job_detail(self, client: httpx.AsyncClient, job_id: str, job_url: str | None) -> str | None:
         """
         Fetches the full job description using the shared client.
         Requires valid job_id (alphanumeric) and job_url (for Referer).
@@ -277,10 +296,11 @@ class JobBoardService:
             if not job_id:
                 return None
 
-            ajax_url = f"{cls.DETAIL_BASE_URL}{job_id}"
+            detail_base = await self._get_detail_url()
+            ajax_url = f"{detail_base}{job_id}"
 
             # Headers must have Referer matching the job page
-            headers = cls.HEADERS.copy()
+            headers = self.HEADERS.copy()
             if job_url:
                 headers["Referer"] = job_url
 
