@@ -181,3 +181,28 @@ class AuthService:
         except Exception as e:
             logger.error(f"Error updating email: {e}", exc_info=True)
             raise e
+
+    def update_user_by_admin(self, user_id: str, updates: dict[str, Any]) -> dict[str, Any]:
+        """
+        Updates a user's role, status, or permissions as an Admin.
+        """
+        try:
+            logger.info(f"Admin updating user {user_id}: {updates.keys()}")
+
+            # 1. Sync Role to Auth User Metadata if it changed
+            if "role" in updates:
+                self.supabase.auth.admin.update_user_by_id(
+                    user_id,
+                    {"user_metadata": {"role": updates["role"]}}
+                )
+
+            # 2. Update Profile table
+            res = self.supabase.table("profiles").update(updates).eq("id", user_id).execute()
+
+            if res.data:
+                return cast(dict[str, Any], res.data[0])
+            raise ValueError(f"Failed to update profile for {user_id}")
+
+        except Exception as e:
+            logger.error(f"Error updating user by admin: {e}", exc_info=True)
+            raise e

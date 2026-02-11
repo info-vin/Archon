@@ -22,18 +22,29 @@ class RegisterRequest(BaseModel):
 class UpdateEmailRequest(BaseModel):
     new_email: str
 
+class AdminUpdateUserRequest(BaseModel):
+    role: str | None = None
+    status: str | None = None
+    permission_overrides: dict[str, bool] | None = None
+
 def get_auth_service():
     return AuthService()
 
 def verify_admin_role(x_user_role: str | None = Header(None, alias="X-User-Role")):
     """
     Simple RBAC check based on trusted header from API Gateway / Client.
-    In a real prod env, we would verify the JWT token claims.
-    For this migration, we rely on the pattern used in other APIs.
     """
     if x_user_role not in ["system_admin", "admin"]:
         raise HTTPException(status_code=403, detail="Insufficient permissions")
     return x_user_role
+
+@router.get("/auth/permissions")
+async def list_permissions(_: str = Depends(verify_admin_role)):
+    """
+    Returns a list of all available system permissions for the UI Matrix.
+    """
+    from ..auth.permissions import ALL_PERMISSIONS
+    return {"permissions": ALL_PERMISSIONS}
 
 @router.post("/admin/users")
 async def admin_create_user(
@@ -49,6 +60,20 @@ async def admin_create_user(
             role=request.role,
             status=request.status
         )
+        return {"profile": profile}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e)) from e
+
+@router.patch("/admin/users/{user_id}")
+async def admin_update_user(
+    user_id: str,
+    request: AdminUpdateUserRequest,
+    service: AuthService = Depends(get_auth_service),
+    _: str = Depends(verify_admin_role)
+):
+    try:
+        updates = request.model_dump(exclude_unset=True)
+        profile = service.update_user_by_admin(user_id, updates)
         return {"profile": profile}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e)) from e

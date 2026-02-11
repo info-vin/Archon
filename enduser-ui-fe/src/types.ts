@@ -46,6 +46,7 @@ export interface Employee {
   role: EmployeeRole;
   avatar: string;
   permissions?: string[];
+  permission_overrides?: Record<string, boolean>;
 }
 
 export interface Project {

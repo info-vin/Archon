@@ -595,25 +595,26 @@ const supabaseApi = {
     }
   },
   async updateEmployee(employeeId: string, updates: Partial<Employee>): Promise<Employee> {
-    const currentUser = await this.getCurrentUser();
-    const isSelf = currentUser && currentUser.id === employeeId;
-    
-    // Determine endpoint based on whether we are updating ourselves or another user (as admin)
-    const endpoint = isSelf ? '/api/users/me' : `/api/users/${employeeId}`;
-    
-    const response = await fetch(endpoint, {
-        method: 'PUT',
+    const response = await fetch(`/api/admin/users/${employeeId}`, {
+        method: 'PATCH',
         headers: await this._getHeaders(),
         body: JSON.stringify(updates)
     });
-
     if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.detail?.error || errorData.detail || 'Failed to update employee profile.');
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Failed to update employee.');
     }
-    
     const data = await response.json();
     return data.profile;
+  },
+
+  async getSystemPermissions(): Promise<string[]> {
+    const response = await fetch('/api/auth/permissions', {
+        headers: await this._getHeaders()
+    });
+    if (!response.ok) throw new Error('Failed to fetch system permissions');
+    const data = await response.json();
+    return data.permissions;
   },
   async updateUserEmail(newEmail: string): Promise<void> {
     const response = await fetch('/api/auth/email', {

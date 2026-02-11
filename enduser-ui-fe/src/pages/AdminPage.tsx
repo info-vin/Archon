@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../services/api.ts';
 import { DocumentVersion, BlogPost } from '../types.ts';
-import { CheckCircleIcon, PlusIcon, XIcon, RefreshCwIcon, SaveIcon, KeyIcon, ShieldCheckIcon } from '../components/Icons.tsx';
+import { CheckCircleIcon, PlusIcon, XIcon, RefreshCwIcon, SaveIcon, KeyIcon, ShieldCheckIcon, SearchIcon } from '../components/Icons.tsx';
 import { useAuth } from '../hooks/useAuth.tsx';
 
 import { IdentityMatrix } from '../features/admin/components/IdentityMatrix.tsx';
@@ -209,36 +209,105 @@ const PromptManagement: React.FC<{ isManagerMode: boolean }> = ({ isManagerMode 
 
 const DocumentVersionsLog: React.FC = () => {
     const [versions, setVersions] = useState<DocumentVersion[]>([]);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [loading, setLoading] = useState(true);
+
     useEffect(() => {
-        api.getDocumentVersions().then(setVersions).catch(err => alert(`Failed to load document versions: ${err.message}`));
+        setLoading(true);
+        api.getDocumentVersions()
+            .then(setVersions)
+            .catch(err => alert(`Failed to load document versions: ${err.message}`))
+            .finally(() => setLoading(false));
     }, []);
+
+    // GAP 3: Robust Multi-dimensional Filtering Logic
+    const filteredVersions = React.useMemo(() => {
+        const query = searchTerm.toLowerCase().trim();
+        if (!query) return versions;
+        
+        return versions.filter(v => 
+            v.created_by?.toLowerCase().includes(query) ||
+            v.field_name?.toLowerCase().includes(query) ||
+            v.change_summary?.toLowerCase().includes(query) ||
+            v.change_type?.toLowerCase().includes(query)
+        );
+    }, [versions, searchTerm]);
     
     return (
-        <div className="bg-card p-6 rounded-2xl border border-border shadow-sm">
-            <h2 className="text-xl font-bold mb-6">Document Version Audit Trail</h2>
-             <div className="overflow-x-auto -mx-6">
-                <table className="min-w-full divide-y divide-border">
-                    <thead className="bg-muted/50">
+        <div className="bg-card p-6 rounded-2xl border border-border shadow-sm flex flex-col h-full max-h-[calc(100vh-250px)]">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+                <div>
+                    <h2 className="text-xl font-bold">Document Version Audit Trail</h2>
+                    <p className="text-xs text-muted-foreground italic">Track every configuration change across the system.</p>
+                </div>
+                
+                {/* GAP 3: Search Interface */}
+                <div className="relative w-full md:w-64">
+                    <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <input 
+                        type="text"
+                        placeholder="Search logs..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="w-full pl-9 pr-4 py-2 bg-muted/50 border border-border rounded-xl text-sm focus:ring-2 ring-primary/30 outline-none transition-all"
+                    />
+                </div>
+            </div>
+
+             <div className="overflow-x-auto overflow-y-auto -mx-6 flex-1 min-h-0">
+                <table className="min-w-full divide-y divide-border relative">
+                    <thead className="bg-muted/50 sticky top-0 z-10">
                         <tr>
                             <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-muted-foreground">Timestamp</th>
                             <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-muted-foreground">Changed By</th>
                             <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-muted-foreground">Type</th>
-                            <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-muted-foreground">Field</th>
+                            <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-muted-foreground">Field / Version</th>
                             <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-muted-foreground">Summary</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-border bg-card">
-                        {versions.map(log => (
-                            <tr key={log.id} className="hover:bg-muted/30 transition-colors">
-                                <td className="px-6 py-4 whitespace-nowrap text-xs text-muted-foreground font-mono">{new Date(log.created_at).toLocaleString()}</td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">{log.created_by}</td>
-                                <td className="px-6 py-4 whitespace-nowrap">
-                                    <span className="px-2 py-0.5 text-[10px] font-bold uppercase bg-muted rounded border border-border">{log.change_type}</span>
+                        {loading ? (
+                            <tr>
+                                <td colSpan={5} className="px-6 py-12 text-center italic text-muted-foreground">
+                                    <RefreshCwIcon className="animate-spin w-6 h-6 mx-auto mb-2 opacity-20" />
+                                    Loading audit logs...
                                 </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm">{log.field_name} <span className="text-xs text-muted-foreground">v{log.version_number}</span></td>
-                                <td className="px-6 py-4 text-xs text-muted-foreground italic max-w-xs truncate">{log.change_summary || 'N/A'}</td>
                             </tr>
-                        ))}
+                        ) : filteredVersions.length === 0 ? (
+                            <tr>
+                                <td colSpan={5} className="px-6 py-12 text-center text-muted-foreground italic">
+                                    {searchTerm ? `No logs matching "${searchTerm}"` : 'No version history found.'}
+                                </td>
+                            </tr>
+                        ) : (
+                            filteredVersions.map(log => (
+                                <tr key={log.id} className="hover:bg-muted/30 transition-colors group">
+                                    <td className="px-6 py-4 whitespace-nowrap text-[10px] text-muted-foreground font-mono">
+                                        {new Date(log.created_at).toLocaleString()}
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap">
+                                        <div className="text-sm font-bold flex items-center gap-2">
+                                            <div className="w-2 h-2 rounded-full bg-indigo-500"></div>
+                                            {log.created_by}
+                                        </div>
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap">
+                                        <span className={`px-2 py-0.5 text-[9px] font-black uppercase rounded border ${
+                                            log.change_type === 'CREATE' ? 'bg-green-50 text-green-700 border-green-200' : 
+                                            log.change_type === 'DELETE' ? 'bg-red-50 text-red-700 border-red-200' :
+                                            'bg-indigo-50 text-indigo-700 border-indigo-200'
+                                        }`}>{log.change_type}</span>
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-xs">
+                                        <span className="font-mono bg-muted px-1 rounded">{log.field_name}</span>
+                                        <span className="ml-2 text-[10px] text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity">REV-{log.version_number}</span>
+                                    </td>
+                                    <td className="px-6 py-4 text-xs text-slate-600 dark:text-slate-400 max-w-xs truncate font-medium" title={log.change_summary || ''}>
+                                        {log.change_summary || 'N/A'}
+                                    </td>
+                                </tr>
+                            ))
+                        )}
                     </tbody>
                 </table>
             </div>
@@ -397,10 +466,11 @@ const SystemSettings: React.FC = () => {
     const fetchSettings = async () => {
         setLoading(true);
         try {
-            // Fetch both crawler and diagnostics settings
+            // Fetch crawler, diagnostics, and lead scoring settings
             const crawlerData = await api.getSystemSettings('crawler_rbac');
             const diagnosticsData = await api.getSystemSettings('diagnostics');
-            setSettings([...crawlerData, ...diagnosticsData]);
+            const scoringData = await api.getSystemSettings('lead_scoring');
+            setSettings([...crawlerData, ...diagnosticsData, ...scoringData]);
         } catch (err: any) {
             alert("Failed to load settings: " + err.message);
         } finally {
@@ -424,9 +494,54 @@ const SystemSettings: React.FC = () => {
 
     const roles = ['SALES', 'MARKETING', 'MANAGER', 'ADMIN'];
     const logLevelSetting = settings.find(s => s.key === 'system.log_level');
+    const scoringSettings = settings.filter(s => s.category === 'lead_scoring');
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-6 pb-20">
+            {/* NEW: Lead Scoring Weights (GAP-024 Optimization) */}
+            <div className="bg-card p-6 rounded-2xl border border-border shadow-sm border-l-4 border-l-indigo-600">
+                <div className="flex justify-between items-start mb-4">
+                    <div>
+                        <h3 className="text-lg font-bold flex items-center gap-2 text-indigo-600">
+                            <ShieldCheckIcon className="w-5 h-5" />
+                            Lead Scoring Weights
+                        </h3>
+                        <p className="text-xs text-muted-foreground">Adjust Alice's Lead Enrichment scoring logic in real-time. Changes apply to the next enrichment loop.</p>
+                    </div>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {scoringSettings.map(setting => (
+                        <div key={setting.key} className="p-4 bg-muted/20 rounded-xl border border-border flex items-center justify-between gap-4 group hover:border-indigo-500/30 transition-all">
+                            <div className="flex-1">
+                                <div className="font-bold text-[10px] uppercase tracking-widest text-indigo-600/70">{setting.key.replace(/SCORING_/g, '').replace(/_/g, ' ')}</div>
+                                <p className="text-xs font-medium text-slate-700 dark:text-slate-300 leading-tight mt-1">{setting.description}</p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <div className="relative">
+                                    <input 
+                                        type="number" 
+                                        defaultValue={setting.value}
+                                        onBlur={(e) => handleUpdate(setting.key, e.target.value)}
+                                        className="w-16 p-2 bg-background border border-border rounded-lg text-sm font-bold text-center outline-none focus:ring-2 ring-indigo-500/50 transition-all"
+                                    />
+                                    {isSaving === setting.key && (
+                                        <div className="absolute -top-1 -right-1">
+                                            <RefreshCwIcon className="animate-spin w-3 h-3 text-indigo-600" />
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                    {scoringSettings.length === 0 && (
+                        <div className="col-span-2 p-8 text-center border-2 border-dashed border-border rounded-xl text-muted-foreground italic text-sm">
+                            No scoring rules found in database. Execute migration 038 to seed defaults.
+                        </div>
+                    )}
+                </div>
+            </div>
+
             {/* NEW: Diagnostics & Log Level Control */}
             <div className="bg-card p-6 rounded-2xl border border-border shadow-sm border-l-4 border-l-amber-500">
                 <h3 className="text-lg font-bold mb-4 flex items-center gap-2 text-amber-600">

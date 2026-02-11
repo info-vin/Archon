@@ -11,6 +11,7 @@ vi.mock('../../../../services/api.ts', () => ({
     getEmployees: vi.fn(),
     updateEmployee: vi.fn(),
     adminCreateUser: vi.fn(),
+    getSystemPermissions: vi.fn().mockResolvedValue(['task:create', 'agent:trigger:dev', 'content:publish']),
   },
 }));
 
@@ -70,7 +71,7 @@ describe('IdentityMatrix', () => {
         const editButtons = screen.getAllByText('Edit');
         fireEvent.click(editButtons[0]); // Click Alice's edit
 
-        expect(screen.getByText('Manage Access: Alice Admin')).toBeInTheDocument();
-        expect(screen.getByLabelText(/Role Assignment/i)).toBeInTheDocument();
+        expect(screen.getByText(/Access Overrides: Alice Admin/i)).toBeInTheDocument();
+        expect(screen.getByLabelText(/Base Role/i)).toBeInTheDocument();
     });
 });

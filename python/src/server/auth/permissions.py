@@ -78,6 +78,15 @@ ROLE_PERMISSIONS: dict[str, set[str]] = {
     }
 }
 
+# --- All Permissions List (for UI Matrix) ---
+ALL_PERMISSIONS = [
+    TASK_CREATE, TASK_READ_TEAM, TASK_READ_ALL, TASK_UPDATE_ALL,
+    AGENT_TRIGGER_DEV, AGENT_TRIGGER_MKT, AGENT_TRIGGER_KNOW,
+    CODE_APPROVE, CONTENT_PUBLISH, CONTENT_REJECT, INFO_REQUEST,
+    STATS_VIEW_TEAM, STATS_VIEW_ALL, LEADS_VIEW_ALL,
+    USER_MANAGE, USER_MANAGE_TEAM, MCP_MANAGE, BRAND_ASSET_MANAGE
+]
+
 def get_role_permissions(role: str) -> set[str]:
     """Returns the set of permissions for a given role (case-insensitive)."""
     return ROLE_PERMISSIONS.get(role.lower(), set())
@@ -86,18 +95,18 @@ def has_permission(user: dict, permission: str) -> bool:
     """
     Checks if a user has a specific permission.
     Args:
-        user: User dictionary from JWT (get_current_user)
+        user: User dictionary (usually from profiles table)
         permission: The permission scope to check (e.g. TASK_CREATE)
     """
     if not user:
         return False
 
-    # 1. Check direct role
+    # 1. Check per-user overrides first (High priority)
+    overrides = user.get("permission_overrides") or {}
+    if permission in overrides:
+        return bool(overrides[permission])
+
+    # 2. Fallback to role-based permissions
     user_role = user.get("role", "viewer").lower()
     role_perms = get_role_permissions(user_role)
-    if permission in role_perms:
-        return True
-
-    # 2. Future: Check per-user overrides (from user_metadata or DB)
-
-    return False
+    return permission in role_perms
