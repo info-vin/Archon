@@ -114,7 +114,7 @@ def seed_data(cursor: PGCursor) -> None:
     api_key_map = [
         ("OPENAI_API_KEY", "OPENAI_API_KEY", "ai", "OpenAI API Key"),
         ("ANTHROPIC_API_KEY", "ANTHROPIC_API_KEY", "ai", "Anthropic API Key"),
-        ("GEMINI_API_KEY", "GOOGLE_API_KEY", "ai", "Google AI API Key"),
+        ("GOOGLE_API_KEY", "GOOGLE_API_KEY", "ai", "Google AI API Key"),
         ("GEMINI_API_KEY", "GEMINI_API_KEY", "ai", "Gemini API Key"),
         ("LOGFIRE_TOKEN", "LOGFIRE_TOKEN", "observability", "Logfire Token"),
     ]
