@@ -395,8 +395,12 @@ Phase 4.4.5 引入了 **Clockwork** 進行系統自動檢測。
         | 43 | `039_add_permission_overrides_to_profiles.sql` | **[RBAC]** 在 `profiles` 表增加 `permission_overrides` 欄位，支援按人授權。 |
         | 44 | `040_modernize_document_versions_constraint.sql` | **[系統]** 現代化稽核日誌約束，支援全系統（如 Librarian）的變更追蹤。 |
         | 45 | `041_restore_crawler_settings.sql` | **[爬蟲]** 恢復爬蟲 RBAC 限制數據，並將 104 Crawler 網址持久化至資料庫。 |
-        | 46 | `seed_mock_leads.sql` | **[種子]** 填充業務線 (Leads) 核心測試資料。 |
-        | 47 | `seed_mock_alerts_and_logs.sql` | **[種子]** 填充 Admin/Manager 儀表板所需的系統警報與日誌資料。 |
+        | 46 | `042_seed_manager_nexus_settings.sql` | **[種子]** 預載 Manager Nexus 的行銷評分與預算設定。 |
+        | 47 | `043_set_default_llm_provider.sql` | **[設定]** 將預設 LLM 提供者設為 Google (Gemini)。 |
+        | 48 | `044_fix_rag_provider_settings.sql` | **[設定]** 強制 RAG 策略使用 Google/Gemini 模型與 Embedding。 |
+        | 49 | `045_add_user_id_to_archon_logs.sql` | **[Schema]** 為 `archon_logs` 增加 `user_id` 欄位以支援使用者稽核。 |
+        | 50 | `seed_mock_leads.sql` | **[種子]** 填充業務線 (Leads) 核心測試資料。 |
+        | 51 | `seed_mock_alerts_and_logs.sql` | **[種子]** 填充 Admin/Manager 儀表板所需的系統警報與日誌資料。 |
         
 3.  **階段三：執行部署**
 
