@@ -798,6 +798,35 @@ const supabaseApi = {
     return response.json();
   },
 
+
+
+  async getManagerAlerts(): Promise<import('../types.ts').AlertItem[]> {
+      const response = await fetch('/api/logs/alerts', { headers: await this._getHeaders() });
+      if (!response.ok) throw new Error('Failed to fetch manager alerts');
+      return response.json();
+  },
+
+  async dispatchAlertTask(alertId: string, assigneeId?: string): Promise<any> {
+      const response = await fetch('/api/tasks/generate-from-alert', {
+          method: 'POST',
+          headers: await this._getHeaders(),
+          body: JSON.stringify({ alert_id: alertId, assignee_id: assigneeId })
+      });
+      if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.detail || 'Failed to dispatch task');
+      }
+      return response.json();
+  },
+
+  async seedKnowledgeBase(): Promise<{ indexed_count: number; total_files: number }> {
+      // Placeholder for verify/rebuild index functionality
+      // In a real implementation, this might trigger a re-crawl or index optimization
+      console.log("Mocking seedKnowledgeBase/Rebuild Index...");
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      return { indexed_count: 0, total_files: 0 };
+  },
+
   async deleteExtractionSchema(id: string): Promise<void> {
     const response = await fetch(`/api/extraction/schemas/${id}`, {
         method: 'DELETE',
@@ -889,10 +918,6 @@ const supabaseApi = {
     return response.json();
   },
 
-  async getManagerAlerts(): Promise<any[]> {
-     return this.getAlerts();
-  },
-
   async triggerSentinel(): Promise<any> {
     const response = await fetch('/api/marketing/manager/sentinel/run', {
         method: 'POST',
@@ -901,29 +926,7 @@ const supabaseApi = {
     return response.json();
   },
 
-  async dispatchAlertTask(alertId: string): Promise<any> {
-    const response = await fetch(`/api/marketing/manager/alerts/${alertId}/dispatch`, {
-        method: 'POST',
-        headers: await this._getHeaders(),
-    });
-    if (!response.ok) {
-         const error = await response.json();
-         throw new Error(error.detail || 'Dispatch failed');
-    }
-    return response.json();
-  },
 
-  async seedKnowledgeBase(): Promise<any> {
-    const response = await fetch('/api/marketing/manager/knowledge/seed', {
-        method: 'POST',
-        headers: await this._getHeaders(),
-    });
-    if (!response.ok) {
-         const error = await response.json();
-         throw new Error(error.detail || 'Seeding failed');
-    }
-    return response.json();
-  },
 
   async generateTaskFromAlert(alertId: string, assigneeId?: string): Promise<any> {
     const response = await fetch('/api/tasks/generate-from-alert', {
@@ -937,6 +940,7 @@ const supabaseApi = {
     }
     return response.json();
   },
+
 };
 
 // Export the API

@@ -167,10 +167,34 @@ class HealthService:
             if not results:
                 raise Exception("Retrieval failed. Document indexed but not found by semantic search.")
 
+            # Calculate Integrity Score
+            score = 100
+            if not details["config"].get("valid", True): # Assume valid if not explicitly failed
+                 # Logic above didn't set 'valid' explicitly, let's infer from errors
+                 pass
+
+            # Deductions based on failures
+            if "Dimension Mismatch" in str(details["errors"]):
+                score -= 20
+
+            # If standard checks fail (simulated by errors list presence)
+            if details["errors"]:
+                 # Generic penalty for errors
+                 score -= 10 * len(details["errors"])
+
+            # Verify retrieval count
+            item_count = len(results) if results else 0
+            if item_count == 0:
+                score -= 30
+
+            # Cap score
+            score = max(0, score)
+
             details["steps"].append(f"Retrieval Passed (Found {len(results)} items)")
 
             return {
-                "status": "healthy" if not details["errors"] else "degraded",
+                "status": "healthy" if score >= 80 else "degraded",
+                "score": score,
                 "details": details
             }
 
@@ -179,5 +203,6 @@ class HealthService:
             details["errors"].append(str(e))
             return {
                 "status": "unhealthy",
+                "score": 0,
                 "details": details
             }

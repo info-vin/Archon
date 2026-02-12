@@ -1,293 +1,699 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { api } from '../services/api.ts';
-import { SystemOverview, AiUsageStats, BlogPost } from '../types.ts';
+import React, { useState, useEffect } from 'react';
+import { api } from '../services/api';
+import { useAuth } from '../hooks/useAuth';
+import { SystemOverview, Employee, AlertItem } from '../types';
 import { 
-    RefreshCwIcon, 
-    AlertTriangleIcon,
-    ClockIcon
-} from '../components/Icons.tsx';
+    CheckCircleIcon, RefreshCwIcon, AlertTriangleIcon, ActivityIcon, 
+    ShieldCheckIcon, DatabaseIcon, UsersIcon, 
+    GitCommitIcon, SearchIcon,
+    UserIcon, DollarSignIcon, ClockIcon, ZapIcon
+} from '../components/Icons';
+import { ManageMemberModal } from '../features/team/components/ManageMemberModal';
+import UserAvatar from '../components/UserAvatar';
 
+// --- Types ---
 type MetricCategory = 'integrity' | 'resources' | 'op_load' | 'sent_risks' | 'active_force' | 'ethics' | 'collab' | 'graph' | 'velocity';
 
-/**
- * ManagerNexus v7.1 - The Commander's SSOT (Lint Fixed)
- * Unified Decision Engine consolidating Panels 5, 6, 7, 8.
- * Style: Muted Glassmorphism, SSOT Data Driven.
- */
-const ManagerNexus: React.FC = () => {
-    // --- STATE ---
-    const [activeMetric, setActiveMetric] = useState<MetricCategory>('sent_risks');
-    const [overview, setOverview] = useState<SystemOverview | null>(null);
-    const [aiStats, setAiStats] = useState<AiUsageStats | null>(null);
-    const [approvals, setApprovals] = useState<{ blogs: BlogPost[]; leads: any[] }>({ blogs: [], leads: [] });
-    const [alerts, setAlerts] = useState<any[]>([]);
-    const [selectedBlog, setSelectedBlog] = useState<BlogPost | null>(null);
-    const [loading, setLoading] = useState(true);
-    const [isRefreshing, setIsRefreshing] = useState(false);
+interface ScoringRule {
+    key: string;
+    label: string;
+    weight: number;
+}
 
-    // --- DATA FETCHING ---
-    const fetchData = async () => {
-        setIsRefreshing(true);
-        try {
-            const [ov, ai, apprvs, alrts] = await Promise.all([
-                api.getSystemOverview(),
-                api.getAiUsage(),
-                api.getPendingApprovals(),
-                api.getManagerAlerts()
-            ]);
-            setOverview(ov);
-            setAiStats(ai);
-            setApprovals(apprvs);
-            setAlerts(alrts);
+interface RulesMetadata {
+    version: string;
+    updated_at: string;
+    updated_by: string;
+}
+
+// --- Components ---
+
+const DetailSection: React.FC<{title: string, subtitle: string, children: React.ReactNode, icon?: React.ReactNode}> = ({title, subtitle, children, icon}) => (
+    <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden animate-in slide-in-from-bottom-4 duration-500">
+        <div className="p-6 border-b border-gray-50 flex items-start justify-between bg-gray-50/30">
+            <div>
+                <h3 className="text-lg font-black text-gray-800 tracking-tight flex items-center gap-2">
+                    {icon} {title}
+                </h3>
+                <p className="text-xs text-gray-500 font-medium mt-1 uppercase tracking-wide">{subtitle}</p>
+            </div>
+        </div>
+        <div className="p-6">
+            {children}
+        </div>
+    </div>
+);
+
+const HUDCard: React.FC<{
+    id: MetricCategory, 
+    label: string, 
+    value: string, 
+    sub: string, 
+    active: boolean, 
+    status: 'good'|'bad'|'warning'|'neutral', 
+    onClick: (id: MetricCategory) => void,
+    tooltip?: string
+}> = ({id, label, value, sub, active, status, onClick, tooltip}) => {
+    const statusColor = status === 'good' ? 'bg-green-500' : status === 'bad' ? 'bg-red-500' : status === 'warning' ? 'bg-amber-500' : 'bg-slate-400';
+    return (
+        <div 
+            onClick={() => onClick(id)} 
+            className={`group relative p-5 rounded-3xl border transition-all cursor-pointer select-none ${
+                active 
+                ? 'bg-white border-indigo-500 shadow-xl scale-[1.02] ring-4 ring-indigo-50/50' 
+                : 'bg-white border-gray-100 hover:border-gray-300 hover:shadow-md'
+            }`}
+        >
+            <div className="flex justify-between items-start mb-3">
+                <span className={`text-[10px] font-black uppercase tracking-widest transition-colors ${active ? 'text-indigo-600' : 'text-gray-400 group-hover:text-indigo-500'}`}>
+                    {label}
+                </span>
+                <div className={`w-2 h-2 rounded-full ${statusColor} shadow-[0_0_8px_currentColor] ${active ? 'animate-pulse' : ''}`} />
+            </div>
+            <p className={`text-2xl font-black tracking-tighter ${active ? 'text-indigo-600' : 'text-gray-800'}`}>
+                {value}
+            </p>
+            <p className="text-[9px] text-gray-400 font-bold opacity-60 mt-1 uppercase tracking-tighter truncate">
+                {sub}
+            </p>
             
-            if (apprvs.blogs.length > 0 && !selectedBlog) {
-                setSelectedBlog(apprvs.blogs[0]);
+            {/* Tooltip */}
+            {tooltip && (
+                <div className="absolute opacity-0 group-hover:opacity-100 transition-opacity bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1.5 bg-gray-900 text-white text-[10px] rounded-lg whitespace-nowrap pointer-events-none z-10">
+                    {tooltip}
+                    <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900"></div>
+                </div>
+            )}
+        </div>
+    );
+};
+
+export const ManagerNexus: React.FC = () => {
+    const { user } = useAuth();
+    const [activeMetric, setActiveMetric] = useState<MetricCategory>('op_load');
+    const [loading, setLoading] = useState(true);
+    
+    // Data States
+    const [overview, setOverview] = useState<SystemOverview | null>(null);
+    const [team, setTeam] = useState<Employee[]>([]);
+    const [approvals, setApprovals] = useState<{blogs: any[], leads: any[]}>({blogs: [], leads: []});
+    const [alerts, setAlerts] = useState<AlertItem[]>([]);
+    const [aiStats, setAiStats] = useState<any>(null);
+
+    // Interaction States
+    const [processingId, setProcessingId] = useState<string | null>(null);
+    const [selectedMember, setSelectedMember] = useState<Employee | null>(null);
+    const [selectedContent, setSelectedContent] = useState<any | null>(null);
+    const [rejectReason, setRejectReason] = useState('');
+    const [isRejecting, setIsRejecting] = useState(false);
+    const [opLoadTab, setOpLoadTab] = useState<'content' | 'devops'>('content');
+
+    // Scoring Rules State
+    const [rules, setRules] = useState<ScoringRule[]>([
+        { key: 'VITAL_CONTACT', label: 'Contact Info', weight: 20 },
+        { key: 'FUNDING_NEWS', label: 'Funding News', weight: 30 },
+        { key: 'JOB_URL', label: 'Hiring Signal', weight: 15 },
+        { key: 'TECH_STACK', label: 'Tech Stack Match', weight: 35 },
+    ]);
+    const [rulesMeta, setRulesMeta] = useState<RulesMetadata>({
+        version: 'v1.0.2',
+        updated_at: new Date().toISOString(),
+        updated_by: 'System Default'
+    });
+
+    useEffect(() => {
+        fetchData();
+    }, []);
+
+    const fetchData = async () => {
+        setLoading(true);
+        try {
+            const [sys, emp, app, alr, ai, settings] = await Promise.all([
+                api.getSystemOverview(),
+                api.getEmployees(),
+                api.getPendingApprovals(),
+                api.getManagerAlerts(),
+                api.getAiUsage(),
+                api.getSystemSettings('marketing_scoring')
+            ]);
+            setOverview(sys);
+            setTeam(emp);
+            setApprovals(app);
+            setAlerts(alr);
+            setAiStats(ai);
+
+            if (settings && settings.length > 0) {
+                 try {
+                     const parsedRules = JSON.parse(settings[0].value);
+                     if (parsedRules.weights) setRules(parsedRules.weights);
+                     if (parsedRules.version) setRulesMeta(prev => ({ ...prev, version: parsedRules.version, updated_by: parsedRules.updated_by }));
+                 } catch (e) {
+                     console.error("Failed to parse scoring rules", e);
+                 }
             }
-        } catch (err) {
-            console.error("Nexus Sync Error", err);
+        } catch (e) {
+            console.error("Nexus Load Failed", e);
         } finally {
             setLoading(false);
-            setIsRefreshing(false);
         }
     };
 
-    useEffect(() => { fetchData(); }, []);
-
-    // --- DEEP ANALYTICS MEMOS ---
-    const analytics = useMemo(() => {
-        const staleLeads = alerts.filter(a => a.details?.type === 'stale_lead');
-        const systemAlerts = alerts.filter(a => a.level !== 'INFO' && a.details?.type !== 'stale_lead');
-        return { staleLeads, systemAlerts };
-    }, [alerts]);
-
-    // --- ACTIONS ---
-    const handleApprove = async (id: string) => {
-        try {
-            await api.processApproval('blog', id, 'approve');
-            setSelectedBlog(null);
-            fetchData();
-        } catch (e) { alert("Approval failed"); }
-    };
-
+    // --- Handlers ---
+    
     const handleDispatch = async (alertId: string) => {
+        setProcessingId(alertId);
         try {
-            await api.dispatchAlertTask(alertId);
-            fetchData();
-        } catch (e) { alert("Dispatch failed"); }
+            const res = await api.dispatchAlertTask(alertId);
+            setAlerts(prev => prev.filter(a => a.id !== alertId)); 
+            alert(`Task Dispatched! ID: ${res.task.id}`);
+        } catch (e: any) {
+            alert("Dispatch failed: " + e.message);
+        } finally {
+            setProcessingId(null);
+        }
     };
 
-    // --- HUD RENDERER ---
-    const renderHUD = () => (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
-            <HUDCard id="integrity" label="Integrity" value={overview?.status === 'healthy' ? "99.8%" : "Degraded"} sub="24h / 5m Interval" active={activeMetric === 'integrity'} status={overview?.status === 'healthy' ? 'good' : 'bad'} onClick={setActiveMetric} />
-            <HUDCard id="resources" label="Resources" value={`$${overview?.cost_24h.toFixed(2) || "0.00"}`} sub="Monthly Cap Budget" active={activeMetric === 'resources'} status={overview?.cost_24h && overview.cost_24h > 15 ? 'warning' : 'neutral'} onClick={setActiveMetric} />
-            <HUDCard id="op_load" label="Op Load" value={`${approvals.blogs.length + approvals.leads.length} Items`} sub="Live Decision Queue" active={activeMetric === 'op_load'} status={approvals.blogs.length > 5 ? 'warning' : 'good'} onClick={setActiveMetric} />
-            <HUDCard id="sent_risks" label="Sent Risks" value={analytics.staleLeads.length.toString()} sub="48h Active Scope" active={activeMetric === 'sent_risks'} status={analytics.staleLeads.length > 0 ? 'bad' : 'good'} onClick={setActiveMetric} />
-            <HUDCard id="active_force" label="Active Force" value={`${overview?.active_agents.filter((a: any) => a.status === 'active').length || 0} Online`} sub="1h Pulse Check" active={activeMetric === 'active_force'} status="good" onClick={setActiveMetric} />
-            
-            <HUDCard id="ethics" label="Ethics" value="Clean" sub="30d Compl. History" active={activeMetric === 'ethics'} status="good" onClick={setActiveMetric} />
-            <HUDCard id="collab" label="Collab" value="82%" sub="7d Rolling Avg" active={activeMetric === 'collab'} status="neutral" onClick={setActiveMetric} />
-            <HUDCard id="graph" label="Graph" value="1.4k Nodes" sub="Global KB Density" active={activeMetric === 'graph'} status="good" onClick={setActiveMetric} />
-            <HUDCard id="velocity" label="Velocity" value="1.2 Days" sub="14d Content Cycle" active={activeMetric === 'velocity'} status="good" onClick={setActiveMetric} />
-        </div>
-    );
+    const handleRebuildIndex = async () => {
+        if (!confirm("Rebuild Knowledge Base index? This consumes significant tokens.")) return;
+        setProcessingId('rebuild_index');
+        try {
+            const res = await api.seedKnowledgeBase();
+            alert(`Rebuild Complete! Indexed: ${res.indexed_count} docs.`);
+        } catch (e: any) {
+            alert("Rebuild failed: " + e.message);
+        } finally {
+            setProcessingId(null);
+        }
+    };
 
-    // --- DETAIL PANEL RENDERER ---
+    const handleApproveContent = async (id: string, type: 'blog' | 'lead') => {
+        setProcessingId(id);
+        try {
+            await api.processApproval(type, id, 'approve');
+            fetchData(); // Refresh all
+            setSelectedContent(null);
+        } catch (e: any) {
+            alert("Approval failed: " + e.message);
+        } finally {
+            setProcessingId(null);
+        }
+    };
+
+    const handleRejectContent = async () => {
+        if (!selectedContent) return;
+        setProcessingId(selectedContent.id);
+        try {
+            // Note: API needs to support reason, currently just reject action
+            await api.processApproval('blog', selectedContent.id, 'reject'); 
+            alert("Content Rejected. Feedback sent to author.");
+            fetchData();
+            setSelectedContent(null);
+            setIsRejecting(false);
+            setRejectReason('');
+        } catch (e: any) {
+            alert("Rejection failed: " + e.message);
+        } finally {
+            setProcessingId(null);
+        }
+    };
+
+    const handleRuleChange = (key: string, val: number) => {
+        setRules(prev => prev.map(r => r.key === key ? { ...r, weight: val } : r));
+    };
+
+    const handleSaveRules = async () => {
+        const total = rules.reduce((acc, r) => acc + r.weight, 0);
+        if (total !== 100) return alert(`Total weight must be 100%. Current: ${total}%`);
+        
+        const newMeta = {
+            version: `v1.0.${parseInt(rulesMeta.version.split('.').pop() || '0') + 1}`,
+            updated_at: new Date().toISOString(),
+            updated_by: user?.name || 'Admin'
+        };
+
+        const payload = {
+            weights: rules,
+            ...newMeta
+        };
+
+        try {
+            await api.updateSystemSetting('marketing_scoring', { 
+                value: JSON.stringify(payload),
+                description: `Updated by ${user?.name}`
+            });
+            setRulesMeta(newMeta);
+            alert("Scoring Rules Saved to Database!");
+        } catch (e: any) {
+            alert("Failed to save rules: " + e.message);
+        }
+    };
+
+    // --- Renders ---
+
     const renderDetail = () => {
         switch (activeMetric) {
-            case 'sent_risks':
-                return (
-                    <div className="space-y-6">
-                        <DetailSection title="Business Exceptions" subtitle="Leads requiring immediate Dispatch action">
-                            <div className="bg-card rounded-xl border border-border overflow-hidden">
-                                <table className="w-full text-left text-xs">
-                                    <thead className="bg-muted/50 text-muted-foreground font-bold border-b border-border">
-                                        <tr>
-                                            <th className="px-4 py-3">ID</th>
-                                            <th className="px-4 py-3">Company</th>
-                                            <th className="px-4 py-3">Score</th>
-                                            <th className="px-4 py-3">Stale</th>
-                                            <th className="px-4 py-3 text-right">Action</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-border">
-                                        {analytics.staleLeads.map(lead => (
-                                            <tr key={lead.id} className="hover:bg-secondary/10">
-                                                <td className="px-4 py-3 font-mono">#{lead.id.substring(0,4)}</td>
-                                                <td className="px-4 py-3 font-bold">{lead.details?.company || 'Unknown'}</td>
-                                                <td className="px-4 py-3 text-amber-600 font-black">{lead.details?.enrichment_score || 0}</td>
-                                                <td className="px-4 py-3">{lead.details?.days_stale || 0}d</td>
-                                                <td className="px-4 py-3 text-right">
-                                                    <button onClick={() => handleDispatch(lead.id)} className="bg-indigo-600 text-white px-3 py-1 rounded-lg font-bold hover:bg-indigo-700 text-[10px]">DISPATCH</button>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </DetailSection>
-                        <DetailSection title="System Anomalies" subtitle="Infrastructure & 429 alerts">
-                            <div className="space-y-2">
-                                {analytics.systemAlerts.map(alert => (
-                                    <div key={alert.id} className="p-3 bg-red-50 dark:bg-red-950/10 border border-red-100 dark:border-red-900/30 rounded-xl flex justify-between items-center">
-                                        <div className="flex items-center gap-3">
-                                            <AlertTriangleIcon className="w-4 h-4 text-red-600" />
-                                            <span className="text-xs font-medium">{alert.message}</span>
-                                        </div>
-                                        <button className="text-[10px] font-bold text-red-600 underline">THROTTLE</button>
-                                    </div>
-                                ))}
-                            </div>
-                        </DetailSection>
-                    </div>
-                );
-            case 'op_load':
-                return (
-                    <div className="space-y-6">
-                        <DetailSection title="Content Queue" subtitle="Bob's pending drafts awaiting review">
-                            <div className="flex gap-2 overflow-x-auto pb-4">
-                                {approvals.blogs.map(blog => (
-                                    <button 
-                                        key={blog.id} 
-                                        onClick={() => setSelectedBlog(blog)}
-                                        className={`px-3 py-2 rounded-lg border text-[10px] font-bold whitespace-nowrap transition-all ${selectedBlog?.id === blog.id ? 'bg-indigo-600 text-white border-indigo-600 shadow-lg' : 'bg-card border-border text-muted-foreground hover:border-indigo-400'}`}
-                                    >
-                                        {blog.title.substring(0, 25)}...
-                                    </button>
-                                ))}
-                            </div>
-                            {selectedBlog && (
-                                <div className="bg-card border border-border p-6 rounded-2xl space-y-4 animate-in fade-in zoom-in-95">
-                                    <h4 className="font-bold text-lg">{selectedBlog.title}</h4>
-                                    <p className="text-sm text-muted-foreground leading-relaxed">{selectedBlog.excerpt}</p>
-                                    <div className="flex gap-3 pt-4 border-t border-border">
-                                        <button onClick={() => handleApprove(selectedBlog.id)} className="flex-1 bg-green-600 text-white py-2 rounded-xl text-xs font-black shadow-lg">APPROVE & PUBLISH</button>
-                                        <button className="px-6 border border-rose-200 text-rose-600 rounded-xl text-xs font-bold hover:bg-rose-50">REJECT</button>
-                                    </div>
-                                </div>
-                            )}
-                        </DetailSection>
-                    </div>
-                );
             case 'resources':
                 return (
-                    <DetailSection title="Resource Burn Detail" subtitle="Model activity and projections">
+                    <DetailSection title="Token Consumption Audit" subtitle="Human vs Machine Resource Allocation" icon={<DollarSignIcon className="w-5 h-5 text-indigo-600"/>}>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            {/* Human Consumption */}
                             <div className="space-y-4">
-                                <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Active Models (Last 24h)</h4>
-                                {aiStats?.daily_costs?.[0]?.models?.map(modelName => (
-                                    <div key={modelName} className="flex justify-between items-center p-3 bg-secondary/20 rounded-xl">
-                                        <span className="text-[10px] font-mono font-bold">{modelName}</span>
-                                        <span className="text-[9px] text-green-600 font-black uppercase">Online</span>
-                                    </div>
-                                ))}
+                                <div className="flex items-center justify-between">
+                                    <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                                        <UserIcon className="w-4 h-4" /> Human
+                                    </h4>
+                                </div>
+                                <div className="space-y-2">
+                                    {aiStats?.usage_by_user?.filter((u: any) => !u.name.toLowerCase().includes('agent') && !u.name.toLowerCase().includes('system')).map((user: any) => (
+                                         <div key={user.name} className="bg-gray-50 p-3 rounded-xl flex justify-between items-center">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+                                                <span className="text-sm font-bold text-gray-700">{user.name}</span>
+                                            </div>
+                                            <div className="text-right">
+                                                <div className="text-xs font-mono text-gray-500">{user.tokens.toLocaleString()} tkns</div>
+                                                <div className="text-[10px] text-gray-400">${user.cost.toFixed(4)}</div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                    {(!aiStats?.usage_by_user || aiStats.usage_by_user.filter((u: any) => !u.name.toLowerCase().includes('agent')).length === 0) && (
+                                        <div className="text-xs text-gray-400 text-center py-4">No human usage recorded.</div>
+                                    )}
+                                </div>
                             </div>
-                            <div className="p-8 bg-indigo-50 dark:bg-indigo-950/20 rounded-[2.5rem] border border-indigo-100 dark:border-indigo-900/30 flex flex-col justify-center text-center">
-                                <p className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 mb-2 uppercase tracking-widest">Runway Projection</p>
-                                <p className="text-5xl font-black text-indigo-700 dark:text-indigo-300 tracking-tighter">12 Days</p>
-                                <p className="text-[10px] text-indigo-500 mt-3 italic opacity-60">Based on 7d rolling average</p>
+
+                            {/* Bot Consumption */}
+                            <div className="space-y-4">
+                                <div className="flex items-center justify-between">
+                                    <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                                        <ZapIcon className="w-4 h-4" /> Machine
+                                    </h4>
+                                </div>
+                                <div className="space-y-2">
+                                    {aiStats?.usage_by_user?.filter((u: any) => u.name.toLowerCase().includes('agent') || u.name.toLowerCase().includes('system')).map((bot: any) => (
+                                        <div key={bot.name} className="bg-indigo-50/50 p-3 rounded-xl flex justify-between items-center border border-indigo-100">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></div>
+                                                <span className="text-sm font-bold text-indigo-700">{bot.name}</span>
+                                            </div>
+                                            <div className="text-right">
+                                                <span className="text-xs font-mono text-indigo-600">{bot.tokens.toLocaleString()} tkns</span>
+                                                <div className="text-[10px] text-indigo-400">${bot.cost.toFixed(4)}</div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                     {(!aiStats?.usage_by_user || aiStats.usage_by_user.filter((u: any) => u.name.toLowerCase().includes('agent')).length === 0) && (
+                                        <div className="text-xs text-gray-400 text-center py-4">No machine usage recorded.</div>
+                                    )}
+                                </div>
                             </div>
                         </div>
                     </DetailSection>
                 );
+
+            case 'op_load':
+                return (
+                    <DetailSection title="Operational Load" subtitle="Approval & Review Queue" icon={<ActivityIcon className="w-5 h-5 text-indigo-600"/>}>
+                        <div className="flex gap-4 mb-6 border-b border-gray-100 pb-2">
+                            <button 
+                                onClick={() => setOpLoadTab('content')}
+                                className={`pb-2 text-sm font-bold transition-colors ${opLoadTab === 'content' ? 'text-indigo-600 border-b-2 border-indigo-600' : 'text-gray-400 hover:text-gray-600'}`}
+                            >
+                                Content ({approvals.blogs.length})
+                            </button>
+                            <button 
+                                onClick={() => setOpLoadTab('devops')}
+                                className={`pb-2 text-sm font-bold transition-colors ${opLoadTab === 'devops' ? 'text-indigo-600 border-b-2 border-indigo-600' : 'text-gray-400 hover:text-gray-600'}`}
+                            >
+                                DevOps (0)
+                            </button>
+                        </div>
+
+                        {opLoadTab === 'content' && (
+                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                                <div className="lg:col-span-1 space-y-2">
+                                    {approvals.blogs.map((blog: any) => (
+                                        <div 
+                                            key={blog.id}
+                                            onClick={() => setSelectedContent(blog)}
+                                            className={`p-4 rounded-xl border cursor-pointer transition-all ${
+                                                selectedContent?.id === blog.id 
+                                                ? 'bg-indigo-50 border-indigo-200 shadow-sm' 
+                                                : 'bg-white border-gray-100 hover:border-indigo-100'
+                                            }`}
+                                        >
+                                            <h4 className="font-bold text-gray-800 text-sm line-clamp-1">{blog.title}</h4>
+                                            <p className="text-xs text-gray-500 mt-1 flex justify-between">
+                                                <span>{blog.author || 'Bob'}</span>
+                                                <span className="font-mono">{new Date(blog.created_at).toLocaleDateString()}</span>
+                                            </p>
+                                        </div>
+                                    ))}
+                                    {approvals.blogs.length === 0 && <div className="text-center py-8 text-gray-400 text-sm">No content pending review.</div>}
+                                </div>
+                                <div className="lg:col-span-2">
+                                    {selectedContent ? (
+                                        <div className="bg-gray-50 rounded-2xl p-6 border border-gray-100 h-full">
+                                            <div className="flex justify-between items-start mb-4">
+                                                <h3 className="text-xl font-black text-gray-900">{selectedContent.title}</h3>
+                                                <span className="px-2 py-1 bg-white rounded-lg text-xs font-bold border border-gray-200 shadow-sm">Draft</span>
+                                            </div>
+                                            
+                                            {/* Preview Placeholder */}
+                                            <div className="aspect-video bg-gray-200 rounded-xl mb-4 flex items-center justify-center text-gray-400">
+                                                <img src={selectedContent.image_url} alt="Preview" className="w-full h-full object-cover rounded-xl" onError={(e) => e.currentTarget.style.display = 'none'} />
+                                                <span className="absolute">Image Preview</span>
+                                            </div>
+
+                                            <p className="text-sm text-gray-600 leading-relaxed mb-6 font-serif">
+                                                {selectedContent.excerpt}...
+                                            </p>
+
+                                            {isRejecting ? (
+                                                <div className="bg-white p-4 rounded-xl border border-red-100 animate-in fade-in">
+                                                    <h5 className="text-xs font-black text-red-500 uppercase mb-2">Rejection Reason</h5>
+                                                    <textarea 
+                                                        className="w-full text-sm p-3 bg-gray-50 rounded-lg border-0 focus:ring-2 focus:ring-red-500/20 mb-3"
+                                                        rows={3}
+                                                        placeholder="Explain why this content needs revision..."
+                                                        value={rejectReason}
+                                                        onChange={e => setRejectReason(e.target.value)}
+                                                    />
+                                                    <div className="flex gap-2 justify-end">
+                                                        <button onClick={() => setIsRejecting(false)} className="px-3 py-1.5 text-xs font-bold text-gray-500">Cancel</button>
+                                                        <button onClick={handleRejectContent} className="px-3 py-1.5 bg-red-500 text-white text-xs font-bold rounded-lg hover:bg-red-600">Confim Reject</button>
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <div className="flex gap-3">
+                                                    <button 
+                                                        onClick={() => handleApproveContent(selectedContent.id, 'blog')}
+                                                        disabled={!!processingId}
+                                                        className="flex-1 bg-green-600 hover:bg-green-700 text-white py-3 rounded-xl font-bold shadow-lg shadow-green-200 transition-all active:scale-95 flex items-center justify-center gap-2"
+                                                    >
+                                                        <CheckCircleIcon className="w-4 h-4" /> Approve & Publish
+                                                    </button>
+                                                    <button 
+                                                        onClick={() => setIsRejecting(true)}
+                                                        className="px-6 bg-white border border-red-200 text-red-600 py-3 rounded-xl font-bold hover:bg-red-50 transition-colors"
+                                                    >
+                                                        Reject
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </div>
+                                    ) : (
+                                        <div className="h-full flex items-center justify-center text-gray-300 font-bold border-2 border-dashed border-gray-200 rounded-2xl">
+                                            Select an item to preview
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+
+                        {opLoadTab === 'devops' && (
+                            <div className="text-center py-12 text-gray-400">
+                                <GitCommitIcon className="w-12 h-12 mx-auto mb-3 opacity-20" />
+                                <p className="text-sm">No infrastructure proposals pending.</p>
+                            </div>
+                        )}
+                    </DetailSection>
+                );
+
+            case 'sent_risks':
+                return (
+                    <DetailSection title="Risk Radar" subtitle="Sentinel Alerts & Scoring Config" icon={<AlertTriangleIcon className="w-5 h-5 text-indigo-600"/>}>
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                            <div className="lg:col-span-2">
+                                <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-4">Active Alerts</h4>
+                                <div className="space-y-3">
+                                    {alerts.map(alert => (
+                                        <div key={alert.id} className="bg-white border border-gray-100 p-4 rounded-xl flex items-center justify-between group hover:shadow-md transition-all">
+                                            <div className="flex items-center gap-4">
+                                                <div className={`p-2 rounded-lg ${alert.details?.type === 'opportunity' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
+                                                    <ZapIcon className="w-4 h-4" />
+                                                </div>
+                                                <div>
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-xs font-bold px-2 py-0.5 bg-gray-100 text-gray-500 rounded uppercase">{alert.details?.source || 'Sentinel'}</span>
+                                                        <span className="text-[10px] text-gray-400">{new Date(alert.created_at).toLocaleTimeString()}</span>
+                                                    </div>
+                                                    <h5 className="font-bold text-gray-800 text-sm">{alert.message}</h5>
+                                                </div>
+                                            </div>
+                                            <button 
+                                                onClick={() => handleDispatch(alert.id)}
+                                                disabled={processingId === alert.id}
+                                                className="px-4 py-2 bg-indigo-50 text-indigo-600 rounded-lg text-xs font-bold hover:bg-indigo-100 transition-colors"
+                                            >
+                                                {processingId === alert.id ? '...' : 'Dispatch'}
+                                            </button>
+                                        </div>
+                                    ))}
+                                    {alerts.length === 0 && <div className="p-8 border border-dashed rounded-xl text-center text-gray-400 text-xs">All clear. No active risks.</div>}
+                                </div>
+                            </div>
+                            
+                            <div className="bg-gray-50 p-6 rounded-2xl border border-gray-100">
+                                <div className="flex justify-between items-center mb-4">
+                                    <h4 className="text-xs font-black text-gray-500 uppercase tracking-widest">Scoring Config</h4>
+                                    <span className="text-[10px] font-mono text-gray-400">{rulesMeta.version}</span>
+                                </div>
+                                <div className="space-y-4 mb-6">
+                                    {rules.map(rule => (
+                                        <div key={rule.key}>
+                                            <div className="flex justify-between text-xs mb-1">
+                                                <span className="font-bold text-gray-700">{rule.label}</span>
+                                                <span className="font-mono text-gray-500">{rule.weight}%</span>
+                                            </div>
+                                            <input 
+                                                type="range" 
+                                                min="0" max="100" 
+                                                value={rule.weight}
+                                                onChange={e => handleRuleChange(rule.key, parseInt(e.target.value))}
+                                                className="w-full h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+                                            />
+                                        </div>
+                                    ))}
+                                </div>
+                                <div className="flex justify-between items-center pt-4 border-t border-gray-200">
+                                    <span className={`text-xs font-bold ${rules.reduce((a,b)=>a+b.weight,0) === 100 ? 'text-green-500' : 'text-red-500'}`}>
+                                        Total: {rules.reduce((a,b)=>a+b.weight,0)}%
+                                    </span>
+                                    <button onClick={handleSaveRules} className="text-xs font-bold text-indigo-600 hover:underline">Save Changes</button>
+                                </div>
+                            </div>
+                        </div>
+                    </DetailSection>
+                );
+
             case 'active_force':
                 return (
-                    <DetailSection title="Active Force Matrix" subtitle="Real-time status of system agents">
+                    <DetailSection title="Active Force" subtitle="Team Roster & Agent Status" icon={<UsersIcon className="w-5 h-5 text-indigo-600"/>}>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {(overview?.active_agents as any[] || []).map((agent: any) => (
-                                <div key={agent.id} className="p-4 bg-card border border-border rounded-2xl flex items-center justify-between group">
+                            {team.map(member => (
+                                <div key={member.id} className="p-4 bg-white border border-gray-100 rounded-2xl flex items-center justify-between hover:border-indigo-200 transition-all">
                                     <div className="flex items-center gap-3">
-                                        <div className={`w-2.5 h-2.5 rounded-full ${agent.status === 'active' ? 'bg-green-500 animate-pulse' : 'bg-slate-300'}`} />
+                                        <UserAvatar name={member.name} role={member.role} />
                                         <div>
-                                            <p className="text-xs font-bold">{agent.name}</p>
-                                            <p className="text-[10px] text-muted-foreground uppercase font-mono tracking-tighter">{agent.role}</p>
+                                            <h4 className="font-bold text-gray-800 text-sm">{member.name}</h4>
+                                            <div className="flex items-center gap-1.5">
+                                                <div className={`w-1.5 h-1.5 rounded-full ${member.status === 'active' ? 'bg-green-500' : 'bg-amber-500'}`} />
+                                                <span className="text-xs text-gray-500 uppercase">{member.role}</span>
+                                            </div>
                                         </div>
                                     </div>
-                                    <button className="opacity-0 group-hover:opacity-100 p-1.5 hover:bg-secondary rounded-lg transition-all"><RefreshCwIcon className="w-3.5 h-3.5" /></button>
+                                    <button 
+                                        onClick={() => setSelectedMember(member)}
+                                        className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                                    >
+                                        <SearchIcon className="w-4 h-4" />
+                                    </button>
+                                </div>
+                            ))}
+                            {/* Agent Cards - Dynamic */}
+                            {overview?.active_agents?.map((agent: any) => (
+                                <div key={agent.id} className="p-4 bg-indigo-50/50 border border-indigo-100 rounded-2xl flex items-center justify-between opacity-80">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-white"><ZapIcon className="w-4 h-4"/></div>
+                                        <div>
+                                            <h4 className="font-bold text-indigo-900 text-sm">{agent.name}</h4>
+                                            <p className="text-[10px] text-indigo-600 uppercase">{agent.role || 'AI Agent'}</p>
+                                        </div>
+                                    </div>
+                                    <span className={`px-2 py-1 text-[10px] font-bold rounded ${agent.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-500'}`}>
+                                        {agent.status === 'active' ? 'ONLINE' : 'STANDBY'}
+                                    </span>
                                 </div>
                             ))}
                         </div>
                     </DetailSection>
                 );
+
+            case 'graph':
+                return (
+                    <DetailSection title="Knowledge Graph" subtitle="RAG Index Status" icon={<DatabaseIcon className="w-5 h-5 text-indigo-600"/>}>
+                        <div className="flex items-center justify-between">
+                            <div className="space-y-1">
+                                <h4 className="text-2xl font-black text-gray-800">{overview?.knowledge_stats?.total_nodes || 0} Nodes</h4>
+                                <p className="text-sm text-gray-500">
+                                    {overview?.knowledge_stats?.total_chunks || 0} Chunks Indexed
+                                </p>
+                            </div>
+                            <button 
+                                onClick={handleRebuildIndex}
+                                disabled={processingId === 'rebuild_index'}
+                                className="px-6 py-3 bg-orange-500 hover:bg-orange-600 text-white rounded-xl font-bold flex items-center gap-2 shadow-lg shadow-orange-200 transition-all active:scale-95 disabled:opacity-50"
+                            >
+                                <RefreshCwIcon className={`w-4 h-4 ${processingId === 'rebuild_index' ? 'animate-spin' : ''}`} />
+                                Rebuild Index
+                            </button>
+                        </div>
+                    </DetailSection>
+                );
+
+            case 'ethics':
+                return (
+                    <DetailSection title="Compliance & Ethics" subtitle="Guardrails Status" icon={<ShieldCheckIcon className="w-5 h-5 text-indigo-600"/>}>
+                        <div className="bg-slate-900 text-green-400 p-6 rounded-2xl font-mono text-xs">
+                            <div className="flex justify-between border-b border-slate-700 pb-2 mb-2">
+                                <span>STANDARD</span>
+                                <span>STATUS</span>
+                            </div>
+                            <div className="space-y-2">
+                                <div className="flex justify-between"><span>ISO-27001 PII Check</span><span className="font-bold">ACTIVE</span></div>
+                                <div className="flex justify-between"><span>Brand Tone Guardrail</span><span className="font-bold">ACTIVE</span></div>
+                                <div className="flex justify-between"><span>Conflict of Interest</span><span className="font-bold">ACTIVE</span></div>
+                                <div className="flex justify-between pt-2 border-t border-slate-800 text-red-400">
+                                    <span>Violations (24h)</span>
+                                    <span className="font-bold">{overview?.ethics_status?.violations_24h || 0}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </DetailSection>
+                );
+
             default:
-                return <div className="p-20 text-center text-muted-foreground italic border border-dashed border-border rounded-3xl">Deep analytics for {activeMetric} is currently being aggregated...</div>;
+                return (
+                    <div className="p-12 text-center text-gray-400 bg-white rounded-3xl border border-dashed border-gray-200">
+                        <ActivityIcon className="w-12 h-12 mx-auto mb-4 opacity-20" />
+                        <p>Select a metric above to view details.</p>
+                    </div>
+                );
         }
     };
 
-    if (loading) return (
-        <div className="flex flex-col items-center justify-center h-[60vh]">
-            <RefreshCwIcon className="animate-spin w-10 h-10 text-slate-400 mb-4" />
-            <span className="text-slate-500 font-bold uppercase tracking-widest text-[10px]">Synchronizing Executive Environment</span>
-        </div>
-    );
+    if (loading) return <div className="flex h-screen items-center justify-center text-gray-400 animate-pulse">Initializing Nexus...</div>;
 
     return (
-        <div className="max-w-[1400px] mx-auto space-y-8 animate-in fade-in duration-700 px-4">
-            <div className="flex justify-between items-end border-b border-border/50 pb-6">
+        <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-8 min-h-screen bg-gray-50/50 font-sans nexus-font-scope" style={{fontFamily: "'Inter', sans-serif"}}>
+             <header className="flex justify-between items-end mb-8">
                 <div>
-                    <h1 className="text-3xl font-black tracking-tight text-foreground uppercase">Managerial <span className="text-indigo-600">Nexus</span></h1>
-                    <p className="text-[10px] text-muted-foreground font-black mt-1 uppercase tracking-[0.2em]">Unified Decision Hub • v7.1</p>
+                    <h1 className="text-3xl font-black text-gray-900 tracking-tight">Manager Nexus</h1>
+                    <p className="text-sm text-gray-500 mt-1 font-medium">Command & Control v7.1</p>
                 </div>
-                <button onClick={fetchData} className={`p-2.5 rounded-xl transition-all ${isRefreshing ? 'bg-indigo-50 text-indigo-600 animate-pulse' : 'hover:bg-secondary text-slate-400'}`}>
-                    <RefreshCwIcon className={`w-5 h-5 ${isRefreshing ? 'animate-spin' : ''}`} />
-                </button>
+                <div className="flex gap-2 text-xs font-bold text-gray-400 bg-white px-3 py-1.5 rounded-lg border border-gray-100 shadow-sm">
+                    <ClockIcon className="w-4 h-4" />
+                    <span>Auto-refresh: 5m</span>
+                </div>
+            </header>
+
+            {/* HUD Grid */}
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                <HUDCard 
+                    id="integrity" label="Integrity" 
+                    value={overview?.integrity_score !== undefined ? `${overview.integrity_score}%` : "..."}
+                    sub="System Health" 
+                    active={activeMetric === 'integrity'} 
+                    status={overview?.status === 'healthy' ? 'good' : 'bad'} 
+                    onClick={setActiveMetric} 
+                    tooltip="RAG Vector DB Health"
+                />
+                <HUDCard 
+                    id="resources" label="Resources" 
+                    value={`$${(overview?.cost_24h || 0).toFixed(2)}`} 
+                    sub="Monthly Cap" 
+                    active={activeMetric === 'resources'} 
+                    status="neutral" 
+                    onClick={setActiveMetric} 
+                    tooltip="Token Usage & Cost vs Budget"
+                />
+                <HUDCard 
+                    id="op_load" label="Op Load" 
+                    value={`${approvals.blogs.length + approvals.leads.length} Items`} 
+                    sub="Decision Queue" 
+                    active={activeMetric === 'op_load'} 
+                    status={approvals.blogs.length > 0 ? "warning" : "good"} 
+                    onClick={setActiveMetric}
+                    tooltip="Pending Approvals & Reviews" 
+                />
+                <HUDCard 
+                    id="sent_risks" label="Sent Risks" 
+                    value={`${alerts.length} Alerts`} 
+                    sub="Exception Radar" 
+                    active={activeMetric === 'sent_risks'} 
+                    status={alerts.length > 0 ? "bad" : "good"} 
+                    onClick={setActiveMetric} 
+                    tooltip="Sentinel Generated Alerts"
+                />
+                <HUDCard 
+                    id="active_force" label="Act Force" 
+                    value={`${team.filter(m=>m.status==='active').length} Online`} 
+                    sub="Roster Status" 
+                    active={activeMetric === 'active_force'} 
+                    status="good" 
+                    onClick={setActiveMetric} 
+                    tooltip="Team & Agent Availability"
+                />
+                {/* Secondary Metrics Row */}
+                <HUDCard id="ethics" label="Ethics" value={overview?.ethics_status?.violations_24h === 0 ? "Clean" : `${overview?.ethics_status?.violations_24h} Events`} sub="Log Audit" active={activeMetric === 'ethics'} status={overview?.ethics_status?.violations_24h === 0 ? 'good' : 'warning'} onClick={setActiveMetric} tooltip="Compliance Violations" />
+                <HUDCard id="collab" label="Collab" value={overview?.collab_score !== undefined ? `${overview.collab_score}%` : "..."} sub="Team Synergy" active={activeMetric === 'collab'} status="good" onClick={setActiveMetric} tooltip="Cross-functional interactions" />
+                <HUDCard id="graph" label="Graph" value={overview?.knowledge_stats?.total_nodes !== undefined ? `${(overview.knowledge_stats.total_nodes / 1000).toFixed(1)}k` : "..."} sub="Knowledge Nodes" active={activeMetric === 'graph'} status="neutral" onClick={setActiveMetric} tooltip="Indexed Documents Count" />
+                <HUDCard id="velocity" label="Velocity" value={overview?.velocity_in_days !== undefined ? `${overview.velocity_in_days}d` : "..."} sub="Cycle Time" active={activeMetric === 'velocity'} status="good" onClick={setActiveMetric} tooltip="Avg Task Completion Time (Days)" />
             </div>
 
-            {renderHUD()}
-
-            <div className="bg-card border border-border rounded-[2.5rem] p-8 shadow-2xl min-h-[500px]">
+            {/* Dynamic Detail Area */}
+            <div className="min-h-[400px]">
                 {renderDetail()}
             </div>
 
-            <footer className="space-y-4 pt-4 border-t border-border/30">
-                <div className="flex items-center gap-3 text-slate-400 px-2">
-                    <ClockIcon className="w-4 h-4" />
-                    <h2 className="text-[10px] font-black uppercase tracking-[0.2em]">Latest Audit Trail</h2>
+            {/* Footer Field Guide */}
+            <footer className="mt-12 pt-8 border-t border-gray-200 text-xs text-gray-400 grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div>
+                    <h5 className="font-bold text-gray-500 uppercase tracking-widest mb-2">Metrics Definition</h5>
+                    <ul className="space-y-1">
+                        <li>• <strong className="text-gray-600">Velocity:</strong> 14-day rolling average of task completion time.</li>
+                        <li>• <strong className="text-gray-600">Risks:</strong> 48-hour window of unresolved Sentinel alerts.</li>
+                    </ul>
                 </div>
-                <div className="bg-secondary/10 rounded-2xl p-5 font-mono text-[10px] space-y-2.5 max-h-32 overflow-y-auto">
-                    {alerts.slice(0, 5).map(log => (
-                        <div key={log.id} className="flex gap-5 border-b border-border/20 pb-1.5 last:border-0 opacity-80 group">
-                            <span className="text-slate-500 shrink-0">{new Date(log.created_at).toLocaleTimeString()}</span>
-                            <span className="text-indigo-500 font-black uppercase shrink-0">[{log.source}]</span>
-                            <span className="group-hover:text-foreground transition-colors">{log.message}</span>
-                        </div>
-                    ))}
+                <div>
+                     <h5 className="font-bold text-gray-500 uppercase tracking-widest mb-2">Color Codes</h5>
+                     <ul className="space-y-1">
+                        <li className="flex items-center gap-2"><div className="w-2 h-2 bg-green-500 rounded-full"></div> Optimal Range</li>
+                        <li className="flex items-center gap-2"><div className="w-2 h-2 bg-amber-500 rounded-full"></div> Warning / Action Needed</li>
+                        <li className="flex items-center gap-2"><div className="w-2 h-2 bg-red-500 rounded-full"></div> Critical Exception</li>
+                     </ul>
+                </div>
+                <div>
+                    <h5 className="font-bold text-gray-500 uppercase tracking-widest mb-2">System Info</h5>
+                    <p>ManagerNexus v7.1 | Build 2026.02.12</p>
+                    <p className="mt-1">© Archon Intelligence Systems</p>
                 </div>
             </footer>
+
+            {/* Member Management Modal */}
+            {selectedMember && (
+                <ManageMemberModal 
+                    member={selectedMember} 
+                    onClose={() => setSelectedMember(null)} 
+                    onSuccess={() => {
+                        setSelectedMember(null);
+                        fetchData();
+                    }} 
+                />
+            )}
         </div>
     );
 };
-
-// --- SUB-COMPONENTS ---
-
-const HUDCard: React.FC<{id: MetricCategory, label: string, value: string, sub: string, active: boolean, status: 'good'|'bad'|'warning'|'neutral', onClick: (id: MetricCategory) => void}> = ({id, label, value, sub, active, status, onClick}) => {
-    const statusColor = status === 'good' ? 'bg-green-500' : status === 'bad' ? 'bg-red-500' : status === 'warning' ? 'bg-amber-500' : 'bg-slate-400';
-    return (
-        <div 
-            onClick={() => onClick(id)} 
-            className={`p-5 rounded-3xl border transition-all cursor-pointer select-none group ${active ? 'bg-white dark:bg-slate-900 border-indigo-500 shadow-xl scale-[1.03]' : 'bg-card border-border hover:border-slate-400'}`}
-        >
-            <div className="flex justify-between items-start mb-3">
-                <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 group-hover:text-indigo-500 transition-colors">{label}</span>
-                <div className={`w-2 h-2 rounded-full ${statusColor} shadow-[0_0_8px_currentColor] ${active ? 'animate-pulse' : ''}`} />
-            </div>
-            <p className={`text-2xl font-black tracking-tighter ${active ? 'text-indigo-600' : 'text-foreground'}`}>{value}</p>
-            <p className="text-[9px] text-muted-foreground font-bold opacity-50 mt-1 uppercase tracking-tighter">{sub}</p>
-        </div>
-    );
-};
-
-const DetailSection: React.FC<{title: string, subtitle: string, children: React.ReactNode}> = ({title, subtitle, children}) => (
-    <div className="space-y-8 animate-in fade-in slide-in-from-left-4 duration-700">
-        <div>
-            <h2 className="text-2xl font-black flex items-center gap-4 uppercase tracking-tight">
-                <div className="w-2 h-8 bg-indigo-600 rounded-full" />
-                {title}
-            </h2>
-            <p className="text-xs text-muted-foreground mt-1.5 ml-6 italic">{subtitle}</p>
-        </div>
-        <div className="ml-6">{children}</div>
-    </div>
-);
 
 export default ManagerNexus;

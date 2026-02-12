@@ -387,16 +387,26 @@ async def generate_pitch(request: PitchRequest, current_user: dict = Depends(get
         model_name = provider_config.get("chat_model") or "gpt-4o"
 
         # Key Decoupling
-        marketing_api_key = await credential_service.get_credential("GEMINI_API_KEY")
-        if not marketing_api_key:
-             marketing_api_key = await credential_service.get_credential("GOOGLE_API_KEY")
+        provider_name = provider_config.get("provider", "openai")
+        api_key = None
+        
+        if provider_name == "openai":
+            api_key = await credential_service.get_credential("OPENAI_API_KEY")
+        elif provider_name == "google" or provider_name == "gemini":
+            api_key = await credential_service.get_credential("GEMINI_API_KEY") or await credential_service.get_credential("GOOGLE_API_KEY")
+        elif provider_name == "anthropic":
+            api_key = await credential_service.get_credential("ANTHROPIC_API_KEY")
+            
+        if not api_key:
+             logger.warning(f"No API key found for provider {provider_name}, falling back to Gemini/Google key.")
+             api_key = await credential_service.get_credential("GEMINI_API_KEY") or await credential_service.get_credential("GOOGLE_API_KEY")
 
         # Use Database-driven prompt with hardcoded fallback
         system_prompt = prompt_service.get_prompt("SALES_PITCH", SALES_PITCH_SYSTEM_PROMPT)
         user_prompt = f"Target Company: {request.company}\nHiring For: {request.job_title}\n\nContext:\n{context_text}"
 
         try:
-            async with get_llm_client(api_key=marketing_api_key) as client:
+            async with get_llm_client(api_key=api_key, provider=provider_name) as client:
                 response = await client.chat.completions.create(
                     model=model_name,
                     messages=[{"role": "system", "content": system_prompt}, {"role": "user", "content": user_prompt}],

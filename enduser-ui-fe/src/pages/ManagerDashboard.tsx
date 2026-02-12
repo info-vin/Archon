@@ -1,15 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../services/api.ts';
 import { useAuth } from '../hooks/useAuth.tsx';
-import { SystemOverview } from '../types.ts';
+import { SystemOverview, AlertItem } from '../types.ts';
 import { CheckCircleIcon, RefreshCwIcon, AlertTriangleIcon, ActivityIcon, ShieldCheckIcon, DatabaseIcon, PlusIcon } from '../components/Icons.tsx';
-
-interface Alert {
-    id: string;
-    message: string;
-    details: any;
-    created_at: string;
-}
 
     // ... (Imports stay same, assuming at top)
 
@@ -28,7 +21,7 @@ interface Alert {
 
     export const ManagerDashboard: React.FC = () => {
         const { user } = useAuth();
-        const [alerts, setAlerts] = useState<Alert[]>([]);
+        const [alerts, setAlerts] = useState<AlertItem[]>([]);
         const [systemHealth, setSystemHealth] = useState<SystemOverview | null>(null);
         const [loading, setLoading] = useState(true);
         const [seedingLoading, setSeedingLoading] = useState(false); // Specific loading for seeding

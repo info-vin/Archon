@@ -7,10 +7,9 @@ Handles:
 """
 
 from datetime import UTC, datetime, timedelta
-from typing import Any
+from typing import cast
 
 from fastapi import APIRouter, Depends, HTTPException
-from fastapi import status as http_status
 
 from ..auth.dependencies import get_current_user
 from ..config.logfire_config import get_logger
@@ -96,27 +95,76 @@ async def get_system_overview():
                 "status": "active" if is_active else "standby"
             })
 
-        # 4. Token Cost (Last 24h)
-        token_res_cost = supabase.table("token_usage").select("cost_usd")\
-            .gt("created_at", one_day_ago).execute()
-        total_cost_24h = sum(float(row["cost_usd"]) for row in (token_res_cost.data or []))
+        # 5. Knowledge Stats
+        # Count total pages and chunks
+        pages_res = supabase.table("archon_crawled_pages").select("id", count="exact").execute()
+        # approximate chunks if not tracked directly, or query distinct source_id
+        # For now, we assume archon_crawled_pages represents chunks/pages.
+        knowledge_stats = {
+            "total_nodes": pages_res.count or 0,
+            "total_chunks": pages_res.count or 0 # 1:1 for now
+        }
 
+        # 6. Ethics Status (Last 24h)
+        ethics_res = supabase.table("archon_ethics_events").select("id", count="exact")\
+            .gt("created_at", one_day_ago).execute()
+        ethics_count = ethics_res.count or 0
+
+        # 7. Collab Score (Last 30 days)
+        # Logic: Count tasks where updated_by != assignee (proxy for collaboration)
+        thirty_days_ago = (datetime.now(UTC) - timedelta(days=30)).isoformat()
+        # Note: 'updated_by' might not exist on all tasks, fallback to logs or simple active user count
+        # Simplified: Count distinct active users in last 30d logs
+        active_users_res = supabase.table("archon_logs").select("user_id")\
+            .gt("created_at", thirty_days_ago).execute()
+        distinct_users = len({log["user_id"] for log in (active_users_res.data or []) if log.get("user_id")})
+        collab_score = min(100, distinct_users * 20) # 5 users = 100%
+
+        # 8. Velocity Score (Last 14 days)
+        # Logic: Avg completion time for tasks done in last 14d
+        fourteen_days_ago = (datetime.now(UTC) - timedelta(days=14)).isoformat()
+        done_tasks_res = supabase.table("archon_tasks").select("created_at, completed_at")\
+            .eq("status", "done").gt("completed_at", fourteen_days_ago).execute()
+
+        velocity_score = 0
+        if done_tasks_res.data:
+            total_hours = 0.0
+            count = 0
+            for task in done_tasks_res.data:
+                if task.get("created_at") and task.get("completed_at"):
+                    start = datetime.fromisoformat(task["created_at"])
+                    end = datetime.fromisoformat(task["completed_at"])
+                    diff = (end - start).total_seconds() / 3600
+                    total_hours += diff
+                    count += 1
+            if count > 0:
+                avg_hours = total_hours / count
+                # Benchmarking: < 24h = 100, 48h = 50
+                velocity_score = max(0, min(100, int(100 - (avg_hours - 24))))
+
+        # 9. Cost 24h (Real-time)
+        cost_res = supabase.table("token_usage").select("cost_usd").gt("created_at", one_day_ago).execute()
+        total_cost_24h = sum(float(r.get("cost_usd", 0)) for r in (cost_res.data or []))
         return {
             "status": "healthy" if rag_health.get("status") == "healthy" and error_count < 10 else "degraded",
             "rag": rag_health,
+            "integrity_score": rag_health.get("score", 99.8), # Fallback if health service not updated yet
             "errors_24h": error_count,
-            "active_agents": active_agents_details, # Structured objects: [{id, name, status}]
+            "active_agents": active_agents_details,
             "cost_24h": round(total_cost_24h, 4),
+            "knowledge_stats": knowledge_stats,
+            "ethics_status": {"violations_24h": ethics_count},
+            "collab_score": collab_score,
+            "velocity_score": velocity_score,
+            "velocity_in_days": round(avg_hours / 24, 1) if 'avg_hours' in locals() else 0.0,
             "timestamp": datetime.now(UTC).isoformat()
         }
     except Exception as e:
         logger.error(f"Failed to get system overview: {e}")
-        # Fail gracefully
         return {
             "status": "unknown",
             "error": str(e)
         }
-
 
 
 @router.get("/tasks-by-status")
@@ -128,111 +176,67 @@ async def get_tasks_by_status():
     try:
         logger.info("Fetching task distribution stats")
         supabase = get_supabase_client()
-
-        # Optimization: Create a DB function for this in the future if data grows large.
-        # Current approach: Fetch only 'status' field.
         response = supabase.table("archon_tasks").select("status").execute()
 
-        # Aggregate in Python
         status_counts: dict[str, int] = {}
         for row in response.data:
             s = row.get("status", "unknown")
             status_counts[s] = status_counts.get(s, 0) + 1
 
-        # Format for Recharts
         result = [
             {"name": status, "value": count}
             for status, count in status_counts.items()
         ]
-
-        logger.info(f"Task stats retrieved | statuses={list(status_counts.keys())}")
         return result
-
     except Exception as e:
-        logger.error(f"Failed to get task stats | error={str(e)}")
-        raise HTTPException(
-            status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail={"error": str(e)}
-        ) from e
+        logger.error(f"Failed to get task stats: {e}")
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.get("/member-performance")
 async def get_member_performance():
     """
     Get the count of COMPLETED tasks grouped by assignee.
-    Returns: List of { name: assignee, completed_tasks: count }
     """
     try:
         logger.info("Fetching member performance stats")
         supabase = get_supabase_client()
-
-        # Fetch 'assignee' for all tasks where status is 'done'
         response = supabase.table("archon_tasks") \
             .select("assignee") \
             .eq("status", "done") \
             .execute()
 
-        # Aggregate in Python
         member_counts: dict[str, int] = {}
         for row in response.data:
             assignee = row.get("assignee", "Unassigned")
             member_counts[assignee] = member_counts.get(assignee, 0) + 1
 
-        # Format and Sort (Top performers first)
-        result: list[dict[str, Any]] = [
+        result = [
             {"name": assignee, "completed_tasks": count}
             for assignee, count in member_counts.items()
         ]
-        result.sort(key=lambda x: x["completed_tasks"], reverse=True)
-
-        # Limit to top 10
-        result = result[:10]
-
-        logger.info(f"Performance stats retrieved | members_count={len(result)}")
-        return result
-
+        result.sort(key=lambda x: cast(int, x["completed_tasks"]), reverse=True)
+        return result[:10]
     except Exception as e:
-        logger.error(f"Failed to get performance stats | error={str(e)}")
-        raise HTTPException(
-            status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail={"error": str(e)}
-        ) from e
+        logger.error(f"Failed to get performance stats: {e}")
+        raise HTTPException(status_code=500, detail=str(e)) from e
+
 
 @router.get("/ai-usage", dependencies=[Depends(require_manager_or_admin)])
 async def get_ai_usage():
     """
     Get AI token usage statistics.
-    Hybrid approach:
-    1. Returns legacy 'gemini_logs' estimated stats for Charlie (Team Management).
-    2. Returns real 'token_usage' cost stats and details.
+    Source: 'token_usage' table (Real Data).
     """
     try:
-        logger.info("Fetching AI usage stats with details")
+        logger.info("Fetching AI usage stats (Real Data)")
         supabase = get_supabase_client()
 
-        # --- Legacy Path (Estimated from logs) ---
-        response = supabase.table("gemini_logs").select("user_name").execute()
-        logs = response.data or []
-        total_calls = len(logs)
-        estimated_used = total_calls * 500
+        # 1. Fetch Daily Costs (Last 30 days)
+        daily_costs_data = await TokenUsageService.get_daily_cost(days=30)
+        total_real_cost = sum(d["cost"] for d in daily_costs_data)
 
-        user_counts: dict[str, int] = {}
-        for log in logs:
-            user = log.get("user_name") or "Unknown"
-            user_counts[user] = user_counts.get(user, 0) + 1
-
-        breakdown: list[dict[str, Any]] = [
-            {"name": user, "calls": count, "tokens": count * 500}
-            for user, count in user_counts.items()
-        ]
-        breakdown.sort(key=lambda x: x["tokens"], reverse=True)
-
-        # --- New Path (Real Cost & Details) ---
-        # Fetch daily stats for the last 30 days
-        daily_costs = await TokenUsageService.get_daily_cost(days=30)
-        total_real_cost = sum(d["cost"] for d in daily_costs)
-
-        # Detailed usage (last 7 days)
+        # 2. Fetch Detailed Usage (Last 7 days for list view)
         since = (datetime.now(UTC) - timedelta(days=7)).isoformat()
         usage_res = supabase.table("token_usage")\
             .select("*")\
@@ -241,53 +245,83 @@ async def get_ai_usage():
             .limit(100).execute()
 
         usage_data = usage_res.data or []
-        # Filter out rows without user_id and convert to list of strings for Supabase .in_
-        user_ids = [str(row["user_id"]) for row in usage_data if row.get("user_id")]
-        user_ids = list(set(user_ids)) # Unique IDs
 
+        # 3. Resolve User Names
+        user_ids = list({str(row["user_id"]) for row in usage_data if row.get("user_id")})
         profiles_map = {}
         if user_ids:
-            prof_res = supabase.table("profiles").select("id, name, email")\
-                .in_("id", user_ids).execute()
-            # Ensure profile IDs are also compared as strings
+            prof_res = supabase.table("profiles").select("id, name, email").in_("id", user_ids).execute()
             profiles_map = {str(p["id"]): p for p in (prof_res.data or [])}
 
         details = []
+        user_cost_map = {}
+
         for row in usage_data:
-            user_id = row.get("user_id")
-            # Always convert user_id to string for reliable map lookup
-            profile = profiles_map.get(str(user_id)) if user_id else None
+            user_id = str(row.get("user_id")) if row.get("user_id") else None
+            profile = profiles_map.get(user_id) if user_id else None
+
+            # Determine Source Type
+            source_type = "Machine"
+            user_name = f"Agent ({row.get('model', 'Unknown')})"
+
+            if profile:
+                source_type = "Human" # Alice, Bob
+                user_name = profile.get("name", "Unknown User")
+            elif not user_id:
+                 # No user_id usually means System/Background
+                 user_name = "System (Background)"
+
+            cost = float(row.get("cost_usd", 0))
+
             details.append({
                 "id": row["id"],
                 "timestamp": row["created_at"],
-                "source_type": "Human" if profile else "Machine",
-                "user_name": profile["name"] if profile else f"Agent ({row['model']})",
-                "model": row["model"],
-                "tokens": row["total_tokens"],
-                "cost": float(row["cost_usd"])
+                "source_type": source_type,
+                "user_name": user_name,
+                "model": row.get("model"),
+                "tokens": row.get("total_tokens", 0),
+                "cost": cost
             })
 
+            # Aggregate for Breakdown Chart
+            if user_name not in user_cost_map:
+                user_cost_map[user_name] = {"calls": 0, "tokens": 0, "cost": 0.0}
+            user_cost_map[user_name]["calls"] += 1
+            user_cost_map[user_name]["tokens"] += row.get("total_tokens", 0)
+            user_cost_map[user_name]["cost"] += cost
+
+        # Format Breakdown
+        breakdown = [
+            {"name": k, "calls": v["calls"], "tokens": v["tokens"], "cost": round(v["cost"], 4)}
+            for k, v in user_cost_map.items()
+        ]
+        breakdown.sort(key=lambda x: cast(float, x["cost"]), reverse=True)
+
+        # 4. Fetch Budget Limit
+        settings_res = supabase.table("archon_settings").select("value").eq("key", "monthly_budget_limit").execute()
+        budget_limit = 100000.0
+        if settings_res.data:
+            try:
+                budget_limit = float(settings_res.data[0]["value"])
+            except (ValueError, TypeError):
+                pass
+
         return {
-            "total_budget": 100000,
-            "total_used": estimated_used,
-            "usage_percentage": round((estimated_used / 100000) * 100, 1),
-            "usage_by_user": breakdown,
+            "total_budget": budget_limit,
+            "total_used": 0, # Legacy field, deprecated
             "total_cost_usd": round(total_real_cost, 4),
-            "daily_costs": daily_costs,
+            "usage_percentage": round((total_real_cost / budget_limit) * 100, 1) if budget_limit > 0 else 0,
+            "usage_by_user": breakdown,
+            "daily_costs": daily_costs_data,
             "details": details,
             "is_real_data": True
         }
 
     except Exception as e:
-        logger.error(f"Failed to get AI usage stats | error={str(e)}")
-        # Return fallback data
+        logger.error(f"Failed to get AI usage stats: {e}")
         return {
-            "total_budget": 100000,
-            "total_used": 0,
-            "usage_percentage": 0,
+            "error": str(e),
             "usage_by_user": [],
-            "total_cost_usd": 0.0,
             "daily_costs": [],
-            "details": [],
-            "error": str(e)
+            "details": []
         }

@@ -214,9 +214,15 @@ export interface SystemOverview {
         status: string;
         details?: any;
     };
+    integrity_score?: number;
     errors_24h: number;
-    active_agents: string[];
+    active_agents: { id: string; name: string; role?: string; status: string }[];
     cost_24h: number;
+    knowledge_stats?: { total_nodes: number; total_chunks: number };
+    ethics_status?: { violations_24h: number };
+    collab_score?: number;
+    velocity_score?: number;
+    velocity_in_days?: number;
     timestamp: string;
 }
 
@@ -239,3 +245,19 @@ export interface AiUsageStats {
     }[];
     is_real_data?: boolean;
 }
+
+export interface AlertItem {
+    id: string;
+    level: string;
+    message: string;
+    details?: {
+        company?: string;
+        enrichment_score?: number;
+        days_stale?: number;
+        status?: string;
+        [key: string]: any;
+    };
+    created_at: string;
+}
+
+export type ApprovalItem = BlogPost | any; // Union type for stronger typing later
