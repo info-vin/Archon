@@ -588,28 +588,46 @@ const MarketingPage: React.FC = () => {
                                           )}
                                       </td>
                                       <td className="px-6 py-4 text-right">
-                                          <div className="flex justify-end gap-2">
-                                            {/* Pitch View Button (Shared) */}
+                                          <div className="flex justify-end items-center gap-2">
+                                            {/* Alice's Triple Quick Actions - RESTORED */}
+                                            
+                                            {/* 1. Interaction History (Activity) */}
+                                            <button 
+                                                className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-full transition-all"
+                                                title="Interaction Logs"
+                                                onClick={(e) => { e.stopPropagation(); alert("Activity Tracker: " + lead.company_name); }}
+                                            >
+                                                <RefreshCwIcon className="w-4 h-4" />
+                                            </button>
+
+                                            {/* 2. Map / Location */}
+                                            <button 
+                                                className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-full transition-all"
+                                                title="View on Map"
+                                                onClick={(e) => { e.stopPropagation(); alert("Opening Map for: " + (lead.location_address || lead.company_name)); }}
+                                            >
+                                                <SearchIcon className="w-4 h-4" />
+                                            </button>
+
+                                            {/* 3. AI Generated Pitch */}
                                             {lead.pitch_content && (
-                                                <Button
-                                                    variant="ghost"
-                                                    size="xs"
-                                                    onClick={() => openViewPitchModal(lead)}
-                                                    className="text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50"
-                                                    title="View Generated Pitch"
+                                                <button
+                                                    onClick={(e) => { e.stopPropagation(); openViewPitchModal(lead); }}
+                                                    className="p-2 text-indigo-600 bg-indigo-50 hover:bg-indigo-600 hover:text-white rounded-full shadow-sm transition-all active:scale-90"
+                                                    title="View AI Pitch"
                                                 >
-                                                    View
-                                                </Button>
+                                                    <SparklesIcon className="w-4 h-4" />
+                                                </button>
                                             )}
 
-                                            {/* Promote Button */}
+                                            {/* Promote Button (Primary) */}
                                             {lead.status !== 'converted' && (
                                                 <Button
                                                     variant="outline"
                                                     size="xs"
                                                     accentColor="indigo"
                                                     onClick={() => openPromoteModal(lead)}
-                                                    className="opacity-0 group-hover:opacity-100 transition-opacity"
+                                                    className="ml-1 px-3"
                                                 >
                                                     Promote
                                                 </Button>

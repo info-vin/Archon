@@ -384,19 +384,23 @@ async def generate_pitch(request: PitchRequest, current_user: dict = Depends(get
 
         # 2. LLM Generation
         provider_config = await credential_service.get_active_provider("llm")
-        model_name = provider_config.get("chat_model") or "gpt-4o"
+        # Optimization: Fetch MARKETING_MODEL
+        rag_strategy_creds = await credential_service.get_credentials_by_category("rag_strategy")
+        marketing_model = rag_strategy_creds.get("MARKETING_MODEL")
+        # Alice uses mandated gemini-2.5-flash for high-performance pitch generation
+        model_name = marketing_model or provider_config.get("chat_model") or "gemini-2.5-flash"
 
         # Key Decoupling
-        provider_name = provider_config.get("provider", "openai")
+        provider_name = provider_config.get("provider") or "google"
         api_key = None
-        
+
         if provider_name == "openai":
             api_key = await credential_service.get_credential("OPENAI_API_KEY")
         elif provider_name == "google" or provider_name == "gemini":
             api_key = await credential_service.get_credential("GEMINI_API_KEY") or await credential_service.get_credential("GOOGLE_API_KEY")
         elif provider_name == "anthropic":
             api_key = await credential_service.get_credential("ANTHROPIC_API_KEY")
-            
+
         if not api_key:
              logger.warning(f"No API key found for provider {provider_name}, falling back to Gemini/Google key.")
              api_key = await credential_service.get_credential("GEMINI_API_KEY") or await credential_service.get_credential("GOOGLE_API_KEY")
@@ -405,10 +409,15 @@ async def generate_pitch(request: PitchRequest, current_user: dict = Depends(get
         system_prompt = prompt_service.get_prompt("SALES_PITCH", SALES_PITCH_SYSTEM_PROMPT)
         user_prompt = f"Target Company: {request.company}\nHiring For: {request.job_title}\n\nContext:\n{context_text}"
 
+        # Model Name Calibration (Feb 2026 Resilience)
+        # Use split()[-1] to ensure we only have the final model ID (e.g. gemini-2.5-flash)
+        # Stripping any vendor prefixes which cause 404 in v1beta OpenAI-compatible mode
+        safe_model_name = model_name.split("/")[-1]
+
         try:
             async with get_llm_client(api_key=api_key, provider=provider_name) as client:
                 response = await client.chat.completions.create(
-                    model=model_name,
+                    model=safe_model_name,
                     messages=[{"role": "system", "content": system_prompt}, {"role": "user", "content": user_prompt}],
                     temperature=0.7
                 )
@@ -416,13 +425,31 @@ async def generate_pitch(request: PitchRequest, current_user: dict = Depends(get
         except Exception as pitch_error:
              logger.error(f"API: Pitch Generation Failed | error={pitch_error}")
 
-             # Log SYSTEM_ALERT
+             # Log SYSTEM_ALERT for Audit
              LogService(get_supabase_client()).create_log_entry({
                  "user_input": f"SYSTEM_ALERT: Pitch Gen Failure [{type(pitch_error).__name__}]",
                  "gemini_response": f"Mock Fallback Activated. Error: {str(pitch_error)}",
                  "project_name": "sales_bot",
                  "user_name": "system"
              })
+
+             # BROADCAST TO CHARLIE (Manager Nexus)
+             try:
+                 get_supabase_client().table("archon_logs").insert({
+                     "level": "ALERT",
+                     "source": "SalesBot",
+                     "type": "system",
+                     "message": f"AI Pitch Generation Failed: {str(pitch_error)[:100]}",
+                     "details": {
+                         "error": str(pitch_error),
+                         "user_id": current_user.get("id"),
+                         "action": "generate_pitch",
+                         "company": request.company,
+                         "model": safe_model_name
+                     }
+                 }).execute()
+             except Exception as log_err:
+                 logger.warning(f"Failed to broadcast alert to Charlie: {log_err}")
 
              content = f"""Subject: Transforming {request.company}'s Workflow with Archon\n\nHi there,\n\nI noticed {request.company} is hiring for {request.job_title}. Archon can help.\n\n(Generated via Fallback due to AI service unavailability)"""
 
@@ -819,6 +846,11 @@ async def reject_suggestion(
         if not api_key:
              api_key = await credential_service.get_credential("GOOGLE_API_KEY")
 
+        # Use Config-driven model instead of hardcoded
+        provider_config = await credential_service.get_active_provider("llm")
+        model_id = provider_config.get("chat_model") or "gemini-2.0-flash"
+        safe_model_id = model_id.replace("models/", "")
+
         # Construct Prompt
         prompt = REJECTION_REASON_PROMPT.format(
             title=post.get("title", "Untitled"),
@@ -830,10 +862,9 @@ async def reject_suggestion(
         # Use GenAI Client directly for consistent behavior
         try:
             client = genai.Client(api_key=api_key)
-            model_id = "gemini-2.0-flash"
 
             response = client.models.generate_content(
-                model=model_id,
+                model=safe_model_id,
                 contents=prompt
             )
             suggestion = response.text
@@ -919,7 +950,8 @@ async def draft_blog_post(request: DraftBlogRequest, current_user: dict = Depend
         # Optimization: Fetch MARKETING_MODEL
         rag_strategy_creds = await credential_service.get_credentials_by_category("rag_strategy")
         marketing_model = rag_strategy_creds.get("MARKETING_MODEL")
-        model_name = marketing_model or provider_config.get("chat_model") or "gpt-4o"
+        # Align to high-efficiency model for Bob
+        model_name = marketing_model or provider_config.get("chat_model") or "gemini-2.5-flash-lite"
 
         # Key Decoupling: Prefer GEMINI_API_KEY for Marketing, fallback to GOOGLE_API_KEY
         marketing_api_key = await credential_service.get_credential("GEMINI_API_KEY")
@@ -968,6 +1000,11 @@ async def draft_blog_post(request: DraftBlogRequest, current_user: dict = Depend
             f"<reference_context>\n{context_text}\n</reference_context>{lang_instruction}"
         )
 
+        # Model Name Calibration (Feb 2026 Resilience)
+        # Use split()[-1] to strip any vendor prefixes like 'models/' or 'google/'
+        # This is critical for compatibility across different LLM provider entry points
+        safe_model_name = model_name.split("/")[-1]
+
         request_id = f"blog-{uuid.uuid4().hex[:8]}"
         user_id = current_user.get("id")
 
@@ -985,7 +1022,7 @@ async def draft_blog_post(request: DraftBlogRequest, current_user: dict = Depend
 
             # JSON-mode response with Gemini 2.5 Flash Lite
             response = client.models.generate_content(
-                model=model_name,
+                model=safe_model_name,
                 contents=cast(Any, [user_prompt]),
                 config=types.GenerateContentConfig(
                     system_instruction=system_prompt,
@@ -1010,7 +1047,7 @@ async def draft_blog_post(request: DraftBlogRequest, current_user: dict = Depend
                 asyncio.create_task(TokenUsageService.log_usage(
                     request_id=request_id,
                     user_id=user_id,
-                    model=model_name,
+                    model=safe_model_name,
                     provider="google",
                     input_tokens=input_tokens,
                     output_tokens=output_tokens,
@@ -1021,7 +1058,7 @@ async def draft_blog_post(request: DraftBlogRequest, current_user: dict = Depend
 
         except Exception as llm_error:
             # 429/5xx Fallback Logic
-            logger.warning(f"API: Primary Model ({model_name}) failed. Attempting downgrade to gemini-1.5-pro.")
+            logger.warning(f"API: Primary Model ({safe_model_name}) failed. Attempting downgrade to gemini-1.5-pro.")
             try:
                 # Fallback to standard Google API Key (Search) if Marketing key is exhausted
                 fallback_key = await credential_service.get_credential("GOOGLE_API_KEY")
@@ -1040,17 +1077,35 @@ async def draft_blog_post(request: DraftBlogRequest, current_user: dict = Depend
                 result = safe_json_loads(fallback_text)
                 model_name = "gemini-1.5-pro (fallback)"
 
-            except Exception:
+            except Exception as final_err:
                 # Robust Mock Fallback
-                logger.error(f"API: ALL LLM Generation Failed | model={model_name} | error={str(llm_error)}", exc_info=True)
+                logger.error(f"API: ALL LLM Generation Failed | model={safe_model_name} | error={str(llm_error)}", exc_info=True)
 
-                # Log SYSTEM_ALERT
+                # Log SYSTEM_ALERT for Audit
                 LogService(get_supabase_client()).create_log_entry({
                     "user_input": f"SYSTEM_ALERT: Blog Draft Failure [{type(llm_error).__name__}]",
                     "gemini_response": f"Mock Fallback Activated. Error: {str(llm_error)}",
                     "project_name": "marketing_bot",
                     "user_name": "system"
                 })
+
+                # BROADCAST TO CHARLIE (Manager Nexus) - GAP-027
+                try:
+                    get_supabase_client().table("archon_logs").insert({
+                        "level": "ALERT",
+                        "source": "MarketingBot",
+                        "type": "system",
+                        "message": f"AI Blog Generation FAILED (429/Error): {str(llm_error)[:100]}",
+                        "details": {
+                            "error": str(llm_error),
+                            "final_error": str(final_err),
+                            "user_id": current_user.get("id"),
+                            "model": safe_model_name,
+                            "topic": request.topic
+                        }
+                    }).execute()
+                except Exception:
+                    pass
 
                 # Fallback Content
                 result = {
@@ -1127,11 +1182,12 @@ async def nana_banana_proxy(
     # REALITY CHECK (Feb 2026): Use Nano Banana Gemini 2.0 Flash (latest stable)
     rag_strategy_creds = await credential_service.get_credentials_by_category("rag_strategy")
     imagen_model = rag_strategy_creds.get("MARKETING_IMAGE_MODEL") or "gemini-2.0-flash-exp"
+    safe_imagen_model = imagen_model.replace("models/", "")
 
     prompt = request.get("prompt", "A futuristic digital artwork of a high-tech dashboard")
     # Mapping old aspect ratios to new SDK if needed, for now use direct
 
-    logger.info(f"API: Nano Banana Call ({imagen_model}) | user={current_user.get('email')}")
+    logger.info(f"API: Nano Banana Call ({safe_imagen_model}) | user={current_user.get('email')}")
 
     try:
         # Use synchronous Client for now or wrap in thread if SDK is blocking
@@ -1140,7 +1196,7 @@ async def nana_banana_proxy(
 
         # Call the new generate_content model for Image Modality
         response = client.models.generate_content(
-            model=imagen_model,
+            model=safe_imagen_model,
             contents=cast(Any, [prompt]),
             config=types.GenerateContentConfig(
                 response_modalities=['IMAGE'],
@@ -1167,7 +1223,7 @@ async def nana_banana_proxy(
             asyncio.create_task(TokenUsageService.log_usage(
                 request_id=f"img-{uuid.uuid4().hex[:8]}",
                 user_id=current_user.get("id"),
-                model=imagen_model,
+                model=safe_imagen_model,
                 provider="google",
                 input_tokens=len(prompt), # Simple heuristic
                 output_tokens=2000, # Image weight
@@ -1315,18 +1371,19 @@ async def reset_leads(current_user: dict = Depends(get_current_user)):
 
 @router.get("/manager/alerts")
 async def get_manager_alerts(current_user: dict = Depends(get_current_user)):
-    """Fetch high-priority alerts for the Manager Dashboard."""
+    """Fetch high-priority BUSINESS alerts for the Manager Dashboard."""
     user_role = current_user.get("role", "viewer")
     if user_role not in ["manager", "admin"]:
         raise HTTPException(status_code=403, detail="Access Denied")
 
     supabase = get_supabase_client()
     try:
-        # Fetch alerts created by Sentinel
+        # Fetch only business-level alerts (like Sentinel or Lead risks) for the Manager
+        # We filter by source to keep the Risk Radar focused on operations, not devops errors
         res = supabase.table("archon_logs")\
             .select("*")\
-            .eq("source", "sentinel")\
             .eq("level", "ALERT")\
+            .in_("source", ["sentinel", "LeadScoring", "BusinessGuard"])\
             .order("created_at", desc=True)\
             .limit(50)\
             .execute()

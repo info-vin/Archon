@@ -38,6 +38,7 @@ def mock_dependencies():
 
         # Mock Credentials
         mock_creds.get_credential = AsyncMock(return_value="fake-api-key")
+        mock_creds.get_active_provider = AsyncMock(return_value={"chat_model": "gemini-2.0-flash", "provider": "google"})
 
         # Mock GenAI
         mock_genai_instance = mock_genai.return_value

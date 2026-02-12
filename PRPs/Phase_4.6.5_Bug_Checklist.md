@@ -10,9 +10,9 @@
 
 |指標 (Metric)|數量 (Count)|詳細資訊 (Details)|
 |:---|:---|:---|
-|**總議題數**|27|涵蓋 UX 流程、資料一致性、系統重置可靠性與開發者體驗 (DX)。|
-|**已完成修正**|10|BUG-027, BUG-031, BUG-032, BUG-033, BUG-034, BUG-037, GAP-018, GAP-020, GAP-021, GAP-022 驗證正常。|
-|**待驗證/討論**|17|其餘項目包含功能缺口、樣式優化與技術債重構。|
+|**總議題數**|35|涵蓋 UX 流程、資料一致性、系統重置可靠性與全盤指揮官 HUD 落地。|
+|**已完成修正**|12|BUG-027, BUG-031, BUG-032, BUG-033, BUG-034, BUG-037, GAP-018, GAP-020, GAP-021, GAP-022, GAP-027, GAP-035 驗證正常。|
+|**待驗證/討論**|23|其餘項目包含剩餘 7 個指揮官圖表、樣式優化與技術債重構。|
 
 ---
 
@@ -21,7 +21,16 @@
 | ID | 類型 (Type) | 角色 | 模組 | 問題描述 | 嚴重度 | 狀態 |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
 | **BUG-037** | 🐛 Bug | **Admin** | **System** | **Agent 數量顯示矛盾 (SSOT 已修復)**。Header 計數與狀態燈列表已統一由後端回傳之狀態物件驅動。驗證方式：1. 觀察計數值與綠燈數量是否 1:1 絕對吻合；2. 執行 `make probe` 後重新整理，確認對應 Agent (Librarian) 轉為 Active 且計數加 1。 | High | 🟢 已修復 |
-| **GAP-027** | 🔧 Gap | **Charlie** | **Nexus** | **指揮官中樞 (Managerial Nexus) 實作**。整合 5, 6, 7, 8 面板，提供 9 軸 HUD 與「點擊下鑽」診斷功能。管理者可直接定位 429 來源、模型成本分佈與成員負載瓶頸，實現「知道問題出在哪裡」的深度決策。 | High | 🟡 待驗證 |
+| **BUG-038** | 🐛 Bug | **All** | **AI/Gemini** | **Gemini 404 & Model Alignment (SSOT 已修復)**。原因：1. 資料庫設定 (`MARKETING_MODEL`) 存有舊模型 `1.5-flash` 覆蓋了程式碼預設值；2. Google API 會因模型名稱前綴或髒路徑自動跳轉至不支援該模型的 `v1main` 接口。修復：1. 底層物理鎖定 `v1beta/openai/` 路徑；2. 實施 `split("/")[-1]` 名稱校準；3. 手動同步 RAGSettings 至 `gemini-2.5-flash`。驗證：Alice 提案生成已恢復正常且具備 429 警報廣播。 | High | 🟢 已修復 |
+| **GAP-027** | 🔧 Gap | **Charlie** | **Nexus** | **指揮官中樞: Integrity (系統完整度)**。已實作：1. 加權評分模型 (知識 70% + 連線 30%)；2. 30 天雙曲線趨勢圖 (Daily vs Baseline)；3. 真實每小時稽核日誌。 | High | 🟢 已修復 |
+| **GAP-035** | 🔧 Gap | **Charlie** | **Nexus** | **指揮官中樞: Resources (資源與人機協作)**。已實作：1. 全角色 (Alice, Bob, Admin, System) 任務剖析；2. 區分 Crawler 與 GenAI 消耗；3. 30 天累計預算消耗圖與 $100 紅線同步。 | High | 🟢 已修復 |
+| **GAP-028** | 🔧 Gap | **Charlie** | **Nexus** | **指揮官中樞: Op Load (營運負載)**。待實作：展示「待決策任務隊列」。包含待審核部落格、Alice 提案堆疊與平均決策時長。 | Medium | ⚪ 待處理 |
+| **GAP-029** | 🔧 Gap | **Charlie** | **Nexus** | **指揮官中樞: Sent Risks (風險雷達)**。待實作：展示「業務風險預警」。聚焦 Stale Leads (14天未動) 與流程卡點，嚴格排除技術噪聲。 | High | ⚪ 待處理 |
+| **GAP-030** | 🔧 Gap | **Charlie** | **Nexus** | **指揮官中樞: Act Force (活躍武力)**。待實作：展示「團隊與 Agent 狀態」。人機在線情況、當前戰鬥力評級與自動化率。 | Medium | ⚪ 待處理 |
+| **GAP-031** | 🔧 Gap | **Charlie** | **Nexus** | **指揮官中樞: Ethics (倫理/合規)**。待實作：展示「Guardrail 監控」。攔截統計、ISO-27001 遵循度趨勢與潛在合規風險。 | Low | ⚪ 待處理 |
+| **GAP-032** | 🔧 Gap | **Charlie** | **Nexus** | **指揮官中樞: Collab (協作分數)**。待實作：展示「Synergy 矩陣」。跨部門 (Sales/Mkt) 任務流轉頻率與協作熱力圖。 | Low | ⚪ 待處理 |
+| **GAP-033** | 🔧 Gap | **Charlie** | **Nexus** | **指揮官中樞: Graph (情報圖譜)**。待實作：展示「知識庫覆蓋率」。產業情資密度、競爭對手追蹤進度與資料新鮮度。 | Medium | ⚪ 待處理 |
+| **GAP-034** | 🔧 Gap | **Charlie** | **Nexus** | **指揮官中樞: Velocity (生產速率)**。待實作：展示「任務結案週期」。Lead 轉化平均天數、SLA 達成率趨勢圖。 | Medium | ⚪ 待處理 |
 | **BUG-027** | 🐛 Bug | **Charlie** | **Team** | Charlie 在 Team Management 面板看不到 Alice 自己開的單。已啟用後端 assigne_id 過濾與前端分頁擴增。 | High | 🟢 已修復 |
 | **BUG-030** | 🐛 Bug | **All** | **Color** | Dashboard 狀態與優先級燈色失效. 已修復 API 回傳缺少 priority 欄位與 ETag 計算問題。已驗證 List, Table, Kanban 所有視圖同步反應。 | High | 🟢 已修復 |
 | **UX-013** | 🎨 Style | **Alice** | **UI/Date**| 日期時間選擇器更換。已實作 `MobileDateTimePicker` 大目標觸控組件，解決手機選取困難並新增業務快捷鍵 (明天/三天後)。已修復單元測試定位問題。 | High | 🟢 已修復 |
@@ -66,6 +75,11 @@
 
 ## 🛠 修復紀錄 (Fix Log)
 
+*   **2026-02-12 (Round 11: Professional Commander Dashboard & Tablet Optimization)**:
+    *   **Integrity (GAP-027)**: 落地「知識+連線」加權評分模型 (70/15/15)。實作專業 30 天雙曲線趨勢圖，支持每日垂直格線與每週日期標籤。
+    *   **Resources (GAP-035)**: 實作全角色人機協作矩陣。包含 Alice, Bob, Charlie, Admin, System。精確區分 Crawler/Research 與 GenAI 消耗，USD/Tokens 與 Admin Health 100% SSOT 對齊。
+    *   **UX/Tablet**: 實作「詳細視圖最大化」模式。點擊右上角 Maximize 進入全螢幕聚焦分析，圖表放大至 500px，字體與對比度優化。
+    *   **Data Fuel**: 執行 `reconstruct_health_history.py` 與 `reconstruct_token_history.py` 注入 30 天真實邏輯歷史數據。
 *   **2026-02-11 (Round 10: Commander Nexus & SSOT Fix)**:
     *   **Nexus**: 實作 `ManagerNexus.tsx` (指揮官中樞)，整合 5, 6, 7, 8 面板並提供 HUD 下鑽診斷。
     *   **SSOT**: 徹底修復 BUG-037，後端動態檢測活躍 Agent，前端取消寫死列表，計數與燈號 100% 同步。

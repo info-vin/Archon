@@ -420,15 +420,17 @@ async def get_llm_client(
 
             # Google's OpenAI-compatible endpoint requires the key in a specific header
             # rather than the standard Authorization: Bearer header.
-            # FIX: Force v1beta endpoint to avoid "v1main not found" errors
-            google_base_url = base_url or "https://generativelanguage.googleapis.com/v1beta/openai/"
+            # FIX: We strictly use the v1beta/openai path to support latest Gemini models (2.0/2.5)
+            # and prevent the system from falling back to the unsupported v1main endpoint.
+            # We explicitly ignore the 'base_url' variable here to avoid dirty config overrides.
+            google_base_url = "https://generativelanguage.googleapis.com/v1beta/openai/"
 
             client = openai.AsyncOpenAI(
                 api_key=resolved_api_key,
                 base_url=google_base_url,
                 default_headers={"x-goog-api-key": resolved_api_key.strip()}
             )
-            logger.info("Google Gemini client created successfully (OpenAI-compatible)")
+            logger.info("Google Gemini client created successfully (v1beta OpenAI-compatible)")
 
         elif provider_name == "openrouter":
             if not resolved_api_key:

@@ -28,7 +28,7 @@ const AdminPage: React.FC = () => {
 
       <div className="border-b border-border mb-6">
         <nav className="-mb-px flex space-x-8 overflow-x-auto" aria-label="Tabs">
-          {!isOnlyManager && <TabButton title="System Health" isActive={activeTab === 'health'} onClick={() => setActiveTab('health')} />}
+          <TabButton title="System Health" isActive={activeTab === 'health'} onClick={() => setActiveTab('health')} />
           {!isOnlyManager && <TabButton title="User Management" isActive={activeTab === 'users'} onClick={() => setActiveTab('users')} />}
           <TabButton title="System Settings" isActive={activeTab === 'settings'} onClick={() => setActiveTab('settings')} />
           <TabButton title="Data Extraction" isActive={activeTab === 'extraction'} onClick={() => setActiveTab('extraction')} />
@@ -39,7 +39,7 @@ const AdminPage: React.FC = () => {
       </div>
 
       <div className="flex-1 overflow-auto">
-        {activeTab === 'health' && !isOnlyManager && <SystemHealthDashboard />}
+        {activeTab === 'health' && <SystemHealthDashboard />}
         {activeTab === 'users' && !isOnlyManager && <IdentityMatrix />}
         {activeTab === 'settings' && <SystemSettings />}
         {activeTab === 'extraction' && <ExtractionManager />}

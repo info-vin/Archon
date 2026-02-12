@@ -798,6 +798,25 @@ const supabaseApi = {
     return response.json();
   },
 
+  async getConnectivityLogs(): Promise<any[]> {
+    const response = await fetch('/api/system/logs/connectivity', {
+        headers: await this._getHeaders()
+    });
+    if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.detail || 'Failed to fetch connectivity logs');
+    }
+    return response.json();
+  },
+
+  async getHealthTrend(): Promise<{ trend: any[]; audit: any[] }> {
+    const response = await fetch('/api/stats/health-trend', {
+        headers: await this._getHeaders()
+    });
+    if (!response.ok) throw new Error('Failed to fetch health trend');
+    return response.json();
+  },
+
 
 
   async getManagerAlerts(): Promise<import('../types.ts').AlertItem[]> {

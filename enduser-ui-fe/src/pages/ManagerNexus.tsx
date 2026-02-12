@@ -6,10 +6,15 @@ import {
     CheckCircleIcon, RefreshCwIcon, AlertTriangleIcon, ActivityIcon, 
     ShieldCheckIcon, DatabaseIcon, UsersIcon, 
     GitCommitIcon, SearchIcon,
-    UserIcon, DollarSignIcon, ClockIcon, ZapIcon
+    DollarSignIcon, ClockIcon, ZapIcon,
+    MaximizeIcon, MinimizeIcon
 } from '../components/Icons';
 import { ManageMemberModal } from '../features/team/components/ManageMemberModal';
 import UserAvatar from '../components/UserAvatar';
+
+import { 
+    Line, XAxis, YAxis, CartesianGrid, Tooltip as ReTooltip, ResponsiveContainer, AreaChart, Area
+} from 'recharts';
 
 // --- Types ---
 type MetricCategory = 'integrity' | 'resources' | 'op_load' | 'sent_risks' | 'active_force' | 'ethics' | 'collab' | 'graph' | 'velocity';
@@ -28,17 +33,35 @@ interface RulesMetadata {
 
 // --- Components ---
 
-const DetailSection: React.FC<{title: string, subtitle: string, children: React.ReactNode, icon?: React.ReactNode}> = ({title, subtitle, children, icon}) => (
-    <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden animate-in slide-in-from-bottom-4 duration-500">
+const DetailSection: React.FC<{
+    title: string, 
+    subtitle: string, 
+    children: React.ReactNode, 
+    icon?: React.ReactNode,
+    isMaximized?: boolean,
+    onToggleMaximize?: () => void
+}> = ({title, subtitle, children, icon, isMaximized, onToggleMaximize}) => (
+    <div className={`
+        bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden animate-in slide-in-from-bottom-4 duration-500
+        ${isMaximized ? 'fixed inset-4 z-[60] shadow-2xl flex flex-col' : ''}
+    `}>
         <div className="p-6 border-b border-gray-50 flex items-start justify-between bg-gray-50/30">
             <div>
-                <h3 className="text-lg font-black text-gray-800 tracking-tight flex items-center gap-2">
+                <h3 className={`font-black text-gray-800 tracking-tight flex items-center gap-2 ${isMaximized ? 'text-2xl' : 'text-lg'}`}>
                     {icon} {title}
                 </h3>
-                <p className="text-xs text-gray-500 font-medium mt-1 uppercase tracking-wide">{subtitle}</p>
+                <p className={`text-gray-500 font-medium mt-1 uppercase tracking-wide ${isMaximized ? 'text-sm' : 'text-xs'}`}>{subtitle}</p>
             </div>
+            {onToggleMaximize && (
+                <button 
+                    onClick={onToggleMaximize}
+                    className="p-2 hover:bg-gray-200/50 rounded-full transition-colors text-gray-400 hover:text-indigo-600"
+                >
+                    {isMaximized ? <MinimizeIcon className="w-6 h-6" /> : <MaximizeIcon className="w-5 h-5" />}
+                </button>
+            )}
         </div>
-        <div className="p-6">
+        <div className={`p-6 ${isMaximized ? 'flex-1 overflow-y-auto' : ''}`}>
             {children}
         </div>
     </div>
@@ -90,11 +113,13 @@ const HUDCard: React.FC<{
 
 export const ManagerNexus: React.FC = () => {
     const { user } = useAuth();
-    const [activeMetric, setActiveMetric] = useState<MetricCategory>('op_load');
+    const [activeMetric, setActiveMetric] = useState<MetricCategory>('integrity');
+    const [isMaximized, setIsMaximized] = useState(false);
     const [loading, setLoading] = useState(true);
     
     // Data States
     const [overview, setOverview] = useState<SystemOverview | null>(null);
+    const [healthTrend, setHealthTrend] = useState<{ trend: any[], audit: any[] }>({ trend: [], audit: [] });
     const [team, setTeam] = useState<Employee[]>([]);
     const [approvals, setApprovals] = useState<{blogs: any[], leads: any[]}>({blogs: [], leads: []});
     const [alerts, setAlerts] = useState<AlertItem[]>([]);
@@ -151,6 +176,13 @@ export const ManagerNexus: React.FC = () => {
                      console.error("Failed to parse scoring rules", e);
                  }
             }
+            
+            // Separated for resilience
+            api.getHealthTrend().then(data => {
+                console.log("📈 Nexus Health Trend Loaded:", data.trend.length, "points");
+                setHealthTrend(data);
+            }).catch(e => console.error("Trend Load Failed", e));
+
         } catch (e) {
             console.error("Nexus Load Failed", e);
         } finally {
@@ -252,59 +284,263 @@ export const ManagerNexus: React.FC = () => {
 
     const renderDetail = () => {
         switch (activeMetric) {
-            case 'resources':
+            case 'integrity':
                 return (
-                    <DetailSection title="Token Consumption Audit" subtitle="Human vs Machine Resource Allocation" icon={<DollarSignIcon className="w-5 h-5 text-indigo-600"/>}>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                            {/* Human Consumption */}
-                            <div className="space-y-4">
-                                <div className="flex items-center justify-between">
-                                    <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
-                                        <UserIcon className="w-4 h-4" /> Human
-                                    </h4>
+                    <DetailSection 
+                        title="System Integrity Analysis" 
+                        subtitle="RAG Vector Quality & Node Alignment (30D)" 
+                        icon={<ShieldCheckIcon className="w-5 h-5 text-indigo-600"/>}
+                        isMaximized={isMaximized}
+                        onToggleMaximize={() => setIsMaximized(!isMaximized)}
+                    >
+                        <div className="space-y-8">
+                            {/* Professional Chart Section */}
+                            <div className="bg-white rounded-3xl border border-gray-100 p-6 shadow-sm">
+                                <div className="flex justify-between items-center mb-6">
+                                    <div>
+                                        <h4 className={`font-black text-gray-800 uppercase tracking-tight ${isMaximized ? 'text-lg' : 'text-sm'}`}>Health Variance Trend</h4>
+                                        <p className="text-[10px] text-gray-400 font-bold uppercase mt-0.5">Y-Axis: Integrity Score (%) | X-Axis: 30 Day Timeline</p>
+                                    </div>
+                                    <div className="flex gap-4">
+                                        <div className="flex items-center gap-1.5"><div className="w-3 h-0.5 bg-indigo-600" /><span className="text-[10px] font-bold text-gray-500 uppercase">Daily Avg</span></div>
+                                        <div className="flex items-center gap-1.5"><div className="w-3 h-0.5 bg-gray-300 border-t border-dashed border-gray-400" /><span className="text-[10px] font-bold text-gray-500 uppercase">Monthly Baseline</span></div>
+                                    </div>
                                 </div>
-                                <div className="space-y-2">
-                                    {aiStats?.usage_by_user?.filter((u: any) => !u.name.toLowerCase().includes('agent') && !u.name.toLowerCase().includes('system')).map((user: any) => (
-                                         <div key={user.name} className="bg-gray-50 p-3 rounded-xl flex justify-between items-center">
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-2 h-2 rounded-full bg-blue-500"></div>
-                                                <span className="text-sm font-bold text-gray-700">{user.name}</span>
-                                            </div>
-                                            <div className="text-right">
-                                                <div className="text-xs font-mono text-gray-500">{user.tokens.toLocaleString()} tkns</div>
-                                                <div className="text-[10px] text-gray-400">${user.cost.toFixed(4)}</div>
-                                            </div>
-                                        </div>
-                                    ))}
-                                    {(!aiStats?.usage_by_user || aiStats.usage_by_user.filter((u: any) => !u.name.toLowerCase().includes('agent')).length === 0) && (
-                                        <div className="text-xs text-gray-400 text-center py-4">No human usage recorded.</div>
-                                    )}
+                                
+                                <div className={`${isMaximized ? 'h-[500px]' : 'h-[320px]'} w-full transition-all duration-500`} key={`${activeMetric}-${isMaximized}`}>
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <AreaChart data={healthTrend.trend.length > 0 ? healthTrend.trend : [{date: '', daily: 100, baseline: 100}]}>
+                                            <defs>
+                                                <linearGradient id="colorDaily" x1="0" y1="0" x2="0" y2="1">
+                                                    <stop offset="5%" stopColor="#6366f1" stopOpacity={0.1}/>
+                                                    <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
+                                                </linearGradient>
+                                            </defs>
+                                            <CartesianGrid strokeDasharray="3 3" vertical={true} stroke="#f1f5f9" />
+                                            <XAxis 
+                                                dataKey="date" 
+                                                axisLine={false} 
+                                                tickLine={false} 
+                                                interval={0}
+                                                tick={(props) => {
+                                                    const { x, y, payload, index } = props;
+                                                    // 每 7 天顯示一次標籤 (0, 7, 14, 21, 28)
+                                                    if (index % 7 !== 0 && index !== healthTrend.trend.length - 1) return <g/>;
+                                                    return (
+                                                        <text x={x} y={(Number(y) || 0) + 12} fontSize={10} fontWeight={800} fill="#94a3b8" textAnchor="middle" className="uppercase">
+                                                            {payload.value}
+                                                        </text>
+                                                    );
+                                                }}
+                                            />
+                                            <YAxis 
+                                                domain={['dataMin - 1', 100]} 
+                                                axisLine={false} 
+                                                tickLine={false} 
+                                                tick={{fontSize: 10, fontWeight: 700, fill: '#94a3b8'}}
+                                                dx={-10}
+                                                ticks={[90, 92, 94, 96, 98, 100]} // 指定專業刻度
+                                            />
+                                            <ReTooltip 
+                                                contentStyle={{borderRadius: '16px', border: 'none', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)', fontSize: '12px', fontWeight: 'bold'}}
+                                                cursor={{stroke: '#4f46e5', strokeWidth: 1, strokeDasharray: '4 4'}}
+                                            />
+                                            <Area 
+                                                type="monotone" 
+                                                dataKey="daily" 
+                                                stroke="#4f46e5" 
+                                                strokeWidth={3} 
+                                                fillOpacity={1} 
+                                                fill="url(#colorDaily)" 
+                                                animationDuration={1500}
+                                                dot={{ r: 2, fill: '#4f46e5', strokeWidth: 2, stroke: '#fff' }}
+                                                activeDot={{ r: 6, strokeWidth: 0 }}
+                                            />
+                                            <Line 
+                                                type="monotone" 
+                                                dataKey="baseline" 
+                                                stroke="#cbd5e1" 
+                                                strokeDasharray="5 5" 
+                                                strokeWidth={2} 
+                                                dot={false}
+                                                animationDuration={2000}
+                                            />
+                                        </AreaChart>
+                                    </ResponsiveContainer>
                                 </div>
                             </div>
 
-                            {/* Bot Consumption */}
+                            {/* Real Integrity Audit Trail */}
                             <div className="space-y-4">
-                                <div className="flex items-center justify-between">
-                                    <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
-                                        <ZapIcon className="w-4 h-4" /> Machine
-                                    </h4>
-                                </div>
-                                <div className="space-y-2">
-                                    {aiStats?.usage_by_user?.filter((u: any) => u.name.toLowerCase().includes('agent') || u.name.toLowerCase().includes('system')).map((bot: any) => (
-                                        <div key={bot.name} className="bg-indigo-50/50 p-3 rounded-xl flex justify-between items-center border border-indigo-100">
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></div>
-                                                <span className="text-sm font-bold text-indigo-700">{bot.name}</span>
+                                <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest px-1">System Health Audit Trail</h4>
+                                <div className="bg-gray-50 rounded-3xl border border-gray-100 divide-y divide-gray-200 overflow-hidden">
+                                    {healthTrend.audit.length > 0 ? healthTrend.audit.map((log: any, idx: number) => {
+                                        const details = log.details || {};
+                                        const total = details.total_sources || 0;
+                                        const indexed = details.indexed_sources || 0;
+                                        const score = details.score || 0;
+                                        const dbOk = details.db_connected !== false;
+                                        const searchOk = details.search_active !== false;
+                                        
+                                        return (
+                                            <div key={idx} className="p-4 flex justify-between items-center bg-white hover:bg-gray-50 transition-colors">
+                                                <div>
+                                                    <div className="text-sm font-bold text-gray-800">
+                                                        Integrity Audit: {score}%
+                                                    </div>
+                                                    <div className="flex gap-3 mt-1 text-[9px] font-black uppercase tracking-tighter">
+                                                        <span className={indexed/total >= 0.95 ? 'text-green-600' : 'text-amber-600'}>Align: {indexed}/{total}</span>
+                                                        <span className={dbOk ? 'text-green-600' : 'text-red-600'}>DB: {dbOk ? 'READY' : 'LOST'}</span>
+                                                        <span className={searchOk ? 'text-green-600' : 'text-red-600'}>Search: {searchOk ? 'ACTIVE' : 'FAIL'}</span>
+                                                    </div>
+                                                    <div className="text-[10px] text-gray-400 font-mono mt-2">
+                                                        {new Date(log.created_at).toLocaleString()} | Operator: Clockwork
+                                                    </div>
+                                                </div>
+                                                <span className={`text-[10px] font-black px-2.5 py-1 rounded-full ${
+                                                    log.level === 'INFO' ? 'text-green-600 bg-green-50' : 'text-amber-600 bg-amber-50'
+                                                }`}>
+                                                    {log.level}
+                                                </span>
                                             </div>
-                                            <div className="text-right">
-                                                <span className="text-xs font-mono text-indigo-600">{bot.tokens.toLocaleString()} tkns</span>
-                                                <div className="text-[10px] text-indigo-400">${bot.cost.toFixed(4)}</div>
+                                        );
+                                    }) : (
+                                        <div className="p-12 text-center text-gray-400 text-xs font-bold uppercase italic">
+                                            No recent health events found
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    </DetailSection>
+                );
+
+            case 'resources':
+                return (
+                    <DetailSection 
+                        title="Synergy & Resource Audit" 
+                        subtitle="Human-Bot Collaboration Window & Budget Burn-up" 
+                        icon={<DollarSignIcon className="w-5 h-5 text-indigo-600"/>}
+                        isMaximized={isMaximized}
+                        onToggleMaximize={() => setIsMaximized(!isMaximized)}
+                    >
+                        <div className="space-y-8">
+                            {/* 1. Monetary Burn-up Chart - Style Matched to Integrity */}
+                            <div className="bg-white rounded-3xl border border-gray-100 p-6 shadow-sm">
+                                <div className="flex justify-between items-center mb-6">
+                                    <div>
+                                        <h4 className={`font-black text-gray-800 uppercase tracking-tight ${isMaximized ? 'text-lg' : 'text-sm'}`}>Monetary Burn-up</h4>
+                                        <p className="text-[10px] text-gray-400 font-bold uppercase mt-0.5">Y-Axis: Cumulative USD | X-Axis: 30 Day Timeline</p>
+                                    </div>
+                                    <div className="text-right">
+                                        <div className={`font-black text-indigo-600 tracking-tighter ${isMaximized ? 'text-3xl' : 'text-xl'}`}>${aiStats?.total_monthly_usd?.toFixed(2)}</div>
+                                        <div className="text-[8px] font-black text-gray-400 uppercase">{(aiStats?.total_monthly_tokens / 1000000).toFixed(2)}M Tokens Transferred</div>
+                                    </div>
+                                </div>
+                                
+                                <div className={`${isMaximized ? 'h-[450px]' : 'h-[280px]'} w-full transition-all duration-500`} key={`burn-${activeMetric}-${isMaximized}`}>
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <AreaChart data={aiStats?.burn_trend || []}>
+                                            <defs>
+                                                <linearGradient id="colorBurn" x1="0" y1="0" x2="0" y2="1">
+                                                    <stop offset="5%" stopColor="#6366f1" stopOpacity={0.1}/>
+                                                    <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
+                                                </linearGradient>
+                                            </defs>
+                                            <CartesianGrid strokeDasharray="3 3" vertical={true} stroke="#f1f5f9" />
+                                            <XAxis 
+                                                dataKey="date" 
+                                                axisLine={false} 
+                                                tickLine={false} 
+                                                tick={{fontSize: 9, fontWeight: 800, fill: '#94a3b8'}}
+                                                interval={6}
+                                            />
+                                            <YAxis 
+                                                domain={[0, 'auto']}
+                                                axisLine={false} 
+                                                tickLine={false} 
+                                                tick={{fontSize: 9, fontWeight: 800, fill: '#94a3b8'}}
+                                                dx={-5}
+                                            />
+                                            <ReTooltip 
+                                                contentStyle={{borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', fontSize: '12px', fontWeight: 'bold'}}
+                                            />
+                                            <Area 
+                                                type="monotone" 
+                                                dataKey="cost" 
+                                                stroke="#4f46e5" 
+                                                strokeWidth={3} 
+                                                fillOpacity={1} 
+                                                fill="url(#colorBurn)" 
+                                                animationDuration={1500}
+                                            />
+                                            {/* Budget Reference Line */}
+                                            <Line 
+                                                type="monotone" 
+                                                dataKey={() => aiStats?.budget_limit} 
+                                                stroke="#ef4444" 
+                                                strokeDasharray="10 10" 
+                                                strokeWidth={2} 
+                                                dot={false}
+                                            />
+                                        </AreaChart>
+                                    </ResponsiveContainer>
+                                </div>
+                                <div className="mt-4 flex gap-4 text-[9px] font-black uppercase text-gray-400">
+                                    <div className="flex items-center gap-1.5"><div className="w-2 h-2 bg-indigo-500 rounded-full" /> Actual Spend</div>
+                                    <div className="flex items-center gap-1.5"><div className="w-3 h-0.5 bg-red-400 border-t border-dashed" /> Budget Cap (${aiStats?.budget_limit})</div>
+                                </div>
+                            </div>
+
+                            {/* 2. Team Synergy Matrix - Style Matched to Integrity Audit */}
+                            <div className="space-y-4">
+                                <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest px-1">Collaboration Efficiency Matrix</h4>
+                                <div className="bg-gray-50 rounded-3xl border border-gray-100 divide-y divide-gray-200 overflow-hidden shadow-sm">
+                                    {aiStats?.team?.map((member: any) => (
+                                        <div key={member.name} className="p-5 bg-white hover:bg-gray-50 transition-colors">
+                                            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                                                <div className="flex items-center gap-4 min-w-[180px]">
+                                                    <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 text-xs font-black">
+                                                        {member.name.substring(0, 2).toUpperCase()}
+                                                    </div>
+                                                    <div>
+                                                        <div className="text-sm font-bold text-gray-800">{member.name}</div>
+                                                        <div className="text-[9px] font-black text-indigo-500 uppercase tracking-tighter">{member.role}</div>
+                                                    </div>
+                                                </div>
+                                                
+                                                <div className="flex-1">
+                                                    <div className="flex justify-between text-[8px] font-black text-gray-400 mb-1.5 uppercase tracking-tighter">
+                                                        <span>Duty Window</span>
+                                                        <span className="text-indigo-600">Avg Assist: {member.avg_window}h/day</span>
+                                                    </div>
+                                                    <div className="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden">
+                                                        <div 
+                                                            className="h-full bg-indigo-500 rounded-full shadow-[0_0_8px_rgba(79,70,229,0.2)]"
+                                                            style={{ width: `${Math.min(100, (member.avg_window / 12) * 100)}%` }}
+                                                        />
+                                                    </div>
+                                                </div>
+
+                                                <div className="text-right min-w-[100px]">
+                                                    <div className="text-sm font-black text-gray-800">${member.total_cost.toFixed(2)}</div>
+                                                    <div className="text-[9px] font-bold text-gray-400 uppercase">{(member.total_tokens / 1000).toFixed(0)}k tkns</div>
+                                                </div>
+                                            </div>
+                                            
+                                            <div className="mt-4 flex flex-wrap gap-2">
+                                                {member.task_distribution.map((task: any) => (
+                                                    <span key={task.type} className={`px-2 py-0.5 text-[8px] font-black rounded-md uppercase tracking-tighter border ${
+                                                        task.type === 'Crawler/Research' 
+                                                        ? 'bg-amber-50 text-amber-600 border-amber-100' 
+                                                        : 'bg-indigo-50 text-indigo-600 border-indigo-100'
+                                                    }`}>
+                                                        {task.type}: {task.count} ops | {(task.tokens / 1000).toFixed(1)}k tkns
+                                                    </span>
+                                                ))}
                                             </div>
                                         </div>
                                     ))}
-                                     {(!aiStats?.usage_by_user || aiStats.usage_by_user.filter((u: any) => u.name.toLowerCase().includes('agent')).length === 0) && (
-                                        <div className="text-xs text-gray-400 text-center py-4">No machine usage recorded.</div>
-                                    )}
                                 </div>
                             </div>
                         </div>

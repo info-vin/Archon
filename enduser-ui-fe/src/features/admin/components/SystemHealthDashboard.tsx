@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { api } from '../../../services/api';
 import { SystemOverview, AiUsageStats } from '../../../types';
-import { XIcon, RefreshCwIcon } from '../../../components/Icons';
+import { XIcon, RefreshCwIcon, AlertTriangleIcon } from '../../../components/Icons';
 
 export const SystemHealthDashboard: React.FC = () => {
     const [overview, setOverview] = useState<SystemOverview | null>(null);
     const [aiStats, setAiStats] = useState<AiUsageStats | null>(null);
+    const [connectivityLogs, setConnectivityLogs] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -13,12 +14,14 @@ export const SystemHealthDashboard: React.FC = () => {
         setLoading(true);
         setError(null);
         try {
-            const [ov, ai] = await Promise.all([
+            const [ov, ai, logs] = await Promise.all([
                 api.getSystemOverview(),
-                api.getAiUsage()
+                api.getAiUsage(),
+                api.getConnectivityLogs()
             ]);
             setOverview(ov);
             setAiStats(ai);
+            setConnectivityLogs(logs);
         } catch (err: any) {
             setError(err.message || "Failed to load system health data");
         } finally {
@@ -117,6 +120,36 @@ export const SystemHealthDashboard: React.FC = () => {
                             />
                         ))}
                     </div>
+                </div>
+            </div>
+
+            {/* AI Connectivity Exceptions (Admin Maintenance View) */}
+            <div className="bg-card p-6 rounded-2xl border border-red-100 shadow-sm border-l-4 border-l-red-500">
+                <h3 className="text-lg font-bold mb-4 text-red-700 flex items-center gap-2">
+                    <AlertTriangleIcon className="w-5 h-5" />
+                    AI Connectivity Exception Log
+                </h3>
+                <div className="space-y-2">
+                    {connectivityLogs.map(log => (
+                        <div key={log.id} className="p-3 bg-red-50/50 rounded-xl border border-red-100 flex justify-between items-center text-xs group hover:bg-red-50 transition-colors">
+                            <div className="flex-1">
+                                <div className="flex items-center gap-2 mb-1">
+                                    <span className="font-black text-red-600 uppercase tracking-tighter bg-red-100 px-1.5 py-0.5 rounded">{log.source}</span>
+                                    <span className="text-[10px] text-gray-400 font-mono">{new Date(log.created_at).toLocaleString()}</span>
+                                </div>
+                                <p className="text-gray-700 font-medium">{log.message}</p>
+                                {log.details?.model && <p className="text-[10px] text-red-400 mt-1 font-mono">Target Model: {log.details.model}</p>}
+                            </div>
+                            <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                                <button className="text-red-600 font-bold hover:underline" onClick={() => alert(JSON.stringify(log.details, null, 2))}>Inspect</button>
+                            </div>
+                        </div>
+                    ))}
+                    {connectivityLogs.length === 0 && (
+                        <div className="text-center py-12 text-gray-400 italic text-sm">
+                            No connectivity exceptions detected in the last window.
+                        </div>
+                    )}
                 </div>
             </div>
         </div>

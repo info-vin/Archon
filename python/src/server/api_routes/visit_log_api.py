@@ -90,9 +90,14 @@ async def _transcribe_with_gemini(
     model: str = "gemini-2.5-flash"
 ) -> tuple[str, str, list[str]]:
     """Transcribes audio using the high-performance Gemini 2.5 model."""
+    # Model Name Calibration (Feb 2026 Resilience)
+    # Use split()[-1] to ensure we only have the final model ID
+    # This is critical for Google REST API paths like /v1beta/models/{safe_model}:generateContent
+    safe_model = model.split("/")[-1]
+
     try:
         file_uri = await _upload_to_google_files_api(audio_content, mime_type, api_key)
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}"
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/{safe_model}:generateContent?key={api_key}"
 
         # Get Prompt from DB (via PromptService) or fallback
         try:
@@ -125,9 +130,27 @@ async def _transcribe_with_gemini(
 
             if resp.status_code == 404:
                 available = await _list_available_models(api_key)
+                # BROADCAST TO CHARLIE
+                try:
+                    get_supabase_client().table("archon_logs").insert({
+                        "level": "ALERT", "source": "VoiceBot", "type": "system",
+                        "message": f"Voice Model Not Found (404): {safe_model}",
+                        "details": {"model": safe_model, "available": available[:5]}
+                    }).execute()
+                except Exception:
+                    pass
                 return f"[錯誤 404: 可用模型: {available[:3]}]", "模型配置錯誤", []
 
             if resp.status_code == 429:
+                # BROADCAST TO CHARLIE
+                try:
+                    get_supabase_client().table("archon_logs").insert({
+                        "level": "ALERT", "source": "VoiceBot", "type": "system",
+                        "message": "Voice API Rate Limit (429)",
+                        "details": {"model": safe_model}
+                    }).execute()
+                except Exception:
+                    pass
                 return "[系統提示：API 額度暫時不足]", "額度限制 (429)", []
 
             if resp.status_code != 200:
@@ -140,6 +163,15 @@ async def _transcribe_with_gemini(
 
     except Exception as e:
         logger.error(f"Voice pipeline error: {e}")
+        # BROADCAST TO CHARLIE
+        try:
+            get_supabase_client().table("archon_logs").insert({
+                "level": "ALERT", "source": "VoiceBot", "type": "system",
+                "message": f"Voice Pipeline Exception: {str(e)[:100]}",
+                "details": {"error": str(e), "model": safe_model}
+            }).execute()
+        except Exception:
+            pass
         return str(e), "發生異常", []
 
 @router.post("/", response_model=VisitLogResponse)

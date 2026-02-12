@@ -32,14 +32,32 @@ async def require_manager_or_admin(user=Depends(get_current_user)):
         )
     return user
 
-@router.get("/health/rag", dependencies=[Depends(require_system_admin)])
+@router.get("/health/rag", dependencies=[Depends(require_manager_or_admin)])
 async def get_rag_health_check() -> dict[str, Any]:
     """
     Performs a deep integrity check of the RAG system.
-    WARNING: This performs DB writes (seeding) and should not be called frequently.
+    Now accessible to Managers for monitoring.
     """
     service = HealthService()
     return await service.check_rag_integrity()
+
+@router.get("/logs/connectivity", dependencies=[Depends(require_manager_or_admin)])
+async def list_connectivity_logs() -> list[dict[str, Any]]:
+    """
+    Lists system-level connectivity alerts (404, 429, etc) for Manager/Admin monitoring.
+    """
+    from ..utils import get_supabase_client
+    supabase = get_supabase_client()
+
+    # Fetch logs flagged as 'system' type alerts
+    response = supabase.table("archon_logs")\
+        .select("*")\
+        .eq("level", "ALERT")\
+        .eq("type", "system")\
+        .order("created_at", desc=True)\
+        .limit(20)\
+        .execute()
+    return response.data or []
 
 @router.get("/settings", dependencies=[Depends(require_manager_or_admin)])
 async def list_system_settings(category: str | None = None) -> list[dict[str, Any]]:

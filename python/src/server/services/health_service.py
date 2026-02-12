@@ -1,11 +1,7 @@
-import asyncio
-import json
-from typing import Any, cast
+import datetime
 
 from ..config.logfire_config import get_logger
 from ..utils import get_supabase_client
-from .credential_service import credential_service
-from .librarian_service import LibrarianService
 from .search.rag_service import RAGService
 
 logger = get_logger(__name__)
@@ -19,8 +15,8 @@ class HealthService:
     def check_database_connection(self) -> bool:
         """Checks if the database connection is active."""
         try:
-            # A simple query to check the connection
-            self.supabase_client.table("users").select("id").limit(1).execute()
+            # Use 'profiles' instead of 'users' as it's guaranteed to be in public schema
+            self.supabase_client.table("profiles").select("id").limit(1).execute()
             return True
         except Exception as e:
             logger.error(f"Database connection check failed: {e}")
@@ -29,12 +25,9 @@ class HealthService:
     def check_table_existence(self, table_name: str) -> bool:
         """Checks if a specific table exists in the database."""
         try:
-            # Note: This is a simplified check. A more robust check might involve
-            # querying information_schema, but for this purpose, a select is sufficient.
             self.supabase_client.table(table_name).select("id").limit(1).execute()
             return True
         except Exception:
-            # The query will fail if the table does not exist
             return False
 
     def get_system_health(self) -> dict:
@@ -48,9 +41,8 @@ class HealthService:
                 "services": {}
             }
 
-        # List of essential tables to check
-        tables_to_check = ["projects", "tasks", "profiles", "gemini_logs"]
-
+        # Use correct prefixed table names for Archon
+        tables_to_check = ["archon_projects", "archon_tasks", "profiles", "archon_settings"]
         table_statuses = {}
         all_tables_ok = True
         for table in tables_to_check:
@@ -74,135 +66,70 @@ class HealthService:
 
     async def check_rag_integrity(self) -> dict:
         """
-        Performs a deep integrity check of the RAG system.
-        Ported from scripts/probe_librarian.py.
-        Includes: Config check, Seeding (Test Data), DB Integrity, Retrieval Test.
+        Calculates a weighted System Integrity Score.
+        Weightage: Knowledge Alignment (70%) + DB (15%) + Search (15%)
         """
-        logger.info("Starting RAG integrity check...")
-
-        details: dict[str, Any] = {
-            "steps": [],
-            "config": {},
-            "errors": []
-        }
+        logger.info("📊 Calculating Composite System Integrity Score...")
 
         try:
-            # 1. Config Check
-            rag_settings = await credential_service.get_credentials_by_category("rag_strategy")
-            provider = rag_settings.get("EMBEDDING_PROVIDER") or rag_settings.get("LLM_PROVIDER") or "openai"
-            model_name = rag_settings.get("EMBEDDING_MODEL") or "text-embedding-3-small"
+            # 1. DB Connectivity Check (15% weight)
+            db_ok = self.check_database_connection()
+            db_score = 15.0 if db_ok else 0.0
 
-            # Intelligent Dimension Detection (GAP-024 Optimization)
-            # Default to 768 to match 000_unified_schema.sql
-            default_dim = "768"
-            if "text-embedding-3" in model_name.lower():
-                default_dim = "1536"
-            elif "large" in model_name.lower():
-                default_dim = "3072"
+            if not db_ok:
+                return {
+                    "status": "unhealthy",
+                    "score": 0.0,
+                    "details": {"error": "Critical: Database connection lost. System integrity compromised."}
+                }
 
-            dimensions_str = rag_settings.get("EMBEDDING_DIMENSIONS", default_dim)
-            expected_dim = int(dimensions_str)
+            # 2. Knowledge Alignment Check (70% weight)
+            total_res = self.supabase_client.table("archon_sources").select("source_id", count="exact").execute()
+            total_count = total_res.count or 0
 
-            details["config"] = {
-                "provider": provider,
-                "model": model_name,
-                "dimensions": expected_dim
-            }
-
-            # Warn on common mismatches
-            if "gemini" in model_name.lower() and expected_dim != 768:
-                 details["errors"].append(f"Config Warning: Model '{model_name}' usually uses 768 dims, but configured for {expected_dim}.")
-            if "large" in model_name.lower() and expected_dim != 3072:
-                 details["errors"].append(f"Config Warning: Model '{model_name}' usually uses 3072 dims, but configured for {expected_dim}.")
-
-            details["steps"].append("Configuration checked")
-
-            # 2. Seeding (Simulating Alice)
-            # Use 'System Probe' as company to easily identify and clean if needed (though we keep it for history)
-            librarian = LibrarianService()
-            source_id = await librarian.archive_sales_pitch(
-                company="System Probe",
-                job_title="Integrity Check",
-                content="This is a generated probe content to verify vector database integrity.",
-                references=["probe-ref"]
-            )
-            details["steps"].append(f"Seeded document: {source_id}")
-
-            # 3. DB Integrity (Wait for Embedding)
-            max_retries = 5
-            raw_embedding = None
-            for _ in range(max_retries):
-                db_item = self.supabase_client.table("archon_crawled_pages").select("embedding").eq("source_id", source_id).limit(1).execute()
-                if db_item.data and db_item.data[0].get("embedding"):
-                    raw_embedding = db_item.data[0].get("embedding")
-                    break
-                await asyncio.sleep(2)
-
-            if not raw_embedding:
-                raise Exception("Embedding generation timed out. Check background workers/triggers.")
-
-            # Parse embedding
-            vec = []
-            if isinstance(raw_embedding, str):
-                vec = cast(list[float], json.loads(raw_embedding))
+            alignment_score = 0.0
+            indexed_count = 0
+            if total_count > 0:
+                indexed_res = self.supabase_client.table("archon_crawled_pages")\
+                    .select("source_id")\
+                    .not_.is_("embedding", "null")\
+                    .execute()
+                indexed_count = len({row["source_id"] for row in (indexed_res.data or [])})
+                alignment_score = (indexed_count / total_count) * 70.0
             else:
-                vec = cast(list[float], raw_embedding)
+                alignment_score = 70.0 # Default full if empty
 
-            dim = len(vec)
-            details["detected_dimensions"] = dim
-
-            if dim != expected_dim:
-                raise Exception(f"Dimension Mismatch! Config expects {expected_dim}, DB has {dim}.")
-
-            details["steps"].append("Embedding Verification Passed")
-
-            # 4. Retrieval Test
+            # 3. Search Responsiveness Check (15% weight)
             rag = RAGService()
-            results = await rag.search_documents(
-                query="Integrity Check",
-                match_count=5,
-                filter_metadata={"knowledge_type": "sales_pitch"}
-            )
+            search_ok = False
+            try:
+                test_search = await rag.search_documents(query="AI", match_count=1)
+                search_ok = len(test_search) > 0
+            except Exception:
+                search_ok = False
 
-            if not results:
-                raise Exception("Retrieval failed. Document indexed but not found by semantic search.")
+            search_score = 15.0 if search_ok else 0.0
 
-            # Calculate Integrity Score
-            score = 100
-            if not details["config"].get("valid", True): # Assume valid if not explicitly failed
-                 # Logic above didn't set 'valid' explicitly, let's infer from errors
-                 pass
-
-            # Deductions based on failures
-            if "Dimension Mismatch" in str(details["errors"]):
-                score -= 20
-
-            # If standard checks fail (simulated by errors list presence)
-            if details["errors"]:
-                 # Generic penalty for errors
-                 score -= 10 * len(details["errors"])
-
-            # Verify retrieval count
-            item_count = len(results) if results else 0
-            if item_count == 0:
-                score -= 30
-
-            # Cap score
-            score = max(0, score)
-
-            details["steps"].append(f"Retrieval Passed (Found {len(results)} items)")
+            # 4. Composite Score
+            final_score = round(db_score + alignment_score + search_score, 2)
 
             return {
-                "status": "healthy" if score >= 80 else "degraded",
-                "score": score,
-                "details": details
+                "status": "healthy" if final_score >= 95 else ("degraded" if final_score >= 80 else "unhealthy"),
+                "score": final_score,
+                "details": {
+                    "alignment_raw": round((alignment_score / 70.0) * 100, 1) if total_count > 0 else 100.0,
+                    "db_connected": db_ok,
+                    "search_active": search_ok,
+                    "total_sources": total_count,
+                    "indexed_sources": indexed_count,
+                    "timestamp": datetime.datetime.now(datetime.UTC).isoformat()
+                }
             }
 
         except Exception as e:
-            logger.error(f"RAG Integrity Check Failed: {e}")
-            details["errors"].append(str(e))
+            logger.error(f"💥 System Integrity Calculation Failed: {e}")
             return {
                 "status": "unhealthy",
-                "score": 0,
-                "details": details
+                "score": 0.0,
+                "details": {"error": str(e)}
             }
