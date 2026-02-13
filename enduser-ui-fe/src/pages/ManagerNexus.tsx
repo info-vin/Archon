@@ -154,11 +154,12 @@ export const ManagerNexus: React.FC = () => {
     const [commanderTrends, setCommanderTrends] = useState<any[]>([]);
     const [forceReadiness, setForceReadiness] = useState<any>(null);
     const [businessRisks, setBusinessRisks] = useState<any[]>([]);
+    const [collabSynergy, setCollabSynergy] = useState<any>(null);
 
     const fetchData = async () => {
         setLoading(true);
         try {
-            const [sys, emp, app, alr, ai, settings, trends, force, risks] = await Promise.all([
+            const [sys, emp, app, alr, ai, settings, trends, force, risks, collab] = await Promise.all([
                 api.getSystemOverview(),
                 api.getEmployees(),
                 api.getPendingApprovals(),
@@ -167,7 +168,8 @@ export const ManagerNexus: React.FC = () => {
                 api.getSystemSettings('marketing_scoring'),
                 api.getCommanderTrends(),
                 api.getForceReadiness(),
-                api.getBusinessRisks()
+                api.getBusinessRisks(),
+                api.getCollabSynergy()
             ]);
             setOverview(sys);
             setTeam(emp);
@@ -177,6 +179,7 @@ export const ManagerNexus: React.FC = () => {
             setCommanderTrends(trends);
             setForceReadiness(force);
             setBusinessRisks(risks);
+            setCollabSynergy(collab);
 
             if (settings && settings.length > 0) {
                  try {
@@ -916,7 +919,68 @@ export const ManagerNexus: React.FC = () => {
                     </DetailSection>
                 );
 
-            case 'graph':
+            case 'collab':
+                return (
+                    <DetailSection title="Collab Synergy" subtitle="Cross-Department Momentum (9x9)" icon={<GitCommitIcon className="w-5 h-5 text-indigo-600"/>}>
+                        <div className="bg-white border border-gray-100 rounded-3xl overflow-hidden shadow-sm">
+                            <div className="overflow-x-auto">
+                                <div className="min-w-[1000px]">
+                                    {/* Matrix Header */}
+                                    <div className="grid grid-cols-10 bg-gray-50 border-b border-gray-100">
+                                        <div className="p-4 text-[9px] font-black text-gray-400 uppercase border-r italic">Origin \ Target</div>
+                                        {collabSynergy?.nodes.map((node: string) => (
+                                            <div key={node} className="p-4 text-center text-[9px] font-black text-gray-500 uppercase tracking-widest truncate">{node}</div>
+                                        ))}
+                                    </div>
+                                    {/* Matrix Rows */}
+                                    {collabSynergy?.matrix.map((row: any) => (
+                                        <div key={row.from} className="grid grid-cols-10 border-b border-gray-50 group hover:bg-indigo-50/20 transition-colors">
+                                            <div className="p-4 bg-gray-50/50 border-r border-gray-100 text-xs font-bold text-gray-700">{row.from}</div>
+                                            {row.interactions.map((cell: any, idx: number) => (
+                                                <div key={idx} className="p-3 flex flex-col justify-center gap-1.5 relative border-r border-gray-50 last:border-r-0">
+                                                    {row.from !== cell.to ? (
+                                                        <>
+                                                            {/* 30D Baseline (Gray Bar) */}
+                                                            <div className="h-1 w-full bg-gray-100 rounded-full overflow-hidden">
+                                                                <div 
+                                                                    className="h-full bg-slate-300" 
+                                                                    style={{ width: `${Math.min(100, (cell.avg_30d / 10) * 100)}%` }} 
+                                                                />
+                                                            </div>
+                                                            {/* 7D Actual (Indigo Bar) */}
+                                                            <div className="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden">
+                                                                <div 
+                                                                    className="h-full bg-indigo-500" 
+                                                                    style={{ width: `${Math.min(100, (cell.actual_7d / 10) * 100)}%` }} 
+                                                                />
+                                                            </div>
+                                                            <div className="flex justify-between items-center text-[8px] font-black text-gray-400 mt-1">
+                                                                <span>{cell.actual_7d}w</span>
+                                                                <span className={cell.actual_7d > cell.avg_30d ? 'text-green-500' : 'text-gray-300'}>
+                                                                    {cell.actual_7d > cell.avg_30d ? '▲' : '▼'}
+                                                                </span>
+                                                            </div>
+                                                        </>
+                                                    ) : (
+                                                        <div className="absolute inset-0 bg-gray-50/30 opacity-50" />
+                                                    )}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                        <div className="mt-6 flex justify-center gap-8">
+                            <div className="flex items-center gap-2 text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                                <div className="w-3 h-1 bg-slate-300 rounded-full" /> 30D Average (Baseline)
+                            </div>
+                            <div className="flex items-center gap-2 text-[10px] font-black text-indigo-600 uppercase tracking-widest">
+                                <div className="w-3 h-1.5 bg-indigo-500 rounded-full" /> 7D Actual (Momentum)
+                            </div>
+                        </div>
+                    </DetailSection>
+                );
                 return (
                     <DetailSection title="Knowledge Graph" subtitle="RAG Index Status" icon={<DatabaseIcon className="w-5 h-5 text-indigo-600"/>}>
                         <div className="flex items-center justify-between">
@@ -1033,7 +1097,15 @@ export const ManagerNexus: React.FC = () => {
                 />
                 {/* Secondary Metrics Row */}
                 <HUDCard id="ethics" label="Ethics" value={overview?.ethics_status?.violations_24h === 0 ? "Clean" : `${overview?.ethics_status?.violations_24h} Events`} sub="Log Audit" active={activeMetric === 'ethics'} status={overview?.ethics_status?.violations_24h === 0 ? 'good' : 'warning'} onClick={setActiveMetric} tooltip="Compliance Violations" />
-                <HUDCard id="collab" label="Collab" value={overview?.collab_score !== undefined ? `${overview.collab_score}%` : "..."} sub="Team Synergy" active={activeMetric === 'collab'} status="good" onClick={setActiveMetric} tooltip="Cross-functional interactions" />
+                <HUDCard 
+                    id="collab" label="Collab" 
+                    value={collabSynergy?.snapshot ? `${collabSynergy.snapshot.momentum_pct > 0 ? '+' : ''}${collabSynergy.snapshot.momentum_pct}%` : "..."} 
+                    sub={collabSynergy?.snapshot?.total_7d !== undefined ? `7D Total: ${collabSynergy.snapshot.total_7d}w` : "Team Synergy"}
+                    active={activeMetric === 'collab'} 
+                    status={collabSynergy?.snapshot?.momentum_pct >= 0 ? "good" : "warning"} 
+                    onClick={setActiveMetric} 
+                    tooltip={`Hot Bridge: ${collabSynergy?.snapshot?.hot_bridge || 'None'}`} 
+                />
                 <HUDCard id="graph" label="Graph" value={overview?.knowledge_stats?.total_nodes !== undefined ? `${(overview.knowledge_stats.total_nodes / 1000).toFixed(1)}k` : "..."} sub="Knowledge Nodes" active={activeMetric === 'graph'} status="neutral" onClick={setActiveMetric} tooltip="Indexed Documents Count" />
                 <HUDCard id="velocity" label="Velocity" value={overview?.velocity_in_days !== undefined ? `${overview.velocity_in_days}d` : "..."} sub="Cycle Time" active={activeMetric === 'velocity'} status="good" onClick={setActiveMetric} tooltip="Avg Task Completion Time (Days)" />
             </div>

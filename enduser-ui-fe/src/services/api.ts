@@ -969,6 +969,12 @@ const supabaseApi = {
     return response.json();
   },
 
+  async getCollabSynergy(): Promise<any> {
+    const response = await fetch('/api/stats/collab-synergy', { headers: await this._getHeaders() });
+    if (!response.ok) return { nodes: [], matrix: [] };
+    return response.json();
+  },
+
   async getBusinessRisks(): Promise<any[]> {
     const response = await fetch('/api/stats/business-risks', { headers: await this._getHeaders() });
     if (!response.ok) return [];
