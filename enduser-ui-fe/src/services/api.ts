@@ -975,6 +975,27 @@ const supabaseApi = {
     return response.json();
   },
 
+  async getSlaReliability(): Promise<any> {
+    const response = await fetch('/api/stats/sla-reliability', { headers: await this._getHeaders() });
+    if (!response.ok) return { current_sla: 0, trend: [] };
+    return response.json();
+  },
+
+  async getEthicsAuditQueue(): Promise<any> {
+    const response = await fetch('/api/stats/ethics-audit-queue', { headers: await this._getHeaders() });
+    if (!response.ok) return { violations: [], pending_versions: [], total_pending: 0 };
+    return response.json();
+  },
+
+  async approvePromptChange(versionId: string): Promise<any> {
+    const response = await fetch(`/api/stats/approve-prompt-change/${versionId}`, {
+        method: 'POST',
+        headers: await this._getHeaders()
+    });
+    if (!response.ok) throw new Error('Failed to approve prompt change');
+    return response.json();
+  },
+
   async getBusinessRisks(): Promise<any[]> {
     const response = await fetch('/api/stats/business-risks', { headers: await this._getHeaders() });
     if (!response.ok) return [];

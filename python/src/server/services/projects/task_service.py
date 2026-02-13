@@ -797,29 +797,47 @@ class TaskService:
             from ..credential_service import credential_service
             from ..search.rag_service import RAGService
 
-            # 1. Fetch Alert
-            res_alert = self.supabase_client.table("archon_logs").select("*").eq("id", alert_id).execute()
-            if not res_alert.data:
-                return False, {"error": f"Alert {alert_id} not found"}
+            # 1. Fetch Alert (Safety first: initialize variables)
+            context_msg = "Automated Alert"
+            details = {}
+            source_table = "archon_logs" # Default
 
-            alert = res_alert.data[0]
-            details = alert.get("details", {})
+            res_alert = self.supabase_client.table("archon_logs").select("*").eq("id", alert_id).execute()
+            alert_data = res_alert.data[0] if (res_alert.data and len(res_alert.data) > 0) else None
+
+            if alert_data:
+                details = alert_data.get("details", {})
+                context_msg = alert_data.get("message", "System Alert")
+                source_table = "archon_logs"
+            else:
+                # Fallback to ethics events table
+                res_ethics = self.supabase_client.table("archon_ethics_events").select("*").eq("id", alert_id).execute()
+                if res_ethics.data and len(res_ethics.data) > 0:
+                    eth = res_ethics.data[0]
+                    context_msg = f"Ethics Violation: {eth.get('event_type')} - {eth.get('description')}"
+                    details = {
+                        "type": "ethics_violation", 
+                        "category": "business", 
+                        "raw_input": eth.get("raw_input"),
+                        "company": "Safety Compliance"
+                    }
+                    source_table = "archon_ethics_events"
+                else:
+                    return False, {"error": f"Alert or Ethics Event {alert_id} not found"}
+
             lead_id = details.get("lead_id")
-            post_id = details.get("post_id") # Support for Content Bottlenecks
+            post_id = details.get("post_id")
 
             # 2. Gather Context
-            context_str = f"ALERT: {alert['message']}\n"
-            company_name = details.get("company", "Unknown Target")
+            context_str = f"ALERT: {context_msg}\n"
+            company_name = details.get("company", "Compliance Case")
 
             if lead_id:
-                # Fetch Lead Details (Stable Pattern: .execute + check)
                 res_lead = self.supabase_client.table("leads").select("*").eq("id", lead_id).execute()
                 if res_lead.data and len(res_lead.data) > 0:
                     lead = res_lead.data[0]
                     context_str += f"COMPANY: {lead['company_name']}\n"
                     context_str += f"IDENTIFIED NEED: {lead.get('identified_need', 'None')}\n"
-
-                    # Fetch Visit Logs for this lead
                     res_logs = self.supabase_client.table("visit_logs").select("summary").eq("lead_id", lead_id).limit(3).execute()
                     if res_logs.data:
                         context_str += "\nPAST VISIT SUMMARIES:\n"
@@ -827,138 +845,83 @@ class TaskService:
                             context_str += f"- {log['summary']}\n"
 
             elif post_id:
-                # Fetch Blog Post Context (New for GAP-029)
                 res_post = self.supabase_client.table("blog_posts").select("*").eq("id", post_id).execute()
                 if res_post.data and len(res_post.data) > 0:
                     post = res_post.data[0]
                     company_name = post.get("title", "Marketing Asset")
-                    context_str += "CONTEXT: Content Bottleneck\n"
-                    context_str += f"POST TITLE: {post['title']}\n"
-                    context_str += f"STATUS: {post['status']}\n"
+                    context_str += f"CONTEXT: Content Bottleneck\nTITLE: {post['title']}\nSTATUS: {post['status']}\n"
 
-            # 3. RAG Search for similar cases or company info
+            # 3. RAG Search
             rag_service = RAGService(self.supabase_client)
-            rag_success, rag_result = await rag_service.perform_rag_query(
-                query=f"{company_name} {details.get('type', '')}",
-                match_count=2
-            )
+            rag_success, rag_result = await rag_service.perform_rag_query(query=f"{company_name} {details.get('type', '')}", match_count=2)
             if rag_success and "results" in rag_result:
                 context_str += "\nINTERNAL KNOWLEDGE BASE SNIPPETS:\n"
                 context_str += "\n".join([res.get("content", "")[:300] for res in rag_result["results"]])
 
-            # 4. Call AI to generate Task Draft
-            # Use gemini-1.5-pro as per Phase 4.6.3 Plan
+            # 4. Call AI
             model_name = "gemini-1.5-pro"
-
-            # Key Decoupling
-            charlie_api_key = await credential_service.get_credential("GEMINI_API_KEY")
-            if not charlie_api_key:
-                 charlie_api_key = await credential_service.get_credential("GOOGLE_API_KEY")
+            charlie_api_key = await credential_service.get_credential("GEMINI_API_KEY") or await credential_service.get_credential("GOOGLE_API_KEY")
 
             prompt = textwrap.dedent(f"""
-                You are Charlie's Strategic Assistant.
-                Convert the following Sentinel Alert into a high-value task for Alice (Sales).
-
-                CONTEXT:
-                {context_str}
-
-                GOAL:
-                Create a specific, actionable task to recover/engage this lead.
-                Include a clear title and a structured description with 'Strategic Goal' and 'Suggested Actions'.
-
-                Format:
-                TITLE: [Action-oriented Title]
-                DESCRIPTION: [Detailed strategy]
+                Convert the following Alert into a high-value task for the team.
+                ALERT: {context_msg}
+                CONTEXT: {context_str}
+                FORMAT: TITLE: [Title] | DESCRIPTION: [Detailed strategy]
             """).strip()
 
             try:
-                # Pass triggered_by as user_id for Token Usage Attribution
                 async with get_llm_client(api_key=charlie_api_key, user_id=triggered_by, request_id=f"task-gen-{alert_id}") as client:
                     response = await client.chat.completions.create(
                         model=model_name,
                         messages=[
-                            {"role": "system", "content": "You are a helpful Managerial AI assistant. ALWAYS answer in Traditional Chinese (Taiwan繁體中文)."},
+                            {"role": "system", "content": "You are Charlie's Assistant. Answer in Traditional Chinese (Taiwan)."},
                             {"role": "user", "content": prompt}
                         ],
                         temperature=0.7
                     )
                 ai_output = str(response.choices[0].message.content)
             except Exception as llm_error:
-                 # Smart Dispatch Fallback: Rule-Based Logic
-                 logger.error(f"Smart Dispatch AI Failed: {llm_error}")
+                 logger.error(f"AI Dispatch Failed: {llm_error}")
+                 ai_output = f"TITLE: Manual Action Needed: {company_name}\nDESCRIPTION: AI failed to generate task for alert: {context_msg}."
 
-                 # Log System Alert
-                 LogService(self.supabase_client).create_log_entry({
-                    "user_input": f"SYSTEM_ALERT: Smart Dispatch Failure [{type(llm_error).__name__}]",
-                    "gemini_response": f"Rule-Based Fallback Activated. Error: {str(llm_error)}",
-                    "project_name": "manager_bot",
-                    "user_name": "system"
-                 })
-
-                 # Rule-Based Template
-                 ai_output = f"""TITLE: Manual Follow-up: {company_name}
-DESCRIPTION: **System Generated Fallback Task**
-Target: {company_name}
-Alert: {alert['message']}
-
-Suggested Actions:
-1. Review recent visit logs.
-2. Contact the decision maker directly.
-3. Update lead status in CRM.
-
-(AI Dispatch service temporarily unavailable)"""
-
-            # Parse AI Output (Simple extraction)
+            # Parse AI Output
             title = f"Follow-up: {company_name}"
             description = ai_output
             if "TITLE:" in ai_output:
                 try:
                     title = ai_output.split("TITLE:")[1].split("DESCRIPTION:")[0].strip()
                     description = ai_output.split("DESCRIPTION:")[1].strip()
-                except Exception:
-                    pass
+                except Exception: pass
 
             # 5. Create Task
-            # Find a default project (prefer Field Ops if exists)
-            p_res = self.supabase_client.table("archon_projects").select("id").ilike("title", "%Field%").limit(1).execute()
-            if not p_res.data:
+            p_res = self.supabase_client.table("archon_projects").select("id").ilike("title", "%Field%").execute()
+            if not (p_res.data and len(p_res.data) > 0):
                 p_res = self.supabase_client.table("archon_projects").select("id").limit(1).execute()
+            
+            if not (p_res.data and len(p_res.data) > 0):
+                return False, {"error": "Critical: No project found in database to attach task."}
 
-            project_id = p_res.data[0]["id"] if p_res.data else "default-project"
+            project_id = p_res.data[0]["id"]
 
-            # Resolve assignee name if ID provided
-            assignee_name = "User"
-            if assignee_id:
-                from ..profile_service import ProfileService
-                p_svc = ProfileService(self.supabase_client)
-                s, profile = p_svc.get_profile(assignee_id)
-                if s and isinstance(profile, dict):
-                    assignee_name = profile.get("name", "User")
-
-            # FB-07: Link Alert to Task via 'sources' field
-            sources = [{"type": "sentinel_alert", "source_id": alert_id, "title": alert["message"]}]
+            sources = [{"type": "sentinel_alert", "source_id": alert_id, "title": context_msg}]
 
             success, result = await self.create_task(
-                project_id=project_id,
-                title=title,
-                description=description,
-                assignee=assignee_name,
-                assignee_id=assignee_id,
-                priority="high", # GAP-029: Escalation to Highest Priority
-                due_date=datetime.now(), # Default immediate
-                sources=sources # Attach link
+                project_id=project_id, title=title, description=description,
+                assignee_id=assignee_id, priority="high", sources=sources
             )
 
             if success:
-                logger.info(f"Smart Dispatch: Task {result['task']['id']} created from alert {alert_id}")
-                # FB-07 & GAP-029: Mark Alert as resolved and lower level to clear HUD
-                updated_details = {**details, "status": "dispatched", "dispatched_task_id": result['task']['id']}
-                self.supabase_client.table("archon_logs").update({
-                    "details": updated_details,
-                    "level": "INFO" # Change Level to clear Charlie's Alert View
-                }).eq("id", alert_id).execute()
+                logger.info(f"Smart Dispatch Success: {source_table} {alert_id}")
+                if source_table == "archon_logs":
+                    updated_details = {**details, "status": "dispatched", "dispatched_task_id": result['task']['id']}
+                    self.supabase_client.table("archon_logs").update({"details": updated_details, "level": "INFO"}).eq("id", alert_id).execute()
+                else:
+                    self.supabase_client.table("archon_ethics_events").update({"resolved": True, "resolution_notes": f"Dispatched: {result['task']['id']}"}).eq("id", alert_id).execute()
 
             return success, result
+        except Exception as e:
+            logger.error(f"Critical Dispatch Error: {e}", exc_info=True)
+            return False, {"error": str(e)}
         except Exception as e:
             logger.error(f"Failed to generate task from alert: {e}", exc_info=True)
             return False, {"error": str(e)}

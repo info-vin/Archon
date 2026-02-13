@@ -5,7 +5,7 @@ import { SystemOverview, Employee, AlertItem } from '../types';
 import { 
     CheckCircleIcon, RefreshCwIcon, AlertTriangleIcon, ActivityIcon, 
     ShieldCheckIcon, DatabaseIcon, UsersIcon, 
-    GitCommitIcon, SearchIcon,
+    GitCommitIcon, SearchIcon, FileTextIcon,
     DollarSignIcon, ClockIcon, ZapIcon,
     MaximizeIcon, MinimizeIcon, SparklesIcon
 } from '../components/Icons';
@@ -155,11 +155,13 @@ export const ManagerNexus: React.FC = () => {
     const [forceReadiness, setForceReadiness] = useState<any>(null);
     const [businessRisks, setBusinessRisks] = useState<any[]>([]);
     const [collabSynergy, setCollabSynergy] = useState<any>(null);
+    const [slaReliability, setSlaReliability] = useState<any>(null);
+    const [ethicsAudit, setEthicsAudit] = useState<any>(null);
 
     const fetchData = async () => {
         setLoading(true);
         try {
-            const [sys, emp, app, alr, ai, settings, trends, force, risks, collab] = await Promise.all([
+            const [sys, emp, app, alr, ai, settings, trends, force, risks, collab, sla, ethics] = await Promise.all([
                 api.getSystemOverview(),
                 api.getEmployees(),
                 api.getPendingApprovals(),
@@ -169,7 +171,9 @@ export const ManagerNexus: React.FC = () => {
                 api.getCommanderTrends(),
                 api.getForceReadiness(),
                 api.getBusinessRisks(),
-                api.getCollabSynergy()
+                api.getCollabSynergy(),
+                api.getSlaReliability(),
+                api.getEthicsAuditQueue()
             ]);
             setOverview(sys);
             setTeam(emp);
@@ -180,6 +184,8 @@ export const ManagerNexus: React.FC = () => {
             setForceReadiness(force);
             setBusinessRisks(risks);
             setCollabSynergy(collab);
+            setSlaReliability(sla);
+            setEthicsAudit(ethics);
 
             if (settings && settings.length > 0) {
                  try {
@@ -211,11 +217,66 @@ export const ManagerNexus: React.FC = () => {
         try {
             await api.generateTaskFromAlert(alertId);
             setAlerts(prev => prev.filter(a => a.id !== alertId)); 
+            // Also refresh ethicsAudit if the ID came from there
+            if (ethicsAudit?.violations.some((v: any) => v.id === alertId)) {
+                fetchData();
+            }
             alert(`Smart Task dispatched! Context enriched by AI.`);
         } catch (e: any) {
             alert("Dispatch failed: " + e.message);
         } finally {
             setProcessingId(null);
+        }
+    };
+
+    const handleApprovePrompt = async (versionId: string) => {
+        setProcessingId(versionId);
+        try {
+            await api.approvePromptChange(versionId);
+            fetchData();
+            alert("Prompt change approved and finalized.");
+        } catch (e: any) {
+            alert("Approval failed: " + e.message);
+        } finally {
+            setProcessingId(null);
+        }
+    };
+
+    const handleViewDiff = (item: any) => {
+        try {
+            if (!item) return;
+            
+            let contentData = item.content;
+            if (typeof item.content === 'string') {
+                try {
+                    contentData = JSON.parse(item.content);
+                } catch (e) {
+                    contentData = { raw: item.content };
+                }
+            }
+
+            const summary = item.change_summary || "Strategic Prompt Update";
+            const field = item.field_name || "Prompt Config";
+            const author = item.created_by || "System";
+            
+            // Safe stringify for display
+            const displayStr = typeof contentData === 'string' 
+                ? contentData 
+                : JSON.stringify(contentData, null, 2);
+
+            alert(
+                `[ AUDIT VIEW: PROMPT CHANGE ]\n` +
+                `----------------------------------\n` +
+                `Target: ${item.document_id}\n` +
+                `Author: ${author}\n` +
+                `Field:  ${field}\n` +
+                `Summary: ${summary}\n\n` +
+                `NEW CONTENT PREVIEW:\n` +
+                `${displayStr.slice(0, 400)}${displayStr.length > 400 ? '...' : ''}`
+            );
+        } catch (err) {
+            console.error("ViewDiff Failed:", err);
+            alert("Unable to preview this change. The data format might be incompatible.");
         }
     };
 
@@ -981,6 +1042,74 @@ export const ManagerNexus: React.FC = () => {
                         </div>
                     </DetailSection>
                 );
+
+            case 'graph':
+                return (
+                    <DetailSection title="Knowledge Graph" subtitle="RAG Index Status" icon={<DatabaseIcon className="w-5 h-5 text-indigo-600"/>}>
+                        <div className="flex items-center justify-between">
+                            <div className="space-y-1">
+                                <h4 className="text-2xl font-black text-gray-800">{overview?.knowledge_stats?.total_nodes || 0} Nodes</h4>
+                                <p className="text-sm text-gray-500">
+                                    {overview?.knowledge_stats?.total_chunks || 0} Chunks Indexed
+                                </p>
+                            </div>
+                            <button 
+                                onClick={handleRebuildIndex}
+                                disabled={processingId === 'rebuild_index'}
+                                className="px-6 py-3 bg-orange-500 hover:bg-orange-600 text-white rounded-xl font-bold flex items-center gap-2 shadow-lg shadow-orange-200 transition-all active:scale-95 disabled:opacity-50"
+                            >
+                                <RefreshCwIcon className={`w-4 h-4 ${processingId === 'rebuild_index' ? 'animate-spin' : ''}`} />
+                                Rebuild Index
+                            </button>
+                        </div>
+                    </DetailSection>
+                );
+
+            case 'velocity':
+                return (
+                    <DetailSection title="SLA Reliability" subtitle="6-Month Strategic Trend (Bi-weekly)" icon={<ClockIcon className="w-5 h-5 text-indigo-600"/>}>
+                        <div className="bg-gray-50/50 border border-gray-100 rounded-3xl p-6 mb-8 min-h-[300px] flex flex-col">
+                            <div className="flex justify-between items-start mb-4">
+                                <div>
+                                    <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-1 flex items-center gap-2">
+                                        <SparklesIcon className="w-3 h-3 text-indigo-500" /> Strategic Discipline Trend (180 Days)
+                                    </h4>
+                                    <p className="text-xl font-black text-gray-800">Current Health: <span className={(slaReliability?.current_sla || 0) >= 95 ? 'text-green-600' : 'text-amber-600'}>{slaReliability?.current_sla || 0}%</span></p>
+                                </div>
+                                <div className="text-right">
+                                    <p className="text-[10px] font-black text-gray-400 uppercase">Target SLA</p>
+                                    <p className="text-lg font-black text-gray-300">95.0%</p>
+                                </div>
+                            </div>
+                            <div className="flex-1 min-h-[220px]">
+                                {slaReliability?.trend && slaReliability.trend.length > 0 ? (
+                                    <ResponsiveContainer width="100%" height={220}>
+                                        <AreaChart data={slaReliability.trend} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                                            <defs>
+                                                <linearGradient id="colorSLA" x1="0" y1="0" x2="0" y2="1">
+                                                    <stop offset="5%" stopColor="#6366f1" stopOpacity={0.1}/>
+                                                    <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
+                                                </linearGradient>
+                                            </defs>
+                                            <CartesianGrid strokeDasharray="3 3" vertical={true} stroke="#f1f5f9" />
+                                            <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{fontSize: 9, fontWeight: 800, fill: '#94a3b8'}} interval={1} />
+                                            <YAxis axisLine={false} tickLine={false} tick={{fontSize: 9, fontWeight: 800, fill: '#94a3b8'}} domain={[80, 100]} />
+                                            <ReTooltip contentStyle={{borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', fontSize: '12px', fontWeight: 'bold'}} />
+                                            <Area type="monotone" dataKey="rate" stroke="#4f46e5" fillOpacity={1} fill="url(#colorSLA)" strokeWidth={3} name="SLA %" isAnimationActive={false} />
+                                            <ReferenceLine y={95} stroke="#10b981" strokeDasharray="3 3" strokeWidth={1}>
+                                                <Label value="Goal" position="right" fill="#10b981" fontSize={9} fontWeight="bold" />
+                                            </ReferenceLine>
+                                        </AreaChart>
+                                    </ResponsiveContainer>
+                                ) : (
+                                    <div className="h-full flex items-center justify-center text-gray-400 italic text-xs">Calibrating long-term reliability sensors...</div>
+                                )}
+                            </div>
+                        </div>
+                    </DetailSection>
+                );
+
+            case 'graph':
                 return (
                     <DetailSection title="Knowledge Graph" subtitle="RAG Index Status" icon={<DatabaseIcon className="w-5 h-5 text-indigo-600"/>}>
                         <div className="flex items-center justify-between">
@@ -1004,19 +1133,74 @@ export const ManagerNexus: React.FC = () => {
 
             case 'ethics':
                 return (
-                    <DetailSection title="Compliance & Ethics" subtitle="Guardrails Status" icon={<ShieldCheckIcon className="w-5 h-5 text-indigo-600"/>}>
-                        <div className="bg-slate-900 text-green-400 p-6 rounded-2xl font-mono text-xs">
-                            <div className="flex justify-between border-b border-slate-700 pb-2 mb-2">
-                                <span>STANDARD</span>
-                                <span>STATUS</span>
-                            </div>
-                            <div className="space-y-2">
-                                <div className="flex justify-between"><span>ISO-27001 PII Check</span><span className="font-bold">ACTIVE</span></div>
-                                <div className="flex justify-between"><span>Brand Tone Guardrail</span><span className="font-bold">ACTIVE</span></div>
-                                <div className="flex justify-between"><span>Conflict of Interest</span><span className="font-bold">ACTIVE</span></div>
-                                <div className="flex justify-between pt-2 border-t border-slate-800 text-red-400">
-                                    <span>Violations (24h)</span>
-                                    <span className="font-bold">{overview?.ethics_status?.violations_24h || 0}</span>
+                    <DetailSection title="Ethics & Prompt Audit" subtitle="Compliance Resolution Center" icon={<ShieldCheckIcon className="w-5 h-5 text-indigo-600"/>}>
+                        <div className="space-y-6">
+                            <div className="bg-indigo-50/30 border border-indigo-100 rounded-3xl p-6">
+                                <h4 className="text-xs font-black text-indigo-900 uppercase tracking-widest mb-4 flex items-center gap-2">
+                                    <ZapIcon className="w-3 h-3" /> Actionable Safety Queue ({ethicsAudit?.total_pending || 0})
+                                </h4>
+                                
+                                <div className="space-y-4">
+                                    {/* 1. Ethics Violations (Sentinel) */}
+                                    {ethicsAudit?.violations.map((v: any) => (
+                                        <div key={v.id} className="bg-white border border-red-100 p-4 rounded-2xl flex items-center justify-between shadow-sm hover:shadow-md transition-all">
+                                            <div className="flex items-center gap-4">
+                                                <div className="bg-red-50 p-3 rounded-xl text-red-600">
+                                                    <ShieldCheckIcon className="w-5 h-5" />
+                                                </div>
+                                                <div>
+                                                    <span className="text-[10px] font-black px-2 py-0.5 bg-red-100 text-red-700 rounded uppercase">Safety Intercept</span>
+                                                    <h5 className="font-bold text-gray-800 text-sm mt-1">{v.event_type}: {v.description}</h5>
+                                                    <p className="text-[10px] text-gray-400 font-mono mt-0.5">Attempted Input: {v.raw_input?.slice(0, 50)}...</p>
+                                                </div>
+                                            </div>
+                                            <button 
+                                                onClick={() => handleDispatch(v.id)}
+                                                className="px-4 py-2 bg-red-600 text-white rounded-xl text-[10px] font-black hover:bg-red-700 transition-all"
+                                            >
+                                                DISPATCH INVESTIGATION
+                                            </button>
+                                        </div>
+                                    ))}
+
+                                    {/* 2. Prompt Changes (Librarian) */}
+                                    {ethicsAudit?.pending_versions.map((p: any) => (
+                                        <div key={p.id} className="bg-white border border-amber-100 p-4 rounded-2xl flex items-center justify-between shadow-sm hover:shadow-md transition-all">
+                                            <div className="flex items-center gap-4">
+                                                <div className="bg-amber-50 p-3 rounded-xl text-amber-600">
+                                                    <FileTextIcon className="w-5 h-5" />
+                                                </div>
+                                                <div>
+                                                    <span className="text-[10px] font-black px-2 py-0.5 bg-amber-100 text-amber-700 rounded uppercase">Prompt Change</span>
+                                                    <h5 className="font-bold text-gray-800 text-sm mt-1">{p.document_id} (v{p.version_number})</h5>
+                                                    <p className="text-[10px] text-gray-400 font-mono mt-0.5">Changed by {p.created_by} | {p.change_summary}</p>
+                                                </div>
+                                            </div>
+                                            <div className="flex gap-2">
+                                                <button 
+                                                    onClick={() => handleViewDiff(p)}
+                                                    className="px-4 py-2 bg-slate-100 text-slate-600 rounded-xl text-[10px] font-black hover:bg-slate-200"
+                                                >
+                                                    VIEW DIFF
+                                                </button>
+                                                <button 
+                                                    onClick={() => handleApprovePrompt(p.id)}
+                                                    disabled={processingId === p.id}
+                                                    className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-[10px] font-black hover:bg-indigo-700"
+                                                >
+                                                    {processingId === p.id ? '...' : 'APPROVE'}
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ))}
+
+                                    {ethicsAudit?.total_pending === 0 && (
+                                        <div className="py-12 flex flex-col items-center justify-center text-center text-green-600 opacity-60">
+                                            <CheckCircleIcon className="w-12 h-12 mb-2" />
+                                            <p className="text-sm font-black uppercase tracking-widest">Compliance Nominal</p>
+                                            <p className="text-[10px]">No unauthorized prompt changes or safety leaks detected.</p>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </div>
@@ -1096,7 +1280,15 @@ export const ManagerNexus: React.FC = () => {
                     tooltip="Team & Agent Availability"
                 />
                 {/* Secondary Metrics Row */}
-                <HUDCard id="ethics" label="Ethics" value={overview?.ethics_status?.violations_24h === 0 ? "Clean" : `${overview?.ethics_status?.violations_24h} Events`} sub="Log Audit" active={activeMetric === 'ethics'} status={overview?.ethics_status?.violations_24h === 0 ? 'good' : 'warning'} onClick={setActiveMetric} tooltip="Compliance Violations" />
+                <HUDCard 
+                    id="ethics" label="Ethics" 
+                    value={ethicsAudit?.total_pending > 0 ? `${ethicsAudit.total_pending} Actions` : "Secure"} 
+                    sub={ethicsAudit?.total_pending > 0 ? `${ethicsAudit.violations.length} Risks | ${ethicsAudit.pending_versions.length} Changes` : "System Nominal"} 
+                    active={activeMetric === 'ethics'} 
+                    status={ethicsAudit?.total_pending > 0 ? 'bad' : 'good'} 
+                    onClick={setActiveMetric} 
+                    tooltip="Safety violations & Prompt audit queue" 
+                />
                 <HUDCard 
                     id="collab" label="Collab" 
                     value={collabSynergy?.snapshot ? `${collabSynergy.snapshot.momentum_pct > 0 ? '+' : ''}${collabSynergy.snapshot.momentum_pct}%` : "..."} 
@@ -1106,8 +1298,16 @@ export const ManagerNexus: React.FC = () => {
                     onClick={setActiveMetric} 
                     tooltip={`Hot Bridge: ${collabSynergy?.snapshot?.hot_bridge || 'None'}`} 
                 />
-                <HUDCard id="graph" label="Graph" value={overview?.knowledge_stats?.total_nodes !== undefined ? `${(overview.knowledge_stats.total_nodes / 1000).toFixed(1)}k` : "..."} sub="Knowledge Nodes" active={activeMetric === 'graph'} status="neutral" onClick={setActiveMetric} tooltip="Indexed Documents Count" />
-                <HUDCard id="velocity" label="Velocity" value={overview?.velocity_in_days !== undefined ? `${overview.velocity_in_days}d` : "..."} sub="Cycle Time" active={activeMetric === 'velocity'} status="good" onClick={setActiveMetric} tooltip="Avg Task Completion Time (Days)" />
+                <HUDCard id="graph" label="Graph" value={overview?.knowledge_stats?.total_nodes !== undefined ? `${overview.knowledge_stats.total_nodes}` : "..."} sub="Knowledge Nodes" active={activeMetric === 'graph'} status="neutral" onClick={setActiveMetric} tooltip="Indexed Documents Count" />
+                <HUDCard 
+                    id="velocity" label="Reliability" 
+                    value={slaReliability?.current_sla !== undefined ? `${slaReliability.current_sla}%` : "..."} 
+                    sub="SLA Attainment" 
+                    active={activeMetric === 'velocity'} 
+                    status={slaReliability?.current_sla >= 95 ? "good" : "warning"} 
+                    onClick={setActiveMetric} 
+                    tooltip="6-Month Strategic Discipline Trend" 
+                />
             </div>
 
             {/* Dynamic Detail Area */}

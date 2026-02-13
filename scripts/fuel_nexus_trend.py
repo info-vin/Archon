@@ -38,14 +38,25 @@ def fuel_tasks():
     now = datetime.now(timezone.utc)
     task_count = 0
 
-    # Inject 90 days
-    for day in range(90):
+    # Inject 180 days
+    for day in range(180):
         daily_count = random.randint(4, 10)
         target_date = now - timedelta(days=day)
         
         for i in range(daily_count):
-            created_at = (target_date - timedelta(hours=random.randint(1, 12))).isoformat()
+            # Create a realistic due date
+            # 90% chance of being on time, 10% chance of being late
+            is_late = random.random() < 0.1
+            
+            created_at = (target_date - timedelta(hours=random.randint(24, 48))).isoformat()
             completed_at = target_date.isoformat()
+            
+            if is_late:
+                # Due date is BEFORE completion
+                due_date = (target_date - timedelta(hours=random.randint(1, 12))).isoformat()
+            else:
+                # Due date is AFTER completion
+                due_date = (target_date + timedelta(hours=random.randint(1, 24))).isoformat()
             
             # Pick creator and assignee
             creator = random.choice(all_entities)
@@ -55,8 +66,8 @@ def fuel_tasks():
                 sources = [{"type": "handoff", "source_id": creator, "title": f"Synergy from {creator}"}]
                 
                 cur.execute("""
-                    INSERT INTO archon_tasks (title, description, project_id, status, assignee_id, assignee, priority, created_at, completed_at, sources)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    INSERT INTO archon_tasks (title, description, project_id, status, assignee_id, assignee, priority, created_at, completed_at, due_date, sources)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 """, (
                     f"FUELED: Synergy {day}-{i}",
                     f"Task initiated by {creator}",
@@ -67,6 +78,7 @@ def fuel_tasks():
                     "medium",
                     created_at,
                     completed_at,
+                    due_date,
                     json.dumps(sources)
                 ))
                 task_count += 1

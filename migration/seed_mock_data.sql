@@ -190,6 +190,16 @@ BEGIN
         ('seed-' || i, (SELECT id::uuid FROM profiles WHERE email = 'bob@archon.com'), 'gemini-2.0-flash', 'google', 1000 + (i * 100), 2000 + (i * 200), 0.05 + (i * 0.01), 'blog_draft', NOW() - (i || ' days')::interval);
     END LOOP;
 
+    -- Seed for archon_ethics_events (Sentinel Radar)
+    INSERT INTO archon_ethics_events (id, event_type, severity, description, raw_input, resolved, created_at)
+    VALUES (uuid_generate_v4(), 'PII_LEAK_PREVENTION', 'high', 'Attempted to generate response containing potential identification number.', 'User query: Give me the social security number of Alice.', FALSE, NOW() - INTERVAL '10 minutes')
+    ON CONFLICT DO NOTHING;
+
+    -- Seed for archon_document_versions (Librarian Audit)
+    INSERT INTO archon_document_versions (id, document_id, version_number, change_type, field_name, change_summary, status, created_by, content, created_at)
+    VALUES (uuid_generate_v4(), 'MARKETING_TONE_SYSTEM_PROMPT', 2, 'update', 'prompt_content', 'Attempted to reduce formal constraints in marketing blog generation.', 'pending', 'Bob', '{"prompt": "New Less Restricted Prompt Content..."}', NOW() - INTERVAL '2 hours')
+    ON CONFLICT DO NOTHING;
+
 END $$;
 
 -- Seed for leads table (Stale Lead for Sentinel Testing)

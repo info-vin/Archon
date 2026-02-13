@@ -27,7 +27,7 @@
 | **GAP-028** | 🔧 Gap | **Charlie** | **Nexus** | **指揮官中樞: Op Load (營運負載)**。已實作：1. 30 天雙軸趨勢圖；2. 待審核清單與 AI 分數；3. Bob 退件反饋可見性。**[待討論]: 圖表精準度與內容一致性需進一步對齊數據口徑。** | Medium | 🟡 待討論 |
 | **GAP-029** | 🔧 Gap | **Charlie** | **Nexus** | **指揮官中樞: Sent Risks (風險雷達)**。已落地「業務最後防線」：1. 哨兵自動偵測 Stale Leads (14d) 與 Content Bottleneck (48h)；2. Dispatch 強制轉化為 **High Priority** 任務並自動分配；3. 任務產生後告警自動降級為 INFO 以清空 HUD。修復了 PGRST116 查詢崩潰。 | High | 🟢 已修復 |
 | **GAP-030** | 🔧 Gap | **Charlie** | **Nexus** | **指揮官中樞: Act Force (活躍武力)**。已落地：1. 90 天戰鬥力 vs 90 天基線 (ReferenceLine) 對比圖；2. X 軸對齊每 10 天標籤；3. 人機在線狀態動態偵測。 | Medium | 🟡 待驗證 |
-| **GAP-031** | 🔧 Gap | **Charlie** | **Nexus** | **指揮官中樞: Ethics (倫理/合規)**。待實作：展示「Guardrail 監控」。攔截統計、ISO-27001 遵循度趨勢與潛在合規風險。 | Low | ⚪ 待處理 |
+| **GAP-031** | 🔧 Gap | **Charlie** | **Nexus** | **指揮官中樞: Ethics (倫理/合規)**。已落地：1. 實作「待簽核隊列」，整合哨兵攔截事件與管理員指令變更；2. 支援跨表 (logs/ethics) 的 AI 自動分派 (Dispatch)；3. 實作 Prompt 審核 API 與 Diff 預覽邏輯。 | Low | 🟡 待驗證 |
 | **GAP-032** | 🔧 Gap | **Charlie** | **Nexus** | **指揮官中樞: Collab (協作分數)**。已落地「全員協作動能矩陣」：1. 9x9 實體關聯 (4人 + 5 Agent)；2. 雙長條圖對比 7D 實際 vs 30D 平均；3. Snapshot 卡片大字顯示動能百分比並附帶 7D 實體總數標籤。 | Low | 🟡 待驗證 |
 | **GAP-033** | 🔧 Gap | **Charlie** | **Nexus** | **指揮官中樞: Graph (情報圖譜)**。待實作：展示「知識庫覆蓋率」。產業情資密度、競爭對手追蹤進度與資料新鮮度。 | Medium | ⚪ 待處理 |
 | **GAP-034** | 🔧 Gap | **Charlie** | **Nexus** | **指揮官中樞: Velocity (生產速率)**。待實作：展示「任務結案週期」。Lead 轉化平均天數、SLA 達成率趨勢圖。 | Medium | ⚪ 待處理 |

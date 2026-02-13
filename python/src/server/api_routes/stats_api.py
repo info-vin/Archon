@@ -229,6 +229,133 @@ async def get_collab_synergy():
     except Exception as e:
         logger.error(f"API: Collab synergy fetch failed: {e}")
         return {"nodes": [], "matrix": [], "error": str(e)}
+@router.post("/approve-prompt-change/{version_id}", dependencies=[Depends(require_manager_or_admin)])
+async def approve_prompt_change(version_id: str):
+    """
+    Charlie approves a pending prompt change from Librarian.
+    """
+    try:
+        supabase = get_supabase_client()
+        res = supabase.table("archon_document_versions")\
+            .update({"status": "approved"})\
+            .eq("id", version_id).execute()
+        
+        if not res.data:
+            raise HTTPException(status_code=404, detail="Version not found")
+            
+        return {"success": True, "message": "Prompt change approved"}
+    except Exception as e:
+        logger.error(f"API: Prompt approval failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/ethics-audit-queue", dependencies=[Depends(require_manager_or_admin)])
+async def get_ethics_audit_queue():
+    """
+    Ethics & Prompt Audit Queue.
+    Combines Sentinel's interceptions and Librarian's version changes.
+    """
+    try:
+        supabase = get_supabase_client()
+        
+        # 1. Fetch Pending Ethics Violations (Sentinel)
+        ethics_res = supabase.table("archon_ethics_events")\
+            .select("*")\
+            .eq("resolved", False)\
+            .order("created_at", desc=True).limit(5).execute()
+        
+        # 2. Fetch Pending Prompt Changes (Librarian)
+        # We look for versions where field_name involves 'prompt' or type is 'prompt'
+        versions_res = supabase.table("archon_document_versions")\
+            .select("*")\
+            .eq("status", "pending")\
+            .order("created_at", desc=True).limit(5).execute()
+            
+        return {
+            "violations": ethics_res.data or [],
+            "pending_versions": versions_res.data or [],
+            "total_pending": len(ethics_res.data or []) + len(versions_res.data or [])
+        }
+    except Exception as e:
+        logger.error(f"API: Ethics audit queue failed: {e}")
+        return {"violations": [], "pending_versions": [], "total_pending": 0}
+
+@router.get("/sla-reliability", dependencies=[Depends(require_manager_or_admin)])
+async def get_sla_reliability():
+    """
+    Strategic Reliability HUD: 6-Month (180D) SLA Attainment.
+    Aggregated every 14 days (Bi-weekly) to filter noise.
+    """
+    try:
+        supabase = get_supabase_client()
+        now = datetime.now(UTC)
+        range_days = 180
+        step_days = 14
+        cutoff_date = (now - timedelta(days=range_days)).isoformat()
+
+        # Fetch all done tasks in 180d
+        res = supabase.table("archon_tasks")\
+            .select("id, completed_at, due_date")\
+            .eq("status", "done")\
+            .gt("completed_at", cutoff_date).execute()
+        
+        all_tasks = res.data or []
+        
+        # Aggregate into 14-day buckets
+        trend = []
+        for i in range(range_days, 0, -step_days):
+            window_end = now - timedelta(days=i - step_days)
+            window_start = now - timedelta(days=i)
+            
+            # Filter tasks in this 14-day window
+            window_tasks = [
+                t for t in all_tasks 
+                if t.get("completed_at") and 
+                window_start <= datetime.fromisoformat(t["completed_at"].replace('Z', '+00:00')) < window_end
+            ]
+            
+            if not window_tasks:
+                trend.append({
+                    "date": window_start.strftime("%m-%d"),
+                    "rate": 100.0, # Neutral fallback
+                    "count": 0
+                })
+                continue
+                
+            met_count = 0
+            for t in window_tasks:
+                if t.get("due_date"):
+                    comp = datetime.fromisoformat(t["completed_at"].replace('Z', '+00:00'))
+                    due = datetime.fromisoformat(t["due_date"].replace('Z', '+00:00'))
+                    if comp <= due:
+                        met_count += 1
+                else:
+                    met_count += 1 # No due date = implicitly met
+            
+            rate = round((met_count / len(window_tasks)) * 100, 1)
+            trend.append({
+                "date": window_start.strftime("%m-%d"),
+                "rate": rate,
+                "count": len(window_tasks)
+            })
+
+        # Calculate Current Snapshot (Last 30 days)
+        last_30d_tasks = [t for t in all_tasks if datetime.fromisoformat(t["completed_at"].replace('Z', '+00:00')) > now - timedelta(days=30)]
+        current_sla = 100.0
+        if last_30d_tasks:
+            met_30d = sum(1 for t in last_30d_tasks if not t.get("due_date") or datetime.fromisoformat(t["completed_at"].replace('Z', '+00:00')) <= datetime.fromisoformat(t["due_date"].replace('Z', '+00:00')))
+            current_sla = round((met_30d / len(last_30d_tasks)) * 100, 1)
+
+        return {
+            "current_sla": current_sla,
+            "trend": trend,
+            "total_analyzed": len(all_tasks),
+            "timestamp": now.isoformat()
+        }
+
+    except Exception as e:
+        logger.error(f"API: SLA Reliability failed: {e}")
+        return {"current_sla": 0, "trend": [], "error": str(e)}
+
 @router.get("/force-readiness", dependencies=[Depends(require_manager_or_admin)])
 async def get_force_readiness():
     """
