@@ -725,26 +725,20 @@ async def submit_blog_for_review(
         if post["status"] != "draft" and post["status"] != "changes_requested":
              raise HTTPException(status_code=400, detail=f"Cannot submit post in status: {post['status']}")
 
-        # 2. Trigger AI Reviewer (Simulated for Phase 4.6.3)
-        # In a real implementation, this would call get_llm_client() with a specific prompt
-        # Here we simulate the logic:
-        # - Content length < 50 chars -> Reject (Low Quality)
-        # - Content contains "CONFIDENTIAL" -> Reject (Compliance)
-        # - Otherwise -> Pass
+        # 2. Trigger AI Reviewer (Grounded Logic - Deduction Based)
+        from .stats_api import calculate_ai_score
 
         content = post.get("content", "")
-        ai_score = 85 # Default high score
-        review_notes = "AI Compliance Check: Passed. Tone is consistent."
+        ai_score = calculate_ai_score(content)
+
+        review_notes = "AI Compliance Check: High quality draft."
         auto_reject = False
 
-        if len(content) < 50:
-            ai_score = 40
-            review_notes = "AI Review: Content too short. Please expand."
+        if ai_score < 50:
+            review_notes = f"AI Review: Critical issues found (Score: {ai_score}). Possible Confidential leak or content too short."
             auto_reject = True
-        elif "CONFIDENTIAL" in content.upper():
-            ai_score = 0
-            review_notes = "AI Review: Security Alert. Found sensitive keyword 'CONFIDENTIAL'."
-            auto_reject = True
+        elif ai_score < 80:
+            review_notes = f"AI Review: Needs improvement (Score: {ai_score}). Check length and structure."
 
         # 3. Decision Logic
         if auto_reject:
@@ -754,10 +748,11 @@ async def submit_blog_for_review(
             new_status = "review" # PENDING_REVIEW
             logger.info(f"API: AI Auto-Pass | id={post_id} | score={ai_score}")
 
-        # 4. Update DB
+        # 4. Update DB (Persistent Fields from Migration 046)
         supabase.table("blog_posts").update({
-            "status": new_status
-            # In future: store review_notes and ai_score in DB
+            "status": new_status,
+            "ai_score": ai_score,
+            "review_notes": review_notes
         }).eq("id", post_id).execute()
 
         return {

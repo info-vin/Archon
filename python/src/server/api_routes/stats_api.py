@@ -32,11 +32,90 @@ async def require_manager_or_admin(user=Depends(get_current_user)):
         raise HTTPException(status_code=403, detail="Manager or Admin access required")
     return user
 
+def calculate_ai_score(content: str) -> int:
+    """
+    Refined Business Integrity Scoring (Deduction Based).
+    - Base: 100
+    - Confidential Leak: -50 (Capped at 0)
+    - Word count < 50: -50
+    - Word count < 200: -20
+    - Missing Header (#): -10
+    """
+    score = 100
+    if "CONFIDENTIAL" in content.upper():
+        score -= 50
+
+    words = content.split()
+    word_count = len(words)
+    if word_count < 50:
+        score -= 50
+    elif word_count < 200:
+        score -= 20
+
+    if "# " not in content:
+        score -= 10
+
+    return max(0, score)
+
+@router.get("/commander-trends", dependencies=[Depends(require_manager_or_admin)])
+async def get_commander_trends():
+    """
+    Strategic 30-day trend data for Charlie.
+    Returns: { date, bob_tokens, decision_hours }
+    """
+    try:
+        supabase = get_supabase_client()
+        thirty_days_ago = (datetime.now(UTC) - timedelta(days=30)).isoformat()
+
+        # 1. Bob's Token Burn (Marketing Role)
+        token_res = supabase.table("token_usage")\
+            .select("created_at, total_tokens")\
+            .in_("user_id", supabase.table("profiles").select("id").eq("role", "marketing"))\
+            .gt("created_at", thirty_days_ago).execute()
+
+        token_map: dict[str, int] = {}
+        for row in (token_res.data or []):
+            d = row["created_at"][:10]
+            token_map[d] = token_map.get(d, 0) + int(row["total_tokens"])
+
+        # 2. Charlie's Decision Velocity (Max 24h)
+        # Time from created_at to first resolution (published/rejected)
+        velocity_res = supabase.table("blog_posts")\
+            .select("created_at, updated_at")\
+            .in_("status", ["published", "changes_requested", "rejected"])\
+            .gt("updated_at", thirty_days_ago).execute()
+
+        velocity_data: dict[str, list[float]] = {}
+        for row in (velocity_res.data or []):
+            d = row["updated_at"][:10]
+            start = datetime.fromisoformat(row["created_at"].replace('Z', '+00:00'))
+            end = datetime.fromisoformat(row["updated_at"].replace('Z', '+00:00'))
+            # Calculate hours and cap at 24.0
+            hours = min(24.0, (end - start).total_seconds() / 3600)
+            if d not in velocity_data:
+                velocity_data[d] = []
+            velocity_data[d].append(hours)
+
+        # 3. Merge Trends
+        all_dates = sorted(set(list(token_map.keys()) + list(velocity_data.keys())))
+        trends = []
+        for date in all_dates:
+            trends.append({
+                "date": date[5:], # MM-DD for UI
+                "bob_tokens": token_map.get(date, 0),
+                "decision_hours": round(sum(velocity_data[date])/len(velocity_data[date]), 1) if date in velocity_data else 0.0
+            })
+
+        return trends
+
+    except Exception as e:
+        logger.error(f"Commander trends failed: {e}")
+        return []
+
 @router.get("/system-overview", dependencies=[Depends(require_manager_or_admin)])
 async def get_system_overview():
     """
     Consolidated health and performance overview.
-    Now accessible to Managers and provides a complete view of registered agents.
     """
     try:
         supabase = get_supabase_client()
@@ -55,38 +134,27 @@ async def get_system_overview():
         from ..services.agent_registry import AGENT_CONFIG
         one_hour_ago = (datetime.now(UTC) - timedelta(hours=1)).isoformat()
 
-        # Define all expected system agents
+        # Define all system entities
         all_agents_def = [
             {"id": "clockwork", "name": "Clockwork", "role": "Scheduler"},
-            {"id": "sentinel", "name": "Sentinel", "role": "Business Guard"}
+            {"id": "sentinel", "name": "Sentinel", "role": "Guard"}
         ]
-        # Add registered AI agents
-        for agent_id, config in AGENT_CONFIG.items():
+        for aid, cfg in AGENT_CONFIG.items():
             all_agents_def.append({
-                "id": str(agent_id),
-                "name": str(config["name"]),
+                "id": str(aid),
+                "name": str(cfg["name"]),
                 "role": "AI Assistant"
             })
 
-        # Get recent activity from logs
-        logs_res = supabase.table("archon_logs").select("source, message")\
+        # REAL LOG CHECK
+        logs_res = supabase.table("archon_logs").select("source")\
             .gt("created_at", one_hour_ago).execute()
         active_sources = {log["source"].lower() for log in (logs_res.data or [])}
 
-        # Get recent activity from tokens
-        token_res = supabase.table("token_usage").select("context_type")\
-            .gt("created_at", one_hour_ago).execute()
-        active_contexts = {t["context_type"].lower() for t in (token_res.data or []) if t.get("context_type")}
-
         active_agents_details = []
         for agent in all_agents_def:
-            # Heuristic for activity: Match source ID or context type
-            is_active = (
-                agent["id"].lower() in active_sources or
-                "clockwork" in active_sources and agent["id"] == "clockwork" or
-                any(agent["id"].lower() in ctx for ctx in active_contexts) or
-                (agent["id"] == "market-bot" and any("blog" in ctx for ctx in active_contexts))
-            )
+            is_active = (agent["id"].lower() in active_sources or
+                         any(agent["name"].lower() in src for src in active_sources))
             active_agents_details.append({
                 "id": agent["id"],
                 "name": agent["name"],
@@ -94,71 +162,39 @@ async def get_system_overview():
                 "status": "active" if is_active else "standby"
             })
 
-        # 5. Knowledge Stats
-        # Count total pages and chunks
-        pages_res = supabase.table("archon_crawled_pages").select("id", count="exact").execute()
-        # approximate chunks if not tracked directly, or query distinct source_id
-        # For now, we assume archon_crawled_pages represents chunks/pages.
-        knowledge_stats = {
-            "total_nodes": pages_res.count or 0,
-            "total_chunks": pages_res.count or 0 # 1:1 for now
-        }
-
-        # 6. Ethics Status (Last 24h)
-        ethics_res = supabase.table("archon_ethics_events").select("id", count="exact")\
-            .gt("created_at", one_day_ago).execute()
-        ethics_count = ethics_res.count or 0
-
-        # 7. Collab Score (Last 30 days)
-        # Logic: Count distinct active users in last 30d logs
+        # 4. 30-Day Decision Velocity Trend (GAP-028 Analytics)
         thirty_days_ago = (datetime.now(UTC) - timedelta(days=30)).isoformat()
-        collab_score = 0
-        try:
-            active_users_res = supabase.table("archon_logs").select("user_id")\
-                .gt("created_at", thirty_days_ago).execute()
-            distinct_users = len({log["user_id"] for log in (active_users_res.data or []) if log.get("user_id")})
-            collab_score = min(100, distinct_users * 20) # 5 users = 100%
-        except Exception as collab_err:
-            logger.warning(f"Failed to calculate collab score (migration 045 pending?): {collab_err}")
-            collab_score = 80 # Graceful fallback score
+        # Logic: Avg time from creation to resolution per day
+        # We use blog_posts as the benchmark for content velocity
+        velocity_res = supabase.table("blog_posts")\
+            .select("created_at, updated_at")\
+            .in_("status", ["published", "changes_requested"])\
+            .gt("updated_at", thirty_days_ago).execute()
 
-        # 8. Velocity Score (Last 14 days)
-        # Logic: Avg completion time for tasks done in last 14d
-        fourteen_days_ago = (datetime.now(UTC) - timedelta(days=14)).isoformat()
-        done_tasks_res = supabase.table("archon_tasks").select("created_at, completed_at")\
-            .eq("status", "done").gt("completed_at", fourteen_days_ago).execute()
+        velocity_trend = []
+        daily_velocity: dict[str, list[float]] = {}
+        for post in (velocity_res.data or []):
+            d = post["updated_at"][:10]
+            start = datetime.fromisoformat(post["created_at"].replace('Z', '+00:00'))
+            end = datetime.fromisoformat(post["updated_at"].replace('Z', '+00:00'))
+            hours = min(24.0, (end - start).total_seconds() / 3600) # Capped at 24h as per requirement
+            if d not in daily_velocity:
+                daily_velocity[d] = []
+            daily_velocity[d].append(hours)
 
-        velocity_score = 0
-        if done_tasks_res.data:
-            total_hours = 0.0
-            count = 0
-            for task in done_tasks_res.data:
-                if task.get("created_at") and task.get("completed_at"):
-                    start = datetime.fromisoformat(task["created_at"])
-                    end = datetime.fromisoformat(task["completed_at"])
-                    diff = (end - start).total_seconds() / 3600
-                    total_hours += diff
-                    count += 1
-            if count > 0:
-                avg_hours = total_hours / count
-                # Benchmarking: < 24h = 100, 48h = 50
-                velocity_score = max(0, min(100, int(100 - (avg_hours - 24))))
+        for d in sorted(daily_velocity.keys()):
+            velocity_trend.append({"date": d[5:], "avg_hours": round(sum(daily_velocity[d])/len(daily_velocity[d]), 1)})
 
-        # 9. Cost 24h (Real-time)
+        # 5. Token Burn (Last 24h Real Cost)
         cost_res = supabase.table("token_usage").select("cost_usd").gt("created_at", one_day_ago).execute()
         total_cost_24h = sum(float(r.get("cost_usd", 0)) for r in (cost_res.data or []))
+
         return {
             "status": "healthy" if rag_health.get("status") == "healthy" and error_count < 10 else "degraded",
-            "rag": rag_health,
-            "integrity_score": rag_health.get("score", 99.8), # Fallback if health service not updated yet
-            "errors_24h": error_count,
             "active_agents": active_agents_details,
             "cost_24h": round(total_cost_24h, 4),
-            "knowledge_stats": knowledge_stats,
-            "ethics_status": {"violations_24h": ethics_count},
-            "collab_score": collab_score,
-            "velocity_score": velocity_score,
-            "velocity_in_days": round(avg_hours / 24, 1) if 'avg_hours' in locals() else 0.0,
+            "velocity_trend": velocity_trend, # Used for ASCII/Recharts visualization
+            "ethics_violations_24h": (supabase.table("archon_ethics_events").select("id", count="exact").gt("created_at", one_day_ago).execute()).count or 0,
             "timestamp": datetime.now(UTC).isoformat()
         }
     except Exception as e:
