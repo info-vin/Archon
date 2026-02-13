@@ -7,7 +7,7 @@ import {
     ShieldCheckIcon, DatabaseIcon, UsersIcon, 
     GitCommitIcon, SearchIcon,
     DollarSignIcon, ClockIcon, ZapIcon,
-    MaximizeIcon, MinimizeIcon
+    MaximizeIcon, MinimizeIcon, SparklesIcon
 } from '../components/Icons';
 import { ManageMemberModal } from '../features/team/components/ManageMemberModal';
 import UserAvatar from '../components/UserAvatar';
@@ -150,22 +150,26 @@ export const ManagerNexus: React.FC = () => {
         fetchData();
     }, []);
 
+    const [commanderTrends, setCommanderTrends] = useState<any[]>([]);
+
     const fetchData = async () => {
         setLoading(true);
         try {
-            const [sys, emp, app, alr, ai, settings] = await Promise.all([
+            const [sys, emp, app, alr, ai, settings, trends] = await Promise.all([
                 api.getSystemOverview(),
                 api.getEmployees(),
                 api.getPendingApprovals(),
                 api.getManagerAlerts(),
                 api.getAiUsage(),
-                api.getSystemSettings('marketing_scoring')
+                api.getSystemSettings('marketing_scoring'),
+                fetch('/api/stats/commander-trends', { headers: await (api as any)._getHeaders() }).then(r => r.json()).catch(() => [])
             ]);
             setOverview(sys);
             setTeam(emp);
             setApprovals(app);
             setAlerts(alr);
             setAiStats(ai);
+            setCommanderTrends(trends);
 
             if (settings && settings.length > 0) {
                  try {
@@ -550,6 +554,44 @@ export const ManagerNexus: React.FC = () => {
             case 'op_load':
                 return (
                     <DetailSection title="Operational Load" subtitle="Approval & Review Queue" icon={<ActivityIcon className="w-5 h-5 text-indigo-600"/>}>
+                        {/* 30-Day Trend Insight (GAP-028 Dashboard) */}
+                        <div className="bg-gray-50/50 border border-gray-100 rounded-3xl p-6 mb-8 h-[300px]">
+                            <h4 className="text-xs font-black text-gray-400 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
+                                <SparklesIcon className="w-3 h-3" /> 30-Day Performance Pulse (Daily)
+                            </h4>
+                            <div className="h-[220px]">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <AreaChart data={commanderTrends}>
+                                        <defs>
+                                            <linearGradient id="colorTokens" x1="0" y1="0" x2="0" y2="1">
+                                                <stop offset="5%" stopColor="#6366f1" stopOpacity={0.1}/>
+                                                <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
+                                            </linearGradient>
+                                        </defs>
+                                        <XAxis 
+                                            dataKey="date" 
+                                            axisLine={false} 
+                                            tickLine={false} 
+                                            fontSize={10} 
+                                            interval={13} // Show labels every 14 days
+                                            tick={{fill: '#94a3b8'}}
+                                        />
+                                        <YAxis yAxisId="left" hide />
+                                        <YAxis yAxisId="right" hide domain={[0, 24]} />
+                                        <ReTooltip 
+                                            contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)'}}
+                                        />
+                                        <Area yAxisId="left" type="monotone" dataKey="bob_tokens" stroke="#6366f1" fillOpacity={1} fill="url(#colorTokens)" strokeWidth={2} name="Bob's Tokens" />
+                                        <Area yAxisId="right" type="monotone" dataKey="decision_hours" stroke="#f59e0b" fill="transparent" strokeWidth={2} strokeDasharray="5 5" name="Decision Gap (Hrs)" />
+                                    </AreaChart>
+                                </ResponsiveContainer>
+                            </div>
+                            <div className="flex justify-center gap-6 mt-2">
+                                <span className="flex items-center gap-2 text-[10px] font-bold text-indigo-600"><div className="w-2 h-2 rounded-full bg-indigo-600"/> Cumulative Tokens</span>
+                                <span className="flex items-center gap-2 text-[10px] font-bold text-amber-600"><div className="w-2 h-2 border-t-2 border-amber-600 border-dashed w-4"/> Wait Time (Max 24h)</span>
+                            </div>
+                        </div>
+
                         <div className="flex gap-4 mb-6 border-b border-gray-100 pb-2">
                             <button 
                                 onClick={() => setOpLoadTab('content')}
