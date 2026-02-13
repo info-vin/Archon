@@ -295,46 +295,79 @@ class SchedulerService:
 
             if not stale_leads:
                 logger.info("🛡️ Clockwork: No stale leads found.")
-                return
+            else:
+                for lead in stale_leads:
+                    # Check for existing recent alert to avoid spam (within last 7 days)
+                    seven_days_ago = (datetime.now(UTC) - timedelta(days=7)).isoformat()
+                    existing = supabase.table("archon_logs").select("id")\
+                        .eq("source", "sentinel")\
+                        .eq("level", "ALERT")\
+                        .gt("created_at", seven_days_ago)\
+                        .filter("details->>lead_id", "eq", str(lead["id"]))\
+                        .execute()
 
-            logger.info(f"🛡️ Clockwork: Detected {len(stale_leads)} stale leads. Creating alerts...")
+                    if existing.data:
+                        continue
 
-            for lead in stale_leads:
-                # Check for existing recent alert to avoid spam (within last 7 days)
-                # Note: Filter by lead_id inside the JSONB details field
+                    # Parse updated_at to calculate actual days
+                    lead_updated = datetime.fromisoformat(lead["updated_at"].replace('Z', '+00:00'))
+                    days_stale = (datetime.now(UTC) - lead_updated).days
+                    alert_msg = f"Stale Lead Risk: {lead['company_name']} ({days_stale} days inactive)"
+
+                    alert_payload = {
+                        "source": "sentinel",
+                        "level": "ALERT",
+                        "message": alert_msg,
+                        "details": {
+                            "type": "stale_lead",
+                            "category": "business", # Strategic Filter
+                            "lead_id": lead["id"],
+                            "company": lead["company_name"],
+                            "days_stale": days_stale,
+                            "enrichment_score": lead.get("enrichment_score", 0)
+                        }
+                    }
+                    supabase.table("archon_logs").insert(alert_payload).execute()
+                    logger.info(f"🛡️ Sentinel: Created alert for {lead['company_name']}")
+
+            # 3. Find Content Bottlenecks (New Logic for GAP-029)
+            # Filter: status = 'review' AND updated_at < 48h ago
+            forty_eight_hours_ago = (datetime.now(UTC) - timedelta(hours=48)).isoformat()
+            post_res = supabase.table("blog_posts")\
+                .select("id, title, status, updated_at")\
+                .eq("status", "review")\
+                .lt("updated_at", forty_eight_hours_ago).execute()
+
+            bottlenecks = post_res.data or []
+            for post in bottlenecks:
                 seven_days_ago = (datetime.now(UTC) - timedelta(days=7)).isoformat()
-                existing = supabase.table("archon_logs").select("id")\
+                existing_p = supabase.table("archon_logs").select("id")\
                     .eq("source", "sentinel")\
                     .eq("level", "ALERT")\
                     .gt("created_at", seven_days_ago)\
-                    .filter("details->>lead_id", "eq", str(lead["id"]))\
+                    .filter("details->>post_id", "eq", str(post["id"]))\
                     .execute()
 
-                logger.info(f"🛡️ Sentinel: Existing check for {lead['company_name']} -> {existing.data}")
-
-                if existing.data:
-                    logger.info(f"🛡️ Sentinel: Alert already exists for {lead['company_name']}, skipping")
+                if existing_p.data:
                     continue
 
-                # Parse updated_at to calculate actual days
-                lead_updated = datetime.fromisoformat(lead["updated_at"].replace('Z', '+00:00'))
-                days_stale = (datetime.now(UTC) - lead_updated).days
-                alert_msg = f"Stale Lead Risk: {lead['company_name']} ({days_stale} days inactive)"
+                post_updated = datetime.fromisoformat(post["updated_at"].replace('Z', '+00:00'))
+                hours_stuck = int((datetime.now(UTC) - post_updated).total_seconds() / 3600)
 
                 alert_payload = {
                     "source": "sentinel",
                     "level": "ALERT",
-                    "message": alert_msg,
+                    "message": f"Content Bottleneck: '{post['title']}' stuck in review for {hours_stuck}h",
                     "details": {
-                        "type": "stale_lead",
-                        "lead_id": lead["id"],
-                        "company": lead["company_name"],
-                        "days_stale": days_stale,
-                        "enrichment_score": lead.get("enrichment_score", 0)
+                        "type": "content_bottleneck",
+                        "category": "business", # Strategic Filter
+                        "post_id": post["id"],
+                        "title": post["title"],
+                        "hours_stuck": hours_stuck
                     }
                 }
                 supabase.table("archon_logs").insert(alert_payload).execute()
-                logger.info(f"🛡️ Sentinel: Created alert for {lead['company_name']}")
+                logger.info(f"🛡️ Sentinel: Created bottleneck alert for {post['title']}")
 
         except Exception as e:
             logger.error(f"💥 Clockwork: Business Sentinel Failed: {e}", exc_info=True)

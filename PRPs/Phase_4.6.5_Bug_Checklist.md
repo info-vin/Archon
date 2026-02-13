@@ -24,9 +24,9 @@
 | **BUG-038** | 🐛 Bug | **All** | **AI/Gemini** | **Gemini 404 & Model Alignment (SSOT 已修復)**。原因：1. 資料庫設定 (`MARKETING_MODEL`) 存有舊模型 `1.5-flash` 覆蓋了程式碼預設值；2. Google API 會因模型名稱前綴或髒路徑自動跳轉至不支援該模型的 `v1main` 接口。修復：1. 底層物理鎖定 `v1beta/openai/` 路徑；2. 實施 `split("/")[-1]` 名稱校準；3. 手動同步 RAGSettings 至 `gemini-2.5-flash`。驗證：Alice 提案生成已恢復正常且具備 429 警報廣播。 | High | 🟢 已修復 |
 | **GAP-027** | 🔧 Gap | **Charlie** | **Nexus** | **指揮官中樞: Integrity (系統完整度)**。已實作：1. 加權評分模型 (知識 70% + 連線 30%)；2. 30 天雙曲線趨勢圖 (Daily vs Baseline)；3. 真實每小時稽核日誌。 | High | 🟢 已修復 |
 | **GAP-035** | 🔧 Gap | **Charlie** | **Nexus** | **指揮官中樞: Resources (資源與人機協作)**。已實作：1. 全角色 (Alice, Bob, Admin, System) 任務剖析；2. 區分 Crawler 與 GenAI 消耗；3. 30 天累計預算消耗圖與 $100 紅線同步。 | High | 🟢 已修復 |
-| **GAP-028** | 🔧 Gap | **Charlie** | **Nexus** | **指揮官中樞: Op Load (營運負載)**。待實作：展示「待決策任務隊列」。包含待審核部落格、Alice 提案堆疊與平均決策時長。 | Medium | ⚪ 待處理 |
-| **GAP-029** | 🔧 Gap | **Charlie** | **Nexus** | **指揮官中樞: Sent Risks (風險雷達)**。待實作：展示「業務風險預警」。聚焦 Stale Leads (14天未動) 與流程卡點，嚴格排除技術噪聲。 | High | ⚪ 待處理 |
-| **GAP-030** | 🔧 Gap | **Charlie** | **Nexus** | **指揮官中樞: Act Force (活躍武力)**。待實作：展示「團隊與 Agent 狀態」。人機在線情況、當前戰鬥力評級與自動化率。 | Medium | ⚪ 待處理 |
+| **GAP-028** | 🔧 Gap | **Charlie** | **Nexus** | **指揮官中樞: Op Load (營運負載)**。已實作：1. 30 天雙軸趨勢圖；2. 待審核清單與 AI 分數；3. Bob 退件反饋可見性。**[待討論]: 圖表精準度與內容一致性需進一步對齊數據口徑。** | Medium | 🟡 待討論 |
+| **GAP-029** | 🔧 Gap | **Charlie** | **Nexus** | **指揮官中樞: Sent Risks (風險雷達)**。已落地「業務最後防線」：1. 哨兵自動偵測 Stale Leads (14d) 與 Content Bottleneck (48h)；2. Dispatch 強制轉化為 **High Priority** 任務並自動分配；3. 任務產生後告警自動降級為 INFO 以清空 HUD。修復了 PGRST116 查詢崩潰。 | High | 🟢 已修復 |
+| **GAP-030** | 🔧 Gap | **Charlie** | **Nexus** | **指揮官中樞: Act Force (活躍武力)**。已落地：1. 90 天戰鬥力 vs 90 天基線 (ReferenceLine) 對比圖；2. X 軸對齊每 10 天標籤；3. 人機在線狀態動態偵測。 | Medium | 🟡 待驗證 |
 | **GAP-031** | 🔧 Gap | **Charlie** | **Nexus** | **指揮官中樞: Ethics (倫理/合規)**。待實作：展示「Guardrail 監控」。攔截統計、ISO-27001 遵循度趨勢與潛在合規風險。 | Low | ⚪ 待處理 |
 | **GAP-032** | 🔧 Gap | **Charlie** | **Nexus** | **指揮官中樞: Collab (協作分數)**。待實作：展示「Synergy 矩陣」。跨部門 (Sales/Mkt) 任務流轉頻率與協作熱力圖。 | Low | ⚪ 待處理 |
 | **GAP-033** | 🔧 Gap | **Charlie** | **Nexus** | **指揮官中樞: Graph (情報圖譜)**。待實作：展示「知識庫覆蓋率」。產業情資密度、競爭對手追蹤進度與資料新鮮度。 | Medium | ⚪ 待處理 |
@@ -70,6 +70,7 @@
 | **GAP-024** | 🔧 Gap | **Alice** | **Pitch** | **Pitch View UI**。已完成：1. 桌面端 Table View 增加 View 按鈕與 Modal；2. 手機端 LeadsCardStack 增加動態 PitchDrawer，支援已生成內容的翻閱與複製。 | Medium | 🟡 待驗證 |
 | **GAP-025** | 🔧 Gap | **Admin** | **Config**| **Scoring Persistence**。已實作：1. Migration 038 權重持久化；2. AdminPage 增加 Lead Scoring Weights 動態配置區塊，支援自動保存與審計日誌同步。 | High | 🟢 已修復 |
 | **GAP-026** | 🔧 Gap | **Admin** | **Audit** | **Audit Search UI**。已實作：DocumentVersionsLog 增加多維度即時搜尋與 Sticky Header，支援按人員、欄位、摘要過濾稽核紀錄。 | Low | 🟢 已修復 |
+| **BUG-039** | 🐛 Bug | **Tech** | **Infra** | **腳本組織與重複性混亂**。`scripts/` 與 `python/scripts/` 存在重複檔案 (`probe_system.py`) 且用途不明確，導致 Docker 執行路徑時常報錯。需統一歸檔至 `python/scripts/` 並建立標準 Makefile 捷徑。 | Medium | ⚪ 待處理 |
 
 ---
 

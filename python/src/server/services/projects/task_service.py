@@ -805,16 +805,17 @@ class TaskService:
             alert = res_alert.data[0]
             details = alert.get("details", {})
             lead_id = details.get("lead_id")
+            post_id = details.get("post_id") # Support for Content Bottlenecks
 
             # 2. Gather Context
             context_str = f"ALERT: {alert['message']}\n"
-            company_name = details.get("company", "Unknown Company")
+            company_name = details.get("company", "Unknown Target")
 
             if lead_id:
-                # Fetch Lead Details
-                res_lead = self.supabase_client.table("leads").select("*").eq("id", lead_id).single().execute()
-                if res_lead.data:
-                    lead = res_lead.data
+                # Fetch Lead Details (Stable Pattern: .execute + check)
+                res_lead = self.supabase_client.table("leads").select("*").eq("id", lead_id).execute()
+                if res_lead.data and len(res_lead.data) > 0:
+                    lead = res_lead.data[0]
                     context_str += f"COMPANY: {lead['company_name']}\n"
                     context_str += f"IDENTIFIED NEED: {lead.get('identified_need', 'None')}\n"
 
@@ -824,6 +825,16 @@ class TaskService:
                         context_str += "\nPAST VISIT SUMMARIES:\n"
                         for log in res_logs.data:
                             context_str += f"- {log['summary']}\n"
+
+            elif post_id:
+                # Fetch Blog Post Context (New for GAP-029)
+                res_post = self.supabase_client.table("blog_posts").select("*").eq("id", post_id).execute()
+                if res_post.data and len(res_post.data) > 0:
+                    post = res_post.data[0]
+                    company_name = post.get("title", "Marketing Asset")
+                    context_str += "CONTEXT: Content Bottleneck\n"
+                    context_str += f"POST TITLE: {post['title']}\n"
+                    context_str += f"STATUS: {post['status']}\n"
 
             # 3. RAG Search for similar cases or company info
             rag_service = RAGService(self.supabase_client)
@@ -933,15 +944,19 @@ Suggested Actions:
                 description=description,
                 assignee=assignee_name,
                 assignee_id=assignee_id,
+                priority="high", # GAP-029: Escalation to Highest Priority
                 due_date=datetime.now(), # Default immediate
                 sources=sources # Attach link
             )
 
             if success:
                 logger.info(f"Smart Dispatch: Task {result['task']['id']} created from alert {alert_id}")
-                # FB-07: Update Alert status to 'dispatched'
+                # FB-07 & GAP-029: Mark Alert as resolved and lower level to clear HUD
                 updated_details = {**details, "status": "dispatched", "dispatched_task_id": result['task']['id']}
-                self.supabase_client.table("archon_logs").update({"details": updated_details}).eq("id", alert_id).execute()
+                self.supabase_client.table("archon_logs").update({
+                    "details": updated_details,
+                    "level": "INFO" # Change Level to clear Charlie's Alert View
+                }).eq("id", alert_id).execute()
 
             return success, result
         except Exception as e:

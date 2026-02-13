@@ -285,12 +285,12 @@ async def create_embeddings_batch(
                         span.set_attribute("provider_used", provider_name)
                         return result
 
-                except (openai.AuthenticationError, openai.PermissionDeniedError, openai.APIConnectionError, openai.RateLimitError, ValueError) as e:
+                except Exception as e:
                     last_exception = e
-                    search_logger.warning(f"Provider '{provider_name}' failed. Last batch failed with error: {e}. Trying next provider if available.")
+                    search_logger.warning(f"Provider '{provider_name}' failed with {type(e).__name__}: {e}. Trying next if available.")
                     if is_last_provider:
-                        search_logger.error(f"All embedding providers failed. Last error from '{provider_name}': {e}", exc_info=True)
-                        raise
+                        search_logger.error(f"All embedding providers failed. Final source of failure '{provider_name}': {e}", exc_info=True)
+                        raise e
                 finally:
                     if client:
                         # Safe close that handles both real AsyncOpenAI clients and MagicMocks
@@ -309,7 +309,10 @@ async def create_embeddings_batch(
                         except Exception as cleanup_err:
                             search_logger.warning(f"Error closing client: {cleanup_err}")
 
-            raise last_exception or ValueError("All providers failed without a specific exception.")
+            if last_exception:
+                raise last_exception
+
+            raise ValueError("No embedding providers were attempted. Please verify API Key configurations in Settings.")
 
         except Exception as e:
             span.set_attribute("catastrophic_failure", True)
