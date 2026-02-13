@@ -1,5 +1,6 @@
 import os
 import random
+import json
 from datetime import datetime, timedelta, timezone
 import psycopg2
 
@@ -10,56 +11,70 @@ if not DB_URL:
     exit(1)
 
 def fuel_tasks():
-    print("🚀 Fueling 90-Day Task History for Nexus Baseline...")
+    print("🚀 Fueling 90-Day Task History for Nexus Synergy Matrix...")
     conn = psycopg2.connect(DB_URL)
     cur = conn.cursor()
 
-    # 1. Clear existing generated fuel (optional, but keep it clean)
+    # 1. Cleanup
     cur.execute("DELETE FROM archon_tasks WHERE title LIKE 'FUELED:%'")
 
-    # 2. Identify a project to attach to
+    # 2. Get Project
     cur.execute("SELECT id FROM archon_projects LIMIT 1")
     project_id = cur.fetchone()[0]
 
-    # 3. Identify a human to assign to
-    cur.execute("SELECT id FROM profiles WHERE role = 'sales' LIMIT 1")
-    alice_id = cur.fetchone()[0]
+    # 3. Get Real Profiles
+    cur.execute("SELECT id, name, role FROM profiles")
+    all_profiles = cur.fetchall()
+    
+    # Map for easy simulation
+    humans = [p[0] for p in all_profiles if p[2] != 'ai_agent']
+    agents = [p[0] for p in all_profiles if p[2] == 'ai_agent']
+    all_entities = [p[0] for p in all_profiles]
+
+    if not humans or not agents:
+        print("❌ Error: Missing humans or agents in profiles table. Run make db-init first.")
+        return
 
     now = datetime.now(timezone.utc)
     task_count = 0
 
-    # Inject 90 days of data
+    # Inject 90 days
     for day in range(90):
-        # Generate 3-8 tasks per day
-        daily_count = random.randint(3, 8)
+        daily_count = random.randint(4, 10)
         target_date = now - timedelta(days=day)
         
         for i in range(daily_count):
-            task_id = f"fuel-{day}-{i}"
             created_at = (target_date - timedelta(hours=random.randint(1, 12))).isoformat()
             completed_at = target_date.isoformat()
             
-            cur.execute("""
-                INSERT INTO archon_tasks (title, description, project_id, status, assignee_id, assignee, priority, created_at, completed_at)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
-                ON CONFLICT DO NOTHING
-            """, (
-                f"FUELED: Weekly Sync {day}-{i}",
-                "Automated historical seed for Nexus trend verification.",
-                project_id,
-                "done",
-                alice_id,
-                "Alice",
-                "medium",
-                created_at,
-                completed_at
-            ))
-            task_count += 1
+            # Pick creator and assignee
+            creator = random.choice(all_entities)
+            assignee = random.choice(humans)
+            
+            if creator != assignee:
+                sources = [{"type": "handoff", "source_id": creator, "title": f"Synergy from {creator}"}]
+                
+                cur.execute("""
+                    INSERT INTO archon_tasks (title, description, project_id, status, assignee_id, assignee, priority, created_at, completed_at, sources)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                """, (
+                    f"FUELED: Synergy {day}-{i}",
+                    f"Task initiated by {creator}",
+                    project_id,
+                    "done",
+                    assignee,
+                    "Automated Worker",
+                    "medium",
+                    created_at,
+                    completed_at,
+                    json.dumps(sources)
+                ))
+                task_count += 1
 
     conn.commit()
     cur.close()
     conn.close()
-    print(f"✅ Successfully injected {task_count} historical tasks across 90 days.")
+    print(f"✅ Successfully injected {task_count} synergy-rich tasks.")
 
 if __name__ == "__main__":
     fuel_tasks()

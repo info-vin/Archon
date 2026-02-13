@@ -116,6 +116,119 @@ async def get_commander_trends():
         logger.error(f"Commander trends failed: {e}")
         return []
 
+@router.get("/collab-synergy", dependencies=[Depends(require_manager_or_admin)])
+async def get_collab_synergy():
+    """
+    Synergy Momentum Matrix (9x9).
+    Calculates interactions between Humans (Alice, Bob, Charlie, Admin)
+    and Agents (Clockwork, Sentinel, Librarian, DevBot, MarketBot).
+    """
+    try:
+        supabase = get_supabase_client()
+        now = datetime.now(UTC)
+        seven_days_ago = (now - timedelta(days=7)).isoformat()
+        thirty_days_ago = (now - timedelta(days=30)).isoformat()
+
+        # Nodes Definition
+        nodes = [
+            {"id": "alice", "name": "Alice", "type": "human"},
+            {"id": "bob", "name": "Bob", "type": "human"},
+            {"id": "charlie", "name": "Charlie", "type": "human"},
+            {"id": "admin", "name": "Admin", "type": "human"},
+            {"id": "clockwork", "name": "Clockwork", "type": "agent"},
+            {"id": "sentinel", "name": "Sentinel", "type": "agent"},
+            {"id": "ai-librarian", "name": "Librarian", "type": "agent"},
+            {"id": "ai-dev-bot", "name": "DevBot", "type": "agent"},
+            {"id": "market-bot", "name": "MarketBot", "type": "agent"}
+        ]
+
+        # 1. Fetch Interactions from Tasks (Assignee vs Source/Creator)
+        tasks_res = supabase.table("archon_tasks")\
+            .select("assignee_id, created_at, sources")\
+            .gt("created_at", thirty_days_ago).execute()
+
+        # 2. Fetch Interactions from Blog Posts (Alice -> Bob via lead_id)
+        blogs_res = supabase.table("blog_posts")\
+            .select("author_name, lead_id, created_at, status")\
+            .gt("created_at", thirty_days_ago).execute()
+
+        matrix: dict[str, dict[str, dict[str, Any]]] = {} # [from][to] -> {7d, 30d}
+
+        def add_interact(fr: str, to: str, date_str: str):
+            f, t = fr.lower(), to.lower()
+            if f not in matrix:
+                matrix[f] = {}
+            if t not in matrix[f]:
+                matrix[f][t] = {"seven": 0, "thirty": 0}
+
+            matrix[f][t]["thirty"] += 1
+            if date_str >= seven_days_ago:
+                matrix[f][t]["seven"] += 1
+
+        # Process Tasks
+        for t in (tasks_res.data or []):
+            to_id = t.get("assignee_id", "unknown")
+            sources = t.get("sources") or []
+            for s in sources:
+                fr_id = s.get("source_id") or s.get("type")
+                if fr_id and to_id:
+                    add_interact(str(fr_id), str(to_id), t["created_at"])
+
+        # Process Blogs (Alice -> Bob bridge)
+        for b in (blogs_res.data or []):
+            if b.get("lead_id"):
+                add_interact("alice", "bob", b["created_at"])
+            if b.get("status") == "changes_requested":
+                add_interact("charlie", "bob", b["created_at"])
+
+        # Format for Frontend
+        formatted_matrix: list[dict[str, Any]] = []
+        total_7d = 0
+        total_30d = 0
+        hot_bridge = {"name": "None", "val": 0}
+
+        for fr_node in nodes:
+            row: dict[str, Any] = {"from": fr_node["name"], "interactions": []}
+            for to_node in nodes:
+                stats = matrix.get(fr_node["id"].lower(), {}).get(to_node["id"].lower(), {"seven": 0, "thirty": 0})
+
+                total_7d += stats["seven"]
+                total_30d += stats["thirty"]
+
+                if stats["seven"] > hot_bridge["val"] and fr_node["id"] != to_node["id"]:
+                    hot_bridge = {"name": f"{fr_node['name']} -> {to_node['name']}", "val": stats["seven"]}
+
+                row["interactions"].append({
+                    "to": to_node["name"],
+                    "actual_7d": stats["seven"],
+                    "avg_30d": round(stats["thirty"] / 4.2, 1)
+                })
+            formatted_matrix.append(row)
+
+        avg_weekly_30d = total_30d / 4.2
+        momentum = round(((total_7d / avg_weekly_30d) - 1) * 100, 1) if avg_weekly_30d > 0 else 0
+
+        active_path_count = 0
+        for row_data in formatted_matrix:
+            for interaction in row_data.get("interactions", []):
+                if interaction.get("actual_7d", 0) > 0:
+                    active_path_count += 1
+
+        return {
+            "nodes": [n["name"] for n in nodes],
+            "matrix": formatted_matrix,
+            "snapshot": {
+                "total_7d": total_7d,
+                "momentum_pct": momentum,
+                "hot_bridge": hot_bridge["name"],
+                "active_paths": active_path_count
+            },
+            "timestamp": now.isoformat()
+        }
+
+    except Exception as e:
+        logger.error(f"API: Collab synergy fetch failed: {e}")
+        return {"nodes": [], "matrix": [], "error": str(e)}
 @router.get("/force-readiness", dependencies=[Depends(require_manager_or_admin)])
 async def get_force_readiness():
     """
@@ -180,7 +293,7 @@ async def get_business_risks():
             .select("*")\
             .eq("level", "ALERT")\
             .filter("details->>category", "eq", "business")\
-            .order("created_at", ascending=False).limit(10).execute()
+            .order("created_at", desc=True).limit(10).execute()
 
         return res.data or []
     except Exception as e:
