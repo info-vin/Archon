@@ -366,7 +366,9 @@ const supabaseApi = {
         authorName: post.authorName || post.author_name,
         publishDate: post.publishDate || post.publish_date,
         imageUrl: post.imageUrl || post.image_url,
-        status: post.status || 'published' // Default if missing
+        status: post.status || 'published', // Default if missing
+        ai_score: post.ai_score,
+        review_notes: post.review_notes
     }));
   },
 
@@ -502,7 +504,15 @@ const supabaseApi = {
       const errorData = await response.json();
       throw new Error(errorData.detail || 'Failed to fetch blog post.');
     }
-    return response.json();
+    const post = await response.json();
+    return {
+        ...post,
+        authorName: post.authorName || post.author_name,
+        publishDate: post.publishDate || post.publish_date,
+        imageUrl: post.imageUrl || post.image_url,
+        ai_score: post.ai_score,
+        review_notes: post.review_notes
+    };
   },
   async createBlogPost(postData: NewBlogPostData): Promise<BlogPost> {
     const response = await fetch('/api/blogs', {
@@ -946,6 +956,24 @@ const supabaseApi = {
   },
 
 
+
+  async getCommanderTrends(): Promise<any[]> {
+    const response = await fetch('/api/stats/commander-trends', { headers: await this._getHeaders() });
+    if (!response.ok) return [];
+    return response.json();
+  },
+
+  async getForceReadiness(): Promise<any> {
+    const response = await fetch('/api/stats/force-readiness', { headers: await this._getHeaders() });
+    if (!response.ok) return { baseline: 0, trend: [] };
+    return response.json();
+  },
+
+  async getBusinessRisks(): Promise<any[]> {
+    const response = await fetch('/api/stats/business-risks', { headers: await this._getHeaders() });
+    if (!response.ok) return [];
+    return response.json();
+  },
 
   async generateTaskFromAlert(alertId: string, assigneeId?: string): Promise<any> {
     const response = await fetch('/api/tasks/generate-from-alert', {

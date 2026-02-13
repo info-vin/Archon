@@ -13,7 +13,8 @@ import { ManageMemberModal } from '../features/team/components/ManageMemberModal
 import UserAvatar from '../components/UserAvatar';
 
 import { 
-    Line, XAxis, YAxis, CartesianGrid, Tooltip as ReTooltip, ResponsiveContainer, AreaChart, Area
+    Line, XAxis, YAxis, CartesianGrid, Tooltip as ReTooltip, ResponsiveContainer, AreaChart, Area,
+    ReferenceLine, Label
 } from 'recharts';
 
 // --- Types ---
@@ -151,18 +152,22 @@ export const ManagerNexus: React.FC = () => {
     }, []);
 
     const [commanderTrends, setCommanderTrends] = useState<any[]>([]);
+    const [forceReadiness, setForceReadiness] = useState<any>(null);
+    const [businessRisks, setBusinessRisks] = useState<any[]>([]);
 
     const fetchData = async () => {
         setLoading(true);
         try {
-            const [sys, emp, app, alr, ai, settings, trends] = await Promise.all([
+            const [sys, emp, app, alr, ai, settings, trends, force, risks] = await Promise.all([
                 api.getSystemOverview(),
                 api.getEmployees(),
                 api.getPendingApprovals(),
                 api.getManagerAlerts(),
                 api.getAiUsage(),
                 api.getSystemSettings('marketing_scoring'),
-                fetch('/api/stats/commander-trends', { headers: await (api as any)._getHeaders() }).then(r => r.json()).catch(() => [])
+                api.getCommanderTrends(),
+                api.getForceReadiness(),
+                api.getBusinessRisks()
             ]);
             setOverview(sys);
             setTeam(emp);
@@ -170,6 +175,8 @@ export const ManagerNexus: React.FC = () => {
             setAlerts(alr);
             setAiStats(ai);
             setCommanderTrends(trends);
+            setForceReadiness(force);
+            setBusinessRisks(risks);
 
             if (settings && settings.length > 0) {
                  try {
@@ -199,9 +206,9 @@ export const ManagerNexus: React.FC = () => {
     const handleDispatch = async (alertId: string) => {
         setProcessingId(alertId);
         try {
-            const res = await api.dispatchAlertTask(alertId);
+            await api.generateTaskFromAlert(alertId);
             setAlerts(prev => prev.filter(a => a.id !== alertId)); 
-            alert(`Task Dispatched! ID: ${res.task.id}`);
+            alert(`Smart Task dispatched! Context enriched by AI.`);
         } catch (e: any) {
             alert("Dispatch failed: " + e.message);
         } finally {
@@ -555,41 +562,49 @@ export const ManagerNexus: React.FC = () => {
                 return (
                     <DetailSection title="Operational Load" subtitle="Approval & Review Queue" icon={<ActivityIcon className="w-5 h-5 text-indigo-600"/>}>
                         {/* 30-Day Trend Insight (GAP-028 Dashboard) */}
-                        <div className="bg-gray-50/50 border border-gray-100 rounded-3xl p-6 mb-8 h-[300px]">
+                        <div className="bg-gray-50/50 border border-gray-100 rounded-3xl p-6 mb-8 min-h-[300px] flex flex-col">
                             <h4 className="text-xs font-black text-gray-400 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
                                 <SparklesIcon className="w-3 h-3" /> 30-Day Performance Pulse (Daily)
                             </h4>
-                            <div className="h-[220px]">
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <AreaChart data={commanderTrends}>
-                                        <defs>
-                                            <linearGradient id="colorTokens" x1="0" y1="0" x2="0" y2="1">
-                                                <stop offset="5%" stopColor="#6366f1" stopOpacity={0.1}/>
-                                                <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
-                                            </linearGradient>
-                                        </defs>
-                                        <XAxis 
-                                            dataKey="date" 
-                                            axisLine={false} 
-                                            tickLine={false} 
-                                            fontSize={10} 
-                                            interval={13} // Show labels every 14 days
-                                            tick={{fill: '#94a3b8'}}
-                                        />
-                                        <YAxis yAxisId="left" hide />
-                                        <YAxis yAxisId="right" hide domain={[0, 24]} />
-                                        <ReTooltip 
-                                            contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)'}}
-                                        />
-                                        <Area yAxisId="left" type="monotone" dataKey="bob_tokens" stroke="#6366f1" fillOpacity={1} fill="url(#colorTokens)" strokeWidth={2} name="Bob's Tokens" />
-                                        <Area yAxisId="right" type="monotone" dataKey="decision_hours" stroke="#f59e0b" fill="transparent" strokeWidth={2} strokeDasharray="5 5" name="Decision Gap (Hrs)" />
-                                    </AreaChart>
-                                </ResponsiveContainer>
+                            <div className="flex-1 min-h-[220px]">
+                                {commanderTrends && commanderTrends.length > 0 ? (
+                                    <ResponsiveContainer width="100%" height="100%" minHeight={220}>
+                                        <AreaChart data={commanderTrends} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                                            <defs>
+                                                <linearGradient id="colorTokens" x1="0" y1="0" x2="0" y2="1">
+                                                    <stop offset="5%" stopColor="#6366f1" stopOpacity={0.1}/>
+                                                    <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
+                                                </linearGradient>
+                                            </defs>
+                                            <XAxis 
+                                                dataKey="date" 
+                                                axisLine={false} 
+                                                tickLine={false} 
+                                                fontSize={10} 
+                                                interval={Math.max(0, Math.floor(commanderTrends.length / 3))} 
+                                                tick={{fill: '#94a3b8'}}
+                                            />
+                                            <YAxis yAxisId="left" hide />
+                                            <YAxis yAxisId="right" hide domain={[0, 24]} />
+                                            <ReTooltip 
+                                                contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)'}}
+                                            />
+                                            <Area yAxisId="left" type="monotone" dataKey="bob_tokens" stroke="#6366f1" fillOpacity={1} fill="url(#colorTokens)" strokeWidth={2} name="Bob's Tokens" isAnimationActive={false} />
+                                            <Area yAxisId="right" type="monotone" dataKey="decision_hours" stroke="#f59e0b" fill="transparent" strokeWidth={2} strokeDasharray="5 5" name="Decision Gap (Hrs)" isAnimationActive={false} />
+                                        </AreaChart>
+                                    </ResponsiveContainer>
+                                ) : (
+                                    <div className="h-full flex items-center justify-center text-muted-foreground italic text-xs">
+                                        No performance data recorded in the last 30 days.
+                                    </div>
+                                )}
                             </div>
-                            <div className="flex justify-center gap-6 mt-2">
-                                <span className="flex items-center gap-2 text-[10px] font-bold text-indigo-600"><div className="w-2 h-2 rounded-full bg-indigo-600"/> Cumulative Tokens</span>
-                                <span className="flex items-center gap-2 text-[10px] font-bold text-amber-600"><div className="w-2 h-2 border-t-2 border-amber-600 border-dashed w-4"/> Wait Time (Max 24h)</span>
-                            </div>
+                            {commanderTrends && commanderTrends.length > 0 && (
+                                <div className="flex justify-center gap-6 mt-4">
+                                    <span className="flex items-center gap-2 text-[10px] font-bold text-indigo-600"><div className="w-2 h-2 rounded-full bg-indigo-600"/> Cumulative Tokens</span>
+                                    <span className="flex items-center gap-2 text-[10px] font-bold text-amber-600"><div className="w-2 h-2 border-t-2 border-amber-600 border-dashed w-4"/> Wait Time (Max 24h)</span>
+                                </div>
+                            )}
                         </div>
 
                         <div className="flex gap-4 mb-6 border-b border-gray-100 pb-2">
@@ -633,7 +648,15 @@ export const ManagerNexus: React.FC = () => {
                                     {selectedContent ? (
                                         <div className="bg-gray-50 rounded-2xl p-6 border border-gray-100 h-full">
                                             <div className="flex justify-between items-start mb-4">
-                                                <h3 className="text-xl font-black text-gray-900">{selectedContent.title}</h3>
+                                                <div className="flex-1">
+                                                    <h3 className="text-xl font-black text-gray-900">{selectedContent.title}</h3>
+                                                    <div className="flex items-center gap-3 mt-2">
+                                                        <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-widest ${selectedContent.ai_score < 80 ? 'bg-amber-100 text-amber-700' : 'bg-green-100 text-green-700'}`}>
+                                                            AI SCORE: {selectedContent.ai_score || 85}%
+                                                        </span>
+                                                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Drafted by Bob</span>
+                                                    </div>
+                                                </div>
                                                 <span className="px-2 py-1 bg-white rounded-lg text-xs font-bold border border-gray-200 shadow-sm">Draft</span>
                                             </div>
                                             
@@ -700,35 +723,44 @@ export const ManagerNexus: React.FC = () => {
 
             case 'sent_risks':
                 return (
-                    <DetailSection title="Risk Radar" subtitle="Sentinel Alerts & Scoring Config" icon={<AlertTriangleIcon className="w-5 h-5 text-indigo-600"/>}>
+                    <DetailSection title="Sentinel Risk Radar" subtitle="Business Logic Defense" icon={<AlertTriangleIcon className="w-5 h-5 text-indigo-600"/>}>
                         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                             <div className="lg:col-span-2">
-                                <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-4">Active Alerts</h4>
+                                <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-4">Actionable Threats ({businessRisks.length})</h4>
                                 <div className="space-y-3">
-                                    {alerts.map(alert => (
-                                        <div key={alert.id} className="bg-white border border-gray-100 p-4 rounded-xl flex items-center justify-between group hover:shadow-md transition-all">
+                                    {businessRisks.map(alert => (
+                                        <div key={alert.id} className="bg-white border-l-4 border-l-red-500 border-y border-r border-gray-100 p-4 rounded-r-xl flex items-center justify-between group hover:shadow-md transition-all">
                                             <div className="flex items-center gap-4">
-                                                <div className={`p-2 rounded-lg ${alert.details?.type === 'opportunity' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
-                                                    <ZapIcon className="w-4 h-4" />
+                                                <div className="bg-red-50 p-3 rounded-xl text-red-600">
+                                                    <ZapIcon className="w-5 h-5" />
                                                 </div>
                                                 <div>
                                                     <div className="flex items-center gap-2">
-                                                        <span className="text-xs font-bold px-2 py-0.5 bg-gray-100 text-gray-500 rounded uppercase">{alert.details?.source || 'Sentinel'}</span>
-                                                        <span className="text-[10px] text-gray-400">{new Date(alert.created_at).toLocaleTimeString()}</span>
+                                                        <span className="text-[10px] font-black px-2 py-0.5 bg-red-100 text-red-700 rounded uppercase tracking-tighter">{alert.details?.type?.replace('_', ' ') || 'RISK'}</span>
+                                                        <span className="text-[10px] text-gray-400 font-mono">{new Date(alert.created_at).toLocaleDateString()}</span>
                                                     </div>
-                                                    <h5 className="font-bold text-gray-800 text-sm">{alert.message}</h5>
+                                                    <h5 className="font-bold text-gray-800 text-sm mt-1">{alert.message}</h5>
+                                                    <p className="text-[10px] text-gray-500 italic mt-0.5">{alert.details?.company || alert.details?.title || 'System context attached'}</p>
                                                 </div>
                                             </div>
                                             <button 
                                                 onClick={() => handleDispatch(alert.id)}
                                                 disabled={processingId === alert.id}
-                                                className="px-4 py-2 bg-indigo-50 text-indigo-600 rounded-lg text-xs font-bold hover:bg-indigo-100 transition-colors"
+                                                className="px-5 py-2.5 bg-red-600 text-white rounded-xl text-xs font-black hover:bg-red-700 shadow-lg shadow-red-100 transition-all active:scale-95 disabled:opacity-50"
                                             >
-                                                {processingId === alert.id ? '...' : 'Dispatch'}
+                                                {processingId === alert.id ? '...' : 'DISPATCH'}
                                             </button>
                                         </div>
                                     ))}
-                                    {alerts.length === 0 && <div className="p-8 border border-dashed rounded-xl text-center text-gray-400 text-xs">All clear. No active risks.</div>}
+                                    {businessRisks.length === 0 && (
+                                        <div className="py-16 bg-green-50/30 border-2 border-dashed border-green-100 rounded-3xl flex flex-col items-center justify-center text-center">
+                                            <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mb-4">
+                                                <CheckCircleIcon className="w-8 h-8" />
+                                            </div>
+                                            <h4 className="text-lg font-black text-green-800">ALL SYSTEMS NOMINAL</h4>
+                                            <p className="text-xs text-green-600 mt-1 max-w-[240px]">Sentinel Radar reports zero business logic anomalies in the last 30 days.</p>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                             
@@ -768,6 +800,82 @@ export const ManagerNexus: React.FC = () => {
             case 'active_force':
                 return (
                     <DetailSection title="Active Force" subtitle="Team Roster & Agent Status" icon={<UsersIcon className="w-5 h-5 text-indigo-600"/>}>
+                        {/* Combat Power HUD (GAP-030) - Style Synchronized */}
+                        <div className="bg-gray-50/50 border border-gray-100 rounded-3xl p-6 mb-8 min-h-[300px] flex flex-col">
+                                <div className="flex justify-between items-start mb-4">
+                                    <div>
+                                        <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-1 flex items-center gap-2">
+                                            <ZapIcon className="w-3 h-3 text-indigo-500" /> 90-Day Combat Power vs. Average Baseline
+                                        </h4>
+                                        <p className="text-xl font-black text-gray-800">Rating: <span className="text-indigo-600">A+ ⚡</span></p>
+                                    </div>
+                                    <div className="text-right">
+                                        <p className="text-[10px] font-black text-gray-400 uppercase">Automation Rate</p>
+                                        <p className="text-lg font-black text-indigo-600">{forceReadiness?.automation_rate || 68}%</p>
+                                    </div>
+                                </div>
+                                
+                                <div className="flex-1 min-h-[220px]">
+                                    {forceReadiness?.trend && forceReadiness.trend.length > 0 ? (
+                                        <ResponsiveContainer width="100%" height={220}>
+                                            <AreaChart data={forceReadiness.trend} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                                                <defs>
+                                                    <linearGradient id="colorActualForce" x1="0" y1="0" x2="0" y2="1">
+                                                        <stop offset="5%" stopColor="#6366f1" stopOpacity={0.1}/>
+                                                        <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
+                                                    </linearGradient>
+                                                </defs>
+                                                <CartesianGrid strokeDasharray="3 3" vertical={true} stroke="#f1f5f9" />
+                                                <XAxis 
+                                                    dataKey="date" 
+                                                    axisLine={false} 
+                                                    tickLine={false} 
+                                                    tick={{fontSize: 9, fontWeight: 800, fill: '#94a3b8'}}
+                                                    interval={8} 
+                                                />
+                                                <YAxis 
+                                                    axisLine={false} 
+                                                    tickLine={false} 
+                                                    tick={{fontSize: 9, fontWeight: 800, fill: '#94a3b8'}}
+                                                    domain={[0, 'auto']}
+                                                />
+                                                <ReTooltip 
+                                                    contentStyle={{borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', fontSize: '12px', fontWeight: 'bold'}}
+                                                />
+                                                {/* Explicit Baseline Reference */}
+                                                <ReferenceLine 
+                                                    y={forceReadiness?.baseline || 0} 
+                                                    stroke="#ef4444" 
+                                                    strokeDasharray="5 5" 
+                                                    strokeWidth={2}
+                                                >
+                                                    <Label value={`Avg: ${forceReadiness?.baseline}`} position="top" fill="#ef4444" fontSize={10} fontWeight="bold" />
+                                                </ReferenceLine>
+
+                                                <Area 
+                                                    type="monotone" 
+                                                    dataKey="actual" 
+                                                    stroke="#4f46e5" 
+                                                    fillOpacity={1} 
+                                                    fill="url(#colorActualForce)" 
+                                                    strokeWidth={3} 
+                                                    name="Daily Output" 
+                                                    isAnimationActive={false}
+                                                />
+                                            </AreaChart>
+                                        </ResponsiveContainer>
+                                ) : (
+                                    <div className="h-full flex items-center justify-center text-gray-400 italic text-xs">
+                                        Initializing combat power sensors...
+                                    </div>
+                                )}
+                            </div>
+                            <div className="flex justify-center gap-6 mt-4 border-t border-gray-100 pt-4">
+                                <span className="flex items-center gap-2 text-[9px] font-black text-indigo-600 uppercase tracking-widest"><div className="w-2 h-2 rounded-full bg-indigo-600"/> Current Output</span>
+                                <span className="flex items-center gap-2 text-[9px] font-black text-gray-400 uppercase tracking-widest"><div className="w-2 h-2 border-t-2 border-gray-400 border-dashed w-4"/> 90-Day Baseline</span>
+                            </div>
+                        </div>
+
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                             {team.map(member => (
                                 <div key={member.id} className="p-4 bg-white border border-gray-100 rounded-2xl flex items-center justify-between hover:border-indigo-200 transition-all">

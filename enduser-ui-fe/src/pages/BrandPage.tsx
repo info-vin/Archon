@@ -386,9 +386,9 @@ const BrandPage: React.FC = () => {
                             </div>
                         )}
                         <h4 className="font-semibold text-gray-800 line-clamp-2">{post.title}</h4>
-                        {post.status === 'changes_requested' && (post as any).review_notes && (
-                            <p className="mt-2 text-[10px] bg-red-50 text-red-700 p-2 rounded-lg border border-red-100 italic line-clamp-2">
-                                💬 {(post as any).review_notes}
+                        {post.status === 'changes_requested' && (post.review_notes || (post as any).reviewNotes) && (
+                            <p className="mt-2 text-[10px] bg-red-50 text-red-700 p-2 rounded-lg border border-red-100 italic line-clamp-3">
+                                💬 {post.review_notes || (post as any).reviewNotes}
                             </p>
                         )}
                         <p className="text-xs text-gray-500 mt-2 italic">By {post.authorName}</p>

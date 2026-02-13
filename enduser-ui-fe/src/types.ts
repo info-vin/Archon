@@ -134,6 +134,8 @@ export interface BlogPost {
     publishDate: string; // ISO String
     imageUrl: string;
     status: 'draft' | 'review' | 'published' | 'changes_requested';
+    ai_score?: number;
+    review_notes?: string;
 }
 
 export interface AssignableUser {
