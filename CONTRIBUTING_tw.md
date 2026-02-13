@@ -399,8 +399,11 @@ Phase 4.4.5 引入了 **Clockwork** 進行系統自動檢測。
         | 47 | `043_set_default_llm_provider.sql` | **[設定]** 將預設 LLM 提供者設為 Google (Gemini)。 |
         | 48 | `044_fix_rag_provider_settings.sql` | **[設定]** 強制 RAG 策略使用 Google/Gemini 模型與 Embedding。 |
         | 49 | `045_add_user_id_to_archon_logs.sql` | **[Schema]** 為 `archon_logs` 增加 `user_id` 欄位以支援使用者稽核。 |
-        | 50 | `seed_mock_leads.sql` | **[種子]** 填充業務線 (Leads) 核心測試資料。 |
-        | 51 | `seed_mock_alerts_and_logs.sql` | **[種子]** 填充 Admin/Manager 儀表板所需的系統警報與日誌資料。 |
+        | 50 | `046_add_ai_score_and_review_notes_to_blogs.sql` | **[Schema]** 為 `blog_posts` 增加 AI 評分與審核註記，支援內容回饋循環。 |
+        | 51 | `047_fix_blog_posts_lead_id.sql` | **[Schema]** 確保 `blog_posts` 包含 `lead_id` 外鍵，連結業務線索與內容行銷。 |
+        | 52 | `048_ethics_audit_hardening.sql` | **[Audit]** 強化倫理審計，為文件版本增加狀態，並追蹤倫理事件解決進度。 |
+        | 53 | `seed_mock_leads.sql` | **[種子]** 填充業務線 (Leads) 核心測試資料。 |
+        | 54 | `seed_mock_alerts_and_logs.sql` | **[種子]** 填充 Admin/Manager 儀表板所需的系統警報與日誌資料。 |
         
 3.  **階段三：執行部署**
 
