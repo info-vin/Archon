@@ -29,7 +29,7 @@
 | **GAP-030** | 🔧 Gap | **Charlie** | **Nexus** | **指揮官中樞: Act Force (活躍武力)**。已落地：1. 90 天戰鬥力 vs 90 天基線 (ReferenceLine) 對比圖；2. X 軸對齊每 10 天標籤；3. 人機在線狀態動態偵測。 | Medium | 🟡 待驗證 |
 | **GAP-031** | 🔧 Gap | **Charlie** | **Nexus** | **指揮官中樞: Ethics (倫理/合規)**。已落地：1. 實作「待簽核隊列」，整合哨兵攔截事件與管理員指令變更；2. 支援跨表 (logs/ethics) 的 AI 自動分派 (Dispatch)；3. 實作 Prompt 審核 API 與 Diff 預覽邏輯。 | Low | 🟡 待驗證 |
 | **GAP-032** | 🔧 Gap | **Charlie** | **Nexus** | **指揮官中樞: Collab (協作分數)**。已落地「全員協作動能矩陣」：1. 9x9 實體關聯 (4人 + 5 Agent)；2. 雙長條圖對比 7D 實際 vs 30D 平均；3. Snapshot 卡片大字顯示動能百分比並附帶 7D 實體總數標籤。 | Low | 🟡 待驗證 |
-| **GAP-033** | 🔧 Gap | **Charlie** | **Nexus** | **指揮官中樞: Graph (情報圖譜)**。待實作：展示「知識庫覆蓋率」。產業情資密度、競爭對手追蹤進度與資料新鮮度。 | Medium | ⚪ 待處理 |
+| **GAP-033** | 🔧 Gap | **Charlie** | **Nexus** | **指揮官中樞: Graph (情報圖譜)**。已落地「情資 ROI 分析」：1. 60 天網域轉換率趨勢圖 (14天滾動平均)；2. Top Domains 審核表 (顯示含金量與警告燈)；3. HUD 卡片大字顯示總體轉換率 (%) 並附帶節點總數標籤。 | Medium | 🟡 待驗證 |
 | **GAP-034** | 🔧 Gap | **Charlie** | **Nexus** | **指揮官中樞: Velocity (生產速率)**。待實作：展示「任務結案週期」。Lead 轉化平均天數、SLA 達成率趨勢圖。 | Medium | ⚪ 待處理 |
 | **BUG-027** | 🐛 Bug | **Charlie** | **Team** | Charlie 在 Team Management 面板看不到 Alice 自己開的單。已啟用後端 assigne_id 過濾與前端分頁擴增。 | High | 🟢 已修復 |
 | **BUG-030** | 🐛 Bug | **All** | **Color** | Dashboard 狀態與優先級燈色失效. 已修復 API 回傳缺少 priority 欄位與 ETag 計算問題。已驗證 List, Table, Kanban 所有視圖同步反應。 | High | 🟢 已修復 |

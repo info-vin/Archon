@@ -987,6 +987,12 @@ const supabaseApi = {
     return response.json();
   },
 
+  async getKnowledgeRoi(): Promise<any> {
+    const response = await fetch('/api/stats/knowledge-roi', { headers: await this._getHeaders() });
+    if (!response.ok) return { overall_conversion: 0, trend: [], top_domains: [] };
+    return response.json();
+  },
+
   async approvePromptChange(versionId: string): Promise<any> {
     const response = await fetch(`/api/stats/approve-prompt-change/${versionId}`, {
         method: 'POST',

@@ -3,7 +3,7 @@ import { api } from '../services/api';
 import { useAuth } from '../hooks/useAuth';
 import { SystemOverview, Employee, AlertItem } from '../types';
 import { 
-    CheckCircleIcon, RefreshCwIcon, AlertTriangleIcon, ActivityIcon, 
+    CheckCircleIcon, AlertTriangleIcon, ActivityIcon, 
     ShieldCheckIcon, DatabaseIcon, UsersIcon, 
     GitCommitIcon, SearchIcon, FileTextIcon,
     DollarSignIcon, ClockIcon, ZapIcon,
@@ -157,11 +157,12 @@ export const ManagerNexus: React.FC = () => {
     const [collabSynergy, setCollabSynergy] = useState<any>(null);
     const [slaReliability, setSlaReliability] = useState<any>(null);
     const [ethicsAudit, setEthicsAudit] = useState<any>(null);
+    const [knowledgeRoi, setKnowledgeRoi] = useState<any>(null);
 
     const fetchData = async () => {
         setLoading(true);
         try {
-            const [sys, emp, app, alr, ai, settings, trends, force, risks, collab, sla, ethics] = await Promise.all([
+            const [sys, emp, app, alr, ai, settings, trends, force, risks, collab, sla, ethics, kroi] = await Promise.all([
                 api.getSystemOverview(),
                 api.getEmployees(),
                 api.getPendingApprovals(),
@@ -173,7 +174,8 @@ export const ManagerNexus: React.FC = () => {
                 api.getBusinessRisks(),
                 api.getCollabSynergy(),
                 api.getSlaReliability(),
-                api.getEthicsAuditQueue()
+                api.getEthicsAuditQueue(),
+                api.getKnowledgeRoi()
             ]);
             setOverview(sys);
             setTeam(emp);
@@ -186,6 +188,7 @@ export const ManagerNexus: React.FC = () => {
             setCollabSynergy(collab);
             setSlaReliability(sla);
             setEthicsAudit(ethics);
+            setKnowledgeRoi(kroi);
 
             if (settings && settings.length > 0) {
                  try {
@@ -1045,22 +1048,96 @@ export const ManagerNexus: React.FC = () => {
 
             case 'graph':
                 return (
-                    <DetailSection title="Knowledge Graph" subtitle="RAG Index Status" icon={<DatabaseIcon className="w-5 h-5 text-indigo-600"/>}>
-                        <div className="flex items-center justify-between">
-                            <div className="space-y-1">
-                                <h4 className="text-2xl font-black text-gray-800">{overview?.knowledge_stats?.total_nodes || 0} Nodes</h4>
-                                <p className="text-sm text-gray-500">
-                                    {overview?.knowledge_stats?.total_chunks || 0} Chunks Indexed
-                                </p>
+                    <DetailSection title="Intelligence ROI & Graph" subtitle="60-Day Conversion Analysis (Bi-weekly)" icon={<DatabaseIcon className="w-5 h-5 text-indigo-600"/>}>
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                            <div className="lg:col-span-2">
+                                {/* 60-Day ROI Trend Chart */}
+                                <div className="bg-gray-50/50 border border-gray-100 rounded-3xl p-6 mb-6">
+                                    <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
+                                        <SparklesIcon className="w-3 h-3 text-indigo-500" /> Intelligence Yield (Conversion %)
+                                    </h4>
+                                    <div className="h-[250px]">
+                                        {knowledgeRoi?.trend && knowledgeRoi.trend.length > 0 ? (
+                                            <ResponsiveContainer width="100%" height="100%">
+                                                <AreaChart data={knowledgeRoi.trend}>
+                                                    <defs>
+                                                        <linearGradient id="colorROI" x1="0" y1="0" x2="0" y2="1">
+                                                            <stop offset="5%" stopColor="#6366f1" stopOpacity={0.1}/>
+                                                            <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
+                                                        </linearGradient>
+                                                    </defs>
+                                                    <CartesianGrid strokeDasharray="3 3" vertical={true} stroke="#f1f5f9" />
+                                                    <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{fontSize: 9, fontWeight: 800, fill: '#94a3b8'}} interval={0} />
+                                                    <YAxis axisLine={false} tickLine={false} tick={{fontSize: 9, fontWeight: 800, fill: '#94a3b8'}} domain={[0, 100]} unit="%" />
+                                                    <ReTooltip contentStyle={{borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', fontSize: '12px'}} />
+                                                    <Area type="monotone" dataKey="conversion" stroke="#4f46e5" fillOpacity={1} fill="url(#colorROI)" strokeWidth={3} name="Conv %" isAnimationActive={false} />
+                                                </AreaChart>
+                                            </ResponsiveContainer>
+                                        ) : (
+                                            <div className="h-full flex items-center justify-center text-gray-400 italic text-xs">Waiting for Knowledge Sensors...</div>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* Domain ROI Table */}
+                                <div className="bg-white border border-gray-100 rounded-3xl overflow-hidden">
+                                    <table className="w-full text-left text-xs">
+                                        <thead className="bg-gray-50 border-b border-gray-100">
+                                            <tr>
+                                                <th className="p-4 text-[10px] font-black text-gray-400 uppercase">Source Domain</th>
+                                                <th className="p-4 text-[10px] font-black text-gray-400 uppercase">Conversion</th>
+                                                <th className="p-4 text-[10px] font-black text-gray-400 uppercase text-right">Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-gray-50">
+                                            {knowledgeRoi?.top_domains?.map((dom: any) => (
+                                                <tr key={dom.domain} className="group hover:bg-gray-50/50 transition-colors">
+                                                    <td className="p-4">
+                                                        <p className="font-bold text-gray-800">{dom.domain}</p>
+                                                        <p className="text-[9px] text-gray-400">{dom.yield} Nodes Ingested</p>
+                                                    </td>
+                                                    <td className="p-4">
+                                                        <div className="flex items-center gap-2">
+                                                            <div className="w-16 h-1 bg-gray-100 rounded-full overflow-hidden">
+                                                                <div 
+                                                                    className={`h-full ${dom.severity === 'good' ? 'bg-green-500' : dom.severity === 'warning' ? 'bg-amber-500' : 'bg-red-500'}`}
+                                                                    style={{ width: `${dom.conversion}%` }}
+                                                                />
+                                                            </div>
+                                                            <span className="text-[10px] font-black text-gray-600">{dom.conversion}%</span>
+                                                        </div>
+                                                    </td>
+                                                    <td className="p-4 text-right">
+                                                        <button className="text-[9px] font-black text-indigo-600 uppercase hover:underline">Block</button>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
-                            <button 
-                                onClick={handleRebuildIndex}
-                                disabled={processingId === 'rebuild_index'}
-                                className="px-6 py-3 bg-orange-500 hover:bg-orange-600 text-white rounded-xl font-bold flex items-center gap-2 shadow-lg shadow-orange-200 transition-all active:scale-95 disabled:opacity-50"
-                            >
-                                <RefreshCwIcon className={`w-4 h-4 ${processingId === 'rebuild_index' ? 'animate-spin' : ''}`} />
-                                Rebuild Index
-                            </button>
+
+                            <div className="space-y-6">
+                                <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+                                    <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4">RAG Control Lever</h4>
+                                    <div className="space-y-4 text-xs">
+                                        <div className="flex justify-between items-center pb-2 border-b border-gray-50">
+                                            <span className="text-gray-500">Embedding</span>
+                                            <span className="font-bold">v3-small</span>
+                                        </div>
+                                        <div className="flex justify-between items-center pb-2 border-b border-gray-50">
+                                            <span className="text-gray-500">Precision</span>
+                                            <span className="font-bold text-green-600">92% ✨</span>
+                                        </div>
+                                    </div>
+                                    <button 
+                                        onClick={handleRebuildIndex}
+                                        className="w-full mt-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-black text-[10px] uppercase shadow-lg shadow-indigo-100"
+                                    >
+                                        TRIGGER FULL RE-INDEX
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </DetailSection>
                 );
@@ -1094,7 +1171,7 @@ export const ManagerNexus: React.FC = () => {
                                             <CartesianGrid strokeDasharray="3 3" vertical={true} stroke="#f1f5f9" />
                                             <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{fontSize: 9, fontWeight: 800, fill: '#94a3b8'}} interval={1} />
                                             <YAxis axisLine={false} tickLine={false} tick={{fontSize: 9, fontWeight: 800, fill: '#94a3b8'}} domain={[80, 100]} />
-                                            <ReTooltip contentStyle={{borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', fontSize: '12px', fontWeight: 'bold'}} />
+                                            <ReTooltip contentStyle={{borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', fontSize: '12px'}} />
                                             <Area type="monotone" dataKey="rate" stroke="#4f46e5" fillOpacity={1} fill="url(#colorSLA)" strokeWidth={3} name="SLA %" isAnimationActive={false} />
                                             <ReferenceLine y={95} stroke="#10b981" strokeDasharray="3 3" strokeWidth={1}>
                                                 <Label value="Goal" position="right" fill="#10b981" fontSize={9} fontWeight="bold" />
@@ -1105,28 +1182,6 @@ export const ManagerNexus: React.FC = () => {
                                     <div className="h-full flex items-center justify-center text-gray-400 italic text-xs">Calibrating long-term reliability sensors...</div>
                                 )}
                             </div>
-                        </div>
-                    </DetailSection>
-                );
-
-            case 'graph':
-                return (
-                    <DetailSection title="Knowledge Graph" subtitle="RAG Index Status" icon={<DatabaseIcon className="w-5 h-5 text-indigo-600"/>}>
-                        <div className="flex items-center justify-between">
-                            <div className="space-y-1">
-                                <h4 className="text-2xl font-black text-gray-800">{overview?.knowledge_stats?.total_nodes || 0} Nodes</h4>
-                                <p className="text-sm text-gray-500">
-                                    {overview?.knowledge_stats?.total_chunks || 0} Chunks Indexed
-                                </p>
-                            </div>
-                            <button 
-                                onClick={handleRebuildIndex}
-                                disabled={processingId === 'rebuild_index'}
-                                className="px-6 py-3 bg-orange-500 hover:bg-orange-600 text-white rounded-xl font-bold flex items-center gap-2 shadow-lg shadow-orange-200 transition-all active:scale-95 disabled:opacity-50"
-                            >
-                                <RefreshCwIcon className={`w-4 h-4 ${processingId === 'rebuild_index' ? 'animate-spin' : ''}`} />
-                                Rebuild Index
-                            </button>
                         </div>
                     </DetailSection>
                 );
@@ -1298,7 +1353,15 @@ export const ManagerNexus: React.FC = () => {
                     onClick={setActiveMetric} 
                     tooltip={`Hot Bridge: ${collabSynergy?.snapshot?.hot_bridge || 'None'}`} 
                 />
-                <HUDCard id="graph" label="Graph" value={overview?.knowledge_stats?.total_nodes !== undefined ? `${overview.knowledge_stats.total_nodes}` : "..."} sub="Knowledge Nodes" active={activeMetric === 'graph'} status="neutral" onClick={setActiveMetric} tooltip="Indexed Documents Count" />
+                <HUDCard 
+                    id="graph" label="Graph" 
+                    value={knowledgeRoi?.overall_conversion !== undefined ? `${knowledgeRoi.overall_conversion}%` : "..."} 
+                    sub={`${overview?.knowledge_stats?.total_nodes || 0} Total Nodes`} 
+                    active={activeMetric === 'graph'} 
+                    status={knowledgeRoi?.overall_conversion > 70 ? 'good' : knowledgeRoi?.overall_conversion > 30 ? 'warning' : 'bad'} 
+                    onClick={setActiveMetric} 
+                    tooltip="Intelligence ROI: Pages Saved vs URLs Scanned" 
+                />
                 <HUDCard 
                     id="velocity" label="Reliability" 
                     value={slaReliability?.current_sla !== undefined ? `${slaReliability.current_sla}%` : "..."} 

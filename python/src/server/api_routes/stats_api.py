@@ -239,14 +239,96 @@ async def approve_prompt_change(version_id: str):
         res = supabase.table("archon_document_versions")\
             .update({"status": "approved"})\
             .eq("id", version_id).execute()
-        
+
         if not res.data:
             raise HTTPException(status_code=404, detail="Version not found")
-            
+
         return {"success": True, "message": "Prompt change approved"}
     except Exception as e:
         logger.error(f"API: Prompt approval failed: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
+
+@router.get("/knowledge-roi", dependencies=[Depends(require_manager_or_admin)])
+async def get_knowledge_roi():
+    """
+    Knowledge Graph ROI: 60-Day Conversion Efficiency.
+    Measures (Pages Saved / URLs Scanned) per Domain.
+    """
+    try:
+        supabase = get_supabase_client()
+        now = datetime.now(UTC)
+        range_days = 60
+        step_days = 14
+        cutoff_date = (now - timedelta(days=range_days)).isoformat()
+
+        # 1. Fetch Sources (Attempts) and Pages (Successes)
+        sources_res = supabase.table("archon_sources").select("source_id, source_url, created_at").gt("created_at", cutoff_date).execute()
+        pages_res = supabase.table("archon_crawled_pages").select("source_id, created_at").gt("created_at", cutoff_date).execute()
+        
+        sources = sources_res.data or []
+        pages = pages_res.data or []
+
+        # 2. Domain Extraction & Grouping
+        from urllib.parse import urlparse
+        def get_domain(url):
+            try:
+                return urlparse(url).netloc or "Local Docs"
+            except Exception:
+                return "Unknown"
+
+        # 3. Time-window Aggregation (14-day steps)
+        trend_data = []
+        for i in range(range_days, 0, -step_days):
+            window_start = now - timedelta(days=i)
+            window_end = now - timedelta(days=i - step_days)
+            
+            w_sources = [s for s in sources if window_start <= datetime.fromisoformat(s["created_at"].replace('Z', '+00:00')) < window_end]
+            w_pages = [p for p in pages if window_start <= datetime.fromisoformat(p["created_at"].replace('Z', '+00:00')) < window_end]
+            
+            conversion = round((len(w_pages) / len(w_sources)) * 100, 1) if w_sources else 0.0
+            
+            trend_data.append({
+                "date": window_start.strftime("%m-%d"),
+                "conversion": conversion,
+                "scanned": len(w_sources),
+                "saved": len(w_pages)
+            })
+
+        # 4. Top Domains Audit
+        domain_map: dict[str, dict[str, int]] = {}
+        for s in sources:
+            dom = get_domain(s["source_url"])
+            if dom not in domain_map:
+                domain_map[dom] = {"scanned": 0, "saved": 0}
+            domain_map[dom]["scanned"] += 1
+        
+        # Cross-reference with pages
+        s_ids = {s["source_id"]: get_domain(s["source_url"]) for s in sources}
+        for p in pages:
+            dom = s_ids.get(p["source_id"])
+            if dom and dom in domain_map:
+                domain_map[dom]["saved"] += 1
+
+        top_domains = []
+        for dom, stats in sorted(domain_map.items(), key=lambda x: x[1]["scanned"], reverse=True)[:5]:
+            conv = round((stats["saved"] / stats["scanned"]) * 100, 1) if stats["scanned"] > 0 else 0.0
+            top_domains.append({
+                "domain": dom,
+                "conversion": conv,
+                "yield": stats["saved"],
+                "severity": "good" if conv > 70 else "warning" if conv > 30 else "bad"
+            })
+
+        return {
+            "overall_conversion": round((len(pages) / len(sources)) * 100, 1) if sources else 0.0,
+            "trend": trend_data,
+            "top_domains": top_domains,
+            "timestamp": now.isoformat()
+        }
+
+    except Exception as e:
+        logger.error(f"API: Knowledge ROI failed: {e}")
+        return {"overall_conversion": 0, "trend": [], "top_domains": [], "error": str(e)}
 
 @router.get("/ethics-audit-queue", dependencies=[Depends(require_manager_or_admin)])
 async def get_ethics_audit_queue():
@@ -264,12 +346,22 @@ async def get_ethics_audit_queue():
             .order("created_at", desc=True).limit(5).execute()
         
         # 2. Fetch Pending Prompt Changes (Librarian)
-        # We look for versions where field_name involves 'prompt' or type is 'prompt'
         versions_res = supabase.table("archon_document_versions")\
             .select("*")\
             .eq("status", "pending")\
             .order("created_at", desc=True).limit(5).execute()
             
+        return {
+            "violations": ethics_res.data or [],
+            "pending_versions": versions_res.data or [],
+            "total_pending": len(ethics_res.data or []) + len(versions_res.data or [])
+        }
+    except Exception as e:
+        logger.error(f"API: Ethics audit queue failed: {e}")
+        return {"violations": [], "pending_versions": [], "total_pending": 0}
+            .eq("status", "pending")\
+            .order("created_at", desc=True).limit(5).execute()
+
         return {
             "violations": ethics_res.data or [],
             "pending_versions": versions_res.data or [],
@@ -297,22 +389,22 @@ async def get_sla_reliability():
             .select("id, completed_at, due_date")\
             .eq("status", "done")\
             .gt("completed_at", cutoff_date).execute()
-        
+
         all_tasks = res.data or []
-        
+
         # Aggregate into 14-day buckets
         trend = []
         for i in range(range_days, 0, -step_days):
             window_end = now - timedelta(days=i - step_days)
             window_start = now - timedelta(days=i)
-            
+
             # Filter tasks in this 14-day window
             window_tasks = [
-                t for t in all_tasks 
-                if t.get("completed_at") and 
+                t for t in all_tasks
+                if t.get("completed_at") and
                 window_start <= datetime.fromisoformat(t["completed_at"].replace('Z', '+00:00')) < window_end
             ]
-            
+
             if not window_tasks:
                 trend.append({
                     "date": window_start.strftime("%m-%d"),
@@ -320,7 +412,7 @@ async def get_sla_reliability():
                     "count": 0
                 })
                 continue
-                
+
             met_count = 0
             for t in window_tasks:
                 if t.get("due_date"):
@@ -330,7 +422,7 @@ async def get_sla_reliability():
                         met_count += 1
                 else:
                     met_count += 1 # No due date = implicitly met
-            
+
             rate = round((met_count / len(window_tasks)) * 100, 1)
             trend.append({
                 "date": window_start.strftime("%m-%d"),

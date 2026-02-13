@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { Employee, EmployeeRole } from '../types.ts';
-import { api, LoginCredentials, RegistrationData } from '../services/api.ts';
-import { supabase } from '../services/api.ts';
+import { Employee, EmployeeRole } from '../types';
+import { api, LoginCredentials, RegistrationData } from '../services/api';
+import { supabase } from '../services/api';
 
 interface AuthContextType {
   user: Employee | null;

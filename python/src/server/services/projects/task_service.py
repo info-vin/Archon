@@ -816,8 +816,8 @@ class TaskService:
                     eth = res_ethics.data[0]
                     context_msg = f"Ethics Violation: {eth.get('event_type')} - {eth.get('description')}"
                     details = {
-                        "type": "ethics_violation", 
-                        "category": "business", 
+                        "type": "ethics_violation",
+                        "category": "business",
                         "raw_input": eth.get("raw_input"),
                         "company": "Safety Compliance"
                     }
@@ -891,13 +891,14 @@ class TaskService:
                 try:
                     title = ai_output.split("TITLE:")[1].split("DESCRIPTION:")[0].strip()
                     description = ai_output.split("DESCRIPTION:")[1].strip()
-                except Exception: pass
+                except Exception:
+                    pass
 
             # 5. Create Task
             p_res = self.supabase_client.table("archon_projects").select("id").ilike("title", "%Field%").execute()
             if not (p_res.data and len(p_res.data) > 0):
                 p_res = self.supabase_client.table("archon_projects").select("id").limit(1).execute()
-            
+
             if not (p_res.data and len(p_res.data) > 0):
                 return False, {"error": "Critical: No project found in database to attach task."}
 
@@ -921,9 +922,6 @@ class TaskService:
             return success, result
         except Exception as e:
             logger.error(f"Critical Dispatch Error: {e}", exc_info=True)
-            return False, {"error": str(e)}
-        except Exception as e:
-            logger.error(f"Failed to generate task from alert: {e}", exc_info=True)
             return False, {"error": str(e)}
 
     async def prune_archived_tasks(self, days_old: int = 30) -> tuple[bool, dict[str, Any]]:

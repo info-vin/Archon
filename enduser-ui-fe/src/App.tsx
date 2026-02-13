@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider, useAuth } from './hooks/useAuth.tsx';
-import { EmployeeRole } from './types.ts';
+import { AuthProvider, useAuth } from './hooks/useAuth';
+import { EmployeeRole } from './types';
 import LandingPage from './pages/LandingPage.tsx';
 import AuthPage from './pages/AuthPage.tsx';
 import DashboardPage from './pages/DashboardPage.tsx';
