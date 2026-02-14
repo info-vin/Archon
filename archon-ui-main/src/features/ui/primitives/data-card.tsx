@@ -14,8 +14,6 @@ interface DataCardProps extends React.HTMLAttributes<HTMLDivElement> {
   transparency?: "clear" | "light" | "medium" | "frosted" | "solid";
 }
 
-
-
 export const DataCard = React.forwardRef<HTMLDivElement, DataCardProps>(
   (
     {

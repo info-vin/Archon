@@ -19,7 +19,7 @@ describe("taskService", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     // Silence console.error for expected API failures to keep test output clean
-    vi.spyOn(console, 'error').mockImplementation(() => {});
+    vi.spyOn(console, "error").mockImplementation(() => {});
   });
 
   afterEach(() => {

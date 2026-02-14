@@ -77,9 +77,7 @@ describe("ProjectCard", () => {
   it("should apply pinned styles when project is pinned", () => {
     const pinnedProject = { ...mockProject, pinned: true };
 
-    render(
-      <ProjectCard project={pinnedProject} isSelected={false} taskCounts={mockTaskCounts} {...mockHandlers} />,
-    );
+    render(<ProjectCard project={pinnedProject} isSelected={false} taskCounts={mockTaskCounts} {...mockHandlers} />);
 
     // The pinned state is indicated by the "DEFAULT" badge
     const pinnedBadge = screen.getByText("DEFAULT");

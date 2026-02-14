@@ -1,4 +1,6 @@
 import React from 'react';
+import { Loader2 } from 'lucide-react';
+
 /**
  * Button - A customizable button component
  *
@@ -12,6 +14,7 @@ export const Button: React.FC<React.ButtonHTMLAttributes<HTMLButtonElement> & {
   accentColor?: 'purple' | 'green' | 'pink' | 'blue' | 'cyan' | 'orange';
   neonLine?: boolean;
   icon?: React.ReactNode;
+  isLoading?: boolean;
 }> = ({
   children,
   variant = 'primary',
@@ -19,7 +22,9 @@ export const Button: React.FC<React.ButtonHTMLAttributes<HTMLButtonElement> & {
   accentColor = 'purple',
   neonLine = false,
   icon,
+  isLoading = false,
   className = '',
+  disabled,
   ...props
 }) => {
   // Size variations
@@ -28,6 +33,13 @@ export const Button: React.FC<React.ButtonHTMLAttributes<HTMLButtonElement> & {
     md: 'text-sm px-4 py-2 rounded-md',
     lg: 'text-base px-6 py-2.5 rounded-md'
   };
+
+  const spinnerSizes = {
+    sm: 'h-3 w-3',
+    md: 'h-4 w-4',
+    lg: 'h-5 w-5'
+  };
+
   // Style variations based on variant
   const variantClasses = {
     primary: `
@@ -50,14 +62,15 @@ export const Button: React.FC<React.ButtonHTMLAttributes<HTMLButtonElement> & {
     cyan: 'bg-cyan-500 shadow-[0_0_10px_2px_rgba(34,211,238,0.4)] dark:shadow-[0_0_20px_5px_rgba(34,211,238,0.7)]',
     orange: 'bg-orange-500 shadow-[0_0_10px_2px_rgba(249,115,22,0.4)] dark:shadow-[0_0_20px_5px_rgba(249,115,22,0.7)]'
   };
-  return <button className={`
+  return <button disabled={disabled || isLoading} className={`
         inline-flex items-center justify-center transition-all duration-200
+        disabled:opacity-50 disabled:cursor-not-allowed
         ${variantClasses[variant]}
         ${sizeClasses[size]}
         ${className}
       `} {...props}>
       {/* Luminous inner light source for primary variant */}
-      {variant === 'primary' && <>
+      {variant === 'primary' && !disabled && !isLoading && <>
           <div className="absolute left-0 right-0 w-[150%] h-[200%] -translate-x-[25%] -translate-y-[30%] opacity-80 group-hover:opacity-100 rounded-[100%] blur-2xl transition-all duration-500 group-hover:scale-110 luminous-button-glow" style={{
         background: `radial-gradient(circle, ${accentColor === 'green' ? 'rgba(16, 185, 129, 0.9)' : accentColor === 'blue' ? 'rgba(59, 130, 246, 0.9)' : accentColor === 'pink' ? 'rgba(236, 72, 153, 0.9)' : accentColor === 'cyan' ? 'rgba(34, 211, 238, 0.9)' : accentColor === 'orange' ? 'rgba(249, 115, 22, 0.9)' : 'rgba(168, 85, 247, 0.9)'} 0%, transparent 70%)`,
         filter: `drop-shadow(0 0 15px ${accentColor === 'green' ? 'rgba(16, 185, 129, 0.8)' : accentColor === 'blue' ? 'rgba(59, 130, 246, 0.8)' : accentColor === 'pink' ? 'rgba(236, 72, 153, 0.8)' : accentColor === 'cyan' ? 'rgba(34, 211, 238, 0.8)' : accentColor === 'orange' ? 'rgba(249, 115, 22, 0.8)' : 'rgba(168, 85, 247, 0.8)'})`
@@ -71,7 +84,8 @@ export const Button: React.FC<React.ButtonHTMLAttributes<HTMLButtonElement> & {
         </>}
       {/* Content with icon support */}
       <span className="relative z-10 flex items-center justify-center">
-        {icon && <span className="mr-2">{icon}</span>}
+        {isLoading && <Loader2 className={`mr-2 animate-spin ${spinnerSizes[size]}`} />}
+        {!isLoading && icon && <span className="mr-2">{icon}</span>}
         {children}
       </span>
       {/* Optional neon line below button */}

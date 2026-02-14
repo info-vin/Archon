@@ -25,12 +25,7 @@ interface ContentViewerProps {
   sourceDocumentUrl?: string;
 }
 
-export const ContentViewer: React.FC<ContentViewerProps> = ({
-  selectedItem,
-  onCopy,
-  copiedId,
-  sourceDocumentUrl,
-}) => {
+export const ContentViewer: React.FC<ContentViewerProps> = ({ selectedItem, onCopy, copiedId, sourceDocumentUrl }) => {
   if (!selectedItem) {
     return (
       <div className="flex-1 flex items-center justify-center text-gray-500">
@@ -47,10 +42,7 @@ export const ContentViewer: React.FC<ContentViewerProps> = ({
     try {
       // Escape HTML entities FIRST per Prism documentation requirement
       // Prism expects pre-escaped input to prevent XSS
-      const escaped = code
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;");
+      const escaped = code.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
       const lang = language?.toLowerCase() || "javascript";
       const grammar = Prism.languages[lang] || Prism.languages.javascript;
@@ -87,8 +79,7 @@ export const ContentViewer: React.FC<ContentViewerProps> = ({
     return cleaned.trim();
   };
 
-  const finalSourceUrl =
-    sourceDocumentUrl || (selectedItem.type === "document" && selectedItem.metadata?.url);
+  const finalSourceUrl = sourceDocumentUrl || (selectedItem.type === "document" && selectedItem.metadata?.url);
 
   return (
     <div className="flex flex-col h-full">
