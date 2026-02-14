@@ -72,29 +72,40 @@ async def get_ai_model_health() -> dict[str, Any]:
             for m in models:
                 available_models_map[m.name] = m
 
+        # Pre-fetch Google credentials for diagnostics if needed
+        from ..services.credential_service import credential_service
+        google_key = await credential_service.get_credential("GOOGLE_API_KEY")
+
         for target in TARGET_MODELS:
             model_info = available_models_map.get(target["id"])
-
-            # Since get_all_available_models caches, we might want to force a ping check here if needed
-            # But for dashboard speed, relying on discovery service cache (5 min) + on-demand referesh is okay.
-            # To make it real-time, the frontend "Refresh" button should invalidate cache if possible,
-            # or we accept 5m latency.
-
-            # Check availability
             is_alive = model_info is not None
 
-            status = "healthy" if is_alive else "offline"
+            status = "healthy"
+            error_detail = None
+
             if not is_alive:
                 overall_status = "degraded"
+                status = "offline"
+
+                # Diagnostic: Why is it offline?
+                if target["provider"] == "google":
+                    if not google_key:
+                        status = "config_missing" # Frontend can map this to "No API Key"
+                    else:
+                        # Check provider health explicitly to get the error message
+                        # We use a dummy config as we already have the key
+                        health = await provider_discovery_service.check_provider_health("google", {"api_key": google_key})
+                        if not health.is_available:
+                            status = "error"
+                            error_detail = health.error_message
 
             results.append({
                 "model": target["id"],
                 "agent": target["agent"],
                 "provider": target["provider"],
                 "status": status,
-                "latency_ms": 150 if is_alive else None, # Placeholder until we thread latency per model
-                # Note: Currently provider_discovery_service checks PROVIDER latency, not per-model.
-                # We'll use a heuristic or update discovery service later for per-model ping.
+                "error": error_detail,
+                "latency_ms": 150 if is_alive else None,
             })
 
         return {

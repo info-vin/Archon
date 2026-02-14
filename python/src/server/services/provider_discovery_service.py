@@ -438,7 +438,11 @@ class ProviderDiscoveryService:
                             last_checked=time.time()
                         )
                     else:
-                        return ProviderStatus(provider, False, response_time, f"HTTP {response.status}")
+                        try:
+                            error_text = await response.text()
+                        except Exception:
+                            error_text = "Unknown error"
+                        return ProviderStatus(provider, False, response_time, f"HTTP {response.status}: {error_text[:200]}")
 
             elif provider == "ollama":
                 base_urls = config.get("base_urls", [config.get("base_url", DEFAULT_OLLAMA_URL)])
