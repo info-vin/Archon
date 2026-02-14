@@ -240,10 +240,11 @@ class ProviderDiscoveryService:
             # Test connectivity with a simple request
             session = await self._get_session()
             base_url = "https://generativelanguage.googleapis.com/v1beta/models"
-            # Use x-goog-api-key header as required by Google/Gemini API
+            # Use x-goog-api-key header as required by Google/Gemini API.
+            # Do NOT pass key in query param if header is used to avoid 'INVALID_ARGUMENT' or 400 errors.
             headers = {"x-goog-api-key": api_key}
 
-            async with session.get(f"{base_url}?key={api_key}", headers=headers) as response:
+            async with session.get(base_url, headers=headers) as response:
                 if response.status == 200:
                     models = model_specs
                     self._cache_result(cache_key, models)
@@ -424,7 +425,8 @@ class ProviderDiscoveryService:
                 base_url = "https://generativelanguage.googleapis.com/v1beta/models"
                 headers = {"x-goog-api-key": api_key}
 
-                async with session.get(f"{base_url}?key={api_key}", headers=headers) as response:
+                # Fix: Use header only, remove query param to match working llm_provider_service pattern
+                async with session.get(base_url, headers=headers) as response:
                     response_time = (time.time() - start_time) * 1000
 
                     if response.status == 200:
