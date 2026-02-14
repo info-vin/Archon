@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../services/api.ts';
 import { DocumentVersion, BlogPost } from '../types.ts';
-import { CheckCircleIcon, PlusIcon, XIcon, RefreshCwIcon, SaveIcon, KeyIcon, ShieldCheckIcon, SearchIcon } from '../components/Icons.tsx';
+import { CheckCircleIcon, PlusIcon, XIcon, RefreshCwIcon, SaveIcon, KeyIcon, ShieldCheckIcon, SearchIcon, SparklesIcon } from '../components/Icons.tsx';
 import { useAuth } from '../hooks/useAuth.tsx';
 
 import { IdentityMatrix } from '../features/admin/components/IdentityMatrix.tsx';
@@ -12,8 +12,10 @@ const AdminPage: React.FC = () => {
   const { user, isAdmin } = useAuth();
   const role = user?.role?.toLowerCase();
   const isOnlyManager = !isAdmin && (role === 'manager');
+  const canManageUsers = isAdmin || role === 'manager'; // Allow Managers to see RBAC
   
-  const [activeTab, setActiveTab] = useState(isOnlyManager ? 'settings' : 'health');
+  // Default tab logic: If manager, default to 'users' if available, or 'settings'
+  const [activeTab, setActiveTab] = useState(isOnlyManager ? 'users' : 'health');
 
   return (
     <div className="flex-1 flex flex-col h-full overflow-hidden p-6 bg-background text-foreground">
@@ -21,7 +23,7 @@ const AdminPage: React.FC = () => {
         <h1 className="text-3xl font-bold">{isOnlyManager ? 'Manager Control Center' : 'Admin Control Center'}</h1>
         <p className="text-muted-foreground">
           {isOnlyManager 
-            ? 'Configure extraction workflows and team-level parameters.' 
+            ? 'Configure team permissions, workflows, and operational parameters.'
             : 'System-wide configuration and personnel management for L1 Administrators.'}
         </p>
       </header>
@@ -29,7 +31,7 @@ const AdminPage: React.FC = () => {
       <div className="border-b border-border mb-6">
         <nav className="-mb-px flex space-x-8 overflow-x-auto" aria-label="Tabs">
           <TabButton title="System Health" isActive={activeTab === 'health'} onClick={() => setActiveTab('health')} />
-          {!isOnlyManager && <TabButton title="User Management" isActive={activeTab === 'users'} onClick={() => setActiveTab('users')} />}
+          {canManageUsers && <TabButton title="User Management" isActive={activeTab === 'users'} onClick={() => setActiveTab('users')} />}
           <TabButton title="System Settings" isActive={activeTab === 'settings'} onClick={() => setActiveTab('settings')} />
           <TabButton title="Data Extraction" isActive={activeTab === 'extraction'} onClick={() => setActiveTab('extraction')} />
           <TabButton title="System Prompts" isActive={activeTab === 'prompts'} onClick={() => setActiveTab('prompts')} />
@@ -40,7 +42,7 @@ const AdminPage: React.FC = () => {
 
       <div className="flex-1 overflow-auto">
         {activeTab === 'health' && <SystemHealthDashboard />}
-        {activeTab === 'users' && !isOnlyManager && <IdentityMatrix />}
+        {activeTab === 'users' && canManageUsers && <IdentityMatrix />}
         {activeTab === 'settings' && <SystemSettings />}
         {activeTab === 'extraction' && <ExtractionManager />}
         {activeTab === 'prompts' && <PromptManagement isManagerMode={isOnlyManager} />}
@@ -466,12 +468,13 @@ const SystemSettings: React.FC = () => {
     const fetchSettings = async () => {
         setLoading(true);
         try {
-            // Fetch crawler, config, diagnostics, and lead scoring settings
+            // Fetch crawler, config, diagnostics, lead scoring, and RAG settings
             const crawlerData = await api.getSystemSettings('crawler_rbac');
             const crawlerConfig = await api.getSystemSettings('crawler_config');
             const diagnosticsData = await api.getSystemSettings('diagnostics');
             const scoringData = await api.getSystemSettings('lead_scoring');
-            setSettings([...crawlerData, ...crawlerConfig, ...diagnosticsData, ...scoringData]);
+            const ragData = await api.getSystemSettings('rag_strategy');
+            setSettings([...crawlerData, ...crawlerConfig, ...diagnosticsData, ...scoringData, ...ragData]);
         } catch (err: any) {
             alert("Failed to load settings: " + err.message);
         } finally {
@@ -497,9 +500,50 @@ const SystemSettings: React.FC = () => {
     const logLevelSetting = settings.find(s => s.key === 'system.log_level');
     const scoringSettings = settings.filter(s => s.category === 'lead_scoring');
     const crawlerConfigSettings = settings.filter(s => s.category === 'crawler_config');
+    const ragSettings = settings.filter(s => s.category === 'rag_strategy');
 
     return (
         <div className="space-y-6 pb-20">
+            {/* NEW: RAG Strategy Configuration (Google Gemini) */}
+            <div className="bg-card p-6 rounded-2xl border border-border shadow-sm border-l-4 border-l-purple-500">
+                <h3 className="text-lg font-bold mb-4 flex items-center gap-2 text-purple-600">
+                    <SparklesIcon className="w-5 h-5" />
+                    RAG Strategy Configuration
+                </h3>
+                <div className="space-y-4">
+                    {ragSettings.map(setting => (
+                        <div key={setting.key} className="p-4 bg-muted/20 rounded-xl border border-border flex flex-col md:flex-row md:items-center justify-between gap-4">
+                            <div className="flex-1">
+                                <div className="font-bold text-xs uppercase tracking-widest text-purple-600/70">{setting.key.replace(/_/g, ' ')}</div>
+                                <p className="text-[10px] text-muted-foreground mt-0.5">{setting.description}</p>
+                            </div>
+                            <div className="flex items-center gap-3 w-full md:w-1/2">
+                                <div className="relative flex-1">
+                                    <input
+                                        type="text"
+                                        defaultValue={setting.value}
+                                        onBlur={(e) => handleUpdate(setting.key, e.target.value)}
+                                        className="w-full p-2 bg-background border border-border rounded-lg text-xs font-mono outline-none focus:ring-2 ring-purple-500/50 transition-all pr-8"
+                                    />
+                                    {/* Green Checkmark for Google Config Validation */}
+                                    {setting.value.toLowerCase().includes('google') && (
+                                        <div className="absolute right-2 top-1/2 -translate-y-1/2 text-green-500" title="Configuration Valid (Google)">
+                                            <CheckCircleIcon className="w-4 h-4" />
+                                        </div>
+                                    )}
+                                </div>
+                                {isSaving === setting.key && <RefreshCwIcon className="animate-spin w-4 h-4 text-purple-600" />}
+                            </div>
+                        </div>
+                    ))}
+                    {ragSettings.length === 0 && (
+                        <div className="p-4 text-center text-muted-foreground italic text-xs">
+                            No RAG strategy settings found. Ensure migration 044 has been applied.
+                        </div>
+                    )}
+                </div>
+            </div>
+
             {/* NEW: Crawler Endpoint Configuration (GAP-024) */}
             <div className="bg-card p-6 rounded-2xl border border-border shadow-sm border-l-4 border-l-blue-500">
                 <h3 className="text-lg font-bold mb-4 flex items-center gap-2 text-blue-600">
