@@ -85,7 +85,17 @@ class ExtractionService:
 
         except Exception as e:
             safe_logfire_error(f"LLM analysis failed: {e}")
-            raise Exception(f"AI Analysis failed: {str(e)}") from e
+            # Fallback: Return a generic schema suggestion instead of crashing
+            return {
+                "fields": [
+                    {"name": "title", "type": "string", "description": "Page Title or Main Heading"},
+                    {"name": "summary", "type": "string", "description": "Brief summary of the content"},
+                    {"name": "url", "type": "string", "description": "Source URL"},
+                    {"name": "author", "type": "string", "description": "Content creator or organization"},
+                    {"name": "published_date", "type": "string", "description": "Date of publication"}
+                ],
+                "error": f"AI Analysis failed, using fallback. Reason: {str(e)[:100]}"
+            }
 
     async def create_schema(self, data: dict[str, Any], user_id: str) -> dict[str, Any]:
         """

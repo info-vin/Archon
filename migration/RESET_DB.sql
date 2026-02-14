@@ -161,6 +161,7 @@ BEGIN
     -- Drop in reverse dependency order to minimize cascade issues
     
     -- New tables from Phase 4.6+
+    DROP TABLE IF EXISTS archon_extraction_schemas CASCADE;
     DROP TABLE IF EXISTS archon_ethics_events CASCADE;
     DROP TABLE IF EXISTS token_usage CASCADE;
     DROP TABLE IF EXISTS marketing_trends CASCADE;

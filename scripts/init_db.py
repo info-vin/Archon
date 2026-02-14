@@ -131,7 +131,7 @@ def seed_data(cursor: PGCursor) -> None:
     bob_settings = [
         ("STORY_CANDIDATE_SCORE_THRESHOLD", "80", "marketing", "Minimum score for victory feed"),
         ("NANA_BANANA_MODEL", "gemini-2.0-flash-exp", "marketing", "Image generation model for Nana Banana"),
-        ("MARKETING_MODEL", "gemini-1.5-pro", "marketing", "Primary model for blog drafting"),
+        ("MARKETING_MODEL", "gemini-2.5-flash", "marketing", "Primary model for blog drafting"),
     ]
     for key, val, category, desc in bob_settings:
         cursor.execute("""

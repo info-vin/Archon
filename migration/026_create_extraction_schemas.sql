@@ -18,11 +18,13 @@ CREATE TABLE IF NOT EXISTS archon_extraction_schemas (
 ALTER TABLE archon_extraction_schemas ENABLE ROW LEVEL SECURITY;
 
 -- Everyone can view schemas (for applying them during crawl)
+DROP POLICY IF EXISTS "Allow all authenticated users to view schemas" ON archon_extraction_schemas;
 CREATE POLICY "Allow all authenticated users to view schemas" ON archon_extraction_schemas
     FOR SELECT
     USING (auth.role() = 'authenticated' OR auth.role() = 'service_role');
 
 -- Only Managers and Admins can manage schemas
+DROP POLICY IF EXISTS "Allow managers and admins to manage schemas" ON archon_extraction_schemas;
 CREATE POLICY "Allow managers and admins to manage schemas" ON archon_extraction_schemas
     FOR ALL
     USING (

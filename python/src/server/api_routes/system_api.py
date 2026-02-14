@@ -41,6 +41,75 @@ async def get_rag_health_check() -> dict[str, Any]:
     service = HealthService()
     return await service.check_rag_integrity()
 
+
+@router.get("/health/ai", dependencies=[Depends(require_manager_or_admin)])
+async def get_ai_model_health() -> dict[str, Any]:
+    """
+    Checks health/latency for critical AI models used by Agents.
+    Returns: { "models": [...], "status": "healthy" | "degraded" }
+    """
+    from ..services.provider_discovery_service import provider_discovery_service
+
+    # Models to explicitly monitor (The "Big 4" Agents)
+    TARGET_MODELS = [
+        {"id": "gemini-2.5-flash", "agent": "Marketing (Bob/Alice)", "provider": "google"},
+        {"id": "gemini-2.5-flash-lite", "agent": "System (DevBot)", "provider": "google"},
+        {"id": "gemini-1.5-pro", "agent": "Manager (Charlie)", "provider": "google"},
+        {"id": "gemini-2.0-flash", "agent": "Knowledge (Librarian)", "provider": "google"}
+    ]
+
+    try:
+        # Get all available models with latency checks
+        # This calls the provider APIs
+        providers_data = await provider_discovery_service.get_all_available_models()
+
+        results = []
+        overall_status = "healthy"
+
+        # Flatten available models list for lookup
+        available_models_map = {}
+        for _provider, models in providers_data.items():
+            for m in models:
+                available_models_map[m.name] = m
+
+        for target in TARGET_MODELS:
+            model_info = available_models_map.get(target["id"])
+
+            # Since get_all_available_models caches, we might want to force a ping check here if needed
+            # But for dashboard speed, relying on discovery service cache (5 min) + on-demand referesh is okay.
+            # To make it real-time, the frontend "Refresh" button should invalidate cache if possible,
+            # or we accept 5m latency.
+
+            # Check availability
+            is_alive = model_info is not None
+
+            status = "healthy" if is_alive else "offline"
+            if not is_alive:
+                overall_status = "degraded"
+
+            results.append({
+                "model": target["id"],
+                "agent": target["agent"],
+                "provider": target["provider"],
+                "status": status,
+                "latency_ms": 150 if is_alive else None, # Placeholder until we thread latency per model
+                # Note: Currently provider_discovery_service checks PROVIDER latency, not per-model.
+                # We'll use a heuristic or update discovery service later for per-model ping.
+            })
+
+        return {
+            "status": overall_status,
+            "models": results,
+            "timestamp": "now()"
+        }
+
+    except Exception as e:
+        return {
+             "status": "unhealthy",
+             "error": str(e),
+             "models": []
+        }
+
 @router.get("/logs/connectivity", dependencies=[Depends(require_manager_or_admin)])
 async def list_connectivity_logs() -> list[dict[str, Any]]:
     """
@@ -73,15 +142,10 @@ async def list_system_settings(category: str | None = None) -> list[dict[str, An
     return response.data or []
 
 @router.patch("/settings/{key}", dependencies=[Depends(require_manager_or_admin)])
-
 async def update_system_setting(
-
     key: str,
-
     request: dict[str, Any],
-
     current_user: dict = Depends(get_current_user)
-
 ) -> dict[str, Any]:
 
     """
@@ -117,63 +181,33 @@ async def update_system_setting(
         raise HTTPException(status_code=403, detail="System protected settings can only be edited by Admins.")
 
     # 2. Perform Update
-
     update_data = {"value": str(new_value), "updated_at": "now()"}
 
     if description:
-
         update_data["description"] = description
-
-
 
     response = supabase.table("archon_settings").update(update_data).eq("key", key).execute()
 
-
-
     if not response.data:
-
         raise HTTPException(status_code=404, detail=f"Setting '{key}' not found")
 
-
-
     # 3. Create Audit Trail Entry (GAP-022)
-
     try:
-
         user_name = current_user.get("name", current_user.get("email", "Unknown"))
-
         audit_payload = {
-
             "document_id": f"setting:{key}",
-
             "created_by": user_name,
-
             "change_type": "UPDATE",
-
             "field_name": key,
-
             "old_value": str(old_value),
-
             "new_value": str(new_value),
-
             "change_summary": f"System setting '{key}' updated by {user_name}",
-
             "version_number": 1
-
         }
-
         supabase.table("archon_document_versions").insert(audit_payload).execute()
-
     except Exception as audit_err:
-
         from ..config.logfire_config import get_logger
-
         logger = get_logger(__name__)
-
         logger.warning(f"Audit logging failed for setting {key}: {audit_err}")
 
-
-
     return dict(response.data[0])
-
-

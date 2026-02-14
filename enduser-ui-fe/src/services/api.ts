@@ -819,6 +819,12 @@ const supabaseApi = {
     return response.json();
   },
 
+  async getAiHealth(): Promise<import('../types.ts').AiHealthStatus> {
+      const response = await fetch('/api/system/health/ai', { headers: await this._getHeaders() });
+      if (!response.ok) throw new Error('Failed to fetch AI health status');
+      return response.json();
+  },
+
   async getHealthTrend(): Promise<{ trend: any[]; audit: any[] }> {
     const response = await fetch('/api/stats/health-trend', {
         headers: await this._getHeaders()
@@ -826,8 +832,6 @@ const supabaseApi = {
     if (!response.ok) throw new Error('Failed to fetch health trend');
     return response.json();
   },
-
-
 
   async getManagerAlerts(): Promise<import('../types.ts').AlertItem[]> {
       const response = await fetch('/api/logs/alerts', { headers: await this._getHeaders() });
@@ -954,8 +958,6 @@ const supabaseApi = {
     });
     return response.json();
   },
-
-
 
   async getCommanderTrends(): Promise<any[]> {
     const response = await fetch('/api/stats/commander-trends', { headers: await this._getHeaders() });

@@ -149,65 +149,30 @@ export interface AssignableUser {
 
 
 export interface TaskStats {
-
     name: string;
-
     value: number;
-
 }
 
 
 
 export interface MemberPerformance {
-
     name: string;
-
     completed_tasks: number;
-
 }
 
 
 
 export interface JobData {
-
-
-
     title: string;
-
-
-
     company: string;
-
-
-
     location?: string;
-
-
-
     salary?: string;
-
-
-
     url?: string;
-
-
-
     description?: string;
-
     description_full?: string;
-
     skills?: string[];
-
-
-
     source: string;
-
-
-
     identified_need?: string; // AI inferred business need
-
-
-
 }
 
 export interface SystemOverview {
@@ -263,3 +228,18 @@ export interface AlertItem {
 }
 
 export type ApprovalItem = BlogPost | any; // Union type for stronger typing later
+
+export interface ModelHealth {
+    model: string;
+    agent: string;
+    provider: string;
+    status: 'healthy' | 'offline';
+    latency_ms: number | null;
+}
+
+export interface AiHealthStatus {
+    status: 'healthy' | 'degraded' | 'unhealthy';
+    models: ModelHealth[];
+    timestamp: string;
+    error?: string;
+}

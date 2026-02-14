@@ -122,6 +122,15 @@ export const handlers = [
   http.get('/api/marketing/manager/alerts', () => HttpResponse.json([])),
   http.get('/api/visit-logs/attendance/status', () => HttpResponse.json({ status: 'clocked_out' })),
   
+  http.get('/api/system/health/ai', () => HttpResponse.json({
+    status: 'healthy',
+    timestamp: new Date().toISOString(),
+    models: [
+        { model: 'gemini-2.5-flash', agent: 'Marketing (Bob/Alice)', provider: 'google', status: 'healthy', latency_ms: 120 },
+        { model: 'gemini-1.5-pro', agent: 'Manager (Charlie)', provider: 'google', status: 'healthy', latency_ms: 250 }
+    ]
+  })),
+  
   // 5. Fallbacks
   http.get('/api/ethics/events', () => HttpResponse.json([])),
   http.get('/api/changes', () => HttpResponse.json([])),

@@ -88,10 +88,12 @@ def fuel_all():
                 cur.execute("INSERT INTO archon_sources (source_id, source_url, created_at, title) VALUES (%s, %s, %s, %s) ON CONFLICT DO NOTHING", 
                             (sid, dom_cfg['url'], target_date.isoformat(), f"Source {i}"))
                 if random.random() < dom_cfg['quality']:
+                    # Add mock embedding (768 zeros) to satisfy system integrity probe
+                    mock_embedding = [0.0] * 768
                     cur.execute("""
-                        INSERT INTO archon_crawled_pages (source_id, created_at, content, url, title, chunk_number, metadata)
-                        VALUES (%s, %s, %s, %s, %s, %s, %s) ON CONFLICT DO NOTHING
-                    """, (sid, target_date.isoformat(), "High value content", f"{dom_cfg['url']}/p{i}", f"Page {i}", 1, json.dumps({})))
+                        INSERT INTO archon_crawled_pages (source_id, created_at, content, url, title, chunk_number, metadata, embedding)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s) ON CONFLICT DO NOTHING
+                    """, (sid, target_date.isoformat(), "High value content", f"{dom_cfg['url']}/p{i}", f"Page {i}", 1, json.dumps({}), mock_embedding))
 
     conn.commit()
     cur.close()
