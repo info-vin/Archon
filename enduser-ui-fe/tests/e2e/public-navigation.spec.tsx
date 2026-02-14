@@ -49,7 +49,7 @@ describe('Public Navigation & Dashboard Access', () => {
     fireEvent.click(backToWebLink);
     
     // 5. Verify Landing Page content
-    await waitFor(() => expect(screen.getByText(/The Command Center for Your Projects/i)).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText(/Managerial Nexus/i)).toBeInTheDocument());
 
     // 6. Verify "Go to Dashboard" button exists in Header (instead of Login)
     expect(screen.getByText(/Go to Dashboard/i)).toBeInTheDocument();

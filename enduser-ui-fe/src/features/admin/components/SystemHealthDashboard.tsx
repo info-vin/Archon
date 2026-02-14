@@ -21,7 +21,7 @@ export const SystemHealthDashboard: React.FC = () => {
             ]);
             setOverview(ov);
             setAiStats(ai);
-            setConnectivityLogs(logs);
+            setConnectivityLogs(Array.isArray(logs) ? logs : []);
         } catch (err: any) {
             setError(err.message || "Failed to load system health data");
         } finally {
@@ -51,35 +51,33 @@ export const SystemHealthDashboard: React.FC = () => {
         </div>
     );
 
-    if (!overview || !aiStats) return null;
-
     return (
         <div className="space-y-6">
             {/* Top Cards */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <StatusCard 
                     title="RAG Health" 
-                    status={overview.status === 'healthy' ? 'good' : 'bad'}
-                    value={overview.rag.status.toUpperCase()}
-                    subtext={overview.rag.details?.errors ? `${overview.rag.details.errors.length} errors` : 'All systems nominal'}
+                    status={overview?.status === 'healthy' ? 'good' : 'bad'}
+                    value={overview?.rag?.status?.toUpperCase() || 'UNKNOWN'}
+                    subtext={overview?.rag?.details?.errors ? `${overview.rag.details.errors.length} errors` : 'All systems nominal'}
                 />
                 <StatusCard 
                     title="Error Rate (24h)" 
-                    status={overview.errors_24h > 0 ? 'warning' : 'good'}
-                    value={overview.errors_24h.toString()}
+                    status={(overview?.errors_24h || 0) > 0 ? 'warning' : 'good'}
+                    value={(overview?.errors_24h || 0).toString()}
                     subtext="Critical backend exceptions"
                 />
                 <StatusCard 
                     title="Active Agents" 
                     status="neutral"
-                    value={overview.active_agents.filter((a: any) => a.status === 'active').length.toString()}
-                    subtext={`${overview.active_agents.length} registered system entities`}
+                    value={(overview?.active_agents || []).filter((a: any) => a.status === 'active').length.toString()}
+                    subtext={`${(overview?.active_agents || []).length} registered system entities`}
                 />
                 <StatusCard 
                     title="Token Cost (24h)" 
-                    status={overview.cost_24h > 10 ? 'warning' : 'neutral'}
-                    value={`$${overview.cost_24h.toFixed(4)}`}
-                    subtext={aiStats.is_real_data ? "Real-time usage" : "Estimated"}
+                    status={(overview?.cost_24h || 0) > 10 ? 'warning' : 'neutral'}
+                    value={`$${(overview?.cost_24h || 0).toFixed(4)}`}
+                    subtext={aiStats?.is_real_data ? "Real-time usage" : "Estimated"}
                 />
             </div>
 
@@ -88,14 +86,14 @@ export const SystemHealthDashboard: React.FC = () => {
                 {/* Cost Analysis */}
                 <div className="bg-card p-6 rounded-2xl border border-border shadow-sm">
                     <h3 className="text-lg font-bold mb-4">AI Cost Analysis (30 Days)</h3>
-                    {aiStats.daily_costs && aiStats.daily_costs.length > 0 ? (
+                    {(aiStats?.daily_costs || []).length > 0 ? (
                         <div className="space-y-3">
-                            {aiStats.daily_costs.slice(0, 5).map(day => (
+                            {aiStats?.daily_costs?.slice(0, 5).map(day => (
                                 <div key={day.date} className="flex justify-between items-center text-sm border-b border-border pb-2 last:border-0">
                                     <span className="font-mono text-muted-foreground">{day.date}</span>
                                     <div className="flex flex-col items-end">
                                         <span className="font-bold">${day.cost.toFixed(4)}</span>
-                                        <span className="text-xs text-muted-foreground">{day.request_count} reqs • {day.models.length} models</span>
+                                        <span className="text-xs text-muted-foreground">{day.request_count} reqs • {(day.models || []).length} models</span>
                                     </div>
                                 </div>
                             ))}
@@ -111,7 +109,7 @@ export const SystemHealthDashboard: React.FC = () => {
                 <div className="bg-card p-6 rounded-2xl border border-border shadow-sm">
                     <h3 className="text-lg font-bold mb-4">Agent Status</h3>
                     <div className="space-y-4">
-                        {overview.active_agents.map((agent: any) => (
+                        {(overview?.active_agents || []).map((agent: any) => (
                             <AgentRow 
                                 key={agent.id}
                                 name={agent.name} 
@@ -130,7 +128,7 @@ export const SystemHealthDashboard: React.FC = () => {
                     AI Connectivity Exception Log
                 </h3>
                 <div className="space-y-2">
-                    {connectivityLogs.map(log => (
+                    {(connectivityLogs || []).map((log: any) => (
                         <div key={log.id} className="p-3 bg-red-50/50 rounded-xl border border-red-100 flex justify-between items-center text-xs group hover:bg-red-50 transition-colors">
                             <div className="flex-1">
                                 <div className="flex items-center gap-2 mb-1">
@@ -145,7 +143,7 @@ export const SystemHealthDashboard: React.FC = () => {
                             </div>
                         </div>
                     ))}
-                    {connectivityLogs.length === 0 && (
+                    {(connectivityLogs || []).length === 0 && (
                         <div className="text-center py-12 text-gray-400 italic text-sm">
                             No connectivity exceptions detected in the last window.
                         </div>

@@ -1,5 +1,6 @@
 import { beforeAll, afterEach, afterAll, vi } from 'vitest';
 import { server } from '../../src/mocks/server';
+import { clearMockData } from '../../src/mocks/handlers';
 import { render } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { AuthProvider } from '../../src/hooks/useAuth';
@@ -87,6 +88,7 @@ beforeAll(() => {
 // Reset handlers after each test to ensure test isolation
 afterEach(() => {
   server.resetHandlers();
+  clearMockData();
   localStorage.clear();
   
   // Re-inject necessary credentials for the next test to prevent "Supabase credentials not set" errors
@@ -132,6 +134,8 @@ export const renderApp = (initialEntries = ['/']) => {
 // Global Mocks for common browser APIs
 if (typeof window !== 'undefined') {
     window.scrollTo = vi.fn();
+    window.alert = vi.fn();
+    window.confirm = vi.fn(() => true);
     Element.prototype.scrollIntoView = vi.fn();
     HTMLElement.prototype.scrollIntoView = vi.fn();
     

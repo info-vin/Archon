@@ -15,7 +15,8 @@ help:
 	@echo "  make dev        - Backend in Docker, frontend local (recommended)"
 	@echo "  make dev-docker - Everything in Docker"
 	@echo "  make stop       - Stop all services"
-	@echo "  make db-init    - Initialize database (Full: Migrations + Seed + Auth)"
+	@echo "  make db-init    - Initialize database (Base: Migrations + Seeds + Auth)"
+	@echo "  make db-fuel    - Inject 6 month historical data for Nexus Trends (Optional)"
 	@echo "  make db-migrate - Run schema migrations ONLY"
 	@echo "  make db-reset   - WIPE and Re-initialize database (Destructive)"
 	@echo "  make test       - Run all tests"
@@ -48,6 +49,11 @@ install-ui:
 db-init:
 	@echo "Initializing database inside archon-server container..."
 	@docker exec -i archon-server /venv/bin/python scripts/init_db.py
+
+# Inject historical trend data (GAP-027, 030, 032, 033, 034)
+db-fuel:
+	@echo "Fueling Nexus with 180-day strategic data..."
+	@docker exec -i archon-server /venv/bin/python scripts/fuel_nexus.py
 
 # Database Migration Only
 db-migrate:

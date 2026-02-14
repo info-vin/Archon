@@ -6,19 +6,11 @@ import { EmployeeRole } from '../../src/types';
 import { renderApp } from './e2e.setup';
 import { createUser } from '../factories/userFactory';
 
-// Using the shared server from e2e setup logic conceptually, but defining local overrides if needed.
-// Actually, since we use renderApp which uses AppRoutes, we should rely on the shared infrastructure.
-
-// Using the shared server from e2e setup logic conceptually.
-// We allow e2e.setup.tsx to handle the base module mocking.
-// We just override specific methods below.
-
 describe('Content Marketing E2E Flow', () => {
     it('Bob can draft a blog post using the Workbench workflow', async () => {
         const user = userEvent.setup();
-        const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {});
         
-        // Mock Bob via Factory
+        // 1. Mock Bob and initial data
         const bob = createUser({
             id: 'bob-1',
             name: 'Bob Marketing',
@@ -48,39 +40,32 @@ describe('Content Marketing E2E Flow', () => {
             references: ['Whitepaper']
         });
 
-        // Mock generic data
-        vi.mocked(api.getBlogPosts).mockResolvedValue([]);
-        vi.mocked(api.getMarketStats).mockResolvedValue({});
-        vi.mocked(api.getMarketingTrends).mockResolvedValue(null);
+        renderApp(['/brand']);
 
-        // Start at Dashboard
-        renderApp(['/dashboard']);
-
-        // 1. Navigate to Brand Hub
-        const brandNavLink = await screen.findByRole('link', { name: /Brand Hub/i });
-        await user.click(brandNavLink);
-
-        // 2. Verify Workbench is active
-        expect(await screen.findByRole('heading', { name: /Victory Feed/i })).toBeInTheDocument();
-
-        // 3. Select a signal (Mozilla)
-        const signal = await screen.findByText('Mozilla');
+        // 2. Verify Victory Feed is active and find the signal
+        const signal = await screen.findByText('Mozilla', {}, { timeout: 15000 });
         await user.click(signal);
 
-        // 4. Verify Context Tab content
+        // 3. Verify Context Intelligence is loaded in the left pane
         expect(await screen.findByText(/Alice said client wants privacy/i)).toBeInTheDocument();
 
-        // 5. Switch to Editor Tab
-        const editorTabBtn = screen.getByRole('button', { name: /Editor/i });
-        await user.click(editorTabBtn);
+        // 4. Open AI Command Center (The floating button with "!")
+        const aiCommandBtn = await screen.findByRole('button', { name: /!/i });
+        await user.click(aiCommandBtn);
 
-        // 6. Click Magic Draft
-        const magicDraftBtn = await screen.findByText(/Magic Draft/i);
-        await user.click(magicDraftBtn);
+        // 5. Execute Magic Synthesis
+        const runSynthesisBtn = await screen.findByRole('button', { name: /Run Magic Synthesis/i });
+        await user.click(runSynthesisBtn);
 
-        // 7. Verify Draft is created
+        // 6. Verify Article Draft is populated in the editor (Wait for async state update)
+        // Check for the title input value
         await waitFor(() => {
-            expect(alertSpy).toHaveBeenCalledWith(expect.stringMatching(/Draft generated/i));
-        }, { timeout: 5000 });
+            const titleInput = screen.getByPlaceholderText(/Article Title/i) as HTMLInputElement;
+            expect(titleInput.value).toBe('Privacy in AI');
+        }, { timeout: 10000 });
+
+        // Check for the content textarea value
+        const contentArea = screen.getByPlaceholderText(/Start typing or use the AI toolbox/i) as HTMLTextAreaElement;
+        expect(contentArea.value).toContain('Article body about Privacy...');
     });
 });

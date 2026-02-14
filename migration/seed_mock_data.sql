@@ -175,20 +175,10 @@ BEGIN
         (proj1_id, 'Fix authentication bug', 'Users are reporting intermittent login failures.', 'review', 'critical', 'Alice Johnson', alice_id, 3, '2024-09-04T10:00:00Z', '2024-09-08T10:00:00Z');
     END IF;
     -- Seed for blog_posts table (Marketing Content)
-    -- Include one 'changes_requested' item with real notes for verification
     INSERT INTO blog_posts (id, title, content, excerpt, author_name, status, publish_date, ai_score, review_notes, created_at, updated_at) VALUES
     (uuid_generate_v4(), 'SAS Smart Manufacturing Solution', 'Content about SAS AI in factories...', 'Deep dive into SAS AI...', 'Bob', 'published', NOW() - INTERVAL '2 days', 95, NULL, NOW() - INTERVAL '3 days', NOW() - INTERVAL '2 days'),
-    (uuid_generate_v4(), 'AI in Tech Support: 2026 Trends', 'Draft content about support bots...', 'Trends in AI support...', 'Bob', 'review', NOW() - INTERVAL '3 days', 82, NULL, NOW() - INTERVAL '4 days', NOW() - INTERVAL '3 days'),
-    (uuid_generate_v4(), 'Internal Strategy: Project X', 'CONFIDENTIAL details about Project X...', 'Strategic draft...', 'Bob', 'changes_requested', NOW() - INTERVAL '1 hour', 45, '💬 AI Review: Critical issues found (Score: 45). Possible Confidential leak or content too short.', NOW() - INTERVAL '2 hours', NOW() - INTERVAL '1 hour')
+    (uuid_generate_v4(), 'AI in Tech Support: 2026 Trends', 'Draft content about support bots...', 'Trends in AI support...', 'Bob', 'review', NOW(), 82, NULL, NOW() - INTERVAL '1 day', NOW())
     ON CONFLICT DO NOTHING;
-
-    -- Seed for token_usage table (Historical Data for Trends Chart)
-    -- Insert simulated data for the last 14 days
-    FOR i IN 1..14 LOOP
-        INSERT INTO token_usage (request_id, user_id, model, provider, input_tokens, output_tokens, cost_usd, context_type, created_at)
-        VALUES 
-        ('seed-' || i, (SELECT id::uuid FROM profiles WHERE email = 'bob@archon.com'), 'gemini-2.0-flash', 'google', 1000 + (i * 100), 2000 + (i * 200), 0.05 + (i * 0.01), 'blog_draft', NOW() - (i || ' days')::interval);
-    END LOOP;
 
     -- Seed for archon_ethics_events (Sentinel Radar)
     INSERT INTO archon_ethics_events (id, event_type, severity, description, raw_input, resolved, created_at)

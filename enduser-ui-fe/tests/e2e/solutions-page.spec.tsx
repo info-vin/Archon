@@ -17,7 +17,7 @@ describe('Solutions Page (Phase 4.3)', () => {
         fireEvent.click(screen.getByText(/Back to Website/i));
     });
     
-    await waitFor(() => expect(screen.getByText(/The Command Center for Your Projects/i)).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText(/Managerial Nexus/i)).toBeInTheDocument());
     
     await act(async () => {
         fireEvent.click(screen.getByText('Solutions'));
@@ -57,7 +57,7 @@ describe('Solutions Page (Phase 4.3)', () => {
     renderApp();
 
     // Navigate to Solutions (Start from Landing since not logged in)
-    await waitFor(() => expect(screen.getByText(/The Command Center for Your Projects/i)).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText(/Managerial Nexus/i)).toBeInTheDocument());
     
     await act(async () => {
         fireEvent.click(screen.getByText('Solutions'));

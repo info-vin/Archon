@@ -271,6 +271,24 @@ Phase 4.4.5 引入了 **Clockwork** 進行系統自動檢測。
     ```
 *   **手動觸發**: 目前 Clockwork 隨 Server 啟動 (每 6 小時一次)。若需立即測試探針邏輯，請直接執行 `make probe`。
 
+### 3.7 戰略級全系統驗證協議 (System Validation Protocols)
+
+為了確保系統從底層代碼到頂層戰情數據皆處於健康狀態，本專案定義了兩套標準驗證序列：
+
+#### **序列 A：邏輯與代碼驗證 (Developer/CI Sequence)**
+**重心**: 確保「代碼沒有 Bug」。
+**執行順序**: `make dev-docker` -> `make test` -> `make probe`
+*   **`make test`**: 執行 544+ 項測試，確認 API 邏輯、權限與組件渲染正確。
+*   **`make probe`**: 在容器內執行，驗證資料庫連線、AI 金鑰與 RAG 檢索維度。
+*   **適用場景**: 提交代碼前的最後品質把關。
+
+#### **序列 B：戰略展示與數據落地 (Strategic/Showcase Sequence)**
+**重心**: 確保「系統具備真實營運感」。
+**執行順序**: `make dev-docker` -> `make db-init` -> `make db-fuel` -> `make probe`
+*   **`make db-init`**: **建立基石**。重置並執行所有遷移，建立 Alice/Bob 等基礎帳號。
+*   **`make db-fuel`**: **注入靈魂**。注入 6 個月歷史紀錄（產出、協作、ROI、SLA），讓 Nexus 戰情室充滿戰略趨勢數據。
+*   **適用場景**: 環境初次部署、系統功能演示、或針對指標口徑進行驗收。
+
 ---
 
 ## 第四章：貢獻與部署流程 (Contribution & Deployment)

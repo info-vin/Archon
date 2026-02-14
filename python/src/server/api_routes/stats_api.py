@@ -264,7 +264,7 @@ async def get_knowledge_roi():
         # 1. Fetch Sources (Attempts) and Pages (Successes)
         sources_res = supabase.table("archon_sources").select("source_id, source_url, created_at").gt("created_at", cutoff_date).execute()
         pages_res = supabase.table("archon_crawled_pages").select("source_id, created_at").gt("created_at", cutoff_date).execute()
-        
+
         sources = sources_res.data or []
         pages = pages_res.data or []
 
@@ -281,12 +281,12 @@ async def get_knowledge_roi():
         for i in range(range_days, 0, -step_days):
             window_start = now - timedelta(days=i)
             window_end = now - timedelta(days=i - step_days)
-            
+
             w_sources = [s for s in sources if window_start <= datetime.fromisoformat(s["created_at"].replace('Z', '+00:00')) < window_end]
             w_pages = [p for p in pages if window_start <= datetime.fromisoformat(p["created_at"].replace('Z', '+00:00')) < window_end]
-            
+
             conversion = round((len(w_pages) / len(w_sources)) * 100, 1) if w_sources else 0.0
-            
+
             trend_data.append({
                 "date": window_start.strftime("%m-%d"),
                 "conversion": conversion,
@@ -301,7 +301,7 @@ async def get_knowledge_roi():
             if dom not in domain_map:
                 domain_map[dom] = {"scanned": 0, "saved": 0}
             domain_map[dom]["scanned"] += 1
-        
+
         # Cross-reference with pages
         s_ids = {s["source_id"]: get_domain(s["source_url"]) for s in sources}
         for p in pages:
@@ -338,27 +338,16 @@ async def get_ethics_audit_queue():
     """
     try:
         supabase = get_supabase_client()
-        
+
         # 1. Fetch Pending Ethics Violations (Sentinel)
         ethics_res = supabase.table("archon_ethics_events")\
             .select("*")\
             .eq("resolved", False)\
             .order("created_at", desc=True).limit(5).execute()
-        
+
         # 2. Fetch Pending Prompt Changes (Librarian)
         versions_res = supabase.table("archon_document_versions")\
             .select("*")\
-            .eq("status", "pending")\
-            .order("created_at", desc=True).limit(5).execute()
-            
-        return {
-            "violations": ethics_res.data or [],
-            "pending_versions": versions_res.data or [],
-            "total_pending": len(ethics_res.data or []) + len(versions_res.data or [])
-        }
-    except Exception as e:
-        logger.error(f"API: Ethics audit queue failed: {e}")
-        return {"violations": [], "pending_versions": [], "total_pending": 0}
             .eq("status", "pending")\
             .order("created_at", desc=True).limit(5).execute()
 

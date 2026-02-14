@@ -20,10 +20,11 @@ const LandingPage: React.FC = () => {
         <div className="flex flex-col">
             {/* Hero Section */}
             <section className="py-20 md:py-32">
-                <div className="container mx-auto text-center px-4">
-                    <h1 className="text-4xl md:text-6xl font-bold mb-4 text-primary tracking-tighter">
-                        The Command Center for Your Projects
-                    </h1>
+                            <div className="container mx-auto text-center px-4">
+                              <h1 className="text-4xl md:text-6xl font-bold mb-4 text-primary tracking-tighter">
+                                Managerial Nexus
+                              </h1>
+                
                     <p className="text-lg md:text-xl mb-8 max-w-3xl mx-auto text-muted-foreground">
                         Manage knowledge, context, and tasks with unparalleled efficiency.
                         Archon provides project-based access, ensuring only assigned employees can view and manage tasks.

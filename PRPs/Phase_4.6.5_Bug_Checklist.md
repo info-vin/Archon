@@ -71,6 +71,11 @@
 | **GAP-025** | 🔧 Gap | **Admin** | **Config**| **Scoring Persistence**。已實作：1. Migration 038 權重持久化；2. AdminPage 增加 Lead Scoring Weights 動態配置區塊，支援自動保存與審計日誌同步。 | High | 🟢 已修復 |
 | **GAP-026** | 🔧 Gap | **Admin** | **Audit** | **Audit Search UI**。已實作：DocumentVersionsLog 增加多維度即時搜尋與 Sticky Header，支援按人員、欄位、摘要過濾稽核紀錄。 | Low | 🟢 已修復 |
 | **BUG-039** | 🐛 Bug | **Tech** | **Infra** | **腳本組織與重複性混亂**。`scripts/` 與 `python/scripts/` 存在重複檔案 (`probe_system.py`) 且用途不明確，導致 Docker 執行路徑時常報錯。需統一歸檔至 `python/scripts/` 並建立標準 Makefile 捷徑。 | Medium | ⚪ 待處理 |
+| **BUG-040** | 🐛 Bug | **Admin** | **E2E/Time**| **Admin Workflow Timeout**。`Admin can update a user role` 測試超時 (15s)。原因：測試預期 "Alice" 但資料為 "Alice Johnson" (Exact Match)。修復：改用 Regex。 | High | 🟢 已修復 |
+| **BUG-041** | 🐛 Bug | **Alice** | **E2E/Time**| **AI Workflow Timeout**。`Sales Outreach` 測試超時 (15s)。原因：Marketing Page 只有標題無按鈕。修復：導航至 Dashboard 建立任務。 | High | 🟢 已修復 |
+| **BUG-042** | 🐛 Bug | **Alice** | **E2E/Race**| **Knowledge Selector Race**。`waitForElementToBeRemoved` 錯誤，目標 Dialog 在檢測前已消失。原因：Modal 關閉過快。修復：改用 `waitFor(expect(not.toBeInDocument))`. | Medium | 🟢 已修復 |
+| **BUG-043** | 🐛 Bug | **Alice** | **E2E/Data**| **Vendor Promotion Missing**. `Vendor Promotion` 測試找不到 `/Retail Corp/i`。原因：Mock Data 屬性名稱不符 (`company` vs `company_name`)。修復：標準化 Mock Data。 | High | 🟢 已修復 |
+| **BUG-044** | 🐛 Bug | **System** | **E2E/Id**  | **Task Persistence ID Mismatch**. `Assignee Persistence` 測試失敗，任務列表找不到 Assignee Name。原因：Mock Create Task 未填入 `name`。修復：Mock Handler 自動查找 User Name。 | High | 🟢 已修復 |
 
 ---
 
@@ -112,3 +117,23 @@
     *   **UX-011**: 搬移設定入口。
 *   **2026-02-03 (Round 1)**:
     *   **DX-001**: 密碼重置。
+
+---
+
+## 🔬 E2E 測試失敗根源 - 深度盤查報告 (2026-02-14)
+
+### **【環境問題 (Environment)】**
+*   **互動模型斷層 (Interaction Divergence)**: UI 已升級為 `MobileDateTimePicker` (按鈕彈窗)，但舊測試腳本仍試圖對 `input` 執行 `fireEvent.change`。這導致日期必填欄位永遠為空，表單驗證無法通過。
+*   **API 彈窗阻塞 (Dialog Blocking)**: JSDOM 不支援 `window.alert`。`TaskModal` 成功後會呼叫原生 Alert，這會掛起測試執行緒，導致 Modal 雖然在邏輯上已關閉，但 DOM 元素仍殘留在畫面上，干擾後續斷言。
+
+### **【資料問題 (Data)】**
+*   **身分對齊衝突 (Identity Mismatch)**: 測試腳本預期指派給 `Alice Johnson`，但 Mock 數據中該 ID 對應的名稱為 `Alice`。此外，由於 Mock POST 請求缺少 `project_id`，新任務在 Dashboard 被 `FB-03` (專案過濾) 邏輯判定為無效專案，導致渲染後立即消失。
+*   **數據飢渴 (Data Starvation)**: 缺失 `POST /api/marketing/leads` 與 `POST /api/marketing/generate-pitch` 的處理器。當測試執行保存動作時觸發 404 報錯，導致 UI 無法進入「成功跳轉」狀態。
+
+### **【底層問題 (Underlying Architecture)】**
+*   **渲染競態 (Race Condition)**: `AuthProvider` 狀態同步存在延遲。進入 `/admin` 或 `/marketing` 後，側邊欄連結與分頁 Tab 的渲染速度慢於測試腳本的搜尋速度。需改用帶有 Timeout 的 `findByRole` 取代靜態 `getByText`。
+*   **防禦性缺失 (Defensive Coding Gap)**: `SourceBadge` 以前缺乏對 `source` 欄位的 null-check。若 Mock 數據結構不完整，`toLowerCase()` 會導致整個 React Tree 崩潰並顯示白屏。
+
+### **【修復狀態總結】**
+- **已加固**: `SourceBadge` Null-check, `IdentityMatrix` Map-check, `handlers.ts` 基礎 API 補齊。
+- **待對齊**: 全域測試腳本的互動流程 (日期選擇、超時增加、姓名同步)。

@@ -185,7 +185,7 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
 const AdminRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const { user, isAdmin } = useAuth();
     const role = user?.role?.toLowerCase();
-    const isManagerOrAdmin = isAdmin || role === 'manager' || role === EmployeeRole.MANAGER;
+    const isManagerOrAdmin = isAdmin || role === 'manager' || role === 'admin' || role === 'system_admin' || role === EmployeeRole.MANAGER;
     return isManagerOrAdmin ? <>{children}</> : <Navigate to="/dashboard" />;
 };
 

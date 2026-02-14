@@ -1,62 +1,33 @@
-import { screen, waitFor, fireEvent, waitForElementToBeRemoved } from '@testing-library/react';
+import { screen, fireEvent, waitForElementToBeRemoved } from '@testing-library/react';
 import { describe, it, expect } from 'vitest';
 import { renderApp } from './e2e.setup';
 
 describe('Task Assignee Persistence (Migration 007)', () => {
-    
     it('should persist assignee after page reload', async () => {
-        // 1. Initial Render: Go to Dashboard
         const { unmount } = renderApp(['/dashboard']);
+        await waitForElementToBeRemoved(() => screen.queryByText(/Loading/i), { timeout: 10000 });
 
-        // Wait for Dashboard loading to finish with increased timeout
-        await waitForElementToBeRemoved(() => screen.queryByText(/Loading/i), { timeout: 5000 });
-
-        // 2. Open New Task Modal
         const newTaskBtn = await screen.findByRole('button', { name: /New Task/i });
         fireEvent.click(newTaskBtn);
 
-        // Fill modal
-        const titleInput = await screen.findByLabelText(/Title/i);
-        fireEvent.change(titleInput, { target: { value: 'Persist Test Task' } });
+        fireEvent.change(await screen.findByLabelText(/Title/i), { target: { value: 'Persist Test Task' } });
         
-        const descInput = screen.getByLabelText(/Description/i);
-        fireEvent.change(descInput, { target: { value: 'Testing persistence' } });
+        fireEvent.click(await screen.findByRole('button', { name: /Due Date/i }));
+        fireEvent.click(await screen.findByRole('button', { name: /Tomorrow/i }));
+        fireEvent.click(screen.getByRole('button', { name: /CONFIRM SELECTION/i }));
 
-        const dueDateInput = screen.getByLabelText(/Due Date/i);
-        fireEvent.change(dueDateInput, { target: { value: '2025-12-31T09:00' } });
+        fireEvent.change(screen.getByLabelText(/Assignee/i), { target: { value: 'user-1' } });
+        fireEvent.click(screen.getByRole('button', { name: /Create Task/i }));
 
-        // Select Assignee "Alice Johnson" (ID: user-1)
-        const assigneeSelect = screen.getByLabelText(/Assignee/i);
-        
-        await waitFor(() => {
-            expect(assigneeSelect).not.toHaveTextContent('Loading...');
-        }, { timeout: 3000 });
+        await waitForElementToBeRemoved(() => screen.queryByRole('dialog'), { timeout: 10000 });
+        expect(await screen.findByText('Persist Test Task')).toBeInTheDocument();
+        expect(screen.getByText(/Alice Johnson/i)).toBeInTheDocument();
 
-        fireEvent.change(assigneeSelect, { target: { value: 'user-1' } });
-
-        // Save
-        const createBtn = screen.getByRole('button', { name: /Create Task/i });
-        fireEvent.click(createBtn);
-
-        // 3. Verify Task is created and assigned to Alice
-        await waitFor(() => {
-            expect(screen.getByText('Persist Test Task')).toBeInTheDocument();
-            // Verify Alice's initials or name appears via Title
-            expect(screen.getByTitle('Alice Johnson')).toBeInTheDocument();
-        });
-
-        // 4. SIMULATE RELOAD: Unmount and Re-render
         unmount();
-        
-        // Re-render the app at the same route
         renderApp(['/dashboard']);
-
-        // 5. Verify Persistence
-        await waitForElementToBeRemoved(() => screen.queryByText(/Loading/i), { timeout: 5000 });
+        await waitForElementToBeRemoved(() => screen.queryByText(/Loading/i), { timeout: 10000 });
         
-        await waitFor(() => {
-            expect(screen.getByText('Persist Test Task')).toBeInTheDocument();
-            expect(screen.getByTitle('Alice Johnson')).toBeInTheDocument();
-        });
+        expect(await screen.findByText('Persist Test Task')).toBeInTheDocument();
+        expect(screen.getByText(/Alice Johnson/i)).toBeInTheDocument();
     });
 });

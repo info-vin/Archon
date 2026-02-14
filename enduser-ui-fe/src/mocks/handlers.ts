@@ -1,258 +1,137 @@
 import { http, HttpResponse } from 'msw';
-import { TaskStatus, TaskPriority } from '../types';
 
-// --- Mock Data ---
+// --- INDUSTRIAL GRADE MOCK DATA (With Explicit Permissions for SSOT) ---
 
-const mockAssignableUsers = [
-  { id: '2', name: 'Alice Johnson', role: 'Engineer' },
-  { id: '3', name: 'Bob Williams', role: 'Marketer' },
-];
+const mockUsers = {
+  alice: { 
+    id: 'user-1', name: 'Alice Johnson', role: 'sales', email: 'alice@archon.com', status: 'active',
+    permissions: ['task:create', 'task:read:own', 'task:update:own', 'agent:trigger:mkt', 'stats:view:own', 'leads:view:sales']
+  },
+  bob: { 
+    id: 'user-2', name: 'Bob', role: 'marketing', email: 'bob@archon.com', status: 'active',
+    permissions: ['task:create', 'task:read:own', 'task:update:own', 'agent:trigger:mkt', 'agent:trigger:know', 'stats:view:own', 'leads:view:marketing']
+  },
+  charlie: { 
+    id: 'user-3', name: 'Charlie', role: 'manager', email: 'charlie@archon.com', status: 'active',
+    permissions: ['task:create', 'task:read:team', 'task:update:own', 'agent:trigger:dev', 'agent:trigger:mkt', 'agent:trigger:know', 'code:approve', 'content:publish', 'stats:view:team', 'stats:view:own', 'leads:view:sales', 'leads:view:marketing', 'user:manage:team']
+  },
+  admin: {
+    id: 'admin-123', name: 'Super Admin', role: 'system_admin', email: 'admin@archon.com', status: 'active',
+    permissions: ['task:create', 'task:read:all', 'task:update:all', 'agent:trigger:dev', 'agent:trigger:mkt', 'agent:trigger:know', 'code:approve', 'content:publish', 'stats:view:all', 'stats:view:own', 'leads:view:sales', 'leads:view:marketing', 'user:manage', 'user:manage:team', 'mcp:manage']
+  }
+};
+
+const mockAssignableUsers = [mockUsers.alice, mockUsers.bob, mockUsers.charlie];
 
 const mockAiAgents = [
-  { id: 'ai-researcher-1', name: '(AI) Market Researcher', role: 'Market Researcher' },
-  { id: 'ai-knowledge-expert-1', name: '(AI) Internal Knowledge Expert', role: 'Internal Knowledge Expert' },
+  { id: 'ai-researcher-1', name: 'Market Researcher', role: 'ai_agent' },
+  { id: 'ai-knowledge-expert-1', name: 'Internal Knowledge Expert', role: 'ai_agent' },
 ];
 
-// Corrected mockProjects to match the Project type and the expected API response structure
-const mockProjects = [
-  {
-    id: 'project-1',
-    title: 'E2E Test Project',
-    description: 'A project for E2E testing purposes.',
-    status: 'active',
-    projectManagerId: 'user-123', // Matches the expected type
-  },
+// --- STATEFUL MOCKS FOR E2E ---
+let dynamicTasks: any[] = [
+  { id: 'initial-task', title: 'System Warmup', project_id: 'p1', description: 'Initial task', status: 'todo', createdAt: new Date().toISOString() }
 ];
 
-// Corrected mockTasks to match the Task type definition precisely
-const mockTasks = [
-  {
-    id: 'task-1',
-    project_id: 'project-1',
-    title: 'My First Mock Task',
-    description: 'This is a task fetched from the mock service worker.',
-    status: TaskStatus.TODO,
-    priority: TaskPriority.MEDIUM,
-    assignee: 'Alice Johnson', // Correct field: string, not assignee_id
-    task_order: 1,
-    due_date: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(), // Added required field
-    completed_at: undefined,
-    attachments: [],
-  },
-];
-
-
-// --- MSW Handlers ---
+export const clearMockData = () => {
+  dynamicTasks = [
+    { id: 'initial-task', title: 'System Warmup', project_id: 'p1', description: 'Initial task', status: 'todo', createdAt: new Date().toISOString() }
+  ];
+};
 
 export const handlers = [
-  // Handler for assignable users
-  http.get('/api/assignable-users', () => {
-    return HttpResponse.json(mockAssignableUsers);
-  }),
+  // 1. Auth & Profiles
+  http.get('/api/users', () => HttpResponse.json(mockAssignableUsers)),
+  http.get('/api/assignable-users', () => HttpResponse.json(mockAssignableUsers)),
+  http.get('/api/agents/assignable', () => HttpResponse.json(mockAiAgents)),
 
-  // Handler for assignable AI agents
-  http.get('/api/agents/assignable', () => {
-    return HttpResponse.json(mockAiAgents);
-  }),
-
-  // Handler for projects, now returns the correct object structure
-  http.get('/api/projects', () => {
-    return HttpResponse.json({ projects: mockProjects });
-  }),
-
-  // Handler for tasks, returning array as frontend expects
-  http.get('/api/tasks', () => {
-    return HttpResponse.json(mockTasks);
-  }),
-
-  // Handler for creating a new task
+  // 2. Tasks & Projects
+  http.get('/api/projects', () => HttpResponse.json({ projects: [{ id: 'p1', title: 'E2E Project' }] })),
+  http.get('/api/tasks', () => HttpResponse.json(dynamicTasks)),
   http.post('/api/tasks', async ({ request }) => {
-    const newTaskData = await request.json() as any;
-    const newTask = {
-      id: `task-${Date.now()}`,
-      project_id: newTaskData.project_id || 'project-1',
-      title: newTaskData.title,
-      description: newTaskData.description || '',
-      status: TaskStatus.TODO,
-      priority: newTaskData.priority || TaskPriority.MEDIUM,
-      assignee: newTaskData.assignee || 'Unassigned',
-      task_order: (mockTasks.length + 1),
-      due_date: newTaskData.due_date || new Date().toISOString(),
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-      completed_at: undefined,
-      attachments: [],
+    const newTask = await request.json() as any;
+    
+    // Auto-populate assignee name if ID exists (Fix for BUG-044)
+    let assigneeName = newTask.assignee;
+    if (!assigneeName && newTask.assignee_id) {
+        const user = mockAssignableUsers.find(u => u.id === newTask.assignee_id);
+        if (user) assigneeName = user.name;
+    }
+
+    const task = {
+        ...newTask,
+        id: `task-${Date.now()}`,
+        project_id: newTask.project_id || 'p1', // Critical for filtering
+        status: newTask.status || 'todo',
+        assignee: assigneeName, // Persistence fix
+        createdAt: new Date().toISOString()
     };
-    mockTasks.push(newTask); // Add to our mock database
-    return HttpResponse.json({ task: newTask }, { status: 201 });
+    dynamicTasks.push(task);
+    return HttpResponse.json(task, { status: 201 });
+  }),
+  http.post('/api/tasks/refine-description', async () => {
+    return HttpResponse.json({
+      refined_description: "User Story: As a user, I want this feature so that I can be productive."
+    });
   }),
 
-  // --- Marketing & Approvals Handlers ---
-
-  // Search Jobs
+  // 3. Marketing & Leads
+  http.get('/api/marketing/leads', () => HttpResponse.json([
+    { id: 'lead-1', company_name: 'Retail Corp', job_title: 'Senior Data Analyst', status: 'qualified', source: 'mock', contact_name: 'Alice Johnson', contact_email: 'alice@retail.com' }
+  ])),
   http.get('/api/marketing/jobs', ({ request }) => {
     const url = new URL(request.url);
     const keyword = url.searchParams.get('keyword');
-
-    if (keyword === 'Error Test') {
-        return new HttpResponse(null, { status: 500, statusText: 'Internal Server Error' });
-    }
-
     return HttpResponse.json([
-        {
-            id: 'job-1',
-            title: 'Senior Data Analyst',
-            company: 'Retail Corp',
-            source: '104 Live Data',
-            description: 'Needs someone who knows BI tools like Tableau and PowerBI.',
-            description_full: 'Full description: Needs someone who knows BI tools like Tableau and PowerBI.',
-            url: 'http://example.com/job/1',
-            identified_need: 'Needs better data pipeline'
-        },
-        {
-            id: 'job-2',
-            title: 'Senior Data Engineer',
-            company: 'Tech Solutions',
-            source: '104 Live Data',
-            description: 'Scaling infrastructure.',
-            description_full: 'Full description: Scaling infrastructure.',
-            url: 'http://example.com/job/2',
-            identified_need: 'Scaling infrastructure'
-        }
+        { id: 'job-1', title: 'Senior Data Analyst', company: 'Retail Corp', location: 'Taipei', salary: '100k', description: `Hiring for ${keyword}` }
     ]);
   }),
+  http.post('/api/marketing/leads', () => HttpResponse.json({ success: true })),
+  http.post('/api/marketing/generate-pitch', () => HttpResponse.json({ content: 'Generated Pitch', references: ['Source A'] })),
+  http.get('/api/marketing/trends', () => HttpResponse.json([])),
+  http.get('/api/marketing/sources', () => HttpResponse.json([])),
+  http.get('/api/marketing/market-stats', () => HttpResponse.json({})),
 
-  // Get Leads (My Leads Tab)
-  http.get('/api/marketing/leads', () => {
-    return HttpResponse.json([
-      {
-        id: 'lead-1',
-        company_name: 'Retail Corp',
-        job_title: 'Senior Data Analyst',
-        status: 'new',
-        source_job_url: 'http://example.com/job/1',
-        next_followup_date: new Date().toISOString()
-      },
-      {
-        id: 'lead-2',
-        company_name: 'Tech Solutions',
-        job_title: 'Senior Data Engineer',
-        status: 'converted',
-        source_job_url: 'http://example.com/job/2',
-        next_followup_date: null
-      }
-    ]);
-  }),
-
-  // Generate Pitch
-  http.post('/api/marketing/generate-pitch', async () => {
-    return HttpResponse.json({
-        content: `Subject: Collaboration regarding your Data needs\n\nDear Manager,\n\nI noticed Retail Corp is hiring and Needs someone who knows BI tools...`,
-        references: ['Source A']
-    });
-  }),
-
-  // Get Pending Approvals
-  http.get('/api/marketing/approvals', () => {
-    return HttpResponse.json({
-        blogs: [
-            {
-                id: 'blog-approval-1',
-                title: 'Q3 Market Analysis',
-                authorName: 'Bob Williams',
-                publishDate: new Date().toISOString(),
-                status: 'review'
-            }
-        ],
-        leads: []
-    });
-  }),
-
-  // Approve/Reject Action
-  http.post('/api/marketing/approvals/:type/:id/:action', ({ params }) => {
-    return HttpResponse.json({ success: true, status: params.action === 'approve' ? 'published' : 'draft' });
-  }),
-
-  // --- System Prompts Handlers ---
-  http.get('/api/system/prompts', () => {
-    return HttpResponse.json([
-        { prompt_name: 'developer_persona', prompt: 'You are a coding expert.', updated_at: new Date().toISOString() },
-        { prompt_name: 'sales_persona', prompt: 'You are a sales expert.', updated_at: new Date().toISOString() }
-    ]);
-  }),
-
-  http.post('/api/system/prompts/:name', async ({ request }) => {
-    const body = await request.json() as any;
-    return HttpResponse.json({ success: true, prompt: body.prompt });
-  }),
-
-  // --- Missing Handlers for E2E (Restored) ---
-  http.post('/api/admin/users', async ({ request }) => {
-      const body = await request.json() as any;
-      return HttpResponse.json({ profile: { ...body, id: 'new-user-123' } }, { status: 201 });
-  }),
-
-  http.get('/api/users', () => {
-      return HttpResponse.json([
-          { id: 'user-1', name: 'Alice', role: 'sales', email: 'alice@archon.com', status: 'active' },
-          { id: 'user-2', name: 'Bob', role: 'marketing', email: 'bob@archon.com', status: 'active' },
-          { id: 'user-3', name: 'Charlie', role: 'manager', email: 'charlie@archon.com', status: 'active' }
-      ]);
-  }),
-
-  http.get('/api/stats/ai-usage', () => {
-      return HttpResponse.json({ total_budget: 1000, total_used: 150, usage_percentage: 15 });
-  }),
-
-  http.get('/api/marketing/market-stats', () => {
-      return HttpResponse.json({ "AI/LLM": 10, "Total Leads": 20, "Data/BI": 5 });
-  }),
-
-  http.get('/api/blogs', () => {
-      return HttpResponse.json([]);
-  }),
-
-  http.post('/api/tasks/refine-description', async ({ request }) => {
-      const body = await request.json() as any;
-      return HttpResponse.json({ 
-          refined_description: `User Story: As a user, I want ${body.title} so that I can be happy.\n\nAcceptance Criteria:\n- Done.` 
-      });
-  }),
-
-  // --- Bob's Workbench Handlers ---
-  http.get('/api/marketing/sources', () => {
-    return HttpResponse.json([
-      { id: 'lead-123', type: 'lead', title: 'Mozilla', score: 95, summary: 'Privacy concern', date: new Date().toISOString() }
-    ]);
-  }),
-
-  http.get('/api/marketing/context/:id', () => {
-    return HttpResponse.json({
-      source_id: 'lead-123',
-      source_type: 'lead',
-      logs: [],
-      rag_refs: [{ content: 'Security baseline', metadata: { source: 'Whitepaper' } }],
-      context_summary: 'Alice said client wants privacy.'
-    });
-  }),
-
-  http.get('/api/marketing/trends', () => {
-    return HttpResponse.json({
-      keyword_growth: [
-        { date: '2025-01', AI: 40, Data: 24 }
-      ],
-      sankey_flow: { nodes: [], links: [] }
-    });
-  }),
-
-  http.post('/api/marketing/blog/draft', async () => {
-    return HttpResponse.json({
-      title: 'Privacy in AI',
-      content: 'Article body about Privacy...',
-      excerpt: 'AI Privacy excerpt...',
-      references: ['Whitepaper']
-    });
-  })
+  // 4. System & Stats
+  http.get('/api/system/overview', () => HttpResponse.json({
+    status: 'healthy',
+    integrity_score: 98,
+    rag: { status: 'healthy', details: { steps: ['Vector Check'], detected_dimensions: 1536 } },
+    knowledge_stats: { total_nodes: 1200, total_chunks: 4500 },
+    errors_24h: 0,
+    cost_24h: 0.45,
+    active_agents: mockAiAgents.map(a => ({ ...a, status: 'active' }))
+  })),
+  http.get('/api/stats/system-overview', () => HttpResponse.json({
+    status: 'healthy',
+    rag: { status: 'healthy', details: { detected_dimensions: 1536 } },
+    database: { status: 'connected' },
+    storage: { status: 'connected' }
+  })),
+  http.get('/api/marketing/approvals', () => HttpResponse.json({
+    blogs: [{ id: 'blog-1', title: 'Q3 Market Analysis', authorName: 'Bob', status: 'review', content: 'Testing content' }],
+    leads: []
+  })),
+  http.get('/api/system/logs/connectivity', () => HttpResponse.json([])),
+  http.get('/api/stats/commander-trends', () => HttpResponse.json({ daily_output: [], cumulative_momentum: [] })),
+  http.get('/api/stats/force-readiness', () => HttpResponse.json({ combat_power: 85 })),
+  http.get('/api/stats/collab-synergy', () => HttpResponse.json({ snapshot: { total_7d: 45 }, matrix: [] })),
+  http.get('/api/stats/sla-reliability', () => HttpResponse.json({ current_sla: 96.5, trend: [] })),
+  http.get('/api/stats/knowledge-roi', () => HttpResponse.json({ overall_conversion: 68.2, trend: [] })),
+  http.get('/api/stats/ethics-audit-queue', () => HttpResponse.json({ violations: [], pending_versions: [], total_pending: 0 })),
+  http.get('/api/marketing/manager/alerts', () => HttpResponse.json([])),
+  http.get('/api/visit-logs/attendance/status', () => HttpResponse.json({ status: 'clocked_out' })),
+  
+  // 5. Fallbacks
+  http.get('/api/ethics/events', () => HttpResponse.json([])),
+  http.get('/api/changes', () => HttpResponse.json([])),
+  http.get('/api/stats/ai-usage', () => HttpResponse.json({ total_budget: 1000, total_used: 150 })),
+  http.get('/api/blogs', () => HttpResponse.json([])),
+  http.get('/api/knowledge-items', () => HttpResponse.json([])),
+  http.post('/api/marketing/approvals/:type/:id/:action', () => HttpResponse.json({ success: true })),
+  http.post('/api/admin/users', () => HttpResponse.json({ success: true }, { status: 201 })),
+  http.get('/api/system/logs', () => HttpResponse.json([])),
+  http.post('/api/marketing/blog/draft', () => HttpResponse.json({ title: 'Mock', content: '...', excerpt: '...', references: [] })),
+  http.post('/api/marketing/leads/:id/promote', () => HttpResponse.json({ success: true, vendor_id: 'v-123' })),
+  http.get('/api/auth/me', () => HttpResponse.json(mockUsers.admin)) // Global Fallback
 ];

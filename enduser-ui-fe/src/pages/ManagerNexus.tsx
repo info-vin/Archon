@@ -1383,8 +1383,8 @@ export const ManagerNexus: React.FC = () => {
                 <div>
                     <h5 className="font-bold text-gray-500 uppercase tracking-widest mb-2">Metrics Definition</h5>
                     <ul className="space-y-1">
-                        <li>• <strong className="text-gray-600">Velocity:</strong> 14-day rolling average of task completion time.</li>
-                        <li>• <strong className="text-gray-600">Risks:</strong> 48-hour window of unresolved Sentinel alerts.</li>
+                        <li>• <strong className="text-gray-600">Reliability:</strong> 6-month strategic SLA attainment (Bi-weekly).</li>
+                        <li>• <strong className="text-gray-600">ROI:</strong> 60-day intelligence yield (Pages Saved / URLs Scanned).</li>
                     </ul>
                 </div>
                 <div>

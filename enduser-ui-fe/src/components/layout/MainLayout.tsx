@@ -94,17 +94,9 @@ const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                     )}
                     {hasPermission('user:manage:team') && (
                         <li className="mb-2">
-                            <Link to="/manager" className={`flex items-center p-2 rounded-md hover:bg-secondary ${location.pathname.startsWith('/manager') ? 'bg-secondary' : ''}`}>
-                                <LayoutGridIcon className="w-5 h-5 mr-3 text-amber-500 dark:text-amber-400" />
-                                Operations Nexus
-                            </Link>
-                        </li>
-                    )}
-                    {hasPermission('user:manage:team') && (
-                        <li className="mb-2">
                             <Link to="/approvals" className={`flex items-center p-2 rounded-md hover:bg-secondary ${location.pathname.startsWith('/approvals') ? 'bg-secondary' : ''}`}>
                                 <FileTextIcon className="w-5 h-5 mr-3 text-amber-500 dark:text-amber-400" />
-                                Command Center
+                                Strategic Approvals
                             </Link>
                         </li>
                     )}
@@ -124,8 +116,8 @@ const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                         </Link>
                     </li>
                     */}
-                    {/* GAP-020: Enable Admin Control Center for Managers based on role */}
-                    {(isAdmin || user?.role?.toLowerCase() === 'manager') && (
+                    {/* GAP-020: Enable Admin Control Center for Super Admins */}
+                    {(isAdmin || hasPermission('user:manage') || user?.role?.toLowerCase() === 'admin' || user?.role?.toLowerCase() === 'system_admin') && (
                          <li className="mb-2">
                             <Link to="/admin" className={`flex items-center p-2 rounded-md hover:bg-secondary ${location.pathname.startsWith('/admin') ? 'bg-secondary' : ''}`}>
                                 <SettingsIcon className="w-5 h-5 mr-3 text-rose-500 dark:text-rose-400" />

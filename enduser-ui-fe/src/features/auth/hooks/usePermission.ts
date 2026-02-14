@@ -74,27 +74,22 @@ export function usePermission() {
   const { user } = useAuth();
   
   const hasPermission = (permission: PermissionScope): boolean => {
-    console.log(`[usePermission] Checking ${permission}. User:`, user ? `${user.name} (${user.role}) [${user.permissions?.join(',')}]` : 'NULL');
     if (!user) {
         return false;
     }
 
-    // 1. Priority: Dynamic Permissions from DB/API (or Mock)
+    // 1. Check Dynamic Permissions (DB/Mock) - Primary Source
     if (user.permissions && Array.isArray(user.permissions) && user.permissions.length > 0) {
-        return (user.permissions as string[]).includes(permission);
+        if ((user.permissions as string[]).includes(permission)) return true;
     }
     
-    // 2. Fallback: Static Role-based Permissions
+    // 2. Industrial-Grade Fallback: Check Static Role-based Mapping (SSOT)
+    // This ensures that even if dynamic permissions are missing or empty, 
+    // basic role-based access is preserved.
     if (user.role) {
-        const normalizedRole = user.role.toLowerCase() as EmployeeRole;
-        const rolePermissions = ROLE_MAP[normalizedRole];
-        
-        // Debug fallback
-        if (!rolePermissions) {
-             console.warn(`[usePermission] No permissions found for role: ${user.role} (normalized: ${normalizedRole})`);
-        }
-        
-        return rolePermissions?.has(permission) ?? false;
+        const normalizedRole = user.role.toLowerCase();
+        const rolePermissions = ROLE_MAP[normalizedRole] || ROLE_MAP[user.role];
+        if (rolePermissions?.has(permission)) return true;
     }
 
     return false;

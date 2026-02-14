@@ -5,6 +5,7 @@ interface SourceBadgeProps {
 }
 
 export const SourceBadge: React.FC<SourceBadgeProps> = ({ source }) => {
+  if (!source) return null;
   const isMock = source.toLowerCase().includes('mock');
   const isLive = !isMock;
 

@@ -263,7 +263,7 @@ export const IdentityMatrix: React.FC = () => {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-border bg-card">
-                            {employees.map(emp => (
+                            {employees.filter(e => e && e.id).map(emp => (
                                 <React.Fragment key={emp.id}>
                                     <tr 
                                         onClick={() => setSelectedUserId(selectedUserId === emp.id ? null : emp.id)}

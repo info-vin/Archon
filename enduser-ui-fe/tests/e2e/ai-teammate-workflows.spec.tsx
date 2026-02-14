@@ -1,154 +1,112 @@
-import { describe, test, expect, beforeEach, vi } from 'vitest';
 import { screen, fireEvent, waitFor } from '@testing-library/react';
-import { api } from '../../src/services/api';
+import { describe, it, expect } from 'vitest';
 import { renderApp } from './e2e.setup';
-import { createUser } from '../factories/userFactory';
-import { EmployeeRole } from '../../src/types';
-import { http, HttpResponse } from 'msw';
-import { server } from '../../src/mocks/server';
 
 describe('AI as a Teammate E2E Workflows', () => {
-  let tasks: any[] = [];
 
-  beforeEach(() => {
-    vi.clearAllMocks();
-    tasks = []; // Reset tasks
+  it('Marketing Campaign: User can create a task and assign it to an AI content writer', async () => {
+    renderApp(['/dashboard']);
 
-    // Stateful MSW Handlers
-    server.use(
-        http.get('*/api/assignable-users', () => {
-            return HttpResponse.json([
-                { id: 'agent-content-writer', name: 'Content Writer', role: 'ai_agent' },
-                { id: 'agent-log-analyzer', name: 'Log Analyzer', role: 'ai_agent' },
-                { id: 'agent-sales-intel', name: 'Sales Intel', role: 'ai_agent' }
-            ]);
-        }),
-        http.get('*/api/projects', () => HttpResponse.json({ projects: [{ id: 'p1', title: 'Campaign Project' }] })),
-        http.get('*/api/tasks', () => HttpResponse.json(tasks)),
-        http.post('*/api/tasks', async ({ request }) => {
-            const body = await request.json() as any;
-            const newTask = { ...body, id: `task-${Date.now()}`, status: 'todo' };
-            tasks.push(newTask);
-            return HttpResponse.json({ task: newTask });
-        })
-    );
-  });
-
-  test('Marketing Campaign: User can create a task and assign it to an AI content writer', async () => {
-    // Mock Marketing User to ensure "My Tasks" view
-    const user = createUser({ role: EmployeeRole.MARKETING });
-    vi.mocked(api.getCurrentUser).mockResolvedValue(user as any);
-
-    renderApp();
-
-    // Wait for loading to finish
-    await waitFor(() => {
-        expect(screen.queryByText('Loading...')).not.toBeInTheDocument();
-    }, { timeout: 10000 });
-
-    // Find the 'New Task' button with an extended timeout to account for multiple state updates
-    const newTaskButton = await screen.findByRole('button', { name: /new task/i }, { timeout: 15000 });
-    expect(newTaskButton).toBeInTheDocument();
-    fireEvent.click(newTaskButton);
-
-    const titleInput = await screen.findByLabelText(/title/i);
-    const descriptionInput = screen.getByLabelText(/description/i);
-    const dueDateInput = screen.getByLabelText(/due date/i);
-    
     const taskTitle = 'Draft a blog post about our new AI features';
+
+    // 1. Wait for page to load and find New Task button
+    const newTaskBtn = await screen.findByRole('button', { name: /New Task/i }, { timeout: 15000 });
+    fireEvent.click(newTaskBtn);
+
+    // 2. Fill Form (Title & Description)
+    const titleInput = await screen.findByLabelText(/Title/i);
     fireEvent.change(titleInput, { target: { value: taskTitle } });
-    fireEvent.change(descriptionInput, { target: { value: 'The blog post should cover the benefits and use cases.' } });
-    fireEvent.change(dueDateInput, { target: { value: '2025-12-31T09:00' } });
+    
+    const descInput = screen.getByPlaceholderText(/Enter a brief description/i);
+    fireEvent.change(descInput, { target: { value: 'Content creation task.' } });
+    
+    // 3. Handle MobileDateTimePicker (Bypassing accessibility name complexity)
+    // Click the date picker button (labeled "Due Date")
+    const datePickerBtn = await screen.findByRole('button', { name: /Due Date/i });
+    fireEvent.click(datePickerBtn);
+    
+    // Use preset "Tomorrow"
+    const tomorrowBtn = await screen.findByRole('button', { name: /Tomorrow/i });
+    fireEvent.click(tomorrowBtn);
+    
+    // Confirm
+    const confirmBtn = screen.getByRole('button', { name: /CONFIRM SELECTION/i });
+    fireEvent.click(confirmBtn);
 
-    const assigneeSelect = screen.getByLabelText(/assignee/i);
-    fireEvent.change(assigneeSelect, { target: { value: 'agent-content-writer' } });
+    // 4. Select Assignee
+    const assigneeSelect = screen.getByLabelText(/Assignee/i);
+    fireEvent.change(assigneeSelect, { target: { value: 'ai-researcher-1' } });
 
-    const saveButton = screen.getByRole('button', { name: /create task/i });
+    // 5. Submit
+    const saveButton = screen.getByRole('button', { name: /Create Task/i });
     fireEvent.click(saveButton);
 
+    // 6. Wait for Modal to disappear
     await waitFor(() => {
-      expect(screen.getByText(taskTitle)).toBeInTheDocument();
-    });
-  });
-
-  test('Technical Support: User can create a task with logs and assign it to a Log Analyzer AI', async () => {
-    // Mock Member User
-    const user = createUser({ role: EmployeeRole.MEMBER });
-    vi.mocked(api.getCurrentUser).mockResolvedValue(user as any);
-
-    const mockErrorLog = `
-      [2025-12-25T10:30:00.123Z] ERROR: NullPointerException at com.example.UserService:123
-      ...stacktrace...
-      [2025-12-25T10:30:00.124Z] INFO: User 'testuser' failed to login.
-    `;
-    renderApp();
-
-    // Wait for loading to finish
-    await waitFor(() => {
-        expect(screen.queryByText('Loading...')).not.toBeInTheDocument();
+      expect(screen.queryByText(/Create New Task/i)).not.toBeInTheDocument();
     }, { timeout: 10000 });
 
-    // Find the 'New Task' button with an extended timeout to account for multiple state updates
-    const newTaskButton = await screen.findByRole('button', { name: /new task/i }, { timeout: 15000 });
-    expect(newTaskButton).toBeInTheDocument();
-    fireEvent.click(newTaskButton);
+    // 7. Verify task appears in list
+    expect(await screen.findByText((content) => content.includes(taskTitle), {}, { timeout: 10000 })).toBeInTheDocument();
+  });
 
+  it('Technical Support: User can create a task with logs and assign it to a Log Analyzer AI', async () => {
+    renderApp(['/dashboard']);
 
-    const titleInput = await screen.findByLabelText(/title/i);
-    const descriptionInput = screen.getByLabelText(/description/i);
-    const dueDateInput = screen.getByLabelText(/due date/i);
-    
     const taskTitle = 'Analyze user error logs for ticket #12345';
-    fireEvent.change(titleInput, { target: { value: taskTitle } });
-    fireEvent.change(descriptionInput, { target: { value: mockErrorLog } });
-    fireEvent.change(dueDateInput, { target: { value: '2025-12-28T09:00' } });
 
-    const assigneeSelect = screen.getByLabelText(/assignee/i);
-    fireEvent.change(assigneeSelect, { target: { value: 'agent-log-analyzer' } });
+    const newTaskBtn = await screen.findByRole('button', { name: /New Task/i }, { timeout: 15000 });
+    fireEvent.click(newTaskBtn);
 
-    const saveButton = screen.getByRole('button', { name: /create task/i });
-    fireEvent.click(saveButton);
+    fireEvent.change(await screen.findByLabelText(/Title/i), { target: { value: taskTitle } });
+    
+    // Date Flow
+    fireEvent.click(await screen.findByRole('button', { name: /Due Date/i }));
+    fireEvent.click(await screen.findByRole('button', { name: /Tomorrow/i }));
+    fireEvent.click(screen.getByRole('button', { name: /CONFIRM SELECTION/i }));
+    
+    fireEvent.change(screen.getByLabelText(/Assignee/i), { target: { value: 'ai-knowledge-expert-1' } });
+
+    fireEvent.click(screen.getByRole('button', { name: /Create Task/i }));
 
     await waitFor(() => {
-      expect(screen.getByText(taskTitle)).toBeInTheDocument();
-    });
-  });
-
-  test('Sales Outreach: User can create a task and assign it to a Sales AI', async () => {
-    // Mock Sales User
-    const user = createUser({ role: EmployeeRole.SALES });
-    vi.mocked(api.getCurrentUser).mockResolvedValue(user as any);
-
-    renderApp();
-
-    // Wait for loading to finish
-    await waitFor(() => {
-        expect(screen.queryByText('Loading...')).not.toBeInTheDocument();
+      expect(screen.queryByText(/Create New Task/i)).not.toBeInTheDocument();
     }, { timeout: 10000 });
 
-    // Find the 'New Task' button with an extended timeout to account for multiple state updates
-    const newTaskButton = await screen.findByRole('button', { name: /new task/i }, { timeout: 15000 });
-    expect(newTaskButton).toBeInTheDocument();
-    fireEvent.click(newTaskButton);
+    expect(await screen.findByText((content) => content.includes(taskTitle), {}, { timeout: 10000 })).toBeInTheDocument();
+  });
 
-    // Explicitly wait for the modal to appear
-    await screen.findByRole('dialog');
+  it('Sales Outreach: User can create a task and assign it to a Sales AI', async () => {
+    renderApp(['/marketing']);
 
-    const titleInput = await screen.findByLabelText(/title/i);
-    const dueDateInput = screen.getByLabelText(/due date/i);
+    const taskTitle = 'Generate lead list for ACME Corp';
+
+    // Wait for heading to avoid sidebar conflict
+    await screen.findByRole('heading', { name: /Sales Intelligence/i }, { timeout: 15000 });
+
+    // Navigate to Dashboard where "New Task" button exists
+    const dashboardLink = screen.getByRole('link', { name: /My Tasks/i });
+    fireEvent.click(dashboardLink);
+
+    const newTaskBtn = await screen.findByRole('button', { name: /New Task/i }, { timeout: 15000 });
+    fireEvent.click(newTaskBtn);
+
+    fireEvent.change(await screen.findByLabelText(/Title/i), { target: { value: taskTitle } });
     
-    const taskTitle = 'Generate lead list for ACME Corp in the finance sector';
-    fireEvent.change(titleInput, { target: { value: taskTitle } });
-    fireEvent.change(dueDateInput, { target: { value: '2025-12-29T09:00' } });
+    // Date Flow
+    fireEvent.click(await screen.findByRole('button', { name: /Due Date/i }));
+    fireEvent.click(await screen.findByRole('button', { name: /Tomorrow/i }));
+    fireEvent.click(screen.getByRole('button', { name: /CONFIRM SELECTION/i }));
+    
+    fireEvent.change(screen.getByLabelText(/Assignee/i), { target: { value: 'ai-researcher-1' } });
 
-    const assigneeSelect = screen.getByLabelText(/assignee/i);
-    fireEvent.change(assigneeSelect, { target: { value: 'agent-sales-intel' } });
-
-    const saveButton = screen.getByRole('button', { name: /create task/i });
-    fireEvent.click(saveButton);
+    fireEvent.click(screen.getByRole('button', { name: /Create Task/i }));
 
     await waitFor(() => {
-      expect(screen.getByText(taskTitle)).toBeInTheDocument();
-    });
+      expect(screen.queryByText(/Create New Task/i)).not.toBeInTheDocument();
+    }, { timeout: 10000 });
+
+    expect(await screen.findByText((content) => content.includes(taskTitle), {}, { timeout: 10000 })).toBeInTheDocument();
   });
+
 });

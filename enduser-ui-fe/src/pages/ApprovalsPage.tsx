@@ -176,7 +176,7 @@ const ApprovalsPage: React.FC = () => {
                 <span className="text-[10px] font-black uppercase tracking-widest">Operations Workbench</span>
             </div>
             <h1 className="text-2xl md:text-3xl font-black text-gray-900 dark:text-white flex items-center gap-3">
-                Operations Nexus
+                Strategic Approvals
             </h1>
             <p className="text-sm text-gray-500 dark:text-slate-400 mt-1 italic">Scan, Review, and Execute system-wide signals.</p>
           </div>
