@@ -91,6 +91,17 @@
 
 # 第三章：近期工作日誌 (Recent Journal Entries)
 
+### 2026-02-16: Strategic Alignment & Testing Infrastructure Audit
+*   **Git 考古與數據分析 (Last 5 Commits)**:
+    *   **核心動向**: 近期變更高度集中於 `enduser-ui-fe` 的無障礙化 (A11y) 與 `marketing_api.py` 的結構重構（Service 層抽離）。
+    *   **穩定性提升**: 完成了從 OpenAI Shim 到官方 `genai.Client` 的遷移，並標準化了全系統 Python 腳本至根目錄 `/scripts`。
+*   **測試框架全圖譜確認**:
+    *   **Backend / Agents**: 使用 `pytest` (搭配 `pytest-asyncio`, `pytest-mock`)。
+    *   **Admin UI**: 使用 `vitest` (Unit/UI)。
+    *   **Enduser UI**: 使用 `vitest` (Unit/E2E 雙重配置)。
+*   **環境同步**: 已完成 `feat/agents` 分支的遠端與地端同步。
+*   **RBAC 演進方向**: 評估導入 Casbin 或將現有 `RBACService` 矩陣資料庫化，初步傾向優先資料庫化以降低系統複雜度。
+
 ### 2026-02-15: Operational Engine Standardization & Loop Defense
 *   **引擎大統一**: 發現營運端 (Alice/POBot) 與行銷端 (Bob) 存在 SDK 斷層（OpenAI Shim vs Google 原生 SDK），導致 Alice 頻繁報錯 `v1main 404`。已將所有生產力路徑遷移至官方 `genai.Client`，徹底解決路由跳轉不穩的問題。
 *   **斷開死迴圈**: 確立了「不回傳罐頭文字」原則。移除所有 `Generated via Fallback` 等欺騙性字串，改為明確的 `503` 異常。這能讓 Agent 正確感知「環境不可用」而暫停，解決了 Alice 「來回問同樣問題」的病灶。
