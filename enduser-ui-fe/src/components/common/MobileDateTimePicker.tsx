@@ -44,24 +44,30 @@ export const MobileDateTimePicker: React.FC<MobileDateTimePickerProps> = ({ valu
     };
 
     const PickerColumn = ({ label, value, onUp, onDown }: any) => (
-        <div className="flex flex-col items-center gap-2">
-            <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">{label}</span>
+        <div className="flex flex-col items-center gap-2" role="group" aria-label={`${label} selector`}>
+            <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest" aria-hidden="true">{label}</span>
             <button 
                 type="button"
                 onClick={onUp}
-                className="w-12 h-12 flex items-center justify-center bg-slate-100 dark:bg-slate-800 rounded-xl active:bg-indigo-100"
+                aria-label={`Increase ${label}`}
+                className="w-12 h-12 flex items-center justify-center bg-slate-100 dark:bg-slate-800 rounded-xl active:bg-indigo-100 hover:bg-slate-200 dark:hover:bg-slate-700 focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:outline-none"
             >
-                <span className="text-xl">▲</span>
+                <span className="text-xl" aria-hidden="true">▲</span>
             </button>
-            <div className="w-16 h-16 flex items-center justify-center bg-white dark:bg-slate-900 border-2 border-indigo-500 rounded-2xl shadow-inner">
+            <div
+                className="w-16 h-16 flex items-center justify-center bg-white dark:bg-slate-900 border-2 border-indigo-500 rounded-2xl shadow-inner"
+                aria-live="polite"
+                aria-atomic="true"
+            >
                 <span className="text-xl font-black">{value}</span>
             </div>
             <button 
                 type="button"
                 onClick={onDown}
-                className="w-12 h-12 flex items-center justify-center bg-slate-100 dark:bg-slate-800 rounded-xl active:bg-indigo-100"
+                aria-label={`Decrease ${label}`}
+                className="w-12 h-12 flex items-center justify-center bg-slate-100 dark:bg-slate-800 rounded-xl active:bg-indigo-100 hover:bg-slate-200 dark:hover:bg-slate-700 focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:outline-none"
             >
-                <span className="text-xl">▼</span>
+                <span className="text-xl" aria-hidden="true">▼</span>
             </button>
         </div>
     );
@@ -75,7 +81,7 @@ export const MobileDateTimePicker: React.FC<MobileDateTimePickerProps> = ({ valu
                 id={pickerId}
                 type="button"
                 onClick={() => setIsOpen(true)}
-                className="w-full p-3 flex items-center justify-between border dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 text-sm hover:border-indigo-500 transition-all"
+                className="w-full p-3 flex items-center justify-between border dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 text-sm hover:border-indigo-500 transition-all focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:outline-none"
             >
                 <div className="flex items-center gap-2">
                     <CalendarIcon className="w-4 h-4 text-indigo-500" />
@@ -85,7 +91,12 @@ export const MobileDateTimePicker: React.FC<MobileDateTimePickerProps> = ({ valu
             </button>
 
             {isOpen && (
-                <div className="fixed inset-0 z-[100] flex items-end md:items-center justify-center bg-black/60 backdrop-blur-sm p-0 md:p-4 animate-in fade-in duration-200">
+                <div
+                    className="fixed inset-0 z-[100] flex items-end md:items-center justify-center bg-black/60 backdrop-blur-sm p-0 md:p-4 animate-in fade-in duration-200"
+                    role="dialog"
+                    aria-modal="true"
+                    aria-label="Set Due Date"
+                >
                     <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-t-[2.5rem] md:rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col animate-in slide-in-from-bottom duration-300 border-t dark:border-slate-800">
                         {/* Header */}
                         <div className="p-6 border-b dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-950">
@@ -93,7 +104,11 @@ export const MobileDateTimePicker: React.FC<MobileDateTimePickerProps> = ({ valu
                                 <h3 className="text-lg font-black tracking-tight">SET DUE DATE</h3>
                                 <p className="text-xs text-slate-500 uppercase font-bold tracking-widest">{formatDisplay(tempDate)}</p>
                             </div>
-                            <button onClick={() => setIsOpen(false)} className="p-2 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-full">
+                            <button
+                                onClick={() => setIsOpen(false)}
+                                className="p-2 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-full focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:outline-none"
+                                aria-label="Close date picker"
+                            >
                                 <XIcon className="w-6 h-6 text-slate-400" />
                             </button>
                         </div>
@@ -105,21 +120,21 @@ export const MobileDateTimePicker: React.FC<MobileDateTimePickerProps> = ({ valu
                                 <button 
                                     type="button"
                                     onClick={() => setPreset(1)}
-                                    className="flex-1 py-3 px-2 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-100 transition-all"
+                                    className="flex-1 py-3 px-2 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-100 transition-all focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:outline-none"
                                 >
                                     Tomorrow
                                 </button>
                                 <button 
                                     type="button"
                                     onClick={() => setPreset(3)}
-                                    className="flex-1 py-3 px-2 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-100 transition-all"
+                                    className="flex-1 py-3 px-2 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-100 transition-all focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:outline-none"
                                 >
                                     +3 Days
                                 </button>
                                 <button 
                                     type="button"
                                     onClick={() => setPreset(7)}
-                                    className="flex-1 py-3 px-2 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-100 transition-all"
+                                    className="flex-1 py-3 px-2 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-100 transition-all focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:outline-none"
                                 >
                                     Next Week
                                 </button>
@@ -133,16 +148,16 @@ export const MobileDateTimePicker: React.FC<MobileDateTimePickerProps> = ({ valu
                                     onUp={() => adjustDate('day', 1)} 
                                     onDown={() => adjustDate('day', -1)} 
                                 />
-                                <div className="text-2xl font-black text-slate-300 mt-6">:</div>
+                                <div className="text-2xl font-black text-slate-300 mt-6" aria-hidden="true">:</div>
                                 <PickerColumn 
                                     label="Hour" 
                                     value={tempDate.getHours()} 
                                     onUp={() => adjustDate('hour', 1)} 
                                     onDown={() => adjustDate('hour', -1)} 
                                 />
-                                <div className="text-2xl font-black text-slate-300 mt-6">:</div>
+                                <div className="text-2xl font-black text-slate-300 mt-6" aria-hidden="true">:</div>
                                 <PickerColumn 
-                                    label="Min" 
+                                    label="Minute"
                                     value={tempDate.getMinutes().toString().padStart(2, '0')} 
                                     onUp={() => adjustDate('minute', 5)} 
                                     onDown={() => adjustDate('minute', -5)} 
@@ -155,7 +170,7 @@ export const MobileDateTimePicker: React.FC<MobileDateTimePickerProps> = ({ valu
                             <Button 
                                 variant="primary" 
                                 accentColor="green"
-                                className="w-full py-5 rounded-2xl text-base font-black shadow-xl shadow-emerald-200 dark:shadow-none"
+                                className="w-full py-5 rounded-2xl text-base font-black shadow-xl shadow-emerald-200 dark:shadow-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
                                 onClick={handleConfirm}
                                 icon={<CheckCircleIcon className="w-5 h-5" />}
                             >
