@@ -10,7 +10,7 @@ describe("apiClient (callAPIWithETag)", () => {
   beforeEach(() => {
     vi.resetAllMocks();
     // Reset fetch to undefined to ensure clean state
-    if (typeof global.fetch !== 'undefined') {
+    if (typeof global.fetch !== "undefined") {
       delete (global as any).fetch;
     }
 
@@ -32,7 +32,7 @@ describe("apiClient (callAPIWithETag)", () => {
     global.AbortSignal = originalAbortSignal;
     if (originalFetch) {
       global.fetch = originalFetch;
-    } else if (typeof global.fetch !== 'undefined') {
+    } else if (typeof global.fetch !== "undefined") {
       delete (global as any).fetch;
     }
   });
@@ -57,7 +57,8 @@ describe("apiClient (callAPIWithETag)", () => {
       expect(global.fetch).toHaveBeenCalledWith(
         expectedUrl,
         expect.objectContaining({
-          headers: expect.not.objectContaining({ // Corrected: GET requests should not have Content-Type
+          headers: expect.not.objectContaining({
+            // Corrected: GET requests should not have Content-Type
             "Content-Type": "application/json",
           }),
         }),
@@ -84,7 +85,7 @@ describe("apiClient (callAPIWithETag)", () => {
         ok: true,
         status: 204,
         headers: new Headers(),
-        text: () => Promise.resolve(''), // Mock text() for 204
+        text: () => Promise.resolve(""), // Mock text() for 204
       };
 
       global.fetch = vi.fn().mockResolvedValue(mockResponse);
@@ -161,7 +162,7 @@ describe("apiClient (callAPIWithETag)", () => {
       global.fetch = vi.fn().mockResolvedValue(mockResponse);
 
       await callAPIWithETag("/test-endpoint", {
-        method: 'POST', // Add method to ensure body is processed
+        method: "POST", // Add method to ensure body is processed
         body: JSON.stringify({}), // Add body to ensure Content-Type is set
         headers: {
           Authorization: "Bearer token123",

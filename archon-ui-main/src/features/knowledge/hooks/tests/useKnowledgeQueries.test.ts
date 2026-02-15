@@ -67,10 +67,10 @@ describe("useKnowledgeQueries - Optimistic Updates", () => {
       // 1. Setup initial caches with different filters
       const technicalFilter = { knowledge_type: "technical" as const };
       const businessFilter = { knowledge_type: "business" as const };
-      
+
       const initialTechData: KnowledgeItemsResponse = { items: [], total: 0, page: 1, per_page: 20 };
       const initialBizData: KnowledgeItemsResponse = { items: [], total: 0, page: 1, per_page: 20 };
-      
+
       // We must set data to ensures the keys are in the cache
       queryClient.setQueryData(knowledgeKeys.summaries(technicalFilter), initialTechData);
       queryClient.setQueryData(knowledgeKeys.summaries(businessFilter), initialBizData);
@@ -106,7 +106,9 @@ describe("useKnowledgeQueries - Optimistic Updates", () => {
 
       // 5. Check Success state - ID should be updated to real-id
       await waitFor(() => {
-        const updatedTechCache = queryClient.getQueryData<KnowledgeItemsResponse>(knowledgeKeys.summaries(technicalFilter));
+        const updatedTechCache = queryClient.getQueryData<KnowledgeItemsResponse>(
+          knowledgeKeys.summaries(technicalFilter),
+        );
         expect(updatedTechCache?.items[0].source_id).toBe("real-id");
       });
     });
@@ -149,9 +151,9 @@ describe("useKnowledgeQueries - Optimistic Updates", () => {
       const { result } = renderHook(() => useUploadDocument(), { wrapper: Wrapper });
 
       const file = new File(["test"], "manual.pdf", { type: "application/pdf" });
-      await result.current.mutateAsync({ 
-        file, 
-        metadata: { knowledge_type: "business" } 
+      await result.current.mutateAsync({
+        file,
+        metadata: { knowledge_type: "business" },
       });
 
       const cache = queryClient.getQueryData<KnowledgeItemsResponse>(knowledgeKeys.summaries(filter));

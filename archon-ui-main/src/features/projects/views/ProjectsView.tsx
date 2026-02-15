@@ -71,7 +71,7 @@ export function ProjectsView({ className = "", "data-id": dataId }: ProjectsView
   const sortedProjects = useMemo(() => {
     // Filter by search query
     const filtered = (projects as Project[]).filter((project) =>
-      project.title.toLowerCase().includes(searchQuery.toLowerCase())
+      project.title.toLowerCase().includes(searchQuery.toLowerCase()),
     );
 
     // Sort: pinned first, then alphabetically
@@ -229,11 +229,16 @@ export function ProjectsView({ className = "", "data-id": dataId }: ProjectsView
             </motion.div>
           ) : (
             /* Empty State / Dashboard Placeholder */
-            <motion.div variants={itemVariants} className="text-center py-20 bg-gray-50/50 dark:bg-gray-900/50 rounded-xl border border-dashed border-gray-200 dark:border-gray-800">
-                <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">Select a project to view details</h3>
-                <p className="text-gray-500 dark:text-gray-400 max-w-md mx-auto">
-                    Click on any project card above to open its dashboard, or create a new project to get started.
-                </p>
+            <motion.div
+              variants={itemVariants}
+              className="text-center py-20 bg-gray-50/50 dark:bg-gray-900/50 rounded-xl border border-dashed border-gray-200 dark:border-gray-800"
+            >
+              <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
+                Select a project to view details
+              </h3>
+              <p className="text-gray-500 dark:text-gray-400 max-w-md mx-auto">
+                Click on any project card above to open its dashboard, or create a new project to get started.
+              </p>
             </motion.div>
           )}
         </>
@@ -316,13 +321,13 @@ export function ProjectsView({ className = "", "data-id": dataId }: ProjectsView
                 </div>
               </>
             ) : (
-                <div className="h-full flex items-center justify-center bg-gray-50/50 dark:bg-gray-900/50 rounded-xl border border-dashed border-gray-200 dark:border-gray-800 p-12">
-                     <div className="text-center">
-                        <ListTodo className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
-                        <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">No project selected</h3>
-                        <p className="text-gray-500 dark:text-gray-400">Select a project from the sidebar to view details.</p>
-                     </div>
+              <div className="h-full flex items-center justify-center bg-gray-50/50 dark:bg-gray-900/50 rounded-xl border border-dashed border-gray-200 dark:border-gray-800 p-12">
+                <div className="text-center">
+                  <ListTodo className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">No project selected</h3>
+                  <p className="text-gray-500 dark:text-gray-400">Select a project from the sidebar to view details.</p>
                 </div>
+              </div>
             )}
           </div>
         </div>

@@ -43,11 +43,11 @@ const createWrapper = () => {
     },
   });
 
-        const Wrapper = ({ children }: { children: React.ReactNode }) =>
-          React.createElement(QueryClientProvider, { client: queryClient }, children);
-        Wrapper.displayName = "Wrapper";
-        return Wrapper;
-      };
+  const Wrapper = ({ children }: { children: React.ReactNode }) =>
+    React.createElement(QueryClientProvider, { client: queryClient }, children);
+  Wrapper.displayName = "Wrapper";
+  return Wrapper;
+};
 describe("useTaskQueries", () => {
   beforeEach(() => {
     vi.clearAllMocks();

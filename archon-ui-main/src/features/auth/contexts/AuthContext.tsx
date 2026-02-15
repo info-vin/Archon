@@ -1,8 +1,8 @@
 // archon-ui-main/src/features/auth/contexts/AuthContext.tsx
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { UserProfile, EmployeeRole } from '@/features/auth/types';
-import { API_BASE_URL } from '@/config/api';
+import React, { createContext, useContext, useState, useEffect } from "react";
+import { UserProfile, EmployeeRole } from "@/features/auth/types";
+import { API_BASE_URL } from "@/config/api";
 
 interface AuthContextType {
   user: UserProfile | null;
@@ -30,8 +30,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // Attempt Dev Auto-Login
         // NOTE: In production, this would check for existing session or redirect to /login
         const response = await fetch(`${API_BASE_URL}/auth/dev-token`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' }
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
         });
 
         if (!response.ok) {
@@ -39,17 +39,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
 
         const data = await response.json();
-        
+
         if (data.access_token && data.user) {
           setToken(data.access_token);
           // Store token for apiClient to pick up
-          localStorage.setItem('archon_token', data.access_token);
-          
+          localStorage.setItem("archon_token", data.access_token);
+
           setUser({
             id: data.user.id,
             email: data.user.email,
             name: "System Admin",
-            role: "system_admin" // Enforced role for Admin UI
+            role: "system_admin", // Enforced role for Admin UI
           });
         }
       } catch (err) {
@@ -64,16 +64,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, token, role: user?.role, isLoading, error }}>
-      {children}
-    </AuthContext.Provider>
+    <AuthContext.Provider value={{ user, token, role: user?.role, isLoading, error }}>{children}</AuthContext.Provider>
   );
 };
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
 };

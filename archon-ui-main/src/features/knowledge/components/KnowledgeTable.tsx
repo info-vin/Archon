@@ -129,7 +129,10 @@ export const KnowledgeTable: React.FC<KnowledgeTableProps> = ({ items, onViewDoc
                     {/* Title */}
                     <td className="py-3 px-4">
                       <div className="flex items-center gap-2">
-                        <span className="font-medium text-sm text-gray-900 dark:text-white truncate max-w-xs inline-block" title={item.title}>
+                        <span
+                          className="font-medium text-sm text-gray-900 dark:text-white truncate max-w-xs inline-block"
+                          title={item.title}
+                        >
                           {item.title}
                         </span>
                       </div>

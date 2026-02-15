@@ -38,8 +38,7 @@ export const DraggableCard = React.forwardRef<HTMLDivElement, DraggableCardProps
           draggedItem.index = index;
         }
       },
-      collect: () => ({
-      }),
+      collect: () => ({}),
     });
 
     const combinedRef = (node: HTMLDivElement | null) => {

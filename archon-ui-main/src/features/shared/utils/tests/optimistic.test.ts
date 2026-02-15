@@ -36,9 +36,10 @@ describe("Optimistic Update Utilities", () => {
     });
 
     it("should apply additional defaults", () => {
-      const entity = createOptimisticEntity<{ id: string; name: string; status: string }>(
-        { name: "Test", status: "pending" },
-      );
+      const entity = createOptimisticEntity<{ id: string; name: string; status: string }>({
+        name: "Test",
+        status: "pending",
+      });
 
       expect(entity.status).toBe("pending");
     });
