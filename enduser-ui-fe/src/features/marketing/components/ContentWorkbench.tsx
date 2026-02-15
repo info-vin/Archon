@@ -41,6 +41,7 @@ interface ContentWorkbenchProps {
   onContentChange: (value: string) => void;
   usedPrompt?: string; 
   feedback?: string; // GAP-023: Instructions from Charlie
+  aiScore?: number; // AI Quality Metric
 }
 
 const INDUSTRIES = ["製造業", "高科技", "零售業", "生技醫療", "金融科技"];

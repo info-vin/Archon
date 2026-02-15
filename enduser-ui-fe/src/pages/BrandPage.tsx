@@ -133,12 +133,12 @@ const BrandPage: React.FC = () => {
                 
                 // CRITICAL: Update state AND localStorage immediately to win the race against persistence hooks
                 setWorkbenchTitle(blogRes.title);
-                setWorkbenchContent(blogRes.content);
+                setWorkbenchContent(blogRes.content || '');
                 setWorkbenchImageUrl(finalImage);
                 setActivePostId(blogRes.id); 
                 
                 localStorage.setItem(`draft_title_${source.id}`, blogRes.title);
-                localStorage.setItem(`draft_content_${source.id}`, blogRes.content);
+                localStorage.setItem(`draft_content_${source.id}`, blogRes.content || '');
                 localStorage.setItem(`draft_image_${source.id}`, finalImage);
                 
                 // Identify associated Task ID from metadata
