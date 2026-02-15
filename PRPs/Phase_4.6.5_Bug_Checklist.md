@@ -2,7 +2,7 @@
 
 > **文件狀態**: 驗證中 (Under Verification)
 > **涵蓋角色**: Alice (Sales), Bob (Marketing), Charlie (Manager), Admin
-> **最後更新**: 2026-02-11
+> **最後更新**: 2026-02-15 (Full Stability Audit)
 
 ---
 
@@ -10,9 +10,9 @@
 
 |指標 (Metric)|數量 (Count)|詳細資訊 (Details)|
 |:---|:---|:---|
-|**總議題數**|35|涵蓋 UX 流程、資料一致性、系統重置可靠性與全盤指揮官 HUD 落地。|
-|**已完成修正**|12|BUG-027, BUG-031, BUG-032, BUG-033, BUG-034, BUG-037, GAP-018, GAP-020, GAP-021, GAP-022, GAP-027, GAP-035 驗證正常。|
-|**待驗證/討論**|23|其餘項目包含剩餘 7 個指揮官圖表、樣式優化與技術債重構。|
+|**總議題數**|36|涵蓋 UX 流程、資料一致性、系統重置可靠性與營運引擎加固。|
+|**已完成修正**|18|BUG-027, BUG-031, BUG-032, BUG-033, BUG-034, BUG-037, BUG-038, BUG-045, GAP-018, GAP-020, GAP-021, GAP-022, GAP-024, GAP-027, GAP-035 驗證正常。|
+|**待驗證/討論**|18|剩餘項目包含 7 個指揮官圖表、樣式優化與技術債重構。|
 
 ---
 
@@ -21,7 +21,8 @@
 | ID | 類型 (Type) | 角色 | 模組 | 問題描述 | 嚴重度 | 狀態 |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
 | **BUG-037** | 🐛 Bug | **Admin** | **System** | **Agent 數量顯示矛盾 (SSOT 已修復)**。Header 計數與狀態燈列表已統一由後端回傳之狀態物件驅動。驗證方式：1. 觀察計數值與綠燈數量是否 1:1 絕對吻合；2. 執行 `make probe` 後重新整理，確認對應 Agent (Librarian) 轉為 Active 且計數加 1。 | High | 🟢 已修復 |
-| **BUG-038** | 🐛 Bug | **All** | **AI/Gemini** | **Gemini 404 & Model Alignment (SSOT 已修復)**。原因：1. 資料庫設定 (`MARKETING_MODEL`) 存有舊模型 `1.5-flash` 覆蓋了程式碼預設值；2. Google API 會因模型名稱前綴或髒路徑自動跳轉至不支援該模型的 `v1main` 接口。修復：1. 底層物理鎖定 `v1beta/openai/` 路徑；2. 實施 `split("/")[-1]` 名稱校準；3. 手動同步 RAGSettings 至 `gemini-2.5-flash`。驗證：Alice 提案生成已恢復正常且具備 429 警報廣播。 | High | 🟢 已修復 |
+| **BUG-038** | 🐛 Bug | **All** | **AI/Gemini** | **Gemini 404 & Model Alignment (SSOT 已修復)**。原因：1. 資料庫設定 (`MARKETING_MODEL`) 存有舊模型 `1.5-flash` 覆蓋了程式碼預設值；2. Google API 會因模型名稱前綴或髒路徑自動跳轉至不支援該模型的 `v1main` 接口。修復：遷移至官方 genai.Client SDK 並實施 `split("/")[-1]` 名稱校準。驗證：Alice 提案生成已恢復正常且具備 429 警報廣播。 | High | 🟢 已修復 |
+| **BUG-045** | 🔄 Loop | **Alice** | **Logic** | **Alice 拜訪紀錄錄音/提案來回問同樣問題**。原因：連線 404 後回傳 Fallback 罐頭文字，Agent 判定任務未完成而陷入無限重試。修復：1. 遷移至官方 genai.Client SDK；2. 移除罐頭文字，改為拋出 503 異常。 | Critical | 🟢 已修復 |
 | **GAP-027** | 🔧 Gap | **Charlie** | **Nexus** | **指揮官中樞: Integrity (系統完整度)**。已實作：1. 加權評分模型 (知識 70% + 連線 30%)；2. 30 天雙曲線趨勢圖 (Daily vs Baseline)；3. 真實每小時稽核日誌。 | High | 🟢 已修復 |
 | **GAP-035** | 🔧 Gap | **Charlie** | **Nexus** | **指揮官中樞: Resources (資源與人機協作)**。已實作：1. 全角色 (Alice, Bob, Admin, System) 任務剖析；2. 區分 Crawler 與 GenAI 消耗；3. 30 天累計預算消耗圖與 $100 紅線同步。 | High | 🟢 已修復 |
 | **GAP-028** | 🔧 Gap | **Charlie** | **Nexus** | **指揮官中樞: Op Load (營運負載)**。已實作：1. 30 天雙軸趨勢圖；2. 待審核清單與 AI 分數；3. Bob 退件反饋可見性。**[待討論]: 圖表精準度與內容一致性需進一步對齊數據口徑。** | Medium | 🟡 待討論 |
@@ -61,16 +62,16 @@
 | **UX-014** | 🎨 Style | **All** | **UI/Nav** | **導航 Icon 配色化**。依職能模組 (Sales/Mkt/Admin) 區分 Icon 顏色。 | Medium | 🟢 已修復 |
 | **TECH-001**| 🏗️ Debt | **Tech** | **RAG** | `RAGSettings.tsx` 重構拆分。 | Medium | ⚪ 待討論 |
 | **TECH-002**| 🏗️ Debt | **Tech** | **Projects**| `projects_api.py` 商業邏輯抽離。 | Medium | ⚪ 待討論 |
-| **TECH-003**| 🏗️ Debt | **Alice** | **Voice** | **語音 Files API 遷移**。棄用 Base64，已實作 `_upload_to_google_files_api` 與 `_transcribe_with_gemini` 支援長音頻上傳。 | High | 🟢 已修復 |
+| **TECH-003**| 🏗️ Debt | **Alice** | **Voice** | **語音 Files API 遷移**。棄用 Base64，已遷移至官方 SDK 支援長音頻上傳。 | High | 🟢 已修復 |
 | **TECH-004**| 📝 Note | **Tech** | **Mobile** | **Mobile Web Hardware Limits (GPS/Mic)**。瀏覽器無法完全存取手機原生硬體 (GPS/麥克風)。已實作 Mock Location 與 File Upload Fallback 作為替代方案。 | Low | ⚪ 已確認 |
 | **GAP-020** | 🔧 Gap | **Admin** | **RBAC** | **精細權限下放 (Delegation)**。已打通 /admin 路由給 Manager，並依權限動態過濾標籤頁。 | High | 🟢 已修復 |
 | **GAP-021** | 🔧 Gap | **Admin** | **Config** | **配置持久化 (Persistence)**。系統設定全面存儲於資料庫 archon_settings，支持熱加載。 | Medium | 🟢 已修復 |
 | **GAP-022** | 🔧 Gap | **Admin** | **Audit** | **變更稽核日誌 (Audit Trail)**。已實作「變更即審計」：Manager 的設定變更自動寫入版本稽核表。 | Medium | 🟢 已修復 |
 | **GAP-023** | 🔧 Gap | **Charlie** | **Return** | **退件反饋與狀態流轉閉環**。已完成：1. 移除 Workbench 顯示限制；2. 解鎖 Charlie 預覽高度與圖片自動識別；3. 實作儲存/提交時自動連動任務狀態 (Doing/Review)。 | High | 🟡 待驗證 |
-| **GAP-024** | 🔧 Gap | **Alice** | **Pitch** | **Pitch View UI**。已完成：1. 桌面端 Table View 增加 View 按鈕與 Modal；2. 手機端 LeadsCardStack 增加動態 PitchDrawer，支援已生成內容的翻閱與複製。 | Medium | 🟡 待驗證 |
+| **GAP-024** | 🔧 Gap | **Alice** | **Pitch** | **Pitch View UI**。已完成：1. 桌面端 Table View 增加 View 按鈕與 Modal；2. 手機端 LeadsCardStack 增加動態 PitchDrawer，支援已生成內容的翻閱與複製。 | Medium | 🟢 已修復 |
 | **GAP-025** | 🔧 Gap | **Admin** | **Config**| **Scoring Persistence**。已實作：1. Migration 038 權重持久化；2. AdminPage 增加 Lead Scoring Weights 動態配置區塊，支援自動保存與審計日誌同步。 | High | 🟢 已修復 |
 | **GAP-026** | 🔧 Gap | **Admin** | **Audit** | **Audit Search UI**。已實作：DocumentVersionsLog 增加多維度即時搜尋與 Sticky Header，支援按人員、欄位、摘要過濾稽核紀錄。 | Low | 🟢 已修復 |
-| **BUG-039** | 🐛 Bug | **Tech** | **Infra** | **腳本組織與重複性混亂**。`scripts/` 與 `python/scripts/` 存在重複檔案 (`probe_system.py`) 且用途不明確，導致 Docker 執行路徑時常報錯。需統一歸檔至 `python/scripts/` 並建立標準 Makefile 捷徑。 | Medium | ⚪ 待處理 |
+| **BUG-039** | 🐛 Bug | **Tech** | **Infra** | **腳本組織與重複性混亂**。`scripts/` 與 `python/scripts/` 存在重複檔案且用途不明確。已統一標準化至 root scripts/ 並清理 redundant python/scripts/。 | Medium | 🟢 已修復 |
 | **BUG-040** | 🐛 Bug | **Admin** | **E2E/Time**| **Admin Workflow Timeout**。`Admin can update a user role` 測試超時 (15s)。原因：測試預期 "Alice" 但資料為 "Alice Johnson" (Exact Match)。修復：改用 Regex。 | High | 🟢 已修復 |
 | **BUG-041** | 🐛 Bug | **Alice** | **E2E/Time**| **AI Workflow Timeout**。`Sales Outreach` 測試超時 (15s)。原因：Marketing Page 只有標題無按鈕。修復：導航至 Dashboard 建立任務。 | High | 🟢 已修復 |
 | **BUG-042** | 🐛 Bug | **Alice** | **E2E/Race**| **Knowledge Selector Race**。`waitForElementToBeRemoved` 錯誤，目標 Dialog 在檢測前已消失。原因：Modal 關閉過快。修復：改用 `waitFor(expect(not.toBeInDocument))`. | Medium | 🟢 已修復 |
@@ -81,6 +82,11 @@
 
 ## 🛠 修復紀錄 (Fix Log)
 
+*   **2026-02-15 (Round 12: Operational Engine Standardization & Loop Defense)**:
+    *   **BUG-045 (Loop Fix)**: 遷移 Alice (Pitch/Voice) 與 POBot (Refinement) 至官方 `genai.Client` SDK。
+    *   **Engine Alignment**: 徹底廢棄 5173 營運端不穩定的 OpenAI Shim，解決 v1main 404 報錯。
+    *   **Loop Defense**: 移除所有欺騙性罐頭文字（如 Fallback 字串），改為明確的 503 報錯，終結 Agent 迴圈。
+    *   **Infra (BUG-039)**: 清理 `python/scripts/` 冗餘，確立外層 `scripts/` 為專案唯一真相腳本區。
 *   **2026-02-12 (Round 11: Professional Commander Dashboard & Tablet Optimization)**:
     *   **Integrity (GAP-027)**: 落地「知識+連線」加權評分模型 (70/15/15)。實作專業 30 天雙曲線趨勢圖，支持每日垂直格線與每週日期標籤。
     *   **Resources (GAP-035)**: 實作全角色人機協作矩陣。包含 Alice, Bob, Charlie, Admin, System。精確區分 Crawler/Research 與 GenAI 消耗，USD/Tokens 與 Admin Health 100% SSOT 對齊。

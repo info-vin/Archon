@@ -638,8 +638,9 @@ class TaskService:
         a structured product spec with User Stories and Technical Requirements.
         """
         try:
-            # Use absolute import for the client factory
-            from src.server.services.llm_provider_service import get_llm_client
+            # REALITY CHECK (Feb 2026): Use official GenAI Client for PO Workflows
+            from google import genai
+            from google.genai import types
 
             from ..credential_service import credential_service
             from ..search.rag_service import RAGService
@@ -677,33 +678,30 @@ class TaskService:
                 KEEP IT CONCISE AND ACTIONABLE.
             """).strip()
 
-            # 3. Generate Content using the correct client pattern
-            # Upgrade to gemini-2.5-flash-lite for efficiency
+            # 3. Generate Content using official SDK
             model_name = "gemini-2.5-flash-lite"
 
-            # Key Decoupling: Prefer GEMINI_API_KEY (Manager/Marketing Resource)
-            charlie_api_key = await credential_service.get_credential("GEMINI_API_KEY")
+            # Key Decoupling: Prefer GEMINI_API_KEY
+            charlie_api_key = await credential_service.get_credential("GEMINI_API_KEY") or await credential_service.get_credential("GOOGLE_API_KEY")
+
             if not charlie_api_key:
-                 charlie_api_key = await credential_service.get_credential("GOOGLE_API_KEY")
+                raise ValueError("No AI API Key available for PO Workflows")
 
-            # DEBUG: Log the model name being used
-            logger.info(f"Refining task with model: {model_name}")
-
-            async with get_llm_client(api_key=charlie_api_key) as client:
-                response = await client.chat.completions.create(
-                    model=model_name,
-                    messages=[
-                        {"role": "system", "content": "You are POBot, a helpful Product Owner assistant. ALWAYS answer in Traditional Chinese (Taiwan繁體中文), regardless of the input language."},
-                        {"role": "user", "content": prompt}
-                    ],
-                    temperature=0.7
+            client = genai.Client(api_key=charlie_api_key)
+            response = client.models.generate_content(
+                model=model_name,
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    system_instruction="You are POBot, a helpful Product Owner assistant. ALWAYS answer in Traditional Chinese (Taiwan繁體中文), regardless of the input language.",
+                    temperature=0.7,
                 )
-                # Cast to str to satisfy MyPy
-                content = str(response.choices[0].message.content)
+            )
 
+            content = response.text or ""
             if not content:
-                raise ValueError("LLM provider returned empty content")
+                raise ValueError("LLM returned empty content")
             return content
+
         except Exception as e:
             logger.error(f"POBot refinement failed: {e}", exc_info=True)
 
@@ -711,15 +709,16 @@ class TaskService:
             try:
                 LogService(self.supabase_client).create_log_entry({
                     "user_input": f"SYSTEM_ALERT: POBot Failure [{type(e).__name__}]",
-                    "gemini_response": f"Refinement Skipped. Error: {str(e)}",
+                    "gemini_response": f"Refinement Failed. Error: {str(e)}",
                     "project_name": "manager_bot",
                     "user_name": "system"
                 })
             except Exception:
-                pass # Fail safe if logging fails
+                pass
 
-            # Graceful Fallback: Return original description with note
-            return f"{description}\n\n[System Note: AI Refinement skipped due to service disruption. Original content preserved.]"
+            # CRITICAL: Raise exception instead of returning a misleading "skip" message.
+            # This allows the UI to handle the error properly.
+            raise RuntimeError(f"POBot Refinement Unavailable: {str(e)[:100]}") from e
 
     async def get_all_project_task_counts(self) -> tuple[bool, dict[str, dict[str, int]]]:
         """
@@ -792,8 +791,6 @@ class TaskService:
         Enriches the task with business context from the lead and RAG.
         """
         try:
-            from src.server.services.llm_provider_service import get_llm_client
-
             from ..credential_service import credential_service
             from ..search.rag_service import RAGService
 
@@ -858,9 +855,12 @@ class TaskService:
                 context_str += "\nINTERNAL KNOWLEDGE BASE SNIPPETS:\n"
                 context_str += "\n".join([res.get("content", "")[:300] for res in rag_result["results"]])
 
-            # 4. Call AI
+            # 4. Call AI using Official SDK
             model_name = "gemini-1.5-pro"
             charlie_api_key = await credential_service.get_credential("GEMINI_API_KEY") or await credential_service.get_credential("GOOGLE_API_KEY")
+
+            if not charlie_api_key:
+                raise ValueError("No AI API Key available for Alert Dispatch")
 
             prompt = textwrap.dedent(f"""
                 Convert the following Alert into a high-value task for the team.
@@ -870,19 +870,28 @@ class TaskService:
             """).strip()
 
             try:
-                async with get_llm_client(api_key=charlie_api_key, user_id=triggered_by, request_id=f"task-gen-{alert_id}") as client:
-                    response = await client.chat.completions.create(
-                        model=model_name,
-                        messages=[
-                            {"role": "system", "content": "You are Charlie's Assistant. Answer in Traditional Chinese (Taiwan)."},
-                            {"role": "user", "content": prompt}
-                        ],
-                        temperature=0.7
+                # REALITY CHECK (Feb 2026): Aligned with other operation endpoints
+                from google import genai
+                from google.genai import types
+
+                client = genai.Client(api_key=charlie_api_key)
+                response = client.models.generate_content(
+                    model=model_name,
+                    contents=prompt,
+                    config=types.GenerateContentConfig(
+                        system_instruction="You are Charlie's Assistant. Answer in Traditional Chinese (Taiwan).",
+                        temperature=0.7,
                     )
-                ai_output = str(response.choices[0].message.content)
+                )
+                ai_output = response.text or ""
+                if not ai_output:
+                    raise ValueError("LLM returned empty dispatch content")
+
             except Exception as llm_error:
                  logger.error(f"AI Dispatch Failed: {llm_error}")
-                 ai_output = f"TITLE: Manual Action Needed: {company_name}\nDESCRIPTION: AI failed to generate task for alert: {context_msg}."
+                 # CRITICAL: Do not create a "Manual Action Needed" task silently.
+                 # Let the exception propagate so the Manager knows the dispatch failed.
+                 raise RuntimeError(f"Smart Dispatch Unavailable: {str(llm_error)[:100]}") from llm_error
 
             # Parse AI Output
             title = f"Follow-up: {company_name}"

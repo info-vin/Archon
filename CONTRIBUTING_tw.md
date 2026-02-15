@@ -20,6 +20,8 @@
 | 8. **維持「啞巴控制器」** | API 控制器應保持輕量。版本控制、來源連結等複雜商業邏輯應封裝於 Service 層。 |
 | 9. **拒絕「手動拆包」** | 嚴禁在 API 層使用連續的 `if request.field is not None`。應善用 Pydantic 的 `model_dump(exclude_unset=True)` 一行搞定。 |
 | 10. **型別是開發者的盔甲** | 使用 `cast` 進行顯式擔保，並區分 Pydantic (執行期安檢) 與 MyPy (開發期藍圖審查) 的職責。 |
+| 11. **營運 SDK 必須對齊** | 凡是 5173 (營運端) 功能，應統一使用 Google 原生 SDK (`genai.Client`) 以確保與 Bob 一樣穩定。嚴禁對生產路徑使用不穩定的 OpenAI Shim。 |
+| 12. **腳本存放唯一真相** | 所有 Python 腳本（診斷、初始化、遷移輔助）**必須**存放於外層 `scripts/` 目錄。嚴禁在 `python/scripts/` 建立副本，以確保 Docker 呼叫路徑一致。 |
 
 ---
 

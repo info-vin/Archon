@@ -91,6 +91,12 @@
 
 # 第三章：近期工作日誌 (Recent Journal Entries)
 
+### 2026-02-15: Operational Engine Standardization & Loop Defense
+*   **引擎大統一**: 發現營運端 (Alice/POBot) 與行銷端 (Bob) 存在 SDK 斷層（OpenAI Shim vs Google 原生 SDK），導致 Alice 頻繁報錯 `v1main 404`。已將所有生產力路徑遷移至官方 `genai.Client`，徹底解決路由跳轉不穩的問題。
+*   **斷開死迴圈**: 確立了「不回傳罐頭文字」原則。移除所有 `Generated via Fallback` 等欺騙性字串，改為明確的 `503` 異常。這能讓 Agent 正確感知「環境不可用」而暫停，解決了 Alice 「來回問同樣問題」的病灶。
+*   **縮排與例外安全性**: 修復了 `task_service.py` 的結構性縮排錯誤，並補齊 `raise ... from e` 以符合 Ruff B904 規範，達成 100% Lint 通過。
+*   **環境唯一真相**: 徹底清理 `python/scripts/` 冗餘，將所有診斷與初始化腳本標準化至外層 `scripts/`，確保 `Makefile` 與 Docker 呼叫路徑絕對穩定。
+
 ### 2026-02-10: Search Nexus Optimization & Mobile Resilience
 *   **捲動革命**: 徹底解決了 `MarketingPage` (Search Tab) 在手機版滑不動的問題。透過移除 `min-h-screen` 與 `flex-1` 限制，釋放垂直捲動權給 Layout。
 *   **UX 反饋增強**: 針對 Pitch 生成流程，實作了 60s 超時邊界與每 15s 切換的「動態進度訊息」，大幅降低 Alice 等待時的焦慮感。

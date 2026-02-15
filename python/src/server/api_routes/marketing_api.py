@@ -16,7 +16,6 @@ from ..services.credential_service import credential_service
 from ..services.guardrail_service import GuardrailService
 from ..services.job_board_service import JobBoardService, JobData
 from ..services.librarian_service import LibrarianService
-from ..services.llm_provider_service import get_llm_client
 from ..services.log_service import LogService
 from ..services.projects.task_service import TaskService
 from ..services.prompt_service import prompt_service
@@ -415,20 +414,29 @@ async def generate_pitch(request: PitchRequest, current_user: dict = Depends(get
         safe_model_name = model_name.split("/")[-1]
 
         try:
-            async with get_llm_client(api_key=api_key, provider=provider_name) as client:
-                response = await client.chat.completions.create(
-                    model=safe_model_name,
-                    messages=[{"role": "system", "content": system_prompt}, {"role": "user", "content": user_prompt}],
-                    temperature=0.7
+            # REALITY CHECK (Feb 2026): Sync Alice with Bob's stable SDK pattern
+            # Using official genai.Client avoids OpenAI-shim routing issues (v1main vs v1beta)
+            client = genai.Client(api_key=api_key)
+
+            response = client.models.generate_content(
+                model=safe_model_name,
+                contents=user_prompt,
+                config=types.GenerateContentConfig(
+                    system_instruction=system_prompt,
+                    temperature=0.7,
                 )
-                content = str(response.choices[0].message.content)
+            )
+            content = response.text or ""
+            if not content:
+                raise ValueError("AI returned empty content")
+
         except Exception as pitch_error:
              logger.error(f"API: Pitch Generation Failed | error={pitch_error}")
 
              # Log SYSTEM_ALERT for Audit
              LogService(get_supabase_client()).create_log_entry({
                  "user_input": f"SYSTEM_ALERT: Pitch Gen Failure [{type(pitch_error).__name__}]",
-                 "gemini_response": f"Mock Fallback Activated. Error: {str(pitch_error)}",
+                 "gemini_response": f"Generation Failed. Error: {str(pitch_error)}",
                  "project_name": "sales_bot",
                  "user_name": "system"
              })
@@ -451,7 +459,12 @@ async def generate_pitch(request: PitchRequest, current_user: dict = Depends(get
              except Exception as log_err:
                  logger.warning(f"Failed to broadcast alert to Charlie: {log_err}")
 
-             content = f"""Subject: Transforming {request.company}'s Workflow with Archon\n\nHi there,\n\nI noticed {request.company} is hiring for {request.job_title}. Archon can help.\n\n(Generated via Fallback due to AI service unavailability)"""
+             # CRITICAL: Stop returning "Generated via Fallback" text as it tricks Agents into infinite retry loops.
+             # Instead, we raise an explicit 503 error so the UI/Agent knows the service is truly unavailable.
+             raise HTTPException(
+                 status_code=503,
+                 detail=f"AI Service Temporarily Unavailable: {str(pitch_error)[:100]}"
+             ) from pitch_error
 
         return PitchResponse(content=content, references=references)
     except Exception as e:

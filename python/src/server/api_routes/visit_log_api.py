@@ -1,10 +1,9 @@
 import asyncio
-import json
 import os
-from typing import cast
 
-import httpx
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
+from google import genai
+from google.genai import types
 from pydantic import BaseModel
 
 from ..auth.dependencies import get_current_user
@@ -22,92 +21,52 @@ class VisitLogResponse(BaseModel):
     voice_transcript: str | None
     follow_up_tasks: list[str]
 
-async def _list_available_models(api_key: str):
-    """Diagnostic tool to stop guessing and see what models are actually available."""
-    url = f"https://generativelanguage.googleapis.com/v1beta/models?key={api_key}"
-    async with httpx.AsyncClient() as client:
-        try:
-            resp = await client.get(url)
-            if resp.status_code == 200:
-                models = [m.get("name") for m in resp.json().get("models", [])]
-                logger.info(f"Available Google Models for this key: {models}")
-                return models
-        except Exception as e:
-            logger.error(f"Failed to list models: {e}")
-    return []
-
-async def _upload_to_google_files_api(
-    audio_content: bytes,
-    mime_type: str,
-    api_key: str,
-    filename: str = "visit_audio.mp3"
-) -> str:
-    """Uploads audio to Google Files API and ensures it is ACTIVE."""
-    # Map common mobile audio formats to Google-compatible MIME types
-    if "mpeg" in mime_type or "mp3" in mime_type:
-        mime_type = "audio/mpeg"
-    elif "m4a" in mime_type or "x-m4a" in mime_type:
-        mime_type = "audio/mp4"
-    elif "wav" in mime_type:
-        mime_type = "audio/wav"
-
-    upload_url = f"https://generativelanguage.googleapis.com/upload/v1beta/files?key={api_key}"
-    boundary = "boundary_archon_voice"
-    metadata = {"file": {"display_name": filename}}
-
-    body = (
-        f"--{boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n"
-        f"{json.dumps(metadata)}\r\n"
-        f"--{boundary}\r\nContent-Type: {mime_type}\r\n\r\n"
-    ).encode() + audio_content + f"\r\n--{boundary}--\r\n".encode()
-
-    headers = {
-        "X-Goog-Upload-Protocol": "multipart",
-        "Content-Type": f"multipart/related; boundary={boundary}"
-    }
-
-    async with httpx.AsyncClient() as client:
-        resp = await client.post(upload_url, content=body, headers=headers, timeout=60.0)
-        if resp.status_code != 200:
-            raise Exception(f"Upload Failed: {resp.status_code}")
-
-        data = resp.json()
-        file_name = data.get("file", {}).get("name")
-        file_uri = data.get("file", {}).get("uri")
-
-        check_url = f"https://generativelanguage.googleapis.com/v1beta/{file_name}?key={api_key}"
-        for _ in range(10):
-            await asyncio.sleep(2)
-            chk = await client.get(check_url)
-            if chk.status_code == 200 and chk.json().get("state") == "ACTIVE":
-                return cast(str, file_uri)
-        return cast(str, file_uri)
-
 async def _transcribe_with_gemini(
     audio_content: bytes,
     mime_type: str,
     api_key: str,
     model: str = "gemini-2.5-flash"
 ) -> tuple[str, str, list[str]]:
-    """Transcribes audio using the high-performance Gemini 2.5 model."""
+    """Transcribes audio using the high-performance Gemini 2.5 model via official SDK."""
     # Model Name Calibration (Feb 2026 Resilience)
-    # Use split()[-1] to ensure we only have the final model ID
-    # This is critical for Google REST API paths like /v1beta/models/{safe_model}:generateContent
     safe_model = model.split("/")[-1]
 
     try:
-        file_uri = await _upload_to_google_files_api(audio_content, mime_type, api_key)
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/{safe_model}:generateContent?key={api_key}"
+        # REALITY CHECK (Feb 2026): Use official GenAI Client for Voice
+        # This avoids unstable manual HTTP requests and URL-based API keys
+        client = genai.Client(api_key=api_key)
 
-        # Get Prompt from DB (via PromptService) or fallback
+        # 1. Upload using official SDK
+        # The SDK handles the multipart encoding and status checking internally
+        import io
+        audio_io = io.BytesIO(audio_content)
+
+        # Map MIME types for stability
+        upload_mime = mime_type
+        if "mpeg" in mime_type or "mp3" in mime_type:
+            upload_mime = "audio/mpeg"
+        elif "m4a" in mime_type or "x-m4a" in mime_type:
+            upload_mime = "audio/mp4"
+
+        uploaded_file = client.files.upload(
+            file=audio_io,
+            config={'mime_type': upload_mime}
+        )
+
+        # 2. Wait for processing (Polling state via SDK)
+        # Use simple loop as SDK upload is sync by default but file status is async
+        for _ in range(10):
+            file_status = client.files.get(name=uploaded_file.name)
+            if file_status.state.name == "ACTIVE":
+                break
+            await asyncio.sleep(2)
+
+        # 3. Get Prompt from DB
         try:
             from ..services.prompt_service import prompt_service
-            prompt_data = prompt_service.get_prompt("VOICE_TRANSCRIPTION_PROMPT")
-            prompt = prompt_data if prompt_data else (
-                "你是一位專業的業務助理。請準確地將這段銷售拜訪錄音轉錄為繁體中文逐字稿，"
-                "並總結關鍵點及提取具體任務。請嚴格以 JSON 格式回傳，"
-                "包含鍵值：'transcript', 'summary', 'tasks' (字串清單)。"
-            )
+            prompt = prompt_service.get_prompt("VOICE_TRANSCRIPTION_PROMPT")
+            if not prompt:
+                raise ValueError("Prompt not found")
         except Exception:
             prompt = (
                 "你是一位專業的業務助理。請準確地將這段銷售拜訪錄音轉錄為繁體中文逐字稿，"
@@ -115,64 +74,49 @@ async def _transcribe_with_gemini(
                 "包含鍵值：'transcript', 'summary', 'tasks' (字串清單)。"
             )
 
-        payload = {
-            "contents": [{
-                "parts": [
-                    {"text": prompt},
-                    {"file_data": {"mime_type": "audio/mpeg" if "mp3" in mime_type else mime_type, "file_uri": file_uri}}
-                ]
-            }],
-            "generationConfig": {"response_mime_type": "application/json"}
-        }
+        # 4. Generate Content with Multi-modality
+        response = client.models.generate_content(
+            model=safe_model,
+            contents=[
+                prompt,
+                uploaded_file
+            ],
+            config=types.GenerateContentConfig(
+                response_mime_type="application/json",
+                temperature=0.0, # Precision is key for transcription
+            )
+        )
 
-        async with httpx.AsyncClient() as client:
-            resp = await client.post(url, json=payload, timeout=120.0)
+        raw_text = response.text or ""
+        if not raw_text:
+            raise ValueError("AI returned empty transcription")
 
-            if resp.status_code == 404:
-                available = await _list_available_models(api_key)
-                # BROADCAST TO CHARLIE
-                try:
-                    get_supabase_client().table("archon_logs").insert({
-                        "level": "ALERT", "source": "VoiceBot", "type": "system",
-                        "message": f"Voice Model Not Found (404): {safe_model}",
-                        "details": {"model": safe_model, "available": available[:5]}
-                    }).execute()
-                except Exception:
-                    pass
-                return f"[錯誤 404: 可用模型: {available[:3]}]", "模型配置錯誤", []
-
-            if resp.status_code == 429:
-                # BROADCAST TO CHARLIE
-                try:
-                    get_supabase_client().table("archon_logs").insert({
-                        "level": "ALERT", "source": "VoiceBot", "type": "system",
-                        "message": "Voice API Rate Limit (429)",
-                        "details": {"model": safe_model}
-                    }).execute()
-                except Exception:
-                    pass
-                return "[系統提示：API 額度暫時不足]", "額度限制 (429)", []
-
-            if resp.status_code != 200:
-                return f"[處理錯誤 {resp.status_code}]", "AI 處理失敗", []
-
-            data = resp.json()
-            raw_text = data["candidates"][0]["content"]["parts"][0]["text"]
-            res_json = safe_json_loads(raw_text)
-            return res_json.get("transcript", ""), res_json.get("summary", ""), res_json.get("tasks", [])
+        res_json = safe_json_loads(raw_text)
+        return (
+            res_json.get("transcript", ""),
+            res_json.get("summary", ""),
+            res_json.get("tasks", [])
+        )
 
     except Exception as e:
         logger.error(f"Voice pipeline error: {e}")
-        # BROADCAST TO CHARLIE
+        # BROADCAST TO CHARLIE (Manager Nexus)
         try:
             get_supabase_client().table("archon_logs").insert({
-                "level": "ALERT", "source": "VoiceBot", "type": "system",
+                "level": "ALERT",
+                "source": "VoiceBot",
+                "type": "system",
                 "message": f"Voice Pipeline Exception: {str(e)[:100]}",
                 "details": {"error": str(e), "model": safe_model}
             }).execute()
         except Exception:
             pass
-        return str(e), "發生異常", []
+
+        # CRITICAL: Raise exception to stop Agent retry loops
+        raise HTTPException(
+            status_code=503,
+            detail=f"Voice AI Service Error: {str(e)[:100]}"
+        ) from e
 
 @router.post("/", response_model=VisitLogResponse)
 async def create_visit_log(
