@@ -442,7 +442,7 @@ const ApprovalsPage: React.FC = () => {
                         </div>
                         
                         <textarea
-                            className="w-full h-40 p-4 rounded-xl bg-gray-50 dark:bg-slate-950 border border-gray-200 dark:border-slate-800 focus:ring-2 focus:ring-red-500 focus:border-red-500 text-sm resize-none outline-none transition-all"
+                            className="w-full h-40 p-4 rounded-xl bg-gray-50 dark:bg-slate-950 border border-gray-200 dark:border-slate-800 focus:ring-2 focus:ring-red-500 focus:border-red-500 text-sm text-gray-900 dark:text-slate-100 placeholder:text-gray-400 dark:placeholder:text-slate-600 resize-none outline-none transition-all"
                             placeholder="Explain why this is being returned..."
                             value={rejectionReason}
                             onChange={(e) => setRejectionReason(e.target.value)}

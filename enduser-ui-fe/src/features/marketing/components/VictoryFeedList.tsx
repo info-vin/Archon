@@ -3,11 +3,15 @@ import { TrendingUpIcon, BuildingIcon, FileTextIcon } from '../../../components/
 
 export interface ContentSource {
   id: string;
-  type: 'lead' | 'task';
+  type: 'lead' | 'task' | 'blog';
   title: string;
   score: number;
   summary: string;
   date: string;
+  review_notes?: string;
+  ai_score?: number;
+  status?: string;
+  metadata?: any;
 }
 
 interface VictoryFeedListProps {
@@ -77,28 +81,50 @@ export const VictoryFeedList: React.FC<VictoryFeedListProps> = ({
               <div className="flex items-center space-x-2 overflow-hidden">
                 {source.type === 'lead' ? (
                   <BuildingIcon className="w-4 h-4 text-blue-500 shrink-0" />
+                ) : source.type === 'blog' ? (
+                  <FileTextIcon className="w-4 h-4 text-purple-500 shrink-0" />
                 ) : (
                   <FileTextIcon className="w-4 h-4 text-orange-500 shrink-0" />
                 )}
-                <span className="font-semibold text-slate-900 dark:text-white truncate">
+                <span className={`font-semibold text-slate-900 dark:text-white truncate ${
+                  source.status === 'changes_requested' ? 'text-red-600 dark:text-red-400' : ''
+                }`}>
                   {source.title}
                 </span>
               </div>
-              <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
-                source.score >= 90 ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'
-              }`}>
-                {source.score}
-              </span>
+              <div className="flex flex-col items-end gap-1">
+                <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
+                  source.score >= 90 ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'
+                }`}>
+                  {source.score}
+                </span>
+                {source.status === 'changes_requested' && (
+                    <span className="text-[9px] font-black bg-red-600 text-white px-1 rounded animate-pulse">
+                        RETURNED
+                    </span>
+                )}
+              </div>
             </div>
             
             <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 mb-2">
-              {source.summary}
+              {source.status === 'changes_requested' 
+                ? (source.review_notes ? `💬 ${source.review_notes}` : '⚠️ Returned: Check notes in Workbench.')
+                : source.summary}
             </p>
             
             <div className="flex items-center justify-between">
-              <span className="text-[10px] text-slate-400">
-                {formatDate(source.date)}
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] text-slate-400">
+                  {formatDate(source.date)}
+                </span>
+                {source.ai_score !== undefined && (
+                  <span className={`text-[9px] font-bold ${
+                    source.ai_score >= 80 ? 'text-green-500' : source.ai_score >= 60 ? 'text-amber-500' : 'text-red-500'
+                  }`}>
+                    AI: {source.ai_score}
+                  </span>
+                )}
+              </div>
               <span className="text-[10px] uppercase text-slate-400 font-medium">
                 {source.type}
               </span>

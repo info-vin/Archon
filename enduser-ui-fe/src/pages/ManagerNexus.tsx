@@ -313,9 +313,9 @@ export const ManagerNexus: React.FC = () => {
         if (!selectedContent) return;
         setProcessingId(selectedContent.id);
         try {
-            // Note: API needs to support reason, currently just reject action
-            await api.processApproval('blog', selectedContent.id, 'reject'); 
-            alert("Content Rejected. Feedback sent to author.");
+            // FIX: Pass the actual rejection reason to the backend
+            await api.processApproval('blog', selectedContent.id, 'reject', rejectReason); 
+            alert("Content Returned. Bob has been notified with your instructions.");
             fetchData();
             setSelectedContent(null);
             setIsRejecting(false);

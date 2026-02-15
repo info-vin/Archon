@@ -39,7 +39,8 @@ interface ContentWorkbenchProps {
   content: string;
   onTitleChange: (value: string) => void;
   onContentChange: (value: string) => void;
-  usedPrompt?: string; // New: For Transparency
+  usedPrompt?: string; 
+  feedback?: string; // GAP-023: Instructions from Charlie
 }
 
 const INDUSTRIES = ["製造業", "高科技", "零售業", "生技醫療", "金融科技"];
@@ -65,7 +66,9 @@ export const ContentWorkbench: React.FC<ContentWorkbenchProps> = ({
   content,
   onTitleChange,
   onContentChange,
-  usedPrompt
+  usedPrompt,
+  feedback,
+  aiScore
 }) => {
   const [isContextOpen, setIsContextOpen] = useState(true);
   const [promptCenterOpen, setPromptCenterOpen] = useState(false);
@@ -175,6 +178,32 @@ export const ContentWorkbench: React.FC<ContentWorkbenchProps> = ({
           </button>
         </div>
       </div>
+
+      {/* Visual Feedback Banner (Charlie's Instructions) */}
+      {(feedback || (aiScore !== undefined && aiScore < 100)) && (
+        <div className="bg-red-50 dark:bg-red-900/20 border-b border-red-100 dark:border-red-900/30 px-6 py-3 flex items-start gap-4 animate-in slide-in-from-top duration-300">
+            <div className="flex flex-col gap-1.5 shrink-0">
+                <div className="px-2 py-0.5 bg-red-100 dark:bg-red-800 rounded text-[10px] font-black text-red-600 dark:text-red-200 uppercase tracking-tighter text-center">
+                    Signal
+                </div>
+                {aiScore !== undefined && (
+                    <div className={`px-2 py-0.5 rounded text-[10px] font-black text-white text-center ${
+                        aiScore >= 80 ? 'bg-green-500' : aiScore >= 60 ? 'bg-amber-500' : 'bg-red-600'
+                    }`}>
+                        AI: {aiScore}
+                    </div>
+                )}
+            </div>
+            <div className="flex-1">
+                <p className="text-[10px] font-black text-red-800 dark:text-red-200 uppercase tracking-widest mb-1 opacity-70">
+                    Charlie's Command Logic
+                </p>
+                <p className="text-sm text-red-900 dark:text-red-100 leading-relaxed font-bold italic">
+                    "{feedback}"
+                </p>
+            </div>
+        </div>
+      )}
 
       {/* Main Layout Area: Split View */}
       <div className="flex-1 flex overflow-hidden relative">

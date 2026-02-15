@@ -35,6 +35,7 @@ const BrandPage: React.FC = () => {
     const [sources, setSources] = useState<ContentSource[]>([]);
     const [activeSource, setActiveSource] = useState<ContentSource | null>(null);
     const [activeTaskId, setActiveTaskId] = useState<string | null>(null);
+    const [activePostId, setActivePostId] = useState<string | null>(null); // GAP-023: Track current blog ID
     const [contextData, setContextData] = useState<any>(null);
     const [isLoadingSources, setIsLoadingSources] = useState(false);
     const [isLoadingContext, setIsLoadingContext] = useState(false);
@@ -48,9 +49,10 @@ const BrandPage: React.FC = () => {
     const [workbenchImageUrl, setWorkbenchImageUrl] = useState('/placeholder-blog.jpg');
     const [lastPrompt, setLastPrompt] = useState<string | undefined>(undefined);
 
-    // Persistence Logic (Restored from Child)
+    // Persistence Logic: Only for NEW drafts from leads/tasks. 
+    // Existing blog posts (returned/drafts) should ALWAYS come from the DB.
     useEffect(() => {
-        if (activeSource?.id) {
+        if (activeSource?.id && activeSource.type !== 'blog') {
             const savedTitle = localStorage.getItem(`draft_title_${activeSource.id}`);
             const savedContent = localStorage.getItem(`draft_content_${activeSource.id}`);
             const savedImage = localStorage.getItem(`draft_image_${activeSource.id}`);
@@ -64,7 +66,7 @@ const BrandPage: React.FC = () => {
             if (savedImage) setWorkbenchImageUrl(savedImage);
             else setWorkbenchImageUrl('/placeholder-blog.jpg');
         }
-    }, [activeSource?.id]);
+    }, [activeSource?.id, activeSource?.type]);
 
     useEffect(() => {
         if (activeSource?.id) {
@@ -113,18 +115,58 @@ const BrandPage: React.FC = () => {
     };
 
     const handleSelectSource = async (source: ContentSource) => {
-        // Fix: Map API alias back to expected UI key for feedback visibility
+        // Immediate Cleanup to avoid state leakage from previous articles
+        setWorkbenchTitle('');
+        setWorkbenchContent('');
+        setWorkbenchImageUrl('/placeholder-blog.jpg');
+        setContextData(null);
+        
         const sourceData = { ...source };
-        if ((sourceData as any).reviewNotes && !(sourceData as any).review_notes) {
-            (sourceData as any).review_notes = (sourceData as any).reviewNotes;
+        
+        // Phase 1 (UML): Feedback Perception & Content Loading
+        if (source.type === 'blog') {
+            setIsLoadingContext(true);
+            try {
+                // FETCH real content from DB
+                const blogRes = await api.getBlogPost(source.id);
+                const finalImage = blogRes.imageUrl || '/placeholder-blog.jpg';
+                
+                // CRITICAL: Update state AND localStorage immediately to win the race against persistence hooks
+                setWorkbenchTitle(blogRes.title);
+                setWorkbenchContent(blogRes.content);
+                setWorkbenchImageUrl(finalImage);
+                setActivePostId(blogRes.id); 
+                
+                localStorage.setItem(`draft_title_${source.id}`, blogRes.title);
+                localStorage.setItem(`draft_content_${source.id}`, blogRes.content);
+                localStorage.setItem(`draft_image_${source.id}`, finalImage);
+                
+                // Identify associated Task ID from metadata
+                const taskId = (blogRes as any).generationMetadata?.task_id || 
+                               (blogRes as any).generation_metadata?.task_id || 
+                               (blogRes as any).task_id;
+                setActiveTaskId(taskId || null);
+                
+                sourceData.review_notes = blogRes.review_notes;
+                sourceData.ai_score = blogRes.ai_score;
+            } catch (err) {
+                console.error("Failed to load blog context", err);
+            } finally {
+                setIsLoadingContext(false);
+            }
+        } else {
+            setActivePostId(null); // Fresh draft for new leads/tasks
         }
+        
         setActiveSource(sourceData);
 
-        // Identify associated Task ID from metadata variants
-        const taskId = (sourceData as any).metadata?.task_id || 
-                       (sourceData as any).task_id || 
-                       (sourceData as any).metadata?.taskId;
-        setActiveTaskId(taskId || null);
+        // Identify associated Task ID for other source types (leads/tasks)
+        if (source.type !== 'blog') {
+            const taskId = sourceData.metadata?.task_id || 
+                           (sourceData as any).task_id || 
+                           sourceData.metadata?.taskId;
+            setActiveTaskId(taskId || null);
+        }
         
         setIsLoadingContext(true);
         try {
@@ -174,24 +216,37 @@ const BrandPage: React.FC = () => {
     const handleSaveWorkbench = async () => {
         try {
             const finalContent = cleanAIImageReference(workbenchContent, workbenchImageUrl);
-
-            // Persist to DB so it shows up in Kanban "Ideas & Drafts"
-            await api.createBlogPost({
+            const postPayload = {
                 title: workbenchTitle || "Untitled Draft",
                 content: finalContent || "",
                 excerpt: finalContent.slice(0, 100) + "...",
                 imageUrl: workbenchImageUrl,
                 status: 'draft',
                 authorName: user?.name || "Bob",
-                publishDate: new Date().toISOString()
-            });
+                publishDate: new Date().toISOString(),
+                reviewNotes: activeSource?.review_notes, 
+                generationMetadata: {
+                    task_id: activeTaskId, // Link to actual task
+                    context_source_id: activeSource?.id,
+                    context_type: activeSource?.type
+                }
+            };
+
+            // Phase 2 (UML): Smart Update logic (Avoid Duplicates)
+            if (activePostId) {
+                await api.updateBlogPost(activePostId, postPayload as any);
+                alert("Draft updated successfully!");
+            } else {
+                const newPost = await api.createBlogPost(postPayload as any);
+                setActivePostId(newPost.id); // Start tracking the new ID
+                alert("New draft saved to workspace!");
+            }
 
             // GAP-023: Sync Task Status to 'doing'
             if (activeTaskId) {
                 await api.updateTask(activeTaskId, { status: TaskStatus.DOING });
             }
 
-            alert("Draft saved to workspace!");
             setViewMode('dashboard');
             loadData(); // Refresh dashboard data
         } catch (err: any) {
@@ -223,24 +278,39 @@ const BrandPage: React.FC = () => {
         
         try {
             const finalContent = cleanAIImageReference(postData.content, workbenchImageUrl);
-
-            // 1. Always Create/Update Draft First
-            const draft = await api.createBlogPost({
+            const payload = {
                 title: postData.title,
                 content: finalContent,
                 excerpt: finalContent.slice(0, 150) + '...',
                 imageUrl: workbenchImageUrl,
                 status: 'draft',
                 authorName: user?.name || 'Unknown Author',
-                publishDate: new Date().toISOString()
-            });
+                publishDate: new Date().toISOString(),
+                reviewNotes: activeSource?.review_notes,
+                generationMetadata: {
+                    task_id: activeTaskId, // Link to actual task
+                    context_source_id: activeSource?.id,
+                    context_type: activeSource?.type
+                }
+            };
+
+            // 1. Upsert Logic: Prevent duplicates
+            let targetPost;
+            if (activePostId) {
+                targetPost = await api.updateBlogPost(activePostId, payload as any);
+            } else {
+                targetPost = await api.createBlogPost(payload as any);
+                setActivePostId(targetPost.id);
+            }
+
+            const postId = targetPost.id;
 
             // 2. If Manager, Publish Directly. If Member, Submit for Review (AI Check)
             if (isManager) {
-                await api.updateBlogPostStatus(draft.id, 'published');
+                await api.updateBlogPostStatus(postId, 'published');
                 alert("Article published successfully!");
             } else {
-                const result = await api.submitBlogPost(draft.id);
+                const result = await api.submitBlogPost(postId);
                 if (result.status === 'changes_requested') {
                     alert(`Submission Returned by AI Reviewer:\n${result.review_notes || 'Quality check failed.'}`);
                 } else {
@@ -329,19 +399,21 @@ const BrandPage: React.FC = () => {
         if (post.status === 'draft' || post.status === 'changes_requested') {
             setWorkbenchTitle(post.title || '');
             setWorkbenchContent(post.content || '');
+            setWorkbenchImageUrl(post.imageUrl || '/placeholder-blog.jpg');
             
-            // Resolve source context association
+            // Resolve source context association (Critical for Backtracking)
             setActiveSource({ 
                 id: post.id, 
-                type: 'lead', 
+                type: 'blog', 
                 title: post.title || 'Untitled Draft',
-                score: 100, 
+                score: (post as any).ai_score || 100, 
                 summary: post.excerpt || '', 
                 date: post.publishDate || new Date().toISOString(),
-                // Handle both snake_case and camelCase from API aliases
-                review_notes: (post as any).reviewNotes || (post as any).review_notes 
+                review_notes: post.review_notes || (post as any).reviewNotes 
             } as any);
             
+            setActivePostId(post.id); // GAP-023: Prevent Duplicates
+
             // Link Task ID for status sync
             const associatedTaskId = (post as any).generationMetadata?.task_id || (post as any).generation_metadata?.task_id || (post as any).task_id;
             setActiveTaskId(associatedTaskId || null);
@@ -378,48 +450,62 @@ const BrandPage: React.FC = () => {
                 </span>
             </div>
             <div className="space-y-3 overflow-y-auto max-h-[500px] pr-1">
-                {columnPosts.map(post => (
-                    <div key={post.id} className="bg-white p-4 rounded-lg shadow-sm border border-gray-100 hover:shadow-md transition-all group relative overflow-hidden">
-                        {post.status === 'changes_requested' && (
-                            <div className="absolute top-0 right-0 bg-red-100 text-red-600 text-[10px] font-bold px-2 py-1 rounded-bl-lg">
-                                RETURNED
-                            </div>
-                        )}
-                        <h4 className="font-semibold text-gray-800 line-clamp-2">{post.title}</h4>
-                        {post.status === 'changes_requested' && (post.review_notes || (post as any).reviewNotes) && (
-                            <p className="mt-2 text-[10px] bg-red-50 text-red-700 p-2 rounded-lg border border-red-100 italic line-clamp-3">
-                                💬 {post.review_notes || (post as any).reviewNotes}
-                            </p>
-                        )}
-                        <p className="text-xs text-gray-500 mt-2 italic">By {post.authorName}</p>
-                        <div className="mt-4 flex justify-between items-center opacity-0 group-hover:opacity-100 transition-opacity">
-                            <div className="flex gap-1">
-                                {post.status !== 'draft' && post.status !== 'changes_requested' && (
-                                    <button onClick={() => updatePostStatus(post.id, 'draft')} className="p-1 hover:bg-gray-100 rounded text-gray-400" title="Move to Draft">
+                {columnPosts.map(post => {
+                    // Precision Data Mapping: Support both snake_case and camelCase from backend
+                    const feedback = post.review_notes || (post as any).reviewNotes;
+                    // Identification: It's returned if status matches OR if there is feedback on a non-final post
+                    const isReturned = post.status === 'changes_requested' || (feedback && post.status !== 'published' && post.status !== 'review');
+                    
+                    return (
+                        <div key={post.id} className={`bg-white p-4 rounded-lg shadow-sm border transition-all group relative overflow-hidden ${isReturned ? 'border-red-200 ring-1 ring-red-50' : 'border-gray-100 hover:shadow-md'}`}>
+                            {isReturned && (
+                                <div className="absolute top-0 right-0 bg-red-600 text-white text-[9px] font-black px-2 py-0.5 rounded-bl-lg tracking-tighter shadow-sm z-20">
+                                    RETURNED
+                                </div>
+                            )}
+                            <h4 className="font-semibold text-gray-800 line-clamp-2 pr-12">{post.title}</h4>
+                            
+                            {isReturned && feedback && (
+                                <div className="mt-3 p-2 bg-red-50/80 rounded-lg border border-red-100 relative">
+                                    <div className="flex items-center gap-1.5 mb-1">
+                                        <span className="text-[9px] font-black text-red-700 bg-red-100 px-1 rounded uppercase">Charlie's Note</span>
+                                    </div>
+                                    <p className="text-[11px] text-red-900 italic line-clamp-4 leading-snug">
+                                        "{feedback}"
+                                    </p>
+                                </div>
+                            )}
+                            
+                            <p className="text-[10px] text-gray-500 mt-2 font-medium">By {post.authorName}</p>
+                            <div className="mt-4 flex justify-between items-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                <div className="flex gap-1">
+                                    {post.status !== 'draft' && post.status !== 'changes_requested' && (
+                                        <button onClick={() => updatePostStatus(post.id, 'draft')} className="p-1 hover:bg-gray-100 rounded text-gray-400" title="Move to Draft">
+                                            <FileEditIcon className="w-4 h-4" />
+                                        </button>
+                                    )}
+                                    <button onClick={() => handleEditSmart(post)} className="p-1 hover:bg-gray-100 rounded text-blue-500" title="Edit Content">
                                         <FileEditIcon className="w-4 h-4" />
                                     </button>
-                                )}
-                                <button onClick={() => handleEditSmart(post)} className="p-1 hover:bg-gray-100 rounded text-blue-500" title="Edit Content">
-                                    <FileEditIcon className="w-4 h-4" />
-                                </button>
-                                <button onClick={() => handleDeletePost(post.id)} className="p-1 hover:bg-red-50 rounded text-red-500" title="Delete">
-                                    <TrendingUpIcon className="w-4 h-4 rotate-45" />
-                                </button>
-                                {post.status !== 'review' && (
-                                    <button onClick={() => updatePostStatus(post.id, 'review')} className="p-1 hover:bg-amber-50 rounded text-amber-500" title="Move to Review">
-                                        <EyeIcon className="w-4 h-4" />
+                                    <button onClick={() => handleDeletePost(post.id)} className="p-1 hover:bg-red-50 rounded text-red-500" title="Delete">
+                                        <TrendingUpIcon className="w-4 h-4 rotate-45" />
                                     </button>
-                                )}
-                                {post.status !== 'published' && (
-                                    <button onClick={() => updatePostStatus(post.id, 'published')} className="p-1 hover:bg-green-50 rounded text-green-600" title="Publish Now">
-                                        <CheckCircleIcon className="w-4 h-4" />
-                                    </button>
-                                )}
+                                    {post.status !== 'review' && (
+                                        <button onClick={() => updatePostStatus(post.id, 'review')} className="p-1 hover:bg-amber-50 rounded text-amber-500" title="Move to Review">
+                                            <EyeIcon className="w-4 h-4" />
+                                        </button>
+                                    )}
+                                    {post.status !== 'published' && (
+                                        <button onClick={() => updatePostStatus(post.id, 'published')} className="p-1 hover:bg-green-50 rounded text-green-600" title="Publish Now">
+                                            <CheckCircleIcon className="w-4 h-4" />
+                                        </button>
+                                    )}
+                                </div>
+                                <span className="text-[10px] uppercase font-bold text-gray-300">#{post.id.slice(0,4)}</span>
                             </div>
-                            <span className="text-[10px] uppercase font-bold text-gray-300">#{post.id.slice(0,4)}</span>
                         </div>
-                    </div>
-                ))}
+                    );
+                })}
             </div>
         </div>
     )};
@@ -615,6 +701,8 @@ const BrandPage: React.FC = () => {
                                     onTitleChange={setWorkbenchTitle}
                                     onContentChange={setWorkbenchContent}
                                     usedPrompt={lastPrompt}
+                                    feedback={activeSource?.review_notes}
+                                    aiScore={activeSource?.ai_score}
                                 />
                             </div>
                         </div>
