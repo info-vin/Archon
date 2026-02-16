@@ -436,3 +436,84 @@ class LibrarianService:
         except Exception as e:
             logger.error(f"Librarian: Failed to archive failure case: {e}")
             return ""
+
+    async def archive_style_critique(
+        self,
+        post_title: str,
+        original_content: str,
+        review_notes: str
+    ) -> str:
+        """
+        Processes manager's review notes to extract reusable style constraints.
+        Enables the 'Expertise Loop' for Bob (Marketing).
+        """
+        try:
+            # 1. Extract Constraint using LLM
+            from ..services.credential_service import credential_service
+            from google import genai
+            from google.genai import types
+
+            api_key = await credential_service.get_credential("GEMINI_API_KEY") or await credential_service.get_credential("GOOGLE_API_KEY")
+            client = genai.Client(api_key=api_key)
+
+            extraction_prompt = (
+                "You are an AI Style Auditor. Analyze the following 'Review Notes' provided by a manager "
+                "regarding a blog post. Extract 1-2 concrete, reusable 'Brand Voice Constraints' or 'Style Rules' "
+                "that should be followed in the future. Avoid fluff. Focus on what to avoid or change.\n\n"
+                f"Post Title: {post_title}\n"
+                f"Review Notes: {review_notes}\n\n"
+                "Return the rules as a clear Markdown list."
+            )
+
+            response = client.models.generate_content(
+                model="gemini-2.0-flash-lite",
+                contents=extraction_prompt,
+                config=types.GenerateContentConfig(temperature=0.1)
+            )
+            extracted_rules = response.text
+
+            # 2. Archive as Knowledge
+            unique_id = str(uuid.uuid4())[:8]
+            source_id = f"style-lesson-{unique_id}"
+            tags = ["brand_voice_constraint", "style_lesson", "bob_feedback"]
+
+            summary = f"Style lesson learned from rejection of '{post_title}'"
+            full_lesson = (
+                f"# Style Lesson: {post_title}\n"
+                f"## Feedback Received\n{review_notes}\n\n"
+                f"## Extracted Constraints\n{extracted_rules}\n\n"
+                f"## Original Reference Context\n{original_content[:500]}..."
+            )
+
+            await update_source_info(
+                client=self.supabase,
+                source_id=source_id,
+                summary=summary,
+                word_count=len(full_lesson.split()),
+                content=full_lesson,
+                knowledge_type="brand_voice",
+                tags=tags,
+                source_display_name=f"Style Lesson: {post_title}"
+            )
+
+            embedding_vector = await create_embedding(full_lesson[:8000])
+            page_data = {
+                "source_id": source_id,
+                "url": f"lesson://style/{source_id}",
+                "chunk_number": 0,
+                "content": full_lesson,
+                "embedding": embedding_vector,
+                "metadata": {
+                    "type": "style_constraint",
+                    "tags": tags,
+                    "post_title": post_title
+                }
+            }
+            self.supabase.table("archon_crawled_pages").insert(page_data).execute()
+
+            logger.info(f"Librarian: Style critique archived | id={source_id}")
+            return source_id
+
+        except Exception as e:
+            logger.error(f"Librarian: Failed to archive style critique: {e}")
+            return ""

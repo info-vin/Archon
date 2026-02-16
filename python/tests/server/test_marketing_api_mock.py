@@ -1,64 +1,57 @@
-
-from unittest.mock import AsyncMock, Mock, patch
-
+from unittest.mock import AsyncMock, Mock, patch, MagicMock
 import pytest
 from fastapi import HTTPException
-
 from src.server.api_routes.marketing_api import DraftBlogRequest, draft_blog_post, nana_banana_proxy
 
-
 @pytest.mark.asyncio
-async def test_draft_blog_fallback_on_llm_failure():
+async def test_draft_blog_failure():
     """
-    TC1: Simulate LLM failure in draft_blog_post -> Assert returns Mock Draft via direct function call.
+    Ensures blog drafting returns 500 on LLM failure (No fallback for text content).
     """
     user = {"id": "test-user-id", "role": "marketing", "email": "test@archon.ai"}
-    request = DraftBlogRequest(topic="AI Benefits", keywords="Efficiency", tone="Expert")
+    request = DraftBlogRequest(topic="AI Benefits")
 
     with patch("src.server.api_routes.marketing_api.genai.Client") as MockGenAI:
-        # Mock the SDK to raise an exception
         MockGenAI.return_value.models.generate_content.side_effect = Exception("LLM failure")
-
-        with patch("src.server.api_routes.marketing_api.RAGService") as MockRAG:
-            MockRAG.return_value.perform_rag_query = AsyncMock(return_value=(True, {"results": []}))
-            with patch("src.server.api_routes.marketing_api.credential_service") as MockCreds:
-                MockCreds.get_active_provider = AsyncMock(return_value={"chat_model": "gemini-2.5-flash-lite"})
-                MockCreds.get_credentials_by_category = AsyncMock(return_value={"MARKETING_MODEL": "gemini-2.5-flash-lite"})
-                MockCreds.get_credential = AsyncMock(return_value="fake-key")
-                with patch("src.server.api_routes.marketing_api.LogService") as MockLogService:
-                    MockLogService.return_value.create_log_entry = Mock()
-
-                    # Directly call the endpoint function
-                    with pytest.raises(HTTPException) as excinfo:
-                        await draft_blog_post(request=request, current_user=user)
-
-                    assert excinfo.value.status_code == 500
-                    assert "LLM failure" in str(excinfo.value.detail)
-
-@pytest.mark.asyncio
-async def test_nana_banana_fallback_on_429():
-    """
-    TC2: Simulate Image API 429 Quota Exceeded -> Assert returns Mock Image via direct function call.
-    """
-    user = {"id": "test-user-id", "role": "marketing", "email": "test@archon.ai"}
-
-    with patch("src.server.api_routes.marketing_api.genai.Client") as MockGenAI:
-        # Mock the SDK to raise an exception (like 429 Resource Exhausted)
-        MockGenAI.return_value.models.generate_content.side_effect = Exception("429 Quota Exceeded")
-
         with patch("src.server.api_routes.marketing_api.credential_service") as MockCreds:
             MockCreds.get_credential = AsyncMock(return_value="fake-key")
-            MockCreds.get_credentials_by_category = AsyncMock(return_value={})
-            with patch("src.server.api_routes.marketing_api.LogService") as MockLogService:
-                MockLogService.return_value.create_log_entry = Mock()
+            with pytest.raises(HTTPException) as excinfo:
+                await draft_blog_post(request=request, current_user=user)
+            assert excinfo.value.status_code == 500
 
-                # Directly call the endpoint function
-                result = await nana_banana_proxy(
-                    request={"prompt": "Cyberpunk City"},
-                    current_user=user
-                )
+@pytest.mark.asyncio
+async def test_nana_banana_tier_fallback():
+    """
+    Simulates Native Render Failure -> Assert switches to Fallback (Pollinations).
+    """
+    user = {"id": "test-user-id", "role": "marketing"}
+    with patch("src.server.api_routes.marketing_api.genai.Client") as MockGenAI:
+        mock_enrich = MagicMock()
+        mock_enrich.text = "Enhanced Prompt"
+        # 1st call OK, 2nd call fails
+        MockGenAI.return_value.models.generate_content.side_effect = [mock_enrich, Exception("No Imagen")]
+        
+        with patch("src.server.api_routes.marketing_api.credential_service") as MockCreds:
+            MockCreds.get_credential = AsyncMock(return_value="fake-key")
+            result = await nana_banana_proxy(request={"prompt": "City"}, current_user=user)
+            assert result["tier"] == "fallback"
+            assert "pollinations.ai" in result["image_url"]
 
-                # ASSERT
-                assert result["status"] == "fallback_mock"
-                assert "placehold.co" in result["image_url"] or "Nana+Banana+Fallback" in result["image_url"] or "Nana Banana Fallback" in result["image_url"]
-                MockLogService.return_value.create_log_entry.assert_called_once()
+@pytest.mark.asyncio
+async def test_nana_banana_emergency_picsum():
+    """
+    Simulates COMPLETE Failure (LLM down) -> Assert switches to Emergency (Picsum).
+    """
+    user = {"id": "test-user-id", "role": "marketing"}
+    # Simulate LLM crash at the very first step
+    with patch("src.server.api_routes.marketing_api.genai.Client") as MockGenAI:
+        MockGenAI.return_value.models.generate_content.side_effect = Exception("Total API Blackout")
+        
+        with patch("src.server.api_routes.marketing_api.credential_service") as MockCreds:
+            MockCreds.get_credential = AsyncMock(return_value="fake-key")
+            result = await nana_banana_proxy(request={"prompt": "Cyberpunk"}, current_user=user)
+            
+            # ASSERT: Bob is unconscious, system uses Picsum
+            assert result["tier"] == "emergency"
+            assert result["status"] == "fallback_picsum"
+            assert "picsum.photos" in result["image_url"]
