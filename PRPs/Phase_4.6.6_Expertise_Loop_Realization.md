@@ -35,19 +35,34 @@
     *   Bob 的 `draft_blog_post` 將預設帶入 `min_score` 篩選，優先命中 `knowledge_api` 產出的 `technical` 與 `market_intel` 標籤。
 
 ### 1.5 DevBot：規範驅動自癒 (SOP-Driven Self-Healing)
-*   **目標**: 讓 DevBot 具備「看手冊 (SOP)」修復代碼的能力，實現從「經驗修復」到「規範修復」的質變。
+*   **狀態**: 已完成 (COMPLETED)
+*   **實作**: 
+    *   `AgentService` 現在具備「規範先行」修復鏈，修復前自動檢索 Librarian 中的 SOP。
+    *   **治理機制**: 引入了基於 Poisson 分佈的 **「成功驅動晉升模型」**。Agent（DevBot, MarketBot）必須累積足夠的成功紀錄（如 L1 > 500 次）才能解鎖更高風險的重構權限。
+    *   **全量驗證**: 自癒迴圈現在強制包含 FE/BE 雙端靜態掃描與單元測試核對。
+
+### 1.6 Charlie：治理與政策注入 (Governance & Policy Injection)
+*   **目標**: 透過經理權限，注入高階開發規範與技術底座知識。
+*   **實作**:
+    *   **配置化爬蟲**: Charlie 透過 `crawler_rbac_settings` 管理全系統的技術掃描任務，將外部 SDK 文檔自動轉化為 RAG 知識。
+    *   **政策定錨**: 所有經由經理上傳的文件（如 `CONTRIBUTING.md`, `SECURITY.md`）自動獲得 `authority_level: high` 標籤。
+    *   **聯動價值**: 當 DevBot 在進行自癒時，會優先權衡 Charlie 注入的「專案政策」，確保修復路徑符合公司規範。
+
+### 1.7 遞迴進化：從重構到規範生成 (Meta-Evolution)
+*   **目標**: 讓系統具備「自我診斷重構需求」與「自動總結成功經驗」的能力。
 *   **落地細節**:
-    1.  **知識原子化 (Knowledge Atomization)**:
-        *   由 `Librarian` 對 `@CONTRIBUTING_tw.md` 進行精確切片。
-        *   **標籤化**: 識別「原則 X」、「附錄 Y」等編號規則，賦予 `type: development_rule` 標籤。
-        *   **特徵對齊**: 建立「錯誤碼 (如 E701) -> 規範章節 (如 縮排規範)」的語義連結。
-    2.  **「規範先行」修復鏈 (Rule-First Repair Chain)**:
-        *   **診斷查閱**: DevBot 看到報錯後，第一動作不是改 Code，而是 `perform_rag_query(query="[Error] fix according to SOP")`。
-        *   **約束推理**: LLM 在構造修復建議時，必須將檢索到的「開發原則」作為強制輸入 (Hard Constraint)。
-    3.  **多階驗收序列 (Multi-Stage Validation Sequence)**:
-        *   修復後執行自律檢查：`Command Check` -> `make lint-be` -> `make test-be`。
-        *   **自我否定迴圈**: 若 `make lint-be` 失敗，DevBot 必須再次回頭問 Librarian：「我的修復違反了哪條新規範？」並進行二次迭代。
-*   **核心價值**: 只要更新文件，全系統的 AI 療癒標準就會同步更新，實現「文件即規則，規則即代碼」。
+    1.  **重構等級自動判定 (Refactor Severity Grading)**:
+        *   DevBot 具備掃描代碼庫的診斷技能，根據以下指標自動判定技術債等級：
+            *   **🟢 Level 1 (Minor)**: 僅 Lint 錯誤。處置：就地修復。
+            *   **🟡 Level 2 (Moderate)**: 檔案行數 300-500 行，邏輯耦合。處置：提議抽離 Helper。
+            *   **🔴 Level 3 (Critical)**: 檔案 > 500 行 (如 `stats_api`), 包含複雜 SQL。處置：**強制 Service 層剝離**。
+    2.  **5173 觸發路徑 (Trigger Paths)**:
+        *   **主動指派**: Charlie 在 5173 的「任務管理」建立優化任務，指派給 `ai-dev-bot`。
+        *   **自動偵測**: `make lint` 失敗時，Clockwork 自動派工。
+        *   **對話式觸發**: 在 5173 的 Agent Chat 輸入：「檢查 `projects_api.py` 的健康度」，觸發診斷。
+    3.  **治理與審核**: DevBot 產出 `Proposed Change`。管理員在 5173 的 `/approvals` 頁面審核 Diff 後執行。
+    4.  **規範回饋**: 成功後自動更新 `PRPs/ai_docs/SOP_Refactoring_Methodology.md`。
+*   **核心價值**: 實現「AI 越修越聰明，規範越補越齊全」的正向循環。
 
 ## 2. 數據流矩陣 (Data Flow Matrix)
 
@@ -56,7 +71,10 @@
 | **Visit Logs** | 文字輸入/錄音 | 提取關鍵需求與情緒 | `visit_logs` + `archon_tasks` |
 | **Leads (LOST)** | 狀態更新 | 提取失敗原因標籤 | `knowledge_items` (Outcome: Fail) |
 | **Approvals** | 填寫 review_notes | 轉化為品牌風格約束 | `knowledge_items` (Category: Voice) |
-| **Crawler** | 成功抓取網頁 | 自動分段與向量化 | `knowledge_items` (Type: Market) |
+| **Lint / WC** | 指令失敗/行數過多 | **判定重構等級 (L1-L3)** | `proposed_changes` (Refactor) |
+| **DevBot Success**| 重構任務完成 | 總結技術細節與封裝模式 | `PRPs/ai_docs/SOP_*.md` |
+| **Alice Crawler**| 業務掃描任務 | 提取市場動態與痛點 | `knowledge_items` (Type: Market) |
+| **Charlie Crawler**| 技術掃描任務 | 提取 SDK 文檔與架構圖 | `knowledge_items` (Type: Technical) |
 | **Docs (MD)** | 文件上傳 | 轉化為開發規範/SOP | `knowledge_items` (Type: SOP) |
 
 ## 3. 執行檢查清單 (Actionable Checklist)

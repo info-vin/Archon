@@ -32,11 +32,12 @@ Archon 是一個「使用者角色的人機協作平台」。在此生態系中�
 
 | Agent 代號 | 類型 | 對應技能/工具 (MCP Tools) | 開發定義 | 此 Role 綁定的模型與檔案來源 (Model & Source) |
 | :--- | :--- | :--- | :--- | :--- |
-| **`DevBot`** | L4-U | **Developer Agent**<br>- `auto_repair`<br>- `logo_tool` | **工匠 (Builder)**。負責修復 Bug、重構代碼，以及 **SVG 品牌資產生成**。 | **Gemini 1.5 Flash** (General) / **Imagen 3** (Logo)<br>Source: `llm_provider_service.py` (Chat)<br>Source: `marketing_api.py` (Logo, `imagen-3.0-generate-001`) |
-| **`MarketBot`**| L4-U | **Marketing/Sales Agent**<br>- `search_job_market`<br>- **`generate_sales_email`** | **獵犬/寫手 (Scout/Writer)**。負責搜尋職缺、分析需求，並**參考 Librarian 的知識**撰寫開發信。 | **Gemini 1.5 Flash** (Default)<br>Config: `RAG Settings` > `MARKETING_MODEL`<br>Source: `marketing_api.py` |
-| **`Librarian`**| L4-U | **Knowledge Agent**<br>- `archive_to_vector_db`<br>- **`rag_retrieval`** | **記憶庫 (Memory)**。負責將部落格/文件/成功信件向量化歸檔，並**提供檢索服務**。 | **Text Embedding 004** (Google) / **3-Small** (OpenAI)<br>Config: `RAG Settings` > `EMBEDDING_MODEL`<br>Source: `llm_provider_service.py` |
-| **`POBot`**    | L4-U | **Product Owner Agent**<br>- `generate_user_story`<br>- **`refine_task_spec`** | **策劃 (Planner)**。負責將回饋轉化為開發規格，並優化模糊的任務描述。 | **Gemini 1.5 Flash** (Default)<br>Config: `RAG Settings` > `LLM_PROVIDER`<br>Source: `task_service.py` |
-| **`Clockwork`**| L4-S | **System Agent**<br>- `cleanup_logs`<br>- `analyze_token_usage` | **維運 (Ops)**。由 Cron Job 定期觸發，**負責計算 AI 消耗、分析 Logs**。 | **Gemini 1.5 Flash** (Default)<br>Config: `RAG Settings`<br>Source: `scheduler_service.py` |
+| **`DevBot`** | L4-U | **Developer Agent**<br>- `auto_repair`<br>- `apply_modification` | **工匠 (Builder)**。負責修復 Bug、重構代碼。 | **Gemini 2.5 Flash Lite**<br>Source: `agent_service.py` |
+| **`MarketBot`**| L4-U | **Marketing/Sales Agent**<br>- `search_job_market`<br>- `generate_sales_email` | **獵犬/寫手 (Scout/Writer)**。負責搜尋職缺、分析需求。 | **Gemini 2.0 Flash** (Blog) / **2.5 Flash Lite** (General)<br>Source: `marketing_api.py`, `agent_service.py` |
+| **`Librarian`**| L4-U | **Knowledge Agent**<br>- `perform_rag_query`<br>- `archive_to_vector_db` | **記憶庫 (Memory)**。負責知識向量化與檢索服務。 | **Gemini 2.0 Flash Lite**<br>Source: `librarian_service.py`, `extraction_service.py` |
+| **`POBot`**    | L4-U | **Product Owner Agent**<br>- `list_projects`<br>- `manage_task` | **策劃 (Planner)**。負責優化任務規格與 User Story 生成。 | **Gemini 2.5 Flash Lite**<br>Source: `agent_service.py` |
+| **`Clockwork`**| L4-S | **System Agent**<br>- `cleanup_logs`<br>- `analyze_token_usage` | **維運 (Ops)**。負責背景診斷、自動化派工與成本核算。 | **Gemini 2.0 Flash Lite**<br>Source: `scheduler_service.py` (via Librarian) |
+| **`Bob (Creative)`**| N/A | **Image Generation**<br>- `nana_banana_proxy` | **設計師 (Designer)**。負責品牌視覺與高品質影像生成。 | **Gemini 2.0 Flash Exp** / **Pollinations.ai** (Fallback)<br>Source: `marketing_api.py` |
 
 ---
 
@@ -45,6 +46,22 @@ Archon 是一個「使用者角色的人機協作平台」。在此生態系中�
 Agent 在系統中具有雙重性：
 1. **介面層 (The Bot)**：作為具備頭像、ID 與 `ai_agent` 角色的「虛擬員工」，存在於指派選單中，供人類協作。
 2. **執行層 (The Proxy)**：透過掛載 **MCP Tools** 與系統權限，具備真實改變系統狀態的能力（如寫入代碼、執行爬蟲、操作向量庫），是能獨立解決問題的「代理人」。
+
+---
+
+## 3.2 AGENT 權限晉升門檻表 (Poisson Success Ledger)
+
+Agent 權限等級必須透過累積成功樣本解鎖。高等級重構要求極高的穩定性機率密度。
+
+| 權限等級 | 類別 | 對應 Agent 類型 | 累積成功門檻 (Success Count) | 降級觸發 (Regression) |
+| :--- | :--- | :--- | :--- | :--- |
+| **Level 1** | 微手術 | **All Agents** | **起點門檻 (> 500 次)** | -10 積分 |
+| **Level 2** | 小重構 | DevBot, POBot | **L1 達標 + 200 次** | -20 積分 |
+| **Level 3** | 邏輯剝離 | DevBot, Librarian | **L2 達標 + 100 次** | -50 積分 |
+| **Level 4** | 接口調整 | DevBot | **L3 達標 + 50 次** | -100 積分 |
+| **Level 5** | 依賴解耦 | DevBot | **L4 達標 + 20 次** | 權限封鎖 |
+| **Level 6** | 服務演進 | DevBot | **L5 達標 + 10 次** | 權限封鎖 |
+| **Level 7** | 核心變革 | DevBot | **人類 Admin 手動授權** | 永久禁止 |
 
 ---
 
@@ -94,15 +111,17 @@ Agent 在系統中具有雙重性：
 - 🔵 **團隊權限**: 可操作團隊資料。
 - 🟣 **全域強制**: Admin 最高權限 (可無視擁有者規則)。
 
-| 功能模組 | 資源/動作 | SYSTEM_ADMIN (You) | MANAGER (Charlie) | SALES (Alice) | MKT (Bob) |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| **手動管理** | **更新任務進度/留言** | 🟣 任意任務 | 🔵 團隊任務 | 🟢 指派給我的 | 🟢 指派給我的 |
-| | **編輯/刪除 Blog** | 🟣 **全域強制** | 🔵 團隊文章 | 🟢 僅限本人 | 🟢 僅限本人 |
+| 功能模組 | 資源/動作 | SYSTEM_ADMIN (You) | MANAGER (Charlie) | SALES (Alice) | MKT (Bob) | **AGENT (L1-L2)** | **AGENT (L3+)** |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **手動管理** | **更新任務進度/留言** | 🟣 任意任務 | 🔵 團隊任務 | 🟢 指派給我的 | 🟢 指派給我的 | 🟢 指派我的 | 🔵 團隊 |
+| | **編輯/刪除 Blog** | 🟣 **全域強制** | 🔵 團隊文章 | 🟢 僅限本人 | 🟢 僅限本人 | 🔴 禁止 | 🟢 本人 |
 | **團隊管理** | **重設成員密碼** | ✅ 全域 | 🔵 (限同部門) | 🔴 | 🔴 |
 | | **檢視系統健康/Logs** | ✅ 全域 | 🔵 (Clockwork 報告) | 🔴 | 🔴 |
-| **品牌管理** | **生成 Logo (DevBot)** | ✅ 允許 | ✅ 允許 | 🔴 禁止 | 🔴 禁止 |
-| | **微調 Logo 參數** | ✅ 允許 | ✅ 允許 | 🔴 禁止 | 🟢 (BRAND_ASSET) |
-| **AI 協作** | **指派 DevBot** | ✅ 允許 | ✅ 允許 | 🔴 禁止 | 🔴 禁止 |
+| **品牌管理** | **生成 Logo (DevBot)** | ✅ 允許 | ✅ 允許 | 🔴 禁止 | 🔴 禁止 | ✅ (僅 SVG) | ✅ (Creative) |
+| | **微調 Logo 參數** | ✅ 允許 | ✅ 允許 | 🔴 禁止 | 🟢 (BRAND_ASSET) | 🔴 禁止 | ✅ 允許 |
+| **系統維護** | **Lint 修復 (L1)** | ✅ 允許 | ✅ 允許 | 🔴 禁止 | 🔴 禁止 | ✅ **自主執行** | ✅ **自主執行** |
+| | **邏輯重構 (L3)** | ✅ 允許 | ✅ 允許 | 🔴 禁止 | 🔴 禁止 | 🔴 **需 Propose** | ✅ **自主執行** |
+| **AI 協作** | **指派 DevBot** | ✅ 允許 | ✅ 允許 | 🔴 禁止 | 🔴 禁止 | 🔴 | 🔴 |
 | | **指派 MarketBot** | ✅ 允許 | ✅ 允許 | ✅ 允許 | ✅ 允許 |
 | | **指派 POBot/Librarian**| ✅ 允許 | ✅ 允許 | ✅ 允許 | ✅ 允許 |
 | | **發起資料請求 (Request Info)** | ✅ 允許 | ✅ 允許 | 🔴 禁止 | ✅ 允許 |
@@ -278,10 +297,15 @@ sequenceDiagram
 
 ---
 
-## 10. COGNITIVE WORKFLOWS & SELF-REINFORCEMENT (認知工作流與自我強化)
+## 10. COGNITIVE WORKFLOWS & SELF-REINFORCEMENT (認知工作流與審計進化)
 
-這是系統邁向 **L5 (Level 5) 自主進化** 的藍圖：
+這是系統邁向 **L5 (Level 5) 自主進化** 的藍圖，採用 **「被動審計」** 模式：
 
-1. **觀察 (Observe)**：透過 `archon_logs` 記錄人類角色 (Alice/Bob) 的操作習慣與 Agent 產出的修改率。
-2. **學習 (Learn)**：由 **Clockwork (L5 模式)** 分析模式，找出效率瓶頸。
-3. **強化 (Reinforce)**：Clockwork 主動向 L1 Admin 提交 `proposed_changes`，建議優化 Agent 的 System Prompts 或建立自動化 Macro，實現工作流的閉環強化。
+1. **觀察與審計 (Observe & Audit)**：Clockwork 透過 `archon_logs` 紀錄全系統行為。它不直接干預任務，而是作為一個「被動觀察者」評估每一次人機協作的成果（如修改率、執行時長）。
+2. **元學習 (Meta-Learning)**：由 **Clockwork (L5 審計模式)** 彙整大量 Audit 日誌，找出系統性瓶頸（例如：某個 Agent 頻繁違反縮排規範）。
+3. **強化與提案 (Reinforce & Propose)**：Clockwork 主動向 L1 Admin 提交 `proposed_changes`。這些提案不針對具體業務邏輯，而是針對 **「系統基因」**：
+    *   優化 Agent 的 **System Prompts**。
+    *   更新 `PRPs/ai_docs/` 中的 **SOP 規範**。
+    *   調整 Poisson 晉升門檻的參數。
+
+> **核心價值**: 實現「AI 不直接改寫自己，但透過審計報告引導人類進行系統演進」的高級治理模式。

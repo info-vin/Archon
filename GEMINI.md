@@ -107,6 +107,10 @@
     *   通過 `make test-be` (544 項測試 100% 通過)。
     *   通過 `enduser-ui-fe` 單元測試 (34 項測試 100% 通過)。
 *   **架構分析**: 盤點 `marketing_api.py` 從 1500+ 行精簡至 500 行的演進，確認「肥控制器」已成功轉型為「啞巴路由器」。
+*   **成功驅動治理 (Governance Evolution)**:
+    *   **晉升體系**: 確立了 Poisson 晉升模型（L1 > 500 次成功始可解鎖 L2）。這能防止 Agent 在未具備足夠基礎經驗前，執行高風險的架構重構。
+    *   **全系統物理核對**: 確立了「後端綠燈 ≠ 全系統安全」的準則。所有重構必須通過 `make lint` (全端) 與 `pnpm test:unit` 的聯合驗收，確保 Alice/Bob 的數據展示不受 Regression 影響。
+    *   **RAG 韌性**: 在 `agent_service` 實作了靜默降級機制，解決了 Mock 測試環境中 Embedding Provider 缺失導致自癒分析中斷的問題。
 
 ### 2026-02-15: Operational Engine Standardization & Loop Defense
 *   **引擎大統一**: 發現營運端 (Alice/POBot) 與行銷端 (Bob) 存在 SDK 斷層（OpenAI Shim vs Google 原生 SDK），導致 Alice 頻繁報錯 `v1main 404`。已將所有生產力路徑遷移至官方 `genai.Client`，徹底解決路由跳轉不穩的問題。

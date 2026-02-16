@@ -321,7 +321,7 @@ async def process_approval(item_type: str, item_id: str, action: str, request: R
                     original_content=post_data.get("content", ""),
                     review_notes=notes
                 ))
-            
+
             task_id = (post_data.get("generation_metadata") or {}).get("task_id")
             if task_id:
                 await TaskService().update_task(task_id, {"status": "done" if action == "approve" else "doing"})
@@ -383,17 +383,17 @@ async def draft_blog_post(request: DraftBlogRequest, current_user: dict = Depend
         is_valid, err = GuardrailService.validate_input(f"{request.topic} {request.keywords or ''}")
         if not is_valid:
             raise HTTPException(status_code=400, detail=f"Guardrail Violation: {err}")
-        
+
         # 1. Base Alice Signals
         context_text = ""
         if request.context_source_id and request.context_type == "lead":
             logs = get_supabase_client().table("visit_logs").select("summary, voice_transcript").eq("lead_id", request.context_source_id).execute().data
             for l_entry in logs:
                 context_text += f"\n[Alice Signal]: {l_entry['summary']}\n{l_entry['voice_transcript']}\n"
-        
+
         # 2. Reusable Expertise Retrieval (Bob's Memory)
         context_text += await _get_expert_style_context(f"{request.topic} {request.keywords or ''}")
-        
+
         is_tc = bool(re.search(r'[\u4e00-\u9fff]', request.topic))
         lang_instr = "You MUST use Traditional Chinese (Taiwan, zh-TW)." if is_tc else ""
         api_key = await credential_service.get_credential("GEMINI_API_KEY") or await credential_service.get_credential("GOOGLE_API_KEY")
@@ -423,14 +423,14 @@ async def nana_banana_proxy(request: dict, current_user: dict = Depends(get_curr
     try:
         user_prompt = request.get("prompt", "a professional marketing graphic")
         style = request.get("style", "professional")
-        
+
         # 1. Expertise Retrieval (Bob's Memory)
         context_text = await _get_expert_style_context(f"image style {style} {user_prompt}")
-        
+
         # 2. Bob's Prompt Engineering (Safe for Free Tier)
         api_key = await credential_service.get_credential("GEMINI_API_KEY") or await credential_service.get_credential("GOOGLE_API_KEY")
         client = genai.Client(api_key=api_key)
-        
+
         enrichment_prompt = (
             "You are Bob, a Senior Marketing Designer. Craft a highly detailed visual prompt "
             "for an AI image generator based on the user's idea and brand constraints.\n\n"
@@ -438,13 +438,13 @@ async def nana_banana_proxy(request: dict, current_user: dict = Depends(get_curr
             f"Constraints: {context_text}\n\n"
             "Return ONLY the enhanced prompt in English."
         )
-        
+
         enrich_resp = client.models.generate_content(
             model="gemini-2.0-flash-lite",
             contents=enrichment_prompt
         )
         enhanced_prompt = enrich_resp.text.strip()
-        
+
         # 3. Tier-aware Rendering
         try:
             # Native attempt (Paid/Pro Tier)
@@ -456,7 +456,7 @@ async def nana_banana_proxy(request: dict, current_user: dict = Depends(get_curr
             for part in (native_resp.parts or []):
                 if part.inline_data:
                     return {
-                        "status": "success", 
+                        "status": "success",
                         "image_url": f"data:{part.inline_data.mime_type};base64,{part.inline_data.data.decode('utf-8')}",
                         "enhanced_prompt": enhanced_prompt,
                         "tier": "native"
@@ -467,7 +467,7 @@ async def nana_banana_proxy(request: dict, current_user: dict = Depends(get_curr
         # 4. Bob's Fallback (Free Tier / Public API)
         safe_prompt = re.sub(r'[^a-zA-Z0-9\s]', '', enhanced_prompt).replace(" ", "%20")
         fallback_url = f"https://image.pollinations.ai/prompt/{safe_prompt}?width=1024&height=1024&nologo=true&seed={uuid.uuid4().hex[:8]}"
-        
+
         return {
             "status": "success",
             "image_url": fallback_url,
@@ -478,6 +478,16 @@ async def nana_banana_proxy(request: dict, current_user: dict = Depends(get_curr
     except Exception as e:
         logger.error(f"NanaBanana: Catastrophic Failure: {e}")
         # Final Safety Net: If Bob's brain (LLM) or construction fails, show a tagged random image.
+        try:
+            LogService(get_supabase_client()).create_log_entry({
+                "user_input": "Nana Banana Failure",
+                "gemini_response": str(e),
+                "project_name": "marketing",
+                "user_name": "system"
+            })
+        except Exception:
+            pass
+
         safe_tag = re.sub(r'[^a-zA-Z0-9]', '', request.get("prompt", "marketing"))[:20]
         return {
             "status": "fallback_picsum",

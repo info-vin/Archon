@@ -291,6 +291,13 @@ Phase 4.4.5 引入了 **Clockwork** 進行系統自動檢測。
 *   **`make db-fuel`**: **注入靈魂**。注入 6 個月歷史紀錄（產出、協作、ROI、SLA），讓 Nexus 戰情室充滿戰略趨勢數據。
 *   **適用場景**: 環境初次部署、系統功能演示、或針對指標口徑進行驗收。
 
+#### **序列 C：AI Agent 提交通訊協議 (Agent Commit Protocol)**
+為了防止 Agent 過度自信導致系統崩潰，AI 開發者（如 DevBot）在提交任何重構變更前，**必須**強制理解並通過以下核對：
+
+1.  **分級晉升**: 遵循 `SOP_Refactoring_Methodology.md`。Level 1 修復必須累積 > 500 次成功紀錄才可解鎖 Level 2。
+2.  **物理核對**: 嚴禁猜測測試結果。必須執行 `make lint` (全端) 與 `pnpm test:unit`。
+3.  ** Regression 防止**: 即使只改後端，也必須驗證 `enduser-ui-fe` 的行銷頁面與統計圖表是否正常顯示。
+
 ---
 
 ## 第四章：貢獻與部署流程 (Contribution & Deployment)

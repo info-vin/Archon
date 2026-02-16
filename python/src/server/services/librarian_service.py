@@ -1,4 +1,5 @@
 
+import asyncio
 import uuid
 from datetime import datetime
 
@@ -447,11 +448,13 @@ class LibrarianService:
         Processes manager's review notes to extract reusable style constraints.
         Enables the 'Expertise Loop' for Bob (Marketing).
         """
+        source_id = ""
         try:
             # 1. Extract Constraint using LLM
-            from ..services.credential_service import credential_service
             from google import genai
             from google.genai import types
+
+            from ..services.credential_service import credential_service
 
             api_key = await credential_service.get_credential("GEMINI_API_KEY") or await credential_service.get_credential("GOOGLE_API_KEY")
             client = genai.Client(api_key=api_key)
@@ -471,6 +474,19 @@ class LibrarianService:
                 config=types.GenerateContentConfig(temperature=0.1)
             )
             extracted_rules = response.text
+
+            # EXP-02: Log Token Usage for audit
+            from ..services.token_usage_service import TokenUsageService
+            if response.usage_metadata:
+                asyncio.create_task(TokenUsageService.log_usage(
+                    request_id=f"critique-{source_id}",
+                    user_id="system-librarian",
+                    model="gemini-2.0-flash-lite",
+                    provider="google",
+                    input_tokens=response.usage_metadata.prompt_token_count,
+                    output_tokens=response.usage_metadata.candidates_token_count,
+                    context_type="expertise_extraction"
+                ))
 
             # 2. Archive as Knowledge
             unique_id = str(uuid.uuid4())[:8]
