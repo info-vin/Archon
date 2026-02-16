@@ -407,7 +407,7 @@ const MarketingPage: React.FC = () => {
                         <EmptyState 
                             title="No Leads Found" 
                             description="Enter a job title above to start scanning the market for potential customers."
-                            icon={<SearchIcon className="w-12 h-12 text-gray-300" />}
+                            icon={<SearchIcon className="w-12 h-12 text-gray-300 dark:text-gray-500" />}
                         />
                     )}
                 </div>
