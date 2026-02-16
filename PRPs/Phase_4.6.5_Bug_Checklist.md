@@ -10,7 +10,7 @@
 
 |指標 (Metric)|數量 (Count)|詳細資訊 (Details)|
 |:---|:---|:---|
-|**總議題數**|36|涵蓋 UX 流程、資料一致性、系統重置可靠性與營運引擎加固。|
+|**總議題數**|38|涵蓋 UX 流程、資料一致性、系統重置可靠性與營運引擎加固。|
 |**已完成修正**|18|BUG-027, BUG-031, BUG-032, BUG-033, BUG-034, BUG-037, BUG-038, BUG-045, GAP-018, GAP-020, GAP-021, GAP-022, GAP-024, GAP-027, GAP-035 驗證正常。|
 |**待驗證/討論**|18|剩餘項目包含 7 個指揮官圖表、樣式優化與技術債重構。|
 
@@ -77,6 +77,8 @@
 | **BUG-042** | 🐛 Bug | **Alice** | **E2E/Race**| **Knowledge Selector Race**。`waitForElementToBeRemoved` 錯誤，目標 Dialog 在檢測前已消失。原因：Modal 關閉過快。修復：改用 `waitFor(expect(not.toBeInDocument))`. | Medium | 🟢 已修復 |
 | **BUG-043** | 🐛 Bug | **Alice** | **E2E/Data**| **Vendor Promotion Missing**. `Vendor Promotion` 測試找不到 `/Retail Corp/i`。原因：Mock Data 屬性名稱不符 (`company` vs `company_name`)。修復：標準化 Mock Data。 | High | 🟢 已修復 |
 | **BUG-044** | 🐛 Bug | **System** | **E2E/Id**  | **Task Persistence ID Mismatch**. `Assignee Persistence` 測試失敗，任務列表找不到 Assignee Name。原因：Mock Create Task 未填入 `name`。修復：Mock Handler 自動查找 User Name。 | High | 🟢 已修復 |
+| **BUG-046** | ⏱️ Timeout | **Alice** | **Voice** | **語音轉錄超時風險 (Voice Timeout Risk)**。長音頻（>3分鐘）可能超過現有 20 秒的輪詢限制 (`_transcribe_with_gemini`)。建議改用 Webhook 或增加輪詢上限。 | Medium | 🔴 待處理 |
+| **TECH-005**| 🏗️ Debt | **Alice** | **Logic** | **專案名稱硬編碼 (Hardcoding)**。語音轉工單邏輯寫死依賴 "Field Ops" 專案存在。建議改用 UUID 或從系統設定讀取。 | Low | 🔴 待處理 |
 
 ---
 

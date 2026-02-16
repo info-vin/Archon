@@ -91,16 +91,19 @@
 
 # 第三章：近期工作日誌 (Recent Journal Entries)
 
-### 2026-02-16: Strategic Alignment & Testing Infrastructure Audit
-*   **Git 考古與數據分析 (Last 5 Commits)**:
-    *   **核心動向**: 近期變更高度集中於 `enduser-ui-fe` 的無障礙化 (A11y) 與 `marketing_api.py` 的結構重構（Service 層抽離）。
-    *   **穩定性提升**: 完成了從 OpenAI Shim 到官方 `genai.Client` 的遷移，並標準化了全系統 Python 腳本至根目錄 `/scripts`。
-*   **測試框架全圖譜確認**:
-    *   **Backend / Agents**: 使用 `pytest` (搭配 `pytest-asyncio`, `pytest-mock`)。
-    *   **Admin UI**: 使用 `vitest` (Unit/UI)。
-    *   **Enduser UI**: 使用 `vitest` (Unit/E2E 雙重配置)。
-*   **環境同步**: 已完成 `feat/agents` 分支的遠端與地端同步。
-*   **RBAC 演進方向**: 評估導入 Casbin 或將現有 `RBACService` 矩陣資料庫化，初步傾向優先資料庫化以降低系統複雜度。
+### 2026-02-16: Strategic Alignment & API Restoration
+*   **Marketing API 全功能恢復**:
+    *   **深度重構**: 徹底修復了 `dad2266` 提交導致的功能遺失，精準補回 Alice (Promote/Pitch)、Bob (Logo/Stats) 與 Charlie (Sentinel/Dispatch) 的 12 個核心端點。
+    *   **SDK 落地**: 全面採用官方 `genai.Client`，實作 503 錯誤傳播與 429 降級防禦，徹底終結 Agent 死迴圈問題。
+    *   **數據連動**: 實作了 Lead 轉 Vendor 時拜訪紀錄的自動繼承，以及 AI 審核通過後自動連動任務狀態。
+*   **深度審查與缺口盤查 (Deep Audit)**:
+    *   完成 Alice/Bob/Charlie 工作流 1:1 對照，確認所有「已修復」項目皆具備真實業務邏輯支撐（非 Mock）。
+    *   新增 **BUG-046** (音頻超時風險) 與 **TECH-005** (專案名稱硬編碼) 於 Bug Checklist。
+*   **品質驗收**:
+    *   通過 `make lint-be` (修復 B904, E701)。
+    *   通過 `make test-be` (544 項測試 100% 通過)。
+    *   通過 `enduser-ui-fe` 單元測試 (34 項測試 100% 通過)。
+*   **架構分析**: 盤點 `marketing_api.py` 從 1500+ 行精簡至 500 行的演進，確認「肥控制器」已成功轉型為「啞巴路由器」。
 
 ### 2026-02-15: Operational Engine Standardization & Loop Defense
 *   **引擎大統一**: 發現營運端 (Alice/POBot) 與行銷端 (Bob) 存在 SDK 斷層（OpenAI Shim vs Google 原生 SDK），導致 Alice 頻繁報錯 `v1main 404`。已將所有生產力路徑遷移至官方 `genai.Client`，徹底解決路由跳轉不穩的問題。
