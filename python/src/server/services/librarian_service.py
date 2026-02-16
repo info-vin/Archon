@@ -356,3 +356,83 @@ class LibrarianService:
         except Exception as e:
             logger.error(f"Librarian: Failed to archive file {file_name} | error={str(e)}")
             return ""
+
+    async def archive_failure_case(
+        self,
+        content: str,
+        reason: str,
+        company: str,
+        job_title: str,
+        metadata: dict | None = None
+    ) -> str:
+        """
+        Archives a failed sales lead or rejected content as negative expertise.
+        Enables the system to learn 'What NOT to do'.
+        """
+        try:
+            # 1. Source ID with 'fail-' prefix
+            unique_id = str(uuid.uuid4())[:8]
+            source_id = f"fail-{company.lower().replace(' ', '-')}-{unique_id}"
+
+            # 2. Metadata & Tags
+            tags = ["failure_case", "risk_factor", "lesson_learned"]
+            title = f"Failure Analysis: {company} - {job_title}"
+            summary = f"Loss analysis for {company}. Reason: {reason}"
+
+            full_content = (
+                f"# Failure Analysis Report\n"
+                f"**Entity**: {company} | **Context**: {job_title}\n"
+                f"**Root Cause**: {reason}\n\n"
+                f"## Full Context\n{content}"
+            )
+
+            # 3. Source Info
+            await update_source_info(
+                client=self.supabase,
+                source_id=source_id,
+                summary=summary,
+                word_count=len(full_content.split()),
+                content=full_content,
+                knowledge_type="failure_analysis",
+                tags=tags,
+                source_display_name=title
+            )
+
+            # 4. Content & Embedding (Critical for RAG search to find lessons)
+            embedding_vector = await create_embedding(full_content[:8000])
+            page_data = {
+                "source_id": source_id,
+                "url": f"analysis://failure/{source_id}",
+                "chunk_number": 0,
+                "content": full_content,
+                "embedding": embedding_vector,
+                "metadata": {
+                    "outcome": "failure",
+                    "reason": reason,
+                    "company": company,
+                    "job": job_title,
+                    **(metadata or {})
+                }
+            }
+            self.supabase.table("archon_crawled_pages").insert(page_data).execute()
+
+            # 5. Audit Version
+            try:
+                self.supabase.table("archon_document_versions").insert({
+                    "document_id": source_id,
+                    "field_name": "failure_analysis",
+                    "change_type": "archive",
+                    "change_summary": f"Captured failure expertise for {company}",
+                    "content": {"reason": reason, "outcome": "lost"},
+                    "created_by": "ai-librarian",
+                    "version_number": 1
+                }).execute()
+            except Exception:
+                pass
+
+            logger.info(f"Librarian: Failure expertise archived | id={source_id}")
+            return source_id
+
+        except Exception as e:
+            logger.error(f"Librarian: Failed to archive failure case: {e}")
+            return ""

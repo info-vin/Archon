@@ -403,27 +403,15 @@ Phase 4.4.5 引入了 **Clockwork** 進行系統自動檢測。
         | 31 | `027_seed_field_ops_project.sql` | **[種子]** 預載 Alice (Sales) 所需的 Field Ops 專案與範例任務。 |
         | 32 | `028_seed_voice_prompt.sql` | **[AI]** 寫入語音轉工單專用的 System Prompt (Alice 核心功能)。 |
         | 33 | `029_fix_archon_logs_schema.sql` | **[修復]** 補齊 `archon_logs` 缺失欄位，支援經理儀表板。 |
-        | 34 | `030_add_system_log_setting.sql` | **[系統]** 實作經理儀表板日誌設定。 |
-        | 35 | `031_create_attendance_table.sql` | **[Schema]** 建立 Charlie 的考勤功能資料表。 |
-        | 36 | `032_allow_manager_view_team_tokens.sql` | **[RBAC]** 強化經理檢視團隊 Token 使用量權限。 |
-        | 37 | `033_add_review_notes_to_blog_posts.sql` | **[修復]** 增加部落格審核註記欄位。 |
-        | 38 | `034_add_blog_generation_metadata.sql` | **[進階]** 增加 AI 生成參數持久化欄位。 |
-        | 39 | `035_refine_prompt_rbac.sql` | **[權限]** 精細化 Prompt 管理員權限。 |
-        | 40 | `036_refine_settings_rbac.sql` | **[權限]** 精細化系統設定管理員權限。 |
-        | 41 | `037_add_pitch_to_leads.sql` | **[Phase 4.6.5]** 增加 Leads 表的 AI 生成提案內容欄位。 |
-        | 42 | `038_seed_scoring_settings.sql` | **[Admin]** 實作線索評分權重持久化，支援 Admin 即時調整業務規則。 |
-        | 43 | `039_add_permission_overrides_to_profiles.sql` | **[RBAC]** 在 `profiles` 表增加 `permission_overrides` 欄位，支援按人授權。 |
-        | 44 | `040_modernize_document_versions_constraint.sql` | **[系統]** 現代化稽核日誌約束，支援全系統（如 Librarian）的變更追蹤。 |
-        | 45 | `041_restore_crawler_settings.sql` | **[爬蟲]** 恢復爬蟲 RBAC 限制數據，並將 104 Crawler 網址持久化至資料庫。 |
-        | 46 | `042_seed_manager_nexus_settings.sql` | **[種子]** 預載 Manager Nexus 的行銷評分與預算設定。 |
-        | 47 | `043_set_default_llm_provider.sql` | **[設定]** 將預設 LLM 提供者設為 Google (Gemini)。 |
-        | 48 | `044_fix_rag_provider_settings.sql` | **[設定]** 強制 RAG 策略使用 Google/Gemini 模型與 Embedding。 |
-        | 49 | `045_add_user_id_to_archon_logs.sql` | **[Schema]** 為 `archon_logs` 增加 `user_id` 欄位以支援使用者稽核。 |
-        | 50 | `046_add_ai_score_and_review_notes_to_blogs.sql` | **[Schema]** 為 `blog_posts` 增加 AI 評分與審核註記，支援內容回饋循環。 |
-        | 51 | `047_fix_blog_posts_lead_id.sql` | **[Schema]** 確保 `blog_posts` 包含 `lead_id` 外鍵，連結業務線索與內容行銷。 |
-        | 52 | `048_ethics_audit_hardening.sql` | **[Audit]** 強化倫理審計，為文件版本增加狀態，並追蹤倫理事件解決進度。 |
-        | 53 | `seed_mock_leads.sql` | **[種子]** 填充業務線 (Leads) 核心測試資料。 |
-        | 54 | `seed_mock_alerts_and_logs.sql` | **[種子]** 填充 Admin/Manager 儀表板所需的系統警報與日誌資料。 |
+        | 34 | `030_schema_hardening_and_mobile.sql` | **[合併]** 整合原 030-034。強化 Mobile Ops、Visit Logs 與基礎 Schema。 |
+        | 35 | `031_rbac_and_policies_refinement.sql` | **[合併]** 整合原 035-040。精細化 RBAC 權限與 RLS 安全政策。 |
+        | 36 | `032_system_settings_and_config.sql` | **[合併]** 整合原 041-048。包含爬蟲設定、LLM Provider、與倫理審計硬化。 |
+        | 37 | `033_seed_nexus_data.sql` | **[種子]** 預載 Nexus 戰情室所需的評分與預算初始化數據。 |
+        | 38 | `034_add_lost_reason_to_leads.sql` | **[Expertise]** 為 Leads 表增加失敗分析欄位，支援 Alice 的失敗案例採集。 |
+        | 39 | `seed_mock_data.sql` | **[種子]** 填充核心基礎資料 (Users, Projects, Employees)。 |
+        | 40 | `seed_blog_posts.sql` | **[種子]** 填充部落格文章假資料 (用於 RAG 測試)。 |
+        | 41 | `seed_mock_leads.sql` | **[種子]** 填充業務線 (Leads) 核心測試資料與訪談紀錄。 |
+        | 42 | `seed_mock_alerts_and_logs.sql` | **[種子]** 填充儀表板所需的警報與系統日誌。 |
         
 3.  **階段三：執行部署**
 
