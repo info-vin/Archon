@@ -1,22 +1,17 @@
-import asyncio
 import logging
-import uuid
 from typing import Any, cast
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Body, Request
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from google import genai
 from google.genai import types
 from pydantic import BaseModel, Field
 
-from ..auth.dependencies import get_current_user, verify_manager_role
+from ..auth.dependencies import get_current_user
 from ..config.logfire_config import get_logger
 from ..prompts.marketing_prompts import BLOG_DRAFT_SYSTEM_PROMPT, REJECTION_REASON_PROMPT
-from ..prompts.sales_prompts import SALES_PITCH_SYSTEM_PROMPT
 from ..services.credential_service import credential_service
 from ..services.guardrail_service import GuardrailService
 from ..services.job_board_service import JobBoardService, JobData
-from ..services.librarian_service import LibrarianService
-from ..services.llm_provider_service import get_llm_client
 from ..services.log_service import LogService
 from ..services.projects.task_service import TaskService
 from ..services.prompt_service import prompt_service
@@ -71,6 +66,11 @@ class RequestInfoRequest(BaseModel):
     context: str
     lead_id: str | None = None
 
+class LeadUpdate(BaseModel):
+    status: str | None = None
+    enrichment_score: int | None = None
+    identified_need: str | None = None
+
 # --- ROUTES ---
 
 @router.get("/jobs", response_model=list[JobData])
@@ -87,6 +87,23 @@ async def get_leads():
         res = get_supabase_client().table("leads").select("*").order("created_at", desc=True).execute()
         return res.data
     except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e)) from e
+
+@router.patch("/leads/{lead_id}")
+async def update_lead(lead_id: str, request: LeadUpdate, current_user: dict = Depends(get_current_user)):
+    try:
+        user_role = current_user.get("role", "viewer").lower()
+        if user_role not in ["admin", "manager", "sales", "system_admin"]:
+            raise HTTPException(status_code=403)
+        supabase = get_supabase_client()
+        update_data = request.model_dump(exclude_unset=True)
+        res = supabase.table("leads").update(update_data).eq("id", lead_id).execute()
+        if not res.data:
+            raise HTTPException(status_code=404, detail="Lead not found")
+        return res.data[0]
+    except Exception as e:
+        if isinstance(e, HTTPException):
+            raise e
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 @router.get("/sources")
@@ -174,7 +191,8 @@ async def get_pending_approvals(current_user: dict = Depends(get_current_user)):
         res = get_supabase_client().table("blog_posts").select("*").eq("status", "review").order("updated_at", desc=True).execute()
         return {"blogs": res.data or [], "leads": []}
     except Exception as e:
-        if isinstance(e, HTTPException): raise e
+        if isinstance(e, HTTPException):
+            raise e
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 @router.post("/approvals/{item_type}/{item_id}/{action}")
@@ -185,13 +203,16 @@ async def process_approval(item_type: str, item_id: str, action: str, request: R
     try:
         supabase = get_supabase_client()
         raw_body = {}
-        try: raw_body = await request.json()
-        except Exception: pass
+        try:
+            raw_body = await request.json()
+        except Exception:
+            pass
         review_notes = raw_body.get("review_notes") or raw_body.get("reviewNotes") or raw_body.get("reason")
         if item_type == "blog":
             new_status = "published" if action == "approve" else "changes_requested"
             update_data = {"status": new_status}
-            if review_notes: update_data["review_notes"] = str(review_notes)
+            if review_notes:
+                update_data["review_notes"] = str(review_notes)
             res = supabase.table("blog_posts").update(update_data).eq("id", item_id).execute()
             if res.data:
                 meta = res.data[0].get("generation_metadata") or {}
@@ -200,7 +221,8 @@ async def process_approval(item_type: str, item_id: str, action: str, request: R
                     try:
                         ts = TaskService(supabase)
                         await ts.update_task(task_id, {"status": "done" if action == "approve" else "doing"})
-                    except Exception: pass
+                    except Exception:
+                        pass
         return {"success": True, "status": action}
     except Exception as e:
         logger.error(f"API: Approval failed: {e}")
@@ -211,7 +233,8 @@ async def submit_blog_for_review(post_id: str, current_user: dict = Depends(get_
     try:
         supabase = get_supabase_client()
         res = supabase.table("blog_posts").select("*").eq("id", post_id).limit(1).execute()
-        if not res.data: raise HTTPException(status_code=404)
+        if not res.data:
+            raise HTTPException(status_code=404)
         post = res.data[0]
         from .stats_api import calculate_ai_score
         new_score = calculate_ai_score(post.get("content", ""))
@@ -223,8 +246,10 @@ async def submit_blog_for_review(post_id: str, current_user: dict = Depends(get_
         supabase.table("blog_posts").update({"status": new_status, "ai_score": final_score, "review_notes": final_notes}).eq("id", post_id).execute()
         task_id = (post.get("generation_metadata") or {}).get("task_id")
         if task_id and not auto_reject:
-            try: await TaskService(supabase).update_task(task_id, {"status": "review"})
-            except Exception: pass
+            try:
+                await TaskService(supabase).update_task(task_id, {"status": "review"})
+            except Exception:
+                pass
         return {"success": True, "status": new_status, "ai_score": final_score, "review_notes": final_notes}
     except Exception as e:
         logger.error(f"API: Submit failed: {e}")
@@ -234,10 +259,12 @@ async def submit_blog_for_review(post_id: str, current_user: dict = Depends(get_
 async def reject_suggestion(request: MarketingRejectSuggestionRequest, current_user: dict = Depends(get_current_user)):
     try:
         user_role = current_user.get("role", "viewer").lower()
-        if user_role not in ["admin", "manager"]: raise HTTPException(status_code=403)
+        if user_role not in ["admin", "manager"]:
+            raise HTTPException(status_code=403)
         supabase = get_supabase_client()
         post_res = supabase.table("blog_posts").select("title, content").eq("id", request.blog_post_id).single().execute()
-        if not post_res.data: raise HTTPException(status_code=404)
+        if not post_res.data:
+            raise HTTPException(status_code=404)
         api_key = await credential_service.get_credential("GEMINI_API_KEY") or await credential_service.get_credential("GOOGLE_API_KEY")
         client = genai.Client(api_key=api_key)
         provider_config = await credential_service.get_active_provider("llm")
@@ -245,25 +272,34 @@ async def reject_suggestion(request: MarketingRejectSuggestionRequest, current_u
         response = client.models.generate_content(model=model_id.replace("models/", ""), contents=REJECTION_REASON_PROMPT.format(title=post_res.data.get("title"), content=post_res.data.get("content")[:3000]))
         return {"suggested_reason": response.text}
     except Exception as e:
-        if isinstance(e, HTTPException): raise e
+        if isinstance(e, HTTPException):
+            raise e
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 @router.post("/request-info")
 async def request_info(request: RequestInfoRequest, current_user: dict = Depends(get_current_user)):
     try:
         user_role = current_user.get("role", "viewer").lower()
-        if user_role not in ["admin", "manager", "marketing"]: raise HTTPException(status_code=403)
+        if user_role not in ["admin", "manager", "marketing"]:
+            raise HTTPException(status_code=403)
         ts = TaskService(get_supabase_client())
         success, result = await ts.create_info_request_task(requester_id=str(current_user.get("email")), subject=request.subject, context=request.context, lead_id=request.lead_id)
-        if not success: raise Exception(result.get("error"))
+        if not success:
+            raise Exception(result.get("error"))
         return {"success": True, "task": result.get("task")}
     except Exception as e:
-        if isinstance(e, HTTPException): raise e
+        if isinstance(e, HTTPException):
+            raise e
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 @router.post("/blog/draft", response_model=DraftBlogResponse)
 async def draft_blog_post(request: DraftBlogRequest, current_user: dict = Depends(get_current_user)):
     try:
+        # 1. Guardrail Validation (Input)
+        is_valid, error_msg = GuardrailService.validate_input(f"{request.topic} {request.keywords or ''}")
+        if not is_valid:
+            raise HTTPException(status_code=400, detail=f"Guardrail Violation: {error_msg}")
+
         rag_service = RAGService()
         search_query = f"{request.topic} {request.keywords or ''}"
         success, rag_res = await rag_service.perform_rag_query(query=search_query, match_count=5)
@@ -272,24 +308,33 @@ async def draft_blog_post(request: DraftBlogRequest, current_user: dict = Depend
             supabase = get_supabase_client()
             if request.context_type == "lead":
                 logs = supabase.table("visit_logs").select("summary, voice_transcript").eq("lead_id", request.context_source_id).execute()
-                for log in logs.data: context_text += f"\n[Signal]: {log['summary']}\n{log['voice_transcript']}\n"
+                for log in logs.data:
+                    context_text += f"\n[Signal]: {log['summary']}\n{log['voice_transcript']}\n"
         api_key = await credential_service.get_credential("GEMINI_API_KEY") or await credential_service.get_credential("GOOGLE_API_KEY")
         client = genai.Client(api_key=api_key)
         sys_prompt = prompt_service.get_prompt("BLOG_DRAFT", BLOG_DRAFT_SYSTEM_PROMPT)
         user_prompt = f"Topic: {request.topic}\nContext:\n{context_text}"
-        
+
         try:
             response = client.models.generate_content(model="gemini-2.0-flash-lite", contents=cast(Any, [user_prompt]), config=types.GenerateContentConfig(system_instruction=sys_prompt, response_mime_type="application/json", temperature=0.7))
             result = safe_json_loads(response.text or "{}")
-        except Exception as llm_err:
+        except Exception:
             # Fallback to 1.5-pro logic for tests
             client_fb = genai.Client(api_key=api_key)
             response = client_fb.models.generate_content(model="gemini-1.5-pro", contents=cast(Any, [user_prompt]), config=types.GenerateContentConfig(system_instruction=sys_prompt, response_mime_type="application/json", temperature=0.7))
             result = safe_json_loads(response.text or "{}")
 
+        # 2. Guardrail Auditing (Output)
+        content = str(result.get("content", ""))
+        is_safe, audit_msg = GuardrailService.audit_output(content, context_text)
+        if not is_safe:
+            raise HTTPException(status_code=422, detail=f"AI Output Blocked: {audit_msg}")
+
         metadata = {"task_id": request.context_source_id if request.context_type == "task" else None, "context_source_id": request.context_source_id, "context_type": request.context_type}
-        return DraftBlogResponse(title=str(result.get("title", "Untitled")), content=str(result.get("content", "")), excerpt=str(result.get("excerpt", "")), metadata=metadata)
+        return DraftBlogResponse(title=str(result.get("title", "Untitled")), content=content, excerpt=str(result.get("excerpt", "")), metadata=metadata)
     except Exception as e:
+        if isinstance(e, HTTPException):
+            raise e
         logger.error(f"API: Draft failed: {e}")
         raise HTTPException(status_code=500, detail=str(e)) from e
 
@@ -314,10 +359,12 @@ async def get_marketing_trends(current_user: dict = Depends(get_current_user)):
         res_t = supabase.table("marketing_trends").select("*").eq("trend_type", "keyword_growth").order("report_date", desc=True).limit(1).execute()
         res_s = supabase.table("marketing_trends").select("*").eq("trend_type", "sankey_flow").order("report_date", desc=True).limit(1).execute()
         return {"keyword_growth": res_t.data[0]["data"] if res_t.data else [], "sankey_flow": res_s.data[0]["data"] if res_s.data else {}}
-    except Exception: return {"keyword_growth": [], "sankey_flow": {}}
+    except Exception:
+        return {"keyword_growth": [], "sankey_flow": {}}
 
 @router.get("/manager/alerts")
 async def get_manager_alerts(current_user: dict = Depends(get_current_user)):
-    if current_user.get("role") not in ["manager", "admin"]: raise HTTPException(status_code=403)
+    if current_user.get("role") not in ["manager", "admin"]:
+        raise HTTPException(status_code=403)
     res = get_supabase_client().table("archon_logs").select("*").eq("level", "ALERT").in_("source", ["sentinel", "LeadScoring"]).order("created_at", desc=True).limit(50).execute()
     return res.data or []
