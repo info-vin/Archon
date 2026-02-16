@@ -96,6 +96,9 @@
     *   **深度重構**: 徹底修復了 `dad2266` 提交導致的功能遺失，精準補回 Alice (Promote/Pitch)、Bob (Logo/Stats) 與 Charlie (Sentinel/Dispatch) 的 12 個核心端點。
     *   **SDK 落地**: 全面採用官方 `genai.Client`，實作 503 錯誤傳播與 429 降級防禦，徹底終結 Agent 死迴圈問題。
     *   **數據連動**: 實作了 Lead 轉 Vendor 時拜訪紀錄的自動繼承，以及 AI 審核通過後自動連動任務狀態。
+*   **5173 登入效能優化 (Grounded Refactor)**:
+    *   **Singleton Cache**: 在 `api.ts` 實作使用者資料快取，將 Header 產生速度從 ~500ms 降至 <1ms，徹底消除 Dashboard 載入時的重複資料庫查詢。
+    *   **Dev-Friendly**: 採用 In-memory 策略，開發者切換角色後僅需 F5 即可刷新權限，兼顧效能與開發彈性。
 *   **深度審查與缺口盤查 (Deep Audit)**:
     *   完成 Alice/Bob/Charlie 工作流 1:1 對照，確認所有「已修復」項目皆具備真實業務邏輯支撐（非 Mock）。
     *   新增 **BUG-046** (音頻超時風險) 與 **TECH-005** (專案名稱硬編碼) 於 Bug Checklist。

@@ -74,6 +74,8 @@ export type NewBlogPostData = Omit<BlogPost, 'id' | 'publishDate'> & { authorNam
 
 // --- SUPABASE API IMPLEMENTATION ---
 const supabaseApi = {
+  _userCache: null as Employee | null,
+
   /**
    * Internal helper to build headers with user role for RBAC
    */
@@ -84,12 +86,13 @@ const supabaseApi = {
     };
 
     try {
+      // Use cached user to avoid DB round-trip on every header generation
       const user = await this.getCurrentUser();
       if (user?.role) {
         headers['X-User-Role'] = user.role;
       }
       
-      // Attach Session Token for Backend Auth
+      // Attach Session Token for Backend Auth (SDK call is fast as it hits local memory)
       if (supabase) {
           const { data: { session } } = await supabase.auth.getSession();
           if (session?.access_token) {
@@ -103,6 +106,7 @@ const supabaseApi = {
   },
 
   async login(credentials: LoginCredentials): Promise<Employee | null> {
+    this._userCache = null; // Clear cache before login
     const { data, error } = await supabase!.auth.signInWithPassword({
       email: credentials.email,
       password: credentials.password!,
@@ -112,6 +116,7 @@ const supabaseApi = {
     throw new Error("Login failed. Please check your credentials.");
   },
   async register(credentials: RegistrationData): Promise<Employee | null> {
+    this._userCache = null; 
     const response = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -124,17 +129,12 @@ const supabaseApi = {
     }
 
     await response.json();
-    
-    // Auto-login after registration is tricky without password transmission again.
-    // Ideally backend registers AND logs in, returning a session token.
-    // For now, we assume user needs to login manually or we auto-login with credentials provided.
-    // To match previous behavior:
     return this.login({ email: credentials.email, password: credentials.password });
   },
   async adminCreateUser(userData: AdminNewUserData): Promise<Employee> {
     const response = await fetch('/api/admin/users', {
         method: 'POST',
-        headers: await this._getHeaders(), // Admin role header will be attached if current user is admin
+        headers: await this._getHeaders(), 
         body: JSON.stringify(userData)
     });
 
@@ -147,16 +147,17 @@ const supabaseApi = {
     return data.profile;
   },
   async logout(): Promise<void> {
+    this._userCache = null; // Purge cache on logout
     const { error } = await supabase!.auth.signOut();
     if (error) throw new Error(error.message);
   },
   async getCurrentUser(): Promise<Employee | null> {
     if (!supabase) return null;
+    if (this._userCache) return this._userCache; // Return cached result immediately
 
     let sessionUser: any = null;
 
     try {
-      // Use Promise.race to enforce a strict timeout on Supabase Auth session check.
       const sessionResult: any = await Promise.race([
         supabase.auth.getSession(),
         new Promise((_, reject) => setTimeout(() => reject(new Error('Auth timeout')), 5000))
@@ -171,21 +172,19 @@ const supabaseApi = {
       return null;
     }
 
-    // Secondary Try/Catch for Profile Fetching
     try {
       const { data: profile, error } = await supabase.from('profiles').select('*').eq('id', sessionUser.id).maybeSingle();
       
       if (error) throw error;
       if (!profile) throw new Error("Profile missing in public.profiles");
       
-      return profile as Employee;
+      this._userCache = profile as Employee;
+      return this._userCache;
     } catch (e: any) {
-      // Sync with Backend dependencies.py logic: Check user_metadata for role
       const metadataRole = sessionUser.user_metadata?.role || EmployeeRole.MEMBER;
-      
       console.warn(`[api.ts] Profile fetch failed (${e?.message}), falling back to metadata role: ${metadataRole}`);
       
-      return { 
+      this._userCache = { 
         id: sessionUser.id, 
         email: sessionUser.email!, 
         name: sessionUser.user_metadata.name || sessionUser.email?.split('@')[0] || 'Authenticated User', 
@@ -196,6 +195,8 @@ const supabaseApi = {
         position: 'User',
         status: 'active' 
       } as Employee;
+      
+      return this._userCache;
     }
   },
   async getTasks(includeClosed: boolean = false, includeUnassigned: boolean = false, assigneeId?: string, perPage: number = 50): Promise<Task[]> {
