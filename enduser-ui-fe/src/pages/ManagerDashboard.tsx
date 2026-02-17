@@ -32,6 +32,11 @@ import { CheckCircleIcon, RefreshCwIcon, AlertTriangleIcon, ActivityIcon, Shield
         const [isSpecOpen, setIsSpecOpen] = useState(false);
         const [isSpecMaximized, setIsSpecMaximized] = useState(false);
         const [specContent, setSpecContent] = useState('');
+
+        // Diagnostic State (1.7)
+        const [diagnosticPath, setDiagnosticPath] = useState('python/src/server/api_routes/projects_api.py');
+        const [diagnosticResult, setDiagnosticResult] = useState<any>(null);
+        const [isDiagnosing, setIsDiagnosing] = useState(false);
         
         // Scoring Rules State
         const [rules, setRules] = useState<ScoringRule[]>([
@@ -126,6 +131,19 @@ import { CheckCircleIcon, RefreshCwIcon, AlertTriangleIcon, ActivityIcon, Shield
                 }
             } catch (e) {
                 setSpecContent(`Error loading specs: ${e}`);
+            }
+        };
+
+        const handleRunDiagnostic = async () => {
+            setIsDiagnosing(true);
+            setDiagnosticResult(null);
+            try {
+                const res = await api.diagnoseFile(diagnosticPath);
+                setDiagnosticResult(res);
+            } catch (e: any) {
+                alert(`Diagnostic failed: ${e.message}`);
+            } finally {
+                setIsDiagnosing(false);
             }
         };
 
@@ -474,6 +492,55 @@ import { CheckCircleIcon, RefreshCwIcon, AlertTriangleIcon, ActivityIcon, Shield
                                 )}
                              </button>
                         </div>
+
+                        {/* Technical Advisory Diagnostic (1.7 - Admin Only) */}
+                        {isAdmin && (
+                            <div className="bg-white border border-gray-100 p-6 rounded-3xl shadow-sm">
+                                <h3 className="font-bold text-gray-800 mb-1">Technical Advisory</h3>
+                                <p className="text-xs text-gray-400 mb-6">Refactoring severity grading (L1-L3).</p>
+                                
+                                <div className="space-y-4">
+                                    <input 
+                                        type="text" 
+                                        value={diagnosticPath}
+                                        onChange={(e) => setDiagnosticPath(e.target.value)}
+                                        className="w-full p-3 bg-gray-50 border-none rounded-xl text-xs font-mono"
+                                        placeholder="File path..."
+                                    />
+                                    <button 
+                                        onClick={handleRunDiagnostic}
+                                        disabled={isDiagnosing}
+                                        className="w-full py-3 bg-slate-900 hover:bg-black text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2"
+                                    >
+                                        {isDiagnosing ? <RefreshCwIcon className="animate-spin w-4 h-4" /> : <ActivityIcon className="w-4 h-4" />}
+                                        START DIAGNOSTIC
+                                    </button>
+
+                                    {diagnosticResult && (
+                                        <div className={`p-4 rounded-2xl animate-in fade-in zoom-in-95 duration-300 ${
+                                            diagnosticResult.severity_level === 3 ? 'bg-red-50 border border-red-100' :
+                                            diagnosticResult.severity_level === 2 ? 'bg-amber-50 border border-amber-100' :
+                                            'bg-green-50 border border-green-100'
+                                        }`}>
+                                            <div className="flex items-center gap-2 mb-2">
+                                                <div className={`w-2 h-2 rounded-full ${
+                                                    diagnosticResult.severity_level === 3 ? 'bg-red-500' :
+                                                    diagnosticResult.severity_level === 2 ? 'bg-amber-500' :
+                                                    'bg-green-500'
+                                                }`} />
+                                                <span className="text-[10px] font-black uppercase tracking-widest">
+                                                    Level {diagnosticResult.severity_level}
+                                                </span>
+                                            </div>
+                                            <p className="text-xs font-bold text-gray-800 mb-1">{diagnosticResult.advice}</p>
+                                            <div className="text-[10px] text-gray-500 font-mono">
+                                                Lines: {diagnosticResult.line_count} | SQL: {diagnosticResult.has_direct_sql ? 'YES' : 'NO'}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
 

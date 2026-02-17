@@ -619,6 +619,19 @@ const supabaseApi = {
     return data.profile;
   },
 
+  async diagnoseFile(filePath: string): Promise<any> {
+    const response = await fetch('/api/admin/diagnose', {
+        method: 'POST',
+        headers: await this._getHeaders(),
+        body: JSON.stringify({ file_path: filePath })
+    });
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.detail || 'Diagnostic failed');
+    }
+    return response.json();
+  },
+
   async getSystemPermissions(): Promise<string[]> {
     const response = await fetch('/api/auth/permissions', {
         headers: await this._getHeaders()

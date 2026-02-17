@@ -180,6 +180,43 @@ class AgentService:
             self.code_modifier.revert_sandbox(original_branch)
             return False, f"Repair error: {e}"
 
+    async def diagnose_file_health(self, file_path: str) -> dict[str, Any]:
+        """
+        Performs a physical diagnostic of a file based on SOP metrics (1.7.1).
+        Assigns L1 (Green), L2 (Yellow), or L3 (Red) severity.
+        """
+        try:
+            with open(file_path, encoding='utf-8') as f:
+                content = f.read()
+
+            lines = content.splitlines()
+            line_count = len(lines)
+
+            # Detect anti-patterns: Direct SQL in API controllers
+            has_direct_sql = bool(re.search(r"supabase\.table\(|execute\(\)", content))
+
+            # 1.7.1 Logic: Severity Grading
+            if line_count > 500 or has_direct_sql:
+                severity = 3  # RED / Critical
+                advice = "Critical Technical Debt: Exceeds 500 lines or contains direct SQL calls. Refactor to Service layer required."
+            elif line_count > 300:
+                severity = 2  # YELLOW / Moderate
+                advice = "Moderate Technical Debt: Large file detected. Consider extracting helpers."
+            else:
+                severity = 1  # GREEN / Minor
+                advice = "Healthy: File matches standard complexity guidelines."
+
+            return {
+                "file_path": file_path,
+                "line_count": line_count,
+                "has_direct_sql": has_direct_sql,
+                "severity_level": severity,
+                "advice": advice,
+                "timestamp": uuid.uuid4().hex[:8] # Trace ID
+            }
+        except Exception as e:
+            return {"error": f"Failed to diagnose file: {e}"}
+
     async def get_assignable_agents(self, user_role: str | None = None) -> list[dict]:
         all_agents = []
         for role_name, agent_id in AI_AGENT_ROLES.items():

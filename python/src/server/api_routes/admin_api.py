@@ -4,6 +4,7 @@ from pydantic import BaseModel
 from ..auth.dependencies import get_current_user
 from ..config.logfire_config import get_logger
 from ..services.admin_service import AdminService
+from ..services.agent_service import agent_service
 
 logger = get_logger(__name__)
 
@@ -11,6 +12,23 @@ router = APIRouter(prefix="/api/admin", tags=["admin"])
 
 class UpdateRoleRequest(BaseModel):
     role: str
+
+class DiagnoseRequest(BaseModel):
+    file_path: str
+
+@router.post("/diagnose")
+async def diagnose_file(
+    request: DiagnoseRequest,
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    Triggers a technical debt diagnostic for a specific file (Admin only).
+    """
+    user_role = current_user.get("role", "viewer").lower()
+    if user_role not in ["admin", "system_admin"]:
+        raise HTTPException(status_code=403, detail="Admin access required")
+
+    return await agent_service.diagnose_file_health(request.file_path)
 
 @router.get("/users")
 async def get_users(

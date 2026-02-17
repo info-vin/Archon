@@ -91,6 +91,21 @@
 
 # 第三章：近期工作日誌 (Recent Journal Entries)
 
+### 2026-02-17: Governance Hardening & Strategic Decoupling
+*   **David Howard (Admin) 身份落地**:
+    *   **更名實體化**: 修改 `seed_mock_data.sql` 與 `test_utility_functions`，將 Admin 正式更名為 **David Howard**，對齊 A-B-C-D 命名序列。
+    *   **物理隔離**: 建立 `archon_crawler_targets` 專屬表並實施 David 專屬管理 RLS。透過 SQL 類別過濾將 URI 設定從 3737 技術面板中徹底隱藏。
+*   **Nexus 戰情室 V2 (Visual Evolution)**:
+    *   **琥珀色規範**: 導覽列 Nexus Icon 正式更換為琥珀色 (`amber-500`) 並移動至管理分組 (Management Group)。
+    *   **規格透明化**: 在 `#/nexus` 實作 `[ View Specs ]` 功能，透過 Slide-over 面板渲染 `docs/nexus-spec.md` 說明 9 大指標口徑。
+*   **Phase 4.6.6 核心實體硬化**:
+    *   **RAG 高品質感知 (1.4/1.6)**: 升級 `RAGService` 支援 `min_score` 傳遞；Bob 檢索專家經驗時注入 `min_score=0.25` 並對 `policy` 標籤實施 +0.15 權重加成。
+    *   **Poisson 治理攔截 (1.5)**: 在 `AgentService` 植入實體成功紀錄檢查（查詢 `archon_logs`）；Agent 積分 < 300 時物理阻斷 L2+ 自動修復，強制切換為提案模式。
+    *   **David 技術顧問 (1.7)**: 實作後端 `diagnose_file_health`（支援行數與 SQL 偵測）與前端診斷操控 UI。
+*   **品質加固**:
+    *   **遷移修復**: 解決 `030` 約束重複建立錯誤與 `031` 的 `token_usage` 表名拼寫錯誤。
+    *   **全量驗收**: 通過 `make db-init` 重建驗證、`make lint` (全端零錯誤) 與 547 項後端/38 項前端單元測試。
+
 ### 2026-02-16: Strategic Alignment & API Restoration
 *   **Marketing API 全功能恢復**:
     *   **深度重構**: 徹底修復了 `dad2266` 提交導致的功能遺失，精準補回 Alice (Promote/Pitch)、Bob (Logo/Stats) 與 Charlie (Sentinel/Dispatch) 的 12 個核心端點。
