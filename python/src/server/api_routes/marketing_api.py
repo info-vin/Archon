@@ -369,12 +369,12 @@ async def _get_expert_style_context(query: str) -> str:
     context_text = ""
     # 1. First attempt: High priority knowledge with strict score (1.4 - Live Knowledge Injection)
     success, rag = await RAGService().perform_rag_query(
-        query=query, 
+        query=query,
         match_count=5,
         filter_metadata={"tags": ["technical", "market_intel", "style_lesson"]},
         min_score=0.25
     )
-    
+
     # 2. Fallback: Generic RAG if prioritized search returns low results
     if not success or not rag.get("results"):
         success, rag = await RAGService().perform_rag_query(query=query, match_count=5, min_score=0.15)

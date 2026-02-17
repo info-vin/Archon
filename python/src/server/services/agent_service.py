@@ -8,6 +8,7 @@ from typing import Any, cast
 
 from ..config.logfire_config import get_logger
 from ..prompts.dev_ops_prompts import DEVBOT_TOOLS, get_devbot_analysis_prompt
+from ..utils import get_supabase_client
 from ..utils.code_modifier import CodeModifier
 from .agent_registry import get_agent_config
 from .credential_service import credential_service
@@ -21,6 +22,31 @@ class AgentService:
     def __init__(self, mcp_client=None):
         self.code_modifier = CodeModifier(base_path=".")
         self.mcp_client = mcp_client
+
+    async def _check_poisson_gate(self, agent_id: str, required_level: int) -> bool:
+        """
+        Enforces Poisson-based success thresholds for refactoring levels.
+        L1: Always (Basic fixes)
+        L2: >300 | L3: >420 | L4: >500 | L5: >550 | L6: >580
+        """
+        if required_level <= 1:
+            return True
+
+        thresholds = {2: 300, 3: 420, 4: 500, 5: 550, 6: 580}
+        min_success = thresholds.get(required_level, 9999)
+
+        try:
+            supabase = get_supabase_client()
+            # Dynamic Success Ledger query
+            res = supabase.table("archon_logs").select("id", count="exact")\
+                .eq("source", agent_id)\
+                .ilike("message", "%Succeeded%").execute()
+
+            success_count = res.count if res.count is not None else 0
+            return success_count >= min_success
+        except Exception as e:
+            get_logger(__name__).error(f"Poisson Gate Check failed: {e}")
+            return False
 
     async def _handle_tool_calls(self, tool_calls) -> list[dict]:
         logger = get_logger(__name__)
@@ -119,6 +145,13 @@ class AgentService:
 
         logger.warning(f"Command '{command}' failed. Starting Active Repair Loop.")
         fix_proposal = await self._analyze_error_with_structured_output(command, stderr.decode().strip()[-2000:])
+
+        # --- Poisson Gate Check (1.5 Governance) ---
+        # Self-healing involving file modification is classified as Level 2 (Moderate)
+        is_trusted = await self._check_poisson_gate(agent_id="system-devbot", required_level=2)
+        if not is_trusted:
+            logger.warning("Poisson Gate: Insufficient credibility for Level 2 auto-repair. Switching to Proposal mode.")
+            return False, f"Poisson Security Block: Agent requires >300 successes for Level 2 auto-repair. Proposal: {fix_proposal.get('reasoning') if fix_proposal else 'Check logs'}"
 
         # Test baseline compatibility: If no file path, it's an "Analysis only" path
         if not fix_proposal or not fix_proposal.get("file_path"):

@@ -141,10 +141,12 @@ async def test_run_command_failure_triggers_healing(
     success, output = await agent_service.run_command_with_self_healing("failing_cmd")
 
     assert success is False
-    assert "Analysis: Check syntax" in output
+    # Verify security block (Agent has 0 successes in test environment)
+    assert "Poisson Security Block" in output
+    assert "Proposal: Check syntax" in output
 
     # Verify LLM was called
     mock_client.chat.completions.create.assert_awaited_once()
     # Verify logger warned about failure
     mock_logger.warning.assert_any_call("Command 'failing_cmd' failed. Starting Active Repair Loop.")
-    mock_logger.warning.assert_any_call("LLM could not propose a valid code fix.")
+    mock_logger.warning.assert_any_call("Poisson Gate: Insufficient credibility for Level 2 auto-repair. Switching to Proposal mode.")
