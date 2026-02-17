@@ -60,14 +60,6 @@ const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                             My Tasks
                         </Link>
                     </li>
-                    {hasPermission('user:manage:team') && (
-                        <li className="mb-2">
-                            <Link to="/nexus" className={`flex items-center p-2 rounded-md hover:bg-secondary ${location.pathname.startsWith('/nexus') ? 'bg-secondary' : ''}`}>
-                                <LayoutGridIcon className="w-5 h-5 mr-3 text-primary" />
-                                Managerial Nexus
-                            </Link>
-                        </li>
-                    )}
                     {hasPermission('stats:view:own') && (
                         <li className="mb-2">
                             <Link to="/stats" className={`flex items-center p-2 rounded-md hover:bg-secondary ${location.pathname.startsWith('/stats') ? 'bg-secondary' : ''}`}>
@@ -93,20 +85,26 @@ const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                         </li>
                     )}
                     {hasPermission('user:manage:team') && (
-                        <li className="mb-2">
-                            <Link to="/approvals" className={`flex items-center p-2 rounded-md hover:bg-secondary ${location.pathname.startsWith('/approvals') ? 'bg-secondary' : ''}`}>
-                                <FileTextIcon className="w-5 h-5 mr-3 text-amber-500 dark:text-amber-400" />
-                                Strategic Approvals
-                            </Link>
-                        </li>
-                    )}
-                    {hasPermission('user:manage:team') && (
-                        <li className="mb-2">
-                            <Link to="/team" className={`flex items-center p-2 rounded-md hover:bg-secondary ${location.pathname.startsWith('/team') ? 'bg-secondary' : ''}`}>
-                                <UserIcon className="w-5 h-5 mr-3 text-amber-500 dark:text-amber-400" />
-                                Team Management
-                            </Link>
-                        </li>
+                        <>
+                            <li className="mb-2">
+                                <Link to="/approvals" className={`flex items-center p-2 rounded-md hover:bg-secondary ${location.pathname.startsWith('/approvals') ? 'bg-secondary' : ''}`}>
+                                    <FileTextIcon className="w-5 h-5 mr-3 text-amber-500 dark:text-amber-400" />
+                                    Strategic Approvals
+                                </Link>
+                            </li>
+                            <li className="mb-2">
+                                <Link to="/team" className={`flex items-center p-2 rounded-md hover:bg-secondary ${location.pathname.startsWith('/team') ? 'bg-secondary' : ''}`}>
+                                    <UserIcon className="w-5 h-5 mr-3 text-amber-500 dark:text-amber-400" />
+                                    Team Management
+                                </Link>
+                            </li>
+                            <li className="mb-2">
+                                <Link to="/nexus" className={`flex items-center p-2 rounded-md hover:bg-secondary ${location.pathname.startsWith('/nexus') ? 'bg-secondary' : ''}`}>
+                                    <LayoutGridIcon className="w-5 h-5 mr-3 text-amber-500 dark:text-amber-400" />
+                                    Nexus戰情室
+                                </Link>
+                            </li>
+                        </>
                     )}
                     {/* UX-011: Settings moved to Profile Modal
                     <li className="mb-2">

@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import ReactMarkdown from 'react-markdown';
 import { api } from '../services/api.ts';
 import { useAuth } from '../hooks/useAuth.tsx';
 import { SystemOverview, AlertItem } from '../types.ts';
-import { CheckCircleIcon, RefreshCwIcon, AlertTriangleIcon, ActivityIcon, ShieldCheckIcon, DatabaseIcon, PlusIcon } from '../components/Icons.tsx';
+import { CheckCircleIcon, RefreshCwIcon, AlertTriangleIcon, ActivityIcon, ShieldCheckIcon, DatabaseIcon, PlusIcon, FileTextIcon, XIcon, MaximizeIcon, MinimizeIcon } from '../components/Icons.tsx';
 
     // ... (Imports stay same, assuming at top)
 
@@ -26,6 +27,11 @@ import { CheckCircleIcon, RefreshCwIcon, AlertTriangleIcon, ActivityIcon, Shield
         const [loading, setLoading] = useState(true);
         const [seedingLoading, setSeedingLoading] = useState(false); // Specific loading for seeding
         const [processingId, setProcessingId] = useState<string | null>(null);
+        
+        // Spec Modal State
+        const [isSpecOpen, setIsSpecOpen] = useState(false);
+        const [isSpecMaximized, setIsSpecMaximized] = useState(false);
+        const [specContent, setSpecContent] = useState('');
         
         // Scoring Rules State
         const [rules, setRules] = useState<ScoringRule[]>([
@@ -107,6 +113,22 @@ import { CheckCircleIcon, RefreshCwIcon, AlertTriangleIcon, ActivityIcon, Shield
             }
         };
 
+        const handleViewSpecs = async () => {
+            setIsSpecOpen(true);
+            try {
+                // Fetch spec from public folder
+                const response = await fetch('/docs/nexus-spec.md');
+                if (response.ok) {
+                    const text = await response.text();
+                    setSpecContent(text);
+                } else {
+                    setSpecContent("Failed to load docs/nexus-spec.md. Please check the public directory.");
+                }
+            } catch (e) {
+                setSpecContent(`Error loading specs: ${e}`);
+            }
+        };
+
         // Scoring Rules Logic
         const totalWeight = rules.reduce((sum, r) => sum + r.weight, 0);
         
@@ -151,6 +173,13 @@ import { CheckCircleIcon, RefreshCwIcon, AlertTriangleIcon, ActivityIcon, Shield
                         <p className="text-sm text-gray-500 mt-1">Operational Oversight & Exception Handling</p>
                     </div>
                     <div className="flex gap-2">
+                         <button 
+                            onClick={handleViewSpecs}
+                            className="px-6 py-3 bg-white border border-indigo-200 text-indigo-600 hover:bg-indigo-50 rounded-2xl text-sm font-bold transition-all shadow-sm active:scale-95 flex items-center gap-2"
+                        >
+                            <FileTextIcon className="w-4 h-4" />
+                            View Specs
+                        </button>
                          <button 
                             onClick={handleSentinelRun}
                             disabled={loading}
@@ -447,6 +476,61 @@ import { CheckCircleIcon, RefreshCwIcon, AlertTriangleIcon, ActivityIcon, Shield
                         </div>
                     </div>
                 </div>
+
+                {/* Specs Slide-over Panel */}
+                {isSpecOpen && (
+                    <>
+                        <div 
+                            className="fixed inset-0 bg-black/20 backdrop-blur-sm z-[60] transition-opacity"
+                            onClick={() => setIsSpecOpen(false)}
+                        />
+                        <div 
+                            className={`fixed inset-y-0 right-0 z-[70] bg-white dark:bg-slate-900 shadow-2xl transition-all duration-500 ease-in-out transform ${
+                                isSpecMaximized ? 'w-full md:w-3/4' : 'w-full md:w-1/2 lg:w-1/3'
+                            }`}
+                        >
+                            <div className="h-full flex flex-col">
+                                <div className="p-6 border-b border-gray-100 dark:border-slate-800 flex justify-between items-center bg-gray-50/50 dark:bg-slate-800/50">
+                                    <div>
+                                        <h3 className="text-xl font-black text-gray-900 dark:text-white flex items-center gap-2">
+                                            <ShieldCheckIcon className="w-5 h-5 text-indigo-600" />
+                                            Metrics Definition
+                                        </h3>
+                                        <p className="text-xs text-gray-500">docs/nexus-spec.md</p>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <button 
+                                            onClick={() => setIsSpecMaximized(!isSpecMaximized)}
+                                            className="p-2 hover:bg-gray-200 dark:hover:bg-slate-700 rounded-lg text-gray-500 transition-colors"
+                                            title={isSpecMaximized ? "Minimize" : "Maximize"}
+                                        >
+                                            {isSpecMaximized ? <MinimizeIcon className="w-5 h-5" /> : <MaximizeIcon className="w-5 h-5" />}
+                                        </button>
+                                        <button 
+                                            onClick={() => setIsSpecOpen(false)}
+                                            className="p-2 hover:bg-red-50 hover:text-red-600 rounded-lg text-gray-400 transition-colors"
+                                        >
+                                            <XIcon className="w-6 h-6" />
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <div className="flex-1 overflow-y-auto p-8 prose prose-indigo max-w-none dark:prose-invert">
+                                    <ReactMarkdown>{specContent || 'Loading specifications...'}</ReactMarkdown>
+                                </div>
+
+                                <div className="p-6 border-t border-gray-100 dark:border-slate-800 bg-gray-50/30">
+                                    <button 
+                                        onClick={() => setIsSpecOpen(false)}
+                                        className="w-full py-3 bg-gray-900 dark:bg-slate-700 text-white rounded-xl font-bold hover:bg-gray-800 transition-all active:scale-[0.98]"
+                                    >
+                                        CLOSE REFERENCE
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </>
+                )}
             </div>
         );
     };

@@ -118,77 +118,6 @@
 *   **縮排與例外安全性**: 修復了 `task_service.py` 的結構性縮排錯誤，並補齊 `raise ... from e` 以符合 Ruff B904 規範，達成 100% Lint 通過。
 *   **環境唯一真相**: 徹底清理 `python/scripts/` 冗餘，將所有診斷與初始化腳本標準化至外層 `scripts/`，確保 `Makefile` 與 Docker 呼叫路徑絕對穩定。
 
-### 2026-02-10: Search Nexus Optimization & Mobile Resilience
-*   **捲動革命**: 徹底解決了 `MarketingPage` (Search Tab) 在手機版滑不動的問題。透過移除 `min-h-screen` 與 `flex-1` 限制，釋放垂直捲動權給 Layout。
-*   **UX 反饋增強**: 針對 Pitch 生成流程，實作了 60s 超時邊界與每 15s 切換的「動態進度訊息」，大幅降低 Alice 等待時的焦慮感。
-*   **Alice 視覺優化**: 
-    *   Leads 卡片實作「大字粗體」預測內容呈現。
-    *   壓縮卡片內部間距（Body P6 -> P4, Header 22% -> 18%），提升資訊密度。
-*   **Dashboard 邏輯加固**:
-    *   實作 `projectMap` 映射與 TableView 的邏輯權重排序（Status: Todo->Done, Priority: Low->Critical）。
-    *   修復了 Bob 工作台 ID 錯配導致的 ReferenceError。
-*   **API 韌性**: 修正了 `maybeSingle()` 在同步客戶端 (`SyncSelectRequestBuilder`) 導致 `AttributeError` 的問題。確立原則：同步路徑必須使用 `.limit(1).execute()` 並配合長度檢查，非同步路徑才可使用 `.maybeSingle()`。這能優雅處理髒資料或 ID 誤判，不再崩潰。
-
-### 2026-02-09: Workspace Nexus Realization & Fine-grained RBAC
-*   **UI/UX 空間革命**:
-    *   **並排編輯 (Split View)**: 重構 `ContentWorkbench.tsx` 與 `BrandPage.tsx`，實作 30/70 分割視圖與雙重收合側邊欄，解決 Context 切換造成的斷腦流問題。
-    *   **視覺即時預覽**: 實作 `VisualHeader` 橫幅，自動解析 Markdown 圖片連結並即時渲染 AI 生成圖。
-    *   **整合 AI 面板**: 實作右下角懸浮式 `AI Command Center`，整合進階配置（產業、圖表、Google Search）與 Prompt 歷史追蹤 (Inspect)。
-*   **權限與安全加固 (Fine-grained RBAC)**:
-    *   **Prompt/Settings 分級**: 建立 `035` 與 `036` Migration，導入 `is_system_protected` 旗標。
-    *   **角色解放**: 允許 Manager (Charlie) 修改業務層級 Prompt 與爬蟲設定，但透過 RLS 與 API 檢查禁止其觸碰 API Keys 與系統道德紅線。
-    *   **連通性修復**: 真正將 `enable_web_research` 參數由前端傳遞至 RAG 服務，確保 Google Search Grounding 落地。
-*   **基礎設施與資源**:
-    *   **相容性優化**: 建立靜態版 `logo-eciton-favicon.svg`，解決瀏覽器不支援動畫 SVG 作為 Favicon 的問題。
-    *   **品質達標**: 修復 `prompts_api.py` 與 `system_api.py` 的型別錯誤，通過 546 項測試。
-
-### 2026-02-07: Zero-Mypy achieved & Charlie RBAC Hardening
-*   **型別安全革命 (Zero-Mypy)**:
-    *   **Agent 泛型化**: 重構 `BaseAgent` 及其子類別 (`Summary`, `Rag`, `Document`) 的泛型與屬性定義，解決 `pydantic-ai` 介面不匹配問題。
-    *   **安全性存取**: 修復全系統 `Request.client` 與 `Optional` 欄位的 None-check，並透過 `# type: ignore[no-any-return]` 解決複雜泛型推導限制。
-    *   **品質達標**: 清除全部 52 個 `mypy` 錯誤，達成後端 100% 型別通過；前端持續維持 `tsc --noEmit` 零錯誤。
-*   **核心功能落地**:
-    *   **權限導覽**: 實作 `MANAGER` 角色在 5173 UI 的行政入口，並動態過濾無權限之標籤頁 (如 Versions)。
-    *   **智慧提取**: 完成 GAP-018 提取模板執行功能，並確保變更自動寫入審計路徑。
-*   **基礎設施**: 修正 `logfire_config.py` 選配匯入衝突與 `ollama_api.py` 的 FastAPI 依賴注入正確性。
-
-### 2026-02-06: Admin Persona Realization & RBAC Hardening
-*   **核心功能落地**:
-    *   **後端**: 修復 `TokenUsageService` 聚合邏輯，於 `stats_api.py` 實作 Hybrid 統計 (USD 成本 + Token 估算)。
-    *   **權限**: 實作 `AdminService` 的 Auth Metadata 自動同步；`marketing_api` 全面改讀資料庫驅動之 Prompt。
-    *   **版控**: 實體化 `LibrarianService` 寫入 `archon_document_versions` 審計路徑。
-*   **UI/UX 統一**:
-    *   **儀表板**: 強化 `ManagerDashboard.tsx`，Admin 登入時自動注入系統健康診斷列。
-    *   **權限矩陣**: `IdentityMatrix.tsx` 新增權限清單展開功能與 Metadata 同步按鈕。
-*   **穩定性與規範**:
-    *   **Lint/Type**: 修正 `BlogPost` 狀態型別與 Icon 引用錯誤；於 `CONTRIBUTING_tw.md` 確立 React Hook 對象依賴項禁令。
-*   **路徑演進**: 更新 `Phase_4.6.5` 議題清單，納入爬蟲設定 RBAC 化與 Files API 遷移。
-
-### 2026-02-05: Auth Stability & Nexus UI Optimization
-*   **權限與導覽穩定化 (Root Cause Fix)**:
-    *   **後端**: 修正 `AuthService.py`，建立使用者時同步將 `role` 寫入 `user_metadata`。確保 `make db-init` 產出的 Token 自帶角色資訊。
-    *   **前端**: 強化 `api.ts` 的 `getCurrentUser` Fallback。當 Profile 讀取失敗時，優先從 Metadata 恢復角色，防止權限降級為 `MEMBER` 導致名單過濾錯誤。
-    *   **診斷**: 在前端增加明確的 Profile fetch 失敗日誌，提升可維護性。
-*   **Bob 工作台與部落格修復**:
-    *   **圖片連結**: 後端 `marketing_api.py` 對 Fallback URL 進行編碼（處理空格），解決 Markdown 圖片無法渲染的問題。
-    *   **內容同步**: 前端 `BrandPage.tsx` 實現封面圖與 AI 生成圖同步，並補齊發佈時的 `publishDate`。
-    *   **Prompt 側邊欄**: `ContentWorkbench.tsx` 加入常駐式 Prompt Inspector，解決提示資訊因點擊消失的問題。
-*   **Charlie (Manager) 體驗升級**:
-    *   **Operations Nexus**: 在側邊欄正式加入入口（支援 Admin/Manager）。
-    *   **平板優先預覽**: `ApprovalsPage.tsx` 實現 WYSIWYG 預覽（圖片+Markdown+Hashtags），並優化大型觸控按鈕（56px+）與視覺層次。
-*   **品質閘門**: 通過後端 535 項測試與全專案 Lint。同步修正了 `App.tsx` 的型別匯入與 `test_marketing_api_mock.py` 的編碼斷言。
-
-### 2026-02-03: Phase 4.6.3 Charlie Finalization (Sentinel & Smart Dispatch)
-*   **功能實作**: 實作了 Charlie (Manager) 指揮官工作流。
-    *   **Sentinel 哨兵**: `SchedulerService` 每 12 小時自動掃描 stale leads (14天未更新) 並產生 ALERT 級別日誌。
-    *   **Alerts API**: 提供 `GET /api/logs/alerts` 接口，支援 RBAC 過濾 (僅經理與管理員可見)，且支援透過 `exclude_dispatched` 排除已分派 (`dispatched`) 的警報。
-    *   **Smart Dispatch**: `TaskService` 整合 RAG 與 LLM，根據 Lead 歷史訪談紀錄自動生成繁體中文追蹤任務。
-    *   **狀態閉環**: 分派任務後自動將 Alert 標記為 `dispatched` 並連結 Task ID 至 Alert details。
-*   **品質加固**: 
-    *   **基礎設施**: 修復了 `llm_provider_service` 循環引用，並校準了 `TokenUsageService` 的成本計算邏輯 (優先 Ollama)。
-*   **測試驗收**: 通過後端 523 個測試與前端 25 個 E2E 測試。
-    *   **文件同步**: 更新了 `CONTRIBUTING_tw.md` 的資料庫遷移表與下一階段規劃文件。
-
 ---
 
 # 第四章：歷史檔案：原則的考古學 (Historical Archive: The Archaeology of Principles)
@@ -211,6 +140,19 @@
     *   **行動優先**: 實作 "Fire & Forget" 的語音轉工單功能。
     *   **效能優化**: 將 GPS 抓取改為 On-Demand，並引入 SQL Batch Update 優化歸檔效能。
     *   **E2E 穩定化**: 修復了 Dashboard 因非同步載入導致的 Race Condition。
+
+4.  **Nexus 戰情室與 UI 空間革命 (Ref: 02-05, 02-09, 02-10)**:
+    *   **並排編輯 (Split View)**: 實作了雙重收合側邊欄與 Markdown 即時預覽，解決 Context 切換的斷腦流問題。
+    *   **行動端韌性**: 透過移除 `min-h-screen` 徹底解決了手機版捲動死鎖問題，並實作了 AI 任務的動態進度反饋。
+    *   **Dashboard 加固**: 修正了同步 API 的 `maybeSingle()` 調用陷阱，確保資料加載穩定性。
+
+5.  **細粒度 RBAC 與型別安全革命 (Ref: 02-06, 02-07)**:
+    *   **Zero-Mypy**: 達成後端 100% 型別通過，重構 `BaseAgent` 泛型解決 `pydantic-ai` 接口匹配問題。
+    *   **權限階層化**: 實作了 Manager 與 Admin 的權限邊界，並導入 `is_system_protected` 旗標保護核心系統 Prompt。
+
+6.  **身分同步與流程自動化 (Ref: 02-03, 02-05)**:
+    *   **Auth 穩定化**: 修正了 `AuthService` 在建立使用者時同步 metadata 的邏輯，確保角色資訊的一致性。
+    *   **Librarian 實體化**: 打通了檔案版本控制與審計路徑的寫入。
 
 ### 2026年1月：權限重構、自癒機制與商業功能落地
 一月是專案從「技術驗證」邁向「商業運作」的關鍵轉折點。我們在前半月集中解決了深層的架構債（特別是 Auth 與 Docker 環境），後半月則全力衝刺商業功能的實作。

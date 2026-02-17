@@ -8,7 +8,7 @@
 INSERT INTO profiles (id, "employeeId", name, email, department, position, status, role, avatar)
 VALUES (
     COALESCE((SELECT id FROM profiles WHERE email = 'admin@archon.com'), '1'),
-    'E1001', 'Admin User', 'admin@archon.com', 'IT', 'System Administrator', 'active', 'system_admin', 'https://i.pravatar.cc/150?u=admin@archon.com'
+    'E1001', 'David Howard', 'admin@archon.com', 'IT', 'System Administrator', 'active', 'system_admin', 'https://i.pravatar.cc/150?u=admin@archon.com'
 )
 ON CONFLICT (id) DO UPDATE SET
     name = EXCLUDED.name,

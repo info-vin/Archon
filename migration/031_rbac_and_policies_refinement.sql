@@ -26,8 +26,8 @@ DROP POLICY IF EXISTS "Users can update own attendance" ON public.attendance_log
 CREATE POLICY "Users can update own attendance" ON public.attendance_logs FOR UPDATE USING (auth.uid() = user_id);
 
 -- Tokens
-DROP POLICY IF EXISTS "Managers can view all token usage" ON public.archon_token_usage;
-CREATE POLICY "Managers can view all token usage" ON public.archon_token_usage FOR SELECT USING (
+DROP POLICY IF EXISTS "Managers can view all token usage" ON public.token_usage;
+CREATE POLICY "Managers can view all token usage" ON public.token_usage FOR SELECT USING (
     EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid()::text AND role = 'manager')
 );
 

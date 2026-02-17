@@ -54,6 +54,7 @@ END $$;
 
 ALTER TABLE public.archon_document_versions 
 DROP CONSTRAINT IF EXISTS chk_project_or_task,
+DROP CONSTRAINT IF EXISTS chk_version_identity,
 ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'approved';
 
 ALTER TABLE public.archon_document_versions
