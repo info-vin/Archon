@@ -14,6 +14,7 @@ from typing import Any, Optional
 from ...config.logfire_config import get_logger, safe_logfire_error, safe_logfire_info
 from ...utils import get_supabase_client
 from ...utils.progress.progress_tracker import ProgressTracker
+from ..credential_service import credential_service
 
 # Import strategies
 # Import operations
@@ -263,6 +264,29 @@ class CrawlingService:
             "message": f"Crawl operation started for {url}",
             "progress_id": self.progress_id,
         }
+
+    async def _get_role_based_max_depth(self, user_role: str | None) -> int:
+        """Fetches max depth from database based on user role (1.6 Rule Realization)."""
+        if not user_role:
+            return 1
+
+        role_map = {
+            "sales": "CRAWL_MAX_DEPTH_SALES",
+            "marketing": "CRAWL_MAX_DEPTH_MARKETING",
+            "manager": "CRAWL_MAX_DEPTH_MANAGER",
+            "admin": "CRAWL_MAX_DEPTH_ADMIN",
+            "system_admin": "CRAWL_MAX_DEPTH_ADMIN"
+        }
+
+        setting_key = role_map.get(user_role.lower())
+        if setting_key:
+            try:
+                # Use credential_service to fetch from archon_settings
+                settings = await credential_service.get_credentials_by_category("crawler_rbac")
+                return int(settings.get(setting_key, 1))
+            except Exception:
+                return 1
+        return 1
 
     async def _async_orchestrate_crawl(self, request: dict[str, Any], task_id: str):
         """
@@ -667,16 +691,27 @@ class CrawlingService:
         else:
             # Handle regular webpages with recursive crawling
             crawl_type = "normal"
+            # 1. Determine Crawl Depth (1.6 - Driven by DB Rules)
+            user_role = request.get("user_role")
+            rbac_limit = await self._get_role_based_max_depth(user_role)
+
+            # Use the lower of (requested, rbac) to prevent privilege escalation,
+            # or rbac if requested is missing.
+            requested_depth = request.get("max_depth")
+            if requested_depth is not None:
+                max_depth = min(int(requested_depth), rbac_limit)
+            else:
+                max_depth = rbac_limit
+
             if self.progress_tracker:
                 await self.progress_tracker.update(
                     status="crawling",
                     progress=10,
-                    log=f"Starting recursive crawl with max depth {request.get('max_depth', 1)}...",
+                    log=f"Starting recursive crawl with max depth {max_depth}...",
                     crawl_type=crawl_type,
                     current_url=url
                 )
 
-            max_depth = request.get("max_depth", 1)
             # Let the strategy handle concurrency from settings
             # This will use CRAWL_MAX_CONCURRENT from database (default: 10)
 

@@ -273,10 +273,11 @@ class LibrarianService:
         file_name: str,
         content: str,
         file_path: str,
-        knowledge_type: str = "technical"
+        knowledge_type: str = "technical",
+        authority_level: str = "normal"
     ) -> str:
         """
-        Archives a local file into the knowledge base.
+        Archives a local file into the knowledge base (1.6 Policy support).
         """
         try:
             # 1. Generate Source ID
@@ -288,6 +289,8 @@ class LibrarianService:
             title = file_name
             word_count = len(content.split())
             tags = ["file_upload", "seeded_knowledge"]
+            if authority_level == "high":
+                tags.append("policy")
 
             if file_name.endswith(".md"):
                 tags.append("markdown")

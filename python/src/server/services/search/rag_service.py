@@ -346,11 +346,20 @@ class RAGService:
                 formatted_results = []
                 for i, result in enumerate(results):
                     try:
+                        res_metadata = result.get("metadata", {})
+                        base_score = float(result.get("similarity") or 0.0)
+
+                        # 1.6 - Policy Boosting: Increase score for high-authority documents
+                        if "policy" in res_metadata.get("tags", []):
+                            boosted_score = min(1.0, base_score + 0.15)
+                            logger.info(f"RAG: Applying Policy Boost | score {base_score:.3f} -> {boosted_score:.3f}")
+                            base_score = boosted_score
+
                         formatted_result = {
                             "id": result.get("id", f"result_{i}"),
                             "content": result.get("content", "")[:1000],  # Limit content
-                            "metadata": result.get("metadata", {}),
-                            "similarity_score": result.get("similarity", 0.0),
+                            "metadata": res_metadata,
+                            "similarity_score": base_score,
                         }
                         formatted_results.append(formatted_result)
                     except Exception as format_error:
