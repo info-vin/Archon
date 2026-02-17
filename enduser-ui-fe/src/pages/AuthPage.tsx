@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth.tsx';
+import { Button } from '../components/Button.tsx';
 
 const AuthPage: React.FC = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -8,6 +9,7 @@ const AuthPage: React.FC = () => {
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   
   const { login, register } = useAuth();
   const navigate = useNavigate();
@@ -15,6 +17,7 @@ const AuthPage: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    setErrorMessage(null);
     
     try {
       if (isLogin) {
@@ -24,20 +27,39 @@ const AuthPage: React.FC = () => {
       }
       navigate('/');
     } catch (error: any) {
-        alert(error.message);
+        setErrorMessage(error.message || 'An authentication error occurred');
     } finally {
         setIsLoading(false);
     }
   };
 
+  const inputErrorClasses = errorMessage
+    ? "border-destructive focus:border-destructive focus:ring-destructive"
+    : "border-border focus:border-ring focus:ring-ring";
+
+  const handleChange = (setter: React.Dispatch<React.SetStateAction<string>>) => (e: React.ChangeEvent<HTMLInputElement>) => {
+      setter(e.target.value);
+      if (errorMessage) setErrorMessage(null);
+  };
+
   return (
     <div className="min-h-screen bg-background flex items-center justify-center">
-      <div className="w-full max-w-md p-8 space-y-8 bg-card rounded-lg shadow-lg">
+      <div className="w-full max-w-md p-8 space-y-8 bg-card rounded-lg shadow-lg border border-border">
         <div>
           <h2 className="text-center text-3xl font-extrabold text-foreground">
             {isLogin ? 'Sign in to your account' : 'Create a new account'}
           </h2>
         </div>
+
+        {errorMessage && (
+            <div role="alert" aria-live="assertive" className="bg-destructive/10 border-l-4 border-destructive text-destructive p-4 mb-4 rounded shadow-sm flex items-start">
+                <div className="flex-1">
+                    <p className="font-bold">Error</p>
+                    <p className="text-sm">{errorMessage}</p>
+                </div>
+            </div>
+        )}
+
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           {!isLogin && (
             <div>
@@ -47,10 +69,11 @@ const AuthPage: React.FC = () => {
                 name="name"
                 type="text"
                 required
-                className="appearance-none rounded-md relative block w-full px-3 py-2 border border-border placeholder-muted-foreground text-foreground bg-input focus:outline-none focus:ring-ring focus:border-ring focus:z-10 sm:text-sm"
+                className={`appearance-none rounded-md relative block w-full px-3 py-2 border placeholder-muted-foreground text-foreground bg-input focus:outline-none focus:ring-2 focus:z-10 sm:text-sm ${inputErrorClasses}`}
                 placeholder="Full Name"
                 value={name}
-                onChange={(e) => setName(e.target.value)}
+                onChange={handleChange(setName)}
+                aria-invalid={!!errorMessage}
               />
             </div>
           )}
@@ -62,10 +85,11 @@ const AuthPage: React.FC = () => {
               type="email"
               autoComplete="email"
               required
-              className="appearance-none rounded-md relative block w-full px-3 py-2 border border-border placeholder-muted-foreground text-foreground bg-input focus:outline-none focus:ring-ring focus:border-ring focus:z-10 sm:text-sm"
+              className={`appearance-none rounded-md relative block w-full px-3 py-2 border placeholder-muted-foreground text-foreground bg-input focus:outline-none focus:ring-2 focus:z-10 sm:text-sm ${inputErrorClasses}`}
               placeholder="Email address"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={handleChange(setEmail)}
+              aria-invalid={!!errorMessage}
             />
           </div>
           <div>
@@ -76,25 +100,31 @@ const AuthPage: React.FC = () => {
               type="password"
               autoComplete="current-password"
               required
-              className="appearance-none rounded-md relative block w-full px-3 py-2 border border-border placeholder-muted-foreground text-foreground bg-input focus:outline-none focus:ring-ring focus:border-ring focus:z-10 sm:text-sm"
+              className={`appearance-none rounded-md relative block w-full px-3 py-2 border placeholder-muted-foreground text-foreground bg-input focus:outline-none focus:ring-2 focus:z-10 sm:text-sm ${inputErrorClasses}`}
               placeholder="Password"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={handleChange(setPassword)}
+              aria-invalid={!!errorMessage}
             />
           </div>
           
           <div>
-            <button
+            <Button
               type="submit"
-              disabled={isLoading}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-primary-foreground bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring disabled:opacity-50"
+              isLoading={isLoading}
+              className="w-full"
+              variant="primary"
             >
-              {isLoading ? 'Processing...' : (isLogin ? 'Sign in' : 'Sign up')}
-            </button>
+              {isLogin ? 'Sign in' : 'Sign up'}
+            </Button>
           </div>
         </form>
         <div className="text-sm text-center">
-          <button onClick={() => { setIsLogin(!isLogin); }} className="font-medium text-primary hover:text-primary/90">
+          <button
+            type="button"
+            onClick={() => { setIsLogin(!isLogin); setErrorMessage(null); }}
+            className="font-medium text-primary hover:text-primary/90"
+          >
             {isLogin ? 'Don\'t have an account? Sign up' : 'Already have an account? Sign in'}
           </button>
         </div>
