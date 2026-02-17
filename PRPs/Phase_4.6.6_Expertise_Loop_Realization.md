@@ -29,11 +29,10 @@
     *   統一由 DevBot 作為單一入口進行資源調度。
 
 ### 1.4 RAG：知識實時感知 (Live Knowledge Injection)
-*   **目標**: 確保 Bob 的生成器能「看到」Alice 剛剛爬回來的數據。
-*   **實作**:
-    *   在 `RAGService.perform_rag_query` 中加入 `filter` 參數。
-    *   Bob 的 `draft_blog_post` 將預設帶入 `min_score` 篩選，優先命中 `knowledge_api` 產出的 `technical` 與 `market_intel` 標籤。
-
+*   **狀態**: 已完成 (COMPLETED)
+*   **實作**: 
+    *   在 `RAGService.perform_rag_query` 中加入 `filter` 參數與 `min_score`。
+    *   Bob 的 `draft_blog_post` 已帶入 `min_score=0.25` 篩選，優先命中 `knowledge_api` 產出的 `technical` 與 `market_intel` 標籤。
 ### 1.5 DevBot：規範驅動自癒 (SOP-Driven Self-Healing)
 *   **狀態**: 已完成 (COMPLETED)
 *   **實作**: 

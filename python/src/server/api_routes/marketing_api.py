@@ -363,14 +363,26 @@ async def request_info(request: RequestInfoRequest, current_user: dict = Depends
 
 async def _get_expert_style_context(query: str) -> str:
     """
-    Unified Bob Expertise Retrieval.
-    Queries RAG for style constraints and past feedback.
+    Unified Bob Expertise Retrieval (1.4 - Live Knowledge Injection).
+    Prioritizes technical and market_intel tags during retrieval.
     """
     context_text = ""
-    success, rag = await RAGService().perform_rag_query(query=query, match_count=5)
+    # 1. First attempt: High priority knowledge with strict score (1.4 - Live Knowledge Injection)
+    success, rag = await RAGService().perform_rag_query(
+        query=query, 
+        match_count=5,
+        filter_metadata={"tags": ["technical", "market_intel", "style_lesson"]},
+        min_score=0.25
+    )
+    
+    # 2. Fallback: Generic RAG if prioritized search returns low results
+    if not success or not rag.get("results"):
+        success, rag = await RAGService().perform_rag_query(query=query, match_count=5, min_score=0.15)
+
     if success:
         for r_item in rag.get("results", []):
             metadata = r_item.get("metadata", {})
+            # Explicit weighting for critical feedback
             if metadata.get("knowledge_type") == "brand_voice" or "style_lesson" in metadata.get("tags", []):
                 context_text += f"\n[PAST STYLE FEEDBACK - CRITICAL]:\n{r_item['content']}\n"
             else:

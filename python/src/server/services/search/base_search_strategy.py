@@ -30,6 +30,7 @@ class BaseSearchStrategy:
         match_count: int,
         filter_metadata: dict | None = None,
         table_rpc: str = "match_archon_crawled_pages",
+        min_score: float | None = None,
     ) -> list[dict[str, Any]]:
         """
         Perform basic vector similarity search.
@@ -41,12 +42,16 @@ class BaseSearchStrategy:
             match_count: Number of results to return
             filter_metadata: Optional metadata filters
             table_rpc: The RPC function to call (match_archon_crawled_pages or match_archon_code_examples)
+            min_score: Optional minimum similarity threshold to override default
 
         Returns:
             List of matching documents with similarity scores
         """
         with safe_span("base_vector_search", table=table_rpc, match_count=match_count) as span:
             try:
+                # Determine threshold
+                threshold = min_score if min_score is not None else SIMILARITY_THRESHOLD
+
                 # Build RPC parameters
                 rpc_params = {"query_embedding": query_embedding, "match_count": match_count}
 
@@ -68,7 +73,7 @@ class BaseSearchStrategy:
                 if response.data:
                     for result in response.data:
                         similarity = float(result.get("similarity") or 0.0)
-                        if similarity >= SIMILARITY_THRESHOLD:
+                        if similarity >= threshold:
                             filtered_results.append(result)
 
                 span.set_attribute("results_found", len(filtered_results))

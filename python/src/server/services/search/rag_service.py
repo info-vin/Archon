@@ -95,6 +95,7 @@ class RAGService:
         filter_metadata: dict | None = None,
         use_hybrid_search: bool = False,
         cached_api_key: str | None = None,
+        min_score: float | None = None,
     ) -> list[dict[str, Any]]:
         """
         Document search with hybrid search capability.
@@ -138,6 +139,7 @@ class RAGService:
                         query_embedding=query_embedding,
                         match_count=match_count,
                         filter_metadata=filter_metadata,
+                        min_score=min_score,
                     )
                     span.set_attribute("search_mode", "vector")
 
@@ -259,7 +261,7 @@ class RAGService:
             return "", ""
 
     async def perform_rag_query(
-        self, query: str, source: str | None = None, match_count: int = 5, filter_metadata: dict | None = None
+        self, query: str, source: str | None = None, match_count: int = 5, filter_metadata: dict | None = None, min_score: float | None = None
     ) -> tuple[bool, dict[str, Any]]:
         """
         Perform a comprehensive RAG query that combines all enabled strategies.
@@ -328,6 +330,7 @@ class RAGService:
                     match_count=search_match_count,
                     filter_metadata=final_filter,
                     use_hybrid_search=use_hybrid_search,
+                    min_score=min_score,
                 )
 
                 # Merge web research results
