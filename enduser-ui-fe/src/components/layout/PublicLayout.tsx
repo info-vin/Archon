@@ -29,6 +29,9 @@ const PublicLayout: React.FC = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground">
+      <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:p-4 focus:bg-background focus:text-foreground focus:ring-2 focus:ring-primary focus:outline-none">
+        Skip to content
+      </a>
       <header className="sticky top-0 z-40 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container mx-auto flex h-14 max-w-screen-2xl items-center justify-between px-4">
           <Link to="/landing" className="mr-6 flex items-center space-x-2">
@@ -127,7 +130,7 @@ const PublicLayout: React.FC = () => {
         </div>
       )}
 
-      <main className="flex-1">
+      <main id="main-content" className="flex-1">
         <Outlet />
       </main>
       <footer className="py-6 md:px-8 md:py-0 border-t border-border">
