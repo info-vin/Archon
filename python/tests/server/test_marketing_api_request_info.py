@@ -28,7 +28,6 @@ def mock_dependencies():
          patch("src.server.api_routes.marketing_api.TaskService") as mock_task_service, \
          patch("src.server.api_routes.marketing_api.RAGService"), \
          patch("src.server.api_routes.marketing_api.get_supabase_client"), \
-         patch("src.server.api_routes.marketing_api.LogService"), \
          patch("src.server.api_routes.marketing_api.JobBoardService"), \
          patch("src.server.api_routes.marketing_api.prompt_service"), \
          patch("src.server.api_routes.marketing_api.credential_service"):

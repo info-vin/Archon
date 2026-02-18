@@ -37,7 +37,7 @@ async def test_nana_banana_tier_fallback():
         with patch("src.server.api_routes.marketing_api.credential_service") as MockCreds:
             MockCreds.get_credential = AsyncMock(return_value="fake-key")
             result = await nana_banana_proxy(request={"prompt": "City"}, current_user=user)
-            assert result["tier"] == "fallback"
+            assert result["tier"] == "fallback_pollinations"
             assert "pollinations.ai" in result["image_url"]
 
 @pytest.mark.asyncio
@@ -55,6 +55,6 @@ async def test_nana_banana_emergency_picsum():
             result = await nana_banana_proxy(request={"prompt": "Cyberpunk"}, current_user=user)
 
             # ASSERT: Bob is unconscious, system uses Picsum
-            assert result["tier"] == "emergency"
-            assert result["status"] == "fallback_picsum"
+            assert result["tier"] == "emergency_picsum"
+            assert result["status"] == "success"
             assert "picsum.photos" in result["image_url"]

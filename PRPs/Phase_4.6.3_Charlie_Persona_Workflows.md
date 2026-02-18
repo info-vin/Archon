@@ -82,19 +82,32 @@ sequenceDiagram
 
 ---
 
-## 4. 實作計畫 (Implementation Gap Analysis)
+## 4. 戰略觀察中樞 (Nexus Command)
+
+Charlie 透過 **Nexus Command**（原戰情室）觀察組織的數位體質指標。
+
+### 4.1 全量生產速率 (Multi-dimensional Velocity)
+*   **數據邏輯**: 不再僅限於部落格產出。Velocity 指標現在聚合了「部落格生成」、「任務結案 (SLA)」與「業務線索轉換」的平均週期。
+*   **決策降噪**: 實作了 **168 小時 (7 天)** 的離群值保護門檻 (Outlier Shield)。這能防止偶發的長期滯留任務扭曲整體的效率趨勢，確保 Charlie 看到的數據具備真實決策參考價值。
+
+### 4.2 跨團隊全局視野 (RBAC Visibility)
+*   **物理權限**: Charlie 具備「全局可見性」。在 `Team Management` 面板中，Charlie 可以無差別檢視 Alice 的外勤任務、Bob 的行銷進度以及系統 Agent 的修復日誌，打破跨部門的資訊孤島。
+
+---
+
+## 5. 實作計畫 (Implementation Gap Analysis)
 
 | 模組 | 現狀 (As-Is) | 實作行動 (Action Item) | 狀態 |
 | :--- | :--- | :--- | :--- |
-| **RBAC** | API 已強制擋權。 | 實作 `/approvals` 與 `/dispatch` 的權限檢查。 | ✅ Done |
+| **RBAC** | API 已強制擋權。 | 實作全局任務可見性與 `/approvals` 權限。 | ✅ Done |
 | **Alerts** | 實作於 `/api/logs`。 | 支援 `exclude_dispatched` 過濾，實現狀態閉環。 | ✅ Done |
 | **Dispatch** | 智慧化任務生成。 | 在 `TaskService` 整合 RAG+LLM 生成繁中任務。 | ✅ Done |
-| **UI** | 100% 遷移至 5173。 | 解鎖審核預覽高度，加固 Markdown 圖片識別。 | ✅ Done |
+| **Nexus** | 數據真實化。 | 落地聚合 Velocity 計算並實作 168h CAP。 | ✅ Done |
 | **Audit** | 具備搜尋功能。 | 實作 `DocumentVersionsLog` 的多維度即時過濾。 | ✅ Done |
 
 ---
 
-## 5. 結論
+## 6. 結論
 
 Charlie Persona 已達成 **100% 落地**。
 透過 **Sentinel (偵測)** 與 **Operations Nexus (執行)**，Charlie 真正實現了 "Management by Exception"，將原本繁瑣的行政檢查轉化為 AI 驅動的「指揮官」模式。所有的變更均受 **Audit Trail** 監控，確保系統演進過程可追溯、可信賴。

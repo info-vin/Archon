@@ -79,3 +79,53 @@ async def update_user_role(
     except Exception as e:
         logger.error(f"Admin API: Failed to update role: {e}")
         raise HTTPException(status_code=500, detail=str(e)) from e
+
+# --- CRAWLER TARGET MANAGEMENT (Phase 1.7 / BUG-048) ---
+
+class CrawlerTargetCreate(BaseModel):
+    target_url: str
+    max_depth: int = 5
+    description: str | None = None
+
+@router.get("/crawler-targets")
+async def list_crawler_targets(
+    current_user: dict = Depends(get_current_user)
+):
+    """List all specialized crawler targets (Admin only)."""
+    user_role = current_user.get("role", "viewer").lower()
+    if user_role not in ["admin", "system_admin"]:
+        raise HTTPException(status_code=403)
+
+    from ..utils import get_supabase_client
+    res = get_supabase_client().table("archon_crawler_targets").select("*").order("created_at").execute()
+    return res.data or []
+
+@router.post("/crawler-targets")
+async def create_crawler_target(
+    request: CrawlerTargetCreate,
+    current_user: dict = Depends(get_current_user)
+):
+    """Add a new target to the isolated crawler registry (Admin only)."""
+    user_role = current_user.get("role", "viewer").lower()
+    if user_role not in ["admin", "system_admin"]:
+        raise HTTPException(status_code=403)
+
+    from ..utils import get_supabase_client
+    res = get_supabase_client().table("archon_crawler_targets").insert(request.model_dump()).execute()
+    if not res.data:
+        raise HTTPException(status_code=500, detail="Failed to create target")
+    return res.data[0]
+
+@router.delete("/crawler-targets/{target_id}")
+async def delete_crawler_target(
+    target_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Remove a target from the registry (Admin only)."""
+    user_role = current_user.get("role", "viewer").lower()
+    if user_role not in ["admin", "system_admin"]:
+        raise HTTPException(status_code=403)
+
+    from ..utils import get_supabase_client
+    get_supabase_client().table("archon_crawler_targets").delete().eq("id", target_id).execute()
+    return {"success": True}

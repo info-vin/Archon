@@ -87,9 +87,28 @@
 *   **9. 巢狀捲動死鎖防禦 (Nested Scroll Lockup Defense)**
     *   **核心**: 在巢狀 Flex 佈局中，子層若使用 `min-h-screen` 會鎖死父層的 `overflow-y-auto` 捲動軸。解決方案是「釋放子層高度」，讓內容自然撐開父層，並輔以底部物理緩衝 (`div.h-32`) 避開手機導覽列。
 
+*   **10. 物理穿透驗證：終結「幽靈開發」 (Physical Penetration Verification)**
+    *   **核心**: 警惕「日誌領跑代碼」。Git Log 與 GEMINI.md 說「已實作」可能是虛假的偽證（例如漏掉 git add）。
+    *   **SOP**: 
+        1.  **實體掃描**: 必須讀取磁碟檔案內容 (`read_file`) 確認邏輯存在。
+        2.  **三向連動**: 檢查入口掛載 (main.py)、依賴映射 (index.html) 與測試斷言 (pytest/vitest)。
+        3.  **拒絕樂觀**: 只有當 `curl` 或 `test` 物理性通過時，方可標記為「🟢 已修復」。
+
 ---
 
 # 第三章：近期工作日誌 (Recent Journal Entries)
+
+### 2026-02-18: 撥亂反正與功能實體落地 (Honest Realization)
+*   **終結幽靈實作 (Correcting Phantom Features)**:
+    *   **Nexus 骨架補全**: 物理實作了缺失的 `/api/stats/ai-usage`、`/api/stats/business-risks` 與 `/force-readiness` 路由。這修正了重構 (Lean Controller) 導致的功能遺失。
+    *   **規格面板落地**: 在 `ManagerNexus.tsx` 實體寫入 `[ View Specs ]` 按鈕與 Slide-over 面板，補齊 `index.html` 的 `importmap` 依賴 (framer-motion, react-markdown)，消除白屏與 ReferenceError。
+*   **物理邊界與硬化 (Hardening)**:
+    *   **David vs. Charlie**: 修正 `system_api.py` 的模型 ID (2.5 -> 2.0)，並將 `/health/*` 端點物理鎖定為 `require_system_admin` 專用。
+    *   **Probe 唯讀化**: 修改 `health_service.py` 移除「寫入式測試」，改為唯讀驗證，徹底終止知識庫數據污染。
+    *   **Bob 韌性加固**: `marketing_api.py` 落地三層防禦降級（Hardened Pollinations -> Prompt-Hash Picsum），確保視覺資產在無 Token 環境下穩定。
+*   **品質驗收**:
+    *   **測試閉環**: 通過後端 549 項（含 regression 修正）與前端 41 項（含 Nexus Smoke Test）測試。
+    *   **物理驗收**: 透過 `curl` 驗證路由存在性，透過 `tsc` 驗證前端型別完整性。
 
 ### 2026-02-17: Governance Hardening & Strategic Decoupling
 *   **David Howard (Admin) 身份落地**:

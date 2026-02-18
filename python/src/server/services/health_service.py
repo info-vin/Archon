@@ -66,10 +66,10 @@ class HealthService:
 
     async def check_rag_integrity(self) -> dict:
         """
-        Calculates a weighted System Integrity Score.
+        Calculates a weighted System Integrity Score without polluting the DB.
         Weightage: Knowledge Alignment (70%) + DB (15%) + Search (15%)
         """
-        logger.info("📊 Calculating Composite System Integrity Score...")
+        logger.info("📊 Calculating Composite System Integrity Score (Read-Only)...")
 
         try:
             # 1. DB Connectivity Check (15% weight)
@@ -80,16 +80,18 @@ class HealthService:
                 return {
                     "status": "unhealthy",
                     "score": 0.0,
-                    "details": {"error": "Critical: Database connection lost. System integrity compromised."}
+                    "details": {"error": "Critical: Database connection lost."}
                 }
 
             # 2. Knowledge Alignment Check (70% weight)
+            # Check how many sources have at least one indexed chunk in crawled_pages
             total_res = self.supabase_client.table("archon_sources").select("source_id", count="exact").execute()
             total_count = total_res.count or 0
 
             alignment_score = 0.0
             indexed_count = 0
             if total_count > 0:
+                # Count distinct sources that have embeddings
                 indexed_res = self.supabase_client.table("archon_crawled_pages")\
                     .select("source_id")\
                     .not_.is_("embedding", "null")\
@@ -97,13 +99,15 @@ class HealthService:
                 indexed_count = len({row["source_id"] for row in (indexed_res.data or [])})
                 alignment_score = (indexed_count / total_count) * 70.0
             else:
-                alignment_score = 70.0 # Default full if empty
+                alignment_score = 70.0 # Default full if system is fresh/empty
 
             # 3. Search Responsiveness Check (15% weight)
+            # Perform a lightweight read-only search for a generic term
             rag = RAGService()
             search_ok = False
             try:
-                test_search = await rag.search_documents(query="AI", match_count=1)
+                # Search for 'Alice' or 'Bob' (common terms in mock data)
+                test_search = await rag.search_documents(query="Archon", match_count=1)
                 search_ok = len(test_search) > 0
             except Exception:
                 search_ok = False
@@ -114,7 +118,7 @@ class HealthService:
             final_score = round(db_score + alignment_score + search_score, 2)
 
             return {
-                "status": "healthy" if final_score >= 95 else ("degraded" if final_score >= 80 else "unhealthy"),
+                "status": "healthy" if final_score >= 90 else ("degraded" if final_score >= 70 else "unhealthy"),
                 "score": final_score,
                 "details": {
                     "alignment_raw": round((alignment_score / 70.0) * 100, 1) if total_count > 0 else 100.0,

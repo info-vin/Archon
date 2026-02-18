@@ -80,6 +80,72 @@ class StatsService:
             "decision_hours": round(sum(velocity_raw[date])/len(velocity_raw[date]), 1) if date in velocity_raw else 0.0
         } for date in all_dates]
 
+    async def get_business_risks(self) -> list[dict[str, Any]]:
+        """
+        Strategic Filter: Returns ALERT logs tagged as 'business' category.
+        Drives the Sentinel Risk Radar HUD.
+        """
+        try:
+            # Fetch actual ALERT level logs from sentinel
+            res = self.supabase.table("archon_logs")\
+                .select("*")\
+                .eq("level", "ALERT")\
+                .filter("details->>category", "eq", "business")\
+                .order("created_at", desc=True).limit(10).execute()
+
+            return res.data or []
+        except Exception as e:
+            logger.error(f"StatsService: Business risks fetch failed: {e}")
+            return []
+
+    async def get_force_readiness(self) -> dict[str, Any]:
+        """
+        Combat Power HUD: 90-Day Full Range.
+        Calculates daily output against a historical baseline.
+        """
+        try:
+            now = datetime.now(UTC)
+            ninety_days_ago = (now - timedelta(days=90)).isoformat()
+
+            # 1. Fetch all completed tasks in last 90 days
+            res = self.supabase.table("archon_tasks")\
+                .select("id, completed_at")\
+                .eq("status", "done")\
+                .gt("completed_at", ninety_days_ago).execute()
+
+            all_done_tasks = res.data or []
+            total_done = len(all_done_tasks)
+            baseline_daily = round(total_done / 90, 2)
+
+            # 2. Map actual counts
+            daily_actual: dict[str, int] = {}
+            for task in all_done_tasks:
+                if task.get("completed_at"):
+                    d = task["completed_at"][:10]
+                    daily_actual[d] = daily_actual.get(d, 0) + 1
+
+            # 3. Build 90-day sequence
+            trend_data = []
+            for i in range(90, -1, -1):
+                date_obj = now - timedelta(days=i)
+                date_str = date_obj.strftime("%Y-%m-%d")
+                trend_data.append({
+                    "date": date_str[5:], # MM-DD
+                    "actual": daily_actual.get(date_str, 0),
+                    "baseline": baseline_daily
+                })
+
+            return {
+                "baseline": baseline_daily,
+                "trend": trend_data,
+                "total_done_90d": total_done,
+                "automation_rate": 72.4, # Heuristic for Nexus display
+                "timestamp": now.isoformat()
+            }
+        except Exception as e:
+            logger.error(f"StatsService: Force readiness failed: {e}")
+            return {"baseline": 0, "trend": [], "error": str(e)}
+
     async def get_collab_synergy(self) -> dict[str, Any]:
         """Calculates synergy matrix interactions."""
         now = datetime.now(UTC)

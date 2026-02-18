@@ -11,8 +11,8 @@
 |指標 (Metric)|數量 (Count)|詳細資訊 (Details)|
 |:---|:---|:---|
 |**總議題數**|38|涵蓋 UX 流程、資料一致性、系統重置可靠性與營運引擎加固。|
-|**已完成修正**|33|經過 2026-02-16 物理審計，大部分邏輯與 Migration 均已就緒。|
-|**剩餘缺口**|5|BUG-046 (音頻超時), TECH-005 (硬編碼), GAP-034 (Velocity 全量計算) 等。|
+|**已完成修正**|36|經過 2026-02-18 物理審計，所有核心功能與指標邏輯均已落地。|
+|**剩餘缺口**|2|僅剩 TECH-001 (RAGSettings) 與 TECH-002 (Projects API) 待討論技術債。|
 
 ---
 
@@ -26,7 +26,7 @@
 | **GAP-027** | 🔧 Gap | **Charlie** | **Nexus** | **指揮官中樞: Integrity (系統完整度)**。 | `stats_service.py` 加權模型 (70/30) 已落地。 | 🟢 已修復 |
 | **GAP-035** | 🔧 Gap | **Charlie** | **Nexus** | **指揮官中樞: Resources (資源消耗)**。 | `stats_service.py` 實作 USD/Token 剖析。 | 🟢 已修復 |
 | **GAP-029** | 🔧 Gap | **Charlie** | **Nexus** | **指揮官中樞: Sent Risks (風險雷達)**。 | `scheduler_service.py` 偵測 Stale Leads。 | 🟢 已修復 |
-| **GAP-034** | 🔧 Gap | **Charlie** | **Nexus** | **指揮官中樞: Velocity (生產速率)**。 | **[缺口]** 僅限於 Blog，缺少 Tasks/Leads 結案週期。 | 🟡 待補全 |
+| **GAP-034** | 🔧 Gap | **Charlie** | **Nexus** | **指揮官中樞: Velocity (生產速率)**。 | `stats_service.py` 已實作全量計算 (Blog/Task/Lead) 與 168h CAP。 | 🟢 已修復 |
 | **BUG-031** | 🐛 Bug | **System** | **DB/Reset**| **`make db-reset` 失敗**。 | `RESET_DB.sql` 已包含所有 2026 新表。 | 🟢 已修復 |
 | **BUG-046** | ⏱️ Timeout | **Alice** | **Voice** | **語音轉錄超時風險**。 | 輪詢上限提升至 60s (30次) 支援長音頻。 | 🟢 已修復 |
 | **TECH-005** | 🏗️ Debt | **Alice** | **Logic** | **專案名稱硬編碼**。 | 透過 `archon_settings` 動態讀取並增加降級搜尋邏輯。 | 🟢 已修復 |
@@ -52,7 +52,7 @@
 | **UX-012** | 🎨 Style | **All** | **Buttons** | 5173 按鈕風格對齊 3737 Style Guide。已實作通用 `Button` 組件。 | Low | 🟢 已修復 |
 | **GAP-012** | 🔧 Gap | **Bob** | **Intel** | 頁面空白無數據，配色太深。已優化配色 (Light Purple Theme) 並確保 Mock Data 顯示。 | Medium | 🟢 已修復 |
 | **GAP-013** | 🔧 Gap | **Charlie** | **Center** | 指揮中心無資料供練習。已在 `seed_mock_data.sql` 注入 `marketing_trends` 數據。 | Medium | 🟢 已修復 |
-| **GAP-014** | 🔧 Gap | **Admin** | **RBAC** | 缺少 RBAC 練習案例。已注入 Viewer/Editor 角色數據 (`viewer@`, `editor@`) 以供權限邊界測試 (非刪除角色)。 | Low | 🟡 待驗收 |
+| **GAP-014** | 🔧 Gap | **Admin** | **RBAC** | 缺少 RBAC 練習案例。 | `seed_mock_data.sql` 已成功注入 Viewer/Editor 練習案例。 | 🟢 已修復 |
 | **GAP-015** | 🔧 Gap | **Tech** | **Score** | Alice 的 Enrichment Score 計算規則實作。已於 `EnrichmentService` 實作動態評分。 | Low | 🟢 已修復 |
 | **GAP-016** | 🔧 Gap | **Tech** | **Token** | Token Usage 真實寫入與可視化確認。已於 `MockLLMClient` 實作 Token 消耗模擬。 | Low | 🟢 已修復 |
 | **GAP-003** | 🔧 Gap | **Alice** | **Swipe** | 滑動誤觸復原功能待驗收。已在 `LeadsCardStack` 實作 Undo 按鈕與歷史堆疊。 | Low | 🟢 已修復 |
@@ -69,7 +69,7 @@
 | **GAP-020** | 🔧 Gap | **Admin** | **RBAC** | **精細權限下放 (Delegation)**。已打通 /admin 路由給 Manager，並依權限動態過濾標籤頁。 | High | 🟢 已修復 |
 | **GAP-021** | 🔧 Gap | **Admin** | **Config** | **配置持久化 (Persistence)**。系統設定全面存儲於資料庫 archon_settings，支持熱加載。 | Medium | 🟢 已修復 |
 | **GAP-022** | 🔧 Gap | **Admin** | **Audit** | **變更稽核日誌 (Audit Trail)**。已實作「變更即審計」：Manager 的設定變更自動寫入版本稽核表。 | Medium | 🟢 已修復 |
-| **GAP-023** | 🔧 Gap | **Charlie** | **Return** | **退件反饋與狀態流轉閉環**。已完成：1. 移除 Workbench 顯示限制；2. 解鎖 Charlie 預覽高度與圖片自動識別；3. 實作儲存/提交時自動連動任務狀態 (Doing/Review)。 | High | 🟡 待驗證 |
+| **GAP-023** | 🔧 Gap | **Charlie** | **Return** | **退件反饋與狀態流轉閉環**。 | `ContentWorkbench.tsx` 已實作視覺化反饋並解除高度限制。 | 🟢 已修復 |
 | **GAP-024** | 🔧 Gap | **Alice** | **Pitch** | **Pitch View UI**。已完成：1. 桌面端 Table View 增加 View 按鈕與 Modal；2. 手機端 LeadsCardStack 增加動態 PitchDrawer，支援已生成內容的翻閱與複製。 | Medium | 🟢 已修復 |
 | **GAP-025** | 🔧 Gap | **Admin** | **Config**| **Scoring Persistence**。已實作：1. Migration 038 權重持久化；2. AdminPage 增加 Lead Scoring Weights 動態配置區塊，支援自動保存與審計日誌同步。 | High | 🟢 已修復 |
 | **GAP-026** | 🔧 Gap | **Admin** | **Audit** | **Audit Search UI**。已實作：DocumentVersionsLog 增加多維度即時搜尋與 Sticky Header，支援按人員、欄位、摘要過濾稽核紀錄。 | Low | 🟢 已修復 |

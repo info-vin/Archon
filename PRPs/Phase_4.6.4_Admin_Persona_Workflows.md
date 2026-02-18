@@ -13,12 +13,13 @@ Admin 是 Archon 系統的創造者與守護者。他擁有上帝視角 (God Mod
 
 ### 角色責任區分 (Admin vs Manager)
 
-| 特徵 | 👨 Charlie (Manager) | 🛠️ Admin (Architect) |
+| 特徵 | 👨 Charlie (Manager / 琥珀色) | 🛠️ David (Admin / 玫瑰色) |
 | :--- | :--- | :--- |
-| **關注點** | **Business Health** (業績、轉換率) | **System Health** (API 延遲、錯誤率、Token 消耗) |
-| **介入時機** | Alice 業績未達標時 | API 出現 500 Error 或 Agent 陷入死迴圈時 |
-| **權限邊界** | 僅能看到自己部門的資料 | 可看到所有資料 (`override_ownership`)，但受稽核紀錄監控 |
-| **核心工具** | Operations Nexus, Approvals | Command Center, Identity Matrix, Config Grid |
+| **關注點** | **Business Health** (SLA、Velocity、轉換率) | **System Health** (API 延遲、模型存活、Token 成本) |
+| **介入時機** | 業務流轉緩慢或內容品質不佳時 | 系統報錯、API Key 洩漏或 Agent 邏輯損壞時 |
+| **權限邊界** | 僅限戰略決策區 (Amber Zone) | 擁有基礎設施區 (Rose Zone) 的物理控制權 |
+| **核心工具** | Nexus Command, Approvals, Team | Admin Center, Identity Matrix, **Crawler Targets** |
+| **色彩規範** | **Amber-500** (代表決策與分派) | **Rose-500** (代表安全與防禦) |
 
 ---
 
@@ -118,9 +119,10 @@ sequenceDiagram
 
 | 模組 | 現狀 (As-Is) | 缺口 (Gap) | 實作行動 (Action Item) | 狀態 |
 | :--- | :--- | :--- | :--- | :--- |
-| **System Health** | `ManagerDashboard.tsx` 整合後台。 | 功能完整，包含 RAG/Error/Agent 監控。 | **Dashboard Integration**: Admin 登入時自動顯示 Health Cards。 | ✅ Done |
+| **System Health** | `system_api.py` 鎖定權限。 | 模型 ID 與邊界隔離。 | **Fix BUG-047/048**: 校正模型版本為 2.0，將 Probe 改為唯讀檢查。 | ✅ Done |
 | **RBAC** | `IdentityMatrix.tsx` 支援細粒度覆寫。 | 已實作 `permission_overrides` 覆寫機制。 | **Permission Override**: 實作交互式權限矩陣，支援三態授權 (Inherit/Grant/Revoke)。 | ✅ Done |
-| **Token Ops** | `stats_api.py` 支援 Hybrid 統計。 | 支援真實成本計算 (`cost_usd`) 與預算監控。 | **Cost Visualization**: 在 Dashboard 顯示每日成本與預算百分比。 | ✅ Done |
+| **Crawler Management** | `admin_api.py` 具備專屬端點。 | 物理隔離 URI 設定。 | **Feature 1.7**: 建立 `archon_crawler_targets` 表並實施 David 專屬管理。 | ✅ Done |
+| **Token Ops** | `stats_api.py` 支援 Hybrid 統計。 | 補齊 `/ai-usage` 端點。 | **Fix 404**: 實作聚合成本計算邏輯並連接至 Nexus。 | ✅ Done |
 | **Config** | `Scoring Logic` 已持久化。 | 評分規則已存入 `archon_settings` 資料庫。 | **Config Persistence**: 實作 Lead Scoring Weights 配置區塊，支援即時微調。 | ✅ Done |
 | **Audit** | 前端具備搜尋與過濾介面。 | 已實作多維度即時過濾稽核紀錄。 | **Audit Log Viewer**: 在 `DocumentVersionsLog` 增加 Search UI 與 Sticky Header。 | ✅ Done |
 

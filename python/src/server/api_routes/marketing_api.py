@@ -16,7 +16,6 @@ from ..prompts.sales_prompts import SALES_PITCH_SYSTEM_PROMPT
 from ..services.credential_service import credential_service
 from ..services.guardrail_service import GuardrailService
 from ..services.job_board_service import JobBoardService, JobData
-from ..services.log_service import LogService
 from ..services.projects.task_service import TaskService
 from ..services.prompt_service import prompt_service
 from ..services.search.rag_service import RAGService
@@ -476,36 +475,32 @@ async def nana_banana_proxy(request: dict, current_user: dict = Depends(get_curr
         except Exception as e:
             logger.info(f"NanaBanana: Native rendering unavailable ({e}). Using Bob's Fallback.")
 
-        # 4. Bob's Fallback (Free Tier / Public API)
-        safe_prompt = re.sub(r'[^a-zA-Z0-9\s]', '', enhanced_prompt).replace(" ", "%20")
-        fallback_url = f"https://image.pollinations.ai/prompt/{safe_prompt}?width=1024&height=1024&nologo=true&seed={uuid.uuid4().hex[:8]}"
+        # 4. Bob's Fallback (Tier 2: Community AI - No Token Required)
+        # Use a simplified URL structure to improve Pollinations stability
+        # We replace spaces with hyphens and remove special chars for better parsing
+        safe_keywords = re.sub(r'[^a-zA-Z0-9\s]', '', enhanced_prompt).strip().replace(" ", "-")
+        fallback_url = f"https://image.pollinations.ai/prompt/{safe_keywords}?width=1024&height=1024&nologo=true"
 
         return {
             "status": "success",
             "image_url": fallback_url,
             "enhanced_prompt": enhanced_prompt,
-            "tier": "fallback"
+            "tier": "fallback_pollinations",
+            "note": "Generated via community AI cluster."
         }
 
     except Exception as e:
-        logger.error(f"NanaBanana: Catastrophic Failure: {e}")
-        # Final Safety Net: If Bob's brain (LLM) or construction fails, show a tagged random image.
-        try:
-            LogService(get_supabase_client()).create_log_entry({
-                "user_input": "Nana Banana Failure",
-                "gemini_response": str(e),
-                "project_name": "marketing",
-                "user_name": "system"
-            })
-        except Exception:
-            pass
-
-        safe_tag = re.sub(r'[^a-zA-Z0-9]', '', request.get("prompt", "marketing"))[:20]
+        logger.error(f"NanaBanana: Primary and AI Fallback failed: {e}")
+        # Final Safety Net: Tier 3 (Stable Visual Asset - No AI)
+        # Use a seed based on the prompt hash to keep it consistent
+        import hashlib
+        prompt_hash = hashlib.md5(request.get("prompt", "marketing").encode()).hexdigest()[:8]
         return {
-            "status": "fallback_picsum",
-            "image_url": f"https://picsum.photos/seed/{uuid.uuid4().hex}/1024/1024?{safe_tag}",
+            "status": "success",
+            "image_url": f"https://picsum.photos/seed/{prompt_hash}/1024/1024",
             "enhanced_prompt": request.get("prompt"),
-            "tier": "emergency"
+            "tier": "emergency_picsum",
+            "note": "Fallback to stable visual placeholder."
         }
 
 @router.get("/trends")

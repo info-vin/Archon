@@ -29,7 +29,10 @@ Bob 不需要更多圓餅圖。他需要的是一個 **內容 IDE (Integrated De
 
 ### Agent 3: Nana Banana (美術 - 視覺助手)
 *   **職責**: 視覺化 (Asset Creator)。
-*   **模型**: 預設 `gemini-2.0-flash-exp`。若遇 429/403 錯誤，自動降級至 `picsum.photos` 動態種子。
+*   **引擎韌性 (3-Tier Resilience)**: 
+    1.  **Native**: 優先調用 Google Imagen 產出高品質圖資。
+    2.  **Fallback**: 若 API Key 缺失或遇到 429/403 錯誤，自動切換至 `pollinations.ai` 公開 API。
+    3.  **Emergency**: 極端情況下調用 `picsum.photos` 隨機圖，確保 UI 流程不中斷。
 
 ---
 
@@ -85,23 +88,26 @@ sequenceDiagram
 
 ## 4. 定案政策與規範 (Finalized Policies)
 
-### P6. 跨角色狀態連動 (Task Sync)
+### P6. 內容完整性與清理 (Smart Polish)
+*   **圖片分離**: 為了保持文章內文純淨，系統在儲存時會自動執行 `cleanAIImageReference`。這會從 Markdown 中移除圖片語法，僅將 URL 保存在元數據的 `imageUrl` 欄位中，避免內容重複渲染或語法污染。
+
+### P7. 介面佈局規範
+*   **高度鎖定**: `/brand` 頁面強制使用 `h-screen overflow-hidden` 佈局。這能消除導覽列、側邊欄與編輯器之間的多重捲動條，提供 IDE 般的沈浸式體驗。
+
+### P8. 跨角色狀態連動 (Task Sync)
 *   **儲存連動**: `Save` 操作強制觸發 `TaskStatus.DOING`。
 *   **提交連動**: `Submit` 操作成功後（通過 AI 檢查）觸發 `TaskStatus.REVIEW`。
 
-### P7. 反饋感知透明化 (Feedback Transparency)
+### P9. 反饋感知透明化 (Feedback Transparency)
 *   **映射規範**: 必須優先處理 API 返回的 `reviewNotes` (camelCase) 並將其賦值給 UI 渲染所需的 `review_notes`。
-
-### P8. 視覺資產一致性
-*   **圖片插入**: AI 生成圖以 `![Cover](url)` 插入正文首行。Charlie 端需具備 regex 提取能力以實現 WYSIWYG 預覽。
 
 ---
 
 ## 5. 執行檢查清單 (Actionable Checklist)
 
-1.  [x] **UI**: 實作 30/70 分割視窗與雙重收合側邊欄。
+1.  [x] **UI**: 實作 30/70 分割視窗、雙重收合側邊欄與 `h-screen` 佈局。
 2.  [x] **Sync**: 實作 `Save` 與 `Submit` 對關聯 Task ID 的狀態更新。
-3.  [x] **Logic**: 修正 `reviewNotes` API 別名映射問題，恢復理由顯示。
-4.  [x] **AI**: 實作 `marketing_api` 的自動合規性審查邏輯 (Mocked)。
-5.  [x] **Visual**: 實作 Prompt Inspector 彈窗。
+3.  [x] **Logic**: 實作 `cleanAIImageReference` 內容清理邏輯。
+4.  [x] **Resilience**: 完成 `marketing_api` 的三層圖資降級防禦。
+5.  [x] **Visual**: 實作 Prompt Inspector 彈窗與視覺化退件反饋橫幅。
 6.  [x] **Data**: 補全 `BlogPost` 介面中的 `authorName` 與 `publishDate`。

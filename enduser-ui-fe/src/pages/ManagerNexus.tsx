@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import ReactMarkdown from 'react-markdown';
+import { motion, AnimatePresence } from 'framer-motion';
 import { api } from '../services/api';
 import { useAuth } from '../hooks/useAuth';
 import { SystemOverview, Employee, AlertItem } from '../types';
@@ -7,7 +9,7 @@ import {
     ShieldCheckIcon, DatabaseIcon, UsersIcon, 
     GitCommitIcon, SearchIcon, FileTextIcon,
     DollarSignIcon, ClockIcon, ZapIcon,
-    MaximizeIcon, MinimizeIcon, SparklesIcon
+    MaximizeIcon, MinimizeIcon, SparklesIcon, XIcon
 } from '../components/Icons';
 import { ManageMemberModal } from '../features/team/components/ManageMemberModal';
 import UserAvatar from '../components/UserAvatar';
@@ -117,6 +119,8 @@ export const ManagerNexus: React.FC = () => {
     const [activeMetric, setActiveMetric] = useState<MetricCategory>('integrity');
     const [isMaximized, setIsMaximized] = useState(false);
     const [loading, setLoading] = useState(true);
+    const [isSpecOpen, setIsSpecOpen] = useState(false);
+    const [specContent, setSpecContent] = useState('');
     
     // Data States
     const [overview, setOverview] = useState<SystemOverview | null>(null);
@@ -149,6 +153,10 @@ export const ManagerNexus: React.FC = () => {
 
     useEffect(() => {
         fetchData();
+        fetch('/docs/nexus-spec.md')
+            .then(res => res.text())
+            .then(setSpecContent)
+            .catch(err => console.error("Failed to load specs:", err));
     }, []);
 
     const [commanderTrends, setCommanderTrends] = useState<any[]>([]);
@@ -1281,9 +1289,18 @@ export const ManagerNexus: React.FC = () => {
                     <h1 className="text-3xl font-black text-gray-900 tracking-tight">Manager Nexus</h1>
                     <p className="text-sm text-gray-500 mt-1 font-medium">Command & Control v7.1</p>
                 </div>
-                <div className="flex gap-2 text-xs font-bold text-gray-400 bg-white px-3 py-1.5 rounded-lg border border-gray-100 shadow-sm">
-                    <ClockIcon className="w-4 h-4" />
-                    <span>Auto-refresh: 5m</span>
+                <div className="flex items-center gap-4">
+                    <button 
+                        onClick={() => setIsSpecOpen(true)}
+                        className="flex items-center gap-2 px-4 py-2 bg-amber-50 text-amber-600 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-amber-100 transition-all active:scale-95 border border-amber-100"
+                    >
+                        <FileTextIcon className="w-4 h-4" />
+                        View Specs
+                    </button>
+                    <div className="flex gap-2 text-xs font-bold text-gray-400 bg-white px-3 py-1.5 rounded-lg border border-gray-100 shadow-sm">
+                        <ClockIcon className="w-4 h-4" />
+                        <span>Auto-refresh: 5m</span>
+                    </div>
                 </div>
             </header>
 
@@ -1413,6 +1430,53 @@ export const ManagerNexus: React.FC = () => {
                     }} 
                 />
             )}
+
+            {/* Nexus Spec Slide-over Panel */}
+            <AnimatePresence>
+                {isSpecOpen && (
+                    <>
+                        {/* Backdrop */}
+                        <motion.div 
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            onClick={() => setIsSpecOpen(false)}
+                            className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[70]"
+                        />
+                        {/* Panel */}
+                        <motion.aside 
+                            initial={{ x: '100%' }}
+                            animate={{ x: 0 }}
+                            exit={{ x: '100%' }}
+                            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+                            className="fixed inset-y-0 right-0 w-full max-w-xl bg-white dark:bg-slate-900 shadow-2xl z-[80] overflow-hidden flex flex-col"
+                        >
+                            <div className="p-6 border-b border-gray-100 dark:border-slate-800 flex justify-between items-center bg-amber-50/30 dark:bg-amber-900/10">
+                                <div className="flex items-center gap-3">
+                                    <div className="p-2 bg-amber-500 rounded-lg text-white">
+                                        <FileTextIcon className="w-5 h-5" />
+                                    </div>
+                                    <h2 className="text-lg font-black text-gray-900 dark:text-white uppercase tracking-tight">Nexus Metrics Spec</h2>
+                                </div>
+                                <button onClick={() => setIsSpecOpen(false)} className="p-2 hover:bg-gray-200/50 dark:hover:bg-slate-800 rounded-full transition-colors text-gray-400">
+                                    <XIcon className="w-6 h-6" />
+                                </button>
+                            </div>
+                            <div className="flex-1 overflow-y-auto p-8 prose prose-slate dark:prose-invert max-w-none prose-headings:font-black prose-h1:text-2xl prose-h2:text-xl prose-h3:text-lg">
+                                <ReactMarkdown>{specContent}</ReactMarkdown>
+                            </div>
+                            <div className="p-6 border-t border-gray-100 dark:border-slate-800 bg-gray-50/50 dark:bg-slate-950/50 flex justify-end">
+                                <button 
+                                    onClick={() => setIsSpecOpen(false)}
+                                    className="px-6 py-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-xl font-bold text-sm hover:scale-105 transition-transform"
+                                >
+                                    Close Spec
+                                </button>
+                            </div>
+                        </motion.aside>
+                    </>
+                )}
+            </AnimatePresence>
         </div>
     );
 };
