@@ -101,7 +101,7 @@ const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                             <li className="mb-2">
                                 <Link to="/nexus" className={`flex items-center p-2 rounded-md hover:bg-secondary ${location.pathname.startsWith('/nexus') ? 'bg-secondary' : ''}`}>
                                     <LayoutGridIcon className="w-5 h-5 mr-3 text-amber-500 dark:text-amber-400" />
-                                    Nexus戰情室
+                                    Nexus Command
                                 </Link>
                             </li>
                         </>

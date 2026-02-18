@@ -54,8 +54,8 @@ async def _transcribe_with_gemini(
         )
 
         # 2. Wait for processing (Polling state via SDK)
-        # Use simple loop as SDK upload is sync by default but file status is async
-        for _ in range(10):
+        # BUG-046: Increased polling to 30 iterations (60s) for longer sales recordings
+        for _ in range(30):
             file_status = client.files.get(name=uploaded_file.name)
             if file_status.state.name == "ACTIVE":
                 break
@@ -157,15 +157,31 @@ async def create_visit_log(
         created_log = res.data[0]
 
         # GAP-009: Voice-to-Task
+        # TECH-005: De-hardcode project title and add robust search fallback
         try:
             from ..services.projects.task_service import task_service
-            proj = supabase.table("archon_projects").select("id").eq("title", "Field Ops").limit(1).execute()
+
+            # 1. Fetch target title from settings
+            settings_res = supabase.table("archon_settings").select("value").eq("key", "DEFAULT_ALICE_PROJECT_TITLE").execute()
+            target_title = settings_res.data[0]["value"] if settings_res.data else "Field Ops"
+
+            # 2. Search for the specific project
+            proj = supabase.table("archon_projects").select("id").eq("title", target_title).limit(1).execute()
+
+            # 3. Fallback: If target project is missing, grab ANY available project to ensure data safety
+            if not proj.data:
+                logger.warning(f"TECH-005: Project '{target_title}' not found. Falling back to latest active project.")
+                proj = supabase.table("archon_projects").select("id").order("created_at", desc=True).limit(1).execute()
+
             p_id = proj.data[0]["id"] if proj.data else None
+
             if p_id:
                 await task_service.create_task(
                     project_id=p_id, title=f"[{visit_type}] 拜訪摘要: {summary[:30]}",
                     description=f"**類型:** {visit_type}\n**逐字稿:**\n{transcript}\n\n**摘要:**\n{summary}", assignee_id=user_id
                 )
+            else:
+                logger.warning("TECH-005: No projects found in system. Task creation skipped for voice log.")
         except Exception as te:
             logger.warning(f"Task creation skipped: {te}")
 

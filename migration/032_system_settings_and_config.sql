@@ -31,7 +31,8 @@ INSERT INTO public.archon_settings (key, value, category, description) VALUES
 ('LLM_PROVIDER', 'google', 'rag_strategy', 'Active LLM Provider for RAG'),
 ('EMBEDDING_PROVIDER', 'google', 'rag_strategy', 'Primary Embedding Provider'),
 ('EMBEDDING_MODEL', 'gemini-embedding-001', 'rag_strategy', 'Embedding Model Name'),
-('MODEL_CHOICE', 'gemini-1.5-flash', 'rag_strategy', 'Selected Chat Model')
+('MODEL_CHOICE', 'gemini-1.5-flash', 'rag_strategy', 'Selected Chat Model'),
+('DEFAULT_ALICE_PROJECT_TITLE', 'Field Ops', 'persona_alice', 'Alice 語音日誌自動轉工單的預設關聯專案名稱。')
 ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value;
 
 -- Register Migration

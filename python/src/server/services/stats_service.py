@@ -27,8 +27,10 @@ class StatsService:
         return max(0, score)
 
     async def get_commander_trends(self) -> list[dict[str, Any]]:
-        """Strategic 30-day trend data."""
+        """Strategic 30-day trend data including full Velocity (GAP-034)."""
         thirty_days_ago = (datetime.now(UTC) - timedelta(days=30)).isoformat()
+
+        # 1. Token Analytics (Bob/Alice Usage)
         marketing_res = self.supabase.table("profiles").select("id").eq("role", "marketing").execute()
         m_ids = [r["id"] for r in (marketing_res.data or [])]
         token_map: dict[str, int] = {}
@@ -38,22 +40,44 @@ class StatsService:
                 d = str(row["created_at"][:10])
                 token_map[d] = token_map.get(d, 0) + int(row["total_tokens"])
 
-        velocity_res = self.supabase.table("blog_posts").select("created_at, updated_at").in_("status", ["published", "changes_requested"]).gt("updated_at", thirty_days_ago).execute()
-        velocity_data: dict[str, list[float]] = {}
-        for row in (velocity_res.data or []):
-            d = str(row["updated_at"][:10])
+        # 2. Velocity Aggregation (GAP-034)
+        # We aggregate three streams: Blogs, Tasks, and Leads
+        velocity_raw: dict[str, list[float]] = {}
+
+        def add_velocity(date_str: str, duration_hours: float):
+            d = date_str[:10]
+            if d not in velocity_raw:
+                velocity_raw[d] = []
+            # CAP at 168 hours (1 week) to prevent outliers from skewing averages
+            velocity_raw[d].append(max(0.1, min(168.0, duration_hours)))
+
+        # A. Blog Velocity
+        blog_res = self.supabase.table("blog_posts").select("created_at, updated_at").in_("status", ["published", "changes_requested"]).gt("updated_at", thirty_days_ago).execute()
+        for row in (blog_res.data or []):
             start = datetime.fromisoformat(row["created_at"].replace('Z', '+00:00'))
             end = datetime.fromisoformat(row["updated_at"].replace('Z', '+00:00'))
-            hours = min(24.0, (end - start).total_seconds() / 3600)
-            if d not in velocity_data:
-                velocity_data[d] = []
-            velocity_data[d].append(hours)
+            add_velocity(row["updated_at"], (end - start).total_seconds() / 3600)
 
-        all_dates = sorted(set(list(token_map.keys()) + list(velocity_data.keys())))
+        # B. Task Velocity (SLA Tracking)
+        task_res = self.supabase.table("archon_tasks").select("created_at, completed_at").eq("status", "done").gt("completed_at", thirty_days_ago).execute()
+        for row in (task_res.data or []):
+            start = datetime.fromisoformat(row["created_at"].replace('Z', '+00:00'))
+            end = datetime.fromisoformat(row["completed_at"].replace('Z', '+00:00'))
+            add_velocity(row["completed_at"], (end - start).total_seconds() / 3600)
+
+        # C. Lead Conversion Velocity
+        lead_res = self.supabase.table("leads").select("created_at, updated_at").eq("status", "converted").gt("updated_at", thirty_days_ago).execute()
+        for row in (lead_res.data or []):
+            start = datetime.fromisoformat(row["created_at"].replace('Z', '+00:00'))
+            end = datetime.fromisoformat(row["updated_at"].replace('Z', '+00:00'))
+            add_velocity(row["updated_at"], (end - start).total_seconds() / 3600)
+
+        # 3. Format Response
+        all_dates = sorted(set(list(token_map.keys()) + list(velocity_raw.keys())))
         return [{
             "date": date[5:],
             "bob_tokens": token_map.get(date, 0),
-            "decision_hours": round(sum(velocity_data[date])/len(velocity_data[date]), 1) if date in velocity_data else 0.0
+            "decision_hours": round(sum(velocity_raw[date])/len(velocity_raw[date]), 1) if date in velocity_raw else 0.0
         } for date in all_dates]
 
     async def get_collab_synergy(self) -> dict[str, Any]:

@@ -28,8 +28,8 @@
 | **GAP-029** | 🔧 Gap | **Charlie** | **Nexus** | **指揮官中樞: Sent Risks (風險雷達)**。 | `scheduler_service.py` 偵測 Stale Leads。 | 🟢 已修復 |
 | **GAP-034** | 🔧 Gap | **Charlie** | **Nexus** | **指揮官中樞: Velocity (生產速率)**。 | **[缺口]** 僅限於 Blog，缺少 Tasks/Leads 結案週期。 | 🟡 待補全 |
 | **BUG-031** | 🐛 Bug | **System** | **DB/Reset**| **`make db-reset` 失敗**。 | `RESET_DB.sql` 已包含所有 2026 新表。 | 🟢 已修復 |
-| **BUG-046** | ⏱️ Timeout | **Alice** | **Voice** | **語音轉錄超時風險**。 | **[風險]** 缺乏長音頻輪詢，超過 1 分鐘極易失敗。 | 🔴 待處理 |
-| **TECH-005** | 🏗️ Debt | **Alice** | **Logic** | **專案名稱硬編碼**。 | **[證據]** `visit_log_api.py:185` 仍寫死 "Field Ops"。 | 🔴 待處理 |
+| **BUG-046** | ⏱️ Timeout | **Alice** | **Voice** | **語音轉錄超時風險**。 | 輪詢上限提升至 60s (30次) 支援長音頻。 | 🟢 已修復 |
+| **TECH-005** | 🏗️ Debt | **Alice** | **Logic** | **專案名稱硬編碼**。 | 透過 `archon_settings` 動態讀取並增加降級搜尋邏輯。 | 🟢 已修復 |
 | **GAP-015** | 🔧 Gap | **Tech** | **Score** | **Alice Enrichment Score 規則**。 | `enrichment_service.py` 實作 Settings 權重。 | 🟢 已修復 |
 | **GAP-021** | 🔧 Gap | **Admin** | **Config** | **配置持久化**。 | `migration/000` 具備 `archon_settings` 表。 | 🟢 已修復 |
 | **GAP-032** | 🔧 Gap | **Charlie** | **Nexus** | **全員協作動能矩陣**。 | `stats_service.py` 具備 9x9 矩陣計算邏輯。 | 🟢 已修復 |
@@ -79,8 +79,8 @@
 | **BUG-042** | 🐛 Bug | **Alice** | **E2E/Race**| **Knowledge Selector Race**。`waitForElementToBeRemoved` 錯誤，目標 Dialog 在檢測前已消失。原因：Modal 關閉過快。修復：改用 `waitFor(expect(not.toBeInDocument))`. | Medium | 🟢 已修復 |
 | **BUG-043** | 🐛 Bug | **Alice** | **E2E/Data**| **Vendor Promotion Missing**. `Vendor Promotion` 測試找不到 `/Retail Corp/i`。原因：Mock Data 屬性名稱不符 (`company` vs `company_name`)。修復：標準化 Mock Data。 | High | 🟢 已修復 |
 | **BUG-044** | 🐛 Bug | **System** | **E2E/Id**  | **Task Persistence ID Mismatch**. `Assignee Persistence` 測試失敗，任務列表找不到 Assignee Name。原因：Mock Create Task 未填入 `name`。修復：Mock Handler 自動查找 User Name。 | High | 🟢 已修復 |
-| **BUG-046** | ⏱️ Timeout | **Alice** | **Voice** | **語音轉錄超時風險 (Voice Timeout Risk)**。長音頻（>3分鐘）可能超過現有 20 秒的輪詢限制 (`_transcribe_with_gemini`)。建議改用 Webhook 或增加輪詢上限。 | Medium | 🔴 待處理 |
-| **TECH-005**| 🏗️ Debt | **Alice** | **Logic** | **專案名稱硬編碼 (Hardcoding)**。語音轉工單邏輯寫死依賴 "Field Ops" 專案存在。建議改用 UUID 或從系統設定讀取。 | Low | 🔴 待處理 |
+| **BUG-046** | ⏱️ Timeout | **Alice** | **Voice** | **語音轉錄超時風險 (Voice Timeout Risk)**。長音頻（>3分鐘）可能超過現有 20 秒的輪詢限制 (`_transcribe_with_gemini`)。建議改用 Webhook 或增加輪詢上限。 | Medium | 🟢 已修復 |
+| **TECH-005**| 🏗️ Debt | **Alice** | **Logic** | **專案名稱硬編碼 (Hardcoding)**。語音轉工單邏輯寫死依賴 "Field Ops" 專案存在。建議改用 UUID 或從系統設定讀取。 | Low | 🟢 已修復 |
 
 ---
 
