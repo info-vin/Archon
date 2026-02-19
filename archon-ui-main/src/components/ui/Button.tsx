@@ -1,5 +1,76 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Loader2 } from 'lucide-react';
+
+// Size variations
+const SIZE_CLASSES = {
+  sm: 'text-xs px-3 py-1.5 rounded',
+  md: 'text-sm px-4 py-2 rounded-md',
+  lg: 'text-base px-6 py-2.5 rounded-md'
+};
+
+const SPINNER_SIZES = {
+  sm: 'h-3 w-3',
+  md: 'h-4 w-4',
+  lg: 'h-5 w-5'
+};
+
+// Neon line color mapping
+const NEON_LINE_COLORS = {
+  purple: 'bg-purple-500 shadow-[0_0_10px_2px_rgba(168,85,247,0.4)] dark:shadow-[0_0_20px_5px_rgba(168,85,247,0.7)]',
+  green: 'bg-emerald-500 shadow-[0_0_10px_2px_rgba(16,185,129,0.4)] dark:shadow-[0_0_20px_5px_rgba(16,185,129,0.7)]',
+  pink: 'bg-pink-500 shadow-[0_0_10px_2px_rgba(236,72,153,0.4)] dark:shadow-[0_0_20px_5px_rgba(236,72,153,0.7)]',
+  blue: 'bg-blue-500 shadow-[0_0_10px_2px_rgba(59,130,246,0.4)] dark:shadow-[0_0_20px_5px_rgba(59,130,246,0.7)]',
+  cyan: 'bg-cyan-500 shadow-[0_0_10px_2px_rgba(34,211,238,0.4)] dark:shadow-[0_0_20px_5px_rgba(34,211,238,0.7)]',
+  orange: 'bg-orange-500 shadow-[0_0_10px_2px_rgba(249,115,22,0.4)] dark:shadow-[0_0_20px_5px_rgba(249,115,22,0.7)]'
+};
+
+// Color values for glow effects
+const ACCENT_COLOR_VALUES = {
+  purple: '168, 85, 247',
+  green: '16, 185, 129',
+  pink: '236, 72, 153',
+  blue: '59, 130, 246',
+  cyan: '34, 211, 238',
+  orange: '249, 115, 22',
+};
+
+// Helper to get glow styles
+const getGlowStyle = (color: keyof typeof ACCENT_COLOR_VALUES) => {
+  const rgb = ACCENT_COLOR_VALUES[color] || ACCENT_COLOR_VALUES.purple;
+  return {
+    background: `radial-gradient(circle, rgba(${rgb}, 0.9) 0%, transparent 70%)`,
+    filter: `drop-shadow(0 0 15px rgba(${rgb}, 0.8))`
+  };
+};
+
+const getOuterGlowStyle = (color: keyof typeof ACCENT_COLOR_VALUES) => {
+  const rgb = ACCENT_COLOR_VALUES[color] || ACCENT_COLOR_VALUES.purple;
+  return {
+    boxShadow: `0 0 20px 5px rgba(${rgb}, 0.6)`
+  };
+};
+
+// Helper to get variant classes
+const getVariantClasses = (variant: string, accentColor: string) => {
+  switch (variant) {
+    case 'primary':
+      return `
+      relative overflow-hidden backdrop-blur-md font-medium
+      bg-${accentColor}-500/80 text-black dark:text-white
+      border border-${accentColor}-500/50 border-t-${accentColor}-300
+      shadow-lg shadow-${accentColor}-500/40 hover:shadow-xl hover:shadow-${accentColor}-500/50
+      group
+    `;
+    case 'secondary':
+      return `bg-black/90 border text-white border-${accentColor}-500 text-${accentColor}-400`;
+    case 'outline':
+      return `bg-white dark:bg-transparent border text-gray-800 dark:text-white border-${accentColor}-500 hover:bg-${accentColor}-500/10`;
+    case 'ghost':
+      return 'bg-transparent text-gray-700 dark:text-white hover:bg-gray-100/50 dark:hover:bg-white/5';
+    default:
+      return '';
+  }
+};
 
 /**
  * Button - A customizable button component
@@ -15,7 +86,7 @@ export const Button: React.FC<React.ButtonHTMLAttributes<HTMLButtonElement> & {
   neonLine?: boolean;
   icon?: React.ReactNode;
   isLoading?: boolean;
-}> = ({
+}> = React.memo(({
   children,
   variant = 'primary',
   size = 'md',
@@ -27,68 +98,64 @@ export const Button: React.FC<React.ButtonHTMLAttributes<HTMLButtonElement> & {
   disabled,
   ...props
 }) => {
-  // Size variations
-  const sizeClasses = {
-    sm: 'text-xs px-3 py-1.5 rounded',
-    md: 'text-sm px-4 py-2 rounded-md',
-    lg: 'text-base px-6 py-2.5 rounded-md'
-  };
 
-  const spinnerSizes = {
-    sm: 'h-3 w-3',
-    md: 'h-4 w-4',
-    lg: 'h-5 w-5'
-  };
+  const variantClass = getVariantClasses(variant, accentColor);
 
-  // Style variations based on variant
-  const variantClasses = {
-    primary: `
-      relative overflow-hidden backdrop-blur-md font-medium
-      bg-${accentColor}-500/80 text-black dark:text-white
-      border border-${accentColor}-500/50 border-t-${accentColor}-300
-      shadow-lg shadow-${accentColor}-500/40 hover:shadow-xl hover:shadow-${accentColor}-500/50
-      group
-    `,
-    secondary: `bg-black/90 border text-white border-${accentColor}-500 text-${accentColor}-400`,
-    outline: `bg-white dark:bg-transparent border text-gray-800 dark:text-white border-${accentColor}-500 hover:bg-${accentColor}-500/10`,
-    ghost: 'bg-transparent text-gray-700 dark:text-white hover:bg-gray-100/50 dark:hover:bg-white/5'
-  };
-  // Neon line color mapping
-  const neonLineColor = {
-    purple: 'bg-purple-500 shadow-[0_0_10px_2px_rgba(168,85,247,0.4)] dark:shadow-[0_0_20px_5px_rgba(168,85,247,0.7)]',
-    green: 'bg-emerald-500 shadow-[0_0_10px_2px_rgba(16,185,129,0.4)] dark:shadow-[0_0_20px_5px_rgba(16,185,129,0.7)]',
-    pink: 'bg-pink-500 shadow-[0_0_10px_2px_rgba(236,72,153,0.4)] dark:shadow-[0_0_20px_5px_rgba(236,72,153,0.7)]',
-    blue: 'bg-blue-500 shadow-[0_0_10px_2px_rgba(59,130,246,0.4)] dark:shadow-[0_0_20px_5px_rgba(59,130,246,0.7)]',
-    cyan: 'bg-cyan-500 shadow-[0_0_10px_2px_rgba(34,211,238,0.4)] dark:shadow-[0_0_20px_5px_rgba(34,211,238,0.7)]',
-    orange: 'bg-orange-500 shadow-[0_0_10px_2px_rgba(249,115,22,0.4)] dark:shadow-[0_0_20px_5px_rgba(249,115,22,0.7)]'
-  };
-  return <button disabled={disabled || isLoading} className={`
+  // Memoize complex style objects for primary variant to prevent recalculation on every render
+  const glowStyle = useMemo(() =>
+    variant === 'primary' ? getGlowStyle(accentColor) : undefined,
+    [variant, accentColor]
+  );
+
+  const outerGlowStyle = useMemo(() =>
+    variant === 'primary' ? getOuterGlowStyle(accentColor) : undefined,
+    [variant, accentColor]
+  );
+
+  return (
+    <button
+      disabled={disabled || isLoading}
+      className={`
         inline-flex items-center justify-center transition-all duration-200
         disabled:opacity-50 disabled:cursor-not-allowed
-        ${variantClasses[variant]}
-        ${sizeClasses[size]}
+        ${variantClass}
+        ${SIZE_CLASSES[size]}
         ${className}
-      `} {...props}>
+      `}
+      {...props}
+    >
       {/* Luminous inner light source for primary variant */}
-      {variant === 'primary' && !disabled && !isLoading && <>
-          <div className="absolute left-0 right-0 w-[150%] h-[200%] -translate-x-[25%] -translate-y-[30%] opacity-80 group-hover:opacity-100 rounded-[100%] blur-2xl transition-all duration-500 group-hover:scale-110 luminous-button-glow" style={{
-        background: `radial-gradient(circle, ${accentColor === 'green' ? 'rgba(16, 185, 129, 0.9)' : accentColor === 'blue' ? 'rgba(59, 130, 246, 0.9)' : accentColor === 'pink' ? 'rgba(236, 72, 153, 0.9)' : accentColor === 'cyan' ? 'rgba(34, 211, 238, 0.9)' : accentColor === 'orange' ? 'rgba(249, 115, 22, 0.9)' : 'rgba(168, 85, 247, 0.9)'} 0%, transparent 70%)`,
-        filter: `drop-shadow(0 0 15px ${accentColor === 'green' ? 'rgba(16, 185, 129, 0.8)' : accentColor === 'blue' ? 'rgba(59, 130, 246, 0.8)' : accentColor === 'pink' ? 'rgba(236, 72, 153, 0.8)' : accentColor === 'cyan' ? 'rgba(34, 211, 238, 0.8)' : accentColor === 'orange' ? 'rgba(249, 115, 22, 0.8)' : 'rgba(168, 85, 247, 0.8)'})`
-      }} aria-hidden="true" />
+      {variant === 'primary' && !disabled && !isLoading && (
+        <>
+          <div
+            className="absolute left-0 right-0 w-[150%] h-[200%] -translate-x-[25%] -translate-y-[30%] opacity-80 group-hover:opacity-100 rounded-[100%] blur-2xl transition-all duration-500 group-hover:scale-110 luminous-button-glow"
+            style={glowStyle}
+            aria-hidden="true"
+          />
           {/* Subtle shine effect on top */}
           <div className="absolute inset-x-0 top-0 h-[1px] bg-white/70 opacity-90" aria-hidden="true" />
           {/* Enhanced outer glow effect */}
-          <div className="absolute inset-0 rounded-md opacity-50 group-hover:opacity-70" style={{
-        boxShadow: `0 0 20px 5px ${accentColor === 'green' ? 'rgba(16, 185, 129, 0.6)' : accentColor === 'blue' ? 'rgba(59, 130, 246, 0.6)' : accentColor === 'pink' ? 'rgba(236, 72, 153, 0.6)' : accentColor === 'cyan' ? 'rgba(34, 211, 238, 0.6)' : accentColor === 'orange' ? 'rgba(249, 115, 22, 0.6)' : 'rgba(168, 85, 247, 0.6)'}`
-      }} aria-hidden="true" />
-        </>}
+          <div
+            className="absolute inset-0 rounded-md opacity-50 group-hover:opacity-70"
+            style={outerGlowStyle}
+            aria-hidden="true"
+          />
+        </>
+      )}
+
       {/* Content with icon support */}
       <span className="relative z-10 flex items-center justify-center">
-        {isLoading && <Loader2 className={`mr-2 animate-spin ${spinnerSizes[size]}`} />}
+        {isLoading && <Loader2 className={`mr-2 animate-spin ${SPINNER_SIZES[size]}`} />}
         {!isLoading && icon && <span className="mr-2">{icon}</span>}
         {children}
       </span>
+
       {/* Optional neon line below button */}
-      {neonLine && <span className={`absolute bottom-0 left-[15%] right-[15%] w-[70%] mx-auto h-[2px] ${neonLineColor[accentColor]}`}></span>}
-    </button>;
-};
+      {neonLine && (
+        <span className={`absolute bottom-0 left-[15%] right-[15%] w-[70%] mx-auto h-[2px] ${NEON_LINE_COLORS[accentColor]}`}></span>
+      )}
+    </button>
+  );
+});
+
+Button.displayName = 'Button';
