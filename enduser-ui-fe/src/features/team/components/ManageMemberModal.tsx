@@ -18,6 +18,13 @@ export const ManageMemberModal: React.FC<ManageMemberModalProps> = ({ member, on
     const [isUpdating, setIsUpdating] = useState(false);
     const [isResetting, setIsResetting] = useState(false);
 
+    // Unique IDs for accessibility
+    const positionId = `position-${member.id}`;
+    const statusId = `status-${member.id}`;
+    const roleId = `role-${member.id}`;
+    const passwordId = `password-${member.id}`;
+    const modalTitleId = `modal-title-${member.id}`;
+
     const handleUpdate = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsUpdating(true);
@@ -46,17 +53,22 @@ export const ManageMemberModal: React.FC<ManageMemberModalProps> = ({ member, on
     };
 
     return (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+        <div
+            className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby={modalTitleId}
+        >
             <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden animate-in fade-in zoom-in-95 duration-200">
                 <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
                     <div className="flex items-center gap-3">
                         <UserAvatar name={member.name} role={member.role} className="w-10 h-10 shadow-sm" />
                         <div>
-                            <h3 className="font-bold text-gray-900">{member.name}</h3>
+                            <h3 id={modalTitleId} className="font-bold text-gray-900">{member.name}</h3>
                             <p className="text-xs text-gray-500">{member.email}</p>
                         </div>
                     </div>
-                    <button onClick={onClose} className="p-2 hover:bg-gray-200 rounded-full transition-colors"><XIcon className="w-5 h-5" /></button>
+                    <button onClick={onClose} className="p-2 hover:bg-gray-200 rounded-full transition-colors" aria-label="Close modal"><XIcon className="w-5 h-5" /></button>
                 </div>
 
                 <div className="p-6 space-y-8">
@@ -64,8 +76,9 @@ export const ManageMemberModal: React.FC<ManageMemberModalProps> = ({ member, on
                     <form onSubmit={handleUpdate} className="space-y-4">
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Position</label>
+                                <label htmlFor={positionId} className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Position</label>
                                 <input 
+                                    id={positionId}
                                     type="text" 
                                     value={position} 
                                     onChange={e => setPosition(e.target.value)}
@@ -73,8 +86,9 @@ export const ManageMemberModal: React.FC<ManageMemberModalProps> = ({ member, on
                                 />
                             </div>
                             <div>
-                                <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Status</label>
+                                <label htmlFor={statusId} className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Status</label>
                                 <select 
+                                    id={statusId}
                                     value={status} 
                                     onChange={e => setStatus(e.target.value as any)}
                                     className="w-full p-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm"
@@ -86,8 +100,9 @@ export const ManageMemberModal: React.FC<ManageMemberModalProps> = ({ member, on
                             </div>
                         </div>
                         <div>
-                            <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Access Role</label>
+                            <label htmlFor={roleId} className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Access Role</label>
                             <select 
+                                id={roleId}
                                 value={role} 
                                 onChange={e => setRole(e.target.value as EmployeeRole)}
                                 className="w-full p-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm"
@@ -112,7 +127,9 @@ export const ManageMemberModal: React.FC<ManageMemberModalProps> = ({ member, on
                             Security Management
                         </h4>
                         <div className="flex gap-2">
+                            <label htmlFor={passwordId} className="sr-only">New password</label>
                             <input 
+                                id={passwordId}
                                 type="password" 
                                 placeholder="New password" 
                                 value={newPassword}

@@ -415,10 +415,11 @@ Phase 4.4.5 引入了 **Clockwork** 進行系統自動檢測。
         | 36 | `032_system_settings_and_config.sql` | **[合併]** 整合原 041-048。包含爬蟲設定、LLM Provider、與倫理審計硬化。 |
         | 37 | `033_seed_nexus_data.sql` | **[種子]** 預載 Nexus 戰情室所需的評分與預算初始化數據。 |
         | 38 | `034_add_lost_reason_to_leads.sql` | **[Expertise]** 為 Leads 表增加失敗分析欄位，支援 Alice 的失敗案例採集。 |
-        | 39 | `seed_mock_data.sql` | **[種子]** 填充核心基礎資料 (Users, Projects, Employees)。 |
-        | 40 | `seed_blog_posts.sql` | **[種子]** 填充部落格文章假資料 (用於 RAG 測試)。 |
-        | 41 | `seed_mock_leads.sql` | **[種子]** 填充業務線 (Leads) 核心測試資料與訪談紀錄。 |
-        | 42 | `seed_mock_alerts_and_logs.sql` | **[種子]** 填充儀表板所需的警報與系統日誌。 |
+        | 39 | `035_create_crawler_targets_table.sql` | **[Phase 4.7]** 建立爬蟲目標表，隔離敏感 URI 配置。 |
+        | 40 | `seed_mock_data.sql` | **[種子]** 填充核心基礎資料 (Users, Projects, Employees)。 |
+        | 41 | `seed_blog_posts.sql` | **[種子]** 填充部落格文章假資料 (用於 RAG 測試)。 |
+        | 42 | `seed_mock_leads.sql` | **[種子]** 填充業務線 (Leads) 核心測試資料與訪談紀錄。 |
+        | 43 | `seed_mock_alerts_and_logs.sql` | **[種子]** 填充儀表板所需的警報與系統日誌。 |
         
 3.  **階段三：執行部署**
 
