@@ -44,6 +44,7 @@ BEGIN
 END;
 $$ language 'plpgsql';
 
+DROP TRIGGER IF EXISTS update_archon_settings_updated_at ON archon_settings;
 CREATE TRIGGER update_archon_settings_updated_at
     BEFORE UPDATE ON archon_settings
     FOR EACH ROW
