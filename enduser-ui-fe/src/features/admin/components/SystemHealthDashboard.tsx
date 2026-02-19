@@ -177,7 +177,7 @@ const AiResilienceWidget: React.FC = () => {
             </h3>
             <div className="space-y-3">
                 {health.models.map(m => (
-                    <div key={m.model} className="flex justify-between items-center text-sm">
+                    <div key={`${m.agent}-${m.model}`} className="flex justify-between items-center text-sm">
                         <div>
                             <div className="font-bold">{m.agent}</div>
                             <div className="text-xs text-muted-foreground font-mono">{m.model}</div>

@@ -3,8 +3,35 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 from fastapi import HTTPException
 
-from src.server.api_routes.marketing_api import DraftBlogRequest, draft_blog_post, nana_banana_proxy
+from src.server.api_routes.marketing_api import (
+    DraftBlogRequest,
+    PitchRequest,
+    draft_blog_post,
+    generate_pitch,
+    nana_banana_proxy,
+)
 
+
+@pytest.mark.asyncio
+async def test_generate_pitch_no_key_real_logic():
+    """
+    Ensures generate_pitch returns 401 (Unauthorized) when API key is missing,
+    adhering to real logic without mocks.
+    """
+    user = {"id": "test-user-id", "role": "sales"}
+    request = PitchRequest(job_title="AI Engineer", company="TechCorp", description="Needs RAG expert")
+
+    with patch("src.server.api_routes.marketing_api.credential_service") as MockCreds:
+        # Simulate missing API key
+        MockCreds.get_credential = AsyncMock(return_value=None)
+        MockCreds.get_active_provider = AsyncMock(return_value={"chat_model": "gemini-2.0-flash"})
+
+        with pytest.raises(HTTPException) as excinfo:
+            await generate_pitch(request=request, current_user=user)
+
+        # ASSERT: No Mock Fallback, we expect 401 Unauthorized
+        assert excinfo.value.status_code == 401
+        assert "API Key not configured" in excinfo.value.detail
 
 @pytest.mark.asyncio
 async def test_draft_blog_failure():

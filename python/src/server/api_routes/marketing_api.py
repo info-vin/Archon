@@ -203,6 +203,7 @@ async def generate_pitch(request: PitchRequest, current_user: dict = Depends(get
     try:
         if current_user.get("role", "viewer").lower() not in ["admin", "manager", "sales", "marketing", "member"]:
             raise HTTPException(status_code=403)
+
         success, search_result = await RAGService().perform_rag_query(query=f"{request.job_title} {request.description[:500]}", match_count=3)
         context_text = ""
         references = []
@@ -211,17 +212,31 @@ async def generate_pitch(request: PitchRequest, current_user: dict = Depends(get
                 source = res.get("metadata", {}).get("source", "Unknown")
                 context_text += f"\n[Context: {source}]\n{res.get('content', '')}\n"
                 references.append(source)
+
         api_key = await credential_service.get_credential("GEMINI_API_KEY") or await credential_service.get_credential("GOOGLE_API_KEY")
+        if not api_key:
+            raise HTTPException(status_code=401, detail="AI API Key not configured. Please check Admin Settings.")
+
         model_id = (await credential_service.get_active_provider("llm")).get("chat_model") or "gemini-2.0-flash"
         sys_prompt = prompt_service.get_prompt("SALES_PITCH", SALES_PITCH_SYSTEM_PROMPT)
-        response = genai.Client(api_key=api_key).models.generate_content(
+
+        client = genai.Client(api_key=api_key)
+        response = client.models.generate_content(
             model=model_id.split("/")[-1],
             contents=f"Company: {request.company}\nRole: {request.job_title}\n\nContext:\n{context_text}",
             config=types.GenerateContentConfig(system_instruction=sys_prompt, temperature=0.7)
         )
+
+        if not response.text:
+            raise Exception("AI returned empty response")
+
         return PitchResponse(content=response.text, references=references)
+
     except Exception as e:
-        raise HTTPException(status_code=503, detail=str(e)) from e
+        if isinstance(e, HTTPException):
+            raise e
+        logger.error(f"API: Pitch generation failed | error={str(e)}", exc_info=True)
+        raise HTTPException(status_code=503, detail=f"AI Service Error: {str(e)}") from e
 
 @router.post("/logo", response_model=LogoResponse)
 async def generate_logo(request: LogoRequest):
