@@ -5,7 +5,6 @@ import { useAuth } from '../hooks/useAuth';
 import { PermissionGuard } from '../features/auth/components/PermissionGuard';
 import { AiCollaborationWidget } from '../features/team/components/AiCollaborationWidget';
 import { ManageMemberModal } from '../features/team/components/ManageMemberModal';
-import { EthicsCard } from '../features/team/components/EthicsCard';
 import UserAvatar from '../components/UserAvatar';
 import TokenUsageTable from '../components/TokenUsageTable';
 import { ShieldCheckIcon, MailIcon, BadgeCheckIcon, XIcon, BarChartIcon } from '../components/Icons';
@@ -19,7 +18,6 @@ const TeamManagementPage: React.FC = () => {
     const [activityMember, setActivityMember] = useState<Employee | null>(null);
     const [showTokenDetails, setShowTokenDetails] = useState(false);
     const [aiUsage, setAiUsage] = useState<any>(null);
-    const [approvals, setApprovals] = useState<{ blogs: any[]; leads: any[] }>({ blogs: [], leads: [] });
 
     useEffect(() => {
         fetchData();
@@ -28,27 +26,16 @@ const TeamManagementPage: React.FC = () => {
     const fetchData = async () => {
         setLoading(true);
         try {
-            const [teamData, usageData, approvalsData] = await Promise.all([
+            const [teamData, usageData] = await Promise.all([
                 api.getEmployees(),
-                api.getAiUsage(),
-                api.getPendingApprovals()
+                api.getAiUsage()
             ]);
             setTeam(teamData);
             setAiUsage(usageData);
-            setApprovals(approvalsData);
         } catch (err: any) {
-            setError(err.message || "Failed to fetch data.");
+            setError(err.message || "Failed to fetch team data.");
         } finally {
             setLoading(false);
-        }
-    };
-
-    const handleApproval = async (type: 'blog' | 'lead', id: string, action: 'approve' | 'reject') => {
-        try {
-            await api.processApproval(type, id, action);
-            fetchData(); // Refresh list
-        } catch (err) {
-            alert("Action failed");
         }
     };
 
@@ -62,51 +49,11 @@ const TeamManagementPage: React.FC = () => {
                     </div>
                 </header>
 
-                {/* AI COLLABORATION WIDGET (Tablet/Touch Friendly) */}
+                {/* AI COLLABORATION WIDGET (Strategic View integrated from Nexus metrics) */}
                 <AiCollaborationWidget 
                     data={aiUsage} 
                     onClick={() => setShowTokenDetails(true)} 
                 />
-
-                {/* ETHICS & COMPLIANCE LOGS (Sentinel) */}
-                <EthicsCard />
-
-                {/* APPROVALS SECTION */}
-                {approvals.blogs.length > 0 && (
-                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                        <div className="p-4 border-b border-gray-100 bg-amber-50/50 flex justify-between items-center">
-                            <h3 className="font-bold text-amber-800 flex items-center gap-2">
-                                <ShieldCheckIcon className="w-5 h-5" />
-                                Pending Approvals
-                            </h3>
-                            <span className="bg-amber-100 text-amber-700 text-xs px-2 py-1 rounded-full font-bold">{approvals.blogs.length} Items</span>
-                        </div>
-                        <div className="divide-y divide-gray-100">
-                            {approvals.blogs.map(blog => (
-                                <div key={blog.id} className="p-4 flex items-center justify-between hover:bg-gray-50 transition-colors">
-                                    <div>
-                                        <p className="font-medium text-gray-900">{blog.title}</p>
-                                        <p className="text-xs text-gray-500">Submitted by {blog.author_name} • Blog Post</p>
-                                    </div>
-                                    <div className="flex gap-2">
-                                        <button 
-                                            onClick={() => handleApproval('blog', blog.id, 'reject')}
-                                            className="px-3 py-1 text-xs font-medium text-red-600 hover:bg-red-50 rounded border border-transparent hover:border-red-200 transition-colors"
-                                        >
-                                            Reject
-                                        </button>
-                                        <button 
-                                            onClick={() => handleApproval('blog', blog.id, 'approve')}
-                                            className="px-3 py-1 text-xs font-bold text-white bg-green-600 hover:bg-green-700 rounded shadow-sm transition-colors"
-                                        >
-                                            Approve & Publish
-                                        </button>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                )}
 
                 {error && (
                     <div className="bg-red-50 text-red-700 p-4 rounded-lg border border-red-100">

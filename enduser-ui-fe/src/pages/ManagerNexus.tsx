@@ -137,7 +137,21 @@ export const ManagerNexus: React.FC = () => {
     const [selectedContent, setSelectedContent] = useState<any | null>(null);
     const [rejectReason, setRejectReason] = useState('');
     const [isRejecting, setIsRejecting] = useState(false);
+    const [isGeneratingReason, setIsGeneratingReason] = useState(false);
     const [opLoadTab, setOpLoadTab] = useState<'content' | 'devops'>('content');
+
+    const handleGenerateReason = async () => {
+        if (!selectedContent) return;
+        setIsGeneratingReason(true);
+        try {
+            const res = await api.rejectSuggestion(selectedContent.id);
+            setRejectReason(res.suggested_reason);
+        } catch (e: any) {
+            alert("AI suggestion failed: " + e.message);
+        } finally {
+            setIsGeneratingReason(false);
+        }
+    };
 
     // Scoring Rules State
     const [rules, setRules] = useState<ScoringRule[]>([
@@ -743,23 +757,39 @@ export const ManagerNexus: React.FC = () => {
                                                 <div className="flex-1">
                                                     <h3 className="text-xl font-black text-gray-900 dark:text-white leading-tight">{selectedContent.title}</h3>
                                                     <div className="flex items-center gap-3 mt-2">
-                                                        <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-widest ${selectedContent.ai_score < 80 ? 'bg-amber-100 text-amber-700' : 'bg-green-100 text-green-700'}`}>
-                                                            AI SCORE: {selectedContent.ai_score || 85}%
+                                                        <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-widest ${ (selectedContent.ai_score || selectedContent.aiScore) < 80 ? 'bg-amber-100 text-amber-700' : 'bg-green-100 text-green-700'}`}>
+                                                            AI SCORE: {selectedContent.ai_score || selectedContent.aiScore || 0}%
                                                         </span>
-                                                        <span className="text-[10px] text-gray-400 font-bold uppercase">{selectedContent.author_name}</span>
+                                                        <span className="text-[10px] text-gray-400 font-bold uppercase">{selectedContent.author_name || selectedContent.authorName}</span>
                                                     </div>
                                                 </div>
                                                 <button onClick={() => setSelectedContent(null)} className="p-2 hover:bg-gray-200 rounded-full transition-colors"><XIcon className="w-4 h-4" /></button>
                                             </div>
 
                                             <div className="prose prose-sm dark:prose-invert max-w-none mb-8 bg-white dark:bg-slate-950 p-6 rounded-xl border border-gray-100 dark:border-slate-800 shadow-sm overflow-hidden">
-                                                {selectedContent.imageUrl && <img src={selectedContent.imageUrl} alt="Cover" className="w-full h-48 object-cover rounded-lg mb-6 shadow-md" />}
+                                                {(selectedContent.imageUrl || selectedContent.image_url) && (
+                                                    <img 
+                                                        src={selectedContent.imageUrl || selectedContent.image_url} 
+                                                        alt="Cover" 
+                                                        className="w-full h-48 object-cover rounded-lg mb-6 shadow-md" 
+                                                    />
+                                                )}
                                                 <ReactMarkdown>{selectedContent.content || ''}</ReactMarkdown>
                                             </div>
 
                                             {isRejecting ? (
                                                 <div className="bg-white dark:bg-slate-950 p-4 rounded-xl border border-red-100 dark:border-red-900/30 mb-4 animate-in fade-in slide-in-from-top-2">
-                                                    <h5 className="text-xs font-black text-red-500 uppercase mb-2">Instructions for Bob</h5>
+                                                    <div className="flex justify-between items-center mb-2">
+                                                        <h5 className="text-xs font-black text-red-500 uppercase">Instructions for Bob</h5>
+                                                        <button 
+                                                            onClick={handleGenerateReason}
+                                                            disabled={isGeneratingReason}
+                                                            className="text-[10px] font-black text-indigo-600 flex items-center gap-1 hover:underline"
+                                                        >
+                                                            <SparklesIcon className={`w-3 h-3 ${isGeneratingReason ? 'animate-spin' : ''}`} />
+                                                            {isGeneratingReason ? 'Generating...' : 'Suggest with AI'}
+                                                        </button>
+                                                    </div>
                                                     <textarea 
                                                         className="w-full text-sm p-3 bg-gray-50 dark:bg-slate-900 rounded-lg border border-gray-100 dark:border-slate-800 focus:ring-2 focus:ring-red-500/20 mb-3 outline-none"
                                                         rows={3}

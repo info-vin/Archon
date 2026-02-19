@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { MenuIcon, XIcon, UserIcon, SettingsIcon, LogOutIcon, ShieldCheckIcon, LayoutGridIcon, PaletteIcon, FileTextIcon } from '../../components/Icons.tsx';
+import { MenuIcon, XIcon, UserIcon, SettingsIcon, LogOutIcon, ShieldCheckIcon, LayoutGridIcon, PaletteIcon } from '../../components/Icons.tsx';
 import LiveClock from '../../components/LiveClock.tsx';
 import UserAvatar from '../../components/UserAvatar.tsx';
 import { BrandLogo } from '../../components/BrandLogo.tsx';
@@ -90,21 +90,15 @@ const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                     {hasPermission('user:manage:team') && (
                         <>
                             <li className="mb-2">
-                                <Link to="/approvals" className={`flex items-center p-2 rounded-md hover:bg-secondary ${location.pathname.startsWith('/approvals') ? 'bg-secondary' : ''}`}>
-                                    <FileTextIcon className="w-5 h-5 mr-3 text-amber-500 dark:text-amber-400" />
-                                    Strategic Approvals
+                                <Link to="/nexus" className={`flex items-center p-2 rounded-md hover:bg-secondary ${location.pathname.startsWith('/nexus') ? 'bg-secondary' : ''}`}>
+                                    <LayoutGridIcon className="w-5 h-5 mr-3 text-amber-500 dark:text-amber-400" />
+                                    Nexus Command
                                 </Link>
                             </li>
                             <li className="mb-2">
                                 <Link to="/team" className={`flex items-center p-2 rounded-md hover:bg-secondary ${location.pathname.startsWith('/team') ? 'bg-secondary' : ''}`}>
                                     <UserIcon className="w-5 h-5 mr-3 text-amber-500 dark:text-amber-400" />
                                     Team Management
-                                </Link>
-                            </li>
-                            <li className="mb-2">
-                                <Link to="/nexus" className={`flex items-center p-2 rounded-md hover:bg-secondary ${location.pathname.startsWith('/nexus') ? 'bg-secondary' : ''}`}>
-                                    <LayoutGridIcon className="w-5 h-5 mr-3 text-amber-500 dark:text-amber-400" />
-                                    Nexus Command
                                 </Link>
                             </li>
                         </>

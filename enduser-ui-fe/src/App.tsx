@@ -13,9 +13,7 @@ import StatsPage from './pages/StatsPage.tsx';
 import MarketingPage from './pages/MarketingPage.tsx';
 import TeamManagementPage from './pages/TeamManagementPage.tsx';
 import BrandPage from './pages/BrandPage.tsx';
-import ApprovalsPage from './pages/ApprovalsPage.tsx';
-import { ManagerDashboard } from './pages/ManagerDashboard.tsx';
-import ManagerNexus from './pages/ManagerNexus.tsx';
+import { ManagerNexus } from './pages/ManagerNexus.tsx';
 import PublicLayout from './components/layout/PublicLayout.tsx';
 import MainLayout from './components/layout/MainLayout.tsx';
 import SolutionsPage from './features/marketing/SolutionsPage.tsx';
@@ -121,13 +119,7 @@ export const AppRoutes: React.FC = () => {
       />
       <Route
         path="/approvals"
-        element={
-          <ProtectedRoute>
-            <MainLayout>
-              <ApprovalsPage />
-            </MainLayout>
-          </ProtectedRoute>
-        }
+        element={<Navigate to="/nexus" replace />}
       />
       <Route
         path="/admin"
@@ -141,13 +133,7 @@ export const AppRoutes: React.FC = () => {
       />
       <Route
         path="/manager"
-        element={
-          <ManagerRoute>
-            <MainLayout>
-              <ManagerDashboard />
-            </MainLayout>
-          </ManagerRoute>
-        }
+        element={<Navigate to="/nexus" replace />}
       />
       <Route
         path="/nexus"

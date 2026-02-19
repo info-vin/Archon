@@ -340,6 +340,8 @@ class StatsService:
             "total_monthly_usd": round(total_monthly_usd, 4),
             "total_monthly_tokens": int(total_monthly_tokens),
             "total_cost_usd": round(total_monthly_usd, 4), # Frontend Alias
+            "total_used": int(total_monthly_tokens), # Compatibility for Team Management Page
+            "usage_percentage": min(100, round((total_monthly_tokens / 100000) * 100, 1)), # Estimate percentage based on a dummy 100k budget
             "daily_costs": daily_costs, # Frontend expected field
             "burn_trend": [{"date": d["date"], "cost": d["cost"]} for d in daily_costs],
             "is_real_data": True,
