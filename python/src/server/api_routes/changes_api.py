@@ -4,7 +4,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException
 
-from ..dependencies import get_current_user_id, get_propose_change_service
+from ..auth.dependencies import get_current_user_id, get_propose_change_service
 from ..services.propose_change_service import ProposeChangeService
 
 router = APIRouter()

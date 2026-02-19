@@ -28,7 +28,10 @@ vi.mock('../services/api', () => ({
     getSlaReliability: vi.fn().mockResolvedValue({ trend: [] }),
     getEthicsAuditQueue: vi.fn().mockResolvedValue({ violations: [], pending_versions: [] }),
     getKnowledgeRoi: vi.fn().mockResolvedValue({ trend: [] }),
-    getHealthTrend: vi.fn().mockResolvedValue({ trend: [], audit: [] }),
+    getHealthTrend: vi.fn().mockResolvedValue({ trend: [] }), // MOCK CRASH: Missing 'audit' field
+    getPendingChanges: vi.fn().mockResolvedValue([
+      { id: 'change-1', type: 'file', created_at: new Date().toISOString(), request_payload: { description: 'Update API' } }
+    ]),
     getCurrentUser: vi.fn().mockResolvedValue({ id: '1', name: 'Admin', role: 'system_admin' }),
     seedKnowledgeBase: vi.fn().mockResolvedValue({ indexed_count: 0 }),
     processApproval: vi.fn().mockResolvedValue({ success: true }),
@@ -74,5 +77,25 @@ describe('ManagerNexus Reliability Verification', () => {
     expect(xIcon).toBeInTheDocument();
     
     console.log("✅ Success: ManagerNexus rendered and Spec Panel opened without crashing.");
+  });
+
+  it('renders DevOps proposals within Op Load tab without crashing (BUG-054 Fix Verification)', async () => {
+    render(
+      <AuthProvider>
+        <ManagerNexus />
+      </AuthProvider>
+    );
+
+    // 1. Navigate to Op Load
+    const opLoadCard = await screen.findByText(/Op Load/i);
+    fireEvent.click(opLoadCard);
+
+    // 2. Switch to DevOps tab
+    const devOpsTab = screen.getByRole('button', { name: /Dev Ops/i });
+    fireEvent.click(devOpsTab);
+
+    // 3. Verify real data from getPendingChanges mock is visible
+    expect(await screen.findByText(/Update API/i)).toBeInTheDocument();
+    console.log("✅ Success: DevOps proposals rendered correctly in Nexus.");
   });
 });

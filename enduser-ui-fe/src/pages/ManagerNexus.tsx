@@ -9,7 +9,8 @@ import {
     ShieldCheckIcon, DatabaseIcon, UsersIcon, 
     GitCommitIcon, SearchIcon, FileTextIcon,
     DollarSignIcon, ClockIcon, ZapIcon,
-    MaximizeIcon, MinimizeIcon, SparklesIcon, XIcon
+    MaximizeIcon, MinimizeIcon, SparklesIcon, XIcon,
+    RefreshCwIcon
 } from '../components/Icons';
 import { ManageMemberModal } from '../features/team/components/ManageMemberModal';
 import UserAvatar from '../components/UserAvatar';
@@ -166,11 +167,12 @@ export const ManagerNexus: React.FC = () => {
     const [slaReliability, setSlaReliability] = useState<any>(null);
     const [ethicsAudit, setEthicsAudit] = useState<any>(null);
     const [knowledgeRoi, setKnowledgeRoi] = useState<any>(null);
+    const [codeProposals, setCodeProposals] = useState<any[]>([]);
 
     const fetchData = async () => {
         setLoading(true);
         try {
-            const [sys, emp, app, alr, ai, settings, trends, force, risks, collab, sla, ethics, kroi] = await Promise.all([
+            const [sys, emp, app, alr, ai, settings, trends, force, risks, collab, sla, ethics, kroi, changes] = await Promise.all([
                 api.getSystemOverview(),
                 api.getEmployees(),
                 api.getPendingApprovals(),
@@ -183,7 +185,8 @@ export const ManagerNexus: React.FC = () => {
                 api.getCollabSynergy(),
                 api.getSlaReliability(),
                 api.getEthicsAuditQueue(),
-                api.getKnowledgeRoi()
+                api.getKnowledgeRoi(),
+                api.getPendingChanges()
             ]);
             setOverview(sys);
             setTeam(emp);
@@ -197,6 +200,7 @@ export const ManagerNexus: React.FC = () => {
             setSlaReliability(sla);
             setEthicsAudit(ethics);
             setKnowledgeRoi(kroi);
+            setCodeProposals(changes || []);
 
             if (settings && settings.length > 0) {
                  try {
@@ -317,13 +321,26 @@ export const ManagerNexus: React.FC = () => {
         }
     };
 
+    const handleCodeAction = async (id: string, action: 'approve' | 'reject') => {
+        setProcessingId(id);
+        try {
+            if (action === 'approve') await api.approveChange(id);
+            else await api.rejectChange(id);
+            alert(action === 'approve' ? 'Change Applied' : 'Change Rejected');
+            fetchData();
+        } catch (err: any) {
+            alert("Action failed: " + err.message);
+        } finally {
+            setProcessingId(null);
+        }
+    };
+
     const handleRejectContent = async () => {
         if (!selectedContent) return;
         setProcessingId(selectedContent.id);
         try {
-            // FIX: Pass the actual rejection reason to the backend
             await api.processApproval('blog', selectedContent.id, 'reject', rejectReason); 
-            alert("Content Returned. Bob has been notified with your instructions.");
+            alert("Content Returned. Bob has been notified.");
             fetchData();
             setSelectedContent(null);
             setIsRejecting(false);
@@ -460,7 +477,7 @@ export const ManagerNexus: React.FC = () => {
                             <div className="space-y-4">
                                 <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest px-1">System Health Audit Trail</h4>
                                 <div className="bg-gray-50 rounded-3xl border border-gray-100 divide-y divide-gray-200 overflow-hidden">
-                                    {healthTrend.audit.length > 0 ? healthTrend.audit.map((log: any, idx: number) => {
+                                    {(healthTrend?.audit || []).length > 0 ? (healthTrend?.audit || []).map((log: any, idx: number) => {
                                         const details = log.details || {};
                                         const total = details.total_sources || 0;
                                         const indexed = details.indexed_sources || 0;
@@ -687,13 +704,13 @@ export const ManagerNexus: React.FC = () => {
                                 onClick={() => setOpLoadTab('content')}
                                 className={`pb-2 text-sm font-bold transition-colors ${opLoadTab === 'content' ? 'text-indigo-600 border-b-2 border-indigo-600' : 'text-gray-400 hover:text-gray-600'}`}
                             >
-                                Content ({approvals.blogs.length})
+                                Context / Content ({approvals.blogs.length})
                             </button>
                             <button 
                                 onClick={() => setOpLoadTab('devops')}
                                 className={`pb-2 text-sm font-bold transition-colors ${opLoadTab === 'devops' ? 'text-indigo-600 border-b-2 border-indigo-600' : 'text-gray-400 hover:text-gray-600'}`}
                             >
-                                DevOps (0)
+                                Dev Ops / Code ({codeProposals.length})
                             </button>
                         </div>
 
@@ -712,75 +729,78 @@ export const ManagerNexus: React.FC = () => {
                                         >
                                             <h4 className="font-bold text-gray-800 text-sm line-clamp-1">{blog.title}</h4>
                                             <p className="text-xs text-gray-500 mt-1 flex justify-between">
-                                                <span>{blog.author || 'Bob'}</span>
-                                                <span className="font-mono">{new Date(blog.created_at).toLocaleDateString()}</span>
+                                                <span>{blog.author_name || 'Bob'}</span>
+                                                <span className="font-mono text-[10px]">{new Date(blog.created_at || Date.now()).toLocaleDateString()}</span>
                                             </p>
                                         </div>
                                     ))}
-                                    {approvals.blogs.length === 0 && <div className="text-center py-8 text-gray-400 text-sm">No content pending review.</div>}
+                                    {approvals.blogs.length === 0 && <div className="text-center py-8 text-gray-400 text-sm italic">No content pending review.</div>}
                                 </div>
                                 <div className="lg:col-span-2">
                                     {selectedContent ? (
-                                        <div className="bg-gray-50 rounded-2xl p-6 border border-gray-100 h-full">
-                                            <div className="flex justify-between items-start mb-4">
+                                        <div className="bg-gray-50 dark:bg-slate-900 rounded-2xl p-6 border border-gray-100 dark:border-slate-800 h-full overflow-y-auto max-h-[600px] shadow-inner">
+                                            <div className="flex justify-between items-start mb-6">
                                                 <div className="flex-1">
-                                                    <h3 className="text-xl font-black text-gray-900">{selectedContent.title}</h3>
+                                                    <h3 className="text-xl font-black text-gray-900 dark:text-white leading-tight">{selectedContent.title}</h3>
                                                     <div className="flex items-center gap-3 mt-2">
                                                         <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-widest ${selectedContent.ai_score < 80 ? 'bg-amber-100 text-amber-700' : 'bg-green-100 text-green-700'}`}>
                                                             AI SCORE: {selectedContent.ai_score || 85}%
                                                         </span>
-                                                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Drafted by Bob</span>
+                                                        <span className="text-[10px] text-gray-400 font-bold uppercase">{selectedContent.author_name}</span>
                                                     </div>
                                                 </div>
-                                                <span className="px-2 py-1 bg-white rounded-lg text-xs font-bold border border-gray-200 shadow-sm">Draft</span>
-                                            </div>
-                                            
-                                            {/* Preview Placeholder */}
-                                            <div className="aspect-video bg-gray-200 rounded-xl mb-4 flex items-center justify-center text-gray-400">
-                                                <img src={selectedContent.image_url} alt="Preview" className="w-full h-full object-cover rounded-xl" onError={(e) => e.currentTarget.style.display = 'none'} />
-                                                <span className="absolute">Image Preview</span>
+                                                <button onClick={() => setSelectedContent(null)} className="p-2 hover:bg-gray-200 rounded-full transition-colors"><XIcon className="w-4 h-4" /></button>
                                             </div>
 
-                                            <p className="text-sm text-gray-600 leading-relaxed mb-6 font-serif">
-                                                {selectedContent.excerpt}...
-                                            </p>
+                                            <div className="prose prose-sm dark:prose-invert max-w-none mb-8 bg-white dark:bg-slate-950 p-6 rounded-xl border border-gray-100 dark:border-slate-800 shadow-sm overflow-hidden">
+                                                {selectedContent.imageUrl && <img src={selectedContent.imageUrl} alt="Cover" className="w-full h-48 object-cover rounded-lg mb-6 shadow-md" />}
+                                                <ReactMarkdown>{selectedContent.content || ''}</ReactMarkdown>
+                                            </div>
 
                                             {isRejecting ? (
-                                                <div className="bg-white p-4 rounded-xl border border-red-100 animate-in fade-in">
-                                                    <h5 className="text-xs font-black text-red-500 uppercase mb-2">Rejection Reason</h5>
+                                                <div className="bg-white dark:bg-slate-950 p-4 rounded-xl border border-red-100 dark:border-red-900/30 mb-4 animate-in fade-in slide-in-from-top-2">
+                                                    <h5 className="text-xs font-black text-red-500 uppercase mb-2">Instructions for Bob</h5>
                                                     <textarea 
-                                                        className="w-full text-sm p-3 bg-gray-50 rounded-lg border-0 focus:ring-2 focus:ring-red-500/20 mb-3"
+                                                        className="w-full text-sm p-3 bg-gray-50 dark:bg-slate-900 rounded-lg border border-gray-100 dark:border-slate-800 focus:ring-2 focus:ring-red-500/20 mb-3 outline-none"
                                                         rows={3}
-                                                        placeholder="Explain why this content needs revision..."
+                                                        placeholder="What should be improved?"
                                                         value={rejectReason}
                                                         onChange={e => setRejectReason(e.target.value)}
                                                     />
                                                     <div className="flex gap-2 justify-end">
                                                         <button onClick={() => setIsRejecting(false)} className="px-3 py-1.5 text-xs font-bold text-gray-500">Cancel</button>
-                                                        <button onClick={handleRejectContent} className="px-3 py-1.5 bg-red-500 text-white text-xs font-bold rounded-lg hover:bg-red-600">Confim Reject</button>
+                                                        <button 
+                                                            disabled={!rejectReason.trim() || !!processingId}
+                                                            onClick={handleRejectContent} 
+                                                            className="px-4 py-1.5 bg-red-600 text-white text-xs font-black rounded-lg hover:bg-red-700 shadow-lg shadow-red-100 dark:shadow-none transition-all active:scale-95"
+                                                        >
+                                                            CONFIRM RETURN
+                                                        </button>
                                                     </div>
                                                 </div>
                                             ) : (
                                                 <div className="flex gap-3">
                                                     <button 
-                                                        onClick={() => handleApproveContent(selectedContent.id, 'blog')}
                                                         disabled={!!processingId}
-                                                        className="flex-1 bg-green-600 hover:bg-green-700 text-white py-3 rounded-xl font-bold shadow-lg shadow-green-200 transition-all active:scale-95 flex items-center justify-center gap-2"
+                                                        onClick={() => { setIsRejecting(true); }}
+                                                        className="flex-1 py-4 text-sm font-bold text-red-600 border border-red-200 rounded-xl hover:bg-red-50 transition-all active:scale-95"
                                                     >
-                                                        <CheckCircleIcon className="w-4 h-4" /> Approve & Publish
+                                                        RETURN
                                                     </button>
                                                     <button 
-                                                        onClick={() => setIsRejecting(true)}
-                                                        className="px-6 bg-white border border-red-200 text-red-600 py-3 rounded-xl font-bold hover:bg-red-50 transition-colors"
+                                                        disabled={!!processingId}
+                                                        onClick={() => handleApproveContent(selectedContent.id, 'blog')}
+                                                        className="flex-[2] py-4 text-sm font-black bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 shadow-lg shadow-indigo-100 dark:shadow-none transition-all active:scale-95 flex items-center justify-center gap-2"
                                                     >
-                                                        Reject
+                                                        {processingId === selectedContent.id ? <RefreshCwIcon className="animate-spin w-4 h-4" /> : <CheckCircleIcon className="w-4 h-4" />}
+                                                        PUBLISH ASSET
                                                     </button>
                                                 </div>
                                             )}
                                         </div>
                                     ) : (
-                                        <div className="h-full flex items-center justify-center text-gray-300 font-bold border-2 border-dashed border-gray-200 rounded-2xl">
-                                            Select an item to preview
+                                        <div className="h-full flex items-center justify-center border-2 border-dashed border-gray-200 rounded-2xl text-gray-400 italic text-sm">
+                                            Select a content draft to begin strategic review
                                         </div>
                                     )}
                                 </div>
@@ -788,9 +808,52 @@ export const ManagerNexus: React.FC = () => {
                         )}
 
                         {opLoadTab === 'devops' && (
-                            <div className="text-center py-12 text-gray-400">
-                                <GitCommitIcon className="w-12 h-12 mx-auto mb-3 opacity-20" />
-                                <p className="text-sm">No infrastructure proposals pending.</p>
+                            <div className="space-y-4">
+                                {codeProposals.map((prop: any) => (
+                                    <div key={prop.id} className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-gray-200 dark:border-slate-800 shadow-sm hover:shadow-md transition-all">
+                                        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+                                            <div className="flex-1">
+                                                <div className="flex items-center gap-2 mb-3">
+                                                    <span className="text-[10px] font-black uppercase tracking-widest text-indigo-600 bg-indigo-50 dark:bg-indigo-900/30 px-2 py-0.5 rounded-full border border-indigo-100 dark:border-indigo-800/50">
+                                                        {prop.type} proposal
+                                                    </span>
+                                                    <span className="text-[10px] text-gray-400 font-mono">{new Date(prop.created_at).toLocaleString()}</span>
+                                                </div>
+                                                <p className="text-gray-800 dark:text-slate-200 font-mono text-sm bg-gray-50 dark:bg-slate-950 p-4 rounded-xl border border-gray-100 dark:border-slate-800 shadow-inner">
+                                                    {prop.request_payload?.description || 'Infrastructure change request detected.'}
+                                                </p>
+                                            </div>
+                                            <div className="flex gap-3 w-full md:w-auto">
+                                                <button 
+                                                    onClick={() => handleViewDiff(prop)}
+                                                    className="p-4 bg-gray-50 dark:bg-slate-800 text-gray-600 dark:text-slate-400 rounded-2xl hover:bg-gray-100 dark:hover:bg-slate-700 transition-all border border-gray-100 dark:border-slate-700"
+                                                    title="Inspect Code Difference"
+                                                >
+                                                    <SearchIcon className="w-5 h-5" />
+                                                </button>
+                                                <button 
+                                                    onClick={() => handleCodeAction(prop.id, 'reject')}
+                                                    disabled={!!processingId}
+                                                    className="flex-1 px-6 py-4 text-xs font-bold text-red-600 border border-red-100 rounded-2xl hover:bg-red-50 transition-all active:scale-95 min-w-[80px]"
+                                                >
+                                                    REJECT
+                                                </button>
+                                                <button 
+                                                    onClick={() => handleCodeAction(prop.id, 'approve')}
+                                                    disabled={!!processingId}
+                                                    className="flex-1 px-6 py-4 text-xs font-black bg-amber-500 text-white rounded-2xl shadow-lg shadow-amber-100 dark:shadow-none transition-all active:scale-95 min-w-[80px]"
+                                                >
+                                                    {processingId === prop.id ? '...' : 'APPROVE'}
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                                {codeProposals.length === 0 && (
+                                    <div className="p-12 text-center border-2 border-dashed border-gray-200 rounded-3xl text-gray-400 italic text-sm">
+                                        No pending code proposals. Infrastructure is stable and verified.
+                                    </div>
+                                )}
                             </div>
                         )}
                     </DetailSection>

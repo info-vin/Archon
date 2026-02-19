@@ -37,11 +37,11 @@ async def get_users(
     current_user: dict = Depends(get_current_user)
 ):
     """
-    Get all users (Admin only).
+    Get all users (Admin & Manager).
     """
     user_role = current_user.get("role", "viewer").lower()
-    if user_role not in ["admin", "system_admin"]:
-        raise HTTPException(status_code=403, detail="Admin access required")
+    if user_role not in ["admin", "system_admin", "manager"]:
+        raise HTTPException(status_code=403, detail="Insufficient permissions")
 
     try:
         users = await AdminService.get_all_users(limit=limit, role_filter=role)

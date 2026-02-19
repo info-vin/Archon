@@ -93,6 +93,17 @@ async def verify_manager_role(
         )
     return True
 
+async def get_current_user_id(
+    current_user: Annotated[dict, Depends(get_current_user)]
+) -> Any:
+    """Extracts the user ID from the current authenticated user."""
+    return current_user.get("id")
+
+async def get_propose_change_service() -> Any:
+    """Dependency that provides an instance of ProposeChangeService."""
+    from ..services.propose_change_service import ProposeChangeService
+    return ProposeChangeService()
+
 def requires_permission(permission: str):
     """
     Factory for creating a dependency that checks if the user has a specific permission.

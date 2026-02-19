@@ -4,14 +4,12 @@ Stats API endpoints for Archon (Refactored - Lean Controller)
 Delegates all business logic and aggregations to StatsService.
 """
 
-from datetime import UTC, datetime, timedelta
 from typing import cast
 
 from fastapi import APIRouter, Depends, HTTPException
 
 from ..auth.dependencies import get_current_user
 from ..config.logfire_config import get_logger
-from ..services.health_service import HealthService
 from ..services.stats_service import StatsService
 from ..utils import get_supabase_client
 
@@ -117,6 +115,17 @@ async def get_business_risks():
     except Exception as e:
         logger.error(f"API: Business risks fetch failed: {e}")
         return []
+
+@router.get("/health-trend", dependencies=[Depends(require_manager_or_admin)])
+async def get_health_trend():
+    """Strategic HUD Trend & Audit Data."""
+    try:
+        from ..services.health_service import HealthService
+        # Physically return the full dictionary which contains both 'trend' and 'audit'
+        return await HealthService().get_health_history(days=30)
+    except Exception as e:
+        logger.error(f"API: Health trend fetch failed: {e}")
+        return {"trend": [], "audit": [], "error": str(e)}
 
 @router.get("/tasks-by-status")
 async def get_tasks_by_status():

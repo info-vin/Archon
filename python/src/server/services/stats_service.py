@@ -306,7 +306,7 @@ class StatsService:
             {"id": "librarian", "name": "Librarian", "role": "RAG Service"},
             {"id": "devbot", "name": "DevBot", "role": "System Engineer"}
         ]
-        
+
         active_agents = []
         for agent in agents_manifest:
             is_active = agent["id"] in active_sources or any(agent["id"] in s.lower() for s in active_sources)
@@ -332,7 +332,7 @@ class StatsService:
         """Provides AI usage stats with daily breakdown and real data flag."""
         from .token_usage_service import TokenUsageService
         daily_costs = await TokenUsageService.get_daily_cost(days=days)
-        
+
         total_monthly_usd = sum(d["cost"] for d in daily_costs)
         total_monthly_tokens = sum(d.get("request_count", 0) * 1000 for d in daily_costs)
 

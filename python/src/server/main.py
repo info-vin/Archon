@@ -26,6 +26,7 @@ from .api_routes.agents_api import router as agents_router
 from .api_routes.auth_api import router as auth_router  # NEW IMPORT
 from .api_routes.blog_api import router as blog_router
 from .api_routes.bug_report_api import router as bug_report_router
+from .api_routes.changes_api import router as changes_router  # NEW IMPORT
 from .api_routes.ethics_api import router as ethics_router  # NEW IMPORT
 from .api_routes.extraction_api import router as extraction_router  # NEW IMPORT (GAP-018)
 from .api_routes.files_api import router as files_router
@@ -261,6 +262,7 @@ app.include_router(admin_router)  # NEW ROUTER
 app.include_router(auth_router)
 app.include_router(blog_router)
 app.include_router(bug_report_router)
+app.include_router(changes_router, prefix="/api")
 app.include_router(log_router)
 app.include_router(ethics_router)
 app.include_router(files_router)

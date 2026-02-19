@@ -320,7 +320,7 @@ const supabaseApi = {
     return data.refined_description;
   },
   async getEmployees(): Promise<Employee[]> {
-    const response = await fetch('/api/users', { headers: await this._getHeaders() });
+    const response = await fetch('/api/admin/users', { headers: await this._getHeaders() });
     if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         throw new Error(errorData.detail || 'Failed to fetch employees.');
