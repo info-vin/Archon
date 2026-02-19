@@ -18,11 +18,24 @@ class SchedulerService:
             cls._instance._scheduler = AsyncIOScheduler()
         return cls._instance
 
-    def start(self):
+    async def _get_setting(self, key: str, default: int) -> int:
+        """Helper to fetch numerical settings from DB."""
+        try:
+            from ..utils import get_supabase_client
+            supabase = get_supabase_client()
+            res = supabase.table("archon_settings").select("value").eq("key", key).execute()
+            if res.data:
+                return int(res.data[0]["value"])
+        except Exception as e:
+            logger.warning(f"Scheduler: Failed to fetch {key}, using default {default}: {e}")
+        return default
+
+    async def start(self):
         if self._scheduler and not self._scheduler.running:
             logger.info("🕒 Clockwork: Starting Scheduler Service...")
             self._scheduler.start()
-            self._schedule_jobs()
+            # We need to run seeding logic in a way that allows fetching async settings
+            await self._schedule_jobs()
         else:
             logger.warning("Clockwork: Scheduler already running or not initialized.")
 
@@ -31,27 +44,31 @@ class SchedulerService:
             logger.info("🛑 Clockwork: Shutting down Scheduler...")
             self._scheduler.shutdown()
 
-    def _schedule_jobs(self):
+    async def _schedule_jobs(self):
         if not self._scheduler:
             return
 
-        # Job 1: System Heartbeat Probe (Hourly for high-res trending)
+        # Fetch intervals from settings
+        probe_mins = await self._get_setting("SCHEDULER_PROBE_INTERVAL_MINS", 60)
+        patrol_mins = await self._get_setting("SCHEDULER_PATROL_INTERVAL_MINS", 60)
+        sentinel_hours = await self._get_setting("SCHEDULER_SENTINEL_INTERVAL_HOURS", 12)
+
+        # Job 1: System Heartbeat Probe
         self._scheduler.add_job(
             self._run_system_probe,
-            trigger=IntervalTrigger(hours=1),
+            trigger=IntervalTrigger(minutes=probe_mins),
             id="system_probe",
             replace_existing=True
         )
-        logger.info("✅ Scheduled Job: System Probe (Hourly)")
+        logger.info(f"✅ Scheduled Job: System Probe (Every {probe_mins} mins)")
 
-        # Job 1.5: System Probe Cleanup (Every 1 hour) - Retention Policy
+        # Job 1.5: System Probe Cleanup (Hourly)
         self._scheduler.add_job(
             self._cleanup_system_probes,
             trigger=IntervalTrigger(hours=1),
             id="system_probe_cleanup",
             replace_existing=True
         )
-        logger.info("✅ Scheduled Job: System Probe Cleanup (Hourly)")
 
         # Job 2: The Accountant - Token Analysis (Every 24 hours)
         self._scheduler.add_job(
@@ -60,25 +77,24 @@ class SchedulerService:
             id="token_analysis",
             replace_existing=True
         )
-        logger.info("✅ Scheduled Job: Token Analysis (Every 24 hours)")
 
-        # Job 3: The Patrol - Log Analysis & Auto-Repair (Every 1 hour)
+        # Job 3: The Patrol - Log Analysis & Auto-Repair
         self._scheduler.add_job(
             self._run_log_patrol,
-            trigger=IntervalTrigger(hours=1),
+            trigger=IntervalTrigger(minutes=patrol_mins),
             id="log_patrol",
             replace_existing=True
         )
-        logger.info("✅ Scheduled Job: Log Patrol (Every 1 hour)")
+        logger.info(f"✅ Scheduled Job: Log Patrol (Every {patrol_mins} mins)")
 
-        # Job 4: The Sentinel - Business Logic Monitoring (Every 12 hours)
+        # Job 4: The Sentinel - Business Logic Monitoring
         self._scheduler.add_job(
             self._run_business_sentinel,
-            trigger=IntervalTrigger(hours=12),
+            trigger=IntervalTrigger(hours=sentinel_hours),
             id="business_sentinel",
             replace_existing=True
         )
-        logger.info("✅ Scheduled Job: Business Sentinel (Every 12 hours)")
+        logger.info(f"✅ Scheduled Job: Business Sentinel (Every {sentinel_hours} hours)")
 
     async def _run_log_patrol(self):
         """

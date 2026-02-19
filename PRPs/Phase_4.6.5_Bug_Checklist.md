@@ -31,6 +31,8 @@
 | **BUG-046** | ⏱️ Timeout | **Alice** | **Voice** | **語音轉錄超時風險**。 | 輪詢上限提升至 60s (30次) 支援長音頻。 | 🟢 已修復 |
 | **BUG-047** | 🔑 Key | **Admin** | **UI** | **React Key 重複 (`gemini-2.0-flash`)**。 | 已在前端 `SystemHealthDashboard.tsx` 實作 `agent-model` 組合鍵並確認生效。 | 🟢 已修復 |
 | **BUG-048** | ❌ 503 | **Alice** | **API** | **`/generate-pitch` 503 (Service Unavailable)**。 | 已還原真實實作並通過 401 異常路徑測試，證實已移除 Mock 降級並補強日誌追蹤。 | 🟢 已修復 |
+| **BUG-049** | 📊 0 Data | **Admin** | **Stats** | **System Health 數據全為 0/UNKNOWN**。 | 已在 `StatsService` 實作管理維度遙測，回傳真實 Agent 列表與 24h 錯誤數。 | 🟢 已修復 |
+| **BUG-050** | 💸 0 Cost | **Admin** | **Stats** | **AI Token 消耗顯示為 0**。 | 修正 `ai-usage` 端點欄位映射（`daily_costs`）並對接實體 `token_usage` 資料。 | 🟢 已修復 |
 | **TECH-005** | 🏗️ Debt | **Alice** | **Logic** | **專案名稱硬編碼**。 | 透過 `archon_settings` 動態讀取並增加降級搜尋邏輯。 | 🟢 已修復 |
 | **GAP-015** | 🔧 Gap | **Tech** | **Score** | **Alice Enrichment Score 規則**。 | `enrichment_service.py` 實作 Settings 權重。 | 🟢 已修復 |
 | **GAP-021** | 🔧 Gap | **Admin** | **Config** | **配置持久化**。 | `migration/000` 具備 `archon_settings` 表。 | 🟢 已修復 |

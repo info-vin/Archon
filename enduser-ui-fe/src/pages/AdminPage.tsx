@@ -468,13 +468,14 @@ const SystemSettings: React.FC = () => {
     const fetchSettings = async () => {
         setLoading(true);
         try {
-            // Fetch crawler, config, diagnostics, lead scoring, and RAG settings
+            // Fetch all necessary configuration categories
             const crawlerData = await api.getSystemSettings('crawler_rbac');
             const crawlerConfig = await api.getSystemSettings('crawler_config');
             const diagnosticsData = await api.getSystemSettings('diagnostics');
             const scoringData = await api.getSystemSettings('lead_scoring');
             const ragData = await api.getSystemSettings('rag_strategy');
-            setSettings([...crawlerData, ...crawlerConfig, ...diagnosticsData, ...scoringData, ...ragData]);
+            const systemData = await api.getSystemSettings('system'); // SCHEDULER frequency settings
+            setSettings([...crawlerData, ...crawlerConfig, ...diagnosticsData, ...scoringData, ...ragData, ...systemData]);
         } catch (err: any) {
             alert("Failed to load settings: " + err.message);
         } finally {
@@ -501,9 +502,57 @@ const SystemSettings: React.FC = () => {
     const scoringSettings = settings.filter(s => s.category === 'lead_scoring');
     const crawlerConfigSettings = settings.filter(s => s.category === 'crawler_config');
     const ragSettings = settings.filter(s => s.category === 'rag_strategy');
+    const schedulerSettings = settings.filter(s => s.category === 'system' && s.key.startsWith('SCHEDULER_'));
 
     return (
         <div className="space-y-6 pb-20">
+            {/* NEW: Scheduler Frequency Configuration (Clockwork) */}
+            <div className="bg-card p-6 rounded-2xl border border-border shadow-sm border-l-4 border-l-orange-500">
+                <h3 className="text-lg font-bold mb-4 flex items-center gap-2 text-orange-600">
+                    <RefreshCwIcon className="w-5 h-5" />
+                    Clockwork: Agent Biological Frequencies (Heartbeat)
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {schedulerSettings.map(setting => {
+                        // Clear mapping to persona-aligned titles
+                        const displayTitle = setting.key === 'SCHEDULER_PROBE_INTERVAL_MINS' ? 'System Heartbeat (Probe)' :
+                                           setting.key === 'SCHEDULER_PATROL_INTERVAL_MINS' ? 'Log Patrol (Auto-Repair)' :
+                                           setting.key === 'SCHEDULER_SENTINEL_INTERVAL_HOURS' ? 'Sentinel (Business Risks)' :
+                                           setting.key.replace(/SCHEDULER_|_MINS|_HOURS/g, '').replace(/_/g, ' ');
+
+                        return (
+                            <div key={setting.key} className="p-4 bg-muted/20 rounded-xl border border-border flex flex-col justify-between gap-3 group hover:border-orange-500/30 transition-all">
+                                <div>
+                                    <div className="font-bold text-[10px] uppercase tracking-widest text-orange-600/70">{displayTitle}</div>
+                                    <p className="text-[10px] text-muted-foreground mt-1 leading-tight">{setting.description}</p>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <div className="relative flex-1">
+                                        <input 
+                                            type="number" 
+                                            defaultValue={setting.value}
+                                            onBlur={(e) => handleUpdate(setting.key, e.target.value)}
+                                            className="w-full p-2 bg-background border border-border rounded-lg text-sm font-bold text-center outline-none focus:ring-2 ring-orange-500/50 transition-all"
+                                        />
+                                        {isSaving === setting.key && (
+                                            <div className="absolute -top-1 -right-1">
+                                                <RefreshCwIcon className="animate-spin w-3 h-3 text-orange-600" />
+                                            </div>
+                                        )}
+                                    </div>
+                                    <span className="text-[10px] font-bold text-muted-foreground uppercase">{setting.key.includes('MINS') ? 'Mins' : 'Hrs'}</span>
+                                </div>
+                            </div>
+                        );
+                    })}
+                    {schedulerSettings.length === 0 && (
+                        <div className="col-span-3 p-4 text-center text-muted-foreground italic text-xs">
+                            No scheduler settings found in database.
+                        </div>
+                    )}
+                </div>
+            </div>
+
             {/* NEW: RAG Strategy Configuration (Google Gemini) */}
             <div className="bg-card p-6 rounded-2xl border border-border shadow-sm border-l-4 border-l-purple-500">
                 <h3 className="text-lg font-bold mb-4 flex items-center gap-2 text-purple-600">

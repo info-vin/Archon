@@ -131,7 +131,10 @@ def seed_data(cursor: PGCursor) -> None:
     bob_settings = [
         ("STORY_CANDIDATE_SCORE_THRESHOLD", "80", "marketing", "Minimum score for victory feed"),
         ("NANA_BANANA_MODEL", "gemini-2.0-flash-exp", "marketing", "Image generation model for Nana Banana"),
-        ("MARKETING_MODEL", "gemini-2.5-flash", "marketing", "Primary model for blog drafting"),
+        ("MARKETING_MODEL", "gemini-2.0-flash", "marketing", "Primary model for marketing content generation"),
+        ("SCHEDULER_PROBE_INTERVAL_MINS", "60", "system", "Frequency of system heartbeat probes (minutes)"),
+        ("SCHEDULER_PATROL_INTERVAL_MINS", "60", "system", "Frequency of log auto-repair scans (minutes)"),
+        ("SCHEDULER_SENTINEL_INTERVAL_HOURS", "12", "business", "Frequency of business risk scans (hours)")
     ]
     for key, val, category, desc in bob_settings:
         cursor.execute("""

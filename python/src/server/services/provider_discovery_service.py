@@ -233,6 +233,7 @@ class ProviderDiscoveryService:
                 ModelSpec("gemini-2.0-flash", "google", 1048576, True, True, False, None, 0.10, 0.40, "Next-gen flash model"),
                 ModelSpec("gemini-2.5-flash", "google", 1048576, True, True, False, None, 0.10, 0.40, "Latest high-performance flash model"),
                 ModelSpec("gemini-2.5-flash-lite", "google", 1048576, True, True, False, None, 0.05, 0.20, "Ultra-fast lite model"),
+                ModelSpec("gemini-2.0-flash-lite-preview-02-05", "google", 1048576, True, True, False, None, 0.05, 0.20, "Next-gen ultra-fast preview model"),
                 ModelSpec("gemini-1.0-pro", "google", 30720, True, False, False, None, 0.50, 1.50, "Efficient model for text tasks"),
                 ModelSpec("text-embedding-004", "google", 2048, False, False, True, 768, 0.00, 0, "Google's latest embedding model"),
             ]

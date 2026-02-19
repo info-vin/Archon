@@ -423,9 +423,27 @@ async def draft_blog_post(request: DraftBlogRequest, current_user: dict = Depend
         is_tc = bool(re.search(r'[\u4e00-\u9fff]', request.topic))
         lang_instr = "You MUST use Traditional Chinese (Taiwan, zh-TW)." if is_tc else ""
         api_key = await credential_service.get_credential("GEMINI_API_KEY") or await credential_service.get_credential("GOOGLE_API_KEY")
-        model_id = (await credential_service.get_active_provider("llm")).get("chat_model") or "gemini-2.0-flash-lite"
+        
+        provider_config = await credential_service.get_active_provider("llm")
+        model_id = provider_config.get("chat_model") or "gemini-2.0-flash-lite-preview-02-05"
+        
         sys_prompt = prompt_service.get_prompt("BLOG_DRAFT", BLOG_DRAFT_SYSTEM_PROMPT)
-        response = genai.Client(api_key=api_key).models.generate_content(model=model_id.split("/")[-1], contents=f"Topic: {request.topic}\nIndustry: {request.industry}\nStyle: {request.style}\nContext: {context_text}\n{lang_instr}", config=types.GenerateContentConfig(system_instruction=sys_prompt, response_mime_type="application/json"))
+        
+        # Physical Fix: Use a dedicated client instance for this request to avoid "closed client" issues
+        client = genai.Client(api_key=api_key)
+        response = client.models.generate_content(
+            model=model_id.split("/")[-1], 
+            contents=f"Topic: {request.topic}\nIndustry: {request.industry}\nStyle: {request.style}\nContext: {context_text}\n{lang_instr}", 
+            config=types.GenerateContentConfig(
+                system_instruction=sys_prompt, 
+                response_mime_type="application/json",
+                temperature=0.7
+            )
+        )
+        
+        if not response.text:
+            raise Exception("AI returned empty content")
+            
         result = safe_json_loads(response.text)
         is_safe, audit = GuardrailService.audit_output(str(result.get("content", "")), context_text)
         if not is_safe:
@@ -565,4 +583,28 @@ async def dispatch_alert_task(alert_id: str, current_user: dict = Depends(get_cu
 async def seed_knowledge_base(current_user: dict = Depends(get_current_user)):
     if current_user.get("role", "viewer").lower() not in ["manager", "admin"]:
         raise HTTPException(status_code=403)
-    return {"status": "completed"}
+    
+    try:
+        from ..services.librarian_service import LibrarianService
+        lib = LibrarianService()
+        
+        # Physical Seeding: Archive a set of foundational documents
+        # This resolves the 'total_sources: 0' issue in HealthService
+        foundation_docs = [
+            {"title": "Archon Core Vision", "content": "Archon is an AI-human collaboration framework focused on physical realization and grounded logic.", "company": "Archon Internal"},
+            {"title": "Alice Persona Protocol", "content": "Alice handles sales outreach and voice-to-task automation with real-time GPS grounding.", "company": "Archon Sales"},
+            {"title": "Bob Persona Protocol", "content": "Bob manages marketing assets, logo generation, and brand consistency.", "company": "Archon Marketing"}
+        ]
+        
+        for doc in foundation_docs:
+            await lib.archive_sales_pitch(
+                company=doc["company"],
+                job_title=doc["title"],
+                content=doc["content"],
+                references=["system:seed"]
+            )
+            
+        return {"status": "completed", "documents_seeded": len(foundation_docs)}
+    except Exception as e:
+        logger.error(f"API: Knowledge seeding failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e)) from e

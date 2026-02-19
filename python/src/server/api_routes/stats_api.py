@@ -154,58 +154,16 @@ async def get_member_performance():
 async def get_system_overview():
     """Consolidated health and performance overview."""
     try:
-        supabase = get_supabase_client()
-        health_service = HealthService()
-        rag_health = await health_service.check_rag_integrity()
-        one_day_ago = (datetime.now(UTC) - timedelta(hours=24)).isoformat()
-
-        # Simple Error Count (Execute and ignore result if unused)
-        supabase.table("archon_logs").select("id", count="exact").eq("level", "ERROR").gt("created_at", one_day_ago).execute()
-
-        # Token Burn
-        cost_res = supabase.table("token_usage").select("cost_usd").gt("created_at", one_day_ago).execute()
-        total_cost_24h = sum(float(r.get("cost_usd", 0)) for r in (cost_res.data or []))
-
-        return {
-            "status": "healthy" if rag_health.get("status") == "healthy" else "degraded",
-            "cost_24h": round(total_cost_24h, 4),
-            "timestamp": datetime.now(UTC).isoformat(),
-            "integrity_score": rag_health.get("score", 0),
-            "knowledge_stats": {
-                "total_nodes": rag_health.get("details", {}).get("total_sources", 0)
-            }
-        }
+        return await stats_service.get_system_health_overview()
     except Exception as e:
         logger.error(f"Failed system overview: {e}")
         return {"status": "unknown", "error": str(e)}
 
 @router.get("/ai-usage", dependencies=[Depends(require_manager_or_admin)])
 async def get_ai_usage():
-    """
-    Get aggregated AI usage stats for the Nexus dashboard.
-    Fixes 404 error by implementing the missing endpoint.
-    """
+    """Aggregated AI usage stats for the Nexus and Health dashboards."""
     try:
-        from ..services.token_usage_service import TokenUsageService
-        daily_costs = await TokenUsageService.get_daily_cost(days=30)
-
-        total_monthly_usd = sum(d["cost"] for d in daily_costs)
-        total_monthly_tokens = sum(d.get("request_count", 0) * 1000 for d in daily_costs) # Estimate if token count missing
-
-        # Mock team breakdown for now to unblock frontend
-        team_stats = [
-            {"name": "System", "role": "Automation", "total_cost": total_monthly_usd * 0.4, "total_tokens": total_monthly_tokens * 0.4, "avg_window": 24, "task_distribution": []},
-            {"name": "Alice", "role": "Sales", "total_cost": total_monthly_usd * 0.3, "total_tokens": total_monthly_tokens * 0.3, "avg_window": 8, "task_distribution": []},
-            {"name": "Bob", "role": "Marketing", "total_cost": total_monthly_usd * 0.3, "total_tokens": total_monthly_tokens * 0.3, "avg_window": 6, "task_distribution": []}
-        ]
-
-        return {
-            "total_monthly_usd": round(total_monthly_usd, 2),
-            "total_monthly_tokens": int(total_monthly_tokens),
-            "budget_limit": 100.0, # Default monthly budget
-            "burn_trend": [{"date": d["date"], "cost": d["cost"]} for d in daily_costs],
-            "team": team_stats
-        }
+        return await stats_service.get_detailed_ai_usage(days=30)
     except Exception as e:
         logger.error(f"Failed to get AI usage: {e}")
         raise HTTPException(status_code=500, detail=str(e)) from e
