@@ -141,6 +141,9 @@ BEGIN
     DROP FUNCTION IF EXISTS match_crawled_pages(vector, int, jsonb, text) CASCADE;
     DROP FUNCTION IF EXISTS match_code_examples(vector, int, jsonb, text) CASCADE;
     
+    -- Analytics functions
+    DROP FUNCTION IF EXISTS get_counts_by_source(text[]) CASCADE;
+    
     -- Task management functions
     DROP FUNCTION IF EXISTS archive_task(UUID, TEXT) CASCADE;
     
@@ -164,6 +167,7 @@ BEGIN
     DROP TABLE IF EXISTS archon_crawler_targets CASCADE;
     DROP TABLE IF EXISTS archon_extraction_schemas CASCADE;
     DROP TABLE IF EXISTS archon_ethics_events CASCADE;
+    DROP TABLE IF EXISTS attendance_logs CASCADE;
     DROP TABLE IF EXISTS token_usage CASCADE;
     DROP TABLE IF EXISTS marketing_trends CASCADE;
     DROP TABLE IF EXISTS subscriptions CASCADE;
@@ -224,6 +228,8 @@ BEGIN
     -- Task-related enums
     DROP TYPE IF EXISTS task_status CASCADE;
     DROP TYPE IF EXISTS task_assignee CASCADE;
+    DROP TYPE IF EXISTS change_status CASCADE;
+    DROP TYPE IF EXISTS change_type CASCADE;
     
     RAISE NOTICE 'Custom types dropped successfully.';
     
