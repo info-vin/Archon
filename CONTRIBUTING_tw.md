@@ -376,51 +376,18 @@ Phase 4.4.5 引入了 **Clockwork** 進行系統自動檢測。
 
     1.  登入 Supabase 儀表板並進入 **SQL Editor**。
 
-        | 順序 | 檔案路徑 (migration/...) | 用途與說明 |
+        | 順序 | 檔案路徑 (migration/0.2.1/...) | 用途與說明 |
         | :--- | :--- | :--- |
-        | 1 | `RESET_DB.sql` | **[重置]** 清空所有資料表與 Schema，確保環境乾淨。 |
-        | 2 | `000_unified_schema.sql` | **[核心]** 建立基礎資料表 (`tasks`, `projects`, `users`...)。 |
-        | 3 | `001_add_due_date_to_tasks.sql` | **[Schema]** 為 `tasks` 表追加 `due_date` 欄位。 |
-        | 4 | `002_create_schema_migrations_table.sql` | **[系統]** 建立 `schema_migrations` 表，追蹤版本。 |
-        | 5 | `003_add_get_counts_by_source_function.sql` | **[函式]** 新增儀表板統計所需的資料庫函式。 |
-        | 6 | `004_create_test_utility_functions.sql` | **[測試]** 建立 `reset_test_database` 等 E2E 測試函式。 |
-        | 7 | `005_create_proposed_changes_table.sql` | **[AI]** 建立 `proposed_changes` 表，支援 AI 協作。 |
-        | 8 | `seed_mock_data.sql` | **[種子]** 填充核心假資料 (Users, Projects, Employees)。 |
-        | 9 | `seed_blog_posts.sql` | **[種子]** 填充部落格文章假資料 (用於 RAG 測試)。 |
-        | 10 | `006_create_sales_intel_tables.sql` | **[Phase 4.2]** 建立 `leads`, `market_insights` 表 (業務情資)。 |
-        | 11 | `007_add_assignee_id_to_tasks.sql` | **[RBAC]** 新增 `assignee_id` 欄位，強化任務指派權限。 |
-        | 12 | `008_system_correction_phase44.sql` | **[修復]** 修正 Phase 4.4 的邏輯與狀態定義。 |
-        | 13 | `009_fix_rbac_roles_and_permissions.sql` | **[RBAC]** 修正 Manager 與 Admin 的權限邊界。 |
-        | 14 | `010_bob_and_alice_schema_updates.sql` | **[Persona]** 支援 Alice (Sales) 與 Bob (Marketing) 視圖。 |
-        | 15 | `011_update_alice_bob_roles.sql` | **[權限]** 升級 Alice/Bob 為 `sales`/`marketing` 角色。 |
-        | 16 | `012_create_archon_logs.sql` | **[日誌]** 建立 `archon_logs` 支援 Clockwork 與系統稽核。 |
-        | 17 | `013_seed_system_prompts.sql` | **[AI]** 寫入 System Prompts (Prompt as Data)。 |
-        | 18 | `014_vector_rls_policy.sql` | **[安全]** 啟用向量庫 RLS，實作部門資料隔離。 |
-        | 19 | `015_fix_vendors_schema.sql` | **[修復]** 修正 `vendors` 資料表結構。 |
-        | 20 | `016_fix_vendors_rls.sql` | **[安全]** 修正 `vendors` 的 RLS 政策。 |
-        | 21 | `017_add_missing_vendor_columns.sql` | **[Schema]** 補齊 `vendors` 缺失欄位 (如 `status`)。 |
-        | 22 | `018_fix_blog_posts_id_default.sql` | **[修復]** 修正 `blog_posts` ID 的 UUID 預設值。 |
-        | 23 | `019_add_prompts_rls.sql` | **[安全]** 為 `system_prompts` 加入 RLS 政策，保護 AI 提示詞。 |
-        | 24 | `020_phase46_schema.sql` | **[Phase 4.6]** Mobile Ops 表 (Visit Logs), Market Intelligence, 與安全加固 (RLS)。 |
-        | 25 | `021_phase4_6_config_and_ethics.sql` | **[Phase 4.6]** 系統設定表 (`archon_settings`) 與倫理準則。 |
-        | 26 | `022_add_blog_lead_relation.sql` | **[Phase 4.6.2]** 連結 Blog 與 Leads，實現 Bob 的內容閉環。 |
-        | 27 | `023_create_token_usage_table.sql` | **[系統]** 建立 `archon_token_usage` 表，支援成本監控。 |
-        | 28 | `024_add_contact_info_to_leads.sql` | **[Schema]** 擴充 Leads 表欄位 (聯絡人、Email、來源) 以支援計分。 |
-        | 29 | `025_crawler_rbac_settings.sql` | **[權限]** 實作爬蟲深度與過濾器的 RBAC 配置化設定。 |
-        | 30 | `026_create_extraction_schemas.sql` | **[Schema]** 建立通用提取 Schema，支援 Librarian 的結構化提取任務。 |
-        | 31 | `027_seed_field_ops_project.sql` | **[種子]** 預載 Alice (Sales) 所需的 Field Ops 專案與範例任務。 |
-        | 32 | `028_seed_voice_prompt.sql` | **[AI]** 寫入語音轉工單專用的 System Prompt (Alice 核心功能)。 |
-        | 33 | `029_fix_archon_logs_schema.sql` | **[修復]** 補齊 `archon_logs` 缺失欄位，支援經理儀表板。 |
-        | 34 | `030_schema_hardening_and_mobile.sql` | **[合併]** 整合原 030-034。強化 Mobile Ops、Visit Logs 與基礎 Schema。 |
-        | 35 | `031_rbac_and_policies_refinement.sql` | **[合併]** 整合原 035-040。精細化 RBAC 權限與 RLS 安全政策。 |
-        | 36 | `032_system_settings_and_config.sql` | **[合併]** 整合原 041-048。包含爬蟲設定、LLM Provider、與倫理審計硬化。 |
-        | 37 | `033_seed_nexus_data.sql` | **[種子]** 預載 Nexus 戰情室所需的評分與預算初始化數據。 |
-        | 38 | `034_add_lost_reason_to_leads.sql` | **[Expertise]** 為 Leads 表增加失敗分析欄位，支援 Alice 的失敗案例採集。 |
-        | 39 | `035_create_crawler_targets_table.sql` | **[Phase 4.7]** 建立爬蟲目標表，隔離敏感 URI 配置。 |
-        | 40 | `seed_mock_data.sql` | **[種子]** 填充核心基礎資料 (Users, Projects, Employees)。 |
-        | 41 | `seed_blog_posts.sql` | **[種子]** 填充部落格文章假資料 (用於 RAG 測試)。 |
-        | 42 | `seed_mock_leads.sql` | **[種子]** 填充業務線 (Leads) 核心測試資料與訪談紀錄。 |
-        | 43 | `seed_mock_alerts_and_logs.sql` | **[種子]** 填充儀表板所需的警報與系統日誌。 |
+        | 1 | `RESET_DB.sql` | **[重置]** 清空所有資料表、型別、與自訂函式，確保環境乾淨。 |
+        | 2 | `01_core_auth_users.sql` | **[核心]** 建立基礎設定表與擴充功能 (如 vector)。 |
+        | 3 | `02_crm_and_knowledge.sql` | **[業務]** 建立 CRM 客戶資料、爬蟲頁面與知識庫文章表。 |
+        | 4 | `03_projects_and_tasks.sql` | **[專案]** 建立專案、任務分配與文件版本控制表。 |
+        | 5 | `04_system_and_logs.sql` | **[系統]** 建立系統活動日誌、Token 用量與考勤表。 |
+        | 6 | `05_policies_and_functions.sql` | **[安控]** 注入所有的函式、觸發器、外鍵約束與 RLS 安全政策。 |
+        | 7 | `seed_mock_data.sql` | **[種子]** 填充核心基礎假資料 (Users, Projects, Employees)。 |
+        | 8 | `seed_blog_posts.sql` | **[種子]** 填充部落格文章假資料 (用於 RAG 測試)。 |
+        | 9 | `seed_mock_leads.sql` | **[種子]** 填充業務線 (Leads) 核心測試資料與訪談紀錄。 |
+        | 10 | `seed_mock_alerts_and_logs.sql` | **[種子]** 填充儀表板所需的警報與系統日誌。 |
         
 3.  **階段三：執行部署**
 
