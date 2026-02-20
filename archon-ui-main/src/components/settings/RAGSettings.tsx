@@ -113,6 +113,7 @@ const DEFAULT_OLLAMA_URL = 'http://host.docker.internal:11434/v1';
 const PROVIDER_CREDENTIAL_KEYS = [
   'OPENAI_API_KEY',
   'GOOGLE_API_KEY',
+  'GEMINI_API_KEY',
   'ANTHROPIC_API_KEY',
   'OPENROUTER_API_KEY',
   'GROK_API_KEY',
@@ -123,6 +124,7 @@ type ProviderCredentialKey = typeof PROVIDER_CREDENTIAL_KEYS[number];
 const CREDENTIAL_PROVIDER_MAP: Record<ProviderCredentialKey, ProviderKey> = {
   OPENAI_API_KEY: 'openai',
   GOOGLE_API_KEY: 'google',
+  GEMINI_API_KEY: 'google',
   ANTHROPIC_API_KEY: 'anthropic',
   OPENROUTER_API_KEY: 'openrouter',
   GROK_API_KEY: 'grok',
@@ -835,7 +837,7 @@ const manualTestConnection = useCallback(async (
         return openAIConnected ? 'configured' : 'missing';
       }
       case 'google': {
-        const hasGoogleKey = hasApiCredential('GOOGLE_API_KEY');
+        const hasGoogleKey = hasApiCredential('GOOGLE_API_KEY') || hasApiCredential('GEMINI_API_KEY');
         
         // Only show configured if we have both API key AND confirmed connection
         const googleConnected = providerConnectionStatus['google']?.connected || false;

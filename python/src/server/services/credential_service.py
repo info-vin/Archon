@@ -383,6 +383,19 @@ class CredentialService:
                     # For non-encrypted values, check if the string is not empty
                     has_value = True
 
+            # Step 2: Environment variable fallback (Physical Hardening)
+            # If not found in cache, check if it's available in the environment
+            if not has_value:
+                # Standard check
+                env_value = os.getenv(key) or os.getenv(key.upper())
+
+                # Google Specific Alias Check (Logical Mapping Alignment)
+                if not env_value and key == "GOOGLE_API_KEY":
+                    env_value = os.getenv("GEMINI_API_KEY")
+
+                if env_value and env_value.strip():
+                    has_value = True
+
             statuses[key] = {"key": key, "has_value": has_value}
 
         return statuses

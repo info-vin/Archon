@@ -4,7 +4,7 @@ Database migration tracking and management service.
 
 import hashlib
 from pathlib import Path
-from typing import Any, cast
+from typing import Any
 
 import logfire
 from supabase import Client
@@ -19,8 +19,8 @@ class MigrationRecord:
     def __init__(self, data: dict[str, Any]):
         self.id = data.get("id")
         self.version = data.get("version")
-        self.migration_name = data.get("migration_name")
-        self.applied_at = data.get("applied_at")
+        self.migration_name = data.get("migration_name") or data.get("version")
+        self.applied_at = data.get("migrated_at") or data.get("applied_at")
         self.checksum = data.get("checksum")
 
 
@@ -44,6 +44,7 @@ class MigrationService:
 
     def __init__(self):
         self._supabase: Client | None = None
+        self._table_name = "schema_migrations"  # Default standard
         # This robustly handles both Docker and local environments by first checking
         # for the fixed Docker path, then falling back to a path calculated
         # relative to this file's location, making it independent of the
@@ -65,42 +66,27 @@ class MigrationService:
 
     async def check_migrations_table_exists(self) -> bool:
         """
-        Check if the archon_migrations table exists in the database.
+        Check if the migrations tracking table exists in the database.
+        Checks for 'schema_migrations' (new standard) and 'archon_migrations' (legacy).
 
         Returns:
             True if table exists, False otherwise
         """
+        supabase = self._get_supabase_client()
+
+        # Direct Probe (Most reliable across all Supabase configs)
         try:
-            supabase = self._get_supabase_client()
-
-            # Query to check if table exists
-            result = supabase.rpc(
-                "sql",
-                {
-                    "query": """
-                        SELECT EXISTS (
-                            SELECT 1
-                            FROM information_schema.tables
-                            WHERE table_schema = 'public'
-                            AND table_name = 'archon_migrations'
-                        ) as exists
-                    """
-                }
-            ).execute()
-
-            # Check if result indicates table exists
-            if result.data and len(result.data) > 0:
-                return cast(bool, result.data[0].get("exists", False))
-            return False
+            # Try new standard first
+            supabase.table("schema_migrations").select("version").limit(0).execute()
+            self._table_name = "schema_migrations"
+            return True
         except Exception:
-            # If the SQL function doesn't exist or query fails, try direct query
             try:
-                supabase = self._get_supabase_client()
-                # Try to select from the table with limit 0
+                # Fallback to legacy
                 supabase.table("archon_migrations").select("id").limit(0).execute()
+                self._table_name = "archon_migrations"
                 return True
-            except Exception as e:
-                logfire.info(f"Migrations table does not exist: {e}")
+            except Exception:
                 return False
 
     async def get_applied_migrations(self) -> list[MigrationRecord]:
@@ -117,7 +103,11 @@ class MigrationService:
                 return []
 
             supabase = self._get_supabase_client()
-            result = supabase.table("archon_migrations").select("*").order("applied_at", desc=True).execute()
+
+            # Determine order column based on table name (Physical Hardening)
+            order_col = "migrated_at" if self._table_name == "schema_migrations" else "applied_at"
+
+            result = supabase.table(self._table_name).select("*").order(order_col, desc=True).execute()
 
             return [MigrationRecord(row) for row in result.data]
         except Exception as e:
@@ -137,6 +127,27 @@ class MigrationService:
         if not self._migrations_dir.exists():
             logfire.warning(f"Migration directory does not exist: {self._migrations_dir}")
             return migrations
+
+        # Scan root migration directory for SQL files
+        for sql_file in sorted(self._migrations_dir.glob("*.sql")):
+            try:
+                # Read SQL content
+                with open(sql_file, encoding="utf-8") as f:
+                    sql_content = f.read()
+
+                # Extract migration name (filename without extension)
+                migration_name = sql_file.stem
+
+                # Create pending migration object
+                migration = PendingMigration(
+                    version="0.0.0", # Standard root version
+                    name=migration_name,
+                    sql_content=sql_content,
+                    file_path=str(sql_file.relative_to(self._migrations_dir.parent)),
+                )
+                migrations.append(migration)
+            except Exception as e:
+                logfire.error(f"Error reading migration file {sql_file}: {e}")
 
         # Scan all version directories
         for version_dir in sorted(self._migrations_dir.iterdir()):
@@ -160,7 +171,7 @@ class MigrationService:
                         version=version,
                         name=migration_name,
                         sql_content=sql_content,
-                        file_path=str(sql_file.relative_to(Path.cwd())),
+                        file_path=str(sql_file.relative_to(self._migrations_dir.parent)),
                     )
                     migrations.append(migration)
                 except Exception as e:
@@ -188,10 +199,11 @@ class MigrationService:
         applied_migrations = await self.get_applied_migrations()
 
         # Create set of applied migration identifiers
-        applied_set = {(m.version, m.migration_name) for m in applied_migrations}
+        # Support matching by migration_name (new) or combination
+        applied_names = {m.migration_name for m in applied_migrations}
 
         # Filter out applied migrations
-        pending = [m for m in all_migrations if (m.version, m.name) not in applied_set]
+        pending = [m for m in all_migrations if m.name not in applied_names]
 
         return pending
 
