@@ -26,18 +26,18 @@ def version_service():
 def mock_release_data():
     """Mock GitHub release data."""
     return {
-        "tag_name": "v0.2.0",
-        "name": "Archon v0.2.0",
-        "html_url": "https://github.com/coleam00/Archon/releases/tag/v0.2.0",
+        "tag_name": "v9.9.9",
+        "name": "Archon v9.9.9",
+        "html_url": "https://github.com/coleam00/Archon/releases/tag/v9.9.9",
         "body": "## Release Notes\n\nNew features and bug fixes",
         "published_at": "2025-01-01T00:00:00Z",
         "author": {"login": "coleam00"},
         "assets": [
             {
-                "name": "archon-v0.2.0.zip",
+                "name": "archon-v9.9.9.zip",
                 "size": 1024000,
                 "download_count": 100,
-                "browser_download_url": "https://github.com/coleam00/Archon/releases/download/v0.2.0/archon-v0.2.0.zip",
+                "browser_download_url": "https://github.com/coleam00/Archon/releases/download/v9.9.9/archon-v9.9.9.zip",
                 "content_type": "application/zip",
             }
         ],
@@ -141,7 +141,7 @@ async def test_check_for_updates_new_version_available(version_service, mock_rel
         result = await version_service.check_for_updates()
 
         assert result["current"] == ARCHON_VERSION
-        assert result["latest"] == "0.2.0"
+        assert result["latest"] == "9.9.9"
         assert result["update_available"] is True
         assert result["release_url"] == mock_release_data["html_url"]
         assert result["release_notes"] == mock_release_data["body"]
@@ -194,12 +194,12 @@ async def test_check_for_updates_parse_version(version_service, mock_release_dat
 @pytest.mark.asyncio
 async def test_check_for_updates_missing_fields(version_service):
     """Test handling of incomplete release data."""
-    mock_data = {"tag_name": "v0.2.0"}  # Minimal data
+    mock_data = {"tag_name": "v9.9.9"}  # Minimal data
 
     with patch.object(version_service, "get_latest_release", return_value=mock_data):
         result = await version_service.check_for_updates()
 
-        assert result["latest"] == "0.2.0"
+        assert result["latest"] == "9.9.9"
         assert result["release_url"] is None
         assert result["release_notes"] is None
         assert result["published_at"] is None
