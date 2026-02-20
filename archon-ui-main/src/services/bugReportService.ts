@@ -82,12 +82,12 @@ class BugReportService {
       const response = await fetch('/api/version/current');
       if (response.ok) {
         const data: { version?: string } = await response.json();
-        return data.version || 'v0.1.0';
+        return data.version || import.meta.env.VITE_APP_VERSION || 'v0.2.0';
       }
     } catch {
       // Fallback to default version
     }
-    return 'v0.1.0';
+    return import.meta.env.VITE_APP_VERSION || 'v0.2.0';
   }
 
   /**

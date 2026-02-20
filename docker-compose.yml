@@ -176,6 +176,7 @@ services:
       - ARCHON_SERVER_PORT=${ARCHON_SERVER_PORT:-8181}
       - HOST=${HOST:-localhost}
       - PROD=${PROD:-false}
+      - VITE_APP_VERSION=${VITE_APP_VERSION:-0.2.0}
       - VITE_ALLOWED_HOSTS=${VITE_ALLOWED_HOSTS:-}
       - VITE_SHOW_DEVTOOLS=${VITE_SHOW_DEVTOOLS:-false}
     networks:
@@ -206,6 +207,7 @@ services:
       - VITE_SUPABASE_ANON_KEY=${SUPABASE_SERVICE_KEY}
       - HOST=${HOST:-localhost}
       - PROD=${PROD:-false}
+      - VITE_APP_VERSION=${VITE_APP_VERSION:-0.2.0}
     networks:
       - app-network
     healthcheck:

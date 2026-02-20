@@ -52,7 +52,6 @@ class SummaryAgent(BaseAgent[SummaryDependencies, SummaryOperation]):
         agent = Agent(
             model=self.model,
             deps_type=SummaryDependencies,
-            result_type=SummaryOperation,
             system_prompt="You are a concise summarization assistant. Your goal is to provide accurate and brief summaries of any given text. Use the 'summarize_text' tool to process user requests.",
             **kwargs,
         )

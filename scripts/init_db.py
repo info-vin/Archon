@@ -81,7 +81,7 @@ def run_migrations(cursor: PGCursor, migration_dir: str = "migration", exclude: 
     """)
     cursor.execute("SELECT version FROM schema_migrations")
     applied = {row[0] for row in cursor.fetchall()}
-    files = sorted(glob.glob(os.path.join(migration_dir, "*.sql")))
+    files = sorted(glob.glob(os.path.join(migration_dir, "0.2.0", "*.sql")))
     exclude = exclude or set()
     skipped_count = 0
 
@@ -98,13 +98,13 @@ def run_migrations(cursor: PGCursor, migration_dir: str = "migration", exclude: 
     logger.info(f"✅ Schema migrations checked. ({skipped_count} scripts skipped as already applied)")
 
 def seed_data(cursor: PGCursor) -> None:
-    seed_file = "migration/seed_mock_data.sql"
+    seed_file = "migration/0.2.0/seed_mock_data.sql"
     if os.path.exists(seed_file):
         logger.info(f"🌱 Seeding mock data: {seed_file}")
         with open(seed_file) as f:
             cursor.execute(f.read())
 
-    blog_seed = "migration/seed_blog_posts.sql"
+    blog_seed = "migration/0.2.0/seed_blog_posts.sql"
     if os.path.exists(blog_seed):
         logger.info(f"🌱 Seeding blog posts: {blog_seed}")
         with open(blog_seed) as f:
@@ -225,7 +225,7 @@ def main():
     if "--clean" in sys.argv:
         logger.warning("⚠️  CLEAN MODE: Resetting database...")
         with db_transaction() as cursor:
-            with open("migration/RESET_DB.sql") as f:
+            with open("migration/0.2.0/RESET_DB.sql") as f:
                 cursor.execute(f.read())
         logger.info("✅ Database reset.")
 

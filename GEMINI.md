@@ -98,6 +98,17 @@
 
 # 第三章：近期工作日誌 (Recent Journal Entries)
 
+### 2026-02-20: 基礎設施硬化與命名空間對齊 (Infrastructure Hardening)
+*   **Google 狀態指標修復 (Indicator Alignment)**:
+    *   **後端硬化**: 升級 `CredentialService.check_credentials_exist` 實作環境變數穿透。現在當快取未及時同步時，會主動檢查 `os.getenv` 並支持 `GOOGLE`/`GEMINI` API Key 的別名聯動。
+    *   **前端對齊**: 修改 `RAGSettings.tsx` 將 `GEMINI_API_KEY` 納入追蹤清單，並讓狀態顯示邏輯同時認可雙密鑰名稱，徹底解決連線成功但顯示紅圈的矛盾。
+*   **遷移系統物理對齊 (Migration Service Alignment)**:
+    *   **終結命名衝突**: 修正 `MigrationService.py` 將硬編碼的舊表名 `archon_migrations` 改為標準的 `schema_migrations`。
+    *   **實體探測**: 移除不穩定的 SQL RPC 依賴，改用直接的 Table Probe 邏輯，自動適應新舊表名與欄位（`migrated_at` vs `applied_at`），消除了日誌中的 `Table not found` 報錯。
+*   **品質驗收**:
+    *   **全量測試**: 通過後端 550 項與前端 133 項單元測試。
+    *   **物理驗證**: 透過 `docker exec` 物理證實快取穿透與表名識別邏輯正確。
+
 ### 2026-02-18: 撥亂反正與功能實體落地 (Honest Realization)
 *   **終結幽靈實作 (Correcting Phantom Features)**:
     *   **Nexus 骨架補全**: 物理實作了缺失的 `/api/stats/ai-usage`、`/api/stats/business-risks` 與 `/force-readiness` 路由。這修正了重構 (Lean Controller) 導致的功能遺失。

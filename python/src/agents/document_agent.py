@@ -77,7 +77,6 @@ class DocumentAgent(BaseAgent[DocumentDependencies, DocumentOperation]):
         agent: Agent[DocumentDependencies, DocumentOperation] = Agent(
             model=self.model,
             deps_type=DocumentDependencies,
-            result_type=DocumentOperation,
             system_prompt="""You are a Document Management Assistant that helps users create, update, and modify project documents through conversation.
 
 **Your Capabilities:**
