@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { api } from '../../../services/api';
-import { Employee, EmployeeRole } from '../../../types';
-import UserAvatar from '../../../components/UserAvatar';
-import { XIcon, RefreshCwIcon, ShieldCheckIcon, KeyIcon } from '../../../components/Icons';
+import { api } from '@/services/api';
+import { Employee, EmployeeRole } from '@/types';
+import UserAvatar from '@/components/UserAvatar';
+import { XIcon, RefreshCwIcon, ShieldCheckIcon, KeyIcon } from '@/components/Icons';
 
 interface ManageMemberModalProps {
     member: Employee;

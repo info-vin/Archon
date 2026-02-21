@@ -3,7 +3,7 @@
 import React from 'react';
 import { PermissionScope, EmployeeRole } from '../types';
 import { usePermission } from '../hooks/usePermission';
-import { useAuth } from '../../../hooks/useAuth';
+import { useAuth } from '@/hooks/useAuth';
 
 interface PermissionGuardProps {
   permission: PermissionScope;

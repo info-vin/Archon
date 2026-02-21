@@ -1,9 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Plus, Trash2, Save, Lock, Unlock, Eye, EyeOff } from 'lucide-react';
-import { Button } from '../ui/Button';
-import { Card } from '../ui/Card';
-import { credentialsService } from '../../services/credentialsService';
-import { useToast } from '../../features/shared/hooks/useToast';
+import { Button } from '@/components/ui/Button';
+import { Card } from '@/components/ui/Card';
+import { credentialsService } from '@/services/credentialsService';
+import { useToast } from '@/features/shared/hooks/useToast';
 
 interface CustomCredential {
   key: string;

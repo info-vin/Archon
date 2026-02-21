@@ -1,7 +1,7 @@
 import React from 'react';
 import { accentColorMap } from '@/features/ui/primitives/accent-colors';
 import { Moon, Sun } from 'lucide-react';
-import { useTheme } from '../../contexts/useTheme';
+import { useTheme } from '@/contexts/useTheme';
 interface ThemeToggleProps {
   accentColor?: 'purple' | 'green' | 'pink' | 'blue';
 }

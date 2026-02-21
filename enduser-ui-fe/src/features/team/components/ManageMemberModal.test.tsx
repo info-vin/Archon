@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import { ManageMemberModal } from './ManageMemberModal';
-import { EmployeeRole } from '../../../types';
+import { EmployeeRole } from '@/types';
 
 // Mock dependencies
 vi.mock('../../../services/api', () => ({

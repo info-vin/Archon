@@ -2,11 +2,11 @@ import { useState, useEffect } from 'react';
 
 import { Moon, Sun, FileText, Palette, Flame, Monitor } from 'lucide-react';
 import { Switch } from '@/features/ui/primitives/switch';
-import { useTheme } from '../../contexts/useTheme';
-import { credentialsService } from '../../services/credentialsService';
-import { useToast } from '../../features/shared/hooks/useToast';
-import { serverHealthService } from '../../services/serverHealthService';
-import { useSettings } from '../../contexts/useSettings';
+import { useTheme } from '@/contexts/useTheme';
+import { credentialsService } from '@/services/credentialsService';
+import { useToast } from '@/features/shared/hooks/useToast';
+import { serverHealthService } from '@/services/serverHealthService';
+import { useSettings } from '@/contexts/useSettings';
 
 export const FeaturesSection = () => {
   const {

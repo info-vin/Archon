@@ -1,8 +1,8 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import { EthicsCard } from './EthicsCard';
-import { api } from '../../../services/api';
-import { useAuth } from '../../../hooks/useAuth';
+import { api } from '@/services/api';
+import { useAuth } from '@/hooks/useAuth';
 
 // Mock useAuth
 vi.mock('../../../hooks/useAuth', () => ({

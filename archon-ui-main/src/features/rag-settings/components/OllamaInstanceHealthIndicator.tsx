@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
-import { Badge } from '../ui/Badge';
-import { Button } from '../ui/Button';
-import { Card } from '../ui/Card';
-import { cn } from '../../lib/utils';
-import { useToast } from '../../features/shared/hooks/useToast';
-import { ollamaService } from '../../services/ollamaService';
-import type { HealthIndicatorProps } from './types/OllamaTypes';
+import { Badge } from '@/components/ui/Badge';
+import { Button } from '@/components/ui/Button';
+import { Card } from '@/components/ui/Card';
+import { cn } from '@/lib/utils';
+import { useToast } from '@/features/shared/hooks/useToast';
+import { ollamaService } from '@/services/ollamaService';
+import type { HealthIndicatorProps } from '@/features/rag-settings/types/OllamaTypes';
 
 /**
  * Health indicator component for individual Ollama instances

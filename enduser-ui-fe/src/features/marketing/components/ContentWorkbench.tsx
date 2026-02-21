@@ -8,7 +8,7 @@ import {
   XIcon,
   RefreshCwIcon,
   SettingsIcon
-} from '../../../components/Icons';
+} from '@/components/Icons';
 import { ContentSource } from './VictoryFeedList';
 
 interface RAGRef {

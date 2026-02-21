@@ -1,7 +1,7 @@
 // enduser-ui-fe/src/features/auth/hooks/usePermission.ts
 
 import { EmployeeRole, PermissionScope } from '../types';
-import { useAuth } from '../../../hooks/useAuth';
+import { useAuth } from '@/hooks/useAuth';
 
 /**
  * Frontend Role-to-Permission Mapping.

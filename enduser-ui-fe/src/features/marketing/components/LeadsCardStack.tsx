@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, useMotionValue, useTransform, AnimatePresence } from 'framer-motion';
-import { CheckCircleIcon, XCircleIcon, UserIcon, ExternalLinkIcon, SparklesIcon, MapIcon, CopyIcon, ShareIcon, XIcon, ActivityIcon, RefreshCwIcon } from '../../../components/Icons.tsx';
+import { CheckCircleIcon, XCircleIcon, UserIcon, ExternalLinkIcon, SparklesIcon, MapIcon, CopyIcon, ShareIcon, XIcon, ActivityIcon, RefreshCwIcon } from '@/components/Icons.tsx';
 
 // Temporary Type Definition (Should be shared)
 export interface Lead {

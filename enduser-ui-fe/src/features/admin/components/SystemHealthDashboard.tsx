@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { api } from '../../../services/api';
-import { SystemOverview, AiUsageStats } from '../../../types';
-import { XIcon, RefreshCwIcon, AlertTriangleIcon } from '../../../components/Icons';
+import { api } from '@/services/api';
+import { SystemOverview, AiUsageStats } from '@/types';
+import { XIcon, RefreshCwIcon, AlertTriangleIcon } from '@/components/Icons';
 
 export const SystemHealthDashboard: React.FC = () => {
     const [overview, setOverview] = useState<SystemOverview | null>(null);

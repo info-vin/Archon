@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { useAuth } from '../../../hooks/useAuth';
-import { api } from '../../../services/api';
-import { ShieldCheckIcon } from '../../../components/Icons';
+import { useAuth } from '@/hooks/useAuth';
+import { api } from '@/services/api';
+import { ShieldCheckIcon } from '@/components/Icons';
 
 interface EthicsEvent {
   id: string;

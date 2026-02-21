@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
-import { api } from '../../../services/api';
-import { XIcon, MapPinIcon, CheckCircleIcon, SparklesIcon, MicrophoneIcon, TrashIcon, UploadIcon } from '../../../components/Icons';
+import { api } from '@/services/api';
+import { XIcon, MapPinIcon, CheckCircleIcon, SparklesIcon, MicrophoneIcon, TrashIcon, UploadIcon } from '@/components/Icons';
 
 interface VisitLogModalProps {
     onClose: () => void;

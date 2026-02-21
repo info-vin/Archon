@@ -1,5 +1,5 @@
 import React from 'react';
-import { TrendingUpIcon, BuildingIcon, FileTextIcon } from '../../../components/Icons';
+import { TrendingUpIcon, BuildingIcon, FileTextIcon } from '@/components/Icons';
 
 export interface ContentSource {
   id: string;

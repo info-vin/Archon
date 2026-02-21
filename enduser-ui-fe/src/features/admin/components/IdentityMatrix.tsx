@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { api } from '../../../services/api.ts';
-import { Employee, EmployeeRole } from '../../../types.ts';
-import { PlusIcon, XIcon, CheckCircleIcon, KeyIcon, XCircleIcon } from '../../../components/Icons.tsx';
-import UserAvatar from '../../../components/UserAvatar.tsx';
+import { api } from '@/services/api.ts';
+import { Employee, EmployeeRole } from '@/types.ts';
+import { PlusIcon, XIcon, CheckCircleIcon, KeyIcon, XCircleIcon } from '@/components/Icons.tsx';
+import UserAvatar from '@/components/UserAvatar.tsx';
 
 // --- ROLE TO PERMISSION MAPPING (Sync with Backend permissions.py) ---
 const ROLE_PERMISSIONS_MAP: Record<string, string[]> = {

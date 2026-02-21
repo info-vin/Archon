@@ -1,6 +1,6 @@
 // enduser-ui-fe/src/features/auth/types/index.ts
 
-import { EmployeeRole } from '../../../types';
+import { EmployeeRole } from '@/types';
 
 export { EmployeeRole };
 

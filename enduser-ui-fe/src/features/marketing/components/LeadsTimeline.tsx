@@ -1,5 +1,5 @@
 import React from 'react';
-import { CheckCircleIcon, ClockIcon, MapPinIcon, UserIcon } from '../../../components/Icons';
+import { CheckCircleIcon, ClockIcon, MapPinIcon, UserIcon } from '@/components/Icons';
 
 interface TimelineEvent {
     id: string;

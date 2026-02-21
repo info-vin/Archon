@@ -27,9 +27,9 @@ import 'prismjs/components/prism-bash'
 import 'prismjs/components/prism-sql'
 import 'prismjs/components/prism-graphql'
 import 'prismjs/themes/prism-tomorrow.css'
-import { Button } from '../ui/Button'
-import { Badge } from '../ui/Badge'
-import { copyToClipboard } from '../../features/shared/utils/clipboard'
+import { Button } from '@/components/ui/Button'
+import { Badge } from '@/components/ui/Badge'
+import { copyToClipboard } from '@/features/shared/utils/clipboard'
 
 export interface CodeExample {
   id: string

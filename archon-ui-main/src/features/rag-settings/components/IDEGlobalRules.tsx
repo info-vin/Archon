@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { Copy, Check } from 'lucide-react';
-import { Card } from '../ui/Card';
-import { Button } from '../ui/Button';
-import { useToast } from '../../features/shared/hooks/useToast';
-import { copyToClipboard } from '../../features/shared/utils/clipboard';
+import { Card } from '@/components/ui/Card';
+import { Button } from '@/components/ui/Button';
+import { useToast } from '@/features/shared/hooks/useToast';
+import { copyToClipboard } from '@/features/shared/utils/clipboard';
 
 type RuleType = 'claude' | 'universal';
 

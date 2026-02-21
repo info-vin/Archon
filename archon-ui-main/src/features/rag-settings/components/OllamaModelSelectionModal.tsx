@@ -1,8 +1,8 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import ReactDOM from 'react-dom';
 import { X, Search, RotateCcw, Zap, Eye, Settings, Download } from 'lucide-react';
-import { Button } from '../ui/Button';
-import { useToast } from '../../features/shared/hooks/useToast';
+import { Button } from '@/components/ui/Button';
+import { useToast } from '@/features/shared/hooks/useToast';
 
 type ApiOllamaModel = {
   name: string;

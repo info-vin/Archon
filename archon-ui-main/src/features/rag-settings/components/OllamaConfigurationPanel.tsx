@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Card } from '../ui/Card';
-import { Button } from '../ui/Button';
-import { Input } from '../ui/Input';
-import { Badge } from '../ui/Badge';
-import { useToast } from '../../features/shared/hooks/useToast';
-import { cn } from '../../lib/utils';
-import { credentialsService, OllamaInstance } from '../../services/credentialsService';
+import { Card } from '@/components/ui/Card';
+import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
+import { Badge } from '@/components/ui/Badge';
+import { useToast } from '@/features/shared/hooks/useToast';
+import { cn } from '@/lib/utils';
+import { credentialsService, OllamaInstance } from '@/services/credentialsService';
 import OllamaModelDiscoveryModal from './OllamaModelDiscoveryModal';
 
 interface OllamaConfigurationPanelProps {

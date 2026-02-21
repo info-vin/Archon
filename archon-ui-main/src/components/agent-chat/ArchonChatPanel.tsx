@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { Send, User, WifiOff, RefreshCw } from 'lucide-react';
 import { ArchonLoadingSpinner, EdgeLitEffect } from '../animations/Animations';
-import { agentChatService, ChatMessage } from '../../services/agentChatService';
+import { agentChatService, ChatMessage } from '@/services/agentChatService';
 
 /**
  * Props for the ArchonChatPanel component

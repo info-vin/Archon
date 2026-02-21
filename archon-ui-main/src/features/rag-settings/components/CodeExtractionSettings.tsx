@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { Check, Save, Loader } from 'lucide-react';
-import { Card } from '../ui/Card';
-import { Input } from '../ui/Input';
-import { Button } from '../ui/Button';
-import { useToast } from '../../features/shared/hooks/useToast';
-import { credentialsService } from '../../services/credentialsService';
+import { Card } from '@/components/ui/Card';
+import { Input } from '@/components/ui/Input';
+import { Button } from '@/components/ui/Button';
+import { useToast } from '@/features/shared/hooks/useToast';
+import { credentialsService } from '@/services/credentialsService';
 
 interface CodeExtractionSettingsProps {
   codeExtractionSettings: {

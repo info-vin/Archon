@@ -6,13 +6,13 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { createPortal } from 'react-dom';
-import { Button } from '../ui/Button';
-import { Input } from '../ui/Input';
-import { Badge } from '../ui/Badge';
-import { Card } from '../ui/Card';
-import { useToast } from '../../features/shared/hooks/useToast';
-import { ollamaService, type OllamaModel } from '../../services/ollamaService';
-import type { OllamaInstance, ModelSelectionState } from './types/OllamaTypes';
+import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
+import { Badge } from '@/components/ui/Badge';
+import { Card } from '@/components/ui/Card';
+import { useToast } from '@/features/shared/hooks/useToast';
+import { ollamaService, type OllamaModel } from '@/services/ollamaService';
+import type { OllamaInstance, ModelSelectionState } from '@/features/rag-settings/types/OllamaTypes';
 
 interface OllamaModelDiscoveryModalProps {
   isOpen: boolean;

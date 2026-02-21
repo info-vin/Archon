@@ -1,16 +1,16 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Check, Save, Loader, ChevronDown, ChevronUp, Zap, Database, Cog } from 'lucide-react';
-import { Card } from '../ui/Card';
-import { Input } from '../ui/Input';
-import { Select } from '../ui/Select';
-import { Button } from '../ui/Button';
-import { Button as GlowButton } from '../../features/ui/primitives/button';
+import { Card } from '@/components/ui/Card';
+import { Input } from '@/components/ui/Input';
+import { Select } from '@/components/ui/Select';
+import { Button } from '@/components/ui/Button';
+import { Button as GlowButton } from '@/features/ui/primitives/button';
 import { LuBrainCircuit } from 'react-icons/lu';
 import { PiDatabaseThin } from 'react-icons/pi';
-import { useToast } from '../../features/shared/hooks/useToast';
-import { credentialsService } from '../../services/credentialsService';
-import OllamaModelDiscoveryModal from './OllamaModelDiscoveryModal';
-import OllamaModelSelectionModal from './OllamaModelSelectionModal';
+import { useToast } from '@/features/shared/hooks/useToast';
+import { credentialsService } from '@/services/credentialsService';
+import OllamaModelDiscoveryModal from './components/OllamaModelDiscoveryModal';
+import OllamaModelSelectionModal from './components/OllamaModelSelectionModal';
 
 type ProviderKey = 'openai' | 'google' | 'ollama' | 'anthropic' | 'grok' | 'openrouter';
 
