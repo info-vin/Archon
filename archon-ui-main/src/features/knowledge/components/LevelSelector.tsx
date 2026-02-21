@@ -99,7 +99,6 @@ export const LevelSelector: React.FC<LevelSelectorProps> = ({ value, onValueChan
                   role="radio"
                   aria-checked={isSelected}
                   aria-label={`Level ${level.value}: ${level.description}`}
-                  tabIndex={isSelected ? 0 : -1}
                   onClick={() => !disabled && onValueChange(level.value)}
                   onKeyDown={(e) => {
                     if (e.key === "Enter" || e.key === " ") {
