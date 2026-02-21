@@ -6,7 +6,7 @@ from typing import Any, cast
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from google import genai
-from google.genai import types
+from google.genai import errors, types
 from pydantic import BaseModel, Field
 
 from ..auth.dependencies import get_current_user
@@ -200,19 +200,23 @@ async def promote_lead_to_vendor(lead_id: str, request: PromoteLeadRequest, curr
 
 @router.post("/generate-pitch", response_model=PitchResponse)
 async def generate_pitch(request: PitchRequest, current_user: dict = Depends(get_current_user)):
+    """
+    Alice's Sales Pitch Generator.
+    Uses RAG context (Librarian) and Alice's core persona to craft a personalized pitch.
+    """
     try:
-        if current_user.get("role", "viewer").lower() not in ["admin", "manager", "sales", "marketing", "member"]:
-            raise HTTPException(status_code=403)
-
-        success, search_result = await RAGService().perform_rag_query(query=f"{request.job_title} {request.description[:500]}", match_count=3)
         context_text = ""
         references = []
-        if success and "results" in search_result:
-            for res in search_result["results"]:
+
+        # 1. Expertise & Style Context
+        search_result = await RAGService().search_documents(f"Sales Pitch: {request.job_title} {request.company}")
+        if search_result:
+            for res in search_result:
                 source = res.get("metadata", {}).get("source", "Unknown")
                 context_text += f"\n[Context: {source}]\n{res.get('content', '')}\n"
-                references.append(source)
+                references.append(str(source))
 
+        # 2. LLM Generation via Google GenAI SDK (Bob/Alice Standard)
         api_key = await credential_service.get_credential("GEMINI_API_KEY") or await credential_service.get_credential("GOOGLE_API_KEY")
         if not api_key:
             raise HTTPException(status_code=401, detail="AI API Key not configured. Please check Admin Settings.")
@@ -233,10 +237,15 @@ async def generate_pitch(request: PitchRequest, current_user: dict = Depends(get
         return PitchResponse(content=response.text, references=references)
 
     except Exception as e:
+        if isinstance(e, errors.ClientError) and "429" in str(e):
+            logger.warning(f"API: Google API Quota Exhausted (429) during pitch generation: {e}")
+            raise HTTPException(status_code=429, detail={"error": "AI Quota Exhausted. Please wait a minute before retrying."}) from e
+
         if isinstance(e, HTTPException):
             raise e
+
         logger.error(f"API: Pitch generation failed | error={str(e)}", exc_info=True)
-        raise HTTPException(status_code=503, detail=f"AI Service Error: {str(e)}") from e
+        raise HTTPException(status_code=503, detail={"error": f"AI Service Error: {str(e)}"}) from e
 
 @router.post("/logo", response_model=LogoResponse)
 async def generate_logo(request: LogoRequest):
@@ -451,7 +460,12 @@ async def draft_blog_post(request: DraftBlogRequest, current_user: dict = Depend
         from ..services.token_usage_service import TokenUsageService
         if response.usage_metadata:
             asyncio.create_task(TokenUsageService.log_usage(request_id=f"blog-{uuid.uuid4().hex[:8]}", user_id=current_user.get("id"), model=model_id.split("/")[-1], provider="google", input_tokens=response.usage_metadata.prompt_token_count, output_tokens=response.usage_metadata.candidates_token_count, context_type="blog_draft"))
-        return DraftBlogResponse(title=result.get("title"), content=result.get("content"), excerpt=result.get("excerpt"), used_prompt=request.topic)
+        return DraftBlogResponse(
+            title=str(result.get("title", "")),
+            content=str(result.get("content", "")),
+            excerpt=str(result.get("excerpt", "")),
+            used_prompt=request.topic
+        )
     except Exception as e:
         if isinstance(e, HTTPException):
             raise e

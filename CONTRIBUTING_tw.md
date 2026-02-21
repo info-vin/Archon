@@ -567,18 +567,20 @@ docker exec -i archon-server /venv/bin/python -c "import os, psycopg2; DB=os.get
 
 ## 附錄 B：技術債監控 (Technical Debt Monitor)
 
-以下檔案行數超過 1000 行，應作為優先重構目標（數據結算至 2026-01-31）：
+以下檔案行數超過 1000 行，應作為優先重構目標（數據結算至 2026-02-21）：
 
 | 檔案路徑 | 行數 | 類型 | 建議行動 |
 | :--- | :--- | :--- | :--- |
-| `archon-ui-main/src/components/settings/RAGSettings.tsx` | 2396 | Frontend | **[Critical]** 拆分為多個子元件 |
-| `python/src/server/api_routes/projects_api.py` | 1748 | Backend | **[Critical]** 拆分 Service，移除手動拆包 |
-| `python/src/server/services/crawling/code_extraction_service.py" | 1581 | Backend | **[High]** 按語言拆分為 Strategy Class |
-| `python/src/server/api_routes/ollama_api.py" | 1335 | Backend | **[High]** 抽離通訊邏輯 |
-| `archon-ui-main/src/components/settings/OllamaModelSelectionModal.tsx" | 1170 | Frontend | **[Medium]** UX 邏輯分離 |
-| `python/src/server/services/ollama/model_discovery_service.py" | 1122 | Backend | **[Medium]** 減少單檔複雜度 |
-| `python/src/server/services/llm_provider_service.py" | 1085 | Backend | **[Medium]** 抽象層重構 |
-| `python/src/server/api_routes/knowledge_api.py" | 1085 | Backend | **[Medium]** API 端點精簡 |
+| `archon-ui-main/src/features/rag-settings/index.tsx` | 2411 | Frontend | **[Critical]** 拆分設定區塊為獨立組件 |
+| `python/src/server/api_routes/projects_api.py` | 1797 | Backend | **[Critical]** 拆分 Service，移除手動拆包 |
+| `python/src/server/services/crawling/code_extraction_service.py` | 1581 | Backend | **[High]** 按語言拆分為 Strategy Class |
+| `enduser-ui-fe/src/pages/ManagerNexus.tsx` | 1577 | Frontend | **[High]** 拆分為子路由或獨立戰情面板 |
+| `python/src/server/api_routes/ollama_api.py` | 1335 | Backend | **[High]** 抽離通訊邏輯 |
+| `python/src/server/services/llm_provider_service.py` | 1278 | Backend | **[Medium]** 抽象層重構 |
+| `archon-ui-main/src/features/rag-settings/components/OllamaModelSelectionModal.tsx` | 1170 | Frontend | **[Medium]** 抽離 Ollama Discovery 邏輯 |
+| `python/src/server/services/ollama/model_discovery_service.py` | 1122 | Backend | **[Medium]** 減少單檔複雜度 |
+| `python/src/server/api_routes/knowledge_api.py` | 1117 | Backend | **[Medium]** API 端點精簡 |
+| `enduser-ui-fe/src/services/api.ts` | 1043 | Frontend | **[Medium]** 按 Persona 拆分 API 模組 |
 
 ---
 

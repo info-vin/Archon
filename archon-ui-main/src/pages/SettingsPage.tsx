@@ -1,142 +1,304 @@
-import React, { useState } from "react";
-import { Settings, Shield, Cpu, Sparkles, Globe, BrainCircuit } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import {
+  Loader,
+  Settings,
+  ChevronDown,
+  Palette,
+  Key,
+  Brain,
+  Code,
+  FileCode,
+  Bug,
+  Info,
+  Database,
+} from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { useToast } from "@/features/shared/hooks/useToast";
+import { useSettings } from "@/contexts/useSettings";
+import { useStaggeredEntrance } from "@/hooks/useStaggeredEntrance";
+import { FeaturesSection } from "@/components/settings/FeaturesSection";
 import { APIKeysSection } from "@/features/rag-settings/components/APIKeysSection";
 import { RAGSettings } from "@/features/rag-settings";
 import { CodeExtractionSettings } from "@/features/rag-settings/components/CodeExtractionSettings";
 import { IDEGlobalRules } from "@/features/rag-settings/components/IDEGlobalRules";
-import { FeaturesSection } from "@/components/settings/FeaturesSection";
+import { ButtonPlayground } from "@/components/settings/ButtonPlayground";
+import { CollapsibleSettingsCard } from "@/components/ui/CollapsibleSettingsCard";
+import { BugReportButton } from "@/components/bug-report/BugReportButton";
+import {
+  credentialsService,
+  RagSettings,
+  CodeExtractionSettings as CodeExtractionSettingsType,
+} from "@/services/credentialsService";
+import { UpdateBanner } from "@/features/settings/version/components/UpdateBanner";
+import { VersionStatusCard } from "@/features/settings/version/components/VersionStatusCard";
+import { MigrationStatusCard } from "@/features/settings/migrations/components/MigrationStatusCard";
 
-// GROUNDED: Real type alignment from source file
-type RagSettingsType = {
-  MODEL_CHOICE: string;
-  USE_CONTEXTUAL_EMBEDDINGS: boolean;
-  CONTEXTUAL_EMBEDDINGS_MAX_WORKERS: number;
-  USE_HYBRID_SEARCH: boolean;
-  USE_AGENTIC_RAG: boolean;
-  USE_RERANKING: boolean;
-  LLM_PROVIDER?: string;
-  LLM_BASE_URL?: string;
-  LLM_INSTANCE_NAME?: string;
-  EMBEDDING_MODEL?: string;
-  EMBEDDING_PROVIDER?: string;
-  OLLAMA_EMBEDDING_URL?: string;
-  OLLAMA_EMBEDDING_INSTANCE_NAME?: string;
-  CRAWL_BATCH_SIZE?: number;
-  CRAWL_MAX_CONCURRENT?: number;
-  CRAWL_WAIT_STRATEGY?: string;
-  CRAWL_PAGE_TIMEOUT?: number;
-  CRAWL_DELAY_BEFORE_HTML?: number;
-};
-
-type CodeExtractionSettingsType = {
-  MIN_CODE_BLOCK_LENGTH: number;
-  MAX_CODE_BLOCK_LENGTH: number;
-  ENABLE_COMPLETE_BLOCK_DETECTION: boolean;
-  ENABLE_LANGUAGE_SPECIFIC_PATTERNS: boolean;
-  ENABLE_PROSE_FILTERING: boolean;
-  MAX_PROSE_RATIO: number;
-  MIN_CODE_INDICATORS: number;
-  ENABLE_DIAGRAM_FILTERING: boolean;
-  ENABLE_CONTEXTUAL_LENGTH: boolean;
-  CODE_EXTRACTION_MAX_WORKERS: number;
-  CONTEXT_WINDOW_SIZE: number;
-  ENABLE_CODE_SUMMARIES: boolean;
-};
-
-const SettingsPage: React.FC = () => {
-  // RAG Settings State
-  const [ragSettings, setRagSettings] = useState<RagSettingsType>({
-    MODEL_CHOICE: 'gpt-4o-mini',
-    USE_CONTEXTUAL_EMBEDDINGS: true,
-    CONTEXTUAL_EMBEDDINGS_MAX_WORKERS: 5,
+export const SettingsPage = (): JSX.Element => {
+  const [ragSettings, setRagSettings] = useState<RagSettings>({
+    USE_CONTEXTUAL_EMBEDDINGS: false,
+    CONTEXTUAL_EMBEDDINGS_MAX_WORKERS: 3,
     USE_HYBRID_SEARCH: true,
-    USE_AGENTIC_RAG: false,
-    USE_RERANKING: false
+    USE_AGENTIC_RAG: true,
+    USE_RERANKING: true,
+    MODEL_CHOICE: "gpt-4.1-nano",
   });
+  const [codeExtractionSettings, setCodeExtractionSettings] =
+    useState<CodeExtractionSettingsType>({
+      MIN_CODE_BLOCK_LENGTH: 250,
+      MAX_CODE_BLOCK_LENGTH: 5000,
+      ENABLE_COMPLETE_BLOCK_DETECTION: true,
+      ENABLE_LANGUAGE_SPECIFIC_PATTERNS: true,
+      ENABLE_PROSE_FILTERING: true,
+      MAX_PROSE_RATIO: 0.15,
+      MIN_CODE_INDICATORS: 3,
+      ENABLE_DIAGRAM_FILTERING: true,
+      ENABLE_CONTEXTUAL_LENGTH: true,
+      CODE_EXTRACTION_MAX_WORKERS: 3,
+      CONTEXT_WINDOW_SIZE: 1000,
+      ENABLE_CODE_SUMMARIES: true,
+    });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [showButtonPlayground, setShowButtonPlayground] = useState(false);
 
-  // Code Extraction Settings State - GROUNDED with 12 real fields
-  const [codeExtractionSettings, setCodeExtractionSettings] = useState<CodeExtractionSettingsType>({
-    MIN_CODE_BLOCK_LENGTH: 10,
-    MAX_CODE_BLOCK_LENGTH: 50000,
-    ENABLE_COMPLETE_BLOCK_DETECTION: true,
-    ENABLE_LANGUAGE_SPECIFIC_PATTERNS: true,
-    ENABLE_PROSE_FILTERING: true,
-    MAX_PROSE_RATIO: 0.5,
-    MIN_CODE_INDICATORS: 2,
-    ENABLE_DIAGRAM_FILTERING: false,
-    ENABLE_CONTEXTUAL_LENGTH: true,
-    CODE_EXTRACTION_MAX_WORKERS: 4,
-    CONTEXT_WINDOW_SIZE: 128000,
-    ENABLE_CODE_SUMMARIES: true
-  });
+  const { showToast } = useToast();
+  const { projectsEnabled } = useSettings();
+
+  // Use staggered entrance animation
+  const { isVisible, containerVariants, itemVariants, titleVariants } =
+    useStaggeredEntrance([1, 2, 3, 4], 0.15);
+
+  // Load settings on mount
+  const loadSettings = useCallback(async (): Promise<void> => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      // Load RAG settings
+      const ragSettingsData = await credentialsService.getRagSettings();
+      setRagSettings(ragSettingsData);
+
+      // Load Code Extraction settings
+      const codeExtractionSettingsData =
+        await credentialsService.getCodeExtractionSettings();
+      setCodeExtractionSettings(codeExtractionSettingsData);
+    } catch (err) {
+      setError("Failed to load settings");
+      console.error(err);
+      showToast("Failed to load settings", "error");
+    } finally {
+      setLoading(false);
+    }
+  }, [showToast]);
+
+  useEffect(() => {
+    loadSettings();
+  }, [loadSettings]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader className="animate-spin text-gray-500" size={32} />
+      </div>
+    );
+  }
 
   return (
-    <div className="container mx-auto py-8 px-4 space-y-8 max-w-7xl animate-in fade-in slide-in-from-bottom-4 duration-700">
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-3xl font-bold text-white flex items-center gap-3">
-            <Settings className="h-8 w-8 text-indigo-400" />
-            System Settings
-          </h1>
-          <p className="text-slate-400 mt-1">Configure AI models, API keys, and system preferences</p>
+    <motion.div
+      initial="hidden"
+      animate={isVisible ? "visible" : "hidden"}
+      variants={containerVariants}
+      className="w-full"
+    >
+      {/* Update Banner */}
+      <UpdateBanner />
+
+      {/* Header */}
+      <motion.div
+        className="flex justify-between items-center mb-8"
+        variants={itemVariants}
+      >
+        <motion.h1
+          className="text-3xl font-bold text-gray-800 dark:text-white flex items-center gap-3"
+          variants={titleVariants}
+        >
+          <Settings className="w-7 h-7 text-blue-500 filter drop-shadow-[0_0_8px_rgba(59,130,246,0.8)]" />
+          Settings
+        </motion.h1>
+      </motion.div>
+
+
+      {/* Main content with two-column layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Left Column */}
+        <div className="space-y-6">
+          <motion.div variants={itemVariants}>
+            <CollapsibleSettingsCard
+              title="Features"
+              icon={Palette}
+              accentColor="purple"
+              storageKey="features"
+              defaultExpanded={true}
+            >
+              <FeaturesSection />
+            </CollapsibleSettingsCard>
+          </motion.div>
+
+          {/* Version Status */}
+          <motion.div variants={itemVariants}>
+            <CollapsibleSettingsCard
+              title="Version & Updates"
+              icon={Info}
+              accentColor="blue"
+              storageKey="version-status"
+              defaultExpanded={true}
+            >
+              <VersionStatusCard />
+            </CollapsibleSettingsCard>
+          </motion.div>
+
+          {/* Migration Status */}
+          <motion.div variants={itemVariants}>
+            <CollapsibleSettingsCard
+              title="Database Migrations"
+              icon={Database}
+              accentColor="purple"
+              storageKey="migration-status"
+              defaultExpanded={false}
+            >
+              <MigrationStatusCard />
+            </CollapsibleSettingsCard>
+          </motion.div>
+
+          {projectsEnabled && (
+            <motion.div variants={itemVariants}>
+              <CollapsibleSettingsCard
+                title="IDE Global Rules"
+                icon={FileCode}
+                accentColor="pink"
+                storageKey="ide-rules"
+                defaultExpanded={true}
+              >
+                <IDEGlobalRules />
+              </CollapsibleSettingsCard>
+            </motion.div>
+          )}
+        </div>
+
+        {/* Right Column */}
+        <div className="space-y-6">
+          <motion.div variants={itemVariants}>
+            <CollapsibleSettingsCard
+              title="API Keys"
+              icon={Key}
+              accentColor="pink"
+              storageKey="api-keys"
+              defaultExpanded={true}
+            >
+              <APIKeysSection />
+            </CollapsibleSettingsCard>
+          </motion.div>
+          <motion.div variants={itemVariants}>
+            <CollapsibleSettingsCard
+              title="RAG Settings"
+              icon={Brain}
+              accentColor="green"
+              storageKey="rag-settings"
+              defaultExpanded={true}
+            >
+              <RAGSettings
+                ragSettings={ragSettings}
+                setRagSettings={setRagSettings}
+              />
+            </CollapsibleSettingsCard>
+          </motion.div>
+          <motion.div variants={itemVariants}>
+            <CollapsibleSettingsCard
+              title="Code Extraction"
+              icon={Code}
+              accentColor="orange"
+              storageKey="code-extraction"
+              defaultExpanded={true}
+            >
+              <CodeExtractionSettings
+                codeExtractionSettings={codeExtractionSettings}
+                setCodeExtractionSettings={setCodeExtractionSettings}
+              />
+            </CollapsibleSettingsCard>
+          </motion.div>
+
+          {/* Bug Report Section */}
+          <motion.div variants={itemVariants}>
+            <CollapsibleSettingsCard
+              title="Bug Reporting"
+              icon={Bug}
+              accentColor="orange"
+              defaultExpanded={false}
+            >
+              <div className="space-y-4">
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Found a bug or issue? Report it to help improve Archon Beta.
+                </p>
+                <div className="flex justify-start">
+                  <BugReportButton variant="secondary" size="md">
+                    Report Bug
+                  </BugReportButton>
+                </div>
+                <div className="text-xs text-gray-500 dark:text-gray-400 space-y-1">
+                  <p>• Bug reports are sent directly to GitHub Issues</p>
+                  <p>• System context is automatically collected</p>
+                  <p>• Your privacy is protected - no personal data is sent</p>
+                </div>
+              </div>
+            </CollapsibleSettingsCard>
+          </motion.div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-8">
-        {/* RAG & Model Configuration */}
-        <section id="rag-settings" className="scroll-mt-20">
-          <div className="flex items-center gap-2 mb-4 text-indigo-300">
-            <BrainCircuit className="h-5 w-5" />
-            <h2 className="text-xl font-semibold uppercase tracking-wider">AI Intelligence</h2>
-          </div>
-          <RAGSettings 
-            ragSettings={ragSettings} 
-            setRagSettings={setRagSettings} 
-          />
-        </section>
+      {/* Button Playground Toggle - Subtle blue circle */}
+      <motion.div variants={itemVariants} className="mt-12 flex justify-center">
+        <button
+          onClick={() => setShowButtonPlayground(!showButtonPlayground)}
+          className="relative w-8 h-8 rounded-full border border-blue-400/30 bg-blue-500/5 hover:bg-blue-500/10 transition-all duration-200 flex items-center justify-center group"
+          title="Toggle Button Playground"
+        >
+          <div className="absolute inset-0 rounded-full bg-blue-500/20 blur-sm opacity-0 group-hover:opacity-100 transition-opacity" />
+          <motion.div
+            animate={{ rotate: showButtonPlayground ? 180 : 0 }}
+            transition={{ duration: 0.2 }}
+          >
+            <ChevronDown className="w-4 h-4 text-blue-400/50" />
+          </motion.div>
+        </button>
+      </motion.div>
 
-        {/* Security & Credentials */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <section id="api-keys" className="scroll-mt-20">
-            <div className="flex items-center gap-2 mb-4 text-emerald-300">
-              <Shield className="h-5 w-5" />
-              <h2 className="text-xl font-semibold uppercase tracking-wider">Authentication</h2>
-            </div>
-            <APIKeysSection />
-          </section>
+      {/* Button Playground - Collapsible */}
+      <AnimatePresence>
+        {showButtonPlayground && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.3 }}
+            className="overflow-hidden"
+          >
+            <motion.div variants={itemVariants} className="mt-4">
+              <ButtonPlayground />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-          <section id="features" className="scroll-mt-20">
-            <div className="flex items-center gap-2 mb-4 text-amber-300">
-              <Sparkles className="h-5 w-5" />
-              <h2 className="text-xl font-semibold uppercase tracking-wider">Platform Features</h2>
-            </div>
-            <FeaturesSection />
-          </section>
-        </div>
-
-        {/* Development & Rules */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <section id="global-rules" className="scroll-mt-20">
-            <div className="flex items-center gap-2 mb-4 text-blue-300">
-              <Cpu className="h-5 w-5" />
-              <h2 className="text-xl font-semibold uppercase tracking-wider">System Rules</h2>
-            </div>
-            <IDEGlobalRules />
-          </section>
-
-          <section id="crawling" className="scroll-mt-20">
-            <div className="flex items-center gap-2 mb-4 text-purple-300">
-              <Globe className="h-5 w-5" />
-              <h2 className="text-xl font-semibold uppercase tracking-wider">Ingestion & Crawling</h2>
-            </div>
-            <CodeExtractionSettings 
-              codeExtractionSettings={codeExtractionSettings}
-              setCodeExtractionSettings={setCodeExtractionSettings}
-            />
-          </section>
-        </div>
-      </div>
-    </div>
+      {/* Error Display */}
+      {error && (
+        <motion.div
+          variants={itemVariants}
+          className="mt-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg"
+        >
+          <p className="text-red-600 dark:text-red-400">{error}</p>
+        </motion.div>
+      )}
+    </motion.div>
   );
 };
 

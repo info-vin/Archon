@@ -173,13 +173,14 @@ class CredentialService:
                     return default
 
         if isinstance(value, str):
-            return value.strip()
+            stripped = value.strip()
+            if stripped:
+                return stripped
 
-        if value is None:
-            # Fallback to environment variables if not found in DB cache
-            env_value = os.getenv(key) or os.getenv(key.upper())
-            if env_value:
-                return env_value
+        # PHYSICAL FALLBACK: If not in cache or is empty string, check OS environment
+        env_value = os.getenv(key) or os.getenv(key.upper())
+        if env_value:
+            return env_value
 
         return value
 
@@ -424,29 +425,33 @@ class CredentialService:
     async def get_active_provider(self, service_type: str = "llm") -> dict[str, Any]:
         """
         Get the currently active provider configuration.
-
-        Args:
-            service_type: Either 'llm' or 'embedding'
-
-        Returns:
-            Dict with provider, api_key, base_url, and models
         """
         try:
-            # Get RAG strategy settings (where UI saves provider selection)
+            # Physical Hardening: Search across critical categories
+            ai_settings = await self.get_credentials_by_category("ai")
+            marketing_settings = await self.get_credentials_by_category("marketing")
             rag_settings = await self.get_credentials_by_category("rag_strategy")
 
+            # Merge all settings, priority to UI-driven categories
+            all_settings = {**ai_settings, **marketing_settings, **rag_settings}
+
             # Get the selected provider
-            provider = rag_settings.get("LLM_PROVIDER", "openai")
+            provider_key = "LLM_PROVIDER" if service_type == "llm" else "EMBEDDING_PROVIDER"
+            provider = all_settings.get(provider_key)
+
+            # Deep Fallback: If not in DB, check OS environment
+            if not provider:
+                provider = os.getenv(provider_key, "openai").lower()
 
             # Get API key for this provider
             api_key = await self._get_provider_api_key(provider)
 
             # Get base URL if needed
-            base_url = self._get_provider_base_url(provider, rag_settings)
+            base_url = self._get_provider_base_url(provider, all_settings)
 
-            # Get models
-            chat_model = rag_settings.get("MODEL_CHOICE", "")
-            embedding_model = rag_settings.get("EMBEDDING_MODEL", "")
+            # Get models with precedence: User Setting (UI) > System Default (init_db)
+            chat_model = all_settings.get("MODEL_CHOICE") or all_settings.get("MARKETING_MODEL") or ""
+            embedding_model = all_settings.get("EMBEDDING_MODEL", "")
 
             return {
                 "provider": provider,
