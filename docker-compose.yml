@@ -228,6 +228,8 @@ services:
     profiles: ["twin"]
     image: browser-use/browser-use-full:latest
     container_name: archon-twin-scout
+    ports:
+      - "6080:6080" # VNC 畫面
     depends_on:
       - enduser-frontend
       - archon-server
