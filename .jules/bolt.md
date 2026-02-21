@@ -1,0 +1,3 @@
+## 2025-05-21 - Unmemoized View Components in Page Files
+**Learning:** `DashboardPage.tsx` defines heavy view components (`ListView`, `TableView`, etc.) inside the file but outside the main component scope. While this avoids recreating the component definition on every render, these components were not memoized. As a result, any state update in the parent `DashboardPage` (e.g., toggling a dropdown or modal) caused all child view components to re-render, even if their props remained stable.
+**Action:** When refactoring or optimizing page components with multiple sub-views defined in the same file, check if they are wrapped in `React.memo`. If they consume callbacks from the parent, ensure those callbacks are stable (using `useCallback`) to make `React.memo` effective.

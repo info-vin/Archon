@@ -49,7 +49,8 @@ const statusIndicator = (status: TaskStatus) => {
 };
 
 // --- View Components ---
-const ListView: React.FC<{ tasks: Task[]; setEditingTask: (task: Task) => void; userMap: Record<string, any> }> = ({ tasks, setEditingTask, userMap }) => (
+// Optimized: Memoized view components to prevent unnecessary re-renders when parent state updates
+const ListView: React.FC<{ tasks: Task[]; setEditingTask: (task: Task) => void; userMap: Record<string, any> }> = React.memo(({ tasks, setEditingTask, userMap }) => (
   <ul className="space-y-3">
     {tasks.map(task => {
         return (
@@ -110,7 +111,7 @@ const ListView: React.FC<{ tasks: Task[]; setEditingTask: (task: Task) => void; 
         );
     })}
   </ul>
-);
+));
 
 const TableView: React.FC<{
   tasks: Task[];
@@ -119,7 +120,7 @@ const TableView: React.FC<{
   sortConfig: { key: SortableTaskKeys; direction: SortDirection } | null;
   userMap: Record<string, any>;
   projectMap: Record<string, string>;
-}> = ({ tasks, setEditingTask, requestSort, sortConfig, userMap, projectMap }) => {
+}> = React.memo(({ tasks, setEditingTask, requestSort, sortConfig, userMap, projectMap }) => {
   const getSortIcon = (key: SortableTaskKeys) => {
     if (!sortConfig || sortConfig.key !== key) return <ChevronsUpDownIcon className="h-4 w-4" />;
     return sortConfig.direction === 'ascending' ? '🔼' : '🔽';
@@ -175,13 +176,13 @@ const TableView: React.FC<{
         </table>
     </div>
   );
-};
+});
 
 const KanbanView: React.FC<{
   tasks: Task[];
   updateTaskStatus: (taskId: string, newStatus: TaskStatus) => void;
   setEditingTask: (task: Task) => void;
-}> = ({ tasks, updateTaskStatus, setEditingTask }) => {
+}> = React.memo(({ tasks, updateTaskStatus, setEditingTask }) => {
   const statuses: TaskStatus[] = [TaskStatus.TODO, TaskStatus.DOING, TaskStatus.REVIEW, TaskStatus.DONE];
   const tasksByStatus = useMemo(() => {
     const grouped: { [key in TaskStatus]?: Task[] } = {};
@@ -260,9 +261,9 @@ const KanbanView: React.FC<{
       ))}
     </div>
   );
-};
+});
 
-const GanttView: React.FC<{ tasks: Task[] }> = ({ tasks }) => {
+const GanttView: React.FC<{ tasks: Task[] }> = React.memo(({ tasks }) => {
   const svgRef = React.useRef<SVGSVGElement>(null);
   const validTasks = useMemo(() => tasks.filter(d => d.due_date && d.created_at), [tasks]);
 
@@ -332,7 +333,7 @@ const GanttView: React.FC<{ tasks: Task[] }> = ({ tasks }) => {
       {validTasks.length === 0 && <p>No tasks with start and end dates to display in Gantt chart.</p>}
     </div>
   );
-};
+});
 
 // Import VisitLogModal and MapPinIcon
 import { VisitLogModal } from '../features/marketing/components/VisitLogModal.tsx';
@@ -438,13 +439,15 @@ const DashboardPage: React.FC = () => {
 
 
   // --- Event Handlers ---
-  const requestSort = (key: SortableTaskKeys) => {
-    let direction: SortDirection = 'ascending';
-    if (sortConfig && sortConfig.key === key && sortConfig.direction === 'ascending') {
-      direction = 'descending';
-    }
-    setSortConfig({ key, direction });
-  };
+  const requestSort = useCallback((key: SortableTaskKeys) => {
+    setSortConfig((currentConfig) => {
+        let direction: SortDirection = 'ascending';
+        if (currentConfig && currentConfig.key === key && currentConfig.direction === 'ascending') {
+          direction = 'descending';
+        }
+        return { key, direction };
+    });
+  }, []);
 
   const updateTaskStatus = useCallback(async (taskId: string, newStatus: TaskStatus) => {
     try {
