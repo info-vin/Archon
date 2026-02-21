@@ -232,6 +232,7 @@ services:
       - "6080:6080" # VNC 畫面
     depends_on:
       - enduser-frontend
+      - archon-frontend
       - archon-server
     environment:
       - GEMINI_API_KEY=${GEMINI_API_KEY}

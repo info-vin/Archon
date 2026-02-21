@@ -19,10 +19,11 @@ async def main():
     
     task = """
     1. 前往 http://enduser-frontend:5173。
-    2. 確認是否已透過 Google 帳號登入。
-    3. 模擬用戶：嘗試建立一個新任務並觀察 UI 流程。
-    4. 記錄任何 UI 遮擋、API 延遲或操作不順暢之處。
-    5. 產出包含 Mermaid 流程圖的 Markdown 診斷報告。
+    2. 確認是否已透過 Google 帳號登入端點。
+    3. 模擬用戶：嘗試建立一個新任務並觀察 UI 流程，記錄任何 UI 遮擋或操作不順暢之處。
+    4. 接下來，前往 http://archon-frontend:3737。
+    5. 觀察並確認系統狀態與 UI，無需登入。
+    6. 產出包含 Mermaid 流程圖的 Markdown 診斷報告，統整兩個網站的健康狀況。
     """
 
     agent = Agent(task=task, llm=llm, browser=browser)

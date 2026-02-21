@@ -209,7 +209,7 @@ clean:
 # 執行自動偵察
 twin-scout:
 	@echo "🚀 啟動數位孿生偵察員..."
-	@docker compose --profile twin --profile backend --profile enduser up archon-twin-scout
+	@docker compose --profile twin --profile backend --profile frontend --profile enduser up archon-twin-scout
 
 # 提示 Antigravity 維修流程
 twin-fix:
