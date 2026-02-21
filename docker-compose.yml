@@ -242,7 +242,7 @@ services:
       - ./.browser_data:/app/user_data
       - ./.twin:/app/.twin
       - ./scripts/twin_scout.py:/app/scout.py
-    command: ["python", "scout.py"]
+    entrypoint: ["python", "scout.py"]
 
 networks:
   app-network:
