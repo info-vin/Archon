@@ -226,23 +226,25 @@ services:
   # Twin Scout (Browser-use + Antigravity Digital Twin)
   archon-twin-scout:
     profiles: ["twin"]
-    image: browseruse/browseruse:latest
+    build:
+      context: .
+      dockerfile: Dockerfile.twin
     container_name: archon-twin-scout
-    ports:
-      - "6080:6080" # VNC 畫面
+    user: "root"
     depends_on:
       - enduser-frontend
       - archon-frontend
       - archon-server
     environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
       - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY:-${GEMINI_API_KEY}}
     networks:
       - app-network
     volumes:
       - ./.browser_data:/app/user_data
       - ./.twin:/app/.twin
       - ./scripts/twin_scout.py:/app/scout.py
-    entrypoint: ["python", "scout.py"]
 
 networks:
   app-network:

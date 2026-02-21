@@ -7,6 +7,9 @@ import { fixupConfigRules } from "@eslint/compat";
 import pluginReactHooks from "eslint-plugin-react-hooks";
 
 export default [
+  {
+    ignores: ["dist/**", "node_modules/**", "coverage/**", "*.config.js"],
+  },
   { files: ["**/*.{js,mjs,cjs,ts,jsx,tsx}"] },
   { languageOptions: { globals: globals.browser } },
   {

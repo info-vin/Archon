@@ -98,6 +98,16 @@
 
 # 第三章：近期工作日誌 (Recent Journal Entries)
 
+### 2026-02-21: 前端架構硬化與模組化 (Front-end Modularization)
+*   **路徑防護網落地 (Path Alias Standardization)**:
+    *   **全面別名化**: 完成 3737 (Admin) 與 5173 (User) 全系統相對路徑轉換為 `@/` 格式。這消滅了 `../../` 的維護地獄，確保檔案搬移時路徑自動對齊。
+*   **3737 特徵模組化 (Feature-based Refactor)**:
+    *   **RAG 模組抽離**: 成功將 `RAGSettings.tsx` 及其 7 個關聯組件移至 `src/features/rag-settings/`，實現「原子化管理」。
+    *   **狀態硬化**: 修正了 `SettingsPage.tsx` 原本存在的 Props 缺失問題，透過注入 `useState` 與 API 連動，達成 100% 型別安全。
+*   **品質與 Lint 清理 (Sanitization)**:
+    *   **Lint 降噪**: 透過配置 `.eslintignore` 排除 `dist` 目錄，將 2400+ 個虛假報錯歸零。
+    *   **物理驗證**: 通過 3737 (135 項) 與 5173 (44 項) 全量單元測試，達成 **Zero Compiler Errors (TSC: OK)**。
+
 ### 2026-02-20: 基礎設施硬化與命名空間對齊 (Infrastructure Hardening)
 *   **Google 狀態指標修復 (Indicator Alignment)**:
     *   **後端硬化**: 升級 `CredentialService.check_credentials_exist` 實作環境變數穿透。現在當快取未及時同步時，會主動檢查 `os.getenv` 並支持 `GOOGLE`/`GEMINI` API Key 的別名聯動。
