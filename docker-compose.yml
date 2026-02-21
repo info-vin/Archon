@@ -226,7 +226,7 @@ services:
   # Twin Scout (Browser-use + Antigravity Digital Twin)
   archon-twin-scout:
     profiles: ["twin"]
-    image: browser-use/browser-use-full:latest
+    image: browseruse/browseruse:latest
     container_name: archon-twin-scout
     ports:
       - "6080:6080" # VNC 畫面
