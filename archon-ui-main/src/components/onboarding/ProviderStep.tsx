@@ -89,6 +89,7 @@ export const ProviderStep = ({ onSaved, onSkip }: ProviderStepProps) => {
       <div>
         <Select
           label="Select AI Provider"
+          required
           value={provider}
           onChange={(e) => setProvider(e.target.value)}
           options={[
@@ -114,6 +115,7 @@ export const ProviderStep = ({ onSaved, onSkip }: ProviderStepProps) => {
           <div>
             <Input
               label="OpenAI API Key"
+              required
               type="password"
               value={apiKey}
               onChange={(e) => setApiKey(e.target.value)}
