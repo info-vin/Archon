@@ -223,6 +223,24 @@ services:
       archon-server:
         condition: service_healthy
 
+  # Twin Scout (Browser-use + Antigravity Digital Twin)
+  archon-twin-scout:
+    profiles: ["twin"]
+    image: browser-use/browser-use-full:latest
+    container_name: archon-twin-scout
+    depends_on:
+      - enduser-frontend
+      - archon-server
+    environment:
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+    networks:
+      - app-network
+    volumes:
+      - ./.browser_data:/app/user_data
+      - ./.twin:/app/.twin
+      - ./scripts/twin_scout.py:/app/scout.py
+    command: ["python", "scout.py"]
+
 networks:
   app-network:
     driver: bridge

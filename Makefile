@@ -204,4 +204,17 @@ clean:
 		echo "Cancelled"; \
 	fi
 
+.PHONY: twin-scout twin-fix
+
+# 執行自動偵察
+twin-scout:
+	@echo "🚀 啟動數位孿生偵察員..."
+	@docker compose --profile twin up archon-twin-scout
+
+# 提示 Antigravity 維修流程
+twin-fix:
+	@echo "🛠️  請在 Antigravity 中執行："
+	@echo "1. 指令: '閱讀 .twin/diagnostics/ 下的最新報告'"
+	@echo "2. 指令: '根據報告修復代碼並更新 RAG 知識庫'"
+
 .DEFAULT_GOAL := help

@@ -6,8 +6,8 @@ readme = "README.md"
 requires-python = ">=3.12"
 # Base dependencies - empty since we're using dependency groups
 dependencies = [
-    "browser-use",
-    "langchain-google-genai",
+    "browser-use>=0.3.2",
+    "langchain-google-genai>=2.1.5",
 ]
 
 # PyTorch CPU-only index configuration
