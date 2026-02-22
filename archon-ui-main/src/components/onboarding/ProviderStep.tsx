@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Key, ExternalLink, Save, Loader } from "lucide-react";
+import { Key, ExternalLink, Save } from "lucide-react";
 import { Input } from "../ui/Input";
 import { Button } from "../ui/Button";
 import { Select } from "../ui/Select";
@@ -76,6 +76,31 @@ export const ProviderStep = ({ onSaved, onSkip }: ProviderStepProps) => {
     }
   };
 
+  const handleProviderSelection = async () => {
+    setSaving(true);
+    try {
+      // Save the provider selection for non-OpenAI providers
+      await credentialsService.updateCredential({
+        key: "LLM_PROVIDER",
+        value: provider,
+        is_encrypted: false,
+        category: "rag_strategy",
+      });
+      showToast(
+        `${provider === "google" ? "Google Gemini" : "Ollama"} selected as provider`,
+        "success",
+      );
+      // Mark onboarding as dismissed
+      localStorage.setItem("onboardingDismissed", "true");
+      onSaved();
+    } catch (error) {
+      console.error("Failed to save provider selection:", error);
+      showToast("Failed to save provider selection", "error");
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const handleSkip = () => {
     showToast("You can configure your provider in Settings", "info");
     // Mark onboarding as dismissed when skipping
@@ -145,14 +170,9 @@ export const ProviderStep = ({ onSaved, onSkip }: ProviderStepProps) => {
               variant="primary"
               size="lg"
               onClick={handleSave}
-              disabled={saving || !apiKey.trim()}
-              icon={
-                saving ? (
-                  <Loader className="w-4 h-4 animate-spin" />
-                ) : (
-                  <Save className="w-4 h-4" />
-                )
-              }
+              disabled={!apiKey.trim()}
+              isLoading={saving}
+              icon={<Save className="w-4 h-4" />}
               className="flex-1"
             >
               {saving ? "Saving..." : "Save & Continue"}
@@ -186,30 +206,11 @@ export const ProviderStep = ({ onSaved, onSkip }: ProviderStepProps) => {
             <Button
               variant="primary"
               size="lg"
-              onClick={async () => {
-                // Save the provider selection for non-OpenAI providers
-                try {
-                  await credentialsService.updateCredential({
-                    key: "LLM_PROVIDER",
-                    value: provider,
-                    is_encrypted: false,
-                    category: "rag_strategy",
-                  });
-                  showToast(
-                    `${provider === "google" ? "Google Gemini" : "Ollama"} selected as provider`,
-                    "success",
-                  );
-                  // Mark onboarding as dismissed
-                  localStorage.setItem("onboardingDismissed", "true");
-                  onSaved();
-                } catch (error) {
-                  console.error("Failed to save provider selection:", error);
-                  showToast("Failed to save provider selection", "error");
-                }
-              }}
+              onClick={handleProviderSelection}
+              isLoading={saving}
               className="flex-1"
             >
-              Continue with {provider === "google" ? "Gemini" : "Ollama"}
+              {saving ? "Saving..." : `Continue with ${provider === "google" ? "Gemini" : "Ollama"}`}
             </Button>
           </div>
         </div>
