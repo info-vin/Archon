@@ -139,7 +139,31 @@ sequenceDiagram
 
 ---
 
-## 6. 結論
+## 6. 實體操作範例：政府政策每日自動同步 (SOP)
+
+**場景**：David 需要系統每日自動更新「勞動部工作生活平衡網」。
+
+### **第一階段：3737 建立基礎 (Source Creation)**
+1.  **入口**：`Admin UI (3737) > Knowledge Base > + Knowledge`。
+2.  **動作**：輸入 `https://wlb.mol.gov.tw/Page/index.aspx`，設定 Type=`Business`，點擊 `Start Crawling`。
+3.  **物理結果**：系統產生 `source_id` 並在 `archon_sources` 建立基礎索引。
+
+### **第二階段：5173 定義營運規則 (Operational Setup)**
+1.  **入口**：`User UI (5173) > Project > Create Task`。
+2.  **指派**：選取 `Librarian Bot`。
+3.  **David's Architect Tools** (玫瑰色區域)：
+    *   **Associate Target**：下拉選單選取上述 WLB 來源。
+    *   **Add to Periodic Schedule**：勾選並選取 `Daily`。
+    *   **Dynamic Whitelist** (由後端推導)：David 在 3737 輸入的網域 `wlb.mol.gov.tw` 會自動被 `RBACService` 納入爬取許可。
+
+### **第三階段：自動化循環 (Expertise Loop)**
+*   `Clockwork` 每 30 分鐘執行掃描。
+*   自動觸發 `Librarian` 穿透動態許可，執行 `crawl4ai` 抓取最新動態內容。
+*   數據自動歸檔，維持 RAG 知識時效性。
+
+---
+
+## 7. 結論
 
 Admin Persona (`Phase 4.6.4`) 的基礎架構已完成 **100%**：
 1.  **可視化 (Visibility)**: 透過 **Command Center**，系統健康度、成本與稽核紀錄一目了然。

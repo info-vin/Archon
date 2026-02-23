@@ -81,9 +81,10 @@ class CreateTaskRequest(BaseModel):
     task_order: int | None = 0
     feature: str | None = None
     due_date: datetime | None = None
-    knowledge_source_ids: list[
-        str
-    ] | None = None  # List of knowledge source IDs to be associated with the task
+    knowledge_source_ids: list[str] | None = None  # List of knowledge source IDs
+    is_recurring: bool | None = False
+    crawler_target_id: str | None = None
+    schedule_config: dict[str, Any] | None = None
 
 
 class AssignableUser(BaseModel):
@@ -846,6 +847,9 @@ async def create_task(
             knowledge_source_ids=request.knowledge_source_ids,
             assignee_id=resolved_assignee_id,
             priority=request.priority or "medium",
+            is_recurring=request.is_recurring or False,
+            crawler_target_id=request.crawler_target_id,
+            schedule_config=request.schedule_config,
         )
 
         if not success or not isinstance(result, dict):
@@ -1036,6 +1040,9 @@ class UpdateTaskRequest(BaseModel):
     feature: str | None = None
     attachments: list[Attachment] | None = None
     due_date: datetime | None = None
+    is_recurring: bool | None = None
+    crawler_target_id: str | None = None
+    schedule_config: dict[str, Any] | None = None
 
 
 class AgentStatusUpdateRequest(BaseModel):
@@ -1171,6 +1178,15 @@ async def update_task(
             ]
         if request.due_date is not None:
             update_fields["due_date"] = request.due_date
+
+        if request.is_recurring is not None:
+            update_fields["is_recurring"] = request.is_recurring
+
+        if request.crawler_target_id is not None:
+            update_fields["crawler_target_id"] = request.crawler_target_id
+
+        if request.schedule_config is not None:
+            update_fields["schedule_config"] = request.schedule_config
 
         # Use TaskService to update the task
         task_service = TaskService()

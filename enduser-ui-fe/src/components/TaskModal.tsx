@@ -176,7 +176,9 @@ export const TaskModal: React.FC<TaskModalProps> = ({ task, onClose, onTaskCreat
       onClose();
     } catch (error: any) {
         console.error("Failed to save task:", error);
-        alert(`Failed to save task: ${error.message}`);
+        // Extract readable error from potential JSON object
+        const errorMessage = error.message || (typeof error === 'object' ? JSON.stringify(error) : String(error));
+        alert(`Failed to save task: ${errorMessage}`);
     } finally {
         setIsSubmitting(false);
     }

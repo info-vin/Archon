@@ -115,6 +115,9 @@ class TaskService:
         knowledge_source_ids: list[str] | None = None,
         assignee_id: str | None = None,
         priority: str = "medium",
+        is_recurring: bool = False,
+        crawler_target_id: str | None = None,
+        schedule_config: dict[str, Any] | None = None,
     ) -> tuple[bool, dict[str, Any]]:
         """
         Create a new task under a project with automatic reordering.
@@ -179,6 +182,9 @@ class TaskService:
                 "priority": priority,
                 "sources": final_sources,
                 "code_examples": code_examples or [],
+                "is_recurring": is_recurring,
+                "crawler_target_id": crawler_target_id,
+                "schedule_config": schedule_config or {},
                 "created_at": datetime.now().isoformat(),
                 "updated_at": datetime.now().isoformat(),
             }
@@ -211,6 +217,9 @@ class TaskService:
                         "priority": task.get("priority"),
                         "created_at": task["created_at"],
                         "due_date": task.get("due_date"),
+                        "is_recurring": task.get("is_recurring"),
+                        "crawler_target_id": task.get("crawler_target_id"),
+                        "schedule_config": task.get("schedule_config"),
                     }
                 }
             else:
@@ -486,6 +495,15 @@ class TaskService:
 
             if "priority" in update_fields:
                 update_data["priority"] = update_fields["priority"]
+
+            if "is_recurring" in update_fields:
+                update_data["is_recurring"] = update_fields["is_recurring"]
+
+            if "crawler_target_id" in update_fields:
+                update_data["crawler_target_id"] = update_fields["crawler_target_id"]
+
+            if "schedule_config" in update_fields:
+                update_data["schedule_config"] = update_fields["schedule_config"]
 
             if "completed_at" in update_fields:
                 comp_val = update_fields["completed_at"]
