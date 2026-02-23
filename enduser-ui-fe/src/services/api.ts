@@ -61,6 +61,9 @@ export type NewTaskData = {
   due_date: string;
   priority: TaskPriority;
   knowledge_source_ids?: string[]; // IDs of knowledge sources to associate with the task
+  is_recurring?: boolean;
+  crawler_target_id?: string | null;
+  schedule_config?: any;
 };
 
 export type NewProjectData = {
@@ -290,7 +293,7 @@ const supabaseApi = {
   },
   async getCrawlerTargets(): Promise<any[]> {
     try {
-      const response = await fetch('/api/system/settings/crawler-targets', {
+      const response = await fetch('/api/admin/crawler-targets', {
         headers: await this._getHeaders()
       });
       if (response.ok) {
@@ -306,6 +309,28 @@ const supabaseApi = {
       console.warn("Crawler targets fetch failed:", err);
     }
     return [];
+  },
+  async createCrawlerTarget(data: { target_url: string; max_depth?: number; description?: string }): Promise<any> {
+    const response = await fetch('/api/admin/crawler-targets', {
+      method: 'POST',
+      headers: await this._getHeaders(),
+      body: JSON.stringify(data)
+    });
+    if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Failed to create crawler target: ${errorText}`);
+    }
+    return await response.json();
+  },
+  async deleteCrawlerTarget(targetId: string): Promise<void> {
+    const response = await fetch(`/api/admin/crawler-targets/${targetId}`, {
+      method: 'DELETE',
+      headers: await this._getHeaders()
+    });
+    if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Failed to delete crawler target: ${errorText}`);
+    }
   },
   async updateTask(taskId: string, updates: UpdateTaskData): Promise<Task> {
     const { assigneeId, ...rest } = updates;

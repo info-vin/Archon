@@ -61,7 +61,10 @@ const ListView: React.FC<{ tasks: Task[]; setEditingTask: (task: Task) => void; 
                 <div className="flex justify-between items-start">
                     <div className="flex flex-col gap-1 max-w-[60%]">
                         <div className="flex items-center gap-2">
-                             <span className="font-bold text-gray-800 text-base leading-snug group-hover:text-indigo-600 transition-colors">{task.title}</span>
+                             <span className="font-bold text-gray-800 text-base leading-snug group-hover:text-indigo-600 transition-colors">
+                                 {task.title}
+                                 {task.is_recurring && <span className="ml-2 text-[10px] font-normal text-blue-500 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100">(🔁 定期任務)</span>}
+                             </span>
                              <PriorityBadge priority={task.priority} />
                         </div>
                         {task.description && (
@@ -154,7 +157,10 @@ const TableView: React.FC<{
                         {projectMap[task.project_id] || 'General'}
                     </span>
                 </td>
-                <td className="px-6 py-4 font-bold text-slate-700 dark:text-slate-200 group-hover:text-indigo-600 transition-colors">{task.title}</td>
+                <td className="px-6 py-4 font-bold text-slate-700 dark:text-slate-200 group-hover:text-indigo-600 transition-colors">
+                    {task.title}
+                    {task.is_recurring && <span className="ml-2 text-[10px] font-normal text-blue-500 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100">(🔁 定期)</span>}
+                </td>
                 <td className="px-6 py-4">
                     <div className="flex items-center gap-2">
                         <UserAvatar 
@@ -230,7 +236,10 @@ const KanbanView: React.FC<{
                   >
                     <PriorityBadge priority={task.priority} variant="stripe" />
                     
-                    <p className="font-semibold text-gray-800 text-sm leading-snug mb-3 group-hover:text-indigo-600 transition-colors">{task.title}</p>
+                    <div className="font-semibold text-gray-800 text-sm leading-snug mb-3 group-hover:text-indigo-600 transition-colors">
+                        {task.title}
+                        {task.is_recurring && <span className="ml-1 text-[10px] font-normal text-blue-500 bg-blue-50 px-1 py-0.5 rounded">(🔁 定期)</span>}
+                    </div>
                     
                     <div className="mb-2">
                         <PriorityBadge priority={task.priority} />

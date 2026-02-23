@@ -262,7 +262,10 @@ const ActivityLogModal: React.FC<{ member: Employee; onClose: () => void }> = ({
                                 <div key={task.id} className="p-4 bg-white border border-gray-100 rounded-xl shadow-sm hover:border-indigo-100 transition-colors">
                                     <div className="flex justify-between items-start">
                                         <div>
-                                            <h4 className="font-bold text-gray-800 text-sm">{task.title}</h4>
+                                            <h4 className="font-bold text-gray-800 text-sm flex items-center flex-wrap gap-1">
+                                                {task.title}
+                                                {task.is_recurring && <span className="text-[10px] font-normal text-blue-500 bg-blue-50 px-1 py-0.5 rounded border border-blue-100">(🔁 定期)</span>}
+                                            </h4>
                                             <p className="text-xs text-gray-500 mt-1 line-clamp-1">{task.description}</p>
                                         </div>
                                         <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${

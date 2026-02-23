@@ -148,7 +148,7 @@ class SchedulerService:
                 # This will trigger Librarian to crawl if it's a knowledge task
                 await agent_service.run_agent_task(
                     task_id=task_id,
-                    agent_id=task_id # Note: agent_id in run_agent_task matches the task's assignee_id internally
+                    agent_id=task.get("assignee_id", "ai-librarian")
                 )
 
                 # Log success

@@ -64,6 +64,18 @@ class AgentService:
                     if file_path and content:
                         self.code_modifier.apply_modification(file_path, content)
                         result = f"Successfully modified {file_path}"
+                elif function_name == "perform_web_crawl":
+                    url = arguments.get("url")
+                    max_depth = arguments.get("max_depth", 2)
+                    if url:
+                        from ..services.crawling.crawling_service import CrawlingService
+                        crawler = CrawlingService()
+                        await crawler.orchestrate_crawl({
+                            "url": url,
+                            "max_depth": max_depth,
+                            "user_role": "admin"
+                        })
+                        result = f"Started background web crawl for {url}"
                 elif self.mcp_client:
                     # Support direct mock method calls if available
                     if hasattr(self.mcp_client, function_name) and callable(getattr(self.mcp_client, function_name)):
@@ -224,10 +236,13 @@ class AgentService:
 
         if not user_role or user_role in ["admin", "system_admin", "manager"]:
             for agent in all_agents:
-                config = get_agent_config(str(agent["id"]))
+                agent_id = str(agent["id"])
+                if agent_id in ["ai-po-bot", "ai-clockwork"]:
+                    continue
+                config = get_agent_config(agent_id)
                 if config:
                     agent["tools"] = config.get("tools", [])
-            return all_agents
+            return [a for a in all_agents if str(a["id"]) not in ["ai-po-bot", "ai-clockwork"]]
 
         filtered = []
         for agent in all_agents:
@@ -271,12 +286,42 @@ class AgentService:
         if not (success and task_data):
             return
 
+        # Direct Pipeline Check for Librarian
+        if agent_id == "ai-librarian" and task_data.get("crawler_target_id"):
+            description = task_data.get("description", "").strip()
+            # If description is empty, bypass LLM and trigger crawling directly
+            if not description or description.lower() in ["periodic sync", "knowledge sync"]:
+                from ..services.crawling.crawling_service import CrawlingService
+                from ..utils import get_supabase_client
+                logger.info(f"[{agent_id}] Direct crawler pipeline triggered for empty description")
+                try:
+                    target_id = task_data["crawler_target_id"]
+                    supabase = get_supabase_client()
+                    res = supabase.table("archon_crawler_targets").select("*").eq("id", target_id).execute()
+                    if not res.data:
+                        raise ValueError(f"Crawler target {target_id} not found")
+                    target = res.data[0]
+
+                    crawler = CrawlingService()
+                    await crawler.orchestrate_crawl({
+                        "url": target["target_url"],
+                        "max_depth": target.get("max_depth", 2),
+                        "user_role": "system_admin"
+                    })
+                    await task_service.update_task(task_id, {"status": "done", "output": f"Direct crawler pipeline started for {target['target_url']}"})
+                    return
+                except Exception as e:
+                    logger.error(f"Direct crawl failed: {e}")
+                    await task_service.update_task(task_id, {"status": "failed", "output": str(e)})
+                    return
+
         messages = [{"role": "system", "content": config["system_prompt"]}, {"role": "user", "content": f"Task: {task_data['title']}"}]
 
         # Consistent tool param for Mock matching
         all_mcp_tools: list[dict[str, Any]] = [
             {"type": "function", "function": {"name": "search_job_market", "description": "Search 104", "parameters": {"type": "object", "properties": {"query": {"type": "string"}}}}},
-            {"type": "function", "function": {"name": "perform_rag_query", "description": "Search RAG", "parameters": {"type": "object", "properties": {"query": {"type": "string"}}}}}
+            {"type": "function", "function": {"name": "perform_rag_query", "description": "Search RAG", "parameters": {"type": "object", "properties": {"query": {"type": "string"}}}}},
+            {"type": "function", "function": {"name": "perform_web_crawl", "description": "Crawl web for RAG", "parameters": {"type": "object", "properties": {"url": {"type": "string"}, "max_depth": {"type": "integer"}}}}}
         ]
         agent_tools_list: list[str] = list(config.get("tools", []))
         agent_tools = [t for t in all_mcp_tools if cast(dict, t["function"])["name"] in agent_tools_list]

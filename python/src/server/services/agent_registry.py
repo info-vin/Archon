@@ -21,7 +21,8 @@ AGENT_CONFIG = {
         "system_prompt": LIBRARIAN_SYSTEM_PROMPT,
         "tools": [
             "perform_rag_query",
-            "get_available_sources"
+            "get_available_sources",
+            "perform_web_crawl"
         ]
     },
 

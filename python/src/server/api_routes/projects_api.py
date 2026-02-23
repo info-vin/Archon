@@ -123,6 +123,9 @@ async def list_assignable_users(
                 continue
 
             user_role = user.get("role")
+            if user_role == "ai_agent":
+                continue
+
             if user_role and rbac_service.has_permission_to_assign(
                 current_user_role, user_role
             ):
@@ -779,17 +782,22 @@ async def create_task(
         resolved_assignee_id = request.assignee_id
 
         if request.assignee_id:
-            profile_service = ProfileService()
-            success, profile = profile_service.get_profile(request.assignee_id)
-            if success and isinstance(profile, dict):
-                target_assignee_name = str(profile.get("name"))
-                logger.info(
-                    f"Resolved assignee_id '{request.assignee_id}' to '{target_assignee_name}'"
-                )
+            from ..services.shared_constants import AI_AGENT_ROLES
+            if request.assignee_id in AI_AGENT_ROLES.values():
+                logger.info(f"Assignee ID '{request.assignee_id}' is an AI Agent. Nullifying UUID for DB insert.")
+                resolved_assignee_id = None
             else:
-                logger.warning(
-                    f"Failed to resolve assignee_id '{request.assignee_id}' to a name."
-                )
+                profile_service = ProfileService()
+                success, profile = profile_service.get_profile(request.assignee_id)
+                if success and isinstance(profile, dict):
+                    target_assignee_name = str(profile.get("name"))
+                    logger.info(
+                        f"Resolved assignee_id '{request.assignee_id}' to '{target_assignee_name}'"
+                    )
+                else:
+                    logger.warning(
+                        f"Failed to resolve assignee_id '{request.assignee_id}' to a name."
+                    )
 
         # RBAC Validation
         if target_assignee_name and target_assignee_name != "User":

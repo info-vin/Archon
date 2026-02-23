@@ -94,6 +94,18 @@
         2.  **三向連動**: 檢查入口掛載 (main.py)、依賴映射 (index.html) 與測試斷言 (pytest/vitest)。
         3.  **拒絕樂觀**: 只有當 `curl` 或 `test` 物理性通過時，方可標記為「🟢 已修復」。
 
+*   **11. 絕對雲原生意識：禁止本地容器暴力破解 (Absolute Cloud-Native Awareness)**
+    *   **核心**: 專案連接的是**雲端 Supabase** (`SUPABASE_URL`)，並非本地 Docker (`supabase-db`)。當遇到資料庫錯誤 (如 `"permission denied for sequence"`)，**絕對禁止**嘗試用 `docker exec psql` 或 `npx supabase` 強行修正。
+    *   **SOP**: 
+        1.  **寫入腳本**: 產生正確的 SQL 修正檔 (存在 `migration/` 下)。
+        2.  **人類授權**: 停止自動化腳本，向使用者說明原因，並請求使用者親自在 Supabase Cloud 執行該段 SQL。
+        3.  這也已被編入 `.agents/skills/supabase_cloud_environment.md` 作為安全預設值。
+
+*   **12. 物理介面與資料模型的斷層審查 (UI vs Data Model Disconnect)**
+    *   **核心**: 後端 API 存在 (`POST /api/admin/crawler-targets`)，Schema 存在，且相依功能存在 (Task Modal 下拉選單)，**不代表**用來創造資料的 UI 介面就存在。
+    *   **教訓**: 在 Phase 4.6.4 中，5173 任務的 Crawler Target 下拉選單為空，原因是 Admin UI 原本「忘記實作」新增 Target 的頁面。
+    *   **SOP**: 當發現前端選單無資料時，除了檢查 API responses，更該使用 `search_file_content` 逆向追蹤建立該資料的 `[POST]` Request 是否有被任何 React Component 呼叫。不要輕易指引使用者去點擊看似相似的按鈕（例如 `+ Knowledge` 建立的是單次的 `archon_sources`，而非定期的 `archon_crawler_targets`，導致了長達數小時的除錯迷航）。
+
 ---
 
 # 第三章：近期工作日誌 (Recent Journal Entries)

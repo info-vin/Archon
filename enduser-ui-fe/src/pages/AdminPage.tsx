@@ -44,7 +44,12 @@ const AdminPage: React.FC = () => {
         {activeTab === 'health' && <SystemHealthDashboard />}
         {activeTab === 'users' && canManageUsers && <IdentityMatrix />}
         {activeTab === 'settings' && <SystemSettings />}
-        {activeTab === 'extraction' && <ExtractionManager />}
+        {activeTab === 'extraction' && (
+          <div className="space-y-8">
+            <CrawlerTargetManager />
+            <ExtractionManager />
+          </div>
+        )}
         {activeTab === 'prompts' && <PromptManagement isManagerMode={isOnlyManager} />}
         {activeTab === 'blog' && !isOnlyManager && <BlogManagement />}
         {activeTab === 'versions' && !isOnlyManager && <DocumentVersionsLog />}
@@ -948,6 +953,153 @@ const ExtractionManager: React.FC = () => {
                     ))}
                     {schemas.length === 0 && <div className="col-span-2 text-center py-12 text-muted-foreground italic">No templates defined yet. Use the tool above to discover and save your first extraction schema.</div>}
                 </div>
+            </div>
+        </div>
+    );
+};
+
+// --- NEW COMPONENT: CRAWLER TARGET MANAGER (GAP-024) ---
+const CrawlerTargetManager: React.FC = () => {
+    const [targets, setTargets] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [newUrl, setNewUrl] = useState('');
+    const [newDepth, setNewDepth] = useState(2);
+    const [newDesc, setNewDesc] = useState('');
+    const [isSaving, setIsSaving] = useState(false);
+
+    useEffect(() => {
+        fetchTargets();
+    }, []);
+
+    const fetchTargets = async () => {
+        setLoading(true);
+        try {
+            const data = await api.getCrawlerTargets();
+            setTargets(data);
+        } catch (err: any) {
+            console.error("Failed to load targets:", err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleSave = async () => {
+        if (!newUrl) return;
+        setIsSaving(true);
+        try {
+            await api.createCrawlerTarget({
+                target_url: newUrl,
+                max_depth: newDepth,
+                description: newDesc
+            });
+            setNewUrl('');
+            setNewDesc('');
+            setNewDepth(2);
+            fetchTargets();
+        } catch (err: any) {
+            alert("Save failed: " + err.message);
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    const handleDelete = async (id: string) => {
+        if (!window.confirm("Delete this crawler target? Tasks relying on it may fail.")) return;
+        try {
+            await api.deleteCrawlerTarget(id);
+            fetchTargets();
+        } catch (err: any) {
+            alert("Delete failed: " + err.message);
+        }
+    };
+
+    if (loading) return <div className="flex justify-center p-6"><RefreshCwIcon className="animate-spin w-6 h-6 text-primary" /></div>;
+
+    return (
+        <div className="bg-card p-6 rounded-2xl border border-border shadow-sm border-l-4 border-l-green-500">
+            <h3 className="text-lg font-bold mb-4 flex items-center gap-2 text-green-600">
+                <ShieldCheckIcon className="w-5 h-5" />
+                Knowledge Base Targets (Crawler)
+            </h3>
+            <p className="text-sm text-muted-foreground mb-6">
+                Define the allowed root URLs that Librarian is permitted to crawl during periodic scheduled tasks.
+                These act as dynamic whitelists and starting points.
+            </p>
+
+            <div className="flex flex-col md:flex-row gap-4 mb-8">
+                <input 
+                    type="url" 
+                    value={newUrl}
+                    onChange={(e) => setNewUrl(e.target.value)}
+                    placeholder="e.g. https://wlb.mol.gov.tw/Page/index.aspx"
+                    className="flex-[2] p-2 bg-background border border-border rounded-lg outline-none focus:ring-2 ring-green-500/50 transition-all font-mono text-sm"
+                />
+                <input 
+                    type="text" 
+                    value={newDesc}
+                    onChange={(e) => setNewDesc(e.target.value)}
+                    placeholder="Description (Optional)"
+                    className="flex-1 p-2 bg-background border border-border rounded-lg outline-none focus:ring-2 ring-green-500/50 transition-all text-sm"
+                />
+                <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold text-muted-foreground">Depth:</span>
+                    <input 
+                        type="number" 
+                        min="1" max="5"
+                        value={newDepth}
+                        onChange={(e) => setNewDepth(parseInt(e.target.value) || 2)}
+                        className="w-16 p-2 bg-background border border-border rounded-lg text-sm text-center outline-none focus:ring-2 ring-green-500/50 transition-all"
+                    />
+                </div>
+                <button 
+                    onClick={handleSave}
+                    disabled={isSaving || !newUrl}
+                    className="px-6 py-2 bg-green-600 text-white rounded-lg font-bold hover:bg-green-700 disabled:opacity-50 flex items-center gap-2 transition-all whitespace-nowrap"
+                >
+                    {isSaving ? <RefreshCwIcon className="animate-spin w-4 h-4" /> : <PlusIcon className="w-4 h-4" />}
+                    ADD TARGET
+                </button>
+            </div>
+
+            <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-border">
+                    <thead>
+                        <tr className="text-xs font-bold text-muted-foreground uppercase tracking-wider bg-muted/30">
+                            <th className="px-4 py-3 text-left w-12">Status</th>
+                            <th className="px-4 py-3 text-left">Target URL</th>
+                            <th className="px-4 py-3 text-left">Description</th>
+                            <th className="px-4 py-3 text-center">Depth</th>
+                            <th className="px-4 py-3 text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border">
+                        {targets.length === 0 ? (
+                            <tr>
+                                <td colSpan={5} className="py-8 text-center text-muted-foreground italic text-sm">
+                                    No crawler targets defined. Tasks will only be able to use ad-hoc URLs.
+                                </td>
+                            </tr>
+                        ) : targets.map(t => (
+                            <tr key={t.id} className="text-sm hover:bg-muted/10 transition-colors">
+                                <td className="px-4 py-3 text-center">
+                                    <div className="w-2 h-2 rounded-full bg-green-500 mx-auto" title="Active"></div>
+                                </td>
+                                <td className="px-4 py-3 font-mono text-xs text-blue-600 dark:text-blue-400 break-all">{t.target_url}</td>
+                                <td className="px-4 py-3 text-muted-foreground">{t.description || '-'}</td>
+                                <td className="px-4 py-3 text-center font-bold">{t.max_depth}</td>
+                                <td className="px-4 py-3 text-right">
+                                    <button 
+                                        onClick={() => handleDelete(t.id)}
+                                        className="p-1.5 text-red-500 hover:bg-red-500/10 rounded-lg transition-all"
+                                        title="Delete Target"
+                                    >
+                                        <XIcon className="w-4 h-4" />
+                                    </button>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
             </div>
         </div>
     );
