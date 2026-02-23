@@ -258,6 +258,9 @@ const supabaseApi = {
     const payload = {
       ...rest,
       assignee_id: assigneeId,
+      is_recurring: task_data.is_recurring,
+      crawler_target_id: task_data.crawler_target_id,
+      schedule_config: task_data.schedule_config
     };
 
     const response = await fetch('/api/tasks', {
@@ -285,11 +288,33 @@ const supabaseApi = {
     const data = await response.json();
     return data.items || [];
   },
+  async getCrawlerTargets(): Promise<any[]> {
+    try {
+      const response = await fetch('/api/system/settings/crawler-targets', {
+        headers: await this._getHeaders()
+      });
+      if (response.ok) {
+        return await response.json();
+      }
+      
+      // Fallback to direct DB query if API not found
+      if (supabase) {
+        const { data, error } = await supabase.from('archon_crawler_targets').select('*').eq('is_active', true);
+        if (!error && data) return data;
+      }
+    } catch (err) {
+      console.warn("Crawler targets fetch failed:", err);
+    }
+    return [];
+  },
   async updateTask(taskId: string, updates: UpdateTaskData): Promise<Task> {
     const { assigneeId, ...rest } = updates;
     const payload = {
         ...rest,
-        ...(assigneeId !== undefined ? { assignee_id: assigneeId } : {})
+        ...(assigneeId !== undefined ? { assignee_id: assigneeId } : {}),
+        is_recurring: updates.is_recurring,
+        crawler_target_id: updates.crawler_target_id,
+        schedule_config: updates.schedule_config
     };
 
     const response = await fetch(`/api/tasks/${taskId}`, {

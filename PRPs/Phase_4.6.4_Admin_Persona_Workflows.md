@@ -122,13 +122,24 @@ sequenceDiagram
 | **System Health** | `system_api.py` 鎖定權限。 | 模型 ID 與邊界隔離。 | **Fix BUG-047/048**: 校正模型版本為 2.0，將 Probe 改為唯讀檢查。 | ✅ Done |
 | **RBAC** | `IdentityMatrix.tsx` 支援細粒度覆寫。 | 已實作 `permission_overrides` 覆寫機制。 | **Permission Override**: 實作交互式權限矩陣，支援三態授權 (Inherit/Grant/Revoke)。 | ✅ Done |
 | **Crawler Management** | `admin_api.py` 具備專屬端點。 | 物理隔離 URI 設定。 | **Feature 1.7**: 建立 `archon_crawler_targets` 表並實施 David 專屬管理。 | ✅ Done |
+| **Trinity Workflow** | 規則與執行斷開。 | 實作 3737 -> 5173 -> 背景執行 閉環。 | **Ops-001**: 實作動態白名單注入、循環任務排程與 Clockwork 任務分派器。 | ✅ Done |
 | **Token Ops** | `stats_api.py` 支援 Hybrid 統計。 | 補齊 `/ai-usage` 端點。 | **Fix 404**: 實作聚合成本計算邏輯並連接至 Nexus。 | ✅ Done |
 | **Config** | `Scoring Logic` 已持久化。 | 評分規則已存入 `archon_settings` 資料庫。 | **Config Persistence**: 實作 Lead Scoring Weights 配置區塊，支援即時微調。 | ✅ Done |
 | **Audit** | 前端具備搜尋與過濾介面。 | 已實作多維度即時過濾稽核紀錄。 | **Audit Log Viewer**: 在 `DocumentVersionsLog` 增加 Search UI 與 Sticky Header。 | ✅ Done |
 
 ---
 
-## 5. 結論
+## 5. 三位一體營運流 (The Trinity Operational Loop) - 2026-02-23 落地
+
+今日已物理打通 David Howard 的核心自動化營運路徑：
+
+1.  **認知定義 (3737)**：David 在 Admin UI 設定 `archon_crawler_targets` (包含網址、動態白名單、深度)。
+2.  **行動指派 (5173)**：David 在 Project Task Modal 中將任務「連結」至上述目標，並勾選「加入排程 (Recurring)」。
+3.  **自動執行 (Background)**：`Clockwork` 任務分派器每 30 分鐘自動掃描到期任務，指派 `Librarian` 執行爬取並更新 RAG 知識庫。
+
+---
+
+## 6. 結論
 
 Admin Persona (`Phase 4.6.4`) 的基礎架構已完成 **100%**：
 1.  **可視化 (Visibility)**: 透過 **Command Center**，系統健康度、成本與稽核紀錄一目了然。

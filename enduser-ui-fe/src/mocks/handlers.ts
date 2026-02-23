@@ -137,6 +137,10 @@ export const handlers = [
   http.get('/api/stats/ai-usage', () => HttpResponse.json({ total_budget: 1000, total_used: 150 })),
   http.get('/api/blogs', () => HttpResponse.json([])),
   http.get('/api/knowledge-items', () => HttpResponse.json([])),
+  http.get('/api/system/settings/crawler-targets', () => HttpResponse.json([
+    { id: 'target-1', target_url: 'https://sas.com/docs', is_active: true },
+    { id: 'target-2', target_url: 'https://104.com.tw', is_active: true }
+  ])),
   http.post('/api/marketing/approvals/:type/:id/:action', () => HttpResponse.json({ success: true })),
   http.post('/api/admin/users', () => HttpResponse.json({ success: true }, { status: 201 })),
   http.get('/api/system/logs', () => HttpResponse.json([])),

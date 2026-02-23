@@ -81,6 +81,9 @@ export interface Task {
   created_at: string; // ISO string
   updated_at: string; // ISO string
   completed_at?: string; // ISO string
+  is_recurring?: boolean;
+  crawler_target_id?: string | null;
+  schedule_config?: any;
   sources?: {
     source_id: string;
     type: string;
@@ -104,6 +107,9 @@ export interface NewTaskData {
   due_date: string;
   project_id: string;
   knowledge_source_ids?: string[];
+  is_recurring?: boolean;
+  crawler_target_id?: string | null;
+  schedule_config?: any;
 }
 
 export interface UpdateTaskData extends Partial<NewTaskData> {

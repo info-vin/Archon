@@ -61,6 +61,7 @@ class RBACService:
 
         try:
             supabase = get_supabase_client()
+            # 1. Fetch static settings from archon_settings
             keys = [f"CRAWL_MAX_DEPTH_{suffix}", f"CRAWL_CONCURRENT_MAX_{suffix}", "CRAWL_ALLOWED_DOMAINS_RESTRICTED"]
             result = supabase.table("archon_settings").select("key, value").in_("key", keys).execute()
 
@@ -79,6 +80,29 @@ class RBACService:
                     domains = settings["CRAWL_ALLOWED_DOMAINS_RESTRICTED"].split(",")
                     constraints["allowed_domains"] = [d.strip() for d in domains if d.strip()]
 
+            # 2. 物理加固：從 archon_crawler_targets 動態抓取 David 在 3737 設定的白名單
+            # 這實現了 David 在 3737 設定 URL 與後端爬蟲權限的物理連動
+            dynamic_result = supabase.table("archon_crawler_targets")\
+                .select("whitelist, target_url")\
+                .eq("is_active", True)\
+                .execute()
+
+            if dynamic_result.data:
+                from typing import cast
+                allowed_domains = cast(list[str], constraints["allowed_domains"])
+
+                for target in dynamic_result.data:
+                    # 加入主網址網域 (Domain) 作為基本許可
+                    from urllib.parse import urlparse
+                    domain = urlparse(target['target_url']).netloc
+                    if domain and domain not in allowed_domains:
+                        allowed_domains.append(domain)
+
+                    # 加入 David 設定的詳細白名單 Patterns
+                    if target.get('whitelist'):
+                        for pattern in target['whitelist']:
+                            if pattern and pattern not in allowed_domains:
+                                allowed_domains.append(pattern)
         except Exception as e:
             logger.error(f"Failed to fetch crawler constraints for role {role}: {e}")
 
