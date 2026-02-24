@@ -50,7 +50,7 @@ class TestPhase49RBAC:
         agent_names = [a["name"] for a in agents]
         assert any("MarketBot" in name for name in agent_names)
         assert any("Librarian" in name for name in agent_names)
-        assert any("POBot" in name for name in agent_names)
+        assert not any("POBot" in name for name in agent_names)  # System bot, not manually assignable
         assert any("DevBot" in name for name in agent_names)
-        # Ensure at least 4 agents exist in registry/mapped
-        assert len(agents) >= 4
+        # Ensure at least 3 agent roles exist (MarketBot, Librarian, DevBot)
+        assert len(agents) >= 3
