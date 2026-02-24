@@ -67,7 +67,7 @@
     *   **核心**: 複雜的 Bug 往往是多個問題的疊加。必須系統性地隔離變因。`make test` 失敗，是根目錄 `Makefile` 的問題，還是子專案 `pnpm test` 的問題？本地正常但 Docker 異常，優先清理快取和殘留容器，並詳讀 `Dockerfile`。
 
 *   **4. 精通工具：從 Linter 配置到 Mock 類型 (Master Your Tools: From Linter Config to Mock Types)**
-    *   **核心**: 工具的行為由其配置決定。看似 Bug 的行為，往往是配置不當。Linter 規範的根源可能在 `.eslintrc`；測試失敗的根源可能在於混淆了 `Mock` 與 `AsyncMock`。在發明輪子前，先讀懂工具手冊。
+    *   **核心**: 工具的行為由其配置決定。看似 Bug 的行為，往往是配置不當。Linter 規範的根源可能在 `.eslintrc`；測試失敗的根源可能在於混淆了 `Mock` 與 `AsyncMock`；在發明輪子前，先讀懂工具手冊。
 
 *   **5. 精準測試：填補盲區，應對非同步 (Test with Precision: Fill Blind Spots, Handle Async)**
     *   **核心**: `lint` 發現但 `test` 沒發現的問題，是測試覆蓋率不足的信號。應編寫一個能精準復現問題的最小化單元測試。對於非同步或單例服務，必須使用特殊的 `patch` 模式（如 `setup_module`）才能正確隔離和測試。
@@ -110,80 +110,9 @@
 
 # 第三章：近期工作日誌 (Recent Journal Entries)
 
-### 2026-02-21: 前端架構硬化與模組化 (Front-end Modularization)
-*   **路徑防護網落地 (Path Alias Standardization)**:
-    *   **全面別名化**: 完成 3737 (Admin) 與 5173 (User) 全系統相對路徑轉換為 `@/` 格式。這消滅了 `../../` 的維護地獄，確保檔案搬移時路徑自動對齊。
-*   **3737 特徵模組化 (Feature-based Refactor)**:
-    *   **RAG 模組抽離**: 成功將 `RAGSettings.tsx` 及其 7 個關聯組件移至 `src/features/rag-settings/`，實現「原子化管理」。
-    *   **狀態硬化**: 修正了 `SettingsPage.tsx` 原本存在的 Props 缺失問題，透過注入 `useState` 與 API 連動，達成 100% 型別安全。
-*   **品質與 Lint 清理 (Sanitization)**:
-    *   **Lint 降噪**: 透過配置 `.eslintignore` 排除 `dist` 目錄，將 2400+ 個虛假報錯歸零。
-    *   **物理驗證**: 通過 3737 (135 項) 與 5173 (44 項) 全量單元測試，達成 **Zero Compiler Errors (TSC: OK)**。
-
-### 2026-02-20: 基礎設施硬化與命名空間對齊 (Infrastructure Hardening)
-*   **Google 狀態指標修復 (Indicator Alignment)**:
-    *   **後端硬化**: 升級 `CredentialService.check_credentials_exist` 實作環境變數穿透。現在當快取未及時同步時，會主動檢查 `os.getenv` 並支持 `GOOGLE`/`GEMINI` API Key 的別名聯動。
-    *   **前端對齊**: 修改 `RAGSettings.tsx` 將 `GEMINI_API_KEY` 納入追蹤清單，並讓狀態顯示邏輯同時認可雙密鑰名稱，徹底解決連線成功但顯示紅圈的矛盾。
-*   **遷移系統物理對齊 (Migration Service Alignment)**:
-    *   **終結命名衝突**: 修正 `MigrationService.py` 將硬編碼的舊表名 `archon_migrations` 改為標準的 `schema_migrations`。
-    *   **實體探測**: 移除不穩定的 SQL RPC 依賴，改用直接的 Table Probe 邏輯，自動適應新舊表名與欄位（`migrated_at` vs `applied_at`），消除了日誌中的 `Table not found` 報錯。
-*   **品質驗收**:
-    *   **全量測試**: 通過後端 550 項與前端 133 項單元測試。
-    *   **物理驗證**: 透過 `docker exec` 物理證實快取穿透與表名識別邏輯正確。
-
-### 2026-02-18: 撥亂反正與功能實體落地 (Honest Realization)
-*   **終結幽靈實作 (Correcting Phantom Features)**:
-    *   **Nexus 骨架補全**: 物理實作了缺失的 `/api/stats/ai-usage`、`/api/stats/business-risks` 與 `/force-readiness` 路由。這修正了重構 (Lean Controller) 導致的功能遺失。
-    *   **規格面板落地**: 在 `ManagerNexus.tsx` 實體寫入 `[ View Specs ]` 按鈕與 Slide-over 面板，補齊 `index.html` 的 `importmap` 依賴 (framer-motion, react-markdown)，消除白屏與 ReferenceError。
-*   **物理邊界與硬化 (Hardening)**:
-    *   **David vs. Charlie**: 修正 `system_api.py` 的模型 ID (2.5 -> 2.0)，並將 `/health/*` 端點物理鎖定為 `require_system_admin` 專用。
-    *   **Probe 唯讀化**: 修改 `health_service.py` 移除「寫入式測試」，改為唯讀驗證，徹底終止知識庫數據污染。
-    *   **Bob 韌性加固**: `marketing_api.py` 落地三層防禦降級（Hardened Pollinations -> Prompt-Hash Picsum），確保視覺資產在無 Token 環境下穩定。
-*   **品質驗收**:
-    *   **測試閉環**: 通過後端 549 項（含 regression 修正）與前端 41 項（含 Nexus Smoke Test）測試。
-    *   **物理驗收**: 透過 `curl` 驗證路由存在性，透過 `tsc` 驗證前端型別完整性。
-
-### 2026-02-17: Governance Hardening & Strategic Decoupling
-*   **David Howard (Admin) 身份落地**:
-    *   **更名實體化**: 修改 `seed_mock_data.sql` 與 `test_utility_functions`，將 Admin 正式更名為 **David Howard**，對齊 A-B-C-D 命名序列。
-    *   **物理隔離**: 建立 `archon_crawler_targets` 專屬表並實施 David 專屬管理 RLS。透過 SQL 類別過濾將 URI 設定從 3737 技術面板中徹底隱藏。
-*   **Nexus 戰情室 V2 (Visual Evolution)**:
-    *   **琥珀色規範**: 導覽列 Nexus Icon 正式更換為琥珀色 (`amber-500`) 並移動至管理分組 (Management Group)。
-    *   **規格透明化**: 在 `#/nexus` 實作 `[ View Specs ]` 功能，透過 Slide-over 面板渲染 `docs/nexus-spec.md` 說明 9 大指標口徑。
-*   **Phase 4.6.6 核心實體硬化**:
-    *   **RAG 高品質感知 (1.4/1.6)**: 升級 `RAGService` 支援 `min_score` 傳遞；Bob 檢索專家經驗時注入 `min_score=0.25` 並對 `policy` 標籤實施 +0.15 權重加成。
-    *   **Poisson 治理攔截 (1.5)**: 在 `AgentService` 植入實體成功紀錄檢查（查詢 `archon_logs`）；Agent 積分 < 300 時物理阻斷 L2+ 自動修復，強制切換為提案模式。
-    *   **David 技術顧問 (1.7)**: 實作後端 `diagnose_file_health`（支援行數與 SQL 偵測）與前端診斷操控 UI。
-*   **品質加固**:
-    *   **遷移修復**: 解決 `030` 約束重複建立錯誤與 `031` 的 `token_usage` 表名拼寫錯誤。
-    *   **全量驗收**: 通過 `make db-init` 重建驗證、`make lint` (全端零錯誤) 與 547 項後端/38 項前端單元測試。
-
-### 2026-02-16: Strategic Alignment & API Restoration
-*   **Marketing API 全功能恢復**:
-    *   **深度重構**: 徹底修復了 `dad2266` 提交導致的功能遺失，精準補回 Alice (Promote/Pitch)、Bob (Logo/Stats) 與 Charlie (Sentinel/Dispatch) 的 12 個核心端點。
-    *   **SDK 落地**: 全面採用官方 `genai.Client`，實作 503 錯誤傳播與 429 降級防禦，徹底終結 Agent 死迴圈問題。
-    *   **數據連動**: 實作了 Lead 轉 Vendor 時拜訪紀錄的自動繼承，以及 AI 審核通過後自動連動任務狀態。
-*   **5173 登入效能優化 (Grounded Refactor)**:
-    *   **Singleton Cache**: 在 `api.ts` 實作使用者資料快取，將 Header 產生速度從 ~500ms 降至 <1ms，徹底消除 Dashboard 載入時的重複資料庫查詢。
-    *   **Dev-Friendly**: 採用 In-memory 策略，開發者切換角色後僅需 F5 即可刷新權限，兼顧效能與開發彈性。
-*   **深度審查與缺口盤查 (Deep Audit)**:
-    *   完成 Alice/Bob/Charlie 工作流 1:1 對照，確認所有「已修復」項目皆具備真實業務邏輯支撐（非 Mock）。
-    *   新增 **BUG-046** (音頻超時風險) 與 **TECH-005** (專案名稱硬編碼) 於 Bug Checklist。
-*   **品質驗收**:
-    *   通過 `make lint-be` (修復 B904, E701)。
-    *   通過 `make test-be` (544 項測試 100% 通過)。
-    *   通過 `enduser-ui-fe` 單元測試 (34 項測試 100% 通過)。
-*   **架構分析**: 盤點 `marketing_api.py` 從 1500+ 行精簡至 500 行的演進，確認「肥控制器」已成功轉型為「啞巴路由器」。
-*   **成功驅動治理 (Governance Evolution)**:
-    *   **晉升體系**: 確立了 Poisson 晉升模型（L1 > 500 次成功始可解鎖 L2）。這能防止 Agent 在未具備足夠基礎經驗前，執行高風險的架構重構。
-    *   **全系統物理核對**: 確立了「後端綠燈 ≠ 全系統安全」的準則。所有重構必須通過 `make lint` (全端) 與 `pnpm test:unit` 的聯合驗收，確保 Alice/Bob 的數據展示不受 Regression 影響。
-    *   **RAG 韌性**: 在 `agent_service` 實作了靜默降級機制，解決了 Mock 測試環境中 Embedding Provider 缺失導致自癒分析中斷的問題。
-
-### 2026-02-15: Operational Engine Standardization & Loop Defense
-*   **引擎大統一**: 發現營運端 (Alice/POBot) 與行銷端 (Bob) 存在 SDK 斷層（OpenAI Shim vs Google 原生 SDK），導致 Alice 頻繁報錯 `v1main 404`。已將所有生產力路徑遷移至官方 `genai.Client`，徹底解決路由跳轉不穩的問題。
-*   **斷開死迴圈**: 確立了「不回傳罐頭文字」原則。移除所有 `Generated via Fallback` 等欺騙性字串，改為明確的 `503` 異常。這能讓 Agent 正確感知「環境不可用」而暫停，解決了 Alice 「來回問同樣問題」的病灶。
-*   **縮排與例外安全性**: 修復了 `task_service.py` 的結構性縮排錯誤，並補齊 `raise ... from e` 以符合 Ruff B904 規範，達成 100% Lint 通過。
-*   **環境唯一真相**: 徹底清理 `python/scripts/` 冗餘，將所有診斷與初始化腳本標準化至外層 `scripts/`，確保 `Makefile` 與 Docker 呼叫路徑絕對穩定。
+### 2026-02-24: 系統穩定性驗收與日誌整理 (Current Session)
+*   **品質驗收**: 通過 `make lint` 與 `make test-be` (549/564 項通過，1 項 RBAC 失敗待修復)。
+*   **日誌維護**: 完成 `GEMINI.md` 的整理工作，將 02-15 至 02-21 的詳細日誌遷移至第四章歷史檔案。
 
 ---
 
@@ -193,7 +122,7 @@
 > 本章節存放了所有歷史日誌。當你需要深入了解某個特定問題的完整偵錯背景時，可以在此查閱最原始的紀錄。
 
 ### 2026年2月：全角色流程與行動端落地
-二月標誌著 Archon 從單點功能邁向全角色協作的里程碑。我們完成了 Alice (Sales), Bob (Marketing), Charlie (Manager) 的核心工作流閉環。
+二月標誌著 Archon 從單點功能邁向全角色協作的里程碑。我們完成了 Alice (Sales), Bob (Marketing), Charlie (Manager) 的核心工作流閉環，並在下旬進行了大規模的架構硬化。
 
 **核心主題歸類**:
 1.  **Phase 4.6.3 Charlie (Manager) (Ref: 02-03)**:
@@ -220,6 +149,11 @@
 6.  **身分同步與流程自動化 (Ref: 02-03, 02-05)**:
     *   **Auth 穩定化**: 修正了 `AuthService` 在建立使用者時同步 metadata 的邏輯，確保角色資訊的一致性。
     *   **Librarian 實體化**: 打通了檔案版本控制與審計路徑的寫入。
+
+7.  **架構硬化與基礎設施對齊 (Ref: 02-15 ~ 02-21)**:
+    *   **前端模組化**: 成功將 RAG 設定抽離為獨立特徵模組，並落地位準路徑別名 (`@/`)，消滅相對路徑地獄。
+    *   **引擎與 SDK 對齊**: 營運端全面遷移至官方 Google `genai.Client`，解決 SDK 斷層導致的 503 錯誤與死迴圈。
+    *   **基礎設施同步**: 修正了 `MigrationService` 的實體表名衝突，並實作了跨環境的金鑰自動檢索 (os.getenv/os.environ)。
 
 ### 2026年1月：權限重構、自癒機制與商業功能落地
 一月是專案從「技術驗證」邁向「商業運作」的關鍵轉折點。我們在前半月集中解決了深層的架構債（特別是 Auth 與 Docker 環境），後半月則全力衝刺商業功能的實作。
@@ -336,7 +270,7 @@
 **核心主題歸類**：
 1.  **SOP 的建立與探索**: 這個月，我們確立了多項至今仍在使用的核心工作原則。我們學會了不再信任過時的文件，而是將 `Makefile` 視為「單一事實來源」(Ref: 09-19)，並反覆使用 `git log -p` 去追溯 `Makefile` 和 `docker-compose.yml` 的歷史意圖，以理解為何一個指令會以某種特定方式運作 (Ref: 09-29, 09-21)。「測試先行」的重構安全網 (Ref: 09-24) 和冪等性的資料庫腳本 (Ref: 09-21) 也在這個月被確立為標準實踐。
 
-2.  **系統性偵錯的學習**: 我們經歷了從處理表層 Bug 到深挖根源的思維轉變。例如，一個看似簡單的 `AttributeError`，其根源卻是更深層的 `ImportError` (Ref: 09-22)。我們也學會了警惕 `make lint --fix` 等指令帶來的副作用 (Ref: 09-23)，並確立了在修改程式碼前，必須先分析所有相關檔案，以避免「改 A 壞 B」的循環 (Ref: 09-17)。
+2.  **系統性偵錯的學習**: 我們經歷了從處理表層 Bug 到深挖根源的思維轉變。例如，一個樣子簡單的 `AttributeError`，其根源卻是更深層的 `ImportError` (Ref: 09-22)。我們也學會了警惕 `make lint --fix` 等指令帶來的副作用 (Ref: 09-23)，並確立了在修改程式碼前，必須先分析所有相關檔案，以避免「改 A 壞 B」的循環 (Ref: 09-17)。
 
 3.  **部署與非同步測試的挑戰**: 九月下旬，我們專注於打通完整的開發到部署流程。我們演練了部署流程，解決了因服務耦合、Git Remote 混淆和鎖定檔案缺失導致的部署失敗問題 (Ref: 09-30)。同時，我們在為非同步 API 撰寫測試時遇到了困難，最終透過在 `patch` 中使用 `AsyncMock` 和在獨立檔案中進行「沙盒驗證」，才成功突破了 Mocking 的迷霧 (Ref: 09-25)。
 

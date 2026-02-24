@@ -109,9 +109,6 @@ class JobBoardService:
                 else:
                     # 2. Fetch Details (Only if we have real jobs)
                     for i, job in enumerate(jobs):
-                        # Infer need first
-                        job.identified_need = self._infer_need(job)
-
                         if job.real_id:
                             # Throttling: Random delay to mimic human behavior
                             if i > 0:
@@ -131,6 +128,9 @@ class JobBoardService:
                         else:
                             job.description_full = f"[Snippet Only] {job.description}"
 
+                        # Infer need after description is fetched
+                        job.identified_need = await self._infer_need(job)
+
                 logger.info(f"Job search completed | count={len(jobs)}")
                 return jobs
 
@@ -139,8 +139,33 @@ class JobBoardService:
                 # Ensure mock jobs also have inferred needs
                 for job in self.MOCK_JOBS:
                     if not job.identified_need:
-                        job.identified_need = self._infer_need(job)
+                        job.identified_need = await self._infer_need(job)
                 return self.MOCK_JOBS
+
+    async def auto_fetch_daily_leads(self) -> int:
+        """
+        Automatically fetches jobs for 5 predefined keywords and saves them.
+        Limits to 4 jobs per keyword (max 20).
+        """
+        logger.info("Starting daily lead auto-fetch...")
+        total_new_leads = 0
+        keywords = ["Python", "Data Analyst", "Marketing", "Project Manager", "Sales"]
+
+        for keyword in keywords:
+            logger.info(f"Auto-fetching jobs for: '{keyword}'")
+            try:
+                jobs = await self.search_jobs(keyword, limit=4)
+                if jobs:
+                    new_leads_count = await self.identify_leads_and_save(jobs)
+                    total_new_leads += new_leads_count
+                    logger.info(f"Saved {new_leads_count} leads for '{keyword}'.")
+            except Exception as e:
+                logger.error(f"Error auto-fetching for '{keyword}': {e}")
+
+            await asyncio.sleep(random.uniform(2.0, 4.0))
+
+        logger.info(f"Daily auto-fetch completed. Total saved: {total_new_leads}")
+        return total_new_leads
 
     async def identify_leads_and_save(self, jobs: list[JobData]) -> int:
         """
@@ -164,7 +189,7 @@ class JobBoardService:
                     "description_snippet": job.description[:500] if job.description else None,
                     "source_job_url": job.url,
                     "status": "new",
-                    "identified_need": job.identified_need or self._infer_need(job)
+                    "identified_need": job.identified_need or await self._infer_need(job)
                 }
 
                 # Store full description in metadata if possible, or extend table later.
@@ -179,22 +204,58 @@ class JobBoardService:
 
         return new_leads_count
 
-    def _infer_need(self, job: JobData) -> str:
+    async def _infer_need(self, job: JobData) -> str:
         """
-        Simple heuristic logic to infer business need from job title/description.
-        In a real scenario, this could be an LLM-powered analysis.
+        Uses LLM to infer business need and extract technical tags from job description.
+        Returns a formatted string: "[Tag1] [Tag2] Inferred business need..."
         """
+        try:
+            from ..services.credential_service import credential_service
+            api_key = await credential_service.get_credential("GEMINI_API_KEY") or await credential_service.get_credential("GOOGLE_API_KEY")
+            if not api_key:
+                return self._fallback_infer_need(job)
+
+            from google import genai
+            from google.genai import types
+
+            client = genai.Client(api_key=api_key)
+            prompt = (
+                "You are an expert technical recruiter and sales analyst. "
+                f"Analyze this job posting for '{job.title}' at '{job.company}'.\n"
+                "1. Extract 2-5 core technical or business skills as tags (e.g. [Python] [B2B Sales] [AWS]).\n"
+                "2. Briefly summarize why they are hiring and what AI/Automation services they might need (1 sentence).\n"
+                "Format EXACTLY like this: [Tag1] [Tag2] [Tag3] Summary sentence here.\n"
+                "Do not use markdown blocks.\n\n"
+                f"Job Description Snippet:\n{job.description_full or job.description}"
+            )
+
+            response = client.models.generate_content(
+                model="gemini-2.0-flash-lite",
+                contents=prompt,
+                config=types.GenerateContentConfig(temperature=0.2)
+            )
+
+            if response.text:
+                res = str(response.text).replace("\n", " ").strip()
+                logger.info(f"LLM tagged job '{job.company}': {res[:50]}...")
+                return res
+            return self._fallback_infer_need(job)
+        except Exception as e:
+            logger.warning(f"LLM tagging failed for {job.company}: {e}")
+            return self._fallback_infer_need(job)
+
+    def _fallback_infer_need(self, job: JobData) -> str:
         title = job.title.lower()
         desc = (job.description or "").lower()
 
         if "analyst" in title or "data" in title or "tableau" in desc:
-            return "Hiring Data Talent -> High potential for BI/Data Tooling."
+            return "[Data] [Analytics] Hiring Data Talent -> High potential for BI/Data Tooling."
         elif "ai" in title or "ml" in title or "llm" in desc:
-            return "Building AI Capabilities -> Target for Archon/Agent framework."
+            return "[AI] [LLM] Building AI Capabilities -> Target for Archon/Agent framework."
         elif "marketing" in title or "sales" in title:
-            return "Expanding Growth Team -> Needs Sales Intelligence/Lead Gen tools."
+            return "[Sales] [Marketing] Expanding Growth Team -> Needs Sales Intelligence/Lead Gen tools."
         else:
-            return f"Hiring for {job.title} -> General digital transformation lead."
+            return f"[{job.title[:10]}] Hiring for {job.title} -> General digital transformation lead."
 
     async def _fetch_from_104(self, client: httpx.AsyncClient, keyword: str, limit: int) -> list[JobData]:
         """

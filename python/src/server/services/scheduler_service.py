@@ -62,6 +62,15 @@ class SchedulerService:
         )
         logger.info(f"✅ Scheduled Job: System Probe (Every {probe_mins} mins)")
 
+        # Job 1.1: Alice Daily Lead Fetch (Every 24 hours)
+        self._scheduler.add_job(
+            self._run_auto_fetch_leads,
+            trigger=IntervalTrigger(hours=24),
+            id="alice_auto_fetch",
+            replace_existing=True
+        )
+        logger.info("✅ Scheduled Job: Alice Auto Fetch (Every 24 hours)")
+
         # Job 1.5: System Probe Cleanup (Hourly)
         self._scheduler.add_job(
             self._cleanup_system_probes,
@@ -161,6 +170,29 @@ class SchedulerService:
 
         except Exception as e:
             logger.error(f"💥 Clockwork: Task Dispatcher Failed: {e}")
+
+    async def _run_auto_fetch_leads(self):
+        """
+        Clockwork task to trigger Alice's daily lead auto-fetch.
+        """
+        logger.info("📡 Clockwork: Triggering daily Alice job search...")
+        try:
+            from ..utils import get_supabase_client
+            from .job_board_service import JobBoardService
+
+            service = JobBoardService()
+            new_leads = await service.auto_fetch_daily_leads()
+
+            supabase = get_supabase_client()
+            supabase.table("archon_logs").insert({
+                "source": "clockwork-scheduler",
+                "level": "INFO",
+                "message": f"Daily auto-fetch completed. {new_leads} new leads saved.",
+                "details": {"new_leads_count": new_leads}
+            }).execute()
+            logger.info(f"✅ Clockwork: Alice daily auto-fetch finished ({new_leads} leads).")
+        except Exception as e:
+            logger.error(f"💥 Clockwork: Alice auto-fetch failed: {e}")
 
     async def _run_log_patrol(self):
         """

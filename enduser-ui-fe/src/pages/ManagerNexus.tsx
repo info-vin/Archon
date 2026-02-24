@@ -19,9 +19,10 @@ import {
     Line, XAxis, YAxis, CartesianGrid, Tooltip as ReTooltip, ResponsiveContainer, AreaChart, Area,
     ReferenceLine, Label
 } from 'recharts';
+import { PromptManagement } from '../features/admin/components/PromptManagement.tsx';
 
 // --- Types ---
-type MetricCategory = 'integrity' | 'resources' | 'op_load' | 'sent_risks' | 'active_force' | 'ethics' | 'collab' | 'graph' | 'velocity';
+type MetricCategory = 'integrity' | 'resources' | 'op_load' | 'sent_risks' | 'active_force' | 'ethics' | 'collab' | 'graph' | 'velocity' | 'prompts';
 
 interface ScoringRule {
     key: string;
@@ -1363,6 +1364,19 @@ export const ManagerNexus: React.FC = () => {
                     </DetailSection>
                 );
 
+            case 'prompts':
+                return (
+                    <DetailSection 
+                        title="System Prompts" 
+                        subtitle="Core Agent Instructions & Behavior Modeling" 
+                        icon={<FileTextIcon className="w-5 h-5 text-indigo-600"/>}
+                    >
+                        <div className="bg-white/80 backdrop-blur border border-gray-100 rounded-3xl p-6 shadow-sm overflow-hidden h-full">
+                            <PromptManagement isManagerMode={true} />
+                        </div>
+                    </DetailSection>
+                );
+
             default:
                 return (
                     <div className="p-12 text-center text-gray-400 bg-white rounded-3xl border border-dashed border-gray-200">
@@ -1480,6 +1494,15 @@ export const ManagerNexus: React.FC = () => {
                     status={slaReliability?.current_sla >= 95 ? "good" : "warning"} 
                     onClick={setActiveMetric} 
                     tooltip="6-Month Strategic Discipline Trend" 
+                />
+                <HUDCard 
+                    id="prompts" label="Prompts" 
+                    value="System" 
+                    sub="Management" 
+                    active={activeMetric === 'prompts'} 
+                    status="neutral" 
+                    onClick={setActiveMetric} 
+                    tooltip="System Prompts Management" 
                 />
             </div>
 

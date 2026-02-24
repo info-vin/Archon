@@ -584,6 +584,16 @@ async def trigger_sentinel(current_user: dict = Depends(get_current_user)):
     await scheduler_service.run_business_sentinel()
     return {"status": "triggered"}
 
+@router.post("/manager/leads/auto-fetch")
+async def trigger_daily_fetch(current_user: dict = Depends(get_current_user)):
+    """Manually trigger Alice's daily lead auto-fetch."""
+    if current_user.get("role", "viewer").lower() not in ["manager", "admin", "sales"]:
+        raise HTTPException(status_code=403)
+    from ..services.job_board_service import JobBoardService
+    service = JobBoardService()
+    new_leads = await service.auto_fetch_daily_leads()
+    return {"success": True, "new_leads_count": new_leads}
+
 @router.post("/manager/alerts/{alert_id}/dispatch")
 async def dispatch_alert_task(alert_id: str, current_user: dict = Depends(get_current_user)):
     if current_user.get("role", "viewer").lower() not in ["manager", "admin"]:
