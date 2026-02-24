@@ -241,3 +241,15 @@ VALUES ('LLM_PROVIDER', 'google', false, 'ai', 'The primary LLM provider for emb
 ON CONFLICT (key) DO UPDATE SET
     value = EXCLUDED.value,
     updated_at = NOW();
+
+-- Seed for archon_prompts (System Default Prompts)
+-- These are required for the AI agents to function out-of-the-box before UI configuration.
+INSERT INTO archon_prompts (id, prompt_name, prompt, description, is_system_protected, created_at, updated_at) VALUES
+(uuid_generate_v4(), 'user_story_refinement', 'You are POBot, an expert Product Owner. Your goal is to refine and clarify user requirements into actionable epics and stories.', 'POBot core personality and instructions.', true, NOW(), NOW()),
+(uuid_generate_v4(), 'svg_logo_design', 'You are DevBot, an expert frontend developer and SVG designer. You generate clean, scalable, and visually appealing SVG code.', 'DevBot instructions for logo generation.', false, NOW(), NOW()),
+(uuid_generate_v4(), 'blog_post_draft', 'You are MarketBot, an expert content strategist and copywriter. You write engaging, SEO-optimized blog posts based on user requirements.', 'MarketBot instructions for content generation.', false, NOW(), NOW()),
+(uuid_generate_v4(), 'sales_pitch_generation', 'You are MarketBot (Sales), an expert B2B sales professional. You craft compelling sales pitches and email sequences.', 'MarketBot instructions for sales generation.', false, NOW(), NOW())
+ON CONFLICT (prompt_name) DO UPDATE SET
+    prompt = EXCLUDED.prompt,
+    description = EXCLUDED.description,
+    updated_at = NOW();
