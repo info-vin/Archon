@@ -129,37 +129,36 @@ sequenceDiagram
 
 ---
 
-## 5. 三位一體營運流 (The Trinity Operational Loop) - 2026-02-23 落地
+## 5. 三位一體營運流 (The Trinity Operational Loop) - 2026-02-24 落地
 
 今日已物理打通 David Howard 的核心自動化營運路徑：
 
-1.  **認知定義 (3737)**：David 在 Admin UI 設定 `archon_crawler_targets` (包含網址、動態白名單、深度)。
-2.  **行動指派 (5173)**：David 在 Project Task Modal 中將任務「連結」至上述目標，並勾選「加入排程 (Recurring)」。
-3.  **自動執行 (Background)**：`Clockwork` 任務分派器每 30 分鐘自動掃描到期任務，指派 `Librarian` 執行爬取並更新 RAG 知識庫。
+1.  **動態白名單定義 (5173 Admin)**：David 在 5173 的 Admin Control Center > Data Extraction 標籤頁設定 `archon_crawler_targets` (包含允許爬取的根網址與深度限制)。
+2.  **知識採集指派 (5173 User)**：任一使用者在建立任務 (Task Modal) 時，指派給 `Librarian` 並綁定上述已許可的 Crawler Target，同時勾選「Recurring（定期任務）」。
+3.  **自動執行 (Background)**：`Clockwork` 任務分派器透過 heartbeat 自動掃描到期任務，觸發 `Librarian` 執行爬取，並將新碎片安全地送入 RAG 知識庫。
 
 ---
 
-## 6. 實體操作範例：政府政策每日自動同步 (SOP)
+## 6. 實體操作範例：政府政策定期自動同步 (SOP)
 
-**場景**：David 需要系統每日自動更新「勞動部工作生活平衡網」。
+**場景**：需要系統定期更新「勞動部工作生活平衡網」的最新政策。
 
-### **第一階段：3737 建立基礎 (Source Creation)**
-1.  **入口**：`Admin UI (3737) > Knowledge Base > + Knowledge`。
-2.  **動作**：輸入 `https://wlb.mol.gov.tw/Page/index.aspx`，設定 Type=`Business`，點擊 `Start Crawling`。
-3.  **物理結果**：系統產生 `source_id` 並在 `archon_sources` 建立基礎索引。
+### **第一階段：David 定義邊界 (Boundary Setup)**
+1.  **入口**：登入 5173 系統，左側選單進入 `Admin Control Center`。
+2.  **動作**：切換至 `Data Extraction` 標籤，在 `Knowledge Base Targets (Crawler)` 區塊輸入 URL `https://wlb.mol.gov.tw/Page/index.aspx` 並設定 Depth，點擊 `ADD TARGET`。
+3.  **物理結果**：系統防禦機制解開對該網域的限制，將其記錄至 `archon_crawler_targets`。
 
-### **第二階段：5173 定義營運規則 (Operational Setup)**
-1.  **入口**：`User UI (5173) > Project > Create Task`。
-2.  **指派**：選取 `Librarian Bot`。
-3.  **David's Architect Tools** (玫瑰色區域)：
-    *   **Associate Target**：下拉選單選取上述 WLB 來源。
-    *   **Add to Periodic Schedule**：勾選並選取 `Daily`。
-    *   **Dynamic Whitelist** (由後端推導)：David 在 3737 輸入的網域 `wlb.mol.gov.tw` 會自動被 `RBACService` 納入爬取許可。
+### **第二階段：建立定期採集管道 (Operational Setup)**
+1.  **入口**：返回左側專案列表，進入任意專案後點擊 `+ New Task`。
+2.  **角色指派**：在 Assignee 下拉選單中指派給 `Librarian`。
+3.  **條件綁定**：
+    *   **Associate Knowledge Target**：下拉選單會自動載入 David 剛設定好的 `https://wlb.mol.gov.tw...`，請選取它。
+    *   **Recurring Config**：選取執行頻率 (如 Daily)。
+4.  **物理結果**：任務建立成功，專案看板上該任務會顯示 `Librarian` 的頭像以及藍色的 `(🔁 定期)` 標籤。
 
 ### **第三階段：自動化循環 (Expertise Loop)**
-*   `Clockwork` 每 30 分鐘執行掃描。
-*   自動觸發 `Librarian` 穿透動態許可，執行 `crawl4ai` 抓取最新動態內容。
-*   數據自動歸檔，維持 RAG 知識時效性。
+*   `Clockwork` 在排程觸發時接管任務。
+*   `Librarian` 依照 Task 綁定的 Target ID，執行 `perform_web_crawl` 獲取最新網頁內容，並儲存為 Chunk 供全系統檢索使用。
 
 ---
 
