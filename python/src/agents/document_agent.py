@@ -73,11 +73,9 @@ class DocumentAgent(BaseAgent[DocumentDependencies, DocumentOperation]):
 
     def _create_agent(self, **kwargs) -> Agent[DocumentDependencies, DocumentOperation]:
         """Create the PydanticAI agent with tools and prompts."""
+        from ..services.prompt_service import prompt_service
 
-        agent: Agent[DocumentDependencies, DocumentOperation] = Agent(
-            model=self.model,
-            deps_type=DocumentDependencies,
-            system_prompt="""You are a Document Management Assistant that helps users create, update, and modify project documents through conversation.
+        default_prompt = """You are a Document Management Assistant that helps users create, update, and modify project documents through conversation.
 
 **Your Capabilities:**
 - Create new documents (PRDs, technical specs, meeting notes, API docs, etc.)
@@ -123,7 +121,13 @@ class DocumentAgent(BaseAgent[DocumentDependencies, DocumentOperation]):
 **✅ Change Management:**
 - "Request approval for the API changes" → Use request_approval tool
 - "Submit PRD updates for review" → Use request_approval tool
-- "Create approval workflow for database changes" → Use request_approval tool""",
+- "Create approval workflow for database changes" → Use request_approval tool"""
+        system_prompt = prompt_service.get_prompt("document_agent_prompt", default_prompt)
+
+        agent: Agent[DocumentDependencies, DocumentOperation] = Agent(
+            model=self.model,
+            deps_type=DocumentDependencies,
+            system_prompt=system_prompt,
             **kwargs,
         )
 

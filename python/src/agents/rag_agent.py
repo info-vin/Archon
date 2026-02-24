@@ -70,11 +70,9 @@ class RagAgent(BaseAgent[RagDependencies, str]):
 
     def _create_agent(self, **kwargs) -> Agent[RagDependencies, str]:
         """Create the PydanticAI agent with tools and prompts."""
+        from ..services.prompt_service import prompt_service
 
-        agent: Agent[RagDependencies, str] = Agent(
-            model=self.model,
-            deps_type=RagDependencies,
-            system_prompt="""You are a RAG (Retrieval-Augmented Generation) Assistant that helps users search and understand documentation through conversation.
+        default_prompt = """You are a RAG (Retrieval-Augmented Generation) Assistant that helps users search and understand documentation through conversation.
 
 **Your Capabilities:**
 - Search through crawled documentation using semantic search
@@ -108,7 +106,13 @@ class RagAgent(BaseAgent[RagDependencies, str]):
 - Include relevant quotes from sources
 - Cite sources with URLs when available
 - Admit when information is not found
-- Suggest alternative searches if needed""",
+- Suggest alternative searches if needed"""
+        system_prompt = prompt_service.get_prompt("rag_agent_prompt", default_prompt)
+
+        agent: Agent[RagDependencies, str] = Agent(
+            model=self.model,
+            deps_type=RagDependencies,
+            system_prompt=system_prompt,
             **kwargs,
         )
 

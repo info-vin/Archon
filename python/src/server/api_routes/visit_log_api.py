@@ -62,17 +62,14 @@ async def _transcribe_with_gemini(
             await asyncio.sleep(2)
 
         # 3. Get Prompt from DB
-        try:
-            from ..services.prompt_service import prompt_service
-            prompt = prompt_service.get_prompt("VOICE_TRANSCRIPTION_PROMPT")
-            if not prompt:
-                raise ValueError("Prompt not found")
-        except Exception:
-            prompt = (
-                "你是一位專業的業務助理。請準確地將這段銷售拜訪錄音轉錄為繁體中文逐字稿，"
-                "並總結關鍵點及提取具體任務。請嚴格以 JSON 格式回傳，"
-                "包含鍵值：'transcript', 'summary', 'tasks' (字串清單)。"
-            )
+        from ..services.prompt_service import prompt_service
+
+        default_prompt = (
+            "你是一位專業的業務助理。請準確地將這段銷售拜訪錄音轉錄為繁體中文逐字稿，"
+            "並總結關鍵點及提取具體任務。請嚴格以 JSON 格式回傳，"
+            "包含鍵值：'transcript', 'summary', 'tasks' (字串清單)。"
+        )
+        prompt = prompt_service.get_prompt("VOICE_TRANSCRIPTION_PROMPT", default_prompt)
 
         # 4. Generate Content with Multi-modality
         response = client.models.generate_content(

@@ -55,13 +55,16 @@ class ExtractionService:
 
         # 2. Analyze with LLM
         try:
-            system_prompt = (
+            from .prompt_service import prompt_service
+
+            default_prompt = (
                 "You are a Data Extraction Expert. Analyze the provided web content (Markdown) "
                 "and identify key structured data fields that would be valuable for business intelligence "
                 "(Sales, Marketing, HR). \n"
                 "Return a JSON object with a 'fields' list. Each field should have: 'name', 'type' (string, number, list), "
                 "and 'description' (example value from text)."
             )
+            system_prompt = prompt_service.get_prompt("data_extraction_prompt", default_prompt)
 
             user_prompt = f"Analyze this content:\n\n{content}"
 
