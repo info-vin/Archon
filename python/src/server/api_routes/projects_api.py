@@ -786,6 +786,12 @@ async def create_task(
             if request.assignee_id in AI_AGENT_ROLES.values():
                 logger.info(f"Assignee ID '{request.assignee_id}' is an AI Agent. Nullifying UUID for DB insert.")
                 resolved_assignee_id = None
+
+                # Derive the agent name from AI_AGENT_ROLES (e.g. "Librarian (Knowledge)" -> "Librarian")
+                for name, agent_id in AI_AGENT_ROLES.items():
+                    if agent_id == request.assignee_id:
+                        target_assignee_name = name.split(" ")[0]
+                        break
             else:
                 profile_service = ProfileService()
                 success, profile = profile_service.get_profile(request.assignee_id)

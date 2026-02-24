@@ -263,7 +263,7 @@ class TaskService:
                     "id, project_id, parent_task_id, title, description, "
                     "status, assignee, assignee_id, task_order, feature, archived, "
                     "archived_at, archived_by, created_at, updated_at, due_date, "
-                    "sources, code_examples"  # Still fetch for counting, but will process differently
+                    "sources, code_examples, is_recurring, crawler_target_id, schedule_config"  # Still fetch for counting, but will process differently
                 )
             else:
                 query = self.supabase_client.table("archon_tasks").select("* ")
@@ -368,6 +368,9 @@ class TaskService:
                     "updated_at": task["updated_at"],
                     "archived": task.get("archived", False),
                     "due_date": task.get("due_date"),
+                    "is_recurring": task.get("is_recurring"),
+                    "crawler_target_id": task.get("crawler_target_id"),
+                    "schedule_config": task.get("schedule_config"),
                 }
 
                 if not exclude_large_fields:
