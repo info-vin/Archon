@@ -56,8 +56,13 @@ export const PromptManagement: React.FC<{ isManagerMode: boolean }> = ({ isManag
             {/* List Sidebar */}
             <div className="lg:col-span-1 space-y-2 overflow-y-auto pr-2 pb-4">
                 <h3 className="text-xs font-bold uppercase text-muted-foreground tracking-wider mb-4">Available Prompts</h3>
-                {prompts.map(p => (
-                    <button 
+                {prompts.length === 0 ? (
+                    <div className="p-4 text-center text-muted-foreground italic text-[11px] border-2 border-dashed border-border rounded-xl">
+                        No system prompts initialized yet. They will auto-populate as agents run for the first time.
+                    </div>
+                ) : (
+                    prompts.map(p => (
+                        <button 
                         key={p.prompt_name}
                         onClick={() => handleSelect(p)}
                         className={`w-full text-left p-4 rounded-xl border transition-all ${selectedPrompt?.prompt_name === p.prompt_name ? 'border-primary bg-primary/5 shadow-sm' : 'border-border bg-card hover:border-primary/50'}`}
@@ -76,7 +81,8 @@ export const PromptManagement: React.FC<{ isManagerMode: boolean }> = ({ isManag
                         </div>
                         <div className="text-xs text-muted-foreground mt-1 line-clamp-1">{p.description || 'No description'}</div>
                     </button>
-                ))}
+                    ))
+                )}
             </div>
 
             {/* Editor Area */}

@@ -564,7 +564,7 @@ async def trigger_enrichment_loop(current_user: dict = Depends(get_current_user)
 
 @router.delete("/leads/reset")
 async def reset_leads(current_user: dict = Depends(get_current_user)):
-    if current_user.get("role", "viewer").lower() not in ["admin", "system_admin"]:
+    if current_user.get("role", "viewer").lower() not in ["admin", "system_admin", "manager"]:
         raise HTTPException(status_code=403)
     res = get_supabase_client().table("leads").delete().neq("id", str(uuid.uuid4())).execute()
     return {"success": True, "count": len(res.data) if res.data else 0}

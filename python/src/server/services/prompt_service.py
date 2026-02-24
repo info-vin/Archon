@@ -56,7 +56,7 @@ class PromptService:
 
     def get_prompt(self, prompt_name: str, default: str | None = None) -> str:
         """
-        Get a prompt by name.
+        Get a prompt by name. If not found, returns default and auto-saves it to DB.
 
         Args:
             prompt_name: The name of the prompt to retrieve
@@ -68,12 +68,19 @@ class PromptService:
         if default is None:
             default = "You are a helpful AI assistant."
 
-        prompt = self._prompts.get(prompt_name, default)
+        if prompt_name not in self._prompts:
+            logger.warning(f"Prompt '{prompt_name}' not found, auto-seeding default.")
+            self._prompts[prompt_name] = default
+            # Auto-seed the default asynchronously so it appears in the UI
+            try:
+                import asyncio
+                loop = asyncio.get_running_loop()
+                loop.create_task(self.update_prompt(prompt_name, default, "Auto-seeded default prompt"))
+            except Exception as e:
+                logger.debug(f"Could not auto-seed prompt {prompt_name}: {e}")
+            return default
 
-        if prompt == default and prompt_name not in self._prompts:
-            logger.warning(f"Prompt '{prompt_name}' not found, using default")
-
-        return prompt
+        return self._prompts[prompt_name]
 
     async def reload_prompts(self) -> None:
         """
