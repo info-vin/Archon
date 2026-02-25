@@ -21,8 +21,9 @@
 
 ### 2.1 資料庫 Seed 實體化 (Seed Materialization)
 *   **地點**: `migration/0.2.1/seed_mock_data.sql`
-*   **內容**: 補全了 11 個專業 Prompt 範本，取代原本的佔位符。
+*   **內容**: 補全了 11 個專業 Prompt 範本，取代原本的佔位符，並新增了 `twin_scout_mission` 供給 E2E 自動化診斷使用。
 *   **亮點**: 包含 POBot 的 Gherkin 語法規範、MarketBot 的 JSON 輸出結構，以及 David Howard 的 L1-L3 技術診斷治理指令。
+*   **Twin Scout 穩定化**: 將 `browser-use` 棄用，改用 Playwright + Gemini Vision 繞過 API JSON Schema 錯誤，能夠穩健處理多模態截圖，並支援 Makefile Prompt 選擇。
 
 ### 2.2 程式碼手術區 (Refactored Files)
 1.  `python/src/agents/document_agent.py`: 移除 Hardcoded Docstring，改為動態獲取。
