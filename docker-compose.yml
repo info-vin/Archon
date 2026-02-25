@@ -231,14 +231,23 @@ services:
       dockerfile: Dockerfile.twin
     container_name: archon-twin-scout
     user: "root"
-    depends_on:
-      - enduser-frontend
-      - archon-frontend
-      - archon-server
     environment:
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
       - GEMINI_API_KEY=${GEMINI_API_KEY}
-      - GOOGLE_API_KEY=${GOOGLE_API_KEY:-${GEMINI_API_KEY}}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - TWIN_SCOUT_TASK=${TWIN_SCOUT_TASK}
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_SERVICE_KEY=${SUPABASE_SERVICE_KEY}
+    depends_on:
+      archon-server:
+        condition: service_healthy
+        required: false
+      archon-frontend:
+        condition: service_healthy
+        required: false
+      enduser-frontend:
+        condition: service_healthy
+        required: false
     networks:
       - app-network
     volumes:

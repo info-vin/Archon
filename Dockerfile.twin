@@ -27,10 +27,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libasound2 \
     && rm -rf /var/lib/apt/lists/*
 
-# Upgrade pip and install core dependencies
-RUN pip install --no-cache-dir --upgrade pip
-# 🟢 物理修正：顯式安裝 playwright 確保 python -m 調用成功
-RUN pip install --no-cache-dir playwright browser-use langchain-google-genai python-dotenv
+# Upgrade pip and install uv for faster builds
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+
+# 🟢 物理修正：使用 uv 並行安裝，大幅節省時間
+RUN uv pip install --system --no-cache playwright browser-use langchain-google-genai python-dotenv supabase
 
 # Install Playwright browsers
 RUN python -m playwright install chromium
