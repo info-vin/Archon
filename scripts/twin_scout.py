@@ -1,130 +1,180 @@
 import asyncio
 import os
 import base64
+import argparse
+import shutil
 from datetime import datetime
 from supabase import create_client, Client
 from playwright.async_api import async_playwright
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.messages import HumanMessage
 
-async def get_mission_from_db():
-    url = os.getenv("SUPABASE_URL")
-    key = os.getenv("SUPABASE_SERVICE_KEY")
-    prompt_key = os.getenv("SCOUT_PROMPT_KEY", "twin_scout_mission")
+# TODO (Phase 4.6.9): 實作 Agent 子目錄 Session 隔離，避免多人同時使用 Chrome 導致 SingletonLock 衝突。
+# TODO (Phase 4.6.9): 實作基於 Gemini Vision 判定結果的動態評分系統。
+
+def parse_args():
+    parser = argparse.ArgumentParser(description="Digital Twin Scout v27 - Back to Origins")
+    parser.add_argument("--mode", type=str, default="both", choices=["audit", "action", "both"])
+    parser.add_argument("--headless", type=str, default="true")
+    return parser.parse_args()
+
+async def get_mission_from_db(prompt_name="twin_scout_mission"):
     try:
+        url = os.getenv("SUPABASE_URL")
+        key = os.getenv("SUPABASE_SERVICE_KEY")
         supabase: Client = create_client(url, key)
-        res = supabase.table("archon_prompts").select("prompt").eq("prompt_name", prompt_key).execute()
-        return res.data[0]["prompt"] if res.data else "Standard UI Audit."
+        res = supabase.table("archon_prompts").select("prompt").eq("prompt_name", prompt_name).execute()
+        return res.data[0]["prompt"] if res.data else "Standard UI Audit Mission."
+    except:
+        return "Standard Audit Mission."
+
+async def log_agent_xp(message, xp_change=0):
+    try:
+        url = os.getenv("SUPABASE_URL")
+        key = os.getenv("SUPABASE_SERVICE_KEY")
+        supabase: Client = create_client(url, key)
+        supabase.table("archon_logs").insert({
+            "source": "agent_action",
+            "level": "INFO",
+            "message": message,
+            "details": {"agent_name": "TwinScout", "xp_change": xp_change, "v": "v27"}
+        }).execute()
+    except:
+        pass
+
+async def perform_banana_action(page, mission_text):
+    print(f"🚀 [ACTION] 啟動 Gemini 任務...")
+    try:
+        await page.goto("https://gemini.google.com/", wait_until="domcontentloaded")
+        await page.wait_for_selector('div[contenteditable="true"]', timeout=180000)
+        
+        # 工具操作
+        menu_selectors = ["button[aria-label*='工具']", "text=工具", "text=Tools"]
+        for sel in menu_selectors:
+            target = await page.query_selector(sel)
+            if target:
+                await target.click()
+                await asyncio.sleep(2)
+                break
+
+        tool_selectors = ["text=Banana", "text=建立圖片", "text=Create Image"]
+        for sel in tool_selectors:
+            tool = await page.query_selector(sel)
+            if tool:
+                await tool.click()
+                await asyncio.sleep(5)
+                break
+
+        # 重新定位並送出
+        textarea = await page.wait_for_selector('div[contenteditable="true"]', timeout=15000)
+        await textarea.fill(mission_text)
+        await page.keyboard.press("Enter")
+        print("✍️ 指令已送出，等待繪製 (45s)...")
+        await asyncio.sleep(45)
+        
+        await page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
+        await asyncio.sleep(2)
+        return True
     except Exception as e:
-        print(f"⚠️ DB Fetch Failed: {e}")
-        return "Standard Audit."
+        print(f"❌ Action 失敗: {e}")
+        return False
 
 async def run_scout_session():
-    print("🔄 啟動 Digital Twin Scout (原生 Playwright + Gemini Vision)...")
-    mission = await get_mission_from_db()
-    print(f"📋 目標指令: {mission}")
+    args = parse_args()
+    is_headless = args.headless.lower() == "true"
     
-    api_key = os.getenv("GEMINI_API_KEY")
-    if not api_key:
-        api_key = os.getenv("GOOGLE_API_KEY")
-        
-    if not api_key:
-        print("❌ Cannot find GEMINI_API_KEY or GOOGLE_API_KEY in environment variables.")
-        return
-        
-    # Prevent Langchain from picking up an expired GOOGLE_API_KEY if GEMINI_API_KEY is preferred
+    # 確保 API Key 優先級
+    api_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
     if "GOOGLE_API_KEY" in os.environ and os.getenv("GEMINI_API_KEY"):
         del os.environ["GOOGLE_API_KEY"]
 
-    report_dir = "./.twin/diagnostics"
-    os.makedirs(report_dir, exist_ok=True)
-    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-    report_path = f"{report_dir}/report_{timestamp}.md"
+    all_results = []
     
-    results = []
-
-    try:
-        async with async_playwright() as p:
-            # 啟動 Chromium 瀏覽器
-            browser = await p.chromium.launch(headless=True, args=['--no-sandbox', '--disable-setuid-sandbox'])
-            context = await browser.new_context()
-            page = await context.new_page()
-
-            # --- Target 1: Admin UI (3737) ---
-            print("📍 正在巡檢 Admin UI (http://archon-ui:3737)...")
-            await page.goto("http://archon-ui:3737")
-            try:
-                # 等待 React 掛載與頁面穩定
-                await page.wait_for_selector('#root > *', timeout=30000)
-                await asyncio.sleep(2)  # 物理緩衝
-                b64_admin = base64.b64encode(await page.screenshot()).decode("utf-8")
-                dom_admin = await page.evaluate("() => document.body.innerText.substring(0, 1000)") # 字串截斷
-                results.append({"name": "Admin UI", "image": b64_admin, "text": dom_admin})
-                print("✅ Admin UI 截圖成功")
-            except Exception as e:
-                print(f"⚠️ Admin UI 截圖失敗: {e}")
-
-            # --- Target 2: EndUser UI (5173 Login Flow) ---
-            print("📍 正在巡檢 EndUser UI (http://enduser-ui:5173/#/auth)...")
-            await page.goto("http://enduser-ui:5173/#/auth")
-            try:
-                await page.wait_for_selector('input[type="email"]', timeout=30000)
-                await page.fill('input[type="email"]', "alice@archon.com")
-                await page.fill('input[type="password"]', "qwer45tyuiop")
-                
-                # 點擊登入按鈕並等待導航
-                await page.click('button[type="submit"]')
-                print("⏳ 等待登入後跳轉與渲染...")
-                
-                # 等待跳轉後的主要介面出現 (假設有特定 sidebar 或 root 下的子元素)
-                await page.wait_for_selector('#root > *', timeout=30000)
-                await asyncio.sleep(3) # 給予網路載入 Dashboard 的時間
-                
-                b64_user = base64.b64encode(await page.screenshot()).decode("utf-8")
-                dom_user = await page.evaluate("() => document.body.innerText.substring(0, 1000)")
-                results.append({"name": "EndUser UI", "image": b64_user, "text": dom_user})
-                print("✅ EndUser UI 截圖成功")
-            except Exception as e:
-                print(f"⚠️ EndUser UI 登入或截圖失敗: {e}")
-
-            await browser.close()
+    async with async_playwright() as p:
+        # --- Audit Stage ---
+        if args.mode in ["audit", "both"]:
+            audit_dir = os.path.abspath("./.browser_data/temp_audit")
+            if os.path.exists(audit_dir): shutil.rmtree(audit_dir, ignore_errors=True)
+            os.makedirs(audit_dir, exist_ok=True)
             
-        if not results:
-            print("❌ 沒有收集到任何 UI 截圖，退出。")
-            return
+            ctx = await p.chromium.launch_persistent_context(user_data_dir=audit_dir, headless=is_headless, args=['--no-sandbox', '--disable-setuid-sandbox'])
+            pg = await ctx.new_page()
             
-        print("🚀 將擷取的畫面送交 Gemini 分析...")
+            # Admin UI
+            try:
+                url = os.getenv("ADMIN_UI_URL", "http://archon-ui:3737")
+                await pg.goto(url, wait_until="domcontentloaded", timeout=30000)
+                await pg.wait_for_selector('#root > *', timeout=30000)
+                await asyncio.sleep(2)
+                txt = await pg.evaluate("() => document.body.innerText.substring(0, 1000)")
+                all_results.append({"name": "Admin UI", "image": base64.b64encode(await pg.screenshot()).decode("utf-8"), "text": txt})
+            except: pass
+
+            # EndUser UI (含登入)
+            try:
+                url = os.getenv("ENDUSER_UI_URL", "http://enduser-ui:5173")
+                await pg.goto(f"{url}/#/auth", wait_until="domcontentloaded", timeout=30000)
+                await pg.wait_for_selector('input[type="email"]', timeout=30000)
+                await pg.fill('input[type="email"]', "alice@archon.com")
+                await pg.fill('input[type="password"]', "qwer45tyuiop")
+                await pg.click('button[type="submit"]')
+                await pg.wait_for_selector('#root > *', timeout=30000)
+                await asyncio.sleep(3)
+                txt = await pg.evaluate("() => document.body.innerText.substring(0, 1000)")
+                all_results.append({"name": "EndUser UI", "image": base64.b64encode(await pg.screenshot()).decode("utf-8"), "text": txt})
+            except: pass
+            
+            await ctx.close()
+
+        # --- Action Stage ---
+        if args.mode in ["action", "both"]:
+            root_dir = os.path.abspath("./.browser_data")
+            for lock in ["SingletonLock", "SingletonSocket"]:
+                f = os.path.join(root_dir, lock)
+                if os.path.exists(f): os.remove(f)
+
+            ctx = await p.chromium.launch_persistent_context(
+                user_data_dir=root_dir, headless=is_headless, channel="chrome",
+                ignore_default_args=["--enable-automation"],
+                args=['--no-sandbox', '--disable-setuid-sandbox', '--disable-blink-features=AutomationControlled']
+            )
+            pg = await ctx.new_page()
+            
+            mission = await get_mission_from_db("banana_mission")
+            success = await perform_banana_action(pg, mission)
+            if success:
+                img = base64.b64encode(await pg.screenshot(full_page=True)).decode("utf-8")
+                all_results.append({"name": "Gemini_Action", "image": img})
+            
+            await ctx.close()
+
+    if all_results:
+        print("🚀 調用 Gemini Vision 產生最終報告...")
         llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", api_key=api_key)
+        mission_desc = await get_mission_from_db("twin_scout_mission")
         
-        # 準備多模態訊息 (Multimodal Message)
-        message_content = [
-            {"type": "text", "text": f"你是一位強悍的 UX/UI 診斷工程師 Digital Twin Scout。\n\n使用者的測試目標：\"{mission}\"\n\n請根據以下提供的網頁截圖，分析這兩個 UI 的狀態，並產出一份 Markdown 格式的中文診斷報告。報告應包含：1. 觀察到的介面狀態 (有無空洞、錯誤訊息) 2. 是否符合目標預期。"}
-        ]
-        
-        for ui in results:
-            message_content.append({"type": "text", "text": f"--- {ui['name']} 畫面內容參考: {ui['text']} ---"})
-            message_content.append({
-                "type": "image_url",
-                "image_url": {"url": f"data:image/png;base64,{ui['image']}"}
-            })
+        msg_parts = [{"type": "text", "text": f"你是一位強悍的 UX/UI 診斷工程師 Digital Twin Scout。\n任務目標：\"{mission_desc}\"\n請誠實診斷：1. 內部 UI 是否健康？ 2. Gemini 截圖中是否真的畫出圖了？"}]
+        for r in all_results:
+            info = f"\n--- 截圖：{r['name']} ---"
+            if "text" in r: info += f"\n[畫面內容擷取]: {r['text']}"
+            msg_parts.append({"type": "text", "text": info})
+            msg_parts.append({"type": "image_url", "image_url": {"url": f"data:image/png;base64,{r['image']}"}})
             
-        human_msg = HumanMessage(content=message_content)
+        response = await llm.ainvoke([HumanMessage(content=msg_parts)])
         
-        response = await llm.ainvoke([human_msg])
-        print("✅ Gemini 分析完成!")
+        # 【恢復歷史規範】：report_{timestamp}.md
+        report_dir = "./.twin/diagnostics"
+        os.makedirs(report_dir, exist_ok=True)
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        report_path = f"{report_dir}/report_{timestamp}.md"
         
-        # Output final result to report
         with open(report_path, "w", encoding="utf-8") as f:
-            f.write(f"# Twin Scout Agent Report (Vision API)\n")
-            f.write(f"- **Time**: {datetime.now().isoformat()}\n")
-            f.write(f"- **Mission Prompt**: {mission}\n\n")
-            f.write(f"## 視覺診斷結果\n\n")
+            f.write(f"# Twin Scout Agent Report\n- **Time**: {datetime.now().isoformat()}\n\n")
             f.write(response.content)
+            f.write("\n\n---\n**診斷人：** Digital Twin Scout")
             
-        print(f"📄 報告已儲存至: {report_path}")
-
-    except Exception as e:
-        print(f"❌ 嚴重故障 (Scout Crash): {e}")
+        print(f"📄 報告已存至歷史規範路徑: {report_path}")
+        await log_agent_xp("Full session finished.")
 
 if __name__ == "__main__":
     asyncio.run(run_scout_session())

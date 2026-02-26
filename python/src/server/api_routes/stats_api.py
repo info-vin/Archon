@@ -4,7 +4,6 @@ Stats API endpoints for Archon (Refactored - Lean Controller)
 Delegates all business logic and aggregations to StatsService.
 """
 
-from typing import cast
 
 from fastapi import APIRouter, Depends, HTTPException
 
