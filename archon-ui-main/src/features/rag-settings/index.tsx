@@ -1124,7 +1124,6 @@ const manualTestConnection = useCallback(async (
   }, [
     ragSettings.LLM_PROVIDER,
     embeddingProvider,
-    ragSettings,
     llmInstanceConfig.url,
     llmInstanceConfig.name,
     embeddingInstanceConfig.url,

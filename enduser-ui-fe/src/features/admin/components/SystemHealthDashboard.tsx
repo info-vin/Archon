@@ -7,6 +7,7 @@ export const SystemHealthDashboard: React.FC = () => {
     const [overview, setOverview] = useState<SystemOverview | null>(null);
     const [aiStats, setAiStats] = useState<AiUsageStats | null>(null);
     const [connectivityLogs, setConnectivityLogs] = useState<any[]>([]);
+    const [agentXp, setAgentXp] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -14,14 +15,16 @@ export const SystemHealthDashboard: React.FC = () => {
         setLoading(true);
         setError(null);
         try {
-            const [ov, ai, logs] = await Promise.all([
+            const [ov, ai, logs, xp] = await Promise.all([
                 api.getSystemOverview(),
                 api.getAiUsage(),
-                api.getConnectivityLogs()
+                api.getConnectivityLogs().catch(() => []),
+                api.getAgentXPStats().catch(() => [])
             ]);
             setOverview(ov);
             setAiStats(ai);
             setConnectivityLogs(Array.isArray(logs) ? logs : []);
+            setAgentXp(Array.isArray(xp) ? xp : []);
         } catch (err: any) {
             setError(err.message || "Failed to load system health data");
         } finally {
@@ -108,16 +111,23 @@ export const SystemHealthDashboard: React.FC = () => {
                 {/* Agent Status (SSOT Driven) */}
                 <div className="space-y-6">
                     <div className="bg-card p-6 rounded-2xl border border-border shadow-sm">
-                        <h3 className="text-lg font-bold mb-4">Agent Status</h3>
+                        <div className="flex justify-between items-center mb-4">
+                            <h3 className="text-lg font-bold">Agent Status & XP</h3>
+                        </div>
                         <div className="space-y-4">
-                            {(overview?.active_agents || []).map((agent: any) => (
-                                <AgentRow 
-                                    key={agent.id}
-                                    name={agent.name} 
-                                    role={agent.role} 
-                                    status={agent.status} 
-                                />
-                            ))}
+                            {(overview?.active_agents || []).map((agent: any) => {
+                                const xpData = agentXp.find((x: any) => x.name.toLowerCase() === agent.name.toLowerCase()) || { total_xp: 0, level: 'Intern' };
+                                return (
+                                    <AgentRow 
+                                        key={agent.id}
+                                        name={agent.name} 
+                                        role={agent.role} 
+                                        status={agent.status} 
+                                        xpData={xpData}
+                                        isActive={agent.status === 'active'}
+                                    />
+                                );
+                            })}
                         </div>
                     </div>
                     
@@ -210,15 +220,21 @@ const StatusCard: React.FC<{title: string, value: string, subtext: string, statu
     );
 };
 
-const AgentRow: React.FC<{name: string, role: string, status: 'active'|'standby'|'offline'}> = ({name, role, status}) => (
-    <div className="flex justify-between items-center">
+const AgentRow: React.FC<{name: string, role: string, status: 'active'|'standby'|'offline', xpData: any, isActive: boolean}> = ({name, role, status, xpData, isActive}) => (
+    <div className="flex justify-between items-center border-b border-border/50 pb-3 last:border-0 last:pb-0">
         <div className="flex items-center gap-3">
-            <div className={`w-2 h-2 rounded-full ${status === 'active' ? 'bg-green-500 animate-pulse' : 'bg-gray-400'}`} />
+            <div className={`w-2 h-2 rounded-full ${isActive ? 'bg-green-500 animate-pulse' : 'bg-gray-400'}`} />
             <div>
-                <div className="font-bold text-sm">{name}</div>
+                <div className="font-bold text-sm flex items-center gap-2">
+                    {name}
+                    {xpData.level && <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-700">{xpData.level}</span>}
+                </div>
                 <div className="text-xs text-muted-foreground">{role}</div>
             </div>
         </div>
-        <span className="text-xs font-mono uppercase bg-muted px-2 py-1 rounded">{status}</span>
+        <div className="flex flex-col items-end gap-1">
+            <span className="text-xs font-mono uppercase bg-muted px-2 py-1 rounded">{status}</span>
+            <span className="text-xs font-bold text-indigo-600 font-mono">{xpData.total_xp} XP</span>
+        </div>
     </div>
 );

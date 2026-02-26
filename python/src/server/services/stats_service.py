@@ -328,6 +328,102 @@ class StatsService:
             }
         }
 
+    async def get_agent_xp_stats(self) -> list[dict[str, Any]]:
+        """
+        Calculates XP for all agents from archon_logs (Zero-New-Table Principle).
+        Returns aggregated XP and derived levels.
+        """
+        try:
+            # Query all 'agent_action' logs where details contains 'xp_change'
+            res = self.supabase.table("archon_logs")\
+                .select("details")\
+                .eq("source", "agent_action")\
+                .execute()
+
+            xp_map: dict[str, int] = {}
+            for row in (res.data or []):
+                details = row.get("details") or {}
+                name = details.get("agent_name", "Unknown Agent")
+                xp = int(details.get("xp_change", 0))
+                xp_map[name] = xp_map.get(name, 0) + xp
+
+            # Map to final list format with levels
+            result = []
+            for name, total_xp in xp_map.items():
+                result.append({
+                    "name": name,
+                    "total_xp": total_xp,
+                    "level": self._get_agent_level(total_xp)
+                })
+
+            # Sort by XP descending
+            result.sort(key=lambda x: x["total_xp"], reverse=True)
+            return result
+        except Exception as e:
+            logger.error(f"StatsService: Agent XP fetch failed: {e}")
+            return []
+
+    def _get_agent_level(self, xp: int) -> str:
+        """Translates total XP into Level Gateway titles per Phase 4.6.8."""
+        if xp >= 880:
+            return "Level 6"
+        if xp >= 870:
+            return "Level 5"
+        if xp >= 850:
+            return "Level 4"
+        if xp >= 800:
+            return "Level 3"
+        if xp >= 700:
+            return "Level 2"
+        if xp >= 500:
+            return "Level 1"
+        return "Intern"
+
+    async def add_agent_action_log(self, agent_name: str, xp_change: int, message: str, details: dict | None = None) -> bool:
+        """
+        Standardized method for agents to record achievements and gain XP.
+        Appends to archon_logs as 'agent_action' source.
+        """
+        try:
+            payload = {
+                "source": "agent_action",
+                "level": "SUCCESS" if xp_change >= 0 else "ERROR",
+                "message": message,
+                "details": {
+                    "agent_name": agent_name,
+                    "xp_change": xp_change,
+                    **(details or {})
+                }
+            }
+            self.supabase.table("archon_logs").insert(payload).execute()
+            return True
+        except Exception as e:
+            logger.error(f"StatsService: Failed to record agent action for {agent_name}: {e}")
+            return False
+
+    async def get_member_performance(self) -> list[dict[str, Any]]:
+        """
+        Calculates performance (completed tasks) for all human members.
+        Centralized from StatsAPI.
+        """
+        try:
+            res = self.supabase.table("archon_tasks")\
+                .select("assignee")\
+                .eq("status", "done")\
+                .execute()
+
+            counts: dict[str, int] = {}
+            for row in (res.data or []):
+                a = row.get("assignee", "Unassigned")
+                counts[a] = counts.get(a, 0) + 1
+
+            result = [{"name": k, "completed_tasks": v} for k, v in counts.items()]
+            result.sort(key=lambda x: cast(int, x["completed_tasks"]), reverse=True)
+            return result[:10]
+        except Exception as e:
+            logger.error(f"StatsService: Member performance failed: {e}")
+            return []
+
     async def get_detailed_ai_usage(self, days: int = 30) -> dict[str, Any]:
         """Provides AI usage stats with daily breakdown and real data flag."""
         from .token_usage_service import TokenUsageService

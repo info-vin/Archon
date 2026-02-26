@@ -144,19 +144,20 @@ async def get_tasks_by_status():
 
 @router.get("/member-performance")
 async def get_member_performance():
-    """Get the count of COMPLETED tasks grouped by assignee."""
+    """Get the count of COMPLETED tasks grouped by assignee (refactored to service)."""
     try:
-        supabase = get_supabase_client()
-        response = supabase.table("archon_tasks").select("assignee").eq("status", "done").execute()
-        counts: dict[str, int] = {}
-        for row in response.data:
-            a = row.get("assignee", "Unassigned")
-            counts[a] = counts.get(a, 0) + 1
-        result = [{"name": k, "completed_tasks": v} for k, v in counts.items()]
-        result.sort(key=lambda x: cast(int, x["completed_tasks"]), reverse=True)
-        return result[:10]
+        return await stats_service.get_member_performance()
     except Exception as e:
         logger.error(f"Failed to get performance stats: {e}")
+        raise HTTPException(status_code=500, detail=str(e)) from e
+
+@router.get("/agent-xp", dependencies=[Depends(require_manager_or_admin)])
+async def get_agent_xp():
+    """Agent Experience (XP) & Level Ranking HUD (Phase 4.6.8)."""
+    try:
+        return await stats_service.get_agent_xp_stats()
+    except Exception as e:
+        logger.error(f"Failed to get agent xp stats: {e}")
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 @router.get("/system-overview", dependencies=[Depends(require_manager_or_admin)])

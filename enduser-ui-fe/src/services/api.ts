@@ -742,6 +742,12 @@ const supabaseApi = {
   },
 
   // --- STATS & MARKETING API ---
+  async getAgentXPStats(): Promise<any[]> {
+    const response = await fetch('/api/stats/agent-xp', { headers: await this._getHeaders() });
+    if (!response.ok) throw new Error('Failed to fetch agent XP stats');
+    return response.json();
+  },
+
   async getTaskDistribution(): Promise<TaskStats[]> {
     const response = await fetch('/api/stats/tasks-by-status', { headers: await this._getHeaders() });
     if (!response.ok) throw new Error('Failed to fetch task stats');
