@@ -106,6 +106,10 @@
     *   **教訓**: 在 Phase 4.6.4 中，5173 任務的 Crawler Target 下拉選單為空，原因是 Admin UI 原本「忘記實作」新增 Target 的頁面。
     *   **SOP**: 當發現前端選單無資料時，除了檢查 API responses，更該使用 `search_file_content` 逆向追蹤建立該資料的 `[POST]` Request 是否有被任何 React Component 呼叫。不要輕易指引使用者去點擊看似相似的按鈕（例如 `+ Knowledge` 建立的是單次的 `archon_sources`，而非定期的 `archon_crawler_targets`，導致了長達數小時的除錯迷航）。
 
+*   **13. Browser-Use 實體設定與 Profile 持久化 (Browser-Use Profile Persistence)**
+    *   **核心**: 在 `browser-use` 中，若要加載已存在的 Playwright Browser Profile (例如已登入的 `.browser_data`)，必須直接在 `BrowserConfig` 中使用 `user_data_dir` 參數，而非透過 `extra_chromium_args` 傳遞 `--user-data-dir` 旗標。
+    *   **教訓**: 若使用 `extra_chromium_args` 傳遞路徑，`browser-use` 底層的 Playwright 管理器可能會忽略該旗標，導致啟動一個全新的、未登入的匿名工作階段。使用 `user_data_dir` 參數則能確保正確載入現有的 Cookie 與 Session。
+
 ---
 
 # 第三章：近期工作日誌 (Recent Journal Entries)
