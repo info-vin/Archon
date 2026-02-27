@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../services/api';
-import { ProposedChange, ChangeStatus, ChangeType } from '../types';
+import { ProposedChange, ChangeType } from '../types';
 import { 
   CheckCircleIcon, 
   XCircleIcon, 
@@ -21,7 +21,7 @@ const ApprovalsPage: React.FC = () => {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [processingId, setProcessingId] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [, setError] = useState<string | null>(null);
 
   const fetchData = async () => {
     setLoading(true);

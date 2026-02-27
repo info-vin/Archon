@@ -357,7 +357,7 @@ class StatsService:
                 })
 
             # Sort by XP descending
-            result.sort(key=lambda x: x["total_xp"], reverse=True)
+            result.sort(key=lambda x: cast(int, x["total_xp"]), reverse=True)
             return result
         except Exception as e:
             logger.error(f"StatsService: Agent XP fetch failed: {e}")

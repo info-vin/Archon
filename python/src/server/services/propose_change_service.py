@@ -62,15 +62,15 @@ class ProposeChangeService:
         p = Path(file_path)
         old_content = ""
         if p.exists() and p.is_file():
-            async with aiofiles.open(p, 'r', encoding='utf-8') as f:
+            async with aiofiles.open(p, encoding='utf-8') as f:
                 old_content = await f.read()
-        
+
         payload = {
             "file_path": file_path,
             "old_content": old_content,
             "new_content": new_content
         }
-        
+
         res = self.db_client.table("proposed_changes").insert({
             "type": "file",
             "status": "pending",

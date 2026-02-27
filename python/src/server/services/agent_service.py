@@ -270,8 +270,39 @@ class AgentService:
         if command:
             success, output = await self.run_command_with_self_healing(command, task_id=task_id)
             await task_service.update_task(task_id, {"status": "done" if success else "failed", "output": output})
+            if success:
+                _, task_data = await task_service.get_task(task_id)
+                if task_data:
+                    await self._award_agent_xp(agent_id, task_data, output)
         else:
             await self._run_general_agent_task(task_id, agent_id)
+
+    async def _award_agent_xp(self, agent_id: str, task_data: dict, output_message: str):
+        import random
+
+        from ..services.stats_service import StatsService
+        stats = StatsService()
+
+        # Calculate dynamic XP based on role/complexity
+        if agent_id == "ai-market-bot":
+            xp = random.randint(5, 10)
+            msg = f"Completed marketing task: {task_data.get('title', 'Unknown')}"
+        elif agent_id == "ai-po-bot" or agent_id == "system-devbot":
+            xp = random.randint(5, 10)
+            msg = f"Completed technical/management task: {task_data.get('title', 'Unknown')}"
+        elif agent_id == "ai-librarian":
+            xp = random.randint(5, 10)
+            msg = f"Completed knowledge extraction: {task_data.get('title', 'Unknown')}"
+        else:
+            xp = random.randint(5, 10)
+            msg = f"Completed task: {task_data.get('title', 'Unknown')}"
+
+        await stats.add_agent_action_log(
+            agent_name=agent_id,
+            xp_change=xp,
+            message=msg,
+            details={"task_id": task_data.get("id"), "output_preview": output_message[:100]}
+        )
 
     async def _run_general_agent_task(self, task_id: str, agent_id: str):
         from ..services.projects.task_service import task_service
@@ -308,7 +339,9 @@ class AgentService:
                         "max_depth": target.get("max_depth", 2),
                         "user_role": "system_admin"
                     })
-                    await task_service.update_task(task_id, {"status": "done", "output": f"Direct crawler pipeline started for {target['target_url']}"})
+                    output_msg = f"Direct crawler pipeline started for {target['target_url']}"
+                    await task_service.update_task(task_id, {"status": "done", "output": output_msg})
+                    await self._award_agent_xp(agent_id, task_data, output_msg)
                     return
                 except Exception as e:
                     logger.error(f"Direct crawl failed: {e}")
@@ -342,6 +375,7 @@ class AgentService:
                     final_output = res_msg.content
 
                 await task_service.update_task(task_id, {"status": "done", "output": final_output})
+                await self._award_agent_xp(agent_id, task_data, final_output)
         except Exception as e:
             await task_service.update_task(task_id, {"status": "failed", "output": str(e)})
 

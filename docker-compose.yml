@@ -252,7 +252,7 @@ services:
     networks:
       - app-network
     volumes:
-      - ./.browser_data:/app/user_data
+      - ./.browser_data:/app/.browser_data
       - ./.twin:/app/.twin
       - ./scripts/twin_scout.py:/app/scout.py
 

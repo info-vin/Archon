@@ -38,7 +38,7 @@ class ProposeFileChangeTool(BaseModel):
         try:
             service = ToolDependencies.get_propose_change_service()
             summary = f"Agent Update: {self.file_path.split('/')[-1]}"
-            
+
             proposal = await service.create_file_proposal(
                 file_path=self.file_path,
                 new_content=self.new_content,

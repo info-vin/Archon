@@ -23,12 +23,9 @@ async def test_get_tasks_by_status():
 
 @pytest.mark.asyncio
 async def test_get_member_performance():
-    mock_supabase = MagicMock()
-    mock_response = MagicMock()
-    mock_response.data = [{"assignee": "Alice"}, {"assignee": "Alice"}, {"assignee": "Bob"}]
-    mock_supabase.table.return_value.select.return_value.eq.return_value.execute.return_value = mock_response
+    mock_data = [{"name": "Alice", "completed_tasks": 2}, {"name": "Bob", "completed_tasks": 1}]
 
-    with patch("src.server.api_routes.stats_api.get_supabase_client", return_value=mock_supabase):
+    with patch("src.server.api_routes.stats_api.stats_service.get_member_performance", return_value=mock_data):
         result = await get_member_performance()
 
         assert len(result) == 2

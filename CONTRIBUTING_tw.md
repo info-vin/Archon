@@ -113,6 +113,18 @@
     *   **指令**: `docker compose --profile backend --profile frontend --profile enduser --profile agents up`
     *   **檢查**: 觀察終端機輸出的啟動日誌，確認無報錯且服務就緒。
 
+### 2.4 Playwright 與 Docker 的 Cookie 加密限制 (Digital Twin 必讀)
+
+在使用 `browser-use` 或 Playwright 進行跨平台自動化操作（如 `twin_scout.py`）時，您**必須**了解一個關於 OS 級別安全性的硬限制：
+
+* **OS 級別加密 (OS-level Encryption)**: 當您在 Mac 本機 (Host) 啟動 Playwright 並登入 Google/Gemini 時，產生的 `.browser_data` (Cookie 與 Session) 會受到 macOS Keychain 的底層加密保護。
+* **Docker 的跨系統盲區**: 即使您將這個 `.browser_data` 透過 `docker-compose.yml` 的 `volumes` 正確掛載進入 Docker 內部的 Linux 容器，Linux 內的 Chromium 也**絕對無法解密**這些 Mac 專屬的 Cookie。
+* **物理後果**: 這會導致腳本在 Docker 內執行時，**永遠被判定為「未登入」狀態**，並卡在要求輸入密碼或驗證的畫面。
+
+> **🛑 開發鐵律**: 
+> 任何極度依賴「維持由 Host 本機建立的敏感登入狀態 (如 Google 帳號)」的自動化工具 (例如生圖工具 `ImageGenerationTool`)，都**不應該**被封裝成 Docker 內的微服務 API 給代理 (Agents) 呼叫。這會導致極度脆弱的架構。
+> **正確作法**: 這類腳本（如展示用的 `make twin-scout`）應該直接在終端機使用原生指令執行：`uv run python scripts/twin_scout.py --mode action`，以確保它能正確讀取本機的解密憑證。
+
 ---
 
 ## 第三章：測試指南 (Testing Guide)
@@ -304,6 +316,7 @@ Phase 4.4.5 引入了 **Clockwork** 進行系統自動檢測。
 ## 第四章：貢獻與部署流程 (Contribution & Deployment)
 
 ### 4.1 前端開發規範 (End-user UI)
+- **Agent 與儀表板位置 (UI Domain Rule - Critical)**: 所有的 AI Agent 相關功能展示（例如：Agent XP 排行榜、Agent 任務派遣列表），**必須**實作在 `enduser-ui-fe` (Port 5173) 中。嚴禁將終端使用者的協作功能錯誤地放入 `archon-ui-main` (Admin UI, Port 3737)。開發時若存在網域存放的疑慮，應以此條例為準。
 - **捲動安全性 (Mobile Scroll Safety - Critical)**: 嚴禁在頁面最外層容器使用 `min-h-screen`、`h-screen` 或 `h-full` 搭配 `overflow-hidden`。這會導致在手機瀏覽器中，內容高度無法正確向外傳遞至 `MainLayout`，進而鎖死垂直捲動。應保持容器高度為 `auto`，並使用底部間距 (`pb-32`) 確保內容不被導覽列遮擋。
 - **AI 反饋與超時 (UX Strategy)**: 
     - 任何預期執行時間超過 15 秒的 AI 任務（如 RAG 檢索、Pro 模型生成），**必須**實作動態狀態訊息（每 10-15 秒切換一次文字），讓使用者知道系統仍在運行。
@@ -312,6 +325,7 @@ Phase 4.4.5 引入了 **Clockwork** 進行系統自動檢測。
 - **型別安全性**: 必須同步更新 `src/types.ts` 並通過 `tsc --noEmit` 檢查。
 
 ### 4.2 Git 工作流程
+
 
 - **分支策略**: 所有工作都**必須**在 `feature/...` 分支上進行。部署也**必須**從 `feature/...` 分支進行。`main` 分支請勿使用。
 - **`cherry-pick` 卡住**: 若 `git cherry-pick --continue` 卡住，請改用 `git cherry-pick --continue --no-edit --no-gpg-sign`。

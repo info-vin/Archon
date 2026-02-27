@@ -134,7 +134,7 @@ async def run_scout_session():
                 if os.path.exists(f): os.remove(f)
 
             ctx = await p.chromium.launch_persistent_context(
-                user_data_dir=root_dir, headless=is_headless, channel="chrome",
+                user_data_dir=root_dir, headless=is_headless,
                 ignore_default_args=["--enable-automation"],
                 args=['--no-sandbox', '--disable-setuid-sandbox', '--disable-blink-features=AutomationControlled']
             )
