@@ -57,6 +57,28 @@ class ProposeChangeService:
         res = self.db_client.table("proposed_changes").select("*").eq("id", str(proposal_id)).execute()
         return res.data[0] if res.data else None
 
+    async def create_file_proposal(self, file_path: str, new_content: str, summary: str) -> dict[str, Any]:
+        """Creates a file change proposal, capturing current content as old_content."""
+        p = Path(file_path)
+        old_content = ""
+        if p.exists() and p.is_file():
+            async with aiofiles.open(p, 'r', encoding='utf-8') as f:
+                old_content = await f.read()
+        
+        payload = {
+            "file_path": file_path,
+            "old_content": old_content,
+            "new_content": new_content
+        }
+        
+        res = self.db_client.table("proposed_changes").insert({
+            "type": "file",
+            "status": "pending",
+            "change_summary": summary,
+            "request_payload": payload
+        }).execute()
+        return cast(dict[str, Any], res.data[0])
+
     async def approve_proposal(self, proposal_id: UUID, user_id: Any) -> dict[str, Any]:
         res = self.db_client.table("proposed_changes").update({"status": "approved", "approved_by": str(user_id), "approved_at": "now()"}).eq("id", str(proposal_id)).execute()
         return cast(dict[str, Any], res.data[0])

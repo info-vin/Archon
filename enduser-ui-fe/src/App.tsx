@@ -14,6 +14,7 @@ import MarketingPage from './pages/MarketingPage.tsx';
 import TeamManagementPage from './pages/TeamManagementPage.tsx';
 import BrandPage from './pages/BrandPage.tsx';
 import { ManagerNexus } from './pages/ManagerNexus.tsx';
+import ApprovalsPage from './pages/ApprovalsPage.tsx';
 import PublicLayout from './components/layout/PublicLayout.tsx';
 import MainLayout from './components/layout/MainLayout.tsx';
 import SolutionsPage from './features/marketing/SolutionsPage.tsx';
@@ -119,7 +120,13 @@ export const AppRoutes: React.FC = () => {
       />
       <Route
         path="/approvals"
-        element={<Navigate to="/nexus" replace />}
+        element={
+          <ManagerRoute>
+            <MainLayout>
+              <ApprovalsPage />
+            </MainLayout>
+          </ManagerRoute>
+        }
       />
       <Route
         path="/admin"
@@ -169,16 +176,16 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
 };
 
 const AdminRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-    const { user, isAdmin } = useAuth();
+    const { isAdmin, user } = useAuth();
     const role = user?.role?.toLowerCase();
-    const isManagerOrAdmin = isAdmin || role === 'manager' || role === 'admin' || role === 'system_admin' || role === EmployeeRole.MANAGER;
-    return isManagerOrAdmin ? <>{children}</> : <Navigate to="/dashboard" />;
+    const isAuthorized = isAdmin || role === 'admin' || role === 'system_admin';
+    return isAuthorized ? <>{children}</> : <Navigate to="/dashboard" />;
 };
 
 const ManagerRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-    const { user } = useAuth();
+    const { isAdmin, user } = useAuth();
     const role = user?.role?.toLowerCase();
-    const isManager = role === EmployeeRole.MANAGER || role === 'manager' || role === EmployeeRole.ADMIN || role === 'admin';
+    const isManager = isAdmin || role === 'manager' || role === 'admin' || role === 'system_admin' || role === EmployeeRole.MANAGER;
     return isManager ? <>{children}</> : <Navigate to="/dashboard" />;
 };
 

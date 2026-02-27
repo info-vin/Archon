@@ -20,11 +20,11 @@
   * **Charlie (`manager`)**: 僅擁有 `TASK_READ_TEAM`，在 Row Level Security (RLS) 與 API 過濾下，他只能在 `/approvals` 看到分配給他、或他底下團隊 (如 Alice, Bob, MarketBot) 所產生的提案。
 
 ### DevBot 的執行斷層 (Execution Gap)
-DevBot 完整的 4 步運作機制目前處於「部分通暢」狀態：
+DevBot 完整的 4 步運作機制目前處於「全線通暢」狀態：
 1. **[🟢 已通] 人類建單**：Kanban UI 成功將 Markdown 寫入 `archon_tasks` 並 Assign 給 DevBot。
 2. **[🟢 已通] Agent 攔截**：`task_service.py` 成功掛載了非同步攔截器，自動喚醒 `AgentService`。
 3. **[🟢 已通] Tool 執行**：DevBot MCP 串接完備，具備分析 `stderr` 與呼叫知識庫的能力。
-4. **[🔴 斷層] 提交流程**：目前的 `AgentService` (特別是 `run_command_with_self_healing`) 在修復錯誤時，會直接呼叫 `CodeModifier` 更改硬碟檔案。**Agent 缺乏「優雅提交 (Propose)」的動作**。
+4. **[🟢 已修復] 提交流程**：`ProposeChangeService` 已實作 `create_file_proposal`，且 `WriteFileTool` 已完成重構。Agent 現在會將變更提交為 `pending` 提案，而非直接寫入磁碟。
 
 ---
 
@@ -62,14 +62,25 @@ sequenceDiagram
 
 ---
 
-## 4. 下一步執行計畫 (Next Epic Action Items)
+## 4. 執行計畫現況 (Action Items Status)
 
-為了實現這個藍圖，接下來的 Phase 4.6.9 任務清單如下：
+1. **[🟢 已完成] [Backend] 重構 Agent Tools**：
+   * 實作 `ProposeChangeService.create_file_proposal`，自動捕捉 `old_content` 以供 Diff 顯示。
+   * 重構 `file_operation_tools.py`，將 `WriteFileTool` 從直接寫入轉向提交提案。
+2. **[🟢 已完成] [Frontend] 實作 Unified Inbox UI**：
+   * 建立 `ApprovalsPage.tsx`，具備並排預覽 (Split View) 功能。
+   * 整合 `DiffViewer.tsx` 組件與 `ReactMarkdown` 渲染器。
+   * 修正 `Icons.tsx` 圖示依賴，確保無外部 package 依賴（HeroIcons -> Local SVG）。
+3. **[🟢 已完成] [Frontend] 對接 Approve API**：
+   * 在 `api.ts` 中對接 `getPendingChanges`, `approveChange`, `rejectChange`。
+   * 修正 `App.tsx` 權限路由，確保 `David (system_admin)` 能正常進入。
 
-1. **[Backend] 重構 Agent Tools**：修改 MCP Tools 或 `AgentService` 流程，當 Agent 決定好修正代碼或寫完文章後，不再直接存檔 / 寫 DB。而是呼叫 `ProposeChangeService` 產生一筆 `pending` 的提案。
-2. **[Frontend] 實作 Unified Inbox UI**：在 `enduser-ui-fe` 提供 `/approvals` 頁面體驗：
-   * 列表顯示所有 `pending` 提案。
-   * 條件渲染視圖：
-     * `type === 'file_diff'` -> 渲染 `DiffViewer` (類似 GitHub PR 對比)。
-     * `type === 'marketing_draft'` -> 渲染 `MarkdownPreview`。
-3. **[Frontend] 對接 Approve API**：將 Inbox 上的 `Approve` 與 `Reject` 按鈕對接到現已存在的 `POST /api/changes/{id}/approve`。
+---
+
+## 5. 實作紀實 (Implementation Record)
+
+* **2026-02-27**: 
+  * 完成前端 `/approvals` 頁面開發與 `MainLayout` 選單掛載。
+  * 修正 `ManagerRoute` 權限漏洞，補上 `system_admin` 角色白名單。
+  * 通過 `pnpm build` 物理性編譯驗證，確認無導入或型別錯誤。
+  * 完成後端 `ProposeChangeService` 的物理捕捉邏輯 (Old Content Snapshoting)。

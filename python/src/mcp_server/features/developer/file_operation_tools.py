@@ -36,21 +36,14 @@ class ProposeFileChangeTool(BaseModel):
         """Submits the file change proposal."""
         logger.info(f"Proposing a change to file: {self.file_path}")
         try:
-            # Read the original content for diffing purposes
-            try:
-                with open(self.file_path, encoding='utf-8') as f:
-                    original_content = f.read()
-            except FileNotFoundError:
-                original_content = "" # File is new
-
             service = ToolDependencies.get_propose_change_service()
-            payload = {
-                "file_path": self.file_path,
-                "new_content": self.new_content,
-                "original_content": original_content,
-                "description": f"Propose to overwrite the file at {self.file_path}"
-            }
-            proposal = await service.create_proposal(change_type='file', payload=payload)
+            summary = f"Agent Update: {self.file_path.split('/')[-1]}"
+            
+            proposal = await service.create_file_proposal(
+                file_path=self.file_path,
+                new_content=self.new_content,
+                summary=summary
+            )
 
             return (f"Successfully proposed a change to file '{self.file_path}'. "
                     f"Proposal ID: {proposal['id']}. Please await human approval.")

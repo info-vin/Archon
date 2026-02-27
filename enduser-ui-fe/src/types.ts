@@ -130,6 +130,39 @@ export interface DocumentVersion {
   created_at: string;
 }
 
+export enum ChangeStatus {
+  PENDING = 'pending',
+  APPROVED = 'approved',
+  REJECTED = 'rejected',
+  EXECUTED = 'executed',
+  FAILED = 'failed'
+}
+
+export enum ChangeType {
+  FILE = 'file',
+  GIT = 'git',
+  SHELL = 'shell'
+}
+
+export interface ProposedChange {
+  id: string;
+  created_at: string;
+  status: ChangeStatus;
+  type: ChangeType;
+  request_payload: {
+    file_path?: string;
+    new_content?: string;
+    old_content?: string;
+    command?: string;
+    [key: string]: any;
+  };
+  change_summary?: string;
+  approved_by?: string;
+  approved_at?: string;
+  executed_at?: string;
+  execution_log?: string;
+}
+
 export interface BlogPost {
     id: string;
     title: string;
