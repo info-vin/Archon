@@ -30,33 +30,33 @@ export const TasksTab = ({ projectId }: TasksTabProps) => {
   const deleteTaskMutation = useDeleteTask(projectId);
 
   // Modal management functions
-  const openEditModal = (task: Task) => {
+  const openEditModal = useCallback((task: Task) => {
     setEditingTask(task);
     setIsModalOpen(true);
-  };
+  }, []);
 
-  const openCreateModal = () => {
+  const openCreateModal = useCallback(() => {
     setEditingTask(null);
     setIsModalOpen(true);
-  };
+  }, []);
 
-  const closeModal = () => {
+  const closeModal = useCallback(() => {
     setEditingTask(null);
     setIsModalOpen(false);
-  };
+  }, []);
 
   // Delete modal management functions
-  const openDeleteModal = (task: Task) => {
+  const openDeleteModal = useCallback((task: Task) => {
     setTaskToDelete(task);
     setShowDeleteModal(true);
-  };
+  }, []);
 
-  const closeDeleteModal = () => {
+  const closeDeleteModal = useCallback(() => {
     setTaskToDelete(null);
     setShowDeleteModal(false);
-  };
+  }, []);
 
-  const confirmDeleteTask = () => {
+  const confirmDeleteTask = useCallback(() => {
     if (!taskToDelete) return;
 
     deleteTaskMutation.mutate(taskToDelete.id, {
@@ -67,7 +67,7 @@ export const TasksTab = ({ projectId }: TasksTabProps) => {
         console.error("Failed to delete task:", error);
       },
     });
-  };
+  }, [taskToDelete, deleteTaskMutation, closeDeleteModal]);
 
   // Get default order for new tasks in a status
   const getDefaultTaskOrder = useCallback((statusTasks: Task[]) => {
@@ -147,7 +147,7 @@ export const TasksTab = ({ projectId }: TasksTabProps) => {
   );
 
   // Inline update for task fields
-  const updateTaskInline = async (taskId: string, updates: Partial<Task>) => {
+  const updateTaskInline = useCallback(async (taskId: string, updates: Partial<Task>) => {
     try {
       // Validate task_order if present (ensures integer precision)
       const processedUpdates = { ...updates };
@@ -163,7 +163,7 @@ export const TasksTab = ({ projectId }: TasksTabProps) => {
       console.error("Failed to update task:", error, { taskId, updates });
       // Error toast handled by mutation
     }
-  };
+  }, [updateTaskMutation]);
 
   if (isLoadingTasks) {
     return (

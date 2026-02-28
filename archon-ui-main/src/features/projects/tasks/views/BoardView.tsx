@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { memo, useState } from "react";
 import { KanbanColumn } from "../components/KanbanColumn";
 import type { Task } from "../types";
 
@@ -11,7 +11,7 @@ interface BoardViewProps {
   onTaskDelete?: (task: Task) => void;
 }
 
-export const BoardView = ({
+export const BoardView = memo(({
   tasks,
   projectId,
   onTaskMove,
@@ -55,4 +55,6 @@ export const BoardView = ({
       </div>
     </div>
   );
-};
+});
+
+BoardView.displayName = "BoardView";

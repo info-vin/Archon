@@ -1,5 +1,5 @@
 import { Check, Edit, Tag, Trash2 } from "lucide-react";
-import React, { useState } from "react";
+import React, { memo, useState } from "react";
 import { useDrag, useDrop } from "react-dnd";
 import { Button, Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../../../ui/primitives";
 import { cn, glassmorphism } from "../../../ui/primitives/styles";
@@ -36,7 +36,7 @@ interface DraggableRowProps {
   onTaskReorder: (taskId: string, newOrder: number, status: Task["status"]) => void;
 }
 
-const DraggableRow = ({
+const DraggableRow = memo(({
   task,
   index,
   projectId,
@@ -225,9 +225,11 @@ const DraggableRow = ({
       </td>
     </tr>
   );
-};
+});
 
-export const TableView = ({
+DraggableRow.displayName = "DraggableRow";
+
+export const TableView = memo(({
   tasks,
   projectId,
   onTaskView,
@@ -323,4 +325,6 @@ export const TableView = ({
       </table>
     </div>
   );
-};
+});
+
+TableView.displayName = "TableView";

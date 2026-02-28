@@ -1,5 +1,5 @@
 import { Activity, CheckCircle2, Eye, ListTodo } from "lucide-react";
-import { useRef } from "react";
+import { memo, useRef } from "react";
 import { useDrop } from "react-dnd";
 import { cn } from "../../../ui/primitives/styles";
 import type { Task } from "../types";
@@ -18,7 +18,7 @@ interface KanbanColumnProps {
   onTaskHover: (taskId: string | null) => void;
 }
 
-export const KanbanColumn = ({
+export const KanbanColumn = memo(({
   status,
   tasks,
   projectId,
@@ -124,4 +124,6 @@ export const KanbanColumn = ({
       </div>
     </div>
   );
-};
+});
+
+KanbanColumn.displayName = "KanbanColumn";

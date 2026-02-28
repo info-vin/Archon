@@ -26,7 +26,7 @@ export interface TaskCardProps {
   onTaskSelect?: (taskId: string) => void;
 }
 
-export const TaskCard: React.FC<TaskCardProps> = ({
+export const TaskCard: React.FC<TaskCardProps> = React.memo(({
   task,
   index,
   projectId,
@@ -229,4 +229,6 @@ export const TaskCard: React.FC<TaskCardProps> = ({
       </Card>
     </div>
   );
-};
+});
+
+TaskCard.displayName = "TaskCard";
