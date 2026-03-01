@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { api } from '../services/api';
 import { Project } from '../types';
+import { XIcon } from './Icons';
 
 interface ProjectModalProps {
   onClose: () => void;
@@ -36,9 +37,20 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({ onClose, onProjectCr
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4" onClick={onClose}>
+    <div
+      className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4"
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="project-modal-title"
+    >
       <div className="bg-card rounded-lg shadow-xl p-6 w-full max-w-md relative" onClick={(e) => e.stopPropagation()}>
-        <h2 className="text-2xl font-bold mb-4">New Project</h2>
+        <div className="flex justify-between items-center mb-4">
+          <h2 id="project-modal-title" className="text-2xl font-bold">New Project</h2>
+          <button onClick={onClose} type="button" className="p-1 rounded-full hover:bg-secondary focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none" aria-label="Close project modal">
+            <XIcon className="w-6 h-6 text-muted-foreground" />
+          </button>
+        </div>
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
             <label htmlFor="project-title" className="block text-sm font-medium text-muted-foreground mb-1">
