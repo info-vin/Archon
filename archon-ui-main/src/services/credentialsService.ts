@@ -71,11 +71,9 @@ export interface OllamaInstance {
   lastHealthCheck?: string;
 }
 
-import { getApiUrl } from "../config/api";
+import { API_BASE_URL } from "../config/api";
 
 class CredentialsService {
-  private baseUrl = getApiUrl();
-
   private notifyCredentialUpdate(keys: string[]): void {
     if (typeof window === "undefined") {
       return;
@@ -106,7 +104,7 @@ class CredentialsService {
   }
 
   async getAllCredentials(): Promise<Credential[]> {
-    const response = await fetch(`${this.baseUrl}/api/credentials`);
+    const response = await fetch(`${API_BASE_URL}/credentials`);
     if (!response.ok) {
       throw new Error("Failed to fetch credentials");
     }
@@ -115,7 +113,7 @@ class CredentialsService {
 
   async getCredentialsByCategory(category: string): Promise<Credential[]> {
     const response = await fetch(
-      `${this.baseUrl}/api/credentials/categories/${category}`,
+      `${API_BASE_URL}/credentials/categories/${category}`,
     );
     if (!response.ok) {
       throw new Error(`Failed to fetch credentials for category: ${category}`);
@@ -156,7 +154,7 @@ class CredentialsService {
   async getCredential(
     key: string,
   ): Promise<{ key: string; value?: string; is_encrypted?: boolean }> {
-    const response = await fetch(`${this.baseUrl}/api/credentials/${key}`);
+    const response = await fetch(`${API_BASE_URL}/credentials/${key}`);
     if (!response.ok) {
       if (response.status === 404) {
         // Return empty object if credential not found
@@ -170,7 +168,7 @@ class CredentialsService {
   async checkCredentialStatus(
     keys: string[]
   ): Promise<{ [key: string]: { key: string; value?: string; has_value: boolean; error?: string } }> {
-    const response = await fetch(`${this.baseUrl}/api/credentials/status-check`, {
+    const response = await fetch(`${API_BASE_URL}/credentials/status-check`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -277,7 +275,7 @@ class CredentialsService {
   async updateCredential(credential: Credential): Promise<Credential> {
     try {
       const response = await fetch(
-        `${this.baseUrl}/api/credentials/${credential.key}`,
+        `${API_BASE_URL}/credentials/${credential.key}`,
         {
           method: "PUT",
           headers: {
@@ -305,7 +303,7 @@ class CredentialsService {
 
   async createCredential(credential: Credential): Promise<Credential> {
     try {
-      const response = await fetch(`${this.baseUrl}/api/credentials`, {
+      const response = await fetch(`${API_BASE_URL}/credentials`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -331,7 +329,7 @@ class CredentialsService {
 
   async deleteCredential(key: string): Promise<void> {
     try {
-      const response = await fetch(`${this.baseUrl}/api/credentials/${key}`, {
+      const response = await fetch(`${API_BASE_URL}/credentials/${key}`, {
         method: "DELETE",
       });
 

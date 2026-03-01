@@ -85,7 +85,7 @@ async def discover_models_endpoint(
     instance_urls: list[str] = Query(..., description="Ollama instance URLs"),
     include_capabilities: bool = Query(True, description="Include capability detection"),
     fetch_details: bool = Query(False, description="Fetch comprehensive model details via /api/show"),
-    background_tasks: BackgroundTasks = None,  # type: ignore[assignment]
+    background_tasks: BackgroundTasks = None,
 ) -> ModelDiscoveryResponse:
     """
     Discover models from multiple Ollama instances with capability detection.

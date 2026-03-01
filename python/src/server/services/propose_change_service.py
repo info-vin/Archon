@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Any, cast
 from uuid import UUID
 
-import aiofiles  # type: ignore
+import aiofiles  # type: ignore[import-untyped]
 
 from ..utils import get_supabase_client
 

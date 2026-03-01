@@ -97,8 +97,13 @@ const supabaseApi = {
       
       // Attach Session Token for Backend Auth (SDK call is fast as it hits local memory)
       if (supabase) {
-          const { data: { session } } = await supabase.auth.getSession();
-          if (session?.access_token) {
+          const sessionResult: any = await Promise.race([
+            supabase.auth.getSession(),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('Auth timeout')), 5000))
+          ]);
+          const { data: { session }, error: sessionError } = sessionResult;
+          
+          if (!sessionError && session?.access_token) {
               headers['Authorization'] = `Bearer ${session.access_token}`;
           }
       }

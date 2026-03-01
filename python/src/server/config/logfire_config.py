@@ -25,7 +25,7 @@ try:
     import logfire
     LOGFIRE_AVAILABLE = True
 except ImportError:
-    logfire = None  # type: ignore[assignment]
+    logfire = None
     LOGFIRE_AVAILABLE = False
 
 # Global state
