@@ -131,6 +131,8 @@ class EnrichmentService:
             .lt("enrichment_score", 40)\
             .neq("status", "archived")\
             .neq("status", "converted")\
+            .neq("status", "won")\
+            .neq("status", "lost")\
             .execute()
 
             pruned_count = len(res.data) if res.data else 0

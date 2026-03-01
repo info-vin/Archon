@@ -55,9 +55,10 @@ async def _transcribe_with_gemini(
 
         # 2. Wait for processing (Polling state via SDK)
         # BUG-046: Increased polling to 30 iterations (60s) for longer sales recordings
+        file_name = uploaded_file.name or ""
         for _ in range(30):
-            file_status = client.files.get(name=uploaded_file.name)
-            if file_status.state.name == "ACTIVE":
+            file_status = client.files.get(name=file_name)
+            if file_status.state and file_status.state.name == "ACTIVE":
                 break
             await asyncio.sleep(2)
 
@@ -72,12 +73,13 @@ async def _transcribe_with_gemini(
         prompt = prompt_service.get_prompt("VOICE_TRANSCRIPTION_PROMPT", default_prompt)
 
         # 4. Generate Content with Multi-modality
+        from typing import Any, cast
         response = client.models.generate_content(
             model=safe_model,
-            contents=[
+            contents=cast(Any, [
                 prompt,
                 uploaded_file
-            ],
+            ]),
             config=types.GenerateContentConfig(
                 response_mime_type="application/json",
                 temperature=0.0, # Precision is key for transcription

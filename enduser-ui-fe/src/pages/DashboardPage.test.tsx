@@ -86,6 +86,7 @@ vi.mock('../services/api', () => {
       getAttendanceStatus: vi.fn().mockResolvedValue({ status: 'out', clock_in_time: null, location: null }),
       clockIn: vi.fn().mockResolvedValue({ status: 'success' }),
       clockOut: vi.fn().mockResolvedValue({ status: 'success' }),
+      getCrawlerTargets: vi.fn().mockResolvedValue([]),
     },
   };
 });

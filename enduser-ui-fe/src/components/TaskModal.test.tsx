@@ -21,6 +21,9 @@ vi.mock('../services/api.ts', () => ({
     createTask: vi.fn().mockResolvedValue({ id: 'new-task' }),
     updateTask: vi.fn().mockResolvedValue({ id: 'task-1' }),
     getKnowledgeItems: vi.fn().mockResolvedValue([]), // Needed for KnowledgeSelector
+    getCrawlerTargets: vi.fn().mockResolvedValue([
+      { id: 't1', target_url: 'https://sas.com', description: 'SAS' }
+    ]),
   }
 }));
 

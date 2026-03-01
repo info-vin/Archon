@@ -330,7 +330,7 @@ async def process_approval(item_type: str, item_id: str, action: str, request: R
         raise HTTPException(status_code=403)
     supabase = get_supabase_client()
     raw_body = await request.json() if request.method == "POST" else {}
-    notes = raw_body.get("review_notes") or raw_body.get("reason")
+    notes = raw_body.get("review_notes") or raw_body.get("reviewNotes") or raw_body.get("reason")
     if item_type == "blog":
         new_status = "published" if action == "approve" else "changes_requested"
         res = supabase.table("blog_posts").update({"status": new_status, "review_notes": notes}).eq("id", item_id).execute()
@@ -459,7 +459,15 @@ async def draft_blog_post(request: DraftBlogRequest, current_user: dict = Depend
             raise HTTPException(status_code=422, detail=f"AI Output Blocked: {audit}")
         from ..services.token_usage_service import TokenUsageService
         if response.usage_metadata:
-            asyncio.create_task(TokenUsageService.log_usage(request_id=f"blog-{uuid.uuid4().hex[:8]}", user_id=current_user.get("id"), model=model_id.split("/")[-1], provider="google", input_tokens=response.usage_metadata.prompt_token_count, output_tokens=response.usage_metadata.candidates_token_count, context_type="blog_draft"))
+            asyncio.create_task(TokenUsageService.log_usage(
+                request_id=f"blog-{uuid.uuid4().hex[:8]}",
+                user_id=current_user.get("id"),
+                model=model_id.split("/")[-1],
+                provider="google",
+                input_tokens=response.usage_metadata.prompt_token_count or 0,
+                output_tokens=response.usage_metadata.candidates_token_count or 0,
+                context_type="blog_draft"
+            ))
         return DraftBlogResponse(
             title=str(result.get("title", "")),
             content=str(result.get("content", "")),
@@ -501,7 +509,7 @@ async def nana_banana_proxy(request: dict, current_user: dict = Depends(get_curr
             model="gemini-2.0-flash-lite",
             contents=enrichment_prompt
         )
-        enhanced_prompt = enrich_resp.text.strip()
+        enhanced_prompt = (enrich_resp.text or "").strip()
 
         # 3. Tier-aware Rendering
         try:
@@ -512,7 +520,7 @@ async def nana_banana_proxy(request: dict, current_user: dict = Depends(get_curr
                 config=types.GenerateContentConfig(response_modalities=['IMAGE'])
             )
             for part in (native_resp.parts or []):
-                if part.inline_data:
+                if part.inline_data and part.inline_data.data:
                     return {
                         "status": "success",
                         "image_url": f"data:{part.inline_data.mime_type};base64,{part.inline_data.data.decode('utf-8')}",

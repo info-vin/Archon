@@ -1,4 +1,4 @@
-import { Employee, EmployeeRole, Task, TaskStatus, TaskPriority, DocumentVersion, Project, BlogPost, AssignableUser, TaskStats, MemberPerformance, JobData } from '../types.ts';
+import { Employee, EmployeeRole, Task, TaskStatus, TaskPriority, DocumentVersion, Project, BlogPost, AssignableUser, TaskStats, MemberPerformance, JobData, CrawlerTarget } from '../types.ts';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
 // --- SUPABASE CLIENT SETUP ---
@@ -291,24 +291,16 @@ const supabaseApi = {
     const data = await response.json();
     return data.items || [];
   },
-  async getCrawlerTargets(): Promise<any[]> {
-    try {
-      const response = await fetch('/api/admin/crawler-targets', {
-        headers: await this._getHeaders()
-      });
-      if (response.ok) {
-        return await response.json();
-      }
-      
-      // Fallback to direct DB query if API not found
-      if (supabase) {
-        const { data, error } = await supabase.from('archon_crawler_targets').select('*').eq('is_active', true);
-        if (!error && data) return data;
-      }
-    } catch (err) {
-      console.warn("Crawler targets fetch failed:", err);
+  async getCrawlerTargets(): Promise<CrawlerTarget[]> {
+    const response = await fetch(`/api/admin/crawler-targets`, {
+      headers: await this._getHeaders()
+    });
+    if (!response.ok) {
+      if (response.status === 404) return [];
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.detail?.error || 'Failed to fetch crawler targets.');
     }
-    return [];
+    return response.json();
   },
   async createCrawlerTarget(data: { target_url: string; max_depth?: number; description?: string }): Promise<any> {
     const response = await fetch('/api/admin/crawler-targets', {

@@ -1130,6 +1130,7 @@ const manualTestConnection = useCallback(async (
     embeddingInstanceConfig.name,
     manualTestConnection,
     fetchOllamaMetrics,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   ]);
   
   return <Card accentColor="green" className="overflow-hidden p-8">

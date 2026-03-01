@@ -486,9 +486,8 @@ class LibrarianService:
                     user_id="system-librarian",
                     model="gemini-2.0-flash-lite",
                     provider="google",
-                    input_tokens=response.usage_metadata.prompt_token_count,
-                    output_tokens=response.usage_metadata.candidates_token_count,
-                    context_type="expertise_extraction"
+                    input_tokens=response.usage_metadata.prompt_token_count or 0,
+                    output_tokens=response.usage_metadata.candidates_token_count or 0
                 ))
 
             # 2. Archive as Knowledge

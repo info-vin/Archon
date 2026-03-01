@@ -233,14 +233,14 @@ class RAGService:
             references = []
 
             # Handling 2.0 SDK response structure
-            if response.candidates and response.candidates[0].content.parts:
+            if response.candidates and response.candidates[0].content and response.candidates[0].content.parts:
                 for part in response.candidates[0].content.parts:
                     if part.text:
                         content += part.text
 
             # Extract grounding metadata if available
             # validation of grounding metadata structure is needed, assuming standard
-            if (response.candidates[0].grounding_metadata
+            if (response.candidates and response.candidates[0].grounding_metadata
                 and response.candidates[0].grounding_metadata.grounding_chunks):
                 for chunk in response.candidates[0].grounding_metadata.grounding_chunks:
                     if chunk.web and chunk.web.uri:

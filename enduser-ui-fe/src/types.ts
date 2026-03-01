@@ -144,6 +144,18 @@ export enum ChangeType {
   SHELL = 'shell'
 }
 
+export interface CrawlerTarget {
+  id: string;
+  target_url: string;
+  description: string;
+  is_active: boolean;
+  update_frequency: string;
+  whitelist: string[];
+  last_crawled_at?: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface ProposedChange {
   id: string;
   created_at: string;
