@@ -58,7 +58,7 @@ ON CONFLICT (id) DO UPDATE SET
 -- DevBot
 INSERT INTO profiles (id, "employeeId", name, email, department, position, status, role, avatar)
 VALUES (
-    COALESCE((SELECT id FROM profiles WHERE email = 'dev.bot@archon.com'), 'agent-dev-001'),
+    COALESCE((SELECT id FROM profiles WHERE email = 'dev.bot@archon.com'), 'ai-dev-bot'),
     'A1001', 'DevBot', 'dev.bot@archon.com', 'AI', 'Code Assistant', 'active', 'ai_agent', 'https://api.dicebear.com/7.x/bottts/svg?seed=DevBot'
 )
 ON CONFLICT (id) DO UPDATE SET
@@ -74,7 +74,7 @@ ON CONFLICT (id) DO UPDATE SET
 -- MarketBot
 INSERT INTO profiles (id, "employeeId", name, email, department, position, status, role, avatar)
 VALUES (
-    COALESCE((SELECT id FROM profiles WHERE email = 'market.bot@archon.com'), 'agent-mr-001'),
+    COALESCE((SELECT id FROM profiles WHERE email = 'market.bot@archon.com'), 'ai-market-bot'),
     'A1002', 'MarketBot', 'market.bot@archon.com', 'AI', 'Market Researcher', 'active', 'ai_agent', 'https://api.dicebear.com/7.x/bottts/svg?seed=MarketBot'
 )
 ON CONFLICT (id) DO UPDATE SET
@@ -90,8 +90,24 @@ ON CONFLICT (id) DO UPDATE SET
 -- Librarian
 INSERT INTO profiles (id, "employeeId", name, email, department, position, status, role, avatar)
 VALUES (
-    COALESCE((SELECT id FROM profiles WHERE email = 'lib.bot@archon.com'), 'agent-lib-001'),
+    COALESCE((SELECT id FROM profiles WHERE email = 'lib.bot@archon.com'), 'ai-librarian'),
     'A1003', 'Librarian', 'lib.bot@archon.com', 'AI', 'Knowledge Manager', 'active', 'ai_agent', 'https://api.dicebear.com/7.x/bottts/svg?seed=Librarian'
+)
+ON CONFLICT (id) DO UPDATE SET
+    "employeeId" = EXCLUDED."employeeId",
+    name = EXCLUDED.name,
+    email = EXCLUDED.email,
+    department = EXCLUDED.department,
+    position = EXCLUDED.position,
+    status = EXCLUDED.status,
+    role = EXCLUDED.role,
+    avatar = EXCLUDED.avatar;
+
+-- POBot
+INSERT INTO profiles (id, "employeeId", name, email, department, position, status, role, avatar)
+VALUES (
+    COALESCE((SELECT id FROM profiles WHERE email = 'po.bot@archon.com'), 'ai-po-bot'),
+    'A1004', 'POBot', 'po.bot@archon.com', 'AI', 'Product Owner', 'active', 'ai_agent', 'https://api.dicebear.com/7.x/bottts/svg?seed=POBot'
 )
 ON CONFLICT (id) DO UPDATE SET
     "employeeId" = EXCLUDED."employeeId",
@@ -106,8 +122,8 @@ ON CONFLICT (id) DO UPDATE SET
 -- Clockwork
 INSERT INTO profiles (id, "employeeId", name, email, department, position, status, role, avatar)
 VALUES (
-    COALESCE((SELECT id FROM profiles WHERE email = 'sys.bot@archon.com'), 'agent-sys-001'),
-    'A1004', 'Clockwork', 'sys.bot@archon.com', 'AI', 'Workflow Automation', 'active', 'ai_agent', 'https://api.dicebear.com/7.x/bottts/svg?seed=Clockwork'
+    COALESCE((SELECT id FROM profiles WHERE email = 'clock.bot@archon.com'), 'ai-clockwork'),
+    'A1005', 'Clockwork', 'clock.bot@archon.com', 'AI', 'Operations', 'active', 'ai_agent', 'https://api.dicebear.com/7.x/bottts/svg?seed=Clockwork'
 )
 ON CONFLICT (id) DO UPDATE SET
     "employeeId" = EXCLUDED."employeeId",
@@ -174,11 +190,7 @@ BEGIN
         INSERT INTO archon_tasks (project_id, title, description, status, priority, assignee, assignee_id, task_order, created_at, updated_at) VALUES
         (proj1_id, 'Fix authentication bug', 'Users are reporting intermittent login failures.', 'review', 'critical', 'Alice Johnson', alice_id, 3, '2024-09-04T10:00:00Z', '2024-09-08T10:00:00Z');
     END IF;
-    -- Seed for blog_posts table (Marketing Content)
-    INSERT INTO blog_posts (id, title, content, excerpt, author_name, status, publish_date, ai_score, review_notes, created_at, updated_at) VALUES
-    (uuid_generate_v4(), 'SAS Smart Manufacturing Solution', 'Content about SAS AI in factories...', 'Deep dive into SAS AI...', 'Bob', 'published', NOW() - INTERVAL '2 days', 95, NULL, NOW() - INTERVAL '3 days', NOW() - INTERVAL '2 days'),
-    (uuid_generate_v4(), 'AI in Tech Support: 2026 Trends', 'Draft content about support bots...', 'Trends in AI support...', 'Bob', 'review', NOW(), 82, NULL, NOW() - INTERVAL '1 day', NOW())
-    ON CONFLICT DO NOTHING;
+
 
     -- Seed for archon_ethics_events (Sentinel Radar)
     INSERT INTO archon_ethics_events (id, event_type, severity, description, raw_input, resolved, created_at)
@@ -192,11 +204,7 @@ BEGIN
 
 END $$;
 
--- Seed for leads table (Stale Lead for Sentinel Testing)
-INSERT INTO leads (company_name, status, enrichment_score, created_at, updated_at)
-VALUES 
-('Legacy Corp', 'new', 20, NOW() - INTERVAL '40 days', NOW() - INTERVAL '35 days')
-ON CONFLICT DO NOTHING;
+
 
 -- Seed for archon_logs (Error Logs for Log Patrol Testing)
 INSERT INTO archon_logs (source, level, message, details, created_at)

@@ -7,6 +7,7 @@ import { SankeyDiagram } from '../features/marketing/components/SankeyDiagram';
 import { VictoryFeedList, ContentSource } from '../features/marketing/components/VictoryFeedList';
 import { ContentWorkbench } from '../features/marketing/components/ContentWorkbench';
 import { useAuth } from '../hooks/useAuth';
+import { useNavigate } from 'react-router-dom';
 import { 
     PlusIcon, 
     PaletteIcon, 
@@ -22,6 +23,7 @@ import {
 
 const BrandPage: React.FC = () => {
     const { user } = useAuth();
+    const navigate = useNavigate();
     const [viewMode, setViewMode] = useState<'dashboard' | 'workbench'>('workbench');
     
     // Dashboard State
@@ -487,6 +489,9 @@ const BrandPage: React.FC = () => {
                                     <button onClick={() => handleEditSmart(post)} className="p-1 hover:bg-gray-100 rounded text-blue-500" title="Edit Content">
                                         <FileEditIcon className="w-4 h-4" />
                                     </button>
+                                    <button onClick={() => navigate(`/brand/editor/${post.id}`)} className="p-1 hover:bg-indigo-50 rounded text-indigo-500" title="Advanced Editor (Pro)">
+                                        <SparklesIcon className="w-4 h-4" />
+                                    </button>
                                     <button onClick={() => handleDeletePost(post.id)} className="p-1 hover:bg-red-50 rounded text-red-500" title="Delete">
                                         <TrendingUpIcon className="w-4 h-4 rotate-45" />
                                     </button>
@@ -512,11 +517,11 @@ const BrandPage: React.FC = () => {
 
     return (
         <PermissionGuard permission="leads:view:marketing" fallback={<div className="p-12 text-center text-gray-500">Access Denied: Brand Hub is for Marketing roles only.</div>}>
-            <div className="flex flex-col h-full">
-                <header className="px-6 py-4 flex justify-between items-center bg-white dark:bg-slate-900 border-b shrink-0 font-sans">
+            <div className="flex flex-col h-full bg-slate-50 dark:bg-slate-900">
+                <header className="px-6 py-8 md:px-10 flex justify-between items-center bg-white dark:bg-slate-900 border-b shrink-0 font-sans">
                     <div className="flex items-center gap-4">
-                        <h1 className="text-2xl font-bold text-gray-800 dark:text-white flex items-center gap-3">
-                            <PaletteIcon className="w-6 h-6 text-indigo-600" />
+                        <h1 className="text-3xl font-bold text-gray-800 dark:text-white flex items-center gap-3">
+                            <PaletteIcon className="w-8 h-8 text-indigo-600" />
                             Brand Hub
                         </h1>
                         

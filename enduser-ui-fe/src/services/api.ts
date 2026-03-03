@@ -609,6 +609,27 @@ const supabaseApi = {
       return response.json();
   },
 
+  async uploadFile(file: File): Promise<{ url: string; key: string }> {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      // Create headers but explicitly remove Content-Type so browser sets it with boundary
+      const headers = await this._getHeaders();
+      delete headers['Content-Type'];
+
+      const response = await fetch('/api/files/upload', {
+          method: 'POST',
+          headers,
+          body: formData
+      });
+
+      if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.detail || 'Failed to upload file.');
+      }
+      return response.json();
+  },
+
   async getContentSources(): Promise<any[]> {
     const response = await fetch('/api/marketing/sources', { headers: await this._getHeaders() });
     if (!response.ok) throw new Error('Failed to fetch content sources');

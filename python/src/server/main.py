@@ -55,6 +55,7 @@ from .services.crawler_manager import cleanup_crawler
 
 # Import utilities and core classes
 from .services.credential_service import initialize_credentials
+from .services.scheduler_service import SchedulerService
 
 # Import missing dependencies that the modular APIs need
 try:
@@ -125,13 +126,7 @@ async def lifespan(app: FastAPI):
         except Exception as e:
             api_logger.warning(f"Could not initialize prompt service: {e}")
 
-        # Initialize Clockwork (Scheduler Service)
-        try:
-            from .services.scheduler_service import scheduler_service
-            scheduler_service.start()
-            api_logger.info("✅ Clockwork (Scheduler) initialized")
-        except Exception as e:
-            api_logger.error(f"❌ Failed to start Clockwork: {e}")
+
 
         # Initialize Agent Neural Wiring (MCP Client Injection)
         try:
@@ -158,6 +153,12 @@ async def lifespan(app: FastAPI):
         except Exception as e:
             api_logger.warning(f"Could not set main event loop: {e}")
 
+        # Re-enable Internal Scheduler
+        try:
+            await SchedulerService().start()
+            api_logger.info("🕒 Internal Scheduler started")
+        except Exception as e:
+            api_logger.warning(f"Could not start internal scheduler: {e}")
 
         # MCP Client functionality removed from architecture
         # Agents now use MCP tools directly
@@ -177,12 +178,7 @@ async def lifespan(app: FastAPI):
     api_logger.info("🛑 Shutting down Archon backend...")
 
     try:
-        # Shutdown Clockwork
-        try:
-            from .services.scheduler_service import scheduler_service
-            scheduler_service.shutdown()
-        except Exception as e:
-            api_logger.warning(f"Could not shutdown Clockwork: {e}")
+
 
         # MCP Client cleanup not needed
 
@@ -198,6 +194,12 @@ async def lifespan(app: FastAPI):
             api_logger.info("Background task manager cleaned up")
         except Exception as e:
             api_logger.warning(f"Could not cleanup background task manager: {str(e)}")
+
+        # Stop Internal Scheduler
+        try:
+            SchedulerService().shutdown()
+        except Exception:
+            pass
 
         api_logger.info("✅ Cleanup completed")
 

@@ -80,7 +80,7 @@ const StatsPage: React.FC = () => {
     >
       <div className="p-6 max-w-7xl mx-auto space-y-8">
         <header>
-          <h1 className="text-3xl font-bold text-gray-800">
+          <h1 className="text-3xl font-bold text-gray-800 dark:text-white flex items-center gap-3">
               {isManager ? "Team Analytics Dashboard" : "My Performance Dashboard"}
           </h1>
           <p className="text-gray-500 mt-2">

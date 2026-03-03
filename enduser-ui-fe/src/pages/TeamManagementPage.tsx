@@ -44,7 +44,7 @@ const TeamManagementPage: React.FC = () => {
             <div className="p-4 md:p-6 max-w-7xl mx-auto space-y-6 md:space-y-8">
                 <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
                     <div>
-                        <h1 className="text-3xl font-bold text-gray-800">Team Management</h1>
+                        <h1 className="text-3xl font-bold text-gray-800 dark:text-white flex items-center gap-3">Team Management</h1>
                         <p className="text-gray-500 mt-2">Manage your team members and oversee AI resource allocation.</p>
                     </div>
                 </header>

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { api } from '../services/api.ts';
 import { DocumentVersion, BlogPost } from '../types.ts';
-import { CheckCircleIcon, PlusIcon, XIcon, RefreshCwIcon, ShieldCheckIcon, SearchIcon, SparklesIcon } from '../components/Icons.tsx';
+import { PlusIcon, XIcon, RefreshCwIcon, ShieldCheckIcon, SearchIcon, SparklesIcon } from '../components/Icons.tsx';
 import { useAuth } from '../hooks/useAuth.tsx';
 
 import { IdentityMatrix } from '../features/admin/components/IdentityMatrix.tsx';
@@ -21,7 +22,7 @@ const AdminPage: React.FC = () => {
   return (
     <div className="flex-1 flex flex-col h-full overflow-hidden p-6 bg-background text-foreground">
       <header className="mb-6">
-        <h1 className="text-3xl font-bold">{isOnlyManager ? 'Manager Control Center' : 'Admin Control Center'}</h1>
+        <h1 className="text-3xl font-bold text-gray-800 dark:text-white flex items-center gap-3">{isOnlyManager ? 'Manager Control Center' : 'Admin Control Center'}</h1>
         <p className="text-muted-foreground">
           {isOnlyManager 
             ? 'Configure team permissions, workflows, and operational parameters.'
@@ -185,38 +186,12 @@ const DocumentVersionsLog: React.FC = () => {
 };
 
 const BlogManagement: React.FC = () => {
-    const { user } = useAuth();
     const [posts, setPosts] = useState<BlogPost[]>([]);
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [editingPost, setEditingPost] = useState<BlogPost | null>(null);
+    const navigate = useNavigate();
 
     useEffect(() => {
         api.getBlogPosts().then(setPosts).catch(err => alert(`Failed to load blog posts: ${err.message}`));
     }, []);
-
-    const handleSavePost = async (postData: Omit<BlogPost, 'id' | 'authorName' | 'publishDate'>, postId?: string) => {
-        try {
-            if (!user) throw new Error("User not found");
-            if (postId) { // Editing existing post
-                const updatedPost = await api.updateBlogPost(postId, postData);
-                setPosts(prev => prev.map(p => p.id === postId ? updatedPost : p));
-                alert('Blog post updated successfully!');
-            } else { // Creating new post
-                const newPostData = {
-                    ...postData,
-                    authorName: user.name,
-                    publishDate: new Date().toISOString(),
-                };
-                const newPost = await api.createBlogPost(newPostData);
-                setPosts(prev => [newPost, ...prev]);
-                alert('Blog post created successfully!');
-            }
-            setIsModalOpen(false);
-            setEditingPost(null);
-        } catch(error: any) {
-             alert(`Failed to save post: ${error.message}`);
-        }
-    };
 
     const handleDeletePost = async (postId: string) => {
         if (window.confirm('Are you sure you want to delete this post?')) {
@@ -230,26 +205,11 @@ const BlogManagement: React.FC = () => {
         }
     };
 
-    const openNewPostModal = () => {
-        setEditingPost(null);
-        setIsModalOpen(true);
-    };
-
-    const openEditPostModal = (post: BlogPost) => {
-        setEditingPost(post);
-        setIsModalOpen(true);
-    };
-
-    const closeModal = () => {
-        setIsModalOpen(false);
-        setEditingPost(null);
-    }
-
     return (
         <div className="bg-card p-6 rounded-2xl border border-border shadow-sm">
             <div className="flex justify-between items-center mb-6">
                 <h2 className="text-xl font-bold">Content Assets</h2>
-                <button onClick={openNewPostModal} className="flex items-center px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 font-bold transition-all shadow-sm">
+                <button onClick={() => navigate('/admin/editor/new')} className="flex items-center px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 font-bold transition-all shadow-sm">
                     <PlusIcon className="w-5 h-5 mr-2" />
                     NEW POST
                 </button>
@@ -267,7 +227,7 @@ const BlogManagement: React.FC = () => {
                     </thead>
                     <tbody className="divide-y divide-border bg-card">
                         {posts.map(post => (
-                            <tr key={post.id} className="hover:bg-muted/30 transition-colors">
+                            <tr key={post.id} className="hover:bg-muted/30 transition-colors cursor-pointer" onClick={() => navigate(`/admin/editor/${post.id}`)}>
                                 <td className="px-6 py-4 whitespace-nowrap font-bold text-sm">{post.title}</td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm">{post.authorName}</td>
                                 <td className="px-6 py-4 whitespace-nowrap">
@@ -275,52 +235,19 @@ const BlogManagement: React.FC = () => {
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-xs text-muted-foreground">{new Date(post.publishDate).toLocaleDateString()}</td>
                                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                    <button onClick={() => openEditPostModal(post)} className="text-primary hover:text-primary/90 font-bold transition-colors">Edit</button>
-                                    <button onClick={() => handleDeletePost(post.id)} className="text-destructive hover:text-destructive/90 font-bold ml-4 transition-colors">Delete</button>
+                                    <button onClick={(e) => { e.stopPropagation(); navigate(`/admin/editor/${post.id}`); }} className="text-primary hover:text-primary/90 font-bold transition-colors">Edit</button>
+                                    <button onClick={(e) => { e.stopPropagation(); handleDeletePost(post.id); }} className="text-destructive hover:text-destructive/90 font-bold ml-4 transition-colors">Delete</button>
                                 </td>
                             </tr>
                         ))}
                     </tbody>
                 </table>
             </div>
-            {isModalOpen && <PostEditorModal post={editingPost} onClose={closeModal} onSubmit={handleSavePost} />}
         </div>
     );
 };
 
-const PostEditorModal: React.FC<{post: BlogPost | null, onClose: () => void, onSubmit: (data: any, postId?: string) => Promise<void>}> = ({ post, onClose, onSubmit }) => {
-    const [title, setTitle] = useState(post?.title || '');
-    const [excerpt, setExcerpt] = useState(post?.excerpt || '');
-    const [content, setContent] = useState(post?.content || ''); 
-    const [imageUrl, setImageUrl] = useState(post?.imageUrl || '');
 
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        onSubmit({ title, excerpt, content, imageUrl }, post?.id);
-    };
-    const inputClass = "appearance-none rounded-md relative block w-full px-3 py-2 border border-border placeholder-muted-foreground text-foreground bg-input focus:outline-none focus:ring-ring focus:border-ring focus:z-10 sm:text-sm";
-
-    return (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-            <div className="bg-card rounded-2xl shadow-xl w-full max-w-2xl p-6 relative animate-in fade-in zoom-in-95 duration-200">
-                <h2 className="text-2xl font-bold mb-4">{post ? 'Edit' : 'Create'} Blog Post</h2>
-                <button onClick={onClose} className="absolute top-4 right-4 p-2 rounded-full hover:bg-muted transition-colors"><XIcon className="w-6 h-6" /></button>
-                <form onSubmit={handleSubmit} className="space-y-4">
-                    <input type="text" placeholder="Title" value={title} onChange={e => setTitle(e.target.value)} className={inputClass} required/>
-                    <textarea placeholder="Excerpt" value={excerpt} onChange={e => setExcerpt(e.target.value)} className={inputClass} rows={3} required></textarea>
-                    <textarea placeholder="Main Content (Markdown)" value={content} onChange={e => setContent(e.target.value)} className={inputClass} rows={10} required></textarea>
-                    <input type="url" placeholder="Image URL" value={imageUrl} onChange={e => setImageUrl(e.target.value)} className={inputClass} required/>
-                    <div className="flex justify-end space-x-2 pt-4 border-t border-border mt-4">
-                        <button type="button" onClick={onClose} className="px-4 py-2 rounded-md bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-colors">Cancel</button>
-                        <button type="submit" className="px-4 py-2 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 font-bold transition-all">
-                            {post ? 'SAVE CHANGES' : 'CREATE ASSET'}
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    );
-};
 
 // --- NEW COMPONENT: SYSTEM SETTINGS ---
 const SystemSettings: React.FC = () => {
@@ -339,9 +266,8 @@ const SystemSettings: React.FC = () => {
             const crawlerData = await api.getSystemSettings('crawler_rbac');
             const diagnosticsData = await api.getSystemSettings('diagnostics');
             const scoringData = await api.getSystemSettings('lead_scoring');
-            const ragData = await api.getSystemSettings('rag_strategy');
             const systemData = await api.getSystemSettings('system'); // SCHEDULER frequency settings
-            setSettings([...crawlerData, ...diagnosticsData, ...scoringData, ...ragData, ...systemData]);
+            setSettings([...crawlerData, ...diagnosticsData, ...scoringData, ...systemData]);
         } catch (err: any) {
             alert("Failed to load settings: " + err.message);
         } finally {
@@ -366,7 +292,6 @@ const SystemSettings: React.FC = () => {
     const roles = ['SALES', 'MARKETING', 'MANAGER', 'ADMIN'];
     const logLevelSetting = settings.find(s => s.key === 'system.log_level');
     const scoringSettings = settings.filter(s => s.category === 'lead_scoring');
-    const ragSettings = settings.filter(s => s.category === 'rag_strategy');
     const schedulerSettings = settings.filter(s => s.category === 'system' && s.key.startsWith('SCHEDULER_'));
 
     return (
@@ -418,43 +343,27 @@ const SystemSettings: React.FC = () => {
                 </div>
             </div>
 
-            {/* NEW: RAG Strategy Configuration (Google Gemini) */}
+            {/* NEW: RAG Strategy Configuration (Google Gemini) - Redirect to SSOT */}
             <div className="bg-card p-6 rounded-2xl border border-border shadow-sm border-l-4 border-l-purple-500">
                 <h3 className="text-lg font-bold mb-4 flex items-center gap-2 text-purple-600">
                     <SparklesIcon className="w-5 h-5" />
                     RAG Strategy Configuration
                 </h3>
-                <div className="space-y-4">
-                    {ragSettings.map(setting => (
-                        <div key={setting.key} className="p-4 bg-muted/20 rounded-xl border border-border flex flex-col md:flex-row md:items-center justify-between gap-4">
-                            <div className="flex-1">
-                                <div className="font-bold text-xs uppercase tracking-widest text-purple-600/70">{setting.key.replace(/_/g, ' ')}</div>
-                                <p className="text-[10px] text-muted-foreground mt-0.5">{setting.description}</p>
-                            </div>
-                            <div className="flex items-center gap-3 w-full md:w-1/2">
-                                <div className="relative flex-1">
-                                    <input
-                                        type="text"
-                                        defaultValue={setting.value}
-                                        onBlur={(e) => handleUpdate(setting.key, e.target.value)}
-                                        className="w-full p-2 bg-background border border-border rounded-lg text-xs font-mono outline-none focus:ring-2 ring-purple-500/50 transition-all pr-8"
-                                    />
-                                    {/* Green Checkmark for Google Config Validation */}
-                                    {setting.value.toLowerCase().includes('google') && (
-                                        <div className="absolute right-2 top-1/2 -translate-y-1/2 text-green-500" title="Configuration Valid (Google)">
-                                            <CheckCircleIcon className="w-4 h-4" />
-                                        </div>
-                                    )}
-                                </div>
-                                {isSaving === setting.key && <RefreshCwIcon className="animate-spin w-4 h-4 text-purple-600" />}
-                            </div>
-                        </div>
-                    ))}
-                    {ragSettings.length === 0 && (
-                        <div className="p-4 text-center text-muted-foreground italic text-xs">
-                            No RAG strategy settings found. Ensure migration 044 has been applied.
-                        </div>
-                    )}
+                <div className="p-6 bg-purple-50/50 dark:bg-purple-900/10 rounded-xl border border-purple-100 dark:border-purple-900 text-center">
+                    <p className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-4">
+                        Advanced RAG parameters (Chunking, Embedding Models, Retrieval Hooks) have been migrated to the dedicated Operational Control Center.
+                    </p>
+                    <a 
+                        href="http://localhost:3737" 
+                        target="_blank" 
+                        rel="noreferrer"
+                        className="inline-flex items-center px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-lg transition-colors shadow-sm"
+                    >
+                        Open RAG Control Center (Port 3737)
+                    </a>
+                    <p className="text-xs text-muted-foreground mt-4 italic">
+                        This ensures a Single Source of Truth (SSOT) for all deep system configurations.
+                    </p>
                 </div>
             </div>
 

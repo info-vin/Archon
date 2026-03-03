@@ -44,6 +44,66 @@ class SchedulerService:
             logger.info("🛑 Clockwork: Shutting down Scheduler...")
             self._scheduler.shutdown()
 
+    async def _update_last_run(self, key: str):
+        try:
+            from ..utils import get_supabase_client
+            supabase = get_supabase_client()
+            now_iso = datetime.now(UTC).isoformat()
+
+            # Check if key exists
+            res = supabase.table("archon_settings").select("key").eq("key", key).execute()
+            if res.data:
+                supabase.table("archon_settings").update({"value": now_iso}).eq("key", key).execute()
+            else:
+                supabase.table("archon_settings").insert({"key": key, "value": now_iso}).execute()
+        except Exception as e:
+            logger.error(f"Scheduler: Failed to update last run for {key}: {e}")
+
+    async def _get_last_run(self, key: str) -> datetime | None:
+        try:
+            from ..utils import get_supabase_client
+            supabase = get_supabase_client()
+            res = supabase.table("archon_settings").select("value").eq("key", key).execute()
+            if res.data:
+                value = res.data[0]["value"]
+                return datetime.fromisoformat(value.replace('Z', '+00:00'))
+        except Exception:
+            pass
+        return None
+
+    async def _schedule_stateful_job(self, job_func, trigger_hours: int, job_id: str):
+        db_key = f"LAST_RUN_{job_id.upper()}"
+        last_run = await self._get_last_run(db_key)
+        now = datetime.now(UTC)
+        next_run = now + timedelta(seconds=10) # default soon
+
+        if last_run:
+            expected_next = last_run + timedelta(hours=trigger_hours)
+            if expected_next > now:
+                next_run = expected_next
+
+        # Wrapper to execute and update DB
+        async def stateful_wrapper():
+            logger.info(f"🕒 Clockwork: Executing stateful job '{job_id}'")
+            try:
+                await job_func()
+            finally:
+                await self._update_last_run(db_key)
+
+        if not self._scheduler:
+            return
+
+        self._scheduler.add_job(
+            stateful_wrapper,
+            trigger=IntervalTrigger(hours=trigger_hours),
+            id=job_id,
+            replace_existing=True,
+            next_run_time=next_run
+        )
+        logger.info(f"✅ Scheduled Job: {job_id} (Every {trigger_hours}h, Next: {next_run.strftime('%Y-%m-%d %H:%M:%S UTC')})")
+
+
+
     async def _schedule_jobs(self):
         if not self._scheduler:
             return
@@ -62,14 +122,12 @@ class SchedulerService:
         )
         logger.info(f"✅ Scheduled Job: System Probe (Every {probe_mins} mins)")
 
-        # Job 1.1: Alice Daily Lead Fetch (Every 24 hours)
-        self._scheduler.add_job(
+        # Job 1.1: Alice Auto Lead Fetch (Stateful, Every 24 hours)
+        await self._schedule_stateful_job(
             self._run_auto_fetch_leads,
-            trigger=IntervalTrigger(hours=24),
-            id="alice_auto_fetch",
-            replace_existing=True
+            trigger_hours=24,
+            job_id="alice_auto_fetch"
         )
-        logger.info("✅ Scheduled Job: Alice Auto Fetch (Every 24 hours)")
 
         # Job 1.5: System Probe Cleanup (Hourly)
         self._scheduler.add_job(
@@ -79,12 +137,11 @@ class SchedulerService:
             replace_existing=True
         )
 
-        # Job 2: The Accountant - Token Analysis (Every 24 hours)
-        self._scheduler.add_job(
+        # Job 2: The Accountant - Token Analysis (Stateful, Every 24 hours)
+        await self._schedule_stateful_job(
             self._analyze_token_usage,
-            trigger=IntervalTrigger(hours=24),
-            id="token_analysis",
-            replace_existing=True
+            trigger_hours=24,
+            job_id="token_analysis"
         )
 
         # Job 3: The Patrol - Log Analysis & Auto-Repair
@@ -96,16 +153,21 @@ class SchedulerService:
         )
         logger.info(f"✅ Scheduled Job: Log Patrol (Every {patrol_mins} mins)")
 
-        # Job 4: The Sentinel - Business Logic Monitoring
-        self._scheduler.add_job(
+        # Job 4: The Sentinel - Business Logic Monitoring (Stateful)
+        await self._schedule_stateful_job(
             self._run_business_sentinel,
-            trigger=IntervalTrigger(hours=sentinel_hours),
-            id="business_sentinel",
-            replace_existing=True
+            trigger_hours=sentinel_hours,
+            job_id="business_sentinel"
         )
-        logger.info(f"✅ Scheduled Job: Business Sentinel (Every {sentinel_hours} hours)")
 
-        # Job 5: The Dispatcher - Recurring Task Execution (Every 30 minutes)
+        # Job 5: Bob's Daily Market Report (Stateful, Every 24 hours)
+        await self._schedule_stateful_job(
+            self._run_daily_market_report,
+            trigger_hours=24,
+            job_id="bob_market_report"
+        )
+
+        # Job 6: The Dispatcher - Recurring Task Execution (Every 30 minutes)
         # 物理加固：實作 David 的自動化爬蟲排程，達成 5173 任務與 3737 設定的自動閉環
         self._scheduler.add_job(
             self._run_task_dispatcher,
@@ -133,7 +195,7 @@ class SchedulerService:
                 supabase.table("archon_tasks")
                 .select("id, title, assignee_id, schedule_config, crawler_target_id")
                 .eq("is_recurring", True)
-                .not_.eq("status", "completed")
+                .not_.eq("status", "done")
                 .execute()
             )
 
@@ -193,6 +255,64 @@ class SchedulerService:
             logger.info(f"✅ Clockwork: Alice daily auto-fetch finished ({new_leads} leads).")
         except Exception as e:
             logger.error(f"💥 Clockwork: Alice auto-fetch failed: {e}")
+
+    async def _run_daily_market_report(self):
+        """
+        Clockwork task to trigger Bob (MarketingBot) to summarize today's leads into a Blog Post.
+        Runs 1 hour after startup if missed, or every 24 hours.
+        """
+        logger.info("✍️ Clockwork: Triggering Bob's Daily Market Report...")
+        try:
+            from ..utils import get_supabase_client
+            from .agent_service import agent_service
+            from .projects.task_service import task_service
+
+            supabase = get_supabase_client()
+
+            # Fetch today's leads to provide context (last 24 hours)
+            one_day_ago = (datetime.now(UTC) - timedelta(hours=24)).isoformat()
+            res = supabase.table("leads").select("company_name, job_title, status").gt("created_at", one_day_ago).execute()
+            leads = res.data or []
+
+            if not leads:
+                logger.info("✍️ Clockwork: No new leads today to report on. Skipping.")
+                return
+
+            lead_summary = "\n".join([f"- {lead['company_name']} looking for {lead['job_title']}" for lead in leads])
+
+            # Create a task for MarketingBot
+            task_title = f"Daily Market Intelligence Report ({datetime.now().strftime('%Y-%m-%d')})"
+            task_desc = f"""Please write an engaging 600-word daily blog post summarizing today's tech job market movements based on the leads Alice found.
+
+Data points from today's scrape ({len(leads)} leads found):
+{lead_summary}
+
+Focus on industry trends, which sectors are hiring, and position Archon as the solution for these fast-moving tech companies.
+The post MUST be written in Traditional Chinese (繁體中文).
+Use the tool to save this blog post as a DRAFT.
+"""
+
+            # Get a default project
+            p_res = supabase.table("archon_projects").select("id").limit(1).execute()
+            if not p_res.data:
+                logger.warning("Clockwork: No projects found to attach marketing task.")
+                return
+            project_id = p_res.data[0]["id"]
+
+            # Dispatch Task
+            success, task_result = await task_service.create_task(
+                project_id=project_id,
+                title=task_title,
+                description=task_desc,
+                assignee_id="ai-market-bot"  # Ensure this ID matches the seed data
+            )
+
+            if success:
+                logger.info(f"✍️ Clockwork: Created Market Report task {task_result['task']['id']}. Dispatching Bob...")
+                await agent_service.run_agent_task(task_id=task_result['task']['id'], agent_id="ai-market-bot")
+
+        except Exception as e:
+            logger.error(f"💥 Clockwork: Bob market report generation failed: {e}")
 
     async def _run_log_patrol(self):
         """

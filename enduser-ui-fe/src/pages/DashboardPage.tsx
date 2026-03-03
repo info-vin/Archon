@@ -488,7 +488,7 @@ const DashboardPage: React.FC = () => {
     <div className="flex-1 flex flex-col h-full overflow-hidden p-6 bg-background">
       {/* Header section remains the same */}
       <header className="flex flex-col md:flex-row md:justify-between md:items-center mb-6 gap-4">
-        <h1 className="text-3xl font-bold">{currentProject ? `${currentProject.title} Tasks` : (isAdmin ? 'All Tasks' : 'My Tasks')}</h1>
+        <h1 className="text-3xl font-bold text-gray-800 dark:text-white flex items-center gap-3">{currentProject ? `${currentProject.title} Tasks` : (isAdmin ? 'All Tasks' : 'My Tasks')}</h1>
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full md:w-auto">
           {/* Project Dropdown */}
           <div className="relative">

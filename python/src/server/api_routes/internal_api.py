@@ -9,7 +9,7 @@ import logging
 import os
 from typing import Any
 
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, BackgroundTasks, HTTPException, Request
 
 from ..services.credential_service import credential_service
 
@@ -139,3 +139,35 @@ async def get_mcp_credentials(request: Request) -> dict[str, Any]:
     except Exception as e:
         logger.error(f"Error retrieving MCP credentials: {e}")
         raise HTTPException(status_code=500, detail="Failed to retrieve credentials") from e
+
+
+@router.post("/cron/trigger")
+async def trigger_cron_jobs(request: Request, background_tasks: BackgroundTasks, api_key: str | None = None):
+    """
+    Webhook to trigger scheduler jobs externally.
+    Allows execution via internal IP or matching ARCHON_CRON_SECRET.
+    """
+    is_internal = is_internal_request(request)
+    valid_api_key = os.getenv("ARCHON_CRON_SECRET")
+
+    if not is_internal:
+        if not valid_api_key or api_key != valid_api_key:
+            auth_header = request.headers.get("Authorization")
+            if not auth_header or auth_header != f"Bearer {valid_api_key}":
+                logger.warning("Unauthorized access to trigger-jobs")
+                raise HTTPException(status_code=403, detail="Access forbidden")
+
+    try:
+        from ..services.scheduler_service import scheduler_service
+        # Add all jobs to FastAPI BackgroundTasks so they run concurrently after the response
+        background_tasks.add_task(scheduler_service._run_system_probe)
+        background_tasks.add_task(scheduler_service._run_auto_fetch_leads)
+        background_tasks.add_task(scheduler_service._analyze_token_usage)
+        background_tasks.add_task(scheduler_service._run_log_patrol)
+        background_tasks.add_task(scheduler_service._run_task_dispatcher)
+        background_tasks.add_task(scheduler_service._cleanup_system_probes)
+
+        return {"status": "success", "message": "Background jobs queued successfully"}
+    except Exception as e:
+        logger.error(f"Error triggering jobs: {e}")
+        raise HTTPException(status_code=500, detail=str(e)) from e

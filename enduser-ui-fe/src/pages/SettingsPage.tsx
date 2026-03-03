@@ -59,7 +59,7 @@ const SettingsPage: React.FC = () => {
 
     return (
         <div className="flex-1 flex flex-col h-full overflow-hidden p-6 bg-background">
-            <h1 className="text-3xl font-bold mb-6">Settings</h1>
+            <h1 className="text-3xl font-bold text-gray-800 dark:text-white mb-6 flex items-center gap-3">Settings</h1>
             <div className="flex-1 overflow-auto space-y-8">
                 <div className="bg-card p-6 rounded-lg max-w-lg">
                     <h2 className="text-xl font-semibold mb-4">Update Email</h2>

@@ -11,7 +11,7 @@ import {
   ChevronRightIcon,
   ArrowPathIcon,
   UserIcon,
-  SparklesIcon
+  ShieldCheckIcon
 } from '../components/Icons';
 import DiffViewer from '../components/DiffViewer';
 import ReactMarkdown from 'react-markdown';
@@ -73,13 +73,13 @@ const ApprovalsPage: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-64px)] bg-gray-50 dark:bg-slate-950 overflow-hidden">
+    <div className="flex flex-col h-[calc(100vh-64px)] bg-gray-50 dark:bg-slate-950 overflow-hidden font-sans font-inter leading-relaxed text-base">
       {/* Header */}
       <div className="bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-slate-800 px-6 py-4 flex justify-between items-center">
         <div>
-          <h1 className="text-xl font-black text-gray-900 dark:text-white flex items-center gap-2">
-            <SparklesIcon className="w-6 h-6 text-indigo-600" />
-            Unified Approval Inbox
+          <h1 className="text-3xl font-bold text-gray-800 dark:text-white flex items-center gap-3">
+            <ShieldCheckIcon className="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
+            Approvals
           </h1>
           <p className="text-xs text-gray-500 font-bold uppercase tracking-wider mt-1">
             Gatekeeper Console • {proposals.length} Pending Actions
@@ -136,11 +136,11 @@ const ApprovalsPage: React.FC = () => {
         </div>
 
         {/* Detail Pane */}
-        <div className="flex-1 overflow-y-auto p-8">
+        <div className="flex-1 overflow-y-auto p-10 md:p-14">
           {selectedProposal ? (
-            <div className="max-w-5xl mx-auto space-y-6">
+            <div className="max-w-5xl mx-auto shadow-sm shadow-gray-200 dark:shadow-none flex flex-col relative">
               {/* Proposal Meta */}
-              <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-gray-200 dark:border-slate-800 shadow-sm">
+              <div className="bg-white dark:bg-slate-900 rounded-t-2xl p-6 border-x border-t border-gray-200 dark:border-slate-800">
                 <div className="flex justify-between items-start">
                   <div>
                     <span className="px-2 py-0.5 bg-indigo-100 text-indigo-700 text-[10px] font-black rounded uppercase tracking-widest">
@@ -180,8 +180,8 @@ const ApprovalsPage: React.FC = () => {
               </div>
 
               {/* Content Preview */}
-              <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-200 dark:border-slate-800 overflow-hidden shadow-sm">
-                <div className="px-6 py-3 border-b border-gray-100 dark:border-slate-800 bg-gray-50/50 dark:bg-slate-800/50">
+              <div className="bg-white dark:bg-slate-900 rounded-b-2xl border-x border-b border-gray-200 dark:border-slate-800 overflow-hidden">
+                <div className="px-8 py-5 border-b border-t border-gray-100 dark:border-slate-800 bg-gray-50/50 dark:bg-slate-800/50">
                   <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Inspection Layer</span>
                 </div>
                 

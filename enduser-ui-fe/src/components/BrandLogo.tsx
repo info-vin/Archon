@@ -38,8 +38,8 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({ className = "w-8 h-8", sho
     // Fallback: Text Logo (Before DevBot runs)
     if (error || !svgContent) {
         return (
-            <div className={`flex items-center gap-2 ${className}`}>
-                <div className="w-full h-full rounded-full bg-gradient-to-br from-cyan-400 to-purple-600 flex items-center justify-center text-white font-bold text-xs shadow-lg animate-pulse">
+            <div className="flex items-center gap-2">
+                <div className={`${className} rounded-full bg-gradient-to-br from-cyan-400 to-purple-600 flex items-center justify-center text-white font-bold text-xs shadow-lg animate-pulse`}>
                     M
                 </div>
                 {showText && <span className="font-bold text-xl tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-cyan-500 to-purple-600">Myrmidon</span>}

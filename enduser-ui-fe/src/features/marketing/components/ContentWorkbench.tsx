@@ -7,9 +7,11 @@ import {
   ExternalLinkIcon,
   XIcon,
   RefreshCwIcon,
-  SettingsIcon
+  SettingsIcon,
+  FileEditIcon
 } from '@/components/Icons';
 import { ContentSource } from './VictoryFeedList';
+import { useNavigate } from 'react-router-dom';
 
 interface RAGRef {
   content: string;
@@ -74,6 +76,7 @@ export const ContentWorkbench: React.FC<ContentWorkbenchProps> = ({
   const [isContextOpen, setIsContextOpen] = useState(true);
   const [promptCenterOpen, setPromptCenterOpen] = useState(false);
   const [promptTab, setPromptTab] = useState<'config' | 'inspect'>('config');
+  const navigate = useNavigate();
   
   // Advanced Config State (Refactored for Center)
   const [config, setConfig] = useState({
@@ -342,14 +345,26 @@ export const ContentWorkbench: React.FC<ContentWorkbenchProps> = ({
             />
           </div>
 
-          {/* Floating AI Command Center Trigger */}
-          <button 
-            onClick={() => setPromptCenterOpen(true)}
-            className="fixed bottom-8 right-8 w-16 h-16 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl shadow-2xl flex items-center justify-center transition-all hover:scale-110 active:scale-95 group z-50"
-          >
-            <SparklesIcon className="w-8 h-8 group-hover:rotate-12 transition-transform" />
-            <div className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 rounded-full border-2 border-white flex items-center justify-center text-[10px] font-black">!</div>
-          </button>
+          {/* Floating Action Buttons */}
+          <div className="fixed bottom-8 right-8 flex flex-col gap-4 z-50">
+            {/* Pro Editor Access */}
+            <button 
+              onClick={() => navigate(`/brand/editor/${activeSource.id}`)}
+              className="w-16 h-16 bg-white dark:bg-slate-800 border-2 border-indigo-100 dark:border-slate-700 hover:border-indigo-500 text-indigo-600 rounded-2xl shadow-xl flex items-center justify-center transition-all hover:scale-110 active:scale-95 group"
+              title="Open Pro Editor"
+            >
+              <FileEditIcon className="w-7 h-7 group-hover:rotate-12 transition-transform" />
+            </button>
+            
+            {/* AI Command Center Trigger */}
+            <button 
+              onClick={() => setPromptCenterOpen(true)}
+              className="w-16 h-16 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl shadow-2xl flex items-center justify-center transition-all hover:scale-110 active:scale-95 group relative"
+            >
+              <SparklesIcon className="w-8 h-8 group-hover:rotate-12 transition-transform" />
+              <div className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 rounded-full border-2 border-white flex items-center justify-center text-[10px] font-black">!</div>
+            </button>
+          </div>
 
           {/* UNIFIED PROMPT CENTER (Drawer/Overlay) */}
           {promptCenterOpen && (

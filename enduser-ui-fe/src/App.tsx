@@ -19,6 +19,7 @@ import PublicLayout from './components/layout/PublicLayout.tsx';
 import MainLayout from './components/layout/MainLayout.tsx';
 import SolutionsPage from './features/marketing/SolutionsPage.tsx';
 import SalesCartPage from './pages/SalesCartPage.tsx';
+import BlogEditor from './pages/BlogEditor.tsx';
 
 const App: React.FC = () => {
   return (
@@ -136,6 +137,17 @@ export const AppRoutes: React.FC = () => {
               <AdminPage />
             </MainLayout>
           </AdminRoute>
+        }
+      />
+      {/* Standalone Route for the Pro Blog Editor (Belongs to Brand Hub / Marketing) */}
+      <Route
+        path="/brand/editor/:id"
+        element={
+          <ProtectedRoute>
+            <MainLayout>
+              <BlogEditor />
+            </MainLayout>
+          </ProtectedRoute>
         }
       />
       <Route

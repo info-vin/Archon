@@ -149,7 +149,7 @@ class JobBoardService:
         """
         logger.info("Starting daily lead auto-fetch...")
         total_new_leads = 0
-        keywords = ["Python", "Data Analyst", "Marketing", "Project Manager", "Sales"]
+        keywords = ["Python", "Data Analyst", "Marketing", "Project Manager", "Sales", "AI"]
 
         for keyword in keywords:
             logger.info(f"Auto-fetching jobs for: '{keyword}'")
