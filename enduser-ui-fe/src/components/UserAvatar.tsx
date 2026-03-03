@@ -20,7 +20,11 @@ const getRoleColor = (role?: string) => {
     return null;
 };
 
-const UserAvatar: React.FC<UserAvatarProps> = ({ name, size = 40, isAI = false, role, className = '' }) => {
+// ⚡ Bolt Optimization:
+// Wrapped UserAvatar in React.memo to prevent unnecessary re-renders in list views (Dashboard ListView, TableView, etc.).
+// Since this component performs color generation calculations (stringToColor) on every render,
+// memoization reduces CPU overhead when parent state updates but avatar props remain unchanged.
+const UserAvatar = React.memo(({ name, size = 40, isAI = false, role, className = '' }: UserAvatarProps) => {
   const initial = name ? name.charAt(0).toUpperCase() : '?';
   
   // Priority: Role Color > AI Color > Hash Color
@@ -50,6 +54,6 @@ const UserAvatar: React.FC<UserAvatarProps> = ({ name, size = 40, isAI = false, 
       {isAI ? 'A' : initial}
     </div>
   );
-};
+});
 
 export default UserAvatar;
