@@ -230,6 +230,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({ task, onClose, onTaskCreat
                     onClick={handleRefineWithAI} 
                     disabled={isRefining || !title}
                     className="text-xs flex items-center gap-1 text-indigo-600 hover:text-indigo-800 disabled:opacity-50 transition-colors font-medium"
+                    title={!title ? "Please enter a title first to use AI refinement" : "Refine description with AI"}
                 >
                     <SparklesIcon className="w-3 h-3" />
                     {isRefining ? 'POBot is thinking...' : 'Refine with AI'}

@@ -1,3 +1,3 @@
-## 2025-03-03 - Accessible Icon-Only Buttons
-**Learning:** Adding `aria-label` and `title` to icon-only buttons drastically improves accessibility for screen readers and provides helpful tooltips for sighted users. Grouping them with `role="group"` and `aria-label="View mode"` provides better context.
-**Action:** Always check icon-only buttons for missing accessible labels and apply `aria-label` and `title` attributes. For grouped controls, use `role="group"`. When unit testing these in `enduser-ui-fe`, remember to wrap them in `<AuthProvider>` and properly mock the api and supabase client to avoid render failures.
+## 2024-03-01 - [Disabled States and Click Feedback]
+**Learning:** Native `disabled` buttons swallow `onClick` events, preventing any embedded helpful alerts or warnings from firing (e.g., `if (!title) alert(...)`). When relying on a button's disabled state for validation, users receive zero feedback on *why* it's disabled unless explicitly communicated.
+**Action:** Always provide a `title` attribute or an ARIA tooltip explaining *why* an action is currently unavailable when conditionally disabling a button.
