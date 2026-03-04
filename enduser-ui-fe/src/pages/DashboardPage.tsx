@@ -531,11 +531,11 @@ const DashboardPage: React.FC = () => {
           </div>
 
           {/* View Mode Buttons */}
-          <div className="flex items-center bg-card border border-border rounded-md p-1">
-            <button onClick={() => setViewMode('list')} className={`p-1.5 ${viewMode === 'list' ? 'bg-background' : ''}`}><ListIcon className="h-5 w-5" /></button>
-            <button onClick={() => setViewMode('table')} className={`p-1.5 ${viewMode === 'table' ? 'bg-background' : ''}`}><TableIcon className="h-5 w-5" /></button>
-            <button onClick={() => setViewMode('kanban')} className={`p-1.5 ${viewMode === 'kanban' ? 'bg-background' : ''}`}><KanbanIcon className="h-5 w-5" /></button>
-            <button onClick={() => setViewMode('gantt')} className={`p-1.5 ${viewMode === 'gantt' ? 'bg-background' : ''}`}><GanttChartIcon className="h-5 w-5" /></button>
+          <div className="flex items-center bg-card border border-border rounded-md p-1" role="group" aria-label="View mode">
+            <button onClick={() => setViewMode('list')} aria-label="List view" title="List view" aria-pressed={viewMode === 'list'} className={`p-1.5 rounded-md transition-colors ${viewMode === 'list' ? 'bg-background shadow-sm' : 'hover:bg-background/50'}`}><ListIcon className="h-5 w-5" /></button>
+            <button onClick={() => setViewMode('table')} aria-label="Table view" title="Table view" aria-pressed={viewMode === 'table'} className={`p-1.5 rounded-md transition-colors ${viewMode === 'table' ? 'bg-background shadow-sm' : 'hover:bg-background/50'}`}><TableIcon className="h-5 w-5" /></button>
+            <button onClick={() => setViewMode('kanban')} aria-label="Kanban view" title="Kanban view" aria-pressed={viewMode === 'kanban'} className={`p-1.5 rounded-md transition-colors ${viewMode === 'kanban' ? 'bg-background shadow-sm' : 'hover:bg-background/50'}`}><KanbanIcon className="h-5 w-5" /></button>
+            <button onClick={() => setViewMode('gantt')} aria-label="Gantt chart view" title="Gantt chart view" aria-pressed={viewMode === 'gantt'} className={`p-1.5 rounded-md transition-colors ${viewMode === 'gantt' ? 'bg-background shadow-sm' : 'hover:bg-background/50'}`}><GanttChartIcon className="h-5 w-5" /></button>
           </div>
 
           {/* New Task Button */}
