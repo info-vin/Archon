@@ -36,6 +36,7 @@ from ..services.projects.document_service import DocumentService
 from ..services.projects.versioning_service import VersioningService
 from ..services.rbac_service import RBACService
 from ..utils import get_supabase_client
+from ..utils.api_utils import handle_service_result
 from ..utils.etag_utils import check_etag, generate_etag
 
 logger = get_logger(__name__)
@@ -559,12 +560,8 @@ async def delete_project(project_id: str):
         project_service = ProjectService()
         success, result = await project_service.delete_project(project_id)
 
-        if not success:
-            if "not found" in result.get("error", "").lower():
-                raise HTTPException(status_code=404, detail=result)
-            else:
-                raise HTTPException(status_code=500, detail=result)
-
+        # type: ignore
+        result = handle_service_result(success, result)
         logger.info(
             f"Project deleted successfully | project_id={project_id} | deleted_tasks={result.get('deleted_tasks', 0)}"
         )
@@ -595,16 +592,8 @@ async def get_project_features(project_id: str):
             project_id
         )
 
-        if not success:
-            error_msg = result.get("error", "") if isinstance(result, dict) else str(result)
-            if "not found" in error_msg.lower():
-                logger.warning(
-                    f"Project not found for features | project_id={project_id}"
-                )
-                raise HTTPException(status_code=404, detail=result)
-            else:
-                raise HTTPException(status_code=500, detail=result)
-
+        # type: ignore
+        result = handle_service_result(success, result)
         logger.info(
             f"Project features retrieved | project_id={project_id} | feature_count={result.get('count', 0)}"
         )
@@ -758,10 +747,8 @@ async def generate_task_from_alert(
             assignee_id=request.assignee_id
         )
 
-        if not success:
-            error_msg = result.get("error", "Unknown error")
-            raise HTTPException(status_code=400, detail=error_msg)
-
+        # type: ignore
+        result = handle_service_result(success, result)
         return result
     except HTTPException:
         raise
@@ -815,13 +802,7 @@ async def create_task(
                 target_assignee_name
             )
 
-            if not success:
-                # Service failed, raise an internal server error
-                raise HTTPException(
-                    status_code=500,
-                    detail={"error": "Failed to verify assignee role"},
-                )
-
+            handle_service_result(success, {"error": "Failed to verify assignee role"})
             if assignee_role:
                 if not rbac_service.has_permission_to_assign(
                     current_user_role, assignee_role
@@ -942,12 +923,8 @@ async def list_tasks(
             else False,  # Only apply if filtering by user
         )
 
-        if not success:
-            error_detail = result.get("error", "Unknown error") if isinstance(result, dict) else str(result)
-
-            logger.error(f"Failed to list tasks | error={error_detail}")
-            raise HTTPException(status_code=500, detail=error_detail)
-
+        # type: ignore
+        result = handle_service_result(success, result)
         # Pagination metadata
         if isinstance(result, dict):
             tasks = result.get("tasks", [])
@@ -1012,15 +989,8 @@ async def get_task(task_id: str):
         task_service = TaskService()
         success, result = await task_service.get_task(task_id)
 
-        if not success:
-            error_msg = result.get("error", "") if isinstance(result, dict) else str(result)
-            if "not found" in error_msg.lower():
-                raise HTTPException(
-                    status_code=404, detail=error_msg
-                )
-            else:
-                raise HTTPException(status_code=500, detail=result)
-
+        # type: ignore
+        result = handle_service_result(success, result)
         task = result["task"]
 
         logger.info(
@@ -1138,13 +1108,7 @@ async def update_task(
                 target_assignee_name
             )
 
-            if not success:
-                # Service failed, raise an internal server error
-                raise HTTPException(
-                    status_code=500,
-                    detail={"error": "Failed to verify assignee role"},
-                )
-
+            handle_service_result(success, {"error": "Failed to verify assignee role"})
             if assignee_role:
                 if not rbac_service.has_permission_to_assign(
                     current_user_role, assignee_role
@@ -1208,15 +1172,8 @@ async def update_task(
             task_id, update_fields
         )
 
-        if not success:
-            error_msg = result.get("error", "") if isinstance(result, dict) else str(result)
-            if "not found" in error_msg.lower():
-                raise HTTPException(
-                    status_code=404, detail=error_msg
-                )
-            else:
-                raise HTTPException(status_code=500, detail=result)
-
+        # type: ignore
+        result = handle_service_result(success, result)
         updated_task = result["task"]
 
         logger.info(
@@ -1290,9 +1247,7 @@ async def report_task_status_from_agent(
         if not success:
             raise HTTPException(
                 status_code=400,
-                detail=result.get(
-                    "error", "Failed to update status from agent"
-                ),
+                detail=(result.get("error", "Failed to update status from agent") if isinstance(result, dict) else "Failed to update status from agent")
             )
         return result
     except HTTPException:
@@ -1322,7 +1277,7 @@ async def report_task_output_from_agent(
         if not success:
             raise HTTPException(
                 status_code=400,
-                detail=result.get("error", "Failed to save agent output"),
+                detail=(result.get("error", "Failed to save agent output") if isinstance(result, dict) else "Failed to save agent output")
             )
         return result
     except HTTPException:
@@ -1350,14 +1305,8 @@ async def mcp_update_task_status(task_id: str, status: str):
         update_fields = {"status": status}
         success, result = await task_service.update_task(task_id, update_fields)
 
-        if not success:
-            error_msg = result.get("error", "") if isinstance(result, dict) else str(result)
-            if "not found" in error_msg.lower():
-                raise HTTPException(
-                    status_code=404, detail=f"Task {task_id} not found"
-                )
-            else:
-                raise HTTPException(status_code=500, detail=result)
+        # type: ignore
+        result = handle_service_result(success, result)
         updated_task = result["task"]
         project_id = updated_task["project_id"]
 
@@ -1406,15 +1355,8 @@ async def list_project_documents(
             project_id, include_content=include_content
         )
 
-        if not success:
-            error_msg = result.get("error", "") if isinstance(result, dict) else str(result)
-            if "not found" in error_msg.lower():
-                raise HTTPException(
-                    status_code=404, detail=error_msg
-                )
-            else:
-                raise HTTPException(status_code=500, detail=result)
-
+        # type: ignore
+        result = handle_service_result(success, result)
         logger.info(
             f"Documents listed successfully | project_id={project_id} | count={result.get('total_count', 0)} | lightweight={not include_content}"
         )
@@ -1451,15 +1393,8 @@ async def create_project_document(
             author=request.author or "",
         )
 
-        if not success:
-            error_msg = result.get("error", "") if isinstance(result, dict) else str(result)
-            if "not found" in error_msg.lower():
-                raise HTTPException(
-                    status_code=404, detail=error_msg
-                )
-            else:
-                raise HTTPException(status_code=400, detail=result)
-
+        # type: ignore
+        result = handle_service_result(success, result)
         logger.info(
             f"Document created successfully | project_id={project_id} | doc_id={result['document']['id']}"
         )
@@ -1588,15 +1523,8 @@ async def delete_project_document(project_id: str, doc_id: str):
         document_service = DocumentService()
         success, result = document_service.delete_document(project_id, doc_id)
 
-        if not success:
-            error_msg = result.get("error", "") if isinstance(result, dict) else str(result)
-            if "not found" in error_msg.lower():
-                raise HTTPException(
-                    status_code=404, detail=error_msg
-                )
-            else:
-                raise HTTPException(status_code=500, detail=result)
-
+        # type: ignore
+        result = handle_service_result(success, result)
         logger.info(
             f"Document deleted successfully | project_id={project_id} | doc_id={doc_id}"
         )
@@ -1709,15 +1637,8 @@ async def create_project_version(
             created_by=request.created_by or "system",
         )
 
-        if not success:
-            error_msg = result.get("error", "") if isinstance(result, dict) else str(result)
-            if "not found" in error_msg.lower():
-                raise HTTPException(
-                    status_code=404, detail=error_msg
-                )
-            else:
-                raise HTTPException(status_code=400, detail=result)
-
+        # type: ignore
+        result = handle_service_result(success, result)
         logger.info(
             f"Version created successfully | project_id={project_id} | version_number={result['version_number']}"
         )
@@ -1752,15 +1673,8 @@ async def get_project_version(
             project_id, field_name, version_number
         )
 
-        if not success:
-            error_msg = result.get("error", "") if isinstance(result, dict) else str(result)
-            if "not found" in error_msg.lower():
-                raise HTTPException(
-                    status_code=404, detail=error_msg
-                )
-            else:
-                raise HTTPException(status_code=500, detail=result)
-
+        # type: ignore
+        result = handle_service_result(success, result)
         logger.info(
             f"Version retrieved successfully | project_id={project_id} | field_name={field_name} | version_number={version_number}"
         )
@@ -1800,15 +1714,8 @@ async def restore_project_version(
             restored_by=request.restored_by or "system",
         )
 
-        if not success:
-            error_msg = result.get("error", "") if isinstance(result, dict) else str(result)
-            if "not found" in error_msg.lower():
-                raise HTTPException(
-                    status_code=404, detail=error_msg
-                )
-            else:
-                raise HTTPException(status_code=500, detail=result)
-
+        # type: ignore
+        result = handle_service_result(success, result)
         logger.info(
             f"Version restored successfully | project_id={project_id} | field_name={field_name} | version_number={version_number}"
         )

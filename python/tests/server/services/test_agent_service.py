@@ -42,7 +42,7 @@ async def test_run_agent_task(mock_get_logger, mock_task_service):
 
     # 2. Verify that task_service.update_task was called correctly (Processing)
     mock_task_service.update_task.assert_has_awaits([
-        call(task_id, {"status": "processing", "assignee": agent_id})
+        call(task_id, {"status": "doing", "assignee": agent_id})
     ])
 
 @pytest.mark.asyncio

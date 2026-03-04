@@ -35,7 +35,7 @@ class TestAgentAwakening:
         service = AgentService(mcp_client=AsyncMock())
 
         # Mock Task Service (Async methods must return awaitables)
-        mock_task_service.get_task = AsyncMock(return_value=(True, {"title": "Write a blog", "description": "About AI"}))
+        mock_task_service.get_task = AsyncMock(return_value=(True, {"task": {"title": "Write a blog", "description": "About AI"}}))
         mock_task_service.update_task = AsyncMock(return_value=(True, {}))
 
         # Mock LLM Client

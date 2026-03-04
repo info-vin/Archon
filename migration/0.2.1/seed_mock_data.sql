@@ -148,22 +148,22 @@ BEGIN
     SELECT id INTO bob_id FROM profiles WHERE email = 'bob@archon.com';
 
     -- Seed for archon_projects table, ensuring idempotency
-    -- Project 1: Archon Core Platform
-    IF NOT EXISTS (SELECT 1 FROM archon_projects WHERE title = 'Archon Core Platform') THEN
+    -- Project 1: Tesla APAC Expansion
+    IF NOT EXISTS (SELECT 1 FROM archon_projects WHERE title = 'Tesla APAC Expansion') THEN
         INSERT INTO archon_projects (title, description) VALUES
-        ('Archon Core Platform', 'Development of the main Archon task management system.')
+        ('Tesla APAC Expansion', 'Strategic recruitment and facility setup for Tesla across the APAC region.')
         RETURNING id INTO proj1_id;
     ELSE
-        SELECT id INTO proj1_id FROM archon_projects WHERE title = 'Archon Core Platform';
+        SELECT id INTO proj1_id FROM archon_projects WHERE title = 'Tesla APAC Expansion';
     END IF;
 
-    -- Project 2: Website Redesign
-    IF NOT EXISTS (SELECT 1 FROM archon_projects WHERE title = 'Website Redesign') THEN
+    -- Project 2: NVIDIA GPU Server Procurement
+    IF NOT EXISTS (SELECT 1 FROM archon_projects WHERE title = 'NVIDIA GPU Server Procurement') THEN
         INSERT INTO archon_projects (title, description) VALUES
-        ('Website Redesign', 'Complete overhaul of the public-facing marketing website.')
+        ('NVIDIA GPU Server Procurement', 'Negotiation and rollout of H100 GPU clusters for AI training facilities.')
         RETURNING id INTO proj2_id;
     ELSE
-        SELECT id INTO proj2_id FROM archon_projects WHERE title = 'Website Redesign';
+        SELECT id INTO proj2_id FROM archon_projects WHERE title = 'NVIDIA GPU Server Procurement';
     END IF;
 
     -- Seed for archon_tasks table using the captured project UUIDs, ensuring idempotency
@@ -201,6 +201,11 @@ BEGIN
     INSERT INTO archon_document_versions (id, document_id, version_number, change_type, field_name, change_summary, status, created_by, content, created_at)
     VALUES (uuid_generate_v4(), 'MARKETING_TONE_SYSTEM_PROMPT', 2, 'update', 'prompt_content', 'Attempted to reduce formal constraints in marketing blog generation.', 'pending', 'Bob', '{"prompt": "New Less Restricted Prompt Content..."}', NOW() - INTERVAL '2 hours')
     ON CONFLICT DO NOTHING;
+
+    -- Seed for archon_crawler_targets (Default Knowledge Target)
+    INSERT INTO archon_crawler_targets (id, target_url, description, status, update_frequency)
+    VALUES (uuid_generate_v4(), 'https://wlb.mol.gov.tw/Page/index.aspx', 'Ministry of Labor - Workforce Balance (wlb)', 'active', 'weekly')
+    ON CONFLICT (target_url) DO NOTHING;
 
 END $$;
 

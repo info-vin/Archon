@@ -262,18 +262,18 @@ class AgentService:
         logger = get_logger(__name__)
         logger.info(f"AI agent '{agent_id}' starting work on task '{task_id}'.")
 
-        success, result = await task_service.update_task(task_id, {"status": "processing", "assignee": agent_id})
+        success, result = await task_service.update_task(task_id, {"status": "doing", "assignee": agent_id})
         if not success:
             logger.error(f"Failed to update task status: {result.get('error')}")
             return
 
         if command:
             success, output = await self.run_command_with_self_healing(command, task_id=task_id)
-            await task_service.update_task(task_id, {"status": "done" if success else "failed", "output": output})
+            await task_service.update_task(task_id, {"status": "done" if success else "failed"})
             if success:
-                _, task_data = await task_service.get_task(task_id)
-                if task_data:
-                    await self._award_agent_xp(agent_id, task_data, output)
+                _, task_resp = await task_service.get_task(task_id)
+                if task_resp and "task" in task_resp:
+                    await self._award_agent_xp(agent_id, task_resp["task"], output)
         else:
             await self._run_general_agent_task(task_id, agent_id)
 
@@ -310,12 +310,13 @@ class AgentService:
         config = get_agent_config(agent_id)
         if not config:
             logger.error(f"Agent '{agent_id}' not found.")
-            await task_service.update_task(task_id, {"status": "failed", "output": f"Agent {agent_id} missing"})
+            await task_service.update_task(task_id, {"status": "failed"})
             return
 
-        success, task_data = await task_service.get_task(task_id)
-        if not (success and task_data):
+        success, task_response = await task_service.get_task(task_id)
+        if not (success and task_response and "task" in task_response):
             return
+        task_data = task_response["task"]
 
         # Direct Pipeline Check for Librarian
         if agent_id == "ai-librarian" and task_data.get("crawler_target_id"):
@@ -340,12 +341,12 @@ class AgentService:
                         "user_role": "system_admin"
                     })
                     output_msg = f"Direct crawler pipeline started for {target['target_url']}"
-                    await task_service.update_task(task_id, {"status": "done", "output": output_msg})
+                    await task_service.update_task(task_id, {"status": "done"})
                     await self._award_agent_xp(agent_id, task_data, output_msg)
                     return
                 except Exception as e:
                     logger.error(f"Direct crawl failed: {e}")
-                    await task_service.update_task(task_id, {"status": "failed", "output": str(e)})
+                    await task_service.update_task(task_id, {"status": "failed"})
                     return
 
         messages = [{"role": "system", "content": config["system_prompt"]}, {"role": "user", "content": f"Task: {task_data['title']}"}]
@@ -374,9 +375,13 @@ class AgentService:
                 else:
                     final_output = res_msg.content
 
-                await task_service.update_task(task_id, {"status": "done", "output": final_output})
+                await task_service.update_task(task_id, {"status": "done"})
+
+                # Use save_agent_output to persist LLM's raw final output
+                await task_service.save_agent_output(task_id, {"content": final_output}, agent_id)
+
                 await self._award_agent_xp(agent_id, task_data, final_output)
-        except Exception as e:
-            await task_service.update_task(task_id, {"status": "failed", "output": str(e)})
+        except Exception:
+            await task_service.update_task(task_id, {"status": "failed"})
 
 agent_service = AgentService()

@@ -9,7 +9,7 @@ describe('Admin Workflows E2E', () => {
     renderApp(['/dashboard']);
 
     // 2. Navigate to Admin Control Center
-    const adminLink = await screen.findByRole('link', { name: /Admin Control Center/i }, { timeout: 15000 });
+    const adminLink = await screen.findByRole('link', { name: /Admin Control/i }, { timeout: 15000 });
     fireEvent.click(adminLink);
 
     // 3. Switch to User Management Tab (Crucial: Default tab is System Health)
@@ -45,7 +45,7 @@ describe('Admin Workflows E2E', () => {
   it('Admin can update a user role', async () => {
     renderApp(['/dashboard']);
 
-    const adminLink = await screen.findByRole('link', { name: /Admin Control Center/i }, { timeout: 15000 });
+    const adminLink = await screen.findByRole('link', { name: /Admin Control/i }, { timeout: 15000 });
     fireEvent.click(adminLink);
 
     // Switch to Users Tab

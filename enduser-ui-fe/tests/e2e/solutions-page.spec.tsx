@@ -14,7 +14,7 @@ describe('Solutions Page (Phase 4.3)', () => {
     await waitFor(() => expect(screen.getByText(/My Tasks/i)).toBeInTheDocument());
     
     await act(async () => {
-        fireEvent.click(screen.getByText(/Back to Website/i));
+        fireEvent.click(screen.getByText(/Website/i));
     });
     
     await waitFor(() => expect(screen.getByText(/Managerial Nexus/i)).toBeInTheDocument());

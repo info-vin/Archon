@@ -280,6 +280,39 @@ export const RAGSettings = ({
 
   const { showToast } = useToast();
 
+  // Config-driven arrays for Performance settings
+  const crawlingSettingsFields = [
+    { key: 'CRAWL_BATCH_SIZE', label: 'Batch Size', min: 10, max: 100, default: 50, description: 'URLs to crawl in parallel (10-100)' },
+    { key: 'CRAWL_MAX_CONCURRENT', label: 'Max Concurrent', min: 1, max: 20, default: 10, description: 'Pages to crawl in parallel per operation (1-20)' },
+    { key: 'CRAWL_PAGE_TIMEOUT', label: 'Page Timeout (ms)', min: 5000, max: 120000, default: 60000, description: 'Timeout per page' },
+    { key: 'CRAWL_DELAY_BEFORE_HTML', label: 'Render Delay (s)', min: 0.1, max: 5, default: 0.5, step: 0.1, description: 'Wait for JS execution' },
+    { key: 'CRAWL_WAIT_STRATEGY', label: 'Wait Strategy', type: 'select', options: [
+      { value: 'domcontentloaded', label: 'DOM Loaded' },
+      { value: 'networkidle', label: 'Network Idle' },
+      { value: 'load', label: 'Full Load' }
+    ]}
+  ];
+
+  const storageSettingsFields = [
+    { key: 'DOCUMENT_STORAGE_BATCH_SIZE', label: 'Document Batch Size', min: 10, max: 100, default: 50, description: 'Chunks per batch (10-100)' },
+    { key: 'EMBEDDING_BATCH_SIZE', label: 'Embedding Batch Size', min: 20, max: 200, default: 100, description: 'Per API call (20-200)' },
+    { key: 'CODE_SUMMARY_MAX_WORKERS', label: 'Code Extraction Workers', min: 1, max: 10, default: 3, description: 'Parallel workers (1-10)' },
+    { key: 'MEMORY_THRESHOLD_PERCENT', label: 'Memory Threshold (%)', min: 50, max: 95, default: 85, description: 'Pause if usage exceeds this' },
+    { key: 'DISPATCHER_CHECK_INTERVAL', label: 'Check Interval (ms)', min: 100, max: 5000, default: 1000, description: 'Queue polling frequency' }
+  ];
+
+  const coreModelFields = [
+    { key: 'MODEL_CHOICE', label: 'Chat Model', type: 'text', placeholder: 'e.g. gpt-4o-mini' },
+    { key: 'EMBEDDING_MODEL', label: 'Embedding Model', type: 'text', placeholder: 'e.g. text-embedding-3-small' },
+    { key: 'LLM_INSTANCE_NAME', label: 'LLM Instance Name', type: 'text' },
+    { key: 'LLM_BASE_URL', label: 'LLM Base URL', type: 'text' },
+    { key: 'OLLAMA_EMBEDDING_URL', label: 'Embedding URL', type: 'text' },
+    { key: 'OLLAMA_EMBEDDING_INSTANCE_NAME', label: 'Embedding Name', type: 'text' },
+    { key: 'CONTEXTUAL_EMBEDDINGS_MAX_WORKERS', label: 'Contextual Workers', type: 'number', min: 1, max: 10 },
+    { key: 'CODE_EXTRACTION_BATCH_SIZE', label: 'Extraction Batch Size', type: 'number', min: 1, max: 50 }
+  ];
+
+
   const fetchOllamaMetrics = useCallback(async () => {
     try {
       setOllamaMetrics(prev => ({ ...prev, loading: true }));
@@ -1290,58 +1323,41 @@ const manualTestConnection = useCallback(async (
           
           <div className="flex justify-between items-end">
             {/* Context-Aware Model Input */}
-            <div className="flex-1 max-w-md">
-              {activeSelection === 'chat' ? (
-                chatProvider !== 'ollama' ? (
-                  <Input
-                    label="Chat Model"
-                    value={getDisplayedChatModel(ragSettings)}
-                    onChange={e => setRagSettings({
-                      ...ragSettings,
-                      MODEL_CHOICE: e.target.value
-                    })}
-                    placeholder={getModelPlaceholder(chatProvider)}
-                    accentColor="green"
-                  />
-                ) : (
-                  <div className="p-3 border border-green-500/30 rounded-lg bg-green-500/5">
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      Chat Model
-                    </label>
-                    <div className="text-sm text-gray-600 dark:text-gray-400">
-                      Configured via Ollama instance
+            <div className="flex-1 max-w-md grid grid-cols-2 gap-4">
+              {coreModelFields.filter(f => 
+                activeSelection === 'chat' ? (f.key === 'MODEL_CHOICE') : (f.key === 'EMBEDDING_MODEL')
+              ).map(field => {
+                const isOllama = activeSelection === 'chat' ? chatProvider === 'ollama' : embeddingProvider === 'ollama';
+                if (!isOllama) {
+                  return (
+                    <Input
+                      key={field.key}
+                      label={field.label}
+                      value={activeSelection === 'chat' ? getDisplayedChatModel(ragSettings) : getDisplayedEmbeddingModel(ragSettings)}
+                      onChange={e => setRagSettings({
+                        ...ragSettings,
+                        [field.key]: e.target.value
+                      })}
+                      placeholder={activeSelection === 'chat' ? getModelPlaceholder(chatProvider) : getEmbeddingPlaceholder(embeddingProvider)}
+                      accentColor={activeSelection === 'chat' ? "green" : "purple"}
+                    />
+                  );
+                } else {
+                  return (
+                    <div key={field.key} className={`p-3 border rounded-lg bg-${activeSelection === 'chat' ? 'green' : 'purple'}-500/5 border-${activeSelection === 'chat' ? 'green' : 'purple'}-500/30`}>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        {field.label}
+                      </label>
+                      <div className="text-sm text-gray-600 dark:text-gray-400">
+                        Configured via Ollama instance
+                      </div>
+                      <div className={`text-xs text-${activeSelection === 'chat' ? 'green' : 'purple'}-400 mt-1`}>
+                        Current: {activeSelection === 'chat' ? (getDisplayedChatModel(ragSettings) || 'Not selected') : (getDisplayedEmbeddingModel(ragSettings) || 'Not selected')}
+                      </div>
                     </div>
-                    <div className="text-xs text-green-400 mt-1">
-                      Current: {getDisplayedChatModel(ragSettings) || 'Not selected'}
-                    </div>
-                  </div>
-                )
-              ) : (
-                embeddingProvider !== 'ollama' ? (
-                  <Input
-                    label="Embedding Model"
-                    value={getDisplayedEmbeddingModel(ragSettings)}
-                    onChange={e => setRagSettings({
-                      ...ragSettings,
-                      EMBEDDING_MODEL: e.target.value
-                    })}
-                    placeholder={getEmbeddingPlaceholder(embeddingProvider)}
-                    accentColor="purple"
-                  />
-                ) : (
-                  <div className="p-3 border border-purple-500/30 rounded-lg bg-purple-500/5">
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      Embedding Model
-                    </label>
-                    <div className="text-sm text-gray-600 dark:text-gray-400">
-                      Configured via Ollama instance
-                    </div>
-                    <div className="text-xs text-purple-400 mt-1">
-                      Current: {getDisplayedEmbeddingModel(ragSettings) || 'Not selected'}
-                    </div>
-                  </div>
-                )
-              )}
+                  );
+                }
+              })}
             </div>
 
             {/* Ollama Configuration Gear Icon */}
@@ -1856,92 +1872,48 @@ const manualTestConnection = useCallback(async (
           {showCrawlingSettings && (
             <div className="mt-4 p-4 border border-green-500/10 rounded-lg bg-green-500/5">
               <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Batch Size
-                  </label>
-                  <input
-                    type="number"
-                    min="10"
-                    max="100"
-                    value={ragSettings.CRAWL_BATCH_SIZE || 50}
-                    onChange={e => setRagSettings({
-                      ...ragSettings,
-                      CRAWL_BATCH_SIZE: parseInt(e.target.value, 10) || 50
-                    })}
-                    className="w-full px-3 py-2 border border-green-500/30 rounded-md bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white focus:border-green-500 focus:ring-1 focus:ring-green-500"
-                  />
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">URLs to crawl in parallel (10-100)</p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Max Concurrent
-                  </label>
-                  <input
-                    type="number"
-                    min="1"
-                    max="20"
-                    value={ragSettings.CRAWL_MAX_CONCURRENT || 10}
-                    onChange={e => setRagSettings({
-                      ...ragSettings,
-                      CRAWL_MAX_CONCURRENT: parseInt(e.target.value, 10) || 10
-                    })}
-                    className="w-full px-3 py-2 border border-green-500/30 rounded-md bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white focus:border-green-500 focus:ring-1 focus:ring-green-500"
-                  />
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Pages to crawl in parallel per operation (1-20)</p>
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-3 gap-4 mt-4">
-                <div>
-                  <Select
-                    label="Wait Strategy"
-                    value={ragSettings.CRAWL_WAIT_STRATEGY || 'domcontentloaded'}
-                    onChange={e => setRagSettings({
-                      ...ragSettings,
-                      CRAWL_WAIT_STRATEGY: e.target.value
-                    })}
-                    accentColor="green"
-                    options={[
-                      { value: 'domcontentloaded', label: 'DOM Loaded (Fast)' },
-                      { value: 'networkidle', label: 'Network Idle (Thorough)' },
-                      { value: 'load', label: 'Full Load (Slowest)' }
-                    ]}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Page Timeout (sec)
-                  </label>
-                  <input
-                    type="number"
-                    min="5"
-                    max="120"
-                    value={(ragSettings.CRAWL_PAGE_TIMEOUT || 60000) / 1000}
-                    onChange={e => setRagSettings({
-                      ...ragSettings,
-                      CRAWL_PAGE_TIMEOUT: (parseInt(e.target.value, 10) || 60) * 1000
-                    })}
-                    className="w-full px-3 py-2 border border-green-500/30 rounded-md bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white focus:border-green-500 focus:ring-1 focus:ring-green-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Render Delay (sec)
-                  </label>
-                  <input
-                    type="number"
-                    min="0.1"
-                    max="5"
-                    step="0.1"
-                    value={ragSettings.CRAWL_DELAY_BEFORE_HTML || 0.5}
-                    onChange={e => setRagSettings({
-                      ...ragSettings,
-                      CRAWL_DELAY_BEFORE_HTML: parseFloat(e.target.value) || 0.5
-                    })}
-                    className="w-full px-3 py-2 border border-green-500/30 rounded-md bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white focus:border-green-500 focus:ring-1 focus:ring-green-500"
-                  />
-                </div>
+                {crawlingSettingsFields.map(field => {
+                    if (field.key === 'CRAWL_WAIT_STRATEGY') {
+                        return (
+                          <div key={field.key}>
+                            <Select
+                              label={field.label}
+                              value={ragSettings.CRAWL_WAIT_STRATEGY || 'domcontentloaded'}
+                              onChange={e => setRagSettings({
+                                ...ragSettings,
+                                CRAWL_WAIT_STRATEGY: e.target.value
+                              })}
+                              accentColor="green"
+                              options={[
+                                { value: 'domcontentloaded', label: 'DOM Loaded (Fast)' },
+                                { value: 'networkidle', label: 'Network Idle (Thorough)' },
+                                { value: 'load', label: 'Full Load (Slowest)' }
+                              ]}
+                            />
+                          </div>
+                        );
+                    }
+                    return (
+                        <div key={field.key}>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                          {field.label}
+                        </label>
+                        <input
+                          type="number"
+                          min={field.min}
+                          max={field.max}
+                          step={field.step}
+                          value={field.key === 'CRAWL_PAGE_TIMEOUT' ? (ragSettings.CRAWL_PAGE_TIMEOUT || 60000) / 1000 : (ragSettings[field.key as keyof typeof ragSettings] as number || field.default)}
+                          onChange={e => setRagSettings({
+                            ...ragSettings,
+                            [field.key]: field.key === 'CRAWL_PAGE_TIMEOUT' ? (parseInt(e.target.value, 10) || 60) * 1000 : (field.step ? parseFloat(e.target.value) : parseInt(e.target.value, 10) || field.default)
+                          })}
+                          className="w-full px-3 py-2 border border-green-500/30 rounded-md bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white focus:border-green-500 focus:ring-1 focus:ring-green-500"
+                        />
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{field.description}</p>
+                      </div>
+                    );
+                })}
               </div>
             </div>
           )}
@@ -1967,57 +1939,25 @@ const manualTestConnection = useCallback(async (
           {showStorageSettings && (
             <div className="mt-4 p-4 border border-green-500/10 rounded-lg bg-green-500/5">
               <div className="grid grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Document Batch Size
-                  </label>
-                  <input
-                    type="number"
-                    min="10"
-                    max="100"
-                    value={ragSettings.DOCUMENT_STORAGE_BATCH_SIZE || 50}
-                    onChange={e => setRagSettings({
-                      ...ragSettings,
-                      DOCUMENT_STORAGE_BATCH_SIZE: parseInt(e.target.value, 10) || 50
-                    })}
-                    className="w-full px-3 py-2 border border-green-500/30 rounded-md bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white focus:border-green-500 focus:ring-1 focus:ring-green-500"
-                  />
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Chunks per batch (10-100)</p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Embedding Batch Size
-                  </label>
-                  <input
-                    type="number"
-                    min="20"
-                    max="200"
-                    value={ragSettings.EMBEDDING_BATCH_SIZE || 100}
-                    onChange={e => setRagSettings({
-                      ...ragSettings,
-                      EMBEDDING_BATCH_SIZE: parseInt(e.target.value, 10) || 100
-                    })}
-                    className="w-full px-3 py-2 border border-green-500/30 rounded-md bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white focus:border-green-500 focus:ring-1 focus:ring-green-500"
-                  />
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Per API call (20-200)</p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Code Extraction Workers
-                  </label>
-                  <input
-                    type="number"
-                    min="1"
-                    max="10"
-                    value={ragSettings.CODE_SUMMARY_MAX_WORKERS || 3}
-                    onChange={e => setRagSettings({
-                      ...ragSettings,
-                      CODE_SUMMARY_MAX_WORKERS: parseInt(e.target.value, 10) || 3
-                    })}
-                    className="w-full px-3 py-2 border border-green-500/30 rounded-md bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white focus:border-green-500 focus:ring-1 focus:ring-green-500"
-                  />
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Parallel workers (1-10)</p>
-                </div>
+                {storageSettingsFields.map(field => (
+                  <div key={field.key}>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      {field.label}
+                    </label>
+                    <input
+                      type="number"
+                      min={field.min}
+                      max={field.max}
+                      value={ragSettings[field.key as keyof typeof ragSettings] as number || field.default}
+                      onChange={e => setRagSettings({
+                        ...ragSettings,
+                        [field.key]: parseInt(e.target.value, 10) || field.default
+                      })}
+                      className="w-full px-3 py-2 border border-green-500/30 rounded-md bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white focus:border-green-500 focus:ring-1 focus:ring-green-500"
+                    />
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{field.description}</p>
+                  </div>
+                ))}
               </div>
               
               <div className="mt-4 flex items-center">

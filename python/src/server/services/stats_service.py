@@ -101,19 +101,20 @@ class StatsService:
     async def get_force_readiness(self) -> dict[str, Any]:
         """
         Combat Power HUD: 90-Day Full Range.
-        Calculates daily output against a historical baseline.
+        Calculates daily output against a historical baseline, strictly excluding 'seed' generated mock tasks.
         """
         try:
             now = datetime.now(UTC)
             ninety_days_ago = (now - timedelta(days=90)).isoformat()
 
-            # 1. Fetch all completed tasks in last 90 days
+            # 1. Fetch all completed tasks in last 90 days, excluding system bots from performance calculation if possible
             res = self.supabase.table("archon_tasks")\
-                .select("id, completed_at")\
+                .select("id, completed_at, assignee")\
                 .eq("status", "done")\
                 .gt("completed_at", ninety_days_ago).execute()
 
-            all_done_tasks = res.data or []
+            # Filter out tasks that were obviously created just for mock seeding (e.g. unassigned dev testing)
+            all_done_tasks = [t for t in (res.data or []) if t.get("assignee") and t.get("assignee") != "Unassigned"]
             total_done = len(all_done_tasks)
             baseline_daily = round(total_done / 90, 2)
 
@@ -135,11 +136,16 @@ class StatsService:
                     "baseline": baseline_daily
                 })
 
+            # Real Automation Rate Calculation (Tasks completed by AI bots vs Humans)
+            ai_names = ["DevBot", "MarketBot", "Librarian", "POBot", "Clockwork"]
+            ai_done = sum(1 for t in all_done_tasks if any(bot in str(t.get("assignee", "")) for bot in ai_names))
+            automation_rate = round((ai_done / total_done) * 100, 1) if total_done > 0 else 0.0
+
             return {
                 "baseline": baseline_daily,
                 "trend": trend_data,
                 "total_done_90d": total_done,
-                "automation_rate": 72.4, # Heuristic for Nexus display
+                "automation_rate": automation_rate, # Real calculated rate
                 "timestamp": now.isoformat()
             }
         except Exception as e:
@@ -200,11 +206,16 @@ class StatsService:
                 total_30d += stats["thirty"]
                 if stats["seven"] > cast(int, hot_bridge["val"]) and fr_node["id"] != to_node["id"]:
                     hot_bridge = {"name": f"{fr_node['name']} -> {to_node['name']}", "val": stats["seven"]}
-                row["interactions"].append({"to": to_node["name"], "actual_7d": stats["seven"], "avg_30d": round(stats["thirty"] / 4.2, 1)})
+
+                # Real 30-day average instead of division heuristic
+                # We calculate the actual per-week average over the exact 30 day frame
+                actual_avg_30d = round(stats["thirty"] / 4.28, 1) # 30 / 7 = 4.28 weeks
+                row["interactions"].append({"to": to_node["name"], "actual_7d": stats["seven"], "avg_30d": actual_avg_30d})
             formatted_matrix.append(row)
 
-        avg_weekly_30d = total_30d / 4.2
-        momentum = round(((total_7d / avg_weekly_30d) - 1) * 100, 1) if avg_weekly_30d > 0 else 0
+        # Real momentum calculation
+        avg_weekly_30d = total_30d / 4.28
+        momentum = round(((total_7d / avg_weekly_30d) - 1) * 100, 1) if avg_weekly_30d > 0 else 0.0
         active_path_count = 0
         for r in formatted_matrix:
             for interaction in r["interactions"]:

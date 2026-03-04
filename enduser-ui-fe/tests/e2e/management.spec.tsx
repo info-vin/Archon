@@ -65,22 +65,26 @@ test('Manager can view pending approvals and click approve', async () => {
         role: EmployeeRole.MANAGER,
         permissions: ['user:manage:team', 'content:publish', 'code:approve', 'task:read:team']
     };
+    const mockProposals = [
+        { id: 'prop-1', type: 'blog', change_summary: 'Q3 Market Analysis', created_at: new Date().toISOString(), request_payload: { new_content: 'Testing content' } }
+    ];
     vi.mocked(api.getCurrentUser).mockResolvedValue(charlie as any);
+    vi.mocked(api.getPendingChanges).mockResolvedValue(mockProposals as any);
+    vi.mocked(api.approveChange).mockResolvedValue({ success: true } as any);
 
     renderApp(['/approvals']);
 
-    // 1. Verify Strategic Approvals Header
-    expect(await screen.findByRole('heading', { name: /Strategic Approvals/i }, { timeout: 10000 })).toBeInTheDocument();
+    // 1. Verify Approvals Header (Aligned with current UI)
+    expect(await screen.findByRole('heading', { name: /Approvals/i }, { timeout: 10000 })).toBeInTheDocument();
 
-    // 2. Ensure the blog item is rendered
-    expect(await screen.findByText('Q3 Market Analysis', {}, { timeout: 10000 })).toBeInTheDocument();
+    // 2. Ensure the blog item is rendered (Handles list/detail duplicates)
+    const blogItems = await screen.findAllByText(/Q3 Market Analysis/i, {}, { timeout: 10000 });
+    expect(blogItems.length).toBeGreaterThan(0);
 
     // 3. Approve Action
-    const approveBtn = await screen.findByText('Publish');
+    const approveBtn = await screen.findByText(/APPROVE & EXECUTE/i);
     await user.click(approveBtn);
 
-    // 4. Verify Success
-    await waitFor(() => {
-        expect(screen.getByText('Q3 Market Analysis')).toBeInTheDocument();
-    });
+    // 4. Verify API Call
+    expect(api.approveChange).toHaveBeenCalledWith('prop-1');
 });

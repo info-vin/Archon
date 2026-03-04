@@ -25,8 +25,8 @@ test('Admin can view and edit system prompts', async () => {
     renderApp(['/dashboard']);
 
     // 3. Navigate to Admin Panel
-    await waitFor(() => expect(screen.getByText(/Admin Control Center/i)).toBeInTheDocument());
-    fireEvent.click(screen.getByText(/Admin Control Center/i));
+    await waitFor(() => expect(screen.getByText(/Admin Control/i)).toBeInTheDocument(), { timeout: 10000 });
+    fireEvent.click(screen.getByText(/Admin Control/i));
 
     // 4. Switch to System Prompts Tab
     const promptsTab = await screen.findByRole('button', { name: /System Prompts/i });

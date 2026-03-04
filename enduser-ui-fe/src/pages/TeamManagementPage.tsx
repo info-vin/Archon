@@ -7,7 +7,11 @@ import { AiCollaborationWidget } from '../features/team/components/AiCollaborati
 import { ManageMemberModal } from '../features/team/components/ManageMemberModal';
 import UserAvatar from '../components/UserAvatar';
 import TokenUsageTable from '../components/TokenUsageTable';
-import { ShieldCheckIcon, MailIcon, BadgeCheckIcon, XIcon, BarChartIcon } from '../components/Icons';
+import { ShieldCheckIcon, MailIcon, BadgeCheckIcon, XIcon, BarChartIcon, FileTextIcon } from '../components/Icons';
+import ReactMarkdown from 'react-markdown';
+
+// Import raw markdown as a string for static in-app SOP rendering
+import aliceSopMarkdown from '../../../PRPs/Phase_4.6.1_Alice_Persona_Workflows.md?raw';
 
 const TeamManagementPage: React.FC = () => {
     const { user } = useAuth();
@@ -16,6 +20,7 @@ const TeamManagementPage: React.FC = () => {
     const [error, setError] = useState<string | null>(null);
     const [editingMember, setEditingMember] = useState<Employee | null>(null);
     const [activityMember, setActivityMember] = useState<Employee | null>(null);
+    const [showSopModal, setShowSopModal] = useState<boolean>(false);
     const [showTokenDetails, setShowTokenDetails] = useState(false);
     const [aiUsage, setAiUsage] = useState<any>(null);
 
@@ -141,6 +146,15 @@ const TeamManagementPage: React.FC = () => {
                                         >
                                             View Activity
                                         </button>
+                                        {/* Inject SOP Viewer specifically for Alice's workflow context */}
+                                        {member.name === 'Alice Johnson' && (
+                                            <button 
+                                                onClick={() => setShowSopModal(true)}
+                                                className="flex-1 text-sm font-bold bg-indigo-50 text-indigo-700 py-3 rounded-xl border border-indigo-100 hover:bg-indigo-100 active:bg-indigo-200 transition-colors min-h-[44px] flex items-center justify-center gap-1 shadow-sm"
+                                            >
+                                                <FileTextIcon className="w-4 h-4" /> SOP
+                                            </button>
+                                        )}
                                     </div>
                                 </div>
                             </div>
@@ -198,6 +212,32 @@ const TeamManagementPage: React.FC = () => {
                                 >
                                     Close Audit
                                 </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* ALICE 4.6.1 SOP MODAL */}
+                {showSopModal && (
+                    <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+                        <div className="bg-white rounded-2xl shadow-xl w-full max-w-3xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col h-[85vh]">
+                            <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-indigo-50/50 shrink-0">
+                                <div className="flex items-center gap-3">
+                                    <div className="bg-indigo-600 p-2 rounded-lg text-white">
+                                        <FileTextIcon className="w-5 h-5" />
+                                    </div>
+                                    <div>
+                                        <h3 className="font-bold text-gray-900 leading-tight">Alice Workflow Guidelines</h3>
+                                        <p className="text-[10px] text-gray-500">Phase 4.6.1 Standard Operating Procedure</p>
+                                    </div>
+                                </div>
+                                <button onClick={() => setShowSopModal(false)} className="p-2 hover:bg-gray-200 rounded-full transition-colors"><XIcon className="w-5 h-5" /></button>
+                            </div>
+                            
+                            <div className="flex-1 overflow-y-auto p-6 md:p-8 bg-gray-50">
+                                <article className="prose prose-sm md:prose-base prose-indigo max-w-none prose-headings:font-bold prose-h1:text-2xl prose-a:text-indigo-600 bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                                    <ReactMarkdown>{aliceSopMarkdown}</ReactMarkdown>
+                                </article>
                             </div>
                         </div>
                     </div>

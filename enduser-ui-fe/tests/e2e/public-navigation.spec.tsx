@@ -41,11 +41,11 @@ describe('Public Navigation & Dashboard Access', () => {
     // 2. Start at Dashboard (redirected from / because authenticated)
     await waitFor(() => expect(screen.getByText(/My Tasks/i)).toBeInTheDocument());
 
-    // 3. Verify "Back to Website" link exists in Sidebar
-    const backToWebLink = screen.getByText(/Back to Website/i);
+    // 3. Verify "Website" link exists in Sidebar
+    const backToWebLink = screen.getByText(/Website/i);
     expect(backToWebLink).toBeInTheDocument();
 
-    // 4. Click "Back to Website" -> Should go to Landing Page
+    // 4. Click "Website" -> Should go to Landing Page
     fireEvent.click(backToWebLink);
     
     // 5. Verify Landing Page content

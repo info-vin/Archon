@@ -136,12 +136,14 @@ export const handlers = [
   http.get('/api/changes', () => HttpResponse.json([])),
   http.get('/api/stats/ai-usage', () => HttpResponse.json({ total_budget: 1000, total_used: 150 })),
   http.get('/api/blogs', () => HttpResponse.json([])),
+  http.get('/api/marketing/blogs', () => HttpResponse.json([])),
   http.get('/api/knowledge-items', () => HttpResponse.json([])),
   http.get('/api/admin/crawler-targets', () => HttpResponse.json([
     { id: 'target-1', target_url: 'https://sas.com/docs', description: 'SAS Docs', is_active: true },
     { id: 'target-2', target_url: 'https://104.com.tw', description: '104 Jobs', is_active: true }
   ])),
   http.post('/api/marketing/approvals/:type/:id/:action', () => HttpResponse.json({ success: true })),
+  http.get('/api/admin/users', () => HttpResponse.json(mockAssignableUsers)),
   http.post('/api/admin/users', () => HttpResponse.json({ success: true }, { status: 201 })),
   http.get('/api/system/logs', () => HttpResponse.json([])),
   http.post('/api/marketing/blog/draft', () => HttpResponse.json({ title: 'Mock', content: '...', excerpt: '...', references: [] })),

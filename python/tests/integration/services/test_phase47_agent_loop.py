@@ -29,7 +29,8 @@ async def test_run_general_agent_task_market_bot(mock_mcp_client):
 
     mock_task_service = AsyncMock()
     mock_task_service.update_task.return_value = (True, {})
-    mock_task_service.get_task.return_value = (True, mock_task)
+    mock_task_service.save_agent_output.return_value = (True, {})
+    mock_task_service.get_task.return_value = (True, {"task": mock_task})
 
     mock_llm_client = AsyncMock()
 
@@ -61,8 +62,9 @@ async def test_run_general_agent_task_market_bot(mock_mcp_client):
 
         assert mock_task_service.update_task.call_count >= 2
         mock_mcp_client.search_job_market.assert_called_once()
-        last_call_args = mock_task_service.update_task.call_args_list[-1]
-        assert "I found 5 React jobs" in last_call_args.args[1]["output"]
+        mock_task_service.save_agent_output.assert_called_once()
+        last_call_args = mock_task_service.save_agent_output.call_args_list[-1]
+        assert "I found 5 React jobs" in last_call_args.args[1]["content"]
 
 @pytest.mark.asyncio
 async def test_run_general_agent_task_librarian(mock_mcp_client):
@@ -72,7 +74,8 @@ async def test_run_general_agent_task_librarian(mock_mcp_client):
     service = AgentService(mcp_client=mock_mcp_client)
     mock_task_service = AsyncMock()
     mock_task_service.update_task.return_value = (True, {})
-    mock_task_service.get_task.return_value = (True, {"id": "t-2", "title": "Check Specs"})
+    mock_task_service.save_agent_output.return_value = (True, {})
+    mock_task_service.get_task.return_value = (True, {"task": {"id": "t-2", "title": "Check Specs", "description": "some desc"}})
 
     mock_llm_client = AsyncMock()
     r1_msg = MagicMock()

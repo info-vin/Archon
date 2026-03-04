@@ -74,3 +74,8 @@
 *   **2026-01-28**:
     *   **BUG-015~024 (QA Institutionalization)**: 完成 E2E 測試的全面重構，引入 `userFactory` 與 `vi.hoisted`，解決了魔術字串與提升錯誤，並修復了 JSDOM 環境缺口與 UI 語義問題。
     *   **BUG-028~030 (QA Stability)**: 驗證並修復了環境掛起 (Hanging)、Admin Mock 洩漏以及 Test Data 缺失問題，E2E 測試通過率 100%。
+*   **2026-03-04 (Phase 4.6.10: 深度數據保真與儀表板優化)**:
+    *   **BUG-4.6.10-01 (Backend State Transition)**: 發現 `AgentService` 中的 `agent_service.py` 舊有邏輯仍預期任務狀態為 `processing`，以及舊有代碼直接更新已不存在的 `output` 欄位。已將預期修改為正確的 `doing` 狀態，並改用專屬的 `save_agent_output` (將 LLM 結果寫入 JSONB `attachments`)。
+    *   **BUG-4.6.10-02 (Test Assertion Regressions)**: 因上述 Backend 狀態與結構重構 (`task_response` 變更為包含 `{"task": {...}}` 包裝)，導致 4 個 Backend Tests 斷言失敗。已全數修正 `test_agent_service.py`, `test_agent_awakening.py` 與 `test_phase47_agent_loop.py`，讓 550 個後端測試回復至 🟢 100% 通過。
+    *   **BUG-4.6.10-03 (Frontend UX)**: 5173 `TeamManagementPage` UI 因舊有 Icon (`DocumentTextIcon`) 不存在導致 Linting 錯誤，已修正為實存的 `FileTextIcon`。
+    *   **Conclusion (落地實作與保真)**: 在執行 DevBot 實體化任務的過程中，驗證了只要確實排除「假資料樂觀路徑」並依靠真實的 DB 寫入與 API 查閱，系統才會暴露出真實的資料結構落差。現已達成測試全過、資料高度保真、且 DevBot 得以透過真實回應賺取 XP 的落地狀態。

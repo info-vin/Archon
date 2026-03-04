@@ -31,6 +31,22 @@ export const CodeExtractionSettings = ({
   const [saving, setSaving] = useState(false);
   const { showToast } = useToast();
 
+  // Config-driven arrays for Input fields
+  const lengthSettings = [
+    { key: 'MIN_CODE_BLOCK_LENGTH', label: 'Minimum Length (chars)', min: 50, max: 2000, step: undefined, placeholder: '' },
+    { key: 'MAX_CODE_BLOCK_LENGTH', label: 'Maximum Length (chars)', min: 1000, max: 20000, step: undefined, placeholder: '5000' }
+  ];
+
+  const advancedSettings = [
+    { key: 'MAX_PROSE_RATIO', label: 'Max Prose Ratio', min: 0, max: 1, step: '0.05', placeholder: '0.15' },
+    { key: 'MIN_CODE_INDICATORS', label: 'Min Code Indicators', min: 1, max: 10, placeholder: '3' },
+    { key: 'CONTEXT_WINDOW_SIZE', label: 'Context Window Size', min: 100, max: 5000, placeholder: '1000' },
+    { key: 'CODE_EXTRACTION_MAX_WORKERS', label: 'Max Workers', min: 1, max: 10, placeholder: '3' },
+    { key: 'CODE_EXTRACTION_BATCH_SIZE', label: 'Batch Size', min: 1, max: 100, placeholder: '20' },
+    { key: 'CODE_EXTRACTION_TIMEOUT', label: 'Timeout (ms)', min: 1000, max: 60000, placeholder: '30000' }
+  ];
+
+
   const handleSave = async () => {
     try {
       setSaving(true);
@@ -72,31 +88,22 @@ export const CodeExtractionSettings = ({
             Code Block Length
           </h3>
           <div className="grid grid-cols-2 gap-4">
-            <Input
-              label="Minimum Length (chars)"
-              type="number"
-              value={codeExtractionSettings.MIN_CODE_BLOCK_LENGTH}
-              onChange={e => setCodeExtractionSettings({
-                ...codeExtractionSettings,
-                MIN_CODE_BLOCK_LENGTH: parseInt(e.target.value, 10) || 250
-              })}
-              accentColor="purple"
-              min="50"
-              max="2000"
-            />
-            <Input
-              label="Maximum Length (chars)"
-              type="number"
-              value={codeExtractionSettings.MAX_CODE_BLOCK_LENGTH}
-              onChange={e => setCodeExtractionSettings({
-                ...codeExtractionSettings,
-                MAX_CODE_BLOCK_LENGTH: parseInt(e.target.value, 10) || 5000
-              })}
-              placeholder="5000"
-              accentColor="purple"
-              min="1000"
-              max="20000"
-            />
+            {lengthSettings.map((field) => (
+              <Input
+                key={field.key}
+                label={field.label}
+                type="number"
+                value={codeExtractionSettings[field.key as keyof typeof codeExtractionSettings] as number}
+                onChange={e => setCodeExtractionSettings({
+                  ...codeExtractionSettings,
+                  [field.key]: parseInt(e.target.value, 10) || 0
+                })}
+                placeholder={field.placeholder}
+                accentColor="purple"
+                min={field.min}
+                max={field.max}
+              />
+            ))}
           </div>
         </div>
 
@@ -184,59 +191,23 @@ export const CodeExtractionSettings = ({
             Advanced Settings
           </h3>
           <div className="grid grid-cols-2 gap-4">
-            <Input
-              label="Max Prose Ratio"
-              type="number"
-              value={codeExtractionSettings.MAX_PROSE_RATIO}
-              onChange={e => setCodeExtractionSettings({
-                ...codeExtractionSettings,
-                MAX_PROSE_RATIO: parseFloat(e.target.value) || 0.15
-              })}
-              placeholder="0.15"
-              accentColor="purple"
-              min="0"
-              max="1"
-              step="0.05"
-            />
-            <Input
-              label="Min Code Indicators"
-              type="number"
-              value={codeExtractionSettings.MIN_CODE_INDICATORS}
-              onChange={e => setCodeExtractionSettings({
-                ...codeExtractionSettings,
-                MIN_CODE_INDICATORS: parseInt(e.target.value, 10) || 3
-              })}
-              placeholder="3"
-              accentColor="purple"
-              min="1"
-              max="10"
-            />
-            <Input
-              label="Context Window Size"
-              type="number"
-              value={codeExtractionSettings.CONTEXT_WINDOW_SIZE}
-              onChange={e => setCodeExtractionSettings({
-                ...codeExtractionSettings,
-                CONTEXT_WINDOW_SIZE: parseInt(e.target.value, 10) || 1000
-              })}
-              placeholder="1000"
-              accentColor="purple"
-              min="100"
-              max="5000"
-            />
-            <Input
-              label="Max Workers"
-              type="number"
-              value={codeExtractionSettings.CODE_EXTRACTION_MAX_WORKERS}
-              onChange={e => setCodeExtractionSettings({
-                ...codeExtractionSettings,
-                CODE_EXTRACTION_MAX_WORKERS: parseInt(e.target.value, 10) || 3
-              })}
-              placeholder="3"
-              accentColor="purple"
-              min="1"
-              max="10"
-            />
+            {advancedSettings.map((field) => (
+              <Input
+                key={field.key}
+                label={field.label}
+                type="number"
+                value={codeExtractionSettings[field.key as keyof typeof codeExtractionSettings] as number}
+                onChange={e => setCodeExtractionSettings({
+                  ...codeExtractionSettings,
+                  [field.key]: field.step ? parseFloat(e.target.value) || 0 : parseInt(e.target.value, 10) || 0
+                })}
+                placeholder={field.placeholder}
+                accentColor="purple"
+                min={field.min}
+                max={field.max}
+                {...(field.step ? { step: field.step } : {})}
+              />
+            ))}
           </div>
         </div>
 
