@@ -11,6 +11,7 @@ import textwrap
 from datetime import datetime
 from typing import Any
 
+from src.server.repositories.base_repository import BaseRepository
 from src.server.services.log_service import LogService  # Enhanced Logging
 from src.server.utils import get_supabase_client
 
@@ -24,14 +25,15 @@ logger = get_logger(__name__)
 # Task updates are handled via polling - no broadcasting needed
 
 
-class TaskService:
+class TaskService(BaseRepository):
     """Service class for task operations"""
 
     VALID_STATUSES = ["todo", "doing", "review", "done", "processing", "dispatched"]
 
     def __init__(self, supabase_client=None):
         """Initialize with optional supabase client"""
-        self.supabase_client = supabase_client or get_supabase_client()
+        client = supabase_client or get_supabase_client()
+        super().__init__(client)
 
     def _notify_ai_agent_of_assignment(self, task_id: str, agent_id: str):
         """
@@ -195,10 +197,16 @@ class TaskService:
             if due_date:
                 task_data["due_date"] = due_date.isoformat()
 
-            response = self.supabase_client.table("archon_tasks").insert(task_data).execute()
+            def _create_query():
+                return self.supabase_client.table("archon_tasks").insert(task_data).execute()
 
-            if response.data:
-                task = response.data[0]
+            success_create, create_result = self.execute_query(
+                query_func=_create_query,
+                error_context="Failed to create task"
+            )
+
+            if success_create:
+                task = create_result["data"][0]
 
                 # If the assignee is an AI agent, notify the MCP
                 if assignee in AI_AGENT_ROLES:
@@ -222,8 +230,7 @@ class TaskService:
                         "schedule_config": task.get("schedule_config"),
                     }
                 }
-            else:
-                return False, {"error": "Failed to create task"}
+            return False, create_result
 
         except Exception as e:
             logger.error(f"Error creating task: {e}")
@@ -412,20 +419,17 @@ class TaskService:
         Returns:
             Tuple of (success, result_dict)
         """
-        try:
-            response = (
-                self.supabase_client.table("archon_tasks").select("* ").eq("id", task_id).execute()
-            )
+        def _query():
+            return self.supabase_client.table("archon_tasks").select("* ").eq("id", task_id).execute()
 
-            if response.data:
-                task = response.data[0]
-                return True, {"task": task}
-            else:
-                return False, {"error": f"Task with ID {task_id} not found"}
+        success, result = self.execute_query(
+            query_func=_query,
+            error_context=f"Task with ID {task_id} not found"
+        )
 
-        except Exception as e:
-            logger.error(f"Error getting task: {e}")
-            return False, {"error": f"Error getting task: {str(e)}"}
+        if success:
+            return True, {"task": result["data"][0]}
+        return False, result
 
     async def update_task(
         self, task_id: str, update_fields: dict[str, Any]
@@ -516,15 +520,21 @@ class TaskService:
                     update_data["completed_at"] = comp_val
 
             # Update task
-            response = (
-                self.supabase_client.table("archon_tasks")
-                .update(update_data)
-                .eq("id", task_id)
-                .execute()
+            def _update_query():
+                return (
+                    self.supabase_client.table("archon_tasks")
+                    .update(update_data)
+                    .eq("id", task_id)
+                    .execute()
+                )
+
+            success_update, update_result = self.execute_query(
+                query_func=_update_query,
+                error_context=f"Task with ID {task_id} not found"
             )
 
-            if response.data:
-                task = response.data[0]
+            if success_update:
+                task = update_result["data"][0]
 
                 # If the assignee was updated to an AI agent, notify the MCP
                 if "assignee" in update_fields and update_fields["assignee"] in AI_AGENT_ROLES:
@@ -533,8 +543,7 @@ class TaskService:
                     )
 
                 return True, {"task": task, "message": "Task updated successfully"}
-            else:
-                return False, {"error": f"Task with ID {task_id} not found"}
+            return False, update_result
 
         except Exception as e:
             logger.error(f"Error updating task: {e}")
@@ -551,13 +560,11 @@ class TaskService:
         """
         try:
             # First, check if task exists and is not already archived
-            task_response = (
-                self.supabase_client.table("archon_tasks").select("* ").eq("id", task_id).execute()
-            )
-            if not task_response.data:
-                return False, {"error": f"Task with ID {task_id} not found"}
+            success_get, get_result = await self.get_task(task_id)
+            if not success_get:
+                return False, get_result
 
-            task = task_response.data[0]
+            task = get_result["task"]
             if task.get("archived") is True:
                 return False, {"error": f"Task with ID {task_id} is already archived"}
 
@@ -570,18 +577,22 @@ class TaskService:
             }
 
             # Archive the main task
-            response = (
-                self.supabase_client.table("archon_tasks")
-                .update(archive_data)
-                .eq("id", task_id)
-                .execute()
+            def _archive_query():
+                return (
+                    self.supabase_client.table("archon_tasks")
+                    .update(archive_data)
+                    .eq("id", task_id)
+                    .execute()
+                )
+
+            success_archive, archive_result = self.execute_query(
+                query_func=_archive_query,
+                error_context=f"Failed to archive task {task_id}"
             )
 
-            if response.data:
-
+            if success_archive:
                 return True, {"task_id": task_id, "message": "Task archived successfully"}
-            else:
-                return False, {"error": f"Failed to archive task {task_id}"}
+            return False, archive_result
 
         except Exception as e:
             logger.error(f"Error archiving task: {e}")
