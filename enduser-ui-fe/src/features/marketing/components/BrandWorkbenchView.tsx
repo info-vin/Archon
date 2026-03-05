@@ -1,8 +1,8 @@
 import React from 'react';
-import { ContentSource } from '../../../types';
+import { ContentSource } from './VictoryFeedList';
 import { ContentWorkbench } from './ContentWorkbench';
 import { 
-    LayoutIcon, SparklesIcon, XIcon, FileEditIcon, RefreshCwIcon, DownloadIcon
+    LayoutIcon, XIcon, RefreshCwIcon
 } from '../../../components/Icons';
 
 interface BrandWorkbenchViewProps {
@@ -12,15 +12,12 @@ interface BrandWorkbenchViewProps {
     isLoadingSources: boolean;
     isLoadingContext: boolean;
     isDrafting: boolean;
-    isGeneratingImage: boolean;
     isSidebarOpen: boolean;
     setIsSidebarOpen: (val: boolean) => void;
     workbenchTitle: string;
     setWorkbenchTitle: (val: string) => void;
     workbenchContent: string;
     setWorkbenchContent: (val: string) => void;
-    workbenchImageUrl: string;
-    setWorkbenchImageUrl: (val: string) => void;
     handleSelectSource: (source: ContentSource) => void;
     handleMagicDraft: (topic: string, config?: any) => void;
     handleSaveWorkbench: () => void;
@@ -29,10 +26,9 @@ interface BrandWorkbenchViewProps {
 
 export const BrandWorkbenchView: React.FC<BrandWorkbenchViewProps> = ({
     sources, activeSource, contextData, 
-    isLoadingSources, isLoadingContext, isDrafting, isGeneratingImage,
+    isLoadingSources, isLoadingContext, isDrafting,
     isSidebarOpen, setIsSidebarOpen,
     workbenchTitle, setWorkbenchTitle, workbenchContent, setWorkbenchContent,
-    workbenchImageUrl, setWorkbenchImageUrl,
     handleSelectSource, handleMagicDraft, handleSaveWorkbench, handlePublishWorkbench
 }) => {
     return (
@@ -78,15 +74,15 @@ export const BrandWorkbenchView: React.FC<BrandWorkbenchViewProps> = ({
                     contextData={contextData}
                     isDrafting={isDrafting}
                     isLoadingContext={isLoadingContext}
-                    onMagicDraft={handleMagicDraft}
+                    onDraft={handleMagicDraft}
+                    onGenerateImage={() => alert("Image generation pending implementation")}
                     onSave={handleSaveWorkbench}
                     onPublish={handlePublishWorkbench}
-                    initialTitle={workbenchTitle}
-                    initialContent={workbenchContent}
-                    initialImageUrl={workbenchImageUrl}
+                    title={workbenchTitle}
+                    content={workbenchContent}
                     onTitleChange={setWorkbenchTitle}
                     onContentChange={setWorkbenchContent}
-                    onImageChange={setWorkbenchImageUrl}
+                    isGeneratingImage={false}
                 />
             </section>
 

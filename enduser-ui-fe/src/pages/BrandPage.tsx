@@ -15,11 +15,10 @@ const BrandPage: React.FC = () => {
         viewMode, setViewMode,
         posts, trendsData, loading,
         sources, activeSource, contextData,
-        isLoadingSources, isLoadingContext, isDrafting, isGeneratingImage,
+        isLoadingSources, isLoadingContext, isDrafting,
         isSidebarOpen, setIsSidebarOpen,
         workbenchTitle, setWorkbenchTitle,
         workbenchContent, setWorkbenchContent,
-        workbenchImageUrl, setWorkbenchImageUrl,
         handleSelectSource, handleMagicDraft, handleSaveWorkbench, handlePublishWorkbench,
         loadData
     } = useBrandLogic();
@@ -31,7 +30,6 @@ const BrandPage: React.FC = () => {
         if (post.status === 'draft' || post.status === 'changes_requested') {
             setWorkbenchTitle(post.title || '');
             setWorkbenchContent(post.content || '');
-            setWorkbenchImageUrl(post.imageUrl || '/placeholder-blog.jpg');
             handleSelectSource({ 
                 id: post.id, 
                 type: 'blog', 
@@ -95,7 +93,6 @@ const BrandPage: React.FC = () => {
                             onNewPost={() => setViewMode('workbench')}
                             onEditSmart={handleEditSmart}
                             onUpdateStatus={() => alert("Quick status update pending implementation")}
-                            onDeletePost={() => alert("Delete pending implementation")}
                             onNavigateAdvanced={(id) => navigate(`/brand/editor/${id}`)}
                         />
                     ) : (
@@ -106,15 +103,12 @@ const BrandPage: React.FC = () => {
                             isLoadingSources={isLoadingSources}
                             isLoadingContext={isLoadingContext}
                             isDrafting={isDrafting}
-                            isGeneratingImage={isGeneratingImage}
                             isSidebarOpen={isSidebarOpen}
                             setIsSidebarOpen={setIsSidebarOpen}
                             workbenchTitle={workbenchTitle}
                             setWorkbenchTitle={setWorkbenchTitle}
                             workbenchContent={workbenchContent}
                             setWorkbenchContent={setWorkbenchContent}
-                            workbenchImageUrl={workbenchImageUrl}
-                            setWorkbenchImageUrl={setWorkbenchImageUrl}
                             handleSelectSource={handleSelectSource}
                             handleMagicDraft={handleMagicDraft}
                             handleSaveWorkbench={handleSaveWorkbench}

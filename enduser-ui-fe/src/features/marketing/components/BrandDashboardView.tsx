@@ -2,7 +2,7 @@ import React from 'react';
 import { BlogPost } from '../../../types';
 import { TrendLineChart } from './TrendLineChart';
 import { SankeyDiagram } from './SankeyDiagram';
-import { VictoryFeedList } from './VictoryFeedList';
+import { VictoryFeedList, ContentSource } from './VictoryFeedList';
 import { 
     PlusIcon, TrendingUpIcon, FileEditIcon, EyeIcon, CheckCircleIcon, SparklesIcon
 } from '../../../components/Icons';
@@ -13,12 +13,11 @@ interface BrandDashboardViewProps {
     onNewPost: () => void;
     onEditSmart: (post: BlogPost) => void;
     onUpdateStatus: (id: string, status: string) => void;
-    onDeletePost: (id: string) => void;
     onNavigateAdvanced: (id: string) => void;
 }
 
 export const BrandDashboardView: React.FC<BrandDashboardViewProps> = ({
-    posts, trendsData, onNewPost, onEditSmart, onUpdateStatus, onDeletePost, onNavigateAdvanced
+    posts, trendsData, onNewPost, onEditSmart, onUpdateStatus, onNavigateAdvanced
 }) => {
     const KanbanColumn = ({ filter, title, icon: Icon, colorClass }: any) => {
         const columnPosts = posts.filter(filter);
@@ -72,9 +71,18 @@ export const BrandDashboardView: React.FC<BrandDashboardViewProps> = ({
         )
     };
 
+    const feedSources: ContentSource[] = posts.map(p => ({
+        id: p.id,
+        type: 'blog',
+        title: p.title,
+        score: p.ai_score || 0,
+        summary: p.excerpt || '',
+        date: p.publishDate,
+        status: p.status
+    }));
+
     return (
         <div className="p-6 max-w-7xl mx-auto space-y-8 font-sans">
-            {/* Market Intelligence */}
             <div className="bg-purple-50 text-gray-900 p-6 rounded-2xl shadow-xl space-y-6 relative overflow-hidden w-full border border-purple-100">
                 <div className="relative z-10">
                     <h2 className="text-xl font-bold flex items-center gap-2 text-purple-900">
@@ -101,7 +109,6 @@ export const BrandDashboardView: React.FC<BrandDashboardViewProps> = ({
                 </div>
             </div>
 
-            {/* Pipeline */}
             <section className="space-y-4">
                 <div className="flex justify-between items-end">
                     <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
@@ -113,35 +120,19 @@ export const BrandDashboardView: React.FC<BrandDashboardViewProps> = ({
                     </button>
                 </div>
                 <div className="flex flex-wrap gap-6">
-                    <KanbanColumn 
-                        title="Drafts & Returned" 
-                        filter={(p: BlogPost) => p.status === 'draft' || p.status === 'changes_requested'}
-                        icon={FileEditIcon} 
-                        colorClass="text-gray-600 border-gray-200" 
-                    />
-                    <KanbanColumn 
-                        title="In Review" 
-                        filter={(p: BlogPost) => p.status === 'review'}
-                        icon={EyeIcon} 
-                        colorClass="text-amber-600 border-amber-200" 
-                    />
-                    <KanbanColumn 
-                        title="Published" 
-                        filter={(p: BlogPost) => p.status === 'published'}
-                        icon={CheckCircleIcon} 
-                        colorClass="text-green-600 border-green-200" 
-                    />
+                    <KanbanColumn title="Drafts & Returned" filter={(p: BlogPost) => p.status === 'draft' || p.status === 'changes_requested'} icon={FileEditIcon} colorClass="text-gray-600 border-gray-200" />
+                    <KanbanColumn title="In Review" filter={(p: BlogPost) => p.status === 'review'} icon={EyeIcon} colorClass="text-amber-600 border-amber-200" />
+                    <KanbanColumn title="Published" filter={(p: BlogPost) => p.status === 'published'} icon={CheckCircleIcon} colorClass="text-green-600 border-green-200" />
                 </div>
             </section>
 
-            {/* Victory Feed */}
             <section className="space-y-4">
                 <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
                     <TrendingUpIcon className="w-5 h-5 text-indigo-500" />
                     Victory Feed
                 </h2>
                 <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
-                    <VictoryFeedList posts={posts} onPostClick={onEditSmart} />
+                    <VictoryFeedList sources={feedSources} onSelect={(s) => onEditSmart(posts.find(p => p.id === s.id)!)} />
                 </div>
             </section>
         </div>

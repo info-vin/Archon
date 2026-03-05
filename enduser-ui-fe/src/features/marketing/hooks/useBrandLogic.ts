@@ -1,17 +1,16 @@
 import { useState, useEffect, useCallback } from 'react';
 import { api } from '../../../services/api';
-import { BlogPost, ContentSource, TaskStatus, EmployeeRole } from '../../../types';
+import { BlogPost, TaskStatus, EmployeeRole } from '../../../types';
 import { useAuth } from '../../../hooks/useAuth';
+import { ContentSource } from '../components/VictoryFeedList';
 
-export const useBrandLogic = (onConfigChange?: () => void) => {
+export const useBrandLogic = () => {
     const { user } = useAuth();
     const [viewMode, setViewMode] = useState<'dashboard' | 'workbench'>('workbench');
     
     // Dashboard State
     const [posts, setPosts] = useState<BlogPost[]>([]);
     const [trendsData, setTrendsData] = useState<any>(null);
-    const [logoSvg, setLogoSvg] = useState<string | null>(null);
-    const [isGenerating, setIsLogoGenerating] = useState(false);
     const [loading, setLoading] = useState(true);
 
     // Workbench State
@@ -23,14 +22,12 @@ export const useBrandLogic = (onConfigChange?: () => void) => {
     const [isLoadingSources, setIsLoadingSources] = useState(false);
     const [isLoadingContext, setIsLoadingContext] = useState(false);
     const [isDrafting, setIsDrafting] = useState(false);
-    const [isGeneratingImage, setIsGeneratingImage] = useState(false);
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
     
     // Workbench Editor State
     const [workbenchTitle, setWorkbenchTitle] = useState('');
     const [workbenchContent, setWorkbenchContent] = useState('');
     const [workbenchImageUrl, setWorkbenchImageUrl] = useState('/placeholder-blog.jpg');
-    const [lastPrompt, setLastPrompt] = useState<string | undefined>(undefined);
 
     // Persistence Logic
     useEffect(() => {
@@ -73,7 +70,7 @@ export const useBrandLogic = (onConfigChange?: () => void) => {
         setIsLoadingSources(true);
         try {
             const sourcesData = await api.getContentSources();
-            setSources(sourcesData);
+            setSources(sourcesData as ContentSource[]);
         } catch (err) {
             console.error("Failed to load content sources:", err);
         } finally {
@@ -148,7 +145,6 @@ export const useBrandLogic = (onConfigChange?: () => void) => {
             });
             setWorkbenchTitle(result.title);
             setWorkbenchContent(result.content);
-            setLastPrompt(result.used_prompt);
         } catch (err: any) {
             alert(err.message || "Drafting failed");
         } finally {
@@ -227,9 +223,9 @@ export const useBrandLogic = (onConfigChange?: () => void) => {
 
     return {
         viewMode, setViewMode, user,
-        posts, trendsData, logoSvg, isGenerating, loading,
+        posts, trendsData, loading,
         sources, activeSource, activeTaskId, contextData,
-        isLoadingSources, isLoadingContext, isDrafting, isGeneratingImage,
+        isLoadingSources, isLoadingContext, isDrafting,
         isSidebarOpen, setIsSidebarOpen,
         workbenchTitle, setWorkbenchTitle,
         workbenchContent, setWorkbenchContent,

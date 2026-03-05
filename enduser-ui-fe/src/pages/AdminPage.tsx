@@ -46,7 +46,12 @@ const AdminPage: React.FC = () => {
         {activeTab === 'health' && <SystemHealthDashboard />}
         {activeTab === 'users' && canManageUsers && <IdentityMatrix />}
         {activeTab === 'settings' && <AdminSystemConfig />}
-        {activeTab === 'extraction' && <AdminExtractionConfig />}
+        {activeTab === 'extraction' && (
+          <div className="space-y-8">
+            <AdminCrawlerConfig />
+            <AdminExtractionConfig />
+          </div>
+        )}
         {activeTab === 'prompts' && <PromptManagement isManagerMode={isOnlyManager} />}
         {activeTab === 'blog' && !isOnlyManager && <AdminContentManager />}
         {activeTab === 'versions' && !isOnlyManager && <AdminAuditLogs />}

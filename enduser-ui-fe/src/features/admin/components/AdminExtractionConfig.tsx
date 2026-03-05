@@ -13,7 +13,7 @@ export const AdminExtractionConfig: React.FC = () => {
     const { 
         schemas, loading, analyzeUrl, setAnalyzeUrl, isAnalyzing, suggestions, 
         newSchemaName, setNewSchemaName, newDomainPattern, setNewDomainPattern,
-        analyzeStructure, saveSchema, deleteSchema, runExtraction 
+        analyzeStructure, saveSchema, runExtraction 
     } = useExtractionSchemas();
 
     if (loading) return <div className="flex justify-center p-12"><RefreshCwIcon className="animate-spin w-8 h-8 text-indigo-600" /></div>;

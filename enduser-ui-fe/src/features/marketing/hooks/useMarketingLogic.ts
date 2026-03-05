@@ -1,7 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { api } from '../../../services/api';
 import { JobData } from '../../../types';
-import { useToast } from '@/features/shared/hooks/useToast';
 
 export const useMarketingLogic = () => {
   const [activeTab, setActiveTab] = useState<'search' | 'leads'>('search');
@@ -27,8 +26,6 @@ export const useMarketingLogic = () => {
   const [selectedPitchLead, setSelectedPitchLead] = useState<any>(null);
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>({ key: 'created_at', direction: 'desc' });
   const [filterMode, setFilterMode] = useState<'all' | 'review_queue'>('all');
-
-  const { showToast } = useToast();
 
   // Alice Methods
   const handleSearch = async (e?: React.FormEvent) => {
