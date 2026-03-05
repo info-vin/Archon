@@ -1,16 +1,18 @@
 # python/src/server/services/profile_service.py
 
 from ..config.logfire_config import get_logger
+from ..repositories.base_repository import BaseRepository
 from ..utils import get_supabase_client
 
 logger = get_logger(__name__)
 
-class ProfileService:
+class ProfileService(BaseRepository):
     """Service for handling business logic related to user profiles."""
 
     def __init__(self, supabase_client=None):
         """Initialize with optional supabase client."""
-        self.supabase_client = supabase_client or get_supabase_client()
+        client = supabase_client or get_supabase_client()
+        super().__init__(client)
 
     def list_all_users(self) -> tuple[bool, list[dict] | str]:
         """
@@ -19,15 +21,17 @@ class ProfileService:
         Returns:
             A tuple containing a success boolean and either a list of users or an error message.
         """
-        try:
-            response = self.supabase_client.table("profiles").select("id, name, role").execute()
-            if response.data is None:
-                logger.warning("Could not fetch profiles from database.")
-                return True, []
-            return True, response.data
-        except Exception as e:
-            logger.error(f"Failed to list profiles: {e}", exc_info=True)
-            return False, f"Failed to retrieve profiles: {e}"
+        def _query():
+            return self.supabase_client.table("profiles").select("id, name, role").execute()
+
+        success, result = self.execute_query(
+            query_func=_query,
+            error_context="Failed to retrieve profiles",
+            require_data=False
+        )
+        if success:
+            return True, result["data"] or []
+        return False, result["error"]
 
     def list_full_profiles(self) -> tuple[bool, list[dict] | str]:
         """
@@ -37,14 +41,17 @@ class ProfileService:
         Returns:
             A tuple containing a success boolean and either a list of users or an error message.
         """
-        try:
-            response = self.supabase_client.table("profiles").select("*").execute()
-            if response.data is None:
-                return True, []
-            return True, response.data
-        except Exception as e:
-            logger.error(f"Failed to list full profiles: {e}", exc_info=True)
-            return False, f"Failed to retrieve full profiles: {e}"
+        def _query():
+            return self.supabase_client.table("profiles").select("*").execute()
+
+        success, result = self.execute_query(
+            query_func=_query,
+            error_context="Failed to retrieve full profiles",
+            require_data=False
+        )
+        if success:
+            return True, result["data"] or []
+        return False, result["error"]
 
     def get_user_role(self, user_name: str) -> tuple[bool, str | None]:
         """
@@ -56,18 +63,19 @@ class ProfileService:
         Returns:
             A tuple containing a success boolean and the user's role or None if not found.
         """
-        try:
-            # Use limit(1) to safely handle potential duplicate names instead of .single()
-            response = self.supabase_client.table("profiles").select("role").eq("name", user_name).limit(1).execute()
-            if response.data:
-                # If data is returned, take the role from the first record
-                return True, response.data[0].get("role")
-            # If no user is found, it's not an error, just return no role
-            return True, None
-        except Exception as e:
-            # An exception here points to a more serious issue (e.g., DB connection)
-            logger.error(f"An unexpected error occurred while retrieving role for user '{user_name}': {e}")
-            return False, None
+        def _query():
+            return self.supabase_client.table("profiles").select("role").eq("name", user_name).limit(1).execute()
+
+        # Returning True, None instead of False when no role is found.
+        success, result = self.execute_query(
+            query_func=_query,
+            error_context=f"An unexpected error occurred while retrieving role for user '{user_name}'",
+            require_data=False
+        )
+
+        if success:
+            return True, result["data"][0].get("role") if result["data"] else None
+        return False, None
 
     def get_profile(self, user_id: str) -> tuple[bool, dict | str | None]:
         """
@@ -79,18 +87,20 @@ class ProfileService:
         Returns:
             A tuple containing success boolean and the profile data (or error message/None).
         """
-        try:
-            # Use limit(1) instead of .single() to avoid exceptions on missing data
-            response = self.supabase_client.table("profiles").select("*").eq("id", user_id).limit(1).execute()
+        def _query():
+            return self.supabase_client.table("profiles").select("*").eq("id", user_id).limit(1).execute()
 
-            if response.data and len(response.data) > 0:
-                return True, response.data[0]
+        success, result = self.execute_query(
+            query_func=_query,
+            error_context=f"Failed to fetch profile for {user_id}",
+            require_data=True
+        )
 
-            logger.warning(f"Profile not found for {user_id}")
-            return False, "Profile not found"
-        except Exception as e:
-            logger.error(f"Failed to fetch profile for {user_id}: {e}", exc_info=True)
-            return False, str(e)
+        if success:
+            return True, result["data"][0]
+
+        # In original logic: Not finding user was a warning -> return False, "Profile not found"
+        return False, "Profile not found"
 
     def update_profile(self, user_id: str, updates: dict) -> tuple[bool, dict | str]:
         """
@@ -103,24 +113,20 @@ class ProfileService:
         Returns:
             A tuple containing success boolean and the updated profile data (or error message).
         """
-        try:
-            # Prevent updating immutable fields if any (id should not be in updates ideally)
-            if "id" in updates:
-                del updates["id"]
+        if "id" in updates:
+            del updates["id"]
 
-            logger.info(f"Updating profile for {user_id} with: {updates.keys()}")
+        logger.info(f"Updating profile for {user_id} with: {updates.keys()}")
 
-            # Fix: Simplify query chain for sync client compatibility (remove .select().single())
-            response = self.supabase_client.table("profiles").update(updates).eq("id", user_id).execute()
+        def _query():
+            return self.supabase_client.table("profiles").update(updates).eq("id", user_id).execute()
 
-            # Check for data or error
-            if response.data:
-                # Return first item if list, else item
-                return True, response.data[0] if isinstance(response.data, list) else response.data
-
-            # Fallback if no data returned (though select() should ensure it)
-            return False, "Update failed or returned no data."
-
-        except Exception as e:
-            logger.error(f"Failed to update profile for {user_id}: {e}", exc_info=True)
-            return False, str(e)
+        success, result = self.execute_query(
+            query_func=_query,
+            error_context=f"Failed to update profile for {user_id}",
+            require_data=True
+        )
+        if success:
+            data = result["data"]
+            return True, data[0] if isinstance(data, list) else data
+        return False, result.get("error", "Update failed or returned no data.")
