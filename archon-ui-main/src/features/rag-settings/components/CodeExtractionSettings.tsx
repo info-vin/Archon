@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { Check, Save, Loader } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
-import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { useToast } from '@/features/shared/hooks/useToast';
 import { credentialsService } from '@/services/credentialsService';
+import { ConfigDrivenInput } from '@/features/admin/components/ConfigDrivenInput';
 
 interface CodeExtractionSettingsProps {
   codeExtractionSettings: {
@@ -33,17 +33,17 @@ export const CodeExtractionSettings = ({
 
   // Config-driven arrays for Input fields
   const lengthSettings = [
-    { key: 'MIN_CODE_BLOCK_LENGTH', label: 'Minimum Length (chars)', min: 50, max: 2000, step: undefined, placeholder: '' },
-    { key: 'MAX_CODE_BLOCK_LENGTH', label: 'Maximum Length (chars)', min: 1000, max: 20000, step: undefined, placeholder: '5000' }
+    { key: 'MIN_CODE_BLOCK_LENGTH', type: 'number', label: 'Minimum Length (chars)', min: 50, max: 2000, step: undefined, placeholder: '' },
+    { key: 'MAX_CODE_BLOCK_LENGTH', type: 'number', label: 'Maximum Length (chars)', min: 1000, max: 20000, step: undefined, placeholder: '5000' }
   ];
 
   const advancedSettings = [
-    { key: 'MAX_PROSE_RATIO', label: 'Max Prose Ratio', min: 0, max: 1, step: '0.05', placeholder: '0.15' },
-    { key: 'MIN_CODE_INDICATORS', label: 'Min Code Indicators', min: 1, max: 10, placeholder: '3' },
-    { key: 'CONTEXT_WINDOW_SIZE', label: 'Context Window Size', min: 100, max: 5000, placeholder: '1000' },
-    { key: 'CODE_EXTRACTION_MAX_WORKERS', label: 'Max Workers', min: 1, max: 10, placeholder: '3' },
-    { key: 'CODE_EXTRACTION_BATCH_SIZE', label: 'Batch Size', min: 1, max: 100, placeholder: '20' },
-    { key: 'CODE_EXTRACTION_TIMEOUT', label: 'Timeout (ms)', min: 1000, max: 60000, placeholder: '30000' }
+    { key: 'MAX_PROSE_RATIO', type: 'number', label: 'Max Prose Ratio', min: 0, max: 1, step: '0.05', placeholder: '0.15' },
+    { key: 'MIN_CODE_INDICATORS', type: 'number', label: 'Min Code Indicators', min: 1, max: 10, placeholder: '3' },
+    { key: 'CONTEXT_WINDOW_SIZE', type: 'number', label: 'Context Window Size', min: 100, max: 5000, placeholder: '1000' },
+    { key: 'CODE_EXTRACTION_MAX_WORKERS', type: 'number', label: 'Max Workers', min: 1, max: 10, placeholder: '3' },
+    { key: 'CODE_EXTRACTION_BATCH_SIZE', type: 'number', label: 'Batch Size', min: 1, max: 100, placeholder: '20' },
+    { key: 'CODE_EXTRACTION_TIMEOUT', type: 'number', label: 'Timeout (ms)', min: 1000, max: 60000, placeholder: '30000' }
   ];
 
 
@@ -89,19 +89,11 @@ export const CodeExtractionSettings = ({
           </h3>
           <div className="grid grid-cols-2 gap-4">
             {lengthSettings.map((field) => (
-              <Input
+              <ConfigDrivenInput
                 key={field.key}
-                label={field.label}
-                type="number"
-                value={codeExtractionSettings[field.key as keyof typeof codeExtractionSettings] as number}
-                onChange={e => setCodeExtractionSettings({
-                  ...codeExtractionSettings,
-                  [field.key]: parseInt(e.target.value, 10) || 0
-                })}
-                placeholder={field.placeholder}
-                accentColor="purple"
-                min={field.min}
-                max={field.max}
+                field={field}
+                value={codeExtractionSettings[field.key as keyof typeof codeExtractionSettings]}
+                onChange={(val: any) => setCodeExtractionSettings({ ...codeExtractionSettings, [field.key]: val })}
               />
             ))}
           </div>
@@ -192,20 +184,11 @@ export const CodeExtractionSettings = ({
           </h3>
           <div className="grid grid-cols-2 gap-4">
             {advancedSettings.map((field) => (
-              <Input
+              <ConfigDrivenInput
                 key={field.key}
-                label={field.label}
-                type="number"
-                value={codeExtractionSettings[field.key as keyof typeof codeExtractionSettings] as number}
-                onChange={e => setCodeExtractionSettings({
-                  ...codeExtractionSettings,
-                  [field.key]: field.step ? parseFloat(e.target.value) || 0 : parseInt(e.target.value, 10) || 0
-                })}
-                placeholder={field.placeholder}
-                accentColor="purple"
-                min={field.min}
-                max={field.max}
-                {...(field.step ? { step: field.step } : {})}
+                field={field}
+                value={codeExtractionSettings[field.key as keyof typeof codeExtractionSettings]}
+                onChange={(val: any) => setCodeExtractionSettings({ ...codeExtractionSettings, [field.key]: val })}
               />
             ))}
           </div>

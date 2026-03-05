@@ -10,6 +10,7 @@ import { PiDatabaseThin } from 'react-icons/pi';
 import OllamaModelDiscoveryModal from './components/OllamaModelDiscoveryModal';
 import OllamaModelSelectionModal from './components/OllamaModelSelectionModal';
 import { credentialsService } from '@/services/credentialsService';
+import { ConfigDrivenInput } from '@/features/admin/components/ConfigDrivenInput';
 import { 
   useRagSettingsData, ProviderKey, RagSettingsType, colorStyles, 
   EMBEDDING_CAPABLE_PROVIDERS, getDefaultModels, normalizeBaseUrl
@@ -753,48 +754,14 @@ export const RAGSettings = ({ ragSettings, setRagSettings }: RAGSettingsProps) =
           {showCrawlingSettings && (
             <div className="mt-4 p-4 border border-green-500/10 rounded-lg bg-green-500/5">
               <div className="grid grid-cols-2 gap-4">
-                {crawlingSettingsFields.map(field => {
-                    if (field.key === 'CRAWL_WAIT_STRATEGY') {
-                        return (
-                          <div key={field.key}>
-                            <Select
-                              label={field.label}
-                              value={ragSettings.CRAWL_WAIT_STRATEGY || 'domcontentloaded'}
-                              onChange={e => setRagSettings({
-                                ...ragSettings,
-                                CRAWL_WAIT_STRATEGY: e.target.value
-                              })}
-                              accentColor="green"
-                              options={[
-                                { value: 'domcontentloaded', label: 'DOM Loaded (Fast)' },
-                                { value: 'networkidle', label: 'Network Idle (Thorough)' },
-                                { value: 'load', label: 'Full Load (Slowest)' }
-                              ]}
-                            />
-                          </div>
-                        );
-                    }
-                    return (
-                        <div key={field.key}>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                          {field.label}
-                        </label>
-                        <input
-                          type="number"
-                          min={field.min}
-                          max={field.max}
-                          step={field.step}
-                          value={field.key === 'CRAWL_PAGE_TIMEOUT' ? (ragSettings.CRAWL_PAGE_TIMEOUT || 60000) / 1000 : (ragSettings[field.key as keyof typeof ragSettings] as number || field.default)}
-                          onChange={e => setRagSettings({
-                            ...ragSettings,
-                            [field.key]: field.key === 'CRAWL_PAGE_TIMEOUT' ? (parseInt(e.target.value, 10) || 60) * 1000 : (field.step ? parseFloat(e.target.value) : parseInt(e.target.value, 10) || field.default)
-                          })}
-                          className="w-full px-3 py-2 border border-green-500/30 rounded-md bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white focus:border-green-500 focus:ring-1 focus:ring-green-500"
-                        />
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{field.description}</p>
-                      </div>
-                    );
-                })}
+                {crawlingSettingsFields.map(field => (
+                  <ConfigDrivenInput
+                    key={field.key}
+                    field={field}
+                    value={ragSettings[field.key as keyof typeof ragSettings]}
+                    onChange={(key, val) => setRagSettings({ ...ragSettings, [key]: val })}
+                  />
+                ))}
               </div>
             </div>
           )}
@@ -821,23 +788,12 @@ export const RAGSettings = ({ ragSettings, setRagSettings }: RAGSettingsProps) =
             <div className="mt-4 p-4 border border-green-500/10 rounded-lg bg-green-500/5">
               <div className="grid grid-cols-3 gap-4">
                 {storageSettingsFields.map(field => (
-                  <div key={field.key}>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      {field.label}
-                    </label>
-                    <input
-                      type="number"
-                      min={field.min}
-                      max={field.max}
-                      value={ragSettings[field.key as keyof typeof ragSettings] as number || field.default}
-                      onChange={e => setRagSettings({
-                        ...ragSettings,
-                        [field.key]: parseInt(e.target.value, 10) || field.default
-                      })}
-                      className="w-full px-3 py-2 border border-green-500/30 rounded-md bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white focus:border-green-500 focus:ring-1 focus:ring-green-500"
-                    />
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{field.description}</p>
-                  </div>
+                  <ConfigDrivenInput
+                    key={field.key}
+                    field={field}
+                    value={ragSettings[field.key as keyof typeof ragSettings]}
+                    onChange={(key, val) => setRagSettings({ ...ragSettings, [key]: val })}
+                  />
                 ))}
               </div>
               
