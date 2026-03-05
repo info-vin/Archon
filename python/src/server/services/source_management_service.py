@@ -10,6 +10,7 @@ from typing import Any
 from supabase import Client
 
 from ..config.logfire_config import get_logger, search_logger
+from ..repositories.base_repository import BaseRepository
 from .client_manager import get_supabase_client
 from .llm_provider_service import get_llm_client
 
@@ -354,12 +355,13 @@ async def update_source_info(
         raise  # Re-raise the exception so the caller knows it failed
 
 
-class SourceManagementService:
+class SourceManagementService(BaseRepository):
     """Service class for source management operations"""
 
     def __init__(self, supabase_client=None):
         """Initialize with optional supabase client"""
-        self.supabase_client = supabase_client or get_supabase_client()
+        client = supabase_client or get_supabase_client()
+        super().__init__(client)
 
     def get_available_sources(self) -> tuple[bool, dict[str, Any]]:
         """
@@ -370,24 +372,29 @@ class SourceManagementService:
         Returns:
             Tuple of (success, result_dict)
         """
-        try:
-            response = self.supabase_client.table("archon_sources").select("*").execute()
+        def _query():
+            return self.supabase_client.table("archon_sources").select("*").execute()
 
-            sources = []
-            for row in response.data:
-                sources.append({
-                    "source_id": row["source_id"],
-                    "title": row.get("title", ""),
-                    "summary": row.get("summary", ""),
-                    "created_at": row.get("created_at", ""),
-                    "updated_at": row.get("updated_at", ""),
-                })
+        success, result = self.execute_query(
+            query_func=_query,
+            error_context="Error retrieving sources",
+            require_data=False
+        )
 
-            return True, {"sources": sources, "total_count": len(sources)}
+        if not success:
+            return False, {"error": f"Error retrieving sources: {result['error']}"}
 
-        except Exception as e:
-            logger.error(f"Error retrieving sources: {e}")
-            return False, {"error": f"Error retrieving sources: {str(e)}"}
+        sources = []
+        for row in (result["data"] or []):
+            sources.append({
+                "source_id": row["source_id"],
+                "title": row.get("title", ""),
+                "summary": row.get("summary", ""),
+                "created_at": row.get("created_at", ""),
+                "updated_at": row.get("updated_at", ""),
+            })
+
+        return True, {"sources": sources, "total_count": len(sources)}
 
     def delete_source(self, source_id: str) -> tuple[bool, dict[str, Any]]:
         """
@@ -399,65 +406,42 @@ class SourceManagementService:
         Returns:
             Tuple of (success, result_dict)
         """
-        try:
-            logger.info(f"Starting delete_source for source_id: {source_id}")
+        logger.info(f"Starting delete_source for source_id: {source_id}")
 
-            # Delete from crawled_pages table
-            try:
-                logger.info(f"Deleting from crawled_pages table for source_id: {source_id}")
-                pages_response = (
-                    self.supabase_client.table("archon_crawled_pages")
-                    .delete()
-                    .eq("source_id", source_id)
-                    .execute()
-                )
-                pages_deleted = len(pages_response.data) if pages_response.data else 0
-                logger.info(f"Deleted {pages_deleted} pages from crawled_pages")
-            except Exception as pages_error:
-                logger.error(f"Failed to delete from crawled_pages: {pages_error}")
-                return False, {"error": f"Failed to delete crawled pages: {str(pages_error)}"}
+        # Delete from crawled_pages table
+        logger.info(f"Deleting from crawled_pages table for source_id: {source_id}")
+        def _pages_query(): return self.supabase_client.table("archon_crawled_pages").delete().eq("source_id", source_id).execute()
+        pages_success, pages_res = self.execute_query(query_func=_pages_query, error_context="Failed to delete from crawled_pages", require_data=False)
+        if not pages_success:
+            return False, {"error": f"Failed to delete crawled pages: {pages_res.get('error')}"}
+        pages_deleted = len(pages_res["data"]) if pages_res["data"] else 0
+        logger.info(f"Deleted {pages_deleted} pages from crawled_pages")
 
-            # Delete from code_examples table
-            try:
-                logger.info(f"Deleting from code_examples table for source_id: {source_id}")
-                code_response = (
-                    self.supabase_client.table("archon_code_examples")
-                    .delete()
-                    .eq("source_id", source_id)
-                    .execute()
-                )
-                code_deleted = len(code_response.data) if code_response.data else 0
-                logger.info(f"Deleted {code_deleted} code examples")
-            except Exception as code_error:
-                logger.error(f"Failed to delete from code_examples: {code_error}")
-                return False, {"error": f"Failed to delete code examples: {str(code_error)}"}
+        # Delete from code_examples table
+        logger.info(f"Deleting from code_examples table for source_id: {source_id}")
+        def _code_query(): return self.supabase_client.table("archon_code_examples").delete().eq("source_id", source_id).execute()
+        code_success, code_res = self.execute_query(query_func=_code_query, error_context="Failed to delete from code_examples", require_data=False)
+        if not code_success:
+            return False, {"error": f"Failed to delete code examples: {code_res.get('error')}"}
+        code_deleted = len(code_res["data"]) if code_res["data"] else 0
+        logger.info(f"Deleted {code_deleted} code examples")
 
-            # Delete from sources table
-            try:
-                logger.info(f"Deleting from sources table for source_id: {source_id}")
-                source_response = (
-                    self.supabase_client.table("archon_sources")
-                    .delete()
-                    .eq("source_id", source_id)
-                    .execute()
-                )
-                source_deleted = len(source_response.data) if source_response.data else 0
-                logger.info(f"Deleted {source_deleted} source records")
-            except Exception as source_error:
-                logger.error(f"Failed to delete from sources: {source_error}")
-                return False, {"error": f"Failed to delete source: {str(source_error)}"}
+        # Delete from sources table
+        logger.info(f"Deleting from sources table for source_id: {source_id}")
+        def _source_query(): return self.supabase_client.table("archon_sources").delete().eq("source_id", source_id).execute()
+        source_success, source_res = self.execute_query(query_func=_source_query, error_context="Failed to delete from sources", require_data=False)
+        if not source_success:
+            return False, {"error": f"Failed to delete source: {source_res.get('error')}"}
+        source_deleted = len(source_res["data"]) if source_res["data"] else 0
+        logger.info(f"Deleted {source_deleted} source records")
 
-            logger.info("Delete operation completed successfully")
-            return True, {
-                "source_id": source_id,
-                "pages_deleted": pages_deleted,
-                "code_examples_deleted": code_deleted,
-                "source_records_deleted": source_deleted,
-            }
-
-        except Exception as e:
-            logger.error(f"Unexpected error in delete_source: {e}")
-            return False, {"error": f"Error deleting source: {str(e)}"}
+        logger.info("Delete operation completed successfully")
+        return True, {
+            "source_id": source_id,
+            "pages_deleted": pages_deleted,
+            "code_examples_deleted": code_deleted,
+            "source_records_deleted": source_deleted,
+        }
 
     def update_source_metadata(
         self,
@@ -482,53 +466,47 @@ class SourceManagementService:
         Returns:
             Tuple of (success, result_dict)
         """
-        try:
-            # Build update data
-            update_data: dict[str, Any] = {}
-            if title is not None:
-                update_data["title"] = str(title)
-            if summary is not None:
-                update_data["summary"] = str(summary)
-            if word_count is not None:
-                update_data["total_word_count"] = int(word_count)
+        # Build update data
+        update_data: dict[str, Any] = {}
+        if title is not None:
+            update_data["title"] = str(title)
+        if summary is not None:
+            update_data["summary"] = str(summary)
+        if word_count is not None:
+            update_data["total_word_count"] = int(word_count)
 
-            # Handle metadata fields
-            if knowledge_type is not None or tags is not None:
-                # Get existing metadata
-                existing = (
-                    self.supabase_client.table("archon_sources")
-                    .select("metadata")
-                    .eq("source_id", source_id)
-                    .execute()
-                )
-                metadata = existing.data[0].get("metadata", {}) if existing.data else {}
+        # Handle metadata fields
+        if knowledge_type is not None or tags is not None:
+            # Get existing metadata
+            def _meta_query(): return self.supabase_client.table("archon_sources").select("metadata").eq("source_id", source_id).execute()
+            meta_success, meta_res = self.execute_query(query_func=_meta_query, error_context="Error getting source metadata", require_data=False)
+            if not meta_success:
+                return False, {"error": f"Error updating source metadata: {meta_res.get('error')}"}
 
-                if knowledge_type is not None:
-                    metadata["knowledge_type"] = knowledge_type
-                if tags is not None:
-                    metadata["tags"] = tags
+            metadata = meta_res["data"][0].get("metadata", {}) if meta_res["data"] else {}
 
-                update_data["metadata"] = metadata
+            if knowledge_type is not None:
+                metadata["knowledge_type"] = knowledge_type
+            if tags is not None:
+                metadata["tags"] = tags
 
-            if not update_data:
-                return False, {"error": "No update data provided"}
+            update_data["metadata"] = metadata
 
-            # Update the source
-            response = (
-                self.supabase_client.table("archon_sources")
-                .update(update_data)
-                .eq("source_id", source_id)
-                .execute()
-            )
+        if not update_data:
+            return False, {"error": "No update data provided"}
 
-            if response.data:
-                return True, {"source_id": source_id, "updated_fields": list(update_data.keys())}
-            else:
-                return False, {"error": f"Source with ID {source_id} not found"}
+        # Update the source
+        def _update_query(): return self.supabase_client.table("archon_sources").update(update_data).eq("source_id", source_id).execute()
+        success, result = self.execute_query(
+            query_func=_update_query,
+            error_context="Error updating source metadata",
+            require_data=True
+        )
 
-        except Exception as e:
-            logger.error(f"Error updating source metadata: {e}")
-            return False, {"error": f"Error updating source metadata: {str(e)}"}
+        if success and result["data"]:
+            return True, {"source_id": source_id, "updated_fields": list(update_data.keys())}
+        else:
+            return False, {"error": f"Source with ID {source_id} not found: {result.get('error', '')}"}
 
     async def create_source_info(
         self,
@@ -594,47 +572,30 @@ class SourceManagementService:
         Returns:
             Tuple of (success, result_dict)
         """
-        try:
-            # Get source metadata
-            source_response = (
-                self.supabase_client.table("archon_sources")
-                .select("*")
-                .eq("source_id", source_id)
-                .execute()
-            )
+        # Get source metadata
+        def _source_query(): return self.supabase_client.table("archon_sources").select("*").eq("source_id", source_id).execute()
+        source_success, source_res = self.execute_query(query_func=_source_query, error_context="Error getting source details", require_data=False)
 
-            if not source_response.data:
-                return False, {"error": f"Source with ID {source_id} not found"}
+        if not source_success or not source_res["data"]:
+            return False, {"error": f"Source with ID {source_id} not found: {source_res.get('error', '')}"}
 
-            source_data = source_response.data[0]
+        source_data = source_res["data"][0]
 
-            # Get page count
-            pages_response = (
-                self.supabase_client.table("archon_crawled_pages")
-                .select("id")
-                .eq("source_id", source_id)
-                .execute()
-            )
-            page_count = len(pages_response.data) if pages_response.data else 0
+        # Get page count
+        def _pages_query(): return self.supabase_client.table("archon_crawled_pages").select("id").eq("source_id", source_id).execute()
+        _, page_res = self.execute_query(query_func=_pages_query, error_context="Error counting pages", require_data=False)
+        page_count = len(page_res["data"]) if page_res.get("data") else 0
 
-            # Get code example count
-            code_response = (
-                self.supabase_client.table("archon_code_examples")
-                .select("id")
-                .eq("source_id", source_id)
-                .execute()
-            )
-            code_count = len(code_response.data) if code_response.data else 0
+        # Get code example count
+        def _code_query(): return self.supabase_client.table("archon_code_examples").select("id").eq("source_id", source_id).execute()
+        _, code_res = self.execute_query(query_func=_code_query, error_context="Error counting code examples", require_data=False)
+        code_count = len(code_res["data"]) if code_res.get("data") else 0
 
-            return True, {
-                "source": source_data,
-                "page_count": page_count,
-                "code_example_count": code_count,
-            }
-
-        except Exception as e:
-            logger.error(f"Error getting source details: {e}")
-            return False, {"error": f"Error getting source details: {str(e)}"}
+        return True, {
+            "source": source_data,
+            "page_count": page_count,
+            "code_example_count": code_count,
+        }
 
     def list_sources_by_type(self, knowledge_type: str | None = None) -> tuple[bool, dict[str, Any]]:
         """
@@ -646,38 +607,41 @@ class SourceManagementService:
         Returns:
             Tuple of (success, result_dict)
         """
-        try:
+        def _query():
             query = self.supabase_client.table("archon_sources").select("*")
-
             if knowledge_type:
                 # Filter by metadata->knowledge_type
                 query = query.filter("metadata->>knowledge_type", "eq", knowledge_type)
+            return query.execute()
 
-            response = query.execute()
+        success, result = self.execute_query(
+            query_func=_query,
+            error_context="Error listing sources by type",
+            require_data=False
+        )
 
-            sources = []
-            for row in response.data:
-                metadata = row.get("metadata", {})
-                sources.append({
-                    "source_id": row["source_id"],
-                    "title": row.get("title", ""),
-                    "summary": row.get("summary", ""),
-                    "knowledge_type": metadata.get("knowledge_type", ""),
-                    "tags": metadata.get("tags", []),
-                    "total_word_count": row.get("total_word_count", 0),
-                    "created_at": row.get("created_at", ""),
-                    "updated_at": row.get("updated_at", ""),
-                })
+        if not success:
+            return False, {"error": f"Error listing sources by type: {result.get('error')}"}
 
-            return True, {
-                "sources": sources,
-                "total_count": len(sources),
-                "knowledge_type_filter": knowledge_type,
-            }
+        sources = []
+        for row in (result["data"] or []):
+            metadata = row.get("metadata", {})
+            sources.append({
+                "source_id": row["source_id"],
+                "title": row.get("title", ""),
+                "summary": row.get("summary", ""),
+                "knowledge_type": metadata.get("knowledge_type", ""),
+                "tags": metadata.get("tags", []),
+                "total_word_count": row.get("total_word_count", 0),
+                "created_at": row.get("created_at", ""),
+                "updated_at": row.get("updated_at", ""),
+            })
 
-        except Exception as e:
-            logger.error(f"Error listing sources by type: {e}")
-            return False, {"error": f"Error listing sources by type: {str(e)}"}
+        return True, {
+            "sources": sources,
+            "total_count": len(sources),
+            "knowledge_type_filter": knowledge_type,
+        }
 
     def create_source_from_upload(
         self,
@@ -693,34 +657,31 @@ class SourceManagementService:
 
         This ensures the metadata is set correctly with source_type='file'.
         """
-        try:
-            logger.info(f"Creating source entry for uploaded file: {source_id}")
-            metadata = {
-                "knowledge_type": knowledge_type,
-                "tags": tags or [],
-                "source_type": "file",
-                "file_name": filename,
-                "status": "completed",
-            }
-            source_data = {
-                "source_id": source_id,
-                "title": filename,
-                "source_display_name": filename,  # Bug B Fix: Add missing field
-                "summary": f"Content from uploaded file: {filename}",
-                "total_word_count": 0,  # This can be updated later if needed
-                "metadata": metadata,
-            }
-            if source_url:
-                source_data["source_url"] = source_url
-            response = self.supabase_client.table("archon_sources").upsert(source_data).execute()
+        logger.info(f"Creating source entry for uploaded file: {source_id}")
+        metadata = {
+            "knowledge_type": knowledge_type,
+            "tags": tags or [],
+            "source_type": "file",
+            "file_name": filename,
+            "status": "completed",
+        }
+        source_data = {
+            "source_id": source_id,
+            "title": filename,
+            "source_display_name": filename,  # Bug B Fix: Add missing field
+            "summary": f"Content from uploaded file: {filename}",
+            "total_word_count": 0,  # This can be updated later if needed
+            "metadata": metadata,
+        }
+        if source_url:
+            source_data["source_url"] = source_url
 
-            # Check if the response has an error
-            if getattr(response, 'error', None):
-                logger.error(f"Supabase error creating source entry for {source_id}: {response.error}")
-                raise Exception(f"Supabase error: {response.error.message}")
+        def _query(): return self.supabase_client.table("archon_sources").upsert(source_data).execute()
+        success, result = self.execute_query(query_func=_query, error_context=f"Error creating source entry for upload {source_id}", require_data=False)
 
-            logger.info(f"Successfully created source entry for {source_id}")
-        except Exception as e:
-            logger.error(f"Error creating source entry for upload {source_id}: {e}")
-            # Re-raise the exception to be caught by the background task handler
-            raise
+        # Check if the response has an error
+        if not success:
+            logger.error(f"Supabase error creating source entry for {source_id}: {result.get('error')}")
+            raise Exception(f"Supabase error: {result.get('error')}")
+
+        logger.info(f"Successfully created source entry for {source_id}")

@@ -1,16 +1,18 @@
 # python/src/server/services/settings_service.py
 
 from ..config.logfire_config import get_logger
+from ..repositories.base_repository import BaseRepository
 from ..utils import get_supabase_client
 
 logger = get_logger(__name__)
 
-class SettingsService:
+class SettingsService(BaseRepository):
     """Service for handling business logic related to application settings and statistics."""
 
     def __init__(self, supabase_client=None):
         """Initialize with optional supabase client."""
-        self.supabase_client = supabase_client or get_supabase_client()
+        client = supabase_client or get_supabase_client()
+        super().__init__(client)
 
     def get_database_statistics(self) -> tuple[bool, dict | str]:
         """
@@ -19,60 +21,62 @@ class SettingsService:
         Returns:
             A tuple containing a success boolean and either a dictionary of table counts or an error message.
         """
-        try:
-            tables_info = {}
+        tables_info = {}
 
-            # Get projects count
-            projects_response = (
-                self.supabase_client.table("archon_projects").select("id", count="exact").execute()
-            )
-            tables_info["projects"] = (
-                projects_response.count if projects_response.count is not None else 0
-            )
+        # Get projects count
+        def _get_projects(): return self.supabase_client.table("archon_projects").select("id", count="exact").execute()
+        success, result = self.execute_query(query_func=_get_projects, error_context="Error getting projects count", require_data=False)
+        if not success:
+            return False, result["error"]
+        tables_info["projects"] = result.get("count", 0) or 0
 
-            # Get tasks count
-            tasks_response = self.supabase_client.table("archon_tasks").select("id", count="exact").execute()
-            tables_info["tasks"] = tasks_response.count if tasks_response.count is not None else 0
+        # Get tasks count
+        def _get_tasks(): return self.supabase_client.table("archon_tasks").select("id", count="exact").execute()
+        success, result = self.execute_query(query_func=_get_tasks, error_context="Error getting tasks count", require_data=False)
+        if not success:
+            return False, result["error"]
+        tables_info["tasks"] = result.get("count", 0) or 0
 
-            # Get crawled pages count
-            pages_response = (
-                self.supabase_client.table("archon_crawled_pages").select("id", count="exact").execute()
-            )
-            tables_info["crawled_pages"] = (
-                pages_response.count if pages_response.count is not None else 0
-            )
+        # Get crawled pages count
+        def _get_pages(): return self.supabase_client.table("archon_crawled_pages").select("id", count="exact").execute()
+        success, result = self.execute_query(query_func=_get_pages, error_context="Error getting pages count", require_data=False)
+        if not success:
+            return False, result["error"]
+        tables_info["crawled_pages"] = result.get("count", 0) or 0
 
-            # Get settings count
-            settings_response = (
-                self.supabase_client.table("archon_settings").select("id", count="exact").execute()
-            )
-            tables_info["settings"] = (
-                settings_response.count if settings_response.count is not None else 0
-            )
+        # Get settings count
+        def _get_settings(): return self.supabase_client.table("archon_settings").select("id", count="exact").execute()
+        success, result = self.execute_query(query_func=_get_settings, error_context="Error getting settings count", require_data=False)
+        if not success:
+            return False, result["error"]
+        tables_info["settings"] = result.get("count", 0) or 0
 
-            return True, tables_info
-
-        except Exception as e:
-            logger.error(f"Error getting database statistics: {e}", exc_info=True)
-            return False, f"Error getting database statistics: {e}"
+        return True, tables_info
 
     def get_setting(self, key: str, default: str | None = None) -> str | None:
         """Retrieve a specific setting value."""
-        try:
-            response = self.supabase_client.table("archon_settings").select("value").eq("key", key).single().execute()
-            if response.data and "value" in response.data:
-                return str(response.data["value"])
-            return default
-        except Exception:
-            return default
+        def _query():
+            return self.supabase_client.table("archon_settings").select("value").eq("key", key).single().execute()
+
+        success, result = self.execute_query(
+            query_func=_query,
+            error_context=f"Error fetching setting {key}",
+            require_data=True
+        )
+        if success and result["data"]:
+            return str(result["data"].get("value", default))
+        return default
 
     def get_all_settings(self) -> dict[str, str]:
         """Retrieve all settings as a dictionary."""
-        try:
-            response = self.supabase_client.table("archon_settings").select("key, value").execute()
-            if response.data:
-                return {item["key"]: item["value"] for item in response.data}
-            return {}
-        except Exception as e:
-            logger.error(f"Error fetching all settings: {e}")
-            return {}
+        def _query():
+            return self.supabase_client.table("archon_settings").select("key, value").execute()
+
+        success, result = self.execute_query(
+            query_func=_query,
+            error_context="Error fetching all settings",
+            require_data=False
+        )
+        if success and result["data"]:
+            return {item["key"]: item["value"] for item in result["data"]}
+        return {}

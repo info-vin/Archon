@@ -1,34 +1,30 @@
 import datetime
 
 from ..config.logfire_config import get_logger
+from ..repositories.base_repository import BaseRepository
 from ..utils import get_supabase_client
 from .search.rag_service import RAGService
 
 logger = get_logger(__name__)
 
-class HealthService:
+class HealthService(BaseRepository):
     """Service for checking the health of the application and its dependencies."""
 
     def __init__(self):
-        self.supabase_client = get_supabase_client()
+        client = get_supabase_client()
+        super().__init__(client)
 
     def check_database_connection(self) -> bool:
         """Checks if the database connection is active."""
-        try:
-            # Use 'profiles' instead of 'users' as it's guaranteed to be in public schema
-            self.supabase_client.table("profiles").select("id").limit(1).execute()
-            return True
-        except Exception as e:
-            logger.error(f"Database connection check failed: {e}")
-            return False
+        def _query(): return self.supabase_client.table("profiles").select("id").limit(1).execute()
+        success, _ = self.execute_query(query_func=_query, error_context="Database connection check failed", require_data=False)
+        return success
 
     def check_table_existence(self, table_name: str) -> bool:
         """Checks if a specific table exists in the database."""
-        try:
-            self.supabase_client.table(table_name).select("id").limit(1).execute()
-            return True
-        except Exception:
-            return False
+        def _query(): return self.supabase_client.table(table_name).select("id").limit(1).execute()
+        success, _ = self.execute_query(query_func=_query, error_context=f"Table check failed for {table_name}", require_data=False)
+        return success
 
     def get_system_health(self) -> dict:
         """Returns a comprehensive health status of the system."""
@@ -71,112 +67,102 @@ class HealthService:
         """
         logger.info("📊 Calculating Composite System Integrity Score (Read-Only)...")
 
-        try:
-            # 1. DB Connectivity Check (15% weight)
-            db_ok = self.check_database_connection()
-            db_score = 15.0 if db_ok else 0.0
+        # 1. DB Connectivity Check (15% weight)
+        db_ok = self.check_database_connection()
+        db_score = 15.0 if db_ok else 0.0
 
-            if not db_ok:
-                return {
-                    "status": "unhealthy",
-                    "score": 0.0,
-                    "details": {"error": "Critical: Database connection lost."}
-                }
-
-            # 2. Knowledge Alignment Check (70% weight)
-            # Check how many sources have at least one indexed chunk in crawled_pages
-            total_res = self.supabase_client.table("archon_sources").select("source_id", count="exact").execute()
-            total_count = total_res.count or 0
-
-            alignment_score = 0.0
-            indexed_count = 0
-            if total_count > 0:
-                # Count distinct sources that have embeddings
-                indexed_res = self.supabase_client.table("archon_crawled_pages")\
-                    .select("source_id")\
-                    .not_.is_("embedding", "null")\
-                    .execute()
-                indexed_count = len({row["source_id"] for row in (indexed_res.data or [])})
-                alignment_score = (indexed_count / total_count) * 70.0
-            else:
-                alignment_score = 70.0 # Default full if system is fresh/empty
-
-            # 3. Search Responsiveness Check (15% weight)
-            # Perform a lightweight read-only search for a generic term
-            rag = RAGService()
-            search_ok = False
-            try:
-                # Search for 'Alice' or 'Bob' (common terms in mock data)
-                test_search = await rag.search_documents(query="Archon", match_count=1)
-                search_ok = len(test_search) > 0
-            except Exception:
-                search_ok = False
-
-            search_score = 15.0 if search_ok else 0.0
-
-            # 4. Composite Score
-            final_score = round(db_score + alignment_score + search_score, 2)
-
-            return {
-                "status": "healthy" if final_score >= 90 else ("degraded" if final_score >= 70 else "unhealthy"),
-                "score": final_score,
-                "details": {
-                    "alignment_raw": round((alignment_score / 70.0) * 100, 1) if total_count > 0 else 100.0,
-                    "db_connected": db_ok,
-                    "search_active": search_ok,
-                    "total_sources": total_count,
-                    "indexed_sources": indexed_count,
-                    "timestamp": datetime.datetime.now(datetime.UTC).isoformat()
-                }
-            }
-
-        except Exception as e:
-            logger.error(f"💥 System Integrity Calculation Failed: {e}")
+        if not db_ok:
             return {
                 "status": "unhealthy",
                 "score": 0.0,
-                "details": {"error": str(e)}
+                "details": {"error": "Critical: Database connection lost."}
             }
+
+        # 2. Knowledge Alignment Check (70% weight)
+        def _query_sources(): return self.supabase_client.table("archon_sources").select("source_id", count="exact").execute()
+        success, res = self.execute_query(query_func=_query_sources, error_context="Error counting sources", require_data=False)
+        if not success:
+            logger.error("💥 System Integrity Calculation Failed formatting total count")
+            return {"status": "unhealthy", "score": 0.0, "details": {"error": res["error"]}}
+
+        total_count = res.get("count", 0) or 0
+
+        alignment_score = 0.0
+        indexed_count = 0
+        if total_count > 0:
+            def _query_indexed(): return self.supabase_client.table("archon_crawled_pages").select("source_id").not_.is_("embedding", "null").execute()
+            idx_success, idx_res = self.execute_query(query_func=_query_indexed, error_context="Error counting indexed sources", require_data=False)
+            if idx_success:
+                indexed_count = len({row["source_id"] for row in (idx_res["data"] or [])})
+                alignment_score = (indexed_count / total_count) * 70.0
+        else:
+            alignment_score = 70.0 # Default full if system is fresh/empty
+
+        # 3. Search Responsiveness Check (15% weight)
+        rag = RAGService()
+        search_ok = False
+        try:
+            test_search = await rag.search_documents(query="Archon", match_count=1)
+            search_ok = len(test_search) > 0
+        except Exception:
+            search_ok = False
+
+        search_score = 15.0 if search_ok else 0.0
+
+        # 4. Composite Score
+        final_score = round(db_score + alignment_score + search_score, 2)
+
+        return {
+            "status": "healthy" if final_score >= 90 else ("degraded" if final_score >= 70 else "unhealthy"),
+            "score": final_score,
+            "details": {
+                "alignment_raw": round((alignment_score / 70.0) * 100, 1) if total_count > 0 else 100.0,
+                "db_connected": db_ok,
+                "search_active": search_ok,
+                "total_sources": total_count,
+                "indexed_sources": indexed_count,
+                "timestamp": datetime.datetime.now(datetime.UTC).isoformat()
+            }
+        }
 
     async def get_health_history(self, days: int = 30) -> dict:
         """
         Retrieves historical integrity audit logs from archon_logs table.
         This provides the physical data for the 'System Health Audit Trail' in Nexus.
         """
-        try:
-            since = (datetime.datetime.now(datetime.UTC) - datetime.timedelta(days=days)).isoformat()
+        since = (datetime.datetime.now(datetime.UTC) - datetime.timedelta(days=days)).isoformat()
 
-            # Query real logs generated by the 'clockwork-scheduler'
-            res = self.supabase_client.table("archon_logs")\
+        def _query():
+            return self.supabase_client.table("archon_logs")\
                 .select("*")\
                 .eq("source", "clockwork-scheduler")\
                 .gt("created_at", since)\
                 .order("created_at", desc=True)\
                 .execute()
 
-            logs = res.data or []
-            trend = []
-            audit_trail = []
-
-            for log in logs:
-                details = log.get("details", {})
-                # The scheduler probe stores the composite score in the 'score' field of details
-                score = details.get("score") if isinstance(details, dict) else None
-
-                if score is not None:
-                    audit_trail.append(log)
-                    trend.append({
-                        "date": log["created_at"][:10],
-                        "score": score
-                    })
-
-            # Sort chronologically for the chart
-            trend.sort(key=lambda x: x["date"])
-
-            return {
-                "trend": trend,
-                "audit": audit_trail[:10] # Return latest 10 audits for the UI list
-            }
-        except Exception as e:
-            logger.error(f"HealthService: History fetch failed: {e}")
+        success, res = self.execute_query(query_func=_query, error_context="History fetch failed", require_data=False)
+        if not success:
+            logger.error("HealthService: History fetch failed")
             return {"trend": [], "audit": []}
+
+        logs = res["data"] or []
+        trend = []
+        audit_trail = []
+
+        for log in logs:
+            details = log.get("details", {})
+            score = details.get("score") if isinstance(details, dict) else None
+
+            if score is not None:
+                audit_trail.append(log)
+                trend.append({
+                    "date": log["created_at"][:10],
+                    "score": score
+                })
+
+        trend.sort(key=lambda x: x["date"])
+
+        return {
+            "trend": trend,
+            "audit": audit_trail[:10]
+        }
