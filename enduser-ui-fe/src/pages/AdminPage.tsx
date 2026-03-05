@@ -1,14 +1,20 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { api } from '../services/api.ts';
-import { DocumentVersion, BlogPost } from '../types.ts';
 import { PlusIcon, XIcon, RefreshCwIcon, ShieldCheckIcon, SearchIcon } from '../components/Icons.tsx';
 import { useAuth } from '../hooks/useAuth.tsx';
 
 import { IdentityMatrix } from '../features/admin/components/IdentityMatrix.tsx';
 import { SystemHealthDashboard } from '../features/admin/components/SystemHealthDashboard.tsx';
 import { PromptManagement } from '../features/admin/components/PromptManagement.tsx';
+import { ConfigDrivenInput } from '../features/admin/components/ConfigDrivenInput.tsx';
 
+import {
+  useDocumentVersions,
+  useBlogPosts,
+  useSystemSettings,
+  useExtractionSchemas,
+  useCrawlerTargets
+} from '../features/admin/hooks/useAdminDashboard.ts';
 
 const adminFieldsConfig = {
   crawlerTarget: [
@@ -42,9 +48,8 @@ const AdminPage: React.FC = () => {
   const { user, isAdmin } = useAuth();
   const role = user?.role?.toLowerCase();
   const isOnlyManager = !isAdmin && (role === 'manager');
-  const canManageUsers = isAdmin || role === 'manager'; // Allow Managers to see RBAC
+  const canManageUsers = isAdmin || role === 'manager';
   
-  // Default tab logic: If manager, default to 'users' if available, or 'settings'
   const [activeTab, setActiveTab] = useState(isOnlyManager ? 'users' : 'health');
 
   return (
@@ -94,7 +99,7 @@ const TabButton: React.FC<{ title: string; isActive: boolean; onClick: () => voi
     onClick={onClick}
     className={`${
       isActive
-        ? 'border-indigo-500 text-indigo-500' // Updated to match Admin Brand (Violet/Indigo)
+        ? 'border-indigo-500 text-indigo-500'
         : 'border-transparent text-muted-foreground hover:text-foreground hover:border-gray-300'
     } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-all`}
   >
@@ -102,34 +107,8 @@ const TabButton: React.FC<{ title: string; isActive: boolean; onClick: () => voi
   </button>
 );
 
-// PromptManagement extracted to src/features/admin/components/PromptManagement.tsx
-
-
 const DocumentVersionsLog: React.FC = () => {
-    const [versions, setVersions] = useState<DocumentVersion[]>([]);
-    const [searchTerm, setSearchTerm] = useState('');
-    const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        setLoading(true);
-        api.getDocumentVersions()
-            .then(setVersions)
-            .catch(err => alert(`Failed to load document versions: ${err.message}`))
-            .finally(() => setLoading(false));
-    }, []);
-
-    // GAP 3: Robust Multi-dimensional Filtering Logic
-    const filteredVersions = React.useMemo(() => {
-        const query = searchTerm.toLowerCase().trim();
-        if (!query) return versions;
-        
-        return versions.filter(v => 
-            v.created_by?.toLowerCase().includes(query) ||
-            v.field_name?.toLowerCase().includes(query) ||
-            v.change_summary?.toLowerCase().includes(query) ||
-            v.change_type?.toLowerCase().includes(query)
-        );
-    }, [versions, searchTerm]);
+    const { filteredVersions, searchTerm, setSearchTerm, loading } = useDocumentVersions();
     
     return (
         <div className="bg-card p-6 rounded-2xl border border-border shadow-sm flex flex-col h-full max-h-[calc(100vh-250px)]">
@@ -139,20 +118,18 @@ const DocumentVersionsLog: React.FC = () => {
                     <p className="text-xs text-muted-foreground italic">Track every configuration change across the system.</p>
                 </div>
                 
-                {/* GAP 3: Search Interface */}
                 <div className="relative w-full md:w-64">
                     <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <input 
-                        type="text"
-                        placeholder="Search logs..."
+                    <ConfigDrivenInput 
+                        field={{ key: 'search', type: 'text', placeholder: 'Search logs...' }}
                         value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
+                        onChange={setSearchTerm}
                         className="w-full pl-9 pr-4 py-2 bg-muted/50 border border-border rounded-xl text-sm focus:ring-2 ring-primary/30 outline-none transition-all"
                     />
                 </div>
             </div>
 
-             <div className="overflow-x-auto overflow-y-auto -mx-6 flex-1 min-h-0">
+            <div className="overflow-x-auto overflow-y-auto -mx-6 flex-1 min-h-0">
                 <table className="min-w-full divide-y divide-border relative">
                     <thead className="bg-muted/50 sticky top-0 z-10">
                         <tr>
@@ -214,24 +191,8 @@ const DocumentVersionsLog: React.FC = () => {
 };
 
 const BlogManagement: React.FC = () => {
-    const [posts, setPosts] = useState<BlogPost[]>([]);
+    const { posts, deletePost } = useBlogPosts();
     const navigate = useNavigate();
-
-    useEffect(() => {
-        api.getBlogPosts().then(setPosts).catch(err => alert(`Failed to load blog posts: ${err.message}`));
-    }, []);
-
-    const handleDeletePost = async (postId: string) => {
-        if (window.confirm('Are you sure you want to delete this post?')) {
-            try {
-                await api.deleteBlogPost(postId);
-                setPosts(prev => prev.filter(p => p.id !== postId));
-                alert('Post deleted successfully!');
-            } catch (error: any) {
-                alert(`Failed to delete post: ${error.message}`);
-            }
-        }
-    };
 
     return (
         <div className="bg-card p-6 rounded-2xl border border-border shadow-sm">
@@ -264,7 +225,7 @@ const BlogManagement: React.FC = () => {
                                 <td className="px-6 py-4 whitespace-nowrap text-xs text-muted-foreground">{new Date(post.publishDate).toLocaleDateString()}</td>
                                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                     <button onClick={(e) => { e.stopPropagation(); navigate(`/admin/editor/${post.id}`); }} className="text-primary hover:text-primary/90 font-bold transition-colors">Edit</button>
-                                    <button onClick={(e) => { e.stopPropagation(); handleDeletePost(post.id); }} className="text-destructive hover:text-destructive/90 font-bold ml-4 transition-colors">Delete</button>
+                                    <button onClick={(e) => { e.stopPropagation(); deletePost(post.id); }} className="text-destructive hover:text-destructive/90 font-bold ml-4 transition-colors">Delete</button>
                                 </td>
                             </tr>
                         ))}
@@ -275,53 +236,15 @@ const BlogManagement: React.FC = () => {
     );
 };
 
-
-
-// --- NEW COMPONENT: SYSTEM SETTINGS ---
 const SystemSettings: React.FC = () => {
-    const [settings, setSettings] = useState<any[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [isSaving, setIsSaving] = useState<string | null>(null);
-
-    useEffect(() => {
-        fetchSettings();
-    }, []);
-
-    const fetchSettings = async () => {
-        setLoading(true);
-        try {
-            // Fetch all necessary configuration categories
-            const crawlerData = await api.getSystemSettings('crawler_rbac');
-            const diagnosticsData = await api.getSystemSettings('diagnostics');
-            const scoringData = await api.getSystemSettings('lead_scoring');
-            const systemData = await api.getSystemSettings('system'); // SCHEDULER frequency settings
-            setSettings([...crawlerData, ...diagnosticsData, ...scoringData, ...systemData]);
-        } catch (err: any) {
-            alert("Failed to load settings: " + err.message);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleUpdate = async (key: string, newValue: string) => {
-        setIsSaving(key);
-        try {
-            await api.updateSystemSetting(key, { value: newValue });
-            setSettings(prev => prev.map(s => s.key === key ? { ...s, value: newValue } : s));
-        } catch (err: any) {
-            alert("Update failed: " + err.message);
-        } finally {
-            setIsSaving(null);
-        }
-    };
-
+    const { settings, loading, isSaving, updateSetting } = useSystemSettings(['crawler_rbac', 'diagnostics', 'lead_scoring', 'system']);
+    
     if (loading) return <div className="flex justify-center p-12"><RefreshCwIcon className="animate-spin w-8 h-8 text-primary" /></div>;
 
     const roles = ['SALES', 'MARKETING', 'MANAGER', 'ADMIN'];
 
     return (
         <div className="space-y-6 pb-20">
-            {/* NEW: Scheduler Frequency Configuration (Clockwork) */}
             <div className="bg-card p-6 rounded-2xl border border-border shadow-sm border-l-4 border-l-orange-500">
                 <h3 className="text-lg font-bold mb-4 flex items-center gap-2 text-orange-600">
                     <RefreshCwIcon className="w-5 h-5" />
@@ -338,19 +261,13 @@ const SystemSettings: React.FC = () => {
                                     <p className="text-[10px] text-muted-foreground mt-1 leading-tight">{setting.description}</p>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                    <div className="relative flex-1">
-                                        <input 
-                                            type="number" 
-                                            defaultValue={setting.value}
-                                            onBlur={(e) => handleUpdate(field.key, e.target.value)}
-                                            className="w-full p-2 bg-background border border-border rounded-lg text-sm font-bold text-center outline-none focus:ring-2 ring-orange-500/50 transition-all"
-                                        />
-                                        {isSaving === field.key && (
-                                            <div className="absolute -top-1 -right-1">
-                                                <RefreshCwIcon className="animate-spin w-3 h-3 text-orange-600" />
-                                            </div>
-                                        )}
-                                    </div>
+                                    <ConfigDrivenInput 
+                                        field={field}
+                                        value={setting.value}
+                                        onBlur={(v) => updateSetting(field.key, v.toString())}
+                                        isSaving={isSaving === field.key}
+                                        className="w-full p-2 bg-background border border-border rounded-lg text-sm font-bold text-center outline-none focus:ring-2 ring-orange-500/50 transition-all"
+                                    />
                                     <span className="text-[10px] font-bold text-muted-foreground uppercase">{field.key.includes('MINS') ? 'Mins' : 'Hrs'}</span>
                                 </div>
                             </div>
@@ -359,9 +276,6 @@ const SystemSettings: React.FC = () => {
                 </div>
             </div>
 
-            {/* ... (RAG Strategy placeholder remains) ... */}
-
-            {/* NEW: Lead Scoring Weights */}
             <div className="bg-card p-6 rounded-2xl border border-border shadow-sm border-l-4 border-l-indigo-600">
                 <div className="flex justify-between items-start mb-4">
                     <div>
@@ -383,19 +297,13 @@ const SystemSettings: React.FC = () => {
                                     <p className="text-xs font-medium text-slate-700 dark:text-slate-300 leading-tight mt-1">{setting.description}</p>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                    <div className="relative">
-                                        <input 
-                                            type="number" 
-                                            defaultValue={setting.value}
-                                            onBlur={(e) => handleUpdate(field.key, e.target.value)}
-                                            className="w-16 p-2 bg-background border border-border rounded-lg text-sm font-bold text-center outline-none focus:ring-2 ring-indigo-500/50 transition-all"
-                                        />
-                                        {isSaving === field.key && (
-                                            <div className="absolute -top-1 -right-1">
-                                                <RefreshCwIcon className="animate-spin w-3 h-3 text-indigo-600" />
-                                            </div>
-                                        )}
-                                    </div>
+                                    <ConfigDrivenInput 
+                                        field={field}
+                                        value={setting.value}
+                                        onBlur={(v) => updateSetting(field.key, v.toString())}
+                                        isSaving={isSaving === field.key}
+                                        className="w-16 p-2 bg-background border border-border rounded-lg text-sm font-bold text-center outline-none focus:ring-2 ring-indigo-500/50 transition-all"
+                                    />
                                 </div>
                             </div>
                         );
@@ -403,7 +311,6 @@ const SystemSettings: React.FC = () => {
                 </div>
             </div>
 
-            {/* NEW: Diagnostics & Whitelist */}
             <div className="bg-card p-6 rounded-2xl border border-border shadow-sm border-l-4 border-l-amber-500">
                 <h3 className="text-lg font-bold mb-4 flex items-center gap-2 text-amber-600">
                     <RefreshCwIcon className="w-5 h-5" />
@@ -421,14 +328,13 @@ const SystemSettings: React.FC = () => {
                                     <p className="text-xs text-muted-foreground">{setting.description}</p>
                                 </div>
                                 <div className="flex items-center gap-3">
-                                    <select 
+                                    <ConfigDrivenInput 
+                                        field={field}
                                         value={setting.value}
-                                        onChange={(e) => handleUpdate(field.key, e.target.value)}
+                                        onChange={(v) => updateSetting(field.key, v.toString())}
+                                        isSaving={isSaving === field.key}
                                         className="bg-background border border-border rounded-lg px-3 py-2 text-sm font-mono outline-none focus:ring-2 ring-primary/50"
-                                    >
-                                        {field.options?.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
-                                    </select>
-                                    {isSaving === field.key && <RefreshCwIcon className="animate-spin w-4 h-4 text-primary" />}
+                                    />
                                 </div>
                             </div>
                         );
@@ -442,11 +348,11 @@ const SystemSettings: React.FC = () => {
                                     {field.label}
                                 </h3>
                                 <div className="space-y-2">
-                                    <textarea 
-                                        defaultValue={setting.value}
-                                        onBlur={(e) => handleUpdate(field.key, e.target.value)}
+                                    <ConfigDrivenInput 
+                                        field={field}
+                                        value={setting.value}
+                                        onBlur={(v) => updateSetting(field.key, v.toString())}
                                         className="w-full p-3 bg-background border border-border rounded-xl font-mono text-xs focus:ring-2 ring-primary outline-none h-24"
-                                        placeholder={field.placeholder}
                                     />
                                     <p className="text-[10px] text-muted-foreground italic">Changes are saved automatically on blur.</p>
                                 </div>
@@ -482,22 +388,22 @@ const SystemSettings: React.FC = () => {
                                     <tr key={role} className="text-sm">
                                         <td className="px-4 py-3 font-medium">{role}</td>
                                         <td className="px-4 py-3">
-                                            <input 
-                                                type="number" 
-                                                defaultValue={depthSetting?.value || 0}
-                                                onBlur={(e) => handleUpdate(depthKey, e.target.value)}
-                                                className="w-20 p-1 bg-background border border-border rounded focus:ring-1 ring-primary outline-none"
+                                            <ConfigDrivenInput 
+                                                field={{ key: depthKey, type: 'number' }}
+                                                value={depthSetting?.value || 0}
+                                                onBlur={(v) => updateSetting(depthKey, v.toString())}
+                                                isSaving={isSaving === depthKey}
+                                                className="w-20 p-1 bg-background border border-border rounded focus:ring-1 ring-primary outline-none inline-block mr-2"
                                             />
-                                            {isSaving === depthKey && <RefreshCwIcon className="inline animate-spin w-3 h-3 ml-2 text-primary" />}
                                         </td>
                                         <td className="px-4 py-3">
-                                            <input 
-                                                type="number" 
-                                                defaultValue={concurrentSetting?.value || 0}
-                                                onBlur={(e) => handleUpdate(concurrentKey, e.target.value)}
-                                                className="w-20 p-1 bg-background border border-border rounded focus:ring-1 ring-primary outline-none"
+                                            <ConfigDrivenInput 
+                                                field={{ key: concurrentKey, type: 'number' }}
+                                                value={concurrentSetting?.value || 0}
+                                                onBlur={(v) => updateSetting(concurrentKey, v.toString())}
+                                                isSaving={isSaving === concurrentKey}
+                                                className="w-20 p-1 bg-background border border-border rounded focus:ring-1 ring-primary outline-none inline-block mr-2"
                                             />
-                                            {isSaving === concurrentKey && <RefreshCwIcon className="inline animate-spin w-3 h-3 ml-2 text-primary" />}
                                         </td>
                                     </tr>
                                 );
@@ -506,117 +412,21 @@ const SystemSettings: React.FC = () => {
                     </table>
                 </div>
             </div>
-
-            <div className="bg-card p-6 rounded-2xl border border-border shadow-sm">
-                <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
-                    <ShieldCheckIcon className="w-5 h-5 text-indigo-500" />
-                    Global Whitelist Domains
-                </h3>
-                {settings.find(s => s.key === 'CRAWL_ALLOWED_DOMAINS_RESTRICTED') && (
-                    <div className="space-y-2">
-                        <textarea 
-                            defaultValue={settings.find(s => s.key === 'CRAWL_ALLOWED_DOMAINS_RESTRICTED')?.value}
-                            onBlur={(e) => handleUpdate('CRAWL_ALLOWED_DOMAINS_RESTRICTED', e.target.value)}
-                            className="w-full p-3 bg-background border border-border rounded-xl font-mono text-xs focus:ring-2 ring-primary outline-none h-24"
-                            placeholder="comma, separated, domains.com"
-                        />
-                        <p className="text-[10px] text-muted-foreground italic">Changes are saved automatically on blur. These domains apply to all non-admin users.</p>
-                    </div>
-                )}
-            </div>
         </div>
     );
 };
 
-// --- NEW COMPONENT: EXTRACTION MANAGER (GAP-018) ---
 const ExtractionManager: React.FC = () => {
-    const [schemas, setSchemas] = useState<any[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [analyzeUrl, setAnalyzeUrl] = useState('');
-    const [isAnalyzing, setIsAnalyzing] = useState(false);
-    const [suggestions, setSuggestions] = useState<any>(null);
-    const [newSchemaName, setNewSchemaName] = useState('');
-    const [newDomainPattern, setNewDomainPattern] = useState('');
-
-    useEffect(() => {
-        fetchSchemas();
-    }, []);
-
-    const fetchSchemas = async () => {
-        setLoading(true);
-        try {
-            const data = await api.getExtractionSchemas();
-            setSchemas(data);
-        } catch (err: any) {
-            alert("Failed to load schemas: " + err.message);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleAnalyze = async () => {
-        if (!analyzeUrl) return;
-        setIsAnalyzing(true);
-        setSuggestions(null);
-        try {
-            const result = await api.analyzeExtractionUrl(analyzeUrl);
-            setSuggestions(result);
-            
-            // Auto-fill some defaults based on URL
-            const url = new URL(analyzeUrl);
-            setNewDomainPattern(`${url.hostname}${url.pathname.split('/').slice(0, 3).join('/')}/*`);
-        } catch (err: any) {
-            alert("Analysis failed: " + err.message);
-        } finally {
-            setIsAnalyzing(false);
-        }
-    };
-
-    const handleSaveSchema = async () => {
-        if (!newSchemaName || !newDomainPattern || !suggestions) return;
-        
-        try {
-            await api.createExtractionSchema({
-                name: newSchemaName,
-                domain_pattern: newDomainPattern,
-                schema_definition: suggestions,
-                description: `Auto-generated for ${newDomainPattern}`
-            });
-            alert("Schema saved successfully!");
-            fetchSchemas();
-            setSuggestions(null);
-            setAnalyzeUrl('');
-        } catch (err: any) {
-            alert("Save failed: " + err.message);
-        }
-    };
-
-    const handleDeleteSchema = async (id: string) => {
-        if (!window.confirm("Delete this extraction template?")) return;
-        try {
-            await api.deleteExtractionSchema(id);
-            fetchSchemas();
-        } catch (err: any) {
-            alert("Delete failed: " + err.message);
-        }
-    };
-
-    const handleRunNow = async (schemaId: string) => {
-        const url = prompt("Enter target URL to extract data from:");
-        if (!url) return;
-        try {
-            const res = await api.runExtraction(url, schemaId);
-            alert(res.message);
-        } catch (err: any) {
-            alert("Execution failed: " + err.message);
-        }
-    };
+    const { 
+        schemas, loading, analyzeUrl, setAnalyzeUrl, isAnalyzing, suggestions, 
+        newSchemaName, setNewSchemaName, newDomainPattern, setNewDomainPattern,
+        analyzeStructure, saveSchema, deleteSchema, runExtraction 
+    } = useExtractionSchemas();
 
     if (loading) return <div className="flex justify-center p-12"><RefreshCwIcon className="animate-spin w-8 h-8 text-primary" /></div>;
 
     return (
         <div className="space-y-8">
-            {/* New Schema / Analyze Tool */}
             <div className="bg-card p-6 rounded-2xl border border-border shadow-sm">
                 <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
                     <RefreshCwIcon className="w-5 h-5 text-indigo-500" />
@@ -625,17 +435,16 @@ const ExtractionManager: React.FC = () => {
                 <p className="text-sm text-muted-foreground mb-4">Paste a sample URL to let DevBot discover its structure and suggest data fields.</p>
                 <div className="flex gap-2 mb-6">
                     {adminFieldsConfig.extraction.filter(f => f.key === 'analyzeUrl').map(field => (
-                        <input 
+                        <ConfigDrivenInput 
                             key={field.key}
-                            type={field.type} 
+                            field={field}
                             value={analyzeUrl}
-                            onChange={(e) => setAnalyzeUrl(e.target.value)}
-                            placeholder={field.placeholder}
+                            onChange={setAnalyzeUrl}
                             className="flex-1 p-2 bg-background border border-border rounded-lg outline-none focus:ring-2 ring-primary/50 transition-all"
                         />
                     ))}
                     <button 
-                        onClick={handleAnalyze}
+                        onClick={analyzeStructure}
                         disabled={isAnalyzing || !analyzeUrl}
                         className="px-6 py-2 bg-indigo-600 text-white rounded-lg font-bold hover:bg-indigo-700 disabled:opacity-50 flex items-center gap-2 transition-all"
                     >
@@ -654,17 +463,17 @@ const ExtractionManager: React.FC = () => {
                                     const setterMap: any = { newSchemaName: setNewSchemaName, newDomainPattern: setNewDomainPattern };
                                     
                                     return (
-                                        <input 
+                                        <ConfigDrivenInput 
                                             key={field.key}
-                                            placeholder={field.placeholder}
+                                            field={field}
                                             value={valueMap[field.key]}
-                                            onChange={(e) => setterMap[field.key](e.target.value)}
+                                            onChange={setterMap[field.key]}
                                             className={`p-1 text-sm bg-background border border-border rounded ${field.key === 'newDomainPattern' ? 'w-48' : ''}`}
                                         />
                                     );
                                 })}
                                 <button 
-                                    onClick={handleSaveSchema}
+                                    onClick={saveSchema}
                                     className="px-3 py-1 bg-green-600 text-white text-xs font-bold rounded hover:bg-green-700"
                                 >
                                     SAVE TEMPLATE
@@ -686,14 +495,13 @@ const ExtractionManager: React.FC = () => {
                 )}
             </div>
 
-            {/* Existing Schemas List */}
             <div className="bg-card p-6 rounded-2xl border border-border shadow-sm">
                 <h3 className="text-lg font-bold mb-4">Saved Extraction Templates</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {schemas.map(s => (
                         <div key={s.id} className="p-4 border border-border rounded-xl bg-muted/10 hover:bg-muted/20 transition-all group relative">
                             <button 
-                                onClick={() => handleDeleteSchema(s.id)}
+                                onClick={() => deleteSchema(s.id)}
                                 className="absolute top-2 right-2 p-1 text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-all"
                             >
                                 <XIcon className="w-4 h-4" />
@@ -708,7 +516,7 @@ const ExtractionManager: React.FC = () => {
                             </div>
                             <div className="mt-4 pt-3 border-t border-border flex justify-end">
                                 <button 
-                                    onClick={() => handleRunNow(s.id)}
+                                    onClick={() => runExtraction(s.id)}
                                     className="text-[10px] font-bold text-indigo-600 hover:text-indigo-700 flex items-center gap-1"
                                 >
                                     <RefreshCwIcon className="w-3 h-3" />
@@ -717,33 +525,15 @@ const ExtractionManager: React.FC = () => {
                             </div>
                         </div>
                     ))}
-                    {schemas.length === 0 && <div className="col-span-2 text-center py-12 text-muted-foreground italic">No templates defined yet. Use the tool above to discover and save your first extraction schema.</div>}
+                    {schemas.length === 0 && <div className="col-span-2 text-center py-12 text-muted-foreground italic">No templates defined yet.</div>}
                 </div>
             </div>
         </div>
     );
 };
 
-// --- NEW COMPONENT: CRAWLER ENDPOINT CONFIGURATION ---
 const CrawlerEndpointConfig: React.FC = () => {
-    const [settings, setSettings] = useState<any[]>([]);
-    const [isSaving, setIsSaving] = useState<string | null>(null);
-
-    useEffect(() => {
-        api.getSystemSettings('crawler_config').then(setSettings).catch(console.error);
-    }, []);
-
-    const handleUpdate = async (key: string, newValue: string) => {
-        setIsSaving(key);
-        try {
-            await api.updateSystemSetting(key, { value: newValue });
-            setSettings(prev => prev.map(s => s.key === key ? { ...s, value: newValue } : s));
-        } catch (err: any) {
-            alert("Update failed: " + err.message);
-        } finally {
-            setIsSaving(null);
-        }
-    };
+    const { settings, isSaving, updateSetting } = useSystemSettings(['crawler_config']);
 
     if (settings.length === 0) return null;
 
@@ -761,13 +551,13 @@ const CrawlerEndpointConfig: React.FC = () => {
                             <p className="text-[10px] text-muted-foreground mt-0.5">{setting.description}</p>
                         </div>
                         <div className="flex items-center gap-3 w-full md:w-2/3">
-                            <input 
-                                type="text" 
-                                defaultValue={setting.value}
-                                onBlur={(e) => handleUpdate(setting.key, e.target.value)}
+                            <ConfigDrivenInput 
+                                field={{ key: setting.key, type: 'text' }}
+                                value={setting.value}
+                                onBlur={(v) => updateSetting(setting.key, v.toString())}
+                                isSaving={isSaving === setting.key}
                                 className="flex-1 p-2 bg-background border border-border rounded-lg text-xs font-mono outline-none focus:ring-2 ring-blue-500/50 transition-all"
                             />
-                            {isSaving === setting.key && <RefreshCwIcon className="animate-spin w-4 h-4 text-blue-600" />}
                         </div>
                     </div>
                 ))}
@@ -776,60 +566,11 @@ const CrawlerEndpointConfig: React.FC = () => {
     );
 };
 
-// --- NEW COMPONENT: CRAWLER TARGET MANAGER (GAP-024) ---
 const CrawlerTargetManager: React.FC = () => {
-    const [targets, setTargets] = useState<any[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [newUrl, setNewUrl] = useState('');
-    const [newDepth, setNewDepth] = useState(2);
-    const [newDesc, setNewDesc] = useState('');
-    const [isSaving, setIsSaving] = useState(false);
-
-    useEffect(() => {
-        fetchTargets();
-    }, []);
-
-    const fetchTargets = async () => {
-        setLoading(true);
-        try {
-            const data = await api.getCrawlerTargets();
-            setTargets(data);
-        } catch (err: any) {
-            console.error("Failed to load targets:", err);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleSave = async () => {
-        if (!newUrl) return;
-        setIsSaving(true);
-        try {
-            await api.createCrawlerTarget({
-                target_url: newUrl,
-                max_depth: newDepth,
-                description: newDesc
-            });
-            setNewUrl('');
-            setNewDesc('');
-            setNewDepth(2);
-            fetchTargets();
-        } catch (err: any) {
-            alert("Save failed: " + err.message);
-        } finally {
-            setIsSaving(false);
-        }
-    };
-
-    const handleDelete = async (id: string) => {
-        if (!window.confirm("Delete this crawler target? Tasks relying on it may fail.")) return;
-        try {
-            await api.deleteCrawlerTarget(id);
-            fetchTargets();
-        } catch (err: any) {
-            alert("Delete failed: " + err.message);
-        }
-    };
+    const { 
+        targets, loading, newUrl, setNewUrl, newDepth, setNewDepth, newDesc, setNewDesc, 
+        isSaving, saveTarget, deleteTarget 
+    } = useCrawlerTargets();
 
     if (loading) return <div className="flex justify-center p-6"><RefreshCwIcon className="animate-spin w-6 h-6 text-primary" /></div>;
 
@@ -840,8 +581,7 @@ const CrawlerTargetManager: React.FC = () => {
                 Knowledge Base Targets (Crawler)
             </h3>
             <p className="text-sm text-muted-foreground mb-6">
-                Define the allowed root URLs that Librarian is permitted to crawl during periodic scheduled tasks.
-                These act as dynamic whitelists and starting points.
+                Define the allowed root URLs that Librarian is permitted to crawl.
             </p>
 
             <div className="flex flex-col md:flex-row gap-4 mb-8">
@@ -850,23 +590,17 @@ const CrawlerTargetManager: React.FC = () => {
                     const setterMap: any = { url: setNewUrl, desc: setNewDesc, depth: setNewDepth };
                     
                     return (
-                        <input 
+                        <ConfigDrivenInput 
                             key={field.key}
-                            type={field.type} 
+                            field={field}
                             value={valueMap[field.key]}
-                            onChange={(e) => {
-                                const val = field.type === 'number' ? parseInt(e.target.value) || 0 : e.target.value;
-                                setterMap[field.key](val);
-                            }}
-                            placeholder={field.placeholder}
-                            min={field.min}
-                            max={field.max}
-                            className={`p-2 bg-background border border-border rounded-lg outline-none focus:ring-2 ring-green-500/50 transition-all ${field.key === 'url' ? 'flex-[2] font-mono text-sm' : field.key === 'depth' ? 'w-16 text-center' : 'flex-1 text-sm'}`}
+                            onChange={setterMap[field.key]}
+                            className={`p-2 bg-background border border-border rounded-lg outline-none focus:ring-2 ring-green-500/50 transition-all ${field.key === 'url' ? 'flex-[2] font-mono text-sm' : field.key === 'depth' ? 'w-full text-center' : 'flex-1 text-sm'}`}
                         />
                     );
                 })}
                 <button 
-                    onClick={handleSave}
+                    onClick={saveTarget}
                     disabled={isSaving || !newUrl}
                     className="px-6 py-2 bg-green-600 text-white rounded-lg font-bold hover:bg-green-700 disabled:opacity-50 flex items-center gap-2 transition-all whitespace-nowrap"
                 >
@@ -890,22 +624,21 @@ const CrawlerTargetManager: React.FC = () => {
                         {targets.length === 0 ? (
                             <tr>
                                 <td colSpan={5} className="py-8 text-center text-muted-foreground italic text-sm">
-                                    No crawler targets defined. Tasks will only be able to use ad-hoc URLs.
+                                    No crawler targets defined.
                                 </td>
                             </tr>
                         ) : targets.map(t => (
                             <tr key={t.id} className="text-sm hover:bg-muted/10 transition-colors">
                                 <td className="px-4 py-3 text-center">
-                                    <div className="w-2 h-2 rounded-full bg-green-500 mx-auto" title="Active"></div>
+                                    <div className="w-2 h-2 rounded-full bg-green-500 mx-auto"></div>
                                 </td>
                                 <td className="px-4 py-3 font-mono text-xs text-blue-600 dark:text-blue-400 break-all">{t.target_url}</td>
                                 <td className="px-4 py-3 text-muted-foreground">{t.description || '-'}</td>
                                 <td className="px-4 py-3 text-center font-bold">{t.max_depth}</td>
                                 <td className="px-4 py-3 text-right">
                                     <button 
-                                        onClick={() => handleDelete(t.id)}
+                                        onClick={() => deleteTarget(t.id)}
                                         className="p-1.5 text-red-500 hover:bg-red-500/10 rounded-lg transition-all"
-                                        title="Delete Target"
                                     >
                                         <XIcon className="w-4 h-4" />
                                     </button>
@@ -919,5 +652,4 @@ const CrawlerTargetManager: React.FC = () => {
     );
 };
 
-// End of AdminPage
 export default AdminPage;
