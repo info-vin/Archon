@@ -73,7 +73,7 @@ const EditUserModal: React.FC<{ user: Employee; onClose: () => void; onSave: (up
                     <KeyIcon className="w-6 h-6 text-primary" />
                     <h2 className="text-2xl font-bold italic">Access Overrides: {user.name}</h2>
                 </div>
-                <button onClick={onClose} className="absolute top-4 right-4 p-2 rounded-full hover:bg-muted transition-colors"><XIcon className="w-6 h-6" /></button>
+                <button onClick={onClose} aria-label="Close modal" className="absolute top-4 right-4 p-2 rounded-full hover:bg-muted transition-colors"><XIcon className="w-6 h-6" /></button>
                 
                 <div className="space-y-6 overflow-y-auto pr-2 flex-1">
                     <div className="grid grid-cols-2 gap-4">
@@ -183,7 +183,7 @@ const NewUserModal: React.FC<{ onClose: () => void; onSave: (newUser: Employee) 
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
             <div className="bg-card rounded-2xl shadow-xl w-full max-lg p-6 relative animate-in fade-in zoom-in-95 duration-200">
                 <h2 className="text-2xl font-bold mb-4">Create New User</h2>
-                <button onClick={onClose} className="absolute top-4 right-4 p-2 rounded-full hover:bg-muted transition-colors"><XIcon className="w-6 h-6" /></button>
+                <button onClick={onClose} aria-label="Close modal" className="absolute top-4 right-4 p-2 rounded-full hover:bg-muted transition-colors"><XIcon className="w-6 h-6" /></button>
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <input type="text" placeholder="Full Name" value={name} onChange={e => setName(e.target.value)} className={inputClass} required />
                     <input type="email" placeholder="Email Address" value={email} onChange={e => setEmail(e.target.value)} className={inputClass} required />
