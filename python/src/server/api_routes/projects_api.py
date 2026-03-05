@@ -10,7 +10,7 @@ Handles:
 
 import json
 from datetime import datetime
-from typing import Any
+from typing import Any, cast
 
 from fastapi import (
     APIRouter,
@@ -560,8 +560,7 @@ async def delete_project(project_id: str):
         project_service = ProjectService()
         success, result = await project_service.delete_project(project_id)
 
-        # type: ignore
-        result = handle_service_result(success, result)
+        result = cast(dict[str, Any], handle_service_result(success, result))
         logger.info(
             f"Project deleted successfully | project_id={project_id} | deleted_tasks={result.get('deleted_tasks', 0)}"
         )
@@ -592,8 +591,7 @@ async def get_project_features(project_id: str):
             project_id
         )
 
-        # type: ignore
-        result = handle_service_result(success, result)
+        result = cast(dict[str, Any], handle_service_result(success, result))
         logger.info(
             f"Project features retrieved | project_id={project_id} | feature_count={result.get('count', 0)}"
         )
@@ -747,8 +745,7 @@ async def generate_task_from_alert(
             assignee_id=request.assignee_id
         )
 
-        # type: ignore
-        result = handle_service_result(success, result)
+        result = cast(dict[str, Any], handle_service_result(success, result))
         return result
     except HTTPException:
         raise
@@ -923,8 +920,7 @@ async def list_tasks(
             else False,  # Only apply if filtering by user
         )
 
-        # type: ignore
-        result = handle_service_result(success, result)
+        result = cast(dict[str, Any], handle_service_result(success, result))
         # Pagination metadata
         if isinstance(result, dict):
             tasks = result.get("tasks", [])
@@ -989,8 +985,7 @@ async def get_task(task_id: str):
         task_service = TaskService()
         success, result = await task_service.get_task(task_id)
 
-        # type: ignore
-        result = handle_service_result(success, result)
+        result = cast(dict[str, Any], handle_service_result(success, result))
         task = result["task"]
 
         logger.info(
@@ -1172,8 +1167,7 @@ async def update_task(
             task_id, update_fields
         )
 
-        # type: ignore
-        result = handle_service_result(success, result)
+        result = cast(dict[str, Any], handle_service_result(success, result))
         updated_task = result["task"]
 
         logger.info(
@@ -1305,8 +1299,7 @@ async def mcp_update_task_status(task_id: str, status: str):
         update_fields = {"status": status}
         success, result = await task_service.update_task(task_id, update_fields)
 
-        # type: ignore
-        result = handle_service_result(success, result)
+        result = cast(dict[str, Any], handle_service_result(success, result))
         updated_task = result["task"]
         project_id = updated_task["project_id"]
 
@@ -1355,8 +1348,7 @@ async def list_project_documents(
             project_id, include_content=include_content
         )
 
-        # type: ignore
-        result = handle_service_result(success, result)
+        result = cast(dict[str, Any], handle_service_result(success, result))
         logger.info(
             f"Documents listed successfully | project_id={project_id} | count={result.get('total_count', 0)} | lightweight={not include_content}"
         )
@@ -1393,8 +1385,7 @@ async def create_project_document(
             author=request.author or "",
         )
 
-        # type: ignore
-        result = handle_service_result(success, result)
+        result = cast(dict[str, Any], handle_service_result(success, result))
         logger.info(
             f"Document created successfully | project_id={project_id} | doc_id={result['document']['id']}"
         )
@@ -1523,8 +1514,7 @@ async def delete_project_document(project_id: str, doc_id: str):
         document_service = DocumentService()
         success, result = document_service.delete_document(project_id, doc_id)
 
-        # type: ignore
-        result = handle_service_result(success, result)
+        result = cast(dict[str, Any], handle_service_result(success, result))
         logger.info(
             f"Document deleted successfully | project_id={project_id} | doc_id={doc_id}"
         )
@@ -1637,8 +1627,7 @@ async def create_project_version(
             created_by=request.created_by or "system",
         )
 
-        # type: ignore
-        result = handle_service_result(success, result)
+        result = cast(dict[str, Any], handle_service_result(success, result))
         logger.info(
             f"Version created successfully | project_id={project_id} | version_number={result['version_number']}"
         )
@@ -1666,15 +1655,13 @@ async def get_project_version(
         logger.info(
             f"Getting version | project_id={project_id} | field_name={field_name} | version_number={version_number}"
         )
-
         # Use VersioningService to get version content
         versioning_service = VersioningService()
         success, result = versioning_service.get_version_content(
             project_id, field_name, version_number
         )
 
-        # type: ignore
-        result = handle_service_result(success, result)
+        result = cast(dict[str, Any], handle_service_result(success, result))
         logger.info(
             f"Version retrieved successfully | project_id={project_id} | field_name={field_name} | version_number={version_number}"
         )
@@ -1714,8 +1701,7 @@ async def restore_project_version(
             restored_by=request.restored_by or "system",
         )
 
-        # type: ignore
-        result = handle_service_result(success, result)
+        result = cast(dict[str, Any], handle_service_result(success, result))
         logger.info(
             f"Version restored successfully | project_id={project_id} | field_name={field_name} | version_number={version_number}"
         )

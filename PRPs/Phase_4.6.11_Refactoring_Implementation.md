@@ -74,7 +74,11 @@
     - **問題**：`ManagerNexus.tsx` 龐大達 1510 行，前 280 行皆是資料獲取與狀態維護（包含 10 多個 state variables 與 API handlers），混雜在視圖層中。
     - **解法**：建立 `useManagerNexusStats.ts` 純邏輯 Hook，抽離所有 `api.get*` 等狀態及 `handleApprove*` 相關動作。
     - **結果**：原組件行數減少近 300 行，將核心邏輯封裝並成功通過型別檢查，確保元件專注於 UI 切換邏輯。
-- **[2026-03] RAG Settings 巨石元件拆解**：
-    - **問題**：`rag-settings/index.tsx` 長達 2351 行，包含所有的 Ollama 連線狀態追蹤、憑證快取、定時去 polling instance health 的巨大 Side Effects 以及 11 個需要維護的設定欄位。
-    - **解法**：透過腳本抽離 line 15 到 1168 所有業務範圍為 `useRagSettingsData.ts`。同時將 `ProviderModelMap`、`colorStyles` 等 Type & Const 一併遷移。
-    - **結果**：`index.tsx` 從 2351 行一次銳減破千行，讓視圖 (View) 與領域狀態邏輯 (Model) 給予明確的分野。
+- **[2026-03] RAG Settings 巨石元件拆解與表單降維**：
+    - **問題**：`rag-settings/index.tsx` 長達 2351 行，包含所有的 Ollama 連線狀態追蹤、憑證快取、定時去 polling instance health 的巨大 Side Effects 以及 11 個需要維護的設定欄位。`rag-settings/components/CodeExtractionSettings.tsx` 也有 8 個手寫的 Input 元件。
+    - **解法**：透過腳本抽離 line 15 到 1168 所有業務範圍為 `useRagSettingsData.ts`。同時將 `ProviderModelMap`、`colorStyles` 等 Type & Const 一併遷移。並且將 11+8 = 19 個 `<input>`/`<Input>` 全部替換成 `ConfigDrivenInput` 配合陣列 Map 渲染。
+    - **結果**：`index.tsx` 從 2351 行一次銳減破千行，讓視圖 (View) 與領域狀態邏輯 (Model) 給予明確的分野。表單部分成功達成 Config-Driven UI 目標，全數 26 個標的皆已銷毀手動節點。
+- **[2026-03] 後端重複邏輯降維打擊 (BaseRepository Pilot)**：
+    - **問題**：後端 Service 中大量重複了 `try...except` 迴圈以及 `if not success:` 的資料庫呼叫樣板代碼。
+    - **解法**：建立 `BaseRepository` 並在 `TaskService.py` 中進行先導實作 (Pilot Testing)。將 `get_task`, `create_task`, `update_task` 及 `archive_task` 等核心 API 置換為使用 `execute_query()` 封裝。
+    - **結果**：成功消滅樣式代碼，並確保所有的 Endpoint 都回傳標準的 `tuple[bool, dict]` 格式。後端 550+ 單元測試也成功通過無 Regression。

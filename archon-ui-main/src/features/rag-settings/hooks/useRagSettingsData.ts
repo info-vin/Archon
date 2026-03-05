@@ -267,10 +267,10 @@ export const useRagSettingsData = (
 
   // Config-driven arrays for Performance settings
   const crawlingSettingsFields = [
-    { key: 'CRAWL_BATCH_SIZE', label: 'Batch Size', min: 10, max: 100, default: 50, description: 'URLs to crawl in parallel (10-100)' },
-    { key: 'CRAWL_MAX_CONCURRENT', label: 'Max Concurrent', min: 1, max: 20, default: 10, description: 'Pages to crawl in parallel per operation (1-20)' },
-    { key: 'CRAWL_PAGE_TIMEOUT', label: 'Page Timeout (ms)', min: 5000, max: 120000, default: 60000, description: 'Timeout per page' },
-    { key: 'CRAWL_DELAY_BEFORE_HTML', label: 'Render Delay (s)', min: 0.1, max: 5, default: 0.5, step: 0.1, description: 'Wait for JS execution' },
+    { key: 'CRAWL_BATCH_SIZE', type: 'number', label: 'Batch Size', min: 10, max: 100, default: 50, description: 'URLs to crawl in parallel (10-100)' },
+    { key: 'CRAWL_MAX_CONCURRENT', type: 'number', label: 'Max Concurrent', min: 1, max: 20, default: 10, description: 'Pages to crawl in parallel per operation (1-20)' },
+    { key: 'CRAWL_PAGE_TIMEOUT', type: 'number', label: 'Page Timeout (ms)', min: 5000, max: 120000, default: 60000, description: 'Timeout per page' },
+    { key: 'CRAWL_DELAY_BEFORE_HTML', type: 'number', label: 'Render Delay (s)', min: 0.1, max: 5, default: 0.5, step: 0.1, description: 'Wait for JS execution' },
     { key: 'CRAWL_WAIT_STRATEGY', label: 'Wait Strategy', type: 'select', options: [
       { value: 'domcontentloaded', label: 'DOM Loaded' },
       { value: 'networkidle', label: 'Network Idle' },
@@ -279,11 +279,11 @@ export const useRagSettingsData = (
   ];
 
   const storageSettingsFields = [
-    { key: 'DOCUMENT_STORAGE_BATCH_SIZE', label: 'Document Batch Size', min: 10, max: 100, default: 50, description: 'Chunks per batch (10-100)' },
-    { key: 'EMBEDDING_BATCH_SIZE', label: 'Embedding Batch Size', min: 20, max: 200, default: 100, description: 'Per API call (20-200)' },
-    { key: 'CODE_SUMMARY_MAX_WORKERS', label: 'Code Extraction Workers', min: 1, max: 10, default: 3, description: 'Parallel workers (1-10)' },
-    { key: 'MEMORY_THRESHOLD_PERCENT', label: 'Memory Threshold (%)', min: 50, max: 95, default: 85, description: 'Pause if usage exceeds this' },
-    { key: 'DISPATCHER_CHECK_INTERVAL', label: 'Check Interval (ms)', min: 100, max: 5000, default: 1000, description: 'Queue polling frequency' }
+    { key: 'DOCUMENT_STORAGE_BATCH_SIZE', type: 'number', label: 'Document Batch Size', min: 10, max: 100, default: 50, description: 'Chunks per batch (10-100)' },
+    { key: 'EMBEDDING_BATCH_SIZE', type: 'number', label: 'Embedding Batch Size', min: 20, max: 200, default: 100, description: 'Per API call (20-200)' },
+    { key: 'CODE_SUMMARY_MAX_WORKERS', type: 'number', label: 'Code Extraction Workers', min: 1, max: 10, default: 3, description: 'Parallel workers (1-10)' },
+    { key: 'MEMORY_THRESHOLD_PERCENT', type: 'number', label: 'Memory Threshold (%)', min: 50, max: 95, default: 85, description: 'Pause if usage exceeds this' },
+    { key: 'DISPATCHER_CHECK_INTERVAL', type: 'number', label: 'Check Interval (ms)', min: 100, max: 5000, default: 1000, description: 'Queue polling frequency' }
   ];
 
   const coreModelFields = [

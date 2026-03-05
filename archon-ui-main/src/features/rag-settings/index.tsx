@@ -2,7 +2,6 @@ import React from 'react';
 import { Check, Save, Loader, ChevronDown, ChevronUp, Zap, Database, Cog } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
-import { Select } from '@/components/ui/Select';
 import { Button } from '@/components/ui/Button';
 import { Button as GlowButton } from '@/features/ui/primitives/button';
 import { LuBrainCircuit } from 'react-icons/lu';
@@ -759,7 +758,7 @@ export const RAGSettings = ({ ragSettings, setRagSettings }: RAGSettingsProps) =
                     key={field.key}
                     field={field}
                     value={ragSettings[field.key as keyof typeof ragSettings]}
-                    onChange={(key, val) => setRagSettings({ ...ragSettings, [key]: val })}
+                    onChange={(val, key) => key && setRagSettings({ ...ragSettings, [key]: val })}
                   />
                 ))}
               </div>
@@ -792,7 +791,7 @@ export const RAGSettings = ({ ragSettings, setRagSettings }: RAGSettingsProps) =
                     key={field.key}
                     field={field}
                     value={ragSettings[field.key as keyof typeof ragSettings]}
-                    onChange={(key, val) => setRagSettings({ ...ragSettings, [key]: val })}
+                    onChange={(val, key) => key && setRagSettings({ ...ragSettings, [key]: val })}
                   />
                 ))}
               </div>

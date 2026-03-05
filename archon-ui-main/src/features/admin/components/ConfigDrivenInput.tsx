@@ -14,8 +14,8 @@ interface FieldConfig {
 interface ConfigDrivenInputProps {
     field: FieldConfig;
     value: any;
-    onChange?: (val: any) => void;
-    onBlur?: (val: any) => void;
+    onChange?: (val: any, key?: string) => void;
+    onBlur?: (val: any, key?: string) => void;
     isSaving?: boolean;
     className?: string;
 }
@@ -24,17 +24,13 @@ export const ConfigDrivenInput: React.FC<ConfigDrivenInputProps> = ({
     field, value, onChange, onBlur, isSaving, className 
 }) => {
     const handleChange = (e: React.ChangeEvent<any>) => {
-        if (onChange) {
-            const val = field.type === 'number' ? (parseInt(e.target.value) || 0) : e.target.value;
-            onChange(val);
-        }
+        const newVal = field.type === 'number' ? (Number(e.target.value) || 0) : e.target.value;
+        if (onChange) onChange(newVal, field.key);
     };
 
     const handleBlur = (e: React.FocusEvent<any>) => {
-        if (onBlur) {
-            const val = field.type === 'number' ? (parseInt(e.target.value) || 0) : e.target.value;
-            onBlur(val);
-        }
+        const newVal = field.type === 'number' ? (Number(e.target.value) || 0) : e.target.value;
+        if (onBlur) onBlur(newVal, field.key);
     };
 
     const baseInputClass = `bg-background border border-border rounded-lg outline-none focus:ring-2 transition-all ${className || 'p-2 w-full text-sm'}`;
