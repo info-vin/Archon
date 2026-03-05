@@ -1,0 +1,240 @@
+import { useState, useEffect, useCallback } from 'react';
+import { api } from '../../../services/api';
+import { BlogPost, ContentSource, TaskStatus, EmployeeRole } from '../../../types';
+import { useAuth } from '../../../hooks/useAuth';
+
+export const useBrandLogic = (onConfigChange?: () => void) => {
+    const { user } = useAuth();
+    const [viewMode, setViewMode] = useState<'dashboard' | 'workbench'>('workbench');
+    
+    // Dashboard State
+    const [posts, setPosts] = useState<BlogPost[]>([]);
+    const [trendsData, setTrendsData] = useState<any>(null);
+    const [logoSvg, setLogoSvg] = useState<string | null>(null);
+    const [isGenerating, setIsLogoGenerating] = useState(false);
+    const [loading, setLoading] = useState(true);
+
+    // Workbench State
+    const [sources, setSources] = useState<ContentSource[]>([]);
+    const [activeSource, setActiveSource] = useState<ContentSource | null>(null);
+    const [activeTaskId, setActiveTaskId] = useState<string | null>(null);
+    const [activePostId, setActivePostId] = useState<string | null>(null);
+    const [contextData, setContextData] = useState<any>(null);
+    const [isLoadingSources, setIsLoadingSources] = useState(false);
+    const [isLoadingContext, setIsLoadingContext] = useState(false);
+    const [isDrafting, setIsDrafting] = useState(false);
+    const [isGeneratingImage, setIsGeneratingImage] = useState(false);
+    const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+    
+    // Workbench Editor State
+    const [workbenchTitle, setWorkbenchTitle] = useState('');
+    const [workbenchContent, setWorkbenchContent] = useState('');
+    const [workbenchImageUrl, setWorkbenchImageUrl] = useState('/placeholder-blog.jpg');
+    const [lastPrompt, setLastPrompt] = useState<string | undefined>(undefined);
+
+    // Persistence Logic
+    useEffect(() => {
+        if (activeSource?.id && activeSource.type !== 'blog') {
+            const savedTitle = localStorage.getItem(`draft_title_${activeSource.id}`);
+            const savedContent = localStorage.getItem(`draft_content_${activeSource.id}`);
+            const savedImage = localStorage.getItem(`draft_image_${activeSource.id}`);
+            
+            setWorkbenchTitle(savedTitle || '');
+            setWorkbenchContent(savedContent || '');
+            setWorkbenchImageUrl(savedImage || '/placeholder-blog.jpg');
+        }
+    }, [activeSource?.id, activeSource?.type]);
+
+    useEffect(() => {
+        if (activeSource?.id) {
+            localStorage.setItem(`draft_title_${activeSource.id}`, workbenchTitle);
+            localStorage.setItem(`draft_content_${activeSource.id}`, workbenchContent);
+            localStorage.setItem(`draft_image_${activeSource.id}`, workbenchImageUrl);
+        }
+    }, [workbenchTitle, workbenchContent, workbenchImageUrl, activeSource?.id]);
+
+    const loadData = useCallback(async () => {
+        setLoading(true);
+        try {
+            const [postsData, trends] = await Promise.all([
+                api.getBlogPosts(),
+                api.getMarketingTrends().catch(() => null)
+            ]);
+            setPosts(postsData);
+            setTrendsData(trends);
+        } catch (err) {
+            console.error("Failed to load brand data:", err);
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    const loadWorkbenchData = useCallback(async () => {
+        setIsLoadingSources(true);
+        try {
+            const sourcesData = await api.getContentSources();
+            setSources(sourcesData);
+        } catch (err) {
+            console.error("Failed to load content sources:", err);
+        } finally {
+            setIsLoadingSources(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        loadData();
+        if (viewMode === 'workbench') loadWorkbenchData();
+    }, [viewMode, loadData, loadWorkbenchData]);
+
+    const handleSelectSource = async (source: ContentSource) => {
+        setWorkbenchTitle('');
+        setWorkbenchContent('');
+        setWorkbenchImageUrl('/placeholder-blog.jpg');
+        setContextData(null);
+        
+        const sourceData = { ...source };
+        
+        if (source.type === 'blog') {
+            setIsLoadingContext(true);
+            try {
+                const blogRes = await api.getBlogPost(source.id);
+                const finalImage = blogRes.imageUrl || '/placeholder-blog.jpg';
+                setWorkbenchTitle(blogRes.title);
+                setWorkbenchContent(blogRes.content || '');
+                setWorkbenchImageUrl(finalImage);
+                setActivePostId(blogRes.id); 
+                
+                localStorage.setItem(`draft_title_${source.id}`, blogRes.title);
+                localStorage.setItem(`draft_content_${source.id}`, blogRes.content || '');
+                localStorage.setItem(`draft_image_${source.id}`, finalImage);
+                
+                const taskId = (blogRes as any).generationMetadata?.task_id || (blogRes as any).task_id;
+                setActiveTaskId(taskId || null);
+                sourceData.review_notes = blogRes.review_notes;
+                sourceData.ai_score = blogRes.ai_score;
+            } catch (err) {
+                console.error("Failed to load blog context", err);
+            } finally {
+                setIsLoadingContext(false);
+            }
+        } else {
+            setActivePostId(null);
+            const taskId = sourceData.metadata?.task_id || (sourceData as any).task_id;
+            setActiveTaskId(taskId || null);
+        }
+        
+        setActiveSource(sourceData);
+        setIsLoadingContext(true);
+        try {
+            const context = await api.getContentContext(source.id, source.type);
+            setContextData(context);
+        } catch (err) {
+            console.error("Failed to load context:", err);
+        } finally {
+            setIsLoadingContext(false);
+        }
+    };
+
+    const handleMagicDraft = async (topic: string, config?: any) => {
+        if (!activeSource) return;
+        setIsDrafting(true);
+        try {
+            const result = await api.draftBlogPost({
+                topic,
+                context_source_id: activeSource.id,
+                context_type: activeSource.type,
+                tone: 'professional',
+                ...config
+            });
+            setWorkbenchTitle(result.title);
+            setWorkbenchContent(result.content);
+            setLastPrompt(result.used_prompt);
+        } catch (err: any) {
+            alert(err.message || "Drafting failed");
+        } finally {
+            setIsDrafting(false);
+        }
+    };
+
+    const handleSaveWorkbench = async () => {
+        try {
+            const postPayload = {
+                title: workbenchTitle || "Untitled Draft",
+                content: workbenchContent || "",
+                excerpt: workbenchContent.slice(0, 100) + "...",
+                imageUrl: workbenchImageUrl,
+                status: 'draft',
+                authorName: user?.name || "Bob",
+                publishDate: new Date().toISOString(),
+                generationMetadata: {
+                    task_id: activeTaskId,
+                    context_source_id: activeSource?.id,
+                    context_type: activeSource?.type
+                }
+            };
+
+            if (activePostId) {
+                await api.updateBlogPost(activePostId, postPayload as any);
+            } else {
+                const newPost = await api.createBlogPost(postPayload as any);
+                setActivePostId(newPost.id);
+            }
+
+            if (activeTaskId) {
+                await api.updateTask(activeTaskId, { status: TaskStatus.DOING });
+            }
+            setViewMode('dashboard');
+            loadData();
+        } catch (err: any) {
+            alert(`Failed to save draft: ${err.message}`);
+        }
+    };
+
+    const handlePublishWorkbench = async (postData: { title: string, content: string }) => {
+        const isManager = user?.role === EmployeeRole.MANAGER || user?.role === EmployeeRole.ADMIN;
+        try {
+            const payload = {
+                ...postData,
+                excerpt: postData.content.slice(0, 150) + '...',
+                imageUrl: workbenchImageUrl,
+                status: 'draft',
+                authorName: user?.name || 'Unknown Author',
+                publishDate: new Date().toISOString(),
+                generationMetadata: {
+                    task_id: activeTaskId,
+                    context_source_id: activeSource?.id,
+                    context_type: activeSource?.type
+                }
+            };
+
+            const targetPost = activePostId 
+                ? await api.updateBlogPost(activePostId, payload as any)
+                : await api.createBlogPost(payload as any);
+
+            if (isManager) {
+                await api.updateBlogPostStatus(targetPost.id, 'published');
+            } else {
+                const result = await api.submitBlogPost(targetPost.id);
+                if (result.status !== 'changes_requested' && activeTaskId) {
+                    await api.updateTask(activeTaskId, { status: TaskStatus.REVIEW });
+                }
+            }
+            loadData();
+        } catch (err: any) {
+            alert(`Operation failed: ${err.message}`);
+        }
+    };
+
+    return {
+        viewMode, setViewMode, user,
+        posts, trendsData, logoSvg, isGenerating, loading,
+        sources, activeSource, activeTaskId, contextData,
+        isLoadingSources, isLoadingContext, isDrafting, isGeneratingImage,
+        isSidebarOpen, setIsSidebarOpen,
+        workbenchTitle, setWorkbenchTitle,
+        workbenchContent, setWorkbenchContent,
+        workbenchImageUrl, setWorkbenchImageUrl,
+        handleSelectSource, handleMagicDraft, handleSaveWorkbench, handlePublishWorkbench,
+        loadData, loadWorkbenchData
+    };
+};

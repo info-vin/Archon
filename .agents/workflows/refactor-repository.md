@@ -38,10 +38,10 @@ git commit -m "refactor(backend): use BaseRepository for <service_name>"
 These are the exact 20 files that currently use the `try...except` and `self.supabase_client` boilerplate and should be passed through this workflow.
 
 ### Core
-- [ ] `python/src/server/services/settings_service.py`
-- [ ] `python/src/server/services/health_service.py`
-- [ ] `python/src/server/services/log_service.py`
-- [ ] `python/src/server/services/source_management_service.py`
+- [x] `python/src/server/services/settings_service.py`
+- [x] `python/src/server/services/health_service.py`
+- [x] `python/src/server/services/log_service.py`
+- [x] `python/src/server/services/source_management_service.py`
 
 ### Projects & Documents
 - [ ] `python/src/server/services/projects/document_service.py`
