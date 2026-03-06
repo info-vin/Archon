@@ -9,8 +9,9 @@ from typing import Any
 
 from supabase import Client
 
+from server.repositories.base_repository import BaseRepository
+
 from ...config.logfire_config import get_logger, safe_span
-from ...repositories.base_repository import BaseRepository
 
 logger = get_logger(__name__)
 

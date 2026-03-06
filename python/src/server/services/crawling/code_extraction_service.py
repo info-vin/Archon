@@ -8,8 +8,9 @@ import re
 from collections.abc import Callable
 from typing import Any
 
+from server.repositories.base_repository import BaseRepository
+
 from ...config.logfire_config import safe_logfire_error, safe_logfire_info
-from ...repositories.base_repository import BaseRepository
 from ...services.credential_service import credential_service
 from ..storage.code_storage_service import (
     add_code_examples_to_supabase,

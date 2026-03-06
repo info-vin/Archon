@@ -104,6 +104,8 @@ export const RAGSettings = ({ ragSettings, setRagSettings }: RAGSettingsProps) =
               setSaving(true);
               const updatedSettings = {
                 ...ragSettings,
+                LLM_PROVIDER: chatProvider,
+                EMBEDDING_PROVIDER: embeddingProvider,
                 LLM_BASE_URL: llmInstanceConfig.url,
                 LLM_INSTANCE_NAME: llmInstanceConfig.name,
                 OLLAMA_EMBEDDING_URL: embeddingInstanceConfig.url,

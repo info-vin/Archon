@@ -13,7 +13,7 @@ import asyncio
 import io
 import json
 import uuid
-from typing import Any
+from typing import Any, cast
 from urllib.parse import quote
 
 from fastapi import APIRouter, Depends, File, Form, Header, HTTPException, UploadFile
@@ -162,9 +162,11 @@ async def get_knowledge_items(
     try:
         # Use KnowledgeItemService
         service = KnowledgeItemService(get_supabase_client())
-        result = await service.list_items(
+        success, result = await service.list_items(
             page=page, per_page=per_page, knowledge_type=knowledge_type, search=search
         )
+        if not success:
+            raise HTTPException(status_code=500, detail=result.get("error"))
         return result
 
     except Exception as e:
@@ -360,12 +362,13 @@ async def refresh_knowledge_item(
 
         # Get the existing knowledge item
         service = KnowledgeItemService(get_supabase_client())
-        existing_item = await service.get_item(source_id)
+        success, res = await service.get_item(source_id)
 
-        if not existing_item:
+        if not success or not res.get("item"):
             raise HTTPException(
-                status_code=404, detail={"error": f"Knowledge item {source_id} not found"}
+                status_code=404, detail={"error": f"Knowledge item {source_id} not found: {res.get('error')}"}
             )
+        existing_item = res["item"]
 
         # Extract metadata
         metadata = existing_item.get("metadata", {})
@@ -965,22 +968,31 @@ async def search_code_examples_simple(request: RagQueryRequest):
     return await search_code_examples(request)
 
 
-@router.get("/rag/sources")
-async def get_available_sources():
+@router.get("/available-sources")
+async def get_available_sources(
+    current_user: dict = Depends(get_current_user)
+):
     """Get all available sources for RAG queries."""
     try:
         # Use KnowledgeItemService
         service = KnowledgeItemService(get_supabase_client())
-        result = await service.get_available_sources()
+        success, result = await service.get_available_sources()
+        if not success:
+            # result is a dict with 'error' if success is False
+            err_msg = str(cast(dict, result).get("error", "Unknown error"))
+            raise HTTPException(status_code=500, detail=err_msg)
 
+        # result is the data if success is True
         # Parse result if it's a string
         if isinstance(result, str):
             result = json.loads(result)
 
         return result
+    except HTTPException:
+        raise
     except Exception as e:
         safe_logfire_error(f"Failed to get available sources | error={str(e)}")
-        raise HTTPException(status_code=500, detail={"error": str(e)}) from e
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.delete("/sources/{source_id}")
@@ -1024,7 +1036,10 @@ async def get_database_metrics():
     try:
         # Use DatabaseMetricsService
         service = DatabaseMetricsService(get_supabase_client())
-        metrics = await service.get_metrics()
+        success, metrics = await service.get_metrics()
+        if not success:
+            err_msg = str(cast(dict, metrics).get("error", "Unknown metrics error"))
+            raise HTTPException(status_code=500, detail=err_msg)
         return metrics
     except Exception as e:
         safe_logfire_error(f"Failed to get database metrics | error={str(e)}")

@@ -11,7 +11,7 @@ import { ShieldCheckIcon, MailIcon, BadgeCheckIcon, XIcon, BarChartIcon, FileTex
 import ReactMarkdown from 'react-markdown';
 
 // Import raw markdown as a string for static in-app SOP rendering
-import aliceSopMarkdown from '../../../PRPs/Phase_4.6.1_Alice_Persona_Workflows.md?raw';
+import aliceSopMarkdown from '../../PRPs/Phase_4.6.1_Alice_Persona_Workflows.md?raw';
 
 const TeamManagementPage: React.FC = () => {
     const { user } = useAuth();

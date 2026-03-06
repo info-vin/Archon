@@ -39,16 +39,17 @@ async def get_users(
     """
     Get all users (Admin & Manager).
     """
-    user_role = current_user.get("role", "viewer").lower()
+    user_role = str(current_user.get("role", "viewer")).lower()
     if user_role not in ["admin", "system_admin", "manager"]:
-        raise HTTPException(status_code=403, detail="Insufficient permissions")
+        logger.warning(f"Admin API: Unauthorized access attempt to /users by {current_user.get('email')} with role {user_role}")
+        raise HTTPException(status_code=403, detail="Insufficient permissions to view team members")
 
     try:
         users = await AdminService.get_all_users(limit=limit, role_filter=role)
         return users
     except Exception as e:
-        logger.error(f"Admin API: Failed to fetch users: {e}")
-        raise HTTPException(status_code=500, detail=str(e)) from e
+        logger.error(f"Admin API: Failed to fetch users: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Database error while fetching users: {str(e)}") from e
 
 @router.patch("/users/{user_id}/role")
 async def update_user_role(

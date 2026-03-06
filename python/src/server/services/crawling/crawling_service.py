@@ -11,11 +11,11 @@ import uuid
 from collections.abc import Awaitable, Callable
 from typing import Any, Optional
 
-from ...config.logfire_config import get_logger, safe_logfire_error, safe_logfire_info
-
 # Import strategies
 # Import operations
-from ...repositories.base_repository import BaseRepository
+from server.repositories.base_repository import BaseRepository
+
+from ...config.logfire_config import get_logger, safe_logfire_error, safe_logfire_info
 from ...utils import get_supabase_client
 from ...utils.progress.progress_tracker import ProgressTracker
 from ..credential_service import credential_service

@@ -16,8 +16,9 @@ from typing import Any, cast
 
 from supabase import Client
 
+from server.repositories.base_repository import BaseRepository
+
 from ...config.logfire_config import get_logger, safe_span
-from ...repositories.base_repository import BaseRepository
 from ..embeddings.embedding_service import create_embedding
 
 logger = get_logger(__name__)

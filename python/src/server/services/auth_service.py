@@ -1,221 +1,62 @@
-from typing import Any, cast
+# python/src/server/services/auth_service.py
 
-from supabase import Client
+from typing import Any
+
+from server.repositories.base_repository import BaseRepository
 
 from ..config.logfire_config import get_logger
 from ..utils import get_supabase_client
-from .profile_service import ProfileService
 
 logger = get_logger(__name__)
 
-class AuthService:
-    """
-    Service for handling authentication and user management via Supabase Admin API.
-    Uses SUPABASE_SERVICE_KEY for privileged operations.
-    """
-
-    def __init__(self, supabase_client: Client | None = None, profile_service: ProfileService | None = None):
-        self.supabase = supabase_client or get_supabase_client()
-        self.profile_service = profile_service or ProfileService(self.supabase)
+class AuthService(BaseRepository):
+    def __init__(self, supabase_client=None):
+        super().__init__(supabase_client or get_supabase_client())
 
     def get_all_users(self) -> list[dict[str, Any]]:
         """
-        Retrieves all user profiles.
+        Lists all users from the profiles table.
+        Returns a list of profile dicts.
         """
         try:
-            success, profiles = self.profile_service.list_full_profiles()
-            if success and isinstance(profiles, list):
-                return profiles
-            return []
+            response = self.supabase_client.table("profiles").select("*").execute()
+            return list(response.data) if response.data else []
         except Exception as e:
-            logger.error(f"Error fetching all users: {e}")
-            raise e
+            logger.error(f"Error fetching users: {e}")
+            return []
 
-    def create_user_by_admin(self, email: str, password: str, name: str, role: str, status: str = 'active') -> dict[str, Any]:
+    def register_user(self, email: str, password: str, name: str, role: str = "employee") -> dict[str, Any]:
         """
-        Creates a new user using the Admin API (does not log out the current user).
-        Also ensures a profile is created in public.profiles.
+        Registers a new user in Supabase Auth and creates a profile.
+        """
+        return self.create_user_by_admin(email, password, name, role)
 
-        Args:
-            email: User email.
-            password: User password.
-            name: User full name.
-            role: EmployeeRole (e.g., 'admin', 'member').
-            status: Account status.
-
-        Returns:
-            Created profile data.
+    def create_user_by_admin(self, email: str, password: str, name: str, role: str = "employee", status: str = "active") -> dict[str, Any]:
+        """
+        Creates a user via admin privileges.
         """
         try:
-            logger.info(f"Admin creating user: {email} with role {role}")
-
-            # 1. Create Auth User via Admin API
-            # Note: invite=False ensures we create it directly, confirm=True auto-confirms email
-            attributes = {
+            # 1. Sign up in Auth
+            auth_res = self.supabase_client.auth.sign_up({
                 "email": email,
                 "password": password,
-                "email_confirm": True,
-                "user_metadata": {"name": name, "role": role}
-            }
+                "options": {"data": {"full_name": name, "role": role}}
+            })
+            if not auth_res.user:
+                raise ValueError("Auth signup failed")
 
-            # Use auth.admin.create_user (GoTrue Admin API)
-            user_response = self.supabase.auth.admin.create_user(attributes)
-
-            if not user_response.user:
-                raise ValueError("Failed to create auth user: No user returned.")
-
-            user_id = user_response.user.id
-            logger.info(f"Auth user created: {user_id}")
+            user_id = auth_res.user.id
 
             # 2. Create Profile
-            # We construct the profile object. 'avatar' is generated same as frontend did.
             profile_data = {
                 "id": user_id,
                 "email": email,
-                "name": name,
+                "full_name": name,
                 "role": role,
-                "status": status,
-                "avatar": f"https://i.pravatar.cc/150?u={user_id}"
+                "status": status
             }
-
-            # Insert into public.profiles
-            # We use upsert to be safe, though create_user should ensure new ID.
-            # Fix: Simplify query chain for sync client compatibility
-            response = self.supabase.table("profiles").upsert(profile_data).execute()
-
-            # For upsert, if we want data back, we might need to fetch it or rely on execute returning it if configured
-            if response.data:
-                logger.info(f"Profile created for: {user_id}")
-                # Return the first item if list
-                if isinstance(response.data, list) and response.data:
-                    return cast(dict[str, Any], response.data[0])
-                return cast(dict[str, Any], response.data)
-            else:
-                # Fallback: If upsert returns nothing (rare), fetch it
-                success, profile = self.profile_service.get_profile(user_id)
-                if success and isinstance(profile, dict):
-                    return cast(dict[str, Any], profile)
-                raise ValueError("Profile creation failed: No data returned.")
-
+            self.supabase_client.table("profiles").upsert(profile_data).execute()
+            return profile_data
         except Exception as e:
-            # Optimize logging: Avoid huge tracebacks for "already registered" errors
-            # We combine str(e) and getattr(e, 'message', '') to catch all variants (AuthApiError, HTTPStatusError)
-            err_content = str(e).lower()
-            # Extract response body from httpx errors (common in Supabase/GoTrue)
-            if hasattr(e, 'response') and hasattr(e.response, 'text'):
-                err_content += f" {e.response.text.lower()}"
-
-            if hasattr(e, 'message'):
-                err_content += f" {str(e.message).lower()}"
-
-            # Check args for good measure (standard Python exception msg)
-            if e.args:
-                for arg in e.args:
-                    err_content += f" {str(arg).lower()}"
-
-            is_duplicate = (
-                "already registered" in err_content or
-                "already been registered" in err_content or
-                "already exists" in err_content or
-                "422" in err_content or
-                "unprocessable entity" in err_content or
-                "authapierror" in str(type(e)).lower() and "422" in err_content  # Catch GoTrue errors
-            )
-
-            if is_duplicate:
-                # Log as warning without stack trace and return None to suppress exception
-                logger.warning(f"User creation skipped (already registered): {email}")
-                return {}
-            else:
-                # Log full error for unexpected issues
-                logger.error(f"Error in create_user_by_admin: {e}", exc_info=True)
-                raise e
-
-    def register_user(self, email: str, password: str, name: str) -> dict[str, Any]:
-        """
-        Public registration.
-        """
-        try:
-            logger.info(f"Public registration for: {email}")
-
-            # For public registration, we use standard signUp (not admin),
-            # BUT since this is server-side with Service Key, strictly speaking we are admin.
-            # However, to simulate 'public' sign up, we can still use auth.sign_up
-            # but that logs us in as that user on this client instance (potentially).
-            # BETTER APPROACH: Use admin.create_user but with default role 'member'.
-
-            attributes = {
-                "email": email,
-                "password": password,
-                "email_confirm": True, # Auto-confirm for simplicity in this app context
-                "user_metadata": {"name": name}
-            }
-
-            user_response = self.supabase.auth.admin.create_user(attributes)
-
-            if not user_response.user:
-                raise ValueError("Registration failed in auth.")
-
-            user_id = user_response.user.id
-
-            profile_data = {
-                "id": user_id,
-                "email": email,
-                "name": name,
-                "role": "member", # Default role
-                "status": "active",
-                "avatar": f"https://i.pravatar.cc/150?u={user_id}"
-            }
-
-            response = self.supabase.table("profiles").insert(profile_data).execute()
-
-            if response.data:
-                if isinstance(response.data, list):
-                    return cast(dict[str, Any], response.data[0])
-                return cast(dict[str, Any], response.data)
-            raise ValueError("Profile creation failed.")
-        except Exception as e:
-            logger.error(f"Error in register_user: {e}", exc_info=True)
-            raise e
-
-    def update_user_email(self, user_id: str, new_email: str) -> None:
-        """
-        Updates user email via Admin API.
-        """
-        try:
-            logger.info(f"Updating email for {user_id} to {new_email}")
-
-            # 1. Update Auth
-            self.supabase.auth.admin.update_user_by_id(user_id, {"email": new_email})
-
-            # 2. Update Profile
-            self.supabase.table("profiles").update({"email": new_email}).eq("id", user_id).execute()
-
-        except Exception as e:
-            logger.error(f"Error updating email: {e}", exc_info=True)
-            raise e
-
-    def update_user_by_admin(self, user_id: str, updates: dict[str, Any]) -> dict[str, Any]:
-        """
-        Updates a user's role, status, or permissions as an Admin.
-        """
-        try:
-            logger.info(f"Admin updating user {user_id}: {updates.keys()}")
-
-            # 1. Sync Role to Auth User Metadata if it changed
-            if "role" in updates:
-                self.supabase.auth.admin.update_user_by_id(
-                    user_id,
-                    {"user_metadata": {"role": updates["role"]}}
-                )
-
-            # 2. Update Profile table
-            res = self.supabase.table("profiles").update(updates).eq("id", user_id).execute()
-
-            if res.data:
-                return cast(dict[str, Any], res.data[0])
-            raise ValueError(f"Failed to update profile for {user_id}")
-
-        except Exception as e:
-            logger.error(f"Error updating user by admin: {e}", exc_info=True)
+            logger.error(f"Registration error: {e}")
             raise e

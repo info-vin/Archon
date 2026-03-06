@@ -347,7 +347,9 @@ async def process_approval(item_type: str, item_id: str, action: str, request: R
 
             task_id = (post_data.get("generation_metadata") or {}).get("task_id")
             if task_id:
-                await TaskService().update_task(task_id, {"status": "done" if action == "approve" else "doing"})
+                success, res = await TaskService().update_task(task_id, {"status": "done" if action == "approve" else "doing"})
+                if not success:
+                    logger.error(f"API: Failed to update task {task_id} during approval: {res.get('error')}")
     return {"success": True}
 
 @router.post("/blog/{post_id}/submit")
@@ -360,7 +362,9 @@ async def submit_blog_for_review(post_id: str, current_user: dict = Depends(get_
     supabase.table("blog_posts").update({"status": new_status, "ai_score": score}).eq("id", post_id).execute()
     task_id = (post.get("generation_metadata") or {}).get("task_id")
     if task_id and new_status == "review":
-        await TaskService().update_task(task_id, {"status": "review"})
+        success, res = await TaskService().update_task(task_id, {"status": "review"})
+        if not success:
+            logger.error(f"API: Failed to set task {task_id} to review: {res.get('error')}")
     return {"success": True, "status": new_status, "ai_score": score}
 
 @router.post("/approvals/reject-suggestion")

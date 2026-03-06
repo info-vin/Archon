@@ -46,7 +46,7 @@ export const useMarketingLogic = () => {
 
     try {
       const results = await api.searchJobs(keyword);
-      clearInterval(progressInterval);
+      if (progressInterval) clearInterval(progressInterval);
       setSearchProgress(100);
       
       setTimeout(() => {
@@ -54,8 +54,10 @@ export const useMarketingLogic = () => {
           setLoading(false);
       }, 500);
     } catch (err: any) {
-      clearInterval(progressInterval);
-      setError("Failed to fetch job market data. Please try again.");
+      if (progressInterval) clearInterval(progressInterval);
+      console.error("🚨 Alice Search Error:", err);
+      setError(err.message || "Failed to fetch job market data. Please try again.");
+      setSearchProgress(0);
       setLoading(false);
     }
   };

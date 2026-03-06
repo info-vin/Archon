@@ -20,6 +20,7 @@ const BrandPage: React.FC = () => {
         workbenchTitle, setWorkbenchTitle,
         workbenchContent, setWorkbenchContent,
         handleSelectSource, handleMagicDraft, handleSaveWorkbench, handlePublishWorkbench,
+        handleDeletePost,
         loadData
     } = useBrandLogic();
 
@@ -93,6 +94,7 @@ const BrandPage: React.FC = () => {
                             onNewPost={() => setViewMode('workbench')}
                             onEditSmart={handleEditSmart}
                             onUpdateStatus={() => alert("Quick status update pending implementation")}
+                            onDeletePost={handleDeletePost}
                             onNavigateAdvanced={(id) => navigate(`/brand/editor/${id}`)}
                         />
                     ) : (

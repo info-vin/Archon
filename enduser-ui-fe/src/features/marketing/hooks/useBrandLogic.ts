@@ -221,6 +221,16 @@ export const useBrandLogic = () => {
         }
     };
 
+    const handleDeletePost = async (id: string) => {
+        if (!window.confirm("Are you sure you want to delete this post?")) return;
+        try {
+            await api.deleteBlogPost(id);
+            setPosts(prev => prev.filter(p => p.id !== id));
+        } catch (err: any) {
+            alert(`Delete failed: ${err.message}`);
+        }
+    };
+
     return {
         viewMode, setViewMode, user,
         posts, trendsData, loading,
@@ -231,6 +241,7 @@ export const useBrandLogic = () => {
         workbenchContent, setWorkbenchContent,
         workbenchImageUrl, setWorkbenchImageUrl,
         handleSelectSource, handleMagicDraft, handleSaveWorkbench, handlePublishWorkbench,
+        handleDeletePost,
         loadData, loadWorkbenchData
     };
 };

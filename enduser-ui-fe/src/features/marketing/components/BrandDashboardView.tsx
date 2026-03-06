@@ -13,11 +13,12 @@ interface BrandDashboardViewProps {
     onNewPost: () => void;
     onEditSmart: (post: BlogPost) => void;
     onUpdateStatus: (id: string, status: string) => void;
+    onDeletePost: (id: string) => void;
     onNavigateAdvanced: (id: string) => void;
 }
 
 export const BrandDashboardView: React.FC<BrandDashboardViewProps> = ({
-    posts, trendsData, onNewPost, onEditSmart, onUpdateStatus, onNavigateAdvanced
+    posts, trendsData, onNewPost, onEditSmart, onUpdateStatus, onDeletePost, onNavigateAdvanced
 }) => {
     const KanbanColumn = ({ filter, title, icon: Icon, colorClass }: any) => {
         const columnPosts = posts.filter(filter);
@@ -61,6 +62,7 @@ export const BrandDashboardView: React.FC<BrandDashboardViewProps> = ({
                                         {post.status !== 'published' && (
                                             <button onClick={() => onUpdateStatus(post.id, 'published')} className="p-1 hover:bg-green-50 rounded text-green-600"><CheckCircleIcon className="w-4 h-4" /></button>
                                         )}
+                                        <button onClick={() => onDeletePost(post.id)} className="p-1 hover:bg-red-50 rounded text-red-500 ml-auto"><PlusIcon className="w-4 h-4 rotate-45" /></button>
                                     </div>
                                 </div>
                             </div>

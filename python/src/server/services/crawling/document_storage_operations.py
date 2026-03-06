@@ -9,8 +9,9 @@ import asyncio
 from collections.abc import Callable
 from typing import Any
 
+from server.repositories.base_repository import BaseRepository
+
 from ...config.logfire_config import get_logger, safe_logfire_error, safe_logfire_info
-from ...repositories.base_repository import BaseRepository
 from ..source_management_service import extract_source_summary, update_source_info
 from ..storage.document_storage_service import add_documents_to_supabase
 from ..storage.storage_services import DocumentStorageService

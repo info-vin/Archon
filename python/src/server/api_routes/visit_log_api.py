@@ -175,10 +175,12 @@ async def create_visit_log(
             p_id = proj.data[0]["id"] if proj.data else None
 
             if p_id:
-                await task_service.create_task(
+                success, task_res = await task_service.create_task(
                     project_id=p_id, title=f"[{visit_type}] 拜訪摘要: {summary[:30]}",
                     description=f"**類型:** {visit_type}\n**逐字稿:**\n{transcript}\n\n**摘要:**\n{summary}", assignee_id=user_id
                 )
+                if not success:
+                    logger.warning(f"Voice-to-Task creation failed: {task_res.get('error')}")
             else:
                 logger.warning("TECH-005: No projects found in system. Task creation skipped for voice log.")
         except Exception as te:

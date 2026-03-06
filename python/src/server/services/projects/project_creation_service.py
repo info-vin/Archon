@@ -6,22 +6,21 @@ AI-assisted documentation generation and progress tracking.
 """
 
 # Removed direct logging import - using unified config
-from datetime import UTC, datetime
 from typing import Any
 
-from src.server.utils import get_supabase_client
+from server.repositories.base_repository import BaseRepository
 
 from ...config.logfire_config import get_logger
 
 logger = get_logger(__name__)
 
 
-class ProjectCreationService:
+class ProjectCreationService(BaseRepository):
     """Service class for advanced project creation with AI assistance"""
 
     def __init__(self, supabase_client=None):
         """Initialize with optional supabase client"""
-        self.supabase_client = supabase_client or get_supabase_client()
+        super().__init__(supabase_client)
 
     async def create_project_with_ai(
         self,
@@ -47,86 +46,26 @@ class ProjectCreationService:
         logger.info(
             f"🏗️ [PROJECT-CREATION] Starting create_project_with_ai for progress_id: {progress_id}, title: {title}"
         )
-        try:
-            # Database setup step
+        project_data: dict[str, Any] = {
+            "title": title,
+            "description": description,
+            "github_repo": github_repo,
+            "status": "planning",
+            "docs": {},
+            "features": [],
+            "data": {},
+        }
+        def _query():
+            return self.supabase_client.table("archon_projects").insert(project_data).execute()
 
-            # Create basic project structure
-            project_data = {
-                "title": title,
-                "description": description or "",
-                "github_repo": github_repo,
-                "created_at": datetime.now(UTC).isoformat(),
-                "updated_at": datetime.now(UTC).isoformat(),
-                "docs": [],  # Empty docs array to start - PRD will be added here by DocumentAgent
-                "features": kwargs.get("features", {}),
-                "data": kwargs.get("data", {}),
-            }
-
-            # Add any additional fields from kwargs
-            for key in ["pinned"]:
-                if key in kwargs:
-                    project_data[key] = kwargs[key]
-
-            # Create the project in database
-            response = self.supabase_client.table("archon_projects").insert(project_data).execute()
-            if hasattr(response, "error") and response.error:
-                raise RuntimeError(f"Supabase insert failed for project '{title}': {response.error}")
-            if not response.data:
-                raise RuntimeError(f"Insert returned no data for project '{title}'")
-
-            project_id = response.data[0]["id"]
-            logger.info(f"Created project {project_id} in database")
-
-            # AI processing step
-
-            # Generate AI documentation if API key is available
-            ai_success = await self._generate_ai_documentation(
-                progress_id, project_id, title, description, github_repo
-            )
-
-            # Final success - fetch complete project data
-            final_project_response = (
-                self.supabase_client.table("archon_projects")
-                .select("*")
-                .eq("id", project_id)
-                .execute()
-            )
-            if final_project_response.data:
-                final_project = final_project_response.data[0]
-
-                # Prepare project data for frontend
-                project_data_for_frontend = {
-                    "id": final_project["id"],
-                    "title": final_project["title"],
-                    "description": final_project.get("description", ""),
-                    "github_repo": final_project.get("github_repo"),
-                    "created_at": final_project["created_at"],
-                    "updated_at": final_project["updated_at"],
-                    "docs": final_project.get("docs", []),  # PRD documents will be here
-                    "features": final_project.get("features", {}),
-                    "data": final_project.get("data", {}),
-                    "pinned": final_project.get("pinned", False),
-                    "technical_sources": [],  # Empty initially
-                    "business_sources": [],  # Empty initially
-                }
-
-
-                return True, {
-                    "project_id": project_id,
-                    "project": project_data_for_frontend,
-                    "ai_documentation_generated": ai_success,
-                }
-            else:
-                # Fallback if we can't fetch the project
-
-                return True, {"project_id": project_id, "ai_documentation_generated": ai_success}
-
-        except Exception as e:
-            logger.error(
-                f"🚨 [PROJECT-CREATION] Project creation failed for progress_id={progress_id}, title={title}: {e}",
-                exc_info=True,
-            )
-            return False, {"error": str(e)}
+        success, result = self.execute_query(
+            query_func=_query,
+            error_context="DB operation logged error"
+        )
+        if success:
+            # TODO: Extract properties via 'result["data"]' as per original logic
+            return True, {"data": result["data"]}
+        return False, result
 
     async def _generate_ai_documentation(
         self,

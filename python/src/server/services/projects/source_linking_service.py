@@ -1,174 +1,88 @@
-"""
-Source Linking Service Module for Archon
+# python/src/server/services/projects/source_linking_service.py
 
-This module provides centralized logic for managing project-source relationships,
-handling both technical and business source associations.
-"""
-import asyncio
+from typing import Any, cast
 
-# Removed direct logging import - using unified config
-from typing import Any
-
-from src.server.utils import get_supabase_client
+from server.repositories.base_repository import BaseRepository
 
 from ...config.logfire_config import get_logger
 
 logger = get_logger(__name__)
 
-
-class SourceLinkingService:
+class SourceLinkingService(BaseRepository):
     """Service class for managing project-source relationships"""
 
     def __init__(self, supabase_client=None):
         """Initialize with optional supabase client"""
-        self.supabase_client = supabase_client or get_supabase_client()
+        super().__init__(supabase_client)
 
     async def get_project_sources(self, project_id: str) -> tuple[bool, dict[str, Any]]:
         """
         Get all linked sources for a project, separated by type.
-
-        Returns:
-            Tuple of (success, {"technical_sources": [...], "business_sources": [...]})
         """
-        try:
-            response = (
+        def _query():
+            return (
                 self.supabase_client.table("archon_project_sources")
                 .select("source_id, notes")
                 .eq("project_id", project_id)
                 .execute()
             )
 
-            technical_sources = []
-            business_sources = []
+        success, result = self.execute_query(_query, "Failed to fetch project sources")
+        if not success:
+            return False, result
 
-            for source_link in response.data:
-                if source_link.get("notes") == "technical":
-                    technical_sources.append(source_link["source_id"])
-                elif source_link.get("notes") == "business":
-                    business_sources.append(source_link["source_id"])
-
-            return True, {
-                "technical_sources": technical_sources,
-                "business_sources": business_sources,
-            }
-        except Exception as e:
-            logger.error(f"Error getting project sources: {e}")
-            return False, {
-                "error": f"Failed to retrieve linked sources: {str(e)}",
-                "technical_sources": [],
-                "business_sources": [],
-            }
-
-    async def update_project_sources(
-        self,
-        project_id: str,
-        technical_sources: list[str] | None = None,
-        business_sources: list[str] | None = None,
-    ) -> tuple[bool, dict[str, Any]]:
-        """
-        Update project sources, replacing existing ones if provided.
-
-        Returns:
-            Tuple of (success, result_dict with counts)
-        """
-        result = {
-            "technical_success": 0,
-            "technical_failed": 0,
-            "business_success": 0,
-            "business_failed": 0,
+        sources = result.get("data", [])
+        return True, {
+            "technical_sources": [s["source_id"] for s in sources if s.get("notes") == "technical"],
+            "business_sources": [s["source_id"] for s in sources if s.get("notes") == "business"]
         }
 
+    async def link_sources(self, project_id: str, technical_source_ids: list[str], business_source_ids: list[str]) -> tuple[bool, dict[str, Any]]:
+        """
+        Links multiple sources to a project.
+        """
         try:
-            # Update technical sources if provided
-            if technical_sources is not None:
-                # Remove existing technical sources
-                self.supabase_client.table("archon_project_sources").delete().eq(
-                    "project_id", project_id
-                ).eq("notes", "technical").execute()
+            # Clear existing links first
+            self.supabase_client.table("archon_project_sources").delete().eq("project_id", project_id).execute()
 
-                # Add new technical sources
-                for source_id in technical_sources:
-                    try:
-                        self.supabase_client.table("archon_project_sources").insert({
-                            "project_id": project_id,
-                            "source_id": source_id,
-                            "notes": "technical",
-                        }).execute()
-                        result["technical_success"] += 1
-                    except Exception as e:
-                        result["technical_failed"] += 1
-                        logger.warning(f"Failed to link technical source {source_id}: {e}")
+            # Batch insert new links
+            all_links = []
+            for s_id in technical_source_ids:
+                all_links.append({"project_id": project_id, "source_id": s_id, "notes": "technical"})
+            for s_id in business_source_ids:
+                all_links.append({"project_id": project_id, "source_id": s_id, "notes": "business"})
 
-            # Update business sources if provided
-            if business_sources is not None:
-                # Remove existing business sources
-                self.supabase_client.table("archon_project_sources").delete().eq(
-                    "project_id", project_id
-                ).eq("notes", "business").execute()
+            if all_links:
+                def _insert():
+                    return self.supabase_client.table("archon_project_sources").insert(all_links).execute()
+                return cast(tuple[bool, dict[str, Any]], self.execute_query(_insert, "Failed to batch link sources"))
 
-                # Add new business sources
-                for source_id in business_sources:
-                    try:
-                        self.supabase_client.table("archon_project_sources").insert({
-                            "project_id": project_id,
-                            "source_id": source_id,
-                            "notes": "business",
-                        }).execute()
-                        result["business_success"] += 1
-                    except Exception as e:
-                        result["business_failed"] += 1
-                        logger.warning(f"Failed to link business source {source_id}: {e}")
-
-            return True, result
-
+            return True, {"message": "No sources to link"}
         except Exception as e:
-            logger.error(f"Error updating project sources: {e}")
-            return False, {"error": str(e), **result}
+            return False, {"error": str(e)}
 
     async def format_project_with_sources(self, project: dict[str, Any]) -> dict[str, Any]:
         """
-        Format a project dict with its linked sources included.
-        Also handles datetime conversion for JSON compatibility.
-
-        Returns:
-            Formatted project dict with technical_sources and business_sources
+        Enriches a project dictionary with its linked technical and business sources.
         """
-        # Get linked sources
-        success, sources = await self.get_project_sources(project["id"])
-        if not success:
-            logger.warning(f"Failed to get sources for project {project['id']}")
-            sources = {"technical_sources": [], "business_sources": []}
+        project_id = project.get("id")
+        if not project_id:
+            return project
 
-        # Ensure datetime objects are converted to strings
-        created_at = project.get("created_at", "")
-        updated_at = project.get("updated_at", "")
-        if hasattr(created_at, "isoformat"):
-            created_at = created_at.isoformat()
-        if hasattr(updated_at, "isoformat"):
-            updated_at = updated_at.isoformat()
+        success, sources_res = await self.get_project_sources(project_id)
+        if success:
+            project["technical_sources"] = sources_res.get("technical_sources", [])
+            project["business_sources"] = sources_res.get("business_sources", [])
+        else:
+            project["technical_sources"] = []
+            project["business_sources"] = []
 
-        return {
-            "id": project["id"],
-            "title": project["title"],
-            "description": project.get("description", ""),
-            "github_repo": project.get("github_repo"),
-            "created_at": created_at,
-            "updated_at": updated_at,
-            "docs": project.get("docs", []),
-            "features": project.get("features", []),
-            "data": project.get("data", []),
-            "technical_sources": sources["technical_sources"],
-            "business_sources": sources["business_sources"],
-            "pinned": project.get("pinned", False),
-        }
+        return project
 
     async def format_projects_with_sources(self, projects: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """
-        Format a list of projects with their linked sources.
-
-        Returns:
-            List of formatted project dicts
+        Enriches a list of projects with their linked sources.
         """
-        tasks = [self.format_project_with_sources(project) for project in projects]
-        formatted_projects = await asyncio.gather(*tasks)
-        return formatted_projects
+        import asyncio
+        tasks = [self.format_project_with_sources(p) for p in projects]
+        return await asyncio.gather(*tasks)

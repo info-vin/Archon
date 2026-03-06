@@ -34,6 +34,8 @@ services:
       - ARCHON_MCP_PORT=${ARCHON_MCP_PORT:-8051}
       - AGENTS_ENABLED=${AGENTS_ENABLED:-false}
       - ENABLE_TEST_ENDPOINTS=true
+    env_file:
+      - .env
     networks:
       - app-network
     volumes:
@@ -219,6 +221,7 @@ services:
     volumes:
       - ./enduser-ui-fe/src:/app/src
       - ./enduser-ui-fe/public:/app/public
+      - ./PRPs:/app/PRPs
     depends_on:
       archon-server:
         condition: service_healthy

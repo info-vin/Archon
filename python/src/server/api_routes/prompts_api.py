@@ -24,8 +24,10 @@ async def list_prompts(current_user: dict = Depends(get_current_user)):
     if role not in ["system_admin", "admin", "manager"]:
         raise HTTPException(status_code=403, detail="Insufficient permissions.")
 
-    prompts = await prompt_service.list_prompts()
-    return prompts
+    success, res = await prompt_service.list_prompts()
+    if not success:
+        raise HTTPException(status_code=500, detail=str(res.get("error")))
+    return res.get("prompts", [])
 
 @router.patch("/{prompt_name}")
 async def update_prompt(
@@ -48,13 +50,13 @@ async def update_prompt(
     if existing.data and existing.data.get("is_system_protected") and role == "manager":
         raise HTTPException(status_code=403, detail="System protected prompts can only be edited by Admins.")
 
-    success, message = await prompt_service.update_prompt(
+    success, res = await prompt_service.update_prompt(
         prompt_name=prompt_name,
         content=request.content,
         description=request.description
     )
 
     if not success:
-        raise HTTPException(status_code=500, detail=message)
+        raise HTTPException(status_code=500, detail=str(res.get("error")))
 
-    return {"success": True, "message": message}
+    return {"success": True, "message": "Prompt updated successfully"}

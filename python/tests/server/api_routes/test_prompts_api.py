@@ -30,9 +30,9 @@ def mock_prompt_service():
 
 def test_list_prompts_admin_success(mock_admin_user, mock_prompt_service):
     # Arrange
-    mock_prompt_service.list_prompts = AsyncMock(return_value=[
+    mock_prompt_service.list_prompts = AsyncMock(return_value=(True, {"prompts": [
         {"prompt_name": "agent-1", "prompt": "Hello"}
-    ])
+    ]}))
 
     # Act
     response = client.get("/api/system/prompts")
@@ -51,7 +51,7 @@ def test_list_prompts_user_forbidden(mock_user, mock_prompt_service):
 
 def test_update_prompt_admin_success(mock_admin_user, mock_prompt_service):
     # Arrange
-    mock_prompt_service.update_prompt = AsyncMock(return_value=(True, "Updated"))
+    mock_prompt_service.update_prompt = AsyncMock(return_value=(True, {"data": "Updated"}))
 
     # Act
     response = client.patch("/api/system/prompts/agent-1", json={
@@ -69,7 +69,7 @@ def test_update_prompt_admin_success(mock_admin_user, mock_prompt_service):
 
 def test_update_prompt_admin_failure(mock_admin_user, mock_prompt_service):
     # Arrange
-    mock_prompt_service.update_prompt = AsyncMock(return_value=(False, "DB Error"))
+    mock_prompt_service.update_prompt = AsyncMock(return_value=(False, {"error": "DB Error"}))
 
     # Act
     response = client.patch("/api/system/prompts/agent-1", json={

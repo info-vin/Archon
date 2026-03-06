@@ -19,8 +19,9 @@ from typing import Any
 from google import genai
 from google.genai import types
 
+from server.repositories.base_repository import BaseRepository
+
 from ...config.logfire_config import get_logger, safe_span
-from ...repositories.base_repository import BaseRepository
 from ...utils import get_supabase_client
 from ..embeddings.embedding_service import create_embedding
 from .agentic_rag_strategy import AgenticRAGStrategy

@@ -50,7 +50,7 @@ class TestSupabaseIntegration:
 
             # This is the line we expect to fail if syntax is wrong
             # Corrected syntax: .upsert(data).execute()
-            response = auth_service.supabase.table("profiles").upsert(profile_data).execute()
+            response = auth_service.supabase_client.table("profiles").upsert(profile_data).execute()
 
             assert response is not None
             # assert response.data is not None # Data might be None if no returning
@@ -65,7 +65,7 @@ class TestSupabaseIntegration:
             # Cleanup - Always run this block
             try:
                 print(f"Cleaning up test profile {dummy_id}")
-                auth_service.supabase.table("profiles").delete().eq("id", dummy_id).execute()
+                auth_service.supabase_client.table("profiles").delete().eq("id", dummy_id).execute()
             except Exception as cleanup_error:
                 print(f"Failed to cleanup test data: {cleanup_error}")
 
@@ -81,7 +81,7 @@ class TestSupabaseIntegration:
 
             # This line caused "SyncFilterRequestBuilder object has no attribute select"
             # Corrected syntax: .update(data).eq(id).execute()
-            blog_service.supabase.table("blog_posts").update(update_data).eq("id", dummy_id).execute()
+            blog_service.supabase_client.table("blog_posts").update(update_data).eq("id", dummy_id).execute()
 
         except AttributeError as e:
             pytest.fail(f"Supabase client syntax error: {e}")

@@ -59,6 +59,8 @@ def test_knowledge_summary_endpoint(client, mock_supabase_client):
     data = response.json()
 
     # Verify response structure
+    # If the service already uses 'total' from our refactor, these assertions should pass.
+    # We ensure consistency between the mock and the expected response.
     assert "items" in data
     assert "total" in data
     assert "page" in data

@@ -23,17 +23,32 @@ interface ConfigDrivenInputProps {
 export const ConfigDrivenInput: React.FC<ConfigDrivenInputProps> = ({ 
     field, value, onChange, onBlur, isSaving, className 
 }) => {
+    // Local state allows the input to visibly update even when only `onBlur` is provided
+    const [localValue, setLocalValue] = React.useState<any>(value ?? '');
+
+    // Sync from props if external value changes (unless we are typing and it's temporary)
+    // For simplicity, we sync when the incoming value differs from local state
+    React.useEffect(() => {
+        if (value !== undefined && value !== null) {
+            setLocalValue(value);
+        }
+    }, [value]);
+
     const handleChange = (e: React.ChangeEvent<any>) => {
+        const val = e.target.value;
+        setLocalValue(val);
+        
         if (onChange) {
-            const val = field.type === 'number' ? (parseInt(e.target.value) || 0) : e.target.value;
-            onChange(val);
+            const parsedVal = field.type === 'number' && val !== '' ? (parseFloat(val) || 0) : val;
+            onChange(parsedVal);
         }
     };
 
     const handleBlur = (e: React.FocusEvent<any>) => {
         if (onBlur) {
-            const val = field.type === 'number' ? (parseInt(e.target.value) || 0) : e.target.value;
-            onBlur(val);
+            const val = e.target.value;
+            const parsedVal = field.type === 'number' && val !== '' ? (parseFloat(val) || 0) : val;
+            onBlur(parsedVal);
         }
     };
 
@@ -43,7 +58,7 @@ export const ConfigDrivenInput: React.FC<ConfigDrivenInputProps> = ({
         <div className="relative flex-1 flex items-center">
             {field.type === 'select' ? (
                 <select 
-                    value={value || ''}
+                    value={localValue}
                     onChange={handleChange}
                     onBlur={handleBlur}
                     className={baseInputClass}
@@ -52,7 +67,7 @@ export const ConfigDrivenInput: React.FC<ConfigDrivenInputProps> = ({
                 </select>
             ) : field.type === 'textarea' ? (
                 <textarea 
-                    value={value || ''}
+                    value={localValue}
                     onChange={handleChange}
                     onBlur={handleBlur}
                     className={baseInputClass}
@@ -61,7 +76,7 @@ export const ConfigDrivenInput: React.FC<ConfigDrivenInputProps> = ({
             ) : (
                 <input 
                     type={field.type} 
-                    value={value ?? ''}
+                    value={localValue}
                     onChange={handleChange}
                     onBlur={handleBlur}
                     placeholder={field.placeholder}

@@ -7,8 +7,9 @@ Pages are stored BEFORE chunking to maintain full context for agent retrieval.
 
 from typing import Any
 
+from server.repositories.base_repository import BaseRepository
+
 from ...config.logfire_config import get_logger, safe_logfire_error, safe_logfire_info
-from ...repositories.base_repository import BaseRepository
 from .helpers.llms_full_parser import parse_llms_full_sections
 
 logger = get_logger(__name__)
