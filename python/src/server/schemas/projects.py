@@ -4,7 +4,9 @@ Project Schemas for API Requests and Responses
 
 from datetime import datetime
 from typing import Any
+
 from pydantic import BaseModel
+
 
 class CreateProjectRequest(BaseModel):
     title: str

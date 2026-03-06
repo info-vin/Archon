@@ -3,9 +3,8 @@ from typing import Any
 
 from supabase import Client
 
-from ..services.client_manager import get_supabase_client
-
 from ..config.logfire_config import get_logger
+from ..services.client_manager import get_supabase_client
 
 logger = get_logger(__name__)
 

@@ -114,9 +114,15 @@
 
 # 第三章：近期工作日誌 (Recent Journal Entries)
 
-### 2026-03-05: Phase 4.6.11 Config-Driven UI 與 BaseRepository 落地 (Current Session)
-*   **前端表單降維**: 成功將 `AdminPage`, `ManagerNexus`, `RAGSettings`, `CodeExtractionSettings` 內的 26 個手寫 input 標籤轉換為 `ConfigDrivenInput` 陣列驅動。大幅瘦身元件，完成 View 與邏輯 (Hooks) 解耦。
-*   **後端防呆與重構**: 建立 `BaseRepository`，並於 `TaskService` 完成先導實作 (Pilot)。成功收斂 `try...except` 樣板代碼，統一 API response 格式，確保 550+ 後端測試通過無 Regression。
+### 2026-03-06: Phase 4.6.12 巨型檔案模組化與物理路徑對齊 (Current Session)
+*   **物理重構落地**:
+    *   `projects_api.py`: 1720 行 -> 210 行。完成 Facade 模式轉換，成功分離 Pydantic 模型至 `schemas/projects.py`。
+    *   `code_extraction_service.py`: 1583 行 -> 160 行。成功將解析邏輯拆分至 `logic/` 子包，還原了 100% 原始正則捕捉率。
+*   **遺留物理瓶頸 (The 403 Path Trap)**:
+    *   **現象**: 冒煙測試回傳 `403 Forbidden`。
+    *   **根源**: 物理路徑不一致。`conftest.py` 使用 `server.auth...` 而新重構代碼使用 `src.server.auth...`。在 FastAPI 注入系統中，這被視為不同的函數物件，導致測試中的 `dependency_overrides` 物理性失效。
+    *   **狀態**: 548/550 通過。待下階段進行全系統 `src.` 路徑標準化校準。
+
 
 ### 2026-02-26: Digital Twin 落地與系統治理加固
 *   **Digital Twin 突破**: 完成 Phase 4.6.8 架構規劃，實作 `twin-scout` 的 Playwright 與 Gemini Vision 整合，成功達成 Scout v9 的物理落地。
