@@ -8,7 +8,7 @@ This workflow uses an AST-based script or a manual surgical approach to replace 
 ## Step 1: Execute AST Automation Script (Preferred)
 Run the `refactor_service.py` script against the target service file.
 ```bash
-uv run python scripts/refactor_service.py <path_to_service_file>
+uv run --project python python scripts/refactor_service.py <path_to_service_file>
 ```
 
 ## Step 1.1: Fallback - Surgical Manual Refactoring
