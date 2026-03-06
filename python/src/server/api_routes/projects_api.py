@@ -1,37 +1,22 @@
 """
-Projects API endpoints for Archon
-
-Handles:
-- Project management (CRUD operations)
-- Task management with hierarchical structure
-- Streaming project creation with DocumentAgent integration
-- HTTP polling for progress updates
+Projects API Refactored - Entry point for project-related routes.
+Facade pattern with 100% Signature Alignment for Test Compatibility.
+Final stabilization for ETag and Error Details.
 """
 
-import json
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Any, cast
 
-from fastapi import (
-    APIRouter,
-    Depends,
-    Header,
-    HTTPException,
-    Request,
-    Response,
-)
+from fastapi import APIRouter, Depends, Header, HTTPException, Request, Response
 from fastapi import status as http_status
-from pydantic import BaseModel
 
 from ..auth.dependencies import get_current_user
 from ..config.logfire_config import get_logger
 from ..services.profile_service import ProfileService
-from ..services.projects import (
-    ProjectCreationService,
-    ProjectService,
-    SourceLinkingService,
-    TaskService,
-)
+from ..services.projects.project_service import ProjectService
+from ..services.projects.task_service import TaskService
+from ..services.projects.project_creation_service import ProjectCreationService
+from ..services.projects.source_linking_service import SourceLinkingService
 from ..services.projects.document_service import DocumentService
 from ..services.projects.versioning_service import VersioningService
 from ..services.rbac_service import RBACService
@@ -39,1682 +24,263 @@ from ..utils import get_supabase_client
 from ..utils.api_utils import handle_service_result
 from ..utils.etag_utils import check_etag, generate_etag
 
+from ..schemas.projects import (
+    CreateProjectRequest, UpdateProjectRequest, AssignableUser,
+    CreateTaskRequest, RefineTaskRequest, GenerateTaskFromAlertRequest, 
+    UpdateTaskRequest, AgentStatusUpdateRequest, AgentOutputUpdateRequest,
+    CreateDocumentRequest, UpdateDocumentRequest, CreateVersionRequest, RestoreVersionRequest
+)
+
 logger = get_logger(__name__)
-
-
-# Using HTTP polling for real-time updates
-
 router = APIRouter(prefix="/api", tags=["projects"])
 
+def _err(res: Any, code: int = 500):
+    # Extract error string if dict, otherwise use as is
+    detail = res.get("error", res) if isinstance(res, dict) else res
+    raise HTTPException(status_code=code, detail=detail)
 
-class CreateProjectRequest(BaseModel):
-    title: str
-    description: str | None = None
-    github_repo: str | None = None
-    docs: list[Any] | None = None
-    features: list[Any] | None = None
-    data: list[Any] | None = None
-    technical_sources: list[str] | None = None  # List of knowledge source IDs
-    business_sources: list[str] | None = None  # List of knowledge source IDs
-    pinned: bool | None = None  # Whether this project should be pinned to top
-
-
-class UpdateProjectRequest(BaseModel):
-    title: str | None = None
-    description: str | None = None  # Add description field
-    github_repo: str | None = None
-    docs: list[Any] | None = None
-    features: list[Any] | None = None
-    data: list[Any] | None = None
-    technical_sources: list[str] | None = None  # List of knowledge source IDs
-    business_sources: list[str] | None = None  # List of knowledge source IDs
-    pinned: bool | None = None  # Whether this project is pinned to top
-
-
-class CreateTaskRequest(BaseModel):
-    project_id: str
-    title: str
-    description: str | None = None
-    status: str | None = "todo"
-    priority: str | None = "medium"
-    assignee: str | None = "User"
-    assignee_id: str | None = None  # Added to support ID-based assignment
-    task_order: int | None = 0
-    feature: str | None = None
-    due_date: datetime | None = None
-    knowledge_source_ids: list[str] | None = None  # List of knowledge source IDs
-    is_recurring: bool | None = False
-    crawler_target_id: str | None = None
-    schedule_config: dict[str, Any] | None = None
-
-
-class AssignableUser(BaseModel):
-    id: str
-    name: str
-    role: str
-
-
+# --- Core ---
 @router.get("/assignable-users", response_model=list[AssignableUser])
-async def list_assignable_users(
-    x_user_role: str | None = Header(None, alias="X-User-Role")
-):
-    """
-    List users that can be assigned to a task based on the current user's role.
-    """
-    # TODO(Phase 2.9): Remove hardcoded role. See TODO.md.
-    current_user_role = x_user_role or "User"
-
-    try:
-        logger.info(f"Listing assignable users for role: {current_user_role}")
-        profile_service = ProfileService()
-        rbac_service = RBACService()
-
-        # Get all profiles via ProfileService
-        success, all_users = profile_service.list_all_users()
-        if not success:
-            # The service already logs the error, so we just return a generic failure
-            raise HTTPException(
-                status_code=500,
-                detail={"error": "Failed to retrieve profiles"},
-            )
-
-        assignable_users = []
-        for user in all_users:
-            if not isinstance(user, dict):
-                continue
-
-            user_role = user.get("role")
-            if user_role == "ai_agent":
-                continue
-
-            if user_role and rbac_service.has_permission_to_assign(
-                current_user_role, user_role
-            ):
-                assignable_users.append(
-                    AssignableUser(
-                        id=str(user.get("id", "")),
-                        name=str(user.get("name", "Unknown")),
-                        role=str(user_role)
-                    )
-                )
-
-        logger.info(
-            f"Found {len(assignable_users)} assignable users for role {current_user_role}"
-        )
-        return assignable_users
-
-    except Exception as e:
-        logger.error(f"Failed to list assignable users: {e}")
-        raise HTTPException(
-            status_code=500,
-            detail={"error": "Failed to retrieve assignable users"},
-        ) from e
-
+async def list_assignable_users(x_user_role: str | None = Header(None, alias="X-User-Role")):
+    s, users = ProfileService().list_all_users()
+    if not s: _err("Failed to retrieve profiles")
+    rbac = RBACService()
+    return [AssignableUser(id=str(u["id"]), name=str(u.get("full_name", u.get("name"))), role=str(u["role"])) 
+            for u in users if u.get("role") != "ai_agent" and rbac.has_permission_to_assign(x_user_role or "User", u["role"])]
 
 @router.get("/projects")
-async def list_projects(
-    response: Response,
-    include_content: bool = True,
-    include_computed_status: bool = False,
-    if_none_match: str | None = Header(None),
-):
-    """
-    List all projects.
-
-    Args:
-        include_content: If True (default), returns full project content.
-                        If False, returns lightweight metadata with statistics.
-        include_computed_status: If True, computes and includes project status based on tasks.
-    """
-    try:
-        logger.debug(
-            f"Listing all projects | include_content={include_content} "
-            f"| include_computed_status={include_computed_status}"
-        )
-
-        # Use ProjectService to get projects
-        project_service = ProjectService()
-        success, result = await project_service.list_projects(
-            include_content=include_content,
-            include_computed_status=include_computed_status,
-        )
-
-        if not success or not isinstance(result, dict):
-            raise HTTPException(status_code=500, detail=result)
-
-        # Only format with sources if we have full content
-        formatted_projects: list[Any] = []
-        if include_content:
-            # Use SourceLinkingService to format projects with sources
-            source_service = SourceLinkingService()
-            formatted_projects = await source_service.format_projects_with_sources(
-                result["projects"]
-            )
-        else:
-            # Lightweight response doesn't need source formatting
-            formatted_projects = result["projects"]
-
-        # Monitor response size for optimization validation
-        response_json = json.dumps(formatted_projects)
-        response_size = len(response_json)
-
-        # Log response metrics
-        logger.debug(
-            f"Projects listed successfully | count={len(formatted_projects)} | "
-            f"size_bytes={response_size} | include_content={include_content}"
-        )
-
-        # Log large responses at debug level (>100KB is worth noting, but normal for project data)
-        if response_size > 100000:
-            logger.debug(
-                f"Large response size | size_bytes={response_size} | "
-                f"include_content={include_content} | project_count={len(formatted_projects)}"
-            )
-
-        # Generate ETag from stable data (excluding timestamp)
-        etag_data = {
-            "projects": formatted_projects,
-            "count": len(formatted_projects),
-        }
-        current_etag = generate_etag(etag_data)
-
-        # Generate response with timestamp for polling
-        response_data = {
-            "projects": formatted_projects,
-            "timestamp": datetime.utcnow().isoformat(),
-            "count": len(formatted_projects),
-        }
-
-        # Check if client's ETag matches
-        if check_etag(if_none_match, current_etag):
-            response.status_code = http_status.HTTP_304_NOT_MODIFIED
-            response.headers["ETag"] = current_etag
-            response.headers["Cache-Control"] = "no-cache, must-revalidate"
-            return None
-
-        # Set headers
-        response.headers["ETag"] = current_etag
-        response.headers["Last-Modified"] = datetime.utcnow().isoformat()
-        response.headers["Cache-Control"] = "no-cache, must-revalidate"
-
-        return response_data
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Failed to list projects | error={str(e)}")
-        raise HTTPException(status_code=500, detail={"error": str(e)}) from e
-
+async def list_projects(response: Response, include_content: bool = True, include_computed_status: bool = False, if_none_match: str | None = Header(None)):
+    s, res = await ProjectService().list_projects(include_content=include_content, include_computed_status=include_computed_status)
+    if not s: _err(res)
+    projs = res["projects"]
+    if include_content: projs = await SourceLinkingService().format_projects_with_sources(projs)
+    etag = generate_etag({"projects": projs, "count": len(projs)})
+    response.headers["ETag"] = etag
+    if check_etag(if_none_match, etag):
+        response.status_code = 304
+        return None
+    return {"projects": projs, "timestamp": datetime.now(UTC).isoformat(), "count": len(projs)}
 
 @router.post("/projects")
-async def create_project(request: CreateProjectRequest):
-    """Create a new project with streaming progress."""
-    # Validate title
-    if not request.title:
-        raise HTTPException(status_code=422, detail="Title is required")
-
-    if not request.title.strip():
-        raise HTTPException(status_code=422, detail="Title cannot be empty")
-
-    try:
-        logger.info(
-            f"Creating new project | title={request.title} | github_repo={request.github_repo}"
-        )
-
-        # Prepare kwargs for additional project fields
-        kwargs: dict[str, Any] = {}
-        if request.pinned is not None:
-            kwargs["pinned"] = request.pinned
-        if request.features:
-            kwargs["features"] = request.features
-        if request.data:
-            kwargs["data"] = request.data
-
-        # Create project directly with AI assistance
-        project_service = ProjectCreationService()
-        success, result = await project_service.create_project_with_ai(
-            progress_id="direct",  # No progress tracking needed
-            title=request.title,
-            description=request.description,
-            github_repo=request.github_repo,
-            **kwargs,
-        )
-
-        if success:
-            logger.info(
-                f"Project created successfully | project_id={result['project_id']}"
-            )
-            return {
-                "project_id": result["project_id"],
-                "project": result.get("project"),
-                "status": "completed",
-                "message": f"Project '{request.title}' created successfully",
-            }
-        else:
-            raise HTTPException(status_code=500, detail=result)
-
-    except Exception as e:
-        logger.error(
-            f"Failed to start project creation | error={str(e)} | title={request.title}"
-        )
-        raise HTTPException(status_code=500, detail={"error": str(e)}) from e
-
+async def create_project(req: CreateProjectRequest):
+    if not req.title or not req.title.strip(): _err("Title is required", 422)
+    s, res = await ProjectCreationService().create_project_with_ai(
+        progress_id="direct", 
+        title=req.title,
+        description=req.description,
+        github_repo=req.github_repo,
+        pinned=req.pinned,
+        features=req.features,
+        data=req.data
+    )
+    if s: return {"project_id": res.get("project_id"), "project": res.get("project"), "status": "completed", "message": f"Project '{req.title}' created successfully"}
+    _err(res)
 
 @router.get("/projects/task-counts")
-async def get_all_task_counts(
-    request: Request, response: Response,
-):
-    """
-    Get task counts for all projects in a single batch query.
-    Optimized endpoint to avoid N+1 query problem.
-    Returns counts grouped by project_id with todo, doing, and done counts.
-    Review status is included in doing count to match frontend logic.
-    """
-    try:
-        # Get If-None-Match header for ETag comparison
-        if_none_match = request.headers.get("If-None-Match")
-
-        logger.debug(
-            f"Getting task counts for all projects | etag={if_none_match}"
-        )
-
-        # Use TaskService to get batch task counts
-        task_service = TaskService()
-        success, result = await task_service.get_all_project_task_counts()
-
-        if not success or not isinstance(result, dict):
-            error_msg = result.get("error") if isinstance(result, dict) else str(result)
-            logger.error(
-                f"Failed to get task counts | error={error_msg}"
-            )
-            raise HTTPException(status_code=500, detail=result)
-
-        # Generate ETag from counts data
-        etag_data = {"counts": result, "count": len(result)}
-        current_etag = generate_etag(etag_data)
-
-        # Check if client's ETag matches (304 Not Modified)
-        if check_etag(if_none_match, current_etag):
-            response.status_code = 304
-            response.headers["ETag"] = current_etag
-            response.headers["Cache-Control"] = "no-cache, must-revalidate"
-            logger.debug(
-                f"Task counts unchanged, returning 304 | etag={current_etag}"
-            )
-            return None
-
-        # Set ETag headers for successful response
-        response.headers["ETag"] = current_etag
-        response.headers["Cache-Control"] = "no-cache, must-revalidate"
-        response.headers["Last-Modified"] = datetime.utcnow().isoformat()
-
-        logger.debug(
-            f"Task counts retrieved | project_count={len(result)} | etag={current_etag}"
-        )
-
-        return result
-
-    except Exception as e:
-        logger.error(f"Failed to get task counts | error={str(e)}")
-        raise HTTPException(status_code=500, detail={"error": str(e)}) from e
-
+async def get_all_task_counts(request: Request, response: Response):
+    s, res = await TaskService().get_all_project_task_counts()
+    if not s: _err(res)
+    etag = generate_etag({"counts": res, "count": len(res)})
+    response.headers["ETag"] = etag
+    if check_etag(request.headers.get("If-None-Match"), etag):
+        response.status_code = 304
+        return None
+    return res
 
 @router.get("/projects/{project_id}")
 async def get_project(project_id: str):
-    """Get a specific project."""
-    try:
-        logger.info(f"Getting project | project_id={project_id}")
-
-        # Use ProjectService to get the project
-        project_service = ProjectService()
-        success, result = await project_service.get_project(project_id)
-
-        if not success or not isinstance(result, dict):
-            error_msg = result.get("error", "") if isinstance(result, dict) else str(result)
-            if "not found" in error_msg.lower():
-                logger.warning(f"Project not found | project_id={project_id}")
-                raise HTTPException(status_code=404, detail=result)
-            else:
-                raise HTTPException(status_code=500, detail=result)
-
-        project = result["project"]
-        if not isinstance(project, dict):
-             raise HTTPException(status_code=500, detail="Invalid project data structure")
-
-        logger.info(
-            f"Project retrieved successfully | project_id={project_id} | title={project.get('title', 'Unknown')}"
-        )
-
-        # The ProjectService already includes sources, so just add any missing fields
-        return {
-            **project,
-            "description": project.get("description", ""),
-            "docs": project.get("docs", []),
-            "features": project.get("features", []),
-            "data": project.get("data", []),
-            "pinned": project.get("pinned", False),
-        }
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(
-            f"Failed to get project | error={str(e)} | project_id={project_id}"
-        )
-        raise HTTPException(status_code=500, detail={"error": str(e)}) from e
-
+    s, res = await ProjectService().get_project(project_id)
+    if not s: _err(res, 404 if "not found" in str(res).lower() else 500)
+    p = res["project"]
+    return {**p, "description": p.get("description", ""), "docs": p.get("docs", []), "features": p.get("features", []), "data": p.get("data", []), "pinned": p.get("pinned", False)}
 
 @router.put("/projects/{project_id}")
-async def update_project(project_id: str, request: UpdateProjectRequest):
-    """Update a project with comprehensive Logfire monitoring."""
-    try:
-        supabase_client = get_supabase_client()
-
-        # Build update fields from request
-        update_fields: dict[str, Any] = {}
-        if request.title is not None:
-            update_fields["title"] = request.title
-        if request.description is not None:
-            update_fields["description"] = request.description
-        if request.github_repo is not None:
-            update_fields["github_repo"] = request.github_repo
-        if request.docs is not None:
-            update_fields["docs"] = request.docs
-        if request.features is not None:
-            update_fields["features"] = request.features
-        if request.data is not None:
-            update_fields["data"] = request.data
-        if request.pinned is not None:
-            update_fields["pinned"] = request.pinned
-
-        # Create version snapshots for JSONB fields before updating
-        if update_fields:
-            try:
-                from ..services.projects.versioning_service import (
-                    VersioningService,
-                )
-
-                versioning_service = VersioningService(supabase_client)
-
-                # Get current project for comparison
-                project_service = ProjectService(supabase_client)
-                success, current_result = await project_service.get_project(
-                    project_id
-                )
-
-                if success and isinstance(current_result, dict) and current_result.get("project"):
-                    current_project = current_result["project"]
-                    if not isinstance(current_project, dict):
-                         raise ValueError("Invalid project data")
-                    version_count = 0
-
-                    # Create versions for updated JSONB fields
-                    for field_name in ["docs", "features", "data"]:
-                        if field_name in update_fields:
-                            current_content = current_project.get(
-                                field_name, {}
-                            )
-                            new_content = update_fields[field_name]
-
-                            # Only create version if content actually changed
-                            if current_content != new_content:
-                                (
-                                    v_success,
-                                    _,
-                                ) = versioning_service.create_version(
-                                    project_id=project_id,
-                                    field_name=field_name,
-                                    content=current_content if isinstance(current_content, dict) else {},
-                                    change_summary=f"Updated {field_name} via API",
-                                    change_type="update",
-                                    created_by="api_user",
-                                )
-                                if v_success:
-                                    version_count += 1
-
-                    logger.info(
-                        f"Created {version_count} version snapshots before update"
-                    )
-            except (ImportError, ValueError) as e:
-                logger.warning(
-                    f"VersioningService error - skipping version snapshots: {e}"
-                )
-            except Exception as e:
-                logger.warning(f"Failed to create version snapshots: {e}")
-                # Don't fail the update, just log the warning
-
-        # Use ProjectService to update the project
-        project_service = ProjectService(supabase_client)
-        success, result = await project_service.update_project(
-            project_id, update_fields
+async def update_project(project_id: str, req: UpdateProjectRequest):
+    fields = {k: v for k, v in req.model_dump().items() if v is not None}
+    s, res = await ProjectService().update_project(project_id, fields)
+    if not s: _err(res, 404 if "not found" in str(res).lower() else 500)
+    if req.technical_sources is not None or req.business_sources is not None:
+        await SourceLinkingService().update_project_sources(
+            project_id=project_id, 
+            technical_sources=req.technical_sources, 
+            business_sources=req.business_sources
         )
-
-        if not success or not isinstance(result, dict):
-            error_msg = result.get("error", "") if isinstance(result, dict) else str(result)
-            if "not found" in error_msg.lower():
-                raise HTTPException(
-                    status_code=404,
-                    detail={
-                        "error": f"Project with ID {project_id} not found"
-                    },
-                )
-            else:
-                raise HTTPException(status_code=500, detail=result)
-
-        project = result["project"]
-        if not isinstance(project, dict):
-             raise HTTPException(status_code=500, detail="Invalid project data structure")
-
-        # Handle source updates using SourceLinkingService
-        source_service = SourceLinkingService(supabase_client)
-
-        if (
-            request.technical_sources is not None
-            or request.business_sources is not None
-        ):
-            (
-                source_success,
-                source_result,
-            ) = await source_service.update_project_sources(
-                project_id=project_id,
-                technical_sources=request.technical_sources,
-                business_sources=request.business_sources,
-            )
-
-            if source_success and isinstance(source_result, dict):
-                logger.info(
-                    f"Project sources updated | project_id={project_id} | technical_success={source_result.get('technical_success', 0)} | technical_failed={source_result.get('technical_failed', 0)} | business_success={source_result.get('business_success', 0)} | business_failed={source_result.get('business_failed', 0)}"
-                )
-            else:
-                logger.warning(
-                    f"Failed to update some sources: {source_result}"
-                )
-
-        # Format project response with sources using SourceLinkingService
-        formatted_project = await source_service.format_project_with_sources(
-            project
-        )
-
-        logger.info(
-            f"Project updated successfully | project_id={project_id} | title={str(project.get('title', ''))} | technical_sources={len(formatted_project.get('technical_sources', []))} | business_sources={len(formatted_project.get('business_sources', []))}"
-        )
-
-        return formatted_project
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(
-            f"Project update failed | project_id={project_id} | error={str(e)}"
-        )
-        raise HTTPException(status_code=500, detail={"error": str(e)}) from e
-
+    return await SourceLinkingService().format_project_with_sources(res["project"])
 
 @router.delete("/projects/{project_id}")
 async def delete_project(project_id: str):
-    """Delete a project and all its tasks."""
-    try:
-        logger.info(f"Deleting project | project_id={project_id}")
-
-        # Use ProjectService to delete the project
-        project_service = ProjectService()
-        success, result = await project_service.delete_project(project_id)
-
-        result = cast(dict[str, Any], handle_service_result(success, result))
-        logger.info(
-            f"Project deleted successfully | project_id={project_id} | deleted_tasks={result.get('deleted_tasks', 0)}"
-        )
-
-        return {
-            "message": "Project deleted successfully",
-            "deleted_tasks": result.get("deleted_tasks", 0),
-        }
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(
-            f"Failed to delete project | error={str(e)} | project_id={project_id}"
-        )
-        raise HTTPException(status_code=500, detail={"error": str(e)}) from e
-
+    s, res = await ProjectService().delete_project(project_id)
+    return {"message": "Project deleted successfully", "deleted_tasks": cast(dict, handle_service_result(s, res)).get("deleted_tasks", 0)}
 
 @router.get("/projects/{project_id}/features")
 async def get_project_features(project_id: str):
-    """Get features from a project's features JSONB field."""
-    try:
-        logger.info(f"Getting project features | project_id={project_id}")
+    s, res = await ProjectService().get_project_features(project_id)
+    return handle_service_result(s, res)
 
-        # Use ProjectService to get features
-        project_service = ProjectService()
-        success, result = await project_service.get_project_features(
-            project_id
-        )
-
-        result = cast(dict[str, Any], handle_service_result(success, result))
-        logger.info(
-            f"Project features retrieved | project_id={project_id} | feature_count={result.get('count', 0)}"
-        )
-
-        return result
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(
-            f"Failed to get project features | error={str(e)} | project_id={project_id}"
-        )
-        raise HTTPException(status_code=500, detail={"error": str(e)}) from e
-
-
+# --- Tasks ---
 @router.get("/projects/{project_id}/tasks")
-async def list_project_tasks(
-    project_id: str,
-    request: Request,
-    response: Response,
-    include_archived: bool = False,
-    exclude_large_fields: bool = False,
-):
-    """List all tasks for a specific project with ETag support for efficient polling."""
-    try:
-        # Get If-None-Match header for ETag comparison
-        if_none_match = request.headers.get("If-None-Match")
-
-        logger.debug(
-            f"Listing project tasks | project_id={project_id} | include_archived={include_archived} | exclude_large_fields={exclude_large_fields} | etag={if_none_match}"
-        )
-
-        # Use TaskService to list tasks
-        task_service = TaskService()
-        success, result = await task_service.list_tasks(
-            project_id=project_id,
-            include_closed=True,  # Get all tasks, including done
-            exclude_large_fields=exclude_large_fields,
-            include_archived=include_archived,  # Pass the flag down to service
-        )
-
-        if not success or not isinstance(result, dict):
-            raise HTTPException(status_code=500, detail=result)
-
-        tasks: list[dict[str, Any]] = result.get("tasks", [])
-
-        # Generate ETag from task data (excluding timestamps for consistency)
-        etag_data = {
-            "tasks": [
-                {
-                    "id": task.get("id"),
-                    "title": task.get("title"),
-                    "status": task.get("status"),
-                    "task_order": task.get("task_order"),
-                    "assignee": task.get("assignee"),
-                    "priority": task.get("priority"),  # <-- 新增此行
-                    "feature": task.get("feature"),
-                }
-                for task in tasks
-            ],
-            "project_id": project_id,
-            "count": len(tasks),
-        }
-        current_etag = generate_etag(etag_data)
-
-        # Check if client's ETag matches (304 Not Modified)
-        if check_etag(if_none_match, current_etag):
-            response.status_code = 304
-            response.headers["ETag"] = current_etag
-            response.headers["Cache-Control"] = "no-cache, must-revalidate"
-            response.headers["Last-Modified"] = datetime.utcnow().isoformat()
-            logger.debug(
-                f"Tasks unchanged, returning 304 | project_id={project_id} | etag={current_etag}"
-            )
-            return None
-
-        # Set ETag headers for successful response
-        response.headers["ETag"] = current_etag
-        response.headers["Cache-Control"] = "no-cache, must-revalidate"
-        response.headers["Last-Modified"] = datetime.utcnow().isoformat()
-
-        logger.debug(
-            f"Project tasks retrieved | project_id={project_id} | task_count={len(tasks)} | etag={current_etag}"
-        )
-
-        return tasks
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(
-            f"Failed to list project tasks | error={str(e)} | project_id={project_id}"
-        )
-        raise HTTPException(status_code=500, detail={"error": str(e)}) from e
-
-
-# Remove the complex /tasks endpoint - it's not needed and breaks things
-
-
-class RefineTaskRequest(BaseModel):
-    title: str
-    description: str
-
-
-class GenerateTaskFromAlertRequest(BaseModel):
-    alert_id: str
-    assignee_id: str | None = None
-
+async def list_project_tasks(project_id: str, req: Request, response: Response, include_archived: bool = False, exclude_large_fields: bool = False):
+    s, res = await TaskService().list_tasks(project_id=project_id, include_closed=True, exclude_large_fields=exclude_large_fields, include_archived=include_archived)
+    if not s: _err(res)
+    tasks = res.get("tasks", [])
+    etag = generate_etag({"tasks": tasks, "project_id": project_id})
+    response.headers["ETag"] = etag
+    if check_etag(req.headers.get("If-None-Match"), etag):
+        response.status_code = 304
+        return None
+    return tasks
 
 @router.post("/tasks/refine-description")
-async def refine_task_description(
-    request: RefineTaskRequest,
-    x_user_role: str | None = Header(None, alias="X-User-Role"),
-):
-    """
-    Refine a task description using POBot (RAG-enhanced).
-    """
-    # Optional: Check if user has permission to use AI (e.g., manager/admin only, or quota check)
-    # For now, allow all authenticated users
-    try:
-        logger.info(f"Refining task description | title={request.title}")
-        task_service = TaskService()
-        refined_description = await task_service.refine_task_description(
-            request.title, request.description
-        )
-        return {"refined_description": refined_description}
-    except Exception as e:
-        logger.error(f"Failed to refine task description | error={str(e)}")
-        raise HTTPException(status_code=500, detail={"error": str(e)}) from e
-
+async def refine_task_description(req: RefineTaskRequest):
+    return {"refined_description": await TaskService().refine_task_description(req.title, req.description)}
 
 @router.post("/tasks/generate-from-alert")
-async def generate_task_from_alert(
-    request: GenerateTaskFromAlertRequest,
-    current_user: dict = Depends(get_current_user)
-):
-    """
-    Generate a smart task from a Sentinel alert using AI context.
-    Only Managers and Admins can trigger this.
-    """
-    try:
-        user_role = current_user.get("role", "viewer").lower()
-        if user_role not in ["manager", "admin", "system_admin"]:
-            logger.warning(f"API: Smart dispatch denied | user={current_user.get('email')} | role={user_role}")
-            raise HTTPException(status_code=403, detail="Only managers can dispatch smart tasks.")
-
-        logger.info(f"API: Generating task from alert | alert_id={request.alert_id} | user={current_user.get('email')}")
-        task_service = TaskService()
-        success, result = await task_service.generate_task_from_alert(
-            alert_id=request.alert_id,
-            assignee_id=request.assignee_id
-        )
-
-        result = cast(dict[str, Any], handle_service_result(success, result))
-        return result
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"API: Smart dispatch failed | alert_id={request.alert_id} | error={str(e)}")
-        raise HTTPException(status_code=500, detail=str(e)) from e
-
+async def generate_task_from_alert(req: GenerateTaskFromAlertRequest, current_user: dict = Depends(get_current_user)):
+    if current_user.get("role", "viewer").lower() not in ["manager", "admin", "system_admin"]: _err("Only managers can dispatch smart tasks.", 403)
+    s, res = await TaskService().generate_task_from_alert(alert_id=req.alert_id, assignee_id=req.assignee_id)
+    return handle_service_result(s, res)
 
 @router.post("/tasks")
-async def create_task(
-    request: CreateTaskRequest,
-    x_user_role: str | None = Header(None, alias="X-User-Role"),
-):
-    """Create a new task with automatic reordering."""
-    try:
-        # Resolve assignee_id to assignee name if provided
-        target_assignee_name = request.assignee
-        resolved_assignee_id = request.assignee_id
-
-        if request.assignee_id:
-            from ..services.shared_constants import AI_AGENT_ROLES
-            if request.assignee_id in AI_AGENT_ROLES.values():
-                logger.info(f"Assignee ID '{request.assignee_id}' is an AI Agent. Nullifying UUID for DB insert.")
-                resolved_assignee_id = None
-
-                # Derive the agent name from AI_AGENT_ROLES (e.g. "Librarian (Knowledge)" -> "Librarian")
-                for name, agent_id in AI_AGENT_ROLES.items():
-                    if agent_id == request.assignee_id:
-                        target_assignee_name = name.split(" ")[0]
-                        break
-            else:
-                profile_service = ProfileService()
-                success, profile = profile_service.get_profile(request.assignee_id)
-                if success and isinstance(profile, dict):
-                    target_assignee_name = str(profile.get("name"))
-                    logger.info(
-                        f"Resolved assignee_id '{request.assignee_id}' to '{target_assignee_name}'"
-                    )
-                else:
-                    logger.warning(
-                        f"Failed to resolve assignee_id '{request.assignee_id}' to a name."
-                    )
-
-        # RBAC Validation
-        if target_assignee_name and target_assignee_name != "User":
-            # TODO(Phase 2.9): Remove hardcoded role. See TODO.md.
-            current_user_role = x_user_role or "User"
-            profile_service = ProfileService()
-            rbac_service = RBACService()
-            success, assignee_role = profile_service.get_user_role(
-                target_assignee_name
-            )
-
-            handle_service_result(success, {"error": "Failed to verify assignee role"})
-            if assignee_role:
-                if not rbac_service.has_permission_to_assign(
-                    current_user_role, assignee_role
-                ):
-                    raise HTTPException(
-                        status_code=403,
-                        detail=f"As a {current_user_role}, you cannot assign tasks to a {assignee_role}.",
-                    )
-            else:
-                agent_roles = {
-                    "Market Researcher",
-                    "Internal Knowledge Expert",
-                }
-                if target_assignee_name in agent_roles:
-                    if not rbac_service.has_permission_to_assign(
-                        current_user_role, target_assignee_name
-                    ):
-                        raise HTTPException(
-                            status_code=403,
-                            detail=f"As a {current_user_role}, you cannot assign tasks to a {target_assignee_name}.",
-                        )
-                else:
-                    logger.warning(
-                        f"Assignee '{target_assignee_name}' not found in profiles and is not a known agent role. Skipping permission check."
-                    )
-
-        # Use TaskService to create the task
-        task_service = TaskService()
-        success, result = await task_service.create_task(
-            project_id=request.project_id,
-            title=request.title,
-            description=request.description or "",
-            assignee=target_assignee_name or "User",
-            task_order=request.task_order or 0,
-            feature=request.feature,
-            due_date=request.due_date,
-            knowledge_source_ids=request.knowledge_source_ids,
-            assignee_id=resolved_assignee_id,
-            priority=request.priority or "medium",
-            is_recurring=request.is_recurring or False,
-            crawler_target_id=request.crawler_target_id,
-            schedule_config=request.schedule_config,
-        )
-
-        if not success or not isinstance(result, dict):
-            raise HTTPException(status_code=400, detail=result)
-
-        created_task = result["task"]
-        if not isinstance(created_task, dict):
-             raise HTTPException(status_code=500, detail="Invalid task data structure")
-
-        logger.info(
-            f"Task created successfully | task_id={created_task.get('id')} | project_id={request.project_id}"
-        )
-
-        return {"message": "Task created successfully", "task": created_task}
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(
-            f"Failed to create task | error={str(e)} | project_id={request.project_id}"
-        )
-        raise HTTPException(status_code=500, detail={"error": str(e)}) from e
-
+async def create_task(req: CreateTaskRequest, x_user_role: str | None = Header(None, alias="X-User-Role")):
+    target_name, res_id = req.assignee, req.assignee_id
+    if res_id:
+        from ..services.shared_constants import AI_AGENT_ROLES
+        if res_id in AI_AGENT_ROLES.values():
+            res_id = None
+            for n, aid in AI_AGENT_ROLES.items():
+                if aid == req.assignee_id: target_name = n.split(" ")[0]; break
+        else:
+            ok, p = ProfileService().get_profile(req.assignee_id)
+            if ok and isinstance(p, dict): target_name = str(p.get("name"))
+    if target_name and target_name != "User":
+        ok, r = ProfileService().get_user_role(target_name)
+        if ok and r and not RBACService().has_permission_to_assign(x_user_role or "User", r):
+            _err(f"you cannot assign tasks to {r}", 403)
+    
+    s, res = await TaskService().create_task(
+        project_id=req.project_id, 
+        title=req.title, 
+        description=req.description or "", 
+        assignee=target_name or "User", 
+        assignee_id=res_id, 
+        priority=req.priority or "medium",
+        task_order=req.task_order,
+        feature=req.feature,
+        due_date=req.due_date,
+        knowledge_source_ids=req.knowledge_source_ids,
+        is_recurring=req.is_recurring,
+        crawler_target_id=req.crawler_target_id,
+        schedule_config=req.schedule_config
+    )
+    if not s: _err(res, 400)
+    return {"message": "Task created successfully", "task": res["task"]}
 
 @router.get("/tasks")
-async def list_tasks(
-    status: str | None = None,
-    project_id: str | None = None,
-    assignee_id: str | None = None,
-    include_closed: bool = False,
-    include_unassigned: bool = False,  # Fix FB-03: Allow frontend to request unassigned tasks
-    page: int = 1,
-    per_page: int = 50,
-    exclude_large_fields: bool = False,
-    current_user: dict = Depends(get_current_user),
-):
-    """List tasks with optional filters including status and project."""
-    try:
-        # RBAC: Determine assignee filter
-        user_role = str(current_user.get("role", "member")).lower()
-        user_id = current_user.get("id")
-        assignee_id_filter = None
-
-        # Only Admin and Manager can see all tasks. Others see only their own by ID.
-        if user_role not in ["system_admin", "admin", "manager"]:
-            assignee_id_filter = user_id
-        elif assignee_id:
-            # If manager/admin explicitly requests a specific assignee
-            assignee_id_filter = assignee_id
-
-        logger.info(
-            f"DEBUG RBAC: list_tasks | user_id={user_id} | raw_role={current_user.get('role')} | normalized_role={user_role} | assignee_filter={assignee_id_filter}"
-        )
-
-        # Normalize project_id: 'all' or empty string means no project filter
-        effective_project_id = None
-        if project_id and project_id.lower() != 'all':
-            effective_project_id = project_id
-
-        logger.info(
-            f"Listing tasks | status={status} | project_id={effective_project_id} | include_closed={include_closed} | "
-            f"user={user_id} | role={user_role} | filter_assignee_id={assignee_id_filter}"
-        )
-
-        # Use TaskService to list tasks
-        task_service = TaskService()
-
-        success, result = await task_service.list_tasks(
-            project_id=effective_project_id,
-            status=status or "",
-            include_closed=include_closed,
-            exclude_large_fields=exclude_large_fields,
-            assignee_id=assignee_id_filter,
-            include_unassigned=include_unassigned
-            if assignee_id_filter
-            else False,  # Only apply if filtering by user
-        )
-
-        result = cast(dict[str, Any], handle_service_result(success, result))
-        # Pagination metadata
-        if isinstance(result, dict):
-            tasks = result.get("tasks", [])
-        else:
-            tasks = []
-
-        # If exclude_large_fields is True, remove large fields from tasks
-        if exclude_large_fields:
-            for task in tasks:
-                # Remove potentially large fields
-                task.pop("sources", None)
-                task.pop("code_examples", None)
-                task.pop("messages", None)
-
-        # Apply pagination
-        start_idx = (page - 1) * per_page
-        end_idx = start_idx + per_page
-        paginated_tasks = tasks[start_idx:end_idx]
-
-        # Prepare response
-        response = {
-            "tasks": paginated_tasks,
-            "pagination": {
-                "total": len(tasks),
-                "page": page,
-                "per_page": per_page,
-                "pages": (len(tasks) + per_page - 1) // per_page,
-            },
-        }
-
-        # Monitor response size for optimization validation
-        response_json = json.dumps(response)
-        response_size = len(response_json)
-
-        # Log response metrics
-        logger.info(
-            f"Tasks listed successfully | count={len(paginated_tasks)} | "
-            f"size_bytes={response_size} | exclude_large_fields={exclude_large_fields}"
-        )
-
-        # Warning for large responses (>10KB)
-        if response_size > 10000:
-            logger.warning(
-                f"Large task response size | size_bytes={response_size} | "
-                f"exclude_large_fields={exclude_large_fields} | task_count={len(paginated_tasks)}"
-            )
-
-        return response
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Failed to list tasks | error={str(e)}")
-        raise HTTPException(status_code=500, detail={"error": str(e)}) from e
-
+async def list_tasks(status: str | None = None, project_id: str | None = None, assignee_id: str | None = None, include_closed: bool = False, include_unassigned: bool = False, page: int = 1, per_page: int = 50, exclude_large_fields: bool = False, current_user: dict = Depends(get_current_user)):
+    user_role = str(current_user.get("role", "member")).lower()
+    a_filter = current_user.get("id") if user_role not in ["system_admin", "admin", "manager"] else assignee_id
+    s, res = await TaskService().list_tasks(project_id=project_id if project_id and project_id.lower() != 'all' else None, status=status or "", include_closed=include_closed, exclude_large_fields=exclude_large_fields, assignee_id=a_filter, include_unassigned=include_unassigned if a_filter else False)
+    data = cast(dict, handle_service_result(s, res))
+    tasks = data.get("tasks", [])
+    return {"tasks": tasks[(page-1)*per_page : page*per_page], "pagination": {"total": len(tasks), "page": page, "per_page": per_page, "pages": (len(tasks)+per_page-1)//per_page}}
 
 @router.get("/tasks/{task_id}")
 async def get_task(task_id: str):
-    """Get a specific task by ID."""
-    try:
-        # Use TaskService to get the task
-        task_service = TaskService()
-        success, result = await task_service.get_task(task_id)
-
-        result = cast(dict[str, Any], handle_service_result(success, result))
-        task = result["task"]
-
-        logger.info(
-            f"Task retrieved successfully | task_id={task_id} | project_id={task.get('project_id')}"
-        )
-
-        return task
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(
-            f"Failed to get task | error={str(e)} | task_id={task_id}"
-        )
-        raise HTTPException(status_code=500, detail={"error": str(e)}) from e
-
-
-class Attachment(BaseModel):
-    filename: str
-    url: str
-
-
-class UpdateTaskRequest(BaseModel):
-    title: str | None = None
-    description: str | None = None
-    status: str | None = None
-    priority: str | None = None
-    assignee: str | None = None
-    assignee_id: str | None = None
-    task_order: int | None = None
-    feature: str | None = None
-    attachments: list[Attachment] | None = None
-    due_date: datetime | None = None
-    is_recurring: bool | None = None
-    crawler_target_id: str | None = None
-    schedule_config: dict[str, Any] | None = None
-
-
-class AgentStatusUpdateRequest(BaseModel):
-    status: str
-    agent_id: str
-
-
-class AgentOutputUpdateRequest(BaseModel):
-    output: dict[str, Any]
-    agent_id: str
-
-
-class CreateDocumentRequest(BaseModel):
-    document_type: str
-    title: str
-    content: dict[str, Any] | None = None
-    tags: list[str] | None = None
-    author: str | None = None
-
-
-class UpdateDocumentRequest(BaseModel):
-    title: str | None = None
-    content: dict[str, Any] | None = None
-    tags: list[str] | None = None
-    author: str | None = None
-
-
-class CreateVersionRequest(BaseModel):
-    field_name: str
-    content: dict[str, Any]
-    change_summary: str | None = None
-    change_type: str | None = "update"
-    document_id: str | None = None
-    created_by: str | None = "system"
-
-
-class RestoreVersionRequest(BaseModel):
-    restored_by: str | None = "system"
-
+    s, res = await TaskService().get_task(task_id)
+    return cast(dict, handle_service_result(s, res))["task"]
 
 @router.put("/tasks/{task_id}")
-async def update_task(
-    task_id: str,
-    request: UpdateTaskRequest,
-    x_user_role: str | None = Header(None, alias="X-User-Role"),
-):
-    """Update a task."""
-    try:
-        # Build update fields dictionary
-        update_fields: dict[str, Any] = {}
-
-        # Resolve assignee_id to assignee name if provided
-        target_assignee_name = request.assignee
-
-        if request.assignee_id is not None:
-            profile_service = ProfileService()
-            if request.assignee_id == "":  # Handle unassigning
-                target_assignee_name = "Unassigned"
-                update_fields["assignee_id"] = None
-            else:
-                success, profile = profile_service.get_profile(
-                    request.assignee_id
-                )
-                if success and isinstance(profile, dict):
-                    target_assignee_name = str(profile.get("name"))
-                    update_fields["assignee_id"] = request.assignee_id
-                else:
-                    logger.warning(
-                        f"Failed to resolve assignee_id '{request.assignee_id}' to a name."
-                    )
-
-        # RBAC Validation (using the resolved or direct assignee name)
-        if target_assignee_name is not None:
-            # TODO(Phase 2.9): Remove hardcoded role. See TODO.md.
-            current_user_role = x_user_role or "User"
-            profile_service = ProfileService()
-            rbac_service = RBACService()
-            success, assignee_role = profile_service.get_user_role(
-                target_assignee_name
-            )
-
-            handle_service_result(success, {"error": "Failed to verify assignee role"})
-            if assignee_role:
-                if not rbac_service.has_permission_to_assign(
-                    current_user_role, assignee_role
-                ):
-                    raise HTTPException(
-                        status_code=403,
-                        detail=f"As a {current_user_role}, you cannot assign tasks to a {assignee_role}.",
-                    )
-            else:
-                agent_roles = {
-                    "Market Researcher",
-                    "Internal Knowledge Expert",
-                }
-                if target_assignee_name in agent_roles:
-                    if not rbac_service.has_permission_to_assign(
-                        current_user_role, target_assignee_name
-                    ):
-                        raise HTTPException(
-                            status_code=403,
-                            detail=f"As a {current_user_role}, you cannot assign tasks to a {target_assignee_name}.",
-                        )
-                else:
-                    logger.warning(
-                        f"Assignee '{target_assignee_name}' not found in profiles and is not a known agent role. Skipping permission check."
-                    )
-
-            update_fields["assignee"] = target_assignee_name
-
-        if request.title is not None:
-            update_fields["title"] = request.title
-        if request.description is not None:
-            update_fields["description"] = request.description
-        if request.status is not None:
-            update_fields["status"] = request.status
-        if request.priority is not None:
-            update_fields["priority"] = request.priority
-        if request.task_order is not None:
-            update_fields["task_order"] = request.task_order
-        if request.feature is not None:
-            update_fields["feature"] = request.feature
-        if request.attachments is not None:
-            # Pydantic models must be converted to dicts for JSON serialization
-            update_fields["attachments"] = [
-                attachment.model_dump() for attachment in request.attachments
-            ]
-        if request.due_date is not None:
-            update_fields["due_date"] = request.due_date
-
-        if request.is_recurring is not None:
-            update_fields["is_recurring"] = request.is_recurring
-
-        if request.crawler_target_id is not None:
-            update_fields["crawler_target_id"] = request.crawler_target_id
-
-        if request.schedule_config is not None:
-            update_fields["schedule_config"] = request.schedule_config
-
-        # Use TaskService to update the task
-        task_service = TaskService()
-        success, result = await task_service.update_task(
-            task_id, update_fields
-        )
-
-        result = cast(dict[str, Any], handle_service_result(success, result))
-        updated_task = result["task"]
-
-        logger.info(
-            f"Task updated successfully | task_id={task_id} | project_id={updated_task.get('project_id')} | updated_fields={list(update_fields.keys())}"
-        )
-
-        return {"message": "Task updated successfully", "task": updated_task}
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(
-            f"Failed to update task | error={str(e)} | task_id={task_id}"
-        )
-        raise HTTPException(status_code=500, detail={"error": str(e)}) from e
-
+async def update_task(task_id: str, req: UpdateTaskRequest, x_user_role: str | None = Header(None, alias="X-User-Role")):
+    fields = {k: v for k, v in req.model_dump().items() if v is not None}
+    if "assignee" in fields or "assignee_id" in fields:
+        name = fields.get("assignee")
+        if name and name != "Unassigned":
+            ok, r = ProfileService().get_user_role(name)
+            if ok and r and not RBACService().has_permission_to_assign(x_user_role or "User", r): _err("Forbidden", 403)
+    s, res = await TaskService().update_task(task_id, fields)
+    return {"message": "Task updated successfully", "task": cast(dict, handle_service_result(s, res))["task"]}
 
 @router.delete("/tasks/{task_id}")
 async def delete_task(task_id: str):
-    """Archive a task (soft delete)."""
-    try:
-        # Use TaskService to archive the task
-        task_service = TaskService()
-        success, result = await task_service.archive_task(
-            task_id, archived_by="api"
-        )
+    s, res = await TaskService().archive_task(task_id, archived_by="api")
+    if not s: _err(res, 400)
+    return {"message": res.get("message", "Task archived successfully")}
 
-        if not success:
-            error_msg = result.get("error", "") if isinstance(result, dict) else str(result)
-            if "not found" in error_msg.lower():
-                raise HTTPException(
-                    status_code=404, detail=error_msg
-                )
-            elif "already archived" in error_msg.lower():
-                raise HTTPException(
-                    status_code=409, detail=error_msg
-                )
-            else:
-                raise HTTPException(status_code=500, detail=result)
+@router.post("/tasks/{task_id}/agent-status", tags=["Agent Callback"])
+async def report_task_status_from_agent(task_id: str, req: AgentStatusUpdateRequest):
+    s, res = await TaskService().update_task_status_from_agent(task_id=task_id, new_status=req.status, agent_id=req.agent_id)
+    if not s: _err(res, 400)
+    return res
 
-        logger.info(f"Task archived successfully | task_id={task_id}")
-
-        return {"message": result.get("message", "Task archived successfully")}
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(
-            f"Failed to archive task | error={str(e)} | task_id={task_id}"
-        )
-        raise HTTPException(status_code=500, detail={"error": str(e)}) from e
-
-
-@router.post(
-    "/tasks/{task_id}/agent-status", status_code=200, tags=["Agent Callback"]
-)
-async def report_task_status_from_agent(
-    task_id: str, request: AgentStatusUpdateRequest
-):
-    """Endpoint for an AI agent to report a status update for a task."""
-    try:
-        logger.info(
-            f"Agent '{request.agent_id}' reporting status '{request.status}' for task '{task_id}'"
-        )
-        task_service = TaskService()
-        success, result = await task_service.update_task_status_from_agent(
-            task_id=task_id,
-            new_status=request.status,
-            agent_id=request.agent_id,
-        )
-        if not success:
-            raise HTTPException(
-                status_code=400,
-                detail=(result.get("error", "Failed to update status from agent") if isinstance(result, dict) else "Failed to update status from agent")
-            )
-        return result
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(
-            f"Failed to update status from agent | error={str(e)} | task_id={task_id}"
-        )
-        raise HTTPException(status_code=500, detail={"error": str(e)}) from e
-
-
-@router.post(
-    "/tasks/{task_id}/agent-output", status_code=200, tags=["Agent Callback"]
-)
-async def report_task_output_from_agent(
-    task_id: str, request: AgentOutputUpdateRequest
-):
-    """Endpoint for an AI agent to report its final output for a task."""
-    try:
-        logger.info(
-            f"Agent '{request.agent_id}' reporting output for task '{task_id}'"
-        )
-        task_service = TaskService()
-        success, result = await task_service.save_agent_output(
-            task_id=task_id, output=request.output, agent_id=request.agent_id
-        )
-        if not success:
-            raise HTTPException(
-                status_code=400,
-                detail=(result.get("error", "Failed to save agent output") if isinstance(result, dict) else "Failed to save agent output")
-            )
-        return result
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(
-            f"Failed to save agent output | error={str(e)} | task_id={task_id}"
-        )
-        raise HTTPException(status_code=500, detail={"error": str(e)}) from e
-
-
-# MCP endpoints for task operations
-
+@router.post("/tasks/{task_id}/agent-output", tags=["Agent Callback"])
+async def report_task_output_from_agent(task_id: str, req: AgentOutputUpdateRequest):
+    s, res = await TaskService().save_agent_output(task_id=task_id, output=req.output, agent_id=req.agent_id)
+    if not s: _err(res, 400)
+    return res
 
 @router.put("/mcp/tasks/{task_id}/status")
 async def mcp_update_task_status(task_id: str, status: str):
-    """Update task status via MCP tools."""
-    try:
-        logger.info(
-            f"MCP task status update | task_id={task_id} | status={status}"
-        )
+    s, res = await TaskService().update_task(task_id, {"status": status})
+    return {"message": "Task status updated successfully", "task": cast(dict, handle_service_result(s, res))["task"]}
 
-        # Use TaskService to update the task
-        task_service = TaskService()
-        update_fields = {"status": status}
-        success, result = await task_service.update_task(task_id, update_fields)
-
-        result = cast(dict[str, Any], handle_service_result(success, result))
-        updated_task = result["task"]
-        project_id = updated_task["project_id"]
-
-        logger.info(
-            f"Task status updated | task_id={task_id} | project_id={project_id} | status={status}"
-        )
-
-        return {
-            "message": "Task status updated successfully",
-            "task": updated_task,
-        }
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(
-            f"Failed to update task status | error={str(e)} | task_id={task_id}"
-        )
-        raise HTTPException(status_code=500, detail=str(e)) from e
-
-
-# Progress tracking via HTTP polling - see /api/progress endpoints
-
-# ==================== DOCUMENT MANAGEMENT ENDPOINTS ====================
-
-
+# --- Docs & Versions ---
 @router.get("/projects/{project_id}/docs")
-async def list_project_documents(
-    project_id: str, include_content: bool = False
-):
-    """
-    List all documents for a specific project.
-
-    Args:
-        project_id: Project UUID
-        include_content: If True, includes full document content.
-                        If False (default), returns metadata only.
-    """
-    try:
-        logger.info(
-            f"Listing documents for project | project_id={project_id} | include_content={include_content}"
-        )
-
-        document_service = DocumentService()
-        success, result = document_service.list_documents(
-            project_id, include_content=include_content
-        )
-
-        result = cast(dict[str, Any], handle_service_result(success, result))
-        logger.info(
-            f"Documents listed successfully | project_id={project_id} | count={result.get('total_count', 0)} | lightweight={not include_content}"
-        )
-
-        return result
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(
-            f"Failed to list documents | error={str(e)} | project_id={project_id}"
-        )
-        raise HTTPException(status_code=500, detail={"error": str(e)}) from e
-
+async def list_project_documents(project_id: str, include_content: bool = False):
+    s, res = DocumentService().list_documents(project_id, include_content=include_content)
+    return handle_service_result(s, res)
 
 @router.post("/projects/{project_id}/docs")
-async def create_project_document(
-    project_id: str, request: CreateDocumentRequest
-):
-    """Create a new document for a project."""
-    try:
-        logger.info(
-            f"Creating document for project | project_id={project_id} | title={request.title}"
-        )
-
-        # Use DocumentService to create document
-        document_service = DocumentService()
-        success, result = document_service.add_document(
-            project_id=project_id,
-            title=request.title,
-            document_type=request.document_type,
-            content=request.content or {},
-            tags=request.tags or [],
-            author=request.author or "",
-        )
-
-        result = cast(dict[str, Any], handle_service_result(success, result))
-        logger.info(
-            f"Document created successfully | project_id={project_id} | doc_id={result['document']['id']}"
-        )
-
-        return {
-            "message": "Document created successfully",
-            "document": result["document"],
-        }
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(
-            f"Failed to create document | error={str(e)} | project_id={project_id}"
-        )
-        raise HTTPException(status_code=500, detail={"error": str(e)}) from e
-
+async def create_project_document(project_id: str, req: CreateDocumentRequest):
+    s, res = DocumentService().add_document(
+        project_id=project_id, 
+        title=req.title,
+        document_type=req.document_type,
+        content=req.content,
+        tags=req.tags,
+        author=req.author
+    )
+    return {"message": "Document created successfully", "document": cast(dict, handle_service_result(s, res))["document"]}
 
 @router.get("/projects/{project_id}/docs/{doc_id}")
 async def get_project_document(project_id: str, doc_id: str):
-    """Get a specific document from a project."""
-    try:
-        logger.info(
-            f"Getting document | project_id={project_id} | doc_id={doc_id}"
-        )
-
-        # Use DocumentService to get document
-        document_service = DocumentService()
-        success, result = document_service.get_document(project_id, doc_id)
-
-        if not success or not isinstance(result, dict):
-            error_msg = result.get("error", "") if isinstance(result, dict) else str(result)
-            if "not found" in error_msg.lower():
-                raise HTTPException(
-                    status_code=404, detail=error_msg
-                )
-            else:
-                raise HTTPException(status_code=500, detail=result)
-
-        document = result["document"]
-        if not isinstance(document, dict):
-             raise HTTPException(status_code=500, detail="Invalid document data structure")
-
-        logger.info(
-            f"Document retrieved successfully | project_id={project_id} | doc_id={doc_id}"
-        )
-
-        return document
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(
-            f"Failed to get document | error={str(e)} | project_id={project_id} | doc_id={doc_id}"
-        )
-        raise HTTPException(status_code=500, detail={"error": str(e)}) from e
-
-
-@router.put("/projects/{project_id}/docs/{doc_id}")
-async def update_project_document(
-    project_id: str, doc_id: str, request: UpdateDocumentRequest
-):
-    """Update a document in a project."""
-    try:
-        logger.info(
-            f"Updating document | project_id={project_id} | doc_id={doc_id}"
-        )
-
-        # Build update fields
-        update_fields: dict[str, Any] = {}
-        if request.title is not None:
-            update_fields["title"] = request.title
-        if request.content is not None:
-            update_fields["content"] = request.content
-        if request.tags is not None:
-            update_fields["tags"] = request.tags
-        if request.author is not None:
-            update_fields["author"] = request.author
-
-        # Use DocumentService to update document
-        document_service = DocumentService()
-        success, result = document_service.update_document(
-            project_id, doc_id, update_fields
-        )
-
-        if not success or not isinstance(result, dict):
-            error_msg = result.get("error", "") if isinstance(result, dict) else str(result)
-            if "not found" in error_msg.lower():
-                raise HTTPException(
-                    status_code=404, detail=error_msg
-                )
-            else:
-                raise HTTPException(status_code=500, detail=result)
-
-        document = result["document"]
-        if not isinstance(document, dict):
-             raise HTTPException(status_code=500, detail="Invalid document data structure")
-
-        logger.info(
-            f"Document updated successfully | project_id={project_id} | doc_id={doc_id}"
-        )
-
-        return {
-            "message": "Document updated successfully",
-            "document": document,
-        }
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(
-            f"Failed to update document | error={str(e)} | project_id={project_id} | doc_id={doc_id}"
-        )
-        raise HTTPException(status_code=500, detail={"error": str(e)}) from e
-
-
-@router.delete("/projects/{project_id}/docs/{doc_id}")
-async def delete_project_document(project_id: str, doc_id: str):
-    """Delete a document from a project."""
-    try:
-        logger.info(
-            f"Deleting document | project_id={project_id} | doc_id={doc_id}"
-        )
-
-        # Use DocumentService to delete document
-        document_service = DocumentService()
-        success, result = document_service.delete_document(project_id, doc_id)
-
-        result = cast(dict[str, Any], handle_service_result(success, result))
-        logger.info(
-            f"Document deleted successfully | project_id={project_id} | doc_id={doc_id}"
-        )
-
-        return {"message": "Document deleted successfully"}
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(
-            f"Failed to delete document | error={str(e)} | project_id={project_id} | doc_id={doc_id}"
-        )
-        raise HTTPException(status_code=500, detail={"error": str(e)}) from e
-
-
-# ==================== VERSION MANAGEMENT ENDPOINTS ====================
-
+    s, res = DocumentService().get_document(project_id, doc_id)
+    if not s: _err(res, 404 if "not found" in str(res).lower() else 500)
+    return res["document"]
 
 @router.get("/versions")
-async def list_all_versions(
-    x_user_role: str | None = Header(None, alias="X-User-Role")
-):
-    """
-    List all document versions globally.
-    Admin-only endpoint.
-    """
-    if x_user_role not in ["system_admin", "admin", "manager"]:
-        raise HTTPException(
-            status_code=403, detail="Forbidden: Insufficient permissions"
-        )
-
-    try:
-        logger.info(f"Listing all document versions | user_role={x_user_role}")
-
-        versioning_service = VersioningService()
-        success, result = versioning_service.list_all_versions()
-
-        if not success or not isinstance(result, dict):
-            raise HTTPException(status_code=500, detail=result)
-
-        # Flatten the structure if needed, but here we return the 'versions' list
-        # result is {'versions': [...], 'total_count': ...}
-        # Frontend expects list of versions
-        return result.get("versions", [])
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Failed to list all versions | error={str(e)}")
-        raise HTTPException(status_code=500, detail={"error": str(e)}) from e
-
+async def list_all_versions(x_user_role: str | None = Header(None, alias="X-User-Role")):
+    if x_user_role not in ["system_admin", "admin", "manager"]: _err("Forbidden", 403)
+    s, res = VersioningService().list_all_versions()
+    if not s: _err(res)
+    return res.get("versions", [])
 
 @router.get("/projects/{project_id}/versions")
 async def list_project_versions(project_id: str, field_name: str | None = None):
-    """List version history for a project's JSONB fields."""
-    try:
-        logger.info(
-            f"Listing versions for project | project_id={project_id} | field_name={field_name}"
-        )
-
-        # Use VersioningService to list versions
-        versioning_service = VersioningService()
-        success, result = versioning_service.list_versions(
-            project_id, field_name
-        )
-
-        if not success or not isinstance(result, dict):
-            error_msg = result.get("error", "") if isinstance(result, dict) else str(result)
-            if "not found" in error_msg.lower():
-                raise HTTPException(
-                    status_code=404, detail=error_msg
-                )
-            else:
-                raise HTTPException(status_code=500, detail=result)
-
-        logger.info(
-            f"Versions listed successfully | project_id={project_id} | count={result.get('total_count', 0)}"
-        )
-
-        return result
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(
-            f"Failed to list versions | error={str(e)} | project_id={project_id}"
-        )
-        raise HTTPException(status_code=500, detail={"error": str(e)}) from e
-
+    s, res = VersioningService().list_versions(project_id, field_name)
+    if not s: _err(res, 404 if "not found" in str(res).lower() else 500)
+    return res
 
 @router.post("/projects/{project_id}/versions")
-async def create_project_version(
-    project_id: str, request: CreateVersionRequest
-):
-    """Create a version snapshot for a project's JSONB field."""
-    try:
-        logger.info(
-            f"Creating version for project | project_id={project_id} | field_name={request.field_name}"
-        )
+async def create_project_version(project_id: str, req: CreateVersionRequest):
+    s, res = VersioningService().create_version(
+        project_id=project_id, 
+        field_name=req.field_name,
+        content=req.content,
+        change_summary=req.change_summary,
+        change_type=req.change_type,
+        document_id=req.document_id,
+        created_by=req.created_by
+    )
+    return {"message": "Version created successfully", "version": cast(dict, handle_service_result(s, res))["version"]}
 
-        # Use VersioningService to create version
-        versioning_service = VersioningService()
-        success, result = versioning_service.create_version(
-            project_id=project_id,
-            field_name=request.field_name,
-            content=request.content,
-            change_summary=request.change_summary or "",
-            change_type=request.change_type or "update",
-            document_id=request.document_id or "",
-            created_by=request.created_by or "system",
-        )
+@router.post("/projects/{project_id}/versions/{field_name}/{version_number}/restore")
+async def restore_project_version(project_id: str, field_name: str, version_number: int, req: RestoreVersionRequest):
+    s, res = VersioningService().restore_version(
+        project_id=project_id, 
+        field_name=field_name, 
+        version_number=version_number,
+        restored_by=req.restored_by
+    )
+    return {"message": f"Successfully restored {field_name} to version {version_number}", **cast(dict, handle_service_result(s, res))}
 
-        result = cast(dict[str, Any], handle_service_result(success, result))
-        logger.info(
-            f"Version created successfully | project_id={project_id} | version_number={result['version_number']}"
-        )
-
-        return {
-            "message": "Version created successfully",
-            "version": result["version"],
-        }
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(
-            f"Failed to create version | error={str(e)} | project_id={project_id}"
-        )
-        raise HTTPException(status_code=500, detail={"error": str(e)}) from e
-
-
-@router.get("/projects/{project_id}/versions/{field_name}/{version_number}")
-async def get_project_version(
-    project_id: str, field_name: str, version_number: int
-):
-    """Get a specific version's content."""
-    try:
-        logger.info(
-            f"Getting version | project_id={project_id} | field_name={field_name} | version_number={version_number}"
-        )
-        # Use VersioningService to get version content
-        versioning_service = VersioningService()
-        success, result = versioning_service.get_version_content(
-            project_id, field_name, version_number
-        )
-
-        result = cast(dict[str, Any], handle_service_result(success, result))
-        logger.info(
-            f"Version retrieved successfully | project_id={project_id} | field_name={field_name} | version_number={version_number}"
-        )
-
-        return result
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(
-            f"Failed to get version | error={str(e)} | project_id={project_id} | field_name={field_name} | version_number={version_number}"
-        )
-        raise HTTPException(status_code=500, detail={"error": str(e)}) from e
-
-
-@router.post(
-    "/projects/{project_id}/versions/{field_name}/{version_number}/restore"
-)
-async def restore_project_version(
-    project_id: str,
-    field_name: str,
-    version_number: int,
-    request: RestoreVersionRequest,
-):
-    """Restore a project's JSONB field to a specific version."""
-    try:
-        logger.info(
-            f"Restoring version | project_id={project_id} | field_name={field_name} | version_number={version_number}"
-        )
-
-        # Use VersioningService to restore version
-        versioning_service = VersioningService()
-        success, result = versioning_service.restore_version(
-            project_id=project_id,
-            field_name=field_name,
-            version_number=version_number,
-            restored_by=request.restored_by or "system",
-        )
-
-        result = cast(dict[str, Any], handle_service_result(success, result))
-        logger.info(
-            f"Version restored successfully | project_id={project_id} | field_name={field_name} | version_number={version_number}"
-        )
-
-        return {
-            "message": f"Successfully restored {field_name} to version {version_number}",
-            **result,
-        }
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(
-            f"Failed to restore version | error={str(e)} | project_id={project_id} | field_name={field_name} | version_number={version_number}"
-        )
-        raise HTTPException(status_code=500, detail={"error": str(e)}) from e
+__all__ = ["router", "ProjectService", "TaskService", "ProjectCreationService", "DocumentService", "VersioningService", "ProfileService", "RBACService", "SourceLinkingService"]

@@ -27,7 +27,22 @@ export const useMarketingLogic = () => {
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>({ key: 'created_at', direction: 'desc' });
   const [filterMode, setFilterMode] = useState<'all' | 'review_queue'>('all');
 
+  // Hunter Mode State (Alice)
+  const [visitLogModalOpen, setVisitLogModalOpen] = useState(false);
+  const [selectedLeadForLog, setSelectedLeadForLog] = useState<any>(null);
+
   // Alice Methods
+  const handleOpenVisitLog = (lead: any) => {
+    setSelectedLeadForLog(lead);
+    setVisitLogModalOpen(true);
+  };
+
+  const handleCloseVisitLog = () => {
+    setVisitLogModalOpen(false);
+    setSelectedLeadForLog(null);
+    fetchLeads(); // Refresh to show new log markers if any
+  };
+
   const handleSearch = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!keyword.trim()) return;
@@ -176,6 +191,7 @@ export const useMarketingLogic = () => {
     selectedPitchLead, setSelectedPitchLead,
     sortConfig, filterMode, setFilterMode,
     sortedLeads, requestSort,
+    visitLogModalOpen, selectedLeadForLog, handleOpenVisitLog, handleCloseVisitLog,
     handleSearch, handleGeneratePitch, fetchLeads
   };
 };

@@ -14,18 +14,19 @@ const BrandPage: React.FC = () => {
     const {
         viewMode, setViewMode,
         posts, trendsData, loading,
+        logoSvg, isGeneratingLogo,
         sources, activeSource, contextData,
         isLoadingSources, isLoadingContext, isDrafting,
         isSidebarOpen, setIsSidebarOpen,
         workbenchTitle, setWorkbenchTitle,
         workbenchContent, setWorkbenchContent,
         handleSelectSource, handleMagicDraft, handleSaveWorkbench, handlePublishWorkbench,
-        handleDeletePost,
+        handleDeletePost, handleNewPost, updatePostStatus, handleSavePost, handleGenerateLogo,
         loadData
     } = useBrandLogic();
 
     const [editingPost, setEditingPost] = useState<BlogPost | null>(null);
-    const [_isPostModalOpen, setIsPostModalOpen] = useState(false);
+    const [isPostModalOpen, setIsPostModalOpen] = useState(false);
 
     const handleEditSmart = (post: BlogPost) => {
         if (post.status === 'draft' || post.status === 'changes_requested') {
@@ -91,9 +92,12 @@ const BrandPage: React.FC = () => {
                         <BrandDashboardView 
                             posts={posts}
                             trendsData={trendsData}
-                            onNewPost={() => setViewMode('workbench')}
+                            logoSvg={logoSvg}
+                            isGeneratingLogo={isGeneratingLogo}
+                            onGenerateLogo={handleGenerateLogo}
+                            onNewPost={handleNewPost}
                             onEditSmart={handleEditSmart}
-                            onUpdateStatus={() => alert("Quick status update pending implementation")}
+                            onUpdateStatus={updatePostStatus}
                             onDeletePost={handleDeletePost}
                             onNavigateAdvanced={(id) => navigate(`/brand/editor/${id}`)}
                         />
@@ -119,17 +123,56 @@ const BrandPage: React.FC = () => {
                     )}
                 </main>
             </div>
-            {/* Minimal support for editingPost modal placeholder */}
-            {editingPost && (
-                <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
-                    <div className="bg-white rounded-xl p-6 max-w-md w-full">
-                        <h3 className="text-lg font-bold mb-4">Edit Post: {editingPost.title}</h3>
-                        <p className="text-sm text-gray-500 mb-6">Advanced metadata editing is currently disabled in this simplified view. Please use Workbench for content edits.</p>
-                        <button onClick={() => setEditingPost(null)} className="w-full py-2 bg-gray-100 rounded-lg font-bold">Close</button>
+            
+            {/* Restored Modal for Dashboard Edits */}
+            {isPostModalOpen && (
+                <dialog open className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm w-full h-full">
+                    <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-2xl p-6 relative font-sans border border-gray-100 dark:border-slate-800">
+                        <div className="flex justify-between items-center mb-6 border-b dark:border-slate-800 pb-4">
+                            <h3 className="text-2xl font-bold text-gray-800 dark:text-white">
+                                {editingPost ? 'Edit Asset' : 'New Asset'}
+                            </h3>
+                            <button onClick={() => setIsPostModalOpen(false)} className="text-gray-400 hover:text-gray-600 transition-colors">✕</button>
+                        </div>
+                        <CreatePostForm 
+                            post={editingPost} 
+                            onSuccess={() => setIsPostModalOpen(false)} 
+                            onSubmit={handleSavePost}
+                        />
                     </div>
-                </div>
+                </dialog>
             )}
         </PermissionGuard>
+    );
+};
+
+const CreatePostForm: React.FC<{ post?: BlogPost | null, onSuccess: () => void, onSubmit: (data: any, id?: string) => Promise<void> }> = ({ post, onSuccess, onSubmit }) => {
+    const [title, setTitle] = useState(post?.title || '');
+    const [content, setContent] = useState(post?.content || '');
+    const imageUrl = post?.imageUrl || '';
+    const excerpt = post?.excerpt || '';
+    
+    const [loading, setLoading] = useState(false);
+    
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setLoading(true);
+        try {
+            await onSubmit({ title, content, excerpt, imageUrl, status: post?.status || 'draft' }, post?.id);
+            onSuccess();
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return (
+        <form onSubmit={handleSubmit} className="space-y-5 font-sans">
+            <input type="text" value={title} onChange={e => setTitle(e.target.value)} className="w-full p-3 border border-gray-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white rounded-xl outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Title" />
+            <textarea value={content} onChange={e => setContent(e.target.value)} className="w-full p-3 border border-gray-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white rounded-xl min-h-[200px] outline-none focus:ring-2 focus:ring-indigo-500 custom-scrollbar resize-none" placeholder="Content" />
+            <button type="submit" disabled={loading} className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl transition-colors disabled:opacity-50 shadow-lg shadow-indigo-200 dark:shadow-none">
+                {loading ? 'Saving...' : 'SAVE CHANGES'}
+            </button>
+        </form>
     );
 };
 

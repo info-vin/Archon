@@ -1,5 +1,5 @@
 import React from 'react';
-import { RefreshCwIcon } from '../../../components/Icons';
+import { RefreshCwIcon, MapPinIcon } from '../../../components/Icons';
 import { Button } from '../../../components/Button';
 import { EmptyState as CommonEmptyState } from '../../../components/common/EmptyState';
 import { api } from '../../../services/api';
@@ -14,11 +14,12 @@ interface MarketingLeadsStackProps {
   fetchLeads: () => Promise<void>;
   sortedLeads: any[];
   setActiveTab: (val: 'search' | 'leads') => void;
+  onOpenVisitLog: (lead: any) => void;
 }
 
 export const MarketingLeadsStack: React.FC<MarketingLeadsStackProps> = ({
   leads, isLeadsLoading, sortConfig, filterMode, setFilterMode,
-  requestSort, fetchLeads, sortedLeads, setActiveTab
+  requestSort, fetchLeads, sortedLeads, setActiveTab, onOpenVisitLog
 }) => {
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-100">
@@ -71,10 +72,47 @@ export const MarketingLeadsStack: React.FC<MarketingLeadsStackProps> = ({
                   <td className="px-6 py-4 text-xs text-gray-500">{new Date(lead.created_at || Date.now()).toLocaleDateString()}</td>
                   <td className="px-6 py-4"><div className="font-medium text-gray-900">{lead.company_name}</div><div className="text-xs text-gray-500">{lead.job_title}</div></td>
                   <td className="px-6 py-4"><div className="text-xs text-gray-600 line-clamp-2">{lead.identified_need || "Pending Analysis..."}</div></td>
-                  <td className="px-6 py-4"><span className={`px-2 py-1 rounded-full text-xs font-bold ${lead.status === 'new' ? 'bg-blue-100 text-blue-700' : lead.status === 'converted' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>{lead.status.toUpperCase()}</span></td>
-                  <td className="px-6 py-4"><a href={lead.source_job_url} target="_blank" rel="noreferrer" className="text-indigo-600 hover:underline text-xs">View Post</a></td>
+                  <td className="px-6 py-4">
+                    <div className="flex flex-col gap-1">
+                      <span className={`px-2 py-1 rounded-full text-xs font-bold text-center ${
+                        lead.status === 'new' ? 'bg-blue-100 text-blue-700' : 
+                        lead.status === 'converted' ? 'bg-green-100 text-green-700' : 
+                        lead.status === 'changes_requested' ? 'bg-red-100 text-red-700' :
+                        'bg-gray-100 text-gray-600'
+                      }`}>
+                        {lead.status.toUpperCase().replace('_', ' ')}
+                      </span>
+                      {lead.ai_score !== undefined && (
+                        <div className="flex items-center justify-center gap-1">
+                          <div className="w-full bg-gray-200 rounded-full h-1">
+                            <div className="bg-indigo-600 h-1 rounded-full" style={{ width: `${lead.ai_score}%` }}></div>
+                          </div>
+                          <span className="text-[10px] font-bold text-indigo-600">{lead.ai_score}</span>
+                        </div>
+                      )}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="flex flex-col gap-1">
+                      <a href={lead.source_job_url} target="_blank" rel="noreferrer" className="text-indigo-600 hover:underline text-xs">View Post</a>
+                      {lead.review_notes && (
+                        <p className="text-[10px] text-red-500 italic line-clamp-1" title={lead.review_notes}>Note: {lead.review_notes}</p>
+                      )}
+                    </div>
+                  </td>
                   <td className="px-6 py-4 text-xs">{lead.next_followup_date ? new Date(lead.next_followup_date).toLocaleDateString() : <span className="text-amber-600 bg-amber-50 px-2 py-0.5 rounded">Schedule</span>}</td>
-                  <td className="px-6 py-4 text-right"><Button variant="ghost" size="sm" onClick={() => alert("Activity Tracker: " + lead.company_name)}><RefreshCwIcon className="w-4 h-4" /></Button></td>
+                  <td className="px-6 py-4 text-right flex justify-end gap-2">
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="text-indigo-600 hover:bg-indigo-50"
+                      onClick={() => onOpenVisitLog(lead)}
+                      title="Log Visit (Hunter Mode)"
+                    >
+                      <MapPinIcon className="w-4 h-4" />
+                    </Button>
+                    <Button variant="ghost" size="sm" onClick={() => alert("Activity Tracker: " + lead.company_name)}><RefreshCwIcon className="w-4 h-4" /></Button>
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -84,3 +122,4 @@ export const MarketingLeadsStack: React.FC<MarketingLeadsStackProps> = ({
     </div>
   );
 };
+

@@ -11,6 +11,8 @@ export const useBrandLogic = () => {
     // Dashboard State
     const [posts, setPosts] = useState<BlogPost[]>([]);
     const [trendsData, setTrendsData] = useState<any>(null);
+    const [logoSvg, setLogoSvg] = useState<string | null>(null);
+    const [isGeneratingLogo, setIsGeneratingLogo] = useState(false);
     const [loading, setLoading] = useState(true);
 
     // Workbench State
@@ -91,7 +93,7 @@ export const useBrandLogic = () => {
         
         const sourceData = { ...source };
         
-        if (source.type === 'blog') {
+        if (source.type === 'blog' && source.id && !source.id.startsWith('blank-')) {
             setIsLoadingContext(true);
             try {
                 const blogRes = await api.getBlogPost(source.id);
@@ -121,15 +123,33 @@ export const useBrandLogic = () => {
         }
         
         setActiveSource(sourceData);
-        setIsLoadingContext(true);
-        try {
-            const context = await api.getContentContext(source.id, source.type);
-            setContextData(context);
-        } catch (err) {
-            console.error("Failed to load context:", err);
-        } finally {
-            setIsLoadingContext(false);
+        if (!source.id.startsWith('blank-')) {
+            setIsLoadingContext(true);
+            try {
+                const context = await api.getContentContext(source.id, source.type);
+                setContextData(context);
+            } catch (err) {
+                console.error("Failed to load context:", err);
+            } finally {
+                setIsLoadingContext(false);
+            }
         }
+    };
+
+    const handleNewPost = () => {
+        setWorkbenchTitle('');
+        setWorkbenchContent('');
+        setWorkbenchImageUrl('/placeholder-blog.jpg');
+        setActivePostId(null);
+        setActiveTaskId(null);
+        setContextData(null);
+        setActiveSource({
+            id: `blank-${Date.now()}`,
+            type: 'blog',
+            title: 'Blank Canvas',
+            summary: 'Start creating from scratch.',
+        } as any);
+        setViewMode('workbench');
     };
 
     const handleMagicDraft = async (topic: string, config?: any) => {
@@ -231,9 +251,51 @@ export const useBrandLogic = () => {
         }
     };
 
+    const updatePostStatus = async (id: string, newStatus: string) => {
+        try {
+            await api.updateBlogPostStatus(id, newStatus);
+            setPosts(prev => prev.map(p => p.id === id ? { ...p, status: newStatus } : p));
+        } catch (err) {
+            alert("Status update failed");
+        }
+    };
+
+    const handleSavePost = async (postData: any, postId?: string) => {
+        try {
+            if (postId) {
+                const updatedPost = await api.updateBlogPost(postId, postData);
+                setPosts(prev => prev.map(p => p.id === postId ? updatedPost : p));
+            } else {
+                 const newPostData = {
+                    ...postData,
+                    authorName: user?.name || "Marketing Bot",
+                    publishDate: new Date().toISOString(),
+                };
+                const newPost = await api.createBlogPost(newPostData);
+                setPosts(prev => [newPost, ...prev]);
+            }
+            loadData();
+        } catch(error: any) {
+             alert(`Failed to save post: ${error.message}`);
+        }
+    };
+
+    const handleGenerateLogo = async () => {
+        setIsGeneratingLogo(true);
+        try {
+            const result = await api.generateLogo("eciton");
+            setLogoSvg(result.svg_content);
+        } catch (err) {
+            alert("Failed to generate logo");
+        } finally {
+            setIsGeneratingLogo(false);
+        }
+    };
+
     return {
         viewMode, setViewMode, user,
         posts, trendsData, loading,
+        logoSvg, setLogoSvg, isGeneratingLogo,
         sources, activeSource, activeTaskId, contextData,
         isLoadingSources, isLoadingContext, isDrafting,
         isSidebarOpen, setIsSidebarOpen,
@@ -241,7 +303,7 @@ export const useBrandLogic = () => {
         workbenchContent, setWorkbenchContent,
         workbenchImageUrl, setWorkbenchImageUrl,
         handleSelectSource, handleMagicDraft, handleSaveWorkbench, handlePublishWorkbench,
-        handleDeletePost,
+        handleDeletePost, handleNewPost, updatePostStatus, handleSavePost, handleGenerateLogo,
         loadData, loadWorkbenchData
     };
 };

@@ -3,7 +3,7 @@ from typing import Any
 
 from supabase import Client
 
-from src.server.services.client_manager import get_supabase_client
+from ..services.client_manager import get_supabase_client
 
 from ..config.logfire_config import get_logger
 

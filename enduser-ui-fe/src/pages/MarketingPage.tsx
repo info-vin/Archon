@@ -4,6 +4,7 @@ import { SearchIcon, TableIcon } from '../components/Icons';
 import { useMarketingLogic } from '../features/marketing/hooks/useMarketingLogic';
 import { MarketingJobSearch } from '../features/marketing/components/MarketingJobSearch';
 import { MarketingLeadsStack } from '../features/marketing/components/MarketingLeadsStack';
+import { VisitLogModal } from '../features/marketing/components/VisitLogModal';
 
 const MarketingPage: React.FC = () => {
   const {
@@ -16,6 +17,7 @@ const MarketingPage: React.FC = () => {
     leads, isLeadsLoading,
     sortConfig, filterMode, setFilterMode,
     sortedLeads, requestSort,
+    visitLogModalOpen, selectedLeadForLog, handleOpenVisitLog, handleCloseVisitLog,
     handleSearch, handleGeneratePitch, fetchLeads
   } = useMarketingLogic();
 
@@ -78,6 +80,16 @@ const MarketingPage: React.FC = () => {
             fetchLeads={fetchLeads}
             sortedLeads={sortedLeads}
             setActiveTab={setActiveTab}
+            onOpenVisitLog={handleOpenVisitLog}
+          />
+        )}
+
+        {visitLogModalOpen && selectedLeadForLog && (
+          <VisitLogModal
+            isOpen={visitLogModalOpen}
+            onClose={handleCloseVisitLog}
+            leadId={selectedLeadForLog.id}
+            companyName={selectedLeadForLog.company_name}
           />
         )}
       </div>

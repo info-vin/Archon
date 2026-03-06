@@ -4,22 +4,37 @@ import { TrendLineChart } from './TrendLineChart';
 import { SankeyDiagram } from './SankeyDiagram';
 import { VictoryFeedList, ContentSource } from './VictoryFeedList';
 import { 
-    PlusIcon, TrendingUpIcon, FileEditIcon, EyeIcon, CheckCircleIcon, SparklesIcon
+    PlusIcon, TrendingUpIcon, FileEditIcon, EyeIcon, CheckCircleIcon, SparklesIcon, LayoutIcon, DownloadIcon, RefreshCwIcon, PaletteIcon
 } from '../../../components/Icons';
 
 interface BrandDashboardViewProps {
     posts: BlogPost[];
     trendsData: any;
+    logoSvg: string | null;
+    isGeneratingLogo: boolean;
     onNewPost: () => void;
     onEditSmart: (post: BlogPost) => void;
     onUpdateStatus: (id: string, status: string) => void;
     onDeletePost: (id: string) => void;
     onNavigateAdvanced: (id: string) => void;
+    onGenerateLogo: () => void;
 }
 
 export const BrandDashboardView: React.FC<BrandDashboardViewProps> = ({
-    posts, trendsData, onNewPost, onEditSmart, onUpdateStatus, onDeletePost, onNavigateAdvanced
+    posts, trendsData, logoSvg, isGeneratingLogo, onNewPost, onEditSmart, onUpdateStatus, onDeletePost, onNavigateAdvanced, onGenerateLogo
 }) => {
+    const downloadLogo = () => {
+        if (!logoSvg) return;
+        const blob = new Blob([logoSvg], { type: 'image/svg+xml' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'logo-eciton.svg';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+
     const KanbanColumn = ({ filter, title, icon: Icon, colorClass }: any) => {
         const columnPosts = posts.filter(filter);
         return (
@@ -54,15 +69,18 @@ export const BrandDashboardView: React.FC<BrandDashboardViewProps> = ({
                                 <p className="text-[10px] text-gray-500 mt-2 font-medium">By {post.authorName}</p>
                                 <div className="mt-4 flex justify-between items-center opacity-0 group-hover:opacity-100 transition-opacity">
                                     <div className="flex gap-1">
-                                        <button onClick={() => onEditSmart(post)} className="p-1 hover:bg-gray-100 rounded text-blue-500"><FileEditIcon className="w-4 h-4" /></button>
-                                        <button onClick={() => onNavigateAdvanced(post.id)} className="p-1 hover:bg-indigo-50 rounded text-indigo-500"><SparklesIcon className="w-4 h-4" /></button>
+                                        {post.status !== 'draft' && post.status !== 'changes_requested' && (
+                                            <button onClick={() => onUpdateStatus(post.id, 'draft')} className="p-1 hover:bg-gray-100 rounded text-gray-400" title="Move to Draft"><FileEditIcon className="w-4 h-4" /></button>
+                                        )}
+                                        <button onClick={() => onEditSmart(post)} className="p-1 hover:bg-gray-100 rounded text-blue-500" title="Edit Content"><FileEditIcon className="w-4 h-4" /></button>
+                                        <button onClick={() => onNavigateAdvanced(post.id)} className="p-1 hover:bg-indigo-50 rounded text-indigo-500" title="Advanced Editor (Pro)"><SparklesIcon className="w-4 h-4" /></button>
                                         {post.status !== 'review' && (
-                                            <button onClick={() => onUpdateStatus(post.id, 'review')} className="p-1 hover:bg-amber-50 rounded text-amber-500"><EyeIcon className="w-4 h-4" /></button>
+                                            <button onClick={() => onUpdateStatus(post.id, 'review')} className="p-1 hover:bg-amber-50 rounded text-amber-500" title="Move to Review"><EyeIcon className="w-4 h-4" /></button>
                                         )}
                                         {post.status !== 'published' && (
-                                            <button onClick={() => onUpdateStatus(post.id, 'published')} className="p-1 hover:bg-green-50 rounded text-green-600"><CheckCircleIcon className="w-4 h-4" /></button>
+                                            <button onClick={() => onUpdateStatus(post.id, 'published')} className="p-1 hover:bg-green-50 rounded text-green-600" title="Publish Now"><CheckCircleIcon className="w-4 h-4" /></button>
                                         )}
-                                        <button onClick={() => onDeletePost(post.id)} className="p-1 hover:bg-red-50 rounded text-red-500 ml-auto"><PlusIcon className="w-4 h-4 rotate-45" /></button>
+                                        <button onClick={() => onDeletePost(post.id)} className="p-1 hover:bg-red-50 rounded text-red-500 ml-auto" title="Delete"><PlusIcon className="w-4 h-4 rotate-45" /></button>
                                     </div>
                                 </div>
                             </div>
@@ -137,6 +155,48 @@ export const BrandDashboardView: React.FC<BrandDashboardViewProps> = ({
                     <VictoryFeedList sources={feedSources} onSelect={(s) => onEditSmart(posts.find(p => p.id === s.id)!)} />
                 </div>
             </section>
+
+            {/* Brand Identity Section (Restored) */}
+            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 space-y-6">
+                <div className="flex justify-between items-center">
+                    <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+                        <LayoutIcon className="w-5 h-5 text-indigo-500" />
+                        Visual Identity
+                    </h2>
+                    <button
+                        onClick={onGenerateLogo}
+                        disabled={isGeneratingLogo}
+                        className="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-indigo-700 disabled:opacity-50 transition-all flex items-center gap-2 shadow-lg shadow-indigo-200"
+                    >
+                        <RefreshCwIcon className={`w-4 h-4 ${isGeneratingLogo ? 'animate-spin' : ''}`} />
+                        Generate with DevBot
+                    </button>
+                </div>
+
+                <div className="h-64 bg-slate-900 rounded-xl flex items-center justify-center relative overflow-hidden group border-4 border-slate-800">
+                    {logoSvg ? (
+                        <div className="w-48 h-48 drop-shadow-[0_0_15px_rgba(0,242,255,0.5)]" dangerouslySetInnerHTML={{ __html: logoSvg }} />
+                    ) : (
+                        <div className="text-slate-500 flex flex-col items-center gap-2">
+                            <PaletteIcon className="w-12 h-12 opacity-20" />
+                            <p className="text-sm">Click generate to preview living brand assets</p>
+                        </div>
+                    )}
+
+                    {logoSvg && (
+                        <button
+                            onClick={downloadLogo}
+                            className="absolute bottom-4 right-4 bg-white/10 backdrop-blur-md text-white p-2 rounded-lg hover:bg-white/20 transition-all opacity-0 group-hover:opacity-100"
+                            title="Download SVG"
+                        >
+                            <DownloadIcon className="w-5 h-5" />
+                        </button>
+                    )}
+                </div>
+                <p className="text-xs text-gray-400 italic text-center">
+                    Powered by **Project ECITON** Engine. Dynamic SVG generation based on collective intelligence math.
+                </p>
+            </div>
         </div>
     );
 };
