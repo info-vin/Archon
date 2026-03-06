@@ -15,11 +15,12 @@ from typing import Any, cast
 from urllib.parse import urlparse
 
 from ...config.logfire_config import get_logger, safe_span
+from ...repositories.base_repository import BaseRepository
 
 logger = get_logger(__name__)
 
 
-class BaseStorageService(ABC):
+class BaseStorageService(BaseRepository, ABC):
     """Base class for all storage services with common functionality."""
 
     def __init__(self, supabase_client=None):
@@ -29,7 +30,7 @@ class BaseStorageService(ABC):
             from ...utils import get_supabase_client
 
             supabase_client = get_supabase_client()
-        self.supabase_client = supabase_client
+        super().__init__(supabase_client)
 
         # Lazy import threading service
         from ...utils import get_utils_threading_service

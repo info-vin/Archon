@@ -20,6 +20,7 @@ from google import genai
 from google.genai import types
 
 from ...config.logfire_config import get_logger, safe_span
+from ...repositories.base_repository import BaseRepository
 from ...utils import get_supabase_client
 from ..embeddings.embedding_service import create_embedding
 from .agentic_rag_strategy import AgenticRAGStrategy
@@ -32,7 +33,7 @@ from .reranking_strategy import RerankingStrategy
 logger = get_logger(__name__)
 
 
-class RAGService:
+class RAGService(BaseRepository):
     """
     Coordinator service that orchestrates multiple RAG strategies.
 
@@ -42,7 +43,7 @@ class RAGService:
 
     def __init__(self, supabase_client=None):
         """Initialize RAG service as a coordinator for search strategies"""
-        self.supabase_client = supabase_client or get_supabase_client()
+        super().__init__(supabase_client or get_supabase_client())
 
         # Initialize base strategy (always needed)
         self.base_strategy = BaseSearchStrategy(self.supabase_client)

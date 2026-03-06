@@ -16,16 +16,17 @@ from typing import Any
 from supabase import Client
 
 from ...config.logfire_config import get_logger, safe_span
+from ...repositories.base_repository import BaseRepository
 from ..embeddings.embedding_service import create_embedding
 
 logger = get_logger(__name__)
 
 
-class HybridSearchStrategy:
+class HybridSearchStrategy(BaseRepository):
     """Strategy class implementing hybrid search combining vector and full-text search"""
 
     def __init__(self, supabase_client: Client, base_strategy):
-        self.supabase_client = supabase_client
+        super().__init__(supabase_client)
         self.base_strategy = base_strategy
 
     async def search_documents_hybrid(
@@ -49,61 +50,64 @@ class HybridSearchStrategy:
             List of matching documents from both vector and text search
         """
         with safe_span("hybrid_search_documents") as span:
-            try:
-                # Prepare filter and source parameters
-                filter_json = filter_metadata or {}
-                source_filter = filter_json.pop("source", None) if "source" in filter_json else None
+            # Prepare filter and source parameters
+            filter_json = filter_metadata or {}
+            source_filter = filter_json.pop("source", None) if "source" in filter_json else None
 
-                # Call the hybrid search PostgreSQL function
-                response = self.supabase_client.rpc(
-                    "hybrid_search_archon_crawled_pages",
-                    {
-                        "query_embedding": query_embedding,
-                        "query_text": query,
-                        "match_count": match_count,
-                        "filter": filter_json,
-                        "source_filter": source_filter,
-                    },
-                ).execute()
+            # Call the hybrid search PostgreSQL function
+            query_obj = self.supabase_client.rpc(
+                "hybrid_search_archon_crawled_pages",
+                {
+                    "query_embedding": query_embedding,
+                    "query_text": query,
+                    "match_count": match_count,
+                    "filter": filter_json,
+                    "source_filter": source_filter,
+                },
+            )
+            success, response = self.execute_query(
+                query_obj.execute,
+                error_context="Hybrid document search failed"
+            )
 
-                if not response.data:
-                    logger.debug("No results from hybrid search")
-                    return []
-
-                # Format results to match expected structure
-                results = []
-                for row in response.data:
-                    result = {
-                        "id": row["id"],
-                        "url": row["url"],
-                        "chunk_number": row["chunk_number"],
-                        "content": row["content"],
-                        "metadata": row["metadata"],
-                        "source_id": row["source_id"],
-                        "similarity": row["similarity"],
-                        "match_type": row["match_type"],
-                    }
-                    results.append(result)
-
-                span.set_attribute("results_count", len(results))
-
-                # Log match type distribution for debugging
-                match_types: dict[str, int] = {}
-                for r in results:
-                    mt = r.get("match_type", "unknown")
-                    match_types[mt] = match_types.get(mt, 0) + 1
-
-                logger.debug(
-                    f"Hybrid search returned {len(results)} results. "
-                    f"Match types: {match_types}"
-                )
-
-                return results
-
-            except Exception as e:
-                logger.error(f"Hybrid document search failed: {e}")
-                span.set_attribute("error", str(e))
+            if not success:
+                span.set_attribute("error", str(response.get("error")))
                 return []
+
+            data = response.get("data", [])
+            if not data:
+                logger.debug("No results from hybrid search")
+                return []
+
+            # Format results to match expected structure
+            results = []
+            for row in data:
+                result = {
+                    "id": row["id"],
+                    "url": row["url"],
+                    "chunk_number": row["chunk_number"],
+                    "content": row["content"],
+                    "metadata": row["metadata"],
+                    "source_id": row["source_id"],
+                    "similarity": row["similarity"],
+                    "match_type": row["match_type"],
+                }
+                results.append(result)
+
+            span.set_attribute("results_count", len(results))
+
+            # Log match type distribution for debugging
+            match_types: dict[str, int] = {}
+            for r in results:
+                mt = r.get("match_type", "unknown")
+                match_types[mt] = match_types.get(mt, 0) + 1
+
+            logger.debug(
+                f"Hybrid search returned {len(results)} results. "
+                f"Match types: {match_types}"
+            )
+
+            return results
 
     async def search_code_examples_hybrid(
         self,
@@ -126,69 +130,72 @@ class HybridSearchStrategy:
             List of matching code examples from both vector and text search
         """
         with safe_span("hybrid_search_code_examples") as span:
-            try:
-                # Create query embedding
-                query_embedding = await create_embedding(query)
+            # Create query embedding
+            query_embedding = await create_embedding(query)
 
-                if not query_embedding:
-                    logger.error("Failed to create embedding for code example query")
-                    return []
-
-                # Prepare filter and source parameters
-                filter_json = filter_metadata or {}
-                # Use source_id parameter if provided, otherwise check filter_metadata
-                final_source_filter = source_id
-                if not final_source_filter and "source" in filter_json:
-                    final_source_filter = filter_json.pop("source")
-
-                # Call the hybrid search PostgreSQL function
-                response = self.supabase_client.rpc(
-                    "hybrid_search_archon_code_examples",
-                    {
-                        "query_embedding": query_embedding,
-                        "query_text": query,
-                        "match_count": match_count,
-                        "filter": filter_json,
-                        "source_filter": final_source_filter,
-                    },
-                ).execute()
-
-                if not response.data:
-                    logger.debug("No results from hybrid code search")
-                    return []
-
-                # Format results to match expected structure
-                results = []
-                for row in response.data:
-                    result = {
-                        "id": row["id"],
-                        "url": row["url"],
-                        "chunk_number": row["chunk_number"],
-                        "content": row["content"],
-                        "summary": row["summary"],
-                        "metadata": row["metadata"],
-                        "source_id": row["source_id"],
-                        "similarity": row["similarity"],
-                        "match_type": row["match_type"],
-                    }
-                    results.append(result)
-
-                span.set_attribute("results_count", len(results))
-
-                # Log match type distribution for debugging
-                match_types: dict[str, int] = {}
-                for r in results:
-                    mt = r.get("match_type", "unknown")
-                    match_types[mt] = match_types.get(mt, 0) + 1
-
-                logger.debug(
-                    f"Hybrid code search returned {len(results)} results. "
-                    f"Match types: {match_types}"
-                )
-
-                return results
-
-            except Exception as e:
-                logger.error(f"Hybrid code example search failed: {e}")
-                span.set_attribute("error", str(e))
+            if not query_embedding:
+                logger.error("Failed to create embedding for code example query")
                 return []
+
+            # Prepare filter and source parameters
+            filter_json = filter_metadata or {}
+            # Use source_id parameter if provided, otherwise check filter_metadata
+            final_source_filter = source_id
+            if not final_source_filter and "source" in filter_json:
+                final_source_filter = filter_json.pop("source")
+
+            # Call the hybrid search PostgreSQL function
+            query_obj = self.supabase_client.rpc(
+                "hybrid_search_archon_code_examples",
+                {
+                    "query_embedding": query_embedding,
+                    "query_text": query,
+                    "match_count": match_count,
+                    "filter": filter_json,
+                    "source_filter": final_source_filter,
+                },
+            )
+            success, response = self.execute_query(
+                query_obj.execute,
+                error_context="Hybrid code example search failed"
+            )
+
+            if not success:
+                span.set_attribute("error", str(response.get("error")))
+                return []
+
+            data = response.get("data", [])
+            if not data:
+                logger.debug("No results from hybrid code search")
+                return []
+
+            # Format results to match expected structure
+            results = []
+            for row in data:
+                result = {
+                    "id": row["id"],
+                    "url": row["url"],
+                    "chunk_number": row["chunk_number"],
+                    "content": row["content"],
+                    "summary": row["summary"],
+                    "metadata": row["metadata"],
+                    "source_id": row["source_id"],
+                    "similarity": row["similarity"],
+                    "match_type": row["match_type"],
+                }
+                results.append(result)
+
+            span.set_attribute("results_count", len(results))
+
+            # Log match type distribution for debugging
+            match_types: dict[str, int] = {}
+            for r in results:
+                mt = r.get("match_type", "unknown")
+                match_types[mt] = match_types.get(mt, 0) + 1
+
+            logger.debug(
+                f"Hybrid code search returned {len(results)} results. "
+                f"Match types: {match_types}"
+            )
+
+            return results

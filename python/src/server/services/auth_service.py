@@ -18,6 +18,19 @@ class AuthService:
         self.supabase = supabase_client or get_supabase_client()
         self.profile_service = profile_service or ProfileService(self.supabase)
 
+    def get_all_users(self) -> list[dict[str, Any]]:
+        """
+        Retrieves all user profiles.
+        """
+        try:
+            success, profiles = self.profile_service.list_full_profiles()
+            if success and isinstance(profiles, list):
+                return profiles
+            return []
+        except Exception as e:
+            logger.error(f"Error fetching all users: {e}")
+            raise e
+
     def create_user_by_admin(self, email: str, password: str, name: str, role: str, status: str = 'active') -> dict[str, Any]:
         """
         Creates a new user using the Admin API (does not log out the current user).

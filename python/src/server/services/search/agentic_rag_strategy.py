@@ -17,12 +17,13 @@ from typing import Any, cast
 from supabase import Client
 
 from ...config.logfire_config import get_logger, safe_span
+from ...repositories.base_repository import BaseRepository
 from ..embeddings.embedding_service import create_embedding
 
 logger = get_logger(__name__)
 
 
-class AgenticRAGStrategy:
+class AgenticRAGStrategy(BaseRepository):
     """Strategy class implementing agentic RAG for code example search and extraction"""
 
     def __init__(self, supabase_client: Client, base_strategy):
@@ -33,7 +34,7 @@ class AgenticRAGStrategy:
             supabase_client: Supabase client for database operations
             base_strategy: Base strategy for vector search
         """
-        self.supabase_client = supabase_client
+        super().__init__(supabase_client)
         self.base_strategy = base_strategy
 
     def is_enabled(self) -> bool:

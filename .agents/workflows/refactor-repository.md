@@ -74,12 +74,12 @@ git commit -m "refactor(backend): use BaseRepository for <service_name>"
 - [ ] `python/src/server/services/projects/source_linking_service.py`
 
 ### Storage & Search
-- [ ] `python/src/server/services/storage/storage_services.py`
-- [ ] `python/src/server/services/storage/base_storage_service.py`
-- [ ] `python/src/server/services/search/agentic_rag_strategy.py`
-- [ ] `python/src/server/services/search/base_search_strategy.py`
-- [ ] `python/src/server/services/search/rag_service.py`
-- [ ] `python/src/server/services/search/hybrid_search_strategy.py`
+- [x] `python/src/server/services/storage/storage_services.py`
+- [x] `python/src/server/services/storage/base_storage_service.py`
+- [x] `python/src/server/services/search/agentic_rag_strategy.py`
+- [x] `python/src/server/services/search/base_search_strategy.py`
+- [x] `python/src/server/services/search/rag_service.py`
+- [x] `python/src/server/services/search/hybrid_search_strategy.py`
 
 ### Crawling
 - [x] `python/src/server/services/crawling/document_storage_operations.py`
