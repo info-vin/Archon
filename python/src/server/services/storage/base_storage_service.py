@@ -14,7 +14,7 @@ from collections.abc import Callable
 from typing import Any, cast
 from urllib.parse import urlparse
 
-from server.repositories.base_repository import BaseRepository
+from src.server.repositories.base_repository import BaseRepository
 
 from ...config.logfire_config import get_logger, safe_span
 

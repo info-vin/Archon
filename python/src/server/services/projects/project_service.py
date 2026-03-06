@@ -2,7 +2,7 @@
 
 from typing import Any
 
-from server.repositories.base_repository import BaseRepository
+from src.server.repositories.base_repository import BaseRepository
 
 from ...config.logfire_config import get_logger
 from .task_service import TaskService
@@ -82,4 +82,14 @@ class ProjectService(BaseRepository):
         success, result = self.execute_query(_query, "Database operation failed")
         if success:
             return True, {"message": "Project deleted successfully"}
+        return False, result
+
+    async def get_project_features(self, project_id: str) -> tuple[bool, dict[str, Any]]:
+        """Retrieve features for a project."""
+        def _query():
+            return self.supabase_client.table("archon_projects").select("features").eq("id", project_id).single().execute()
+
+        success, result = self.execute_query(_query, f"Failed to fetch features for project {project_id}")
+        if success:
+            return True, result.get("data", {})
         return False, result

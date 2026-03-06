@@ -5,7 +5,7 @@ This module provides business logic for logging Gemini interactions.
 """
 from datetime import datetime
 
-from server.repositories.base_repository import BaseRepository
+from src.server.repositories.base_repository import BaseRepository
 
 from ..config.logfire_config import get_logger
 from ..utils import get_supabase_client

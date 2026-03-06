@@ -1,4 +1,4 @@
-from typing import Any, cast
+from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
@@ -39,7 +39,7 @@ async def get_rag_health_check() -> dict[str, Any]:
     Restricted to System Admin to prevent probe data pollution.
     """
     service = HealthService()
-    return cast(dict[str, Any], await service.check_rag_integrity())
+    return await service.check_rag_integrity()
 
 
 @router.get("/health/ai", dependencies=[Depends(require_system_admin)])

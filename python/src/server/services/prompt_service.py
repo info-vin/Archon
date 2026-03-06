@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import Any
 from unittest.mock import MagicMock
 
-from server.repositories.base_repository import BaseRepository
+from src.server.repositories.base_repository import BaseRepository
 
 from ..config.logfire_config import get_logger
 from ..utils import get_supabase_client
@@ -42,7 +42,7 @@ class PromptService(BaseRepository):
     async def list_prompts(self) -> tuple[bool, dict[str, Any]]:
         """List all system prompts from the database."""
         def _query():
-            return self.supabase_client.table("archon_system_prompts").select("*").execute()
+            return self.supabase_client.table("archon_prompts").select("*").execute()
 
         success, result = self.execute_query(_query, "Failed to list prompts")
         if success:
@@ -57,7 +57,7 @@ class PromptService(BaseRepository):
                 return self._prompts[name]
 
             # Fallback to direct DB call
-            res = self.supabase_client.table("archon_system_prompts").select("prompt_text").eq("name", name).single().execute()
+            res = self.supabase_client.table("archon_prompts").select("prompt_text").eq("name", name).single().execute()
 
             # DEFENSIVE: Check if res.data is a real dict and not a MagicMock
             if res.data and not isinstance(res.data, MagicMock):
@@ -72,7 +72,7 @@ class PromptService(BaseRepository):
             update_data = {"prompt_text": content}
             if description:
                 update_data["description"] = description
-            return self.supabase_client.table("archon_system_prompts").update(update_data).eq("name", prompt_name).execute()
+            return self.supabase_client.table("archon_prompts").update(update_data).eq("name", prompt_name).execute()
 
         success, result = self.execute_query(_query, f"Failed to update prompt {prompt_name}")
         if success:

@@ -1,8 +1,8 @@
 # python/src/server/services/projects/source_linking_service.py
 
-from typing import Any, cast
+from typing import Any
 
-from server.repositories.base_repository import BaseRepository
+from src.server.repositories.base_repository import BaseRepository
 
 from ...config.logfire_config import get_logger
 
@@ -37,29 +37,45 @@ class SourceLinkingService(BaseRepository):
             "business_sources": [s["source_id"] for s in sources if s.get("notes") == "business"]
         }
 
-    async def link_sources(self, project_id: str, technical_source_ids: list[str], business_source_ids: list[str]) -> tuple[bool, dict[str, Any]]:
+    async def update_project_sources(
+        self,
+        project_id: str,
+        technical_sources: list[str] | None = None,
+        business_sources: list[str] | None = None,
+    ) -> tuple[bool, dict[str, Any]]:
         """
-        Links multiple sources to a project.
+        Update project sources, replacing existing ones if provided.
         """
         try:
-            # Clear existing links first
-            self.supabase_client.table("archon_project_sources").delete().eq("project_id", project_id).execute()
+            # 1. Clear existing links
+            def _delete():
+                return self.supabase_client.table("archon_project_sources").delete().eq("project_id", project_id).execute()
 
-            # Batch insert new links
+            self.execute_query(_delete, "Failed to clear project sources", require_data=False)
+
+            # 2. Batch insert new links
             all_links = []
-            for s_id in technical_source_ids:
-                all_links.append({"project_id": project_id, "source_id": s_id, "notes": "technical"})
-            for s_id in business_source_ids:
-                all_links.append({"project_id": project_id, "source_id": s_id, "notes": "business"})
+            if technical_sources:
+                for s_id in technical_sources:
+                    all_links.append({"project_id": project_id, "source_id": s_id, "notes": "technical"})
+            if business_sources:
+                for s_id in business_sources:
+                    all_links.append({"project_id": project_id, "source_id": s_id, "notes": "business"})
 
             if all_links:
                 def _insert():
                     return self.supabase_client.table("archon_project_sources").insert(all_links).execute()
-                return cast(tuple[bool, dict[str, Any]], self.execute_query(_insert, "Failed to batch link sources"))
+                return self.execute_query(_insert, "Failed to batch link sources")
 
             return True, {"message": "No sources to link"}
         except Exception as e:
             return False, {"error": str(e)}
+
+    async def link_sources(self, project_id: str, technical_source_ids: list[str], business_source_ids: list[str]) -> tuple[bool, dict[str, Any]]:
+        """
+        Legacy wrapper for link_sources.
+        """
+        return await self.update_project_sources(project_id, technical_source_ids, business_source_ids)
 
     async def format_project_with_sources(self, project: dict[str, Any]) -> dict[str, Any]:
         """

@@ -8,7 +8,7 @@ AI-assisted documentation generation and progress tracking.
 # Removed direct logging import - using unified config
 from typing import Any
 
-from server.repositories.base_repository import BaseRepository
+from src.server.repositories.base_repository import BaseRepository
 
 from ...config.logfire_config import get_logger
 

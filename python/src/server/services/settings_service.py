@@ -1,6 +1,6 @@
 # python/src/server/services/settings_service.py
 
-from server.repositories.base_repository import BaseRepository
+from src.server.repositories.base_repository import BaseRepository
 
 from ..config.logfire_config import get_logger
 from ..utils import get_supabase_client

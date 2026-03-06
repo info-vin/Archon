@@ -8,7 +8,7 @@ import re
 from collections.abc import Callable
 from typing import Any
 
-from server.repositories.base_repository import BaseRepository
+from src.server.repositories.base_repository import BaseRepository
 
 from ...config.logfire_config import safe_logfire_error, safe_logfire_info
 from ...services.credential_service import credential_service

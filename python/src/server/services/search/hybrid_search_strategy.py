@@ -15,7 +15,7 @@ from typing import Any
 
 from supabase import Client
 
-from server.repositories.base_repository import BaseRepository
+from src.server.repositories.base_repository import BaseRepository
 
 from ...config.logfire_config import get_logger, safe_span
 from ..embeddings.embedding_service import create_embedding

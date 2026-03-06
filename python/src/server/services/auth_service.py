@@ -1,8 +1,8 @@
 # python/src/server/services/auth_service.py
 
-from typing import Any
+from typing import Any, cast
 
-from server.repositories.base_repository import BaseRepository
+from src.server.repositories.base_repository import BaseRepository
 
 from ..config.logfire_config import get_logger
 from ..utils import get_supabase_client
@@ -36,16 +36,19 @@ class AuthService(BaseRepository):
         Creates a user via admin privileges.
         """
         try:
-            # 1. Sign up in Auth
-            auth_res = self.supabase_client.auth.sign_up({
+            # 1. Create Auth User via Admin API
+            attributes = {
                 "email": email,
                 "password": password,
-                "options": {"data": {"full_name": name, "role": role}}
-            })
-            if not auth_res.user:
-                raise ValueError("Auth signup failed")
+                "email_confirm": True,
+                "user_metadata": {"full_name": name, "role": role}
+            }
 
-            user_id = auth_res.user.id
+            user_response = self.supabase_client.auth.admin.create_user(attributes)
+            if not user_response.user:
+                raise ValueError("Auth creation failed")
+
+            user_id = user_response.user.id
 
             # 2. Create Profile
             profile_data = {
@@ -53,10 +56,54 @@ class AuthService(BaseRepository):
                 "email": email,
                 "full_name": name,
                 "role": role,
-                "status": status
+                "status": status,
+                "avatar": f"https://i.pravatar.cc/150?u={user_id}"
             }
+
             self.supabase_client.table("profiles").upsert(profile_data).execute()
             return profile_data
         except Exception as e:
-            logger.error(f"Registration error: {e}")
+            logger.error(f"Admin user creation error: {e}")
+            raise e
+
+    def update_user_email(self, user_id: str, new_email: str) -> None:
+        """
+        Updates user email via Admin API.
+        """
+        try:
+            logger.info(f"Updating email for {user_id} to {new_email}")
+
+            # 1. Update Auth
+            self.supabase_client.auth.admin.update_user_by_id(user_id, {"email": new_email})
+
+            # 2. Update Profile
+            self.supabase_client.table("profiles").update({"email": new_email}).eq("id", user_id).execute()
+
+        except Exception as e:
+            logger.error(f"Error updating email: {e}", exc_info=True)
+            raise e
+
+    def update_user_by_admin(self, user_id: str, updates: dict[str, Any]) -> dict[str, Any]:
+        """
+        Updates a user's role, status, or permissions as an Admin.
+        """
+        try:
+            logger.info(f"Admin updating user {user_id}: {updates.keys()}")
+
+            # 1. Sync Role to Auth User Metadata if it changed
+            if "role" in updates:
+                self.supabase_client.auth.admin.update_user_by_id(
+                    user_id,
+                    {"user_metadata": {"role": updates["role"]}}
+                )
+
+            # 2. Update Profile table
+            res = self.supabase_client.table("profiles").update(updates).eq("id", user_id).execute()
+
+            if res.data:
+                return cast(dict[str, Any], res.data[0])
+            raise ValueError(f"Failed to update profile for {user_id}")
+
+        except Exception as e:
+            logger.error(f"Error updating user by admin: {e}", exc_info=True)
             raise e

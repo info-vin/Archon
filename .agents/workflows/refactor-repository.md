@@ -66,12 +66,12 @@ git commit -m "refactor(backend): use BaseRepository for <service_name>"
 - [x] `python/src/server/services/profile_service.py`
 
 ### Projects & Documents
-- [ ] `python/src/server/services/projects/document_service.py`
-- [ ] `python/src/server/services/projects/project_creation_service.py`
-- [ ] `python/src/server/services/projects/project_service.py`
+- [x] `python/src/server/services/projects/document_service.py`
+- [x] `python/src/server/services/projects/project_creation_service.py`
+- [x] `python/src/server/services/projects/project_service.py`
 - [x] `python/src/server/services/projects/task_service.py` (Pilot completed)
-- [ ] `python/src/server/services/projects/versioning_service.py`
-- [ ] `python/src/server/services/projects/source_linking_service.py`
+- [x] `python/src/server/services/projects/versioning_service.py`
+- [x] `python/src/server/services/projects/source_linking_service.py`
 
 ### Storage & Search
 - [x] `python/src/server/services/storage/storage_services.py`
