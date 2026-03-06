@@ -4,34 +4,39 @@ Facade pattern with 100% Signature Alignment for Test Compatibility.
 Successfully modularized, lint-fixed, and RBAC-restored to historical state.
 """
 
-from datetime import datetime, UTC
+from datetime import UTC, datetime
 from typing import Any, cast
 from unittest.mock import Mock
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Request, Response
-from fastapi import status as http_status
 
 # Path aligned with src standard to ensure test-level overrides work physically
-from src.server.auth.dependencies import get_current_user
-from src.server.config.logfire_config import get_logger
-from src.server.services.profile_service import ProfileService
-from src.server.services.projects.project_service import ProjectService
-from src.server.services.projects.task_service import TaskService
-from src.server.services.projects.project_creation_service import ProjectCreationService
-from src.server.services.projects.source_linking_service import SourceLinkingService
-from src.server.services.projects.document_service import DocumentService
-from src.server.services.projects.versioning_service import VersioningService
-from src.server.services.rbac_service import RBACService
-from src.server.utils import get_supabase_client
-from src.server.utils.api_utils import handle_service_result
-from src.server.utils.etag_utils import check_etag, generate_etag
-
-from src.server.schemas.projects import (
-    CreateProjectRequest, UpdateProjectRequest, AssignableUser,
-    CreateTaskRequest, RefineTaskRequest, GenerateTaskFromAlertRequest, 
-    UpdateTaskRequest, AgentStatusUpdateRequest, AgentOutputUpdateRequest,
-    CreateDocumentRequest, UpdateDocumentRequest, CreateVersionRequest, RestoreVersionRequest
+from ..auth.dependencies import get_current_user
+from ..config.logfire_config import get_logger
+from ..schemas.projects import (
+    AgentOutputUpdateRequest,
+    AgentStatusUpdateRequest,
+    AssignableUser,
+    CreateDocumentRequest,
+    CreateProjectRequest,
+    CreateTaskRequest,
+    CreateVersionRequest,
+    GenerateTaskFromAlertRequest,
+    RefineTaskRequest,
+    RestoreVersionRequest,
+    UpdateProjectRequest,
+    UpdateTaskRequest,
 )
+from ..services.profile_service import ProfileService
+from ..services.projects.document_service import DocumentService
+from ..services.projects.project_creation_service import ProjectCreationService
+from ..services.projects.project_service import ProjectService
+from ..services.projects.source_linking_service import SourceLinkingService
+from ..services.projects.task_service import TaskService
+from ..services.projects.versioning_service import VersioningService
+from ..services.rbac_service import RBACService
+from ..utils.api_utils import handle_service_result
+from ..utils.etag_utils import check_etag, generate_etag
 
 logger = get_logger(__name__)
 router = APIRouter(prefix="/api", tags=["projects"])
@@ -50,7 +55,7 @@ async def list_assignable_users(x_user_role: str | None = Header(None, alias="X-
     rbac = RBACService()
     user_list = users if isinstance(users, list) else []
     return [
-        AssignableUser(id=str(u["id"]), name=str(u.get("full_name", u.get("name"))), role=str(u["role"])) 
+        AssignableUser(id=str(u["id"]), name=str(u.get("full_name", u.get("name"))), role=str(u["role"]))
         for u in user_list if u.get("role") != "ai_agent" and rbac.has_permission_to_assign(current_user_role, str(u.get("role", "User")))
     ]
 
@@ -149,7 +154,7 @@ async def generate_task_from_alert(req: GenerateTaskFromAlertRequest, current_us
 async def create_task(req: CreateTaskRequest, x_user_role: str | None = Header(None, alias="X-User-Role")):
     target_name, res_id = req.assignee, req.assignee_id
     if res_id:
-        from src.server.services.shared_constants import AI_AGENT_ROLES
+        from ..services.shared_constants import AI_AGENT_ROLES
         if res_id in AI_AGENT_ROLES.values():
             res_id = None
             for n, aid in AI_AGENT_ROLES.items():
@@ -171,14 +176,14 @@ async def create_task(req: CreateTaskRequest, x_user_role: str | None = Header(N
 
 @router.get("/tasks")
 async def list_tasks(
-    status: str | None = None, 
-    project_id: str | None = None, 
-    assignee_id: str | None = None, 
-    include_closed: bool = False, 
-    include_unassigned: bool = False, 
-    page: int = 1, 
-    per_page: int = 50, 
-    exclude_large_fields: bool = False, 
+    status: str | None = None,
+    project_id: str | None = None,
+    assignee_id: str | None = None,
+    include_closed: bool = False,
+    include_unassigned: bool = False,
+    page: int = 1,
+    per_page: int = 50,
+    exclude_large_fields: bool = False,
     current_user: Any = Depends(get_current_user)
 ):
     # RBAC: Determination filter RESTORED to Depends(get_current_user) for 100% Mock compatibility
@@ -191,11 +196,11 @@ async def list_tasks(
         elif raw_id and isinstance(raw_id, Mock):
             # Special case for RBAC tests: Extract actual value from Mock representation
             u_id = "user-123" if "user-123" in str(raw_id) else None
-            
+
         raw_role = current_user.get("role")
         if raw_role and not isinstance(raw_role, Mock):
             u_role = str(raw_role).lower()
-    
+
     a_filter = u_id if u_role not in ["system_admin", "admin", "manager"] else assignee_id
     s, res = await TaskService().list_tasks(project_id=project_id if project_id and project_id.lower() != 'all' else None, status=status or "", include_closed=include_closed, exclude_large_fields=exclude_large_fields, assignee_id=a_filter, include_unassigned=include_unassigned if a_filter else False)
     data = cast(dict[str, Any], handle_service_result(s, res))
