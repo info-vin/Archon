@@ -12,12 +12,13 @@ from collections.abc import Awaitable, Callable
 from typing import Any, Optional
 
 from ...config.logfire_config import get_logger, safe_logfire_error, safe_logfire_info
-from ...utils import get_supabase_client
-from ...utils.progress.progress_tracker import ProgressTracker
-from ..credential_service import credential_service
 
 # Import strategies
 # Import operations
+from ...repositories.base_repository import BaseRepository
+from ...utils import get_supabase_client
+from ...utils.progress.progress_tracker import ProgressTracker
+from ..credential_service import credential_service
 from .document_storage_operations import DocumentStorageOperations
 from .helpers.site_config import SiteConfig
 
@@ -51,7 +52,7 @@ def unregister_orchestration(progress_id: str):
         del _active_orchestrations[progress_id]
 
 
-class CrawlingService:
+class CrawlingService(BaseRepository):
     """
     Service class for web crawling and orchestration operations.
     Combines functionality from both CrawlingService and CrawlOrchestrationService.
@@ -66,8 +67,8 @@ class CrawlingService:
             supabase_client: The Supabase client for database operations
             progress_id: Optional progress ID for HTTP polling updates
         """
+        super().__init__(supabase_client or get_supabase_client())
         self.crawler = crawler
-        self.supabase_client = supabase_client or get_supabase_client()
         self.progress_id = progress_id
         self.progress_tracker = None
 

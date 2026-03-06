@@ -10,6 +10,7 @@ from collections.abc import Callable
 from typing import Any
 
 from ...config.logfire_config import get_logger, safe_logfire_error, safe_logfire_info
+from ...repositories.base_repository import BaseRepository
 from ..source_management_service import extract_source_summary, update_source_info
 from ..storage.document_storage_service import add_documents_to_supabase
 from ..storage.storage_services import DocumentStorageService
@@ -18,21 +19,21 @@ from .code_extraction_service import CodeExtractionService
 logger = get_logger(__name__)
 
 
-class DocumentStorageOperations:
+class DocumentStorageOperations(BaseRepository):
     """
     Handles document storage operations for crawled content.
     """
 
-    def __init__(self, supabase_client):
+    def __init__(self, supabase_client=None):
         """
         Initialize document storage operations.
 
         Args:
             supabase_client: The Supabase client for database operations
         """
-        self.supabase_client = supabase_client
-        self.doc_storage_service = DocumentStorageService(supabase_client)
-        self.code_extraction_service = CodeExtractionService(supabase_client)
+        super().__init__(supabase_client)
+        self.doc_storage_service = DocumentStorageService(self.supabase_client)
+        self.code_extraction_service = CodeExtractionService(self.supabase_client)
 
     async def process_and_store_documents(
         self,
@@ -269,58 +270,67 @@ class DocumentStorageOperations:
                     f"Failed to create/update source record for '{source_id}': {str(e)}"
                 )
                 # Try a simpler approach with minimal data
-                try:
-                    safe_logfire_info(f"Attempting fallback source creation for '{source_id}'")
-                    fallback_data = {
-                        "source_id": source_id,
-                        "title": source_id,  # Use source_id as title fallback
-                        "summary": summary,
-                        "total_word_count": source_id_word_counts[source_id],
-                        "metadata": {
-                            "knowledge_type": request.get("knowledge_type", "documentation"),
-                            "tags": request.get("tags", []),
-                            "auto_generated": True,
-                            "fallback_creation": True,
-                            "original_url": request.get("url"),
-                        },
-                    }
+                safe_logfire_info(f"Attempting fallback source creation for '{source_id}'")
+                fallback_data = {
+                    "source_id": source_id,
+                    "title": source_id,  # Use source_id as title fallback
+                    "summary": summary,
+                    "total_word_count": source_id_word_counts[source_id],
+                    "metadata": {
+                        "knowledge_type": request.get("knowledge_type", "documentation"),
+                        "tags": request.get("tags", []),
+                        "auto_generated": True,
+                        "fallback_creation": True,
+                        "original_url": request.get("url"),
+                    },
+                }
 
-                    # Add new fields if provided
-                    if source_url:
-                        fallback_data["source_url"] = source_url
-                    if source_display_name:
-                        fallback_data["source_display_name"] = source_display_name
+                # Add new fields if provided
+                if source_url:
+                    fallback_data["source_url"] = source_url
+                if source_display_name:
+                    fallback_data["source_display_name"] = source_display_name
 
-                    self.supabase_client.table("archon_sources").upsert(fallback_data).execute()
+                query = self.supabase_client.table("archon_sources").upsert(fallback_data)
+                success, response = self.execute_query(
+                    query.execute,
+                    error_context=f"Failed fallback source creation for '{source_id}'",
+                    require_data=True
+                )
+
+                if success:
                     safe_logfire_info(f"Fallback source creation succeeded for '{source_id}'")
-                except Exception as fallback_error:
-                    logger.error(f"Both source creation attempts failed for '{source_id}'", exc_info=True)
+                else:
+                    error_msg = response.get('error')
                     safe_logfire_error(
-                        f"Both source creation attempts failed for '{source_id}': {str(fallback_error)}"
+                        f"Both source creation attempts failed for '{source_id}': {error_msg}"
                     )
                     raise Exception(
-                        f"Unable to create source record for '{source_id}'. This will cause foreign key violations. Error: {str(fallback_error)}"
-                    ) from fallback_error
+                        f"Unable to create source record for '{source_id}'. This will cause foreign key violations. Error: {error_msg}"
+                    ) from e
 
         # Verify ALL source records exist before proceeding with document storage
         if unique_source_ids:
             for source_id in unique_source_ids:
-                try:
-                    source_check = (
-                        self.supabase_client.table("archon_sources")
-                        .select("source_id")
-                        .eq("source_id", source_id)
-                        .execute()
-                    )
-                    if not source_check.data:
-                        raise Exception(
-                            f"Source record verification failed - '{source_id}' does not exist in sources table"
-                        )
+                query = (
+                    self.supabase_client.table("archon_sources")
+                    .select("source_id")
+                    .eq("source_id", source_id)
+                )
+                success, response = self.execute_query(
+                    query.execute,
+                    error_context=f"Source verification failed for '{source_id}'",
+                    require_data=True
+                )
+
+                if success and response.get('data'):
                     safe_logfire_info(f"Source record verified for '{source_id}'")
-                except Exception as e:
-                    logger.error(f"Source verification failed for '{source_id}'", exc_info=True)
-                    safe_logfire_error(f"Source verification failed for '{source_id}': {str(e)}")
-                    raise
+                else:
+                    error_msg = response.get('error')
+                    safe_logfire_error(f"Source verification failed for '{source_id}': {error_msg}")
+                    raise Exception(
+                        f"Source record verification failed - '{source_id}' does not exist in sources table. Error: {error_msg}"
+                    )
 
             safe_logfire_info(
                 f"All {len(unique_source_ids)} source records verified - proceeding with document storage"

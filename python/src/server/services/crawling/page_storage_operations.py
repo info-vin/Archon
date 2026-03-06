@@ -7,15 +7,14 @@ Pages are stored BEFORE chunking to maintain full context for agent retrieval.
 
 from typing import Any
 
-from postgrest.exceptions import APIError
-
 from ...config.logfire_config import get_logger, safe_logfire_error, safe_logfire_info
+from ...repositories.base_repository import BaseRepository
 from .helpers.llms_full_parser import parse_llms_full_sections
 
 logger = get_logger(__name__)
 
 
-class PageStorageOperations:
+class PageStorageOperations(BaseRepository):
     """
     Handles page storage operations for crawled content.
 
@@ -23,14 +22,14 @@ class PageStorageOperations:
     This enables agents to retrieve complete documentation pages instead of just chunks.
     """
 
-    def __init__(self, supabase_client):
+    def __init__(self, supabase_client=None):
         """
         Initialize page storage operations.
 
         Args:
             supabase_client: The Supabase client for database operations
         """
-        self.supabase_client = supabase_client
+        super().__init__(supabase_client)
 
     async def store_pages(
         self,
@@ -90,36 +89,28 @@ class PageStorageOperations:
 
         # Batch upsert pages
         if pages_to_insert:
-            try:
-                safe_logfire_info(
-                    f"Upserting {len(pages_to_insert)} pages into archon_page_metadata table"
-                )
-                result = (
-                    self.supabase_client.table("archon_page_metadata")
-                    .upsert(pages_to_insert, on_conflict="url")
-                    .execute()
-                )
+            safe_logfire_info(
+                f"Upserting {len(pages_to_insert)} pages into archon_page_metadata table"
+            )
+            query = self.supabase_client.table("archon_page_metadata").upsert(pages_to_insert, on_conflict="url")
+            success, response = self.execute_query(
+                query.execute,
+                error_context=f"Failed to upsert pages for source {source_id}",
+                require_data=True
+            )
 
+            if success and response.get("data"):
                 # Build url → page_id mapping
-                for page in result.data:
+                for page in response["data"]:
                     url_to_page_id[page["url"]] = page["id"]
 
                 safe_logfire_info(
                     f"Successfully stored {len(url_to_page_id)}/{len(pages_to_insert)} pages in archon_page_metadata"
                 )
-
-            except APIError as e:
+            else:
                 safe_logfire_error(
-                    f"Database error upserting pages | source_id={source_id} | attempted={len(pages_to_insert)} | error={str(e)}"
+                    f"Error upserting pages | source_id={source_id} | attempted={len(pages_to_insert)} | error={response.get('error')}"
                 )
-                logger.error(f"Failed to upsert pages for source {source_id}: {e}", exc_info=True)
-                # Don't raise - allow chunking to continue even if page storage fails
-
-            except Exception as e:
-                safe_logfire_error(
-                    f"Unexpected error upserting pages | source_id={source_id} | attempted={len(pages_to_insert)} | error={str(e)}"
-                )
-                logger.error(f"Unexpected error upserting pages for source {source_id}: {e}", exc_info=True)
                 # Don't raise - allow chunking to continue
 
         return url_to_page_id
@@ -189,36 +180,28 @@ class PageStorageOperations:
 
         # Batch upsert pages
         if pages_to_insert:
-            try:
-                safe_logfire_info(
-                    f"Upserting {len(pages_to_insert)} section pages into archon_page_metadata"
-                )
-                result = (
-                    self.supabase_client.table("archon_page_metadata")
-                    .upsert(pages_to_insert, on_conflict="url")
-                    .execute()
-                )
+            safe_logfire_info(
+                f"Upserting {len(pages_to_insert)} section pages into archon_page_metadata"
+            )
+            query = self.supabase_client.table("archon_page_metadata").upsert(pages_to_insert, on_conflict="url")
+            success, response = self.execute_query(
+                query.execute,
+                error_context=f"Failed to upsert sections for {base_url}",
+                require_data=True
+            )
 
+            if success and response.get("data"):
                 # Build url → page_id mapping
-                for page in result.data:
+                for page in response["data"]:
                     url_to_page_id[page["url"]] = page["id"]
 
                 safe_logfire_info(
                     f"Successfully stored {len(url_to_page_id)}/{len(pages_to_insert)} section pages"
                 )
-
-            except APIError as e:
+            else:
                 safe_logfire_error(
-                    f"Database error upserting sections | base_url={base_url} | attempted={len(pages_to_insert)} | error={str(e)}"
+                    f"Error upserting sections | base_url={base_url} | attempted={len(pages_to_insert)} | error={response.get('error')}"
                 )
-                logger.error(f"Failed to upsert sections for {base_url}: {e}", exc_info=True)
-                # Don't raise - allow process to continue
-
-            except Exception as e:
-                safe_logfire_error(
-                    f"Unexpected error upserting sections | base_url={base_url} | attempted={len(pages_to_insert)} | error={str(e)}"
-                )
-                logger.error(f"Unexpected error upserting sections for {base_url}: {e}", exc_info=True)
                 # Don't raise - allow process to continue
 
         return url_to_page_id
@@ -231,18 +214,19 @@ class PageStorageOperations:
             page_id: The UUID of the page to update
             chunk_count: Number of chunks created from this page
         """
-        try:
-            self.supabase_client.table("archon_page_metadata").update(
-                {"chunk_count": chunk_count}
-            ).eq("id", page_id).execute()
+        query = self.supabase_client.table("archon_page_metadata").update(
+            {"chunk_count": chunk_count}
+        ).eq("id", page_id)
 
+        success, response = self.execute_query(
+            query.execute,
+            error_context=f"Failed to update chunk_count for page {page_id}",
+            require_data=True  # Ensure update was successful? Wait, update returns data. Let's say False to be safe if require_data should be False for an update that might just affect 1 row, but Supabase updates return the updated rows.
+        )
+
+        if success:
             safe_logfire_info(f"Updated chunk_count={chunk_count} for page_id={page_id}")
-
-        except APIError as e:
+        else:
             logger.warning(
-                f"Database error updating chunk_count for page {page_id}: {e}", exc_info=True
-            )
-        except Exception as e:
-            logger.warning(
-                f"Unexpected error updating chunk_count for page {page_id}: {e}", exc_info=True
+                f"Database error updating chunk_count for page {page_id}: {response.get('error')}"
             )

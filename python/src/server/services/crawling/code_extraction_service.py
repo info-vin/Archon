@@ -9,6 +9,7 @@ from collections.abc import Callable
 from typing import Any
 
 from ...config.logfire_config import safe_logfire_error, safe_logfire_info
+from ...repositories.base_repository import BaseRepository
 from ...services.credential_service import credential_service
 from ..storage.code_storage_service import (
     add_code_examples_to_supabase,
@@ -16,7 +17,7 @@ from ..storage.code_storage_service import (
 )
 
 
-class CodeExtractionService:
+class CodeExtractionService(BaseRepository):
     """
     Service for extracting and processing code examples from documents.
     """
@@ -55,14 +56,14 @@ class CodeExtractionService:
         },
     }
 
-    def __init__(self, supabase_client):
+    def __init__(self, supabase_client=None):
         """
         Initialize the code extraction service.
 
         Args:
             supabase_client: The Supabase client for database operations
         """
-        self.supabase_client = supabase_client
+        super().__init__(supabase_client)
         self._settings_cache = {}
 
     async def _get_setting(self, key: str, default: Any) -> Any:
