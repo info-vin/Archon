@@ -6,6 +6,14 @@ from src.server.main import app
 
 client = TestClient(app)
 
+from src.server.auth.dependencies import get_current_user
+
+# Setup mock user dependency override
+def mock_get_current_user():
+    return {"id": "test_user_id", "email": "test@example.com"}
+
+app.dependency_overrides[get_current_user] = mock_get_current_user
+
 @patch('src.server.api_routes.knowledge_api.RBACService')
 @patch('src.server.services.source_management_service.SourceManagementService')
 def test_delete_knowledge_item_forbidden(MockSourceManagementService, MockRBACService):
