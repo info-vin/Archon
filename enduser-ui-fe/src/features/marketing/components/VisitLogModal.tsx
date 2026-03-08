@@ -5,9 +5,11 @@ import { XIcon, MapPinIcon, CheckCircleIcon, SparklesIcon, MicrophoneIcon, Trash
 interface VisitLogModalProps {
     onClose: () => void;
     onSuccess: () => void;
+    leadId?: string;
+    companyName?: string;
 }
 
-export const VisitLogModal: React.FC<VisitLogModalProps> = ({ onClose, onSuccess }) => {
+export const VisitLogModal: React.FC<VisitLogModalProps> = ({ onClose, onSuccess, leadId, companyName }) => {
     const [step, setStep] = useState<'type' | 'details' | 'summary'>('type');
     const [type, setType] = useState('');
     const [location, setLocation] = useState<{lat: number, lng: number} | null>(null);
@@ -44,7 +46,7 @@ export const VisitLogModal: React.FC<VisitLogModalProps> = ({ onClose, onSuccess
     // GAP-009: Simulate Voice Input
     const simulateVoiceInput = () => {
         setNotes((prev) => {
-            const mockTranscript = "[Mock Voice] 客戶對新的 AI 功能非常感興趣，特別是自動化報表的部分。建議下週二安排產品演示。";
+            const mockTranscript = `[Mock Voice] Visit to ${companyName || 'client'}. 客戶對新的 AI 功能非常感興趣，特別是自動化報表的部分。建議下週二安排產品演示。`;
             return prev ? prev + "\n" + mockTranscript : mockTranscript;
         });
     };
@@ -65,6 +67,9 @@ export const VisitLogModal: React.FC<VisitLogModalProps> = ({ onClose, onSuccess
         try {
             const formData = new FormData();
             formData.append('visit_type', type); // Ensure type is passed
+            if (leadId) {
+                formData.append('lead_id', leadId);
+            }
             if (location) {
                 formData.append('latitude', location.lat.toString());
                 formData.append('longitude', location.lng.toString());

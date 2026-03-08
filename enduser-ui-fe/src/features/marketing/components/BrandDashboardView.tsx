@@ -14,7 +14,7 @@ interface BrandDashboardViewProps {
     isGeneratingLogo: boolean;
     onNewPost: () => void;
     onEditSmart: (post: BlogPost) => void;
-    onUpdateStatus: (id: string, status: string) => void;
+    onUpdateStatus: (id: string, status: BlogPost['status']) => void;
     onDeletePost: (id: string) => void;
     onNavigateAdvanced: (id: string) => void;
     onGenerateLogo: () => void;

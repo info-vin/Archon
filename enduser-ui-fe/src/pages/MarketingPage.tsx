@@ -86,8 +86,11 @@ const MarketingPage: React.FC = () => {
 
         {visitLogModalOpen && selectedLeadForLog && (
           <VisitLogModal
-            isOpen={visitLogModalOpen}
             onClose={handleCloseVisitLog}
+            onSuccess={() => {
+              handleCloseVisitLog();
+              fetchLeads();
+            }}
             leadId={selectedLeadForLog.id}
             companyName={selectedLeadForLog.company_name}
           />

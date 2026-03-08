@@ -84,6 +84,7 @@ export interface Task {
   is_recurring?: boolean;
   crawler_target_id?: string | null;
   schedule_config?: any;
+  agent_output?: any;
   sources?: {
     source_id: string;
     type: string;

@@ -251,7 +251,7 @@ export const useBrandLogic = () => {
         }
     };
 
-    const updatePostStatus = async (id: string, newStatus: string) => {
+    const updatePostStatus = async (id: string, newStatus: BlogPost['status']) => {
         try {
             await api.updateBlogPostStatus(id, newStatus);
             setPosts(prev => prev.map(p => p.id === id ? { ...p, status: newStatus } : p));
