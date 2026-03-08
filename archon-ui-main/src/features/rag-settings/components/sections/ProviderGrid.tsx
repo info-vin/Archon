@@ -3,7 +3,8 @@ import { LuBrainCircuit } from 'react-icons/lu';
 import { PiDatabaseThin } from 'react-icons/pi';
 import { Check } from 'lucide-react';
 import { Button as GlowButton } from '@/features/ui/primitives/button';
-import { ProviderKey, RagSettingsType, colorStyles, EMBEDDING_CAPABLE_PROVIDERS, getDefaultModels } from '../../hooks/useRagSettingsData';
+import { ProviderKey, RagSettingsType } from '../../types';
+import { colorStyles, EMBEDDING_CAPABLE_PROVIDERS, getDefaultModels } from '../../constants';
 
 interface ProviderGridProps {
   activeSelection: 'chat' | 'embedding';

@@ -2,7 +2,7 @@ import React from 'react';
 import { Cog } from 'lucide-react';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
-import { ProviderKey, RagSettingsType } from '../../hooks/useRagSettingsData';
+import { ProviderKey, RagSettingsType } from '../../types';
 
 interface ModelConfigFormProps {
   activeSelection: 'chat' | 'embedding';

@@ -12,10 +12,6 @@ import {
   useRagSettingsData, RagSettingsType,
   normalizeBaseUrl
 } from './hooks/useRagSettingsData';
-import { 
-  getDisplayedChatModel, getDisplayedEmbeddingModel, 
-  getModelPlaceholder, getEmbeddingPlaceholder 
-} from './utils/modelHelpers';
 
 interface RAGSettingsProps {
   ragSettings: RagSettingsType;
@@ -46,7 +42,9 @@ export const RAGSettings = ({ ragSettings, setRagSettings }: RAGSettingsProps) =
     showToast, setOllamaServerStatus,
     manualTestConnection, getProviderStatus,
     shouldShowProviderAlert, providerAlertClassName, providerAlertMessage,
-    crawlingSettingsFields, storageSettingsFields, coreModelFields
+    crawlingSettingsFields, storageSettingsFields, coreModelFields,
+    getDisplayedChatModel, getDisplayedEmbeddingModel, 
+    getModelPlaceholder, getEmbeddingPlaceholder
   } = useRagSettingsData(ragSettings, setRagSettings);
 
   return (
