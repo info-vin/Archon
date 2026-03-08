@@ -36,7 +36,7 @@ from .api_routes.log_api import router as log_router
 from .api_routes.marketing_api import router as marketing_router  # NEW IMPORT
 from .api_routes.mcp_api import router as mcp_router
 from .api_routes.migration_api import router as migration_router
-from .api_routes.ollama_api import router as ollama_router
+from .api_routes.ollama import router as ollama_router
 from .api_routes.progress_api import router as progress_router
 from .api_routes.projects_api import router as projects_router
 from .api_routes.prompts_api import router as prompts_router
