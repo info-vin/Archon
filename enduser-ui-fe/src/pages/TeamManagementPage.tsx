@@ -194,7 +194,7 @@ const TeamManagementPage: React.FC = () => {
                                         <p className="text-xs text-gray-500">Real-time Human vs Machine Resource Audit (Last 7 Days)</p>
                                     </div>
                                 </div>
-                                <button onClick={() => setShowTokenDetails(false)} className="p-2 hover:bg-gray-200 rounded-full transition-colors"><XIcon className="w-5 h-5" /></button>
+                                <button onClick={() => setShowTokenDetails(false)} className="p-2 hover:bg-gray-200 rounded-full transition-colors" aria-label="Close token details"><XIcon className="w-5 h-5" /></button>
                             </div>
                             
                             <div className="flex-1 overflow-y-auto p-0">
@@ -231,7 +231,7 @@ const TeamManagementPage: React.FC = () => {
                                         <p className="text-[10px] text-gray-500">Phase 4.6.1 Standard Operating Procedure</p>
                                     </div>
                                 </div>
-                                <button onClick={() => setShowSopModal(false)} className="p-2 hover:bg-gray-200 rounded-full transition-colors"><XIcon className="w-5 h-5" /></button>
+                                <button onClick={() => setShowSopModal(false)} className="p-2 hover:bg-gray-200 rounded-full transition-colors" aria-label="Close SOP modal"><XIcon className="w-5 h-5" /></button>
                             </div>
                             
                             <div className="flex-1 overflow-y-auto p-6 md:p-8 bg-gray-50">
@@ -288,7 +288,7 @@ const ActivityLogModal: React.FC<{ member: Employee; onClose: () => void }> = ({
                             <p className="text-xs text-gray-500">Recent Assignments & Tasks</p>
                         </div>
                     </div>
-                    <button onClick={onClose} className="p-2 hover:bg-gray-200 rounded-full transition-colors"><XIcon className="w-5 h-5" /></button>
+                    <button onClick={onClose} className="p-2 hover:bg-gray-200 rounded-full transition-colors" aria-label="Close activity log"><XIcon className="w-5 h-5" /></button>
                 </div>
                 
                 <div className="flex-1 overflow-y-auto p-6">

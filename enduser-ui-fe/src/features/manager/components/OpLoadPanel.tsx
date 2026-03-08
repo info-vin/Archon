@@ -189,7 +189,7 @@ export const OpLoadPanel: React.FC<OpLoadPanelProps> = ({
                                             <span className="text-[10px] text-gray-400 font-bold uppercase">{selectedContent.author_name || selectedContent.authorName}</span>
                                         </div>
                                     </div>
-                                    <button onClick={() => setSelectedContent(null)} className="p-2 hover:bg-gray-200 rounded-full transition-colors"><XIcon className="w-4 h-4" /></button>
+                                    <button onClick={() => setSelectedContent(null)} className="p-2 hover:bg-gray-200 rounded-full transition-colors" aria-label="Close content preview"><XIcon className="w-4 h-4" /></button>
                                 </div>
 
                                 <div className="prose prose-sm dark:prose-invert max-w-none mb-8 bg-white dark:bg-slate-950 p-6 rounded-xl border border-gray-100 dark:border-slate-800 shadow-sm overflow-hidden">
@@ -284,6 +284,7 @@ export const OpLoadPanel: React.FC<OpLoadPanelProps> = ({
                                         onClick={() => handleViewDiff(prop)}
                                         className="p-4 bg-gray-50 dark:bg-slate-800 text-gray-600 dark:text-slate-400 rounded-2xl hover:bg-gray-100 dark:hover:bg-slate-700 transition-all border border-gray-100 dark:border-slate-700"
                                         title="Inspect Code Difference"
+                                        aria-label="Inspect Code Difference"
                                     >
                                         <SearchIcon className="w-5 h-5" />
                                     </button>
