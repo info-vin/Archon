@@ -40,9 +40,7 @@ _DOC_INDICATORS = [
     "! ",
 ]
 
-_DOC_INDICATOR_WORDS = [
-    w for ind in _DOC_INDICATORS if isinstance(ind, tuple) for w in ind
-]
+_DOC_INDICATOR_WORDS = [w for ind in _DOC_INDICATORS if isinstance(ind, tuple) for w in ind]
 _DOC_INDICATOR_STRINGS = [ind for ind in _DOC_INDICATORS if isinstance(ind, str)]
 
 _CODE_PATTERNS = [
@@ -137,11 +135,7 @@ def _select_best_code_variant(similar_blocks: list[dict[str, Any]]) -> dict[str,
     best_block = max(similar_blocks, key=score_block)
     variant_count = len(similar_blocks)
     if variant_count > 1:
-        languages = [
-            block.get("language", "")
-            for block in similar_blocks
-            if block.get("language")
-        ]
+        languages = [block.get("language", "") for block in similar_blocks if block.get("language")]
         unique_languages = list(set(filter(None, languages)))
         best_block["consolidated_variants"] = variant_count
         if unique_languages:
@@ -149,9 +143,7 @@ def _select_best_code_variant(similar_blocks: list[dict[str, Any]]) -> dict[str,
     return best_block
 
 
-def extract_code_blocks_logic(
-    markdown_content: str, min_length: int | None = None
-) -> list[dict[str, Any]]:
+def extract_code_blocks_logic(markdown_content: str, min_length: int | None = None) -> list[dict[str, Any]]:
     """
     Core extraction engine logic.
     Restored with FULL Jules Performance Optimizations.
@@ -160,10 +152,7 @@ def extract_code_blocks_logic(
         from src.server.services.credential_service import credential_service
 
         def _get_setting_fallback(key: str, default: str) -> str:
-            if (
-                credential_service._cache_initialized
-                and key in credential_service._cache
-            ):
+            if credential_service._cache_initialized and key in credential_service._cache:
                 return cast(str, credential_service._cache[key])
             return os.getenv(key, default)
 
@@ -171,20 +160,14 @@ def extract_code_blocks_logic(
             min_length = int(_get_setting_fallback("MIN_CODE_BLOCK_LENGTH", "250"))
 
         max_length = int(_get_setting_fallback("MAX_CODE_BLOCK_LENGTH", "5000"))
-        enable_prose_filtering = (
-            _get_setting_fallback("ENABLE_PROSE_FILTERING", "true").lower() == "true"
-        )
+        enable_prose_filtering = _get_setting_fallback("ENABLE_PROSE_FILTERING", "true").lower() == "true"
         max_prose_ratio = float(_get_setting_fallback("MAX_PROSE_RATIO", "0.15"))
         min_code_indicators = int(_get_setting_fallback("MIN_CODE_INDICATORS", "3"))
-        enable_diagram_filtering = (
-            _get_setting_fallback("ENABLE_DIAGRAM_FILTERING", "true").lower() == "true"
-        )
+        enable_diagram_filtering = _get_setting_fallback("ENABLE_DIAGRAM_FILTERING", "true").lower() == "true"
         context_window_size = int(_get_setting_fallback("CONTEXT_WINDOW_SIZE", "1000"))
 
     except Exception as e:
-        search_logger.warning(
-            f"Failed to get code extraction settings: {e}, using defaults"
-        )
+        search_logger.warning(f"Failed to get code extraction settings: {e}, using defaults")
         if min_length is None:
             min_length = 250
         max_length, enable_prose_filtering, max_prose_ratio = 5000, True, 0.15
@@ -231,8 +214,17 @@ def extract_code_blocks_logic(
 
         if not language or language in ["text", "plaintext", "txt"]:
             code_lower = code_content.lower()
-            doc_score = sum(1 for w in _DOC_INDICATOR_WORDS if w in code_lower)
-            doc_score += sum(2 for s in _DOC_INDICATOR_STRINGS if s in code_lower)
+
+            # PERFORMANCE: Replaced sum(1 for ...) with standard for loop
+            # to avoid generator object creation overhead in hot paths
+            doc_score = 0
+            for w in _DOC_INDICATOR_WORDS:
+                if w in code_lower:
+                    doc_score += 1
+
+            for s in _DOC_INDICATOR_STRINGS:
+                if s in code_lower:
+                    doc_score += 2
 
             if enable_prose_filtering:
                 words = code_content.split()
@@ -240,27 +232,36 @@ def extract_code_blocks_logic(
                     i += 2
                     continue
 
-            code_pattern_count = sum(1 for p in _CODE_PATTERNS if p in code_content)
+            # PERFORMANCE: Replaced sum(1 for ...) with standard for loop
+            code_pattern_count = 0
+            for p in _CODE_PATTERNS:
+                if p in code_content:
+                    code_pattern_count += 1
+
             if code_pattern_count < min_code_indicators and len(non_empty_lines) > 5:
                 i += 2
                 continue
 
             if enable_diagram_filtering:
                 # Optimized diagram check using non_empty_lines
-                special_char_lines = sum(
-                    1
-                    for line in non_empty_lines[:10]
-                    if line
-                    and sum(1 for c in line if not c.isalnum() and not c.isspace())
-                    / len(line)
-                    > 0.7
-                )
-                diagram_indicator_count = sum(
-                    1 for ind in _DIAGRAM_INDICATORS if ind in code_content
-                )
-                if (
-                    special_char_lines >= 3 or diagram_indicator_count >= 5
-                ) and code_pattern_count < 5:
+                special_char_lines = 0
+                for line in non_empty_lines[:10]:
+                    if line:
+                        # PERFORMANCE: Replaced sum(1 for ...) with standard for loop
+                        special_chars = 0
+                        for c in line:
+                            if not c.isalnum() and not c.isspace():
+                                special_chars += 1
+                        if special_chars / len(line) > 0.7:
+                            special_char_lines += 1
+
+                # PERFORMANCE: Replaced sum(1 for ...) with standard for loop
+                diagram_indicator_count = 0
+                for ind in _DIAGRAM_INDICATORS:
+                    if ind in code_content:
+                        diagram_indicator_count += 1
+
+                if (special_char_lines >= 3 or diagram_indicator_count >= 5) and code_pattern_count < 5:
                     i += 2
                     continue
 
@@ -292,10 +293,7 @@ def extract_code_blocks_logic(
         for jdx, block2 in enumerate(code_blocks):
             if jdx <= idx or jdx in processed_indices:
                 continue
-            if (
-                _calculate_code_similarity(block1["code"], block2["code"])
-                >= similarity_threshold
-            ):
+            if _calculate_code_similarity(block1["code"], block2["code"]) >= similarity_threshold:
                 similar_group.append(block2)
                 processed_indices.add(jdx)
         grouped_blocks.append(_select_best_code_variant(similar_group))
