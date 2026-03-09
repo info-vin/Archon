@@ -1,7 +1,10 @@
 from dataclasses import dataclass
 from typing import Any
+
 from pydantic import BaseModel, Field
+
 from ..base_agent import ArchonDependencies
+
 
 @dataclass
 class DocumentDependencies(ArchonDependencies):

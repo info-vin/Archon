@@ -13,8 +13,8 @@ from typing import Any
 from pydantic_ai import Agent, RunContext
 
 from .base_agent import BaseAgent
-from .document.models import DocumentDependencies, DocumentOperation
 from .document import logic
+from .document.models import DocumentDependencies, DocumentOperation
 
 logger = logging.getLogger(__name__)
 

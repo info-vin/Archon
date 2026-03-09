@@ -1,8 +1,8 @@
 import json
 import logging
 import uuid
-from datetime import datetime, timedelta
-from typing import Any, cast
+from datetime import datetime
+from typing import Any
 
 from src.agents.mcp_client import get_mcp_client
 
@@ -219,9 +219,10 @@ async def create_feature_plan_logic(
     try:
         # Simplified React Flow generation
         nodes = [{"id": "start", "type": "input", "position": {"x": 100, "y": 100}, "data": {"label": f"Start: {feature_name}"}}]
-        edges = []
-        
+        edges: list[dict[str, Any]] = []
+
         content = {
+
             "feature_overview": {"name": feature_name, "description": feature_description, "priority": "high"},
             "user_stories": user_stories.split("\n") if user_stories else [],
             "react_flow_diagram": {"nodes": nodes, "edges": edges, "viewport": {"x": 0, "y": 0, "zoom": 1}},
@@ -258,10 +259,10 @@ async def create_erd_logic(
 ) -> str:
     """Logic for creating an ERD and SQL schema."""
     try:
-        entities = []
-        sql_schema = []
+        entities: list[dict[str, Any]] = []
+        sql_schema: list[str] = []
         # (Parsing logic omitted for brevity, keeping same as original)
-        
+
         content = {
             "system_overview": {"name": system_name, "description": entity_descriptions},
             "entities": entities,
