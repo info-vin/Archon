@@ -96,7 +96,12 @@ export const opsApi = {
       return handleResponse(response, "API Request failed");
   },
 
+  async getAlerts(): Promise<AlertItem[]> {
+      return this.getManagerAlerts();
+  },
+
   async dispatchAlertTask(alertId: string, assigneeId?: string): Promise<any> {
+
       const response = await fetch('/api/tasks/generate-from-alert', {
           method: 'POST',
           headers: await getHeaders(),
