@@ -1,10 +1,12 @@
-from typing import Any, cast
+from typing import cast
+
 from fastapi import APIRouter, Depends, Header, HTTPException
+
 from src.server.api_routes.knowledge.schemas import KnowledgeItemRequest
 from src.server.auth.dependencies import get_current_user
+from src.server.config.logfire_config import get_logger, safe_logfire_error
 from src.server.services.knowledge.knowledge_item_service import KnowledgeItemService
 from src.server.utils import get_supabase_client
-from src.server.config.logfire_config import safe_logfire_error, get_logger
 
 router = APIRouter()
 logger = get_logger(__name__)
@@ -49,6 +51,7 @@ async def get_knowledge_item_chunks(
     source_id: str,
     page: int = 1,
     limit: int = 50,
+    domain_filter: str | None = None,
 ):
     """Get content chunks for a specific knowledge item."""
     try:
@@ -56,7 +59,7 @@ async def get_knowledge_item_chunks(
         from src.server.services.knowledge.knowledge_summary_service import KnowledgeSummaryService
         service = KnowledgeSummaryService(get_supabase_client())
         success, result = await service.get_item_chunks(
-            source_id=source_id, page=page, per_page=limit
+            source_id=source_id, page=page, per_page=limit, domain_filter=domain_filter
         )
         if not success:
             raise HTTPException(status_code=500, detail=result.get("error"))

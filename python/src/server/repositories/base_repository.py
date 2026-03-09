@@ -33,7 +33,13 @@ class BaseRepository:
             response = query_func()
             if require_data and not response.data:
                 return False, {"error": f"{error_context}"}
-            return True, {"data": response.data}
+
+            # Include count metadata if available in the response
+            result = {"data": response.data}
+            if hasattr(response, "count") and response.count is not None:
+                result["count"] = response.count
+
+            return True, result
         except Exception as e:
             logger.error(f"{error_context}: {str(e)}")
             return False, {"error": f"{error_context}: {str(e)}"}

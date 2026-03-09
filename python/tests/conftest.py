@@ -163,14 +163,18 @@ def client(mock_supabase_client):
             return_value=mock_supabase_client,
         ):
             with patch(
-                "server.services.credential_service.create_client",
+                "src.server.utils.get_supabase_client",
                 return_value=mock_supabase_client,
             ):
-                with patch("supabase.create_client", return_value=mock_supabase_client):
-                    from unittest.mock import AsyncMock
+                with patch(
+                    "server.services.credential_service.create_client",
+                    return_value=mock_supabase_client,
+                ):
+                    with patch("supabase.create_client", return_value=mock_supabase_client):
+                        from unittest.mock import AsyncMock
 
-                    import server.main as server_main
-                    from server.auth.dependencies import get_current_user
+                        import server.main as server_main
+                        from server.auth.dependencies import get_current_user
 
                     # Mark initialization as complete for testing (before accessing app)
                     server_main._initialization_complete = True

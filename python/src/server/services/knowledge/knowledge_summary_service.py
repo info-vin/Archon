@@ -63,23 +63,17 @@ class KnowledgeSummaryService:
 
             if search:
                 search_pattern = f"%{search}%"
-                query = query.or_(
-                    f"title.ilike.{search_pattern},summary.ilike.{search_pattern}"
-                )
+                query = query.or_(f"title.ilike.{search_pattern},summary.ilike.{search_pattern}")
 
             # Get total count
-            count_query = self.supabase.from_("archon_sources").select(
-                "*", count="exact", head=True
-            )
+            count_query = self.supabase.from_("archon_sources").select("*", count="exact", head=True)
 
             if knowledge_type:
                 count_query = count_query.contains("metadata", {"knowledge_type": knowledge_type})
 
             if search:
                 search_pattern = f"%{search}%"
-                count_query = count_query.or_(
-                    f"title.ilike.{search_pattern},summary.ilike.{search_pattern}"
-                )
+                count_query = count_query.or_(f"title.ilike.{search_pattern},summary.ilike.{search_pattern}")
 
             count_result = count_query.execute()
             total = count_result.count if hasattr(count_result, "count") else 0
@@ -130,7 +124,9 @@ class KnowledgeSummaryService:
                     if not knowledge_type:
                         # Fallback: If not in metadata, default to "technical" for now
                         # This handles legacy data that might not have knowledge_type set
-                        safe_logfire_info(f"Knowledge type not found in metadata for {source_id}, defaulting to technical")
+                        safe_logfire_info(
+                            f"Knowledge type not found in metadata for {source_id}, defaulting to technical"
+                        )
                         knowledge_type = "technical"
 
                     summary = {
@@ -148,9 +144,7 @@ class KnowledgeSummaryService:
                     }
                     summaries.append(summary)
 
-            safe_logfire_info(
-                f"Knowledge summaries fetched | count={len(summaries)} | total={total}"
-            )
+            safe_logfire_info(f"Knowledge summaries fetched | count={len(summaries)} | total={total}")
 
             return {
                 "items": summaries,
@@ -261,3 +255,56 @@ class KnowledgeSummaryService:
         except Exception as e:
             safe_logfire_error(f"Failed to get first URLs | error={str(e)}")
             return {sid: f"source://{sid}" for sid in source_ids}
+
+    async def get_item_chunks(
+        self, source_id: str, page: int = 1, per_page: int = 50, domain_filter: str | None = None
+    ) -> tuple[bool, dict[str, Any]]:
+        """
+        Get document chunks for a specific knowledge item with pagination and optional domain filtering.
+        """
+        try:
+            # Enforce physical bounds for pagination
+            per_page = max(1, min(per_page, 100))
+            page = max(1, page)
+
+            safe_logfire_info(
+                f"Fetching chunks for source_id: {source_id}, page={page}, per_page={per_page}, domain_filter={domain_filter}"
+            )
+
+            query = self.supabase.from_("archon_crawled_pages").select(
+                "id, source_id, content, metadata, url", count="exact"
+            )
+            query = query.eq("source_id", source_id)
+
+            if domain_filter:
+                query = query.ilike("url", f"%{domain_filter}%")
+
+            offset = (page - 1) * per_page
+
+            # Deterministic ordering
+            query = query.order("url", desc=False).order("id", desc=False)
+
+            # Apply pagination
+            query = query.range(offset, offset + per_page - 1)
+
+            result = query.execute()
+
+            if getattr(result, "error", None):
+                safe_logfire_error(f"Supabase query error | source_id={source_id} | error={result.error}")
+                return False, {"error": str(result.error)}
+
+            chunks = result.data if result.data else []
+            total_count = result.count if hasattr(result, "count") and result.count is not None else len(chunks)
+
+            return True, {
+                "chunks": chunks,
+                "pagination": {
+                    "total": total_count,
+                    "page": page,
+                    "per_page": per_page,
+                    "total_pages": (total_count + per_page - 1) // per_page if total_count > 0 else 0,
+                },
+            }
+        except Exception as e:
+            safe_logfire_error(f"Failed to fetch chunks | source_id={source_id} | error={str(e)}")
+            return False, {"error": str(e)}
