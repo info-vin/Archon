@@ -120,6 +120,19 @@ _DOC_INDICATORS = [
     ". ", "? ", "! ",
 ]
 
+_DOC_INDICATOR_WORDS = [
+    word
+    for indicator in _DOC_INDICATORS
+    if isinstance(indicator, tuple)
+    for word in indicator
+]
+
+_DOC_INDICATOR_STRINGS = [
+    indicator
+    for indicator in _DOC_INDICATORS
+    if isinstance(indicator, str)
+]
+
 _CODE_PATTERNS = [
     "=", "(", ")", "{", "}", "[", "]", ";",
     "function", "def", "class", "import", "export",
@@ -326,14 +339,15 @@ def extract_code_blocks(markdown_content: str, min_length: int | None = None) ->
 
             # Count documentation indicators (using pre-compiled constant)
             doc_score = 0
-            for indicator in _DOC_INDICATORS:
-                if isinstance(indicator, tuple):
-                    # Check if multiple words from tuple appear
-                    doc_score += sum(1 for word in indicator if cast(str, word) in code_lower)
-                else:
-                    indicator_str = cast(str, indicator)
-                    if indicator_str in code_lower:
-                        doc_score += 2
+
+            # Use pre-flattened lists to avoid isinstance checks and generator overhead in loops
+            for word in _DOC_INDICATOR_WORDS:
+                if word in code_lower:
+                    doc_score += 1
+
+            for indicator_str in _DOC_INDICATOR_STRINGS:
+                if indicator_str in code_lower:
+                    doc_score += 2
 
             # Calculate lines and check structure
             content_lines = code_content.split("\n")
@@ -353,7 +367,11 @@ def extract_code_blocks(markdown_content: str, min_length: int | None = None) ->
                         continue
 
             # Additional check: if no typical code patterns found
-            code_pattern_count = sum(1 for pattern in _CODE_PATTERNS if pattern in code_content)
+            code_pattern_count = 0
+            for pattern in _CODE_PATTERNS:
+                if pattern in code_content:
+                    code_pattern_count += 1
+
             if code_pattern_count < min_code_indicators and len(non_empty_lines) > 5:
                 # Looks more like prose than code
                 search_logger.debug(
