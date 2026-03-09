@@ -114,7 +114,7 @@ const HistoryDrawer = ({ lead, onClose }: { lead: Lead, onClose: () => void }) =
             >
                 <div className="flex justify-between items-center mb-6">
                     <h3 className="text-lg font-bold">Activity Timeline</h3>
-                    <button onClick={onClose}><XIcon className="w-5 h-5 text-gray-400" /></button>
+                    <button onClick={onClose} aria-label="Close timeline" className="focus-visible:ring-2 focus-visible:ring-indigo-500 rounded-full outline-none"><XIcon className="w-5 h-5 text-gray-400" /></button>
                 </div>
                 <LeadsTimeline events={mockEvents} />
             </div>
