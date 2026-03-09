@@ -7,14 +7,13 @@ Supports multi-instance configurations with automatic dimension detection and he
 
 import asyncio
 import time
-from dataclasses import dataclass
 from typing import Any, cast
 
 import httpx
 
 from src.server.config.logfire_config import get_logger
-from src.server.services.llm_provider_service import get_llm_client
-from .discovery.models import OllamaModel, ModelCapabilities, InstanceHealthStatus
+
+from .discovery.models import InstanceHealthStatus, ModelCapabilities, OllamaModel
 
 logger = get_logger(__name__)
 

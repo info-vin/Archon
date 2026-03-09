@@ -5,7 +5,7 @@ Defines dataclasses for discovered models, their capabilities, and instance heal
 """
 
 from dataclasses import dataclass
-from typing import Any, Optional
+from typing import Any
 
 
 @dataclass
