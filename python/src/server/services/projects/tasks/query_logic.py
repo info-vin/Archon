@@ -5,7 +5,7 @@ This module handles complex task listing with RBAC filters and
 batch project task counting.
 """
 
-from typing import Any
+from typing import Any, cast
 
 from src.server.config.logfire_config import get_logger
 
@@ -162,4 +162,5 @@ async def get_all_project_task_counts_logic(task_service_instance) -> tuple[bool
         return True, counts_by_project
     except Exception as e:
         logger.error(f"Error fetching task counts logic: {e}")
-        return False, {"error": f"Error fetching task counts: {str(e)}"}
+        error_data: Any = {"error": f"Error fetching task counts: {str(e)}"}
+        return False, cast(dict[str, dict[str, int]], error_data)

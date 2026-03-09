@@ -40,7 +40,6 @@ def generate_code_example_summary_logic(
 ) -> dict[str, str]:
     """
     Generate a summary and name for a code example using its surrounding context.
-    Includes comprehensive API key retrieval and LLM calling.
     """
     model_choice = _get_model_choice_logic()
 
@@ -130,7 +129,11 @@ Format your response as JSON:
 
 
 async def generate_code_summaries_batch_logic(
-    service_instance, code_blocks: list[dict[str, Any]], provider: str | None = None
+    service_instance,
+    code_blocks: list[dict[str, Any]],
+    max_workers: int | None = None,
+    progress_callback: Any = None,
+    provider: str | None = None,
 ) -> list[dict[str, str]]:
     """
     Generate summaries for a batch of code blocks concurrently.
@@ -138,18 +141,45 @@ async def generate_code_summaries_batch_logic(
     if not code_blocks:
         return []
 
-    search_logger.info(f"Generating summaries for {len(code_blocks)} code blocks...")
+    # Get max_workers from settings if not provided
+    if max_workers is None:
+        try:
+            from src.server.services.credential_service import credential_service
+            if credential_service._cache_initialized and "CODE_SUMMARY_MAX_WORKERS" in credential_service._cache:
+                max_workers = int(credential_service._cache["CODE_SUMMARY_MAX_WORKERS"])
+            else:
+                max_workers = int(os.getenv("CODE_SUMMARY_MAX_WORKERS", "3"))
+        except Exception:
+            max_workers = 3
+
+    search_logger.info(f"Generating summaries for {len(code_blocks)} code blocks with max_workers={max_workers}")
+
+    # Semaphore to limit concurrent requests
+    semaphore = asyncio.Semaphore(max_workers)
+    completed_count = 0
+    lock = asyncio.Lock()
 
     async def _sum_single(block: dict[str, Any]) -> dict[str, str]:
-        # Offload CPU/IO intensive LLM call to thread
-        return await asyncio.to_thread(
-            generate_code_example_summary_logic,
-            code=block["code"],
-            context_before=block.get("context_before", ""),
-            context_after=block.get("context_after", ""),
-            language=block.get("language", ""),
-            provider=provider,
-        )
+        nonlocal completed_count
+        async with semaphore:
+            # CPU/IO intensive LLM call to thread
+            result = await asyncio.to_thread(
+                generate_code_example_summary_logic,
+                code=block["code"],
+                context_before=block.get("context_before", ""),
+                context_after=block.get("context_after", ""),
+                language=block.get("language", ""),
+                provider=provider,
+            )
+            async with lock:
+                completed_count += 1
+                if progress_callback:
+                    await progress_callback({
+                        "status": "code_summarization",
+                        "log": f"Generated {completed_count}/{len(code_blocks)} code summaries"
+                    })
+            return result
 
     tasks = [_sum_single(block) for block in code_blocks]
-    return await asyncio.gather(*tasks)
+    results = await asyncio.gather(*tasks)
+    return list(results)

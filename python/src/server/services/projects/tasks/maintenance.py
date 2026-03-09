@@ -6,7 +6,7 @@ archiving, and maintenance tasks like pruning.
 """
 
 from datetime import datetime, timedelta
-from typing import Any
+from typing import Any, cast
 
 from src.server.config.logfire_config import get_logger
 
@@ -30,7 +30,6 @@ def validate_assignee_logic(assignee: str) -> tuple[bool, str]:
 async def notify_ai_agent_logic(task_id: str, agent_id: str):
     """
     Triggers the agent service call in a non-blocking way.
-    Imports agent_service locally to break circular dependency.
     """
     try:
         from src.server.services.agent_service import agent_service
@@ -50,7 +49,7 @@ async def archive_task_logic(
     try:
         success_get, get_result = await task_service_instance.get_task(task_id)
         if not success_get:
-            return False, get_result
+            return False, cast(dict[str, Any], get_result)
 
         task = get_result["task"]
         if task.get("archived") is True:
@@ -78,7 +77,7 @@ async def archive_task_logic(
 
         if success_archive:
             return True, {"task_id": task_id, "message": "Task archived successfully"}
-        return False, archive_result
+        return False, cast(dict[str, Any], archive_result)
 
     except Exception as e:
         logger.error(f"Error archiving task logic: {e}")
@@ -126,7 +125,7 @@ async def update_task_status_from_agent_logic(
     try:
         success, result = await task_service_instance.get_task(task_id)
         if not success:
-            return False, result
+            return False, cast(dict[str, Any], result)
         current_task = result["task"]
 
         if current_task.get("assignee") != agent_id:
@@ -134,7 +133,7 @@ async def update_task_status_from_agent_logic(
             logger.warning(error_msg)
             return False, {"error": error_msg}
 
-        return await task_service_instance.update_task(task_id, {"status": new_status, "assignee": agent_id})
+        return cast(tuple[bool, dict[str, Any]], await task_service_instance.update_task(task_id, {"status": new_status, "assignee": agent_id}))
     except Exception as e:
         logger.error(f"Error updating task status from agent logic: {e}")
         return False, {"error": str(e)}
@@ -151,7 +150,7 @@ async def save_agent_output_logic(
     try:
         success, result = await task_service_instance.get_task(task_id)
         if not success:
-            return False, result
+            return False, cast(dict[str, Any], result)
         current_task = result["task"]
 
         if current_task.get("assignee") != agent_id:
@@ -172,7 +171,7 @@ async def save_agent_output_logic(
         else:
             new_attachments = [current_attachments, agent_output_data]
 
-        return await task_service_instance.update_task(task_id, {"attachments": new_attachments})
+        return cast(tuple[bool, dict[str, Any]], await task_service_instance.update_task(task_id, {"attachments": new_attachments}))
     except Exception as e:
         logger.error(f"Error saving agent output logic: {e}")
         return False, {"error": str(e)}

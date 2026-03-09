@@ -6,7 +6,7 @@ metadata enrichment via /api/show, and pattern matching.
 """
 
 import time
-from typing import Any
+from typing import Any, cast
 
 import httpx
 
@@ -168,7 +168,7 @@ async def detect_model_capabilities_logic(
     """Detect capabilities by testing model endpoints with caching."""
     cache_key = f"{model_name}@{instance_url}"
     if cache_key in service_instance.capability_cache:
-        return service_instance.capability_cache[cache_key]
+        return cast(ModelCapabilities, service_instance.capability_cache[cache_key])
 
     caps = ModelCapabilities()
     try:
