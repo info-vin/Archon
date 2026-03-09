@@ -1,0 +1,12 @@
+_calculate_code_similarity
+_get_max_workers
+_get_model_choice
+_get_setting_fallback
+_normalize_code_for_comparison
+_select_best_code_variant
+add_code_examples_to_supabase
+extract_code_blocks
+generate_code_example_summary
+generate_code_summaries_batch
+generate_single_summary_with_limit
+score_block

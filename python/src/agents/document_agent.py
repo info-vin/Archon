@@ -7,6 +7,7 @@ natural conversation. Refactored for L2 modularity.
 
 import logging
 import os
+import uuid
 from datetime import datetime
 from typing import Any
 
@@ -132,7 +133,21 @@ class DocumentAgent(BaseAgent[DocumentDependencies, DocumentOperation]):
         """Fetch the system prompt from the prompt service."""
         from ..services.prompt_service import prompt_service
         default_prompt = "You are a Document Management Assistant."
-        return prompt_service.get_prompt("document_agent_prompt", default_prompt)
+        prompt: str = prompt_service.get_prompt("document_agent_prompt", default_prompt)
+        return prompt
+
+    def _generate_block_id(self) -> str:
+        """Generate a unique block ID (Facade)."""
+        return str(uuid.uuid4())
+
+    def _create_block(self, block_type: str, content: str, properties: dict[str, Any] | None = None) -> dict[str, Any]:
+        """Create a document block (Facade)."""
+        return {
+            "id": self._generate_block_id(),
+            "type": block_type,
+            "content": content,
+            "properties": properties or {"text": content}
+        }
 
     async def run_conversation(
         self,

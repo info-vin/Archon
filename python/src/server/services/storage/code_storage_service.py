@@ -5,6 +5,7 @@ Handles storage operations for extracted code examples, including
 contextual embeddings and AI summaries.
 """
 
+import os
 from collections.abc import Callable
 from typing import Any
 
@@ -14,6 +15,17 @@ from src.server.config.logfire_config import search_logger
 
 from ..embeddings.contextual_embedding_service import generate_contextual_embeddings_batch
 from ..embeddings.embedding_service import EmbeddingBatchResult, create_embeddings_batch
+
+
+def _get_model_choice() -> str:
+    """Get MODEL_CHOICE with direct fallback (Facade)."""
+    from .code.summarization import _get_model_choice_logic
+    return _get_model_choice_logic()
+
+
+def _get_max_workers() -> int:
+    """Get max workers logic (Facade)."""
+    return int(os.getenv("CONTEXTUAL_EMBEDDINGS_MAX_WORKERS", "3"))
 
 
 async def generate_code_summaries_batch(
@@ -65,7 +77,6 @@ async def add_code_examples_to_supabase(
 ):
     """
     Add code examples to the Supabase code_examples table in batches.
-    Refactored to align with latest EmbeddingService structure.
     """
     total_examples = len(code_examples)
     if total_examples == 0:
@@ -133,7 +144,6 @@ async def add_code_examples_to_supabase(
 class CodeStorageService:
     """
     Facade Service for code storage operations.
-    Maintained for backward compatibility.
     """
     def __init__(self, supabase_client: Client | None = None):
         self.supabase_client = supabase_client

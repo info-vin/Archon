@@ -5,14 +5,15 @@ Handles model capability testing (chat, embedding, structured output),
 metadata enrichment via /api/show, and pattern matching.
 """
 
-import asyncio
 import time
 from typing import Any, cast
+
 import httpx
 
 from src.server.config.logfire_config import get_logger
 from src.server.services.llm_provider_service import get_llm_client
-from .models import OllamaModel, ModelCapabilities
+
+from .models import ModelCapabilities, OllamaModel
 
 logger = get_logger(__name__)
 
@@ -39,11 +40,16 @@ async def enrich_model_capabilities_logic(
 
         if is_embedding_model:
             model.capabilities = ["embedding"]
-            if "nomic" in model_name_lower: model.embedding_dimensions = 768
-            elif "bge" in model_name_lower: model.embedding_dimensions = 1024 if "large" in model_name_lower else 768
-            elif "e5" in model_name_lower: model.embedding_dimensions = 1024 if "large" in model_name_lower else 768
-            elif "arctic" in model_name_lower: model.embedding_dimensions = 1024
-            else: model.embedding_dimensions = 768
+            if "nomic" in model_name_lower:
+                model.embedding_dimensions = 768
+            elif "bge" in model_name_lower:
+                model.embedding_dimensions = 1024 if "large" in model_name_lower else 768
+            elif "e5" in model_name_lower:
+                model.embedding_dimensions = 1024 if "large" in model_name_lower else 768
+            elif "arctic" in model_name_lower:
+                model.embedding_dimensions = 1024
+            else:
+                model.embedding_dimensions = 768
             logger.debug(f"Pattern-matched embedding model {model.name}")
             enriched_models.append(model)
         else:
@@ -111,25 +117,23 @@ def _map_details_to_model(model: OllamaModel, info: dict[str, Any]):
         model.capabilities = list(set(model.capabilities + api_caps))
 
     if info.get("parameters"):
-        if model.parameters: model.parameters.update(info["parameters"])
-        else: model.parameters = info["parameters"]
+        if model.parameters:
+            model.parameters.update(info["parameters"])
+        else:
+            model.parameters = info["parameters"]
 
 
 async def detect_model_capabilities_logic(
     service_instance, model_name: str, instance_url: str, optimized: bool = False
 ) -> ModelCapabilities:
-    """Detect capabilities with CONCURRENCY LOCK (Restored)."""
+    """Detect capabilities with CONCURRENCY LOCK."""
     cache_key = f"{model_name}@{instance_url}"
-    
-    # 1. Thread-safe cache check
+
     async with service_instance.capability_lock:
         if cache_key in service_instance.capability_cache:
             return cast(ModelCapabilities, service_instance.capability_cache[cache_key])
 
-    # 2. Perform detection (outside lock to allow parallel requests if needed, 
-    # but service currently uses global lock for safety)
     async with service_instance.capability_lock:
-        # Re-check cache after acquiring lock
         if cache_key in service_instance.capability_cache:
             return cast(ModelCapabilities, service_instance.capability_cache[cache_key])
 
@@ -190,15 +194,20 @@ async def get_model_details_logic(model_name: str, instance_url: str) -> dict[st
                 if params_raw:
                     for line in params_raw.split("\n"):
                         if line.strip().startswith("num_ctx"):
-                            try: num_ctx = int(line.split()[-1])
-                            except Exception: pass
+                            try:
+                                num_ctx = int(line.split()[-1])
+                            except Exception:
+                                pass
                 max_ctx = None
                 base_ctx = None
                 embed_dim = None
                 for k, v in model_info.items():
-                    if k.endswith(".context_length"): max_ctx = v
-                    elif k.endswith(".rope.scaling.original_context_length"): base_ctx = v
-                    elif k.endswith(".embedding_length"): embed_dim = v
+                    if k.endswith(".context_length"):
+                        max_ctx = v
+                    elif k.endswith(".rope.scaling.original_context_length"):
+                        base_ctx = v
+                    elif k.endswith(".embedding_length"):
+                        embed_dim = v
                 current_ctx = num_ctx or base_ctx or max_ctx
                 details = {
                     "family": details_section.get("family"),
@@ -219,7 +228,8 @@ async def get_model_details_logic(model_name: str, instance_url: str) -> dict[st
                     "attention_heads": next((v for k, v in model_info.items() if ".attention.head_count" in k or ".n_head" in k), None),
                 }
                 return details
-    except Exception: pass
+    except Exception:
+        pass
     return None
 
 
@@ -229,8 +239,10 @@ async def test_embedding_capability_logic(model_name: str, instance_url: str) ->
             res = await client.post(f"{instance_url.rstrip('/')}/api/embeddings", json={"model": model_name, "prompt": "test"})
             if res.status_code == 200:
                 emb = res.json().get("embedding", [])
-                if emb: return len(emb)
-    except Exception: pass
+                if emb:
+                    return len(emb)
+    except Exception:
+        pass
     return None
 
 
@@ -240,7 +252,8 @@ async def test_chat_capability_logic(model_name: str, instance_url: str) -> bool
             client.base_url = f"{instance_url.rstrip('/')}/v1"
             res = await client.chat.completions.create(model=model_name, messages=[{"role": "user", "content": "Hi"}], max_tokens=1, timeout=10)
             return bool(res.choices)
-    except Exception: return False
+    except Exception:
+        return False
 
 
 async def test_function_calling_capability_logic(model_name: str, instance_url: str) -> bool:
@@ -249,7 +262,8 @@ async def test_function_calling_capability_logic(model_name: str, instance_url: 
             client.base_url = f"{instance_url.rstrip('/')}/v1"
             res = await client.chat.completions.create(model=model_name, messages=[{"role": "user", "content": "Time?"}], tools=[{"type": "function", "function": {"name": "get_time", "description": "time", "parameters": {"type": "object", "properties": {}}}}], max_tokens=10, timeout=8)
             return hasattr(res.choices[0].message, "tool_calls") and bool(res.choices[0].message.tool_calls)
-    except Exception: return False
+    except Exception:
+        return False
 
 
 async def test_structured_output_capability_logic(model_name: str, instance_url: str) -> bool:
@@ -258,7 +272,8 @@ async def test_structured_output_capability_logic(model_name: str, instance_url:
             client.base_url = f"{instance_url.rstrip('/')}/v1"
             res = await client.chat.completions.create(model=model_name, messages=[{"role": "user", "content": "JSON ok? {\"a\":1}"}], max_tokens=20, timeout=8, temperature=0)
             return "{" in (res.choices[0].message.content or "")
-    except Exception: return False
+    except Exception:
+        return False
 
 
 async def test_embedding_capability_fast_logic(model_name: str, instance_url: str) -> int | None:
@@ -267,8 +282,10 @@ async def test_embedding_capability_fast_logic(model_name: str, instance_url: st
             res = await client.post(f"{instance_url.rstrip('/')}/api/embeddings", json={"model": model_name, "prompt": "t"})
             if res.status_code == 200:
                 emb = res.json().get("embedding", [])
-                if emb: return len(emb)
-    except Exception: pass
+                if emb:
+                    return len(emb)
+    except Exception:
+        pass
     return None
 
 
@@ -278,7 +295,8 @@ async def test_chat_capability_fast_logic(model_name: str, instance_url: str) ->
             client.base_url = f"{instance_url.rstrip('/')}/v1"
             res = await client.chat.completions.create(model=model_name, messages=[{"role": "user", "content": "H"}], max_tokens=1, timeout=5)
             return bool(res.choices)
-    except Exception: return False
+    except Exception:
+        return False
 
 
 async def test_structured_output_capability_fast_logic(model_name: str, instance_url: str) -> bool:
@@ -287,4 +305,5 @@ async def test_structured_output_capability_fast_logic(model_name: str, instance
             client.base_url = f"{instance_url.rstrip('/')}/v1"
             res = await client.chat.completions.create(model=model_name, messages=[{"role": "user", "content": "JSON: {}"}], max_tokens=5, timeout=5)
             return "{" in (res.choices[0].message.content or "")
-    except Exception: return False
+    except Exception:
+        return False
