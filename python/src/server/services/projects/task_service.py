@@ -7,12 +7,10 @@ shared between MCP tools and FastAPI endpoints.
 
 # Removed direct logging import - using unified config
 import asyncio
-import textwrap
 from datetime import datetime
 from typing import Any
 
 from src.server.repositories.base_repository import BaseRepository
-from src.server.services.log_service import LogService  # Enhanced Logging
 from src.server.utils import get_supabase_client
 
 from ...config.logfire_config import get_logger
@@ -36,31 +34,19 @@ class TaskService(BaseRepository):
         super().__init__(client)
 
     def _notify_ai_agent_of_assignment(self, task_id: str, agent_id: str):
-        """
-        Triggers the agent service call in a non-blocking way.
-        Imports agent_service locally to break circular dependency.
-        """
-        # Local import to break circular dependency
-        from ..agent_service import agent_service
-
-        logger.info(f"Scheduling notification for AI agent {agent_id} for task {task_id}")
-        # Use asyncio.create_task to run the async call without blocking the main flow
-        asyncio.create_task(agent_service.run_agent_task(task_id=task_id, agent_id=agent_id))
+        """Delegates agent notification to maintenance submodule."""
+        from .tasks.maintenance import notify_ai_agent_logic
+        asyncio.create_task(notify_ai_agent_logic(task_id, agent_id))
 
     def validate_status(self, status: str) -> tuple[bool, str]:
-        """Validate task status"""
-        if status not in self.VALID_STATUSES:
-            return (
-                False,
-                f"Invalid status '{status}'. Must be one of: {', '.join(self.VALID_STATUSES)}",
-            )
-        return True, ""
+        """Delegates status validation to maintenance submodule."""
+        from .tasks.maintenance import validate_status_logic
+        return validate_status_logic(status, self.VALID_STATUSES)
 
     def validate_assignee(self, assignee: str) -> tuple[bool, str]:
-        """Validate task assignee"""
-        if not assignee or not isinstance(assignee, str) or len(assignee.strip()) == 0:
-            return False, "Assignee must be a non-empty string"
-        return True, ""
+        """Delegates assignee validation to maintenance submodule."""
+        from .tasks.maintenance import validate_assignee_logic
+        return validate_assignee_logic(assignee)
 
     async def create_info_request_task(
         self,
@@ -243,174 +229,18 @@ class TaskService(BaseRepository):
         include_closed: bool = False,
         exclude_large_fields: bool = False,
         include_archived: bool = False,
-        assignee_id: str | None = None, # Keep for future use
-        assignee_name: str | None = None, # For current name-based RBAC
-        include_unassigned: bool = False, # Fix FB-03: Allow seeing unassigned tasks
+        assignee_id: str | None = None,
+        assignee_name: str | None = None,
+        include_unassigned: bool = False,
     ) -> tuple[bool, dict[str, Any]]:
         """
-        List tasks with various filters.
-
-        Args:
-            project_id: Filter by project
-            status: Filter by status
-            include_closed: Include done tasks
-            exclude_large_fields: If True, excludes sources and code_examples fields
-            include_archived: If True, includes archived tasks
-            assignee_id: Filter by assignee user ID (future proofing)
-            assignee_name: Filter by assignee name (current RBAC implementation)
-
-        Returns:
-            Tuple of (success, result_dict)
+        List tasks with various filters. Delegates to query submodule.
         """
-        try:
-            # Start with base query
-            if exclude_large_fields:
-                # Select all fields except large JSONB ones
-                query = self.supabase_client.table("archon_tasks").select(
-                    "id, project_id, parent_task_id, title, description, "
-                    "status, assignee, assignee_id, task_order, feature, archived, "
-                    "archived_at, archived_by, created_at, updated_at, due_date, "
-                    "sources, code_examples, is_recurring, crawler_target_id, schedule_config"  # Still fetch for counting, but will process differently
-                )
-            else:
-                query = self.supabase_client.table("archon_tasks").select("* ")
-
-            # Track filters for debugging
-            filters_applied = []
-
-            # Apply filters
-            if assignee_id:
-                if include_unassigned:
-                    # Fix FB-03: Show tasks assigned to me OR unassigned
-                    # Syntax: assignee_id.eq.UUID,assignee_id.is.null
-                    query = query.or_(f"assignee_id.eq.{assignee_id},assignee_id.is.null")
-                    filters_applied.append(f"assignee_id={assignee_id} OR unassigned")
-                else:
-                    query = query.eq("assignee_id", assignee_id)
-                    filters_applied.append(f"assignee_id={assignee_id}")
-
-            if assignee_name and not assignee_id: # Only fallback to name if ID is not provided
-                if include_unassigned:
-                     # Name-based fallback (less precise but needed for legacy)
-                     query = query.or_(f"assignee.eq.{assignee_name},assignee.eq.User") # Assuming 'User' is default unassigned
-                     filters_applied.append(f"assignee={assignee_name} OR User")
-                else:
-                    query = query.eq("assignee", assignee_name)
-                    filters_applied.append(f"assignee={assignee_name}")
-
-            if status:
-                # Validate status
-                is_valid, error_msg = self.validate_status(status)
-                if not is_valid:
-                    return False, {"error": error_msg}
-                query = query.eq("status", status)
-                filters_applied.append(f"status={status}")
-                # When filtering by specific status, don't apply include_closed filter
-                # as it would be redundant or potentially conflicting
-            elif not include_closed:
-                # Only exclude done tasks if no specific status filter is applied
-                query = query.neq("status", "done")
-                filters_applied.append("exclude done tasks")
-
-            # Filter out archived tasks only if not including them
-            if not include_archived:
-                query = query.or_("archived.is.null,archived.is.false")
-                filters_applied.append("exclude archived tasks (null or false)")
-            else:
-                filters_applied.append("include all tasks (including archived)")
-
-            logger.debug(f"Listing tasks with filters: {', '.join(filters_applied)}")
-
-            # Execute query and get raw response
-            response = (
-                query.order("task_order", desc=False).order("created_at", desc=False).execute()
-            )
-
-            # Debug: Log task status distribution and filter effectiveness
-            if response.data:
-                status_counts: dict[str, int] = {}
-                archived_counts = {"null": 0, "true": 0, "false": 0}
-
-                for task in response.data:
-                    task_status = task.get("status", "unknown")
-                    status_counts[task_status] = status_counts.get(task_status, 0) + 1
-
-                    # Check archived field
-                    archived_value = task.get("archived")
-                    if archived_value is None:
-                        archived_counts["null"] += 1
-                    elif archived_value is True:
-                        archived_counts["true"] += 1
-                    else:
-                        archived_counts["false"] += 1
-
-                logger.debug(
-                    f"Retrieved {len(response.data)} tasks. Status distribution: {status_counts}"
-                )
-                logger.debug(f"Archived field distribution: {archived_counts}")
-
-                # If we're filtering by status and getting wrong results, log sample
-                if status and len(response.data) > 0:
-                    first_task = response.data[0]
-                    logger.warning(
-                        f"Status filter: {status}, First task status: {first_task.get('status')}, archived: {first_task.get('archived')}"
-                    )
-            else:
-                logger.debug("No tasks found with current filters")
-
-            tasks = []
-            for task in response.data:
-                task_data = {
-                    "id": task["id"],
-                    "project_id": task["project_id"],
-                    "title": task["title"],
-                    "description": task["description"],
-                    "status": task["status"],
-                    "assignee": task.get("assignee", "User"),
-                    "assignee_id": task.get("assignee_id"),
-                    "task_order": task.get("task_order", 0),
-                    "feature": task.get("feature"),
-                    "priority": task.get("priority", "medium"),
-                    "created_at": task["created_at"],
-                    "updated_at": task["updated_at"],
-                    "archived": task.get("archived", False),
-                    "due_date": task.get("due_date"),
-                    "is_recurring": task.get("is_recurring"),
-                    "crawler_target_id": task.get("crawler_target_id"),
-                    "schedule_config": task.get("schedule_config"),
-                }
-
-                if not exclude_large_fields:
-                    # Include full JSONB fields
-                    task_data["sources"] = task.get("sources", [])
-                    task_data["code_examples"] = task.get("code_examples", [])
-                else:
-                    # Add counts instead of full content
-                    task_data["stats"] = {
-                        "sources_count": len(task.get("sources", [])),
-                        "code_examples_count": len(task.get("code_examples", []))
-                    }
-
-                tasks.append(task_data)
-
-            filter_info = []
-            if project_id:
-                filter_info.append(f"project_id={project_id}")
-            if status:
-                filter_info.append(f"status={status}")
-            if not include_closed:
-                filter_info.append("excluding closed tasks")
-
-            return True, {
-                "tasks": tasks,
-                "total_count": len(tasks),
-                "filters_applied": ", ".join(filter_info) if filter_info else "none",
-                "include_closed": include_closed,
-            }
-
-        except Exception as e:
-            logger.error(f"Error listing tasks: {e}")
-            return False, {"error": f"Error listing tasks: {str(e)}"}
+        from .tasks.query_logic import list_tasks_logic
+        return await list_tasks_logic(
+            self, project_id, status, include_closed, exclude_large_fields,
+            include_archived, assignee_id, assignee_name, include_unassigned
+        )
 
     async def get_task(self, task_id: str) -> tuple[bool, dict[str, Any]]:
         """
@@ -552,452 +382,56 @@ class TaskService(BaseRepository):
     async def archive_task(
         self, task_id: str, archived_by: str = "mcp"
     ) -> tuple[bool, dict[str, Any]]:
-        """
-        Archive a task and all its subtasks (soft delete).
-
-        Returns:
-            Tuple of (success, result_dict)
-        """
-        try:
-            # First, check if task exists and is not already archived
-            success_get, get_result = await self.get_task(task_id)
-            if not success_get:
-                return False, get_result
-
-            task = get_result["task"]
-            if task.get("archived") is True:
-                return False, {"error": f"Task with ID {task_id} is already archived"}
-
-            # Archive the task
-            archive_data = {
-                "archived": True,
-                "archived_at": datetime.now().isoformat(),
-                "archived_by": archived_by,
-                "updated_at": datetime.now().isoformat(),
-            }
-
-            # Archive the main task
-            def _archive_query():
-                return (
-                    self.supabase_client.table("archon_tasks")
-                    .update(archive_data)
-                    .eq("id", task_id)
-                    .execute()
-                )
-
-            success_archive, archive_result = self.execute_query(
-                query_func=_archive_query,
-                error_context=f"Failed to archive task {task_id}"
-            )
-
-            if success_archive:
-                return True, {"task_id": task_id, "message": "Task archived successfully"}
-            return False, archive_result
-
-        except Exception as e:
-            logger.error(f"Error archiving task: {e}")
-            return False, {"error": f"Error archiving task: {str(e)}"}
+        """Archives a task. Delegates to maintenance submodule."""
+        from .tasks.maintenance import archive_task_logic
+        return await archive_task_logic(self, task_id, archived_by)
 
     async def update_task_status_from_agent(
         self, task_id: str, new_status: str, agent_id: str
     ) -> tuple[bool, dict[str, Any]]:
-        """
-        Update a task's status from an agent. Includes validation.
-        """
-        try:
-            success, result = await self.get_task(task_id)
-            if not success:
-                return False, result
-            current_task = result["task"]
-
-            # Validation: Check if the reporting agent is the assigned agent
-            if current_task.get("assignee") != agent_id:
-                error_msg = f"Agent '{agent_id}' is not authorized to update task '{task_id}'. Task is assigned to '{current_task.get('assignee')}'."
-                logger.warning(error_msg)
-                return False, {"error": error_msg}
-
-            # Use the existing update_task method to perform the update
-            return await self.update_task(task_id, {"status": new_status, "assignee": agent_id})
-
-        except Exception as e:
-            logger.error(f"Error updating task status from agent: {e}")
-            return False, {"error": f"Error updating task status from agent: {str(e)}"}
+        """Updates status via agent. Delegates to maintenance submodule."""
+        from .tasks.maintenance import update_task_status_from_agent_logic
+        return await update_task_status_from_agent_logic(self, task_id, new_status, agent_id)
 
     async def save_agent_output(
         self, task_id: str, output: dict[str, Any], agent_id: str
     ) -> tuple[bool, dict[str, Any]]:
-        """
-        Save the output from an AI agent to the task's attachments.
-        """
-        try:
-            success, result = await self.get_task(task_id)
-            if not success:
-                return False, result
-            current_task = result["task"]
-
-            # Validation: Check if the reporting agent is the assigned agent
-            if current_task.get("assignee") != agent_id:
-                error_msg = f"Agent '{agent_id}' is not authorized to save output for task '{task_id}'. Task is assigned to '{current_task.get('assignee')}'."
-                logger.warning(error_msg)
-                return False, {"error": error_msg}
-
-            # Prepare the agent output to be stored
-            agent_output_data = {
-                "agent_id": agent_id,
-                "timestamp": datetime.now().isoformat(),
-                "output": output
-            }
-
-            # Get current attachments and append the new output
-            current_attachments = current_task.get("attachments") or []
-            if isinstance(current_attachments, list):
-                current_attachments.append(agent_output_data)
-                new_attachments = current_attachments
-            else:
-                 # If attachments is not a list, wrap it and the new output in a new list
-                new_attachments = [current_attachments, agent_output_data]
-
-            # Use the existing update_task method to save the attachments
-            return await self.update_task(task_id, {"attachments": new_attachments})
-
-        except Exception as e:
-            logger.error(f"Error saving agent output: {e}")
-            return False, {"error": f"Error saving agent output: {str(e)}"}
+        """Saves agent output. Delegates to maintenance submodule."""
+        from .tasks.maintenance import save_agent_output_logic
+        return await save_agent_output_logic(self, task_id, output, agent_id)
 
     async def refine_task_description(self, title: str, description: str) -> str:
         """
         Uses POBot (RAG-enhanced) to transform a raw description into
-        a structured product spec with User Stories and Technical Requirements.
+        a structured product spec.
         """
-        try:
-            # REALITY CHECK (Feb 2026): Use official GenAI Client for PO Workflows
-            from google import genai
-            from google.genai import types
-
-            from ..credential_service import credential_service
-            from ..search.rag_service import RAGService
-
-            # 1. Fetch relevant context using RAG
-            rag_service = RAGService(self.supabase_client)
-            rag_success, rag_result = await rag_service.perform_rag_query(
-                query=f"{title} {description}",
-                match_count=3
-            )
-
-            context_str = ""
-            if rag_success and "results" in rag_result:
-                snippets = [res.get("content", "")[:300] for res in rag_result["results"]]
-                context_str = "\n".join(snippets)
-                logger.info(f"POBot RAG found {len(snippets)} context snippets")
-
-            # 2. Construct Prompt with Context
-            prompt = textwrap.dedent(f"""
-                You are POBot, an expert Product Owner.
-                Refine the following task into a professional, structured specification.
-
-                TASK TITLE: {title}
-                RAW DESCRIPTION: {description}
-
-                RELEVANT PROJECT CONTEXT (from RAG):
-                {context_str}
-
-                FORMAT:
-                1. **Goal**: One sentence high-level goal.
-                2. **User Stories**: At least 2-3 stories in "As a... I want to... so that..." format.
-                3. **Acceptance Criteria**: Detailed bullet points.
-                4. **Technical Considerations**: Constraints or hints (based on context if applicable).
-
-                KEEP IT CONCISE AND ACTIONABLE.
-            """).strip()
-
-            # 3. Generate Content using official SDK
-            model_name = "gemini-2.5-flash-lite"
-
-            # Key Decoupling: Prefer GEMINI_API_KEY
-            charlie_api_key = await credential_service.get_credential("GEMINI_API_KEY") or await credential_service.get_credential("GOOGLE_API_KEY")
-
-            if not charlie_api_key:
-                raise ValueError("No AI API Key available for PO Workflows")
-
-            client = genai.Client(api_key=charlie_api_key)
-            response = client.models.generate_content(
-                model=model_name,
-                contents=prompt,
-                config=types.GenerateContentConfig(
-                    system_instruction="You are POBot, a helpful Product Owner assistant. ALWAYS answer in Traditional Chinese (Taiwan繁體中文), regardless of the input language.",
-                    temperature=0.7,
-                )
-            )
-
-            content = response.text or ""
-            if not content:
-                raise ValueError("LLM returned empty content")
-            return content
-
-        except Exception as e:
-            logger.error(f"POBot refinement failed: {e}", exc_info=True)
-
-            # System Alert Logging
-            try:
-                LogService(self.supabase_client).create_log_entry({
-                    "user_input": f"SYSTEM_ALERT: POBot Failure [{type(e).__name__}]",
-                    "gemini_response": f"Refinement Failed. Error: {str(e)}",
-                    "project_name": "manager_bot",
-                    "user_name": "system"
-                })
-            except Exception:
-                pass
-
-            # CRITICAL: Raise exception instead of returning a misleading "skip" message.
-            # This allows the UI to handle the error properly.
-            raise RuntimeError(f"POBot Refinement Unavailable: {str(e)[:100]}") from e
+        from .tasks.ai_operations import refine_task_description_logic
+        return await refine_task_description_logic(self.supabase_client, title, description)
 
     async def get_all_project_task_counts(self) -> tuple[bool, dict[str, dict[str, int]]]:
         """
-        Get task counts for all projects in a single optimized query.
-
-        Returns task counts grouped by project_id and status.
-        Includes review status in "doing" count to match frontend logic.
-
-        Returns:
-            Tuple of (success, counts_dict) where counts_dict is:
-            {"project-id": {"todo": 5, "doing": 2, "done": 10}}
+        Get task counts for all projects. Delegates to query submodule.
         """
-        try:
-            logger.debug("Fetching task counts for all projects in batch")
-
-            # Query all non-archived tasks grouped by project_id and status
-            response = (
-                self.supabase_client.table("archon_tasks")
-                .select("project_id, status")
-                .or_("archived.is.null,archived.is.false")
-                .execute()
-            )
-
-            if not response.data:
-                logger.debug("No tasks found")
-                return True, {}
-
-            # Process results into counts by project and status
-            counts_by_project: dict[str, dict[str, int]] = {}
-
-            for task in response.data:
-                project_id = task.get("project_id")
-                status = task.get("status")
-
-                if not project_id or not status:
-                    continue
-
-                # Initialize project counts if not exists
-                if project_id not in counts_by_project:
-                    counts_by_project[project_id] = {
-                        "todo": 0,
-                        "doing": 0,
-                        "done": 0
-                    }
-
-                # Map review to doing to match frontend logic
-                if status == "review":
-                    counts_by_project[project_id]["doing"] += 1
-                elif status in ["todo", "doing", "done"]:
-                    counts_by_project[project_id][status] += 1
-
-            logger.debug(f"Task counts fetched for {len(counts_by_project)} projects")
-
-            return True, counts_by_project
-
-        except Exception as e:
-            logger.error(f"Error fetching task counts: {e}")
-            # Use cast to satisfy return type dict[str, dict[str, int]]
-            error_data: Any = {"error": f"Error fetching task counts: {str(e)}"}
-            return False, error_data
+        from .tasks.query_logic import get_all_project_task_counts_logic
+        return await get_all_project_task_counts_logic(self)
 
     async def generate_task_from_alert(
         self,
         alert_id: str,
         assignee_id: str | None = None,
-        triggered_by: str | None = None # Added for Token Tracking
+        triggered_by: str | None = None
     ) -> tuple[bool, dict[str, Any]]:
         """
         AI-powered task generation from a Sentinel alert.
-        Enriches the task with business context from the lead and RAG.
+        Delegates to AI submodule.
         """
-        try:
-            from ..credential_service import credential_service
-            from ..search.rag_service import RAGService
-
-            # 1. Fetch Alert (Safety first: initialize variables)
-            context_msg = "Automated Alert"
-            details = {}
-            source_table = "archon_logs" # Default
-
-            res_alert = self.supabase_client.table("archon_logs").select("*").eq("id", alert_id).execute()
-            alert_data = res_alert.data[0] if (res_alert.data and len(res_alert.data) > 0) else None
-
-            if alert_data:
-                details = alert_data.get("details", {})
-                context_msg = alert_data.get("message", "System Alert")
-                source_table = "archon_logs"
-            else:
-                # Fallback to ethics events table
-                res_ethics = self.supabase_client.table("archon_ethics_events").select("*").eq("id", alert_id).execute()
-                if res_ethics.data and len(res_ethics.data) > 0:
-                    eth = res_ethics.data[0]
-                    context_msg = f"Ethics Violation: {eth.get('event_type')} - {eth.get('description')}"
-                    details = {
-                        "type": "ethics_violation",
-                        "category": "business",
-                        "raw_input": eth.get("raw_input"),
-                        "company": "Safety Compliance"
-                    }
-                    source_table = "archon_ethics_events"
-                else:
-                    return False, {"error": f"Alert or Ethics Event {alert_id} not found"}
-
-            lead_id = details.get("lead_id")
-            post_id = details.get("post_id")
-
-            # 2. Gather Context
-            context_str = f"ALERT: {context_msg}\n"
-            company_name = details.get("company", "Compliance Case")
-
-            if lead_id:
-                res_lead = self.supabase_client.table("leads").select("*").eq("id", lead_id).execute()
-                if res_lead.data and len(res_lead.data) > 0:
-                    lead = res_lead.data[0]
-                    context_str += f"COMPANY: {lead['company_name']}\n"
-                    context_str += f"IDENTIFIED NEED: {lead.get('identified_need', 'None')}\n"
-                    res_logs = self.supabase_client.table("visit_logs").select("summary").eq("lead_id", lead_id).limit(3).execute()
-                    if res_logs.data:
-                        context_str += "\nPAST VISIT SUMMARIES:\n"
-                        for log in res_logs.data:
-                            context_str += f"- {log['summary']}\n"
-
-            elif post_id:
-                res_post = self.supabase_client.table("blog_posts").select("*").eq("id", post_id).execute()
-                if res_post.data and len(res_post.data) > 0:
-                    post = res_post.data[0]
-                    company_name = post.get("title", "Marketing Asset")
-                    context_str += f"CONTEXT: Content Bottleneck\nTITLE: {post['title']}\nSTATUS: {post['status']}\n"
-
-            # 3. RAG Search
-            rag_service = RAGService(self.supabase_client)
-            rag_success, rag_result = await rag_service.perform_rag_query(query=f"{company_name} {details.get('type', '')}", match_count=2)
-            if rag_success and "results" in rag_result:
-                context_str += "\nINTERNAL KNOWLEDGE BASE SNIPPETS:\n"
-                context_str += "\n".join([res.get("content", "")[:300] for res in rag_result["results"]])
-
-            # 4. Call AI using Official SDK
-            model_name = "gemini-1.5-pro"
-            charlie_api_key = await credential_service.get_credential("GEMINI_API_KEY") or await credential_service.get_credential("GOOGLE_API_KEY")
-
-            if not charlie_api_key:
-                raise ValueError("No AI API Key available for Alert Dispatch")
-
-            prompt = textwrap.dedent(f"""
-                Convert the following Alert into a high-value task for the team.
-                ALERT: {context_msg}
-                CONTEXT: {context_str}
-                FORMAT: TITLE: [Title] | DESCRIPTION: [Detailed strategy]
-            """).strip()
-
-            try:
-                # REALITY CHECK (Feb 2026): Aligned with other operation endpoints
-                from google import genai
-                from google.genai import types
-
-                client = genai.Client(api_key=charlie_api_key)
-                response = client.models.generate_content(
-                    model=model_name,
-                    contents=prompt,
-                    config=types.GenerateContentConfig(
-                        system_instruction="You are Charlie's Assistant. Answer in Traditional Chinese (Taiwan).",
-                        temperature=0.7,
-                    )
-                )
-                ai_output = response.text or ""
-                if not ai_output:
-                    raise ValueError("LLM returned empty dispatch content")
-
-            except Exception as llm_error:
-                 logger.error(f"AI Dispatch Failed: {llm_error}")
-                 # CRITICAL: Do not create a "Manual Action Needed" task silently.
-                 # Let the exception propagate so the Manager knows the dispatch failed.
-                 raise RuntimeError(f"Smart Dispatch Unavailable: {str(llm_error)[:100]}") from llm_error
-
-            # Parse AI Output
-            title = f"Follow-up: {company_name}"
-            description = ai_output
-            if "TITLE:" in ai_output:
-                try:
-                    title = ai_output.split("TITLE:")[1].split("DESCRIPTION:")[0].strip()
-                    description = ai_output.split("DESCRIPTION:")[1].strip()
-                except Exception:
-                    pass
-
-            # 5. Create Task
-            p_res = self.supabase_client.table("archon_projects").select("id").ilike("title", "%Field%").execute()
-            if not (p_res.data and len(p_res.data) > 0):
-                p_res = self.supabase_client.table("archon_projects").select("id").limit(1).execute()
-
-            if not (p_res.data and len(p_res.data) > 0):
-                return False, {"error": "Critical: No project found in database to attach task."}
-
-            project_id = p_res.data[0]["id"]
-
-            sources = [{"type": "sentinel_alert", "source_id": alert_id, "title": context_msg}]
-
-            success, result = await self.create_task(
-                project_id=project_id, title=title, description=description,
-                assignee_id=assignee_id, priority="high", sources=sources
-            )
-
-            if success:
-                logger.info(f"Smart Dispatch Success: {source_table} {alert_id}")
-                if source_table == "archon_logs":
-                    updated_details = {**details, "status": "dispatched", "dispatched_task_id": result['task']['id']}
-                    self.supabase_client.table("archon_logs").update({"details": updated_details, "level": "INFO"}).eq("id", alert_id).execute()
-                else:
-                    self.supabase_client.table("archon_ethics_events").update({"resolved": True, "resolution_notes": f"Dispatched: {result['task']['id']}"}).eq("id", alert_id).execute()
-
-            return success, result
-        except Exception as e:
-            logger.error(f"Critical Dispatch Error: {e}", exc_info=True)
-            return False, {"error": str(e)}
+        from .tasks.ai_operations import generate_task_from_alert_logic
+        return await generate_task_from_alert_logic(self, alert_id, assignee_id)
 
     async def prune_archived_tasks(self, days_old: int = 30) -> tuple[bool, dict[str, Any]]:
-        """
-        Permanently delete archived tasks older than X days.
-        This implements GAP-011 (Auto Prune).
-        """
-        try:
-            from datetime import timedelta
-
-            cutoff_date = (datetime.now() - timedelta(days=days_old)).isoformat()
-
-            logger.info(f"Pruning archived tasks older than {days_old} days (cutoff: {cutoff_date})")
-
-            # Select IDs to delete first for logging
-            tasks_to_prune = (
-                self.supabase_client.table("archon_tasks")
-                .select("id")
-                .eq("archived", True)
-                .lt("archived_at", cutoff_date)
-                .execute()
-            )
-
-            count = len(tasks_to_prune.data) if tasks_to_prune.data else 0
-
-            if count > 0:
-                # Perform deletion
-                self.supabase_client.table("archon_tasks").delete().eq("archived", True).lt("archived_at", cutoff_date).execute()
-                logger.info(f"Successfully pruned {count} tasks")
-
-            return True, {"pruned_count": count, "cutoff_date": cutoff_date}
-
-        except Exception as e:
-            logger.error(f"Error pruning tasks: {e}")
-            return False, {"error": str(e)}
+        """Prunes old archived tasks. Delegates to maintenance submodule."""
+        from .tasks.maintenance import prune_archived_tasks_logic
+        return await prune_archived_tasks_logic(self, days_old)
 
 
 task_service = TaskService()
