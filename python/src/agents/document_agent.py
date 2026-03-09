@@ -36,10 +36,7 @@ class DocumentAgent(BaseAgent[DocumentDependencies, DocumentOperation]):
 
     def _create_agent(self, **kwargs) -> Agent[DocumentDependencies, DocumentOperation]:
         """Create the PydanticAI agent with tools and prompts."""
-        from ..services.prompt_service import prompt_service
-
-        default_prompt = """You are a Document Management Assistant."""
-        system_prompt = prompt_service.get_prompt("document_agent_prompt", default_prompt)
+        system_prompt = self.get_system_prompt()
 
         agent: Agent[DocumentDependencies, DocumentOperation] = Agent(
             model=self.model,
@@ -130,6 +127,12 @@ class DocumentAgent(BaseAgent[DocumentDependencies, DocumentOperation]):
             )
 
         return agent
+
+    def get_system_prompt(self) -> str:
+        """Fetch the system prompt from the prompt service."""
+        from ..services.prompt_service import prompt_service
+        default_prompt = "You are a Document Management Assistant."
+        return prompt_service.get_prompt("document_agent_prompt", default_prompt)
 
     async def run_conversation(
         self,

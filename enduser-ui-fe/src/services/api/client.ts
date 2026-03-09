@@ -11,6 +11,12 @@ const getSupabaseConfig = () => {
         key = localStorage.getItem('supabaseAnonKey') || "";
     }
 
+    // 🟢 RULE 7: Proactive Guard against Docker DNS pollution (_kong)
+    if (url && url.includes('_kong')) {
+        console.warn("⚠️ [Security] Internal Docker DNS detected in Frontend. Blocking request to prevent DNS hang.");
+        return { url: null, key: null };
+    }
+
     return { url: url || null, key: key || null };
 };
 

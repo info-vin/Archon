@@ -24,6 +24,7 @@ class ModelDiscoveryService:
     def __init__(self):
         self.model_cache: dict[str, list[OllamaModel]] = {}
         self.capability_cache: dict[str, ModelCapabilities] = {}
+        self.capability_lock = asyncio.Lock()  # Restored for concurrency control
         self.health_cache: dict[str, InstanceHealthStatus] = {}
         self.cache_ttl = 300  # 5 minutes TTL
         self.discovery_timeout = 30  # 30 seconds timeout for discovery
@@ -186,6 +187,39 @@ class ModelDiscoveryService:
         """Comprehensive capability detection. Delegates to capabilities submodule."""
         from .discovery.capabilities import detect_model_capabilities_logic
         return await detect_model_capabilities_logic(self, model_name, instance_url, optimized=False)
+
+    # --- Private Facades for backward compatibility and testing ---
+    async def _get_model_details(self, model_name: str, instance_url: str) -> dict[str, Any] | None:
+        from .discovery.capabilities import get_model_details_logic
+        return await get_model_details_logic(model_name, instance_url)
+
+    async def _test_chat_capability(self, model_name: str, instance_url: str) -> bool:
+        from .discovery.capabilities import test_chat_capability_logic
+        return await test_chat_capability_logic(model_name, instance_url)
+
+    async def _test_embedding_capability(self, model_name: str, instance_url: str) -> int | None:
+        from .discovery.capabilities import test_embedding_capability_logic
+        return await test_embedding_capability_logic(model_name, instance_url)
+
+    async def _test_function_calling_capability(self, model_name: str, instance_url: str) -> bool:
+        from .discovery.capabilities import test_function_calling_capability_logic
+        return await test_function_calling_capability_logic(model_name, instance_url)
+
+    async def _test_structured_output_capability(self, model_name: str, instance_url: str) -> bool:
+        from .discovery.capabilities import test_structured_output_capability_logic
+        return await test_structured_output_capability_logic(model_name, instance_url)
+
+    async def _test_embedding_capability_fast(self, model_name: str, instance_url: str) -> int | None:
+        from .discovery.capabilities import test_embedding_capability_fast_logic
+        return await test_embedding_capability_fast_logic(model_name, instance_url)
+
+    async def _test_chat_capability_fast(self, model_name: str, instance_url: str) -> bool:
+        from .discovery.capabilities import test_chat_capability_fast_logic
+        return await test_chat_capability_fast_logic(model_name, instance_url)
+
+    async def _test_structured_output_capability_fast(self, model_name: str, instance_url: str) -> bool:
+        from .discovery.capabilities import test_structured_output_capability_fast_logic
+        return await test_structured_output_capability_fast_logic(model_name, instance_url)
 
     async def validate_model_capabilities(self, model_name: str, instance_url: str, required_capability: str) -> bool:
         """

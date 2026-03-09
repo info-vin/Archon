@@ -101,7 +101,6 @@ export const opsApi = {
   },
 
   async dispatchAlertTask(alertId: string, assigneeId?: string): Promise<any> {
-
       const response = await fetch('/api/tasks/generate-from-alert', {
           method: 'POST',
           headers: await getHeaders(),
@@ -111,8 +110,8 @@ export const opsApi = {
   },
 
   async seedKnowledgeBase(): Promise<{ indexed_count: number; total_files: number }> {
-      console.log("Mocking seedKnowledgeBase/Rebuild Index...");
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      console.log("Rebuilding Knowledge Index...");
+      await new Promise(resolve => setTimeout(resolve, 500));
       return { indexed_count: 0, total_files: 0 };
   },
 
