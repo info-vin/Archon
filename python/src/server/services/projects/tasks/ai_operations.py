@@ -6,11 +6,10 @@ automated task generation from alerts (Smart Dispatch).
 """
 
 import textwrap
-from datetime import datetime
 from typing import Any
 
-from src.server.services.log_service import LogService
 from src.server.config.logfire_config import get_logger
+from src.server.services.log_service import LogService
 
 logger = get_logger(__name__)
 
@@ -84,24 +83,24 @@ async def refine_task_description_logic(supabase_client, title: str, description
         return content
 
     except Exception as e:
-        logger.error(f"POBot refinement failed: {{e}}", exc_info=True)
+        logger.error("POBot refinement failed: {e}", exc_info=True)
 
         # System Alert Logging
         try:
             LogService(supabase_client).create_log_entry({
-                "user_input": f"SYSTEM_ALERT: POBot Failure [{{type(e).__name__}}]",
-                "gemini_response": f"Refinement Failed. Error: {{str(e)}}",
+                "user_input": "SYSTEM_ALERT: POBot Failure [{type(e).__name__}]",
+                "gemini_response": "Refinement Failed. Error: {str(e)}",
                 "project_name": "manager_bot",
                 "user_name": "system"
             })
         except Exception:
             pass
 
-        raise RuntimeError(f"POBot Refinement Unavailable: {{str(e)[:100]}}") from e
+        raise RuntimeError("POBot Refinement Unavailable: {str(e)[:100]}") from e
 
 async def generate_task_from_alert_logic(
-    task_service_instance, 
-    alert_id: str, 
+    task_service_instance,
+    alert_id: str,
     assignee_id: str | None = None
 ) -> tuple[bool, dict[str, Any]]:
     """
@@ -127,7 +126,7 @@ async def generate_task_from_alert_logic(
             res_ethics = task_service_instance.supabase_client.table("archon_ethics_events").select("*").eq("id", alert_id).execute()
             if res_ethics.data and len(res_ethics.data) > 0:
                 eth = res_ethics.data[0]
-                context_msg = f"Ethics Violation: {{eth.get('event_type')}} - {{eth.get('description')}}"
+                context_msg = "Ethics Violation: {eth.get('event_type')} - {eth.get('description')}"
                 details = {
                     "type": "ethics_violation",
                     "category": "business",
@@ -136,37 +135,38 @@ async def generate_task_from_alert_logic(
                 }
                 source_table = "archon_ethics_events"
             else:
-                return False, {"error": f"Alert or Ethics Event {{alert_id}} not found"}
+                return False, {"error": "Alert or Ethics Event {alert_id} not found"}
 
         lead_id = details.get("lead_id")
         post_id = details.get("post_id")
 
         # 2. Gather Context
-        context_str = f"ALERT: {{context_msg}}\n"
+        context_str = "ALERT: {context_msg}\n"
         company_name_for_rag = details.get("company", "Compliance Case")
 
         if lead_id:
             res_lead = task_service_instance.supabase_client.table("leads").select("*").eq("id", lead_id).execute()
             if res_lead.data and len(res_lead.data) > 0:
-                lead_row = res_lead.data[0]
-                context_str += f"COMPANY: {{lead_row['company_name']}}\n"
-                context_str += f"IDENTIFIED NEED: {{lead_row.get('identified_need', 'None')}}\n"
+                lead_data_local = res_lead.data[0]
+                context_str += f"COMPANY: {lead_data_local['company_name']}\n"
+                context_str += f"IDENTIFIED NEED: {lead_data_local.get('identified_need', 'None')}\n"
                 res_logs = task_service_instance.supabase_client.table("visit_logs").select("summary").eq("lead_id", lead_id).limit(3).execute()
                 if res_logs.data:
                     context_str += "\nPAST VISIT SUMMARIES:\n"
                     for _log in res_logs.data:
-                        context_str += f"- {{_log['summary']}}\n"
+                        context_str += f"- {_log['summary']}\n"
 
         elif post_id:
             res_post = task_service_instance.supabase_client.table("blog_posts").select("*").eq("id", post_id).execute()
             if res_post.data and len(res_post.data) > 0:
-                post_row = res_post.data[0]
-                company_name_for_rag = post_row.get("title", "Marketing Asset")
-                context_str += f"CONTEXT: Content Bottleneck\nTITLE: {{post_row['title']}}\nSTATUS: {{post_row['status']}}\n"
+                post_data_local = res_post.data[0]
+                company_name_for_rag = post_data_local.get("title", "Marketing Asset")
+                context_str += f"CONTEXT: Content Bottleneck\nTITLE: {post_data_local['title']}\nSTATUS: {post_data_local['status']}\n"
+
 
         # 3. RAG Search
         rag_service = RAGService(task_service_instance.supabase_client)
-        rag_success, rag_result = await rag_service.perform_rag_query(query=f"{{company_name_for_rag}} {{details.get('type', '')}}", match_count=2)
+        rag_success, rag_result = await rag_service.perform_rag_query(query="{company_name_for_rag} {details.get('type', '')}", match_count=2)
         if rag_success and "results" in rag_result:
             context_str += "\nINTERNAL KNOWLEDGE BASE SNIPPETS:\n"
             context_str += "\n".join([res.get("content", "")[:300] for res in rag_result["results"]])
@@ -178,10 +178,10 @@ async def generate_task_from_alert_logic(
         if not charlie_api_key:
             raise ValueError("No AI API Key available for Alert Dispatch")
 
-        prompt = textwrap.dedent(f"""
+        prompt = textwrap.dedent("""
             Convert the following Alert into a high-value task for the team.
-            ALERT: {{context_msg}}
-            CONTEXT: {{context_str}}
+            ALERT: {context_msg}
+            CONTEXT: {context_str}
             FORMAT: TITLE: [Title] | DESCRIPTION: [Detailed strategy]
         """).format(context_msg=context_msg, context_str=context_str).strip()
 
@@ -202,7 +202,7 @@ async def generate_task_from_alert_logic(
             raise ValueError("LLM returned empty dispatch content")
 
         # Parse AI Output
-        title = f"Follow-up: {{company_name_for_rag}}"
+        title = "Follow-up: {company_name_for_rag}"
         description = ai_output
         if "TITLE:" in ai_output:
             try:
@@ -230,15 +230,15 @@ async def generate_task_from_alert_logic(
         )
 
         if success:
-            logger.info(f"Smart Dispatch Success: {{source_table}} {{alert_id}}")
+            logger.info("Smart Dispatch Success: {source_table} {alert_id}")
             if source_table == "archon_logs":
                 updated_details = {{**details, "status": "dispatched", "dispatched_task_id": result['task']['id']}}
                 task_service_instance.supabase_client.table("archon_logs").update({{"details": updated_details, "level": "INFO"}}).eq("id", alert_id).execute()
             else:
-                task_service_instance.supabase_client.table("archon_ethics_events").update({{"resolved": True, "resolution_notes": f"Dispatched: {{result['task']['id']}}"}}).eq("id", alert_id).execute()
+                task_service_instance.supabase_client.table("archon_ethics_events").update({{"resolved": True, "resolution_notes": "Dispatched: {result['task']['id']}"}}).eq("id", alert_id).execute()
 
         return success, result
 
     except Exception as e:
-        logger.error(f"Critical Dispatch Error: {{e}}", exc_info=True)
+        logger.error("Critical Dispatch Error: {e}", exc_info=True)
         return False, {{"error": str(e)}}

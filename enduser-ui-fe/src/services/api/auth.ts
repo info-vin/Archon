@@ -1,6 +1,6 @@
 import { supabase } from './client';
 import { getHeaders, handleResponse, userState } from './base';
-import { Employee, EmployeeRole } from '../../types.ts';
+import { Employee, EmployeeRole, AssignableUser } from '../../types.ts';
 import { LoginCredentials, RegistrationData, AdminNewUserData } from './types';
 
 export const authApi = {
@@ -114,5 +114,30 @@ export const authApi = {
     });
     const data = await handleResponse(response, 'Failed to update employee');
     return data.profile;
+  },
+
+  async getEmployees(): Promise<Employee[]> {
+    const response = await fetch('/api/admin/users', { headers: await getHeaders() });
+    const data = await handleResponse(response, 'Failed to fetch employees');
+    return data.profiles;
+  },
+
+  async getAssignableUsers(): Promise<AssignableUser[]> {
+    const response = await fetch('/api/tasks/assignable-users', { headers: await getHeaders() });
+    return handleResponse(response, 'Failed to fetch assignable users');
+  },
+
+  async getAssignableAgents(): Promise<any[]> {
+    const response = await fetch('/api/tasks/assignable-agents', { headers: await getHeaders() });
+    return handleResponse(response, 'Failed to fetch assignable agents');
+  },
+
+  async resetPassword(userId: string, newPassword: string): Promise<void> {
+    const response = await fetch(`/api/admin/users/${userId}/reset-password`, {
+        method: 'POST',
+        headers: await getHeaders(),
+        body: JSON.stringify({ password: newPassword })
+    });
+    await handleResponse(response, 'Failed to reset password');
   }
 };

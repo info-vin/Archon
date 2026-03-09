@@ -72,5 +72,54 @@ export const statsApi = {
   async getBusinessRisks(): Promise<any[]> {
     const response = await fetch('/api/stats/business-risks', { headers: await getHeaders() });
     return handleResponse(response, 'Failed to fetch business risks');
+  },
+
+  async getPendingApprovals(): Promise<{ blogs: any[]; leads: any[] }> {
+    const response = await fetch('/api/approvals/pending', { headers: await getHeaders() });
+    const data = await handleResponse(response, 'Failed to fetch pending approvals');
+    // Ensure the data has the expected structure even if backend returns an array
+    if (Array.isArray(data)) {
+        return {
+            blogs: data.filter(item => item.type === 'blog' || item.category === 'blog'),
+            leads: data.filter(item => item.type === 'lead' || item.category === 'lead')
+        };
+    }
+    return data || { blogs: [], leads: [] };
+  },
+
+  async processApproval(type: string, id: string, action: 'approve' | 'reject', reason?: string): Promise<any> {
+    const response = await fetch(`/api/approvals/${type}/${id}/${action}`, {
+        method: 'POST',
+        headers: await getHeaders(),
+        body: JSON.stringify({ reason })
+    });
+    return handleResponse(response, `Failed to ${action} approval`);
+  },
+
+  async getMarketingTrends(): Promise<any[]> {
+    const response = await fetch('/api/marketing/trends', { headers: await getHeaders() });
+    return handleResponse(response, 'Failed to fetch marketing trends');
+  },
+
+  async getMarketStats(): Promise<any> {
+    const response = await fetch('/api/marketing/stats', { headers: await getHeaders() });
+    return handleResponse(response, 'Failed to fetch market stats');
+  },
+
+  async rejectSuggestion(id: string): Promise<any> {
+    const response = await fetch(`/api/marketing/suggestions/${id}/reject`, {
+        method: 'POST',
+        headers: await getHeaders(),
+    });
+    return handleResponse(response, 'Failed to reject suggestion');
+  },
+
+  async nanaBananaProxy(data: any): Promise<any> {
+    const response = await fetch('/api/proxy/nana-banana', {
+        method: 'POST',
+        headers: await getHeaders(),
+        body: JSON.stringify(data)
+    });
+    return handleResponse(response, 'Proxy request failed');
   }
 };

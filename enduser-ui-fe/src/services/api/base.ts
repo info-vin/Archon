@@ -1,5 +1,5 @@
 import { supabase } from './client';
-import { Employee, EmployeeRole } from '../../types.ts';
+import { Employee } from '../../types.ts';
 
 /**
  * Shared state for user cache to reduce redundant profile fetches

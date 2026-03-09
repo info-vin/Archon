@@ -2,7 +2,6 @@ import { authApi } from './auth';
 import { tasksApi } from './tasks';
 import { statsApi } from './stats';
 import { opsApi } from './ops';
-import { supabase } from './client';
 
 /**
  * Modularized API Service for Archon End-User UI.

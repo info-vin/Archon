@@ -72,6 +72,16 @@ export const tasksApi = {
     return handleResponse(response, 'Failed to update task');
   },
 
+  async refineTaskDescription(title: string, description: string): Promise<string> {
+    const response = await fetch('/api/tasks/refine', {
+        method: 'POST',
+        headers: await getHeaders(),
+        body: JSON.stringify({ title, description })
+    });
+    const data = await handleResponse(response, 'Failed to refine task');
+    return data.refined_description;
+  },
+
   async generateTaskFromAlert(alertId: string, assigneeId?: string): Promise<any> {
     const response = await fetch(`/api/marketing/manager/alerts/${alertId}/dispatch`, {
         method: 'POST',
@@ -79,5 +89,34 @@ export const tasksApi = {
         body: JSON.stringify({ assignee_id: assigneeId })
     });
     return handleResponse(response, 'Failed to generate task from alert');
+  },
+
+  async getPendingChanges(): Promise<any[]> {
+    const response = await fetch('/api/changes', { headers: await getHeaders() });
+    return handleResponse(response, 'Failed to fetch pending changes');
+  },
+
+  async approveChange(changeId: string): Promise<any> {
+    const response = await fetch(`/api/changes/${changeId}/approve`, {
+        method: 'POST',
+        headers: await getHeaders(),
+    });
+    return handleResponse(response, 'Failed to approve change');
+  },
+
+  async rejectChange(changeId: string): Promise<any> {
+    const response = await fetch(`/api/changes/${changeId}/reject`, {
+        method: 'POST',
+        headers: await getHeaders(),
+    });
+    return handleResponse(response, 'Failed to reject change');
+  },
+
+  async approvePromptChange(versionId: string): Promise<any> {
+    const response = await fetch(`/api/stats/approve-prompt-change/${versionId}`, {
+        method: 'POST',
+        headers: await getHeaders()
+    });
+    return handleResponse(response, 'Failed to approve prompt change');
   }
 };
