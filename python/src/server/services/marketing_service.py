@@ -272,3 +272,77 @@ class MarketingService(BaseRepository):
         if "Archon" in content:
             return 85
         return 75
+
+    async def run_sentinel(self) -> dict:
+        """Manually trigger the Business Sentinel."""
+        from ..services.scheduler_service import scheduler_service
+        await scheduler_service.run_business_sentinel()
+        return {"status": "triggered", "message": "Sentinel scan started in background."}
+
+    async def seed_knowledge(self) -> dict:
+        """Trigger the Knowledge Seeding process (scans resources and archives them)."""
+        import os
+
+        from ..services.librarian_service import LibrarianService
+
+        # Define target directories relative to server root
+        roots_to_try = [
+            "../enduser-ui-fe/public/aus/156_resource",
+            "/app/enduser-ui-fe/public/aus/156_resource",
+            "../../enduser-ui-fe/public/aus/156_resource",
+            os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../../enduser-ui-fe/public/aus/156_resource"))
+        ]
+
+        target_dir = None
+        for r in roots_to_try:
+            if os.path.exists(r):
+                target_dir = r
+                break
+
+        if not target_dir:
+            # Fallback for dev: try a simpler docs folder
+            if os.path.exists("docs"):
+                target_dir = "docs"
+
+        if not target_dir:
+            return {"error": "Knowledge resource directory not found."}
+
+        librarian = LibrarianService()
+        success_count = 0
+        total_count = 0
+        errors = []
+
+        try:
+            for root, _, files in os.walk(target_dir):
+                for file in files:
+                    if file.startswith('.') or file == "DS_Store":
+                        continue
+                    if not (file.endswith('.md') or file.endswith('.txt')):
+                        continue
+
+                    total_count += 1
+                    file_path = os.path.join(root, file)
+                    try:
+                        with open(file_path, encoding='utf-8') as f:
+                            content = f.read()
+                        if not content.strip():
+                            continue
+                        await librarian.archive_file(
+                            file_name=file,
+                            content=content,
+                            file_path=file_path,
+                            knowledge_type="technical"
+                        )
+                        success_count += 1
+                    except Exception as e:
+                        errors.append(f"{file}: {str(e)}")
+
+            return {
+                "status": "completed",
+                "scanned_dir": target_dir,
+                "total_files": total_count,
+                "indexed_count": success_count,
+                "errors": errors[:5]
+            }
+        except Exception as e:
+            return {"error": f"Seeding failed: {str(e)}"}

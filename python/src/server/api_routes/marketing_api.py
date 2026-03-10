@@ -133,3 +133,18 @@ async def draft_blog_post(request: DraftBlogRequest, current_user: dict = Depend
 @router.get("/trends")
 async def get_marketing_trends(current_user: dict = Depends(get_current_user), service: MarketingService = Depends(get_marketing_service)):
     return await service.get_trends()
+
+@router.post("/manager/sentinel/run")
+async def trigger_sentinel(current_user: dict = Depends(get_current_user), service: MarketingService = Depends(get_marketing_service)):
+    if current_user.get("role") not in ["manager", "admin", "system_admin"]:
+        raise HTTPException(status_code=403)
+    return await service.run_sentinel()
+
+@router.post("/manager/knowledge/seed")
+async def seed_knowledge_base(current_user: dict = Depends(get_current_user), service: MarketingService = Depends(get_marketing_service)):
+    if current_user.get("role") not in ["manager", "admin", "system_admin"]:
+        raise HTTPException(status_code=403)
+    res = await service.seed_knowledge()
+    if "error" in res:
+        raise HTTPException(status_code=500, detail=res["error"])
+    return res
