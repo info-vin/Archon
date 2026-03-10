@@ -1,28 +1,26 @@
-import asyncio
 from typing import Any, cast
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
+
 from ..auth.dependencies import get_current_user
 from ..schemas.marketing import (
-    PitchRequest, PitchResponse, CreateLeadRequest, PromoteLeadRequest,
-    DraftBlogRequest, DraftBlogResponse, ApprovalActionRequest,
-    MarketingRejectSuggestionRequest, RequestInfoRequest, LeadUpdate,
-    LogoRequest, DispatchAlertRequest
+    CreateLeadRequest,
+    DraftBlogRequest,
+    DraftBlogResponse,
+    LeadUpdate,
+    LogoRequest,
+    MarketingRejectSuggestionRequest,
+    PitchRequest,
+    PitchResponse,
+    PromoteLeadRequest,
+    RequestInfoRequest,
 )
 from ..services.marketing_service import MarketingService
 from ..services.projects.task_service import TaskService
-from ..services.credential_service import credential_service
-from ..services.prompt_service import prompt_service
-from ..prompts.marketing_prompts import REJECTION_REASON_PROMPT
-from ..utils.api_utils import handle_service_result
-from google import genai
 
 # --- PHYSICAL BRIDGE FOR EXISTING TESTS (CRITICAL) ---
 # These must be exposed here so that mock.patch("...marketing_api.RAGService") etc. work.
-from ..services.search.rag_service import RAGService
-from ..utils import get_supabase_client
-from ..config.logfire_config import get_logger
-from ..services.job_board_service import JobBoardService
+from ..utils.api_utils import handle_service_result
 
 router = APIRouter(prefix="/api/marketing", tags=["marketing"])
 

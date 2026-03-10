@@ -54,7 +54,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({ task, onClose, onTaskCreat
           setAssigneeId(user.id);
         }
 
-        const formattedAiAgents = aiAgents.map(agent => ({
+        const formattedAiAgents = aiAgents.map((agent: AssignableUser) => ({
           ...agent,
           name: `(AI) ${agent.name}`
         }));

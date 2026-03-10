@@ -23,11 +23,11 @@ import BlogEditor from './pages/BlogEditor.tsx';
 
 const App: React.FC = () => {
   return (
-    <AuthProvider>
-      <HashRouter>
+    <HashRouter>
+      <AuthProvider>
         <AppRoutes />
-      </HashRouter>
-    </AuthProvider>
+      </AuthProvider>
+    </HashRouter>
   );
 };
 

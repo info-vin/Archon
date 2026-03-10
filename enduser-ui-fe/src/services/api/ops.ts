@@ -245,7 +245,7 @@ export const opsApi = {
   },
 
   async draftBlogPost(data: any): Promise<any> {
-    const response = await fetch('/api/blogs/draft', {
+    const response = await fetch('/api/marketing/blog/draft', {
         method: 'POST',
         headers: await getHeaders(),
         body: JSON.stringify(data)
@@ -324,12 +324,12 @@ export const opsApi = {
   },
 
   async getContentSources(): Promise<any[]> {
-    const response = await fetch('/api/marketing/content-sources', { headers: await getHeaders() });
+    const response = await fetch('/api/marketing/sources', { headers: await getHeaders() });
     return handleResponse(response, 'Failed to fetch content sources');
   },
 
   async getContentContext(id: string, type: string): Promise<any> {
-    const response = await fetch(`/api/marketing/content-context/${type}/${id}`, { headers: await getHeaders() });
+    const response = await fetch(`/api/marketing/context/${id}?source_type=${type}`, { headers: await getHeaders() });
     return handleResponse(response, 'Failed to fetch content context');
   },
 
@@ -337,7 +337,7 @@ export const opsApi = {
     const response = await fetch('/api/marketing/generate-logo', {
         method: 'POST',
         headers: await getHeaders(),
-        body: JSON.stringify({ brand_name: brandName })
+        body: JSON.stringify({ style: brandName })
     });
     return handleResponse(response, 'Failed to generate logo');
   },

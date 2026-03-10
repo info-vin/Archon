@@ -14,10 +14,10 @@ def create_test_app():
 
 @pytest.fixture
 def mock_dependencies():
-    with patch("src.server.api_routes.marketing_api.get_logger", return_value=MagicMock()), \
+    with patch("src.server.services.marketing_service.get_logger", return_value=MagicMock()), \
          patch("src.server.services.blog_service.BlogService.get_post") as mock_get_post, \
-         patch("src.server.api_routes.marketing_api.credential_service") as mock_creds, \
-         patch("src.server.api_routes.marketing_api.genai.Client") as mock_genai:
+         patch("src.server.services.marketing_service.credential_service") as mock_creds, \
+         patch("src.server.services.marketing_service.genai.Client") as mock_genai:
 
         # Default: Post found
         mock_get_post.return_value = (True, {"post": {"title": "Bad Blog Post", "content": "This is bad content."}})

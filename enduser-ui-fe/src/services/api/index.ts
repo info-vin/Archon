@@ -13,7 +13,7 @@ export const api = {
   ...statsApi,
   ...opsApi,
   // Backward compatibility for unit tests
-  getAssignableAgents: tasksApi.getAssignableAgents,
+  getAssignableAgents: authApi.getAssignableAgents,
   getAttendanceStatus: opsApi.getAttendanceStatus,
 };
 

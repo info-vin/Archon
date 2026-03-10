@@ -19,8 +19,8 @@ def mock_user_dependency():
 
 @pytest.fixture
 def mock_services():
-    with patch("src.server.api_routes.marketing_api.RAGService") as mock_rag, \
-         patch("src.server.api_routes.marketing_api.genai.Client") as mock_genai, \
+    with patch("src.server.services.marketing_service.RAGService") as mock_rag, \
+         patch("src.server.services.marketing_service.genai.Client") as mock_genai, \
          patch("src.server.services.credential_service.credential_service.get_credential", new_callable=AsyncMock) as mock_get_cred, \
          patch("src.server.services.credential_service.credential_service.get_active_provider", new_callable=AsyncMock) as mock_get_provider, \
          patch("src.server.services.credential_service.credential_service.get_credentials_by_category", new_callable=AsyncMock) as mock_get_cat, \

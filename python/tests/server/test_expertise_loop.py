@@ -1,10 +1,12 @@
+from unittest.mock import AsyncMock, MagicMock
+
 import pytest
-import asyncio
-from unittest.mock import AsyncMock, MagicMock, patch
 from fastapi.testclient import TestClient
-from server.main import app
-from server.auth.dependencies import get_current_user
+
 from server.api_routes.marketing_api import get_marketing_service
+from server.auth.dependencies import get_current_user
+from server.main import app
+
 
 @pytest.fixture
 def client():
@@ -21,8 +23,6 @@ async def test_marketing_approval_triggers_learning(client):
     """
     Bob's Loop: Charlie rejects a blog -> Expertise loop triggers learning.
     """
-    mock_blog = {"id": "blog-1", "title": "Test Blog", "content": "Hello!!!"}
-    
     # 物理修正：使用 Dependency Override 注入 Mock Service
     mock_svc = MagicMock()
     # process_approval 回傳 bool
@@ -38,6 +38,6 @@ async def test_marketing_approval_triggers_learning(client):
 
     assert response.status_code == 200
     assert response.json()["success"] is True
-    
+
     # 驗證 Service 是否被呼叫
     mock_svc.process_approval.assert_called_once()

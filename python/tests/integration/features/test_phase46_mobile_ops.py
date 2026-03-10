@@ -1,10 +1,12 @@
+from unittest.mock import AsyncMock, MagicMock
+
 import pytest
-import asyncio
-from unittest.mock import AsyncMock, MagicMock, patch
 from fastapi.testclient import TestClient
-from server.main import app
-from server.auth.dependencies import get_current_user
+
 from server.api_routes.marketing_api import get_marketing_service
+from server.auth.dependencies import get_current_user
+from server.main import app
+
 
 @pytest.fixture
 def precise_client():
@@ -21,9 +23,9 @@ def test_lead_lifecycle_mobile_ops(precise_client):
     mock_svc = MagicMock()
     mock_svc.list_leads = AsyncMock(return_value=[mock_lead])
     mock_svc.update_lead = AsyncMock(return_value=(True, {**mock_lead, "status": "shortlisted"}))
-    
+
     app.dependency_overrides[get_marketing_service] = lambda: mock_svc
-    
+
     try:
         res = precise_client.get("/api/marketing/leads")
         assert res.status_code == 200

@@ -24,13 +24,13 @@ def create_test_app():
 @pytest.fixture
 def mock_dependencies():
     # Patch all the services used in marketing_api.py at module level or init
-    with patch("src.server.api_routes.marketing_api.get_logger", return_value=MagicMock()), \
+    with patch("src.server.services.marketing_service.get_logger", return_value=MagicMock()), \
          patch("src.server.api_routes.marketing_api.TaskService") as mock_task_service, \
-         patch("src.server.api_routes.marketing_api.RAGService"), \
-         patch("src.server.api_routes.marketing_api.get_supabase_client"), \
-         patch("src.server.api_routes.marketing_api.JobBoardService"), \
-         patch("src.server.api_routes.marketing_api.prompt_service"), \
-         patch("src.server.api_routes.marketing_api.credential_service"):
+         patch("src.server.services.marketing_service.RAGService"), \
+         patch("src.server.services.marketing_service.get_supabase_client"), \
+         patch("src.server.services.marketing_service.JobBoardService"), \
+         patch("src.server.services.marketing_service.prompt_service"), \
+         patch("src.server.services.marketing_service.credential_service"):
 
         # Setup TaskService mock
         task_service_instance = mock_task_service.return_value
