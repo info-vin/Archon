@@ -34,7 +34,7 @@ export const MarketingJobSearch: React.FC<MarketingJobSearchProps> = ({
 
   return (
     <>
-      <div className="bg-card p-6 rounded-xl shadow-sm border border-border">
+      <div className="bg-card p-6 rounded-xl shadow-sm border border-border mb-6">
         <form onSubmit={handleSearch} className="flex gap-4">
           <input
             type="text"
@@ -54,7 +54,7 @@ export const MarketingJobSearch: React.FC<MarketingJobSearchProps> = ({
           {error && (
             <div className="bg-red-50 text-red-700 p-4 rounded-lg border border-red-100 flex justify-between items-center">
               <span>{error}</span>
-              <button onClick={() => setError(null)} aria-label="Dismiss error" className="p-1 hover:bg-red-100 rounded-full transition-colors focus-visible:ring-2 focus-visible:ring-red-500 outline-none"><XIcon className="w-4 h-4" /></button>
+              <button onClick={() => setError(null)} className="p-1 hover:bg-red-100 rounded-full transition-colors outline-none"><XIcon className="w-4 h-4" /></button>
             </div>
           )}
           
@@ -148,7 +148,7 @@ export const MarketingJobSearch: React.FC<MarketingJobSearchProps> = ({
           <div id="pitch-section" className="lg:w-1/2 space-y-4">
             <div className="bg-indigo-50 p-4 rounded-xl border border-indigo-100 text-sm">
               <h4 className="font-bold text-indigo-900 mb-2 flex items-center gap-2"><SparklesIcon className="w-4 h-4" />AI System Prompt</h4>
-              <p className="text-indigo-800 font-mono text-xs bg-white/50 p-2 rounded">"You are a top-tier Sales Representative... Write a personalized pitch..."</p>
+              <p className="text-indigo-800 font-mono text-xs bg-white/50 p-2 rounded">"You are a top-tier Sales Representative..."</p>
             </div>
             <div className="bg-card p-6 rounded-xl shadow-lg border border-border sticky top-6">
               <div className="flex justify-between items-center mb-4">

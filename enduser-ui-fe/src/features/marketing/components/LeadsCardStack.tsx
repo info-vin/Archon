@@ -141,11 +141,12 @@ const Card = ({ lead, style, onDragEnd, onPitch, onHistory }: { lead: Lead, styl
     return (
         <motion.div
             drag="x"
-            dragConstraints={{ left: 0, right: 0 }}
-            style={style}
+            dragConstraints={{ left: -100, right: 100 }}
+            dragElastic={0.7}
+            style={{ ...style, touchAction: 'none' }}
             onDragEnd={onDragEnd}
-            className="absolute top-0 left-0 w-full h-full bg-card rounded-2xl shadow-xl border border-border overflow-hidden flex flex-col"
-            whileTap={{ cursor: "grabbing" }}
+            className="absolute top-0 left-0 w-full h-full bg-card rounded-2xl shadow-xl border border-border overflow-hidden flex flex-col cursor-grab active:cursor-grabbing"
+            whileTap={{ scale: 0.98 }}
         >
             {/* Header / Image Area - Reduced height for efficiency */}
             <div className="h-[18%] bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center p-3 relative shrink-0">

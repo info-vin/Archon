@@ -122,6 +122,7 @@ async def create_visit_log(
     customer_id: str | None = Form(None), lead_id: str | None = Form(None),
     latitude: float | None = Form(None), longitude: float | None = Form(None),
     location_address: str | None = Form(None), visit_type: str = Form("Client Meeting"),
+    notes: str | None = Form(None),
     audio_file: UploadFile = File(None),
     current_user: dict = Depends(get_current_user)
 ):
@@ -129,7 +130,7 @@ async def create_visit_log(
     try:
         supabase = get_supabase_client()
         transcript = ""
-        summary = "無提供語音。"
+        summary = notes if notes else "無提供語音。"
         tasks: list[str] = []
 
         if audio_file:
@@ -143,9 +144,13 @@ async def create_visit_log(
 
             if api_key:
                 content = await audio_file.read()
-                transcript, summary, tasks = await _transcribe_with_gemini(
+                transcript, generated_summary, tasks = await _transcribe_with_gemini(
                     content, audio_file.content_type or "audio/mpeg", api_key, audio_model
                 )
+                if notes:
+                    summary = f"{notes}\n\n--- AI 語音分析 ---\n{generated_summary}"
+                else:
+                    summary = generated_summary
 
         res = supabase.table("visit_logs").insert({
             "user_id": user_id, "customer_id": customer_id, "lead_id": lead_id,
@@ -186,7 +191,12 @@ async def create_visit_log(
         except Exception as te:
             logger.warning(f"Task creation skipped: {te}")
 
-        return VisitLogResponse(id=created_log["id"], summary=summary, voice_transcript=transcript, follow_up_tasks=tasks)
+        return VisitLogResponse(
+            id=str(created_log.get("id", "new-log")),
+            summary=summary,
+            voice_transcript=transcript,
+            follow_up_tasks=tasks
+        )
     except Exception as e:
         logger.error(f"API Failure: {e}")
         raise HTTPException(status_code=500, detail=str(e)) from e

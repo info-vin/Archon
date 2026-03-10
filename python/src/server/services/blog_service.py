@@ -37,6 +37,9 @@ class BlogService(BaseRepository):
 
     async def create_post(self, post_data: dict[str, Any]) -> tuple[bool, dict[str, Any]]:
         """Create a new blog post."""
+        # P6: Smart Polish - Extract image and clean content
+        post_data = self._clean_content_images(post_data)
+
         def _query():
             return self.supabase_client.table("blog_posts").insert(post_data).execute()
 
@@ -48,6 +51,10 @@ class BlogService(BaseRepository):
 
     async def update_post(self, post_id: str, update_data: dict[str, Any]) -> tuple[bool, dict[str, Any]]:
         """Update an existing blog post."""
+        # P6: Smart Polish - Extract image and clean content
+        if "content" in update_data:
+            update_data = self._clean_content_images(update_data)
+
         def _query():
             return self.supabase_client.table("blog_posts").update(update_data).eq("id", post_id).execute()
 
@@ -56,6 +63,27 @@ class BlogService(BaseRepository):
             data = res.get("data", [])
             return True, {"post": data[0] if isinstance(data, list) and data else data}
         return False, res
+
+    def _clean_content_images(self, data: dict[str, Any]) -> dict[str, Any]:
+        """
+        P6 Implementation: Extracts image URL from Markdown syntax and strips it from content.
+        Moves url to metadata 'image_url' field.
+        """
+        import re
+        content = data.get("content", "")
+        if not content:
+            return data
+
+        # Pattern: ![alt](url)
+        match = re.search(r"!\[.*?\]\((.*?)\)", content)
+        if match:
+            # Move to image_url if not already explicitly set
+            if not data.get("image_url"):
+                data["image_url"] = match.group(1)
+            # Remove from content
+            data["content"] = re.sub(r"!\[.*?\]\((.*?)\)", "", content).strip()
+
+        return data
 
     async def delete_post(self, post_id: str) -> tuple[bool, dict[str, Any]]:
         """Delete a blog post."""

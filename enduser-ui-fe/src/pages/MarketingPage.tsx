@@ -1,6 +1,6 @@
 import React from 'react';
 import { PermissionGuard } from '../features/auth/components/PermissionGuard';
-import { SearchIcon, TableIcon } from '../components/Icons';
+import { SearchIcon, TableIcon, MapPinIcon } from '../components/Icons';
 import { useMarketingLogic } from '../features/marketing/hooks/useMarketingLogic';
 import { MarketingJobSearch } from '../features/marketing/components/MarketingJobSearch';
 import { MarketingLeadsStack } from '../features/marketing/components/MarketingLeadsStack';
@@ -81,6 +81,7 @@ const MarketingPage: React.FC = () => {
             sortedLeads={sortedLeads}
             setActiveTab={setActiveTab}
             onOpenVisitLog={handleOpenVisitLog}
+            onGeneratePitch={handleGeneratePitch}
           />
         )}
 
@@ -95,6 +96,21 @@ const MarketingPage: React.FC = () => {
             companyName={selectedLeadForLog.company_name}
           />
         )}
+
+        {/* Alice's FAB for Visit Logs (Mobile Optimization) */}
+        <button
+          onClick={() => {
+            if (leads.length > 0) {
+              handleOpenVisitLog(leads[0]);
+            } else {
+              alert("Add a lead first to create a visit log!");
+            }
+          }}
+          className="fixed bottom-6 right-6 w-14 h-14 bg-indigo-600 text-white rounded-full shadow-2xl flex items-center justify-center hover:bg-indigo-700 transition-all active:scale-95 z-40 md:hidden"
+          title="New Visit Log"
+        >
+          <MapPinIcon className="w-6 h-6" />
+        </button>
       </div>
     </PermissionGuard>
   );

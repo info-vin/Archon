@@ -41,7 +41,7 @@ class AuthService(BaseRepository):
                 "email": email,
                 "password": password,
                 "email_confirm": True,
-                "user_metadata": {"full_name": name, "role": role}
+                "user_metadata": {"name": name, "role": role}
             }
 
             user_response = self.supabase_client.auth.admin.create_user(attributes)
@@ -54,7 +54,7 @@ class AuthService(BaseRepository):
             profile_data = {
                 "id": user_id,
                 "email": email,
-                "full_name": name,
+                "name": name,
                 "role": role,
                 "status": status,
                 "avatar": f"https://i.pravatar.cc/150?u={user_id}"

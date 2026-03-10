@@ -1,3 +1,4 @@
+
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from ..auth.dependencies import get_current_user
@@ -56,7 +57,7 @@ async def create_blog_post(
         raise HTTPException(status_code=500, detail=result.get("error"))
     return result.get("post")
 
-@router.put("/{post_id}", response_model=BlogPostResponse)
+@router.patch("/{post_id}", response_model=BlogPostResponse)
 async def update_blog_post(
     post_id: str,
     request: UpdateBlogPostRequest,
@@ -75,6 +76,29 @@ async def update_blog_post(
     if not success:
         raise HTTPException(status_code=404, detail=result.get("error"))
     return result.get("post")
+
+@router.patch("/{post_id}/status")
+async def update_blog_post_status(
+    post_id: str,
+    request: dict,
+    current_user: dict = Depends(get_current_user),
+    service: BlogService = Depends(get_blog_service)
+):
+    """Update the status of an existing blog post."""
+    rbac_service = RBACService()
+    user_role = current_user.get("role", "viewer")
+
+    if not rbac_service.can_manage_content(user_role):
+        raise HTTPException(status_code=403, detail="Forbidden: You do not have permission to update blog status.")
+
+    status_val = request.get("status")
+    if not status_val:
+        raise HTTPException(status_code=400, detail="Status value is required.")
+
+    success, result = await service.update_post(post_id, {"status": status_val})
+    if not success:
+        raise HTTPException(status_code=404, detail=result.get("error"))
+    return {"message": "Status updated successfully"}
 
 @router.delete("/{post_id}", status_code=204)
 async def delete_blog_post(

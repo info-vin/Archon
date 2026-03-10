@@ -123,12 +123,12 @@ export const authApi = {
   },
 
   async getAssignableUsers(): Promise<AssignableUser[]> {
-    const response = await fetch('/api/tasks/assignable-users', { headers: await getHeaders() });
+    const response = await fetch('/api/assignable-users', { headers: await getHeaders() });
     return handleResponse(response, 'Failed to fetch assignable users');
   },
 
   async getAssignableAgents(): Promise<any[]> {
-    const response = await fetch('/api/tasks/assignable-agents', { headers: await getHeaders() });
+    const response = await fetch('/api/agents/assignable', { headers: await getHeaders() });
     return handleResponse(response, 'Failed to fetch assignable agents');
   },
 

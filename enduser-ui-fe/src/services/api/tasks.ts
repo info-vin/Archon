@@ -73,7 +73,7 @@ export const tasksApi = {
   },
 
   async refineTaskDescription(title: string, description: string): Promise<string> {
-    const response = await fetch('/api/tasks/refine', {
+    const response = await fetch('/api/tasks/refine-description', {
         method: 'POST',
         headers: await getHeaders(),
         body: JSON.stringify({ title, description })

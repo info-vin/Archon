@@ -22,6 +22,8 @@ interface BrandWorkbenchViewProps {
     handleMagicDraft: (topic: string, config?: any) => void;
     handleSaveWorkbench: () => void;
     handlePublishWorkbench: (data: { title: string, content: string }) => void;
+    handleGenerateImage: (style: string) => void;
+    isGeneratingLogo: boolean;
 }
 
 export const BrandWorkbenchView: React.FC<BrandWorkbenchViewProps> = ({
@@ -29,7 +31,8 @@ export const BrandWorkbenchView: React.FC<BrandWorkbenchViewProps> = ({
     isLoadingSources, isLoadingContext, isDrafting,
     isSidebarOpen, setIsSidebarOpen,
     workbenchTitle, setWorkbenchTitle, workbenchContent, setWorkbenchContent,
-    handleSelectSource, handleMagicDraft, handleSaveWorkbench, handlePublishWorkbench
+    handleSelectSource, handleMagicDraft, handleSaveWorkbench, handlePublishWorkbench,
+    handleGenerateImage, isGeneratingLogo
 }) => {
     return (
         <div className="flex h-full relative font-sans">
@@ -75,14 +78,14 @@ export const BrandWorkbenchView: React.FC<BrandWorkbenchViewProps> = ({
                     isDrafting={isDrafting}
                     isLoadingContext={isLoadingContext}
                     onDraft={handleMagicDraft}
-                    onGenerateImage={() => alert("Image generation pending implementation")}
+                    onGenerateImage={handleGenerateImage}
                     onSave={handleSaveWorkbench}
                     onPublish={handlePublishWorkbench}
                     title={workbenchTitle}
                     content={workbenchContent}
                     onTitleChange={setWorkbenchTitle}
                     onContentChange={setWorkbenchContent}
-                    isGeneratingImage={false}
+                    isGeneratingImage={isGeneratingLogo}
                 />
             </section>
 

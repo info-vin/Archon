@@ -14,14 +14,15 @@ const BrandPage: React.FC = () => {
     const {
         viewMode, setViewMode,
         posts, trendsData, loading,
-        logoSvg, isGeneratingLogo,
+        logoSvg, 
         sources, activeSource, contextData,
         isLoadingSources, isLoadingContext, isDrafting,
         isSidebarOpen, setIsSidebarOpen,
         workbenchTitle, setWorkbenchTitle,
         workbenchContent, setWorkbenchContent,
         handleSelectSource, handleMagicDraft, handleSaveWorkbench, handlePublishWorkbench,
-        handleDeletePost, handleNewPost, updatePostStatus, handleSavePost, handleGenerateLogo,
+        handleDeletePost, handleNewPost, updatePostStatus, handleSavePost, 
+        handleGenerateImage, isGeneratingLogo,
         loadData
     } = useBrandLogic();
 
@@ -94,7 +95,7 @@ const BrandPage: React.FC = () => {
                             trendsData={trendsData}
                             logoSvg={logoSvg}
                             isGeneratingLogo={isGeneratingLogo}
-                            onGenerateLogo={handleGenerateLogo}
+                            onGenerateLogo={() => handleGenerateImage('minimal')}
                             onNewPost={handleNewPost}
                             onEditSmart={handleEditSmart}
                             onUpdateStatus={updatePostStatus}
@@ -119,6 +120,8 @@ const BrandPage: React.FC = () => {
                             handleMagicDraft={handleMagicDraft}
                             handleSaveWorkbench={handleSaveWorkbench}
                             handlePublishWorkbench={handlePublishWorkbench}
+                            handleGenerateImage={handleGenerateImage}
+                            isGeneratingLogo={isGeneratingLogo}
                         />
                     )}
                 </main>

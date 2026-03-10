@@ -280,13 +280,17 @@ export const useBrandLogic = () => {
         }
     };
 
-    const handleGenerateLogo = async () => {
+    const handleGenerateImage = async (style: string) => {
         setIsGeneratingLogo(true);
         try {
-            const result = await api.generateLogo("eciton");
-            setLogoSvg(result.svg_content);
+            const result = await api.generateLogo(style);
+            if (result.image_url) {
+                setWorkbenchImageUrl(result.image_url);
+                // Also inject into content for P6 Smart Polish
+                setWorkbenchContent(prev => `![AI Image](${result.image_url})\n\n${prev}`);
+            }
         } catch (err) {
-            alert("Failed to generate logo");
+            alert("Failed to generate image");
         } finally {
             setIsGeneratingLogo(false);
         }
@@ -303,7 +307,8 @@ export const useBrandLogic = () => {
         workbenchContent, setWorkbenchContent,
         workbenchImageUrl, setWorkbenchImageUrl,
         handleSelectSource, handleMagicDraft, handleSaveWorkbench, handlePublishWorkbench,
-        handleDeletePost, handleNewPost, updatePostStatus, handleSavePost, handleGenerateLogo,
+        handleDeletePost, handleNewPost, updatePostStatus, handleSavePost, 
+        handleGenerateImage,
         loadData, loadWorkbenchData
     };
 };

@@ -208,18 +208,18 @@ export const opsApi = {
   },
 
   async getBlogPosts(): Promise<BlogPost[]> {
-    const response = await fetch('/api/marketing/blog', { headers: await getHeaders() });
+    const response = await fetch('/api/blogs', { headers: await getHeaders() });
     const data = await handleResponse(response, 'Failed to fetch blog posts');
-    return data.posts || [];
+    return Array.isArray(data) ? data : (data.blogs || data.posts || []);
   },
 
   async getBlogPost(id: string): Promise<BlogPost> {
-    const response = await fetch(`/api/marketing/blog/${id}`, { headers: await getHeaders() });
+    const response = await fetch(`/api/blogs/${id}`, { headers: await getHeaders() });
     return handleResponse(response, 'Failed to fetch blog post');
   },
 
   async createBlogPost(data: NewBlogPostData): Promise<BlogPost> {
-    const response = await fetch('/api/marketing/blog', {
+    const response = await fetch('/api/blogs', {
         method: 'POST',
         headers: await getHeaders(),
         body: JSON.stringify(data)
@@ -228,7 +228,7 @@ export const opsApi = {
   },
 
   async updateBlogPost(id: string, data: Partial<BlogPost>): Promise<BlogPost> {
-    const response = await fetch(`/api/marketing/blog/${id}`, {
+    const response = await fetch(`/api/blogs/${id}`, {
         method: 'PATCH',
         headers: await getHeaders(),
         body: JSON.stringify(data)
@@ -237,7 +237,7 @@ export const opsApi = {
   },
 
   async deleteBlogPost(id: string): Promise<void> {
-    const response = await fetch(`/api/marketing/blog/${id}`, {
+    const response = await fetch(`/api/blogs/${id}`, {
         method: 'DELETE',
         headers: await getHeaders()
     });
@@ -245,7 +245,7 @@ export const opsApi = {
   },
 
   async draftBlogPost(data: any): Promise<any> {
-    const response = await fetch('/api/marketing/blog/draft', {
+    const response = await fetch('/api/blogs/draft', {
         method: 'POST',
         headers: await getHeaders(),
         body: JSON.stringify(data)
@@ -254,7 +254,7 @@ export const opsApi = {
   },
 
   async submitBlogPost(id: string): Promise<any> {
-    const response = await fetch(`/api/marketing/blog/${id}/submit`, {
+    const response = await fetch(`/api/blogs/${id}/submit`, {
         method: 'POST',
         headers: await getHeaders()
     });
@@ -262,7 +262,7 @@ export const opsApi = {
   },
 
   async updateBlogPostStatus(id: string, status: string): Promise<void> {
-    const response = await fetch(`/api/marketing/blog/${id}/status`, {
+    const response = await fetch(`/api/blogs/${id}/status`, {
         method: 'PATCH',
         headers: await getHeaders(),
         body: JSON.stringify({ status })

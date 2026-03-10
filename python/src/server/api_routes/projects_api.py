@@ -103,7 +103,7 @@ async def get_project(project_id: str):
     p = res.get("project", {})
     return {**p, "description": p.get("description", ""), "docs": p.get("docs", []), "features": p.get("features", []), "data": p.get("data", []), "pinned": p.get("pinned", False)}
 
-@router.put("/projects/{project_id}")
+@router.patch("/projects/{project_id}")
 async def update_project(project_id: str, req: UpdateProjectRequest):
     fields = {k: v for k, v in req.model_dump().items() if v is not None}
     s, res = await ProjectService().update_project(project_id, fields)
@@ -212,7 +212,7 @@ async def get_task(task_id: str):
     s, res = await TaskService().get_task(task_id)
     return cast(dict[str, Any], handle_service_result(s, res)).get("task")
 
-@router.put("/tasks/{task_id}")
+@router.patch("/tasks/{task_id}")
 async def update_task(task_id: str, req: UpdateTaskRequest, x_user_role: str | None = Header(None, alias="X-User-Role")):
     fields = {k: v for k, v in req.model_dump().items() if v is not None}
     if "assignee" in fields or "assignee_id" in fields:

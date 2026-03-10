@@ -3,6 +3,7 @@ import { RefreshCwIcon, MapPinIcon } from '../../../components/Icons';
 import { Button } from '../../../components/Button';
 import { EmptyState as CommonEmptyState } from '../../../components/common/EmptyState';
 import { api } from '../../../services/api';
+import { LeadsCardStack, Lead } from './LeadsCardStack';
 
 interface MarketingLeadsStackProps {
   leads: any[];
@@ -15,12 +16,48 @@ interface MarketingLeadsStackProps {
   sortedLeads: any[];
   setActiveTab: (val: 'search' | 'leads') => void;
   onOpenVisitLog: (lead: any) => void;
+  onGeneratePitch: (lead: any) => void;
 }
 
 export const MarketingLeadsStack: React.FC<MarketingLeadsStackProps> = ({
   leads, isLeadsLoading, sortConfig, filterMode, setFilterMode,
-  requestSort, fetchLeads, sortedLeads, setActiveTab, onOpenVisitLog
+  requestSort, fetchLeads, sortedLeads, setActiveTab, onOpenVisitLog, onGeneratePitch
 }) => {
+  // Scenario A: Swipeable Stack for New/Pending Leads
+  const pendingLeads: Lead[] = sortedLeads
+    .filter(l => l.status === 'new' || l.status === 'pending')
+    .map(l => ({
+        id: l.id,
+        company_name: l.company_name,
+        job_title: l.job_title,
+        source: l.source,
+        source_job_url: l.source_job_url,
+        identified_need: l.identified_need || "",
+        status: l.status,
+        match_score: l.ai_score,
+        pitch_content: l.pitch_content
+    }));
+
+  const shortlistedLeads = sortedLeads.filter(l => l.status !== 'new' && l.status !== 'pending' && l.status !== 'archived');
+
+  const handleSwipeRight = async (lead: Lead) => {
+    try {
+        await api.updateLead(lead.id, { status: 'shortlisted' });
+        await fetchLeads();
+    } catch (err) {
+        console.error("Failed to shortlist via swipe:", err);
+    }
+  };
+
+  const handleSwipeLeft = async (lead: Lead) => {
+    try {
+        await api.updateLead(lead.id, { status: 'archived' });
+        await fetchLeads();
+    } catch (err) {
+        console.error("Failed to archive via swipe:", err);
+    }
+  };
+
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-100">
       <div className="p-6 border-b border-gray-100 flex justify-between items-center">
@@ -40,7 +77,7 @@ export const MarketingLeadsStack: React.FC<MarketingLeadsStackProps> = ({
         </div>
       </div>
       
-      <div className="hidden md:block overflow-x-auto">
+      <div className="overflow-x-auto">
         <div className="px-6 py-4 flex items-center justify-between border-b border-gray-100 bg-gray-50/50">
           <div className="flex items-center gap-4">
             <span className="text-sm font-medium text-gray-500">Filter:</span>
@@ -54,72 +91,109 @@ export const MarketingLeadsStack: React.FC<MarketingLeadsStackProps> = ({
         ) : leads.length === 0 ? (
           <div className="p-12"><CommonEmptyState title="Your Pipeline is Empty" description="Identify potential customers in the Job Search tab." actionLabel="Go to Search" onAction={() => setActiveTab('search')} /></div>
         ) : (
-          <table className="w-full text-sm text-left">
-            <thead className="bg-gray-50 text-gray-500 font-medium">
-              <tr>
-                <th className="px-6 py-3 cursor-pointer hover:bg-gray-100" onClick={() => requestSort('created_at')}>Date {sortConfig?.key === 'created_at' && (sortConfig.direction === 'asc' ? '▲' : '▼')}</th>
-                <th className="px-6 py-3 cursor-pointer hover:bg-gray-100" onClick={() => requestSort('company_name')}>Company {sortConfig?.key === 'company_name' && (sortConfig.direction === 'asc' ? '▲' : '▼')}</th>
-                <th className="px-6 py-3 w-1/4">Job Summary</th>
-                <th className="px-6 py-3 cursor-pointer hover:bg-gray-100" onClick={() => requestSort('status')}>Status {sortConfig?.key === 'status' && (sortConfig.direction === 'asc' ? '▲' : '▼')}</th>
-                <th className="px-6 py-3">Source</th>
-                <th className="px-6 py-3 cursor-pointer hover:bg-gray-100" onClick={() => requestSort('next_followup_date')}>Follow Up {sortConfig?.key === 'next_followup_date' && (sortConfig.direction === 'asc' ? '▲' : '▼')}</th>
-                <th className="px-6 py-3 text-right">Action</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {sortedLeads.map(lead => (
-                <tr key={lead.id} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-6 py-4 text-xs text-gray-500">{new Date(lead.created_at || Date.now()).toLocaleDateString()}</td>
-                  <td className="px-6 py-4"><div className="font-medium text-gray-900">{lead.company_name}</div><div className="text-xs text-gray-500">{lead.job_title}</div></td>
-                  <td className="px-6 py-4"><div className="text-xs text-gray-600 line-clamp-2">{lead.identified_need || "Pending Analysis..."}</div></td>
-                  <td className="px-6 py-4">
-                    <div className="flex flex-col gap-1">
-                      <span className={`px-2 py-1 rounded-full text-xs font-bold text-center ${
-                        lead.status === 'new' ? 'bg-blue-100 text-blue-700' : 
-                        lead.status === 'converted' ? 'bg-green-100 text-green-700' : 
-                        lead.status === 'changes_requested' ? 'bg-red-100 text-red-700' :
-                        'bg-gray-100 text-gray-600'
-                      }`}>
-                        {lead.status.toUpperCase().replace('_', ' ')}
-                      </span>
-                      {lead.ai_score !== undefined && (
-                        <div className="flex items-center justify-center gap-1">
-                          <div className="w-full bg-gray-200 rounded-full h-1">
-                            <div className="bg-indigo-600 h-1 rounded-full" style={{ width: `${lead.ai_score}%` }}></div>
-                          </div>
-                          <span className="text-[10px] font-bold text-indigo-600">{lead.ai_score}</span>
-                        </div>
-                      )}
+          <>
+            {/* MOBILE: Swipeable Stack for New Leads */}
+            {pendingLeads.length > 0 && (
+                <div className="md:hidden pt-4 pb-12 bg-gray-50/30 border-b border-gray-100">
+                    <div className="px-6 mb-2">
+                        <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Hunter Mode: Swipe to Shortlist</span>
                     </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex flex-col gap-1">
-                      <a href={lead.source_job_url} target="_blank" rel="noreferrer" className="text-indigo-600 hover:underline text-xs">View Post</a>
-                      {lead.review_notes && (
-                        <p className="text-[10px] text-red-500 italic line-clamp-1" title={lead.review_notes}>Note: {lead.review_notes}</p>
-                      )}
+                    <LeadsCardStack 
+                        leads={pendingLeads}
+                        onSwipeRight={handleSwipeRight}
+                        onSwipeLeft={handleSwipeLeft}
+                    />
+                </div>
+            )}
+
+            {/* MOBILE: Shortlisted/Converted Items (Classic List with Scenario B Pitch) */}
+            <div className="md:hidden space-y-4 p-4">
+              {shortlistedLeads.length > 0 && <h3 className="text-xs font-bold text-gray-500 px-2 uppercase tracking-tight mb-2">My Shortlist ({shortlistedLeads.length})</h3>}
+              {shortlistedLeads.map(lead => (
+                <div key={lead.id} className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 space-y-3 transition-all active:scale-[0.98] active:bg-gray-50">
+                  <div className="flex justify-between items-start">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600 font-bold text-lg">
+                        {lead.company_name[0]}
+                      </div>
+                      <div>
+                        <div className="font-bold text-gray-900 leading-tight">{lead.company_name}</div>
+                        <div className="text-[10px] text-gray-500 font-medium uppercase tracking-wider">{lead.job_title}</div>
+                      </div>
                     </div>
-                  </td>
-                  <td className="px-6 py-4 text-xs">{lead.next_followup_date ? new Date(lead.next_followup_date).toLocaleDateString() : <span className="text-amber-600 bg-amber-50 px-2 py-0.5 rounded">Schedule</span>}</td>
-                  <td className="px-6 py-4 text-right flex justify-end gap-2">
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      className="text-indigo-600 hover:bg-indigo-50"
-                      onClick={() => onOpenVisitLog(lead)}
-                      title="Log Visit (Hunter Mode)"
-                    >
-                      <MapPinIcon className="w-4 h-4" />
+                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                      lead.status === 'converted' ? 'bg-green-100 text-green-700' : 'bg-indigo-100 text-indigo-700'
+                    }`}>
+                      {lead.status.toUpperCase()}
+                    </span>
+                  </div>
+                  <div className="bg-gray-50/80 p-3 rounded-xl border border-gray-50 text-xs text-gray-700 italic">
+                    {lead.identified_need || "Qualified lead data..."}
+                  </div>
+                  <div className="grid grid-cols-3 gap-2 pt-2">
+                    <Button variant="outline" size="sm" className="text-indigo-600 border-indigo-100 bg-indigo-50/30 font-bold text-[10px] h-9 rounded-xl" onClick={() => onOpenVisitLog(lead)}>
+                      <MapPinIcon className="w-3.5 h-3.5 mr-1" /> HUNTER
                     </Button>
-                    <Button variant="ghost" size="sm" onClick={() => alert("Activity Tracker: " + lead.company_name)}><RefreshCwIcon className="w-4 h-4" /></Button>
-                  </td>
-                </tr>
+                    {/* Scenario B: Restore One-Tap Pitch */}
+                    <Button variant="outline" size="sm" className="text-amber-600 border-amber-100 bg-amber-50/30 font-bold text-[10px] h-9 rounded-xl" onClick={() => onGeneratePitch(lead)}>
+                      <RefreshCwIcon className="w-3.5 h-3.5 mr-1" /> PITCH
+                    </Button>
+                    <a href={lead.source_job_url} target="_blank" rel="noreferrer" className="flex items-center justify-center bg-gray-900 text-white rounded-xl text-[10px] font-bold h-9">
+                      VIEW URL
+                    </a>
+                  </div>
+                </div>
               ))}
-            </tbody>
-          </table>
+              {pendingLeads.length === 0 && shortlistedLeads.length === 0 && (
+                  <p className="text-center py-8 text-gray-400 text-sm italic">All caught up!</p>
+              )}
+            </div>
+
+            {/* Desktop Table View */}
+            <table className="hidden md:table w-full text-sm text-left">
+              <thead className="bg-gray-50 text-gray-500 font-medium">
+                <tr>
+                  <th className="px-6 py-3 cursor-pointer hover:bg-gray-100" onClick={() => requestSort('created_at')}>Date {sortConfig?.key === 'created_at' && (sortConfig.direction === 'asc' ? '▲' : '▼')}</th>
+                  <th className="px-6 py-3 cursor-pointer hover:bg-gray-100" onClick={() => requestSort('company_name')}>Company {sortConfig?.key === 'company_name' && (sortConfig.direction === 'asc' ? '▲' : '▼')}</th>
+                  <th className="px-6 py-3 w-1/4">Job Summary</th>
+                  <th className="px-6 py-3 cursor-pointer hover:bg-gray-100" onClick={() => requestSort('status')}>Status {sortConfig?.key === 'status' && (sortConfig.direction === 'asc' ? '▲' : '▼')}</th>
+                  <th className="px-6 py-3">Source</th>
+                  <th className="px-6 py-3 cursor-pointer hover:bg-gray-100" onClick={() => requestSort('next_followup_date')}>Follow Up {sortConfig?.key === 'next_followup_date' && (sortConfig.direction === 'asc' ? '▲' : '▼')}</th>
+                  <th className="px-6 py-3 text-right">Action</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {sortedLeads.map(lead => (
+                  <tr key={lead.id} className="hover:bg-gray-50 transition-colors">
+                    <td className="px-6 py-4 text-xs text-gray-500">{new Date(lead.created_at || Date.now()).toLocaleDateString()}</td>
+                    <td className="px-6 py-4"><div className="font-medium text-gray-900">{lead.company_name}</div><div className="text-xs text-gray-500">{lead.job_title}</div></td>
+                    <td className="px-6 py-4"><div className="text-xs text-gray-600 line-clamp-2">{lead.identified_need || "Pending Analysis..."}</div></td>
+                    <td className="px-6 py-4">
+                      <div className="flex flex-col gap-1">
+                        <span className={`px-2 py-1 rounded-full text-xs font-bold text-center ${
+                          lead.status === 'new' ? 'bg-blue-100 text-blue-700' : 
+                          lead.status === 'converted' ? 'bg-green-100 text-green-700' : 
+                          'bg-gray-100 text-gray-600'
+                        }`}>
+                          {lead.status.toUpperCase().replace('_', ' ')}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4"><a href={lead.source_job_url} target="_blank" rel="noreferrer" className="text-indigo-600 hover:underline text-xs">View Post</a></td>
+                    <td className="px-6 py-4 text-xs">{lead.next_followup_date ? new Date(lead.next_followup_date).toLocaleDateString() : <span className="text-amber-600 bg-amber-50 px-2 py-0.5 rounded">Schedule</span>}</td>
+                    <td className="px-6 py-4 text-right flex justify-end gap-2">
+                      <Button variant="ghost" size="sm" className="text-indigo-600 hover:bg-indigo-50" onClick={() => onOpenVisitLog(lead)} title="Log Visit (Hunter Mode)">
+                        <MapPinIcon className="w-4 h-4" />
+                      </Button>
+                      <Button variant="ghost" size="sm" onClick={() => alert("Activity Tracker: " + lead.company_name)}><RefreshCwIcon className="w-4 h-4" /></Button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </>
         )}
       </div>
     </div>
   );
 };
-

@@ -203,8 +203,8 @@ BEGIN
     ON CONFLICT DO NOTHING;
 
     -- Seed for archon_crawler_targets (Default Knowledge Target)
-    INSERT INTO archon_crawler_targets (id, target_url, description, status, update_frequency)
-    VALUES (uuid_generate_v4(), 'https://wlb.mol.gov.tw/Page/index.aspx', 'Ministry of Labor - Workforce Balance (wlb)', 'active', 'weekly')
+    INSERT INTO archon_crawler_targets (id, target_url, description, is_active)
+    VALUES (uuid_generate_v4(), 'https://wlb.mol.gov.tw/Page/index.aspx', 'Ministry of Labor - Workforce Balance (wlb)', true)
     ON CONFLICT (target_url) DO NOTHING;
 
 END $$;

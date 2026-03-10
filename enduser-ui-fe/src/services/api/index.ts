@@ -12,6 +12,9 @@ export const api = {
   ...tasksApi,
   ...statsApi,
   ...opsApi,
+  // Backward compatibility for unit tests
+  getAssignableAgents: tasksApi.getAssignableAgents,
+  getAttendanceStatus: opsApi.getAttendanceStatus,
 };
 
 // Re-export core dependencies and types for backward compatibility
