@@ -68,7 +68,15 @@ async def validate_code_quality(
     if language.lower() in LANGUAGE_PATTERNS:
         lang_info = LANGUAGE_PATTERNS[language.lower()]
         lang_indicators = lang_info.get("min_indicators", [])
-        found_lang_indicators = sum(1 for indicator in lang_indicators if indicator in code.lower())
+
+        # PERFORMANCE: Replaced sum(1 for ...) with standard for loop to avoid
+        # repeated code.lower() evaluations which are O(N) allocations
+        code_lower = code.lower()
+        found_lang_indicators = 0
+        for indicator in lang_indicators:
+            if indicator in code_lower:
+                found_lang_indicators += 1
+
         if found_lang_indicators < 2:
             safe_logfire_info(f"Code lacks {language} indicators")
             return False
@@ -76,7 +84,12 @@ async def validate_code_quality(
     if len(non_empty_lines) < 3:
         return False
 
-    very_long_lines = sum(1 for line in lines if len(line) > 300)
+    # PERFORMANCE: Replaced sum(1 for ...) with standard for loop
+    very_long_lines = 0
+    for line in lines:
+        if len(line) > 300:
+            very_long_lines += 1
+
     if len(lines) > 0 and very_long_lines > len(lines) * 0.5:
         safe_logfire_info("Code has too many very long lines")
         return False
