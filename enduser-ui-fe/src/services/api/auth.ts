@@ -119,7 +119,9 @@ export const authApi = {
   async getEmployees(): Promise<Employee[]> {
     const response = await fetch('/api/admin/users', { headers: await getHeaders() });
     const data = await handleResponse(response, 'Failed to fetch employees');
-    return data.profiles;
+    // Align with Backend Refactor (Phase 4.6.12): Handle both direct array and {profiles: []}
+    if (Array.isArray(data)) return data;
+    return data.profiles || data.users || [];
   },
 
   async getAssignableUsers(): Promise<AssignableUser[]> {

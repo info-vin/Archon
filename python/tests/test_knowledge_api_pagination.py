@@ -34,7 +34,7 @@ def bridge_dna(mock_supabase_client):
     mock_supabase_client.table.return_value = infinite_mock
     mock_supabase_client.from_.return_value = infinite_mock
 
-    with patch("src.server.api_routes.knowledge.items.get_supabase_client", return_value=mock_supabase_client):
+    with patch("server.api_routes.knowledge.items.get_supabase_client", return_value=mock_supabase_client):
         yield
 
 def test_knowledge_summary_endpoint(client, mock_supabase_client):

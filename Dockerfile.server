@@ -63,7 +63,7 @@ COPY python/tests/ tests/
 COPY migration/ migration/
 
 # Set environment variables
-ENV PYTHONPATH="/app:$PYTHONPATH"
+ENV PYTHONPATH="/app/src:/app:$PYTHONPATH"
 ENV PYTHONUNBUFFERED=1
 ENV PATH="/venv/bin:$PATH"
 

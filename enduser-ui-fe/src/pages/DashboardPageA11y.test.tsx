@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import DashboardPage from './DashboardPage';
-import { AuthProvider } from '../hooks/useAuth';
+import { AuthProvider } from '@/hooks/useAuth';
 
 // Mock the api to avoid network calls during render
 vi.mock('../services/api', () => ({

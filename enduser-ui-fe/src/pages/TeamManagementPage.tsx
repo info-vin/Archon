@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../services/api';
 import { Employee, Task } from '../types';
-import { useAuth } from '../hooks/useAuth';
+import { useAuth } from '@/hooks/useAuth';
 import { PermissionGuard } from '../features/auth/components/PermissionGuard';
 import { AiCollaborationWidget } from '../features/team/components/AiCollaborationWidget';
 import { ManageMemberModal } from '../features/team/components/ManageMemberModal';
@@ -10,8 +10,9 @@ import TokenUsageTable from '../components/TokenUsageTable';
 import { ShieldCheckIcon, MailIcon, BadgeCheckIcon, XIcon, BarChartIcon, FileTextIcon } from '../components/Icons';
 import ReactMarkdown from 'react-markdown';
 
-// Import raw markdown as a string for static in-app SOP rendering
-import aliceSopMarkdown from '../../PRPs/Phase_4.6.1_Alice_Persona_Workflows.md?raw';
+// Removed direct file import from outside the project root (../../PRPs/...) 
+// because it breaks Vite production builds.
+const aliceSopMarkdown = "SOP documentation is currently unavailable. Please check the central knowledge base.";
 
 const TeamManagementPage: React.FC = () => {
     const { user } = useAuth();

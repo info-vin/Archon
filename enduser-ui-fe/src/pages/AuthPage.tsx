@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../hooks/useAuth.tsx';
+import { useAuth } from '@/hooks/useAuth';
 import { Button } from '../components/Button.tsx';
 
 const AuthPage: React.FC = () => {

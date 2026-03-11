@@ -36,9 +36,9 @@ from starlette.responses import JSONResponse, Response
 # Add the project root to Python path for imports
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 # Import Logfire configuration
-from src.server.config.logfire_config import mcp_logger, setup_logfire
-from src.server.services.mcp_service_client import get_mcp_service_client
-from src.server.services.mcp_session_manager import get_session_manager
+from server.config.logfire_config import mcp_logger, setup_logfire
+from server.services.mcp_service_client import get_mcp_service_client
+from server.services.mcp_session_manager import get_session_manager
 
 # Load environment variables from the project root .env file
 project_root = Path(__file__).resolve().parent.parent

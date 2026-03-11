@@ -4,7 +4,7 @@ import { MenuIcon, XIcon, UserIcon, SettingsIcon, LogOutIcon, ShieldCheckIcon, L
 import LiveClock from '../../components/LiveClock.tsx';
 import UserAvatar from '../../components/UserAvatar.tsx';
 import { BrandLogo } from '../../components/BrandLogo.tsx';
-import { useAuth } from '../../hooks/useAuth.tsx';
+import { useAuth } from '@/hooks/useAuth';
 import { usePermission } from '../../features/auth/hooks/usePermission.ts';
 
 const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {

@@ -3,7 +3,7 @@ import { Link, useLocation, Outlet } from 'react-router-dom';
 import { MenuIcon, XIcon } from '../../components/Icons.tsx';
 import ThemeToggle from '../../components/ThemeToggle.tsx';
 import { BrandLogo } from '../../components/BrandLogo.tsx';
-import { useAuth } from '../../hooks/useAuth.tsx';
+import { useAuth } from '@/hooks/useAuth';
 
 const PublicLayout: React.FC = () => {
   const location = useLocation();

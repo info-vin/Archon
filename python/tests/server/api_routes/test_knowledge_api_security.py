@@ -14,7 +14,7 @@ def mock_get_current_user():
 
 app.dependency_overrides[get_current_user] = mock_get_current_user
 
-@patch('src.server.api_routes.knowledge_api.RBACService')
+@patch("server.services.rbac_service.RBACService")
 @patch('src.server.services.source_management_service.SourceManagementService')
 def test_delete_knowledge_item_forbidden(MockSourceManagementService, MockRBACService):
     """Test that deleting a knowledge item with insufficient permissions returns 403."""
@@ -38,7 +38,7 @@ def test_delete_knowledge_item_forbidden(MockSourceManagementService, MockRBACSe
     # Verify service was NOT called
     source_service_instance.delete_source.assert_not_called()
 
-@patch('src.server.api_routes.knowledge_api.RBACService')
+@patch("server.services.rbac_service.RBACService")
 @patch('src.server.services.source_management_service.SourceManagementService')
 def test_delete_knowledge_item_authorized(MockSourceManagementService, MockRBACService):
     """Test that deleting a knowledge item with correct permissions succeeds."""
@@ -63,7 +63,7 @@ def test_delete_knowledge_item_authorized(MockSourceManagementService, MockRBACS
     # Verify service WAS called
     source_service_instance.delete_source.assert_called_once()
 
-@patch('src.server.api_routes.knowledge_api.RBACService')
+@patch("server.services.rbac_service.RBACService")
 @patch('src.server.services.source_management_service.SourceManagementService')
 def test_delete_knowledge_item_backward_compatibility(MockSourceManagementService, MockRBACService):
     """Test that deleting without header is allowed (backward compatibility)."""

@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { api } from '../../../services/api.ts';
 import { SystemOverview, Employee, AlertItem } from '../../../types.ts';
-import { useAuth } from '../../../hooks/useAuth.tsx';
+import { useAuth } from '@/hooks/useAuth';
 
 export type MetricCategory = 'integrity' | 'resources' | 'op_load' | 'sent_risks' | 'active_force' | 'ethics' | 'collab' | 'graph' | 'velocity' | 'prompts';
 

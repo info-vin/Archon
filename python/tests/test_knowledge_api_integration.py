@@ -52,7 +52,7 @@ class TestKnowledgeAPIIntegration:
         mock_supabase_client.table.return_value.select.side_effect = create_mock_select
 
         # 4. FORCE PATCH at the entry point to bridge physical import gaps
-        with patch("src.server.api_routes.knowledge.items.get_supabase_client", return_value=mock_supabase_client):
+        with patch("server.api_routes.knowledge.items.get_supabase_client", return_value=mock_supabase_client):
             response = client.get("/api/knowledge-items?page=1&per_page=10")
 
         # 5. Final Assertions

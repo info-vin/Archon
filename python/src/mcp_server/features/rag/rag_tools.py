@@ -19,7 +19,7 @@ import httpx
 from mcp.server.fastmcp import Context, FastMCP
 
 # Import service discovery for HTTP communication
-from src.server.config.service_discovery import get_api_url
+from server.config.service_discovery import get_api_url
 
 logger = logging.getLogger(__name__)
 

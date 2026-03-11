@@ -79,7 +79,7 @@ async def update_knowledge_item(
 ):
     """Update a knowledge item's metadata."""
     if x_user_role:
-        from src.server.api_routes.knowledge_api import RBACService
+        from server.services.rbac_service import RBACService
         rbac_service = RBACService()
         if not rbac_service.can_manage_content(x_user_role):
             raise HTTPException(status_code=403, detail="Forbidden: Permission denied")
@@ -103,7 +103,7 @@ async def delete_knowledge_item(
 ):
     """Delete a knowledge item and its associated data."""
     if x_user_role:
-        from src.server.api_routes.knowledge_api import RBACService
+        from server.services.rbac_service import RBACService
         rbac_service = RBACService()
         if not rbac_service.can_manage_content(x_user_role):
             raise HTTPException(status_code=403, detail="Forbidden: Permission denied")

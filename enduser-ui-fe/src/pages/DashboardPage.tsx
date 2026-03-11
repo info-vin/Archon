@@ -7,7 +7,7 @@ import { ProjectModal } from '../components/ProjectModal.tsx';
 import { ClockInWidget } from '../components/ClockInWidget.tsx';
 import UserAvatar from '../components/UserAvatar.tsx';
 import { select, extent, scaleTime, scaleBand, axisTop, timeFormat, timeDay, timeWeek } from 'd3';
-import { useAuth } from '../hooks/useAuth.tsx';
+import { useAuth } from '@/hooks/useAuth';
 
 type ViewMode = 'list' | 'table' | 'kanban' | 'gantt';
 type SortableTaskKeys = 'title' | 'due_date' | 'priority' | 'status' | 'completed_at' | 'created_at';

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useAuth } from '../hooks/useAuth.tsx';
+import { useAuth } from '@/hooks/useAuth';
 import { api } from '../services/api.ts';
 
 const SettingsPage: React.FC = () => {

@@ -50,6 +50,16 @@ async def create_lead(request: CreateLeadRequest, current_user: dict = Depends(g
         lead = data
     return lead
 
+@router.post("/leads/reset")
+async def reset_leads(current_user: dict = Depends(get_current_user), service: MarketingService = Depends(get_marketing_service)):
+    user_role = current_user.get("role", "viewer").lower()
+    if user_role not in ["admin", "manager", "system_admin"]:
+        raise HTTPException(status_code=403, detail="Insufficient permissions")
+    success = await service.reset_leads()
+    if not success:
+        raise HTTPException(status_code=500, detail="Failed to reset leads")
+    return {"status": "success"}
+
 @router.patch("/leads/{lead_id}")
 async def update_lead(lead_id: str, request: LeadUpdate, current_user: dict = Depends(get_current_user), service: MarketingService = Depends(get_marketing_service)):
     user_role = current_user.get("role", "viewer").lower()

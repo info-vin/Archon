@@ -1,7 +1,7 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import { ManagerNexus } from './ManagerNexus';
-import { AuthProvider } from '../hooks/useAuth';
+import { AuthProvider } from '@/hooks/useAuth';
 
 // Define the icons mock to ensure XIcon exists
 vi.mock('../components/Icons', async (importOriginal) => {

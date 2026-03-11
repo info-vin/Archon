@@ -1,5 +1,5 @@
 import React from 'react';
-import { useAuth } from '../../hooks/useAuth.tsx';
+import { useAuth } from '@/hooks/useAuth';
 import { SolutionItem } from './solutionsConfig';
 import LegacyViewer from './LegacyViewer.tsx';
 import { ShieldCheckIcon } from '../../components/Icons.tsx';

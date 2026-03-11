@@ -46,7 +46,7 @@ async def get_users(
 
     try:
         users = await AdminService.get_all_users(limit=limit, role_filter=role)
-        return users
+        return {"profiles": users}
     except Exception as e:
         logger.error(f"Admin API: Failed to fetch users: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Database error while fetching users: {str(e)}") from e
@@ -94,8 +94,8 @@ async def list_crawler_targets(
 ):
     """List all specialized crawler targets (Admin only)."""
     user_role = current_user.get("role", "viewer").lower()
-    if user_role not in ["admin", "system_admin"]:
-        raise HTTPException(status_code=403)
+    if user_role not in ["admin", "system_admin", "manager"]:
+        raise HTTPException(status_code=403, detail="Manager or Admin access required")
 
     from ..utils import get_supabase_client
     res = get_supabase_client().table("archon_crawler_targets").select("*").order("created_at").execute()
@@ -108,8 +108,8 @@ async def create_crawler_target(
 ):
     """Add a new target to the isolated crawler registry (Admin only)."""
     user_role = current_user.get("role", "viewer").lower()
-    if user_role not in ["admin", "system_admin"]:
-        raise HTTPException(status_code=403)
+    if user_role not in ["admin", "system_admin", "manager"]:
+        raise HTTPException(status_code=403, detail="Manager or Admin access required")
 
     from ..utils import get_supabase_client
     res = get_supabase_client().table("archon_crawler_targets").insert(request.model_dump()).execute()
@@ -124,8 +124,8 @@ async def delete_crawler_target(
 ):
     """Remove a target from the registry (Admin only)."""
     user_role = current_user.get("role", "viewer").lower()
-    if user_role not in ["admin", "system_admin"]:
-        raise HTTPException(status_code=403)
+    if user_role not in ["admin", "system_admin", "manager"]:
+        raise HTTPException(status_code=403, detail="Manager or Admin access required")
 
     from ..utils import get_supabase_client
     get_supabase_client().table("archon_crawler_targets").delete().eq("id", target_id).execute()

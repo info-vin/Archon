@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { api } from '../../../services/api';
 import { BlogPost, TaskStatus, EmployeeRole } from '../../../types';
-import { useAuth } from '../../../hooks/useAuth';
+import { useAuth } from '@/hooks/useAuth';
 import { ContentSource } from '../components/VictoryFeedList';
 
 export const useBrandLogic = () => {
