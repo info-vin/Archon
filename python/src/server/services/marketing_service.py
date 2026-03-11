@@ -90,71 +90,51 @@ class MarketingService(BaseRepository):
             return False, {"error": str(e)}
 
     async def generate_pitch(self, company: str, job_title: str) -> dict:
-        # Emergency Physical Inject: Bypassing broken Docker mount for .env
-        injected_key = "AIzaSyAOiqg7sreLQU7eX5uwE7h4i4UoSLl6O_E"
-        keys_to_try = [injected_key]
+        """
+        Generates a tailored sales pitch using Gemini LLM.
+        Uses credential_service to retrieve the appropriate API key.
+        """
+        try:
+            # 1. Fetch API Key from Credential Service
+            api_key = await credential_service.get_credential("GEMINI_API_KEY") or await credential_service.get_credential("GOOGLE_API_KEY")
 
-        if not keys_to_try:
-            return {"error_code": 401, "message": "No AI API Keys found."}
+            if not api_key:
+                logger.error("MarketingService: No Gemini/Google API Key found in settings or environment.")
+                return {"error_code": 401, "message": "No AI API Keys found."}
 
-        import os
-        last_error = None
-        for api_key in keys_to_try:
+            # 2. Initialize Client and Prompts
+            client = genai.Client(api_key=api_key)
+            sys_prompt = prompt_service.get_prompt("SALES_PITCH", SALES_PITCH_SYSTEM_PROMPT)
+
+            # 3. Call AI with current model choice (gemini-2.5-flash)
+            response = client.models.generate_content(
+                model="gemini-2.5-flash",
+                contents=f"Company: {company}\nRole: {job_title}",
+                config=types.GenerateContentConfig(system_instruction=sys_prompt)
+            )
+
+            # 4. LOG ACTUAL TOKEN USAGE (Physical evidence)
             try:
-                # 1. Hide potential conflicting env vars
-                orig_google = os.environ.pop("GOOGLE_API_KEY", None)
-                orig_gemini = os.environ.pop("GEMINI_API_KEY", None)
-                try:
-                    # 1. Explicitly pass key to bypass env preference
-                    client = genai.Client(api_key=api_key)
-                    sys_prompt = prompt_service.get_prompt("SALES_PITCH", SALES_PITCH_SYSTEM_PROMPT)
+                import uuid
 
-                    response = client.models.generate_content(
-                        model="gemini-2.5-flash",
-                        contents=f"Company: {company}\nRole: {job_title}",
-                        config=types.GenerateContentConfig(system_instruction=sys_prompt)
-                    )
+                from server.services.token_usage_service import TokenUsageService
+                asyncio.create_task(TokenUsageService.log_usage(
+                    request_id=f"pitch-{uuid.uuid4().hex[:8]}",
+                    user_id="alice-sales", # Default for Alice
+                    model="gemini-2.5-flash",
+                    provider="google",
+                    input_tokens=response.usage_metadata.prompt_token_count if response.usage_metadata else 0,
+                    output_tokens=response.usage_metadata.candidates_token_count if response.usage_metadata else 0,
+                    context_type="sales_pitch_generation"
+                ))
+            except Exception as log_err:
+                logger.warning(f"Failed to log token usage: {log_err}")
 
-                    # 2. LOG ACTUAL TOKEN USAGE (Physical evidence)
-                    try:
-                        import uuid
+            return {"content": response.text or "AI Error", "references": []}
 
-                        from server.services.token_usage_service import TokenUsageService
-                        asyncio.create_task(TokenUsageService.log_usage(
-                            request_id=f"pitch-{uuid.uuid4().hex[:8]}",
-                            user_id="alice-sales", # Default for Alice
-                            model="gemini-2.5-flash",                            provider="google",
-                            input_tokens=response.usage_metadata.prompt_token_count,
-                            output_tokens=response.usage_metadata.candidates_token_count,
-                            context_type="sales_pitch_generation"
-                        ))
-                    except Exception as log_err:
-                        logger.warning(f"Failed to log token usage: {log_err}")
-
-                    # 2. Always restore env BEFORE return
-                    if orig_google:
-                        os.environ["GOOGLE_API_KEY"] = orig_google
-                    if orig_gemini:
-                        os.environ["GEMINI_API_KEY"] = orig_gemini
-
-                    return {"content": response.text or "AI Error", "references": []}
-                except Exception as call_err:
-                    # Ensure cleanup on AI call failure
-                    if orig_google:
-                        os.environ["GOOGLE_API_KEY"] = orig_google
-                    if orig_gemini:
-                        os.environ["GEMINI_API_KEY"] = orig_gemini
-                    raise call_err
-            except Exception as e:
-                last_error = str(e)
-                if "429" in last_error:
-                    continue
-                break
-
-        # FINAL DEFENSE: Mock Fallback (Restores yesterday's perceived stability)
-        logger.warning(f"MarketingService: All AI paths exhausted (Last Error: {last_error}). Triggering Mock fallback.")
-        mock_content = f"""[SALES PITCH for {company}]\nHi there, I noticed you are looking for a {job_title}. Archon can help streamline your workflows... (Simulated content due to exhausted quota)"""
-        return {"content": mock_content, "references": ["Simulated by Archon Core"]}
+        except Exception as e:
+            logger.error(f"MarketingService: AI generation failed: {e}")
+            return {"error_code": 500, "message": f"AI generation error: {str(e)}"}
 
     async def generate_visual_asset(self, style: str) -> dict:
         """Scenario 3: Nana Banana 3-Tier Defense"""
@@ -267,65 +247,55 @@ class MarketingService(BaseRepository):
         )
         return str(resp.text) if resp.text else None
     async def draft_blog(self, topic: str, industry: list[str] | None, keywords: str | None) -> tuple[bool, dict]:
+        """
+        Bob's Daily Blog Draft Generation.
+        Uses credential_service for API key retrieval and maintains gemini-2.5-flash model.
+        """
         # P11: Guardrail Check
         is_valid, err = GuardrailService.validate_input(f"{topic} {keywords or ''}")
         if not is_valid:
             return False, {"error_code": 400, "message": f"Guardrail Violation: {err}"}
 
-        context_text = await self._get_expert_style_context(f"{topic} {industry}")
+        try:
+            context_text = await self._get_expert_style_context(f"{topic} {industry}")
 
-        # Physical Fix: Force key switch logic for Bob
-        gemini_key = await credential_service.get_credential("GEMINI_API_KEY")
-        google_key = await credential_service.get_credential("GOOGLE_API_KEY")
-        keys_to_try = [k for k in [gemini_key, google_key] if k]
+            # 1. Fetch API Key from Credential Service
+            api_key = await credential_service.get_credential("GEMINI_API_KEY") or await credential_service.get_credential("GOOGLE_API_KEY")
 
-        if not keys_to_try:
-            return False, {"error_code": 401, "message": "API Key missing"}
+            if not api_key:
+                logger.error("MarketingService: No API Key found for blog drafting.")
+                return False, {"error_code": 401, "message": "API Key missing"}
 
-        import os
-        last_error = None
-        for api_key in keys_to_try:
-            try:
-                orig_google = os.environ.pop("GOOGLE_API_KEY", None)
-                orig_gemini = os.environ.pop("GEMINI_API_KEY", None)
-                try:
-                    os.environ["GEMINI_API_KEY"] = api_key
-                    client = genai.Client()
-                    sys_prompt = prompt_service.get_prompt("BLOG_DRAFT", BLOG_DRAFT_SYSTEM_PROMPT)
+            # 2. Initialize Client
+            client = genai.Client(api_key=api_key)
+            sys_prompt = prompt_service.get_prompt("BLOG_DRAFT", BLOG_DRAFT_SYSTEM_PROMPT)
 
-                    response = client.models.generate_content(
-                        model="gemini-2.5-flash",
-                        contents=f"Topic: {topic}\nContext: {context_text}",
-                        config=types.GenerateContentConfig(system_instruction=sys_prompt, response_mime_type="application/json")
-                    )
+            # 3. Call AI with current model choice
+            response = client.models.generate_content(
+                model="gemini-2.5-flash",
+                contents=f"Topic: {topic}\nContext: {context_text}",
+                config=types.GenerateContentConfig(system_instruction=sys_prompt, response_mime_type="application/json")
+            )
 
-                    if not response.text:
-                        return False, {"error": "AI Empty response"}
-                    result = safe_json_loads(response.text)
+            if not response.text:
+                return False, {"error": "AI Empty response"}
 
-                    # P11: AI Leakage Guardrail
-                    is_safe, audit = GuardrailService.audit_output(str(result.get("content", "")), context_text)
-                    if not is_safe:
-                        return False, {"error_code": 422, "message": f"AI Output Blocked: {audit}"}
+            result = safe_json_loads(response.text)
 
-                    return True, {
-                        "title": str(result.get("title", "Untitled")),
-                        "content": str(result.get("content", "")),
-                        "excerpt": str(result.get("excerpt", "")),
-                        "used_prompt": topic
-                    }
-                finally:
-                    if orig_google:
-                        os.environ["GOOGLE_API_KEY"] = orig_google
-                    if orig_gemini:
-                        os.environ["GEMINI_API_KEY"] = orig_gemini
-            except Exception as e:
-                last_error = str(e)
-                if "429" in last_error:
-                    continue
-                break
+            # P11: AI Leakage Guardrail
+            is_safe, audit = GuardrailService.audit_output(str(result.get("content", "")), context_text)
+            if not is_safe:
+                return False, {"error_code": 422, "message": f"AI Output Blocked: {audit}"}
 
-        return False, {"error_code": 429 if "429" in (last_error or "") else 500, "message": f"AI Error: {last_error}"}
+            return True, {
+                "title": str(result.get("title", "Untitled")),
+                "content": str(result.get("content", "")),
+                "excerpt": str(result.get("excerpt", "")),
+                "used_prompt": topic
+            }
+        except Exception as e:
+            logger.error(f"MarketingService: Blog drafting failed: {e}")
+            return False, {"error_code": 500, "message": f"AI Error: {str(e)}"}
 
     async def get_trends(self) -> dict:
         res_t = self.supabase_client.table("marketing_trends").select("*").eq("trend_type", "keyword_growth").order("report_date", desc=True).limit(1).execute()

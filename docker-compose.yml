@@ -45,6 +45,7 @@ services:
       - ./scripts:/app/scripts # Mount utility scripts
       - ./migration:/app/migration # Mount SQL migrations
       - ./enduser-ui-fe/public:/app/frontend_public # Mount frontend assets for Knowledge Seeding
+      - ./PRPs:/app/PRPs # Mount PRPs for Alice's SOP access
     extra_hosts:
       - "host.docker.internal:host-gateway"
     command:

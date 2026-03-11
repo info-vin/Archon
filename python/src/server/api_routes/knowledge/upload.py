@@ -1,5 +1,4 @@
 import asyncio
-import io
 import json
 import uuid
 
@@ -47,26 +46,32 @@ async def upload_document(
             "log": f"Starting upload for {file.filename}"
         })
 
-        task = asyncio.create_task(
-            _perform_upload_with_progress(
-                progress_id, file_content, file_metadata, tag_list, knowledge_type, tracker
-            )
-        )
+        # Launch background task and store it for tracking (Physical Alignment with domain state)
+        task = asyncio.create_task(background_upload(
+            file_content=file_content,
+            file_metadata=file_metadata,
+            progress_id=progress_id,
+            tags=tag_list,
+            knowledge_type=knowledge_type,
+            tracker=tracker
+        ))
+
         active_crawl_tasks[progress_id] = task
 
         return {
+            "status": "success",
             "progress_id": progress_id,
-            "filename": file.filename,
-            "status": "started"
+            "message": "Upload started in background"
         }
+
     except Exception as e:
         safe_logfire_error(f"Upload initialization failed: {e}")
         raise HTTPException(status_code=500, detail=str(e)) from e
 
-async def _perform_upload_with_progress(
-    progress_id: str,
+async def background_upload(
     file_content: bytes,
     file_metadata: dict,
+    progress_id: str,
     tags: list[str],
     knowledge_type: str,
     tracker: ProgressTracker
@@ -77,39 +82,41 @@ async def _perform_upload_with_progress(
         storage = DocumentStorageService()
         source_manager = SourceManagementService()
 
-        await tracker.update({"status": "extracting", "progress": 20, "log": "Extracting text..."})
+        await tracker.update("extracting", 20, "Extracting text...")
 
         text = extract_text_from_document(
-            io.BytesIO(file_content),
-            file_metadata["content_type"],
-            file_metadata["filename"]
+            file_content,
+            file_metadata["filename"],
+            file_metadata["content_type"]
         )
 
         if not text:
             raise ValueError("No text could be extracted from the document.")
 
-        await tracker.update({"status": "storing", "progress": 50, "log": "Storing document..."})
+        await tracker.update("storing", 50, "Storing document...")
 
         # Simple implementation for seeding/upload
         source_id = f"upload-{file_metadata['filename']}-{uuid.uuid4().hex[:6]}"
-        await source_manager.create_source(
+        await source_manager.create_source_info(
             source_id=source_id,
-            url=f"upload://{file_metadata['filename']}",
-            title=file_metadata["filename"],
+            content_sample=text[:200], # Required argument
+            word_count=len(text.split()),
             knowledge_type=knowledge_type,
             tags=tags
         )
 
-        await storage.store_document(
-            source_id=source_id,
-            content=text,
-            metadata=file_metadata
+        await storage.store_documents(
+            documents=[{
+                "source_id": source_id,
+                "content": text,
+                "metadata": file_metadata
+            }]
         )
 
         await tracker.complete({"log": "Upload successful!"})
     except Exception as e:
         safe_logfire_error(f"Background upload failed for {file_metadata.get('filename')}: {e}")
-        await tracker.update({"status": "failed", "progress": 0, "log": f"Error: {str(e)}"})
+        await tracker.update("failed", 0, f"Error: {str(e)}")
     finally:
         if progress_id in active_crawl_tasks:
             del active_crawl_tasks[progress_id]
