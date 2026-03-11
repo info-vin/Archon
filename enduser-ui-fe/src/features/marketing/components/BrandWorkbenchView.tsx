@@ -93,6 +93,7 @@ export const BrandWorkbenchView: React.FC<BrandWorkbenchViewProps> = ({
             <button 
                 onClick={() => setIsSidebarOpen(!isSidebarOpen)}
                 className="absolute left-0 bottom-10 z-30 bg-indigo-600 text-white p-2 rounded-r-lg shadow-lg hover:bg-indigo-700 transition-all transform hover:scale-110 active:scale-95"
+                aria-label={isSidebarOpen ? "Close sidebar" : "Open sidebar"}
             >
                 {isSidebarOpen ? <XIcon className="w-4 h-4" /> : <LayoutIcon className="w-4 h-4" />}
             </button>

@@ -379,7 +379,7 @@ export const ContentWorkbench: React.FC<ContentWorkbenchProps> = ({
                     <p className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">Unified Prompt & Logic Console</p>
                   </div>
                 </div>
-                <button onClick={() => setPromptCenterOpen(false)} className="p-2 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-full transition-colors">
+                <button onClick={() => setPromptCenterOpen(false)} className="p-2 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-full transition-colors" aria-label="Close AI Command Center">
                   <XIcon className="w-5 h-5 text-slate-400" />
                 </button>
               </div>
