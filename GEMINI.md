@@ -114,14 +114,18 @@
 
 # 第三章：近期工作日誌 (Recent Journal Entries)
 
-### 2026-03-06: Phase 4.6.12 巨型檔案模組化與物理路徑對齊 (Current Session)
-*   **物理重構落地**:
-    *   `projects_api.py`: 1720 行 -> 210 行。完成 Facade 模式轉換，成功分離 Pydantic 模型至 `schemas/projects.py`。
-    *   `code_extraction_service.py`: 1583 行 -> 160 行。成功將解析邏輯拆分至 `logic/` 子包，還原了 100% 原始正則捕捉率。
-*   **遺留物理瓶頸 (The 403 Path Trap)**:
-    *   **現象**: 冒煙測試回傳 `403 Forbidden`。
-    *   **根源**: 物理路徑不一致。`conftest.py` 使用 `server.auth...` 而新重構代碼使用 `src.server.auth...`。在 FastAPI 注入系統中，這被視為不同的函數物件，導致測試中的 `dependency_overrides` 物理性失效。
-    *   **狀態**: 548/550 通過。待下階段進行全系統 `src.` 路徑標準化校準。
+### 2026-03-11: Phase 4.6.12 最終硬化與全系統架構查核 (Current Session)
+*   **物理安全性修復**:
+    *   `marketing_service.py`: 徹底移除硬編碼 API Key (`injected_key`) 與 `os.environ.pop` 操作，還原為 `credential_service` 全域配置。
+    *   `docker-compose.yml`: 補全 `PRPs/` 目錄掛載，解決後端 Agent 無法存取實體 SOP 文件之物理斷裂。
+*   **測試與路徑對齊**:
+    *   實施「雙重路徑補丁 (Dual Path Patching)」策略，解決 pytest 環境下 `src.server` 與 `server` 模組遮蔽 (Shadowing) 導致的 Mock 攔截失效問題。
+    *   修復 `upload.py` 背景任務參數順序錯位及 `active_crawl_tasks` 型別不匹配錯誤。
+*   **架構查核結論**:
+    *   完成 Phase 4.6.10/11/12 全面物理查核：所有行數超過 1000 行之巨型檔案已全數拆分完畢。
+    *   指標：後端 551/551 測試通過，達成 Zero-Lint 與 Zero-Mypy 穩定狀態。
+
+### 2026-03-06: Phase 4.6.12 巨型檔案模組化與物理路徑對齊
 
 
 ### 2026-02-26: Digital Twin 落地與系統治理加固

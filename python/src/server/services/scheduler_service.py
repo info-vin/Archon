@@ -179,23 +179,48 @@ class SchedulerService:
 
     async def _run_task_dispatcher(self):
         """
-        Scans archon_tasks for recurring tasks (is_recurring=true) and dispatches them
-        based on David's schedule_config.
+        Scans archon_tasks for recurring tasks (is_recurring=true) and dispatches them.
+        Harden version: Includes dynamic timeout reclamation (Task Sentinel) aligned with David's 5173 UI.
         """
-        logger.info("📡 Clockwork: Starting Task Dispatcher...")
+        logger.info("📡 Clockwork: Starting Task Dispatcher (Physical Alignment Mode)...")
         try:
             from ..utils import get_supabase_client
             from .agent_service import agent_service
+            from .credential_service import credential_service
 
             supabase = get_supabase_client()
 
-            # Find recurring tasks that are ready to run
-            # For MVP: We pick 'todo' or 'pending' tasks marked as recurring
+            # 1. Physical Reclaim: Recover zombie tasks
+            # David can override this via archon_settings key 'TASK_RECLAIM_TIMEOUT' (default 60m)
+            timeout_mins = int(await credential_service.get_credential("TASK_RECLAIM_TIMEOUT", 60))
+            threshold_time = (datetime.now(UTC) - timedelta(minutes=timeout_mins)).isoformat()
+
+            # Reset stuck tasks to allow 5173 UI to reflect ready status
+            reclaim_res = (
+                supabase.table("archon_tasks")
+                .update({"status": "todo", "updated_at": datetime.now(UTC).isoformat()})
+                .eq("status", "processing")
+                .lt("updated_at", threshold_time)
+                .execute()
+            )
+
+            if reclaim_res.data:
+                logger.warning(f"🚨 Task Sentinel: Reclaimed {len(reclaim_res.data)} stuck tasks (Timeout > {timeout_mins}m)")
+                for t in reclaim_res.data:
+                    supabase.table("archon_logs").insert({
+                        "source": "task-sentinel",
+                        "level": "WARNING",
+                        "message": f"Auto-reclaimed stuck task: {t['title']}",
+                        "details": {"task_id": t["id"], "type": "timeout_reclamation"}
+                    }).execute()
+
+            # 2. Dispatch: Pick recurring tasks that David has set to 'todo'
+            # Filtering for is_recurring=True ensures we only automate what David intended
             res = (
                 supabase.table("archon_tasks")
                 .select("id, title, assignee_id, schedule_config, crawler_target_id")
                 .eq("is_recurring", True)
-                .not_.eq("status", "done")
+                .eq("status", "todo")
                 .execute()
             )
 
@@ -204,30 +229,26 @@ class SchedulerService:
                 logger.info("📡 Clockwork: No pending recurring tasks found.")
                 return
 
-            logger.info(f"📡 Clockwork: Processing {len(tasks)} recurring tasks...")
+            logger.info(f"📡 Clockwork: Found {len(tasks)} tasks ready for automated execution.")
 
             for task in tasks:
-                # 物理連動：如果任務關聯了 crawler_target_id (來自 3737)，則優先處理
                 target_id = task.get("crawler_target_id")
                 task_id = task["id"]
 
-                # Check if it's time to run (Simple daily logic for now)
-                # In a full implementation, we would parse cron from schedule_config
-                logger.info(f"📡 Clockwork: Dispatching task '{task['title']}' (ID: {task_id}) to Agent {task['assignee_id']}")
+                logger.info(f"📡 Clockwork: Dispatching task '{task['title']}' (ID: {task_id})")
 
-                # Execute the task via AgentService
-                # This will trigger Librarian to crawl if it's a knowledge task
+                # Physical Handover to AgentService
                 await agent_service.run_agent_task(
                     task_id=task_id,
                     agent_id=task.get("assignee_id", "ai-librarian")
                 )
 
-                # Log success
+                # Record in Audit Log for David's 5173 Dashboard
                 supabase.table("archon_logs").insert({
                     "source": "clockwork-scheduler",
                     "level": "INFO",
                     "message": f"Auto-dispatched recurring task: {task['title']}",
-                    "details": {"task_id": task_id, "target_id": target_id}
+                    "details": {"task_id": task_id, "assignee": task.get("assignee_id"), "target_id": target_id}
                 }).execute()
 
         except Exception as e:

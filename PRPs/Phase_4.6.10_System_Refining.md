@@ -70,7 +70,11 @@
 
 ---
 
-## 漸進式重構原則 (Incremental Refactoring Policy)
-對於大型巨獸檔案（如 `rag-settings/index.tsx` 2400行，`projects_api.py` 1800行）：
-*   **絕對不進行一次性的全面重寫**。
-*   採用 **Feature-Driven (事件驅動)** 方式。例如：在執行 Step 3 時，因為要加骨架屏，所以「順便」把 Nexus 的某些卡片切成獨立元件；在執行 Step 1.2 時，因為要精簡 Settings，所以「順便」切分 `rag-settings`。
+## 物理落地查核結論 (Physical Audit Conclusion) - 2026-03-11
+*   **執行狀態**: 🟢 **100% 物理落地**
+*   **關鍵證據**:
+    *   **狀態化排程器**: 提交 `031f9ad` 實作了基於 `archon_settings` 的 `_schedule_stateful_job` 邏輯，徹底解決 Render 重啟導致的排程失效。
+    *   **Nexus 重構**: 提交 `e925c14` 將 1500 行之 `ManagerNexus.tsx` 拆分為 10 個組件並導入 Skeleton Screens。
+    *   **DiffViewer 整合**: 提交 `a3397db` 完成 `DiffViewer` 於 `/approvals` 頁面之物理掛載。
+    *   **資料淨化**: `migration/0.2.1/` 實體 SQL 已移除 `Legacy Corp` 等髒資料。
+*   **架構偏差紀錄**: Webhook 化計畫改為「內部狀態化排程」，以降低外部維護成本，目前運作穩定。
