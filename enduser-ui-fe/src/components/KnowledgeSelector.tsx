@@ -89,6 +89,8 @@ export const KnowledgeSelector: React.FC<KnowledgeSelectorProps> = ({
               onClick={() => toggleItem(item.source_id)}
               className="hover:text-destructive transition-colors"
               disabled={disabled}
+              aria-label="Remove item"
+              title="Remove item"
             >
               <XIcon className="w-3 h-3" />
             </button>
