@@ -48,7 +48,8 @@ CREATE TYPE public.task_status AS ENUM (
     'processing',
     'dispatched',
     'pending',
-    'archived'
+    'archived',
+    'cancelled'
 );
 
 

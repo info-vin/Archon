@@ -1,84 +1,43 @@
-from unittest.mock import patch
-
+import pytest
 from fastapi.testclient import TestClient
-
-from src.server.auth.dependencies import get_current_user
+from unittest.mock import AsyncMock, MagicMock, patch
 from src.server.main import app
+from src.server.auth.dependencies import get_current_user
 
 client = TestClient(app)
 
+@pytest.fixture
+def mock_admin_user():
+    user = {"id": "admin1", "role": "system_admin", "email": "admin@archon.com"}
+    app.dependency_overrides[get_current_user] = lambda: user
+    yield user
+    app.dependency_overrides.pop(get_current_user, None)
 
-# Setup mock user dependency override
-def mock_get_current_user():
-    return {"id": "test_user_id", "email": "test@example.com"}
+@pytest.fixture
+def mock_normal_user():
+    user = {"id": "user1", "role": "employee", "email": "user@archon.com"}
+    app.dependency_overrides[get_current_user] = lambda: user
+    yield user
+    app.dependency_overrides.pop(get_current_user, None)
 
-app.dependency_overrides[get_current_user] = mock_get_current_user
-
-@patch("server.services.rbac_service.RBACService")
-@patch('src.server.services.source_management_service.SourceManagementService')
-def test_delete_knowledge_item_forbidden(MockSourceManagementService, MockRBACService):
-    """Test that deleting a knowledge item with insufficient permissions returns 403."""
-    # Setup RBAC to deny access
-    rbac_instance = MockRBACService.return_value
-    rbac_instance.can_manage_content.return_value = False
-
-    # Mock Source Service (should not be called, but just in case)
-    source_service_instance = MockSourceManagementService.return_value
-
-    response = client.delete(
-        "/api/knowledge-items/test-source-id",
-        headers={"X-User-Role": "Member"}
-    )
-
-    assert response.status_code == 403
-    assert "Forbidden" in response.json()["detail"]
-
-    # Verify RBAC was checked
-    rbac_instance.can_manage_content.assert_called_with("Member")
-    # Verify service was NOT called
-    source_service_instance.delete_source.assert_not_called()
-
-@patch("server.services.rbac_service.RBACService")
-@patch('src.server.services.source_management_service.SourceManagementService')
-def test_delete_knowledge_item_authorized(MockSourceManagementService, MockRBACService):
-    """Test that deleting a knowledge item with correct permissions succeeds."""
-    # Setup RBAC to allow access
-    rbac_instance = MockRBACService.return_value
-    rbac_instance.can_manage_content.return_value = True
-
-    # Mock Source Service success
-    source_service_instance = MockSourceManagementService.return_value
-    source_service_instance.delete_source.return_value = (True, {})
-
-    response = client.delete(
-        "/api/knowledge-items/test-source-id",
-        headers={"X-User-Role": "Admin"}
-    )
-
-    assert response.status_code == 200
-    assert response.json()["success"] is True
-
-    # Verify RBAC was checked
-    rbac_instance.can_manage_content.assert_called_with("Admin")
-    # Verify service WAS called
-    source_service_instance.delete_source.assert_called_once()
-
-@patch("server.services.rbac_service.RBACService")
-@patch('src.server.services.source_management_service.SourceManagementService')
-def test_delete_knowledge_item_backward_compatibility(MockSourceManagementService, MockRBACService):
-    """Test that deleting without header is allowed (backward compatibility)."""
-
-    # Mock Source Service success
-    source_service_instance = MockSourceManagementService.return_value
-    source_service_instance.delete_source.return_value = (True, {})
-
-    # Call without headers
+def test_delete_knowledge_item_forbidden(mock_normal_user):
+    """驗證普通員工無法刪除知識庫項目 (RBAC 403)"""
+    # NO PATCH NEEDED: The dependency factory should block this physically
     response = client.delete("/api/knowledge-items/test-source-id")
+    assert response.status_code == 403
 
-    assert response.status_code == 200
-    assert response.json()["success"] is True
+def test_delete_knowledge_item_authorized(mock_admin_user):
+    """驗證管理員可以刪除知識庫項目"""
+    with patch("src.server.api_routes.knowledge.items.SourceManagementService.delete_source") as mock_delete:
+        mock_delete.return_value = (True, {"id": "test-source-id"})
+        response = client.delete("/api/knowledge-items/test-source-id")
+        assert response.status_code == 200
+        assert response.json()["success"] is True
 
-    # Verify RBAC was NOT called (or at least logic skipped it)
-    # Actually RBAC service might be instantiated but method not called if header is missing
-    # But let's check that delete_source WAS called
-    source_service_instance.delete_source.assert_called_once()
+def test_delete_knowledge_item_backward_compatibility(mock_admin_user):
+    """驗證舊版路徑 alias 依然受控且可用"""
+    with patch("src.server.api_routes.knowledge.items.SourceManagementService.delete_source") as mock_delete:
+        mock_delete.return_value = (True, {"id": "test-source-id"})
+        response = client.delete("/api/sources/test-source-id")
+        assert response.status_code == 200
+        assert response.json()["success"] is True
