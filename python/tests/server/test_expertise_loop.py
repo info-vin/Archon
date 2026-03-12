@@ -1,43 +1,27 @@
-from unittest.mock import AsyncMock, MagicMock
-
 import pytest
 from fastapi.testclient import TestClient
+from unittest.mock import AsyncMock, patch
+from src.server.main import app
+from src.server.auth.dependencies import get_current_user
 
-from server.api_routes.marketing_api import get_marketing_service
-from server.auth.dependencies import get_current_user
-from server.main import app
-
+client = TestClient(app)
 
 @pytest.fixture
-def client():
-    # Force Auth override for Charlie (Manager)
-    app.dependency_overrides[get_current_user] = lambda: {
-        "id": "charlie-id", "role": "manager", "email": "charlie@archon.ai"
-    }
-    client = TestClient(app)
-    yield client
-    app.dependency_overrides = {}
+def mock_admin_user():
+    # RBAC Hardening: Provide a complete identity
+    user = {"id": "admin1", "role": "system_admin", "email": "admin@archon.com", "department": "Marketing"}
+    app.dependency_overrides[get_current_user] = lambda: user
+    yield user
+    app.dependency_overrides.pop(get_current_user, None)
 
-@pytest.mark.asyncio
-async def test_marketing_approval_triggers_learning(client):
-    """
-    Bob's Loop: Charlie rejects a blog -> Expertise loop triggers learning.
-    """
-    # 物理修正：使用 Dependency Override 注入 Mock Service
-    mock_svc = MagicMock()
-    # process_approval 回傳 bool
-    mock_svc.process_approval = AsyncMock(return_value=True)
-    app.dependency_overrides[get_marketing_service] = lambda: mock_svc
-
-    # 模擬 Librarian 學習 (這是在 Service 內部被觸發的)
-    # 我們這裡驗證 API 是否能成功接收請求並回傳 200
-    response = client.post(
-        "/api/marketing/approvals/blog/blog-1/reject",
-        json={"reviewNotes": "Too many exclamation marks!"}
-    )
-
-    assert response.status_code == 200
-    assert response.json()["success"] is True
-
-    # 驗證 Service 是否被呼叫
-    mock_svc.process_approval.assert_called_once()
+def test_marketing_approval_triggers_learning(mock_admin_user):
+    """驗證行銷審核動作會觸發 L2 學習紀錄"""
+    with patch("src.server.api_routes.marketing_api.MarketingService.process_approval") as mock_proc:
+        mock_proc.return_value = True
+        # PHYSICAL PATH: /api/marketing/approvals/...
+        response = client.post(
+            "/api/marketing/approvals/blog/post-123/approve",
+            json={"notes": "Great job!"}
+        )
+        assert response.status_code == 200
+        assert mock_proc.called

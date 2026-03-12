@@ -126,7 +126,7 @@ async def get_health_trend():
         logger.error(f"API: Health trend fetch failed: {e}")
         return {"trend": [], "audit": [], "error": str(e)}
 
-@router.get("/tasks-by-status")
+@router.get("/tasks-by-status", dependencies=[Depends(require_manager_or_admin)])
 async def get_tasks_by_status():
     """Get the count of tasks grouped by status."""
     try:
@@ -141,7 +141,7 @@ async def get_tasks_by_status():
         logger.error(f"Failed to get task stats: {e}")
         raise HTTPException(status_code=500, detail=str(e)) from e
 
-@router.get("/member-performance")
+@router.get("/member-performance", dependencies=[Depends(require_manager_or_admin)])
 async def get_member_performance():
     """Get the count of COMPLETED tasks grouped by assignee (refactored to service)."""
     try:

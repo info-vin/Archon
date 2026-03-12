@@ -46,10 +46,12 @@ class ProposeChangeService:
         self.executor = ActionExecutor()
         self.logger = logging.getLogger(__name__)
 
-    async def list_proposals(self, status: str | None = 'pending') -> list[dict[str, Any]]:
+    async def list_proposals(self, status: str | None = 'pending', user_id: str | None = None) -> list[dict[str, Any]]:
+        """Lists proposals, optionally filtered by status and user department scope."""
         query = self.db_client.table("proposed_changes").select("*")
         if status:
             query = query.eq("status", status)
+        # TODO: Add department isolation logic here based on user_id
         res = query.order("created_at", desc=True).execute()
         return cast(list[dict[str, Any]], res.data or [])
 

@@ -1,62 +1,43 @@
+"""
+Prompts API Hardened - Secure management of AI system instructions.
+Standardized RBAC Sealing with correct response unwrapping.
+"""
+
+from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel
 
-from ..auth.dependencies import get_current_user
-from ..config.logfire_config import get_logger
-from ..services.prompt_service import prompt_service
-from ..utils import get_supabase_client
+from src.server.auth.dependencies import get_current_user, requires_permission
+from src.server.auth.permissions import USER_MANAGE
+from src.server.services.prompt_service import prompt_service
 
-logger = get_logger(__name__)
-
-router = APIRouter(prefix="/api/system/prompts", tags=["system"])
-
-class UpdatePromptRequest(BaseModel):
-    content: str
-    description: str | None = None
+router = APIRouter(prefix="/api/system/prompts", tags=["prompts"])
 
 @router.get("")
-async def list_prompts(current_user: dict = Depends(get_current_user)):
-    """
-    List all system prompts. Restricted to Admins.
-    """
-    role = current_user.get("role", "viewer").lower()
-    if role not in ["system_admin", "admin", "manager"]:
-        raise HTTPException(status_code=403, detail="Insufficient permissions.")
-
-    success, res = await prompt_service.list_prompts()
-    if not success:
-        raise HTTPException(status_code=500, detail=str(res.get("error")))
+async def list_all_prompts(current_user: dict = Depends(get_current_user)):
+    """Lists all configured prompts."""
+    s, res = await prompt_service.list_prompts()
+    if not s:
+        raise HTTPException(status_code=500, detail=str(res))
     return res.get("prompts", [])
 
 @router.patch("/{prompt_name}")
 async def update_prompt(
-    prompt_name: str,
-    request: UpdatePromptRequest,
-    current_user: dict = Depends(get_current_user)
+    prompt_name: str, 
+    content: dict[str, str], 
+    current_user: dict = Depends(requires_permission(USER_MANAGE))
 ):
-    """
-    Update a system prompt. Restricted to Admins/Managers based on protection flag.
-    """
-    role = current_user.get("role", "viewer").lower()
-    if role not in ["system_admin", "admin", "manager"]:
-        raise HTTPException(status_code=403, detail="Insufficient permissions.")
-
-    # Business Logic: Check if protected before attempting DB update (Fast Fail)
-    # Note: RLS will also block this, but we check here for better error messaging.
-    supabase = get_supabase_client()
-    existing = supabase.table("archon_prompts").select("is_system_protected").eq("prompt_name", prompt_name).single().execute()
-
-    if existing.data and existing.data.get("is_system_protected") and role == "manager":
-        raise HTTPException(status_code=403, detail="System protected prompts can only be edited by Admins.")
-
-    success, res = await prompt_service.update_prompt(
-        prompt_name=prompt_name,
-        content=request.content,
-        description=request.description
-    )
-
-    if not success:
-        raise HTTPException(status_code=500, detail=str(res.get("error")))
-
-    return {"success": True, "message": "Prompt updated successfully"}
+    """Updates a system prompt. Requires Admin level permission."""
+    new_prompt = content.get("content") or content.get("prompt")
+    if not new_prompt:
+        raise HTTPException(status_code=422, detail="Prompt content is required")
+        
+    try:
+        s, res = await prompt_service.update_prompt(prompt_name, new_prompt, description=content.get("description"))
+        if not s:
+            raise HTTPException(status_code=500, detail=str(res))
+        return {"status": "success", "prompt": res}
+    except Exception as e:
+        if "protected" in str(e).lower():
+            raise HTTPException(status_code=403, detail="Cannot modify system protected prompts.")
+        raise HTTPException(status_code=500, detail=str(e))

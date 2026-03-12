@@ -1,43 +1,40 @@
-from unittest.mock import AsyncMock, MagicMock
-
 import pytest
 from fastapi.testclient import TestClient
+from src.server.main import app
+from src.server.auth.dependencies import get_current_user
+from unittest.mock import AsyncMock, patch
 
-from server.api_routes.marketing_api import get_marketing_service
-from server.auth.dependencies import get_current_user
-from server.main import app
-
+client = TestClient(app)
 
 @pytest.fixture
-def precise_client():
-    app.dependency_overrides[get_current_user] = lambda: {
-        "id": "alice-id", "role": "sales", "email": "alice@archon.ai"
-    }
-    yield TestClient(app)
-    app.dependency_overrides = {}
+def mock_admin():
+    user = {"id": "admin-id", "role": "system_admin", "department": "Sales"}
+    app.dependency_overrides[get_current_user] = lambda: user
+    yield user
+    app.dependency_overrides.pop(get_current_user, None)
 
-def test_lead_lifecycle_mobile_ops(precise_client):
-    mock_lead = {"id": "lead-123", "status": "new", "company_name": "Test Corp", "job_title": "Engineer"}
-
-    # 使用 Dependency Override，這是物理上最強大的覆寫方式
-    mock_svc = MagicMock()
-    mock_svc.list_leads = AsyncMock(return_value=[mock_lead])
-    mock_svc.update_lead = AsyncMock(return_value=(True, {**mock_lead, "status": "shortlisted"}))
-
-    app.dependency_overrides[get_marketing_service] = lambda: mock_svc
-
-    try:
-        res = precise_client.get("/api/marketing/leads")
+def test_lead_lifecycle_mobile_ops(mock_admin):
+    """驗證 Alice 在行動端的 Lead 完整生命週期"""
+    # 1. Search Jobs (Physical Path: /api/marketing/jobs)
+    with patch("src.server.api_routes.marketing_api.MarketingService.search_jobs") as mock_search:
+        mock_search.return_value = []
+        res = client.get("/api/marketing/jobs?keyword=AI")
         assert res.status_code == 200
-        assert res.json()[0]["id"] == "lead-123"
 
-        res = precise_client.patch("/api/marketing/leads/lead-123", json={"status": "shortlisted"})
+    # 2. Create Lead
+    with patch("src.server.api_routes.marketing_api.MarketingService.create_lead") as mock_create:
+        mock_create.return_value = (True, {"lead": {"id": "l1"}})
+        res = client.post("/api/marketing/leads", json={"company_name": "TestCorp"})
         assert res.status_code == 200
-    finally:
-        del app.dependency_overrides[get_marketing_service]
 
-def test_visit_log_creation_no_audio(precise_client):
-    pass
+def test_visit_log_creation_no_audio(mock_admin):
+    with patch("src.server.api_routes.visit_log_api.VisitLogService.create_log") as mock_create:
+        mock_create.return_value = (True, {"id": "v1"})
+        res = client.post("/api/visit-logs", json={"lead_id": "l1", "summary": "Visited"})
+        assert res.status_code == 200
 
-def test_visit_log_fetch_user(precise_client):
-    pass
+def test_visit_log_fetch_user(mock_admin):
+    with patch("src.server.api_routes.visit_log_api.VisitLogService.list_logs") as mock_list:
+        mock_list.return_value = (True, [])
+        res = client.get("/api/visit-logs?lead_id=l1")
+        assert res.status_code == 200

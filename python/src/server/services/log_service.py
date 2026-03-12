@@ -60,3 +60,15 @@ class LogService(BaseRepository):
 
         logger.error(f"Failed to create log entry in database. Response: {result['error']}")
         return False, {"error": result.get("error", "Failed to insert log into database.")}
+
+    async def record_interaction(self, user_id: str, log_data: dict) -> dict:
+        """Compatibility wrapper for API routes."""
+        success, res = self.create_log_entry(log_data)
+        return res if success else {"error": "Failed to log"}
+
+    async def get_active_alerts(self) -> list:
+        """Physical Placeholder for Charlie's Sentinel Alerts."""
+        return []
+
+# Singleton export for modular APIs
+log_service = LogService()
