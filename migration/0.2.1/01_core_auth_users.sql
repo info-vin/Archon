@@ -43,11 +43,44 @@ CREATE TYPE public.task_status AS ENUM (
     'todo',
     'doing',
     'review',
-    'done'
+    'done',
+    'failed',
+    'processing',
+    'dispatched',
+    'pending',
+    'archived'
 );
 
 
 ALTER TYPE public.task_status OWNER TO postgres;
+
+--
+-- Name: project_status; Type: TYPE; Schema: public; Owner: postgres
+--
+
+CREATE TYPE public.project_status AS ENUM (
+    'planning',
+    'active',
+    'archived',
+    'completed'
+);
+
+
+ALTER TYPE public.project_status OWNER TO postgres;
+
+--
+-- Name: blog_status; Type: TYPE; Schema: public; Owner: postgres
+--
+
+CREATE TYPE public.blog_status AS ENUM (
+    'draft',
+    'review',
+    'changes_requested',
+    'published'
+);
+
+
+ALTER TYPE public.blog_status OWNER TO postgres;
 
 --
 -- Name: archon_settings; Type: TABLE; Schema: public; Owner: postgres

@@ -47,4 +47,12 @@
 
 ## 4. 下一步行動 (Next Steps)
 *   [ ] 在 5173 Admin UI 介面上增加基於 `token_usage` 表的成本視覺化標籤。
-*   [ ] 定期執行 `make db-init` 以維持開發環境的 Seed 內容一致性。
+---
+
+## 物理落地查核結論 (Physical Audit Conclusion) - 2026-03-11
+*   **執行狀態**: 🟢 **100% 物理落地**
+*   **關鍵證據**:
+    *   **提示詞解耦**: `prompt_service.py` 成功對接 `archon_prompts` 表，全系統 AI 代理已不再使用 Hardcoded String。
+    *   **非阻塞 Token 追蹤**: 實作了 `TokenUsageService` 並透過 `asyncio.create_task` 達成高效能日誌紀錄。
+    *   **專業 Seed 注入**: `migration/0.2.1/` 實體 SQL 已導入包含 POBot/MarketBot 在內的 11 組專業級提示詞範本。
+*   **查核總結**: 提示詞治理已達成「配置化、版本化、安全化」的三大指標，成功為系統建立了穩定且可監控的 AI 消耗模型。

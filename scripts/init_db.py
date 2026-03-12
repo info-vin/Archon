@@ -203,13 +203,22 @@ def _find_auth_id(supabase, email: str) -> str | None:
     return None
 
 def _fix_id_mismatch(cursor: PGCursor, old_id: str, new_id: str, email: str, name: str) -> None:
+    """Safely updates profile ID and re-links tasks without breaking FK constraints."""
     try:
-        cursor.execute("UPDATE archon_tasks SET assignee_id = NULL WHERE assignee_id = %s", (old_id,))
+        # Physical Alignment: Standardize ID across Auth and Profiles
+        # 1. Update the profile ID itself (the source of truth)
         cursor.execute("UPDATE profiles SET id = %s WHERE email = %s", (new_id, email))
+        
+        # 2. Update any tasks that were assigned to the OLD (mismatched) ID
+        cursor.execute("UPDATE archon_tasks SET assignee_id = %s WHERE assignee_id = %s", (new_id, old_id))
+        
+        # 3. Fallback: Update by name for legacy task entries
         cursor.execute("UPDATE archon_tasks SET assignee_id = %s WHERE assignee = %s", (new_id, name))
+        
+        logger.info(f"✅ Successfully aligned physical ID for {email}")
     except Exception as e:
-        logger.error(f"❌ Failed to fix ID for {email}: {e}")
-        raise e
+        logger.error(f"❌ Failed to fix physical ID alignment for {email}: {e}")
+        # We don't raise here to allow other users to sync, but we log the failure
 
 def print_dev_token() -> None:
     if not HAS_SERVER_DEPS:

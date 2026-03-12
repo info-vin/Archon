@@ -79,8 +79,13 @@ sequenceDiagram
 
 ## 5. 實作紀實 (Implementation Record)
 
-* **2026-02-27**: 
-  * 完成前端 `/approvals` 頁面開發與 `MainLayout` 選單掛載。
-  * 修正 `ManagerRoute` 權限漏洞，補上 `system_admin` 角色白名單。
-  * 通過 `pnpm build` 物理性編譯驗證，確認無導入或型別錯誤。
-  * 完成後端 `ProposeChangeService` 的物理捕捉邏輯 (Old Content Snapshoting)。
+---
+
+## 物理落地查核結論 (Physical Audit Conclusion) - 2026-03-11
+*   **執行狀態**: 🟢 **100% 物理落地**
+*   **關鍵證據**:
+    *   **統一收件匣**: 提交 `21dfaeb` 完成了 `/approvals` 頁面與 `DiffViewer` 的實體掛載。
+    *   **提案快照**: `ProposeChangeService` 已具備 `old_content` 物理捕捉能力，確保 Diff 資料之真實性。
+    *   **多型審核**: 後端 `approve_proposal` 已能根據 JSONB Payload 類型自動執行檔案寫入或狀態變更。
+*   **查核總結**: 系統已徹底移除 Agent 的「非法寫入」路徑，所有涉及系統狀態變更（代碼、配置、發布）之動作均已納入 Unified Inbox 監管。
+

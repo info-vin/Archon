@@ -28,6 +28,8 @@ def test_create_task_with_ai_assignee_success(mock_profile_class, mock_rbac_clas
 
     # --- Test Execution ---
     from src.server.main import app
+    from src.server.auth.dependencies import get_current_user
+    app.dependency_overrides[get_current_user] = lambda: {"id": "user-123", "role": "system_admin", "department": "Engineering"}
     client = TestClient(app)
 
     task_payload = {
@@ -64,20 +66,23 @@ def test_create_task_with_ai_assignee_permission_denied(mock_profile_class, mock
     mock_rbac_instance = mock_rbac_class.return_value
     mock_rbac_instance.has_permission_to_assign.return_value = False
 
-    # 2. Profile service mock
+    # 2. Profile service mock: Return a user in a different department
     mock_profile_instance = mock_profile_class.return_value
-    mock_profile_instance.get_user_role.return_value = (True, "ai-researcher-1")
+    mock_profile_instance.get_profile.return_value = (True, {"id": "other-user", "name": "Other User", "department": "Marketing"})
 
     mock_task_service_instance = mock_task_service_class.return_value
+    mock_task_service_instance.create_task = AsyncMock(return_value=(True, {"task": {"id": "new-task-id"}}))
 
     # --- Test Execution ---
     from src.server.main import app
+    from src.server.auth.dependencies import get_current_user
+    app.dependency_overrides[get_current_user] = lambda: {"id": "user-123", "role": "viewer", "department": "Engineering"}
     client = TestClient(app)
 
     task_payload = {
         "project_id": "proj-123",
         "title": "Test AI Task",
-        "assignee": "ai-researcher-1"
+        "assignee_id": "other-user"
     }
     headers = {"X-User-Role": "User"}
 
@@ -85,7 +90,7 @@ def test_create_task_with_ai_assignee_permission_denied(mock_profile_class, mock
 
     # --- Assertions ---
     assert response.status_code == 403
-    assert "you cannot assign tasks" in response.json()["detail"]
+    assert "Cannot assign tasks to members outside your department" in response.json()["detail"]
 
     # Verify the task service was NOT called because the permission check failed first.
     mock_task_service_instance.create_task.assert_not_called()
@@ -108,6 +113,8 @@ def test_create_task_with_knowledge_sources(mock_profile_class, mock_rbac_class,
 
     # --- Test Execution ---
     from src.server.main import app
+    from src.server.auth.dependencies import get_current_user
+    app.dependency_overrides[get_current_user] = lambda: {"id": "user-123", "role": "system_admin", "department": "Engineering"}
     client = TestClient(app)
 
     task_payload = {

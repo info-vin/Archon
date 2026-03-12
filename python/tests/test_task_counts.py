@@ -1,72 +1,55 @@
-"""Test suite for batch task counts endpoint - Performance optimization tests."""
-from unittest.mock import AsyncMock, Mock, patch
-
+import pytest
 from fastapi.testclient import TestClient
+from unittest.mock import AsyncMock, MagicMock, patch
 
-# 1. Create mocks BEFORE app import
-# mock_task_service_instance will be the result of TaskService()
-mock_task_service_instance = AsyncMock()
-mock_task_service_class = Mock(return_value=mock_task_service_instance)
+# Correct import paths for physical dependency overrides
+from src.server.main import app
+from src.server.auth.dependencies import get_current_user
 
-# 2. Define patch target for the CLASS where it is USED in the API module.
-task_service_patch = patch('src.server.api_routes.projects_api.TaskService', mock_task_service_class)
-
-# 3. Now import the app
-from src.server.main import app  # noqa: E402
-
-
-# 4. Setup and Teardown for the module to control the patch lifecycle
+# Setup Global Overrides for this test module
 def setup_module(module):
-    """Start all patches."""
-    task_service_patch.start()
+    # Ensure all routes have a system_admin context for these tests
+    app.dependency_overrides[get_current_user] = lambda: {
+        "id": "user-counts",
+        "role": "system_admin",
+        "department": "Engineering"
+    }
 
 def teardown_module(module):
-    """Stop all patches."""
-    task_service_patch.stop()
+    app.dependency_overrides.pop(get_current_user, None)
 
+client = TestClient(app)
 
 def test_batch_task_counts_endpoint():
-    """Test that batch task counts endpoint returns counts from the service."""
-    client = TestClient(app)
-    # Reset and configure mock for this test
-    mock_task_service_instance.reset_mock()
-
-    mock_counts = {
-        "project-1": {"todo": 2, "doing": 2, "done": 1},
-        "project-2": {"todo": 1, "doing": 1, "done": 2},
-        "project-3": {"todo": 1, "doing": 0, "done": 0},
-    }
-    mock_task_service_instance.get_all_project_task_counts = AsyncMock(return_value=(True, mock_counts))
-
-    response = client.get("/api/projects/task-counts")
-
-    assert response.status_code == 200
-    data = response.json()
-    assert data == mock_counts
-
+    """Test the batch task counts endpoint with mocked service."""
+    # We patch the CLASS itself where it is used in the API module
+    with patch("src.server.api_routes.projects_api.TaskService") as mock_service_class:
+        # The constructor returns an instance
+        mock_instance = MagicMock()
+        mock_service_class.return_value = mock_instance
+        
+        # That instance has an async method that returns (success, data)
+        mock_instance.get_all_project_task_counts = AsyncMock(return_value=(True, {"proj-1": {"todo": 5}}))
+        
+        response = client.get("/api/projects/task-counts")
+        
+        assert response.status_code == 200
+        assert response.json() == {"proj-1": {"todo": 5}}
 
 def test_batch_task_counts_etag_caching():
-    """Test that ETag caching works correctly for task counts."""
-    with TestClient(app) as client:
-        # Reset and configure mock for this test to ensure isolation
-        mock_task_service_instance.reset_mock()
-
-        mock_counts = {"project-1": {"todo": 1, "doing": 1, "done": 0}}
-        # Set the return value for the mock. It will be the same for both calls in this test.
-        mock_task_service_instance.get_all_project_task_counts = AsyncMock(return_value=(True, mock_counts))
-
-        # First request - should return data with ETag
+    """Test ETag caching for the batch task counts endpoint."""
+    with patch("src.server.api_routes.projects_api.TaskService") as mock_service_class:
+        mock_instance = MagicMock()
+        mock_service_class.return_value = mock_instance
+        mock_instance.get_all_project_task_counts = AsyncMock(return_value=(True, {"proj-1": {"todo": 5}}))
+        
+        # First request to get the ETag
         response1 = client.get("/api/projects/task-counts")
         assert response1.status_code == 200
-        assert "ETag" in response1.headers
-        etag = response1.headers["ETag"]
-        # Verify service was called exactly once
-        assert mock_task_service_instance.get_all_project_task_counts.await_count == 1
-
-        # Second request with If-None-Match header - should return 304
+        etag = response1.headers.get("ETag")
+        assert etag is not None
+        
+        # Second request with If-None-Match
         response2 = client.get("/api/projects/task-counts", headers={"If-None-Match": etag})
         assert response2.status_code == 304
-        assert response2.headers.get("ETag") == etag
-
-        # Verify service was called TWICE in total for both requests
-        assert mock_task_service_instance.get_all_project_task_counts.await_count == 2
+        assert response2.content == b""

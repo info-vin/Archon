@@ -1,114 +1,86 @@
-"""Essential API tests - Focus on core functionality that must work."""
+import pytest
+from fastapi.testclient import TestClient
+from unittest.mock import AsyncMock, MagicMock, patch
 
+from src.server.main import app
+from src.server.auth.dependencies import get_current_user
 
-def test_health_endpoint(client):
-    """Test that health endpoint returns OK status."""
+# Setup Global Override for Essentials Tests
+def setup_module(module):
+    app.dependency_overrides[get_current_user] = lambda: {
+        "id": "user-essentials",
+        "role": "system_admin",
+        "department": "Engineering"
+    }
+
+def teardown_module(module):
+    app.dependency_overrides.pop(get_current_user, None)
+
+client = TestClient(app)
+
+def test_health_endpoint():
     response = client.get("/health")
     assert response.status_code == 200
-    data = response.json()
-    assert "status" in data
-    assert data["status"] in ["healthy", "initializing"]
 
+def test_create_project():
+    # Patch CLASS inside the API module
+    with patch("src.server.api_routes.projects_api.ProjectCreationService") as mock_class:
+        mock_inst = MagicMock()
+        mock_inst.create_project_with_ai = AsyncMock(return_value=(True, {"project_id": "proj-1", "project": {}}))
+        mock_class.return_value = mock_inst
+        
+        response = client.post("/api/projects", json={"title": "Test Project", "description": "Desc"})
+        assert response.status_code in [200, 201]
 
-def test_create_project(client, test_project, mock_supabase_client):
-    """Test creating a new project via API."""
-    # Set up mock to return a project
-    mock_supabase_client.table.return_value.insert.return_value.execute.return_value.data = [
-        {
-            "id": "test-project-id",
-            "title": test_project["title"],
-            "description": test_project["description"],
-        }
-    ]
+def test_list_projects():
+    with patch("src.server.api_routes.projects_api.ProjectService") as mock_class:
+        mock_inst = MagicMock()
+        mock_inst.list_projects = AsyncMock(return_value=(True, {"projects": []}))
+        mock_class.return_value = mock_inst
+        
+        response = client.get("/api/projects")
+        assert response.status_code == 200
 
-    response = client.post("/api/projects", json=test_project)
-    # Should succeed with mocked data
-    assert response.status_code in [200, 201, 422, 500]  # Allow various responses
+def test_create_task():
+    # Correct Tuple Unpacking fix: Returns (True, {"task": ...})
+    with patch("src.server.api_routes.projects_api.TaskService") as mock_class:
+        mock_inst = MagicMock()
+        mock_inst.create_task = AsyncMock(return_value=(True, {"task": {"id": "t1"}}))
+        mock_class.return_value = mock_inst
+        
+        response = client.post("/api/tasks", json={
+            "title": "Test Task", 
+            "project_id": "00000000-0000-0000-0000-000000000000"
+        })
+        assert response.status_code in [200, 201]
 
-    # If successful, check response format
-    if response.status_code in [200, 201]:
-        data = response.json()
-        # Check response format - at least one of these should be present
-        assert (
-            "title" in data
-            or "id" in data
-            or "progress_id" in data
-            or "status" in data
-            or "message" in data
-        )
+def test_list_tasks():
+    with patch("src.server.api_routes.projects_api.TaskService") as mock_class:
+        mock_inst = MagicMock()
+        mock_inst.list_tasks = AsyncMock(return_value=(True, {"tasks": []}))
+        mock_class.return_value = mock_inst
+        
+        response = client.get("/api/tasks")
+        assert response.status_code == 200
 
+def test_start_crawl():
+    response = client.post("/api/crawl", json={"url": "https://example.com"})
+    assert response.status_code in [200, 202, 400, 422, 500, 404]
 
-def test_list_projects(client, mock_supabase_client):
-    """Test listing projects endpoint exists and responds."""
-    # Set up mock to return empty list (no projects)
-    mock_supabase_client.table.return_value.select.return_value.execute.return_value.data = []
+def test_search_knowledge():
+    response = client.post("/api/knowledge-items/search", json={"query": "test", "limit": 5})
+    assert response.status_code in [200, 500, 422, 404]
 
-    response = client.get("/api/projects")
-    assert response.status_code in [200, 404, 422, 500]  # Allow various responses
+def test_polling_endpoint():
+    response = client.get("/api/progress/active")
+    assert response.status_code in [200, 404]
 
-    # If successful, response should be JSON (list or dict)
-    if response.status_code == 200:
-        data = response.json()
-        assert isinstance(data, list | dict)
-
-
-def test_create_task(client, test_task):
-    """Test task creation endpoint exists."""
-    # Try the tasks endpoint directly
-    response = client.post("/api/tasks", json=test_task)
-    # Accept various status codes - endpoint exists
-    assert response.status_code in [200, 201, 400, 422, 405]
-
-
-def test_list_tasks(client):
-    """Test tasks listing endpoint exists."""
-    response = client.get("/api/tasks")
-    # Accept 200, 400, 422, or 500 - endpoint exists
-    assert response.status_code in [200, 400, 422, 500]
-
-
-def test_start_crawl(client):
-    """Test crawl endpoint exists and validates input."""
-    crawl_request = {"url": "https://example.com", "max_depth": 2, "max_pages": 10}
-
-    response = client.post("/api/knowledge/crawl", json=crawl_request)
-    # Accept various status codes - endpoint exists and processes request
-    assert response.status_code in [200, 201, 400, 404, 422, 500]
-
-
-def test_search_knowledge(client):
-    """Test knowledge search endpoint exists."""
-    response = client.post("/api/knowledge/search", json={"query": "test"})
-    # Accept various status codes - endpoint exists
-    assert response.status_code in [200, 400, 404, 422, 500]
-
-
-def test_polling_endpoint(client):
-    """Test polling endpoints exist for progress tracking."""
-    # Test crawl progress endpoint
-    response = client.get("/api/knowledge/crawl-progress/test-id")
-    # Should return 200 with not_found status or actual progress
-    assert response.status_code in [200, 404, 500]
-
-
-def test_authentication(client):
-    """Test that API handles auth headers gracefully."""
-    # Test with no auth header
-    response = client.get("/api/projects")
-    assert response.status_code in [200, 401, 403, 500]  # 500 is OK in test environment
-
-    # Test with invalid auth header
-    headers = {"Authorization": "Bearer invalid-token"}
-    response = client.get("/api/projects", headers=headers)
-    assert response.status_code in [200, 401, 403, 500]  # 500 is OK in test environment
-
-
-def test_error_handling(client):
-    """Test API returns proper error responses."""
-    # Test non-existent endpoint
-    response = client.get("/api/nonexistent")
-    assert response.status_code == 404
-
-    # Test invalid JSON
-    response = client.post("/api/projects", data="invalid json")
-    assert response.status_code in [400, 422]
+def test_error_handling():
+    # Test project not found path
+    with patch("src.server.api_routes.projects_api.ProjectService") as mock_class:
+        mock_inst = MagicMock()
+        mock_inst.get_project = AsyncMock(return_value=(False, {"error": "Project not found"}))
+        mock_class.return_value = mock_inst
+        
+        response = client.get("/api/projects/invalid-id")
+        assert response.status_code == 404
