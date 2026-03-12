@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
-from ..auth.dependencies import get_current_user
+from ..auth.dependencies import get_current_user, verify_admin_role
 from ..config.logfire_config import get_logger
 from ..services.admin_service import AdminService
 from ..services.agent_service import agent_service
@@ -16,7 +16,7 @@ class UpdateRoleRequest(BaseModel):
 class DiagnoseRequest(BaseModel):
     file_path: str
 
-@router.post("/diagnose")
+@router.post("/diagnose", dependencies=[Depends(verify_admin_role)])
 async def diagnose_file(
     request: DiagnoseRequest,
     current_user: dict = Depends(get_current_user)
@@ -24,10 +24,6 @@ async def diagnose_file(
     """
     Triggers a technical debt diagnostic for a specific file (Admin only).
     """
-    user_role = current_user.get("role", "viewer").lower()
-    if user_role not in ["admin", "system_admin"]:
-        raise HTTPException(status_code=403, detail="Admin access required")
-
     return await agent_service.diagnose_file_health(request.file_path)
 
 @router.get("/users")
@@ -51,7 +47,7 @@ async def get_users(
         logger.error(f"Admin API: Failed to fetch users: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Database error while fetching users: {str(e)}") from e
 
-@router.patch("/users/{user_id}/role")
+@router.patch("/users/{user_id}/role", dependencies=[Depends(verify_admin_role)])
 async def update_user_role(
     user_id: str,
     request: UpdateRoleRequest,
@@ -60,15 +56,6 @@ async def update_user_role(
     """
     Update a user's role (Admin only).
     """
-    user_role = current_user.get("role", "viewer").lower()
-    # Double check: Only System Admin or Admin can do this?
-    # Let's say Admin can do it for now.
-    if user_role not in ["admin", "system_admin"]:
-        raise HTTPException(status_code=403, detail="Admin access required")
-
-    # Prevent Admin from demoting themselves if they are the last admin?
-    # Omitted for simplicity in Phase 4.6.4, but good to keep in mind.
-
     try:
         email = str(current_user.get("email", "unknown"))
         updated_user = await AdminService.update_user_role(
@@ -88,45 +75,33 @@ class CrawlerTargetCreate(BaseModel):
     max_depth: int = 5
     description: str | None = None
 
-@router.get("/crawler-targets")
+@router.get("/crawler-targets", dependencies=[Depends(verify_admin_role)])
 async def list_crawler_targets(
     current_user: dict = Depends(get_current_user)
 ):
     """List all specialized crawler targets (Admin only)."""
-    user_role = current_user.get("role", "viewer").lower()
-    if user_role not in ["admin", "system_admin", "manager"]:
-        raise HTTPException(status_code=403, detail="Manager or Admin access required")
-
     from ..utils import get_supabase_client
     res = get_supabase_client().table("archon_crawler_targets").select("*").order("created_at").execute()
     return res.data or []
 
-@router.post("/crawler-targets")
+@router.post("/crawler-targets", dependencies=[Depends(verify_admin_role)])
 async def create_crawler_target(
     request: CrawlerTargetCreate,
     current_user: dict = Depends(get_current_user)
 ):
     """Add a new target to the isolated crawler registry (Admin only)."""
-    user_role = current_user.get("role", "viewer").lower()
-    if user_role not in ["admin", "system_admin", "manager"]:
-        raise HTTPException(status_code=403, detail="Manager or Admin access required")
-
     from ..utils import get_supabase_client
     res = get_supabase_client().table("archon_crawler_targets").insert(request.model_dump()).execute()
     if not res.data:
         raise HTTPException(status_code=500, detail="Failed to create target")
     return res.data[0]
 
-@router.delete("/crawler-targets/{target_id}")
+@router.delete("/crawler-targets/{target_id}", dependencies=[Depends(verify_admin_role)])
 async def delete_crawler_target(
     target_id: str,
     current_user: dict = Depends(get_current_user)
 ):
     """Remove a target from the registry (Admin only)."""
-    user_role = current_user.get("role", "viewer").lower()
-    if user_role not in ["admin", "system_admin", "manager"]:
-        raise HTTPException(status_code=403, detail="Manager or Admin access required")
-
     from ..utils import get_supabase_client
     get_supabase_client().table("archon_crawler_targets").delete().eq("id", target_id).execute()
     return {"success": True}

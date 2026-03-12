@@ -3,8 +3,9 @@ import time
 from datetime import UTC, datetime
 
 import httpx
-from fastapi import APIRouter, BackgroundTasks, HTTPException, Query
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
 
+from ...auth.dependencies import get_current_user, verify_admin_role
 from ...config.logfire_config import get_logger
 from ...services.ollama.model_discovery_service import model_discovery_service
 from ...utils import get_supabase_client
@@ -26,6 +27,7 @@ async def discover_models_endpoint(
     include_capabilities: bool = Query(True, description="Include capability detection"),
     fetch_details: bool = Query(False, description="Fetch comprehensive model details via /api/show"),
     background_tasks: BackgroundTasks = None,
+    current_user: dict = Depends(get_current_user),
 ) -> ModelDiscoveryResponse:
     """Discover models from multiple Ollama instances."""
     try:
@@ -49,8 +51,11 @@ async def discover_models_endpoint(
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 @router.post("/models/discover-and-store", response_model=ModelListResponse)
-async def discover_and_store_models_endpoint(request: ModelDiscoveryAndStoreRequest) -> ModelListResponse:
-    """Discover and assess models, then store results in DB."""
+async def discover_and_store_models_endpoint(
+    request: ModelDiscoveryAndStoreRequest,
+    current_user: dict = Depends(verify_admin_role)
+) -> ModelListResponse:
+    """Discover and assess models, then store results in DB. Admin only."""
     try:
         supabase = get_supabase_client()
         stored_models = []
@@ -99,7 +104,7 @@ async def discover_and_store_models_endpoint(request: ModelDiscoveryAndStoreRequ
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 @router.get("/models/stored", response_model=ModelListResponse)
-async def get_stored_models_endpoint() -> ModelListResponse:
+async def get_stored_models_endpoint(current_user: dict = Depends(get_current_user)) -> ModelListResponse:
     """Retrieve stored Ollama models from database."""
     try:
         supabase = get_supabase_client()
@@ -140,8 +145,11 @@ async def get_stored_models_endpoint() -> ModelListResponse:
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 @router.post("/models/discover-with-details", response_model=ModelDiscoveryResponse)
-async def discover_models_with_real_details(request: ModelDiscoveryAndStoreRequest) -> ModelDiscoveryResponse:
-    """Discover models with real details from endpoints."""
+async def discover_models_with_real_details(
+    request: ModelDiscoveryAndStoreRequest,
+    current_user: dict = Depends(verify_admin_role)
+) -> ModelDiscoveryResponse:
+    """Discover models with real details from endpoints. Admin only."""
     try:
         stored_models = []
         instances_checked = 0
@@ -173,8 +181,11 @@ async def discover_models_with_real_details(request: ModelDiscoveryAndStoreReque
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 @router.post("/models/test-capabilities", response_model=ModelCapabilityTestResponse)
-async def test_model_capabilities_endpoint(request: ModelCapabilityTestRequest) -> ModelCapabilityTestResponse:
-    """Test real-time capabilities of a specific model."""
+async def test_model_capabilities_endpoint(
+    request: ModelCapabilityTestRequest,
+    current_user: dict = Depends(verify_admin_role)
+) -> ModelCapabilityTestResponse:
+    """Test real-time capabilities of a specific model. Admin only."""
     start_time = time.time()
     try:
         return ModelCapabilityTestResponse(
