@@ -11,7 +11,7 @@ client = TestClient(app)
 @pytest.fixture
 def patch_api_dependencies():
     mock_supabase_client = MagicMock()
-    with patch("server.utils.get_supabase_client", return_value=mock_supabase_client):
+    with patch("src.server.utils.get_supabase_client", return_value=mock_supabase_client):
         yield mock_supabase_client
 
 @pytest.mark.xfail(reason="Attendance API not physically implemented in the backend router yet.")

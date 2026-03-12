@@ -17,7 +17,6 @@ async def test_generate_pitch_no_key_real_logic():
     user = {"id": "test-id", "role": "sales"}
 
     # PHYSICAL HARDENING: Patch the Service METHOD directly at its source
-    # This guarantees interception even if the class is instantiated locally
     with patch("src.server.services.marketing_service.MarketingService.generate_pitch") as mock_method:
         # Simulate the structured error response
         mock_method.return_value = {"error_code": 401, "message": "Invalid Key"}
@@ -25,11 +24,9 @@ async def test_generate_pitch_no_key_real_logic():
         # We call the API function directly
         try:
             res = await generate_pitch(req=req_obj, current_user=user)
-            # If it returns a dict, check it
             if isinstance(res, dict):
                 assert res.get("error_code") == 401
         except HTTPException as e:
-            # If the hardened API raised the exception, verify its status code
             assert e.status_code == 401
 
 @pytest.mark.asyncio
