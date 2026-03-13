@@ -35,6 +35,7 @@ export const StaticToggles = () => {
               onClick={() => setPowerStates((s) => ({ ...s, purple: !s.purple }))}
               color="purple"
               size={40}
+              ariaLabel="Toggle Purple Power"
             />
             <span className="text-xs text-gray-500">Purple</span>
           </div>
@@ -44,6 +45,7 @@ export const StaticToggles = () => {
               onClick={() => setPowerStates((s) => ({ ...s, cyan: !s.cyan }))}
               color="cyan"
               size={40}
+              ariaLabel="Toggle Cyan Power"
             />
             <span className="text-xs text-gray-500">Cyan</span>
           </div>
@@ -53,6 +55,7 @@ export const StaticToggles = () => {
               onClick={() => setPowerStates((s) => ({ ...s, green: !s.green }))}
               color="green"
               size={40}
+              ariaLabel="Toggle Green Power"
             />
             <span className="text-xs text-gray-500">Green</span>
           </div>
@@ -62,6 +65,7 @@ export const StaticToggles = () => {
               onClick={() => setPowerStates((s) => ({ ...s, orange: !s.orange }))}
               color="orange"
               size={40}
+              ariaLabel="Toggle Orange Power"
             />
             <span className="text-xs text-gray-500">Orange</span>
           </div>

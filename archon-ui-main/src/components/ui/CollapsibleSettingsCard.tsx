@@ -84,6 +84,7 @@ export const CollapsibleSettingsCard: React.FC<{
             onClick={handleToggle}
             color={accentColor}
             size={36}
+            ariaLabel={`Toggle ${title}`}
           />
         </div>
 

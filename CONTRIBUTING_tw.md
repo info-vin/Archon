@@ -402,6 +402,17 @@ Phase 4.4.5 引入了 **Clockwork** 進行系統自動檢測。
         | 8 | `seed_blog_posts.sql` | **[種子]** 填充部落格文章假資料 (用於 RAG 測試)。 |
         | 9 | `seed_mock_leads.sql` | **[種子]** 填充業務線 (Leads) 核心測試資料與訪談紀錄。 |
         | 10 | `seed_mock_alerts_and_logs.sql` | **[種子]** 填充儀表板所需的警報與系統日誌。 |
+        | 11 | `001_add_source_url_display_name.sql` | **[功能]** 知識庫來源增加顯示名稱。 |
+        | 12 | `002_add_hybrid_search_tsvector.sql` | **[效能]** 增加混合搜尋支援的 tsvector。 |
+        | 13 | `003_ollama_add_columns.sql` | **[功能]** 擴增 Ollama 模型相關欄位。 |
+        | 14 | `004_ollama_migrate_data.sql` | **[移轉]** 遷移 Ollama 相關資料。 |
+        | 15 | `005_ollama_create_functions.sql` | **[功能]** 建立 Ollama 相關資料庫函式。 |
+        | 16 | `006_ollama_create_indexes_optional.sql` | **[效能]** 建立 Ollama 資料表索引。 |
+        | 17 | `007_add_priority_column_to_tasks.sql` | **[功能]** 任務資料表增加優先級欄位。 |
+        | 18 | `008_add_migration_tracking.sql` | **[系統]** 增加遷移追蹤記錄表。 |
+        | 19 | `009_add_cascade_delete_constraints.sql` | **[系統]** 增加關聯刪除約束 (Cascade Delete)。 |
+        | 20 | `010_add_provider_placeholders.sql` | **[系統]** 增加 Provider 佔位符資料。 |
+        | 21 | `011_add_page_metadata_table.sql` | **[功能]** 增加頁面元資料表。 |
         
 3.  **階段三：執行部署**
 

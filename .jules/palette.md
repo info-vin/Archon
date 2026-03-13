@@ -5,3 +5,7 @@
 ## 2025-03-03 - Missing ARIA Labels on Close Modals
 **Learning:** Icon-only close buttons (`XIcon`) across various feature components (`ContentWorkbench`, `ManagerNexus`, `LeadsCardStack`, `BrandWorkbenchView`) frequently lack `aria-label` attributes, causing them to be announced simply as "button" by screen readers.
 **Action:** When implementing modal or panel close actions using `XIcon` or similar icon-only buttons, always explicitly add an `aria-label` attribute (e.g., `aria-label="Close modal"` or a more descriptive label like `aria-label="Close AI Command Center"`).
+
+## 2025-05-15 - Interactive Toggles ARIA Attributes
+**Learning:** Icon-only visual toggles built with custom DIVs or specific components (like `PowerButton.tsx` in `archon-ui-main`) are completely invisible to screen readers without specific roles and state attributes.
+**Action:** When creating or modifying visual switches, explicitly include `role="switch"`, `aria-checked={isToggled}`, and a descriptive `aria-label` to provide structural and state context to assistive technologies.
