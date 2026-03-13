@@ -3,6 +3,8 @@ Constants for Code Extraction logic.
 Includes language-specific patterns and quality indicators.
 """
 
+import re
+
 LANGUAGE_PATTERNS = {
     "typescript": {
         "block_start": r"^\s*(export\s+)?(class|interface|function|const|type|enum)\s+\w+",
@@ -55,6 +57,8 @@ COMMENT_PATTERNS = [
     r"^\s*'''",  # Python docstrings alt
     r"^\s*\*\s",  # JSDoc style
 ]
+
+COMPILED_COMMENT_PATTERNS = [re.compile(p) for p in COMMENT_PATTERNS]
 
 PROSE_INDICATORS = [
     r"\b(the|this|that|these|those|is|are|was|were|will|would|should|could|have|has|had)\b",
