@@ -1,15 +1,17 @@
 """
 Visit Log Service - Business logic for tracking customer interactions.
 """
-from typing import Any, Optional
+from typing import Any
+
 from src.server.repositories.base_repository import BaseRepository
 from src.server.utils import get_supabase_client
+
 
 class VisitLogService(BaseRepository):
     def __init__(self, supabase_client=None):
         super().__init__(supabase_client or get_supabase_client())
 
-    async def list_logs(self, lead_id: Optional[str] = None) -> tuple[bool, Any]:
+    async def list_logs(self, lead_id: str | None = None) -> tuple[bool, Any]:
         def _query():
             q = self.supabase_client.table("visit_logs").select("*")
             if lead_id:

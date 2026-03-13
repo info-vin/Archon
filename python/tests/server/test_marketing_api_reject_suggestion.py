@@ -1,5 +1,5 @@
 
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 from fastapi import FastAPI
@@ -16,12 +16,12 @@ def create_test_app():
 def mock_dependencies():
     with patch("src.server.services.marketing_service.get_logger", return_value=MagicMock()), \
          patch("src.server.services.marketing_service.LibrarianService.archive_style_critique") as mock_critique, \
-         patch("src.server.services.marketing_service.credential_service") as mock_creds, \
+         patch("src.server.services.marketing_service.credential_service"), \
          patch("src.server.services.marketing_service.get_supabase_client") as mock_supabase_factory:
 
         mock_supabase = MagicMock()
         mock_supabase_factory.return_value = mock_supabase
-        
+
         # Mock successful update
         mock_res = MagicMock()
         mock_res.data = [{"id": "post-123", "title": "Bad Blog Post", "content": "This is bad content."}]

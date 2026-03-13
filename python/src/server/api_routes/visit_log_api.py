@@ -4,9 +4,9 @@ Lean implementation with full test compatibility.
 """
 
 from fastapi import APIRouter, Depends, HTTPException
+
 from src.server.auth.dependencies import get_current_user
 from src.server.services.visit_log_service import VisitLogService
-from src.server.utils import get_supabase_client  # EXPORT for test patching
 
 router = APIRouter(prefix="/api/visit-logs", tags=["visit-logs"])
 

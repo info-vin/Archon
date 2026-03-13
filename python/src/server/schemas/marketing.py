@@ -1,5 +1,6 @@
+
 from pydantic import BaseModel
-from typing import List, Optional
+
 
 class PitchRequest(BaseModel):
     company: str
@@ -7,32 +8,32 @@ class PitchRequest(BaseModel):
 
 class PitchResponse(BaseModel):
     content: str
-    references: List[str] = []
+    references: list[str] = []
 
 class LogoRequest(BaseModel):
     style: str
 
 class LeadCreateRequest(BaseModel):
     company_name: str
-    contact_name: Optional[str] = None
-    email: Optional[str] = None
-    identified_need: Optional[str] = None
-    source_job_url: Optional[str] = None
+    contact_name: str | None = None
+    email: str | None = None
+    identified_need: str | None = None
+    source_job_url: str | None = None
 
 class LeadUpdateRequest(BaseModel):
-    status: Optional[str] = None
-    identified_need: Optional[str] = None
-    pitch_content: Optional[str] = None
+    status: str | None = None
+    identified_need: str | None = None
+    pitch_content: str | None = None
 
 class PromoteLeadRequest(BaseModel):
     vendor_name: str
-    email: Optional[str] = None
-    notes: Optional[str] = None
+    email: str | None = None
+    notes: str | None = None
 
 class ApprovalRequest(BaseModel):
-    notes: Optional[str] = None
+    notes: str | None = None
 
 class DraftBlogRequest(BaseModel):
     topic: str
-    industry: Optional[List[str]] = None
-    keywords: Optional[str] = None
+    industry: list[str] | None = None
+    keywords: str | None = None

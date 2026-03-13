@@ -1,9 +1,10 @@
-import pytest
-from fastapi.testclient import TestClient
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from src.server.main import app
+from fastapi.testclient import TestClient
+
 from src.server.auth.dependencies import get_current_user
+from src.server.main import app
+
 
 # Setup Global Override
 def setup_module(module):
@@ -22,19 +23,19 @@ def test_project_with_tasks_flow():
     # Patch all involved classes
     with patch("src.server.api_routes.projects_api.ProjectCreationService") as mock_create_class, \
          patch("src.server.api_routes.projects_api.TaskService") as mock_task_class:
-        
+
         mock_create_inst = MagicMock()
         mock_create_inst.create_project_with_ai = AsyncMock(return_value=(True, {"project_id": "proj-int-1"}))
         mock_create_class.return_value = mock_create_inst
-        
+
         mock_task_inst = MagicMock()
         mock_task_inst.create_task = AsyncMock(return_value=(True, {"task": {"id": "task-int-1"}}))
         mock_task_class.return_value = mock_task_inst
-        
+
         # Test project creation
         proj_res = client.post("/api/projects", json={"title": "Integration Project"})
         assert proj_res.status_code in [200, 201]
-        
+
         # Test task creation
         task_res = client.post("/api/tasks", json={
             "title": "Integrated Task",
@@ -73,7 +74,7 @@ def test_database_operations():
         mock_inst = MagicMock()
         mock_inst.list_projects = AsyncMock(return_value=(True, {"projects": []}))
         mock_proj_class.return_value = mock_inst
-        
+
         response = client.get("/api/projects")
         assert response.status_code == 200
 
@@ -82,6 +83,6 @@ def test_concurrent_operations():
         mock_inst = MagicMock()
         mock_inst.list_tasks = AsyncMock(return_value=(True, {"tasks": []}))
         mock_task_class.return_value = mock_inst
-        
+
         response = client.get("/api/tasks")
         assert response.status_code == 200

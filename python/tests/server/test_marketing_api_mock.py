@@ -1,6 +1,8 @@
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import patch
+
 import pytest
 from fastapi import HTTPException
+
 from server.api_routes.marketing_api import (
     DraftBlogRequest,
     LogoRequest,
@@ -9,6 +11,7 @@ from server.api_routes.marketing_api import (
     generate_logo,
     generate_pitch,
 )
+
 
 @pytest.mark.asyncio
 async def test_generate_pitch_no_key_real_logic():

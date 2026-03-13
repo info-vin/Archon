@@ -27,8 +27,8 @@ def test_create_task_with_ai_assignee_success(mock_profile_class, mock_rbac_clas
     mock_task_service_instance.create_task = AsyncMock(return_value=(True, {"task": {"id": "new-task-id"}}))
 
     # --- Test Execution ---
-    from src.server.main import app
     from src.server.auth.dependencies import get_current_user
+    from src.server.main import app
     app.dependency_overrides[get_current_user] = lambda: {"id": "user-123", "role": "system_admin", "department": "Engineering"}
     client = TestClient(app)
 
@@ -74,8 +74,8 @@ def test_create_task_with_ai_assignee_permission_denied(mock_profile_class, mock
     mock_task_service_instance.create_task = AsyncMock(return_value=(True, {"task": {"id": "new-task-id"}}))
 
     # --- Test Execution ---
-    from src.server.main import app
     from src.server.auth.dependencies import get_current_user
+    from src.server.main import app
     app.dependency_overrides[get_current_user] = lambda: {"id": "user-123", "role": "viewer", "department": "Engineering"}
     client = TestClient(app)
 
@@ -112,8 +112,8 @@ def test_create_task_with_knowledge_sources(mock_profile_class, mock_rbac_class,
     mock_task_service_instance.create_task = AsyncMock(return_value=(True, {"task": {"id": "new-task-id"}}))
 
     # --- Test Execution ---
-    from src.server.main import app
     from src.server.auth.dependencies import get_current_user
+    from src.server.main import app
     app.dependency_overrides[get_current_user] = lambda: {"id": "user-123", "role": "system_admin", "department": "Engineering"}
     client = TestClient(app)
 

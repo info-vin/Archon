@@ -3,21 +3,20 @@ Knowledge Items API Hardened - Secure management of knowledge sources and chunks
 Standardized alignment with L2 modularity infrastructure.
 """
 
-from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException
 
 from src.server.auth.dependencies import get_current_user, requires_permission
-from src.server.auth.permissions import TASK_READ_TEAM, TASK_UPDATE_ALL
+from src.server.auth.permissions import TASK_UPDATE_ALL
 from src.server.services.knowledge.knowledge_item_service import KnowledgeItemService
-from src.server.services.source_management_service import SourceManagementService
 from src.server.services.knowledge.knowledge_summary_service import KnowledgeSummaryService
+from src.server.services.source_management_service import SourceManagementService
 from src.server.utils import get_supabase_client
 
 router = APIRouter()
 
 # EXPORTS for Test Patching Compatibility
-KnowledgeService = KnowledgeItemService 
+KnowledgeService = KnowledgeItemService
 KnowledgeSummaryService = KnowledgeSummaryService
 
 @router.get("/knowledge-items/sources")
@@ -57,7 +56,7 @@ async def list_source_chunks(source_id: str, current_user: dict = Depends(get_cu
 
 @router.delete("/knowledge-items/{source_id}")
 async def delete_knowledge_source(
-    source_id: str, 
+    source_id: str,
     current_user: dict = Depends(requires_permission(TASK_UPDATE_ALL))
 ):
     """Deletes a knowledge source. Requires Admin level permission."""

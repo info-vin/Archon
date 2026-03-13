@@ -3,9 +3,8 @@ MCP API Hardened - Connects Agents to external tools and systems.
 Standardized alignment with get_mcp_service_client infrastructure.
 """
 
-from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 
 from src.server.auth.dependencies import get_current_user, requires_permission
 from src.server.auth.permissions import MCP_MANAGE

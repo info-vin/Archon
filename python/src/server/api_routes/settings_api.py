@@ -1,6 +1,6 @@
 """
 Settings API Hardened - Secure management of credentials and users.
-Standardized RBAC Sealing with correct response unwrapping.
+Standardized alignment with credential_service infrastructure.
 """
 
 from typing import Any
@@ -12,7 +12,6 @@ from src.server.auth.permissions import USER_MANAGE
 from src.server.schemas.settings import (
     CredentialCreate,
     CredentialResponse,
-    CredentialStatusResponse,
     UserUpdateRequest,
 )
 from src.server.services.credential_service import credential_service
@@ -24,15 +23,16 @@ def get_credential_service():
     """Export for test compatibility."""
     return credential_service
 
-@router.post("/credentials/status-check", response_model=list[CredentialStatusResponse])
+@router.post("/credentials/status-check", response_model=dict[str, dict[str, Any]])
 async def check_credentials_status(current_user: dict = Depends(get_current_user)):
-    """Checks if configured AI keys are valid."""
-    return await credential_service.check_all_status()
+    """Checks if key AI credentials exist in the system."""
+    target_keys = ["GOOGLE_API_KEY", "GEMINI_API_KEY", "OPENAI_API_KEY", "ANTHROPIC_API_KEY"]
+    return await credential_service.check_credentials_exist(target_keys)
 
-@router.get("/credentials", response_model=list[CredentialResponse])
+@router.get("/credentials")
 async def list_credentials(current_user: dict = Depends(requires_permission(USER_MANAGE))):
     """Lists all credentials. Restricted to Admin."""
-    return await credential_service.list_all()
+    return await credential_service.list_all_credentials()
 
 @router.get("/credentials/{key}")
 async def get_credential(key: str, current_user: dict = Depends(requires_permission(USER_MANAGE))):

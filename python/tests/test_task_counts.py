@@ -1,10 +1,12 @@
-import pytest
-from fastapi.testclient import TestClient
 from unittest.mock import AsyncMock, MagicMock, patch
+
+from fastapi.testclient import TestClient
+
+from src.server.auth.dependencies import get_current_user
 
 # Correct import paths for physical dependency overrides
 from src.server.main import app
-from src.server.auth.dependencies import get_current_user
+
 
 # Setup Global Overrides for this test module
 def setup_module(module):
@@ -27,12 +29,12 @@ def test_batch_task_counts_endpoint():
         # The constructor returns an instance
         mock_instance = MagicMock()
         mock_service_class.return_value = mock_instance
-        
+
         # That instance has an async method that returns (success, data)
         mock_instance.get_all_project_task_counts = AsyncMock(return_value=(True, {"proj-1": {"todo": 5}}))
-        
+
         response = client.get("/api/projects/task-counts")
-        
+
         assert response.status_code == 200
         assert response.json() == {"proj-1": {"todo": 5}}
 
@@ -42,13 +44,13 @@ def test_batch_task_counts_etag_caching():
         mock_instance = MagicMock()
         mock_service_class.return_value = mock_instance
         mock_instance.get_all_project_task_counts = AsyncMock(return_value=(True, {"proj-1": {"todo": 5}}))
-        
+
         # First request to get the ETag
         response1 = client.get("/api/projects/task-counts")
         assert response1.status_code == 200
         etag = response1.headers.get("ETag")
         assert etag is not None
-        
+
         # Second request with If-None-Match
         response2 = client.get("/api/projects/task-counts", headers={"If-None-Match": etag})
         assert response2.status_code == 304

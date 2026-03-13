@@ -20,7 +20,7 @@ def mock_dependencies():
 
         mock_supabase = MagicMock()
         mock_supabase_factory.return_value = mock_supabase
-        
+
         # Mock visit_logs fetch
         mock_logs_res = MagicMock()
         mock_logs_res.data = [{"summary": "Great meeting with Client X"}]
@@ -56,12 +56,13 @@ def test_get_context_success(client, mock_dependencies):
     assert "Great meeting" in data["context_summary"]
 
 def test_get_context_unauthorized(client, mock_dependencies):
-    from src.server.auth.dependencies import get_current_user
     # Mock get_current_user to raise 401 (unauthenticated)
     from fastapi import HTTPException
+
+    from src.server.auth.dependencies import get_current_user
     def mock_get_current_user():
         raise HTTPException(status_code=401, detail="Unauthorized")
-    
+
     client.app.dependency_overrides[get_current_user] = mock_get_current_user
 
     response = client.get("/api/marketing/context/lead-001")

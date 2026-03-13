@@ -1,8 +1,10 @@
+from unittest.mock import patch
+
 import pytest
 from fastapi.testclient import TestClient
-from src.server.main import app
+
 from src.server.auth.dependencies import get_current_user
-from unittest.mock import AsyncMock, patch
+from src.server.main import app
 
 client = TestClient(app)
 

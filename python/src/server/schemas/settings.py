@@ -1,27 +1,28 @@
+
 from pydantic import BaseModel
-from typing import Optional
+
 
 class CredentialCreate(BaseModel):
     key: str
     value: str
     is_encrypted: bool = False
     category: str = "ai"
-    description: Optional[str] = None
+    description: str | None = None
 
 class CredentialResponse(BaseModel):
     key: str
     category: str
-    description: Optional[str] = None
+    description: str | None = None
     updated_at: str
 
 class CredentialStatusResponse(BaseModel):
     provider: str
     status: str
-    message: Optional[str] = None
+    message: str | None = None
 
 class UserUpdateRequest(BaseModel):
-    name: Optional[str] = None
-    full_name: Optional[str] = None
-    avatar: Optional[str] = None
-    role: Optional[str] = None
-    department: Optional[str] = None
+    name: str | None = None
+    full_name: str | None = None
+    avatar: str | None = None
+    role: str | None = None
+    department: str | None = None

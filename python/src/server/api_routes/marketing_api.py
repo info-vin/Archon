@@ -23,8 +23,6 @@ from src.server.schemas.marketing import (
     PromoteLeadRequest,
 )
 from src.server.services.marketing_service import MarketingService
-from src.server.services.projects.task_service import TaskService
-from src.server.services.blog_service import BlogService
 
 router: APIRouter = APIRouter(prefix="/api/marketing", tags=["marketing"])
 
@@ -114,8 +112,8 @@ async def get_pending_approvals(current_user: dict = Depends(requires_permission
 
 @router.post("/approvals/{item_type}/{item_id}/{action}")
 async def process_approval(
-    item_type: str, item_id: str, action: str, 
-    req: ApprovalRequest, 
+    item_type: str, item_id: str, action: str,
+    req: ApprovalRequest,
     current_user: dict = Depends(requires_permission(CONTENT_PUBLISH))
 ):
     service = MarketingService()

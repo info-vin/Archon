@@ -1,8 +1,10 @@
-import pytest
-from fastapi.testclient import TestClient
-from src.server.main import app
-from src.server.auth.dependencies import get_current_user
 from unittest.mock import AsyncMock, MagicMock, patch
+
+from fastapi.testclient import TestClient
+
+from src.server.auth.dependencies import get_current_user
+from src.server.main import app
+
 
 # Setup Global Override
 def setup_module(module):
@@ -24,7 +26,7 @@ def test_summary_endpoint_performance():
         # Fixed: Align with service return type (success, data)
         mock_inst.get_available_sources = AsyncMock(return_value=(True, []))
         mock_class.return_value = mock_inst
-        
+
         response = client.get("/api/knowledge-items/sources")
         assert response.status_code == 200
 
@@ -34,6 +36,6 @@ def test_error_handling_in_pagination():
         mock_inst = MagicMock()
         mock_inst.list_items = AsyncMock(return_value=(False, {"error": "Database Crash"}))
         mock_class.return_value = mock_inst
-        
+
         response = client.get("/api/knowledge-items")
         assert response.status_code == 500

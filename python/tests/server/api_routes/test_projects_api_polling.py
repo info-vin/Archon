@@ -1,11 +1,13 @@
 """Unit tests for projects API polling endpoints with ETag support."""
 from unittest.mock import AsyncMock, MagicMock, patch
+
 from fastapi.testclient import TestClient
-from datetime import UTC, datetime
+
+from src.server.auth.dependencies import get_current_user
 
 # 1. Correct import paths for physical dependency overrides
 from src.server.main import app
-from src.server.auth.dependencies import get_current_user
+
 
 # 2. Setup Global Overrides
 def setup_module(module):

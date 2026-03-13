@@ -3,7 +3,7 @@ Changes API Hardened - Secure Inbox for AI proposed changes.
 Ensures only authorized Managers and Admins can approve or reject proposals.
 """
 
-from typing import Any, cast
+from typing import Any
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -32,7 +32,7 @@ async def get_proposal(change_id: UUID, current_user: dict = Depends(get_current
 
 @router.post("/{change_id}/approve")
 async def approve_proposal(
-    change_id: UUID, 
+    change_id: UUID,
     current_user: dict = Depends(requires_permission(CODE_APPROVE))
 ):
     """Executes the proposed change. Requires CODE_APPROVE permission."""
@@ -41,11 +41,11 @@ async def approve_proposal(
         res = await service.approve_proposal(change_id, user_id=current_user.get("id"))
         return {"status": "success", "message": "Change approved and executed", "details": res}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 @router.post("/{change_id}/reject")
 async def reject_proposal(
-    change_id: UUID, 
+    change_id: UUID,
     current_user: dict = Depends(requires_permission(TASK_READ_TEAM))
 ):
     """Rejects the proposal. Requires Manager level visibility."""
@@ -54,4 +54,4 @@ async def reject_proposal(
         res = await service.reject_proposal(change_id, user_id=current_user.get("id"))
         return {"status": "rejected", "message": "Change proposal rejected", "details": res}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e

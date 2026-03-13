@@ -12,7 +12,6 @@ from typing import Any
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request
 
 from ..auth.dependencies import get_current_user, verify_admin_role
-
 from ..services.credential_service import credential_service
 
 logger = logging.getLogger(__name__)
