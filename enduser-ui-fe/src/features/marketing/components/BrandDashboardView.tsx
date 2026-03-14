@@ -68,19 +68,19 @@ export const BrandDashboardView: React.FC<BrandDashboardViewProps> = ({
                                 )}
                                 <p className="text-[10px] text-gray-500 mt-2 font-medium">By {post.authorName}</p>
                                 <div className="mt-4 flex justify-between items-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <div className="flex gap-1">
+                                    <div className="flex gap-1" role="group" aria-label="Post actions">
                                         {post.status !== 'draft' && post.status !== 'changes_requested' && (
-                                            <button onClick={() => onUpdateStatus(post.id, 'draft')} className="p-1 hover:bg-gray-100 rounded text-gray-400" title="Move to Draft"><FileEditIcon className="w-4 h-4" /></button>
+                                            <button onClick={() => onUpdateStatus(post.id, 'draft')} className="p-1 hover:bg-gray-100 rounded text-gray-400" title="Move to Draft" aria-label="Move to Draft"><FileEditIcon className="w-4 h-4" /></button>
                                         )}
-                                        <button onClick={() => onEditSmart(post)} className="p-1 hover:bg-gray-100 rounded text-blue-500" title="Edit Content"><FileEditIcon className="w-4 h-4" /></button>
-                                        <button onClick={() => onNavigateAdvanced(post.id)} className="p-1 hover:bg-indigo-50 rounded text-indigo-500" title="Advanced Editor (Pro)"><SparklesIcon className="w-4 h-4" /></button>
+                                        <button onClick={() => onEditSmart(post)} className="p-1 hover:bg-gray-100 rounded text-blue-500" title="Edit Content" aria-label="Edit Content"><FileEditIcon className="w-4 h-4" /></button>
+                                        <button onClick={() => onNavigateAdvanced(post.id)} className="p-1 hover:bg-indigo-50 rounded text-indigo-500" title="Advanced Editor (Pro)" aria-label="Advanced Editor (Pro)"><SparklesIcon className="w-4 h-4" /></button>
                                         {post.status !== 'review' && (
-                                            <button onClick={() => onUpdateStatus(post.id, 'review')} className="p-1 hover:bg-amber-50 rounded text-amber-500" title="Move to Review"><EyeIcon className="w-4 h-4" /></button>
+                                            <button onClick={() => onUpdateStatus(post.id, 'review')} className="p-1 hover:bg-amber-50 rounded text-amber-500" title="Move to Review" aria-label="Move to Review"><EyeIcon className="w-4 h-4" /></button>
                                         )}
                                         {post.status !== 'published' && (
-                                            <button onClick={() => onUpdateStatus(post.id, 'published')} className="p-1 hover:bg-green-50 rounded text-green-600" title="Publish Now"><CheckCircleIcon className="w-4 h-4" /></button>
+                                            <button onClick={() => onUpdateStatus(post.id, 'published')} className="p-1 hover:bg-green-50 rounded text-green-600" title="Publish Now" aria-label="Publish Now"><CheckCircleIcon className="w-4 h-4" /></button>
                                         )}
-                                        <button onClick={() => onDeletePost(post.id)} className="p-1 hover:bg-red-50 rounded text-red-500 ml-auto" title="Delete"><PlusIcon className="w-4 h-4 rotate-45" /></button>
+                                        <button onClick={() => onDeletePost(post.id)} className="p-1 hover:bg-red-50 rounded text-red-500 ml-auto" title="Delete" aria-label="Delete"><PlusIcon className="w-4 h-4 rotate-45" /></button>
                                     </div>
                                 </div>
                             </div>
@@ -188,6 +188,7 @@ export const BrandDashboardView: React.FC<BrandDashboardViewProps> = ({
                             onClick={downloadLogo}
                             className="absolute bottom-4 right-4 bg-white/10 backdrop-blur-md text-white p-2 rounded-lg hover:bg-white/20 transition-all opacity-0 group-hover:opacity-100"
                             title="Download SVG"
+                            aria-label="Download SVG"
                         >
                             <DownloadIcon className="w-5 h-5" />
                         </button>
