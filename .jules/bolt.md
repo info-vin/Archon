@@ -17,3 +17,7 @@
 ## 2024-05-18 - Nested generator expressions vs explicit loops
 **Learning:** Using nested generator expressions like `sum(1 for ... if any(...))` causes significant overhead in Python due to creating multiple generator objects per outer loop iteration. Replacing these nested generators with standard `for` loops, caching type conversions (like `str()`), and using early `break` statements can be ~4x faster on hot paths.
 **Action:** When filtering or counting based on compound conditions involving sub-lists or strings, unroll nested generators (`any()`, `all()`, or inner comprehensions) into standard `for` loops to avoid allocation overhead and enable true short-circuiting.
+
+## 2024-06-15 - Repeated regex compilation in hot paths
+**Learning:** Using `re.search(pattern, text)` inside frequently executed code (like loops or functions called many times per document) causes Python to look up the pattern in its internal cache or re-compile it repeatedly. On hot paths involving many regex checks, this adds significant overhead compared to using a pre-compiled `re.compile()` object (`pattern.search(text)`).
+**Action:** Always pre-compile regular expressions used within loops or frequently executed validation functions as module-level constants (e.g. `COMPILED_PATTERNS = [re.compile(p) for p in PATTERNS]`).

@@ -58,10 +58,22 @@ COMMENT_PATTERNS = [
     r"^\s*\*\s",  # JSDoc style
 ]
 
+BAD_PATTERNS = [
+    r"\b(from|import|def|class|if|for|while|return)(?=[a-z])",
+    r"&[lg]t;|&amp;|&quot;|&#\d+;",
+    r"<[^>]{50,}>",
+    r"(<span[^>]*>){5,}",
+    r"[^\s]{200,}",
+]
+
+COMPILED_CODE_INDICATORS = [re.compile(v) for v in CODE_INDICATORS.values()]
 COMPILED_COMMENT_PATTERNS = [re.compile(p) for p in COMMENT_PATTERNS]
+COMPILED_BAD_PATTERNS = [re.compile(p) for p in BAD_PATTERNS]
 
 PROSE_INDICATORS = [
     r"\b(the|this|that|these|those|is|are|was|were|will|would|should|could|have|has|had)\b",
     r"[.!?]\s+[A-Z]",  # Sentence endings followed by capital letter
     r"\b(however|therefore|furthermore|moreover|nevertheless)\b",
 ]
+
+COMPILED_PROSE_INDICATORS = [re.compile(p, re.IGNORECASE) for p in PROSE_INDICATORS]
