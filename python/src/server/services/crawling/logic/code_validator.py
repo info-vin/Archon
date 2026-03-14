@@ -7,7 +7,7 @@ import re
 
 from src.server.config.logfire_config import safe_logfire_info
 
-from .constants import CODE_INDICATORS, COMMENT_PATTERNS, LANGUAGE_PATTERNS, PROSE_INDICATORS
+from .constants import CODE_INDICATORS, COMPILED_COMMENT_PATTERNS, LANGUAGE_PATTERNS, PROSE_INDICATORS
 
 
 async def validate_code_quality(
@@ -54,10 +54,12 @@ async def validate_code_quality(
     if not non_empty_lines:
         return False
 
+    # PERFORMANCE: Use precompiled regexes to avoid inner loop compilation overhead.
+    # Also avoid line.strip() since patterns handle leading whitespace with ^\s*.
     comment_lines = 0
     for line in lines:
-        for pattern in COMMENT_PATTERNS:
-            if re.match(pattern, line.strip()):
+        for p in COMPILED_COMMENT_PATTERNS:
+            if p.match(line):
                 comment_lines += 1
                 break
 
