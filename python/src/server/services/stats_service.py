@@ -321,6 +321,10 @@ class StatsService:
             .gt("created_at", one_hour_ago).execute()
         active_sources = {log["source"] for log in (logs_res.data or [])}
 
+        # PERFORMANCE: Pre-calculate lower case sources outside loop to avoid
+        # re-evaluating .lower() in the any() generator expression for every agent
+        active_sources_lower = {s.lower() for s in active_sources}
+
         agents_manifest = [
             {"id": "clockwork", "name": "Clockwork", "role": "Scheduler"},
             {"id": "sentinel", "name": "Sentinel", "role": "Guard"},
@@ -330,7 +334,7 @@ class StatsService:
 
         active_agents = []
         for agent in agents_manifest:
-            is_active = agent["id"] in active_sources or any(agent["id"] in s.lower() for s in active_sources)
+            is_active = agent["id"] in active_sources or any(agent["id"] in s for s in active_sources_lower)
             active_agents.append({
                 **agent,
                 "status": "active" if is_active else "standby"

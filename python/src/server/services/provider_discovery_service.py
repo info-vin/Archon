@@ -167,7 +167,9 @@ class ProviderDiscoveryService:
         except Exception as e:
             logger.debug(f"Tool support test failed for {model_name}: {e}")
             # Fall back to name-based heuristics for known models
-            return any(pattern in model_name.lower()
+            # PERFORMANCE: Cache .lower() to avoid re-evaluation in generator
+            model_name_lower = model_name.lower()
+            return any(pattern in model_name_lower
                       for pattern in CHAT_MODEL_PATTERNS)
 
         finally:
@@ -291,22 +293,27 @@ class ProviderDiscoveryService:
                             # Determine model capabilities based on testing and name patterns
                             # Test for function calling capabilities via actual API calls
                             supports_tools = await self._test_tool_support(model_name, api_url)
+
+                            # PERFORMANCE: Cache model_name.lower() to avoid re-evaluating it
+                            # up to 5 times in the capability checks below
+                            model_name_lower = model_name.lower()
+
                             # Vision support is typically indicated by name patterns (reliable indicator)
-                            supports_vision = any(pattern in model_name.lower() for pattern in VISION_MODEL_PATTERNS)
+                            supports_vision = any(pattern in model_name_lower for pattern in VISION_MODEL_PATTERNS)
                             # Embedding support is typically indicated by name patterns (reliable indicator)
-                            supports_embeddings = any(pattern in model_name.lower() for pattern in EMBEDDING_MODEL_PATTERNS)
+                            supports_embeddings = any(pattern in model_name_lower for pattern in EMBEDDING_MODEL_PATTERNS)
 
                             # Estimate context window based on model family
                             context_window = 4096  # Default
                             for family, window_size in MODEL_CONTEXT_WINDOWS.items():
-                                if family in model_name.lower():
+                                if family in model_name_lower:
                                     context_window = window_size
                                     break
 
                             # Set embedding dimensions for known embedding models
                             embedding_dims = None
                             for model_pattern, dims in EMBEDDING_DIMENSIONS.items():
-                                if model_pattern in model_name.lower():
+                                if model_pattern in model_name_lower:
                                     embedding_dims = dims
                                     break
 
