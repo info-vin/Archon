@@ -280,7 +280,9 @@ class CredentialsService {
         localStorage.removeItem('ollama-instances');
         return { migrated: true, instanceCount: instances.length };
       }
-    } catch {}
+    } catch (err) {
+      console.warn('Failed to migrate Ollama instances from local storage:', err);
+    }
     return { migrated: false, instanceCount: 0 };
   }
 }

@@ -25,7 +25,7 @@ client = TestClient(app)
 def test_batch_task_counts_endpoint():
     """Test the batch task counts endpoint with mocked service."""
     # We patch the CLASS itself where it is used in the API module
-    with patch("src.server.api_routes.projects_api.TaskService") as mock_service_class:
+    with patch("src.server.api_routes.projects.ops.TaskService") as mock_service_class:
         # The constructor returns an instance
         mock_instance = MagicMock()
         mock_service_class.return_value = mock_instance
@@ -40,7 +40,7 @@ def test_batch_task_counts_endpoint():
 
 def test_batch_task_counts_etag_caching():
     """Test ETag caching for the batch task counts endpoint."""
-    with patch("src.server.api_routes.projects_api.TaskService") as mock_service_class:
+    with patch("src.server.api_routes.projects.ops.TaskService") as mock_service_class:
         mock_instance = MagicMock()
         mock_service_class.return_value = mock_instance
         mock_instance.get_all_project_task_counts = AsyncMock(return_value=(True, {"proj-1": {"todo": 5}}))

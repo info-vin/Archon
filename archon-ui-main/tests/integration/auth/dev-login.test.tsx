@@ -79,6 +79,6 @@ describe('Dev Auto-Login Integration', () => {
       // The error message format depends on how AuthContext handles it. 
       // Based on current code: `throw new Error("Auto-login failed: ${response.statusText}")`
       expect(screen.getByText(/Auto-login failed: Not Found/i)).toBeInTheDocument();
-    });
+    }, { timeout: 10000 });
   });
 });

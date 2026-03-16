@@ -3,7 +3,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 from fastapi.testclient import TestClient
 
 
-@patch('src.server.api_routes.projects_api.TaskService', new_callable=MagicMock)
+@patch('src.server.api_routes.projects.ops.TaskService', new_callable=MagicMock)
 def test_list_tasks_admin_access(mock_task_service_class):
     """
     Test that admins can list all tasks (no assignee_id filter).
@@ -37,7 +37,7 @@ def test_list_tasks_admin_access(mock_task_service_class):
     # Cleanup
     app.dependency_overrides = {}
 
-@patch('src.server.api_routes.projects_api.TaskService', new_callable=MagicMock)
+@patch('src.server.api_routes.projects.ops.TaskService', new_callable=MagicMock)
 def test_list_tasks_member_access(mock_task_service_class):
     """
     Test that regular members can only list their own tasks (assignee_id filter applied).

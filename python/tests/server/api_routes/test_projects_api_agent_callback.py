@@ -7,7 +7,7 @@ mock_task_service = AsyncMock()
 mock_task_service_class = MagicMock(return_value=mock_task_service)
 
 # Patch the TaskService class used in the API module
-task_service_patch = patch('src.server.api_routes.projects_api.TaskService', mock_task_service_class)
+task_service_patch = patch('src.server.api_routes.projects.ops.TaskService', mock_task_service_class)
 
 def setup_module(module):
     task_service_patch.start()

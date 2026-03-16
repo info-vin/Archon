@@ -5,9 +5,9 @@ from fastapi.testclient import TestClient
 
 # To test the API routes in isolation, we patch the services they depend on.
 # These patches target the namespaces where the services are imported and used.
-@patch('src.server.api_routes.projects_api.TaskService', new_callable=MagicMock)
-@patch('src.server.api_routes.projects_api.RBACService', new_callable=MagicMock)
-@patch('src.server.api_routes.projects_api.ProfileService', new_callable=MagicMock)
+@patch('src.server.api_routes.projects.ops.TaskService', new_callable=MagicMock)
+@patch('src.server.api_routes.projects.ops.RBACService', new_callable=MagicMock)
+@patch('src.server.api_routes.projects.ops.ProfileService', new_callable=MagicMock)
 def test_create_task_with_ai_assignee_success(mock_profile_class, mock_rbac_class, mock_task_service_class):
     """
     Unit test for the POST /tasks endpoint.
@@ -53,9 +53,9 @@ def test_create_task_with_ai_assignee_success(mock_profile_class, mock_rbac_clas
     assert called_kwargs["assignee"] == "ai-researcher-1"
 
 
-@patch('src.server.api_routes.projects_api.TaskService', new_callable=MagicMock)
-@patch('src.server.api_routes.projects_api.RBACService', new_callable=MagicMock)
-@patch('src.server.api_routes.projects_api.ProfileService', new_callable=MagicMock)
+@patch('src.server.api_routes.projects.ops.TaskService', new_callable=MagicMock)
+@patch('src.server.api_routes.projects.ops.RBACService', new_callable=MagicMock)
+@patch('src.server.api_routes.projects.ops.ProfileService', new_callable=MagicMock)
 def test_create_task_with_ai_assignee_permission_denied(mock_profile_class, mock_rbac_class, mock_task_service_class):
     """
     Unit test for the POST /tasks endpoint.
@@ -96,9 +96,9 @@ def test_create_task_with_ai_assignee_permission_denied(mock_profile_class, mock
     mock_task_service_instance.create_task.assert_not_called()
 
 
-@patch('src.server.api_routes.projects_api.TaskService', new_callable=MagicMock)
-@patch('src.server.api_routes.projects_api.RBACService', new_callable=MagicMock)
-@patch('src.server.api_routes.projects_api.ProfileService', new_callable=MagicMock)
+@patch('src.server.api_routes.projects.ops.TaskService', new_callable=MagicMock)
+@patch('src.server.api_routes.projects.ops.RBACService', new_callable=MagicMock)
+@patch('src.server.api_routes.projects.ops.ProfileService', new_callable=MagicMock)
 def test_create_task_with_knowledge_sources(mock_profile_class, mock_rbac_class, mock_task_service_class):
     """
     Unit test for the POST /tasks endpoint with knowledge_source_ids.

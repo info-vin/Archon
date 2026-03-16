@@ -25,8 +25,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const initAuth = async (retries = 3) => {
+    const initAuth = async (retries = 3): Promise<void> => {
       try {
+        setIsLoading(true);
+        setError(null);
+
         // Attempt Dev Auto-Login
         const response = await fetch(`${API_BASE_URL}/auth/dev-token`, {
           method: "POST",
@@ -35,9 +38,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         if (!response.ok) {
           if (retries > 0) {
-            console.log(`Auto-login attempt failed, retrying... (${retries} left)`);
-            setTimeout(() => initAuth(retries - 1), 2000);
-            return;
+            console.warn(`Auto-login attempt failed, retrying... (${retries} left)`);
+            // Wait for 2 seconds before retrying
+            await new Promise((resolve) => setTimeout(resolve, 2000));
+            return initAuth(retries - 1);
           }
           throw new Error(`Auto-login failed: ${response.statusText}`);
         }
@@ -56,10 +60,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             role: "system_admin", // Enforced role for Admin UI
           });
         }
+        setIsLoading(false);
       } catch (err) {
         console.error("Auth initialization failed:", err);
         setError(err instanceof Error ? err.message : "Unknown auth error");
-      } finally {
         setIsLoading(false);
       }
     };
