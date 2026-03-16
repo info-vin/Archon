@@ -24,18 +24,15 @@ export interface RagSettings {
   OLLAMA_EMBEDDING_INSTANCE_NAME?: string;
   EMBEDDING_MODEL?: string;
   EMBEDDING_PROVIDER?: string;
-  // Crawling Performance Settings
   CRAWL_BATCH_SIZE?: number;
   CRAWL_MAX_CONCURRENT?: number;
   CRAWL_WAIT_STRATEGY?: string;
   CRAWL_PAGE_TIMEOUT?: number;
   CRAWL_DELAY_BEFORE_HTML?: number;
-  // Storage Performance Settings
   DOCUMENT_STORAGE_BATCH_SIZE?: number;
   EMBEDDING_BATCH_SIZE?: number;
   DELETE_BATCH_SIZE?: number;
   ENABLE_PARALLEL_BATCHES?: boolean;
-  // Advanced Settings
   MEMORY_THRESHOLD_PERCENT?: number;
   DISPATCHER_CHECK_INTERVAL?: number;
   CODE_EXTRACTION_BATCH_SIZE?: number;
@@ -71,304 +68,124 @@ export interface OllamaInstance {
   lastHealthCheck?: string;
 }
 
-import { API_BASE_URL } from "../config/api";
+import { callAPIWithETag } from "../features/shared/api/apiClient";
 
 class CredentialsService {
   private notifyCredentialUpdate(keys: string[]): void {
-    if (typeof window === "undefined") {
-      return;
-    }
-
-    window.dispatchEvent(
-      new CustomEvent("archon:credentials-updated", { detail: { keys } })
-    );
-  }
-
-  private handleCredentialError(error: unknown, context: string): Error {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-
-    // Check for network errors
-    if (
-      errorMessage.toLowerCase().includes("network") ||
-      errorMessage.includes("fetch") ||
-      errorMessage.includes("Failed to fetch")
-    ) {
-      return new Error(
-        `Network error while ${context.toLowerCase()}: ${errorMessage}. ` +
-          `Please check your connection and server status.`,
-      );
-    }
-
-    // Return original error with context
-    return new Error(`${context} failed: ${errorMessage}`);
+    if (typeof window === "undefined") return;
+    window.dispatchEvent(new CustomEvent("archon:credentials-updated", { detail: { keys } }));
   }
 
   async getAllCredentials(): Promise<Credential[]> {
-    const response = await fetch(`${API_BASE_URL}/credentials`);
-    if (!response.ok) {
-      throw new Error("Failed to fetch credentials");
-    }
-    return response.json();
+    return callAPIWithETag<Credential[]>('/credentials');
   }
 
   async getCredentialsByCategory(category: string): Promise<Credential[]> {
-    const response = await fetch(
-      `${API_BASE_URL}/credentials/categories/${category}`,
-    );
-    if (!response.ok) {
-      throw new Error(`Failed to fetch credentials for category: ${category}`);
+    const result = await callAPIWithETag<any>(`/credentials/categories/${category}`);
+    if (result && result.credentials && typeof result.credentials === "object") {
+      return Object.entries(result.credentials).map(([key, val]: [string, any]) => ({
+        key,
+        value: val && typeof val === "object" ? (val.value || "") : String(val),
+        is_encrypted: val && typeof val === "object" ? val.is_encrypted : false,
+        category,
+        description: (val && typeof val === "object" && val.description) || "",
+      }));
     }
-    const result = await response.json();
-
-    // The API returns {credentials: {...}} where credentials is a dict
-    // Convert to array format expected by frontend
-    if (result.credentials && typeof result.credentials === "object") {
-      return Object.entries(result.credentials).map(
-        ([key, val]: [string, any]) => {
-          if (val && typeof val === "object" && val.is_encrypted) {
-            return {
-              key,
-              value: "[ENCRYPTED]",
-              encrypted_value: undefined,
-              is_encrypted: true,
-              category,
-              description: val.description || "",
-            };
-          } else {
-            return {
-              key,
-              value: typeof val === "object" ? (val.value || "") : String(val),
-              encrypted_value: undefined,
-              is_encrypted: false,
-              category,
-              description: (typeof val === "object" && val.description) || "",
-            };
-          }
-        },
-      );
-    }
-
-    return [];
+    return Array.isArray(result) ? result : [];
   }
 
-  async getCredential(
-    key: string,
-  ): Promise<{ key: string; value?: string; is_encrypted?: boolean }> {
-    const response = await fetch(`${API_BASE_URL}/credentials/${key}`);
-    if (!response.ok) {
-      if (response.status === 404) {
-        // Return empty object if credential not found
-        return { key, value: undefined };
-      }
-      throw new Error(`Failed to fetch credential: ${key}`);
+  async getCredential(key: string): Promise<{ key: string; value?: string; is_encrypted?: boolean }> {
+    try {
+      return await callAPIWithETag<any>(`/credentials/${key}`);
+    } catch (error: any) {
+      if (error.message?.includes('404')) return { key, value: undefined };
+      throw error;
     }
-    return response.json();
   }
 
-  async checkCredentialStatus(
-    keys: string[]
-  ): Promise<{ [key: string]: { key: string; value?: string; has_value: boolean; error?: string } }> {
-    const response = await fetch(`${API_BASE_URL}/credentials/status-check`, {
+  async checkCredentialStatus(keys: string[]): Promise<any> {
+    return callAPIWithETag('/credentials/status-check', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
       body: JSON.stringify({ keys }),
     });
-    
-    if (!response.ok) {
-      throw new Error(`Failed to check credential status: ${response.statusText}`);
-    }
-    
-    return response.json();
   }
 
   async getRagSettings(): Promise<RagSettings> {
     const ragCredentials = await this.getCredentialsByCategory("rag_strategy");
     const apiKeysCredentials = await this.getCredentialsByCategory("api_keys");
-
     const settings: RagSettings = {
       USE_CONTEXTUAL_EMBEDDINGS: false,
       CONTEXTUAL_EMBEDDINGS_MAX_WORKERS: 3,
       USE_HYBRID_SEARCH: true,
-  USE_AGENTIC_RAG: true,
-  USE_RERANKING: true,
-  MODEL_CHOICE: "gpt-4.1-nano",
-  LLM_PROVIDER: "openai",
-  LLM_BASE_URL: "",
-  LLM_INSTANCE_NAME: "",
-  OLLAMA_EMBEDDING_URL: "",
-  OLLAMA_EMBEDDING_INSTANCE_NAME: "",
-  EMBEDDING_PROVIDER: "openai",
-  EMBEDDING_MODEL: "",
-      // Crawling Performance Settings defaults
+      USE_AGENTIC_RAG: true,
+      USE_RERANKING: true,
+      MODEL_CHOICE: "gemini-1.5-flash",
+      LLM_PROVIDER: "google",
+      EMBEDDING_PROVIDER: "google",
+      EMBEDDING_MODEL: "text-embedding-004",
       CRAWL_BATCH_SIZE: 50,
       CRAWL_MAX_CONCURRENT: 10,
       CRAWL_WAIT_STRATEGY: "domcontentloaded",
-      CRAWL_PAGE_TIMEOUT: 60000, // Increased from 30s to 60s for documentation sites
+      CRAWL_PAGE_TIMEOUT: 60000,
       CRAWL_DELAY_BEFORE_HTML: 0.5,
-      // Storage Performance Settings defaults
       DOCUMENT_STORAGE_BATCH_SIZE: 50,
       EMBEDDING_BATCH_SIZE: 100,
       DELETE_BATCH_SIZE: 100,
       ENABLE_PARALLEL_BATCHES: true,
-      // Advanced Settings defaults
       MEMORY_THRESHOLD_PERCENT: 80,
       DISPATCHER_CHECK_INTERVAL: 30,
       CODE_EXTRACTION_BATCH_SIZE: 50,
       CODE_SUMMARY_MAX_WORKERS: 3,
     };
-
-    // Map credentials to settings
     [...ragCredentials, ...apiKeysCredentials].forEach((cred) => {
       if (cred.key in settings) {
         const key = cred.key as keyof RagSettings;
-        // String fields
-        if (
-          [
-            "MODEL_CHOICE",
-            "LLM_PROVIDER",
-            "LLM_BASE_URL",
-            "LLM_INSTANCE_NAME",
-            "OLLAMA_EMBEDDING_URL",
-            "OLLAMA_EMBEDDING_INSTANCE_NAME",
-            "EMBEDDING_PROVIDER",
-            "EMBEDDING_MODEL",
-            "CRAWL_WAIT_STRATEGY",
-          ].includes(key)
-        ) {
-          (settings as any)[key] = cred.value || "";
-        }
-        // Number fields
-        else if (
-          [
-            "CONTEXTUAL_EMBEDDINGS_MAX_WORKERS",
-            "CRAWL_BATCH_SIZE",
-            "CRAWL_MAX_CONCURRENT",
-            "CRAWL_PAGE_TIMEOUT",
-            "DOCUMENT_STORAGE_BATCH_SIZE",
-            "EMBEDDING_BATCH_SIZE",
-            "DELETE_BATCH_SIZE",
-            "MEMORY_THRESHOLD_PERCENT",
-            "DISPATCHER_CHECK_INTERVAL",
-            "CODE_EXTRACTION_BATCH_SIZE",
-            "CODE_SUMMARY_MAX_WORKERS",
-          ].includes(key)
-        ) {
-          (settings as any)[key] =
-            parseInt(cred.value || "0", 10) || (settings as any)[key];
-        }
-        // Float fields
-        else if (key === "CRAWL_DELAY_BEFORE_HTML") {
-          (settings as any)[key] = parseFloat(cred.value || "0.5") || 0.5;
-        }
-        // Boolean fields
-        else {
-          (settings as any)[key] = cred.value === "true";
-        }
+        if (typeof settings[key] === "boolean") (settings as any)[key] = cred.value === "true";
+        else if (["CRAWL_DELAY_BEFORE_HTML"].includes(key)) (settings as any)[key] = parseFloat(cred.value || "0.5");
+        else if (typeof settings[key] === "number") (settings as any)[key] = parseInt(cred.value || "0", 10);
+        else (settings as any)[key] = cred.value || "";
       }
     });
-
     return settings;
   }
 
   async updateCredential(credential: Credential): Promise<Credential> {
-    try {
-      const response = await fetch(
-        `${API_BASE_URL}/credentials/${credential.key}`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(credential),
-        },
-      );
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`HTTP ${response.status}: ${errorText}`);
-      }
-
-      const updated = await response.json();
-      this.notifyCredentialUpdate([credential.key]);
-      return updated;
-    } catch (error) {
-      throw this.handleCredentialError(
-        error,
-        `Updating credential '${credential.key}'`,
-      );
-    }
+    const updated = await callAPIWithETag<Credential>(`/credentials/${credential.key}`, {
+      method: "PUT",
+      body: JSON.stringify(credential),
+    });
+    this.notifyCredentialUpdate([credential.key]);
+    return updated;
   }
 
   async createCredential(credential: Credential): Promise<Credential> {
-    try {
-      const response = await fetch(`${API_BASE_URL}/credentials`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(credential),
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`HTTP ${response.status}: ${errorText}`);
-      }
-
-      const created = await response.json();
-      this.notifyCredentialUpdate([credential.key]);
-      return created;
-    } catch (error) {
-      throw this.handleCredentialError(
-        error,
-        `Creating credential '${credential.key}'`,
-      );
-    }
+    const created = await callAPIWithETag<Credential>('/credentials', {
+      method: "POST",
+      body: JSON.stringify(credential),
+    });
+    this.notifyCredentialUpdate([credential.key]);
+    return created;
   }
 
   async deleteCredential(key: string): Promise<void> {
-    try {
-      const response = await fetch(`${API_BASE_URL}/credentials/${key}`, {
-        method: "DELETE",
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`HTTP ${response.status}: ${errorText}`);
-      }
-
-      this.notifyCredentialUpdate([key]);
-    } catch (error) {
-      throw this.handleCredentialError(error, `Deleting credential '${key}'`);
-    }
+    await callAPIWithETag(`/credentials/${key}`, { method: "DELETE" });
+    this.notifyCredentialUpdate([key]);
   }
 
   async updateRagSettings(settings: RagSettings): Promise<void> {
-    const promises = [];
-
-    // Update all RAG strategy settings
-    for (const [key, value] of Object.entries(settings)) {
-      // Skip undefined values
-      if (value === undefined) continue;
-
-      promises.push(
-        this.updateCredential({
-          key,
-          value: value.toString(),
-          is_encrypted: false,
-          category: "rag_strategy",
-        }),
-      );
-    }
-
+    const promises = Object.entries(settings)
+      .filter(([_, value]) => value !== undefined)
+      .map(([key, value]) => this.updateCredential({
+        key,
+        value: value.toString(),
+        is_encrypted: false,
+        category: "rag_strategy",
+      }));
     await Promise.all(promises);
   }
 
   async getCodeExtractionSettings(): Promise<CodeExtractionSettings> {
-    const codeExtractionCredentials =
-      await this.getCredentialsByCategory("code_extraction");
-
+    const codeExtractionCredentials = await this.getCredentialsByCategory("code_extraction");
     const settings: CodeExtractionSettings = {
       MIN_CODE_BLOCK_LENGTH: 250,
       MAX_CODE_BLOCK_LENGTH: 5000,
@@ -383,159 +200,54 @@ class CredentialsService {
       CONTEXT_WINDOW_SIZE: 1000,
       ENABLE_CODE_SUMMARIES: true,
     };
-
-    // Map credentials to settings
     codeExtractionCredentials.forEach((cred) => {
       if (cred.key in settings) {
         const key = cred.key as keyof CodeExtractionSettings;
-        if (typeof settings[key] === "number") {
-          if (key === "MAX_PROSE_RATIO") {
-            (settings as any)[key] = parseFloat(cred.value || "0.15");
-          } else {
-            (settings as any)[key] = parseInt(
-              cred.value || settings[key].toString(),
-              10,
-            );
-          }
-        } else if (typeof settings[key] === "boolean") {
-          (settings as any)[key] = cred.value === "true";
-        }
+        if (key === "MAX_PROSE_RATIO") (settings as any)[key] = parseFloat(cred.value || "0.15");
+        else if (typeof settings[key] === "number") (settings as any)[key] = parseInt(cred.value || "0", 10);
+        else if (typeof settings[key] === "boolean") (settings as any)[key] = cred.value === "true";
       }
     });
-
     return settings;
   }
 
-  async updateCodeExtractionSettings(
-    settings: CodeExtractionSettings,
-  ): Promise<void> {
-    const promises = [];
-
-    // Update all code extraction settings
-    for (const [key, value] of Object.entries(settings)) {
-      promises.push(
-        this.updateCredential({
-          key,
-          value: value.toString(),
-          is_encrypted: false,
-          category: "code_extraction",
-        }),
-      );
-    }
-
+  async updateCodeExtractionSettings(settings: CodeExtractionSettings): Promise<void> {
+    const promises = Object.entries(settings).map(([key, value]) => this.updateCredential({
+      key,
+      value: value.toString(),
+      is_encrypted: false,
+      category: "code_extraction",
+    }));
     await Promise.all(promises);
   }
 
-  // Ollama Instance Management
   async getOllamaInstances(): Promise<OllamaInstance[]> {
-    try {
-      const ollamaCredentials = await this.getCredentialsByCategory('ollama_instances');
-      
-      // Convert credentials to OllamaInstance objects
-      const instances: OllamaInstance[] = [];
-      const instanceMap: Record<string, Partial<OllamaInstance>> = {};
-      
-      // Group credentials by instance ID
-      ollamaCredentials.forEach(cred => {
-        const parts = cred.key.split('_');
-        if (parts.length >= 3 && parts[0] === 'ollama' && parts[1] === 'instance') {
-          const instanceId = parts[2];
-          const field = parts.slice(3).join('_') as keyof OllamaInstance;
-          
-          if (!instanceMap[instanceId]) {
-            instanceMap[instanceId] = { id: instanceId };
-          }
-          
-          // Parse the field value
-          let value: string | boolean | number = cred.value || "";
-          if (field === 'isEnabled' || field === 'isPrimary' || field === 'isHealthy') {
-            value = cred.value === 'true';
-          } else if (field === 'responseTimeMs' || field === 'modelsAvailable' || field === 'loadBalancingWeight') {
-            value = parseInt(cred.value || '0', 10);
-          }
-          
-          (instanceMap[instanceId] as any)[field] = value;
-        }
-      });
-      
-      // Convert to array and ensure required fields
-      Object.values(instanceMap).forEach(instance => {
-        if (instance.id && instance.name && instance.baseUrl) {
-          instances.push({
-            id: instance.id,
-            name: instance.name,
-            baseUrl: instance.baseUrl,
-            isEnabled: instance.isEnabled ?? true,
-            isPrimary: instance.isPrimary ?? false,
-            instanceType: instance.instanceType ?? 'both',
-            loadBalancingWeight: instance.loadBalancingWeight ?? 100,
-            isHealthy: instance.isHealthy,
-            responseTimeMs: instance.responseTimeMs,
-            modelsAvailable: instance.modelsAvailable,
-            lastHealthCheck: instance.lastHealthCheck
-          });
-        }
-      });
-      
-      return instances;
-    } catch (error) {
-      console.error('Failed to load Ollama instances from database:', error);
-      return [];
-    }
+    const ollamaCredentials = await this.getCredentialsByCategory('ollama_instances');
+    const instanceMap: Record<string, Partial<OllamaInstance>> = {};
+    ollamaCredentials.forEach(cred => {
+      const parts = cred.key.split('_');
+      if (parts.length >= 3 && parts[0] === 'ollama' && parts[1] === 'instance') {
+        const id = parts[2];
+        const field = parts.slice(3).join('_') as keyof OllamaInstance;
+        if (!instanceMap[id]) instanceMap[id] = { id };
+        let value: any = cred.value || "";
+        if (['isEnabled', 'isPrimary', 'isHealthy'].includes(field)) value = cred.value === 'true';
+        else if (['responseTimeMs', 'modelsAvailable', 'loadBalancingWeight'].includes(field)) value = parseInt(cred.value || '0', 10);
+        (instanceMap[id] as any)[field] = value;
+      }
+    });
+    return Object.values(instanceMap).filter(i => i.id && i.name && i.baseUrl) as OllamaInstance[];
   }
 
   async setOllamaInstances(instances: OllamaInstance[]): Promise<void> {
-    try {
-      // First, delete existing ollama instance credentials
-      const existingCredentials = await this.getCredentialsByCategory('ollama_instances');
-      for (const cred of existingCredentials) {
-        await this.deleteCredential(cred.key);
-      }
-      
-      // Add new instance credentials
-      const promises: Promise<Credential>[] = [];
-      
-      instances.forEach(instance => {
-        const fields: Record<string, string | boolean | number> = {
-          name: instance.name,
-          baseUrl: instance.baseUrl,
-          isEnabled: instance.isEnabled,
-          isPrimary: instance.isPrimary,
-          instanceType: instance.instanceType || 'both',
-          loadBalancingWeight: instance.loadBalancingWeight || 100
-        };
-        
-        // Add optional health-related fields
-        if (instance.isHealthy !== undefined) {
-          fields.isHealthy = instance.isHealthy;
-        }
-        if (instance.responseTimeMs !== undefined) {
-          fields.responseTimeMs = instance.responseTimeMs;
-        }
-        if (instance.modelsAvailable !== undefined) {
-          fields.modelsAvailable = instance.modelsAvailable;
-        }
-        if (instance.lastHealthCheck) {
-          fields.lastHealthCheck = instance.lastHealthCheck;
-        }
-        
-        // Create a credential for each field
-        Object.entries(fields).forEach(([field, value]) => {
-          promises.push(
-            this.createCredential({
-              key: `ollama_instance_${instance.id}_${field}`,
-              value: value.toString(),
-              is_encrypted: false,
-              category: 'ollama_instances'
-            })
-          );
-        });
-      });
-      
-      await Promise.all(promises);
-    } catch (error) {
-      throw this.handleCredentialError(error, 'Saving Ollama instances');
-    }
+    const existing = await this.getCredentialsByCategory('ollama_instances');
+    await Promise.all(existing.map(c => this.deleteCredential(c.key)));
+    const promises: Promise<any>[] = [];
+    instances.forEach(inst => {
+      const fields = { name: inst.name, baseUrl: inst.baseUrl, isEnabled: inst.isEnabled, isPrimary: inst.isPrimary, instanceType: inst.instanceType || 'both', loadBalancingWeight: inst.loadBalancingWeight || 100 };
+      Object.entries(fields).forEach(([f, v]) => promises.push(this.createCredential({ key: `ollama_instance_${inst.id}_${f}`, value: v.toString(), is_encrypted: false, category: 'ollama_instances' })));
+    });
+    await Promise.all(promises);
   }
 
   async addOllamaInstance(instance: OllamaInstance): Promise<void> {
@@ -546,57 +258,30 @@ class CredentialsService {
 
   async updateOllamaInstance(instanceId: string, updates: Partial<OllamaInstance>): Promise<void> {
     const instances = await this.getOllamaInstances();
-    const instanceIndex = instances.findIndex(inst => inst.id === instanceId);
-    
-    if (instanceIndex === -1) {
-      throw new Error(`Ollama instance with ID ${instanceId} not found`);
+    const index = instances.findIndex(inst => inst.id === instanceId);
+    if (index !== -1) {
+      instances[index] = { ...instances[index], ...updates };
+      await this.setOllamaInstances(instances);
     }
-    
-    instances[instanceIndex] = { ...instances[instanceIndex], ...updates };
-    await this.setOllamaInstances(instances);
   }
 
   async removeOllamaInstance(instanceId: string): Promise<void> {
     const instances = await this.getOllamaInstances();
-    const filteredInstances = instances.filter(inst => inst.id !== instanceId);
-    
-    if (filteredInstances.length === instances.length) {
-      throw new Error(`Ollama instance with ID ${instanceId} not found`);
-    }
-    
-    await this.setOllamaInstances(filteredInstances);
+    await this.setOllamaInstances(instances.filter(inst => inst.id !== instanceId));
   }
 
-  async migrateOllamaFromLocalStorage(): Promise<{ migrated: boolean; instanceCount: number }> {
+  async migrateOllamaFromLocalStorage(): Promise<any> {
+    const saved = localStorage.getItem('ollama-instances');
+    if (!saved) return { migrated: false, instanceCount: 0 };
     try {
-      // Check if there are existing instances in the database
-      const existingInstances = await this.getOllamaInstances();
-      if (existingInstances.length > 0) {
-        return { migrated: false, instanceCount: 0 };
+      const instances = JSON.parse(saved);
+      if (Array.isArray(instances) && instances.length > 0) {
+        await this.setOllamaInstances(instances);
+        localStorage.removeItem('ollama-instances');
+        return { migrated: true, instanceCount: instances.length };
       }
-      
-      // Try to load from localStorage
-      const localStorageData = localStorage.getItem('ollama-instances');
-      if (!localStorageData) {
-        return { migrated: false, instanceCount: 0 };
-      }
-      
-      const localInstances = JSON.parse(localStorageData);
-      if (!Array.isArray(localInstances) || localInstances.length === 0) {
-        return { migrated: false, instanceCount: 0 };
-      }
-      
-      // Migrate to database
-      await this.setOllamaInstances(localInstances);
-      
-      // Clean up localStorage
-      localStorage.removeItem('ollama-instances');
-      
-      return { migrated: true, instanceCount: localInstances.length };
-    } catch (error) {
-      console.error('Failed to migrate Ollama instances from localStorage:', error);
-      return { migrated: false, instanceCount: 0 };
-    }
+    } catch {}
+    return { migrated: false, instanceCount: 0 };
   }
 }
 

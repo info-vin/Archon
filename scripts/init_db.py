@@ -110,22 +110,49 @@ def seed_data(cursor: PGCursor) -> None:
         with open(blog_seed) as f:
             cursor.execute(f.read())
 
+    rag_defaults = "migration/0.2.1/seed_rag_defaults.sql"
+    if os.path.exists(rag_defaults):
+        logger.info(f"🌱 Seeding RAG defaults: {rag_defaults}")
+        with open(rag_defaults) as f:
+            cursor.execute(f.read())
+
     logger.info("🔑 Syncing API Keys from Env...")
     api_key_map = [
-        ("OPENAI_API_KEY", "OPENAI_API_KEY", "ai", "OpenAI API Key"),
-        ("ANTHROPIC_API_KEY", "ANTHROPIC_API_KEY", "ai", "Anthropic API Key"),
-        ("GOOGLE_API_KEY", "GOOGLE_API_KEY", "ai", "Google AI API Key"),
-        ("GEMINI_API_KEY", "GEMINI_API_KEY", "ai", "Gemini API Key"),
+        ("OPENAI_API_KEY", "OPENAI_API_KEY", "api_keys", "OpenAI API Key"),
+        ("ANTHROPIC_API_KEY", "ANTHROPIC_API_KEY", "api_keys", "Anthropic API Key"),
+        ("GOOGLE_API_KEY", "GOOGLE_API_KEY", "api_keys", "Google AI API Key"),
+        ("GEMINI_API_KEY", "GEMINI_API_KEY", "api_keys", "Gemini API Key"),
         ("LOGFIRE_TOKEN", "LOGFIRE_TOKEN", "observability", "Logfire Token"),
     ]
     for env_var, db_key, category, desc in api_key_map:
         val = os.getenv(env_var)
         if val:
+            # We want these to be encrypted in the DB
+            from src.server.services.credential_service import credential_service
+            # We must use a synchronous-looking approach or direct SQL for simplicity in init_db
+            # Actually, direct SQL with is_encrypted=true is fine, but we need to encrypt the value
+            # For simplicity in init_db, we will use the service if available, otherwise fallback
+            encrypted_val = credential_service._encrypt_value(val)
             cursor.execute("""
-                INSERT INTO archon_settings (key, value, is_encrypted, category, description, updated_at)
-                VALUES (%s, %s, false, %s, %s, NOW())
-                ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW();
-            """, (db_key, val, category, desc))
+                INSERT INTO archon_settings (key, encrypted_value, is_encrypted, category, description, updated_at)
+                VALUES (%s, %s, true, %s, %s, NOW())
+                ON CONFLICT (key) DO UPDATE SET encrypted_value = EXCLUDED.encrypted_value, is_encrypted = true, updated_at = NOW();
+            """, (db_key, encrypted_val, category, desc))
+
+    # Feature Flags and System Settings
+    feature_settings = [
+        ("PROJECTS_ENABLED", "true", "features", "Enable or disable Projects and Tasks functionality"),
+        ("STYLE_GUIDE_ENABLED", "false", "features", "Show UI style guide and components in navigation"),
+        ("DISCONNECT_SCREEN_ENABLED", "true", "features", "Enable the server disconnection overlay"),
+        ("LOGFIRE_ENABLED", "false", "features", "Enable Logfire telemetry"),
+        ("OLLAMA_INSTANCES", '[{"id":"default","name":"Local Ollama","baseUrl":"http://host.docker.internal:11434","isEnabled":true,"isPrimary":true,"loadBalancingWeight":100,"instanceType":"both"}]', "ollama_instances", "Configured Ollama instances for the system")
+    ]
+    for key, val, category, desc in feature_settings:
+        cursor.execute("""
+            INSERT INTO archon_settings (key, value, is_encrypted, category, description, updated_at)
+            VALUES (%s, %s, false, %s, %s, NOW())
+            ON CONFLICT (key) DO NOTHING;
+        """, (key, val, category, desc))
 
     # Bob Workflow Specific Settings
     bob_settings = [
@@ -134,13 +161,15 @@ def seed_data(cursor: PGCursor) -> None:
         ("MARKETING_MODEL", "gemini-2.0-flash", "marketing", "Primary model for marketing content generation"),
         ("SCHEDULER_PROBE_INTERVAL_MINS", "60", "system", "Frequency of system heartbeat probes (minutes)"),
         ("SCHEDULER_PATROL_INTERVAL_MINS", "60", "system", "Frequency of log auto-repair scans (minutes)"),
-        ("SCHEDULER_SENTINEL_INTERVAL_HOURS", "12", "business", "Frequency of business risk scans (hours)")
+        ("SCHEDULER_SENTINEL_INTERVAL_HOURS", "12", "business", "Frequency of business risk scans (hours)"),
+        ("CRAWLER_104_SEARCH_API", "https://www.104.com.tw/jobs/search/list", "crawling", "104 Search API Endpoint"),
+        ("CRAWLER_104_DETAIL_API", "https://www.104.com.tw/job/ajax/content", "crawling", "104 Job Detail AJAX Endpoint")
     ]
     for key, val, category, desc in bob_settings:
         cursor.execute("""
             INSERT INTO archon_settings (key, value, is_encrypted, category, description, updated_at)
             VALUES (%s, %s, false, %s, %s, NOW())
-            ON CONFLICT (key) DO NOTHING;
+            ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW();
         """, (key, val, category, desc))
 
 def sync_auth_users(cursor: PGCursor) -> None:
@@ -242,7 +271,7 @@ def main():
 
     # 1. Run Migrations & Seeds in one transaction
     with db_transaction() as cursor:
-        run_migrations(cursor, exclude={'RESET_DB.sql', 'backup_database.sql', 'complete_setup.sql', 'seed_mock_data.sql'})
+        run_migrations(cursor, exclude={'RESET_DB.sql', 'backup_database.sql', 'complete_setup.sql'})
         
         if not migrate_only:
             seed_data(cursor)
