@@ -73,6 +73,7 @@ server = [
     "beautifulsoup4>=4.13.4",
     "lxml>=5.4.0",
     "APScheduler>=3.10.0",
+    "pydantic-ai>=0.0.13",
 ]
 
 # Optional reranking dependencies for server

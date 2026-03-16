@@ -106,6 +106,15 @@ export async function callAPIWithETag<T = unknown>(endpoint: string, options: Re
 
     // Handle errors
     if (!response.ok) {
+      if (response.status === 401) {
+        console.warn("🔐 401 Unauthorized detected. Clearing stale token and retrying...");
+        localStorage.removeItem("archon_token");
+        // Optional: Force reload to trigger AuthContext initAuth
+        if (typeof window !== "undefined") {
+          window.location.reload();
+        }
+      }
+      
       let errorMessage = `HTTP error! status: ${response.status}`;
       try {
         const errorBody = await response.text();

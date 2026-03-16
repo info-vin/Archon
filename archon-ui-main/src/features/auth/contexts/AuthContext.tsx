@@ -25,16 +25,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const initAuth = async () => {
+    const initAuth = async (retries = 3) => {
       try {
         // Attempt Dev Auto-Login
-        // NOTE: In production, this would check for existing session or redirect to /login
         const response = await fetch(`${API_BASE_URL}/auth/dev-token`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
         });
 
         if (!response.ok) {
+          if (retries > 0) {
+            console.log(`Auto-login attempt failed, retrying... (${retries} left)`);
+            setTimeout(() => initAuth(retries - 1), 2000);
+            return;
+          }
           throw new Error(`Auto-login failed: ${response.statusText}`);
         }
 

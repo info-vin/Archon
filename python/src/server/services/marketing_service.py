@@ -297,7 +297,25 @@ class MarketingService(BaseRepository):
             logger.error(f"MarketingService: Blog drafting failed: {e}")
             return False, {"error_code": 500, "message": f"AI Error: {str(e)}"}
 
-    async def get_trends(self) -> dict:
+    async def get_marketing_stats(self) -> dict:
+        """Fetch basic marketing performance statistics."""
+        try:
+            leads_count = self.supabase_client.table("leads").select("id", count="exact").execute().count or 0
+            blogs_count = self.supabase_client.table("blog_posts").select("id", count="exact").execute().count or 0
+            converted_leads = self.supabase_client.table("leads").select("id", count="exact").eq("status", "converted").execute().count or 0
+
+            return {
+                "total_leads": leads_count,
+                "total_blog_posts": blogs_count,
+                "conversion_rate": round((converted_leads / leads_count * 100), 2) if leads_count > 0 else 0,
+                "active_campaigns": 3, # Placeholder for now
+                "last_updated": "2026-03-16T10:00:00Z"
+            }
+        except Exception as e:
+            logger.error(f"Failed to fetch marketing stats: {e}")
+            return {"error": str(e)}
+
+    async def get_marketing_trends(self) -> dict:
         res_t = self.supabase_client.table("marketing_trends").select("*").eq("trend_type", "keyword_growth").order("report_date", desc=True).limit(1).execute()
         res_s = self.supabase_client.table("marketing_trends").select("*").eq("trend_type", "sankey_flow").order("report_date", desc=True).limit(1).execute()
         return {

@@ -34,7 +34,6 @@ from .api_routes.internal_api import router as internal_router
 from .api_routes.knowledge_api import router as knowledge_router
 from .api_routes.log_api import router as log_router
 from .api_routes.marketing_api import router as marketing_router  # NEW IMPORT
-from .api_routes.mcp_api import router as mcp_router
 from .api_routes.migration_api import router as migration_router
 from .api_routes.ollama import router as ollama_router
 from .api_routes.progress_api import router as progress_router
@@ -72,7 +71,7 @@ logger = logging.getLogger(__name__)
 
 # Override uvicorn's access log format to be less verbose
 uvicorn_logger = logging.getLogger("uvicorn.access")
-uvicorn_logger.setLevel(logging.WARNING)  # Only log warnings and errors, not every request
+uvicorn_logger.setLevel(logging.INFO)  # Enable all logs
 
 # CrawlingContext has been replaced by CrawlerManager in services/crawler_manager.py
 
@@ -251,8 +250,9 @@ async def skip_health_check_logs(request, call_next):
 
 
 # Include API routers
-app.include_router(settings_router)
-app.include_router(mcp_router)
+app.include_router(settings_router, prefix="/api")
+app.include_router(auth_router, prefix="/api")
+
 # app.include_router(mcp_client_router)  # Removed - not part of new architecture
 app.include_router(knowledge_router)
 app.include_router(projects_router)

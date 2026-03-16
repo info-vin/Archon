@@ -11,9 +11,18 @@ from .utils import get_user_from_token
 
 # Security scheme for OpenAPI docs
 security = HTTPBearer()
+security_optional = HTTPBearer(auto_error=False)
 
 async def get_token(credentials: Annotated[HTTPAuthorizationCredentials, Depends(security)]) -> str:
     """Extracts the Bearer token from the Authorization header."""
+    return str(credentials.credentials)
+
+async def get_token_optional(
+    credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(security_optional)]
+) -> str | None:
+    """Extracts the Bearer token if present, otherwise returns None."""
+    if not credentials:
+        return None
     return str(credentials.credentials)
 
 async def get_current_user(
@@ -56,6 +65,25 @@ async def get_current_user(
         }
 
     return cast(dict[str, Any], profile) # Should contain 'role' field
+
+async def get_current_user_optional(
+    token: Annotated[str | None, Depends(get_token_optional)]
+) -> dict | None:
+    """
+    Validates the token and retrieves the profile if a token is provided.
+    If no token is provided, or the token is invalid, returns None instead of raising 401.
+    Useful for endpoints that have public fallback behavior (e.g. public settings).
+    """
+    if not token:
+        return None
+
+    try:
+        # We reuse get_current_user logic but catch the 401 to return None
+        return await get_current_user(token)
+    except HTTPException as e:
+        if e.status_code == status.HTTP_401_UNAUTHORIZED:
+            return None
+        raise e
 
 async def get_current_admin(
     current_user: Annotated[dict, Depends(get_current_user)]

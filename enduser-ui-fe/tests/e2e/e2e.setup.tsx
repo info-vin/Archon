@@ -65,9 +65,22 @@ vi.mock('../../src/services/api', async (importOriginal) => {
 
     // 3. Wrap other functions to allow spying/mocking while defaulting to pass-through
     Object.keys(mockedApi).forEach(key => {
-        if (key !== 'getCurrentUser' && key !== 'getTasks' && key !== '_getHeaders' && typeof mockedApi[key] === 'function') {
+        const ignoreList = ['getCurrentUser', 'getTasks', '_getHeaders', 'getAssignableAgents', 'getAttendanceStatus'];
+        
+        if (!ignoreList.includes(key) && typeof mockedApi[key] === 'function') {
             mockedApi[key] = vi.fn().mockImplementation((...args) => actual.api[key].call(mockedApi, ...args));
+        } else if (ignoreList.includes(key) && typeof mockedApi[key] === 'function') {
+             // Keep the original function reference for testing fallbacks
+             mockedApi[key] = actual.api[key];
         }
+    });
+    
+    // Explicitly re-attach for specific test suites that might rely on them
+    mockedApi.getCurrentUser = vi.fn().mockResolvedValue(MOCK_ADMIN_USER);
+    mockedApi._getHeaders = vi.fn().mockResolvedValue({
+        'Content-Type': 'application/json',
+        'X-User-Role': 'system_admin', 
+        'Authorization': 'Bearer mock-token'
     });
     
     return {

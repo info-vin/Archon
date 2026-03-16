@@ -13,10 +13,17 @@ from src.server.services.mcp_service_client import get_mcp_service_client
 router = APIRouter(prefix="/api/mcp", tags=["mcp"])
 
 @router.get("/status")
+@router.get("/health")
 async def get_mcp_status(current_user: dict = Depends(get_current_user)):
     """General connection status. Available to all authenticated users."""
     client = get_mcp_service_client()
     return await client.health_check()
+
+@router.get("/sessions")
+async def get_mcp_sessions(current_user: dict = Depends(get_current_user)):
+    """Get active tool sessions. Frontend expectation."""
+    # Placeholder: In a real system, this would query the session manager
+    return {"sessions": [], "count": 0}
 
 @router.get("/config")
 async def get_mcp_config(current_user: dict = Depends(requires_permission(MCP_MANAGE))):

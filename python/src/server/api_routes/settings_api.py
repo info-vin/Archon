@@ -7,9 +7,9 @@ Supports legacy /api prefix for frontend compatibility.
 from datetime import datetime
 from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 
-from src.server.auth.dependencies import get_current_user, requires_permission
+from src.server.auth.dependencies import get_current_user, get_current_user_optional, requires_permission
 from src.server.auth.permissions import USER_MANAGE
 from src.server.schemas.settings import (
     CredentialCreate,
@@ -112,9 +112,20 @@ async def get_credentials_by_category(
 @router.get("/credentials/{key}")
 async def get_credential(
     key: str,
-    current_user: dict = Depends(get_current_user)
+    current_user: dict | None = Depends(get_current_user_optional)
 ):
-    """Fetch a specific credential."""
+    """
+    Fetch a specific credential.
+    Public UI settings can be fetched without authentication.
+    Other settings require a valid user token.
+    """
+    if current_user is None and key not in OPTIONAL_SETTINGS_WITH_DEFAULTS:
+        # Enforce authentication for all non-public keys
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication required to fetch this setting"
+        )
+
     val = await credential_service.get_credential(key)
     if val is None:
         if key in OPTIONAL_SETTINGS_WITH_DEFAULTS:

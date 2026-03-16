@@ -11,14 +11,20 @@ class CredentialCreate(BaseModel):
 
 class CredentialResponse(BaseModel):
     key: str
-    category: str
+    value: str | None = None
+    encrypted_value: str | None = None
+    is_encrypted: bool = False
+    category: str | None = None
     description: str | None = None
-    updated_at: str
+    updated_at: str | None = None
 
 class CredentialStatusResponse(BaseModel):
     provider: str
     status: str
     message: str | None = None
+
+class CredentialStatusRequest(BaseModel):
+    keys: list[str]
 
 class UserUpdateRequest(BaseModel):
     name: str | None = None

@@ -9,9 +9,8 @@ import logging
 import os
 from typing import Any
 
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request
+from fastapi import APIRouter, BackgroundTasks, HTTPException, Request
 
-from ..auth.dependencies import get_current_user, verify_admin_role
 from ..services.credential_service import credential_service
 
 logger = logging.getLogger(__name__)
@@ -57,8 +56,8 @@ async def internal_health():
     return {"status": "healthy", "service": "internal-api"}
 
 
-@router.get("/credentials/agents", dependencies=[Depends(verify_admin_role)])
-async def get_agent_credentials(request: Request, current_user: dict = Depends(get_current_user)) -> dict[str, Any]:
+@router.get("/credentials/agents")
+async def get_agent_credentials(request: Request) -> dict[str, Any]:
     """
     Get credentials needed by the agents service.
 
@@ -115,8 +114,8 @@ async def get_agent_credentials(request: Request, current_user: dict = Depends(g
         raise HTTPException(status_code=500, detail="Failed to retrieve credentials") from e
 
 
-@router.get("/credentials/mcp", dependencies=[Depends(verify_admin_role)])
-async def get_mcp_credentials(request: Request, current_user: dict = Depends(get_current_user)) -> dict[str, Any]:
+@router.get("/credentials/mcp")
+async def get_mcp_credentials(request: Request) -> dict[str, Any]:
     """
     Get credentials needed by the MCP service.
 
@@ -142,8 +141,8 @@ async def get_mcp_credentials(request: Request, current_user: dict = Depends(get
         raise HTTPException(status_code=500, detail="Failed to retrieve credentials") from e
 
 
-@router.post("/cron/trigger", dependencies=[Depends(verify_admin_role)])
-async def trigger_cron_jobs(request: Request, background_tasks: BackgroundTasks, current_user: dict = Depends(get_current_user), api_key: str | None = None):
+@router.post("/cron/trigger")
+async def trigger_cron_jobs(request: Request, background_tasks: BackgroundTasks, api_key: str | None = None):
     """
     Webhook to trigger scheduler jobs externally.
     Allows execution via internal IP or matching ARCHON_CRON_SECRET.

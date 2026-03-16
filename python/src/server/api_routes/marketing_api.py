@@ -105,6 +105,24 @@ async def get_content_context(source_id: str, source_type: str = Query("lead"), 
     service = MarketingService()
     return await service.get_content_context(source_id, source_type)
 
+@router.post("/manager/sentinel/run")
+async def run_sentinel_manual(current_user: dict = Depends(requires_permission(AGENT_TRIGGER_MKT))):
+    """Manually trigger the Business Sentinel."""
+    service = MarketingService()
+    return await service.run_sentinel()
+
+@router.get("/stats")
+async def get_marketing_stats(current_user: dict = Depends(get_current_user)):
+    """Fetch marketing performance statistics."""
+    service = MarketingService()
+    return await service.get_marketing_stats()
+
+@router.get("/trends")
+async def get_marketing_trends(current_user: dict = Depends(get_current_user)):
+    """Fetch marketing trends analysis."""
+    service = MarketingService()
+    return await service.get_marketing_trends()
+
 @router.get("/approvals")
 async def get_pending_approvals(current_user: dict = Depends(requires_permission(TASK_READ_TEAM))):
     service = MarketingService()

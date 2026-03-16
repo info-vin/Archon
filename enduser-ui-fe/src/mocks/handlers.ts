@@ -77,7 +77,7 @@ export const handlers = [
 
   // 3. Marketing & Leads
   http.get('/api/marketing/leads', () => HttpResponse.json([
-    { id: 'lead-1', company_name: 'Retail Corp', job_title: 'Senior Data Analyst', status: 'qualified', source: 'mock', contact_name: 'Alice Johnson', contact_email: 'alice@retail.com' }
+    { id: 'lead-1', company_name: 'Retail Corp', job_title: 'Senior Data Analyst', status: 'shortlisted', source: 'mock', contact_name: 'Alice Johnson', contact_email: 'alice@retail.com', match_score: 95, identified_need: 'Needs data analytics solution' }
   ])),
   http.get('/api/marketing/jobs', ({ request }) => {
     const url = new URL(request.url);
@@ -129,6 +129,10 @@ export const handlers = [
         { model: 'gemini-2.5-flash', agent: 'Marketing (Bob/Alice)', provider: 'google', status: 'healthy', latency_ms: 120 },
         { model: 'gemini-1.5-pro', agent: 'Manager (Charlie)', provider: 'google', status: 'healthy', latency_ms: 250 }
     ]
+  })),
+  http.get('/api/stats/agent-xp', () => HttpResponse.json({
+    monthly_trend: [],
+    recent_transactions: []
   })),
   
   // 5. Fallbacks

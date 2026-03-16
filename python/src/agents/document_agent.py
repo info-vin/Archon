@@ -131,10 +131,17 @@ class DocumentAgent(BaseAgent[DocumentDependencies, DocumentOperation]):
 
     def get_system_prompt(self) -> str:
         """Fetch the system prompt from the prompt service."""
-        from ..services.prompt_service import prompt_service
-        default_prompt = "You are a Document Management Assistant."
-        prompt: str = prompt_service.get_prompt("document_agent_prompt", default_prompt)
-        return prompt
+        default_prompt = """You are a Document Management Assistant.
+You help users manage, create, and update project documentation.
+You can list documents, create new ones, update specific sections, and generate diagrams like ERD or Feature Plans.
+Always be professional and helpful."""
+        try:
+            from ..services.prompt_service import prompt_service
+            prompt: str = prompt_service.get_prompt("document_agent_prompt", default_prompt)
+            return prompt
+        except (ImportError, Exception) as e:
+            logger.warning(f"Could not load prompt from service (fallback to default): {e}")
+            return default_prompt
 
     def _generate_block_id(self) -> str:
         """Generate a unique block ID (Facade)."""

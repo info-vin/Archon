@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from pydantic import BaseModel
 
 from ..auth.dependencies import get_current_user, verify_admin_role
@@ -9,6 +9,25 @@ from ..services.agent_service import agent_service
 logger = get_logger(__name__)
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
+
+@router.post("/upload")
+async def admin_upload_file(
+    file: UploadFile = File(...),
+    knowledge_type: str = Form("technical"),
+    tags: str = Form("[]"),
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    Compatibility endpoint for enduser-ui-fe upload feature.
+    Delegates to the standard document upload logic.
+    """
+    from .knowledge.upload import upload_document
+    return await upload_document(
+        file=file,
+        knowledge_type=knowledge_type,
+        tags=tags,
+        current_user=current_user
+    )
 
 class UpdateRoleRequest(BaseModel):
     role: str
