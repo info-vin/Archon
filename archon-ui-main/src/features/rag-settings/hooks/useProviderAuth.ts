@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { credentialsService } from '@/services/credentialsService';
+import { callAPIWithETag } from '@/features/shared/api/apiClient';
 import { PROVIDER_CREDENTIAL_KEYS, CREDENTIAL_PROVIDER_MAP } from '../constants';
 import { ProviderCredentialKey, RagSettingsType } from '../types';
 
@@ -33,8 +34,7 @@ export const useProviderAuth = (ragSettings: RagSettingsType) => {
   const testProviderConnection = useCallback(async (provider: string): Promise<boolean> => {
     setProviderConnectionStatus(prev => ({ ...prev, [provider]: { ...prev[provider], checking: true } }));
     try {
-      const response = await fetch(`/api/providers/${provider}/status`);
-      const result = await response.json();
+      const result = await callAPIWithETag<any>(`/providers/${provider}/status`);
       const isConnected = result.ok && result.reason === 'connected';
       setProviderConnectionStatus(prev => ({
         ...prev,

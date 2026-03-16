@@ -1,3 +1,4 @@
+import { callAPIWithETag } from '../features/shared/api/apiClient';
 import { credentialsService } from './credentialsService';
 
 interface HealthCheckCallback {
@@ -32,19 +33,15 @@ class ServerHealthService {
   async checkHealth(): Promise<boolean> {
     try {
       // Use the proxied /api/health endpoint which works in both dev and Docker
-      const response = await fetch('/api/health', {
+      // callAPIWithETag handles auth headers and standardized error response
+      const data = await callAPIWithETag<any>('/health', {
         method: 'GET',
         signal: AbortSignal.timeout(10000) // 10 second timeout (increased for heavy operations)
       });
       
-      if (response.ok) {
-        const data = await response.json();
-        // Accept healthy, online, or initializing (server is starting up)
-        const isHealthy = data.status === 'healthy' || data.status === 'online' || data.status === 'initializing';
-        return isHealthy;
-      }
-      console.error('🏥 [Health] Response not OK:', response.status);
-      return false;
+      // Accept healthy, online, or initializing (server is starting up)
+      const isHealthy = data.status === 'healthy' || data.status === 'online' || data.status === 'initializing';
+      return isHealthy;
     } catch (err) {
       console.error('🏥 [Health] Health check failed:', err);
       // Health check failed

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { callAPIWithETag } from '../features/shared/api/apiClient';
 
 interface MigrationStatus {
   migrationRequired: boolean;
@@ -15,8 +16,7 @@ export const useMigrationStatus = (): MigrationStatus => {
   useEffect(() => {
     const checkMigrationStatus = async (): Promise<void> => {
       try {
-        const response = await fetch('/api/health');
-        const healthData = await response.json();
+        const healthData = await callAPIWithETag<any>('/health');
         
         if (healthData.status === 'migration_required') {
           setStatus({

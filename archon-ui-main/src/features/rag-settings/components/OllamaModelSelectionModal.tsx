@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom';
 import { X, Search, RotateCcw, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { useToast } from '@/features/shared/hooks/useToast';
+import { callAPIWithETag } from '@/features/shared/api/apiClient';
 import { OllamaModelCard } from './shared/OllamaModelCard';
 import { ModelInfo } from '../types/ModelInterfaces';
 import { useOllamaModelFilter } from '../hooks/useOllamaModelFilter';
@@ -93,9 +94,8 @@ export const OllamaModelSelectionModal: React.FC<OllamaModelSelectionModalProps>
         }
       }
       const instanceUrl = instances.find(i => i.url.replace('/v1', '') === selectedInstanceUrl)?.url || selectedInstanceUrl + '/v1';
-      const response = await fetch(`/api/ollama/models?instance_urls=${encodeURIComponent(instanceUrl)}&include_capabilities=true&fetch_details=true`);
-      if (response.ok) {
-        const data = await response.json();
+      const data = await callAPIWithETag<any>(`/ollama/models?instance_urls=${encodeURIComponent(instanceUrl)}&include_capabilities=true&fetch_details=true`);
+      if (data) {
         const getArchonCompatibility = (model: ApiOllamaModel, mType: string): 'full' | 'partial' | 'limited' => {
           if (mType === 'chat') {
             const n = model.name.toLowerCase();

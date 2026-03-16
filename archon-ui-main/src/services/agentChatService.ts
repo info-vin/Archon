@@ -3,6 +3,7 @@
  * Handles communication with AI agents via REST API
  */
 
+import { callAPIWithETag } from '../features/shared/api/apiClient';
 import { serverHealthService } from './serverHealthService';
 
 export interface ChatMessage {
@@ -28,16 +29,13 @@ interface ChatRequest {
 }
 
 class AgentChatService {
-  private baseUrl: string;
   private pollingIntervals: Map<string, NodeJS.Timeout> = new Map();
   private messageHandlers: Map<string, (message: ChatMessage) => void> = new Map();
   private errorHandlers: Map<string, (error: Error) => void> = new Map();
   private _serverStatus: 'online' | 'offline' | 'unknown' = 'unknown';
 
   constructor() {
-    // In development, the API is proxied through Vite, so we use the same origin
-    // In production, this would be the actual API URL
-    this.baseUrl = '';
+    // callAPIWithETag handles baseUrl automatically via proxy/config
   }
 
   /**
@@ -59,17 +57,9 @@ class AgentChatService {
    */
   private async checkServerStatus(): Promise<'online' | 'offline'> {
     try {
-      const response = await fetch(`${this.baseUrl}/api/agent-chat/status`, {
-        method: 'GET',
-      });
-      
-      if (response.ok) {
-        this._serverStatus = 'online';
-        return 'online';
-      } else {
-        this._serverStatus = 'offline';
-        return 'offline';
-      }
+      await callAPIWithETag("/agent-chat/status");
+      this._serverStatus = 'online';
+      return 'online';
     } catch (error) {
       console.error('Failed to check chat server status:', error);
       this._serverStatus = 'offline';
@@ -82,14 +72,8 @@ class AgentChatService {
    */
   async validateSession(sessionId: string): Promise<boolean> {
     try {
-      const response = await fetch(`${this.baseUrl}/api/agent-chat/sessions/${sessionId}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      return response.ok;
+      await callAPIWithETag(`/agent-chat/sessions/${sessionId}`);
+      return true;
     } catch (error) {
       console.error('Failed to validate session:', error);
       return false;
@@ -101,32 +85,19 @@ class AgentChatService {
    */
   async createSession(agentType: string, projectId?: string): Promise<ChatSession> {
     try {
-      const response = await fetch(`${this.baseUrl}/api/agent-chat/sessions`, {
+      const session = await callAPIWithETag<ChatSession>("/agent-chat/sessions", {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify({
           agent_type: agentType,
           project_id: projectId
         }),
       });
-
-      if (!response.ok) {
-        // If we get a 404, the agent service is not running
-        if (response.status === 404) {
-          throw new Error('Agent chat service is not available. The service may be disabled.');
-        }
-        throw new Error(`Failed to create session: ${response.statusText}`);
-      }
-
-      const session = await response.json();
       return session;
     } catch (error) {
-      // Don't log fetch errors for disabled service
-      if (error instanceof Error && !error.message.includes('not available')) {
-        console.error('Failed to create chat session:', error);
+      if (error instanceof Error && error.message.includes('404')) {
+        throw new Error('Agent chat service is not available. The service may be disabled.');
       }
+      console.error('Failed to create chat session:', error);
       throw error;
     }
   }
@@ -136,19 +107,10 @@ class AgentChatService {
    */
   async sendMessage(sessionId: string, request: ChatRequest): Promise<ChatMessage> {
     try {
-      const response = await fetch(`${this.baseUrl}/api/agent-chat/sessions/${sessionId}/send`, {
+      const message = await callAPIWithETag<ChatMessage>(`/agent-chat/sessions/${sessionId}/send`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify(request),
       });
-
-      if (!response.ok) {
-        throw new Error(`Failed to send message: ${response.statusText}`);
-      }
-
-      const message = await response.json();
       return message;
     } catch (error) {
       console.error('Failed to send message:', error);
@@ -175,28 +137,8 @@ class AgentChatService {
     
     const pollInterval = setInterval(async () => {
       try {
-        const response = await fetch(`${this.baseUrl}/api/agent-chat/sessions/${sessionId}/messages${lastMessageId ? `?after=${lastMessageId}` : ''}`, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        });
-
-        if (!response.ok) {
-          // If we get a 404, the service is not available - stop polling
-          if (response.status === 404) {
-            clearInterval(pollInterval);
-            this.pollingIntervals.delete(sessionId);
-            const errorHandler = this.errorHandlers.get(sessionId);
-            if (errorHandler) {
-              errorHandler(new Error('Agent chat service is not available'));
-            }
-            return;
-          }
-          throw new Error(`Failed to fetch messages: ${response.statusText}`);
-        }
-
-        const messages: ChatMessage[] = await response.json();
+        const url = `/agent-chat/sessions/${sessionId}/messages${lastMessageId ? `?after=${lastMessageId}` : ''}`;
+        const messages = await callAPIWithETag<ChatMessage[]>(url);
         
         // Process new messages
         for (const message of messages) {
@@ -207,10 +149,17 @@ class AgentChatService {
           }
         }
       } catch (error) {
-        // Only log non-404 errors (404s are handled above)
-        if (error instanceof Error && !error.message.includes('404')) {
-          console.error('Failed to poll messages:', error);
+        if (error instanceof Error && error.message.includes('404')) {
+          clearInterval(pollInterval);
+          this.pollingIntervals.delete(sessionId);
+          const errorHandler = this.errorHandlers.get(sessionId);
+          if (errorHandler) {
+            errorHandler(new Error('Agent chat service is not available'));
+          }
+          return;
         }
+        
+        console.error('Failed to poll messages:', error);
         const errorHandler = this.errorHandlers.get(sessionId);
         if (errorHandler) {
           errorHandler(error instanceof Error ? error : new Error('Unknown error'));
@@ -233,18 +182,7 @@ class AgentChatService {
    */
   async getChatHistory(sessionId: string): Promise<ChatMessage[]> {
     try {
-      const response = await fetch(`${this.baseUrl}/api/agent-chat/sessions/${sessionId}/messages`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`Failed to get chat history: ${response.statusText}`);
-      }
-
-      const messages = await response.json();
+      const messages = await callAPIWithETag<ChatMessage[]>(`/agent-chat/sessions/${sessionId}/messages`);
       return messages;
     } catch (error) {
       console.error('Failed to get chat history:', error);
@@ -260,16 +198,9 @@ class AgentChatService {
       // Clean up any active connections first
       this.cleanupConnection(sessionId);
 
-      const response = await fetch(`${this.baseUrl}/api/agent-chat/sessions/${sessionId}`, {
+      await callAPIWithETag(`/agent-chat/sessions/${sessionId}`, {
         method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-        },
       });
-
-      if (!response.ok) {
-        throw new Error(`Failed to delete session: ${response.statusText}`);
-      }
     } catch (error) {
       console.error('Failed to delete chat session:', error);
       throw error;
@@ -286,14 +217,15 @@ class AgentChatService {
       return 'offline';
     }
 
-    // If we already know the status and it's not unknown, we could potentially return it
-    // but the current implementation always checks fresh. 
-    // Just referencing it here satisfies the linter.
-    if (this._serverStatus === 'online' && Math.random() > 0.999) {
-       return this._serverStatus;
-    }
-
+    // Return the status from checkServerStatus
     return this.checkServerStatus();
+  }
+
+  /**
+   * Status property accessor for internal use or UI binding
+   */
+  get status(): 'online' | 'offline' | 'unknown' {
+    return this._serverStatus;
   }
 
   /**

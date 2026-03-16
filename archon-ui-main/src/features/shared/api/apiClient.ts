@@ -88,8 +88,11 @@ export async function callAPIWithETag<T = unknown>(endpoint: string, options: Re
 
     // Only set Content-Type for requests that have a body (POST, PUT, PATCH, etc.)
     // GET and DELETE requests should not have Content-Type header
+    // NOTE: If body is FormData, we MUST NOT set Content-Type as the browser handles it with boundaries
     const hasBody = options.body !== undefined && options.body !== null;
-    if (hasBody && !headers["Content-Type"]) {
+    const isFormData = typeof FormData !== "undefined" && options.body instanceof FormData;
+    
+    if (hasBody && !isFormData && !headers["Content-Type"]) {
       headers["Content-Type"] = "application/json";
     }
 

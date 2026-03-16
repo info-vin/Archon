@@ -5,7 +5,7 @@
  * Integrates with the enhanced backend Ollama endpoints for multi-instance configurations.
  */
 
-import { getApiUrl } from "../config/api";
+import { callAPIWithETag } from "../features/shared/api/apiClient";
 
 // Type definitions for Ollama API responses
 export interface OllamaModel {
@@ -176,8 +176,6 @@ export interface EmbeddingRouteOptions {
 }
 
 class OllamaService {
-  private baseUrl = getApiUrl();
-
   private handleApiError(error: unknown, context: string): Error {
     const errorMessage = error instanceof Error ? error.message : String(error);
 
@@ -223,20 +221,7 @@ class OllamaService {
         params.append('include_capabilities', options.includeCapabilities.toString());
       }
 
-      const response = await fetch(`${this.baseUrl}/api/ollama/models?${params.toString()}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`HTTP ${response.status}: ${errorText}`);
-      }
-
-      const data = await response.json();
-      return data;
+      return await callAPIWithETag<ModelDiscoveryResponse>(`/ollama/models?${params.toString()}`);
     } catch (error) {
       throw this.handleApiError(error, "Model discovery");
     }
@@ -261,20 +246,7 @@ class OllamaService {
         params.append('include_models', 'true');
       }
 
-      const response = await fetch(`${this.baseUrl}/api/ollama/instances/health?${params.toString()}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`HTTP ${response.status}: ${errorText}`);
-      }
-
-      const data = await response.json();
-      return data;
+      return await callAPIWithETag<InstanceHealthResponse>(`/ollama/instances/health?${params.toString()}`);
     } catch (error) {
       throw this.handleApiError(error, "Instance health checking");
     }
@@ -291,21 +263,10 @@ class OllamaService {
         timeout_seconds: options.timeoutSeconds || 30,
       };
 
-      const response = await fetch(`${this.baseUrl}/api/ollama/validate`, {
+      return await callAPIWithETag<InstanceValidationResponse>("/ollama/validate", {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify(requestBody),
       });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`HTTP ${response.status}: ${errorText}`);
-      }
-
-      const data = await response.json();
-      return data;
     } catch (error) {
       throw this.handleApiError(error, "Instance validation");
     }
@@ -322,21 +283,10 @@ class OllamaService {
         text_sample: options.textSample,
       };
 
-      const response = await fetch(`${this.baseUrl}/api/ollama/embedding/route`, {
+      return await callAPIWithETag<EmbeddingRouteResponse>("/ollama/embedding/route", {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify(requestBody),
       });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`HTTP ${response.status}: ${errorText}`);
-      }
-
-      const data = await response.json();
-      return data;
     } catch (error) {
       throw this.handleApiError(error, "Embedding route analysis");
     }
@@ -361,20 +311,7 @@ class OllamaService {
         params.append('sort_by_performance', 'true');
       }
 
-      const response = await fetch(`${this.baseUrl}/api/ollama/embedding/routes?${params.toString()}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`HTTP ${response.status}: ${errorText}`);
-      }
-
-      const data = await response.json();
-      return data;
+      return await callAPIWithETag<EmbeddingRoutesResponse>(`/ollama/embedding/routes?${params.toString()}`);
     } catch (error) {
       throw this.handleApiError(error, "Getting embedding routes");
     }
@@ -385,20 +322,9 @@ class OllamaService {
    */
   async clearCaches(): Promise<{ message: string }> {
     try {
-      const response = await fetch(`${this.baseUrl}/api/ollama/cache`, {
+      return await callAPIWithETag<{ message: string }>("/ollama/cache", {
         method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-        },
       });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`HTTP ${response.status}: ${errorText}`);
-      }
-
-      const data = await response.json();
-      return data;
     } catch (error) {
       throw this.handleApiError(error, "Cache clearing");
     }

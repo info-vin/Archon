@@ -4,7 +4,6 @@
  */
 
 import { callAPIWithETag } from "../../shared/api/apiClient";
-import { APIServiceError } from "../../shared/types/errors";
 import type {
   ChunksResponse,
   CodeExamplesResponse,
@@ -117,54 +116,15 @@ export const knowledgeService = {
       formData.append("tags", JSON.stringify(metadata.tags));
     }
 
-    // Use fetch directly for file upload (FormData doesn't work well with our ETag wrapper)
-    // In test environment, we need absolute URLs
-    let uploadUrl = "/api/documents/upload";
-    if (typeof process !== "undefined" && process.env?.NODE_ENV === "test") {
-      const testHost = process.env?.VITE_HOST || "localhost";
-      const testPort = process.env?.ARCHON_SERVER_PORT || "8181";
-      uploadUrl = `http://${testHost}:${testPort}${uploadUrl}`;
-    }
-
-    // Explicitly add Authorization header since we're bypassing callAPIWithETag
-    const headers: Record<string, string> = {};
-
-    let token = localStorage.getItem("archon_token");
-    // Fallback: Try to find Supabase token in localStorage
-    if (!token) {
-      for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key && key.startsWith("sb-") && key.endsWith("-auth-token")) {
-          try {
-            const sessionData = JSON.parse(localStorage.getItem(key) || "{}");
-            if (sessionData.access_token) {
-              token = sessionData.access_token;
-              break;
-            }
-          } catch {
-            // Ignore parse errors
-          }
-        }
-      }
-    }
-
-    if (token) {
-      headers["Authorization"] = `Bearer ${token}`;
-    }
-
-    const response = await fetch(uploadUrl, {
-      method: "POST",
-      headers, // Pass headers with auth token
-      body: formData,
-      signal: AbortSignal.timeout(300000), // 5 minute timeout for large file uploads
-    });
-
-    if (!response.ok) {
-      const err = await response.json().catch(() => ({}));
-      throw new APIServiceError(err.error || `HTTP ${response.status}`, "HTTP_ERROR", response.status);
-    }
-
-    return response.json();
+    // callAPIWithETag now supports FormData correctly
+    return callAPIWithETag<{ success: boolean; progressId: string; message: string; filename: string }>(
+      "/api/documents/upload",
+      {
+        method: "POST",
+        body: formData,
+        signal: AbortSignal.timeout(300000), // 5 minute timeout for large file uploads
+      },
+    );
   },
 
   /**

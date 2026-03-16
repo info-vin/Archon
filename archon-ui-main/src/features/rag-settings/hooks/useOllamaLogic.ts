@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
+import { callAPIWithETag } from '@/features/shared/api/apiClient';
 import { RagSettingsType } from '../types';
 import { DEFAULT_OLLAMA_URL } from '../constants';
 import { normalizeBaseUrl } from '../utils/modelHelpers';
@@ -54,9 +55,8 @@ export const useOllamaLogic = (
       instanceUrls.forEach(url => params.append('instance_urls', url));
       params.append('include_capabilities', 'true');
 
-      const response = await fetch(`/api/ollama/models?${params.toString()}`);
-      if (response.ok) {
-        const data = await response.json();
+      const data = await callAPIWithETag<any>(`/ollama/models?${params.toString()}`);
+      if (data) {
         const allChat = data.chat_models || [];
         const allEmb = data.embedding_models || [];
 
@@ -95,11 +95,10 @@ export const useOllamaLogic = (
 
     try {
       const baseUrl = url.replace('/v1', '').replace(/\/$/, '');
-      const backendHealthUrl = `/api/ollama/instances/health?instance_urls=${encodeURIComponent(baseUrl)}&include_models=true`;
+      const backendHealthUrl = `/ollama/instances/health?instance_urls=${encodeURIComponent(baseUrl)}&include_models=true`;
 
-      const response = await fetch(backendHealthUrl, { signal: AbortSignal.timeout(15000) });
-      if (response.ok) {
-        const data = await response.json();
+      const data = await callAPIWithETag<any>(backendHealthUrl, { signal: AbortSignal.timeout(15000) });
+      if (data) {
         const statusData = data.instance_status?.[baseUrl];
 
         if (statusData?.is_healthy) {
@@ -140,10 +139,9 @@ export const useOllamaLogic = (
     let cancelled = false;
     (async () => {
       try {
-        const response = await fetch(`/api/ollama/instances/health?instance_urls=${encodeURIComponent(baseUrl)}`, { signal: AbortSignal.timeout(10000) });
+        const data = await callAPIWithETag<any>(`/ollama/instances/health?instance_urls=${encodeURIComponent(baseUrl)}`, { signal: AbortSignal.timeout(10000) });
         if (cancelled) return;
-        if (response.ok) {
-          const data = await response.json();
+        if (data) {
           setOllamaServerStatus(data.instance_status?.[baseUrl]?.is_healthy ? 'online' : 'offline');
         } else setOllamaServerStatus('offline');
       } catch { if (!cancelled) setOllamaServerStatus('offline'); }
