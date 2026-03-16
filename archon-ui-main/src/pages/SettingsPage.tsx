@@ -40,7 +40,7 @@ export const SettingsPage = (): JSX.Element => {
     USE_HYBRID_SEARCH: true,
     USE_AGENTIC_RAG: true,
     USE_RERANKING: true,
-    MODEL_CHOICE: "gpt-4.1-nano",
+    MODEL_CHOICE: "gemini-2.5-flash",
   });
   const [codeExtractionSettings, setCodeExtractionSettings] =
     useState<CodeExtractionSettingsType>({

@@ -119,7 +119,7 @@ class CredentialsService {
       USE_HYBRID_SEARCH: true,
       USE_AGENTIC_RAG: true,
       USE_RERANKING: true,
-      MODEL_CHOICE: "gemini-1.5-flash",
+      MODEL_CHOICE: "gemini-2.5-flash",
       LLM_PROVIDER: "google",
       EMBEDDING_PROVIDER: "google",
       EMBEDDING_MODEL: "text-embedding-004",
