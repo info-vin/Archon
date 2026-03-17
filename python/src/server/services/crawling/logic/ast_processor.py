@@ -101,7 +101,13 @@ def detect_language_from_content(code: str) -> str:
     """Heuristic language detection."""
     scores = {}
     for lang, compiled_patterns in LANGUAGE_PATTERNS_COMPILED.items():
-        score = sum(1 for p in compiled_patterns if p.search(code))
+        # PERFORMANCE: Replaced sum(1 for ...) with standard for loop
+        # to avoid generator object creation overhead in hot path
+        score = 0
+        for p in compiled_patterns:
+            if p.search(code):
+                score += 1
+
         if score > 0:
             scores[lang] = score
 
