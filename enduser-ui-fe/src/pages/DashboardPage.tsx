@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { api } from '../services/api.ts';
+import { api } from '../services/api';
 import { Task, TaskStatus, TaskPriority, Project } from '../types.ts';
 import { GanttChartIcon, KanbanIcon, ListIcon, TableIcon, PlusIcon, ChevronDownIcon, ChevronsUpDownIcon, PaperclipIcon, ClockIcon } from '../components/Icons.tsx';
 import { TaskModal } from '../components/TaskModal.tsx';

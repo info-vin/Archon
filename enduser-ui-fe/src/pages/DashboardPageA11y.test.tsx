@@ -11,7 +11,9 @@ vi.mock('../services/api', () => ({
     getTasks: vi.fn().mockResolvedValue([]),
     getRecentActivity: vi.fn().mockResolvedValue([]),
     getCurrentUser: vi.fn().mockResolvedValue({ id: '1', email: 'test@example.com', role: 'user' }),
-    getAssignableUsers: vi.fn().mockResolvedValue([])
+    getAssignableUsers: vi.fn().mockResolvedValue([]),
+    getAssignableAgents: vi.fn().mockResolvedValue([]),
+    getAttendanceStatus: vi.fn().mockResolvedValue({ status: 'out' })
   },
   supabase: null
 }));

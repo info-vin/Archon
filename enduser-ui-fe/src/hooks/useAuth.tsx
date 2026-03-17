@@ -73,6 +73,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   }, []);
 
+  useEffect(() => {
+    if (user?.role) {
+      localStorage.setItem('user_role', user.role);
+    } else if (!user) {
+      localStorage.removeItem('user_role');
+    }
+  }, [user]);
+
   const login = async (credentials: LoginCredentials) => {
     setLoading(true);
     try {

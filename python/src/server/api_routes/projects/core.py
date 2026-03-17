@@ -2,7 +2,9 @@
 Projects Core API - Handles Project and Document life cycle.
 """
 
+from datetime import UTC, datetime
 from typing import Any, cast
+
 from fastapi import APIRouter, Depends, Header, HTTPException, Response
 
 from src.server.auth.dependencies import get_current_user, requires_permission
@@ -13,6 +15,7 @@ from src.server.schemas.projects import (
     CreateProjectRequest,
     UpdateProjectRequest,
 )
+
 from ...services.profile_service import ProfileService
 from ...services.projects.document_service import DocumentService
 from ...services.projects.project_creation_service import ProjectCreationService
@@ -21,7 +24,6 @@ from ...services.projects.source_linking_service import SourceLinkingService
 from ...services.rbac_service import RBACService
 from ...utils.api_utils import handle_service_result
 from ...utils.etag_utils import check_etag, generate_etag
-from datetime import datetime, UTC
 
 router = APIRouter()
 

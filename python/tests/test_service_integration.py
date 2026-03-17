@@ -21,8 +21,8 @@ client = TestClient(app)
 
 def test_project_with_tasks_flow():
     # Patch all involved classes
-    with patch("src.server.api_routes.projects_api.ProjectCreationService") as mock_create_class, \
-         patch("src.server.api_routes.projects_api.TaskService") as mock_task_class:
+    with patch("src.server.api_routes.projects.core.ProjectCreationService") as mock_create_class, \
+         patch("src.server.api_routes.projects.ops.TaskService") as mock_task_class:
 
         mock_create_inst = MagicMock()
         mock_create_inst.create_project_with_ai = AsyncMock(return_value=(True, {"project_id": "proj-int-1"}))
@@ -70,7 +70,7 @@ def test_background_task_progress():
     assert True
 
 def test_database_operations():
-    with patch("src.server.api_routes.projects_api.ProjectService") as mock_proj_class:
+    with patch("src.server.api_routes.projects.core.ProjectService") as mock_proj_class:
         mock_inst = MagicMock()
         mock_inst.list_projects = AsyncMock(return_value=(True, {"projects": []}))
         mock_proj_class.return_value = mock_inst
@@ -79,7 +79,7 @@ def test_database_operations():
         assert response.status_code == 200
 
 def test_concurrent_operations():
-    with patch("src.server.api_routes.projects_api.TaskService") as mock_task_class:
+    with patch("src.server.api_routes.projects.ops.TaskService") as mock_task_class:
         mock_inst = MagicMock()
         mock_inst.list_tasks = AsyncMock(return_value=(True, {"tasks": []}))
         mock_task_class.return_value = mock_inst

@@ -3,10 +3,10 @@ import { render, screen, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import BlogDetailPage from './BlogDetailPage.tsx';
-import { api } from '../services/api.ts';
+import { api } from '../services/api';
 
 // Mock the API
-vi.mock('../services/api.ts', () => ({
+vi.mock('../services/api', () => ({
     api: {
         getBlogPost: vi.fn()
     }

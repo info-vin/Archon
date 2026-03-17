@@ -24,8 +24,8 @@ def test_health_endpoint():
     assert response.status_code == 200
 
 def test_create_project():
-    # Patch CLASS inside the API module
-    with patch("src.server.api_routes.projects_api.ProjectCreationService") as mock_class:
+    # Patch CLASS inside the split API modules
+    with patch("src.server.api_routes.projects.core.ProjectCreationService") as mock_class:
         mock_inst = MagicMock()
         mock_inst.create_project_with_ai = AsyncMock(return_value=(True, {"project_id": "proj-1", "project": {}}))
         mock_class.return_value = mock_inst
@@ -34,7 +34,7 @@ def test_create_project():
         assert response.status_code in [200, 201]
 
 def test_list_projects():
-    with patch("src.server.api_routes.projects_api.ProjectService") as mock_class:
+    with patch("src.server.api_routes.projects.core.ProjectService") as mock_class:
         mock_inst = MagicMock()
         mock_inst.list_projects = AsyncMock(return_value=(True, {"projects": []}))
         mock_class.return_value = mock_inst
@@ -44,7 +44,8 @@ def test_list_projects():
 
 def test_create_task():
     # Correct Tuple Unpacking fix: Returns (True, {"task": ...})
-    with patch("src.server.api_routes.projects_api.TaskService") as mock_class:
+    # Patching the new physical location in projects.ops
+    with patch("src.server.api_routes.projects.ops.TaskService") as mock_class:
         mock_inst = MagicMock()
         mock_inst.create_task = AsyncMock(return_value=(True, {"task": {"id": "t1"}}))
         mock_class.return_value = mock_inst
@@ -56,7 +57,7 @@ def test_create_task():
         assert response.status_code in [200, 201]
 
 def test_list_tasks():
-    with patch("src.server.api_routes.projects_api.TaskService") as mock_class:
+    with patch("src.server.api_routes.projects.ops.TaskService") as mock_class:
         mock_inst = MagicMock()
         mock_inst.list_tasks = AsyncMock(return_value=(True, {"tasks": []}))
         mock_class.return_value = mock_inst
@@ -77,8 +78,8 @@ def test_polling_endpoint():
     assert response.status_code in [200, 404]
 
 def test_error_handling():
-    # Test project not found path
-    with patch("src.server.api_routes.projects_api.ProjectService") as mock_class:
+    # Test project not found path - patching projects.core
+    with patch("src.server.api_routes.projects.core.ProjectService") as mock_class:
         mock_inst = MagicMock()
         mock_inst.get_project = AsyncMock(return_value=(False, {"error": "Project not found"}))
         mock_class.return_value = mock_inst

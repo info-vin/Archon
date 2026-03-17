@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { api } from '../services/api.ts';
+import { api } from '../services/api';
 import { XIcon, ChevronDownIcon, CheckCircleIcon, PaperclipIcon } from './Icons.tsx';
 
 interface KnowledgeItem {

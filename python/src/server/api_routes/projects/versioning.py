@@ -3,6 +3,7 @@ Projects Versioning API - Handles version history and restoration.
 """
 
 from typing import Any, cast
+
 from fastapi import APIRouter, Depends, HTTPException
 
 from src.server.auth.dependencies import get_current_user

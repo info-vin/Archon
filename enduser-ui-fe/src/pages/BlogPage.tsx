@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { api } from '../services/api.ts';
+import { api } from '../services/api';
 import { BlogPost } from '../types.ts';
 
 const BlogPage: React.FC = () => {

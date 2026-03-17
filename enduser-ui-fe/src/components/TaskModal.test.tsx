@@ -5,7 +5,7 @@ import userEvent from '@testing-library/user-event';
 import { Task, TaskPriority, TaskStatus } from '../types';
 
 // Mock API
-vi.mock('../services/api.ts', () => ({
+vi.mock('../services/api', () => ({
   api: {
     getAssignableUsers: vi.fn().mockResolvedValue([
       { id: '2', name: 'Alice Johnson', role: 'member' }

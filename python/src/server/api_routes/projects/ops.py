@@ -3,6 +3,7 @@ Projects Ops API - Handles Tasks, AI Dispatching, and Agent Callbacks.
 """
 
 from typing import Any, cast
+
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
 
 from src.server.auth.dependencies import get_current_user, requires_permission
@@ -15,6 +16,7 @@ from src.server.schemas.projects import (
     RefineTaskRequest,
     UpdateTaskRequest,
 )
+
 from ...services.profile_service import ProfileService
 from ...services.projects.task_service import TaskService
 from ...services.rbac_service import RBACService

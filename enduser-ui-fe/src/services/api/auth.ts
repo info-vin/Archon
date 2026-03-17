@@ -1,7 +1,8 @@
 import { supabase } from './client';
-import { getHeaders, handleResponse, userState } from './base';
+import { userState } from './base';
 import { Employee, EmployeeRole, AssignableUser } from '../../types.ts';
 import { LoginCredentials, RegistrationData, AdminNewUserData } from './types';
+import { callAPI } from './apiClient';
 
 export const authApi = {
   async login(credentials: LoginCredentials): Promise<Employee | null> {
@@ -17,24 +18,20 @@ export const authApi = {
 
   async register(credentials: RegistrationData): Promise<Employee | null> {
     userState.cache = null; 
-    const response = await fetch('/api/auth/register', {
+    await callAPI('/api/auth/register', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(credentials)
     });
 
-    await handleResponse(response, 'Registration failed');
     return this.login({ email: credentials.email, password: credentials.password });
   },
 
   async adminCreateUser(userData: AdminNewUserData): Promise<Employee> {
-    const response = await fetch('/api/admin/users', {
+    const data = await callAPI<{ profile: Employee }>('/api/admin/users', {
         method: 'POST',
-        headers: await getHeaders(), 
         body: JSON.stringify(userData)
     });
 
-    const data = await handleResponse(response, 'Failed to create user');
     return data.profile;
   },
 
@@ -87,18 +84,15 @@ export const authApi = {
   },
 
   async getSystemPermissions(): Promise<string[]> {
-    const response = await fetch('/api/auth/permissions', { headers: await getHeaders() });
-    const data = await handleResponse(response, 'Failed to fetch permissions');
+    const data = await callAPI<{ permissions: string[] }>('/api/auth/permissions');
     return data.permissions;
   },
 
   async updateUserEmail(newEmail: string): Promise<void> {
-    const response = await fetch('/api/auth/email', {
+    await callAPI('/api/auth/email', {
         method: 'PUT',
-        headers: await getHeaders(),
         body: JSON.stringify({ new_email: newEmail })
     });
-    await handleResponse(response, 'Failed to update email');
   },
 
   async updateUserPassword(newPassword: string): Promise<void> {
@@ -107,39 +101,31 @@ export const authApi = {
   },
 
   async updateEmployee(id: string, updates: Partial<Employee>): Promise<Employee> {
-    const response = await fetch(`/api/admin/users/${id}`, {
+    const data = await callAPI<{ profile: Employee }>(`/api/admin/users/${id}`, {
         method: 'PATCH',
-        headers: await getHeaders(),
         body: JSON.stringify(updates)
     });
-    const data = await handleResponse(response, 'Failed to update employee');
     return data.profile;
   },
 
   async getEmployees(): Promise<Employee[]> {
-    const response = await fetch('/api/admin/users', { headers: await getHeaders() });
-    const data = await handleResponse(response, 'Failed to fetch employees');
-    // Align with Backend Refactor (Phase 4.6.12): Handle both direct array and {profiles: []}
+    const data = await callAPI<any>('/api/admin/users');
     if (Array.isArray(data)) return data;
     return data.profiles || data.users || [];
   },
 
   async getAssignableUsers(): Promise<AssignableUser[]> {
-    const response = await fetch('/api/assignable-users', { headers: await getHeaders() });
-    return handleResponse(response, 'Failed to fetch assignable users');
+    return await callAPI<AssignableUser[]>('/api/assignable-users');
   },
 
   async getAssignableAgents(): Promise<any[]> {
-    const response = await fetch('/api/agents/assignable', { headers: await getHeaders() });
-    return handleResponse(response, 'Failed to fetch assignable agents');
+    return await callAPI<any[]>('/api/agents/assignable');
   },
 
   async resetPassword(userId: string, newPassword: string): Promise<void> {
-    const response = await fetch(`/api/admin/users/${userId}/reset-password`, {
+    await callAPI(`/api/admin/users/${userId}/reset-password`, {
         method: 'POST',
-        headers: await getHeaders(),
         body: JSON.stringify({ password: newPassword })
     });
-    await handleResponse(response, 'Failed to reset password');
   }
 };

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { AssignableUser, Task, TaskPriority, NewTaskData, UpdateTaskData } from '../types.ts';
-import { api } from '../services/api.ts';
+import { api } from '../services/api';
 import { XIcon, SparklesIcon } from './Icons.tsx';
 import { KnowledgeSelector } from './KnowledgeSelector.tsx';
 import { MobileDateTimePicker } from './common/MobileDateTimePicker';

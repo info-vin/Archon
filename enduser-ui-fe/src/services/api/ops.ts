@@ -1,353 +1,281 @@
-import { getHeaders, handleResponse } from './base';
 import { JobData, AiHealthStatus, AlertItem, BlogPost, CrawlerTarget, DocumentVersion } from '../../types.ts';
 import { NewBlogPostData } from './types';
+import { callAPI } from './apiClient';
 
 export const opsApi = {
   async searchJobs(keyword: string): Promise<JobData[]> {
-    const response = await fetch(`/api/marketing/jobs?keyword=${encodeURIComponent(keyword)}`, { headers: await getHeaders() });
-    return handleResponse(response, 'Failed to search jobs');
+    return await callAPI<JobData[]>(`/api/marketing/jobs?keyword=${encodeURIComponent(keyword)}`);
   },
 
   async generatePitch(jobTitle: string, company: string, description: string): Promise<{ content: string; references: string[] }> {
-    const response = await fetch('/api/marketing/generate-pitch', {
+    return await callAPI<{ content: string; references: string[] }>('/api/marketing/generate-pitch', {
         method: 'POST',
-        headers: await getHeaders(),
         body: JSON.stringify({ job_title: jobTitle, company, description })
     });
-    return handleResponse(response, 'Failed to generate pitch');
   },
 
   async getSystemPrompts(): Promise<any[]> {
-    const response = await fetch('/api/system/prompts', { headers: await getHeaders() });
-    return handleResponse(response, 'Failed to fetch prompts');
+    return await callAPI<any[]>('/api/system/prompts');
   },
 
   async updateSystemPrompt(promptName: string, data: { content: string; description?: string }): Promise<any> {
-    const response = await fetch(`/api/system/prompts/${promptName}`, {
+    return await callAPI(`/api/system/prompts/${promptName}`, {
         method: 'POST', 
-        headers: await getHeaders(),
         body: JSON.stringify({ prompt: data.content, description: data.description })
     });
-    return handleResponse(response, 'Failed to update system prompt');
   },
 
   async getSystemSettings(category?: string): Promise<any[]> {
     const query = category ? `?category=${category}` : '';
-    const response = await fetch(`/api/system/settings${query}`, { headers: await getHeaders() });
-    return handleResponse(response, 'Failed to fetch settings');
+    return await callAPI<any[]>(`/api/system/settings${query}`);
   },
 
   async updateSystemSetting(key: string, data: { value: string; description?: string }): Promise<any> {
-    const response = await fetch(`/api/system/settings/${key}`, {
+    return await callAPI(`/api/system/settings/${key}`, {
         method: 'PATCH',
-        headers: await getHeaders(),
         body: JSON.stringify(data)
     });
-    return handleResponse(response, 'Failed to update setting');
   },
 
   async analyzeExtractionUrl(url: string): Promise<any> {
-    const response = await fetch('/api/extraction/analyze', {
+    return await callAPI('/api/extraction/analyze', {
         method: 'POST',
-        headers: await getHeaders(),
         body: JSON.stringify({ url })
     });
-    return handleResponse(response, 'Analysis failed');
   },
 
   async getExtractionSchemas(): Promise<any[]> {
-    const response = await fetch('/api/extraction/schemas', { headers: await getHeaders() });
-    return handleResponse(response, "API Request failed");
+    return await callAPI<any[]>('/api/extraction/schemas');
   },
 
   async createExtractionSchema(data: any): Promise<any> {
-    const response = await fetch('/api/extraction/schemas', {
+    return await callAPI('/api/extraction/schemas', {
         method: 'POST',
-        headers: await getHeaders(),
         body: JSON.stringify(data)
     });
-    return handleResponse(response, "API Request failed");
   },
 
   async deleteExtractionSchema(id: string): Promise<void> {
-    const response = await fetch(`/api/extraction/schemas/${id}`, {
-        method: 'DELETE',
-        headers: await getHeaders()
+    await callAPI(`/api/extraction/schemas/${id}`, {
+        method: 'DELETE'
     });
-    await handleResponse(response, 'Failed to delete schema');
   },
 
   async runExtraction(url: string, schemaId: string): Promise<any> {
-    const response = await fetch('/api/extraction/run', {
+    return await callAPI('/api/extraction/run', {
         method: 'POST',
-        headers: await getHeaders(),
         body: JSON.stringify({ url, schema_id: schemaId })
     });
-    return handleResponse(response, 'Extraction failed to start');
   },
 
   async getAiHealth(): Promise<AiHealthStatus> {
-      const response = await fetch('/api/system/health/ai', { headers: await getHeaders() });
-      return handleResponse(response, "API Request failed");
+    return await callAPI<AiHealthStatus>('/api/system/health/ai');
   },
 
   async getManagerAlerts(): Promise<AlertItem[]> {
-      const response = await fetch('/api/logs/alerts', { headers: await getHeaders() });
-      return handleResponse(response, "API Request failed");
+    return await callAPI<AlertItem[]>('/api/logs/alerts');
   },
 
   async getAlerts(): Promise<AlertItem[]> {
-      return this.getManagerAlerts();
+    return this.getManagerAlerts();
   },
 
   async dispatchAlertTask(alertId: string, assigneeId?: string): Promise<any> {
-      const response = await fetch('/api/tasks/generate-from-alert', {
-          method: 'POST',
-          headers: await getHeaders(),
-          body: JSON.stringify({ alert_id: alertId, assignee_id: assigneeId })
-      });
-      return handleResponse(response, "API Request failed");
+    return await callAPI('/api/tasks/generate-from-alert', {
+        method: 'POST',
+        body: JSON.stringify({ alert_id: alertId, assignee_id: assigneeId })
+    });
   },
 
   async seedKnowledgeBase(): Promise<{ indexed_count: number; total_files: number }> {
-      console.log("Rebuilding Knowledge Index...");
-      await new Promise(resolve => setTimeout(resolve, 500));
-      return { indexed_count: 0, total_files: 0 };
+    console.log("Rebuilding Knowledge Index...");
+    await new Promise(resolve => setTimeout(resolve, 500));
+    return { indexed_count: 0, total_files: 0 };
   },
 
   async getVisitLogs(userId?: string): Promise<any[]> {
     const query = userId ? `?user_id=${userId}` : '';
-    const response = await fetch(`/api/visit-logs/${query}`, { headers: await getHeaders() });
-    return handleResponse(response, 'Failed to fetch visit logs');
+    return await callAPI<any[]>(`/api/visit-logs/${query}`);
   },
 
   async createVisitLog(formData: FormData): Promise<any> {
-    const headers = await getHeaders();
-    delete headers['Content-Type']; 
-    const response = await fetch('/api/visit-logs/', {
+    return await callAPI('/api/visit-logs/', {
         method: 'POST',
-        headers: headers,
         body: formData
     });
-    return handleResponse(response, 'Failed to create visit log');
   },
 
   async getAttendanceStatus(): Promise<{ status: string; clock_in_time: string | null; location: string | null }> {
-      const response = await fetch('/api/visit-logs/attendance/status', { headers: await getHeaders() });
-      return handleResponse(response, 'Failed to fetch attendance status');
+    return await callAPI<{ status: string; clock_in_time: string | null; location: string | null }>('/api/visit-logs/attendance/status');
   },
 
   async clockIn(data: { latitude?: number; longitude?: number; location_name?: string; status: string }): Promise<void> {
-      const response = await fetch('/api/visit-logs/attendance/clock-in', {
-          method: 'POST',
-          headers: await getHeaders(),
-          body: JSON.stringify(data)
-      });
-      await handleResponse(response, 'Clock In failed');
+    await callAPI('/api/visit-logs/attendance/clock-in', {
+        method: 'POST',
+        body: JSON.stringify(data)
+    });
   },
 
   async clockOut(): Promise<void> {
-      const response = await fetch('/api/visit-logs/attendance/clock-out', {
-          method: 'POST',
-          headers: await getHeaders()
-      });
-      await handleResponse(response, 'Clock Out failed');
+    await callAPI('/api/visit-logs/attendance/clock-out', {
+        method: 'POST'
+    });
   },
 
   async getEthicsEvents(): Promise<any[]> {
-    const response = await fetch('/api/ethics/events', { headers: await getHeaders() });
-    return handleResponse(response, 'Failed to fetch ethics events');
+    return await callAPI<any[]>('/api/ethics/events');
   },
 
   async triggerSentinel(): Promise<any> {
-    const response = await fetch('/api/marketing/manager/sentinel/run', {
-        method: 'POST',
-        headers: await getHeaders(),
+    return await callAPI('/api/marketing/manager/sentinel/run', {
+        method: 'POST'
     });
-    return handleResponse(response, 'Sentinel trigger failed');
   },
 
   async getLeads(): Promise<any[]> {
-    const response = await fetch('/api/marketing/leads', { headers: await getHeaders() });
-    return handleResponse(response, 'Failed to fetch leads');
+    return await callAPI<any[]>('/api/marketing/leads');
   },
 
   async createLead(leadData: any): Promise<any> {
-    const response = await fetch('/api/marketing/leads', {
+    return await callAPI('/api/marketing/leads', {
         method: 'POST',
-        headers: await getHeaders(),
         body: JSON.stringify(leadData)
     });
-    return handleResponse(response, 'Failed to create lead');
   },
 
   async updateLead(id: string, updates: any): Promise<any> {
-    const response = await fetch(`/api/marketing/leads/${id}`, {
+    return await callAPI(`/api/marketing/leads/${id}`, {
         method: 'PATCH',
-        headers: await getHeaders(),
         body: JSON.stringify(updates)
     });
-    return handleResponse(response, 'Failed to update lead');
   },
 
   async promoteLead(id: string, data: any): Promise<any> {
-    const response = await fetch(`/api/marketing/leads/${id}/promote`, {
+    return await callAPI(`/api/marketing/leads/${id}/promote`, {
         method: 'POST',
-        headers: await getHeaders(),
         body: JSON.stringify(data)
     });
-    return handleResponse(response, 'Failed to promote lead');
   },
 
   async resetLeads(): Promise<void> {
-    const response = await fetch('/api/marketing/leads/reset', {
-        method: 'POST',
-        headers: await getHeaders()
+    await callAPI('/api/marketing/leads/reset', {
+        method: 'POST'
     });
-    await handleResponse(response, 'Failed to reset leads');
   },
 
   async getBlogPosts(): Promise<BlogPost[]> {
-    const response = await fetch('/api/blogs', { headers: await getHeaders() });
-    const data = await handleResponse(response, 'Failed to fetch blog posts');
+    const data = await callAPI<any>('/api/blogs');
     return Array.isArray(data) ? data : (data.blogs || data.posts || []);
   },
 
   async getBlogPost(id: string): Promise<BlogPost> {
-    const response = await fetch(`/api/blogs/${id}`, { headers: await getHeaders() });
-    return handleResponse(response, 'Failed to fetch blog post');
+    return await callAPI<BlogPost>(`/api/blogs/${id}`);
   },
 
   async createBlogPost(data: NewBlogPostData): Promise<BlogPost> {
-    const response = await fetch('/api/blogs', {
+    return await callAPI<BlogPost>('/api/blogs', {
         method: 'POST',
-        headers: await getHeaders(),
         body: JSON.stringify(data)
     });
-    return handleResponse(response, 'Failed to create blog post');
   },
 
   async updateBlogPost(id: string, data: Partial<BlogPost>): Promise<BlogPost> {
-    const response = await fetch(`/api/blogs/${id}`, {
+    return await callAPI<BlogPost>(`/api/blogs/${id}`, {
         method: 'PATCH',
-        headers: await getHeaders(),
         body: JSON.stringify(data)
     });
-    return handleResponse(response, 'Failed to update blog post');
   },
 
   async deleteBlogPost(id: string): Promise<void> {
-    const response = await fetch(`/api/blogs/${id}`, {
-        method: 'DELETE',
-        headers: await getHeaders()
+    await callAPI(`/api/blogs/${id}`, {
+        method: 'DELETE'
     });
-    await handleResponse(response, 'Failed to delete blog post');
   },
 
   async draftBlogPost(data: any): Promise<any> {
-    const response = await fetch('/api/marketing/blog/draft', {
+    return await callAPI('/api/marketing/blog/draft', {
         method: 'POST',
-        headers: await getHeaders(),
         body: JSON.stringify(data)
     });
-    return handleResponse(response, 'Failed to draft blog post');
   },
 
   async submitBlogPost(id: string): Promise<any> {
-    const response = await fetch(`/api/blogs/${id}/submit`, {
-        method: 'POST',
-        headers: await getHeaders()
+    return await callAPI(`/api/blogs/${id}/submit`, {
+        method: 'POST'
     });
-    return handleResponse(response, 'Failed to submit blog post');
   },
 
   async updateBlogPostStatus(id: string, status: string): Promise<void> {
-    const response = await fetch(`/api/blogs/${id}/status`, {
+    await callAPI(`/api/blogs/${id}/status`, {
         method: 'PATCH',
-        headers: await getHeaders(),
         body: JSON.stringify({ status })
     });
-    await handleResponse(response, 'Failed to update blog status');
   },
 
   async uploadFile(file: File): Promise<{ url: string }> {
     const formData = new FormData();
     formData.append('file', file);
-    const headers = await getHeaders();
-    delete headers['Content-Type'];
-    const response = await fetch('/api/admin/upload', {
+    return await callAPI<{ url: string }>('/api/admin/upload', {
         method: 'POST',
-        headers: headers,
         body: formData
     });
-    return handleResponse(response, 'Upload failed');
   },
 
   async getKnowledgeItems(): Promise<any[]> {
-    const response = await fetch('/api/knowledge', { headers: await getHeaders() });
-    const data = await handleResponse(response, 'Failed to fetch knowledge');
+    const data = await callAPI<any>('/api/knowledge');
     return data.items || [];
   },
 
   async getCrawlerTargets(): Promise<CrawlerTarget[]> {
-    const response = await fetch('/api/admin/crawler-targets', { headers: await getHeaders() });
-    const data = await handleResponse(response, 'Failed to fetch crawler targets');
+    const data = await callAPI<any>('/api/admin/crawler-targets');
     return data.targets || [];
   },
 
   async createCrawlerTarget(targetData: any): Promise<CrawlerTarget> {
-    const response = await fetch('/api/admin/crawler-targets', {
+    return await callAPI<CrawlerTarget>('/api/admin/crawler-targets', {
         method: 'POST',
-        headers: await getHeaders(),
         body: JSON.stringify(targetData)
     });
-    return handleResponse(response, 'Failed to create crawler target');
   },
 
   async deleteCrawlerTarget(id: string): Promise<void> {
-    const response = await fetch(`/api/admin/crawler-targets/${id}`, {
-        method: 'DELETE',
-        headers: await getHeaders()
+    await callAPI(`/api/admin/crawler-targets/${id}`, {
+        method: 'DELETE'
     });
-    await handleResponse(response, 'Failed to delete crawler target');
   },
 
   async getDocumentVersions(): Promise<DocumentVersion[]> {
-    const response = await fetch('/api/admin/document-versions', { headers: await getHeaders() });
-    const data = await handleResponse(response, 'Failed to fetch document versions');
+    const data = await callAPI<any>('/api/admin/document-versions');
     return data.versions || [];
   },
 
   async getConnectivityLogs(): Promise<any[]> {
-    const response = await fetch('/api/system/logs/connectivity', { headers: await getHeaders() });
-    return handleResponse(response, 'Failed to fetch connectivity logs');
+    return await callAPI<any[]>('/api/system/logs/connectivity');
+  },
+
+  async getConnectivityLogsByType(type: string): Promise<any[]> {
+    return await callAPI<any[]>(`/api/system/logs/connectivity?type=${type}`);
   },
 
   async getContentSources(): Promise<any[]> {
-    const response = await fetch('/api/marketing/sources', { headers: await getHeaders() });
-    return handleResponse(response, 'Failed to fetch content sources');
+    return await callAPI<any[]>('/api/marketing/sources');
   },
 
   async getContentContext(id: string, type: string): Promise<any> {
-    const response = await fetch(`/api/marketing/context/${id}?source_type=${type}`, { headers: await getHeaders() });
-    return handleResponse(response, 'Failed to fetch content context');
+    return await callAPI<any>(`/api/marketing/context/${id}?source_type=${type}`);
   },
 
   async generateLogo(brandName: string): Promise<any> {
-    const response = await fetch('/api/marketing/generate-logo', {
+    return await callAPI('/api/marketing/generate-logo', {
         method: 'POST',
-        headers: await getHeaders(),
         body: JSON.stringify({ style: brandName })
     });
-    return handleResponse(response, 'Failed to generate logo');
   },
 
   async diagnoseFile(filePath: string): Promise<any> {
-    const response = await fetch('/api/admin/diagnose', {
+    return await callAPI('/api/admin/diagnose', {
         method: 'POST',
-        headers: await getHeaders(),
         body: JSON.stringify({ file_path: filePath })
     });
-    return handleResponse(response, 'Diagnostic failed');
   }
 };

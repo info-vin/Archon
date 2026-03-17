@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import { api } from '../services/api.ts';
+import { api } from '../services/api';
 
 const SettingsPage: React.FC = () => {
     const { user } = useAuth();

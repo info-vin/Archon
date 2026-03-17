@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import Markdown from 'react-markdown';
-import { api } from '../services/api.ts';
+import { api } from '../services/api';
 import { BlogPost } from '../types.ts';
 
 const BlogDetailPage: React.FC = () => {

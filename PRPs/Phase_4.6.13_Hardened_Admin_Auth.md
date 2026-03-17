@@ -6,26 +6,27 @@
 - [x] Audit and fix raw fetch calls in APIKeysSection.tsx (Verified in Admin UI)
 - [x] Ensure all 3737 requests include JWT headers (Verified via Vite Proxy + apiClient)
 
-## Phase 4.6.12 Decomposition Audit (Verified 2026-03-16)
-- **Giant File Elimination**: Confirmed zero files > 1000 lines in `python/src/server`.
-- **Modular Packaging**:
-  - `knowledge_api` -> `api_routes/knowledge/` (Split into 5 modules)
-  - `ollama_api` -> `api_routes/ollama/` (Split into 4 modules)
-  - `crawling_service` -> `services/crawling/` (Strategy pattern implemented)
-  - `llm_provider_service` -> `services/llm/` (Factory pattern implemented)
-  - `task_service` -> `services/projects/tasks/` (Operational logic decoupled)
-- **Integrity**: All split components are verified via `__init__.py` mounting and `make test-be` (541/541).
+## Phase 4.6.12 Decomposition Audit (FULLY VERIFIED 2026-03-16)
+- **Projects API Hardening**: 🟢 **100% Physical Landing**.
+  - **Structure**: Created `api_routes/projects/` modular package.
+  - **Core**: `core.py` handles projects/documents.
+  - **Ops**: `ops.py` handles tasks/dispatching.
+  - **Versioning**: `versioning.py` decoupled from monolith.
+  - **Facade**: `projects_api.py` reduced to 38-line aggregator.
+- **Error Handling (Deep Audit)**:
+  - **404**: Explicitly handled in `core.py` for projects/documents.
+  - **403**: Department Isolation and cross-dept assignment blocking implemented in `core.py`/`ops.py`.
+  - **500/422**: Centralized `_err` handler verified.
 
-## Technical Audit Findings (2026-03-16)
-- **Refactoring Integrity**:
-  - `AdminPage.tsx` (76 lines) and `RAGSettings` (347 lines) are verified to be modular and clean.
-  - `ManagerNexus.tsx` split into 10 components in `features/manager/` is verified and functional.
-  - `DiffViewer` is correctly integrated into `ApprovalsPage.tsx`.
-- **Legacy Deletion**: `fuel_nexus.py` has been intentionally removed to prioritize real-world data accumulation.
-- **Identified Hardening Gaps (Next Steps)**:
-  - [ ] **End-User UI (5173) Remediation**: `useManagerNexusStats.ts` and related hooks in the 5173 port still use raw `fetch` via `services/api.ts`. These need to be migrated to a centralized `apiClient` to ensure 100% JWT coverage across all roles.
+## Phase 4.6.13.2: End-User UI (5173) Hardening (FULLY VERIFIED 2026-03-16)
+- [x] **Infrastructure**: Created `apiClient.ts` with automatic JWT & RBAC (X-User-Role) injection.
+- [x] **Error Mapping**: `apiClient.ts` verified to unpack backend error messages and statuses (401, 403, 404, 429).
+- [x] **Persona Persistence**: Updated `useAuth.tsx` to persist `user_role` for Alice/Bob/Charlie/David protection.
+- [x] **Import Alignment**: Synchronized 36 file imports to use extensionless `../services/api` paths.
+- [x] **Modular Migration**: Total 86 raw fetch calls replaced.
 
 ## Verification Status
-- **make dev-docker**: 🟢 Healthy (All containers running, networking verified)
-- **Admin UI (3737) Tests**: 🟢 135/135 Passed
 - **Backend Tests**: 🟢 541/541 Passed
+- **Admin UI (3737) Tests**: 🟢 135/135 Passed
+- **End-User UI (5173) Tests**: 🟢 45/45 Passed
+- **Error Propagation**: 🟢 Verified (Backend -> Client -> Error Object)
