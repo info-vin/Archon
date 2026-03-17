@@ -35,6 +35,10 @@ export type PermissionScope =
   | 'leads:view:all' | 'leads:view:sales' | 'leads:view:marketing'
   | 'user:manage' | 'user:manage:team' | 'mcp:manage';
 
+export type ViewMode = 'list' | 'table' | 'kanban' | 'gantt';
+export type SortableTaskKeys = 'title' | 'due_date' | 'priority' | 'status' | 'completed_at' | 'created_at';
+export type SortDirection = 'ascending' | 'descending';
+
 export interface Employee {
   id: string;
   employeeId: string;

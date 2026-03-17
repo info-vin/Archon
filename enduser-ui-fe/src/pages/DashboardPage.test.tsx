@@ -83,6 +83,7 @@ vi.mock('../services/api', () => {
       }),
       createTask: vi.fn().mockResolvedValue({ id: 'new-task-1' }),
       updateTask: vi.fn().mockResolvedValue({ id: 'task-1' }),
+      getEmployees: vi.fn().mockResolvedValue(mockUsers),
       getAttendanceStatus: vi.fn().mockResolvedValue({ status: 'out', clock_in_time: null, location: null }),
       clockIn: vi.fn().mockResolvedValue({ status: 'success' }),
       clockOut: vi.fn().mockResolvedValue({ status: 'success' }),
