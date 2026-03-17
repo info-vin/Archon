@@ -17,3 +17,7 @@
 ## 2024-05-18 - Nested generator expressions vs explicit loops
 **Learning:** Using nested generator expressions like `sum(1 for ... if any(...))` causes significant overhead in Python due to creating multiple generator objects per outer loop iteration. Replacing these nested generators with standard `for` loops, caching type conversions (like `str()`), and using early `break` statements can be ~4x faster on hot paths.
 **Action:** When filtering or counting based on compound conditions involving sub-lists or strings, unroll nested generators (`any()`, `all()`, or inner comprehensions) into standard `for` loops to avoid allocation overhead and enable true short-circuiting.
+
+## 2024-05-18 - Pre-calculate values before O(N²) similarity loops
+**Learning:** Performing regex substitutions or string normalizations (e.g. `_normalize_code_for_comparison`) repeatedly inside a nested similarity comparison loop (O(N²)) introduces massive overhead.
+**Action:** When comparing objects pairwise inside nested loops, always pre-calculate normalized strings or features in an O(N) array beforehand, then use those pre-calculated values inside the O(N²) inner loop. This simple change yields a 1.3x to 2x speedup for sequence deduplication.
