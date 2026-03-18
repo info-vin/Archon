@@ -1,7 +1,8 @@
 import logging
+import os
 import traceback
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, Header, HTTPException
 from pydantic import BaseModel
 
 from ..auth.dependencies import verify_admin_role
@@ -16,11 +17,20 @@ def get_auth_service():
     return AuthService()
 
 @router.post("/auth/dev-token")
-async def get_dev_token():
+async def get_dev_token(x_admin_secret: str | None = Header(None, alias="X-Admin-Secret")):
     """
     Standardized Dev Token Endpoint.
-    Ensures admin@archon.com exists and returns a valid session.
+    Hardened with X-Admin-Secret validation to prevent unauthorized access.
     """
+    admin_secret = os.getenv("ADMIN_SECRET")
+    is_prod = os.getenv("PROD", "false").lower() == "true"
+
+    # Enforce secret check if ADMIN_SECRET is set or if in PROD environment
+    if is_prod or admin_secret:
+        if x_admin_secret != admin_secret:
+            logger.warning("Unauthorized dev-token attempt blocked. Invalid secret provided.")
+            raise HTTPException(status_code=403, detail="Unauthorized: Invalid Admin Secret.")
+
     email = "admin@archon.com"
     password = "qwer45tyuiop"
 

@@ -33,7 +33,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // Attempt Dev Auto-Login
         const response = await fetch(`${API_BASE_URL}/auth/dev-token`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            "X-Admin-Secret": (import.meta.env.VITE_ADMIN_SECRET as string) || "",
+          },
         });
 
         if (!response.ok) {
