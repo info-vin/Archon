@@ -3,7 +3,7 @@ from decimal import Decimal
 from typing import Any
 
 from ..config.logfire_config import get_logger
-from ..utils import get_supabase_client
+from .client_manager import get_supabase_client
 
 logger = get_logger(__name__)
 
@@ -75,6 +75,30 @@ class TokenUsageService:
                 return supabase.table("token_usage").insert(payload).execute()
 
             await asyncio.to_thread(_log_to_db)
+
+            # --- PHYSICAL XP REWARD SYSTEM (Phase 4.6.15) ---
+            if user_id:
+                # Check if this user_id belongs to an AI Agent to reward XP
+                # We use a simple check for now: Is it in our list of known Bot IDs or names?
+                # A more robust check would be querying profiles.role, but for speed we can use the context
+                try:
+                    from .agent_registry import AGENT_CONFIG
+                    agent_names = [config["name"] for config in AGENT_CONFIG.values()]
+                    
+                    # We need the display name to award XP via StatsService
+                    res = supabase.table("profiles").select("name").eq("id", user_id).execute()
+                    if res.data and res.data[0]["name"] in agent_names:
+                        agent_display_name = res.data[0]["name"]
+                        from .stats_service import StatsService
+                        stats_service = StatsService()
+                        await stats_service.add_agent_action_log(
+                            agent_name=agent_display_name,
+                            xp_change=1, # Micro-reward for model execution
+                            message=f"Computational contribution for {context_type or 'general_task'}",
+                            details={"token_request_id": request_id, "model": model}
+                        )
+                except Exception as xp_err:
+                    logger.warning(f"XP Reward skipped: {xp_err}")
 
             if provider != "ollama":
                 logger.debug(f"💰 Token Usage Logged: {model} | {input_tokens}/{output_tokens} | ${cost:.6f}")

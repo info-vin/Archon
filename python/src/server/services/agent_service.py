@@ -121,7 +121,9 @@ class AgentService:
                 res_msg = response.choices[0].message
 
                 if hasattr(response, "usage") and response.usage:
-                    asyncio.create_task(TokenUsageService.log_usage(request_id=f"{request_id}-r1", user_id="system-devbot", model=model, provider="google", input_tokens=response.usage.prompt_tokens, output_tokens=response.usage.completion_tokens, context_type="self_healing"))
+                    from .agent_registry import get_agent_uuid
+                    agent_uuid = get_agent_uuid("dev-bot")
+                    asyncio.create_task(TokenUsageService.log_usage(request_id=f"{request_id}-r1", user_id=agent_uuid, model=model, provider="google", input_tokens=response.usage.prompt_tokens, output_tokens=response.usage.completion_tokens, context_type="self_healing"))
 
                 tool_calls = res_msg.tool_calls
                 if tool_calls and self.mcp_client:

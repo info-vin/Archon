@@ -116,11 +116,15 @@ class MarketingService(BaseRepository):
             # 4. LOG ACTUAL TOKEN USAGE (Physical evidence)
             try:
                 import uuid
+                from .agent_registry import get_agent_uuid
+                from .token_usage_service import TokenUsageService
+                
+                # Resolve Real Physical Identity
+                agent_uuid = get_agent_uuid("market-bot")
 
-                from server.services.token_usage_service import TokenUsageService
                 asyncio.create_task(TokenUsageService.log_usage(
                     request_id=f"pitch-{uuid.uuid4().hex[:8]}",
-                    user_id="alice-sales", # Default for Alice
+                    user_id=agent_uuid, # Real UUID from Registry
                     model="gemini-2.5-flash",
                     provider="google",
                     input_tokens=response.usage_metadata.prompt_token_count if response.usage_metadata else 0,

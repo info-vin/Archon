@@ -120,8 +120,14 @@ const TeamManagementPage: React.FC = () => {
                                                         style={{ width: `${aiUsage?.usage_percentage || 0}%` }}
                                                     ></div>
                                                 </div>
-                                                <div className="mt-1 text-right text-[10px] text-gray-400">
-                                                    {aiUsage?.total_used?.toLocaleString()} / {aiUsage?.total_budget?.toLocaleString()} Credits
+                                                <div className="mt-2 flex justify-between items-center text-[10px]">
+                                                    <div className="flex items-center gap-1 font-bold text-gray-400">
+                                                        <span className="bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded uppercase tracking-tighter">Cost</span>
+                                                        <span className="text-gray-600 font-mono">\${aiUsage?.total_monthly_usd?.toFixed(4) || "0.0000"} USD</span>
+                                                    </div>
+                                                    <div className="text-gray-400">
+                                                        {aiUsage?.total_used?.toLocaleString()} / {aiUsage?.total_budget?.toLocaleString()} Credits
+                                                    </div>
                                                 </div>
                                             </div>
                                         ) : (

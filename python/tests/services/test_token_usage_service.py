@@ -37,7 +37,9 @@ async def test_log_usage(service, mock_supabase):
         user_id="user-1"
     )
 
-    mock_supabase.table.assert_called_with("token_usage")
+    # Verify any of the calls was to token_usage
+    # (Multiple calls now due to XP system querying profiles)
+    mock_supabase.table.assert_any_call("token_usage")
 
     # Verify payload contains calculated cost
     # Input: 100 * 2.50/1M = 0.00025
