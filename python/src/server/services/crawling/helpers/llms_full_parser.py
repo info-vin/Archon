@@ -10,6 +10,9 @@ import re
 from pydantic import BaseModel
 
 
+_CODE_FENCE_RE = re.compile(r"^[ \t]*```", re.MULTILINE)
+
+
 class LLMsFullSection(BaseModel):
     """Parsed section from llms-full.txt file"""
 
@@ -203,10 +206,9 @@ def parse_llms_full_sections(content: str, base_url: str) -> list[LLMsFullSectio
             current = sections[i]
 
             # Count ``` at start of lines only (proper code fences)
-            code_fence_count = sum(
-                1 for line in current.content.split('\n')
-                if line.strip().startswith('```')
-            )
+            # PERFORMANCE: Using pre-compiled regex .findall() is significantly faster
+            # than splitting the entire content and iterating over lines with generator.
+            code_fence_count = len(_CODE_FENCE_RE.findall(current.content))
 
             # If odd number, we're inside an unclosed code block - merge with next
             while code_fence_count % 2 == 1 and i + 1 < len(sections):
@@ -223,10 +225,9 @@ def parse_llms_full_sections(content: str, base_url: str) -> list[LLMsFullSectio
                 )
                 # Move to next section and recount ``` at start of lines
                 i += 1
-                code_fence_count = sum(
-                    1 for line in current.content.split('\n')
-                    if line.strip().startswith('```')
-                )
+                # PERFORMANCE: Using pre-compiled regex .findall() is significantly faster
+                # than splitting the entire content and iterating over lines with generator.
+                code_fence_count = len(_CODE_FENCE_RE.findall(current.content))
 
             fixed_sections.append(current)
             i += 1
