@@ -50,7 +50,9 @@ export const McpStatusBar: React.FC<McpStatusBarProps> = ({ status, sessionInfo,
       {/* Status Indicator */}
       <div className="flex items-center gap-2">
         {getStatusIcon()}
-        <span className={cn("font-semibold", getStatusColor())}>{status.status.toUpperCase()}</span>
+        <span className={cn("font-semibold", getStatusColor())}>
+          {(status?.status || "unknown").toUpperCase()}
+        </span>
       </div>
 
       {/* Separator */}

@@ -50,7 +50,7 @@ export const MarketingJobSearch: React.FC<MarketingJobSearchProps> = ({
       </div>
 
       <div className="flex gap-6 flex-col lg:flex-row">
-        <div className="flex-1 space-y-4">
+        <div className="flex-1 min-w-0 space-y-4">
           {error && (
             <div className="bg-red-50 text-red-700 p-4 rounded-lg border border-red-100 flex justify-between items-center">
               <span>{error}</span>
@@ -73,7 +73,7 @@ export const MarketingJobSearch: React.FC<MarketingJobSearchProps> = ({
           {generating && (
             <div className="bg-indigo-50 border border-indigo-100 rounded-lg p-4 flex items-center gap-3 animate-pulse">
               <RefreshCwIcon className="w-5 h-5 text-indigo-600 animate-spin" />
-              <div className="flex-1">
+              <div className="flex-1 min-w-0">
                 <p className="text-sm font-bold text-indigo-900">{generatingStatus}</p>
                 <p className="text-xs text-indigo-700">Archon is crafting a high-impact response.</p>
               </div>
@@ -124,8 +124,17 @@ export const MarketingJobSearch: React.FC<MarketingJobSearchProps> = ({
                       </div>
                     )}
                     <div className="flex justify-between items-center mt-4 pt-4 border-t border-gray-100">
-                      <div className="text-xs text-muted-foreground flex items-center gap-2 cursor-pointer" onClick={(e) => { e.stopPropagation(); setExpandedJobIdx(null); }}>
-                        <span className={expandedJobIdx === idx ? 'text-indigo-600 font-bold hover:text-indigo-800' : ''}>{expandedJobIdx === idx ? 'Tap to collapse' : 'Tap card to details'}</span>
+                      <div 
+                        className="text-xs text-muted-foreground flex items-center gap-2 cursor-pointer outline-none hover:text-indigo-600 focus-visible:ring-2 ring-indigo-500 rounded px-1" 
+                        role="button"
+                        tabIndex={0}
+                        onClick={(e) => { e.stopPropagation(); setExpandedJobIdx(expandedJobIdx === idx ? null : idx); }}
+                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.stopPropagation(); setExpandedJobIdx(expandedJobIdx === idx ? null : idx); } }}
+                        aria-expanded={expandedJobIdx === idx}
+                      >
+                        <span className={expandedJobIdx === idx ? 'text-indigo-600 font-bold' : ''}>
+                          {expandedJobIdx === idx ? 'Tap to collapse' : 'Tap card to details'}
+                        </span>
                       </div>
                       <div className="flex gap-2">
                         <Button variant="secondary" size="sm" onClick={(e) => { e.stopPropagation(); api.createLead({ company_name: job.company, job_title: job.title, source: job.source, source_job_url: job.url, identified_need: job.identified_need, status: 'new' }).then(() => alert("Added to Pipeline!")).catch(() => alert("Failed to add lead")); }}>Add Lead</Button>

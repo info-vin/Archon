@@ -6,7 +6,7 @@ import { FileTextIcon, XIcon } from '../../../../components/Icons';
 export interface NexusSpecPanelProps {
     isOpen: boolean;
     onClose: () => void;
-    specContent: string;
+    specContent?: string;
 }
 
 export const NexusSpecPanel: React.FC<NexusSpecPanelProps> = ({ isOpen, onClose, specContent }) => {

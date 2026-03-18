@@ -165,9 +165,14 @@ export const MarketingLeadsStack: React.FC<MarketingLeadsStackProps> = ({
               <tbody className="divide-y divide-gray-100">
                 {sortedLeads.map(lead => (
                   <tr key={lead.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-6 py-4 text-xs text-gray-500">{new Date(lead.created_at || Date.now()).toLocaleDateString()}</td>
-                    <td className="px-6 py-4"><div className="font-medium text-gray-900">{lead.company_name}</div><div className="text-xs text-gray-500">{lead.job_title}</div></td>
-                    <td className="px-6 py-4"><div className="text-xs text-gray-600 line-clamp-2">{lead.identified_need || "Pending Analysis..."}</div></td>
+                    <td className="px-6 py-4 text-xs text-gray-500 whitespace-nowrap">{new Date(lead.created_at || Date.now()).toLocaleDateString()}</td>
+                    <td className="px-6 py-4 min-w-0 max-w-[200px]">
+                      <div className="font-medium text-gray-900 truncate" title={lead.company_name}>{lead.company_name}</div>
+                      <div className="text-xs text-gray-500 truncate" title={lead.job_title}>{lead.job_title}</div>
+                    </td>
+                    <td className="px-6 py-4 w-1/4">
+                      <div className="text-xs text-gray-600 line-clamp-2">{lead.identified_need || "Pending Analysis..."}</div>
+                    </td>
                     <td className="px-6 py-4">
                       <div className="flex flex-col gap-1">
                         <span className={`px-2 py-1 rounded-full text-xs font-bold text-center ${
@@ -180,12 +185,12 @@ export const MarketingLeadsStack: React.FC<MarketingLeadsStackProps> = ({
                       </div>
                     </td>
                     <td className="px-6 py-4"><a href={lead.source_job_url} target="_blank" rel="noreferrer" className="text-indigo-600 hover:underline text-xs">View Post</a></td>
-                    <td className="px-6 py-4 text-xs">{lead.next_followup_date ? new Date(lead.next_followup_date).toLocaleDateString() : <span className="text-amber-600 bg-amber-50 px-2 py-0.5 rounded">Schedule</span>}</td>
+                    <td className="px-6 py-4 text-xs whitespace-nowrap">{lead.next_followup_date ? new Date(lead.next_followup_date).toLocaleDateString() : <span className="text-amber-600 bg-amber-50 px-2 py-0.5 rounded">Schedule</span>}</td>
                     <td className="px-6 py-4 text-right flex justify-end gap-2">
-                      <Button variant="ghost" size="sm" className="text-indigo-600 hover:bg-indigo-50" onClick={() => onOpenVisitLog(lead)} title="Log Visit (Hunter Mode)">
+                      <Button variant="ghost" size="sm" className="text-indigo-600 hover:bg-indigo-50" onClick={() => onOpenVisitLog(lead)} aria-label="Log Visit (Hunter Mode)" title="Log Visit (Hunter Mode)">
                         <MapPinIcon className="w-4 h-4" />
                       </Button>
-                      <Button variant="ghost" size="sm" onClick={() => alert("Activity Tracker: " + lead.company_name)}><RefreshCwIcon className="w-4 h-4" /></Button>
+                      <Button variant="ghost" size="sm" aria-label="Track Activity" title="Track Activity" onClick={() => alert("Activity Tracker: " + lead.company_name)}><RefreshCwIcon className="w-4 h-4" /></Button>
                     </td>
                   </tr>
                 ))}

@@ -72,7 +72,7 @@ export const AICommandCenter: React.FC<AICommandCenterProps> = ({
         </button>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-8 custom-scrollbar space-y-8">
+      <div className="flex-1 min-w-0 overflow-y-auto p-8 custom-scrollbar space-y-8">
         {promptTab === 'config' ? (
           <div className="space-y-8">
             {/* Industry */}

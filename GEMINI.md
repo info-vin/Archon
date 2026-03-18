@@ -41,6 +41,9 @@
 >
 > 1.  **第一步：強制讀取上下文**: 在回應您的任何請求前，我**必須**先讀取 `GEMINI.md` 和 `CONTRIBUTING_tw.md` 的內容。
 > 2.  **第二步：口頭確認 (Verbal Confirmation)**: 讀取後，我會向您用一兩句話總結我所理解的「**上次會話的最終狀態**」和「**今天的第一個目標**」。
+*   **當前狀態 (Current Context)**: Phase 4.6.14 已結案，全系統 UI 完成硬化。
+*   **今日目標 (Today's Goal)**: 啟動 Phase 4.6.15，重點實作 Agent XP 經驗值系統與 Token 成本視覺化標籤。
+
 > 3.  **第三步：取得您的確認**: 在您確認我對起點的理解無誤後，我才能開始執行第一個指令。
 
 ### 【UI 開發鐵律 (UI Development Iron Law)】
@@ -113,6 +116,16 @@
 ---
 
 # 第三章：近期工作日誌 (Recent Journal Entries)
+
+### 2026-03-18: Phase 4.6.14 結案與 4.6.15 Agent 進化啟動 (Current Session)
+*   **Phase 4.6.14 結案**:
+    *   物理驗證 Manager Nexus 子組件單元測試 100% 通過。
+    *   全系統完成 Layout min-w-0 加固與 A11y 強化。
+    *   修復 MCP 404 與前端 `toUpperCase()` 崩潰 Bug。
+*   **啟動 Phase 4.6.15 (Agent XP 落地與 Token 成本透明化)**:
+    *   **Agent XP API**: 實作 `get_agent_xp_ranking` 端點，將 Agent 的操作歷史轉化為等級/經驗值。
+    *   **Token 視覺化**: 在 Admin UI 注入 Token 成本標籤，實現資源使用的物理透明。
+    *   **Twin Scout 整合**: 打通 Scout 報告與 Knowledge Base 的自動上傳管道。
 
 ### 2026-03-11: Phase 4.6.12 最終硬化與全系統架構查核 (Current Session)
 *   **物理安全性修復**:

@@ -47,7 +47,7 @@ export const KanbanView: React.FC<KanbanViewProps> = React.memo(({ tasks, update
              <span className="bg-white px-2 py-0.5 rounded-full text-xs font-bold text-gray-500 shadow-sm">{tasksByStatus[status]?.length || 0}</span>
           </div>
           
-          <div className="flex-1 space-y-3 overflow-y-auto pr-1">
+          <div className="flex-1 min-w-0 space-y-3 overflow-y-auto pr-1">
             {tasksByStatus[status]?.map(task => {
                return (
                   <div 

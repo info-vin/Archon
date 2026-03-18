@@ -17,7 +17,17 @@ router = APIRouter(prefix="/api/mcp", tags=["mcp"])
 async def get_mcp_status(current_user: dict = Depends(get_current_user)):
     """General connection status. Available to all authenticated users."""
     client = get_mcp_service_client()
-    return await client.health_check()
+    health = await client.health_check()
+    
+    # Standardize response for frontend McpStatusBar
+    is_healthy = health.get("api_service", False) and health.get("agents_service", False)
+    
+    return {
+        "status": "running" if is_healthy else "degraded",
+        "uptime": 3600, # Placeholder or track actual process uptime
+        "version": "1.0.0",
+        "services": health
+    }
 
 @router.get("/sessions")
 async def get_mcp_sessions(current_user: dict = Depends(get_current_user)):

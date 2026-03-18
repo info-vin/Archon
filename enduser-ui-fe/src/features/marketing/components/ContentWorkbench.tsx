@@ -98,7 +98,7 @@ export const ContentWorkbench: React.FC<ContentWorkbenchProps> = ({
       />
 
       {/* Main Layout Area: Split View */}
-      <div className="flex-1 flex overflow-hidden relative">
+      <div className="flex-1 min-w-0 flex overflow-hidden relative">
         
         {/* Left Pane: Source Context (Collapsible) */}
         <SourceContextPane
@@ -109,7 +109,7 @@ export const ContentWorkbench: React.FC<ContentWorkbenchProps> = ({
         />
 
         {/* Right Pane: Editor战場 */}
-        <div className="flex-1 flex flex-col relative bg-white dark:bg-slate-900 overflow-y-auto custom-scrollbar">
+        <div className="flex-1 min-w-0 flex flex-col relative bg-white dark:bg-slate-900 overflow-y-auto custom-scrollbar">
           
           <EditorBody
             activeSource={activeSource}
@@ -128,6 +128,7 @@ export const ContentWorkbench: React.FC<ContentWorkbenchProps> = ({
             <button 
               onClick={() => navigate(`/brand/editor/${activeSource.id}`)}
               className="w-16 h-16 bg-white dark:bg-slate-800 border-2 border-indigo-100 dark:border-slate-700 hover:border-indigo-500 text-indigo-600 rounded-2xl shadow-xl flex items-center justify-center transition-all hover:scale-110 active:scale-95 group"
+              aria-label="Open Pro Editor"
               title="Open Pro Editor"
             >
               <FileEditIcon className="w-7 h-7 group-hover:rotate-12 transition-transform" />
@@ -137,9 +138,11 @@ export const ContentWorkbench: React.FC<ContentWorkbenchProps> = ({
             <button 
               onClick={() => setPromptCenterOpen(true)}
               className="w-16 h-16 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl shadow-2xl flex items-center justify-center transition-all hover:scale-110 active:scale-95 group relative"
+              aria-label="Open AI Command Center"
+              title="Open AI Command Center"
             >
               <SparklesIcon className="w-8 h-8 group-hover:rotate-12 transition-transform" />
-              <div className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 rounded-full border-2 border-white flex items-center justify-center text-[10px] font-black">!</div>
+              <div className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 rounded-full border-2 border-white flex items-center justify-center text-[10px] font-black" aria-hidden="true">!</div>
             </button>
           </div>
 

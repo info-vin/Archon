@@ -34,6 +34,7 @@ from .api_routes.internal_api import router as internal_router
 from .api_routes.knowledge_api import router as knowledge_router
 from .api_routes.log_api import router as log_router
 from .api_routes.marketing_api import router as marketing_router  # NEW IMPORT
+from .api_routes.mcp_api import router as mcp_api_router  # NEW IMPORT
 from .api_routes.migration_api import router as migration_router
 from .api_routes.ollama import router as ollama_router
 from .api_routes.progress_api import router as progress_router
@@ -253,7 +254,7 @@ async def skip_health_check_logs(request, call_next):
 app.include_router(settings_router, prefix="/api")
 app.include_router(auth_router, prefix="/api")
 
-# app.include_router(mcp_client_router)  # Removed - not part of new architecture
+app.include_router(mcp_api_router)
 app.include_router(knowledge_router)
 app.include_router(projects_router)
 app.include_router(progress_router)

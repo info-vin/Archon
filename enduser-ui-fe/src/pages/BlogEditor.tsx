@@ -102,6 +102,7 @@ const BlogEditor: React.FC = () => {
                     <button 
                         onClick={() => navigate('/admin')}
                         className="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-500 hover:text-gray-900"
+                        aria-label="Back to Admin"
                     >
                         <ArrowLeftIcon className="w-6 h-6" />
                     </button>
@@ -192,7 +193,7 @@ const BlogEditor: React.FC = () => {
                         )}
                     </div>
 
-                    <div className="flex-1 flex flex-col">
+                    <div className="flex-1 min-w-0 flex flex-col">
                         <div className="flex items-center justify-between mb-2">
                             <label className="text-xs font-black uppercase tracking-widest text-gray-500">Main Content (Markdown)</label>
                             <label className="cursor-pointer flex items-center gap-1.5 text-xs font-bold text-indigo-600 hover:text-indigo-700 transition-colors bg-indigo-50 px-3 py-1.5 rounded-lg">
@@ -209,7 +210,7 @@ const BlogEditor: React.FC = () => {
                                     setPost({...post, content: e.target.value});
                                 }
                             }}
-                            className="w-full flex-1 min-h-[500px] text-sm font-mono bg-white border border-gray-200 rounded-2xl px-4 py-4 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all placeholder:text-gray-300 shadow-inner block"
+                            className="w-full flex-1 min-w-0 min-h-[500px] text-sm font-mono bg-white border border-gray-200 rounded-2xl px-4 py-4 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all placeholder:text-gray-300 shadow-inner block"
                             placeholder="# Write your magnificent content here...\n\nMarkdown is fully supported!"
                         />
                     </div>
@@ -217,7 +218,7 @@ const BlogEditor: React.FC = () => {
 
                 {/* Diff Viewer Column */}
                 {showDiff && (
-                    <div className="h-full flex flex-col animate-in slide-in-from-right-8 opacity-0 fade-in duration-500 fill-mode-forwards max-w-full">
+                    <div className="h-full flex flex-col min-w-0 animate-in slide-in-from-right-8 opacity-0 fade-in duration-500 fill-mode-forwards max-w-full">
                          <div className="flex justify-between items-end mb-2">
                              <div>
                                 <h3 className="text-lg font-black text-gray-900 tracking-tight flex items-center gap-2">
@@ -253,7 +254,7 @@ const BlogEditor: React.FC = () => {
                              </div>
                          )}
 
-                         <div className="flex-1 bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm flex flex-col min-h-[500px]">
+                         <div className="flex-1 min-w-0 bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm flex flex-col min-h-[500px]">
                             <DiffViewer 
                                 oldCode={post.content || ''} 
                                 newCode={suggestedContent || post.content || ''} 

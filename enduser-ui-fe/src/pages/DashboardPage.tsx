@@ -51,7 +51,7 @@ const DashboardPage: React.FC = () => {
   }
 
   return (
-    <div className="flex-1 flex flex-col h-full overflow-hidden p-6 bg-background">
+    <div className="flex-1 min-w-0 flex flex-col h-full overflow-hidden p-6 bg-background">
       {/* Header section */}
       <header className="flex flex-col md:flex-row md:justify-between md:items-center mb-6 gap-4">
         <h1 className="text-3xl font-bold text-gray-800 dark:text-white flex items-center gap-3">
