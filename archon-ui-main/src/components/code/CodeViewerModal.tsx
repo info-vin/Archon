@@ -144,6 +144,8 @@ export const CodeViewerModal: React.FC<CodeViewerModalProps> = ({
               <button
                 onClick={() => setSidebarCollapsed(true)}
                 className="text-gray-500 hover:text-white p-1 rounded transition-colors"
+                aria-label="Collapse sidebar"
+                title="Collapse sidebar"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -218,6 +220,8 @@ export const CodeViewerModal: React.FC<CodeViewerModalProps> = ({
           <button
             onClick={() => setSidebarCollapsed(false)}
             className="absolute left-4 top-20 bg-gray-900/90 border border-gray-800 rounded-lg p-2 text-gray-400 hover:text-white hover:bg-gray-800/90 transition-all shadow-lg"
+            aria-label="Expand sidebar"
+            title="Expand sidebar"
           >
             <ChevronRight className="w-4 h-4" />
           </button>
@@ -238,6 +242,8 @@ export const CodeViewerModal: React.FC<CodeViewerModalProps> = ({
             <button
               onClick={onClose}
               className="text-gray-500 hover:text-white bg-gray-900/50 border border-gray-800 rounded-full p-2 transition-colors ml-4"
+              aria-label="Close code viewer"
+              title="Close code viewer"
             >
               <X className="w-5 h-5" />
             </button>
