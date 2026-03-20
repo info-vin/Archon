@@ -106,8 +106,8 @@ sequenceDiagram
     
     alt 需要重置知識庫
         Admin->>UI: 點擊 "Rebuild Index"
-        UI->>API: POST /knowledge/seed
-        API->>DB: Truncate & Re-embed
+        UI->>API: POST /api/marketing/knowledge/seed (Admin Authorized)
+        API->>DB: Scan physical resource mounts & Re-index
         API-->>UI: Toast "Index Rebuilt: 1240 docs"
     end
     end
@@ -136,7 +136,8 @@ sequenceDiagram
 今日已物理實現 Token 經濟體系與 Agent 資歷治理的閉環：
 
 1.  **動態預算操控**：Admin 可透過修改環境變數 `TOKEN_PRICING_JSON` 即時更新全系統的模型成本模型，無需重啟代碼。
-2.  **資歷化安全網**：實施 XP (Experience Points) 等級制度。Admin 定義等級門檻，系統自動限制「菜鳥 Agent」的檔案修改權限，實現物理級的安全防護。
+2.  **資歷化安全網**：實施 XP (Experience Points) 等級制度。Admin 定義等級門檻，系統自動限制「菜鳥 Agent」的檔案修改權限。
+3.  **路由閉環**：已補齊 `submit_blog` 與 `seed_knowledge` 實體路由，確保 Admin 具備對核心業務與基礎設施的物理觸發權。
 
 ### 5.2 核心自動化營運路徑 (Operational Path)
 

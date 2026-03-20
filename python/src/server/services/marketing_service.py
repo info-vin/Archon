@@ -5,7 +5,7 @@ from google import genai
 from google.genai import types
 
 from ..config.logfire_config import get_logger
-from ..prompts.marketing_prompts import BLOG_DRAFT_SYSTEM_PROMPT, REJECTION_REASON_PROMPT
+from ..prompts.marketing_prompts import BLOG_DRAFT_SYSTEM_PROMPT
 from ..prompts.sales_prompts import SALES_PITCH_SYSTEM_PROMPT
 from ..repositories.base_repository import BaseRepository
 from ..services.credential_service import credential_service
@@ -268,6 +268,7 @@ class MarketingService(BaseRepository):
             # LOG ACTUAL TOKEN USAGE (Physical Alignment - Phase 4.6.15)
             try:
                 import uuid
+
                 from .agent_registry import get_agent_uuid
                 from .token_usage_service import TokenUsageService
                 agent_uuid = get_agent_uuid("market-bot")
