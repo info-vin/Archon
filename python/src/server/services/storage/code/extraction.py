@@ -108,12 +108,6 @@ def _normalize_code_for_comparison(code: str) -> str:
     return normalized
 
 
-def _calculate_code_similarity(code1: str, code2: str) -> float:
-    norm1 = _normalize_code_for_comparison(code1)
-    norm2 = _normalize_code_for_comparison(code2)
-    return SequenceMatcher(None, norm1, norm2).ratio()
-
-
 def _select_best_code_variant(similar_blocks: list[dict[str, Any]]) -> dict[str, Any]:
     if len(similar_blocks) == 1:
         return similar_blocks[0]
@@ -284,16 +278,27 @@ def extract_code_blocks_logic(markdown_content: str, min_length: int | None = No
 
     if not code_blocks:
         return code_blocks
+
     similarity_threshold, grouped_blocks, processed_indices = 0.85, [], set()
+
+    # Pre-calculate normalized code strings to avoid O(N^2) repeated normalizations
+    normalized_codes = [_normalize_code_for_comparison(b["code"]) for b in code_blocks]
+
     for idx, block1 in enumerate(code_blocks):
         if idx in processed_indices:
             continue
         similar_group = [block1]
         processed_indices.add(idx)
+
+        norm1 = normalized_codes[idx]
+
         for jdx, block2 in enumerate(code_blocks):
             if jdx <= idx or jdx in processed_indices:
                 continue
-            if _calculate_code_similarity(block1["code"], block2["code"]) >= similarity_threshold:
+
+            norm2 = normalized_codes[jdx]
+
+            if SequenceMatcher(None, norm1, norm2).ratio() >= similarity_threshold:
                 similar_group.append(block2)
                 processed_indices.add(jdx)
         grouped_blocks.append(_select_best_code_variant(similar_group))
