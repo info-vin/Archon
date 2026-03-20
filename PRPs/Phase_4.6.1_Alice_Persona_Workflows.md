@@ -68,9 +68,12 @@
 ### P3. 自動歸檔邏輯 (GAP-011)
 *   **策略**: **溫和模式 (Recycle Bin)**。
 *   **實作**: `EnrichmentService.prune_stale_leads` 處理歸檔。狀態變更為 `archived`，資料保留在資料庫中，可隨時復原。
+*   **物理連動 (Librarian Output)**: Alice 產出的 `visit_logs` 與 `summary` 已物理化為系統研究脈絡。
+    *   **落地證明**: `MarketingService.py` 實體呼叫 `visit_logs` 表，將 Alice 的前線情報轉化為 Bob 的創作養分。
 
 ### P4. Token 成本控制
 *   **限制**: 歸檔與篩選優先使用 SQL 條件，僅對高價值 (Shortlisted) 目標調用 LLM 進行深度分析。
+*   **2026-03-20 物理驗證 (Phase 4.6.15)**: 任務列表與 Modal 已注入實體 Token 成本標籤 (`ai_metrics`)，Alice 可直接在手機端檢核 AI 產出的經濟效益與 XP 等級。
 
 ### P5. 視覺化 AI 反饋 (UX Consistency)
 *   **策略**: **高對比即時洞察**。

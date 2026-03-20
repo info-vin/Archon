@@ -350,11 +350,25 @@ export const TaskModal: React.FC<TaskModalProps> = ({ task, onClose, onTaskCreat
           {isEditMode && task?.agent_output && (
             <div className="mt-6 p-4 bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800 rounded-xl space-y-3 animate-in fade-in zoom-in-95 duration-300">
               <div className="flex items-center justify-between">
-                <h3 className="text-xs font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest flex items-center gap-2">
-                  <SparklesIcon className="w-3 h-3" />
-                  AI Agent Report
-                </h3>
-                <span className="text-[9px] font-bold text-indigo-400">v1.0 Payload</span>
+                <div className="flex items-center gap-3">
+                  <h3 className="text-xs font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest flex items-center gap-2">
+                    <SparklesIcon className="w-3 h-3" />
+                    AI Agent Report
+                  </h3>
+                  
+                  {/* Phase 4.6.15: Token Cost Badge */}
+                  {task.ai_metrics && task.ai_metrics.total_cost_usd > 0 && (
+                    <div className="flex items-center gap-2">
+                      <span className="px-2 py-0.5 bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 text-[10px] font-black rounded-full border border-emerald-200 dark:border-emerald-800 animate-in fade-in slide-in-from-left-2">
+                        ${task.ai_metrics.total_cost_usd.toFixed(4)}
+                      </span>
+                      <span className="text-[9px] text-slate-400 font-medium">
+                        {task.ai_metrics.total_tokens.toLocaleString()} tokens
+                      </span>
+                    </div>
+                  )}
+                </div>
+                <span className="text-[9px] font-bold text-indigo-400">v1.1 Economic Payload</span>
               </div>
               <div className="bg-white dark:bg-slate-950 p-4 rounded-lg border border-indigo-50 dark:border-indigo-900 text-xs font-mono text-slate-700 dark:text-slate-300 overflow-x-auto max-h-60 custom-scrollbar">
                 {typeof task.agent_output === 'string' ? task.agent_output : JSON.stringify(task.agent_output, null, 2)}

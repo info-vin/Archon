@@ -4,7 +4,7 @@
 > **目標角色**: Bob (內容行銷主管)
 > **核心目標**: 將 Bob 的工作流從「被動看報表」轉型為「主動生產內容」，透過 **三代理人協作模型 (3-Agent Collaboration Model)** 打造一個具備任務連動能力的內容工作臺。
 > **技術核心**: 
-> 1.  **混合模型策略**: 文字生成採用 `gemini-2.0-flash` 正式版；圖片生成採用 `gemini-2.0-flash-exp` (Imagen)。
+> 1.  **混合模型策略**: 文字生成採用 `gemini-2.0-flash`；視覺資產採用 **MCP SVG Generator** (本地幾何運算，免 Token 成本)。
 > 2.  **數據映射 (GAP-023)**: 支援 Pydantic Alias 映射（API: `reviewNotes` -> UI: `review_notes`）。
 > 3.  **條件式任務同步**: 提交審核時，僅在通過 AI 自動合規性檢查 (Compliance Check) 後，任務狀態才會流轉至 `Review`。
 
@@ -28,11 +28,10 @@ Bob 不需要更多圓餅圖。他需要的是一個 **內容 IDE (Integrated De
 *   **透明化**: 支援 `used_prompt` 回傳，前端可點擊 "View AI Prompt" 檢視完整上下文。
 
 ### Agent 3: Nana Banana (美術 - 視覺助手)
-*   **職責**: 視覺化 (Asset Creator)。
-*   **引擎韌性 (3-Tier Resilience)**: 
-    1.  **Native**: 優先調用 Google Imagen 產出高品質圖資。
-    2.  **Fallback**: 若 API Key 缺失或遇到 429/403 錯誤，自動切換至 `pollinations.ai` 公開 API。
-    3.  **Emergency**: 極端情況下調用 `picsum.photos` 隨機圖，確保 UI 流程不中斷。
+*   **職責**: 視覺資產 (Vector Asset Creator)。
+*   **物理實現**: 定位為「系統外掛工具」，不涉及雲端圖像計費。
+*   **核心引擎**: 透過 `logo_tool.py` 物理生成幾何 SVG 向量圖，支援 `Project ECITON` 動態品牌識別。
+*   **降級機制**: 具備 Scout 自動化腳本 (`twin_scout_gemini_auth.py`) 與外部 Pollinations 連結之雙軌防禦。
 
 ---
 
@@ -96,7 +95,10 @@ sequenceDiagram
 
 ### P8. 跨角色狀態連動 (Task Sync)
 *   **儲存連動**: `Save` 操作強制觸發 `TaskStatus.DOING`。
-*   **提交連動**: `Submit` 操作成功後（通過 AI 檢查）觸發 `TaskStatus.REVIEW`。
+*   **提交連動**: `Submit` 操作成功後觸發 `TaskStatus.REVIEW`。
+*   **2026-03-20 物理對齊 (Phase 4.6.15)**: 
+    *   **落地實作**: 撰稿功能已對接到 `MarketingService.py:254` (MarketBot)；提交功能已對接到 `MarketingService.py:227` 並補齊路由。
+    *   **外掛說明**: Nana Banana 繪圖功能定位為「系統外掛/工具」，採用 MCP 幾何生成 (logo_tool.py)，不涉及 LLM 計費模型呼叫，故其繪圖行為不計入 AI Token 成本。
 
 ### P9. 反饋感知透明化 (Feedback Transparency)
 *   **映射規範**: 必須優先處理 API 返回的 `reviewNotes` (camelCase) 並將其賦值給 UI 渲染所需的 `review_notes`。

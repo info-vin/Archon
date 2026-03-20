@@ -4,10 +4,11 @@ Standardized with Physical UUID resolution for Phase 4.6.15.
 """
 
 from functools import lru_cache
-from ..utils import get_supabase_client
+
 from ..prompts.marketing_prompts import BLOG_DRAFT_SYSTEM_PROMPT
 from ..prompts.pm_prompts import USER_STORY_SYSTEM_PROMPT
 from ..prompts.rag_prompts import LIBRARIAN_SYSTEM_PROMPT
+from ..utils import get_supabase_client
 
 AGENT_CONFIG = {
     "market-bot": {
@@ -57,7 +58,7 @@ def get_agent_uuid(agent_key: str) -> str | None:
     config = AGENT_CONFIG.get(agent_key)
     if not config:
         return None
-    
+
     agent_name = config["name"]
     try:
         supabase = get_supabase_client()

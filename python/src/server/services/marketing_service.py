@@ -116,9 +116,10 @@ class MarketingService(BaseRepository):
             # 4. LOG ACTUAL TOKEN USAGE (Physical evidence)
             try:
                 import uuid
+
                 from .agent_registry import get_agent_uuid
                 from .token_usage_service import TokenUsageService
-                
+
                 # Resolve Real Physical Identity
                 agent_uuid = get_agent_uuid("market-bot")
 
@@ -233,23 +234,6 @@ class MarketingService(BaseRepository):
         self.supabase_client.table("blog_posts").update({"status": status, "ai_score": score}).eq("id", post_id).execute()
         return True, {"status": status, "ai_score": score}
 
-    async def get_rejection_reason(self, blog_post_id: str) -> str | None:
-        """Bob's Smart Polish: Get AI suggested rejection reason"""
-        from ..services.blog_service import BlogService
-        s, blog = await BlogService().get_post(blog_post_id)
-        if not s or not blog or not blog.get('post'):
-            return None
-
-        api_key = await credential_service.get_credential("GEMINI_API_KEY")
-        if not api_key:
-            return "API Key Missing"
-
-        client = genai.Client(api_key=api_key)
-        resp = client.models.generate_content(
-            model="gemini-2.0-flash",
-            contents=REJECTION_REASON_PROMPT.format(title=blog['post']['title'], content=blog['post']['content'][:1000])
-        )
-        return str(resp.text) if resp.text else None
     async def draft_blog(self, topic: str, industry: list[str] | None, keywords: str | None) -> tuple[bool, dict]:
         """
         Bob's Daily Blog Draft Generation.
@@ -280,6 +264,24 @@ class MarketingService(BaseRepository):
                 contents=f"Topic: {topic}\nContext: {context_text}",
                 config=types.GenerateContentConfig(system_instruction=sys_prompt, response_mime_type="application/json")
             )
+
+            # LOG ACTUAL TOKEN USAGE (Physical Alignment - Phase 4.6.15)
+            try:
+                import uuid
+                from .agent_registry import get_agent_uuid
+                from .token_usage_service import TokenUsageService
+                agent_uuid = get_agent_uuid("market-bot")
+                asyncio.create_task(TokenUsageService.log_usage(
+                    request_id=f"blog-{uuid.uuid4().hex[:8]}",
+                    user_id=agent_uuid,
+                    model="gemini-2.5-flash",
+                    provider="google",
+                    input_tokens=response.usage_metadata.prompt_token_count if response.usage_metadata else 0,
+                    output_tokens=response.usage_metadata.candidates_token_count if response.usage_metadata else 0,
+                    context_type="blog_generation"
+                ))
+            except Exception as log_err:
+                logger.warning(f"Failed to log blog token usage: {log_err}")
 
             if not response.text:
                 return False, {"error": "AI Empty response"}
@@ -312,8 +314,8 @@ class MarketingService(BaseRepository):
                 "total_leads": leads_count,
                 "total_blog_posts": blogs_count,
                 "conversion_rate": round((converted_leads / leads_count * 100), 2) if leads_count > 0 else 0,
-                "active_campaigns": 3, # Placeholder for now
-                "last_updated": "2026-03-16T10:00:00Z"
+                "active_campaigns": blogs_count, # Use blog count as active campaigns surrogate
+                "last_updated": "2026-03-20T10:00:00Z"
             }
         except Exception as e:
             logger.error(f"Failed to fetch marketing stats: {e}")

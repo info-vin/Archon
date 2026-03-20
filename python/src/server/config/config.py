@@ -3,8 +3,10 @@ Environment configuration management for the MCP server.
 """
 
 import ipaddress
+import json
 import os
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from typing import Any
 from urllib.parse import urlparse
 
 from jose import jwt
@@ -27,6 +29,7 @@ class EnvironmentConfig:
     gemini_api_key: str | None = None
     host: str = "0.0.0.0"
     transport: str = "sse"
+    token_pricing: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -207,6 +210,32 @@ def load_environment_config() -> EnvironmentConfig:
     except ValueError as e:
         raise ConfigurationError(f"PORT must be a valid integer, got: {port_str}") from e
 
+    # Load Token Pricing from JSON environment variable (Phase 4.6.15)
+    # This allows Charlie to adjust budget pricing without code changes.
+    token_pricing_json = os.getenv("TOKEN_PRICING_JSON")
+    default_pricing = {
+        "gpt-4o": {"input": 2.50, "output": 10.00},
+        "gpt-4o-mini": {"input": 0.15, "output": 0.60},
+        "gemini-1.5-pro": {"input": 1.25, "output": 5.00},
+        "gemini-1.5-flash": {"input": 0.075, "output": 0.30},
+        "gemini-2.0-flash": {"input": 0.10, "output": 0.40},
+        "gemini-2.0-flash-exp": {"input": 0.10, "output": 0.40},
+        "gemini-2.5-flash": {"input": 0.10, "output": 0.40},
+        "gemini-2.5-flash-lite": {"input": 0.05, "output": 0.20},
+        "text-embedding-004": {"input": 0.02, "output": 0.00},
+        "ollama": {"input": 0.00, "output": 0.00}
+    }
+
+    token_pricing = default_pricing
+    if token_pricing_json:
+        try:
+            custom_pricing = json.loads(token_pricing_json)
+            # Merge custom pricing into defaults
+            token_pricing.update(custom_pricing)
+        except json.JSONDecodeError:
+            # Fallback to defaults if JSON is malformed
+            pass
+
     return EnvironmentConfig(
         openai_api_key=openai_api_key,
         supabase_url=supabase_url,
@@ -214,6 +243,7 @@ def load_environment_config() -> EnvironmentConfig:
         host=host,
         port=port,
         transport=transport,
+        token_pricing=token_pricing
     )
 
 

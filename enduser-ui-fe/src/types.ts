@@ -89,6 +89,11 @@ export interface Task {
   crawler_target_id?: string | null;
   schedule_config?: any;
   agent_output?: any;
+  ai_metrics?: {
+    total_tokens: number;
+    total_cost_usd: number;
+    is_ai_powered: boolean;
+  };
   sources?: {
     source_id: string;
     type: string;

@@ -244,22 +244,46 @@ class TaskService(BaseRepository):
 
     async def get_task(self, task_id: str) -> tuple[bool, dict[str, Any]]:
         """
-        Get a specific task by ID.
+        Get a specific task by ID, including AI usage metrics (Phase 4.6.15).
 
         Returns:
             Tuple of (success, result_dict)
         """
         def _query():
-            return self.supabase_client.table("archon_tasks").select("* ").eq("id", task_id).execute()
+            return self.supabase_client.table("archon_tasks").select("*").eq("id", task_id).execute()
 
         success, result = self.execute_query(
             query_func=_query,
             error_context=f"Task with ID {task_id} not found"
         )
 
-        if success:
-            return True, {"task": result["data"][0]}
-        return False, result
+        if not success:
+            return False, result
+
+        task_data = result["data"][0]
+
+        # 1. Aggregate AI Metrics (Token Usage & Cost)
+        try:
+            # We search for token usage linked to this task_id.
+            # AgentService logs usage with request_id containing the task_id.
+            token_res = self.supabase_client.table("token_usage")\
+                .select("total_tokens, cost_usd")\
+                .ilike("request_id", f"%{task_id}%")\
+                .execute()
+
+            total_tokens = sum(row.get("total_tokens", 0) for row in (token_res.data or []))
+            total_cost = sum(float(row.get("cost_usd", 0)) for row in (token_res.data or []))
+
+            task_data["ai_metrics"] = {
+                "total_tokens": total_tokens,
+                "total_cost_usd": round(total_cost, 6),
+                "is_ai_powered": total_tokens > 0
+            }
+        except Exception as e:
+            logger.warning(f"Failed to aggregate AI metrics for task {task_id}: {e}")
+            task_data["ai_metrics"] = {"total_tokens": 0, "total_cost_usd": 0, "is_ai_powered": False}
+
+        return True, {"task": task_data}
 
     async def update_task(
         self, task_id: str, update_fields: dict[str, Any]

@@ -90,6 +90,15 @@ async def draft_blog_post(req: DraftBlogRequest, current_user: dict = Depends(re
         _err(res.get("message", "AI Draft failed"), res.get("error_code", 500))
     return res
 
+@router.post("/blog/{post_id}/submit")
+async def submit_blog(post_id: str, current_user: dict = Depends(get_current_user)):
+    """Bob submits a draft for Charlie's review."""
+    service = MarketingService()
+    success, res = await service.submit_blog(post_id)
+    if not success:
+        _err(res.get("error", "Submission failed"), 400)
+    return res
+
 @router.post("/generate-logo")
 async def generate_logo(req: LogoRequest, current_user: dict = Depends(requires_permission(BRAND_ASSET_MANAGE))):
     service = MarketingService()
@@ -122,6 +131,12 @@ async def get_marketing_trends(current_user: dict = Depends(get_current_user)):
     """Fetch marketing trends analysis."""
     service = MarketingService()
     return await service.get_marketing_trends()
+
+@router.post("/knowledge/seed")
+async def seed_knowledge_base(current_user: dict = Depends(requires_permission(CONTENT_PUBLISH))):
+    """Admin triggers the physical knowledge seeding process."""
+    service = MarketingService()
+    return await service.seed_knowledge()
 
 @router.get("/approvals")
 async def get_pending_approvals(current_user: dict = Depends(requires_permission(TASK_READ_TEAM))):

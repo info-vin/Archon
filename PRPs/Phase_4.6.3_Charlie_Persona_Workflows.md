@@ -15,8 +15,9 @@ Charlie 是 Archon 系統的神經中樞。他不生產原始數據，也不撰�
 
 ## 2. 核心 AI 助手矩陣 (The Agent Toolkit)
 
-| Agent 名稱 | 職責 (Role) | 核心能力 (Capability) | 如何節省 Charlie 工時 (Efficiency) |
+| Agent 名稱 | 職責 (Role) | 核心能力 (Capability) | 治理機制 (Governance - New) |
 | :--- | :--- | :--- | :--- |
+| **🛡️ DevBot (開發)** | **系統修復** | **L2+ 自動修復** | **XP 等級鎖定**。必須達到 Level 1 (500 XP) 才能獲得物理寫入權限，降低破壞風險。 |
 | **🛡️ Sentinel (哨兵)** | **異常偵測**<br>(自動監控 Stale Leads) | **不需主動查表**。`SchedulerService` 每 12 小時掃描一次滯留 14 天以上的客戶，並自動產生 Alert 日誌。 |
 | **🧠 Librarian (參謀)** | **戰略分析**<br>(智慧任務生成) | **不需手寫任務內容**。整合 RAG 案例庫，根據線索歷史自動生成繁體中文追蹤任務草稿。 |
 | **⚖️ Reviewer (門神)** | **品質審核**<br>(WYSIWYG 預覽) | **不需切換視窗**。在 `ApprovalsPage` 實現 Markdown 與 AI 生成圖的 1:1 即時渲染，支援 AI 輔助生成退件理由。 |
@@ -92,6 +93,11 @@ Charlie 透過 **Nexus Command**（原戰情室）觀察組織的數位體質指
 
 ### 4.2 跨團隊全局視野 (RBAC Visibility)
 *   **物理權限**: Charlie 具備「全局可見性」。在 `Team Management` 面板中，Charlie 可以無差別檢視 Alice 的外勤任務、Bob 的行銷進度以及系統 Agent 的修復日誌，打破跨部門的資訊孤島。
+
+### 4.3 AI 經濟治理 (XP & Token Traceability)
+*   **2026-03-20 物理對齊 (Phase 4.6.15)**: 
+    *   **ROI 透明化**: 戰情室已注入「Token 成本追蹤」。Charlie 可直接看到每個任務的實體美金開支，實現 AI 產出的 ROI 量化管理。
+    *   **資歷化管理**: 實作基於 XP (Experience Points) 的等級體系。Agent 的權限不再是靜態設定，而是隨其「成功貢獻」動態提升，強化系統自癒的安全性。
 
 ---
 

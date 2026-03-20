@@ -8,7 +8,6 @@ from typing import Any, cast
 
 from ..config.logfire_config import get_logger
 from ..prompts.dev_ops_prompts import DEVBOT_TOOLS, get_devbot_analysis_prompt
-from ..utils import get_supabase_client
 from ..utils.code_modifier import CodeModifier
 from .agent_registry import get_agent_config
 from .credential_service import credential_service
@@ -25,27 +24,40 @@ class AgentService:
 
     async def _check_poisson_gate(self, agent_id: str, required_level: int) -> bool:
         """
-        Enforces Poisson-based success thresholds for refactoring levels.
-        L1: Always (Basic fixes)
-        L2: >300 | L3: >420 | L4: >500 | L5: >550 | L6: >580
+        Enforces dynamic governance based on Agent XP Levels (Phase 4.6.15).
+        Replaces legacy 'fuzzy success ledger' with physical XP rankings.
         """
         if required_level <= 1:
             return True
 
-        thresholds = {2: 300, 3: 420, 4: 500, 5: 550, 6: 580}
-        min_success = thresholds.get(required_level, 9999)
+        from .stats_service import StatsService
+        stats_service = StatsService()
 
         try:
-            supabase = get_supabase_client()
-            # Dynamic Success Ledger query
-            res = supabase.table("archon_logs").select("id", count="exact")\
-                .eq("source", agent_id)\
-                .ilike("message", "%Succeeded%").execute()
+            # 1. Fetch unified XP rankings
+            rankings = await stats_service.get_agent_xp_stats()
 
-            success_count = res.count if res.count is not None else 0
-            return success_count >= min_success
+            # 2. Extract level for the specific agent
+            # Note: agent_id in rankings comes from 'agent_name' in logs
+            agent_xp_info = next((r for r in rankings if r["name"] == agent_id or agent_id in r["name"]), None)
+
+            if not agent_xp_info:
+                get_logger(__name__).warning(f"Poisson Gate: No XP record found for agent '{agent_id}'. Denying L{required_level}+ access.")
+                return False
+
+            # Level string format is "Level X" or "Intern"
+            level_str = agent_xp_info.get("level", "Intern")
+            if level_str == "Intern":
+                current_level = 0
+            else:
+                try:
+                    current_level = int(level_str.split(" ")[1])
+                except (IndexError, ValueError):
+                    current_level = 0
+
+            return current_level >= required_level
         except Exception as e:
-            get_logger(__name__).error(f"Poisson Gate Check failed: {e}")
+            get_logger(__name__).error(f"Poisson Gate (Level Sync) failed: {e}")
             return False
 
     async def _handle_tool_calls(self, tool_calls) -> list[dict]:

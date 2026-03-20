@@ -123,7 +123,7 @@ sequenceDiagram
 | **RBAC** | `IdentityMatrix.tsx` 支援細粒度覆寫。 | 已實作 `permission_overrides` 覆寫機制。 | **Permission Override**: 實作交互式權限矩陣，支援三態授權 (Inherit/Grant/Revoke)。 | ✅ Done |
 | **Crawler Management** | `admin_api.py` 具備專屬端點。 | 物理隔離 URI 設定。 | **Feature 1.7**: 建立 `archon_crawler_targets` 表並實施 David 專屬管理。 | ✅ Done |
 | **Trinity Workflow** | 規則與執行斷開。 | 實作 3737 -> 5173 -> 背景執行 閉環。 | **Ops-001**: 實作動態白名單注入、循環任務排程與 Clockwork 任務分派器。 | ✅ Done |
-| **Token Ops** | `stats_api.py` 支援 Hybrid 統計。 | 補齊 `/ai-usage` 端點。 | **Fix 404**: 實作聚合成本計算邏輯並連接至 Nexus。 | ✅ Done |
+| **Token Ops** | `stats_api.py` 支援 Hybrid 統計。 | 定價解耦與實體追蹤。 | **Phase 4.6.15**: 實作 `TOKEN_PRICING_JSON` 配置，實現「零代碼」成本調整。 | ✅ Done |
 | **Config** | `Scoring Logic` 已持久化。 | 評分規則已存入 `archon_settings` 資料庫。 | **Config Persistence**: 實作 Lead Scoring Weights 配置區塊，支援即時微調。 | ✅ Done |
 | **Audit** | 前端具備搜尋與過濾介面。 | 已實作多維度即時過濾稽核紀錄。 | **Audit Log Viewer**: 在 `DocumentVersionsLog` 增加 Search UI 與 Sticky Header。 | ✅ Done |
 
@@ -131,7 +131,14 @@ sequenceDiagram
 
 ## 5. 三位一體營運流 (The Trinity Operational Loop) - 2026-02-24 落地
 
-今日已物理打通 David Howard 的核心自動化營運路徑：
+### 5.1 財務與治理自動化 (Financial & Governance Auto-Pilot) - 2026-03-20 落地
+
+今日已物理實現 Token 經濟體系與 Agent 資歷治理的閉環：
+
+1.  **動態預算操控**：Admin 可透過修改環境變數 `TOKEN_PRICING_JSON` 即時更新全系統的模型成本模型，無需重啟代碼。
+2.  **資歷化安全網**：實施 XP (Experience Points) 等級制度。Admin 定義等級門檻，系統自動限制「菜鳥 Agent」的檔案修改權限，實現物理級的安全防護。
+
+### 5.2 核心自動化營運路徑 (Operational Path)
 
 1.  **動態白名單定義 (5173 Admin)**：David 在 5173 的 Admin Control Center > Data Extraction 標籤頁設定 `archon_crawler_targets` (包含允許爬取的根網址與深度限制)。
 2.  **知識採集指派 (5173 User)**：任一使用者在建立任務 (Task Modal) 時，指派給 `Librarian` 並綁定上述已許可的 Crawler Target，同時勾選「Recurring（定期任務）」。

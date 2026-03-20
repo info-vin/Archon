@@ -15,14 +15,14 @@ class TestAgentAwakening:
         # 1. MarketBot
         market_config = get_agent_config("ai-market-bot")
         assert market_config is not None
-        assert market_config["name"] == "MarketBot"
+        assert market_config["name"] == "Archon MarketBot"
         assert "search_job_market" in market_config["tools"]
         assert "Marketing Content Writer" in market_config["system_prompt"] or "Blog" in market_config["system_prompt"]
 
         # 2. Librarian
         lib_config = get_agent_config("ai-librarian")
         assert lib_config is not None
-        assert lib_config["name"] == "Librarian"
+        assert lib_config["name"] == "Archon Librarian"
         assert "perform_rag_query" in lib_config["tools"]
 
     @patch("src.server.services.agent_service.get_llm_client")

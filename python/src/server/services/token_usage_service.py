@@ -2,26 +2,11 @@ import asyncio
 from decimal import Decimal
 from typing import Any
 
+from ..config.config import get_config
 from ..config.logfire_config import get_logger
 from .client_manager import get_supabase_client
 
 logger = get_logger(__name__)
-
-# Pricing Map (USD per 1M tokens) - Updated 2026-02-03
-# Values are illustrative approximations.
-PRICING_MAP = {
-    "gpt-4o": {"input": 2.50, "output": 10.00},
-    "gpt-4o-mini": {"input": 0.15, "output": 0.60},
-    "gemini-1.5-pro": {"input": 1.25, "output": 5.00},
-    "gemini-1.5-flash": {"input": 0.075, "output": 0.30},
-    "gemini-2.0-flash": {"input": 0.10, "output": 0.40},
-    "gemini-2.5-flash": {"input": 0.10, "output": 0.40},
-    "gemini-2.5-flash-lite": {"input": 0.05, "output": 0.20}, # Nano Banana Lite
-    "gemini-2.5-flash-image": {"input": 0.00, "output": 2.00}, # $0.002 per image (heuristic)
-    "text-embedding-004": {"input": 0.02, "output": 0.00},
-    "claude-3-5-sonnet": {"input": 3.00, "output": 15.00},
-    "ollama": {"input": 0.00, "output": 0.00}, # Local is free
-}
 
 class TokenUsageService:
     @staticmethod
@@ -39,10 +24,15 @@ class TokenUsageService:
         This is designed to be "fire and forget" - errors are logged but don't stop execution.
         """
         try:
-            # calculate cost
-            rates = PRICING_MAP.get(model, PRICING_MAP.get("gemini-2.5-flash-lite"))
+            # calculate cost using global config (Phase 4.6.15)
+            config = get_config()
+            pricing = config.token_pricing
+
+            # Use specific model pricing or fallback to a standard lite model
+            rates = pricing.get(model, pricing.get("gemini-2.5-flash-lite"))
+
             if provider == "ollama":
-                rates = PRICING_MAP["ollama"]
+                rates = pricing.get("ollama", {"input": 0, "output": 0})
 
             cost = Decimal(0)
             if rates:
@@ -84,7 +74,7 @@ class TokenUsageService:
                 try:
                     from .agent_registry import AGENT_CONFIG
                     agent_names = [config["name"] for config in AGENT_CONFIG.values()]
-                    
+
                     # We need the display name to award XP via StatsService
                     res = supabase.table("profiles").select("name").eq("id", user_id).execute()
                     if res.data and res.data[0]["name"] in agent_names:
