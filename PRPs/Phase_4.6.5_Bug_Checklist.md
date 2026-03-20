@@ -32,7 +32,7 @@
 | **BUG-047** | 🔑 Key | **Admin** | **UI** | **React Key 重複 (`gemini-2.0-flash`)**。 | 已在前端 `SystemHealthDashboard.tsx` 實作 `agent-model` 組合鍵並確認生效。 | 🟢 已修復 |
 | **BUG-048** | ❌ 503 | **Alice** | **API** | **`/generate-pitch` 503 (Service Unavailable)**。 | 已還原真實實作並通過 401 異常路徑測試，證實已移除 Mock 降級並補強日誌追蹤。 | 🟢 已修復 |
 | **BUG-049** | 📊 0 Data | **Admin** | **Stats** | **System Health 數據全為 0/UNKNOWN**。 | 已在 `StatsService` 實作管理維度遙測，回傳真實 Agent 列表與 24h 錯誤數。 | 🟢 已修復 |
-| **BUG-050** | 💸 0 Cost | **Admin** | **Stats** | **AI Token 消耗顯示為 0**。 | 修正 `ai-usage` 端點欄位映射（`daily_costs`）並對接實體 `token_usage` 資料。 | 🟢 已修復 |
+| **BUG-050** | 💸 0 Cost | **Admin** | **Stats** | **AI Token 消耗顯示為 0**。 | **2026-03-20 加固**: 實作 `TaskService` 模糊匹配聚合，確保跨 Service 之 AI 任務成本正確歸因至 Task Modal。 | 🟢 已修復 |
 | **TECH-005** | 🏗️ Debt | **Alice** | **Logic** | **專案名稱硬編碼**。 | 透過 `archon_settings` 動態讀取並增加降級搜尋邏輯。 | 🟢 已修復 |
 | **GAP-015** | 🔧 Gap | **Tech** | **Score** | **Alice Enrichment Score 規則**。 | `enrichment_service.py` 實作 Settings 權重。 | 🟢 已修復 |
 | **GAP-021** | 🔧 Gap | **Admin** | **Config** | **配置持久化**。 | `migration/000` 具備 `archon_settings` 表。 | 🟢 已修復 |
@@ -58,7 +58,7 @@
 | **GAP-013** | 🔧 Gap | **Charlie** | **Center** | 指揮中心無資料供練習。已在 `seed_mock_data.sql` 注入 `marketing_trends` 數據。 | Medium | 🟢 已修復 |
 | **GAP-014** | 🔧 Gap | **Admin** | **RBAC** | 缺少 RBAC 練習案例。 | `seed_mock_data.sql` 已成功注入 Viewer/Editor 練習案例。 | 🟢 已修復 |
 | **GAP-015** | 🔧 Gap | **Tech** | **Score** | Alice 的 Enrichment Score 計算規則實作。已於 `EnrichmentService` 實作動態評分。 | Low | 🟢 已修復 |
-| **GAP-016** | 🔧 Gap | **Tech** | **Token** | Token Usage 真實寫入與可視化確認。已於 `MockLLMClient` 實作 Token 消耗模擬。 | Low | 🟢 已修復 |
+| **GAP-016** | 🔧 Gap | **Tech** | **Token** | Token Usage 真實寫入與可視化確認。**2026-03-20 物理落地**: 實作 `TOKEN_PRICING_JSON` 動態解析，脫離模擬進入實體環境。 | Low | 🟢 已修復 |
 | **GAP-003** | 🔧 Gap | **Alice** | **Swipe** | 滑動誤觸復原功能待驗收。已在 `LeadsCardStack` 實作 Undo 按鈕與歷史堆疊。 | Low | 🟢 已修復 |
 | **GAP-011** | 🔧 Gap | **Alice** | **Prune** | 自動歸檔邏輯待驗收。已實作 `task_service.prune_archived_tasks` | Low | 🟢 已修復 |
 | **GAP-017** | 🔧 Gap | **Alice** | **Crawler**| **爬蟲參數配置化**。已整合 RBAC 設定爬蟲深度與過濾器 (Knowledge API)。 | Low | 🟢 已修復 |
@@ -90,6 +90,10 @@
 
 ## 🛠 修復紀錄 (Fix Log)
 
+*   **2026-03-20 (Round 13: Economic Intelligence & Agent XP Governance)**:
+    *   **Economic Transparency (Phase 4.6.15)**: 實現 `TOKEN_PRICING_JSON` 動態配置與 `TaskModal` 成本注入，徹底終結「0 成本」幻想。
+    *   **XP Governance**: 重構 `AgentService` 安全閘門，將 L2+ 自動修復權限與物理 XP 等級掛鉤，強化系統安全性。
+    *   **API Alignment**: 補齊 `submit_blog` 與 `seed_knowledge` 實體路由，解決重構後的路由斷層。
 *   **2026-02-15 (Round 12: Operational Engine Standardization & Loop Defense)**:
     *   **BUG-045 (Loop Fix)**: 遷移 Alice (Pitch/Voice) 與 POBot (Refinement) 至官方 `genai.Client` SDK。
     *   **Engine Alignment**: 徹底廢棄 5173 營運端不穩定的 OpenAI Shim，解決 v1main 404 報錯。

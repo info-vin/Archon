@@ -33,10 +33,11 @@
 
 ### 1.5 DevBot：規範驅動自癒 (SOP-Driven Self-Healing)
 *   **狀態**: 已完成 (COMPLETED)
-*   **實作**: 
-    *   `AgentService` 已植入「規範先行」檢索，修復前自動查詢 RAG 中的 SOP。
-    *   **治理機制**: 已實作基於 Poisson 分佈的 **「成功驅動晉升模型」**。
-    *   **攔截生效**: Agent 累積成功紀錄 < 300 次時，自動阻斷 L2+ 修復並切換為提案模式。
+*   **物理演進史**: 
+    *   **2026-02-17 (Initial Gate)**: 實作 Poisson 閘門，基於日誌字串模糊匹配 (ilike %Succeeded%) 限制 L2 修復權限。
+    *   **2026-02-27 (XP Injection)**: 注入 `_award_agent_xp` 獎勵邏輯，物理化 Agent 行為價值。
+    *   **2026-03-20 (Governance Closure)**: 物理連結閘門與 XP API。權限判斷正式升級為 **「XP 等級鎖定」** (Level 1+ 始獲物理寫入權限)，達成行為資歷化治理。
+
 
 ### 1.6 Charlie & David：治理與物理隔離 (Governance Hardening)
 *   **狀態**: 已完成 (COMPLETED)
