@@ -43,6 +43,10 @@
 ### 3.2 降級保護 (Fallback Strategy)
 所有 Agent 的 `get_prompt` 調用均保留了完整的 Python Default 字串。**即使資料庫斷線，AI 功能仍能以原本的專業邏輯運作**，不會出現遺失指令的情況。
 
+### 3.3 前端架構去虛化 (UI Consolidation) - 2026-03-20
+*   **物理清理**: 刪除冗餘的 `CodeViewerModal.tsx` (442 行死代碼)。
+*   **整合現狀**: 確認代碼檢視功能已成功遷移至垂直切片架構中的 `KnowledgeInspector` 組件，支援高性能分頁與跨角色 (Alice/Charlie) 共享。
+
 ---
 
 ## 4. 下一步行動 (Next Steps)
