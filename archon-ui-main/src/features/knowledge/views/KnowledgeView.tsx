@@ -24,6 +24,7 @@ export const KnowledgeView = () => {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [inspectorItem, setInspectorItem] = useState<KnowledgeItem | null>(null);
   const [inspectorInitialTab, setInspectorInitialTab] = useState<"documents" | "code">("documents");
+  const [isSyncing, setIsSyncing] = useState(false);
 
   // Build filter object for API - memoize to prevent recreating on every render
   const filter = useMemo<KnowledgeItemsFilter>(() => {
@@ -53,6 +54,24 @@ export const KnowledgeView = () => {
   // Toast notifications
   const { showToast } = useToast();
   const previousOperations = useRef<ActiveOperation[]>([]);
+
+  const handleSyncReports = async () => {
+    const { knowledgeService } = await import("../services/knowledgeService");
+    setIsSyncing(true);
+    try {
+      const res = await knowledgeService.ingestScoutReports();
+      if (res.status === "completed") {
+        showToast(`✅ Synced ${res.count} scout reports to knowledge base.`, "success");
+        refetch();
+      } else {
+        showToast(`ℹ️ ${res.message || "No new reports found."}`, "info");
+      }
+    } catch (err: any) {
+      showToast(`❌ Sync failed: ${err.message}`, "error");
+    } finally {
+      setIsSyncing(false);
+    }
+  };
 
   // Track crawl completions and errors for toast notifications
   useEffect(() => {
@@ -131,6 +150,8 @@ export const KnowledgeView = () => {
         viewMode={viewMode}
         onViewModeChange={setViewMode}
         onAddKnowledge={handleAddKnowledge}
+        onSyncReports={handleSyncReports}
+        isSyncing={isSyncing}
       />
 
       {/* Main Content */}

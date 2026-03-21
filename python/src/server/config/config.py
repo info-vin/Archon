@@ -212,7 +212,15 @@ def load_environment_config() -> EnvironmentConfig:
 
     # Load Token Pricing from JSON environment variable (Phase 4.6.15)
     # This allows Charlie to adjust budget pricing without code changes.
+    # Phase 4.6.15: Priority DB -> ENV
     token_pricing_json = os.getenv("TOKEN_PRICING_JSON")
+    try:
+        from ..utils import get_supabase_client
+        db_res = get_supabase_client().table("archon_settings").select("value").eq("key", "TOKEN_PRICING_JSON").execute()
+        if db_res.data:
+            token_pricing_json = db_res.data[0]["value"]
+    except Exception:
+        pass
     default_pricing = {
         "gpt-4o": {"input": 2.50, "output": 10.00},
         "gpt-4o-mini": {"input": 0.15, "output": 0.60},

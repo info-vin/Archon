@@ -134,6 +134,22 @@ class TokenUsageService:
                 daily_stats[date_str]["request_count"] += 1
                 daily_stats[date_str]["models"].add(row["model"])
 
+                # Phase 4.6.15: Grounded ROI data (Aggregate by Agent Name for Frontend alignment)
+                if "agent_costs" not in daily_stats[date_str]:
+                    daily_stats[date_str]["agent_costs"] = {}
+
+                u_id = row.get("user_id")
+                if u_id:
+                    # Resolve ID to Display Name for Frontend compatibility
+                    # We utilize a simple cache-less lookup here or a mapped dictionary
+                    # To keep it grounded, we'll use the UUID as fallback but try to map known agents
+                    name_map = {
+                        "e1682371-0000-0000-0000-000000000000": "DevBot", # Mock or real UUIDs from seed
+                        "a11ce000-0000-0000-0000-000000000000": "MarketBot"
+                    }
+                    agent_name = name_map.get(u_id, u_id) # Use UUID if not in map
+                    daily_stats[date_str]["agent_costs"][agent_name] = daily_stats[date_str]["agent_costs"].get(agent_name, 0) + row.get("cost_usd", 0)
+
             # Convert to list and sort
             result = []
             for d in sorted(daily_stats.keys()):

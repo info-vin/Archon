@@ -66,6 +66,8 @@
 *   **8.1 狀態化排程器 (Stateful Scheduler)**：捨棄單純的 Memory Job Store，改為每次任務執行後將時間戳記寫入 `archon_settings`。伺服器啟動時，會根據上次執行時間智慧判斷下發頻率，解決 Render 無限重啟導致的計時器歸零問題。
 *   **8.2 擴展爬蟲面向 (104 Job Board)**：將 Alice 的自動搜尋關鍵字從 5 個擴展至 6 個，新增 `"Customer Success"` 與 `"AI"` 面向，並設定啟動後 10 分鐘進行首輪掃描，隨後轉為每 24 小時一次。
 *   **8.3 Bob 的每日產業市場日報 (Daily Market Report)**：新增專屬排程，每 24 小時觸發一次 `ai-market-bot`，自動調取 Alice 當日抓取的 Leads 資料，並寫作一篇 600 字的大盤趨勢預測部落格草稿。
+    *   **2026-03-21 物理落地 (The Loop)**: 已在 `MarketingService.draft_blog` 實作自動持久化至 `blog_posts` 表，狀態設為 `review`，確保 Charlie 可直接審核。
+
 *   **8.4 UI 終極拋光**：
     *   修復 `ApprovalsPage` 頂部仍有白邊的問題（於 MainLayout 為 `/approvals` 加入全版面樣式）。
     *   修復 `BrandLogo` 生成失敗時，文字「Myrmidon」遭 flex 擠壓跑版的問題。

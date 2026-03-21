@@ -11,20 +11,58 @@ class StatsService:
         self.supabase = get_supabase_client()
 
     @staticmethod
-    def calculate_ai_score(content: str) -> int:
-        """Refined Business Integrity Scoring."""
+    def calculate_ai_score(content: str, metadata: dict | None = None) -> int:
+        """
+        Physical Business Integrity Scoring (Phase 4.6.15).
+        Scores based on original word count thresholds and technical indicators.
+        """
         score = 100
-        if "CONFIDENTIAL" in content.upper():
-            score -= 50
         words = content.split()
         word_count = len(words)
+
+        # 1. Content Quality (Based on original historical thresholds)
         if word_count < 50:
             score -= 50
         elif word_count < 200:
             score -= 20
-        if "# " not in content:
-            score -= 10
+
+        # 2. Technical Verification (Physical indicators from Agent tasks)
+        if metadata:
+            # If a command was run, returncode 0 is expected
+            if metadata.get("returncode") is not None and metadata.get("returncode") != 0:
+                score -= 40
+            # If linting was performed
+            if metadata.get("lint_passed") is False:
+                score -= 15
+            # If specific keywords are required
+            if metadata.get("required_terms"):
+                for term in metadata["required_terms"]:
+                    if term.upper() not in content.upper():
+                        score -= 10
+
+        # 3. Safety/Compliance
+        if "CONFIDENTIAL" in content.upper():
+            score -= 50
+
         return max(0, score)
+
+    async def add_agent_action_log(self, agent_name: str, xp_change: int, message: str, details: dict | None = None) -> None:
+        """Logs an agent action and updates XP (Grounded Rewards)."""
+        try:
+            payload = {
+                "source": "agent_action",
+                "level": "INFO" if xp_change >= 0 else "WARNING",
+                "message": message,
+                "details": {
+                    **(details or {}),
+                    "agent_name": agent_name,
+                    "xp_change": xp_change,
+                    "timestamp_v": "v4.6.15"
+                }
+            }
+            self.supabase.table("archon_logs").insert(payload).execute()
+        except Exception as e:
+            logger.error(f"Failed to add agent action log: {e}")
 
     async def get_commander_trends(self) -> list[dict[str, Any]]:
         """Strategic 30-day trend data including full Velocity (GAP-034)."""
@@ -399,28 +437,6 @@ class StatsService:
         if xp >= 500:
             return "Level 1"
         return "Intern"
-
-    async def add_agent_action_log(self, agent_name: str, xp_change: int, message: str, details: dict | None = None) -> bool:
-        """
-        Standardized method for agents to record achievements and gain XP.
-        Appends to archon_logs as 'agent_action' source.
-        """
-        try:
-            payload = {
-                "source": "agent_action",
-                "level": "SUCCESS" if xp_change >= 0 else "ERROR",
-                "message": message,
-                "details": {
-                    "agent_name": agent_name,
-                    "xp_change": xp_change,
-                    **(details or {})
-                }
-            }
-            self.supabase.table("archon_logs").insert(payload).execute()
-            return True
-        except Exception as e:
-            logger.error(f"StatsService: Failed to record agent action for {agent_name}: {e}")
-            return False
 
     async def get_member_performance(self) -> list[dict[str, Any]]:
         """

@@ -17,6 +17,8 @@ interface KnowledgeHeaderProps {
   viewMode: "grid" | "table";
   onViewModeChange: (mode: "grid" | "table") => void;
   onAddKnowledge: () => void;
+  onSyncReports: () => void;
+  isSyncing: boolean;
 }
 
 export const KnowledgeHeader: React.FC<KnowledgeHeaderProps> = ({
@@ -29,6 +31,8 @@ export const KnowledgeHeader: React.FC<KnowledgeHeaderProps> = ({
   viewMode,
   onViewModeChange,
   onAddKnowledge,
+  onSyncReports,
+  isSyncing,
 }) => {
   return (
     <div className="flex flex-col gap-4 px-6 py-4 border-b border-white/10">
@@ -42,11 +46,22 @@ export const KnowledgeHeader: React.FC<KnowledgeHeaderProps> = ({
           </span>
         </div>
 
-        {/* Add knowledge button - stays on top line */}
-        <Button variant="knowledge" onClick={onAddKnowledge} className="shadow-lg shadow-purple-500/30 flex-shrink-0">
-          <Plus className="w-4 h-4 mr-2" />
-          Knowledge
-        </Button>
+        {/* Action buttons */}
+        <div className="flex items-center gap-2">
+          <Button 
+            variant="ghost" 
+            onClick={onSyncReports} 
+            disabled={isSyncing}
+            className="text-xs text-cyan-400 border border-cyan-500/30 hover:bg-cyan-500/10"
+          >
+            <Terminal className={cn("w-3 h-3 mr-2", isSyncing && "animate-spin")} />
+            Sync Reports
+          </Button>
+          <Button variant="knowledge" onClick={onAddKnowledge} className="shadow-lg shadow-purple-500/30 flex-shrink-0">
+            <Plus className="w-4 h-4 mr-2" />
+            Knowledge
+          </Button>
+        </div>
       </div>
 
       {/* Row 2: Search and Filters (wraps on smaller screens) */}

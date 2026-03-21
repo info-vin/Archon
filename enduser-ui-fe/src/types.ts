@@ -270,6 +270,7 @@ export interface AiUsageStats {
         cost: number;
         request_count: number;
         models: string[];
+        agent_costs?: Record<string, number>;
     }[];
     is_real_data?: boolean;
 }

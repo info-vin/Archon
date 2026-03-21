@@ -71,13 +71,26 @@ class AgentService:
             try:
                 result = "Tool execution failed"
                 if function_name == "apply_modification":
-                    file_path = arguments.get("file_path")
-                    content = arguments.get("content")
-                    if file_path and content:
-                        self.code_modifier.apply_modification(file_path, content)
-                        result = f"Successfully modified {file_path}"
+                    # --- Poisson Gate: Level 2 (500 XP) for Physical Write ---
+                    # Key match with Archon DevBot in AgentRegistry (Grounded ID)
+                    is_trusted = await self._check_poisson_gate(agent_id="Archon DevBot", required_level=2)
+                    if not is_trusted:
+                        logger.warning("[Poisson Gate] Blocked unauthorized write attempt by Agent.")
+                        result = "Poisson Security Block: Agent requires Level 2 (500+ XP) for physical write operations."
+                    else:
+                        file_path = arguments.get("file_path")
+                        content = arguments.get("content")
+                        if file_path and content:
+                            self.code_modifier.apply_modification(file_path, content)
+                            result = f"Successfully modified {file_path}"
                 elif function_name == "perform_web_crawl":
-                    url = arguments.get("url")
+                    # --- Poisson Gate: Level 1 (100 XP) for Web Crawling ---
+                    is_trusted = await self._check_poisson_gate(agent_id="Archon MarketBot", required_level=1)
+                    if not is_trusted:
+                        logger.warning("[Poisson Gate] Blocked unauthorized crawl attempt by Agent.")
+                        result = "Poisson Security Block: Agent requires Level 1 (100+ XP) for web crawling operations."
+                    else:
+                        url = arguments.get("url")
                     max_depth = arguments.get("max_depth", 2)
                     if url:
                         from ..services.crawling.crawling_service import CrawlingService
@@ -292,30 +305,32 @@ class AgentService:
             await self._run_general_agent_task(task_id, agent_id)
 
     async def _award_agent_xp(self, agent_id: str, task_data: dict, output_message: str):
-        import random
-
         from ..services.stats_service import StatsService
         stats = StatsService()
 
-        # Calculate dynamic XP based on role/complexity
-        if agent_id == "ai-market-bot":
-            xp = random.randint(5, 10)
-            msg = f"Completed marketing task: {task_data.get('title', 'Unknown')}"
-        elif agent_id == "ai-po-bot" or agent_id == "system-devbot":
-            xp = random.randint(5, 10)
-            msg = f"Completed technical/management task: {task_data.get('title', 'Unknown')}"
-        elif agent_id == "ai-librarian":
-            xp = random.randint(5, 10)
-            msg = f"Completed knowledge extraction: {task_data.get('title', 'Unknown')}"
-        else:
-            xp = random.randint(5, 10)
-            msg = f"Completed task: {task_data.get('title', 'Unknown')}"
+        # Physical Scoring instead of random (Phase 4.6.15)
+        # We derive metadata from the task context
+        meta = {
+            "lint_passed": "Success" in output_message, # Heuristic for self-healing
+            "required_terms": ["Archon"] if agent_id == "ai-librarian" else []
+        }
+
+        score = stats.calculate_ai_score(output_message, meta)
+        # Translate 0-100 score to 0-15 XP
+        xp = int(score / 6.6)
+
+        # Grounded ID check from registry (e.g. ai-dev-bot -> Archon DevBot)
+        from .agent_registry import get_agent_config
+        config = get_agent_config(agent_id)
+        display_name = config["name"] if config else agent_id
+
+        msg = f"Completed {display_name} task: {task_data.get('title', 'Unknown')}"
 
         await stats.add_agent_action_log(
-            agent_name=agent_id,
+            agent_name=display_name,
             xp_change=xp,
             message=msg,
-            details={"task_id": task_data.get("id"), "output_preview": output_message[:100]}
+            details={"task_id": task_data.get("id"), "score": score}
         )
 
     async def _run_general_agent_task(self, task_id: str, agent_id: str):

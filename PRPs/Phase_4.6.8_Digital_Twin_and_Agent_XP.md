@@ -58,7 +58,9 @@
 - [x] **2026-03-20 物理落地 (XP Governance)**: 
     *   已在 `stats_api.py` 物理掛載 `GET /api/stats/agent-xp` 端點。
     *   **權限對齊**: 成功將 XP 等級與 `AgentService` 安全閘門物理連動。Agent 必須達到 Level 1 始獲物理寫入權限，達成「行為資歷化」治理。
-- [ ] **待開發**: 將 Twin Scout 報告自動化上傳至 Knowledge Base 的 RAG 流程。
+- [x] **2026-03-21 物理落地 (Scout-to-RAG)**: 
+    *   已實作 `ScoutIngestionService` 並在 Admin UI (3737) 掛載同步按鈕。
+    *   **向外探索**: `twin_scout.py` 已支援 `--outbound_url` 參數，具備外部 UI 靈感採集能力。
 
 ---
 

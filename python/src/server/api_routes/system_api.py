@@ -32,6 +32,18 @@ async def require_manager_or_admin(user=Depends(get_current_user)):
         )
     return user
 
+@router.post("/scout/ingest", dependencies=[Depends(require_system_admin)])
+async def ingest_scout_reports() -> dict[str, Any]:
+    """
+    Manually triggers ingestion of Twin Scout diagnostic reports into the RAG Knowledge Base.
+    Restricted to System Admin.
+    """
+    from ..services.scout_ingestion_service import scout_ingestion_service
+    try:
+        return await scout_ingestion_service.ingest_reports()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Scout ingestion failed: {str(e)}") from e
+
 @router.get("/health/rag", dependencies=[Depends(require_system_admin)])
 async def get_rag_health_check() -> dict[str, Any]:
     """

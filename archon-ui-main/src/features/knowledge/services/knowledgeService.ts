@@ -204,4 +204,13 @@ export const knowledgeService = {
   async getKnowledgeSources(): Promise<KnowledgeSource[]> {
     return callAPIWithETag<KnowledgeSource[]>("/api/knowledge-items/sources");
   },
+
+  /**
+   * Manually ingest Digital Twin Scout reports (Phase 4.6.15)
+   */
+  async ingestScoutReports(): Promise<{ status: string; count: number; message?: string }> {
+    return callAPIWithETag<{ status: string; count: number; message?: string }>("/api/system/scout/ingest", {
+      method: "POST",
+    });
+  },
 };

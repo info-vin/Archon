@@ -28,9 +28,9 @@ async def require_manager_or_admin(user=Depends(get_current_user)):
         raise HTTPException(status_code=403, detail="Manager or Admin access required")
     return user
 
-def calculate_ai_score(content: str) -> int:
-    """Delegates to StatsService."""
-    return StatsService.calculate_ai_score(content)
+def calculate_ai_score(content: str, metadata: dict | None = None) -> int:
+    """Delegates to StatsService (Phase 4.6.15 metadata alignment)."""
+    return StatsService.calculate_ai_score(content, metadata)
 
 @router.get("/commander-trends", dependencies=[Depends(require_manager_or_admin)])
 async def get_commander_trends():

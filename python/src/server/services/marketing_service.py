@@ -294,11 +294,24 @@ class MarketingService(BaseRepository):
             if not is_safe:
                 return False, {"error_code": 422, "message": f"AI Output Blocked: {audit}"}
 
-            return True, {
+            # Physical Persistence (Phase 4.6.15)
+            # Create the blog post in 'review' status for Charlie
+            new_post = {
                 "title": str(result.get("title", "Untitled")),
                 "content": str(result.get("content", "")),
                 "excerpt": str(result.get("excerpt", "")),
-                "used_prompt": topic
+                "status": "review", # Automatically goes to approval inbox
+                "ai_score": self._calculate_ai_score(str(result.get("content", ""))),
+                "image_url": "https://picsum.photos/seed/market/1024/1024"
+            }
+
+            self.supabase_client.table("blog_posts").insert(new_post).execute()
+
+            return True, {
+                "title": new_post["title"],
+                "content": new_post["content"],
+                "excerpt": new_post["excerpt"],
+                "status": "review"
             }
         except Exception as e:
             logger.error(f"MarketingService: Blog drafting failed: {e}")

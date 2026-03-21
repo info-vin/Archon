@@ -16,7 +16,8 @@ const systemFieldsConfig = [
     { key: 'SCHEDULER_SENTINEL_INTERVAL_HOURS', type: 'number', label: 'Sentinel (Business Risks)' },
     { key: 'SCORING_RELEVANCE', type: 'number', label: 'Scoring: Relevance' },
     { key: 'SCORING_AUTHORITY', type: 'number', label: 'Scoring: Authority' },
-    { key: 'SCORING_RECENCY', type: 'number', label: 'Scoring: Recency' }
+    { key: 'SCORING_RECENCY', type: 'number', label: 'Scoring: Recency' },
+    { key: 'TOKEN_PRICING_JSON', type: 'textarea', label: 'AI Token Pricing (JSON)', placeholder: '{"google": {"gemini-pro": 0.01}}' }
 ];
 
 export const AdminSystemConfig: React.FC = () => {
@@ -89,6 +90,37 @@ export const AdminSystemConfig: React.FC = () => {
                         );
                     })}
                 </div>
+            </div>
+
+            {/* Token Pricing & Budget */}
+            <div className="bg-card p-6 rounded-2xl border border-border shadow-sm border-l-4 border-l-emerald-500">
+                <h3 className="text-lg font-bold mb-4 flex items-center gap-2 text-emerald-600">
+                    <ShieldCheckIcon className="w-5 h-5" />
+                    AI Token Pricing & Resource Budget
+                </h3>
+                {systemFieldsConfig.filter(f => f.key === 'TOKEN_PRICING_JSON').map(field => {
+                    const setting = settings.find(s => s.key === field.key);
+                    if (!setting) return null;
+                    return (
+                        <div key={field.key} className="space-y-4">
+                            <div className="p-4 bg-muted/20 rounded-xl border border-border">
+                                <div className="font-bold text-sm mb-1">{field.label}</div>
+                                <p className="text-xs text-muted-foreground mb-4">{setting.description}</p>
+                                <ConfigDrivenInput 
+                                    field={field}
+                                    value={setting.value}
+                                    onBlur={(v) => updateSetting(field.key, v.toString())}
+                                    isSaving={isSaving === field.key}
+                                    className="w-full p-4 bg-background border border-border rounded-xl font-mono text-xs focus:ring-2 ring-emerald-500 outline-none h-40"
+                                />
+                                <div className="mt-2 flex items-center gap-2">
+                                    <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                                    <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest">Pricing Policy Active</span>
+                                </div>
+                            </div>
+                        </div>
+                    );
+                })}
             </div>
 
             {/* Diagnostics */}

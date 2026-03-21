@@ -10,9 +10,26 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.messages import HumanMessage
 
 def parse_args():
-    parser = argparse.ArgumentParser(description="Digital Twin Scout v28 - Multi-Persona")
+    parser = argparse.ArgumentParser(description="Digital Twin Scout v29 - Outbound Intelligence")
     parser.add_argument("--headless", type=str, default="true")
+    parser.add_argument("--outbound_url", type=str, default="", help="External URL to inspect for design inspiration.")
     return parser.parse_args()
+
+async def inspect_outbound(pg, target_url, persona_name="Outbound Scout"):
+    """Goes directly to an external URL without login to gather inspiration."""
+    print(f"🌍 [Scout] Outbound Mission -> {target_url}...")
+    try:
+        await pg.goto(target_url, wait_until="networkidle", timeout=60000)
+        await asyncio.sleep(3) # Wait for animations
+        
+        txt = await pg.evaluate("() => document.body.innerText.substring(0, 2000)")
+        img = base64.b64encode(await pg.screenshot(full_page=True)).decode("utf-8")
+        
+        print(f"✅ [Scout] Outbound inspection complete.")
+        return {"name": f"Outbound ({target_url})", "image": img, "text": txt}
+    except Exception as e:
+        print(f"❌ [Scout] Outbound inspection FAILED: {e}")
+        return None
 
 async def get_mission_from_db(prompt_name="twin_scout_mission"):
     try:
@@ -135,6 +152,12 @@ async def run_scout_session():
             args=['--no-sandbox', '--disable-setuid-sandbox']
         )
         pg = await ctx.new_page()
+        
+        # New: Outbound Scouting (Phase 4.6.15)
+        if args.outbound_url:
+            outbound_res = await inspect_outbound(pg, args.outbound_url)
+            if outbound_res:
+                all_results.append(outbound_res)
         
         for p_config in personas:
             res = await inspect_persona(pg, p_config["email"], p_config["url"], p_config["selector"], p_config["name"])
