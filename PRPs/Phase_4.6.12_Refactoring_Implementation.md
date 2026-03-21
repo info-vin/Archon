@@ -69,3 +69,6 @@ Phase 4.6.12 完成後，全系統應**不再存在任何行數超過 1000 行�
     *   **測試隔離**: 實施「雙重路徑補丁」策略，解決 `src.server` 與 `server` 模組遮蔽引發的 Mock 失效問題。
     *   **安全加固**: 徹底還原 `MarketingService` 憑證讀取邏輯，清除所有硬編碼金鑰。
     *   **驗證指標**: 後端 551/551 測試通過，Zero-Lint/Zero-Mypy。
+*   **2026-03-20 物理加固 (API Alignment)**:
+    *   **行銷模組硬化**: 補齊了重構遺漏的 `POST /blog/{id}/submit` 與 `POST /knowledge/seed` 路由，達成 100% 業務閉環。
+    *   **計費歸因補強**: 物理修復 `MarketingService.draft_blog` 的計費遺漏，確保所有 AI 產出具備實體成本追蹤。

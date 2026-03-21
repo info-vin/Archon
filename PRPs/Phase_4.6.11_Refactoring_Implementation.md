@@ -78,6 +78,9 @@
     - **問題**：`rag-settings/index.tsx` 長達 2351 行，包含所有的 Ollama 連線狀態追蹤、憑證快取、定時去 polling instance health 的巨大 Side Effects 以及 11 個需要維護的設定欄位。`rag-settings/components/CodeExtractionSettings.tsx` 也有 8 個手寫的 Input 元件。
     - **解法**：透過腳本抽離 line 15 到 1168 所有業務範圍為 `useRagSettingsData.ts`。同時將 `ProviderModelMap`、`colorStyles` 等 Type & Const 一併遷移。並且將 11+8 = 19 個 `<input>`/`<Input>` 全部替換成 `ConfigDrivenInput` 配合陣列 Map 渲染。
     - **結果**：`index.tsx` 從 2351 行一次銳減破千行，讓視圖 (View) 與領域狀態邏輯 (Model) 給予明確的分野。表單部分成功達成 Config-Driven UI 目標，全數 26 個標的皆已銷毀手動節點。
+- **[2026-03-20] 前端架構去虛化 (Consolidation)**：
+    - **物理清理**：刪除冗餘的 `CodeViewerModal.tsx` (442 行死代碼)。
+    - **架構整合**：確認代碼檢視功能已物理遷移至垂直切片架構下的 `KnowledgeInspector` (透過 `handleViewCodeExamples` 驅動)，消除舊目錄遺留之認知斷層。
 - **[2026-03] 後端重複邏輯降維打擊 (BaseRepository Pilot)**：
     - **問題**：後端 Service 中大量重複了 `try...except` 迴圈以及 `if not success:` 的資料庫呼叫樣板代碼。
     - **解法**：建立 `BaseRepository` 並在 `TaskService.py` 中進行先導實作 (Pilot Testing)。將 `get_task`, `create_task`, `update_task` 及 `archive_task` 等核心 API 置換為使用 `execute_query()` 封裝。

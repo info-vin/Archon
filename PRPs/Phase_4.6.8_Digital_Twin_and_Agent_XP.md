@@ -15,14 +15,10 @@
 *   **策略**: 將 Twin Scout 產出的 `.twin/diagnostics/report_*.md` 直接轉化為系統知識。
 *   **作法**: 管理員可直接登入 **Admin UI (3737) -> Knowledge Base** 介面，透過現有的「上傳文件」功能，將 Markdown 報告送入 `archon_sources` 表進行切片 (Chunking) 與向量化 (Embedding)。這讓 RAG 助理能即時掌握系統最新的健康狀態歷史。
 
-### 2.2 外部 UI 偵察與 Mockup 生成 (External Scouting)
-*   **擴展動機**: 雙生系統並非只能用來「測試」，也能用來「研發」。
-*   **實作藍圖**: 透過動態變更 `make twin-scout` 的 Target Prompt，賦予 Twin Scout 外部網址的探索權。
-    *   **UI 靈感採集**: 指示 Scout 前往知名網站 (如 Awwwards, Dribbble)，利用 Playwright 截取特定排板的快照，交由 Gemini 分析其色彩美學與 Flexbox 結構。
-    *   **Banana Mockup 生成**: 結合 `browser-use` 核心或者 Gemini 的生圖工具，根據擷取到的風格生成前期的 UI 設計稿 (Mockup/Banana image)。
-*   **規避 429 與 Docker 瓶頸**:
-    *   為防止 Free Tier API 的 HTTP 429 (Rate Limit) 限制，以及省去 Docker Compose 的網路/硬體耗損。
-    *   此 External Scouting 模式可改為**純 Local 環境執行腳本** (指定 URL 而非 Docker 內的 `http://enduser-ui:5173`)，靈活度極高且成本近乎為零。
+### 2.2 多角色自動化巡航 (Multi-Persona Cruising)
+*   **物理實作**: `scripts/twin_scout.py` 已實作 Alice, Bob, Charlie 與 Admin 的自動化登入與 UI 渲染檢查。
+*   **診斷閉環**: 產出的 `.twin/diagnostics/report_*.md` 可作為系統健康歷史，支援物理性的架構回溯。
+
 
 ---
 
@@ -38,9 +34,9 @@
     *   `details` (JSONB): `{"agent_name": "DevBot", "target_file": "DashboardPage.tsx", "xp_change": 15, "task_id": "uuid"}`
 
 ### 3.2 邏輯層：利用現存的 `stats_api.py`
-完全不需要建立新的 `xp_service.py`。我們發現後端 `src/server/api_routes/stats_api.py` 已經實作了強大的統計端點。
-*   **改造 `get_member_performance()`**: 
-    將此 API 擴充，使其不僅查詢人類使用者的 `archon_tasks` 處理率，也能透過 SQL SUM() 聚合 `archon_logs` 中 `details->>'xp_change'` 的總和。
+完全不需要建立新的 `xp_service.py`。我們發現後端 `src/server/api_routes/stats_api.py` 已經實作了實體端點：
+*   **物理端點**: `GET /api/stats/agent-xp`。
+*   **實作邏輯**: 調用 `StatsService.get_agent_xp_stats()`，透過 SQL SUM() 聚合 `archon_logs` 中 `details->>'xp_change'` 的總和。
     ```sql
     -- 概念 SQL：計算特定 Agent 的總 XP
     SELECT SUM((details->>'xp_change')::int) as total_xp 
@@ -59,9 +55,10 @@
 ---
 
 ## 4. 下一步行動 (Next Steps)
-- [ ] 測試將 Twin Scout 報告上傳至 Admin UI (3737) 的 Knowledge Base。
-- [ ] 在 `stats_api.py` 中實作 `get_agent_xp_ranking()` 函數，並與前端 Admin Dashboard 對接。
-- [ ] 撰寫一個可存取外部 URL 以抓取 UI 靈感的延伸版 Scout Prompt。
+- [x] **2026-03-20 物理落地 (XP Governance)**: 
+    *   已在 `stats_api.py` 物理掛載 `GET /api/stats/agent-xp` 端點。
+    *   **權限對齊**: 成功將 XP 等級與 `AgentService` 安全閘門物理連動。Agent 必須達到 Level 1 始獲物理寫入權限，達成「行為資歷化」治理。
+- [ ] **待開發**: 將 Twin Scout 報告自動化上傳至 Knowledge Base 的 RAG 流程。
 
 ---
 

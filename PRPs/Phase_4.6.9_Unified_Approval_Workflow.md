@@ -3,7 +3,10 @@
 ## 1. 核心願景 (Core Vision)
 為了避免「重覆造輪子」與確保系統的極簡治理 (Scalability)，我們決定揚棄為不同角色（Sales, Engineering, Marketing）建立獨立審核頁面的作法。取而代之的是建立單一的 **「統一審核中心 (Unified Approval Inbox)」** (`/approvals`)。
 
-所有的 AI Agents (DevBot, MarketBot, Alice 等) 執行完任務後，不再直接寫入實體資料或覆寫檔案，而是將產出打包為標準化的 JSONB Payload，寫入後端共用的 `proposed_changes` 系統表中，等待具有權限的人類主管（Gatekeeper）一鍵 Approve。
+所有的 AI Agents 執行完任務後，不再直接寫入實體生產環境。系統實施 **「雙軌提案機制」**：
+1.  **代碼與系統提案**: 透過 `proposed_changes` 表進行 JSONB Payload 管理，支援實體 Diff 預覽與檔案覆寫（DevBot）。
+2.  **內容與業務提案**: 透過業務實體表（如 `blog_posts`）的狀態標記 (`status: review`) 進行管理，支援富文本預覽與發布控制（MarketBot）。
+Waiting for approval from authorized Human Gatekeepers (David/Charlie).
 
 ---
 
@@ -87,5 +90,7 @@ sequenceDiagram
     *   **統一收件匣**: 提交 `21dfaeb` 完成了 `/approvals` 頁面與 `DiffViewer` 的實體掛載。
     *   **提案快照**: `ProposeChangeService` 已具備 `old_content` 物理捕捉能力，確保 Diff 資料之真實性。
     *   **多型審核**: 後端 `approve_proposal` 已能根據 JSONB Payload 類型自動執行檔案寫入或狀態變更。
-*   **查核總結**: 系統已徹底移除 Agent 的「非法寫入」路徑，所有涉及系統狀態變更（代碼、配置、發布）之動作均已納入 Unified Inbox 監管。
+*   **2026-03-20 物理落地 (Marketing Inbox)**: 
+    *   補齊了 `POST /api/marketing/blog/{post_id}/submit` 路由，正式將 Bob 的行銷內容納入統一審核中樞。
+*   **查核總結**: 系統已達成跨角色 (Sales, Marketing, Engineering) 的提案閉環，確保所有 AI 產出在影響生產環境前皆經過人類物理審查。
 

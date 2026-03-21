@@ -22,8 +22,10 @@
 ### Step 2: 解決 Render 效能與排程罷工 (Scheduler Architecture) - *核心架構調整*
 **現狀問題**：目前的排程器 (`Clockwork`) 綁死在 Render (0.2 CPU) 的 API 伺服器內，只要 API 關閉或休眠，每日的爬蟲與分析就會罷工，且拖垮微弱的伺服器效能。
 **解決策略**：
-*   **2.1 排程剝離 (Webhook 化)**：
-    *   修改 `scheduler_service.py` 的邏輯，將原本的定時觸發，改為**提供受 API Key 保護的 Webhook 端點** (`POST /api/internal/trigger-jobs`)。
+*   **2.1 排程雙軌化 (Dual-Path Scheduling)**：
+    *   **主路徑 (Internal)**: 實作基於 `archon_settings` 的物理狀態追蹤，解決重啟失效。
+    *   **備援路徑 (External Webhook)**: 物理掛載於 `POST /api/internal/cron/trigger`，受 `ARCHON_CRON_SECRET` 保護，用於應對 API 伺服器長期休眠。
+
 *   **2.2 外部驅動**：
     *   在開發/測試期：寫一個簡單的腳本手動打 API 測試。
     *   在正式環境：捨棄 Render 內部的排程，改用**外部的 Cron 服務** (例如 GitHub Actions Cron, Supabase pg_cron, 或 Render 的 Cron Job 功能) 來定期呼叫這個 Webhook。這樣即使 API 伺服器休眠，外部請求也會將其喚醒並執行任務，且不再長期占用 CPU 資源來防空轉。
@@ -77,4 +79,5 @@
     *   **Nexus 重構**: 提交 `e925c14` 將 1500 行之 `ManagerNexus.tsx` 拆分為 10 個組件並導入 Skeleton Screens。
     *   **DiffViewer 整合**: 提交 `a3397db` 完成 `DiffViewer` 於 `/approvals` 頁面之物理掛載。
     *   **資料淨化**: `migration/0.2.1/` 實體 SQL 已移除 `Legacy Corp` 等髒資料。
-*   **架構偏差紀錄**: Webhook 化計畫改為「內部狀態化排程」，以降低外部維護成本，目前運作穩定。
+*   **狀態化排程器**: 提交 `031f9ad` 實作了 `_schedule_stateful_job` 邏輯，並同步落地 Bob 的每日市場日報自動化 (Line 256)。
+*   **架構偏差紀錄**: **物理雙軌制落地**。Webhook 路徑已實作備援 (`/api/internal/cron/trigger`)，但目前優先採用內部狀態化硬化，達成自給自足的排程穩定性。
