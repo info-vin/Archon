@@ -333,7 +333,18 @@ class StatsService:
             if not window_tasks:
                 trend.append({"date": w_start.strftime("%m-%d"), "rate": 100.0, "count": 0})
                 continue
-            met = sum(1 for t in window_tasks if not t.get("due_date") or datetime.fromisoformat(str(t["completed_at"]).replace('Z', '+00:00')) <= datetime.fromisoformat(str(t["due_date"]).replace('Z', '+00:00')))
+
+            # PERFORMANCE: Replaced sum(1 for ...) with standard for loop to avoid generator creation overhead on hot path
+            met = 0
+            for t in window_tasks:
+                if not t.get("due_date"):
+                    met += 1
+                else:
+                    completed_at_dt = datetime.fromisoformat(str(t["completed_at"]).replace('Z', '+00:00'))
+                    due_date_dt = datetime.fromisoformat(str(t["due_date"]).replace('Z', '+00:00'))
+                    if completed_at_dt <= due_date_dt:
+                        met += 1
+
             trend.append({"date": w_start.strftime("%m-%d"), "rate": round((met/len(window_tasks))*100, 1), "count": len(window_tasks)})
         return {"current_sla": trend[-1]["rate"] if trend else 100.0, "trend": trend, "total_analyzed": len(all_tasks), "timestamp": now.isoformat()}
 
