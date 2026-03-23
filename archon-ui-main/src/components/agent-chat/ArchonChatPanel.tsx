@@ -431,6 +431,8 @@ export const ArchonChatPanel: React.FC<ArchonChatPanelProps> = props => {
               onClick={handleSendMessage} 
               disabled={connectionStatus !== 'online' || isTyping || !inputValue.trim()} 
               className="relative flex items-center justify-center p-2 rounded-md overflow-hidden group disabled:opacity-50 disabled:cursor-not-allowed"
+              aria-label="Send message"
+              title="Send message"
             >
               {/* Glass background */}
               <div className="absolute inset-0 backdrop-blur-md bg-gradient-to-b from-blue-100/80 to-blue-50/60 dark:from-white/5 dark:to-black/20 rounded-md"></div>
