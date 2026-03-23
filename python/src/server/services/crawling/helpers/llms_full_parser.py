@@ -197,16 +197,17 @@ def parse_llms_full_sections(content: str, base_url: str) -> list[LLMsFullSectio
 
     # Fix sections that were split inside code blocks - merge them with next section
     if sections:
+        # PERFORMANCE: Pre-compile regex for code fences outside the loop to avoid string
+        # allocations from split('\n') and overhead from generator creation on every iteration
+        code_fence_pattern = re.compile(r"^\s*```", re.MULTILINE)
+
         fixed_sections: list[LLMsFullSection] = []
         i = 0
         while i < len(sections):
             current = sections[i]
 
             # Count ``` at start of lines only (proper code fences)
-            code_fence_count = sum(
-                1 for line in current.content.split('\n')
-                if line.strip().startswith('```')
-            )
+            code_fence_count = len(code_fence_pattern.findall(current.content))
 
             # If odd number, we're inside an unclosed code block - merge with next
             while code_fence_count % 2 == 1 and i + 1 < len(sections):
@@ -223,10 +224,7 @@ def parse_llms_full_sections(content: str, base_url: str) -> list[LLMsFullSectio
                 )
                 # Move to next section and recount ``` at start of lines
                 i += 1
-                code_fence_count = sum(
-                    1 for line in current.content.split('\n')
-                    if line.strip().startswith('```')
-                )
+                code_fence_count = len(code_fence_pattern.findall(current.content))
 
             fixed_sections.append(current)
             i += 1
