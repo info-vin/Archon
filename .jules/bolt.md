@@ -20,3 +20,7 @@
 ## 2025-05-18 - Pre-calculate feature strings before O(N^2) comparison loops
 **Learning:** In `extract_code_blocks_logic`, calling `_normalize_code_for_comparison` inside the O(N^2) nested deduplication loop caused massive performance degradation because expensive regex substitutions were run redundantly.
 **Action:** Always pre-calculate normalized codes or feature vectors into an O(N) list comprehension BEFORE executing an O(N^2) similarity or comparison loop.
+
+## 2025-05-18 - SequenceMatcher.ratio() performance bottleneck in O(N^2) loops
+**Learning:** Using `difflib.SequenceMatcher.ratio()` directly inside an O(N^2) loop (like code block deduplication) without bounds checking is a severe performance bottleneck because the algorithm is O(L1*L2) internally.
+**Action:** Always pre-calculate sequence lengths and use a fast upper-bound length ratio check (`2.0 * min(L1, L2) / (L1 + L2) < threshold`), followed by `SequenceMatcher`'s internal heuristic guards (`real_quick_ratio()` and `quick_ratio()`), before falling back to the expensive `.ratio()` calculation.
