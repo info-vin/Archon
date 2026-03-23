@@ -9,11 +9,13 @@ from .code_extraction_service import CodeExtractionService
 from .crawling_service import (
     CrawlingService,
     CrawlOrchestrationService,
+)
+from .document_storage_operations import DocumentStorageOperations
+from .handlers.registry import (
     get_active_orchestration,
     register_orchestration,
     unregister_orchestration,
 )
-from .document_storage_operations import DocumentStorageOperations
 from .helpers.site_config import SiteConfig
 
 # Export helpers
