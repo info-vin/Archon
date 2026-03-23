@@ -400,37 +400,74 @@ class StatsService:
 
     async def get_agent_xp_stats(self) -> list[dict[str, Any]]:
         """
-        Calculates XP for all agents from archon_logs (Zero-New-Table Principle).
-        Returns aggregated XP and derived levels.
+        Calculates XP and Total Cost for all agents from archon_logs and token_usage.
+        Returns aggregated XP, cost, and derived levels (Phase 4.6.15 Hardening).
         """
         try:
-            # Query all 'agent_action' logs where details contains 'xp_change'
-            res = self.supabase.table("archon_logs")\
+            # 1. Aggregation A: XP from archon_logs (Source: agent_action)
+            xp_res = self.supabase.table("archon_logs")\
                 .select("details")\
                 .eq("source", "agent_action")\
                 .execute()
 
             xp_map: dict[str, int] = {}
-            for row in (res.data or []):
+            for row in (xp_res.data or []):
                 details = row.get("details") or {}
-                name = details.get("agent_name", "Unknown Agent")
+                # Handle both 'agent_name' and legacy 'agent_id' keys for physical parity
+                name = details.get("agent_name") or details.get("agent_id") or "Unknown Agent"
                 xp = int(details.get("xp_change", 0))
                 xp_map[name] = xp_map.get(name, 0) + xp
 
-            # Map to final list format with levels
-            result = []
-            for name, total_xp in xp_map.items():
-                result.append({
-                    "name": name,
-                    "total_xp": total_xp,
-                    "level": self._get_agent_level(total_xp)
-                })
+            # 2. Aggregation B: Total Cost from token_usage
+            cost_res = self.supabase.table("token_usage").select("user_id, cost_usd").execute()
 
-            # Sort by XP descending
+            # Map of user_id to agent names from registry (Physical Identity Sync)
+            from .agent_registry import AGENT_CONFIG, get_agent_uuid
+            # Define explicit mapping with string-only types
+            agent_id_to_name: dict[str, str] = {}
+            for config_key in AGENT_CONFIG:
+                u_id = get_agent_uuid(config_key)
+                if u_id:
+                    # Physically extract and force string type
+                    agent_val = AGENT_CONFIG[config_key].get("name", "Unknown")
+                    agent_id_to_name[u_id] = str(agent_val)
+
+            cost_map: dict[str, float] = {}
+            for row in (cost_res.data or []):
+                u_id_raw = row.get("user_id")
+                if u_id_raw and u_id_raw in agent_id_to_name:
+                    target_name = agent_id_to_name[u_id_raw]
+                    # Ensure target_name is treated as a single string, not a sequence
+                    current_cost = cost_map.get(target_name, 0.0)
+                    cost_map[target_name] = current_cost + float(row.get("cost_usd", 0))
+
+            # 3. Final Convergence: Merge XP and Cost
+            result = []
+            for key, config_obj in AGENT_CONFIG.items():
+                name_key = str(config_obj.get("name", "Unknown"))
+                total_xp = xp_map.get(name_key, 0)
+
+                # Fallback check for legacy names
+                if total_xp == 0:
+                    legacy_key = f"ai-{key}"
+                    total_xp = xp_map.get(legacy_key, 0)
+
+                total_cost = cost_map.get(name_key, 0.0)
+
+                # ROI Calculation
+                roi = round(total_xp / total_cost, 2) if total_cost > 0 else 0.0
+
+                result.append({
+                    "name": name_key,
+                    "total_xp": total_xp,
+                    "total_cost": round(total_cost, 4),
+                    "roi_ratio": roi,
+                    "level": self._get_agent_level(total_xp)
+                })            # Sort by XP descending (Leaderboard Logic)
             result.sort(key=lambda x: cast(int, x["total_xp"]), reverse=True)
             return result
         except Exception as e:
-            logger.error(f"StatsService: Agent XP fetch failed: {e}")
+            logger.error(f"StatsService: Agent XP/Cost fetch failed: {e}")
             return []
 
     def _get_agent_level(self, xp: int) -> str:

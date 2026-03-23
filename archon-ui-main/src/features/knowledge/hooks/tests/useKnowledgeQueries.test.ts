@@ -3,7 +3,7 @@ import { renderHook, waitFor } from "@testing-library/react";
 import React from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { KnowledgeItemsResponse } from "../../types";
-import { knowledgeKeys, useCrawlUrl, useUploadDocument } from "../useKnowledgeQueries";
+import { knowledgeKeys, useCrawlUrl, useUploadDocument } from "..";
 
 // Mock the services
 vi.mock("../../services", () => ({

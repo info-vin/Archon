@@ -6,7 +6,7 @@
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { STALE_TIMES } from "@/features/shared/config/queryPatterns";
-import { knowledgeKeys } from "../../hooks/useKnowledgeQueries";
+import { knowledgeKeys } from "../../hooks";
 import { knowledgeService } from "../../services";
 import type { ChunksResponse, CodeExample, CodeExamplesResponse, DocumentChunk } from "../../types";
 

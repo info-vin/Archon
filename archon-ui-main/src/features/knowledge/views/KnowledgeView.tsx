@@ -10,7 +10,7 @@ import type { ActiveOperation } from "../../progress/types";
 import { AddKnowledgeDialog } from "../components/AddKnowledgeDialog";
 import { KnowledgeHeader } from "../components/KnowledgeHeader";
 import { KnowledgeList } from "../components/KnowledgeList";
-import { useKnowledgeSummaries } from "../hooks/useKnowledgeQueries";
+import { useKnowledgeSummaries } from "../hooks";
 import { KnowledgeInspector } from "../inspector/components/KnowledgeInspector";
 import type { KnowledgeItem, KnowledgeItemsFilter } from "../types";
 

@@ -4,7 +4,7 @@
  */
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useKnowledgeChunks, useKnowledgeCodeExamples } from "../../hooks/useKnowledgeQueries";
+import { useKnowledgeChunks, useKnowledgeCodeExamples } from "../../hooks";
 import type { CodeExample, DocumentChunk } from "../../types";
 
 const PAGE_SIZE = 20;
