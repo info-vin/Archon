@@ -75,6 +75,7 @@ export const DeleteConfirmModal: React.FC<DeleteConfirmModalProps> = ({
               onClick={onCancel}
               className="px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors"
               autoFocus
+              aria-label="Cancel deletion"
             >
               Cancel
             </button>
@@ -82,6 +83,7 @@ export const DeleteConfirmModal: React.FC<DeleteConfirmModalProps> = ({
               type="button"
               onClick={onConfirm}
               className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors shadow-lg shadow-red-600/25 hover:shadow-red-700/25"
+              aria-label={`Confirm deletion of ${itemName}`}
             >
               Delete
             </button>
