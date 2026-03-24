@@ -14,6 +14,7 @@ from ..auth.permissions import USER_MANAGE
 router = APIRouter(prefix="/api/system/prompts", tags=["prompts"])
 
 @router.get("")
+@router.get("/list")
 async def list_all_prompts(current_user: dict = Depends(get_current_user)):
     """Lists all configured prompts."""
     s, res = await prompt_service.list_prompts()
