@@ -303,11 +303,7 @@ def extract_code_blocks_logic(markdown_content: str, min_length: int | None = No
             len2 = normalized_lengths[jdx]
 
             # PERFORMANCE: Fast length check avoiding expensive SequenceMatcher initialization
-            if len1 == 0 and len2 == 0:
-                pass
-            elif len1 == 0 or len2 == 0:
-                continue
-            elif 2.0 * min(len1, len2) / (len1 + len2) < similarity_threshold:
+            if 2 * min(len1, len2) < similarity_threshold * (len1 + len2):
                 continue
 
             # PERFORMANCE: Use fast heuristic guards before expensive full ratio calculation
