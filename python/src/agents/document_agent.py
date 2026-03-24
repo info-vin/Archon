@@ -136,7 +136,7 @@ You help users manage, create, and update project documentation.
 You can list documents, create new ones, update specific sections, and generate diagrams like ERD or Feature Plans.
 Always be professional and helpful."""
         try:
-            from ..services.prompt_service import prompt_service
+            from server.services.prompt_service import prompt_service
             prompt: str = prompt_service.get_prompt("document_agent_prompt", default_prompt)
             return prompt
         except (ImportError, Exception) as e:

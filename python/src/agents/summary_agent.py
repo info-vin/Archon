@@ -49,7 +49,7 @@ class SummaryAgent(BaseAgent[SummaryDependencies, SummaryOperation]):
 
     def _create_agent(self, **kwargs) -> Agent[SummaryDependencies, SummaryOperation]:
         """Create the PydanticAI agent with tools and prompts."""
-        from ..services.prompt_service import prompt_service
+        from server.services.prompt_service import prompt_service
 
         default_prompt = "You are a concise summarization assistant. Your goal is to provide accurate and brief summaries of any given text. Use the 'summarize_text' tool to process user requests."
         system_prompt = prompt_service.get_prompt("summary_agent_prompt", default_prompt)

@@ -80,7 +80,6 @@ export const OllamaModelSelectionModal: React.FC<OllamaModelSelectionModalProps>
   const loadModels = useCallback(async (forceRefresh: boolean = false) => {
     try {
       setLoading(true);
-      const cacheKey = `ollama_models_${selectedInstanceUrl}_${modelType}`;
       if (forceRefresh) sessionStorage.removeItem(cacheKey);
       const cachedData = sessionStorage.getItem(cacheKey);
       if (cachedData && !forceRefresh) {
@@ -146,10 +145,10 @@ export const OllamaModelSelectionModal: React.FC<OllamaModelSelectionModalProps>
     } finally {
       setLoading(false);
     }
-  }, [selectedInstanceUrl, modelType, instances, showToast, cacheKey]);
+  }, [selectedInstanceUrl, instances, showToast, cacheKey]);
 
   const refreshModels = async () => {
-    sessionStorage.removeItem(`ollama_models_${selectedInstanceUrl}_${modelType}`);
+    sessionStorage.removeItem(cacheKey);
     setLoadedFromCache(false);
     try {
       setRefreshing(true);

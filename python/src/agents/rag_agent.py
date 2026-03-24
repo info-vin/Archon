@@ -318,7 +318,7 @@ class RagAgent(BaseAgent[RagDependencies, str]):
 - Admit when information is not found
 - Suggest alternative searches if needed"""
         try:
-            from ..services.prompt_service import prompt_service
+            from server.services.prompt_service import prompt_service
 
             return str(prompt_service.get_prompt(
                 "rag_agent_prompt",
