@@ -17,20 +17,20 @@ class JobData(BaseModel):
     salary: str | None = None
     url: str | None = None
     description: str | None = None
-    description_full: str | None = None # ADDED: Full Job Description
+    description_full: str | None = None
     skills: list[str] | None = None
     source: str = "104"
-    company_website: str | None = None # ADDED: Official Company Website
-    identified_need: str | None = None  # ADDED: AI/Logic inferred need
-    real_id: str | None = None # Internal Use: For AJAX fetching
+    company_website: str | None = None
+    identified_need: str | None = None
+    real_id: str | None = None
 
 class JobBoardService:
     """
     Service to interact with external job boards (specifically 104.com.tw).
-    Uses direct AJAX simulation for performance, with a Mock fallback for reliability.
+    Uses direct AJAX simulation for performance.
+    MOCK DATA REMOVED: System only returns real data or empty list.
     """
 
-    # UPDATED: Valid Endpoint as of Jan 2026 (Now configurable in Settings)
     DEFAULT_BASE_URL = "https://www.104.com.tw/jobs/search/api/jobs"
     DEFAULT_DETAIL_BASE_URL = "https://www.104.com.tw/job/ajax/content/"
 
@@ -38,7 +38,6 @@ class JobBoardService:
         self.supabase = get_supabase_client()
 
     async def _get_base_url(self) -> str:
-        """Retrieves the 104 Search API URL from settings, falling back to default."""
         try:
             from ..services.settings_service import SettingsService
             settings = SettingsService(self.supabase)
@@ -47,7 +46,6 @@ class JobBoardService:
             return self.DEFAULT_BASE_URL
 
     async def _get_detail_url(self) -> str:
-        """Retrieves the 104 Detail API URL from settings, falling back to default."""
         try:
             from ..services.settings_service import SettingsService
             settings = SettingsService(self.supabase)
@@ -56,146 +54,78 @@ class JobBoardService:
             return self.DEFAULT_DETAIL_BASE_URL
 
     HEADERS = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
         "Referer": "https://www.104.com.tw/jobs/search/",
         "Accept": "application/json, text/plain, */*",
-        "Accept-Language": "zh-TW,zh;q=0.9,en-US;q=0.8,en;q=0.7",
         "X-Requested-With": "XMLHttpRequest"
     }
 
-    # Static Mock Data for Fallback (High Quality Realization)
-    MOCK_JOBS = [
-        JobData(
-            title="Senior AI Automation Engineer",
-            company="Global Tech Solutions",
-            location="Taipei City",
-            salary="1.8M - 2.8M TWD/Year",
-            url="https://www.104.com.tw/job/mock-tech-1",
-            description="Seeking expert to implement Agentic workflows and LLM pipelines.",
-            description_full="Full job description: We are building an autonomous operations team. Expertise in PydanticAI, LangChain, and FastAPI is required.",
-            skills=["Python", "PydanticAI", "LLM Ops"],
-            source="mock",
-            identified_need="Building AI Team -> Perfect match for Archon Agent Framework."
-        ),
-        JobData(
-            title="Marketing Technology Specialist",
-            company="Innovative Retail Group",
-            location="Hsinchu",
-            salary="1.2M - 1.6M TWD/Year",
-            url="https://www.104.com.tw/job/mock-marketing-1",
-            description="Focus on automating marketing campaigns and lead generation.",
-            description_full="Full job description: Looking for someone to integrate AI tools into our CRM and marketing stack to improve ROI.",
-            skills=["Python", "CRM Integration", "Data Analysis"],
-            source="mock",
-            identified_need="Campaign Automation -> Needs Bob (MarketingBot) features."
-        ),
-        JobData(
-            title="DevOps & Cloud Architect",
-            company="CloudFlow Systems",
-            location="Remote",
-            salary="2.0M+ TWD/Year",
-            url="https://www.104.com.tw/job/mock-devops-1",
-            description="Manage scalable infrastructure and CI/CD pipelines.",
-            description_full="Full job description: Ensuring 99.9% uptime for our AI SaaS. Experience with Docker and Supabase is a plus.",
-            skills=["Docker", "Kubernetes", "Supabase"],
-            source="mock",
-            identified_need="Infrastructure Hardening -> Needs DevBot monitoring."
-        )
-    ]
+    # REAL DATA ONLY: MOCK_JOBS is now empty
+    MOCK_JOBS: list[JobData] = []
 
     async def search_jobs(self, keyword: str, limit: int = 10) -> list[JobData]:
-        """
-        Search for jobs using keyword and identify potential leads.
-        Now also fetches full job details for each result.
-        """
         logger.info(f"Searching jobs | keyword={keyword} | limit={limit}")
 
-        # Use a single session for the entire lifecycle to maintain cookies (Anti-Scraping)
         async with httpx.AsyncClient(timeout=20.0, headers=self.HEADERS, follow_redirects=True) as client:
             try:
                 # 1. Fetch List
                 jobs = await self._fetch_from_104(client, keyword, limit)
 
                 if not jobs:
-                    logger.warning("104 API returned empty list, falling back to mock")
-                    jobs = self.MOCK_JOBS
-                else:
-                    # 2. Fetch Details (Only if we have real jobs)
-                    for i, job in enumerate(jobs):
-                        if job.real_id:
-                            # Throttling: Random delay to mimic human behavior
-                            if i > 0:
-                                delay = random.uniform(1.3, 2.7)
-                                await asyncio.sleep(delay)
+                    logger.warning("104 API returned empty list or blocked.")
+                    return []
 
-                            try:
-                                detail = await self._fetch_job_detail(client, job.real_id, job.url)
-                                if detail:
-                                    job.description_full = detail
-                                    logger.info(f"Fetched detail | id={job.real_id} | len={len(detail)}")
-                                else:
-                                    job.description_full = f"[Snippet Only] {job.description}"
-                            except Exception as e:
-                                logger.warning(f"Failed to fetch job detail | url={job.url} | error={e}")
+                # 2. Fetch Details
+                for i, job in enumerate(jobs):
+                    if job.real_id:
+                        if i > 0:
+                            await asyncio.sleep(random.uniform(1.3, 2.7))
+
+                        try:
+                            detail = await self._fetch_job_detail(client, job.real_id, job.url)
+                            if detail:
+                                job.description_full = detail
+                            else:
                                 job.description_full = f"[Snippet Only] {job.description}"
-                        else:
+                        except Exception as e:
+                            logger.warning(f"Failed to fetch job detail | url={job.url} | error={e}")
                             job.description_full = f"[Snippet Only] {job.description}"
 
-                        # Infer need after description is fetched
-                        job.identified_need = await self._infer_need(job)
+                    # Infer need after description is fetched
+                    job.identified_need = await self._infer_need(job)
 
                 logger.info(f"Job search completed | count={len(jobs)}")
                 return jobs
 
             except Exception as e:
-                logger.error(f"Job search failed | error={str(e)} | switching_to_fallback=True")
-                # Ensure mock jobs also have inferred needs
-                for job in self.MOCK_JOBS:
-                    if not job.identified_need:
-                        job.identified_need = await self._infer_need(job)
-                return self.MOCK_JOBS
+                logger.error(f"Job search failed | error={str(e)}")
+                return []
 
     async def auto_fetch_daily_leads(self) -> int:
-        """
-        Automatically fetches jobs for 5 predefined keywords and saves them.
-        Limits to 4 jobs per keyword (max 20).
-        """
         logger.info("Starting daily lead auto-fetch...")
         total_new_leads = 0
-        keywords = ["Python", "Data Analyst", "Marketing", "Project Manager", "Sales", "AI"]
+        keywords = ["Python", "AI", "Marketing", "Sales"]
 
         for keyword in keywords:
-            logger.info(f"Auto-fetching jobs for: '{keyword}'")
             try:
                 jobs = await self.search_jobs(keyword, limit=4)
                 if jobs:
                     new_leads_count = await self.identify_leads_and_save(jobs)
                     total_new_leads += new_leads_count
-                    logger.info(f"Saved {new_leads_count} leads for '{keyword}'.")
             except Exception as e:
                 logger.error(f"Error auto-fetching for '{keyword}': {e}")
-
             await asyncio.sleep(random.uniform(2.0, 4.0))
 
-        logger.info(f"Daily auto-fetch completed. Total saved: {total_new_leads}")
         return total_new_leads
 
     async def identify_leads_and_save(self, jobs: list[JobData]) -> int:
-        """
-        Filters jobs into leads and saves them to the 'leads' database table.
-        Returns the number of new leads saved.
-        """
         new_leads_count = 0
-
         for job in jobs:
             try:
-                # 1. Check if lead already exists (by company name and source URL)
                 existing = self.supabase.table("leads").select("id").eq("company_name", job.company).eq("source_job_url", job.url).execute()
-
                 if existing.data:
                     continue
 
-                # 2. Save new lead
                 lead_data = {
                     "company_name": job.company,
                     "job_title": job.title,
@@ -204,42 +134,26 @@ class JobBoardService:
                     "status": "new",
                     "identified_need": job.identified_need or await self._infer_need(job)
                 }
-
-                # Store full description in metadata if possible, or extend table later.
-                # For now, we just stick to the existing schema.
-
                 self.supabase.table("leads").insert(lead_data).execute()
                 new_leads_count += 1
-                logger.info(f"New lead identified and saved | company={job.company}")
-
             except Exception as e:
                 logger.error(f"Failed to save lead | company={job.company} | error={str(e)}")
-
         return new_leads_count
 
     async def _infer_need(self, job: JobData) -> str:
-        """
-        Uses LLM to infer business need and extract technical tags from job description.
-        Returns a formatted string: "[Tag1] [Tag2] Inferred business need..."
-        """
         try:
             from ..services.credential_service import credential_service
             api_key = await credential_service.get_credential("GEMINI_API_KEY") or await credential_service.get_credential("GOOGLE_API_KEY")
             if not api_key:
-                return self._fallback_infer_need(job)
+                return f"Hiring for {job.title} at {job.company}"
 
             from google import genai
             from google.genai import types
 
             client = genai.Client(api_key=api_key)
             prompt = (
-                "You are an expert technical recruiter and sales analyst. "
-                f"Analyze this job posting for '{job.title}' at '{job.company}'.\n"
-                "1. Extract 2-5 core technical or business skills as tags (e.g. [Python] [B2B Sales] [AWS]).\n"
-                "2. Briefly summarize why they are hiring and what AI/Automation services they might need (1 sentence).\n"
-                "Format EXACTLY like this: [Tag1] [Tag2] [Tag3] Summary sentence here.\n"
-                "Do not use markdown blocks.\n\n"
-                f"Job Description Snippet:\n{job.description_full or job.description}"
+                "Analyze this job posting and extract 2-5 technical tags and a summary of AI/Automation needs.\n"
+                f"Format: [Tag1] [Tag2] Summary.\nJob: {job.title} at {job.company}\nDesc: {job.description_full or job.description}"
             )
 
             response = client.models.generate_content(
@@ -247,151 +161,66 @@ class JobBoardService:
                 contents=prompt,
                 config=types.GenerateContentConfig(temperature=0.2)
             )
-
-            if response.text:
-                res = str(response.text).replace("\n", " ").strip()
-                logger.info(f"LLM tagged job '{job.company}': {res[:50]}...")
-                return res
-            return self._fallback_infer_need(job)
-        except Exception as e:
-            logger.warning(f"LLM tagging failed for {job.company}: {e}")
-            return self._fallback_infer_need(job)
-
-    def _fallback_infer_need(self, job: JobData) -> str:
-        title = job.title.lower()
-        desc = (job.description or "").lower()
-
-        if "analyst" in title or "data" in title or "tableau" in desc:
-            return "[Data] [Analytics] Hiring Data Talent -> High potential for BI/Data Tooling."
-        elif "ai" in title or "ml" in title or "llm" in desc:
-            return "[AI] [LLM] Building AI Capabilities -> Target for Archon/Agent framework."
-        elif "marketing" in title or "sales" in title:
-            return "[Sales] [Marketing] Expanding Growth Team -> Needs Sales Intelligence/Lead Gen tools."
-        else:
-            return f"[{job.title[:10]}] Hiring for {job.title} -> General digital transformation lead."
+            return str(response.text).strip() if response.text else f"Hiring for {job.title}"
+        except Exception:
+            return f"Hiring for {job.title}"
 
     async def _fetch_from_104(self, client: httpx.AsyncClient, keyword: str, limit: int) -> list[JobData]:
-        """
-        Internal method to fetch job list.
-        Now uses the passed client to share session cookies.
-        """
         params = {
-            "ro": "0",
-            "kwop": "7",
-            "keyword": keyword,
-            "expansionType": "area,spec,com,job,wf,wktm",
-            "order": "1",
-            "asc": "0",
-            "page": "1",
-            "mode": "s",
-            "jobsource": "2018indexpoc",
+            "ro": "0", "kwop": "7", "keyword": keyword, "order": "1", "asc": "0", "page": "1", "mode": "s", "jobsource": "2018indexpoc",
         }
-
-        # Visit search home first to set cookies (Important!)
+        # Pre-warm session
         await client.get("https://www.104.com.tw/jobs/search/", params={"keyword": keyword})
 
         base_url = await self._get_base_url()
         response = await client.get(base_url, params=params)
-
         if response.status_code != 200:
-            raise Exception(f"API Error: {response.status_code}")
+            return []
 
         data = response.json()
-
-        # Validation
-        if "data" not in data:
-            raise Exception("Invalid API Response Structure")
-
         raw_jobs = data.get("data", [])
         parsed_jobs = []
 
         for item in raw_jobs[:limit]:
-            # Safe Extraction
-            title = item.get("jobName", "Unknown Title")
-            company = item.get("custName", "Unknown Company")
-
-            # Extract URL securely and get the real Job ID (alphanumeric)
-            # 104 returns link dictionary with 'job' key like "//www.104.com.tw/job/8u3r5?jobsource=..."
             raw_link = item.get("link", {}).get("job", "")
-
             real_id = None
             url = None
-
             if raw_link:
                 url = f"https:{raw_link}" if raw_link.startswith("//") else raw_link
-                # Extract ID: /job/8u3r5? -> 8u3r5
-                try:
-                    if "/job/" in url:
-                        # Extract the segment after /job/ and before any ?
-                        real_id = url.split("?")[0].split("/job/")[1]
-                except Exception:
-                    pass
-            else:
-                # Fallback construction (usually won't work for AJAX but keeps URL valid)
-                job_no = item.get("jobNo")
-                url = f"https://www.104.com.tw/job/{job_no}" if job_no else None
-
-            # Description snippet
-            desc = item.get("jobDesc", "")
-
-            # Location & Salary
-            location = item.get("jobAddrNoDesc") or item.get("jobAddress")
-            salary = item.get("salaryDesc")
-
-            # Tags/Skills
-            skills = []
-            tags = item.get("tags", [])
-            if tags:
-                skills = [t.get("desc") for t in tags if "desc" in t]
+                if "/job/" in url:
+                    real_id = url.split("?")[0].split("/job/")[1]
 
             parsed_jobs.append(JobData(
-                title=title,
-                company=company,
-                location=location,
-                salary=salary,
+                title=item.get("jobName", "Unknown"),
+                company=item.get("custName", "Unknown"),
+                location=item.get("jobAddrNoDesc"),
+                salary=item.get("salaryDesc"),
                 url=url,
-                description=desc,
-                skills=skills,
+                description=item.get("jobDesc", ""),
                 source="104",
-                real_id=real_id # Stored for next step
+                real_id=real_id
             ))
-
         return parsed_jobs
 
     async def _fetch_job_detail(self, client: httpx.AsyncClient, job_id: str, job_url: str | None) -> str | None:
-        """
-        Fetches the full job description using the shared client.
-        Requires valid job_id (alphanumeric) and job_url (for Referer).
-        """
         try:
             if not job_id:
                 return None
-
             detail_base = await self._get_detail_url()
             ajax_url = f"{detail_base}{job_id}"
 
-            # Headers must have Referer matching the job page
             headers = self.HEADERS.copy()
             if job_url:
                 headers["Referer"] = job_url
+                # CRITICAL: Physical Warm-up for Detail AJAX
+                await client.get(job_url, headers={"User-Agent": headers["User-Agent"]}, follow_redirects=True)
 
             response = await client.get(ajax_url, headers=headers)
-
             if response.status_code != 200:
-                logger.warning(f"Job AJAX fetch failed | status={response.status_code} | url={ajax_url}")
                 return None
 
             data = response.json()
-
-            # Extract description from JSON structure
-            # Path: data -> jobDetail -> jobDescription
-            job_desc = data.get("data", {}).get("jobDetail", {}).get("jobDescription")
-
-            if job_desc:
-                return cast(str, job_desc)
-
-            return None
-
-        except Exception as e:
-            logger.warning(f"Error fetching job detail via AJAX | id={job_id} | error={e}")
+            res = data.get("data", {}).get("jobDetail", {}).get("jobDescription")
+            return cast(str, res) if res else None
+        except Exception:
             return None

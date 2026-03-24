@@ -128,7 +128,8 @@ const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                             </Link>
                         </li>
                     )}
-                    {(isAdmin || hasPermission('user:manage:team')) && (
+                    {/* Charlie (Manager) specific features */}
+                    {hasPermission('user:manage:team') && (
                         <>
                             <li className="mb-2 w-full">
                                 <Link to="/approvals" title={isCollapsed ? "Approvals" : undefined} className={`flex ${isCollapsed ? 'flex-col items-center justify-center p-2 text-[10px] text-center' : 'items-center p-2'} rounded-md hover:bg-secondary ${location.pathname.startsWith('/approvals') ? 'bg-secondary' : ''} transition-all`}>
