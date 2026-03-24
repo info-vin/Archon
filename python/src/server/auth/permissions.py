@@ -53,7 +53,7 @@ ROLE_PERMISSIONS: dict[str, set[str]] = {
         STATS_VIEW_ALL, LEADS_VIEW_ALL,
         USER_MANAGE, MCP_MANAGE, BRAND_ASSET_MANAGE, USER_MANAGE_TEAM
     },
-    "manager": { # Charlie
+    "manager": {
         TASK_CREATE, TASK_READ_TEAM, TASK_UPDATE_OWN,
         AGENT_TRIGGER_DEV, AGENT_TRIGGER_MKT, AGENT_TRIGGER_KNOW,
         CODE_APPROVE, CONTENT_PUBLISH, CONTENT_REJECT, INFO_REQUEST,
@@ -65,10 +65,10 @@ ROLE_PERMISSIONS: dict[str, set[str]] = {
         AGENT_TRIGGER_KNOW,
         STATS_VIEW_OWN
     },
-    "sales": { # Alice
+    "sales": {
         TASK_CREATE, TASK_READ_OWN, TASK_UPDATE_OWN,
         AGENT_TRIGGER_MKT,
-        STATS_VIEW_OWN, LEADS_VIEW_ALL
+        LEADS_VIEW_ALL
     },
     "marketing": { # Bob
         TASK_CREATE, TASK_READ_OWN, TASK_UPDATE_OWN,
