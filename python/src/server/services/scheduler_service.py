@@ -33,7 +33,7 @@ class SchedulerService:
             if res.data:
                 return int(res.data[0]["value"])
         except Exception as e:
-            logger.warning(f"Scheduler: Failed to fetch {key}: {e}")
+            logger.warning(f"Scheduler: Failed to fetch {key}, using default {default}: {e}")
         return default
 
     async def start(self):

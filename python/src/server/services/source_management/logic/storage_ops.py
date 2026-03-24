@@ -3,9 +3,8 @@ Database Operations for Source Management
 Physically isolated to handle core persistence logic.
 """
 import logging
-
+from typing import Any
 from supabase import Client
-
 from server.config.logfire_config import search_logger
 from server.services.source_management.logic.ai_metadata import generate_source_title_and_metadata
 
@@ -32,15 +31,15 @@ async def update_source_info(
         if existing_source.data:
             existing_title = existing_source.data[0]["title"]
             search_logger.info(f"Preserving existing title for {source_id}: {existing_title}")
-
-            # Detailed source_type detection restoration
+            search_logger.info(f"Updating existing source {source_id} metadata: knowledge_type={knowledge_type}")
+            
             if source_url and source_url.startswith("file://"):
                 source_type = "file"
             elif original_url and original_url.startswith("file://"):
                 source_type = "file"
             else:
                 source_type = "url"
-
+            
             metadata = {
                 "knowledge_type": knowledge_type,
                 "tags": tags or [],
@@ -101,7 +100,7 @@ async def update_source_info(
             client.table("archon_sources").upsert(upsert_data).execute()
             search_logger.info(f"Created/updated source {source_id} with title: {title}")
     except Exception as e:
-        logger.error(f"Error updating source {source_id}: {e}")
+        search_logger.error(f"Error updating source {source_id}: {e}")
         raise
 
 def create_source_from_upload_logic(

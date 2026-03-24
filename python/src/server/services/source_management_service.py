@@ -5,12 +5,11 @@ Entry point for source management. Implementation delegated to logic sub-modules
 to maintain a clean, maintainable file size (< 300 lines).
 """
 from typing import Any
-
 from server.config.logfire_config import get_logger
 from server.repositories.base_repository import BaseRepository
 from server.services.client_manager import get_supabase_client
 
-# Re-export logic functions for backward compatibility (Zero 404/500 Risk)
+# Re-export logic functions for backward compatibility
 from server.services.source_management.logic.ai_metadata import (
     extract_source_summary,
     generate_source_title_and_metadata,
@@ -57,34 +56,41 @@ class SourceManagementService(BaseRepository):
     def delete_source(self, source_id: str) -> tuple[bool, dict[str, Any]]:
         """Delete a source and its associations (cascaded manually for precision)."""
         logger.info(f"Starting delete_source for source_id: {source_id}")
-
+        
         # 1. Pages
+        logger.info(f"Deleting from crawled_pages table for source_id: {source_id}")
         def _p_q():
             return self.supabase_client.table("archon_crawled_pages").delete().eq("source_id", source_id).execute()
         p_ok, p_res = self.execute_query(_p_q, "Failed to delete from crawled_pages", False)
         if not p_ok:
             return False, {"error": f"Failed to delete crawled pages: {p_res.get('error')}"}
-        p_count = len(p_res["data"] or [])
+        pages_deleted = len(p_res["data"] or [])
+        logger.info(f"Deleted {pages_deleted} pages from crawled_pages")
 
         # 2. Code
+        logger.info(f"Deleting from code_examples table for source_id: {source_id}")
         def _c_q():
             return self.supabase_client.table("archon_code_examples").delete().eq("source_id", source_id).execute()
         c_ok, c_res = self.execute_query(_c_q, "Failed to delete from code_examples", False)
         if not c_ok:
             return False, {"error": f"Failed to delete code examples: {c_res.get('error')}"}
-        c_count = len(c_res["data"] or [])
+        code_deleted = len(c_res["data"] or [])
+        logger.info(f"Deleted {code_deleted} code examples")
 
         # 3. Source record
+        logger.info(f"Deleting from sources table for source_id: {source_id}")
         def _s_q():
             return self.supabase_client.table("archon_sources").delete().eq("source_id", source_id).execute()
         s_ok, s_res = self.execute_query(_s_q, "Failed to delete from sources", False)
         if not s_ok:
             return False, {"error": f"Failed to delete source: {s_res.get('error')}"}
-        s_count = len(s_res["data"] or [])
+        source_deleted = len(s_res["data"] or [])
+        logger.info(f"Deleted {source_deleted} source records")
 
+        logger.info("Delete operation completed successfully")
         return True, {
-            "source_id": source_id, "pages_deleted": p_count,
-            "code_examples_deleted": c_count, "source_records_deleted": s_count,
+            "source_id": source_id, "pages_deleted": pages_deleted,
+            "code_examples_deleted": code_deleted, "source_records_deleted": source_deleted,
         }
 
     def update_source_metadata(self, source_id: str, **kwargs) -> tuple[bool, dict[str, Any]]:
@@ -103,7 +109,7 @@ class SourceManagementService(BaseRepository):
             ok, res = self.execute_query(_m_q, "Error getting source metadata", False)
             if not ok:
                 return False, {"error": f"Error updating source metadata: {res.get('error')}"}
-
+            
             metadata = res["data"][0].get("metadata", {}) if res["data"] else {}
             if kwargs.get("knowledge_type"):
                 metadata["knowledge_type"] = kwargs["knowledge_type"]
@@ -147,18 +153,18 @@ class SourceManagementService(BaseRepository):
         ok, res = self.execute_query(_s_q, "Error getting source details", False)
         if not ok or not res["data"]:
             return False, {"error": f"Source with ID {source_id} not found: {res.get('error', '')}"}
-
+        
         source_data = res["data"][0]
         def _p_c():
             return self.supabase_client.table("archon_crawled_pages").select("id").eq("source_id", source_id).execute()
         _, p_res = self.execute_query(_p_c, "Error counting pages", False)
-
+        
         def _c_c():
             return self.supabase_client.table("archon_code_examples").select("id").eq("source_id", source_id).execute()
         _, c_res = self.execute_query(_c_c, "Error counting code examples", False)
-
+        
         return True, {
-            "source": source_data,
+            "source": source_data, 
             "page_count": len(p_res["data"] or []),
             "code_example_count": len(c_res["data"] or [])
         }
@@ -186,7 +192,10 @@ class SourceManagementService(BaseRepository):
                 "created_at": row.get("created_at", ""),
                 "updated_at": row.get("updated_at", ""),
             })
-        return True, {"sources": sources, "total_count": len(sources), "knowledge_type_filter": knowledge_type}
+        return True, {
+            "sources": sources, "total_count": len(sources),
+            "knowledge_type_filter": knowledge_type
+        }
 
     def create_source_from_upload(self, source_id: str, filename: str, **kwargs) -> None:
         """Delegated upload logic."""
