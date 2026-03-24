@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { api } from '../../../services/api';
 import { Task, Project, TaskStatus, SortableTaskKeys, SortDirection, Employee } from '../../../types';
+import { useAuth } from '../../../hooks/useAuth';
 
 export const useDashboardLogic = (selectedProjectId: string) => {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -8,29 +9,42 @@ export const useDashboardLogic = (selectedProjectId: string) => {
   const [users, setUsers] = useState<Employee[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [sortConfig, setSortConfig] = useState<{ key: SortableTaskKeys; direction: SortDirection } | null>(null);
+  
+  const { user } = useAuth();
 
   const fetchData = useCallback(async () => {
     setIsLoading(true);
     try {
-      const [tasksData, projectsData, usersData] = await Promise.all([
+      // Alice (Sales) doesn't need to see the team members. 
+      // Only managers and admins should call getEmployees to avoid 403 errors.
+      const isManagerOrAdmin = user?.role?.toLowerCase() === 'manager' || 
+                               user?.role?.toLowerCase() === 'admin' || 
+                               user?.role?.toLowerCase() === 'system_admin';
+
+      const promises: [Promise<Task[]>, Promise<Project[]>, Promise<Employee[]>] = [
         api.getTasks(true), // include closed
         api.getProjects(),
-        api.getEmployees()
-      ]);
+        isManagerOrAdmin ? api.getEmployees() : Promise.resolve([])
+      ];
+
+      const [tasksData, projectsData, usersData] = await Promise.all(promises);
+      
       setTasks(tasksData);
       setProjects(projectsData);
       setUsers(usersData);
     } catch (error: any) {
       console.error('Failed to load dashboard data:', error);
-      alert(`Failed to load dashboard data: ${error.message}`);
+      // alert(`Failed to load dashboard data: ${error.message}`);
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [user]);
 
   useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+    if (user) {
+      fetchData();
+    }
+  }, [fetchData, user]);
 
   const userMap = useMemo(() => {
     const map: Record<string, any> = {};

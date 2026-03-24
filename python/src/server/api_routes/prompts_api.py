@@ -6,9 +6,10 @@ Standardized RBAC Sealing with correct response unwrapping.
 
 from fastapi import APIRouter, Depends, HTTPException
 
-from src.server.auth.dependencies import get_current_user, requires_permission
-from src.server.auth.permissions import USER_MANAGE
 from src.server.services.prompt_service import prompt_service
+
+from ..auth.dependencies import get_current_user, requires_permission
+from ..auth.permissions import USER_MANAGE
 
 router = APIRouter(prefix="/api/system/prompts", tags=["prompts"])
 

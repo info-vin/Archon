@@ -220,7 +220,7 @@ class RAGService(BaseRepository):
             """
 
             # 5. Generate with Grounding
-            model_id = "gemini-2.0-flash" # Use a capable model
+            model_id = "gemini-2.5-flash" # Use a capable model
             response = client.models.generate_content(
                 model=model_id,
                 contents=prompt,

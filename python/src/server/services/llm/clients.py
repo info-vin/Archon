@@ -43,7 +43,8 @@ async def get_llm_client(
             rag_settings = get_cached_settings(cache_key)
             if rag_settings is None:
                 rag_settings = await credential_service.get_credentials_by_category("rag_strategy")
-                set_cached_settings(cache_key, rag_settings)
+                if isinstance(rag_settings, dict):
+                    set_cached_settings(cache_key, rag_settings)
             if provider != "ollama":
                 base_url = credential_service._get_provider_base_url(provider, rag_settings)
             else:
@@ -54,7 +55,8 @@ async def get_llm_client(
             config = get_cached_settings(cache_key)
             if config is None:
                 config = await credential_service.get_active_provider(service_type)
-                set_cached_settings(cache_key, config)
+                if isinstance(config, dict):
+                    set_cached_settings(cache_key, config)
             provider_name = config["provider"]
             if not resolved_api_key:
                 resolved_api_key = config["api_key"]

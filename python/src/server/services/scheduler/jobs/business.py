@@ -3,6 +3,7 @@ Business Monitoring Jobs for Scheduler
 Handles leads, market reports, and token analysis.
 """
 from datetime import UTC, datetime, timedelta
+
 from server.config.logfire_config import get_logger
 from server.utils import get_supabase_client
 
@@ -15,7 +16,7 @@ async def run_auto_fetch_leads():
         from server.services.job_board_service import JobBoardService
         service = JobBoardService()
         new_leads = await service.auto_fetch_daily_leads()
-        
+
         get_supabase_client().table("archon_logs").insert({
             "source": "clockwork-scheduler", "level": "INFO",
             "message": f"Daily auto-fetch completed. {new_leads} new leads saved.",
@@ -36,11 +37,10 @@ async def run_daily_market_report():
         res = supabase.table("leads").select("company_name, job_title, status").gt("created_at", one_day_ago).execute()
         leads = res.data or []
         if not leads:
-            logger.info("✍️ Clockwork: No new leads today to report on. Skipping.")
-            return
-
-        lead_summary = "\n".join([f"- {lead['company_name']} looking for {lead['job_title']}" for lead in leads])
-        task_title = f"Daily Market Intelligence ({datetime.now().strftime('%Y-%m-%d')})"
+            logger.info("✍️ Clockwork: No new leads today to report on. (Cycle logged)")
+        else:
+            lead_summary = "\n".join([f"- {lead['company_name']} looking for {lead['job_title']}" for lead in leads])
+            task_title = f"Daily Market Intelligence ({datetime.now().strftime('%Y-%m-%d')})"
         task_desc = f"""Please write an engaging 600-word daily blog post summarizing today's tech job market movements.
 
 Data points ({len(leads)} leads):
@@ -53,7 +53,7 @@ Use the tool to save this blog post as a DRAFT."""
         if not p_res.data:
             logger.warning("Clockwork: No projects found to attach marketing task.")
             return
-            
+
         success, tr = await task_service.create_task(project_id=p_res.data[0]["id"], title=task_title, description=task_desc, assignee_id="ai-market-bot")
         if success:
             logger.info(f"✍️ Clockwork: Created Market Report task {tr['task']['id']}. Dispatching Bob...")
@@ -69,7 +69,7 @@ async def analyze_token_usage():
         one_day_ago = (datetime.now(UTC) - timedelta(hours=24)).isoformat()
         res = supabase.table("gemini_logs").select("user_name, gemini_response").gt("created_at", one_day_ago).execute()
         data = res.data or []
-        
+
         usage_map: dict[str, int] = {}
         total_tokens = 0
         for entry in data:
@@ -104,10 +104,10 @@ async def run_business_sentinel():
         res_settings = supabase.table("archon_settings").select("value").eq("key", "STALE_LEAD_THRESHOLD_DAYS").execute()
         if res_settings.data:
             threshold_days = int(res_settings.data[0]["value"])
-        
+
         cutoff_date = (datetime.now(UTC) - timedelta(days=threshold_days)).isoformat()
         logger.info(f"🛡️ Sentinel: Scanning for leads updated before {cutoff_date} (threshold={threshold_days}d)")
-        
+
         seven_days_ago = (datetime.now(UTC) - timedelta(days=7)).isoformat()
 
         # 1. Stale Leads
@@ -116,9 +116,9 @@ async def run_business_sentinel():
         if not stale_leads:
             logger.info("🛡️ Clockwork: No stale leads found.")
         else:
-            company_names = ", ".join([l['company_name'] for l in stale_leads])
+            company_names = ", ".join([lead['company_name'] for lead in stale_leads])
             logger.info(f"🛡️ Sentinel: Found {len(stale_leads)} potential stale leads in DB: {company_names}")
-            
+
             for lead in stale_leads:
                 # Anti-spam: Check if already alerted in last 7 days
                 existing = supabase.table("archon_logs").select("id").eq("source", "sentinel").eq("level", "ALERT").gt("created_at", seven_days_ago).filter("details->>lead_id", "eq", str(lead["id"])).execute()
@@ -143,7 +143,7 @@ async def run_business_sentinel():
                 continue
 
             alert_payload = {
-                "source": "sentinel", "level": "ALERT", 
+                "source": "sentinel", "level": "ALERT",
                 "message": f"Content Bottleneck: '{post['title']}' stuck in review",
                 "details": {"type": "content_bottleneck", "category": "business", "post_id": post["id"], "title": post["title"]}
             }

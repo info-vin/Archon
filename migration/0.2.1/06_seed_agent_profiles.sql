@@ -6,39 +6,35 @@
 -- We use fixed UUIDs to ensure traceability across restarts and service syncs.
 -- These UUIDs match the name_map in token_usage_service.py (Phase 4.6.15).
 
-INSERT INTO public.profiles (id, name, email, role, status, created_at)
+INSERT INTO public.profiles (id, name, email, role, status)
 VALUES 
 (
     'e1682371-0000-0000-0000-000000000000', 
     'Archon DevBot', 
     'devbot@archon.ai', 
     'agent', 
-    'active', 
-    NOW()
+    'active'
 ),
 (
     'a11ce000-0000-0000-0000-000000000000', 
     'Archon MarketBot', 
     'marketbot@archon.ai', 
     'marketing', 
-    'active', 
-    NOW()
+    'active'
 ),
 (
     'b0b00000-0000-0000-0000-000000000000', 
     'Archon Librarian', 
     'librarian@archon.ai', 
     'agent', 
-    'active', 
-    NOW()
+    'active'
 ),
 (
     'p0b00000-0000-0000-0000-000000000000', 
     'Archon POBot', 
     'pobot@archon.ai', 
     'agent', 
-    'active', 
-    NOW()
+    'active'
 )
 ON CONFLICT (id) DO UPDATE SET
     name = EXCLUDED.name,

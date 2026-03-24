@@ -316,12 +316,7 @@ class CredentialService:
                         "description": item["description"],
                     }
                 else:
-                    credentials[key] = {
-                        "value": item["value"],
-                        "is_encrypted": False,
-                        "category": item["category"],
-                        "description": item["description"],
-                    }
+                    credentials[key] = item["value"]
 
             # Cache rag_strategy results
             if category == "rag_strategy":

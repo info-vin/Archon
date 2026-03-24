@@ -6,13 +6,14 @@ from typing import Any, cast
 
 from fastapi import APIRouter, Depends, HTTPException
 
-from src.server.auth.dependencies import get_current_user
 from src.server.schemas.projects import (
     CreateVersionRequest,
     RestoreVersionRequest,
 )
 from src.server.services.projects.versioning_service import VersioningService
 from src.server.utils.api_utils import handle_service_result
+
+from ...auth.dependencies import get_current_user
 
 router = APIRouter()
 

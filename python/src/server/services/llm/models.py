@@ -13,14 +13,16 @@ async def get_embedding_model(provider: str | None = None) -> str:
             rag_settings = get_cached_settings(cache_key)
             if rag_settings is None:
                 rag_settings = await credential_service.get_credentials_by_category("rag_strategy")
-                set_cached_settings(cache_key, rag_settings)
+                if isinstance(rag_settings, dict):
+                    set_cached_settings(cache_key, rag_settings)
             custom_model = rag_settings.get("EMBEDDING_MODEL", "")
         else:
             cache_key = "provider_config_embedding"
             provider_config = get_cached_settings(cache_key)
             if provider_config is None:
                 provider_config = await credential_service.get_active_provider("embedding")
-                set_cached_settings(cache_key, provider_config)
+                if isinstance(provider_config, dict):
+                    set_cached_settings(cache_key, provider_config)
             provider_name = provider_config["provider"]
             custom_model = provider_config["embedding_model"]
 

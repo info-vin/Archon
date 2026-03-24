@@ -5,6 +5,7 @@ Entry point for source management. Implementation delegated to logic sub-modules
 to maintain a clean, maintainable file size (< 300 lines).
 """
 from typing import Any
+
 from server.config.logfire_config import get_logger
 from server.repositories.base_repository import BaseRepository
 from server.services.client_manager import get_supabase_client
@@ -56,7 +57,7 @@ class SourceManagementService(BaseRepository):
     def delete_source(self, source_id: str) -> tuple[bool, dict[str, Any]]:
         """Delete a source and its associations (cascaded manually for precision)."""
         logger.info(f"Starting delete_source for source_id: {source_id}")
-        
+
         # 1. Pages
         logger.info(f"Deleting from crawled_pages table for source_id: {source_id}")
         def _p_q():
@@ -109,7 +110,7 @@ class SourceManagementService(BaseRepository):
             ok, res = self.execute_query(_m_q, "Error getting source metadata", False)
             if not ok:
                 return False, {"error": f"Error updating source metadata: {res.get('error')}"}
-            
+
             metadata = res["data"][0].get("metadata", {}) if res["data"] else {}
             if kwargs.get("knowledge_type"):
                 metadata["knowledge_type"] = kwargs["knowledge_type"]
@@ -153,18 +154,18 @@ class SourceManagementService(BaseRepository):
         ok, res = self.execute_query(_s_q, "Error getting source details", False)
         if not ok or not res["data"]:
             return False, {"error": f"Source with ID {source_id} not found: {res.get('error', '')}"}
-        
+
         source_data = res["data"][0]
         def _p_c():
             return self.supabase_client.table("archon_crawled_pages").select("id").eq("source_id", source_id).execute()
         _, p_res = self.execute_query(_p_c, "Error counting pages", False)
-        
+
         def _c_c():
             return self.supabase_client.table("archon_code_examples").select("id").eq("source_id", source_id).execute()
         _, c_res = self.execute_query(_c_c, "Error counting code examples", False)
-        
+
         return True, {
-            "source": source_data, 
+            "source": source_data,
             "page_count": len(p_res["data"] or []),
             "code_example_count": len(c_res["data"] or [])
         }

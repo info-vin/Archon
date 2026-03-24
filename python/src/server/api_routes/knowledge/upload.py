@@ -4,7 +4,6 @@ import uuid
 
 from fastapi import APIRouter, Depends, File, Form, Header, HTTPException, UploadFile
 
-from src.server.auth.dependencies import get_current_user
 from src.server.config.logfire_config import get_logger, safe_logfire_error
 
 # TOP-LEVEL IMPORTS for Test Patching
@@ -12,6 +11,8 @@ from src.server.services.source_management_service import SourceManagementServic
 from src.server.services.storage.storage_services import DocumentStorageService
 from src.server.utils.document_processing import extract_text_from_document
 from src.server.utils.progress.progress_tracker import ProgressTracker
+
+from ...auth.dependencies import get_current_user
 
 # Domain State
 from . import active_crawl_tasks

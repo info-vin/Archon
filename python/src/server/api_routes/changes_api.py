@@ -8,9 +8,10 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException
 
-from src.server.auth.dependencies import get_current_user, requires_permission
-from src.server.auth.permissions import CODE_APPROVE, TASK_READ_TEAM
 from src.server.services.propose_change_service import ProposeChangeService
+
+from ..auth.dependencies import get_current_user, requires_permission
+from ..auth.permissions import CODE_APPROVE, TASK_READ_TEAM
 
 router = APIRouter(prefix="/api/changes", tags=["Changes"])
 

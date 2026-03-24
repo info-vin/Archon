@@ -6,8 +6,6 @@ from typing import Any, cast
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
 
-from src.server.auth.dependencies import get_current_user, requires_permission
-from src.server.auth.permissions import AGENT_TRIGGER_DEV
 from src.server.schemas.projects import (
     AgentOutputUpdateRequest,
     AgentStatusUpdateRequest,
@@ -17,6 +15,8 @@ from src.server.schemas.projects import (
     UpdateTaskRequest,
 )
 
+from ...auth.dependencies import get_current_user, requires_permission
+from ...auth.permissions import AGENT_TRIGGER_DEV
 from ...services.profile_service import ProfileService
 from ...services.projects.task_service import TaskService
 from ...services.rbac_service import RBACService

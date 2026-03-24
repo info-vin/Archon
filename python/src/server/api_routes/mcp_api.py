@@ -6,9 +6,10 @@ Standardized alignment with get_mcp_service_client infrastructure.
 
 from fastapi import APIRouter, Depends
 
-from src.server.auth.dependencies import get_current_user, requires_permission
-from src.server.auth.permissions import MCP_MANAGE
 from src.server.services.mcp_service_client import get_mcp_service_client
+
+from ..auth.dependencies import get_current_user, requires_permission
+from ..auth.permissions import MCP_MANAGE
 
 router = APIRouter(prefix="/api/mcp", tags=["mcp"])
 

@@ -24,5 +24,23 @@ class VisitLogService(BaseRepository):
             return self.supabase_client.table("visit_logs").insert(data).execute()
         return self.execute_query(_query, "Failed to create log")
 
+    async def get_attendance_status(self, user_id: str) -> tuple[bool, Any]:
+        """Fetches the current attendance status for a user."""
+        def _query():
+            return self.supabase_client.table("attendance_logs")\
+                .select("*")\
+                .eq("user_id", user_id)\
+                .order("clock_in_time", desc=True)\
+                .limit(1)\
+                .execute()
+
+        success, res = self.execute_query(_query, "Failed to fetch attendance status")
+        if not success or not res:
+            return True, {"status": "OFF_WORK", "clock_in_time": None}
+
+        # Extract data from Supabase response
+        data: list[Any] = res if isinstance(res, list) else []
+        return True, data[0] if len(data) > 0 else {"status": "OFF_WORK", "clock_in_time": None}
+
 # Singleton export
 visit_log_service = VisitLogService()

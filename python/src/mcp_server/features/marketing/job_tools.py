@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field
 
-from .....server.services.job_board_service import JobBoardService
+from server.services.job_board_service import JobBoardService
 
 
 class SearchJobMarketTool(BaseModel):

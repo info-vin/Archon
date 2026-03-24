@@ -34,9 +34,12 @@ export const APIKeysSection = () => {
       const allCredentials = await credentialsService.getAllCredentials();
       
       // Filter to only show API keys (credentials that end with _KEY or _API)
+      // AND exclude enduser_config category to keep 104 settings isolated from 3737
       const apiKeys = allCredentials.filter(cred => {
         const key = cred.key.toUpperCase();
-        return key.includes('_KEY') || key.includes('_API') || key.includes('API_');
+        const isApiKey = key.includes('_KEY') || key.includes('_API') || key.includes('API_');
+        const isEndUserConfig = cred.category === 'enduser_config';
+        return isApiKey && !isEndUserConfig;
       });
       
       // Convert to UI format

@@ -4,11 +4,12 @@ import uuid
 from fastapi import APIRouter, Depends, Header, HTTPException
 
 from src.server.api_routes.knowledge.schemas import CrawlRequest
-from src.server.auth.dependencies import get_current_user
 from src.server.config.logfire_config import safe_logfire_error, safe_logfire_info
 from src.server.services.knowledge.knowledge_item_service import KnowledgeItemService
 from src.server.utils import get_supabase_client
 from src.server.utils.progress.progress_tracker import ProgressTracker
+
+from ...auth.dependencies import get_current_user
 
 # CENTRAL TASK REGISTRY - Defined here to allow PEP8 compliant top-level imports in Facade
 active_crawl_tasks: dict[str, asyncio.Task] = {}

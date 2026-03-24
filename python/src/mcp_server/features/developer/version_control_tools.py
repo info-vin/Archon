@@ -5,8 +5,8 @@ from typing import cast
 
 from pydantic import BaseModel, Field
 
-from .....server.services.credential_service import credential_service
-from .....server.services.llm_provider_service import get_llm_client
+from server.services.credential_service import credential_service
+from server.services.llm_provider_service import get_llm_client
 
 # Using the same dependency injector pattern as file_operation_tools
 from .file_operation_tools import ToolDependencies

@@ -9,8 +9,6 @@ from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from src.server.auth.dependencies import get_current_user, get_current_user_optional, requires_permission
-from src.server.auth.permissions import USER_MANAGE
 from src.server.schemas.settings import (
     CredentialCreate,
     CredentialResponse,
@@ -20,6 +18,9 @@ from src.server.schemas.settings import (
 from src.server.services.credential_service import credential_service
 from src.server.services.profile_service import ProfileService
 from src.server.services.settings_service import SettingsService
+
+from ..auth.dependencies import get_current_user, get_current_user_optional, requires_permission
+from ..auth.permissions import USER_MANAGE
 
 # Use no prefix here, managed by main.py
 router = APIRouter(tags=["settings"])

@@ -56,37 +56,50 @@ class JobBoardService:
             return self.DEFAULT_DETAIL_BASE_URL
 
     HEADERS = {
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
         "Referer": "https://www.104.com.tw/jobs/search/",
         "Accept": "application/json, text/plain, */*",
+        "Accept-Language": "zh-TW,zh;q=0.9,en-US;q=0.8,en;q=0.7",
         "X-Requested-With": "XMLHttpRequest"
     }
 
-    # Static Mock Data for Fallback
+    # Static Mock Data for Fallback (High Quality Realization)
     MOCK_JOBS = [
         JobData(
-            title="Senior Data Analyst",
-            company="Retail Corp",
+            title="Senior AI Automation Engineer",
+            company="Global Tech Solutions",
             location="Taipei City",
-            salary="1.5M - 2.5M TWD/Year",
-            url="https://www.104.com.tw/job/mock-retail-1",
-            description="We are looking for an expert in BI tools and SQL.",
-            description_full="Full job description: We are looking for an expert in BI tools and SQL. Responsibilities include...",
-            skills=["SQL", "Tableau", "Python"],
+            salary="1.8M - 2.8M TWD/Year",
+            url="https://www.104.com.tw/job/mock-tech-1",
+            description="Seeking expert to implement Agentic workflows and LLM pipelines.",
+            description_full="Full job description: We are building an autonomous operations team. Expertise in PydanticAI, LangChain, and FastAPI is required.",
+            skills=["Python", "PydanticAI", "LLM Ops"],
             source="mock",
-            identified_need="Hiring Data Analyst -> Potential BI Tool Customer"
+            identified_need="Building AI Team -> Perfect match for Archon Agent Framework."
         ),
         JobData(
-            title="AI Solutions Engineer",
-            company="Future Systems",
-            location="Remote",
-            salary="Negotiable",
-            url="https://www.104.com.tw/job/mock-ai-1",
-            description="Build the next generation of AI tools using LLMs.",
-            description_full="Full job description: Build the next generation of AI tools using LLMs. Requirements: 5+ years exp...",
-            skills=["Python", "LangChain", "OpenAI"],
+            title="Marketing Technology Specialist",
+            company="Innovative Retail Group",
+            location="Hsinchu",
+            salary="1.2M - 1.6M TWD/Year",
+            url="https://www.104.com.tw/job/mock-marketing-1",
+            description="Focus on automating marketing campaigns and lead generation.",
+            description_full="Full job description: Looking for someone to integrate AI tools into our CRM and marketing stack to improve ROI.",
+            skills=["Python", "CRM Integration", "Data Analysis"],
             source="mock",
-            identified_need="Developing AI Features -> Needs LLM Ops / Archon"
+            identified_need="Campaign Automation -> Needs Bob (MarketingBot) features."
+        ),
+        JobData(
+            title="DevOps & Cloud Architect",
+            company="CloudFlow Systems",
+            location="Remote",
+            salary="2.0M+ TWD/Year",
+            url="https://www.104.com.tw/job/mock-devops-1",
+            description="Manage scalable infrastructure and CI/CD pipelines.",
+            description_full="Full job description: Ensuring 99.9% uptime for our AI SaaS. Experience with Docker and Supabase is a plus.",
+            skills=["Docker", "Kubernetes", "Supabase"],
+            source="mock",
+            identified_need="Infrastructure Hardening -> Needs DevBot monitoring."
         )
     ]
 

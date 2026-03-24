@@ -24,9 +24,9 @@ async def test_search_jobs_fallback_to_mock():
         jobs = await service.search_jobs("Data Analyst")
 
         assert len(jobs) > 0
-        assert jobs[0].company == "Retail Corp"  # Should use updated mock data
+        assert jobs[0].company == "Global Tech Solutions"  # Should use updated mock data
         assert jobs[0].source == "mock"
-        assert "BI Tool" in jobs[0].identified_need  # Need should be inferred
+        assert "Archon Agent Framework" in jobs[0].identified_need  # Need should be inferred
 
 @pytest.mark.asyncio
 async def test_identify_leads_and_save(mock_supabase):

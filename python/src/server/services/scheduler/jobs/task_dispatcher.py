@@ -3,6 +3,7 @@ Task Dispatcher Job for Scheduler
 Handles reclamation of stuck tasks and dispatching of recurring tasks.
 """
 from datetime import UTC, datetime, timedelta
+
 from server.config.logfire_config import get_logger
 from server.utils import get_supabase_client
 
@@ -19,7 +20,7 @@ async def run_task_dispatcher():
         # 1. Reclaim stuck tasks (Zombie management)
         timeout_mins = int(await credential_service.get_credential("TASK_RECLAIM_TIMEOUT", 60))
         threshold = (datetime.now(UTC) - timedelta(minutes=timeout_mins)).isoformat()
-        
+
         reclaim_res = supabase.table("archon_tasks").update({"status": "todo", "updated_at": datetime.now(UTC).isoformat()}).eq("status", "processing").lt("updated_at", threshold).execute()
         if reclaim_res.data:
             logger.warning(f"🚨 Task Sentinel: Reclaimed {len(reclaim_res.data)} stuck tasks (Timeout > {timeout_mins}m)")
@@ -42,7 +43,7 @@ async def run_task_dispatcher():
             task_id = task["id"]
             logger.info(f"📡 Clockwork: Dispatching task '{task['title']}' (ID: {task_id})")
             await agent_service.run_agent_task(task_id=task_id, agent_id=task.get("assignee_id", "ai-librarian"))
-            
+
             # Record in Audit Log
             supabase.table("archon_logs").insert({
                 "source": "clockwork-scheduler", "level": "INFO",

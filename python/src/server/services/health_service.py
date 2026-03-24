@@ -68,7 +68,11 @@ class HealthService(BaseRepository):
         data = res.get("data")
         total_count = 0
         if data is not None:
-            total_count = getattr(data, "count", 0) or (len(data) if isinstance(data, list) else 0)
+            # Handle Supabase count (can be method or int depending on response type)
+            raw_count = getattr(data, "count", 0)
+            total_count = raw_count() if callable(raw_count) else int(raw_count or 0)
+            if total_count == 0 and isinstance(data, list):
+                total_count = len(data)
 
         alignment_score = 0.0
         indexed_count = 0
@@ -78,7 +82,8 @@ class HealthService(BaseRepository):
 
             idx_success, idx_res = self.execute_query(_query_indexed, "Error counting indexed sources", require_data=False)
             if idx_success:
-                indexed_count = len({row["source_id"] for row in (idx_res.get("data") or [])})
+                idx_data = idx_res.get("data") or []
+                indexed_count = len({row["source_id"] for row in idx_data})
                 alignment_score = (indexed_count / total_count) * 70.0
         else:
             alignment_score = 70.0 # Default full if system is fresh/empty
@@ -87,8 +92,8 @@ class HealthService(BaseRepository):
         rag = RAGService()
         search_ok = False
         try:
-            test_search = await rag.search_documents(query="Archon", match_count=1)
-            search_ok = len(test_search) > 0
+            test_search, _ = await rag.search_documents(query="Archon", match_count=1)
+            search_ok = len(test_search) > 0 if isinstance(test_search, list) else False
         except Exception:
             search_ok = False
 
@@ -156,4 +161,3 @@ class HealthService(BaseRepository):
             "trend": trend,
             "audit": audit_trail[:10]
         }
-

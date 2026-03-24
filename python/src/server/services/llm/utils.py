@@ -12,17 +12,22 @@ _CACHE_TTL_SECONDS = 300  # 5 minutes
 
 def get_cached_settings(key: str) -> Any | None:
     """Get cached settings if not expired."""
-    if key in _settings_cache:
-        value, timestamp = _settings_cache[key]
+    # DEFENSIVE: Ensure key is hashable
+    safe_key = str(key) if isinstance(key, dict) else key
+
+    if safe_key in _settings_cache:
+        value, timestamp = _settings_cache[safe_key]
         if time.time() - timestamp < _CACHE_TTL_SECONDS:
             return value
         else:
-            del _settings_cache[key]
+            del _settings_cache[safe_key]
     return None
 
 def set_cached_settings(key: str, value: Any) -> None:
     """Cache settings with current timestamp."""
-    _settings_cache[key] = (value, time.time())
+    # DEFENSIVE: Ensure key is hashable
+    safe_key = str(key) if isinstance(key, dict) else key
+    _settings_cache[safe_key] = (value, time.time())
 
 def is_valid_provider(provider_name: str | None) -> bool:
     """Check if a provider is supported and valid."""

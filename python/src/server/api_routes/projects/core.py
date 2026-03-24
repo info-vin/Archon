@@ -7,8 +7,6 @@ from typing import Any, cast
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Response
 
-from src.server.auth.dependencies import get_current_user, requires_permission
-from src.server.auth.permissions import TASK_CREATE, TASK_UPDATE_ALL
 from src.server.schemas.projects import (
     AssignableUser,
     CreateDocumentRequest,
@@ -16,6 +14,8 @@ from src.server.schemas.projects import (
     UpdateProjectRequest,
 )
 
+from ...auth.dependencies import get_current_user, requires_permission
+from ...auth.permissions import TASK_CREATE, TASK_UPDATE_ALL
 from ...services.profile_service import ProfileService
 from ...services.projects.document_service import DocumentService
 from ...services.projects.project_creation_service import ProjectCreationService

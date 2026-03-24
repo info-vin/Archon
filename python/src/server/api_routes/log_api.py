@@ -5,9 +5,10 @@ Ensures operational logs are only accessible to authorized personnel.
 
 from fastapi import APIRouter, Depends, status
 
-from src.server.auth.dependencies import get_current_user, requires_permission
-from src.server.auth.permissions import TASK_READ_TEAM
 from src.server.services.log_service import log_service
+
+from ..auth.dependencies import get_current_user, requires_permission
+from ..auth.permissions import TASK_READ_TEAM
 
 router = APIRouter(prefix="/api/logs", tags=["logs"])
 

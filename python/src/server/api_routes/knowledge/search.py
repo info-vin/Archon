@@ -6,10 +6,11 @@ Enforces authentication for all knowledge retrieval operations.
 from fastapi import APIRouter, Depends, HTTPException
 
 from src.server.api_routes.knowledge.schemas import RagQueryRequest
-from src.server.auth.dependencies import get_current_user
 from src.server.config.logfire_config import safe_logfire_error
 from src.server.services.search.rag_service import RAGService
 from src.server.utils import get_supabase_client
+
+from ...auth.dependencies import get_current_user
 
 router = APIRouter()
 

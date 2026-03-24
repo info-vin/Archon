@@ -5,13 +5,6 @@ Standardized RBAC Sealing with Full Test Compatibility.
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 
-from src.server.auth.dependencies import get_current_user, requires_permission
-from src.server.auth.permissions import (
-    AGENT_TRIGGER_MKT,
-    BRAND_ASSET_MANAGE,
-    CONTENT_PUBLISH,
-    TASK_READ_TEAM,
-)
 from src.server.schemas.marketing import (
     ApprovalRequest,
     DraftBlogRequest,
@@ -23,6 +16,14 @@ from src.server.schemas.marketing import (
     PromoteLeadRequest,
 )
 from src.server.services.marketing_service import MarketingService
+
+from ..auth.dependencies import get_current_user, requires_permission
+from ..auth.permissions import (
+    AGENT_TRIGGER_MKT,
+    BRAND_ASSET_MANAGE,
+    CONTENT_PUBLISH,
+    TASK_READ_TEAM,
+)
 
 router: APIRouter = APIRouter(prefix="/api/marketing", tags=["marketing"])
 
