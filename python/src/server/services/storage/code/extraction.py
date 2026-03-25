@@ -283,6 +283,8 @@ def extract_code_blocks_logic(markdown_content: str, min_length: int | None = No
 
     # Pre-calculate normalized code strings to avoid O(N^2) repeated normalizations
     normalized_codes = [_normalize_code_for_comparison(b["code"]) for b in code_blocks]
+    # PERFORMANCE: Pre-calculate lengths to allow O(1) upper-bound ratio checks before expensive SequenceMatcher logic
+    norm_lengths = [len(norm) for norm in normalized_codes]
 
     for idx, block1 in enumerate(code_blocks):
         if idx in processed_indices:
@@ -291,15 +293,30 @@ def extract_code_blocks_logic(markdown_content: str, min_length: int | None = No
         processed_indices.add(idx)
 
         norm1 = normalized_codes[idx]
+        len1 = norm_lengths[idx]
 
         for jdx, block2 in enumerate(code_blocks):
             if jdx <= idx or jdx in processed_indices:
                 continue
 
+            len2 = norm_lengths[jdx]
+
+            # PERFORMANCE: O(1) fast upper-bound length ratio check
+            if len1 + len2 > 0 and (2.0 * min(len1, len2) / (len1 + len2)) < similarity_threshold:
+                continue
+
             norm2 = normalized_codes[jdx]
 
-            if SequenceMatcher(None, norm1, norm2).ratio() >= similarity_threshold:
+            # PERFORMANCE: Utilize SequenceMatcher heuristic guards real_quick_ratio() and quick_ratio()
+            # to short-circuit expensive .ratio() evaluations during O(N^2) similarity checks
+            matcher = SequenceMatcher(None, norm1, norm2)
+            if (
+                matcher.real_quick_ratio() >= similarity_threshold
+                and matcher.quick_ratio() >= similarity_threshold
+                and matcher.ratio() >= similarity_threshold
+            ):
                 similar_group.append(block2)
                 processed_indices.add(jdx)
+
         grouped_blocks.append(_select_best_code_variant(similar_group))
     return grouped_blocks
