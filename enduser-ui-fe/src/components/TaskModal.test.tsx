@@ -18,6 +18,9 @@ vi.mock('../services/api', () => ({
       name: 'Test User',
       role: 'system_admin'
     }),
+    getProjects: vi.fn().mockResolvedValue([
+      { id: 'proj-123', title: 'Test Project' }
+    ]),
     createTask: vi.fn().mockResolvedValue({ id: 'new-task' }),
     updateTask: vi.fn().mockResolvedValue({ id: 'task-1' }),
     getKnowledgeItems: vi.fn().mockResolvedValue([]), // Needed for KnowledgeSelector
@@ -50,7 +53,7 @@ describe('TaskModal', () => {
       onClose: vi.fn(),
       onTaskCreated: vi.fn(),
       onTaskUpdated: vi.fn(),
-      projectId: 'proj-123',
+      initialProjectId: 'proj-123',
       ...props,
     };
     return render(<TaskModal {...defaultProps} />);

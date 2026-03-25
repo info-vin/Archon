@@ -188,10 +188,13 @@ dependencies = [
 agents = [
     { name = "fastapi" },
     { name = "httpx" },
+    { name = "psutil" },
     { name = "pydantic" },
     { name = "pydantic-ai" },
     { name = "python-dotenv" },
+    { name = "python-jose", extra = ["cryptography"] },
     { name = "structlog" },
+    { name = "supabase" },
     { name = "uvicorn" },
 ]
 all = [
@@ -247,8 +250,10 @@ mcp = [
     { name = "logfire", version = "4.25.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.14'" },
     { name = "mcp" },
     { name = "openai" },
+    { name = "psutil" },
     { name = "pydantic" },
     { name = "python-dotenv" },
+    { name = "python-jose", extra = ["cryptography"] },
     { name = "supabase" },
 ]
 server = [
@@ -300,10 +305,13 @@ requires-dist = [
 agents = [
     { name = "fastapi", specifier = ">=0.104.0" },
     { name = "httpx", specifier = ">=0.24.0" },
+    { name = "psutil", specifier = ">=5.9.0" },
     { name = "pydantic", specifier = ">=2.0.0" },
     { name = "pydantic-ai", specifier = ">=0.0.13" },
     { name = "python-dotenv", specifier = ">=1.0.0" },
+    { name = "python-jose", extras = ["cryptography"], specifier = ">=3.3.0" },
     { name = "structlog", specifier = ">=23.1.0" },
+    { name = "supabase", specifier = "==2.15.1" },
     { name = "uvicorn", specifier = ">=0.24.0" },
 ]
 all = [
@@ -357,8 +365,10 @@ mcp = [
     { name = "logfire", specifier = ">=0.30.0" },
     { name = "mcp", specifier = "==1.12.2" },
     { name = "openai", specifier = ">=1.71.0" },
+    { name = "psutil", specifier = ">=5.9.0" },
     { name = "pydantic", specifier = ">=2.0.0" },
     { name = "python-dotenv", specifier = ">=1.0.0" },
+    { name = "python-jose", extras = ["cryptography"], specifier = ">=3.3.0" },
     { name = "supabase", specifier = "==2.15.1" },
 ]
 server = [

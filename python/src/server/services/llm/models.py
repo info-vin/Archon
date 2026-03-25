@@ -37,7 +37,7 @@ async def get_embedding_model(provider: str | None = None) -> str:
         mapping = {
             "openai": "text-embedding-3-small",
             "ollama": "nomic-embed-text",
-            "google": "text-embedding-004"
+            "google": "gemini-embedding-001"
         }
         return mapping.get(provider_name, "text-embedding-3-small")
     except Exception as e:
@@ -63,6 +63,7 @@ def is_google_embedding_model(model: str) -> bool:
         return False
     patterns = [
         "text-embedding-004",
+        "text-embedding-001",
         "text-embedding-005",
         "text-multilingual-embedding-002",
         "gemini-embedding-001",
@@ -92,6 +93,7 @@ def get_supported_embedding_models(provider: str) -> list[str]:
     openai_models = ["text-embedding-ada-002", "text-embedding-3-small", "text-embedding-3-large"]
     google_models = [
         "text-embedding-004",
+        "text-embedding-001",
         "text-embedding-005",
         "text-multilingual-embedding-002",
         "gemini-embedding-001",

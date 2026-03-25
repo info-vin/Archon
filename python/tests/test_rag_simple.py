@@ -309,8 +309,12 @@ class TestRAGIntegrationSimple:
             patch.object(rag_service, "search_documents") as mock_search,
             patch.object(rag_service, "get_bool_setting") as mock_settings,
         ):
-            # Enable reranking
-            mock_settings.return_value = True
+            # Only enable reranking specifically
+            def side_effect(key, default=False):
+                if key == "USE_RERANKING":
+                    return True
+                return False
+            mock_settings.side_effect = side_effect
 
             # Mock search results
             mock_search.return_value = [

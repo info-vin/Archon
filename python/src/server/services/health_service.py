@@ -65,25 +65,25 @@ class HealthService(BaseRepository):
             logger.error("💥 System Integrity Calculation Failed")
             return {"status": "unhealthy", "score": 0.0, "details": {"error": res.get("error")}}
 
+        # res['count'] is populated by BaseRepository.execute_query
+        total_count = int(res.get("count") or 0)
         data = res.get("data")
-        total_count = 0
-        if data is not None:
-            # Handle Supabase count (can be method or int depending on response type)
-            raw_count = getattr(data, "count", 0)
-            total_count = raw_count() if callable(raw_count) else int(raw_count or 0)
-            if total_count == 0 and isinstance(data, list):
-                total_count = len(data)
+        if total_count == 0 and isinstance(data, list):
+            total_count = len(data)
 
         alignment_score = 0.0
         indexed_count = 0
         if total_count > 0:
             def _query_indexed():
-                return self.supabase_client.table("archon_crawled_pages").select("source_id").not_.is_("embedding", "null").execute()
+                return self.supabase_client.table("archon_crawled_pages").select("source_id", count="exact").not_.is_("embedding", "null").execute()
 
             idx_success, idx_res = self.execute_query(_query_indexed, "Error counting indexed sources", require_data=False)
             if idx_success:
-                idx_data = idx_res.get("data") or []
-                indexed_count = len({row["source_id"] for row in idx_data})
+                indexed_count = int(idx_res.get("count") or 0)
+                if indexed_count == 0:
+                    idx_data = idx_res.get("data") or []
+                    indexed_count = len({row["source_id"] for row in idx_data})
+
                 alignment_score = (indexed_count / total_count) * 70.0
         else:
             alignment_score = 70.0 # Default full if system is fresh/empty

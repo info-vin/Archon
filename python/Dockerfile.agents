@@ -9,7 +9,7 @@ RUN pip install --no-cache-dir uv
 # Copy pyproject.toml for dependency installation
 COPY pyproject.toml .
 
-# Install only agents dependencies using uv
+# Install only agent dependencies to system python
 RUN uv pip install --system --group agents
 
 # Copy agents code - no dependencies on server code
@@ -17,8 +17,19 @@ RUN uv pip install --system --group agents
 COPY src/agents/ src/agents/
 COPY src/__init__.py src/
 
+# Copy necessary server files for Prompt Governance and Base Repository
+# We copy specific directories to ensure all potential dependency paths are covered
+COPY src/server/__init__.py src/server/
+COPY src/server/config/ src/server/config/
+COPY src/server/utils/ src/server/utils/
+COPY src/server/repositories/ src/server/repositories/
+COPY src/server/services/ src/server/services/
+COPY src/server/auth/ src/server/auth/
+COPY src/server/schemas/ src/server/schemas/
+COPY src/server/models/ src/server/models/
+
 # Set environment variables
-ENV PYTHONPATH="/app:$PYTHONPATH"
+ENV PYTHONPATH="/app/src:/app"
 ENV PYTHONUNBUFFERED=1
 
 # Expose Agents port
@@ -27,7 +38,7 @@ ENV ARCHON_AGENTS_PORT=${ARCHON_AGENTS_PORT}
 EXPOSE 8052
 
 # Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD sh -c "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8052/health')\""
 
 # Add and use entrypoint script

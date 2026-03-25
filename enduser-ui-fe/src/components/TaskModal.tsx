@@ -10,12 +10,12 @@ interface TaskModalProps {
   onClose: () => void;
   onTaskCreated: () => void;
   onTaskUpdated: () => void;
-  projectId?: string;
+  initialProjectId?: string;
 }
 
 const inputClass = "appearance-none rounded-md relative block w-full px-3 py-2 border border-border placeholder-muted-foreground text-foreground bg-input focus:outline-none focus:ring-ring focus:border-ring focus:z-10 sm:text-sm";
 
-export const TaskModal: React.FC<TaskModalProps> = ({ task, onClose, onTaskCreated, onTaskUpdated, projectId }) => {
+export const TaskModal: React.FC<TaskModalProps> = ({ task, onClose, onTaskCreated, onTaskUpdated, initialProjectId }) => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [assigneeId, setAssigneeId] = useState('');
@@ -33,6 +33,8 @@ export const TaskModal: React.FC<TaskModalProps> = ({ task, onClose, onTaskCreat
   const [crawlerTargetId, setCrawlerTargetId] = useState('');
   const [crawlerTargets, setCrawlerTargets] = useState<any[]>([]);
   const [frequency, setFrequency] = useState('daily');
+  const [projects, setProjects] = useState<any[]>([]);
+  const [selectedProjectId, setSelectedProjectId] = useState<string>(initialProjectId || '');
 
   const isEditMode = task != null && task.id;
 
@@ -40,26 +42,21 @@ export const TaskModal: React.FC<TaskModalProps> = ({ task, onClose, onTaskCreat
     const fetchInitialData = async () => {
       try {
         setIsLoadingUsers(true);
-        // Step 1: Priority Data (Users & Agents) - Must load for UI to be functional
-        const [users, aiAgents, user] = await Promise.all([
+        // Step 1: Priority Data (Users, Agents, Projects)
+        const [users, aiAgents, user, projectsData] = await Promise.all([
           api.getAssignableUsers(),
           api.getAssignableAgents(),
-          api.getCurrentUser()
+          api.getCurrentUser(),
+          api.getProjects()
         ]);
         
         setCurrentUser(user);
+        setProjects(projectsData || []);
         
-        // FB-03: Default assignee to current user for new tasks so they are visible in "My Tasks"
-        if (!isEditMode && user) {
-          setAssigneeId(user.id);
+        // If no projectId passed, default to first available project
+        if (!selectedProjectId && projectsData && projectsData.length > 0) {
+            setSelectedProjectId(projectsData[0].id);
         }
-
-        const formattedAiAgents = aiAgents.map((agent: AssignableUser) => ({
-          ...agent,
-          name: `(AI) ${agent.name}`
-        }));
-
-        setAssignableUsers([...users, ...formattedAiAgents]);
 
         // Step 2: Background Data (Crawler Targets) - Can fail gracefully without blocking main UI
         api.getCrawlerTargets().then(targets => {
@@ -130,7 +127,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({ task, onClose, onTaskCreat
       return;
     }
     
-    const finalProjectId = isEditMode ? task.project_id : projectId;
+    const finalProjectId = isEditMode ? task.project_id : selectedProjectId;
     if (!finalProjectId) {
       alert('A project must be selected to create or update a task.');
       return;
@@ -239,6 +236,19 @@ export const TaskModal: React.FC<TaskModalProps> = ({ task, onClose, onTaskCreat
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
+              <label htmlFor="project" className="block text-sm font-medium mb-1">Project</label>
+              <select 
+                id="project" 
+                value={selectedProjectId} 
+                onChange={(e) => setSelectedProjectId(e.target.value)} 
+                className={inputClass}
+                disabled={isEditMode}
+              >
+                {!selectedProjectId && <option value="">Select Project</option>}
+                {projects.map(p => <option key={p.id} value={p.id}>{p.title}</option>)}
+              </select>
+            </div>
+            <div className="flex-1">
               <label htmlFor="assignee" className="block text-sm font-medium mb-1">Assignee</label>
               <select id="assignee" value={assigneeId} onChange={(e) => setAssigneeId(e.target.value)} className={inputClass} disabled={isLoadingUsers}>
                 <option value="">{isLoadingUsers ? 'Loading...' : 'Unassigned'}</option>
@@ -264,7 +274,11 @@ export const TaskModal: React.FC<TaskModalProps> = ({ task, onClose, onTaskCreat
                   }
                   return null;
               })()}
+            </div>
+          </div>
 
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="flex-1">
               {/* David's Architect Workflow: Dynamic Crawler Settings */}
               {(() => {
                   const selected = assignableUsers.find(u => u.id === assigneeId);

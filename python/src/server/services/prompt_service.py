@@ -33,10 +33,10 @@ class PromptService(BaseRepository):
         success, res = await self.list_prompts()
         if success:
             for p in res.get("prompts", []):
-                # DEFENSIVE: Handle both 'prompt_text' (DB) and 'prompt' (Tests)
-                text = p.get("prompt_text") or p.get("prompt")
+                # DB schema: prompt_name, prompt
+                text = p.get("prompt")
                 if text:
-                    self._prompts[p["name"] if "name" in p else p.get("prompt_name")] = text
+                    self._prompts[p.get("prompt_name", "")] = text
             self._last_loaded = datetime.utcnow()
 
     async def list_prompts(self) -> tuple[bool, dict[str, Any]]:
@@ -56,12 +56,12 @@ class PromptService(BaseRepository):
             if name in self._prompts:
                 return self._prompts[name]
 
-            # Fallback to direct DB call
-            res = self.supabase_client.table("archon_prompts").select("prompt_text").eq("name", name).single().execute()
+            # Fallback to direct DB call - Schema: prompt_name, prompt
+            res = self.supabase_client.table("archon_prompts").select("prompt").eq("prompt_name", name).single().execute()
 
             # DEFENSIVE: Check if res.data is a real dict and not a MagicMock
             if res.data and not isinstance(res.data, MagicMock):
-                return res.data.get("prompt_text") or default or ""
+                return res.data.get("prompt") or default or ""
         except Exception:
             pass
         return default or "You are a helpful AI assistant."
@@ -69,10 +69,11 @@ class PromptService(BaseRepository):
     async def update_prompt(self, prompt_name: str, content: str, description: str | None = None) -> tuple[bool, dict[str, Any]]:
         """Update a system prompt."""
         def _query():
-            update_data = {"prompt_text": content}
+            # DB schema uses 'prompt' for the content and 'prompt_name' for identity
+            update_data = {"prompt": content}
             if description:
                 update_data["description"] = description
-            return self.supabase_client.table("archon_prompts").update(update_data).eq("name", prompt_name).execute()
+            return self.supabase_client.table("archon_prompts").update(update_data).eq("prompt_name", prompt_name).execute()
 
         success, result = self.execute_query(_query, f"Failed to update prompt {prompt_name}")
         if success:

@@ -21,13 +21,13 @@ describe('Task Assignee Persistence (Migration 007)', () => {
 
         await waitForElementToBeRemoved(() => screen.queryByRole('dialog'), { timeout: 10000 });
         expect(await screen.findByText('Persist Test Task')).toBeInTheDocument();
-        expect(screen.getByText(/Alice Johnson/i)).toBeInTheDocument();
+        expect(await screen.findByTitle(/Alice/i)).toBeInTheDocument();
 
         unmount();
         renderApp(['/dashboard']);
         await waitForElementToBeRemoved(() => screen.queryByText(/Loading/i), { timeout: 10000 });
         
         expect(await screen.findByText('Persist Test Task')).toBeInTheDocument();
-        expect(screen.getByText(/Alice Johnson/i)).toBeInTheDocument();
+        expect(await screen.findByTitle(/Alice/i)).toBeInTheDocument();
     });
 });

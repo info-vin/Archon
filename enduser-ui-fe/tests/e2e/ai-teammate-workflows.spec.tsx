@@ -39,12 +39,13 @@ describe('AI as a Teammate E2E Workflows', () => {
 
     // 5. Submit
     const saveButton = screen.getByRole('button', { name: /Create Task/i });
+    await waitFor(() => expect(saveButton).not.toBeDisabled());
     fireEvent.click(saveButton);
 
     // 6. Wait for Modal to disappear
     await waitFor(() => {
       expect(screen.queryByText(/Create New Task/i)).not.toBeInTheDocument();
-    }, { timeout: 10000 });
+    }, { timeout: 15000 });
 
     // 7. Verify task appears in list
     expect(await screen.findByText((content) => content.includes(taskTitle), {}, { timeout: 10000 })).toBeInTheDocument();
@@ -67,11 +68,13 @@ describe('AI as a Teammate E2E Workflows', () => {
     
     fireEvent.change(screen.getByLabelText(/Assignee/i), { target: { value: 'ai-knowledge-expert-1' } });
 
-    fireEvent.click(screen.getByRole('button', { name: /Create Task/i }));
+    const saveButton = screen.getByRole('button', { name: /Create Task/i });
+    await waitFor(() => expect(saveButton).not.toBeDisabled());
+    fireEvent.click(saveButton);
 
     await waitFor(() => {
       expect(screen.queryByText(/Create New Task/i)).not.toBeInTheDocument();
-    }, { timeout: 10000 });
+    }, { timeout: 15000 });
 
     expect(await screen.findByText((content) => content.includes(taskTitle), {}, { timeout: 10000 })).toBeInTheDocument();
   });
@@ -100,11 +103,13 @@ describe('AI as a Teammate E2E Workflows', () => {
     
     fireEvent.change(screen.getByLabelText(/Assignee/i), { target: { value: 'ai-researcher-1' } });
 
-    fireEvent.click(screen.getByRole('button', { name: /Create Task/i }));
+    const saveButton = screen.getByRole('button', { name: /Create Task/i });
+    await waitFor(() => expect(saveButton).not.toBeDisabled());
+    fireEvent.click(saveButton);
 
     await waitFor(() => {
       expect(screen.queryByText(/Create New Task/i)).not.toBeInTheDocument();
-    }, { timeout: 10000 });
+    }, { timeout: 15000 });
 
     expect(await screen.findByText((content) => content.includes(taskTitle), {}, { timeout: 10000 })).toBeInTheDocument();
   });

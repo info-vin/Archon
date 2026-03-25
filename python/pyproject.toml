@@ -95,6 +95,8 @@ mcp = [
     "openai>=1.71.0",
     "cryptography>=41.0.0",
     "aiofiles>=23.2.1",
+    "python-jose[cryptography]>=3.3.0",
+    "psutil>=5.9.0",
 ]
 
 # Agents container dependencies
@@ -106,6 +108,9 @@ agents = [
     "httpx>=0.24.0",
     "python-dotenv>=1.0.0",
     "structlog>=23.1.0",
+    "python-jose[cryptography]>=3.3.0",
+    "supabase==2.15.1",
+    "psutil>=5.9.0",
 ]
 
 # All dependencies for running unit tests locally

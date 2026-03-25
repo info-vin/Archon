@@ -122,7 +122,7 @@ class CredentialsService {
       MODEL_CHOICE: "gemini-2.5-flash",
       LLM_PROVIDER: "google",
       EMBEDDING_PROVIDER: "google",
-      EMBEDDING_MODEL: "text-embedding-004",
+      EMBEDDING_MODEL: "gemini-embedding-001",
       CRAWL_BATCH_SIZE: 50,
       CRAWL_MAX_CONCURRENT: 10,
       CRAWL_WAIT_STRATEGY: "domcontentloaded",

@@ -12,31 +12,29 @@ RUN pip install --no-cache-dir uv && \
 # Copy pyproject.toml for dependency installation
 COPY pyproject.toml .
 
-# Install only mcp dependencies using uv
+# Install only MCP dependencies to system python
 RUN uv pip install --system --group mcp
 
-# Create minimal directory structure
-RUN mkdir -p src/mcp_server/features/projects src/mcp_server/features/tasks src/mcp_server/features/documents src/server/services src/server/config src/server/services/ollama
+# Create directory structure
+RUN mkdir -p src/mcp_server/features/projects src/mcp_server/features/developer src/mcp_server/features/marketing
 
-# Copy only MCP-specific files
+# Copy the core MCP server code
 COPY src/mcp_server/ src/mcp_server/
 COPY src/__init__.py src/
 
 # Copy the server files MCP needs for HTTP communication and Developer Tools
+# We copy specific directories to maintain a lean image while ensuring all dependencies are present
 COPY src/server/__init__.py src/server/
-COPY src/server/services/mcp_service_client.py src/server/services/
-COPY src/server/services/client_manager.py src/server/services/
-COPY src/server/services/mcp_session_manager.py src/server/services/
-COPY src/server/services/propose_change_service.py src/server/services/
-COPY src/server/services/llm_provider_service.py src/server/services/
-COPY src/server/services/credential_service.py src/server/services/
-COPY src/server/services/ollama/ src/server/services/ollama/
-COPY src/server/config/__init__.py src/server/config/
-COPY src/server/config/service_discovery.py src/server/config/
-COPY src/server/config/logfire_config.py src/server/config/
+COPY src/server/utils/ src/server/utils/
+COPY src/server/repositories/ src/server/repositories/
+COPY src/server/config/ src/server/config/
+COPY src/server/services/ src/server/services/
+COPY src/server/auth/ src/server/auth/
+COPY src/server/schemas/ src/server/schemas/
+COPY src/server/models/ src/server/models/
 
 # Set environment variables
-ENV PYTHONPATH="/app:$PYTHONPATH"
+ENV PYTHONPATH="/app/src:/app"
 ENV PYTHONUNBUFFERED=1
 
 # Expose MCP port

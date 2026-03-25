@@ -43,7 +43,7 @@ class MultiDimensionalEmbeddingService:
             return 1536
 
         # Google models
-        elif "text-embedding-004" in model_lower or "gemini-text-embedding" in model_lower:
+        elif "text-embedding-004" in model_lower or "gemini-embedding-001" in model_lower or "gemini-text-embedding" in model_lower:
             return 768
 
         # Ollama models (common patterns)

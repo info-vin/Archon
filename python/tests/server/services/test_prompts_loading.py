@@ -17,10 +17,10 @@ async def test_load_prompts_success():
     mock_supabase = MagicMock()
     mock_response = MagicMock()
     mock_response.data = [
-        {"name": "blog_post_draft", "prompt_text": "You are MarketBot (Blog)..."},
-        {"name": "sales_pitch_generation", "prompt_text": "You are MarketBot (Sales)..."},
-        {"name": "svg_logo_design", "prompt_text": "You are DevBot..."},
-        {"name": "user_story_refinement", "prompt_text": "You are POBot..."}
+        {"prompt_name": "blog_post_draft", "prompt": "You are MarketBot (Blog)..."},
+        {"prompt_name": "sales_pitch_generation", "prompt": "You are MarketBot (Sales)..."},
+        {"prompt_name": "svg_logo_design", "prompt": "You are DevBot..."},
+        {"prompt_name": "user_story_refinement", "prompt": "You are POBot..."}
     ]
     # Configure mock behavior for list_prompts which uses self.execute_query
     mock_supabase.table.return_value.select.return_value.execute.return_value = mock_response

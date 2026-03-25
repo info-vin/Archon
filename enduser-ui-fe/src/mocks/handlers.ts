@@ -141,6 +141,12 @@ export const handlers = [
   http.get('/api/stats/ai-usage', () => HttpResponse.json({ total_budget: 1000, total_used: 150 })),
   http.get('/api/blogs', () => HttpResponse.json([])),
   http.get('/api/marketing/blogs', () => HttpResponse.json([])),
+  http.get('/api/knowledge', () => HttpResponse.json({ 
+    items: [
+      { source_id: 'know-1', title: 'Internal Wiki', knowledge_type: 'documentation', url: 'https://wiki.internal' },
+      { source_id: 'know-2', title: 'Product Spec', knowledge_type: 'specification', url: 'https://docs.internal/spec' }
+    ] 
+  })),
   http.get('/api/knowledge-items', () => HttpResponse.json([])),
   http.get('/api/admin/crawler-targets', () => HttpResponse.json([
     { id: 'target-1', target_url: 'https://sas.com/docs', description: 'SAS Docs', is_active: true },

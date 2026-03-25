@@ -18,7 +18,7 @@ VALUES
 ('USE_RERANKING', 'true', false, 'rag_strategy', 'Enable reranking of search results', NOW()),
 ('LLM_PROVIDER', 'google', false, 'rag_strategy', 'AI Provider for RAG', NOW()),
 ('EMBEDDING_PROVIDER', 'google', false, 'rag_strategy', 'Embedding Provider', NOW()),
-('EMBEDDING_MODEL', 'text-embedding-004', false, 'rag_strategy', 'Embedding model name', NOW()),
+('EMBEDDING_MODEL', 'gemini-embedding-001', false, 'rag_strategy', 'Embedding model name', NOW()),
 ('CRAWL_WAIT_STRATEGY', 'domcontentloaded', false, 'rag_strategy', 'Crawler wait strategy', NOW()),
 ('DELETE_BATCH_SIZE', '100', false, 'rag_strategy', 'Batch size for deletions', NOW()),
 ('ENABLE_PARALLEL_BATCHES', 'true', false, 'rag_strategy', 'Enable parallel batch processing', NOW()),

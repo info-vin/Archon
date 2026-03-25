@@ -124,8 +124,14 @@ class RerankingStrategy:
             Reranked and sorted list of results
         """
         # Add rerank scores to valid results
+        # DEFENSIVE: Ensure we don't exceed the bounds of the scores list
+        max_scores = len(scores)
         for i, valid_idx in enumerate(valid_indices):
-            results[valid_idx]["rerank_score"] = float(scores[i])
+            if i < max_scores:
+                results[valid_idx]["rerank_score"] = float(scores[i])
+            else:
+                # If we're missing a score for some reason, use a very low fallback
+                results[valid_idx]["rerank_score"] = -1.0
 
         # Sort results by rerank score (descending - highest relevance first)
         reranked_results = sorted(results, key=lambda x: x.get("rerank_score", -1.0), reverse=True)

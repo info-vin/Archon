@@ -49,8 +49,8 @@ describe('Content Marketing E2E Flow', () => {
         // 3. Verify Context Intelligence is loaded in the left pane
         expect(await screen.findByText(/Alice said client wants privacy/i)).toBeInTheDocument();
 
-        // 4. Open AI Command Center (The floating button with "!")
-        const aiCommandBtn = await screen.findByRole('button', { name: /!/i });
+        // 4. Open AI Command Center
+        const aiCommandBtn = await screen.findByRole('button', { name: /Open AI Command Center/i });
         await user.click(aiCommandBtn);
 
         // 5. Execute Magic Synthesis
