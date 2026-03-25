@@ -45,7 +45,7 @@ export const TaskCardActions: React.FC<TaskCardActionsProps> = ({
   };
 
   return (
-    <div className="flex items-center gap-1.5">
+    <div className="flex items-center gap-1.5" role="group" aria-label="Task Actions">
       <SimpleTooltip content={isDeleting ? "Deleting..." : "Delete task"}>
         <button
           type="button"

@@ -46,7 +46,7 @@ export const ProjectCardActions: React.FC<ProjectCardActionsProps> = ({
     }
   };
   return (
-    <div className="flex items-center gap-1.5">
+    <div className="flex items-center gap-1.5" role="group" aria-label="Project Actions">
       {/* Delete Button */}
       <SimpleTooltip content={isDeleting ? "Deleting..." : "Delete project"}>
         <button
