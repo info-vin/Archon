@@ -38,7 +38,9 @@ export function PendingMigrationsModal({
   };
 
   const handleCopyAll = async () => {
-    const allSql = migrations.map((m) => `-- ${m.name}\n${m.sql_content}`).join("\n\n");
+    const allSql = migrations
+      .map((m) => `-- ${m.name}\n${m.sql_content}`)
+      .join("\n\n");
     const result = await copyToClipboard(allSql);
     if (result.success) {
       showToast("All migration SQL copied to clipboard", "success");
@@ -73,9 +75,17 @@ export function PendingMigrationsModal({
           <div className="flex items-center justify-between p-6 border-b border-gray-700">
             <div className="flex items-center gap-3">
               <Database className="w-6 h-6 text-purple-400" />
-              <h2 className="text-xl font-semibold text-white">Pending Database Migrations</h2>
+              <h2 className="text-xl font-semibold text-white">
+                Pending Database Migrations
+              </h2>
             </div>
-            <button type="button" onClick={onClose} className="p-2 hover:bg-gray-700/50 rounded-lg transition-colors">
+            <button
+              type="button"
+              onClick={onClose}
+              className="p-2 hover:bg-gray-700/50 rounded-lg transition-colors"
+              aria-label="Close pending migrations modal"
+              title="Close pending migrations modal"
+            >
               <X className="w-5 h-5 text-gray-400" />
             </button>
           </div>
@@ -90,7 +100,10 @@ export function PendingMigrationsModal({
               <li>Copy the SQL for each migration below</li>
               <li>Open your Supabase dashboard SQL Editor</li>
               <li>Paste and execute each migration in order</li>
-              <li>Click &quot;Refresh Status&quot; below to verify migrations were applied</li>
+              <li>
+                Click &quot;Refresh Status&quot; below to verify migrations were
+                applied
+              </li>
             </ol>
             {migrations.length > 1 && (
               <button
@@ -108,7 +121,9 @@ export function PendingMigrationsModal({
             {migrations.length === 0 ? (
               <div className="text-center py-8">
                 <CheckCircle className="w-12 h-12 text-green-400 mx-auto mb-3" />
-                <p className="text-gray-300">All migrations have been applied!</p>
+                <p className="text-gray-300">
+                  All migrations have been applied!
+                </p>
               </div>
             ) : (
               <div className="space-y-4 pb-4">
@@ -120,7 +135,9 @@ export function PendingMigrationsModal({
                     <div className="p-4">
                       <div className="flex items-center justify-between mb-2">
                         <div>
-                          <h4 className="text-white font-medium">{migration.name}</h4>
+                          <h4 className="text-white font-medium">
+                            {migration.name}
+                          </h4>
                           <p className="text-gray-400 text-sm mt-1">
                             Version: {migration.version} • {migration.file_path}
                           </p>
@@ -128,7 +145,9 @@ export function PendingMigrationsModal({
                         <div className="flex items-center gap-2">
                           <button
                             type="button"
-                            onClick={() => handleCopy(migration.sql_content, index)}
+                            onClick={() =>
+                              handleCopy(migration.sql_content, index)
+                            }
                             className="px-3 py-1.5 bg-gray-700 hover:bg-gray-600 rounded text-sm font-medium text-gray-300 flex items-center gap-2 transition-colors"
                           >
                             {copiedIndex === index ? (
@@ -145,7 +164,11 @@ export function PendingMigrationsModal({
                           </button>
                           <button
                             type="button"
-                            onClick={() => setExpandedIndex(expandedIndex === index ? null : index)}
+                            onClick={() =>
+                              setExpandedIndex(
+                                expandedIndex === index ? null : index,
+                              )
+                            }
                             className="px-3 py-1.5 bg-gray-700 hover:bg-gray-600 rounded text-sm font-medium text-gray-300 transition-colors"
                           >
                             {expandedIndex === index ? "Hide" : "Show"} SQL
