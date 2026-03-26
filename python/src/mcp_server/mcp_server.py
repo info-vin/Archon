@@ -56,28 +56,8 @@ server_host = "0.0.0.0"
 mcp_port = os.getenv("ARCHON_MCP_PORT", "8051")
 server_port = int(mcp_port)
 
-# Initialize the main FastMCP server
-try:
-    logger.info("🏗️ MCP SERVER INITIALIZATION:")
-    logger.info("   Server Name: archon-mcp-server")
-
-    mcp = FastMCP(
-        "archon-mcp-server",
-        description="MCP server for Archon - uses HTTP calls to other services",
-        instructions="", # Defined below
-        lifespan=lifespan,
-        host=server_host,
-        port=server_port,
-    )
-    logger.info("✓ FastMCP server instance created successfully")
-
-except Exception as e:
-    logger.error(f"✗ Failed to create FastMCP server: {e}")
-    logger.error(traceback.format_exc())
-    raise
-
-
 # Define MCP instructions for Claude Code and other clients
+# Moved before FastMCP init to fix AttributeError: no setter (Phase 4.6.20)
 MCP_INSTRUCTIONS = """
 # Archon MCP Server Instructions
 
@@ -199,7 +179,26 @@ Create feature-level tasks:
 - "Add payment processing system"
 - "Create admin dashboard"
 """
-mcp.instructions = MCP_INSTRUCTIONS
+
+# Initialize the main FastMCP server with physical instruction alignment
+try:
+    logger.info("🏗️ MCP SERVER INITIALIZATION:")
+    logger.info("   Server Name: archon-mcp-server")
+
+    mcp = FastMCP(
+        "archon-mcp-server",
+        description="MCP server for Archon - uses HTTP calls to other services",
+        instructions=MCP_INSTRUCTIONS, # Correct way to pass instructions
+        lifespan=lifespan,
+        host=server_host,
+        port=server_port,
+    )
+    logger.info("✓ FastMCP server instance created successfully")
+
+except Exception as e:
+    logger.error(f"✗ Failed to create FastMCP server: {e}")
+    logger.error(traceback.format_exc())
+    raise
 
 
 # Discovery endpoint for Agents (Phase 4.6.19)
@@ -231,7 +230,6 @@ async def list_tools() -> str:
 
 
 # Direct RPC Bridge for Agents (Phase 4.6.19)
-# This enables standard HTTP POST calls to tools, avoiding 406 Not Acceptable.
 @mcp.custom_route("/rpc", methods=["POST"])
 async def mcp_rpc_handler(request: Request) -> Response:
     """Handle standard JSON-RPC requests via POST."""
@@ -243,7 +241,7 @@ async def mcp_rpc_handler(request: Request) -> Response:
 
         # 1. Discovery handling (Fast path using Worker-local Registry)
         if method_name == "list_tools":
-            # FAIL-SAFE A: Try disk cache first (most reliable across processes)
+            # FAIL-SAFE A: Try disk cache first
             tools_cache = "/tmp/mcp_tools.json"
             if os.path.exists(tools_cache):
                 try:
@@ -255,7 +253,7 @@ async def mcp_rpc_handler(request: Request) -> Response:
                 except Exception:
                     pass
 
-            # FAIL-SAFE B: If registry is empty, try live fetch in this process
+            # FAIL-SAFE B: If registry is empty, try live fetch
             if not GLOBAL_TOOL_REGISTRY:
                 logger.warning(f"⚠️ [PID {os.getpid()}] Registry empty, triggering fail-safe live fetch")
                 raw_tools = mcp._tool_manager.list_tools()
@@ -270,7 +268,7 @@ async def mcp_rpc_handler(request: Request) -> Response:
 
             return JSONResponse({"jsonrpc": "2.0", "result": GLOBAL_TOOL_REGISTRY, "id": body.get("id")})
 
-        # 2. Tool execution via official API (Handles ctx injection automatically)
+        # 2. Tool execution via official API
         logger.info(f"RPC Call: [PID {os.getpid()}] Executing tool '{method_name}' via official call_tool API")
         try:
             raw_result = await mcp.call_tool(method_name, params)
@@ -283,7 +281,6 @@ async def mcp_rpc_handler(request: Request) -> Response:
             for item in raw_result:
                 if hasattr(item, "model_dump"):
                     dump = item.model_dump()
-                    # Unwrap TextContent for standard JSON-RPC clients
                     processed_result.append(dump.get("text", "") if dump.get("type") == "text" else dump)
                 else:
                     processed_result.append(str(item))
@@ -296,13 +293,27 @@ async def mcp_rpc_handler(request: Request) -> Response:
         return JSONResponse({"error": {"code": -32603, "message": str(e)}}, status_code=500)
 
 
+# Custom route for session tracking
+@mcp.custom_route("/sessions", methods=["GET"])
+async def get_sessions(request: Request) -> Response:
+    """Get active session count from FastMCP internal state."""
+    active_sessions = 0
+    try:
+        if hasattr(mcp, "session_manager"):
+            if hasattr(mcp.session_manager, "_server_instances"):
+                active_sessions = len(mcp.session_manager._server_instances)
+    except Exception as e:
+        logger.error(f"Failed to get active sessions: {e}")
+
+    return JSONResponse({"active_sessions": active_sessions})
+
+
 # Import and register modules
 def register_modules():
     """Register all MCP tool modules."""
     logger.info("🔧 Registering MCP tool modules...")
     modules_registered = 0
 
-    # Infrastructure & Monitoring (Phase 4.6.20 Slimming)
     try:
         from src.mcp_server.features.infra_tools import register_infra_tools
         register_infra_tools(mcp)
@@ -311,7 +322,6 @@ def register_modules():
     except Exception as e:
         logger.error(f"✗ Failed to register infra tools: {e}")
 
-    # RAG
     try:
         from src.mcp_server.features.rag import register_rag_tools
         register_rag_tools(mcp)
@@ -320,7 +330,6 @@ def register_modules():
     except Exception as e:
         logger.error(f"✗ Error registering RAG module: {e}")
 
-    # Projects & Tasks
     try:
         from src.mcp_server.features.projects import register_project_tools
         register_project_tools(mcp)
@@ -337,7 +346,6 @@ def register_modules():
     except Exception as e:
         logger.error(f"✗ Failed to register task tools: {e}")
 
-    # Feature Management
     try:
         from src.mcp_server.features.feature_tools import register_feature_tools
         register_feature_tools(mcp)
@@ -346,7 +354,6 @@ def register_modules():
     except Exception as e:
         logger.error(f"✗ Failed to register feature tools: {e}")
 
-    # Developer, Marketing, Design
     try:
         from src.mcp_server.features.developer import register_developer_tools
         register_developer_tools(mcp)
@@ -371,7 +378,6 @@ def register_modules():
     except Exception as e:
         logger.error(f"✗ Failed to register design tools: {e}")
 
-    # Document Management
     try:
         from src.mcp_server.features.documents import register_document_tools
         register_document_tools(mcp)
