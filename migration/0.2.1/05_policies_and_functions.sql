@@ -1357,6 +1357,8 @@ CREATE POLICY "Allow authenticated users to read and update archon_projects" ON 
 
 CREATE POLICY "Allow authenticated users to read and update archon_tasks" ON public.archon_tasks TO authenticated USING (true);
 
+CREATE POLICY "Allow system to insert tasks" ON public.archon_tasks FOR INSERT WITH CHECK (true);
+
 
 --
 -- Name: archon_document_versions Allow authenticated users to read archon_document_versions; Type: POLICY; Schema: public; Owner: postgres
@@ -1405,6 +1407,10 @@ CREATE POLICY "Allow authenticated users to view insights" ON public.market_insi
 --
 
 CREATE POLICY "Allow authenticated users to view leads" ON public.leads FOR SELECT USING ((auth.role() = 'authenticated'::text));
+
+CREATE POLICY "Allow system to insert leads" ON public.leads FOR INSERT WITH CHECK (true);
+
+CREATE POLICY "Allow system to update leads" ON public.leads FOR UPDATE USING (true);
 
 
 --

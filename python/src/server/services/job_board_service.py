@@ -120,6 +120,9 @@ class JobBoardService:
 
     async def identify_leads_and_save(self, jobs: list[JobData]) -> int:
         new_leads_count = 0
+        from .stats_service import StatsService
+        stats_service = StatsService()
+
         for job in jobs:
             try:
                 existing = self.supabase.table("leads").select("id").eq("company_name", job.company).eq("source_job_url", job.url).execute()
@@ -134,8 +137,23 @@ class JobBoardService:
                     "status": "new",
                     "identified_need": job.identified_need or await self._infer_need(job)
                 }
-                self.supabase.table("leads").insert(lead_data).execute()
+                res = self.supabase.table("leads").insert(lead_data).execute()
+
+                # Physical Verification: Stop phantom logs if insert failed
+                if not res.data and hasattr(res, "error") and res.error:
+                    logger.error(f"Failed to save lead | company={job.company} | error={res.error}")
+                    continue
+
                 new_leads_count += 1
+
+                # Reward XP for identifying a lead (Phase 4.6.15 Integration)
+                await stats_service.add_agent_action_log(
+                    agent_name="Alice",
+                    xp_change=10,
+                    message=f"Identified new lead: {job.company}",
+                    details={"company": job.company, "job_title": job.title},
+                    content=lead_data["identified_need"]
+                )
             except Exception as e:
                 logger.error(f"Failed to save lead | company={job.company} | error={str(e)}")
         return new_leads_count

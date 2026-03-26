@@ -46,17 +46,23 @@ class StatsService:
 
         return max(0, score)
 
-    async def add_agent_action_log(self, agent_name: str, xp_change: int, message: str, details: dict | None = None) -> None:
+    async def add_agent_action_log(self, agent_name: str, xp_change: int, message: str, details: dict | None = None, content: str | None = None) -> None:
         """Logs an agent action and updates XP (Grounded Rewards)."""
         try:
+            # Physical Integration: Calculate dynamic XP if content is provided
+            final_xp = xp_change
+            if content:
+                final_xp = self.calculate_ai_score(content, details)
+                logger.info(f"XP Scoring: Calculated dynamic score {final_xp} for {agent_name}")
+
             payload = {
                 "source": "agent_action",
-                "level": "INFO" if xp_change >= 0 else "WARNING",
+                "level": "INFO" if final_xp >= 0 else "WARNING",
                 "message": message,
                 "details": {
                     **(details or {}),
                     "agent_name": agent_name,
-                    "xp_change": xp_change,
+                    "xp_change": final_xp,
                     "timestamp_v": "v4.6.15"
                 }
             }

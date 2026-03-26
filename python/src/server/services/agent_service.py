@@ -380,12 +380,12 @@ class AgentService:
 
         messages = [{"role": "system", "content": config["system_prompt"]}, {"role": "user", "content": f"Task: {task_data['title']}"}]
 
-        # Consistent tool param for Mock matching
-        all_mcp_tools: list[dict[str, Any]] = [
-            {"type": "function", "function": {"name": "search_job_market", "description": "Search 104", "parameters": {"type": "object", "properties": {"query": {"type": "string"}}}}},
-            {"type": "function", "function": {"name": "perform_rag_query", "description": "Search RAG", "parameters": {"type": "object", "properties": {"query": {"type": "string"}}}}},
-            {"type": "function", "function": {"name": "perform_web_crawl", "description": "Crawl web for RAG", "parameters": {"type": "object", "properties": {"url": {"type": "string"}, "max_depth": {"type": "integer"}}}}}
-        ]
+        # Physical Synchronization: Fetch dynamic tools from MCP (Phase 4.6.19)
+        all_mcp_tools: list[dict[str, Any]] = []
+        if self.mcp_client:
+            all_mcp_tools = await self.mcp_client.list_tools()
+            logger.info(f"Dynamic Tool Discovery: Synced {len(all_mcp_tools)} tools from MCP.")
+
         agent_tools_list: list[str] = list(config.get("tools", []))
         agent_tools = [t for t in all_mcp_tools if cast(dict, t["function"])["name"] in agent_tools_list]
         tools_param = agent_tools if agent_tools else None

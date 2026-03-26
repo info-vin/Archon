@@ -58,6 +58,16 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+def get_tool_schema(tool: Any) -> dict:
+    """Safely extract tool schema regardless of FastMCP version."""
+    if hasattr(tool, "inputSchema"):
+        return tool.inputSchema
+    if hasattr(tool, "parameters"):
+        return tool.parameters
+    if hasattr(tool, "model_dump"):
+        return tool.model_dump().get("inputSchema", {})
+    return {}
+
 # Global initialization lock and flag
 _initialization_lock = threading.Lock()
 _initialization_complete = False
@@ -127,62 +137,56 @@ async def perform_health_checks(context: ArchonContext):
             context.health_status["last_health_check"] = datetime.now().isoformat()
 
 
+# GLOBAL REGISTRY FOR AGENTS (Phase 4.6.19)
+GLOBAL_TOOL_REGISTRY = []
+
 @asynccontextmanager
 async def lifespan(server: FastMCP) -> AsyncIterator[ArchonContext]:
     """
-    Lifecycle manager - no heavy dependencies.
+    Lifecycle manager - ensures tools are registered in the correct process.
     """
-    global _initialization_complete, _shared_context
+    global _initialization_complete, _shared_context, GLOBAL_TOOL_REGISTRY
 
     # Quick check without lock
     if _initialization_complete and _shared_context:
-        logger.info("♻️ Reusing existing context for new SSE connection")
+        logger.info(f"♻️ [PID {os.getpid()}] Reusing existing context")
         yield _shared_context
         return
 
     # Acquire lock for initialization
     with _initialization_lock:
-        # Double-check pattern
         if _initialization_complete and _shared_context:
-            logger.info("♻️ Reusing existing context for new SSE connection")
             yield _shared_context
             return
 
-        logger.info("🚀 Starting MCP server...")
+        logger.info(f"🚀 [PID {os.getpid()}] Starting MCP server...")
 
         try:
-            # Initialize session manager
-            logger.info("🔐 Initializing session manager...")
             get_session_manager()
-            logger.info("✓ Session manager initialized")
-
-            # Initialize service client for HTTP calls
-            logger.info("🌐 Initializing service client...")
             service_client = get_mcp_service_client()
-            logger.info("✓ Service client initialized")
-
-            # Create context
             context = ArchonContext(service_client=service_client)
-
-            # Perform initial health check
             await perform_health_checks(context)
 
-            logger.info("✓ MCP server ready")
+            # --- PHYSICAL REGISTRY POPULATION (Phase 4.6.19) ---
+            raw_tools = mcp._tool_manager.list_tools()
+            GLOBAL_TOOL_REGISTRY = [{
+                "type": "function",
+                "function": {
+                    "name": t.name, 
+                    "description": t.description or "", 
+                    "parameters": get_tool_schema(t)
+                }
+            } for t in raw_tools]
+            logger.info(f"✅ [PID {os.getpid()}] PHYSICAL REGISTRY FINALIZED: {len(GLOBAL_TOOL_REGISTRY)} tools")
 
-            # Store context globally
+
             _shared_context = context
             _initialization_complete = True
-
             yield context
 
         except Exception as e:
             logger.error(f"💥 Critical error in lifespan setup: {e}")
-            logger.error(traceback.format_exc())
             raise
-        finally:
-            # Clean up resources
-            logger.info("🧹 Cleaning up MCP server...")
-            logger.info("✅ MCP server shutdown complete")
 
 
 # Define MCP instructions for Claude Code and other clients
@@ -328,6 +332,96 @@ except Exception as e:
     logger.error(f"✗ Failed to create FastMCP server: {e}")
     logger.error(traceback.format_exc())
     raise
+
+
+# Discovery endpoint for Agents (Phase 4.6.19)
+@mcp.tool()
+async def list_tools() -> str:
+    """Dynamically list all registered MCP tools using official FastMCP API."""
+    try:
+        # Physical Discovery: Use the official async API (v1.12.2)
+        tools = await mcp.list_tools()
+        formatted_tools = []
+        for tool in tools:
+            formatted_tools.append({
+                "type": "function",
+                "function": {
+                    "name": tool.name,
+                    "description": tool.description or "",
+                    "parameters": get_tool_schema(tool)
+                }
+            })
+
+        return json.dumps({
+            "success": True,
+            "tools": formatted_tools,
+            "count": len(formatted_tools),
+            "timestamp": datetime.now().isoformat()
+        }, indent=2)
+    except Exception as e:
+        logger.error(f"Failed to list tools: {e}")
+        return json.dumps({"success": False, "error": str(e)}, indent=2)
+
+
+# Direct RPC Bridge for Agents (Phase 4.6.19)
+# This enables standard HTTP POST calls to tools, avoiding 406 Not Acceptable.
+@mcp.custom_route("/rpc", methods=["POST"])
+async def mcp_rpc_handler(request: Request) -> Response:
+    """Handle standard JSON-RPC requests via POST."""
+    global GLOBAL_TOOL_REGISTRY
+    try:
+        body = await request.json()
+        method_name = body.get("method")
+        params = body.get("params", {})
+
+        # 1. Discovery handling (Fast path using Worker-local Registry)
+        if method_name == "list_tools":
+            # FAIL-SAFE A: Try disk cache first (most reliable across processes)
+            tools_cache = "/tmp/mcp_tools.json"
+            if os.path.exists(tools_cache):
+                try:
+                    with open(tools_cache) as f:
+                        cached = json.load(f)
+                        if cached:
+                            logger.info(f"✅ [PID {os.getpid()}] Discovery: Serving {len(cached)} tools from disk cache")
+                            return JSONResponse({"jsonrpc": "2.0", "result": cached, "id": body.get("id")})
+                except Exception: pass
+
+            # FAIL-SAFE B: If registry is empty, try live fetch in this process
+            if not GLOBAL_TOOL_REGISTRY:
+                logger.warning(f"⚠️ [PID {os.getpid()}] Registry empty, triggering fail-safe live fetch")
+                raw_tools = mcp._tool_manager.list_tools()
+                GLOBAL_TOOL_REGISTRY = [{
+                    "type": "function",
+                    "function": {"name": t.name, "description": t.description or "", "parameters": get_tool_schema(t)}
+                } for t in raw_tools]
+            
+            return JSONResponse({"jsonrpc": "2.0", "result": GLOBAL_TOOL_REGISTRY, "id": body.get("id")})
+
+        # 2. Tool execution via official API (Handles ctx injection automatically)
+        logger.info(f"RPC Call: [PID {os.getpid()}] Executing tool '{method_name}' via official call_tool API")
+        try:
+            raw_result = await mcp.call_tool(method_name, params)
+        except Exception as tool_err:
+            return JSONResponse({"error": {"code": -32603, "message": f"Tool execution failed: {str(tool_err)}"}}, status_code=500)
+
+        # 3. Physical Serialization & Unwrapping
+        processed_result = []
+        if isinstance(raw_result, list):
+            for item in raw_result:
+                if hasattr(item, "model_dump"):
+                    dump = item.model_dump()
+                    # Unwrap TextContent for standard JSON-RPC clients
+                    processed_result.append(dump.get("text", "") if dump.get("type") == "text" else dump)
+                else:
+                    processed_result.append(str(item))
+        else:
+            processed_result = str(raw_result)
+
+        return JSONResponse({"jsonrpc": "2.0", "result": processed_result, "id": body.get("id")})
+    except Exception as e:
+        logger.error(f"RPC Bridge Failed: {e}", exc_info=True)
+        return JSONResponse({"error": {"code": -32603, "message": str(e)}}, status_code=500)
 
 
 # Custom route for session tracking
@@ -604,6 +698,22 @@ def register_modules():
     if modules_registered == 0:
         logger.error("💥 No modules were successfully registered!")
         raise RuntimeError("No MCP modules available")
+
+    # PHYSICAL PERSISTENCE (Phase 4.6.19)
+    # Save tools to disk to survive process isolation/lazy loading
+    try:
+        # Use sync access here since we are in the module level init
+        tools = mcp._tool_manager.list_tools()
+        formatted = [{
+            "type": "function",
+            "function": {"name": t.name, "description": t.description or "", "parameters": get_tool_schema(t)}
+        } for t in tools]
+        
+        with open("/tmp/mcp_tools.json", "w") as f:
+            json.dump(formatted, f)
+        logger.info(f"✅ PHYSICAL TOOLS PERSISTED: {len(formatted)} tools saved to /tmp/mcp_tools.json")
+    except Exception as e:
+        logger.error(f"Failed to persist physical tools: {e}")
 
 
 # Register all modules when this file is imported

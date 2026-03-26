@@ -36,14 +36,14 @@ export const TaskModal: React.FC<TaskModalProps> = ({ task, onClose, onTaskCreat
   const [projects, setProjects] = useState<any[]>([]);
   const [selectedProjectId, setSelectedProjectId] = useState<string>(initialProjectId || '');
 
-  const isEditMode = task != null && task.id;
+  const isEditMode = !!(task && task.id);
 
   useEffect(() => {
     const fetchInitialData = async () => {
       try {
         setIsLoadingUsers(true);
         // Step 1: Priority Data (Users, Agents, Projects)
-        const [users, aiAgents, user, projectsData] = await Promise.all([
+        const [usersData, aiAgentsData, user, projectsData] = await Promise.all([
           api.getAssignableUsers(),
           api.getAssignableAgents(),
           api.getCurrentUser(),
@@ -52,6 +52,10 @@ export const TaskModal: React.FC<TaskModalProps> = ({ task, onClose, onTaskCreat
         
         setCurrentUser(user);
         setProjects(projectsData || []);
+        
+        // Combine humans and AI agents for the assignee list
+        const allAssignable = [...(usersData || []), ...(aiAgentsData || [])];
+        setAssignableUsers(allAssignable);
         
         // If no projectId passed, default to first available project
         if (!selectedProjectId && projectsData && projectsData.length > 0) {

@@ -151,7 +151,7 @@ const DashboardPage: React.FC = () => {
           onClose={() => { setIsTaskModalOpen(false); setEditingTask(null); }}
           onTaskCreated={() => fetchData()}
           onTaskUpdated={() => fetchData()}
-          projectId={selectedProjectId !== 'all' ? selectedProjectId : undefined}
+          initialProjectId={selectedProjectId !== 'all' ? selectedProjectId : undefined}
         />
       )}
       

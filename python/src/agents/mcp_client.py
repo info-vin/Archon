@@ -58,7 +58,7 @@ class MCPClient:
         """Close the HTTP client."""
         await self.client.aclose()
 
-    async def call_tool(self, tool_name: str, **kwargs) -> dict[str, Any]:
+    async def call_tool(self, tool_name: str, **kwargs) -> Any:
         """
         Call an MCP tool via HTTP.
 
@@ -67,13 +67,13 @@ class MCPClient:
             **kwargs: Tool arguments
 
         Returns:
-            Dict with the tool response
+            The tool result (natural type)
         """
         try:
             # MCP tools are called via JSON-RPC protocol
             request_data = {"jsonrpc": "2.0", "method": tool_name, "params": kwargs, "id": 1}
 
-            # Make HTTP request to MCP server
+            # Make HTTP request to MCP server via the new /rpc bridge (Phase 4.6.19)
             response = await self.client.post(
                 f"{self.mcp_url}/rpc",
                 json=request_data,
@@ -87,7 +87,8 @@ class MCPClient:
                 error = result["error"]
                 raise Exception(f"MCP tool error: {error.get('message', 'Unknown error')}")
 
-            return cast(dict[str, Any], result.get("result", {}))
+            # Return the result part of the JSON-RPC response
+            return result.get("result")
 
         except httpx.HTTPError as e:
             logger.error(f"HTTP error calling MCP tool {tool_name}: {e}")
@@ -95,6 +96,23 @@ class MCPClient:
         except Exception as e:
             logger.error(f"Error calling MCP tool {tool_name}: {e}")
             raise
+
+    async def list_tools(self) -> list[dict[str, Any]]:
+        """
+        Dynamically list all registered MCP tools from the server.
+
+        Returns:
+            List of OpenAI-compatible tool schemas.
+        """
+        try:
+            # list_tools is a special method handled by the /rpc fast path
+            result = await self.call_tool("list_tools")
+            if isinstance(result, list):
+                return cast(list[dict[str, Any]], result)
+            return []
+        except Exception as e:
+            logger.error(f"Failed to fetch tool list from MCP: {e}")
+            return []
 
     # Convenience methods for common MCP tools
 

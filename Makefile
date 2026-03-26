@@ -166,9 +166,13 @@ test-fe-single:
 # Run backend tests
 test-be:
 	@echo "Running backend tests..."
+	@if [ "$$(grep SUPABASE_URL .env | cut -d= -f2 | grep -i 'supabase.co')" != "" ] && [ "$$FORCE_PROD_TEST" != "true" ]; then \
+		echo "❌ ERROR: Production database detected in .env! Testing blocked to prevent data wipe."; \
+		echo "Use 'FORCE_PROD_TEST=true make test-be' if you really mean it."; \
+		exit 1; \
+	fi
 	@touch .env
 	@cd python && $(UV) sync --group dev --group mcp --group agents --group server && $(UV) run --env-file ../.env pytest
-
 # Run performance diagnostic
 test-perf:
 	@echo "Running Token Usage Performance Diagnostic..."
