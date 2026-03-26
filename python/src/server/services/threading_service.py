@@ -79,6 +79,7 @@ class RateLimiter:
         self.config = config
         self.request_times: deque[float] = deque()
         self.token_usage: deque[tuple[float, int]] = deque()
+        self._current_tokens = 0
         self.semaphore = asyncio.Semaphore(config.max_concurrent)
         self._lock = asyncio.Lock()
 
@@ -103,6 +104,7 @@ class RateLimiter:
                     # Record the request
                     self.request_times.append(now)
                     self.token_usage.append((now, estimated_tokens))
+                    self._current_tokens += estimated_tokens
                     return True
 
                 # Calculate wait time if we can't make the request
@@ -147,7 +149,7 @@ class RateLimiter:
             return False
 
         # Check token usage limit
-        current_tokens = sum(tokens for _, tokens in self.token_usage)
+        current_tokens = self._current_tokens
         if current_tokens + estimated_tokens > self.config.tokens_per_minute:
             return False
 
@@ -161,7 +163,8 @@ class RateLimiter:
             self.request_times.popleft()
 
         while self.token_usage and self.token_usage[0][0] < cutoff_time:
-            self.token_usage.popleft()
+            _, tokens = self.token_usage.popleft()
+            self._current_tokens -= tokens
 
     def _calculate_wait_time(self, estimated_tokens: int) -> float:
         """Calculate how long to wait before retrying"""
@@ -178,7 +181,7 @@ class RateLimiter:
 
     def _get_current_usage(self) -> dict[str, int]:
         """Get current usage statistics"""
-        current_tokens = sum(tokens for _, tokens in self.token_usage)
+        current_tokens = self._current_tokens
         return {
             "requests": len(self.request_times),
             "tokens": current_tokens,
