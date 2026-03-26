@@ -103,6 +103,8 @@ services:
       - ARCHON_MCP_PORT=${ARCHON_MCP_PORT:-8051}
       - ARCHON_SERVER_PORT=${ARCHON_SERVER_PORT:-8181}
       - ARCHON_AGENTS_PORT=${ARCHON_AGENTS_PORT:-8052}
+    volumes:
+      - mcp-cache:/tmp
     networks:
       - app-network
     depends_on:
@@ -264,3 +266,6 @@ services:
 networks:
   app-network:
     driver: bridge
+
+volumes:
+  mcp-cache:

@@ -32,7 +32,13 @@ class TestAgentAwakening:
         """
         Verify MarketBot wakes up, loads its prompt, and executes a task loop.
         """
-        service = AgentService(mcp_client=AsyncMock())
+        # Physical Alignment: Setup Mock MCP Client with new OpenAI-style tool schema (Phase 4.6.19)
+        mock_mcp = AsyncMock()
+        mock_mcp.list_tools.return_value = [
+            {"type": "function", "function": {"name": "search_job_market", "description": "Search 104", "parameters": {}}},
+            {"type": "function", "function": {"name": "perform_rag_query", "description": "Search RAG", "parameters": {}}}
+        ]
+        service = AgentService(mcp_client=mock_mcp)
 
         # Mock Task Service (Async methods must return awaitables)
         mock_task_service.get_task = AsyncMock(return_value=(True, {"task": {"title": "Write a blog", "description": "About AI"}}))

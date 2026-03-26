@@ -18,175 +18,63 @@ import json
 import logging
 import os
 import sys
-import threading
-import time
 import traceback
-from collections.abc import AsyncIterator
-from contextlib import asynccontextmanager
-from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 from typing import Any
 
 from dotenv import load_dotenv
-from mcp.server.fastmcp import Context, FastMCP
+from mcp.server.fastmcp import FastMCP
 from starlette.requests import Request
 from starlette.responses import JSONResponse, Response
 
 # Add the project root to Python path for imports
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-# Import Logfire configuration
-from server.config.logfire_config import mcp_logger, setup_logfire
-from server.services.mcp_service_client import get_mcp_service_client
-from server.services.mcp_session_manager import get_session_manager
+
+# Import Core Infrastructure (Phase 4.6.20 Slimming)
+from server.config.logfire_config import setup_logfire
+from src.mcp_server.core import (
+    GLOBAL_TOOL_REGISTRY,
+    get_tool_schema,
+    lifespan,
+)
 
 # Load environment variables from the project root .env file
 project_root = Path(__file__).resolve().parent.parent
 dotenv_path = project_root / ".env"
 load_dotenv(dotenv_path, override=True)
 
-# Configure logging FIRST before any imports that might use it
+# Configure logging
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    handlers=[
-        logging.StreamHandler(sys.stdout),
-        logging.FileHandler("/tmp/mcp_server.log", mode="a")
-        if os.path.exists("/tmp")
-        else logging.NullHandler(),
-    ],
+    handlers=[logging.StreamHandler(sys.stdout)],
 )
 logger = logging.getLogger(__name__)
 
-def get_tool_schema(tool: Any) -> dict:
-    """Safely extract tool schema regardless of FastMCP version."""
-    if hasattr(tool, "inputSchema"):
-        return tool.inputSchema
-    if hasattr(tool, "parameters"):
-        return tool.parameters
-    if hasattr(tool, "model_dump"):
-        return tool.model_dump().get("inputSchema", {})
-    return {}
-
-# Global initialization lock and flag
-_initialization_lock = threading.Lock()
-_initialization_complete = False
-_shared_context = None
-
-server_host = "0.0.0.0"  # Listen on all interfaces
-
-# Require ARCHON_MCP_PORT to be set
-mcp_port = os.getenv("ARCHON_MCP_PORT")
-if not mcp_port:
-    raise ValueError(
-        "ARCHON_MCP_PORT environment variable is required. "
-        "Please set it in your .env file or environment. "
-        "Default value: 8051"
-    )
+server_host = "0.0.0.0"
+mcp_port = os.getenv("ARCHON_MCP_PORT", "8051")
 server_port = int(mcp_port)
 
+# Initialize the main FastMCP server
+try:
+    logger.info("🏗️ MCP SERVER INITIALIZATION:")
+    logger.info("   Server Name: archon-mcp-server")
 
-@dataclass
-class ArchonContext:
-    """
-    Context for MCP server.
-    No heavy dependencies - just service client for HTTP calls.
-    """
+    mcp = FastMCP(
+        "archon-mcp-server",
+        description="MCP server for Archon - uses HTTP calls to other services",
+        instructions="", # Defined below
+        lifespan=lifespan,
+        host=server_host,
+        port=server_port,
+    )
+    logger.info("✓ FastMCP server instance created successfully")
 
-    service_client: Any
-    health_status: dict | None = None
-    startup_time: float | None = None
-
-    def __post_init__(self):
-        if self.health_status is None:
-            self.health_status = {
-                "status": "healthy",
-                "api_service": False,
-                "agents_service": False,
-                "last_health_check": None,
-            }
-        if self.startup_time is None:
-            self.startup_time = time.time()
-
-
-async def perform_health_checks(context: ArchonContext):
-    """Perform health checks on dependent services via HTTP."""
-    try:
-        # Check dependent services
-        service_health = await context.service_client.health_check()
-
-        if context.health_status is not None:
-            context.health_status["api_service"] = service_health.get("api_service", False)
-            context.health_status["agents_service"] = service_health.get("agents_service", False)
-
-            # Overall status
-            all_critical_ready = context.health_status["api_service"]
-
-            context.health_status["status"] = "healthy" if all_critical_ready else "degraded"
-            context.health_status["last_health_check"] = datetime.now().isoformat()
-
-            if not all_critical_ready:
-                logger.warning(f"Health check failed: {context.health_status}")
-            else:
-                logger.info("Health check passed - dependent services healthy")
-
-    except Exception as e:
-        logger.error(f"Health check error: {e}")
-        if context.health_status is not None:
-            context.health_status["status"] = "unhealthy"
-            context.health_status["last_health_check"] = datetime.now().isoformat()
-
-
-# GLOBAL REGISTRY FOR AGENTS (Phase 4.6.19)
-GLOBAL_TOOL_REGISTRY = []
-
-@asynccontextmanager
-async def lifespan(server: FastMCP) -> AsyncIterator[ArchonContext]:
-    """
-    Lifecycle manager - ensures tools are registered in the correct process.
-    """
-    global _initialization_complete, _shared_context, GLOBAL_TOOL_REGISTRY
-
-    # Quick check without lock
-    if _initialization_complete and _shared_context:
-        logger.info(f"♻️ [PID {os.getpid()}] Reusing existing context")
-        yield _shared_context
-        return
-
-    # Acquire lock for initialization
-    with _initialization_lock:
-        if _initialization_complete and _shared_context:
-            yield _shared_context
-            return
-
-        logger.info(f"🚀 [PID {os.getpid()}] Starting MCP server...")
-
-        try:
-            get_session_manager()
-            service_client = get_mcp_service_client()
-            context = ArchonContext(service_client=service_client)
-            await perform_health_checks(context)
-
-            # --- PHYSICAL REGISTRY POPULATION (Phase 4.6.19) ---
-            raw_tools = mcp._tool_manager.list_tools()
-            GLOBAL_TOOL_REGISTRY = [{
-                "type": "function",
-                "function": {
-                    "name": t.name, 
-                    "description": t.description or "", 
-                    "parameters": get_tool_schema(t)
-                }
-            } for t in raw_tools]
-            logger.info(f"✅ [PID {os.getpid()}] PHYSICAL REGISTRY FINALIZED: {len(GLOBAL_TOOL_REGISTRY)} tools")
-
-
-            _shared_context = context
-            _initialization_complete = True
-            yield context
-
-        except Exception as e:
-            logger.error(f"💥 Critical error in lifespan setup: {e}")
-            raise
+except Exception as e:
+    logger.error(f"✗ Failed to create FastMCP server: {e}")
+    logger.error(traceback.format_exc())
+    raise
 
 
 # Define MCP instructions for Claude Code and other clients
@@ -311,27 +199,7 @@ Create feature-level tasks:
 - "Add payment processing system"
 - "Create admin dashboard"
 """
-
-# Initialize the main FastMCP server with fixed configuration
-try:
-    logger.info("🏗️ MCP SERVER INITIALIZATION:")
-    logger.info("   Server Name: archon-mcp-server")
-    logger.info("   Description: MCP server using HTTP calls")
-
-    mcp = FastMCP(
-        "archon-mcp-server",
-        description="MCP server for Archon - uses HTTP calls to other services",
-        instructions=MCP_INSTRUCTIONS,
-        lifespan=lifespan,
-        host=server_host,
-        port=server_port,
-    )
-    logger.info("✓ FastMCP server instance created successfully")
-
-except Exception as e:
-    logger.error(f"✗ Failed to create FastMCP server: {e}")
-    logger.error(traceback.format_exc())
-    raise
+mcp.instructions = MCP_INSTRUCTIONS
 
 
 # Discovery endpoint for Agents (Phase 4.6.19)
@@ -339,7 +207,6 @@ except Exception as e:
 async def list_tools() -> str:
     """Dynamically list all registered MCP tools using official FastMCP API."""
     try:
-        # Physical Discovery: Use the official async API (v1.12.2)
         tools = await mcp.list_tools()
         formatted_tools = []
         for tool in tools:
@@ -385,7 +252,8 @@ async def mcp_rpc_handler(request: Request) -> Response:
                         if cached:
                             logger.info(f"✅ [PID {os.getpid()}] Discovery: Serving {len(cached)} tools from disk cache")
                             return JSONResponse({"jsonrpc": "2.0", "result": cached, "id": body.get("id")})
-                except Exception: pass
+                except Exception:
+                    pass
 
             # FAIL-SAFE B: If registry is empty, try live fetch in this process
             if not GLOBAL_TOOL_REGISTRY:
@@ -393,9 +261,13 @@ async def mcp_rpc_handler(request: Request) -> Response:
                 raw_tools = mcp._tool_manager.list_tools()
                 GLOBAL_TOOL_REGISTRY = [{
                     "type": "function",
-                    "function": {"name": t.name, "description": t.description or "", "parameters": get_tool_schema(t)}
+                    "function": {
+                        "name": t.name,
+                        "description": t.description or "",
+                        "parameters": get_tool_schema(t)
+                    }
                 } for t in raw_tools]
-            
+
             return JSONResponse({"jsonrpc": "2.0", "result": GLOBAL_TOOL_REGISTRY, "id": body.get("id")})
 
         # 2. Tool execution via official API (Handles ctx injection automatically)
@@ -406,7 +278,7 @@ async def mcp_rpc_handler(request: Request) -> Response:
             return JSONResponse({"error": {"code": -32603, "message": f"Tool execution failed: {str(tool_err)}"}}, status_code=500)
 
         # 3. Physical Serialization & Unwrapping
-        processed_result = []
+        processed_result: Any = []
         if isinstance(raw_result, list):
             for item in raw_result:
                 if hasattr(item, "model_dump"):
@@ -424,291 +296,106 @@ async def mcp_rpc_handler(request: Request) -> Response:
         return JSONResponse({"error": {"code": -32603, "message": str(e)}}, status_code=500)
 
 
-# Custom route for session tracking
-@mcp.custom_route("/sessions", methods=["GET"])
-async def get_sessions(request: Request) -> Response:
-    """Get active session count from FastMCP internal state."""
-    active_sessions = 0
-    try:
-        # Access FastMCP internal session manager state if available
-        # The session manager is lazy-loaded, but since we are handling a request,
-        # it should be initialized.
-        if hasattr(mcp, "session_manager"):
-            # Access the internal _server_instances dict which tracks active connections
-            # Note: This is accessing internal state, but it's the only way to get real counts
-            if hasattr(mcp.session_manager, "_server_instances"):
-                active_sessions = len(mcp.session_manager._server_instances)
-    except Exception as e:
-        logger.error(f"Failed to get active sessions: {e}")
-
-    return JSONResponse({"active_sessions": active_sessions})
-
-
-# Health check endpoint
-@mcp.tool()
-async def health_check(ctx: Context) -> str:
-    """
-    Check health status of MCP server and dependencies.
-
-    Returns:
-        JSON with health status, uptime, and service availability
-    """
-    try:
-        # Try to get the lifespan context
-        context = getattr(ctx.request_context, "lifespan_context", None)
-
-        if context is None:
-            # Server starting up
-            return json.dumps({
-                "success": True,
-                "status": "starting",
-                "message": "MCP server is initializing...",
-                "timestamp": datetime.now().isoformat(),
-            })
-
-        # Server is ready - perform health checks
-        if hasattr(context, "health_status") and context.health_status:
-            await perform_health_checks(context)
-
-            return json.dumps({
-                "success": True,
-                "health": context.health_status,
-                "uptime_seconds": time.time() - context.startup_time,
-                "timestamp": datetime.now().isoformat(),
-            })
-        else:
-            return json.dumps({
-                "success": True,
-                "status": "ready",
-                "message": "MCP server is running",
-                "timestamp": datetime.now().isoformat(),
-            })
-
-    except Exception as e:
-        logger.error(f"Health check failed: {e}")
-        return json.dumps({
-            "success": False,
-            "error": f"Health check failed: {str(e)}",
-            "timestamp": datetime.now().isoformat(),
-        })
-
-
-# Session management endpoint
-@mcp.tool()
-async def session_info(ctx: Context) -> str:
-    """
-    Get current and active session information.
-
-    Returns:
-        JSON with active sessions count and server uptime
-    """
-    try:
-        session_manager = get_session_manager()
-
-        # Build session info
-        session_info_data = {
-            "active_sessions": session_manager.get_active_session_count(),
-            "session_timeout": session_manager.timeout,
-        }
-
-        # Add server uptime
-        context = getattr(ctx.request_context, "lifespan_context", None)
-        if context and hasattr(context, "startup_time"):
-            session_info_data["server_uptime_seconds"] = time.time() - context.startup_time
-
-        return json.dumps({
-            "success": True,
-            "session_management": session_info_data,
-            "timestamp": datetime.now().isoformat(),
-        })
-
-    except Exception as e:
-        logger.error(f"Session info failed: {e}")
-        return json.dumps({
-            "success": False,
-            "error": f"Failed to get session info: {str(e)}",
-            "timestamp": datetime.now().isoformat(),
-        })
-
-
 # Import and register modules
 def register_modules():
     """Register all MCP tool modules."""
     logger.info("🔧 Registering MCP tool modules...")
-
     modules_registered = 0
 
-    # Import and register RAG module (HTTP-based version)
+    # Infrastructure & Monitoring (Phase 4.6.20 Slimming)
+    try:
+        from src.mcp_server.features.infra_tools import register_infra_tools
+        register_infra_tools(mcp)
+        modules_registered += 1
+        logger.info("✓ Infrastructure tools registered")
+    except Exception as e:
+        logger.error(f"✗ Failed to register infra tools: {e}")
+
+    # RAG
     try:
         from src.mcp_server.features.rag import register_rag_tools
-
         register_rag_tools(mcp)
         modules_registered += 1
         logger.info("✓ RAG module registered (HTTP-based)")
-    except ImportError as e:
-        logger.warning(f"⚠ RAG module not available: {e}")
     except Exception as e:
         logger.error(f"✗ Error registering RAG module: {e}")
-        logger.error(traceback.format_exc())
 
-    # Import and register all feature tools - separated and focused
-
-    # Project Management Tools
+    # Projects & Tasks
     try:
         from src.mcp_server.features.projects import register_project_tools
-
         register_project_tools(mcp)
         modules_registered += 1
         logger.info("✓ Project tools registered")
-    except ImportError as e:
-        # Module not found - this is acceptable in modular architecture
-        logger.warning(f"⚠ Project tools module not available (optional): {e}")
-    except (SyntaxError, NameError, AttributeError) as e:
-        # Code errors that should not be ignored
-        logger.error(f"✗ Code error in project tools - MUST FIX: {e}")
-        logger.error(traceback.format_exc())
-        raise  # Re-raise to prevent running with broken code
     except Exception as e:
-        # Unexpected errors during registration
         logger.error(f"✗ Failed to register project tools: {e}")
-        logger.error(traceback.format_exc())
-        # Don't raise - allow other modules to register
 
-    # Task Management Tools
     try:
         from src.mcp_server.features.tasks import register_task_tools
-
         register_task_tools(mcp)
         modules_registered += 1
         logger.info("✓ Task tools registered")
-    except ImportError as e:
-        logger.warning(f"⚠ Task tools module not available (optional): {e}")
-    except (SyntaxError, NameError, AttributeError) as e:
-        logger.error(f"✗ Code error in task tools - MUST FIX: {e}")
-        logger.error(traceback.format_exc())
-        raise
     except Exception as e:
         logger.error(f"✗ Failed to register task tools: {e}")
-        logger.error(traceback.format_exc())
 
-    # Document Management Tools
-    try:
-        from src.mcp_server.features.documents import register_document_tools
-
-        register_document_tools(mcp)
-        modules_registered += 1
-        logger.info("✓ Document tools registered")
-    except ImportError as e:
-        logger.warning(f"⚠ Document tools module not available (optional): {e}")
-    except (SyntaxError, NameError, AttributeError) as e:
-        logger.error(f"✗ Code error in document tools - MUST FIX: {e}")
-        logger.error(traceback.format_exc())
-        raise
-    except Exception as e:
-        logger.error(f"✗ Failed to register document tools: {e}")
-        logger.error(traceback.format_exc())
-
-    # Version Management Tools
-    try:
-        from src.mcp_server.features.documents import register_version_tools
-
-        register_version_tools(mcp)
-        modules_registered += 1
-        logger.info("✓ Version tools registered")
-    except ImportError as e:
-        logger.warning(f"⚠ Version tools module not available (optional): {e}")
-    except (SyntaxError, NameError, AttributeError) as e:
-        logger.error(f"✗ Code error in version tools - MUST FIX: {e}")
-        logger.error(traceback.format_exc())
-        raise
-    except Exception as e:
-        logger.error(f"✗ Failed to register version tools: {e}")
-        logger.error(traceback.format_exc())
-
-    # Feature Management Tools
+    # Feature Management
     try:
         from src.mcp_server.features.feature_tools import register_feature_tools
-
         register_feature_tools(mcp)
         modules_registered += 1
         logger.info("✓ Feature tools registered")
-    except ImportError as e:
-        logger.warning(f"⚠ Feature tools module not available (optional): {e}")
-    except (SyntaxError, NameError, AttributeError) as e:
-        logger.error(f"✗ Code error in feature tools - MUST FIX: {e}")
-        logger.error(traceback.format_exc())
-        raise
     except Exception as e:
         logger.error(f"✗ Failed to register feature tools: {e}")
-        logger.error(traceback.format_exc())
 
-    # Developer Tools (Smart Git, File Ops, etc.)
+    # Developer, Marketing, Design
     try:
         from src.mcp_server.features.developer import register_developer_tools
-
         register_developer_tools(mcp)
         modules_registered += 1
         logger.info("✓ Developer tools registered")
-    except ImportError as e:
-        logger.warning(f"⚠ Developer tools module not available (optional): {e}")
-    except (SyntaxError, NameError, AttributeError) as e:
-        logger.error(f"✗ Code error in developer tools - MUST FIX: {e}")
-        logger.error(traceback.format_exc())
-        raise
     except Exception as e:
         logger.error(f"✗ Failed to register developer tools: {e}")
-        logger.error(traceback.format_exc())
 
-    # Marketing Tools (Job Search, etc.)
     try:
         from src.mcp_server.features.marketing import register_marketing_tools
-
         register_marketing_tools(mcp)
         modules_registered += 1
         logger.info("✓ Marketing tools registered")
-    except ImportError as e:
-        logger.warning(f"⚠ Marketing tools module not available (optional): {e}")
-    except (SyntaxError, NameError, AttributeError) as e:
-        logger.error(f"✗ Code error in marketing tools - MUST FIX: {e}")
-        logger.error(traceback.format_exc())
-        raise
     except Exception as e:
         logger.error(f"✗ Failed to register marketing tools: {e}")
-        logger.error(traceback.format_exc())
 
-    # Design Tools (Logo Generation, etc.)
     try:
         from src.mcp_server.features.design import register_design_tools
-
         register_design_tools(mcp)
         modules_registered += 1
         logger.info("✓ Design tools registered")
-    except ImportError as e:
-        logger.warning(f"⚠ Design tools module not available (optional): {e}")
-    except (SyntaxError, NameError, AttributeError) as e:
-        logger.error(f"✗ Code error in design tools - MUST FIX: {e}")
-        logger.error(traceback.format_exc())
-        raise
     except Exception as e:
         logger.error(f"✗ Failed to register design tools: {e}")
-        logger.error(traceback.format_exc())
+
+    # Document Management
+    try:
+        from src.mcp_server.features.documents import register_document_tools
+        register_document_tools(mcp)
+        modules_registered += 1
+        logger.info("✓ Document tools registered")
+    except Exception as e:
+        logger.error(f"✗ Failed to register document tools: {e}")
+
+    try:
+        from src.mcp_server.features.documents import register_version_tools
+        register_version_tools(mcp)
+        modules_registered += 1
+        logger.info("✓ Version tools registered")
+    except Exception as e:
+        logger.error(f"✗ Failed to register version tools: {e}")
 
     logger.info(f"📦 Total modules registered: {modules_registered}")
-
     if modules_registered == 0:
-        logger.error("💥 No modules were successfully registered!")
         raise RuntimeError("No MCP modules available")
 
     # PHYSICAL PERSISTENCE (Phase 4.6.19)
-    # Save tools to disk to survive process isolation/lazy loading
     try:
-        # Use sync access here since we are in the module level init
         tools = mcp._tool_manager.list_tools()
-        formatted = [{
-            "type": "function",
-            "function": {"name": t.name, "description": t.description or "", "parameters": get_tool_schema(t)}
-        } for t in tools]
-        
+        formatted = [{"type": "function", "function": {"name": t.name, "description": t.description or "", "parameters": get_tool_schema(t)}} for t in tools]
         with open("/tmp/mcp_tools.json", "w") as f:
             json.dump(formatted, f)
         logger.info(f"✅ PHYSICAL TOOLS PERSISTED: {len(formatted)} tools saved to /tmp/mcp_tools.json")
@@ -716,43 +403,25 @@ def register_modules():
         logger.error(f"Failed to persist physical tools: {e}")
 
 
-# Register all modules when this file is imported
+# Register all modules
 try:
     register_modules()
 except Exception as e:
     logger.error(f"💥 Critical error during module registration: {e}")
-    logger.error(traceback.format_exc())
     raise
 
 
 def main():
     """Main entry point for the MCP server."""
     try:
-        # Initialize Logfire first
         setup_logfire(service_name="archon-mcp-server")
-
         logger.info("🚀 Starting Archon MCP Server")
-        logger.info("   Mode: Streamable HTTP")
         logger.info(f"   URL: http://{server_host}:{server_port}/mcp")
-
-        mcp_logger.info("🔥 Logfire initialized for MCP server")
-        mcp_logger.info(f"🌟 Starting MCP server - host={server_host}, port={server_port}")
-
         mcp.run(transport="streamable-http")
-
     except Exception as e:
-        mcp_logger.error(f"💥 Fatal error in main - error={str(e)}, error_type={type(e).__name__}")
         logger.error(f"💥 Fatal error in main: {e}")
-        logger.error(traceback.format_exc())
-        raise
+        sys.exit(1)
 
 
 if __name__ == "__main__":
-    try:
-        main()
-    except KeyboardInterrupt:
-        logger.info("👋 MCP server stopped by user")
-    except Exception as e:
-        logger.error(f"💥 Unhandled exception: {e}")
-        logger.error(traceback.format_exc())
-        sys.exit(1)
+    main()
