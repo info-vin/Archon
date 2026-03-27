@@ -24,3 +24,7 @@
 ## 2024-05-18 - Fast upper-bound ratio checks for SequenceMatcher
 **Learning:** In Python, calling `difflib.SequenceMatcher.ratio()` inside O(N^2) loops (like deduplicating code blocks) is a severe performance bottleneck because `.ratio()` calculates the actual longest common subsequence in O(L_a * L_b) time.
 **Action:** Always optimize `SequenceMatcher` inside loops by pre-calculating sequence lengths to allow a fast O(1) upper-bound check (`2.0 * min(l1, l2) / (l1 + l2) < threshold`), and always call the heuristic guards `.real_quick_ratio()` and `.quick_ratio()` before committing to `.ratio()`.
+
+## 2026-03-27 - [O(1) Rate Limiter Token Counting]
+**Learning:** Using O(N) generator expressions like `sum(tokens for _, tokens in deque)` inside highly concurrent paths (like rate limiters) causes unnecessary overhead.
+**Action:** Introduce an O(1) caching counter that tracks the running sum by incrementing on addition and decrementing on removal.
