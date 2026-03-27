@@ -5,3 +5,7 @@
 ## 2025-03-03 - Missing ARIA Labels on Close Modals
 **Learning:** Icon-only close buttons (`XIcon`) across various feature components (`ContentWorkbench`, `ManagerNexus`, `LeadsCardStack`, `BrandWorkbenchView`) frequently lack `aria-label` attributes, causing them to be announced simply as "button" by screen readers.
 **Action:** When implementing modal or panel close actions using `XIcon` or similar icon-only buttons, always explicitly add an `aria-label` attribute (e.g., `aria-label="Close modal"` or a more descriptive label like `aria-label="Close AI Command Center"`).
+
+## $(date +%Y-%m-%d) - Dynamic ARIA Labels on State-Changing Buttons
+**Learning:** When adding `aria-label` attributes to buttons with dynamic inner text (like changing from "Reconnect" to "Connecting..."), a static `aria-label` causes screen readers to ignore the dynamic text, losing important state context.
+**Action:** Always make the `aria-label` dynamic (e.g., `aria-label={isLoading ? "Connecting to chat" : "Reconnect to chat"}`) to match the button's visual state.

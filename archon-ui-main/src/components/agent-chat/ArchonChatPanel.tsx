@@ -245,7 +245,14 @@ export const ArchonChatPanel: React.FC<ArchonChatPanelProps> = props => {
       width: `${width}px`
     }} data-id={props['data-id']}>
       {/* Drag handle for resizing */}
-      <div ref={dragHandleRef} className={`absolute left-0 top-0 w-1.5 h-full cursor-ew-resize z-20 ${isDragging ? 'bg-blue-500/50' : 'bg-transparent hover:bg-blue-500/30'} transition-colors duration-200`} onMouseDown={handleDragStart} />
+      <div
+        ref={dragHandleRef}
+        className={`absolute left-0 top-0 w-1.5 h-full cursor-ew-resize z-20 ${isDragging ? 'bg-blue-500/50' : 'bg-transparent hover:bg-blue-500/30'} transition-colors duration-200`}
+        onMouseDown={handleDragStart}
+        role="separator"
+        aria-orientation="vertical"
+        aria-label="Resize chat panel"
+      />
       {/* Main panel with glassmorphism */}
       <div className="h-full flex flex-col relative backdrop-blur-md bg-gradient-to-b from-white/80 to-white/60 dark:from-white/10 dark:to-black/30 border-l border-blue-200 dark:border-blue-500/30">
         {/* Edgelit glow effect */}
@@ -279,6 +286,7 @@ export const ArchonChatPanel: React.FC<ArchonChatPanelProps> = props => {
                   onClick={handleReconnect}
                   disabled={isReconnecting}
                   className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700 bg-blue-100/80 hover:bg-blue-200/80 dark:bg-blue-900/30 dark:hover:bg-blue-800/40 px-2 py-1 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  aria-label={isReconnecting ? "Connecting to chat" : "Reconnect to chat"}
                 >
                   <RefreshCw className={`w-3 h-3 ${isReconnecting ? 'animate-spin' : ''}`} />
                   {isReconnecting ? 'Connecting...' : 'Reconnect'}
