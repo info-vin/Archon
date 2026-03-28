@@ -21,14 +21,21 @@ class AgentService:
     def __init__(self, mcp_client=None):
         self.code_modifier = CodeModifier(base_path=".")
         self.mcp_client = mcp_client
+        # Unified Tool Dispatch Map (Phase 4.6.23)
+        from collections.abc import Callable, Coroutine
+        self._native_tools: dict[str, Callable[..., Coroutine[Any, Any, str]]] = {
+            "apply_modification": self._exec_apply_modification,
+            "perform_web_crawl": self._exec_perform_web_crawl,
+            "execute_shell_command": self._exec_execute_shell_command
+        }
 
-    async def _check_poisson_gate(self, agent_id: str, required_level: int) -> bool:
+    async def _check_poisson_gate(self, agent_id: str, required_level: int) -> tuple[bool, str]:
         """
         Enforces dynamic governance based on Agent XP Levels (Phase 4.6.15).
-        Replaces legacy 'fuzzy success ledger' with physical XP rankings.
+        Returns: (is_trusted, current_level_description)
         """
-        if required_level <= 1:
-            return True
+        if required_level <= 0:
+            return True, "Level 0 (Intern)"
 
         from .stats_service import StatsService
         stats_service = StatsService()
@@ -37,15 +44,13 @@ class AgentService:
             # 1. Fetch unified XP rankings
             rankings = await stats_service.get_agent_xp_stats()
 
-            # 2. Extract level for the specific agent
-            # Note: agent_id in rankings comes from 'agent_name' in logs
-            agent_xp_info = next((r for r in rankings if r["name"] == agent_id or agent_id in r["name"]), None)
+            # 2. Extract level for the specific agent using slug (agent_id)
+            agent_xp_info = next((r for r in rankings if r["name"] == agent_id), None)
 
             if not agent_xp_info:
                 get_logger(__name__).warning(f"Poisson Gate: No XP record found for agent '{agent_id}'. Denying L{required_level}+ access.")
-                return False
+                return False, "Unknown (XP 0)"
 
-            # Level string format is "Level X" or "Intern"
             level_str = agent_xp_info.get("level", "Intern")
             if level_str == "Intern":
                 current_level = 0
@@ -55,10 +60,10 @@ class AgentService:
                 except (IndexError, ValueError):
                     current_level = 0
 
-            return current_level >= required_level
+            return current_level >= required_level, level_str
         except Exception as e:
             get_logger(__name__).error(f"Poisson Gate (Level Sync) failed: {e}")
-            return False
+            return False, "Error"
 
     async def _handle_tool_calls(self, tool_calls, agent_id: str) -> list[dict]:
         logger = get_logger(__name__)
@@ -72,56 +77,56 @@ class AgentService:
             function_name = tool_call.function.name
             arguments = json.loads(tool_call.function.arguments)
             call_id = tool_call.id
-            logger.info(f"[MCP] Agent {display_name} requesting tool execution: {function_name}")
+            logger.info(f"[MCP] Agent {display_name} ({agent_id}) requesting tool execution: {function_name}")
             try:
                 required_level = get_tool_min_level(function_name)
-                is_trusted = await self._check_poisson_gate(agent_id=display_name, required_level=required_level)
+                is_trusted, curr_level = await self._check_poisson_gate(agent_id=agent_id, required_level=required_level)
 
                 if not is_trusted:
-                    logger.warning(f"[Poisson Gate] Blocked unauthorized attempt by {display_name} for tool {function_name}.")
-                    result = f"Poisson Security Block: Agent requires Level {required_level} for {function_name} operations."
+                    logger.warning(f"[Poisson Gate] Blocked unauthorized attempt by {agent_id} for tool {function_name}. (Level {curr_level} < {required_level})")
+                    result = f"Poisson Security Block: Your current level is {curr_level}, but {function_name} requires Level {required_level}."
                 else:
-                    result = "Tool execution failed"
-                    if function_name == "apply_modification":
-                        file_path = arguments.get("file_path")
-                        content = arguments.get("content")
-                        if file_path and content:
-                            self.code_modifier.apply_modification(file_path, content)
-                            result = f"Successfully modified {file_path}"
-                    elif function_name == "perform_web_crawl":
-                        url = arguments.get("url")
-                        max_depth = arguments.get("max_depth", 2)
-                        if url:
-                            from ..services.crawling.crawling_service import CrawlingService
-                            crawler = CrawlingService()
-                            await crawler.orchestrate_crawl({
-                                "url": url,
-                                "max_depth": max_depth,
-                                "user_role": "admin"
-                            })
-                            result = f"Started background web crawl for {url}"
-                    elif function_name == "execute_shell_command":
-                        cmd = arguments.get("command")
-                        task_guid = arguments.get("task_id")
-                        if cmd:
-                            success, output = await self.run_command_with_self_healing(cmd, agent_id=agent_id, task_id=task_guid)
-                            result = f"Command output:\n{output}"
+                    if function_name in self._native_tools:
+                        result = await self._native_tools[function_name](agent_id, **arguments)
                     elif self.mcp_client:
                         # Support direct mock method calls if available
                         if hasattr(self.mcp_client, function_name) and callable(getattr(self.mcp_client, function_name)):
                             method = getattr(self.mcp_client, function_name)
-                            if asyncio.iscoroutinefunction(method):
-                                result = await method(**arguments)
-                            else:
-                                result = method(**arguments)
+                            result = await method(**arguments) if asyncio.iscoroutinefunction(method) else method(**arguments)
                         else:
                             result = await self.mcp_client.call_tool(function_name, **arguments)
+                    else:
+                        result = f"Tool {function_name} not available."
 
                 tool_outputs.append({"role": "tool", "tool_call_id": call_id, "content": str(result)})
             except Exception as e:
                 logger.error(f"[MCP] Tool execution failed ({function_name}): {e}")
                 tool_outputs.append({"role": "tool", "tool_call_id": call_id, "content": str(e)})
         return tool_outputs
+
+    async def _exec_apply_modification(self, agent_id: str, file_path: str = "", content: str = "", **kwargs) -> str:
+        if file_path and content:
+            self.code_modifier.apply_modification(file_path, content)
+            return f"Successfully modified {file_path}"
+        return "Missing file_path or content"
+
+    async def _exec_perform_web_crawl(self, agent_id: str, url: str = "", max_depth: int = 2, **kwargs) -> str:
+        if url:
+            from ..services.crawling.crawling_service import CrawlingService
+            crawler = CrawlingService()
+            await crawler.orchestrate_crawl({
+                "url": url,
+                "max_depth": max_depth,
+                "user_role": "admin"
+            })
+            return f"Started background web crawl for {url}"
+        return "Missing URL"
+
+    async def _exec_execute_shell_command(self, agent_id: str, command: str = "", task_id: str | None = None, **kwargs) -> str:
+        if command:
+            _, output = await self.run_command_with_self_healing(command, agent_id=agent_id, task_id=task_id)
+            return f"Command output:\n{output}"
+        return "Missing command"
 
     async def _analyze_error_with_structured_output(self, command: str, stderr: str, agent_id: str) -> dict[str, Any] | None:
         logger = get_logger(__name__)
@@ -192,10 +197,10 @@ class AgentService:
 
         # --- Poisson Gate Check (1.5 Governance) ---
         # Self-healing involving file modification is classified as Level 2 (Moderate)
-        is_trusted = await self._check_poisson_gate(agent_id=agent_id, required_level=2)
+        is_trusted, curr_level = await self._check_poisson_gate(agent_id=agent_id, required_level=2)
         if not is_trusted:
-            logger.warning("Poisson Gate: Insufficient credibility for Level 2 auto-repair. Switching to Proposal mode.")
-            return False, f"Poisson Security Block: Agent requires >300 successes for Level 2 auto-repair. Proposal: {fix_proposal.get('reasoning') if fix_proposal else 'Check logs'}"
+            logger.warning(f"Poisson Gate: Insufficient credibility for Level 2 auto-repair. ({curr_level})")
+            return False, f"Poisson Security Block: Your current level is {curr_level}, but Level 2 is required for autonomous repair. Proposal: {fix_proposal.get('reasoning') if fix_proposal else 'Check logs'}"
 
         # Test baseline compatibility: If no file path, it's an "Analysis only" path
         if not fix_proposal or not fix_proposal.get("file_path"):
@@ -405,6 +410,40 @@ class AgentService:
                             "task_id": {"type": "string", "description": "Optional task ID"}
                         },
                         "required": ["command"]
+                    }
+                }
+            })
+
+        if "apply_modification" in agent_tools_list:
+            agent_tools.append({
+                "type": "function",
+                "function": {
+                    "name": "apply_modification",
+                    "description": "Physically modify a file's content. Use this to apply code fixes or updates.",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "file_path": {"type": "string", "description": "The relative path to the file"},
+                            "content": {"type": "string", "description": "The full new content for the file"}
+                        },
+                        "required": ["file_path", "content"]
+                    }
+                }
+            })
+
+        if "perform_web_crawl" in agent_tools_list:
+            agent_tools.append({
+                "type": "function",
+                "function": {
+                    "name": "perform_web_crawl",
+                    "description": "Trigger a deep background web crawl for a given URL.",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "url": {"type": "string", "description": "The target URL to crawl"},
+                            "max_depth": {"type": "integer", "description": "Maximum link depth (default 2)"}
+                        },
+                        "required": ["url"]
                     }
                 }
             })

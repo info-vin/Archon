@@ -11,10 +11,10 @@
 | 原則 | 解釋 |
 | :--- | :--- |
 | 1. **警惕「副本任務」陷阱** | 分析是為了解決「主線任務」，而不是為了開啟無止盡的調查循環。在得到分析結果後，應回頭思考如何將此結果應用於完成最初的目標。 |
-| 2. **驗證而非假設** | 不要「幻想」一個可運行的環境或完美的程式碼狀態。永遠要透過指令或工具進行驗證，並在最後進行「眼見為實」的視覺化驗收。 |
+| 2. **物理穿透驗證 (拒絕幻想)** | 拒絕「日誌領跑代碼」。不要幻想環境或狀態是完美的，必須讀取磁碟實體檔案內容 (`read_file`) 確認邏輯存在，並透過指令或工具 (`curl`, `test`) 物理性通過方可標記為「已修復」。嚴禁在未經實體掃描的情況下宣稱任務完成。 |
 | 3. **精準修改，避免副作用** | 修復 Bug 或修改程式碼時，應採取最小、最精準的修改。使用 `replace` 時務必提供足夠的上下文，以避免「改 A 壞 B」。 |
 | 4. **徹底理解工具** | 永遠不要假設一個指令的行為。在使用 `make` 或其他腳本前，先閱讀其源碼，理解其是否包含 `--fix` 等有副作用的參數。 |
-| 5. **撰寫冪等的資料庫腳本** | 所有資料庫遷移腳本都應具備「冪等性」，確保其可以安全地重複執行。應大量使用 `DROP ... IF EXISTS` 和 `CREATE ... IF NOT EXISTS`。 |
+| 5. **撰寫冪等的資料庫腳本** | 所有資料庫遷移腳本都應具備「冪等性」，確保其可以安全地執行。應大量使用 `DROP ... IF EXISTS` 和 `CREATE ... IF NOT EXISTS`。 |
 | 6. **`Makefile` 是唯一指令來源** | 文件應引用 `make <command>`，而不是直接複製貼上底層 shell 指令，以確保文件與腳本永遠同步。 |
 | 7. **安全地修改與復原** | 複雜修改應使用 `write_file` 一次性覆寫。當修改後測試失敗，應立即用 `git checkout -- <file>` 還原，而不是在錯誤的基礎上繼續修補。 |
 | 8. **維持「啞巴控制器」** | API 控制器應保持輕量。版本控制、來源連結等複雜商業邏輯應封裝於 Service 層。 |
@@ -23,8 +23,7 @@
 | 11. **營運 SDK 必須對齊** | 凡是 5173 (營運端) 功能，應統一使用 Google 原生 SDK (`genai.Client`) 以確保與 Bob 一樣穩定。嚴禁對生產路徑使用不穩定的 OpenAI Shim。 |
 | 12. **腳本存放唯一真相** | 所有 Python 腳本（診斷、初始化、遷移輔助）**必須**存放於外層 `scripts/` 目錄。嚴禁在 `python/scripts/` 建立副本，以確保 Docker 呼叫路徑一致。 |
 | 13. **資料庫語意化整併** | 當 Migration 腳本碎片化過多時，應使用 `pg_dump` 抽出當下完美結構，並以「語意化終極整併 (Semantic True Consolidation)」重構。放棄單純時序拼接（避免先 CREATE 又 ALTER 的冗餘），而是按照外鍵順序（設定 -> 核心表 -> 關聯表 -> 函數與安控）改寫為 5~6 個純淨的最終態檔案，並刪除舊債。 |
-| 14. **物理穿透驗證** | 拒絕「日誌領跑代碼」。必須讀取磁碟實體檔案內容 (`read_file`) 確認邏輯存在，並透過 `curl` 或 `test` 物理性通過方可標記為「已修復」。嚴禁在未經實體掃描的情況下宣稱任務完成。 |
-| 15. **絕對雲原生意識** | 專案連接的是雲端服務 (如 Supabase Cloud)，並非本地容器。嚴禁嘗試用 `docker exec psql` 強行修正資料庫狀態。正確作法是產出 SQL 修正檔並請求使用者在雲端執行。 |
+| 14. **絕對雲原生意識** | 專案連接的是雲端服務 (如 Supabase Cloud)，並非本地容器。嚴禁嘗試用 `docker exec psql` 強行修正資料庫狀態。正確作法是產出 SQL 修正檔並請求使用者在雲端執行。 |
 
 ---
 
@@ -396,14 +395,14 @@ Phase 4.4.5 引入了 **Clockwork** 進行系統自動檢測。
         | :--- | :--- | :--- |
         | 1 | `RESET_DB.sql` | **[重置]** 清空所有資料表、型別、與自訂函式，確保環境乾淨。 |
         | 2 | `01_core_auth_users.sql` | **[核心]** 建立基礎設定表與擴充功能 (如 vector)。 |
-        | 3 | `02_crm_and_knowledge.sql` | **[業務]** 建立 CRM 客戶資料、爬蟲頁面與知識庫文章表。 |
-        | 4 | `03_projects_and_tasks.sql` | **[專案]** 建立專案、任務分配與文件版本控制表。 |
-        | 5 | `04_system_and_logs.sql` | **[系統]** 建立系統活動日誌、Token 用量與考勤表。 |
-        | 6 | `05_policies_and_functions.sql` | **[安控]** 注入所有的函式、觸發器、外鍵約束與 RLS 安全政策。 |
-        | 7 | `seed_mock_data.sql` | **[種子]** 填充核心基礎假資料 (Users, Projects, Employees)。 |
-        | 8 | `seed_blog_posts.sql` | **[種子]** 填充部落格文章假資料 (用於 RAG 測試)。 |
-        | 9 | `seed_mock_leads.sql` | **[種子]** 填充業務線 (Leads) 核心測試資料與訪談紀錄。 |
-        | 10 | `seed_mock_alerts_and_logs.sql` | **[種子]** 填充儀表板所需的警報與系統日誌。 |
+        | 3 | `02_crm_and_knowledge.sql" | **[業務]** 建立 CRM 客戶資料、爬蟲頁面與知識庫文章表。 |
+        | 4 | `03_projects_and_tasks.sql" | **[專案]** 建立專案、任務分配與文件版本控制表。 |
+        | 5 | `04_system_and_logs.sql" | **[系統]** 建立系統活動日誌、Token 用量與考勤表。 |
+        | 6 | `05_policies_and_functions.sql" | **[安控]** 注入所有的函式、觸發器、外鍵約束與 RLS 安全政策。 |
+        | 7 | `seed_mock_data.sql" | **[種子]** 填充核心基礎假資料 (Users, Projects, Employees)。 |
+        | 8 | `seed_blog_posts.sql" | **[種子]** 填充部落格文章假資料 (用於 RAG 測試)。 |
+        | 9 | `seed_mock_leads.sql" | **[種子]** 填充業務線 (Leads) 核心測試資料與訪談紀錄。 |
+        | 10 | `seed_mock_alerts_and_logs.sql" | **[種子]** 填充儀表板所需的警報與系統日誌。 |
         
 3.  **階段三：執行部署**
 
@@ -469,7 +468,7 @@ Phase 4.4.5 引入了 **Clockwork** 進行系統自動檢測。
             ```bash
             curl -H "Authorization: Bearer <DEV_TOKEN>" https://<BACKEND_URL>/api/system/health/rag
             ```
-        *   **方法 B (CLI)**: 在本地或透過 Render Shell 執行 `make probe` (此指令實際上是呼叫 `python scripts/probe_librarian.py` 的舊別名，或新版中對應的 curl 指令)。
+        *   **方法 B (CLI)**: 在本地 or 透過 Render Shell 執行 `make probe` (此指令實際上是呼叫 `python scripts/probe_librarian.py` 的舊別名，或新版中對應的 curl 指令)。
     *   **成功標準**: 回傳 JSON 中包含 `"status": "healthy"` 且 `details` 中無錯誤訊息。這證明了資料庫連線、Vector Extension 與 OpenAI/Gemini Embedding API 皆運作正常。
 
     **3.3 觸發部署**
@@ -583,20 +582,17 @@ docker exec -i archon-server /venv/bin/python -c "import os, psycopg2; DB=os.get
 
 ## 附錄 B：技術債監控 (Technical Debt Monitor)
 
-> **結算日期**: 2026-03-11 (L2 Hardening Completed)
+> **結算日期**: 2026-03-26 (Phase 4.6.20 Hardening Baseline)
 > **狀態**: 🟢 **全系統巨型檔案已清零**。不再存在任何超過 1000 行的原始碼檔案。
+> **新增指標**: 已達成 MCP 伺服器 36% 體積縮減 (759 -> 487 行)，成功落實物理工具持久化 (mcp-cache)。
 
 | 檔案路徑 | 原始行數 | 目前行數 | 最終狀態 | 成果 |
 | :--- | :---: | :---: | :--- | :--- |
 | `rag-settings/index.tsx` | 2411 | **347** | ✅ **已拆分** | 業務邏輯抽離至 `useRagSettingsData.ts` |
 | `projects_api.py` | 1797 | **297** | ✅ **已拆分** | 轉型為 Facade 模式並分離 Pydantic |
+| `mcp_server.py` | 759 | **487** | ✅ **已重構** | 成功實施 Phase 4.6.20 瘦身與模組化 |
 | `code_extraction_service.py` | 1581 | **227** | ✅ **已拆分** | 拆分至 `logic/` 子目錄 |
 | `ManagerNexus.tsx` | 1577 | **515** | ✅ **已拆分** | 拆分為 10 個專門 Domain 組件 |
-| `ollama_api.py` | 1335 | **L2 Pkg** | ✅ **已模組化** | 演進為 `api_routes/ollama/` 模組包 |
-| `llm_provider_service.py` | 1278 | **83** | ✅ **已模組化** | 演進為 Provider 體系結構 |
-| `model_discovery_service.py` | 1122 | **444** | ✅ **已精簡** | 抽離模型掃描與能力偵測邏輯 |
-| `knowledge_api.py` | 1117 | **41** | ✅ **已模組化** | 演進為 `api_routes/knowledge/` 模組包 |
-| `api.ts` (enduser) | 1043 | **8** | ✅ **已模組化** | 拆分為 5 個角色專屬 API 子模組 |
 
 ---
 
@@ -621,4 +617,3 @@ docker exec -i archon-server /venv/bin/python -c "import os, psycopg2; DB=os.get
     - **測試防護網**: 
         - **Backend**: 554 個測試 (100% 通過)。
         - **Frontend**: 183 個測試 (Unit + E2E + Admin，100% 通過)。
-

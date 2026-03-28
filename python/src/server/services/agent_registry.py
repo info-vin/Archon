@@ -16,8 +16,9 @@ TOOL_CONFIG = {
     "perform_web_crawl": {"min_xp_level": 1, "risk_level": "write"},
     "search_job_market": {"min_xp_level": 0, "risk_level": "read"},
     "generate_sales_email": {"min_xp_level": 0, "risk_level": "write"},
-    "perform_rag_query": {"min_xp_level": 0, "risk_level": "read"},
-    "get_available_sources": {"min_xp_level": 0, "risk_level": "read"},
+    "rag_search_knowledge_base": {"min_xp_level": 0, "risk_level": "read"},
+    "rag_get_available_sources": {"min_xp_level": 0, "risk_level": "read"},
+    "rag_search_code_examples": {"min_xp_level": 0, "risk_level": "read"},
     "list_projects": {"min_xp_level": 0, "risk_level": "read"},
     "manage_task": {"min_xp_level": 0, "risk_level": "write"},
     "search_code_examples": {"min_xp_level": 0, "risk_level": "read"},
@@ -44,8 +45,9 @@ AGENT_CONFIG = {
         "name": "Archon Librarian",
         "system_prompt": LIBRARIAN_SYSTEM_PROMPT,
         "tools": [
-            "perform_rag_query",
-            "get_available_sources",
+            "rag_search_knowledge_base",
+            "rag_get_available_sources",
+            "rag_search_code_examples",
             "perform_web_crawl"
         ]
     },
@@ -62,7 +64,7 @@ AGENT_CONFIG = {
         "name": "Archon DevBot",
         "system_prompt": "You are Archon DevBot. Use tools to fix code or generate assets.",
         "tools": [
-            "search_code_examples",
+            "rag_search_code_examples",
             "generate_logo",
             "apply_modification",
             "execute_shell_command"

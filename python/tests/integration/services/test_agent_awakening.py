@@ -23,7 +23,7 @@ class TestAgentAwakening:
         lib_config = get_agent_config("ai-librarian")
         assert lib_config is not None
         assert lib_config["name"] == "Archon Librarian"
-        assert "perform_rag_query" in lib_config["tools"]
+        assert "rag_search_knowledge_base" in lib_config["tools"]
 
     @patch("src.server.services.agent_service.get_llm_client")
     # Patch the singleton instance directly where it lives

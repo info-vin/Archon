@@ -149,4 +149,4 @@ async def test_run_command_failure_triggers_healing(
     mock_client.chat.completions.create.assert_awaited_once()
     # Verify logger warned about failure
     mock_logger.warning.assert_any_call("Command 'failing_cmd' failed. Starting Active Repair Loop.")
-    mock_logger.warning.assert_any_call("Poisson Gate: Insufficient credibility for Level 2 auto-repair. Switching to Proposal mode.")
+    mock_logger.warning.assert_any_call("Poisson Gate: Insufficient credibility for Level 2 auto-repair. (Unknown (XP 0))")

@@ -256,7 +256,11 @@ export const TaskModal: React.FC<TaskModalProps> = ({ task, onClose, onTaskCreat
               <label htmlFor="assignee" className="block text-sm font-medium mb-1">Assignee</label>
               <select id="assignee" value={assigneeId} onChange={(e) => setAssigneeId(e.target.value)} className={inputClass} disabled={isLoadingUsers}>
                 <option value="">{isLoadingUsers ? 'Loading...' : 'Unassigned'}</option>
-                {assignableUsers.map(user => <option key={user.id} value={user.id}>{user.name}</option>)}
+                {assignableUsers.map(user => (
+                  <option key={user.id} value={user.id}>
+                    {user.role === 'ai_agent' ? `(AI) ${user.name}` : user.name}
+                  </option>
+                ))}
               </select>
               
               {/* Agent Capabilities Preview */}
