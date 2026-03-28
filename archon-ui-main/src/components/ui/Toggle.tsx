@@ -6,20 +6,24 @@ interface ToggleProps {
   accentColor?: 'purple' | 'green' | 'pink' | 'blue' | 'orange';
   icon?: React.ReactNode;
   disabled?: boolean;
+  'aria-label'?: string;
+  id?: string;
 }
 export const Toggle: React.FC<ToggleProps> = ({
   checked,
   onCheckedChange,
   accentColor = 'blue',
   icon,
-  disabled = false
+  disabled = false,
+  'aria-label': ariaLabel,
+  id
 }) => {
   const handleClick = () => {
     if (!disabled) {
       onCheckedChange(!checked);
     }
   };
-  return <button role="switch" aria-checked={checked} onClick={handleClick} disabled={disabled} className={`
+  return <button id={id} role="switch" aria-checked={checked} aria-label={ariaLabel} onClick={handleClick} disabled={disabled} className={`
         toggle-switch
         ${checked ? 'toggle-checked' : ''}
         ${disabled ? 'toggle-disabled' : ''}

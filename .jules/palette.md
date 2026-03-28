@@ -5,3 +5,6 @@
 ## 2025-03-03 - Missing ARIA Labels on Close Modals
 **Learning:** Icon-only close buttons (`XIcon`) across various feature components (`ContentWorkbench`, `ManagerNexus`, `LeadsCardStack`, `BrandWorkbenchView`) frequently lack `aria-label` attributes, causing them to be announced simply as "button" by screen readers.
 **Action:** When implementing modal or panel close actions using `XIcon` or similar icon-only buttons, always explicitly add an `aria-label` attribute (e.g., `aria-label="Close modal"` or a more descriptive label like `aria-label="Close AI Command Center"`).
+## 2026-03-28 - Add missing aria-labels to toggle components
+**Learning:** Found multiple custom input components (Checkbox, Toggle, PowerButton) that functioned via underlying buttons but lacked essential ARIA attributes (`aria-label`, `aria-checked`, `role="checkbox"`/`role="switch"`).
+**Action:** Always verify that interactive custom components have proper roles and ARIA attributes exposed.
