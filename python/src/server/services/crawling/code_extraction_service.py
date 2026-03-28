@@ -164,7 +164,15 @@ class CodeExtractionService(BaseRepository):
                 if len(code) < min_l:
                     continue
 
-                if not any(not (end_p <= es or start_p >= ee) for es, ee in extracted_positions):
+                # PERFORMANCE: Replaced any() generator expression with standard for loop
+                # to avoid generator object creation overhead and enable early breaking on hot path
+                is_overlapping = False
+                for es, ee in extracted_positions:
+                    if not (end_p <= es or start_p >= ee):
+                        is_overlapping = True
+                        break
+
+                if not is_overlapping:
                     extracted_positions.add((start_p, end_p))
                     cleaned = self._clean_code_content(code, lang)
                     if await self._validate_code_quality(cleaned, lang):

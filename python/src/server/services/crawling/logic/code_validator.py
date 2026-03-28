@@ -3,11 +3,16 @@ Code Quality Validator Logic
 Ensures extracted content is meaningful programming code.
 """
 
-import re
 
 from src.server.config.logfire_config import safe_logfire_info
 
-from .constants import CODE_INDICATORS, COMPILED_COMMENT_PATTERNS, LANGUAGE_PATTERNS, PROSE_INDICATORS
+from .constants import (
+    COMPILED_BAD_PATTERNS,
+    COMPILED_CODE_INDICATORS,
+    COMPILED_COMMENT_PATTERNS,
+    COMPILED_PROSE_INDICATORS,
+    LANGUAGE_PATTERNS,
+)
 
 
 async def validate_code_quality(
@@ -28,21 +33,14 @@ async def validate_code_quality(
             return False
 
     # Check for poor extraction patterns
-    bad_patterns = [
-        r"\b(from|import|def|class|if|for|while|return)(?=[a-z])",
-        r"&[lg]t;|&amp;|&quot;|&#\d+;",
-        r"<[^>]{50,}>",
-        r"(<span[^>]*>){5,}",
-        r"[^\s]{200,}",
-    ]
-    for pattern in bad_patterns:
-        if re.search(pattern, code):
-            safe_logfire_info(f"Code failed quality check: pattern '{pattern}' found")
+    for pattern in COMPILED_BAD_PATTERNS:
+        if pattern.search(code):
+            safe_logfire_info(f"Code failed quality check: pattern '{pattern.pattern}' found")
             return False
 
     indicator_count = 0
-    for _name, pattern in CODE_INDICATORS.items():
-        if re.search(pattern, code):
+    for _name, pattern in COMPILED_CODE_INDICATORS.items():
+        if pattern.search(code):
             indicator_count += 1
 
     if indicator_count < min_code_indicators:
@@ -100,8 +98,8 @@ async def validate_code_quality(
         prose_score = 0
         words = code.split()
         word_count = len(words)
-        for pattern in PROSE_INDICATORS:
-            prose_score += len(re.findall(pattern, code, re.IGNORECASE))
+        for pattern in COMPILED_PROSE_INDICATORS:
+            prose_score += len(pattern.findall(code))
         if word_count > 0 and prose_score / word_count > max_prose_ratio:
             safe_logfire_info(f"Code appears to be prose: ratio={prose_score/word_count}")
             return False
