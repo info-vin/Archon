@@ -69,7 +69,7 @@ class TestDevBotSkills:
         service.mcp_client.search_code_examples.return_value = "Found definition of error"
 
         # --- Execute ---
-        result = await service._analyze_error_with_structured_output("cmd", "error")
+        result = await service._analyze_error_with_structured_output("cmd", "error", agent_id="ai-dev-bot")
 
         # --- Verify ---
         assert result is not None

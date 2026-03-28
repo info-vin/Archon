@@ -62,7 +62,8 @@ async def test_analyze_error_with_skills_flow(mock_mcp_client):
 
         result = await service._analyze_error_with_structured_output(
             command="python script.py",
-            stderr="ImportError: No module named foo"
+            stderr="ImportError: No module named foo",
+            agent_id="ai-dev-bot"
         )
 
         mock_mcp_client.search_code_examples.assert_called_once_with(query="ImportError")
@@ -89,7 +90,7 @@ async def test_analyze_error_graceful_degradation():
     with patch("server.services.agent_service.get_llm_client", return_value=mock_ctx), \
          patch("server.services.agent_service.credential_service.get_active_provider", return_value={"chat_model": "test-model-v1"}):
 
-        result = await service._analyze_error_with_structured_output("cmd", "err")
+        result = await service._analyze_error_with_structured_output("cmd", "err", agent_id="ai-dev-bot")
         assert result == final_fix
         call_args = mock_llm_client.chat.completions.create.call_args
         assert call_args.kwargs['tools'] is None

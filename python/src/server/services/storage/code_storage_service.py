@@ -149,7 +149,11 @@ class CodeStorageService:
         self.supabase_client = supabase_client
 
     async def add_code_examples(self, **kwargs):
-        return await add_code_examples_to_supabase(client=self.supabase_client, **kwargs)
+        client = self.supabase_client
+        if client is None:
+            from ....utils import get_supabase_client
+            client = get_supabase_client()
+        return await add_code_examples_to_supabase(client=client, **kwargs)
 
     async def generate_summaries(self, blocks, max_workers=None, callback=None, provider=None):
         return await generate_code_summaries_batch(blocks, max_workers, callback, provider)

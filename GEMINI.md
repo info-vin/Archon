@@ -41,8 +41,8 @@
 >
 > 1.  **第一步：強制讀取上下文**: 在回應您的任何請求前，我**必須**先讀取 `GEMINI.md` 和 `CONTRIBUTING_tw.md` 的內容。
 > 2.  **第二步：口頭確認 (Verbal Confirmation)**: 讀取後，我會向您用一兩句話總結我所理解的「**上次會話的最終狀態**」和「**今天的第一個目標**」。
-*   **當前狀態 (Current Context)**: Phase 4.6.14 已結案，全系統 UI 完成硬化。
-*   **今日目標 (Today's Goal)**: 啟動 Phase 4.6.15，重點實作 Agent XP 經驗值系統與 Token 成本視覺化標籤。
+*   **當前狀態 (Current Context)**: Phase 4.6.21 已結案，物理驗證門禁硬化生效並對齊文件矛盾。
+*   **今日目標 (Today's Goal)**: 啟動 Phase 4.6.22，移除 AgentService 最後的 command 模擬參數，落地基於上下文的自主推理。
 
 > 3.  **第三步：取得您的確認**: 在您確認我對起點的理解無誤後，我才能開始執行第一個指令。
 
@@ -117,16 +117,31 @@
 
 # 第三章：近期工作日誌 (Recent Journal Entries)
 
-### 2026-03-24: Phase 4.6.16 結案與技術債清零 (Current Session)
-*   **Phase 4.6.16 結案**:
-    *   **後端精煉**: `crawling_service.py` 從 732 行成功拆分為編排器、路由器與策略模組，主檔案精簡至 259 行 (縮減 64%)。
-    *   **前端加固**: 完成 `useKnowledgeQueries.ts` 職責拆分，並修復 `archon-ui-main` 全域 `react-hooks/exhaustive-deps` 警告。
-    *   **品質驗收**: `make lint` (全端) 與 `make test-be` (542/552 項通過) 物理驗證通過。
-*   **啟動下一階段準備**:
-    *   確認全系統巨型檔案債務已清零。
-    *   準備啟動 Phase 4.7 整合測試與 RAG 效能優化。
+### 2026-03-26: Phase 4.6.21 門禁硬化與 XP 權限閉環 (Current Session)
+*   **今日目標 (門禁硬化)**:
+    - 終結「指令/LLM」雙軌制的邏輯分裂，確保 Agent 無法跳過等級檢查去動代碼。
+    - 重構 `agent_registry.py`，導入 `TOOL_CONFIG` 全域配置。
+    - 確保所有真實工具執行後皆有 XP 回饋，統一走 LLM 思考流程。
+*   **Phase 4.6.20 結案 (MCP Slimming)**:
+    - 成功重構 `mcp_server.py`，代碼精簡 36% 並實作 `mcp-cache` 持久化工具緩存。
+    - 修正 MCP 指令傳遞 Read-only 屬性崩潰與 E701 風格違規。
+*   **Phase 4.6.17 ~ 4.6.19 成果**:
+    - **Physical Recovery**: 修正 `HealthService` 崩潰，達成 554/554 後端測試 100% 通過。
+    - **Neural Wiring**: 實作 `list_tools` 動態發現與 XP 經驗值系統物理對齊。
+    - **Security**: 硬化 Leads 與 Tasks 的 RLS 政策，解決 `INSERT/UPDATE` 權限缺失。
 
-### 2026-03-18: Phase 4.6.14 結案與 4.6.15 Agent 進化啟動
+### 2026-03-26: Phase 4.6.21 結案與 4.6.22 推理落地 (Current Session)
+*   **Phase 4.6.21 結案 (Hardening & Alignment)**:
+    - 物理對齊 `CONTRIBUTING_tw.md` 與 Git Log 編號斷層，結束幽靈開發。
+    - 硬化 `Poisson Gate` 門禁：將工具權限移至 `agent_registry.py` 並實作動態攔截。
+    - 物理驗證：XP 0 的 Agent 呼叫 L2 工具被成功攔截，L0 工具可正常執行。
+    - 達成全系統 **Zero MyPy Errors** (197 檔案)。
+*   **啟動 Phase 4.6.22**:
+    - 目標：移除 `AgentService` 最後的 `command` 模擬參數。
+    - 策略：強化 Task Description 傳遞，讓 Agent 透過上下文自主推理。
+
+### 2026-03-24: Phase 4.6.16 結案與技術債清零
+
 *   **Phase 4.6.14 結案**:
     *   物理驗證 Manager Nexus 子組件單元測試 100% 通過。
     *   全系統完成 Layout min-w-0 加固與 A11y 強化。

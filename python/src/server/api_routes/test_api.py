@@ -50,6 +50,7 @@ else:
         Required fields: task_id, agent_id, command
         """
         from ..services.agent_service import agent_service
+        from ..services.projects.task_service import task_service
 
         task_id = payload.get("task_id")
         agent_id = payload.get("agent_id")
@@ -58,8 +59,17 @@ else:
         if not task_id or not agent_id:
             raise HTTPException(status_code=400, detail="Missing task_id or agent_id")
 
+        # Grounded Reasoning Transition: If command is provided, update task description
+        # This forces the agent to read and reason instead of being magically injected.
+        if command:
+            success, task_data = await task_service.get_task(task_id)
+            if success and task_data:
+                old_desc = task_data["task"].get("description", "")
+                new_desc = f"{old_desc}\n\n[Instruction]: Please use appropriate tools to execute and verify: {command}"
+                await task_service.update_task(task_id, {"description": new_desc})
+
         # Run the task in the background
         import asyncio
-        asyncio.create_task(agent_service.run_agent_task(task_id, agent_id, command))
+        asyncio.create_task(agent_service.run_agent_task(task_id, agent_id))
 
         return {"message": f"Task {task_id} triggered for agent {agent_id}", "command": command}

@@ -128,8 +128,8 @@ class MarketingService(BaseRepository):
                     user_id=agent_uuid, # Real UUID from Registry
                     model="gemini-2.5-flash",
                     provider="google",
-                    input_tokens=response.usage_metadata.prompt_token_count if response.usage_metadata else 0,
-                    output_tokens=response.usage_metadata.candidates_token_count if response.usage_metadata else 0,
+                    input_tokens=getattr(response.usage_metadata, 'prompt_token_count', 0) or 0,
+                    output_tokens=getattr(response.usage_metadata, 'candidates_token_count', 0) or 0,
                     context_type="sales_pitch_generation"
                 ))
             except Exception as log_err:
@@ -154,7 +154,7 @@ class MarketingService(BaseRepository):
                     config=types.GenerateContentConfig(response_modalities=['IMAGE'])
                 )
                 for part in (native_resp.parts or []):
-                    if part.inline_data:
+                    if part.inline_data and part.inline_data.data:
                         return {
                             "status": "success",
                             "image_url": f"data:{part.inline_data.mime_type};base64,{part.inline_data.data.decode('utf-8')}",
@@ -277,8 +277,8 @@ class MarketingService(BaseRepository):
                     user_id=agent_uuid,
                     model="gemini-2.5-flash",
                     provider="google",
-                    input_tokens=response.usage_metadata.prompt_token_count if response.usage_metadata else 0,
-                    output_tokens=response.usage_metadata.candidates_token_count if response.usage_metadata else 0,
+                    input_tokens=getattr(response.usage_metadata, 'prompt_token_count', 0) or 0,
+                    output_tokens=getattr(response.usage_metadata, 'candidates_token_count', 0) or 0,
                     context_type="blog_generation"
                 ))
             except Exception as log_err:

@@ -4,11 +4,31 @@ Standardized with Physical UUID resolution for Phase 4.6.15.
 """
 
 from functools import lru_cache
+from typing import cast
 
 from ..prompts.marketing_prompts import BLOG_DRAFT_SYSTEM_PROMPT
 from ..prompts.pm_prompts import USER_STORY_SYSTEM_PROMPT
 from ..prompts.rag_prompts import LIBRARIAN_SYSTEM_PROMPT
 from ..utils import get_supabase_client
+
+TOOL_CONFIG = {
+    "apply_modification": {"min_xp_level": 2, "risk_level": "write"},
+    "perform_web_crawl": {"min_xp_level": 1, "risk_level": "write"},
+    "search_job_market": {"min_xp_level": 0, "risk_level": "read"},
+    "generate_sales_email": {"min_xp_level": 0, "risk_level": "write"},
+    "perform_rag_query": {"min_xp_level": 0, "risk_level": "read"},
+    "get_available_sources": {"min_xp_level": 0, "risk_level": "read"},
+    "list_projects": {"min_xp_level": 0, "risk_level": "read"},
+    "manage_task": {"min_xp_level": 0, "risk_level": "write"},
+    "search_code_examples": {"min_xp_level": 0, "risk_level": "read"},
+    "generate_logo": {"min_xp_level": 0, "risk_level": "write"},
+    "execute_shell_command": {"min_xp_level": 2, "risk_level": "write"},
+}
+
+def get_tool_min_level(tool_name: str) -> int:
+    """Returns the minimum XP level required to execute a tool. Defaults to 0."""
+    config = TOOL_CONFIG.get(tool_name, {})
+    return cast(int, config.get("min_xp_level", 0))
 
 AGENT_CONFIG = {
     "market-bot": {
@@ -44,7 +64,8 @@ AGENT_CONFIG = {
         "tools": [
             "search_code_examples",
             "generate_logo",
-            "apply_modification"
+            "apply_modification",
+            "execute_shell_command"
         ]
     }
 }

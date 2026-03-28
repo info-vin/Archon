@@ -23,6 +23,8 @@
 | 11. **營運 SDK 必須對齊** | 凡是 5173 (營運端) 功能，應統一使用 Google 原生 SDK (`genai.Client`) 以確保與 Bob 一樣穩定。嚴禁對生產路徑使用不穩定的 OpenAI Shim。 |
 | 12. **腳本存放唯一真相** | 所有 Python 腳本（診斷、初始化、遷移輔助）**必須**存放於外層 `scripts/` 目錄。嚴禁在 `python/scripts/` 建立副本，以確保 Docker 呼叫路徑一致。 |
 | 13. **資料庫語意化整併** | 當 Migration 腳本碎片化過多時，應使用 `pg_dump` 抽出當下完美結構，並以「語意化終極整併 (Semantic True Consolidation)」重構。放棄單純時序拼接（避免先 CREATE 又 ALTER 的冗餘），而是按照外鍵順序（設定 -> 核心表 -> 關聯表 -> 函數與安控）改寫為 5~6 個純淨的最終態檔案，並刪除舊債。 |
+| 14. **物理穿透驗證** | 拒絕「日誌領跑代碼」。必須讀取磁碟實體檔案內容 (`read_file`) 確認邏輯存在，並透過 `curl` 或 `test` 物理性通過方可標記為「已修復」。嚴禁在未經實體掃描的情況下宣稱任務完成。 |
+| 15. **絕對雲原生意識** | 專案連接的是雲端服務 (如 Supabase Cloud)，並非本地容器。嚴禁嘗試用 `docker exec psql` 強行修正資料庫狀態。正確作法是產出 SQL 修正檔並請求使用者在雲端執行。 |
 
 ---
 
@@ -600,21 +602,23 @@ docker exec -i archon-server /venv/bin/python -c "import os, psycopg2; DB=os.get
 
 ## 附錄 C：系統演進現狀 (System Evolution Status)
 
-> **更新日期**: 2026-02-03
-> **說明**: 本章節記錄了 Phase 4.7 至 4.11 期間完成的核心架構升級。開發者在進行新功能開發時，應充分利用這些已就緒的基礎設施。
+> **更新日期**: 2026-03-26 (Hybrid Hardening State)
+> **說明**: 本章節記錄了 Phase 4.6.x 期間完成的核心架構硬化與後續系統整合現狀。
 
-- **1. 神經連結 (Neural Wiring) - Phase 4.7**: 系統已全面導入 **Model Context Protocol (MCP)**。
+- **0. 硬化基礎 (Hardening Foundation) - Phase 4.6.17 ~ 4.6.21**:
+    - **MCP Slimming (4.6.20)**: 成功重構 `mcp_server.py`，將核心生命週期與工具定義分離，完成 36% 代碼精簡與物理緩存 (`mcp-cache`) 實作。
+    - **Permission Hardening (4.6.21)**: 取消 LLM 思考指令雙軌制。實作 `TOOL_CONFIG` 工具調用授權白名單機制，強制 Agent 所有操作（包含 `command`）須經過 MCP/工具層審驗，完成指令全代理與 XP 動態治理機制。
+    - **Physical Recovery**: 修正了 `HealthService` 長達兩週的探針崩潰，達成 554 個後端測試 100% 通過。
+    - **Dynamic Discovery**: 實作動態工具發現 (`list_tools`) 與 OpenAI 模式同步。
+- **1. 神經連結 (Neural Wiring) - Phase 4.7**: 系統已初步導入 **Model Context Protocol (MCP)**。
     - **Client**: `AgentService` 透過單例的 `MCPClient` (`src/agents/mcp_client.py`) 與工具層通訊。
-    - **Two-pass Loop**: Agent 的思考迴圈已升級為「Think (分析) -> Tool (執行) -> Act (回應)」的雙重確認模式。
-    - **DevBot 能力**: DevBot 現在具備「先查詢知識庫 (`rag_search`) 再修復」的 L2 自癒能力，不再盲目嘗試。
-- **2. Agent 覺醒 (Agent Awakening) - Phase 4.8**: 所有 Agent 的角色定義、Prompt 與工具權限皆已集中管理於 `src/server/services/agent_registry.py`。
-    - **通用化**: 移除了 Hardcoded 的 Mock 邏輯，MarketBot、Librarian 與 POBot 現在皆透過通用的 MCP 迴圈運作。
-- **3. 安全與自治 (Security & Autonomy) - Phase 4.9**: `/api/agents/assignable` 已實作角色過濾 (Sales 僅見 MarketBot，Marketing 可見 Librarian)。
-    - **Clockwork Patrol**:
-        - **Log Patrol**: 每小時自動掃描 `archon_logs` 中的錯誤，並主動派工給 DevBot。
-        - **Business Sentinel**: 每 12 小時自動掃描超過 14 天未更新的 Stale Leads。
-- **4. 穩定化與除債 (Quality & Stability) - Phase 4.10 ~ 4.11**: 後端代碼庫已達成 **Zero MyPy Errors**，消除了所有隱性的型別風險。
-    - **測試防護網**:
-        - **Backend**: 532 個測試 (100% 通過)。
+    - **Two-pass Loop**: Agent 的思考迴圈已升級為「Think (分析) -> Tool (執行) -> Act (回應)」模式。
+- **2. Agent 覺醒 (Agent Awakening) - Phase 4.8**: 
+    - **Registry**: 角色定義、Prompt 與工具權限已集中於 `src/server/services/agent_registry.py`。
+    - **Hybrid Logic**: 目前處於過渡期「混合模式」，保留 4.6 的 XP 等級評分系統，同時支援真實工具呼叫，下一步會將 XP 與等級納入物理工具檢查。
+- **3. 長期型別政策 (Long-term Type Policy) - Phase 4.11**:
+    - **Type Safety**: 後端代碼庫已達成物理性 **Zero MyPy Errors**。
+    - **測試防護網**: 
+        - **Backend**: 554 個測試 (100% 通過)。
         - **Frontend**: 183 個測試 (Unit + E2E + Admin，100% 通過)。
-        - **E2E**: 包含完整的資料庫重置與全流程驗證。
+

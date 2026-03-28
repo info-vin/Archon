@@ -60,57 +60,62 @@ class AgentService:
             get_logger(__name__).error(f"Poisson Gate (Level Sync) failed: {e}")
             return False
 
-    async def _handle_tool_calls(self, tool_calls) -> list[dict]:
+    async def _handle_tool_calls(self, tool_calls, agent_id: str) -> list[dict]:
         logger = get_logger(__name__)
+        from .agent_registry import get_agent_config, get_tool_min_level
+
+        config = get_agent_config(agent_id)
+        display_name = config["name"] if config else agent_id
+
         tool_outputs = []
         for tool_call in tool_calls:
             function_name = tool_call.function.name
             arguments = json.loads(tool_call.function.arguments)
             call_id = tool_call.id
-            logger.info(f"[MCP] Agent requesting tool execution: {function_name}")
+            logger.info(f"[MCP] Agent {display_name} requesting tool execution: {function_name}")
             try:
-                result = "Tool execution failed"
-                if function_name == "apply_modification":
-                    # --- Poisson Gate: Level 2 (500 XP) for Physical Write ---
-                    # Key match with Archon DevBot in AgentRegistry (Grounded ID)
-                    is_trusted = await self._check_poisson_gate(agent_id="Archon DevBot", required_level=2)
-                    if not is_trusted:
-                        logger.warning("[Poisson Gate] Blocked unauthorized write attempt by Agent.")
-                        result = "Poisson Security Block: Agent requires Level 2 (500+ XP) for physical write operations."
-                    else:
+                required_level = get_tool_min_level(function_name)
+                is_trusted = await self._check_poisson_gate(agent_id=display_name, required_level=required_level)
+
+                if not is_trusted:
+                    logger.warning(f"[Poisson Gate] Blocked unauthorized attempt by {display_name} for tool {function_name}.")
+                    result = f"Poisson Security Block: Agent requires Level {required_level} for {function_name} operations."
+                else:
+                    result = "Tool execution failed"
+                    if function_name == "apply_modification":
                         file_path = arguments.get("file_path")
                         content = arguments.get("content")
                         if file_path and content:
                             self.code_modifier.apply_modification(file_path, content)
                             result = f"Successfully modified {file_path}"
-                elif function_name == "perform_web_crawl":
-                    # --- Poisson Gate: Level 1 (100 XP) for Web Crawling ---
-                    is_trusted = await self._check_poisson_gate(agent_id="Archon MarketBot", required_level=1)
-                    if not is_trusted:
-                        logger.warning("[Poisson Gate] Blocked unauthorized crawl attempt by Agent.")
-                        result = "Poisson Security Block: Agent requires Level 1 (100+ XP) for web crawling operations."
-                    else:
+                    elif function_name == "perform_web_crawl":
                         url = arguments.get("url")
-                    max_depth = arguments.get("max_depth", 2)
-                    if url:
-                        from ..services.crawling.crawling_service import CrawlingService
-                        crawler = CrawlingService()
-                        await crawler.orchestrate_crawl({
-                            "url": url,
-                            "max_depth": max_depth,
-                            "user_role": "admin"
-                        })
-                        result = f"Started background web crawl for {url}"
-                elif self.mcp_client:
-                    # Support direct mock method calls if available
-                    if hasattr(self.mcp_client, function_name) and callable(getattr(self.mcp_client, function_name)):
-                        method = getattr(self.mcp_client, function_name)
-                        if asyncio.iscoroutinefunction(method):
-                            result = await method(**arguments)
+                        max_depth = arguments.get("max_depth", 2)
+                        if url:
+                            from ..services.crawling.crawling_service import CrawlingService
+                            crawler = CrawlingService()
+                            await crawler.orchestrate_crawl({
+                                "url": url,
+                                "max_depth": max_depth,
+                                "user_role": "admin"
+                            })
+                            result = f"Started background web crawl for {url}"
+                    elif function_name == "execute_shell_command":
+                        cmd = arguments.get("command")
+                        task_guid = arguments.get("task_id")
+                        if cmd:
+                            success, output = await self.run_command_with_self_healing(cmd, agent_id=agent_id, task_id=task_guid)
+                            result = f"Command output:\n{output}"
+                    elif self.mcp_client:
+                        # Support direct mock method calls if available
+                        if hasattr(self.mcp_client, function_name) and callable(getattr(self.mcp_client, function_name)):
+                            method = getattr(self.mcp_client, function_name)
+                            if asyncio.iscoroutinefunction(method):
+                                result = await method(**arguments)
+                            else:
+                                result = method(**arguments)
                         else:
-                            result = method(**arguments)
-                    else:
-                        result = await self.mcp_client.call_tool(function_name, **arguments)
+                            result = await self.mcp_client.call_tool(function_name, **arguments)
 
                 tool_outputs.append({"role": "tool", "tool_call_id": call_id, "content": str(result)})
             except Exception as e:
@@ -118,7 +123,7 @@ class AgentService:
                 tool_outputs.append({"role": "tool", "tool_call_id": call_id, "content": str(e)})
         return tool_outputs
 
-    async def _analyze_error_with_structured_output(self, command: str, stderr: str) -> dict[str, Any] | None:
+    async def _analyze_error_with_structured_output(self, command: str, stderr: str, agent_id: str) -> dict[str, Any] | None:
         logger = get_logger(__name__)
         from ..services.search.rag_service import RAGService
         from ..services.token_usage_service import TokenUsageService
@@ -147,13 +152,13 @@ class AgentService:
 
                 if hasattr(response, "usage") and response.usage:
                     from .agent_registry import get_agent_uuid
-                    agent_uuid = get_agent_uuid("dev-bot")
+                    agent_uuid = get_agent_uuid(agent_id)
                     asyncio.create_task(TokenUsageService.log_usage(request_id=f"{request_id}-r1", user_id=agent_uuid, model=model, provider="google", input_tokens=response.usage.prompt_tokens, output_tokens=response.usage.completion_tokens, context_type="self_healing"))
 
                 tool_calls = res_msg.tool_calls
                 if tool_calls and self.mcp_client:
                     messages.append(res_msg)
-                    tool_results = await self._handle_tool_calls(tool_calls)
+                    tool_results = await self._handle_tool_calls(tool_calls, agent_id=agent_id)
                     messages.extend(tool_results)
                     final_response = await client.chat.completions.create(model=model, messages=messages, tools=tools, response_format={"type": "json_object"})
                     content = final_response.choices[0].message.content.strip()
@@ -171,7 +176,7 @@ class AgentService:
             logger.error(f"Analysis failed: {e}")
             return {"file_path": None, "reasoning": f"Analysis: Check syntax. Error: {e}"}
 
-    async def run_command_with_self_healing(self, command: str, task_id: str | None = None) -> tuple[bool, str]:
+    async def run_command_with_self_healing(self, command: str, agent_id: str, task_id: str | None = None) -> tuple[bool, str]:
         logger = get_logger(__name__)
         task_id = task_id or f"auto-{uuid.uuid4().hex[:8]}"
         logger.info(f"Executing command with self-healing (L2): {command}")
@@ -183,11 +188,11 @@ class AgentService:
             return True, stdout.decode().strip()
 
         logger.warning(f"Command '{command}' failed. Starting Active Repair Loop.")
-        fix_proposal = await self._analyze_error_with_structured_output(command, stderr.decode().strip()[-2000:])
+        fix_proposal = await self._analyze_error_with_structured_output(command, stderr.decode().strip()[-2000:], agent_id=agent_id)
 
         # --- Poisson Gate Check (1.5 Governance) ---
         # Self-healing involving file modification is classified as Level 2 (Moderate)
-        is_trusted = await self._check_poisson_gate(agent_id="system-devbot", required_level=2)
+        is_trusted = await self._check_poisson_gate(agent_id=agent_id, required_level=2)
         if not is_trusted:
             logger.warning("Poisson Gate: Insufficient credibility for Level 2 auto-repair. Switching to Proposal mode.")
             return False, f"Poisson Security Block: Agent requires >300 successes for Level 2 auto-repair. Proposal: {fix_proposal.get('reasoning') if fix_proposal else 'Check logs'}"
@@ -210,7 +215,7 @@ class AgentService:
                 lint_proc = await asyncio.create_subprocess_shell("make lint-be", stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
                 await lint_proc.communicate()
                 if lint_proc.returncode != 0:
-                    return await self.run_command_with_self_healing("make lint-be", task_id=task_id)
+                    return await self.run_command_with_self_healing("make lint-be", agent_id=agent_id, task_id=task_id)
                 return True, f"Repair successful on {sandbox_branch}. Reasoning: {fix_proposal.get('reasoning')}"
             else:
                 self.code_modifier.revert_sandbox(original_branch)
@@ -284,7 +289,7 @@ class AgentService:
                 filtered.append(agent)
         return filtered
 
-    async def run_agent_task(self, task_id: str, agent_id: str, command: str | None = None):
+    async def run_agent_task(self, task_id: str, agent_id: str):
         from ..services.projects.task_service import task_service
         logger = get_logger(__name__)
         logger.info(f"AI agent '{agent_id}' starting work on task '{task_id}'.")
@@ -294,15 +299,7 @@ class AgentService:
             logger.error(f"Failed to update task status: {result.get('error')}")
             return
 
-        if command:
-            success, output = await self.run_command_with_self_healing(command, task_id=task_id)
-            await task_service.update_task(task_id, {"status": "done" if success else "failed"})
-            if success:
-                _, task_resp = await task_service.get_task(task_id)
-                if task_resp and "task" in task_resp:
-                    await self._award_agent_xp(agent_id, task_resp["task"], output)
-        else:
-            await self._run_general_agent_task(task_id, agent_id)
+        await self._run_general_agent_task(task_id, agent_id)
 
     async def _award_agent_xp(self, agent_id: str, task_data: dict, output_message: str):
         from ..services.stats_service import StatsService
@@ -378,7 +375,12 @@ class AgentService:
                     await task_service.update_task(task_id, {"status": "failed"})
                     return
 
-        messages = [{"role": "system", "content": config["system_prompt"]}, {"role": "user", "content": f"Task: {task_data['title']}"}]
+        # Grounded Reasoning: Provide both title and description to the Agent
+        task_desc = task_data.get("description", "No description provided.")
+        messages = [
+            {"role": "system", "content": config["system_prompt"]},
+            {"role": "user", "content": f"Task: {task_data['title']}\n\nDetails: {task_desc}"}
+        ]
 
         # Physical Synchronization: Fetch dynamic tools from MCP (Phase 4.6.19)
         all_mcp_tools: list[dict[str, Any]] = []
@@ -388,6 +390,25 @@ class AgentService:
 
         agent_tools_list: list[str] = list(config.get("tools", []))
         agent_tools = [t for t in all_mcp_tools if cast(dict, t["function"])["name"] in agent_tools_list]
+
+        # Inject natively supported tools that are not in MCP
+        if "execute_shell_command" in agent_tools_list:
+            agent_tools.append({
+                "type": "function",
+                "function": {
+                    "name": "execute_shell_command",
+                    "description": "Execute a shell command on the host system. Crucial for self-healing and code verification.",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "command": {"type": "string", "description": "The exact shell command to execute"},
+                            "task_id": {"type": "string", "description": "Optional task ID"}
+                        },
+                        "required": ["command"]
+                    }
+                }
+            })
+
         tools_param = agent_tools if agent_tools else None
 
         try:
@@ -397,7 +418,7 @@ class AgentService:
                 res_msg = response.choices[0].message
                 if res_msg.tool_calls and self.mcp_client:
                     messages.append(res_msg)
-                    tool_results = await self._handle_tool_calls(res_msg.tool_calls)
+                    tool_results = await self._handle_tool_calls(res_msg.tool_calls, agent_id=agent_id)
                     messages.extend(tool_results)
                     final_response = await client.chat.completions.create(model="gemini-2.5-flash-lite", messages=messages, tools=tools_param)
                     final_output = final_response.choices[0].message.content

@@ -95,7 +95,7 @@ async def test_run_command_success(mock_get_logger, mock_subprocess):
     mock_subprocess.return_value = mock_process
 
     agent_service = AgentService()
-    success, output = await agent_service.run_command_with_self_healing("echo test")
+    success, output = await agent_service.run_command_with_self_healing("echo test", agent_id="test-bot")
 
     assert success is True
     assert output == "success output"
@@ -138,7 +138,7 @@ async def test_run_command_failure_triggers_healing(
     mock_client.chat.completions.create.return_value = mock_response
 
     agent_service = AgentService()
-    success, output = await agent_service.run_command_with_self_healing("failing_cmd")
+    success, output = await agent_service.run_command_with_self_healing("failing_cmd", agent_id="test-bot")
 
     assert success is False
     # Verify security block (Agent has 0 successes in test environment)
