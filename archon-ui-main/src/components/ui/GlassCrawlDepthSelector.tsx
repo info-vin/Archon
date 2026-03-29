@@ -72,6 +72,7 @@ export const GlassCrawlDepthSelector: React.FC<GlassCrawlDepthSelectorProps> = (
                 "flex items-center justify-center flex-shrink-0",
                 "hover:scale-110 active:scale-95"
               )}
+              aria-label={`Crawl depth level ${level}: ${getLevelDescription(level)}`}
             >
               {/* Outer glass layer with glow */}
               <div className={cn(
