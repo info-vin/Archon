@@ -261,6 +261,7 @@ export const SettingsPage = (): JSX.Element => {
           onClick={() => setShowButtonPlayground(!showButtonPlayground)}
           className="relative w-8 h-8 rounded-full border border-blue-400/30 bg-blue-500/5 hover:bg-blue-500/10 transition-all duration-200 flex items-center justify-center group"
           title="Toggle Button Playground"
+          aria-label="Toggle Button Playground"
         >
           <div className="absolute inset-0 rounded-full bg-blue-500/20 blur-sm opacity-0 group-hover:opacity-100 transition-opacity" />
           <motion.div
