@@ -79,7 +79,7 @@
     *   **核心**: 開發不僅僅是寫程式碼。它始於透過分析假資料 (`MOCK_DATA`) 或文件來理解真實的專案願景，並終結於 `push`、部署、以及最重要的——由終端使用者在瀏覽器（注意快取）驗證無誤。一個修復只有在被使用者確認後才算完成。
 
 *   **7. 內外網隔離原則：主動防禦環境變數污染 (Internal/External Isolation: Proactive Guard against Env Pollution)**
-    *   **核心**: 在 Docker 化環境中，後端傳遞給前端的環境變數（如 `SUPABASE_URL`）可能包含內部 Docker DNS（如 `supabase_kong`）。這對瀏覽器是無效的。前端代碼必須具備「主動防禦」邏輯，透過靜態特徵檢測（如檢查 URL 是否包含 `_kong`），在請求發出前攔截並切換至 Mock 模式，避免瀏覽器因 DNS 解析失敗而陷入無限 Loading。
+    *   **核心**: 在 Docker 化環境中，後端傳遞給前端的環境變數（如 `SUPABASE_URL`）可能包含內部 Docker DNS（如 `supabase_kong`）。這對瀏覽器是無效的。前端代碼必須具備「主動防禦」邏輯，透過靜態特徵檢測（如檢查 URL 是否包含 `_kong`），在請求發出前攔截並切換至 Mock模式，避免瀏覽器因 DNS 解析失敗而陷入無限 Loading。
 
 *   **8. 測試邊界與狀態化模擬 (Test Boundaries & Stateful Mocks)**
     *   **核心**: 
@@ -117,63 +117,14 @@
 
 # 第三章：近期工作日誌 (Recent Journal Entries)
 
-### 2026-03-26: Phase 4.6.21 門禁硬化與 XP 權限閉環 (Current Session)
-*   **今日目標 (門禁硬化)**:
-    - 終結「指令/LLM」雙軌制的邏輯分裂，確保 Agent 無法跳過等級檢查去動代碼。
-    - 重構 `agent_registry.py`，導入 `TOOL_CONFIG` 全域配置。
-    - 確保所有真實工具執行後皆有 XP 回饋，統一走 LLM 思考流程。
-*   **Phase 4.6.20 結案 (MCP Slimming)**:
-    - 成功重構 `mcp_server.py`，代碼精簡 36% 並實作 `mcp-cache` 持久化工具緩存。
-    - 修正 MCP 指令傳遞 Read-only 屬性崩潰與 E701 風格違規。
-*   **Phase 4.6.17 ~ 4.6.19 成果**:
-    - **Physical Recovery**: 修正 `HealthService` 崩潰，達成 554/554 後端測試 100% 通過。
-    - **Neural Wiring**: 實作 `list_tools` 動態發現與 XP 經驗值系統物理對齊。
-    - **Security**: 硬化 Leads 與 Tasks 的 RLS 政策，解決 `INSERT/UPDATE` 權限缺失。
-
-### 2026-03-26: Phase 4.6.21 結案與 4.6.22 推理落地 (Current Session)
-*   **Phase 4.6.21 結案 (Hardening & Alignment)**:
-    - 物理對齊 `CONTRIBUTING_tw.md` 與 Git Log 編號斷層，結束幽靈開發。
-    - 硬化 `Poisson Gate` 門禁：將工具權限移至 `agent_registry.py` 並實作動態攔截。
-    - 物理驗證：XP 0 的 Agent 呼叫 L2 工具被成功攔截，L0 工具可正常執行。
-    - 達成全系統 **Zero MyPy Errors** (197 檔案)。
-*   **啟動 Phase 4.6.22**:
-    - 目標：移除 `AgentService` 最後的 `command` 模擬參數。
-    - 策略：強化 Task Description 傳遞，讓 Agent 透過上下文自主推理。
-
-### 2026-03-24: Phase 4.6.16 結案與技術債清零
-
-*   **Phase 4.6.14 結案**:
-    *   物理驗證 Manager Nexus 子組件單元測試 100% 通過。
-    *   全系統完成 Layout min-w-0 加固與 A11y 強化。
-    *   修復 MCP 404 與前端 `toUpperCase()` 崩潰 Bug。
-*   **啟動 Phase 4.6.15 (Agent XP 落地與 Token 成本透明化)**:
-    *   **Agent XP API**: 實作 `get_agent_xp_ranking` 端點，將 Agent 的操作歷史轉化為等級/經驗值。
-    *   **Token 視覺化**: 在 Admin UI 注入 Token 成本標籤，實現資源使用的物理透明。
-    *   **Twin Scout 整合**: 打通 Scout 報告與 Knowledge Base 的自動上傳管道。
-
-### 2026-03-11: Phase 4.6.12 最終硬化與全系統架構查核 (Current Session)
-*   **物理安全性修復**:
-    *   `marketing_service.py`: 徹底移除硬編碼 API Key (`injected_key`) 與 `os.environ.pop` 操作，還原為 `credential_service` 全域配置。
-    *   `docker-compose.yml`: 補全 `PRPs/` 目錄掛載，解決後端 Agent 無法存取實體 SOP 文件之物理斷裂。
-*   **測試與路徑對齊**:
-    *   實施「雙重路徑補丁 (Dual Path Patching)」策略，解決 pytest 環境下 `src.server` 與 `server` 模組遮蔽 (Shadowing) 導致的 Mock 攔截失效問題。
-    *   修復 `upload.py` 背景任務參數順序錯位及 `active_crawl_tasks` 型別不匹配錯誤。
-*   **架構查核結論**:
-    *   完成 Phase 4.6.10/11/12 全面物理查核：所有行數超過 1000 行之巨型檔案已全數拆分完畢。
-    *   指標：後端 551/551 測試通過，達成 Zero-Lint 與 Zero-Mypy 穩定狀態。
-
-### 2026-03-06: Phase 4.6.12 巨型檔案模組化與物理路徑對齊
-
-
-### 2026-02-26: Digital Twin 落地與系統治理加固
-*   **Digital Twin 突破**: 完成 Phase 4.6.8 架構規劃，實作 `twin-scout` 的 Playwright 與 Gemini Vision 整合，成功達成 Scout v9 的物理落地。
-*   **環境穩定化**: 修復 Vite 403 Forbidden 錯誤與 Docker 連通性問題，解決 Scout v6 中的 `AttributeError`。
-*   **治理與權限**: 完成 Phase 4.6.7 提示詞解耦與專業種子數據注入；修正 Admin UI 空狀態與 Charlie 權限 Bug；更新 RBAC 測試確保 POBot 分派邏輯正確。
-*   **自動化流程**: 實作 Alice 自動化爬蟲設定與 Admin 戰情室 UI 重構。
-
-### 2026-02-24: 系統穩定性驗收與日誌整理
-*   **品質驗收**: 通過 `make lint` 與 `make test-be` (549/564 項通過，1 項 RBAC 失敗待修復)。
-*   **日誌維護**: 完成 `GEMINI.md` 的整理工作，將 02-15 至 02-21 的詳細日誌遷移至第四章歷史檔案。
+### 2026-03-30: Phase 4.6.23 結案與 Unified Tool Dispatch (Current Session)
+*   **今日目標 (結案與對齊)**:
+    - **統一工具調度**: 重構 `AgentService._native_tools` 映射表，移除硬編碼 `if/elif` 邏輯。
+    - **身分對齊**: Poisson Gate 全面對齊為 Slug-based (agent_id) 查詢，修正與 `profiles.name` 的脆弱連結。
+    - **效能優化**: 實作 `RateLimiter` O(1) 計數器優化，消除 `sum()` 遍歷開銷。
+    - **品質掃描**: 通過 `make lint-be` 與 553/553 項後端測試，確認系統 100% 穩定。
+*   **物理成果**:
+    - 完成 Phase 4.6.21-23 治理與硬化，Agent 具備基於等級的自主工具推理能力。
 
 ---
 
@@ -181,6 +132,23 @@
 
 > **【封存說明】**
 > 本章節存放了所有歷史日誌。當你需要深入了解某個特定問題的完整偵錯背景時，可以在此查閱最原始的紀錄。
+
+### 2026年3月：結構化重構、治理硬化與效能收斂
+三月是 Archon 從巨型架構邁向模組化治理的關鍵月份。我們消滅了所有超過 1000 行的檔案，並建立了基於 XP 的 Agent 治理體系。
+
+**核心主題歸類**:
+1.  **模組化革命 (Ref: 03-06 ~ 03-11)**:
+    *   **巨型檔案清零**: 拆分 `ollama_api.py`, `knowledge_api.py`, `task_service.py` 與前端 `api.ts`（949 -> 8 行）。
+    *   **BaseRepository 導入**: 標準化 20+ 個服務的資料庫交互邏輯。
+
+2.  **Agent 治理與 XP 門禁 (Ref: 03-24 ~ 03-26)**:
+    *   **身分落地**: 實作 `agent_xp` 經驗值系統與 Poisson Gate 物理攔截。
+    *   **門禁硬化**: 實作解釋性攔截訊息，引導 Agent 了解等級需求。
+
+3.  **效能與基礎設施硬化 (Ref: 03-30)**:
+    *   **調度統一**: 完成 `AgentService` 原生工具動態分發 (Unified Tool Dispatch)。
+    *   **O(1) 優化**: 將 `RateLimiter` 複雜度從 O(N) 降至 O(1)，提升高併發穩定性。
+    *   **品質標竿**: 達成全系統 Zero-Lint、Zero-Mypy 與 550+ 測試通過。
 
 ### 2026年2月：全角色流程與行動端落地
 二月標誌著 Archon 從單點功能邁向全角色協作的里程碑。我們完成了 Alice (Sales), Bob (Marketing), Charlie (Manager) 的核心工作流閉環，並在下旬進行了大規模的架構硬化。
@@ -249,7 +217,7 @@
     *   **探針制度化**: 將 `probe_librarian.py` 升級為標準化 `make probe` 指令，並加入維度完整性檢查 (768 vs 1536)，成為 CI/CD 的可靠 Smoke Test。
 
 7.  **系統體制化與行動端擴展 (Ref: 01-26 ~ 01-30)**:
-    *   **品質與安全**: 實作了 Row Level Security (RLS) 防止資料外洩，並進行了大規模的 Type Safety/Lint 清掃，消除了數百個潛在的運行時錯誤。
+    *   **品質與安全**: 實作了 Row Level Security (RLS) 防止資料外洩，並進行了大規模的 Type Safety/Lint 清掃，消優了數百個潛在的運行時錯誤。
     *   **行動優先**: 為 Alice 打造了 "Hunter Mode" 與語音日誌功能，確立了行動端 "Fire & Forget" 的設計哲學。
     *   **測試韌性**: 面對 Dashboard 複雜的非同步載入，學會了使用 `waitFor` 配合 DOM 狀態檢查來消除 Flaky Tests，並將探針 (Probe) 升級為 CI 標準檢查。
 
@@ -257,7 +225,7 @@
 
 十二月是技術債償還與新功能開發並行的月份。我們完成了全系統的 Async 化，並實作了 AI 開發者流程的核心基礎。
 
-**核心主題歸類**：
+**核心主題歸類**:
 1.  **AI 開發者審核流程 (Ref: 12-31, 12-16)**:
     *   **願景對齊**: 在假資料中挖掘出「AI as a Teammate」的真實願景。
     *   **功能實作**: 完成了 `DiffViewer` 與提案審核後端。在 `file_operation_tools.py` 加入 `original_content` 以支援差異比對。
@@ -282,7 +250,7 @@
 
 十一月是偵錯月。我們深入解決了多個層層疊加的複雜 Bug，並確立了以 Git 歷史為最終真相的偵錯文化。
 
-**核心主題歸類**：
+**核心主題歸類**:
 1.  **前端異常的深層根源 (Ref: 11-27, 11-28, 11-13)**:
     *   **`about:blank` 之謎**: 文件上傳後跳轉空白頁。追蹤發現是後端 `knowledge_item_service.py` 錯誤回傳了無效的 `source://` URL。
     *   **UI 報錯**: Admin UI 顯示 "Failed to Load Knowledge Base"。使用者提供的 `invalid input syntax for type uuid` 成為關鍵線索，定位到 DB 函式參數型別不匹配。
@@ -304,7 +272,7 @@
 
 十月份是專案架構轉型的關鍵期。我們將實驗性的 `feature` 分支嫁接到主幹，並首次打通了雲端部署流程。
 
-**核心主題歸類**：
+**核心主題歸類**:
 1.  **系統嫁接與架構確立 (Ref: 10-17, 10-05)**:
     *   **挑戰**: 在將 `feature` 分支應用移植到 `main` 架構時，遭遇了依賴管理 (`pip` vs `uv`) 與工具鏈 (`npm` vs `pnpm`) 的「精神分裂」。
     *   **解決**: 透過 `git diff --name-status` 全面盤點差異。確立了 `Makefile` 為單一事實來源，並統一使用 `pnpm` 與 `uv`。
@@ -324,14 +292,14 @@
     *   **移除病灶**: `archon-ui-main` 啟動失敗指向 `useThemeAware.ts`，調查發現這是無用的 Dead Code，直接刪除即修復。
     *   **釐親矛盾**: 透過釐清「UI 載入成功但 API 404」的精確場景，區分了「啟動問題」與「資料問題」。
 
-### 2025年9月：SOP、歷史追溯與偵錯紀律的建立
+### 2025年9月：SOP, 歷史追溯與偵錯紀律的建立
 
 九月份是專案從混亂的「救火隊模式」轉向「紀律化開發」的關鍵月份。這個月的歷程充滿了在 `make` 指令、Docker 環境、部署流程和非同步測試中的反覆試錯。
 
-**核心主題歸類**：
+**核心主題歸類**:
 1.  **SOP 的建立與探索**: 這個月，我們確立了多項至今仍在使用的核心工作原則。我們學會了不再信任過時的文件，而是將 `Makefile` 視為「單一事實來源」(Ref: 09-19)，並反覆使用 `git log -p` 去追溯 `Makefile` 和 `docker-compose.yml` 的歷史意圖，以理解為何一個指令會以某種特定方式運作 (Ref: 09-29, 09-21)。「測試先行」的重構安全網 (Ref: 09-24) 和冪等性的資料庫腳本 (Ref: 09-21) 也在這個月被確立為標準實踐。
 
-2.  **系統性偵錯的學習**: 我們經歷了從處理表層 Bug 到深挖根源的思維轉變。例如，一個樣子簡單的 `AttributeError`，其根源卻是更深層的 `ImportError` (Ref: 09-22)。我們也學會了警惕 `make lint --fix` 等指令帶來的副作用 (Ref: 09-23)，並確立了在修改程式碼前，必須先分析所有相關檔案，以避免「改 A 壞 B」的循環 (Ref: 09-17)。
+2.  **系統性偵錯的學習**: 我們經歷了從處理表層 Bug 到深挖根源的思維轉變。例如，一個樣子簡單的 `AttributeError`, 其根源卻是更深層的 `ImportError` (Ref: 09-22)。我們也學會了警惕 `make lint --fix` 等指令帶來的副作用 (Ref: 09-23)，並確立了在修改程式碼前，必須先分析所有相關檔案，以避免「改 A 壞 B」的循環 (Ref: 09-17)。
 
 3.  **部署與非同步測試的挑戰**: 九月下旬，我們專注於打通完整的開發到部署流程。我們演練了部署流程，解決了因服務耦合、Git Remote 混淆和鎖定檔案缺失導致的部署失敗問題 (Ref: 09-30)。同時，我們在為非同步 API 撰寫測試時遇到了困難，最終透過在 `patch` 中使用 `AsyncMock` 和在獨立檔案中進行「沙盒驗證」，才成功突破了 Mocking 的迷霧 (Ref: 09-25)。
 
