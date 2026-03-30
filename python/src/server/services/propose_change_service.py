@@ -51,7 +51,17 @@ class ProposeChangeService:
         query = self.db_client.table("proposed_changes").select("*")
         if status:
             query = query.eq("status", status)
-        # TODO: Add department isolation logic here based on user_id
+        
+        # Physical Department Isolation (Phase 4.6.23 Hardening)
+        if user_id:
+            # First, get the department of the requesting manager
+            manager_res = self.db_client.table("profiles").select("department, role").eq("id", user_id).single().execute()
+            if manager_res.data and manager_res.data.get("role") != "system_admin":
+                dept = manager_res.data.get("department")
+                # Filter proposals where the embedded created_by user belongs to the same department
+                # Note: This requires create_file_proposal to embed 'created_by' in JSONB
+                query = query.filter("request_payload->>created_by_dept", "eq", dept)
+
         res = query.order("created_at", desc=True).execute()
         return cast(list[dict[str, Any]], res.data or [])
 
@@ -59,7 +69,7 @@ class ProposeChangeService:
         res = self.db_client.table("proposed_changes").select("*").eq("id", str(proposal_id)).execute()
         return res.data[0] if res.data else None
 
-    async def create_file_proposal(self, file_path: str, new_content: str, summary: str) -> dict[str, Any]:
+    async def create_file_proposal(self, file_path: str, new_content: str, summary: str, user_id: str | None = None) -> dict[str, Any]:
         """Creates a file change proposal, capturing current content as old_content."""
         p = Path(file_path)
         old_content = ""
@@ -67,10 +77,18 @@ class ProposeChangeService:
             async with aiofiles.open(p, encoding='utf-8') as f:
                 old_content = await f.read()
 
+        # Physical identity embedding (Phase 4.6.23)
+        dept = "General"
+        if user_id:
+            u_res = self.db_client.table("profiles").select("department").eq("id", user_id).single().execute()
+            dept = u_res.data.get("department", "General") if u_res.data else "General"
+
         payload = {
             "file_path": file_path,
             "old_content": old_content,
-            "new_content": new_content
+            "new_content": new_content,
+            "created_by": user_id,
+            "created_by_dept": dept
         }
 
         res = self.db_client.table("proposed_changes").insert({

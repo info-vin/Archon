@@ -122,7 +122,7 @@ services:
           "CMD",
           "sh",
           "-c",
-          'python -c "import socket; s=socket.socket(); s.connect((''localhost'', ${ARCHON_MCP_PORT:-8051})); s.close()"',
+          'python -c "import socket; s=socket.socket(); s.connect((''127.0.0.1'', 8051)); s.close()"',
         ]
       interval: 30s
       timeout: 10s

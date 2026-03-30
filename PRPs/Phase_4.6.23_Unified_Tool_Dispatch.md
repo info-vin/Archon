@@ -25,8 +25,15 @@
     - 實作解釋性字串，包含當前等級與需求等級。
 - [x] **補齊工具視野**：手動注入 `apply_modification` 與 `perform_web_crawl` 的 Schema (修復 0326 遺漏)。
 
-### 2.2 更新 `GEMINI.md`
-- [x] 更新當前狀態至 4.6.22 結案，設定今日目標為 4.6.23 工具統一。
+### 2.3 物理審計補充任務 (Final Hardening)
+- [ ] **移除專案硬編碼**: 
+    - 修改 `python/src/server/services/projects/task_service.py`，將 `"field_ops_001"` 改為動態從 `archon_settings` 讀取。
+- [ ] **補全部門隔離邏輯**: 
+    - 修改 `python/src/server/services/propose_change_service.py`，實作 Service 層的經理部門檢查。
+- [ ] **實體化幾何繪圖外掛**: 
+    - 建立 `python/src/server/services/marketing/logo_tool.py`，實作 PRP 承諾的 SVG 物理生成邏輯。
+- [ ] **修正環境變數混合**: 
+    - 更新 `.env.test`，物理隔離生產環境 URL，防止 `FORCE_PROD_TEST` 誤傷。
 
 ## 3. 物理驗證計畫 (Verification)
 
@@ -37,3 +44,16 @@
     - 執行 `make test-be`：物理證實 553 通過。
 - [x] **型別掃描**：
     - 執行 `uv run mypy src/server`：物理證實 **Zero Errors**。
+- [ ] **負面測試驗證 (New)**：
+    - 模擬 Manager A 查看 Manager B 的提案，斷言觸發 403。
+- [ ] **動態專案驗證 (New)**：
+    - 修改 `archon_settings` 後，斷言語音工單流向正確變更。
+
+## 4. 4xx/5xx 錯誤碼專項審查結論 (Zero Fantasy)
+
+| 狀態碼 | 查核結論 (Audit Result) | 剩餘動作 |
+| :--- | :--- | :--- |
+| **401** | ✅ Settings API 已加固。 | 監控前端 Silent Refresh 延遲。 |
+| **403** | ⚠️ API 層已封鎖，Service 層缺失部門檢查。 | 執行 2.3 中的部門隔離修正。 |
+| **404** | ⚠️ 存在語音任務轉發至寫死 ID 的風險。 | 執行 2.3 中的專案硬編碼修正。 |
+| **500** | ✅ `safe_json_loads` 已覆蓋主要 API。 | 建立 Storage 權限的防禦性捕捉。 |

@@ -11,8 +11,11 @@ from src.server.services.client_manager import get_supabase_client
 logger = get_logger(__name__)
 
 class StorageUploadError(Exception):
-    """Custom exception for storage upload failures."""
-    pass
+    """Custom exception for storage upload failures with HTTP-aligned status codes."""
+    def __init__(self, message: str, status_code: int = 500):
+        self.message = message
+        self.status_code = status_code
+        super().__init__(self.message)
 
 class StorageService:
     def __init__(self):
@@ -60,13 +63,25 @@ class StorageService:
 
         except Exception as e:
             detailed_error_message = f"Storage upload failed: {e}"
+            status_code = 500
+            
+            # Physical error recognition
+            msg = str(e).lower()
+            if "bucket not found" in msg:
+                status_code = 404
+            elif "permission denied" in msg or "not authorized" in msg:
+                status_code = 403
+            elif "too large" in msg:
+                status_code = 413
+
             if hasattr(e, 'response') and e.response:
                 try:
                     response_json = e.response.json()
                     detailed_error_message += f" Supabase response: {response_json}"
                 except ValueError:
                     detailed_error_message += f" Supabase response text: {e.response.text}"
+            
             logger.error(f"Failed to upload file to Supabase. Bucket: {bucket_name}, Error: {detailed_error_message}")
-            raise StorageUploadError(detailed_error_message) from e
+            raise StorageUploadError(detailed_error_message, status_code=status_code) from e
 
 storage_service = StorageService()

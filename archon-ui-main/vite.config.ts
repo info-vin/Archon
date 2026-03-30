@@ -314,12 +314,14 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
             });
           }
         },
-        // Health check endpoint proxy
-        '/health': {
+        // Health check endpoint proxy - Narrowed to /api/health to avoid root shadowing
+        '/api/health': {
           target: `http://${host}:${port}`,
+          rewrite: (path) => path.replace(/^\/api/, ''),
           changeOrigin: true,
           secure: false
-        },
+        }
+,
         // Socket.IO specific proxy configuration
         '/socket.io': {
           target: `http://${host}:${port}`,

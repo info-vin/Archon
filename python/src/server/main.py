@@ -297,6 +297,7 @@ async def root():
 
 # Health check endpoint
 @app.get("/health")
+@app.head("/health")
 async def health_check():
     """Health check endpoint that indicates true readiness including credential loading."""
     from datetime import datetime

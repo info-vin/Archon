@@ -142,11 +142,16 @@ class MarketingService(BaseRepository):
             return {"error_code": 500, "message": f"AI generation error: {str(e)}"}
 
     async def generate_visual_asset(self, style: str) -> dict:
-        """Scenario 3: Nana Banana 3-Tier Defense"""
+        """Scenario 3: Nana Banana 3-Tier Defense (Grounded Implementation)"""
+        from .marketing.logo_tool import generate_logo_svg
+        import base64
+        
         try:
             api_key = await credential_service.get_credential("GEMINI_API_KEY") or await credential_service.get_credential("GOOGLE_API_KEY")
             client = genai.Client(api_key=api_key)
             prompt = f"Professional tech logo, {style}, high resolution"
+            
+            # TIER 1: Native AI Generation
             try:
                 native_resp = client.models.generate_content(
                     model="gemini-2.0-flash-exp",
@@ -162,12 +167,22 @@ class MarketingService(BaseRepository):
                             "svg_content": ""
                         }
             except Exception:
-                pass
+                logger.warning("MarketingService: Native AI visual generation failed, falling back to local SVG.")
 
-            import urllib.parse
-            fallback_url = f"https://image.pollinations.ai/prompt/{urllib.parse.quote(prompt)}?width=1024&height=1024&nologo=true"
-            return {"status": "success", "image_url": fallback_url, "tier": "fallback_pollinations", "svg_content": "<svg></svg>"}
-        except Exception:
+            # TIER 2: Physical Local SVG (Zero Token Cost)
+            # Fulfills PRP promise of geometric logo generation
+            svg_content = generate_logo_svg(style)
+            svg_base64 = base64.b64encode(svg_content.encode('utf-8')).decode('utf-8')
+            
+            return {
+                "status": "success", 
+                "image_url": f"data:image/svg+xml;base64,{svg_base64}", 
+                "tier": "physical_svg", 
+                "svg_content": svg_content
+            }
+
+        except Exception as e:
+            logger.error(f"MarketingService: Emergency visual fallback triggered: {e}")
             return {"status": "success", "image_url": "https://picsum.photos/1024/1024", "tier": "emergency"}
 
     async def get_combined_sources(self, user_id: str) -> list[dict]:
