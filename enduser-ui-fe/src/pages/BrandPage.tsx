@@ -82,7 +82,7 @@ const BrandPage: React.FC = () => {
                     </div>
                     
                     <div className="flex items-center gap-3">
-                        <button onClick={loadData} className="p-2 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-full transition-colors">
+                        <button onClick={loadData} className="p-2 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-full transition-colors" aria-label="Refresh data" title="Refresh data">
                             <RefreshCwIcon className={`w-5 h-5 text-slate-400 ${loading ? 'animate-spin' : ''}`} />
                         </button>
                     </div>
@@ -135,7 +135,7 @@ const BrandPage: React.FC = () => {
                             <h3 className="text-2xl font-bold text-gray-800 dark:text-white">
                                 {editingPost ? 'Edit Asset' : 'New Asset'}
                             </h3>
-                            <button onClick={() => setIsPostModalOpen(false)} className="text-gray-400 hover:text-gray-600 transition-colors">✕</button>
+                            <button onClick={() => setIsPostModalOpen(false)} className="text-gray-400 hover:text-gray-600 transition-colors" aria-label="Close modal" title="Close modal">✕</button>
                         </div>
                         <CreatePostForm 
                             post={editingPost} 
