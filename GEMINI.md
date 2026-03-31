@@ -44,6 +44,7 @@
 *   **當前狀態 (Current Context)**: Phase 4.6.22 已結案，物理移除模擬參數並達成推理落地。
 *   **今日目標 (Today's Goal)**: 啟動 Phase 4.6.23，統一原生工具調度與身分對齊，達成 100% 全端對齊驗收。
 
+
 > 3.  **第三步：取得您的確認**: 在您確認我對起點的理解無誤後，我才能開始執行第一個指令。
 
 ### 【UI 開發鐵律 (UI Development Iron Law)】
@@ -117,14 +118,15 @@
 
 # 第三章：近期工作日誌 (Recent Journal Entries)
 
-### 2026-03-30: Phase 4.6.23 結案與 Unified Tool Dispatch (Current Session)
-*   **今日目標 (結案與對齊)**:
-    - **統一工具調度**: 重構 `AgentService._native_tools` 映射表，移除硬編碼 `if/elif` 邏輯。
-    - **身分對齊**: Poisson Gate 全面對齊為 Slug-based (agent_id) 查詢，修正與 `profiles.name` 的脆弱連結。
-    - **效能優化**: 實作 `RateLimiter` O(1) 計數器優化，消除 `sum()` 遍歷開銷。
-    - **品質掃描**: 通過 `make lint-be` 與 553/553 項後端測試，確認系統 100% 穩定。
+### 2026-03-30: Phase 4.6.24 結案與三月終極對齊 (Current Session)
+*   **今日目標 (結案與硬化)**:
+    - **巨型檔案清零**: 完成 `CredentialService`, `UrlHandler`, `StatsService`, `ProviderDiscovery` 四大中樞的 L2 模組化拆分，單一檔案行數降至 < 350 行。
+    - **邏輯高保真還原**: 經由三遍物理對帳，確保 100% 恢復了原本遺失的 URL 正規化引擎與 Fernet 保護註釋。
+    - **ROI 視覺化**: 前端實體化 `ROIAnalyticsBadge` 與 `TokenUsageTable`，達成 AI 經濟透明化。
+    - **全系統穩定性**: 通過 557/557 項後端測試與 56/56 項前端單元測試，達成 **Zero-Lint** 狀態。
 *   **物理成果**:
-    - 完成 Phase 4.6.21-23 治理與硬化，Agent 具備基於等級的自主工具推理能力。
+    - 徹底隔離 `.env.test` 物理位址，實作並驗證了部門隔離 (SEC-001) 的負面測試。
+    - 補完 Charlie 智慧提取 (Extraction API) 的實體執行邏輯，不再回傳 Mock。
 
 ---
 
@@ -137,18 +139,22 @@
 三月是 Archon 從巨型架構邁向模組化治理的關鍵月份。我們消滅了所有超過 1000 行的檔案，並建立了基於 XP 的 Agent 治理體系。
 
 **核心主題歸類**:
-1.  **模組化革命 (Ref: 03-06 ~ 03-11)**:
-    *   **巨型檔案清零**: 拆分 `ollama_api.py`, `knowledge_api.py`, `task_service.py` 與前端 `api.ts`（949 -> 8 行）。
-    *   **BaseRepository 導入**: 標準化 20+ 個服務的資料庫交互邏輯。
+1.  **模組化革命 (Ref: 03-06 ~ 03-31)**:
+    *   **巨型檔案清零**: 拆分 `ollama_api.py`, `knowledge_api.py`, `task_service.py` 與四大核心 Service。
+    *   **L2 標竿建立**: 確立了以 `llm/` 包為範本的目錄化重構標準，確保 Facade 模式的 100% 向後兼容。
 
 2.  **Agent 治理與 XP 門禁 (Ref: 03-24 ~ 03-26)**:
     *   **身分落地**: 實作 `agent_xp` 經驗值系統與 Poisson Gate 物理攔截。
-    *   **門禁硬化**: 實作解釋性攔截訊息，引導 Agent 了解等級需求。
+    *   **門禁硬化**: 實作解釋性攔截訊息，並實體對齊 Slug-based 身分識別。
 
 3.  **效能與基礎設施硬化 (Ref: 03-30)**:
     *   **調度統一**: 完成 `AgentService` 原生工具動態分發 (Unified Tool Dispatch)。
     *   **O(1) 優化**: 將 `RateLimiter` 複雜度從 O(N) 降至 O(1)，提升高併發穩定性。
-    *   **品質標竿**: 達成全系統 Zero-Lint、Zero-Mypy 與 550+ 測試通過。
+    *   **全端對齊**: 找回並恢復了二月重構中遺失的 Token 詳細明細表。
+
+4.  **安全與 ROI 實體化 (Ref: 03-31)**:
+    *   **部門隔離**: 實作 JSONB 穿透式隔離，並通過 403 負面測試驗證。
+    *   **ROI 落地**: 實作前端 ROI 狀態欄，補齊 AI 經濟治理最後的功能斷層。
 
 ### 2026年2月：全角色流程與行動端落地
 二月標誌著 Archon 從單點功能邁向全角色協作的里程碑。我們完成了 Alice (Sales), Bob (Marketing), Charlie (Manager) 的核心工作流閉環，並在下旬進行了大規模的架構硬化。
