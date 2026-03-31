@@ -1,13 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import { api } from '@/services/api';
 import { SystemOverview, AiUsageStats } from '@/types';
-import { XIcon, RefreshCwIcon, AlertTriangleIcon } from '@/components/Icons';
+import { XIcon, RefreshCwIcon, AlertTriangleIcon, ListIcon } from '@/components/Icons';
+import TokenUsageTable, { TokenUsageDetail } from './TokenUsageTable';
 
 export const SystemHealthDashboard: React.FC = () => {
     const [overview, setOverview] = useState<SystemOverview | null>(null);
     const [aiStats, setAiStats] = useState<AiUsageStats | null>(null);
     const [connectivityLogs, setConnectivityLogs] = useState<any[]>([]);
     const [agentXp, setAgentXp] = useState<any[]>([]);
+    const [recentUsage, setRecentUsage] = useState<TokenUsageDetail[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -15,17 +17,20 @@ export const SystemHealthDashboard: React.FC = () => {
         setLoading(true);
         setError(null);
         try {
-            const [ov, ai, logs, xp] = await Promise.all([
+            const [ov, ai, logs, xp, recent] = await Promise.all([
                 api.getSystemOverview(),
                 api.getAiUsage(),
-                api.getConnectivityLogs().catch(() => []),
-                api.getAgentXPStats().catch(() => [])
+                api.getConnectivityLogs(),
+                api.getAgentXPStats(),
+                api.getRecentTokenUsage()
             ]);
             setOverview(ov);
             setAiStats(ai);
-            setConnectivityLogs(Array.isArray(logs) ? logs : []);
-            setAgentXp(Array.isArray(xp) ? xp : []);
+            setConnectivityLogs(logs || []);
+            setAgentXp(xp || []);
+            setRecentUsage(recent || []);
         } catch (err: any) {
+
             setError(err.message || "Failed to load system health data");
         } finally {
             setLoading(false);
@@ -141,6 +146,21 @@ export const SystemHealthDashboard: React.FC = () => {
                     
                     <AiResilienceWidget />
                 </div>
+            </div>
+
+            {/* Recent Token Transactions (Restored Feature - Phase 4.6.23) */}
+            <div className="bg-card p-6 rounded-2xl border border-border shadow-sm">
+                <div className="flex items-center gap-2 mb-4">
+                    <ListIcon className="w-5 h-5 text-indigo-500" />
+                    <h3 className="text-lg font-bold">Recent Token Transactions</h3>
+                </div>
+                {recentUsage.length > 0 ? (
+                    <TokenUsageTable details={recentUsage} />
+                ) : (
+                    <div className="text-center py-12 text-muted-foreground italic border-2 border-dashed border-border rounded-xl">
+                        No recent transactions found in token_usage table.
+                    </div>
+                )}
             </div>
 
             {/* AI Connectivity Exceptions (Admin Maintenance View) */}

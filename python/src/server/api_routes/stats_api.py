@@ -176,3 +176,12 @@ async def get_ai_usage():
     except Exception as e:
         logger.error(f"Failed to get AI usage: {e}")
         raise HTTPException(status_code=500, detail=str(e)) from e
+
+@router.get("/token-usage/recent", dependencies=[Depends(require_manager_or_admin)])
+async def get_recent_token_usage(limit: int = 20):
+    """Retrieve the most recent token transactions including user names."""
+    try:
+        return await stats_service.get_recent_token_usage(limit=limit)
+    except Exception as e:
+        logger.error(f"Failed to get recent token usage: {e}")
+        raise HTTPException(status_code=500, detail=str(e)) from e

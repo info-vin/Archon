@@ -476,6 +476,37 @@ class StatsService:
             logger.error(f"StatsService: Agent XP/Cost fetch failed: {e}")
             return []
 
+    async def get_recent_token_usage(self, limit: int = 20) -> list[dict[str, Any]]:
+        """
+        Retrieves recent individual token usage transactions.
+        Physically joins with profiles to get user names.
+        """
+        try:
+            # Physical Join: token_usage -> profiles
+            # Note: total_tokens is a generated column in the schema
+            res = self.supabase.table("token_usage")\
+                .select("*, profiles(name, role)")\
+                .order("created_at", desc=True)\
+                .limit(limit).execute()
+
+            formatted = []
+            for row in (res.data or []):
+                profile = row.get("profiles") or {}
+                formatted.append({
+                    "id": row["id"],
+                    "timestamp": row["created_at"],
+                    "user_name": profile.get("name", "Unknown"),
+                    "role": profile.get("role", "system"),
+                    "model": row["model"],
+                    "tokens": row.get("total_tokens", 0),
+                    "cost": float(row.get("cost_usd", 0.0)),
+                    "context": row.get("context_type", "General")
+                })
+            return formatted
+        except Exception as e:
+            logger.error(f"StatsService: Recent token usage fetch failed: {e}")
+            return []
+
     def _get_agent_level(self, xp: int) -> str:
         """Translates total XP into Level Gateway titles per Phase 4.6.8."""
         if xp >= 880:

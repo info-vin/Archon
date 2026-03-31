@@ -64,7 +64,7 @@ class StorageService:
         except Exception as e:
             detailed_error_message = f"Storage upload failed: {e}"
             status_code = 500
-            
+
             # Physical error recognition
             msg = str(e).lower()
             if "bucket not found" in msg:
@@ -80,7 +80,7 @@ class StorageService:
                     detailed_error_message += f" Supabase response: {response_json}"
                 except ValueError:
                     detailed_error_message += f" Supabase response text: {e.response.text}"
-            
+
             logger.error(f"Failed to upload file to Supabase. Bucket: {bucket_name}, Error: {detailed_error_message}")
             raise StorageUploadError(detailed_error_message, status_code=status_code) from e
 

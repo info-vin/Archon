@@ -130,7 +130,75 @@ class ExtractionService:
         response = self.supabase.table("archon_extraction_schemas").select("*").order("created_at", desc=True).execute()
         return cast(list[dict[str, Any]], response.data or [])
 
+    async def get_schema(self, schema_id: str) -> dict[str, Any] | None:
+        """Get a single schema by ID."""
+        response = self.supabase.table("archon_extraction_schemas").select("*").eq("id", schema_id).execute()
+        return response.data[0] if response.data else None
+
+    async def update_schema(self, schema_id: str, data: dict[str, Any]) -> dict[str, Any]:
+        """Updates an existing schema."""
+        update_data = {k: v for k, v in data.items() if k in ["name", "domain_pattern", "schema_definition", "target_role", "description"]}
+        response = self.supabase.table("archon_extraction_schemas").update(update_data).eq("id", schema_id).execute()
+        if not response.data:
+            raise Exception("Update failed or schema not found")
+        return cast(dict[str, Any], response.data[0])
+
     async def delete_schema(self, schema_id: str) -> bool:
         """Delete a schema."""
         self.supabase.table("archon_extraction_schemas").delete().eq("id", schema_id).execute()
         return True
+
+    async def run_extraction(self, url: str, schema_id: str, user_id: str) -> dict[str, Any]:
+        """
+        Performs actual data extraction: Crawl -> LLM Parse (using schema) -> Result.
+        """
+        safe_logfire_info(f"User {user_id} triggered real extraction for {url} using schema {schema_id}")
+
+        # 1. Get the Schema
+        schema = await self.get_schema(schema_id)
+        if not schema:
+            raise Exception(f"Schema {schema_id} not found")
+
+        # 2. Fetch Content
+        crawler = await get_crawler()
+        if not crawler:
+            raise Exception("Crawler unavailable")
+        result = await crawler.arun(url)
+        content = result.markdown if hasattr(result, 'markdown') and result.markdown else ""
+        if not content:
+            raise Exception("Failed to crawl content for extraction")
+
+        # 3. Extract with LLM using the schema definition
+        from .llm_provider_service import get_llm_client
+
+        schema_json = schema["schema_definition"]
+        system_prompt = (
+            f"You are a Data Extraction Expert. Extract structured data from the provided content "
+            f"strictly following this JSON schema: {schema_json}. \n"
+            "Return only the extracted data as a JSON object."
+        )
+
+        async with get_llm_client() as client:
+            response = await client.chat.completions.create(
+                model="gemini-2.0-flash",
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": f"Extract data from this content:\n\n{content[:15000]}"}
+                ],
+                response_format={"type": "json_object"}
+            )
+
+            content_text, _, _ = extract_message_text(response.choices[0])
+            extracted_data = safe_json_loads(content_text)
+
+            # 4. Persistence (Physical Log)
+            # In a full Phase 5 implementation, this would go to archon_extracted_data.
+            # For 4.6.23, we log the success and return the data to fulfill the loop.
+            logger.info(f"Successfully extracted data from {url} using schema '{schema['name']}'")
+
+            return {
+                "success": True,
+                "data": extracted_data,
+                "schema_used": schema["name"],
+                "source_url": url
+            }

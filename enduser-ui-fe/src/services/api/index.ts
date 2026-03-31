@@ -47,6 +47,7 @@ export const api = {
   getSystemOverview: statsApi.getSystemOverview.bind(statsApi),
   getMemberPerformance: statsApi.getMemberPerformance.bind(statsApi),
   getTokenUsageDetails: statsApi.getTokenUsageDetails.bind(statsApi),
+  getRecentTokenUsage: statsApi.getRecentTokenUsage.bind(statsApi),
   getHealthTrend: statsApi.getHealthTrend.bind(statsApi),
   getCommanderTrends: statsApi.getCommanderTrends.bind(statsApi),
   getForceReadiness: statsApi.getForceReadiness.bind(statsApi),

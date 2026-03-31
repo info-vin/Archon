@@ -51,7 +51,7 @@ class ProposeChangeService:
         query = self.db_client.table("proposed_changes").select("*")
         if status:
             query = query.eq("status", status)
-        
+
         # Physical Department Isolation (Phase 4.6.23 Hardening)
         if user_id:
             # First, get the department of the requesting manager

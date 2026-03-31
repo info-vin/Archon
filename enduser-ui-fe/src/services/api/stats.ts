@@ -26,6 +26,10 @@ export const statsApi = {
     return await callAPI<any[]>(`/api/stats/token-usage/details?days=${days}`);
   },
 
+  async getRecentTokenUsage(limit: number = 20): Promise<any[]> {
+    return await callAPI<any[]>(`/api/stats/token-usage/recent?limit=${limit}`);
+  },
+
   async getHealthTrend(): Promise<{ trend: any[]; audit: any[] }> {
     return await callAPI<{ trend: any[]; audit: any[] }>('/api/stats/health-trend');
   },

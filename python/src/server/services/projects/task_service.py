@@ -76,13 +76,13 @@ class TaskService(BaseRepository):
             from ..settings_service import SettingsService
             settings = SettingsService(self.supabase_client)
             project_id = settings.get_setting("default_business_project")
-            
+
             # Fallback logic: if no setting, find the first available project
             if not project_id:
                 logger.warning("No 'default_business_project' set. Falling back to the first available project.")
                 def _get_first_project():
                     return self.supabase_client.table("archon_projects").select("id").limit(1).execute()
-                
+
                 p_success, p_result = self.execute_query(_get_first_project, "Get fallback project", require_data=True)
                 if p_success and p_result["data"]:
                     project_id = p_result["data"][0]["id"]

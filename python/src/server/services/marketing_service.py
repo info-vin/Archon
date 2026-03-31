@@ -143,14 +143,15 @@ class MarketingService(BaseRepository):
 
     async def generate_visual_asset(self, style: str) -> dict:
         """Scenario 3: Nana Banana 3-Tier Defense (Grounded Implementation)"""
-        from .marketing.logo_tool import generate_logo_svg
         import base64
-        
+
+        from .marketing.logo_tool import generate_logo_svg
+
         try:
             api_key = await credential_service.get_credential("GEMINI_API_KEY") or await credential_service.get_credential("GOOGLE_API_KEY")
             client = genai.Client(api_key=api_key)
             prompt = f"Professional tech logo, {style}, high resolution"
-            
+
             # TIER 1: Native AI Generation
             try:
                 native_resp = client.models.generate_content(
@@ -173,11 +174,11 @@ class MarketingService(BaseRepository):
             # Fulfills PRP promise of geometric logo generation
             svg_content = generate_logo_svg(style)
             svg_base64 = base64.b64encode(svg_content.encode('utf-8')).decode('utf-8')
-            
+
             return {
-                "status": "success", 
-                "image_url": f"data:image/svg+xml;base64,{svg_base64}", 
-                "tier": "physical_svg", 
+                "status": "success",
+                "image_url": f"data:image/svg+xml;base64,{svg_base64}",
+                "tier": "physical_svg",
                 "svg_content": svg_content
             }
 

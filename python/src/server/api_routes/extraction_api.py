@@ -32,6 +32,15 @@ async def list_schemas() -> list[dict[str, Any]]:
     service = ExtractionService()
     return await service.list_schemas()
 
+@router.get("/schemas/{schema_id}", dependencies=[Depends(verify_manager_role)])
+async def get_schema(schema_id: str) -> dict[str, Any]:
+    """Get a single schema by ID."""
+    service = ExtractionService()
+    schema = await service.get_schema(schema_id)
+    if not schema:
+        raise HTTPException(status_code=404, detail="Schema not found")
+    return schema
+
 @router.post("/schemas", dependencies=[Depends(verify_manager_role)])
 async def create_schema(
     request: dict[str, Any],
@@ -43,6 +52,19 @@ async def create_schema(
         return await service.create_schema(request, current_user["id"])
     except Exception as e:
         logger.error(f"Create schema failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e)) from e
+
+@router.patch("/schemas/{schema_id}", dependencies=[Depends(verify_manager_role)])
+async def update_schema(
+    schema_id: str,
+    request: dict[str, Any]
+) -> dict[str, Any]:
+    """Update an existing schema."""
+    service = ExtractionService()
+    try:
+        return await service.update_schema(schema_id, request)
+    except Exception as e:
+        logger.error(f"Update schema failed: {e}")
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 @router.delete("/schemas/{schema_id}", dependencies=[Depends(verify_manager_role)])
@@ -58,7 +80,7 @@ async def run_extraction(
     current_user: dict = Depends(get_current_user)
 ) -> dict[str, Any]:
     """
-    Triggers an asynchronous extraction task.
+    Triggers an actual data extraction task.
     Payload: { "url": "...", "schema_id": "..." }
     """
     url = request.get("url")
@@ -66,12 +88,10 @@ async def run_extraction(
     if not url or not schema_id:
         raise HTTPException(status_code=400, detail="URL and schema_id are required")
 
-    # In a real implementation, this would trigger a background task (Librarian)
-    # For now, we return a mock success message to confirm the loop is closed.
-    logger.info(f"User {current_user.get('id')} triggered extraction for {url} using schema {schema_id}")
-
-    return {
-        "success": True,
-        "message": "Extraction task queued successfully. Librarian agent is now processing.",
-        "task_id": f"ext-{schema_id[:4]}-{url.split('/')[-1][:8]}"
-    }
+    service = ExtractionService()
+    try:
+        # Fulfills Phase 4.6.23: Functional Realization (No more Mock)
+        return await service.run_extraction(url, schema_id, current_user["id"])
+    except Exception as e:
+        logger.error(f"Extraction failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e)) from e
