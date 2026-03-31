@@ -53,27 +53,23 @@ class EmbeddingRouter:
     """
 
     # Database column mapping for different dimensions
-    DIMENSION_COLUMNS = {
-        768: "embedding_768",
-        1024: "embedding_1024",
-        1536: "embedding_1536",
-        3072: "embedding_3072"
-    }
+    DIMENSION_COLUMNS = {768: "embedding_768", 1024: "embedding_1024", 1536: "embedding_1536", 3072: "embedding_3072"}
 
     # Index type preferences for performance optimization
     INDEX_PREFERENCES = {
-        768: "ivfflat",   # Good for smaller dimensions
+        768: "ivfflat",  # Good for smaller dimensions
         1024: "ivfflat",  # Good for medium dimensions
         1536: "ivfflat",  # Good for standard OpenAI dimensions
-        3072: "hnsw"      # Better for high dimensions
+        3072: "hnsw",  # Better for high dimensions
     }
 
     def __init__(self):
         self.routing_cache: dict[str, RoutingDecision] = {}
         self.cache_ttl = 300  # 5 minutes cache TTL
 
-    async def route_embedding(self, model_name: str, instance_url: str,
-                            text_content: str | None = None) -> RoutingDecision:
+    async def route_embedding(
+        self, model_name: str, instance_url: str, text_content: str | None = None
+    ) -> RoutingDecision:
         """
         Determine the optimal routing for an embedding operation.
 
@@ -100,9 +96,7 @@ class EmbeddingRouter:
 
             if dimensions:
                 # Step 2: Route to appropriate column based on detected dimensions
-                decision = await self._route_by_dimensions(
-                    model_name, instance_url, dimensions, strategy="auto-detect"
-                )
+                decision = await self._route_by_dimensions(model_name, instance_url, dimensions, strategy="auto-detect")
                 logger.info(f"Auto-detected routing: {model_name} -> {decision.target_column} ({dimensions}D)")
 
             else:
@@ -126,7 +120,7 @@ class EmbeddingRouter:
                 dimensions=3072,
                 confidence=0.1,
                 fallback_applied=True,
-                routing_strategy="emergency-fallback"
+                routing_strategy="emergency-fallback",
             )
 
     async def _detect_model_dimensions(self, model_name: str, instance_url: str) -> int | None:
@@ -150,9 +144,7 @@ class EmbeddingRouter:
                 return dimensions
 
             # Try capability detection if model info doesn't have dimensions
-            capabilities = await model_discovery_service._detect_model_capabilities(
-                model_name, instance_url
-            )
+            capabilities = await model_discovery_service._detect_model_capabilities(model_name, instance_url)
 
             if capabilities.embedding_dimensions:
                 dimensions = capabilities.embedding_dimensions
@@ -166,8 +158,9 @@ class EmbeddingRouter:
             logger.error(f"Error detecting dimensions for {model_name}: {e}")
             return None
 
-    async def _route_by_dimensions(self, model_name: str, instance_url: str,
-                                 dimensions: int, strategy: str) -> RoutingDecision:
+    async def _route_by_dimensions(
+        self, model_name: str, instance_url: str, dimensions: int, strategy: str
+    ) -> RoutingDecision:
         """
         Route embedding based on detected dimensions.
 
@@ -190,8 +183,10 @@ class EmbeddingRouter:
         fallback_applied = dimensions not in self.DIMENSION_COLUMNS
 
         if fallback_applied:
-            logger.warning(f"Model {model_name} dimensions {dimensions} not directly supported, "
-                          f"using {target_column} with padding/truncation")
+            logger.warning(
+                f"Model {model_name} dimensions {dimensions} not directly supported, "
+                f"using {target_column} with padding/truncation"
+            )
 
         return RoutingDecision(
             target_column=target_column,
@@ -200,7 +195,7 @@ class EmbeddingRouter:
             dimensions=dimensions,
             confidence=confidence,
             fallback_applied=fallback_applied,
-            routing_strategy=strategy
+            routing_strategy=strategy,
         )
 
     async def _route_by_model_mapping(self, model_name: str, instance_url: str) -> RoutingDecision:
@@ -227,7 +222,7 @@ class EmbeddingRouter:
             dimensions=dimensions,
             confidence=0.8,  # Medium confidence for model mapping
             fallback_applied=True,
-            routing_strategy="model-mapping"
+            routing_strategy="model-mapping",
         )
 
     def _get_target_column(self, dimensions: int) -> str:
@@ -284,9 +279,7 @@ class EmbeddingRouter:
 
         try:
             # Discover models from all instances
-            discovery_result = await model_discovery_service.discover_models_from_multiple_instances(
-                instance_urls
-            )
+            discovery_result = await model_discovery_service.discover_models_from_multiple_instances(instance_urls)
 
             # Process embedding models
             for embedding_model in discovery_result["embedding_models"]:
@@ -305,7 +298,7 @@ class EmbeddingRouter:
                         instance_url=instance_url,
                         dimensions=dimensions,
                         column_name=target_column,
-                        performance_score=performance_score
+                        performance_score=performance_score,
                     )
 
                     routes.append(route)
@@ -373,9 +366,7 @@ class EmbeddingRouter:
         try:
             # Check if the model still supports embeddings
             is_valid = await model_discovery_service.validate_model_capabilities(
-                decision.model_name,
-                decision.instance_url,
-                "embedding"
+                decision.model_name, decision.instance_url, "embedding"
             )
 
             if not is_valid:
@@ -439,11 +430,7 @@ class EmbeddingRouter:
             "model_mapping_routes": model_mapping_routes,
             "fallback_routes": fallback_routes,
             "dimension_distribution": dimension_distribution,
-            "confidence_distribution": {
-                "high": confidence_high,
-                "medium": confidence_medium,
-                "low": confidence_low
-            }
+            "confidence_distribution": {"high": confidence_high, "medium": confidence_medium, "low": confidence_low},
         }
 
 

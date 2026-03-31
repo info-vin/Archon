@@ -30,35 +30,29 @@ class TestSourceUrlShadowing:
 
         # Track what gets passed to _create_source_records
         captured_source_url = None
-        async def mock_create_source_records(all_metadatas, all_contents, source_word_counts,
-                                            request, source_url, source_display_name):
+
+        async def mock_create_source_records(
+            all_metadatas, all_contents, source_word_counts, request, source_url, source_display_name
+        ):
             nonlocal captured_source_url
             captured_source_url = source_url
 
         doc_storage._create_source_records = mock_create_source_records
 
         # Mock add_documents_to_supabase
-        with patch('src.server.services.crawling.document_storage_operations.add_documents_to_supabase') as mock_add:
+        with patch("src.server.services.crawling.document_storage_operations.add_documents_to_supabase") as mock_add:
             mock_add.return_value = {"chunks_stored": 3}
 
             # Test data - simulating a sitemap crawl
             original_source_url = "https://mem0.ai/sitemap.xml"
             crawl_results = [
-                {
-                    "url": "https://mem0.ai/page1",
-                    "markdown": "Content of page 1",
-                    "title": "Page 1"
-                },
-                {
-                    "url": "https://mem0.ai/page2",
-                    "markdown": "Content of page 2",
-                    "title": "Page 2"
-                },
+                {"url": "https://mem0.ai/page1", "markdown": "Content of page 1", "title": "Page 1"},
+                {"url": "https://mem0.ai/page2", "markdown": "Content of page 2", "title": "Page 2"},
                 {
                     "url": "https://mem0.ai/models/openai-o3",  # Last document URL
                     "markdown": "Content of models page",
-                    "title": "Models"
-                }
+                    "title": "Models",
+                },
             ]
 
             request = {"knowledge_type": "documentation", "tags": []}
@@ -72,16 +66,18 @@ class TestSourceUrlShadowing:
                 progress_callback=None,
                 cancellation_check=None,
                 source_url=original_source_url,  # This should NOT be overwritten
-                source_display_name="Test Sitemap"
+                source_display_name="Test Sitemap",
             )
 
             # Verify the original source_url was preserved
-            assert captured_source_url == original_source_url, \
+            assert captured_source_url == original_source_url, (
                 f"source_url should be '{original_source_url}', not '{captured_source_url}'"
+            )
 
             # Verify it's NOT the last document's URL
-            assert captured_source_url != "https://mem0.ai/models/openai-o3", \
+            assert captured_source_url != "https://mem0.ai/models/openai-o3", (
                 "source_url should NOT be overwritten with the last document's URL"
+            )
 
             # Verify url_to_full_document has correct URLs
             assert "https://mem0.ai/page1" in result["url_to_full_document"]
@@ -99,18 +95,20 @@ class TestSourceUrlShadowing:
 
         # Capture metadata
         captured_metadatas = None
-        async def mock_create_source_records(all_metadatas, all_contents, source_word_counts,
-                                            request, source_url, source_display_name):
+
+        async def mock_create_source_records(
+            all_metadatas, all_contents, source_word_counts, request, source_url, source_display_name
+        ):
             nonlocal captured_metadatas
             captured_metadatas = all_metadatas
 
         doc_storage._create_source_records = mock_create_source_records
 
-        with patch('src.server.services.crawling.document_storage_operations.add_documents_to_supabase') as mock_add:
+        with patch("src.server.services.crawling.document_storage_operations.add_documents_to_supabase") as mock_add:
             mock_add.return_value = {"chunks_stored": 2}
             crawl_results = [
                 {"url": "https://example.com/doc1", "markdown": "Doc 1"},
-                {"url": "https://example.com/doc2", "markdown": "Doc 2"}
+                {"url": "https://example.com/doc2", "markdown": "Doc 2"},
             ]
 
             await doc_storage.process_and_store_documents(
@@ -119,7 +117,7 @@ class TestSourceUrlShadowing:
                 crawl_type="normal",
                 original_source_id="test456",
                 source_url="https://example.com",
-                source_display_name="Example"
+                source_display_name="Example",
             )
 
             # Each metadata should have the correct document URL

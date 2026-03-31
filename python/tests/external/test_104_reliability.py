@@ -26,5 +26,6 @@ async def test_104_crawler_reliability():
         assert "data" in data
         print(f"\n✅ 104 Real-time Data Probe: PASSED (Found {data['data'].get('custName')})")
 
+
 if __name__ == "__main__":
     pytest.main([__file__])

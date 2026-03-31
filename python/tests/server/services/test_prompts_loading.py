@@ -11,6 +11,7 @@ def reset_prompt_service():
     PromptService._reset_for_testing()
     yield
 
+
 @pytest.mark.asyncio
 async def test_load_prompts_success():
     """Test successful loading of prompts from database."""
@@ -20,7 +21,7 @@ async def test_load_prompts_success():
         {"prompt_name": "blog_post_draft", "prompt": "You are MarketBot (Blog)..."},
         {"prompt_name": "sales_pitch_generation", "prompt": "You are MarketBot (Sales)..."},
         {"prompt_name": "svg_logo_design", "prompt": "You are DevBot..."},
-        {"prompt_name": "user_story_refinement", "prompt": "You are POBot..."}
+        {"prompt_name": "user_story_refinement", "prompt": "You are POBot..."},
     ]
     # Configure mock behavior for list_prompts which uses self.execute_query
     mock_supabase.table.return_value.select.return_value.execute.return_value = mock_response
@@ -33,12 +34,13 @@ async def test_load_prompts_success():
         assert service.get_prompt("blog_post_draft") == "You are MarketBot (Blog)..."
         assert service.get_prompt("svg_logo_design") == "You are DevBot..."
 
+
 @pytest.mark.asyncio
 async def test_load_prompts_empty_db():
     """Test behavior when database returns no prompts."""
     mock_supabase = MagicMock()
     mock_response = MagicMock()
-    mock_response.data = [] # Empty list
+    mock_response.data = []  # Empty list
     mock_supabase.table.return_value.select.return_value.execute.return_value = mock_response
 
     with patch("src.server.services.prompt_service.get_supabase_client", return_value=mock_supabase):
@@ -49,6 +51,7 @@ async def test_load_prompts_empty_db():
         assert len(service._prompts) == 0
         # Default fallback check
         assert service.get_prompt("non_existent") == "You are a helpful AI assistant."
+
 
 @pytest.mark.asyncio
 async def test_get_prompt_fallback():

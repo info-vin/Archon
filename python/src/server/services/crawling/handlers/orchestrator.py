@@ -9,11 +9,13 @@ if TYPE_CHECKING:
 
 logger = get_logger(__name__)
 
+
 class CrawlOrchestrator:
     """
     Handles the asynchronous lifecycle of a crawl operation.
     Physically isolated for Phase 4.6.16 modularization.
     """
+
     def __init__(self, service: "CrawlingService"):
         self.service = service
 
@@ -45,12 +47,9 @@ class CrawlOrchestrator:
             safe_logfire_info(f"Starting async crawl orchestration | url={url} | task_id={task_id}")
 
             if self.service.progress_tracker:
-                await self.service.progress_tracker.start({
-                    "url": url,
-                    "status": "starting",
-                    "progress": 0,
-                    "log": f"Starting crawl of {url}"
-                })
+                await self.service.progress_tracker.start(
+                    {"url": url, "status": "starting", "progress": 0, "log": f"Starting crawl of {url}"}
+                )
 
             original_source_id = self.service.url_handler.generate_unique_source_id(url)
             source_display_name = self.service.url_handler.extract_display_name(url)
@@ -71,17 +70,16 @@ class CrawlOrchestrator:
             await update_mapped_progress("starting", 100, f"Starting crawl of {url}", current_url=url)
             self.service._check_cancellation()
 
-            await update_mapped_progress("analyzing", 50, f"Analyzing URL type for {url}", total_pages=1, processed_pages=0)
+            await update_mapped_progress(
+                "analyzing", 50, f"Analyzing URL type for {url}", total_pages=1, processed_pages=0
+            )
 
             # Detect and crawl
             crawl_results, crawl_type = await self.service.url_type_router.crawl_by_url_type(url, request)
 
             if self.service.progress_tracker and crawl_type:
                 await self.service.progress_tracker.update(
-                    status="crawling",
-                    progress=15,
-                    log=f"Processing {crawl_type} content",
-                    crawl_type=crawl_type
+                    status="crawling", progress=15, log=f"Processing {crawl_type} content", crawl_type=crawl_type
                 )
 
             self.service._check_cancellation()
@@ -97,10 +95,7 @@ class CrawlOrchestrator:
                 if self.service.progress_tracker:
                     mapped_progress = self.service.progress_mapper.map_progress("document_storage", progress)
                     await self.service.progress_tracker.update(
-                        status="document_storage",
-                        progress=mapped_progress,
-                        log=message,
-                        **kwargs
+                        status="document_storage", progress=mapped_progress, log=message, **kwargs
                     )
 
             storage_results = await self.service.doc_storage_ops.process_and_store_documents(
@@ -136,7 +131,7 @@ class CrawlOrchestrator:
                             status=data.get("status", "code_extraction"),
                             progress=mapped_progress,
                             log=data.get("log", "Extracting code examples..."),
-                            **{k: v for k, v in data.items() if k not in ["status", "progress", "percentage", "log"]}
+                            **{k: v for k, v in data.items() if k not in ["status", "progress", "percentage", "log"]},
                         )
 
                 code_examples_count = await self.service.doc_storage_ops.extract_and_store_code_examples(
@@ -170,14 +165,16 @@ class CrawlOrchestrator:
             )
 
             if self.service.progress_tracker:
-                await self.service.progress_tracker.complete({
-                    "chunks_stored": actual_chunks_stored,
-                    "code_examples_found": code_examples_count,
-                    "processed_pages": len(crawl_results),
-                    "total_pages": len(crawl_results),
-                    "sourceId": storage_results.get("source_id", ""),
-                    "log": "Crawl completed successfully!",
-                })
+                await self.service.progress_tracker.complete(
+                    {
+                        "chunks_stored": actual_chunks_stored,
+                        "code_examples_found": code_examples_count,
+                        "processed_pages": len(crawl_results),
+                        "total_pages": len(crawl_results),
+                        "sourceId": storage_results.get("source_id", ""),
+                        "log": "Crawl completed successfully!",
+                    }
+                )
 
             if self.service.progress_id:
                 unregister_orchestration(self.service.progress_id)
@@ -199,12 +196,7 @@ class CrawlOrchestrator:
             safe_logfire_error(f"Async crawl orchestration failed | error={str(e)}")
             error_message = f"Crawl failed: {str(e)}"
             await self.service._handle_progress_update(
-                task_id, {
-                    "status": "error",
-                    "progress": -1,
-                    "log": error_message,
-                    "error": str(e)
-                }
+                task_id, {"status": "error", "progress": -1, "log": error_message, "error": str(e)}
             )
             if self.service.progress_tracker:
                 await self.service.progress_tracker.error(error_message)

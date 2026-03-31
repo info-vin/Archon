@@ -5,6 +5,7 @@ from ..utils import get_supabase_client
 
 logger = get_logger(__name__)
 
+
 class RBACService:
     """Service for handling Role-Based Access Control (RBAC) logic."""
 
@@ -15,21 +16,25 @@ class RBACService:
         self.permissions = {
             # Admin can assign to anyone
             "admin": ["admin", "system_admin", "manager", "employee", "member", "marketing", "sales", "ai_agent"],
-            "system_admin": ["admin", "system_admin", "manager", "employee", "member", "marketing", "sales", "ai_agent"],
-
+            "system_admin": [
+                "admin",
+                "system_admin",
+                "manager",
+                "employee",
+                "member",
+                "marketing",
+                "sales",
+                "ai_agent",
+            ],
             # Manager can assign to their team (generic simplification) and agents
             "manager": ["manager", "employee", "member", "marketing", "sales", "ai_agent"],
-
             # Employees/Members can assign to themselves and generic agents
             "employee": ["employee", "member", "ai_agent"],
             "member": ["employee", "member", "ai_agent"],
-
             # Marketers can assign to themselves and Marketing Agents
             "marketing": ["marketing", "ai_agent"],
-
             # Sales can assign to themselves and Sales Agents
             "sales": ["sales", "ai_agent"],
-
             # Legacy/Alias support
             "pm": ["manager", "employee", "member", "marketing", "sales", "ai_agent"],
             "engineer": ["employee", "member", "ai_agent"],
@@ -48,15 +53,15 @@ class RBACService:
             "system_admin": "ADMIN",
             "manager": "MANAGER",
             "marketing": "MARKETING",
-            "sales": "SALES"
+            "sales": "SALES",
         }
-        suffix = role_map.get(role, "SALES") # Default to strictest (SALES) for unknown roles
+        suffix = role_map.get(role, "SALES")  # Default to strictest (SALES) for unknown roles
 
         # Default safe values if DB fetch fails
         constraints = {
             "max_depth": 2,
             "max_concurrent": 3,
-            "allowed_domains": ["104.com.tw", "github.com", "google.com"]
+            "allowed_domains": ["104.com.tw", "github.com", "google.com"],
         }
 
         try:
@@ -66,7 +71,7 @@ class RBACService:
             result = supabase.table("archon_settings").select("key, value").in_("key", keys).execute()
 
             if result.data:
-                settings = {item['key']: item['value'] for item in result.data}
+                settings = {item["key"]: item["value"] for item in result.data}
 
                 depth_key = f"CRAWL_MAX_DEPTH_{suffix}"
                 if depth_key in settings:
@@ -82,25 +87,26 @@ class RBACService:
 
             # 2. 物理加固：從 archon_crawler_targets 動態抓取 David 在 3737 設定的白名單
             # 這實現了 David 在 3737 設定 URL 與後端爬蟲權限的物理連動
-            dynamic_result = supabase.table("archon_crawler_targets")\
-                .select("whitelist, target_url")\
-                .eq("is_active", True)\
-                .execute()
+            dynamic_result = (
+                supabase.table("archon_crawler_targets").select("whitelist, target_url").eq("is_active", True).execute()
+            )
 
             if dynamic_result.data:
                 from typing import cast
+
                 allowed_domains = cast(list[str], constraints["allowed_domains"])
 
                 for target in dynamic_result.data:
                     # 加入主網址網域 (Domain) 作為基本許可
                     from urllib.parse import urlparse
-                    domain = urlparse(target['target_url']).netloc
+
+                    domain = urlparse(target["target_url"]).netloc
                     if domain and domain not in allowed_domains:
                         allowed_domains.append(domain)
 
                     # 加入 David 設定的詳細白名單 Patterns
-                    if target.get('whitelist'):
-                        for pattern in target['whitelist']:
+                    if target.get("whitelist"):
+                        for pattern in target["whitelist"]:
                             if pattern and pattern not in allowed_domains:
                                 allowed_domains.append(pattern)
         except Exception as e:

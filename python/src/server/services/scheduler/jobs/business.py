@@ -2,6 +2,7 @@
 Business Monitoring Jobs for Scheduler
 Handles leads, market reports, and token analysis.
 """
+
 from datetime import UTC, datetime, timedelta
 
 from server.config.logfire_config import get_logger
@@ -9,22 +10,28 @@ from server.utils import get_supabase_client
 
 logger = get_logger(__name__)
 
+
 async def run_auto_fetch_leads():
     """Clockwork task to trigger Alice's daily lead auto-fetch."""
     logger.info("📡 Clockwork: Triggering daily Alice job search...")
     try:
         from server.services.job_board_service import JobBoardService
+
         service = JobBoardService()
         new_leads = await service.auto_fetch_daily_leads()
 
-        get_supabase_client().table("archon_logs").insert({
-            "source": "clockwork-scheduler", "level": "INFO",
-            "message": f"Daily auto-fetch completed. {new_leads} new leads saved.",
-            "details": {"new_leads_count": new_leads}
-        }).execute()
+        get_supabase_client().table("archon_logs").insert(
+            {
+                "source": "clockwork-scheduler",
+                "level": "INFO",
+                "message": f"Daily auto-fetch completed. {new_leads} new leads saved.",
+                "details": {"new_leads_count": new_leads},
+            }
+        ).execute()
         logger.info(f"✅ Clockwork: Alice daily auto-fetch finished ({new_leads} leads).")
     except Exception as e:
         logger.error(f"💥 Clockwork: Alice auto-fetch failed: {e}")
+
 
 async def run_daily_market_report():
     """Triggering Bob (MarketingBot) to summarize today's leads."""
@@ -32,6 +39,7 @@ async def run_daily_market_report():
     try:
         from server.services.agent_service import agent_service
         from server.services.projects.task_service import task_service
+
         supabase = get_supabase_client()
         one_day_ago = (datetime.now(UTC) - timedelta(hours=24)).isoformat()
         res = supabase.table("leads").select("company_name, job_title, status").gt("created_at", one_day_ago).execute()
@@ -54,12 +62,15 @@ Use the tool to save this blog post as a DRAFT."""
             logger.warning("Clockwork: No projects found to attach marketing task.")
             return
 
-        success, tr = await task_service.create_task(project_id=p_res.data[0]["id"], title=task_title, description=task_desc, assignee_id="ai-market-bot")
+        success, tr = await task_service.create_task(
+            project_id=p_res.data[0]["id"], title=task_title, description=task_desc, assignee_id="ai-market-bot"
+        )
         if success:
             logger.info(f"✍️ Clockwork: Created Market Report task {tr['task']['id']}. Dispatching Bob...")
-            await agent_service.run_agent_task(task_id=tr['task']['id'], agent_id="ai-market-bot")
+            await agent_service.run_agent_task(task_id=tr["task"]["id"], agent_id="ai-market-bot")
     except Exception as e:
         logger.error(f"💥 Clockwork: Bob market report generation failed: {e}")
+
 
 async def analyze_token_usage():
     """Token Usage Analysis & Retention."""
@@ -82,18 +93,22 @@ async def analyze_token_usage():
             total_tokens += est
 
         logger.info(f"📊 Daily Token Analysis: {total_tokens} tokens estimated across {len(usage_map)} users.")
-        supabase.table("archon_logs").insert({
-            "source": "clockwork-scheduler", "level": "INFO",
-            "message": f"Daily Token Analysis: {total_tokens} tokens",
-            "details": {
-                "type": "token_analysis",
-                "period": "24h",
-                "total_estimated": total_tokens,
-                "usage_breakdown": usage_map
+        supabase.table("archon_logs").insert(
+            {
+                "source": "clockwork-scheduler",
+                "level": "INFO",
+                "message": f"Daily Token Analysis: {total_tokens} tokens",
+                "details": {
+                    "type": "token_analysis",
+                    "period": "24h",
+                    "total_estimated": total_tokens,
+                    "usage_breakdown": usage_map,
+                },
             }
-        }).execute()
+        ).execute()
     except Exception as e:
         logger.error(f"💥 Clockwork: Token Analysis Failed: {e}")
+
 
 async def run_business_sentinel():
     """Scans leads for staleness (Sentinel logic with anti-spam)."""
@@ -101,7 +116,9 @@ async def run_business_sentinel():
     try:
         supabase = get_supabase_client()
         threshold_days = 14
-        res_settings = supabase.table("archon_settings").select("value").eq("key", "STALE_LEAD_THRESHOLD_DAYS").execute()
+        res_settings = (
+            supabase.table("archon_settings").select("value").eq("key", "STALE_LEAD_THRESHOLD_DAYS").execute()
+        )
         if res_settings.data:
             threshold_days = int(res_settings.data[0]["value"])
 
@@ -111,41 +128,83 @@ async def run_business_sentinel():
         seven_days_ago = (datetime.now(UTC) - timedelta(days=7)).isoformat()
 
         # 1. Stale Leads
-        res = supabase.table("leads").select("id, company_name, updated_at").lt("updated_at", cutoff_date).not_.in_("status", ["won", "converted"]).limit(20).execute()
+        res = (
+            supabase.table("leads")
+            .select("id, company_name, updated_at")
+            .lt("updated_at", cutoff_date)
+            .not_.in_("status", ["won", "converted"])
+            .limit(20)
+            .execute()
+        )
         stale_leads = res.data or []
         if not stale_leads:
             logger.info("🛡️ Clockwork: No stale leads found.")
         else:
-            company_names = ", ".join([lead['company_name'] for lead in stale_leads])
+            company_names = ", ".join([lead["company_name"] for lead in stale_leads])
             logger.info(f"🛡️ Sentinel: Found {len(stale_leads)} potential stale leads in DB: {company_names}")
 
             for lead in stale_leads:
                 # Anti-spam: Check if already alerted in last 7 days
-                existing = supabase.table("archon_logs").select("id").eq("source", "sentinel").eq("level", "ALERT").gt("created_at", seven_days_ago).filter("details->>lead_id", "eq", str(lead["id"])).execute()
+                existing = (
+                    supabase.table("archon_logs")
+                    .select("id")
+                    .eq("source", "sentinel")
+                    .eq("level", "ALERT")
+                    .gt("created_at", seven_days_ago)
+                    .filter("details->>lead_id", "eq", str(lead["id"]))
+                    .execute()
+                )
                 if existing.data:
                     continue
 
                 alert_payload = {
-                    "source": "sentinel", "level": "ALERT", "message": f"Stale Lead: {lead['company_name']}",
-                    "details": {"type": "stale_lead", "category": "business", "lead_id": lead["id"], "company": lead["company_name"]}
+                    "source": "sentinel",
+                    "level": "ALERT",
+                    "message": f"Stale Lead: {lead['company_name']}",
+                    "details": {
+                        "type": "stale_lead",
+                        "category": "business",
+                        "lead_id": lead["id"],
+                        "company": lead["company_name"],
+                    },
                 }
                 supabase.table("archon_logs").insert(alert_payload).execute()
                 logger.info(f"🛡️ Sentinel: Created alert for {lead['company_name']}")
 
         # 2. Content Bottlenecks (GAP-029)
         forty_eight_hours_ago = (datetime.now(UTC) - timedelta(hours=48)).isoformat()
-        post_res = supabase.table("blog_posts").select("id, title, updated_at").eq("status", "review").lt("updated_at", forty_eight_hours_ago).execute()
+        post_res = (
+            supabase.table("blog_posts")
+            .select("id, title, updated_at")
+            .eq("status", "review")
+            .lt("updated_at", forty_eight_hours_ago)
+            .execute()
+        )
         posts = post_res.data or []
         for post in posts:
             # Anti-spam
-            existing_p = supabase.table("archon_logs").select("id").eq("source", "sentinel").eq("level", "ALERT").gt("created_at", seven_days_ago).filter("details->>post_id", "eq", str(post["id"])).execute()
+            existing_p = (
+                supabase.table("archon_logs")
+                .select("id")
+                .eq("source", "sentinel")
+                .eq("level", "ALERT")
+                .gt("created_at", seven_days_ago)
+                .filter("details->>post_id", "eq", str(post["id"]))
+                .execute()
+            )
             if existing_p.data:
                 continue
 
             alert_payload = {
-                "source": "sentinel", "level": "ALERT",
+                "source": "sentinel",
+                "level": "ALERT",
                 "message": f"Content Bottleneck: '{post['title']}' stuck in review",
-                "details": {"type": "content_bottleneck", "category": "business", "post_id": post["id"], "title": post["title"]}
+                "details": {
+                    "type": "content_bottleneck",
+                    "category": "business",
+                    "post_id": post["id"],
+                    "title": post["title"],
+                },
             }
             supabase.table("archon_logs").insert(alert_payload).execute()
             logger.info(f"🛡️ Sentinel: Created bottleneck alert for {post['title']}")

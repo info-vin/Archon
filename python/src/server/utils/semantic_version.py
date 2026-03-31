@@ -23,16 +23,16 @@ def parse_version(version_string: str) -> tuple[int, int, int, str | None]:
     """
     # Remove 'v' prefix if present
     version = version_string.strip()
-    if version.lower().startswith('v'):
+    if version.lower().startswith("v"):
         version = version[1:]
 
     # Parse version with optional prerelease
-    pattern = r'^(\d+)\.(\d+)\.(\d+)(?:-(.+))?$'
+    pattern = r"^(\d+)\.(\d+)\.(\d+)(?:-(.+))?$"
     match = re.match(pattern, version)
 
     if not match:
         # Try to handle incomplete versions like "1.0"
-        simple_pattern = r'^(\d+)(?:\.(\d+))?(?:\.(\d+))?$'
+        simple_pattern = r"^(\d+)(?:\.(\d+))?(?:\.(\d+))?$"
         simple_match = re.match(simple_pattern, version)
         if simple_match:
             major = int(simple_match.group(1))

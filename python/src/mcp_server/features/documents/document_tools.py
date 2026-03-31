@@ -21,6 +21,7 @@ logger = logging.getLogger(__name__)
 # Optimization constants
 DEFAULT_PAGE_SIZE = 10
 
+
 def optimize_document_response(doc: dict) -> dict:
     """Optimize document object for MCP response."""
     doc = doc.copy()  # Don't modify original
@@ -72,9 +73,7 @@ def register_document_tools(mcp: FastMCP):
             # Single document get mode
             if document_id:
                 async with httpx.AsyncClient(timeout=timeout) as client:
-                    response = await client.get(
-                        urljoin(api_url, f"/api/projects/{project_id}/docs/{document_id}")
-                    )
+                    response = await client.get(urljoin(api_url, f"/api/projects/{project_id}/docs/{document_id}"))
 
                     if response.status_code == 200:
                         document = response.json()
@@ -92,9 +91,7 @@ def register_document_tools(mcp: FastMCP):
 
             # List mode
             async with httpx.AsyncClient(timeout=timeout) as client:
-                response = await client.get(
-                    urljoin(api_url, f"/api/projects/{project_id}/docs")
-                )
+                response = await client.get(urljoin(api_url, f"/api/projects/{project_id}/docs"))
 
                 if response.status_code == 200:
                     data = response.json()
@@ -107,7 +104,8 @@ def register_document_tools(mcp: FastMCP):
                     if query:
                         query_lower = query.lower()
                         documents = [
-                            d for d in documents
+                            d
+                            for d in documents
                             if query_lower in d.get("title", "").lower()
                             or query_lower in str(d.get("content", "")).lower()
                         ]
@@ -120,15 +118,17 @@ def register_document_tools(mcp: FastMCP):
                     # Optimize document responses - remove content from list views
                     optimized = [optimize_document_response(d) for d in paginated]
 
-                    return json.dumps({
-                        "success": True,
-                        "documents": optimized,
-                        "count": len(optimized),
-                        "total": len(documents),
-                        "project_id": project_id,
-                        "query": query,
-                        "document_type": document_type
-                    })
+                    return json.dumps(
+                        {
+                            "success": True,
+                            "documents": optimized,
+                            "count": len(optimized),
+                            "total": len(documents),
+                            "project_id": project_id,
+                            "query": query,
+                            "document_type": document_type,
+                        }
+                    )
                 else:
                     return MCPErrorFormatter.from_http_error(response, "list documents")
 
@@ -178,8 +178,7 @@ def register_document_tools(mcp: FastMCP):
                 if action == "create":
                     if not title or not document_type:
                         return MCPErrorFormatter.format_error(
-                            "validation_error",
-                            "title and document_type required for create"
+                            "validation_error", "title and document_type required for create"
                         )
 
                     response = await client.post(
@@ -190,7 +189,7 @@ def register_document_tools(mcp: FastMCP):
                             "content": content or {},
                             "tags": tags or [],
                             "author": author or "User",
-                        }
+                        },
                     )
 
                     if response.status_code == 200:
@@ -198,21 +197,20 @@ def register_document_tools(mcp: FastMCP):
                         document = result.get("document")
 
                         # Don't optimize for create - return full document
-                        return json.dumps({
-                            "success": True,
-                            "document": document,
-                            "document_id": document.get("id") if document else None,
-                            "message": result.get("message", "Document created successfully")
-                        })
+                        return json.dumps(
+                            {
+                                "success": True,
+                                "document": document,
+                                "document_id": document.get("id") if document else None,
+                                "message": result.get("message", "Document created successfully"),
+                            }
+                        )
                     else:
                         return MCPErrorFormatter.from_http_error(response, "create document")
 
                 elif action == "update":
                     if not document_id:
-                        return MCPErrorFormatter.format_error(
-                            "validation_error",
-                            "document_id required for update"
-                        )
+                        return MCPErrorFormatter.format_error("validation_error", "document_id required for update")
 
                     update_data: dict[str, Any] = {}
                     if title is not None:
@@ -225,14 +223,10 @@ def register_document_tools(mcp: FastMCP):
                         update_data["author"] = author
 
                     if not update_data:
-                        return MCPErrorFormatter.format_error(
-                            "validation_error",
-                            "No fields to update"
-                        )
+                        return MCPErrorFormatter.format_error("validation_error", "No fields to update")
 
                     response = await client.put(
-                        urljoin(api_url, f"/api/projects/{project_id}/docs/{document_id}"),
-                        json=update_data
+                        urljoin(api_url, f"/api/projects/{project_id}/docs/{document_id}"), json=update_data
                     )
 
                     if response.status_code == 200:
@@ -241,39 +235,32 @@ def register_document_tools(mcp: FastMCP):
 
                         # Don't optimize for update - return full document
 
-                        return json.dumps({
-                            "success": True,
-                            "document": document,
-                            "message": result.get("message", "Document updated successfully")
-                        })
+                        return json.dumps(
+                            {
+                                "success": True,
+                                "document": document,
+                                "message": result.get("message", "Document updated successfully"),
+                            }
+                        )
                     else:
                         return MCPErrorFormatter.from_http_error(response, "update document")
 
                 elif action == "delete":
                     if not document_id:
-                        return MCPErrorFormatter.format_error(
-                            "validation_error",
-                            "document_id required for delete"
-                        )
+                        return MCPErrorFormatter.format_error("validation_error", "document_id required for delete")
 
-                    response = await client.delete(
-                        urljoin(api_url, f"/api/projects/{project_id}/docs/{document_id}")
-                    )
+                    response = await client.delete(urljoin(api_url, f"/api/projects/{project_id}/docs/{document_id}"))
 
                     if response.status_code == 200:
                         result = response.json()
-                        return json.dumps({
-                            "success": True,
-                            "message": result.get("message", "Document deleted successfully")
-                        })
+                        return json.dumps(
+                            {"success": True, "message": result.get("message", "Document deleted successfully")}
+                        )
                     else:
                         return MCPErrorFormatter.from_http_error(response, "delete document")
 
                 else:
-                    return MCPErrorFormatter.format_error(
-                        "invalid_action",
-                        f"Unknown action: {action}"
-                    )
+                    return MCPErrorFormatter.format_error("invalid_action", f"Unknown action: {action}")
 
         except httpx.RequestError as e:
             return MCPErrorFormatter.from_exception(e, f"{action} document")

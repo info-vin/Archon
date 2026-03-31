@@ -68,10 +68,7 @@ class BaseSearchStrategy(BaseRepository):
 
             # Execute search
             query = self.supabase_client.rpc(table_rpc, rpc_params)
-            success, response = self.execute_query(
-                query.execute,
-                error_context=f"Vector search failed ({table_rpc})"
-            )
+            success, response = self.execute_query(query.execute, error_context=f"Vector search failed ({table_rpc})")
 
             if not success:
                 span.set_attribute("error", str(response.get("error")))

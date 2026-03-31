@@ -1,6 +1,7 @@
 """
 Version configuration for Archon.
 """
+
 import os
 
 # Current version of Archon

@@ -23,6 +23,7 @@ class HealthService(BaseRepository):
 
     def check_db_health(self) -> bool:
         """Checks if the database is reachable and responding."""
+
         def _query():
             return self.supabase_client.table("profiles").select("id", count="exact").limit(1).execute()
 
@@ -50,11 +51,7 @@ class HealthService(BaseRepository):
         db_score = 15.0 if db_ok else 0.0
 
         if not db_ok:
-            return {
-                "status": "unhealthy",
-                "score": 0.0,
-                "details": {"error": "Critical: Database connection lost."}
-            }
+            return {"status": "unhealthy", "score": 0.0, "details": {"error": "Critical: Database connection lost."}}
 
         # 2. Knowledge Alignment Check (70% weight)
         def _query_sources():
@@ -74,10 +71,18 @@ class HealthService(BaseRepository):
         alignment_score = 0.0
         indexed_count = 0
         if total_count > 0:
-            def _query_indexed():
-                return self.supabase_client.table("archon_crawled_pages").select("source_id", count="exact").not_.is_("embedding", "null").execute()
 
-            idx_success, idx_res = self.execute_query(_query_indexed, "Error counting indexed sources", require_data=False)
+            def _query_indexed():
+                return (
+                    self.supabase_client.table("archon_crawled_pages")
+                    .select("source_id", count="exact")
+                    .not_.is_("embedding", "null")
+                    .execute()
+                )
+
+            idx_success, idx_res = self.execute_query(
+                _query_indexed, "Error counting indexed sources", require_data=False
+            )
             if idx_success:
                 indexed_count = int(idx_res.get("count") or 0)
                 if indexed_count == 0:
@@ -86,7 +91,7 @@ class HealthService(BaseRepository):
 
                 alignment_score = (indexed_count / total_count) * 70.0
         else:
-            alignment_score = 70.0 # Default full if system is fresh/empty
+            alignment_score = 70.0  # Default full if system is fresh/empty
 
         # 3. Search Responsiveness Check (15% weight)
         rag = RAGService()
@@ -111,8 +116,8 @@ class HealthService(BaseRepository):
                 "search_active": search_ok,
                 "total_sources": total_count,
                 "indexed_sources": indexed_count,
-                "timestamp": datetime.datetime.now(datetime.UTC).isoformat()
-            }
+                "timestamp": datetime.datetime.now(datetime.UTC).isoformat(),
+            },
         }
 
     async def get_health_history(self, days: int = 30) -> dict[str, Any]:
@@ -122,12 +127,14 @@ class HealthService(BaseRepository):
         since = (datetime.datetime.now(datetime.UTC) - datetime.timedelta(days=days)).isoformat()
 
         def _query():
-            return self.supabase_client.table("archon_logs")\
-                .select("*")\
-                .eq("source", "clockwork-scheduler")\
-                .gt("created_at", since)\
-                .order("created_at", desc=True)\
+            return (
+                self.supabase_client.table("archon_logs")
+                .select("*")
+                .eq("source", "clockwork-scheduler")
+                .gt("created_at", since)
+                .order("created_at", desc=True)
                 .execute()
+            )
 
         success, res = self.execute_query(_query, "History fetch failed", require_data=False)
         if not success:
@@ -150,14 +157,8 @@ class HealthService(BaseRepository):
 
             if score is not None:
                 audit_trail.append(log)
-                trend.append({
-                    "date": log["created_at"][:10],
-                    "score": score
-                })
+                trend.append({"date": log["created_at"][:10], "score": score})
 
         trend.sort(key=lambda x: x["date"])
 
-        return {
-            "trend": trend,
-            "audit": audit_trail[:10]
-        }
+        return {"trend": trend, "audit": audit_trail[:10]}

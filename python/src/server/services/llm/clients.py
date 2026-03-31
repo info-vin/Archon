@@ -10,6 +10,7 @@ from .base import MockLLMClient, UsageTrackingClient
 
 logger = get_logger(__name__)
 
+
 @asynccontextmanager
 async def get_llm_client(
     provider: str | None = None,
@@ -73,7 +74,7 @@ async def get_llm_client(
                 resolved_api_key = None
             elif len(resolved_api_key) > 500:
                 raise ValueError("API key length exceeds security limits")
-            if resolved_api_key and any(char in resolved_api_key for char in ['\n', '\r', '\t', '\0']):
+            if resolved_api_key and any(char in resolved_api_key for char in ["\n", "\r", "\t", "\0"]):
                 raise ValueError("API key contains invalid characters")
 
         if not resolved_api_key and provider_name in ["openai", "google", "anthropic", "grok", "openrouter"]:
@@ -106,7 +107,7 @@ async def get_llm_client(
             client = openai.AsyncOpenAI(
                 api_key=resolved_api_key,
                 base_url=google_url,
-                default_headers={"x-goog-api-key": resolved_api_key.strip()}
+                default_headers={"x-goog-api-key": resolved_api_key.strip()},
             )
         elif provider_name == "grok":
             if not resolved_api_key:
@@ -116,7 +117,7 @@ async def get_llm_client(
             if not client:
                 client = openai.AsyncOpenAI(api_key=resolved_api_key or "unused", base_url=base_url)
 
-        if client and hasattr(client, 'chat') and hasattr(client.chat, 'completions'):
+        if client and hasattr(client, "chat") and hasattr(client.chat, "completions"):
             yield UsageTrackingClient(client, user_id, request_id or str(uuid.uuid4()), provider_name or "unknown")
         else:
             yield client
@@ -131,6 +132,7 @@ async def get_llm_client(
                     res = close_method()
                     if inspect.isawaitable(res):
                         await res
+
 
 async def create_embedding_client(config: dict[str, Any]) -> openai.AsyncOpenAI:
     p = config.get("provider")
@@ -149,22 +151,28 @@ async def create_embedding_client(config: dict[str, Any]) -> openai.AsyncOpenAI:
     if p == "google":
         if not key:
             raise ValueError("Google API key not found")
-        return openai.AsyncOpenAI(api_key=key, base_url=url or "https://generativelanguage.googleapis.com/v1beta/openai/", default_headers={"x-goog-api-key": key.strip()})
+        return openai.AsyncOpenAI(
+            api_key=key,
+            base_url=url or "https://generativelanguage.googleapis.com/v1beta/openai/",
+            default_headers={"x-goog-api-key": key.strip()},
+        )
 
     if p != "ollama":
         raise ValueError(f"Unsupported embedding provider: {p}")
 
     return openai.AsyncOpenAI(api_key=key, base_url=url)
 
+
 async def _get_optimal_ollama_instance(instance_type=None, use_embedding=False, override=None):
     if override:
         if isinstance(override, str):
-            if override.endswith('/v1'):
+            if override.endswith("/v1"):
                 return override
             return f"{override}/v1"
         return override
 
     from ..llm_provider_service import credential_service
+
     rag_data = await credential_service.get_credentials_by_category("rag_strategy")
 
     # DEFENSIVE: Ensure we have a real dictionary (handles Mock objects in tests)
@@ -175,14 +183,14 @@ async def _get_optimal_ollama_instance(instance_type=None, use_embedding=False, 
         embedding_url = rag_data.get("OLLAMA_EMBEDDING_URL")
         # DEFENSIVE: Ensure we have a real string
         if isinstance(embedding_url, str) and embedding_url:
-            if embedding_url.endswith('/v1'):
+            if embedding_url.endswith("/v1"):
                 return embedding_url
             return f"{embedding_url}/v1"
 
     url = rag_data.get("LLM_BASE_URL", "http://host.docker.internal:11434")
     # DEFENSIVE: Ensure we have a real string
     if isinstance(url, str):
-        if url.endswith('/v1'):
+        if url.endswith("/v1"):
             return url
         return f"{url}/v1"
     return "http://host.docker.internal:11434/v1"

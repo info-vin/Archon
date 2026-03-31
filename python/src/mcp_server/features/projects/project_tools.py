@@ -27,11 +27,13 @@ logger = logging.getLogger(__name__)
 MAX_DESCRIPTION_LENGTH = 1000
 DEFAULT_PAGE_SIZE = 10  # Reduced from 50
 
+
 def truncate_text(text: str, max_length: int = MAX_DESCRIPTION_LENGTH) -> str:
     """Truncate text to maximum length with ellipsis."""
     if text and len(text) > max_length:
-        return text[:max_length - 3] + "..."
+        return text[: max_length - 3] + "..."
     return text
+
 
 def optimize_project_response(project: dict) -> dict:
     """Optimize project object for MCP response."""
@@ -113,7 +115,8 @@ def register_project_tools(mcp: FastMCP):
                     if query:
                         query_lower = query.lower()
                         projects = [
-                            p for p in projects
+                            p
+                            for p in projects
                             if query_lower in p.get("title", "").lower()
                             or query_lower in p.get("description", "").lower()
                         ]
@@ -126,15 +129,17 @@ def register_project_tools(mcp: FastMCP):
                     # Optimize project responses
                     optimized = [optimize_project_response(p) for p in paginated]
 
-                    return json.dumps({
-                        "success": True,
-                        "projects": optimized,
-                        "count": len(optimized),
-                        "total": len(projects),
-                        "page": page,
-                        "per_page": per_page,
-                        "query": query
-                    })
+                    return json.dumps(
+                        {
+                            "success": True,
+                            "projects": optimized,
+                            "count": len(optimized),
+                            "total": len(projects),
+                            "page": page,
+                            "per_page": per_page,
+                            "query": query,
+                        }
+                    )
                 else:
                     return MCPErrorFormatter.from_http_error(response, "list projects")
 
@@ -177,18 +182,11 @@ def register_project_tools(mcp: FastMCP):
             async with httpx.AsyncClient(timeout=timeout) as client:
                 if action == "create":
                     if not title:
-                        return MCPErrorFormatter.format_error(
-                            "validation_error",
-                            "title required for create"
-                        )
+                        return MCPErrorFormatter.format_error("validation_error", "title required for create")
 
                     response = await client.post(
                         urljoin(api_url, "/api/projects"),
-                        json={
-                            "title": title,
-                            "description": description or "",
-                            "github_repo": github_repo
-                        }
+                        json={"title": title, "description": description or "", "github_repo": github_repo},
                     )
 
                     if response.status_code == 200:
@@ -215,18 +213,20 @@ def register_project_tools(mcp: FastMCP):
 
                                             if poll_data.get("status") == "completed":
                                                 project = poll_data.get("result", {}).get("project", {})
-                                                return json.dumps({
-                                                    "success": True,
-                                                    "project": optimize_project_response(project),
-                                                    "project_id": project.get("id"),
-                                                    "message": poll_data.get("result", {}).get("message", "Project created successfully")
-                                                })
+                                                return json.dumps(
+                                                    {
+                                                        "success": True,
+                                                        "project": optimize_project_response(project),
+                                                        "project_id": project.get("id"),
+                                                        "message": poll_data.get("result", {}).get(
+                                                            "message", "Project created successfully"
+                                                        ),
+                                                    }
+                                                )
                                             elif poll_data.get("status") == "failed":
                                                 error_msg = poll_data.get("error", "Project creation failed")
                                                 return MCPErrorFormatter.format_error(
-                                                    "creation_failed",
-                                                    error_msg,
-                                                    details=poll_data.get("details")
+                                                    "creation_failed", error_msg, details=poll_data.get("details")
                                                 )
                                             # Continue polling if still processing
 
@@ -236,32 +236,31 @@ def register_project_tools(mcp: FastMCP):
                                         return MCPErrorFormatter.format_error(
                                             "timeout",
                                             "Project creation timed out",
-                                            suggestion="Check project status manually"
+                                            suggestion="Check project status manually",
                                         )
 
                             return MCPErrorFormatter.format_error(
                                 "timeout",
                                 "Project creation timed out after maximum attempts",
-                                details={"progress_id": result.get("progress_id")}
+                                details={"progress_id": result.get("progress_id")},
                             )
                         else:
                             # Synchronous response
                             project = result.get("project", {})
-                            return json.dumps({
-                                "success": True,
-                                "project": optimize_project_response(project),
-                                "project_id": project.get("id"),
-                                "message": result.get("message", "Project created successfully")
-                            })
+                            return json.dumps(
+                                {
+                                    "success": True,
+                                    "project": optimize_project_response(project),
+                                    "project_id": project.get("id"),
+                                    "message": result.get("message", "Project created successfully"),
+                                }
+                            )
                     else:
                         return MCPErrorFormatter.from_http_error(response, "create project")
 
                 elif action == "update":
                     if not project_id:
-                        return MCPErrorFormatter.format_error(
-                            "validation_error",
-                            "project_id required for update"
-                        )
+                        return MCPErrorFormatter.format_error("validation_error", "project_id required for update")
 
                     update_data = {}
                     if title is not None:
@@ -272,15 +271,9 @@ def register_project_tools(mcp: FastMCP):
                         update_data["github_repo"] = github_repo
 
                     if not update_data:
-                        return MCPErrorFormatter.format_error(
-                            "validation_error",
-                            "No fields to update"
-                        )
+                        return MCPErrorFormatter.format_error("validation_error", "No fields to update")
 
-                    response = await client.put(
-                        urljoin(api_url, f"/api/projects/{project_id}"),
-                        json=update_data
-                    )
+                    response = await client.put(urljoin(api_url, f"/api/projects/{project_id}"), json=update_data)
 
                     if response.status_code == 200:
                         result = response.json()
@@ -289,39 +282,32 @@ def register_project_tools(mcp: FastMCP):
                         if project:
                             project = optimize_project_response(project)
 
-                        return json.dumps({
-                            "success": True,
-                            "project": project,
-                            "message": result.get("message", "Project updated successfully")
-                        })
+                        return json.dumps(
+                            {
+                                "success": True,
+                                "project": project,
+                                "message": result.get("message", "Project updated successfully"),
+                            }
+                        )
                     else:
                         return MCPErrorFormatter.from_http_error(response, "update project")
 
                 elif action == "delete":
                     if not project_id:
-                        return MCPErrorFormatter.format_error(
-                            "validation_error",
-                            "project_id required for delete"
-                        )
+                        return MCPErrorFormatter.format_error("validation_error", "project_id required for delete")
 
-                    response = await client.delete(
-                        urljoin(api_url, f"/api/projects/{project_id}")
-                    )
+                    response = await client.delete(urljoin(api_url, f"/api/projects/{project_id}"))
 
                     if response.status_code == 200:
                         result = response.json()
-                        return json.dumps({
-                            "success": True,
-                            "message": result.get("message", "Project deleted successfully")
-                        })
+                        return json.dumps(
+                            {"success": True, "message": result.get("message", "Project deleted successfully")}
+                        )
                     else:
                         return MCPErrorFormatter.from_http_error(response, "delete project")
 
                 else:
-                    return MCPErrorFormatter.format_error(
-                        "invalid_action",
-                        f"Unknown action: {action}"
-                    )
+                    return MCPErrorFormatter.format_error("invalid_action", f"Unknown action: {action}")
 
         except httpx.RequestError as e:
             return MCPErrorFormatter.from_exception(e, f"{action} project")

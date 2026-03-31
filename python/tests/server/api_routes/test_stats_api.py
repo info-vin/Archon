@@ -21,6 +21,7 @@ async def test_get_tasks_by_status():
         assert {"name": "todo", "value": 2} in result
         assert {"name": "done", "value": 1} in result
 
+
 @pytest.mark.asyncio
 async def test_get_member_performance():
     mock_data = [{"name": "Alice", "completed_tasks": 2}, {"name": "Bob", "completed_tasks": 1}]

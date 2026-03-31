@@ -1,4 +1,3 @@
-
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -12,6 +11,7 @@ def mock_supabase():
         client = MagicMock()
         mock.return_value = client
         yield client
+
 
 @pytest.mark.asyncio
 async def test_get_all_users(mock_supabase):
@@ -29,6 +29,7 @@ async def test_get_all_users(mock_supabase):
     assert len(users) == 2
     assert users[0]["role"] == "admin"
     mock_supabase.table.assert_called_with("profiles")
+
 
 @pytest.mark.asyncio
 async def test_update_user_role(mock_supabase):

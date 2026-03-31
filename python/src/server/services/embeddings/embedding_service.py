@@ -94,19 +94,13 @@ async def create_embedding(text: str) -> list[float]:
                 error_info = result.failed_items[0]
                 error_msg = error_info.get("error", "Unknown error")
                 if "quota" in error_msg.lower():
-                    raise EmbeddingQuotaExhaustedError(
-                        f"OpenAI quota exhausted: {error_msg}", text_preview=text
-                    )
+                    raise EmbeddingQuotaExhaustedError(f"OpenAI quota exhausted: {error_msg}", text_preview=text)
                 elif "rate" in error_msg.lower():
                     raise EmbeddingRateLimitError(f"Rate limit hit: {error_msg}", text_preview=text)
                 else:
-                    raise EmbeddingAPIError(
-                        f"Failed to create embedding: {error_msg}", text_preview=text
-                    )
+                    raise EmbeddingAPIError(f"Failed to create embedding: {error_msg}", text_preview=text)
             else:
-                raise EmbeddingAPIError(
-                    "No embeddings returned from batch creation", text_preview=text
-                )
+                raise EmbeddingAPIError("No embeddings returned from batch creation", text_preview=text)
         return result.embeddings[0]
     except EmbeddingError:
         # Re-raise our custom exceptions
@@ -118,15 +112,11 @@ async def create_embedding(text: str) -> list[float]:
         search_logger.error(f"Failed text preview: {text[:100]}...")
 
         if "insufficient_quota" in error_msg:
-            raise EmbeddingQuotaExhaustedError(
-                f"OpenAI quota exhausted: {error_msg}", text_preview=text
-            ) from e
+            raise EmbeddingQuotaExhaustedError(f"OpenAI quota exhausted: {error_msg}", text_preview=text) from e
         elif "rate_limit" in error_msg.lower():
             raise EmbeddingRateLimitError(f"Rate limit hit: {error_msg}", text_preview=text) from e
         else:
-            raise EmbeddingAPIError(
-                f"Embedding error: {error_msg}", text_preview=text, original_error=e
-            ) from e
+            raise EmbeddingAPIError(f"Embedding error: {error_msg}", text_preview=text, original_error=e) from e
 
 
 async def create_embeddings_batch(
@@ -164,7 +154,7 @@ async def create_embeddings_batch(
     texts = validated_texts
 
     result = EmbeddingBatchResult()
-    threading_service = get_threading_service() # Variable assigned and used now
+    threading_service = get_threading_service()  # Variable assigned and used now
 
     with safe_span("create_embeddings_batch", text_count=len(texts), total_chars=sum(len(t) for t in texts)) as span:
         try:
@@ -176,7 +166,7 @@ async def create_embeddings_batch(
             for idx, config in enumerate(configs):
                 client: openai.AsyncOpenAI | None = None
                 provider_name = config.get("provider", "unknown")
-                is_last_provider = (idx == len(configs) - 1)
+                is_last_provider = idx == len(configs) - 1
 
                 try:
                     search_logger.info(f"Attempting embedding creation with provider: {provider_name}")
@@ -189,18 +179,21 @@ async def create_embeddings_batch(
                     all_batches_succeeded_for_provider = True
                     for i in range(0, len(texts), batch_size):
                         batch = texts[i : i + batch_size]
-                        batch_index = i // batch_size # Variable used now
+                        batch_index = i // batch_size  # Variable used now
 
                         try:
                             batch_tokens = int(sum(len(text.split()) for text in batch) * 1.3)
                             rate_limit_callback = None
                             if progress_callback:
+
                                 async def rate_limit_callback(data: dict, res=result):
                                     processed = res.success_count + res.failure_count
                                     message = f"Rate limited: {data.get('message', 'Waiting...')}"
                                     await progress_callback(message, (processed / len(texts)) * 100)
 
-                            async with threading_service.rate_limited_operation(batch_tokens, rate_limit_callback): # Re-introduced rate limiting
+                            async with threading_service.rate_limited_operation(
+                                batch_tokens, rate_limit_callback
+                            ):  # Re-introduced rate limiting
                                 retry_count = 0
                                 max_retries = 3
                                 while retry_count < max_retries:
@@ -213,7 +206,12 @@ async def create_embeddings_batch(
                                                 # Use gemini-embedding-001 which is proven stable
                                                 # Fallback to config model if not explicit, then to a stable default
                                                 stable_model = config.get("embedding_model") or "gemini-embedding-001"
-                                                api_key_to_use = (config.get("api_key") or os.getenv("GEMINI_API_KEY") or "").strip().strip('"').strip("'")
+                                                api_key_to_use = (
+                                                    (config.get("api_key") or os.getenv("GEMINI_API_KEY") or "")
+                                                    .strip()
+                                                    .strip('"')
+                                                    .strip("'")
+                                                )
 
                                                 url = f"https://generativelanguage.googleapis.com/v1beta/models/{stable_model}:embedContent"
                                                 headers = {"x-goog-api-key": api_key_to_use}
@@ -221,7 +219,7 @@ async def create_embeddings_batch(
                                                 for text_item in batch:
                                                     payload = {
                                                         "content": {"parts": [{"text": text_item}]},
-                                                        "outputDimensionality": 768
+                                                        "outputDimensionality": 768,
                                                     }
                                                     resp = await http_client.post(url, headers=headers, json=payload)
 
@@ -229,20 +227,23 @@ async def create_embeddings_batch(
                                                         data = resp.json()
                                                         result.add_success(data["embedding"]["values"], text_item)
                                                     else:
-                                                        search_logger.error(f"Google native API failed: Status {resp.status_code}, Body: {resp.text}")
-                                                        raise EmbeddingAPIError(f"Google error {resp.status_code}: {resp.text}")
+                                                        search_logger.error(
+                                                            f"Google native API failed: Status {resp.status_code}, Body: {resp.text}"
+                                                        )
+                                                        raise EmbeddingAPIError(
+                                                            f"Google error {resp.status_code}: {resp.text}"
+                                                        )
                                         else:
                                             # Standard OpenAI-compatible call
                                             if provider_name != "google":
                                                 response = await client.embeddings.create(
                                                     model=cast(str, embedding_model),
                                                     input=batch,
-                                                    dimensions=embedding_dimensions
+                                                    dimensions=embedding_dimensions,
                                                 )
                                             else:
                                                 response = await client.embeddings.create(
-                                                    model=cast(str, embedding_model),
-                                                    input=batch
+                                                    model=cast(str, embedding_model), input=batch
                                                 )
 
                                             for item, text_item in zip(response.data, batch, strict=False):
@@ -251,26 +252,45 @@ async def create_embeddings_batch(
                                     except openai.RateLimitError as e:
                                         error_message = str(e)
                                         if "insufficient_quota" in error_message:
-                                            search_logger.error(f"Provider {provider_name} has insufficient quota.", exc_info=True)
+                                            search_logger.error(
+                                                f"Provider {provider_name} has insufficient quota.", exc_info=True
+                                            )
                                             raise
 
                                         retry_count += 1
                                         if retry_count >= max_retries:
-                                            search_logger.error(f"Rate limit retries exceeded for provider {provider_name}. Batch {batch_index}.", exc_info=True)
+                                            search_logger.error(
+                                                f"Rate limit retries exceeded for provider {provider_name}. Batch {batch_index}.",
+                                                exc_info=True,
+                                            )
                                             raise
 
-                                        wait_time = 2 ** retry_count
-                                        search_logger.warning(f"Rate limit hit for {provider_name}. Batch {batch_index}. Waiting {wait_time}s before retry {retry_count}/{max_retries}")
+                                        wait_time = 2**retry_count
+                                        search_logger.warning(
+                                            f"Rate limit hit for {provider_name}. Batch {batch_index}. Waiting {wait_time}s before retry {retry_count}/{max_retries}"
+                                        )
                                         await asyncio.sleep(wait_time)
                         except Exception as e:
                             # Re-raise specific exceptions that should trigger provider failover
-                            if isinstance(e, openai.AuthenticationError | openai.PermissionDeniedError | openai.APIConnectionError | openai.RateLimitError):
+                            if isinstance(
+                                e,
+                                openai.AuthenticationError
+                                | openai.PermissionDeniedError
+                                | openai.APIConnectionError
+                                | openai.RateLimitError,
+                            ):
                                 raise
 
                             all_batches_succeeded_for_provider = False
-                            search_logger.error(f"Batch {batch_index} failed for provider {provider_name}: {e}", exc_info=True) # batch_index used
+                            search_logger.error(
+                                f"Batch {batch_index} failed for provider {provider_name}: {e}", exc_info=True
+                            )  # batch_index used
                             for text in batch:
-                                result.add_failure(text, EmbeddingAPIError(f"Batch {batch_index} failed: {e}", original_error=e), batch_index)
+                                result.add_failure(
+                                    text,
+                                    EmbeddingAPIError(f"Batch {batch_index} failed: {e}", original_error=e),
+                                    batch_index,
+                                )
 
                         if progress_callback:
                             processed = result.success_count + result.failure_count
@@ -287,9 +307,14 @@ async def create_embeddings_batch(
 
                 except Exception as e:
                     last_exception = e
-                    search_logger.warning(f"Provider '{provider_name}' failed with {type(e).__name__}: {e}. Trying next if available.")
+                    search_logger.warning(
+                        f"Provider '{provider_name}' failed with {type(e).__name__}: {e}. Trying next if available."
+                    )
                     if is_last_provider:
-                        search_logger.error(f"All embedding providers failed. Final source of failure '{provider_name}': {e}", exc_info=True)
+                        search_logger.error(
+                            f"All embedding providers failed. Final source of failure '{provider_name}': {e}",
+                            exc_info=True,
+                        )
                         raise e
                 finally:
                     if client:
@@ -298,7 +323,9 @@ async def create_embeddings_batch(
                             # Try standard close method
                             close_method = getattr(client, "close", None)
                             if callable(close_method):
-                                is_coroutine = inspect.iscoroutinefunction(close_method) or inspect.isawaitable(close_method)
+                                is_coroutine = inspect.iscoroutinefunction(close_method) or inspect.isawaitable(
+                                    close_method
+                                )
                                 if is_coroutine:
                                     await close_method()
                                 else:

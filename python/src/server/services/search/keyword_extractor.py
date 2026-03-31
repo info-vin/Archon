@@ -246,9 +246,7 @@ class KeywordExtractor:
         self.stop_words = STOP_WORDS | TECHNICAL_STOP_WORDS
         self.preserve_keywords = PRESERVE_KEYWORDS
 
-    def extract_keywords(
-        self, query: str, min_length: int = 2, max_keywords: int = 10
-    ) -> list[str]:
+    def extract_keywords(self, query: str, min_length: int = 2, max_keywords: int = 10) -> list[str]:
         """
         Extract meaningful keywords from a search query.
 

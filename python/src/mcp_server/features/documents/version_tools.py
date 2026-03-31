@@ -21,6 +21,7 @@ logger = logging.getLogger(__name__)
 # Optimization constants
 DEFAULT_PAGE_SIZE = 10
 
+
 def optimize_version_response(version: dict) -> dict:
     """Optimize version object for MCP response."""
     version = version.copy()  # Don't modify original
@@ -90,10 +91,7 @@ def register_version_tools(mcp: FastMCP):
                 params["field_name"] = field_name
 
             async with httpx.AsyncClient(timeout=timeout) as client:
-                response = await client.get(
-                    urljoin(api_url, f"/api/projects/{project_id}/versions"),
-                    params=params
-                )
+                response = await client.get(urljoin(api_url, f"/api/projects/{project_id}/versions"), params=params)
 
                 if response.status_code == 200:
                     data = response.json()
@@ -107,14 +105,16 @@ def register_version_tools(mcp: FastMCP):
                     # Optimize version responses
                     optimized = [optimize_version_response(v) for v in paginated]
 
-                    return json.dumps({
-                        "success": True,
-                        "versions": optimized,
-                        "count": len(optimized),
-                        "total": len(versions),
-                        "project_id": project_id,
-                        "field_name": field_name
-                    })
+                    return json.dumps(
+                        {
+                            "success": True,
+                            "versions": optimized,
+                            "count": len(optimized),
+                            "total": len(versions),
+                            "project_id": project_id,
+                            "field_name": field_name,
+                        }
+                    )
                 else:
                     return MCPErrorFormatter.from_http_error(response, "list versions")
 
@@ -161,10 +161,7 @@ def register_version_tools(mcp: FastMCP):
             async with httpx.AsyncClient(timeout=timeout) as client:
                 if action == "create":
                     if not content:
-                        return MCPErrorFormatter.format_error(
-                            "validation_error",
-                            "content required for create"
-                        )
+                        return MCPErrorFormatter.format_error("validation_error", "content required for create")
 
                     response = await client.post(
                         urljoin(api_url, f"/api/projects/{project_id}/versions"),
@@ -174,7 +171,7 @@ def register_version_tools(mcp: FastMCP):
                             "change_summary": change_summary or "No summary provided",
                             "document_id": document_id,
                             "created_by": created_by,
-                        }
+                        },
                     )
 
                     if response.status_code == 200:
@@ -183,41 +180,41 @@ def register_version_tools(mcp: FastMCP):
 
                         # Don't optimize for create - return full version
 
-                        return json.dumps({
-                            "success": True,
-                            "version": version,
-                            "message": result.get("message", "Version created successfully")
-                        })
+                        return json.dumps(
+                            {
+                                "success": True,
+                                "version": version,
+                                "message": result.get("message", "Version created successfully"),
+                            }
+                        )
                     else:
                         return MCPErrorFormatter.from_http_error(response, "create version")
 
                 elif action == "restore":
                     if version_number is None:
-                        return MCPErrorFormatter.format_error(
-                            "validation_error",
-                            "version_number required for restore"
-                        )
+                        return MCPErrorFormatter.format_error("validation_error", "version_number required for restore")
 
                     response = await client.post(
                         urljoin(api_url, f"/api/projects/{project_id}/versions/{field_name}/{version_number}/restore"),
-                        json={}
+                        json={},
                     )
 
                     if response.status_code == 200:
                         result = response.json()
-                        return json.dumps({
-                            "success": True,
-                            "message": result.get("message", "Version restored successfully"),
-                            "field_name": field_name,
-                            "version_number": version_number
-                        })
+                        return json.dumps(
+                            {
+                                "success": True,
+                                "message": result.get("message", "Version restored successfully"),
+                                "field_name": field_name,
+                                "version_number": version_number,
+                            }
+                        )
                     else:
                         return MCPErrorFormatter.from_http_error(response, "restore version")
 
                 else:
                     return MCPErrorFormatter.format_error(
-                        "invalid_action",
-                        f"Unknown action: {action}. Use 'create' or 'restore'"
+                        "invalid_action", f"Unknown action: {action}. Use 'create' or 'restore'"
                     )
 
         except httpx.RequestError as e:

@@ -115,7 +115,7 @@ class RateLimiter:
                         extra={
                             "tokens": estimated_tokens,
                             "current_usage": self._get_current_usage(),
-                        }
+                        },
                     )
                     wait_time_to_sleep = wait_time
                 else:
@@ -130,11 +130,13 @@ class RateLimiter:
                         await asyncio.sleep(5)
                         remaining = wait_time_to_sleep - (i + 1) * 5
                         if progress_callback is not None:
-                            await progress_callback({
-                                "type": "rate_limit_wait",
-                                "remaining_seconds": max(0, remaining),
-                                "message": f"waiting {max(0, remaining):.1f}s more..."
-                            })
+                            await progress_callback(
+                                {
+                                    "type": "rate_limit_wait",
+                                    "remaining_seconds": max(0, remaining),
+                                    "message": f"waiting {max(0, remaining):.1f}s more...",
+                                }
+                            )
                     # Sleep any remaining time
                     if wait_time_to_sleep % 5 > 0:
                         await asyncio.sleep(wait_time_to_sleep % 5)
@@ -233,7 +235,7 @@ class MemoryAdaptiveDispatcher:
                 extra={
                     "memory_percent": metrics.memory_percent,
                     "workers": workers,
-                }
+                },
             )
         elif metrics.cpu_percent > self.config.cpu_threshold * 100:
             # Reduce workers when CPU is high
@@ -243,7 +245,7 @@ class MemoryAdaptiveDispatcher:
                 extra={
                     "cpu_percent": metrics.cpu_percent,
                     "workers": workers,
-                }
+                },
             )
         elif metrics.memory_percent < 50 and metrics.cpu_percent < 50:
             # Increase workers when resources are available
@@ -280,7 +282,7 @@ class MemoryAdaptiveDispatcher:
                     "mode": mode,
                     "memory_percent": self.last_metrics.memory_percent,
                     "cpu_percent": self.last_metrics.cpu_percent,
-                }
+                },
             )
 
         # Track active workers
@@ -304,13 +306,15 @@ class MemoryAdaptiveDispatcher:
                 try:
                     # Report worker started
                     if progress_callback and worker_id:
-                        await progress_callback({
-                            "type": "worker_started",
-                            "worker_id": worker_id,
-                            "item_index": index,
-                            "total_items": len(items),
-                            "message": f"Worker {worker_id} processing item {index + 1}",
-                        })
+                        await progress_callback(
+                            {
+                                "type": "worker_started",
+                                "worker_id": worker_id,
+                                "item_index": index,
+                                "total_items": len(items),
+                                "message": f"Worker {worker_id} processing item {index + 1}",
+                            }
+                        )
 
                     # For CPU-intensive work, run in thread pool
                     if mode == ProcessingMode.CPU_INTENSIVE:
@@ -331,15 +335,16 @@ class MemoryAdaptiveDispatcher:
 
                     # Progress reporting with worker info
                     if progress_callback:
-                        await progress_callback({
-                            "type": "worker_completed",
-                            "worker_id": worker_id,
-                            "item_index": index,
-                            "completed_count": completed_count,
-                            "total_items": len(items),
-                            "message": f"Worker {worker_id} completed item {index + 1}",
-                        })
-
+                        await progress_callback(
+                            {
+                                "type": "worker_completed",
+                                "worker_id": worker_id,
+                                "item_index": index,
+                                "completed_count": completed_count,
+                                "total_items": len(items),
+                                "message": f"Worker {worker_id} completed item {index + 1}",
+                            }
+                        )
 
                     return result
 
@@ -350,8 +355,7 @@ class MemoryAdaptiveDispatcher:
                             del active_workers[worker_id]
 
                     logfire_logger.error(
-                        f"Processing failed for item {index}",
-                        extra={"error": str(e), "item_index": index}
+                        f"Processing failed for item {index}", extra={"error": str(e), "item_index": index}
                     )
                     return None
 
@@ -369,8 +373,7 @@ class MemoryAdaptiveDispatcher:
             if isinstance(result, Exception):
                 failed_items.append({"index": idx, "error": str(result)})
                 logfire_logger.error(
-                    f"Task failed with exception for item {idx}",
-                    extra={"error": str(result), "item_index": idx}
+                    f"Task failed with exception for item {idx}", extra={"error": str(result), "item_index": idx}
                 )
             elif result is None:
                 failed_items.append({"index": idx, "error": "Processing returned None"})
@@ -390,18 +393,11 @@ class MemoryAdaptiveDispatcher:
 
         if failed_items:
             log_extra["failed_items"] = failed_items
-            logfire_logger.warning(
-                f"Adaptive processing completed with {len(failed_items)} failures",
-                extra=log_extra
-            )
+            logfire_logger.warning(f"Adaptive processing completed with {len(failed_items)} failures", extra=log_extra)
         else:
-            logfire_logger.info(
-                "Adaptive processing completed successfully",
-                extra=log_extra
-            )
+            logfire_logger.info("Adaptive processing completed successfully", extra=log_extra)
 
         return successful_results
-
 
 
 class ThreadingService:
@@ -417,12 +413,8 @@ class ThreadingService:
         self.memory_dispatcher = MemoryAdaptiveDispatcher(self.config)
 
         # Thread pools for different workload types
-        self.cpu_executor = ThreadPoolExecutor(
-            max_workers=self.config.max_workers, thread_name_prefix="archon-cpu"
-        )
-        self.io_executor = ThreadPoolExecutor(
-            max_workers=self.config.max_workers * 2, thread_name_prefix="archon-io"
-        )
+        self.cpu_executor = ThreadPoolExecutor(max_workers=self.config.max_workers, thread_name_prefix="archon-cpu")
+        self.io_executor = ThreadPoolExecutor(max_workers=self.config.max_workers * 2, thread_name_prefix="archon-io")
 
         self._running = False
         self._health_check_task: asyncio.Task[None] | None = None
@@ -506,7 +498,6 @@ class ThreadingService:
             enable_worker_tracking=enable_worker_tracking,
         )
 
-
     def get_system_metrics(self) -> SystemMetrics:
         """Get current system performance metrics"""
         return self.memory_dispatcher.get_system_metrics()
@@ -525,22 +516,17 @@ class ThreadingService:
                         "cpu_percent": metrics.cpu_percent,
                         "available_memory_gb": metrics.available_memory_gb,
                         "active_threads": metrics.active_threads,
-                    }
+                    },
                 )
 
                 # Alert on critical thresholds
                 if metrics.memory_percent > 90:
-                    logfire_logger.warning(
-                        "Critical memory usage",
-                        extra={"memory_percent": metrics.memory_percent}
-                    )
+                    logfire_logger.warning("Critical memory usage", extra={"memory_percent": metrics.memory_percent})
                     # Force garbage collection
                     gc.collect()
 
                 if metrics.cpu_percent > 95:
-                    logfire_logger.warning(
-                        "Critical CPU usage", extra={"cpu_percent": metrics.cpu_percent}
-                    )
+                    logfire_logger.warning("Critical CPU usage", extra={"cpu_percent": metrics.cpu_percent})
 
                 # Check for memory leaks (too many threads)
                 if metrics.active_threads > self.config.max_workers * 3:
@@ -549,7 +535,7 @@ class ThreadingService:
                         extra={
                             "active_threads": metrics.active_threads,
                             "max_expected": self.config.max_workers * 3,
-                        }
+                        },
                     )
 
                 await asyncio.sleep(self.config.health_check_interval)

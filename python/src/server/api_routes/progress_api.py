@@ -16,11 +16,7 @@ router = APIRouter(prefix="/api/progress", tags=["progress"])
 
 
 @router.get("/{operation_id}")
-async def get_progress(
-    operation_id: str,
-    response: Response,
-    if_none_match: str | None = Header(None)
-):
+async def get_progress(operation_id: str, response: Response, if_none_match: str | None = Header(None)):
     """
     Get progress for an operation with ETag support.
 
@@ -35,11 +31,7 @@ async def get_progress(
 
         if not operation:
             logger.warning(f"Operation not found | operation_id={operation_id}")
-            raise HTTPException(
-                status_code=404,
-                detail={"error": f"Operation {operation_id} not found"}
-            )
-
+            raise HTTPException(status_code=404, detail={"error": f"Operation {operation_id} not found"})
 
         # Ensure we have the progress_id in the data
         operation["progress_id"] = operation_id
@@ -50,13 +42,14 @@ async def get_progress(
         # Create standardized response using Pydantic model
         progress_response = create_progress_response(operation_type, operation)
 
-
         # Convert to dict with camelCase fields for API response
         response_data = progress_response.model_dump(by_alias=True, exclude_none=True)
 
         # Debug logging for code extraction fields
         if operation_type == "crawl" and operation.get("status") == "code_extraction":
-            logger.info(f"Code extraction response fields: completedSummaries={response_data.get('completedSummaries')}, totalSummaries={response_data.get('totalSummaries')}, codeBlocksFound={response_data.get('codeBlocksFound')}")
+            logger.info(
+                f"Code extraction response fields: completedSummaries={response_data.get('completedSummaries')}, totalSummaries={response_data.get('totalSummaries')}, codeBlocksFound={response_data.get('codeBlocksFound')}"
+            )
 
         # Generate ETag from stable data (excluding timestamp)
         etag_data = {k: v for k, v in response_data.items() if k != "timestamp"}
@@ -82,7 +75,9 @@ async def get_progress(
             # No need to poll completed/failed operations
             response.headers["X-Poll-Interval"] = "0"
 
-        logger.info(f"Progress retrieved | operation_id={operation_id} | status={response_data.get('status')} | progress={response_data.get('progress')}")
+        logger.info(
+            f"Progress retrieved | operation_id={operation_id} | status={response_data.get('status')} | progress={response_data.get('progress')}"
+        )
 
         return response_data
 
@@ -109,21 +104,23 @@ async def list_active_operations():
         # Get active operations from ProgressTracker
         for op_id, operation in ProgressTracker._progress_states.items():
             if operation.get("status") in ["starting", "running", "crawling", "processing"]:
-                active_operations.append({
-                    "operation_id": op_id,
-                    "operation_type": operation.get("type", "unknown"),
-                    "status": operation.get("status"),
-                    "progress": operation.get("progress", 0),
-                    "message": operation.get("log", "Processing..."),
-                    "started_at": operation.get("start_time"),
-                })
+                active_operations.append(
+                    {
+                        "operation_id": op_id,
+                        "operation_type": operation.get("type", "unknown"),
+                        "status": operation.get("status"),
+                        "progress": operation.get("progress", 0),
+                        "message": operation.get("log", "Processing..."),
+                        "started_at": operation.get("start_time"),
+                    }
+                )
 
         logger.info(f"Active operations listed | count={len(active_operations)}")
 
         return {
             "operations": active_operations,
             "count": len(active_operations),
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.utcnow().isoformat(),
         }
 
     except Exception as e:

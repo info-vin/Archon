@@ -8,11 +8,9 @@ from src.server.services.blog_service import BlogService
 
 # Skip integration tests if no real Supabase credentials
 @pytest.mark.skipif(
-    not os.getenv("SUPABASE_URL") or not os.getenv("SUPABASE_SERVICE_KEY"),
-    reason="Requires real Supabase credentials"
+    not os.getenv("SUPABASE_URL") or not os.getenv("SUPABASE_SERVICE_KEY"), reason="Requires real Supabase credentials"
 )
 class TestSupabaseIntegration:
-
     @pytest.fixture
     def auth_service(self):
         return AuthService()
@@ -45,7 +43,7 @@ class TestSupabaseIntegration:
                 "email": "integration_test@example.com",
                 "name": "Integration Test",
                 "role": "member",
-                "status": "active"
+                "status": "active",
             }
 
             # This is the line we expect to fail if syntax is wrong

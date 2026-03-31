@@ -4,6 +4,7 @@ Scheduler Service (Refactored)
 The central Clockwork engine for Archon.
 Logic is delegated to 'jobs/' sub-modules for modularity.
 """
+
 from datetime import UTC, datetime, timedelta
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
@@ -13,6 +14,7 @@ from server.config.logfire_config import get_logger
 from server.services.scheduler.jobs import business, patrol, task_dispatcher
 
 logger = get_logger(__name__)
+
 
 class SchedulerService:
     _instance = None
@@ -28,6 +30,7 @@ class SchedulerService:
         """Helper to fetch numerical settings from DB."""
         try:
             from server.utils import get_supabase_client
+
             supabase = get_supabase_client()
             res = supabase.table("archon_settings").select("value").eq("key", key).execute()
             if res.data:
@@ -53,6 +56,7 @@ class SchedulerService:
         """Robust last run persistence."""
         try:
             from server.utils import get_supabase_client
+
             supabase = get_supabase_client()
             now_iso = datetime.now(UTC).isoformat()
             res = supabase.table("archon_settings").select("key").eq("key", key).execute()
@@ -67,10 +71,11 @@ class SchedulerService:
         """Robust last run retrieval."""
         try:
             from server.utils import get_supabase_client
+
             supabase = get_supabase_client()
             res = supabase.table("archon_settings").select("value").eq("key", key).execute()
             if res.data:
-                return datetime.fromisoformat(res.data[0]["value"].replace('Z', '+00:00'))
+                return datetime.fromisoformat(res.data[0]["value"].replace("Z", "+00:00"))
         except Exception:
             pass
         return None
@@ -87,6 +92,7 @@ class SchedulerService:
             expected = last_run + timedelta(hours=trigger_hours)
             if expected > now:
                 next_run = expected
+
         async def stateful_wrapper():
             logger.info(f"🕒 Clockwork: Executing stateful job '{job_id}'")
             try:
@@ -95,8 +101,16 @@ class SchedulerService:
                 await self._update_last_run(db_key)
 
         if self._scheduler:
-            self._scheduler.add_job(stateful_wrapper, trigger=IntervalTrigger(hours=trigger_hours), id=job_id, replace_existing=True, next_run_time=next_run)
-            logger.info(f"✅ Scheduled Job: {job_id} (Every {trigger_hours}h, Next: {next_run.strftime('%Y-%m-%d %H:%M:%S UTC')})")
+            self._scheduler.add_job(
+                stateful_wrapper,
+                trigger=IntervalTrigger(hours=trigger_hours),
+                id=job_id,
+                replace_existing=True,
+                next_run_time=next_run,
+            )
+            logger.info(
+                f"✅ Scheduled Job: {job_id} (Every {trigger_hours}h, Next: {next_run.strftime('%Y-%m-%d %H:%M:%S UTC')})"
+            )
 
     async def _schedule_jobs(self):
         if not self._scheduler:
@@ -107,12 +121,24 @@ class SchedulerService:
         sentinel_hours = await self._get_setting("SCHEDULER_SENTINEL_INTERVAL_HOURS", 12)
 
         # 1. Patrol Jobs
-        self._scheduler.add_job(self._run_system_probe, trigger=IntervalTrigger(minutes=probe_mins), id="system_probe", replace_existing=True)
+        self._scheduler.add_job(
+            self._run_system_probe,
+            trigger=IntervalTrigger(minutes=probe_mins),
+            id="system_probe",
+            replace_existing=True,
+        )
         logger.info(f"✅ Scheduled Job: System Probe (Every {probe_mins} mins)")
 
-        self._scheduler.add_job(self._cleanup_system_probes, trigger=IntervalTrigger(hours=1), id="system_probe_cleanup", replace_existing=True)
+        self._scheduler.add_job(
+            self._cleanup_system_probes,
+            trigger=IntervalTrigger(hours=1),
+            id="system_probe_cleanup",
+            replace_existing=True,
+        )
 
-        self._scheduler.add_job(self._run_log_patrol, trigger=IntervalTrigger(minutes=patrol_mins), id="log_patrol", replace_existing=True)
+        self._scheduler.add_job(
+            self._run_log_patrol, trigger=IntervalTrigger(minutes=patrol_mins), id="log_patrol", replace_existing=True
+        )
         logger.info(f"✅ Scheduled Job: Log Patrol (Every {patrol_mins} mins)")
 
         # 2. Business Jobs (Stateful)
@@ -122,18 +148,38 @@ class SchedulerService:
         await self._schedule_stateful_job(self._run_daily_market_report, 24, "bob_market_report")
 
         # 3. Task Dispatcher
-        self._scheduler.add_job(self._run_task_dispatcher, trigger=IntervalTrigger(minutes=30), id="task_dispatcher", replace_existing=True)
+        self._scheduler.add_job(
+            self._run_task_dispatcher, trigger=IntervalTrigger(minutes=30), id="task_dispatcher", replace_existing=True
+        )
         logger.info("✅ Scheduled Job: Task Dispatcher (Every 30 mins)")
 
     # Delegation Methods
-    async def _run_system_probe(self): await patrol.run_system_probe()
-    async def _run_log_patrol(self): await patrol.run_log_patrol()
-    async def _cleanup_system_probes(self): await patrol.cleanup_system_probes()
-    async def _run_auto_fetch_leads(self): await business.run_auto_fetch_leads()
-    async def _analyze_token_usage(self): await business.analyze_token_usage()
-    async def _run_business_sentinel(self): await business.run_business_sentinel()
-    async def run_business_sentinel(self): await business.run_business_sentinel()
-    async def _run_daily_market_report(self): await business.run_daily_market_report()
-    async def _run_task_dispatcher(self): await task_dispatcher.run_task_dispatcher()
+    async def _run_system_probe(self):
+        await patrol.run_system_probe()
+
+    async def _run_log_patrol(self):
+        await patrol.run_log_patrol()
+
+    async def _cleanup_system_probes(self):
+        await patrol.cleanup_system_probes()
+
+    async def _run_auto_fetch_leads(self):
+        await business.run_auto_fetch_leads()
+
+    async def _analyze_token_usage(self):
+        await business.analyze_token_usage()
+
+    async def _run_business_sentinel(self):
+        await business.run_business_sentinel()
+
+    async def run_business_sentinel(self):
+        await business.run_business_sentinel()
+
+    async def _run_daily_market_report(self):
+        await business.run_daily_market_report()
+
+    async def _run_task_dispatcher(self):
+        await task_dispatcher.run_task_dispatcher()
+
 
 scheduler_service = SchedulerService()

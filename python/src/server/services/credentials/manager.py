@@ -1,23 +1,26 @@
-
 import os
 import re
 import time
 from dataclasses import dataclass
-from typing import Any, cast, Optional, List, Dict
+from typing import Any, cast
+
 from supabase import Client, create_client
+
 from ...config.logfire_config import get_logger
 from .encryption_util import EncryptionUtil
 
 logger = get_logger(__name__)
 
+
 @dataclass
 class CredentialItem:
     """
     Represents a credential/setting item.
-    
-    This is used primarily for the Settings UI to represent the state 
+
+    This is used primarily for the Settings UI to represent the state
     of a specific configuration key.
     """
+
     key: str
     value: str | None = None
     encrypted_value: str | None = None
@@ -25,12 +28,13 @@ class CredentialItem:
     category: str | None = None
     description: str | None = None
 
+
 class CredentialManager:
     """
     Service for managing application credentials and configuration.
-    
-    Handles loading, storing, and accessing credentials with encryption 
-    for sensitive values. Credentials include API keys, service credentials, 
+
+    Handles loading, storing, and accessing credentials with encryption
+    for sensitive values. Credentials include API keys, service credentials,
     and application configuration stored in the archon_settings table.
     """
 
@@ -46,10 +50,10 @@ class CredentialManager:
         """
         Get or create a properly configured Supabase client using environment variables.
         Uses the standard Supabase client initialization.
-        
+
         Returns:
             A configured Supabase Client instance.
-            
+
         Raises:
             ValueError: If required environment variables are missing.
         """
@@ -58,9 +62,7 @@ class CredentialManager:
             key = os.getenv("SUPABASE_SERVICE_KEY")
 
             if not url or not key:
-                raise ValueError(
-                    "SUPABASE_URL and SUPABASE_SERVICE_KEY must be set in environment variables"
-                )
+                raise ValueError("SUPABASE_URL and SUPABASE_SERVICE_KEY must be set in environment variables")
 
             try:
                 # Initialize with standard Supabase client - no need for custom headers
@@ -84,7 +86,7 @@ class CredentialManager:
         """
         Load all credentials from database and cache them.
         This is typically called at system startup via initialize_credentials.
-        
+
         Returns:
             A dictionary of all loaded credentials.
         """
@@ -123,15 +125,15 @@ class CredentialManager:
     async def get_credential(self, key: str, default: Any = None, decrypt: bool = True) -> Any:
         """
         Get a credential value by key.
-        
-        This method checks the internal cache first, and falls back to OS 
+
+        This method checks the internal cache first, and falls back to OS
         environment variables if the key is not found or empty in the database.
-        
+
         Args:
             key: The configuration key to look up.
             default: Value to return if the key is not found.
             decrypt: Whether to automatically decrypt encrypted values.
-            
+
         Returns:
             The credential value, or the default value if not found.
         """
@@ -145,7 +147,8 @@ class CredentialManager:
             encrypted_value = value.get("encrypted_value")
             if encrypted_value:
                 try:
-                    return EncryptionUtil.decrypt_value(encrypted_value)
+                    # SELF-DELEGATION: Use internal method to allow object-level mocking in tests
+                    return self._decrypt_value(encrypted_value)
                 except Exception as e:
                     logger.error(f"Failed to decrypt credential {key}: {e}")
                     return default
@@ -166,10 +169,10 @@ class CredentialManager:
     async def get_encrypted_credential_raw(self, key: str) -> str | None:
         """
         Get the raw encrypted value for a credential (without decryption).
-        
+
         Args:
             key: The configuration key.
-            
+
         Returns:
             The raw encrypted string or None.
         """
@@ -210,11 +213,12 @@ class CredentialManager:
                 "key": key,
                 "is_encrypted": is_encrypted,
                 "category": category,
-                "description": description
+                "description": description,
             }
 
             if is_encrypted:
-                data["encrypted_value"] = EncryptionUtil.encrypt_value(value)
+                # SELF-DELEGATION: Use internal method to allow object-level mocking in tests
+                data["encrypted_value"] = self._encrypt_value(value)
                 data["value"] = None
             else:
                 data["value"] = value
@@ -232,9 +236,7 @@ class CredentialManager:
                 self._rag_cache_timestamp = None
                 logger.debug(f"Invalidated RAG settings cache due to update of {key}")
 
-            logger.info(
-                f"Successfully {'encrypted and ' if is_encrypted else ''}stored credential: {key}"
-            )
+            logger.info(f"Successfully {'encrypted and ' if is_encrypted else ''}stored credential: {key}")
             return True
 
         except Exception as e:
@@ -244,10 +246,10 @@ class CredentialManager:
     async def delete_credential(self, key: str) -> bool:
         """
         Delete a credential from database and cache.
-        
+
         Args:
             key: The key to delete.
-            
+
         Returns:
             True if successful.
         """
@@ -277,8 +279,8 @@ class CredentialManager:
     async def get_credentials_by_category(self, category: str) -> dict[str, Any]:
         """
         Get all credentials for a specific category.
-        
-        Special caching is applied for the 'rag_strategy' category to 
+
+        Special caching is applied for the 'rag_strategy' category to
         reduce redundant database calls during high-frequency RAG operations.
         """
         if not self._cache_initialized:
@@ -287,16 +289,17 @@ class CredentialManager:
         # Special caching for rag_strategy category
         if category == "rag_strategy":
             current_time = time.time()
-            if (self._rag_settings_cache is not None and self._rag_cache_timestamp is not None 
-                and current_time - self._rag_cache_timestamp < self._rag_cache_ttl):
+            if (
+                self._rag_settings_cache is not None
+                and self._rag_cache_timestamp is not None
+                and current_time - self._rag_cache_timestamp < self._rag_cache_ttl
+            ):
                 logger.debug("Using cached RAG settings")
                 return self._rag_settings_cache
 
         try:
             supabase = self._get_supabase_client()
-            result = (
-                supabase.table("archon_settings").select("*").eq("category", category).execute()
-            )
+            result = supabase.table("archon_settings").select("*").eq("category", category).execute()
 
             credentials = {}
             for item in result.data:
@@ -489,12 +492,14 @@ class CredentialManager:
                 base_url = self._get_provider_base_url(provider, rag_settings)
 
                 if api_key:
-                    configs.append({
-                        "provider": provider,
-                        "api_key": api_key,
-                        "base_url": base_url,
-                        "embedding_model": embedding_model,
-                    })
+                    configs.append(
+                        {
+                            "provider": provider,
+                            "api_key": api_key,
+                            "base_url": base_url,
+                            "embedding_model": embedding_model,
+                        }
+                    )
 
             return configs
 
@@ -535,3 +540,13 @@ class CredentialManager:
         except Exception as e:
             logger.error(f"Error setting active provider {provider} for {service_type}: {e}")
             return False
+
+    # BACKWARD COMPATIBILITY ALIASES (Physical Alignment with Phase 4.6 Legacy)
+    def _encrypt_value(self, value: str) -> str:
+        return EncryptionUtil.encrypt_value(value)
+
+    def _decrypt_value(self, encrypted_value: str) -> str:
+        return EncryptionUtil.decrypt_value(encrypted_value)
+
+    def _get_encryption_key(self) -> bytes:
+        return EncryptionUtil.get_encryption_key()

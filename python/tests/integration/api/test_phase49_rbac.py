@@ -6,12 +6,14 @@ from server.main import app
 
 client = TestClient(app)
 
+
 @pytest.fixture(autouse=True)
 def clear_overrides():
     """Clear overrides after each test"""
     app.dependency_overrides = {}
     yield
     app.dependency_overrides = {}
+
 
 @pytest.mark.asyncio
 async def test_get_assignable_agents_anonymous():
@@ -20,25 +22,20 @@ async def test_get_assignable_agents_anonymous():
     response = client.get("/api/agents/assignable")
     assert response.status_code in [401, 403]
 
+
 @pytest.mark.asyncio
-
 async def test_get_assignable_agents_admin():
-
     """Test that admin sees all agents."""
 
     # Override dependency to simulate logged-in admin
 
     app.dependency_overrides[get_current_user] = lambda: {"id": "admin-1", "role": "system_admin"}
 
-
-
     response = client.get("/api/agents/assignable")
 
     assert response.status_code == 200
 
     agents = response.json()
-
-
 
     agent_names = [a["name"] for a in agents]
 
@@ -51,18 +48,13 @@ async def test_get_assignable_agents_admin():
     assert "Librarian (Knowledge)" in agent_names
 
 
-
 @pytest.mark.asyncio
-
 async def test_get_assignable_agents_sales_alice():
-
     """Test that Alice (Sales) ONLY sees MarketBot."""
 
     # Override dependency to simulate Alice
 
     app.dependency_overrides[get_current_user] = lambda: {"id": "alice-1", "role": "sales"}
-
-
 
     response = client.get("/api/agents/assignable")
 
@@ -72,13 +64,9 @@ async def test_get_assignable_agents_sales_alice():
 
     agent_names = [a["name"] for a in agents]
 
-
-
     # Requirement: Alice sees MarketBot
 
     assert "MarketBot (Sales)" in agent_names
-
-
 
     # Requirement: Alice DOES NOT see DevBot or Librarian
 

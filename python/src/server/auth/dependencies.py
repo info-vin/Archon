@@ -13,21 +13,22 @@ from .utils import get_user_from_token
 security = HTTPBearer()
 security_optional = HTTPBearer(auto_error=False)
 
+
 async def get_token(credentials: Annotated[HTTPAuthorizationCredentials, Depends(security)]) -> str:
     """Extracts the Bearer token from the Authorization header."""
     return str(credentials.credentials)
 
+
 async def get_token_optional(
-    credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(security_optional)]
+    credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(security_optional)],
 ) -> str | None:
     """Extracts the Bearer token if present, otherwise returns None."""
     if not credentials:
         return None
     return str(credentials.credentials)
 
-async def get_current_user(
-    token: Annotated[str, Depends(get_token)]
-) -> dict:
+
+async def get_current_user(token: Annotated[str, Depends(get_token)]) -> dict:
     """
     Validates the token and retrieves the full user profile (including Role) from the database.
     This is the SSOT for "Who is this user?".
@@ -54,21 +55,16 @@ async def get_current_user(
         # Try to get role from user_metadata first.
         fallback_role = "employee"
         if hasattr(auth_user, "user_metadata") and auth_user.user_metadata:
-             metadata_role = auth_user.user_metadata.get("role")
-             if metadata_role:
-                 fallback_role = metadata_role
+            metadata_role = auth_user.user_metadata.get("role")
+            if metadata_role:
+                fallback_role = metadata_role
 
-        return {
-            "id": user_id,
-            "email": auth_user.email,
-            "role": fallback_role
-        }
+        return {"id": user_id, "email": auth_user.email, "role": fallback_role}
 
-    return cast(dict[str, Any], profile) # Should contain 'role' field
+    return cast(dict[str, Any], profile)  # Should contain 'role' field
 
-async def get_current_user_optional(
-    token: Annotated[str | None, Depends(get_token_optional)]
-) -> dict | None:
+
+async def get_current_user_optional(token: Annotated[str | None, Depends(get_token_optional)]) -> dict | None:
     """
     Validates the token and retrieves the profile if a token is provided.
     If no token is provided, or the token is invalid, returns None instead of raising 401.
@@ -85,66 +81,57 @@ async def get_current_user_optional(
             return None
         raise e
 
-async def get_current_admin(
-    current_user: Annotated[dict, Depends(get_current_user)]
-) -> dict:
+
+async def get_current_admin(current_user: Annotated[dict, Depends(get_current_user)]) -> dict:
     """Dependency that enforces Admin role and returns the user object."""
     role = current_user.get("role", "").lower()
     if role not in ["admin", "system_admin"]:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Admin privileges required"
-        )
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin privileges required")
     return current_user
 
-async def verify_admin_role(
-    current_user: Annotated[dict, Depends(get_current_user)]
-):
+
+async def verify_admin_role(current_user: Annotated[dict, Depends(get_current_user)]):
     """Secure boolean-style dependency for Admin enforcement via JWT."""
     role = current_user.get("role", "").lower()
     if role not in ["admin", "system_admin"]:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Admin privileges required"
-        )
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin privileges required")
     return True
 
-async def verify_manager_role(
-    current_user: Annotated[dict, Depends(get_current_user)]
-):
+
+async def verify_manager_role(current_user: Annotated[dict, Depends(get_current_user)]):
     """Secure dependency ensuring the user is at least a Manager or Admin."""
     role = current_user.get("role", "").lower()
     if role not in ["admin", "system_admin", "manager"]:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Manager privileges or higher required"
-        )
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Manager privileges or higher required")
     return True
 
-async def get_current_user_id(
-    current_user: Annotated[dict, Depends(get_current_user)]
-) -> Any:
+
+async def get_current_user_id(current_user: Annotated[dict, Depends(get_current_user)]) -> Any:
     """Extracts the user ID from the current authenticated user."""
     return current_user.get("id")
+
 
 async def get_propose_change_service() -> Any:
     """Dependency that provides an instance of ProposeChangeService."""
     from ..services.propose_change_service import ProposeChangeService
+
     return ProposeChangeService()
+
 
 def requires_permission(permission: str):
     """
     Factory for creating a dependency that checks if the user has a specific permission.
     Usage: @router.get("/", dependencies=[Depends(requires_permission(TASK_CREATE))])
     """
+
     async def permission_checker(current_user: Annotated[dict, Depends(get_current_user)]):
         role = current_user.get("role", "").lower()
         user_permissions = get_role_permissions(role)
 
         if permission not in user_permissions:
-             raise HTTPException(
+            raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail=f"Permission denied: User with role '{role}' lacks '{permission}'"
+                detail=f"Permission denied: User with role '{role}' lacks '{permission}'",
             )
         return current_user
 

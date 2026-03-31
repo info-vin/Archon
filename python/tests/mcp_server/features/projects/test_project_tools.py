@@ -58,8 +58,8 @@ async def test_create_project_success(mock_mcp, mock_context):
         "status": "completed",
         "result": {
             "project": {"id": "project-123", "title": "Test Project", "created_at": "2024-01-01"},
-            "message": "Project created successfully"
-        }
+            "message": "Project created successfully",
+        },
     }
 
     with patch("src.mcp_server.features.projects.project_tools.httpx.AsyncClient") as mock_client:
@@ -132,7 +132,7 @@ async def test_find_projects_success(mock_mcp, mock_context):
             {"id": "proj-1", "title": "Project 1", "created_at": "2024-01-01"},
             {"id": "proj-2", "title": "Project 2", "created_at": "2024-01-02"},
         ],
-        "count": 2
+        "count": 2,
     }
 
     with patch("src.mcp_server.features.projects.project_tools.httpx.AsyncClient") as mock_client:
@@ -174,8 +174,6 @@ async def test_get_project_not_found(mock_mcp, mock_context):
         assert result_data["success"] is False
         # Error must be structured format (dict), not string
         assert "error" in result_data
-        assert isinstance(result_data["error"], dict), (
-            "Error should be structured format, not string"
-        )
+        assert isinstance(result_data["error"], dict), "Error should be structured format, not string"
         assert result_data["error"]["type"] == "not_found"
         assert "not found" in result_data["error"]["message"].lower()

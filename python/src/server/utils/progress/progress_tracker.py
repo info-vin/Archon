@@ -65,9 +65,7 @@ class ProgressTracker:
             self.state.update(initial_data)
 
         self._update_state()
-        safe_logfire_info(
-            f"Progress tracking started | progress_id={self.progress_id} | type={self.operation_type}"
-        )
+        safe_logfire_info(f"Progress tracking started | progress_id={self.progress_id} | type={self.operation_type}")
 
     async def update(self, status: str, progress: int, log: str, **kwargs):
         """
@@ -95,29 +93,32 @@ class ProgressTracker:
         else:
             actual_progress = new_progress
 
-        self.state.update({
-            "status": status,
-            "progress": actual_progress,
-            "log": log,
-            "timestamp": datetime.now().isoformat(),
-        })
+        self.state.update(
+            {
+                "status": status,
+                "progress": actual_progress,
+                "log": log,
+                "timestamp": datetime.now().isoformat(),
+            }
+        )
 
         # Add log entry
         if "logs" not in self.state:
             self.state["logs"] = []
 
         logs_list = cast(list[dict[str, Any]], self.state["logs"])
-        logs_list.append({
-            "timestamp": datetime.now().isoformat(),
-            "message": log,
-            "status": status,
-            "progress": progress,
-        })
+        logs_list.append(
+            {
+                "timestamp": datetime.now().isoformat(),
+                "message": log,
+                "status": status,
+                "progress": progress,
+            }
+        )
 
         # Add any additional data
         for key, value in kwargs.items():
             self.state[key] = value
-
 
         self._update_state()
 
@@ -158,11 +159,13 @@ class ProgressTracker:
             error_message: Error message
             error_details: Optional additional error details
         """
-        self.state.update({
-            "status": "error",
-            "error": error_message,
-            "error_time": datetime.now().isoformat(),
-        })
+        self.state.update(
+            {
+                "status": "error",
+                "error": error_message,
+                "error_time": datetime.now().isoformat(),
+            }
+        )
 
         if error_details:
             self.state["error_details"] = error_details
@@ -172,9 +175,7 @@ class ProgressTracker:
             f"Progress error | progress_id={self.progress_id} | type={self.operation_type} | error={error_message}"
         )
 
-    async def update_batch_progress(
-        self, current_batch: int, total_batches: int, batch_size: int, message: str
-    ):
+    async def update_batch_progress(self, current_batch: int, total_batches: int, batch_size: int, message: str):
         """
         Update progress for batch operations.
 
@@ -194,9 +195,7 @@ class ProgressTracker:
             batch_size=batch_size,
         )
 
-    async def update_crawl_stats(
-        self, processed_pages: int, total_pages: int, current_url: str | None = None
-    ):
+    async def update_crawl_stats(self, processed_pages: int, total_pages: int, current_url: str | None = None):
         """
         Update crawling statistics.
 
@@ -219,9 +218,7 @@ class ProgressTracker:
             current_url=current_url,
         )
 
-    async def update_storage_progress(
-        self, chunks_stored: int, total_chunks: int, operation: str = "storing"
-    ):
+    async def update_storage_progress(self, chunks_stored: int, total_chunks: int, operation: str = "storing"):
         """
         Update document storage progress.
 
@@ -240,7 +237,12 @@ class ProgressTracker:
         )
 
     async def update_code_extraction_progress(
-        self, documents_processed: int, total_documents: int, code_blocks_found: int, total_summaries: int, current_file: str
+        self,
+        documents_processed: int,
+        total_documents: int,
+        code_blocks_found: int,
+        total_summaries: int,
+        current_file: str,
     ):
         """
         Update code extraction progress.

@@ -1,4 +1,5 @@
 """Unit tests for URLHandler class."""
+
 from src.server.services.crawling.helpers.url_handler import URLHandler
 
 
@@ -87,7 +88,10 @@ class TestURLHandler:
         assert handler.is_binary_file("https://example.com/jquery.min.js") is False  # JS files might be crawlable
 
         # Real-world example from the error
-        assert handler.is_binary_file("https://docs.crawl4ai.com/apps/crawl4ai-assistant/crawl4ai-assistant-v1.3.0.zip") is True
+        assert (
+            handler.is_binary_file("https://docs.crawl4ai.com/apps/crawl4ai-assistant/crawl4ai-assistant-v1.3.0.zip")
+            is True
+        )
 
     def test_is_sitemap(self):
         """Test sitemap detection."""

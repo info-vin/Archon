@@ -1,6 +1,7 @@
 """
 Prompts for DevBot and DevOps / Engineering Persona Prompts
 """
+
 from ..schemas.tool_schemas import GenerateLogoArgs, RagSearchArgs, SearchCodeArgs
 
 
@@ -34,6 +35,7 @@ If the error is an environment issue or you cannot fix it by modifying code, ret
 Ensure the "fixed_content" is valid code for the target language.
 """
 
+
 # Tool definitions for OpenAI/Gemini Tool Calling
 
 # Dynamic Tool Definitions using Pydantic
@@ -43,24 +45,23 @@ DEVBOT_TOOLS = [
         "function": {
             "name": "search_code_examples",
             "description": "Search the codebase for specific patterns or API usage examples.",
-            "parameters": SearchCodeArgs.model_json_schema()
-        }
+            "parameters": SearchCodeArgs.model_json_schema(),
+        },
     },
     {
         "type": "function",
         "function": {
             "name": "rag_search_knowledge_base",
             "description": "Search the official documentation and knowledge base for help.",
-            "parameters": RagSearchArgs.model_json_schema()
-        }
+            "parameters": RagSearchArgs.model_json_schema(),
+        },
     },
     {
         "type": "function",
         "function": {
             "name": "generate_logo",
             "description": "Generate an SVG logo based on descriptive keywords.",
-            "parameters": GenerateLogoArgs.model_json_schema()
-        }
-    }
+            "parameters": GenerateLogoArgs.model_json_schema(),
+        },
+    },
 ]
-

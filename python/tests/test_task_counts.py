@@ -14,13 +14,16 @@ def setup_module(module):
     app.dependency_overrides[get_current_user] = lambda: {
         "id": "user-counts",
         "role": "system_admin",
-        "department": "Engineering"
+        "department": "Engineering",
     }
+
 
 def teardown_module(module):
     app.dependency_overrides.pop(get_current_user, None)
 
+
 client = TestClient(app)
+
 
 def test_batch_task_counts_endpoint():
     """Test the batch task counts endpoint with mocked service."""
@@ -37,6 +40,7 @@ def test_batch_task_counts_endpoint():
 
         assert response.status_code == 200
         assert response.json() == {"proj-1": {"todo": 5}}
+
 
 def test_batch_task_counts_etag_caching():
     """Test ETag caching for the batch task counts endpoint."""

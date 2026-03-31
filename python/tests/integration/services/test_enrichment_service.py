@@ -15,13 +15,16 @@ async def test_enrich_lead_success():
     mock_supabase.table().select().eq().single().execute.return_value.data = {
         "id": "lead-123",
         "company_name": "Test Corp",
-        "enrichment_status": None
+        "enrichment_status": None,
     }
 
-    with patch("server.services.enrichment_service.get_supabase_client", return_value=mock_supabase), \
-         patch("server.services.credential_service.credential_service.get_credential", new_callable=AsyncMock) as mock_get_cred, \
-         patch("asyncio.sleep", return_value=None): # Skip sleep
-
+    with (
+        patch("server.services.enrichment_service.get_supabase_client", return_value=mock_supabase),
+        patch(
+            "server.services.credential_service.credential_service.get_credential", new_callable=AsyncMock
+        ) as mock_get_cred,
+        patch("asyncio.sleep", return_value=None),
+    ):  # Skip sleep
         # Mock ENABLE_REAL_ENRICHMENT = False (default)
         mock_get_cred.return_value = "false"
 
@@ -34,6 +37,7 @@ async def test_enrich_lead_success():
         assert args[0]["enrichment_status"] == "success"
         # Score calculation: 20 (base) + 20 (mock_email) + 30 (funding in news) = 70
         assert args[0]["enrichment_score"] == 70
+
 
 @pytest.mark.asyncio
 async def test_prune_stale_leads():
@@ -51,7 +55,7 @@ async def test_prune_stale_leads():
     # The final .execute() returns the list of modified records
     mock_update_chain.execute.return_value.data = [
         {"id": "lead-old-1", "status": "archived"},
-        {"id": "lead-old-2", "status": "archived"}
+        {"id": "lead-old-2", "status": "archived"},
     ]
 
     with patch("server.services.enrichment_service.get_supabase_client", return_value=mock_supabase):

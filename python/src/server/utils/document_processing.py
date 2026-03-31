@@ -65,19 +65,23 @@ def extract_text_from_document(file_content: bytes, filename: str, content_type:
             return extract_text_from_docx(file_content)
 
         # Text files (markdown, txt, etc.)
-        elif content_type.startswith("text/") or filename.lower().endswith((
-            ".txt",
-            ".md",
-            ".markdown",
-            ".rst",
-        )):
+        elif content_type.startswith("text/") or filename.lower().endswith(
+            (
+                ".txt",
+                ".md",
+                ".markdown",
+                ".rst",
+            )
+        ):
             return file_content.decode("utf-8", errors="ignore")
 
         else:
             raise ValueError(f"Unsupported file format: {content_type} ({filename})")
 
     except Exception as e:
-        logger.error(f"Document text extraction failed | filename={filename} | content_type={content_type} | error={str(e)}")
+        logger.error(
+            f"Document text extraction failed | filename={filename} | content_type={content_type} | error={str(e)}"
+        )
         raise Exception(f"Failed to extract text from {filename}: {str(e)}") from e
 
 
@@ -92,9 +96,7 @@ def extract_text_from_pdf(file_content: bytes) -> str:
         Extracted text content
     """
     if not PDFPLUMBER_AVAILABLE and not PYPDF2_AVAILABLE:
-        raise Exception(
-            "No PDF processing libraries available. Please install pdfplumber and PyPDF2."
-        )
+        raise Exception("No PDF processing libraries available. Please install pdfplumber and PyPDF2.")
 
     text_content = []
 

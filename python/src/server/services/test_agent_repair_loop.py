@@ -1,4 +1,3 @@
-
 import os
 from unittest.mock import AsyncMock, patch
 
@@ -12,6 +11,7 @@ from python.src.server.utils.code_modifier import CodeModifier
 BROKEN_SCRIPT = "broken_script.py"
 BROKEN_CONTENT = "print 'Hello World'  # Syntax Error in Python 3"
 FIXED_CONTENT = "print('Hello World')  # Fixed"
+
 
 @pytest.fixture
 def clean_env():
@@ -34,6 +34,7 @@ def clean_env():
     if current != initial_branch and "autosave" in current:
         modifier.revert_sandbox(initial_branch)
 
+
 @pytest.mark.asyncio
 async def test_agent_repair_loop_python(clean_env):
     """
@@ -50,23 +51,17 @@ async def test_agent_repair_loop_python(clean_env):
     mock_llm_response = {
         "file_path": BROKEN_SCRIPT,
         "fixed_content": FIXED_CONTENT,
-        "reasoning": "Fixed Python 2 print statement to Python 3 function call."
+        "reasoning": "Fixed Python 2 print statement to Python 3 function call.",
     }
 
     # We need to mock _analyze_error_with_structured_output directly
     # to avoid complex mocking of the OpenAI client and config
-    with patch.object(
-        agent_service,
-        "_analyze_error_with_structured_output",
-        new_callable=AsyncMock
-    ) as mock_analyze:
-
+    with patch.object(agent_service, "_analyze_error_with_structured_output", new_callable=AsyncMock) as mock_analyze:
         mock_analyze.return_value = mock_llm_response
 
         # ACT
         success, message = await agent_service.run_command_with_self_healing(
-            f"python3 {BROKEN_SCRIPT}",
-            task_id="test-repair-1"
+            f"python3 {BROKEN_SCRIPT}", task_id="test-repair-1"
         )
 
         # ASSERT
@@ -83,6 +78,7 @@ async def test_agent_repair_loop_python(clean_env):
         current_branch = agent_service.code_modifier.get_current_branch()
         assert "autosave" in current_branch
 
+
 @pytest.mark.asyncio
 async def test_agent_repair_loop_typescript_simulation(clean_env):
     """
@@ -93,7 +89,7 @@ async def test_agent_repair_loop_typescript_simulation(clean_env):
     mock_llm_response = {
         "file_path": TS_FILE,
         "fixed_content": "const x: string = 'hello';",
-        "reasoning": "Fixed type mismatch"
+        "reasoning": "Fixed type mismatch",
     }
 
     # ACT: Run a command that 'fails' first, then 'succeeds'
@@ -111,15 +107,12 @@ async def test_agent_repair_loop_typescript_simulation(clean_env):
         mock_shell.side_effect = [process_fail, process_success]
 
         with patch.object(
-            agent_service,
-            "_analyze_error_with_structured_output",
-            new_callable=AsyncMock
+            agent_service, "_analyze_error_with_structured_output", new_callable=AsyncMock
         ) as mock_analyze:
             mock_analyze.return_value = mock_llm_response
 
             success, message = await agent_service.run_command_with_self_healing(
-                f"tsc {TS_FILE}",
-                task_id="test-repair-ts"
+                f"tsc {TS_FILE}", task_id="test-repair-ts"
             )
 
             assert success is True

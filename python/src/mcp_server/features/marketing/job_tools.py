@@ -8,7 +8,10 @@ class SearchJobMarketTool(BaseModel):
     Searches for job market data (e.g., from 104 Job Bank) to gather requirements for a specific role.
     Use this to understand what skills and qualifications are currently in demand.
     """
-    keyword: str = Field(..., description="The job title or keyword to search for (e.g., 'Python Engineer', 'Marketing Manager').")
+
+    keyword: str = Field(
+        ..., description="The job title or keyword to search for (e.g., 'Python Engineer', 'Marketing Manager')."
+    )
     limit: int = Field(10, description="Maximum number of job listings to retrieve. Default is 10.")
 
     async def execute(self) -> str:
@@ -34,6 +37,7 @@ class SearchJobMarketTool(BaseModel):
 
         except Exception as e:
             return f"Error searching job market: {str(e)}"
+
 
 marketing_tools = [
     SearchJobMarketTool,

@@ -25,9 +25,11 @@ from ...utils.etag_utils import check_etag, generate_etag
 
 router = APIRouter()
 
+
 def _err(res: Any, code: int = 500):
     detail = res.get("error", res) if isinstance(res, dict) else res
     raise HTTPException(status_code=code, detail=detail)
+
 
 @router.get("/projects/task-counts")
 async def get_all_task_counts(request: Request, response: Response, current_user: dict = Depends(get_current_user)):
@@ -41,6 +43,7 @@ async def get_all_task_counts(request: Request, response: Response, current_user
         return None
     return res
 
+
 @router.get("/projects/{project_id}/tasks")
 async def list_project_tasks(
     project_id: str,
@@ -48,9 +51,14 @@ async def list_project_tasks(
     response: Response,
     include_archived: bool = False,
     exclude_large_fields: bool = False,
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user),
 ):
-    s, res = await TaskService().list_tasks(project_id=project_id, include_closed=True, exclude_large_fields=exclude_large_fields, include_archived=include_archived)
+    s, res = await TaskService().list_tasks(
+        project_id=project_id,
+        include_closed=True,
+        exclude_large_fields=exclude_large_fields,
+        include_archived=include_archived,
+    )
     if not s or not isinstance(res, dict):
         _err(res)
     tasks = res.get("tasks", [])
@@ -61,18 +69,20 @@ async def list_project_tasks(
         return None
     return tasks
 
+
 @router.post("/tasks/refine-description")
 async def refine_task_description(req: RefineTaskRequest, current_user: dict = Depends(get_current_user)):
     res = await TaskService().refine_task_description(req.title, req.description)
     return {"refined_description": res}
 
+
 @router.post("/tasks/generate-from-alert")
 async def generate_task_from_alert(
-    req: GenerateTaskFromAlertRequest,
-    current_user: dict = Depends(requires_permission(AGENT_TRIGGER_DEV))
+    req: GenerateTaskFromAlertRequest, current_user: dict = Depends(requires_permission(AGENT_TRIGGER_DEV))
 ):
     s, res = await TaskService().generate_task_from_alert(alert_id=req.alert_id, assignee_id=req.assignee_id)
     return handle_service_result(s, res)
+
 
 @router.post("/tasks")
 async def create_task(req: CreateTaskRequest, current_user: dict = Depends(get_current_user)):
@@ -83,6 +93,7 @@ async def create_task(req: CreateTaskRequest, current_user: dict = Depends(get_c
     target_name, res_id = req.assignee, req.assignee_id
     if res_id:
         from src.server.services.shared_constants import AI_AGENT_ROLES
+
         if res_id in AI_AGENT_ROLES.values():
             res_id = None
             for n, aid in AI_AGENT_ROLES.items():
@@ -96,10 +107,25 @@ async def create_task(req: CreateTaskRequest, current_user: dict = Depends(get_c
                 if u_role not in ["system_admin", "admin"] and p.get("department") != u_dept:
                     _err(f"Cannot assign tasks to members outside your department ({p.get('department')})", 403)
 
-    s, res = await TaskService().create_task(project_id=req.project_id, title=req.title, description=req.description or "", assignee=target_name or "User", assignee_id=res_id, priority=req.priority or "medium", task_order=req.task_order or 0, feature=req.feature, due_date=req.due_date, knowledge_source_ids=req.knowledge_source_ids, is_recurring=req.is_recurring or False, crawler_target_id=req.crawler_target_id, schedule_config=req.schedule_config)
+    s, res = await TaskService().create_task(
+        project_id=req.project_id,
+        title=req.title,
+        description=req.description or "",
+        assignee=target_name or "User",
+        assignee_id=res_id,
+        priority=req.priority or "medium",
+        task_order=req.task_order or 0,
+        feature=req.feature,
+        due_date=req.due_date,
+        knowledge_source_ids=req.knowledge_source_ids,
+        is_recurring=req.is_recurring or False,
+        crawler_target_id=req.crawler_target_id,
+        schedule_config=req.schedule_config,
+    )
     if not s or not isinstance(res, dict):
         _err(res, 400)
     return {"message": "Task created successfully", "task": res.get("task")}
+
 
 @router.get("/tasks")
 async def list_tasks(
@@ -111,7 +137,7 @@ async def list_tasks(
     page: int = 1,
     per_page: int = 50,
     exclude_large_fields: bool = False,
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user),
 ):
     u_role = current_user.get("role", "member").lower()
     u_id = current_user.get("id")
@@ -122,31 +148,33 @@ async def list_tasks(
         a_filter = u_id
 
     s, res = await TaskService().list_tasks(
-        project_id=project_id if project_id and project_id.lower() != 'all' else None,
+        project_id=project_id if project_id and project_id.lower() != "all" else None,
         status=status or "",
         include_closed=include_closed,
         exclude_large_fields=exclude_large_fields,
         assignee_id=a_filter,
-        include_unassigned=include_unassigned if u_role in ["admin", "manager"] else False
+        include_unassigned=include_unassigned if u_role in ["admin", "manager"] else False,
     )
 
     data = cast(dict[str, Any], handle_service_result(s, res))
     tasks = data.get("tasks", [])
 
     return {
-        "tasks": tasks[(page-1)*per_page : page*per_page],
+        "tasks": tasks[(page - 1) * per_page : page * per_page],
         "pagination": {
             "total": len(tasks),
             "page": page,
             "per_page": per_page,
-            "pages": (len(tasks)+per_page-1)//per_page
-        }
+            "pages": (len(tasks) + per_page - 1) // per_page,
+        },
     }
+
 
 @router.get("/tasks/{task_id}")
 async def get_task(task_id: str, current_user: dict = Depends(get_current_user)):
     s, res = await TaskService().get_task(task_id)
     return cast(dict[str, Any], handle_service_result(s, res)).get("task")
+
 
 @router.put("/tasks/{task_id}")
 async def update_task(task_id: str, req: UpdateTaskRequest, current_user: dict = Depends(get_current_user)):
@@ -161,7 +189,11 @@ async def update_task(task_id: str, req: UpdateTaskRequest, current_user: dict =
                 _err("Forbidden: Cannot reassign to this role", 403)
 
     s, res = await TaskService().update_task(task_id, fields)
-    return {"message": "Task updated successfully", "task": cast(dict[str, Any], handle_service_result(s, res)).get("task")}
+    return {
+        "message": "Task updated successfully",
+        "task": cast(dict[str, Any], handle_service_result(s, res)).get("task"),
+    }
+
 
 @router.delete("/tasks/{task_id}")
 async def delete_task(task_id: str, current_user: dict = Depends(get_current_user)):
@@ -172,12 +204,16 @@ async def delete_task(task_id: str, current_user: dict = Depends(get_current_use
         _err(res, 400)
     return {"message": "Task archived successfully"}
 
+
 @router.post("/tasks/{task_id}/agent-status", tags=["Agent Callback"])
 async def report_task_status_from_agent(task_id: str, req: AgentStatusUpdateRequest):
-    s, res = await TaskService().update_task_status_from_agent(task_id=task_id, new_status=req.status, agent_id=req.agent_id)
+    s, res = await TaskService().update_task_status_from_agent(
+        task_id=task_id, new_status=req.status, agent_id=req.agent_id
+    )
     if not s:
         _err(res, 400)
     return res
+
 
 @router.post("/tasks/{task_id}/agent-output", tags=["Agent Callback"])
 async def report_task_output_from_agent(task_id: str, req: AgentOutputUpdateRequest):

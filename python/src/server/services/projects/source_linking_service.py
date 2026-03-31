@@ -8,6 +8,7 @@ from ...config.logfire_config import get_logger
 
 logger = get_logger(__name__)
 
+
 class SourceLinkingService(BaseRepository):
     """Service class for managing project-source relationships"""
 
@@ -19,6 +20,7 @@ class SourceLinkingService(BaseRepository):
         """
         Get all linked sources for a project, separated by type.
         """
+
         def _query():
             return (
                 self.supabase_client.table("archon_project_sources")
@@ -34,7 +36,7 @@ class SourceLinkingService(BaseRepository):
         sources = result.get("data", [])
         return True, {
             "technical_sources": [s["source_id"] for s in sources if s.get("notes") == "technical"],
-            "business_sources": [s["source_id"] for s in sources if s.get("notes") == "business"]
+            "business_sources": [s["source_id"] for s in sources if s.get("notes") == "business"],
         }
 
     async def update_project_sources(
@@ -49,7 +51,9 @@ class SourceLinkingService(BaseRepository):
         try:
             # 1. Clear existing links
             def _delete():
-                return self.supabase_client.table("archon_project_sources").delete().eq("project_id", project_id).execute()
+                return (
+                    self.supabase_client.table("archon_project_sources").delete().eq("project_id", project_id).execute()
+                )
 
             self.execute_query(_delete, "Failed to clear project sources", require_data=False)
 
@@ -63,15 +67,19 @@ class SourceLinkingService(BaseRepository):
                     all_links.append({"project_id": project_id, "source_id": s_id, "notes": "business"})
 
             if all_links:
+
                 def _insert():
                     return self.supabase_client.table("archon_project_sources").insert(all_links).execute()
+
                 return self.execute_query(_insert, "Failed to batch link sources")
 
             return True, {"message": "No sources to link"}
         except Exception as e:
             return False, {"error": str(e)}
 
-    async def link_sources(self, project_id: str, technical_source_ids: list[str], business_source_ids: list[str]) -> tuple[bool, dict[str, Any]]:
+    async def link_sources(
+        self, project_id: str, technical_source_ids: list[str], business_source_ids: list[str]
+    ) -> tuple[bool, dict[str, Any]]:
         """
         Legacy wrapper for link_sources.
         """
@@ -100,5 +108,6 @@ class SourceLinkingService(BaseRepository):
         Enriches a list of projects with their linked sources.
         """
         import asyncio
+
         tasks = [self.format_project_with_sources(p) for p in projects]
         return await asyncio.gather(*tasks)

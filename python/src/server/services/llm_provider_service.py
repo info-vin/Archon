@@ -79,5 +79,5 @@ __all__ = [
     "asyncio",
     "uuid",
     "is_valid_embedding_model_for_provider",
-    "get_supported_embedding_models"
+    "get_supported_embedding_models",
 ]

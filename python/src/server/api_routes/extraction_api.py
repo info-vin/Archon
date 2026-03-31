@@ -9,6 +9,7 @@ from ..services.extraction_service import ExtractionService
 logger = get_logger(__name__)
 router = APIRouter(prefix="/api/extraction", tags=["Extraction"])
 
+
 @router.post("/analyze", dependencies=[Depends(verify_manager_role)])
 async def analyze_url(request: dict[str, str]) -> dict[str, Any]:
     """
@@ -26,11 +27,13 @@ async def analyze_url(request: dict[str, str]) -> dict[str, Any]:
         logger.error(f"Analysis failed: {e}")
         raise HTTPException(status_code=500, detail=str(e)) from e
 
+
 @router.get("/schemas", dependencies=[Depends(verify_manager_role)])
 async def list_schemas() -> list[dict[str, Any]]:
     """List all extraction schemas."""
     service = ExtractionService()
     return await service.list_schemas()
+
 
 @router.get("/schemas/{schema_id}", dependencies=[Depends(verify_manager_role)])
 async def get_schema(schema_id: str) -> dict[str, Any]:
@@ -41,11 +44,9 @@ async def get_schema(schema_id: str) -> dict[str, Any]:
         raise HTTPException(status_code=404, detail="Schema not found")
     return schema
 
+
 @router.post("/schemas", dependencies=[Depends(verify_manager_role)])
-async def create_schema(
-    request: dict[str, Any],
-    current_user: dict = Depends(get_current_user)
-) -> dict[str, Any]:
+async def create_schema(request: dict[str, Any], current_user: dict = Depends(get_current_user)) -> dict[str, Any]:
     """Create a new extraction schema."""
     service = ExtractionService()
     try:
@@ -54,11 +55,9 @@ async def create_schema(
         logger.error(f"Create schema failed: {e}")
         raise HTTPException(status_code=500, detail=str(e)) from e
 
+
 @router.patch("/schemas/{schema_id}", dependencies=[Depends(verify_manager_role)])
-async def update_schema(
-    schema_id: str,
-    request: dict[str, Any]
-) -> dict[str, Any]:
+async def update_schema(schema_id: str, request: dict[str, Any]) -> dict[str, Any]:
     """Update an existing schema."""
     service = ExtractionService()
     try:
@@ -67,6 +66,7 @@ async def update_schema(
         logger.error(f"Update schema failed: {e}")
         raise HTTPException(status_code=500, detail=str(e)) from e
 
+
 @router.delete("/schemas/{schema_id}", dependencies=[Depends(verify_manager_role)])
 async def delete_schema(schema_id: str) -> dict[str, bool]:
     """Delete a schema."""
@@ -74,11 +74,9 @@ async def delete_schema(schema_id: str) -> dict[str, bool]:
     await service.delete_schema(schema_id)
     return {"success": True}
 
+
 @router.post("/run", dependencies=[Depends(verify_manager_role)])
-async def run_extraction(
-    request: dict[str, str],
-    current_user: dict = Depends(get_current_user)
-) -> dict[str, Any]:
+async def run_extraction(request: dict[str, str], current_user: dict = Depends(get_current_user)) -> dict[str, Any]:
     """
     Triggers an actual data extraction task.
     Payload: { "url": "...", "schema_id": "..." }

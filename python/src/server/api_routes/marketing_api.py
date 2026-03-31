@@ -27,22 +27,27 @@ from ..auth.permissions import (
 
 router: APIRouter = APIRouter(prefix="/api/marketing", tags=["marketing"])
 
+
 def get_marketing_service():
     """Export for test compatibility."""
     return MarketingService()
 
+
 def _err(msg: str, code: int = 403):
     raise HTTPException(status_code=code, detail=msg)
+
 
 @router.get("/jobs")
 async def search_jobs(keyword: str = Query(...), limit: int = 10, current_user: dict = Depends(get_current_user)):
     service = MarketingService()
     return await service.search_jobs(keyword, limit)
 
+
 @router.get("/leads")
 async def list_leads(current_user: dict = Depends(get_current_user)):
     service = MarketingService()
     return await service.list_leads()
+
 
 @router.post("/leads")
 async def create_lead(req: LeadCreateRequest, current_user: dict = Depends(get_current_user)):
@@ -52,11 +57,13 @@ async def create_lead(req: LeadCreateRequest, current_user: dict = Depends(get_c
         _err(str(res), 400)
     return res
 
+
 @router.post("/leads/reset")
 async def reset_leads(current_user: dict = Depends(requires_permission(CONTENT_PUBLISH))):
     service = MarketingService()
     success = await service.reset_leads()
     return {"success": success}
+
 
 @router.patch("/leads/{lead_id}")
 async def update_lead(lead_id: str, req: LeadUpdateRequest, current_user: dict = Depends(get_current_user)):
@@ -66,6 +73,7 @@ async def update_lead(lead_id: str, req: LeadUpdateRequest, current_user: dict =
         _err(str(res), 400)
     return res
 
+
 @router.post("/leads/{lead_id}/promote")
 async def promote_lead(lead_id: str, req: PromoteLeadRequest, current_user: dict = Depends(get_current_user)):
     service = MarketingService()
@@ -73,6 +81,7 @@ async def promote_lead(lead_id: str, req: PromoteLeadRequest, current_user: dict
     if not success:
         _err(str(res), 400)
     return res
+
 
 @router.post("/generate-pitch", response_model=PitchResponse)
 async def generate_pitch(req: PitchRequest, current_user: dict = Depends(requires_permission(AGENT_TRIGGER_MKT))):
@@ -83,6 +92,7 @@ async def generate_pitch(req: PitchRequest, current_user: dict = Depends(require
         raise HTTPException(status_code=res["error_code"], detail=res["message"])
     return res
 
+
 @router.post("/draft-blog")
 async def draft_blog_post(req: DraftBlogRequest, current_user: dict = Depends(requires_permission(AGENT_TRIGGER_MKT))):
     service = MarketingService()
@@ -90,6 +100,7 @@ async def draft_blog_post(req: DraftBlogRequest, current_user: dict = Depends(re
     if not success:
         _err(res.get("message", "AI Draft failed"), res.get("error_code", 500))
     return res
+
 
 @router.post("/blog/{post_id}/submit")
 async def submit_blog(post_id: str, current_user: dict = Depends(get_current_user)):
@@ -100,20 +111,26 @@ async def submit_blog(post_id: str, current_user: dict = Depends(get_current_use
         _err(res.get("error", "Submission failed"), 400)
     return res
 
+
 @router.post("/generate-logo")
 async def generate_logo(req: LogoRequest, current_user: dict = Depends(requires_permission(BRAND_ASSET_MANAGE))):
     service = MarketingService()
     return await service.generate_visual_asset(req.style)
+
 
 @router.get("/sources")
 async def get_combined_sources(current_user: dict = Depends(get_current_user)):
     service = MarketingService()
     return await service.get_combined_sources(user_id=str(current_user.get("id")))
 
+
 @router.get("/context/{source_id}")
-async def get_content_context(source_id: str, source_type: str = Query("lead"), current_user: dict = Depends(get_current_user)):
+async def get_content_context(
+    source_id: str, source_type: str = Query("lead"), current_user: dict = Depends(get_current_user)
+):
     service = MarketingService()
     return await service.get_content_context(source_id, source_type)
+
 
 @router.post("/manager/sentinel/run")
 async def run_sentinel_manual(current_user: dict = Depends(requires_permission(AGENT_TRIGGER_MKT))):
@@ -121,11 +138,13 @@ async def run_sentinel_manual(current_user: dict = Depends(requires_permission(A
     service = MarketingService()
     return await service.run_sentinel()
 
+
 @router.get("/stats")
 async def get_marketing_stats(current_user: dict = Depends(get_current_user)):
     """Fetch marketing performance statistics."""
     service = MarketingService()
     return await service.get_marketing_stats()
+
 
 @router.get("/trends")
 async def get_marketing_trends(current_user: dict = Depends(get_current_user)):
@@ -133,22 +152,27 @@ async def get_marketing_trends(current_user: dict = Depends(get_current_user)):
     service = MarketingService()
     return await service.get_marketing_trends()
 
+
 @router.post("/knowledge/seed")
 async def seed_knowledge_base(current_user: dict = Depends(requires_permission(CONTENT_PUBLISH))):
     """Admin triggers the physical knowledge seeding process."""
     service = MarketingService()
     return await service.seed_knowledge()
 
+
 @router.get("/approvals")
 async def get_pending_approvals(current_user: dict = Depends(requires_permission(TASK_READ_TEAM))):
     service = MarketingService()
     return await service.get_pending_approvals()
 
+
 @router.post("/approvals/{item_type}/{item_id}/{action}")
 async def process_approval(
-    item_type: str, item_id: str, action: str,
+    item_type: str,
+    item_id: str,
+    action: str,
     req: ApprovalRequest,
-    current_user: dict = Depends(requires_permission(CONTENT_PUBLISH))
+    current_user: dict = Depends(requires_permission(CONTENT_PUBLISH)),
 ):
     service = MarketingService()
     success = await service.process_approval(item_type, item_id, action, req.notes)

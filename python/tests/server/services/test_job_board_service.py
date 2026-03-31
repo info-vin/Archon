@@ -12,6 +12,7 @@ def mock_supabase():
         mock_get_client.return_value = mock_client
         yield mock_client
 
+
 @pytest.mark.asyncio
 async def test_search_jobs_fallback_to_mock():
     """
@@ -26,6 +27,7 @@ async def test_search_jobs_fallback_to_mock():
         assert len(jobs) == 0
         pass
 
+
 @pytest.mark.asyncio
 async def test_identify_leads_and_save(mock_supabase):
     """
@@ -33,18 +35,11 @@ async def test_identify_leads_and_save(mock_supabase):
     """
     service = JobBoardService()
     # Setup mock jobs
-    jobs = [
-        JobData(
-            title="Data Scientist",
-            company="Test Corp",
-            url="http://test/1",
-            identified_need="Need AI"
-        )
-    ]
+    jobs = [JobData(title="Data Scientist", company="Test Corp", url="http://test/1", identified_need="Need AI")]
 
     # Setup Supabase Mock chain: table().select().eq().eq().execute() -> data
     mock_select_builder = Mock()
-    mock_select_builder.eq.return_value.eq.return_value.execute.return_value = Mock(data=[]) # No existing lead
+    mock_select_builder.eq.return_value.eq.return_value.execute.return_value = Mock(data=[])  # No existing lead
 
     mock_insert_builder = Mock()
     mock_insert_builder.execute.return_value = Mock(data=[{"id": "new-id"}])
@@ -72,6 +67,7 @@ async def test_identify_leads_and_save(mock_supabase):
     inserted_data = mock_table.insert.call_args[0][0]
     assert inserted_data["company_name"] == "Test Corp"
     assert inserted_data["identified_need"] == "Need AI"
+
 
 @pytest.mark.asyncio
 async def test_identify_leads_skips_existing(mock_supabase):

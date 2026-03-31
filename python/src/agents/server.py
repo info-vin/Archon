@@ -97,9 +97,7 @@ async def fetch_credentials_from_server():
 
         except (httpx.HTTPError, httpx.RequestError) as e:
             if attempt < max_retries - 1:
-                logger.warning(
-                    f"Failed to fetch credentials (attempt {attempt + 1}/{max_retries}): {e}"
-                )
+                logger.warning(f"Failed to fetch credentials (attempt {attempt + 1}/{max_retries}): {e}")
                 logger.info(f"Retrying in {retry_delay} seconds...")
                 await asyncio.sleep(retry_delay)
             else:
@@ -146,6 +144,13 @@ app = FastAPI(
     version="1.0.0",
     lifespan=lifespan,
 )
+
+
+@app.get("/")
+@app.head("/")
+async def root():
+    """Root endpoint for the agents service"""
+    return {"status": "healthy", "service": "agents"}
 
 
 @app.get("/health")
@@ -230,6 +235,7 @@ async def stream_agent(agent_type: str, request: AgentRequest):
             # Prepare dependencies based on agent type
             # Import dependency classes
             from .base_agent import ArchonDependencies
+
             deps: ArchonDependencies
 
             if agent_type == "rag":

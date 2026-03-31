@@ -76,14 +76,14 @@ def validate_supabase_key(supabase_key: str) -> tuple[bool, str]:
         # Also skip all other validations (aud, exp, etc) since we only care about the role
         decoded = jwt.decode(
             supabase_key,
-            '',
+            "",
             options={
                 "verify_signature": False,
                 "verify_aud": False,
                 "verify_exp": False,
                 "verify_nbf": False,
-                "verify_iat": False
-            }
+                "verify_iat": False,
+            },
         )
         role = decoded.get("role")
 
@@ -216,7 +216,10 @@ def load_environment_config() -> EnvironmentConfig:
     token_pricing_json = os.getenv("TOKEN_PRICING_JSON")
     try:
         from ..utils import get_supabase_client
-        db_res = get_supabase_client().table("archon_settings").select("value").eq("key", "TOKEN_PRICING_JSON").execute()
+
+        db_res = (
+            get_supabase_client().table("archon_settings").select("value").eq("key", "TOKEN_PRICING_JSON").execute()
+        )
         if db_res.data:
             token_pricing_json = db_res.data[0]["value"]
     except Exception:
@@ -231,7 +234,7 @@ def load_environment_config() -> EnvironmentConfig:
         "gemini-2.5-flash": {"input": 0.10, "output": 0.40},
         "gemini-2.5-flash-lite": {"input": 0.05, "output": 0.20},
         "text-embedding-004": {"input": 0.02, "output": 0.00},
-        "ollama": {"input": 0.00, "output": 0.00}
+        "ollama": {"input": 0.00, "output": 0.00},
     }
 
     token_pricing = default_pricing
@@ -251,7 +254,7 @@ def load_environment_config() -> EnvironmentConfig:
         host=host,
         port=port,
         transport=transport,
-        token_pricing=token_pricing
+        token_pricing=token_pricing,
     )
 
 

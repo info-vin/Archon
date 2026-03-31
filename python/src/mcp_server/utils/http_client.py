@@ -65,10 +65,7 @@ async def call_api(
             else:
                 error_detail = response.text
                 logger.error(f"API Error {response.status_code} on {path}: {error_detail}")
-                return {
-                    "success": False,
-                    "error": f"HTTP {response.status_code}: {error_detail}"
-                }
+                return {"success": False, "error": f"HTTP {response.status_code}: {error_detail}"}
 
     except Exception as e:
         logger.error(f"Failed to call API {path}: {e}")

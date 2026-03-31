@@ -8,6 +8,7 @@ from .client_manager import get_supabase_client
 
 logger = get_logger(__name__)
 
+
 class TokenUsageService:
     @staticmethod
     async def log_usage(
@@ -17,7 +18,7 @@ class TokenUsageService:
         input_tokens: int,
         output_tokens: int,
         user_id: str | None = None,
-        context_type: str | None = None
+        context_type: str | None = None,
     ) -> None:
         """
         Log token usage to the database with cost calculation.
@@ -36,10 +37,10 @@ class TokenUsageService:
 
             cost = Decimal(0)
             if rates:
-                 # (tokens / 1,000,000) * rate
-                 input_cost = (Decimal(input_tokens) / Decimal(1_000_000)) * Decimal(rates["input"])
-                 output_cost = (Decimal(output_tokens) / Decimal(1_000_000)) * Decimal(rates["output"])
-                 cost = input_cost + output_cost
+                # (tokens / 1,000,000) * rate
+                input_cost = (Decimal(input_tokens) / Decimal(1_000_000)) * Decimal(rates["input"])
+                output_cost = (Decimal(output_tokens) / Decimal(1_000_000)) * Decimal(rates["output"])
+                cost = input_cost + output_cost
 
             supabase = get_supabase_client()
 
@@ -52,7 +53,7 @@ class TokenUsageService:
                 "output_tokens": output_tokens,
                 "cost_usd": float(cost),
                 "context_type": context_type,
-                "created_at": "now()"
+                "created_at": "now()",
             }
 
             # Using fire-and-forget approach or await?
@@ -73,6 +74,7 @@ class TokenUsageService:
                 # A more robust check would be querying profiles.role, but for speed we can use the context
                 try:
                     from .agent_registry import AGENT_CONFIG
+
                     agent_names = [config["name"] for config in AGENT_CONFIG.values()]
 
                     # We need the display name to award XP via StatsService
@@ -80,12 +82,13 @@ class TokenUsageService:
                     if res.data and res.data[0]["name"] in agent_names:
                         agent_display_name = res.data[0]["name"]
                         from .stats_service import StatsService
+
                         stats_service = StatsService()
                         await stats_service.add_agent_action_log(
                             agent_name=agent_display_name,
-                            xp_change=1, # Micro-reward for model execution
+                            xp_change=1,  # Micro-reward for model execution
                             message=f"Computational contribution for {context_type or 'general_task'}",
-                            details={"token_request_id": request_id, "model": model}
+                            details={"token_request_id": request_id, "model": model},
                         )
                 except Exception as xp_err:
                     logger.warning(f"XP Reward skipped: {xp_err}")
@@ -105,13 +108,19 @@ class TokenUsageService:
         try:
             supabase = get_supabase_client()
             from datetime import UTC, datetime, timedelta
+
             since = datetime.now(UTC) - timedelta(days=days)
 
             # Fetch last N days raw data
             def _fetch_data():
-                return supabase.table("token_usage").select("cost_usd, created_at, model, provider")\
-                    .gt("created_at", since.isoformat())\
-                    .order("created_at", desc=True).limit(5000).execute()
+                return (
+                    supabase.table("token_usage")
+                    .select("cost_usd, created_at, model, provider")
+                    .gt("created_at", since.isoformat())
+                    .order("created_at", desc=True)
+                    .limit(5000)
+                    .execute()
+                )
 
             res = await asyncio.to_thread(_fetch_data)
 
@@ -123,12 +132,7 @@ class TokenUsageService:
                 # created_at is ISO string e.g. "2026-02-06T12:00:00+00:00"
                 date_str = row["created_at"].split("T")[0]
                 if date_str not in daily_stats:
-                    daily_stats[date_str] = {
-                        "date": date_str,
-                        "cost": 0.0,
-                        "request_count": 0,
-                        "models": set()
-                    }
+                    daily_stats[date_str] = {"date": date_str, "cost": 0.0, "request_count": 0, "models": set()}
 
                 daily_stats[date_str]["cost"] += row.get("cost_usd", 0)
                 daily_stats[date_str]["request_count"] += 1
@@ -144,17 +148,19 @@ class TokenUsageService:
                     # We utilize a simple cache-less lookup here or a mapped dictionary
                     # To keep it grounded, we'll use the UUID as fallback but try to map known agents
                     name_map = {
-                        "e1682371-0000-0000-0000-000000000000": "DevBot", # Mock or real UUIDs from seed
-                        "a11ce000-0000-0000-0000-000000000000": "MarketBot"
+                        "e1682371-0000-0000-0000-000000000000": "DevBot",  # Mock or real UUIDs from seed
+                        "a11ce000-0000-0000-0000-000000000000": "MarketBot",
                     }
-                    agent_name = name_map.get(u_id, u_id) # Use UUID if not in map
-                    daily_stats[date_str]["agent_costs"][agent_name] = daily_stats[date_str]["agent_costs"].get(agent_name, 0) + row.get("cost_usd", 0)
+                    agent_name = name_map.get(u_id, u_id)  # Use UUID if not in map
+                    daily_stats[date_str]["agent_costs"][agent_name] = daily_stats[date_str]["agent_costs"].get(
+                        agent_name, 0
+                    ) + row.get("cost_usd", 0)
 
             # Convert to list and sort
             result = []
             for d in sorted(daily_stats.keys()):
                 item = daily_stats[d]
-                item["models"] = list(item["models"]) # Convert set to list for JSON serialization
+                item["models"] = list(item["models"])  # Convert set to list for JSON serialization
                 result.append(item)
 
             return result

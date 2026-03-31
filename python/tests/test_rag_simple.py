@@ -11,14 +11,16 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 # Set test environment variables
-os.environ.update({
-    "SUPABASE_URL": "http://test.supabase.co",
-    "SUPABASE_SERVICE_KEY": "test_key",
-    "OPENAI_API_KEY": "test_openai_key",
-    "USE_HYBRID_SEARCH": "false",
-    "USE_RERANKING": "false",
-    "USE_AGENTIC_RAG": "false",
-})
+os.environ.update(
+    {
+        "SUPABASE_URL": "http://test.supabase.co",
+        "SUPABASE_SERVICE_KEY": "test_key",
+        "OPENAI_API_KEY": "test_openai_key",
+        "USE_HYBRID_SEARCH": "false",
+        "USE_RERANKING": "false",
+        "USE_AGENTIC_RAG": "false",
+    }
+)
 
 
 @pytest.fixture
@@ -83,9 +85,7 @@ class TestRAGServiceSearch:
 
         # Test the search
         query_embedding = [0.1] * 1536
-        results = await rag_service.base_strategy.vector_search(
-            query_embedding=query_embedding, match_count=5
-        )
+        results = await rag_service.base_strategy.vector_search(query_embedding=query_embedding, match_count=5)
 
         assert isinstance(results, list)
         assert len(results) == 1
@@ -120,9 +120,7 @@ class TestRAGServiceSearch:
     async def test_perform_rag_query_basic(self, rag_service):
         """Test complete RAG query pipeline"""
         with patch.object(rag_service, "search_documents") as mock_search:
-            mock_search.return_value = [
-                {"id": "1", "content": "Test content", "similarity": 0.8, "metadata": {}}
-            ]
+            mock_search.return_value = [{"id": "1", "content": "Test content", "similarity": 0.8, "metadata": {}}]
 
             success, result = await rag_service.perform_rag_query(query="test query", match_count=5)
 
@@ -136,9 +134,7 @@ class TestRAGServiceSearch:
     async def test_search_code_examples_delegation(self, rag_service):
         """Test code examples search delegates to agentic strategy"""
         with patch.object(rag_service.agentic_strategy, "search_code_examples") as mock_agentic:
-            mock_agentic.return_value = [
-                {"content": "def test(): pass", "summary": "Test function", "url": "test.py"}
-            ]
+            mock_agentic.return_value = [{"content": "def test(): pass", "summary": "Test function", "url": "test.py"}]
 
             results = await rag_service.search_code_examples(query="test function", match_count=10)
 
@@ -193,9 +189,7 @@ class TestRerankingCore:
 
         original_results = [{"content": "Test content", "score": 0.8}]
 
-        result = await reranking_strategy.rerank_results(
-            query="test query", results=original_results
-        )
+        result = await reranking_strategy.rerank_results(query="test query", results=original_results)
 
         # Should return original results when no model
         assert result == original_results
@@ -214,9 +208,7 @@ class TestRerankingCore:
             {"content": "Content 3", "similarity": 0.9},
         ]
 
-        result = await reranking_strategy.rerank_results(
-            query="test query", results=original_results
-        )
+        result = await reranking_strategy.rerank_results(query="test query", results=original_results)
 
         # Should return reranked results
         assert isinstance(result, list)
@@ -283,9 +275,7 @@ class TestRAGIntegrationSimple:
         with patch.object(rag_service, "search_documents") as mock_search:
             mock_search.return_value = []
 
-            success, result = await rag_service.perform_rag_query(
-                query="empty query", match_count=5
-            )
+            success, result = await rag_service.perform_rag_query(query="empty query", match_count=5)
 
             assert success is True
             assert "results" in result
@@ -314,6 +304,7 @@ class TestRAGIntegrationSimple:
                 if key == "USE_RERANKING":
                     return True
                 return False
+
             mock_settings.side_effect = side_effect
 
             # Mock search results
@@ -360,9 +351,7 @@ class TestRAGIntegrationSimple:
                 }
             ]
 
-            results = await rag_service.search_documents(
-                query="test query", use_hybrid_search=True, match_count=5
-            )
+            results = await rag_service.search_documents(query="test query", use_hybrid_search=True, match_count=5)
 
             assert isinstance(results, list)
             assert len(results) == 1

@@ -32,6 +32,7 @@ async def test_generate_pitch_no_key_real_logic():
         except HTTPException as e:
             assert e.status_code == 401
 
+
 @pytest.mark.asyncio
 async def test_draft_blog_failure():
     """驗證部落格生成失敗時回傳 500"""
@@ -46,6 +47,7 @@ async def test_draft_blog_failure():
 
         assert excinfo.value.status_code == 500
 
+
 @pytest.mark.asyncio
 async def test_generate_logo_tier_fallback():
     """驗證圖資生成 Fallback 邏輯"""
@@ -54,7 +56,9 @@ async def test_generate_logo_tier_fallback():
 
     with patch("src.server.services.marketing_service.MarketingService.generate_visual_asset") as mock_method:
         mock_method.return_value = {
-            "status": "success", "image_url": "https://pollinations.ai/fake", "tier": "fallback_pollinations"
+            "status": "success",
+            "image_url": "https://pollinations.ai/fake",
+            "tier": "fallback_pollinations",
         }
 
         result = await generate_logo(req=req_obj, current_user=user)

@@ -40,13 +40,9 @@ class UserStory(BaseModel):
     id: str = Field(..., description="Unique identifier for the user story")
     title: str = Field(..., description="Brief title of the user story")
     description: str = Field(..., description="As a [user], I want [goal] so that [benefit]")
-    acceptance_criteria: list[str] = Field(
-        default_factory=list, description="List of acceptance criteria"
-    )
+    acceptance_criteria: list[str] = Field(default_factory=list, description="List of acceptance criteria")
     priority: Priority = Field(default=Priority.MEDIUM, description="Priority level")
-    estimated_effort: str | None = Field(
-        None, description="Effort estimate (e.g., 'Small', 'Medium', 'Large')"
-    )
+    estimated_effort: str | None = Field(None, description="Effort estimate (e.g., 'Small', 'Medium', 'Large')")
     status: str = Field(default="draft", description="Status of the user story")
 
 
@@ -57,17 +53,13 @@ class Goal(BaseModel):
     title: str = Field(..., description="Brief title of the goal")
     description: str = Field(..., description="Detailed description of the goal")
     priority: Priority = Field(default=Priority.MEDIUM, description="Priority level")
-    success_metrics: list[str] = Field(
-        default_factory=list, description="How success will be measured"
-    )
+    success_metrics: list[str] = Field(default_factory=list, description="How success will be measured")
 
 
 class TechnicalRequirement(BaseModel):
     """Technical requirements and constraints"""
 
-    category: str = Field(
-        ..., description="Category (e.g., 'Performance', 'Security', 'Scalability')"
-    )
+    category: str = Field(..., description="Category (e.g., 'Performance', 'Security', 'Scalability')")
     description: str = Field(..., description="Detailed requirement description")
     priority: Priority = Field(default=Priority.MEDIUM, description="Priority level")
 
@@ -82,9 +74,7 @@ class ProjectRequirementsDocument(BaseModel):
     title: str = Field(..., description="Title of the project")
     description: str = Field(default="", description="Brief project description")
     version: str = Field(default="1.0", description="Document version")
-    last_updated: datetime = Field(
-        default_factory=datetime.now, description="Last update timestamp"
-    )
+    last_updated: datetime = Field(default_factory=datetime.now, description="Last update timestamp")
 
     # Project Details
     goals: list[Goal] = Field(default_factory=list, description="List of project goals")
@@ -92,9 +82,7 @@ class ProjectRequirementsDocument(BaseModel):
 
     # Scope and Context
     scope: str = Field(default="", description="Project scope definition")
-    out_of_scope: list[str] = Field(
-        default_factory=list, description="What is explicitly out of scope"
-    )
+    out_of_scope: list[str] = Field(default_factory=list, description="What is explicitly out of scope")
     assumptions: list[str] = Field(default_factory=list, description="Project assumptions")
     constraints: list[str] = Field(default_factory=list, description="Project constraints")
 
@@ -105,14 +93,10 @@ class ProjectRequirementsDocument(BaseModel):
 
     # Stakeholders and Timeline
     stakeholders: list[str] = Field(default_factory=list, description="Key stakeholders")
-    timeline: dict[str, Any] = Field(
-        default_factory=dict, description="Project timeline and milestones"
-    )
+    timeline: dict[str, Any] = Field(default_factory=dict, description="Project timeline and milestones")
 
     # Success Criteria
-    success_criteria: list[str] = Field(
-        default_factory=list, description="Overall project success criteria"
-    )
+    success_criteria: list[str] = Field(default_factory=list, description="Overall project success criteria")
 
     @validator("last_updated", pre=True, always=True)
     def set_last_updated(cls, v):
@@ -198,7 +182,7 @@ def create_default_prd(project_title: str) -> ProjectRequirementsDocument:
                 acceptance_criteria=["PRD is created", "Stakeholders review and approve"],
                 priority=Priority.HIGH,
                 estimated_effort="Small",
-                status="draft"
+                status="draft",
             )
         ],
         technical_requirements=[
@@ -216,9 +200,7 @@ def create_default_prd(project_title: str) -> ProjectRequirementsDocument:
     )
 
 
-def create_default_document(
-    project_id: str, document_type: DocumentType, title: str
-) -> GeneralDocument:
+def create_default_document(project_id: str, document_type: DocumentType, title: str) -> GeneralDocument:
     """Create a default document based on type"""
     content = {}
 
@@ -236,5 +218,5 @@ def create_default_document(
         tags=["default", document_type.value],
         author=None,
         created_at=datetime.now(),
-        updated_at=datetime.now()
+        updated_at=datetime.now(),
     )

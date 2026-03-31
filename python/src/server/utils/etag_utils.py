@@ -18,7 +18,7 @@ def generate_etag(data: Any) -> str:
     json_str = json.dumps(data, sort_keys=True, default=str)
 
     # Generate MD5 hash
-    hash_obj = hashlib.md5(json_str.encode('utf-8'))
+    hash_obj = hashlib.md5(json_str.encode("utf-8"))
 
     # Return ETag in standard format (quoted)
     return f'"{hash_obj.hexdigest()}"'

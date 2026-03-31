@@ -2,7 +2,6 @@
 Tests for ProgressMapper
 """
 
-
 from src.server.services.crawling.progress_mapper import ProgressMapper
 
 
@@ -73,7 +72,7 @@ class TestProgressMapper:
         mapper = ProgressMapper()
 
         # Set some initial progress
-        mapper.map_progress("crawling", 50) # sets progress to 4
+        mapper.map_progress("crawling", 50)  # sets progress to 4
         current = mapper.last_overall_progress
         assert current == 4
 
@@ -160,7 +159,7 @@ class TestProgressMapper:
         mapper = ProgressMapper()
 
         # Set some progress
-        mapper.map_progress("document_storage", 50) # -> 20
+        mapper.map_progress("document_storage", 50)  # -> 20
         assert mapper.last_overall_progress == 20
         assert mapper.current_stage == "document_storage"
 
@@ -187,7 +186,7 @@ class TestProgressMapper:
 
         assert mapper.get_current_progress() == 0
 
-        mapper.map_progress("crawling", 50) # -> 4
+        mapper.map_progress("crawling", 50)  # -> 4
         assert mapper.get_current_progress() == 4
 
         # code_extraction (30-95) at 50% -> 30 + (50/100 * 65) = 30 + 32.5 = 62.5 -> 62

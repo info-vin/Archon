@@ -90,14 +90,10 @@ class PageStorageOperations(BaseRepository):
 
         # Batch upsert pages
         if pages_to_insert:
-            safe_logfire_info(
-                f"Upserting {len(pages_to_insert)} pages into archon_page_metadata table"
-            )
+            safe_logfire_info(f"Upserting {len(pages_to_insert)} pages into archon_page_metadata table")
             query = self.supabase_client.table("archon_page_metadata").upsert(pages_to_insert, on_conflict="url")
             success, response = self.execute_query(
-                query.execute,
-                error_context=f"Failed to upsert pages for source {source_id}",
-                require_data=True
+                query.execute, error_context=f"Failed to upsert pages for source {source_id}", require_data=True
             )
 
             if success and response.get("data"):
@@ -148,9 +144,7 @@ class PageStorageOperations(BaseRepository):
             logger.warning(f"No sections found in llms-full.txt file: {base_url}")
             return url_to_page_id
 
-        safe_logfire_info(
-            f"Parsed {len(sections)} sections from llms-full.txt file: {base_url}"
-        )
+        safe_logfire_info(f"Parsed {len(sections)} sections from llms-full.txt file: {base_url}")
 
         # Prepare page records for each section
         pages_to_insert: list[dict[str, Any]] = []
@@ -181,14 +175,10 @@ class PageStorageOperations(BaseRepository):
 
         # Batch upsert pages
         if pages_to_insert:
-            safe_logfire_info(
-                f"Upserting {len(pages_to_insert)} section pages into archon_page_metadata"
-            )
+            safe_logfire_info(f"Upserting {len(pages_to_insert)} section pages into archon_page_metadata")
             query = self.supabase_client.table("archon_page_metadata").upsert(pages_to_insert, on_conflict="url")
             success, response = self.execute_query(
-                query.execute,
-                error_context=f"Failed to upsert sections for {base_url}",
-                require_data=True
+                query.execute, error_context=f"Failed to upsert sections for {base_url}", require_data=True
             )
 
             if success and response.get("data"):
@@ -196,9 +186,7 @@ class PageStorageOperations(BaseRepository):
                 for page in response["data"]:
                     url_to_page_id[page["url"]] = page["id"]
 
-                safe_logfire_info(
-                    f"Successfully stored {len(url_to_page_id)}/{len(pages_to_insert)} section pages"
-                )
+                safe_logfire_info(f"Successfully stored {len(url_to_page_id)}/{len(pages_to_insert)} section pages")
             else:
                 safe_logfire_error(
                     f"Error upserting sections | base_url={base_url} | attempted={len(pages_to_insert)} | error={response.get('error')}"
@@ -215,19 +203,17 @@ class PageStorageOperations(BaseRepository):
             page_id: The UUID of the page to update
             chunk_count: Number of chunks created from this page
         """
-        query = self.supabase_client.table("archon_page_metadata").update(
-            {"chunk_count": chunk_count}
-        ).eq("id", page_id)
+        query = (
+            self.supabase_client.table("archon_page_metadata").update({"chunk_count": chunk_count}).eq("id", page_id)
+        )
 
         success, response = self.execute_query(
             query.execute,
             error_context=f"Failed to update chunk_count for page {page_id}",
-            require_data=True  # Ensure update was successful? Wait, update returns data. Let's say False to be safe if require_data should be False for an update that might just affect 1 row, but Supabase updates return the updated rows.
+            require_data=True,  # Ensure update was successful? Wait, update returns data. Let's say False to be safe if require_data should be False for an update that might just affect 1 row, but Supabase updates return the updated rows.
         )
 
         if success:
             safe_logfire_info(f"Updated chunk_count={chunk_count} for page_id={page_id}")
         else:
-            logger.warning(
-                f"Database error updating chunk_count for page {page_id}: {response.get('error')}"
-            )
+            logger.warning(f"Database error updating chunk_count for page {page_id}: {response.get('error')}")

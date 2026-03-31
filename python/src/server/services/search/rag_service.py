@@ -207,9 +207,7 @@ class RAGService(BaseRepository):
             client = genai.Client(api_key=api_key)
 
             # 3. Define Tools
-            google_search_tool = types.Tool(
-                google_search=types.GoogleSearch()
-            )
+            google_search_tool = types.Tool(google_search=types.GoogleSearch())
 
             # 4. Prompt
             prompt = f"""
@@ -220,14 +218,14 @@ class RAGService(BaseRepository):
             """
 
             # 5. Generate with Grounding
-            model_id = "gemini-2.5-flash" # Use a capable model
+            model_id = "gemini-2.5-flash"  # Use a capable model
             response = client.models.generate_content(
                 model=model_id,
                 contents=prompt,
                 config=types.GenerateContentConfig(
                     tools=[google_search_tool],
                     response_modalities=["TEXT"],
-                )
+                ),
             )
 
             # 6. Extract Content & References
@@ -242,8 +240,11 @@ class RAGService(BaseRepository):
 
             # Extract grounding metadata if available
             # validation of grounding metadata structure is needed, assuming standard
-            if (response.candidates and response.candidates[0].grounding_metadata
-                and response.candidates[0].grounding_metadata.grounding_chunks):
+            if (
+                response.candidates
+                and response.candidates[0].grounding_metadata
+                and response.candidates[0].grounding_metadata.grounding_chunks
+            ):
                 for chunk in response.candidates[0].grounding_metadata.grounding_chunks:
                     if chunk.web and chunk.web.uri:
                         references.append(chunk.web.uri)
@@ -263,7 +264,12 @@ class RAGService(BaseRepository):
             return "", ""
 
     async def perform_rag_query(
-        self, query: str, source: str | None = None, match_count: int = 5, filter_metadata: dict | None = None, min_score: float | None = None
+        self,
+        query: str,
+        source: str | None = None,
+        match_count: int = 5,
+        filter_metadata: dict | None = None,
+        min_score: float | None = None,
     ) -> tuple[bool, dict[str, Any]]:
         """
         Perform a comprehensive RAG query that combines all enabled strategies.
@@ -281,9 +287,7 @@ class RAGService(BaseRepository):
         Returns:
             Tuple of (success, result_dict)
         """
-        with safe_span(
-            "rag_query_pipeline", query_length=len(query), source=source, match_count=match_count
-        ) as span:
+        with safe_span("rag_query_pipeline", query_length=len(query), source=source, match_count=match_count) as span:
             try:
                 logger.info(f"RAG query started: {query[:100]}{'...' if len(query) > 100 else ''}")
 
@@ -303,7 +307,9 @@ class RAGService(BaseRepository):
                     # Fetch 5x the requested amount when reranking is enabled
                     # The reranker will select the best from this larger pool
                     search_match_count = match_count * 5
-                    logger.debug(f"Reranking enabled - fetching {search_match_count} candidates for {match_count} final results")
+                    logger.debug(
+                        f"Reranking enabled - fetching {search_match_count} candidates for {match_count} final results"
+                    )
 
                 # Step 0: Web Research (if enabled)
                 # Check setting or parameter
@@ -316,12 +322,14 @@ class RAGService(BaseRepository):
                     try:
                         web_content, source_id = await self.perform_web_research(query)
                         if web_content:
-                            web_research_results.append({
-                                "id": source_id,
-                                "content": web_content,
-                                "metadata": {"type": "web_research", "source_id": source_id},
-                                "similarity": 1.0 # Artificially high score to ensure visibility
-                            })
+                            web_research_results.append(
+                                {
+                                    "id": source_id,
+                                    "content": web_content,
+                                    "metadata": {"type": "web_research", "source_id": source_id},
+                                    "similarity": 1.0,  # Artificially high score to ensure visibility
+                                }
+                            )
                             logger.info(f"Web research successful: {source_id}")
                     except Exception as e:
                         logger.warning(f"Web research failed: {e}")
@@ -377,7 +385,9 @@ class RAGService(BaseRepository):
                             query, formatted_results, content_key="content", top_k=match_count
                         )
                         reranking_applied = True
-                        logger.debug(f"Reranking applied: {search_match_count} candidates -> {len(formatted_results)} final results")
+                        logger.debug(
+                            f"Reranking applied: {search_match_count} candidates -> {len(formatted_results)} final results"
+                        )
                     except Exception as e:
                         logger.warning(f"Reranking failed: {e}")
                         reranking_applied = False
@@ -487,7 +497,9 @@ class RAGService(BaseRepository):
                         results = await self.reranking_strategy.rerank_results(
                             query, results, content_key="content", top_k=match_count
                         )
-                        logger.debug(f"Code reranking applied: {search_match_count} candidates -> {len(results)} final results")
+                        logger.debug(
+                            f"Code reranking applied: {search_match_count} candidates -> {len(results)} final results"
+                        )
                     except Exception as e:
                         logger.warning(f"Code reranking failed: {e}")
                         # If reranking fails but we fetched extra results, trim to requested count

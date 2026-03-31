@@ -58,9 +58,7 @@ router = APIRouter(prefix="/api/migrations", tags=["migrations"])
 
 
 @router.get("/status", response_model=MigrationStatusResponse)
-async def get_migration_status(
-    response: Response, if_none_match: str | None = Header(None)
-):
+async def get_migration_status(response: Response, if_none_match: str | None = Header(None)):
     """
     Get current migration status including pending and applied migrations.
 
@@ -136,10 +134,11 @@ async def get_migration_history(response: Response, if_none_match: str | None = 
             response.headers["ETag"] = f'"{etag}"'
             response.headers["Cache-Control"] = "no-cache, must-revalidate"
             from typing import cast
+
             return MigrationHistoryResponse(
                 migrations=cast(list[MigrationRecord], history["migrations"]),
                 total_count=cast(int, history["total_count"]),
-                current_version=cast(str, history["current_version"])
+                current_version=cast(str, history["current_version"]),
             )
 
     except Exception as e:

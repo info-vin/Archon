@@ -73,29 +73,19 @@ async def get_agent_credentials(request: Request) -> dict[str, Any]:
         # Get credentials needed by agents
         credentials = {
             # OpenAI credentials
-            "OPENAI_API_KEY": await credential_service.get_credential(
-                "OPENAI_API_KEY", decrypt=True
-            ),
-            "OPENAI_MODEL": await credential_service.get_credential(
-                "OPENAI_MODEL", default="gpt-4o-mini"
-            ),
+            "OPENAI_API_KEY": await credential_service.get_credential("OPENAI_API_KEY", decrypt=True),
+            "OPENAI_MODEL": await credential_service.get_credential("OPENAI_MODEL", default="gpt-4o-mini"),
             # Model configurations
             "DOCUMENT_AGENT_MODEL": await credential_service.get_credential(
                 "DOCUMENT_AGENT_MODEL", default="openai:gpt-4o"
             ),
-            "RAG_AGENT_MODEL": await credential_service.get_credential(
-                "RAG_AGENT_MODEL", default="openai:gpt-4o-mini"
-            ),
-            "TASK_AGENT_MODEL": await credential_service.get_credential(
-                "TASK_AGENT_MODEL", default="openai:gpt-4o"
-            ),
+            "RAG_AGENT_MODEL": await credential_service.get_credential("RAG_AGENT_MODEL", default="openai:gpt-4o-mini"),
+            "TASK_AGENT_MODEL": await credential_service.get_credential("TASK_AGENT_MODEL", default="openai:gpt-4o"),
             # Rate limiting settings
             "AGENT_RATE_LIMIT_ENABLED": await credential_service.get_credential(
                 "AGENT_RATE_LIMIT_ENABLED", default="true"
             ),
-            "AGENT_MAX_RETRIES": await credential_service.get_credential(
-                "AGENT_MAX_RETRIES", default="3"
-            ),
+            "AGENT_MAX_RETRIES": await credential_service.get_credential("AGENT_MAX_RETRIES", default="3"),
             # MCP endpoint
             "MCP_SERVICE_URL": f"http://archon-mcp:{os.getenv('ARCHON_MCP_PORT')}",
             # Additional settings
@@ -159,6 +149,7 @@ async def trigger_cron_jobs(request: Request, background_tasks: BackgroundTasks,
 
     try:
         from ..services.scheduler_service import scheduler_service
+
         # Add all jobs to FastAPI BackgroundTasks so they run concurrently after the response
         background_tasks.add_task(scheduler_service._run_system_probe)
         background_tasks.add_task(scheduler_service._run_auto_fetch_leads)

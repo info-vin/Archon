@@ -20,13 +20,14 @@ from . import active_crawl_tasks
 router = APIRouter()
 logger = get_logger(__name__)
 
+
 @router.post("/documents/upload")
 async def upload_document(
     file: UploadFile = File(...),
     knowledge_type: str = Form("technical"),
     tags: str = Form("[]"),
     x_user_role: str | None = Header(None, alias="X-User-Role"),
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user),
 ):
     """Upload a document and process it into knowledge chunks."""
     try:
@@ -34,40 +35,31 @@ async def upload_document(
         progress_id = str(uuid.uuid4())
 
         file_content = await file.read()
-        file_metadata = {
-            "filename": file.filename,
-            "content_type": file.content_type,
-            "size": len(file_content)
-        }
+        file_metadata = {"filename": file.filename, "content_type": file.content_type, "size": len(file_content)}
 
         tracker = ProgressTracker(progress_id)
-        await tracker.start({
-            "status": "initializing",
-            "progress": 0,
-            "log": f"Starting upload for {file.filename}"
-        })
+        await tracker.start({"status": "initializing", "progress": 0, "log": f"Starting upload for {file.filename}"})
 
         # Launch background task and store it for tracking (Physical Alignment with domain state)
-        task = asyncio.create_task(background_upload(
-            file_content=file_content,
-            file_metadata=file_metadata,
-            progress_id=progress_id,
-            tags=tag_list,
-            knowledge_type=knowledge_type,
-            tracker=tracker
-        ))
+        task = asyncio.create_task(
+            background_upload(
+                file_content=file_content,
+                file_metadata=file_metadata,
+                progress_id=progress_id,
+                tags=tag_list,
+                knowledge_type=knowledge_type,
+                tracker=tracker,
+            )
+        )
 
         active_crawl_tasks[progress_id] = task
 
-        return {
-            "status": "success",
-            "progress_id": progress_id,
-            "message": "Upload started in background"
-        }
+        return {"status": "success", "progress_id": progress_id, "message": "Upload started in background"}
 
     except Exception as e:
         safe_logfire_error(f"Upload initialization failed: {e}")
         raise HTTPException(status_code=500, detail=str(e)) from e
+
 
 async def background_upload(
     file_content: bytes,
@@ -75,7 +67,7 @@ async def background_upload(
     progress_id: str,
     tags: list[str],
     knowledge_type: str,
-    tracker: ProgressTracker
+    tracker: ProgressTracker,
 ):
     """Background task for processing uploaded documents."""
     try:
@@ -85,11 +77,7 @@ async def background_upload(
 
         await tracker.update("extracting", 20, "Extracting text...")
 
-        text = extract_text_from_document(
-            file_content,
-            file_metadata["filename"],
-            file_metadata["content_type"]
-        )
+        text = extract_text_from_document(file_content, file_metadata["filename"], file_metadata["content_type"])
 
         if not text:
             raise ValueError("No text could be extracted from the document.")
@@ -100,19 +88,13 @@ async def background_upload(
         source_id = f"upload-{file_metadata['filename']}-{uuid.uuid4().hex[:6]}"
         await source_manager.create_source_info(
             source_id=source_id,
-            content_sample=text[:200], # Required argument
+            content_sample=text[:200],  # Required argument
             word_count=len(text.split()),
             knowledge_type=knowledge_type,
-            tags=tags
+            tags=tags,
         )
 
-        await storage.store_documents(
-            documents=[{
-                "source_id": source_id,
-                "content": text,
-                "metadata": file_metadata
-            }]
-        )
+        await storage.store_documents(documents=[{"source_id": source_id, "content": text, "metadata": file_metadata}])
 
         await tracker.complete({"log": "Upload successful!"})
     except Exception as e:

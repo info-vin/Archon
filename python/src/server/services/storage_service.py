@@ -1,4 +1,3 @@
-
 import mimetypes
 from typing import cast
 
@@ -10,12 +9,15 @@ from src.server.services.client_manager import get_supabase_client
 
 logger = get_logger(__name__)
 
+
 class StorageUploadError(Exception):
     """Custom exception for storage upload failures with HTTP-aligned status codes."""
+
     def __init__(self, message: str, status_code: int = 500):
         self.message = message
         self.status_code = status_code
         super().__init__(self.message)
+
 
 class StorageService:
     def __init__(self):
@@ -40,9 +42,7 @@ class StorageService:
                 content_type = "application/octet-stream"
 
             supabase.storage.from_(bucket_name).upload(
-                path=file_path,
-                file=content,
-                file_options={"content-type": content_type, "upsert": "true"}
+                path=file_path, file=content, file_options={"content-type": content_type, "upsert": "true"}
             )
 
             # The bucket is private, so we must create a signed URL.
@@ -56,7 +56,9 @@ class StorageService:
             public_url = signed_url_response.get("signedURL")
 
             if not public_url:
-                raise StorageUploadError(f"Failed to create signed URL for {file_path}. Response: {signed_url_response}")
+                raise StorageUploadError(
+                    f"Failed to create signed URL for {file_path}. Response: {signed_url_response}"
+                )
 
             logger.info(f"Successfully uploaded file '{file.filename}' and created signed URL.")
             return cast(str, public_url)
@@ -74,7 +76,7 @@ class StorageService:
             elif "too large" in msg:
                 status_code = 413
 
-            if hasattr(e, 'response') and e.response:
+            if hasattr(e, "response") and e.response:
                 try:
                     response_json = e.response.json()
                     detailed_error_message += f" Supabase response: {response_json}"
@@ -83,5 +85,6 @@ class StorageService:
 
             logger.error(f"Failed to upload file to Supabase. Bucket: {bucket_name}, Error: {detailed_error_message}")
             raise StorageUploadError(detailed_error_message, status_code=status_code) from e
+
 
 storage_service = StorageService()

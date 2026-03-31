@@ -11,10 +11,11 @@ from .schemas import InstanceValidationRequest, InstanceValidationResponse
 logger = get_logger(__name__)
 router = APIRouter()
 
+
 @router.get("/instances/health")
 async def health_check_endpoint(
     instance_urls: list[str] = Query(..., description="Ollama instance URLs to check"),
-    include_models: bool = Query(False, description="Include model count in response")
+    include_models: bool = Query(False, description="Include model count in response"),
 ) -> dict[str, Any]:
     """Check health status of multiple Ollama instances."""
     try:
@@ -22,14 +23,14 @@ async def health_check_endpoint(
         health_results = {}
         for instance_url in instance_urls:
             try:
-                url = instance_url.rstrip('/')
+                url = instance_url.rstrip("/")
                 health_status = await model_discovery_service.check_instance_health(url)
                 health_results[url] = {
                     "is_healthy": health_status.is_healthy,
                     "response_time_ms": health_status.response_time_ms,
                     "models_available": health_status.models_available if include_models else None,
                     "error_message": health_status.error_message,
-                    "last_checked": health_status.last_checked
+                    "last_checked": health_status.last_checked,
                 }
             except Exception as e:
                 logger.warning(f"Health check failed for {instance_url}: {e}")
@@ -38,14 +39,16 @@ async def health_check_endpoint(
                     "response_time_ms": None,
                     "models_available": None,
                     "error_message": str(e),
-                    "last_checked": None
+                    "last_checked": None,
                 }
 
         healthy_count = sum(1 for result in health_results.values() if result["is_healthy"])
         avg_response_time = None
         if healthy_count > 0:
-            response_times = cast(list[float], [r["response_time_ms"] for r in health_results.values()
-                            if r["response_time_ms"] is not None])
+            response_times = cast(
+                list[float],
+                [r["response_time_ms"] for r in health_results.values() if r["response_time_ms"] is not None],
+            )
             if response_times:
                 avg_response_time = sum(response_times) / len(response_times)
 
@@ -54,27 +57,25 @@ async def health_check_endpoint(
                 "total_instances": len(instance_urls),
                 "healthy_instances": healthy_count,
                 "unhealthy_instances": len(instance_urls) - healthy_count,
-                "average_response_time_ms": avg_response_time
+                "average_response_time_ms": avg_response_time,
             },
             "instance_status": health_results,
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
     except Exception as e:
         logger.error(f"Error in health check: {e}")
         raise HTTPException(status_code=500, detail=str(e)) from e
 
+
 @router.post("/validate", response_model=InstanceValidationResponse)
 async def validate_instance_endpoint(req: InstanceValidationRequest) -> InstanceValidationResponse:
     """Validate a specific Ollama instance and its capabilities."""
     try:
-        url = req.instance_url.rstrip('/')
+        url = req.instance_url.rstrip("/")
         logger.info(f"Validating instance: {url}")
 
         # Fixed: Aligned with actual validate_provider_instance signature
-        result = await validate_provider_instance(
-            provider="ollama",
-            instance_url=url
-        )
+        result = await validate_provider_instance(provider="ollama", instance_url=url)
 
         health_status = await model_discovery_service.check_instance_health(url)
 
@@ -88,8 +89,8 @@ async def validate_instance_endpoint(req: InstanceValidationRequest) -> Instance
             health_status={
                 "is_healthy": health_status.is_healthy,
                 "last_checked": health_status.last_checked,
-                "error": health_status.error_message
-            }
+                "error": health_status.error_message,
+            },
         )
     except Exception as e:
         logger.error(f"Error validating instance {req.instance_url}: {e}")
@@ -100,5 +101,5 @@ async def validate_instance_endpoint(req: InstanceValidationRequest) -> Instance
             models_available=0,
             error_message=str(e),
             capabilities={},
-            health_status={"is_healthy": False, "error": str(e)}
+            health_status={"is_healthy": False, "error": str(e)},
         )

@@ -7,6 +7,7 @@ from ..utils import get_supabase_client
 
 logger = get_logger(__name__)
 
+
 class ProfileService(BaseRepository):
     """Service for handling business logic related to user profiles."""
 
@@ -22,13 +23,12 @@ class ProfileService(BaseRepository):
         Returns:
             A tuple containing a success boolean and either a list of users or an error message.
         """
+
         def _query():
             return self.supabase_client.table("profiles").select("id, name, role").execute()
 
         success, result = self.execute_query(
-            query_func=_query,
-            error_context="Failed to retrieve profiles",
-            require_data=False
+            query_func=_query, error_context="Failed to retrieve profiles", require_data=False
         )
         if success:
             return True, result["data"] or []
@@ -42,13 +42,12 @@ class ProfileService(BaseRepository):
         Returns:
             A tuple containing a success boolean and either a list of users or an error message.
         """
+
         def _query():
             return self.supabase_client.table("profiles").select("*").execute()
 
         success, result = self.execute_query(
-            query_func=_query,
-            error_context="Failed to retrieve full profiles",
-            require_data=False
+            query_func=_query, error_context="Failed to retrieve full profiles", require_data=False
         )
         if success:
             return True, result["data"] or []
@@ -64,6 +63,7 @@ class ProfileService(BaseRepository):
         Returns:
             A tuple containing a success boolean and the user's role or None if not found.
         """
+
         def _query():
             return self.supabase_client.table("profiles").select("role").eq("name", user_name).limit(1).execute()
 
@@ -71,7 +71,7 @@ class ProfileService(BaseRepository):
         success, result = self.execute_query(
             query_func=_query,
             error_context=f"An unexpected error occurred while retrieving role for user '{user_name}'",
-            require_data=False
+            require_data=False,
         )
 
         if success:
@@ -88,13 +88,12 @@ class ProfileService(BaseRepository):
         Returns:
             A tuple containing success boolean and the profile data (or error message/None).
         """
+
         def _query():
             return self.supabase_client.table("profiles").select("*").eq("id", user_id).limit(1).execute()
 
         success, result = self.execute_query(
-            query_func=_query,
-            error_context=f"Failed to fetch profile for {user_id}",
-            require_data=True
+            query_func=_query, error_context=f"Failed to fetch profile for {user_id}", require_data=True
         )
 
         if success:
@@ -123,9 +122,7 @@ class ProfileService(BaseRepository):
             return self.supabase_client.table("profiles").update(updates).eq("id", user_id).execute()
 
         success, result = self.execute_query(
-            query_func=_query,
-            error_context=f"Failed to update profile for {user_id}",
-            require_data=True
+            query_func=_query, error_context=f"Failed to update profile for {user_id}", require_data=True
         )
         if success:
             data = result["data"]

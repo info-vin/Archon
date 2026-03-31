@@ -58,7 +58,7 @@ def sample_document_data():
             "First chunk of page 2",
             "Second chunk of page 2",
             "Third chunk of page 2",
-            "First chunk of page 3"
+            "First chunk of page 3",
         ],
         "metadatas": [
             {"url": "https://example.com/page1", "title": "Page 1", "chunk_index": 0},
@@ -66,13 +66,13 @@ def sample_document_data():
             {"url": "https://example.com/page2", "title": "Page 2", "chunk_index": 0},
             {"url": "https://example.com/page2", "title": "Page 2", "chunk_index": 1},
             {"url": "https://example.com/page2", "title": "Page 2", "chunk_index": 2},
-            {"url": "https://example.com/page3", "title": "Page 3", "chunk_index": 0}
+            {"url": "https://example.com/page3", "title": "Page 3", "chunk_index": 0},
         ],
         "url_to_full_document": {
             "https://example.com/page1": "Full content of page 1",
             "https://example.com/page2": "Full content of page 2",
-            "https://example.com/page3": "Full content of page 3"
-        }
+            "https://example.com/page3": "Full content of page 3",
+        },
     }
 
 
@@ -80,17 +80,22 @@ class TestDocumentStorageProgressIntegration:
     """Integration tests for document storage progress tracking."""
 
     @pytest.mark.asyncio
-    @patch('src.server.services.storage.document_storage_service.create_embeddings_batch')
-    @patch('src.server.services.credential_service.credential_service')
-    async def test_batch_progress_reporting(self, mock_credentials, mock_create_embeddings,
-                                          mock_supabase_client, sample_document_data,
-                                          mock_progress_callback):
+    @patch("src.server.services.storage.document_storage_service.create_embeddings_batch")
+    @patch("src.server.services.credential_service.credential_service")
+    async def test_batch_progress_reporting(
+        self,
+        mock_credentials,
+        mock_create_embeddings,
+        mock_supabase_client,
+        sample_document_data,
+        mock_progress_callback,
+    ):
         """Test that batch progress is reported correctly during document storage."""
 
         # Setup mock credentials
         mock_credentials.get_credentials_by_category.return_value = {
             "DOCUMENT_STORAGE_BATCH_SIZE": "3",  # Small batch size for testing
-            "USE_CONTEXTUAL_EMBEDDINGS": "false"
+            "USE_CONTEXTUAL_EMBEDDINGS": "false",
         }
 
         # Mock embedding creation
@@ -105,15 +110,16 @@ class TestDocumentStorageProgressIntegration:
             metadatas=sample_document_data["metadatas"],
             url_to_full_document=sample_document_data["url_to_full_document"],
             batch_size=3,
-            progress_callback=mock_progress_callback
+            progress_callback=mock_progress_callback,
         )
 
         # Verify batch progress was reported
         assert mock_progress_callback.call_count >= 2  # At least start and end
 
         # Check that batch information was passed correctly
-        batch_calls = [call for call in mock_progress_callback.call_history
-                      if len(call[1]) > 0 and "current_batch" in call[1]]
+        batch_calls = [
+            call for call in mock_progress_callback.call_history if len(call[1]) > 0 and "current_batch" in call[1]
+        ]
 
         assert len(batch_calls) >= 2  # Should have multiple batch progress updates
 
@@ -127,16 +133,17 @@ class TestDocumentStorageProgressIntegration:
             assert call_kwargs["completed_batches"] >= 0
 
     @pytest.mark.asyncio
-    @patch('src.server.services.storage.document_storage_service.create_embeddings_batch')
-    @patch('src.server.services.credential_service.credential_service')
-    async def test_progress_callback_signature(self, mock_credentials, mock_create_embeddings,
-                                             mock_supabase_client, sample_document_data):
+    @patch("src.server.services.storage.document_storage_service.create_embeddings_batch")
+    @patch("src.server.services.credential_service.credential_service")
+    async def test_progress_callback_signature(
+        self, mock_credentials, mock_create_embeddings, mock_supabase_client, sample_document_data
+    ):
         """Test that progress callback is called with correct signature."""
 
         # Setup
         mock_credentials.get_credentials_by_category.return_value = {
             "DOCUMENT_STORAGE_BATCH_SIZE": "6",  # Process all in one batch
-            "USE_CONTEXTUAL_EMBEDDINGS": "false"
+            "USE_CONTEXTUAL_EMBEDDINGS": "false",
         }
 
         mock_create_embeddings.return_value = create_mock_embedding_result(6)
@@ -145,12 +152,7 @@ class TestDocumentStorageProgressIntegration:
         callback_calls = []
 
         async def validate_callback(status: str, progress: int, message: str, **kwargs):
-            callback_calls.append({
-                'status': status,
-                'progress': progress,
-                'message': message,
-                'kwargs': kwargs
-            })
+            callback_calls.append({"status": status, "progress": progress, "message": message, "kwargs": kwargs})
 
         # Call function
         await add_documents_to_supabase(
@@ -160,41 +162,43 @@ class TestDocumentStorageProgressIntegration:
             contents=sample_document_data["contents"],
             metadatas=sample_document_data["metadatas"],
             url_to_full_document=sample_document_data["url_to_full_document"],
-            progress_callback=validate_callback
+            progress_callback=validate_callback,
         )
 
         # Verify callback signature
         assert len(callback_calls) >= 2
 
         for call in callback_calls:
-            assert isinstance(call['status'], str)
-            assert isinstance(call['progress'], int)
-            assert isinstance(call['message'], str)
-            assert isinstance(call['kwargs'], dict)
+            assert isinstance(call["status"], str)
+            assert isinstance(call["progress"], int)
+            assert isinstance(call["message"], str)
+            assert isinstance(call["kwargs"], dict)
 
             # Check that batch info is in kwargs when present
-            if 'current_batch' in call['kwargs']:
-                assert isinstance(call['kwargs']['current_batch'], int)
-                assert isinstance(call['kwargs']['total_batches'], int)
-                assert call['kwargs']['current_batch'] >= 1
-                assert call['kwargs']['total_batches'] >= 1
+            if "current_batch" in call["kwargs"]:
+                assert isinstance(call["kwargs"]["current_batch"], int)
+                assert isinstance(call["kwargs"]["total_batches"], int)
+                assert call["kwargs"]["current_batch"] >= 1
+                assert call["kwargs"]["total_batches"] >= 1
 
     @pytest.mark.asyncio
-    @patch('src.server.services.storage.document_storage_service.create_embeddings_batch')
-    @patch('src.server.services.credential_service.credential_service')
-    async def test_cancellation_support(self, mock_credentials, mock_create_embeddings,
-                                       mock_supabase_client, sample_document_data):
+    @patch("src.server.services.storage.document_storage_service.create_embeddings_batch")
+    @patch("src.server.services.credential_service.credential_service")
+    async def test_cancellation_support(
+        self, mock_credentials, mock_create_embeddings, mock_supabase_client, sample_document_data
+    ):
         """Test that cancellation is handled correctly during document storage."""
 
         mock_credentials.get_credentials_by_category.return_value = {
             "DOCUMENT_STORAGE_BATCH_SIZE": "2",
-            "USE_CONTEXTUAL_EMBEDDINGS": "false"
+            "USE_CONTEXTUAL_EMBEDDINGS": "false",
         }
 
         mock_create_embeddings.return_value = create_mock_embedding_result(2)
 
         # Create cancellation check that triggers after first batch
         call_count = 0
+
         def cancellation_check():
             nonlocal call_count
             call_count += 1
@@ -210,19 +214,20 @@ class TestDocumentStorageProgressIntegration:
                 contents=sample_document_data["contents"],
                 metadatas=sample_document_data["metadatas"],
                 url_to_full_document=sample_document_data["url_to_full_document"],
-                cancellation_check=cancellation_check
+                cancellation_check=cancellation_check,
             )
 
     @pytest.mark.asyncio
-    @patch('src.server.services.storage.document_storage_service.create_embeddings_batch')
-    @patch('src.server.services.credential_service.credential_service')
-    async def test_error_handling_in_progress_reporting(self, mock_credentials, mock_create_embeddings,
-                                                      mock_supabase_client, sample_document_data):
+    @patch("src.server.services.storage.document_storage_service.create_embeddings_batch")
+    @patch("src.server.services.credential_service.credential_service")
+    async def test_error_handling_in_progress_reporting(
+        self, mock_credentials, mock_create_embeddings, mock_supabase_client, sample_document_data
+    ):
         """Test that errors in progress reporting don't crash the storage process."""
 
         mock_credentials.get_credentials_by_category.return_value = {
             "DOCUMENT_STORAGE_BATCH_SIZE": "3",
-            "USE_CONTEXTUAL_EMBEDDINGS": "false"
+            "USE_CONTEXTUAL_EMBEDDINGS": "false",
         }
 
         mock_create_embeddings.return_value = create_mock_embedding_result(3)
@@ -240,7 +245,7 @@ class TestDocumentStorageProgressIntegration:
             contents=sample_document_data["contents"][:3],
             metadatas=sample_document_data["metadatas"][:3],
             url_to_full_document=dict(list(sample_document_data["url_to_full_document"].items())[:2]),
-            progress_callback=failing_callback
+            progress_callback=failing_callback,
         )
 
         # Should still return valid result
@@ -272,7 +277,7 @@ class TestProgressTrackerIntegration:
             ("code_extraction", 80, "Generating AI summaries (40/50 examples)"),
             ("code_extraction", 95, "Code extraction completed"),
             ("finalization", 98, "Finalizing crawl metadata"),
-            ("completed", 100, "Crawl completed successfully")
+            ("completed", 100, "Crawl completed successfully"),
         ]
 
         # Process sequence
@@ -286,7 +291,7 @@ class TestProgressTrackerIntegration:
                 processed_pages=60 if status in ["crawling", "processing"] else None,
                 current_batch=3 if status == "document_storage" and progress == 25 else None,
                 total_batches=6 if status == "document_storage" else None,
-                code_blocks_found=150 if status == "code_extraction" else None
+                code_blocks_found=150 if status == "code_extraction" else None,
             )
 
         # Verify final state
@@ -314,7 +319,7 @@ class TestProgressTrackerIntegration:
             (3, 6, 2, "Starting batch 3/6 (25 chunks)"),
             (4, 6, 3, "Starting batch 4/6 (25 chunks)"),
             (5, 6, 4, "Starting batch 5/6 (25 chunks)"),
-            (6, 6, 5, "Starting batch 6/6 (15 chunks)")
+            (6, 6, 5, "Starting batch 6/6 (15 chunks)"),
         ]
 
         for current, total, completed, message in batches:
@@ -328,7 +333,7 @@ class TestProgressTrackerIntegration:
                 total_batches=total,
                 completed_batches=completed,
                 chunks_in_batch=25 if current < 6 else 15,
-                active_workers=4
+                active_workers=4,
             )
 
         # Verify batch data is preserved
@@ -353,16 +358,14 @@ class TestProgressTrackerIntegration:
                     status="processing",
                     progress=i * 20,
                     log=f"{prefix} progress update {i}",
-                    custom_field=f"{prefix}_data_{i}"
+                    custom_field=f"{prefix}_data_{i}",
                 )
                 # Small delay to simulate real work
                 await asyncio.sleep(0.01)
 
         # Run all updates concurrently
         await asyncio.gather(
-            update_tracker(tracker1, "Crawl1"),
-            update_tracker(tracker2, "Upload"),
-            update_tracker(tracker3, "Crawl3")
+            update_tracker(tracker1, "Crawl1"), update_tracker(tracker2, "Upload"), update_tracker(tracker3, "Crawl3")
         )
 
         # Verify each tracker maintains independent state

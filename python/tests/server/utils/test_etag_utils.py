@@ -1,7 +1,5 @@
 """Unit tests for ETag utilities used in HTTP polling."""
 
-
-
 from src.server.utils.etag_utils import check_etag, generate_etag
 
 
@@ -141,9 +139,9 @@ class TestEtagIntegration:
         response_data = {
             "projects": [
                 {"id": "proj-1", "name": "Project 1", "status": "active"},
-                {"id": "proj-2", "name": "Project 2", "status": "completed"}
+                {"id": "proj-2", "name": "Project 2", "status": "completed"},
             ],
-            "count": 2
+            "count": 2,
         }
 
         # Generate ETag for response
@@ -166,7 +164,7 @@ class TestEtagIntegration:
             "status": "running",
             "percentage": 45,
             "message": "Processing items...",
-            "metadata": {"processed": 45, "total": 100}
+            "metadata": {"processed": 45, "total": 100},
         }
 
         etag1 = generate_etag(progress_data)

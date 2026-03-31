@@ -31,8 +31,8 @@ else:
 
             # Call the database functions via RPC
             # These functions are defined in migration/004_create_test_utility_functions.sql
-            supabase_client.rpc('reset_test_database').execute()
-            supabase_client.rpc('seed_test_database').execute()
+            supabase_client.rpc("reset_test_database").execute()
+            supabase_client.rpc("seed_test_database").execute()
 
             return {"message": "Database reset and seeded successfully via API."}
         except Exception as e:
@@ -70,6 +70,7 @@ else:
 
         # Run the task in the background
         import asyncio
+
         asyncio.create_task(agent_service.run_agent_task(task_id, agent_id))
 
         return {"message": f"Task {task_id} triggered for agent {agent_id}", "command": command}

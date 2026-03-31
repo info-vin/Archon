@@ -55,13 +55,11 @@ class ProjectCreationService(BaseRepository):
             "features": [],
             "data": {},
         }
+
         def _query():
             return self.supabase_client.table("archon_projects").insert(project_data).execute()
 
-        success, result = self.execute_query(
-            query_func=_query,
-            error_context="DB operation logged error"
-        )
+        success, result = self.execute_query(query_func=_query, error_context="DB operation logged error")
         if success:
             # TODO: Extract properties via 'result["data"]' as per original logic
             return True, {"data": result["data"]}
@@ -84,6 +82,7 @@ class ProjectCreationService(BaseRepository):
         try:
             # Check if LLM provider is configured
             from ..credential_service import credential_service
+
             provider_config = await credential_service.get_active_provider("llm")
 
             if not provider_config:
@@ -93,13 +92,13 @@ class ProjectCreationService(BaseRepository):
             # Import DocumentAgent (lazy import to avoid startup issues)
             from ...agents.document_agent import DocumentAgent
 
-
-
             # Initialize DocumentAgent
             document_agent = DocumentAgent()
 
             # Generate comprehensive PRD using conversation
-            prd_request = f"Create a PRD document titled '{title} - Product Requirements Document' for a project called '{title}'"
+            prd_request = (
+                f"Create a PRD document titled '{title} - Product Requirements Document' for a project called '{title}'"
+            )
             if description:
                 prd_request += f" with the following description: {description}"
             if github_repo:
@@ -118,7 +117,6 @@ class ProjectCreationService(BaseRepository):
             )
 
             if agent_result.success:
-
                 return True
             else:
                 return False

@@ -20,6 +20,7 @@ from ..embeddings.embedding_service import EmbeddingBatchResult, create_embeddin
 def _get_model_choice() -> str:
     """Get MODEL_CHOICE with direct fallback (Facade)."""
     from .code.summarization import _get_model_choice_logic
+
     return _get_model_choice_logic()
 
 
@@ -32,7 +33,7 @@ async def generate_code_summaries_batch(
     code_blocks: list[dict[str, Any]],
     max_workers: int | None = None,
     progress_callback: Any = None,
-    provider: str | None = None
+    provider: str | None = None,
 ) -> list[dict[str, str]]:
     """
     Generate summaries for multiple code blocks.
@@ -40,6 +41,7 @@ async def generate_code_summaries_batch(
     Kept as a module-level function for backward compatibility.
     """
     from .code.summarization import generate_code_summaries_batch_logic
+
     return await generate_code_summaries_batch_logic(None, code_blocks, max_workers, progress_callback, provider)
 
 
@@ -49,6 +51,7 @@ def extract_code_blocks(markdown_content: str, min_length: int | None = None) ->
     Delegates to extraction submodule.
     """
     from .code.extraction import extract_code_blocks_logic
+
     return extract_code_blocks_logic(markdown_content, min_length)
 
 
@@ -60,6 +63,7 @@ def generate_code_example_summary(
     Delegates to summarization submodule.
     """
     from .code.summarization import generate_code_example_summary_logic
+
     return generate_code_example_summary_logic(code, context_before, context_after, language, provider)
 
 
@@ -84,6 +88,7 @@ async def add_code_examples_to_supabase(
 
     # Check for contextual embeddings setting
     from src.server.services.credential_service import credential_service
+
     enable_contextual_val = await credential_service.get_credential("ENABLE_CONTEXTUAL_EMBEDDINGS", "false")
     enable_contextual = str(enable_contextual_val).lower() == "true"
 
@@ -91,31 +96,33 @@ async def add_code_examples_to_supabase(
     if enable_contextual and url_to_full_document:
         search_logger.info("Generating context for code examples...")
         full_docs = [url_to_full_document.get(url, "") for url in urls]
-        context_results = await generate_contextual_embeddings_batch(
-            full_docs, code_examples, provider=provider
-        )
+        context_results = await generate_contextual_embeddings_batch(full_docs, code_examples, provider=provider)
         context_texts = [res[0] for res in context_results]
 
     for i in range(0, total_examples, batch_size):
         batch_end = min(i + batch_size, total_examples)
         batch_examples = code_examples[i:batch_end]
 
-        batch_result: EmbeddingBatchResult = await create_embeddings_batch(
-            batch_examples, progress_callback=None
-        )
+        batch_result: EmbeddingBatchResult = await create_embeddings_batch(batch_examples, progress_callback=None)
 
         if batch_result.success_count == 0:
-            search_logger.error(f"Failed to generate embeddings for batch {i//batch_size}")
+            search_logger.error(f"Failed to generate embeddings for batch {i // batch_size}")
             continue
 
         embeddings = batch_result.embeddings
 
         batch_data = []
-        for j, (example, embedding, summary, url, chunk_num, meta) in enumerate(zip(
-            batch_examples, embeddings, summaries[i:batch_end],
-            urls[i:batch_end], chunk_numbers[i:batch_end], metadatas[i:batch_end],
-            strict=False
-        )):
+        for j, (example, embedding, summary, url, chunk_num, meta) in enumerate(
+            zip(
+                batch_examples,
+                embeddings,
+                summaries[i:batch_end],
+                urls[i:batch_end],
+                chunk_numbers[i:batch_end],
+                metadatas[i:batch_end],
+                strict=False,
+            )
+        ):
             row = {
                 "source_url": url,
                 "chunk_number": chunk_num,
@@ -131,12 +138,14 @@ async def add_code_examples_to_supabase(
         try:
             client.table("code_examples").insert(batch_data).execute()
             if progress_callback:
-                await progress_callback({
-                    "status": "storing_code",
-                    "log": f"Stored {batch_end}/{total_examples} code examples",
-                    "current": batch_end,
-                    "total": total_examples
-                })
+                await progress_callback(
+                    {
+                        "status": "storing_code",
+                        "log": f"Stored {batch_end}/{total_examples} code examples",
+                        "current": batch_end,
+                        "total": total_examples,
+                    }
+                )
         except Exception as e:
             search_logger.error(f"Failed to insert code examples batch: {e}")
 
@@ -145,6 +154,7 @@ class CodeStorageService:
     """
     Facade Service for code storage operations.
     """
+
     def __init__(self, supabase_client: Client | None = None):
         self.supabase_client = supabase_client
 
@@ -152,6 +162,7 @@ class CodeStorageService:
         client = self.supabase_client
         if client is None:
             from ....utils import get_supabase_client
+
             client = get_supabase_client()
         return await add_code_examples_to_supabase(client=client, **kwargs)
 

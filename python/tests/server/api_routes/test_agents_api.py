@@ -9,15 +9,11 @@ from src.server.services.agent_service import AI_AGENT_ROLES  # Import the actua
 # so that the router gets the mocked dependency
 mock_agent_service = AsyncMock()
 mock_agent_service.get_assignable_agents.return_value = [
-    {"id": agent_id, "name": role_name, "role": role_name}
-    for role_name, agent_id in AI_AGENT_ROLES.items()
+    {"id": agent_id, "name": role_name, "role": role_name} for role_name, agent_id in AI_AGENT_ROLES.items()
 ]
 
 # The patch needs to target where the object is *used*, which is in the api_routes module
-module_patch = patch(
-    'src.server.api_routes.agents_api.agent_service',
-    mock_agent_service
-)
+module_patch = patch("src.server.api_routes.agents_api.agent_service", mock_agent_service)
 
 # Now we can import the app
 from src.server.main import app  # noqa: E402
@@ -26,6 +22,7 @@ from src.server.main import app  # noqa: E402
 module_patch.start()
 
 client = TestClient(app)
+
 
 def test_get_assignable_agents_success():
     """
@@ -43,12 +40,14 @@ def test_get_assignable_agents_success():
     assert isinstance(data, list)
     assert len(data) == len(AI_AGENT_ROLES)
     # Check that the returned agents match the expected roles
-    expected_agents = [{"id": agent_id, "name": role_name, "role": role_name} for role_name, agent_id in AI_AGENT_ROLES.items()]
+    expected_agents = [
+        {"id": agent_id, "name": role_name, "role": role_name} for role_name, agent_id in AI_AGENT_ROLES.items()
+    ]
     assert all(any(item == expected for expected in expected_agents) for item in data)
-
 
     # Verify that the mocked service method was called
     mock_agent_service.get_assignable_agents.assert_awaited_once()
+
 
 def test_get_assignable_agents_service_error():
     """
@@ -74,6 +73,7 @@ def test_get_assignable_agents_service_error():
     mock_agent_service.get_assignable_agents.return_value = [
         {"id": "ai-tester-1", "name": "測試 AI Agent", "role": "TEST"},
     ]
+
 
 # Stop the patch after all tests in this module are done
 def teardown_module(module):

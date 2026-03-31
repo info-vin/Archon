@@ -14,17 +14,17 @@ class ProgressMapper:
     STAGE_RANGES = {
         "starting": (0, 1),
         "initializing": (0, 1),
-        "analyzing": (1, 2),       # URL analysis is very quick
-        "crawling": (2, 5),        # Crawling pages is relatively fast
-        "processing": (5, 8),      # Content processing/chunking is quick
-        "source_creation": (8, 10), # DB operations are fast
-        "document_storage": (10, 30), # Embeddings + batch processing - significant but not longest
+        "analyzing": (1, 2),  # URL analysis is very quick
+        "crawling": (2, 5),  # Crawling pages is relatively fast
+        "processing": (5, 8),  # Content processing/chunking is quick
+        "source_creation": (8, 10),  # DB operations are fast
+        "document_storage": (10, 30),  # Embeddings + batch processing - significant but not longest
         "code_extraction": (30, 95),  # LONGEST PHASE: AI analysis of code examples
-        "code_storage": (30, 95),     # Alias
-        "finalization": (95, 100),    # Quick final steps
+        "code_storage": (30, 95),  # Alias
+        "finalization": (95, 100),  # Quick final steps
         "completed": (100, 100),
-        "complete": (100, 100),       # Alias
-        "error": (-1, -1),            # Special case for errors
+        "complete": (100, 100),  # Alias
+        "error": (-1, -1),  # Special case for errors
         # Upload-specific stages
         "reading": (0, 5),
         "extracting": (5, 10),

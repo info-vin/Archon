@@ -18,10 +18,7 @@ def _get_model_choice_logic() -> str:
     try:
         from src.server.services.credential_service import credential_service
 
-        if (
-            credential_service._cache_initialized
-            and "MODEL_CHOICE" in credential_service._cache
-        ):
+        if credential_service._cache_initialized and "MODEL_CHOICE" in credential_service._cache:
             model = credential_service._cache["MODEL_CHOICE"]
         else:
             model = os.getenv("MODEL_CHOICE", "gpt-4.1-nano")
@@ -73,15 +70,10 @@ Format your response as JSON:
         if not api_key:
             from src.server.services.credential_service import credential_service
 
-            if (
-                credential_service._cache_initialized
-                and "OPENAI_API_KEY" in credential_service._cache
-            ):
+            if credential_service._cache_initialized and "OPENAI_API_KEY" in credential_service._cache:
                 cached_key = credential_service._cache["OPENAI_API_KEY"]
                 if isinstance(cached_key, dict) and cached_key.get("is_encrypted"):
-                    api_key = credential_service._decrypt_value(
-                        cached_key["encrypted_value"]
-                    )
+                    api_key = credential_service._decrypt_value(cached_key["encrypted_value"])
                 else:
                     api_key = cached_key
             else:
@@ -121,9 +113,7 @@ Format your response as JSON:
     except Exception as e:
         search_logger.error(f"Summarization AI Error: {e}")
         return {
-            "example_name": (
-                f"Code Example ({language})" if language else "Code Example"
-            ),
+            "example_name": (f"Code Example ({language})" if language else "Code Example"),
             "summary": "Code example for demonstration purposes.",
         }
 
@@ -145,6 +135,7 @@ async def generate_code_summaries_batch_logic(
     if max_workers is None:
         try:
             from src.server.services.credential_service import credential_service
+
             if credential_service._cache_initialized and "CODE_SUMMARY_MAX_WORKERS" in credential_service._cache:
                 max_workers = int(credential_service._cache["CODE_SUMMARY_MAX_WORKERS"])
             else:
@@ -174,10 +165,12 @@ async def generate_code_summaries_batch_logic(
             async with lock:
                 completed_count += 1
                 if progress_callback:
-                    await progress_callback({
-                        "status": "code_summarization",
-                        "log": f"Generated {completed_count}/{len(code_blocks)} code summaries"
-                    })
+                    await progress_callback(
+                        {
+                            "status": "code_summarization",
+                            "log": f"Generated {completed_count}/{len(code_blocks)} code summaries",
+                        }
+                    )
             return result
 
     tasks = [_sum_single(block) for block in code_blocks]

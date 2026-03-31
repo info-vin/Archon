@@ -8,12 +8,14 @@ from src.server.main import app
 
 client = TestClient(app)
 
+
 @pytest.fixture
 def mock_admin():
     user = {"id": "admin-id", "role": "system_admin", "department": "Sales"}
     app.dependency_overrides[get_current_user] = lambda: user
     yield user
     app.dependency_overrides.pop(get_current_user, None)
+
 
 def test_lead_lifecycle_mobile_ops(mock_admin):
     """驗證 Alice 在行動端的 Lead 完整生命週期"""
@@ -29,11 +31,13 @@ def test_lead_lifecycle_mobile_ops(mock_admin):
         res = client.post("/api/marketing/leads", json={"company_name": "TestCorp"})
         assert res.status_code == 200
 
+
 def test_visit_log_creation_no_audio(mock_admin):
     with patch("src.server.api_routes.visit_log_api.VisitLogService.create_log") as mock_create:
         mock_create.return_value = (True, {"id": "v1"})
         res = client.post("/api/visit-logs", json={"lead_id": "l1", "summary": "Visited"})
         assert res.status_code == 200
+
 
 def test_visit_log_fetch_user(mock_admin):
     with patch("src.server.api_routes.visit_log_api.VisitLogService.list_logs") as mock_list:

@@ -19,11 +19,7 @@ class TestProgressDetails:
     def test_create_with_snake_case_fields(self):
         """Test creating ProgressDetails with snake_case field names."""
         details = ProgressDetails(
-            current_chunk=25,
-            total_chunks=100,
-            current_batch=3,
-            total_batches=6,
-            chunks_per_second=5.5
+            current_chunk=25, total_chunks=100, current_batch=3, total_batches=6, chunks_per_second=5.5
         )
 
         assert details.current_chunk == 25
@@ -34,13 +30,7 @@ class TestProgressDetails:
 
     def test_create_with_camel_case_fields(self):
         """Test creating ProgressDetails with camelCase field names."""
-        details = ProgressDetails(
-            currentChunk=25,
-            totalChunks=100,
-            currentBatch=3,
-            totalBatches=6,
-            chunksPerSecond=5.5
-        )
+        details = ProgressDetails(currentChunk=25, totalChunks=100, currentBatch=3, totalBatches=6, chunksPerSecond=5.5)
 
         assert details.current_chunk == 25
         assert details.total_chunks == 100
@@ -50,11 +40,7 @@ class TestProgressDetails:
 
     def test_model_dump_uses_aliases(self):
         """Test that model_dump uses camelCase aliases."""
-        details = ProgressDetails(
-            current_chunk=25,
-            total_chunks=100,
-            chunks_per_second=2.5
-        )
+        details = ProgressDetails(current_chunk=25, total_chunks=100, chunks_per_second=2.5)
 
         data = details.model_dump(by_alias=True)
 
@@ -71,10 +57,7 @@ class TestBaseProgressResponse:
     def test_create_minimal_response(self):
         """Test creating minimal progress response."""
         response = BaseProgressResponse(
-            progress_id="test-123",
-            status="running",
-            progress=50.0,
-            message="Processing..."
+            progress_id="test-123", status="running", progress=50.0, message="Processing..."
         )
 
         assert response.progress_id == "test-123"
@@ -85,46 +68,28 @@ class TestBaseProgressResponse:
     def test_progress_validation(self):
         """Test that progress is validated to be between 0-100."""
         # Valid progress
-        response = BaseProgressResponse(
-            progress_id="test-123",
-            status="running",
-            progress=50.0
-        )
+        response = BaseProgressResponse(progress_id="test-123", status="running", progress=50.0)
         assert response.progress == 50.0
 
         # Invalid progress - too high
         with pytest.raises(ValidationError):
-            BaseProgressResponse(
-                progress_id="test-123",
-                status="running",
-                progress=150.0
-            )
+            BaseProgressResponse(progress_id="test-123", status="running", progress=150.0)
 
         # Invalid progress - too low
         with pytest.raises(ValidationError):
-            BaseProgressResponse(
-                progress_id="test-123",
-                status="running",
-                progress=-10.0
-            )
+            BaseProgressResponse(progress_id="test-123", status="running", progress=-10.0)
 
     def test_logs_validation_and_conversion(self):
         """Test logs field validation and conversion."""
         # Test with list of strings
         response = BaseProgressResponse(
-            progress_id="test-123",
-            status="running",
-            progress=50.0,
-            logs=["Starting", "Processing", "Almost done"]
+            progress_id="test-123", status="running", progress=50.0, logs=["Starting", "Processing", "Almost done"]
         )
         assert response.logs == ["Starting", "Processing", "Almost done"]
 
         # Test with single string
         response = BaseProgressResponse(
-            progress_id="test-123",
-            status="running",
-            progress=50.0,
-            logs="Single log message"
+            progress_id="test-123", status="running", progress=50.0, logs="Single log message"
         )
         assert response.logs == ["Single log message"]
 
@@ -135,8 +100,8 @@ class TestBaseProgressResponse:
             progress=50.0,
             logs=[
                 {"message": "Starting", "timestamp": "2024-01-01T10:00:00"},
-                {"message": "Processing", "timestamp": "2024-01-01T10:01:00"}
-            ]
+                {"message": "Processing", "timestamp": "2024-01-01T10:01:00"},
+            ],
         )
         assert response.logs == ["Starting", "Processing"]
 
@@ -147,7 +112,7 @@ class TestBaseProgressResponse:
             status="running",
             progress=50.0,
             currentStep="processing",  # camelCase
-            stepMessage="Working on it"  # camelCase
+            stepMessage="Working on it",  # camelCase
         )
 
         assert response.progress_id == "test-123"
@@ -171,7 +136,7 @@ class TestCrawlProgressResponse:
             total_batches=6,
             completed_batches=2,
             chunks_in_batch=25,
-            active_workers=4
+            active_workers=4,
         )
 
         assert response.progress_id == "crawl-123"
@@ -193,7 +158,7 @@ class TestCrawlProgressResponse:
             completed_documents=45,
             total_documents=50,
             completed_summaries=30,
-            total_summaries=40
+            total_summaries=40,
         )
 
         assert response.code_blocks_found == 150
@@ -206,26 +171,29 @@ class TestCrawlProgressResponse:
     def test_status_validation(self):
         """Test that only valid crawl statuses are accepted."""
         valid_statuses = [
-            "starting", "analyzing", "crawling", "processing",
-            "source_creation", "document_storage", "code_extraction", "code_storage",
-            "finalization", "completed", "failed", "cancelled", "stopping", "error"
+            "starting",
+            "analyzing",
+            "crawling",
+            "processing",
+            "source_creation",
+            "document_storage",
+            "code_extraction",
+            "code_storage",
+            "finalization",
+            "completed",
+            "failed",
+            "cancelled",
+            "stopping",
+            "error",
         ]
 
         for status in valid_statuses:
-            response = CrawlProgressResponse(
-                progress_id="test-123",
-                status=status,
-                progress=50.0
-            )
+            response = CrawlProgressResponse(progress_id="test-123", status=status, progress=50.0)
             assert response.status == status
 
         # Invalid status should raise validation error
         with pytest.raises(ValidationError):
-            CrawlProgressResponse(
-                progress_id="test-123",
-                status="invalid_status",
-                progress=50.0
-            )
+            CrawlProgressResponse(progress_id="test-123", status="invalid_status", progress=50.0)
 
     def test_camel_case_field_aliases(self):
         """Test that crawl-specific fields use camelCase aliases."""
@@ -238,7 +206,7 @@ class TestCrawlProgressResponse:
             processedPages=50,  # camelCase
             codeBlocksFound=75,  # camelCase
             totalBatches=6,  # camelCase
-            currentBatch=3  # camelCase
+            currentBatch=3,  # camelCase
         )
 
         assert response.current_url == "https://example.com/page1"
@@ -251,21 +219,11 @@ class TestCrawlProgressResponse:
     def test_duration_conversion(self):
         """Test that duration is converted to string."""
         # Test with float
-        response = CrawlProgressResponse(
-            progress_id="test-123",
-            status="completed",
-            progress=100.0,
-            duration=123.45
-        )
+        response = CrawlProgressResponse(progress_id="test-123", status="completed", progress=100.0, duration=123.45)
         assert response.duration == "123.45"
 
         # Test with int
-        response = CrawlProgressResponse(
-            progress_id="test-123",
-            status="completed",
-            progress=100.0,
-            duration=120
-        )
+        response = CrawlProgressResponse(progress_id="test-123", status="completed", progress=100.0, duration=120)
         assert response.duration == "120"
 
         # Test with None
@@ -273,7 +231,7 @@ class TestCrawlProgressResponse:
             progress_id="test-123",
             status="processing",  # Use valid crawl status
             progress=50.0,
-            duration=None
+            duration=None,
         )
         assert response.duration is None
 
@@ -291,7 +249,7 @@ class TestUploadProgressResponse:
             file_name="document.pdf",
             file_type="application/pdf",
             chunks_stored=400,
-            word_count=5000
+            word_count=5000,
         )
 
         assert response.progress_id == "upload-123"
@@ -305,17 +263,19 @@ class TestUploadProgressResponse:
     def test_upload_status_validation(self):
         """Test upload status validation."""
         valid_statuses = [
-            "starting", "reading", "chunking",
-            "source_creation", "summarizing", "storing",
-            "completed", "failed", "cancelled"
+            "starting",
+            "reading",
+            "chunking",
+            "source_creation",
+            "summarizing",
+            "storing",
+            "completed",
+            "failed",
+            "cancelled",
         ]
 
         for status in valid_statuses:
-            response = UploadProgressResponse(
-                progress_id="test-123",
-                status=status,
-                progress=50.0
-            )
+            response = UploadProgressResponse(progress_id="test-123", status=status, progress=50.0)
             assert response.status == status
 
 
@@ -325,25 +285,23 @@ class TestProjectCreationProgressResponse:
     def test_project_creation_status_validation(self):
         """Test project creation status validation."""
         valid_statuses = [
-            "starting", "analyzing", "generating_prp", "creating_tasks",
-            "organizing", "completed", "failed", "error"
+            "starting",
+            "analyzing",
+            "generating_prp",
+            "creating_tasks",
+            "organizing",
+            "completed",
+            "failed",
+            "error",
         ]
 
         for status in valid_statuses:
-            response = ProjectCreationProgressResponse(
-                progress_id="test-123",
-                status=status,
-                progress=50.0
-            )
+            response = ProjectCreationProgressResponse(progress_id="test-123", status=status, progress=50.0)
             assert response.status == status
 
         # Invalid status should raise validation error
         with pytest.raises(ValidationError):
-            ProjectCreationProgressResponse(
-                progress_id="test-123",
-                status="invalid_status",
-                progress=50.0
-            )
+            ProjectCreationProgressResponse(progress_id="test-123", status="invalid_status", progress=50.0)
 
 
 class TestProgressResponseFactory:
@@ -359,7 +317,7 @@ class TestProgressResponseFactory:
             "current_batch": 3,
             "total_batches": 6,
             "total_pages": 60,
-            "processed_pages": 60
+            "processed_pages": 60,
         }
 
         response = create_progress_response("crawl", progress_data)
@@ -378,7 +336,7 @@ class TestProgressResponseFactory:
             "progress": 75,
             "log": "Storing document chunks",
             "file_name": "document.pdf",
-            "chunks_stored": 300
+            "chunks_stored": 300,
         }
 
         response = create_progress_response("upload", progress_data)
@@ -399,7 +357,7 @@ class TestProgressResponseFactory:
             "total_batches": 6,
             "current_chunk": 150,
             "total_chunks": 300,
-            "chunks_per_second": 5.5
+            "chunks_per_second": 5.5,
         }
 
         response = create_progress_response("crawl", progress_data)
@@ -414,30 +372,20 @@ class TestProgressResponseFactory:
     def test_factory_handles_missing_fields(self):
         """Test that factory handles missing required fields gracefully."""
         # Missing status
-        progress_data = {
-            "progress_id": "test-123",
-            "progress": 50
-        }
+        progress_data = {"progress_id": "test-123", "progress": 50}
 
         response = create_progress_response("crawl", progress_data)
         assert response.status == "starting"  # Default
 
         # Missing progress
-        progress_data = {
-            "progress_id": "test-123",
-            "status": "processing"
-        }
+        progress_data = {"progress_id": "test-123", "status": "processing"}
 
         response = create_progress_response("crawl", progress_data)
         assert response.progress == 0  # Default
 
     def test_factory_unknown_operation_type(self):
         """Test factory with unknown operation type falls back to base response."""
-        progress_data = {
-            "progress_id": "test-123",
-            "status": "processing",
-            "progress": 50
-        }
+        progress_data = {"progress_id": "test-123", "status": "processing", "progress": 50}
 
         response = create_progress_response("unknown_type", progress_data)
         assert isinstance(response, BaseProgressResponse)
@@ -449,7 +397,7 @@ class TestProgressResponseFactory:
         progress_data = {
             "progress_id": "test-123",
             "status": "invalid_crawl_status",  # Invalid status
-            "progress": 50
+            "progress": 50,
         }
 
         response = create_progress_response("crawl", progress_data)

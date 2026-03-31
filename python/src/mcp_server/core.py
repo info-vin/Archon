@@ -27,12 +27,14 @@ GLOBAL_TOOL_REGISTRY = []
 
 logger = logging.getLogger(__name__)
 
+
 @dataclass
 class ArchonContext:
     """
     Context for MCP server.
     No heavy dependencies - just service client for HTTP calls.
     """
+
     service_client: Any
     health_status: dict | None = None
     startup_time: float | None = None
@@ -48,6 +50,7 @@ class ArchonContext:
         if self.startup_time is None:
             self.startup_time = time.time()
 
+
 def get_tool_schema(tool: Any) -> dict:
     """Safely extract tool schema regardless of FastMCP version."""
     if hasattr(tool, "inputSchema"):
@@ -57,6 +60,7 @@ def get_tool_schema(tool: Any) -> dict:
     if hasattr(tool, "model_dump"):
         return cast(dict, tool.model_dump().get("inputSchema", {}))
     return {}
+
 
 async def perform_health_checks(context: ArchonContext):
     """Perform health checks on dependent services via HTTP."""
@@ -84,6 +88,7 @@ async def perform_health_checks(context: ArchonContext):
         if context.health_status is not None:
             context.health_status["status"] = "unhealthy"
             context.health_status["last_health_check"] = datetime.now().isoformat()
+
 
 @asynccontextmanager
 async def lifespan(server: FastMCP) -> AsyncIterator[ArchonContext]:
@@ -119,14 +124,13 @@ async def lifespan(server: FastMCP) -> AsyncIterator[ArchonContext]:
             # --- PHYSICAL REGISTRY POPULATION (Phase 4.6.19) ---
             # Access the server's tool manager
             raw_tools = server._tool_manager.list_tools()
-            GLOBAL_TOOL_REGISTRY = [{
-                "type": "function",
-                "function": {
-                    "name": t.name,
-                    "description": t.description or "",
-                    "parameters": get_tool_schema(t)
+            GLOBAL_TOOL_REGISTRY = [
+                {
+                    "type": "function",
+                    "function": {"name": t.name, "description": t.description or "", "parameters": get_tool_schema(t)},
                 }
-            } for t in raw_tools]
+                for t in raw_tools
+            ]
             logger.info(f"✅ [PID {os.getpid()}] PHYSICAL REGISTRY FINALIZED: {len(GLOBAL_TOOL_REGISTRY)} tools")
 
             _shared_context = context

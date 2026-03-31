@@ -5,9 +5,9 @@ def test_calculate_ai_score_grounded_logic():
     stats = StatsService()
 
     # 1. Test basic quality (Word count based)
-    assert stats.calculate_ai_score("Very short content") == 50 # < 50 words penalty
+    assert stats.calculate_ai_score("Very short content") == 50  # < 50 words penalty
 
-    long_content = "Word " * 201 # 200+ words to pass all length checks
+    long_content = "Word " * 201  # 200+ words to pass all length checks
     assert stats.calculate_ai_score(long_content) == 100
 
     # 2. Test Technical Metadata (Phase 4.6.15 Physical indicators)

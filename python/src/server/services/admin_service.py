@@ -5,6 +5,7 @@ from ..utils import get_supabase_client
 
 logger = get_logger(__name__)
 
+
 class AdminService:
     @staticmethod
     async def get_all_users(limit: int = 100, role_filter: str | None = None) -> list[dict[str, Any]]:
@@ -52,10 +53,7 @@ class AdminService:
             # Since get_supabase_client uses SERVICE_KEY, we have admin privileges.
             try:
                 # Note: supabase-py admin methods are sync
-                supabase.auth.admin.update_user_by_id(
-                    user_id,
-                    {"user_metadata": {"role": new_role}}
-                )
+                supabase.auth.admin.update_user_by_id(user_id, {"user_metadata": {"role": new_role}})
                 logger.info(f"AdminService: Synced metadata role for {user_id}")
             except Exception as auth_err:
                 # Log but don't fail the whole request if only metadata sync fails

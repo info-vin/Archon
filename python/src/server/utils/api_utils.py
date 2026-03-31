@@ -4,9 +4,7 @@ from fastapi import HTTPException
 
 
 def handle_service_result(
-    success: bool,
-    result: dict[str, Any] | list[Any] | str | None,
-    not_found_msg: str = "not found"
+    success: bool, result: dict[str, Any] | list[Any] | str | None, not_found_msg: str = "not found"
 ) -> dict[str, Any] | list[Any]:
     """
     Standardizes the error checking for service layer responses.
@@ -28,4 +26,4 @@ def handle_service_result(
 
         raise HTTPException(status_code=500, detail=detail)
 
-    return result # type: ignore
+    return result  # type: ignore

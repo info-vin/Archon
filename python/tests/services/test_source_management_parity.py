@@ -24,7 +24,10 @@ async def test_extract_source_summary_logic():
 
     # 4. 執行測試
     with patch("src.server.services.source_management.logic.ai_metadata.get_llm_client", side_effect=mock_llm_context):
-        with patch("src.server.services.credential_service.credential_service.get_credentials_by_category", new_callable=AsyncMock) as mock_creds:
+        with patch(
+            "src.server.services.credential_service.credential_service.get_credentials_by_category",
+            new_callable=AsyncMock,
+        ) as mock_creds:
             mock_creds.return_value = {"MODEL_CHOICE": "test-model"}
 
             summary = await extract_source_summary("test-source", "test content")
@@ -32,6 +35,7 @@ async def test_extract_source_summary_logic():
             # 斷言
             assert summary == "Test Summary Content"
             print("\n✅ Task F: AI Metadata Parity Test PASSED.")
+
 
 if __name__ == "__main__":
     pytest.main([__file__])

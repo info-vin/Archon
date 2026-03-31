@@ -13,14 +13,13 @@ from .file_operation_tools import ToolDependencies
 
 logger = logging.getLogger(__name__)
 
+
 async def _get_staged_diff() -> str:
     """Gets the diff of staged changes."""
     try:
         # Check if git is available and we are in a git repo
         process = await asyncio.create_subprocess_exec(
-            'git', 'diff', '--staged',
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE
+            "git", "diff", "--staged", stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
         )
         stdout, stderr = await process.communicate()
         if process.returncode != 0:
@@ -30,6 +29,7 @@ async def _get_staged_diff() -> str:
     except Exception as e:
         logger.warning(f"Error executing git diff: {e}")
         return ""
+
 
 async def _generate_commit_message(diff: str, original_message: str) -> str:
     """Generates a smart commit message using LLM."""
@@ -58,15 +58,13 @@ Instructions:
 
         async with get_llm_client() as client:
             response = await client.chat.completions.create(
-                model=model,
-                messages=[{"role": "user", "content": prompt}],
-                max_tokens=150,
-                temperature=0.3
+                model=model, messages=[{"role": "user", "content": prompt}], max_tokens=150, temperature=0.3
             )
             generated_message = cast(str, response.choices[0].message.content.strip())
             # Remove any surrounding quotes if present
-            if (generated_message.startswith('"') and generated_message.endswith('"')) or \
-               (generated_message.startswith("'") and generated_message.endswith("'")):
+            if (generated_message.startswith('"') and generated_message.endswith('"')) or (
+                generated_message.startswith("'") and generated_message.endswith("'")
+            ):
                 generated_message = generated_message[1:-1]
 
             logger.info(f"Smart Commit: Replaced '{original_message}' with '{generated_message}'")
@@ -76,11 +74,13 @@ Instructions:
         logger.error(f"Failed to generate smart commit message: {e}")
         return original_message
 
+
 class ProposeGitBranchTool(BaseModel):
     """
     Proposes the creation of a new Git branch.
     This action requires human approval before the branch is actually created.
     """
+
     branch_name: str = Field(..., description="The name of the new branch to create (e.g., 'feature/new-login-flow').")
 
     async def execute(self) -> str:
@@ -95,21 +95,25 @@ class ProposeGitBranchTool(BaseModel):
             payload = {
                 "command": "git_create_branch",
                 "branch_name": self.branch_name,
-                "description": f"Propose to create a new branch named '{self.branch_name}'."
+                "description": f"Propose to create a new branch named '{self.branch_name}'.",
             }
-            proposal = await service.create_proposal(change_type='git', payload=payload)
+            proposal = await service.create_proposal(change_type="git", payload=payload)
 
-            return (f"Successfully proposed to create a new branch '{self.branch_name}'. "
-                    f"Proposal ID: {proposal['id']}. Please await human approval.")
+            return (
+                f"Successfully proposed to create a new branch '{self.branch_name}'. "
+                f"Proposal ID: {proposal['id']}. Please await human approval."
+            )
         except Exception as e:
             logger.error(f"Failed to propose git branch '{self.branch_name}': {e}", exc_info=True)
             return f"Error: Could not propose git branch creation. Reason: {e}"
+
 
 class ProposeGitCommitTool(BaseModel):
     """
     Proposes committing all currently staged changes to the current branch.
     This action requires human approval before the commit is made.
     """
+
     commit_message: str = Field(..., description="The commit message (e.g., 'feat: Add user authentication endpoint').")
 
     async def execute(self) -> str:
@@ -133,16 +137,19 @@ class ProposeGitCommitTool(BaseModel):
             payload = {
                 "command": "git_commit",
                 "commit_message": final_message,
-                "description": f"Propose to commit staged changes with message: '{final_message}'."
+                "description": f"Propose to commit staged changes with message: '{final_message}'.",
             }
-            proposal = await service.create_proposal(change_type='git', payload=payload)
+            proposal = await service.create_proposal(change_type="git", payload=payload)
 
-            return (f"Successfully proposed a git commit. "
-                    f"Proposal ID: {proposal['id']}. Please await human approval.\n"
-                    f"Message: {final_message}")
+            return (
+                f"Successfully proposed a git commit. "
+                f"Proposal ID: {proposal['id']}. Please await human approval.\n"
+                f"Message: {final_message}"
+            )
         except Exception as e:
             logger.error(f"Failed to propose git commit: {e}", exc_info=True)
             return f"Error: Could not propose git commit. Reason: {e}"
+
 
 # To be added to the MCP's tool registry
 developer_version_control_tools: list[type[BaseModel]] = [

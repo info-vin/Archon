@@ -4,7 +4,6 @@ Stats API endpoints for Archon (Refactored - Lean Controller)
 Delegates all business logic and aggregations to StatsService.
 """
 
-
 from fastapi import APIRouter, Depends, HTTPException
 
 from ..auth.dependencies import get_current_user
@@ -17,10 +16,12 @@ logger = get_logger(__name__)
 router = APIRouter(prefix="/api/stats", tags=["stats"])
 stats_service = StatsService()
 
+
 async def require_admin(user=Depends(get_current_user)):
     if user.get("role") not in ["admin", "system_admin"]:
         raise HTTPException(status_code=403, detail="Admin access required")
     return user
+
 
 async def require_manager_or_admin(user=Depends(get_current_user)):
     role = (user.get("role") or "").lower()
@@ -28,9 +29,11 @@ async def require_manager_or_admin(user=Depends(get_current_user)):
         raise HTTPException(status_code=403, detail="Manager or Admin access required")
     return user
 
+
 def calculate_ai_score(content: str, metadata: dict | None = None) -> int:
     """Delegates to StatsService (Phase 4.6.15 metadata alignment)."""
     return StatsService.calculate_ai_score(content, metadata)
+
 
 @router.get("/commander-trends", dependencies=[Depends(require_manager_or_admin)])
 async def get_commander_trends():
@@ -41,6 +44,7 @@ async def get_commander_trends():
         logger.error(f"Commander trends failed: {e}")
         return []
 
+
 @router.get("/collab-synergy", dependencies=[Depends(require_manager_or_admin)])
 async def get_collab_synergy():
     """Synergy Momentum Matrix (9x9)."""
@@ -49,6 +53,7 @@ async def get_collab_synergy():
     except Exception as e:
         logger.error(f"API: Collab synergy fetch failed: {e}")
         return {"nodes": [], "matrix": [], "error": str(e)}
+
 
 @router.post("/approve-prompt-change/{version_id}", dependencies=[Depends(require_manager_or_admin)])
 async def approve_prompt_change(version_id: str):
@@ -63,6 +68,7 @@ async def approve_prompt_change(version_id: str):
         logger.error(f"API: Prompt approval failed: {e}")
         raise HTTPException(status_code=500, detail=str(e)) from e
 
+
 @router.get("/knowledge-roi", dependencies=[Depends(require_manager_or_admin)])
 async def get_knowledge_roi():
     """Knowledge Graph ROI: 60-Day Conversion Efficiency."""
@@ -72,21 +78,37 @@ async def get_knowledge_roi():
         logger.error(f"API: Knowledge ROI failed: {e}")
         return {"overall_conversion": 0, "trend": [], "top_domains": [], "error": str(e)}
 
+
 @router.get("/ethics-audit-queue", dependencies=[Depends(require_manager_or_admin)])
 async def get_ethics_audit_queue():
     """Ethics & Prompt Audit Queue."""
     try:
         supabase = get_supabase_client()
-        ethics_res = supabase.table("archon_ethics_events").select("*").eq("resolved", False).order("created_at", desc=True).limit(5).execute()
-        versions_res = supabase.table("archon_document_versions").select("*").eq("status", "pending").order("created_at", desc=True).limit(5).execute()
+        ethics_res = (
+            supabase.table("archon_ethics_events")
+            .select("*")
+            .eq("resolved", False)
+            .order("created_at", desc=True)
+            .limit(5)
+            .execute()
+        )
+        versions_res = (
+            supabase.table("archon_document_versions")
+            .select("*")
+            .eq("status", "pending")
+            .order("created_at", desc=True)
+            .limit(5)
+            .execute()
+        )
         return {
             "violations": ethics_res.data or [],
             "pending_versions": versions_res.data or [],
-            "total_pending": len(ethics_res.data or []) + len(versions_res.data or [])
+            "total_pending": len(ethics_res.data or []) + len(versions_res.data or []),
         }
     except Exception as e:
         logger.error(f"API: Ethics audit queue failed: {e}")
         return {"violations": [], "pending_versions": [], "total_pending": 0}
+
 
 @router.get("/sla-reliability", dependencies=[Depends(require_manager_or_admin)])
 async def get_sla_reliability():
@@ -97,6 +119,7 @@ async def get_sla_reliability():
         logger.error(f"API: SLA Reliability failed: {e}")
         return {"current_sla": 0, "trend": [], "error": str(e)}
 
+
 @router.get("/force-readiness", dependencies=[Depends(require_manager_or_admin)])
 async def get_force_readiness():
     """Combat Power HUD: 90-Day Full Range."""
@@ -105,6 +128,7 @@ async def get_force_readiness():
     except Exception as e:
         logger.error(f"API: Force readiness failed: {e}")
         return {"baseline": 0, "trend": [], "error": str(e)}
+
 
 @router.get("/business-risks", dependencies=[Depends(require_manager_or_admin)])
 async def get_business_risks():
@@ -115,16 +139,19 @@ async def get_business_risks():
         logger.error(f"API: Business risks fetch failed: {e}")
         return []
 
+
 @router.get("/health-trend", dependencies=[Depends(require_manager_or_admin)])
 async def get_health_trend():
     """Strategic HUD Trend & Audit Data."""
     try:
         from ..services.health_service import HealthService
+
         # Physically return the full dictionary which contains both 'trend' and 'audit'
         return await HealthService().get_health_history(days=30)
     except Exception as e:
         logger.error(f"API: Health trend fetch failed: {e}")
         return {"trend": [], "audit": [], "error": str(e)}
+
 
 @router.get("/tasks-by-status", dependencies=[Depends(require_manager_or_admin)])
 async def get_tasks_by_status():
@@ -141,6 +168,7 @@ async def get_tasks_by_status():
         logger.error(f"Failed to get task stats: {e}")
         raise HTTPException(status_code=500, detail=str(e)) from e
 
+
 @router.get("/member-performance", dependencies=[Depends(require_manager_or_admin)])
 async def get_member_performance():
     """Get the count of COMPLETED tasks grouped by assignee (refactored to service)."""
@@ -149,6 +177,7 @@ async def get_member_performance():
     except Exception as e:
         logger.error(f"Failed to get performance stats: {e}")
         raise HTTPException(status_code=500, detail=str(e)) from e
+
 
 @router.get("/agent-xp", dependencies=[Depends(require_manager_or_admin)])
 async def get_agent_xp():
@@ -159,6 +188,7 @@ async def get_agent_xp():
         logger.error(f"Failed to get agent xp stats: {e}")
         raise HTTPException(status_code=500, detail=str(e)) from e
 
+
 @router.get("/system-overview", dependencies=[Depends(require_manager_or_admin)])
 async def get_system_overview():
     """Consolidated health and performance overview."""
@@ -168,6 +198,7 @@ async def get_system_overview():
         logger.error(f"Failed system overview: {e}")
         return {"status": "unknown", "error": str(e)}
 
+
 @router.get("/ai-usage", dependencies=[Depends(require_manager_or_admin)])
 async def get_ai_usage():
     """Aggregated AI usage stats for the Nexus and Health dashboards."""
@@ -176,6 +207,7 @@ async def get_ai_usage():
     except Exception as e:
         logger.error(f"Failed to get AI usage: {e}")
         raise HTTPException(status_code=500, detail=str(e)) from e
+
 
 @router.get("/token-usage/recent", dependencies=[Depends(require_manager_or_admin)])
 async def get_recent_token_usage(limit: int = 20):

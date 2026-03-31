@@ -65,8 +65,8 @@ def sample_progress_data():
             "Crawling pages",
             "Processing batch 1/6",
             "Processing batch 2/6",
-            "Processing batch 3/6"
-        ]
+            "Processing batch 3/6",
+        ],
     }
 
 
@@ -93,7 +93,7 @@ class ProgressTestHelper:
         expected_status: str,
         expected_progress: int,
         expected_message: str,
-        expected_kwargs: dict[str, Any] | None = None
+        expected_kwargs: dict[str, Any] | None = None,
     ):
         """Assert that progress tracker was updated with expected values."""
         tracker_mock.update.assert_called()
@@ -112,7 +112,7 @@ class ProgressTestHelper:
         callback_mock: AsyncMock,
         expected_current_batch: int,
         expected_total_batches: int,
-        expected_completed_batches: int
+        expected_completed_batches: int,
     ):
         """Assert that batch progress was reported correctly."""
         found_batch_call = False
@@ -134,7 +134,7 @@ class ProgressTestHelper:
                 "url": f"https://example.com/page{i}",
                 "markdown": f"# Page {i}\n\nThis is content for page {i}.",
                 "title": f"Page {i}",
-                "description": f"Description for page {i}"
+                "description": f"Description for page {i}",
             }
             for i in range(1, count + 1)
         ]
@@ -153,7 +153,7 @@ class ProgressTestHelper:
             {"status": "document_storage", "progress": 25, "message": "Processing batch 3/6"},
             {"status": "code_extraction", "progress": 60, "message": "Extracting code examples"},
             {"status": "finalization", "progress": 97, "message": "Finalizing results"},
-            {"status": "completed", "progress": 100, "message": "Crawl completed"}
+            {"status": "completed", "progress": 100, "message": "Crawl completed"},
         ]
 
 

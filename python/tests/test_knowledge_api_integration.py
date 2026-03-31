@@ -11,13 +11,16 @@ def setup_module(module):
     app.dependency_overrides[get_current_user] = lambda: {
         "id": "user-knowledge-int",
         "role": "system_admin",
-        "department": "Engineering"
+        "department": "Engineering",
     }
+
 
 def teardown_module(module):
     app.dependency_overrides.pop(get_current_user, None)
 
+
 client = TestClient(app)
+
 
 def test_summary_endpoint_performance():
     # Physically aligned patch point for KnowledgeItemService
@@ -29,6 +32,7 @@ def test_summary_endpoint_performance():
 
         response = client.get("/api/knowledge-items/sources")
         assert response.status_code == 200
+
 
 def test_error_handling_in_pagination():
     # Force a 500 error by mocking the service to return failure

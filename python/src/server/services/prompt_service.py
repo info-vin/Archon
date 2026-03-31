@@ -11,6 +11,7 @@ from ..utils import get_supabase_client
 
 logger = get_logger(__name__)
 
+
 class PromptService(BaseRepository):
     """Service for managing AI agent prompts."""
 
@@ -41,6 +42,7 @@ class PromptService(BaseRepository):
 
     async def list_prompts(self) -> tuple[bool, dict[str, Any]]:
         """List all system prompts from the database."""
+
         def _query():
             return self.supabase_client.table("archon_prompts").select("*").execute()
 
@@ -57,7 +59,9 @@ class PromptService(BaseRepository):
                 return self._prompts[name]
 
             # Fallback to direct DB call - Schema: prompt_name, prompt
-            res = self.supabase_client.table("archon_prompts").select("prompt").eq("prompt_name", name).single().execute()
+            res = (
+                self.supabase_client.table("archon_prompts").select("prompt").eq("prompt_name", name).single().execute()
+            )
 
             # DEFENSIVE: Check if res.data is a real dict and not a MagicMock
             if res.data and not isinstance(res.data, MagicMock):
@@ -66,17 +70,27 @@ class PromptService(BaseRepository):
             pass
         return default or "You are a helpful AI assistant."
 
-    async def update_prompt(self, prompt_name: str, content: str, description: str | None = None) -> tuple[bool, dict[str, Any]]:
+    async def update_prompt(
+        self, prompt_name: str, content: str, description: str | None = None
+    ) -> tuple[bool, dict[str, Any]]:
         """Update a system prompt."""
+
         def _query():
             # DB schema uses 'prompt' for the content and 'prompt_name' for identity
             update_data = {"prompt": content}
             if description:
                 update_data["description"] = description
-            return self.supabase_client.table("archon_prompts").update(update_data).eq("prompt_name", prompt_name).execute()
+            return (
+                self.supabase_client.table("archon_prompts")
+                .update(update_data)
+                .eq("prompt_name", prompt_name)
+                .execute()
+            )
 
         success, result = self.execute_query(_query, f"Failed to update prompt {prompt_name}")
         if success:
-            self._prompts[prompt_name] = content # Sync cache
+            self._prompts[prompt_name] = content  # Sync cache
         return success, result
+
+
 prompt_service = PromptService()

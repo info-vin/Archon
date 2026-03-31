@@ -26,20 +26,19 @@ TOOL_CONFIG = {
     "execute_shell_command": {"min_xp_level": 2, "risk_level": "write"},
 }
 
+
 def get_tool_min_level(tool_name: str) -> int:
     """Returns the minimum XP level required to execute a tool. Defaults to 0."""
     config = TOOL_CONFIG.get(tool_name, {})
     return cast(int, config.get("min_xp_level", 0))
 
+
 AGENT_CONFIG = {
     "market-bot": {
         "name": "Archon MarketBot",
         "system_prompt": BLOG_DRAFT_SYSTEM_PROMPT,
-        "tools": [
-            "search_job_market",
-            "generate_sales_email"
-        ],
-        "default_tool": "search_job_market"
+        "tools": ["search_job_market", "generate_sales_email"],
+        "default_tool": "search_job_market",
     },
     "librarian": {
         "name": "Archon Librarian",
@@ -48,29 +47,21 @@ AGENT_CONFIG = {
             "rag_search_knowledge_base",
             "rag_get_available_sources",
             "rag_search_code_examples",
-            "perform_web_crawl"
-        ]
+            "perform_web_crawl",
+        ],
     },
-
     "po-bot": {
         "name": "Archon POBot",
         "system_prompt": USER_STORY_SYSTEM_PROMPT,
-        "tools": [
-            "list_projects",
-            "manage_task"
-        ]
+        "tools": ["list_projects", "manage_task"],
     },
     "dev-bot": {
         "name": "Archon DevBot",
         "system_prompt": "You are Archon DevBot. Use tools to fix code or generate assets.",
-        "tools": [
-            "rag_search_code_examples",
-            "generate_logo",
-            "apply_modification",
-            "execute_shell_command"
-        ]
-    }
+        "tools": ["rag_search_code_examples", "generate_logo", "apply_modification", "execute_shell_command"],
+    },
 }
+
 
 @lru_cache(maxsize=20)
 def get_agent_uuid(agent_key: str) -> str | None:
@@ -93,6 +84,7 @@ def get_agent_uuid(agent_key: str) -> str | None:
     except Exception:
         return None
 
+
 def get_agent_config(agent_id: str) -> dict | None:
     """
     Retrieves the configuration for a specific agent.
@@ -103,7 +95,7 @@ def get_agent_config(agent_id: str) -> dict | None:
         "ai-market-bot": "market-bot",
         "ai-librarian": "librarian",
         "ai-po-bot": "po-bot",
-        "ai-dev-bot": "dev-bot"
+        "ai-dev-bot": "dev-bot",
     }
 
     key = mapping.get(agent_id, agent_id)

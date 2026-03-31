@@ -12,6 +12,7 @@ from src.server.config.logfire_config import get_logger
 
 logger = get_logger(__name__)
 
+
 def validate_status_logic(status: str, valid_statuses: list[str]) -> tuple[bool, str]:
     """Validate task status against allowed list"""
     if status not in valid_statuses:
@@ -21,11 +22,13 @@ def validate_status_logic(status: str, valid_statuses: list[str]) -> tuple[bool,
         )
     return True, ""
 
+
 def validate_assignee_logic(assignee: str) -> tuple[bool, str]:
     """Validate task assignee consistency"""
     if not assignee or not isinstance(assignee, str) or len(assignee.strip()) == 0:
         return False, "Assignee must be a non-empty string"
     return True, ""
+
 
 async def notify_ai_agent_logic(task_id: str, agent_id: str):
     """
@@ -33,15 +36,15 @@ async def notify_ai_agent_logic(task_id: str, agent_id: str):
     """
     try:
         from src.server.services.agent_service import agent_service
+
         logger.info(f"Scheduling notification for AI agent {agent_id} for task {task_id}")
         await agent_service.run_agent_task(task_id=task_id, agent_id=agent_id)
     except Exception as e:
         logger.error(f"Failed to notify agent {agent_id}: {e}")
 
+
 async def archive_task_logic(
-    task_service_instance,
-    task_id: str,
-    archived_by: str = "mcp"
+    task_service_instance, task_id: str, archived_by: str = "mcp"
 ) -> tuple[bool, dict[str, Any]]:
     """
     Archive a task and all its subtasks (soft delete).
@@ -71,8 +74,7 @@ async def archive_task_logic(
             )
 
         success_archive, archive_result = task_service_instance.execute_query(
-            query_func=_archive_query,
-            error_context=f"Failed to archive task {task_id}"
+            query_func=_archive_query, error_context=f"Failed to archive task {task_id}"
         )
 
         if success_archive:
@@ -83,10 +85,8 @@ async def archive_task_logic(
         logger.error(f"Error archiving task logic: {e}")
         return False, {"error": str(e)}
 
-async def prune_archived_tasks_logic(
-    task_service_instance,
-    days_old: int = 30
-) -> tuple[bool, dict[str, Any]]:
+
+async def prune_archived_tasks_logic(task_service_instance, days_old: int = 30) -> tuple[bool, dict[str, Any]]:
     """
     Permanently delete archived tasks older than X days.
     """
@@ -105,7 +105,9 @@ async def prune_archived_tasks_logic(
         count = len(tasks_to_prune.data) if tasks_to_prune.data else 0
 
         if count > 0:
-            task_service_instance.supabase_client.table("archon_tasks").delete().eq("archived", True).lt("archived_at", cutoff_date).execute()
+            task_service_instance.supabase_client.table("archon_tasks").delete().eq("archived", True).lt(
+                "archived_at", cutoff_date
+            ).execute()
             logger.info(f"Successfully pruned {count} tasks")
 
         return True, {"pruned_count": count, "cutoff_date": cutoff_date}
@@ -113,11 +115,9 @@ async def prune_archived_tasks_logic(
         logger.error(f"Error pruning tasks logic: {e}")
         return False, {"error": str(e)}
 
+
 async def update_task_status_from_agent_logic(
-    task_service_instance,
-    task_id: str,
-    new_status: str,
-    agent_id: str
+    task_service_instance, task_id: str, new_status: str, agent_id: str
 ) -> tuple[bool, dict[str, Any]]:
     """
     Update a task's status from an agent with authority validation.
@@ -133,16 +133,17 @@ async def update_task_status_from_agent_logic(
             logger.warning(error_msg)
             return False, {"error": error_msg}
 
-        return cast(tuple[bool, dict[str, Any]], await task_service_instance.update_task(task_id, {"status": new_status, "assignee": agent_id}))
+        return cast(
+            tuple[bool, dict[str, Any]],
+            await task_service_instance.update_task(task_id, {"status": new_status, "assignee": agent_id}),
+        )
     except Exception as e:
         logger.error(f"Error updating task status from agent logic: {e}")
         return False, {"error": str(e)}
 
+
 async def save_agent_output_logic(
-    task_service_instance,
-    task_id: str,
-    output: dict[str, Any],
-    agent_id: str
+    task_service_instance, task_id: str, output: dict[str, Any], agent_id: str
 ) -> tuple[bool, dict[str, Any]]:
     """
     Save the output from an AI agent to the task's attachments.
@@ -158,11 +159,7 @@ async def save_agent_output_logic(
             logger.warning(error_msg)
             return False, {"error": error_msg}
 
-        agent_output_data = {
-            "agent_id": agent_id,
-            "timestamp": datetime.now().isoformat(),
-            "output": output
-        }
+        agent_output_data = {"agent_id": agent_id, "timestamp": datetime.now().isoformat(), "output": output}
 
         current_attachments = current_task.get("attachments") or []
         if isinstance(current_attachments, list):
@@ -171,7 +168,10 @@ async def save_agent_output_logic(
         else:
             new_attachments = [current_attachments, agent_output_data]
 
-        return cast(tuple[bool, dict[str, Any]], await task_service_instance.update_task(task_id, {"attachments": new_attachments}))
+        return cast(
+            tuple[bool, dict[str, Any]],
+            await task_service_instance.update_task(task_id, {"attachments": new_attachments}),
+        )
     except Exception as e:
         logger.error(f"Error saving agent output logic: {e}")
         return False, {"error": str(e)}

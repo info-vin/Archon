@@ -28,6 +28,7 @@ def _extract_reasoning_strings(value: Any) -> list[str]:
                 return _extract_reasoning_strings(attr_val)
     return []
 
+
 def extract_message_text(choice: Any) -> tuple[str, str, bool]:
     """Extract primary content and reasoning text from a chat completion choice."""
     if not choice:
@@ -62,11 +63,12 @@ def extract_message_text(choice: Any) -> tuple[str, str, bool]:
         content_text = reasoning_text
     return content_text, reasoning_text, bool(reasoning_text)
 
+
 def extract_json_from_reasoning(reasoning_text: str, context_code: str = "", language: str = "") -> str:
     """Extract JSON content from reasoning text, with synthesis fallback."""
     if not reasoning_text:
         return ""
-    json_block_pattern = r'```(?:json)?\s*(\{.*?\})\s*```'
+    json_block_pattern = r"```(?:json)?\s*(\{.*?\})\s*```"
     json_matches = re.findall(json_block_pattern, reasoning_text, re.DOTALL | re.IGNORECASE)
     for match in json_matches:
         try:
@@ -75,7 +77,7 @@ def extract_json_from_reasoning(reasoning_text: str, context_code: str = "", lan
         except Exception:
             continue
 
-    json_pattern = r'\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}'
+    json_pattern = r"\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}"
     json_matches = re.findall(json_pattern, reasoning_text, re.DOTALL)
     for match in json_matches:
         try:
@@ -86,6 +88,7 @@ def extract_json_from_reasoning(reasoning_text: str, context_code: str = "", lan
             continue
     return synthesize_json_from_reasoning(reasoning_text, context_code, language)
 
+
 def synthesize_json_from_reasoning(reasoning_text: str, context_code: str = "", language: str = "") -> str:
     """Full-scale original synthesis logic with 15+ action patterns and 19+ tech patterns."""
     if not reasoning_text and not context_code:
@@ -95,21 +98,42 @@ def synthesize_json_from_reasoning(reasoning_text: str, context_code: str = "", 
     combined = f"{text_lower} {code_lower}"
 
     action_patterns = [
-        (r'\b(?:parse|parsing|parsed)\b', 'Parse'), (r'\b(?:create|creating|created)\b', 'Create'),
-        (r'\b(?:analyze|analyzing|analyzed)\b', 'Analyze'), (r'\b(?:extract|extracting|extracted)\b', 'Extract'),
-        (r'\b(?:generate|generating|generated)\b', 'Generate'), (r'\b(?:process|processing|processed)\b', 'Process'),
-        (r'\b(?:load|loading|loaded)\b', 'Load'), (r'\b(?:handle|handling|handled)\b', 'Handle'),
-        (r'\b(?:manage|managing|managed)\b', 'Manage'), (r'\b(?:build|building|built)\b', 'Build'),
-        (r'\b(?:define|defining|defined)\b', 'Define'), (r'\b(?:implement|implementing|implemented)\b', 'Implement'),
-        (r'\b(?:fetch|fetching|fetched)\b', 'Fetch'), (r'\b(?:connect|connecting|connected)\b', 'Connect'),
-        (r'\b(?:validate|validating|validated)\b', 'Validate')
+        (r"\b(?:parse|parsing|parsed)\b", "Parse"),
+        (r"\b(?:create|creating|created)\b", "Create"),
+        (r"\b(?:analyze|analyzing|analyzed)\b", "Analyze"),
+        (r"\b(?:extract|extracting|extracted)\b", "Extract"),
+        (r"\b(?:generate|generating|generated)\b", "Generate"),
+        (r"\b(?:process|processing|processed)\b", "Process"),
+        (r"\b(?:load|loading|loaded)\b", "Load"),
+        (r"\b(?:handle|handling|handled)\b", "Handle"),
+        (r"\b(?:manage|managing|managed)\b", "Manage"),
+        (r"\b(?:build|building|built)\b", "Build"),
+        (r"\b(?:define|defining|defined)\b", "Define"),
+        (r"\b(?:implement|implementing|implemented)\b", "Implement"),
+        (r"\b(?:fetch|fetching|fetched)\b", "Fetch"),
+        (r"\b(?:connect|connecting|connected)\b", "Connect"),
+        (r"\b(?:validate|validating|validated)\b", "Validate"),
     ]
     tech_patterns = [
-        (r'\bjson\b', 'JSON'), (r'\bapi\b', 'API'), (r'\bfile\b', 'File'), (r'\bdata\b', 'Data'),
-        (r'\bcode\b', 'Code'), (r'\btext\b', 'Text'), (r'\bcontent\b', 'Content'), (r'\bresponse\b', 'Response'),
-        (r'\brequest\b', 'Request'), (r'\bconfig\b', 'Config'), (r'\bllm\b', 'LLM'), (r'\bmodel\b', 'Model'),
-        (r'\bexample\b', 'Example'), (r'\bcontext\b', 'Context'), (r'\basync\b', 'Async'), (r'\bfunction\b', 'Function'),
-        (r'\bclass\b', 'Class'), (r'\bprint\b', 'Output'), (r'\breturn\b', 'Return')
+        (r"\bjson\b", "JSON"),
+        (r"\bapi\b", "API"),
+        (r"\bfile\b", "File"),
+        (r"\bdata\b", "Data"),
+        (r"\bcode\b", "Code"),
+        (r"\btext\b", "Text"),
+        (r"\bcontent\b", "Content"),
+        (r"\bresponse\b", "Response"),
+        (r"\brequest\b", "Request"),
+        (r"\bconfig\b", "Config"),
+        (r"\bllm\b", "LLM"),
+        (r"\bmodel\b", "Model"),
+        (r"\bexample\b", "Example"),
+        (r"\bcontext\b", "Context"),
+        (r"\basync\b", "Async"),
+        (r"\bfunction\b", "Function"),
+        (r"\bclass\b", "Class"),
+        (r"\bprint\b", "Output"),
+        (r"\breturn\b", "Return"),
     ]
 
     detected_actions = [a for p, a in action_patterns if re.search(p, combined)]
@@ -130,13 +154,13 @@ def synthesize_json_from_reasoning(reasoning_text: str, context_code: str = "", 
 
     # Restored multi-line loops with proper variable names (Fixed E741)
     lines = []
-    for raw_line in reasoning_text.split('\n'):
+    for raw_line in reasoning_text.split("\n"):
         if len(raw_line.strip()) > 10:
             lines.append(raw_line.strip())
 
     if lines:
         first = lines[0][:100] + "..." if len(lines[0]) > 100 else lines[0]
-        action_name = detected_actions[0].lower() if detected_actions else 'processing'
+        action_name = detected_actions[0].lower() if detected_actions else "processing"
         summary = f"Code example showing {action_name} operations. {first}"
     else:
         summary = f"Code example demonstrating {name.lower()} functionality."

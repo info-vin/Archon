@@ -30,9 +30,7 @@ class DocumentAgent(BaseAgent[DocumentDependencies, DocumentOperation]):
         if model is None:
             model = os.getenv("DOCUMENT_AGENT_MODEL", "openai:gpt-4o")
 
-        super().__init__(
-            model=model, name="DocumentAgent", retries=3, enable_rate_limiting=True, **kwargs
-        )
+        super().__init__(model=model, name="DocumentAgent", retries=3, enable_rate_limiting=True, **kwargs)
         self.supabase_client = supabase_client
 
     def _create_agent(self, **kwargs) -> Agent[DocumentDependencies, DocumentOperation]:
@@ -75,7 +73,12 @@ class DocumentAgent(BaseAgent[DocumentDependencies, DocumentOperation]):
         ) -> str:
             """Create a new document with structured content."""
             return await logic.create_document_logic(
-                ctx.deps.project_id, ctx.deps.user_id, title, document_type, content_description, ctx.deps.progress_callback
+                ctx.deps.project_id,
+                ctx.deps.user_id,
+                title,
+                document_type,
+                content_description,
+                ctx.deps.progress_callback,
             )
 
         @agent.tool
@@ -137,6 +140,7 @@ You can list documents, create new ones, update specific sections, and generate 
 Always be professional and helpful."""
         try:
             from server.services.prompt_service import prompt_service
+
             prompt: str = prompt_service.get_prompt("document_agent_prompt", default_prompt)
             return prompt
         except (ImportError, Exception) as e:
@@ -153,7 +157,7 @@ Always be professional and helpful."""
             "id": self._generate_block_id(),
             "type": block_type,
             "content": content,
-            "properties": properties or {"text": content}
+            "properties": properties or {"text": content},
         }
 
     async def run_conversation(
@@ -178,7 +182,12 @@ Always be professional and helpful."""
         except Exception as e:
             self.logger.error(f"Document operation failed: {str(e)}")
             return DocumentOperation(
-                operation_type="error", document_id=None, document_type=None,
-                title=None, success=False, message=f"Failed: {str(e)}",
-                changes_made=[], content_preview=None,
+                operation_type="error",
+                document_id=None,
+                document_type=None,
+                title=None,
+                success=False,
+                message=f"Failed: {str(e)}",
+                changes_made=[],
+                content_preview=None,
             )

@@ -7,6 +7,7 @@ from ..utils import get_supabase_client
 
 logger = get_logger(__name__)
 
+
 class SettingsService(BaseRepository):
     """Service for handling business logic related to application settings and statistics."""
 
@@ -25,29 +26,45 @@ class SettingsService(BaseRepository):
         tables_info = {}
 
         # Get projects count
-        def _get_projects(): return self.supabase_client.table("archon_projects").select("id", count="exact").execute()
-        success, result = self.execute_query(query_func=_get_projects, error_context="Error getting projects count", require_data=False)
+        def _get_projects():
+            return self.supabase_client.table("archon_projects").select("id", count="exact").execute()
+
+        success, result = self.execute_query(
+            query_func=_get_projects, error_context="Error getting projects count", require_data=False
+        )
         if not success:
             return False, result["error"]
         tables_info["projects"] = result.get("count", 0) or 0
 
         # Get tasks count
-        def _get_tasks(): return self.supabase_client.table("archon_tasks").select("id", count="exact").execute()
-        success, result = self.execute_query(query_func=_get_tasks, error_context="Error getting tasks count", require_data=False)
+        def _get_tasks():
+            return self.supabase_client.table("archon_tasks").select("id", count="exact").execute()
+
+        success, result = self.execute_query(
+            query_func=_get_tasks, error_context="Error getting tasks count", require_data=False
+        )
         if not success:
             return False, result["error"]
         tables_info["tasks"] = result.get("count", 0) or 0
 
         # Get crawled pages count
-        def _get_pages(): return self.supabase_client.table("archon_crawled_pages").select("id", count="exact").execute()
-        success, result = self.execute_query(query_func=_get_pages, error_context="Error getting pages count", require_data=False)
+        def _get_pages():
+            return self.supabase_client.table("archon_crawled_pages").select("id", count="exact").execute()
+
+        success, result = self.execute_query(
+            query_func=_get_pages, error_context="Error getting pages count", require_data=False
+        )
         if not success:
             return False, result["error"]
         tables_info["crawled_pages"] = result.get("count", 0) or 0
 
         # Get settings count
-        def _get_settings(): return self.supabase_client.table("archon_settings").select("id", count="exact").execute()
-        success, result = self.execute_query(query_func=_get_settings, error_context="Error getting settings count", require_data=False)
+        def _get_settings():
+            return self.supabase_client.table("archon_settings").select("id", count="exact").execute()
+
+        success, result = self.execute_query(
+            query_func=_get_settings, error_context="Error getting settings count", require_data=False
+        )
         if not success:
             return False, result["error"]
         tables_info["settings"] = result.get("count", 0) or 0
@@ -56,13 +73,12 @@ class SettingsService(BaseRepository):
 
     def get_setting(self, key: str, default: str | None = None) -> str | None:
         """Retrieve a specific setting value."""
+
         def _query():
             return self.supabase_client.table("archon_settings").select("value").eq("key", key).single().execute()
 
         success, result = self.execute_query(
-            query_func=_query,
-            error_context=f"Error fetching setting {key}",
-            require_data=True
+            query_func=_query, error_context=f"Error fetching setting {key}", require_data=True
         )
         if success and result["data"]:
             return str(result["data"].get("value", default))
@@ -70,13 +86,12 @@ class SettingsService(BaseRepository):
 
     def get_all_settings(self) -> dict[str, str]:
         """Retrieve all settings as a dictionary."""
+
         def _query():
             return self.supabase_client.table("archon_settings").select("key, value").execute()
 
         success, result = self.execute_query(
-            query_func=_query,
-            error_context="Error fetching all settings",
-            require_data=False
+            query_func=_query, error_context="Error fetching all settings", require_data=False
         )
         if success and result["data"]:
             return {item["key"]: item["value"] for item in result["data"]}

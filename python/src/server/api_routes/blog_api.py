@@ -1,4 +1,3 @@
-
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from ..auth.dependencies import get_current_user
@@ -8,8 +7,10 @@ from ..services.rbac_service import RBACService
 
 router = APIRouter(prefix="/api/blogs", tags=["blog"])
 
+
 def get_blog_service():
     return BlogService()
+
 
 @router.get("", response_model=list[BlogPostResponse])
 async def get_blog_posts(service: BlogService = Depends(get_blog_service)):
@@ -17,10 +18,10 @@ async def get_blog_posts(service: BlogService = Depends(get_blog_service)):
     success, result = await service.list_posts()
     if not success:
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=result.get("error", "Failed to fetch blog posts")
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=result.get("error", "Failed to fetch blog posts")
         )
     return result.get("posts", [])
+
 
 @router.get("/{post_id}", response_model=BlogPostResponse)
 async def get_blog_post(post_id: str, service: BlogService = Depends(get_blog_service)):
@@ -28,21 +29,18 @@ async def get_blog_post(post_id: str, service: BlogService = Depends(get_blog_se
     success, result = await service.get_post(post_id)
     if not success:
         if result.get("error") == "Post not found.":
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Post not found"
-            )
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Post not found")
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=result.get("error", "Failed to fetch blog post")
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=result.get("error", "Failed to fetch blog post")
         )
     return result.get("post")
+
 
 @router.post("", response_model=BlogPostResponse)
 async def create_blog_post(
     request: CreateBlogPostRequest,
     current_user: dict = Depends(get_current_user),
-    service: BlogService = Depends(get_blog_service)
+    service: BlogService = Depends(get_blog_service),
 ):
     """Create a new blog post."""
     rbac_service = RBACService()
@@ -51,18 +49,19 @@ async def create_blog_post(
     if not rbac_service.can_manage_content(user_role):
         raise HTTPException(status_code=403, detail="Forbidden: You do not have permission to create blog posts.")
 
-    post_data = request.model_dump(mode='json', exclude={'id'})
+    post_data = request.model_dump(mode="json", exclude={"id"})
     success, result = await service.create_post(post_data)
     if not success:
         raise HTTPException(status_code=500, detail=result.get("error"))
     return result.get("post")
+
 
 @router.patch("/{post_id}", response_model=BlogPostResponse)
 async def update_blog_post(
     post_id: str,
     request: UpdateBlogPostRequest,
     current_user: dict = Depends(get_current_user),
-    service: BlogService = Depends(get_blog_service)
+    service: BlogService = Depends(get_blog_service),
 ):
     """Update an existing blog post."""
     rbac_service = RBACService()
@@ -71,18 +70,19 @@ async def update_blog_post(
     if not rbac_service.can_manage_content(user_role):
         raise HTTPException(status_code=403, detail="Forbidden: You do not have permission to update blog posts.")
 
-    update_data = request.model_dump(mode='json', exclude_unset=True)
+    update_data = request.model_dump(mode="json", exclude_unset=True)
     success, result = await service.update_post(post_id, update_data)
     if not success:
         raise HTTPException(status_code=404, detail=result.get("error"))
     return result.get("post")
+
 
 @router.patch("/{post_id}/status")
 async def update_blog_post_status(
     post_id: str,
     request: dict,
     current_user: dict = Depends(get_current_user),
-    service: BlogService = Depends(get_blog_service)
+    service: BlogService = Depends(get_blog_service),
 ):
     """Update the status of an existing blog post."""
     rbac_service = RBACService()
@@ -100,11 +100,10 @@ async def update_blog_post_status(
         raise HTTPException(status_code=404, detail=result.get("error"))
     return {"message": "Status updated successfully"}
 
+
 @router.delete("/{post_id}", status_code=204)
 async def delete_blog_post(
-    post_id: str,
-    current_user: dict = Depends(get_current_user),
-    service: BlogService = Depends(get_blog_service)
+    post_id: str, current_user: dict = Depends(get_current_user), service: BlogService = Depends(get_blog_service)
 ):
     """Delete a blog post."""
     rbac_service = RBACService()

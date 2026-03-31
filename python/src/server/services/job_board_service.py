@@ -10,6 +10,7 @@ from ..utils import get_supabase_client
 
 logger = get_logger(__name__)
 
+
 class JobData(BaseModel):
     title: str
     company: str
@@ -23,6 +24,7 @@ class JobData(BaseModel):
     company_website: str | None = None
     identified_need: str | None = None
     real_id: str | None = None
+
 
 class JobBoardService:
     """
@@ -40,6 +42,7 @@ class JobBoardService:
     async def _get_base_url(self) -> str:
         try:
             from ..services.settings_service import SettingsService
+
             settings = SettingsService(self.supabase)
             return settings.get_setting("CRAWLER_104_SEARCH_API", self.DEFAULT_BASE_URL) or self.DEFAULT_BASE_URL
         except Exception:
@@ -48,8 +51,12 @@ class JobBoardService:
     async def _get_detail_url(self) -> str:
         try:
             from ..services.settings_service import SettingsService
+
             settings = SettingsService(self.supabase)
-            return settings.get_setting("CRAWLER_104_DETAIL_API", self.DEFAULT_DETAIL_BASE_URL) or self.DEFAULT_DETAIL_BASE_URL
+            return (
+                settings.get_setting("CRAWLER_104_DETAIL_API", self.DEFAULT_DETAIL_BASE_URL)
+                or self.DEFAULT_DETAIL_BASE_URL
+            )
         except Exception:
             return self.DEFAULT_DETAIL_BASE_URL
 
@@ -57,7 +64,7 @@ class JobBoardService:
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
         "Referer": "https://www.104.com.tw/jobs/search/",
         "Accept": "application/json, text/plain, */*",
-        "X-Requested-With": "XMLHttpRequest"
+        "X-Requested-With": "XMLHttpRequest",
     }
 
     # REAL DATA ONLY: MOCK_JOBS is now empty
@@ -121,11 +128,18 @@ class JobBoardService:
     async def identify_leads_and_save(self, jobs: list[JobData]) -> int:
         new_leads_count = 0
         from .stats_service import StatsService
+
         stats_service = StatsService()
 
         for job in jobs:
             try:
-                existing = self.supabase.table("leads").select("id").eq("company_name", job.company).eq("source_job_url", job.url).execute()
+                existing = (
+                    self.supabase.table("leads")
+                    .select("id")
+                    .eq("company_name", job.company)
+                    .eq("source_job_url", job.url)
+                    .execute()
+                )
                 if existing.data:
                     continue
 
@@ -135,7 +149,7 @@ class JobBoardService:
                     "description_snippet": job.description[:500] if job.description else None,
                     "source_job_url": job.url,
                     "status": "new",
-                    "identified_need": job.identified_need or await self._infer_need(job)
+                    "identified_need": job.identified_need or await self._infer_need(job),
                 }
                 res = self.supabase.table("leads").insert(lead_data).execute()
 
@@ -152,7 +166,7 @@ class JobBoardService:
                     xp_change=10,
                     message=f"Identified new lead: {job.company}",
                     details={"company": job.company, "job_title": job.title},
-                    content=lead_data["identified_need"]
+                    content=lead_data["identified_need"],
                 )
             except Exception as e:
                 logger.error(f"Failed to save lead | company={job.company} | error={str(e)}")
@@ -161,7 +175,10 @@ class JobBoardService:
     async def _infer_need(self, job: JobData) -> str:
         try:
             from ..services.credential_service import credential_service
-            api_key = await credential_service.get_credential("GEMINI_API_KEY") or await credential_service.get_credential("GOOGLE_API_KEY")
+
+            api_key = await credential_service.get_credential(
+                "GEMINI_API_KEY"
+            ) or await credential_service.get_credential("GOOGLE_API_KEY")
             if not api_key:
                 return f"Hiring for {job.title} at {job.company}"
 
@@ -175,9 +192,7 @@ class JobBoardService:
             )
 
             response = client.models.generate_content(
-                model="gemini-2.0-flash-lite",
-                contents=prompt,
-                config=types.GenerateContentConfig(temperature=0.2)
+                model="gemini-2.0-flash-lite", contents=prompt, config=types.GenerateContentConfig(temperature=0.2)
             )
             return str(response.text).strip() if response.text else f"Hiring for {job.title}"
         except Exception:
@@ -185,7 +200,14 @@ class JobBoardService:
 
     async def _fetch_from_104(self, client: httpx.AsyncClient, keyword: str, limit: int) -> list[JobData]:
         params = {
-            "ro": "0", "kwop": "7", "keyword": keyword, "order": "1", "asc": "0", "page": "1", "mode": "s", "jobsource": "2018indexpoc",
+            "ro": "0",
+            "kwop": "7",
+            "keyword": keyword,
+            "order": "1",
+            "asc": "0",
+            "page": "1",
+            "mode": "s",
+            "jobsource": "2018indexpoc",
         }
         # Pre-warm session
         await client.get("https://www.104.com.tw/jobs/search/", params={"keyword": keyword})
@@ -208,16 +230,18 @@ class JobBoardService:
                 if "/job/" in url:
                     real_id = url.split("?")[0].split("/job/")[1]
 
-            parsed_jobs.append(JobData(
-                title=item.get("jobName", "Unknown"),
-                company=item.get("custName", "Unknown"),
-                location=item.get("jobAddrNoDesc"),
-                salary=item.get("salaryDesc"),
-                url=url,
-                description=item.get("jobDesc", ""),
-                source="104",
-                real_id=real_id
-            ))
+            parsed_jobs.append(
+                JobData(
+                    title=item.get("jobName", "Unknown"),
+                    company=item.get("custName", "Unknown"),
+                    location=item.get("jobAddrNoDesc"),
+                    salary=item.get("salaryDesc"),
+                    url=url,
+                    description=item.get("jobDesc", ""),
+                    source="104",
+                    real_id=real_id,
+                )
+            )
         return parsed_jobs
 
     async def _fetch_job_detail(self, client: httpx.AsyncClient, job_id: str, job_url: str | None) -> str | None:

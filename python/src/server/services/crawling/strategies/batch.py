@@ -77,9 +77,7 @@ class BatchCrawlStrategy:
             raise ValueError(f"Failed to load crawler configuration: {e}") from e
         except Exception as e:
             # For non-critical errors (e.g., network issues), use defaults but log prominently
-            logger.error(
-                f"Failed to load crawl settings from database: {e}, using defaults", exc_info=True
-            )
+            logger.error(f"Failed to load crawl settings from database: {e}, using defaults", exc_info=True)
             batch_size = 50
             if max_concurrent is None:
                 max_concurrent = 10  # Safe default to prevent memory issues
@@ -129,20 +127,12 @@ class BatchCrawlStrategy:
             if progress_callback:
                 # Pass step information as flattened kwargs for consistency
                 await progress_callback(
-                    "crawling",
-                    progress_val,
-                    message,
-                    currentStep=message,
-                    stepMessage=message,
-                    **kwargs
+                    "crawling", progress_val, message, currentStep=message, stepMessage=message, **kwargs
                 )
 
         total_urls = len(urls)
         await report_progress(
-            start_progress,
-            f"Starting to crawl {total_urls} URLs...",
-            total_pages=total_urls,
-            processed_pages=0
+            start_progress, f"Starting to crawl {total_urls} URLs...", total_pages=total_urls, processed_pages=0
         )
 
         # Use configured batch size
@@ -167,23 +157,17 @@ class BatchCrawlStrategy:
             batch_end = min(i + batch_size, total_urls)
 
             # Report batch start with smooth progress
-            progress_percentage = start_progress + int(
-                (i / total_urls) * (end_progress - start_progress)
-            )
+            progress_percentage = start_progress + int((i / total_urls) * (end_progress - start_progress))
             await report_progress(
                 progress_percentage,
                 f"Processing batch {batch_start + 1}-{batch_end} of {total_urls} URLs...",
                 total_pages=total_urls,
-                processed_pages=processed
+                processed_pages=processed,
             )
 
             # Crawl this batch using arun_many with streaming
-            logger.info(
-                f"Starting parallel crawl of batch {batch_start + 1}-{batch_end} ({len(batch_urls)} URLs)"
-            )
-            batch_results = await self.crawler.arun_many(
-                urls=batch_urls, config=crawl_config, dispatcher=dispatcher
-            )
+            logger.info(f"Starting parallel crawl of batch {batch_start + 1}-{batch_end} ({len(batch_urls)} URLs)")
+            batch_results = await self.crawler.arun_many(urls=batch_urls, config=crawl_config, dispatcher=dispatcher)
 
             # Handle streaming results
             async for result in batch_results:
@@ -200,30 +184,26 @@ class BatchCrawlStrategy:
                 if result.success and result.markdown:
                     # Map back to original URL
                     original_url = url_mapping.get(result.url, result.url)
-                    successful_results.append({
-                        "url": original_url,
-                        "markdown": result.markdown,
-                        "html": result.html,  # Use raw HTML
-                    })
-                else:
-                    logger.warning(
-                        f"Failed to crawl {result.url}: {getattr(result, 'error_message', 'Unknown error')}"
+                    successful_results.append(
+                        {
+                            "url": original_url,
+                            "markdown": result.markdown,
+                            "html": result.html,  # Use raw HTML
+                        }
                     )
+                else:
+                    logger.warning(f"Failed to crawl {result.url}: {getattr(result, 'error_message', 'Unknown error')}")
 
                 # Report individual URL progress with smooth increments
-                progress_percentage = start_progress + int(
-                    (processed / total_urls) * (end_progress - start_progress)
-                )
+                progress_percentage = start_progress + int((processed / total_urls) * (end_progress - start_progress))
                 # Report more frequently for smoother progress
-                if (
-                    processed % 5 == 0 or processed == total_urls
-                ):  # Report every 5 URLs or at the end
+                if processed % 5 == 0 or processed == total_urls:  # Report every 5 URLs or at the end
                     await report_progress(
                         progress_percentage,
                         f"Crawled {processed}/{total_urls} pages ({len(successful_results)} successful)",
                         total_pages=total_urls,
                         processed_pages=processed,
-                        successful_count=len(successful_results)
+                        successful_count=len(successful_results),
                     )
 
         await report_progress(
@@ -231,6 +211,6 @@ class BatchCrawlStrategy:
             f"Batch crawling completed: {len(successful_results)}/{total_urls} pages successful",
             total_pages=total_urls,
             processed_pages=processed,
-            successful_count=len(successful_results)
+            successful_count=len(successful_results),
         )
         return successful_results

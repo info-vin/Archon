@@ -7,5 +7,5 @@ AI_AGENT_ROLES = {
     "Librarian (Knowledge)": "ai-librarian",
     "DevBot (Engineering)": "ai-dev-bot",
     "POBot (Product)": "ai-po-bot",
-    "Clockwork (Ops)": "ai-clockwork"
+    "Clockwork (Ops)": "ai-clockwork",
 }

@@ -9,6 +9,7 @@ from ..utils import get_supabase_client
 
 logger = get_logger(__name__)
 
+
 class AuthService(BaseRepository):
     def __init__(self, supabase_client=None):
         super().__init__(supabase_client or get_supabase_client())
@@ -31,7 +32,9 @@ class AuthService(BaseRepository):
         """
         return self.create_user_by_admin(email, password, name, role)
 
-    def create_user_by_admin(self, email: str, password: str, name: str, role: str = "employee", status: str = "active") -> dict[str, Any]:
+    def create_user_by_admin(
+        self, email: str, password: str, name: str, role: str = "employee", status: str = "active"
+    ) -> dict[str, Any]:
         """
         Creates a user via admin privileges.
         """
@@ -41,7 +44,7 @@ class AuthService(BaseRepository):
                 "email": email,
                 "password": password,
                 "email_confirm": True,
-                "user_metadata": {"name": name, "role": role}
+                "user_metadata": {"name": name, "role": role},
             }
 
             user_response = self.supabase_client.auth.admin.create_user(attributes)
@@ -57,7 +60,7 @@ class AuthService(BaseRepository):
                 "name": name,
                 "role": role,
                 "status": status,
-                "avatar": f"https://i.pravatar.cc/150?u={user_id}"
+                "avatar": f"https://i.pravatar.cc/150?u={user_id}",
             }
 
             self.supabase_client.table("profiles").upsert(profile_data).execute()
@@ -92,10 +95,7 @@ class AuthService(BaseRepository):
 
             # 1. Sync Role to Auth User Metadata if it changed
             if "role" in updates:
-                self.supabase_client.auth.admin.update_user_by_id(
-                    user_id,
-                    {"user_metadata": {"role": updates["role"]}}
-                )
+                self.supabase_client.auth.admin.update_user_by_id(user_id, {"user_metadata": {"role": updates["role"]}})
 
             # 2. Update Profile table
             res = self.supabase_client.table("profiles").update(updates).eq("id", user_id).execute()

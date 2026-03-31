@@ -15,6 +15,7 @@ def mock_supabase_client():
     mock_client.table.return_value = mock_table
     return mock_client
 
+
 @pytest.fixture
 def mock_dependencies(mock_supabase_client):
     # DUAL PATH PATCHING: To prevent module shadowing errors (src.server vs server)
@@ -22,18 +23,14 @@ def mock_dependencies(mock_supabase_client):
         # Patch both possible import paths for each dependency in upload.py
         patch("server.api_routes.knowledge.upload.SourceManagementService"),
         patch("src.server.api_routes.knowledge.upload.SourceManagementService"),
-
         patch("server.api_routes.knowledge.upload.DocumentStorageService"),
         patch("src.server.api_routes.knowledge.upload.DocumentStorageService"),
-
         patch("server.api_routes.knowledge.upload.ProgressTracker"),
         patch("src.server.api_routes.knowledge.upload.ProgressTracker"),
-
         patch("server.api_routes.knowledge.upload.extract_text_from_document", return_value="Test Content"),
         patch("src.server.api_routes.knowledge.upload.extract_text_from_document", return_value="Test Content"),
-
         patch("server.utils.get_supabase_client", return_value=mock_supabase_client),
-        patch("src.server.utils.get_supabase_client", return_value=mock_supabase_client)
+        patch("src.server.utils.get_supabase_client", return_value=mock_supabase_client),
     ]
 
     # Start all patches and keep their mocks
@@ -41,8 +38,8 @@ def mock_dependencies(mock_supabase_client):
 
     # Configure Mocks (The first instances for SourceManager and StorageService)
     # Since we patch twice, we configure the common Mock instances
-    mock_sm_inst = started_mocks[0].return_value # server.api_routes...
-    started_mocks[1].return_value = mock_sm_inst # src.server.api_routes... (Link them)
+    mock_sm_inst = started_mocks[0].return_value  # server.api_routes...
+    started_mocks[1].return_value = mock_sm_inst  # src.server.api_routes... (Link them)
     mock_sm_inst.create_source_info = AsyncMock(return_value=(True, {"id": "test-source"}))
 
     mock_storage_inst = started_mocks[2].return_value
@@ -57,15 +54,12 @@ def mock_dependencies(mock_supabase_client):
     started_mocks[4].return_value = mock_tracker_inst
     started_mocks[5].return_value = mock_tracker_inst
 
-    yield {
-        "tracker": mock_tracker_inst,
-        "storage": mock_storage_inst,
-        "source_manager": mock_sm_inst
-    }
+    yield {"tracker": mock_tracker_inst, "storage": mock_storage_inst, "source_manager": mock_sm_inst}
 
     # Cleanup
     for p in patches:
         p.stop()
+
 
 @pytest.mark.asyncio
 async def test_file_upload_runs_to_completion(mock_dependencies):
@@ -86,7 +80,7 @@ async def test_file_upload_runs_to_completion(mock_dependencies):
         progress_id=progress_id,
         tags=tags,
         knowledge_type=knowledge_type,
-        tracker=tracker
+        tracker=tracker,
     )
 
     # Verify - Success state should be reached

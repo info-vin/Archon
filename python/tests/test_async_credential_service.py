@@ -219,7 +219,6 @@ class TestAsyncCredentialService:
             # Plain text values should be stored directly
             assert credential_service._cache["MODEL_CHOICE"] == "gpt-4.1-nano"
 
-
     @pytest.mark.asyncio
     async def test_get_active_provider_basic(self, mock_supabase_client):
         """Test basic provider configuration retrieval"""
@@ -277,9 +276,7 @@ class TestAsyncCredentialService:
         credential_service._cache = {"CORRUPTED_KEY": encrypted_data}
         credential_service._cache_initialized = True
 
-        with patch.object(
-            credential_service, "_decrypt_value", side_effect=Exception("Decryption failed")
-        ):
+        with patch.object(credential_service, "_decrypt_value", side_effect=Exception("Decryption failed")):
             # Should fall back to default when decryption fails
             result = await credential_service.get_credential("CORRUPTED_KEY", "fallback_value")
             assert result == "fallback_value"
@@ -356,9 +353,10 @@ class TestAsyncCredentialService:
                 return "key-b"
             return None
 
-        with patch.object(credential_service, 'get_credentials_by_category', return_value=mock_rag_settings), \
-             patch.object(credential_service, 'get_credential', side_effect=mock_get_credential):
-
+        with (
+            patch.object(credential_service, "get_credentials_by_category", return_value=mock_rag_settings),
+            patch.object(credential_service, "get_credential", side_effect=mock_get_credential),
+        ):
             configs = await credential_service.get_embedding_provider_configs()
 
             assert len(configs) == 2
@@ -382,9 +380,10 @@ class TestAsyncCredentialService:
                 return "general_openai_key"
             return None
 
-        with patch.object(credential_service, 'get_credentials_by_category', return_value=mock_rag_settings), \
-             patch.object(credential_service, 'get_credential', side_effect=mock_get_credential):
-
+        with (
+            patch.object(credential_service, "get_credentials_by_category", return_value=mock_rag_settings),
+            patch.object(credential_service, "get_credential", side_effect=mock_get_credential),
+        ):
             configs = await credential_service.get_embedding_provider_configs()
 
             assert len(configs) == 1
@@ -405,9 +404,10 @@ class TestAsyncCredentialService:
                 return "general_google_key"
             return None
 
-        with patch.object(credential_service, 'get_credentials_by_category', return_value=mock_rag_settings), \
-             patch.object(credential_service, 'get_credential', side_effect=mock_get_credential):
-
+        with (
+            patch.object(credential_service, "get_credentials_by_category", return_value=mock_rag_settings),
+            patch.object(credential_service, "get_credential", side_effect=mock_get_credential),
+        ):
             configs = await credential_service.get_embedding_provider_configs()
 
             assert len(configs) == 1
@@ -418,6 +418,6 @@ class TestAsyncCredentialService:
     @pytest.mark.asyncio
     async def test_get_embedding_provider_configs_no_provider(self):
         """Test get_embedding_provider_configs with no provider configured."""
-        with patch.object(credential_service, 'get_credentials_by_category', return_value={}):
+        with patch.object(credential_service, "get_credentials_by_category", return_value={}):
             configs = await credential_service.get_embedding_provider_configs()
             assert len(configs) == 0

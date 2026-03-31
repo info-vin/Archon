@@ -83,9 +83,7 @@ def test_from_exception_timeout():
     # httpx.TimeoutException is a subclass of httpx.RequestError
     exception = httpx.TimeoutException("Request timed out after 30s")
 
-    result = MCPErrorFormatter.from_exception(
-        exception, "fetch data", {"url": "http://api.example.com"}
-    )
+    result = MCPErrorFormatter.from_exception(exception, "fetch data", {"url": "http://api.example.com"})
 
     result_data = json.loads(result)
     assert result_data["success"] is False

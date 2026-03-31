@@ -13,6 +13,7 @@ from ..config.logfire_config import search_logger
 
 # ...
 
+
 def get_supabase_client() -> Client:
     """
     Get a Supabase client instance.
@@ -24,9 +25,7 @@ def get_supabase_client() -> Client:
     key = os.getenv("SUPABASE_SERVICE_KEY")
 
     if not url or not key:
-        raise ValueError(
-            "SUPABASE_URL and SUPABASE_SERVICE_KEY must be set in environment variables"
-        )
+        raise ValueError("SUPABASE_URL and SUPABASE_SERVICE_KEY must be set in environment variables")
 
     try:
         # Let Supabase handle connection pooling internally

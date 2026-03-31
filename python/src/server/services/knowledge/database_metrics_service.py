@@ -38,25 +38,17 @@ class DatabaseMetricsService:
             metrics = {}
 
             # Sources count
-            sources_result = (
-                self.supabase.table("archon_sources").select("*", count="exact").execute()
-            )
+            sources_result = self.supabase.table("archon_sources").select("*", count="exact").execute()
             metrics["sources_count"] = sources_result.count if sources_result.count else 0
 
             # Crawled pages count
-            pages_result = (
-                self.supabase.table("archon_crawled_pages").select("*", count="exact").execute()
-            )
+            pages_result = self.supabase.table("archon_crawled_pages").select("*", count="exact").execute()
             metrics["pages_count"] = pages_result.count if pages_result.count else 0
 
             # Code examples count
             try:
-                code_examples_result = (
-                    self.supabase.table("archon_code_examples").select("*", count="exact").execute()
-                )
-                metrics["code_examples_count"] = (
-                    code_examples_result.count if code_examples_result.count else 0
-                )
+                code_examples_result = self.supabase.table("archon_code_examples").select("*", count="exact").execute()
+                metrics["code_examples_count"] = code_examples_result.count if code_examples_result.count else 0
             except Exception:
                 metrics["code_examples_count"] = 0
 
@@ -65,9 +57,7 @@ class DatabaseMetricsService:
 
             # Calculate additional metrics
             metrics["average_pages_per_source"] = (
-                round(metrics["pages_count"] / metrics["sources_count"], 2)
-                if metrics["sources_count"] > 0
-                else 0
+                round(metrics["pages_count"] / metrics["sources_count"], 2) if metrics["sources_count"] > 0 else 0
             )
 
             safe_logfire_info(
@@ -91,9 +81,7 @@ class DatabaseMetricsService:
             stats: dict[str, Any] = {}
 
             # Get knowledge type distribution
-            knowledge_types_result = (
-                self.supabase.table("archon_sources").select("metadata->knowledge_type").execute()
-            )
+            knowledge_types_result = self.supabase.table("archon_sources").select("metadata->knowledge_type").execute()
 
             if knowledge_types_result.data:
                 type_counts: dict[str, int] = {}
@@ -112,8 +100,7 @@ class DatabaseMetricsService:
             )
 
             stats["recent_sources"] = [
-                {"source_id": s["source_id"], "created_at": s["created_at"]}
-                for s in (recent_sources.data or [])
+                {"source_id": s["source_id"], "created_at": s["created_at"]} for s in (recent_sources.data or [])
             ]
 
             return stats

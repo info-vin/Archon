@@ -19,6 +19,7 @@ class CreateProjectRequest(BaseModel):
     business_sources: list[str] | None = None
     pinned: bool | None = None
 
+
 class UpdateProjectRequest(BaseModel):
     title: str | None = None
     description: str | None = None
@@ -30,10 +31,12 @@ class UpdateProjectRequest(BaseModel):
     business_sources: list[str] | None = None
     pinned: bool | None = None
 
+
 class AssignableUser(BaseModel):
     id: str
     name: str
     role: str
+
 
 class CreateTaskRequest(BaseModel):
     project_id: str
@@ -51,17 +54,21 @@ class CreateTaskRequest(BaseModel):
     crawler_target_id: str | None = None
     schedule_config: dict[str, Any] | None = None
 
+
 class RefineTaskRequest(BaseModel):
     title: str
     description: str
+
 
 class GenerateTaskFromAlertRequest(BaseModel):
     alert_id: str
     assignee_id: str | None = None
 
+
 class Attachment(BaseModel):
     filename: str
     url: str
+
 
 class UpdateTaskRequest(BaseModel):
     title: str | None = None
@@ -78,13 +85,16 @@ class UpdateTaskRequest(BaseModel):
     crawler_target_id: str | None = None
     schedule_config: dict[str, Any] | None = None
 
+
 class AgentStatusUpdateRequest(BaseModel):
     status: str
     agent_id: str
 
+
 class AgentOutputUpdateRequest(BaseModel):
     output: dict[str, Any]
     agent_id: str
+
 
 class CreateDocumentRequest(BaseModel):
     document_type: str
@@ -93,11 +103,13 @@ class CreateDocumentRequest(BaseModel):
     tags: list[str] | None = None
     author: str | None = None
 
+
 class UpdateDocumentRequest(BaseModel):
     title: str | None = None
     content: dict[str, Any] | None = None
     tags: list[str] | None = None
     author: str | None = None
+
 
 class CreateVersionRequest(BaseModel):
     field_name: str
@@ -106,6 +118,7 @@ class CreateVersionRequest(BaseModel):
     change_type: str | None = "update"
     document_id: str | None = None
     created_by: str | None = "system"
+
 
 class RestoreVersionRequest(BaseModel):
     restored_by: str | None = "system"

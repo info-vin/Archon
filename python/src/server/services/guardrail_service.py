@@ -1,7 +1,7 @@
-
 from ..config.logfire_config import get_logger
 
 logger = get_logger(__name__)
+
 
 class GuardrailService:
     """
@@ -11,8 +11,14 @@ class GuardrailService:
 
     # Basic keyword blocklist (In a real app, this might come from DB or external service)
     FORBIDDEN_KEYWORDS = {
-        "competitor_x", "illegal", "confidential", "internal_only",
-        "password", "secret", "hack", "exploit"
+        "competitor_x",
+        "illegal",
+        "confidential",
+        "internal_only",
+        "password",
+        "secret",
+        "hack",
+        "exploit",
     }
 
     @classmethod
@@ -32,14 +38,17 @@ class GuardrailService:
                 # Log to Ethics Table (Fire and forget)
                 try:
                     from ..utils import get_supabase_client
+
                     supabase = get_supabase_client()
-                    supabase.table("archon_ethics_events").insert({
-                        "severity": "high",
-                        "event_type": "policy_violation",
-                        "description": f"Input contained forbidden keyword: {word}",
-                        "raw_input": text,
-                        "created_at": "now()"
-                    }).execute()
+                    supabase.table("archon_ethics_events").insert(
+                        {
+                            "severity": "high",
+                            "event_type": "policy_violation",
+                            "description": f"Input contained forbidden keyword: {word}",
+                            "raw_input": text,
+                            "created_at": "now()",
+                        }
+                    ).execute()
                 except Exception as e:
                     logger.error(f"Failed to log ethics event: {e}")
 
@@ -63,22 +72,25 @@ class GuardrailService:
         # For now, we enforce a length check and ensure no "I am an AI" leakage if tone is professional.
 
         if "i am an ai language model" in generated_text.lower():
-             logger.warning("Guardrail: Output blocked due to AI disclosure leakage")
+            logger.warning("Guardrail: Output blocked due to AI disclosure leakage")
 
-             # Log to Ethics Table
-             try:
-                 from ..utils import get_supabase_client
-                 supabase = get_supabase_client()
-                 supabase.table("archon_ethics_events").insert({
-                     "severity": "medium",
-                     "event_type": "hallucination",
-                     "description": "AI Output contained generic disclosure (potential hallucination/leakage)",
-                     "raw_input": generated_text[:500], # Store partial output
-                     "created_at": "now()"
-                 }).execute()
-             except Exception as e:
-                 logger.error(f"Failed to log ethics event: {e}")
+            # Log to Ethics Table
+            try:
+                from ..utils import get_supabase_client
 
-             return False, "Output contains generic AI disclosure."
+                supabase = get_supabase_client()
+                supabase.table("archon_ethics_events").insert(
+                    {
+                        "severity": "medium",
+                        "event_type": "hallucination",
+                        "description": "AI Output contained generic disclosure (potential hallucination/leakage)",
+                        "raw_input": generated_text[:500],  # Store partial output
+                        "created_at": "now()",
+                    }
+                ).execute()
+            except Exception as e:
+                logger.error(f"Failed to log ethics event: {e}")
+
+            return False, "Output contains generic AI disclosure."
 
         return True, None

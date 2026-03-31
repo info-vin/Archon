@@ -21,6 +21,7 @@ from .schemas import (
 logger = get_logger(__name__)
 router = APIRouter()
 
+
 @router.get("/models", response_model=ModelDiscoveryResponse)
 async def discover_models_endpoint(
     background_tasks: BackgroundTasks,
@@ -32,7 +33,7 @@ async def discover_models_endpoint(
     """Discover models from multiple Ollama instances."""
     try:
         logger.info(f"Starting model discovery for {len(instance_urls)} instances")
-        valid_urls = [url.rstrip('/') for url in instance_urls if url.startswith(('http://', 'https://'))]
+        valid_urls = [url.rstrip("/") for url in instance_urls if url.startswith(("http://", "https://"))]
         if not valid_urls:
             raise HTTPException(status_code=400, detail="No valid instance URLs provided")
 
@@ -50,10 +51,10 @@ async def discover_models_endpoint(
         logger.error(f"Error in model discovery: {e}")
         raise HTTPException(status_code=500, detail=str(e)) from e
 
+
 @router.post("/models/discover-and-store", response_model=ModelListResponse)
 async def discover_and_store_models_endpoint(
-    request: ModelDiscoveryAndStoreRequest,
-    current_user: dict = Depends(verify_admin_role)
+    request: ModelDiscoveryAndStoreRequest, current_user: dict = Depends(verify_admin_role)
 ) -> ModelListResponse:
     """Discover and assess models, then store results in DB. Admin only."""
     try:
@@ -63,23 +64,28 @@ async def discover_and_store_models_endpoint(
 
         for instance_url in request.instance_urls:
             try:
-                base_url = instance_url.replace('/v1', '').rstrip('/')
+                base_url = instance_url.replace("/v1", "").rstrip("/")
                 models = await model_discovery_service.discover_models(base_url)
                 instances_checked += 1
                 for model in models:
                     comp_info = _assess_archon_compatibility(model)
-                    stored_models.append(StoredModelInfo(
-                        name=model.name, host=base_url, model_type=_determine_model_type(model),
-                        size_mb=_extract_model_size(model), context_length=_extract_context_length(model),
-                        parameters=_extract_parameters(model),
-                        capabilities=getattr(model, 'capabilities', []),
-                        archon_compatibility=comp_info['level'],
-                        compatibility_features=comp_info['features'],
-                        limitations=comp_info['limitations'],
-                        performance_rating=_assess_performance_rating(model),
-                        description=_generate_model_description(model),
-                        last_updated=datetime.now(UTC).isoformat()
-                    ))
+                    stored_models.append(
+                        StoredModelInfo(
+                            name=model.name,
+                            host=base_url,
+                            model_type=_determine_model_type(model),
+                            size_mb=_extract_model_size(model),
+                            context_length=_extract_context_length(model),
+                            parameters=_extract_parameters(model),
+                            capabilities=getattr(model, "capabilities", []),
+                            archon_compatibility=comp_info["level"],
+                            compatibility_features=comp_info["features"],
+                            limitations=comp_info["limitations"],
+                            performance_rating=_assess_performance_rating(model),
+                            description=_generate_model_description(model),
+                            last_updated=datetime.now(UTC).isoformat(),
+                        )
+                    )
             except Exception:
                 continue
 
@@ -87,21 +93,28 @@ async def discover_and_store_models_endpoint(
             "models": [m.dict() for m in stored_models],
             "last_discovery": datetime.now(UTC).isoformat(),
             "instances_checked": instances_checked,
-            "total_count": len(stored_models)
+            "total_count": len(stored_models),
         }
-        supabase.table("archon_settings").upsert({
-            "key": "ollama_discovered_models", "value": json.dumps(models_data),
-            "category": "ollama", "updated_at": datetime.now(UTC).isoformat()
-        }).execute()
+        supabase.table("archon_settings").upsert(
+            {
+                "key": "ollama_discovered_models",
+                "value": json.dumps(models_data),
+                "category": "ollama",
+                "updated_at": datetime.now(UTC).isoformat(),
+            }
+        ).execute()
 
         return ModelListResponse(
-            models=stored_models, total_count=len(stored_models),
-            instances_checked=instances_checked, last_discovery=str(models_data["last_discovery"]),
-            cache_status="updated"
+            models=stored_models,
+            total_count=len(stored_models),
+            instances_checked=instances_checked,
+            last_discovery=str(models_data["last_discovery"]),
+            cache_status="updated",
         )
     except Exception as e:
         logger.error(f"Error in discover and store: {e}")
         raise HTTPException(status_code=500, detail=str(e)) from e
+
 
 @router.get("/models/stored", response_model=ModelListResponse)
 async def get_stored_models_endpoint(current_user: dict = Depends(get_current_user)) -> ModelListResponse:
@@ -111,7 +124,9 @@ async def get_stored_models_endpoint(current_user: dict = Depends(get_current_us
         result = supabase.table("archon_settings").select("value").eq("key", "ollama_discovered_models").execute()
         models_setting = result.data[0]["value"] if result.data else None
         if not models_setting:
-            return ModelListResponse(models=[], total_count=0, instances_checked=0, last_discovery=None, cache_status="empty")
+            return ModelListResponse(
+                models=[], total_count=0, instances_checked=0, last_discovery=None, cache_status="empty"
+            )
 
         data = json.loads(models_setting) if isinstance(models_setting, str) else models_setting
         models_list = data if isinstance(data, list) else data.get("models", [])
@@ -119,42 +134,49 @@ async def get_stored_models_endpoint(current_user: dict = Depends(get_current_us
         stored_models = []
         for m in models_list:
             try:
-                stored_models.append(StoredModelInfo(
-                    name=str(m.get('name', 'Unknown')),
-                    host=str(m.get('instance_url', m.get('host', 'Unknown'))),
-                    model_type=str(m.get('model_type', 'chat')),
-                    size_mb=m.get('size_mb'), context_length=m.get('context_length'),
-                    parameters=m.get('parameters'), capabilities=m.get('capabilities', []),
-                    archon_compatibility=m.get('archon_compatibility', 'unknown'),
-                    compatibility_features=m.get('compatibility_features', []),
-                    limitations=m.get('limitations', []), performance_rating=m.get('performance_rating'),
-                    description=m.get('description'), last_updated=m.get('last_updated', datetime.now(UTC).isoformat()),
-                    embedding_dimensions=m.get('embedding_dimensions')
-                ))
+                stored_models.append(
+                    StoredModelInfo(
+                        name=str(m.get("name", "Unknown")),
+                        host=str(m.get("instance_url", m.get("host", "Unknown"))),
+                        model_type=str(m.get("model_type", "chat")),
+                        size_mb=m.get("size_mb"),
+                        context_length=m.get("context_length"),
+                        parameters=m.get("parameters"),
+                        capabilities=m.get("capabilities", []),
+                        archon_compatibility=m.get("archon_compatibility", "unknown"),
+                        compatibility_features=m.get("compatibility_features", []),
+                        limitations=m.get("limitations", []),
+                        performance_rating=m.get("performance_rating"),
+                        description=m.get("description"),
+                        last_updated=m.get("last_updated", datetime.now(UTC).isoformat()),
+                        embedding_dimensions=m.get("embedding_dimensions"),
+                    )
+                )
             except Exception:
                 continue
 
         return ModelListResponse(
-            models=stored_models, total_count=len(stored_models),
+            models=stored_models,
+            total_count=len(stored_models),
             instances_checked=data.get("instances_checked", 0) if isinstance(data, dict) else 0,
             last_discovery=data.get("last_discovery") if isinstance(data, dict) else None,
-            cache_status="loaded"
+            cache_status="loaded",
         )
     except Exception as e:
         logger.error(f"Error retrieving stored models: {e}")
         raise HTTPException(status_code=500, detail=str(e)) from e
 
+
 @router.post("/models/discover-with-details", response_model=ModelDiscoveryResponse)
 async def discover_models_with_real_details(
-    request: ModelDiscoveryAndStoreRequest,
-    current_user: dict = Depends(verify_admin_role)
+    request: ModelDiscoveryAndStoreRequest, current_user: dict = Depends(verify_admin_role)
 ) -> ModelDiscoveryResponse:
     """Discover models with real details from endpoints. Admin only."""
     try:
         stored_models = []
         instances_checked = 0
         for instance_url in request.instance_urls:
-            base_url = instance_url.replace('/v1', '').rstrip('/')
+            base_url = instance_url.replace("/v1", "").rstrip("/")
             try:
                 async with httpx.AsyncClient(timeout=5.0) as client:
                     tags_res = await client.get(f"{base_url}/api/tags")
@@ -166,24 +188,36 @@ async def discover_models_with_real_details(
                             continue
                         m_type = _determine_model_type_from_name_only(m_name)
                         size_mb = round(m_data.get("size", 0) / (1024 * 1024))
-                        stored_models.append({
-                            "name": m_name, "host": base_url, "model_type": m_type,
-                            "size_mb": size_mb, "last_updated": datetime.now(UTC).isoformat(),
-                            "archon_compatibility": "full" if m_type == 'chat' else "limited"
-                        })
+                        stored_models.append(
+                            {
+                                "name": m_name,
+                                "host": base_url,
+                                "model_type": m_type,
+                                "size_mb": size_mb,
+                                "last_updated": datetime.now(UTC).isoformat(),
+                                "archon_compatibility": "full" if m_type == "chat" else "limited",
+                            }
+                        )
                 instances_checked += 1
             except Exception:
                 continue
 
-        return ModelDiscoveryResponse(total_models=len(stored_models), chat_models=[], embedding_models=[], host_status={}, discovery_errors=[], unique_model_names=[])
+        return ModelDiscoveryResponse(
+            total_models=len(stored_models),
+            chat_models=[],
+            embedding_models=[],
+            host_status={},
+            discovery_errors=[],
+            unique_model_names=[],
+        )
     except Exception as e:
         logger.error(f"Error in detailed discovery: {e}")
         raise HTTPException(status_code=500, detail=str(e)) from e
 
+
 @router.post("/models/test-capabilities", response_model=ModelCapabilityTestResponse)
 async def test_model_capabilities_endpoint(
-    request: ModelCapabilityTestRequest,
-    current_user: dict = Depends(verify_admin_role)
+    request: ModelCapabilityTestRequest, current_user: dict = Depends(verify_admin_role)
 ) -> ModelCapabilityTestResponse:
     """Test real-time capabilities of a specific model. Admin only."""
     start_time = time.time()
@@ -193,12 +227,13 @@ async def test_model_capabilities_endpoint(
             instance_url=request.instance_url,
             test_results={},
             compatibility_assessment={},
-            test_duration_seconds=time.time()-start_time,
-            errors=[]
+            test_duration_seconds=time.time() - start_time,
+            errors=[],
         )
     except Exception as e:
         logger.error(f"Error testing capabilities: {e}")
         raise HTTPException(status_code=500, detail=str(e)) from e
+
 
 # --- Helpers ---
 async def _warm_model_cache(instance_urls: list[str]):
@@ -209,26 +244,34 @@ async def _warm_model_cache(instance_urls: list[str]):
         except Exception:
             pass
 
+
 def _assess_archon_compatibility(model):
-    return {'level': 'full', 'features': [], 'limitations': []}
+    return {"level": "full", "features": [], "limitations": []}
+
 
 def _determine_model_type(model):
-    return 'chat'
+    return "chat"
+
 
 def _extract_model_size(model):
     return None
 
+
 def _extract_context_length(model):
     return 4096
+
 
 def _extract_parameters(model):
     return None
 
+
 def _assess_performance_rating(model):
-    return 'medium'
+    return "medium"
+
 
 def _generate_model_description(model):
     return None
 
+
 def _determine_model_type_from_name_only(model_name):
-    return 'chat'
+    return "chat"

@@ -23,8 +23,7 @@ async def test_openai_connection(api_key: str) -> bool:
     try:
         async with httpx.AsyncClient(timeout=10.0) as client:
             response = await client.get(
-                "https://api.openai.com/v1/models",
-                headers={"Authorization": f"Bearer {api_key}"}
+                "https://api.openai.com/v1/models", headers={"Authorization": f"Bearer {api_key}"}
             )
             return bool(response.status_code == 200)
     except Exception as e:
@@ -41,7 +40,7 @@ async def test_google_connection(api_key: str) -> bool:
         async with httpx.AsyncClient(timeout=10.0) as client:
             response = await client.get(
                 "https://generativelanguage.googleapis.com/v1beta/models",
-                headers={"x-goog-api-key": api_key} # Service handles stripping now
+                headers={"x-goog-api-key": api_key},  # Service handles stripping now
             )
             logger.info(f"Google API response: {response.status_code}")
             if response.status_code != 200:
@@ -57,11 +56,7 @@ async def test_anthropic_connection(api_key: str) -> bool:
     try:
         async with httpx.AsyncClient(timeout=10.0) as client:
             response = await client.get(
-                "https://api.anthropic.com/v1/models",
-                headers={
-                    "x-api-key": api_key,
-                    "anthropic-version": "2023-06-01"
-                }
+                "https://api.anthropic.com/v1/models", headers={"x-api-key": api_key, "anthropic-version": "2023-06-01"}
             )
             return bool(response.status_code == 200)
     except Exception as e:
@@ -74,8 +69,7 @@ async def test_openrouter_connection(api_key: str) -> bool:
     try:
         async with httpx.AsyncClient(timeout=10.0) as client:
             response = await client.get(
-                "https://openrouter.ai/api/v1/models",
-                headers={"Authorization": f"Bearer {api_key}"}
+                "https://openrouter.ai/api/v1/models", headers={"Authorization": f"Bearer {api_key}"}
             )
             return bool(response.status_code == 200)
     except Exception as e:
@@ -87,10 +81,7 @@ async def test_grok_connection(api_key: str) -> bool:
     """Test Grok API connectivity"""
     try:
         async with httpx.AsyncClient(timeout=10.0) as client:
-            response = await client.get(
-                "https://api.x.ai/v1/models",
-                headers={"Authorization": f"Bearer {api_key}"}
-            )
+            response = await client.get("https://api.x.ai/v1/models", headers={"Authorization": f"Bearer {api_key}"})
             return bool(response.status_code == 200)
     except Exception as e:
         logger.warning(f"Grok connectivity test failed: {e}")
@@ -109,11 +100,8 @@ PROVIDER_TESTERS = {
 @router.get("/{provider}/status")
 async def get_provider_status(
     provider: str = Path(
-        ...,
-        description="Provider name to test connectivity for",
-        regex="^[a-z0-9_]+$",
-        max_length=20
-    )
+        ..., description="Provider name to test connectivity for", regex="^[a-z0-9_]+$", max_length=20
+    ),
 ):
     """Test provider connectivity using server-side API key (secure)"""
     try:
@@ -121,8 +109,7 @@ async def get_provider_status(
         allowed_providers = {"openai", "ollama", "google", "openrouter", "anthropic", "grok"}
         if provider not in allowed_providers:
             raise HTTPException(
-                status_code=400,
-                detail=f"Invalid provider '{provider}'. Allowed providers: {sorted(allowed_providers)}"
+                status_code=400, detail=f"Invalid provider '{provider}'. Allowed providers: {sorted(allowed_providers)}"
             )
 
         # Basic sanitization for logging
@@ -130,10 +117,7 @@ async def get_provider_status(
         logger.info(f"Testing {safe_provider} connectivity server-side")
 
         if provider not in PROVIDER_TESTERS:
-            raise HTTPException(
-                status_code=400,
-                detail=f"Provider '{provider}' not supported for connectivity testing"
-            )
+            raise HTTPException(status_code=400, detail=f"Provider '{provider}' not supported for connectivity testing")
 
         # Determine which DB keys to check based on the provider
         provider_key_map = {
@@ -142,20 +126,20 @@ async def get_provider_status(
             "anthropic": ["ANTHROPIC_API_KEY"],
             "openrouter": ["OPENROUTER_API_KEY"],
             "grok": ["GROK_API_KEY", "XAI_API_KEY"],
-            "ollama": [] # Ollama doesn't need a key usually, or uses LLM_BASE_URL
+            "ollama": [],  # Ollama doesn't need a key usually, or uses LLM_BASE_URL
         }
 
         keys_to_check = provider_key_map.get(provider, [])
         api_key = None
 
         if provider == "ollama":
-             # Ollama "connection" is usually just checking the URL, but here we preserve the interface
-             # We might need to fetch the base URL instead if the tester needed it,
-             # but the tester signature currently only takes api_key.
-             # For now, pass a dummy key for Ollama to allow the tester to proceed (if it handles URL internally or if we update it)
-             # However, looking at the tester map, 'ollama' is NOT in PROVIDER_TESTERS in the current file state.
-             # So we just skip if it's not supported.
-             pass
+            # Ollama "connection" is usually just checking the URL, but here we preserve the interface
+            # We might need to fetch the base URL instead if the tester needed it,
+            # but the tester signature currently only takes api_key.
+            # For now, pass a dummy key for Ollama to allow the tester to proceed (if it handles URL internally or if we update it)
+            # However, looking at the tester map, 'ollama' is NOT in PROVIDER_TESTERS in the current file state.
+            # So we just skip if it's not supported.
+            pass
 
         for key_name in keys_to_check:
             api_key = await credential_service.get_credential(key_name, decrypt=True)
@@ -175,7 +159,7 @@ async def get_provider_status(
         return {
             "ok": is_connected,
             "reason": "connected" if is_connected else "connection_failed",
-            "provider": provider  # Echo back validated provider name
+            "provider": provider,  # Echo back validated provider name
         }
 
     except HTTPException:
@@ -185,6 +169,4 @@ async def get_provider_status(
         # Basic error sanitization for logging
         safe_error = str(e)[:100]  # Limit length
         logger.error(f"Error testing {provider[:20]} connectivity: {safe_error}")
-        raise HTTPException(
-            status_code=500, detail={"error": "Internal server error during connectivity test"}
-        ) from e
+        raise HTTPException(status_code=500, detail={"error": "Internal server error during connectivity test"}) from e

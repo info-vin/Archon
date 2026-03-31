@@ -19,6 +19,7 @@ from ..utils.json_utils import safe_json_loads
 
 logger = get_logger(__name__)
 
+
 class MarketingService(BaseRepository):
     """
     Marketing Service - Encapsulates all Alice/Bob workflows and 3-Agent collaboration logic.
@@ -37,6 +38,7 @@ class MarketingService(BaseRepository):
     async def list_leads(self) -> list[dict]:
         def _query():
             return self.supabase_client.table("leads").select("*").order("created_at", desc=True).execute()
+
         success, res = self.execute_query(_query, "Failed to fetch leads")
         return res.get("data", []) if success else []
 
@@ -45,12 +47,16 @@ class MarketingService(BaseRepository):
         source_url = lead_data.get("source_job_url")
 
         if source_url:
+
             def _check_existing():
                 return self.supabase_client.table("leads").select("id").eq("source_job_url", source_url).execute()
+
             _, existing = self.execute_query(_check_existing, "Check existing lead")
             if existing.get("data"):
                 if lead_data.get("pitch_content"):
-                    self.supabase_client.table("leads").update({"pitch_content": lead_data["pitch_content"]}).eq("id", existing["data"][0]['id']).execute()
+                    self.supabase_client.table("leads").update({"pitch_content": lead_data["pitch_content"]}).eq(
+                        "id", existing["data"][0]["id"]
+                    ).execute()
                 return True, {"lead": existing["data"][0]}
 
         def _insert():
@@ -70,20 +76,24 @@ class MarketingService(BaseRepository):
             return True, {"lead": res["data"][0]}
         return False, res
 
-    async def promote_to_vendor(self, lead_id: str, vendor_name: str, email: str | None, notes: str | None, owner_id: str) -> tuple[bool, dict]:
+    async def promote_to_vendor(
+        self, lead_id: str, vendor_name: str, email: str | None, notes: str | None, owner_id: str
+    ) -> tuple[bool, dict]:
         try:
             vendor_data = {
                 "name": vendor_name,
                 "contact_email": email,
                 "description": notes or "Promoted",
                 "status": "active",
-                "owner_id": owner_id
+                "owner_id": owner_id,
             }
             vendor_res = self.supabase_client.table("vendors").insert(vendor_data).execute()
             new_vendor_id = vendor_res.data[0]["id"]
 
             self.supabase_client.table("leads").update({"status": "converted"}).eq("id", lead_id).execute()
-            self.supabase_client.table("visit_logs").update({"customer_id": new_vendor_id}).eq("lead_id", lead_id).execute()
+            self.supabase_client.table("visit_logs").update({"customer_id": new_vendor_id}).eq(
+                "lead_id", lead_id
+            ).execute()
 
             return True, {"vendor": vendor_res.data[0]}
         except Exception as e:
@@ -96,7 +106,9 @@ class MarketingService(BaseRepository):
         """
         try:
             # 1. Fetch API Key from Credential Service
-            api_key = await credential_service.get_credential("GEMINI_API_KEY") or await credential_service.get_credential("GOOGLE_API_KEY")
+            api_key = await credential_service.get_credential(
+                "GEMINI_API_KEY"
+            ) or await credential_service.get_credential("GOOGLE_API_KEY")
 
             if not api_key:
                 logger.error("MarketingService: No Gemini/Google API Key found in settings or environment.")
@@ -110,7 +122,7 @@ class MarketingService(BaseRepository):
             response = client.models.generate_content(
                 model="gemini-2.5-flash",
                 contents=f"Company: {company}\nRole: {job_title}",
-                config=types.GenerateContentConfig(system_instruction=sys_prompt)
+                config=types.GenerateContentConfig(system_instruction=sys_prompt),
             )
 
             # 4. LOG ACTUAL TOKEN USAGE (Physical evidence)
@@ -123,15 +135,17 @@ class MarketingService(BaseRepository):
                 # Resolve Real Physical Identity
                 agent_uuid = get_agent_uuid("market-bot")
 
-                asyncio.create_task(TokenUsageService.log_usage(
-                    request_id=f"pitch-{uuid.uuid4().hex[:8]}",
-                    user_id=agent_uuid, # Real UUID from Registry
-                    model="gemini-2.5-flash",
-                    provider="google",
-                    input_tokens=getattr(response.usage_metadata, 'prompt_token_count', 0) or 0,
-                    output_tokens=getattr(response.usage_metadata, 'candidates_token_count', 0) or 0,
-                    context_type="sales_pitch_generation"
-                ))
+                asyncio.create_task(
+                    TokenUsageService.log_usage(
+                        request_id=f"pitch-{uuid.uuid4().hex[:8]}",
+                        user_id=agent_uuid,  # Real UUID from Registry
+                        model="gemini-2.5-flash",
+                        provider="google",
+                        input_tokens=getattr(response.usage_metadata, "prompt_token_count", 0) or 0,
+                        output_tokens=getattr(response.usage_metadata, "candidates_token_count", 0) or 0,
+                        context_type="sales_pitch_generation",
+                    )
+                )
             except Exception as log_err:
                 logger.warning(f"Failed to log token usage: {log_err}")
 
@@ -148,7 +162,9 @@ class MarketingService(BaseRepository):
         from .marketing.logo_tool import generate_logo_svg
 
         try:
-            api_key = await credential_service.get_credential("GEMINI_API_KEY") or await credential_service.get_credential("GOOGLE_API_KEY")
+            api_key = await credential_service.get_credential(
+                "GEMINI_API_KEY"
+            ) or await credential_service.get_credential("GOOGLE_API_KEY")
             client = genai.Client(api_key=api_key)
             prompt = f"Professional tech logo, {style}, high resolution"
 
@@ -157,15 +173,15 @@ class MarketingService(BaseRepository):
                 native_resp = client.models.generate_content(
                     model="gemini-2.0-flash-exp",
                     contents=cast(Any, [prompt]),
-                    config=types.GenerateContentConfig(response_modalities=['IMAGE'])
+                    config=types.GenerateContentConfig(response_modalities=["IMAGE"]),
                 )
-                for part in (native_resp.parts or []):
+                for part in native_resp.parts or []:
                     if part.inline_data and part.inline_data.data:
                         return {
                             "status": "success",
                             "image_url": f"data:{part.inline_data.mime_type};base64,{part.inline_data.data.decode('utf-8')}",
                             "tier": "native",
-                            "svg_content": ""
+                            "svg_content": "",
                         }
             except Exception:
                 logger.warning("MarketingService: Native AI visual generation failed, falling back to local SVG.")
@@ -173,13 +189,13 @@ class MarketingService(BaseRepository):
             # TIER 2: Physical Local SVG (Zero Token Cost)
             # Fulfills PRP promise of geometric logo generation
             svg_content = generate_logo_svg(style)
-            svg_base64 = base64.b64encode(svg_content.encode('utf-8')).decode('utf-8')
+            svg_base64 = base64.b64encode(svg_content.encode("utf-8")).decode("utf-8")
 
             return {
                 "status": "success",
                 "image_url": f"data:image/svg+xml;base64,{svg_base64}",
                 "tier": "physical_svg",
-                "svg_content": svg_content
+                "svg_content": svg_content,
             }
 
         except Exception as e:
@@ -188,32 +204,66 @@ class MarketingService(BaseRepository):
 
     async def get_combined_sources(self, user_id: str) -> list[dict]:
         leads = self.supabase_client.table("leads").select("*").limit(10).execute().data or []
-        tasks = self.supabase_client.table("archon_tasks").select("*").eq("assignee_id", user_id).limit(10).execute().data or []
-        blogs = self.supabase_client.table("blog_posts").select("*").in_("status", ["draft", "changes_requested"]).limit(10).execute().data or []
+        tasks = (
+            self.supabase_client.table("archon_tasks").select("*").eq("assignee_id", user_id).limit(10).execute().data
+            or []
+        )
+        blogs = (
+            self.supabase_client.table("blog_posts")
+            .select("*")
+            .in_("status", ["draft", "changes_requested"])
+            .limit(10)
+            .execute()
+            .data
+            or []
+        )
 
         sources = []
         for lead_entry in leads:
-            sources.append({
-                "id": lead_entry["id"], "type": "lead", "title": lead_entry["company_name"],
-                "score": lead_entry.get("enrichment_score", 0),
-                "summary": lead_entry.get("identified_need", "")[:100], "date": lead_entry["created_at"]
-            })
+            sources.append(
+                {
+                    "id": lead_entry["id"],
+                    "type": "lead",
+                    "title": lead_entry["company_name"],
+                    "score": lead_entry.get("enrichment_score", 0),
+                    "summary": lead_entry.get("identified_need", "")[:100],
+                    "date": lead_entry["created_at"],
+                }
+            )
         for task_entry in tasks:
-            sources.append({
-                "id": task_entry["id"], "type": "task", "title": task_entry["title"],
-                "score": 100, "summary": task_entry.get("description", "")[:100], "date": task_entry["created_at"]
-            })
+            sources.append(
+                {
+                    "id": task_entry["id"],
+                    "type": "task",
+                    "title": task_entry["title"],
+                    "score": 100,
+                    "summary": task_entry.get("description", "")[:100],
+                    "date": task_entry["created_at"],
+                }
+            )
         for blog_entry in blogs:
-            sources.append({
-                "id": blog_entry["id"], "type": "blog", "title": blog_entry["title"],
-                "score": blog_entry.get("ai_score", 0), "summary": blog_entry.get("excerpt", ""),
-                "date": blog_entry["created_at"], "status": blog_entry["status"]
-            })
+            sources.append(
+                {
+                    "id": blog_entry["id"],
+                    "type": "blog",
+                    "title": blog_entry["title"],
+                    "score": blog_entry.get("ai_score", 0),
+                    "summary": blog_entry.get("excerpt", ""),
+                    "date": blog_entry["created_at"],
+                    "status": blog_entry["status"],
+                }
+            )
         return sorted(sources, key=lambda x: x["date"], reverse=True)
 
     async def get_pending_approvals(self) -> dict:
         """Physical Fix for Charlie's Approvals Page"""
-        res = self.supabase_client.table("blog_posts").select("*").eq("status", "review").order("updated_at", desc=True).execute()
+        res = (
+            self.supabase_client.table("blog_posts")
+            .select("*")
+            .eq("status", "review")
+            .order("updated_at", desc=True)
+            .execute()
+        )
         return {"blogs": res.data or [], "leads": []}
 
     async def get_content_context(self, source_id: str, source_type: str) -> dict:
@@ -223,20 +273,32 @@ class MarketingService(BaseRepository):
             for log_item in logs:
                 context_text += f"\n[Log]: {log_item.get('summary')}\n"
         success, res = await RAGService().perform_rag_query(query=context_text[:1000] or "General", match_count=3)
-        return {"source_id": source_id, "source_type": source_type, "rag_refs": res.get("results", []) if success else [], "context_summary": context_text}
+        return {
+            "source_id": source_id,
+            "source_type": source_type,
+            "rag_refs": res.get("results", []) if success else [],
+            "context_summary": context_text,
+        }
 
     async def process_approval(self, item_type: str, item_id: str, action: str, notes: str | None) -> bool:
         if item_type == "blog":
             new_status = "published" if action == "approve" else "changes_requested"
-            res = self.supabase_client.table("blog_posts").update({"status": new_status, "review_notes": notes}).eq("id", item_id).execute()
+            res = (
+                self.supabase_client.table("blog_posts")
+                .update({"status": new_status, "review_notes": notes})
+                .eq("id", item_id)
+                .execute()
+            )
 
             if action != "approve" and notes and res.data:
                 post_data = res.data[0]
-                asyncio.create_task(LibrarianService().archive_style_critique(
-                    post_title=post_data.get("title", "Untitled"),
-                    original_content=post_data.get("content", ""),
-                    review_notes=notes
-                ))
+                asyncio.create_task(
+                    LibrarianService().archive_style_critique(
+                        post_title=post_data.get("title", "Untitled"),
+                        original_content=post_data.get("content", ""),
+                        review_notes=notes,
+                    )
+                )
             return True
         return False
 
@@ -247,7 +309,9 @@ class MarketingService(BaseRepository):
 
         score = self._calculate_ai_score(post.get("content", ""))
         status = "changes_requested" if score < 50 else "review"
-        self.supabase_client.table("blog_posts").update({"status": status, "ai_score": score}).eq("id", post_id).execute()
+        self.supabase_client.table("blog_posts").update({"status": status, "ai_score": score}).eq(
+            "id", post_id
+        ).execute()
         return True, {"status": status, "ai_score": score}
 
     async def draft_blog(self, topic: str, industry: list[str] | None, keywords: str | None) -> tuple[bool, dict]:
@@ -264,7 +328,9 @@ class MarketingService(BaseRepository):
             context_text = await self._get_expert_style_context(f"{topic} {industry}")
 
             # 1. Fetch API Key from Credential Service
-            api_key = await credential_service.get_credential("GEMINI_API_KEY") or await credential_service.get_credential("GOOGLE_API_KEY")
+            api_key = await credential_service.get_credential(
+                "GEMINI_API_KEY"
+            ) or await credential_service.get_credential("GOOGLE_API_KEY")
 
             if not api_key:
                 logger.error("MarketingService: No API Key found for blog drafting.")
@@ -278,7 +344,9 @@ class MarketingService(BaseRepository):
             response = client.models.generate_content(
                 model="gemini-2.5-flash",
                 contents=f"Topic: {topic}\nContext: {context_text}",
-                config=types.GenerateContentConfig(system_instruction=sys_prompt, response_mime_type="application/json")
+                config=types.GenerateContentConfig(
+                    system_instruction=sys_prompt, response_mime_type="application/json"
+                ),
             )
 
             # LOG ACTUAL TOKEN USAGE (Physical Alignment - Phase 4.6.15)
@@ -287,16 +355,19 @@ class MarketingService(BaseRepository):
 
                 from .agent_registry import get_agent_uuid
                 from .token_usage_service import TokenUsageService
+
                 agent_uuid = get_agent_uuid("market-bot")
-                asyncio.create_task(TokenUsageService.log_usage(
-                    request_id=f"blog-{uuid.uuid4().hex[:8]}",
-                    user_id=agent_uuid,
-                    model="gemini-2.5-flash",
-                    provider="google",
-                    input_tokens=getattr(response.usage_metadata, 'prompt_token_count', 0) or 0,
-                    output_tokens=getattr(response.usage_metadata, 'candidates_token_count', 0) or 0,
-                    context_type="blog_generation"
-                ))
+                asyncio.create_task(
+                    TokenUsageService.log_usage(
+                        request_id=f"blog-{uuid.uuid4().hex[:8]}",
+                        user_id=agent_uuid,
+                        model="gemini-2.5-flash",
+                        provider="google",
+                        input_tokens=getattr(response.usage_metadata, "prompt_token_count", 0) or 0,
+                        output_tokens=getattr(response.usage_metadata, "candidates_token_count", 0) or 0,
+                        context_type="blog_generation",
+                    )
+                )
             except Exception as log_err:
                 logger.warning(f"Failed to log blog token usage: {log_err}")
 
@@ -316,9 +387,9 @@ class MarketingService(BaseRepository):
                 "title": str(result.get("title", "Untitled")),
                 "content": str(result.get("content", "")),
                 "excerpt": str(result.get("excerpt", "")),
-                "status": "review", # Automatically goes to approval inbox
+                "status": "review",  # Automatically goes to approval inbox
                 "ai_score": self._calculate_ai_score(str(result.get("content", ""))),
-                "image_url": "https://picsum.photos/seed/market/1024/1024"
+                "image_url": "https://picsum.photos/seed/market/1024/1024",
             }
 
             self.supabase_client.table("blog_posts").insert(new_post).execute()
@@ -327,7 +398,7 @@ class MarketingService(BaseRepository):
                 "title": new_post["title"],
                 "content": new_post["content"],
                 "excerpt": new_post["excerpt"],
-                "status": "review"
+                "status": "review",
             }
         except Exception as e:
             logger.error(f"MarketingService: Blog drafting failed: {e}")
@@ -338,25 +409,46 @@ class MarketingService(BaseRepository):
         try:
             leads_count = self.supabase_client.table("leads").select("id", count="exact").execute().count or 0
             blogs_count = self.supabase_client.table("blog_posts").select("id", count="exact").execute().count or 0
-            converted_leads = self.supabase_client.table("leads").select("id", count="exact").eq("status", "converted").execute().count or 0
+            converted_leads = (
+                self.supabase_client.table("leads")
+                .select("id", count="exact")
+                .eq("status", "converted")
+                .execute()
+                .count
+                or 0
+            )
 
             return {
                 "total_leads": leads_count,
                 "total_blog_posts": blogs_count,
                 "conversion_rate": round((converted_leads / leads_count * 100), 2) if leads_count > 0 else 0,
-                "active_campaigns": blogs_count, # Use blog count as active campaigns surrogate
-                "last_updated": "2026-03-20T10:00:00Z"
+                "active_campaigns": blogs_count,  # Use blog count as active campaigns surrogate
+                "last_updated": "2026-03-20T10:00:00Z",
             }
         except Exception as e:
             logger.error(f"Failed to fetch marketing stats: {e}")
             return {"error": str(e)}
 
     async def get_marketing_trends(self) -> dict:
-        res_t = self.supabase_client.table("marketing_trends").select("*").eq("trend_type", "keyword_growth").order("report_date", desc=True).limit(1).execute()
-        res_s = self.supabase_client.table("marketing_trends").select("*").eq("trend_type", "sankey_flow").order("report_date", desc=True).limit(1).execute()
+        res_t = (
+            self.supabase_client.table("marketing_trends")
+            .select("*")
+            .eq("trend_type", "keyword_growth")
+            .order("report_date", desc=True)
+            .limit(1)
+            .execute()
+        )
+        res_s = (
+            self.supabase_client.table("marketing_trends")
+            .select("*")
+            .eq("trend_type", "sankey_flow")
+            .order("report_date", desc=True)
+            .limit(1)
+            .execute()
+        )
         return {
             "keyword_growth": res_t.data[0]["data"] if res_t.data else [],
-            "sankey_flow": res_s.data[0]["data"] if res_s.data else {}
+            "sankey_flow": res_s.data[0]["data"] if res_s.data else {},
         }
 
     async def _get_expert_style_context(self, query: str) -> str:
@@ -377,6 +469,7 @@ class MarketingService(BaseRepository):
     async def run_sentinel(self) -> dict:
         """Manually trigger the Business Sentinel."""
         from ..services.scheduler_service import scheduler_service
+
         await scheduler_service.run_business_sentinel()
         return {"status": "triggered", "message": "Sentinel scan started in background."}
 
@@ -412,23 +505,20 @@ class MarketingService(BaseRepository):
         try:
             for root, _, files in os.walk(target_dir):
                 for file in files:
-                    if file.startswith('.') or file == "DS_Store":
+                    if file.startswith(".") or file == "DS_Store":
                         continue
-                    if not (file.endswith('.md') or file.endswith('.txt')):
+                    if not (file.endswith(".md") or file.endswith(".txt")):
                         continue
 
                     total_count += 1
                     file_path = os.path.join(root, file)
                     try:
-                        with open(file_path, encoding='utf-8') as f:
+                        with open(file_path, encoding="utf-8") as f:
                             content = f.read()
                         if not content.strip():
                             continue
                         await librarian.archive_file(
-                            file_name=file,
-                            content=content,
-                            file_path=file_path,
-                            knowledge_type="technical"
+                            file_name=file, content=content, file_path=file_path, knowledge_type="technical"
                         )
                         success_count += 1
                     except Exception as e:
@@ -439,7 +529,7 @@ class MarketingService(BaseRepository):
                 "scanned_dir": target_dir,
                 "total_files": total_count,
                 "indexed_count": success_count,
-                "errors": errors[:5]
+                "errors": errors[:5],
             }
         except Exception as e:
             return {"error": f"Seeding failed: {str(e)}"}

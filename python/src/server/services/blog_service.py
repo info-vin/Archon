@@ -9,6 +9,7 @@ from ..utils import get_supabase_client
 
 logger = get_logger(__name__)
 
+
 class BlogService(BaseRepository):
     """Service for handling blog post operations."""
 
@@ -17,6 +18,7 @@ class BlogService(BaseRepository):
 
     async def list_posts(self) -> tuple[bool, dict[str, Any]]:
         """Retrieve a list of all blog posts."""
+
         def _query():
             return self.supabase_client.table("blog_posts").select("*").order("publish_date", desc=True).execute()
 
@@ -27,6 +29,7 @@ class BlogService(BaseRepository):
 
     async def get_post(self, post_id: str) -> tuple[bool, dict[str, Any]]:
         """Retrieve a single blog post by its ID."""
+
         def _query():
             return self.supabase_client.table("blog_posts").select("*").eq("id", post_id).single().execute()
 
@@ -70,6 +73,7 @@ class BlogService(BaseRepository):
         Moves url to metadata 'image_url' field.
         """
         import re
+
         content = data.get("content", "")
         if not content:
             return data
@@ -87,6 +91,7 @@ class BlogService(BaseRepository):
 
     async def delete_post(self, post_id: str) -> tuple[bool, dict[str, Any]]:
         """Delete a blog post."""
+
         def _query():
             return self.supabase_client.table("blog_posts").delete().eq("id", post_id).execute()
 

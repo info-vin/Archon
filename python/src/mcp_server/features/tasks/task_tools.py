@@ -23,7 +23,7 @@ DEFAULT_PAGE_SIZE = 10
 def truncate_text(text: str, max_length: int = MAX_DESCRIPTION_LENGTH) -> str:
     """Truncate text to maximum length with ellipsis."""
     if text and len(text) > max_length:
-        return text[:max_length - 3] + "..."
+        return text[: max_length - 3] + "..."
     return text
 
 
@@ -129,20 +129,22 @@ def register_task_tools(mcp: FastMCP):
             elif "data" in result:
                 tasks = result["data"]
                 total_count = result.get("total", len(tasks))
-            elif isinstance(result.get("result"), list): # Compatibility
+            elif isinstance(result.get("result"), list):  # Compatibility
                 tasks = result["result"]
                 total_count = len(tasks)
 
             # Optimize task responses
             optimized_tasks = [optimize_task_response(task) for task in tasks]
 
-            return json.dumps({
-                "success": True,
-                "tasks": optimized_tasks,
-                "total_count": total_count,
-                "count": len(optimized_tasks),
-                "query": query,
-            })
+            return json.dumps(
+                {
+                    "success": True,
+                    "tasks": optimized_tasks,
+                    "total_count": total_count,
+                    "count": len(optimized_tasks),
+                    "query": query,
+                }
+            )
 
         except Exception as e:
             logger.error(f"Error listing tasks: {e}", exc_info=True)
@@ -159,7 +161,7 @@ def register_task_tools(mcp: FastMCP):
         status: str | None = None,
         assignee: str | None = None,
         task_order: int | None = None,
-        feature: str | None = None
+        feature: str | None = None,
     ) -> str:
         """
         Manage tasks (consolidated: create/update/delete).
@@ -167,39 +169,55 @@ def register_task_tools(mcp: FastMCP):
         try:
             if action == "create":
                 if not project_id or not title:
-                    return MCPErrorFormatter.format_error("validation_error", "project_id and title required for create")
+                    return MCPErrorFormatter.format_error(
+                        "validation_error", "project_id and title required for create"
+                    )
 
-                result = await call_api("POST", "/api/tasks", json={
-                    "project_id": project_id,
-                    "title": title,
-                    "description": description or "",
-                    "assignee": assignee or "User",
-                    "task_order": task_order or 0,
-                    "feature": feature,
-                    "sources": [],
-                    "code_examples": [],
-                })
+                result = await call_api(
+                    "POST",
+                    "/api/tasks",
+                    json={
+                        "project_id": project_id,
+                        "title": title,
+                        "description": description or "",
+                        "assignee": assignee or "User",
+                        "task_order": task_order or 0,
+                        "feature": feature,
+                        "sources": [],
+                        "code_examples": [],
+                    },
+                )
 
                 if result.get("success"):
                     task = result.get("task")
                     if task:
                         task = optimize_task_response(task)
-                    return json.dumps({
-                        "success": True,
-                        "task": task,
-                        "task_id": task.get("id") if task else None,
-                        "message": result.get("message", "Task created successfully"),
-                    })
+                    return json.dumps(
+                        {
+                            "success": True,
+                            "task": task,
+                            "task_id": task.get("id") if task else None,
+                            "message": result.get("message", "Task created successfully"),
+                        }
+                    )
                 return json.dumps(result, indent=2)
 
             elif action == "update":
                 if not task_id:
                     return MCPErrorFormatter.format_error("validation_error", "task_id required for update")
 
-                update_fields = {k: v for k, v in {
-                    "title": title, "description": description, "status": status,
-                    "assignee": assignee, "task_order": task_order, "feature": feature
-                }.items() if v is not None}
+                update_fields = {
+                    k: v
+                    for k, v in {
+                        "title": title,
+                        "description": description,
+                        "status": status,
+                        "assignee": assignee,
+                        "task_order": task_order,
+                        "feature": feature,
+                    }.items()
+                    if v is not None
+                }
 
                 if not update_fields:
                     return MCPErrorFormatter.format_error("validation_error", "No fields to update")
@@ -210,11 +228,13 @@ def register_task_tools(mcp: FastMCP):
                     task = result.get("task")
                     if task:
                         task = optimize_task_response(task)
-                    return json.dumps({
-                        "success": True,
-                        "task": task,
-                        "message": result.get("message", "Task updated successfully"),
-                    })
+                    return json.dumps(
+                        {
+                            "success": True,
+                            "task": task,
+                            "message": result.get("message", "Task updated successfully"),
+                        }
+                    )
                 return json.dumps(result, indent=2)
 
             elif action == "delete":
@@ -233,11 +253,15 @@ def register_task_tools(mcp: FastMCP):
     @mcp.tool()
     async def report_task_status(ctx: Context, task_id: str, status: str, agent_id: str) -> str:
         """Allows an AI agent to report a status update for a specific task."""
-        result = await call_api("POST", f"/api/tasks/{task_id}/agent-status", json={"status": status, "agent_id": agent_id})
+        result = await call_api(
+            "POST", f"/api/tasks/{task_id}/agent-status", json={"status": status, "agent_id": agent_id}
+        )
         return json.dumps(result, indent=2)
 
     @mcp.tool()
     async def report_task_output(ctx: Context, task_id: str, output: dict[str, Any], agent_id: str) -> str:
         """Allows an AI agent to report its final output or intermediate results for a specific task."""
-        result = await call_api("POST", f"/api/tasks/{task_id}/agent-output", json={"output": output, "agent_id": agent_id})
+        result = await call_api(
+            "POST", f"/api/tasks/{task_id}/agent-output", json={"output": output, "agent_id": agent_id}
+        )
         return json.dumps(result, indent=2)

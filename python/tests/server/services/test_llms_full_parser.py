@@ -2,7 +2,6 @@
 Tests for LLMs-full.txt Section Parser
 """
 
-
 from src.server.services.crawling.helpers.llms_full_parser import (
     create_section_slug,
     create_section_url,

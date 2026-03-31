@@ -121,9 +121,7 @@ class VersionService:
             published_at = None
             if release.get("published_at"):
                 try:
-                    published_at = datetime.fromisoformat(
-                        release["published_at"].replace("Z", "+00:00")
-                    )
+                    published_at = datetime.fromisoformat(release["published_at"].replace("Z", "+00:00"))
                 except Exception:
                     pass
 

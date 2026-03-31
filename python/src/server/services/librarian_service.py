@@ -1,4 +1,3 @@
-
 import asyncio
 import uuid
 from datetime import datetime
@@ -14,18 +13,13 @@ from ..utils import get_supabase_client
 
 logger = get_logger(__name__)
 
+
 class LibrarianService:
     def __init__(self):
         self.supabase = get_supabase_client()
         self.source_service = SourceManagementService(self.supabase)
 
-    async def archive_any_url(
-        self,
-        url: str,
-        user_role: str = "member",
-        depth: int = 0,
-        max_depth: int = 1
-    ) -> str:
+    async def archive_any_url(self, url: str, user_role: str = "member", depth: int = 0, max_depth: int = 1) -> str:
         """
         New (Phase 4.7): Dynamically crawls ANY authorized URL and indexes it.
         Supports HTML and recursive Sitemap ingestion.
@@ -57,13 +51,13 @@ class LibrarianService:
 
                 async def process_link(link: str):
                     if not link.endswith(".xml"):
-                        return await self.archive_any_url(link, user_role=user_role, depth=depth + 1, max_depth=max_depth)
+                        return await self.archive_any_url(
+                            link, user_role=user_role, depth=depth + 1, max_depth=max_depth
+                        )
                     return None
 
                 await threading_service.batch_process(
-                    items=target_links,
-                    process_func=process_link,
-                    mode=ProcessingMode.NETWORK_BOUND
+                    items=target_links, process_func=process_link, mode=ProcessingMode.NETWORK_BOUND
                 )
 
                 return f"batch-processed-{len(target_links)}-items"
@@ -73,10 +67,7 @@ class LibrarianService:
             title = result["title"]
 
             source_id = await self.archive_file(
-                file_name=f"External: {title[:50]}",
-                content=content,
-                file_path=url,
-                knowledge_type="external_knowledge"
+                file_name=f"External: {title[:50]}", content=content, file_path=url, knowledge_type="external_knowledge"
             )
 
             logger.info(f"Librarian: Successfully ingested external URL | url={url} | id={source_id}")
@@ -86,13 +77,7 @@ class LibrarianService:
             logger.error(f"Librarian: Failed to archive URL {url} | error={str(e)}")
             return ""
 
-    async def archive_sales_pitch(
-        self,
-        company: str,
-        job_title: str,
-        content: str,
-        references: list[str]
-    ) -> str:
+    async def archive_sales_pitch(self, company: str, job_title: str, content: str, references: list[str]) -> str:
         """
         Archives a generated sales pitch into the knowledge base.
 
@@ -128,7 +113,7 @@ class LibrarianService:
                 "target_job": job_title,
                 "source_type": "generated",
                 "auto_generated": True,
-                "created_at": datetime.now().isoformat()
+                "created_at": datetime.now().isoformat(),
             }
 
             logger.info(f"Librarian: Archiving pitch | source_id={source_id} | company={company}")
@@ -143,7 +128,7 @@ class LibrarianService:
                 content=content,
                 knowledge_type="sales_pitch",
                 tags=tags,
-                source_display_name=title
+                source_display_name=title,
             )
 
             # 4. Insert Content (archon_crawled_pages)
@@ -159,25 +144,27 @@ class LibrarianService:
             page_data = {
                 "source_id": source_id,
                 "url": f"generated://pitch/{source_id}",
-                "chunk_number": 0, # Required field
+                "chunk_number": 0,  # Required field
                 "content": content,
                 "embedding": embedding_vector,
-                "metadata": {**metadata, "title": title} # Store title in metadata
+                "metadata": {**metadata, "title": title},  # Store title in metadata
             }
 
             self.supabase.table("archon_crawled_pages").insert(page_data).execute()
 
             # 5. Record version for audit trail (Admin Insight)
             try:
-                self.supabase.table("archon_document_versions").insert({
-                    "document_id": source_id,
-                    "field_name": "sales_pitch",
-                    "change_type": "create",
-                    "change_summary": f"Archived generated pitch for {company}",
-                    "content": {"source_id": source_id, "company": company, "job": job_title},
-                    "created_by": "ai-librarian",
-                    "version_number": 1
-                }).execute()
+                self.supabase.table("archon_document_versions").insert(
+                    {
+                        "document_id": source_id,
+                        "field_name": "sales_pitch",
+                        "change_type": "create",
+                        "change_summary": f"Archived generated pitch for {company}",
+                        "content": {"source_id": source_id, "company": company, "job": job_title},
+                        "created_by": "ai-librarian",
+                        "version_number": 1,
+                    }
+                ).execute()
             except Exception as v_err:
                 logger.warning(f"Librarian: Failed to log document version: {v_err}")
 
@@ -189,12 +176,7 @@ class LibrarianService:
             # For now, we return empty string to indicate failure but allow flow to continue.
             return ""
 
-    async def archive_web_research(
-        self,
-        query: str,
-        content: str,
-        references: list[str]
-    ) -> str:
+    async def archive_web_research(self, query: str, content: str, references: list[str]) -> str:
         """
         Archives web research results into the knowledge base.
         """
@@ -221,12 +203,12 @@ class LibrarianService:
                 content=content,
                 knowledge_type="web_research",
                 tags=tags,
-                source_display_name=title
+                source_display_name=title,
             )
 
             # 4. Insert Content & Embedding
             try:
-                embedding_vector = await create_embedding(content[:8000]) # Limit for embedding
+                embedding_vector = await create_embedding(content[:8000])  # Limit for embedding
             except Exception as e:
                 logger.error(f"Librarian: Failed to generate embedding for research {source_id}: {e}")
                 embedding_vector = None
@@ -242,23 +224,25 @@ class LibrarianService:
                     "tags": tags,
                     "query": query,
                     "references": references,
-                    "title": title
-                }
+                    "title": title,
+                },
             }
 
             self.supabase.table("archon_crawled_pages").insert(page_data).execute()
 
             # 5. Record version
             try:
-                self.supabase.table("archon_document_versions").insert({
-                    "document_id": source_id,
-                    "field_name": "web_research",
-                    "change_type": "create",
-                    "change_summary": f"Archived research for: {query}",
-                    "content": {"source_id": source_id, "query": query, "refs_count": len(references)},
-                    "created_by": "ai-librarian",
-                    "version_number": 1
-                }).execute()
+                self.supabase.table("archon_document_versions").insert(
+                    {
+                        "document_id": source_id,
+                        "field_name": "web_research",
+                        "change_type": "create",
+                        "change_summary": f"Archived research for: {query}",
+                        "content": {"source_id": source_id, "query": query, "refs_count": len(references)},
+                        "created_by": "ai-librarian",
+                        "version_number": 1,
+                    }
+                ).execute()
             except Exception as v_err:
                 logger.warning(f"Librarian: Failed to log document version: {v_err}")
 
@@ -274,7 +258,7 @@ class LibrarianService:
         content: str,
         file_path: str,
         knowledge_type: str = "technical",
-        authority_level: str = "normal"
+        authority_level: str = "normal",
     ) -> str:
         """
         Archives a local file into the knowledge base (1.6 Policy support).
@@ -311,12 +295,12 @@ class LibrarianService:
                 knowledge_type=knowledge_type,
                 tags=tags,
                 source_display_name=title,
-                original_url=f"file://{file_path}"
+                original_url=f"file://{file_path}",
             )
 
             # 4. Content & Embedding
             chunk_size = 4000
-            chunks = [content[i:i+chunk_size] for i in range(0, len(content), chunk_size)]
+            chunks = [content[i : i + chunk_size] for i in range(0, len(content), chunk_size)]
 
             for i, chunk in enumerate(chunks):
                 try:
@@ -335,22 +319,24 @@ class LibrarianService:
                         "knowledge_type": knowledge_type,
                         "tags": tags,
                         "file_path": file_path,
-                        "title": f"{title} (Part {i+1})"
-                    }
+                        "title": f"{title} (Part {i + 1})",
+                    },
                 }
                 self.supabase.table("archon_crawled_pages").insert(page_data).execute()
 
             # 5. Record version for audit trail (Admin Insight)
             try:
-                self.supabase.table("archon_document_versions").insert({
-                    "document_id": source_id,
-                    "field_name": "knowledge_file",
-                    "change_type": "create",
-                    "change_summary": f"Indexed local file: {file_name}",
-                    "content": {"source_id": source_id, "file": file_name, "path": file_path},
-                    "created_by": "ai-librarian",
-                    "version_number": 1
-                }).execute()
+                self.supabase.table("archon_document_versions").insert(
+                    {
+                        "document_id": source_id,
+                        "field_name": "knowledge_file",
+                        "change_type": "create",
+                        "change_summary": f"Indexed local file: {file_name}",
+                        "content": {"source_id": source_id, "file": file_name, "path": file_path},
+                        "created_by": "ai-librarian",
+                        "version_number": 1,
+                    }
+                ).execute()
             except Exception as v_err:
                 logger.warning(f"Librarian: Failed to log document version: {v_err}")
 
@@ -362,12 +348,7 @@ class LibrarianService:
             return ""
 
     async def archive_failure_case(
-        self,
-        content: str,
-        reason: str,
-        company: str,
-        job_title: str,
-        metadata: dict | None = None
+        self, content: str, reason: str, company: str, job_title: str, metadata: dict | None = None
     ) -> str:
         """
         Archives a failed sales lead or rejected content as negative expertise.
@@ -399,7 +380,7 @@ class LibrarianService:
                 content=full_content,
                 knowledge_type="failure_analysis",
                 tags=tags,
-                source_display_name=title
+                source_display_name=title,
             )
 
             # 4. Content & Embedding (Critical for RAG search to find lessons)
@@ -415,22 +396,24 @@ class LibrarianService:
                     "reason": reason,
                     "company": company,
                     "job": job_title,
-                    **(metadata or {})
-                }
+                    **(metadata or {}),
+                },
             }
             self.supabase.table("archon_crawled_pages").insert(page_data).execute()
 
             # 5. Audit Version
             try:
-                self.supabase.table("archon_document_versions").insert({
-                    "document_id": source_id,
-                    "field_name": "failure_analysis",
-                    "change_type": "archive",
-                    "change_summary": f"Captured failure expertise for {company}",
-                    "content": {"reason": reason, "outcome": "lost"},
-                    "created_by": "ai-librarian",
-                    "version_number": 1
-                }).execute()
+                self.supabase.table("archon_document_versions").insert(
+                    {
+                        "document_id": source_id,
+                        "field_name": "failure_analysis",
+                        "change_type": "archive",
+                        "change_summary": f"Captured failure expertise for {company}",
+                        "content": {"reason": reason, "outcome": "lost"},
+                        "created_by": "ai-librarian",
+                        "version_number": 1,
+                    }
+                ).execute()
             except Exception:
                 pass
 
@@ -441,12 +424,7 @@ class LibrarianService:
             logger.error(f"Librarian: Failed to archive failure case: {e}")
             return ""
 
-    async def archive_style_critique(
-        self,
-        post_title: str,
-        original_content: str,
-        review_notes: str
-    ) -> str:
+    async def archive_style_critique(self, post_title: str, original_content: str, review_notes: str) -> str:
         """
         Processes manager's review notes to extract reusable style constraints.
         Enables the 'Expertise Loop' for Bob (Marketing).
@@ -459,7 +437,9 @@ class LibrarianService:
 
             from ..services.credential_service import credential_service
 
-            api_key = await credential_service.get_credential("GEMINI_API_KEY") or await credential_service.get_credential("GOOGLE_API_KEY")
+            api_key = await credential_service.get_credential(
+                "GEMINI_API_KEY"
+            ) or await credential_service.get_credential("GOOGLE_API_KEY")
             client = genai.Client(api_key=api_key)
 
             extraction_prompt = (
@@ -474,21 +454,24 @@ class LibrarianService:
             response = client.models.generate_content(
                 model="gemini-2.0-flash-lite",
                 contents=extraction_prompt,
-                config=types.GenerateContentConfig(temperature=0.1)
+                config=types.GenerateContentConfig(temperature=0.1),
             )
             extracted_rules = response.text
 
             # EXP-02: Log Token Usage for audit
             from ..services.token_usage_service import TokenUsageService
+
             if response.usage_metadata:
-                asyncio.create_task(TokenUsageService.log_usage(
-                    request_id=f"critique-{source_id}",
-                    user_id="system-librarian",
-                    model="gemini-2.0-flash-lite",
-                    provider="google",
-                    input_tokens=response.usage_metadata.prompt_token_count or 0,
-                    output_tokens=response.usage_metadata.candidates_token_count or 0
-                ))
+                asyncio.create_task(
+                    TokenUsageService.log_usage(
+                        request_id=f"critique-{source_id}",
+                        user_id="system-librarian",
+                        model="gemini-2.0-flash-lite",
+                        provider="google",
+                        input_tokens=response.usage_metadata.prompt_token_count or 0,
+                        output_tokens=response.usage_metadata.candidates_token_count or 0,
+                    )
+                )
 
             # 2. Archive as Knowledge
             unique_id = str(uuid.uuid4())[:8]
@@ -511,7 +494,7 @@ class LibrarianService:
                 content=full_lesson,
                 knowledge_type="brand_voice",
                 tags=tags,
-                source_display_name=f"Style Lesson: {post_title}"
+                source_display_name=f"Style Lesson: {post_title}",
             )
 
             embedding_vector = await create_embedding(full_lesson[:8000])
@@ -521,11 +504,7 @@ class LibrarianService:
                 "chunk_number": 0,
                 "content": full_lesson,
                 "embedding": embedding_vector,
-                "metadata": {
-                    "type": "style_constraint",
-                    "tags": tags,
-                    "post_title": post_title
-                }
+                "metadata": {"type": "style_constraint", "tags": tags, "post_title": post_title},
             }
             self.supabase.table("archon_crawled_pages").insert(page_data).execute()
 

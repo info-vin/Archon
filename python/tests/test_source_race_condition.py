@@ -48,18 +48,20 @@ class TestSourceRaceCondition:
                 # Run async function in new event loop for each thread
                 loop = asyncio.new_event_loop()
                 asyncio.set_event_loop(loop)
-                loop.run_until_complete(update_source_info(
-                    client=mock_client,
-                    source_id="test_source_123",
-                    summary=f"Summary from thread {thread_id}",
-                    word_count=100,
-                    content=f"Content from thread {thread_id}",
-                    knowledge_type="documentation",
-                    tags=["test"],
-                    update_frequency=0,
-                    source_url="https://example.com",
-                    source_display_name=f"Example Site {thread_id}"  # Will be used as title
-                ))
+                loop.run_until_complete(
+                    update_source_info(
+                        client=mock_client,
+                        source_id="test_source_123",
+                        summary=f"Summary from thread {thread_id}",
+                        word_count=100,
+                        content=f"Content from thread {thread_id}",
+                        knowledge_type="documentation",
+                        tags=["test"],
+                        update_frequency=0,
+                        source_url="https://example.com",
+                        source_display_name=f"Example Site {thread_id}",  # Will be used as title
+                    )
+                )
                 loop.close()
             except Exception as e:
                 failed_creates.append((thread_id, str(e)))
@@ -105,15 +107,17 @@ class TestSourceRaceCondition:
         # Run async function in sync context
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
-        loop.run_until_complete(update_source_info(
-            client=mock_client,
-            source_id="new_source",
-            summary="Test summary",
-            word_count=100,
-            content="Test content",
-            knowledge_type="documentation",
-            source_display_name="Test Display Name"  # Will be used as title
-        ))
+        loop.run_until_complete(
+            update_source_info(
+                client=mock_client,
+                source_id="new_source",
+                summary="Test summary",
+                word_count=100,
+                content="Test content",
+                knowledge_type="documentation",
+                source_display_name="Test Display Name",  # Will be used as title
+            )
+        )
         loop.close()
 
         # Should use upsert, not insert
@@ -138,7 +142,7 @@ class TestSourceRaceCondition:
         existing_source = {
             "source_id": "existing_source",
             "title": "Existing Title",
-            "metadata": {"knowledge_type": "api"}
+            "metadata": {"knowledge_type": "api"},
         }
         mock_client.table.return_value.select.return_value.eq.return_value.execute.return_value.data = [existing_source]
 
@@ -149,14 +153,16 @@ class TestSourceRaceCondition:
         # Run async function in sync context
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
-        loop.run_until_complete(update_source_info(
-            client=mock_client,
-            source_id="existing_source",
-            summary="Updated summary",
-            word_count=200,
-            content="Updated content",
-            knowledge_type="documentation"
-        ))
+        loop.run_until_complete(
+            update_source_info(
+                client=mock_client,
+                source_id="existing_source",
+                summary="Updated summary",
+                word_count=200,
+                content="Updated content",
+                knowledge_type="documentation",
+            )
+        )
         loop.close()
 
         # Should use upsert for existing sources to handle race conditions
@@ -187,7 +193,7 @@ class TestSourceRaceCondition:
                 summary=f"Summary {task_id}",
                 word_count=100,
                 content=f"Content {task_id}",
-                knowledge_type="documentation"
+                knowledge_type="documentation",
             )
 
         # Create 10 tasks, but only 2 unique source_ids
@@ -257,25 +263,24 @@ class TestSourceRaceCondition:
                 # Run async function in new event loop for each thread
                 loop = asyncio.new_event_loop()
                 asyncio.set_event_loop(loop)
-                loop.run_until_complete(update_source_info(
-                    client=mock_client,
-                    source_id="race_source",
-                    summary="Race summary",
-                    word_count=100,
-                    content="Race content",
-                    knowledge_type="documentation",
-                    source_display_name="Race Display Name"  # Will be used as title
-                ))
+                loop.run_until_complete(
+                    update_source_info(
+                        client=mock_client,
+                        source_id="race_source",
+                        summary="Race summary",
+                        word_count=100,
+                        content="Race content",
+                        knowledge_type="documentation",
+                        source_display_name="Race Display Name",  # Will be used as title
+                    )
+                )
                 loop.close()
             except Exception as e:
                 errors.append((thread_id, str(e)))
 
         # Run 2 threads that will both check before either creates
         with ThreadPoolExecutor(max_workers=2) as executor:
-            futures = [
-                executor.submit(create_with_error_tracking, 1),
-                executor.submit(create_with_error_tracking, 2)
-            ]
+            futures = [executor.submit(create_with_error_tracking, 1), executor.submit(create_with_error_tracking, 2)]
             for future in futures:
                 future.result()
 

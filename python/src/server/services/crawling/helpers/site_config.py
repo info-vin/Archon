@@ -3,6 +3,7 @@ Site Configuration Helper
 
 Handles site-specific configurations and detection.
 """
+
 from crawl4ai.markdown_generation_strategy import DefaultMarkdownGenerator
 
 from ....config.logfire_config import get_logger
@@ -17,33 +18,27 @@ class SiteConfig:
     CODE_BLOCK_SELECTORS = [
         # Milkdown
         ".milkdown-code-block pre",
-
         # Monaco Editor
         ".monaco-editor .view-lines",
-
         # CodeMirror
         ".cm-editor .cm-content",
         ".cm-line",
-
         # Prism.js (used by Docusaurus, Docsify, Gatsby)
         "pre[class*='language-']",
         "code[class*='language-']",
         ".prism-code",
-
         # highlight.js
         "pre code.hljs",
         ".hljs",
-
         # Shiki (used by VitePress, Nextra)
         ".shiki",
         "div[class*='language-'] pre",
         ".astro-code",
-
         # Generic patterns
         "pre code",
         ".code-block",
         ".codeblock",
-        ".highlight pre"
+        ".highlight pre",
     ]
 
     @staticmethod
@@ -58,16 +53,16 @@ class SiteConfig:
             True if URL appears to be a documentation site
         """
         doc_patterns = [
-            'docs.',
-            'documentation.',
-            '/docs/',
-            '/documentation/',
-            'readthedocs',
-            'gitbook',
-            'docusaurus',
-            'vitepress',
-            'docsify',
-            'mkdocs'
+            "docs.",
+            "documentation.",
+            "/docs/",
+            "/documentation/",
+            "readthedocs",
+            "gitbook",
+            "docusaurus",
+            "vitepress",
+            "docsify",
+            "mkdocs",
         ]
 
         url_lower = url.lower()
@@ -84,15 +79,15 @@ class SiteConfig:
         return DefaultMarkdownGenerator(
             content_source="html",  # Use raw HTML to preserve code blocks
             options={
-                "mark_code": True,         # Mark code blocks properly
+                "mark_code": True,  # Mark code blocks properly
                 "handle_code_in_pre": True,  # Handle <pre><code> tags
-                "body_width": 0,            # No line wrapping
+                "body_width": 0,  # No line wrapping
                 "skip_internal_links": True,  # Add to reduce noise
-                "include_raw_html": False,    # Prevent HTML in markdown
-                "escape": False,             # Don't escape special chars in code
-                "decode_unicode": True,      # Decode unicode characters
+                "include_raw_html": False,  # Prevent HTML in markdown
+                "escape": False,  # Don't escape special chars in code
+                "decode_unicode": True,  # Decode unicode characters
                 "strip_empty_lines": False,  # Preserve empty lines in code
                 "preserve_code_formatting": True,  # Custom option if supported
-                "code_language_callback": lambda el: el.get('class', '').replace('language-', '') if el else ''
-            }
+                "code_language_callback": lambda el: el.get("class", "").replace("language-", "") if el else "",
+            },
         )

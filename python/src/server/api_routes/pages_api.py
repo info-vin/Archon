@@ -108,9 +108,11 @@ async def list_pages(
         client = get_supabase_client()
 
         # Build query - select only summary fields (no full_content)
-        query = client.table("archon_page_metadata").select(
-            "id, url, section_title, section_order, word_count, char_count, chunk_count"
-        ).eq("source_id", source_id)
+        query = (
+            client.table("archon_page_metadata")
+            .select("id, url, section_title, section_order, word_count, char_count, chunk_count")
+            .eq("source_id", source_id)
+        )
 
         # Add section filter if provided
         if section:

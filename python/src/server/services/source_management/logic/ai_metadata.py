@@ -2,6 +2,7 @@
 AI Metadata Logic for Source Management
 Physically isolated to reduce monolithic file size.
 """
+
 from typing import Any
 
 from server.config.logfire_config import search_logger
@@ -26,6 +27,7 @@ The above content is from the documentation for '{source_id}'. Please provide a 
     try:
         async with get_llm_client(provider=provider) as client:
             from server.services.credential_service import credential_service
+
             rag_settings = await credential_service.get_credentials_by_category("rag_strategy")
             model_choice = rag_settings.get("MODEL_CHOICE", "gpt-4.1-nano")
             search_logger.info(f"Generating summary for {source_id} using model: {model_choice}")
@@ -33,7 +35,10 @@ The above content is from the documentation for '{source_id}'. Please provide a 
             response = await client.chat.completions.create(
                 model=model_choice,
                 messages=[
-                    {"role": "system", "content": "You are a helpful assistant that provides concise library/tool/framework summaries."},
+                    {
+                        "role": "system",
+                        "content": "You are a helpful assistant that provides concise library/tool/framework summaries.",
+                    },
                     {"role": "user", "content": prompt},
                 ],
             )
@@ -54,6 +59,7 @@ The above content is from the documentation for '{source_id}'. Please provide a 
         search_logger.error(f"Error generating summary with LLM for {source_id}: {e}. Using default.")
         return default_summary
 
+
 async def generate_source_title_and_metadata(
     source_id: str,
     content: str,
@@ -69,6 +75,7 @@ async def generate_source_title_and_metadata(
         try:
             async with get_llm_client(provider=provider) as client:
                 from server.services.credential_service import credential_service
+
                 rag_settings = await credential_service.get_credentials_by_category("rag_strategy")
                 model_choice = rag_settings.get("MODEL_CHOICE", "gpt-4.1-nano")
                 sample_content = content[:3000]
@@ -88,7 +95,7 @@ async def generate_source_title_and_metadata(
                 prompt = f"""You are creating a title for crawled content that identifies the SERVICE NAME and SOURCE TYPE.
 
 Source ID: {source_id}
-Original URL: {original_url or 'Not provided'}
+Original URL: {original_url or "Not provided"}
 Display Name: {source_context}
 {source_type_info}
 

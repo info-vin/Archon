@@ -8,6 +8,7 @@ from .llm_provider_service import extract_message_text
 
 logger = get_logger(__name__)
 
+
 class ExtractionService:
     """
     Service for managing data extraction schemas and analyzing web content structure.
@@ -36,11 +37,11 @@ class ExtractionService:
 
             # Use crawl4ai to get markdown directly
             result = await crawler.arun(url)
-            content = result.markdown if hasattr(result, 'markdown') and result.markdown else ""
+            content = result.markdown if hasattr(result, "markdown") and result.markdown else ""
 
             if not content:
                 # Fallback: Try raw HTML if markdown extraction failed
-                content = result.html if hasattr(result, 'html') and result.html else ""
+                content = result.html if hasattr(result, "html") and result.html else ""
 
             if not content:
                 raise Exception(f"URL returned empty content. Status: {getattr(result, 'status_code', 'unknown')}")
@@ -70,15 +71,13 @@ class ExtractionService:
 
             # Phase 4.7 Optimization: Use standard LLM client pattern
             from .llm_provider_service import get_llm_client
+
             async with get_llm_client() as client:
                 # Use Gemini 2.0 Flash for stability and long context
                 response = await client.chat.completions.create(
                     model="gemini-2.0-flash",
-                    messages=[
-                        {"role": "system", "content": system_prompt},
-                        {"role": "user", "content": user_prompt}
-                    ],
-                    response_format={"type": "json_object"}
+                    messages=[{"role": "system", "content": system_prompt}, {"role": "user", "content": user_prompt}],
+                    response_format={"type": "json_object"},
                 )
 
                 # Extract text using utility
@@ -95,9 +94,9 @@ class ExtractionService:
                     {"name": "summary", "type": "string", "description": "Brief summary of the content"},
                     {"name": "url", "type": "string", "description": "Source URL"},
                     {"name": "author", "type": "string", "description": "Content creator or organization"},
-                    {"name": "published_date", "type": "string", "description": "Date of publication"}
+                    {"name": "published_date", "type": "string", "description": "Date of publication"},
                 ],
-                "error": f"AI Analysis failed, using fallback. Reason: {str(e)[:100]}"
+                "error": f"AI Analysis failed, using fallback. Reason: {str(e)[:100]}",
             }
 
     async def create_schema(self, data: dict[str, Any], user_id: str) -> dict[str, Any]:
@@ -111,7 +110,7 @@ class ExtractionService:
                 "schema_definition": data["schema_definition"],
                 "target_role": data.get("target_role"),
                 "description": data.get("description"),
-                "created_by": user_id
+                "created_by": user_id,
             }
 
             response = self.supabase.table("archon_extraction_schemas").insert(payload).execute()
@@ -137,7 +136,11 @@ class ExtractionService:
 
     async def update_schema(self, schema_id: str, data: dict[str, Any]) -> dict[str, Any]:
         """Updates an existing schema."""
-        update_data = {k: v for k, v in data.items() if k in ["name", "domain_pattern", "schema_definition", "target_role", "description"]}
+        update_data = {
+            k: v
+            for k, v in data.items()
+            if k in ["name", "domain_pattern", "schema_definition", "target_role", "description"]
+        }
         response = self.supabase.table("archon_extraction_schemas").update(update_data).eq("id", schema_id).execute()
         if not response.data:
             raise Exception("Update failed or schema not found")
@@ -164,7 +167,7 @@ class ExtractionService:
         if not crawler:
             raise Exception("Crawler unavailable")
         result = await crawler.arun(url)
-        content = result.markdown if hasattr(result, 'markdown') and result.markdown else ""
+        content = result.markdown if hasattr(result, "markdown") and result.markdown else ""
         if not content:
             raise Exception("Failed to crawl content for extraction")
 
@@ -183,9 +186,9 @@ class ExtractionService:
                 model="gemini-2.0-flash",
                 messages=[
                     {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": f"Extract data from this content:\n\n{content[:15000]}"}
+                    {"role": "user", "content": f"Extract data from this content:\n\n{content[:15000]}"},
                 ],
-                response_format={"type": "json_object"}
+                response_format={"type": "json_object"},
             )
 
             content_text, _, _ = extract_message_text(response.choices[0])
@@ -196,9 +199,4 @@ class ExtractionService:
             # For 4.6.23, we log the success and return the data to fulfill the loop.
             logger.info(f"Successfully extracted data from {url} using schema '{schema['name']}'")
 
-            return {
-                "success": True,
-                "data": extracted_data,
-                "schema_used": schema["name"],
-                "source_url": url
-            }
+            return {"success": True, "data": extracted_data, "schema_used": schema["name"], "source_url": url}

@@ -1,5 +1,3 @@
-
-
 import pytest
 
 from src.server.services.agent_service import AgentService
@@ -7,7 +5,6 @@ from src.server.services.agent_service import AgentService
 
 @pytest.mark.asyncio
 class TestPhase49RBAC:
-
     async def test_sales_role_restrictions(self):
         """Alice (Sales) should ONLY see MarketBot."""
         service = AgentService()

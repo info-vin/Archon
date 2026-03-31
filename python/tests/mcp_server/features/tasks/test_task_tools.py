@@ -90,17 +90,13 @@ async def test_find_tasks_with_project_filter(mock_mcp, mock_context):
         "tasks": [
             {"id": "task-1", "title": "Task 1", "status": "todo"},
             {"id": "task-2", "title": "Task 2", "status": "doing"},
-        ]
+        ],
     }
 
     with patch("src.mcp_server.features.tasks.task_tools.call_api", new_callable=AsyncMock) as mock_call:
         mock_call.return_value = mock_res
 
-        result = await find_tasks(
-            mock_context,
-            filter_by="project",
-            filter_value="project-123"
-        )
+        result = await find_tasks(mock_context, filter_by="project", filter_value="project-123")
 
         result_data = json.loads(result)
         assert result_data["success"] is True
@@ -124,17 +120,13 @@ async def test_find_tasks_with_status_filter(mock_mcp, mock_context):
         "success": True,
         "tasks": [
             {"id": "task-1", "title": "Task 1", "status": "todo"},
-        ]
+        ],
     }
 
     with patch("src.mcp_server.features.tasks.task_tools.call_api", new_callable=AsyncMock) as mock_call:
         mock_call.return_value = mock_res
 
-        result = await find_tasks(
-            mock_context,
-            filter_by="status",
-            filter_value="todo"
-        )
+        result = await find_tasks(mock_context, filter_by="status", filter_value="todo")
 
         result_data = json.loads(result)
         assert result_data["success"] is True
@@ -161,12 +153,7 @@ async def test_update_task_status(mock_mcp, mock_context):
     with patch("src.mcp_server.features.tasks.task_tools.call_api", new_callable=AsyncMock) as mock_call:
         mock_call.return_value = mock_res
 
-        result = await manage_task(
-            mock_context,
-            action="update",
-            task_id="task-123",
-            status="doing"
-        )
+        result = await manage_task(mock_context, action="update", task_id="task-123", status="doing")
 
         result_data = json.loads(result)
         assert result_data["success"] is True
@@ -186,19 +173,12 @@ async def test_delete_task_already_archived(mock_mcp, mock_context):
     manage_task = mock_mcp._tools.get("manage_task")
 
     # Mock call_api 404 response
-    mock_res = {
-        "success": False,
-        "error": "HTTP 404: Not Found"
-    }
+    mock_res = {"success": False, "error": "HTTP 404: Not Found"}
 
     with patch("src.mcp_server.features.tasks.task_tools.call_api", new_callable=AsyncMock) as mock_call:
         mock_call.return_value = mock_res
 
-        result = await manage_task(
-            mock_context,
-            action="delete",
-            task_id="task-none"
-        )
+        result = await manage_task(mock_context, action="delete", task_id="task-none")
 
         result_data = json.loads(result)
         assert result_data["success"] is False

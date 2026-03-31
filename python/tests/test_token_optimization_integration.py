@@ -98,9 +98,7 @@ async def test_documents_endpoint():
     async with httpx.AsyncClient() as client:
         try:
             response = await client.get(
-                "http://localhost:8181/api/projects",
-                params={"include_content": "false"},
-                timeout=10.0
+                "http://localhost:8181/api/projects", params={"include_content": "false"}, timeout=10.0
             )
             if response.status_code == 200:
                 projects = response.json()

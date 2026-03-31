@@ -7,7 +7,6 @@ various embedding models from OpenAI, Google, Ollama, and other providers.
 This service works with the tested database schema that has been validated.
 """
 
-
 from ...config.logfire_config import get_logger
 
 logger = get_logger(__name__)
@@ -15,11 +14,12 @@ logger = get_logger(__name__)
 # Supported embedding dimensions based on tested database schema
 # Note: Model lists are dynamically determined by providers, not hardcoded
 SUPPORTED_DIMENSIONS: dict[int, list[str]] = {
-    768: [],   # Common dimensions for various providers (Google, etc.)
+    768: [],  # Common dimensions for various providers (Google, etc.)
     1024: [],  # Ollama and other providers
     1536: [],  # OpenAI models (text-embedding-3-small, ada-002)
-    3072: []   # OpenAI large models (text-embedding-3-large)
+    3072: [],  # OpenAI large models (text-embedding-3-large)
 }
+
 
 class MultiDimensionalEmbeddingService:
     """Service for managing embeddings with multiple dimensions."""
@@ -43,7 +43,11 @@ class MultiDimensionalEmbeddingService:
             return 1536
 
         # Google models
-        elif "text-embedding-004" in model_lower or "gemini-embedding-001" in model_lower or "gemini-text-embedding" in model_lower:
+        elif (
+            "text-embedding-004" in model_lower
+            or "gemini-embedding-001" in model_lower
+            or "gemini-text-embedding" in model_lower
+        ):
             return 768
 
         # Ollama models (common patterns)
@@ -70,6 +74,7 @@ class MultiDimensionalEmbeddingService:
     def is_dimension_supported(self, dimension: int) -> bool:
         """Check if a dimension is supported by the database schema."""
         return dimension in SUPPORTED_DIMENSIONS
+
 
 # Global instance
 multi_dimensional_embedding_service = MultiDimensionalEmbeddingService()

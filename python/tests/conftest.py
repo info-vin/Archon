@@ -184,7 +184,11 @@ def client(mock_supabase_client):
                     mock_schema_check = AsyncMock(return_value={"valid": True, "message": "Schema is up to date"})
 
                     # Global Auth Mock for tests
-                    app.dependency_overrides[get_current_user] = lambda: {"id": "test-admin", "role": "admin", "email": "admin@test.com"}
+                    app.dependency_overrides[get_current_user] = lambda: {
+                        "id": "test-admin",
+                        "role": "admin",
+                        "email": "admin@test.com",
+                    }
 
                     with patch("server.main._check_database_schema", new=mock_schema_check):
                         return TestClient(app)

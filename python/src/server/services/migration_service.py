@@ -140,7 +140,7 @@ class MigrationService:
 
                 # Create pending migration object
                 migration = PendingMigration(
-                    version="0.0.0", # Standard root version
+                    version="0.0.0",  # Standard root version
                     name=migration_name,
                     sql_content=sql_content,
                     file_path=str(sql_file.relative_to(self._migrations_dir.parent)),

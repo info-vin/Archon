@@ -7,8 +7,8 @@ from src.server.services.agent_service import AgentService
 
 @pytest.mark.asyncio
 # Correctly patch the dependencies at their source, accounting for local imports.
-@patch('src.server.services.projects.task_service.task_service', new_callable=AsyncMock)
-@patch('src.server.services.agent_service.get_logger')
+@patch("src.server.services.projects.task_service.task_service", new_callable=AsyncMock)
+@patch("src.server.services.agent_service.get_logger")
 async def test_run_agent_task(mock_get_logger, mock_task_service):
     """
     Unit tests the AgentService.run_agent_task method.
@@ -30,24 +30,21 @@ async def test_run_agent_task(mock_get_logger, mock_task_service):
 
     # --- Test Execution ---
     # We mock _run_general_agent_task to avoid LLM calls in this unit test
-    with patch.object(AgentService, '_run_general_agent_task', new_callable=AsyncMock) as mock_general_loop:
+    with patch.object(AgentService, "_run_general_agent_task", new_callable=AsyncMock) as mock_general_loop:
         await agent_service.run_agent_task(task_id, agent_id)
         mock_general_loop.assert_awaited_once_with(task_id, agent_id)
 
     # --- Assertions ---
     # 1. Verify starting logger call
-    mock_logger.info.assert_any_call(
-        f"AI agent '{agent_id}' starting work on task '{task_id}'."
-    )
+    mock_logger.info.assert_any_call(f"AI agent '{agent_id}' starting work on task '{task_id}'.")
 
     # 2. Verify that task_service.update_task was called correctly (Processing)
-    mock_task_service.update_task.assert_has_awaits([
-        call(task_id, {"status": "doing", "assignee": agent_id})
-    ])
+    mock_task_service.update_task.assert_has_awaits([call(task_id, {"status": "doing", "assignee": agent_id})])
+
 
 @pytest.mark.asyncio
-@patch('src.server.services.projects.task_service.task_service', new_callable=AsyncMock)
-@patch('src.server.services.agent_service.get_logger')
+@patch("src.server.services.projects.task_service.task_service", new_callable=AsyncMock)
+@patch("src.server.services.agent_service.get_logger")
 async def test_run_agent_task_fails_to_update(mock_get_logger, mock_task_service):
     """
     Tests that if updating the task status fails, an error is logged.
@@ -68,19 +65,15 @@ async def test_run_agent_task_fails_to_update(mock_get_logger, mock_task_service
 
     # --- Assertions ---
     # Verify the starting log was called
-    mock_logger.info.assert_called_once_with(
-        f"AI agent '{agent_id}' starting work on task '{task_id}'."
-    )
+    mock_logger.info.assert_called_once_with(f"AI agent '{agent_id}' starting work on task '{task_id}'.")
 
     # Verify the error log call matches implementation
-    mock_logger.error.assert_called_once_with(
-        "Failed to update task status: DB down"
-    )
+    mock_logger.error.assert_called_once_with("Failed to update task status: DB down")
 
 
 @pytest.mark.asyncio
-@patch('src.server.services.agent_service.asyncio.create_subprocess_shell')
-@patch('src.server.services.agent_service.get_logger')
+@patch("src.server.services.agent_service.asyncio.create_subprocess_shell")
+@patch("src.server.services.agent_service.get_logger")
 async def test_run_command_success(mock_get_logger, mock_subprocess):
     """
     Test run_command_with_self_healing when command succeeds.
@@ -103,10 +96,10 @@ async def test_run_command_success(mock_get_logger, mock_subprocess):
 
 
 @pytest.mark.asyncio
-@patch('src.server.services.agent_service.credential_service')
-@patch('src.server.services.agent_service.get_llm_client')
-@patch('src.server.services.agent_service.asyncio.create_subprocess_shell')
-@patch('src.server.services.agent_service.get_logger')
+@patch("src.server.services.agent_service.credential_service")
+@patch("src.server.services.agent_service.get_llm_client")
+@patch("src.server.services.agent_service.asyncio.create_subprocess_shell")
+@patch("src.server.services.agent_service.get_logger")
 async def test_run_command_failure_triggers_healing(
     mock_get_logger, mock_subprocess, mock_get_llm, mock_credential_service
 ):
@@ -149,4 +142,6 @@ async def test_run_command_failure_triggers_healing(
     mock_client.chat.completions.create.assert_awaited_once()
     # Verify logger warned about failure
     mock_logger.warning.assert_any_call("Command 'failing_cmd' failed. Starting Active Repair Loop.")
-    mock_logger.warning.assert_any_call("Poisson Gate: Insufficient credibility for Level 2 auto-repair. (Unknown (XP 0))")
+    mock_logger.warning.assert_any_call(
+        "Poisson Gate: Insufficient credibility for Level 2 auto-repair. (Unknown (XP 0))"
+    )

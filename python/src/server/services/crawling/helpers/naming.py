@@ -1,62 +1,81 @@
 
 import re
-import logging
-from urllib.parse import urlparse
+from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
+
 from ....config.logfire_config import get_logger
 
 logger = get_logger(__name__)
 
 class URLNamingUtil:
     """
-    Utilities for URL transformation and human-readable naming.
-    
-    This provides user-friendly names for common source patterns
-    while falling back to the domain for unknown patterns.
-    Fulfills Phase 4.6 requirement for physical UI alignment.
+    Utilities for URL transformation, normalization, and human-readable naming.
+    Fulfills Phase 4.6 requirement for physical UI alignment and crawling consistency.
     """
+
+    @staticmethod
+    def canonicalize_url(url: str) -> str:
+        """
+        Standardizes a URL to ensure consistent source IDs (Physical Parity).
+        1:1 Implementation from original url_handler.py.
+        """
+        try:
+            if not url:
+                return ""
+
+            # Canonicalize URL for consistent hashing
+            parsed = urlparse(url.strip())
+
+            # Normalize scheme and netloc to lowercase
+            scheme = (parsed.scheme or "").lower()
+            netloc = (parsed.netloc or "").lower()
+
+            # Remove default ports
+            if netloc.endswith(":80") and scheme == "http":
+                netloc = netloc[:-3]
+            if netloc.endswith(":443") and scheme == "https":
+                netloc = netloc[:-4]
+
+            # Normalize path (remove trailing slash except for root)
+            path = parsed.path or "/"
+            if path.endswith("/") and len(path) > 1:
+                path = path.rstrip("/")
+
+            # Remove common tracking parameters and sort remaining
+            tracking_params = {
+                "utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content",
+                "gclid", "fbclid", "ref", "source"
+            }
+            query_items = [
+                (k, v) for k, v in parse_qsl(parsed.query, keep_blank_values=True)
+                if k not in tracking_params
+            ]
+            query = urlencode(sorted(query_items))
+
+            # Reconstruct canonical URL (fragment is dropped)
+            return urlunparse((scheme, netloc, path, "", query, ""))
+        except Exception as e:
+            logger.warning(f"Error canonicalizing URL {url}: {e}")
+            return url
 
     @staticmethod
     def transform_github_url(url: str) -> str:
         """
-        Transform GitHub web URLs to raw content URLs for better crawling.
-        
-        Example: 
-            https://github.com/owner/repo/blob/main/file.md 
-            -> https://raw.githubusercontent.com/owner/repo/main/file.md
-            
-        Args:
-            url: The GitHub URL to transform.
-            
-        Returns:
-            The transformed raw content URL or the original URL if not a blob.
+        Transform GitHub URLs to raw content URLs (Physical Parity).
+        1:1 Implementation from original url_handler.py.
         """
-        try:
-            # Only transform blob URLs (standard view pages)
-            if "github.com" not in url or "/blob/" not in url:
-                return url
-            
-            # Transformation logic: replace domain and strip /blob/
-            raw_url = url.replace("github.com", "raw.githubusercontent.com")
-            raw_url = raw_url.replace("/blob/", "/")
-            
-            return raw_url
-        except Exception as e:
-            logger.warning(f"Error transforming GitHub URL {url}: {e}")
-            return url
+        # Pattern for GitHub file URLs
+        github_file_pattern = r"https://github\.com/([^/]+)/([^/]+)/blob/([^/]+)/(.+)"
+        match = re.match(github_file_pattern, url)
+        if match:
+            owner, repo, branch, path = match.groups()
+            return f"https://raw.githubusercontent.com/{owner}/{repo}/{branch}/{path}"
+        return url
 
     @staticmethod
     def extract_display_name(url: str) -> str:
         """
-        Extract a human-readable display name from URL.
-
-        This creates user-friendly names for common source patterns
-        while falling back to the domain for unknown patterns.
-
-        Args:
-            url: The URL to extract a display name from
-
-        Returns:
-            A human-readable string suitable for UI display
+        Extract a human-readable display name from URL with 100% physical parity.
+        1:1 Implementation from original url_handler.py.
         """
         try:
             parsed = urlparse(url)

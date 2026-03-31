@@ -2,10 +2,12 @@ from ...config.logfire_config import get_logger
 
 logger = get_logger(__name__)
 
+
 async def get_embedding_model(provider: str | None = None) -> str:
     """Get the configured embedding model based on the provider."""
     # Late import to ensure physical identity with test patches
     from ..llm_provider_service import credential_service, get_cached_settings, is_valid_provider, set_cached_settings
+
     try:
         if provider:
             provider_name = provider
@@ -31,18 +33,15 @@ async def get_embedding_model(provider: str | None = None) -> str:
 
         if custom_model and len(str(custom_model).strip()) > 0:
             m = str(custom_model).strip()
-            if len(m) <= 100 and not any(char in m for char in ['\n', '\r', '\t', '\0']):
+            if len(m) <= 100 and not any(char in m for char in ["\n", "\r", "\t", "\0"]):
                 return m
 
-        mapping = {
-            "openai": "text-embedding-3-small",
-            "ollama": "nomic-embed-text",
-            "google": "gemini-embedding-001"
-        }
+        mapping = {"openai": "text-embedding-3-small", "ollama": "nomic-embed-text", "google": "gemini-embedding-001"}
         return mapping.get(provider_name, "text-embedding-3-small")
     except Exception as e:
         logger.error(f"Error getting embedding model: {e}")
         return "text-embedding-3-small"
+
 
 def is_openai_embedding_model(model: str) -> bool:
     if not model:
@@ -58,6 +57,7 @@ def is_openai_embedding_model(model: str) -> bool:
                 return True
     return any(base in model_lower for base in base_models)
 
+
 def is_google_embedding_model(model: str) -> bool:
     if not model:
         return False
@@ -67,9 +67,10 @@ def is_google_embedding_model(model: str) -> bool:
         "text-embedding-005",
         "text-multilingual-embedding-002",
         "gemini-embedding-001",
-        "multimodalembedding@001"
+        "multimodalembedding@001",
     ]
     return any(p in model.lower() for p in patterns)
+
 
 def is_valid_embedding_model_for_provider(model: str, provider: str) -> bool:
     if not model or not provider:
@@ -86,6 +87,7 @@ def is_valid_embedding_model_for_provider(model: str, provider: str) -> bool:
         return any(p in model.lower() for p in patterns)
     return is_openai_embedding_model(model)
 
+
 def get_supported_embedding_models(provider: str) -> list[str]:
     if not provider:
         return []
@@ -97,7 +99,7 @@ def get_supported_embedding_models(provider: str) -> list[str]:
         "text-embedding-005",
         "text-multilingual-embedding-002",
         "gemini-embedding-001",
-        "multimodalembedding@001"
+        "multimodalembedding@001",
     ]
     if p_lower == "openai":
         return openai_models
@@ -108,6 +110,7 @@ def get_supported_embedding_models(provider: str) -> list[str]:
     if p_lower == "ollama":
         return ["nomic-embed-text", "all-minilm", "mxbai-embed-large"]
     return openai_models
+
 
 def is_reasoning_model(model_name: str) -> bool:
     if not model_name:
@@ -124,8 +127,10 @@ def is_reasoning_model(model_name: str) -> bool:
             return True
     return False
 
+
 def requires_max_completion_tokens(model_name: str) -> bool:
     return is_reasoning_model(model_name)
+
 
 def prepare_chat_completion_params(model: str, params: dict) -> dict:
     if not model or not params:

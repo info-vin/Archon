@@ -26,7 +26,10 @@ class ProposeShellCommandTool(BaseModel):
     This is a high-risk operation that requires human approval. Only commands
     from a known safe list (like 'make test-be') should ever be approved.
     """
-    command: str = Field(..., description=f"The shell command to propose. Must be one of: {', '.join(SAFE_COMMAND_WHITELIST)}")
+
+    command: str = Field(
+        ..., description=f"The shell command to propose. Must be one of: {', '.join(SAFE_COMMAND_WHITELIST)}"
+    )
 
     async def execute(self) -> str:
         """Submits the shell command execution proposal."""
@@ -36,22 +39,23 @@ class ProposeShellCommandTool(BaseModel):
         # The tool itself should validate against the whitelist before even proposing.
         if self.command not in SAFE_COMMAND_WHITELIST:
             logger.warning(f"Blocked attempt to propose a non-whitelisted command: {self.command}")
-            return (f"Error: The command '{self.command}' is not in the list of "
-                    f"approved safe commands. Proposal rejected.")
+            return (
+                f"Error: The command '{self.command}' is not in the list of approved safe commands. Proposal rejected."
+            )
 
         try:
             service = ToolDependencies.get_propose_change_service()
-            payload = {
-                "command": self.command,
-                "description": f"Propose to run the shell command: `{self.command}`."
-            }
-            proposal = await service.create_proposal(change_type='shell', payload=payload)
+            payload = {"command": self.command, "description": f"Propose to run the shell command: `{self.command}`."}
+            proposal = await service.create_proposal(change_type="shell", payload=payload)
 
-            return (f"Successfully proposed to run the command: `{self.command}`. "
-                    f"Proposal ID: {proposal['id']}. Please await human approval.")
+            return (
+                f"Successfully proposed to run the command: `{self.command}`. "
+                f"Proposal ID: {proposal['id']}. Please await human approval."
+            )
         except Exception as e:
             logger.error(f"Failed to propose shell command '{self.command}': {e}", exc_info=True)
             return f"Error: Could not propose shell command execution. Reason: {e}"
+
 
 # To be added to the MCP's tool registry
 developer_execution_tools = [

@@ -118,15 +118,11 @@ class BaseStorageService(BaseRepository, ABC):
         Returns:
             List of text chunks
         """
-        with safe_span(
-            "smart_chunk_text_async", text_length=len(text), chunk_size=chunk_size
-        ) as span:
+        with safe_span("smart_chunk_text_async", text_length=len(text), chunk_size=chunk_size) as span:
             try:
                 # For large texts, run chunking in thread pool
                 if len(text) > 50000:  # 50KB threshold
-                    chunks = await self.threading_service.run_cpu_intensive(
-                        self.smart_chunk_text, text, chunk_size
-                    )
+                    chunks = await self.threading_service.run_cpu_intensive(self.smart_chunk_text, text, chunk_size)
                 else:
                     chunks = self.smart_chunk_text(text, chunk_size)
 
@@ -136,9 +132,7 @@ class BaseStorageService(BaseRepository, ABC):
                 span.set_attribute("chunks_created", len(chunks))
                 span.set_attribute("success", True)
 
-                logger.info(
-                    f"Successfully chunked text: original_length={len(text)}, chunks_created={len(chunks)}"
-                )
+                logger.info(f"Successfully chunked text: original_length={len(text)}, chunks_created={len(chunks)}")
 
                 return cast(list[str], chunks)
 
@@ -148,9 +142,7 @@ class BaseStorageService(BaseRepository, ABC):
                 logger.error(f"Error chunking text: {e}")
                 raise
 
-    def extract_metadata(
-        self, chunk: str, base_metadata: dict[str, Any] | None = None
-    ) -> dict[str, Any]:
+    def extract_metadata(self, chunk: str, base_metadata: dict[str, Any] | None = None) -> dict[str, Any]:
         """
         Extract metadata from a text chunk.
 
@@ -233,9 +225,7 @@ class BaseStorageService(BaseRepository, ABC):
             # Report progress
             if progress_callback:
                 progress_pct = int((batch_end / total_items) * 100)
-                await progress_callback(
-                    f"{description}: {batch_end}/{total_items} items", progress_pct
-                )
+                await progress_callback(f"{description}: {batch_end}/{total_items} items", progress_pct)
 
         return results
 

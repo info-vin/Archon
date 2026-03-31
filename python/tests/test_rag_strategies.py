@@ -32,9 +32,7 @@ with patch.dict(
             mock_supabase.return_value = mock_client
 
             # Mock embedding service to prevent API calls
-            with patch(
-                "src.server.services.embeddings.embedding_service.create_embedding"
-            ) as mock_embed:
+            with patch("src.server.services.embeddings.embedding_service.create_embedding") as mock_embed:
                 mock_embed.return_value = [0.1] * 1536
 
 
@@ -76,9 +74,7 @@ class TestRAGService:
     @pytest.mark.asyncio
     async def test_search_code_examples(self, rag_service):
         """Test code examples search"""
-        with patch.object(
-            rag_service.agentic_strategy, "search_code_examples"
-        ) as mock_agentic_search:
+        with patch.object(rag_service.agentic_strategy, "search_code_examples") as mock_agentic_search:
             # Mock agentic search results
             mock_agentic_search.return_value = [
                 {
@@ -89,9 +85,7 @@ class TestRAGService:
                 }
             ]
 
-            result = await rag_service.search_code_examples(
-                query="python function example", match_count=5
-            )
+            result = await rag_service.search_code_examples(query="python function example", match_count=5)
 
             assert isinstance(result, list)
             assert len(result) == 1
@@ -127,9 +121,7 @@ class TestRAGService:
 
         # Create a mock reranking strategy
         mock_strategy = MagicMock(spec=RerankingStrategy)
-        mock_strategy.rerank_results = AsyncMock(
-            return_value=[{"content": "Reranked content", "score": 0.98}]
-        )
+        mock_strategy.rerank_results = AsyncMock(return_value=[{"content": "Reranked content", "score": 0.98}])
 
         # Assign the mock strategy to the service
         rag_service.reranking_strategy = mock_strategy
@@ -137,9 +129,7 @@ class TestRAGService:
         original_results = [{"content": "Original content", "score": 0.80}]
 
         # Call the strategy directly (as the service now does internally)
-        result = await rag_service.reranking_strategy.rerank_results(
-            query="test query", results=original_results
-        )
+        result = await rag_service.reranking_strategy.rerank_results(query="test query", results=original_results)
 
         assert isinstance(result, list)
         assert result[0]["content"] == "Reranked content"
@@ -199,9 +189,7 @@ class TestRerankingStrategy:
 
             original_results = [{"content": "Test content", "score": 0.8}]
 
-            result = await reranking_strategy.rerank_results(
-                query="test query", results=original_results
-            )
+            result = await reranking_strategy.rerank_results(query="test query", results=original_results)
 
             # Should return original results when model not available
             assert result == original_results
@@ -222,9 +210,7 @@ class TestRerankingStrategy:
                 {"content": "Content 2", "score": 0.7},
             ]
 
-            result = await reranking_strategy.rerank_results(
-                query="test query", results=original_results
-            )
+            result = await reranking_strategy.rerank_results(query="test query", results=original_results)
 
             assert isinstance(result, list)
             assert len(result) <= len(original_results)
@@ -281,9 +267,7 @@ class TestRAGIntegration:
             rag_service.reranking_strategy.rerank_results = AsyncMock()
 
         with (
-            patch(
-                "src.server.services.embeddings.embedding_service.create_embedding"
-            ) as mock_embedding,
+            patch("src.server.services.embeddings.embedding_service.create_embedding") as mock_embedding,
             patch.object(rag_service.base_strategy, "vector_search") as mock_search,
             patch.object(rag_service, "get_bool_setting") as mock_settings,
             patch.object(rag_service.reranking_strategy, "rerank_results") as mock_rerank,
@@ -299,13 +283,9 @@ class TestRAGIntegration:
                 {"content": "Test result 2", "similarity": 0.8, "id": "2", "metadata": {}},
             ]
 
-            mock_rerank.return_value = [
-                {"content": "Reranked result", "similarity": 0.95, "id": "1", "metadata": {}}
-            ]
+            mock_rerank.return_value = [{"content": "Reranked result", "similarity": 0.95, "id": "1", "metadata": {}}]
 
-            success, result = await rag_service.perform_rag_query(
-                query="complex technical query", match_count=10
-            )
+            success, result = await rag_service.perform_rag_query(query="complex technical query", match_count=10)
 
             assert success is True
             assert "results" in result
@@ -314,9 +294,7 @@ class TestRAGIntegration:
     @pytest.mark.asyncio
     async def test_error_handling_in_rag_pipeline(self, rag_service):
         """Test error handling when strategies fail"""
-        with patch(
-            "src.server.services.embeddings.embedding_service.create_embedding"
-        ) as mock_embedding:
+        with patch("src.server.services.embeddings.embedding_service.create_embedding") as mock_embedding:
             # Simulate embedding failure (returns None)
             mock_embedding.return_value = None
 
@@ -331,18 +309,14 @@ class TestRAGIntegration:
     async def test_empty_results_handling(self, rag_service):
         """Test handling of empty search results"""
         with (
-            patch(
-                "src.server.services.embeddings.embedding_service.create_embedding"
-            ) as mock_embedding,
+            patch("src.server.services.embeddings.embedding_service.create_embedding") as mock_embedding,
             patch.object(rag_service.base_strategy, "vector_search") as mock_search,
         ):
             # Mock embedding creation
             mock_embedding.return_value = [0.1] * 1536
             mock_search.return_value = []  # Empty results
 
-            success, result = await rag_service.perform_rag_query(
-                query="nonexistent query", match_count=5
-            )
+            success, result = await rag_service.perform_rag_query(query="nonexistent query", match_count=5)
 
             assert success is True
             assert "results" in result
@@ -366,9 +340,7 @@ class TestRAGPerformance:
     async def test_concurrent_rag_queries(self, rag_service):
         """Test multiple concurrent RAG queries"""
         with (
-            patch(
-                "src.server.services.embeddings.embedding_service.create_embedding"
-            ) as mock_embedding,
+            patch("src.server.services.embeddings.embedding_service.create_embedding") as mock_embedding,
             patch.object(rag_service.base_strategy, "vector_search") as mock_search,
         ):
             # Mock embedding creation
@@ -400,9 +372,7 @@ class TestRAGPerformance:
     async def test_large_result_set_handling(self, rag_service):
         """Test handling of large result sets"""
         with (
-            patch(
-                "src.server.services.embeddings.embedding_service.create_embedding"
-            ) as mock_embedding,
+            patch("src.server.services.embeddings.embedding_service.create_embedding") as mock_embedding,
             patch.object(rag_service.base_strategy, "vector_search") as mock_search,
         ):
             # Mock embedding creation
@@ -420,9 +390,7 @@ class TestRAGPerformance:
             ]
             mock_search.return_value = large_results
 
-            success, result = await rag_service.perform_rag_query(
-                query="large query", match_count=50
-            )
+            success, result = await rag_service.perform_rag_query(query="large query", match_count=50)
 
             assert success is True
             assert "results" in result
@@ -463,18 +431,14 @@ class TestRAGConfiguration:
     async def test_strategy_conditional_execution(self, rag_service):
         """Test that strategies only execute when enabled"""
         with (
-            patch(
-                "src.server.services.embeddings.embedding_service.create_embedding"
-            ) as mock_embedding,
+            patch("src.server.services.embeddings.embedding_service.create_embedding") as mock_embedding,
             patch.object(rag_service.base_strategy, "vector_search") as mock_search,
             patch.object(rag_service, "get_bool_setting") as mock_setting,
         ):
             # Mock embedding creation
             mock_embedding.return_value = [0.1] * 1536
 
-            mock_search.return_value = [
-                {"content": "test", "similarity": 0.9, "id": "1", "metadata": {}}
-            ]
+            mock_search.return_value = [{"content": "test", "similarity": 0.9, "id": "1", "metadata": {}}]
 
             # Disable all strategies
             mock_setting.return_value = False

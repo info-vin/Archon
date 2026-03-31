@@ -2,6 +2,7 @@
 Database Operations for Source Management
 Physically isolated to handle core persistence logic.
 """
+
 import logging
 
 from supabase import Client
@@ -10,6 +11,7 @@ from server.config.logfire_config import search_logger
 from server.services.source_management.logic.ai_metadata import generate_source_title_and_metadata
 
 logger = logging.getLogger(__name__)
+
 
 async def update_source_info(
     client: Client,
@@ -52,8 +54,10 @@ async def update_source_info(
                 metadata["original_url"] = original_url
 
             update_data = {
-                "summary": summary, "total_word_count": word_count,
-                "metadata": metadata, "updated_at": "now()",
+                "summary": summary,
+                "total_word_count": word_count,
+                "metadata": metadata,
+                "updated_at": "now()",
             }
             if source_url:
                 update_data["source_url"] = source_url
@@ -71,11 +75,20 @@ async def update_source_info(
                     source_type = "file"
                 else:
                     source_type = "url"
-                metadata = {"knowledge_type": knowledge_type, "tags": tags or [], "source_type": source_type, "auto_generated": False}
+                metadata = {
+                    "knowledge_type": knowledge_type,
+                    "tags": tags or [],
+                    "source_type": source_type,
+                    "auto_generated": False,
+                }
             else:
                 title, metadata = await generate_source_title_and_metadata(
-                    source_id=source_id, content=content, knowledge_type=knowledge_type,
-                    tags=tags, original_url=original_url, source_display_name=source_display_name
+                    source_id=source_id,
+                    content=content,
+                    knowledge_type=knowledge_type,
+                    tags=tags,
+                    original_url=original_url,
+                    source_display_name=source_display_name,
                 )
                 if source_url and source_url.startswith("file://"):
                     metadata["source_type"] = "file"
@@ -90,8 +103,11 @@ async def update_source_info(
 
             search_logger.info(f"Creating new source {source_id} with knowledge_type={knowledge_type}")
             upsert_data = {
-                "source_id": source_id, "title": title, "summary": summary,
-                "total_word_count": word_count, "metadata": metadata,
+                "source_id": source_id,
+                "title": title,
+                "summary": summary,
+                "total_word_count": word_count,
+                "metadata": metadata,
             }
             if source_url:
                 upsert_data["source_url"] = source_url
@@ -103,6 +119,7 @@ async def update_source_info(
     except Exception as e:
         search_logger.error(f"Error updating source {source_id}: {e}")
         raise
+
 
 def create_source_from_upload_logic(
     client: Client,
@@ -134,7 +151,7 @@ def create_source_from_upload_logic(
         source_data["source_url"] = source_url
 
     res = client.table("archon_sources").upsert(source_data).execute()
-    if hasattr(res, 'error') and res.error:
+    if hasattr(res, "error") and res.error:
         search_logger.error(f"Supabase error creating source entry for {source_id}: {res.error}")
         raise Exception(f"Supabase error: {res.error}")
     search_logger.info(f"Successfully created source entry for {source_id}")

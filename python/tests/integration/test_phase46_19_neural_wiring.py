@@ -13,34 +13,36 @@ async def test_agent_service_dynamic_tool_discovery():
     """
     # 1. Setup Mock MCP Client with a dynamic tool list
     mock_mcp_client = MagicMock()
-    mock_mcp_client.list_tools = AsyncMock(return_value=[
-        {
-            "type": "function",
-            "function": {
-                "name": "dynamic_test_tool",
-                "description": "A dynamically discovered tool",
-                "parameters": {"type": "object", "properties": {"arg": {"type": "string"}}}
+    mock_mcp_client.list_tools = AsyncMock(
+        return_value=[
+            {
+                "type": "function",
+                "function": {
+                    "name": "dynamic_test_tool",
+                    "description": "A dynamically discovered tool",
+                    "parameters": {"type": "object", "properties": {"arg": {"type": "string"}}},
+                },
             }
-        }
-    ])
+        ]
+    )
 
     # 2. Setup Mock Agent Registry config
-    mock_config = {
-        "name": "Test Bot",
-        "system_prompt": "You are a test bot.",
-        "tools": ["dynamic_test_tool"]
-    }
+    mock_config = {"name": "Test Bot", "system_prompt": "You are a test bot.", "tools": ["dynamic_test_tool"]}
 
     # 3. Setup AgentService with the mock client
     service = AgentService(mcp_client=mock_mcp_client)
 
     # 4. Mock dependencies
-    with patch("server.services.agent_service.get_agent_config", return_value=mock_config), \
-         patch("server.services.projects.task_service.task_service.get_task", return_value=(True, {"task": {"id": "t1", "title": "Test Task"}})), \
-         patch("server.services.projects.task_service.task_service.update_task", new_callable=AsyncMock), \
-         patch("server.services.projects.task_service.task_service.save_agent_output", new_callable=AsyncMock), \
-         patch("server.services.agent_service.get_llm_client") as mock_get_llm:
-
+    with (
+        patch("server.services.agent_service.get_agent_config", return_value=mock_config),
+        patch(
+            "server.services.projects.task_service.task_service.get_task",
+            return_value=(True, {"task": {"id": "t1", "title": "Test Task"}}),
+        ),
+        patch("server.services.projects.task_service.task_service.update_task", new_callable=AsyncMock),
+        patch("server.services.projects.task_service.task_service.save_agent_output", new_callable=AsyncMock),
+        patch("server.services.agent_service.get_llm_client") as mock_get_llm,
+    ):
         # Mock LLM response
         mock_client_ctx = AsyncMock()
         mock_get_llm.return_value.__aenter__.return_value = mock_client_ctx
@@ -67,6 +69,7 @@ async def test_agent_service_dynamic_tool_discovery():
         assert passed_tools[0]["function"]["name"] == "dynamic_test_tool"
         assert "Search 104" not in str(passed_tools), "Hardcoded tools should NOT be present"
 
+
 @pytest.mark.asyncio
 async def test_mcp_client_list_tools_real_rpc_structure():
     """
@@ -83,10 +86,8 @@ async def test_mcp_client_list_tools_real_rpc_structure():
     # Physical alignment: Standard JSON-RPC 2.0 response format
     mock_response.json.return_value = {
         "jsonrpc": "2.0",
-        "result": [
-            {"type": "function", "function": {"name": "real_tool", "description": "desc", "parameters": {}}}
-        ],
-        "id": 1
+        "result": [{"type": "function", "function": {"name": "real_tool", "description": "desc", "parameters": {}}}],
+        "id": 1,
     }
     client.client.post = AsyncMock(return_value=mock_response)
 

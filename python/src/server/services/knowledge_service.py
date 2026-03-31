@@ -3,6 +3,7 @@ from ..utils import get_supabase_client
 
 logger = get_logger(__name__)
 
+
 class KnowledgeService:
     def __init__(self):
         self.supabase = get_supabase_client()

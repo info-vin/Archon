@@ -7,6 +7,7 @@ from ..utils import get_supabase_client
 
 logger = get_logger(__name__)
 
+
 class EnrichmentService:
     """
     Service to handle the enrichment loop for leads.
@@ -35,6 +36,7 @@ class EnrichmentService:
 
             # Check Toggle for Real vs Mock
             from ..services.credential_service import credential_service
+
             # We reuse 'rag_strategy' category as per migration
             enable_real = await credential_service.get_credential("ENABLE_REAL_ENRICHMENT")
             is_real_mode = str(enable_real).lower() == "true"
@@ -61,10 +63,13 @@ class EnrichmentService:
 
             # Append to identified_need for visibility
             current_need = lead.get("identified_need") or ""
-            enriched_summary = f"{current_need}\n\n[Auto-Enriched Data]\nTax ID: {mock_tax_id}\nEmail: {mock_email}\nNews: {mock_news}"
+            enriched_summary = (
+                f"{current_need}\n\n[Auto-Enriched Data]\nTax ID: {mock_tax_id}\nEmail: {mock_email}\nNews: {mock_news}"
+            )
 
             # Implement GAP-015: Dynamic Scoring via SettingsService
             from ..services.settings_service import SettingsService
+
             settings_service = SettingsService(supabase)
 
             # Fetch rules (with defaults)
@@ -72,7 +77,7 @@ class EnrichmentService:
             score_funding = int(settings_service.get_setting("SCORING_NEWS_FUNDING", "30") or "30")
             score_job = int(settings_service.get_setting("SCORING_HAS_JOB_URL", "15") or "15")
 
-            base_score = 20 # Baseline for existing
+            base_score = 20  # Baseline for existing
             if mock_email:
                 base_score += score_vital
             if "funding" in mock_news.lower():
@@ -85,7 +90,7 @@ class EnrichmentService:
                 "enrichment_score": base_score,
                 "data_last_verified_at": datetime.now().isoformat(),
                 "identified_need": enriched_summary,
-                "contact_email": mock_email # Try saving to column if exists (based on API usage)
+                "contact_email": mock_email,  # Try saving to column if exists (based on API usage)
             }
 
             supabase.table("leads").update(enrichment_data).eq("id", lead_id).execute()
@@ -123,17 +128,17 @@ class EnrichmentService:
             # Criteria: Created < cutoff AND Score < 40 (GAP-011) AND Not already processed
             logger.info(f"Pruning: Executing batch archive for leads created before {cutoff_time} with score < 40")
 
-            res = supabase.table("leads").update({
-                "status": "archived",
-                "auto_archived_reason": "stale_low_quality"
-            })\
-            .lt("created_at", cutoff_time)\
-            .lt("enrichment_score", 40)\
-            .neq("status", "archived")\
-            .neq("status", "converted")\
-            .neq("status", "won")\
-            .neq("status", "lost")\
-            .execute()
+            res = (
+                supabase.table("leads")
+                .update({"status": "archived", "auto_archived_reason": "stale_low_quality"})
+                .lt("created_at", cutoff_time)
+                .lt("enrichment_score", 40)
+                .neq("status", "archived")
+                .neq("status", "converted")
+                .neq("status", "won")
+                .neq("status", "lost")
+                .execute()
+            )
 
             pruned_count = len(res.data) if res.data else 0
 

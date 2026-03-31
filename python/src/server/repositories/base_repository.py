@@ -8,15 +8,13 @@ from ..services.client_manager import get_supabase_client
 
 logger = get_logger(__name__)
 
+
 class BaseRepository:
     def __init__(self, supabase_client: Client | None = None):
         self.supabase_client = supabase_client or get_supabase_client()
 
     def execute_query(
-        self,
-        query_func: Callable[[], Any],
-        error_context: str = "Query failed",
-        require_data: bool = False
+        self, query_func: Callable[[], Any], error_context: str = "Query failed", require_data: bool = False
     ) -> tuple[bool, dict[str, Any]]:
         """
         封裝 Supabase 查詢，提供標準化的錯誤處理與資料驗證機制。

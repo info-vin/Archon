@@ -17,23 +17,27 @@ app.dependency_overrides[get_current_user] = lambda: {"id": "admin-id", "email":
 
 client = TestClient(app)
 
+
 @pytest.fixture(autouse=True)
 def reset_mock():
     mock_service.reset_mock()
     # Reset to admin by default
-    app.dependency_overrides[get_current_user] = lambda: {"id": "admin-id", "email": "admin@archon.com", "role": "admin"}
+    app.dependency_overrides[get_current_user] = lambda: {
+        "id": "admin-id",
+        "email": "admin@archon.com",
+        "role": "admin",
+    }
+
 
 def test_admin_create_user_success():
-    mock_service.create_user_by_admin.return_value = {
-        "id": "123", "email": "test@example.com", "role": "member"
-    }
+    mock_service.create_user_by_admin.return_value = {"id": "123", "email": "test@example.com", "role": "member"}
 
     payload = {
         "name": "Test User",
         "email": "test@example.com",
         "password": "password123",
         "role": "member",
-        "status": "active"
+        "status": "active",
     }
 
     # Should succeed because dependency override provides admin role
@@ -44,6 +48,7 @@ def test_admin_create_user_success():
     # The current stub implementation does not call service.create_user_by_admin
     # mock_service.create_user_by_admin.assert_called_once()
 
+
 def test_admin_create_user_forbidden():
     # Override current user to a member
     app.dependency_overrides[get_current_user] = lambda: {"id": "user-id", "email": "user@archon.com", "role": "member"}
@@ -53,10 +58,9 @@ def test_admin_create_user_forbidden():
         "email": "test@example.com",
         "password": "password123",
         "role": "member",
-        "status": "active"
+        "status": "active",
     }
 
     response = client.post("/api/admin/users", json=payload)
 
     assert response.status_code == 403
-

@@ -1,7 +1,7 @@
-
 """
 Crawler Manager Service
 """
+
 from typing import Optional
 
 try:
@@ -48,8 +48,6 @@ class CrawlerManager:
                 logger.error("ERROR: crawl4ai not available")
                 raise ImportError("crawl4ai is not installed or available")
 
-
-
             browser_config = BrowserConfig(
                 headless=True,
                 verbose=False,
@@ -85,6 +83,7 @@ class CrawlerManager:
 # Global instance management (Phase 4.6.23 Hardening)
 _crawler_manager: CrawlerManager | None = None
 
+
 def get_manager() -> CrawlerManager:
     """Lazy initializer for the global manager."""
     global _crawler_manager
@@ -92,13 +91,16 @@ def get_manager() -> CrawlerManager:
         _crawler_manager = CrawlerManager()
     return _crawler_manager
 
+
 async def get_crawler() -> AsyncWebCrawler | None:
     """Get the global crawler instance."""
     return await get_manager().get_crawler()
 
+
 async def initialize_crawler():
     """Initialize the global crawler."""
     await get_manager().initialize()
+
 
 async def cleanup_crawler():
     """Clean up the global crawler."""

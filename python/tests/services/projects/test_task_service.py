@@ -9,8 +9,7 @@ from src.server.services.projects.task_service import AI_AGENT_ROLES, TaskServic
 
 @pytest.mark.asyncio
 class TestTaskServiceAIAssignment(unittest.TestCase):
-
-    @patch('src.server.services.projects.task_service.agent_service')
+    @patch("src.server.services.projects.task_service.agent_service")
     async def test_create_task_with_ai_assignee_notifies_agent_service(self, mock_agent_service):
         mock_agent_service.run_agent_task = AsyncMock()
         mock_supabase_client = MagicMock()
@@ -29,7 +28,7 @@ class TestTaskServiceAIAssignment(unittest.TestCase):
 
         mock_agent_service.run_agent_task.assert_awaited_once_with(task_id=task_id, agent_id=ai_agent_name)
 
-    @patch('src.server.services.projects.task_service.agent_service')
+    @patch("src.server.services.projects.task_service.agent_service")
     async def test_update_task_to_ai_assignee_notifies_agent_service(self, mock_agent_service):
         mock_agent_service.run_agent_task = AsyncMock()
         mock_supabase_client = MagicMock()
@@ -43,11 +42,15 @@ class TestTaskServiceAIAssignment(unittest.TestCase):
 
         get_execute_mock = MagicMock()
         get_execute_mock.data = [mock_current_task]
-        mock_supabase_client.table.return_value.select.return_value.eq.return_value.execute.return_value = get_execute_mock
+        mock_supabase_client.table.return_value.select.return_value.eq.return_value.execute.return_value = (
+            get_execute_mock
+        )
 
         update_execute_mock = MagicMock()
         update_execute_mock.data = [mock_updated_task]
-        mock_supabase_client.table.return_value.update.return_value.eq.return_value.execute.return_value = update_execute_mock
+        mock_supabase_client.table.return_value.update.return_value.eq.return_value.execute.return_value = (
+            update_execute_mock
+        )
 
         update_fields = {"assignee": ai_agent_name}
 

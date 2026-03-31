@@ -1,4 +1,3 @@
-
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -37,6 +36,7 @@ async def test_parse_sitemap_success():
         # Verify get was called with correct URL
         mock_client_instance.get.assert_called_once_with(sitemap_url)
 
+
 @pytest.mark.asyncio
 async def test_parse_sitemap_http_error():
     """Test handling of HTTP errors (non-200 status)."""
@@ -57,6 +57,7 @@ async def test_parse_sitemap_http_error():
 
         assert urls == []
         mock_client_instance.get.assert_called_once_with(sitemap_url)
+
 
 @pytest.mark.asyncio
 async def test_parse_sitemap_cancellation():
@@ -79,10 +80,12 @@ async def test_parse_sitemap_cancellation():
 
         cancellation_check.assert_called_once()
 
+
 @pytest.mark.asyncio
 async def test_parse_sitemap_request_error():
     """Test handling of httpx RequestError."""
     import httpx
+
     strategy = SitemapCrawlStrategy()
     sitemap_url = "http://example.com/sitemap.xml"
 
@@ -95,6 +98,7 @@ async def test_parse_sitemap_request_error():
         urls = await strategy.parse_sitemap(sitemap_url)
 
         assert urls == []
+
 
 @pytest.mark.asyncio
 async def test_parse_sitemap_xml_parse_error():

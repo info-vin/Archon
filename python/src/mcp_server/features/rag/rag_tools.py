@@ -50,18 +50,12 @@ def register_rag_tools(mcp: FastMCP):
         result = await call_api("GET", "/api/rag/sources")
         if result.get("success"):
             sources = result.get("sources", [])
-            return json.dumps(
-                {"success": True, "sources": sources, "count": len(sources)}, indent=2
-            )
+            return json.dumps({"success": True, "sources": sources, "count": len(sources)}, indent=2)
         return json.dumps(result, indent=2)
 
     @mcp.tool()
     async def rag_search_knowledge_base(
-        ctx: Context,
-        query: str,
-        source_id: str | None = None,
-        match_count: int = 5,
-        return_mode: str = "pages"
+        ctx: Context, query: str, source_id: str | None = None, match_count: int = 5, return_mode: str = "pages"
     ) -> str:
         """
         Search knowledge base for relevant content using RAG.
@@ -75,11 +69,7 @@ def register_rag_tools(mcp: FastMCP):
         Returns:
             JSON string with success status and search results.
         """
-        request_data = {
-            "query": query,
-            "match_count": match_count,
-            "return_mode": return_mode
-        }
+        request_data = {"query": query, "match_count": match_count, "return_mode": return_mode}
         if source_id:
             request_data["source"] = source_id
 
@@ -132,9 +122,7 @@ def register_rag_tools(mcp: FastMCP):
         return json.dumps(result, indent=2)
 
     @mcp.tool()
-    async def rag_list_pages_for_source(
-        ctx: Context, source_id: str, section: str | None = None
-    ) -> str:
+    async def rag_list_pages_for_source(ctx: Context, source_id: str, section: str | None = None) -> str:
         """
         List all pages for a given knowledge source.
 
@@ -162,9 +150,7 @@ def register_rag_tools(mcp: FastMCP):
         return json.dumps(result, indent=2)
 
     @mcp.tool()
-    async def rag_read_full_page(
-        ctx: Context, page_id: str | None = None, url: str | None = None
-    ) -> str:
+    async def rag_read_full_page(ctx: Context, page_id: str | None = None, url: str | None = None) -> str:
         """
         Retrieve full page content from knowledge base.
 

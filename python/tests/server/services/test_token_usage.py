@@ -28,7 +28,7 @@ async def test_log_usage_pricing():
             provider="openai",
             input_tokens=1_000_000,
             output_tokens=1_000_000,
-            user_id="user-1"
+            user_id="user-1",
         )
 
         args, _ = mock_table.insert.call_args
@@ -44,13 +44,14 @@ async def test_log_usage_pricing():
             provider="ollama",
             input_tokens=5000,
             output_tokens=200,
-            user_id="user-2"
+            user_id="user-2",
         )
 
         args, _ = mock_table.insert.call_args
         payload = args[0]
         assert payload["provider"] == "ollama"
         assert payload["cost_usd"] == 0.0
+
 
 @pytest.mark.asyncio
 async def test_log_usage_unknown_model_fallback():
@@ -67,7 +68,7 @@ async def test_log_usage_unknown_model_fallback():
             model="unknown-super-model",
             provider="openai",
             input_tokens=1_000_000,
-            output_tokens=1_000_000
+            output_tokens=1_000_000,
         )
 
         args, _ = mock_table.insert.call_args

@@ -134,9 +134,7 @@ class TestPortConfiguration:
         os.environ.pop("ARCHON_MCP_PORT", None)
 
         # Test the logic from config.py
-        with pytest.raises(
-            ConfigurationError, match="PORT or ARCHON_MCP_PORT environment variable is required"
-        ):
+        with pytest.raises(ConfigurationError, match="PORT or ARCHON_MCP_PORT environment variable is required"):
             port_str = os.getenv("PORT")
             if not port_str:
                 port_str = os.getenv("ARCHON_MCP_PORT")

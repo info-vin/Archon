@@ -80,8 +80,8 @@ def test_config_raises_on_anon_key():
         {
             "SUPABASE_URL": "https://test.supabase.co",
             "SUPABASE_SERVICE_KEY": mock_anon_key,
-            "OPENAI_API_KEY": ""  # Clear any existing key
-        }
+            "OPENAI_API_KEY": "",  # Clear any existing key
+        },
     ):
         with pytest.raises(ConfigurationError) as exc_info:
             load_environment_config()
@@ -104,8 +104,8 @@ def test_config_accepts_service_key():
             "SUPABASE_URL": "https://test.supabase.co",
             "SUPABASE_SERVICE_KEY": mock_service_key,
             "PORT": "8051",  # Required for config
-            "OPENAI_API_KEY": ""  # Clear any existing key
-        }
+            "OPENAI_API_KEY": "",  # Clear any existing key
+        },
     ):
         # Should not raise an exception
         config = load_environment_config()
@@ -120,8 +120,8 @@ def test_config_handles_invalid_jwt():
             "SUPABASE_URL": "https://test.supabase.co",
             "SUPABASE_SERVICE_KEY": "invalid-jwt-key",
             "PORT": "8051",  # Required for config
-            "OPENAI_API_KEY": ""  # Clear any existing key
-        }
+            "OPENAI_API_KEY": "",  # Clear any existing key
+        },
     ):
         # Should not raise an exception for invalid JWT
         config = load_environment_config()
@@ -140,8 +140,8 @@ def test_config_fails_on_unknown_role():
             "SUPABASE_URL": "https://test.supabase.co",
             "SUPABASE_SERVICE_KEY": mock_unknown_key,
             "PORT": "8051",  # Required for config
-            "OPENAI_API_KEY": ""  # Clear any existing key
-        }
+            "OPENAI_API_KEY": "",  # Clear any existing key
+        },
     ):
         # Should raise ConfigurationError for unknown role
         with pytest.raises(ConfigurationError) as exc_info:
@@ -164,7 +164,7 @@ def test_config_raises_on_anon_key_with_port():
             "SUPABASE_URL": "https://test.supabase.co",
             "SUPABASE_SERVICE_KEY": mock_anon_key,
             "PORT": "8051",
-            "OPENAI_API_KEY": "sk-test123"  # Valid OpenAI key
+            "OPENAI_API_KEY": "sk-test123",  # Valid OpenAI key
         },
     ):
         # Should still raise ConfigurationError for anon key even with valid OpenAI key

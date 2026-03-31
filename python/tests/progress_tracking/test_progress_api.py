@@ -15,6 +15,7 @@ from src.server.utils.progress.progress_tracker import ProgressTracker
 def client():
     """Create a test client for the progress API."""
     from fastapi import FastAPI
+
     app = FastAPI()
     app.include_router(router)
     return TestClient(app)
@@ -41,16 +42,16 @@ def mock_progress_data():
             {"timestamp": "2024-01-01T10:00:00", "message": "Starting crawl", "status": "starting"},
             {"timestamp": "2024-01-01T10:01:00", "message": "Analyzing URL", "status": "analyzing"},
             {"timestamp": "2024-01-01T10:02:00", "message": "Crawling pages", "status": "crawling"},
-            {"timestamp": "2024-01-01T10:05:00", "message": "Processing batch 3/6", "status": "document_storage"}
-        ]
+            {"timestamp": "2024-01-01T10:05:00", "message": "Processing batch 3/6", "status": "document_storage"},
+        ],
     }
 
 
 class TestProgressAPI:
     """Test cases for progress API endpoints."""
 
-    @patch('src.server.api_routes.progress_api.ProgressTracker.get_progress')
-    @patch('src.server.api_routes.progress_api.create_progress_response')
+    @patch("src.server.api_routes.progress_api.ProgressTracker.get_progress")
+    @patch("src.server.api_routes.progress_api.create_progress_response")
     def test_get_progress_success(self, mock_create_response, mock_get_progress, client, mock_progress_data):
         """Test successful progress retrieval."""
         # Setup mocks
@@ -66,7 +67,7 @@ class TestProgressAPI:
             "totalBatches": 6,
             "completedBatches": 2,
             "totalPages": 60,
-            "processedPages": 60
+            "processedPages": 60,
         }
         mock_create_response.return_value = mock_response
 
@@ -87,7 +88,7 @@ class TestProgressAPI:
         mock_get_progress.assert_called_once_with("test-123")
         mock_create_response.assert_called_once_with("crawl", mock_progress_data)
 
-    @patch('src.server.api_routes.progress_api.ProgressTracker.get_progress')
+    @patch("src.server.api_routes.progress_api.ProgressTracker.get_progress")
     def test_get_progress_not_found(self, mock_get_progress, client):
         """Test progress retrieval for non-existent operation."""
         mock_get_progress.return_value = None
@@ -98,18 +99,14 @@ class TestProgressAPI:
         data = response.json()
         assert "Operation non-existent-id not found" in data["detail"]["error"]
 
-    @patch('src.server.api_routes.progress_api.ProgressTracker.get_progress')
-    @patch('src.server.api_routes.progress_api.create_progress_response')
+    @patch("src.server.api_routes.progress_api.ProgressTracker.get_progress")
+    @patch("src.server.api_routes.progress_api.create_progress_response")
     def test_get_progress_with_etag_cache(self, mock_create_response, mock_get_progress, client, mock_progress_data):
         """Test ETag caching functionality."""
         mock_get_progress.return_value = mock_progress_data
 
         mock_response = MagicMock()
-        mock_response.model_dump.return_value = {
-            "progressId": "test-123",
-            "status": "document_storage",
-            "progress": 45
-        }
+        mock_response.model_dump.return_value = {"progressId": "test-123", "status": "document_storage", "progress": 45}
         mock_create_response.return_value = mock_response
 
         # First request - should return data with ETag
@@ -123,9 +120,11 @@ class TestProgressAPI:
         assert response2.status_code == status.HTTP_304_NOT_MODIFIED
         assert response2.headers.get("ETag") == etag
 
-    @patch('src.server.api_routes.progress_api.ProgressTracker.get_progress')
-    @patch('src.server.api_routes.progress_api.create_progress_response')
-    def test_get_progress_poll_interval_headers(self, mock_create_response, mock_get_progress, client, mock_progress_data):
+    @patch("src.server.api_routes.progress_api.ProgressTracker.get_progress")
+    @patch("src.server.api_routes.progress_api.create_progress_response")
+    def test_get_progress_poll_interval_headers(
+        self, mock_create_response, mock_get_progress, client, mock_progress_data
+    ):
         """Test that appropriate polling interval headers are set."""
         # Test running operation
         mock_progress_data["status"] = "running"
@@ -155,9 +154,21 @@ class TestProgressAPI:
 
         try:
             ProgressTracker._progress_states = {
-                "op-1": {"type": "crawl", "status": "running", "progress": 25, "log": "Crawling pages", "start_time": datetime(2024, 1, 1, 10, 0, 0)},
-                "op-2": {"type": "upload", "status": "starting", "progress": 0, "log": "Initializing", "start_time": datetime(2024, 1, 1, 10, 1, 0)},
-                "op-3": {"type": "crawl", "status": "completed", "progress": 100, "log": "Completed"}
+                "op-1": {
+                    "type": "crawl",
+                    "status": "running",
+                    "progress": 25,
+                    "log": "Crawling pages",
+                    "start_time": datetime(2024, 1, 1, 10, 0, 0),
+                },
+                "op-2": {
+                    "type": "upload",
+                    "status": "starting",
+                    "progress": 0,
+                    "log": "Initializing",
+                    "start_time": datetime(2024, 1, 1, 10, 1, 0),
+                },
+                "op-3": {"type": "crawl", "status": "completed", "progress": 100, "log": "Completed"},
             }
 
             response = client.get("/api/progress/")
@@ -203,7 +214,7 @@ class TestProgressAPI:
             # Restore original states
             ProgressTracker._progress_states = original_states
 
-    @patch('src.server.api_routes.progress_api.ProgressTracker.get_progress')
+    @patch("src.server.api_routes.progress_api.ProgressTracker.get_progress")
     def test_get_progress_server_error(self, mock_get_progress, client):
         """Test handling of server errors during progress retrieval."""
         mock_get_progress.side_effect = Exception("Database connection failed")
@@ -214,9 +225,11 @@ class TestProgressAPI:
         data = response.json()
         assert "Database connection failed" in data["detail"]["error"]
 
-    @patch('src.server.api_routes.progress_api.ProgressTracker.get_progress')
-    @patch('src.server.api_routes.progress_api.create_progress_response')
-    def test_progress_response_model_validation(self, mock_create_response, mock_get_progress, client, mock_progress_data):
+    @patch("src.server.api_routes.progress_api.ProgressTracker.get_progress")
+    @patch("src.server.api_routes.progress_api.create_progress_response")
+    def test_progress_response_model_validation(
+        self, mock_create_response, mock_get_progress, client, mock_progress_data
+    ):
         """Test that progress response model validation works correctly."""
         mock_get_progress.return_value = mock_progress_data
 
@@ -227,14 +240,14 @@ class TestProgressAPI:
 
         assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
 
-    @patch('src.server.api_routes.progress_api.ProgressTracker.get_progress')
-    @patch('src.server.api_routes.progress_api.create_progress_response')
+    @patch("src.server.api_routes.progress_api.ProgressTracker.get_progress")
+    @patch("src.server.api_routes.progress_api.create_progress_response")
     def test_get_progress_different_operation_types(self, mock_create_response, mock_get_progress, client):
         """Test progress retrieval for different operation types."""
         test_cases = [
             {"type": "crawl", "status": "document_storage"},
             {"type": "upload", "status": "storing"},
-            {"type": "project_creation", "status": "generating_prp"}
+            {"type": "project_creation", "status": "generating_prp"},
         ]
 
         for case in test_cases:
@@ -243,7 +256,7 @@ class TestProgressAPI:
                 "type": case["type"],
                 "status": case["status"],
                 "progress": 50,
-                "log": f"Processing {case['type']}"
+                "log": f"Processing {case['type']}",
             }
 
             mock_get_progress.return_value = mock_progress_data

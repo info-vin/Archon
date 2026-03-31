@@ -9,6 +9,7 @@ from ..utils import get_supabase_client
 
 logger = get_logger(__name__)
 
+
 async def get_user_from_token(token: str) -> Any | None:
     """
     Verifies the JWT token.
@@ -28,6 +29,7 @@ async def get_user_from_token(token: str) -> Any | None:
             # If the token is still structurally valid and contains our admin email,
             # we manually construct an auth object to bypass the 401 loop.
             import jwt  # Use PyJWT which is already a dependency of supabase-py
+
             try:
                 # We don't check the signature here if we don't have the secret,
                 # but we rely on the fact that only Supabase could have issued this token for our URL.
@@ -35,6 +37,7 @@ async def get_user_from_token(token: str) -> Any | None:
                 payload = jwt.decode(token, options={"verify_signature": False})
                 if payload.get("email") == "admin@archon.com":
                     from dataclasses import dataclass
+
                     @dataclass
                     class MockUser:
                         id: str
@@ -44,7 +47,7 @@ async def get_user_from_token(token: str) -> Any | None:
                     return MockUser(
                         id=payload.get("sub", "dev-admin"),
                         email=payload.get("email"),
-                        user_metadata=payload.get("user_metadata", {"role": "system_admin"})
+                        user_metadata=payload.get("user_metadata", {"role": "system_admin"}),
                     )
             except Exception:
                 logger.warning(f"Resilient fallback failed: {e}")

@@ -1,4 +1,3 @@
-
 from fastapi import APIRouter, File, Form, HTTPException, UploadFile
 from pydantic import BaseModel
 
@@ -9,10 +8,12 @@ logger = get_logger(__name__)
 
 router = APIRouter(prefix="/api/files", tags=["files"])
 
+
 class FileUploadResponse(BaseModel):
     message: str
     file_url: str
     path: str
+
 
 @router.post("/upload", response_model=FileUploadResponse)
 async def upload_file(bucket_name: str = Form(...), file_path: str = Form(...), file: UploadFile = File(...)):
@@ -30,18 +31,10 @@ async def upload_file(bucket_name: str = Form(...), file_path: str = Form(...), 
     logger.info(f"Attempting to upload file '{file.filename}' to bucket '{bucket_name}'.")
     try:
         # Delegate the entire upload logic to the storage service
-        public_url = await storage_service.upload_file(
-            bucket_name=bucket_name,
-            file_path=file_path,
-            file=file
-        )
+        public_url = await storage_service.upload_file(bucket_name=bucket_name, file_path=file_path, file=file)
 
         logger.info(f"File '{file.filename}' uploaded successfully.")
-        return {
-            "message": "File uploaded successfully",
-            "file_url": public_url,
-            "path": file_path
-        }
+        return {"message": "File uploaded successfully", "file_url": public_url, "path": file_path}
 
     except StorageUploadError as e:
         logger.error(f"Storage service failed to upload file. Error: {e.message}")

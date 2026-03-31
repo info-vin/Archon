@@ -33,10 +33,10 @@ class TestDocumentStorageMetrics:
         # Track what gets logged
         logged_messages = []
 
-        with patch('src.server.services.crawling.document_storage_operations.safe_logfire_info') as mock_log:
+        with patch("src.server.services.crawling.document_storage_operations.safe_logfire_info") as mock_log:
             mock_log.side_effect = lambda msg: logged_messages.append(msg)
 
-            with patch('src.server.services.crawling.document_storage_operations.add_documents_to_supabase'):
+            with patch("src.server.services.crawling.document_storage_operations.add_documents_to_supabase"):
                 # Test data with mix of empty and non-empty documents
                 crawl_results = [
                     {"url": "https://example.com/page1", "markdown": "Content 1"},
@@ -52,7 +52,7 @@ class TestDocumentStorageMetrics:
                     crawl_type="test",
                     original_source_id="test123",
                     source_url="https://example.com",
-                    source_display_name="Example"
+                    source_display_name="Example",
                 )
 
                 # Find the metrics log message
@@ -82,10 +82,10 @@ class TestDocumentStorageMetrics:
 
         logged_messages = []
 
-        with patch('src.server.services.crawling.document_storage_operations.safe_logfire_info') as mock_log:
+        with patch("src.server.services.crawling.document_storage_operations.safe_logfire_info") as mock_log:
             mock_log.side_effect = lambda msg: logged_messages.append(msg)
 
-            with patch('src.server.services.crawling.document_storage_operations.add_documents_to_supabase'):
+            with patch("src.server.services.crawling.document_storage_operations.add_documents_to_supabase"):
                 # All documents are empty
                 crawl_results = [
                     {"url": "https://example.com/page1", "markdown": ""},
@@ -99,7 +99,7 @@ class TestDocumentStorageMetrics:
                     crawl_type="test",
                     original_source_id="test456",
                     source_url="https://example.com",
-                    source_display_name="Example"
+                    source_display_name="Example",
                 )
 
                 # Find the metrics log
@@ -130,10 +130,10 @@ class TestDocumentStorageMetrics:
 
         logged_messages = []
 
-        with patch('src.server.services.crawling.document_storage_operations.safe_logfire_info') as mock_log:
+        with patch("src.server.services.crawling.document_storage_operations.safe_logfire_info") as mock_log:
             mock_log.side_effect = lambda msg: logged_messages.append(msg)
 
-            with patch('src.server.services.crawling.document_storage_operations.add_documents_to_supabase'):
+            with patch("src.server.services.crawling.document_storage_operations.add_documents_to_supabase"):
                 crawl_results = [
                     {"url": "https://example.com/page", "markdown": "Long content here..."},
                 ]
@@ -144,7 +144,7 @@ class TestDocumentStorageMetrics:
                     crawl_type="test",
                     original_source_id="test789",
                     source_url="https://example.com",
-                    source_display_name="Example"
+                    source_display_name="Example",
                 )
 
                 # Find metrics log
@@ -173,8 +173,8 @@ class TestDocumentStorageMetrics:
         doc_storage.doc_storage_service.smart_chunk_text = Mock(side_effect=mock_chunk)
         doc_storage._create_source_records = AsyncMock()
 
-        with patch('src.server.services.crawling.document_storage_operations.safe_logfire_info'):
-            with patch('src.server.services.crawling.document_storage_operations.add_documents_to_supabase'):
+        with patch("src.server.services.crawling.document_storage_operations.safe_logfire_info"):
+            with patch("src.server.services.crawling.document_storage_operations.add_documents_to_supabase"):
                 # Mix of documents with various content states
                 crawl_results = [
                     {"url": "https://example.com/1", "markdown": "Content"},
@@ -191,7 +191,7 @@ class TestDocumentStorageMetrics:
                     crawl_type="test",
                     original_source_id="test999",
                     source_url="https://example.com",
-                    source_display_name="Example"
+                    source_display_name="Example",
                 )
 
                 # Should process only documents 1 and 4 (documents with actual content)

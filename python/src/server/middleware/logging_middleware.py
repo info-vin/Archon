@@ -39,9 +39,7 @@ class LoggingMiddleware(BaseHTTPMiddleware):
 
         # Log the request
         client_host = request.client.host if request.client is not None else "unknown"
-        self.logger.info(
-            f"HTTP Request | method={request.method} | path={request.url.path} | client={client_host}"
-        )
+        self.logger.info(f"HTTP Request | method={request.method} | path={request.url.path} | client={client_host}")
 
         try:
             # Process the request
@@ -114,9 +112,7 @@ class LoggingRoute(APIRoute):
                 duration = time.time() - start_time
 
                 # Log successful endpoint execution
-                logger.info(
-                    f"Endpoint: {endpoint_name} | duration_ms={round(duration * 1000, 2)} | status=success"
-                )
+                logger.info(f"Endpoint: {endpoint_name} | duration_ms={round(duration * 1000, 2)} | status=success")
 
                 return response
 

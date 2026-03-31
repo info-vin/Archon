@@ -36,9 +36,7 @@ class RagQueryResult(BaseModel):
 
     query_type: str = Field(description="Type of query: search, explain, summarize, compare")
     original_query: str = Field(description="The original user query")
-    refined_query: str | None = Field(
-        description="Refined query used for search if different from original"
-    )
+    refined_query: str | None = Field(description="Refined query used for search if different from original")
     results_found: int = Field(description="Number of relevant results found")
     sources: list[str] = Field(description="List of unique sources referenced")
     answer: str = Field(description="The synthesized answer based on retrieved content")
@@ -64,9 +62,7 @@ class RagAgent(BaseAgent[RagDependencies, str]):
         if model is None:
             model = os.getenv("RAG_AGENT_MODEL", "openai:gpt-4o-mini")
 
-        super().__init__(
-            model=model, name="RagAgent", retries=3, enable_rate_limiting=True, **kwargs
-        )
+        super().__init__(model=model, name="RagAgent", retries=3, enable_rate_limiting=True, **kwargs)
 
     def _create_agent(self, **kwargs) -> Agent[RagDependencies, str]:
         """Create the PydanticAI agent with tools and prompts."""
@@ -82,11 +78,7 @@ class RagAgent(BaseAgent[RagDependencies, str]):
         # Register dynamic system prompt for context
         @agent.system_prompt
         async def add_search_context(ctx: RunContext[RagDependencies]) -> str:
-            source_info = (
-                f"Source Filter: {ctx.deps.source_filter}"
-                if ctx.deps.source_filter
-                else "No source filter"
-            )
+            source_info = f"Source Filter: {ctx.deps.source_filter}" if ctx.deps.source_filter else "No source filter"
             return f"""
 **Current Search Context:**
 - Project ID: {ctx.deps.project_id or "Global search"}
@@ -144,9 +136,7 @@ class RagAgent(BaseAgent[RagDependencies, str]):
                         f"Content: {content}\n"
                     )
 
-                return f"Found {len(results)} relevant results:\n\n" + "\n---\n".join(
-                    formatted_results
-                )
+                return f"Found {len(results)} relevant results:\n\n" + "\n---\n".join(formatted_results)
 
             except Exception as e:
                 logger.error(f"Error searching documents: {e}")
@@ -182,9 +172,7 @@ class RagAgent(BaseAgent[RagDependencies, str]):
                     # Format the description if available
                     desc_text = f" - {description}" if description else ""
 
-                    source_list.append(
-                        f"- **{source_id}**: {title}{desc_text} (added {created[:10]})"
-                    )
+                    source_list.append(f"- **{source_id}**: {title}{desc_text} (added {created[:10]})")
 
                 return f"Available sources ({len(sources)} total):\n" + "\n".join(source_list)
 
@@ -241,18 +229,14 @@ class RagAgent(BaseAgent[RagDependencies, str]):
                         f"```{lang}\n{code}\n```"
                     )
 
-                return f"Found {len(examples)} code examples:\n\n" + "\n---\n".join(
-                    formatted_examples
-                )
+                return f"Found {len(examples)} code examples:\n\n" + "\n---\n".join(formatted_examples)
 
             except Exception as e:
                 logger.error(f"Error searching code examples: {e}")
                 return f"Error searching code: {str(e)}"
 
         @agent.tool
-        async def refine_search_query(
-            ctx: RunContext[RagDependencies], original_query: str, context: str
-        ) -> str:
+        async def refine_search_query(ctx: RunContext[RagDependencies], original_query: str, context: str) -> str:
             """Refine a search query based on context to get better results."""
             try:
                 # Simple query expansion based on context
@@ -320,10 +304,12 @@ class RagAgent(BaseAgent[RagDependencies, str]):
         try:
             from server.services.prompt_service import prompt_service
 
-            return str(prompt_service.get_prompt(
-                "rag_agent_prompt",
-                default=default_prompt,
-            ))
+            return str(
+                prompt_service.get_prompt(
+                    "rag_agent_prompt",
+                    default=default_prompt,
+                )
+            )
         except (ImportError, Exception) as e:
             logger.warning(f"Could not load prompt from service (fallback to default): {e}")
             return default_prompt

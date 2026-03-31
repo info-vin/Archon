@@ -61,9 +61,7 @@ class DocumentStorageService(BaseStorageService):
                 chunks = await self.smart_chunk_text_async(
                     file_content,
                     chunk_size=5000,
-                    progress_callback=lambda msg, pct: report_progress(
-                        f"Chunking: {msg}", int(10 + float(pct) * 0.2)
-                    ),
+                    progress_callback=lambda msg, pct: report_progress(f"Chunking: {msg}", int(10 + float(pct) * 0.2)),
                 )
 
                 if not chunks:
@@ -202,9 +200,7 @@ class DocumentStorageService(BaseStorageService):
         # Extract metadata for each chunk
         processed_chunks = []
         for i, chunk in enumerate(chunks):
-            meta = self.extract_metadata(
-                chunk, {"chunk_index": i, "source": document.get("source", "unknown")}
-            )
+            meta = self.extract_metadata(chunk, {"chunk_index": i, "source": document.get("source", "unknown")})
             processed_chunks.append({"content": chunk, "metadata": meta})
 
         return {
@@ -213,9 +209,7 @@ class DocumentStorageService(BaseStorageService):
             "source": document.get("source"),
         }
 
-    def store_code_examples(
-        self, code_examples: list[dict[str, Any]]
-    ) -> tuple[bool, dict[str, Any]]:
+    def store_code_examples(self, code_examples: list[dict[str, Any]]) -> tuple[bool, dict[str, Any]]:
         """
         Store code examples. This is kept for backward compatibility.
         The actual implementation should use add_code_examples_to_supabase directly.
@@ -232,9 +226,7 @@ class DocumentStorageService(BaseStorageService):
 
             # This method exists for backward compatibility
             # The actual storage should be done through the proper service functions
-            logger.warning(
-                "store_code_examples is deprecated. Use add_code_examples_to_supabase directly."
-            )
+            logger.warning("store_code_examples is deprecated. Use add_code_examples_to_supabase directly.")
 
             return True, {"code_examples_stored": len(code_examples)}
 

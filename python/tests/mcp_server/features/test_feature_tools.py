@@ -123,8 +123,6 @@ async def test_get_project_features_not_found(mock_mcp, mock_context):
         assert result_data["success"] is False
         # Error must be structured format (dict), not string
         assert "error" in result_data
-        assert isinstance(result_data["error"], dict), (
-            "Error should be structured format, not string"
-        )
+        assert isinstance(result_data["error"], dict), "Error should be structured format, not string"
         assert result_data["error"]["type"] == "not_found"
         assert "not found" in result_data["error"]["message"].lower()

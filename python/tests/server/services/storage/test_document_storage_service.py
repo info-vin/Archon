@@ -14,10 +14,13 @@ async def test_upload_document_sets_source_type_file():
     """
 
     # Mock dependencies
-    with patch("src.server.services.storage.storage_services.add_documents_to_supabase", new_callable=AsyncMock) as mock_add_docs, \
-         patch("src.server.services.storage.storage_services.get_logger"), \
-         patch("src.server.services.storage.storage_services.safe_span") as mock_safe_span:
-
+    with (
+        patch(
+            "src.server.services.storage.storage_services.add_documents_to_supabase", new_callable=AsyncMock
+        ) as mock_add_docs,
+        patch("src.server.services.storage.storage_services.get_logger"),
+        patch("src.server.services.storage.storage_services.safe_span") as mock_safe_span,
+    ):
         # Mock the context manager for safe_span
         mock_span_instance = MagicMock()
         mock_safe_span.return_value.__enter__.return_value = mock_span_instance
@@ -36,10 +39,7 @@ async def test_upload_document_sets_source_type_file():
         file_content = "This is some content."
 
         success, result = await service.upload_document(
-            file_content=file_content,
-            filename=filename,
-            source_id=source_id,
-            knowledge_type=knowledge_type
+            file_content=file_content, filename=filename, source_id=source_id, knowledge_type=knowledge_type
         )
 
         assert success is True

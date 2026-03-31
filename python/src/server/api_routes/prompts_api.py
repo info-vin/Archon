@@ -3,7 +3,6 @@ Prompts API Hardened - Secure management of AI system instructions.
 Standardized RBAC Sealing with correct response unwrapping.
 """
 
-
 from fastapi import APIRouter, Depends, HTTPException
 
 from src.server.services.prompt_service import prompt_service
@@ -12,6 +11,7 @@ from ..auth.dependencies import get_current_user, requires_permission
 from ..auth.permissions import USER_MANAGE
 
 router = APIRouter(prefix="/api/system/prompts", tags=["prompts"])
+
 
 @router.get("")
 @router.get("/list")
@@ -22,11 +22,10 @@ async def list_all_prompts(current_user: dict = Depends(get_current_user)):
         raise HTTPException(status_code=500, detail=str(res))
     return res.get("prompts", [])
 
+
 @router.patch("/{prompt_name}")
 async def update_prompt(
-    prompt_name: str,
-    content: dict[str, str],
-    current_user: dict = Depends(requires_permission(USER_MANAGE))
+    prompt_name: str, content: dict[str, str], current_user: dict = Depends(requires_permission(USER_MANAGE))
 ):
     """Updates a system prompt. Requires Admin level permission."""
     new_prompt = content.get("content") or content.get("prompt")

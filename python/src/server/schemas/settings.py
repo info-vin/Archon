@@ -1,4 +1,3 @@
-
 from pydantic import BaseModel
 
 
@@ -9,6 +8,7 @@ class CredentialCreate(BaseModel):
     category: str = "ai"
     description: str | None = None
 
+
 class CredentialResponse(BaseModel):
     key: str
     value: str | None = None
@@ -18,13 +18,16 @@ class CredentialResponse(BaseModel):
     description: str | None = None
     updated_at: str | None = None
 
+
 class CredentialStatusResponse(BaseModel):
     provider: str
     status: str
     message: str | None = None
 
+
 class CredentialStatusRequest(BaseModel):
     keys: list[str]
+
 
 class UserUpdateRequest(BaseModel):
     name: str | None = None

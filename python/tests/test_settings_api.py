@@ -8,6 +8,7 @@ from src.server.main import app
 
 client = TestClient(app)
 
+
 @pytest.fixture
 def mock_admin_user():
     user = {"id": "admin1", "role": "system_admin", "email": "admin@archon.com"}
@@ -17,6 +18,7 @@ def mock_admin_user():
     app.dependency_overrides.pop(get_current_user, None)
     app.dependency_overrides.pop(get_current_user_optional, None)
 
+
 def test_optional_setting_returns_default(mock_admin_user):
     # Physical Path Alignment: /api/settings/credentials/...
     with patch("src.server.services.credential_service.CredentialService.get_credential") as mock_get:
@@ -25,11 +27,13 @@ def test_optional_setting_returns_default(mock_admin_user):
         assert response.status_code == 200
         assert response.json()["value"] == "default-val"
 
+
 def test_unknown_credential_returns_404(mock_admin_user):
     with patch("src.server.services.credential_service.CredentialService.get_credential") as mock_get:
         mock_get.return_value = None
         response = client.get("/api/credentials/REALLY_UNKNOWN")
         assert response.status_code == 404
+
 
 def test_existing_credential_returns_normally(mock_admin_user):
     with patch("src.server.services.credential_service.CredentialService.get_credential") as mock_get:
@@ -38,6 +42,7 @@ def test_existing_credential_returns_normally(mock_admin_user):
         assert response.status_code == 200
         assert response.json()["value"] == "secret-key"
 
+
 def test_unauthenticated_public_setting_returns_default():
     # Should be accessible without mock_admin_user
     app.dependency_overrides.clear()
@@ -45,7 +50,8 @@ def test_unauthenticated_public_setting_returns_default():
         mock_get.return_value = None
         response = client.get("/api/credentials/PROJECTS_ENABLED")
         assert response.status_code == 200
-        assert response.json()["value"] == "true" # From OPTIONAL_SETTINGS_WITH_DEFAULTS
+        assert response.json()["value"] == "true"  # From OPTIONAL_SETTINGS_WITH_DEFAULTS
+
 
 def test_unauthenticated_private_setting_returns_401():
     # Should be rejected without mock_admin_user

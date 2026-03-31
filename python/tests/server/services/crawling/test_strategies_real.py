@@ -10,6 +10,7 @@ async def async_gen(items):
     for item in items:
         yield item
 
+
 @pytest.mark.asyncio
 async def test_recursive_crawl_logic_execution():
     """物理驗證遞迴爬取邏輯是否能正確執行分派與進度回報"""
@@ -26,20 +27,22 @@ async def test_recursive_crawl_logic_execution():
 
     # 2. 準備參數
     start_urls = ["https://test.com"]
-    def transform_func(x): return x
-    def is_doc_func(x): return True
+
+    def transform_func(x):
+        return x
+
+    def is_doc_func(x):
+        return True
 
     # 3. 執行
     results = await strategy.crawl_recursive_with_progress(
-        start_urls=start_urls,
-        transform_url_func=transform_func,
-        is_documentation_site_func=is_doc_func,
-        max_depth=1
+        start_urls=start_urls, transform_url_func=transform_func, is_documentation_site_func=is_doc_func, max_depth=1
     )
 
     # 4. 斷言
     assert len(results) > 0
     print("\n✅ Task E: Recursive Strategy Parity Test PASSED (Async Gen).")
+
 
 if __name__ == "__main__":
     pytest.main([__file__])

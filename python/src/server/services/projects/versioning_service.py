@@ -8,6 +8,7 @@ from ...config.logfire_config import get_logger
 
 logger = get_logger(__name__)
 
+
 class VersioningService(BaseRepository):
     """Service class for document versioning operations"""
 
@@ -28,6 +29,7 @@ class VersioningService(BaseRepository):
         """
         Creates a new version record for a project document field.
         """
+
         # 1. Get latest version number
         def _get_latest():
             return (
@@ -64,6 +66,7 @@ class VersioningService(BaseRepository):
 
     async def get_version_history(self, project_id: str) -> tuple[bool, dict[str, Any]]:
         """Retrieve the version history for a specific project."""
+
         def _query():
             return (
                 self.supabase_client.table("archon_document_versions")
@@ -72,10 +75,12 @@ class VersioningService(BaseRepository):
                 .order("created_at", desc=True)
                 .execute()
             )
+
         return self.execute_query(_query, "Failed to fetch version history")
 
     def list_all_versions(self) -> tuple[bool, dict[str, Any]]:
         """List all document versions globally."""
+
         def _query():
             return (
                 self.supabase_client.table("archon_document_versions")
@@ -92,19 +97,23 @@ class VersioningService(BaseRepository):
 
     def list_versions(self, project_id: str, field_name: str | None = None) -> tuple[bool, dict[str, Any]]:
         """List version history for a project's JSONB fields."""
+
         def _query():
             query = self.supabase_client.table("archon_document_versions").select("*").eq("project_id", project_id)
             if field_name:
                 query = query.eq("field_name", field_name)
             return query.order("version_number", desc=True).execute()
 
-        success, res = self.execute_query(_query, f"Failed to fetch versions for project {project_id}", require_data=False)
+        success, res = self.execute_query(
+            _query, f"Failed to fetch versions for project {project_id}", require_data=False
+        )
         if success:
             return True, {"versions": res.get("data", []), "total_count": len(res.get("data", []))}
         return False, res
 
     def get_version_content(self, project_id: str, field_name: str, version_number: int) -> tuple[bool, dict[str, Any]]:
         """Get a specific version's content."""
+
         def _query():
             return (
                 self.supabase_client.table("archon_document_versions")
@@ -121,7 +130,9 @@ class VersioningService(BaseRepository):
             return True, cast(dict[str, Any], res.get("data"))
         return False, res
 
-    def restore_version(self, project_id: str, field_name: str, version_number: int, restored_by: str = "system") -> tuple[bool, dict[str, Any]]:
+    def restore_version(
+        self, project_id: str, field_name: str, version_number: int, restored_by: str = "system"
+    ) -> tuple[bool, dict[str, Any]]:
         """Restore a project's JSONB field to a specific version."""
         try:
             # 1. Get the content from the specific version
@@ -135,7 +146,12 @@ class VersioningService(BaseRepository):
 
             # 2. Update the project table
             def _update_project():
-                return self.supabase_client.table("archon_projects").update({field_name: content}).eq("id", project_id).execute()
+                return (
+                    self.supabase_client.table("archon_projects")
+                    .update({field_name: content})
+                    .eq("id", project_id)
+                    .execute()
+                )
 
             proj_success, proj_res = self.execute_query(_update_project, f"Failed to update project {field_name}")
             if not proj_success:
@@ -148,7 +164,7 @@ class VersioningService(BaseRepository):
                 content=cast(dict[str, Any], content),
                 change_summary=f"Restored to version {version_number}",
                 change_type="restore",
-                created_by=restored_by
+                created_by=restored_by,
             )
 
             return True, {"restored_content": content}
@@ -157,6 +173,7 @@ class VersioningService(BaseRepository):
 
     async def get_all_versions(self) -> tuple[bool, dict[str, Any]]:
         """Retrieve all document versions across all projects."""
+
         def _query():
             return (
                 self.supabase_client.table("archon_sources")
@@ -165,4 +182,5 @@ class VersioningService(BaseRepository):
                 .limit(100)
                 .execute()
             )
+
         return self.execute_query(_query, "Failed to fetch all versions")

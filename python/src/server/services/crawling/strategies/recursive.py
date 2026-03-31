@@ -82,9 +82,7 @@ class RecursiveCrawlStrategy:
             raise ValueError(f"Failed to load crawler configuration: {e}") from e
         except Exception as e:
             # For non-critical errors (e.g., network issues), use defaults but log prominently
-            logger.error(
-                f"Failed to load crawl settings from database: {e}, using defaults", exc_info=True
-            )
+            logger.error(f"Failed to load crawl settings from database: {e}, using defaults", exc_info=True)
             batch_size = 50
             if max_concurrent is None:
                 max_concurrent = 10  # Safe default to prevent memory issues
@@ -96,9 +94,7 @@ class RecursiveCrawlStrategy:
         has_doc_sites = any(is_documentation_site_func(url) for url in start_urls)
 
         if has_doc_sites:
-            logger.info(
-                "Detected documentation sites for recursive crawl, using enhanced configuration"
-            )
+            logger.info("Detected documentation sites for recursive crawl, using enhanced configuration")
             run_config = CrawlerRunConfig(
                 cache_mode=CacheMode.BYPASS,
                 stream=True,  # Enable streaming for faster parallel processing
@@ -135,12 +131,7 @@ class RecursiveCrawlStrategy:
             if progress_callback:
                 # Pass step information as flattened kwargs for consistency
                 await progress_callback(
-                    "crawling",
-                    progress_val,
-                    message,
-                    current_step=message,
-                    step_message=message,
-                    **kwargs
+                    "crawling", progress_val, message, current_step=message, step_message=message, **kwargs
                 )
 
         visited = set()
@@ -158,19 +149,13 @@ class RecursiveCrawlStrategy:
             if cancellation_check:
                 cancellation_check()
 
-            urls_to_crawl = [
-                normalize_url(url) for url in current_urls if normalize_url(url) not in visited
-            ]
+            urls_to_crawl = [normalize_url(url) for url in current_urls if normalize_url(url) not in visited]
             if not urls_to_crawl:
                 break
 
             # Calculate progress for this depth level
-            depth_start = start_progress + int(
-                (depth / max_depth) * (end_progress - start_progress) * 0.8
-            )
-            depth_end = start_progress + int(
-                ((depth + 1) / max_depth) * (end_progress - start_progress) * 0.8
-            )
+            depth_start = start_progress + int((depth / max_depth) * (end_progress - start_progress) * 0.8)
+            depth_end = start_progress + int(((depth + 1) / max_depth) * (end_progress - start_progress) * 0.8)
 
             await report_progress(
                 depth_start,
@@ -200,9 +185,7 @@ class RecursiveCrawlStrategy:
                     url_mapping[transformed] = url
 
                 # Calculate progress for this batch within the depth
-                batch_progress = depth_start + int(
-                    (batch_idx / len(urls_to_crawl)) * (depth_end - depth_start)
-                )
+                batch_progress = depth_start + int((batch_idx / len(urls_to_crawl)) * (depth_end - depth_start))
                 await report_progress(
                     batch_progress,
                     f"Depth {depth + 1}: crawling URLs {batch_idx + 1}-{batch_end_idx} of {len(urls_to_crawl)}",
@@ -236,11 +219,13 @@ class RecursiveCrawlStrategy:
                     total_processed += 1
 
                     if result.success and result.markdown:
-                        results_all.append({
-                            "url": original_url,
-                            "markdown": result.markdown,
-                            "html": result.html,  # Always use raw HTML for code extraction
-                        })
+                        results_all.append(
+                            {
+                                "url": original_url,
+                                "markdown": result.markdown,
+                                "html": result.html,  # Always use raw HTML for code extraction
+                            }
+                        )
                         depth_successful += 1
 
                         # Find internal links for next depth

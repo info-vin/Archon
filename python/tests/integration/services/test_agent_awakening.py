@@ -1,4 +1,3 @@
-
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -9,7 +8,6 @@ from src.server.services.agent_service import AgentService
 
 @pytest.mark.asyncio
 class TestAgentAwakening:
-
     async def test_agent_registry_load(self):
         """Verify Registry loads correct config for known agents."""
         # 1. MarketBot
@@ -35,13 +33,21 @@ class TestAgentAwakening:
         # Physical Alignment: Setup Mock MCP Client with new OpenAI-style tool schema (Phase 4.6.19)
         mock_mcp = AsyncMock()
         mock_mcp.list_tools.return_value = [
-            {"type": "function", "function": {"name": "search_job_market", "description": "Search 104", "parameters": {}}},
-            {"type": "function", "function": {"name": "perform_rag_query", "description": "Search RAG", "parameters": {}}}
+            {
+                "type": "function",
+                "function": {"name": "search_job_market", "description": "Search 104", "parameters": {}},
+            },
+            {
+                "type": "function",
+                "function": {"name": "perform_rag_query", "description": "Search RAG", "parameters": {}},
+            },
         ]
         service = AgentService(mcp_client=mock_mcp)
 
         # Mock Task Service (Async methods must return awaitables)
-        mock_task_service.get_task = AsyncMock(return_value=(True, {"task": {"title": "Write a blog", "description": "About AI"}}))
+        mock_task_service.get_task = AsyncMock(
+            return_value=(True, {"task": {"title": "Write a blog", "description": "About AI"}})
+        )
         mock_task_service.update_task = AsyncMock(return_value=(True, {}))
 
         # Mock LLM Client
@@ -77,4 +83,4 @@ class TestAgentAwakening:
         # We expected filtered tools for MarketBot
         tool_names = [t["function"]["name"] for t in tools]
         assert "search_job_market" in tool_names
-        assert "search_code_examples" not in tool_names # DevBot tool should NOT be here
+        assert "search_code_examples" not in tool_names  # DevBot tool should NOT be here

@@ -42,10 +42,17 @@ class TestNoZeroEmbeddings:
         mock_get_configs = AsyncMock(return_value=[primary_config])
         mock_create_client = AsyncMock(return_value=mock_client)
 
-        with patch("src.server.services.embeddings.embedding_service.credential_service.get_embedding_provider_configs", mock_get_configs), \
-             patch("src.server.services.embeddings.embedding_service.create_embedding_client", mock_create_client), \
-             patch("src.server.services.embeddings.embedding_service.credential_service.get_credentials_by_category", AsyncMock(return_value={"EMBEDDING_BATCH_SIZE": "10"})):
-
+        with (
+            patch(
+                "src.server.services.embeddings.embedding_service.credential_service.get_embedding_provider_configs",
+                mock_get_configs,
+            ),
+            patch("src.server.services.embeddings.embedding_service.create_embedding_client", mock_create_client),
+            patch(
+                "src.server.services.embeddings.embedding_service.credential_service.get_credentials_by_category",
+                AsyncMock(return_value={"EMBEDDING_BATCH_SIZE": "10"}),
+            ),
+        ):
             # Single embedding still raises for backward compatibility
             with pytest.raises(EmbeddingQuotaExhaustedError) as exc_info:
                 await create_embedding("test text")
@@ -66,10 +73,17 @@ class TestNoZeroEmbeddings:
         mock_get_configs = AsyncMock(return_value=[primary_config])
         mock_create_client = AsyncMock(return_value=mock_client)
 
-        with patch("src.server.services.embeddings.embedding_service.credential_service.get_embedding_provider_configs", mock_get_configs), \
-             patch("src.server.services.embeddings.embedding_service.create_embedding_client", mock_create_client), \
-             patch("src.server.services.embeddings.embedding_service.credential_service.get_credentials_by_category", AsyncMock(return_value={"EMBEDDING_BATCH_SIZE": "10"})):
-
+        with (
+            patch(
+                "src.server.services.embeddings.embedding_service.credential_service.get_embedding_provider_configs",
+                mock_get_configs,
+            ),
+            patch("src.server.services.embeddings.embedding_service.create_embedding_client", mock_create_client),
+            patch(
+                "src.server.services.embeddings.embedding_service.credential_service.get_credentials_by_category",
+                AsyncMock(return_value={"EMBEDDING_BATCH_SIZE": "10"}),
+            ),
+        ):
             with pytest.raises(EmbeddingRateLimitError) as exc_info:
                 await create_embedding("test text")
 
@@ -78,14 +92,10 @@ class TestNoZeroEmbeddings:
     @pytest.mark.asyncio
     async def test_async_api_error_raises_exception(self) -> None:
         """Test that API errors raise exception instead of returning zeros."""
-        with patch(
-            "src.server.services.embeddings.embedding_service.get_llm_client"
-        ) as mock_client:
+        with patch("src.server.services.embeddings.embedding_service.get_llm_client") as mock_client:
             # Mock the client to raise generic error
             mock_ctx = AsyncMock()
-            mock_ctx.__aenter__.return_value.embeddings.create.side_effect = Exception(
-                "Network error"
-            )
+            mock_ctx.__aenter__.return_value.embeddings.create.side_effect = Exception("Network error")
             mock_client.return_value = mock_ctx
 
             with pytest.raises(EmbeddingAPIError) as exc_info:
@@ -103,19 +113,28 @@ class TestNoZeroEmbeddings:
         mock_response.data = [Mock(embedding=[0.1] * 1536), Mock(embedding=[0.2] * 1536)]
 
         # First call succeeds, second fails
-        mock_client.embeddings.create = AsyncMock(side_effect=[
-            mock_response,
-            Exception("API Error"),
-        ])
+        mock_client.embeddings.create = AsyncMock(
+            side_effect=[
+                mock_response,
+                Exception("API Error"),
+            ]
+        )
 
         primary_config = {"provider": "openai", "embedding_model": "text-embedding-ada-002", "api_key": "key-ok"}
         mock_get_configs = AsyncMock(return_value=[primary_config])
         mock_create_client = AsyncMock(return_value=mock_client)
 
-        with patch("src.server.services.embeddings.embedding_service.credential_service.get_embedding_provider_configs", mock_get_configs), \
-             patch("src.server.services.embeddings.embedding_service.create_embedding_client", mock_create_client), \
-             patch("src.server.services.embeddings.embedding_service.credential_service.get_credentials_by_category", AsyncMock(return_value={"EMBEDDING_BATCH_SIZE": "2"})):
-
+        with (
+            patch(
+                "src.server.services.embeddings.embedding_service.credential_service.get_embedding_provider_configs",
+                mock_get_configs,
+            ),
+            patch("src.server.services.embeddings.embedding_service.create_embedding_client", mock_create_client),
+            patch(
+                "src.server.services.embeddings.embedding_service.credential_service.get_credentials_by_category",
+                AsyncMock(return_value={"EMBEDDING_BATCH_SIZE": "2"}),
+            ),
+        ):
             # Process 4 texts (batch size will be 2)
             texts = ["text1", "text2", "text3", "text4"]
             result = await create_embeddings_batch(texts)
@@ -149,10 +168,17 @@ class TestNoZeroEmbeddings:
         mock_get_configs = AsyncMock(return_value=[primary_config])
         mock_create_client = AsyncMock(return_value=mock_client)
 
-        with patch("src.server.services.embeddings.embedding_service.credential_service.get_embedding_provider_configs", mock_get_configs), \
-             patch("src.server.services.embeddings.embedding_service.create_embedding_client", mock_create_client), \
-             patch("src.server.services.embeddings.embedding_service.credential_service.get_credentials_by_category", AsyncMock(return_value={"EMBEDDING_DIMENSIONS": "3072"})):
-
+        with (
+            patch(
+                "src.server.services.embeddings.embedding_service.credential_service.get_embedding_provider_configs",
+                mock_get_configs,
+            ),
+            patch("src.server.services.embeddings.embedding_service.create_embedding_client", mock_create_client),
+            patch(
+                "src.server.services.embeddings.embedding_service.credential_service.get_credentials_by_category",
+                AsyncMock(return_value={"EMBEDDING_DIMENSIONS": "3072"}),
+            ),
+        ):
             result = await create_embeddings_batch(["test text"])
 
             # Verify the dimensions parameter was passed correctly
@@ -182,10 +208,17 @@ class TestNoZeroEmbeddings:
         mock_get_configs = AsyncMock(return_value=[primary_config])
         mock_create_client = AsyncMock(return_value=mock_client)
 
-        with patch("src.server.services.embeddings.embedding_service.credential_service.get_embedding_provider_configs", mock_get_configs), \
-             patch("src.server.services.embeddings.embedding_service.create_embedding_client", mock_create_client), \
-             patch("src.server.services.embeddings.embedding_service.credential_service.get_credentials_by_category", AsyncMock(return_value={})):# No dimensions specified
-
+        with (
+            patch(
+                "src.server.services.embeddings.embedding_service.credential_service.get_embedding_provider_configs",
+                mock_get_configs,
+            ),
+            patch("src.server.services.embeddings.embedding_service.create_embedding_client", mock_create_client),
+            patch(
+                "src.server.services.embeddings.embedding_service.credential_service.get_credentials_by_category",
+                AsyncMock(return_value={}),
+            ),
+        ):  # No dimensions specified
             result = await create_embeddings_batch(["test text"])
 
             # Verify the default dimensions parameter was used
@@ -211,10 +244,17 @@ class TestNoZeroEmbeddings:
         mock_get_configs = AsyncMock(return_value=[primary_config])
         mock_create_client = AsyncMock(return_value=mock_client)
 
-        with patch("src.server.services.embeddings.embedding_service.credential_service.get_embedding_provider_configs", mock_get_configs), \
-             patch("src.server.services.embeddings.embedding_service.create_embedding_client", mock_create_client), \
-             patch("src.server.services.embeddings.embedding_service.credential_service.get_credentials_by_category", AsyncMock(return_value={"EMBEDDING_BATCH_SIZE": "10"})):
-
+        with (
+            patch(
+                "src.server.services.embeddings.embedding_service.credential_service.get_embedding_provider_configs",
+                mock_get_configs,
+            ),
+            patch("src.server.services.embeddings.embedding_service.create_embedding_client", mock_create_client),
+            patch(
+                "src.server.services.embeddings.embedding_service.credential_service.get_credentials_by_category",
+                AsyncMock(return_value={"EMBEDDING_BATCH_SIZE": "10"}),
+            ),
+        ):
             texts = ["text1", "text2", "text3", "text4"]
             result = await create_embeddings_batch(texts)
 
@@ -241,9 +281,7 @@ class TestNoZeroEmbeddings:
         test_text = "This is a test"
 
         # Test: Batch function with error should return failure result, not zeros
-        with patch(
-            "src.server.services.embeddings.embedding_service.get_llm_client"
-        ) as mock_client:
+        with patch("src.server.services.embeddings.embedding_service.get_llm_client") as mock_client:
             # Mock the client to raise an error
             mock_ctx = AsyncMock()
             mock_ctx.__aenter__.return_value.embeddings.create.side_effect = Exception("Test error")

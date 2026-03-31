@@ -14,13 +14,10 @@ class KnowledgeItemService(BaseRepository):
         super().__init__(supabase_client)
 
     async def list_items(
-        self,
-        page: int = 1,
-        per_page: int = 20,
-        knowledge_type: str | None = None,
-        search: str | None = None
+        self, page: int = 1, per_page: int = 20, knowledge_type: str | None = None, search: str | None = None
     ) -> tuple[bool, dict[str, Any]]:
         """List knowledge items with pagination."""
+
         def _query():
             query = self.supabase_client.table("archon_sources").select("*", count="exact")
 
@@ -43,23 +40,24 @@ class KnowledgeItemService(BaseRepository):
                 "items": data,
                 "total": result.get("count", 0) or len(data),
                 "page": page,
-                "per_page": per_page
+                "per_page": per_page,
             }
         return False, result
 
     async def get_item(self, source_id: str) -> tuple[bool, dict[str, Any]]:
         """Retrieve a single knowledge item."""
+
         def _query():
-            return self.supabase_client.table("archon_sources").select("*").eq("source_id", source_id).single().execute()
+            return (
+                self.supabase_client.table("archon_sources").select("*").eq("source_id", source_id).single().execute()
+            )
 
         success, result = self.execute_query(_query, f"Failed to get item {source_id}", require_data=True)
         if success:
             return True, {"item": result["data"]}
         return False, result
 
-    async def update_item(
-        self, source_id: str, updates: dict[str, Any]
-    ) -> tuple[bool, dict[str, Any]]:
+    async def update_item(self, source_id: str, updates: dict[str, Any]) -> tuple[bool, dict[str, Any]]:
         """
         Update a knowledge item's metadata.
         """
@@ -85,7 +83,12 @@ class KnowledgeItemService(BaseRepository):
             if metadata_updates:
                 # Get current metadata
                 def _meta_query():
-                    return self.supabase_client.table("archon_sources").select("metadata").eq("source_id", source_id).execute()
+                    return (
+                        self.supabase_client.table("archon_sources")
+                        .select("metadata")
+                        .eq("source_id", source_id)
+                        .execute()
+                    )
 
                 meta_success, meta_res = self.execute_query(_meta_query, "Error getting metadata", require_data=False)
 
@@ -98,7 +101,12 @@ class KnowledgeItemService(BaseRepository):
 
             # Perform the update
             def _update_query():
-                return self.supabase_client.table("archon_sources").update(update_data).eq("source_id", source_id).execute()
+                return (
+                    self.supabase_client.table("archon_sources")
+                    .update(update_data)
+                    .eq("source_id", source_id)
+                    .execute()
+                )
 
             success, result = self.execute_query(_update_query, f"Failed to update item {source_id}", require_data=True)
             if success:
@@ -110,6 +118,7 @@ class KnowledgeItemService(BaseRepository):
 
     async def get_available_sources(self) -> tuple[bool, dict[str, Any]]:
         """Get all available sources for RAG queries."""
+
         def _query():
             return self.supabase_client.table("archon_sources").select("source_id, title, metadata").execute()
 
@@ -119,12 +128,14 @@ class KnowledgeItemService(BaseRepository):
             formatted = []
             for row in result["data"]:
                 meta = row.get("metadata", {})
-                formatted.append({
-                    "id": row["source_id"],
-                    "source_id": row["source_id"],
-                    "title": row["title"],
-                    "knowledge_type": meta.get("knowledge_type", "technical"),
-                    "url": row.get("source_url") or meta.get("original_url", f"source://{row['source_id']}")
-                })
+                formatted.append(
+                    {
+                        "id": row["source_id"],
+                        "source_id": row["source_id"],
+                        "title": row["title"],
+                        "knowledge_type": meta.get("knowledge_type", "technical"),
+                        "url": row.get("source_url") or meta.get("original_url", f"source://{row['source_id']}"),
+                    }
+                )
             return True, {"sources": formatted}
         return False, result

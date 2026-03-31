@@ -39,7 +39,7 @@ def test_pending_migration_init():
         version="0.1.0",
         name="001_initial",
         sql_content="CREATE TABLE test (id INT);",
-        file_path="migration/0.1.0/001_initial.sql"
+        file_path="migration/0.1.0/001_initial.sql",
     )
 
     assert migration.version == "0.1.0"
@@ -56,7 +56,7 @@ def test_migration_record_init():
         "version": "0.1.0",
         "migration_name": "001_initial",
         "applied_at": "2025-01-01T00:00:00Z",
-        "checksum": "abc123"
+        "checksum": "abc123",
     }
 
     record = MigrationRecord(data)
@@ -105,8 +105,8 @@ async def test_get_applied_migrations_success(migration_service, mock_supabase_c
 
     mock_supabase_client.table.return_value.select.return_value.order.return_value.execute.return_value = mock_response
 
-    with patch.object(migration_service, '_get_supabase_client', return_value=mock_supabase_client):
-        with patch.object(migration_service, 'check_migrations_table_exists', return_value=True):
+    with patch.object(migration_service, "_get_supabase_client", return_value=mock_supabase_client):
+        with patch.object(migration_service, "check_migrations_table_exists", return_value=True):
             result = await migration_service.get_applied_migrations()
 
             assert len(result) == 1
@@ -118,8 +118,8 @@ async def test_get_applied_migrations_success(migration_service, mock_supabase_c
 @pytest.mark.asyncio
 async def test_get_applied_migrations_table_not_exists(migration_service, mock_supabase_client):
     """Test handling when migrations table doesn't exist."""
-    with patch.object(migration_service, '_get_supabase_client', return_value=mock_supabase_client):
-        with patch.object(migration_service, 'check_migrations_table_exists', return_value=False):
+    with patch.object(migration_service, "_get_supabase_client", return_value=mock_supabase_client):
+        with patch.object(migration_service, "check_migrations_table_exists", return_value=False):
             result = await migration_service.get_applied_migrations()
             assert result == []
 
@@ -133,19 +133,19 @@ async def test_get_pending_migrations_with_files(migration_service, mock_supabas
             version="0.1.0",
             name="001_initial",
             sql_content="CREATE TABLE test;",
-            file_path="migration/0.1.0/001_initial.sql"
+            file_path="migration/0.1.0/001_initial.sql",
         ),
         PendingMigration(
             version="0.1.0",
             name="002_update",
             sql_content="ALTER TABLE test ADD col TEXT;",
-            file_path="migration/0.1.0/002_update.sql"
-        )
+            file_path="migration/0.1.0/002_update.sql",
+        ),
     ]
 
     # Mock no applied migrations
-    with patch.object(migration_service, 'scan_migration_directory', return_value=mock_migrations):
-        with patch.object(migration_service, 'get_applied_migrations', return_value=[]):
+    with patch.object(migration_service, "scan_migration_directory", return_value=mock_migrations):
+        with patch.object(migration_service, "get_applied_migrations", return_value=[]):
             result = await migration_service.get_pending_migrations()
 
             assert len(result) == 2
@@ -163,29 +163,31 @@ async def test_get_pending_migrations_some_applied(migration_service, mock_supab
             version="0.1.0",
             name="001_initial",
             sql_content="CREATE TABLE test;",
-            file_path="migration/0.1.0/001_initial.sql"
+            file_path="migration/0.1.0/001_initial.sql",
         ),
         PendingMigration(
             version="0.1.0",
             name="002_update",
             sql_content="ALTER TABLE test ADD col TEXT;",
-            file_path="migration/0.1.0/002_update.sql"
-        )
+            file_path="migration/0.1.0/002_update.sql",
+        ),
     ]
 
     # Mock first migration as applied
     mock_applied = [
-        MigrationRecord({
-            "version": "0.1.0",
-            "migration_name": "001_initial",
-            "applied_at": "2025-01-01T00:00:00Z",
-            "checksum": None
-        })
+        MigrationRecord(
+            {
+                "version": "0.1.0",
+                "migration_name": "001_initial",
+                "applied_at": "2025-01-01T00:00:00Z",
+                "checksum": None,
+            }
+        )
     ]
 
-    with patch.object(migration_service, 'scan_migration_directory', return_value=mock_all_migrations):
-        with patch.object(migration_service, 'get_applied_migrations', return_value=mock_applied):
-            with patch.object(migration_service, 'check_migrations_table_exists', return_value=True):
+    with patch.object(migration_service, "scan_migration_directory", return_value=mock_all_migrations):
+        with patch.object(migration_service, "get_applied_migrations", return_value=mock_applied):
+            with patch.object(migration_service, "check_migrations_table_exists", return_value=True):
                 result = await migration_service.get_pending_migrations()
 
                 assert len(result) == 1
@@ -201,23 +203,25 @@ async def test_get_migration_status_all_applied(migration_service, mock_supabase
             version="0.1.0",
             name="001_initial",
             sql_content="CREATE TABLE test;",
-            file_path="migration/0.1.0/001_initial.sql"
+            file_path="migration/0.1.0/001_initial.sql",
         )
     ]
 
     # Mock migration as applied
     mock_applied = [
-        MigrationRecord({
-            "version": "0.1.0",
-            "migration_name": "001_initial",
-            "applied_at": "2025-01-01T00:00:00Z",
-            "checksum": None
-        })
+        MigrationRecord(
+            {
+                "version": "0.1.0",
+                "migration_name": "001_initial",
+                "applied_at": "2025-01-01T00:00:00Z",
+                "checksum": None,
+            }
+        )
     ]
 
-    with patch.object(migration_service, 'scan_migration_directory', return_value=mock_all_migrations):
-        with patch.object(migration_service, 'get_applied_migrations', return_value=mock_applied):
-            with patch.object(migration_service, 'check_migrations_table_exists', return_value=True):
+    with patch.object(migration_service, "scan_migration_directory", return_value=mock_all_migrations):
+        with patch.object(migration_service, "get_applied_migrations", return_value=mock_applied):
+            with patch.object(migration_service, "check_migrations_table_exists", return_value=True):
                 result = await migration_service.get_migration_status()
 
                 assert result["current_version"] == ARCHON_VERSION
@@ -236,19 +240,19 @@ async def test_get_migration_status_bootstrap_required(migration_service, mock_s
             version="0.1.0",
             name="001_initial",
             sql_content="CREATE TABLE test;",
-            file_path="migration/0.1.0/001_initial.sql"
+            file_path="migration/0.1.0/001_initial.sql",
         ),
         PendingMigration(
             version="0.1.0",
             name="002_update",
             sql_content="ALTER TABLE test ADD col TEXT;",
-            file_path="migration/0.1.0/002_update.sql"
-        )
+            file_path="migration/0.1.0/002_update.sql",
+        ),
     ]
 
-    with patch.object(migration_service, 'scan_migration_directory', return_value=mock_all_migrations):
-        with patch.object(migration_service, 'get_applied_migrations', return_value=[]):
-            with patch.object(migration_service, 'check_migrations_table_exists', return_value=False):
+    with patch.object(migration_service, "scan_migration_directory", return_value=mock_all_migrations):
+        with patch.object(migration_service, "get_applied_migrations", return_value=[]):
+            with patch.object(migration_service, "check_migrations_table_exists", return_value=False):
                 result = await migration_service.get_migration_status()
 
                 assert result["bootstrap_required"] is True
@@ -261,9 +265,9 @@ async def test_get_migration_status_bootstrap_required(migration_service, mock_s
 @pytest.mark.asyncio
 async def test_get_migration_status_no_files(migration_service, mock_supabase_client):
     """Test migration status when no migration files exist."""
-    with patch.object(migration_service, 'scan_migration_directory', return_value=[]):
-        with patch.object(migration_service, 'get_applied_migrations', return_value=[]):
-            with patch.object(migration_service, 'check_migrations_table_exists', return_value=True):
+    with patch.object(migration_service, "scan_migration_directory", return_value=[]):
+        with patch.object(migration_service, "get_applied_migrations", return_value=[]):
+            with patch.object(migration_service, "check_migrations_table_exists", return_value=True):
                 result = await migration_service.get_migration_status()
 
                 assert result["has_pending"] is False

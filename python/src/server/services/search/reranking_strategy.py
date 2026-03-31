@@ -30,9 +30,7 @@ DEFAULT_RERANKING_MODEL = "cross-encoder/ms-marco-MiniLM-L-6-v2"
 class RerankingStrategy:
     """Strategy class implementing result reranking using CrossEncoder models"""
 
-    def __init__(
-        self, model_name: str = DEFAULT_RERANKING_MODEL, model_instance: Any | None = None
-    ):
+    def __init__(self, model_name: str = DEFAULT_RERANKING_MODEL, model_instance: Any | None = None):
         """
         Initialize reranking strategy.
 
@@ -165,14 +163,10 @@ class RerankingStrategy:
             logger.debug("Reranking skipped - no model or no results")
             return results
 
-        with safe_span(
-            "rerank_results", result_count=len(results), model_name=self.model_name
-        ) as span:
+        with safe_span("rerank_results", result_count=len(results), model_name=self.model_name) as span:
             try:
                 # Build query-document pairs
-                query_doc_pairs, valid_indices = self.build_query_document_pairs(
-                    query, results, content_key
-                )
+                query_doc_pairs, valid_indices = self.build_query_document_pairs(query, results, content_key)
 
                 if not query_doc_pairs:
                     logger.warning("No valid texts found for reranking")

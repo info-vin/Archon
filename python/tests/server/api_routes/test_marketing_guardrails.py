@@ -8,12 +8,14 @@ from src.server.main import app
 
 client = TestClient(app)
 
+
 @pytest.fixture
 def mock_admin_user():
     user = {"id": "admin1", "role": "system_admin", "email": "admin@archon.com"}
     app.dependency_overrides[get_current_user] = lambda: user
     yield user
     app.dependency_overrides.pop(get_current_user, None)
+
 
 def test_guardrail_blocks_forbidden_input(mock_admin_user):
     # Physical Path Alignment: /api/marketing/draft-blog
@@ -23,11 +25,13 @@ def test_guardrail_blocks_forbidden_input(mock_admin_user):
         response = client.post("/api/marketing/draft-blog", json={"topic": "forbidden"})
         assert response.status_code == 400
 
+
 def test_guardrail_allows_safe_input(mock_admin_user):
     with patch("src.server.api_routes.marketing_api.MarketingService.draft_blog", new_callable=AsyncMock) as mock_draft:
         mock_draft.return_value = (True, {"title": "Safe", "content": "Clean content"})
         response = client.post("/api/marketing/draft-blog", json={"topic": "safe"})
         assert response.status_code == 200
+
 
 def test_guardrail_blocks_ai_leakage(mock_admin_user):
     # Physical Path Alignment: /api/marketing/draft-blog

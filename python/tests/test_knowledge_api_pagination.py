@@ -12,13 +12,16 @@ def setup_module(module):
     app.dependency_overrides[get_current_user] = lambda: {
         "id": "user-knowledge",
         "role": "system_admin",
-        "department": "Engineering"
+        "department": "Engineering",
     }
+
 
 def teardown_module(module):
     app.dependency_overrides.pop(get_current_user, None)
 
+
 client = TestClient(app)
+
 
 def test_knowledge_summary_endpoint():
     # Physically aligned patch point for KnowledgeItemService
@@ -30,6 +33,7 @@ def test_knowledge_summary_endpoint():
         response = client.get("/api/knowledge-items/sources")
         assert response.status_code == 200
 
+
 def test_chunks_pagination():
     # Chunks are delegated to KnowledgeSummaryService
     with patch("src.server.api_routes.knowledge.items.KnowledgeSummaryService") as mock_class:
@@ -40,6 +44,7 @@ def test_chunks_pagination():
         response = client.get("/api/knowledge-items/source-1/chunks")
         assert response.status_code == 200
 
+
 def test_pagination_limit_validation():
     # Smoke test connectivity with identity override
     with patch("src.server.api_routes.knowledge.items.KnowledgeItemService") as mock_class:
@@ -49,6 +54,7 @@ def test_pagination_limit_validation():
         response = client.get("/api/knowledge-items?per_page=10")
         assert response.status_code == 200
 
+
 def test_empty_results_pagination():
     with patch("src.server.api_routes.knowledge.items.KnowledgeItemService") as mock_class:
         mock_inst = MagicMock()
@@ -56,6 +62,7 @@ def test_empty_results_pagination():
         mock_class.return_value = mock_inst
         response = client.get("/api/knowledge-items?page=100")
         assert response.status_code == 200
+
 
 def test_code_examples_rag_endpoint():
     # Use search path - Path the Service Logic in the search module

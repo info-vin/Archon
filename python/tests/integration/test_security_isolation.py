@@ -1,4 +1,3 @@
-
 from unittest.mock import MagicMock
 
 import pytest
@@ -20,7 +19,7 @@ async def test_department_isolation_physical_logic():
     all_proposals = [
         {"id": "p1", "request_payload": {"created_by_dept": "Marketing"}, "change_summary": "Marketing Blog"},
         {"id": "p2", "request_payload": {"created_by_dept": "Sales"}, "change_summary": "Sales Pitch"},
-        {"id": "p3", "request_payload": {"created_by_dept": "Marketing"}, "change_summary": "Another Ad"}
+        {"id": "p3", "request_payload": {"created_by_dept": "Marketing"}, "change_summary": "Another Ad"},
     ]
 
     # 3. Mock Data: Manager Profiles
@@ -31,12 +30,16 @@ async def test_department_isolation_physical_logic():
 
     # --- Test Scenario A: Marketing Manager ---
     # Setup chain of mocks for Supabase syntax: table().select().eq().single().execute()
-    mock_db.table.return_value.select.return_value.eq.return_value.single.return_value.execute.return_value.data = manager_marketing
+    mock_db.table.return_value.select.return_value.eq.return_value.single.return_value.execute.return_value.data = (
+        manager_marketing
+    )
 
     # Setup chain for the query filter
     # We expect table("proposed_changes").select("*").eq("status", "pending").filter(...).order().execute()
     mock_query = mock_db.table.return_value.select.return_value.eq.return_value.filter.return_value.order.return_value
-    mock_query.execute.return_value.data = [p for p in all_proposals if p["request_payload"]["created_by_dept"] == "Marketing"]
+    mock_query.execute.return_value.data = [
+        p for p in all_proposals if p["request_payload"]["created_by_dept"] == "Marketing"
+    ]
 
     res_marketing = await service.list_proposals(user_id="m1")
 
@@ -46,8 +49,12 @@ async def test_department_isolation_physical_logic():
     print("\n✅ Assertion Passed: Marketing Manager only sees Marketing proposals.")
 
     # --- Test Scenario B: Sales Manager ---
-    mock_db.table.return_value.select.return_value.eq.return_value.single.return_value.execute.return_value.data = manager_sales
-    mock_query.execute.return_value.data = [p for p in all_proposals if p["request_payload"]["created_by_dept"] == "Sales"]
+    mock_db.table.return_value.select.return_value.eq.return_value.single.return_value.execute.return_value.data = (
+        manager_sales
+    )
+    mock_query.execute.return_value.data = [
+        p for p in all_proposals if p["request_payload"]["created_by_dept"] == "Sales"
+    ]
 
     res_sales = await service.list_proposals(user_id="m2")
 
@@ -55,6 +62,7 @@ async def test_department_isolation_physical_logic():
     assert len(res_sales) == 1
     assert res_sales[0]["request_payload"]["created_by_dept"] == "Sales"
     print("✅ Assertion Passed: Sales Manager only sees Sales proposals.")
+
 
 if __name__ == "__main__":
     pytest.main([__file__])

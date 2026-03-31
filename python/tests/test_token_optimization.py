@@ -16,7 +16,7 @@ from src.server.services.projects.task_service import TaskService
 class TestProjectServiceOptimization:
     """Test ProjectService with include_content parameter."""
 
-    @patch('src.server.utils.get_supabase_client')
+    @patch("src.server.utils.get_supabase_client")
     async def test_list_projects_with_full_content(self, mock_supabase):
         """Test backward compatibility - default returns full content."""
         # Setup mock
@@ -25,18 +25,20 @@ class TestProjectServiceOptimization:
 
         # Mock response with large JSONB fields
         mock_response = Mock()
-        mock_response.data = [{
-            "id": "test-id",
-            "title": "Test Project",
-            "description": "Test Description",
-            "github_repo": "https://github.com/test/repo",
-            "docs": [{"id": "doc1", "content": {"large": "content" * 100}}],
-            "features": [{"feature1": "data"}],
-            "data": [{"key": "value"}],
-            "pinned": False,
-            "created_at": "2024-01-01",
-            "updated_at": "2024-01-01"
-        }]
+        mock_response.data = [
+            {
+                "id": "test-id",
+                "title": "Test Project",
+                "description": "Test Description",
+                "github_repo": "https://github.com/test/repo",
+                "docs": [{"id": "doc1", "content": {"large": "content" * 100}}],
+                "features": [{"feature1": "data"}],
+                "data": [{"key": "value"}],
+                "pinned": False,
+                "created_at": "2024-01-01",
+                "updated_at": "2024-01-01",
+            }
+        ]
 
         mock_table = Mock()
         mock_select = Mock()
@@ -64,7 +66,7 @@ class TestProjectServiceOptimization:
         # Verify SELECT * was used
         mock_table.select.assert_called_with("*")
 
-    @patch('src.server.utils.get_supabase_client')
+    @patch("src.server.utils.get_supabase_client")
     async def test_list_projects_lightweight(self, mock_supabase):
         """Test lightweight response excludes large fields."""
         # Setup mock
@@ -73,18 +75,20 @@ class TestProjectServiceOptimization:
 
         # Mock response with full data (after N+1 fix, we fetch all data)
         mock_response = Mock()
-        mock_response.data = [{
-            "id": "test-id",
-            "title": "Test Project",
-            "description": "Test Description",
-            "github_repo": "https://github.com/test/repo",
-            "created_at": "2024-01-01",
-            "updated_at": "2024-01-01",
-            "pinned": False,
-            "docs": [{"id": "doc1"}, {"id": "doc2"}, {"id": "doc3"}],  # 3 docs
-            "features": [{"feature1": "data"}, {"feature2": "data"}],  # 2 features
-            "data": [{"key": "value"}]  # Has data
-        }]
+        mock_response.data = [
+            {
+                "id": "test-id",
+                "title": "Test Project",
+                "description": "Test Description",
+                "github_repo": "https://github.com/test/repo",
+                "created_at": "2024-01-01",
+                "updated_at": "2024-01-01",
+                "pinned": False,
+                "docs": [{"id": "doc1"}, {"id": "doc2"}, {"id": "doc3"}],  # 3 docs
+                "features": [{"feature1": "data"}, {"feature2": "data"}],  # 2 features
+                "data": [{"key": "value"}],  # Has data
+            }
+        ]
 
         # Setup mock chain - now simpler after N+1 fix
         mock_table = Mock()
@@ -124,28 +128,28 @@ class TestProjectServiceOptimization:
         """Verify token count reduction."""
         # Simulate full content response
         full_content = {
-            "projects": [{
-                "id": "test",
-                "title": "Test",
-                "description": "Test Description",
-                "docs": [{"content": {"large": "x" * 10000}} for _ in range(5)],
-                "features": [{"data": "y" * 5000} for _ in range(3)],
-                "data": [{"values": "z" * 8000}]
-            }]
+            "projects": [
+                {
+                    "id": "test",
+                    "title": "Test",
+                    "description": "Test Description",
+                    "docs": [{"content": {"large": "x" * 10000}} for _ in range(5)],
+                    "features": [{"data": "y" * 5000} for _ in range(3)],
+                    "data": [{"values": "z" * 8000}],
+                }
+            ]
         }
 
         # Simulate lightweight response
         lightweight = {
-            "projects": [{
-                "id": "test",
-                "title": "Test",
-                "description": "Test Description",
-                "stats": {
-                    "docs_count": 5,
-                    "features_count": 3,
-                    "has_data": True
+            "projects": [
+                {
+                    "id": "test",
+                    "title": "Test",
+                    "description": "Test Description",
+                    "stats": {"docs_count": 5, "features_count": 3, "has_data": True},
                 }
-            }]
+            ]
         }
 
         # Calculate approximate token counts (rough estimate: 1 token ≈ 4 chars)
@@ -161,27 +165,29 @@ class TestProjectServiceOptimization:
 class TestTaskServiceOptimization:
     """Test TaskService with exclude_large_fields parameter."""
 
-    @patch('src.server.utils.get_supabase_client')
+    @patch("src.server.utils.get_supabase_client")
     async def test_list_tasks_with_large_fields(self, mock_supabase):
         """Test backward compatibility - default includes large fields."""
         mock_client = Mock()
         mock_supabase.return_value = mock_client
 
         mock_response = Mock()
-        mock_response.data = [{
-            "id": "task-1",
-            "project_id": "proj-1",
-            "title": "Test Task",
-            "description": "Test Description",
-            "sources": [{"url": "http://example.com", "content": "large"}],
-            "code_examples": [{"code": "function() { /* large */ }"}],
-            "status": "todo",
-            "assignee": "User",
-            "task_order": 0,
-            "feature": None,
-            "created_at": "2024-01-01",
-            "updated_at": "2024-01-01"
-        }]
+        mock_response.data = [
+            {
+                "id": "task-1",
+                "project_id": "proj-1",
+                "title": "Test Task",
+                "description": "Test Description",
+                "sources": [{"url": "http://example.com", "content": "large"}],
+                "code_examples": [{"code": "function() { /* large */ }"}],
+                "status": "todo",
+                "assignee": "User",
+                "task_order": 0,
+                "feature": None,
+                "created_at": "2024-01-01",
+                "updated_at": "2024-01-01",
+            }
+        ]
 
         # Setup mock chain
         mock_table = Mock()
@@ -204,27 +210,29 @@ class TestTaskServiceOptimization:
         assert "sources" in result["tasks"][0]
         assert "code_examples" in result["tasks"][0]
 
-    @patch('src.server.utils.get_supabase_client')
+    @patch("src.server.utils.get_supabase_client")
     async def test_list_tasks_exclude_large_fields(self, mock_supabase):
         """Test excluding large fields returns counts instead."""
         mock_client = Mock()
         mock_supabase.return_value = mock_client
 
         mock_response = Mock()
-        mock_response.data = [{
-            "id": "task-1",
-            "project_id": "proj-1",
-            "title": "Test Task",
-            "description": "Test Description",
-            "status": "todo",
-            "assignee": "User",
-            "task_order": 0,
-            "feature": None,
-            "sources": [1, 2, 3],  # Will be counted
-            "code_examples": [1, 2],  # Will be counted
-            "created_at": "2024-01-01",
-            "updated_at": "2024-01-01"
-        }]
+        mock_response.data = [
+            {
+                "id": "task-1",
+                "project_id": "proj-1",
+                "title": "Test Task",
+                "description": "Test Description",
+                "status": "todo",
+                "assignee": "User",
+                "task_order": 0,
+                "feature": None,
+                "sources": [1, 2, 3],  # Will be counted
+                "code_examples": [1, 2],  # Will be counted
+                "created_at": "2024-01-01",
+                "updated_at": "2024-01-01",
+            }
+        ]
 
         # Setup mock chain
         mock_table = Mock()
@@ -255,25 +263,29 @@ class TestTaskServiceOptimization:
 class TestDocumentServiceOptimization:
     """Test DocumentService with include_content parameter."""
 
-    @patch('src.server.utils.get_supabase_client')
+    @patch("src.server.utils.get_supabase_client")
     def test_list_documents_metadata_only(self, mock_supabase):
         """Test default returns metadata only."""
         mock_client = Mock()
         mock_supabase.return_value = mock_client
 
         mock_response = Mock()
-        mock_response.data = [{
-            "docs": [{
-                "id": "doc-1",
-                "title": "Test Doc",
-                "content": {"huge": "content" * 1000},
-                "document_type": "spec",
-                "status": "draft",
-                "version": "1.0",
-                "tags": ["test"],
-                "author": "Test Author"
-            }]
-        }]
+        mock_response.data = [
+            {
+                "docs": [
+                    {
+                        "id": "doc-1",
+                        "title": "Test Doc",
+                        "content": {"huge": "content" * 1000},
+                        "document_type": "spec",
+                        "status": "draft",
+                        "version": "1.0",
+                        "tags": ["test"],
+                        "author": "Test Author",
+                    }
+                ]
+            }
+        ]
 
         # Setup mock chain
         mock_table = Mock()
@@ -295,21 +307,16 @@ class TestDocumentServiceOptimization:
         assert doc["stats"]["content_size"] > 0
         assert doc["title"] == "Test Doc"
 
-    @patch('src.server.utils.get_supabase_client')
+    @patch("src.server.utils.get_supabase_client")
     def test_list_documents_with_content(self, mock_supabase):
         """Test include_content=True returns full documents."""
         mock_client = Mock()
         mock_supabase.return_value = mock_client
 
         mock_response = Mock()
-        mock_response.data = [{
-            "docs": [{
-                "id": "doc-1",
-                "title": "Test Doc",
-                "content": {"huge": "content"},
-                "document_type": "spec"
-            }]
-        }]
+        mock_response.data = [
+            {"docs": [{"id": "doc-1", "title": "Test Doc", "content": {"huge": "content"}, "document_type": "spec"}]}
+        ]
 
         # Setup mock chain
         mock_table = Mock()
@@ -339,18 +346,19 @@ class TestBackwardCompatibility:
         service = ProjectService(Mock())
         # Check default parameter value
         import inspect
+
         sig = inspect.signature(service.list_projects)
-        assert sig.parameters['include_content'].default is True
+        assert sig.parameters["include_content"].default is True
 
         # DocumentService default should NOT include content
         doc_service = DocumentService(Mock())
         sig = inspect.signature(doc_service.list_documents)
-        assert sig.parameters['include_content'].default is False
+        assert sig.parameters["include_content"].default is False
 
         # TaskService default should NOT exclude fields
         task_service = TaskService(Mock())
         sig = inspect.signature(task_service.list_tasks)
-        assert sig.parameters['exclude_large_fields'].default is False
+        assert sig.parameters["exclude_large_fields"].default is False
 
 
 if __name__ == "__main__":

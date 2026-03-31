@@ -1,4 +1,3 @@
-
 import hashlib
 import random
 
@@ -20,7 +19,9 @@ class LogoGenerator:
         bg_color = "#0F0F0F"
 
         # Start SVG
-        svg = f'<svg width="{width}" height="{height}" viewBox="0 0 {width} {height}" xmlns="http://www.w3.org/2000/svg">'
+        svg = (
+            f'<svg width="{width}" height="{height}" viewBox="0 0 {width} {height}" xmlns="http://www.w3.org/2000/svg">'
+        )
         svg += f'<rect width="100%" height="100%" fill="{bg_color}"/>'
 
         # Generate 3-5 geometric shapes
@@ -36,7 +37,9 @@ class LogoGenerator:
             elif shape_type == "rect":
                 x, y = rng.randint(0, width), rng.randint(0, height)
                 w, h = rng.randint(100, 300), rng.randint(100, 300)
-                svg += f'<rect x="{x}" y="{y}" width="{w}" height="{h}" fill="{color}" fill-opacity="{opacity}" rx="10" />'
+                svg += (
+                    f'<rect x="{x}" y="{y}" width="{w}" height="{h}" fill="{color}" fill-opacity="{opacity}" rx="10" />'
+                )
             else:
                 # Triangle/Polygon
                 points = []
@@ -44,8 +47,9 @@ class LogoGenerator:
                     points.append(f"{rng.randint(0, width)},{rng.randint(0, height)}")
                 svg += f'<polygon points="{" ".join(points)}" fill="{color}" fill-opacity="{opacity}" />'
 
-        svg += '</svg>'
+        svg += "</svg>"
         return svg
+
 
 def generate_logo_svg(seed: str) -> str:
     return LogoGenerator.generate_svg(seed)

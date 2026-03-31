@@ -9,6 +9,7 @@ from ...repositories.base_repository import BaseRepository
 
 logger = get_logger(__name__)
 
+
 class DocumentService(BaseRepository):
     def __init__(self, supabase_client=None):
         super().__init__(supabase_client)
@@ -33,15 +34,13 @@ class DocumentService(BaseRepository):
                     if isinstance(doc, dict):
                         # Calculate content size before popping it
                         import json
+
                         content = doc.get("content") or {}
                         content_size = len(json.dumps(content))
 
                         doc.pop("content", None)
                         if "stats" not in doc:
-                            doc["stats"] = {
-                                "version_count": doc.get("version", 1),
-                                "content_size": content_size
-                            }
+                            doc["stats"] = {"version_count": doc.get("version", 1), "content_size": content_size}
             return True, {"documents": docs_list}
         return False, result
 
@@ -67,6 +66,7 @@ class DocumentService(BaseRepository):
             "updated_at": datetime.utcnow().isoformat(),
             "version": 1,
         }
+
         def _query():
             res = self.supabase_client.table("archon_projects").select("docs").eq("id", project_id).single().execute()
             docs = res.data.get("docs") or {}
@@ -74,10 +74,13 @@ class DocumentService(BaseRepository):
                 docs = {d["id"]: d for d in docs if "id" in d}
             docs[doc_id] = new_doc
             return self.supabase_client.table("archon_projects").update({"docs": docs}).eq("id", project_id).execute()
+
         return self.execute_query(_query, "DB operation logged error")
 
     def get_document(self, project_id: str, doc_id: str) -> tuple[bool, dict[str, Any]]:
-        def _query(): return self.supabase_client.table("archon_projects").select("docs").eq("id", project_id).execute()
+        def _query():
+            return self.supabase_client.table("archon_projects").select("docs").eq("id", project_id).execute()
+
         success, result = self.execute_query(_query, "DB operation logged error")
         if success:
             docs = result["data"][0].get("docs") or {} if result["data"] else {}
@@ -87,7 +90,9 @@ class DocumentService(BaseRepository):
             return (True, {"document": doc}) if doc else (False, {"error": "Not found"})
         return False, result
 
-    def update_document(self, project_id: str, doc_id: str, update_fields: dict[str, Any]) -> tuple[bool, dict[str, Any]]:
+    def update_document(
+        self, project_id: str, doc_id: str, update_fields: dict[str, Any]
+    ) -> tuple[bool, dict[str, Any]]:
         def _query():
             res = self.supabase_client.table("archon_projects").select("docs").eq("id", project_id).single().execute()
             docs = res.data.get("docs") or {}
@@ -98,6 +103,7 @@ class DocumentService(BaseRepository):
             docs[doc_id].update(update_fields)
             docs[doc_id]["updated_at"] = datetime.utcnow().isoformat()
             return self.supabase_client.table("archon_projects").update({"docs": docs}).eq("id", project_id).execute()
+
         return self.execute_query(_query, "DB operation logged error")
 
     def delete_document(self, project_id: str, doc_id: str) -> tuple[bool, dict[str, Any]]:
@@ -109,4 +115,5 @@ class DocumentService(BaseRepository):
             if doc_id in docs:
                 docs.pop(doc_id)
             return self.supabase_client.table("archon_projects").update({"docs": docs}).eq("id", project_id).execute()
+
         return self.execute_query(_query, "DB operation logged error")

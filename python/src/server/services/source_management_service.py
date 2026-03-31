@@ -4,6 +4,7 @@ Source Management Service (Refactored)
 Entry point for source management. Implementation delegated to logic sub-modules
 to maintain a clean, maintainable file size (< 300 lines).
 """
+
 from typing import Any
 
 from server.config.logfire_config import get_logger
@@ -30,6 +31,7 @@ __all__ = [
     "create_source_from_upload_logic",
 ]
 
+
 class SourceManagementService(BaseRepository):
     """Facade Service for source management operations."""
 
@@ -39,19 +41,27 @@ class SourceManagementService(BaseRepository):
 
     def get_available_sources(self) -> tuple[bool, dict[str, Any]]:
         """Get all available sources from archon_sources."""
+
         def _query():
             return self.supabase_client.table("archon_sources").select("*").execute()
-        success, result = self.execute_query(query_func=_query, error_context="Error retrieving sources", require_data=False)
+
+        success, result = self.execute_query(
+            query_func=_query, error_context="Error retrieving sources", require_data=False
+        )
         if not success:
             return False, {"error": f"Error retrieving sources: {result['error']}"}
 
         sources = []
-        for row in (result["data"] or []):
-            sources.append({
-                "source_id": row["source_id"], "title": row.get("title", ""),
-                "summary": row.get("summary", ""), "created_at": row.get("created_at", ""),
-                "updated_at": row.get("updated_at", ""),
-            })
+        for row in result["data"] or []:
+            sources.append(
+                {
+                    "source_id": row["source_id"],
+                    "title": row.get("title", ""),
+                    "summary": row.get("summary", ""),
+                    "created_at": row.get("created_at", ""),
+                    "updated_at": row.get("updated_at", ""),
+                }
+            )
         return True, {"sources": sources, "total_count": len(sources)}
 
     def delete_source(self, source_id: str) -> tuple[bool, dict[str, Any]]:
@@ -60,8 +70,10 @@ class SourceManagementService(BaseRepository):
 
         # 1. Pages
         logger.info(f"Deleting from crawled_pages table for source_id: {source_id}")
+
         def _p_q():
             return self.supabase_client.table("archon_crawled_pages").delete().eq("source_id", source_id).execute()
+
         p_ok, p_res = self.execute_query(_p_q, "Failed to delete from crawled_pages", False)
         if not p_ok:
             return False, {"error": f"Failed to delete crawled pages: {p_res.get('error')}"}
@@ -70,8 +82,10 @@ class SourceManagementService(BaseRepository):
 
         # 2. Code
         logger.info(f"Deleting from code_examples table for source_id: {source_id}")
+
         def _c_q():
             return self.supabase_client.table("archon_code_examples").delete().eq("source_id", source_id).execute()
+
         c_ok, c_res = self.execute_query(_c_q, "Failed to delete from code_examples", False)
         if not c_ok:
             return False, {"error": f"Failed to delete code examples: {c_res.get('error')}"}
@@ -80,8 +94,10 @@ class SourceManagementService(BaseRepository):
 
         # 3. Source record
         logger.info(f"Deleting from sources table for source_id: {source_id}")
+
         def _s_q():
             return self.supabase_client.table("archon_sources").delete().eq("source_id", source_id).execute()
+
         s_ok, s_res = self.execute_query(_s_q, "Failed to delete from sources", False)
         if not s_ok:
             return False, {"error": f"Failed to delete source: {s_res.get('error')}"}
@@ -90,8 +106,10 @@ class SourceManagementService(BaseRepository):
 
         logger.info("Delete operation completed successfully")
         return True, {
-            "source_id": source_id, "pages_deleted": pages_deleted,
-            "code_examples_deleted": code_deleted, "source_records_deleted": source_deleted,
+            "source_id": source_id,
+            "pages_deleted": pages_deleted,
+            "code_examples_deleted": code_deleted,
+            "source_records_deleted": source_deleted,
         }
 
     def update_source_metadata(self, source_id: str, **kwargs) -> tuple[bool, dict[str, Any]]:
@@ -105,8 +123,12 @@ class SourceManagementService(BaseRepository):
             update_data["total_word_count"] = int(kwargs["word_count"])
 
         if kwargs.get("knowledge_type") or kwargs.get("tags"):
+
             def _m_q():
-                return self.supabase_client.table("archon_sources").select("metadata").eq("source_id", source_id).execute()
+                return (
+                    self.supabase_client.table("archon_sources").select("metadata").eq("source_id", source_id).execute()
+                )
+
             ok, res = self.execute_query(_m_q, "Error getting source metadata", False)
             if not ok:
                 return False, {"error": f"Error updating source metadata: {res.get('error')}"}
@@ -123,6 +145,7 @@ class SourceManagementService(BaseRepository):
 
         def _u_q():
             return self.supabase_client.table("archon_sources").update(update_data).eq("source_id", source_id).execute()
+
         success, result = self.execute_query(_u_q, "Error updating source metadata", True)
         if success and result.get("data"):
             return True, {"source_id": source_id, "updated_fields": list(update_data.keys())}
@@ -133,15 +156,21 @@ class SourceManagementService(BaseRepository):
         try:
             summary = await extract_source_summary(source_id, content_sample)
             await update_source_info(
-                self.supabase_client, source_id, summary, kwargs.get("word_count", 0),
-                content_sample[:5000], kwargs.get("knowledge_type", "technical"),
-                kwargs.get("tags", []), kwargs.get("update_frequency", 7)
+                self.supabase_client,
+                source_id,
+                summary,
+                kwargs.get("word_count", 0),
+                content_sample[:5000],
+                kwargs.get("knowledge_type", "technical"),
+                kwargs.get("tags", []),
+                kwargs.get("update_frequency", 7),
             )
             return True, {
-                "source_id": source_id, "summary": summary,
+                "source_id": source_id,
+                "summary": summary,
                 "word_count": kwargs.get("word_count", 0),
                 "knowledge_type": kwargs.get("knowledge_type", "technical"),
-                "tags": kwargs.get("tags", [])
+                "tags": kwargs.get("tags", []),
             }
         except Exception as e:
             logger.error(f"Error creating source info: {e}")
@@ -149,59 +178,70 @@ class SourceManagementService(BaseRepository):
 
     def get_source_details(self, source_id: str) -> tuple[bool, dict[str, Any]]:
         """Retrieve full details including counts."""
+
         def _s_q():
             return self.supabase_client.table("archon_sources").select("*").eq("source_id", source_id).execute()
+
         ok, res = self.execute_query(_s_q, "Error getting source details", False)
         if not ok or not res["data"]:
             return False, {"error": f"Source with ID {source_id} not found: {res.get('error', '')}"}
 
         source_data = res["data"][0]
+
         def _p_c():
             return self.supabase_client.table("archon_crawled_pages").select("id").eq("source_id", source_id).execute()
+
         _, p_res = self.execute_query(_p_c, "Error counting pages", False)
 
         def _c_c():
             return self.supabase_client.table("archon_code_examples").select("id").eq("source_id", source_id).execute()
+
         _, c_res = self.execute_query(_c_c, "Error counting code examples", False)
 
         return True, {
             "source": source_data,
             "page_count": len(p_res["data"] or []),
-            "code_example_count": len(c_res["data"] or [])
+            "code_example_count": len(c_res["data"] or []),
         }
 
     def list_sources_by_type(self, knowledge_type: str | None = None) -> tuple[bool, dict[str, Any]]:
         """Filtered listing of sources with full metadata parity."""
+
         def _q():
             query = self.supabase_client.table("archon_sources").select("*")
             if knowledge_type:
                 query = query.filter("metadata->>knowledge_type", "eq", knowledge_type)
             return query.execute()
+
         success, result = self.execute_query(_q, "Error listing sources by type", False)
         if not success:
             return False, {"error": f"Error listing sources by type: {result.get('error')}"}
 
         sources = []
-        for row in (result["data"] or []):
+        for row in result["data"] or []:
             meta = row.get("metadata", {})
-            sources.append({
-                "source_id": row["source_id"], "title": row.get("title", ""),
-                "summary": row.get("summary", ""),
-                "knowledge_type": meta.get("knowledge_type", ""),
-                "tags": meta.get("tags", []),
-                "total_word_count": row.get("total_word_count", 0),
-                "created_at": row.get("created_at", ""),
-                "updated_at": row.get("updated_at", ""),
-            })
-        return True, {
-            "sources": sources, "total_count": len(sources),
-            "knowledge_type_filter": knowledge_type
-        }
+            sources.append(
+                {
+                    "source_id": row["source_id"],
+                    "title": row.get("title", ""),
+                    "summary": row.get("summary", ""),
+                    "knowledge_type": meta.get("knowledge_type", ""),
+                    "tags": meta.get("tags", []),
+                    "total_word_count": row.get("total_word_count", 0),
+                    "created_at": row.get("created_at", ""),
+                    "updated_at": row.get("updated_at", ""),
+                }
+            )
+        return True, {"sources": sources, "total_count": len(sources), "knowledge_type_filter": knowledge_type}
 
     def create_source_from_upload(self, source_id: str, filename: str, **kwargs) -> None:
         """Delegated upload logic."""
         create_source_from_upload_logic(
-            self.supabase_client, source_id, filename,
-            kwargs.get("knowledge_type", "technical"), kwargs.get("tags", []),
-            kwargs.get("chunks_stored", 0), kwargs.get("source_url")
+            self.supabase_client,
+            source_id,
+            filename,
+            kwargs.get("knowledge_type", "technical"),
+            kwargs.get("tags", []),
+            kwargs.get("chunks_stored", 0),
+            kwargs.get("source_url"),
         )

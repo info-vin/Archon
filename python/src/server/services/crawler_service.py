@@ -9,6 +9,7 @@ from .rbac_service import RBACService
 
 logger = get_logger(__name__)
 
+
 class CrawlerService:
     """
     Enterprise-grade Crawler Service (Phase 4.7)
@@ -76,7 +77,7 @@ class CrawlerService:
             "title": title.strip() if title else url,
             "content": text,
             "url": url,
-            "is_batch": False
+            "is_batch": False,
         }
 
     def _process_sitemap(self, xml: str, url: str) -> dict[str, Any]:
@@ -93,5 +94,5 @@ class CrawlerService:
             "content": f"Discovered {len(links)} links in sitemap. Ready for batch ingestion.",
             "url": url,
             "discovered_links": links,
-            "is_batch": True
+            "is_batch": True,
         }

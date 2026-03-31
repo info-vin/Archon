@@ -87,9 +87,7 @@ class AgenticRAGStrategy(BaseRepository):
         Returns:
             List of matching code examples
         """
-        with safe_span(
-            "agentic_code_search", query_length=len(query), match_count=match_count
-        ) as span:
+        with safe_span("agentic_code_search", query_length=len(query), match_count=match_count) as span:
             try:
                 # Create embedding for the query (no enhancement)
                 query_embedding = await create_embedding(query)
@@ -104,18 +102,19 @@ class AgenticRAGStrategy(BaseRepository):
                     combined_filter["source"] = source_id
 
                 # Use base strategy for vector search
-                results = cast(list[dict[str, Any]], await self.base_strategy.vector_search(
-                    query_embedding=query_embedding,
-                    match_count=match_count,
-                    filter_metadata=combined_filter,
-                    table_rpc="match_archon_code_examples",
-                ))
+                results = cast(
+                    list[dict[str, Any]],
+                    await self.base_strategy.vector_search(
+                        query_embedding=query_embedding,
+                        match_count=match_count,
+                        filter_metadata=combined_filter,
+                        table_rpc="match_archon_code_examples",
+                    ),
+                )
 
                 span.set_attribute("results_found", len(results))
 
-                logger.debug(
-                    f"Agentic code search found {len(results)} results for query: {query[:50]}..."
-                )
+                logger.debug(f"Agentic code search found {len(results)} results for query: {query[:50]}...")
 
                 return results
 
@@ -203,9 +202,7 @@ class AgenticRAGStrategy(BaseRepository):
                 span.set_attribute("results_returned", len(formatted_results))
                 span.set_attribute("success", True)
 
-                logger.info(
-                    f"Agentic RAG search completed - {len(formatted_results)} code examples found"
-                )
+                logger.info(f"Agentic RAG search completed - {len(formatted_results)} code examples found")
 
                 return True, response_data
 
@@ -350,9 +347,7 @@ class AgenticRAGStrategy(BaseRepository):
         code_indicators = [kw for kw in code_keywords if kw in query_lower]
 
         # Determine if query is code-related
-        is_code_query = (
-            len(detected_languages) > 0 or len(detected_frameworks) > 0 or len(code_indicators) > 0
-        )
+        is_code_query = len(detected_languages) > 0 or len(detected_frameworks) > 0 or len(code_indicators) > 0
 
         return {
             "is_code_query": is_code_query,
@@ -371,6 +366,7 @@ class AgenticRAGStrategy(BaseRepository):
 def create_agentic_rag_strategy(supabase_client: Client) -> AgenticRAGStrategy:
     """Create an agentic RAG strategy instance."""
     from .base_search_strategy import BaseSearchStrategy
+
     base_strategy = BaseSearchStrategy(supabase_client)
     return AgenticRAGStrategy(supabase_client, base_strategy)
 

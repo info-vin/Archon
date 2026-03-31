@@ -15,12 +15,14 @@ from ..auth.permissions import CODE_APPROVE, TASK_READ_TEAM
 
 router = APIRouter(prefix="/api/changes", tags=["Changes"])
 
+
 @router.get("", response_model=list[dict[str, Any]])
 async def list_proposals(current_user: dict = Depends(get_current_user)):
     """Lists all pending AI proposals. Respects department isolation."""
     service = ProposeChangeService()
     # Logic inside service should filter by department for non-admins
     return await service.list_proposals(user_id=str(current_user.get("id")))
+
 
 @router.get("/{change_id}")
 async def get_proposal(change_id: UUID, current_user: dict = Depends(get_current_user)):
@@ -31,11 +33,9 @@ async def get_proposal(change_id: UUID, current_user: dict = Depends(get_current
         raise HTTPException(status_code=404, detail="Proposal not found")
     return res
 
+
 @router.post("/{change_id}/approve")
-async def approve_proposal(
-    change_id: UUID,
-    current_user: dict = Depends(requires_permission(CODE_APPROVE))
-):
+async def approve_proposal(change_id: UUID, current_user: dict = Depends(requires_permission(CODE_APPROVE))):
     """Executes the proposed change. Requires CODE_APPROVE permission."""
     service = ProposeChangeService()
     try:
@@ -44,11 +44,9 @@ async def approve_proposal(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e)) from e
 
+
 @router.post("/{change_id}/reject")
-async def reject_proposal(
-    change_id: UUID,
-    current_user: dict = Depends(requires_permission(TASK_READ_TEAM))
-):
+async def reject_proposal(change_id: UUID, current_user: dict = Depends(requires_permission(TASK_READ_TEAM))):
     """Rejects the proposal. Requires Manager level visibility."""
     service = ProposeChangeService()
     try:

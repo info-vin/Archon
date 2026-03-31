@@ -2,6 +2,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 async def get_role_based_max_depth(user_role: str | None, credential_service) -> int:
     """
     Fetches max crawl depth from database based on user role.
@@ -22,7 +23,7 @@ async def get_role_based_max_depth(user_role: str | None, credential_service) ->
         "marketing": "CRAWL_MAX_DEPTH_MARKETING",
         "manager": "CRAWL_MAX_DEPTH_MANAGER",
         "admin": "CRAWL_MAX_DEPTH_ADMIN",
-        "system_admin": "CRAWL_MAX_DEPTH_ADMIN"
+        "system_admin": "CRAWL_MAX_DEPTH_ADMIN",
     }
 
     setting_key = role_map.get(user_role.lower())

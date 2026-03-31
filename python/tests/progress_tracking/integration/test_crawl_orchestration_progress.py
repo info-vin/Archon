@@ -34,9 +34,7 @@ def crawl_progress_mock_supabase_client():
 def crawling_service(mock_crawler, crawl_progress_mock_supabase_client):
     """Create a CrawlingService instance for testing."""
     service = CrawlingService(
-        crawler=mock_crawler,
-        supabase_client=crawl_progress_mock_supabase_client,
-        progress_id="test-crawl-123"
+        crawler=mock_crawler, supabase_client=crawl_progress_mock_supabase_client, progress_id="test-crawl-123"
     )
     # Initialize progress tracker for testing
     service.set_progress_id("test-crawl-123")
@@ -47,8 +45,10 @@ class TestCrawlOrchestrationProgressIntegration:
     """Integration tests for crawl orchestration progress tracking."""
 
     @pytest.mark.asyncio
-    @patch('src.server.services.crawling.document_storage_operations.DocumentStorageOperations.process_and_store_documents')
-    @patch('src.server.services.crawling.strategies.batch.BatchCrawlStrategy.crawl_batch_with_progress')
+    @patch(
+        "src.server.services.crawling.document_storage_operations.DocumentStorageOperations.process_and_store_documents"
+    )
+    @patch("src.server.services.crawling.strategies.batch.BatchCrawlStrategy.crawl_batch_with_progress")
     async def test_full_crawl_orchestration_progress(self, mock_batch_crawl, mock_doc_storage, crawling_service):
         """Test complete crawl orchestration with progress mapping."""
 
@@ -64,7 +64,7 @@ class TestCrawlOrchestrationProgressIntegration:
             "chunk_count": 300,
             "chunks_stored": 300,
             "total_word_count": 15000,
-            "source_id": "source-123"
+            "source_id": "source-123",
         }
 
         # Track all progress updates
@@ -77,6 +77,7 @@ class TestCrawlOrchestrationProgressIntegration:
 
         # Patch the progress tracker update to capture calls
         original_update = crawling_service.progress_tracker.update
+
         async def tracked_update(*args, **kwargs):
             result = await original_update(*args, **kwargs)
             track_progress_updates()
@@ -85,11 +86,7 @@ class TestCrawlOrchestrationProgressIntegration:
         crawling_service.progress_tracker.update = tracked_update
 
         # Test data
-        test_request = {
-            "url": "https://example.com/sitemap.xml",
-            "knowledge_type": "documentation",
-            "tags": ["test"]
-        }
+        test_request = {"url": "https://example.com/sitemap.xml", "knowledge_type": "documentation", "tags": ["test"]}
 
         # Execute the crawl (using internal orchestration method would be ideal)
         # For now, test the document storage orchestration part
@@ -97,9 +94,10 @@ class TestCrawlOrchestrationProgressIntegration:
 
         # Mock the document storage callback to simulate realistic progress
         doc_storage_calls = []
+
         async def mock_doc_storage_with_progress(*args, **kwargs):
             # Get the progress callback
-            progress_callback = kwargs.get('progress_callback')
+            progress_callback = kwargs.get("progress_callback")
 
             if progress_callback:
                 # Simulate batch processing progress
@@ -112,17 +110,12 @@ class TestCrawlOrchestrationProgressIntegration:
                         total_batches=6,
                         completed_batches=batch - 1,
                         chunks_in_batch=25,
-                        active_workers=4
+                        active_workers=4,
                     )
                     doc_storage_calls.append(batch)
                     await asyncio.sleep(0.01)  # Small delay
 
-            return {
-                "chunk_count": 150,
-                "chunks_stored": 150,
-                "total_word_count": 7500,
-                "source_id": "source-456"
-            }
+            return {"chunk_count": 150, "chunks_stored": 150, "total_word_count": 7500, "source_id": "source-456"}
 
         mock_doc_storage.side_effect = mock_doc_storage_with_progress
 
@@ -135,7 +128,7 @@ class TestCrawlOrchestrationProgressIntegration:
             request=test_request,
             crawl_type="sitemap",
             original_source_id="source-456",
-            progress_callback=progress_callback
+            progress_callback=progress_callback,
         )
 
         # Verify progress updates were captured
@@ -146,7 +139,9 @@ class TestCrawlOrchestrationProgressIntegration:
 
         # Progress should generally increase (allowing for some mapping adjustments)
         for i in range(1, len(mapped_progresses)):
-            assert mapped_progresses[i] >= mapped_progresses[i-1], f"Progress went backwards: {mapped_progresses[i-1]} -> {mapped_progresses[i]}"
+            assert mapped_progresses[i] >= mapped_progresses[i - 1], (
+                f"Progress went backwards: {mapped_progresses[i - 1]} -> {mapped_progresses[i]}"
+            )
 
         # Verify batch information is preserved
         batch_updates = [update for update in progress_updates if "current_batch" in update]
@@ -182,14 +177,12 @@ class TestCrawlOrchestrationProgressIntegration:
             mapped = mapper.map_progress(stage, stage_progress)
 
             # Update tracker with mapped progress
-            await tracker.update(
-                status=stage,
-                progress=mapped,
-                log=f"Stage {stage} at {stage_progress}% -> {mapped}%"
-            )
+            await tracker.update(status=stage, progress=mapped, log=f"Stage {stage} at {stage_progress}% -> {mapped}%")
 
             # Allow small tolerance for rounding
-            assert abs(mapped - expected_overall) <= 1, f"Stage {stage} mapping: expected ~{expected_overall}%, got {mapped}%"
+            assert abs(mapped - expected_overall) <= 1, (
+                f"Stage {stage} mapping: expected ~{expected_overall}%, got {mapped}%"
+            )
 
         # Verify final state
         final_state = tracker.get_state()
@@ -204,6 +197,7 @@ class TestCrawlOrchestrationProgressIntegration:
         progress_count = 0
 
         original_update = crawling_service.progress_tracker.update
+
         async def cancellation_update(*args, **kwargs):
             nonlocal progress_count
             progress_count += 1
@@ -224,9 +218,7 @@ class TestCrawlOrchestrationProgressIntegration:
                 break
 
             await crawling_service.progress_tracker.update(
-                status="processing",
-                progress=i * 20,
-                log=f"Progress update {i}"
+                status="processing", progress=i * 20, log=f"Progress update {i}"
             )
 
         # Should have been cancelled
@@ -244,13 +236,15 @@ class TestCrawlOrchestrationProgressIntegration:
 
         # Create callback that logs all calls for inspection
         async def logging_callback(status: str, progress: int, message: str, **kwargs):
-            callback_calls.append({
-                'status': status,
-                'progress': progress,
-                'message': message,
-                'kwargs': kwargs,
-                'kwargs_keys': list(kwargs.keys())
-            })
+            callback_calls.append(
+                {
+                    "status": status,
+                    "progress": progress,
+                    "message": message,
+                    "kwargs": kwargs,
+                    "kwargs_keys": list(kwargs.keys()),
+                }
+            )
 
         # Create the progress callback
         progress_callback = await crawling_service._create_crawl_progress_callback("document_storage")
@@ -264,7 +258,7 @@ class TestCrawlOrchestrationProgressIntegration:
             total_batches=6,
             completed_batches=1,
             chunks_in_batch=25,
-            active_workers=4
+            active_workers=4,
         )
 
         # Verify the callback was processed correctly
@@ -309,10 +303,7 @@ class TestCrawlOrchestrationProgressIntegration:
                 mapped_progress = mapper.map_progress("document_storage", i * 10)
 
                 await crawling_service.progress_tracker.update(
-                    status="document_storage",
-                    progress=mapped_progress,
-                    log=f"Update {i}",
-                    test_data=f"data_{i}"
+                    status="document_storage", progress=mapped_progress, log=f"Update {i}", test_data=f"data_{i}"
                 )
                 successful_updates += 1
 

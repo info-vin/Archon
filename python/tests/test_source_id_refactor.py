@@ -35,7 +35,7 @@ class TestSourceIDGeneration:
 
             # Check that ID is a 16-character hex string
             assert len(source_id) == 16, f"ID should be 16 chars, got {len(source_id)}"
-            assert all(c in '0123456789abcdef' for c in source_id), f"ID should be hex: {source_id}"
+            assert all(c in "0123456789abcdef" for c in source_id), f"ID should be hex: {source_id}"
 
         # All IDs should be unique
         assert len(set(source_ids)) == len(source_ids), "All source IDs should be unique"
@@ -214,8 +214,9 @@ class TestDisplayNameExtraction:
 
         for url, expected_contains in test_cases:
             display_name = handler.extract_display_name(url)
-            assert expected_contains in display_name or display_name == expected_contains, \
+            assert expected_contains in display_name or display_name == expected_contains, (
                 f"Edge case {url} handling failed: {display_name}"
+            )
 
     def test_special_file_display_names(self):
         """Test that special files like llms.txt and sitemap.xml are properly displayed."""
@@ -226,15 +227,12 @@ class TestDisplayNameExtraction:
             ("https://docs.mem0.ai/llms-full.txt", "Mem0 - Llms.Txt"),
             ("https://example.com/llms.txt", "Example - Llms.Txt"),
             ("https://api.example.com/llms.txt", "Example API"),  # API takes precedence
-
             # sitemap.xml files
             ("https://mem0.ai/sitemap.xml", "Mem0 - Sitemap.Xml"),
             ("https://docs.example.com/sitemap.xml", "Example - Sitemap.Xml"),
             ("https://example.org/sitemap.xml", "Example - Sitemap.Xml"),
-
             # Regular .txt files on docs sites
             ("https://docs.example.com/readme.txt", "Example - Readme.Txt"),
-
             # Non-special files should not get special treatment
             ("https://docs.example.com/guide", "Example Documentation"),
             ("https://example.com/page.html", "Example - Page.Html"),  # Path gets added for single file
@@ -277,13 +275,11 @@ class TestRaceConditionFix:
         source_ids = [handler.generate_unique_source_id(url) for url in github_urls]
 
         # All should be unique
-        assert len(set(source_ids)) == len(source_ids), \
-            "Race condition not fixed: duplicate source IDs for same domain"
+        assert len(set(source_ids)) == len(source_ids), "Race condition not fixed: duplicate source IDs for same domain"
 
         # None should be just "github.com"
         for source_id in source_ids:
-            assert source_id != "github.com", \
-                "Source ID should not be just the domain"
+            assert source_id != "github.com", "Source ID should not be just the domain"
 
     def test_hash_properties(self):
         """Test that the hash has good properties."""
@@ -298,8 +294,9 @@ class TestRaceConditionFix:
 
         # IDs should be completely different (good hash distribution)
         matching_chars = sum(1 for a, b in zip(id1, id2, strict=False) if a == b)
-        assert matching_chars < 8, \
+        assert matching_chars < 8, (
             f"Similar URLs should generate very different hashes, {matching_chars}/16 chars match"
+        )
 
 
 class TestIntegration:
@@ -317,34 +314,33 @@ class TestIntegration:
 
         # Verify all fields are populated correctly
         assert len(source_id) == 16, "Source ID should be 16 characters"
-        assert source_display_name == "GitHub - microsoft/typescript", \
-            f"Display name incorrect: {source_display_name}"
+        assert source_display_name == "GitHub - microsoft/typescript", f"Display name incorrect: {source_display_name}"
         assert source_url == url, "Source URL should match original"
 
         # Simulate database record
         source_record = {
-            'source_id': source_id,
-            'source_url': source_url,
-            'source_display_name': source_display_name,
-            'title': None,  # Generated later
-            'summary': None,  # Generated later
-            'metadata': {}
+            "source_id": source_id,
+            "source_url": source_url,
+            "source_display_name": source_display_name,
+            "title": None,  # Generated later
+            "summary": None,  # Generated later
+            "metadata": {},
         }
 
         # Verify record structure
-        assert 'source_id' in source_record
-        assert 'source_url' in source_record
-        assert 'source_display_name' in source_record
+        assert "source_id" in source_record
+        assert "source_url" in source_record
+        assert "source_display_name" in source_record
 
     def test_backward_compatibility(self):
         """Test that the system handles existing sources gracefully."""
         # The migration should handle this by backfilling
         # source_url and source_display_name with source_id value
         migrated_source = {
-            'source_id': 'github.com',
-            'source_url': 'github.com',  # Backfilled
-            'source_display_name': 'github.com',  # Backfilled
+            "source_id": "github.com",
+            "source_url": "github.com",  # Backfilled
+            "source_display_name": "github.com",  # Backfilled
         }
 
-        assert migrated_source['source_url'] is not None
-        assert migrated_source['source_display_name'] is not None
+        assert migrated_source["source_url"] is not None
+        assert migrated_source["source_display_name"] is not None

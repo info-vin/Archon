@@ -1,4 +1,3 @@
-
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -13,9 +12,11 @@ def mock_supabase():
         mock.return_value = client
         yield client
 
+
 @pytest.fixture
 def service():
     return TokenUsageService()
+
 
 @pytest.mark.asyncio
 async def test_log_usage(service, mock_supabase):
@@ -29,12 +30,7 @@ async def test_log_usage(service, mock_supabase):
     mock_insert.execute.return_value = mock_execute
 
     await service.log_usage(
-        request_id="req-123",
-        model="gpt-4o",
-        provider="openai",
-        input_tokens=100,
-        output_tokens=50,
-        user_id="user-1"
+        request_id="req-123", model="gpt-4o", provider="openai", input_tokens=100, output_tokens=50, user_id="user-1"
     )
 
     # Verify any of the calls was to token_usage
@@ -54,17 +50,13 @@ async def test_log_usage(service, mock_supabase):
     assert payload["input_tokens"] == 100
     assert payload["cost_usd"] == pytest.approx(0.00075)
 
+
 @pytest.mark.asyncio
 async def test_log_usage_ollama(service, mock_supabase):
     mock_supabase.table.return_value.insert.return_value.execute.return_value = MagicMock()
 
     await service.log_usage(
-        request_id="req-456",
-        model="llama3",
-        provider="ollama",
-        input_tokens=1000,
-        output_tokens=1000,
-        user_id="user-1"
+        request_id="req-456", model="llama3", provider="ollama", input_tokens=1000, output_tokens=1000, user_id="user-1"
     )
 
     args, _ = mock_supabase.table.return_value.insert.call_args

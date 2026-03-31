@@ -17,7 +17,9 @@ async def test_run_log_patrol_creates_task():
     mock_logs_chain = MagicMock()
     mock_logs = [{"id": "log-1", "source": "api", "message": "500 Error", "level": "ERROR"}]
     # We must mock EVERY step of the chain to ensure .data is reached on the FINAL execute()
-    mock_logs_chain.select.return_value.eq.return_value.gt.return_value.limit.return_value.execute.return_value.data = mock_logs
+    mock_logs_chain.select.return_value.eq.return_value.gt.return_value.limit.return_value.execute.return_value.data = (
+        mock_logs
+    )
 
     # Setup precise chain for archon_projects
     mock_proj_chain = MagicMock()
@@ -32,20 +34,16 @@ async def test_run_log_patrol_creates_task():
 
     mock_task_service = AsyncMock()
     # Ensure it returns the tuple (success, result) as expected by the real service signature
-    mock_task_service.create_task.return_value = (True, {
-        "task": {
-            "id": "task-repair-1",
-            "assignee_id": "ai-dev-bot"
-        }
-    })
+    mock_task_service.create_task.return_value = (True, {"task": {"id": "task-repair-1", "assignee_id": "ai-dev-bot"}})
 
     mock_agent_service = AsyncMock()
 
     # We patch BOTH possible paths to be absolutely sure
-    with patch("server.utils.get_supabase_client", return_value=mock_supabase), \
-         patch("server.services.projects.task_service.task_service", mock_task_service), \
-         patch("server.services.agent_service.agent_service", mock_agent_service):
-
+    with (
+        patch("server.utils.get_supabase_client", return_value=mock_supabase),
+        patch("server.services.projects.task_service.task_service", mock_task_service),
+        patch("server.services.agent_service.agent_service", mock_agent_service),
+    ):
         # Execute
         await scheduler_service._run_log_patrol()
 
@@ -60,6 +58,7 @@ async def test_run_log_patrol_creates_task():
         assert call_kwargs.get("task_id") == "task-repair-1"
         assert call_kwargs.get("agent_id") == "ai-dev-bot"
 
+
 @pytest.mark.asyncio
 async def test_run_log_patrol_no_errors():
     """
@@ -73,9 +72,10 @@ async def test_run_log_patrol_no_errors():
 
     mock_task_service = AsyncMock()
 
-    with patch("server.utils.get_supabase_client", return_value=mock_supabase), \
-         patch("server.services.projects.task_service.task_service", mock_task_service):
-
+    with (
+        patch("server.utils.get_supabase_client", return_value=mock_supabase),
+        patch("server.services.projects.task_service.task_service", mock_task_service),
+    ):
         await scheduler_service._run_log_patrol()
 
         mock_task_service.create_task.assert_not_called()

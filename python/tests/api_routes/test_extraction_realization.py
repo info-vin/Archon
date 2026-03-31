@@ -1,4 +1,3 @@
-
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -17,19 +16,22 @@ async def test_extraction_service_realization_logic():
     user_id = "test-mgr-id"
 
     # 1. Setup Mocks
-    with patch("server.services.extraction_service.get_supabase_client") as mock_db_factory, \
-         patch("server.services.extraction_service.get_crawler") as mock_get_crawler, \
-         patch("server.services.llm_provider_service.get_llm_client") as mock_get_llm:
-
+    with (
+        patch("server.services.extraction_service.get_supabase_client") as mock_db_factory,
+        patch("server.services.extraction_service.get_crawler") as mock_get_crawler,
+        patch("server.services.llm_provider_service.get_llm_client") as mock_get_llm,
+    ):
         mock_db = MagicMock()
         mock_db_factory.return_value = mock_db
 
         # Mock Schema retrieval
-        mock_db.table.return_value.select.return_value.eq.return_value.execute.return_value.data = [{
-            "id": schema_id,
-            "name": "Test Realization",
-            "schema_definition": {"fields": [{"name": "price", "type": "number"}]}
-        }]
+        mock_db.table.return_value.select.return_value.eq.return_value.execute.return_value.data = [
+            {
+                "id": schema_id,
+                "name": "Test Realization",
+                "schema_definition": {"fields": [{"name": "price", "type": "number"}]},
+            }
+        ]
 
         # Mock Crawler instance
         mock_crawler = AsyncMock()
@@ -68,8 +70,10 @@ async def test_extraction_service_realization_logic():
 
         print("\n✅ Assertion Passed: Extraction Service physical logic verified.")
 
+
 if __name__ == "__main__":
     import asyncio
+
     print("\n🚀 STARTING STANDALONE PHYSICAL VERIFICATION...")
     asyncio.run(test_extraction_service_realization_logic())
     print("\n✨ ALL TESTS PASSED!")

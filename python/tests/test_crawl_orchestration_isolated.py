@@ -41,11 +41,13 @@ class MockCrawlOrchestrationService:
 
         async def callback(status: str, percentage: int, message: str, **kwargs):
             if self.progress_id:
-                self.progress_state.update({
-                    "status": status,
-                    "percentage": percentage,
-                    "log": message,
-                })
+                self.progress_state.update(
+                    {
+                        "status": status,
+                        "percentage": percentage,
+                        "log": message,
+                    }
+                )
 
         return callback
 
@@ -99,9 +101,7 @@ class MockCrawlOrchestrationService:
             code_examples += content.count("```")
         return code_examples // 2  # Each code block has opening and closing
 
-    async def _async_orchestrate_crawl(
-        self, request: dict[str, Any], task_id: str
-    ) -> dict[str, Any]:
+    async def _async_orchestrate_crawl(self, request: dict[str, Any], task_id: str) -> dict[str, Any]:
         """Mock async orchestration"""
         try:
             self._check_cancellation()
@@ -122,9 +122,7 @@ class MockCrawlOrchestrationService:
             parsed_url = urlparse(url)
             source_id = parsed_url.netloc or parsed_url.path
 
-            storage_results = await self._process_and_store_documents(
-                crawl_results, request, crawl_type, source_id
-            )
+            storage_results = await self._process_and_store_documents(crawl_results, request, crawl_type, source_id)
 
             self._check_cancellation()
 
@@ -288,9 +286,7 @@ class TestAsyncCrawlOrchestration:
 
         url_to_full_document = {"https://example.com/api": crawl_results[0]["markdown"]}
 
-        result = await orchestration_service._extract_and_store_code_examples(
-            crawl_results, url_to_full_document
-        )
+        result = await orchestration_service._extract_and_store_code_examples(crawl_results, url_to_full_document)
 
         assert result == 2  # Two code blocks found
 
@@ -316,9 +312,7 @@ class TestAsyncCrawlOrchestration:
         orchestration_service.cancel()
 
         with pytest.raises(Exception, match="CrawlCancelledException"):
-            await orchestration_service._process_and_store_documents(
-                crawl_results, request, "webpage", "example.com"
-            )
+            await orchestration_service._process_and_store_documents(crawl_results, request, "webpage", "example.com")
 
     @pytest.mark.asyncio
     async def test_error_handling_in_orchestration(self, orchestration_service):
@@ -342,12 +336,8 @@ class TestAsyncCrawlOrchestration:
         """Test documentation site URL detection"""
         # Test documentation sites
         assert orchestration_service._is_documentation_site("https://docs.python.org")
-        assert orchestration_service._is_documentation_site(
-            "https://react.dev/docs/getting-started"
-        )
-        assert orchestration_service._is_documentation_site(
-            "https://project.readthedocs.io/en/latest/"
-        )
+        assert orchestration_service._is_documentation_site("https://react.dev/docs/getting-started")
+        assert orchestration_service._is_documentation_site("https://project.readthedocs.io/en/latest/")
         assert orchestration_service._is_documentation_site("https://example.com/documentation/api")
 
         # Test non-documentation sites
@@ -421,9 +411,7 @@ class TestAsyncBehaviors:
         service = MockCrawlOrchestrationService()
 
         # This chain should complete without blocking
-        crawl_results, crawl_type = await service._crawl_by_url_type(
-            "https://example.com", {"max_depth": 1}
-        )
+        crawl_results, crawl_type = await service._crawl_by_url_type("https://example.com", {"max_depth": 1})
 
         storage_results = await service._process_and_store_documents(
             crawl_results, {"knowledge_type": "technical"}, crawl_type, "example.com"
@@ -445,9 +433,7 @@ class TestAsyncBehaviors:
 
         async def long_running_operation():
             await asyncio.sleep(0.1)  # Simulate work
-            return await service._async_orchestrate_crawl(
-                {"url": "https://example.com"}, "task-123"
-            )
+            return await service._async_orchestrate_crawl({"url": "https://example.com"}, "task-123")
 
         # Start task and cancel it
         task = asyncio.create_task(long_running_operation())

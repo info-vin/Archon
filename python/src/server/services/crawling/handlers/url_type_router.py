@@ -6,11 +6,13 @@ from src.server.services.credential_service import credential_service
 if TYPE_CHECKING:
     from ..crawling_service import CrawlingService
 
+
 class URLTypeRouter:
     """
     Handles URL type detection and dispatches to appropriate crawling strategies.
     Physically isolated for Phase 4.6.16 modularization.
     """
+
     def __init__(self, service: "CrawlingService"):
         self.service = service
 
@@ -33,7 +35,7 @@ class URLTypeRouter:
                     progress=10,
                     log="Detected text file, fetching content...",
                     crawl_type=crawl_type,
-                    current_url=url
+                    current_url=url,
                 )
             crawl_results = await self.service.crawl_markdown_file(
                 url,
@@ -43,7 +45,7 @@ class URLTypeRouter:
             )
             # Check if this is a link collection file and extract links
             if crawl_results and len(crawl_results) > 0:
-                content = crawl_results[0].get('markdown', '')
+                content = crawl_results[0].get("markdown", "")
                 if self.service.url_handler.is_link_collection_file(url, content):
                     # Extract links from the content
                     extracted_links = self.service.url_handler.extract_markdown_links(content, url)
@@ -51,19 +53,20 @@ class URLTypeRouter:
                     # Filter out self-referential links to avoid redundant crawling
                     if extracted_links:
                         extracted_links = [
-                            link for link in extracted_links
-                            if not self.service.url_handler.is_self_link(link, url)
+                            link for link in extracted_links if not self.service.url_handler.is_self_link(link, url)
                         ]
                         # Log filtered count if needed
 
                     # Filter out binary files
                     if extracted_links:
-                        extracted_links = [link for link in extracted_links if not self.service.url_handler.is_binary_file(link)]
+                        extracted_links = [
+                            link for link in extracted_links if not self.service.url_handler.is_binary_file(link)
+                        ]
 
                     if extracted_links:
                         batch_results = await self.service.crawl_batch_with_progress(
                             extracted_links,
-                            max_concurrent=request.get('max_concurrent'),
+                            max_concurrent=request.get("max_concurrent"),
                             progress_callback=await self.service._create_crawl_progress_callback("crawling"),
                             start_progress=10,
                             end_progress=20,
@@ -80,7 +83,7 @@ class URLTypeRouter:
                     progress=10,
                     log="Detected sitemap, parsing URLs...",
                     crawl_type=crawl_type,
-                    current_url=url
+                    current_url=url,
                 )
             sitemap_urls = await self.service.parse_sitemap(url)
 
@@ -110,7 +113,7 @@ class URLTypeRouter:
                     progress=10,
                     log=f"Starting recursive crawl with max depth {max_depth}...",
                     crawl_type=crawl_type,
-                    current_url=url
+                    current_url=url,
                 )
 
             crawl_results = await self.service.crawl_recursive_with_progress(

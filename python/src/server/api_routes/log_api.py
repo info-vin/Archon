@@ -12,10 +12,12 @@ from ..auth.permissions import TASK_READ_TEAM
 
 router = APIRouter(prefix="/api/logs", tags=["logs"])
 
+
 @router.post("/record-gemini-log", status_code=status.HTTP_201_CREATED)
 async def record_gemini_log(log_data: dict, current_user: dict = Depends(get_current_user)):
     """Logs an AI interaction. Available to all authenticated users/agents."""
     return await log_service.record_interaction(str(current_user.get("id")), log_data)
+
 
 @router.get("/alerts")
 async def get_system_alerts(current_user: dict = Depends(requires_permission(TASK_READ_TEAM))):

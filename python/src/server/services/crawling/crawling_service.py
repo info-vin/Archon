@@ -103,9 +103,7 @@ class CrawlingService(BaseRepository):
         if self._cancelled:
             raise asyncio.CancelledError("Crawl operation was cancelled by user")
 
-    async def _create_crawl_progress_callback(
-        self, base_status: str
-    ) -> Callable[[str, int, str], Awaitable[None]]:
+    async def _create_crawl_progress_callback(self, base_status: str) -> Callable[[str, int, str], Awaitable[None]]:
         """Create a progress callback for crawling operations.
 
         Args:
@@ -114,6 +112,7 @@ class CrawlingService(BaseRepository):
         Returns:
             Async callback function with signature (status: str, progress: int, message: str, **kwargs) -> None
         """
+
         async def callback(status: str, progress: int, message: str, **kwargs):
             if self.progress_tracker:
                 # Debug log what we're receiving
@@ -124,12 +123,7 @@ class CrawlingService(BaseRepository):
                 )
 
                 # Update progress via tracker (stores in memory for HTTP polling)
-                await self.progress_tracker.update(
-                    status=base_status,
-                    progress=progress,
-                    log=message,
-                    **kwargs
-                )
+                await self.progress_tracker.update(status=base_status, progress=progress, log=message, **kwargs)
                 safe_logfire_info(
                     f"Updated crawl progress | progress_id={self.progress_id} | status={base_status} | progress={progress} | "
                     f"total_pages={kwargs.get('total_pages', 'N/A')} | processed_pages={kwargs.get('processed_pages', 'N/A')}"
@@ -151,7 +145,7 @@ class CrawlingService(BaseRepository):
                 status=update.get("status", "processing"),
                 progress=update.get("progress", update.get("percentage", 0)),  # Support both for compatibility
                 log=update.get("log", "Processing..."),
-                **{k: v for k, v in update.items() if k not in ["status", "progress", "percentage", "log"]}
+                **{k: v for k, v in update.items() if k not in ["status", "progress", "percentage", "log"]},
             )
 
     # Simple delegation methods for backward compatibility
@@ -165,7 +159,11 @@ class CrawlingService(BaseRepository):
         )
 
     async def crawl_markdown_file(
-        self, url: str, progress_callback: Callable[[str, int, str], Awaitable[None]] | None = None, start_progress: int = 10, end_progress: int = 20
+        self,
+        url: str,
+        progress_callback: Callable[[str, int, str], Awaitable[None]] | None = None,
+        start_progress: int = 10,
+        end_progress: int = 20,
     ) -> list[dict[str, Any]]:
         """Crawl a .txt or markdown file."""
         return await self.single_page_strategy.crawl_markdown_file(

@@ -4,6 +4,7 @@ Code Extraction Service
 Orchestrates extraction, processing, and storage of code examples from documents.
 Refactored for L2 modularity while maintaining 100% logic alignment.
 """
+
 import re
 from collections.abc import Callable
 from typing import Any
@@ -53,13 +54,26 @@ class CodeExtractionService(BaseRepository):
             return default
 
     # --- Setting Accessors ---
-    async def _get_min_code_length(self) -> int: return int(await self._get_setting("MIN_CODE_BLOCK_LENGTH", 250))
-    async def _get_max_code_length(self) -> int: return int(await self._get_setting("MAX_CODE_BLOCK_LENGTH", 5000))
-    async def _is_prose_filtering_enabled(self) -> bool: return bool(await self._get_setting("ENABLE_PROSE_FILTERING", True))
-    async def _get_max_prose_ratio(self) -> float: return float(await self._get_setting("MAX_PROSE_RATIO", 0.15))
-    async def _get_min_code_indicators(self) -> int: return int(await self._get_setting("MIN_CODE_INDICATORS", 3))
-    async def _is_diagram_filtering_enabled(self) -> bool: return bool(await self._get_setting("ENABLE_DIAGRAM_FILTERING", True))
-    async def _is_contextual_length_enabled(self) -> bool: return bool(await self._get_setting("ENABLE_CONTEXTUAL_LENGTH", True))
+    async def _get_min_code_length(self) -> int:
+        return int(await self._get_setting("MIN_CODE_BLOCK_LENGTH", 250))
+
+    async def _get_max_code_length(self) -> int:
+        return int(await self._get_setting("MAX_CODE_BLOCK_LENGTH", 5000))
+
+    async def _is_prose_filtering_enabled(self) -> bool:
+        return bool(await self._get_setting("ENABLE_PROSE_FILTERING", True))
+
+    async def _get_max_prose_ratio(self) -> float:
+        return float(await self._get_setting("MAX_PROSE_RATIO", 0.15))
+
+    async def _get_min_code_indicators(self) -> int:
+        return int(await self._get_setting("MIN_CODE_INDICATORS", 3))
+
+    async def _is_diagram_filtering_enabled(self) -> bool:
+        return bool(await self._get_setting("ENABLE_DIAGRAM_FILTERING", True))
+
+    async def _is_contextual_length_enabled(self) -> bool:
+        return bool(await self._get_setting("ENABLE_CONTEXTUAL_LENGTH", True))
 
     async def extract_and_store_code_examples(
         self,
@@ -71,7 +85,7 @@ class CodeExtractionService(BaseRepository):
         end_progress: int = 100,
         cancellation_check: Callable[[], None] | None = None,
         cancellation_token: dict[str, Any] | None = None,
-        progress_id: str | None = None
+        progress_id: str | None = None,
     ) -> int:
         """
         Entry point for code extraction. Signature sequence RESTORED for Test compatibility.
@@ -80,11 +94,13 @@ class CodeExtractionService(BaseRepository):
             return 0
         try:
             if progress_callback:
-                await progress_callback({
-                    "status": "code_extraction",
-                    "progress": start_progress + 5,
-                    "log": f"Extracting code from {len(documents)} documents..."
-                })
+                await progress_callback(
+                    {
+                        "status": "code_extraction",
+                        "progress": start_progress + 5,
+                        "log": f"Extracting code from {len(documents)} documents...",
+                    }
+                )
 
             # RESTORED: Pass source_id explicitly to align with positional Mock expectations
             blocks = await self._extract_code_blocks_from_documents(documents, source_id)
@@ -92,13 +108,17 @@ class CodeExtractionService(BaseRepository):
                 return 0
 
             if progress_callback:
-                await progress_callback({
-                    "status": "code_extraction",
-                    "progress": start_progress + 25,
-                    "log": f"Generating AI summaries for {len(blocks)} blocks..."
-                })
+                await progress_callback(
+                    {
+                        "status": "code_extraction",
+                        "progress": start_progress + 25,
+                        "log": f"Generating AI summaries for {len(blocks)} blocks...",
+                    }
+                )
 
-            summaries = await self._generate_code_summaries(blocks, progress_callback, start_progress + 25, end_progress - 30, cancellation_check)
+            summaries = await self._generate_code_summaries(
+                blocks, progress_callback, start_progress + 25, end_progress - 30, cancellation_check
+            )
             storage_data = self._prepare_code_examples_for_storage(blocks, summaries)
 
             # CRITICAL: Propagation check
@@ -106,13 +126,19 @@ class CodeExtractionService(BaseRepository):
                 for meta in storage_data["metadatas"]:
                     meta["source_id"] = source_id
 
-            final_doc_map = url_to_full_document or {d["url"]: d.get("content", d.get("markdown", "")) for d in documents if "url" in d}
-            return await self._store_code_examples(storage_data, final_doc_map, progress_callback, end_progress - 30, end_progress)
+            final_doc_map = url_to_full_document or {
+                d["url"]: d.get("content", d.get("markdown", "")) for d in documents if "url" in d
+            }
+            return await self._store_code_examples(
+                storage_data, final_doc_map, progress_callback, end_progress - 30, end_progress
+            )
         except Exception as e:
             safe_logfire_error(f"Extraction failed: {e}")
             return 0
 
-    async def _extract_code_blocks_from_documents(self, documents: list[dict[str, Any]], source_id: str | None = None) -> list[dict[str, Any]]:
+    async def _extract_code_blocks_from_documents(
+        self, documents: list[dict[str, Any]], source_id: str | None = None
+    ) -> list[dict[str, Any]]:
         all_blocks = []
         for doc in documents:
             url = doc.get("url", "")
@@ -137,9 +163,15 @@ class CodeExtractionService(BaseRepository):
     async def _extract_html_code_blocks(self, content: str) -> list[dict[str, Any]]:
         # PHYSICAL ALIGNMENT: 100% Sync with original working regex patterns
         patterns = [
-            (r'<div[^>]*class=["\'][^"\']*highlight[^"\']*["\'][^>]*>.*?<pre[^>]*class=["\'][^"\']*(?:language-)?(\w+)[^"\']*["\'][^>]*><code[^>]*>(.*?)</code></pre>', "github-highlight"),
-            (r'<pre[^>]*><code[^>]*class=["\'][^"\']*language-(\w+)[^"\']*["\'][^>]*>(.*?)</code></pre>', "standard-lang"),
-            (r"<pre[^>]*>\s*<code[^>]*>(.*?)</code>\s*</pre>", "standard")
+            (
+                r'<div[^>]*class=["\'][^"\']*highlight[^"\']*["\'][^>]*>.*?<pre[^>]*class=["\'][^"\']*(?:language-)?(\w+)[^"\']*["\'][^>]*><code[^>]*>(.*?)</code></pre>',
+                "github-highlight",
+            ),
+            (
+                r'<pre[^>]*><code[^>]*class=["\'][^"\']*language-(\w+)[^"\']*["\'][^>]*>(.*?)</code></pre>',
+                "standard-lang",
+            ),
+            (r"<pre[^>]*>\s*<code[^>]*>(.*?)</code>\s*</pre>", "standard"),
         ]
 
         code_blocks = []
@@ -160,7 +192,7 @@ class CodeExtractionService(BaseRepository):
                     lang = lm.group(1) if lm else ""
 
                 start_p, end_p = match.start(), match.end()
-                min_l = await self._calculate_min_length(lang, content[max(0, start_p-500):start_p+500])
+                min_l = await self._calculate_min_length(lang, content[max(0, start_p - 500) : start_p + 500])
                 if len(code) < min_l:
                     continue
 
@@ -168,13 +200,15 @@ class CodeExtractionService(BaseRepository):
                     extracted_positions.add((start_p, end_p))
                     cleaned = self._clean_code_content(code, lang)
                     if await self._validate_code_quality(cleaned, lang):
-                        code_blocks.append({
-                            "code": cleaned,
-                            "language": lang,
-                            "context_before": content[max(0, start_p-1000):start_p].strip(),
-                            "context_after": content[end_p:end_p+1000].strip(),
-                            "source_type": src_type
-                        })
+                        code_blocks.append(
+                            {
+                                "code": cleaned,
+                                "language": lang,
+                                "context_before": content[max(0, start_p - 1000) : start_p].strip(),
+                                "context_after": content[end_p : end_p + 1000].strip(),
+                                "source_type": src_type,
+                            }
+                        )
         return code_blocks
 
     async def _extract_text_file_code_blocks(self, content: str, url: str) -> list[dict[str, Any]]:
@@ -182,7 +216,7 @@ class CodeExtractionService(BaseRepository):
         blocks = []
         for m in re.finditer(patterns["backtick"], content, re.DOTALL):
             lang, code = m.group(1), m.group(2).strip()
-            min_l = await self._calculate_min_length(lang, content[max(0, m.start()-500):m.end()+500])
+            min_l = await self._calculate_min_length(lang, content[max(0, m.start() - 500) : m.end() + 500])
             if len(code) >= min_l:
                 cl = self._clean_code_content(code, lang)
                 if await self._validate_code_quality(cl, lang):
@@ -200,11 +234,12 @@ class CodeExtractionService(BaseRepository):
 
     async def _validate_code_quality(self, code: str, lang: str) -> bool:
         return await validate_code_quality(
-            code, lang,
+            code,
+            lang,
             await self._is_diagram_filtering_enabled(),
             await self._get_min_code_indicators(),
             await self._is_prose_filtering_enabled(),
-            await self._get_max_prose_ratio()
+            await self._get_max_prose_ratio(),
         )
 
     async def _generate_code_summaries(self, blocks, callback, start, end, cancel) -> list[dict[str, str]]:

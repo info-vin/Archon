@@ -66,10 +66,7 @@ class HybridSearchStrategy(BaseRepository):
                     "source_filter": source_filter,
                 },
             )
-            success, response = self.execute_query(
-                query_obj.execute,
-                error_context="Hybrid document search failed"
-            )
+            success, response = self.execute_query(query_obj.execute, error_context="Hybrid document search failed")
 
             if not success:
                 span.set_attribute("error", str(response.get("error")))
@@ -103,10 +100,7 @@ class HybridSearchStrategy(BaseRepository):
                 mt = r.get("match_type", "unknown")
                 match_types[mt] = match_types.get(mt, 0) + 1
 
-            logger.debug(
-                f"Hybrid search returned {len(results)} results. "
-                f"Match types: {match_types}"
-            )
+            logger.debug(f"Hybrid search returned {len(results)} results. Match types: {match_types}")
 
             return results
 
@@ -156,10 +150,7 @@ class HybridSearchStrategy(BaseRepository):
                     "source_filter": final_source_filter,
                 },
             )
-            success, response = self.execute_query(
-                query_obj.execute,
-                error_context="Hybrid code example search failed"
-            )
+            success, response = self.execute_query(query_obj.execute, error_context="Hybrid code example search failed")
 
             if not success:
                 span.set_attribute("error", str(response.get("error")))
@@ -194,9 +185,6 @@ class HybridSearchStrategy(BaseRepository):
                 mt = r.get("match_type", "unknown")
                 match_types[mt] = match_types.get(mt, 0) + 1
 
-            logger.debug(
-                f"Hybrid code search returned {len(results)} results. "
-                f"Match types: {match_types}"
-            )
+            logger.debug(f"Hybrid code search returned {len(results)} results. Match types: {match_types}")
 
             return results

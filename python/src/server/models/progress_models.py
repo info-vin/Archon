@@ -56,7 +56,7 @@ class BaseProgressResponse(BaseModel):
                     result.append(item)
                 elif isinstance(item, dict):
                     # Extract the message from the log dict
-                    message = item.get('message', str(item))
+                    message = item.get("message", str(item))
                     result.append(message)
                 else:
                     result.append(str(item))
@@ -71,9 +71,20 @@ class CrawlProgressResponse(BaseProgressResponse):
     """Progress response for crawl operations."""
 
     status: Literal[
-        "starting", "analyzing", "crawling", "processing",
-        "source_creation", "document_storage", "code_extraction", "code_storage",
-        "finalization", "completed", "failed", "cancelled", "stopping", "error"
+        "starting",
+        "analyzing",
+        "crawling",
+        "processing",
+        "source_creation",
+        "document_storage",
+        "code_extraction",
+        "code_storage",
+        "finalization",
+        "completed",
+        "failed",
+        "cancelled",
+        "stopping",
+        "error",
     ]
 
     # Crawl-specific fields
@@ -124,9 +135,17 @@ class UploadProgressResponse(BaseProgressResponse):
     """Progress response for document upload operations."""
 
     status: Literal[
-        "starting", "reading", "extracting", "chunking",
-        "creating_source", "summarizing", "storing", "source_creation",
-        "completed", "failed", "cancelled"
+        "starting",
+        "reading",
+        "extracting",
+        "chunking",
+        "creating_source",
+        "summarizing",
+        "storing",
+        "source_creation",
+        "completed",
+        "failed",
+        "cancelled",
     ]
 
     # Upload-specific fields
@@ -147,8 +166,7 @@ class ProjectCreationProgressResponse(BaseProgressResponse):
     """Progress response for project creation operations."""
 
     status: Literal[
-        "starting", "analyzing", "generating_prp", "creating_tasks",
-        "organizing", "completed", "failed", "error"
+        "starting", "analyzing", "generating_prp", "creating_tasks", "organizing", "completed", "failed", "error"
     ]
 
     # Project creation specific
@@ -160,10 +178,7 @@ class ProjectCreationProgressResponse(BaseProgressResponse):
         populate_by_name = True  # Accept both snake_case and camelCase
 
 
-def create_progress_response(
-    operation_type: str,
-    progress_data: dict[str, Any]
-) -> BaseProgressResponse:
+def create_progress_response(operation_type: str, progress_data: dict[str, Any]) -> BaseProgressResponse:
     """
     Factory function to create the appropriate progress response based on operation type.
 
@@ -219,10 +234,10 @@ def create_progress_response(
             details_data[camel_field] = progress_data[snake_field]
 
     # Also check for crawl-specific fields that might use alternative names
-    if 'pages_crawled' not in progress_data and 'processed_pages' in progress_data:
-        details_data['pagesCrawled'] = progress_data['processed_pages']
-    if 'totalPages' not in details_data and 'total_pages' in progress_data:
-        details_data['totalPages'] = progress_data['total_pages']
+    if "pages_crawled" not in progress_data and "processed_pages" in progress_data:
+        details_data["pagesCrawled"] = progress_data["processed_pages"]
+    if "totalPages" not in details_data and "total_pages" in progress_data:
+        details_data["totalPages"] = progress_data["total_pages"]
 
     # Create details object if we have any detail fields
     if details_data:
@@ -233,14 +248,18 @@ def create_progress_response(
         # Debug logging for code extraction fields
         if operation_type == "crawl" and "completed_summaries" in progress_data:
             from ..config.logfire_config import get_logger
+
             logger = get_logger(__name__)
-            logger.info(f"Code extraction progress fields present: completed_summaries={progress_data.get('completed_summaries')}, total_summaries={progress_data.get('total_summaries')}")
+            logger.info(
+                f"Code extraction progress fields present: completed_summaries={progress_data.get('completed_summaries')}, total_summaries={progress_data.get('total_summaries')}"
+            )
 
         instance = model_class(**progress_data)
         return cast(BaseProgressResponse, instance)
     except Exception as e:
         # Log validation errors for debugging
         from ..config.logfire_config import get_logger
+
         logger = get_logger(__name__)
         logger.error(f"Failed to create {model_class.__name__}: {e}", exc_info=True)
 

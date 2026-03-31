@@ -7,6 +7,7 @@ from ..services.health_service import HealthService
 
 router = APIRouter(prefix="/api/system", tags=["System"])
 
+
 async def require_system_admin(user=Depends(get_current_user)):
     """
     Dependency to ensure the user has SYSTEM_ADMIN role.
@@ -15,10 +16,10 @@ async def require_system_admin(user=Depends(get_current_user)):
     role = (user.get("role") or "").lower()
     if role not in ["system_admin", "admin"]:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Access Denied: Requires System Administrator privileges."
+            status_code=status.HTTP_403_FORBIDDEN, detail="Access Denied: Requires System Administrator privileges."
         )
     return user
+
 
 async def require_manager_or_admin(user=Depends(get_current_user)):
     """
@@ -27,10 +28,10 @@ async def require_manager_or_admin(user=Depends(get_current_user)):
     role = (user.get("role") or "").lower()
     if role not in ["manager", "admin", "system_admin"]:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Access Denied: Requires Manager or Admin privileges."
+            status_code=status.HTTP_403_FORBIDDEN, detail="Access Denied: Requires Manager or Admin privileges."
         )
     return user
+
 
 @router.post("/scout/ingest", dependencies=[Depends(require_system_admin)])
 async def ingest_scout_reports() -> dict[str, Any]:
@@ -39,10 +40,12 @@ async def ingest_scout_reports() -> dict[str, Any]:
     Restricted to System Admin.
     """
     from ..services.scout_ingestion_service import scout_ingestion_service
+
     try:
         return await scout_ingestion_service.ingest_reports()
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Scout ingestion failed: {str(e)}") from e
+
 
 @router.get("/health/rag", dependencies=[Depends(require_system_admin)])
 async def get_rag_health_check() -> dict[str, Any]:
@@ -69,7 +72,7 @@ async def get_ai_model_health() -> dict[str, Any]:
         {"id": "gemini-2.0-flash-lite-preview-02-05", "agent": "System (DevBot)", "provider": "google"},
         {"id": "gemini-1.5-pro", "agent": "Manager (Charlie)", "provider": "google"},
         {"id": "gemini-2.0-flash", "agent": "Knowledge (Extract)", "provider": "google"},
-        {"id": "gemini-2.0-flash-lite-preview-02-05", "agent": "Knowledge (Summary)", "provider": "google"}
+        {"id": "gemini-2.0-flash-lite-preview-02-05", "agent": "Knowledge (Summary)", "provider": "google"},
     ]
 
     try:
@@ -88,6 +91,7 @@ async def get_ai_model_health() -> dict[str, Any]:
 
         # Pre-fetch Google credentials for diagnostics if needed
         from ..services.credential_service import credential_service
+
         google_key = await credential_service.get_credential("GOOGLE_API_KEY")
 
         for target in TARGET_MODELS:
@@ -104,36 +108,33 @@ async def get_ai_model_health() -> dict[str, Any]:
                 # Diagnostic: Why is it offline?
                 if target["provider"] == "google":
                     if not google_key:
-                        status = "config_missing" # Frontend can map this to "No API Key"
+                        status = "config_missing"  # Frontend can map this to "No API Key"
                     else:
                         # Check provider health explicitly to get the error message
                         # We use a dummy config as we already have the key
-                        health = await provider_discovery_service.check_provider_health("google", {"api_key": google_key})
+                        health = await provider_discovery_service.check_provider_health(
+                            "google", {"api_key": google_key}
+                        )
                         if not health.is_available:
                             status = "error"
                             error_detail = health.error_message
 
-            results.append({
-                "model": target["id"],
-                "agent": target["agent"],
-                "provider": target["provider"],
-                "status": status,
-                "error": error_detail,
-                "latency_ms": 150 if is_alive else None,
-            })
+            results.append(
+                {
+                    "model": target["id"],
+                    "agent": target["agent"],
+                    "provider": target["provider"],
+                    "status": status,
+                    "error": error_detail,
+                    "latency_ms": 150 if is_alive else None,
+                }
+            )
 
-        return {
-            "status": overall_status,
-            "models": results,
-            "timestamp": "now()"
-        }
+        return {"status": overall_status, "models": results, "timestamp": "now()"}
 
     except Exception as e:
-        return {
-             "status": "unhealthy",
-             "error": str(e),
-             "models": []
-        }
+        return {"status": "unhealthy", "error": str(e), "models": []}
+
 
 @router.get("/logs/connectivity", dependencies=[Depends(require_system_admin)])
 async def list_connectivity_logs() -> list[dict[str, Any]]:
@@ -142,17 +143,21 @@ async def list_connectivity_logs() -> list[dict[str, Any]]:
     Restricted to System Admin.
     """
     from ..utils import get_supabase_client
+
     supabase = get_supabase_client()
 
     # Fetch logs flagged as 'system' type alerts
-    response = supabase.table("archon_logs")\
-        .select("*")\
-        .eq("level", "ALERT")\
-        .eq("type", "system")\
-        .order("created_at", desc=True)\
-        .limit(20)\
+    response = (
+        supabase.table("archon_logs")
+        .select("*")
+        .eq("level", "ALERT")
+        .eq("type", "system")
+        .order("created_at", desc=True)
+        .limit(20)
         .execute()
+    )
     return response.data or []
+
 
 @router.get("/settings", dependencies=[Depends(require_manager_or_admin)])
 async def list_system_settings(category: str | None = None) -> list[dict[str, Any]]:
@@ -161,6 +166,7 @@ async def list_system_settings(category: str | None = None) -> list[dict[str, An
     Charlie can see business settings, David can see everything.
     """
     from ..utils import get_supabase_client
+
     supabase = get_supabase_client()
     query = supabase.table("archon_settings").select("*")
     if category:
@@ -168,13 +174,11 @@ async def list_system_settings(category: str | None = None) -> list[dict[str, An
     response = query.order("key").execute()
     return response.data or []
 
+
 @router.patch("/settings/{key}", dependencies=[Depends(require_system_admin)])
 async def update_system_setting(
-    key: str,
-    request: dict[str, Any],
-    current_user: dict = Depends(get_current_user)
+    key: str, request: dict[str, Any], current_user: dict = Depends(get_current_user)
 ) -> dict[str, Any]:
-
     """
     Updates a specific system setting and records the change in the audit trail.
     Restricted to System Admin only.
@@ -205,7 +209,9 @@ async def update_system_setting(
 
     # 1.1 Granular RBAC Check (Charlie protection)
     if is_protected and role == "manager":
-        logger.warning(f"API: Manager attempted to edit protected setting | key={key} | user={current_user.get('email')}")
+        logger.warning(
+            f"API: Manager attempted to edit protected setting | key={key} | user={current_user.get('email')}"
+        )
         raise HTTPException(status_code=403, detail="System protected settings can only be edited by Admins.")
 
     # 2. Perform Update
@@ -230,11 +236,12 @@ async def update_system_setting(
             "old_value": str(old_value),
             "new_value": str(new_value),
             "change_summary": f"System setting '{key}' updated by {user_name}",
-            "version_number": 1
+            "version_number": 1,
         }
         supabase.table("archon_document_versions").insert(audit_payload).execute()
     except Exception as audit_err:
         from ..config.logfire_config import get_logger
+
         logger = get_logger(__name__)
         logger.warning(f"Audit logging failed for setting {key}: {audit_err}")
 

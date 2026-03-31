@@ -16,6 +16,7 @@ active_crawl_tasks: dict[str, asyncio.Task] = {}
 
 router: APIRouter = APIRouter()
 
+
 @router.get("/crawl-progress/{progress_id}")
 async def get_crawl_progress(progress_id: str):
     """Get the current progress of a crawl or refresh operation."""
@@ -31,10 +32,12 @@ async def get_crawl_progress(progress_id: str):
         safe_logfire_error(f"Failed to get crawl progress {progress_id} | error={str(e)}")
         raise HTTPException(status_code=500, detail=str(e)) from e
 
+
 @router.post("/knowledge-items/stop/{progress_id}")
 async def stop_crawl_operation(progress_id: str, current_user: dict = Depends(get_current_user)):
     """Stop an active crawl or refresh operation."""
     from src.server.services.crawling import unregister_orchestration
+
     try:
         safe_logfire_info(f"Stop crawl requested | progress_id={progress_id}")
         if progress_id in active_crawl_tasks:
@@ -52,15 +55,17 @@ async def stop_crawl_operation(progress_id: str, current_user: dict = Depends(ge
         safe_logfire_error(f"Failed to stop operation {progress_id} | error={str(e)}")
         raise HTTPException(status_code=500, detail=str(e)) from e
 
+
 @router.post("/knowledge-items/{source_id}/refresh")
 async def refresh_knowledge_item(
     source_id: str,
     x_user_role: str | None = Header(None, alias="X-User-Role"),
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user),
 ):
     """Refresh an existing knowledge item by re-crawling its source."""
     # LATE IMPORT to share the same physical registry with other modules
     from server.services.rbac_service import RBACService
+
     try:
         service = KnowledgeItemService(get_supabase_client())
         success, res = await service.get_item(source_id)
@@ -82,9 +87,12 @@ async def refresh_knowledge_item(
         progress_id = str(uuid.uuid4())
         tracker = ProgressTracker(progress_id)
         await tracker.update(
-            status="initializing", progress=0,
+            status="initializing",
+            progress=0,
             log=f"Starting refresh for {url} (Role: {x_user_role or 'unknown'})",
-            source_id=source_id, operation="refresh", crawl_type="refresh"
+            source_id=source_id,
+            operation="refresh",
+            crawl_type="refresh",
         )
 
         from src.server.services.crawler_manager import get_crawler
@@ -100,7 +108,7 @@ async def refresh_knowledge_item(
             "tags": metadata.get("tags", []),
             "max_depth": max_depth,
             "is_refresh": True,
-            "source_id": source_id
+            "source_id": source_id,
         }
 
         task = asyncio.create_task(crawl_service.orchestrate_crawl(request_dict))
@@ -115,15 +123,17 @@ async def refresh_knowledge_item(
         safe_logfire_error(f"Failed to refresh item {source_id} | error={str(e)}")
         raise HTTPException(status_code=500, detail=str(e)) from e
 
+
 @router.post("/knowledge-items/crawl")
 async def crawl_knowledge_item(
     request: CrawlRequest,
     x_user_role: str | None = Header(None, alias="X-User-Role"),
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user),
 ):
     """Start a new web crawl to populate the knowledge base."""
     # LATE IMPORT to share the same physical registry with other modules
     from server.services.rbac_service import RBACService
+
     try:
         rbac_service = RBACService()
         constraints = rbac_service.get_crawler_constraints(x_user_role)
@@ -132,9 +142,11 @@ async def crawl_knowledge_item(
         progress_id = str(uuid.uuid4())
         tracker = ProgressTracker(progress_id)
         await tracker.update(
-            status="initializing", progress=0,
+            status="initializing",
+            progress=0,
             log=f"Initializing crawl for {request.url}...",
-            operation="crawl", crawl_type="new"
+            operation="crawl",
+            crawl_type="new",
         )
 
         from src.server.services.crawler_manager import get_crawler
@@ -149,7 +161,7 @@ async def crawl_knowledge_item(
             "knowledge_type": request.knowledge_type,
             "tags": request.tags,
             "max_depth": max_depth,
-            "max_concurrent": constraints.get("max_concurrent", 3)
+            "max_concurrent": constraints.get("max_concurrent", 3),
         }
 
         task = asyncio.create_task(orchestration_service.orchestrate_crawl(request_dict))
@@ -159,7 +171,7 @@ async def crawl_knowledge_item(
             "success": True,
             "progressId": progress_id,
             "message": "Crawling started",
-            "estimatedDuration": "3-5 minutes"
+            "estimatedDuration": "3-5 minutes",
         }
     except Exception as e:
         safe_logfire_error(f"Failed to start crawl | error={str(e)}")

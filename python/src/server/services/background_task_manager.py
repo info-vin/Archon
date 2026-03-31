@@ -84,22 +84,20 @@ class BackgroundTaskManager:
                 result = await async_task_func(*task_args)
 
                 # Update metadata to completed state
-                self.task_metadata[task_id].update({
-                    "status": "complete",
-                    "progress": 100,
-                    "result": result,
-                })
+                self.task_metadata[task_id].update(
+                    {
+                        "status": "complete",
+                        "progress": 100,
+                        "result": result,
+                    }
+                )
 
                 # Send completion update via progress callback if provided
                 if progress_callback:
                     try:
-                        await progress_callback(
-                            task_id, {"status": "complete", "percentage": 100, "result": result}
-                        )
+                        await progress_callback(task_id, {"status": "complete", "percentage": 100, "result": result})
                     except Exception as callback_error:
-                        logger.error(
-                            f"Progress callback error for completed task {task_id}: {callback_error}"
-                        )
+                        logger.error(f"Progress callback error for completed task {task_id}: {callback_error}")
 
                 logger.info(f"Async task {task_id} completed successfully")
                 return result
@@ -108,22 +106,20 @@ class BackgroundTaskManager:
                 logger.error(f"Async task {task_id} failed with error: {e}")
 
                 # Update metadata to error state
-                self.task_metadata[task_id].update({
-                    "status": "error",
-                    "progress": -1,
-                    "error": str(e),
-                })
+                self.task_metadata[task_id].update(
+                    {
+                        "status": "error",
+                        "progress": -1,
+                        "error": str(e),
+                    }
+                )
 
                 # Send error update via progress callback if provided
                 if progress_callback:
                     try:
-                        await progress_callback(
-                            task_id, {"status": "error", "percentage": -1, "error": str(e)}
-                        )
+                        await progress_callback(task_id, {"status": "error", "percentage": -1, "error": str(e)})
                     except Exception as callback_error:
-                        logger.error(
-                            f"Progress callback error for failed task {task_id}: {callback_error}"
-                        )
+                        logger.error(f"Progress callback error for failed task {task_id}: {callback_error}")
 
                 raise
             finally:

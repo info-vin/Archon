@@ -38,15 +38,15 @@ class TestAsyncSourceSummary:
             return original_summary_result
 
         # Mock the storage service
-        doc_storage.doc_storage_service.smart_chunk_text = Mock(
-            return_value=["chunk1", "chunk2"]
-        )
+        doc_storage.doc_storage_service.smart_chunk_text = Mock(return_value=["chunk1", "chunk2"])
 
-        with patch('src.server.services.crawling.document_storage_operations.extract_source_summary',
-                   side_effect=slow_extract_summary):
-            with patch('src.server.services.crawling.document_storage_operations.update_source_info'):
-                with patch('src.server.services.crawling.document_storage_operations.safe_logfire_info'):
-                    with patch('src.server.services.crawling.document_storage_operations.safe_logfire_error'):
+        with patch(
+            "src.server.services.crawling.document_storage_operations.extract_source_summary",
+            side_effect=slow_extract_summary,
+        ):
+            with patch("src.server.services.crawling.document_storage_operations.update_source_info"):
+                with patch("src.server.services.crawling.document_storage_operations.safe_logfire_info"):
+                    with patch("src.server.services.crawling.document_storage_operations.safe_logfire_error"):
                         # Create test metadata
                         all_metadatas = [
                             {"source_id": "test123", "word_count": 100},
@@ -66,7 +66,7 @@ class TestAsyncSourceSummary:
                             source_word_counts,
                             request,
                             "https://example.com",
-                            "Example Site"
+                            "Example Site",
                         )
 
                         end_time = time.time()
@@ -95,17 +95,19 @@ class TestAsyncSourceSummary:
         def failing_extract_summary(source_id, content):
             raise RuntimeError("AI service unavailable")
 
-        doc_storage.doc_storage_service.smart_chunk_text = Mock(
-            return_value=["chunk1"]
-        )
+        doc_storage.doc_storage_service.smart_chunk_text = Mock(return_value=["chunk1"])
 
         error_messages = []
 
-        with patch('src.server.services.crawling.document_storage_operations.extract_source_summary',
-                   side_effect=failing_extract_summary):
-            with patch('src.server.services.crawling.document_storage_operations.update_source_info') as mock_update:
-                with patch('src.server.services.crawling.document_storage_operations.safe_logfire_info'):
-                    with patch('src.server.services.crawling.document_storage_operations.safe_logfire_error') as mock_error:
+        with patch(
+            "src.server.services.crawling.document_storage_operations.extract_source_summary",
+            side_effect=failing_extract_summary,
+        ):
+            with patch("src.server.services.crawling.document_storage_operations.update_source_info") as mock_update:
+                with patch("src.server.services.crawling.document_storage_operations.safe_logfire_info"):
+                    with patch(
+                        "src.server.services.crawling.document_storage_operations.safe_logfire_error"
+                    ) as mock_error:
                         mock_error.side_effect = lambda msg: error_messages.append(msg)
 
                         all_metadatas = [{"source_id": "test456", "word_count": 100}]
@@ -114,12 +116,7 @@ class TestAsyncSourceSummary:
                         request = {}
 
                         await doc_storage._create_source_records(
-                            all_metadatas,
-                            all_contents,
-                            source_word_counts,
-                            request,
-                            None,
-                            None
+                            all_metadatas, all_contents, source_word_counts, request, None, None
                         )
 
                         # Verify error was logged
@@ -149,14 +146,14 @@ class TestAsyncSourceSummary:
             execution_order.append(f"end_{source_id}")
             return f"Summary for {source_id}"
 
-        doc_storage.doc_storage_service.smart_chunk_text = Mock(
-            return_value=["chunk"]
-        )
+        doc_storage.doc_storage_service.smart_chunk_text = Mock(return_value=["chunk"])
 
-        with patch('src.server.services.crawling.document_storage_operations.extract_source_summary',
-                   side_effect=track_extract_summary):
-            with patch('src.server.services.crawling.document_storage_operations.update_source_info'):
-                with patch('src.server.services.crawling.document_storage_operations.safe_logfire_info'):
+        with patch(
+            "src.server.services.crawling.document_storage_operations.extract_source_summary",
+            side_effect=track_extract_summary,
+        ):
+            with patch("src.server.services.crawling.document_storage_operations.update_source_info"):
+                with patch("src.server.services.crawling.document_storage_operations.safe_logfire_info"):
                     # Create metadata for multiple sources
                     all_metadatas = [
                         {"source_id": "source1", "word_count": 100},
@@ -172,12 +169,7 @@ class TestAsyncSourceSummary:
                     request = {}
 
                     await doc_storage._create_source_records(
-                        all_metadatas,
-                        all_contents,
-                        source_word_counts,
-                        request,
-                        None,
-                        None
+                        all_metadatas, all_contents, source_word_counts, request, None, None
                     )
 
                     # With threading, sources are processed sequentially in the loop
@@ -204,40 +196,35 @@ class TestAsyncSourceSummary:
         captured_calls = []
 
         def capture_extract_summary(source_id, content):
-            captured_calls.append({
-                "source_id": source_id,
-                "content_len": len(content),
-                "content_preview": content[:50] if content else ""
-            })
+            captured_calls.append(
+                {
+                    "source_id": source_id,
+                    "content_len": len(content),
+                    "content_preview": content[:50] if content else "",
+                }
+            )
             return f"Summary for {source_id}"
 
         doc_storage.doc_storage_service.smart_chunk_text = Mock(
-            return_value=["This is chunk one with some content",
-                          "This is chunk two with more content"]
+            return_value=["This is chunk one with some content", "This is chunk two with more content"]
         )
 
-        with patch('src.server.services.crawling.document_storage_operations.extract_source_summary',
-                   side_effect=capture_extract_summary):
-            with patch('src.server.services.crawling.document_storage_operations.update_source_info'):
-                with patch('src.server.services.crawling.document_storage_operations.safe_logfire_info'):
+        with patch(
+            "src.server.services.crawling.document_storage_operations.extract_source_summary",
+            side_effect=capture_extract_summary,
+        ):
+            with patch("src.server.services.crawling.document_storage_operations.update_source_info"):
+                with patch("src.server.services.crawling.document_storage_operations.safe_logfire_info"):
                     all_metadatas = [
                         {"source_id": "test789", "word_count": 100},
                         {"source_id": "test789", "word_count": 150},
                     ]
-                    all_contents = [
-                        "This is chunk one with some content",
-                        "This is chunk two with more content"
-                    ]
+                    all_contents = ["This is chunk one with some content", "This is chunk two with more content"]
                     source_word_counts = {"test789": 250}
                     request = {}
 
                     await doc_storage._create_source_records(
-                        all_metadatas,
-                        all_contents,
-                        source_word_counts,
-                        request,
-                        None,
-                        None
+                        all_metadatas, all_contents, source_word_counts, request, None, None
                     )
 
                     # Verify the correct values were passed to the thread
@@ -266,16 +253,18 @@ class TestAsyncSourceSummary:
             time.sleep(0.1)  # This would block the event loop if not run in thread
             return None  # update_source_info doesn't return anything
 
-        doc_storage.doc_storage_service.smart_chunk_text = Mock(
-            return_value=["chunk1"]
-        )
+        doc_storage.doc_storage_service.smart_chunk_text = Mock(return_value=["chunk1"])
 
-        with patch('src.server.services.crawling.document_storage_operations.extract_source_summary',
-                   return_value="Test summary"):
-            with patch('src.server.services.crawling.document_storage_operations.update_source_info',
-                       side_effect=slow_update_source_info):
-                with patch('src.server.services.crawling.document_storage_operations.safe_logfire_info'):
-                    with patch('src.server.services.crawling.document_storage_operations.safe_logfire_error'):
+        with patch(
+            "src.server.services.crawling.document_storage_operations.extract_source_summary",
+            return_value="Test summary",
+        ):
+            with patch(
+                "src.server.services.crawling.document_storage_operations.update_source_info",
+                side_effect=slow_update_source_info,
+            ):
+                with patch("src.server.services.crawling.document_storage_operations.safe_logfire_info"):
+                    with patch("src.server.services.crawling.document_storage_operations.safe_logfire_error"):
                         all_metadatas = [{"source_id": "test_update", "word_count": 100}]
                         all_contents = ["chunk1"]
                         source_word_counts = {"test_update": 100}
@@ -290,7 +279,7 @@ class TestAsyncSourceSummary:
                             source_word_counts,
                             request,
                             "https://example.com",
-                            "Example Site"
+                            "Example Site",
                         )
 
                         end_time = time.time()
@@ -314,9 +303,7 @@ class TestAsyncSourceSummary:
         def failing_update_source_info(**kwargs):
             raise RuntimeError("Database connection failed")
 
-        doc_storage.doc_storage_service.smart_chunk_text = Mock(
-            return_value=["chunk1"]
-        )
+        doc_storage.doc_storage_service.smart_chunk_text = Mock(return_value=["chunk1"])
 
         error_messages = []
         fallback_called = False
@@ -328,12 +315,18 @@ class TestAsyncSourceSummary:
 
         mock_supabase.table.return_value.upsert.side_effect = track_fallback_upsert
 
-        with patch('src.server.services.crawling.document_storage_operations.extract_source_summary',
-                   return_value="Test summary"):
-            with patch('src.server.services.crawling.document_storage_operations.update_source_info',
-                       side_effect=failing_update_source_info):
-                with patch('src.server.services.crawling.document_storage_operations.safe_logfire_info'):
-                    with patch('src.server.services.crawling.document_storage_operations.safe_logfire_error') as mock_error:
+        with patch(
+            "src.server.services.crawling.document_storage_operations.extract_source_summary",
+            return_value="Test summary",
+        ):
+            with patch(
+                "src.server.services.crawling.document_storage_operations.update_source_info",
+                side_effect=failing_update_source_info,
+            ):
+                with patch("src.server.services.crawling.document_storage_operations.safe_logfire_info"):
+                    with patch(
+                        "src.server.services.crawling.document_storage_operations.safe_logfire_error"
+                    ) as mock_error:
                         mock_error.side_effect = lambda msg: error_messages.append(msg)
 
                         all_metadatas = [{"source_id": "test_fail", "word_count": 100}]
@@ -347,7 +340,7 @@ class TestAsyncSourceSummary:
                             source_word_counts,
                             request,
                             "https://example.com",
-                            "Example Site"
+                            "Example Site",
                         )
 
                         # Verify error was logged
@@ -372,22 +365,24 @@ class TestAsyncSourceSummary:
             captured_kwargs.update(kwargs)
             return None
 
-        doc_storage.doc_storage_service.smart_chunk_text = Mock(
-            return_value=["chunk content"]
-        )
+        doc_storage.doc_storage_service.smart_chunk_text = Mock(return_value=["chunk content"])
 
-        with patch('src.server.services.crawling.document_storage_operations.extract_source_summary',
-                   return_value="Generated summary"):
-            with patch('src.server.services.crawling.document_storage_operations.update_source_info',
-                       side_effect=capture_update_source_info):
-                with patch('src.server.services.crawling.document_storage_operations.safe_logfire_info'):
+        with patch(
+            "src.server.services.crawling.document_storage_operations.extract_source_summary",
+            return_value="Generated summary",
+        ):
+            with patch(
+                "src.server.services.crawling.document_storage_operations.update_source_info",
+                side_effect=capture_update_source_info,
+            ):
+                with patch("src.server.services.crawling.document_storage_operations.safe_logfire_info"):
                     all_metadatas = [{"source_id": "test_kwargs", "word_count": 250}]
                     all_contents = ["chunk content"]
                     source_word_counts = {"test_kwargs": 250}
                     request = {
                         "knowledge_type": "api_reference",
                         "tags": ["api", "docs"],
-                        "url": "https://original.url/crawl"
+                        "url": "https://original.url/crawl",
                     }
 
                     await doc_storage._create_source_records(
@@ -396,7 +391,7 @@ class TestAsyncSourceSummary:
                         source_word_counts,
                         request,
                         "https://source.url",
-                        "Source Display Name"
+                        "Source Display Name",
                     )
 
                     # Verify all kwargs were passed correctly

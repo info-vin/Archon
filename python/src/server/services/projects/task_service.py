@@ -36,24 +36,23 @@ class TaskService(BaseRepository):
     def _notify_ai_agent_of_assignment(self, task_id: str, agent_id: str):
         """Delegates agent notification to maintenance submodule."""
         from .tasks.maintenance import notify_ai_agent_logic
+
         asyncio.create_task(notify_ai_agent_logic(task_id, agent_id))
 
     def validate_status(self, status: str) -> tuple[bool, str]:
         """Delegates status validation to maintenance submodule."""
         from .tasks.maintenance import validate_status_logic
+
         return validate_status_logic(status, self.VALID_STATUSES)
 
     def validate_assignee(self, assignee: str) -> tuple[bool, str]:
         """Delegates assignee validation to maintenance submodule."""
         from .tasks.maintenance import validate_assignee_logic
+
         return validate_assignee_logic(assignee)
 
     async def create_info_request_task(
-        self,
-        requester_id: str,
-        subject: str,
-        context: str,
-        lead_id: str | None = None
+        self, requester_id: str, subject: str, context: str, lead_id: str | None = None
     ) -> tuple[bool, dict[str, Any]]:
         """
         Creates a specialized task for requesting information (Alice Loop).
@@ -74,12 +73,14 @@ class TaskService(BaseRepository):
 
             # 2. Get Project ID Dynamically (Phase 4.6.23 Hardening)
             from ..settings_service import SettingsService
+
             settings = SettingsService(self.supabase_client)
             project_id = settings.get_setting("default_business_project")
 
             # Fallback logic: if no setting, find the first available project
             if not project_id:
                 logger.warning("No 'default_business_project' set. Falling back to the first available project.")
+
                 def _get_first_project():
                     return self.supabase_client.table("archon_projects").select("id").limit(1).execute()
 
@@ -87,7 +88,7 @@ class TaskService(BaseRepository):
                 if p_success and p_result["data"]:
                     project_id = p_result["data"][0]["id"]
                 else:
-                    project_id = "field_ops_001" # Ultimate safety fallback
+                    project_id = "field_ops_001"  # Ultimate safety fallback
 
             # 3. Create Task
             # Status: pending_approval (This effectively assigns it to Manager's queue)
@@ -96,10 +97,10 @@ class TaskService(BaseRepository):
                 project_id=project_id,
                 title=f"Info Request: {subject}",
                 description=description,
-                assignee="Charlie", # Initial assignee is Manager for approval
+                assignee="Charlie",  # Initial assignee is Manager for approval
                 priority="high",
                 feature="information_request",
-                task_order=0
+                task_order=0,
             )
 
         except Exception as e:
@@ -163,10 +164,12 @@ class TaskService(BaseRepository):
 
                         # Increment task_order for all affected tasks
                         for existing_task in existing_tasks_response.data:
-                            self.supabase_client.table("archon_tasks").update({
-                                "task_order": existing_task["task_order"] + 1,
-                                "updated_at": datetime.now().isoformat(),
-                            }).eq("id", existing_task["id"]).execute()
+                            self.supabase_client.table("archon_tasks").update(
+                                {
+                                    "task_order": existing_task["task_order"] + 1,
+                                    "updated_at": datetime.now().isoformat(),
+                                }
+                            ).eq("id", existing_task["id"]).execute()
                 except Exception as e:
                     logger.warning(f"Reordering tasks failed: {e}. Proceeding with task creation.")
 
@@ -204,8 +207,7 @@ class TaskService(BaseRepository):
                 return self.supabase_client.table("archon_tasks").insert(task_data).execute()
 
             success_create, create_result = self.execute_query(
-                query_func=_create_query,
-                error_context="Failed to create task"
+                query_func=_create_query, error_context="Failed to create task"
             )
 
             if success_create:
@@ -254,9 +256,17 @@ class TaskService(BaseRepository):
         List tasks with various filters. Delegates to query submodule.
         """
         from .tasks.query_logic import list_tasks_logic
+
         return await list_tasks_logic(
-            self, project_id, status, include_closed, exclude_large_fields,
-            include_archived, assignee_id, assignee_name, include_unassigned
+            self,
+            project_id,
+            status,
+            include_closed,
+            exclude_large_fields,
+            include_archived,
+            assignee_id,
+            assignee_name,
+            include_unassigned,
         )
 
     async def get_task(self, task_id: str) -> tuple[bool, dict[str, Any]]:
@@ -266,13 +276,11 @@ class TaskService(BaseRepository):
         Returns:
             Tuple of (success, result_dict)
         """
+
         def _query():
             return self.supabase_client.table("archon_tasks").select("*").eq("id", task_id).execute()
 
-        success, result = self.execute_query(
-            query_func=_query,
-            error_context=f"Task with ID {task_id} not found"
-        )
+        success, result = self.execute_query(query_func=_query, error_context=f"Task with ID {task_id} not found")
 
         if not success:
             return False, result
@@ -283,10 +291,12 @@ class TaskService(BaseRepository):
         try:
             # We search for token usage linked to this task_id.
             # AgentService logs usage with request_id containing the task_id.
-            token_res = self.supabase_client.table("token_usage")\
-                .select("total_tokens, cost_usd")\
-                .ilike("request_id", f"%{task_id}%")\
+            token_res = (
+                self.supabase_client.table("token_usage")
+                .select("total_tokens, cost_usd")
+                .ilike("request_id", f"%{task_id}%")
                 .execute()
+            )
 
             total_tokens = sum(row.get("total_tokens", 0) for row in (token_res.data or []))
             total_cost = sum(float(row.get("cost_usd", 0)) for row in (token_res.data or []))
@@ -294,7 +304,7 @@ class TaskService(BaseRepository):
             task_data["ai_metrics"] = {
                 "total_tokens": total_tokens,
                 "total_cost_usd": round(total_cost, 6),
-                "is_ai_powered": total_tokens > 0
+                "is_ai_powered": total_tokens > 0,
             }
         except Exception as e:
             logger.warning(f"Failed to aggregate AI metrics for task {task_id}: {e}")
@@ -302,9 +312,7 @@ class TaskService(BaseRepository):
 
         return True, {"task": task_data}
 
-    async def update_task(
-        self, task_id: str, update_fields: dict[str, Any]
-    ) -> tuple[bool, dict[str, Any]]:
+    async def update_task(self, task_id: str, update_fields: dict[str, Any]) -> tuple[bool, dict[str, Any]]:
         """
         Update task with specified fields.
 
@@ -341,7 +349,9 @@ class TaskService(BaseRepository):
                 # If task is being moved from 'done' to another status, clear completed_at
                 elif new_status != "done" and current_task.get("status") == "done":
                     # Use a sentinel or handle this in the update dict to satisfy MyPy
-                    update_data["completed_at"] = ""  # Using empty string as sentinel for null in JSONB update if needed, or cast to Any
+                    update_data["completed_at"] = (
+                        ""  # Using empty string as sentinel for null in JSONB update if needed, or cast to Any
+                    )
                     # Actually, for Supabase/Postgrest via Python wrapper, None works but MyPy might complain if the dict type isn't Any
                     update_data["completed_at"] = None  # type: ignore
 
@@ -366,7 +376,7 @@ class TaskService(BaseRepository):
             if "due_date" in update_fields:
                 # Ensure datetime is serialized to string for Supabase
                 due_val = update_fields["due_date"]
-                if hasattr(due_val, 'isoformat'):
+                if hasattr(due_val, "isoformat"):
                     update_data["due_date"] = due_val.isoformat()
                 else:
                     update_data["due_date"] = due_val
@@ -385,23 +395,17 @@ class TaskService(BaseRepository):
 
             if "completed_at" in update_fields:
                 comp_val = update_fields["completed_at"]
-                if hasattr(comp_val, 'isoformat'):
+                if hasattr(comp_val, "isoformat"):
                     update_data["completed_at"] = comp_val.isoformat()
                 else:
                     update_data["completed_at"] = comp_val
 
             # Update task
             def _update_query():
-                return (
-                    self.supabase_client.table("archon_tasks")
-                    .update(update_data)
-                    .eq("id", task_id)
-                    .execute()
-                )
+                return self.supabase_client.table("archon_tasks").update(update_data).eq("id", task_id).execute()
 
             success_update, update_result = self.execute_query(
-                query_func=_update_query,
-                error_context=f"Task with ID {task_id} not found"
+                query_func=_update_query, error_context=f"Task with ID {task_id} not found"
             )
 
             if success_update:
@@ -409,9 +413,7 @@ class TaskService(BaseRepository):
 
                 # If the assignee was updated to an AI agent, notify the MCP
                 if "assignee" in update_fields and update_fields["assignee"] in AI_AGENT_ROLES:
-                    self._notify_ai_agent_of_assignment(
-                        task_id=task_id, agent_id=update_fields["assignee"]
-                    )
+                    self._notify_ai_agent_of_assignment(task_id=task_id, agent_id=update_fields["assignee"])
 
                 return True, {"task": task, "message": "Task updated successfully"}
             return False, update_result
@@ -420,11 +422,10 @@ class TaskService(BaseRepository):
             logger.error(f"Error updating task: {e}")
             return False, {"error": f"Error updating task: {str(e)}"}
 
-    async def archive_task(
-        self, task_id: str, archived_by: str = "mcp"
-    ) -> tuple[bool, dict[str, Any]]:
+    async def archive_task(self, task_id: str, archived_by: str = "mcp") -> tuple[bool, dict[str, Any]]:
         """Archives a task. Delegates to maintenance submodule."""
         from .tasks.maintenance import archive_task_logic
+
         return await archive_task_logic(self, task_id, archived_by)
 
     async def update_task_status_from_agent(
@@ -432,6 +433,7 @@ class TaskService(BaseRepository):
     ) -> tuple[bool, dict[str, Any]]:
         """Updates status via agent. Delegates to maintenance submodule."""
         from .tasks.maintenance import update_task_status_from_agent_logic
+
         return await update_task_status_from_agent_logic(self, task_id, new_status, agent_id)
 
     async def save_agent_output(
@@ -439,6 +441,7 @@ class TaskService(BaseRepository):
     ) -> tuple[bool, dict[str, Any]]:
         """Saves agent output. Delegates to maintenance submodule."""
         from .tasks.maintenance import save_agent_output_logic
+
         return await save_agent_output_logic(self, task_id, output, agent_id)
 
     async def refine_task_description(self, title: str, description: str) -> str:
@@ -447,6 +450,7 @@ class TaskService(BaseRepository):
         a structured product spec.
         """
         from .tasks.ai_operations import refine_task_description_logic
+
         return await refine_task_description_logic(self.supabase_client, title, description)
 
     async def get_all_project_task_counts(self) -> tuple[bool, dict[str, dict[str, int]]]:
@@ -454,24 +458,24 @@ class TaskService(BaseRepository):
         Get task counts for all projects. Delegates to query submodule.
         """
         from .tasks.query_logic import get_all_project_task_counts_logic
+
         return await get_all_project_task_counts_logic(self)
 
     async def generate_task_from_alert(
-        self,
-        alert_id: str,
-        assignee_id: str | None = None,
-        triggered_by: str | None = None
+        self, alert_id: str, assignee_id: str | None = None, triggered_by: str | None = None
     ) -> tuple[bool, dict[str, Any]]:
         """
         AI-powered task generation from a Sentinel alert.
         Delegates to AI submodule.
         """
         from .tasks.ai_operations import generate_task_from_alert_logic
+
         return await generate_task_from_alert_logic(self, alert_id, assignee_id)
 
     async def prune_archived_tasks(self, days_old: int = 30) -> tuple[bool, dict[str, Any]]:
         """Prunes old archived tasks. Delegates to maintenance submodule."""
         from .tasks.maintenance import prune_archived_tasks_logic
+
         return await prune_archived_tasks_logic(self, days_old)
 
 

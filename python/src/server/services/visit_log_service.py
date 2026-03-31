@@ -1,6 +1,7 @@
 """
 Visit Log Service - Business logic for tracking customer interactions.
 """
+
 from typing import Any
 
 from src.server.repositories.base_repository import BaseRepository
@@ -17,22 +18,27 @@ class VisitLogService(BaseRepository):
             if lead_id:
                 q = q.eq("lead_id", lead_id)
             return q.execute()
+
         return self.execute_query(_query, "Failed to list logs")
 
     async def create_log(self, data: dict) -> tuple[bool, Any]:
         def _query():
             return self.supabase_client.table("visit_logs").insert(data).execute()
+
         return self.execute_query(_query, "Failed to create log")
 
     async def get_attendance_status(self, user_id: str) -> tuple[bool, Any]:
         """Fetches the current attendance status for a user."""
+
         def _query():
-            return self.supabase_client.table("attendance_logs")\
-                .select("*")\
-                .eq("user_id", user_id)\
-                .order("clock_in_time", desc=True)\
-                .limit(1)\
+            return (
+                self.supabase_client.table("attendance_logs")
+                .select("*")
+                .eq("user_id", user_id)
+                .order("clock_in_time", desc=True)
+                .limit(1)
                 .execute()
+            )
 
         success, res = self.execute_query(_query, "Failed to fetch attendance status")
         if not success or not res:
@@ -41,6 +47,7 @@ class VisitLogService(BaseRepository):
         # Extract data from Supabase response
         data: list[Any] = res if isinstance(res, list) else []
         return True, data[0] if len(data) > 0 else {"status": "OFF_WORK", "clock_in_time": None}
+
 
 # Singleton export
 visit_log_service = VisitLogService()

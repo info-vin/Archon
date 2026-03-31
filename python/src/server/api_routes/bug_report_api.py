@@ -53,9 +53,7 @@ class GitHubService:
         """Create a GitHub issue from a bug report."""
 
         if not self.token:
-            raise HTTPException(
-                status_code=500, detail="GitHub integration not configured - GITHUB_TOKEN not found"
-            )
+            raise HTTPException(status_code=500, detail="GitHub integration not configured - GITHUB_TOKEN not found")
 
         # Format the issue body
         issue_body = self._format_issue_body(bug_report)
@@ -98,9 +96,7 @@ class GitHubService:
                     )
                 else:
                     logger.error(f"GitHub API error: {response.status_code} - {response.text}")
-                    raise HTTPException(
-                        status_code=500, detail=f"GitHub API error: {response.status_code}"
-                    )
+                    raise HTTPException(status_code=500, detail=f"GitHub API error: {response.status_code}")
 
         except httpx.TimeoutException as e:
             logger.error("GitHub API request timed out")
@@ -208,9 +204,7 @@ async def create_github_issue(bug_report: BugReportRequest):
         try:
             result = await github_service.create_issue(bug_report)
 
-            logger.info(
-                f"Successfully created GitHub issue #{result['issue_number']}: {result['issue_url']}"
-            )
+            logger.info(f"Successfully created GitHub issue #{result['issue_number']}: {result['issue_url']}")
 
             return BugReportResponse(
                 success=True,

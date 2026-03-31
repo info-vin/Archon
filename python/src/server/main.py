@@ -126,8 +126,6 @@ async def lifespan(app: FastAPI):
         except Exception as e:
             api_logger.warning(f"Could not initialize prompt service: {e}")
 
-
-
         # Initialize Agent Neural Wiring (MCP Client Injection)
         try:
             from ..agents.mcp_client import get_mcp_client
@@ -178,8 +176,6 @@ async def lifespan(app: FastAPI):
     api_logger.info("🛑 Shutting down Archon backend...")
 
     try:
-
-
         # MCP Client cleanup not needed
 
         # Cleanup crawling context
@@ -232,7 +228,9 @@ app.add_middleware(
 )
 
 
-app.include_router(test_api_router) # NEW ROUTER
+app.include_router(test_api_router)  # NEW ROUTER
+
+
 # Add middleware to skip logging for health checks
 @app.middleware("http")
 async def skip_health_check_logs(request, call_next):
@@ -279,11 +277,12 @@ app.include_router(marketing_router)
 app.include_router(system_router)
 app.include_router(prompts_router)
 app.include_router(visit_log_router)
-app.include_router(extraction_router) # NEW ROUTER (GAP-018)
+app.include_router(extraction_router)  # NEW ROUTER (GAP-018)
 
 
 # Root endpoint
 @app.get("/")
+@app.head("/")
 async def root():
     """Root endpoint returning API information."""
     return {
@@ -323,7 +322,7 @@ async def health_check():
             "migration_required": True,
             "message": schema_status["message"],
             "migration_instructions": "Open Supabase Dashboard → SQL Editor → Run: migration/add_source_url_display_name.sql",
-            "schema_valid": False
+            "schema_valid": False,
         }
 
     return {
@@ -346,6 +345,7 @@ async def api_health_check():
 # Cache schema check result to avoid repeated database queries
 _schema_check_cache: dict[str, Any] = {"valid": None, "checked_at": 0.0}
 
+
 async def _check_database_schema():
     """Check if the projects table exists to determine schema validity."""
     import time
@@ -357,16 +357,16 @@ async def _check_database_schema():
     # If we recently failed, don't spam the database (wait at least 30 seconds)
     current_time = time.time()
     last_checked = float(_schema_check_cache.get("checked_at", 0.0))
-    if (_schema_check_cache.get("valid") is False and
-        current_time - last_checked < 30):
+    if _schema_check_cache.get("valid") is False and current_time - last_checked < 30:
         return _schema_check_cache.get("result", {"valid": False, "message": "Schema check recently failed."})
 
     try:
         from .services.client_manager import get_supabase_client
+
         client = get_supabase_client()
 
         # Check if the 'archon_projects' table exists.
-        client.table('archon_projects').select('id').limit(1).execute()
+        client.table("archon_projects").select("id").limit(1).execute()
 
         # Cache successful result
         _schema_check_cache["valid"] = True
@@ -383,7 +383,7 @@ async def _check_database_schema():
         if 'relation "archon_projects" does not exist' in error_msg:
             result = {
                 "valid": False,
-                "message": "Projects table not detected. This is required for the projects feature."
+                "message": "Projects table not detected. This is required for the projects feature.",
             }
             # Cache failed result
             _schema_check_cache["valid"] = False

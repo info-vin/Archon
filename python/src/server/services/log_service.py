@@ -3,6 +3,7 @@ Log Service Module for Archon
 
 This module provides business logic for logging Gemini interactions.
 """
+
 from datetime import datetime
 
 from src.server.repositories.base_repository import BaseRepository
@@ -11,6 +12,7 @@ from ..config.logfire_config import get_logger
 from ..utils import get_supabase_client
 
 logger = get_logger(__name__)
+
 
 class LogService(BaseRepository):
     """Service class for logging operations"""
@@ -49,9 +51,7 @@ class LogService(BaseRepository):
             return self.supabase_client.table("gemini_logs").insert(insert_data).execute()
 
         success, result = self.execute_query(
-            query_func=_query,
-            error_context="Failed to insert log into database",
-            require_data=True
+            query_func=_query, error_context="Failed to insert log into database", require_data=True
         )
 
         if success and result["data"]:
@@ -69,6 +69,7 @@ class LogService(BaseRepository):
     async def get_active_alerts(self) -> list:
         """Physical Placeholder for Charlie's Sentinel Alerts."""
         return []
+
 
 # Singleton export for modular APIs
 log_service = LogService()

@@ -11,16 +11,18 @@ from src.server.services.projects.task_service import (  # Ensure task_service s
 # Mock Supabase client for all tests
 @pytest.fixture
 def mock_supabase_client():
-    with patch('src.server.utils.get_supabase_client') as mock_get_client:
+    with patch("src.server.utils.get_supabase_client") as mock_get_client:
         mock_client = MagicMock()
         mock_get_client.return_value = mock_client
         yield mock_client
+
 
 # Test TaskService instance
 @pytest.fixture
 def test_task_service(mock_supabase_client):
     # Ensure a fresh instance for tests that might modify internal state
     return TaskService(supabase_client=mock_supabase_client)
+
 
 @pytest.mark.asyncio
 async def test_update_task_status_from_agent_success(test_task_service, mock_supabase_client):
@@ -30,12 +32,7 @@ async def test_update_task_status_from_agent_success(test_task_service, mock_sup
     new_status = "doing"
 
     # Mock get_task to return a task assigned to the test_agent_id
-    test_task = {
-        "id": test_task_id,
-        "assignee": test_agent_id,
-        "status": "todo",
-        "attachments": []
-    }
+    test_task = {"id": test_task_id, "assignee": test_agent_id, "status": "todo", "attachments": []}
     test_task_service.get_task = AsyncMock(return_value=(True, {"task": test_task}))
     test_task_service.update_task = AsyncMock(return_value=(True, {"task": {**test_task, "status": new_status}}))
 
@@ -50,6 +47,7 @@ async def test_update_task_status_from_agent_success(test_task_service, mock_sup
         test_task_id, {"status": new_status, "assignee": test_agent_id}
     )
 
+
 @pytest.mark.asyncio
 async def test_update_task_status_from_agent_unauthorized(test_task_service, mock_supabase_client):
     """Test status update failure from an unauthorized agent."""
@@ -58,14 +56,9 @@ async def test_update_task_status_from_agent_unauthorized(test_task_service, moc
     unauthorized_agent_id = "ai-qa-agent-2"
     new_status = "doing"
 
-    test_task = {
-        "id": test_task_id,
-        "assignee": assigned_agent_id,
-        "status": "todo",
-        "attachments": []
-    }
+    test_task = {"id": test_task_id, "assignee": assigned_agent_id, "status": "todo", "attachments": []}
     test_task_service.get_task = AsyncMock(return_value=(True, {"task": test_task}))
-    test_task_service.update_task = AsyncMock() # Should not be called
+    test_task_service.update_task = AsyncMock()  # Should not be called
 
     success, result = await test_task_service.update_task_status_from_agent(
         task_id=test_task_id, new_status=new_status, agent_id=unauthorized_agent_id
@@ -75,6 +68,7 @@ async def test_update_task_status_from_agent_unauthorized(test_task_service, moc
     assert "not authorized" in result["error"]
     test_task_service.get_task.assert_called_once_with(test_task_id)
     test_task_service.update_task.assert_not_called()
+
 
 @pytest.mark.asyncio
 async def test_save_agent_output_success_empty_attachments(test_task_service, mock_supabase_client):
@@ -87,13 +81,13 @@ async def test_save_agent_output_success_empty_attachments(test_task_service, mo
         "id": test_task_id,
         "assignee": test_agent_id,
         "status": "processing",
-        "attachments": [] # Empty attachments
+        "attachments": [],  # Empty attachments
     }
     test_task_service.get_task = AsyncMock(return_value=(True, {"task": test_task}))
 
     # Mock the update_task call's return value for the new attachments
     expected_attachments_update = [
-        {"agent_id": test_agent_id, "output": test_output, "timestamp": Any} # Timestamp is dynamic
+        {"agent_id": test_agent_id, "output": test_output, "timestamp": Any}  # Timestamp is dynamic
     ]
     test_task_service.update_task = AsyncMock(
         return_value=(True, {"task": {**test_task, "attachments": expected_attachments_update}})
@@ -133,14 +127,14 @@ async def test_save_agent_output_success_existing_attachments(test_task_service,
         "id": test_task_id,
         "assignee": test_agent_id,
         "status": "processing",
-        "attachments": [existing_attachment] # Existing attachments
+        "attachments": [existing_attachment],  # Existing attachments
     }
     test_task_service.get_task = AsyncMock(return_value=(True, {"task": test_task}))
 
     # Mock the update_task call's return value for the new attachments
     expected_attachments_update = [
         existing_attachment,
-        {"agent_id": test_agent_id, "output": test_output, "timestamp": Any}
+        {"agent_id": test_agent_id, "output": test_output, "timestamp": Any},
     ]
     test_task_service.update_task = AsyncMock(
         return_value=(True, {"task": {**test_task, "attachments": expected_attachments_update}})
@@ -178,14 +172,9 @@ async def test_save_agent_output_unauthorized(test_task_service, mock_supabase_c
     unauthorized_agent_id = "ai-qa-agent-2"
     test_output = {"error": "Access denied"}
 
-    test_task = {
-        "id": test_task_id,
-        "assignee": assigned_agent_id,
-        "status": "processing",
-        "attachments": []
-    }
+    test_task = {"id": test_task_id, "assignee": assigned_agent_id, "status": "processing", "attachments": []}
     test_task_service.get_task = AsyncMock(return_value=(True, {"task": test_task}))
-    test_task_service.update_task = AsyncMock() # Should not be called
+    test_task_service.update_task = AsyncMock()  # Should not be called
 
     success, result = await test_task_service.save_agent_output(
         task_id=test_task_id, output=test_output, agent_id=unauthorized_agent_id
@@ -195,4 +184,3 @@ async def test_save_agent_output_unauthorized(test_task_service, mock_supabase_c
     assert "not authorized" in result["error"]
     test_task_service.get_task.assert_called_once_with(test_task_id)
     test_task_service.update_task.assert_not_called()
-

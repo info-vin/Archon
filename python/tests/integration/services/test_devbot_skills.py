@@ -1,4 +1,3 @@
-
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -10,7 +9,6 @@ from src.server.services.agent_service import AgentService
 
 @pytest.mark.asyncio
 class TestDevBotSkills:
-
     async def test_tool_schemas_integrity(self):
         """Verify Pydantic schemas generate correct JSON schemas for LLM."""
         # check SearchCodeArgs
@@ -44,12 +42,7 @@ class TestDevBotSkills:
         mock_function.arguments = '{"query": "AttributeError"}'
 
         msg_tool_call = MagicMock()
-        msg_tool_call.tool_calls = [
-            MagicMock(
-                id="call_123",
-                function=mock_function
-            )
-        ]
+        msg_tool_call.tool_calls = [MagicMock(id="call_123", function=mock_function)]
         msg_tool_call.content = None
 
         # Round 2 Response: Final JSON
@@ -61,7 +54,7 @@ class TestDevBotSkills:
         # First call -> Tool Call, Second call -> Final JSON
         mock_client_instance.chat.completions.create.side_effect = [
             MagicMock(choices=[MagicMock(message=msg_tool_call)]),
-            MagicMock(choices=[MagicMock(message=msg_final)])
+            MagicMock(choices=[MagicMock(message=msg_final)]),
         ]
 
         # --- Mock Tool Execution ---

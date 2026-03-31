@@ -75,17 +75,17 @@ def register_feature_tools(mcp: FastMCP):
             timeout = get_default_timeout()
 
             async with httpx.AsyncClient(timeout=timeout) as client:
-                response = await client.get(
-                    urljoin(api_url, f"/api/projects/{project_id}/features")
-                )
+                response = await client.get(urljoin(api_url, f"/api/projects/{project_id}/features"))
 
                 if response.status_code == 200:
                     result = response.json()
-                    return json.dumps({
-                        "success": True,
-                        "features": result.get("features", []),
-                        "count": len(result.get("features", [])),
-                    })
+                    return json.dumps(
+                        {
+                            "success": True,
+                            "features": result.get("features", []),
+                            "count": len(result.get("features", [])),
+                        }
+                    )
                 elif response.status_code == 404:
                     return MCPErrorFormatter.format_error(
                         error_type="not_found",
@@ -97,9 +97,7 @@ def register_feature_tools(mcp: FastMCP):
                     return MCPErrorFormatter.from_http_error(response, "get project features")
 
         except httpx.RequestError as e:
-            return MCPErrorFormatter.from_exception(
-                e, "get project features", {"project_id": project_id}
-            )
+            return MCPErrorFormatter.from_exception(e, "get project features", {"project_id": project_id})
         except Exception as e:
             logger.error(f"Error getting project features: {e}", exc_info=True)
             return MCPErrorFormatter.from_exception(e, "get project features")

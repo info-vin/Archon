@@ -35,5 +35,5 @@ __all__ = [
     "VersioningService",
     "ProfileService",
     "RBACService",
-    "SourceLinkingService"
+    "SourceLinkingService",
 ]

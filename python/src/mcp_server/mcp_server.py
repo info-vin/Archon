@@ -188,7 +188,7 @@ try:
     mcp = FastMCP(
         "archon-mcp-server",
         description="MCP server for Archon - uses HTTP calls to other services",
-        instructions=MCP_INSTRUCTIONS, # Correct way to pass instructions
+        instructions=MCP_INSTRUCTIONS,  # Correct way to pass instructions
         lifespan=lifespan,
         host=server_host,
         port=server_port,
@@ -209,21 +209,26 @@ async def list_tools() -> str:
         tools = await mcp.list_tools()
         formatted_tools = []
         for tool in tools:
-            formatted_tools.append({
-                "type": "function",
-                "function": {
-                    "name": tool.name,
-                    "description": tool.description or "",
-                    "parameters": get_tool_schema(tool)
+            formatted_tools.append(
+                {
+                    "type": "function",
+                    "function": {
+                        "name": tool.name,
+                        "description": tool.description or "",
+                        "parameters": get_tool_schema(tool),
+                    },
                 }
-            })
+            )
 
-        return json.dumps({
-            "success": True,
-            "tools": formatted_tools,
-            "count": len(formatted_tools),
-            "timestamp": datetime.now().isoformat()
-        }, indent=2)
+        return json.dumps(
+            {
+                "success": True,
+                "tools": formatted_tools,
+                "count": len(formatted_tools),
+                "timestamp": datetime.now().isoformat(),
+            },
+            indent=2,
+        )
     except Exception as e:
         logger.error(f"Failed to list tools: {e}")
         return json.dumps({"success": False, "error": str(e)}, indent=2)
@@ -248,7 +253,9 @@ async def mcp_rpc_handler(request: Request) -> Response:
                     with open(tools_cache) as f:
                         cached = json.load(f)
                         if cached:
-                            logger.info(f"✅ [PID {os.getpid()}] Discovery: Serving {len(cached)} tools from disk cache")
+                            logger.info(
+                                f"✅ [PID {os.getpid()}] Discovery: Serving {len(cached)} tools from disk cache"
+                            )
                             return JSONResponse({"jsonrpc": "2.0", "result": cached, "id": body.get("id")})
                 except Exception:
                     pass
@@ -257,14 +264,17 @@ async def mcp_rpc_handler(request: Request) -> Response:
             if not GLOBAL_TOOL_REGISTRY:
                 logger.warning(f"⚠️ [PID {os.getpid()}] Registry empty, triggering fail-safe live fetch")
                 raw_tools = mcp._tool_manager.list_tools()
-                GLOBAL_TOOL_REGISTRY = [{
-                    "type": "function",
-                    "function": {
-                        "name": t.name,
-                        "description": t.description or "",
-                        "parameters": get_tool_schema(t)
+                GLOBAL_TOOL_REGISTRY = [
+                    {
+                        "type": "function",
+                        "function": {
+                            "name": t.name,
+                            "description": t.description or "",
+                            "parameters": get_tool_schema(t),
+                        },
                     }
-                } for t in raw_tools]
+                    for t in raw_tools
+                ]
 
             return JSONResponse({"jsonrpc": "2.0", "result": GLOBAL_TOOL_REGISTRY, "id": body.get("id")})
 
@@ -273,7 +283,9 @@ async def mcp_rpc_handler(request: Request) -> Response:
         try:
             raw_result = await mcp.call_tool(method_name, params)
         except Exception as tool_err:
-            return JSONResponse({"error": {"code": -32603, "message": f"Tool execution failed: {str(tool_err)}"}}, status_code=500)
+            return JSONResponse(
+                {"error": {"code": -32603, "message": f"Tool execution failed: {str(tool_err)}"}}, status_code=500
+            )
 
         # 3. Physical Serialization & Unwrapping
         processed_result: Any = []
@@ -316,6 +328,7 @@ def register_modules():
 
     try:
         from src.mcp_server.features.infra_tools import register_infra_tools
+
         register_infra_tools(mcp)
         modules_registered += 1
         logger.info("✓ Infrastructure tools registered")
@@ -324,6 +337,7 @@ def register_modules():
 
     try:
         from src.mcp_server.features.rag import register_rag_tools
+
         register_rag_tools(mcp)
         modules_registered += 1
         logger.info("✓ RAG module registered (HTTP-based)")
@@ -332,6 +346,7 @@ def register_modules():
 
     try:
         from src.mcp_server.features.projects import register_project_tools
+
         register_project_tools(mcp)
         modules_registered += 1
         logger.info("✓ Project tools registered")
@@ -340,6 +355,7 @@ def register_modules():
 
     try:
         from src.mcp_server.features.tasks import register_task_tools
+
         register_task_tools(mcp)
         modules_registered += 1
         logger.info("✓ Task tools registered")
@@ -348,6 +364,7 @@ def register_modules():
 
     try:
         from src.mcp_server.features.feature_tools import register_feature_tools
+
         register_feature_tools(mcp)
         modules_registered += 1
         logger.info("✓ Feature tools registered")
@@ -356,6 +373,7 @@ def register_modules():
 
     try:
         from src.mcp_server.features.developer import register_developer_tools
+
         register_developer_tools(mcp)
         modules_registered += 1
         logger.info("✓ Developer tools registered")
@@ -364,6 +382,7 @@ def register_modules():
 
     try:
         from src.mcp_server.features.marketing import register_marketing_tools
+
         register_marketing_tools(mcp)
         modules_registered += 1
         logger.info("✓ Marketing tools registered")
@@ -372,6 +391,7 @@ def register_modules():
 
     try:
         from src.mcp_server.features.design import register_design_tools
+
         register_design_tools(mcp)
         modules_registered += 1
         logger.info("✓ Design tools registered")
@@ -380,6 +400,7 @@ def register_modules():
 
     try:
         from src.mcp_server.features.documents import register_document_tools
+
         register_document_tools(mcp)
         modules_registered += 1
         logger.info("✓ Document tools registered")
@@ -388,6 +409,7 @@ def register_modules():
 
     try:
         from src.mcp_server.features.documents import register_version_tools
+
         register_version_tools(mcp)
         modules_registered += 1
         logger.info("✓ Version tools registered")
@@ -401,7 +423,13 @@ def register_modules():
     # PHYSICAL PERSISTENCE (Phase 4.6.19)
     try:
         tools = mcp._tool_manager.list_tools()
-        formatted = [{"type": "function", "function": {"name": t.name, "description": t.description or "", "parameters": get_tool_schema(t)}} for t in tools]
+        formatted = [
+            {
+                "type": "function",
+                "function": {"name": t.name, "description": t.description or "", "parameters": get_tool_schema(t)},
+            }
+            for t in tools
+        ]
         with open("/tmp/mcp_tools.json", "w") as f:
             json.dump(formatted, f)
         logger.info(f"✅ PHYSICAL TOOLS PERSISTED: {len(formatted)} tools saved to /tmp/mcp_tools.json")

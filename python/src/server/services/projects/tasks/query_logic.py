@@ -11,6 +11,7 @@ from src.server.config.logfire_config import get_logger
 
 logger = get_logger(__name__)
 
+
 async def list_tasks_logic(
     task_service_instance,
     project_id: str | None = None,
@@ -51,8 +52,8 @@ async def list_tasks_logic(
 
         if assignee_name and not assignee_id:
             if include_unassigned:
-                 query = query.or_(f"assignee.eq.{assignee_name},assignee.eq.User")
-                 filters_applied.append(f"assignee={assignee_name} OR User")
+                query = query.or_(f"assignee.eq.{assignee_name},assignee.eq.User")
+                filters_applied.append(f"assignee={assignee_name} OR User")
             else:
                 query = query.eq("assignee", assignee_name)
                 filters_applied.append(f"assignee={assignee_name}")
@@ -73,9 +74,7 @@ async def list_tasks_logic(
 
         logger.debug(f"Listing tasks with filters: {', '.join(filters_applied)}")
 
-        response = (
-            query.order("task_order", desc=False).order("created_at", desc=False).execute()
-        )
+        response = query.order("task_order", desc=False).order("created_at", desc=False).execute()
 
         tasks = []
         for task in response.data:
@@ -105,7 +104,7 @@ async def list_tasks_logic(
             else:
                 task_data["stats"] = {
                     "sources_count": len(task.get("sources", [])),
-                    "code_examples_count": len(task.get("code_examples", []))
+                    "code_examples_count": len(task.get("code_examples", [])),
                 }
             tasks.append(task_data)
 
@@ -127,6 +126,7 @@ async def list_tasks_logic(
     except Exception as e:
         logger.error(f"Error listing tasks logic: {e}")
         return False, {"error": f"Error listing tasks: {str(e)}"}
+
 
 async def get_all_project_task_counts_logic(task_service_instance) -> tuple[bool, dict[str, dict[str, int]]]:
     """

@@ -1,10 +1,10 @@
-
 import logging
 import os
 import subprocess
 import time
 
 logger = logging.getLogger(__name__)
+
 
 class CodeModifier:
     """
@@ -18,13 +18,7 @@ class CodeModifier:
     def _run_git(self, args: list[str]) -> str:
         """Helper to run git commands."""
         try:
-            result = subprocess.run(
-                ["git"] + args,
-                cwd=self.base_path,
-                check=True,
-                capture_output=True,
-                text=True
-            )
+            result = subprocess.run(["git"] + args, cwd=self.base_path, check=True, capture_output=True, text=True)
             return result.stdout.strip()
         except subprocess.CalledProcessError as e:
             logger.error(f"Git command failed: git {' '.join(args)}\nStderr: {e.stderr}")
@@ -69,8 +63,8 @@ class CodeModifier:
         current_branch = self._run_git(["rev-parse", "--abbrev-ref", "HEAD"])
 
         if current_branch == original_branch:
-             logger.warning("Already on original branch, nothing to revert.")
-             return
+            logger.warning("Already on original branch, nothing to revert.")
+            return
 
         logger.info(f"Reverting sandbox. Switching back to {original_branch} and deleting {current_branch}")
         self._run_git(["checkout", original_branch])

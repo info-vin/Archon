@@ -1,4 +1,3 @@
-
 from fastapi import APIRouter, Depends, HTTPException
 
 from ..auth.dependencies import get_current_user
@@ -12,6 +11,7 @@ router = APIRouter(
     tags=["agents"],
 )
 
+
 @router.get("/health")
 async def agents_health():
     """
@@ -19,10 +19,10 @@ async def agents_health():
     """
     return {"status": "healthy", "service": "agents"}
 
+
 @router.get("/assignable", response_model=list[dict])
 async def get_assignable_agents(
-    current_user: dict = Depends(get_current_user),
-    service: AgentService = Depends(lambda: agent_service)
+    current_user: dict = Depends(get_current_user), service: AgentService = Depends(lambda: agent_service)
 ):
     """
     Get a list of all assignable AI agents.

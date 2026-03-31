@@ -1,4 +1,3 @@
-
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -28,6 +27,7 @@ def mock_genai_client():
         client_instance.models.generate_content.return_value = mock_response
         yield client_instance
 
+
 @pytest.fixture
 def mock_librarian():
     # Patch where the class is defined, not where it is imported locally
@@ -36,6 +36,7 @@ def mock_librarian():
         instance.archive_web_research = AsyncMock(return_value="web-source-123")
         yield instance
 
+
 @pytest.fixture
 def mock_credential_service():
     # Patch the service instance in credential_service module
@@ -43,22 +44,23 @@ def mock_credential_service():
         mock.get_credential = AsyncMock(return_value="fake-api-key")
         yield mock
 
+
 @pytest.fixture
 def mock_base_dependencies():
-    with patch("src.server.services.search.rag_service.get_supabase_client"), \
-         patch("src.server.services.search.rag_service.BaseSearchStrategy"), \
-         patch("src.server.services.search.rag_service.HybridSearchStrategy"), \
-         patch("src.server.services.search.rag_service.AgenticRAGStrategy"), \
-         patch("src.server.services.search.rag_service.create_embedding", new_callable=AsyncMock) as mock_embed:
+    with (
+        patch("src.server.services.search.rag_service.get_supabase_client"),
+        patch("src.server.services.search.rag_service.BaseSearchStrategy"),
+        patch("src.server.services.search.rag_service.HybridSearchStrategy"),
+        patch("src.server.services.search.rag_service.AgenticRAGStrategy"),
+        patch("src.server.services.search.rag_service.create_embedding", new_callable=AsyncMock) as mock_embed,
+    ):
         mock_embed.return_value = [0.1, 0.2, 0.3]
         yield
 
+
 @pytest.mark.asyncio
 async def test_perform_web_research_success(
-    mock_base_dependencies,
-    mock_genai_client,
-    mock_librarian,
-    mock_credential_service
+    mock_base_dependencies, mock_genai_client, mock_librarian, mock_credential_service
 ):
     service = RAGService()
 
@@ -77,24 +79,21 @@ async def test_perform_web_research_success(
     assert args[1] == "This is a web search summary."
     assert args[2] == ["https://example.com"]
 
+
 @pytest.mark.asyncio
 async def test_perform_rag_query_with_web_research(
-    mock_base_dependencies,
-    mock_genai_client,
-    mock_librarian,
-    mock_credential_service
+    mock_base_dependencies, mock_genai_client, mock_librarian, mock_credential_service
 ):
     service = RAGService()
 
     # Mock base search strategy returns
-    service.base_strategy.vector_search = AsyncMock(return_value=[
-        {"id": "doc-1", "content": "Internal doc", "similarity": 0.8}
-    ])
+    service.base_strategy.vector_search = AsyncMock(
+        return_value=[{"id": "doc-1", "content": "Internal doc", "similarity": 0.8}]
+    )
 
     # Execute with enable_web_research=True in metadata
     result_success, result_data = await service.perform_rag_query(
-        query="latest trends",
-        filter_metadata={"enable_web_research": True}
+        query="latest trends", filter_metadata={"enable_web_research": True}
     )
 
     assert result_success is True

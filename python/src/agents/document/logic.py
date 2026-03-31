@@ -18,12 +18,7 @@ async def list_documents_logic(supabase_client: Any, project_id: str) -> str:
         if not supabase_client:
             return "Error: Database client not configured."
 
-        response = (
-            supabase_client.table("archon_projects")
-            .select("docs")
-            .eq("id", project_id)
-            .execute()
-        )
+        response = supabase_client.table("archon_projects").select("docs").eq("id", project_id).execute()
 
         if not response.data:
             return "No project found with the given ID."
@@ -44,28 +39,19 @@ async def list_documents_logic(supabase_client: Any, project_id: str) -> str:
         return f"Error retrieving documents: {str(e)}"
 
 
-async def get_document_logic(
-    supabase_client: Any, project_id: str, document_title: str
-) -> str:
+async def get_document_logic(supabase_client: Any, project_id: str, document_title: str) -> str:
     """Logic for retrieving a specific document's content."""
     try:
         if not supabase_client:
             return "Error: Database client not configured."
 
-        response = (
-            supabase_client.table("archon_projects")
-            .select("docs")
-            .eq("id", project_id)
-            .execute()
-        )
+        response = supabase_client.table("archon_projects").select("docs").eq("id", project_id).execute()
 
         if not response.data:
             return "No project found."
 
         docs = response.data[0].get("docs", [])
-        matching_docs = [
-            doc for doc in docs if document_title.lower() in doc.get("title", "").lower()
-        ]
+        matching_docs = [doc for doc in docs if document_title.lower() in doc.get("title", "").lower()]
 
         if not matching_docs:
             available_docs = [doc.get("title", "Untitled") for doc in docs[:5]]
@@ -166,9 +152,7 @@ async def update_document_logic(
     """Logic for updating an existing document."""
     try:
         mcp_client = await get_mcp_client()
-        get_result = await mcp_client.manage_document(
-            action="get", project_id=project_id, title=document_title
-        )
+        get_result = await mcp_client.manage_document(action="get", project_id=project_id, title=document_title)
 
         get_data = json.loads(get_result)
         if not get_data.get("success", False):
@@ -265,9 +249,7 @@ async def create_feature_plan_logic(
             "created_by": user_id or "DocumentAgent",
         }
 
-        result_json = await mcp_client.manage_project(
-            action="add_feature", project_id=project_id, feature=new_feature
-        )
+        result_json = await mcp_client.manage_project(action="add_feature", project_id=project_id, feature=new_feature)
         result_data = json.loads(result_json)
 
         if result_data.get("success", False):
@@ -309,9 +291,7 @@ async def create_erd_logic(
             "created_by": user_id or "DocumentAgent",
         }
 
-        result_json = await mcp_client.manage_project(
-            action="add_data", project_id=project_id, data=new_data_model
-        )
+        result_json = await mcp_client.manage_project(action="add_data", project_id=project_id, data=new_data_model)
         result_data = json.loads(result_json)
 
         if result_data.get("success", False):
@@ -365,9 +345,7 @@ async def request_approval_logic(
 # --- Helper functions ---
 
 
-def _convert_to_blocks(
-    title: str, document_type: str, content_description: str
-) -> list[dict[str, Any]]:
+def _convert_to_blocks(title: str, document_type: str, content_description: str) -> list[dict[str, Any]]:
     """FULL Jules implementation of block conversion including PRD sections."""
     blocks = [
         {

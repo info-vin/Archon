@@ -42,5 +42,5 @@ __all__ = [
     "SiteConfig",
     "get_active_orchestration",
     "register_orchestration",
-    "unregister_orchestration"
+    "unregister_orchestration",
 ]

@@ -5,9 +5,9 @@ from fastapi.testclient import TestClient
 
 # To test the API routes in isolation, we patch the services they depend on.
 # These patches target the namespaces where the services are imported and used.
-@patch('src.server.api_routes.projects.ops.TaskService', new_callable=MagicMock)
-@patch('src.server.api_routes.projects.ops.RBACService', new_callable=MagicMock)
-@patch('src.server.api_routes.projects.ops.ProfileService', new_callable=MagicMock)
+@patch("src.server.api_routes.projects.ops.TaskService", new_callable=MagicMock)
+@patch("src.server.api_routes.projects.ops.RBACService", new_callable=MagicMock)
+@patch("src.server.api_routes.projects.ops.ProfileService", new_callable=MagicMock)
 def test_create_task_with_ai_assignee_success(mock_profile_class, mock_rbac_class, mock_task_service_class):
     """
     Unit test for the POST /tasks endpoint.
@@ -29,14 +29,15 @@ def test_create_task_with_ai_assignee_success(mock_profile_class, mock_rbac_clas
     # --- Test Execution ---
     from src.server.auth.dependencies import get_current_user
     from src.server.main import app
-    app.dependency_overrides[get_current_user] = lambda: {"id": "user-123", "role": "system_admin", "department": "Engineering"}
+
+    app.dependency_overrides[get_current_user] = lambda: {
+        "id": "user-123",
+        "role": "system_admin",
+        "department": "Engineering",
+    }
     client = TestClient(app)
 
-    task_payload = {
-        "project_id": "proj-123",
-        "title": "Test AI Task",
-        "assignee": "ai-researcher-1"
-    }
+    task_payload = {"project_id": "proj-123", "title": "Test AI Task", "assignee": "ai-researcher-1"}
     headers = {"X-User-Role": "Admin"}
 
     response = client.post("/api/tasks", json=task_payload, headers=headers)
@@ -53,9 +54,9 @@ def test_create_task_with_ai_assignee_success(mock_profile_class, mock_rbac_clas
     assert called_kwargs["assignee"] == "ai-researcher-1"
 
 
-@patch('src.server.api_routes.projects.ops.TaskService', new_callable=MagicMock)
-@patch('src.server.api_routes.projects.ops.RBACService', new_callable=MagicMock)
-@patch('src.server.api_routes.projects.ops.ProfileService', new_callable=MagicMock)
+@patch("src.server.api_routes.projects.ops.TaskService", new_callable=MagicMock)
+@patch("src.server.api_routes.projects.ops.RBACService", new_callable=MagicMock)
+@patch("src.server.api_routes.projects.ops.ProfileService", new_callable=MagicMock)
 def test_create_task_with_ai_assignee_permission_denied(mock_profile_class, mock_rbac_class, mock_task_service_class):
     """
     Unit test for the POST /tasks endpoint.
@@ -68,7 +69,10 @@ def test_create_task_with_ai_assignee_permission_denied(mock_profile_class, mock
 
     # 2. Profile service mock: Return a user in a different department
     mock_profile_instance = mock_profile_class.return_value
-    mock_profile_instance.get_profile.return_value = (True, {"id": "other-user", "name": "Other User", "department": "Marketing"})
+    mock_profile_instance.get_profile.return_value = (
+        True,
+        {"id": "other-user", "name": "Other User", "department": "Marketing"},
+    )
 
     mock_task_service_instance = mock_task_service_class.return_value
     mock_task_service_instance.create_task = AsyncMock(return_value=(True, {"task": {"id": "new-task-id"}}))
@@ -76,14 +80,15 @@ def test_create_task_with_ai_assignee_permission_denied(mock_profile_class, mock
     # --- Test Execution ---
     from src.server.auth.dependencies import get_current_user
     from src.server.main import app
-    app.dependency_overrides[get_current_user] = lambda: {"id": "user-123", "role": "viewer", "department": "Engineering"}
+
+    app.dependency_overrides[get_current_user] = lambda: {
+        "id": "user-123",
+        "role": "viewer",
+        "department": "Engineering",
+    }
     client = TestClient(app)
 
-    task_payload = {
-        "project_id": "proj-123",
-        "title": "Test AI Task",
-        "assignee_id": "other-user"
-    }
+    task_payload = {"project_id": "proj-123", "title": "Test AI Task", "assignee_id": "other-user"}
     headers = {"X-User-Role": "User"}
 
     response = client.post("/api/tasks", json=task_payload, headers=headers)
@@ -96,9 +101,9 @@ def test_create_task_with_ai_assignee_permission_denied(mock_profile_class, mock
     mock_task_service_instance.create_task.assert_not_called()
 
 
-@patch('src.server.api_routes.projects.ops.TaskService', new_callable=MagicMock)
-@patch('src.server.api_routes.projects.ops.RBACService', new_callable=MagicMock)
-@patch('src.server.api_routes.projects.ops.ProfileService', new_callable=MagicMock)
+@patch("src.server.api_routes.projects.ops.TaskService", new_callable=MagicMock)
+@patch("src.server.api_routes.projects.ops.RBACService", new_callable=MagicMock)
+@patch("src.server.api_routes.projects.ops.ProfileService", new_callable=MagicMock)
 def test_create_task_with_knowledge_sources(mock_profile_class, mock_rbac_class, mock_task_service_class):
     """
     Unit test for the POST /tasks endpoint with knowledge_source_ids.
@@ -114,13 +119,18 @@ def test_create_task_with_knowledge_sources(mock_profile_class, mock_rbac_class,
     # --- Test Execution ---
     from src.server.auth.dependencies import get_current_user
     from src.server.main import app
-    app.dependency_overrides[get_current_user] = lambda: {"id": "user-123", "role": "system_admin", "department": "Engineering"}
+
+    app.dependency_overrides[get_current_user] = lambda: {
+        "id": "user-123",
+        "role": "system_admin",
+        "department": "Engineering",
+    }
     client = TestClient(app)
 
     task_payload = {
         "project_id": "proj-123",
         "title": "Task with Knowledge",
-        "knowledge_source_ids": ["source-1", "source-2"]
+        "knowledge_source_ids": ["source-1", "source-2"],
     }
 
     response = client.post("/api/tasks", json=task_payload)

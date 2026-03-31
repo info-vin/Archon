@@ -121,7 +121,7 @@ class ModelDiscoveryService:
             # Use direct HTTP client for /api/tags endpoint (not OpenAI-compatible)
             async with httpx.AsyncClient(timeout=httpx.Timeout(self.discovery_timeout)) as client:
                 # Remove /v1 suffix if present (OpenAI compatibility layer)
-                base_url = instance_url.rstrip('/').replace('/v1', '')
+                base_url = instance_url.rstrip("/").replace("/v1", "")
                 # Ollama API endpoint for listing models
                 tags_url = f"{base_url}/api/tags"
 
@@ -139,7 +139,7 @@ class ModelDiscoveryService:
                             size=model_data.get("size", 0),
                             digest=model_data.get("digest", ""),
                             capabilities=[],  # Will be filled by capability detection
-                            instance_url=instance_url
+                            instance_url=instance_url,
                         )
 
                         # Extract additional model details if available
@@ -148,7 +148,7 @@ class ModelDiscoveryService:
                             model.parameters = {
                                 "family": details.get("family", ""),
                                 "parameter_size": details.get("parameter_size", ""),
-                                "quantization": details.get("quantization_level", "")
+                                "quantization": details.get("quantization_level", ""),
                             }
 
                         models.append(model)
@@ -156,7 +156,9 @@ class ModelDiscoveryService:
                 logger.info(f"Discovered {len(models)} models from {instance_url}")
 
                 # Enrich models with capability information
-                enriched_models = await self._enrich_model_capabilities(models, instance_url, fetch_details=fetch_details)
+                enriched_models = await self._enrich_model_capabilities(
+                    models, instance_url, fetch_details=fetch_details
+                )
 
                 # Cache the results
                 self._cache_models(instance_url, enriched_models)
@@ -173,52 +175,65 @@ class ModelDiscoveryService:
             logger.error(f"Error discovering models from {instance_url}: {e}")
             raise Exception(f"Failed to discover models: {str(e)}") from e
 
-    async def _enrich_model_capabilities(self, models: list[OllamaModel], instance_url: str, fetch_details: bool = False) -> list[OllamaModel]:
+    async def _enrich_model_capabilities(
+        self, models: list[OllamaModel], instance_url: str, fetch_details: bool = False
+    ) -> list[OllamaModel]:
         """Pattern-match and enrich model capabilities. Delegates to capabilities submodule."""
         from .discovery.capabilities import enrich_model_capabilities_logic
+
         return await enrich_model_capabilities_logic(self, models, instance_url, fetch_details)
 
     async def _detect_model_capabilities_optimized(self, model_name: str, instance_url: str) -> ModelCapabilities:
         """Optimized capability detection. Delegates to capabilities submodule."""
         from .discovery.capabilities import detect_model_capabilities_logic
+
         return await detect_model_capabilities_logic(self, model_name, instance_url, optimized=True)
 
     async def _detect_model_capabilities(self, model_name: str, instance_url: str) -> ModelCapabilities:
         """Comprehensive capability detection. Delegates to capabilities submodule."""
         from .discovery.capabilities import detect_model_capabilities_logic
+
         return await detect_model_capabilities_logic(self, model_name, instance_url, optimized=False)
 
     # --- Private Facades for backward compatibility and testing ---
     async def _get_model_details(self, model_name: str, instance_url: str) -> dict[str, Any] | None:
         from .discovery.capabilities import get_model_details_logic
+
         return await get_model_details_logic(model_name, instance_url)
 
     async def _test_chat_capability(self, model_name: str, instance_url: str) -> bool:
         from .discovery.capabilities import test_chat_capability_logic
+
         return await test_chat_capability_logic(model_name, instance_url)
 
     async def _test_embedding_capability(self, model_name: str, instance_url: str) -> int | None:
         from .discovery.capabilities import test_embedding_capability_logic
+
         return await test_embedding_capability_logic(model_name, instance_url)
 
     async def _test_function_calling_capability(self, model_name: str, instance_url: str) -> bool:
         from .discovery.capabilities import test_function_calling_capability_logic
+
         return await test_function_calling_capability_logic(model_name, instance_url)
 
     async def _test_structured_output_capability(self, model_name: str, instance_url: str) -> bool:
         from .discovery.capabilities import test_structured_output_capability_logic
+
         return await test_structured_output_capability_logic(model_name, instance_url)
 
     async def _test_embedding_capability_fast(self, model_name: str, instance_url: str) -> int | None:
         from .discovery.capabilities import test_embedding_capability_fast_logic
+
         return await test_embedding_capability_fast_logic(model_name, instance_url)
 
     async def _test_chat_capability_fast(self, model_name: str, instance_url: str) -> bool:
         from .discovery.capabilities import test_chat_capability_fast_logic
+
         return await test_chat_capability_fast_logic(model_name, instance_url)
 
     async def _test_structured_output_capability_fast(self, model_name: str, instance_url: str) -> bool:
         from .discovery.capabilities import test_structured_output_capability_fast_logic
+
         return await test_structured_output_capability_fast_logic(model_name, instance_url)
 
     async def validate_model_capabilities(self, model_name: str, instance_url: str, required_capability: str) -> bool:
@@ -316,7 +331,9 @@ class ModelDiscoveryService:
                 status.models_available = models_count
                 status.last_checked = str(time.time())
 
-                logger.debug(f"Instance {instance_url} is healthy: {models_count} models, {status.response_time_ms:.0f}ms")
+                logger.debug(
+                    f"Instance {instance_url} is healthy: {models_count} models, {status.response_time_ms:.0f}ms"
+                )
 
         except httpx.TimeoutException:
             status.error_message = "Connection timeout"
@@ -333,7 +350,9 @@ class ModelDiscoveryService:
 
         return status
 
-    async def discover_models_from_multiple_instances(self, instance_urls: list[str], fetch_details: bool = False) -> dict[str, Any]:
+    async def discover_models_from_multiple_instances(
+        self, instance_urls: list[str], fetch_details: bool = False
+    ) -> dict[str, Any]:
         """
         Discover models from multiple Ollama instances concurrently.
 
@@ -350,7 +369,7 @@ class ModelDiscoveryService:
                 "chat_models": [],
                 "embedding_models": [],
                 "host_status": {},
-                "discovery_errors": []
+                "discovery_errors": [],
             }
 
         logger.info(f"Discovering models from {len(instance_urls)} Ollama instances with fetch_details={fetch_details}")
@@ -376,48 +395,48 @@ class ModelDiscoveryService:
                 # Use cast to tell type checker this is list[OllamaModel]
                 models = cast(list[OllamaModel], result)
                 all_models.extend(models)
-                host_status[url] = {
-                    "status": "online",
-                    "models_count": str(len(models)),
-                    "instance_url": url
-                }
+                host_status[url] = {"status": "online", "models_count": str(len(models)), "instance_url": url}
 
                 # Categorize models
                 for model in models:
                     if "chat" in model.capabilities:
-                        chat_models.append({
-                            "name": model.name,
-                            "instance_url": model.instance_url,
-                            "size": model.size,
-                            "parameters": model.parameters,
-                            # Real API data from /api/show - all 3 context values
-                            "context_window": model.context_window,
-                            "max_context_length": model.max_context_length,
-                            "base_context_length": model.base_context_length,
-                            "custom_context_length": model.custom_context_length,
-                            "architecture": model.architecture,
-                            "format": model.format,
-                            "parent_model": model.parent_model,
-                            "capabilities": model.capabilities
-                        })
+                        chat_models.append(
+                            {
+                                "name": model.name,
+                                "instance_url": model.instance_url,
+                                "size": model.size,
+                                "parameters": model.parameters,
+                                # Real API data from /api/show - all 3 context values
+                                "context_window": model.context_window,
+                                "max_context_length": model.max_context_length,
+                                "base_context_length": model.base_context_length,
+                                "custom_context_length": model.custom_context_length,
+                                "architecture": model.architecture,
+                                "format": model.format,
+                                "parent_model": model.parent_model,
+                                "capabilities": model.capabilities,
+                            }
+                        )
 
                     if "embedding" in model.capabilities:
-                        embedding_models.append({
-                            "name": model.name,
-                            "instance_url": model.instance_url,
-                            "dimensions": model.embedding_dimensions,
-                            "size": model.size,
-                            "parameters": model.parameters,
-                            # Real API data from /api/show - all 3 context values
-                            "context_window": model.context_window,
-                            "max_context_length": model.max_context_length,
-                            "base_context_length": model.base_context_length,
-                            "custom_context_length": model.custom_context_length,
-                            "architecture": model.architecture,
-                            "format": model.format,
-                            "parent_model": model.parent_model,
-                            "capabilities": model.capabilities
-                        })
+                        embedding_models.append(
+                            {
+                                "name": model.name,
+                                "instance_url": model.instance_url,
+                                "dimensions": model.embedding_dimensions,
+                                "size": model.size,
+                                "parameters": model.parameters,
+                                # Real API data from /api/show - all 3 context values
+                                "context_window": model.context_window,
+                                "max_context_length": model.max_context_length,
+                                "base_context_length": model.base_context_length,
+                                "custom_context_length": model.custom_context_length,
+                                "architecture": model.architecture,
+                                "format": model.format,
+                                "parent_model": model.parent_model,
+                                "capabilities": model.capabilities,
+                            }
+                        )
 
         # Remove duplicates (same model on multiple instances)
         unique_models = {}
@@ -431,11 +450,13 @@ class ModelDiscoveryService:
             "embedding_models": embedding_models,
             "host_status": host_status,
             "discovery_errors": discovery_errors,
-            "unique_model_names": list({model.name for model in unique_models.values()})
+            "unique_model_names": list({model.name for model in unique_models.values()}),
         }
 
-        logger.info(f"Discovery complete: {discovery_result['total_models']} total models, "
-                   f"{len(chat_models)} chat, {len(embedding_models)} embedding")
+        logger.info(
+            f"Discovery complete: {discovery_result['total_models']} total models, "
+            f"{len(chat_models)} chat, {len(embedding_models)} embedding"
+        )
 
         return discovery_result
 

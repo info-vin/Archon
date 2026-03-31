@@ -16,7 +16,7 @@ async def validate_code_quality(
     is_diagram_filtering_enabled: bool,
     min_code_indicators: int,
     is_prose_filtering_enabled: bool,
-    max_prose_ratio: float
+    max_prose_ratio: float,
 ) -> bool:
     """Enhanced validation to ensure extracted content is actual code."""
     if not code or len(code.strip()) < 20:
@@ -103,7 +103,7 @@ async def validate_code_quality(
         for pattern in PROSE_INDICATORS:
             prose_score += len(re.findall(pattern, code, re.IGNORECASE))
         if word_count > 0 and prose_score / word_count > max_prose_ratio:
-            safe_logfire_info(f"Code appears to be prose: ratio={prose_score/word_count}")
+            safe_logfire_info(f"Code appears to be prose: ratio={prose_score / word_count}")
             return False
 
     return True

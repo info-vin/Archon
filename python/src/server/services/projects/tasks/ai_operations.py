@@ -14,9 +14,7 @@ from src.server.services.log_service import LogService
 logger = get_logger(__name__)
 
 
-async def refine_task_description_logic(
-    supabase_client, title: str, description: str
-) -> str:
+async def refine_task_description_logic(supabase_client, title: str, description: str) -> str:
     """
     Uses POBot (RAG-enhanced) to transform a raw description into
     a structured product spec with User Stories and Technical Requirements.
@@ -30,9 +28,7 @@ async def refine_task_description_logic(
 
         # 1. Fetch relevant context using RAG
         rag_service = RAGService(supabase_client)
-        rag_success, rag_result = await rag_service.perform_rag_query(
-            query=f"{title} {description}", match_count=3
-        )
+        rag_success, rag_result = await rag_service.perform_rag_query(query=f"{title} {description}", match_count=3)
 
         context_str = ""
         if rag_success and "results" in rag_result:
@@ -41,8 +37,9 @@ async def refine_task_description_logic(
             logger.info(f"POBot RAG found {len(snippets)} context snippets")
 
         # 2. Construct Prompt with Context
-        prompt = textwrap.dedent(
-            f"""
+        prompt = (
+            textwrap.dedent(
+                f"""
             You are POBot, an expert Product Owner.
             Refine the following task into a professional, structured specification.
 
@@ -60,7 +57,10 @@ async def refine_task_description_logic(
 
             KEEP IT CONCISE AND ACTIONABLE.
         """
-        ).format(context_str=context_str).strip()
+            )
+            .format(context_str=context_str)
+            .strip()
+        )
 
         # 3. Generate Content using official SDK
         model_name = "gemini-2.5-flash-lite"
@@ -80,7 +80,7 @@ async def refine_task_description_logic(
             config=types.GenerateContentConfig(
                 system_instruction="You are POBot, a helpful Product Owner assistant. ALWAYS answer in Traditional Chinese (Taiwan繁體中文), regardless of the input language.",
                 temperature=0.7,
-            )
+            ),
         )
 
         content = response.text or ""
@@ -123,15 +123,8 @@ async def generate_task_from_alert_logic(
         details = {}
         source_table = "archon_logs"
 
-        res_alert = (
-            task_service_instance.supabase_client.table("archon_logs")
-            .select("*")
-            .eq("id", alert_id)
-            .execute()
-        )
-        alert_data = (
-            res_alert.data[0] if (res_alert.data and len(res_alert.data) > 0) else None
-        )
+        res_alert = task_service_instance.supabase_client.table("archon_logs").select("*").eq("id", alert_id).execute()
+        alert_data = res_alert.data[0] if (res_alert.data and len(res_alert.data) > 0) else None
 
         if alert_data:
             details = alert_data.get("details", {})
@@ -145,9 +138,7 @@ async def generate_task_from_alert_logic(
             )
             if res_ethics.data and len(res_ethics.data) > 0:
                 eth = res_ethics.data[0]
-                context_msg = (
-                    f"Ethics Violation: {eth.get('event_type')} - {eth.get('description')}"
-                )
+                context_msg = f"Ethics Violation: {eth.get('event_type')} - {eth.get('description')}"
                 details = {
                     "type": "ethics_violation",
                     "category": "business",
@@ -165,18 +156,11 @@ async def generate_task_from_alert_logic(
         context_str = f"ALERT: {context_msg}\n"
 
         if lead_id:
-            res_lead = (
-                task_service_instance.supabase_client.table("leads")
-                .select("*")
-                .eq("id", lead_id)
-                .execute()
-            )
+            res_lead = task_service_instance.supabase_client.table("leads").select("*").eq("id", lead_id).execute()
             if res_lead.data and len(res_lead.data) > 0:
                 lead_data_local = res_lead.data[0]
                 context_str += f"COMPANY: {lead_data_local['company_name']}\n"
-                context_str += (
-                    f"IDENTIFIED NEED: {lead_data_local.get('identified_need', 'None')}\n"
-                )
+                context_str += f"IDENTIFIED NEED: {lead_data_local.get('identified_need', 'None')}\n"
                 res_logs = (
                     task_service_instance.supabase_client.table("visit_logs")
                     .select("summary")
@@ -190,12 +174,7 @@ async def generate_task_from_alert_logic(
                         context_str += f"- {_log['summary']}\n"
 
         elif post_id:
-            res_post = (
-                task_service_instance.supabase_client.table("blog_posts")
-                .select("*")
-                .eq("id", post_id)
-                .execute()
-            )
+            res_post = task_service_instance.supabase_client.table("blog_posts").select("*").eq("id", post_id).execute()
             if res_post.data and len(res_post.data) > 0:
                 post_data_local = res_post.data[0]
                 context_str += f"CONTEXT: Content Bottleneck\nTITLE: {post_data_local['title']}\nSTATUS: {post_data_local['status']}\n"
@@ -208,9 +187,7 @@ async def generate_task_from_alert_logic(
         )
         if rag_success and "results" in rag_result:
             context_str += "\nINTERNAL KNOWLEDGE BASE SNIPPETS:\n"
-            context_str += "\n".join(
-                [res.get("content", "")[:300] for res in rag_result["results"]]
-            )
+            context_str += "\n".join([res.get("content", "")[:300] for res in rag_result["results"]])
 
         # 4. Call AI using Official SDK
         model_name = "gemini-1.5-pro"
@@ -221,14 +198,18 @@ async def generate_task_from_alert_logic(
         if not charlie_api_key:
             raise ValueError("No AI API Key available for Alert Dispatch")
 
-        prompt = textwrap.dedent(
-            f"""
+        prompt = (
+            textwrap.dedent(
+                f"""
             Convert the following Alert into a high-value task for the team.
             ALERT: {context_msg}
             CONTEXT: {context_str}
             FORMAT: TITLE: [Title] | DESCRIPTION: [Detailed strategy]
         """
-        ).format(context_msg=context_msg, context_str=context_str).strip()
+            )
+            .format(context_msg=context_msg, context_str=context_str)
+            .strip()
+        )
 
         from google import genai
         from google.genai import types
@@ -240,7 +221,7 @@ async def generate_task_from_alert_logic(
             config=types.GenerateContentConfig(
                 system_instruction="You are Charlie's Assistant. Answer in Traditional Chinese (Taiwan).",
                 temperature=0.7,
-            )
+            ),
         )
         ai_output = response.text or ""
         if not ai_output:
@@ -264,17 +245,10 @@ async def generate_task_from_alert_logic(
             .execute()
         )
         if not (p_res.data and len(p_res.data) > 0):
-            p_res = (
-                task_service_instance.supabase_client.table("archon_projects")
-                .select("id")
-                .limit(1)
-                .execute()
-            )
+            p_res = task_service_instance.supabase_client.table("archon_projects").select("id").limit(1).execute()
 
         if not (p_res.data and len(p_res.data) > 0):
-            return False, {
-                "error": "Critical: No project found in database to attach task."
-            }
+            return False, {"error": "Critical: No project found in database to attach task."}
 
         project_id = p_res.data[0]["id"]
 

@@ -40,28 +40,34 @@ def register_infra_tools(mcp: FastMCP):
         try:
             context = getattr(ctx.request_context, "lifespan_context", None)
             if context is None:
-                return json.dumps({
-                    "success": True,
-                    "status": "starting",
-                    "message": "MCP server is initializing...",
-                    "timestamp": datetime.now().isoformat(),
-                })
+                return json.dumps(
+                    {
+                        "success": True,
+                        "status": "starting",
+                        "message": "MCP server is initializing...",
+                        "timestamp": datetime.now().isoformat(),
+                    }
+                )
 
             if hasattr(context, "health_status") and context.health_status:
                 await perform_health_checks(context)
-                return json.dumps({
-                    "success": True,
-                    "health": context.health_status,
-                    "uptime_seconds": time.time() - context.startup_time,
-                    "timestamp": datetime.now().isoformat(),
-                })
+                return json.dumps(
+                    {
+                        "success": True,
+                        "health": context.health_status,
+                        "uptime_seconds": time.time() - context.startup_time,
+                        "timestamp": datetime.now().isoformat(),
+                    }
+                )
             else:
-                return json.dumps({
-                    "success": True,
-                    "status": "ready",
-                    "message": "MCP server is running",
-                    "timestamp": datetime.now().isoformat(),
-                })
+                return json.dumps(
+                    {
+                        "success": True,
+                        "status": "ready",
+                        "message": "MCP server is running",
+                        "timestamp": datetime.now().isoformat(),
+                    }
+                )
         except Exception as e:
             logger.error(f"Health check failed: {e}")
             return json.dumps({"success": False, "error": str(e), "timestamp": datetime.now().isoformat()})
@@ -79,11 +85,9 @@ def register_infra_tools(mcp: FastMCP):
             if context and hasattr(context, "startup_time"):
                 session_info_data["server_uptime_seconds"] = time.time() - context.startup_time
 
-            return json.dumps({
-                "success": True,
-                "session_management": session_info_data,
-                "timestamp": datetime.now().isoformat()
-            })
+            return json.dumps(
+                {"success": True, "session_management": session_info_data, "timestamp": datetime.now().isoformat()}
+            )
         except Exception as e:
             logger.error(f"Session info failed: {e}")
             return json.dumps({"success": False, "error": str(e), "timestamp": datetime.now().isoformat()})
