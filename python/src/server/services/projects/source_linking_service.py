@@ -105,9 +105,51 @@ class SourceLinkingService(BaseRepository):
 
     async def format_projects_with_sources(self, projects: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """
-        Enriches a list of projects with their linked sources.
+        Enriches a list of projects with their linked sources using a single batch query.
+        Solves N+1 query performance bottleneck.
         """
-        import asyncio
+        if not projects:
+            return projects
 
-        tasks = [self.format_project_with_sources(p) for p in projects]
-        return await asyncio.gather(*tasks)
+        project_ids = [p["id"] for p in projects if "id" in p]
+        if not project_ids:
+            return projects
+
+        def _query():
+            return (
+                self.supabase_client.table("archon_project_sources")
+                .select("project_id, source_id, notes")
+                .in_("project_id", project_ids)
+                .execute()
+            )
+
+        success, result = self.execute_query(_query, "Failed to batch fetch project sources")
+
+        # Initialize empty source lists for all projects
+        for p in projects:
+            p["technical_sources"] = []
+            p["business_sources"] = []
+
+        if success:
+            sources = result.get("data", [])
+
+            # Group by project_id
+            grouped_sources = {}
+            for s in sources:
+                pid = s.get("project_id")
+                if pid not in grouped_sources:
+                    grouped_sources[pid] = {"technical": [], "business": []}
+
+                if s.get("notes") == "technical":
+                    grouped_sources[pid]["technical"].append(s["source_id"])
+                elif s.get("notes") == "business":
+                    grouped_sources[pid]["business"].append(s["source_id"])
+
+            # Map back to projects
+            for p in projects:
+                pid = p.get("id")
+                if pid in grouped_sources:
+                    p["technical_sources"] = grouped_sources[pid]["technical"]
+                    p["business_sources"] = grouped_sources[pid]["business"]
+
+        return projects

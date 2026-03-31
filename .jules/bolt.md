@@ -28,3 +28,7 @@
 ## 2025-05-18 - Tracking O(N) generator expressions in Python queues for rate limiters
 **Learning:** In highly concurrent paths like `RateLimiter`, using an O(N) generator expression (e.g., `sum(tokens for _, tokens in deque)`) to calculate current token usage causes a significant performance bottleneck because it repeatedly loops over potentially thousands of items.
 **Action:** Replace `sum(...)` generator expressions over queues with an O(1) caching counter (e.g., `self.current_tokens`) that is incremented when adding items and decremented when removing items.
+
+## 2024-05-24 - [Resolve N+1 Query in SourceLinkingService]
+**Learning:** The `list_projects` route suffered from an N+1 query bottleneck because it looped over every project and made a separate database call to fetch its linked sources via `SourceLinkingService`.
+**Action:** Implemented a batched `in_` Supabase query for linked sources to replace `asyncio.gather` on individual queries. When hydrating lists of entities with associated table data, always batch the query by ID array rather than running queries in a loop.
