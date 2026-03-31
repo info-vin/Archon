@@ -3,6 +3,7 @@ import { api } from '@/services/api';
 import { SystemOverview, AiUsageStats } from '@/types';
 import { XIcon, RefreshCwIcon, AlertTriangleIcon, ListIcon } from '@/components/Icons';
 import TokenUsageTable, { TokenUsageDetail } from './TokenUsageTable';
+import { ROIAnalyticsBadge } from './ROIAnalyticsBadge';
 
 export const SystemHealthDashboard: React.FC = () => {
     const [overview, setOverview] = useState<SystemOverview | null>(null);
@@ -61,6 +62,9 @@ export const SystemHealthDashboard: React.FC = () => {
 
     return (
         <div className="space-y-6">
+            {/* AI ROI & Cost Analytics (Phase 4.6.24 Realization) */}
+            {aiStats && <ROIAnalyticsBadge data={aiStats as any} />}
+
             {/* Top Cards */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <StatusCard 

@@ -87,40 +87,51 @@ async def update_user_role(
         logger.error(f"Admin API: Failed to update role: {e}")
         raise HTTPException(status_code=500, detail=str(e)) from e
 
-# --- CRAWLER TARGET MANAGEMENT (Phase 1.7 / BUG-048) ---
+# --- CRAWLER TARGET MANAGEMENT (Phase 1.7 / Phase 4.6.24 Hardened) ---
 
 class CrawlerTargetCreate(BaseModel):
     target_url: str
     max_depth: int = 5
     description: str | None = None
 
-@router.get("/crawler-targets", dependencies=[Depends(verify_admin_role)])
+@router.get("/crawler-targets", dependencies=[Depends(require_manager_or_admin)])
 async def list_crawler_targets(
     current_user: dict = Depends(get_current_user)
 ):
-    """List all specialized crawler targets (Admin only)."""
+    """List specialized crawler targets (Respects Department Isolation)."""
     from ..utils import get_supabase_client
-    res = get_supabase_client().table("archon_crawler_targets").select("*").order("created_at").execute()
+    query = get_supabase_client().table("archon_crawler_targets").select("*")
+    
+    # Physical Isolation logic: If not Admin, filter by department
+    if current_user.get("role") not in ["admin", "system_admin"]:
+        dept = current_user.get("department", "General")
+        query = query.eq("department", dept)
+        
+    res = query.order("created_at").execute()
     return res.data or []
 
-@router.post("/crawler-targets", dependencies=[Depends(verify_admin_role)])
+@router.post("/crawler-targets", dependencies=[Depends(require_manager_or_admin)])
 async def create_crawler_target(
     request: CrawlerTargetCreate,
     current_user: dict = Depends(get_current_user)
 ):
-    """Add a new target to the isolated crawler registry (Admin only)."""
+    """Add a new target associated with the manager's department."""
     from ..utils import get_supabase_client
-    res = get_supabase_client().table("archon_crawler_targets").insert(request.model_dump()).execute()
+    data = request.model_dump()
+    data["department"] = current_user.get("department", "General")
+    
+    res = get_supabase_client().table("archon_crawler_targets").insert(data).execute()
     if not res.data:
         raise HTTPException(status_code=500, detail="Failed to create target")
     return res.data[0]
 
-@router.delete("/crawler-targets/{target_id}", dependencies=[Depends(verify_admin_role)])
+@router.delete("/crawler-targets/{target_id}", dependencies=[Depends(require_manager_or_admin)])
 async def delete_crawler_target(
     target_id: str,
     current_user: dict = Depends(get_current_user)
 ):
-    """Remove a target from the registry (Admin only)."""
+    """Remove a target (Protected by DB RLS for Managers)."""
     from ..utils import get_supabase_client
+    # Managers can only delete if RLS allows (matching department)
     get_supabase_client().table("archon_crawler_targets").delete().eq("id", target_id).execute()
     return {"success": True}

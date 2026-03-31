@@ -1,30 +1,33 @@
 
+from unittest.mock import AsyncMock, MagicMock, patch
+
 import pytest
-from unittest.mock import MagicMock, patch, AsyncMock
+
 from server.services.extraction_service import ExtractionService
+
 
 @pytest.mark.asyncio
 async def test_extraction_service_realization_logic():
     """
-    Physically verifies the extraction logic: 
+    Physically verifies the extraction logic:
     Crawl -> LLM Parse -> Persistence.
     """
     schema_id = "test-schema-uuid"
     test_url = "https://example.com/data"
     user_id = "test-mgr-id"
-    
+
     # 1. Setup Mocks
     with patch("server.services.extraction_service.get_supabase_client") as mock_db_factory, \
          patch("server.services.extraction_service.get_crawler") as mock_get_crawler, \
          patch("server.services.llm_provider_service.get_llm_client") as mock_get_llm:
-        
+
         mock_db = MagicMock()
         mock_db_factory.return_value = mock_db
-        
+
         # Mock Schema retrieval
         mock_db.table.return_value.select.return_value.eq.return_value.execute.return_value.data = [{
-            "id": schema_id, 
-            "name": "Test Realization", 
+            "id": schema_id,
+            "name": "Test Realization",
             "schema_definition": {"fields": [{"name": "price", "type": "number"}]}
         }]
 
@@ -36,7 +39,7 @@ async def test_extraction_service_realization_logic():
         # Mock LLM Client
         mock_llm = AsyncMock()
         mock_get_llm.return_value.__aenter__.return_value = mock_llm
-        
+
         # Concrete class to avoid MagicMock recursion depth issues
         class MockMessage:
             def __init__(self, content):
@@ -62,7 +65,7 @@ async def test_extraction_service_realization_logic():
         assert result["success"] is True
         assert result["data"]["price"] == 500
         assert result["schema_used"] == "Test Realization"
-        
+
         print("\n✅ Assertion Passed: Extraction Service physical logic verified.")
 
 if __name__ == "__main__":
