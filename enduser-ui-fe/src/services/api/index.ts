@@ -102,6 +102,7 @@ export const api = {
   updateBlogPostStatus: opsApi.updateBlogPostStatus.bind(opsApi),
   uploadFile: opsApi.uploadFile.bind(opsApi),
   getKnowledgeItems: opsApi.getKnowledgeItems.bind(opsApi),
+  searchKnowledgeItems: opsApi.searchKnowledgeItems.bind(opsApi),
   getCrawlerTargets: opsApi.getCrawlerTargets.bind(opsApi),
   createCrawlerTarget: opsApi.createCrawlerTarget.bind(opsApi),
   deleteCrawlerTarget: opsApi.deleteCrawlerTarget.bind(opsApi),

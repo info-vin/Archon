@@ -226,6 +226,13 @@ export const opsApi = {
     return data.items || [];
   },
 
+  async searchKnowledgeItems(query: string, limit: number = 5): Promise<any[]> {
+    return await callAPI<any[]>('/api/knowledge-items/search', {
+        method: 'POST',
+        body: JSON.stringify({ query, limit })
+    });
+  },
+
   async getCrawlerTargets(): Promise<CrawlerTarget[]> {
     const data = await callAPI<any>('/api/admin/crawler-targets');
     return data.targets || [];

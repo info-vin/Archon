@@ -113,6 +113,24 @@ async def get_llm_client(
             if not resolved_api_key:
                 raise ValueError("Grok API key not found - set GROK_API_KEY environment variable")
             client = openai.AsyncOpenAI(api_key=resolved_api_key, base_url=base_url or "https://api.x.ai/v1")
+        elif provider_name == "openrouter":
+            if not resolved_api_key:
+                raise ValueError("OpenRouter API key not found")
+            client = openai.AsyncOpenAI(
+                api_key=resolved_api_key,
+                base_url=base_url or "https://openrouter.ai/api/v1",
+                default_headers={
+                    "HTTP-Referer": "https://github.com/info-vin/Archon",
+                    "X-Title": "Archon AI",
+                },
+            )
+        elif provider_name == "anthropic":
+            # Anthropic uses a different SDK typically, but many proxies support OpenAI-compatible access
+            if not resolved_api_key:
+                raise ValueError("Anthropic API key not found")
+            client = openai.AsyncOpenAI(
+                api_key=resolved_api_key, base_url=base_url or "https://api.anthropic.com/v1/messages"
+            )
         else:
             if not client:
                 client = openai.AsyncOpenAI(api_key=resolved_api_key or "unused", base_url=base_url)

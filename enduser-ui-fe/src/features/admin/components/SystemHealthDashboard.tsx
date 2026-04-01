@@ -4,6 +4,7 @@ import { SystemOverview, AiUsageStats } from '@/types';
 import { XIcon, RefreshCwIcon, AlertTriangleIcon, ListIcon } from '@/components/Icons';
 import TokenUsageTable, { TokenUsageDetail } from './TokenUsageTable';
 import { ROIAnalyticsBadge } from './ROIAnalyticsBadge';
+import { RAGPlayground } from './RAGPlayground';
 
 export const SystemHealthDashboard: React.FC = () => {
     const [overview, setOverview] = useState<SystemOverview | null>(null);
@@ -151,6 +152,9 @@ export const SystemHealthDashboard: React.FC = () => {
                     <AiResilienceWidget />
                 </div>
             </div>
+
+            {/* Industrial RAG Playground (Phase 4.6.26 Realization) */}
+            <RAGPlayground />
 
             {/* Recent Token Transactions (Restored Feature - Phase 4.6.23) */}
             <div className="bg-card p-6 rounded-2xl border border-border shadow-sm">

@@ -96,9 +96,14 @@ class DocumentStorageService(BaseStorageService):
                     if tags:
                         meta["tags"] = tags
 
+                    # Physical Hardening: Contextual Fingerprint Injection (Phase 4.6.26)
+                    # This prefixes the actual text content with its source identity
+                    # ensures that even isolated chunks carry their domain lineage.
+                    fingerprint = f"[Source: {filename} | Index: {i}] "
+
                     urls.append(doc_url)
                     chunk_numbers.append(i)
-                    contents.append(chunk)
+                    contents.append(fingerprint + chunk)
                     metadatas.append(meta)
                     total_word_count += meta.get("word_count", 0)
 
