@@ -399,10 +399,15 @@ Phase 4.4.5 引入了 **Clockwork** 進行系統自動檢測。
         | 4 | `03_projects_and_tasks.sql" | **[專案]** 建立專案、任務分配與文件版本控制表。 |
         | 5 | `04_system_and_logs.sql" | **[系統]** 建立系統活動日誌、Token 用量與考勤表。 |
         | 6 | `05_policies_and_functions.sql" | **[安控]** 注入所有的函式、觸發器、外鍵約束與 RLS 安全政策。 |
-        | 7 | `seed_mock_data.sql" | **[種子]** 填充核心基礎假資料 (Users, Projects, Employees)。 |
-        | 8 | `seed_blog_posts.sql" | **[種子]** 填充部落格文章假資料 (用於 RAG 測試)。 |
-        | 9 | `seed_mock_leads.sql" | **[種子]** 填充業務線 (Leads) 核心測試資料與訪談紀錄。 |
-        | 10 | `seed_mock_alerts_and_logs.sql" | **[種子]** 填充儀表板所需的警報與系統日誌。 |
+        | 7 | `06_seed_agent_profiles.sql` | **[配置]** 建立 Agent 配置。 |
+        | 8 | `06_task_scheduler_and_crawler_targets.sql` | **[配置]** 排程與爬蟲。 |
+        | 9 | `07_harden_crawler_targets_isolation.sql` | **[安全]** 爬蟲隔離強化。 |
+        | 10 | `08_seed_operational_configs.sql` | **[配置]** 營運配置。 |
+        | 11 | `seed_mock_data.sql" | **[種子]** 填充核心基礎假資料 (Users, Projects, Employees)。 |
+        | 12 | `seed_blog_posts.sql" | **[種子]** 填充部落格文章假資料 (用於 RAG 測試)。 |
+        | 13 | `seed_mock_leads.sql" | **[種子]** 填充業務線 (Leads) 核心測試資料與訪談紀錄。 |
+        | 14 | `seed_rag_defaults.sql` | **[種子]** 填充 RAG 預設設定。 |
+        | 15 | `seed_mock_alerts_and_logs.sql" | **[種子]** 填充儀表板所需的警報與系統日誌。 |
         
 3.  **階段三：執行部署**
 
