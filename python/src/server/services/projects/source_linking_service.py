@@ -105,9 +105,48 @@ class SourceLinkingService(BaseRepository):
 
     async def format_projects_with_sources(self, projects: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """
-        Enriches a list of projects with their linked sources.
+        Enriches a list of projects with their linked sources using a single batch query.
         """
-        import asyncio
+        if not projects:
+            return projects
 
-        tasks = [self.format_project_with_sources(p) for p in projects]
-        return await asyncio.gather(*tasks)
+        project_ids = [p["id"] for p in projects if p.get("id")]
+        if not project_ids:
+            for p in projects:
+                p["technical_sources"] = []
+                p["business_sources"] = []
+            return projects
+
+        def _query():
+            return (
+                self.supabase_client.table("archon_project_sources")
+                .select("project_id, source_id, notes")
+                .in_("project_id", project_ids)
+                .execute()
+            )
+
+        success, result = self.execute_query(_query, "Failed to fetch batched project sources")
+
+        for p in projects:
+            p["technical_sources"] = []
+            p["business_sources"] = []
+
+        if success:
+            sources = result.get("data", [])
+            tech_sources_map = {}
+            biz_sources_map = {}
+            for s in sources:
+                pid = s["project_id"]
+                sid = s["source_id"]
+                if s.get("notes") == "technical":
+                    tech_sources_map.setdefault(pid, []).append(sid)
+                elif s.get("notes") == "business":
+                    biz_sources_map.setdefault(pid, []).append(sid)
+
+            for p in projects:
+                pid = p.get("id")
+                if pid:
+                    p["technical_sources"] = tech_sources_map.get(pid, [])
+                    p["business_sources"] = biz_sources_map.get(pid, [])
+
+        return projects
