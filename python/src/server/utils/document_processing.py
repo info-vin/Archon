@@ -53,16 +53,17 @@ def extract_text_from_document(file_content: bytes, filename: str, content_type:
         Exception: If extraction fails
     """
     try:
+        extracted_text = ""
         # PDF files
         if content_type == "application/pdf" or filename.lower().endswith(".pdf"):
-            return extract_text_from_pdf(file_content)
+            extracted_text = extract_text_from_pdf(file_content)
 
         # Word documents
         elif content_type in [
             "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
             "application/msword",
         ] or filename.lower().endswith((".docx", ".doc")):
-            return extract_text_from_docx(file_content)
+            extracted_text = extract_text_from_docx(file_content)
 
         # Text files (markdown, txt, etc.)
         elif content_type.startswith("text/") or filename.lower().endswith(
@@ -73,10 +74,19 @@ def extract_text_from_document(file_content: bytes, filename: str, content_type:
                 ".rst",
             )
         ):
-            return file_content.decode("utf-8", errors="ignore")
+            extracted_text = file_content.decode("utf-8", errors="ignore")
 
         else:
             raise ValueError(f"Unsupported file format: {content_type} ({filename})")
+
+        # Physical Hardening: Ensure final output is clean UTF-8 NFC and free of control chars
+        import unicodedata
+        # Keep newlines, tabs and printable chars, strip other control categories
+        clean_text = "".join(
+            ch for ch in unicodedata.normalize("NFC", extracted_text)
+            if unicodedata.category(ch)[0] != "C" or ch in "\n\r\t"
+        )
+        return clean_text.strip()
 
     except Exception as e:
         logger.error(

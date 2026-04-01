@@ -29,7 +29,7 @@ from .agentic_rag_strategy import AgenticRAGStrategy
 # Import all strategies
 from .base_search_strategy import BaseSearchStrategy
 from .hybrid_search_strategy import HybridSearchStrategy
-from .reranking_strategy import RerankingStrategy
+from .reranking_strategy import reranking_strategy
 
 logger = get_logger(__name__)
 
@@ -57,12 +57,13 @@ class RAGService(BaseRepository):
         self.reranking_strategy = None
         use_reranking = self.get_bool_setting("USE_RERANKING", False)
         if use_reranking:
-            try:
-                self.reranking_strategy = RerankingStrategy()
-                logger.info("Reranking strategy loaded successfully")
-            except Exception as e:
-                logger.warning(f"Failed to load reranking strategy: {e}")
+            # Physical Optimization: Use the singleton to avoid 15s loading delay
+            self.reranking_strategy = reranking_strategy
+            if not self.reranking_strategy.is_available():
+                logger.warning("Reranking singleton is not available (model failed to load)")
                 self.reranking_strategy = None
+            else:
+                logger.info("Reranking strategy attached from singleton")
 
     def get_setting(self, key: str, default: str = "false") -> str:
         """Get a setting from the credential service or fall back to environment variable."""

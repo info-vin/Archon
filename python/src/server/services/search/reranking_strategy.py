@@ -8,7 +8,6 @@ a trained neural model, typically improving precision over initial retrieval sco
 Uses the cross-encoder/ms-marco-MiniLM-L-6-v2 model for reranking by default.
 """
 
-import os
 from typing import Any
 
 try:
@@ -113,121 +112,116 @@ class RerankingStrategy:
         Apply reranking scores to results and sort them.
 
         Args:
-            results: Original search results
-            scores: Reranking scores from the model
-            valid_indices: Indices of results that were scored
-            top_k: Optional limit on number of results to return
+            results: List of search results
+            scores: Reranking scores
+            valid_indices: Indices of results that were reranked
+            top_k: Maximum number of results to return (optional)
 
         Returns:
-            Reranked and sorted list of results
+            Reranked and sorted results
         """
-        # Add rerank scores to valid results
-        # DEFENSIVE: Ensure we don't exceed the bounds of the scores list
-        max_scores = len(scores)
-        for i, valid_idx in enumerate(valid_indices):
-            if i < max_scores:
-                results[valid_idx]["rerank_score"] = float(scores[i])
-            else:
-                # If we're missing a score for some reason, use a very low fallback
-                results[valid_idx]["rerank_score"] = -1.0
+        # Create a new list for ranked results
+        reranked_results = []
 
-        # Sort results by rerank score (descending - highest relevance first)
-        reranked_results = sorted(results, key=lambda x: x.get("rerank_score", -1.0), reverse=True)
+        # Map scores back to original results
+        for score_idx, original_idx in enumerate(valid_indices):
+            result = results[original_idx].copy()
+            result["rerank_score"] = float(scores[score_idx])
+            reranked_results.append(result)
 
-        # Apply top_k limit if specified
-        if top_k is not None and top_k > 0:
+        # Handle results that couldn't be reranked (keep them at the bottom if needed)
+        # For now, we only return results that were successfully reranked
+
+        # Sort by rerank score descending
+        reranked_results.sort(key=lambda x: x.get("rerank_score", 0), reverse=True)
+
+        if top_k:
             reranked_results = reranked_results[:top_k]
 
         return reranked_results
 
     async def rerank_results(
-        self,
-        query: str,
-        results: list[dict[str, Any]],
-        content_key: str = "content",
-        top_k: int | None = None,
+        self, query: str, results: list[dict[str, Any]], top_k: int | None = None, **kwargs
     ) -> list[dict[str, Any]]:
         """
-        Rerank search results using the CrossEncoder model.
+        Asynchronously rerank search results. Main interface for the strategy.
+        Supports extra arguments like content_key for backward compatibility.
 
         Args:
-            query: The search query used to retrieve results
-            results: List of search results to rerank
-            content_key: The key in each result dict containing text content for reranking
-            top_k: Optional limit on number of results to return after reranking
+            query: The search query
+            results: List of results to rerank
+            top_k: Number of results to return (optional)
+            **kwargs: Additional parameters (e.g. content_key)
 
         Returns:
-            Reranked list of results ordered by rerank_score (highest first)
+            Sorted and reranked results
         """
-        if not self.model or not results:
-            logger.debug("Reranking skipped - no model or no results")
+        if not self.is_available() or not results:
             return results
 
-        with safe_span("rerank_results", result_count=len(results), model_name=self.model_name) as span:
-            try:
-                # Build query-document pairs
-                query_doc_pairs, valid_indices = self.build_query_document_pairs(query, results, content_key)
+        try:
+            content_key = kwargs.get("content_key", "content")
+            # 1. Build pairs
+            pairs, valid_indices = self.build_query_document_pairs(query, results, content_key=content_key)
 
-                if not query_doc_pairs:
-                    logger.warning("No valid texts found for reranking")
-                    return results
-
-                # Get reranking scores from the model
-                with safe_span("crossencoder_predict"):
-                    scores = self.model.predict(query_doc_pairs)
-
-                # Apply scores and sort results
-                reranked_results = self.apply_rerank_scores(results, scores, valid_indices, top_k)
-
-                span.set_attribute("reranked_count", len(reranked_results))
-                if len(scores) > 0:
-                    span.set_attribute("score_range", f"{min(scores):.3f}-{max(scores):.3f}")
-                    logger.debug(
-                        f"Reranked {len(query_doc_pairs)} results, score range: {min(scores):.3f}-{max(scores):.3f}"
-                    )
-
-                return reranked_results
-
-            except Exception as e:
-                logger.error(f"Error during reranking: {e}")
-                span.set_attribute("error", str(e))
+            if not pairs:
                 return results
 
-    def get_model_info(self) -> dict[str, Any]:
-        """Get information about the loaded reranking model."""
-        return {
-            "model_name": self.model_name,
-            "available": self.is_available(),
-            "crossencoder_available": CROSSENCODER_AVAILABLE,
-            "model_loaded": self.model is not None,
-        }
+            # 2. Get scores from model - Offload to thread to keep event loop free
+            import asyncio
+            scores = await asyncio.to_thread(self.model.predict, pairs)
 
-
-class RerankingConfig:
-    """Configuration helper for reranking settings"""
-
-    @staticmethod
-    def from_credential_service(credential_service) -> dict[str, Any]:
-        """Load reranking configuration from credential service."""
-        try:
-            use_reranking = credential_service.get_bool_setting("USE_RERANKING", False)
-            model_name = credential_service.get_setting("RERANKING_MODEL", DEFAULT_RERANKING_MODEL)
-            top_k = int(credential_service.get_setting("RERANKING_TOP_K", "0"))
-
-            return {
-                "enabled": use_reranking,
-                "model_name": model_name,
-                "top_k": top_k if top_k > 0 else None,
-            }
+            # 3. Apply and sort
+            return self.apply_rerank_scores(results, list(scores), valid_indices, top_k)
         except Exception as e:
-            logger.error(f"Error loading reranking config: {e}")
-            return {"enabled": False, "model_name": DEFAULT_RERANKING_MODEL, "top_k": None}
+            logger.error(f"Reranking failed: {e}")
+            return results
 
-    @staticmethod
-    def from_env() -> dict[str, Any]:
-        """Load reranking configuration from environment variables."""
-        return {
-            "enabled": os.getenv("USE_RERANKING", "false").lower() in ("true", "1", "yes", "on"),
-            "model_name": os.getenv("RERANKING_MODEL", DEFAULT_RERANKING_MODEL),
-            "top_k": int(os.getenv("RERANKING_TOP_K", "0")) or None,
-        }
+    async def rerank_results_async(
+        self, query: str, results: list[dict[str, Any]], top_k: int | None = None
+    ) -> list[dict[str, Any]]:
+        """
+        Asynchronously rerank search results.
+
+        Args:
+            query: The search query
+            results: List of results to rerank
+            top_k: Number of results to return (optional)
+
+        Returns:
+            Sorted and reranked results
+        """
+        if not self.is_available() or not results:
+            return results
+
+        with safe_span("rerank_results", query=query, result_count=len(results)) as span:
+            try:
+                # 1. Build pairs
+                pairs, valid_indices = self.build_query_document_pairs(query, results)
+
+                if not pairs:
+                    return results
+
+                # 2. Get scores from model
+                # Predict is typically a heavy blocking operation, but we're in an async context
+                # For heavy models, this should be offloaded to a thread pool
+                import asyncio
+
+                scores = await asyncio.to_thread(self.model.predict, pairs)
+
+                # 3. Apply and sort
+                ranked_results = self.apply_rerank_scores(results, list(scores), valid_indices, top_k)
+
+                if span:
+                    span.set_attribute("top_score", ranked_results[0].get("rerank_score") if ranked_results else 0)
+
+                return ranked_results
+            except Exception as e:
+                logger.error(f"Reranking failed: {e}")
+                return results
+
+
+# --- Singleton Pattern for Performance Optimization ---
+# Pre-initialize the strategy instance to avoid re-loading the model on every request.
+# Phase 4.6.25: Enables system-wide pre-loading.
+reranking_strategy = RerankingStrategy()

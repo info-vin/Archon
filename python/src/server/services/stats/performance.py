@@ -41,7 +41,7 @@ class PerformanceManager:
             score -= 50
         return max(0, score)
 
-    async def add_agent_action_log(self, agent_name: str, xp_change: int, message: str, details: dict | None = None, content: str | None = None) -> None:
+    async def add_agent_action_log(self, agent_name: str, xp_change: int, message: str, details: dict | None = None, content: str | None = None, agent_id: str | None = None) -> None:
         """Logs an agent action and updates XP (Grounded Rewards)."""
         try:
             final_xp = xp_change
@@ -56,8 +56,9 @@ class PerformanceManager:
                 "details": {
                     **(details or {}),
                     "agent_name": agent_name,
+                    "agent_id": agent_id,
                     "xp_change": final_xp,
-                    "timestamp_v": "v4.6.15",
+                    "timestamp_v": "v4.6.23", # Updated for identity alignment
                 },
             }
             self.supabase.table("archon_logs").insert(payload).execute()
@@ -178,11 +179,13 @@ class PerformanceManager:
             result = []
             for key, config in AGENT_CONFIG.items():
                 name = str(config.get("name", "Unknown"))
-                total_xp = xp_map.get(name, 0) or xp_map.get(f"ai-{key}", 0)
+                slug = f"ai-{key}"
+                total_xp = xp_map.get(name, 0) or xp_map.get(slug, 0)
                 total_cost = cost_map.get(name, 0.0)
                 roi = round(total_xp / total_cost, 2) if total_cost > 0 else 0.0
                 result.append({
                     "name": name,
+                    "agent_id": slug,
                     "total_xp": total_xp,
                     "total_cost": round(total_cost, 4),
                     "roi_ratio": roi,

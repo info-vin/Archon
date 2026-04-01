@@ -98,6 +98,14 @@ async def lifespan(app: FastAPI):
         # Initialize credentials from database FIRST - this is the foundation for everything else
         await initialize_credentials()
 
+        # Phase 4.6.25: Pre-load Reranking model to eliminate cold-start latency
+        from src.server.services.search.reranking_strategy import reranking_strategy
+        # The singleton instantiation already triggers _load_model()
+        if reranking_strategy.is_available():
+            logger.info("Reranking model pre-loaded successfully.")
+        else:
+            logger.warning("Reranking model failed to pre-load.")
+
         # Now that credentials are loaded, we can properly initialize logging
         # This must happen AFTER credentials so LOGFIRE_ENABLED is set from database
         setup_logfire(service_name="archon-backend")

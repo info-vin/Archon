@@ -35,10 +35,17 @@ async def upload_document(
         progress_id = str(uuid.uuid4())
 
         file_content = await file.read()
-        file_metadata = {"filename": file.filename, "content_type": file.content_type, "size": len(file_content)}
+        # Capturing metadata early to avoid competition in background task
+        filename = file.filename or "uploaded_document"
+        content_type = file.content_type or "application/octet-stream"
+        file_metadata = {
+            "filename": filename,
+            "content_type": content_type,
+            "size": len(file_content)
+        }
 
         tracker = ProgressTracker(progress_id)
-        await tracker.start({"status": "initializing", "progress": 0, "log": f"Starting upload for {file.filename}"})
+        await tracker.start({"status": "initializing", "progress": 0, "log": f"Starting upload for {filename}"})
 
         # Launch background task and store it for tracking (Physical Alignment with domain state)
         task = asyncio.create_task(
@@ -94,7 +101,14 @@ async def background_upload(
             tags=tags,
         )
 
-        await storage.store_documents(documents=[{"source_id": source_id, "content": text, "metadata": file_metadata}])
+        await storage.store_documents(
+            documents=[{
+                "source_id": source_id,
+                "content": text,
+                "filename": file_metadata["filename"],  # Physical alignment: must be at top level
+                "metadata": file_metadata
+            }]
+        )
 
         await tracker.complete({"log": "Upload successful!"})
     except Exception as e:

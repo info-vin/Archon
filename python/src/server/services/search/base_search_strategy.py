@@ -81,6 +81,15 @@ class BaseSearchStrategy(BaseRepository):
                 for result in data:
                     similarity = float(result.get("similarity") or 0.0)
                     if similarity >= threshold:
+                        # Physical Hardening: Ensure content is clean UTF-8 string
+                        content = result.get("content", "")
+                        if content and isinstance(content, str):
+                            try:
+                                # Fix potential Latin-1/UTF-8 double-encoding/mismatch
+                                result["content"] = content.encode('latin-1').decode('utf-8')
+                            except (UnicodeEncodeError, UnicodeDecodeError):
+                                # Already healthy or unfixable
+                                pass
                         filtered_results.append(result)
 
             span.set_attribute("results_found", len(filtered_results))

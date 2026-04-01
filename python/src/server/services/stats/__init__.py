@@ -48,8 +48,8 @@ class StatsService:
     def calculate_ai_score(content: str, metadata: dict | None = None) -> int:
         return PerformanceManager.calculate_ai_score(content, metadata)
 
-    async def add_agent_action_log(self, agent_name: str, xp_change: int, message: str, details: dict | None = None, content: str | None = None) -> None:
-        await self.performance.add_agent_action_log(agent_name, xp_change, message, details, content)
+    async def add_agent_action_log(self, agent_name: str, xp_change: int, message: str, details: dict | None = None, content: str | None = None, agent_id: str | None = None) -> None:
+        await self.performance.add_agent_action_log(agent_name, xp_change, message, details, content, agent_id)
 
     async def get_agent_xp_stats(self) -> list[dict[str, Any]]:
         return await self.performance.get_agent_xp_stats()

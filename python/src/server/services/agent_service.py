@@ -38,16 +38,14 @@ class AgentService:
         if required_level <= 0:
             return True, "Level 0 (Intern)"
 
-        from .stats_service import StatsService
-
-        stats_service = StatsService()
+        from .stats_service import stats_service
 
         try:
             # 1. Fetch unified XP rankings
             rankings = await stats_service.get_agent_xp_stats()
 
             # 2. Extract level for the specific agent using slug (agent_id)
-            agent_xp_info = next((r for r in rankings if r["name"] == agent_id), None)
+            agent_xp_info = next((r for r in rankings if r.get("agent_id") == agent_id), None)
 
             if not agent_xp_info:
                 get_logger(__name__).warning(
@@ -355,9 +353,7 @@ class AgentService:
         await self._run_general_agent_task(task_id, agent_id)
 
     async def _award_agent_xp(self, agent_id: str, task_data: dict, output_message: str):
-        from ..services.stats_service import StatsService
-
-        stats = StatsService()
+        from .stats_service import stats_service
 
         # Physical Scoring instead of random (Phase 4.6.15)
         # We derive metadata from the task context
@@ -366,7 +362,7 @@ class AgentService:
             "required_terms": ["Archon"] if agent_id == "ai-librarian" else [],
         }
 
-        score = stats.calculate_ai_score(output_message, meta)
+        score = stats_service.calculate_ai_score(output_message, meta)
         # Translate 0-100 score to 0-15 XP
         xp = int(score / 6.6)
 
@@ -378,8 +374,12 @@ class AgentService:
 
         msg = f"Completed {display_name} task: {task_data.get('title', 'Unknown')}"
 
-        await stats.add_agent_action_log(
-            agent_name=display_name, xp_change=xp, message=msg, details={"task_id": task_data.get("id"), "score": score}
+        await stats_service.add_agent_action_log(
+            agent_name=display_name,
+            agent_id=agent_id,
+            xp_change=xp,
+            message=msg,
+            details={"task_id": task_data.get("id"), "score": score},
         )
 
     async def _run_general_agent_task(self, task_id: str, agent_id: str):

@@ -34,9 +34,9 @@ class ServerHealthService {
     try {
       // Use the proxied /api/health endpoint which works in both dev and Docker
       // callAPIWithETag handles auth headers and standardized error response
-      const data = await callAPIWithETag<any>('/health', {
+      const data = await callAPIWithETag<any>('/api/health', {
         method: 'GET',
-        signal: AbortSignal.timeout(10000) // 10 second timeout (increased for heavy operations)
+        signal: AbortSignal.timeout(20000) // 20 second timeout (increased for heavy operations)
       });
       
       // Accept healthy, online, or initializing (server is starting up)
