@@ -41,8 +41,8 @@
 >
 > 1.  **第一步：強制讀取上下文**: 在回應您的任何請求前，我**必須**先讀取 `GEMINI.md` 和 `CONTRIBUTING_tw.md` 的內容。
 > 2.  **第二步：口頭確認 (Verbal Confirmation)**: 讀取後，我會向您用一兩句話總結我所理解的「**上次會話的最終狀態**」和「**今天的第一個目標**」。
-*   **當前狀態 (Current Context)**: Phase 4.6.22 已結案，物理移除模擬參數並達成推理落地。
-*   **今日目標 (Today's Goal)**: 啟動 Phase 4.6.23，統一原生工具調度與身分對齊，達成 100% 全端對齊驗收。
+*   **當前狀態 (Current Context)**: Phase 4.6.26 已結案，RAG 工業化（指紋注入）與 5173 治理實驗室已實體落地。
+*   **今日目標 (Today's Goal)**: 啟動 Phase 4.7 神經連結 (MCP Client 優化)，降低跨容器工具調用開銷。
 
 
 > 3.  **第三步：取得您的確認**: 在您確認我對起點的理解無誤後，我才能開始執行第一個指令。
@@ -118,15 +118,16 @@
 
 # 第三章：近期工作日誌 (Recent Journal Entries)
 
-### 2026-03-30: Phase 4.6.24 結案與三月終極對齊 (Current Session)
-*   **今日目標 (結案與硬化)**:
-    - **巨型檔案清零**: 完成 `CredentialService`, `UrlHandler`, `StatsService`, `ProviderDiscovery` 四大中樞的 L2 模組化拆分，單一檔案行數降至 < 350 行。
-    - **邏輯高保真還原**: 經由三遍物理對帳，確保 100% 恢復了原本遺失的 URL 正規化引擎與 Fernet 保護註釋。
-    - **ROI 視覺化**: 前端實體化 `ROIAnalyticsBadge` 與 `TokenUsageTable`，達成 AI 經濟透明化。
-    - **全系統穩定性**: 通過 557/557 項後端測試與 56/56 項前端單元測試，達成 **Zero-Lint** 狀態。
+### 2026-04-01: Phase 4.6.25 & 4.6.26 結案與 RAG 工業化 (Current Session)
+*   **今日目標 (性能、編碼與治理)**:
+    - **性能極致化**: 實作 Reranking 模型單例化與預加載，搜尋冷啟動延遲從 15s 降至 **2s**。
+    - **編碼終極硬化**: 透過 NFC 正規化與 Latin-1 物理重解碼，徹底消滅 RAG 搜尋結果中的轉義亂碼。
+    - **語境指紋注入**: 在切片階段物理注入 `[Source: {filename} | Index: {i}]`，達成工業級 RAG 可追溯性。
+    - **5173 實體化**: 在 EndUser UI 掛載 `RAGPlayground`，讓管理員能物理驗證檢索精確度與指紋效果。
 *   **物理成果**:
-    - 徹底隔離 `.env.test` 物理位址，實作並驗證了部門隔離 (SEC-001) 的負面測試。
-    - 補完 Charlie 智慧提取 (Extraction API) 的實體執行邏輯，不再回傳 Mock。
+    - 通過 **613 項** 物理測試（557 BE + 56 FE），達成 Zero-Lint 狀態。
+    - 修復了文件上傳 API 在 4.6.24 重構後的異步 `KeyError` 與作用域 Bug。
+    - 外科手術式移植了 OpenRouter/Anthropic/Grok 的實體串接支持。
 
 ---
 
@@ -139,6 +140,10 @@
 三月是 Archon 從巨型架構邁向模組化治理的關鍵月份。我們消滅了所有超過 1000 行的檔案，並建立了基於 XP 的 Agent 治理體系。
 
 **核心主題歸類**:
+1.  **Phase 4.6.24 結案 (Ref: 03-30)**:
+    - **巨型檔案清零**: 完成 `CredentialService`, `UrlHandler`, `StatsService`, `ProviderDiscovery` 四大中樞的 L2 模組化拆分。
+    - **ROI 視覺化**: 前端實體化 `ROIAnalyticsBadge` 與 `TokenUsageTable`，達成 AI 經濟透明化。
+    - **物理隔離**: 徹底隔離 `.env.test` 物理位址，實作並驗證了部門隔離 (SEC-001) 的負面測試。
 1.  **模組化革命 (Ref: 03-06 ~ 03-31)**:
     *   **巨型檔案清零**: 拆分 `ollama_api.py`, `knowledge_api.py`, `task_service.py` 與四大核心 Service。
     *   **L2 標竿建立**: 確立了以 `llm/` 包為範本的目錄化重構標準，確保 Facade 模式的 100% 向後兼容。
