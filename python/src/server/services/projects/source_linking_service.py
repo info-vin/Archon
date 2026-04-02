@@ -34,9 +34,21 @@ class SourceLinkingService(BaseRepository):
             return False, result
 
         sources = result.get("data", [])
+
+        # ⚡ Bolt Optimization: Replaced multiple list comprehensions with a single pass loop.
+        # Impact: Reduces iteration overhead from O(2N) to O(N) by grouping in one pass.
+        # This is especially helpful if projects accumulate a large number of sources over time.
+        technical_sources = []
+        business_sources = []
+        for s in sources:
+            if s.get("notes") == "technical":
+                technical_sources.append(s["source_id"])
+            elif s.get("notes") == "business":
+                business_sources.append(s["source_id"])
+
         return True, {
-            "technical_sources": [s["source_id"] for s in sources if s.get("notes") == "technical"],
-            "business_sources": [s["source_id"] for s in sources if s.get("notes") == "business"],
+            "technical_sources": technical_sources,
+            "business_sources": business_sources,
         }
 
     async def update_project_sources(
