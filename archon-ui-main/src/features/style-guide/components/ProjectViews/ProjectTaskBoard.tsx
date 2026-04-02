@@ -27,17 +27,17 @@ const TaskCardExample = ({ task, index }: { task: any; index: number }) => {
                 {task.feature}
               </div>
             )}
-            <div className="ml-auto flex items-center gap-1">
+            <div className="ml-auto flex items-center gap-1" role="group" aria-label="Task actions">
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <button type="button" className="p-1 rounded hover:bg-cyan-500/10 text-gray-500 hover:text-cyan-500 transition-colors"><Edit className="w-3 h-3" /></button>
+                    <button type="button" aria-label="Edit task" className="p-1 rounded hover:bg-cyan-500/10 text-gray-500 hover:text-cyan-500 transition-colors"><Edit className="w-3 h-3" /></button>
                   </TooltipTrigger>
                   <TooltipContent>Edit task</TooltipContent>
                 </Tooltip>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <button type="button" className="p-1 rounded hover:bg-red-500/10 text-gray-500 hover:text-red-500 transition-colors"><Trash2 className="w-3 h-3" /></button>
+                    <button type="button" aria-label="Delete task" className="p-1 rounded hover:bg-red-500/10 text-gray-500 hover:text-red-500 transition-colors"><Trash2 className="w-3 h-3" /></button>
                   </TooltipTrigger>
                   <TooltipContent>Delete task</TooltipContent>
                 </Tooltip>
