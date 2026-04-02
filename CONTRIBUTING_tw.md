@@ -392,23 +392,13 @@ Phase 4.4.5 引入了 **Clockwork** 進行系統自動檢測。
 
     1.  登入 Supabase 儀表板並進入 **SQL Editor**。
 
-        | 順序 | 檔案路徑 (migration/0.2.1/...) | 用途與說明 |
+        | 順序 | 檔案路徑 (migration/0.2.2/...) | 用途與說明 |
         | :--- | :--- | :--- |
-        | 1 | `RESET_DB.sql` | **[重置]** 清空所有資料表、型別、與自訂函式，確保環境乾淨。 |
-        | 2 | `01_core_auth_users.sql` | **[核心]** 建立基礎設定表與擴充功能 (如 vector)。 |
-        | 3 | `02_crm_and_knowledge.sql" | **[業務]** 建立 CRM 客戶資料、爬蟲頁面與知識庫文章表。 |
-        | 4 | `03_projects_and_tasks.sql" | **[專案]** 建立專案、任務分配與文件版本控制表。 |
-        | 5 | `04_system_and_logs.sql" | **[系統]** 建立系統活動日誌、Token 用量與考勤表。 |
-        | 6 | `05_policies_and_functions.sql" | **[安控]** 注入所有的函式、觸發器、外鍵約束與 RLS 安全政策。 |
-        | 7 | `06_seed_agent_profiles.sql` | **[配置]** 建立 Agent 配置。 |
-        | 8 | `06_task_scheduler_and_crawler_targets.sql` | **[配置]** 排程與爬蟲。 |
-        | 9 | `07_harden_crawler_targets_isolation.sql` | **[安全]** 爬蟲隔離強化。 |
-        | 10 | `08_seed_operational_configs.sql` | **[配置]** 營運配置。 |
-        | 11 | `seed_mock_data.sql" | **[種子]** 填充核心基礎假資料 (Users, Projects, Employees)。 |
-        | 12 | `seed_blog_posts.sql" | **[種子]** 填充部落格文章假資料 (用於 RAG 測試)。 |
-        | 13 | `seed_mock_leads.sql" | **[種子]** 填充業務線 (Leads) 核心測試資料與訪談紀錄。 |
-        | 14 | `seed_rag_defaults.sql` | **[種子]** 填充 RAG 預設設定。 |
-        | 15 | `seed_mock_alerts_and_logs.sql" | **[種子]** 填充儀表板所需的警報與系統日誌。 |
+        | 1 | `01_foundation.sql` | **[重置與基礎]** 清空資料庫並建立核心表與 ENUMs。 |
+        | 2 | `02_business_schema.sql` | **[業務表結構]** 建立 CRM、專案、任務與多維 Embedding 實體欄位。 |
+        | 3 | `03_logic_security.sql` | **[邏輯與安控]** 注入 SQL Functions 與 RLS 安全政策。 |
+        | 4 | `04_seed_config.sql` | **[營運配置]** 初始化 Agent 角色與 RAG 預設參數。 |
+        | 5 | `05_seed_mock.sql` | **[種子資料]** 填充部落格文章與測試專案。 |
         
 3.  **階段三：執行部署**
 

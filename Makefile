@@ -48,8 +48,7 @@ install-ui:
 # Database initialization (Idempotent)
 db-init:
 	@echo "Initializing database inside archon-server container..."
-	@docker exec -i archon-server /venv/bin/python scripts/init_db.py
-
+	@docker exec -i archon-server /venv/bin/python scripts/init_db.py $(ARGS)
 # Inject historical trend data (GAP-027, 030, 032, 033, 034)
 db-fuel:
 	@echo "Fueling Nexus with 180-day strategic data..."

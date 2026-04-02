@@ -72,6 +72,16 @@ def is_duplicate_user_error(e: Exception) -> bool:
             err_str += f" {str(arg).lower()}"
     return any(k in err_str for k in ["already registered", "already been registered", "already exists", "422", "unprocessable entity"])
 
+def get_latest_migration_version(migration_dir: str = "migration") -> str:
+    """Automatically detects the latest SemVer-like directory in the migration folder."""
+    subdirs = [d for d in os.listdir(migration_dir) if os.path.isdir(os.path.join(migration_dir, d)) and d[0].isdigit()]
+    if not subdirs:
+        return "0.2.1"  # Fallback
+    # Sort by version components to handle 0.10.0 > 0.2.0 correctly
+    latest = sorted(subdirs, key=lambda x: [int(c) for d in [x.split('.')] for c in d])[-1]
+    logger.info(f"📂 Detected latest migration version: {latest}")
+    return latest
+
 def run_migrations(cursor: PGCursor, migration_dir: str = "migration", exclude: set[str] | None = None) -> None:
     logger.info("Running schema migrations...")
     cursor.execute("""
@@ -81,13 +91,15 @@ def run_migrations(cursor: PGCursor, migration_dir: str = "migration", exclude: 
     """)
     cursor.execute("SELECT version FROM schema_migrations")
     applied = {row[0] for row in cursor.fetchall()}
-    files = sorted(glob.glob(os.path.join(migration_dir, "0.2.1", "*.sql")))
+    
+    version = get_latest_migration_version(migration_dir)
+    files = sorted(glob.glob(os.path.join(migration_dir, version, "*.sql")))
     exclude = exclude or set()
     skipped_count = 0
 
     for f_path in files:
         fname = os.path.basename(f_path)
-        version_id = os.path.splitext(fname)[0]
+        version_id = f"{version}/{os.path.splitext(fname)[0]}"
         if fname in exclude or version_id in applied:
             skipped_count += 1
             continue
@@ -98,19 +110,20 @@ def run_migrations(cursor: PGCursor, migration_dir: str = "migration", exclude: 
     logger.info(f"✅ Schema migrations checked. ({skipped_count} scripts skipped as already applied)")
 
 def seed_data(cursor: PGCursor) -> None:
-    seed_file = "migration/0.2.1/seed_mock_data.sql"
+    version = get_latest_migration_version()
+    seed_file = f"migration/{version}/seed_mock_data.sql"
     if os.path.exists(seed_file):
         logger.info(f"🌱 Seeding mock data: {seed_file}")
         with open(seed_file) as f:
             cursor.execute(f.read())
 
-    blog_seed = "migration/0.2.1/seed_blog_posts.sql"
+    blog_seed = f"migration/{version}/seed_blog_posts.sql"
     if os.path.exists(blog_seed):
         logger.info(f"🌱 Seeding blog posts: {blog_seed}")
         with open(blog_seed) as f:
             cursor.execute(f.read())
 
-    rag_defaults = "migration/0.2.1/seed_rag_defaults.sql"
+    rag_defaults = f"migration/{version}/seed_rag_defaults.sql"
     if os.path.exists(rag_defaults):
         logger.info(f"🌱 Seeding RAG defaults: {rag_defaults}")
         with open(rag_defaults) as f:
@@ -262,8 +275,14 @@ def print_dev_token() -> None:
 def main():
     if "--clean" in sys.argv:
         logger.warning("⚠️  CLEAN MODE: Resetting database...")
+        version = get_latest_migration_version()
+        reset_file = f"migration/{version}/RESET_DB.sql"
+        if not os.path.exists(reset_file):
+             # Fallback to foundation if RESET_DB is merged into 01_foundation.sql
+             reset_file = f"migration/{version}/01_foundation.sql"
+        
         with db_transaction() as cursor:
-            with open("migration/0.2.1/RESET_DB.sql") as f:
+            with open(reset_file) as f:
                 cursor.execute(f.read())
         logger.info("✅ Database reset.")
 
