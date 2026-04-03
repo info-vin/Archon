@@ -613,3 +613,27 @@ docker exec -i archon-server /venv/bin/python -c "import os, psycopg2; DB=os.get
     - **測試防護網**: 
         - **Backend**: 554 個測試 (100% 通過)。
         - **Frontend**: 183 個測試 (Unit + E2E + Admin，100% 通過)。
+
+---
+
+## 附錄 D：基礎設施物理審計 (Infrastructure Audit)
+
+> **結算日期**: 2026-04-02
+> **狀態**: 🟡 **映像檔體積待優化**。目前 `archon-server` 體積為 10.2GB。
+
+- **體積組成真相 (物理公證)**:
+    - **NVIDIA/CUDA 庫**: 2.85 GB (路徑: `/venv/lib/python3.12/site-packages/nvidia`)。
+    - **PyTorch (GPU版)**: 1.51 GB (內含 816MB 之 `libtorch_cuda.so`)。
+    - **Playwright Chromium**: 622 MB。
+- **硬體對帳結論**: 透過物理探針 `torch.cuda.is_available()` 證實目前環境僅抓取 **CPU only**。上述 3GB+ 的 CUDA 庫為無效死重，未來應遷移至 `torch-cpu` 分支。
+
+## 附錄 E：資料庫表格設計初衷 (Schema Rationale)
+
+> **說明**: 本章節記錄了部分看似「死代碼」表格的設立原因，防止誤刪。
+
+- **`market_insights`**: 
+    - **Ref**: Phase 4.2 (0b86ad8)
+    - **初衷**: 為了 Bob 產出的「戰略級市場分析報告」預留空間。雖然目前 `leads` 承擔了大部分業務數據，但此表為未來長期趨勢分析的基石。
+- **`subscriptions`**: 
+    - **Ref**: 2025-09 重構 (277bfda)
+    - **初衷**: 為「商業化付費模式」預留的數據模型，支援 API 訂閱與用量計費。
