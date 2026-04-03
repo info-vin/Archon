@@ -11,77 +11,41 @@
 -- Name: change_status; Type: TYPE; Schema: public; Owner: postgres
 --
 
-CREATE TYPE public.change_status AS ENUM (
-    'pending',
-    'approved',
-    'rejected',
-    'executed',
-    'failed'
-);
-
-
-ALTER TYPE public.change_status OWNER TO postgres;
+DO $$ BEGIN
+    CREATE TYPE public.change_status AS ENUM ('pending', 'approved', 'rejected', 'executed', 'failed');
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 --
 -- Name: change_type; Type: TYPE; Schema: public; Owner: postgres
 --
 
-CREATE TYPE public.change_type AS ENUM (
-    'file',
-    'git',
-    'shell'
-);
-
-
-ALTER TYPE public.change_type OWNER TO postgres;
+DO $$ BEGIN
+    CREATE TYPE public.change_type AS ENUM ('file', 'git', 'shell');
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 --
 -- Name: task_status; Type: TYPE; Schema: public; Owner: postgres
 --
 
-CREATE TYPE public.task_status AS ENUM (
-    'todo',
-    'doing',
-    'review',
-    'done',
-    'failed',
-    'processing',
-    'dispatched',
-    'pending',
-    'archived',
-    'cancelled'
-);
-
-
-ALTER TYPE public.task_status OWNER TO postgres;
+DO $$ BEGIN
+    CREATE TYPE public.task_status AS ENUM ('todo', 'doing', 'review', 'done', 'failed', 'processing', 'dispatched', 'pending', 'archived', 'cancelled');
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 --
 -- Name: project_status; Type: TYPE; Schema: public; Owner: postgres
 --
 
-CREATE TYPE public.project_status AS ENUM (
-    'planning',
-    'active',
-    'archived',
-    'completed'
-);
-
-
-ALTER TYPE public.project_status OWNER TO postgres;
+DO $$ BEGIN
+    CREATE TYPE public.project_status AS ENUM ('planning', 'active', 'archived', 'completed');
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 --
 -- Name: blog_status; Type: TYPE; Schema: public; Owner: postgres
 --
 
-CREATE TYPE public.blog_status AS ENUM (
-    'draft',
-    'review',
-    'changes_requested',
-    'published'
-);
-
-
-ALTER TYPE public.blog_status OWNER TO postgres;
+DO $$ BEGIN
+    CREATE TYPE public.blog_status AS ENUM ('draft', 'review', 'changes_requested', 'published');
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 --
 -- Name: archon_settings; Type: TABLE; Schema: public; Owner: postgres
