@@ -278,6 +278,7 @@ export const ArchonChatPanel: React.FC<ArchonChatPanelProps> = props => {
                 <button
                   onClick={handleReconnect}
                   disabled={isReconnecting}
+                  aria-label={isReconnecting ? 'Reconnecting to chat server' : 'Reconnect to chat server'}
                   className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700 bg-blue-100/80 hover:bg-blue-200/80 dark:bg-blue-900/30 dark:hover:bg-blue-800/40 px-2 py-1 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <RefreshCw className={`w-3 h-3 ${isReconnecting ? 'animate-spin' : ''}`} />

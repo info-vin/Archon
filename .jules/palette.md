@@ -9,3 +9,7 @@
 ## 2025-05-14 - Adding ARIA labels to grouped icon-only buttons
 **Learning:** Icon-only buttons lacking `aria-label`s fail to convey their purpose to screen reader users. When these buttons act as a group (e.g., action buttons for a task), wrapping them in an element with `role="group"` and an `aria-label` provides crucial context.
 **Action:** Always add `aria-label` to icon-only buttons. If they are logically grouped, enclose them in a container with `role="group"` and an `aria-label`.
+
+## 2026-04-02 - [Dynamic ARIA labels for loading states]
+**Learning:** Screen readers might not correctly announce the changing state of a button if its inner text changes during async operations (like from 'Reconnect' to 'Connecting...').
+**Action:** Always provide a dynamic `aria-label` that reflects the current loading state of the button.
