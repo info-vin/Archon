@@ -84,6 +84,7 @@ mcp = [
     "psutil>=5.9.0",
     "aiofiles==25.1.0",
     "supabase==2.15.1",
+    "openai==1.71.0",
 ]
 
 # Agents container dependencies

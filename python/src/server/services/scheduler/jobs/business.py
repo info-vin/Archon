@@ -46,9 +46,10 @@ async def run_daily_market_report():
         leads = res.data or []
         if not leads:
             logger.info("✍️ Clockwork: No new leads today to report on. (Cycle logged)")
-        else:
-            lead_summary = "\n".join([f"- {lead['company_name']} looking for {lead['job_title']}" for lead in leads])
-            task_title = f"Daily Market Intelligence ({datetime.now().strftime('%Y-%m-%d')})"
+            return
+
+        lead_summary = "\n".join([f"- {lead['company_name']} looking for {lead['job_title']}" for lead in leads])
+        task_title = f"Daily Market Intelligence ({datetime.now().strftime('%Y-%m-%d')})"
         task_desc = f"""Please write an engaging 600-word daily blog post summarizing today's tech job market movements.
 
 Data points ({len(leads)} leads):
