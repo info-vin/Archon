@@ -66,13 +66,15 @@ server = [
     "pydantic-ai>=0.0.13",
 ]
 
-# Optional reranking dependencies for server
+# Optional reranking dependencies for server (Moved to agents service in Phase 4.6.28)
 server-reranking = [
+    "numpy==1.26.4",
     "sentence-transformers==3.1.1",
-    "torch>=2.0.0",
-    "transformers>=4.30.0",
+    "torch==2.2.2",
+    "transformers==4.44.2",
 ]
-# MCP container dependencies
+
+# MCP container dependencies (Hardened for Phase 4.6.28 - Fully grounded)
 mcp = [
     "mcp==1.12.2",
     "httpx>=0.24.0",
@@ -81,11 +83,6 @@ mcp = [
     "logfire>=0.30.0",
     "fastapi>=0.104.0",
     "psutil>=5.9.0",
-    "aiofiles==25.1.0",
-    "supabase==2.15.1",
-    "openai==1.71.0",
-]
-
     "aiofiles==25.1.0",
     "supabase==2.15.1",
     "openai==1.71.0",
@@ -111,9 +108,7 @@ agents = [
 ]
 
 # All dependencies for running unit tests locally
-# This combines all container dependencies plus test-specific ones
 all = [
-    # All server dependencies
     "fastapi>=0.104.0",
     "uvicorn>=0.24.0",
     "python-multipart>=0.0.20",
@@ -132,44 +127,40 @@ all = [
     "docker>=6.1.0",
     "logfire>=0.30.0",
     "APScheduler>=3.10.0",
-    # MCP specific (mcp version)
     "mcp==1.12.2",
-    # Agents specific
     "pydantic-ai>=0.0.13",
     "structlog>=23.1.0",
-    # Shared utilities
     "httpx>=0.24.0",
     "pydantic>=2.0.0",
     "python-dotenv>=1.0.0",
-    # Test dependencies
     "pytest>=8.0.0",
     "pytest-asyncio>=0.21.0",
     "pytest-mock>=3.12.0",
     "pytest-timeout>=2.3.0",
     "requests>=2.31.0",
     "factory-boy>=3.3.0",
+    "beautifulsoup4>=4.13.4",
+    "lxml>=5.4.0",
+    "aiofiles==25.1.0",
 ]
+
+# PyTorch CPU-only index configuration (Phase 4.6.28 Slimming)
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+# Sources configuration to use CPU-only PyTorch
+[tool.uv.sources]
+torch = [{ index = "pytorch-cpu" }]
 
 [tool.ruff]
 line-length = 120
 target-version = "py312"
 
 [tool.ruff.lint]
-select = [
-    "E",  # pycodestyle errors
-    "W",  # pycodestyle warnings
-    "F",  # pyflakes
-    "I",  # isort
-    "B",  # flake8-bugbear
-    "C4", # flake8-comprehensions
-    "UP", # pyupgrade
-]
-ignore = [
-    "E501", # line too long - handled by line-length
-    "B008", # do not perform function calls in argument defaults
-    "C901", # too complex
-    "W191", # indentation contains tabs
-]
+select = ["E", "W", "F", "I", "B", "C4", "UP"]
+ignore = ["E501", "B008", "C901", "W191"]
 
 [tool.ruff.format]
 quote-style = "double"
@@ -188,17 +179,4 @@ warn_redundant_casts = true
 warn_unused_ignores = true
 warn_no_return = true
 check_untyped_defs = true
-
-# Third-party libraries often don't have type stubs
-# We'll explicitly type our own code but not fail on external libs
 ignore_missing_imports = true
-
-# PyTorch CPU-only index configuration (Phase 4.6.28 Slimming)
-[[tool.uv.index]]
-name = "pytorch-cpu"
-url = "https://download.pytorch.org/whl/cpu"
-explicit = true
-
-# Sources configuration to use CPU-only PyTorch
-[tool.uv.sources]
-torch = [{ index = "pytorch-cpu" }]
