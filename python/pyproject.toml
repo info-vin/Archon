@@ -86,6 +86,7 @@ mcp = [
     "aiofiles==25.1.0",
     "supabase==2.15.1",
     "openai==1.71.0",
+    "cryptography>=41.0.0",
 ]
 
 # Agents container dependencies
