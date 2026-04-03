@@ -56,11 +56,6 @@ server = [
     "docker>=6.1.0",
     # Logging
     "logfire>=0.30.0",
-    # Reranking and ML (Phase 4.6.25 Hardening - Pinned for Intel Mac Parity)
-    "numpy==1.26.4",
-    "sentence-transformers==3.1.1",
-    "torch==2.2.2",
-    "transformers==4.44.2",
     # Testing (needed for UI-triggered tests)
     "pytest>=8.0.0",
     "pytest-asyncio>=0.21.0",
@@ -87,6 +82,8 @@ mcp = [
     "logfire>=0.30.0",
     "fastapi>=0.104.0",
     "psutil>=5.9.0",
+    "aiofiles==25.1.0",
+    "supabase==2.15.1",
 ]
 
 # Agents container dependencies
@@ -101,6 +98,11 @@ agents = [
     "python-jose[cryptography]>=3.3.0",
     "supabase==2.15.1",
     "psutil>=5.9.0",
+    # ML Reranking dependencies (Physically transferred for Phase 4.6.28)
+    "numpy==1.26.4",
+    "sentence-transformers==3.1.1",
+    "torch==2.2.2",
+    "transformers==4.44.2",
 ]
 
 # All dependencies for running unit tests locally
@@ -185,3 +187,13 @@ check_untyped_defs = true
 # Third-party libraries often don't have type stubs
 # We'll explicitly type our own code but not fail on external libs
 ignore_missing_imports = true
+
+# PyTorch CPU-only index configuration (Phase 4.6.28 Slimming)
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+# Sources configuration to use CPU-only PyTorch
+[tool.uv.sources]
+torch = [{ index = "pytorch-cpu" }]

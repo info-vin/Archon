@@ -145,6 +145,10 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+# Phase 4.6.28: Neural Bridge - Include Reranking Router
+from .rerank_router import router as rerank_router
+app.include_router(rerank_router, tags=["ml"])
+
 
 @app.get("/")
 @app.head("/")

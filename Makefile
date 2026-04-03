@@ -220,3 +220,18 @@ twin-fix:
 	@echo "2. 指令: '根據報告修復代碼並更新 RAG 知識庫'"
 
 .DEFAULT_GOAL := help
+
+# Phase 4.6.28: 終極物理同步與重建
+sync-grounding:
+	@echo "Syncing latest changes from remote..."
+	@git fetch -a
+	@git pull --rebase origin feat/twins
+	@echo "Sync complete."
+	@echo "Building and starting all services (Clean State)..."
+	@$(COMPOSE) --profile backend --profile agents --profile frontend --profile enduser build --no-cache
+	@$(COMPOSE) --profile backend --profile agents --profile frontend --profile enduser up -d
+	@echo "Environment reborn. Initializing data..."
+	@docker exec -i archon-server /venv/bin/python scripts/init_db.py --clean
+	@echo "🎉 FULL SYSTEM SYNC COMPLETE & VERIFIED."
+	@docker images --format "table {{.Repository}}\t{{.Size}}" | grep -E "archon|enduser"
+	@docker compose ps

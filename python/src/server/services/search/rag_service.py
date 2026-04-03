@@ -53,6 +53,10 @@ class RAGService(BaseRepository):
         self.hybrid_strategy = HybridSearchStrategy(self.supabase_client, self.base_strategy)
         self.agentic_strategy = AgenticRAGStrategy(self.supabase_client, self.base_strategy)
 
+        # Phase 4.6.28: Neural Bridge Configuration
+        self.agents_enabled = self.get_bool_setting("AGENTS_ENABLED", False)
+        self.agents_url = os.getenv("AGENTS_SERVICE_URL", "http://archon-agents:8052")
+
         # Initialize reranking strategy based on settings
         self.reranking_strategy = None
         use_reranking = self.get_bool_setting("USE_RERANKING", False)
@@ -90,6 +94,36 @@ class RAGService(BaseRepository):
         """Get a boolean setting from credential service."""
         value = self.get_setting(key, "false" if not default else "true")
         return value.lower() in ("true", "1", "yes", "on")
+
+    async def _remote_rerank(self, query: str, results: list[dict], content_key: str, top_k: int) -> list[dict]:
+        """Performs reranking via remote agents service (Phase 4.6.28)."""
+        import httpx
+
+        try:
+            async with httpx.AsyncClient(timeout=30.0) as client:
+                response = await client.post(
+                    f"{self.agents_url}/rerank",
+                    json={
+                        "query": query,
+                        "documents": results,
+                        "content_key": content_key,
+                        "top_k": top_k,
+                    },
+                )
+                if response.status_code == 200:
+                    data = response.json()
+                    if data.get("success"):
+                        logger.info("Remote reranking successful via Agents service.")
+                        return data.get("results", [])
+
+                logger.warning(f"Remote rerank failed (Status {response.status_code}). Falling back...")
+        except Exception as e:
+            logger.warning(f"Remote rerank connection error: {e}. Falling back...")
+
+        # Fallback to local if available, else return original
+        if self.reranking_strategy:
+            return await self.reranking_strategy.rerank_results(query, results, content_key, top_k)
+        return results[:top_k]
 
     async def search_documents(
         self,
@@ -379,22 +413,33 @@ class RAGService(BaseRepository):
 
                 # Step 3: Apply reranking if we have a strategy or if enabled
                 reranking_applied = False
-                if self.reranking_strategy and formatted_results:
-                    try:
-                        # Pass top_k to limit results to the originally requested count
-                        formatted_results = await self.reranking_strategy.rerank_results(
-                            query, formatted_results, content_key="content", top_k=match_count
-                        )
-                        reranking_applied = True
-                        logger.debug(
-                            f"Reranking applied: {search_match_count} candidates -> {len(formatted_results)} final results"
-                        )
-                    except Exception as e:
-                        logger.warning(f"Reranking failed: {e}")
-                        reranking_applied = False
-                        # If reranking fails but we fetched extra results, trim to requested count
-                        if len(formatted_results) > match_count:
-                            formatted_results = formatted_results[:match_count]
+                if formatted_results:
+                    use_reranking = self.get_bool_setting("USE_RERANKING", False)
+                    if use_reranking:
+                        if self.agents_enabled:
+                            formatted_results = await self._remote_rerank(
+                                query, formatted_results, content_key="content", top_k=match_count
+                            )
+                            reranking_applied = True
+                        elif self.reranking_strategy:
+                            try:
+                                # Pass top_k to limit results to the originally requested count
+                                formatted_results = await self.reranking_strategy.rerank_results(
+                                    query, formatted_results, content_key="content", top_k=match_count
+                                )
+                                reranking_applied = True
+                                logger.debug(
+                                    f"Reranking applied: {search_match_count} candidates -> {len(formatted_results)} final results"
+                                )
+                            except Exception as e:
+                                logger.warning(f"Reranking failed: {e}")
+                                reranking_applied = False
+                                # If reranking fails but we fetched extra results, trim to requested count
+                                if len(formatted_results) > match_count:
+                                    formatted_results = formatted_results[:match_count]
+                    elif len(formatted_results) > match_count:
+                        # Even if reranking is off, we might have fetched match_count * 5, so trim it
+                        formatted_results = formatted_results[:match_count]
 
                 # Build response
                 response_data = {
