@@ -61,11 +61,11 @@ export const Card = React.forwardRef<HTMLDivElement, CardProps>(
       if (!hasGlow || hasEdge) return "";
 
       if (glowType === "inner") {
-        return glassCard.innerGlowHover?.[glowColor]?.[glowSize] || "";
+        return glassCard.innerGlowSizes?.[glowColor]?.[glowSize] || "";
       }
 
       // Outer glow hover
-      return glassCard.outerGlowHover?.[glowColor]?.[glowSize] || glowVariant.hover;
+      return glassCard.outerGlowSizes?.[glowColor]?.[glowSize] || glowVariant.hover;
     };
 
     const edgeStyle = glassCard.edgeColors[edgeColor];

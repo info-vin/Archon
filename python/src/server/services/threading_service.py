@@ -18,7 +18,7 @@ from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
 
 # Removed direct logging import - using unified config
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 
 import psutil
@@ -29,12 +29,13 @@ from ..config.logfire_config import get_logger
 logfire_logger = get_logger("threading")
 
 
-class ProcessingMode(str, Enum):
+class ProcessingMode(StrEnum):
     """Processing modes for different workload types"""
 
     CPU_INTENSIVE = "cpu_intensive"  # AI summaries, embeddings, heavy computation
     IO_BOUND = "io_bound"  # Database operations, file I/O
     NETWORK_BOUND = "network_bound"  # External API calls, web requests
+
 
 
 @dataclass

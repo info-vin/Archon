@@ -129,7 +129,7 @@ export const compoundStyles = {
   `,
   floatingPanel: `
     ${glassmorphism.background.strong}
-    ${glassmorphism.border.strong || glassmorphism.border.default}
+    ${glassmorphism.border.default}
     ${glassmorphism.shadow.lg}
     ${glassmorphism.animation.fadeIn}
     ${glassmorphism.animation.slideIn}

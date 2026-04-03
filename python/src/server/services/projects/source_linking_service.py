@@ -145,8 +145,8 @@ class SourceLinkingService(BaseRepository):
 
         if success:
             sources = result.get("data", [])
-            tech_sources_map = {}
-            biz_sources_map = {}
+            tech_sources_map: dict[str, list[str]] = {}
+            biz_sources_map: dict[str, list[str]] = {}
             for s in sources:
                 pid = s["project_id"]
                 sid = s["source_id"]

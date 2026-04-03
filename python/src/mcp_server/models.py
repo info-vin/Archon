@@ -8,13 +8,13 @@ This module defines Pydantic models for:
 """
 
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 
 from pydantic import BaseModel, Field, validator
 
 
-class DocumentType(str, Enum):
+class DocumentType(StrEnum):
     """Enumeration of supported document types"""
 
     PRD = "prd"
@@ -25,7 +25,7 @@ class DocumentType(str, Enum):
     API_SPEC = "api_spec"
 
 
-class Priority(str, Enum):
+class Priority(StrEnum):
     """Priority levels for goals and user stories"""
 
     LOW = "low"

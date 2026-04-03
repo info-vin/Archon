@@ -2,7 +2,7 @@
 import React from 'react';
 import { Link, Unlink } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { type CornerRadius, type GlowIntensity, type ColorOption, getColorConfig, getGlowConfig } from '@/components/ui/NeonButton';
+import { type CornerRadius, type GlowIntensity, type ColorOption } from '@/components/ui/NeonButton';
 
 interface PlaygroundControlsProps {
   showLayer2: boolean;
@@ -41,11 +41,10 @@ export const PlaygroundControls: React.FC<PlaygroundControlsProps> = (props) => 
   const {
     showLayer2, setShowLayer2, layer2Inset, setLayer2Inset,
     layer1Color, setLayer1Color, layer2Color, setLayer2Color,
-    layer1Border, setLayer1Border, layer2Border, setLayer2Border,
     coloredText, setColoredText, layer1Glow, setLayer1Glow,
-    layer2Glow, setLayer2Glow, borderGlow, setBorderGlow,
-    layer1Radius, setLayer1Radius, layer2Radius, setLayer2Radius,
-    layer1Linked, setLayer1Linked, layer2Linked, setLayer2Linked,
+    layer2Glow, setLayer2Glow,
+    layer1Radius, setLayer1Radius, layer2Radius,
+    layer1Linked, setLayer1Linked, setLayer2Linked,
     activeTab, setActiveTab
   } = props;
 
