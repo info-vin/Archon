@@ -72,7 +72,6 @@ server-reranking = [
     "torch>=2.0.0",
     "transformers>=4.30.0",
 ]
-
 # MCP container dependencies
 mcp = [
     "mcp==1.12.2",
@@ -82,6 +81,11 @@ mcp = [
     "logfire>=0.30.0",
     "fastapi>=0.104.0",
     "psutil>=5.9.0",
+    "aiofiles==25.1.0",
+    "supabase==2.15.1",
+    "openai==1.71.0",
+]
+
     "aiofiles==25.1.0",
     "supabase==2.15.1",
     "openai==1.71.0",

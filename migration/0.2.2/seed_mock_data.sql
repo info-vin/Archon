@@ -45,7 +45,10 @@ INSERT INTO archon_prompts (prompt_name, prompt, is_system_protected, descriptio
 VALUES 
 ('SALES_PITCH', 'You are Alice, a senior sales rep...', true, 'Sales Pitch Generation'),
 ('BLOG_DRAFT', 'You are Bob, a marketing expert...', true, 'Blog Post Generation'),
-('MARKET_INTELLIGENCE', 'Analyze leads and identify trends...', true, 'Market Insight Logic')
+('MARKET_INTELLIGENCE', 'Analyze leads and identify trends...', true, 'Market Insight Logic'),
+('document_agent_prompt', 'You are a Document Management Assistant. Help users organize, search, and manage their technical files.', true, 'System Document Agent'),
+('rag_agent_prompt', 'You are a RAG (Retrieval-Augmented Generation) Assistant that helps users search and understand documentation through conversation.', true, 'System RAG Agent'),
+('summary_agent_prompt', 'You are a concise summarization assistant. Your goal is to provide accurate and brief summaries of any given text.', true, 'System Summary Agent')
 ON CONFLICT (prompt_name) DO UPDATE SET prompt = EXCLUDED.prompt;
 -- Mock Data for Sentinel Verification
 -- Inserts stale leads to trigger alerts
