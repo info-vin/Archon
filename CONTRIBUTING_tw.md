@@ -336,6 +336,42 @@ Phase 4.4.5 引入了 **Clockwork** 進行系統自動檢測。
 
 此流程的最終目標，是成功將一個穩定的 `feature/...` 分支部署到 **Render**。
 
+**Recent SQL Migrations added:**
+- `migration/0.1.0/001_add_source_url_display_name.sql`
+- `migration/0.1.0/002_add_hybrid_search_tsvector.sql`
+- `migration/0.1.0/003_ollama_add_columns.sql`
+- `migration/0.1.0/004_ollama_migrate_data.sql`
+- `migration/0.1.0/005_ollama_create_functions.sql`
+- `migration/0.1.0/006_ollama_create_indexes_optional.sql`
+- `migration/0.1.0/007_add_priority_column_to_tasks.sql`
+- `migration/0.1.0/008_add_migration_tracking.sql`
+- `migration/0.1.0/009_add_cascade_delete_constraints.sql`
+- `migration/0.1.0/010_add_provider_placeholders.sql`
+- `migration/0.1.0/011_add_page_metadata_table.sql`
+- `migration/0.2.1/01_core_auth_users.sql`
+- `migration/0.2.1/02_crm_and_knowledge.sql`
+- `migration/0.2.1/03_projects_and_tasks.sql`
+- `migration/0.2.1/04_system_and_logs.sql`
+- `migration/0.2.1/05_policies_and_functions.sql`
+- `migration/0.2.1/06_seed_agent_profiles.sql`
+- `migration/0.2.1/06_task_scheduler_and_crawler_targets.sql`
+- `migration/0.2.1/07_harden_crawler_targets_isolation.sql`
+- `migration/0.2.1/08_seed_operational_configs.sql`
+- `migration/0.2.1/RESET_DB.sql`
+- `migration/0.2.1/seed_blog_posts.sql`
+- `migration/0.2.1/seed_mock_alerts_and_logs.sql`
+- `migration/0.2.1/seed_mock_data.sql`
+- `migration/0.2.1/seed_mock_leads.sql`
+- `migration/0.2.1/seed_rag_defaults.sql`
+- `migration/0.2.2/01_schema.sql`
+- `migration/0.2.2/02_logic.sql`
+- `migration/0.2.2/03_config.sql`
+- `migration/0.2.2/RESET_DB.sql`
+- `migration/0.2.2/seed_blog_posts.sql`
+- `migration/0.2.2/seed_mock_data.sql`
+- `migration/0.2.2/seed_rag_defaults.sql`
+- `migration/temp_fix_seq.sql`
+
 1.  **階段一：部署前本地檢查**
     此步驟提供兩種流程選項：
     *   **流程一 (快速檢查)**: 至少執行 `make test` 與 `make lint`。
