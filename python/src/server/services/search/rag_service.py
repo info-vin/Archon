@@ -102,10 +102,10 @@ class RAGService(BaseRepository):
         try:
             async with httpx.AsyncClient(timeout=30.0) as client:
                 response = await client.post(
-                    f"{self.agents_url}/rerank",
+                    f"{self.agents_url}/ml/rerank",
                     json={
                         "query": query,
-                        "documents": results,
+                        "results": results,
                         "content_key": content_key,
                         "top_k": top_k,
                     },

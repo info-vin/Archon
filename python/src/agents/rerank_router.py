@@ -1,7 +1,8 @@
 
 import logging
 from typing import Any
-from fastapi import APIRouter, HTTPException
+
+from fastapi import APIRouter
 from pydantic import BaseModel
 
 # Physical import from the shared volume
@@ -12,7 +13,7 @@ router = APIRouter()
 
 class RerankRequest(BaseModel):
     query: str
-    documents: list[dict[str, Any]]
+    results: list[dict[str, Any]]
     content_key: str = "content"
     top_k: int = 5
 
@@ -29,7 +30,7 @@ async def rerank_documents(request: RerankRequest):
 
         results = await reranking_strategy.rerank_results(
             query=request.query,
-            results=request.documents,
+            results=request.results,
             content_key=request.content_key,
             top_k=request.top_k,
         )

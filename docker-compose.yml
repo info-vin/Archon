@@ -154,7 +154,8 @@ services:
       - ARCHON_AGENTS_PORT=${ARCHON_AGENTS_PORT:-8052}
       - ARCHON_SERVER_PORT=${ARCHON_SERVER_PORT:-8181}
     volumes:
-      - ./python/src:/app/src
+      - ./python/src/agents:/app/agents
+      - ./python/src/server/services/search/reranking_strategy.py:/app/src/server/services/search/reranking_strategy.py
     networks:
       - app-network
     healthcheck:

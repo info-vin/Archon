@@ -56,10 +56,16 @@ class RerankingStrategy:
         """
         return cls(model_name=model_name, model_instance=model)
 
-    def _load_model(self) -> CrossEncoder:
+    def _load_model(self) -> Any:
         """Load the CrossEncoder model for reranking."""
+        import os
+        agents_enabled = os.getenv("AGENTS_ENABLED", "false").lower() == "true"
+
         if not CROSSENCODER_AVAILABLE:
-            logger.warning("sentence-transformers not available - reranking disabled")
+            if not agents_enabled:
+                logger.warning("sentence-transformers not available - reranking disabled")
+            else:
+                logger.info("Local sentence-transformers not available, but Neural Bridge (Agents) is enabled.")
             return None
 
         try:
@@ -70,8 +76,10 @@ class RerankingStrategy:
             return None
 
     def is_available(self) -> bool:
-        """Check if reranking is available (model loaded successfully)."""
-        return self.model is not None
+        """Check if reranking is available (model loaded successfully or remote agents enabled)."""
+        import os
+        agents_enabled = os.getenv("AGENTS_ENABLED", "false").lower() == "true"
+        return self.model is not None or agents_enabled
 
     def build_query_document_pairs(
         self, query: str, results: list[dict[str, Any]], content_key: str = "content"
@@ -168,6 +176,10 @@ class RerankingStrategy:
                 return results
 
             # 2. Get scores from model - Offload to thread to keep event loop free
+            if self.model is None:
+                logger.info("Local model is None, skipping local reranking (Remote Agents mode).")
+                return results[:top_k] if top_k else results
+
             import asyncio
             scores = await asyncio.to_thread(self.model.predict, pairs)
 
