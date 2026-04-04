@@ -114,7 +114,8 @@ class RAGService(BaseRepository):
                     data = response.json()
                     if data.get("success"):
                         logger.info("Remote reranking successful via Agents service.")
-                        return data.get("results", [])
+                        from typing import Any, cast
+                        return cast(list[dict[str, Any]], data.get("results", []))
 
                 logger.warning(f"Remote rerank failed (Status {response.status_code}). Falling back...")
         except Exception as e:
@@ -122,7 +123,9 @@ class RAGService(BaseRepository):
 
         # Fallback to local if available, else return original
         if self.reranking_strategy:
-            return await self.reranking_strategy.rerank_results(query, results, content_key, top_k)
+            return await self.reranking_strategy.rerank_results(
+                query, results, top_k=top_k, content_key=content_key
+            )
         return results[:top_k]
 
     async def search_documents(

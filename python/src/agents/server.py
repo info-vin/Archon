@@ -26,6 +26,7 @@ from pydantic import BaseModel
 # Import our PydanticAI agents
 from .document_agent import DocumentAgent
 from .rag_agent import RagAgent
+from .rerank_router import router as rerank_router
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -145,8 +146,6 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# Phase 4.6.28: Neural Bridge - Include Reranking Router
-from .rerank_router import router as rerank_router
 app.include_router(rerank_router, tags=["ml"])
 
 

@@ -41,8 +41,8 @@
 >
 > 1.  **第一步：強制讀取上下文**: 在回應您的任何請求前，我**必須**先讀取 `GEMINI.md` 和 `CONTRIBUTING_tw.md` 的內容。
 > 2.  **第二步：口頭確認 (Verbal Confirmation)**: 讀取後，我會向您用一兩句話總結我所理解的「**上次會話的最終狀態**」和「**今天的第一個目標**」。
-*   **當前狀態 (Current Context)**: Phase 4.6.26 已結案，RAG 工業化（指紋注入）與 5173 治理實驗室已實體落地。
-*   **今日目標 (Today's Goal)**: 啟動 Phase 4.7 神經連結 (MCP Client 優化)，降低跨容器工具調用開銷。
+*   **當前狀態 (Current Context)**: Phase 4.6.27 (0.2.2 遷移) 已落地，系統進入解耦階段。
+*   **今日目標 (Today's Goal)**: 啟動 Phase 4.6.28 神經橋接實體化 (Neural Bridge Realization)，將 Reranking 邏輯物理轉移至 Agents 容器。
 
 
 > 3.  **第三步：取得您的確認**: 在您確認我對起點的理解無誤後，我才能開始執行第一個指令。
