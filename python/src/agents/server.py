@@ -146,7 +146,7 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-app.include_router(rerank_router, tags=["ml"])
+app.include_router(rerank_router, prefix="/ml", tags=["ml"])
 
 
 @app.get("/")
