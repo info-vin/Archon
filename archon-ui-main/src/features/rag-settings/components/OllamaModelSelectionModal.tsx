@@ -171,7 +171,7 @@ export const OllamaModelSelectionModal: React.FC<OllamaModelSelectionModalProps>
           <div><h2 className="text-xl font-semibold text-white flex items-center"><Zap className="w-5 h-5 text-blue-400 mr-2" />Select Ollama Model</h2><p className="text-sm text-gray-400 mt-1">Choose model for {modelType} from {selectedInstanceUrl}</p></div>
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" onClick={refreshModels} disabled={refreshing} className="text-blue-400 border-blue-400"><RotateCcw className={`w-4 h-4 mr-1 ${refreshing ? 'animate-spin' : ''}`} />Refresh</Button>
-            <button onClick={onClose} className="text-gray-400 hover:text-white"><X className="w-6 h-6" /></button>
+            <button aria-label="Close modal" onClick={onClose} className="text-gray-400 hover:text-white"><X className="w-6 h-6" /></button>
           </div>
         </div>
         <div className="p-6 border-b border-gray-700">

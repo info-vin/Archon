@@ -90,6 +90,7 @@ export const ProviderGrid: React.FC<ProviderGridProps> = ({
             <button
               key={provider.key}
               type="button"
+              aria-label={`Select ${provider.name} provider`}
               onClick={() => {
                 const providerKey = provider.key as ProviderKey;
                 if (activeSelection === 'chat') {
