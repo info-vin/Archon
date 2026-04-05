@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { AssignableUser, Task, TaskPriority, NewTaskData, UpdateTaskData } from '../types.ts';
 import { api } from '../services/api';
-import { XIcon, SparklesIcon } from './Icons.tsx';
+import { XIcon, SparklesIcon, RefreshCwIcon } from './Icons.tsx';
 import { KnowledgeSelector } from './KnowledgeSelector.tsx';
 import { MobileDateTimePicker } from './common/MobileDateTimePicker';
 
@@ -416,7 +416,8 @@ export const TaskModal: React.FC<TaskModalProps> = ({ task, onClose, onTaskCreat
               <button type="button" onClick={onClose} className="px-4 py-2 rounded-md bg-secondary text-secondary-foreground hover:bg-secondary/80">
                 Cancel
               </button>
-              <button type="submit" disabled={isSubmitting} className="px-4 py-2 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50">
+              <button type="submit" disabled={isSubmitting} className="px-4 py-2 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 flex items-center justify-center gap-2">
+                {isSubmitting && <RefreshCwIcon className="w-4 h-4 animate-spin" />}
                 {isSubmitting ? 'Saving...' : (isEditMode ? 'Save Changes' : 'Create Task')}
               </button>
             </div>
