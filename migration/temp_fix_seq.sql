@@ -1,1 +1,0 @@
-GRANT USAGE, SELECT ON SEQUENCE archon_crawled_pages_id_seq TO anon, authenticated, postgres, service_role; GRANT USAGE, SELECT ON SEQUENCE archon_code_examples_id_seq TO anon, authenticated, postgres, service_role;

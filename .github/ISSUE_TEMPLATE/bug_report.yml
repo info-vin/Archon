@@ -17,7 +17,7 @@ body:
     attributes:
       label: Archon Version
       description: What version of Archon are you running?
-      placeholder: "v0.1.0 or check package.json"
+      placeholder: "v0.2.2 or check package.json"
     validations:
       required: true
 

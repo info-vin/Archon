@@ -155,6 +155,13 @@ class MigrationService:
                 continue
 
             version = version_dir.name
+            
+            # Physical Hardening: Only scan the current version directory or the '0.0.0' placeholder.
+            # This prevents obsolete version folders (e.g., 0.1.0, 0.2.1) from cluttering the UI
+            # with "pending" warnings when the system is already at 0.2.2+.
+            if version != ARCHON_VERSION and version != "0.0.0":
+                logfire.debug(f"Skipping obsolete migration directory: {version}")
+                continue
 
             # Scan all SQL files in version directory
             for sql_file in sorted(version_dir.glob("*.sql")):
@@ -163,8 +170,12 @@ class MigrationService:
                     with open(sql_file, encoding="utf-8") as f:
                         sql_content = f.read()
 
-                    # Extract migration name (filename without extension)
-                    migration_name = sql_file.stem
+                    # Extract migration name
+                    # Physical Alignment: Include version prefix if not in root to match DB records
+                    if version != "0.0.0":
+                        migration_name = f"{version}/{sql_file.stem}"
+                    else:
+                        migration_name = sql_file.stem
 
                     # Create pending migration object
                     migration = PendingMigration(

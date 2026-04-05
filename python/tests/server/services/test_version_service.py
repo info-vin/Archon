@@ -81,7 +81,7 @@ async def test_get_latest_release_uses_cache(version_service, mock_release_data)
 async def test_get_latest_release_cache_expired(version_service, mock_release_data):
     """Test that cache is refreshed when expired."""
     # Set up expired cache
-    old_data = {"tag_name": "v0.1.0"}
+    old_data = {"tag_name": "v0.2.2"}
     version_service._cache = old_data
     version_service._cache_time = datetime.now() - timedelta(hours=2)
 

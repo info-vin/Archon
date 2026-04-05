@@ -76,7 +76,7 @@ def get_latest_migration_version(migration_dir: str = "migration") -> str:
     """Automatically detects the latest SemVer-like directory in the migration folder."""
     subdirs = [d for d in os.listdir(migration_dir) if os.path.isdir(os.path.join(migration_dir, d)) and d[0].isdigit()]
     if not subdirs:
-        return "0.2.1"  # Fallback
+        return "0.2.2"  # Fallback
     # Sort by version components to handle 0.10.0 > 0.2.0 correctly
     latest = sorted(subdirs, key=lambda x: [int(c) for d in [x.split('.')] for c in d])[-1]
     logger.info(f"📂 Detected latest migration version: {latest}")

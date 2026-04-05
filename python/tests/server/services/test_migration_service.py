@@ -36,16 +36,16 @@ def mock_supabase_client():
 def test_pending_migration_init():
     """Test PendingMigration initialization and checksum calculation."""
     migration = PendingMigration(
-        version="0.1.0",
+        version="0.2.2",
         name="001_initial",
         sql_content="CREATE TABLE test (id INT);",
-        file_path="migration/0.1.0/001_initial.sql",
+        file_path="migration/0.2.2/001_initial.sql",
     )
 
-    assert migration.version == "0.1.0"
+    assert migration.version == "0.2.2"
     assert migration.name == "001_initial"
     assert migration.sql_content == "CREATE TABLE test (id INT);"
-    assert migration.file_path == "migration/0.1.0/001_initial.sql"
+    assert migration.file_path == "migration/0.2.2/001_initial.sql"
     assert migration.checksum == hashlib.md5(b"CREATE TABLE test (id INT);").hexdigest()
 
 
@@ -53,7 +53,7 @@ def test_migration_record_init():
     """Test MigrationRecord initialization from database data."""
     data = {
         "id": "123-456",
-        "version": "0.1.0",
+        "version": "0.2.2",
         "migration_name": "001_initial",
         "applied_at": "2025-01-01T00:00:00Z",
         "checksum": "abc123",
@@ -62,7 +62,7 @@ def test_migration_record_init():
     record = MigrationRecord(data)
 
     assert record.id == "123-456"
-    assert record.version == "0.1.0"
+    assert record.version == "0.2.2"
     assert record.migration_name == "001_initial"
     assert record.applied_at == "2025-01-01T00:00:00Z"
     assert record.checksum == "abc123"
@@ -96,7 +96,7 @@ async def test_get_applied_migrations_success(migration_service, mock_supabase_c
     mock_response.data = [
         {
             "id": "123",
-            "version": "0.1.0",
+            "version": "0.2.2",
             "migration_name": "001_initial",
             "applied_at": "2025-01-01T00:00:00Z",
             "checksum": "abc123",
@@ -111,7 +111,7 @@ async def test_get_applied_migrations_success(migration_service, mock_supabase_c
 
             assert len(result) == 1
             assert isinstance(result[0], MigrationRecord)
-            assert result[0].version == "0.1.0"
+            assert result[0].version == "0.2.2"
             assert result[0].migration_name == "001_initial"
 
 
@@ -130,16 +130,16 @@ async def test_get_pending_migrations_with_files(migration_service, mock_supabas
     # Mock scan_migration_directory to return test migrations
     mock_migrations = [
         PendingMigration(
-            version="0.1.0",
+            version="0.2.2",
             name="001_initial",
             sql_content="CREATE TABLE test;",
-            file_path="migration/0.1.0/001_initial.sql",
+            file_path="migration/0.2.2/001_initial.sql",
         ),
         PendingMigration(
-            version="0.1.0",
+            version="0.2.2",
             name="002_update",
             sql_content="ALTER TABLE test ADD col TEXT;",
-            file_path="migration/0.1.0/002_update.sql",
+            file_path="migration/0.2.2/002_update.sql",
         ),
     ]
 
@@ -160,16 +160,16 @@ async def test_get_pending_migrations_some_applied(migration_service, mock_supab
     # Mock all migrations
     mock_all_migrations = [
         PendingMigration(
-            version="0.1.0",
+            version="0.2.2",
             name="001_initial",
             sql_content="CREATE TABLE test;",
-            file_path="migration/0.1.0/001_initial.sql",
+            file_path="migration/0.2.2/001_initial.sql",
         ),
         PendingMigration(
-            version="0.1.0",
+            version="0.2.2",
             name="002_update",
             sql_content="ALTER TABLE test ADD col TEXT;",
-            file_path="migration/0.1.0/002_update.sql",
+            file_path="migration/0.2.2/002_update.sql",
         ),
     ]
 
@@ -177,7 +177,7 @@ async def test_get_pending_migrations_some_applied(migration_service, mock_supab
     mock_applied = [
         MigrationRecord(
             {
-                "version": "0.1.0",
+                "version": "0.2.2",
                 "migration_name": "001_initial",
                 "applied_at": "2025-01-01T00:00:00Z",
                 "checksum": None,
@@ -200,10 +200,10 @@ async def test_get_migration_status_all_applied(migration_service, mock_supabase
     # Mock one migration file
     mock_all_migrations = [
         PendingMigration(
-            version="0.1.0",
+            version="0.2.2",
             name="001_initial",
             sql_content="CREATE TABLE test;",
-            file_path="migration/0.1.0/001_initial.sql",
+            file_path="migration/0.2.2/001_initial.sql",
         )
     ]
 
@@ -211,7 +211,7 @@ async def test_get_migration_status_all_applied(migration_service, mock_supabase
     mock_applied = [
         MigrationRecord(
             {
-                "version": "0.1.0",
+                "version": "0.2.2",
                 "migration_name": "001_initial",
                 "applied_at": "2025-01-01T00:00:00Z",
                 "checksum": None,
@@ -237,16 +237,16 @@ async def test_get_migration_status_bootstrap_required(migration_service, mock_s
     # Mock migration files
     mock_all_migrations = [
         PendingMigration(
-            version="0.1.0",
+            version="0.2.2",
             name="001_initial",
             sql_content="CREATE TABLE test;",
-            file_path="migration/0.1.0/001_initial.sql",
+            file_path="migration/0.2.2/001_initial.sql",
         ),
         PendingMigration(
-            version="0.1.0",
+            version="0.2.2",
             name="002_update",
             sql_content="ALTER TABLE test ADD col TEXT;",
-            file_path="migration/0.1.0/002_update.sql",
+            file_path="migration/0.2.2/002_update.sql",
         ),
     ]
 
