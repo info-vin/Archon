@@ -10,7 +10,7 @@ VALUES
 ('EMBEDDING_BATCH_SIZE', '100', false, 'rag_strategy', 'Number of chunks to embed in one batch', NOW()),
 ('DOCUMENT_STORAGE_BATCH_SIZE', '50', false, 'rag_strategy', 'Number of documents to store in one batch', NOW()),
 ('MEMORY_THRESHOLD_PERCENT', '85', false, 'rag_strategy', 'Memory usage threshold for flow control', NOW()),
-('MODEL_CHOICE', 'gemini-1.5-flash', false, 'rag_strategy', 'Primary AI model for RAG operations', NOW()),
+('MODEL_CHOICE', 'gemini-2.5-flash', false, 'rag_strategy', 'Primary AI model for RAG operations', NOW()),
 ('USE_CONTEXTUAL_EMBEDDINGS', 'false', false, 'rag_strategy', 'Whether to use contextual embedding enhancement', NOW()),
 ('CONTEXTUAL_EMBEDDINGS_MAX_WORKERS', '3', false, 'rag_strategy', 'Max workers for contextual embedding', NOW()),
 ('USE_HYBRID_SEARCH', 'true', false, 'rag_strategy', 'Whether to combine vector and keyword search', NOW()),

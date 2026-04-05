@@ -41,8 +41,8 @@
 >
 > 1.  **第一步：強制讀取上下文**: 在回應您的任何請求前，我**必須**先讀取 `GEMINI.md` 和 `CONTRIBUTING_tw.md` 的內容。
 > 2.  **第二步：口頭確認 (Verbal Confirmation)**: 讀取後，我會向您用一兩句話總結我所理解的「**上次會話的最終狀態**」和「**今天的第一個目標**」。
-*   **當前狀態 (Current Context)**: Phase 4.6.27 (0.2.2 遷移) 已落地，系統進入解耦階段。
-*   **今日目標 (Today's Goal)**: 啟動 Phase 4.6.28 神經橋接實體化 (Neural Bridge Realization)，將 Reranking 邏輯物理轉移至 Agents 容器。
+*   **當前狀態 (Current Context)**: Phase 4.6.29 (系統硬化與 0.2.2 對齊) 已結案。
+*   **今日目標 (Today's Goal)**: 啟動 Phase 5 RBAC 基礎設施，實作細粒度權限控制與身份驗證硬化。
 
 
 > 3.  **第三步：取得您的確認**: 在您確認我對起點的理解無誤後，我才能開始執行第一個指令。
@@ -114,14 +114,42 @@
     *   **核心**: 在 `browser-use` 中，若要加載已存在的 Playwright Browser Profile (例如已登入的 `.browser_data`)，必須直接在 `BrowserConfig` 中使用 `user_data_dir` 參數，而非透過 `extra_chromium_args` 傳遞 `--user-data-dir` 旗標。
     *   **教訓**: 若使用 `extra_chromium_args` 傳遞路徑，`browser-use` 底層的 Playwright 管理器可能會忽略該旗標，導致啟動一個全新的、未登入的匿名工作階段。使用 `user_data_dir` 參數則能確保正確載入現有的 Cookie 與 Session。
 
+*   **14. 跨環境動態路徑偵測 (Cross-Env Path Resilience)**
+    *   **核心**: 在 Docker 容器化環境中，絕對路徑與相對路徑（如 `../../../../migration`）的行為與宿主機不同。
+    *   **教訓**: 尋找系統事實來源（如 `migration/` 資料夾）時，必須採用「多路徑探測法（Physical Search Strategy）」，優先嘗試 Docker 內部絕對路徑（`/app/migration`）與多級相對路徑，確保代碼在開發機與生產容器中均能準確獲取版本資訊。
+
+*   **15. 設定的可見性與系統保護 (Settings Visibility & Hardening)**
+    *   **核心**: 資料庫中的 `archon_settings` 表承載了從 AI 金鑰到內部營運參數的所有配置。
+    *   **教訓**: 透過引入 `is_system_protected` 欄位與 API 層級的物理過濾，確保 Admin UI (3737) 僅顯示「人類可管理的設定」，而隱藏內部的工具參數（如 Bob 的 104 Crawler API），避免操作介面過載並強化內部隱私。
+
 ---
 
 # 第三章：近期工作日誌 (Recent Journal Entries)
 
+### 2026-04-05: Phase 4.6.28 & 4.6.29 結案：神經橋接與系統硬化落地
+*   **今日目標 (物理落地)**:
+    - **解耦完成**: Server 成功卸載 130 個重型 ML 依賴（如 `torch`），Reranking 邏輯物理轉移至 `archon-agents` 容器。
+    - **動態版本**: 實作了基於 `migration/` 資料夾的動態版本偵測，全系統達成 `0.2.2` 一致性。
+    - **物理隔離**: 透過 `is_system_protected` 物理過濾，成功在 Admin UI (3737) 中隱藏 Bob 的內部營運 API。
+    - **同步強化**: 強化了 `init_db.py`，確保 API Keys 100% 反映 `.env` 最新狀態並完成加密同步。
+*   **物理成果**:
+    - 通過 555/565 個後端測試，系統穩定性達標。
+    - 解決了 Docker 容器內版本偵測的路徑斷層問題。
+    - RAG 預設模型成功對齊為 3 月標準的 `gemini-2.5-flash`。
+
+### 2026-04-02: 物理落地：Intel Mac 效能硬化與幻覺終結 (Current Session)
+*   **今日目標 (物理落地)**:
+    - **環境對齊**: 物理偵測並解決了 Intel Mac (x86_64) 無法安裝最新 Torch 的斷層。
+    - **效能落地**: 修正 `NumPy 2.x` 引發的載入崩潰，鎖定 `1.26.4` 黃金組合，熱機搜尋降至 **2.3s**。
+    - **命名校正**: 修正了幽靈類別 `StorageService` 為實體類別 `DocumentStorageService`。
+    - **5173 對齊**: 實體驗證了 RAG 實驗室掛載於 5173/admin，消除了導航斷層。
+*   **物理成果**:
+    - 成功降級 NumPy 並重新鎖定 `uv.lock`，終結了「改 A 壞 B」的編譯快取損壞。
+    - 通過實體探針驗證，搜尋延遲從 15s (錯誤重試) 物理壓縮至 **2.3s** (模型熱機運算)。
+
 ### 2026-04-01: Phase 4.6.25 & 4.6.26 結案（⚠️ 存在環境幻覺偏差）
 *   **注意**: 此日誌回報的「2s 冷啟動」與「結案」係基於非 Intel Mac 環境之幻想。實體代碼層面缺失依賴與正確類別呼叫，導致在 x86_64 環境下失效。
 
-### 2026-04-02: 物理落地：Intel Mac 效能硬化與幻覺終結 (Current Session)
 *   **今日目標 (物理落地)**:
     - **環境對齊**: 物理偵測並解決了 Intel Mac (x86_64) 無法安裝最新 Torch 的斷層。
     - **效能落地**: 修正 `NumPy 2.x` 引發的載入崩潰，鎖定 `1.26.4` 黃金組合，熱機搜尋降至 **2.3s**。

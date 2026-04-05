@@ -142,14 +142,15 @@ def seed_data(cursor: PGCursor) -> None:
         if val:
             # We want these to be encrypted in the DB
             from src.server.services.credential_service import credential_service
-            # We must use a synchronous-looking approach or direct SQL for simplicity in init_db
-            # Actually, direct SQL with is_encrypted=true is fine, but we need to encrypt the value
-            # For simplicity in init_db, we will use the service if available, otherwise fallback
             encrypted_val = credential_service._encrypt_value(val)
+            # Physical Sync: Force Update on conflict to match .env
             cursor.execute("""
                 INSERT INTO archon_settings (key, encrypted_value, is_encrypted, category, description, updated_at)
                 VALUES (%s, %s, true, %s, %s, NOW())
-                ON CONFLICT (key) DO UPDATE SET encrypted_value = EXCLUDED.encrypted_value, is_encrypted = true, updated_at = NOW();
+                ON CONFLICT (key) DO UPDATE SET 
+                    encrypted_value = EXCLUDED.encrypted_value, 
+                    is_encrypted = true, 
+                    updated_at = NOW();
             """, (db_key, encrypted_val, category, desc))
 
     # Feature Flags and System Settings
@@ -167,23 +168,26 @@ def seed_data(cursor: PGCursor) -> None:
             ON CONFLICT (key) DO NOTHING;
         """, (key, val, category, desc))
 
-    # Bob Workflow Specific Settings
+    # Bob Workflow Specific Settings - Physically Hardened (System Protected)
     bob_settings = [
-        ("STORY_CANDIDATE_SCORE_THRESHOLD", "80", "marketing", "Minimum score for victory feed"),
-        ("NANA_BANANA_MODEL", "gemini-2.5-flash-lite", "marketing", "Image generation model for Nana Banana"),
-        ("MARKETING_MODEL", "gemini-2.5-flash", "marketing", "Primary model for marketing content generation"),
-        ("SCHEDULER_PROBE_INTERVAL_MINS", "60", "system", "Frequency of system heartbeat probes (minutes)"),
-        ("SCHEDULER_PATROL_INTERVAL_MINS", "60", "system", "Frequency of log auto-repair scans (minutes)"),
-        ("SCHEDULER_SENTINEL_INTERVAL_HOURS", "12", "business", "Frequency of business risk scans (hours)"),
-        ("CRAWLER_104_SEARCH_API", "https://www.104.com.tw/jobs/search/list", "crawling", "104 Search API Endpoint"),
-        ("CRAWLER_104_DETAIL_API", "https://www.104.com.tw/job/ajax/content", "crawling", "104 Job Detail AJAX Endpoint")
+        ("STORY_CANDIDATE_SCORE_THRESHOLD", "80", "marketing", "Minimum score for victory feed", False),
+        ("NANA_BANANA_MODEL", "gemini-2.5-flash-lite", "marketing", "Image generation model for Nana Banana", False),
+        ("MARKETING_MODEL", "gemini-2.5-flash", "marketing", "Primary model for marketing content generation", False),
+        ("SCHEDULER_PROBE_INTERVAL_MINS", "60", "system", "Frequency of system heartbeat probes (minutes)", False),
+        ("SCHEDULER_PATROL_INTERVAL_MINS", "60", "system", "Frequency of log auto-repair scans (minutes)", False),
+        ("SCHEDULER_SENTINEL_INTERVAL_HOURS", "12", "business", "Frequency of business risk scans (hours)", False),
+        ("CRAWLER_104_SEARCH_API", "https://www.104.com.tw/jobs/search/list", "crawling", "104 Search API Endpoint", True),
+        ("CRAWLER_104_DETAIL_API", "https://www.104.com.tw/job/ajax/content", "crawling", "104 Job Detail AJAX Endpoint", True)
     ]
-    for key, val, category, desc in bob_settings:
+    for key, val, category, desc, is_protected in bob_settings:
         cursor.execute("""
-            INSERT INTO archon_settings (key, value, is_encrypted, category, description, updated_at)
-            VALUES (%s, %s, false, %s, %s, NOW())
-            ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW();
-        """, (key, val, category, desc))
+            INSERT INTO archon_settings (key, value, is_encrypted, category, description, is_system_protected, updated_at)
+            VALUES (%s, %s, false, %s, %s, %s, NOW())
+            ON CONFLICT (key) DO UPDATE SET 
+                value = EXCLUDED.value, 
+                is_system_protected = EXCLUDED.is_system_protected,
+                updated_at = NOW();
+        """, (key, val, category, desc, is_protected))
 
 def sync_auth_users(cursor: PGCursor) -> None:
     if not HAS_SERVER_DEPS:

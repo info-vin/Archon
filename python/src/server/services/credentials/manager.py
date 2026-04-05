@@ -330,7 +330,14 @@ class CredentialManager:
         """Get all credentials as a list of CredentialItem objects (for Settings UI)."""
         try:
             supabase = self._get_supabase_client()
-            result = supabase.table("archon_settings").select("*").execute()
+
+            # Physically filter out system protected keys from the list (for Admin UI 3737)
+            # We use a select with the filter if the column exists
+            try:
+                result = supabase.table("archon_settings").select("*").eq("is_system_protected", False).execute()
+            except Exception:
+                # Fallback if column does not exist yet
+                result = supabase.table("archon_settings").select("*").execute()
 
             credentials = []
             for item in result.data:
