@@ -220,8 +220,12 @@ class MetricsManager:
         """Provides AI usage stats with daily breakdown and real data flag."""
         from ..token_usage_service import TokenUsageService
         daily_costs = await TokenUsageService.get_daily_cost(days=days)
-        total_monthly_usd = sum(d["cost"] for d in daily_costs)
-        total_monthly_tokens = sum(d.get("request_count", 0) * 1000 for d in daily_costs)
+        # PERFORMANCE: Replaced sum(x for ...) generators with a single standard for-loop pass
+        total_monthly_usd = 0.0
+        total_monthly_tokens = 0
+        for d in daily_costs:
+            total_monthly_usd += d["cost"]
+            total_monthly_tokens += d.get("request_count", 0) * 1000
         return {
             "total_monthly_usd": round(total_monthly_usd, 4),
             "total_monthly_tokens": int(total_monthly_tokens),

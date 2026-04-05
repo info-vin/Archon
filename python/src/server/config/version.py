@@ -23,13 +23,13 @@ def get_latest_version() -> str:
             os.path.abspath(os.path.join(os.getcwd(), "migration")),
             "migration"
         ]
-        
+
         base_path = None
         for path in possible_paths:
             if os.path.exists(path) and os.path.isdir(path):
                 base_path = path
                 break
-        
+
         if not base_path:
             return os.getenv("ARCHON_VERSION", "0.2.1")
 
