@@ -48,5 +48,7 @@ async def test_update_user_role(mock_supabase):
     result = await AdminService.update_user_role("u1", "manager", "admin@test.com")
 
     assert result["role"] == "manager"
-    mock_supabase.table.assert_called_with("profiles")
+    # Phase 5.8: Multiple table calls (profiles update + audit log)
+    mock_supabase.table.assert_any_call("profiles")
+    mock_supabase.table.assert_any_call("archon_logs")
     mock_supabase.table.return_value.update.assert_called_with({"role": "manager"})

@@ -61,6 +61,25 @@ class AdminService:
                 logger.error(f"AdminService: Auth metadata sync failed for {user_id}: {auth_err}")
 
             data = res.data[0]
+
+            # 3. Log the audit event physically in archon_logs (Phase 5.8)
+            try:
+                audit_log = {
+                    "source": "admin_action",
+                    "level": "INFO",
+                    "message": f"User role updated: {user_id} -> {new_role}",
+                    "type": "audit",
+                    "details": {
+                        "target_user_id": user_id,
+                        "new_role": new_role,
+                        "updated_by": current_admin_email,
+                        "version": "v4.6.31"
+                    }
+                }
+                supabase.table("archon_logs").insert(audit_log).execute()
+            except Exception as log_err:
+                logger.error(f"AdminService: Audit logging failed: {log_err}")
+
             return cast(dict[str, Any], data)
 
         except Exception as e:
@@ -101,6 +120,23 @@ class AdminService:
             from .rbac_service import RBACService
 
             RBACService._matrix_cache = None
+
+            # Log the audit event physically in archon_logs (Phase 5.8)
+            try:
+                audit_log = {
+                    "source": "admin_action",
+                    "level": "INFO",
+                    "message": f"RBAC Matrix updated for role: {role}",
+                    "type": "audit",
+                    "details": {
+                        "role": role,
+                        "permissions": permissions,
+                        "version": "v4.6.31"
+                    }
+                }
+                supabase.table("archon_logs").insert(audit_log).execute()
+            except Exception as log_err:
+                logger.error(f"AdminService: RBAC audit logging failed: {log_err}")
 
             return cast(dict[str, Any], res.data[0])
         except Exception as e:
