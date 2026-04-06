@@ -155,7 +155,7 @@ class MigrationService:
                 continue
 
             version = version_dir.name
-            
+
             # Physical Hardening: Only scan the current version directory or the '0.0.0' placeholder.
             # This prevents obsolete version folders (e.g., 0.1.0, 0.2.1) from cluttering the UI
             # with "pending" warnings when the system is already at 0.2.2+.

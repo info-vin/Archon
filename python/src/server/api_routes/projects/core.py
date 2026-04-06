@@ -15,7 +15,7 @@ from src.server.schemas.projects import (
 )
 
 from ...auth.dependencies import get_current_user, requires_permission
-from ...auth.permissions import TASK_CREATE, TASK_UPDATE_ALL
+from ...auth.permissions import TASK_CREATE, TASK_READ_TEAM, TASK_UPDATE_ALL
 from ...services.profile_service import ProfileService
 from ...services.projects.document_service import DocumentService
 from ...services.projects.project_creation_service import ProjectCreationService
@@ -43,14 +43,13 @@ async def list_assignable_users(current_user: dict = Depends(get_current_user)):
 
     rbac = RBACService()
     user_list = users if isinstance(users, list) else []
-    user_dept = current_user.get("department")
 
     return [
         AssignableUser(id=str(u["id"]), name=str(u.get("full_name", u.get("name"))), role=str(u["role"]))
         for u in user_list
         if u.get("role") != "ai_agent"
         and rbac.has_permission_to_assign(current_user_role, str(u.get("role", "User")))
-        and (current_user_role in ["system_admin", "admin"] or u.get("department") == user_dept)
+        and rbac.validate_project_access(u, current_user)
     ]
 
 
@@ -60,12 +59,9 @@ async def list_projects(
     include_content: bool = True,
     include_computed_status: bool = False,
     if_none_match: str | None = Header(None),
-    current_user: dict = Depends(get_current_user),
+    current_user: dict = Depends(requires_permission(TASK_READ_TEAM)),
 ):
-    """Lists projects, with department isolation for non-admins."""
-    u_role = current_user.get("role", "viewer").lower()
-    u_dept = current_user.get("department")
-
+    """Lists projects, with department isolation managed by RBACService."""
     s, res = await ProjectService().list_projects(
         include_content=include_content, include_computed_status=include_computed_status
     )
@@ -73,9 +69,7 @@ async def list_projects(
         _err(res)
 
     projs = res.get("projects", [])
-
-    if u_role not in ["system_admin", "admin"]:
-        projs = [p for p in projs if p.get("department") == u_dept or not p.get("department")]
+    projs = RBACService().scope_projects(projs, current_user)
 
     if include_content:
         projs = await SourceLinkingService().format_projects_with_sources(projs)
@@ -115,12 +109,7 @@ async def get_project(project_id: str, current_user: dict = Depends(get_current_
         _err(res if s else "Project not found", 404 if "not found" in str(res).lower() or s else 500)
     p = res.get("project", {})
 
-    u_role = current_user.get("role", "viewer").lower()
-    if (
-        u_role not in ["system_admin", "admin"]
-        and p.get("department")
-        and p.get("department") != current_user.get("department")
-    ):
+    if not RBACService().validate_project_access(p, current_user):
         _err("Access denied to this department's project.", 403)
 
     return {
@@ -140,8 +129,7 @@ async def update_project(project_id: str, req: UpdateProjectRequest, current_use
         _err("Project not found", 404)
 
     p = res["project"]
-    u_role = current_user.get("role", "viewer").lower()
-    if u_role not in ["system_admin", "admin"] and p.get("department") != current_user.get("department"):
+    if not RBACService().validate_project_access(p, current_user):
         _err("Permission denied: Cannot update other department's projects.", 403)
 
     fields = {k: v for k, v in req.model_dump().items() if v is not None}

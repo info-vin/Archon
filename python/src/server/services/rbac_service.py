@@ -149,3 +149,33 @@ class RBACService:
         # Updated Phase 4.4: Sales and Marketing are content creators too.
         content_manager_roles = ["admin", "system_admin", "manager", "marketing", "sales"]
         return current_user_role.lower() in content_manager_roles
+
+    def scope_projects(self, projects: list[dict], user: dict) -> list[dict]:
+        """
+        Filters a list of projects based on user's department and role.
+        Centralized logic from projects/core.py for Phase 4.6.30.
+        """
+        role = user.get("role", "viewer").lower()
+        dept = user.get("department")
+
+        if role in ["system_admin", "admin"]:
+            return projects
+
+        return [p for p in projects if p.get("department") == dept or not p.get("department")]
+
+    def validate_project_access(self, project: dict, user: dict) -> bool:
+        """
+        Validates if a user has access to a specific project based on department.
+        Centralized logic from projects/core.py for Phase 4.6.30.
+        """
+        role = user.get("role", "viewer").lower()
+        dept = user.get("department")
+
+        if role in ["system_admin", "admin"]:
+            return True
+
+        project_dept = project.get("department")
+        if not project_dept:
+            return True
+
+        return bool(project_dept == dept)
