@@ -46,8 +46,11 @@ class OpenAIErrorAdapter(ProviderErrorAdapter):
 
         # Check for sensitive words after sanitization
         sensitive_words = ["internal", "server", "endpoint"]
-        if any(word in sanitized.lower() for word in sensitive_words):
-            return "OpenAI API encountered an error. Please verify your API key and quota."
+        # PERFORMANCE: Replaced generator expression and cached .lower() to avoid O(N) string allocations
+        sanitized_lower = sanitized.lower()
+        for word in sensitive_words:
+            if word in sanitized_lower:
+                return "OpenAI API encountered an error. Please verify your API key and quota."
 
         return sanitized
 
@@ -77,8 +80,11 @@ class GoogleAIErrorAdapter(ProviderErrorAdapter):
 
         # Check for sensitive words
         sensitive_words = ["internal", "server", "endpoint", "project"]
-        if any(word in sanitized.lower() for word in sensitive_words):
-            return "Google AI API encountered an error. Please verify your API key."
+        # PERFORMANCE: Replaced generator expression and cached .lower() to avoid O(N) string allocations
+        sanitized_lower = sanitized.lower()
+        for word in sensitive_words:
+            if word in sanitized_lower:
+                return "Google AI API encountered an error. Please verify your API key."
 
         return sanitized
 
@@ -105,8 +111,11 @@ class AnthropicErrorAdapter(ProviderErrorAdapter):
 
         # Check for sensitive words
         sensitive_words = ["internal", "server", "endpoint"]
-        if any(word in sanitized.lower() for word in sensitive_words):
-            return "Anthropic API encountered an error. Please verify your API key."
+        # PERFORMANCE: Replaced generator expression and cached .lower() to avoid O(N) string allocations
+        sanitized_lower = sanitized.lower()
+        for word in sensitive_words:
+            if word in sanitized_lower:
+                return "Anthropic API encountered an error. Please verify your API key."
 
         return sanitized
 
