@@ -21,7 +21,7 @@ TO authenticated
 USING (
     EXISTS (
         SELECT 1 FROM public.profiles 
-        WHERE id = auth.uid() AND role IN ('system_admin', 'admin')
+        WHERE id = auth.uid()::text AND role IN ('system_admin', 'admin')
     )
 );
 

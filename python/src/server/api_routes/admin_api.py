@@ -83,6 +83,37 @@ async def update_user_role(user_id: str, request: UpdateRoleRequest, current_use
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 
+# --- RBAC MATRIX MANAGEMENT (Phase 5.4 / Phase 4.6.31 Dynamic) ---
+
+
+class RBACRoleUpdate(BaseModel):
+    role: str
+    permissions: list[str]
+    description: str | None = None
+
+
+@router.get("/rbac/matrix", dependencies=[Depends(verify_manager_role)])
+async def get_rbac_matrix(current_user: dict = Depends(get_current_user)):
+    """Fetch the full role-permission matrix (Managers & Admins)."""
+    try:
+        return await AdminService.get_rbac_matrix()
+    except Exception as e:
+        logger.error(f"Admin API: Failed to fetch RBAC matrix: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error while fetching matrix") from e
+
+
+@router.post("/rbac/role", dependencies=[Depends(verify_admin_role)])
+async def update_rbac_role(request: RBACRoleUpdate, current_user: dict = Depends(get_current_user)):
+    """Update permissions for a specific role (Admin only)."""
+    try:
+        return await AdminService.update_rbac_role(
+            role=request.role, permissions=request.permissions, description=request.description
+        )
+    except Exception as e:
+        logger.error(f"Admin API: Failed to update RBAC role: {e}")
+        raise HTTPException(status_code=500, detail=str(e)) from e
+
+
 # --- CRAWLER TARGET MANAGEMENT (Phase 1.7 / Phase 4.6.24 Hardened) ---
 
 

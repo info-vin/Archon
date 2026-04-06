@@ -66,3 +66,43 @@ class AdminService:
         except Exception as e:
             logger.error(f"AdminService: Failed to update role: {e}")
             raise
+
+    @staticmethod
+    async def get_rbac_matrix() -> list[dict[str, Any]]:
+        """Fetch the full role-permission matrix from the database."""
+        try:
+            supabase = get_supabase_client()
+            res = supabase.table("archon_roles_permissions").select("*").order("role").execute()
+            return cast(list[dict[str, Any]], res.data or [])
+        except Exception as e:
+            logger.error(f"AdminService: Failed to fetch RBAC matrix: {e}")
+            raise
+
+    @staticmethod
+    async def update_rbac_role(
+        role: str, permissions: list[str], description: str | None = None
+    ) -> dict[str, Any]:
+        """Update or create a role's permissions in the dynamic matrix."""
+        try:
+            supabase = get_supabase_client()
+            payload: dict[str, Any] = {
+                "role": role.lower(),
+                "permissions": permissions,
+            }
+            if description is not None:
+                payload["description"] = description
+
+            res = supabase.table("archon_roles_permissions").upsert(payload).execute()
+
+            if not res.data:
+                raise ValueError(f"Failed to update role {role}")
+
+            # Clear RBACService cache to ensure changes take effect immediately
+            from .rbac_service import RBACService
+
+            RBACService._matrix_cache = None
+
+            return cast(dict[str, Any], res.data[0])
+        except Exception as e:
+            logger.error(f"AdminService: Failed to update RBAC role {role}: {e}")
+            raise

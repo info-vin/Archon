@@ -216,19 +216,29 @@ const NewUserModal: React.FC<{ onClose: () => void; onSave: (newUser: Employee) 
 
 export const IdentityMatrix: React.FC = () => {
     const [employees, setEmployees] = useState<Employee[]>([]);
+    const [rbacMatrix, setRBACMatrix] = useState<any[]>([]);
+    const [allPermissions, setAllPermissions] = useState<string[]>([]);
+    const [activeTab, setActiveTab] = useState<'personnel' | 'matrix'>('personnel');
     const [editingUser, setEditingUser] = useState<Employee | null>(null);
     const [isNewUserModalOpen, setIsNewUserModalOpen] = useState(false);
     const [loading, setLoading] = useState(true);
     const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+    const [isSavingMatrix, setIsSavingMatrix] = useState(false);
 
     useEffect(() => {
         setLoading(true);
-        api.getEmployees()
-            .then(setEmployees)
-            .catch(err => alert(`Failed to load employees: ${err.message}`))
-            .finally(() => setLoading(false));
+        Promise.all([
+            api.getEmployees(),
+            api.getRBACMatrix(),
+            api.getSystemPermissions()
+        ]).then(([emps, matrix, perms]) => {
+            setEmployees(emps);
+            setRBACMatrix(matrix);
+            setAllPermissions(perms);
+        }).catch(err => alert(`Failed to load Identity data: ${err.message}`))
+          .finally(() => setLoading(false));
     }, []);
-    
+
     const handleUpdateUserInList = (updatedUser: Employee) => {
         setEmployees(employees.map(e => e.id === updatedUser.id ? updatedUser : e));
     };
@@ -237,99 +247,206 @@ export const IdentityMatrix: React.FC = () => {
         setEmployees(prev => [...prev, newUser]);
     };
 
+    const toggleMatrixPermission = (roleName: string, permission: string) => {
+        const updatedMatrix = rbacMatrix.map(item => {
+            if (item.role === roleName) {
+                const currentPerms = item.permissions || [];
+                const newPerms = currentPerms.includes(permission)
+                    ? currentPerms.filter((p: string) => p !== permission)
+                    : [...currentPerms, permission];
+                return { ...item, permissions: newPerms };
+            }
+            return item;
+        });
+        setRBACMatrix(updatedMatrix);
+    };
+
+    const saveMatrixChanges = async () => {
+        setIsSavingMatrix(true);
+        try {
+            // Save each changed role (Simplified for MVP: save all current state)
+            for (const row of rbacMatrix) {
+                await api.updateRBACRole(row.role, row.permissions, row.description);
+            }
+            alert('RBAC Matrix saved successfully!');
+        } catch (error: any) {
+            alert(`Error saving matrix: ${error.message}`);
+        } finally {
+            setIsSavingMatrix(false);
+        }
+    };
+
     if (loading) return <div className="p-12 text-center text-muted-foreground italic">Loading Identity Matrix...</div>;
+
+    const getPermissionsForRole = (roleName: string) => {
+        const row = rbacMatrix.find(r => r.role.toLowerCase() === roleName.toLowerCase());
+        return row ? row.permissions : [];
+    };
 
     return (
         <div className="space-y-6">
-            <div className="bg-card p-6 rounded-2xl border border-border shadow-sm">
-                <div className="flex justify-between items-center mb-6">
-                    <div>
-                        <h2 className="text-xl font-bold">Identity Matrix</h2>
-                        <p className="text-xs text-muted-foreground">Manage system access levels and sync metadata for all personnel.</p>
-                    </div>
-                     <button onClick={() => setIsNewUserModalOpen(true)} className="flex items-center px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 font-bold transition-all shadow-sm">
-                        <PlusIcon className="w-5 h-5 mr-2" />
-                        NEW USER
-                    </button>
-                </div>
-                <div className="overflow-x-auto -mx-6">
-                    <table className="min-w-full divide-y divide-border">
-                        <thead className="bg-muted/50">
-                            <tr>
-                                <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-muted-foreground">Personnel</th>
-                                <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-muted-foreground">Assigned Role</th>
-                                <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-muted-foreground">Account Status</th>
-                                <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-muted-foreground text-right">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-border bg-card">
-                            {employees.filter(e => e && e.id).map(emp => {
-                                const isSelected = selectedUserId === emp.id;
-                                const statusClasses = {
-                                    active: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
-                                    inactive: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
-                                    suspended: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
-                                };
-                                const rowClasses = isSelected ? 'bg-primary/5' : 'hover:bg-muted/30';
+            {/* Tab Navigation */}
+            <div className="flex space-x-1 bg-muted/50 p-1 rounded-xl w-fit border border-border">
+                <button 
+                    onClick={() => setActiveTab('personnel')}
+                    className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${activeTab === 'personnel' ? 'bg-background shadow-sm text-primary' : 'text-muted-foreground hover:text-foreground'}`}
+                >
+                    Personnel List
+                </button>
+                <button 
+                    onClick={() => setActiveTab('matrix')}
+                    className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${activeTab === 'matrix' ? 'bg-background shadow-sm text-primary' : 'text-muted-foreground hover:text-foreground'}`}
+                >
+                    Role Permissions Matrix
+                </button>
+            </div>
 
-                                return (
-                                    <React.Fragment key={emp.id}>
-                                        <tr 
-                                            role="button"
-                                            tabIndex={0}
-                                            onClick={() => setSelectedUserId(isSelected ? null : emp.id)}
-                                            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setSelectedUserId(isSelected ? null : emp.id); }}
-                                            className={`cursor-pointer transition-colors ${rowClasses}`}
-                                            aria-expanded={isSelected}
-                                        >
-                                            <td className="px-6 py-4 whitespace-nowrap min-w-0">
-                                                <div className="flex items-center min-w-0">
-                                                    <UserAvatar name={emp.name || ''} role={emp.role} className="h-10 w-10 rounded-lg shadow-sm shrink-0" />
-                                                    <div className="ml-4 min-w-0">
-                                                        <div className="text-sm font-bold truncate">{emp.name}</div>
-                                                        <div className="text-xs text-muted-foreground truncate">{emp.email}</div>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                <span className="text-[10px] font-bold uppercase tracking-tight bg-secondary px-2 py-1 rounded border border-border">{emp.role}</span>
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                <span className={`px-2 py-1 inline-flex text-[10px] leading-4 font-bold uppercase tracking-widest rounded-full ${statusClasses[emp.status as keyof typeof statusClasses] || statusClasses.inactive}`}>
-                                                    {emp.status}
-                                                </span>
-                                            </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                            <button 
-                                                onClick={(e) => { e.stopPropagation(); setEditingUser(emp); }} 
-                                                className="text-primary hover:text-primary/90 font-bold transition-colors disabled:opacity-30" 
-                                                disabled={emp.role === EmployeeRole.SYSTEM_ADMIN}
+            {activeTab === 'personnel' ? (
+                <div className="bg-card p-6 rounded-2xl border border-border shadow-sm">
+                    <div className="flex justify-between items-center mb-6">
+                        <div>
+                            <h2 className="text-xl font-bold">Personnel Registry</h2>
+                            <p className="text-xs text-muted-foreground">Manage system access levels and sync metadata for all personnel.</p>
+                        </div>
+                         <button onClick={() => setIsNewUserModalOpen(true)} className="flex items-center px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 font-bold transition-all shadow-sm">
+                            <PlusIcon className="w-5 h-5 mr-2" />
+                            NEW USER
+                        </button>
+                    </div>
+                    <div className="overflow-x-auto -mx-6">
+                        <table className="min-w-full divide-y divide-border">
+                            <thead className="bg-muted/50">
+                                <tr>
+                                    <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-muted-foreground">Personnel</th>
+                                    <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-muted-foreground">Assigned Role</th>
+                                    <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-muted-foreground">Account Status</th>
+                                    <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-muted-foreground text-right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-border bg-card">
+                                {employees.filter(e => e && e.id).map(emp => {
+                                    const isSelected = selectedUserId === emp.id;
+                                    const statusClasses = {
+                                        active: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
+                                        inactive: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
+                                        suspended: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
+                                    };
+                                    const rowClasses = isSelected ? 'bg-primary/5' : 'hover:bg-muted/30';
+
+                                    return (
+                                        <React.Fragment key={emp.id}>
+                                            <tr 
+                                                role="button"
+                                                tabIndex={0}
+                                                onClick={() => setSelectedUserId(isSelected ? null : emp.id)}
+                                                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setSelectedUserId(isSelected ? null : emp.id); }}
+                                                className={`cursor-pointer transition-colors ${rowClasses}`}
+                                                aria-expanded={isSelected}
                                             >
-                                                Edit
-                                            </button>
-                                        </td>
-                                    </tr>
-                                    {selectedUserId === emp.id && (
-                                        <tr className="bg-muted/10">
-                                            <td colSpan={4} className="px-6 py-4 border-b border-border">
-                                                <div className="flex flex-wrap gap-2">
-                                                    <span className="text-[10px] font-bold text-muted-foreground uppercase mr-2">Permissions:</span>
-                                                    {(ROLE_PERMISSIONS_MAP[emp.role.toLowerCase()] || ROLE_PERMISSIONS_MAP['viewer']).map(p => (
-                                                        <span key={p} className="px-2 py-0.5 bg-background border border-border rounded text-[9px] font-mono text-muted-foreground italic">
-                                                            {p}
-                                                        </span>
-                                                    ))}
-                                                </div>
+                                                <td className="px-6 py-4 whitespace-nowrap min-w-0">
+                                                    <div className="flex items-center min-w-0">
+                                                        <UserAvatar name={emp.name || ''} role={emp.role} className="h-10 w-10 rounded-lg shadow-sm shrink-0" />
+                                                        <div className="ml-4 min-w-0">
+                                                            <div className="text-sm font-bold truncate">{emp.name}</div>
+                                                            <div className="text-xs text-muted-foreground truncate">{emp.email}</div>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap">
+                                                    <span className="text-[10px] font-bold uppercase tracking-tight bg-secondary px-2 py-1 rounded border border-border">{emp.role}</span>
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap">
+                                                    <span className={`px-2 py-1 inline-flex text-[10px] leading-4 font-bold uppercase tracking-widest rounded-full ${statusClasses[emp.status as keyof typeof statusClasses] || statusClasses.inactive}`}>
+                                                        {emp.status}
+                                                    </span>
+                                                </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                                <button 
+                                                    onClick={(e) => { e.stopPropagation(); setEditingUser(emp); }} 
+                                                    className="text-primary hover:text-primary/90 font-bold transition-colors disabled:opacity-30" 
+                                                    disabled={emp.role === EmployeeRole.SYSTEM_ADMIN}
+                                                >
+                                                    Edit
+                                                </button>
                                             </td>
                                         </tr>
-                                    )}
-                                </React.Fragment>
-                            );
-                        })}
-                        </tbody>
-                    </table>
+                                        {selectedUserId === emp.id && (
+                                            <tr className="bg-muted/10">
+                                                <td colSpan={4} className="px-6 py-4 border-b border-border">
+                                                    <div className="flex flex-wrap gap-2">
+                                                        <span className="text-[10px] font-bold text-muted-foreground uppercase mr-2">Effective Permissions:</span>
+                                                        {getPermissionsForRole(emp.role).map((p: string) => (
+                                                            <span key={p} className="px-2 py-0.5 bg-background border border-border rounded text-[9px] font-mono text-muted-foreground italic">
+                                                                {p}
+                                                            </span>
+                                                        ))}
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        )}
+                                    </React.Fragment>
+                                );
+                            })}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
-            </div>
+            ) : (
+                /* Dynamic RBAC Matrix Tab */
+                <div className="bg-card p-6 rounded-2xl border border-border shadow-sm">
+                    <div className="flex justify-between items-center mb-6">
+                        <div>
+                            <h2 className="text-xl font-bold">Role Capabilities Matrix</h2>
+                            <p className="text-xs text-muted-foreground">Define what each role is permitted to do across the entire system.</p>
+                        </div>
+                        <button 
+                            onClick={saveMatrixChanges} 
+                            disabled={isSavingMatrix}
+                            className="flex items-center px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-bold transition-all shadow-lg shadow-indigo-100 disabled:opacity-50"
+                        >
+                            {isSavingMatrix ? 'SAVING...' : 'SAVE MATRIX'}
+                        </button>
+                    </div>
+
+                    <div className="overflow-x-auto -mx-6">
+                        <table className="min-w-full divide-y divide-border">
+                            <thead className="bg-muted/50">
+                                <tr>
+                                    <th className="px-6 py-3 text-left text-[10px] font-black uppercase tracking-widest text-muted-foreground sticky left-0 bg-muted/50 z-10">Permission / Role</th>
+                                    {rbacMatrix.map(row => (
+                                        <th key={row.role} className="px-4 py-3 text-center text-[10px] font-black uppercase tracking-widest text-primary min-w-[100px]">
+                                            {row.role}
+                                        </th>
+                                    ))}
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-border bg-card">
+                                {allPermissions.map(perm => (
+                                    <tr key={perm} className="hover:bg-muted/20 transition-colors">
+                                        <td className="px-6 py-3 whitespace-nowrap text-[10px] font-mono font-bold text-foreground sticky left-0 bg-card z-10 border-r border-border">
+                                            {perm}
+                                        </td>
+                                        {rbacMatrix.map(row => {
+                                            const hasPerm = (row.permissions || []).includes(perm);
+                                            return (
+                                                <td key={`${row.role}-${perm}`} className="px-4 py-3 text-center">
+                                                    <button 
+                                                        onClick={() => toggleMatrixPermission(row.role, perm)}
+                                                        className={`w-6 h-6 rounded-md border flex items-center justify-center mx-auto transition-all ${hasPerm ? 'bg-green-500 border-green-600 text-white' : 'bg-background border-border text-transparent hover:border-primary/50'}`}
+                                                    >
+                                                        {hasPerm && <CheckCircleIcon className="w-4 h-4" />}
+                                                    </button>
+                                                </td>
+                                            );
+                                        })}
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            )}
+
             {editingUser && <EditUserModal user={editingUser} onClose={() => setEditingUser(null)} onSave={handleUpdateUserInList} />}
             {isNewUserModalOpen && <NewUserModal onClose={() => setIsNewUserModalOpen(false)} onSave={handleAddNewUserToList} />}
         </div>

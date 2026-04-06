@@ -127,5 +127,16 @@ export const authApi = {
         method: 'POST',
         body: JSON.stringify({ password: newPassword })
     });
+  },
+
+  async getRBACMatrix(): Promise<any[]> {
+    return await callAPI<any[]>('/api/admin/rbac/matrix');
+  },
+
+  async updateRBACRole(role: string, permissions: string[], description?: string): Promise<any> {
+    return await callAPI<any>('/api/admin/rbac/role', {
+        method: 'POST',
+        body: JSON.stringify({ role, permissions, description })
+    });
   }
 };

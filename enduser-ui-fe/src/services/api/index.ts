@@ -25,6 +25,8 @@ export const api = {
   getAssignableUsers: authApi.getAssignableUsers.bind(authApi),
   getAssignableAgents: authApi.getAssignableAgents.bind(authApi),
   resetPassword: authApi.resetPassword.bind(authApi),
+  getRBACMatrix: authApi.getRBACMatrix.bind(authApi),
+  updateRBACRole: authApi.updateRBACRole.bind(authApi),
 
   // Tasks
   getTasks: tasksApi.getTasks.bind(tasksApi),
