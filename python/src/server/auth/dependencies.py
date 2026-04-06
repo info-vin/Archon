@@ -6,7 +6,6 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from ..services.profile_service import ProfileService
-from .permissions import get_role_permissions
 from .utils import get_user_from_token
 
 # Security scheme for OpenAPI docs
@@ -125,8 +124,11 @@ def requires_permission(permission: str):
     """
 
     async def permission_checker(current_user: Annotated[dict, Depends(get_current_user)]):
+        from ..services.rbac_service import RBACService
+
         role = current_user.get("role", "").lower()
-        user_permissions = get_role_permissions(role)
+        # Phase 4.6.31: Switch to Dynamic RBAC Matrix via RBACService
+        user_permissions = await RBACService().get_role_permissions(role)
 
         if permission not in user_permissions:
             raise HTTPException(

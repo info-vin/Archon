@@ -1,5 +1,6 @@
 # python/src/server/services/rbac_service.py
 
+from ..auth.permissions import ROLE_PERMISSIONS
 from ..config.logfire_config import get_logger
 from ..utils import get_supabase_client
 
@@ -7,14 +8,16 @@ logger = get_logger(__name__)
 
 
 class RBACService:
-    """Service for handling Role-Based Access Control (RBAC) logic."""
+    """
+    Service for handling Role-Based Access Control (RBAC) logic.
+    Phase 4.6.31: Transitioned from hardcoded dicts to dynamic database-backed matrix.
+    """
+
+    _matrix_cache: dict[str, set[str]] | None = None
 
     def __init__(self):
-        # Permission rules: Who can assign to whom.
-        # Roles match permissions.py (lowercase) + 'ai_agent'
-        # NOTE: 'member' is mapped to 'employee' logic for simplicity if not explicitly defined
+        # Initial assignment rules (Static fallback)
         self.permissions = {
-            # Admin can assign to anyone
             "admin": ["admin", "system_admin", "manager", "employee", "member", "marketing", "sales", "ai_agent"],
             "system_admin": [
                 "admin",
@@ -26,19 +29,45 @@ class RBACService:
                 "sales",
                 "ai_agent",
             ],
-            # Manager can assign to their team (generic simplification) and agents
             "manager": ["manager", "employee", "member", "marketing", "sales", "ai_agent"],
-            # Employees/Members can assign to themselves and generic agents
             "employee": ["employee", "member", "ai_agent"],
             "member": ["employee", "member", "ai_agent"],
-            # Marketers can assign to themselves and Marketing Agents
             "marketing": ["marketing", "ai_agent"],
-            # Sales can assign to themselves and Sales Agents
             "sales": ["sales", "ai_agent"],
-            # Legacy/Alias support
             "pm": ["manager", "employee", "member", "marketing", "sales", "ai_agent"],
             "engineer": ["employee", "member", "ai_agent"],
         }
+
+    async def get_role_permissions(self, role: str) -> set[str]:
+        """
+        Returns the set of permissions for a given role.
+        Priority: 1. DB (Dynamic) -> 2. permissions.py (Static Fallback)
+        """
+        matrix = await self.get_matrix()
+        return matrix.get(role.lower(), set())
+
+    async def get_matrix(self, force_refresh: bool = False) -> dict[str, set[str]]:
+        """Retrieves the full role-permission matrix, with caching support."""
+        if not force_refresh and self._matrix_cache is not None:
+            return self._matrix_cache
+
+        # Try to load from Database
+        try:
+            supabase = get_supabase_client()
+            result = supabase.table("archon_roles_permissions").select("role, permissions").execute()
+
+            if result.data:
+                dynamic_matrix = {item["role"].lower(): set(item["permissions"]) for item in result.data}
+                RBACService._matrix_cache = dynamic_matrix
+                logger.info(f"Loaded {len(dynamic_matrix)} roles from dynamic RBAC matrix")
+                return dynamic_matrix
+        except Exception as e:
+            logger.warning(f"Failed to load dynamic RBAC matrix from DB, falling back to static: {e}")
+
+        # Fallback to static permissions.py
+        static_matrix = {role.lower(): perms for role, perms in ROLE_PERMISSIONS.items()}
+        RBACService._matrix_cache = static_matrix
+        return static_matrix
 
     def get_crawler_constraints(self, current_user_role: str | None) -> dict:
         """
