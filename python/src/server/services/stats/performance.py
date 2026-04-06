@@ -156,14 +156,28 @@ class PerformanceManager:
         }
 
     async def get_agent_xp_stats(self) -> list[dict[str, Any]]:
-        """Calculates XP and Total Cost for all agents (Phase 4.6.15 parity)."""
+        """Calculates XP, Success Count, and Total Cost for all agents (Phase 5.5)."""
         try:
             xp_res = self.supabase.table("archon_logs").select("details").eq("source", "agent_action").execute()
             xp_map: dict[str, int] = {}
+            success_map: dict[str, int] = {}
+
             for row in xp_res.data or []:
                 details = row.get("details") or {}
                 name = details.get("agent_name") or details.get("agent_id") or "Unknown Agent"
-                xp_map[name] = xp_map.get(name, 0) + int(details.get("xp_change", 0))
+                xp_change = int(details.get("xp_change", 0))
+                
+                # Accumulate Total XP
+                xp_map[name] = xp_map.get(name, 0) + xp_change
+                
+                # Accumulate Success Count (Positive XP Change)
+                if xp_change > 0:
+                    success_map[name] = success_map.get(name, 0) + 1
+
+            # Fetch overrides for Level 7 check
+            overrides_res = self.supabase.table("profiles").select("id, name, role, permission_overrides").eq("role", "ai_agent").execute()
+            overrides_map = {r.get("id"): r.get("permission_overrides", {}) for r in overrides_res.data or []}
+            name_to_overrides = {r.get("name"): r.get("permission_overrides", {}) for r in overrides_res.data or []}
 
             cost_res = self.supabase.table("token_usage").select("user_id, cost_usd").execute()
             from ..agent_registry import AGENT_CONFIG, get_agent_uuid
@@ -185,18 +199,26 @@ class PerformanceManager:
             for key, config in AGENT_CONFIG.items():
                 name = str(config.get("name", "Unknown"))
                 slug = f"ai-{key}"
+                u_id = get_agent_uuid(key)
+                
                 total_xp = xp_map.get(name, 0) or xp_map.get(slug, 0)
+                success_count = success_map.get(name, 0) or success_map.get(slug, 0)
                 total_cost = cost_map.get(name, 0.0)
                 roi = round(total_xp / total_cost, 2) if total_cost > 0 else 0.0
+                
+                # Get overrides for this specific agent
+                agent_overrides = overrides_map.get(u_id) or name_to_overrides.get(name) or {}
+                
                 result.append({
                     "name": name,
                     "agent_id": slug,
                     "total_xp": total_xp,
+                    "success_count": success_count,
                     "total_cost": round(total_cost, 4),
                     "roi_ratio": roi,
-                    "level": self._get_agent_level(total_xp)
+                    "level": self._get_agent_level(success_count, agent_overrides)
                 })
-            result.sort(key=lambda x: cast(int, x["total_xp"]), reverse=True)
+            result.sort(key=lambda x: cast(int, x["success_count"]), reverse=True)
             return result
         except Exception as e:
             logger.error(f"PerformanceManager: XP Stats failed: {e}")
@@ -226,17 +248,20 @@ class PerformanceManager:
             logger.error(f"PerformanceManager: Risks failed: {e}")
             return []
 
-    def _get_agent_level(self, xp: int) -> str:
-        if xp >= 880:
+    def _get_agent_level(self, success_count: int, overrides: dict | None = None) -> str:
+        """Determines Agent Level based on success count and admin overrides (Poisson Gate)."""
+        if overrides and overrides.get("is_trusted_level_7"):
+            return "Level 7"
+        if success_count >= 880:
             return "Level 6"
-        if xp >= 870:
+        if success_count >= 870:
             return "Level 5"
-        if xp >= 850:
+        if success_count >= 850:
             return "Level 4"
-        if xp >= 800:
+        if success_count >= 800:
             return "Level 3"
-        if xp >= 700:
+        if success_count >= 700:
             return "Level 2"
-        if xp >= 500:
+        if success_count >= 500:
             return "Level 1"
         return "Intern"
