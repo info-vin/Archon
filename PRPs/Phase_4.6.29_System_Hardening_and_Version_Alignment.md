@@ -19,16 +19,16 @@
 - [x] **Task D: RAG 模型基準對齊 (RAG Baseline Alignment)**
     - **修改**: `migration/0.2.2/seed_rag_defaults.sql`。
     - **結果**: 將預設模型從 `gemini-1.5-flash` 升級為 `gemini-2.5-flash`。
-- [ ] **Task E: 遷移掃描硬化 (Migration Scanning Hardening)**
+- [x] **Task E: 遷移掃描硬化 (Migration Scanning Hardening)**
     - **修改**: `python/src/server/services/migration_service.py`。
-    - **目標**: 僅掃描當前版本目錄，忽略 `0.1.0`, `0.2.1` 等過期歷史資料夾，消除 3737 的遷移警告。
+    - **結果**: 已實作對 `ARCHON_VERSION` 的精確掃描與舊目錄過濾，消除了無效的 Pending 警告。
 
 ## 2. 驗證方法 (Verification)
 
 - [x] **驗證 A**: 執行 `docker exec archon-server python -c "from src.server.config.version import ARCHON_VERSION; print(ARCHON_VERSION)"` -> 預期 `0.2.2`。
 - [x] **驗證 B**: 登入 3737 Settings 頁面，確認 API Keys 列表中無 `CRAWLER_104` 相關項目。
 - [x] **驗證 C**: 核對 Admin UI 顯示的 `GOOGLE_API_KEY` 末 4 碼與 `.env` 是否一致。
-- [ ] **驗證 D**: 刷新 3737 "Database Migrations" 頁面，確認 `Pending Migrations` 數量歸零（或僅顯示當前版本的必要項）。
+- [x] **驗證 D**: 刷新 3737 "Database Migrations" 頁面，確認 `Pending Migrations` 數量歸零。
 
 ## 3. 預期結果
 - 系統不再顯示誤導性的 `0.2.1` 版號。

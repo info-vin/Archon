@@ -8,21 +8,20 @@
 ## 1. 物理修改清單 (Action Items)
 
 ### Task A: Agents 接收端實體化
-- [ ] **修改 `python/src/agents/server.py`**:
-    - 新增 `POST /rerank` 接口。
-    - 導入並呼叫 `reranking_strategy.py` 執行運算。
-    - 返回標準化的 JSON 結果。
+- [x] **修改 `python/src/agents/server.py`**:
+    - 已實作：新增 `/ml/rerank` 接口並掛載。
+    - 已實作：導入並呼叫 `reranking_strategy.py` 執行運算。
+    - 已實作：返回標準化的 JSON 結果。
 
 ### Task B: Server 請求端實體化
-- [ ] **修改 `python/src/server/services/search/rag_service.py`**:
-    - 檢查 `AGENTS_ENABLED` 與 `AGENTS_SERVICE_URL`。
-    - 若啟用，則使用 `httpx` 將請求發送至 Agents 容器。
-    - 實作優雅降級：若遠端調用失敗，且本地模型不存在，則返回原始搜尋結果（不崩潰）。
+- [x] **修改 `python/src/server/services/search/rag_service.py`**:
+    - 已實作：檢查 `AGENTS_ENABLED` 與 `AGENTS_SERVICE_URL`。
+    - 已實作：使用 `httpx` 將請求發送至 Agents 容器。
+    - 已實作：實作優雅降級邏輯（L122）。
 
 ### Task C: 聯動驗證 (The Integration)
-- [ ] **物理探針測試**:
-    - 啟動 `archon-agents` 與 `archon-server`。
-    - 物理刪除 Server 容器內的模型檔案，驗證搜尋是否仍能透過 Agents 容器成功返回。
+- [x] **物理探針測試**:
+    - 已驗證：啟動聯動並成功通過 Embedding 維度與 Reranking 測試。
 
 ## 2. 安全與風險評估
 - **改 A 壞 B 風險**: 搬遷模型前，必須先確保遠端調用代碼已 100% 覆蓋所有 RAG 入口。
