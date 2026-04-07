@@ -1,0 +1,72 @@
+11:-- Name: change_status; Type: TYPE; Schema: public; Owner: postgres
+19:-- Name: change_type; Type: TYPE; Schema: public; Owner: postgres
+27:-- Name: task_status; Type: TYPE; Schema: public; Owner: postgres
+35:-- Name: project_status; Type: TYPE; Schema: public; Owner: postgres
+43:-- Name: blog_status; Type: TYPE; Schema: public; Owner: postgres
+51:-- Name: archon_settings; Type: TABLE; Schema: public; Owner: postgres
+71:-- Name: TABLE archon_settings; Type: COMMENT; Schema: public; Owner: postgres
+78:-- Name: profiles; Type: TABLE; Schema: public; Owner: postgres
+98:-- Name: archon_code_examples; Type: TABLE; Schema: public; Owner: postgres
+118:-- Name: archon_code_examples_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+132:-- Name: archon_code_examples_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+139:-- Name: archon_crawled_pages; Type: TABLE; Schema: public; Owner: postgres
+159:-- Name: archon_crawled_pages_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+173:-- Name: archon_crawled_pages_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+180:-- Name: archon_crawler_targets; Type: TABLE; Schema: public; Owner: postgres
+197:-- Name: archon_extraction_schemas; Type: TABLE; Schema: public; Owner: postgres
+217:-- Name: archon_sources; Type: TABLE; Schema: public; Owner: postgres
+236:-- Name: COLUMN archon_sources.source_id; Type: COMMENT; Schema: public; Owner: postgres
+243:-- Name: COLUMN archon_sources.source_url; Type: COMMENT; Schema: public; Owner: postgres
+250:-- Name: COLUMN archon_sources.source_display_name; Type: COMMENT; Schema: public; Owner: postgres
+257:-- Name: COLUMN archon_sources.title; Type: COMMENT; Schema: public; Owner: postgres
+264:-- Name: COLUMN archon_sources.metadata; Type: COMMENT; Schema: public; Owner: postgres
+271:-- Name: blog_posts; Type: TABLE; Schema: public; Owner: postgres
+298:-- Name: COLUMN blog_posts.source_lead_id; Type: COMMENT; Schema: public; Owner: postgres
+305:-- Name: COLUMN blog_posts.target_brand; Type: COMMENT; Schema: public; Owner: postgres
+312:-- Name: leads; Type: TABLE; Schema: public; Owner: postgres
+348:-- Name: COLUMN leads.lost_reason; Type: COMMENT; Schema: public; Owner: postgres
+355:-- Name: COLUMN leads.lost_competitor; Type: COMMENT; Schema: public; Owner: postgres
+362:-- Name: vendors; Type: TABLE; Schema: public; Owner: postgres
+383:-- Name: TABLE vendors; Type: COMMENT; Schema: public; Owner: postgres
+390:-- Name: COLUMN vendors.name; Type: COMMENT; Schema: public; Owner: postgres
+397:-- Name: COLUMN vendors.service_type; Type: COMMENT; Schema: public; Owner: postgres
+404:-- Name: archon_code_examples id; Type: DEFAULT; Schema: public; Owner: postgres
+411:-- Name: archon_crawled_pages id; Type: DEFAULT; Schema: public; Owner: postgres
+417:-- Name: archon_document_versions; Type: TABLE; Schema: public; Owner: postgres
+440:-- Name: TABLE archon_document_versions; Type: COMMENT; Schema: public; Owner: postgres
+447:-- Name: COLUMN archon_document_versions.task_id; Type: COMMENT; Schema: public; Owner: postgres
+454:-- Name: COLUMN archon_document_versions.field_name; Type: COMMENT; Schema: public; Owner: postgres
+461:-- Name: COLUMN archon_document_versions.content; Type: COMMENT; Schema: public; Owner: postgres
+468:-- Name: COLUMN archon_document_versions.change_type; Type: COMMENT; Schema: public; Owner: postgres
+475:-- Name: COLUMN archon_document_versions.document_id; Type: COMMENT; Schema: public; Owner: postgres
+482:-- Name: archon_project_sources; Type: TABLE; Schema: public; Owner: postgres
+498:-- Name: archon_projects; Type: TABLE; Schema: public; Owner: postgres
+518:-- Name: archon_tasks; Type: TABLE; Schema: public; Owner: postgres
+552:-- Name: COLUMN archon_tasks.assignee; Type: COMMENT; Schema: public; Owner: postgres
+559:-- Name: COLUMN archon_tasks.archived; Type: COMMENT; Schema: public; Owner: postgres
+566:-- Name: COLUMN archon_tasks.archived_at; Type: COMMENT; Schema: public; Owner: postgres
+573:-- Name: COLUMN archon_tasks.archived_by; Type: COMMENT; Schema: public; Owner: postgres
+580:-- Name: proposed_changes; Type: TABLE; Schema: public; Owner: postgres
+599:-- Name: TABLE proposed_changes; Type: COMMENT; Schema: public; Owner: postgres
+606:-- Name: COLUMN proposed_changes.status; Type: COMMENT; Schema: public; Owner: postgres
+613:-- Name: COLUMN proposed_changes.type; Type: COMMENT; Schema: public; Owner: postgres
+620:-- Name: COLUMN proposed_changes.request_payload; Type: COMMENT; Schema: public; Owner: postgres
+627:-- Name: COLUMN proposed_changes.approved_by; Type: COMMENT; Schema: public; Owner: postgres
+633:-- Name: archon_ethics_events; Type: TABLE; Schema: public; Owner: postgres
+651:-- Name: archon_logs; Type: TABLE; Schema: public; Owner: postgres
+670:-- Name: archon_prompts; Type: TABLE; Schema: public; Owner: postgres
+687:-- Name: attendance_logs; Type: TABLE; Schema: public; Owner: postgres
+708:-- Name: customers; Type: TABLE; Schema: public; Owner: postgres
+722:-- Name: TABLE customers; Type: COMMENT; Schema: public; Owner: postgres
+729:-- Name: COLUMN customers.name; Type: COMMENT; Schema: public; Owner: postgres
+736:-- Name: COLUMN customers.email; Type: COMMENT; Schema: public; Owner: postgres
+743:-- Name: gemini_logs; Type: TABLE; Schema: public; Owner: postgres
+759:-- Name: gemini_logs_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+774:-- Name: gemini_logs_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+781:-- Name: market_insights; Type: TABLE; Schema: public; Owner: postgres
+796:-- Name: marketing_trends; Type: TABLE; Schema: public; Owner: postgres
+811:-- Name: subscriptions; Type: TABLE; Schema: public; Owner: postgres
+827:-- Name: token_usage; Type: TABLE; Schema: public; Owner: postgres
+848:-- Name: TABLE token_usage; Type: COMMENT; Schema: public; Owner: postgres
+855:-- Name: visit_logs; Type: TABLE; Schema: public; Owner: postgres
+880:-- Name: gemini_logs id; Type: DEFAULT; Schema: public; Owner: postgres

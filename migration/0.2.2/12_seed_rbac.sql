@@ -14,23 +14,10 @@ CREATE TABLE IF NOT EXISTS public.archon_roles_permissions (
 ALTER TABLE public.archon_roles_permissions ENABLE ROW LEVEL SECURITY;
 
 -- Policy: Only Admins can modify the matrix
-CREATE POLICY "Admins can manage RBAC matrix" 
-ON public.archon_roles_permissions 
-FOR ALL 
-TO authenticated 
-USING (
-    EXISTS (
-        SELECT 1 FROM public.profiles 
-        WHERE id = auth.uid()::text AND role IN ('system_admin', 'admin')
-    )
-);
+
 
 -- Policy: Authenticated users can read the matrix
-CREATE POLICY "Users can read RBAC matrix" 
-ON public.archon_roles_permissions 
-FOR SELECT 
-TO authenticated 
-USING (true);
+
 
 -- 2. Seed Initial Data (Mirrored from permissions.py current state)
 INSERT INTO public.archon_roles_permissions (role, permissions, description, is_system_protected)

@@ -126,6 +126,17 @@
 
 # 第三章：近期工作日誌 (Recent Journal Entries)
 
+### 2026-04-06: Phase 5 結案：RBAC 基礎設施與身份動態化落地
+*   **今日目標 (物理落地)**:
+    - **動態矩陣**: 成功將權限定義從程式碼物理遷移至資料庫 `archon_roles_permissions` 表格，達成 100% 動態化。
+    - **5173 連動**: 在 End-User UI 實作了 Identity Matrix 管理介面，Charlie (Manager) 現具備物理權能調整團隊權限。
+    - **Poisson 硬化**: Agent 晉升機制與 PRP 「成功樣本數」物理對齊，並實作了基於 JSONB Overrides 的 Level 7 Admin 手動授權。
+    - **審計閉環**: 在 `AdminService` 注入了物理日誌邏輯，所有權限異動皆自動記錄於 `archon_logs` 以供稽核。
+*   **物理成果**:
+    - 通過 567/567 個後端測試（含新增的動態 API 測試），系統穩定性維持綠色。
+    - 解決了 SQL 遷移中的 `text = uuid` 型別斷層衝突。
+    - 達成了全系統「身分 -> 權限 -> 執行」的實體閉環治理。
+
 ### 2026-04-05: Phase 4.6.28 & 4.6.29 結案：神經橋接與系統硬化落地
 *   **今日目標 (物理落地)**:
     - **解耦完成**: Server 成功卸載 130 個重型 ML 依賴（如 `torch`），Reranking 邏輯物理轉移至 `archon-agents` 容器。

@@ -394,11 +394,18 @@ Phase 4.4.5 引入了 **Clockwork** 進行系統自動檢測。
 
         | 順序 | 檔案路徑 (migration/0.2.2/...) | 用途與說明 |
         | :--- | :--- | :--- |
-        | 1 | `01_foundation.sql` | **[重置與基礎]** 清空資料庫並建立核心表與 ENUMs。 |
-        | 2 | `02_business_schema.sql` | **[業務表結構]** 建立 CRM、專案、任務與多維 Embedding 實體欄位。 |
-        | 3 | `03_logic_security.sql` | **[邏輯與安控]** 注入 SQL Functions 與 RLS 安全政策。 |
-        | 4 | `04_seed_config.sql` | **[營運配置]** 初始化 Agent 角色與 RAG 預設參數。 |
-        | 5 | `05_seed_mock.sql` | **[種子資料]** 填充部落格文章與測試專案。 |
+        | 1 | `01_foundation_types.sql` | **[基礎]** 建立 ENUMs 與基礎數據類型。 |
+        | 2 | `02_tables_core.sql` | **[結構]** 建立核心系統表 (Settings, Profiles)。 |
+        | 3 | `03_tables_business.sql` | **[結構]** 建立業務表 (Projects, Tasks, Leads)。 |
+        | 4 | `04_tables_ops.sql` | **[結構]** 建立任務審核、日誌與營運表。 |
+        | 5 | `05_logic_functions.sql` | **[邏輯]** 注入 RAG 搜尋與業務邏輯 SQL 函式。 |
+        | 6 | `06_constraints_main.sql` | **[約束]** 定義所有表格的主鍵 (PK) 與唯一性 (Unique)。 |
+        | 7 | `07_logic_indexes.sql` | **[效能]** 建立向量索引、搜尋索引與效能優化。 |
+        | 8 | `08_logic_triggers.sql` | **[自動化]** 設定更新時戳與狀態連動 Trigger。 |
+        | 9 | `09_constraints_fkeys.sql` | **[關聯]** 定義表格間的 Foreign Key 物理連結。 |
+        | 10 | `10_security_rls.sql` | **[安控]** 開啟 RLS 並定義存取政策 (Policies)。 |
+        | 11 | `11_seed_config.sql` | **[配置]** 初始化系統參數與 RAG 預設值。 |
+        | 12 | `12_seed_rbac.sql` | **[權限]** 注入動態 RBAC 矩陣初始數據。 |
         
 3.  **階段三：執行部署**
 
