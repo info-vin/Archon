@@ -4,7 +4,7 @@ import sys
 from pathlib import Path
 
 # Add src to path
-sys.path.append(str(Path(__file__).parent.parent / "src"))
+sys.path.append(str(Path(__file__).parent.parent / "python" / "src"))
 
 from server.config.logfire_config import get_logger
 from server.services.librarian_service import LibrarianService
@@ -49,13 +49,11 @@ async def seed_knowledge():
                         with open(file_path, encoding='utf-8') as f:
                             content = f.read()
                     elif file.endswith('.pdf'):
-                        # Optional: Add PDF support here if needed
-                        # For now, just skip or print specific message
-                        import pypdf
-                        with open(file_path, 'rb') as f:
-                            reader = pypdf.PdfReader(f)
-                            for page in reader.pages:
-                                content += page.extract_text() + "\n"
+                        import pdfplumber
+                        with pdfplumber.open(file_path) as pdf:
+                            content = ""
+                            for page in pdf.pages:
+                                content += (page.extract_text() or "") + "\n"
                     else:
                         print(f"⚠️  Skipping unsupported file type: {file}")
                         continue
