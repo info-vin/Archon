@@ -9,7 +9,8 @@ from src.server.services.knowledge.knowledge_item_service import KnowledgeItemSe
 from src.server.utils import get_supabase_client
 from src.server.utils.progress.progress_tracker import ProgressTracker
 
-from ...auth.dependencies import get_current_user
+from ...auth.dependencies import requires_permission
+from ...auth.permissions import TASK_CREATE
 
 # CENTRAL TASK REGISTRY - Defined here to allow PEP8 compliant top-level imports in Facade
 active_crawl_tasks: dict[str, asyncio.Task] = {}
@@ -19,7 +20,7 @@ router: APIRouter = APIRouter()
 
 @router.get("/crawl-progress/{progress_id}")
 async def get_crawl_progress(progress_id: str):
-    """Get the current progress of a crawl or refresh operation."""
+    """Get the current progress of a crawl or refresh operation. Public within system."""
     try:
         tracker = ProgressTracker(progress_id)
         status = tracker.get_state()
@@ -34,8 +35,10 @@ async def get_crawl_progress(progress_id: str):
 
 
 @router.post("/knowledge-items/stop/{progress_id}")
-async def stop_crawl_operation(progress_id: str, current_user: dict = Depends(get_current_user)):
-    """Stop an active crawl or refresh operation."""
+async def stop_crawl_operation(
+    progress_id: str, current_user: dict = Depends(requires_permission(TASK_CREATE))
+):
+    """Stop an active crawl or refresh operation. Requires TASK_CREATE."""
     from src.server.services.crawling import unregister_orchestration
 
     try:
@@ -60,9 +63,9 @@ async def stop_crawl_operation(progress_id: str, current_user: dict = Depends(ge
 async def refresh_knowledge_item(
     source_id: str,
     x_user_role: str | None = Header(None, alias="X-User-Role"),
-    current_user: dict = Depends(get_current_user),
+    current_user: dict = Depends(requires_permission(TASK_CREATE)),
 ):
-    """Refresh an existing knowledge item by re-crawling its source."""
+    """Refresh an existing knowledge item by re-crawling its source. Requires TASK_CREATE."""
     # LATE IMPORT to share the same physical registry with other modules
     from server.services.rbac_service import RBACService
 
@@ -128,9 +131,9 @@ async def refresh_knowledge_item(
 async def crawl_knowledge_item(
     request: CrawlRequest,
     x_user_role: str | None = Header(None, alias="X-User-Role"),
-    current_user: dict = Depends(get_current_user),
+    current_user: dict = Depends(requires_permission(TASK_CREATE)),
 ):
-    """Start a new web crawl to populate the knowledge base."""
+    """Start a new web crawl to populate the knowledge base. Requires TASK_CREATE."""
     # LATE IMPORT to share the same physical registry with other modules
     from server.services.rbac_service import RBACService
 

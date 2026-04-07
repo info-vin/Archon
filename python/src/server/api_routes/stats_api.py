@@ -6,7 +6,8 @@ Delegates all business logic and aggregations to StatsService.
 
 from fastapi import APIRouter, Depends, HTTPException
 
-from ..auth.dependencies import get_current_user
+from ..auth.dependencies import requires_permission
+from ..auth.permissions import TASK_READ_TEAM
 from ..config.logfire_config import get_logger
 from ..services.stats_service import StatsService
 from ..utils import get_supabase_client
@@ -17,25 +18,12 @@ router = APIRouter(prefix="/api/stats", tags=["stats"])
 stats_service = StatsService()
 
 
-async def require_admin(user=Depends(get_current_user)):
-    if user.get("role") not in ["admin", "system_admin"]:
-        raise HTTPException(status_code=403, detail="Admin access required")
-    return user
-
-
-async def require_manager_or_admin(user=Depends(get_current_user)):
-    role = (user.get("role") or "").lower()
-    if role not in ["manager", "admin", "system_admin"]:
-        raise HTTPException(status_code=403, detail="Manager or Admin access required")
-    return user
-
-
 def calculate_ai_score(content: str, metadata: dict | None = None) -> int:
     """Delegates to StatsService (Phase 4.6.15 metadata alignment)."""
     return StatsService.calculate_ai_score(content, metadata)
 
 
-@router.get("/commander-trends", dependencies=[Depends(require_manager_or_admin)])
+@router.get("/commander-trends", dependencies=[Depends(requires_permission(TASK_READ_TEAM))])
 async def get_commander_trends():
     """Strategic 30-day trend data for Charlie."""
     try:
@@ -45,7 +33,7 @@ async def get_commander_trends():
         return []
 
 
-@router.get("/collab-synergy", dependencies=[Depends(require_manager_or_admin)])
+@router.get("/collab-synergy", dependencies=[Depends(requires_permission(TASK_READ_TEAM))])
 async def get_collab_synergy():
     """Synergy Momentum Matrix (9x9)."""
     try:
@@ -55,7 +43,7 @@ async def get_collab_synergy():
         return {"nodes": [], "matrix": [], "error": str(e)}
 
 
-@router.post("/approve-prompt-change/{version_id}", dependencies=[Depends(require_manager_or_admin)])
+@router.post("/approve-prompt-change/{version_id}", dependencies=[Depends(requires_permission(TASK_READ_TEAM))])
 async def approve_prompt_change(version_id: str):
     """Charlie approves a pending prompt change."""
     try:
@@ -69,7 +57,7 @@ async def approve_prompt_change(version_id: str):
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 
-@router.get("/knowledge-roi", dependencies=[Depends(require_manager_or_admin)])
+@router.get("/knowledge-roi", dependencies=[Depends(requires_permission(TASK_READ_TEAM))])
 async def get_knowledge_roi():
     """Knowledge Graph ROI: 60-Day Conversion Efficiency."""
     try:
@@ -79,7 +67,7 @@ async def get_knowledge_roi():
         return {"overall_conversion": 0, "trend": [], "top_domains": [], "error": str(e)}
 
 
-@router.get("/ethics-audit-queue", dependencies=[Depends(require_manager_or_admin)])
+@router.get("/ethics-audit-queue", dependencies=[Depends(requires_permission(TASK_READ_TEAM))])
 async def get_ethics_audit_queue():
     """Ethics & Prompt Audit Queue."""
     try:
@@ -110,7 +98,7 @@ async def get_ethics_audit_queue():
         return {"violations": [], "pending_versions": [], "total_pending": 0}
 
 
-@router.get("/sla-reliability", dependencies=[Depends(require_manager_or_admin)])
+@router.get("/sla-reliability", dependencies=[Depends(requires_permission(TASK_READ_TEAM))])
 async def get_sla_reliability():
     """Strategic Reliability HUD: 6-Month (180D) SLA Attainment."""
     try:
@@ -120,7 +108,7 @@ async def get_sla_reliability():
         return {"current_sla": 0, "trend": [], "error": str(e)}
 
 
-@router.get("/force-readiness", dependencies=[Depends(require_manager_or_admin)])
+@router.get("/force-readiness", dependencies=[Depends(requires_permission(TASK_READ_TEAM))])
 async def get_force_readiness():
     """Combat Power HUD: 90-Day Full Range."""
     try:
@@ -130,7 +118,7 @@ async def get_force_readiness():
         return {"baseline": 0, "trend": [], "error": str(e)}
 
 
-@router.get("/business-risks", dependencies=[Depends(require_manager_or_admin)])
+@router.get("/business-risks", dependencies=[Depends(requires_permission(TASK_READ_TEAM))])
 async def get_business_risks():
     """Sentinel Risk Radar HUD Data."""
     try:
@@ -140,7 +128,7 @@ async def get_business_risks():
         return []
 
 
-@router.get("/health-trend", dependencies=[Depends(require_manager_or_admin)])
+@router.get("/health-trend", dependencies=[Depends(requires_permission(TASK_READ_TEAM))])
 async def get_health_trend():
     """Strategic HUD Trend & Audit Data."""
     try:
@@ -153,7 +141,7 @@ async def get_health_trend():
         return {"trend": [], "audit": [], "error": str(e)}
 
 
-@router.get("/tasks-by-status", dependencies=[Depends(require_manager_or_admin)])
+@router.get("/tasks-by-status", dependencies=[Depends(requires_permission(TASK_READ_TEAM))])
 async def get_tasks_by_status():
     """Get the count of tasks grouped by status."""
     try:
@@ -169,7 +157,7 @@ async def get_tasks_by_status():
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 
-@router.get("/member-performance", dependencies=[Depends(require_manager_or_admin)])
+@router.get("/member-performance", dependencies=[Depends(requires_permission(TASK_READ_TEAM))])
 async def get_member_performance():
     """Get the count of COMPLETED tasks grouped by assignee (refactored to service)."""
     try:
@@ -179,7 +167,7 @@ async def get_member_performance():
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 
-@router.get("/agent-xp", dependencies=[Depends(require_manager_or_admin)])
+@router.get("/agent-xp", dependencies=[Depends(requires_permission(TASK_READ_TEAM))])
 async def get_agent_xp():
     """Agent Experience (XP) & Level Ranking HUD (Phase 4.6.8)."""
     try:
@@ -189,7 +177,7 @@ async def get_agent_xp():
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 
-@router.get("/system-overview", dependencies=[Depends(require_manager_or_admin)])
+@router.get("/system-overview", dependencies=[Depends(requires_permission(TASK_READ_TEAM))])
 async def get_system_overview():
     """Consolidated health and performance overview."""
     try:
@@ -199,7 +187,7 @@ async def get_system_overview():
         return {"status": "unknown", "error": str(e)}
 
 
-@router.get("/ai-usage", dependencies=[Depends(require_manager_or_admin)])
+@router.get("/ai-usage", dependencies=[Depends(requires_permission(TASK_READ_TEAM))])
 async def get_ai_usage():
     """Aggregated AI usage stats for the Nexus and Health dashboards."""
     try:
@@ -209,7 +197,7 @@ async def get_ai_usage():
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 
-@router.get("/token-usage/recent", dependencies=[Depends(require_manager_or_admin)])
+@router.get("/token-usage/recent", dependencies=[Depends(requires_permission(TASK_READ_TEAM))])
 async def get_recent_token_usage(limit: int = 20):
     """Retrieve the most recent token transactions including user names."""
     try:

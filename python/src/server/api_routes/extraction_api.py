@@ -2,7 +2,8 @@ from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException
 
-from ..auth.dependencies import get_current_user, verify_manager_role
+from ..auth.dependencies import get_current_user, requires_permission
+from ..auth.permissions import TASK_READ_TEAM
 from ..config.logfire_config import get_logger
 from ..services.extraction_service import ExtractionService
 
@@ -10,7 +11,7 @@ logger = get_logger(__name__)
 router = APIRouter(prefix="/api/extraction", tags=["Extraction"])
 
 
-@router.post("/analyze", dependencies=[Depends(verify_manager_role)])
+@router.post("/analyze", dependencies=[Depends(requires_permission(TASK_READ_TEAM))])
 async def analyze_url(request: dict[str, str]) -> dict[str, Any]:
     """
     Analyze a URL to discover potential data fields.
@@ -28,14 +29,14 @@ async def analyze_url(request: dict[str, str]) -> dict[str, Any]:
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 
-@router.get("/schemas", dependencies=[Depends(verify_manager_role)])
+@router.get("/schemas", dependencies=[Depends(requires_permission(TASK_READ_TEAM))])
 async def list_schemas() -> list[dict[str, Any]]:
     """List all extraction schemas."""
     service = ExtractionService()
     return await service.list_schemas()
 
 
-@router.get("/schemas/{schema_id}", dependencies=[Depends(verify_manager_role)])
+@router.get("/schemas/{schema_id}", dependencies=[Depends(requires_permission(TASK_READ_TEAM))])
 async def get_schema(schema_id: str) -> dict[str, Any]:
     """Get a single schema by ID."""
     service = ExtractionService()
@@ -45,7 +46,7 @@ async def get_schema(schema_id: str) -> dict[str, Any]:
     return schema
 
 
-@router.post("/schemas", dependencies=[Depends(verify_manager_role)])
+@router.post("/schemas", dependencies=[Depends(requires_permission(TASK_READ_TEAM))])
 async def create_schema(request: dict[str, Any], current_user: dict = Depends(get_current_user)) -> dict[str, Any]:
     """Create a new extraction schema."""
     service = ExtractionService()
@@ -56,7 +57,7 @@ async def create_schema(request: dict[str, Any], current_user: dict = Depends(ge
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 
-@router.patch("/schemas/{schema_id}", dependencies=[Depends(verify_manager_role)])
+@router.patch("/schemas/{schema_id}", dependencies=[Depends(requires_permission(TASK_READ_TEAM))])
 async def update_schema(schema_id: str, request: dict[str, Any]) -> dict[str, Any]:
     """Update an existing schema."""
     service = ExtractionService()
@@ -67,7 +68,7 @@ async def update_schema(schema_id: str, request: dict[str, Any]) -> dict[str, An
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 
-@router.delete("/schemas/{schema_id}", dependencies=[Depends(verify_manager_role)])
+@router.delete("/schemas/{schema_id}", dependencies=[Depends(requires_permission(TASK_READ_TEAM))])
 async def delete_schema(schema_id: str) -> dict[str, bool]:
     """Delete a schema."""
     service = ExtractionService()
@@ -75,7 +76,7 @@ async def delete_schema(schema_id: str) -> dict[str, bool]:
     return {"success": True}
 
 
-@router.post("/run", dependencies=[Depends(verify_manager_role)])
+@router.post("/run", dependencies=[Depends(requires_permission(TASK_READ_TEAM))])
 async def run_extraction(request: dict[str, str], current_user: dict = Depends(get_current_user)) -> dict[str, Any]:
     """
     Triggers an actual data extraction task.

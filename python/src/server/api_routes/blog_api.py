@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from ..auth.dependencies import get_current_user
+from ..auth.dependencies import requires_permission
+from ..auth.permissions import CONTENT_PUBLISH, CONTENT_REJECT
 from ..models.blog import BlogPostResponse, CreateBlogPostRequest, UpdateBlogPostRequest
 from ..services.blog_service import BlogService
-from ..services.rbac_service import RBACService
 
 router = APIRouter(prefix="/api/blogs", tags=["blog"])
 
@@ -14,7 +14,7 @@ def get_blog_service():
 
 @router.get("", response_model=list[BlogPostResponse])
 async def get_blog_posts(service: BlogService = Depends(get_blog_service)):
-    """Get all blog posts."""
+    """Get all blog posts. Public access."""
     success, result = await service.list_posts()
     if not success:
         raise HTTPException(
@@ -25,7 +25,7 @@ async def get_blog_posts(service: BlogService = Depends(get_blog_service)):
 
 @router.get("/{post_id}", response_model=BlogPostResponse)
 async def get_blog_post(post_id: str, service: BlogService = Depends(get_blog_service)):
-    """Get a single blog post by ID."""
+    """Get a single blog post by ID. Public access."""
     success, result = await service.get_post(post_id)
     if not success:
         if result.get("error") == "Post not found.":
@@ -39,16 +39,10 @@ async def get_blog_post(post_id: str, service: BlogService = Depends(get_blog_se
 @router.post("", response_model=BlogPostResponse)
 async def create_blog_post(
     request: CreateBlogPostRequest,
-    current_user: dict = Depends(get_current_user),
+    current_user: dict = Depends(requires_permission(CONTENT_PUBLISH)),
     service: BlogService = Depends(get_blog_service),
 ):
-    """Create a new blog post."""
-    rbac_service = RBACService()
-    user_role = current_user.get("role", "viewer")
-
-    if not rbac_service.can_manage_content(user_role):
-        raise HTTPException(status_code=403, detail="Forbidden: You do not have permission to create blog posts.")
-
+    """Create a new blog post. Requires CONTENT_PUBLISH permission."""
     post_data = request.model_dump(mode="json", exclude={"id"})
     success, result = await service.create_post(post_data)
     if not success:
@@ -60,16 +54,10 @@ async def create_blog_post(
 async def update_blog_post(
     post_id: str,
     request: UpdateBlogPostRequest,
-    current_user: dict = Depends(get_current_user),
+    current_user: dict = Depends(requires_permission(CONTENT_PUBLISH)),
     service: BlogService = Depends(get_blog_service),
 ):
-    """Update an existing blog post."""
-    rbac_service = RBACService()
-    user_role = current_user.get("role", "viewer")
-
-    if not rbac_service.can_manage_content(user_role):
-        raise HTTPException(status_code=403, detail="Forbidden: You do not have permission to update blog posts.")
-
+    """Update an existing blog post. Requires CONTENT_PUBLISH permission."""
     update_data = request.model_dump(mode="json", exclude_unset=True)
     success, result = await service.update_post(post_id, update_data)
     if not success:
@@ -81,16 +69,10 @@ async def update_blog_post(
 async def update_blog_post_status(
     post_id: str,
     request: dict,
-    current_user: dict = Depends(get_current_user),
+    current_user: dict = Depends(requires_permission(CONTENT_PUBLISH)),
     service: BlogService = Depends(get_blog_service),
 ):
-    """Update the status of an existing blog post."""
-    rbac_service = RBACService()
-    user_role = current_user.get("role", "viewer")
-
-    if not rbac_service.can_manage_content(user_role):
-        raise HTTPException(status_code=403, detail="Forbidden: You do not have permission to update blog status.")
-
+    """Update the status of an existing blog post. Requires CONTENT_PUBLISH permission."""
     status_val = request.get("status")
     if not status_val:
         raise HTTPException(status_code=400, detail="Status value is required.")
@@ -103,15 +85,11 @@ async def update_blog_post_status(
 
 @router.delete("/{post_id}", status_code=204)
 async def delete_blog_post(
-    post_id: str, current_user: dict = Depends(get_current_user), service: BlogService = Depends(get_blog_service)
+    post_id: str,
+    current_user: dict = Depends(requires_permission(CONTENT_REJECT)),
+    service: BlogService = Depends(get_blog_service),
 ):
-    """Delete a blog post."""
-    rbac_service = RBACService()
-    user_role = current_user.get("role", "viewer")
-
-    if not rbac_service.can_manage_content(user_role):
-        raise HTTPException(status_code=403, detail="Forbidden: You do not have permission to delete blog posts.")
-
+    """Delete a blog post. Requires CONTENT_REJECT permission."""
     success, result = await service.delete_post(post_id)
     if not success:
         raise HTTPException(status_code=404, detail=result.get("error"))

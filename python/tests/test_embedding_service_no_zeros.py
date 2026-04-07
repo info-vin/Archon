@@ -192,7 +192,7 @@ class TestNoZeroEmbeddings:
 
     @pytest.mark.asyncio
     async def test_default_embedding_dimensions(self) -> None:
-        """Test that default dimensions (1536) are used when not configured."""
+        """Test that default dimensions (768) are used when not configured."""
         # Mock successful response
         mock_client = MagicMock()
         mock_client.aclose = AsyncMock()
@@ -201,7 +201,7 @@ class TestNoZeroEmbeddings:
 
         # Setup mock response with default dimensions
         mock_response = Mock()
-        mock_response.data = [Mock(embedding=[0.1] * 1536)]
+        mock_response.data = [Mock(embedding=[0.1] * 768)]
         mock_create.return_value = mock_response
 
         primary_config = {"provider": "openai", "embedding_model": "text-embedding-3-small", "api_key": "key-ok"}
@@ -224,11 +224,11 @@ class TestNoZeroEmbeddings:
             # Verify the default dimensions parameter was used
             mock_create.assert_called_once()
             call_args = mock_create.call_args
-            assert call_args.kwargs["dimensions"] == 1536
+            assert call_args.kwargs["dimensions"] == 768
 
             # Verify result
             assert result.success_count == 1
-            assert len(result.embeddings[0]) == 1536
+            assert len(result.embeddings[0]) == 768
 
     @pytest.mark.asyncio
     async def test_batch_quota_exhausted_stops_process(self) -> None:

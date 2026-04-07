@@ -12,7 +12,8 @@ from src.server.services.storage.storage_services import DocumentStorageService
 from src.server.utils.document_processing import extract_text_from_document
 from src.server.utils.progress.progress_tracker import ProgressTracker
 
-from ...auth.dependencies import get_current_user
+from ...auth.dependencies import requires_permission
+from ...auth.permissions import TASK_CREATE
 
 # Domain State
 from . import active_crawl_tasks
@@ -27,9 +28,9 @@ async def upload_document(
     knowledge_type: str = Form("technical"),
     tags: str = Form("[]"),
     x_user_role: str | None = Header(None, alias="X-User-Role"),
-    current_user: dict = Depends(get_current_user),
+    current_user: dict = Depends(requires_permission(TASK_CREATE)),
 ):
-    """Upload a document and process it into knowledge chunks."""
+    """Upload a document and process it into knowledge chunks. Requires TASK_CREATE."""
     try:
         tag_list = json.loads(tags)
         progress_id = str(uuid.uuid4())

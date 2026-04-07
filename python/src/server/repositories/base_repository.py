@@ -12,6 +12,17 @@ logger = get_logger(__name__)
 class BaseRepository:
     def __init__(self, supabase_client: Client | None = None):
         self.supabase_client = supabase_client or get_supabase_client()
+        self._token: str | None = None
+
+    def set_user_context(self, token: str) -> "BaseRepository":
+        """
+        注入使用者的 JWT Token，確保後續查詢能觸發資料庫層的 RLS。
+        """
+        if token:
+            self._token = token
+            # 物理加固：更新 Supabase Client 的 Authorization 標頭
+            self.supabase_client.postgrest.auth(token)
+        return self
 
     def execute_query(
         self, query_func: Callable[[], Any], error_context: str = "Query failed", require_data: bool = False

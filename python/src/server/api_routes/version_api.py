@@ -9,7 +9,8 @@ import logfire
 from fastapi import APIRouter, Depends, Header, HTTPException, Response
 from pydantic import BaseModel
 
-from ..auth.dependencies import get_current_user
+from ..auth.dependencies import requires_permission
+from ..auth.permissions import TASK_READ_TEAM
 from ..config.version import ARCHON_VERSION
 from ..services.version_service import version_service
 from ..utils.etag_utils import check_etag, generate_etag
@@ -52,14 +53,12 @@ router = APIRouter(prefix="/api/version", tags=["version"])
 
 
 @router.get("/documents", response_model=list[dict[str, Any]])
-async def get_document_versions(limit: int = 50, current_user: dict = Depends(get_current_user)):
+async def get_document_versions(
+    limit: int = 50, current_user: dict = Depends(requires_permission(TASK_READ_TEAM))
+):
     """
-    Fetch historical versions of project documents (Admin only).
+    Fetch historical versions of project documents. Requires TASK_READ_TEAM.
     """
-    user_role = current_user.get("role", "viewer").lower()
-    if user_role not in ["admin", "system_admin"]:
-        raise HTTPException(status_code=403, detail="Admin access required")
-
     try:
         from ..utils import get_supabase_client
 

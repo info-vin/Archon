@@ -1,36 +1,25 @@
-from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel
 
-from ..auth.dependencies import get_current_user
+from ..auth.dependencies import requires_permission
+from ..auth.permissions import TASK_READ_TEAM
 from ..config.logfire_config import get_logger
 from ..utils import get_supabase_client
+from .models_ethics import EthicsEvent
 
 logger = get_logger(__name__)
 
 router = APIRouter(prefix="/api/ethics", tags=["ethics"])
 
 
-class EthicsEvent(BaseModel):
-    id: str
-    severity: str
-    event_type: str
-    description: str | None
-    raw_input: str | None
-    created_at: datetime
-
-
 @router.get("/events", response_model=list[EthicsEvent])
-async def get_ethics_events(limit: int = 20, current_user: dict = Depends(get_current_user)):
+async def get_ethics_events(
+    limit: int = 20, current_user: dict = Depends(requires_permission(TASK_READ_TEAM))
+):
     """
     Get recent ethics violation events.
-    Only accessible by Managers and Admins.
+    Accessible by roles with TASK_READ_TEAM scope (Managers/Admins).
     """
-    user_role = current_user.get("role", "viewer").lower()
-    if user_role not in ["manager", "system_admin", "admin"]:
-        raise HTTPException(status_code=403, detail="Insufficient permissions.")
-
     try:
         supabase = get_supabase_client()
         # Order by created_at desc
