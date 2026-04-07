@@ -97,9 +97,10 @@ class HealthService(BaseRepository):
         rag = RAGService()
         search_ok = False
         try:
-            test_search, _ = await rag.search_documents(query="Archon", match_count=1)
+            test_search = await rag.search_documents(query="Archon", match_count=1)
             search_ok = len(test_search) > 0 if isinstance(test_search, list) else False
-        except Exception:
+        except Exception as e:
+            logger.error(f"Probe Search Check failed: {e}")
             search_ok = False
 
         search_score = 15.0 if search_ok else 0.0

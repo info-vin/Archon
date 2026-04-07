@@ -174,7 +174,7 @@ async def create_embeddings_batch(
 
                     rag_settings = await credential_service.get_credentials_by_category("rag_strategy")
                     batch_size = int(rag_settings.get("EMBEDDING_BATCH_SIZE", "100"))
-                    embedding_dimensions = int(rag_settings.get("EMBEDDING_DIMENSIONS", "1536"))
+                    embedding_dimensions = int(rag_settings.get("EMBEDDING_DIMENSIONS", "768"))
 
                     all_batches_succeeded_for_provider = True
                     for i in range(0, len(texts), batch_size):
