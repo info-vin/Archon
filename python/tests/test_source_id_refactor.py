@@ -293,7 +293,7 @@ class TestRaceConditionFix:
         id2 = handler.generate_unique_source_id(url2)
 
         # IDs should be completely different (good hash distribution)
-        matching_chars = sum(1 for a, b in zip(id1, id2, strict=False) if a == b)
+        matching_chars = len([1 for a, b in zip(id1, id2, strict=False) if a == b])
         assert matching_chars < 8, (
             f"Similar URLs should generate very different hashes, {matching_chars}/16 chars match"
         )

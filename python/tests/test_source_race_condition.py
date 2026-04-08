@@ -204,8 +204,8 @@ class TestSourceRaceCondition:
         assert len(operations) == 10, "All 10 operations should complete"
 
         # Check that we tried to upsert the two sources multiple times
-        source_0_count = sum(1 for op, sid in operations if sid == "async_source_0")
-        source_1_count = sum(1 for op, sid in operations if sid == "async_source_1")
+        source_0_count = len([1 for op, sid in operations if sid == "async_source_0"])
+        source_1_count = len([1 for op, sid in operations if sid == "async_source_1"])
 
         assert source_0_count == 5, "async_source_0 should be upserted 5 times"
         assert source_1_count == 5, "async_source_1 should be upserted 5 times"

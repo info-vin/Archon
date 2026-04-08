@@ -42,7 +42,7 @@ async def health_check_endpoint(
                     "last_checked": None,
                 }
 
-        healthy_count = sum(1 for result in health_results.values() if result["is_healthy"])
+        healthy_count = len([1 for result in health_results.values() if result["is_healthy"]])
         avg_response_time = None
         if healthy_count > 0:
             response_times = cast(
