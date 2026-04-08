@@ -129,7 +129,7 @@ export const VisitLogModal: React.FC<VisitLogModalProps> = ({ onClose, onSuccess
             <div className="bg-white rounded-t-2xl sm:rounded-xl shadow-xl w-full max-w-md p-6 animate-in slide-in-from-bottom-10 sm:slide-in-from-bottom-0 sm:zoom-in-95 duration-200">
                 <div className="flex justify-between items-center mb-6">
                     <h3 className="text-xl font-bold">New Visit Log</h3>
-                    <button onClick={onClose} aria-label="Close modal" className="focus-visible:ring-2 focus-visible:ring-indigo-500 rounded-full outline-none"><XIcon className="w-6 h-6 text-gray-400" /></button>
+                    <button onClick={onClose} aria-label="Close modal" title="Close modal" className="focus-visible:ring-2 focus-visible:ring-indigo-500 rounded-full outline-none"><XIcon className="w-6 h-6 text-gray-400" /></button>
                 </div>
 
                 {step === 'type' && (
@@ -158,7 +158,7 @@ export const VisitLogModal: React.FC<VisitLogModalProps> = ({ onClose, onSuccess
                                 <div className={`flex-1 p-3 rounded-lg border ${location ? 'bg-green-50 border-green-200 text-green-800' : 'bg-gray-50 border-gray-200 text-gray-500'}`}>
                                     {location ? `${location.lat.toFixed(4)}, ${location.lng.toFixed(4)}` : "No location data"}
                                 </div>
-                                <button onClick={handleLocation} className="p-3 bg-gray-100 rounded-lg hover:bg-gray-200 text-gray-700">
+                                <button onClick={handleLocation} aria-label="Get current location" title="Get current location" className="p-3 bg-gray-100 rounded-lg hover:bg-gray-200 text-gray-700">
                                     <MapPinIcon className="w-5 h-5" />
                                 </button>
                             </div>
@@ -199,7 +199,7 @@ export const VisitLogModal: React.FC<VisitLogModalProps> = ({ onClose, onSuccess
                                         <p className="text-sm font-bold text-gray-800 truncate">{audioFile?.name}</p>
                                         <p className="text-xs text-gray-500">Ready to upload</p>
                                     </div>
-                                    <button onClick={clearAudio} className="p-2 hover:bg-red-100 rounded-full text-red-500 transition-colors">
+                                    <button onClick={clearAudio} aria-label="Remove audio recording" title="Remove audio recording" className="p-2 hover:bg-red-100 rounded-full text-red-500 transition-colors">
                                         <TrashIcon className="w-4 h-4" />
                                     </button>
                                 </div>
