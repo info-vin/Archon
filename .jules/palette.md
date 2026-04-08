@@ -13,3 +13,7 @@
 ## 2026-04-02 - [Dynamic ARIA labels for loading states]
 **Learning:** Screen readers might not correctly announce the changing state of a button if its inner text changes during async operations (like from 'Reconnect' to 'Connecting...').
 **Action:** Always provide a dynamic `aria-label` that reflects the current loading state of the button.
+
+## 2026-04-08 - Explicit Form Associations for Textareas
+**Learning:** React labels without `htmlFor` attributes paired with textareas missing `id` attributes prevent clicking the label text from focusing the input. This harms accessibility and user experience for screen readers and those relying on pointer devices.
+**Action:** Always explicitly link `<label>` elements to their inputs (like `<textarea>`) using `htmlFor` and `id` pairs to ensure interactive form accessibility.

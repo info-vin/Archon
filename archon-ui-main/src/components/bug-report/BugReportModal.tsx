@@ -281,10 +281,11 @@ export const BugReportModal: React.FC<BugReportModalProps> = ({
 
                 {/* Description */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  <label htmlFor="bug-description" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     What were you trying to do? *
                   </label>
                   <textarea
+                    id="bug-description"
                     value={report.description}
                     onChange={(e) =>
                       setReport((r) => ({ ...r, description: e.target.value }))
@@ -298,10 +299,11 @@ export const BugReportModal: React.FC<BugReportModalProps> = ({
 
                 {/* Steps to Reproduce */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  <label htmlFor="bug-steps" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Steps to Reproduce
                   </label>
                   <textarea
+                    id="bug-steps"
                     value={report.stepsToReproduce}
                     onChange={(e) =>
                       setReport((r) => ({
@@ -318,10 +320,11 @@ export const BugReportModal: React.FC<BugReportModalProps> = ({
                 {/* Expected vs Actual Behavior */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    <label htmlFor="bug-expected" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       Expected Behavior
                     </label>
                     <textarea
+                      id="bug-expected"
                       value={report.expectedBehavior}
                       onChange={(e) =>
                         setReport((r) => ({
@@ -336,10 +339,11 @@ export const BugReportModal: React.FC<BugReportModalProps> = ({
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    <label htmlFor="bug-actual" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       Actual Behavior
                     </label>
                     <textarea
+                      id="bug-actual"
                       value={report.actualBehavior}
                       onChange={(e) =>
                         setReport((r) => ({
