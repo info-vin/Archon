@@ -25,6 +25,7 @@
 | 13. **資料庫語意化整併** | 當 Migration 腳本碎片化過多時，應使用 `pg_dump` 抽出當下完美結構，並以「語意化終極整併 (Semantic True Consolidation)」重構。放棄單純時序拼接（避免先 CREATE 又 ALTER 的冗餘），而是按照外鍵順序（設定 -> 核心表 -> 關聯表 -> 函數與安控）改寫為 5~6 個純淨的最終態檔案，並刪除舊債。 |
 | 14. **絕對雲原生意識** | 專案連接的是雲端服務 (如 Supabase Cloud)，並非本地容器。嚴禁嘗試用 `docker exec psql` 強行修正資料庫狀態。正確作法是產出 SQL 修正檔並請求使用者在雲端執行。 |
 | 15. **環境與硬體對齊 (Intel Mac 警示)** | 涉及 ML 模型 (如 Torch, Rerank) 時，嚴禁假設所有開發環境為 M1/M2。必須鎖定 NumPy 為 1.x (如 `1.26.4`) 以相容舊架構，並實施物理探針 (`docker exec`) 驗證模型載入秒數。拒絕在未經 x86_64 驗證的情況下宣稱「效能優化」。 |
+| 16. **拒絕路由幻想 (API Route Sovereignty)** | 嚴禁假設 API 路由存在（如 `/login`）。必須讀取 `main.py` 與 `api_routes/` 檔案公證實體路徑。目前 Archon Server **不處理** 登入請求（由前端與 Supabase 直連），僅處理具備 JWT 的業務邏輯與管理操作。 |
 
 ---
 
@@ -546,6 +547,10 @@ Phase 4.4.5 引入了 **Clockwork** 進行系統自動檢測。
 **解決方案**:
 1.  **強制重置**: 手動執行 `RESET_DB.sql` (這會刪除所有表包含 `schema_migrations`)。
 2.  **重新初始化**: 再次執行 `make db-init`。
+3.  **恢復 RAG 知識**: 若 `make probe` 分數過低，請執行：
+    ```bash
+    docker exec archon-server python scripts/seed_knowledge.py
+    ```
 
 **Docker 快速指令**:
 ```bash

@@ -116,7 +116,8 @@
 
 *   **14. 跨環境動態路徑偵測 (Cross-Env Path Resilience)**
     *   **核心**: 在 Docker 容器化環境中，絕對路徑與相對路徑（如 `../../../../migration`）的行為與宿主機不同。
-    *   **教訓**: 尋找系統事實來源（如 `migration/` 資料夾）時，必須採用「多路徑探測法（Physical Search Strategy）」，優先嘗試 Docker 內部絕對路徑（`/app/migration`）與多級相對路徑，確保代碼在開發機與生產容器中均能準確獲取版本資訊。
+    *   **教訓**: 尋找系統事實來源（如 `migration/` 或 `frontend_public`）時，必須採用「多路徑陣列探測法（Multi-Path Array Probing）」，同時定義 Host 相對路徑、Docker 絕對路徑與根目錄相對路徑，確保代碼具備環境自適應能力。
+    *   **範例**: `POSSIBLE_DIRS = ["../enduser-ui-fe/public", "/app/frontend_public", "enduser-ui-fe/public"]`。
 
 *   **15. 設定的可見性與系統保護 (Settings Visibility & Hardening)**
     *   **核心**: 資料庫中的 `archon_settings` 表承載了從 AI 金鑰到內部營運參數的所有配置。
