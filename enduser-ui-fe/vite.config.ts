@@ -29,6 +29,7 @@ export default defineConfig(({ mode }) => {
         host: '0.0.0.0',
         port: 5173,
         allowedHosts: true,
+        hmr: isDocker ? false : undefined,
         proxy: {
           '/api': {
             target: `http://${proxyHost}:${port}`,
@@ -54,6 +55,11 @@ export default defineConfig(({ mode }) => {
       },
       build: {
         emptyOutDir: true,
+      },
+      preview: {
+        host: '0.0.0.0',
+        port: 5173,
+        strictPort: true,
       },
       test: {
         globals: true,

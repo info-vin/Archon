@@ -179,7 +179,7 @@ services:
     ports:
       - "${ARCHON_UI_PORT:-3737}:3737"
     environment:
-      - VITE_API_URL=http://${HOST:-localhost}:${ARCHON_SERVER_PORT:-8181}
+      - VITE_API_URL=http://archon-server:8181
       - VITE_ARCHON_SERVER_PORT=${ARCHON_SERVER_PORT:-8181}
       - ARCHON_SERVER_PORT=${ARCHON_SERVER_PORT:-8181}
       - HOST=${HOST:-localhost}
@@ -210,7 +210,7 @@ services:
     ports:
       - "${ENDUSER_UI_PORT:-5173}:5173"
     environment:
-      - VITE_API_URL=http://${HOST:-localhost}:${ARCHON_SERVER_PORT:-8181}
+      - VITE_API_URL=http://archon-server:8181
       - VITE_ARCHON_SERVER_PORT=${ARCHON_SERVER_PORT:-8181}
       - VITE_SUPABASE_URL=${SUPABASE_URL}
       - VITE_SUPABASE_ANON_KEY=${SUPABASE_SERVICE_KEY}
@@ -224,7 +224,7 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 60s
+      start_period: 180s
     volumes:
       - ./enduser-ui-fe/src:/app/src
       - ./enduser-ui-fe/public:/app/public
@@ -246,19 +246,18 @@ services:
       - GEMINI_API_KEY=${GEMINI_API_KEY}
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - TWIN_SCOUT_TASK=${TWIN_SCOUT_TASK}
-      - SCOUT_PROMPT_KEY=${SCOUT_PROMPT_KEY}
+      - SCOUT_PROMPT_KEY=${SCOUT_PROMPT_KEY:-twin_scout_mission}
       - SUPABASE_URL=${SUPABASE_URL}
       - SUPABASE_SERVICE_KEY=${SUPABASE_SERVICE_KEY}
+      - ARCHON_SERVER_URL=http://archon-server:8181
+      - ENDUSER_UI_URL=http://enduser-ui:5173
     depends_on:
       archon-server:
         condition: service_healthy
-        required: false
       archon-frontend:
         condition: service_healthy
-        required: false
       enduser-frontend:
         condition: service_healthy
-        required: false
     networks:
       - app-network
     volumes:

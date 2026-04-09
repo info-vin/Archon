@@ -6,37 +6,29 @@ CREATE TABLE IF NOT EXISTS public.archon_roles_permissions (
     role TEXT PRIMARY KEY,
     permissions TEXT[] NOT NULL DEFAULT '{}',
     description TEXT,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
-    is_system_protected BOOLEAN DEFAULT false -- Prevent deletion of core roles
+    is_system_protected BOOLEAN DEFAULT false,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Enable RLS
-ALTER TABLE public.archon_roles_permissions ENABLE ROW LEVEL SECURITY;
-
--- Policy: Only Admins can modify the matrix
-
-
--- Policy: Authenticated users can read the matrix
-
-
--- 2. Seed Initial Data (Mirrored from permissions.py current state)
+-- 2. Seed Initial Dynamic Matrix (SSOT)
 INSERT INTO public.archon_roles_permissions (role, permissions, description, is_system_protected)
 VALUES 
 ('system_admin', 
- ARRAY['task:create', 'task:read:own', 'task:read:team', 'task:read:all', 'task:update:own', 'task:update:all', 'agent:trigger:dev', 'agent:trigger:mkt', 'agent:trigger:know', 'code:approve', 'content:publish', 'content:reject', 'info:request', 'stats:view:own', 'stats:view:team', 'stats:view:all', 'leads:view:all', 'user:manage', 'mcp:manage', 'brand:manage', 'user:manage:team'], 
- 'Full system access', true),
-('admin', 
- ARRAY['task:create', 'task:read:own', 'task:read:team', 'task:read:all', 'task:update:own', 'task:update:all', 'agent:trigger:dev', 'agent:trigger:mkt', 'agent:trigger:know', 'code:approve', 'content:publish', 'content:reject', 'info:request', 'stats:view:own', 'stats:view:team', 'stats:view:all', 'leads:view:all', 'user:manage', 'mcp:manage', 'brand:manage', 'user:manage:team'], 
- 'Alias for system_admin', true),
+ ARRAY['task:create', 'task:read:own', 'task:read:team', 'task:read:all', 'task:update:own', 'task:update:all', 'task:delete', 'user:manage', 'user:manage:team', 'mcp:manage', 'stats:view:own', 'stats:view:team', 'stats:view:all', 'agent:trigger:dev', 'agent:trigger:mkt', 'agent:trigger:know', 'leads:view:all', 'content:publish', 'content:reject', 'info:request', 'brand:manage'], 
+ 'System Administrator with full access', true),
 ('manager', 
- ARRAY['task:create', 'task:read:team', 'task:update:own', 'agent:trigger:dev', 'agent:trigger:mkt', 'agent:trigger:know', 'code:approve', 'content:publish', 'content:reject', 'info:request', 'stats:view:team', 'leads:view:all', 'user:manage:team', 'mcp:manage', 'brand:manage'], 
- 'Team manager role', true),
+ ARRAY['task:create', 'task:read:team', 'task:update:own', 'user:manage:team', 'agent:trigger:mkt', 'agent:trigger:know', 'stats:view:team', 'leads:view:all', 'brand:manage', 'code:approve', 'mcp:manage', 'content:publish', 'content:reject', 'info:request'], 
+ 'Department manager', true),
 ('sales', 
- ARRAY['task:create', 'task:read:own', 'task:read:team', 'task:update:own', 'agent:trigger:mkt', 'leads:view:all'], 
+ ARRAY['task:create', 'task:read:own', 'task:read:team', 'task:update:own', 'agent:trigger:mkt', 'leads:view:all', 'leads:view:sales', 'stats:view:own'], 
  'Sales persona Alice', true),
 ('marketing', 
  ARRAY['task:create', 'task:read:own', 'task:read:team', 'task:update:own', 'agent:trigger:mkt', 'agent:trigger:know', 'stats:view:own', 'leads:view:all', 'brand:manage', 'info:request'], 
  'Marketing persona Bob', true),
+('ai_agent', 
+ ARRAY['task:read:own', 'task:read:team', 'agent:trigger:know', 'stats:view:own'], 
+ 'Automated agents like DevBot', true),
 ('employee', 
  ARRAY['task:create', 'task:read:own', 'task:update:own', 'agent:trigger:know', 'stats:view:own'], 
  'Generic employee', true)

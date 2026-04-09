@@ -46,21 +46,24 @@ async def get_current_user(token: Annotated[str, Depends(get_token)]) -> dict:
     # 2. Retrieve Context (Authorization)
     # We need the Role from the 'profiles' table, not just the Auth user
     profile_service = ProfileService()
-    success, profile = profile_service.get_profile(user_id)
+    try:
+        success, profile = profile_service.get_profile(user_id)
+        if success and profile:
+            return cast(dict[str, Any], profile)
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).warning(f"⚠️ Profile fetch failed for {user_id}: {e}. Falling back to metadata.")
 
-    if not success or not profile:
-        # Fallback: If profile doesn't exist yet (rare race condition),
-        # return basic auth info with default role.
-        # Try to get role from user_metadata first.
-        fallback_role = "employee"
-        if hasattr(auth_user, "user_metadata") and auth_user.user_metadata:
-            metadata_role = auth_user.user_metadata.get("role")
-            if metadata_role:
-                fallback_role = metadata_role
+    # Fallback: If profile doesn't exist yet (rare race condition or seed mismatch),
+    # return basic auth info with default role.
+    # Try to get role from user_metadata first.
+    fallback_role = "employee"
+    if hasattr(auth_user, "user_metadata") and auth_user.user_metadata:
+        metadata_role = auth_user.user_metadata.get("role")
+        if metadata_role:
+            fallback_role = metadata_role
 
-        return {"id": user_id, "email": auth_user.email, "role": fallback_role}
-
-    return cast(dict[str, Any], profile)  # Should contain 'role' field
+    return {"id": user_id, "email": auth_user.email, "role": fallback_role}
 
 
 async def get_current_user_optional(token: Annotated[str | None, Depends(get_token_optional)]) -> dict | None:
@@ -129,6 +132,11 @@ def requires_permission(permission: str):
         role = current_user.get("role", "").lower()
         # Phase 4.6.31: Switch to Dynamic RBAC Matrix via RBACService
         user_permissions = await RBACService().get_role_permissions(role)
+
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.info(f"🛡️ [RBAC Check] User: {current_user.get('email')} | Role: {role} | Checking: {permission}")
+        logger.info(f"🔑 [RBAC Matrix] Available for {role}: {user_permissions}")
 
         if permission not in user_permissions:
             raise HTTPException(

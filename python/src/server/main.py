@@ -219,6 +219,17 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+@app.exception_handler(Exception)
+async def global_exception_handler(request, exc):
+    import traceback
+    api_logger.error(f"🔥 Global Crash on {request.url.path}: {str(exc)}")
+    api_logger.error(traceback.format_exc())
+    from fastapi.responses import JSONResponse
+    return JSONResponse(
+        status_code=500,
+        content={"message": "Internal Server Error", "detail": str(exc)},
+    )
+
 # Configure CORS
 origins = [
     "https://archon-ui-wiwy.onrender.com",
@@ -226,6 +237,8 @@ origins = [
     "http://localhost:5173",
     "http://localhost:3000",
     "http://localhost:3737",
+    "http://enduser-ui:5173",
+    "http://archon-ui:3737",
 ]
 app.add_middleware(
     CORSMiddleware,
@@ -271,7 +284,7 @@ app.include_router(admin_router)  # NEW ROUTER
 app.include_router(auth_router)
 app.include_router(blog_router)
 app.include_router(bug_report_router)
-app.include_router(changes_router, prefix="/api")
+app.include_router(changes_router)
 app.include_router(log_router)
 app.include_router(ethics_router)
 app.include_router(files_router)

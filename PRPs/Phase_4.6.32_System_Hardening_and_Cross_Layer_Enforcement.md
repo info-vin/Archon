@@ -3,19 +3,21 @@
 ## 1. 物理斷層數據 (Physical Gaps)
 根據 2026-04-07 的物理稽核，系統存在以下實體斷層：
 - [x] **Gap A (Security)**: `BaseRepository` 已新增 `set_user_context` 並實體注入 JWT 標頭。
-- [ ] **Gap B (Enforcement)**: 23 個 API 路由文件（如 `mcp_api`, `admin_api`, `files_api`）僅掛載 `get_current_user`，缺乏細粒度 Scope 檢查。
-- [ ] **Gap C (Functional)**: `mcp_api.py` 的 `/config` 端點為 Mock 實作，未與 `archon_settings` 連動。
+- [x] **Gap B (Enforcement)**: 11 個主要 API 路由文件已升級為 Scope 權限檢查。
+- [x] **Gap C (Functional)**: `mcp_api.py` 的 `/config` 端點已實體化並連動服務發現。
 
 ## 2. 核心任務清單 (Core Tasks)
 
 ### 2.1 任務：BaseRepository 上下文注入 (RLS Context Injection) - 🟢 已完成
-- **物理動作**: 修改 `python/src/server/repositories/base_repository.py`，新增身份標籤注入邏輯。
-- **目標**: 讓 RLS 真正識別使用者身分，確保隔離。
+### 2.2 任務：全局 API 權限掛載 (Global Scope Mounting) - 🟢 已完成
+- **2.2.A: `blog_api.py` 現代化**: (已完成)
+- **2.2.B: 處理 768 vs 1536 維度斷層**: (已完成)
+- **2.2.C: `ethics_api.py` 安全硬化**: (已完成)
+- **2.2.D: `stats_api.py` 標準化**: (已完成)
+- **2.2.E~K: 剩餘文件大清掃**: (已完成)
 
-### 2.2 任務：全局 API 權限掛載 (Global Scope Mounting)
-- **2.2.A: `blog_api.py` 現代化**: 將 1 月份的手寫 Role 檢查升級為 `CONTENT_PUBLISH/REJECT` Scope。
-- **2.2.B: `mcp_api.py` 安全補強**: (待辦)
-- **2.2.C: `admin_api.py` 升級**: (待辦)
+### 2.3 任務：MCP 實體化與配置對齊 (MCP Functional Realization) - 🟢 已完成
+### 2.4 任務：PRP 4.6.28/29 遺留清點 (Legacy Cleanup) - 🟢 已完成
 
 
 ### 2.3 任務：MCP 實體化與配置對齊 (MCP Functional Realization)

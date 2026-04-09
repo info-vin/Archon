@@ -63,7 +63,7 @@ export const statsApi = {
   },
 
   async getPendingApprovals(): Promise<{ blogs: any[]; leads: any[] }> {
-    const data = await callAPI<any>('/api/approvals/pending');
+    const data = await callAPI<any>('/api/marketing/approvals');
     // Ensure the data has the expected structure even if backend returns an array
     if (Array.isArray(data)) {
         return {

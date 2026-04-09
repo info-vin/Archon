@@ -203,21 +203,25 @@ def sync_auth_users(cursor: PGCursor) -> None:
     DEFAULT_PW = "qwer45tyuiop"
     for p_id, email, name, role in profiles:
         try:
-            auth_service.create_user_by_admin(email=email, password=DEFAULT_PW, name=name, role=role)
-            logger.info(f"✅ Created Auth User: {email}")
-        except Exception as e:
-            if not is_duplicate_user_error(e):
-                logger.error(f"❌ Failed to create user {email}: {e}")
-                continue
+            # Physical Parity: Try to create, if fails, we update.
+            try:
+                auth_service.create_user_by_admin(email=email, password=DEFAULT_PW, name=name, role=role)
+                logger.info(f"✅ Created Auth User: {email}")
+            except Exception as e:
+                if "already registered" in str(e).lower() or "already exists" in str(e).lower():
+                    logger.info(f"🔄 User {email} already exists, syncing ID and password...")
+                else:
+                    raise e
             
             # Update password for existing users to match DX-001 requirement
-            try:
-                auth_uid = _find_auth_id(supabase, email)
-                if auth_uid:
-                    supabase.auth.admin.update_user_by_id(auth_uid, {"password": DEFAULT_PW})
-                    logger.info(f"🔑 Reset password for existing user: {email}")
-            except Exception as reset_err:
-                logger.warning(f"⚠️ Could not reset password for {email}: {reset_err}")
+            auth_uid = _find_auth_id(supabase, email)
+            if auth_uid:
+                supabase.auth.admin.update_user_by_id(auth_uid, {"password": DEFAULT_PW})
+                logger.info(f"🔑 Reset password for existing user: {email}")
+            
+        except Exception as err:
+            logger.warning(f"⚠️ Could not sync auth for {email}: {err}")
+            continue
 
         auth_uid = _find_auth_id(supabase, email)
         if not auth_uid:

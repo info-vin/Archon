@@ -2,15 +2,15 @@
 -- Physical Alignment for Phase 4.6.13: Removing all non-existent identities and aligning with RBAC.
 
 -- 1. Physical Cleanup: Clear and rebuild profiles to ensure zero ghost bots
-DELETE FROM profiles WHERE id NOT IN ('1', '2', '3', '4');
+DELETE FROM profiles WHERE id NOT IN ('9442c7eb-6420-48a3-8c20-2b100961dc43', '7df8d67a-152b-40cb-8839-0933dbdca74c', '200dbf3c-5947-4c8a-8c2c-76c31b77bacd', 'fe212bca-4c22-4bd3-a866-3a73f1aa0638');
 
 -- 2. Core Human Personas (SSOT)
 INSERT INTO profiles (id, "employeeId", name, email, department, position, status, role, avatar)
 VALUES 
-('1', 'E1001', 'David Howard', 'admin@archon.com', 'IT', 'System Administrator', 'active', 'system_admin', 'https://i.pravatar.cc/150?u=admin@archon.com'),
-('2', 'E1002', 'Alice Johnson', 'alice@archon.com', 'Sales', 'Sales Representative', 'active', 'sales', 'https://i.pravatar.cc/150?u=alice@archon.com'),
-('3', 'E1003', 'Bob Williams', 'bob@archon.com', 'Marketing', 'Marketing Specialist', 'active', 'marketing', 'https://i.pravatar.cc/150?u=bob@archon.com'),
-('4', 'E1004', 'Charlie Brown', 'charlie@archon.com', 'Marketing', 'Marketing Manager', 'active', 'manager', 'https://i.pravatar.cc/150?u=charlie@archon.com')
+('9442c7eb-6420-48a3-8c20-2b100961dc43', 'E1001', 'David Howard', 'admin@archon.com', 'IT', 'System Administrator', 'active', 'system_admin', 'https://i.pravatar.cc/150?u=admin@archon.com'),
+('7df8d67a-152b-40cb-8839-0933dbdca74c', 'E1002', 'Alice Johnson', 'alice@archon.com', 'Sales', 'Sales Representative', 'active', 'sales', 'https://i.pravatar.cc/150?u=alice@archon.com'),
+('200dbf3c-5947-4c8a-8c2c-76c31b77bacd', 'E1003', 'Bob Williams', 'bob@archon.com', 'Marketing', 'Marketing Specialist', 'active', 'marketing', 'https://i.pravatar.cc/150?u=bob@archon.com'),
+('fe212bca-4c22-4bd3-a866-3a73f1aa0638', 'E1004', 'Charlie Brown', 'charlie@archon.com', 'Marketing', 'Marketing Manager', 'active', 'manager', 'https://i.pravatar.cc/150?u=charlie@archon.com')
 ON CONFLICT (id) DO UPDATE SET 
     role = EXCLUDED.role, 
     email = EXCLUDED.email,

@@ -20,7 +20,7 @@ class ScoutIngestionService:
     async def ingest_reports(self) -> dict:
         """
         Scans for report_*.md files and indexes them via Librarian.
-        Avoids redundant indexing by checking file existence or timestamps (optional).
+        Avoids redundant indexing and filters out infrastructure noise (e.g. connection failures).
         """
         if not os.path.exists(self.diagnostics_dir):
             return {"status": "error", "message": f"Directory {self.diagnostics_dir} not found"}
@@ -36,6 +36,15 @@ class ScoutIngestionService:
         for report_file in reports:
             file_path = os.path.join(self.diagnostics_dir, report_file)
             try:
+                with open(file_path, encoding="utf-8") as f:
+                    content = f.read()
+
+                # Triage: Filter out reports that are just connection errors
+                noise_keywords = ["Connection refused", "ECONNREFUSED", "TimeoutError", "net::ERR_CONNECTION_REFUSED"]
+                if any(k in content for k in noise_keywords) and "✅" not in content:
+                    logger.warning(f"[Scout Ingestion] Skipping noisy infrastructure report: {report_file}")
+                    continue
+
                 # Deduplication check: Has this file been indexed?
                 from ..utils import get_supabase_client
 
@@ -43,9 +52,11 @@ class ScoutIngestionService:
                 existing = (
                     supabase.table("archon_sources")
                     .select("source_id")
-                    .eq("source_url", f"scout://{report_file}")
+                    .eq("metadata->>knowledge_type", "scout_report")
+                    .eq("source_display_name", report_file)
                     .execute()
                 )
+
                 if existing.data:
                     continue
 

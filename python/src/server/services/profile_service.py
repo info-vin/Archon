@@ -86,7 +86,7 @@ class ProfileService(BaseRepository):
             user_id: The UUID of the user.
 
         Returns:
-            A tuple containing success boolean and the profile data (or error message/None).
+            A tuple containing success boolean and the profile data (with flattened permissions).
         """
 
         def _query():
@@ -96,10 +96,14 @@ class ProfileService(BaseRepository):
             query_func=_query, error_context=f"Failed to fetch profile for {user_id}", require_data=True
         )
 
-        if success:
-            return True, result["data"][0]
+        if success and result["data"]:
+            profile = result["data"][0]
+            # Since the frontend might still look for 'permissions', we can either leave it empty
+            # and rely on the frontend's static SSOT fallback, or inject it dynamically here.
+            # For simplicity and stability, we leave dynamic RBAC enforcement to the backend endpoints.
+            profile["permissions"] = []
+            return True, profile
 
-        # In original logic: Not finding user was a warning -> return False, "Profile not found"
         return False, "Profile not found"
 
     def update_profile(self, user_id: str, updates: dict) -> tuple[bool, dict | str]:

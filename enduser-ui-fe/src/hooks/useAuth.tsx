@@ -26,7 +26,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             setUser(currentUser);
         } catch (error) {
             console.error("Failed to fetch current user:", error);
-            // Could clear localstorage/sessionstorage here if auth is invalid
         } finally {
             setLoading(false);
         }
@@ -34,25 +33,22 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     
     fetchUser();
 
-    // Only set up the real-time listener if Supabase is configured
     if (supabase) {
         const { data: authListener } = supabase.auth.onAuthStateChange(
-          async (event, _session) => {
+          async (event, session) => {
             if (event === 'SIGNED_IN') {
-              // Only set loading if we don't have a user yet (initial load) or it's an explicit sign-in.
-              // Background refreshes should not block the UI or cause unmounting.
-              const shouldSetLoading = event === 'SIGNED_IN' || !user;
+              // --- Auth Parity: Physically persist token for callAPI ---
+              if (session?.access_token) {
+                localStorage.setItem('archon_token', session.access_token);
+              }
               
+              const shouldSetLoading = event === 'SIGNED_IN' || !user;
               if (shouldSetLoading) setLoading(true);
               
               try {
                 const currentUser = await api.getCurrentUser();
-                // ONLY update if we got a valid user. If null (timeout/network error), 
-                // keep the existing user state to avoid unexpected logouts.
                 if (currentUser) {
                     setUser(currentUser);
-                } else {
-                    console.warn(`[useAuth] ${event} occurred but getCurrentUser returned null. Retaining existing session.`);
                 }
               } catch (error) {
                 console.error("Failed to refresh user on auth change:", error);
@@ -62,6 +58,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             }
             if (event === 'SIGNED_OUT') {
               setUser(null);
+              localStorage.removeItem('archon_token');
+              localStorage.removeItem('user_role');
               setLoading(false);
             }
           }
@@ -88,7 +86,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setUser(loggedInUser);
     } catch (error) {
       console.error("Login failed", error);
-      throw error; // Re-throw for the UI component
+      throw error;
     } finally {
       setLoading(false);
     }
@@ -101,7 +99,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setUser(newUser);
     } catch (error) {
       console.error("Registration failed", error);
-      throw error; // Re-throw for the UI component
+      throw error;
     } finally {
       setLoading(false);
     }
@@ -112,7 +110,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         await api.logout();
         setUser(null);
     } catch(error: any) {
-        alert(`Logout failed: ${error.message}`);
+        console.error(`Logout failed: ${error.message}`);
     }
   };
 
@@ -122,7 +120,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   return (
     <AuthContext.Provider value={{ user, isAuthenticated, isAdmin, login, register, logout, loading }}>
-      {children}
+      {!loading ? children : (
+        <div className="flex items-center justify-center min-h-screen bg-slate-900 text-white">
+          <div className="flex flex-col items-center gap-4">
+            <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+            <p className="text-lg font-medium animate-pulse">Syncing Identity Matrix...</p>
+          </div>
+        </div>
+      )}
     </AuthContext.Provider>
   );
 };

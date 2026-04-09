@@ -29,9 +29,15 @@ export async function callAPI<T>(
   endpoint: string,
   options: RequestInit = {}
 ): Promise<T> {
-  // Ensure endpoint starts with /api if it's a relative path
+  // --- Physical Network Alignment ---
+  // In Docker/Scout, relative paths don't work. We need a solid Base URL.
+  const envBase = import.meta.env.VITE_API_URL || '';
   const normalizedEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
-  const fullUrl = normalizedEndpoint.startsWith('http') ? normalizedEndpoint : normalizedEndpoint;
+  
+  // Construct full URL with BaseURL logic
+  const fullUrl = normalizedEndpoint.startsWith('http') 
+    ? normalizedEndpoint 
+    : `${envBase}${normalizedEndpoint}`;
   
   const headers: Record<string, string> = {
     ...((options.body instanceof FormData) ? {} : { 'Content-Type': 'application/json' }),

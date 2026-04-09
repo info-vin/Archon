@@ -1,36 +1,42 @@
 // enduser-ui-fe/src/features/auth/components/PermissionGuard.tsx
 
 import React from 'react';
-import { PermissionScope, EmployeeRole } from '../types';
+import { PermissionScope } from '../types';
 import { usePermission } from '../hooks/usePermission';
 import { useAuth } from '@/hooks/useAuth';
 
 interface PermissionGuardProps {
   permission: PermissionScope;
-  userRole?: EmployeeRole; // Optional as it's now internal
   children: React.ReactNode;
   fallback?: React.ReactNode;
 }
 
 /**
- * Higher-Order Component for RBAC.
- * Prevents unauthorized rendering and handles auth loading state.
+ * PermissionGuard: Protects UI components based on RBAC scopes.
+ * Hardened with real-time identity sensing and physical audit logging.
  */
-export const PermissionGuard: React.FC<PermissionGuardProps> = ({
-  permission,
-  children,
-  fallback = null
+export const PermissionGuard: React.FC<PermissionGuardProps> = ({ 
+  permission, 
+  children, 
+  fallback = null 
 }) => {
   const { hasPermission } = usePermission();
-  const { loading } = useAuth();
+  const { user, loading } = useAuth();
 
-  // Wait for auth to initialize before making decisions
+  // 1. Initial State: Waiting for Identity Sync
   if (loading) {
-    return <div className="p-4 text-center text-gray-400">Verifying access...</div>;
+    return null; // Silent while loading
   }
 
-  console.log('PermissionGuard check:', { permission, has: hasPermission(permission), user: 'unavailable_here' });
-  if (!hasPermission(permission)) {
+  // 2. Authorization Check: Use the synchronized hasPermission logic
+  const isAllowed = hasPermission(permission);
+
+  // --- PHYSICAL AUDIT: End the fantasy ---
+  if (!isAllowed) {
+    console.warn(`🛡️ [RBAC_GUARD] Access Denied | User: ${user?.email || 'Anonymous'} | Role: ${user?.role || 'None'} | Missing: ${permission}`);
+  }
+
+  if (!isAllowed) {
     return <>{fallback}</>;
   }
 

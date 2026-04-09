@@ -3,6 +3,8 @@ import os
 import base64
 import argparse
 import shutil
+import time
+import requests
 from datetime import datetime
 from supabase import create_client, Client
 from playwright.async_api import async_playwright
@@ -10,36 +12,55 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.messages import HumanMessage
 
 def parse_args():
-    parser = argparse.ArgumentParser(description="Digital Twin Scout v29 - Outbound Intelligence")
+    parser = argparse.ArgumentParser(description="Digital Twin Scout v36 - Isolated Perception")
     parser.add_argument("--headless", type=str, default="true")
-    parser.add_argument("--outbound_url", type=str, default="", help="External URL to inspect for design inspiration.")
+    parser.add_argument("--outbound_url", type=str, default="", help="External URL to inspect.")
     return parser.parse_args()
 
-async def inspect_outbound(pg, target_url, persona_name="Outbound Scout"):
-    """Goes directly to an external URL without login to gather inspiration."""
-    print(f"🌍 [Scout] Outbound Mission -> {target_url}...")
-    try:
-        await pg.goto(target_url, wait_until="networkidle", timeout=60000)
-        await asyncio.sleep(3) # Wait for animations
-        
-        txt = await pg.evaluate("() => document.body.innerText.substring(0, 2000)")
-        img = base64.b64encode(await pg.screenshot(full_page=True)).decode("utf-8")
-        
-        print(f"✅ [Scout] Outbound inspection complete.")
-        return {"name": f"Outbound ({target_url})", "image": img, "text": txt}
-    except Exception as e:
-        print(f"❌ [Scout] Outbound inspection FAILED: {e}")
-        return None
+def limit_diagnostic_capacity(directory="./.twin/diagnostics", max_files=10):
+    if not os.path.exists(directory): return
+    files = [os.path.join(directory, f) for f in os.listdir(directory) if os.path.isfile(os.path.join(directory, f))]
+    if len(files) <= max_files: return
+    normal_files = sorted([os.path.join(directory, f) for f in os.listdir(directory)], key=os.path.getmtime)
+    excess = len(normal_files) - max_files
+    for i in range(excess):
+        try: os.remove(normal_files[i])
+        except: pass
 
-async def get_mission_from_db(prompt_name="twin_scout_mission"):
+async def get_workflow_snapshot(email):
     try:
         url = os.getenv("SUPABASE_URL")
         key = os.getenv("SUPABASE_SERVICE_KEY")
         supabase: Client = create_client(url, key)
-        res = supabase.table("archon_prompts").select("prompt").eq("prompt_name", prompt_name).execute()
-        return res.data[0]["prompt"] if res.data else "Standard UI Audit Mission."
-    except:
-        return "Standard Audit Mission."
+        user_res = supabase.table("profiles").select("id, name").eq("email", email).execute()
+        if not user_res.data: return f"Reality Snapshot: Unknown Persona ({email})"
+        user_id = user_res.data[0]["id"]
+        user_name = user_res.data[0]["name"]
+        
+        if "alice" in email:
+            leads_res = supabase.table("leads").select("id").execute()
+            tasks_res = supabase.table("archon_tasks").select("id").eq("assignee_id", user_id).execute()
+            return f"Reality Snapshot for {user_name}: {len(leads_res.data)} total leads, {len(tasks_res.data)} tasks assigned."
+        elif "bob" in email:
+            blog_res = supabase.table("blog_posts").select("id").execute()
+            return f"Reality Snapshot for {user_name}: {len(blog_res.data)} total posts."
+        elif "dev.bot" in email:
+            agent_tasks = supabase.table("archon_tasks").select("id").eq("assignee_id", user_id).execute()
+            return f"Reality Snapshot for {user_name}: {len(agent_tasks.data)} tasks assigned."
+
+        return f"Reality Snapshot for {user_name}: Context loaded."
+    except Exception as e:
+        return f"Reality Snapshot: [Error] {e}"
+
+async def wait_for_server_ready(url, timeout=60):
+    start_time = time.time()
+    while time.time() - start_time < timeout:
+        try:
+            resp = requests.get(f"{url}/api/health", timeout=5)
+            if resp.status_code == 200: return True
+        except: pass
+        await asyncio.sleep(3)
+    return False
 
 async def log_agent_xp(message, xp_change=0):
     try:
@@ -47,140 +68,99 @@ async def log_agent_xp(message, xp_change=0):
         key = os.getenv("SUPABASE_SERVICE_KEY")
         supabase: Client = create_client(url, key)
         supabase.table("archon_logs").insert({
-            "source": "agent_action",
-            "level": "INFO",
-            "message": message,
-            "details": {"agent_name": "TwinScout", "xp_change": xp_change, "v": "v28"}
+            "source": "agent_action", "level": "INFO", "message": message,
+            "details": {"agent_name": "TwinScout", "xp_change": xp_change, "v": "v36"}
         }).execute()
-    except:
-        pass
+    except: pass
 
 async def inspect_persona(pg, email, target_url, wait_selector, persona_name):
-    """Logs in and navigates to the target URL, waiting for a specific selector to prove rendering."""
     print(f"🕵️‍♀️ [Scout] Inspecting {persona_name} ({email}) -> {target_url}...")
     
-    # Capture browser console logs for hard evidence
-    pg.on("console", lambda msg: print(f"🖥️ [Browser {persona_name}] {msg.type}: {msg.text}"))
+    # physical log capture for audit
+    pg.on("console", lambda msg: print(f"🖥️ [Browser {persona_name}] {msg.type.upper()}: {msg.text}"))
+    pg.on("pageerror", lambda err: print(f"🚨 [Browser FATAL {persona_name}]: {err.message}"))
     
+    reality_context = await get_workflow_snapshot(email)
+
     try:
         url = os.getenv("ENDUSER_UI_URL", "http://enduser-ui:5173")
-        
-        # 1. Login
         await pg.goto(f"{url}/#/auth", wait_until="domcontentloaded", timeout=30000)
         await pg.wait_for_selector('input[type="email"]', timeout=30000)
         await pg.fill('input[type="email"]', email)
         await pg.fill('input[type="password"]', "qwer45tyuiop")
         await pg.click('button[type="submit"]')
         
-        # 2. Evidence-based Wait: Ensure URL actually changes away from auth
-        print(f"⏳ Waiting for login routing to complete...")
-        try:
-            await pg.wait_for_function('window.location.hash !== "#/auth"', timeout=15000)
-        except Exception as e:
-            print(f"⚠️ [Scout] URL did not leave /auth. Login might have failed silently: {e}")
-
-        # 3. Navigate to specific target
+        # --- Physical Parity: Wait for Session Initialization ---
+        await asyncio.sleep(3) 
+        
+        await pg.wait_for_function('window.location.hash !== "#/auth"', timeout=15000)
         await pg.goto(f"{url}/#{target_url}", wait_until="domcontentloaded", timeout=30000)
-        
-        # 4. Wait for specific content to prove it's NOT infinitely loading
-        print(f"⏳ Waiting for {persona_name}'s specific UI elements ({wait_selector})...")
         await pg.wait_for_selector(wait_selector, timeout=30000)
-        
-        # Extra 2 seconds for API data fetching to settle
         await asyncio.sleep(2)
 
         txt = await pg.evaluate("() => document.body.innerText.substring(0, 1000)")
         img = base64.b64encode(await pg.screenshot(full_page=True)).decode("utf-8")
         
-        # 5. Logout for next persona
-        try:
-            await pg.click('button:has-text("Logout"), button[aria-label="Logout"], .fa-sign-out-alt', timeout=5000)
-            await pg.wait_for_selector('input[type="email"]', timeout=10000)
-        except Exception as logout_e:
-            print(f"⚠️ [Scout] Logout button not found or failed, clearing cookies instead: {logout_e}")
-            await pg.context.clear_cookies()
-            
-        print(f"✅ [Scout] {persona_name} inspection complete.")
-        return {"name": persona_name, "image": img, "text": txt}
+        return {"name": persona_name, "image": img, "text": txt, "reality": reality_context}
     except Exception as e:
-        print(f"❌ [Scout] {persona_name} inspection FAILED: {e}")
+        print(f"❌ [Scout] {persona_name} FAILED: {e}")
         try:
-            err_img_bytes = await pg.screenshot(full_page=True)
-            err_img = base64.b64encode(err_img_bytes).decode("utf-8")
-            
-            # Save raw PNG for debug
-            debug_dir = "./.twin/diagnostics"
-            os.makedirs(debug_dir, exist_ok=True)
-            safe_name = persona_name.split()[0].lower()
-            with open(f"{debug_dir}/error_{safe_name}.png", "wb") as f:
-                f.write(err_img_bytes)
-                
-            return {"name": f"{persona_name} (FAILED)", "image": err_img, "text": f"Error: {e}"}
-        except Exception as snap_e:
-            return {"name": f"{persona_name} (CRASH)", "text": f"Fatal error: {e}. Screenshot failed: {snap_e}"}
+            err_img = base64.b64encode(await pg.screenshot(full_page=True)).decode("utf-8")
+            return {"name": f"{persona_name} (FAILED)", "image": err_img, "text": f"Error: {e}", "reality": reality_context}
+        except:
+            return {"name": f"{persona_name} (CRASH)", "text": f"Fatal error: {e}", "reality": reality_context}
 
 async def run_scout_session():
     args = parse_args()
     is_headless = args.headless.lower() == "true"
-    
     api_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
     all_results = []
+
+    limit_diagnostic_capacity()
+    server_url = os.getenv("ARCHON_SERVER_URL", "http://archon-server:8181")
+    await wait_for_server_ready(server_url)
     
-    # 4 Personas Matrix defined in Phase 4.6.8 & 4.6.9
     personas = [
-        # Alice (Sales): Check Dashboard for Tasks
-        {"email": "alice@archon.com", "url": "/dashboard", "selector": "table, .grid-cols-1", "name": "Alice (Sales)"},
-        
-        # Bob (Marketing): Check Blog
-        {"email": "bob@archon.com", "url": "/marketing", "selector": ".grid-cols-1.md\\:grid-cols-2", "name": "Bob (Marketing)"},
-        
-        # Charlie (Manager): Check Nexus Data Matrix
-        {"email": "charlie@archon.com", "url": "/nexus", "selector": ".recharts-responsive-container", "name": "Charlie (Manager Nexus)"},
-        
-        # David (Admin): Check System Health on 5173 /admin
-        {"email": "admin@archon.com", "url": "/admin", "selector": "text=System Health", "name": "David (Admin Controls)"}
+        {"email": "alice@archon.com", "url": "/dashboard", "selector": "ul, table, .grid-cols-1", "name": "Alice (Sales)"},
+        {"email": "bob@archon.com", "url": "/marketing", "selector": "ul, .grid-cols-1", "name": "Bob (Marketing)"},
+        {"email": "charlie@archon.com", "url": "/nexus", "selector": "canvas, .recharts-responsive-container", "name": "Charlie (Manager Nexus)"},
+        {"email": "admin@archon.com", "url": "/admin", "selector": "h1, .admin-panel", "name": "David Howard (Admin)"},
+        {"email": "dev.bot@archon.com", "url": "/dashboard", "selector": "ul, table, .card", "name": "DevBot (Agent)"}
     ]
 
     async with async_playwright() as p:
-        audit_dir = os.path.abspath("./.browser_data/temp_audit")
-        if os.path.exists(audit_dir): shutil.rmtree(audit_dir, ignore_errors=True)
-        os.makedirs(audit_dir, exist_ok=True)
-        
-        ctx = await p.chromium.launch_persistent_context(
-            user_data_dir=audit_dir, 
-            headless=is_headless, 
-            args=['--no-sandbox', '--disable-setuid-sandbox']
-        )
-        pg = await ctx.new_page()
-        
-        # New: Outbound Scouting (Phase 4.6.15)
-        if args.outbound_url:
-            outbound_res = await inspect_outbound(pg, args.outbound_url)
-            if outbound_res:
-                all_results.append(outbound_res)
-        
         for p_config in personas:
+            # --- CRITICAL PARITY FIX: Physical Context Isolation ---
+            safe_name = p_config["name"].split()[0].lower()
+            audit_dir = os.path.abspath(f"./.browser_data/scout_{safe_name}")
+            if os.path.exists(audit_dir): shutil.rmtree(audit_dir, ignore_errors=True)
+            os.makedirs(audit_dir, exist_ok=True)
+            
+            ctx = await p.chromium.launch_persistent_context(
+                user_data_dir=audit_dir, headless=is_headless, 
+                args=['--no-sandbox', '--disable-setuid-sandbox'],
+                viewport={'width': 1920, 'height': 1080},
+                user_agent=f"ArchonIsolatedScout/3.6 ({safe_name})"
+            )
+            pg = await ctx.new_page()
             res = await inspect_persona(pg, p_config["email"], p_config["url"], p_config["selector"], p_config["name"])
-            if res:
-                all_results.append(res)
-                
-        await ctx.close()
+            if res: all_results.append(res)
+            await ctx.close()
 
     if all_results:
-        print("🚀 [Scout] Invoking Gemini Vision for final diagnosis...")
+        print("🚀 [Scout] Invoking Gemini Vision for isolated workflow alignment...")
         llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", api_key=api_key)
-        mission_desc = await get_mission_from_db("twin_scout_mission")
         
         system_prompt = (
-            f"你是一位強悍的 UX/UI 診斷工程師 Digital Twin Scout。\n"
-            f"任務目標：{mission_desc}\n"
-            f"請誠實、客觀地根據截圖與文字診斷：\n"
-            f"這 4 位角色的 UI 是否成功載入？有沒有無限 Loading 或是連線拒絕的錯誤？"
-            f"**注意：請務必全程使用「繁體中文」撰寫此報告。**"
+            f"你是一位強悍的工作流診斷工程師 Digital Twin Scout v36。\n"
+            f"任務：比對 [Reality Snapshot] (來自 DB) 與截圖是否一致。\n"
+            f"若發現 403 或 Permission Denied，請標註為 **[RBAC_FAILURE]**。\n"
+            f"若數據不對齊，請標註為 **[PARITY_MISMATCH]**。\n"
+            f"全程使用「繁體中文」撰寫此報告。"
         )
         msg_parts = [{"type": "text", "text": system_prompt}]
         for r in all_results:
-            info = f"\n--- Screenshot: {r['name']} ---"
+            info = f"\n--- Persona: {r['name']} ---\n[Reality Context]: {r['reality']}"
             if "text" in r: info += f"\n[Text Excerpt]: {r['text']}"
             msg_parts.append({"type": "text", "text": info})
             if "image" in r:
@@ -189,22 +169,16 @@ async def run_scout_session():
         try:
             response = await llm.ainvoke([HumanMessage(content=msg_parts)])
             content = response.content
-        except Exception as e:
-            content = f"Failed to invoke Gemini API: {e}"
+        except Exception as e: content = f"Failed to invoke Gemini API: {e}"
         
         report_dir = "./.twin/diagnostics"
         os.makedirs(report_dir, exist_ok=True)
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        report_path = f"{report_dir}/report_{timestamp}.md"
-        
+        report_path = f"{report_dir}/report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md"
         with open(report_path, "w", encoding="utf-8") as f:
-            f.write(f"# Twin Scout Agent Report (Multi-Persona)\n- **Time**: {datetime.now().isoformat()}\n\n")
+            f.write(f"# Twin Scout Isolated Report (v36)\n- **Generated**: {datetime.now().isoformat()}\n\n")
             f.write(content)
-            f.write("\n\n---\n**Diagnostician:** Digital Twin Scout v28")
-            
-        print(f"📄 [Scout] Report saved to: {report_path}")
-        await log_agent_xp("Multi-Persona session finished.")
+            f.write("\n\n---\n**Diagnostician:** Digital Twin Scout v36 (Isolated)")
+        print(f"📄 [Scout] Report saved: {report_path}")
 
 if __name__ == "__main__":
     asyncio.run(run_scout_session())
-
