@@ -11,12 +11,26 @@ from server.services.librarian_service import LibrarianService
 
 logger = get_logger("seed_knowledge")
 
-TARGET_DIRS = [
-    "../enduser-ui-fe/public/aus/156_resource",
-    # Add other directories here if needed
+# Dynamic Path Detection for Host vs Docker
+# Pattern 14: Cross-Env Path Resilience
+POSSIBLE_DIRS = [
+    "../enduser-ui-fe/public/aus/156_resource",      # Host relative
+    "/app/frontend_public/aus/156_resource",        # Docker internal mapping
+    "enduser-ui-fe/public/aus/156_resource"          # Root relative
 ]
 
+TARGET_DIRS = []
+for p in POSSIBLE_DIRS:
+    if Path(p).resolve().exists():
+        TARGET_DIRS.append(p)
+        break
+
 async def seed_knowledge():
+    if not TARGET_DIRS:
+        print("❌ Error: No valid knowledge source directory found in any known locations.")
+        print(f"Checked: {POSSIBLE_DIRS}")
+        return
+
     librarian = LibrarianService()
 
     print("🤖 Librarian Robot: Initialized.")

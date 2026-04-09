@@ -34,7 +34,7 @@ async def get_user_from_token(token: str) -> Any | None:
                 # In dev mode, we trust the claims if it's a valid token from our expected domain
                 payload = jwt.decode(token, options={"verify_signature": False})
                 email = payload.get("email", "")
-                
+
                 # Broaden fallback to all @archon.com users to support Alice/Bob/Charlie/David
                 if email.endswith("@archon.com") or payload.get("sub"):
                     from dataclasses import dataclass
@@ -47,7 +47,7 @@ async def get_user_from_token(token: str) -> Any | None:
 
                     # Determine role from metadata or fallback to employee
                     metadata = payload.get("user_metadata", {})
-                    
+
                     return MockUser(
                         id=payload.get("sub", "dev-user"),
                         email=email,

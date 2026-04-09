@@ -12,6 +12,8 @@ vi.mock('../../../../services/api.ts', () => ({
     updateEmployee: vi.fn(),
     adminCreateUser: vi.fn(),
     getSystemPermissions: vi.fn().mockResolvedValue(['task:create', 'agent:trigger:dev', 'content:publish']),
+    getRBACMatrix: vi.fn().mockResolvedValue([]),
+    updateRBACRole: vi.fn(),
   },
 }));
 
@@ -56,7 +58,7 @@ describe('IdentityMatrix', () => {
         });
         
         expect(screen.getByText('bob@test.com')).toBeInTheDocument();
-        expect(screen.getByText('Identity Matrix')).toBeInTheDocument();
+        expect(screen.getByText('Personnel Registry')).toBeInTheDocument();
         expect(screen.getAllByText('Edit').length).toBe(2);
     });
 

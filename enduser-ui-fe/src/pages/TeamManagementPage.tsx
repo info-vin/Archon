@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../services/api';
 import { Employee, Task } from '../types';
-import { useAuth } from '@/hooks/useAuth';
 import { PermissionGuard } from '../features/auth/components/PermissionGuard';
 import { AiCollaborationWidget } from '../features/team/components/AiCollaborationWidget';
 import { ManageMemberModal } from '../features/team/components/ManageMemberModal';
@@ -15,7 +14,6 @@ import ReactMarkdown from 'react-markdown';
 const aliceSopMarkdown = "SOP documentation is currently unavailable. Please check the central knowledge base.";
 
 const TeamManagementPage: React.FC = () => {
-    const { user } = useAuth();
     const [team, setTeam] = useState<Employee[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -46,7 +44,7 @@ const TeamManagementPage: React.FC = () => {
     };
 
     return (
-        <PermissionGuard permission="user:manage:team" userRole={user?.role} fallback={<div className="p-8 text-center text-gray-500">Access Denied: Team Management is for Managers and Admins only.</div>}>
+        <PermissionGuard permission="user:manage:team" fallback={<div className="p-8 text-center text-gray-500">Access Denied: Team Management is for Managers and Admins only.</div>}>
             <div className="p-4 md:p-6 max-w-7xl mx-auto space-y-6 md:space-y-8">
                 <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
                     <div>

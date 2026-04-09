@@ -75,7 +75,6 @@ const StatsPage: React.FC = () => {
   return (
     <PermissionGuard 
         permission="stats:view:own" 
-        userRole={user?.role} 
         fallback={<div className="p-8 text-center">Access Denied: You do not have permission to view statistics.</div>}
     >
       <div className="p-6 max-w-7xl mx-auto space-y-8">

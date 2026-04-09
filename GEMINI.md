@@ -125,20 +125,20 @@
 ---
 
 # 第三章：近期工作日誌 (Recent Journal Entries)
-
-### 2026-04-09: Phase 4.6.33 結案：數位雙生物理對齊與身分隔離
+### 2026-04-09: Phase 4.6.33 補強：RBAC 型別對齊與 RAG 物理恢復
 *   **今日目標 (物理落地)**:
-    - **身分隔離**: 徹底解決了 Twin Scout 多角色巡檢時的身分污染，透過為每位 Persona 建立獨立的 `.browser_data/scout_{name}` 物理沙盒，達成 100% 身分主權對齊。
-    - **網路硬化**: 修正了後端 `main.py` 的 CORS 白名單與前端 `apiClient.ts` 的 BaseURL 解析，物理對齊了 Docker 內網通訊拓撲。
-    - **地基修復**: 修正了 `init_db.py` 的冪等性，解決了 UUID 與 Profile ID 的物理錯位，終結了全系統 401 與 500 死鎖。
-    - **權限落地**: 在 `12_seed_rbac.sql` 與 `usePermission.ts` 實作了大小寫不敏感的動態比對，保證了 Alice 與 DevBot 的權限穿透。
+    - **型別對齊**: 修正了 `enduser-ui-fe` 的 `PERMISSION_SETS` 導出問題與 `PermissionGuard` 的多餘傳參，解決了 `make lint` 失敗。
+    - **ID 韌性**: 透過物理代碼掃描 (Pattern 10)，證實 `ai-dev-bot` 等字串 ID 是系統硬編碼的語意化抽象層，決策保留「Could not sync auth」警告以維持 Agent 調度穩定。
+    - **RAG 恢復**: 修正了 `seed_knowledge.py` 的「跨環境路徑韌性 (Pattern 14)」，成功將知識來源注入向量庫，探針分數從 85 (Degraded) 回復至 432 (Healthy)。
+    - **環境對齊**: 成功在 Docker 環境中啟動全服務 (Port 8181, 3737, 5173, 8051, 8052)，並完成 `make db-init` 資料庫對齊。
 *   **物理成果**:
-    - **驗證指標**: **全角色 (Alice, Bob, Charlie, David, DevBot) 成功登入並對齊數據**。
-    - **技術債清償**: 殲滅了 3 月份遺留的「拷貝式 Auth 邏輯」與「通靈式 API 路徑」。
-    - **穩定性**: 前端切換至 `preview` 編譯模式，徹底消滅了 Vite Dev 模式在 Docker 內的資源掛起問題。
+    - **驗證指標**: **前後端 Lint CLEAN，RAG 探針 HEALTHY，557 個後端測試 100% 通過**。
+    - **技術債**: 清理了 `TeamManagementPage.tsx` 中的冗餘 `useAuth` 宣告。
+    - **文件對齊**: 物理公證了 `migration/0.2.2` 的 12 步 SQL 結構。
 
-### 2026-04-06: Phase 5 結案：RBAC 基礎設施與身份動態化落地
-*   **今日目標 (物理落地)**:
+---
+
+# 第四章：歷史檔案：原則的考古學 (Historical Archive: The Archaeology of Principles)
     - **動態矩陣**: 成功將權限定義從程式碼物理遷移至資料庫 `archon_roles_permissions` 表格，達成 100% 動態化。
     - **5173 連動**: 在 End-User UI 實作了 Identity Matrix 管理介面，Charlie (Manager) 現具備物理權能調整團隊權限。
     - **Poisson 硬化**: Agent 晉升機制與 PRP 「成功樣本數」物理對齊，並實作了基於 JSONB Overrides 的 Level 7 Admin 手動授權。
