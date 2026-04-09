@@ -19,13 +19,34 @@ def parse_args():
 
 def limit_diagnostic_capacity(directory="./.twin/diagnostics", max_files=10):
     if not os.path.exists(directory): return
-    files = [os.path.join(directory, f) for f in os.listdir(directory) if os.path.isfile(os.path.join(directory, f))]
-    if len(files) <= max_files: return
-    normal_files = sorted([os.path.join(directory, f) for f in os.listdir(directory)], key=os.path.getmtime)
-    excess = len(normal_files) - max_files
-    for i in range(excess):
-        try: os.remove(normal_files[i])
+    all_files = [os.path.join(directory, f) for f in os.listdir(directory) if os.path.isfile(os.path.join(directory, f))]
+    if len(all_files) <= max_files: return
+    
+    # Pattern 33.2: Filter out MISMATCH reports from deletion list
+    removable_files = []
+    for f in all_files:
+        try:
+            with open(f, 'r') as content:
+                text = content.read()
+                if "PARITY_MISMATCH" in text or "WORKFLOW_FAILURE" in text:
+                    continue # Lock this file
+            removable_files.append(f)
+        except:
+            removable_files.append(f)
+
+    if len(removable_files) <= (max_files // 2): # Safety valve: if too many locked, allow more files
+        print("⚠️ [Metabolism] Diagnostic folder contains many locked mismatch reports.")
+    
+    removable_files.sort(key=os.path.getmtime)
+    excess = len(all_files) - max_files
+    deleted = 0
+    for f in removable_files:
+        if deleted >= excess: break
+        try: 
+            os.remove(f)
+            deleted += 1
         except: pass
+    print(f"♻️ [Metabolism] Cleaned {deleted} old reports. ({len(all_files)-deleted} remaining)")
 
 async def get_workflow_snapshot(email):
     try:
