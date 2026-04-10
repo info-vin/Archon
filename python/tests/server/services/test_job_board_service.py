@@ -20,12 +20,12 @@ async def test_search_jobs_fallback_to_mock():
     and correctly infers needs.
     """
     service = JobBoardService()
-    # Mock _fetch_from_104 to raise an exception
-    with patch.object(JobBoardService, "_fetch_from_104", side_effect=Exception("Network Error")):
+    # Mock _fetch_from_104_sync to raise an exception
+    with patch.object(JobBoardService, "_fetch_from_104_sync", side_effect=Exception("Network Error")):
         jobs = await service.search_jobs("Data Analyst")
 
+        # In Sync-Thru Real Data Mode, errors return empty list (No mock fallback)
         assert len(jobs) == 0
-        pass
 
 
 @pytest.mark.asyncio
