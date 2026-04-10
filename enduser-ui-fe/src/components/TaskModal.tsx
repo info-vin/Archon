@@ -416,7 +416,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({ task, onClose, onTaskCreat
               <button type="button" onClick={onClose} className="px-4 py-2 rounded-md bg-secondary text-secondary-foreground hover:bg-secondary/80">
                 Cancel
               </button>
-              <button type="submit" disabled={isSubmitting} className="px-4 py-2 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 flex items-center justify-center gap-2">
+              <button type="submit" disabled={isSubmitting} className="px-4 py-2 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 flex items-center justify-center gap-2" aria-label={isSubmitting ? 'Saving task...' : (isEditMode ? 'Save changes' : 'Create task')}>
                 {isSubmitting && <RefreshCwIcon className="w-4 h-4 animate-spin" />}
                 {isSubmitting ? 'Saving...' : (isEditMode ? 'Save Changes' : 'Create Task')}
               </button>
