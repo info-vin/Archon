@@ -23,7 +23,7 @@ describe('MainLayout Role-Based Visibility', () => {
     
     // 模擬 Sales 權限 (無管理權限)
     (usePermission as any).mockReturnValue({
-      hasPermission: (p: string) => ['leads:view:sales', 'stats:view:own'].includes(p)
+      hasPermission: (p: string) => ['leads:view:all', 'stats:view:own'].includes(p)
     });
 
     render(

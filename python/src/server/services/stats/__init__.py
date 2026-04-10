@@ -66,7 +66,7 @@ class StatsService:
     async def get_system_health_overview(self) -> dict[str, Any]:
         """Consolidated health and performance overview for Admin (1:1 Restoration)."""
         try:
-            from .health_service import HealthService
+            from ..health_service import HealthService
             rag_health = await HealthService().check_rag_integrity()
             one_day_ago = (datetime.now(UTC) - timedelta(hours=24)).isoformat()
 

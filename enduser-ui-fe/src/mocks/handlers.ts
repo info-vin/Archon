@@ -5,11 +5,11 @@ import { http, HttpResponse } from 'msw';
 const mockUsers = {
   alice: { 
     id: 'user-1', name: 'Alice Johnson', role: 'sales', email: 'alice@archon.com', status: 'active',
-    permissions: ['task:create', 'task:read:own', 'task:update:own', 'agent:trigger:mkt', 'stats:view:own', 'leads:view:sales']
+    permissions: ['task:create', 'task:read:own', 'task:update:own', 'agent:trigger:mkt', 'stats:view:own', 'leads:view:all', 'leads:view:sales']
   },
   bob: { 
     id: 'user-2', name: 'Bob', role: 'marketing', email: 'bob@archon.com', status: 'active',
-    permissions: ['task:create', 'task:read:own', 'task:update:own', 'agent:trigger:mkt', 'agent:trigger:know', 'stats:view:own', 'leads:view:marketing']
+    permissions: ['task:create', 'task:read:own', 'task:update:own', 'agent:trigger:mkt', 'agent:trigger:know', 'stats:view:own', 'leads:view:all', 'leads:view:marketing']
   },
   charlie: { 
     id: 'user-3', name: 'Charlie', role: 'manager', email: 'charlie@archon.com', status: 'active',

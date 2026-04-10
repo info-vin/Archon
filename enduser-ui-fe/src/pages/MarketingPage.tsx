@@ -23,7 +23,7 @@ const MarketingPage: React.FC = () => {
 
   return (
     <PermissionGuard 
-      permission="leads:view:sales" 
+      permission="leads:view:all" 
       fallback={<div className="p-8 text-center text-gray-500">Access Denied: This feature is for Sales & Marketing roles only.</div>}
     >
       <div className="p-4 md:p-6 max-w-7xl mx-auto space-y-8">

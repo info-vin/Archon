@@ -63,7 +63,7 @@ const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
             }
         };
         
-        if (hasPermission('leads:view:sales')) {
+        if (hasPermission('leads:view:all')) {
             fetchCart();
             // Poll every 10s to keep in sync
             const interval = setInterval(fetchCart, 10000);
@@ -112,7 +112,7 @@ const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                             </Link>
                         </li>
                     )}
-                    {hasPermission('leads:view:sales') && (
+                    {hasPermission('leads:view:all') && (
                         <li className="mb-2 w-full">
                             <Link to="/marketing" title={isCollapsed ? "Sales Intel" : undefined} className={`flex ${isCollapsed ? 'flex-col items-center justify-center p-2 text-[10px] text-center' : 'items-center p-2'} rounded-md hover:bg-secondary ${location.pathname.startsWith('/marketing') ? 'bg-secondary' : ''} transition-all`}>
                                 <ShieldCheckIcon className={`w-5 h-5 text-blue-500 dark:text-blue-400 ${isCollapsed ? 'mb-1' : 'mr-3'}`} />
@@ -207,14 +207,14 @@ const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                     <span className="text-[10px] mt-1">Home</span>
                 </Link>
                 
-                {hasPermission('leads:view:sales') && (
+                {hasPermission('leads:view:all') && (
                     <Link to="/marketing" className={`flex flex-col items-center justify-center p-2 rounded-lg ${location.pathname.startsWith('/marketing') ? 'text-primary' : 'text-muted-foreground'}`}>
                         <ShieldCheckIcon className="w-6 h-6 text-blue-500 dark:text-blue-400" />
                         <span className="text-[10px] mt-1">Leads</span>
                     </Link>
                 )}
 
-                {hasPermission('leads:view:sales') && (
+                {hasPermission('leads:view:all') && (
                     <Link to="/sales-cart" className={`flex flex-col items-center justify-center p-2 rounded-lg ${location.pathname.startsWith('/sales-cart') ? 'text-primary' : 'text-muted-foreground'}`}>
                          {/* TODO: Add ShoppingCartIcon */}
                         <div className="relative">

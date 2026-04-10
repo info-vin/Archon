@@ -5,6 +5,7 @@ import { TaskModal } from '../components/TaskModal';
 import { ProjectModal } from '../components/ProjectModal';
 import { ClockInWidget } from '../components/ClockInWidget';
 import { useAuth } from '@/hooks/useAuth';
+import { EmptyState } from '../components/common/EmptyState';
 
 // Feature Components
 import { ListView } from '../features/dashboard/components/ListView';
@@ -137,10 +138,21 @@ const DashboardPage: React.FC = () => {
       <div className="flex-1 overflow-auto">
         <ClockInWidget />
         <div className="mt-4">
-          {viewMode === 'list' && <ListView tasks={sortedTasks} setEditingTask={setEditingTask} userMap={userMap} />}
-          {viewMode === 'table' && <TableView tasks={sortedTasks} setEditingTask={setEditingTask} requestSort={requestSort} sortConfig={sortConfig} userMap={userMap} projectMap={projectMap} />}
-          {viewMode === 'kanban' && <KanbanView tasks={filteredTasks} updateTaskStatus={updateTaskStatus} setEditingTask={setEditingTask} userMap={userMap} />}
-          {viewMode === 'gantt' && <GanttView tasks={sortedTasks} />}
+          {!isLoading && sortedTasks.length === 0 ? (
+            <EmptyState 
+              title="No tasks found" 
+              description={selectedProjectId === 'all' ? "You don't have any tasks assigned yet." : "No tasks found for this project."}
+              actionLabel="Create New Task"
+              onAction={() => setIsTaskModalOpen(true)}
+            />
+          ) : (
+            <>
+              {viewMode === 'list' && <ListView tasks={sortedTasks} setEditingTask={setEditingTask} userMap={userMap} />}
+              {viewMode === 'table' && <TableView tasks={sortedTasks} setEditingTask={setEditingTask} requestSort={requestSort} sortConfig={sortConfig} userMap={userMap} projectMap={projectMap} />}
+              {viewMode === 'kanban' && <KanbanView tasks={filteredTasks} updateTaskStatus={updateTaskStatus} setEditingTask={setEditingTask} userMap={userMap} />}
+              {viewMode === 'gantt' && <GanttView tasks={sortedTasks} />}
+            </>
+          )}
         </div>
       </div>
 
