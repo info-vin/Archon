@@ -35,3 +35,11 @@
 ## 2024-05-18 - Replacing multiple list comprehensions with single iteration over lists
 **Learning:** Traversing the exact same list twice using list comprehensions like `[s["source_id"] for s in sources if ...]` adds unnecessary O(N) overhead compared to a single pass accumulation.
 **Action:** When extracting grouped items from a list, use a single for-loop with O(1) appends to respective lists to prevent redundant iteration loops over large datasets.
+
+## 2024-05-18 - Single pass accumulation over multiple generators
+**Learning:** In Python, calculating multiple aggregates (like sums) from the exact same list using multiple generator expressions (e.g., `sum(r['a'] for r in data)` and `sum(r['b'] for r in data)`) adds unnecessary O(N) iteration overhead and generator allocations.
+**Action:** Use a single pass `for` loop to accumulate multiple values simultaneously to save CPU time and memory spikes.
+
+## 2024-05-18 - Beware Supabase 1000-row limit for aggregate counts
+**Learning:** Using an O(1) `.in_("id", ids)` fetch to retrieve ALL rows into memory in Python to emulate a `GROUP BY COUNT` is functionally dangerous because Supabase/PostgREST enforces a strict 1000-row limit by default. If the total relations exceed this, the query silently truncates, resulting in wildly inaccurate counts.
+**Action:** Do NOT use `.in_()` to pull raw rows to emulate aggregate database counts. Use `count="exact", head=True` inside individual `.eq()` lookups if an RPC is not available, as it delegates the true count to the database engine and respects pagination limits.

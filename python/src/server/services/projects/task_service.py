@@ -298,8 +298,12 @@ class TaskService(BaseRepository):
                 .execute()
             )
 
-            total_tokens = sum(row.get("total_tokens", 0) for row in (token_res.data or []))
-            total_cost = sum(float(row.get("cost_usd", 0)) for row in (token_res.data or []))
+            # ⚡ Bolt Optimization: Single O(N) loop instead of O(2N) multiple generators
+            total_tokens = 0
+            total_cost = 0.0
+            for row in (token_res.data or []):
+                total_tokens += row.get("total_tokens", 0)
+                total_cost += float(row.get("cost_usd", 0))
 
             task_data["ai_metrics"] = {
                 "total_tokens": total_tokens,
