@@ -29,9 +29,15 @@ export async function callAPI<T>(
   endpoint: string,
   options: RequestInit = {}
 ): Promise<T> {
-  // --- Physical Network Alignment ---
+  // --- Physical Network Alignment (Pattern 7: Internal/External Isolation) ---
   // In Docker/Scout, relative paths don't work. We need a solid Base URL.
-  const envBase = import.meta.env.VITE_API_URL || '';
+  let envBase = import.meta.env.VITE_API_URL || '';
+  
+  // 🟢 Physical Correction: If in browser and env points to internal Docker service, rewrite to localhost
+  if (typeof window !== 'undefined' && envBase.includes('archon-server')) {
+    envBase = envBase.replace('archon-server', 'localhost');
+  }
+
   const normalizedEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
   
   // Construct full URL with BaseURL logic

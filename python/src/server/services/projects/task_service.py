@@ -149,29 +149,18 @@ class TaskService(BaseRepository):
             # REORDERING LOGIC: If inserting at a specific position, increment existing tasks
             if task_order > 0:
                 try:
-                    # Get all tasks in the same project and status with task_order >= new task's order
-                    existing_tasks_response = (
-                        self.supabase_client.table("archon_tasks")
-                        .select("id, task_order")
-                        .eq("project_id", project_id)
-                        .eq("status", task_status)
-                        .gte("task_order", task_order)
-                        .execute()
-                    )
-
-                    if existing_tasks_response.data:
-                        logger.info(f"Reordering {len(existing_tasks_response.data)} existing tasks")
-
-                        # Increment task_order for all affected tasks
-                        for existing_task in existing_tasks_response.data:
-                            self.supabase_client.table("archon_tasks").update(
-                                {
-                                    "task_order": existing_task["task_order"] + 1,
-                                    "updated_at": datetime.now().isoformat(),
-                                }
-                            ).eq("id", existing_task["id"]).execute()
+                    # Optimize: Use RPC to increment task_orders in a single atomic database operation (N+1 Fix)
+                    self.supabase_client.rpc(
+                        "increment_task_orders",
+                        {
+                            "p_project_id": project_id,
+                            "p_status": task_status,
+                            "p_start_order": task_order,
+                        },
+                    ).execute()
+                    logger.info(f"Reordered tasks in project {project_id} starting from order {task_order}")
                 except Exception as e:
-                    logger.warning(f"Reordering tasks failed: {e}. Proceeding with task creation.")
+                    logger.warning(f"Reordering tasks failed via RPC: {e}. Proceeding with task creation.")
 
             # Process knowledge_source_ids if provided
             final_sources = sources or []
