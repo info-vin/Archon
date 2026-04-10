@@ -63,7 +63,7 @@ describe('TaskModal', () => {
     setup();
     expect(screen.getByText('Create New Task')).toBeInTheDocument();
     expect(screen.getByLabelText('Title')).toHaveValue('');
-    expect(screen.getByRole('button', { name: 'Create Task' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Create task' })).toBeInTheDocument();
     // Wait for users to load
     await screen.findByRole('option', { name: 'Alice Johnson' });
     await screen.findByRole('option', { name: '(AI) Assistant' });
@@ -113,7 +113,7 @@ describe('TaskModal', () => {
     // Mock window.alert
     const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {});
 
-    await user.click(screen.getByRole('button', { name: 'Create Task' }));
+    await user.click(screen.getByRole('button', { name: 'Create task' }));
 
     await waitFor(() => {
       expect(alertSpy).toHaveBeenCalled();
@@ -138,7 +138,7 @@ describe('TaskModal', () => {
     // Mock window.alert
     const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {});
 
-    await user.click(screen.getByRole('button', { name: 'Save Changes' }));
+    await user.click(screen.getByRole('button', { name: 'Save changes' }));
 
     await waitFor(() => {
       expect(onTaskUpdated).toHaveBeenCalledTimes(1);
@@ -153,7 +153,7 @@ describe('TaskModal', () => {
     const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {});
     setup({ onTaskCreated });
 
-    const submitButton = screen.getByRole('button', { name: 'Create Task' });
+    const submitButton = screen.getByRole('button', { name: 'Create task' });
     fireEvent.submit(submitButton);
 
     await waitFor(() => {
