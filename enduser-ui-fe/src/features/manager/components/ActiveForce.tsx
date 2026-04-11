@@ -109,6 +109,7 @@ export const ActiveForce: React.FC<ActiveForceProps> = ({
                         <button 
                             onClick={() => setSelectedMember(member)}
                             className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                            aria-label={`View details for ${member.name}`}
                         >
                             <SearchIcon className="w-4 h-4" />
                         </button>
