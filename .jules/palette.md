@@ -13,3 +13,7 @@
 ## 2026-04-02 - [Dynamic ARIA labels for loading states]
 **Learning:** Screen readers might not correctly announce the changing state of a button if its inner text changes during async operations (like from 'Reconnect' to 'Connecting...').
 **Action:** Always provide a dynamic `aria-label` that reflects the current loading state of the button.
+
+## 2025-03-05 - ActiveForce Member Details Button Accessibility
+**Learning:** Icon-only buttons used for viewing specific item details (like team members) need dynamic ARIA labels that include the item's name (e.g., `aria-label={\`View details for \${member.name}\`}`) to provide adequate context for screen reader users, rather than a generic "View details".
+**Action:** Always use dynamic interpolation for `aria-label`s on icon-only buttons within mapped lists to ensure context-specific accessibility.
