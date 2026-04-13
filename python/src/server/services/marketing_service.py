@@ -14,6 +14,7 @@ from ..services.job_board_service import JobBoardService, JobData
 from ..services.librarian_service import LibrarianService
 from ..services.prompt_service import prompt_service
 from ..services.search.rag_service import RAGService
+from .log_service import LogService
 from ..utils import get_supabase_client
 from ..utils.json_utils import safe_json_loads
 
@@ -105,22 +106,27 @@ class MarketingService(BaseRepository):
         Uses credential_service to retrieve the appropriate API key.
         """
         try:
-            # 1. Fetch API Key from Credential Service
-            api_key = await credential_service.get_credential(
-                "GEMINI_API_KEY"
-            ) or await credential_service.get_credential("GOOGLE_API_KEY")
+            # 1. Fetch Dedicated API Key (SSOT: No unsafe fallbacks)
+            api_key = await credential_service.get_credential("GEMINI_API_KEY")
 
             if not api_key:
-                logger.error("MarketingService: No Gemini/Google API Key found in settings or environment.")
-                return {"error_code": 401, "message": "No AI API Keys found."}
+                logger.error("MarketingService: GEMINI_API_KEY not found. Refusing fallback to prevent 503.")
+                return {"error_code": 401, "message": "Dedicated GEMINI_API_KEY missing. Please configure in Settings."}
 
-            # 2. Initialize Client and Prompts
+            # 2. Get Dynamic Model Configuration (Physical Parity with Feb 2026 Goal)
+            from ..services.credential_service import credential_service
+            rag_strategy_creds = await credential_service.get_credentials_by_category("rag_strategy")
+            marketing_model = rag_strategy_creds.get("MARKETING_MODEL") or "gemini-2.5-flash"
+            # Strip prefixes for SDK compatibility
+            safe_model = marketing_model.split("/")[-1]
+
+            # Use asynchronous client for non-blocking FastAPI integration
             client = genai.Client(api_key=api_key)
             sys_prompt = prompt_service.get_prompt("SALES_PITCH", SALES_PITCH_SYSTEM_PROMPT)
 
-            # 3. Call AI with current model choice (gemini-2.5-flash)
-            response = client.models.generate_content(
-                model="gemini-2.5-flash",
+            # 3. Call AI with Dynamic Model (Asynchronous)
+            response = await client.aio.models.generate_content(
+                model=safe_model,
                 contents=f"Company: {company}\nRole: {job_title}",
                 config=types.GenerateContentConfig(system_instruction=sys_prompt),
             )
@@ -128,7 +134,6 @@ class MarketingService(BaseRepository):
             # 4. LOG ACTUAL TOKEN USAGE (Physical evidence)
             try:
                 import uuid
-
                 from .agent_registry import get_agent_uuid
                 from .token_usage_service import TokenUsageService
 
@@ -153,6 +158,18 @@ class MarketingService(BaseRepository):
 
         except Exception as e:
             logger.error(f"MarketingService: AI generation failed: {e}")
+            
+            # Persistent Audit Log for David (Admin)
+            try:
+                LogService(self.supabase_client).create_log_entry({
+                    "user_input": f"Pitch Generation Request: {company} / {job_title}",
+                    "gemini_response": f"AI Error: {str(e)[:500]}",
+                    "project_name": "SalesBot",
+                    "user_name": "alice@archon.com"
+                })
+            except Exception as log_err:
+                logger.warning(f"Failed to record marketing error to DB: {log_err}")
+                
             return {"error_code": 500, "message": f"AI generation error: {str(e)}"}
 
     async def generate_visual_asset(self, style: str) -> dict:

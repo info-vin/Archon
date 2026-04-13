@@ -25,6 +25,7 @@ VALUES
 ('DISPATCHER_CHECK_INTERVAL', '30', false, 'rag_strategy', 'Interval for task dispatcher check', NOW()),
 ('CODE_EXTRACTION_BATCH_SIZE', '50', false, 'rag_strategy', 'Batch size for code extraction', NOW()),
 ('CODE_SUMMARY_MAX_WORKERS', '3', false, 'rag_strategy', 'Max workers for code summarization', NOW()),
+('MARKETING_MODEL', 'gemini-2.5-flash', false, 'rag_strategy', 'Model used for Alice and Bob marketing tasks', NOW()),
 
 -- Code Extraction Settings
 ('MIN_CODE_BLOCK_LENGTH', '250', false, 'code_extraction', 'Minimum characters for a valid code block', NOW()),
