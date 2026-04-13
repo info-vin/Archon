@@ -341,6 +341,25 @@ Phase 4.4.5 引入了 **Clockwork** 進行系統自動檢測。
     此步驟提供兩種流程選項：
     *   **流程一 (快速檢查)**: 至少執行 `make test` 與 `make lint`。
     *   **流程二 (完整驗證)**: 執行「[2.3 全 Docker 環境手動驗證 SOP](#23-全-docker-環境手動驗證-sop)」，以進行最徹底的檢查。
+    - migration/0.2.2/01_foundation_types.sql
+    - migration/0.2.2/02_tables_core.sql
+    - migration/0.2.2/03_tables_business.sql
+    - migration/0.2.2/04_tables_ops.sql
+    - migration/0.2.2/05_logic_functions.sql
+    - migration/0.2.2/06_constraints_main.sql
+    - migration/0.2.2/07_logic_indexes.sql
+    - migration/0.2.2/08_logic_triggers.sql
+    - migration/0.2.2/09_constraints_fkeys.sql
+    - migration/0.2.2/10_security_rls.sql
+    - migration/0.2.2/11_seed_config.sql
+    - migration/0.2.2/12_seed_rbac.sql
+    - migration/0.2.2/13_optimize_task_reordering.sql
+    - migration/0.2.2/14_sync_persona_parity.sql
+    - migration/0.2.2/RESET_DB.sql
+    - migration/0.2.2/seed_blog_posts.sql
+    - migration/0.2.2/seed_mock_data.sql
+    - migration/0.2.2/seed_rag_defaults.sql
+    - migration/temp_fix_seq.sql
 
 2.  **階段二：資料庫遷移 (Database Migration) - v2 (Tracked)**
 
