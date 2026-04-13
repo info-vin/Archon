@@ -50,7 +50,9 @@ async def validate_code_quality(
         return False
 
     lines = code.split("\n")
-    non_empty_lines = [line for line in lines if line.strip()]
+    # PERFORMANCE: Replaced line.strip() with line and not line.isspace()
+    # to avoid string allocation overhead when checking for non-empty lines
+    non_empty_lines = [line for line in lines if line and not line.isspace()]
     if not non_empty_lines:
         return False
 

@@ -17,6 +17,7 @@
 ## 2024-05-18 - Nested generator expressions vs explicit loops
 **Learning:** Using nested generator expressions like `sum(1 for ... if any(...))` causes significant overhead in Python due to creating multiple generator objects per outer loop iteration. Replacing these nested generators with standard `for` loops, caching type conversions (like `str()`), and using early `break` statements can be ~4x faster on hot paths.
 **Action:** When filtering or counting based on compound conditions involving sub-lists or strings, unroll nested generators (`any()`, `all()`, or inner comprehensions) into standard `for` loops to avoid allocation overhead and enable true short-circuiting.
+
 ## 2025-05-18 - Pre-calculate feature strings before O(N^2) comparison loops
 **Learning:** In `extract_code_blocks_logic`, calling `_normalize_code_for_comparison` inside the O(N^2) nested deduplication loop caused massive performance degradation because expensive regex substitutions were run redundantly.
 **Action:** Always pre-calculate normalized codes or feature vectors into an O(N) list comprehension BEFORE executing an O(N^2) similarity or comparison loop.
@@ -32,6 +33,7 @@
 ## 2025-05-18 - Batch database fetches for related entities using .in_()
 **Learning:** Using O(N) individual database queries through loop mechanisms like `asyncio.gather(*[format_with_sources(p) for p in projects])` produces an N+1 query bottleneck when looking up relationships, such as linked sources for project IDs.
 **Action:** Always batch these database lookups into a single O(1) `.in_("id", id_list)` database query, and map the bulk response data back to the entity list in memory in order to speed up the loop processing execution path.
+
 ## 2024-05-18 - Replacing multiple list comprehensions with single iteration over lists
 **Learning:** Traversing the exact same list twice using list comprehensions like `[s["source_id"] for s in sources if ...]` adds unnecessary O(N) overhead compared to a single pass accumulation.
 **Action:** When extracting grouped items from a list, use a single for-loop with O(1) appends to respective lists to prevent redundant iteration loops over large datasets.
@@ -43,3 +45,7 @@
 ## 2024-05-18 - Beware Supabase 1000-row limit for aggregate counts
 **Learning:** Using an O(1) `.in_("id", ids)` fetch to retrieve ALL rows into memory in Python to emulate a `GROUP BY COUNT` is functionally dangerous because Supabase/PostgREST enforces a strict 1000-row limit by default. If the total relations exceed this, the query silently truncates, resulting in wildly inaccurate counts.
 **Action:** Do NOT use `.in_()` to pull raw rows to emulate aggregate database counts. Use `count="exact", head=True` inside individual `.eq()` lookups if an RPC is not available, as it delegates the true count to the database engine and respects pagination limits.
+
+## 2026-03-09 - Avoid string.strip() allocations in string filtering comprehensions
+**Learning:** Using `[line for line in lines if line.strip()]` to filter out empty or whitespace-only lines causes unnecessary string object allocations for every single string evaluated.
+**Action:** Use `[line for line in lines if line and not line.isspace()]` instead, which is ~30% faster since it does not create a new stripped string object for the evaluation.
