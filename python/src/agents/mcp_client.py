@@ -36,9 +36,17 @@ class MCPClient:
             except ImportError:
                 # Fallback for when running in agents container
                 import os
+                from pathlib import Path
 
                 mcp_port = os.getenv("ARCHON_MCP_PORT", "8051")
-                if os.getenv("DOCKER_CONTAINER"):
+                # Check for multiple Docker indicators
+                is_docker = (
+                    os.getenv("DOCKER_CONTAINER") == "true" or
+                    os.getenv("DOCKER_ENV") == "true" or
+                    Path("/.dockerenv").exists()
+                )
+
+                if is_docker:
                     self.mcp_url = f"http://archon-mcp:{mcp_port}"
                 else:
                     self.mcp_url = f"http://localhost:{mcp_port}"

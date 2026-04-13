@@ -56,7 +56,7 @@ export const useManagerNexusStats = () => {
     const fetchData = useCallback(async () => {
         setLoading(true);
         try {
-            const [sys, emp, app, alr, ai, settings, trends, force, risks, collab, sla, ethics, kroi, changes] = await Promise.all([
+            const results = await Promise.allSettled([
                 api.getSystemOverview(),
                 api.getEmployees(),
                 api.getPendingApprovals(),
@@ -72,23 +72,30 @@ export const useManagerNexusStats = () => {
                 api.getKnowledgeRoi(),
                 api.getPendingChanges()
             ]);
-            setOverview(sys);
-            setTeam(emp);
-            setApprovals(app);
-            setAlerts(alr);
-            setAiStats(ai);
-            setCommanderTrends(trends);
-            setForceReadiness(force);
-            setBusinessRisks(risks);
-            setCollabSynergy(collab);
-            setSlaReliability(sla);
-            setEthicsAudit(ethics);
-            setKnowledgeRoi(kroi);
-            setCodeProposals(changes || []);
 
-            if (settings && settings.length > 0) {
+            const getData = <T>(index: number, fallback: T): T => {
+                const res = results[index];
+                return res.status === 'fulfilled' ? res.value as T : fallback;
+            };
+
+            setOverview(getData(0, null));
+            setTeam(getData(1, []));
+            setApprovals(getData(2, { blogs: [], leads: [] }));
+            setAlerts(getData(3, []));
+            setAiStats(getData(4, null));
+            const settings = getData(5, null);
+            setCommanderTrends(getData(6, []));
+            setForceReadiness(getData(7, null));
+            setBusinessRisks(getData(8, []));
+            setCollabSynergy(getData(9, null));
+            setSlaReliability(getData(10, null));
+            setEthicsAudit(getData(11, null));
+            setKnowledgeRoi(getData(12, null));
+            setCodeProposals(getData(13, []) || []);
+
+            if (settings && (settings as any[]).length > 0) {
                  try {
-                     const parsedRules = JSON.parse(settings[0].value);
+                     const parsedRules = JSON.parse((settings as any[])[0].value);
                      if (parsedRules.weights) setRules(parsedRules.weights);
                      if (parsedRules.version) setRulesMeta(prev => ({ ...prev, version: parsedRules.version, updated_by: parsedRules.updated_by }));
                  } catch (e) {
@@ -102,7 +109,7 @@ export const useManagerNexusStats = () => {
             }).catch(e => console.error("Trend Load Failed", e));
 
         } catch (e) {
-            console.error("Nexus Load Failed", e);
+            console.error("Nexus Fatal Load Failure", e);
         } finally {
             setLoading(false);
         }

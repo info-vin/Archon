@@ -112,7 +112,7 @@ const SalesCartPage: React.FC = () => {
     };
 
     return (
-        <PermissionGuard permission="leads:view:sales">
+        <PermissionGuard permission="leads:view:all">
             <div className="p-4 pb-32 max-w-lg mx-auto min-h-screen relative">
                 <header className="mb-6 flex justify-between items-center sticky top-0 bg-background/95 backdrop-blur z-10 py-2 border-b border-transparent">
                     <div className="flex items-center gap-3">

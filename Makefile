@@ -77,6 +77,11 @@ verify-data:
 	@docker exec -i archon-server /venv/bin/python - < scripts/verify_seed.py
 
 # Run Librarian Probe (Diagnostics)
+# --- 5-Persona Physical Health Gate ---
+persona-audit:
+	@echo "🔍 Performing Global Persona Physical Audit (Alice, Bob, Charlie, David, Agents)..."
+	@docker exec -it archon-server /venv/bin/python scripts/persona_smoke_test.py
+
 probe:
 	@echo "Running Librarian Probe inside archon-server..."
 	@docker exec -i archon-server /venv/bin/python -c "from src.server.services.health_service import HealthService; import asyncio; hs = HealthService(); print(asyncio.run(hs.check_rag_integrity()))"

@@ -55,12 +55,15 @@ export const useBrandLogic = () => {
     const loadData = useCallback(async () => {
         setLoading(true);
         try {
-            const [postsData, trends] = await Promise.all([
+            // Using Settled pattern for Bob's dashboard resilience
+            const results = await Promise.allSettled([
                 api.getBlogPosts(),
-                api.getMarketingTrends().catch(() => null)
+                api.getMarketingTrends()
             ]);
-            setPosts(postsData);
-            setTrendsData(trends);
+            
+            if (results[0].status === 'fulfilled') setPosts(results[0].value);
+            if (results[1].status === 'fulfilled') setTrendsData(results[1].value);
+            
         } catch (err) {
             console.error("Failed to load brand data:", err);
         } finally {

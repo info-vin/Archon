@@ -10,8 +10,17 @@ interface ListViewProps {
   userMap: Record<string, any>;
 }
 
-export const ListView: React.FC<ListViewProps> = React.memo(({ tasks, setEditingTask, userMap }) => (
-  <ul className="space-y-3">
+export const ListView: React.FC<ListViewProps> = React.memo(({ tasks, setEditingTask, userMap }) => {
+  if (tasks.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12 bg-white/50 backdrop-blur-md rounded-2xl border border-white/50 border-dashed">
+        <p className="text-gray-400 font-medium italic">No tasks assigned for today. Great job!</p>
+      </div>
+    );
+  }
+
+  return (
+    <ul className="space-y-3">
     {tasks.map(task => {
         return (
             <li key={task.id} onClick={() => setEditingTask(task)} className="group relative overflow-hidden bg-white/70 backdrop-blur-md rounded-xl border border-white/50 shadow-sm hover:shadow-md transition-all cursor-pointer p-4 pl-5">
@@ -64,4 +73,6 @@ export const ListView: React.FC<ListViewProps> = React.memo(({ tasks, setEditing
         );
     })}
   </ul>
-));
+  );
+  });
+

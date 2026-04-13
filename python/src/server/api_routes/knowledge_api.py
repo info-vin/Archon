@@ -14,7 +14,9 @@ from .knowledge.upload import upload_document
 # We use /api as prefix to flatten the paths requested by FE
 router: APIRouter = APIRouter(prefix="/api", tags=["knowledge"])
 
-router.include_router(items_router)
+# Backward compatibility aliases for old tests (GAP-012)
+router.include_router(items_router, prefix="/knowledge-items")
+router.include_router(items_router) 
 router.include_router(search_router)
 router.include_router(crawling_router)
 router.include_router(upload_router)

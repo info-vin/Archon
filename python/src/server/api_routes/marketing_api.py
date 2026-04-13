@@ -84,7 +84,18 @@ async def promote_lead(lead_id: str, req: PromoteLeadRequest, current_user: dict
 
 
 @router.post("/generate-pitch", response_model=PitchResponse)
-async def generate_pitch(req: PitchRequest, current_user: dict = Depends(requires_permission(AGENT_TRIGGER_MKT))):
+async def generate_pitch(
+    req: PitchRequest,
+    current_user: dict = Depends(get_current_user)
+):
+    # Flexible check: system_admin, marketing, or sales can trigger pitch generation
+    role = current_user.get("role", "viewer").lower()
+    if role not in ["system_admin", "admin", "marketing", "sales"]:
+        raise HTTPException(
+            status_code=403,
+            detail=f"Role '{role}' is unauthorized to generate pitches"
+        )
+
     service = MarketingService()
     res = await service.generate_pitch(req.company, req.job_title)
     if isinstance(res, dict) and "error_code" in res:

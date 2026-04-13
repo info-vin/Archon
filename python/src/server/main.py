@@ -17,29 +17,27 @@ import os
 from contextlib import asynccontextmanager
 from typing import Any
 
-from fastapi import FastAPI
+from fastapi import FastAPI, APIRouter
 from fastapi.middleware.cors import CORSMiddleware
 
 from .api_routes.admin_api import router as admin_router  # NEW IMPORT
 from .api_routes.agent_chat_api import router as agent_chat_router
-from .api_routes.agents_api import router as agents_router
+from .api_routes.agents_api import router as agents_router # MISSING
 from .api_routes.auth_api import router as auth_router  # NEW IMPORT
 from .api_routes.blog_api import router as blog_router
 from .api_routes.bug_report_api import router as bug_report_router
 from .api_routes.changes_api import router as changes_router  # NEW IMPORT
 from .api_routes.ethics_api import router as ethics_router  # NEW IMPORT
 from .api_routes.extraction_api import router as extraction_router  # NEW IMPORT (GAP-018)
-from .api_routes.files_api import router as files_router
 from .api_routes.internal_api import router as internal_router
 from .api_routes.knowledge_api import router as knowledge_router
 from .api_routes.log_api import router as log_router
 from .api_routes.marketing_api import router as marketing_router  # NEW IMPORT
 from .api_routes.mcp_api import router as mcp_api_router  # NEW IMPORT
 from .api_routes.migration_api import router as migration_router
-from .api_routes.ollama import router as ollama_router
 from .api_routes.progress_api import router as progress_router
 from .api_routes.projects_api import router as projects_router
-from .api_routes.prompts_api import router as prompts_router
+from .api_routes.prompts_api import router as prompts_router # MISSING
 from .api_routes.providers_api import router as providers_router
 from .api_routes.settings_api import router as settings_router
 from .api_routes.stats_api import router as stats_router
@@ -235,6 +233,7 @@ origins = [
     "https://archon-ui-wiwy.onrender.com",
     "https://enduser-ui-fe.onrender.com",
     "http://localhost:5173",
+    "http://127.0.0.1:5173",
     "http://localhost:3000",
     "http://localhost:3737",
     "http://enduser-ui:5173",
@@ -269,36 +268,37 @@ async def skip_health_check_logs(request, call_next):
     return await call_next(request)
 
 
-# Include API routers
-app.include_router(settings_router, prefix="/api")
-app.include_router(auth_router, prefix="/api")
-
-app.include_router(mcp_api_router)
-app.include_router(knowledge_router)
+# --- API Routing Standardized (Phase 4.6.34) ---
+# Group 1: Routers that ALREADY define "/api" in their internal prefix (No extra prefix needed)
 app.include_router(projects_router)
-app.include_router(progress_router)
-app.include_router(agent_chat_router)
-app.include_router(internal_router)
-app.include_router(agents_router)
-app.include_router(admin_router)  # NEW ROUTER
-app.include_router(auth_router)
+app.include_router(marketing_router)
+app.include_router(admin_router)
 app.include_router(blog_router)
+app.include_router(stats_router)
+app.include_router(mcp_api_router)
+app.include_router(visit_log_router)
+app.include_router(version_router)
+app.include_router(log_router)
 app.include_router(bug_report_router)
 app.include_router(changes_router)
-app.include_router(log_router)
+app.include_router(extraction_router)
 app.include_router(ethics_router)
-app.include_router(files_router)
-app.include_router(version_router)
 app.include_router(providers_router)
-app.include_router(ollama_router)
 app.include_router(migration_router)
-app.include_router(agents_router)
-app.include_router(stats_router)
-app.include_router(marketing_router)
 app.include_router(system_router)
+app.include_router(agent_chat_router)
+app.include_router(progress_router)
+app.include_router(knowledge_router)
+app.include_router(agents_router)
+from .api_routes.prompts_api import router as prompts_router
 app.include_router(prompts_router)
-app.include_router(visit_log_router)
-app.include_router(extraction_router)  # NEW ROUTER (GAP-018)
+
+# Group 2: Routers that NEED an "/api" prefix (defined without prefix internally)
+app.include_router(auth_router, prefix="/api")
+app.include_router(settings_router, prefix="/api")
+app.include_router(internal_router) # Already defines /internal
+
+app.include_router(test_api_router)
 
 
 # Root endpoint
