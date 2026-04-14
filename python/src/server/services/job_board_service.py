@@ -68,7 +68,7 @@ class JobBoardService:
     # REAL DATA ONLY: MOCK_JOBS remains empty
     MOCK_JOBS: list[JobData] = []
 
-    async def search_jobs(self, keyword: str, limit: int = 10) -> list[JobData]:
+    async def search_jobs(self, keyword: str, limit: int = 8) -> list[JobData]:
         logger.info(f"Searching jobs (Sync-Thru Mode) | keyword={keyword}")
 
         # CRITICAL: Using SYNC Client inside async thread pool to bypass WAF TLS fingerprinting

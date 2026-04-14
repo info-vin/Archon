@@ -12,7 +12,7 @@ class SearchJobMarketTool(BaseModel):
     keyword: str = Field(
         ..., description="The job title or keyword to search for (e.g., 'Python Engineer', 'Marketing Manager')."
     )
-    limit: int = Field(10, description="Maximum number of job listings to retrieve. Default is 10.")
+    limit: int = Field(8, description="Maximum number of job listings to retrieve. Default is 8.")
 
     async def execute(self) -> str:
         """Executes the job search."""

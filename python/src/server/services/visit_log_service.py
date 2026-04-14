@@ -22,8 +22,13 @@ class VisitLogService(BaseRepository):
         return self.execute_query(_query, "Failed to list logs")
 
     async def create_log(self, data: dict) -> tuple[bool, Any]:
+        # GAP-011: Physical field alignment (Normalizing payload for DB)
+        normalized_data = data.copy()
+        if "company_name" in normalized_data and "location_address" not in normalized_data:
+            normalized_data["location_address"] = normalized_data.pop("company_name")
+
         def _query():
-            return self.supabase_client.table("visit_logs").insert(data).execute()
+            return self.supabase_client.table("visit_logs").insert(normalized_data).execute()
 
         return self.execute_query(_query, "Failed to create log")
 

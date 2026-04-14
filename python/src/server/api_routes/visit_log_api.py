@@ -31,6 +31,10 @@ async def create_visit_log(
 ):
     """Creates a new visit log and automatically generates a task in Field Ops."""
     service = VisitLogService()
+
+    # GAP-011: Physical identity injection
+    log_data["user_id"] = current_user.get("id")
+
     success, res = await service.create_log(log_data)
 
     if not success:
@@ -43,19 +47,19 @@ async def create_visit_log(
 
         # 1. Identify the 'Field Ops' project (Physical ID resolution)
         sb = service.supabase_client
-        project_res = sb.table("archon_projects").select("id").eq("name", "Field Ops").execute()
+        project_res = sb.table("archon_projects").select("id").eq("title", "Field Ops").execute()
 
         if project_res.data:
             project_id = project_res.data[0]["id"]
             summary = log_data.get("summary", "New field visit log created.")
+            company = log_data.get("location_address") or log_data.get("company_name", "Unnamed Client")
 
             await task_svc.create_task(
                 project_id=project_id,
-                title=f"[Field Ops] Visit Log: {log_data.get('company_name', 'Unnamed Client')}",
+                title=f"[Field Ops] Visit Log: {company}",
                 description=f"AI Summary: {summary}\n\nNote: Auto-generated from voice log.",
                 assignee=current_user.get("id", "User")
             )
-
     except Exception as e:
         # We don't fail the visit log creation if task creation fails, but we log it
         from ..config.logfire_config import get_logger

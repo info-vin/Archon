@@ -1,6 +1,9 @@
 # Phase 4.6.1: Alice (Sales Rep) Persona Workflows & Validation
 
-> **文件狀態**: ✅ 規格定案 (Policies Finalized) - 2026-02-07 (Updated)
+> **文件狀態**: ✅ 代碼實體對齊 (Physically Aligned) - 2026-04-14 (Updated)
+> **最新修訂 (Code Alignment)**:
+> 1. `find_jobs` (104 Job Bank) 爬蟲單次獲取量由 10 筆下修為 8 筆以規避限流阻擋。
+> 2. `JobBoardService` 實裝 `Sync-Thru Mode` 成功繞過 WAF 阻擋 (104 crawler blockage)。
 > **目標角色**: Alice (王牌業務員)
 > **情境核心**: 行動優先 (Mobile-First)、單手操作、業務戰鬥力。
 
