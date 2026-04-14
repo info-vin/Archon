@@ -16,7 +16,7 @@ router: APIRouter = APIRouter(prefix="/api", tags=["knowledge"])
 
 # Backward compatibility aliases for old tests (GAP-012)
 router.include_router(items_router, prefix="/knowledge-items")
-router.include_router(items_router) 
+router.include_router(items_router)
 router.include_router(search_router)
 router.include_router(crawling_router)
 router.include_router(upload_router)

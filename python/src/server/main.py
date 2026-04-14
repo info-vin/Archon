@@ -17,12 +17,12 @@ import os
 from contextlib import asynccontextmanager
 from typing import Any
 
-from fastapi import FastAPI, APIRouter
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from .api_routes.admin_api import router as admin_router  # NEW IMPORT
 from .api_routes.agent_chat_api import router as agent_chat_router
-from .api_routes.agents_api import router as agents_router # MISSING
+from .api_routes.agents_api import router as agents_router  # MISSING
 from .api_routes.auth_api import router as auth_router  # NEW IMPORT
 from .api_routes.blog_api import router as blog_router
 from .api_routes.bug_report_api import router as bug_report_router
@@ -37,7 +37,7 @@ from .api_routes.mcp_api import router as mcp_api_router  # NEW IMPORT
 from .api_routes.migration_api import router as migration_router
 from .api_routes.progress_api import router as progress_router
 from .api_routes.projects_api import router as projects_router
-from .api_routes.prompts_api import router as prompts_router # MISSING
+from .api_routes.prompts_api import router as prompts_router  # MISSING
 from .api_routes.providers_api import router as providers_router
 from .api_routes.settings_api import router as settings_router
 from .api_routes.stats_api import router as stats_router
@@ -290,7 +290,6 @@ app.include_router(agent_chat_router)
 app.include_router(progress_router)
 app.include_router(knowledge_router)
 app.include_router(agents_router)
-from .api_routes.prompts_api import router as prompts_router
 app.include_router(prompts_router)
 
 # Group 2: Routers that NEED an "/api" prefix (defined without prefix internally)

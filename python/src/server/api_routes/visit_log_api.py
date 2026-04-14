@@ -29,11 +29,38 @@ async def list_visit_logs(
 async def create_visit_log(
     log_data: dict, current_user: dict = Depends(requires_permission(TASK_CREATE))
 ):
-    """Creates a new visit log. Requires TASK_CREATE permission."""
+    """Creates a new visit log and automatically generates a task in Field Ops."""
     service = VisitLogService()
     success, res = await service.create_log(log_data)
+
     if not success:
         raise HTTPException(status_code=400, detail=str(res))
+
+    # GAP-009: Automatic Task Creation for Alice
+    try:
+        from src.server.services.projects.task_service import TaskService
+        task_svc = TaskService()
+
+        # 1. Identify the 'Field Ops' project (Physical ID resolution)
+        sb = service.supabase_client
+        project_res = sb.table("archon_projects").select("id").eq("name", "Field Ops").execute()
+
+        if project_res.data:
+            project_id = project_res.data[0]["id"]
+            summary = log_data.get("summary", "New field visit log created.")
+
+            await task_svc.create_task(
+                project_id=project_id,
+                title=f"[Field Ops] Visit Log: {log_data.get('company_name', 'Unnamed Client')}",
+                description=f"AI Summary: {summary}\n\nNote: Auto-generated from voice log.",
+                assignee=current_user.get("id", "User")
+            )
+
+    except Exception as e:
+        # We don't fail the visit log creation if task creation fails, but we log it
+        from ..config.logfire_config import get_logger
+        get_logger(__name__).warning(f"Voice-to-Task automation failed: {e}")
+
     data = res.get("data", []) if isinstance(res, dict) else res
     return data[0] if isinstance(data, list) and len(data) > 0 else {}
 

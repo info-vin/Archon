@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { MenuIcon, XIcon, UserIcon, SettingsIcon, LogOutIcon, ShieldCheckIcon, LayoutGridIcon, PaletteIcon, CheckCircleIcon } from '../../components/Icons.tsx';
+import { MenuIcon, UserIcon, SettingsIcon, LogOutIcon, ShieldCheckIcon, LayoutGridIcon, PaletteIcon, CheckCircleIcon } from '../../components/Icons.tsx';
 import LiveClock from '../../components/LiveClock.tsx';
 import UserAvatar from '../../components/UserAvatar.tsx';
 import { BrandLogo } from '../../components/BrandLogo.tsx';

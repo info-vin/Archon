@@ -33,11 +33,12 @@ class LogService(BaseRepository):
         Returns:
             Tuple of (success, result_dict)
         """
+        gemini_resp = str(log_data.get("gemini_response") or "Unknown AI Response")
         # Prepare data for archon_logs (Unified Logging Pattern)
         insert_data = {
             "source": log_data.get("project_name", "system"),
-            "level": "ERROR" if "Error" in str(log_data.get("gemini_response")) else "INFO",
-            "message": log_data.get("gemini_response")[:500],
+            "level": "ERROR" if "Error" in gemini_resp else "INFO",
+            "message": gemini_resp[:500],
             "details": {
                 "user_input": log_data.get("user_input"),
                 "user_name": log_data.get("user_name")

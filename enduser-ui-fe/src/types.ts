@@ -32,7 +32,7 @@ export type PermissionScope =
   | 'agent:trigger:dev' | 'agent:trigger:mkt' | 'agent:trigger:know'
   | 'code:approve' | 'content:publish'
   | 'stats:view:own' | 'stats:view:team' | 'stats:view:all'
-  | 'leads:view:all' | 'leads:view:sales' | 'leads:view:marketing'
+  | 'leads:view:all' | 'leads:view:sales' | 'leads:view:marketing' | 'brand:manage'
   | 'user:manage' | 'user:manage:team' | 'mcp:manage';
 
 export type ViewMode = 'list' | 'table' | 'kanban' | 'gantt';

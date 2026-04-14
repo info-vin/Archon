@@ -14,9 +14,9 @@ from ..services.job_board_service import JobBoardService, JobData
 from ..services.librarian_service import LibrarianService
 from ..services.prompt_service import prompt_service
 from ..services.search.rag_service import RAGService
-from .log_service import LogService
 from ..utils import get_supabase_client
 from ..utils.json_utils import safe_json_loads
+from .log_service import LogService
 
 logger = get_logger(__name__)
 
@@ -133,6 +133,7 @@ class MarketingService(BaseRepository):
             # 4. LOG ACTUAL TOKEN USAGE (Physical evidence)
             try:
                 import uuid
+
                 from .agent_registry import get_agent_uuid
                 from .token_usage_service import TokenUsageService
 
@@ -157,7 +158,7 @@ class MarketingService(BaseRepository):
 
         except Exception as e:
             logger.error(f"MarketingService: AI generation failed: {e}")
-            
+
             # Persistent Audit Log for David (Admin)
             try:
                 LogService(self.supabase_client).create_log_entry({
@@ -168,7 +169,7 @@ class MarketingService(BaseRepository):
                 })
             except Exception as log_err:
                 logger.warning(f"Failed to record marketing error to DB: {log_err}")
-                
+
             return {"error_code": 500, "message": f"AI generation error: {str(e)}"}
 
     async def generate_visual_asset(self, style: str) -> dict:
