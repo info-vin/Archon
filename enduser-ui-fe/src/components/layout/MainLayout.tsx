@@ -91,9 +91,9 @@ const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                         <BrandLogo className="w-10 h-10" />
                     </Link>
                     {!isCollapsed && (
-                        <button onClick={() => setIsSidebarOpen(false)} className="md:hidden p-1 hover:bg-secondary rounded-md ml-auto" aria-label="Close sidebar">
-                            <XIcon className="w-6 h-6" />
-                        </button>
+                        <div className="ml-2 px-2 py-0.5 bg-indigo-500 text-white text-[8px] font-bold rounded uppercase">
+                            {user?.role}: {user?.permissions?.length || 0}
+                        </div>
                     )}
                 </div>
                 {/* Desktop Navigation */}
@@ -120,7 +120,7 @@ const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                             </Link>
                         </li>
                     )}
-                    {hasPermission('leads:view:marketing') && (
+                    {hasPermission('brand:manage') && (
                         <li className="mb-2 w-full">
                             <Link to="/brand" title={isCollapsed ? "Brand Hub" : undefined} className={`flex ${isCollapsed ? 'flex-col items-center justify-center p-2 text-[10px] text-center' : 'items-center p-2'} rounded-md hover:bg-secondary ${location.pathname.startsWith('/brand') ? 'bg-secondary' : ''} transition-all`}>
                                 <PaletteIcon className={`w-5 h-5 text-purple-500 dark:text-purple-400 ${isCollapsed ? 'mb-1' : 'mr-3'}`} />

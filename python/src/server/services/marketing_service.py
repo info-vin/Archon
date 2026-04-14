@@ -114,7 +114,6 @@ class MarketingService(BaseRepository):
                 return {"error_code": 401, "message": "Dedicated GEMINI_API_KEY missing. Please configure in Settings."}
 
             # 2. Get Dynamic Model Configuration (Physical Parity with Feb 2026 Goal)
-            from ..services.credential_service import credential_service
             rag_strategy_creds = await credential_service.get_credentials_by_category("rag_strategy")
             marketing_model = rag_strategy_creds.get("MARKETING_MODEL") or "gemini-2.5-flash"
             # Strip prefixes for SDK compatibility

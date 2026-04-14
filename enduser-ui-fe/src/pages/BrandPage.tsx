@@ -49,7 +49,7 @@ const BrandPage: React.FC = () => {
 
     return (
         <PermissionGuard 
-            permission="leads:view:marketing" 
+            permission="brand:manage" 
             fallback={<div className="p-12 text-center text-gray-500">Access Denied: Brand Hub is for Marketing roles only.</div>}
         >
             <div className="flex flex-col h-full bg-slate-50 dark:bg-slate-900">
@@ -88,7 +88,7 @@ const BrandPage: React.FC = () => {
                     </div>
                 </header>
 
-                <main className={`flex-1 ${viewMode === 'workbench' ? 'overflow-hidden' : 'overflow-auto'}`}>
+                <main className="flex-1 overflow-auto">
                     {viewMode === 'dashboard' ? (
                         <BrandDashboardView 
                             posts={posts}

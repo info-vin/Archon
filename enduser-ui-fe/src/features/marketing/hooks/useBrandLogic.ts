@@ -18,6 +18,13 @@ export const useBrandLogic = () => {
     // Workbench State
     const [sources, setSources] = useState<ContentSource[]>([]);
     const [activeSource, setActiveSource] = useState<ContentSource | null>(null);
+
+    // Auto-select first source if none active
+    useEffect(() => {
+        if (viewMode === 'workbench' && sources.length > 0 && !activeSource) {
+            handleSelectSource(sources[0]);
+        }
+    }, [sources, viewMode, activeSource]);
     const [activeTaskId, setActiveTaskId] = useState<string | null>(null);
     const [activePostId, setActivePostId] = useState<string | null>(null);
     const [contextData, setContextData] = useState<any>(null);

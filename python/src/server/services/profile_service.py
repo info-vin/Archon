@@ -98,10 +98,7 @@ class ProfileService(BaseRepository):
 
         if success and result["data"]:
             profile = result["data"][0]
-            # Since the frontend might still look for 'permissions', we can either leave it empty
-            # and rely on the frontend's static SSOT fallback, or inject it dynamically here.
-            # For simplicity and stability, we leave dynamic RBAC enforcement to the backend endpoints.
-            profile["permissions"] = []
+            # Permissions are now handled by the dynamic RBAC service or frontend fallback
             return True, profile
 
         return False, "Profile not found"

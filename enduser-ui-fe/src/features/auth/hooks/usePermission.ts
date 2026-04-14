@@ -54,29 +54,21 @@ export function usePermission() {
 
     const normalizedReq = permission.toLowerCase();
 
-    // 1. Check Dynamic Permissions (DB/Mock) - Primary Source
-    // Includes fallback check for 'scopes' or 'permission_overrides'
-    const rawPerms = user.permissions || (user as any).scopes || [];
-    if (Array.isArray(rawPerms)) {
-        const lowerPerms = (rawPerms as string[]).map(p => p.toLowerCase());
-        if (lowerPerms.includes(normalizedReq)) return true;
-    }
+    // Combined Source: Dynamic + Static Fallback (SSOT)
+    const dynamicPerms = user.permissions || (user as any).scopes || [];
     
-    // 2. Industrial-Grade Fallback: Check Static Role-based Mapping (SSOT)
-    if (user.role) {
-        const normalizedRole = user.role.toLowerCase();
-        const rolePermissions = ROLE_MAP[normalizedRole] || ROLE_MAP[user.role];
-        
-        if (rolePermissions) {
-            if (rolePermissions.has('*')) return true;
-            // Search the set with lowercase comparison
-            for (const p of Array.from(rolePermissions)) {
-                if (p.toLowerCase() === normalizedReq) return true;
-            }
-        }
-    }
+    // Get Static Set based on role
+    const normalizedRole = (user.role || '').toLowerCase();
+    const staticPermsSet = ROLE_MAP[normalizedRole] || new Set();
+    
+    // Union of both sources for 100% reliability
+    const allPerms = new Set([
+        ...dynamicPerms.map((p: string) => p.toLowerCase()),
+        ...Array.from(staticPermsSet).map((p: any) => p.toLowerCase())
+    ]);
 
-    return false;
+    if (allPerms.has('*')) return true;
+    return allPerms.has(normalizedReq);
   };
 
   return { hasPermission };

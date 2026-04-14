@@ -33,22 +33,26 @@ class LogService(BaseRepository):
         Returns:
             Tuple of (success, result_dict)
         """
-        # Prepare data for insertion
+        # Prepare data for archon_logs (Unified Logging Pattern)
         insert_data = {
-            "user_input": log_data.get("user_input"),
-            "gemini_response": log_data.get("gemini_response"),
-            "project_name": log_data.get("project_name"),
-            "user_name": log_data.get("user_name"),
+            "source": log_data.get("project_name", "system"),
+            "level": "ERROR" if "Error" in str(log_data.get("gemini_response")) else "INFO",
+            "message": log_data.get("gemini_response")[:500],
+            "details": {
+                "user_input": log_data.get("user_input"),
+                "user_name": log_data.get("user_name")
+            },
             "created_at": datetime.now().isoformat(),
+            "project_name": log_data.get("project_name")
         }
 
         # Validate required field
-        if not insert_data["gemini_response"]:
-            logger.warning("Attempted to create a log entry with no gemini_response.")
-            return False, {"error": "gemini_response is a required field."}
+        if not insert_data["message"]:
+            logger.warning("Attempted to create a log entry with no message.")
+            return False, {"error": "message is a required field."}
 
         def _query():
-            return self.supabase_client.table("gemini_logs").insert(insert_data).execute()
+            return self.supabase_client.table("archon_logs").insert(insert_data).execute()
 
         success, result = self.execute_query(
             query_func=_query, error_context="Failed to insert log into database", require_data=True

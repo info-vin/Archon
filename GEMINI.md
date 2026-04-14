@@ -121,7 +121,17 @@
 
 *   **15. 設定的可見性與系統保護 (Settings Visibility & Hardening)**
     *   **核心**: 資料庫中的 `archon_settings` 表承載了從 AI 金鑰到內部營運參數的所有配置。
-    *   **教訓**: 透過引入 `is_system_protected` 欄位與 API 層級的物理過濾，確保 Admin UI (3737) 僅顯示「人類可管理的設定」，而隱藏內部的工具參數（如 Bob 的 104 Crawler API），避免操作介面過載並強化內部隱私。
+    *   **教訓**: 透過引入 `is_system_protected` 欄位與 API 層級的物理過濾，確保 Admin UI (3737) 僅顯示「人類可管理的設定」，而隱藏內部的工具參數。
+
+*   **16. 路由嵌套與前綴衝突 (Route Nesting & Prefix Conflict)**
+    *   **核心**: 在 FastAPI 模組化掛載中，若子路由 (`APIRouter`) 已定義 `prefix="/api/..."`，主入口 `main.py` **絕對禁止** 再次添加重複前綴。
+    - **物理罪證**: 4.6.34 期間出現了 `/api/api/admin` 導致 404 與 ReadTimeout。
+    - **SOP**: 每次修改路由，必須執行 `make persona-audit` 物理公證 5 人通路。
+
+*   **17. 靜默權限遮蔽陷阱 (Silent Permission Masking)**
+    *   **核心**: 後端 Service **絕對禁止** 手寫 `profile["permissions"] = []`。
+    - **物理罪證**: 這會導致前端引擎認為使用者「確定無權限」而跳過 Role Fallback，造成 Bob 的側邊欄物理消失。
+    - **SOP**: 權限應由專屬的 `RBACService` 動態注入，或留空交由前端靜態規則自癒。
 
 ---
 
