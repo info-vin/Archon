@@ -43,3 +43,7 @@
 ## 2024-05-18 - Beware Supabase 1000-row limit for aggregate counts
 **Learning:** Using an O(1) `.in_("id", ids)` fetch to retrieve ALL rows into memory in Python to emulate a `GROUP BY COUNT` is functionally dangerous because Supabase/PostgREST enforces a strict 1000-row limit by default. If the total relations exceed this, the query silently truncates, resulting in wildly inaccurate counts.
 **Action:** Do NOT use `.in_()` to pull raw rows to emulate aggregate database counts. Use `count="exact", head=True` inside individual `.eq()` lookups if an RPC is not available, as it delegates the true count to the database engine and respects pagination limits.
+
+## 2025-05-18 - Batching database inserts for chunked content
+**Learning:** When splitting large text files into chunks for database storage, inserting each chunk in a loop (`.insert().execute()`) creates an N+1 query bottleneck. The database insertion overhead can dominate the function's execution time for large files.
+**Action:** Batch multiple Supabase row insertions by accumulating data into a list and calling a single `.insert([...]).execute()`. Add a fallback to individual insertions in case of batch failure to preserve data and detailed logging.
