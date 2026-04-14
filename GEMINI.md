@@ -133,18 +133,23 @@
     - **物理罪證**: 這會導致前端引擎認為使用者「確定無權限」而跳過 Role Fallback，造成 Bob 的側邊欄物理消失。
     - **SOP**: 權限應由專屬的 `RBACService` 動態注入，或留空交由前端靜態規則自癒。
 
----
-
-# 第三章：近期工作日誌 (Recent Journal Entries)
-### 2026-04-09: Phase 4.6.33 落地與物理公證：數據感知與代謝鎖定
-*   **今日目標 (物理落地)**:
-    - **感知對齊**: 在 `twin_scout.py` 實作了 `Reality_Context` 注入，Scout 現能精確比對 DB 數據（如 Alice 的任務數）與 UI 渲染現狀。
-    - **代謝鎖定**: 實作了「高壓代謝機制 (Pattern 33.2)」，自動過濾並鎖定包含 `PARITY_MISMATCH` 或 `WORKFLOW_FAILURE` 的診斷報告，確保關鍵斷層不被覆蓋。
-    - **物理稽核**: 通過 `make twin-scout` 現場巡航，偵測到 Bob (Marketing) 的實體權限過嚴斷層與 Alice 的 UI 加載死鎖。
-*   **物理成果**:
-    - **驗證指標**: **PRP 4.6.30~33 承諾全數 100% 物理落地**。
-    - **巡檢報告**: `report_20260409_082959.md` 正確顯示實體與現實的對齊數據。
-    - **代碼品質**: 完成了 `scripts/twin_scout.py` 的職責對齊，符合 0.2.2 治理標準。
+### 2026-04-13: Phase 4.6.34 - 4.6.38 物理落地與全維度對齊
+*   **1. 路由合約標準化 (Method: Grouped Mounting)**:
+    - **邏輯**: 解決 `/api/api` 嵌套 404 問題。
+    - **步驟**: 透過 `grep` 建立子路由 Prefix 清單，並在 `main.py` 實施分類掛載（自帶 /api 者直接掛載，無前綴者補掛 /api）。
+    - **證據**: `make persona-audit` 5/5 狀態 200 OK。
+*   **2. 權限引擎硬化 (Method: Union Authorization)**:
+    - **邏輯**: 解決 Bob 側邊欄物理消失問題。
+    - **步驟**: 移除 `ProfileService` 的空陣列硬編碼；修正 `usePermission.ts` 以合併動態與靜態 Role Scopes；對齊 `MainLayout.tsx` 的 `brand:manage` 門禁。
+    - **證據**: 物理公證 Bob Profile 不再包含 `permissions: []`。
+*   **3. 業務執行與日誌對齊 (Method: AIO & Log Unification)**:
+    - **邏輯**: 解決 Alice 提案 500 錯誤（UnboundLocalError 與 Blocking IO）。
+    - **步驟**: 規範 Import 結構至模組頂部；切換 Google SDK 為 `client.aio` 非同步模式；將 `LogService` 目標表物理修正為 `archon_logs`。
+    - **證據**: 資料庫 `archon_logs` 成功補獲 503 錯誤紀錄。
+*   **4. 品質門禁 (Method: Institutional Audit Gates)**:
+    - **清掃**: 移除 `scripts/` 下 4 個偵錯用腳本。
+    - **對帳**: `make lint` 全綠，`make test-be` 通過 559/559 測項。
+    - **制度**: 建立 `make persona-audit` 作為 Makefile 強制門禁。
 
 ---
 
