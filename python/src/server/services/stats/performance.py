@@ -66,30 +66,27 @@ class PerformanceManager:
             logger.error(f"PerformanceManager: Action log failed: {e}")
 
     async def get_collab_synergy(self) -> dict[str, Any]:
-        """Calculates synergy matrix interactions (Type-Hardened)."""
+        """Calculates synergy matrix interactions with Dynamic Nodes (Phase 4.6.39)."""
         now = datetime.now(UTC)
         seven_days_ago = (now - timedelta(days=7)).isoformat()
         thirty_days_ago = (now - timedelta(days=30)).isoformat()
 
-        nodes = [
-            {"id": "alice", "name": "Alice"},
-            {"id": "bob", "name": "Bob"},
-            {"id": "charlie", "name": "Charlie"},
-            {"id": "admin", "name": "Admin"},
-            {"id": "clockwork", "name": "Clockwork"},
-            {"id": "sentinel", "name": "Sentinel"},
-            {"id": "ai-librarian", "name": "Librarian"},
-            {"id": "ai-dev-bot", "name": "DevBot"},
-            {"id": "market-bot", "name": "MarketBot"},
-        ]
+        # Dynamic Nodes Extraction
+        profiles_res = self.supabase.table("profiles").select("id, name, email").execute()
+        profile_map = {str(p["id"]): p["name"] for p in (profiles_res.data or [])}
+        email_to_name = {str(p["email"]).split("@")[0].lower(): p["name"] for p in (profiles_res.data or [])}
 
         tasks_res = self.supabase.table("archon_tasks").select("assignee_id, created_at, sources").gt("created_at", thirty_days_ago).execute()
         blogs_res = self.supabase.table("blog_posts").select("author_name, lead_id, created_at, status").gt("created_at", thirty_days_ago).execute()
+        logs_res = self.supabase.table("archon_logs").select("source").eq("level", "ALERT").gt("created_at", thirty_days_ago).execute()
 
+        active_participants = set()
         matrix: dict[str, dict[str, dict[str, int]]] = {}
 
         def add_interact(fr: str, to: str, date_str: str) -> None:
             f, t = fr.lower(), to.lower()
+            active_participants.add(f)
+            active_participants.add(t)
             if f not in matrix:
                 matrix[f] = {}
             if t not in matrix[f]:
@@ -107,19 +104,34 @@ class PerformanceManager:
                     add_interact(fr_id, to_id, t["created_at"])
 
         for b in (blogs_res.data or []):
+            author = str(b.get("author_name") or "bob").lower()
             if b.get("lead_id"):
-                add_interact("alice", "bob", b["created_at"])
+                add_interact("alice", author, b["created_at"])
             if b.get("status") == "changes_requested":
-                add_interact("charlie", "bob", b["created_at"])
+                add_interact("charlie", author, b["created_at"])
+            elif b.get("status") == "published":
+                add_interact(author, "charlie", b["created_at"])
+
+        for l in (logs_res.data or []):
+            if l.get("source") == "twin_scout":
+                add_interact("twin_scout", "charlie", thirty_days_ago) # Alert Charlie
+
+        # Build dynamic nodes list from discovered participants
+        # Sort to ensure UI stability
+        sorted_participants = sorted(list(active_participants))
+        nodes_list = []
+        for p_id in sorted_participants:
+            name = profile_map.get(p_id) or email_to_name.get(p_id) or p_id.capitalize()
+            nodes_list.append({"id": p_id, "name": name})
 
         formatted_matrix: list[dict[str, Any]] = []
         total_7d, total_30d = 0, 0
         hot_bridge_name = "None"
         hot_bridge_val = 0
 
-        for fr_node in nodes:
+        for fr_node in nodes_list:
             row: dict[str, Any] = {"from": fr_node["name"], "interactions": []}
-            for to_node in nodes:
+            for to_node in nodes_list:
                 stats = matrix.get(fr_node["id"].lower(), {}).get(to_node["id"].lower(), {"seven": 0, "thirty": 0})
                 total_7d += stats["seven"]
                 total_30d += stats["thirty"]
@@ -137,14 +149,11 @@ class PerformanceManager:
 
         avg_weekly_30d = total_30d / 4.28
         momentum = round(((total_7d / avg_weekly_30d) - 1) * 100, 1) if avg_weekly_30d > 0 else 0.0
-
-        # PERFORMANCE: Replaced sum(1 for ...) with a list comprehension
-        # Expected Impact: ~20% faster execution on this hot path by avoiding generator
-        # object creation overhead, scaling with the number of interactions.
         active_paths_count = len([1 for r in formatted_matrix for i in r["interactions"] if i["actual_7d"] > 0])
 
+        # Return dynamic synergy data
         return {
-            "nodes": [n["name"] for n in nodes],
+            "nodes": [n["name"] for n in nodes_list],
             "matrix": formatted_matrix,
             "snapshot": {
                 "total_7d": total_7d,

@@ -30,14 +30,9 @@ export async function callAPI<T>(
   options: RequestInit = {}
 ): Promise<T> {
   // --- Physical Network Alignment (Pattern 7: Internal/External Isolation) ---
-  // In Docker/Scout, relative paths don't work. We need a solid Base URL.
-  let envBase = import.meta.env.VITE_API_URL || '';
+  // We rely on Vite Proxy for environment-aware routing (localhost vs archon-server).
+  const envBase = import.meta.env.VITE_API_URL || '';
   
-  // 🟢 Physical Correction: If in browser and env points to internal Docker service, rewrite to localhost
-  if (typeof window !== 'undefined' && envBase.includes('archon-server')) {
-    envBase = envBase.replace('archon-server', 'localhost');
-  }
-
   const normalizedEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
   
   // Construct full URL with BaseURL logic
