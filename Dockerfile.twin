@@ -30,8 +30,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Upgrade pip and install uv for faster builds
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
-# 🟢 物理修正：使用 uv 並行安裝，大幅節省時間
-RUN uv pip install --system --no-cache playwright browser-use langchain-google-genai python-dotenv supabase
+# 🟢 物理修正：使用 uv 並行安裝，對齊 0413 官方 SDK 標準
+RUN uv pip install --system --no-cache playwright google-genai python-dotenv supabase
 
 # Install Playwright browsers
 RUN python -m playwright install chromium
