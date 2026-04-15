@@ -112,13 +112,13 @@ class PerformanceManager:
             elif b.get("status") == "published":
                 add_interact(author, "charlie", b["created_at"])
 
-        for l in (logs_res.data or []):
-            if l.get("source") == "twin_scout":
+        for log_entry in (logs_res.data or []):
+            if log_entry.get("source") == "twin_scout":
                 add_interact("twin_scout", "charlie", thirty_days_ago) # Alert Charlie
 
         # Build dynamic nodes list from discovered participants
         # Sort to ensure UI stability
-        sorted_participants = sorted(list(active_participants))
+        sorted_participants = sorted(active_participants)
         nodes_list = []
         for p_id in sorted_participants:
             name = profile_map.get(p_id) or email_to_name.get(p_id) or p_id.capitalize()
