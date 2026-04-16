@@ -39,9 +39,23 @@ class BlogService(BaseRepository):
         return False, res
 
     async def create_post(self, post_data: dict[str, Any]) -> tuple[bool, dict[str, Any]]:
-        """Create a new blog post."""
+        """Create a new blog post with AI-generated visual asset."""
         # P6: Smart Polish - Extract image and clean content
         post_data = self._clean_content_images(post_data)
+
+        # Task 40.4: Automated Visual Generation (Nana Banana Integration)
+        if not post_data.get("cover_image"):
+            try:
+                from src.server.services.marketing_service import MarketingService
+                marketing_svc = MarketingService(self.supabase_client)
+                title = post_data.get("title", "Modern Tech")
+                # Request a visual asset matching the blog title style
+                visual = await marketing_svc.generate_visual_asset(style=f"Cyberpunk Tech Logo for {title}")
+                if visual.get("status") == "success":
+                    post_data["cover_image"] = visual.get("image_url")
+                    logger.info(f"BlogService: Automatically attached cover image (Tier: {visual.get('tier')})")
+            except Exception as e:
+                logger.warning(f"BlogService: Visual generation skipped due to error: {e}")
 
         def _query():
             return self.supabase_client.table("blog_posts").insert(post_data).execute()
