@@ -133,6 +133,19 @@
     - **物理罪證**: 這會導致前端引擎認為使用者「確定無權限」而跳過 Role Fallback，造成 Bob 的側邊欄物理消失。
     - **SOP**: 權限應由專屬的 `RBACService` 動態注入，或留空交由前端靜態規則自癒。
 
+### 2026-04-15: Phase 4.6.39 - 4.6.40 原本目標回歸與 503 根除
+*   **1. 503 結構性根除 (Method: Atomic & Official SDK)**:
+    - **邏輯**: 診斷 503 根源為「舊版 LangChain 封裝衝突」與「多模態 Payload 超載」。
+    - **步驟**: 遷移至官方 `google-genai` SDK；實作「一人一診」原子化巡檢；加入指數退避 (Exponential Backoff) 重試邏輯。
+    - **證據**: 物理公證巡檢日誌成功觸發 `⏳ 503 API Strain. Retrying...` 並最終 100% 成功產出報告。
+*   **2. 原本目標物理復原 (Method: Git Source Recovery)**:
+    - **Alice**: 透過 7 個月 Git Log 考古，找回 02-06 遺失的「語音轉工單」核心鏈條 (GAP-009)，物理修正 API 為 Multipart Form 接收，並成功產出實體追蹤任務。
+    - **Bob**: 補齊資料庫 `cover_image` 欄位與 `marketing` 角色的 `content:publish` 權限；物理掛鉤 `BlogService` 與 `Nana Banana` 視覺生成，達成「圖文並茂」願景。
+    - **Charlie**: 恢復 `manager/alerts` API 物理可見性，打通雙生系統 (Scout) 至經理儀表板的預警鏈條。
+*   **3. 品質門禁公證 (Method: Double-Gate Audit)**:
+    - **修正**: 修正了重構後遺留的 `sorted(list())` 轉型錯誤與測試檔案中的 Mock 路徑斷層。
+    - **證據**: **559/559 項後端測試 100% 通過**，後端 254 個源檔案 **Lint CLEAN**。
+
 ### 2026-04-13: Phase 4.6.34 - 4.6.38 物理落地與全維度對齊
 *   **1. 路由合約標準化 (Method: Grouped Mounting)**:
     - **邏輯**: 解決 `/api/api` 嵌套 404 問題。

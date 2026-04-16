@@ -33,14 +33,14 @@ def test_lead_lifecycle_mobile_ops(mock_admin):
 
 
 def test_visit_log_creation_no_audio(mock_admin):
-    with patch("src.server.api_routes.visit_log_api.VisitLogService.create_log") as mock_create:
+    with patch("src.server.api_routes.visit_log_api.visit_log_service.create_log") as mock_create:
         mock_create.return_value = (True, {"id": "v1"})
         res = client.post("/api/visit-logs", json={"lead_id": "l1", "summary": "Visited"})
         assert res.status_code == 200
 
 
 def test_visit_log_fetch_user(mock_admin):
-    with patch("src.server.api_routes.visit_log_api.VisitLogService.list_logs") as mock_list:
+    with patch("src.server.api_routes.visit_log_api.visit_log_service.list_logs") as mock_list:
         mock_list.return_value = (True, [])
         res = client.get("/api/visit-logs?lead_id=l1")
         assert res.status_code == 200

@@ -1,12 +1,9 @@
-import asyncio
-import os
 import json
-from typing import Any, cast
-from datetime import datetime
+from typing import Any
 
+from src.server.config.logfire_config import get_logger
 from src.server.repositories.base_repository import BaseRepository
 from src.server.utils import get_supabase_client
-from src.server.config.logfire_config import get_logger
 
 logger = get_logger(__name__)
 
@@ -32,10 +29,11 @@ class VisitLogService(BaseRepository):
         Returns: (transcript, summary, tasks)
         """
         try:
-            from src.server.services.credential_service import credential_service
-            from src.server.services.prompt_service import prompt_service
             from google import genai
             from google.genai import types
+
+            from src.server.services.credential_service import credential_service
+            from src.server.services.prompt_service import prompt_service
 
             # 1. Get Credentials
             api_key = await credential_service.get_credential("GEMINI_API_KEY")
@@ -51,8 +49,8 @@ class VisitLogService(BaseRepository):
             # 2. Upload to Files API
             # Note: For small field audio, we can pass bytes directly or use the Files API.
             # Aligned with 7a92a7d preference for stable Files API handling.
-            
-            # Using a simplified Bytes upload for faster execution if supported, 
+
+            # Using a simplified Bytes upload for faster execution if supported,
             # otherwise fallback to Files API pattern if latency allows.
             sys_prompt = prompt_service.get_prompt("VOICE_TRANSCRIPTION", (
                 "你是一位專業的業務助理。請準確地將拜訪錄音轉錄為繁體中文逐字稿，"
@@ -87,7 +85,7 @@ class VisitLogService(BaseRepository):
         """
         transcript = ""
         summary = data.get("summary", "No audio provided.")
-        tasks = []
+        tasks: list[str] = []
 
         if audio_file:
             logger.info("VisitLogService: Processing audio file...")
@@ -118,15 +116,15 @@ class VisitLogService(BaseRepository):
         # res is typically a list from Supabase PostgREST
         created_log = res[0] if isinstance(res, list) and len(res) > 0 else res
         visit_id = created_log.get("id")
-        
+
         # 2. Automated Task Dispatch (The "Lost" Logic from 7a92a7d)
         try:
             from src.server.services.projects.task_service import task_service
-            
+
             # Find Field Ops project
             proj_res = self.supabase_client.table("archon_projects").select("id").eq("title", "Field Ops").limit(1).execute()
             project_id = proj_res.data[0]["id"] if proj_res.data else None
-            
+
             if not project_id:
                 # Fallback to any active project
                 fallback = self.supabase_client.table("archon_projects").select("id").limit(1).execute()
@@ -141,7 +139,7 @@ class VisitLogService(BaseRepository):
                     f"**AI 摘要:**\n{summary}\n\n"
                     f"**拜訪地點:** {log_payload['location_address'] or '未提供'}"
                 )
-                
+
                 await task_service.create_task(
                     project_id=project_id,
                     title=task_title,
