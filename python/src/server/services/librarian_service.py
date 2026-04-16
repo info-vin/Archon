@@ -301,6 +301,7 @@ class LibrarianService:
             # 4. Content & Embedding
             chunk_size = 4000
             chunks = [content[i : i + chunk_size] for i in range(0, len(content), chunk_size)]
+            page_data_list = []
 
             for i, chunk in enumerate(chunks):
                 try:
@@ -322,7 +323,18 @@ class LibrarianService:
                         "title": f"{title} (Part {i + 1})",
                     },
                 }
-                self.supabase.table("archon_crawled_pages").insert(page_data).execute()
+                page_data_list.append(page_data)
+
+            if page_data_list:
+                try:
+                    self.supabase.table("archon_crawled_pages").insert(page_data_list).execute()
+                except Exception as batch_e:
+                    logger.warning(f"Librarian: Batch insert failed ({batch_e}), falling back to individual inserts")
+                    for p in page_data_list:
+                        try:
+                            self.supabase.table("archon_crawled_pages").insert(p).execute()
+                        except Exception as e:
+                            logger.error(f"Librarian: Individual insert failed for chunk {p['chunk_number']} of {source_id}: {e}")
 
             # 5. Record version for audit trail (Admin Insight)
             try:
