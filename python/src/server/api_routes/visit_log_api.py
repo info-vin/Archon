@@ -3,8 +3,8 @@ Visit Log API Hardened - Secure management of physical visit records.
 Lean implementation with full test compatibility and GAP-009 Realization.
 """
 
-from typing import Optional
-from fastapi import APIRouter, Depends, HTTPException, File, UploadFile, Form
+
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 
 from src.server.services.visit_log_service import visit_log_service
 
@@ -16,7 +16,7 @@ router = APIRouter(prefix="/api/visit-logs", tags=["visit-logs"])
 
 @router.get("")
 async def list_visit_logs(
-    lead_id: Optional[str] = None, 
+    lead_id: str | None = None,
     current_user: dict = Depends(requires_permission(TASK_READ_TEAM))
 ):
     """Lists visit logs, optionally filtered by lead. Restricted to Manager/Admin."""
@@ -28,13 +28,13 @@ async def list_visit_logs(
 
 @router.post("")
 async def create_visit_log(
-    company_name: Optional[str] = Form(None),
-    customer_id: Optional[str] = Form(None),
-    lead_id: Optional[str] = Form(None),
-    latitude: Optional[float] = Form(None),
-    longitude: Optional[float] = Form(None),
-    location_address: Optional[str] = Form(None),
-    audio_file: Optional[UploadFile] = File(None),
+    company_name: str | None = Form(None),
+    customer_id: str | None = Form(None),
+    lead_id: str | None = Form(None),
+    latitude: float | None = Form(None),
+    longitude: float | None = Form(None),
+    location_address: str | None = Form(None),
+    audio_file: UploadFile | None = File(None),
     current_user: dict = Depends(requires_permission(TASK_CREATE))
 ):
     """
