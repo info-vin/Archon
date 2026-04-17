@@ -89,6 +89,10 @@ export const statsApi = {
     return await callAPI<any>('/api/marketing/stats');
   },
 
+  async getMarketingIntelligence(): Promise<any> {
+    return await callAPI<any>('/api/marketing/intelligence');
+  },
+
   async rejectSuggestion(id: string): Promise<any> {
     return await callAPI(`/api/marketing/suggestions/${id}/reject`, {
         method: 'POST'

@@ -271,9 +271,14 @@ export const RAGSettings = ({ ragSettings, setRagSettings }: RAGSettingsProps) =
             {showCrawlingSettings ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
           </div>
           {showCrawlingSettings && (
-            <div className="mt-4 p-4 border border-green-500/10 rounded-lg bg-green-500/5 grid grid-cols-2 gap-4">
+            <div className="mt-4 p-4 border border-green-500/10 rounded-lg bg-green-500/5 grid grid-cols-2 gap-x-6 gap-y-4">
               {crawlingSettingsFields.map(field => (
-                <ConfigDrivenInput key={field.key} field={field} value={ragSettings[field.key as keyof typeof ragSettings]} onChange={(val, key) => key && setRagSettings({ ...ragSettings, [key]: val })} />
+                <div key={field.key} className="space-y-1">
+                  <label className="block text-xs font-medium text-gray-500 dark:text-zinc-400 uppercase tracking-wider">
+                    {field.label || field.key}
+                  </label>
+                  <ConfigDrivenInput field={field} value={ragSettings[field.key as keyof typeof ragSettings]} onChange={(val, key) => key && setRagSettings({ ...ragSettings, [key]: val })} />
+                </div>
               ))}
             </div>
           )}
@@ -286,9 +291,14 @@ export const RAGSettings = ({ ragSettings, setRagSettings }: RAGSettingsProps) =
           </div>
           {showStorageSettings && (
             <div className="mt-4 p-4 border border-green-500/10 rounded-lg bg-green-500/5 space-y-4">
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-3 gap-x-6 gap-y-4">
                 {storageSettingsFields.map(field => (
-                  <ConfigDrivenInput key={field.key} field={field} value={ragSettings[field.key as keyof typeof ragSettings]} onChange={(val, key) => key && setRagSettings({ ...ragSettings, [key]: val })} />
+                  <div key={field.key} className="space-y-1">
+                    <label className="block text-xs font-medium text-gray-500 dark:text-zinc-400 uppercase tracking-wider">
+                      {field.label || field.key}
+                    </label>
+                    <ConfigDrivenInput field={field} value={ragSettings[field.key as keyof typeof ragSettings]} onChange={(val, key) => key && setRagSettings({ ...ragSettings, [key]: val })} />
+                  </div>
                 ))}
               </div>
               <CustomCheckbox id="parallelBatches" checked={ragSettings.ENABLE_PARALLEL_BATCHES !== false} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setRagSettings({ ...ragSettings, ENABLE_PARALLEL_BATCHES: e.target.checked })} label="Enable Parallel Processing" description="Process multiple batches simultaneously" />

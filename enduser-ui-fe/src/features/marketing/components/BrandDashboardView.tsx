@@ -3,6 +3,7 @@ import { BlogPost } from '../../../types';
 import { TrendLineChart } from './TrendLineChart';
 import { SankeyDiagram } from './SankeyDiagram';
 import { VictoryFeedList, ContentSource } from './VictoryFeedList';
+import { IntelligenceHud } from './IntelligenceHud';
 import { 
     PlusIcon, TrendingUpIcon, FileEditIcon, EyeIcon, CheckCircleIcon, SparklesIcon, LayoutIcon, DownloadIcon, RefreshCwIcon, PaletteIcon
 } from '../../../components/Icons';
@@ -105,10 +106,13 @@ export const BrandDashboardView: React.FC<BrandDashboardViewProps> = ({
         <div className="p-6 max-w-7xl mx-auto space-y-8 font-sans">
             <div className="bg-purple-50 text-gray-900 p-6 rounded-2xl shadow-xl space-y-6 relative overflow-hidden w-full border border-purple-100">
                 <div className="relative z-10">
-                    <h2 className="text-xl font-bold flex items-center gap-2 text-purple-900">
+                    <h2 className="text-xl font-bold flex items-center gap-2 text-purple-900 mb-6">
                         <TrendingUpIcon className="w-5 h-5 text-purple-600" />
                         Market Intelligence 2.0
                     </h2>
+                    
+                    <IntelligenceHud />
+
                     {trendsData ? (
                         <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-8">
                             <div className="bg-white p-4 rounded-xl border border-purple-100 shadow-sm">

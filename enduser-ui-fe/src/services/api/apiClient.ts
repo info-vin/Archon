@@ -30,8 +30,13 @@ export async function callAPI<T>(
   options: RequestInit = {}
 ): Promise<T> {
   // --- Physical Network Alignment (Pattern 7: Internal/External Isolation) ---
-  // We rely on Vite Proxy for environment-aware routing (localhost vs archon-server).
-  const envBase = import.meta.env.VITE_API_URL || '';
+  // In Docker environments, VITE_API_URL might point to internal DNS (archon-server).
+  // We MUST rewrite this to localhost for browser-side execution.
+  let envBase = import.meta.env.VITE_API_URL || '';
+  
+  if (typeof window !== 'undefined' && envBase.includes('archon-server')) {
+    envBase = envBase.replace('archon-server', 'localhost');
+  }
   
   const normalizedEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
   

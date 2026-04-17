@@ -5,7 +5,6 @@ Handles generation of contextual embeddings for improved RAG retrieval.
 Includes proper rate limiting for OpenAI API calls.
 """
 
-import os
 from typing import cast
 
 import openai
@@ -20,73 +19,55 @@ async def generate_contextual_embedding(
 ) -> tuple[str, bool]:
     """
     Generate contextual information for a chunk with proper rate limiting.
-
-    Args:
-        full_document: The complete document text
-        chunk: The specific chunk of text to generate context for
-        provider: Optional provider override
-
-    Returns:
-        Tuple containing:
-        - The contextual text that situates the chunk within the document
-        - Boolean indicating if contextual embedding was performed
+    Uses Gemini 2.5 Flash (preferred) or default chat model.
     """
-    # Model choice is a RAG setting, get from credential service
-    try:
-        from ...services.credential_service import credential_service
-
-        model_choice = await credential_service.get_credential("MODEL_CHOICE", "gpt-4.1-nano")
-    except Exception as e:
-        # Fallback to environment variable or default
-        search_logger.warning(f"Failed to get MODEL_CHOICE from credential service: {e}, using fallback")
-        model_choice = os.getenv("MODEL_CHOICE", "gpt-4.1-nano")
-
-    search_logger.debug(f"Using MODEL_CHOICE: {model_choice}")
-
     threading_service = get_threading_service()
 
-    # Estimate tokens: document preview (5000 chars ≈ 1250 tokens) + chunk + prompt
-    estimated_tokens = 1250 + len(chunk.split()) + 100  # Rough estimate
+    # Gemini 2.5 Flash has 1M+ context, we can comfortably use 20k chars (~5k tokens)
+    doc_context = full_document[:20000] if len(full_document) > 20000 else full_document
+    estimated_tokens = len(doc_context.split()) + len(chunk.split()) + 200
 
     try:
-        # Use rate limiting before making the API call
         async with threading_service.rate_limited_operation(estimated_tokens):
             async with get_llm_client(provider=provider) as client:
+                # Optimized prompt following Anthropic's "Situating" pattern
                 prompt = f"""<document>
-{full_document[:5000]}
+{doc_context}
 </document>
-Here is the chunk we want to situate within the whole document
+Here is the chunk we want to situate within the whole document:
 <chunk>
 {chunk}
 </chunk>
-Please give a short succinct context to situate this chunk within the overall document for the purposes of improving search retrieval of the chunk. Answer only with the succinct context and nothing else."""
+Please give a short succinct context to situate this chunk within the overall document for the purposes of improving search retrieval of the chunk.
+Answer only with the succinct context and nothing else. Do not repeat the chunk content."""
 
-                # Get model from provider configuration
                 model = await _get_model_choice(provider)
+
+                # Force Gemini 2.5 Flash if available as it's the project standard for fast/cheap reasoning
+                if "gemini" in model.lower() and "flash" not in model.lower():
+                    model = "gemini-2.5-flash"
 
                 response = await client.chat.completions.create(
                     model=model,
                     messages=[
                         {
                             "role": "system",
-                            "content": "You are a helpful assistant that provides concise contextual information.",
+                            "content": "You are a professional librarian that provides high-signal contextual metadata for RAG retrieval.",
                         },
                         {"role": "user", "content": prompt},
                     ],
-                    temperature=0.3,
-                    max_tokens=200,
+                    temperature=0.1, # Low temperature for consistency
+                    max_tokens=300,
                 )
 
                 context = response.choices[0].message.content.strip()
-                contextual_text = f"{context}\n---\n{chunk}"
+                # Prepend context as per Anthropic strategy
+                contextual_text = f"{context}\n\n{chunk}"
 
                 return contextual_text, True
 
     except Exception as e:
-        if "rate_limit_exceeded" in str(e) or "429" in str(e):
-            search_logger.warning(f"Rate limit hit in contextual embedding: {e}")
-        else:
-            search_logger.error(f"Error generating contextual embedding: {e}")
+        search_logger.error(f"Error generating contextual embedding: {e}")
         return chunk, False
 
 
@@ -148,13 +129,13 @@ async def generate_contextual_embeddings_batch(
             batch_prompt = "Process the following chunks and provide contextual information for each:\\n\\n"
 
             for i, (doc, chunk) in enumerate(zip(full_documents, chunks, strict=False)):
-                # Use only 2000 chars of document context to save tokens
-                doc_preview = doc[:2000] if len(doc) > 2000 else doc
+                # Use 10k chars per doc in batch mode to stay within reasonable token limits
+                doc_preview = doc[:10000] if len(doc) > 10000 else doc
                 batch_prompt += f"CHUNK {i + 1}:\\n"
                 batch_prompt += f"<document_preview>\\n{doc_preview}\\n</document_preview>\\n"
-                batch_prompt += f"<chunk>\\n{chunk[:500]}\\n</chunk>\\n\\n"  # Limit chunk preview
+                batch_prompt += f"<chunk>\\n{chunk[:1000]}\\n</chunk>\\n\\n"  # Increased chunk preview
 
-            batch_prompt += "For each chunk, provide a short succinct context to situate it within the overall document for improving search retrieval. Format your response as:\\nCHUNK 1: [context]\\nCHUNK 2: [context]\\netc."
+            batch_prompt += "For each chunk, provide a short succinct context to situate it within the overall document for improving search retrieval. Answer only with the succinct context. Format your response as:\\nCHUNK 1: [context]\\nCHUNK 2: [context]\\netc."
 
             # Make single API call for ALL chunks
             response = await client.chat.completions.create(
@@ -162,12 +143,12 @@ async def generate_contextual_embeddings_batch(
                 messages=[
                     {
                         "role": "system",
-                        "content": "You are a helpful assistant that generates contextual information for document chunks.",
+                        "content": "You are a professional librarian that generates high-signal contextual information for RAG retrieval.",
                     },
                     {"role": "user", "content": batch_prompt},
                 ],
-                temperature=0,
-                max_tokens=100 * len(chunks),  # Limit response size
+                temperature=0.1,
+                max_tokens=200 * len(chunks),  # Increased limit
             )
 
             # Parse response

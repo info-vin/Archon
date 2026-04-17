@@ -256,6 +256,71 @@ class MetricsManager:
             logger.error(f"MetricsManager: Recent token usage fetch failed: {e}")
             return []
 
+    async def get_marketing_intelligence(self) -> dict[str, Any]:
+        """Marketing 2.0: Deep Lead Analysis & ROI (Phase 4.6.42)."""
+        try:
+            res = self.supabase.table("leads").select("*").execute()
+            leads = res.data or []
+
+            # 1. Conversion Funnel (Physical Data)
+            funnel = {
+                "new": 0, "contacted": 0, "shortlisted": 0, "converted": 0, "archived": 0
+            }
+            for lead in leads:
+                s = lead.get("status", "new")
+                if s in funnel:
+                    funnel[s] += 1
+
+            # 2. Industry/Job Distribution (Keyword Proxy)
+            categories = {
+                "AI/ML": ["AI", "Machine Learning", "ML", "Deep Learning"],
+                "Data/Analytics": ["Data", "Analyst", "Statistics"],
+                "Engineering": ["Engineer", "Developer", "Backend", "Frontend", "Python"],
+                "Marketing/Sales": ["Marketing", "Sales", "Business", "Brand"],
+                "Management": ["Manager", "Director", "VP", "Lead"]
+            }
+
+            distribution: dict[str, int] = dict.fromkeys(categories, 0)
+            distribution["Other"] = 0
+
+            for lead in leads:
+                title = str(lead.get("job_title") or "").upper()
+                found = False
+                for cat, keywords in categories.items():
+                    if any(k.upper() in title for k in keywords):
+                        distribution[cat] += 1
+                        found = True
+                        break
+                if not found:
+                    distribution["Other"] += 1
+
+            # 3. ROI & Velocity
+            # Calculate average conversion velocity (GAP-034)
+            velocity_sum = 0.0
+            converted_count = 0
+            for lead in leads:
+                if lead.get("status") == "converted" and lead.get("updated_at") and lead.get("created_at"):
+                    start = datetime.fromisoformat(lead["created_at"].replace("Z", "+00:00"))
+                    end = datetime.fromisoformat(lead["updated_at"].replace("Z", "+00:00"))
+                    velocity_sum += (end - start).total_seconds() / 3600
+                    converted_count += 1
+
+            avg_velocity = round(velocity_sum / converted_count, 1) if converted_count > 0 else 0.0
+
+            return {
+                "total_leads": len(leads),
+                "funnel": funnel,
+                "distribution": distribution,
+                "metrics": {
+                    "avg_conversion_hours": avg_velocity,
+                    "high_value_percentage": round((distribution["AI/ML"] + distribution["Management"]) / len(leads) * 100, 1) if leads else 0.0
+                },
+                "timestamp": datetime.now(UTC).isoformat()
+            }
+        except Exception as e:
+            logger.error(f"MetricsManager: Marketing intelligence failed: {e}")
+            return {"error": str(e)}
+
     def _window_check(self, item: dict[str, Any], start: datetime, end: datetime) -> bool:
         try:
             raw_val = item.get("created_at") or item.get("completed_at")

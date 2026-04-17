@@ -90,11 +90,6 @@ const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                     <Link to="/dashboard" className="flex items-center transition-transform hover:scale-105 active:scale-95">
                         <BrandLogo className="w-10 h-10" />
                     </Link>
-                    {!isCollapsed && (
-                        <div className="ml-2 px-2 py-0.5 bg-indigo-500 text-white text-[8px] font-bold rounded uppercase">
-                            {user?.role}: {user?.permissions?.length || 0}
-                        </div>
-                    )}
                 </div>
                 {/* Desktop Navigation */}
                 <ul className="flex-grow p-2 overflow-y-auto overflow-x-hidden" onClick={() => setIsSidebarOpen(false)}>
@@ -170,9 +165,14 @@ const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                    <Link to="/settings" title={isCollapsed ? "Profile" : undefined} className={`flex ${isCollapsed ? 'flex-col items-center justify-center mb-4 text-center' : 'items-center mb-4 p-2 -mx-2'} rounded-md hover:bg-secondary transition-colors group`}>
                        <UserAvatar name={user?.name || ''} role={user?.role} className={`w-10 h-10 ${isCollapsed ? 'mb-1' : 'mr-3'} group-hover:ring-2 ring-primary/20 transition-all`} />
                        {!isCollapsed && (
-                           <div className="overflow-hidden">
-                               <p className="font-semibold truncate">{user?.name}</p>
-                               <p className="text-sm text-muted-foreground truncate">{user?.email}</p>
+                           <div className="overflow-hidden flex-1">
+                               <p className="font-semibold truncate leading-tight">{user?.name}</p>
+                               <div className="flex items-center gap-2 mt-1">
+                                   <p className="text-[10px] text-muted-foreground truncate max-w-[100px]">{user?.email}</p>
+                                   <div className="px-1.5 py-0.5 bg-indigo-500 text-white text-[7px] font-bold rounded uppercase shrink-0">
+                                       {user?.role}: {user?.permissions?.length || 0}
+                                   </div>
+                               </div>
                            </div>
                        )}
                    </Link>

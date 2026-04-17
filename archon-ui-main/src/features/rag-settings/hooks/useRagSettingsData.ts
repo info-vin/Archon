@@ -175,7 +175,9 @@ export const useRagSettingsData = (
     { key: 'CRAWL_MAX_CONCURRENT', type: 'number', label: 'Max Concurrent', min: 1, max: 20, default: 10 },
     { key: 'CRAWL_PAGE_TIMEOUT', type: 'number', label: 'Page Timeout (ms)', min: 5000, max: 120000, default: 60000 },
     { key: 'CRAWL_DELAY_BEFORE_HTML', type: 'number', label: 'Render Delay (s)', min: 0.1, max: 5, default: 0.5, step: 0.1 },
-    { key: 'CRAWL_WAIT_STRATEGY', label: 'Wait Strategy', type: 'select', options: [{ value: 'domcontentloaded', label: 'DOM Loaded' }, { value: 'networkidle', label: 'Network Idle' }, { value: 'load', label: 'Full Load' }] }
+    { key: 'CRAWL_WAIT_STRATEGY', label: 'Wait Strategy', type: 'select', options: [{ value: 'domcontentloaded', label: 'DOM Loaded' }, { value: 'networkidle', label: 'Network Idle' }, { value: 'load', label: 'Full Load' }] },
+    { key: 'RAG_CONTEXTUAL_WINDOW', type: 'number', label: 'Context Window (chars)', min: 1000, max: 100000, default: 20000 },
+    { key: 'RAG_CONTEXTUAL_PROMPT', type: 'textarea', label: 'Context Prompt' }
   ];
 
   const storageSettingsFields = [

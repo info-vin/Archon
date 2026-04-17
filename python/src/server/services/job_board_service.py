@@ -64,7 +64,7 @@ class JobBoardService:
         "Accept": "application/json, text/plain, */*",
         "X-Requested-With": "XMLHttpRequest",
     }
-    
+
     USER_AGENTS = [
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
         "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
@@ -82,7 +82,7 @@ class JobBoardService:
         def _fetch_all():
             headers = self.HEADERS.copy()
             headers["User-Agent"] = random.choice(self.USER_AGENTS)
-            
+
             with httpx.Client(headers=headers, follow_redirects=True, timeout=20.0) as client:
                 try:
                     # 1. Warm-up

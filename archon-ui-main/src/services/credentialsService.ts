@@ -37,6 +37,8 @@ export interface RagSettings {
   DISPATCHER_CHECK_INTERVAL?: number;
   CODE_EXTRACTION_BATCH_SIZE?: number;
   CODE_SUMMARY_MAX_WORKERS?: number;
+  RAG_CONTEXTUAL_WINDOW?: number;
+  RAG_CONTEXTUAL_PROMPT?: string;
 }
 
 export interface CodeExtractionSettings {
@@ -136,6 +138,8 @@ class CredentialsService {
       DISPATCHER_CHECK_INTERVAL: 30,
       CODE_EXTRACTION_BATCH_SIZE: 50,
       CODE_SUMMARY_MAX_WORKERS: 3,
+      RAG_CONTEXTUAL_WINDOW: 20000,
+      RAG_CONTEXTUAL_PROMPT: "Please give a short succinct context to situate this chunk within the overall document.",
     };
     [...ragCredentials, ...apiKeysCredentials].forEach((cred) => {
       if (cred.key in settings) {

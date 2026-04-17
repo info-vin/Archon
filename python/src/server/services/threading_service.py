@@ -525,7 +525,7 @@ class ThreadingService:
                     logfire_logger.warning("Critical memory usage", extra={"memory_percent": metrics.memory_percent})
                     # Force garbage collection
                     gc.collect()
-                    
+
                     # Physical Database Alert (Phase 4.6.41)
                     try:
                         from .log_service import log_service
@@ -539,7 +539,7 @@ class ThreadingService:
 
                 if metrics.cpu_percent > 95:
                     logfire_logger.warning("Critical CPU usage", extra={"cpu_percent": metrics.cpu_percent})
-                    
+
                     # Physical Database Alert (Phase 4.6.41)
                     try:
                         from .log_service import log_service

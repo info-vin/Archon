@@ -62,6 +62,7 @@ export const api = {
   processApproval: statsApi.processApproval.bind(statsApi),
   getMarketingTrends: statsApi.getMarketingTrends.bind(statsApi),
   getMarketStats: statsApi.getMarketStats.bind(statsApi),
+  getMarketingIntelligence: statsApi.getMarketingIntelligence.bind(statsApi),
   rejectSuggestion: statsApi.rejectSuggestion.bind(statsApi),
   nanaBananaProxy: statsApi.nanaBananaProxy.bind(statsApi),
 

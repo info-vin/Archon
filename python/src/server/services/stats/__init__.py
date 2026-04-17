@@ -25,6 +25,22 @@ class StatsService:
         self.performance = PerformanceManager(self.supabase)
 
     # --- METRICS & TRENDS ---
+    async def get_tasks_by_status(self) -> list[dict[str, Any]]:
+        """Backwards compatibility for frontend stats."""
+        try:
+            response = self.supabase.table("archon_tasks").select("status").execute()
+            counts: dict[str, int] = {}
+            for row in response.data:
+                s = row.get("status", "unknown")
+                counts[s] = counts.get(s, 0) + 1
+            return [{"name": k, "value": v} for k, v in counts.items()]
+        except Exception as e:
+            logger.error(f"StatsService: Tasks by status failed: {e}")
+            return []
+
+    async def get_marketing_intelligence(self) -> dict[str, Any]:
+        return await self.metrics.get_marketing_intelligence()
+
     async def get_commander_trends(self) -> list[dict[str, Any]]:
         return await self.metrics.get_commander_trends()
 

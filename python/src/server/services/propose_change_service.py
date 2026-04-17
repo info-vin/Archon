@@ -110,12 +110,12 @@ class ProposeChangeService:
             .eq("id", str(proposal_id))
             .execute()
         )
-        
+
         # Physical Audit Log (Phase 4.6.41)
         try:
             u_res = self.db_client.table("profiles").select("name").eq("id", str(user_id)).single().execute()
             user_name = u_res.data.get("name", "Unknown Admin") if u_res.data else "Unknown Admin"
-            
+
             from .log_service import log_service
             log_service.create_log_entry({
                 "project_name": "admin-audit",
@@ -135,12 +135,12 @@ class ProposeChangeService:
             .eq("id", str(proposal_id))
             .execute()
         )
-        
+
         # Physical Audit Log (Phase 4.6.41)
         try:
             u_res = self.db_client.table("profiles").select("name").eq("id", str(user_id)).single().execute()
             user_name = u_res.data.get("name", "Unknown Admin") if u_res.data else "Unknown Admin"
-            
+
             from .log_service import log_service
             log_service.create_log_entry({
                 "project_name": "admin-audit",
@@ -166,7 +166,7 @@ class ProposeChangeService:
                 .eq("id", str(proposal_id))
                 .execute()
             )
-            
+
             # Physical Execution Audit (Phase 4.6.41)
             try:
                 from .log_service import log_service

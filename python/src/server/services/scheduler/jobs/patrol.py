@@ -101,6 +101,18 @@ async def run_log_patrol():
 
         if success:
             logger.info(f"👮 Clockwork: Created repair task {task_result['task']['id']}. Dispatching DevBot...")
+
+            # Phase 4.6.42: Trigger Cognitive Self-Tuning (Prompt Evolution)
+            try:
+                from ...system.self_tuning_service import self_tuning_service
+                # Pick the first error to tune
+                if errors:
+                    res = await self_tuning_service.tune_prompt_from_error(str(errors[0]["id"]))
+                    if res.get("success"):
+                        logger.info(f"🧠 Clockwork: Prompt tuning proposal created: {res.get('proposal_id')}")
+            except Exception as tune_err:
+                logger.warning(f"🧠 Clockwork: Prompt tuning failed: {tune_err}")
+
             await agent_service.run_agent_task(
                 task_id=task_result["task"]["id"], agent_id=task_result["task"]["assignee_id"]
             )
