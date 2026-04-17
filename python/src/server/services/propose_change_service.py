@@ -93,11 +93,12 @@ class ProposeChangeService:
             "new_content": new_content,
             "created_by": user_id,
             "created_by_dept": dept,
+            "change_summary": summary, # Embedded in payload for resilience
         }
 
         res = (
             self.db_client.table("proposed_changes")
-            .insert({"type": "file", "status": "pending", "change_summary": summary, "request_payload": payload})
+            .insert({"type": "file", "status": "pending", "request_payload": payload})
             .execute()
         )
         return cast(dict[str, Any], res.data[0])
@@ -109,6 +110,22 @@ class ProposeChangeService:
             .eq("id", str(proposal_id))
             .execute()
         )
+        
+        # Physical Audit Log (Phase 4.6.41)
+        try:
+            u_res = self.db_client.table("profiles").select("name").eq("id", str(user_id)).single().execute()
+            user_name = u_res.data.get("name", "Unknown Admin") if u_res.data else "Unknown Admin"
+            
+            from .log_service import log_service
+            log_service.create_log_entry({
+                "project_name": "admin-audit",
+                "user_name": user_name,
+                "gemini_response": f"Proposal {proposal_id} approved by {user_name}",
+                "user_input": f"Approve {proposal_id}"
+            })
+        except Exception as e:
+            self.logger.warning(f"Audit log failed: {e}")
+
         return cast(dict[str, Any], res.data[0])
 
     async def reject_proposal(self, proposal_id: UUID, user_id: Any) -> dict[str, Any]:
@@ -118,6 +135,22 @@ class ProposeChangeService:
             .eq("id", str(proposal_id))
             .execute()
         )
+        
+        # Physical Audit Log (Phase 4.6.41)
+        try:
+            u_res = self.db_client.table("profiles").select("name").eq("id", str(user_id)).single().execute()
+            user_name = u_res.data.get("name", "Unknown Admin") if u_res.data else "Unknown Admin"
+            
+            from .log_service import log_service
+            log_service.create_log_entry({
+                "project_name": "admin-audit",
+                "user_name": user_name,
+                "gemini_response": f"Proposal {proposal_id} rejected by {user_name}",
+                "user_input": f"Reject {proposal_id}"
+            })
+        except Exception as e:
+            self.logger.warning(f"Audit log failed: {e}")
+
         return cast(dict[str, Any], res.data[0])
 
     async def execute_proposal(self, proposal_id: UUID) -> dict[str, Any]:
@@ -133,6 +166,18 @@ class ProposeChangeService:
                 .eq("id", str(proposal_id))
                 .execute()
             )
+            
+            # Physical Execution Audit (Phase 4.6.41)
+            try:
+                from .log_service import log_service
+                log_service.create_log_entry({
+                    "project_name": "admin-audit",
+                    "gemini_response": f"Proposal {proposal_id} executed successfully: {log[:100]}",
+                    "user_input": f"Execute {proposal_id}"
+                })
+            except Exception:
+                pass
+
             return cast(dict[str, Any], res.data[0])
         except Exception as e:
             self.db_client.table("proposed_changes").update({"status": "failed", "execution_log": str(e)}).eq(

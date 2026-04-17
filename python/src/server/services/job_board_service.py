@@ -64,6 +64,13 @@ class JobBoardService:
         "Accept": "application/json, text/plain, */*",
         "X-Requested-With": "XMLHttpRequest",
     }
+    
+    USER_AGENTS = [
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36",
+        "Mozilla/5.0 (iPhone; CPU iPhone OS 17_2_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.2 Mobile/15E148 Safari/604.1"
+    ]
 
     # REAL DATA ONLY: MOCK_JOBS remains empty
     MOCK_JOBS: list[JobData] = []
@@ -73,9 +80,21 @@ class JobBoardService:
 
         # CRITICAL: Using SYNC Client inside async thread pool to bypass WAF TLS fingerprinting
         def _fetch_all():
-            with httpx.Client(headers=self.HEADERS, follow_redirects=True, timeout=20.0) as client:
-                # 1. Warm-up
-                client.get(f"https://www.104.com.tw/jobs/search/?keyword={keyword}")
+            headers = self.HEADERS.copy()
+            headers["User-Agent"] = random.choice(self.USER_AGENTS)
+            
+            with httpx.Client(headers=headers, follow_redirects=True, timeout=20.0) as client:
+                try:
+                    # 1. Warm-up
+                    warmup_res = client.get(f"https://www.104.com.tw/jobs/search/?keyword={keyword}")
+                    if warmup_res.status_code == 403:
+                        logger.warning("403 Detected during warm-up. UA rotation triggered.")
+                        headers["User-Agent"] = random.choice(self.USER_AGENTS)
+                        client.headers.update(headers)
+                        import time
+                        time.sleep(5)
+                except Exception as e:
+                    logger.warning(f"Warm-up failed: {e}")
 
                 # 2. Fetch List
                 jobs = self._fetch_from_104_sync(client, keyword, limit)
@@ -87,12 +106,11 @@ class JobBoardService:
                     if job.real_id:
                         if i > 0:
                             import time
-                            time.sleep(random.uniform(1.5, 3.0))
+                            time.sleep(random.uniform(2.0, 5.0)) # Increased delay for safety
 
                         detail = self._fetch_job_detail_sync(client, job.real_id, job.url)
                         job.description_full = detail or f"[Snippet Only] {job.description}"
 
-                    # 4. Infer need (Requires async, done outside)
                 return jobs
 
         # Run sync blocks in executor to not block event loop

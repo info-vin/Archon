@@ -525,9 +525,31 @@ class ThreadingService:
                     logfire_logger.warning("Critical memory usage", extra={"memory_percent": metrics.memory_percent})
                     # Force garbage collection
                     gc.collect()
+                    
+                    # Physical Database Alert (Phase 4.6.41)
+                    try:
+                        from .log_service import log_service
+                        log_service.create_log_entry({
+                            "project_name": "system-resource",
+                            "gemini_response": f"CRITICAL: Memory usage at {metrics.memory_percent}%",
+                            "user_input": "Automatic System Health Check"
+                        })
+                    except Exception:
+                        pass
 
                 if metrics.cpu_percent > 95:
                     logfire_logger.warning("Critical CPU usage", extra={"cpu_percent": metrics.cpu_percent})
+                    
+                    # Physical Database Alert (Phase 4.6.41)
+                    try:
+                        from .log_service import log_service
+                        log_service.create_log_entry({
+                            "project_name": "system-resource",
+                            "gemini_response": f"CRITICAL: CPU usage at {metrics.cpu_percent}%",
+                            "user_input": "Automatic System Health Check"
+                        })
+                    except Exception:
+                        pass
 
                 # Check for memory leaks (too many threads)
                 if metrics.active_threads > self.config.max_workers * 3:
