@@ -127,6 +127,7 @@ const EditUserModal: React.FC<{ user: Employee; onClose: () => void; onSave: (up
                                     <button 
                                         key={perm}
                                         onClick={() => togglePermission(perm)}
+                                        aria-label={`Toggle override for ${perm}`}
                                         className={`flex flex-col p-2 rounded-xl border transition-all text-left group ${bgClass} hover:ring-2 ring-primary/20`}
                                     >
                                         <div className="flex justify-between items-center">
@@ -432,6 +433,7 @@ export const IdentityMatrix: React.FC = () => {
                                                 <td key={`${row.role}-${perm}`} className="px-4 py-3 text-center">
                                                     <button 
                                                         onClick={() => toggleMatrixPermission(row.role, perm)}
+                                                        aria-label={`Toggle ${perm} permission for ${row.role}`}
                                                         className={`w-6 h-6 rounded-md border flex items-center justify-center mx-auto transition-all ${hasPerm ? 'bg-green-500 border-green-600 text-white' : 'bg-background border-border text-transparent hover:border-primary/50'}`}
                                                     >
                                                         {hasPerm && <CheckCircleIcon className="w-4 h-4" />}
