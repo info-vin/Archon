@@ -182,7 +182,12 @@ async def create_embeddings_batch(
                         batch_index = i // batch_size  # Variable used now
 
                         try:
-                            batch_tokens = int(sum(len(text.split()) for text in batch) * 1.3)
+                            # PERFORMANCE: Replaced sum(len(text.split())...) with a faster loop and .count(' ')
+                            # which avoids allocating lists for every text chunk.
+                            batch_tokens_raw = 0
+                            for text in batch:
+                                batch_tokens_raw += text.count(" ") + 1
+                            batch_tokens = int(batch_tokens_raw * 1.3)
                             rate_limit_callback = None
                             if progress_callback:
 

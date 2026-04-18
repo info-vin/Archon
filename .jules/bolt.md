@@ -47,3 +47,7 @@
 ## 2025-05-18 - Batching database inserts for chunked content
 **Learning:** When splitting large text files into chunks for database storage, inserting each chunk in a loop (`.insert().execute()`) creates an N+1 query bottleneck. The database insertion overhead can dominate the function's execution time for large files.
 **Action:** Batch multiple Supabase row insertions by accumulating data into a list and calling a single `.insert([...]).execute()`. Add a fallback to individual insertions in case of batch failure to preserve data and detailed logging.
+
+## 2024-05-18 - Avoid text.split() for fast word counting
+**Learning:** Using `len(text.split())` to estimate token or word counts is extremely inefficient because it allocates a new list and string objects for every word. When inside a generator expression like `sum(len(t.split()) for t in batch)`, it can be ~10x slower than alternative approaches.
+**Action:** When you only need to estimate word counts (like for rate limit calculations), use `text.count(' ') + 1` inside a standard for-loop. This executes in optimized C code, bypassing massive string and list allocations.
