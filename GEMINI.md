@@ -133,6 +133,29 @@
     - **物理罪證**: 這會導致前端引擎認為使用者「確定無權限」而跳過 Role Fallback，造成 Bob 的側邊欄物理消失。
     - **SOP**: 權限應由專屬的 `RBACService` 動態注入，或留空交由前端靜態規則自癒。
 
+*   **18. 環境物理對齊原則 (Environment Physical Alignment)**
+    *   **核心**: 嚴禁幻想 Host 機器與 Docker 容器具有完全相同的依賴狀態。
+    - **教訓**: 在 4.6.42 中，本地執行 `make lint` 導致 `uv` 因群組未對齊而物理卸載 130 個套件。`google` 等命名空間包（Namespace Packages）極易因安裝順序或快取而發生 Import 衝突。
+    - **SOP**: 當發生 `ImportError` 且路徑看似正確時，執行「終極自癒」：`rm -rf .venv uv.lock && uv sync --all-groups`。執行測試時必須顯式指定 `PYTHONPATH=src` 以確保 Host 與容器邏輯對等。
+
+---
+
+# 第三章：近期工作日誌 (Recent Activity Logs)
+
+### 2026-04-20: Phase 4.6.42 結案：行銷情報 2.0 與系統 429 硬化
+*   **1. 行銷情報視覺化 (Method: Lifecycle Funnel)**:
+    - **邏輯**: 實作 `ConversionFunnel` 組件，取代單一進度條。
+    - **證據**: Bob 的 Brand Hub 現可物理觀察 Leads 從「新獲取」到「轉化」的 4 階段流失率。
+*   **2. 動態評分注入 (Method: Zero-SQL Dynamic Weights)**:
+    - **邏輯**: 在 `MarketingService` 注入 `_calculate_lead_score`，優先讀取 `archon_settings` 設定。
+    - **證據**: 通過物理公證測試，'VP' 職位獲 95 分，'AI Engineer' 獲 85 分，成功對齊 4.6.42 戰略目標。
+*   **3. 系統級 429 抗性 (Method: Double-Gate Throttling)**:
+    - **節流**: 將 `ThreadingService` 的全局並發物理限制為 1，頻率壓低至 12 RPM 以適配 Gemini Free Tier。
+    - **自癒**: 在 `ContextualEmbeddingService` 實作「原地等待 15s 重試」，終結 429 報警鬼打牆。
+*   **4. 品質與環境公證 (Method: Binary Parity Recovery)**:
+    - **修正**: 恢復了 `docker-compose.yml` 中被硬編碼的 `VITE_API_URL` 插補邏輯。
+    - **證據**: **559/559 項後端測試 100% 通過**，Lint **全綠**，本地 `.venv` 已透過 `uv.lock` 重建至 04/16 巔峰狀態。
+
 ### 2026-04-15: Phase 4.6.39 - 4.6.40 原本目標回歸與 503 根除
 *   **1. 503 結構性根除 (Method: Atomic & Official SDK)**:
     - **邏輯**: 診斷 503 根源為「舊版 LangChain 封裝衝突」與「多模態 Payload 超載」。
