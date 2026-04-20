@@ -136,14 +136,30 @@ async def lifespan(app: FastAPI):
         try:
             from ..agents.mcp_client import get_mcp_client
             from .services.agent_service import agent_service
+            from .services.log_service import log_service
 
             # Initialize the global MCP client bridge
             mcp_bridge = await get_mcp_client()
 
-            # Inject into Agent Service (Neural Wiring)
-            agent_service.mcp_client = mcp_bridge
-            api_logger.info("🧠 Agent Neural Wiring Complete: MCP Client injected into AgentService")
+            # Initialize tool list to verify connection
+            tools = await mcp_bridge.list_tools()
+            if not tools:
+                 log_service.create_log_entry({
+                    "project_name": "mcp-neural-wiring",
+                    "gemini_response": "🧠 Agent Neural Wiring FAILED: MCP Client connected but returned 0 tools. Check volumes/permissions.",
+                    "user_input": f"mcp_url: {mcp_bridge.mcp_url}"
+                })
+            else:
+                # Inject into Agent Service (Neural Wiring)
+                agent_service.mcp_client = mcp_bridge
+                api_logger.info(f"🧠 Agent Neural Wiring Complete: MCP Client injected with {len(tools)} tools.")
         except Exception as e:
+            from .services.log_service import log_service
+            log_service.create_log_entry({
+                "project_name": "mcp-neural-wiring",
+                "gemini_response": f"⚠️ Failed to wire Agent to MCP (Skills disabled): {str(e)}",
+                "user_input": "lifespan_startup"
+            })
             api_logger.warning(f"⚠️ Failed to wire Agent to MCP (Skills disabled): {e}")
 
         # Set the main event loop for background tasks

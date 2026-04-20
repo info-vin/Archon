@@ -51,7 +51,7 @@ class MCPClient:
                 else:
                     self.mcp_url = f"http://localhost:{mcp_port}"
 
-        self.client = httpx.AsyncClient(timeout=30.0)
+        self.client = httpx.AsyncClient(timeout=2.0)
         logger.info(f"MCP Client initialized with URL: {self.mcp_url}")
 
     async def __aenter__(self):

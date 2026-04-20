@@ -25,7 +25,6 @@ class AgentService:
         from collections.abc import Callable, Coroutine
 
         self._native_tools: dict[str, Callable[..., Coroutine[Any, Any, str]]] = {
-            "apply_modification": self._exec_apply_modification,
             "perform_web_crawl": self._exec_perform_web_crawl,
             "execute_shell_command": self._exec_execute_shell_command,
         }
@@ -447,64 +446,8 @@ class AgentService:
         agent_tools_list: list[str] = list(config.get("tools", []))
         agent_tools = [t for t in all_mcp_tools if cast(dict, t["function"])["name"] in agent_tools_list]
 
-        # Inject natively supported tools that are not in MCP
-        if "execute_shell_command" in agent_tools_list:
-            agent_tools.append(
-                {
-                    "type": "function",
-                    "function": {
-                        "name": "execute_shell_command",
-                        "description": "Execute a shell command on the host system. Crucial for self-healing and code verification.",
-                        "parameters": {
-                            "type": "object",
-                            "properties": {
-                                "command": {"type": "string", "description": "The exact shell command to execute"},
-                                "task_id": {"type": "string", "description": "Optional task ID"},
-                            },
-                            "required": ["command"],
-                        },
-                    },
-                }
-            )
-
-        if "apply_modification" in agent_tools_list:
-            agent_tools.append(
-                {
-                    "type": "function",
-                    "function": {
-                        "name": "apply_modification",
-                        "description": "Physically modify a file's content. Use this to apply code fixes or updates.",
-                        "parameters": {
-                            "type": "object",
-                            "properties": {
-                                "file_path": {"type": "string", "description": "The relative path to the file"},
-                                "content": {"type": "string", "description": "The full new content for the file"},
-                            },
-                            "required": ["file_path", "content"],
-                        },
-                    },
-                }
-            )
-
-        if "perform_web_crawl" in agent_tools_list:
-            agent_tools.append(
-                {
-                    "type": "function",
-                    "function": {
-                        "name": "perform_web_crawl",
-                        "description": "Trigger a deep background web crawl for a given URL.",
-                        "parameters": {
-                            "type": "object",
-                            "properties": {
-                                "url": {"type": "string", "description": "The target URL to crawl"},
-                                "max_depth": {"type": "integer", "description": "Maximum link depth (default 2)"},
-                            },
-                            "required": ["url"],
-                        },
-                    },
-                }
-            )
-
+        # If any tools are requested but not found in MCP, they will naturally be missing
+        # from tools_param, ensuring we don't call non-existent or shadow tools.
         tools_param = agent_tools if agent_tools else None
 
         try:

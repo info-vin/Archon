@@ -104,17 +104,8 @@ services:
       - ARCHON_MCP_PORT=${ARCHON_MCP_PORT:-8051}
       - ARCHON_SERVER_PORT=${ARCHON_SERVER_PORT:-8181}
       - ARCHON_AGENTS_PORT=${ARCHON_AGENTS_PORT:-8052}
-    volumes:
-      - mcp-cache:/tmp
     networks:
       - app-network
-    depends_on:
-      archon-server:
-        condition: service_healthy
-      archon-agents:
-        condition: service_healthy
-        required: false  # Do not fail if agents service is disabled/not started
-
     extra_hosts:
       - "host.docker.internal:host-gateway"
     healthcheck:
@@ -129,8 +120,14 @@ services:
       timeout: 10s
       retries: 3
       start_period: 60s # Give dependencies time to start
+    volumes:
+      - mcp-cache:/tmp
+      - ./.git:/app/.git # Mount Git metadata for CodeModifier
+      - ./python/src:/app/src # Mount source for tool execution
+      - ./PRPs:/app/PRPs # Mount PRPs for contextual tool awareness
+      - ./scripts:/app/scripts # Mount utility scripts for agents
+      - ./CONTRIBUTING_tw.md:/app/CONTRIBUTING_tw.md # Developer guidelines for self-healing
 
-  # AI Agents Service (ML/Reranking)
   archon-agents:
     profiles:
       - agents  # Only starts when explicitly using --profile agents

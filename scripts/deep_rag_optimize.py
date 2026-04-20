@@ -7,54 +7,60 @@ load_dotenv()
 sys.path.append(os.path.join(os.getcwd(), 'python', 'src'))
 
 from server.utils import get_supabase_client
-from server.services.embeddings.contextual_embedding_service import generate_contextual_embeddings_batch
+from server.services.embeddings.contextual_embedding_service import generate_contextual_embedding
 from server.services.embeddings.embedding_service import create_embedding
 
 async def deep_rag_optimize():
     client = get_supabase_client()
-    print("🚀 Starting Deep RAG Optimization (Batch Mode)...")
+    print("🚀 Starting Deep RAG Optimization (Surgical Mode)...")
     
-    res = client.table('archon_crawled_pages').select('source_id').execute()
-    source_ids = list(set([r['source_id'] for r in res.data]))
+    # Only get chunks that NEED optimization
+    res = client.table('archon_crawled_pages').select('id, content, source_id, metadata').filter('metadata->>contextual_embedding', 'is', 'null').execute()
+    todo_chunks = res.data
     
-    for sid in source_ids:
-        chunks_res = client.table('archon_crawled_pages').select('*').eq('source_id', sid).order('chunk_number').execute()
-        all_chunks = chunks_res.data
-        if not all_chunks: continue
-            
-        full_doc = "\n".join([c['content'] for c in all_chunks])
+    if not todo_chunks:
+        print("✨ All chunks are already optimized!")
+        return
+
+    print(f"📦 Found {len(todo_chunks)} chunks to optimize.")
+    total_optimized = 0
+    
+    # Group by source to avoid re-fetching full_doc unnecessarily
+    source_groups = {}
+    for chunk in todo_chunks:
+        sid = chunk['source_id']
+        if sid not in source_groups:
+            source_groups[sid] = []
+        source_groups[sid].append(chunk)
+
+    for sid, chunks in source_groups.items():
+        print(f"\n📂 Source: {sid}")
+        # Fetch all chunks for this source to reconstruct full document context
+        all_chunks_res = client.table('archon_crawled_pages').select('content').eq('source_id', sid).order('chunk_number').execute()
+        full_doc = "\n".join([c['content'] for c in all_chunks_res.data])
         
-        # Filter only those that need optimization
-        todo_chunks = [c for c in all_chunks if not (c.get('metadata') or {}).get('contextual_embedding')]
-        if not todo_chunks: continue
-        
-        print(f"\n📦 Processing {len(todo_chunks)} chunks for source: {sid}")
-        
-        # Process in batches of 10 to minimize API calls (Anti-429)
-        batch_size = 10
-        for i in range(0, len(todo_chunks), batch_size):
-            batch = todo_chunks[i:i+batch_size]
-            print(f"  Sending Batch {i//batch_size + 1} ({len(batch)} chunks)...")
+        for chunk in chunks:
+            print(f"  ⚡ Optimizing chunk {chunk['id']}...")
+            new_content, success = await generate_contextual_embedding(full_doc, chunk['content'])
             
-            # Use the existing batch function
-            results = await generate_contextual_embeddings_batch([full_doc]*len(batch), [c['content'] for c in batch])
+            if success:
+                new_embedding = await create_embedding(new_content)
+                metadata = chunk.get('metadata') or {}
+                metadata['contextual_embedding'] = True
+                metadata['original_content_before_contextual'] = chunk['content']
+                
+                client.table('archon_crawled_pages').update({
+                    'content': new_content,
+                    'embedding': new_embedding,
+                    'metadata': metadata
+                }).eq('id', chunk['id']).execute()
+                total_optimized += 1
+                print(f"    ✅ Success.")
+            else:
+                print(f"    ❌ Failed to generate contextual embedding.")
             
-            for chunk, (new_content, success) in zip(batch, results):
-                if success:
-                    new_embedding = await create_embedding(new_content)
-                    metadata = chunk.get('metadata') or {}
-                    metadata['contextual_embedding'] = True
-                    metadata['original_content_before_contextual'] = chunk['content']
-                    
-                    client.table('archon_crawled_pages').update({
-                        'content': new_content,
-                        'embedding': new_embedding,
-                        'metadata': metadata
-                    }).eq('id', chunk['id']).execute()
-            
-            print(f"  ✅ Batch {i//batch_size + 1} processed.")
-            # Wait 10s between batches to safely stay under Free Tier RPM
-            await asyncio.sleep(10)
+            # Small delay to respect rate limits even with retry logic
+            await asyncio.sleep(2)
     
     print(f"\n✨ Deep RAG Optimization complete! Total chunks optimized: {total_optimized}")
 

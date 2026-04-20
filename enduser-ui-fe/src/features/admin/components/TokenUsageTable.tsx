@@ -46,7 +46,9 @@ const TokenUsageTable: React.FC<TokenUsageTableProps> = ({ details }) => {
               </td>
               <td className="px-4 py-3 text-muted-foreground font-mono text-xs">{row.model}</td>
               <td className="px-4 py-3 text-right font-mono">{row.tokens.toLocaleString()}</td>
-              <td className="px-4 py-3 text-right font-mono font-bold">${row.cost.toFixed(4)}</td>
+              <td className="px-4 py-3 text-right font-mono font-bold">
+                ${row.cost > 0 ? row.cost.toFixed(4) : "0.0000"}
+              </td>
             </tr>
           ))}
         </tbody>

@@ -242,14 +242,20 @@ class MetricsManager:
     async def get_recent_token_usage(self, limit: int = 20) -> list[dict[str, Any]]:
         """Retrieves recent individual token usage transactions."""
         try:
-            res = self.supabase.table("token_usage").select("*, profiles(name, role)").order("created_at", desc=True).limit(limit).execute()
+            # Physical Fix: Remove JOIN query (PGRST200) as FK relationship may not exist
+            res = self.supabase.table("token_usage").select("*").order("created_at", desc=True).limit(limit).execute()
             formatted = []
             for row in (res.data or []):
-                profile = row.get("profiles") or {}
+                # Fallback for entities without profile mapping (e.g. Agents)
                 formatted.append({
-                    "id": row["id"], "timestamp": row["created_at"], "user_name": profile.get("name", "Unknown"),
-                    "role": profile.get("role", "system"), "model": row["model"], "tokens": row.get("total_tokens", 0),
-                    "cost": float(row.get("cost_usd", 0.0)), "context": row.get("context_type", "General")
+                    "id": row["id"],
+                    "timestamp": row["created_at"],
+                    "user_name": row.get("entity_name", "Archon Agent"), # Use entity_name if recorded
+                    "role": row.get("entity_role", "ai_agent"),
+                    "model": row["model"],
+                    "tokens": row.get("total_tokens", 0),
+                    "cost": float(row.get("estimated_cost_usd", 0.0) or 0.0),
+                    "context": row.get("context_type", "General")
                 })
             return formatted
         except Exception as e:

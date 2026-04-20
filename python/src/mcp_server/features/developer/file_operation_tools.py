@@ -63,5 +63,32 @@ class WriteFileTool(ProposeFileChangeTool):
     pass
 
 
+class ApplyFileModificationTool(BaseModel):
+    """
+    Physically modifies a file by overwriting it with new content.
+    WARNING: This action is destructive and writes directly to disk.
+    Used for automated self-healing and code updates.
+    """
+
+    file_path: str = Field(..., description="The relative path of the file to be modified (from workspace root).")
+    content: str = Field(..., description="The full new content to be written to the file.")
+
+    async def execute(self) -> str:
+        """Physically modifies the file by direct write (no Git sandbox)."""
+        logger.info(f"Applying physical modification to file: {self.file_path}")
+        try:
+            import os
+            # Ensure the directory exists
+            os.makedirs(os.path.dirname(self.file_path), exist_ok=True)
+
+            with open(self.file_path, "w", encoding="utf-8") as f:
+                f.write(self.content)
+
+            return f"Successfully modified file '{self.file_path}' physically via direct write."
+        except Exception as e:
+            logger.error(f"Failed to modify file {self.file_path}: {e}", exc_info=True)
+            return f"Error: Could not modify file '{self.file_path}'. Reason: {e}"
+
+
 # To be added to the MCP's tool registry
-developer_file_tools = [ProposeFileChangeTool, WriteFileTool]
+developer_file_tools: list[type[BaseModel]] = [ProposeFileChangeTool, WriteFileTool]
