@@ -5,6 +5,7 @@ Handles generation of contextual embeddings for improved RAG retrieval.
 Includes proper rate limiting for OpenAI API calls.
 """
 
+import asyncio
 from typing import cast
 
 import openai
@@ -65,6 +66,17 @@ Answer only with the succinct context and nothing else. Do not repeat the chunk 
                 contextual_text = f"{context}\n\n{chunk}"
 
                 return contextual_text, True
+
+    except openai.RateLimitError:
+        # Physical In-place Retry: Wait for quota recovery
+        search_logger.warning("429 Quota Exhausted. Waiting 15s for recovery...")
+        await asyncio.sleep(15)
+        try:
+            # Recursive retry once
+            return await generate_contextual_embedding(full_document, chunk, provider=provider)
+        except Exception as retry_err:
+            search_logger.error(f"Retry failed after 429: {retry_err}")
+            return chunk, False
 
     except Exception as e:
         search_logger.error(f"Error generating contextual embedding: {e}")

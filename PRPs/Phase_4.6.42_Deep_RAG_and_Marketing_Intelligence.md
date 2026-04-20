@@ -28,7 +28,7 @@
 - [x] **Task 1**: 升級 `contextual_embedding_service.py` 邏輯 (Gemini 2.5 Flash + 20k context)。
 - [ ] **Task 2**: 實作 `LeadScoringService` 根據 job_title 自動評估 Leads 價值。
 - [ ] **Task 3**: 批次完成剩餘 29 個 RAG 切片的優化。
-- [ ] **Task 4**: 在 5173/bob 頁面實作 `ConversionFunnel` 組件。
+- [x] **Task 4**: 在 5173/bob 頁面實作 `ConversionFunnel` 組件。
 
 ---
 

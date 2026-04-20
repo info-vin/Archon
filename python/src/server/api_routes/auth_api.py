@@ -42,7 +42,7 @@ async def get_dev_token(x_admin_secret: str | None = Header(None, alias="X-Admin
         # 1. Try simple sign in
         try:
             res = supabase.auth.sign_in_with_password({"email": email, "password": password})
-            if res.session:
+            if res.session and res.user:
                 return {
                     "access_token": res.session.access_token,
                     "user": {"id": res.user.id, "email": res.user.email, "role": "system_admin"},
@@ -60,7 +60,7 @@ async def get_dev_token(x_admin_secret: str | None = Header(None, alias="X-Admin
 
         # 3. Final sign in attempt
         res = supabase.auth.sign_in_with_password({"email": email, "password": password})
-        if res.session:
+        if res.session and res.user:
             return {
                 "access_token": res.session.access_token,
                 "user": {"id": res.user.id, "email": res.user.email, "role": "system_admin"},

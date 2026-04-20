@@ -38,7 +38,7 @@ class DiscoveryEngine:
                     "tools": [{"type": "function", "function": {"name": "test", "parameters": {}}}],
                     "max_tokens": 1
                 },
-                timeout=5
+                timeout=aiohttp.ClientTimeout(total=5)
             ) as response:
                 return bool(response.status == 200)
         except Exception:

@@ -45,6 +45,11 @@ class MarketingService(BaseRepository):
 
     async def create_lead(self, lead_data: dict, creator_id: str | None = None) -> tuple[bool, dict]:
         lead_data["created_from_user_id"] = creator_id
+
+        # Physical Realization of Phase 4.6.42 Task 2: Automatic Lead Scoring
+        if not lead_data.get("enrichment_score") or lead_data.get("enrichment_score") == 0:
+            lead_data["enrichment_score"] = await self._calculate_lead_score(lead_data.get("job_title"))
+
         source_url = lead_data.get("source_job_url")
 
         if source_url:
@@ -498,6 +503,40 @@ class MarketingService(BaseRepository):
         except Exception as e:
             logger.error(f"Failed to reset leads: {e}")
             return False
+
+    async def _calculate_lead_score(self, job_title: str | None) -> int:
+        """
+        Calculates a dynamic lead score based on job titles.
+        Uses SettingsService with local fallbacks to avoid SQL overhead.
+        """
+        try:
+            from ..services.settings_service import SettingsService
+            settings = SettingsService(self.supabase_client)
+
+            # 1. Fetch Dynamic Weights (Zero-SQL migration approach)
+            w_strat = int(settings.get_setting("SCORE_STRATEGIC") or "95")
+            w_tech = int(settings.get_setting("SCORE_TECHNICAL") or "85")
+            w_ops = int(settings.get_setting("SCORE_OPERATIONAL") or "70")
+            w_base = int(settings.get_setting("SCORE_BASE") or "40")
+
+            title = str(job_title or "").upper()
+
+            # Level 3: Strategic/Decision Makers
+            if any(kw in title for kw in ["DIRECTOR", "VP", "HEAD", "CHIEF", "ARCHITECT", "FOUNDER"]):
+                return w_strat
+
+            # Level 2: Technical Core (AI/ML Priority)
+            if any(kw in title for kw in ["AI", "ML", "MACHINE LEARNING", "DATA", "PYTHON", "ENGINEER"]):
+                return w_tech
+
+            # Level 1: Operational Management
+            if any(kw in title for kw in ["MANAGER", "LEAD", "SENIOR", "TEAM LEAD"]):
+                return w_ops
+
+            return w_base
+        except Exception as e:
+            logger.warning(f"Lead Scoring Failed: {e}. Falling back to 40.")
+            return 40
 
     async def seed_knowledge(self) -> dict:
         """Trigger the Knowledge Seeding process (scans resources and archives them)."""

@@ -21,7 +21,7 @@ async def get_user_from_token(token: str) -> Any | None:
         # 1. Primary: Standard verification via Supabase Auth Server
         try:
             user_response = supabase.auth.get_user(token)
-            if user_response.user:
+            if user_response and user_response.user:
                 return user_response.user
         except Exception as e:
             # 2. Resilient Fallback:

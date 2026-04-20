@@ -10,6 +10,7 @@ import {
   Clock
 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { ConversionFunnel } from './ConversionFunnel';
 
 export const IntelligenceHud: React.FC = () => {
   const [data, setData] = useState<any>(null);
@@ -51,28 +52,17 @@ export const IntelligenceHud: React.FC = () => {
       >
         <div className="flex items-center gap-2 mb-4 text-zinc-400">
           <Activity size={18} className="text-emerald-500" />
-          <h3 className="text-sm font-bold uppercase tracking-wider">Conversion Funnel</h3>
+          <h3 className="text-sm font-bold uppercase tracking-wider">Lead Lifecycle</h3>
         </div>
         
-        <div className="space-y-3">
-          <div className="flex justify-between items-end">
-            <span className="text-xs text-zinc-500">NEW LEADS</span>
-            <span className="text-xl font-mono text-white">{funnel.new}</span>
-          </div>
-          <div className="w-full bg-zinc-800 h-2 rounded-full overflow-hidden">
-            <div 
-              className={`h-full transition-all duration-1000 ${isBottleneck ? 'bg-amber-500' : 'bg-emerald-500'}`}
-              style={{ width: `${(funnel.new / total_leads) * 100}%` }}
-            />
-          </div>
+        <ConversionFunnel funnel={funnel} totalLeads={total_leads} />
           
-          {isBottleneck && (
-            <div className="mt-4 p-2 bg-amber-500/10 border border-amber-500/20 rounded text-[10px] text-amber-500 flex items-start gap-2">
-              <AlertTriangle size={14} className="shrink-0" />
-              <span>BOTTLENECK DETECTED: Over 80% of leads are stuck in "New" status. Review velocity required.</span>
-            </div>
-          )}
-        </div>
+        {isBottleneck && (
+          <div className="mt-4 p-2 bg-amber-500/10 border border-amber-500/20 rounded text-[10px] text-amber-500 flex items-start gap-2">
+            <AlertTriangle size={14} className="shrink-0" />
+            <span>BOTTLENECK: {Math.round((funnel.new / total_leads) * 100)}% of leads are stuck in "New". Review extraction filters.</span>
+          </div>
+        )}
       </motion.div>
 
       {/* 2. High-Value Intelligence */}

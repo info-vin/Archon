@@ -180,13 +180,13 @@ services:
     ports:
       - "${ARCHON_UI_PORT:-3737}:3737"
     environment:
-      - VITE_API_URL=http://archon-server:8181
+      - VITE_API_URL=http://archon-server:${ARCHON_SERVER_PORT:-8181}
       - VITE_ARCHON_SERVER_PORT=${ARCHON_SERVER_PORT:-8181}
       - ARCHON_SERVER_PORT=${ARCHON_SERVER_PORT:-8181}
       - HOST=${HOST:-localhost}
       - PROD=${PROD:-false}
       - VITE_ADMIN_SECRET=${ADMIN_SECRET}
-      - VITE_APP_VERSION=${VITE_APP_VERSION:-0.2.0}
+      - VITE_APP_VERSION=${VITE_APP_VERSION:-0.2.2}
       - VITE_ALLOWED_HOSTS=${VITE_ALLOWED_HOSTS:-}
       - VITE_SHOW_DEVTOOLS=${VITE_SHOW_DEVTOOLS:-false}
     networks:
@@ -202,6 +202,7 @@ services:
     depends_on:
       archon-server:
         condition: service_healthy
+        required: false
 
   # Frontend (End-User UI)
   enduser-frontend:
@@ -211,13 +212,13 @@ services:
     ports:
       - "${ENDUSER_UI_PORT:-5173}:5173"
     environment:
-      - VITE_API_URL=http://archon-server:8181
+      - VITE_API_URL=http://archon-server:${ARCHON_SERVER_PORT:-8181}
       - VITE_ARCHON_SERVER_PORT=${ARCHON_SERVER_PORT:-8181}
       - VITE_SUPABASE_URL=${SUPABASE_URL}
-      - VITE_SUPABASE_ANON_KEY=${SUPABASE_SERVICE_KEY}
+      - VITE_SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY:-${SUPABASE_SERVICE_KEY}}
       - HOST=${HOST:-localhost}
       - PROD=${PROD:-false}
-      - VITE_APP_VERSION=${VITE_APP_VERSION:-0.2.0}
+      - VITE_APP_VERSION=${VITE_APP_VERSION:-0.2.2}
     networks:
       - app-network
     healthcheck:
@@ -233,6 +234,7 @@ services:
     depends_on:
       archon-server:
         condition: service_healthy
+        required: false
 
   # Twin Scout (Browser-use + Antigravity Digital Twin)
   archon-twin-scout:
