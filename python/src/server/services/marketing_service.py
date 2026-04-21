@@ -119,18 +119,19 @@ class MarketingService(BaseRepository):
                 return {"error_code": 401, "message": "Dedicated GEMINI_API_KEY missing. Please configure in Settings."}
 
             # 2. Get Dynamic Model Configuration (Physical Parity with Feb 2026 Goal)
+            from ..config.model_ssot import SYSTEM_MODELS
+
             rag_strategy_creds = await credential_service.get_credentials_by_category("rag_strategy")
-            marketing_model = rag_strategy_creds.get("MARKETING_MODEL") or "gemini-2.5-flash"
-            # Strip prefixes for SDK compatibility
-            safe_model = marketing_model.split("/")[-1]
+            marketing_model = rag_strategy_creds.get("MARKETING_MODEL") or SYSTEM_MODELS["DEFAULT_TEXT"]
 
             # Use asynchronous client for non-blocking FastAPI integration
             client = genai.Client(api_key=api_key)
             sys_prompt = prompt_service.get_prompt("SALES_PITCH", SALES_PITCH_SYSTEM_PROMPT)
 
             # 3. Call AI with Dynamic Model (Asynchronous)
+            # Use physical path directly to maintain SDK compatibility (Phase 4.6.43)
             response = await client.aio.models.generate_content(
-                model=safe_model,
+                model=marketing_model,
                 contents=f"Company: {company}\nRole: {job_title}",
                 config=types.GenerateContentConfig(system_instruction=sys_prompt),
             )
@@ -191,9 +192,11 @@ class MarketingService(BaseRepository):
             prompt = f"Professional tech logo, {style}, high resolution"
 
             # TIER 1: Native AI Generation
+            from ..config.model_ssot import SYSTEM_MODELS
+
             try:
                 native_resp = client.models.generate_content(
-                    model="gemini-2.0-flash-exp",
+                    model=SYSTEM_MODELS["IMAGE_GEN"],
                     contents=cast(Any, [prompt]),
                     config=types.GenerateContentConfig(response_modalities=["IMAGE"]),
                 )
