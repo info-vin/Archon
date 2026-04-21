@@ -70,6 +70,7 @@ class ApplyFileModificationTool(BaseModel):
     Used for automated self-healing and code updates.
     """
 
+    tool_name: str = "apply_modification"
     file_path: str = Field(..., description="The relative path of the file to be modified (from workspace root).")
     content: str = Field(..., description="The full new content to be written to the file.")
 
@@ -91,4 +92,8 @@ class ApplyFileModificationTool(BaseModel):
 
 
 # To be added to the MCP's tool registry
-developer_file_tools: list[type[BaseModel]] = [ProposeFileChangeTool, WriteFileTool]
+developer_file_tools: list[type[BaseModel]] = [
+    ProposeFileChangeTool,
+    WriteFileTool,
+    ApplyFileModificationTool,
+]

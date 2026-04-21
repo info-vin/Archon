@@ -57,7 +57,40 @@ class ProposeShellCommandTool(BaseModel):
             return f"Error: Could not propose shell command execution. Reason: {e}"
 
 
+class ExecuteShellCommandTool(BaseModel):
+    """
+    Physically executes a shell command on the system.
+    WARNING: High-risk operation. Use for verification, linting, and system tasks.
+    Used for autonomous self-healing (Phase 4.6.43).
+    """
+
+    tool_name: str = "execute_shell_command"
+    command: str = Field(..., description="The exact shell command to execute.")
+
+    async def execute(self) -> str:
+        """Executes the shell command directly."""
+        import asyncio
+
+        logger.info(f"🐚 MCP Tool: Physically executing command: {self.command}")
+        try:
+            process = await asyncio.create_subprocess_shell(
+                self.command, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
+            )
+            stdout, stderr = await process.communicate()
+            output = stdout.decode().strip()
+            error = stderr.decode().strip()
+
+            if process.returncode == 0:
+                return f"✅ Command succeeded:\n{output}"
+            else:
+                return f"❌ Command failed (Code {process.returncode}):\n{error}\nOutput:\n{output}"
+        except Exception as e:
+            logger.error(f"Command execution failed: {e}")
+            return f"❌ Execution error: {str(e)}"
+
+
 # To be added to the MCP's tool registry
 developer_execution_tools = [
     ProposeShellCommandTool,
+    ExecuteShellCommandTool,
 ]

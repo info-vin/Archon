@@ -22,12 +22,10 @@ class AgentService:
         self.code_modifier = CodeModifier(base_path=".")
         self.mcp_client = mcp_client
         # Unified Tool Dispatch Map (Phase 4.6.23)
+        # Empty dictionary forces usage of MCP tools via self.mcp_client.call_tool (Phase 4.6.43)
         from collections.abc import Callable, Coroutine
 
-        self._native_tools: dict[str, Callable[..., Coroutine[Any, Any, str]]] = {
-            "perform_web_crawl": self._exec_perform_web_crawl,
-            "execute_shell_command": self._exec_execute_shell_command,
-        }
+        self._native_tools: dict[str, Callable[..., Coroutine[Any, Any, str]]] = {}
 
     async def _check_poisson_gate(self, agent_id: str, required_level: int) -> tuple[bool, str]:
         """
@@ -114,29 +112,6 @@ class AgentService:
                 logger.error(f"[MCP] Tool execution failed ({function_name}): {e}")
                 tool_outputs.append({"role": "tool", "tool_call_id": call_id, "content": str(e)})
         return tool_outputs
-
-    async def _exec_apply_modification(self, agent_id: str, file_path: str = "", content: str = "", **kwargs) -> str:
-        if file_path and content:
-            self.code_modifier.apply_modification(file_path, content)
-            return f"Successfully modified {file_path}"
-        return "Missing file_path or content"
-
-    async def _exec_perform_web_crawl(self, agent_id: str, url: str = "", max_depth: int = 2, **kwargs) -> str:
-        if url:
-            from ..services.crawling.crawling_service import CrawlingService
-
-            crawler = CrawlingService()
-            await crawler.orchestrate_crawl({"url": url, "max_depth": max_depth, "user_role": "admin"})
-            return f"Started background web crawl for {url}"
-        return "Missing URL"
-
-    async def _exec_execute_shell_command(
-        self, agent_id: str, command: str = "", task_id: str | None = None, **kwargs
-    ) -> str:
-        if command:
-            _, output = await self.run_command_with_self_healing(command, agent_id=agent_id, task_id=task_id)
-            return f"Command output:\n{output}"
-        return "Missing command"
 
     async def _analyze_error_with_structured_output(
         self, command: str, stderr: str, agent_id: str

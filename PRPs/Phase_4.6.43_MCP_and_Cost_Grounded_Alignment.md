@@ -35,16 +35,17 @@
     - **檔案**: `TokenUsageTable.tsx`。
     - **動作**: 確保 `$0` 顯示為 `$0.0000` 而非空白。
 
-### [Phase 2] MCP 物理封印解除 (Physical Unblocking)
+### [Phase 2] MCP 物理封印解除 (Physical Unlocking)
 - [x] **Task 4: 硬化啟動報警**
     - **檔案**: `python/src/server/main.py`。
     - **動作**: 提升 MCP 連線失敗至 `ALERT` 級別，寫入 `archon_logs`。
-- [ ] **Task 5: 解除 MCP 權限封印**
+- [x] **Task 5: 解除 MCP 權限封印**
     - **檔案**: `docker-compose.yml`。
-    - **動作**: 將 `./python/src` 掛載到 `archon-mcp` 服務。
-- [ ] **Task 6: 遷移影子工具 (Shadow Tool Migration)**
+    - **動作**: 將 `./python/src` 等核心目錄掛載到 `archon-mcp` 服務，物理驗證完成 (2026-04-21)。
+- [x] **Task 6: 遷移影子工具 (Shadow Tool Migration)**
     - **檔案**: `python/src/server/services/agent_service.py`。
-    - **動作**: 逐步移除 `_native_tools` 攔截，將邏輯回歸 `mcp_server` 的實體工具中。
+    - **動作**: 物理清空 `_native_tools` 字典，工具執行回歸 `mcp_server` 實體類別。
+    - **合約對稱**: 在 MCP 端實作 `ApplyFileModificationTool`、`ExecuteShellCommandTool` 與 `PerformWebCrawlTool` 並物理強制 snake_case 名稱。
 
 ---
 

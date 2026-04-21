@@ -10,12 +10,24 @@ def register_developer_tools(mcp: FastMCP):
 
     # Register file operation tools
     for file_tool_cls in developer_file_tools:
-        mcp.add_tool(file_tool_cls)
+        name = getattr(file_tool_cls, "tool_name", None)
+        if name:
+            mcp.tool(name=name)(file_tool_cls)
+        else:
+            mcp.add_tool(file_tool_cls)
 
     # Register version control tools
     for vc_tool_cls in developer_version_control_tools:
-        mcp.add_tool(vc_tool_cls)
+        name = getattr(vc_tool_cls, "tool_name", None)
+        if name:
+            mcp.tool(name=name)(vc_tool_cls)
+        else:
+            mcp.add_tool(vc_tool_cls)
 
     # Register execution tools
     for exec_tool_cls in developer_execution_tools:
-        mcp.add_tool(exec_tool_cls)
+        name = getattr(exec_tool_cls, "tool_name", None)
+        if name:
+            mcp.tool(name=name)(exec_tool_cls)
+        else:
+            mcp.add_tool(exec_tool_cls)

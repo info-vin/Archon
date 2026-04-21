@@ -1,6 +1,11 @@
+import logging
+
 from pydantic import BaseModel, Field
 
+from server.services.crawling.crawling_service import CrawlingService
 from server.services.job_board_service import JobBoardService
+
+logger = logging.getLogger(__name__)
 
 
 class SearchJobMarketTool(BaseModel):
@@ -39,6 +44,33 @@ class SearchJobMarketTool(BaseModel):
             return f"Error searching job market: {str(e)}"
 
 
+class PerformWebCrawlTool(BaseModel):
+    """
+    Triggers a deep background web crawl for a given URL via the CrawlingService.
+    Useful for building knowledge bases and researching competitors.
+    """
+
+    tool_name: str = "perform_web_crawl"
+    url: str = Field(..., description="The target URL to crawl")
+    max_depth: int = Field(2, description="Maximum link depth (default 2)")
+
+    async def execute(self) -> str:
+        """Trigger a deep background web crawl."""
+        try:
+            logger.info(f"🕷️ MCP Tool: Starting crawl for {self.url}")
+            crawler = CrawlingService()
+            # Note: We use admin role as default for system-triggered crawls
+            await crawler.orchestrate_crawl({"url": self.url, "max_depth": self.max_depth, "user_role": "admin"})
+            return f"✅ Successfully started background web crawl for {self.url}"
+        except Exception as e:
+            return f"❌ Crawler error: {str(e)}"
+
+
 marketing_tools = [
     SearchJobMarketTool,
+]
+
+
+marketing_crawler_tools = [
+    PerformWebCrawlTool,
 ]
