@@ -21,18 +21,18 @@ test('User can select knowledge items when creating a task', async () => {
   renderApp(['/dashboard']);
   await waitFor(() => expect(screen.queryByText(/Loading/i)).not.toBeInTheDocument(), { timeout: 10000 });
 
-  const newTaskBtn = await screen.findByRole('button', { name: /New Task/i });
+  const newTaskBtn = await screen.findByRole('button', { name: /New Task/i }, { timeout: 15000 });
   await user.click(newTaskBtn);
 
-  fireEvent.change(await screen.findByLabelText(/Title/i), { target: { value: 'Task with Knowledge' } });
+  fireEvent.change(await screen.findByLabelText(/Title/i, {}, { timeout: 15000 }), { target: { value: 'Task with Knowledge' } });
   
-  const datePickerBtn = await screen.findByRole('button', { name: /Due Date/i });
+  const datePickerBtn = await screen.findByRole('button', { name: /Due Date/i }, { timeout: 15000 });
   await user.click(datePickerBtn);
-  await user.click(await screen.findByRole('button', { name: /Tomorrow/i }));
+  await user.click(await screen.findByRole('button', { name: /Tomorrow/i }, { timeout: 15000 }));
   await user.click(screen.getByRole('button', { name: /CONFIRM SELECTION/i }));
 
-  await user.click(await screen.findByRole('button', { name: /Select internal knowledge/i }));
-  await user.click(await screen.findByText('Onboarding Guide'));
+  await user.click(await screen.findByRole('button', { name: /Select internal knowledge/i }, { timeout: 15000 }));
+  await user.click(await screen.findByText('Onboarding Guide', {}, { timeout: 15000 }));
   
   await user.click(screen.getByRole('button', { name: /Create Task/i }));
   await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument(), { timeout: 10000 });

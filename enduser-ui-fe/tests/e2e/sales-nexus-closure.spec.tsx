@@ -69,7 +69,7 @@ describe('Sales Nexus Closure Flow (Phase 4.4.2)', () => {
         expect(modalHeading).toBeInTheDocument();
 
         // 5. Success Check (Just close modal for now since we're adapting a broken test)
-        const closeBtn = screen.getByRole('button', { name: /Cancel/i });
+        const closeBtn = screen.getByRole('button', { name: /Close modal/i });
         fireEvent.click(closeBtn);
         
         await waitFor(() => {

@@ -11,6 +11,7 @@ const { MOCK_ADMIN_USER } = vi.hoisted(() => {
   return {
     MOCK_ADMIN_USER: {
         id: 'user-123',
+        name: 'System Admin',
         email: 'admin@archon.com',
         role: 'system_admin',
         // SSOT: Synchronized with usePermission.ts admin set
@@ -54,7 +55,7 @@ vi.mock('../../src/services/api', async (importOriginal) => {
     // --- Hybrid Strategy: Mock Auth Only, Pass-through Data ---
     
     // 1. Mock getCurrentUser using the HOISTED data
-    mockedApi.getCurrentUser = vi.fn().mockResolvedValue(MOCK_ADMIN_USER);
+    mockedApi.getCurrentUser = vi.fn().mockResolvedValue(structuredClone(MOCK_ADMIN_USER));
 
     // 2. Mock _getHeaders to avoid hanging on supabase.auth.getSession() (Fix for BUG-028)
     mockedApi._getHeaders = vi.fn().mockResolvedValue({
@@ -68,7 +69,10 @@ vi.mock('../../src/services/api', async (importOriginal) => {
         const ignoreList = ['getCurrentUser', 'getTasks', '_getHeaders', 'getAssignableAgents', 'getAttendanceStatus'];
         
         if (!ignoreList.includes(key) && typeof mockedApi[key] === 'function') {
-            mockedApi[key] = vi.fn().mockImplementation((...args) => actual.api[key].call(mockedApi, ...args));
+            const originalFn = actual.api[key];
+            const mockFn = vi.fn().mockImplementation((...args) => originalFn.call(mockedApi, ...args));
+            (mockFn as any)._passThrough = originalFn;
+            mockedApi[key] = mockFn;
         } else if (ignoreList.includes(key) && typeof mockedApi[key] === 'function') {
              // Keep the original function reference for testing fallbacks
              mockedApi[key] = actual.api[key];
@@ -76,7 +80,7 @@ vi.mock('../../src/services/api', async (importOriginal) => {
     });
     
     // Explicitly re-attach for specific test suites that might rely on them
-    mockedApi.getCurrentUser = vi.fn().mockResolvedValue(MOCK_ADMIN_USER);
+    mockedApi.getCurrentUser = vi.fn().mockResolvedValue(structuredClone(MOCK_ADMIN_USER));
     mockedApi._getHeaders = vi.fn().mockResolvedValue({
         'Content-Type': 'application/json',
         'X-User-Role': 'system_admin', 
@@ -119,8 +123,23 @@ afterEach(() => {
   import('../../src/services/api').then(module => {
       const { api } = module as any;
       if (vi.isMockFunction(api.getCurrentUser)) {
-          api.getCurrentUser.mockResolvedValue(MOCK_ADMIN_USER);
+          api.getCurrentUser.mockResolvedValue(structuredClone(MOCK_ADMIN_USER));
       }
+      if (vi.isMockFunction(api._getHeaders)) {
+          api._getHeaders.mockResolvedValue({
+              'Content-Type': 'application/json',
+              'X-User-Role': 'system_admin', 
+              'Authorization': 'Bearer mock-token'
+          });
+      }
+      
+      // Restore all pass-through mocks to their original pass-through implementation
+      Object.keys(api).forEach(key => {
+          if (typeof api[key] === 'function' && vi.isMockFunction(api[key]) && (api[key] as any)._passThrough) {
+              const originalFn = (api[key] as any)._passThrough;
+              api[key].mockImplementation((...args: any[]) => originalFn.call(api, ...args));
+          }
+      });
   });
 });
 

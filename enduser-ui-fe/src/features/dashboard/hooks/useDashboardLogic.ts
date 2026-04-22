@@ -48,19 +48,19 @@ export const useDashboardLogic = (selectedProjectId: string) => {
 
   const userMap = useMemo(() => {
     const map: Record<string, any> = {};
-    users.forEach(u => { map[u.id] = u; });
+    (users || []).forEach(u => { map[u.id] = u; });
     return map;
   }, [users]);
 
   const projectMap = useMemo(() => {
     const map: Record<string, string> = {};
-    projects.forEach(p => { map[p.id] = p.title; });
+    (projects || []).forEach(p => { map[p.id] = p.title; });
     return map;
   }, [projects]);
 
   const filteredTasks = useMemo(() => {
-    if (!selectedProjectId || selectedProjectId === 'all') return tasks;
-    return tasks.filter(task => task.project_id === selectedProjectId);
+    if (!selectedProjectId || selectedProjectId === 'all') return tasks || [];
+    return (tasks || []).filter(task => task.project_id === selectedProjectId);
   }, [tasks, selectedProjectId]);
 
   const STATUS_WEIGHTS: Record<string, number> = { 'todo': 1, 'doing': 2, 'review': 3, 'done': 4 };

@@ -3,11 +3,11 @@ import React from 'react';
 import { DollarSign, Cpu, TrendingUp, ShieldCheck } from 'lucide-react';
 
 interface ROIAnalyticsBadgeProps {
-  data: {
-    total_monthly_usd: number;
-    total_monthly_tokens: number;
-    usage_percentage: number;
-    is_real_data: boolean;
+  data?: {
+    total_monthly_usd?: number;
+    total_monthly_tokens?: number;
+    usage_percentage?: number;
+    is_real_data?: boolean;
   };
 }
 
@@ -21,7 +21,7 @@ export const ROIAnalyticsBadge: React.FC<ROIAnalyticsBadgeProps> = ({ data }) =>
         </div>
         <div>
           <p className="text-xs text-muted-foreground font-medium uppercase">Monthly Spend</p>
-          <h4 className="text-xl font-bold">${data.total_monthly_usd.toFixed(2)}</h4>
+          <h4 className="text-xl font-bold">${(data?.total_monthly_usd || 0).toFixed(2)}</h4>
         </div>
       </div>
 
@@ -32,7 +32,7 @@ export const ROIAnalyticsBadge: React.FC<ROIAnalyticsBadgeProps> = ({ data }) =>
         </div>
         <div>
           <p className="text-xs text-muted-foreground font-medium uppercase">Tokens Used</p>
-          <h4 className="text-xl font-bold">{(data.total_monthly_tokens / 1000).toFixed(1)}k</h4>
+          <h4 className="text-xl font-bold">{((data?.total_monthly_tokens || 0) / 1000).toFixed(1)}k</h4>
         </div>
       </div>
 
@@ -44,11 +44,11 @@ export const ROIAnalyticsBadge: React.FC<ROIAnalyticsBadgeProps> = ({ data }) =>
         <div>
           <p className="text-xs text-muted-foreground font-medium uppercase">Quota Usage</p>
           <div className="flex items-center gap-2">
-            <h4 className="text-xl font-bold">{data.usage_percentage}%</h4>
+            <h4 className="text-xl font-bold">{data?.usage_percentage || 0}%</h4>
             <div className="w-16 h-1.5 bg-muted rounded-full overflow-hidden">
               <div 
                 className="h-full bg-purple-500" 
-                style={{ width: `${data.usage_percentage}%` }}
+                style={{ width: `${data?.usage_percentage || 0}%` }}
               />
             </div>
           </div>
@@ -57,13 +57,13 @@ export const ROIAnalyticsBadge: React.FC<ROIAnalyticsBadgeProps> = ({ data }) =>
 
       {/* Status Badge */}
       <div className="bg-card p-4 rounded-xl border border-border shadow-sm flex items-center gap-4">
-        <div className={`p-3 rounded-lg ${data.is_real_data ? 'bg-indigo-500/10' : 'bg-orange-500/10'}`}>
-          <ShieldCheck className={`w-5 h-5 ${data.is_real_data ? 'text-indigo-600' : 'text-orange-600'}`} />
+        <div className={`p-3 rounded-lg ${data?.is_real_data ? 'bg-indigo-500/10' : 'bg-orange-500/10'}`}>
+          <ShieldCheck className={`w-5 h-5 ${data?.is_real_data ? 'text-indigo-600' : 'text-orange-600'}`} />
         </div>
         <div>
           <p className="text-xs text-muted-foreground font-medium uppercase">Data Integrity</p>
-          <h4 className={`text-sm font-bold ${data.is_real_data ? 'text-indigo-600' : 'text-orange-600'}`}>
-            {data.is_real_data ? 'PHYSICAL LOGS' : 'SIMULATED'}
+          <h4 className={`text-sm font-bold ${data?.is_real_data ? 'text-indigo-600' : 'text-orange-600'}`}>
+            {data?.is_real_data ? 'PHYSICAL LOGS' : 'SIMULATED'}
           </h4>
         </div>
       </div>
