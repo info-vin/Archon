@@ -17,3 +17,7 @@
 ## 2025-03-05 - ActiveForce Member Details Button Accessibility
 **Learning:** Icon-only buttons used for viewing specific item details (like team members) need dynamic ARIA labels that include the item's name (e.g., `aria-label={\`View details for \${member.name}\`}`) to provide adequate context for screen reader users, rather than a generic "View details".
 **Action:** Always use dynamic interpolation for `aria-label`s on icon-only buttons within mapped lists to ensure context-specific accessibility.
+
+## 2024-04-22 - Replacing Hardcoded Text Icons with Proper SVG Components
+**Learning:** Hardcoded text characters (like `✕` for close buttons) not only look inconsistent across different OS and fonts, but they also severely harm accessibility if lacking an `aria-label`. Screen readers may read out the literal character name (e.g., "multiplication x"), which is confusing.
+**Action:** When creating or fixing modal close buttons, always use existing SVG icon components (like `<XIcon />`) from the design system, and explicitly attach a descriptive `aria-label` (e.g., `aria-label="Close modal"`) to ensure the intent is clearly communicated to assistive technologies.
