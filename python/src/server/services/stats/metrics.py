@@ -166,11 +166,27 @@ class MetricsManager:
                 except Exception:
                     return "Unknown"
 
+            parsed_sources = []
+            for s in sources:
+                if raw := s.get("created_at"):
+                    try:
+                        parsed_sources.append((s, datetime.fromisoformat(str(raw).replace("Z", "+00:00"))))
+                    except Exception:
+                        pass
+
+            parsed_pages = []
+            for p in pages:
+                if raw := p.get("created_at"):
+                    try:
+                        parsed_pages.append((p, datetime.fromisoformat(str(raw).replace("Z", "+00:00"))))
+                    except Exception:
+                        pass
+
             trend_data = []
             for i in range(60, 0, -14):
                 w_start, w_end = now - timedelta(days=i), now - timedelta(days=i - 14)
-                w_sources = [s for s in sources if self._window_check(s, w_start, w_end)]
-                w_pages = [p for p in pages if self._window_check(p, w_start, w_end)]
+                w_sources = [s for s, dt in parsed_sources if w_start <= dt < w_end]
+                w_pages = [p for p, dt in parsed_pages if w_start <= dt < w_end]
                 trend_data.append({
                     "date": w_start.strftime("%m-%d"),
                     "conversion": round((len(w_pages) / len(w_sources)) * 100, 1) if w_sources else 0.0,
@@ -194,22 +210,33 @@ class MetricsManager:
         try:
             res = self.supabase.table("archon_tasks").select("id, completed_at, due_date").eq("status", "done").gt("completed_at", cutoff).execute()
             all_tasks = res.data or []
+            parsed_tasks = []
+            for t in all_tasks:
+                if raw_comp := t.get("completed_at"):
+                    try:
+                        comp_dt = datetime.fromisoformat(str(raw_comp).replace("Z", "+00:00"))
+                        parsed_tasks.append((t, comp_dt))
+                    except Exception:
+                        pass
+
             trend = []
             for i in range(180, 0, -14):
                 w_start, w_end = now - timedelta(days=i), now - timedelta(days=i - 14)
-                window_tasks = [t for t in all_tasks if t.get("completed_at") and self._window_check(t, w_start, w_end)]
+                window_tasks = [(t, comp_dt) for t, comp_dt in parsed_tasks if w_start <= comp_dt < w_end]
                 if not window_tasks:
                     trend.append({"date": w_start.strftime("%m-%d"), "rate": 100.0, "count": 0})
                     continue
                 met = 0
-                for t in window_tasks:
+                for t, comp_dt in window_tasks:
                     if not t.get("due_date"):
                         met += 1
                     else:
-                        c_dt = datetime.fromisoformat(str(t["completed_at"]).replace("Z", "+00:00"))
-                        d_dt = datetime.fromisoformat(str(t["due_date"]).replace("Z", "+00:00"))
-                        if c_dt <= d_dt:
-                            met += 1
+                        try:
+                            d_dt = datetime.fromisoformat(str(t["due_date"]).replace("Z", "+00:00"))
+                            if comp_dt <= d_dt:
+                                met += 1
+                        except Exception:
+                            pass
                 trend.append({"date": w_start.strftime("%m-%d"), "rate": round((met / len(window_tasks)) * 100, 1), "count": len(window_tasks)})
             return {"current_sla": trend[-1]["rate"] if trend else 100.0, "trend": trend, "total_analyzed": len(all_tasks)}
         except Exception as e:

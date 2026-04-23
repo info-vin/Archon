@@ -51,3 +51,6 @@
 ## 2024-05-18 - Avoid text.split() for fast word counting
 **Learning:** Using `len(text.split())` to estimate token or word counts is extremely inefficient because it allocates a new list and string objects for every word. When inside a generator expression like `sum(len(t.split()) for t in batch)`, it can be ~10x slower than alternative approaches.
 **Action:** When you only need to estimate word counts (like for rate limit calculations), use `text.count(' ') + 1` inside a standard for-loop. This executes in optimized C code, bypassing massive string and list allocations.
+## 2025-05-18 - Pre-parsing dates before nested time window loops
+**Learning:** In `get_knowledge_roi` and `get_sla_reliability`, calling `datetime.fromisoformat()` repeatedly inside a 14-day rolling window loop causes an O(N*M) performance bottleneck, as the same date strings are parsed over and over.
+**Action:** Extract the date string parsing out of the nested loops. Pre-parse all dates into an in-memory list (e.g., `[(item, parsed_date)]`) before executing the time window loop to ensure O(N) date conversions and fast O(1) datetime comparisons.
