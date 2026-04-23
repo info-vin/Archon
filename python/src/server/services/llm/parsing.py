@@ -51,7 +51,9 @@ def extract_message_text(choice: Any) -> tuple[str, str, bool]:
     if content_text and not reasoning_text:
         # Heuristic reasoning detection
         indicators = ["okay, let's see", "let me think", "analyzing", "breaking this down", "step by step"]
-        if any(ind in content_text.lower() for ind in indicators):
+        # PERFORMANCE: Extracted content_text.lower() outside generators to prevent O(N*M) repeated allocations
+        content_lower = content_text.lower()
+        if any(ind in content_lower for ind in indicators):
             reasoning_text = content_text
             extracted = extract_json_from_reasoning(content_text)
             if extracted:

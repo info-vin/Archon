@@ -106,9 +106,11 @@ class StatsService:
                 {"id": "devbot", "name": "DevBot", "role": "System Engineer"},
             ]
 
+            # PERFORMANCE: Pre-computed lowercase sources to prevent O(N*M) repeated conversions in generator expression
+            active_sources_lower = {s.lower() for s in active_sources}
             active_agents = []
             for agent in agents_manifest:
-                is_active = agent["id"] in active_sources or any(agent["id"] in s.lower() for s in active_sources)
+                is_active = agent["id"] in active_sources or any(agent["id"] in s for s in active_sources_lower)
                 active_agents.append({**agent, "status": "active" if is_active else "standby"})
 
             return {

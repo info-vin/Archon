@@ -54,3 +54,7 @@
 ## 2025-05-18 - Pre-parsing dates before nested time window loops
 **Learning:** In `get_knowledge_roi` and `get_sla_reliability`, calling `datetime.fromisoformat()` repeatedly inside a 14-day rolling window loop causes an O(N*M) performance bottleneck, as the same date strings are parsed over and over.
 **Action:** Extract the date string parsing out of the nested loops. Pre-parse all dates into an in-memory list (e.g., `[(item, parsed_date)]`) before executing the time window loop to ensure O(N) date conversions and fast O(1) datetime comparisons.
+
+## 2024-05-18 - Repeated string conversions in generator expressions
+**Learning:** Using a generator expression like `sum(1 for x in y if x in text.lower())` or `any(p in model.lower() for p in patterns)` re-evaluates `text.lower()` on every iteration if it's placed in the loop condition, leading to O(N*M) string allocations instead of O(N) when iterating over strings. The creation of generator expressions also has some overhead compared to standard for loops.
+**Action:** When extracting data or checking multiple items against a string, always cache the string conversions (like `.lower()`) outside of loops into variables like `model_lower = model.lower()`, and consider standard for loops instead of generators on hot paths for better performance.

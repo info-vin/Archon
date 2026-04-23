@@ -69,7 +69,9 @@ def is_google_embedding_model(model: str) -> bool:
         "gemini-embedding-001",
         "multimodalembedding@001",
     ]
-    return any(p in model.lower() for p in patterns)
+    # PERFORMANCE: Extracted model.lower() outside generators to prevent O(N*M) repeated allocations
+    model_lower = model.lower()
+    return any(p in model_lower for p in patterns)
 
 
 def is_valid_embedding_model_for_provider(model: str, provider: str) -> bool:
@@ -84,7 +86,9 @@ def is_valid_embedding_model_for_provider(model: str, provider: str) -> bool:
         return is_openai_embedding_model(model) or is_google_embedding_model(model)
     if p_lower == "ollama":
         patterns = ["nomic-embed", "all-minilm", "mxbai-embed", "embed"]
-        return any(p in model.lower() for p in patterns)
+        # PERFORMANCE: Extracted model.lower() outside generators to prevent O(N*M) repeated allocations
+        model_lower = model.lower()
+        return any(p in model_lower for p in patterns)
     return is_openai_embedding_model(model)
 
 

@@ -31,16 +31,18 @@ async def discover_ollama_models(base_urls: list[str], session: aiohttp.ClientSe
                         model_name = full_name.split(":")[0]
 
                         supports_tools = await test_tool_fn(model_name, api_url)
-                        supports_vision = any(p in model_name.lower() for p in VISION_MODEL_PATTERNS)
-                        supports_embeddings = any(p in model_name.lower() for p in EMBEDDING_MODEL_PATTERNS)
+                        # PERFORMANCE: Extracted model_name.lower() outside generators to prevent O(N*M) repeated allocations
+                        model_lower = model_name.lower()
+                        supports_vision = any(p in model_lower for p in VISION_MODEL_PATTERNS)
+                        supports_embeddings = any(p in model_lower for p in EMBEDDING_MODEL_PATTERNS)
 
                         context_window = 4096
                         for family, window_size in MODEL_CONTEXT_WINDOWS.items():
-                            if family in model_name.lower():
+                            if family in model_lower:
                                 context_window = window_size
                                 break
 
-                        embedding_dims = next((dims for pattern, dims in EMBEDDING_DIMENSIONS.items() if pattern in model_name.lower()), None)
+                        embedding_dims = next((dims for pattern, dims in EMBEDDING_DIMENSIONS.items() if pattern in model_lower), None)
 
                         models.append(ModelSpec(
                             name=full_name, provider="ollama", context_window=context_window,
