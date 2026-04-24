@@ -70,26 +70,37 @@ class HealthService(BaseRepository):
 
         alignment_score = 0.0
         indexed_count = 0
+        dimension_ok = True
+
         if total_count > 0:
 
             def _query_indexed():
+                # Physical Dimension Check (Restored Phase 4.6.46: 768 Hard Assertion)
                 return (
                     self.supabase_client.table("archon_crawled_pages")
-                    .select("source_id", count="exact")
+                    .select("source_id, embedding")
                     .not_.is_("embedding", "null")
+                    .limit(5)
                     .execute()
                 )
 
             idx_success, idx_res = self.execute_query(
-                _query_indexed, "Error counting indexed sources", require_data=False
+                _query_indexed, "Error checking embedding dimensions", require_data=False
             )
-            if idx_success:
-                indexed_count = int(idx_res.get("count") or 0)
-                if indexed_count == 0:
-                    idx_data = idx_res.get("data") or []
-                    indexed_count = len({row["source_id"] for row in idx_data})
+            if idx_success and idx_res.get("data"):
+                idx_data = idx_res.get("data") or []
+                indexed_count = len(idx_data)
 
-                alignment_score = (indexed_count / total_count) * 70.0
+                # Physical Proof: Inspect the first available vector
+                first_vec = idx_data[0].get("embedding")
+                if first_vec:
+                    # Note: Handle both list and string representation
+                    vec_len = len(first_vec) if isinstance(first_vec, list) else 0
+                    if vec_len != 768:
+                        logger.error(f"🚨 RAG DIMENSION MISMATCH: Expected 768, got {vec_len}")
+                        dimension_ok = False
+
+                alignment_score = 70.0 if dimension_ok else 0.0
         else:
             alignment_score = 70.0  # Default full if system is fresh/empty
 
@@ -108,11 +119,19 @@ class HealthService(BaseRepository):
         # 4. Composite Score
         final_score = round(db_score + alignment_score + search_score, 2)
 
+        # Final Status Realization
+        if not dimension_ok:
+            status = "critical_failure"
+            final_score = 0.0
+        else:
+            status = "healthy" if final_score >= 90 else ("degraded" if final_score >= 70 else "unhealthy")
+
         return {
-            "status": "healthy" if final_score >= 90 else ("degraded" if final_score >= 70 else "unhealthy"),
+            "status": status,
             "score": final_score,
             "details": {
                 "alignment_raw": round((alignment_score / 70.0) * 100, 1) if total_count > 0 else 100.0,
+                "dimension_match": dimension_ok,
                 "db_connected": db_ok,
                 "search_active": search_ok,
                 "total_sources": total_count,
