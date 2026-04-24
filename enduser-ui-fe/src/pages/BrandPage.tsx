@@ -82,7 +82,7 @@ const BrandPage: React.FC = () => {
                     </div>
                     
                     <div className="flex items-center gap-3">
-                        <button onClick={loadData} className="p-2 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-full transition-colors">
+                        <button onClick={loadData} aria-label="Refresh data" className="p-2 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-full transition-colors">
                             <RefreshCwIcon className={`w-5 h-5 text-slate-400 ${loading ? 'animate-spin' : ''}`} />
                         </button>
                     </div>

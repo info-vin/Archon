@@ -192,6 +192,7 @@ export const BrandDashboardView: React.FC<BrandDashboardViewProps> = ({
                             onClick={downloadLogo}
                             className="absolute bottom-4 right-4 bg-white/10 backdrop-blur-md text-white p-2 rounded-lg hover:bg-white/20 transition-all opacity-0 group-hover:opacity-100"
                             title="Download SVG"
+                            aria-label="Download SVG"
                         >
                             <DownloadIcon className="w-5 h-5" />
                         </button>
