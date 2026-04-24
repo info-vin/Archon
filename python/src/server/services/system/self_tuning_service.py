@@ -66,8 +66,9 @@ CURRENT PROMPT CODE:
 Propose a surgical modification to the prompt string within this code to prevent this error.
 Return ONLY the full corrected file content.
 """
+                from ...config.model_ssot import SYSTEM_MODELS
                 response = await client.chat.completions.create(
-                    model="gemini-2.5-flash",
+                    model=SYSTEM_MODELS["DEFAULT_TEXT"],
                     messages=[{"role": "user", "content": tuning_prompt}],
                     temperature=0.1
                 )

@@ -5,6 +5,7 @@ from google import genai
 from google.genai import types
 
 from ..config.logfire_config import get_logger
+from ..config.model_ssot import SYSTEM_MODELS
 from ..prompts.marketing_prompts import BLOG_DRAFT_SYSTEM_PROMPT
 from ..prompts.sales_prompts import SALES_PITCH_SYSTEM_PROMPT
 from ..repositories.base_repository import BaseRepository
@@ -146,11 +147,13 @@ class MarketingService(BaseRepository):
                 # Resolve Real Physical Identity
                 agent_uuid = get_agent_uuid("market-bot")
 
+                from ..config.model_ssot import SYSTEM_MODELS
+
                 asyncio.create_task(
                     TokenUsageService.log_usage(
                         request_id=f"pitch-{uuid.uuid4().hex[:8]}",
                         user_id=agent_uuid,  # Real UUID from Registry
-                        model="gemini-2.5-flash",
+                        model=SYSTEM_MODELS["DEFAULT_TEXT"],
                         provider="google",
                         input_tokens=getattr(response.usage_metadata, "prompt_token_count", 0) or 0,
                         output_tokens=getattr(response.usage_metadata, "candidates_token_count", 0) or 0,
@@ -342,7 +345,7 @@ class MarketingService(BaseRepository):
     async def draft_blog(self, topic: str, industry: list[str] | None, keywords: str | None) -> tuple[bool, dict]:
         """
         Bob's Daily Blog Draft Generation.
-        Uses credential_service for API key retrieval and maintains gemini-2.5-flash model.
+        Restored with EXP-03 (Creative Resilience) style constraints.
         """
         # P11: Guardrail Check
         is_valid, err = GuardrailService.validate_input(f"{topic} {keywords or ''}")
@@ -367,7 +370,7 @@ class MarketingService(BaseRepository):
 
             # 3. Call AI with current model choice
             response = client.models.generate_content(
-                model="gemini-2.5-flash",
+                model=SYSTEM_MODELS["DEFAULT_TEXT"],
                 contents=f"Topic: {topic}\nContext: {context_text}",
                 config=types.GenerateContentConfig(
                     system_instruction=sys_prompt, response_mime_type="application/json"
@@ -386,7 +389,7 @@ class MarketingService(BaseRepository):
                     TokenUsageService.log_usage(
                         request_id=f"blog-{uuid.uuid4().hex[:8]}",
                         user_id=agent_uuid,
-                        model="gemini-2.5-flash",
+                        model=SYSTEM_MODELS["DEFAULT_TEXT"],
                         provider="google",
                         input_tokens=getattr(response.usage_metadata, "prompt_token_count", 0) or 0,
                         output_tokens=getattr(response.usage_metadata, "candidates_token_count", 0) or 0,
@@ -477,11 +480,26 @@ class MarketingService(BaseRepository):
         }
 
     async def _get_expert_style_context(self, query: str) -> str:
+        """
+        Restores EXP-03 (Creative Resilience) logic:
+        1. Performs RAG on general context.
+        2. Retrieves specific brand voice constraints from Manager critiques.
+        """
+        # Step 1: General Context RAG
         success, rag = await RAGService().perform_rag_query(query=query, match_count=5, min_score=0.15)
         context_text = ""
         if success:
             for r in rag.get("results", []):
                 context_text += f"\n[RAG]: {r['content']}\n"
+
+        # Step 2: Brand Voice Constraints (Phase 4.6.46: Critical Restoration)
+        try:
+            constraints = await LibrarianService().get_style_constraints(category="marketing")
+            if constraints:
+                context_text += f"\n[BRAND VOICE CONSTRAINTS]:\n{constraints}\n"
+        except Exception as e:
+            logger.warning(f"EXP-03: Failed to retrieve style constraints: {e}")
+
         return context_text
 
     def _calculate_ai_score(self, content: str) -> int:

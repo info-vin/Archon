@@ -46,7 +46,8 @@ Answer only with the succinct context and nothing else. Do not repeat the chunk 
 
                 # Force Gemini 2.5 Flash if available as it's the project standard for fast/cheap reasoning
                 if "gemini" in model.lower() and "flash" not in model.lower():
-                    model = "gemini-2.5-flash"
+                    from ...config.model_ssot import SYSTEM_MODELS
+                    model = SYSTEM_MODELS["DEFAULT_TEXT"]
 
                 response = await client.chat.completions.create(
                     model=model,

@@ -131,7 +131,7 @@ async def analyze_with_retry(client, model, contents, system_prompt, retries=3):
                 print(f"⏳ [Scout] API Strain ({err_str[:15]}). Retrying in {backoff}s... ({i+1}/{retries})")
                 await asyncio.sleep(backoff)
                 backoff *= 2
-                if i == retries - 2: current_model = "gemini-1.5-flash"
+                if i == retries - 2: current_model = "gemini-3.1-flash-lite-preview"
             else:
                 return f"AI Error: {err_str}"
     return "AI Error: Continuous failure even with fallback."
@@ -187,7 +187,7 @@ async def run_scout_session():
         print("❌ [Scout] GEMINI_API_KEY missing. Aborting.")
         return
 
-    target_model = (await credential_service.get_credential("MARKETING_MODEL") or "gemini-2.5-flash").split("/")[-1]
+    target_model = (await credential_service.get_credential("MARKETING_MODEL") or "gemini-3.1-flash-lite-preview").split("/")[-1]
     client = genai.Client(api_key=api_key)
 
     mission_key = os.getenv("SCOUT_PROMPT_KEY", "twin_scout_mission")
@@ -237,6 +237,28 @@ async def run_scout_session():
     print(f"📄 [Scout] Final Report saved: {report_path}")
     final_type = "PARITY_MISMATCH" if "PARITY_MISMATCH" in report_text else "WORKFLOW_SUCCESS"
     await log_twin_diagnosis(report_text, final_type)
+
+    # --- RESTORED FEEDBACK LOOP (Phase 4.6.46) ---
+    if final_type == "WORKFLOW_SUCCESS":
+        try:
+            url = os.getenv("SUPABASE_URL")
+            key = os.getenv("SUPABASE_SERVICE_KEY")
+            supabase: Client = create_client(url, key)
+            
+            # Example heuristic: if success, ensure basic tools are low friction
+            # In a production EXP-03, this would parse 'analysis' for specific tool name recommendations
+            optimizations = {
+                "search_job_market": {"min_xp_level": 0},
+                "rag_search_knowledge_base": {"min_xp_level": 0}
+            }
+            supabase.table("archon_settings").upsert({
+                "setting_key": "AGENT_TOOL_OVERRIDES",
+                "setting_value": optimizations,
+                "is_system_protected": True
+            }).execute()
+            print("🚀 [Scout] Self-tuning optimizations applied to AgentRegistry.")
+        except Exception as e:
+            print(f"⚠️ [Scout] Feedback loop write failed: {e}")
 
 if __name__ == "__main__":
     asyncio.run(run_scout_session())

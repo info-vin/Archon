@@ -24,7 +24,7 @@ class LogService(BaseRepository):
 
     def create_log_entry(self, log_data: dict) -> tuple[bool, dict]:
         """
-        Creates a new log entry in the gemini_logs table.
+        Creates a new log entry in the archon_logs table.
 
         Args:
             log_data: A dictionary containing the log data.

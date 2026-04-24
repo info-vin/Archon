@@ -74,36 +74,43 @@ Use the tool to save this blog post as a DRAFT."""
 
 
 async def analyze_token_usage():
-    """Token Usage Analysis & Retention."""
+    """Token Usage Analysis & Proactive Alerting (Phase 4.6.46: Proactive)"""
     logger.info("🤖 Clockwork: Starting Token Usage Analysis...")
     try:
         supabase = get_supabase_client()
         one_day_ago = (datetime.now(UTC) - timedelta(hours=24)).isoformat()
-        res = supabase.table("gemini_logs").select("user_name, gemini_response").gt("created_at", one_day_ago).execute()
+        # Physical Fix: table is token_usage
+        res = supabase.table("token_usage").select("input_tokens, output_tokens, cost_usd").gt("created_at", one_day_ago).execute()
         data = res.data or []
 
-        usage_map: dict[str, int] = {}
-        total_tokens = 0
-        for entry in data:
-            user = entry.get("user_name", "Unknown")
-            content = entry.get("gemini_response", "")
-            if not content:
-                continue
-            est = len(content) // 4
-            usage_map[user] = usage_map.get(user, 0) + est
-            total_tokens += est
+        total_tokens = sum((row.get("input_tokens", 0) + row.get("output_tokens", 0)) for row in data)
+        total_cost = sum(float(row.get("cost_usd", 0)) for row in data)
 
-        logger.info(f"📊 Daily Token Analysis: {total_tokens} tokens estimated across {len(usage_map)} users.")
+        # 1. INFO Log
+        logger.info(f"📊 Daily Token Analysis: {total_tokens} physical tokens, ${total_cost:.4f} USD.")
+
+        # 2. PROACTIVE ALERT (Restored Milestone)
+        # Alert if cost exceeds threshold (Default $1.0)
+        cost_threshold = 1.0
+        if total_cost > cost_threshold:
+            supabase.table("archon_logs").insert({
+                "source": "sentinel-cost",
+                "level": "ALERT",
+                "message": f"💰 Cost Spike Detected: 24h spend ${total_cost:.2f} > threshold ${cost_threshold:.2f}",
+                "details": {"total_cost": total_cost, "total_tokens": total_tokens, "request_count": len(data)}
+            }).execute()
+
         supabase.table("archon_logs").insert(
             {
                 "source": "clockwork-scheduler",
                 "level": "INFO",
-                "message": f"Daily Token Analysis: {total_tokens} tokens",
+                "message": f"Daily Token Analysis: {total_tokens} physical tokens",
                 "details": {
                     "type": "token_analysis",
                     "period": "24h",
-                    "total_estimated": total_tokens,
-                    "usage_breakdown": usage_map,
+                    "total_tokens": total_tokens,
+                    "total_cost": total_cost,
+                    "request_count": len(data),
                 },
             }
         ).execute()
@@ -112,28 +119,29 @@ async def analyze_token_usage():
 
 
 async def run_business_sentinel():
-    """Scans leads for staleness (Sentinel logic with anti-spam)."""
+    """Scans leads for staleness with Proactive State Intervention (Restored Phase 4.6.46)."""
     logger.info("🛡️ Clockwork: Starting Business Sentinel...")
     try:
         supabase = get_supabase_client()
         threshold_days = 14
+        # Physical Fix: Column name is 'setting_key', not 'key'
         res_settings = (
-            supabase.table("archon_settings").select("value").eq("key", "STALE_LEAD_THRESHOLD_DAYS").execute()
+            supabase.table("archon_settings").select("setting_value").eq("setting_key", "STALE_LEAD_THRESHOLD_DAYS").execute()
         )
         if res_settings.data:
-            threshold_days = int(res_settings.data[0]["value"])
+            threshold_days = int(res_settings.data[0]["setting_value"])
 
         cutoff_date = (datetime.now(UTC) - timedelta(days=threshold_days)).isoformat()
         logger.info(f"🛡️ Sentinel: Scanning for leads updated before {cutoff_date} (threshold={threshold_days}d)")
 
         seven_days_ago = (datetime.now(UTC) - timedelta(days=7)).isoformat()
 
-        # 1. Stale Leads
+        # 1. Stale Leads with Proactive Intervention
         res = (
             supabase.table("leads")
             .select("id, company_name, updated_at")
             .lt("updated_at", cutoff_date)
-            .not_.in_("status", ["won", "converted"])
+            .not_.in_("status", ["won", "converted", "dormant"])
             .limit(20)
             .execute()
         )
@@ -141,11 +149,11 @@ async def run_business_sentinel():
         if not stale_leads:
             logger.info("🛡️ Clockwork: No stale leads found.")
         else:
-            company_names = ", ".join([lead["company_name"] for lead in stale_leads])
-            logger.info(f"🛡️ Sentinel: Found {len(stale_leads)} potential stale leads in DB: {company_names}")
-
             for lead in stale_leads:
-                # Anti-spam: Check if already alerted in last 7 days
+                # Proactive Action: Mark as dormant to auto-clean Alice's workbench
+                supabase.table("leads").update({"status": "dormant"}).eq("id", lead["id"]).execute()
+
+                # Anti-spam: Check if already alerted
                 existing = (
                     supabase.table("archon_logs")
                     .select("id")
@@ -161,16 +169,17 @@ async def run_business_sentinel():
                 alert_payload = {
                     "source": "sentinel",
                     "level": "ALERT",
-                    "message": f"Stale Lead: {lead['company_name']}",
+                    "message": f"Stale Lead Auto-Dormant: {lead['company_name']}",
                     "details": {
                         "type": "stale_lead",
                         "category": "business",
                         "lead_id": lead["id"],
                         "company": lead["company_name"],
+                        "action": "status_changed_to_dormant"
                     },
                 }
                 supabase.table("archon_logs").insert(alert_payload).execute()
-                logger.info(f"🛡️ Sentinel: Created alert for {lead['company_name']}")
+                logger.info(f"🛡️ Sentinel: Created proactive alert for {lead['company_name']}")
 
         # 2. Content Bottlenecks (GAP-029)
         forty_eight_hours_ago = (datetime.now(UTC) - timedelta(hours=48)).isoformat()

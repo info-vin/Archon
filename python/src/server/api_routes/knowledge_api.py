@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 
 # EXPORTS for test compatibility (GAP-012)
-from ..services.storage_service import storage_service
+from ..services.storage.storage_services import storage_service
 from ..utils import get_supabase_client
 from .knowledge import active_crawl_tasks
 from .knowledge.crawling import router as crawling_router

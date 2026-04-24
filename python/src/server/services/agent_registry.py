@@ -28,9 +28,21 @@ TOOL_CONFIG = {
 
 
 def get_tool_min_level(tool_name: str) -> int:
-    """Returns the minimum XP level required to execute a tool. Defaults to 0."""
+    """Returns the minimum XP level required to execute a tool. (Phase 4.6.46: Dynamic Support)"""
     config = TOOL_CONFIG.get(tool_name, {})
-    return cast(int, config.get("min_xp_level", 0))
+    static_level = cast(int, config.get("min_xp_level", 0))
+
+    # Physical Realization of Dynamic Feedback Loop
+    try:
+        from ..services.settings_service import SettingsService
+        settings = SettingsService()
+        overrides = settings.get_setting("AGENT_TOOL_OVERRIDES")
+        if overrides and isinstance(overrides, dict):
+            return int(overrides.get(tool_name, {}).get("min_xp_level", static_level))
+    except Exception:
+        pass
+
+    return static_level
 
 
 AGENT_CONFIG = {

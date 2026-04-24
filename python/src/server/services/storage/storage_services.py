@@ -238,3 +238,7 @@ class DocumentStorageService(BaseStorageService):
         except Exception as e:
             logger.error(f"Error in store_code_examples: {e}")
             return False, {"error": str(e)}
+
+# Singleton export for backward compatibility
+storage_service = DocumentStorageService()
+

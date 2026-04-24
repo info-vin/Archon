@@ -136,7 +136,8 @@ class AgentService:
         request_id = f"fix-{uuid.uuid4().hex[:8]}"
 
         try:
-            model = "gemini-2.5-flash-lite"
+            from ..config.model_ssot import SYSTEM_MODELS
+            model = SYSTEM_MODELS["DEFAULT_TEXT"]
             admin_api_key = await credential_service.get_credential(
                 "GEMINI_API_KEY"
             ) or await credential_service.get_credential("GOOGLE_API_KEY")
@@ -429,9 +430,11 @@ class AgentService:
             admin_api_key = await credential_service.get_credential(
                 "GEMINI_API_KEY"
             ) or await credential_service.get_credential("GOOGLE_API_KEY")
+            from ..config.model_ssot import SYSTEM_MODELS
+
             async with get_llm_client(api_key=admin_api_key) as client:
                 response = await client.chat.completions.create(
-                    model="gemini-2.5-flash-lite", messages=messages, tools=tools_param
+                    model=SYSTEM_MODELS["DEFAULT_TEXT"], messages=messages, tools=tools_param
                 )
                 res_msg = response.choices[0].message
                 if res_msg.tool_calls and self.mcp_client:
@@ -439,7 +442,7 @@ class AgentService:
                     tool_results = await self._handle_tool_calls(res_msg.tool_calls, agent_id=agent_id)
                     messages.extend(tool_results)
                     final_response = await client.chat.completions.create(
-                        model="gemini-2.5-flash-lite", messages=messages, tools=tools_param
+                        model=SYSTEM_MODELS["DEFAULT_TEXT"], messages=messages, tools=tools_param
                     )
                     final_output = final_response.choices[0].message.content
                 else:

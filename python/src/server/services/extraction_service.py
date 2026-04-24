@@ -1,6 +1,7 @@
 from typing import Any, cast
 
 from ..config.logfire_config import get_logger, safe_logfire_error, safe_logfire_info
+from ..config.model_ssot import SYSTEM_MODELS
 from ..utils import get_supabase_client
 from ..utils.json_utils import safe_json_loads
 from .crawler_manager import get_crawler
@@ -70,12 +71,13 @@ class ExtractionService:
             user_prompt = f"Analyze this content:\n\n{content}"
 
             # Phase 4.7 Optimization: Use standard LLM client pattern
+            from ..config.model_ssot import SYSTEM_MODELS
             from .llm_provider_service import get_llm_client
 
             async with get_llm_client() as client:
                 # Use Gemini 2.0 Flash for stability and long context
                 response = await client.chat.completions.create(
-                    model="gemini-2.0-flash",
+                    model=SYSTEM_MODELS["DEFAULT_TEXT"],
                     messages=[{"role": "system", "content": system_prompt}, {"role": "user", "content": user_prompt}],
                     response_format={"type": "json_object"},
                 )
@@ -183,7 +185,7 @@ class ExtractionService:
 
         async with get_llm_client() as client:
             response = await client.chat.completions.create(
-                model="gemini-2.0-flash",
+                model=SYSTEM_MODELS["DEFAULT_TEXT"],
                 messages=[
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": f"Extract data from this content:\n\n{content[:15000]}"},

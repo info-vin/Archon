@@ -30,7 +30,9 @@ class TokenUsageService:
             pricing = config.token_pricing
 
             # Use specific model pricing or fallback to a standard lite model
-            rates = pricing.get(model, pricing.get("gemini-2.5-flash-lite"))
+            from ..config.model_ssot import SYSTEM_MODELS
+
+            rates = pricing.get(model, pricing.get(SYSTEM_MODELS["DEFAULT_TEXT"].split("/")[-1]))
 
             if provider == "ollama":
                 rates = pricing.get("ollama", {"input": 0, "output": 0})
@@ -144,14 +146,15 @@ class TokenUsageService:
 
                 u_id = row.get("user_id")
                 if u_id:
-                    # Resolve ID to Display Name for Frontend compatibility
-                    # We utilize a simple cache-less lookup here or a mapped dictionary
-                    # To keep it grounded, we'll use the UUID as fallback but try to map known agents
-                    name_map = {
-                        "e1682371-0000-0000-0000-000000000000": "DevBot",  # Mock or real UUIDs from seed
-                        "a11ce000-0000-0000-0000-000000000000": "MarketBot",
-                    }
-                    agent_name = name_map.get(u_id, u_id)  # Use UUID if not in map
+                    # Resolve ID to Display Name (Phase 4.6.45: Dynamic Registry Lookup)
+                    from .agent_registry import AGENT_CONFIG, get_agent_uuid
+
+                    agent_name = str(u_id)  # Default to UUID string
+                    for agent_key in AGENT_CONFIG.keys():
+                        if get_agent_uuid(agent_key) == str(u_id):
+                            agent_name = str(AGENT_CONFIG[agent_key]["name"])
+                            break
+
                     daily_stats[date_str]["agent_costs"][agent_name] = daily_stats[date_str]["agent_costs"].get(
                         agent_name, 0
                     ) + row.get("cost_usd", 0)

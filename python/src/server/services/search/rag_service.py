@@ -256,7 +256,8 @@ class RAGService(BaseRepository):
             """
 
             # 5. Generate with Grounding
-            model_id = "gemini-2.5-flash"  # Use a capable model
+            from ...config.model_ssot import SYSTEM_MODELS
+            model_id = SYSTEM_MODELS["DEFAULT_TEXT"]  # Use a capable model
             response = client.models.generate_content(
                 model=model_id,
                 contents=prompt,

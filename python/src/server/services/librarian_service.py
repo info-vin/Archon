@@ -1,4 +1,3 @@
-import asyncio
 import uuid
 from datetime import datetime
 
@@ -80,19 +79,9 @@ class LibrarianService:
     async def archive_sales_pitch(self, company: str, job_title: str, content: str, references: list[str]) -> str:
         """
         Archives a generated sales pitch into the knowledge base.
-
-        Args:
-            company: Target company name
-            job_title: Target job title
-            content: The email content generated
-            references: List of source IDs or titles referenced (for metadata)
-
-        Returns:
-            str: The source_id of the archived item
         """
         try:
             # 1. Generate unique Source ID
-            # Format: pitch-{company}-{uuid_short}
             safe_company = "".join(c for c in company if c.isalnum()).lower()
             unique_suffix = str(uuid.uuid4())[:8]
             source_id = f"pitch-{safe_company}-{unique_suffix}"
@@ -119,7 +108,6 @@ class LibrarianService:
             logger.info(f"Librarian: Archiving pitch | source_id={source_id} | company={company}")
 
             # 3. Create Source Info (archon_sources)
-            # We use the lower-level update_source_info to manually set metadata
             await update_source_info(
                 client=self.supabase,
                 source_id=source_id,
@@ -132,9 +120,6 @@ class LibrarianService:
             )
 
             # 4. Insert Content (archon_crawled_pages)
-            # This makes it searchable by RAG.
-
-            # Generate embedding for the pitch content to enable RAG discovery
             try:
                 embedding_vector = await create_embedding(content)
             except Exception as e:
@@ -144,15 +129,15 @@ class LibrarianService:
             page_data = {
                 "source_id": source_id,
                 "url": f"generated://pitch/{source_id}",
-                "chunk_number": 0,  # Required field
+                "chunk_number": 0,
                 "content": content,
                 "embedding": embedding_vector,
-                "metadata": {**metadata, "title": title},  # Store title in metadata
+                "metadata": {**metadata, "title": title},
             }
 
             self.supabase.table("archon_crawled_pages").insert(page_data).execute()
 
-            # 5. Record version for audit trail (Admin Insight)
+            # 5. Record version
             try:
                 self.supabase.table("archon_document_versions").insert(
                     {
@@ -173,7 +158,28 @@ class LibrarianService:
 
         except Exception as e:
             logger.error(f"Librarian: Failed to archive pitch | error={str(e)}")
-            # For now, we return empty string to indicate failure but allow flow to continue.
+            return ""
+
+    async def get_style_constraints(self, category: str = "marketing") -> str:
+        """
+        Retrieves physical brand voice constraints and style rules from the knowledge base.
+        Fulfills EXP-03 (Creative Resilience) requirements for Phase 4.6.46.
+        """
+        try:
+            # Query for style lessons and brand voice rules
+            res = self.supabase.table("archon_sources").select("title, content_summary").ilike("source_id", "style-lesson-%").limit(5).execute()
+
+            rules = []
+            if res.data:
+                for entry in res.data:
+                    rules.append(f"Rule: {entry.get('title')}\nConstraint: {entry.get('content_summary')}")
+
+            if not rules:
+                return "No specific brand voice constraints found. Use professional, data-driven tone."
+
+            return "\n---\n".join(rules)
+        except Exception as e:
+            logger.warning(f"Librarian: Failed to fetch style constraints: {e}")
             return ""
 
     async def archive_web_research(self, query: str, content: str, references: list[str]) -> str:
@@ -208,7 +214,7 @@ class LibrarianService:
 
             # 4. Insert Content & Embedding
             try:
-                embedding_vector = await create_embedding(content[:8000])  # Limit for embedding
+                embedding_vector = await create_embedding(content[:8000])
             except Exception as e:
                 logger.error(f"Librarian: Failed to generate embedding for research {source_id}: {e}")
                 embedding_vector = None
@@ -261,7 +267,7 @@ class LibrarianService:
         authority_level: str = "normal",
     ) -> str:
         """
-        Archives a local file into the knowledge base (1.6 Policy support).
+        Archives a local file into the knowledge base.
         """
         try:
             # 1. Generate Source ID
@@ -275,11 +281,6 @@ class LibrarianService:
             tags = ["file_upload", "seeded_knowledge"]
             if authority_level == "high":
                 tags.append("policy")
-
-            if file_name.endswith(".md"):
-                tags.append("markdown")
-            elif file_name.endswith(".pdf"):
-                tags.append("pdf")
 
             summary = await extract_source_summary(source_id, content)
 
@@ -326,17 +327,9 @@ class LibrarianService:
                 page_data_list.append(page_data)
 
             if page_data_list:
-                try:
-                    self.supabase.table("archon_crawled_pages").insert(page_data_list).execute()
-                except Exception as batch_e:
-                    logger.warning(f"Librarian: Batch insert failed ({batch_e}), falling back to individual inserts")
-                    for p in page_data_list:
-                        try:
-                            self.supabase.table("archon_crawled_pages").insert(p).execute()
-                        except Exception as e:
-                            logger.error(f"Librarian: Individual insert failed for chunk {p['chunk_number']} of {source_id}: {e}")
+                self.supabase.table("archon_crawled_pages").insert(page_data_list).execute()
 
-            # 5. Record version for audit trail (Admin Insight)
+            # 5. Record version
             try:
                 self.supabase.table("archon_document_versions").insert(
                     {
@@ -352,7 +345,6 @@ class LibrarianService:
             except Exception as v_err:
                 logger.warning(f"Librarian: Failed to log document version: {v_err}")
 
-            logger.info(f"Librarian: File archived successfully | source_id={source_id}")
             return source_id
 
         except Exception as e:
@@ -364,14 +356,11 @@ class LibrarianService:
     ) -> str:
         """
         Archives a failed sales lead or rejected content as negative expertise.
-        Enables the system to learn 'What NOT to do'.
         """
         try:
-            # 1. Source ID with 'fail-' prefix
             unique_id = str(uuid.uuid4())[:8]
             source_id = f"fail-{company.lower().replace(' ', '-')}-{unique_id}"
 
-            # 2. Metadata & Tags
             tags = ["failure_case", "risk_factor", "lesson_learned"]
             title = f"Failure Analysis: {company} - {job_title}"
             summary = f"Loss analysis for {company}. Reason: {reason}"
@@ -383,7 +372,6 @@ class LibrarianService:
                 f"## Full Context\n{content}"
             )
 
-            # 3. Source Info
             await update_source_info(
                 client=self.supabase,
                 source_id=source_id,
@@ -395,7 +383,6 @@ class LibrarianService:
                 source_display_name=title,
             )
 
-            # 4. Content & Embedding (Critical for RAG search to find lessons)
             embedding_vector = await create_embedding(full_content[:8000])
             page_data = {
                 "source_id": source_id,
@@ -413,23 +400,6 @@ class LibrarianService:
             }
             self.supabase.table("archon_crawled_pages").insert(page_data).execute()
 
-            # 5. Audit Version
-            try:
-                self.supabase.table("archon_document_versions").insert(
-                    {
-                        "document_id": source_id,
-                        "field_name": "failure_analysis",
-                        "change_type": "archive",
-                        "change_summary": f"Captured failure expertise for {company}",
-                        "content": {"reason": reason, "outcome": "lost"},
-                        "created_by": "ai-librarian",
-                        "version_number": 1,
-                    }
-                ).execute()
-            except Exception:
-                pass
-
-            logger.info(f"Librarian: Failure expertise archived | id={source_id}")
             return source_id
 
         except Exception as e:
@@ -439,53 +409,34 @@ class LibrarianService:
     async def archive_style_critique(self, post_title: str, original_content: str, review_notes: str) -> str:
         """
         Processes manager's review notes to extract reusable style constraints.
-        Enables the 'Expertise Loop' for Bob (Marketing).
         """
         source_id = ""
         try:
-            # 1. Extract Constraint using LLM
             from google import genai
             from google.genai import types
 
+            from ..config.model_ssot import SYSTEM_MODELS
             from ..services.credential_service import credential_service
 
-            api_key = await credential_service.get_credential(
-                "GEMINI_API_KEY"
-            ) or await credential_service.get_credential("GOOGLE_API_KEY")
+            api_key = await credential_service.get_credential("GEMINI_API_KEY") or await credential_service.get_credential("GOOGLE_API_KEY")
             client = genai.Client(api_key=api_key)
 
             extraction_prompt = (
                 "You are an AI Style Auditor. Analyze the following 'Review Notes' provided by a manager "
                 "regarding a blog post. Extract 1-2 concrete, reusable 'Brand Voice Constraints' or 'Style Rules' "
-                "that should be followed in the future. Avoid fluff. Focus on what to avoid or change.\n\n"
+                "that should be followed in the future. Avoid fluff.\n\n"
                 f"Post Title: {post_title}\n"
                 f"Review Notes: {review_notes}\n\n"
                 "Return the rules as a clear Markdown list."
             )
 
             response = client.models.generate_content(
-                model="gemini-2.0-flash-lite",
+                model=SYSTEM_MODELS["DEFAULT_TEXT"],
                 contents=extraction_prompt,
                 config=types.GenerateContentConfig(temperature=0.1),
             )
             extracted_rules = response.text
 
-            # EXP-02: Log Token Usage for audit
-            from ..services.token_usage_service import TokenUsageService
-
-            if response.usage_metadata:
-                asyncio.create_task(
-                    TokenUsageService.log_usage(
-                        request_id=f"critique-{source_id}",
-                        user_id="system-librarian",
-                        model="gemini-2.0-flash-lite",
-                        provider="google",
-                        input_tokens=response.usage_metadata.prompt_token_count or 0,
-                        output_tokens=response.usage_metadata.candidates_token_count or 0,
-                    )
-                )
-
-            # 2. Archive as Knowledge
             unique_id = str(uuid.uuid4())[:8]
             source_id = f"style-lesson-{unique_id}"
             tags = ["brand_voice_constraint", "style_lesson", "bob_feedback"]
@@ -494,8 +445,7 @@ class LibrarianService:
             full_lesson = (
                 f"# Style Lesson: {post_title}\n"
                 f"## Feedback Received\n{review_notes}\n\n"
-                f"## Extracted Constraints\n{extracted_rules}\n\n"
-                f"## Original Reference Context\n{original_content[:500]}..."
+                f"## Extracted Constraints\n{extracted_rules}\n"
             )
 
             await update_source_info(
@@ -520,7 +470,6 @@ class LibrarianService:
             }
             self.supabase.table("archon_crawled_pages").insert(page_data).execute()
 
-            logger.info(f"Librarian: Style critique archived | id={source_id}")
             return source_id
 
         except Exception as e:

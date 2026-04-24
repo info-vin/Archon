@@ -1,8 +1,16 @@
 import json
+import os
+import tempfile
 from typing import Any
 
+from google import genai
+from google.genai import types
+
 from src.server.config.logfire_config import get_logger
+from src.server.config.model_ssot import SYSTEM_MODELS
 from src.server.repositories.base_repository import BaseRepository
+from src.server.services.credential_service import credential_service
+from src.server.services.prompt_service import prompt_service
 from src.server.utils import get_supabase_client
 
 logger = get_logger(__name__)
@@ -29,12 +37,6 @@ class VisitLogService(BaseRepository):
         Returns: (transcript, summary, tasks)
         """
         try:
-            from google import genai
-            from google.genai import types
-
-            from src.server.services.credential_service import credential_service
-            from src.server.services.prompt_service import prompt_service
-
             # 1. Get Credentials
             api_key = await credential_service.get_credential("GEMINI_API_KEY")
             if not api_key:
@@ -42,32 +44,32 @@ class VisitLogService(BaseRepository):
                 return "[Error: API Key Missing]", "AI processing failed.", []
 
             rag_strategy = await credential_service.get_credentials_by_category("rag_strategy")
-            model_name = (rag_strategy.get("AUDIO_MODEL") or "gemini-2.0-flash").split("/")[-1]
+            model_name = (rag_strategy.get("AUDIO_MODEL") or SYSTEM_MODELS["DEFAULT_TEXT"]).split("/")[-1]
 
             client = genai.Client(api_key=api_key)
 
-            # 2. Upload to Files API
-            # Note: For small field audio, we can pass bytes directly or use the Files API.
-            # Aligned with 7a92a7d preference for stable Files API handling.
+            # 2. Upload to Files API (Restored Phase 4.6.46: 40c92ce)
+            with tempfile.NamedTemporaryFile(suffix=".mp3", delete=False) as tmp:
+                tmp.write(audio_content)
+                tmp_path = tmp.name
 
-            # Using a simplified Bytes upload for faster execution if supported,
-            # otherwise fallback to Files API pattern if latency allows.
-            sys_prompt = prompt_service.get_prompt("VOICE_TRANSCRIPTION", (
-                "你是一位專業的業務助理。請準確地將拜訪錄音轉錄為繁體中文逐字稿，"
-                "總結關鍵對話內容，並提取跟進任務。回傳格式為 JSON: "
-                "{'transcript': '...', 'summary': '...', 'tasks': ['...']}"
-            ))
+            try:
+                uploaded_file = client.files.upload(path=tmp_path)
 
-            contents = [
-                sys_prompt,
-                types.Part.from_bytes(data=audio_content, mime_type=mime_type)
-            ]
+                sys_prompt = prompt_service.get_prompt("VOICE_TRANSCRIPTION", (
+                    "你是一位專業的業務助理。請準確地將拜訪錄音轉錄為繁體中文逐字稿，"
+                    "總結關鍵對話內容，並提取跟進任務。回傳格式為 JSON: "
+                    "{'transcript': '...', 'summary': '...', 'tasks': ['...']}"
+                ))
 
-            response = await client.aio.models.generate_content(
-                model=model_name,
-                contents=contents,
-                config=types.GenerateContentConfig(response_mime_type="application/json")
-            )
+                response = await client.aio.models.generate_content(
+                    model=model_name,
+                    contents=[uploaded_file, sys_prompt],
+                    config=types.GenerateContentConfig(response_mime_type="application/json")
+                )
+            finally:
+                if os.path.exists(tmp_path):
+                    os.remove(tmp_path)
 
             result = json.loads(response.text)
             return (
@@ -117,13 +119,17 @@ class VisitLogService(BaseRepository):
         created_log = res[0] if isinstance(res, list) and len(res) > 0 else res
         visit_id = created_log.get("id")
 
-        # 2. Automated Task Dispatch (The "Lost" Logic from 7a92a7d)
+        # 2. Automated Task Dispatch (Phase 4.6.45: Robust Discovery)
         try:
             from src.server.services.projects.task_service import task_service
 
-            # Find Field Ops project
-            proj_res = self.supabase_client.table("archon_projects").select("id").eq("title", "Field Ops").limit(1).execute()
-            project_id = proj_res.data[0]["id"] if proj_res.data else None
+            # Strategy: 1. Try title matching 'Ops' 2. Fallback
+            project_id = None
+
+            # Try fuzzy match 'Ops' first to avoid hard 'Field Ops' constraint
+            proj_res = self.supabase_client.table("archon_projects").select("id").ilike("title", "%Ops%").limit(1).execute()
+            if proj_res.data:
+                project_id = proj_res.data[0]["id"]
 
             if not project_id:
                 # Fallback to any active project

@@ -185,7 +185,8 @@ class JobBoardService:
             from google import genai
             client = genai.Client(api_key=api_key)
             prompt = f"Analyze job needs: {job.title} at {job.company}. Desc: {job.description_full or job.description}"
-            response = client.models.generate_content(model="gemini-2.0-flash-lite", contents=prompt)
+            from ..config.model_ssot import SYSTEM_MODELS
+            response = client.models.generate_content(model=SYSTEM_MODELS["DEFAULT_TEXT"], contents=prompt)
             return str(response.text).strip() if response.text else f"Hiring for {job.title}"
         except Exception:
             return f"Hiring for {job.title}"

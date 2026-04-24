@@ -63,7 +63,8 @@ async def refine_task_description_logic(supabase_client, title: str, description
         )
 
         # 3. Generate Content using official SDK
-        model_name = "gemini-2.5-flash-lite"
+        from src.server.config.model_ssot import SYSTEM_MODELS
+        model_name = SYSTEM_MODELS["DEFAULT_TEXT"]
 
         # Key Decoupling: Prefer GEMINI_API_KEY
         charlie_api_key = await credential_service.get_credential(
@@ -190,7 +191,8 @@ async def generate_task_from_alert_logic(
             context_str += "\n".join([res.get("content", "")[:300] for res in rag_result["results"]])
 
         # 4. Call AI using Official SDK
-        model_name = "gemini-1.5-pro"
+        from src.server.config.model_ssot import SYSTEM_MODELS
+        model_name = SYSTEM_MODELS["DEFAULT_PRO"].split("/")[-1]
         charlie_api_key = await credential_service.get_credential(
             "GEMINI_API_KEY"
         ) or await credential_service.get_credential("GOOGLE_API_KEY")
