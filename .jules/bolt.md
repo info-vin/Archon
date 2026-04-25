@@ -54,3 +54,11 @@
 ## 2025-05-18 - Pre-parsing dates before nested time window loops
 **Learning:** In `get_knowledge_roi` and `get_sla_reliability`, calling `datetime.fromisoformat()` repeatedly inside a 14-day rolling window loop causes an O(N*M) performance bottleneck, as the same date strings are parsed over and over.
 **Action:** Extract the date string parsing out of the nested loops. Pre-parse all dates into an in-memory list (e.g., `[(item, parsed_date)]`) before executing the time window loop to ensure O(N) date conversions and fast O(1) datetime comparisons.
+
+## 2024-05-18 - Repeated string transformations in nested dictionary comprehensions
+**Learning:** In Python, applying string transformations (e.g., `.upper()`) to static dictionary values inside a nested loop causes redundant memory allocation and performance penalties. Using `any(k.upper() in title for k in keywords)` repeatedly recalculates `.upper()` thousands of times unnecessarily.
+**Action:** Extract and precalculate these values (e.g., `categories_upper = {k: [w.upper() for w in v] for k, v in categories.items()}`) outside the loop to reduce O(N*M*K) overhead to an O(1) memory lookup per iteration.
+
+## 2024-05-18 - Avoid generator expressions with implicit string operations on hot paths
+**Learning:** Using `any(word in sanitized.lower() for word in sensitive_words)` forces the Python engine to evaluate `sanitized.lower()` inside a generator on every single iteration step. For long error strings, this can double the execution time.
+**Action:** Always extract text transformations (`sanitized.lower()`) out of generator loops, or unroll them into explicit `for` loops for large strings.

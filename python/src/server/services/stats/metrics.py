@@ -313,16 +313,25 @@ class MetricsManager:
                 "Management": ["Manager", "Director", "VP", "Lead"]
             }
 
+            # PERFORMANCE: Precalculate upper keywords for O(1) string checks inside the nested loop
+            categories_upper = {
+                cat: [k.upper() for k in keywords]
+                for cat, keywords in categories.items()
+            }
+
             distribution: dict[str, int] = dict.fromkeys(categories, 0)
             distribution["Other"] = 0
 
             for lead in leads:
                 title = str(lead.get("job_title") or "").upper()
                 found = False
-                for cat, keywords in categories.items():
-                    if any(k.upper() in title for k in keywords):
-                        distribution[cat] += 1
-                        found = True
+                for cat, keywords_upper in categories_upper.items():
+                    for k in keywords_upper:
+                        if k in title:
+                            distribution[cat] += 1
+                            found = True
+                            break
+                    if found:
                         break
                 if not found:
                     distribution["Other"] += 1

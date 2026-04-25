@@ -46,7 +46,9 @@ class OpenAIErrorAdapter(ProviderErrorAdapter):
 
         # Check for sensitive words after sanitization
         sensitive_words = ["internal", "server", "endpoint"]
-        if any(word in sanitized.lower() for word in sensitive_words):
+        # PERFORMANCE: Extract text transformation out of generator loop
+        sanitized_lower = sanitized.lower()
+        if any(word in sanitized_lower for word in sensitive_words):
             return "OpenAI API encountered an error. Please verify your API key and quota."
 
         return sanitized
@@ -77,7 +79,9 @@ class GoogleAIErrorAdapter(ProviderErrorAdapter):
 
         # Check for sensitive words
         sensitive_words = ["internal", "server", "endpoint", "project"]
-        if any(word in sanitized.lower() for word in sensitive_words):
+        # PERFORMANCE: Extract text transformation out of generator loop
+        sanitized_lower = sanitized.lower()
+        if any(word in sanitized_lower for word in sensitive_words):
             return "Google AI API encountered an error. Please verify your API key."
 
         return sanitized
@@ -105,7 +109,9 @@ class AnthropicErrorAdapter(ProviderErrorAdapter):
 
         # Check for sensitive words
         sensitive_words = ["internal", "server", "endpoint"]
-        if any(word in sanitized.lower() for word in sensitive_words):
+        # PERFORMANCE: Extract text transformation out of generator loop
+        sanitized_lower = sanitized.lower()
+        if any(word in sanitized_lower for word in sensitive_words):
             return "Anthropic API encountered an error. Please verify your API key."
 
         return sanitized
