@@ -21,3 +21,6 @@
 ## 2024-04-22 - Replacing Hardcoded Text Icons with Proper SVG Components
 **Learning:** Hardcoded text characters (like `✕` for close buttons) not only look inconsistent across different OS and fonts, but they also severely harm accessibility if lacking an `aria-label`. Screen readers may read out the literal character name (e.g., "multiplication x"), which is confusing.
 **Action:** When creating or fixing modal close buttons, always use existing SVG icon components (like `<XIcon />`) from the design system, and explicitly attach a descriptive `aria-label` (e.g., `aria-label="Close modal"`) to ensure the intent is clearly communicated to assistive technologies.
+## 2024-05-15 - Adding aria-labels to VisitLogModal icon buttons
+**Learning:** Icon-only buttons used for specific actions in modals (like "Location" or "Clear Audio" in `VisitLogModal`) lack accessible names, causing screen readers to announce them as generic buttons. This prevents visually impaired users from understanding their function.
+**Action:** Always add descriptive `aria-label` attributes to icon-only buttons (e.g., `aria-label="Use current location"`) to ensure the action intent is clearly communicated to assistive technologies.
