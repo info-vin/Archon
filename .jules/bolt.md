@@ -54,3 +54,6 @@
 ## 2025-05-18 - Pre-parsing dates before nested time window loops
 **Learning:** In `get_knowledge_roi` and `get_sla_reliability`, calling `datetime.fromisoformat()` repeatedly inside a 14-day rolling window loop causes an O(N*M) performance bottleneck, as the same date strings are parsed over and over.
 **Action:** Extract the date string parsing out of the nested loops. Pre-parse all dates into an in-memory list (e.g., `[(item, parsed_date)]`) before executing the time window loop to ensure O(N) date conversions and fast O(1) datetime comparisons.
+## 2025-05-18 - Avoid repeated string conversions in dictionaries
+**Learning:** In Python, applying string transformations (e.g., `.upper()`) to static dictionary values inside a nested loop causes redundant memory allocation and performance penalties.
+**Action:** Extract and precalculate these values (e.g., `categories_upper = {k: [w.upper() for w in v] for k, v in categories.items()}`) outside the loop.
