@@ -48,6 +48,7 @@ export const MigrationBanner: React.FC<MigrationBannerProps> = ({
               <button
                 onClick={onDismiss}
                 className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-200 text-sm font-medium"
+                aria-label="Dismiss migration banner"
               >
                 Dismiss (temporarily)
               </button>

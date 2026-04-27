@@ -21,3 +21,7 @@
 ## 2024-04-22 - Replacing Hardcoded Text Icons with Proper SVG Components
 **Learning:** Hardcoded text characters (like `✕` for close buttons) not only look inconsistent across different OS and fonts, but they also severely harm accessibility if lacking an `aria-label`. Screen readers may read out the literal character name (e.g., "multiplication x"), which is confusing.
 **Action:** When creating or fixing modal close buttons, always use existing SVG icon components (like `<XIcon />`) from the design system, and explicitly attach a descriptive `aria-label` (e.g., `aria-label="Close modal"`) to ensure the intent is clearly communicated to assistive technologies.
+
+## 2024-05-18 - Expanding Generic Component Props for Accessibility
+**Learning:** Reusable UI components like custom Checkboxes and Toggles often encapsulate standard HTML elements but omit crucial accessibility props (like `aria-label`). If a developer uses `<Checkbox />` without a visible `<label>`, screen readers have no context for what the checkbox controls.
+**Action:** Always inspect custom UI primitives to ensure they can accept and forward `aria-label` or `aria-labelledby` props. When creating generic components, include `ariaLabel?: string;` in the props interface and apply it to the underlying interactive element, ideally with a fallback if appropriate.
