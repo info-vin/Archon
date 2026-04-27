@@ -1,17 +1,6 @@
 import { screen, fireEvent } from '@testing-library/react';
 import { vi, expect, test, beforeEach } from 'vitest';
 import { renderApp } from './e2e.setup';
-import { api } from '../../src/services/api';
-import { EmployeeRole } from '../../src/types';
-
-// Mock specific data for this workflow
-const MOCK_LEAD = {
-    id: 'lead-789',
-    company_name: 'Future Client Ltd',
-    job_title: 'Fullstack Engineer',
-    status: 'new',
-    assigned_sales_id: 'user-123'
-};
 
 beforeEach(() => {
     vi.resetAllMocks();

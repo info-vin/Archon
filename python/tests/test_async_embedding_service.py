@@ -43,7 +43,7 @@ class TestAsyncEmbeddingService:
         mock_embeddings = MagicMock()
         mock_response = MagicMock()
         mock_response.data = [
-            MagicMock(embedding=[0.1, 0.2, 0.3] + [0.0] * 1533)  # 1536 dimensions
+            MagicMock(embedding=[0.1, 0.2, 0.3] + [0.0] * 765)  # 768 dimensions
         ]
         mock_embeddings.create = AsyncMock(return_value=mock_response)
         mock_client.embeddings = mock_embeddings
@@ -84,7 +84,7 @@ class TestAsyncEmbeddingService:
             result = await create_embedding("test text")
 
             # Verify the result
-            assert len(result) == 1536
+            assert len(result) == 768
             assert result[0] == 0.1
             assert result[1] == 0.2
             assert result[2] == 0.3
@@ -118,7 +118,7 @@ class TestAsyncEmbeddingService:
             result = await create_embedding("")
 
             # Should still work with empty text
-            assert len(result) == 1536
+            assert len(result) == 768
             mock_llm_client.embeddings.create.assert_called_once()
 
     @pytest.mark.asyncio
@@ -158,8 +158,8 @@ class TestAsyncEmbeddingService:
         # Setup mock response for multiple embeddings
         mock_response = MagicMock()
         mock_response.data = [
-            MagicMock(embedding=[0.1, 0.2, 0.3] + [0.0] * 1533),
-            MagicMock(embedding=[0.4, 0.5, 0.6] + [0.0] * 1533),
+            MagicMock(embedding=[0.1, 0.2, 0.3] + [0.0] * 765),
+            MagicMock(embedding=[0.4, 0.5, 0.6] + [0.0] * 765),
         ]
         mock_llm_client.embeddings.create = AsyncMock(return_value=mock_response)
 
@@ -189,8 +189,8 @@ class TestAsyncEmbeddingService:
             assert result.success_count == 2
             assert result.failure_count == 0
             assert len(result.embeddings) == 2
-            assert len(result.embeddings[0]) == 1536
-            assert len(result.embeddings[1]) == 1536
+            assert len(result.embeddings[0]) == 768
+            assert len(result.embeddings[1]) == 768
             assert result.embeddings[0][0] == 0.1
             assert result.embeddings[1][0] == 0.4
 
@@ -298,7 +298,7 @@ class TestAsyncEmbeddingService:
     async def test_create_embeddings_batch_with_progress_callback(self, mock_llm_client, mock_threading_service):
         """Test batch embedding with progress callback"""
         mock_response = MagicMock()
-        mock_response.data = [MagicMock(embedding=[0.1] * 1536)]
+        mock_response.data = [MagicMock(embedding=[0.1] * 768)]
         mock_llm_client.embeddings.create = AsyncMock(return_value=mock_response)
 
         primary_config = {"provider": "openai", "embedding_model": "text-embedding-3-small", "api_key": "key-ok"}
@@ -336,7 +336,7 @@ class TestAsyncEmbeddingService:
     async def test_create_embeddings_batch_large_batch_splitting(self, mock_llm_client, mock_threading_service):
         """Test that large batches are properly split according to batch size settings"""
         mock_response = MagicMock()
-        mock_response.data = [MagicMock(embedding=[0.1] * 1536) for _ in range(2)]  # 2 embeddings per call
+        mock_response.data = [MagicMock(embedding=[0.1] * 768) for _ in range(2)]  # 2 embeddings per call
         mock_llm_client.embeddings.create = AsyncMock(return_value=mock_response)
 
         primary_config = {"provider": "openai", "embedding_model": "text-embedding-3-small", "api_key": "key-ok"}
@@ -397,7 +397,7 @@ class TestAsyncEmbeddingService:
         mock_success_client = MagicMock()
         mock_success_embeddings = MagicMock()
         mock_success_response = MagicMock()
-        mock_success_response.data = [MagicMock(embedding=[0.1] * 1536), MagicMock(embedding=[0.2] * 1536)]
+        mock_success_response.data = [MagicMock(embedding=[0.1] * 768), MagicMock(embedding=[0.2] * 768)]
         mock_success_embeddings.create = AsyncMock(return_value=mock_success_response)
         mock_success_client.embeddings = mock_success_embeddings
         mock_success_client.close = AsyncMock()

@@ -110,7 +110,7 @@ class TestNoZeroEmbeddings:
         mock_client = MagicMock()
         mock_client.aclose = AsyncMock()
         mock_response = Mock()
-        mock_response.data = [Mock(embedding=[0.1] * 1536), Mock(embedding=[0.2] * 1536)]
+        mock_response.data = [Mock(embedding=[0.1] * 768), Mock(embedding=[0.2] * 768)]
 
         # First call succeeds, second fails
         mock_client.embeddings.create = AsyncMock(
@@ -266,14 +266,14 @@ class TestNoZeroEmbeddings:
 
     @pytest.mark.asyncio
     async def test_no_zero_vectors_in_results(self) -> None:
-        """Test that no function ever returns a zero vector [0.0] * 1536."""
+        """Test that no function ever returns a zero vector [0.0] * 768."""
         # This is a meta-test to ensure our implementation never creates zero vectors
 
         # Helper to check if a value is a zero embedding
         def is_zero_embedding(value):
             if not isinstance(value, list):
                 return False
-            if len(value) != 1536:
+            if len(value) != 768:
                 return False
             return all(v == 0.0 for v in value)
 
@@ -312,7 +312,7 @@ class TestEmbeddingBatchResult:
     def test_batch_result_add_success(self) -> None:
         """Test adding successful embeddings."""
         result = EmbeddingBatchResult()
-        embedding = [0.1] * 1536
+        embedding = [0.1] * 768
         text = "test text"
 
         result.add_success(embedding, text)
@@ -347,8 +347,8 @@ class TestEmbeddingBatchResult:
         result = EmbeddingBatchResult()
 
         # Add successes
-        result.add_success([0.1] * 1536, "text1")
-        result.add_success([0.2] * 1536, "text2")
+        result.add_success([0.1] * 768, "text1")
+        result.add_success([0.2] * 768, "text2")
 
         # Add failures
         result.add_failure("text3", Exception("Error 1"), 1)
