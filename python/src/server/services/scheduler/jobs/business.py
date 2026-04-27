@@ -83,8 +83,12 @@ async def analyze_token_usage():
         res = supabase.table("token_usage").select("input_tokens, output_tokens, cost_usd").gt("created_at", one_day_ago).execute()
         data = res.data or []
 
-        total_tokens = sum((row.get("input_tokens", 0) + row.get("output_tokens", 0)) for row in data)
-        total_cost = sum(float(row.get("cost_usd", 0)) for row in data)
+        # PERFORMANCE: Replaced two sum() generators with single for loop pass
+        total_tokens = 0
+        total_cost = 0.0
+        for row in data:
+            total_tokens += row.get("input_tokens", 0) + row.get("output_tokens", 0)
+            total_cost += float(row.get("cost_usd", 0))
 
         # 1. INFO Log
         logger.info(f"📊 Daily Token Analysis: {total_tokens} physical tokens, ${total_cost:.4f} USD.")

@@ -314,16 +314,21 @@ class MetricsManager:
                 "Management": ["Manager", "Director", "VP", "Lead"]
             }
 
-            distribution: dict[str, int] = dict.fromkeys(categories, 0)
+            categories_upper = {k: [w.upper() for w in v] for k, v in categories.items()}
+            distribution: dict[str, int] = dict.fromkeys(categories_upper, 0)
             distribution["Other"] = 0
 
             for lead in leads:
                 title = str(lead.get("job_title") or "").upper()
                 found = False
-                for cat, keywords in categories.items():
-                    if any(k.upper() in title for k in keywords):
-                        distribution[cat] += 1
-                        found = True
+                for cat, keywords in categories_upper.items():
+                    # PERFORMANCE: Pre-calculated upper strings and explicit loop avoids any() generator overhead
+                    for k in keywords:
+                        if k in title:
+                            distribution[cat] += 1
+                            found = True
+                            break
+                    if found:
                         break
                 if not found:
                     distribution["Other"] += 1
