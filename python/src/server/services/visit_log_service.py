@@ -54,7 +54,28 @@ class VisitLogService(BaseRepository):
                 tmp_path = tmp.name
 
             try:
+                # 1. Upload the file
                 uploaded_file = client.files.upload(path=tmp_path)
+                logger.info(f"VisitLogService: Uploaded file {uploaded_file.name}. Polling for ACTIVE state...")
+
+                # 2. Wait for processing (ACTIVE state)
+                import asyncio
+                max_retries = 30
+                poll_interval = 2
+
+                file_info = client.files.get(name=uploaded_file.name)
+                for _ in range(max_retries):
+                    if file_info.state.name == "ACTIVE":
+                        break
+                    elif file_info.state.name == "FAILED":
+                        raise Exception("File processing failed on Google servers.")
+
+                    logger.info(f"VisitLogService: File state is {file_info.state.name}, waiting...")
+                    await asyncio.sleep(poll_interval)
+                    file_info = client.files.get(name=uploaded_file.name)
+
+                if file_info.state.name != "ACTIVE":
+                    raise Exception("Timeout waiting for audio processing.")
 
                 sys_prompt = prompt_service.get_prompt("VOICE_TRANSCRIPTION", (
                     "你是一位專業的業務助理。請準確地將拜訪錄音轉錄為繁體中文逐字稿，"
@@ -64,7 +85,7 @@ class VisitLogService(BaseRepository):
 
                 response = await client.aio.models.generate_content(
                     model=model_name,
-                    contents=[uploaded_file, sys_prompt],
+                    contents=[file_info, sys_prompt],
                     config=types.GenerateContentConfig(response_mime_type="application/json")
                 )
             finally:

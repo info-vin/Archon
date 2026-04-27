@@ -186,7 +186,7 @@ async def run_business_sentinel():
                 logger.info(f"🛡️ Sentinel: Created proactive alert for {lead['company_name']}")
 
         # 2. Content Bottlenecks (GAP-029)
-        forty_eight_hours_ago = (datetime.now(UTC) - timedelta(hours=48)).isoformat()
+        forty_eight_hours_ago = (datetime.now(UTC) - timedelta(hours=1)).isoformat()
         post_res = (
             supabase.table("blog_posts")
             .select("id, title, updated_at")

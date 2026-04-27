@@ -91,14 +91,18 @@ class HealthService(BaseRepository):
                 idx_data = idx_res.get("data") or []
                 indexed_count = len(idx_data)
 
-                # Physical Proof: Inspect the first available vector
-                first_vec = idx_data[0].get("embedding")
-                if first_vec:
-                    # Note: Handle both list and string representation
-                    vec_len = len(first_vec) if isinstance(first_vec, list) else 0
-                    if vec_len != 768:
-                        logger.error(f"🚨 RAG DIMENSION MISMATCH: Expected 768, got {vec_len}")
-                        dimension_ok = False
+                if indexed_count > 0:
+                    # Physical Proof: Inspect the first available vector
+                    first_vec = idx_data[0].get("embedding")
+                    if first_vec:
+                        # Note: Handle both list and string representation
+                        vec_len = len(first_vec) if isinstance(first_vec, list) else 0
+                        if vec_len != 768:
+                            logger.error(f"🚨 RAG DIMENSION MISMATCH: Expected 768, got {vec_len}")
+                            dimension_ok = False
+                else:
+                    # Physically accept 0 records as healthy during bootstrap
+                    dimension_ok = True
 
                 alignment_score = 70.0 if dimension_ok else 0.0
         else:

@@ -174,27 +174,28 @@ async def list_tasks(
     # Final Physical Filter: Managers only see people in their department
     if u_role == "manager" and not is_admin:
         from ...services.profile_service import ProfileService
-        _, profiles = ProfileService().get_all_profiles()
-        dept_member_ids = [p["id"] for p in profiles if p.get("department") == u_dept]
-        # Include AI Agents in the view (as they work for all departments)
-        from src.server.services.shared_constants import AI_AGENT_ROLES
-        allowed_ids = set(dept_member_ids + list(AI_AGENT_ROLES.values()))
-        tasks = [t for t in tasks if t.get("assignee_id") in allowed_ids or t.get("assignee_id") is None]
+        _, profiles = ProfileService().list_full_profiles()
+        if isinstance(profiles, list):
+            dept_member_ids = [p["id"] for p in profiles if p.get("department") == u_dept]
+            # Include AI Agents in the view (as they work for all departments)
+            from src.server.services.shared_constants import AI_AGENT_ROLES
+            allowed_ids = set(dept_member_ids + list(AI_AGENT_ROLES.values()))
+            tasks = [t for t in tasks if t.get("assignee_id") in allowed_ids or t.get("assignee_id") is None]
+
     if u_role not in ["system_admin", "admin"]:
         from ...services.projects.project_service import ProjectService
-        
+
         # Fetch all projects the user is technically allowed to see
         s_proj, res_proj = await ProjectService().list_projects(include_content=False, include_computed_status=False)
         if s_proj and isinstance(res_proj, dict):
             all_projs = res_proj.get("projects", [])
             allowed_projs = RBACService().scope_projects(all_projs, current_user)
             allowed_proj_ids = {p["id"] for p in allowed_projs}
-            
+
             # Filter the tasks to only those belonging to the allowed projects
             tasks = [t for t in tasks if t.get("project_id") in allowed_proj_ids or not t.get("project_id")]
 
-    return {
-        "tasks": tasks[(page - 1) * per_page : page * per_page],
+    return {        "tasks": tasks[(page - 1) * per_page : page * per_page],
         "pagination": {
             "total": len(tasks),
             "page": page,

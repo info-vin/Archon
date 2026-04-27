@@ -40,12 +40,14 @@
 > **【鐵律】此 SOP 為 Gemini 在每次新會話開始時，都必須嚴格遵守的首要步驟，旨在確保上下文同步，避免重複錯誤。**
 >
 > 1.  **第一步：強制讀取上下文**: 在回應您的任何請求前，我**必須**先讀取 `GEMINI.md` 和 `CONTRIBUTING_tw.md` 的內容。
-> 2.  **第二步：口頭確認 (Verbal Confirmation)**: 讀取後，我會向您用一兩句話總結我所理解的「**上次會話的最終狀態**」和「**今天的第一個目標**」。
-*   **當前狀態 (Current Context)**: Phase 4.6.32 (全局權限硬化與物理對齊) 已結案。
-*   **今日目標 (Today's Goal)**: 啟動下一個核心功能模組或進行深層 RAG 品質優化。
+> 2.  **第二步：物理對帳門禁 (Physical Audit Gate)**: 
+>     - **Schema 對帳**: 在執行任何 API 或資料庫欄位修改前，必須讀取 `migration/` 資料夾下的 SQL 實體。**嚴禁幻想欄位名稱**。
+>     - **雙生對帳**: 執行 `make twin-scout` 巡檢前，必須讀取 `scripts/twin_scout.py`，確保 Reality Snapshot 的 SQL 指標與 UI 頁面路徑 100% 物理對齊，防止 false mismatch。
+> 3.  **第三步：口頭確認 (Verbal Confirmation)**: 讀取後，我會向您用一兩句話總結我所理解的「**上次會話的最終狀態**」和「**今天的第一個目標**」。
+*   **當前狀態 (Current Context)**: Phase 4.6.46 (物理加固與失落功能恢復) 已結案。
+*   **今日目標 (Today's Goal)**: 維護系統 100% 物理健康度並啟動下一階段擴展。
 
-
-> 3.  **第三步：取得您的確認**: 在您確認我對起點的理解無誤後，我才能開始執行第一個指令。
+> 4.  **第四步：取得您的確認**: 在您確認我對起點的理解無誤後，我才能開始執行第一個指令。
 
 ### 【UI 開發鐵律 (UI Development Iron Law)】
 
@@ -141,6 +143,20 @@
 ---
 
 # 第三章：近期工作日誌 (Recent Activity Logs)
+
+### 2026-04-25: Phase 4.6.46 結案、地基水泥化與全員工作流公證
+*   **1. 地基物理加固 (Method: SQL ID Realignment)**:
+    - **邏輯**: 物理重設所有非 UUID 身分（如 `ai-dev-bot`）為標準 UUID，根除 22P02 格式錯誤。
+    - **對帳**: 物理指派 42 筆無主 Leads 給 Alice 的新 UUID，恢復實體數據可見性。
+*   **2. 系統穩定性硬化 (Method: Backend & API Cementing)**:
+    - **修正**: 還原 `business.py` 與 `twin_scout.py` 的正確資料庫欄位名 (`key`/`value`)，終結 8181 崩潰循環。
+    - **隔離**: 在 `ops.py` 與 `marketing_api.py` 強制實施部門級 SQL 物理隔離 (SEC-001)。
+*   **3. UI 穩定性與回歸修復 (Method: Defensive UI Modeling)**:
+    - **修復**: 恢復 `TaskModal.tsx` 的 Manager/Member 指派分流邏輯，並加入 `Map` 去重防止 React Key 衝突。
+    - **優化**: 優先排序 `AdminPage` 的 Prompt 管理，並在 `SystemHealthDashboard` 加入防禦性載入，防止單點 API 404/500 卡死全頁。
+*   **4. 巡檢物理對齊 (Method: Digital Twin Alignment)**:
+    - **校正**: 修正偵察員腳本中 Bob 的路徑為 `/brand`；穩定授權 Headers，排除 401 虛假報警。
+    - **結果**: 5 人工作流達成物理公證 🟢 **[WORKFLOW_SUCCESS]**（除環境字型與性能瓶頸外）。
 
 ### 2026-04-22: Phase 4.6.44 結案、考古整併與全系統物理對齊
 *   **1. Phase 4.6.44 物理落地 (Method: Deep Clone & Isolation)**:

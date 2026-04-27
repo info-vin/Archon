@@ -82,8 +82,9 @@ async def get_workflow_snapshot(email):
             tasks_res = supabase.table("archon_tasks").select("id", count='exact').eq("assignee_id", user_id).limit(1).execute()
             return f"Reality Snapshot for {user_name}: {leads_res.count} total leads, {tasks_res.count} tasks assigned."
         elif "bob" in email:
-            blog_res = supabase.table("blog_posts").select("id", count='exact').limit(1).execute()
-            return f"Reality Snapshot for {user_name}: {blog_res.count} total posts."
+            # Bob in /brand Hub sees brand-related leads. Aligning snapshot metric to UI.
+            blog_res = supabase.table("leads").select("id", count='exact').limit(1).execute()
+            return f"Reality Snapshot for {user_name}: {blog_res.count} total items in Brand Hub."
         elif "dev.bot" in email:
             agent_tasks = supabase.table("archon_tasks").select("id", count='exact').eq("assignee_id", user_id).limit(1).execute()
             return f"Reality Snapshot for {user_name}: {agent_tasks.count} tasks assigned."
@@ -256,7 +257,7 @@ async def run_scout_session():
                 "key": "AGENT_TOOL_OVERRIDES",
                 "value": optimizations,
                 "is_system_protected": True
-            }).execute()
+            }, on_conflict="key").execute()
             print("🚀 [Scout] Self-tuning optimizations applied to AgentRegistry.")
         except Exception as e:
             print(f"⚠️ [Scout] Feedback loop write failed: {e}")

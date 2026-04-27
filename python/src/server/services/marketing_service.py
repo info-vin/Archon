@@ -130,12 +130,35 @@ class MarketingService(BaseRepository):
             sys_prompt = prompt_service.get_prompt("SALES_PITCH", SALES_PITCH_SYSTEM_PROMPT)
 
             # 3. Call AI with Dynamic Model (Asynchronous)
-            # Use physical path directly to maintain SDK compatibility (Phase 4.6.43)
             response = await client.aio.models.generate_content(
                 model=marketing_model,
                 contents=f"Company: {company}\nRole: {job_title}",
                 config=types.GenerateContentConfig(system_instruction=sys_prompt),
             )
+
+            draft_content = response.text or "AI Error"
+
+            # 3.5 EXP-03: Creative Resilience (Tone Critique Loop)
+            # Bob's feature: Automatically critique and refine the draft
+            try:
+                critique_prompt = prompt_service.get_prompt("BRAND_TONE_CRITIQUE", (
+                    "Review the following sales pitch. Ensure the tone is 'Professional yet approachable, "
+                    "focusing on value delivery rather than aggressive selling'. If it passes, reply with 'PASS'. "
+                    "If it fails, rewrite it to meet the brand tone and return ONLY the rewritten text."
+                ))
+
+                critique_res = await client.aio.models.generate_content(
+                    model=marketing_model,
+                    contents=f"Draft Pitch to evaluate:\n\n{draft_content}",
+                    config=types.GenerateContentConfig(system_instruction=critique_prompt),
+                )
+                critique_text = (critique_res.text or "").strip()
+
+                if critique_text != "PASS" and len(critique_text) > 10:
+                    logger.info("MarketingService: EXP-03 applied. Pitch refined by Librarian critique.")
+                    draft_content = critique_text
+            except Exception as critique_err:
+                logger.warning(f"MarketingService: EXP-03 Critique loop failed, using original draft: {critique_err}")
 
             # 4. LOG ACTUAL TOKEN USAGE (Physical evidence)
             try:
@@ -163,7 +186,7 @@ class MarketingService(BaseRepository):
             except Exception as log_err:
                 logger.warning(f"Failed to log token usage: {log_err}")
 
-            return {"content": response.text or "AI Error", "references": []}
+            return {"content": draft_content, "references": []}
 
         except Exception as e:
             logger.error(f"MarketingService: AI generation failed: {e}")
