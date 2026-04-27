@@ -226,6 +226,10 @@ async def run_scout_session():
             res = await inspect_and_analyze(pg, p_config, reality_map, client, target_model, mission_prompt)
             global_report.append(res)
             await ctx.close()
+            
+            # Physical Cooldown to prevent 503 API Strain (Gemini Free Tier)
+            print(f"⏳ [Scout] Cooling down for 15s before next persona...")
+            await asyncio.sleep(15)
 
     report_text = "# Digital Twin Consolidated Report (v39.1 - Anti-503)\n\n"
     for r in global_report:

@@ -275,7 +275,7 @@ class MarketingService(BaseRepository):
                 {
                     "id": lead_entry["id"],
                     "type": "lead",
-                    "title": lead_entry["company_name"],
+                    "title": lead_entry.get("company_name") or "Unknown Company",
                     "score": lead_entry.get("enrichment_score", 0),
                     "summary": (lead_entry.get("identified_need") or "")[:100],
                     "date": lead_entry["created_at"],
@@ -286,7 +286,7 @@ class MarketingService(BaseRepository):
                 {
                     "id": task_entry["id"],
                     "type": "task",
-                    "title": task_entry["title"],
+                    "title": task_entry.get("title") or "Untitled Task",
                     "score": 100,
                     "summary": (task_entry.get("description") or "")[:100],
                     "date": task_entry["created_at"],
@@ -297,9 +297,9 @@ class MarketingService(BaseRepository):
                 {
                     "id": blog_entry["id"],
                     "type": "blog",
-                    "title": blog_entry["title"],
+                    "title": blog_entry.get("title") or "Untitled Blog",
                     "score": blog_entry.get("ai_score", 0),
-                    "summary": blog_entry.get("excerpt", ""),
+                    "summary": (blog_entry.get("excerpt") or "")[:100],
                     "date": blog_entry["created_at"],
                     "status": blog_entry["status"],
                 }
@@ -321,8 +321,8 @@ class MarketingService(BaseRepository):
         context_text = ""
         if source_type == "lead":
             logs = self.supabase_client.table("visit_logs").select("*").eq("lead_id", source_id).execute().data
-            for log_item in logs:
-                context_text += f"\n[Log]: {log_item.get('summary')}\n"
+            for log_item in (logs or []):
+                context_text += f"\n[Log]: {log_item.get('summary') or 'No summary'}\n"
         success, res = await RAGService().perform_rag_query(query=context_text[:1000] or "General", match_count=3)
         return {
             "source_id": source_id,
