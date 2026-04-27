@@ -23,6 +23,7 @@ class MetricsManager:
         # 1. Token Analytics (Bob/Alice Usage)
         marketing_res = self.supabase.table("profiles").select("id").eq("role", "marketing").execute()
         m_ids = [r["id"] for r in (marketing_res.data or [])]
+        
         token_map: dict[str, int] = {}
         if m_ids:
             token_res = (

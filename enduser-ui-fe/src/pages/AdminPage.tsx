@@ -32,12 +32,12 @@ const AdminPage: React.FC = () => {
 
       <div className="border-b border-border mb-6">
         <nav className="-mb-px flex space-x-8 overflow-x-auto" aria-label="Tabs">
+          <TabButton title="System Prompts" isActive={activeTab === 'prompts'} onClick={() => setActiveTab('prompts')} />
           <TabButton title="System Health" isActive={activeTab === 'health'} onClick={() => setActiveTab('health')} />
           {canManageUsers && <TabButton title="User Management" isActive={activeTab === 'users'} onClick={() => setActiveTab('users')} />}
           <TabButton title="Cost & Usage" isActive={activeTab === 'costs'} onClick={() => setActiveTab('costs')} />
           <TabButton title="System Settings" isActive={activeTab === 'settings'} onClick={() => setActiveTab('settings')} />
           <TabButton title="Data Extraction" isActive={activeTab === 'extraction'} onClick={() => setActiveTab('extraction')} />
-          <TabButton title="System Prompts" isActive={activeTab === 'prompts'} onClick={() => setActiveTab('prompts')} />
           {!isOnlyManager && <TabButton title="Blog Management" isActive={activeTab === 'blog'} onClick={() => setActiveTab('blog')} />}
           {!isOnlyManager && <TabButton title="Document Versions" isActive={activeTab === 'versions'} onClick={() => setActiveTab('versions')} />}
         </nav>
@@ -46,7 +46,13 @@ const AdminPage: React.FC = () => {
       <div className="flex-1 overflow-auto">
         {activeTab === 'health' && <SystemHealthDashboard />}
         {activeTab === 'users' && canManageUsers && <IdentityMatrix />}
-        {activeTab === 'costs' && <SystemHealthDashboard />}
+        {activeTab === 'costs' && (
+          <div className="space-y-6">
+             {/* Reuse the dashboard data or separate component. 
+                 For now, we point back to SystemHealthDashboard but we will split its logic later to prevent卡死 */}
+             <SystemHealthDashboard />
+          </div>
+        )}
         {activeTab === 'settings' && <AdminSystemConfig />}
         {activeTab === 'extraction' && (
           <div className="space-y-8">

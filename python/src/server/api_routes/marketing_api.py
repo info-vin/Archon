@@ -45,8 +45,25 @@ async def search_jobs(keyword: str = Query(...), limit: int = 10, current_user: 
 
 @router.get("/leads")
 async def list_leads(current_user: dict = Depends(get_current_user)):
-    service = MarketingService()
-    return await service.list_leads()
+    u_role = current_user.get("role", "member").lower()
+    u_id = current_user.get("id")
+    
+    # Physical Database Query (SEC-001)
+    from ..utils import get_supabase_client
+    supabase = get_supabase_client()
+    
+    if u_role in ["system_admin", "admin"]:
+        res = supabase.table("leads").select("*").order("created_at", desc=True).execute()
+        return res.data or []
+        
+    if u_role == "sales":
+        # Alice only sees her 42 leads
+        res = supabase.table("leads").select("*").eq("assigned_sales_id", u_id).order("created_at", desc=True).execute()
+        return res.data or []
+    
+    # Default for marketing
+    res = supabase.table("leads").select("*").order("created_at", desc=True).execute()
+    return res.data or []
 
 
 @router.post("/leads")

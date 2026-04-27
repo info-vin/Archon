@@ -25,11 +25,8 @@ export async function getHeaders(extraHeaders: Record<string, string> = {}): Pro
     }
     
     if (supabase) {
-        const sessionResult: any = await Promise.race([
-          supabase.auth.getSession(),
-          new Promise((_, reject) => setTimeout(() => reject(new Error('Auth timeout')), 5000))
-        ]);
-        const { data: { session }, error: sessionError } = sessionResult;
+        // Physically retrieve session without race condition to avoid 401s in Docker
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         
         if (!sessionError && session?.access_token) {
             headers['Authorization'] = `Bearer ${session.access_token}`;

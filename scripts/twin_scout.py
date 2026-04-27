@@ -154,7 +154,8 @@ async def inspect_and_analyze(pg, p_config, reality_map, client, target_model, m
         await pg.wait_for_function('window.location.hash !== "#/auth"', timeout=15000)
         await pg.goto(f"{url}/#{target_url}", wait_until="domcontentloaded", timeout=30000)
         await pg.wait_for_selector(wait_selector, timeout=30000)
-        await asyncio.sleep(2)
+        # physically wait longer for permission sync
+        await asyncio.sleep(5)
 
         txt = await pg.evaluate("() => document.body.innerText.substring(0, 1000)")
         img_bytes = await pg.screenshot(full_page=True)
@@ -200,7 +201,7 @@ async def run_scout_session():
 
     personas = [
         {"email": "alice@archon.com", "url": "/marketing", "selector": "ul, table, .grid-cols-1", "name": "Alice (Sales)"},
-        {"email": "bob@archon.com", "url": "/marketing", "selector": "ul, .grid-cols-1", "name": "Bob (Marketing)"},
+        {"email": "bob@archon.com", "url": "/brand", "selector": "ul, .grid-cols-1", "name": "Bob (Marketing)"},
         {"email": "charlie@archon.com", "url": "/nexus", "selector": "canvas, .recharts-responsive-container", "name": "Charlie (Manager Nexus)"},
         {"email": "admin@archon.com", "url": "/admin", "selector": "h1, .admin-panel", "name": "David Howard (Admin)"},
         {"email": "dev.bot@archon.com", "url": "/dashboard", "selector": "ul, table, .card", "name": "DevBot (Agent)"}
@@ -252,8 +253,8 @@ async def run_scout_session():
                 "rag_search_knowledge_base": {"min_xp_level": 0}
             }
             supabase.table("archon_settings").upsert({
-                "setting_key": "AGENT_TOOL_OVERRIDES",
-                "setting_value": optimizations,
+                "key": "AGENT_TOOL_OVERRIDES",
+                "value": optimizations,
                 "is_system_protected": True
             }).execute()
             print("🚀 [Scout] Self-tuning optimizations applied to AgentRegistry.")

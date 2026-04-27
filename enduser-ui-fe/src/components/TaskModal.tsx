@@ -53,13 +53,28 @@ export const TaskModal: React.FC<TaskModalProps> = ({ task, onClose, onTaskCreat
         setCurrentUser(user);
         setProjects(projectsData || []);
         
-        // Combine humans and AI agents for the assignee list
-        const allAssignable = [...(usersData || []), ...(aiAgentsData || [])];
-        setAssignableUsers(allAssignable);
+        // PRPs Phase 4.4: Dynamic Assignee Filtering based on Role
+        const isManager = user?.role === 'manager' || user?.role === 'admin' || user?.role === 'system_admin';
+        
+        let filteredUsers = usersData || [];
+        if (!isManager && user) {
+          // Member (Alice/Bob) can only assign to themselves
+          filteredUsers = (usersData || []).filter(u => u.id === user.id);
+        }
+
+        // Combine humans and AI agents, removing duplicates by ID
+        const combined = [...filteredUsers, ...(aiAgentsData || [])];
+        const uniqueUsers = Array.from(new Map(combined.map(u => [u.id, u])).values());
+        setAssignableUsers(uniqueUsers);
         
         // If no projectId passed, default to first available project
         if (!selectedProjectId && projectsData && projectsData.length > 0) {
             setSelectedProjectId(projectsData[0].id);
+        }
+
+        // PRPs FB-03: Default assignee to current user for new tasks
+        if (!isEditMode && user && !assigneeId) {
+            setAssigneeId(user.id);
         }
 
         // Step 2: Background Data (Crawler Targets) - Can fail gracefully without blocking main UI
@@ -254,7 +269,13 @@ export const TaskModal: React.FC<TaskModalProps> = ({ task, onClose, onTaskCreat
             </div>
             <div className="flex-1">
               <label htmlFor="assignee" className="block text-sm font-medium mb-1">Assignee</label>
-              <select id="assignee" value={assigneeId} onChange={(e) => setAssigneeId(e.target.value)} className={inputClass} disabled={isLoadingUsers}>
+              <select 
+                id="assignee" 
+                value={assigneeId || ''} 
+                onChange={(e) => setAssigneeId(e.target.value)} 
+                className={inputClass} 
+                disabled={isLoadingUsers}
+              >
                 <option value="">{isLoadingUsers ? 'Loading...' : 'Unassigned'}</option>
                 {assignableUsers.map(user => (
                   <option key={user.id} value={user.id}>
@@ -303,13 +324,12 @@ export const TaskModal: React.FC<TaskModalProps> = ({ task, onClose, onTaskCreat
                               
                               <div>
                                   <label htmlFor="crawlerTarget" className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Associate Knowledge Target (from 3737)</label>
-                                  <select 
-                                      id="crawlerTarget" 
-                                      value={crawlerTargetId} 
+                                  <select
+                                      id="crawlerTarget"
+                                      value={crawlerTargetId || ''}
                                       onChange={(e) => setCrawlerTargetId(e.target.value)}
                                       className={`${inputClass} border-rose-200 focus:ring-rose-500 focus:border-rose-500`}
-                                  >
-                                      <option value="">-- No Specific Target --</option>
+                                  >                                      <option value="">-- No Specific Target --</option>
                                       {crawlerTargets.map(t => (
                                           <option key={t.id} value={t.id}>{t.target_url}</option>
                                       ))}

@@ -126,10 +126,10 @@ async def run_business_sentinel():
         threshold_days = 14
         # Physical Fix: Column name is 'setting_key', not 'key'
         res_settings = (
-            supabase.table("archon_settings").select("setting_value").eq("setting_key", "STALE_LEAD_THRESHOLD_DAYS").execute()
+            supabase.table("archon_settings").select("value").eq("key", "STALE_LEAD_THRESHOLD_DAYS").execute()
         )
         if res_settings.data:
-            threshold_days = int(res_settings.data[0]["setting_value"])
+            threshold_days = int(res_settings.data[0]["value"])
 
         cutoff_date = (datetime.now(UTC) - timedelta(days=threshold_days)).isoformat()
         logger.info(f"🛡️ Sentinel: Scanning for leads updated before {cutoff_date} (threshold={threshold_days}d)")

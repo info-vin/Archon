@@ -19,18 +19,29 @@ export const SystemHealthDashboard: React.FC = () => {
         setLoading(true);
         setError(null);
         try {
+            // Physically protect against partial API failures (404/500)
+            const safeFetch = async (promise: Promise<any>) => {
+                try { return await promise; } 
+                catch (e) { console.warn("Partial Dashboard Fetch Failure:", e); return null; }
+            };
+
             const [ov, ai, logs, xp, recent] = await Promise.all([
-                api.getSystemOverview(),
-                api.getAiUsage(),
-                api.getConnectivityLogs(),
-                api.getAgentXPStats(),
-                api.getRecentTokenUsage()
+                safeFetch(api.getSystemOverview()),
+                safeFetch(api.getAiUsage()),
+                safeFetch(api.getConnectivityLogs()),
+                safeFetch(api.getAgentXPStats()),
+                safeFetch(api.getRecentTokenUsage())
             ]);
-            setOverview(ov);
-            setAiStats(ai);
+            
+            if (ov) setOverview(ov);
+            if (ai) setAiStats(ai);
             setConnectivityLogs(logs || []);
             setAgentXp(xp || []);
             setRecentUsage(recent || []);
+            
+            if (!ov && !ai) {
+                throw new Error("Core health services are currently unreachable.");
+            }
         } catch (err: any) {
 
             setError(err.message || "Failed to load system health data");

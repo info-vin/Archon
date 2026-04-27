@@ -90,6 +90,7 @@ mcp = [
     "python-jose[cryptography]==3.3.0",
     "beautifulsoup4==4.13.4",
     "lxml==5.4.0",
+    "crawl4ai==0.7.4",
 ]
 
 # Agents container dependencies

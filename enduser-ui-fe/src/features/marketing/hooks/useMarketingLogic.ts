@@ -3,7 +3,7 @@ import { api } from '../../../services/api';
 import { JobData } from '../../../types';
 
 export const useMarketingLogic = () => {
-  const [activeTab, setActiveTab] = useState<'search' | 'leads'>('search');
+  const [activeTab, setActiveTab] = useState<'search' | 'leads'>('leads');
   
   // Search State (Alice)
   const [keyword, setKeyword] = useState('Data Analyst');

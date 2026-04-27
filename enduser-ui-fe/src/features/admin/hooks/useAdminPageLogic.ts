@@ -7,7 +7,7 @@ export const useAdminPageLogic = () => {
   const isOnlyManager = !isAdmin && (role === 'manager');
   const canManageUsers = isAdmin || role === 'manager';
   
-  const [activeTab, setActiveTab] = useState(isOnlyManager ? 'users' : 'health');
+  const [activeTab, setActiveTab] = useState(isOnlyManager ? 'users' : 'prompts');
 
   return {
     activeTab,
