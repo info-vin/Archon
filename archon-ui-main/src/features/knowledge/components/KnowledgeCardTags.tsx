@@ -262,6 +262,8 @@ export const KnowledgeCardTags: React.FC<KnowledgeCardTagsProps> = ({ sourceId, 
             "flex items-center gap-0.5 text-[10px] text-gray-500 dark:text-gray-400",
             "hover:text-cyan-600 dark:hover:text-cyan-400 transition-colors px-1 py-0.5 rounded",
           ].join(" ")}
+          aria-expanded={showAllTags}
+          aria-label={showAllTags ? "Show fewer tags" : "Show more tags"}
         >
           {showAllTags ? (
             <>

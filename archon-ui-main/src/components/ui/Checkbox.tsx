@@ -8,6 +8,7 @@ interface CheckboxProps {
   indeterminate?: boolean;
   disabled?: boolean;
   className?: string;
+  ariaLabel?: string;
 }
 
 export const Checkbox = ({
@@ -15,7 +16,8 @@ export const Checkbox = ({
   onChange,
   indeterminate = false,
   disabled = false,
-  className = ''
+  className = '',
+  ariaLabel
 }: CheckboxProps) => {
   const [isChecked, setIsChecked] = useState(checked);
 
@@ -35,6 +37,7 @@ export const Checkbox = ({
     <button
       onClick={handleClick}
       disabled={disabled}
+      aria-label={ariaLabel || "Toggle checkbox"}
       className={`
         relative w-5 h-5 rounded-md
         bg-white/10 dark:bg-black/20
