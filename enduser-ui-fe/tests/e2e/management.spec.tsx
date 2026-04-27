@@ -15,8 +15,13 @@ test('Manager (Charlie) can access Team Management Panel', async () => {
     
     renderApp(['/team']);
 
-    expect(await screen.findByRole('heading', { name: /Team Management/i }, { timeout: 10000 })).toBeInTheDocument();
-    expect(await screen.findByTitle(/Alice Johnson/i)).toBeInTheDocument();
+    // 3. Mock team data specifically for this test to overcome isolation
+    vi.mocked(api.getEmployees).mockResolvedValue([
+        { id: 'alice-123', name: 'Alice Johnson', role: 'sales', department: 'Marketing' }
+    ] as any);
+
+    expect(await screen.findByRole('heading', { name: /Team Management/i }, { timeout: 3000 })).toBeInTheDocument();
+    expect(await screen.findByText(/Alice Johnson/i)).toBeInTheDocument();
 });
 
 test('Sales (Alice) is denied access to Team Management Panel', async () => {

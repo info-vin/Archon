@@ -37,4 +37,4 @@
 
 ## 🛡️ 守門員公證 (Gatekeeper Notary)
 - [x] 已建立 `.git/hooks/pre-commit` 阻斷舊模型與舊表名。
-- [ ] 執行 `make lint` 確保恢復後的邏輯符合 4.6.45 的品質標準。
+- [x] 執行 `make lint` 確保恢復後的邏輯符合 4.6.45 的品質標準。

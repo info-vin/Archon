@@ -54,12 +54,15 @@ describe('MarketingPage Sales Intelligence Flow', () => {
         vi.mocked(api.getCurrentUser).mockResolvedValue(salesUser as any);
 
         vi.mocked(api.searchJobs).mockRejectedValue(new Error('API Down'));
+// 1. 前往頁面
+renderApp(['/marketing']);
 
-        renderApp(['/marketing']);
-        
-        await screen.findByText(/Sales Intelligence/i);
+// --- Physical Alignment: Switch to Search tab as 'leads' is now default ---
+const searchTabBtn = await screen.findByText(/Job Search/i);
+fireEvent.click(searchTabBtn);
 
-        const input = screen.getByPlaceholderText(/Enter job title/i);
+// 2. 執行搜尋
+const input = await screen.findByPlaceholderText(/Enter job title/i);
         fireEvent.change(input, { target: { value: 'Data Analyst' } });
         fireEvent.click(screen.getByText(/Find Leads/i));
 

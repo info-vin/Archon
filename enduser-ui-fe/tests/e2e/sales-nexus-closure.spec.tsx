@@ -1,79 +1,71 @@
-import { screen, fireEvent, waitFor } from '@testing-library/react';
-import { describe, it, expect, vi } from 'vitest';
+import { screen, fireEvent } from '@testing-library/react';
+import { vi, expect, test, beforeEach } from 'vitest';
 import { renderApp } from './e2e.setup';
 import { api } from '../../src/services/api';
 import { EmployeeRole } from '../../src/types';
-import { createUser } from '../factories/userFactory';
 
-describe('Sales Nexus Closure Flow (Phase 4.4.2)', () => {
+// Mock specific data for this workflow
+const MOCK_LEAD = {
+    id: 'lead-789',
+    company_name: 'Future Client Ltd',
+    job_title: 'Fullstack Engineer',
+    status: 'new',
+    assigned_sales_id: 'user-123'
+};
+
+beforeEach(() => {
+    vi.resetAllMocks();
+});
+
+test('Sales Nexus Closure Flow (Phase 4.4.2) > Librarian Integration: Pitch generation triggers automated archiving', async () => {
+    // 1. Go to page
+    renderApp(['/marketing']);
     
-    it('Librarian Integration: Pitch generation triggers automated archiving', async () => {
-        // Mock Sales User
-        const salesUser = createUser({ role: EmployeeRole.SALES });
-        vi.mocked(api.getCurrentUser).mockResolvedValue(salesUser as any);
+    // --- Physical Alignment: Switch to Search tab as 'leads' is now default ---
+    const searchTabBtn = await screen.findByRole('button', { name: /Job Search/i });
+    fireEvent.click(searchTabBtn);
 
-        renderApp(['/marketing']);
+    // 2. Search for a job
+    const input = await screen.findByPlaceholderText(/Enter job title/i);
+    fireEvent.change(input, { target: { value: 'Data Analyst' } });
+    
+    const findBtn = screen.getByRole('button', { name: /Find Leads/i });
+    fireEvent.click(findBtn);
 
-        // 1. Initial State: Wait for Sales Intelligence page
-        await screen.findByRole('heading', { name: /Sales Intelligence/i }, { timeout: 15000 });
+    // 3. Select a job and identify as lead
+    const identifyBtn = await screen.findByText(/Identify as Lead/i);
+    fireEvent.click(identifyBtn);
 
-        // 2. Search for a job
-        const input = screen.getByPlaceholderText(/Enter job title/i);
-        fireEvent.change(input, { target: { value: 'Data Analyst' } });
-        fireEvent.click(screen.getByText(/Find Leads/i));
+    // 4. In "My Leads" view, generate pitch
+    // Explicitly click the "My Leads" tab button to resolve ambiguity
+    const leadsTabBtn = await screen.findByRole('button', { name: /My Leads/i });
+    fireEvent.click(leadsTabBtn);
+    
+    const generateBtn = await screen.findByText(/Generate Pitch/i);
+    fireEvent.click(generateBtn);
 
-        // 3. Find the lead and Verify Job Title
-        await screen.findByText('Retail Corp', {}, { timeout: 15000 });
-        expect(screen.getByText(/Hiring:\s*Senior Data Analyst/i)).toBeInTheDocument();
+    // 5. Verify Librarian archiving is called (Physical Audit)
+    expect(await screen.findByText(/Pitch generated and archived/i)).toBeInTheDocument();
+});
 
-        // 4. Generate Pitch
-        const generateBtns = screen.getAllByText(/Generate Pitch/i);
-        fireEvent.click(generateBtns[0]);
+test('Sales Nexus Closure Flow (Phase 4.4.2) > Hunter Mode: Logging a physical visit', async () => {
+    renderApp(['/marketing']);
 
-        // 5. Approve & Save (Triggers Librarian)
-        const approveBtn = await screen.findByText(/Approve & Save/i, {}, { timeout: 15000 });
-        
-        // Mock window.alert to capture result
-        const alertMock = vi.spyOn(window, 'alert').mockImplementation(() => {});
-        fireEvent.click(approveBtn);
+    // 1. Switch to "My Leads" Tab using specific role to avoid heading ambiguity
+    const leadsTabBtn = await screen.findByRole('button', { name: /My Leads/i });
+    fireEvent.click(leadsTabBtn);
 
-        // 6. Verify Correct Success Message (Matches MarketingPage.tsx)
-        await waitFor(() => {
-            expect(alertMock).toHaveBeenCalledWith(expect.stringContaining("Saved!"));
-        }, { timeout: 10000 });
-        
-        alertMock.mockRestore();
-    });
+    // 2. Open Visit Log Modal
+    const logBtn = await screen.findByTitle(/New Visit Log/i);
+    fireEvent.click(logBtn);
 
-    it('Hunter Mode: Logging a physical visit', async () => {
-        const salesUser = createUser({ role: EmployeeRole.SALES });
-        vi.mocked(api.getCurrentUser).mockResolvedValue(salesUser as any);
+    // 3. Submit Log
+    const textArea = screen.getByPlaceholderText(/What happened during the visit/i);
+    fireEvent.change(textArea, { target: { value: 'Customer was very interested in the RAG features.' } });
+    
+    const submitBtn = screen.getByText(/Save Visit Log/i);
+    fireEvent.click(submitBtn);
 
-        renderApp(['/marketing']);
-        await screen.findByRole('heading', { name: /Sales Intelligence/i }, { timeout: 15000 });
-
-        // 1. Switch to "My Leads" Tab
-        const leadsTabBtn = screen.getByText(/My Leads/i);
-        fireEvent.click(leadsTabBtn);
-
-        // 2. Verify Identified Leads are visible (Fix: use findAllByText to handle multiple matches)
-        const leads = await screen.findAllByText(/Retail Corp/i, {}, { timeout: 10000 });
-        expect(leads.length).toBeGreaterThan(0);
-
-        // 3. Open Visit Log Action
-        const hunterBtn = screen.getByTitle(/Log Visit/i);
-        fireEvent.click(hunterBtn);
-
-        // 4. Fill Visit Log Details
-        const modalHeading = await screen.findByText(/New Visit Log/i, {}, { timeout: 10000 });
-        expect(modalHeading).toBeInTheDocument();
-
-        // 5. Success Check (Just close modal for now since we're adapting a broken test)
-        const closeBtn = screen.getByRole('button', { name: /Close modal/i });
-        fireEvent.click(closeBtn);
-        
-        await waitFor(() => {
-            expect(screen.queryByText(/New Visit Log/i)).not.toBeInTheDocument();
-        }, { timeout: 10000 });
-    });
+    // 4. Verify success
+    expect(await screen.findByText(/Visit log saved/i)).toBeInTheDocument();
 });

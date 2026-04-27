@@ -1,32 +1,51 @@
-// enduser-ui-fe/tests/e2e/pre-setup.ts
+import { vi } from 'vitest';
 
-// This file runs BEFORE any other setup files or tests.
-// It is used to initialize the environment (like localStorage)
-// so that modules imported by `vi.mock` (which are hoisted)
-// can access these values immediately.
+/**
+ * SECTION 0: CRITICAL BROWSER POLYFILLS
+ * Using Object.defineProperty to lock down globals before React ever runs.
+ */
 
-const mockUser = {
-    id: 'user-e2e-1',
-    employeeId: 'E2E001',
-    name: 'E2E Test User',
-    email: 'e2e@archon.com',
-    department: 'QA',
-    position: 'Tester',
-    status: 'active',
-    role: 'Admin',
-    avatar: 'https://i.pravatar.cc/150?u=e2e@archon.com'
-};
+const mockMatchMedia = vi.fn().mockImplementation(query => ({
+  matches: false,
+  media: query,
+  onchange: null,
+  addListener: vi.fn(), 
+  removeListener: vi.fn(), 
+  addEventListener: vi.fn(),
+  removeEventListener: vi.fn(),
+  dispatchEvent: vi.fn(),
+}));
 
-// Inject Supabase credentials into localStorage.
-const supabaseUrl = process.env.VITE_SUPABASE_URL || 'https://mock.supabase.co';
-const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY || 'mock-key';
+// Physical lock on global and window
+Object.defineProperty(global, 'matchMedia', {
+    writable: true,
+    value: mockMatchMedia
+});
 
-if (supabaseUrl && supabaseAnonKey) {
-  localStorage.setItem('supabaseUrl', supabaseUrl);
-  localStorage.setItem('supabaseAnonKey', supabaseAnonKey);
+if (typeof window !== 'undefined') {
+    Object.defineProperty(window, 'matchMedia', {
+        writable: true,
+        value: mockMatchMedia
+    });
 }
 
-// Inject the mock user.
-localStorage.setItem('user', JSON.stringify(mockUser));
+// Ensure other globals don't crash components
+const noop = () => {};
+if (typeof window !== 'undefined') {
+    window.scrollTo = noop;
+    (window as any).alert = noop;
+    (window as any).confirm = () => true;
+}
 
-console.log('✅ [Pre-Setup] Environment variables injected into localStorage.');
+if (typeof Element !== 'undefined') {
+    Element.prototype.scrollIntoView = noop;
+}
+
+if (typeof HTMLDialogElement !== 'undefined' && !HTMLDialogElement.prototype.showModal) {
+    HTMLDialogElement.prototype.showModal = function(this: HTMLDialogElement) {
+        this.setAttribute('open', '');
+    };
+    HTMLDialogElement.prototype.close = function(this: HTMLDialogElement) {
+        this.removeAttribute('open');
+    };
+}
