@@ -144,6 +144,18 @@
 
 # 第三章：近期工作日誌 (Recent Activity Logs)
 
+### 2026-04-27: Phase 4.6.46 加固公證、API 門禁硬化與 503 資源瓶頸
+*   **1. 地基物理加固 (Method: Active Service Gates)**:
+    - **邏輯**: 將 RAG 768 維度檢查從「外掛腳本」物理鎖入 `LibrarianService` 與 `EmbeddingService` 生產路徑。
+    - **證據**: 修改後，`HealthService` 若偵測到維度不符將立即阻斷並報警，防止髒數據注入。
+*   **2. API 防禦性修復 (Method: Defensive Data Modeling)**:
+    - **修正**: 解決 Bob (Marketing) API 500 錯誤。物理證據顯示種子資料中的 `NULL` 欄位導致字串切片崩潰；已套用 `(value or "")` 模式。
+    - **修正**: 解決 Charlie (Manager) `degraded` 狀態。修正了 `HealthService` 無法解析字串化向量的邏輯 Bug。
+*   **3. 物理公證軌跡 (Method: Audit Trail)**:
+    - **結果**: `make persona-audit` 達成 5/5 API 通道 🟢 **[SUCCESS]**。
+    - **瓶頸**: `make twin-scout` 因 Gemini Free Tier 503 壓力暫時失效。
+    - **軌跡存檔**: `.twin/diagnostics/audit_trail_20260427_153740.log`。
+
 ### 2026-04-25: Phase 4.6.46 結案、地基水泥化與全員工作流公證
 *   **1. 地基物理加固 (Method: SQL ID Realignment)**:
     - **邏輯**: 物理重設所有非 UUID 身分（如 `ai-dev-bot`）為標準 UUID，根除 22P02 格式錯誤。

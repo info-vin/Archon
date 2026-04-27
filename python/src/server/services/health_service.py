@@ -101,7 +101,7 @@ class HealthService(BaseRepository):
                                 first_vec = json.loads(first_vec)
                             except Exception:
                                 first_vec = []
-                        
+
                         vec_len = len(first_vec) if isinstance(first_vec, list) else 0
                         if vec_len != 768:
                             logger.error(f"🚨 RAG DIMENSION MISMATCH: Expected 768, got {vec_len}")

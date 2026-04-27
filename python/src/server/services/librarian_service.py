@@ -393,7 +393,7 @@ class LibrarianService:
             embedding_vector = await create_embedding(full_content[:8000])
             if not embedding_vector or len(embedding_vector) != 768:
                 raise Exception(f"Invalid embedding dimension: {len(embedding_vector) if embedding_vector else 'None'}")
-            
+
             page_data = {
                 "source_id": source_id,
                 "url": f"analysis://failure/{source_id}",
