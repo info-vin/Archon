@@ -95,7 +95,13 @@ class HealthService(BaseRepository):
                     # Physical Proof: Inspect the first available vector
                     first_vec = idx_data[0].get("embedding")
                     if first_vec:
-                        # Note: Handle both list and string representation
+                        # Handle list, or stringified list from REST responses
+                        if isinstance(first_vec, str):
+                            try:
+                                first_vec = json.loads(first_vec)
+                            except Exception:
+                                first_vec = []
+                        
                         vec_len = len(first_vec) if isinstance(first_vec, list) else 0
                         if vec_len != 768:
                             logger.error(f"🚨 RAG DIMENSION MISMATCH: Expected 768, got {vec_len}")

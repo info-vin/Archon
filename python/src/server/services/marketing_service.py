@@ -277,7 +277,7 @@ class MarketingService(BaseRepository):
                     "type": "lead",
                     "title": lead_entry["company_name"],
                     "score": lead_entry.get("enrichment_score", 0),
-                    "summary": lead_entry.get("identified_need", "")[:100],
+                    "summary": (lead_entry.get("identified_need") or "")[:100],
                     "date": lead_entry["created_at"],
                 }
             )
@@ -288,7 +288,7 @@ class MarketingService(BaseRepository):
                     "type": "task",
                     "title": task_entry["title"],
                     "score": 100,
-                    "summary": task_entry.get("description", "")[:100],
+                    "summary": (task_entry.get("description") or "")[:100],
                     "date": task_entry["created_at"],
                 }
             )

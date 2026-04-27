@@ -230,7 +230,13 @@ async def create_embeddings_batch(
 
                                                     if resp.status_code == 200:
                                                         data = resp.json()
-                                                        result.add_success(data["embedding"]["values"], text_item)
+                                                        emb = data["embedding"]["values"]
+                                                        # Physical Integrity Gate: Enforce 768 dimensions (Phase 4.6.46 Hardening)
+                                                        if len(emb) != 768:
+                                                            err_msg = f"Dimension mismatch from Google Native: Expected 768, got {len(emb)}"
+                                                            search_logger.error(f"❌ CRITICAL RAG GATE FAILURE: {err_msg}")
+                                                            raise EmbeddingAPIError(err_msg)
+                                                        result.add_success(emb, text_item)
                                                     else:
                                                         search_logger.error(
                                                             f"Google native API failed: Status {resp.status_code}, Body: {resp.text}"
@@ -252,6 +258,11 @@ async def create_embeddings_batch(
                                                 )
 
                                             for item, text_item in zip(response.data, batch, strict=False):
+                                                # Physical Integrity Gate: Enforce 768 dimensions (Phase 4.6.46 Hardening)
+                                                if len(item.embedding) != embedding_dimensions:
+                                                    err_msg = f"Dimension mismatch from {provider_name}: Expected {embedding_dimensions}, got {len(item.embedding)}"
+                                                    search_logger.error(f"❌ CRITICAL RAG GATE FAILURE: {err_msg}")
+                                                    raise EmbeddingAPIError(err_msg)
                                                 result.add_success(item.embedding, text_item)
                                         break
                                     except openai.RateLimitError as e:

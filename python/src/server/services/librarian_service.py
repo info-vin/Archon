@@ -122,9 +122,12 @@ class LibrarianService:
             # 4. Insert Content (archon_crawled_pages)
             try:
                 embedding_vector = await create_embedding(content)
+                if not embedding_vector or len(embedding_vector) != 768:
+                    raise Exception(f"Invalid embedding dimension: {len(embedding_vector) if embedding_vector else 'None'}")
             except Exception as e:
-                logger.error(f"Librarian: Failed to generate embedding for pitch {source_id} | error={str(e)}")
-                embedding_vector = None
+                logger.error(f"❌ Librarian: RAG GATE BLOCKED pitch {source_id} due to embedding failure: {e}")
+                # Critical: We must NOT continue with a None embedding as it will break RAG search
+                raise e
 
             page_data = {
                 "source_id": source_id,
@@ -215,9 +218,11 @@ class LibrarianService:
             # 4. Insert Content & Embedding
             try:
                 embedding_vector = await create_embedding(content[:8000])
+                if not embedding_vector or len(embedding_vector) != 768:
+                    raise Exception(f"Invalid embedding dimension: {len(embedding_vector) if embedding_vector else 'None'}")
             except Exception as e:
-                logger.error(f"Librarian: Failed to generate embedding for research {source_id}: {e}")
-                embedding_vector = None
+                logger.error(f"❌ Librarian: RAG GATE BLOCKED research {source_id} due to embedding failure: {e}")
+                raise e
 
             page_data = {
                 "source_id": source_id,
@@ -307,9 +312,11 @@ class LibrarianService:
             for i, chunk in enumerate(chunks):
                 try:
                     embedding_vector = await create_embedding(chunk)
+                    if not embedding_vector or len(embedding_vector) != 768:
+                        raise Exception(f"Invalid embedding dimension: {len(embedding_vector) if embedding_vector else 'None'}")
                 except Exception as e:
-                    logger.error(f"Librarian: Embedding failed for chunk {i} of {source_id}: {e}")
-                    embedding_vector = None
+                    logger.error(f"❌ Librarian: RAG GATE BLOCKED chunk {i} of {source_id} due to embedding failure: {e}")
+                    raise e
 
                 page_data = {
                     "source_id": source_id,
@@ -384,6 +391,9 @@ class LibrarianService:
             )
 
             embedding_vector = await create_embedding(full_content[:8000])
+            if not embedding_vector or len(embedding_vector) != 768:
+                raise Exception(f"Invalid embedding dimension: {len(embedding_vector) if embedding_vector else 'None'}")
+            
             page_data = {
                 "source_id": source_id,
                 "url": f"analysis://failure/{source_id}",
@@ -460,6 +470,9 @@ class LibrarianService:
             )
 
             embedding_vector = await create_embedding(full_lesson[:8000])
+            if not embedding_vector or len(embedding_vector) != 768:
+                raise Exception(f"Invalid embedding dimension: {len(embedding_vector) if embedding_vector else 'None'}")
+
             page_data = {
                 "source_id": source_id,
                 "url": f"lesson://style/{source_id}",
