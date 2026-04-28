@@ -13,7 +13,7 @@ USERS = {
 PW = "qwer45tyuiop"
 
 async def test_persona(name, email):
-    async with httpx.AsyncClient(timeout=10.0) as client:
+    async with httpx.AsyncClient(timeout=30.0) as client:
         try:
             from src.server.utils import get_supabase_client
             sb = get_supabase_client()

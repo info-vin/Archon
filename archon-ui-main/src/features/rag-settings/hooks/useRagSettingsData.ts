@@ -138,7 +138,8 @@ export const useRagSettingsData = (
       }
       setTimeout(() => ollama.fetchOllamaMetrics(), 2000);
     }
-  }, [ragSettings.LLM_PROVIDER, embeddingProvider, llmInstanceConfig, embeddingInstanceConfig, ollama, ragSettings]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ragSettings.LLM_PROVIDER, embeddingProvider, llmInstanceConfig.url, embeddingInstanceConfig.url]);
 
   // Alert Resolution Logic
   const getProviderStatus = (pKey: string) => {

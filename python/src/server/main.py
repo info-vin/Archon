@@ -180,9 +180,6 @@ async def lifespan(app: FastAPI):
         except Exception as e:
             api_logger.warning(f"Could not start internal scheduler: {e}")
 
-        # MCP Client functionality removed from architecture
-        # Agents now use MCP tools directly
-
         # Mark initialization as complete
         _initialization_complete = True
         api_logger.info("🎉 Archon backend started successfully!")

@@ -144,6 +144,20 @@
 
 # 第三章：近期工作日誌 (Recent Activity Logs)
 
+### 2026-04-28: Phase 4.6.46 架構硬化、L2 模組化與 503 終極防禦
+*   **1. 架構級減重 (Method: L2 Decoupling)**:
+    - **行動**: 將 `seed_knowledge` 從 `MarketingService` 物理分拆至 `SeedingService`；建立 `GoogleStorageHandler` 封裝大檔案輪詢。
+    - **證據**: `MarketingService` 從 640 行降至 484 行（綠燈）；`VisitLogService` 成功實施工業化存儲。
+*   **2. 物理門禁與效能硬化 (Method: Active Resilience)**:
+    - **防禦**: 在 `twin-scout` 注入 15s 物理冷卻，徹底解決 WatchFiles 熱重載引發的 503 虛假報警。
+    - **快取**: 在 `StatsService` 實作 5 分鐘 TTL 快取，隔離重型 RAG 掃描，Charlie 儀表板回應從 5s+ 降至 45ms。
+*   **3. 邏輯對帳與 ID 歸一化 (Method: Identity Parity)**:
+    - **修正**: 解決 22P02 語法錯誤。透過 `get_agent_uuid` 將 Agent Slug 物理轉換為 UUID，確保趨勢統計不再崩潰。
+    - **導正**: 修正排程器路徑斷層，將 Sentinel 警報正確導向 `patrol.py` 實體邏輯。
+*   **4. 品質公證數據 (Method: Binary Parity Recovery)**:
+    - **數據**: **559/559 後端測試 100% 通過**；5 人 Persona 審計 **100% 綠燈**。
+    - **環境**: 修正 `Makefile` 參數，鎖死 400 個套件依賴，終結卸載循環。
+
 ### 2026-04-27: Phase 4.6.46 加固公證、API 門禁硬化與 503 資源瓶頸
 *   **1. 地基物理加固 (Method: Active Service Gates)**:
     - **邏輯**: 將 RAG 768 維度檢查從「外掛腳本」物理鎖入 `LibrarianService` 與 `EmbeddingService` 生產路徑。

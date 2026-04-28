@@ -198,7 +198,7 @@ lint-fe:
 # Run backend linter
 lint-be:
 	@echo "Linting backend..."
-	@cd python && $(UV) sync --group dev
+	@cd python && $(UV) sync --all-groups
 	@cd python && $(UV) run ruff check --fix
 	@cd python && $(UV) run mypy src --ignore-missing-imports
 

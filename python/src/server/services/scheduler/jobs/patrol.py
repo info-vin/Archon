@@ -174,3 +174,72 @@ async def cleanup_system_probes():
             logger.info("✅ Clockwork: Cleanup complete. No expired probe data found.")
     except Exception as e:
         logger.error(f"💥 Clockwork: System Probe Cleanup Failed: {e}")
+
+
+async def run_business_sentinel():
+    """
+    Restores Phase 4.6.46 Sentinel: Scans leads for staleness.
+    Generates ALERT logs for the Charlie (Manager) Dashboard.
+    """
+    logger.info("🛡️ Clockwork: Starting Business Sentinel...")
+    try:
+        from server.utils import get_supabase_client
+        supabase = get_supabase_client()
+
+        # 1. Fetch Threshold from settings (Fallback to 14 days)
+        threshold_days = 14
+        try:
+            res_settings = supabase.table("archon_settings").select("value").eq("key", "STALE_LEAD_THRESHOLD_DAYS").execute()
+            if res_settings.data:
+                threshold_days = int(res_settings.data[0]["value"])
+        except Exception:
+            pass
+
+        cutoff_date = (datetime.now(UTC) - timedelta(days=threshold_days)).isoformat()
+        logger.info(f"🛡️ Sentinel: Scanning for leads updated before {cutoff_date}")
+
+        # 2. Find Stale Leads (NOT won/converted)
+        res = (
+            supabase.table("leads")
+            .select("id, company_name, updated_at, enrichment_score, status")
+            .lt("updated_at", cutoff_date)
+            .not_.in_("status", ["won", "converted"])
+            .limit(20)
+            .execute()
+        )
+
+        stale_leads = res.data or []
+        if not stale_leads:
+            logger.info("🛡️ Clockwork: No stale leads found.")
+            return
+
+        for lead in stale_leads:
+            # Avoid spam: Check if alert exists within last 7 days
+            seven_days_ago = (datetime.now(UTC) - timedelta(days=7)).isoformat()
+            existing = supabase.table("archon_logs").select("id")\
+                .eq("source", "sentinel")\
+                .eq("level", "ALERT")\
+                .gt("created_at", seven_days_ago)\
+                .filter("details->>lead_id", "eq", str(lead["id"]))\
+                .execute()
+
+            if not existing.data:
+                lead_updated = datetime.fromisoformat(lead["updated_at"].replace('Z', '+00:00'))
+                days_stale = (datetime.now(UTC) - lead_updated).days
+
+                alert_payload = {
+                    "source": "sentinel",
+                    "level": "ALERT",
+                    "message": f"Stale Lead Risk: {lead['company_name']} ({days_stale} days inactive)",
+                    "details": {
+                        "type": "stale_lead",
+                        "lead_id": lead["id"],
+                        "company": lead["company_name"],
+                        "days_stale": days_stale
+                    }
+                }
+                supabase.table("archon_logs").insert(alert_payload).execute()
+                logger.info(f"🛡️ Sentinel: Created alert for {lead['company_name']}")
+
+    except Exception as e:
+        logger.error(f"💥 Clockwork: Business Sentinel Failed: {e}")

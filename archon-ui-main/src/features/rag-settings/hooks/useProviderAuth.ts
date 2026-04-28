@@ -64,12 +64,12 @@ export const useProviderAuth = (ragSettings: RagSettingsType) => {
   // 30s Automatic Refresh
   useEffect(() => {
     const interval = setInterval(() => {
-      if (Object.keys(ragSettings).length > 0) {
+      if (ragSettings.LLM_PROVIDER) {
         void reloadApiCredentials();
       }
     }, 30000);
     return () => clearInterval(interval);
-  }, [ragSettings, reloadApiCredentials]);
+  }, [ragSettings.LLM_PROVIDER, reloadApiCredentials]);
 
   // Periodic Connection Testing (60s)
   useEffect(() => {

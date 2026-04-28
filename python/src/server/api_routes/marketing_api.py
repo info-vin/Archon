@@ -205,7 +205,8 @@ async def get_marketing_intelligence(current_user: dict = Depends(get_current_us
 @router.post("/knowledge/seed")
 async def seed_knowledge_base(current_user: dict = Depends(requires_permission(CONTENT_PUBLISH))):
     """Admin triggers the physical knowledge seeding process."""
-    service = MarketingService()
+    from ..services.system.seeding_service import SeedingService
+    service = SeedingService()
     return await service.seed_knowledge()
 
 

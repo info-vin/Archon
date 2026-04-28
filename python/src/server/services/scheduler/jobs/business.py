@@ -63,8 +63,12 @@ Use the tool to save this blog post as a DRAFT."""
             logger.warning("Clockwork: No projects found to attach marketing task.")
             return
 
+        # Physical Parity: Get real UUID for the agent (Anti-22P02)
+        from server.services.agent_registry import get_agent_uuid
+        market_bot_uuid = get_agent_uuid("market-bot") or "ai-market-bot"
+
         success, tr = await task_service.create_task(
-            project_id=p_res.data[0]["id"], title=task_title, description=task_desc, assignee_id="ai-market-bot"
+            project_id=p_res.data[0]["id"], title=task_title, description=task_desc, assignee_id=market_bot_uuid
         )
         if success:
             logger.info(f"✍️ Clockwork: Created Market Report task {tr['task']['id']}. Dispatching Bob...")

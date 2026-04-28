@@ -79,12 +79,20 @@ class StatsService:
     async def get_business_risks(self) -> list[dict[str, Any]]:
         return await self.performance.get_business_risks()
 
+    _health_cache: dict[str, Any] | None = None
+    _health_cache_time: datetime | None = None
+
     async def get_system_health_overview(self) -> dict[str, Any]:
         """Consolidated health and performance overview for Admin (1:1 Restoration)."""
         try:
+            now = datetime.now(UTC)
+            # Physical Cache Gate: Prevent Charlie's dashboard from DDOSing the RAG DB (Gap-046)
+            if StatsService._health_cache and StatsService._health_cache_time and (now - StatsService._health_cache_time) < timedelta(minutes=5):
+                return StatsService._health_cache
+
             from ..health_service import HealthService
             rag_health = await HealthService().check_rag_integrity()
-            one_day_ago = (datetime.now(UTC) - timedelta(hours=24)).isoformat()
+            one_day_ago = (now - timedelta(hours=24)).isoformat()
 
             # 1. Error Count
             error_res = self.supabase.table("archon_logs").select("id", count="exact").eq("level", "ERROR").gt("created_at", one_day_ago).execute()
@@ -95,7 +103,7 @@ class StatsService:
             total_cost_24h = sum(float(r.get("cost_usd", 0)) for r in (cost_res.data or []))
 
             # 3. Active Agents
-            one_hour_ago = (datetime.now(UTC) - timedelta(hours=1)).isoformat()
+            one_hour_ago = (now - timedelta(hours=1)).isoformat()
             logs_res = self.supabase.table("archon_logs").select("source").gt("created_at", one_hour_ago).execute()
             active_sources = {log["source"] for log in (logs_res.data or [])}
 
@@ -111,16 +119,20 @@ class StatsService:
                 is_active = agent["id"] in active_sources or any(agent["id"] in s.lower() for s in active_sources)
                 active_agents.append({**agent, "status": "active" if is_active else "standby"})
 
-            return {
+            result = {
                 "status": "healthy" if rag_health.get("status") == "healthy" and error_count < 10 else "degraded",
                 "rag": rag_health,
                 "errors_24h": error_count,
                 "active_agents": active_agents,
                 "cost_24h": round(total_cost_24h, 4),
-                "timestamp": datetime.now(UTC).isoformat(),
+                "timestamp": now.isoformat(),
                 "integrity_score": rag_health.get("score", 0),
                 "knowledge_stats": {"total_nodes": rag_health.get("details", {}).get("total_sources", 0)},
             }
+
+            StatsService._health_cache = result
+            StatsService._health_cache_time = now
+            return result
         except Exception as e:
             logger.error(f"StatsService: Overview failed: {e}")
             return {"status": "error", "error": str(e)}

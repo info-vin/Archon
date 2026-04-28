@@ -66,8 +66,26 @@ const TeamManagementPage: React.FC = () => {
                 )}
 
                 {loading ? (
-                    <div className="flex justify-center p-12">
-                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {[1, 2, 3].map((i) => (
+                            <div key={i} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden animate-pulse min-h-[250px]">
+                                <div className="h-2 bg-gray-200"></div>
+                                <div className="p-6">
+                                    <div className="flex items-start gap-4">
+                                        <div className="w-16 h-16 bg-gray-200 rounded-xl shrink-0"></div>
+                                        <div className="flex-1 space-y-3 py-1">
+                                            <div className="h-5 bg-gray-200 rounded w-3/4"></div>
+                                            <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                                            <div className="h-4 bg-gray-200 rounded-full w-16 mt-2"></div>
+                                        </div>
+                                    </div>
+                                    <div className="mt-8 space-y-4">
+                                        <div className="flex gap-3 items-center"><div className="w-4 h-4 rounded-full bg-gray-200"></div><div className="h-3 bg-gray-200 rounded w-full"></div></div>
+                                        <div className="flex gap-3 items-center"><div className="w-4 h-4 rounded-full bg-gray-200"></div><div className="h-3 bg-gray-200 rounded w-2/3"></div></div>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

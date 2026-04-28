@@ -18,7 +18,7 @@ logger = get_logger(__name__)
 class VisitLogService(BaseRepository):
     """
     Visit Log Service - Business logic for tracking customer interactions.
-    Restored with Voice-to-Task (GAP-009) and aligned with 0413 SDK patterns.
+    Restored with Voice-to-Task (GAP-009) and aligned with 04-27 Hardening.
     """
     def __init__(self, supabase_client=None):
         super().__init__(supabase_client or get_supabase_client())
@@ -33,11 +33,10 @@ class VisitLogService(BaseRepository):
 
     async def _process_voice_with_ai(self, audio_content: bytes, mime_type: str) -> tuple[str, str, list[str]]:
         """
-        Processes audio using official google-genai SDK (Phase 4.6.39 pattern).
-        Returns: (transcript, summary, tasks)
+        Processes audio using official google-genai SDK.
+        Supports large files via polling (Physical Restoration of Apr 16 stability).
         """
         try:
-            # 1. Get Credentials
             api_key = await credential_service.get_credential("GEMINI_API_KEY")
             if not api_key:
                 logger.error("VisitLogService: GEMINI_API_KEY missing.")
@@ -48,34 +47,18 @@ class VisitLogService(BaseRepository):
 
             client = genai.Client(api_key=api_key)
 
-            # 2. Upload to Files API (Restored Phase 4.6.46: 40c92ce)
             with tempfile.NamedTemporaryFile(suffix=".mp3", delete=False) as tmp:
                 tmp.write(audio_content)
                 tmp_path = tmp.name
 
             try:
-                # 1. Upload the file
-                uploaded_file = client.files.upload(path=tmp_path)
-                logger.info(f"VisitLogService: Uploaded file {uploaded_file.name}. Polling for ACTIVE state...")
-
-                # 2. Wait for processing (ACTIVE state)
-                import asyncio
-                max_retries = 30
-                poll_interval = 2
-
-                file_info = client.files.get(name=uploaded_file.name)
-                for _ in range(max_retries):
-                    if file_info.state.name == "ACTIVE":
-                        break
-                    elif file_info.state.name == "FAILED":
-                        raise Exception("File processing failed on Google servers.")
-
-                    logger.info(f"VisitLogService: File state is {file_info.state.name}, waiting...")
-                    await asyncio.sleep(poll_interval)
-                    file_info = client.files.get(name=uploaded_file.name)
-
-                if file_info.state.name != "ACTIVE":
-                    raise Exception("Timeout waiting for audio processing.")
+                # 1. Industrialized Upload (Supports Alice's 20MB+ field recordings)
+                from ..utils.google_storage import GoogleStorageHandler
+                file_info = await GoogleStorageHandler.upload_and_wait(
+                    client=client,
+                    path=tmp_path,
+                    display_name="Visit Log Audio"
+                )
 
                 sys_prompt = prompt_service.get_prompt("VOICE_TRANSCRIPTION", (
                     "你是一位專業的業務助理。請準確地將拜訪錄音轉錄為繁體中文逐字稿，"
@@ -83,40 +66,37 @@ class VisitLogService(BaseRepository):
                     "{'transcript': '...', 'summary': '...', 'tasks': ['...']}"
                 ))
 
+                logger.info(f"VisitLogService: Realizing GAP-009 using model {model_name}...")
                 response = await client.aio.models.generate_content(
                     model=model_name,
                     contents=[file_info, sys_prompt],
                     config=types.GenerateContentConfig(response_mime_type="application/json")
                 )
+
+                result = json.loads(response.text)
+                return (
+                    result.get("transcript", ""),
+                    result.get("summary", "音訊處理完成。"),
+                    result.get("tasks", [])
+                )
             finally:
                 if os.path.exists(tmp_path):
                     os.remove(tmp_path)
 
-            result = json.loads(response.text)
-            return (
-                result.get("transcript", ""),
-                result.get("summary", "音訊處理完成。"),
-                result.get("tasks", [])
-            )
         except Exception as e:
             logger.error(f"VisitLogService: AI processing crashed: {e}")
             return f"[AI Error: {e}]", "System error during transcription.", []
 
     async def create_log(self, data: dict, audio_file: Any = None) -> tuple[bool, Any]:
-        """
-        Creates a visit log and automatically triggers Task Generation (GAP-009).
-        """
         transcript = ""
         summary = data.get("summary", "No audio provided.")
         tasks: list[str] = []
 
         if audio_file:
-            logger.info("VisitLogService: Processing audio file...")
             audio_content = await audio_file.read()
             mime_type = audio_file.content_type or "audio/webm"
             transcript, summary, tasks = await self._process_voice_with_ai(audio_content, mime_type)
 
-        # 1. Insert Visit Log
         log_payload = {
             "user_id": data.get("user_id"),
             "customer_id": data.get("customer_id"),
@@ -136,68 +116,34 @@ class VisitLogService(BaseRepository):
         if not success or not res:
             return False, res
 
-        # res is typically a list from Supabase PostgREST
         created_log = res[0] if isinstance(res, list) and len(res) > 0 else res
-        visit_id = created_log.get("id")
 
-        # 2. Automated Task Dispatch (Phase 4.6.45: Robust Discovery)
+        # Automated Task Dispatch (Phase 4.6.46 Hardened)
         try:
             from src.server.services.projects.task_service import task_service
-
-            # Strategy: 1. Try title matching 'Ops' 2. Fallback
-            project_id = None
-
-            # Try fuzzy match 'Ops' first to avoid hard 'Field Ops' constraint
             proj_res = self.supabase_client.table("archon_projects").select("id").ilike("title", "%Ops%").limit(1).execute()
-            if proj_res.data:
-                project_id = proj_res.data[0]["id"]
+            project_id = proj_res.data[0]["id"] if proj_res.data else None
 
-            if not project_id:
-                # Fallback to any active project
-                fallback = self.supabase_client.table("archon_projects").select("id").limit(1).execute()
-                project_id = fallback.data[0]["id"] if fallback.data else None
-
-            if project_id and visit_id:
+            if project_id and created_log.get("id"):
                 entity_name = data.get("company_name") or "客戶"
                 task_title = f"[Field Ops] 追蹤: {entity_name} - {summary[:30]}..."
-                task_desc = (
-                    f"**由語音日誌自動產生**\n\n"
-                    f"**逐字稿:**\n{transcript}\n\n"
-                    f"**AI 摘要:**\n{summary}\n\n"
-                    f"**拜訪地點:** {log_payload['location_address'] or '未提供'}"
-                )
-
                 await task_service.create_task(
                     project_id=project_id,
                     title=task_title,
-                    description=task_desc,
+                    description=f"**逐字稿:**\n{transcript}\n\n**摘要:**\n{summary}",
                     assignee_id=data.get("user_id"),
-                    sources=[{"type": "visit_log", "id": str(visit_id)}]
+                    sources=[{"type": "visit_log", "id": str(created_log['id'])}]
                 )
-                logger.info(f"VisitLogService: Successfully dispatched auto-task for log {visit_id}")
         except Exception as task_err:
-            logger.error(f"VisitLogService: Auto-task dispatch failed: {task_err}")
+            logger.error(f"VisitLogService: Auto-task failed: {task_err}")
 
         return True, created_log
 
     async def get_attendance_status(self, user_id: str) -> tuple[bool, Any]:
-        """Fetches the current attendance status for a user."""
         def _query():
-            return (
-                self.supabase_client.table("attendance_logs")
-                .select("*")
-                .eq("user_id", user_id)
-                .order("clock_in_time", desc=True)
-                .limit(1)
-                .execute()
-            )
-
-        success, res = self.execute_query(_query, "Failed to fetch attendance status")
-        if not success or not res:
-            return True, {"status": "OFF_WORK", "clock_in_time": None}
-
+            return self.supabase_client.table("attendance_logs").select("*").eq("user_id", user_id).order("clock_in_time", desc=True).limit(1).execute()
+        success, res = self.execute_query(_query, "Failed to fetch status")
         data: list[Any] = res if isinstance(res, list) else []
         return True, data[0] if len(data) > 0 else {"status": "OFF_WORK", "clock_in_time": None}
 
-# Singleton export
 visit_log_service = VisitLogService()

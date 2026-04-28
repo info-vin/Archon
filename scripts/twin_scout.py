@@ -180,6 +180,10 @@ async def inspect_and_analyze(pg, p_config, reality_map, client, target_model, m
         return {"name": name, "analysis": f"Critical Failure: {e}"}
 
 async def run_scout_session():
+    # Phase 4.6.46 Hardening: Wait for backend hot-reload stability
+    print("⏳ [Scout] Cooling down 15s for backend stability (Anti-503)...")
+    await asyncio.sleep(15)
+    
     args = parse_args()
     is_headless = args.headless.lower() == "true"
     if not await initialize_services(): return

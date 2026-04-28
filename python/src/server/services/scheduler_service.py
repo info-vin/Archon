@@ -172,10 +172,10 @@ class SchedulerService:
         await business.analyze_token_usage()
 
     async def _run_business_sentinel(self):
-        await business.run_business_sentinel()
+        await patrol.run_business_sentinel()
 
     async def run_business_sentinel(self):
-        await business.run_business_sentinel()
+        await patrol.run_business_sentinel()
 
     async def _run_daily_market_report(self):
         await business.run_daily_market_report()
