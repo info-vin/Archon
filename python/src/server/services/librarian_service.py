@@ -8,6 +8,7 @@ from ..services.source_management_service import (
     extract_source_summary,
     update_source_info,
 )
+from .shared_constants import AgentUUIDs
 from ..utils import get_supabase_client
 
 logger = get_logger(__name__)
@@ -146,7 +147,7 @@ class LibrarianService:
                         "change_type": "create",
                         "change_summary": f"Archived generated pitch for {company}",
                         "content": {"source_id": source_id, "company": company, "job": job_title},
-                        "created_by": "ai-librarian",
+                        "created_by": AgentUUIDs.LIBRARIAN,
                         "version_number": 1,
                     }
                 ).execute()
@@ -245,7 +246,7 @@ class LibrarianService:
                         "change_type": "create",
                         "change_summary": f"Archived research for: {query}",
                         "content": {"source_id": source_id, "query": query, "refs_count": len(references)},
-                        "created_by": "ai-librarian",
+                        "created_by": AgentUUIDs.LIBRARIAN,
                         "version_number": 1,
                     }
                 ).execute()
@@ -338,7 +339,7 @@ class LibrarianService:
                         "change_type": "create",
                         "change_summary": f"Indexed local file: {file_name}",
                         "content": {"source_id": source_id, "file": file_name, "path": file_path},
-                        "created_by": "ai-librarian",
+                        "created_by": AgentUUIDs.LIBRARIAN,
                         "version_number": 1,
                     }
                 ).execute()

@@ -6,6 +6,7 @@ Handles reclamation of stuck tasks and dispatching of recurring tasks.
 from datetime import UTC, datetime, timedelta
 
 from server.config.logfire_config import get_logger
+from server.services.shared_constants import AgentUUIDs
 from server.utils import get_supabase_client
 
 logger = get_logger(__name__)
@@ -62,7 +63,7 @@ async def run_task_dispatcher():
         for task in tasks:
             task_id = task["id"]
             logger.info(f"📡 Clockwork: Dispatching task '{task['title']}' (ID: {task_id})")
-            await agent_service.run_agent_task(task_id=task_id, agent_id=task.get("assignee_id", "ai-librarian"))
+            await agent_service.run_agent_task(task_id=task_id, agent_id=task.get("assignee_id", AgentUUIDs.LIBRARIAN))
 
             # Record in Audit Log
             supabase.table("archon_logs").insert(

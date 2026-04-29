@@ -6,6 +6,7 @@ Handles leads, market reports, and token analysis.
 from datetime import UTC, datetime, timedelta
 
 from server.config.logfire_config import get_logger
+from server.services.shared_constants import AgentUUIDs
 from server.utils import get_supabase_client
 
 logger = get_logger(__name__)
@@ -64,11 +65,11 @@ Use the tool to save this blog post as a DRAFT."""
             return
 
         success, tr = await task_service.create_task(
-            project_id=p_res.data[0]["id"], title=task_title, description=task_desc, assignee_id="ai-market-bot"
+            project_id=p_res.data[0]["id"], title=task_title, description=task_desc, assignee_id=AgentUUIDs.MARKET_BOT
         )
         if success:
             logger.info(f"✍️ Clockwork: Created Market Report task {tr['task']['id']}. Dispatching Bob...")
-            await agent_service.run_agent_task(task_id=tr["task"]["id"], agent_id="ai-market-bot")
+            await agent_service.run_agent_task(task_id=tr["task"]["id"], agent_id=AgentUUIDs.MARKET_BOT)
     except Exception as e:
         logger.error(f"💥 Clockwork: Bob market report generation failed: {e}")
 

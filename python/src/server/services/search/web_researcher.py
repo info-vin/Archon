@@ -1,7 +1,7 @@
 # python/src/server/services/search/web_researcher.py
-import logging
 from google import genai
 from google.genai import types
+
 from ...config.logfire_config import get_logger
 from ...config.model_ssot import SYSTEM_MODELS
 
@@ -25,7 +25,7 @@ class WebResearcher:
 
             client = genai.Client(api_key=api_key)
             google_search_tool = types.Tool(google_search=types.GoogleSearch())
-            
+
             response = client.models.generate_content(
                 model=SYSTEM_MODELS["DEFAULT_TEXT"],
                 contents=f"Research: {query}",
@@ -33,9 +33,11 @@ class WebResearcher:
             )
 
             content = ""
-            if response.candidates:
-                content = "".join([p.text for p in response.candidates[0].content.parts if p.text])
-            
+            if response.candidates and response.candidates[0].content:
+                parts = response.candidates[0].content.parts
+                if parts:
+                    content = "".join([p.text for p in parts if p.text])
+
             if not content:
                 return "", ""
 

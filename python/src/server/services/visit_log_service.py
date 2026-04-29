@@ -1,7 +1,7 @@
 import json
 import os
 import tempfile
-from typing import Any
+from typing import Any, cast
 
 from google import genai
 from google.genai import types
@@ -54,7 +54,7 @@ class VisitLogService(BaseRepository):
                 tmp_path = tmp.name
 
             try:
-                uploaded_file = client.files.upload(path=tmp_path)
+                uploaded_file = client.files.upload(file=tmp_path)
 
                 sys_prompt = prompt_service.get_prompt("VOICE_TRANSCRIPTION", (
                     "你是一位專業的業務助理。請準確地將拜訪錄音轉錄為繁體中文逐字稿，"
@@ -64,14 +64,14 @@ class VisitLogService(BaseRepository):
 
                 response = await client.aio.models.generate_content(
                     model=model_name,
-                    contents=[uploaded_file, sys_prompt],
+                    contents=cast(Any, [uploaded_file, sys_prompt]),
                     config=types.GenerateContentConfig(response_mime_type="application/json")
                 )
             finally:
                 if os.path.exists(tmp_path):
                     os.remove(tmp_path)
 
-            result = json.loads(response.text)
+            result = json.loads(cast(str, response.text))
             return (
                 result.get("transcript", ""),
                 result.get("summary", "音訊處理完成。"),

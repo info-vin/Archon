@@ -292,7 +292,7 @@ class AgentService:
             )
 
         from .shared_constants import AgentUUIDs
-        system_bots = ["ai-po-bot", "ai-clockwork", AgentUUIDs.PO_BOT, AgentUUIDs.CLOCKWORK]
+        system_bots = [AgentUUIDs.PO_BOT, AgentUUIDs.CLOCKWORK]
 
         if not user_role or user_role in ["admin", "system_admin", "manager"]:
             for agent in all_agents:
@@ -311,9 +311,9 @@ class AgentService:
             if config:
                 agent["tools"] = config.get("tools", [])
                 agent["description"] = config.get("system_prompt", "").split("\n")[0]
-            if user_role == "sales" and agent_id in ["ai-market-bot", AgentUUIDs.MARKET_BOT]:
+            if user_role == "sales" and agent_id == AgentUUIDs.MARKET_BOT:
                 filtered.append(agent)
-            elif user_role == "marketing" and agent_id in ["ai-market-bot", "ai-librarian", AgentUUIDs.MARKET_BOT, AgentUUIDs.LIBRARIAN]:
+            elif user_role == "marketing" and agent_id in [AgentUUIDs.MARKET_BOT, AgentUUIDs.LIBRARIAN]:
                 filtered.append(agent)
         return filtered
 
@@ -337,7 +337,7 @@ class AgentService:
         # We derive metadata from the task context
         meta = {
             "lint_passed": "Success" in output_message,  # Heuristic for self-healing
-            "required_terms": ["Archon"] if agent_id == "ai-librarian" else [],
+            "required_terms": ["Archon"] if agent_id == AgentUUIDs.LIBRARIAN else [],
         }
 
         score = stats_service.calculate_ai_score(output_message, meta)
@@ -377,7 +377,7 @@ class AgentService:
 
         from .shared_constants import AgentUUIDs
         # Direct Pipeline Check for Librarian
-        if agent_id in ["ai-librarian", AgentUUIDs.LIBRARIAN] and task_data.get("crawler_target_id"):
+        if agent_id == AgentUUIDs.LIBRARIAN and task_data.get("crawler_target_id"):
             description = task_data.get("description", "").strip()
             # If description is empty, bypass LLM and trigger crawling directly
             if not description or description.lower() in ["periodic sync", "knowledge sync"]:

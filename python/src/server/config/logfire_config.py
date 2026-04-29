@@ -26,7 +26,7 @@ try:
 
     LOGFIRE_AVAILABLE = True
 except ImportError:
-    logfire = None
+    logfire: Any = None  # type: ignore
     LOGFIRE_AVAILABLE = False
 
 # Global state

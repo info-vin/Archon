@@ -7,11 +7,12 @@ based on observed errors in archon_logs.
 import logging
 from typing import Any
 
-import aiofiles  # type: ignore[import-untyped]
+import aiofiles
 
 from ...utils import get_supabase_client
 from ..llm_provider_service import get_llm_client
 from ..propose_change_service import ProposeChangeService
+from ..shared_constants import AgentUUIDs
 
 logger = logging.getLogger(__name__)
 
@@ -79,7 +80,7 @@ Return ONLY the full corrected file content.
                 file_path=file_path,
                 new_content=new_content,
                 summary=f"Cognitive Self-Tuning: Optimization for {agent_name} based on error {log_id}",
-                user_id="ai-dev-bot"
+                user_id=AgentUUIDs.DEV_BOT
             )
 
             return {"success": True, "proposal_id": proposal["id"], "file_path": file_path}

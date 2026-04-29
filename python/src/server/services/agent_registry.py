@@ -104,10 +104,6 @@ def get_agent_config(agent_id: str) -> dict | None:
     """
     from .shared_constants import AgentUUIDs
     mapping = {
-        "ai-market-bot": "market-bot",
-        "ai-librarian": "librarian",
-        "ai-po-bot": "po-bot",
-        "ai-dev-bot": "dev-bot",
         AgentUUIDs.MARKET_BOT: "market-bot",
         AgentUUIDs.LIBRARIAN: "librarian",
         AgentUUIDs.PO_BOT: "po-bot",

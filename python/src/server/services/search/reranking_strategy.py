@@ -15,7 +15,7 @@ try:
 
     CROSSENCODER_AVAILABLE = True
 except ImportError:
-    CrossEncoder = None
+    CrossEncoder: Any = None  # type: ignore
     CROSSENCODER_AVAILABLE = False
 
 from ...config.logfire_config import get_logger, safe_span

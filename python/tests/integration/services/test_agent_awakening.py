@@ -11,14 +11,14 @@ class TestAgentAwakening:
     async def test_agent_registry_load(self):
         """Verify Registry loads correct config for known agents."""
         # 1. MarketBot
-        market_config = get_agent_config("ai-market-bot")
+        market_config = get_agent_config("f3f1c1cc-29c9-4036-bd86-a4a58edad237")
         assert market_config is not None
         assert market_config["name"] == "Archon MarketBot"
         assert "search_job_market" in market_config["tools"]
         assert "Marketing Content Writer" in market_config["system_prompt"] or "Blog" in market_config["system_prompt"]
 
         # 2. Librarian
-        lib_config = get_agent_config("ai-librarian")
+        lib_config = get_agent_config("579f988b-4b92-49b4-956a-28d4810eeaad")
         assert lib_config is not None
         assert lib_config["name"] == "Archon Librarian"
         assert "rag_search_knowledge_base" in lib_config["tools"]
@@ -61,7 +61,7 @@ class TestAgentAwakening:
         mock_client_instance.chat.completions.create.return_value = mock_response
 
         # Execute Run (MarketBot)
-        await service.run_agent_task(task_id="task_123", agent_id="ai-market-bot")
+        await service.run_agent_task(task_id="task_123", agent_id="f3f1c1cc-29c9-4036-bd86-a4a58edad237")
 
         # Verify:
         # 1. Task was fetched
@@ -74,7 +74,7 @@ class TestAgentAwakening:
         system_msg = messages[0]
         assert system_msg["role"] == "system"
         # Check if system prompt matches registry
-        config = get_agent_config("ai-market-bot")
+        config = get_agent_config("f3f1c1cc-29c9-4036-bd86-a4a58edad237")
         assert system_msg["content"] == config["system_prompt"]
 
         # 3. Tools were passed

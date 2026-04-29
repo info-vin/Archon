@@ -1,6 +1,7 @@
 # python/src/server/services/shared_constants.py
 from dataclasses import dataclass
 
+
 @dataclass(frozen=True)
 class AgentUUIDs:
     """

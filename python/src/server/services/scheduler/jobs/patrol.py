@@ -6,6 +6,8 @@ Handles system health, log monitoring, and cleanup.
 from datetime import UTC, datetime, timedelta
 
 from server.config.logfire_config import get_logger
+from server.services.shared_constants import AgentUUIDs
+from server.utils import get_supabase_client
 
 logger = get_logger(__name__)
 
@@ -149,7 +151,7 @@ async def cleanup_system_probes():
         res_versions = (
             supabase.table("archon_document_versions")
             .delete()
-            .eq("created_by", "ai-librarian")
+            .eq("created_by", AgentUUIDs.LIBRARIAN)
             .like("change_summary", "%System Probe%")
             .lt("created_at", cutoff_time)
             .execute()

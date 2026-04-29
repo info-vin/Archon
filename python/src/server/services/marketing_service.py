@@ -40,12 +40,12 @@ class MarketingService(BaseRepository):
     async def list_leads(self, user_id: str | None = None, role: str | None = None) -> list[dict]:
         def _query():
             q = self.supabase_client.table("leads").select("*")
-            
+
             # Role-based physical filtering
             if role == "sales" and user_id:
                 # Alice sees her assigned leads OR unassigned leads (The Public Pool)
                 q = q.or_(f"assigned_sales_id.eq.{user_id},assigned_sales_id.is.null")
-            
+
             return q.order("created_at", desc=True).execute()
 
         success, res = self.execute_query(_query, "Failed to fetch leads")

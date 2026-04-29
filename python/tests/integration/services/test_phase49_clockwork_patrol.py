@@ -34,7 +34,7 @@ async def test_run_log_patrol_creates_task():
 
     mock_task_service = AsyncMock()
     # Ensure it returns the tuple (success, result) as expected by the real service signature
-    mock_task_service.create_task.return_value = (True, {"task": {"id": "task-repair-1", "assignee_id": "ai-dev-bot"}})
+    mock_task_service.create_task.return_value = (True, {"task": {"id": "task-repair-1", "assignee_id": "bcb00484-30bd-46fb-9e39-84b2ec4ced31"}})
 
     mock_agent_service = AsyncMock()
 
@@ -56,7 +56,7 @@ async def test_run_log_patrol_creates_task():
         mock_agent_service.run_agent_task.assert_called_once()
         _, call_kwargs = mock_agent_service.run_agent_task.call_args
         assert call_kwargs.get("task_id") == "task-repair-1"
-        assert call_kwargs.get("agent_id") == "ai-dev-bot"
+        assert call_kwargs.get("agent_id") == "bcb00484-30bd-46fb-9e39-84b2ec4ced31"
 
 
 @pytest.mark.asyncio
