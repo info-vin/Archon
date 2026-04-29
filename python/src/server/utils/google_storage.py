@@ -4,8 +4,6 @@ import asyncio
 import logging
 from typing import Any
 
-from google import genai
-
 logger = logging.getLogger(__name__)
 
 class GoogleStorageHandler:
@@ -15,7 +13,7 @@ class GoogleStorageHandler:
     """
 
     @staticmethod
-    async def upload_and_wait(client: genai.Client, path: str, display_name: str = "Audio File") -> Any:
+    async def upload_and_wait(client: Any, path: str, display_name: str = "Audio File") -> Any:
         """
         Uploads a file and polls until its state is 'ACTIVE'.
         Ensures resilience for Alice's long field recordings.

@@ -9,7 +9,7 @@ import logging
 import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Any, TypeVar, cast
+from typing import Any, TypeVar
 
 from pydantic import BaseModel
 from pydantic_ai import Agent
@@ -247,7 +247,7 @@ class BaseAgent[DepsT, OutputT](ABC):
             )
             self.logger.info(f"Agent {self.name} completed successfully")
             # PydanticAI returns a RunResult with data attribute
-            return cast(OutputT, result.data)
+            return result.data
         except TimeoutError as e:
             self.logger.error(f"Agent {self.name} timed out after 120 seconds")
             raise Exception(f"Agent {self.name} operation timed out - taking too long to respond") from e

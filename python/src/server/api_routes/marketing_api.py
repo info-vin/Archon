@@ -45,25 +45,8 @@ async def search_jobs(keyword: str = Query(...), limit: int = 10, current_user: 
 
 @router.get("/leads")
 async def list_leads(current_user: dict = Depends(get_current_user)):
-    u_role = current_user.get("role", "member").lower()
-    u_id = current_user.get("id")
-
-    # Physical Database Query (SEC-001)
-    from ..utils import get_supabase_client
-    supabase = get_supabase_client()
-
-    if u_role in ["system_admin", "admin"]:
-        res = supabase.table("leads").select("*").order("created_at", desc=True).execute()
-        return res.data or []
-
-    if u_role == "sales":
-        # Alice only sees her 42 leads
-        res = supabase.table("leads").select("*").eq("assigned_sales_id", u_id).order("created_at", desc=True).execute()
-        return res.data or []
-
-    # Default for marketing
-    res = supabase.table("leads").select("*").order("created_at", desc=True).execute()
-    return res.data or []
+    service = MarketingService()
+    return await service.list_leads(user_id=str(current_user.get("id")), role=current_user.get("role", "member"))
 
 
 @router.post("/leads")
@@ -205,8 +188,7 @@ async def get_marketing_intelligence(current_user: dict = Depends(get_current_us
 @router.post("/knowledge/seed")
 async def seed_knowledge_base(current_user: dict = Depends(requires_permission(CONTENT_PUBLISH))):
     """Admin triggers the physical knowledge seeding process."""
-    from ..services.system.seeding_service import SeedingService
-    service = SeedingService()
+    service = MarketingService()
     return await service.seed_knowledge()
 
 

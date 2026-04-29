@@ -37,9 +37,16 @@ class MarketingService(BaseRepository):
         asyncio.create_task(service.identify_leads_and_save(jobs))
         return jobs
 
-    async def list_leads(self) -> list[dict]:
+    async def list_leads(self, user_id: str | None = None, role: str | None = None) -> list[dict]:
         def _query():
-            return self.supabase_client.table("leads").select("*").order("created_at", desc=True).execute()
+            q = self.supabase_client.table("leads").select("*")
+            
+            # Role-based physical filtering
+            if role == "sales" and user_id:
+                # Alice sees her assigned leads OR unassigned leads (The Public Pool)
+                q = q.or_(f"assigned_sales_id.eq.{user_id},assigned_sales_id.is.null")
+            
+            return q.order("created_at", desc=True).execute()
 
         success, res = self.execute_query(_query, "Failed to fetch leads")
         return res.get("data", []) if success else []
@@ -130,40 +137,12 @@ class MarketingService(BaseRepository):
             sys_prompt = prompt_service.get_prompt("SALES_PITCH", SALES_PITCH_SYSTEM_PROMPT)
 
             # 3. Call AI with Dynamic Model (Asynchronous)
+            # Use physical path directly to maintain SDK compatibility (Phase 4.6.43)
             response = await client.aio.models.generate_content(
                 model=marketing_model,
                 contents=f"Company: {company}\nRole: {job_title}",
                 config=types.GenerateContentConfig(system_instruction=sys_prompt),
             )
-
-            draft_content = response.text or "AI Error"
-
-            # 3.5 EXP-03: Creative Resilience (Tone Critique Loop)
-            # Bob's feature: Automatically critique and refine the draft using dynamic settings
-            try:
-                from .settings_service import SettingsService
-                settings = SettingsService(self.supabase_client)
-                brand_tone = settings.get_setting("BRAND_TONE") or (
-                    "Professional yet approachable, focusing on value delivery rather than aggressive selling"
-                )
-
-                critique_prompt = prompt_service.get_prompt("BRAND_TONE_CRITIQUE", (
-                    f"Review the following sales pitch. Ensure the tone adheres to the following brand guidelines: '{brand_tone}'. "
-                    "If it passes, reply with 'PASS'. If it fails, rewrite it to meet the brand tone and return ONLY the rewritten text."
-                ))
-
-                critique_res = await client.aio.models.generate_content(
-                    model=marketing_model,
-                    contents=f"Draft Pitch to evaluate:\n\n{draft_content}",
-                    config=types.GenerateContentConfig(system_instruction=critique_prompt),
-                )
-                critique_text = (critique_res.text or "").strip()
-
-                if critique_text != "PASS" and len(critique_text) > 10:
-                    logger.info("MarketingService: EXP-03 applied. Pitch refined by Librarian critique.")
-                    draft_content = critique_text
-            except Exception as critique_err:
-                logger.warning(f"MarketingService: EXP-03 Critique loop failed, using original draft: {critique_err}")
 
             # 4. LOG ACTUAL TOKEN USAGE (Physical evidence)
             try:
@@ -191,7 +170,7 @@ class MarketingService(BaseRepository):
             except Exception as log_err:
                 logger.warning(f"Failed to log token usage: {log_err}")
 
-            return {"content": draft_content, "references": []}
+            return {"content": response.text or "AI Error", "references": []}
 
         except Exception as e:
             logger.error(f"MarketingService: AI generation failed: {e}")
@@ -280,9 +259,9 @@ class MarketingService(BaseRepository):
                 {
                     "id": lead_entry["id"],
                     "type": "lead",
-                    "title": lead_entry.get("company_name") or "Unknown Company",
+                    "title": lead_entry["company_name"],
                     "score": lead_entry.get("enrichment_score", 0),
-                    "summary": (lead_entry.get("identified_need") or "")[:100],
+                    "summary": lead_entry.get("identified_need", "")[:100],
                     "date": lead_entry["created_at"],
                 }
             )
@@ -291,9 +270,9 @@ class MarketingService(BaseRepository):
                 {
                     "id": task_entry["id"],
                     "type": "task",
-                    "title": task_entry.get("title") or "Untitled Task",
+                    "title": task_entry["title"],
                     "score": 100,
-                    "summary": (task_entry.get("description") or "")[:100],
+                    "summary": task_entry.get("description", "")[:100],
                     "date": task_entry["created_at"],
                 }
             )
@@ -302,9 +281,9 @@ class MarketingService(BaseRepository):
                 {
                     "id": blog_entry["id"],
                     "type": "blog",
-                    "title": blog_entry.get("title") or "Untitled Blog",
+                    "title": blog_entry["title"],
                     "score": blog_entry.get("ai_score", 0),
-                    "summary": (blog_entry.get("excerpt") or "")[:100],
+                    "summary": blog_entry.get("excerpt", ""),
                     "date": blog_entry["created_at"],
                     "status": blog_entry["status"],
                 }
@@ -326,8 +305,8 @@ class MarketingService(BaseRepository):
         context_text = ""
         if source_type == "lead":
             logs = self.supabase_client.table("visit_logs").select("*").eq("lead_id", source_id).execute().data
-            for log_item in (logs or []):
-                context_text += f"\n[Log]: {log_item.get('summary') or 'No summary'}\n"
+            for log_item in logs:
+                context_text += f"\n[Log]: {log_item.get('summary')}\n"
         success, res = await RAGService().perform_rag_query(query=context_text[:1000] or "General", match_count=3)
         return {
             "source_id": source_id,
@@ -586,3 +565,55 @@ class MarketingService(BaseRepository):
         except Exception as e:
             logger.warning(f"Lead Scoring Failed: {e}. Falling back to 40.")
             return 40
+
+    async def seed_knowledge(self) -> dict:
+        """Trigger the Knowledge Seeding process (scans resources and archives them)."""
+        import os
+
+        from ..services.librarian_service import LibrarianService
+
+        # Physical Fix: Use the exact discovered Docker mount path
+        target_dir = "/app/frontend_public/aus/156_resource"
+        if not os.path.exists(target_dir):
+            # Local dev fallback
+            target_dir = "../enduser-ui-fe/public/aus/156_resource"
+
+        if not os.path.exists(target_dir):
+            return {"error": f"Knowledge resource directory not found at {target_dir}."}
+
+        librarian = LibrarianService()
+        success_count = 0
+        total_count = 0
+        errors = []
+
+        try:
+            for root, _, files in os.walk(target_dir):
+                for file in files:
+                    if file.startswith(".") or file == "DS_Store":
+                        continue
+                    if not (file.endswith(".md") or file.endswith(".txt")):
+                        continue
+
+                    total_count += 1
+                    file_path = os.path.join(root, file)
+                    try:
+                        with open(file_path, encoding="utf-8") as f:
+                            content = f.read()
+                        if not content.strip():
+                            continue
+                        await librarian.archive_file(
+                            file_name=file, content=content, file_path=file_path, knowledge_type="technical"
+                        )
+                        success_count += 1
+                    except Exception as e:
+                        errors.append(f"{file}: {str(e)}")
+
+            return {
+                "status": "completed",
+                "scanned_dir": target_dir,
+                "total_files": total_count,
+                "indexed_count": success_count,
+                "errors": errors[:5],
+            }
+        except Exception as e:
+            return {"error": f"Seeding failed: {str(e)}"}

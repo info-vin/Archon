@@ -285,24 +285,11 @@ class AgentService:
             return {"error": f"Failed to diagnose file: {e}"}
 
     async def get_assignable_agents(self, user_role: str | None = None) -> list[dict]:
-        from .stats_service import stats_service
-
         all_agents = []
-        rankings = await stats_service.get_agent_xp_stats()
-
         for role_name, agent_id in AI_AGENT_ROLES.items():
-            # Physical XP Injection (David's Governance)
-            agent_xp_info = next((r for r in rankings if r.get("agent_id") == agent_id), {})
-
-            all_agents.append({
-                "id": agent_id,
-                "name": role_name,
-                "role": role_name,
-                "tools": [],
-                "description": "AI Agent",
-                "xp": agent_xp_info.get("xp", 0),
-                "level": agent_xp_info.get("level", "Intern")
-            })
+            all_agents.append(
+                {"id": agent_id, "name": role_name, "role": role_name, "tools": [], "description": "AI Agent"}
+            )
 
         if not user_role or user_role in ["admin", "system_admin", "manager"]:
             for agent in all_agents:

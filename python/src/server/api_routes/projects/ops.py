@@ -141,23 +141,11 @@ async def list_tasks(
 ):
     u_role = current_user.get("role", "member").lower()
     u_id = current_user.get("id")
-    u_dept = current_user.get("department")
 
-    # Only system admins can bypass department isolation
-    is_admin = u_role in ["system_admin", "admin"]
-
-    # SEC-001: Strict Role-Based Filtering
-    if is_admin:
-        a_filter = assignee_id
-    elif u_role == "manager":
-        # Managers can filter by teammate, or see all if no ID provided
+    if u_role in ["system_admin", "admin", "manager"]:
         a_filter = assignee_id
     else:
-        # Members (Alice/Bob) are PHYSICALLY restricted to their own tasks
         a_filter = u_id
-
-    # If the user is admin or manager, they might see unassigned tasks
-    can_see_unassigned = is_admin or u_role == "manager"
 
     s, res = await TaskService().list_tasks(
         project_id=project_id if project_id and project_id.lower() != "all" else None,
@@ -165,37 +153,14 @@ async def list_tasks(
         include_closed=include_closed,
         exclude_large_fields=exclude_large_fields,
         assignee_id=a_filter,
-        include_unassigned=can_see_unassigned
+        include_unassigned=include_unassigned if u_role in ["admin", "manager"] else False,
     )
 
     data = cast(dict[str, Any], handle_service_result(s, res))
     tasks = data.get("tasks", [])
 
-    # Final Physical Filter: Managers only see people in their department
-    if u_role == "manager" and not is_admin:
-        from ...services.profile_service import ProfileService
-        _, profiles = ProfileService().list_full_profiles()
-        if isinstance(profiles, list):
-            dept_member_ids = [p["id"] for p in profiles if p.get("department") == u_dept]
-            # Include AI Agents in the view (as they work for all departments)
-            from src.server.services.shared_constants import AI_AGENT_ROLES
-            allowed_ids = set(dept_member_ids + list(AI_AGENT_ROLES.values()))
-            tasks = [t for t in tasks if t.get("assignee_id") in allowed_ids or t.get("assignee_id") is None]
-
-    if u_role not in ["system_admin", "admin"]:
-        from ...services.projects.project_service import ProjectService
-
-        # Fetch all projects the user is technically allowed to see
-        s_proj, res_proj = await ProjectService().list_projects(include_content=False, include_computed_status=False)
-        if s_proj and isinstance(res_proj, dict):
-            all_projs = res_proj.get("projects", [])
-            allowed_projs = RBACService().scope_projects(all_projs, current_user)
-            allowed_proj_ids = {p["id"] for p in allowed_projs}
-
-            # Filter the tasks to only those belonging to the allowed projects
-            tasks = [t for t in tasks if t.get("project_id") in allowed_proj_ids or not t.get("project_id")]
-
-    return {        "tasks": tasks[(page - 1) * per_page : page * per_page],
+    return {
+        "tasks": tasks[(page - 1) * per_page : page * per_page],
         "pagination": {
             "total": len(tasks),
             "page": page,

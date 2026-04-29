@@ -70,14 +70,6 @@ def ensure_test_environment():
     os.environ["ARCHON_SERVER_PORT"] = "8181"
     os.environ["ARCHON_MCP_PORT"] = "8051"
     os.environ["ARCHON_AGENTS_PORT"] = "8052"
-
-    # Reset singleton caches to prevent test pollution (Gap 4.6.44)
-    try:
-        from src.server.services.rbac_service import RBACService
-        RBACService._matrix_cache = None
-    except ImportError:
-        pass
-
     yield
 
 

@@ -63,12 +63,8 @@ Use the tool to save this blog post as a DRAFT."""
             logger.warning("Clockwork: No projects found to attach marketing task.")
             return
 
-        # Physical Parity: Get real UUID for the agent (Anti-22P02)
-        from server.services.agent_registry import get_agent_uuid
-        market_bot_uuid = get_agent_uuid("market-bot") or "ai-market-bot"
-
         success, tr = await task_service.create_task(
-            project_id=p_res.data[0]["id"], title=task_title, description=task_desc, assignee_id=market_bot_uuid
+            project_id=p_res.data[0]["id"], title=task_title, description=task_desc, assignee_id="ai-market-bot"
         )
         if success:
             logger.info(f"✍️ Clockwork: Created Market Report task {tr['task']['id']}. Dispatching Bob...")
@@ -87,12 +83,8 @@ async def analyze_token_usage():
         res = supabase.table("token_usage").select("input_tokens, output_tokens, cost_usd").gt("created_at", one_day_ago).execute()
         data = res.data or []
 
-        # PERFORMANCE: Replaced two sum() generators with single for loop pass
-        total_tokens = 0
-        total_cost = 0.0
-        for row in data:
-            total_tokens += row.get("input_tokens", 0) + row.get("output_tokens", 0)
-            total_cost += float(row.get("cost_usd", 0))
+        total_tokens = sum((row.get("input_tokens", 0) + row.get("output_tokens", 0)) for row in data)
+        total_cost = sum(float(row.get("cost_usd", 0)) for row in data)
 
         # 1. INFO Log
         logger.info(f"📊 Daily Token Analysis: {total_tokens} physical tokens, ${total_cost:.4f} USD.")
@@ -134,10 +126,10 @@ async def run_business_sentinel():
         threshold_days = 14
         # Physical Fix: Column name is 'setting_key', not 'key'
         res_settings = (
-            supabase.table("archon_settings").select("value").eq("key", "STALE_LEAD_THRESHOLD_DAYS").execute()
+            supabase.table("archon_settings").select("setting_value").eq("setting_key", "STALE_LEAD_THRESHOLD_DAYS").execute()
         )
         if res_settings.data:
-            threshold_days = int(res_settings.data[0]["value"])
+            threshold_days = int(res_settings.data[0]["setting_value"])
 
         cutoff_date = (datetime.now(UTC) - timedelta(days=threshold_days)).isoformat()
         logger.info(f"🛡️ Sentinel: Scanning for leads updated before {cutoff_date} (threshold={threshold_days}d)")
@@ -190,7 +182,7 @@ async def run_business_sentinel():
                 logger.info(f"🛡️ Sentinel: Created proactive alert for {lead['company_name']}")
 
         # 2. Content Bottlenecks (GAP-029)
-        forty_eight_hours_ago = (datetime.now(UTC) - timedelta(hours=1)).isoformat()
+        forty_eight_hours_ago = (datetime.now(UTC) - timedelta(hours=48)).isoformat()
         post_res = (
             supabase.table("blog_posts")
             .select("id, title, updated_at")
