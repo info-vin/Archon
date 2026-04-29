@@ -7,7 +7,6 @@ from datetime import UTC, datetime, timedelta
 
 from server.config.logfire_config import get_logger
 from server.services.shared_constants import AgentUUIDs
-from server.utils import get_supabase_client
 
 logger = get_logger(__name__)
 

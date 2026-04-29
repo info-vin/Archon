@@ -8,8 +8,8 @@ from ..services.source_management_service import (
     extract_source_summary,
     update_source_info,
 )
-from .shared_constants import AgentUUIDs
 from ..utils import get_supabase_client
+from .shared_constants import AgentUUIDs
 
 logger = get_logger(__name__)
 

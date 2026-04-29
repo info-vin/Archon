@@ -331,6 +331,7 @@ class AgentService:
         await self._run_general_agent_task(task_id, agent_id)
 
     async def _award_agent_xp(self, agent_id: str, task_data: dict, output_message: str):
+        from .shared_constants import AgentUUIDs
         from .stats_service import stats_service
 
         # Physical Scoring instead of random (Phase 4.6.15)
