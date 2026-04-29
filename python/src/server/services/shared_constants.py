@@ -5,7 +5,7 @@ from dataclasses import dataclass
 class AgentUUIDs:
     """
     Physical Source of Truth for AI Agent Identities (Phase 4.6.47 Grounded).
-    Used to eliminate hardcoded strings across the system.
+    Eliminates hardcoded strings while maintaining test stability.
     """
     MARKET_BOT = "f3f1c1cc-29c9-4036-bd86-a4a58edad237"
     LIBRARIAN = "579f988b-4b92-49b4-956a-28d4810eeaad"
@@ -14,7 +14,6 @@ class AgentUUIDs:
     CLOCKWORK = "e1bf7a99-44bf-44ce-a460-cb4e31e798f4"
 
 # Known AI agent roles that can be assigned tasks
-# Format: { "Display Name": "agent-id" }
 AI_AGENT_ROLES = {
     "MarketBot (Sales)": AgentUUIDs.MARKET_BOT,
     "Librarian (Knowledge)": AgentUUIDs.LIBRARIAN,
