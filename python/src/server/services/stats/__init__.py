@@ -98,6 +98,8 @@ class StatsService:
             one_hour_ago = (datetime.now(UTC) - timedelta(hours=1)).isoformat()
             logs_res = self.supabase.table("archon_logs").select("source").gt("created_at", one_hour_ago).execute()
             active_sources = {log["source"] for log in (logs_res.data or [])}
+            # PERFORMANCE: Extract string conversion outside loop and unroll nested generator
+            active_sources_lower = [s.lower() for s in active_sources]
 
             agents_manifest = [
                 {"id": "clockwork", "name": "Clockwork", "role": "Scheduler"},
@@ -108,7 +110,13 @@ class StatsService:
 
             active_agents = []
             for agent in agents_manifest:
-                is_active = agent["id"] in active_sources or any(agent["id"] in s.lower() for s in active_sources)
+                agent_id = agent["id"]
+                is_active = agent_id in active_sources
+                if not is_active:
+                    for s_lower in active_sources_lower:
+                        if agent_id in s_lower:
+                            is_active = True
+                            break
                 active_agents.append({**agent, "status": "active" if is_active else "standby"})
 
             return {
