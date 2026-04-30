@@ -340,6 +340,7 @@ export const LeadsCardStack: React.FC<LeadsCardStackProps> = ({ leads, onSwipeRi
                     disabled={history.length === 0}
                     className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center shadow-sm text-gray-500 hover:bg-gray-200 disabled:opacity-30 transition-all"
                     title="Undo Last Swipe"
+                    aria-label="Undo Last Swipe"
                 >
                     <RefreshCwIcon className="w-5 h-5 -scale-x-100" />
                 </button>

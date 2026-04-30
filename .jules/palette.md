@@ -25,3 +25,6 @@
 ## 2024-05-18 - Expanding Generic Component Props for Accessibility
 **Learning:** Reusable UI components like custom Checkboxes and Toggles often encapsulate standard HTML elements but omit crucial accessibility props (like `aria-label`). If a developer uses `<Checkbox />` without a visible `<label>`, screen readers have no context for what the checkbox controls.
 **Action:** Always inspect custom UI primitives to ensure they can accept and forward `aria-label` or `aria-labelledby` props. When creating generic components, include `ariaLabel?: string;` in the props interface and apply it to the underlying interactive element, ideally with a fallback if appropriate.
+## 2025-05-19 - Multiline Scanning for Accessibility Attributes
+**Learning:** Standard line-by-line grep fails to identify missing `aria-label`s on `<button>` elements that span multiple lines, leaving hidden accessibility gaps in JSX code.
+**Action:** When auditing the codebase for missing attributes, use multiline regex scripts (e.g., Python `re.findall(r'<button[^>]*>[\s\S]*?</button>', content)`) to correctly parse and validate components structured across multiple lines.
