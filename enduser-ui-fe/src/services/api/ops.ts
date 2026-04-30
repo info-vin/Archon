@@ -133,7 +133,9 @@ export const opsApi = {
   },
 
   async getLeads(): Promise<any[]> {
-    return await callAPI<any[]>('/api/marketing/leads');
+    return await callAPI<any[]>('/api/marketing/leads', {
+        headers: { 'Cache-Control': 'no-cache, no-store, must-revalidate', 'Pragma': 'no-cache' }
+    });
   },
 
   async createLead(leadData: any): Promise<any> {

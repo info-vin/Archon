@@ -289,10 +289,13 @@ class MetricsManager:
             logger.error(f"MetricsManager: Recent token usage fetch failed: {e}")
             return []
 
-    async def get_marketing_intelligence(self) -> dict[str, Any]:
+    async def get_marketing_intelligence(self, user_id: str | None = None) -> dict[str, Any]:
         """Marketing 2.0: Deep Lead Analysis & ROI (Phase 4.6.42)."""
         try:
-            res = self.supabase.table("leads").select("*").execute()
+            query = self.supabase.table("leads").select("*")
+            if user_id:
+                query = query.or_(f"assigned_sales_id.eq.{user_id},assigned_sales_id.is.null")
+            res = query.execute()
             leads = res.data or []
 
             # 1. Conversion Funnel (Physical Data)

@@ -96,8 +96,8 @@ sequenceDiagram
 ### P8. 跨角色狀態連動 (Task Sync)
 *   **儲存連動**: `Save` 操作強制觸發 `TaskStatus.DOING`。
 *   **提交連動**: `Submit` 操作成功後觸發 `TaskStatus.REVIEW`。
-*   **2026-03-20 物理對齊 (Phase 4.6.15)**: 
-    *   **落地實作**: 撰稿功能已對接到 `MarketingService.py:254` (MarketBot)；提交功能已對接到 `MarketingService.py:227` 並補齊路由。
+*   **2026-04-30 物理對齊 (Phase 4.6.47 L2 Decoupling)**: 
+    *   **落地實作**: 撰稿與審核功能已完全從龐大的 `MarketingService` 拆分。目前 `marketing_service.py` 作為輕量外觀 (Facade)，將 `draft_blog` 與 `submit_blog` 物理委派給專職的 `ContentHandler`。自動化市場情報則由 `business.py` 每日排程自動觸發 `AgentUUIDs.MARKET_BOT` 生成。
     *   **外掛說明**: Nana Banana 繪圖功能定位為「系統外掛/工具」，採用 MCP 幾何生成 (logo_tool.py)，不涉及 LLM 計費模型呼叫，故其繪圖行為不計入 AI Token 成本。
 
 ### P9. 反饋感知透明化 (Feedback Transparency)
@@ -113,3 +113,30 @@ sequenceDiagram
 4.  [x] **Resilience**: 完成 `marketing_api` 的三層圖資降級防禦。
 5.  [x] **Visual**: 實作 Prompt Inspector 彈窗與視覺化退件反饋橫幅。
 6.  [x] **Data**: 補全 `BlogPost` 介面中的 `authorName` 與 `publishDate`。
+
+---
+
+## 6. 物理公證實錄 (2026-04-30 Physical Evidence)
+
+根據實體程式碼的深入檢視（特別是 `marketing_service.py`、`business.py` 排程器與 `seed_mock_data.sql`），以下是 Bob（行銷人員）與其對應之 AI 代理（MarketBot）在系統中的實際工作流與產出對比。
+
+### 6.1 主被動工作流拆解
+*   **🧑‍💼 Bob 的主動工作流 (前端介面與 API 操作)**
+    *   **商機情報 (Intelligence HUD 2.0)**: Bob 每日檢視 `list_leads()`，系統透過 `_calculate_lead_score` 自動評分（例如 VP 等級得高分）。
+    *   **內容創作 (Brand Hub)**: 主動發起 `draft_blog`、生成客製化提案 `generate_pitch`，並使用 `generate_visual_asset` 生成視覺配圖。
+    *   **審核提交**: 文章完成後透過 `submit_blog` 送交主管 (Charlie) 進行 `process_approval`。
+
+*   **🤖 MarketBot 的自動工作流 (排程器與 Agent Service)**
+    *   **每日市場報告自動化**: `business.py` 每天自動撈取過去 24 小時的新 Leads，指派任務給 MarketBot。
+    *   **自動草擬 (Agent Task)**: MarketBot 自動生成一篇 600 字繁體中文「每日市場情報」部落格草稿，儲存為 DRAFT 狀態。
+    *   **哨兵監控 (Sentinel)**: `run_business_sentinel()` 幫 Bob 自動監控超過 14 天未互動的休眠商機 (Dormant)，以及卡關超過 48 小時的內容瓶頸 (Content Bottleneck)。
+
+### 6.2 預期實際產出 (產出數據對齊)
+
+| 週期 | 執行者 | 產出項目 (Physical Output) | 來源 / 依據 | 預估產出數量 |
+| :--- | :--- | :--- | :--- | :--- |
+| **每天** | 🤖 MarketBot | **市場情報部落格 (Draft)** | `business.py -> run_daily_market_report()` 撈取前 24h 爬蟲資料指派生成任務 | 每天 **1 篇** (600字繁體中文草稿) |
+| **每天** | 🧑‍💼 Bob | **高分商機標記與提案生成** | `LeadHandler -> calculate_lead_score` / `generate_pitch` | 每日處理約 **10-20 筆** 高分商機 |
+| **每天** | ⚙️ 系統哨兵 | **資源與卡關警報 (Alerts)** | `business.py -> run_business_sentinel()` | 每天監控並發出 **N 筆** 休眠商機與內容瓶頸警報 |
+| **每週** | 🧑‍💼 Bob | **已發布的官方部落格 (Published)** | Bob 將 MarketBot 的草稿精修後，提交給 Charlie 審核 (`submit_blog`) | 每週約 **3-5 篇** 正式發布文章 |
+| **每月** | 🧑‍💼 Bob | **品牌轉換率與行銷趨勢報告** | `AnalyticsHandler -> get_marketing_trends()` (四階段流失率漏斗) | 每月 **1 份** 即時戰情儀表板數據 |

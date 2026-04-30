@@ -117,3 +117,30 @@ Charlie 透過 **Nexus Command**（原戰情室）觀察組織的數位體質指
 
 Charlie Persona 已達成 **100% 落地**。
 透過 **Sentinel (偵測)** 與 **Operations Nexus (執行)**，Charlie 真正實現了 "Management by Exception"，將原本繁瑣的行政檢查轉化為 AI 驅動的「指揮官」模式。所有的變更均受 **Audit Trail** 監控，確保系統演進過程可追溯、可信賴。
+
+---
+
+## 7. 物理公證實錄 (2026-04-30 Physical Evidence)
+
+根據實體程式碼的深入檢視（包含 `marketing/content_handler.py` 的審核機制、`changes_api.py` 以及排程器邏輯），以下是 Charlie（主管）在系統中的實際跨角色互動與預期產出數據。
+
+### 7.1 跨角色實體互動 (Cross-Persona Interactions)
+*   **👩 Alice (Sales) <-> 👨 Charlie (前線調度)**: 
+    *   Sentinel 會自動幫 Charlie 抓出超過 14 天未互動的閒置客戶並拋出 Alert。Charlie 點擊「指派任務」後，系統會啟動 RAG 檢索過去的訪談紀錄，自動草擬高價值的追蹤任務，並推送給 Alice。
+*   **👨 Charlie <-> 👤 Bob (Marketing) (品質把關與 AI 學習)**: 
+    *   Bob 送出的文章會進入 Charlie 的 `/approvals` 佇列。
+    *   **AI 學習介入 (`content_handler.py:193`)**: 當 Charlie 退回文章並寫下理由時，`LibrarianService.archive_style_critique()` 會自動啟動，將退件理由寫入知識庫。未來 AI 幫 Bob 寫文章時會自動避開 Charlie 討厭的風格。
+*   **👨 Charlie <-> 👨‍💻 David (Admin) (業務與系統邊界)**: 
+    *   David 負責維護伺服器資源，但涉及核心 Prompt 變更時，底層的 `changes_api.py` 確保只有管理職（Managers & Admins）能進行最終核准。
+*   **👨 Charlie <-> 🤖 POBot (產品經理 Agent)**: 
+    *   面對大型專案，Charlie 只要給出一句話，POBot 就會自動擴寫成具有 User Story 規格的完整任務清單，省下行政作業時間。
+
+### 7.2 預期實際產出 (產出數據對齊)
+
+| 週期 | 執行者 | 產出項目 (Physical Output) | 來源 / 依據 | 預估產出數量 |
+| :--- | :--- | :--- | :--- | :--- |
+| **每天** | 👨 Charlie | **派發高價值追蹤任務** | 讀取 Sentinel 拋出的 Alert 日誌，觸發 RAG 轉譯後指派給 Alice 執行。 | 每日 **N 筆** 異常任務分派 |
+| **每天** | 👨 Charlie | **內容與提案審批 (Approvals)** | 呼叫 `process_approval` 審核 Bob 或 MarketBot 送交的文章。 | 每日審核 **1-3 篇** 內容 |
+| **每天** | 🤖 Librarian | **動態風格指南更新** | 攔截 Charlie 的退件理由 (`archive_style_critique`) 並自動寫入 RAG 向量知識庫。 | 每次退件自動產生 **1 筆** 學習記憶 |
+| **每週** | 🤖 POBot | **優化後的工作規格書** | 透過 Charlie 提供的簡短指令草稿，自動擴充 User Story 與執行步驟。 | 依專案進度，每週約 **3-5 份** |
+| **每月** | 👨 Charlie | **多維度產能指標 (Velocity)** | 檢視 Nexus Command 中聚合了「生成」、「審批」與「轉換」週期的趨勢報表，防禦離群值 (168h CAP)。 | 每月產出 **1 份** 決策盤點 |

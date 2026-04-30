@@ -94,9 +94,9 @@ const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                 {/* Desktop Navigation */}
                 <ul className="flex-grow p-2 overflow-y-auto overflow-x-hidden" onClick={() => setIsSidebarOpen(false)}>
                     <li className="mb-2 w-full">
-                        <Link to={user?.role?.toLowerCase() === 'marketing' ? "/brand" : "/dashboard"} title={isCollapsed ? "My Tasks" : undefined} className={`flex ${isCollapsed ? 'flex-col items-center justify-center p-2 text-[10px] text-center' : 'items-center p-2'} rounded-md hover:bg-secondary ${location.pathname === '/dashboard' || (location.pathname === '/brand' && user?.role?.toLowerCase() === 'marketing') ? 'bg-secondary' : ''} transition-all`}>
+                        <Link to="/dashboard" title={isCollapsed ? "My Tasks" : undefined} className={`flex ${isCollapsed ? 'flex-col items-center justify-center p-2 text-[10px] text-center' : 'items-center p-2'} rounded-md hover:bg-secondary ${location.pathname === '/dashboard' ? 'bg-secondary' : ''} transition-all`}>
                             <UserIcon className={`w-5 h-5 ${isCollapsed ? 'mb-1' : 'mr-3'}`} />
-                            <span className={`${isCollapsed ? 'leading-tight' : 'truncate'}`}>{user?.role?.toLowerCase() === 'marketing' ? "Brand Hub" : "My Tasks"}</span>
+                            <span className={`${isCollapsed ? 'leading-tight' : 'truncate'}`}>My Tasks</span>
                         </Link>
                     </li>
                     {hasPermission('stats:view:own') && (

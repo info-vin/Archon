@@ -34,9 +34,9 @@ class BaseStorageService(BaseRepository, ABC):
         super().__init__(supabase_client)
 
         # Lazy import threading service
-        from ...utils import get_utils_threading_service
+        from ..threading_service import get_threading_service
 
-        self.threading_service = get_utils_threading_service()
+        self.threading_service = get_threading_service()
 
     def smart_chunk_text(self, text: str, chunk_size: int = 5000) -> list[str]:
         """
