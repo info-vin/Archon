@@ -57,3 +57,6 @@
 ## 2025-05-18 - Avoid repeated string conversions in dictionaries
 **Learning:** In Python, applying string transformations (e.g., `.upper()`) to static dictionary values inside a nested loop causes redundant memory allocation and performance penalties.
 **Action:** Extract and precalculate these values (e.g., `categories_upper = {k: [w.upper() for w in v] for k, v in categories.items()}`) outside the loop.
+## 2024-04-29 - Python Performance: Redundant String Allocations in Nested Loops
+**Learning:** In Python, applying string transformations (e.g., `k.upper()`) to static dictionary values inside a nested loop causes redundant memory allocations and significant CPU overhead during every iteration.
+**Action:** Extract and precalculate the transformed values into a new dictionary (e.g., `categories_upper = {k: [w.upper() for w in v] for k, v in categories.items()}`) outside the loop.

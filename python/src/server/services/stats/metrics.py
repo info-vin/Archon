@@ -316,11 +316,14 @@ class MetricsManager:
             distribution: dict[str, int] = dict.fromkeys(categories, 0)
             distribution["Other"] = 0
 
+            # PERFORMANCE: Precalculate uppercase keywords outside the loop to avoid redundant allocations
+            categories_upper = {cat: [k.upper() for k in keywords] for cat, keywords in categories.items()}
+
             for lead in leads:
                 title = str(lead.get("job_title") or "").upper()
                 found = False
-                for cat, keywords in categories.items():
-                    if any(k.upper() in title for k in keywords):
+                for cat, keywords_upper in categories_upper.items():
+                    if any(k in title for k in keywords_upper):
                         distribution[cat] += 1
                         found = True
                         break
