@@ -29,7 +29,7 @@ class LeadHandler:
             return q.order("created_at", desc=True).execute()
 
         success, res = self.execute_query(_query, "Failed to fetch leads")
-        return res.get("data", []) if success else []
+        return res.data if success and hasattr(res, "data") and res.data is not None else []
 
     async def create_lead(self, lead_data: dict, creator_id: str | None = None) -> tuple[bool, dict]:
         lead_data["created_from_user_id"] = creator_id
@@ -41,27 +41,27 @@ class LeadHandler:
             def _check_existing():
                 return self.supabase_client.table("leads").select("id").eq("source_job_url", source_url).execute()
             _, existing = self.execute_query(_check_existing, "Check existing lead")
-            if existing.get("data"):
+            if hasattr(existing, "data") and existing.data:
                 if lead_data.get("pitch_content"):
                     self.supabase_client.table("leads").update({"pitch_content": lead_data["pitch_content"]}).eq(
-                        "id", existing["data"][0]["id"]
+                        "id", existing.data[0]["id"]
                     ).execute()
-                return True, {"lead": existing["data"][0]}
+                return True, {"lead": existing.data[0]}
 
         def _insert():
             return self.supabase_client.table("leads").insert(lead_data).execute()
 
         success, res = self.execute_query(_insert, "Failed to create lead")
-        if success and res.get("data"):
-            return True, {"lead": res["data"][0]}
+        if success and hasattr(res, "data") and res.data:
+            return True, {"lead": res.data[0]}
         return False, res
 
     async def update_lead(self, lead_id: str, update_data: dict) -> tuple[bool, dict]:
         def _query():
             return self.supabase_client.table("leads").update(update_data).eq("id", lead_id).execute()
         success, res = self.execute_query(_query, f"Failed to update lead {lead_id}")
-        if success and res.get("data"):
-            return True, {"lead": res["data"][0]}
+        if success and hasattr(res, "data") and res.data:
+            return True, {"lead": res.data[0]}
         return False, res
 
     async def promote_to_vendor(
