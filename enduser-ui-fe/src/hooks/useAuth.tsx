@@ -20,47 +20,52 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
-    const fetchUser = async () => {
+    const initializeAuth = async () => {
         try {
+            // 1. Ensure we have a valid session before fetching user identity
+            const { data: { session }, error } = supabase ? await supabase.auth.getSession() : { data: { session: null }, error: null };
+            
+            if (error || !session?.access_token) {
+                // Clear potentially corrupted tokens
+                localStorage.removeItem('archon_token');
+                localStorage.removeItem('user_role');
+                setUser(null);
+                return;
+            }
+
+            localStorage.setItem('archon_token', session.access_token);
             const currentUser = await api.getCurrentUser();
             setUser(currentUser);
         } catch (error) {
-            console.error("Failed to fetch current user:", error);
+            console.error("Failed to initialize user session, forcing cleanup:", error);
+            localStorage.removeItem('archon_token');
+            localStorage.removeItem('user_role');
+            setUser(null);
         } finally {
             setLoading(false);
         }
     };
     
-    fetchUser();
+    initializeAuth();
 
     if (supabase) {
         const { data: authListener } = supabase.auth.onAuthStateChange(
           async (event, session) => {
             if (event === 'SIGNED_IN') {
-              // --- Auth Parity: Physically persist token for callAPI ---
               if (session?.access_token) {
                 localStorage.setItem('archon_token', session.access_token);
               }
-              
-              const shouldSetLoading = event === 'SIGNED_IN' || !user;
-              if (shouldSetLoading) setLoading(true);
-              
+              setLoading(true);
               try {
                 const currentUser = await api.getCurrentUser();
-                if (currentUser) {
-                    setUser(currentUser);
-                }
-              } catch (error) {
-                console.error("Failed to refresh user on auth change:", error);
+                setUser(currentUser);
               } finally {
-                if (shouldSetLoading) setLoading(false);
+                setLoading(false);
               }
-            }
-            if (event === 'SIGNED_OUT') {
+            } else if (event === 'SIGNED_OUT') {
               setUser(null);
               localStorage.removeItem('archon_token');
               localStorage.removeItem('user_role');
-              setLoading(false);
             }
           }
         );

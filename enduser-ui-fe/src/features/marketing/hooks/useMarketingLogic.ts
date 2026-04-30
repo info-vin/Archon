@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { api } from '../../../services/api';
 import { JobData } from '../../../types';
+import { useAuth } from '../../../hooks/useAuth';
 
 export const useMarketingLogic = () => {
   const [activeTab, setActiveTab] = useState<'search' | 'leads'>('leads');
@@ -168,9 +169,12 @@ export const useMarketingLogic = () => {
     setSortConfig({ key, direction });
   };
 
+  // Sync logic
+  const { user } = useAuth();
+
   useEffect(() => {
-      if (activeTab === 'leads') fetchLeads();
-  }, [activeTab, fetchLeads]);
+      if (user && activeTab === 'leads') fetchLeads();
+  }, [activeTab, fetchLeads, user]);
 
   useEffect(() => {
     return () => { if (statusTimer) clearInterval(statusTimer); };

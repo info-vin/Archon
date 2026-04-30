@@ -3,6 +3,8 @@ Marketing API Hardened - Entry point for Alice & Bob workflows.
 Standardized RBAC Sealing with Full Test Compatibility.
 """
 
+import logging
+
 from fastapi import APIRouter, Depends, HTTPException, Query
 
 from src.server.schemas.marketing import (
@@ -25,29 +27,29 @@ from ..auth.permissions import (
     TASK_READ_TEAM,
 )
 
-router: APIRouter = APIRouter(prefix="/api/marketing", tags=["marketing"])
+logger = logging.getLogger(__name__)
 
+router: APIRouter = APIRouter(prefix="/api/marketing", tags=["marketing"])
 
 def get_marketing_service():
     """Export for test compatibility."""
     return MarketingService()
 
-
 def _err(msg: str, code: int = 403):
     raise HTTPException(status_code=code, detail=msg)
-
 
 @router.get("/jobs")
 async def search_jobs(keyword: str = Query(...), limit: int = 10, current_user: dict = Depends(get_current_user)):
     service = MarketingService()
     return await service.search_jobs(keyword, limit)
 
-
 @router.get("/leads")
 async def list_leads(current_user: dict = Depends(get_current_user)):
+    user_id = str(current_user.get("id"))
+    role = current_user.get("role", "member")
+    logger.info(f"DEBUG: list_leads accessed by UserID: {user_id}, Role: {role}")
     service = MarketingService()
-    return await service.list_leads(user_id=str(current_user.get("id")), role=current_user.get("role", "member"))
-
+    return await service.list_leads(user_id=user_id, role=role)
 
 @router.post("/leads")
 async def create_lead(req: LeadCreateRequest, current_user: dict = Depends(get_current_user)):
@@ -57,13 +59,11 @@ async def create_lead(req: LeadCreateRequest, current_user: dict = Depends(get_c
         _err(str(res), 400)
     return res
 
-
 @router.post("/leads/reset")
 async def reset_leads(current_user: dict = Depends(requires_permission(CONTENT_PUBLISH))):
     service = MarketingService()
     success = await service.reset_leads()
     return {"success": success}
-
 
 @router.patch("/leads/{lead_id}")
 async def update_lead(lead_id: str, req: LeadUpdateRequest, current_user: dict = Depends(get_current_user)):
@@ -73,7 +73,6 @@ async def update_lead(lead_id: str, req: LeadUpdateRequest, current_user: dict =
         _err(str(res), 400)
     return res
 
-
 @router.post("/leads/{lead_id}/promote")
 async def promote_lead(lead_id: str, req: PromoteLeadRequest, current_user: dict = Depends(get_current_user)):
     service = MarketingService()
@@ -82,13 +81,11 @@ async def promote_lead(lead_id: str, req: PromoteLeadRequest, current_user: dict
         _err(str(res), 400)
     return res
 
-
 @router.post("/generate-pitch", response_model=PitchResponse)
 async def generate_pitch(
     req: PitchRequest,
     current_user: dict = Depends(get_current_user)
 ):
-    # Flexible check: system_admin, marketing, or sales can trigger pitch generation
     role = current_user.get("role", "viewer").lower()
     if role not in ["system_admin", "admin", "marketing", "sales"]:
         raise HTTPException(
@@ -99,10 +96,8 @@ async def generate_pitch(
     service = MarketingService()
     res = await service.generate_pitch(req.company, req.job_title)
     if isinstance(res, dict) and "error_code" in res:
-        # Physical Alignment: Mapping service errors to HTTP Exceptions
         raise HTTPException(status_code=res["error_code"], detail=res["message"])
     return res
-
 
 @router.post("/draft-blog")
 async def draft_blog_post(req: DraftBlogRequest, current_user: dict = Depends(requires_permission(AGENT_TRIGGER_MKT))):
@@ -112,28 +107,23 @@ async def draft_blog_post(req: DraftBlogRequest, current_user: dict = Depends(re
         _err(res.get("message", "AI Draft failed"), res.get("error_code", 500))
     return res
 
-
 @router.post("/blog/{post_id}/submit")
 async def submit_blog(post_id: str, current_user: dict = Depends(get_current_user)):
-    """Bob submits a draft for Charlie's review."""
     service = MarketingService()
     success, res = await service.submit_blog(post_id)
     if not success:
         _err(res.get("error", "Submission failed"), 400)
     return res
 
-
 @router.post("/generate-logo")
 async def generate_logo(req: LogoRequest, current_user: dict = Depends(requires_permission(BRAND_ASSET_MANAGE))):
     service = MarketingService()
     return await service.generate_visual_asset(req.style)
 
-
 @router.get("/sources")
 async def get_combined_sources(current_user: dict = Depends(get_current_user)):
     service = MarketingService()
     return await service.get_combined_sources(user_id=str(current_user.get("id")))
-
 
 @router.get("/context/{source_id}")
 async def get_content_context(
@@ -142,10 +132,8 @@ async def get_content_context(
     service = MarketingService()
     return await service.get_content_context(source_id, source_type)
 
-
 @router.get("/manager/alerts")
 async def get_manager_alerts(current_user: dict = Depends(requires_permission(TASK_READ_TEAM))):
-    """Fetch recent Sentinel and system alerts for management review."""
     from ..utils import get_supabase_client
     sb = get_supabase_client()
     res = sb.table("archon_logs").select("*")\
@@ -155,48 +143,36 @@ async def get_manager_alerts(current_user: dict = Depends(requires_permission(TA
         .limit(50).execute()
     return res.data or []
 
-
 @router.post("/manager/sentinel/run")
 async def run_sentinel_manual(current_user: dict = Depends(requires_permission(AGENT_TRIGGER_MKT))):
-    """Manually trigger the Business Sentinel."""
     service = MarketingService()
     return await service.run_sentinel()
 
-
 @router.get("/stats")
 async def get_marketing_stats(current_user: dict = Depends(get_current_user)):
-    """Fetch marketing performance statistics."""
     service = MarketingService()
     return await service.get_marketing_stats()
 
-
 @router.get("/trends")
 async def get_marketing_trends(current_user: dict = Depends(get_current_user)):
-    """Fetch marketing trends analysis."""
     service = MarketingService()
     return await service.get_marketing_trends()
 
-
 @router.get("/intelligence")
 async def get_marketing_intelligence(current_user: dict = Depends(get_current_user)):
-    """Marketing 2.0: Fetch deep lead analysis and ROI metrics."""
     from ..services.stats.metrics import MetricsManager
     metrics = MetricsManager()
-    return await metrics.get_marketing_intelligence()
-
+    return await metrics.get_marketing_intelligence(user_id=str(current_user.get("id")))
 
 @router.post("/knowledge/seed")
 async def seed_knowledge_base(current_user: dict = Depends(requires_permission(CONTENT_PUBLISH))):
-    """Admin triggers the physical knowledge seeding process."""
     service = MarketingService()
     return await service.seed_knowledge()
-
 
 @router.get("/approvals")
 async def get_pending_approvals(current_user: dict = Depends(requires_permission(TASK_READ_TEAM))):
     service = MarketingService()
     return await service.get_pending_approvals()
-
 
 @router.post("/approvals/{item_type}/{item_id}/{action}")
 async def process_approval(
