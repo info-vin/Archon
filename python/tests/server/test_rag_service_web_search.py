@@ -30,6 +30,9 @@ def mock_genai_client():
 
 @pytest.fixture
 def mock_librarian():
+    # Explicitly import the module to resolve lazy imports during testing
+    import src.server.services.librarian_service  # noqa: F401
+    
     # Patch where the class is defined, not where it is imported locally
     with patch("src.server.services.librarian_service.LibrarianService") as mock:
         instance = mock.return_value

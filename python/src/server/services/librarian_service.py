@@ -9,6 +9,8 @@ from ..services.source_management_service import (
     update_source_info,
 )
 from ..utils import get_supabase_client
+from ..repositories.knowledge_repository import KnowledgeRepository
+from .knowledge.chunking_service import KnowledgeChunkingService
 from .shared_constants import AgentUUIDs
 
 logger = get_logger(__name__)
@@ -18,6 +20,8 @@ class LibrarianService:
     def __init__(self):
         self.supabase = get_supabase_client()
         self.source_service = SourceManagementService(self.supabase)
+        self.repo = KnowledgeRepository(self.supabase)
+        self.chunker = KnowledgeChunkingService()
 
     async def archive_any_url(self, url: str, user_role: str = "member", depth: int = 0, max_depth: int = 1) -> str:
         """
@@ -136,23 +140,16 @@ class LibrarianService:
                 "metadata": {**metadata, "title": title},
             }
 
-            self.supabase.table("archon_crawled_pages").insert(page_data).execute()
+            self.repo.insert_crawled_page(page_data)
 
             # 5. Record version
-            try:
-                self.supabase.table("archon_document_versions").insert(
-                    {
-                        "document_id": source_id,
-                        "field_name": "sales_pitch",
-                        "change_type": "create",
-                        "change_summary": f"Archived generated pitch for {company}",
-                        "content": {"source_id": source_id, "company": company, "job": job_title},
-                        "created_by": AgentUUIDs.LIBRARIAN,
-                        "version_number": 1,
-                    }
-                ).execute()
-            except Exception as v_err:
-                logger.warning(f"Librarian: Failed to log document version: {v_err}")
+            self.repo.insert_document_version(
+                document_id=source_id,
+                field_name="sales_pitch",
+                change_summary=f"Archived generated pitch for {company}",
+                content={"source_id": source_id, "company": company, "job": job_title},
+                created_by=AgentUUIDs.LIBRARIAN,
+            )
 
             logger.info(f"Librarian: Pitch archived successfully | source_id={source_id}")
             return source_id
@@ -235,23 +232,16 @@ class LibrarianService:
                 },
             }
 
-            self.supabase.table("archon_crawled_pages").insert(page_data).execute()
+            self.repo.insert_crawled_page(page_data)
 
             # 5. Record version
-            try:
-                self.supabase.table("archon_document_versions").insert(
-                    {
-                        "document_id": source_id,
-                        "field_name": "web_research",
-                        "change_type": "create",
-                        "change_summary": f"Archived research for: {query}",
-                        "content": {"source_id": source_id, "query": query, "refs_count": len(references)},
-                        "created_by": AgentUUIDs.LIBRARIAN,
-                        "version_number": 1,
-                    }
-                ).execute()
-            except Exception as v_err:
-                logger.warning(f"Librarian: Failed to log document version: {v_err}")
+            self.repo.insert_document_version(
+                document_id=source_id,
+                field_name="web_research",
+                change_summary=f"Archived research for: {query}",
+                content={"source_id": source_id, "query": query, "refs_count": len(references)},
+                created_by=AgentUUIDs.LIBRARIAN,
+            )
 
             return source_id
 
@@ -301,50 +291,29 @@ class LibrarianService:
             )
 
             # 4. Content & Embedding
-            chunk_size = 4000
-            chunks = [content[i : i + chunk_size] for i in range(0, len(content), chunk_size)]
-            page_data_list = []
-
-            for i, chunk in enumerate(chunks):
-                try:
-                    embedding_vector = await create_embedding(chunk)
-                except Exception as e:
-                    logger.error(f"Librarian: Embedding failed for chunk {i} of {source_id}: {e}")
-                    embedding_vector = None
-
-                page_data = {
-                    "source_id": source_id,
-                    "url": f"file://{file_path}#chunk={i}",
-                    "chunk_number": i,
-                    "content": chunk,
-                    "embedding": embedding_vector,
-                    "metadata": {
-                        "knowledge_type": knowledge_type,
-                        "tags": tags,
-                        "file_path": file_path,
-                        "title": f"{title} (Part {i + 1})",
-                    },
-                }
-                page_data_list.append(page_data)
+            page_data_list = await self.chunker.process_document_into_pages(
+                source_id=source_id,
+                content=content,
+                base_url=f"file://{file_path}",
+                metadata={
+                    "knowledge_type": knowledge_type,
+                    "tags": tags,
+                    "file_path": file_path,
+                },
+                title_prefix=title
+            )
 
             if page_data_list:
-                self.supabase.table("archon_crawled_pages").insert(page_data_list).execute()
+                self.repo.insert_crawled_page(page_data_list)
 
             # 5. Record version
-            try:
-                self.supabase.table("archon_document_versions").insert(
-                    {
-                        "document_id": source_id,
-                        "field_name": "knowledge_file",
-                        "change_type": "create",
-                        "change_summary": f"Indexed local file: {file_name}",
-                        "content": {"source_id": source_id, "file": file_name, "path": file_path},
-                        "created_by": AgentUUIDs.LIBRARIAN,
-                        "version_number": 1,
-                    }
-                ).execute()
-            except Exception as v_err:
-                logger.warning(f"Librarian: Failed to log document version: {v_err}")
+            self.repo.insert_document_version(
+                document_id=source_id,
+                field_name="knowledge_file",
+                change_summary=f"Indexed local file: {file_name}",
+                content={"source_id": source_id, "file": file_name, "path": file_path},
+                created_by=AgentUUIDs.LIBRARIAN,
+            )
 
             return source_id
 
@@ -399,7 +368,7 @@ class LibrarianService:
                     **(metadata or {}),
                 },
             }
-            self.supabase.table("archon_crawled_pages").insert(page_data).execute()
+            self.repo.insert_crawled_page(page_data)
 
             return source_id
 
@@ -469,7 +438,7 @@ class LibrarianService:
                 "embedding": embedding_vector,
                 "metadata": {"type": "style_constraint", "tags": tags, "post_title": post_title},
             }
-            self.supabase.table("archon_crawled_pages").insert(page_data).execute()
+            self.repo.insert_crawled_page(page_data)
 
             return source_id
 

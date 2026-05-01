@@ -15,9 +15,9 @@ def create_test_app():
 
 @pytest.fixture
 def mock_dependencies():
+    import src.server.services.marketing.content_handler  # Explicit import to allow patching
     with (
         patch("src.server.services.marketing.content_handler.get_logger", return_value=MagicMock()),
-        patch("src.server.services.marketing.content_handler.LibrarianService.archive_style_critique") as mock_critique,
         patch("src.server.services.marketing.content_handler.credential_service"),
         patch("src.server.services.marketing_service.get_supabase_client") as mock_supabase_factory,
     ):
@@ -29,7 +29,7 @@ def mock_dependencies():
         mock_res.data = [{"id": "post-123", "title": "Bad Blog Post", "content": "This is bad content."}]
         mock_supabase.table.return_value.update.return_value.eq.return_value.execute.return_value = mock_res
 
-        yield {"supabase": mock_supabase, "mock_critique": mock_critique}
+        yield {"supabase": mock_supabase}
 
 
 @pytest.fixture
