@@ -170,7 +170,7 @@ const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                                <div className="flex items-center gap-2 mt-1">
                                    <p className="text-[10px] text-muted-foreground truncate max-w-[100px]">{user?.email}</p>
                                    <div className="px-1.5 py-0.5 bg-indigo-500 text-white text-[7px] font-bold rounded uppercase shrink-0">
-                                       {user?.role}: {user?.permissions?.length || 0}
+                                       {user?.role}
                                    </div>
                                </div>
                            </div>

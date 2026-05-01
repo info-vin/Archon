@@ -132,7 +132,6 @@ async def analyze_with_retry(client, model, contents, system_prompt, retries=3):
                 print(f"⏳ [Scout] API Strain ({err_str[:15]}). Retrying in {backoff}s... ({i+1}/{retries})")
                 await asyncio.sleep(backoff)
                 backoff *= 2
-                if i == retries - 2: current_model = "gemini-3.1-flash-lite-preview"
             else:
                 return f"AI Error: {err_str}"
     return "AI Error: Continuous failure even with fallback."

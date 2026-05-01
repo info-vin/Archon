@@ -1,10 +1,9 @@
-import json
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from server.services.agent_registry import get_agent_uuid
 from server.services.agent_service import AgentService
+
 
 @pytest.fixture
 def mock_mcp_client():

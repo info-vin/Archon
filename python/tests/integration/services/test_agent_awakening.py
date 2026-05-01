@@ -2,7 +2,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from src.server.services.agent_registry import get_agent_config, get_agent_uuid
+from src.server.services.agent_registry import get_agent_config
 from src.server.services.agent_service import AgentService
 
 

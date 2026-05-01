@@ -48,12 +48,14 @@ def get_tool_min_level(tool_name: str) -> int:
 AGENT_CONFIG = {
     "market-bot": {
         "name": "Archon MarketBot",
+        "model_tier": "lite",
         "system_prompt": BLOG_DRAFT_SYSTEM_PROMPT,
         "tools": ["search_job_market", "generate_sales_email"],
         "default_tool": "search_job_market",
     },
     "librarian": {
         "name": "Archon Librarian",
+        "model_tier": "lite",
         "system_prompt": LIBRARIAN_SYSTEM_PROMPT,
         "tools": [
             "rag_search_knowledge_base",
@@ -64,11 +66,13 @@ AGENT_CONFIG = {
     },
     "po-bot": {
         "name": "Archon POBot",
+        "model_tier": "pro",
         "system_prompt": USER_STORY_SYSTEM_PROMPT,
         "tools": ["list_projects", "manage_task"],
     },
     "dev-bot": {
         "name": "Archon DevBot",
+        "model_tier": "pro",
         "system_prompt": "You are Archon DevBot. Use tools to fix code or generate assets.",
         "tools": ["rag_search_code_examples", "generate_logo", "apply_modification", "execute_shell_command"],
     },
