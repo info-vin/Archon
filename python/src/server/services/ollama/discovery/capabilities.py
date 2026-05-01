@@ -17,6 +17,47 @@ from .models import ModelCapabilities, OllamaModel
 
 logger = get_logger(__name__)
 
+# PERFORMANCE: Pre-compiled tuples to prevent redundant allocations inside the loop
+EMBEDDING_PATTERNS = (
+    "embed",
+    "embedding",
+    "bge-",
+    "e5-",
+    "sentence-",
+    "arctic-embed",
+    "nomic-embed",
+    "mxbai-embed",
+    "snowflake-arctic-embed",
+    "gte-",
+    "stella-",
+)
+
+CHAT_PATTERNS = (
+    "phi",
+    "qwen",
+    "llama",
+    "mistral",
+    "gemma",
+    "deepseek",
+    "codellama",
+    "orca",
+    "vicuna",
+    "wizardlm",
+    "solar",
+    "mixtral",
+    "chatglm",
+    "baichuan",
+    "yi",
+    "zephyr",
+    "openchat",
+    "starling",
+    "nous-hermes",
+)
+
+FUNCTION_CALLING_PATTERNS = ("qwen", "llama3", "phi3", "mistral")
+STRUCTURED_OUTPUT_PATTERNS = ("llama", "phi", "gemma")
+UNKNOWN_EMBEDDING_PATTERNS = ("embed", "embedding", "vector")
+
 
 async def enrich_model_capabilities_logic(
     service_instance,
@@ -32,20 +73,7 @@ async def enrich_model_capabilities_logic(
     for model in models:
         model_name_lower = model.name.lower()
 
-        embedding_patterns = [
-            "embed",
-            "embedding",
-            "bge-",
-            "e5-",
-            "sentence-",
-            "arctic-embed",
-            "nomic-embed",
-            "mxbai-embed",
-            "snowflake-arctic-embed",
-            "gte-",
-            "stella-",
-        ]
-        is_embedding_model = any(pattern in model_name_lower for pattern in embedding_patterns)
+        is_embedding_model = any(pattern in model_name_lower for pattern in EMBEDDING_PATTERNS)
 
         if is_embedding_model:
             model.capabilities = ["embedding"]
@@ -62,32 +90,11 @@ async def enrich_model_capabilities_logic(
             logger.debug(f"Pattern-matched embedding model {model.name}")
             enriched_models.append(model)
         else:
-            chat_patterns = [
-                "phi",
-                "qwen",
-                "llama",
-                "mistral",
-                "gemma",
-                "deepseek",
-                "codellama",
-                "orca",
-                "vicuna",
-                "wizardlm",
-                "solar",
-                "mixtral",
-                "chatglm",
-                "baichuan",
-                "yi",
-                "zephyr",
-                "openchat",
-                "starling",
-                "nous-hermes",
-            ]
-            if any(pattern in model_name_lower for pattern in chat_patterns):
+            if any(pattern in model_name_lower for pattern in CHAT_PATTERNS):
                 model.capabilities = ["chat"]
-                if any(p in model_name_lower for p in ["qwen", "llama3", "phi3", "mistral"]):
+                if any(p in model_name_lower for p in FUNCTION_CALLING_PATTERNS):
                     model.capabilities.extend(["function_calling", "structured_output"])
-                elif any(p in model_name_lower for p in ["llama", "phi", "gemma"]):
+                elif any(p in model_name_lower for p in STRUCTURED_OUTPUT_PATTERNS):
                     model.capabilities.append("structured_output")
 
                 if fetch_details:
@@ -105,7 +112,7 @@ async def enrich_model_capabilities_logic(
         for model in unknown_models:
             model.capabilities = ["chat"]
             model_name_lower = model.name.lower()
-            if any(h in model_name_lower for h in ["embed", "embedding", "vector"]):
+            if any(h in model_name_lower for h in UNKNOWN_EMBEDDING_PATTERNS):
                 model.capabilities = ["embedding"]
                 model.embedding_dimensions = 768
             enriched_models.append(model)
