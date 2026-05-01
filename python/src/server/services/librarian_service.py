@@ -2,6 +2,7 @@ import uuid
 from datetime import datetime
 
 from ..config.logfire_config import get_logger
+from ..repositories.knowledge_repository import KnowledgeRepository
 from ..services.embeddings.embedding_service import create_embedding
 from ..services.source_management_service import (
     SourceManagementService,
@@ -9,7 +10,6 @@ from ..services.source_management_service import (
     update_source_info,
 )
 from ..utils import get_supabase_client
-from ..repositories.knowledge_repository import KnowledgeRepository
 from .knowledge.chunking_service import KnowledgeChunkingService
 from .shared_constants import AgentUUIDs
 

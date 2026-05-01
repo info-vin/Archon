@@ -56,11 +56,11 @@ async def test_agent_repair_loop_python(clean_env):
 
     # We need to mock _analyze_error_with_structured_output directly
     # to avoid complex mocking of the OpenAI client and config
-    with patch.object(agent_service, "_analyze_error_with_structured_output", new_callable=AsyncMock) as mock_analyze:
+    with patch.object(agent_service.dev_ops, "_analyze_error_with_structured_output", new_callable=AsyncMock) as mock_analyze:
         mock_analyze.return_value = mock_llm_response
 
         # ACT
-        success, message = await agent_service.run_command_with_self_healing(
+        success, message = await agent_service.dev_ops.run_command_with_self_healing(
             f"python3 {BROKEN_SCRIPT}", task_id="test-repair-1"
         )
 
@@ -75,7 +75,7 @@ async def test_agent_repair_loop_python(clean_env):
         assert content == FIXED_CONTENT
 
         # Verify we are on a sandbox branch
-        current_branch = agent_service.code_modifier.get_current_branch()
+        current_branch = agent_service.dev_ops.code_modifier.get_current_branch()
         assert "autosave" in current_branch
 
 
@@ -107,11 +107,11 @@ async def test_agent_repair_loop_typescript_simulation(clean_env):
         mock_shell.side_effect = [process_fail, process_success]
 
         with patch.object(
-            agent_service, "_analyze_error_with_structured_output", new_callable=AsyncMock
+            agent_service.dev_ops, "_analyze_error_with_structured_output", new_callable=AsyncMock
         ) as mock_analyze:
             mock_analyze.return_value = mock_llm_response
 
-            success, message = await agent_service.run_command_with_self_healing(
+            success, message = await agent_service.dev_ops.run_command_with_self_healing(
                 f"tsc {TS_FILE}", task_id="test-repair-ts"
             )
 

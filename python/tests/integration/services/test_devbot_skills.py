@@ -20,7 +20,7 @@ class TestDevBotSkills:
         search_tool = next(t for t in DEVBOT_TOOLS if t["function"]["name"] == "search_code_examples")
         assert search_tool["function"]["parameters"]["properties"]["query"]["type"] == "string"
 
-    @patch("src.server.services.agent_service.get_llm_client")
+    @patch("src.server.services.dev_ops_agent_service.get_llm_client")
     async def test_devbot_auto_repair_loop_mocked(self, mock_get_client):
         """
         Test the 'Two-pass' loop in _analyze_error_with_structured_output.
@@ -62,7 +62,7 @@ class TestDevBotSkills:
         service.mcp_client.search_code_examples.return_value = "Found definition of error"
 
         # --- Execute ---
-        result = await service._analyze_error_with_structured_output("cmd", "error", agent_id="bcb00484-30bd-46fb-9e39-84b2ec4ced31")
+        result = await service.dev_ops._analyze_error_with_structured_output("cmd", "error", agent_id="bcb00484-30bd-46fb-9e39-84b2ec4ced31")
 
         # --- Verify ---
         assert result is not None

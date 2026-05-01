@@ -44,7 +44,7 @@ async def diagnose_file(request: DiagnoseRequest, current_user: dict = Depends(g
     """
     Triggers a technical debt diagnostic for a specific file (Admin only).
     """
-    return await agent_service.diagnose_file_health(request.file_path)
+    return await agent_service.dev_ops.diagnose_file_health(request.file_path)
 
 
 @router.get("/users")

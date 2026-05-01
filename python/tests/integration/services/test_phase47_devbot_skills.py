@@ -3,7 +3,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from server.services.agent_service import AgentService
+from src.server.services.agent_service import AgentService
 
 
 @pytest.fixture
@@ -55,12 +55,12 @@ async def test_analyze_error_with_skills_flow(mock_mcp_client):
     mock_provider_config = {"chat_model": "test-model-v1"}
 
     with (
-        patch("server.services.agent_service.get_llm_client", return_value=mock_ctx),
+        patch("src.server.services.dev_ops_agent_service.get_llm_client", return_value=mock_ctx),
         patch(
-            "server.services.agent_service.credential_service.get_active_provider", return_value=mock_provider_config
+            "src.server.services.dev_ops_agent_service.credential_service.get_active_provider", return_value=mock_provider_config
         ),
     ):
-        result = await service._analyze_error_with_structured_output(
+        result = await service.dev_ops._analyze_error_with_structured_output(
             command="python script.py", stderr="ImportError: No module named foo", agent_id="bcb00484-30bd-46fb-9e39-84b2ec4ced31"
         )
 
@@ -87,13 +87,13 @@ async def test_analyze_error_graceful_degradation():
     mock_ctx.__aenter__.return_value = mock_llm_client
 
     with (
-        patch("server.services.agent_service.get_llm_client", return_value=mock_ctx),
+        patch("src.server.services.dev_ops_agent_service.get_llm_client", return_value=mock_ctx),
         patch(
-            "server.services.agent_service.credential_service.get_active_provider",
+            "src.server.services.dev_ops_agent_service.credential_service.get_active_provider",
             return_value={"chat_model": "test-model-v1"},
         ),
     ):
-        result = await service._analyze_error_with_structured_output("cmd", "err", agent_id="bcb00484-30bd-46fb-9e39-84b2ec4ced31")
+        result = await service.dev_ops._analyze_error_with_structured_output("cmd", "err", agent_id="bcb00484-30bd-46fb-9e39-84b2ec4ced31")
         assert result == final_fix
         call_args = mock_llm_client.chat.completions.create.call_args
         assert call_args.kwargs["tools"] is None

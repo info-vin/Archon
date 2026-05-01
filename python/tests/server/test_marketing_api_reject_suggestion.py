@@ -15,7 +15,6 @@ def create_test_app():
 
 @pytest.fixture
 def mock_dependencies():
-    import src.server.services.marketing.content_handler  # Explicit import to allow patching
     with (
         patch("src.server.services.marketing.content_handler.get_logger", return_value=MagicMock()),
         patch("src.server.services.marketing.content_handler.credential_service"),

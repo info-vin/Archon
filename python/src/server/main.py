@@ -11,14 +11,16 @@ Modules:
 - projects_api: Project and task management with streaming
 """
 
-import asyncio
-import logging
 import os
-from contextlib import asynccontextmanager
-from typing import Any
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+
+from src.server.core import (
+    check_system_health,
+    global_exception_handler,
+    lifespan,
+)
 
 from .api_routes.admin_api import router as admin_router  # NEW IMPORT
 from .api_routes.agent_chat_api import router as agent_chat_router
@@ -47,183 +49,6 @@ from .api_routes.version_api import router as version_router
 from .api_routes.visit_log_api import router as visit_log_router  # NEW IMPORT
 
 # Import Logfire configuration
-from .config.logfire_config import api_logger, setup_logfire
-from .services.background_task_manager import cleanup_task_manager
-from .services.crawler_manager import cleanup_crawler
-
-# Import utilities and core classes
-from .services.credential_service import initialize_credentials
-from .services.scheduler_service import SchedulerService
-
-# Import missing dependencies that the modular APIs need
-try:
-    from crawl4ai import AsyncWebCrawler, BrowserConfig
-except ImportError:
-    # These are optional dependencies for full functionality
-    AsyncWebCrawler = None
-    BrowserConfig = None
-
-# Logger will be initialized after credentials are loaded
-logger = logging.getLogger(__name__)
-
-# Set up logging configuration to reduce noise
-
-# Override uvicorn's access log format to be less verbose
-uvicorn_logger = logging.getLogger("uvicorn.access")
-uvicorn_logger.setLevel(logging.INFO)  # Enable all logs
-
-# CrawlingContext has been replaced by CrawlerManager in services/crawler_manager.py
-
-# Global flag to track if initialization is complete
-_initialization_complete = False
-
-
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    """Application lifespan manager for startup and shutdown tasks."""
-    global _initialization_complete
-    _initialization_complete = False
-
-    # Startup
-    logger.info("🚀 Starting Archon backend...")
-
-    try:
-        # Validate configuration FIRST - check for anon vs service key
-        from .config.config import get_config
-
-        get_config()  # This will raise ConfigurationError if anon key detected
-
-        # Initialize credentials from database FIRST - this is the foundation for everything else
-        await initialize_credentials()
-
-        # Phase 4.6.25: Pre-load Reranking model to eliminate cold-start latency
-        from src.server.services.search.reranking_strategy import reranking_strategy
-        # The singleton instantiation already triggers _load_model()
-        if reranking_strategy.is_available():
-            logger.info("Reranking model pre-loaded successfully.")
-        else:
-            logger.warning("Reranking model failed to pre-load.")
-
-        # Now that credentials are loaded, we can properly initialize logging
-        # This must happen AFTER credentials so LOGFIRE_ENABLED is set from database
-        setup_logfire(service_name="archon-backend")
-
-        # Now we can safely use the logger
-        logger.info("✅ Credentials initialized")
-        api_logger.info("🔥 Logfire initialized for backend")
-
-        # Initialize crawling context
-        # try:
-        #     await initialize_crawler()
-        # except Exception as e:
-        #     api_logger.warning(f"Could not fully initialize crawling context: {str(e)}")
-
-        # Make crawling context available to modules
-        # Crawler is now managed by CrawlerManager
-
-        api_logger.info("✅ Using polling for real-time updates")
-
-        # Initialize Prompt Service
-        try:
-            from .services.prompt_service import prompt_service
-
-            await prompt_service.load_prompts()
-            api_logger.info("✅ Prompt service initialized")
-        except Exception as e:
-            api_logger.warning(f"Could not initialize prompt service: {e}")
-
-        # Initialize Agent Neural Wiring (MCP Client Injection)
-        try:
-            from ..agents.mcp_client import get_mcp_client
-            from .services.agent_service import agent_service
-            from .services.log_service import log_service
-
-            # Initialize the global MCP client bridge
-            mcp_bridge = await get_mcp_client()
-
-            # Initialize tool list to verify connection
-            tools = await mcp_bridge.list_tools()
-            if not tools:
-                 log_service.create_log_entry({
-                    "project_name": "mcp-neural-wiring",
-                    "gemini_response": "🧠 Agent Neural Wiring FAILED: MCP Client connected but returned 0 tools. Check volumes/permissions.",
-                    "user_input": f"mcp_url: {mcp_bridge.mcp_url}"
-                })
-            else:
-                # Inject into Agent Service (Neural Wiring)
-                agent_service.mcp_client = mcp_bridge
-                api_logger.info(f"🧠 Agent Neural Wiring Complete: MCP Client injected with {len(tools)} tools.")
-        except Exception as e:
-            from .services.log_service import log_service
-            log_service.create_log_entry({
-                "project_name": "mcp-neural-wiring",
-                "gemini_response": f"⚠️ Failed to wire Agent to MCP (Skills disabled): {str(e)}",
-                "user_input": "lifespan_startup"
-            })
-            api_logger.warning(f"⚠️ Failed to wire Agent to MCP (Skills disabled): {e}")
-
-        # Set the main event loop for background tasks
-        try:
-            from .services.background_task_manager import get_task_manager
-
-            task_manager = get_task_manager()
-            current_loop = asyncio.get_running_loop()
-            task_manager.set_main_loop(current_loop)
-            api_logger.info("✅ Main event loop set for background tasks")
-        except Exception as e:
-            api_logger.warning(f"Could not set main event loop: {e}")
-
-        # Re-enable Internal Scheduler
-        try:
-            await SchedulerService().start()
-            api_logger.info("🕒 Internal Scheduler started")
-        except Exception as e:
-            api_logger.warning(f"Could not start internal scheduler: {e}")
-
-        # MCP Client functionality removed from architecture
-        # Agents now use MCP tools directly
-
-        # Mark initialization as complete
-        _initialization_complete = True
-        api_logger.info("🎉 Archon backend started successfully!")
-
-    except Exception as e:
-        api_logger.error(f"❌ Failed to start backend: {str(e)}")
-        raise
-
-    yield
-
-    # Shutdown
-    _initialization_complete = False
-    api_logger.info("🛑 Shutting down Archon backend...")
-
-    try:
-        # MCP Client cleanup not needed
-
-        # Cleanup crawling context
-        try:
-            await cleanup_crawler()
-        except Exception as e:
-            api_logger.warning(f"Could not cleanup crawling context: {str(e)}")
-
-        # Cleanup background task manager
-        try:
-            await cleanup_task_manager()
-            api_logger.info("Background task manager cleaned up")
-        except Exception as e:
-            api_logger.warning(f"Could not cleanup background task manager: {str(e)}")
-
-        # Stop Internal Scheduler
-        try:
-            SchedulerService().shutdown()
-        except Exception:
-            pass
-
-        api_logger.info("✅ Cleanup completed")
-
-    except Exception as e:
-        api_logger.error(f"❌ Error during shutdown: {str(e)}")
-
 
 # Create FastAPI application
 app = FastAPI(
@@ -233,16 +58,7 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-@app.exception_handler(Exception)
-async def global_exception_handler(request, exc):
-    import traceback
-    api_logger.error(f"🔥 Global Crash on {request.url.path}: {str(exc)}")
-    api_logger.error(traceback.format_exc())
-    from fastapi.responses import JSONResponse
-    return JSONResponse(
-        status_code=500,
-        content={"message": "Internal Server Error", "detail": str(exc)},
-    )
+app.add_exception_handler(Exception, global_exception_handler)
 
 # Configure CORS
 origins = [
@@ -333,106 +149,16 @@ async def root():
 # Health check endpoint
 @app.get("/health")
 @app.head("/health")
-async def health_check():
+async def health_check_route():
     """Health check endpoint that indicates true readiness including credential loading."""
-    from datetime import datetime
-
-    # Check if initialization is complete
-    if not _initialization_complete:
-        return {
-            "status": "initializing",
-            "service": "archon-backend",
-            "timestamp": datetime.now().isoformat(),
-            "message": "Backend is starting up, credentials loading...",
-            "ready": False,
-        }
-
-    # Check for required database schema
-    schema_status = await _check_database_schema()
-    if not schema_status["valid"]:
-        return {
-            "status": "migration_required",
-            "service": "archon-backend",
-            "timestamp": datetime.now().isoformat(),
-            "ready": False,
-            "migration_required": True,
-            "message": schema_status["message"],
-            "migration_instructions": "Open Supabase Dashboard → SQL Editor → Run: migration/add_source_url_display_name.sql",
-            "schema_valid": False,
-        }
-
-    return {
-        "status": "healthy",
-        "service": "archon-backend",
-        "timestamp": datetime.now().isoformat(),
-        "ready": True,
-        "credentials_loaded": True,
-        "schema_valid": True,
-    }
+    return await check_system_health()
 
 
 # API health check endpoint (alias for /health at /api/health)
 @app.get("/api/health")
-async def api_health_check():
+async def api_health_check_route():
     """API health check endpoint - alias for /health."""
-    return await health_check()
-
-
-# Cache schema check result to avoid repeated database queries
-_schema_check_cache: dict[str, Any] = {"valid": None, "checked_at": 0.0}
-
-
-async def _check_database_schema():
-    """Check if the projects table exists to determine schema validity."""
-    import time
-
-    # If we've already confirmed schema is valid, don't check again
-    if _schema_check_cache.get("valid") is True:
-        return {"valid": True, "message": "Schema is up to date (cached)"}
-
-    # If we recently failed, don't spam the database (wait at least 30 seconds)
-    current_time = time.time()
-    last_checked = float(_schema_check_cache.get("checked_at", 0.0))
-    if _schema_check_cache.get("valid") is False and current_time - last_checked < 30:
-        return _schema_check_cache.get("result", {"valid": False, "message": "Schema check recently failed."})
-
-    try:
-        from .services.client_manager import get_supabase_client
-
-        client = get_supabase_client()
-
-        # Check if the 'archon_projects' table exists.
-        client.table("archon_projects").select("id").limit(1).execute()
-
-        # Cache successful result
-        _schema_check_cache["valid"] = True
-        _schema_check_cache["checked_at"] = current_time
-        _schema_check_cache["result"] = {"valid": True, "message": "Schema is up to date"}
-
-        return _schema_check_cache["result"]
-
-    except Exception as e:
-        error_msg = str(e).lower()
-        api_logger.debug(f"Schema check error: {type(e).__name__}: {str(e)}")
-
-        # Check if the error indicates the table does not exist.
-        if 'relation "archon_projects" does not exist' in error_msg:
-            result = {
-                "valid": False,
-                "message": "Projects table not detected. This is required for the projects feature.",
-            }
-            # Cache failed result
-            _schema_check_cache["valid"] = False
-            _schema_check_cache["checked_at"] = current_time
-            _schema_check_cache["result"] = result
-            return result
-
-        # For other errors, consider the schema valid to not block other functionalities,
-        # but log the error.
-        api_logger.warning(f"Inconclusive schema check: {error_msg}")
-        # To be safe, let's not block the app for other errors.
-        # The original code returned true for inconclusive results.
-        return {"valid": True, "message": f"Schema check inconclusive: {str(e)}"}
+    return await check_system_health()
 
 
 # Export the app directly for uvicorn to use

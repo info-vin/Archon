@@ -39,8 +39,8 @@ async def get_ai_model_health() -> dict[str, Any]:
     Checks health/latency for critical AI models used by Agents.
     Returns: { "models": [...], "status": "healthy" | "degraded" }
     """
-    from ..services.discovery import provider_discovery_service
     from ..config.model_ssot import get_model_path
+    from ..services.discovery import provider_discovery_service
 
     # Models to explicitly monitor (Comprehensive Multi-Agent Dependencies)
     TARGET_MODELS = [

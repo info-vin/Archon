@@ -1,4 +1,5 @@
 from typing import Any
+
 from ...config.logfire_config import get_logger
 from ..embeddings.embedding_service import create_embedding
 

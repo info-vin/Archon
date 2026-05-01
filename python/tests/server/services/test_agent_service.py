@@ -72,8 +72,8 @@ async def test_run_agent_task_fails_to_update(mock_get_logger, mock_task_service
 
 
 @pytest.mark.asyncio
-@patch("src.server.services.agent_service.asyncio.create_subprocess_shell")
-@patch("src.server.services.agent_service.get_logger")
+@patch("src.server.services.dev_ops_agent_service.asyncio.create_subprocess_shell")
+@patch("src.server.services.dev_ops_agent_service.get_logger")
 async def test_run_command_success(mock_get_logger, mock_subprocess):
     """
     Test run_command_with_self_healing when command succeeds.
@@ -88,7 +88,7 @@ async def test_run_command_success(mock_get_logger, mock_subprocess):
     mock_subprocess.return_value = mock_process
 
     agent_service = AgentService()
-    success, output = await agent_service.run_command_with_self_healing("echo test", agent_id="test-bot")
+    success, output = await agent_service.dev_ops.run_command_with_self_healing("echo test", agent_id="test-bot")
 
     assert success is True
     assert output == "success output"
@@ -96,10 +96,10 @@ async def test_run_command_success(mock_get_logger, mock_subprocess):
 
 
 @pytest.mark.asyncio
-@patch("src.server.services.agent_service.credential_service")
-@patch("src.server.services.agent_service.get_llm_client")
-@patch("src.server.services.agent_service.asyncio.create_subprocess_shell")
-@patch("src.server.services.agent_service.get_logger")
+@patch("src.server.services.dev_ops_agent_service.credential_service")
+@patch("src.server.services.dev_ops_agent_service.get_llm_client")
+@patch("src.server.services.dev_ops_agent_service.asyncio.create_subprocess_shell")
+@patch("src.server.services.dev_ops_agent_service.get_logger")
 async def test_run_command_failure_triggers_healing(
     mock_get_logger, mock_subprocess, mock_get_llm, mock_credential_service
 ):
@@ -131,7 +131,7 @@ async def test_run_command_failure_triggers_healing(
     mock_client.chat.completions.create.return_value = mock_response
 
     agent_service = AgentService()
-    success, output = await agent_service.run_command_with_self_healing("failing_cmd", agent_id="test-bot")
+    success, output = await agent_service.dev_ops.run_command_with_self_healing("failing_cmd", agent_id="test-bot")
 
     assert success is False
     # Verify security block (Agent has 0 successes in test environment)
