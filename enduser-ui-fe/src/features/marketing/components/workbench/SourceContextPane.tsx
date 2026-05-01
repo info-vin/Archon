@@ -63,6 +63,7 @@ export const SourceContextPane: React.FC<SourceContextPaneProps> = ({
       {/* Floating Sidebar Toggle [2] - Local Context Control */}
       <button
         onClick={onToggleContext}
+        aria-label={isContextOpen ? "Collapse Context" : "Expand Context"}
         className={`absolute bottom-10 z-40 p-2 bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-r-lg shadow-md transition-all duration-500 hover:w-8 group ${
             isContextOpen ? 'left-[33.333333%]' : 'left-0'
         }`}
