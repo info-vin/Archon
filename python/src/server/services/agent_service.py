@@ -35,7 +35,7 @@ class AgentService:
         if required_level <= 0:
             return True, "Level 0 (Intern)"
 
-        from .stats_service import stats_service
+        from .stats import stats_service
 
         try:
             # 1. Fetch unified XP rankings
@@ -335,7 +335,7 @@ class AgentService:
 
     async def _award_agent_xp(self, agent_id: str, task_data: dict, output_message: str):
         from .shared_constants import AgentUUIDs
-        from .stats_service import stats_service
+        from .stats import stats_service
 
         # Physical Scoring instead of random (Phase 4.6.15)
         # We derive metadata from the task context

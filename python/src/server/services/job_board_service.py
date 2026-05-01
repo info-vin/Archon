@@ -144,7 +144,7 @@ class JobBoardService:
 
     async def identify_leads_and_save(self, jobs: list[JobData]) -> int:
         new_leads_count = 0
-        from .stats_service import StatsService
+        from .stats import StatsService
         stats_service = StatsService()
 
         for job in jobs:

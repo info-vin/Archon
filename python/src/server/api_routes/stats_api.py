@@ -9,7 +9,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from ..auth.dependencies import requires_permission
 from ..auth.permissions import TASK_READ_TEAM
 from ..config.logfire_config import get_logger
-from ..services.stats_service import StatsService
+from ..services.stats import StatsService
 from ..utils import get_supabase_client
 
 logger = get_logger(__name__)

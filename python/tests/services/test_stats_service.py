@@ -1,4 +1,4 @@
-from src.server.services.stats_service import StatsService
+from src.server.services.stats import StatsService
 
 
 def test_calculate_ai_score_grounded_logic():

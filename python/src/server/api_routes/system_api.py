@@ -39,16 +39,15 @@ async def get_ai_model_health() -> dict[str, Any]:
     Checks health/latency for critical AI models used by Agents.
     Returns: { "models": [...], "status": "healthy" | "degraded" }
     """
-    from ..services.provider_discovery_service import provider_discovery_service
+    from ..services.discovery import provider_discovery_service
+    from ..config.model_ssot import get_model_path
 
     # Models to explicitly monitor (Comprehensive Multi-Agent Dependencies)
     TARGET_MODELS = [
-        {"id": "gemini-2.0-flash", "agent": "Marketing (Text)", "provider": "google"},
-        {"id": "gemini-2.0-flash-exp", "agent": "Marketing (Imagen)", "provider": "google"},
-        {"id": "gemini-2.0-flash-lite-preview-02-05", "agent": "System (DevBot)", "provider": "google"},
-        {"id": "gemini-1.5-pro", "agent": "Manager (Charlie)", "provider": "google"},
-        {"id": "gemini-2.0-flash", "agent": "Knowledge (Extract)", "provider": "google"},
-        {"id": "gemini-2.0-flash-lite-preview-02-05", "agent": "Knowledge (Summary)", "provider": "google"},
+        {"id": get_model_path("DEFAULT_TEXT").replace("models/", ""), "agent": "General Text", "provider": "google"},
+        {"id": get_model_path("IMAGE_GEN").replace("models/", ""), "agent": "Marketing (Imagen)", "provider": "google"},
+        {"id": get_model_path("DEFAULT_PRO").replace("models/", ""), "agent": "Reasoning & Coding", "provider": "google"},
+        {"id": get_model_path("EMBEDDING").replace("models/", ""), "agent": "Knowledge (Embedding)", "provider": "google"},
     ]
 
     try:

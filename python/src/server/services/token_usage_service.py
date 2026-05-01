@@ -83,7 +83,7 @@ class TokenUsageService:
                     res = supabase.table("profiles").select("name").eq("id", user_id).execute()
                     if res.data and res.data[0]["name"] in agent_names:
                         agent_display_name = res.data[0]["name"]
-                        from .stats_service import StatsService
+                        from .stats import StatsService
 
                         stats_service = StatsService()
                         await stats_service.add_agent_action_log(
