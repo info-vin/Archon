@@ -8,10 +8,10 @@ class AgentUUIDs:
     Physical Source of Truth for AI Agent Identities (Phase 4.6.47 Grounded).
     Eliminates hardcoded strings while maintaining test stability.
     """
-    MARKET_BOT = "f3f1c1cc-29c9-4036-bd86-a4a58edad237"
-    LIBRARIAN = "579f988b-4b92-49b4-956a-28d4810eeaad"
-    DEV_BOT = "bcb00484-30bd-46fb-9e39-84b2ec4ced31"
-    PO_BOT = "abdd3904-f4b9-42be-ab04-15935da7c3a8"
+    MARKET_BOT = "a11ce000-0000-0000-0000-000000000000"
+    LIBRARIAN = "b0b00000-0000-0000-0000-000000000000"
+    DEV_BOT = "e1682371-0000-0000-0000-000000000000"
+    PO_BOT = "p0b00000-0000-0000-0000-000000000000"
     CLOCKWORK = "e1bf7a99-44bf-44ce-a460-cb4e31e798f4"
 
 # Known AI agent roles that can be assigned tasks

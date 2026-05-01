@@ -1,9 +1,10 @@
+import json
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
+from server.services.agent_registry import get_agent_uuid
 from server.services.agent_service import AgentService
-
 
 @pytest.fixture
 def mock_mcp_client():
@@ -63,7 +64,7 @@ async def test_run_general_agent_task_market_bot(mock_mcp_client):
         ),
         patch("server.services.projects.task_service.task_service", mock_task_service),
     ):
-        await service.run_agent_task(task_id="t-1", agent_id="f3f1c1cc-29c9-4036-bd86-a4a58edad237")
+        await service.run_agent_task(task_id="t-1", agent_id="market-bot")
 
         assert mock_task_service.update_task.call_count >= 2
         mock_mcp_client.search_job_market.assert_called_once()
@@ -112,5 +113,5 @@ async def test_run_general_agent_task_librarian(mock_mcp_client):
         ),
         patch("server.services.projects.task_service.task_service", mock_task_service),
     ):
-        await service.run_agent_task(task_id="t-2", agent_id="579f988b-4b92-49b4-956a-28d4810eeaad")
+        await service.run_agent_task(task_id="t-2", agent_id="librarian")
         mock_mcp_client.perform_rag_query.assert_called_once()

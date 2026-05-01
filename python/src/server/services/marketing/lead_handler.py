@@ -61,7 +61,29 @@ class LeadHandler:
             return self.supabase_client.table("leads").update(update_data).eq("id", lead_id).execute()
         success, res = self.execute_query(_query, f"Failed to update lead {lead_id}")
         if success and hasattr(res, "data") and res.data:
-            return True, {"lead": res.data[0]}
+            lead_data = res.data[0]
+            if lead_data.get("status") == "LOST":
+                try:
+                    from ..librarian_service import LibrarianService
+                    librarian = LibrarianService()
+                    # The lead data will contain company_name and job_title. We extract lost_reason.
+                    reason = update_data.get("lost_reason", "No reason provided")
+                    company = lead_data.get("company_name", "Unknown Company")
+                    job = lead_data.get("job_title", "Unknown Job")
+                    import asyncio
+                    # Run archiving as a background task to prevent blocking the UI
+                    asyncio.create_task(
+                        librarian.archive_failure_case(
+                            content=f"Lead marked as LOST. Need: {lead_data.get('identified_need')}",
+                            reason=reason,
+                            company=company,
+                            job_title=job,
+                            metadata={"lead_id": lead_id}
+                        )
+                    )
+                except Exception as e:
+                    logger.error(f"Failed to archive failure case for lead {lead_id}: {e}")
+            return True, {"lead": lead_data}
         return False, res
 
     async def promote_to_vendor(

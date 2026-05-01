@@ -125,12 +125,12 @@ async def run_business_sentinel():
     try:
         supabase = get_supabase_client()
         threshold_days = 14
-        # Physical Fix: Column name is 'setting_key', not 'key'
+        # Physical Fix: Column name is 'key', not 'setting_key'
         res_settings = (
-            supabase.table("archon_settings").select("setting_value").eq("setting_key", "STALE_LEAD_THRESHOLD_DAYS").execute()
+            supabase.table("archon_settings").select("value").eq("key", "STALE_LEAD_THRESHOLD_DAYS").execute()
         )
         if res_settings.data:
-            threshold_days = int(res_settings.data[0]["setting_value"])
+            threshold_days = int(res_settings.data[0]["value"])
 
         cutoff_date = (datetime.now(UTC) - timedelta(days=threshold_days)).isoformat()
         logger.info(f"🛡️ Sentinel: Scanning for leads updated before {cutoff_date} (threshold={threshold_days}d)")
@@ -179,8 +179,22 @@ async def run_business_sentinel():
                         "action": "status_changed_to_dormant"
                     },
                 }
-                supabase.table("archon_logs").insert(alert_payload).execute()
+                log_res = supabase.table("archon_logs").insert(alert_payload).execute()
                 logger.info(f"🛡️ Sentinel: Created proactive alert for {lead['company_name']}")
+
+                if log_res.data:
+                    log_id = log_res.data[0]["id"]
+                    try:
+                        import asyncio
+
+                        from server.services.projects.task_service import task_service
+                        # We don't have assignee_id in the basic select above, but task_service can handle fallback or we can add it.
+                        # For now, we trigger the orchestration.
+                        asyncio.create_task(
+                            task_service.generate_task_from_alert(alert_id=str(log_id), assignee_id=None)
+                        )
+                    except Exception as task_err:
+                        logger.error(f"🛡️ Sentinel: Failed to auto-generate task from alert {log_id}: {task_err}")
 
         # 2. Content Bottlenecks (GAP-029)
         forty_eight_hours_ago = (datetime.now(UTC) - timedelta(hours=48)).isoformat()

@@ -227,12 +227,10 @@ def load_environment_config() -> EnvironmentConfig:
     default_pricing = {
         "gpt-4o": {"input": 2.50, "output": 10.00},
         "gpt-4o-mini": {"input": 0.15, "output": 0.60},
-        "gemini-1.5-pro": {"input": 1.25, "output": 5.00},
-        "gemini-1.5-flash": {"input": 0.075, "output": 0.30},
-        "gemini-2.0-flash": {"input": 0.10, "output": 0.40},
-        "gemini-2.0-flash-exp": {"input": 0.10, "output": 0.40},
-        "gemini-2.5-flash": {"input": 0.10, "output": 0.40},
-        "gemini-2.5-flash-lite": {"input": 0.05, "output": 0.20},
+        "gemini-3.1-pro-preview": {"input": 1.25, "output": 5.00},
+        "gemini-3.1-flash": {"input": 0.10, "output": 0.40},
+        "gemini-3.1-flash-lite-preview": {"input": 0.05, "output": 0.20},
+        "gemini-3.1-flash-lite": {"input": 0.05, "output": 0.20},
         "text-embedding-004": {"input": 0.02, "output": 0.00},
         "ollama": {"input": 0.00, "output": 0.00},
     }

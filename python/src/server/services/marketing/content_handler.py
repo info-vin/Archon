@@ -191,14 +191,20 @@ class ContentHandler:
             new_status = "published" if action == "approve" else "changes_requested"
             res = self.supabase_client.table("blog_posts").update({"status": new_status, "review_notes": notes}).eq("id", item_id).execute()
             if action != "approve" and notes and res.data:
-                post_data = res.data[0]
-                asyncio.create_task(
-                    LibrarianService().archive_style_critique(
-                        post_title=post_data.get("title", "Untitled"),
-                        original_content=post_data.get("content", ""),
-                        review_notes=notes,
+                try:
+                    post_data = res.data[0]
+                    import asyncio
+
+                    from ..librarian_service import LibrarianService
+                    asyncio.create_task(
+                        LibrarianService().archive_style_critique(
+                            post_title=post_data.get("title", "Untitled"),
+                            original_content=post_data.get("content", ""),
+                            review_notes=notes,
+                        )
                     )
-                )
+                except Exception as e:
+                    logger.error(f"Failed to archive style critique for blog {item_id}: {e}")
             return True
         return False
 

@@ -9,11 +9,11 @@ SYSTEM_MODELS = {
     # Gemini 3.1 Flash-Lite: Best Free Tier model (15 RPM / 1000 RPD)
     "DEFAULT_TEXT": "models/gemini-3.1-flash-lite-preview",
 
-    # Gemini 2.5 Pro: Last reasoning model with Free Tier (Deprecates June 17, 2026)
-    "DEFAULT_PRO": "models/gemini-2.5-pro",
+    # Gemini 3.1 Pro: Latest reasoning model
+    "DEFAULT_PRO": "models/gemini-3.1-pro-preview",
 
     # Image Models (Requires Billing for API, MarketingService uses internal fallback)
-    "IMAGE_GEN": "models/gemini-2.5-flash-image",
+    "IMAGE_GEN": "models/gemini-3.1-flash-image-preview",
 
     # Legacy Alignment (Kept per User Request - Deprecates July 2026)
     "EMBEDDING": "models/gemini-embedding-001"

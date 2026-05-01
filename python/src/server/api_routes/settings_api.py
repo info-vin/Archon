@@ -31,7 +31,7 @@ OPTIONAL_SETTINGS_WITH_DEFAULTS = {
     "PROJECTS_ENABLED": "true",
     "LOGFIRE_ENABLED": "false",
     "STYLE_GUIDE_ENABLED": "false",
-    "MODEL_CHOICE": "models/gemini-2.5-flash",
+    "MODEL_CHOICE": "models/gemini-3.1-flash-lite-preview",
 }
 
 

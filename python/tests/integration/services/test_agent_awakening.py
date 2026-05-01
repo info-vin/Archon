@@ -2,7 +2,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from src.server.services.agent_registry import get_agent_config
+from src.server.services.agent_registry import get_agent_config, get_agent_uuid
 from src.server.services.agent_service import AgentService
 
 
@@ -11,14 +11,14 @@ class TestAgentAwakening:
     async def test_agent_registry_load(self):
         """Verify Registry loads correct config for known agents."""
         # 1. MarketBot
-        market_config = get_agent_config("f3f1c1cc-29c9-4036-bd86-a4a58edad237")
+        market_config = get_agent_config("market-bot")
         assert market_config is not None
         assert market_config["name"] == "Archon MarketBot"
         assert "search_job_market" in market_config["tools"]
         assert "Marketing Content Writer" in market_config["system_prompt"] or "Blog" in market_config["system_prompt"]
 
         # 2. Librarian
-        lib_config = get_agent_config("579f988b-4b92-49b4-956a-28d4810eeaad")
+        lib_config = get_agent_config("librarian")
         assert lib_config is not None
         assert lib_config["name"] == "Archon Librarian"
         assert "rag_search_knowledge_base" in lib_config["tools"]
@@ -61,7 +61,7 @@ class TestAgentAwakening:
         mock_client_instance.chat.completions.create.return_value = mock_response
 
         # Execute Run (MarketBot)
-        await service.run_agent_task(task_id="task_123", agent_id="f3f1c1cc-29c9-4036-bd86-a4a58edad237")
+        await service.run_agent_task(task_id="task_123", agent_id="market-bot")
 
         # Verify:
         # 1. Task was fetched
@@ -74,7 +74,7 @@ class TestAgentAwakening:
         system_msg = messages[0]
         assert system_msg["role"] == "system"
         # Check if system prompt matches registry
-        config = get_agent_config("f3f1c1cc-29c9-4036-bd86-a4a58edad237")
+        config = get_agent_config("market-bot")
         assert system_msg["content"] == config["system_prompt"]
 
         # 3. Tools were passed
