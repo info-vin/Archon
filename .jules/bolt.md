@@ -60,3 +60,6 @@
 ## 2024-04-29 - Python Performance: Redundant String Allocations in Nested Loops
 **Learning:** In Python, applying string transformations (e.g., `k.upper()`) to static dictionary values inside a nested loop causes redundant memory allocations and significant CPU overhead during every iteration.
 **Action:** Extract and precalculate the transformed values into a new dictionary (e.g., `categories_upper = {k: [w.upper() for w in v] for k, v in categories.items()}`) outside the loop.
+## 2025-05-18 - Replacing len(text.split()) with text.count(' ') is functionally incorrect
+**Learning:** In Python, replacing `len(text.split())` with `text.count(' ') + 1` for word counting or token estimations is functionally incorrect because `split()` handles all whitespace characters (tabs, newlines, multiple spaces) and groups them, whereas `count(' ')` introduces logical bugs by ignoring other whitespaces and miscounting consecutive spaces.
+**Action:** Do not use `text.count(' ') + 1` to replace `len(text.split())`. If performance is a critical issue without allocations, use regex iterators like `sum(1 for _ in re.finditer(r'\S+', text))` or stick to the highly optimized CPython `split()` for general cases.

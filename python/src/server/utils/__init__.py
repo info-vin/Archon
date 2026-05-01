@@ -16,6 +16,7 @@ The actual implementations have been moved to:
 
 # Keep some imports that are still needed
 from ..services.client_manager import get_supabase_client
+
 # Note: storage and search imports removed to avoid circular dependency
 # Import these directly from their modules when needed:
 # from ..services.storage import add_documents_to_supabase, extract_code_blocks, etc.
