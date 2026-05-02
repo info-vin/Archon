@@ -109,10 +109,10 @@ class TestAsyncCredentialService:
         credential_service._cache = {"SECRET_KEY": encrypted_data}
         credential_service._cache_initialized = True
 
-        with patch.object(credential_service, "_decrypt_value", return_value="decrypted_value"):
+        with patch("src.server.services.credentials.crypto_utils.CryptoUtils.decrypt_value", return_value="decrypted_value") as mock_decrypt:
             result = await get_credential("SECRET_KEY", "default")
             assert result == "decrypted_value"
-            credential_service._decrypt_value.assert_called_once_with("encrypted_test_value")
+            mock_decrypt.assert_called_once_with("encrypted_test_value")
 
     @pytest.mark.asyncio
     async def test_get_credential_cache_not_initialized(self, mock_supabase_client):
@@ -184,12 +184,12 @@ class TestAsyncCredentialService:
         mock_table.insert().execute.return_value = mock_response
 
         with patch.object(credential_service, "_get_supabase_client", return_value=mock_client):
-            with patch.object(credential_service, "_encrypt_value", return_value="encrypted_value"):
+            with patch("src.server.services.credentials.crypto_utils.CryptoUtils.encrypt_value", return_value="encrypted_value") as mock_encrypt:
                 result = await set_credential("SECRET_KEY", "secret_value", is_encrypted=True)
                 assert result is True
 
                 # Should have encrypted the value
-                credential_service._encrypt_value.assert_called_once_with("secret_value")
+                mock_encrypt.assert_called_once_with("secret_value")
 
     @pytest.mark.asyncio
     async def test_load_all_credentials(self, mock_supabase_client, sample_credentials_data):
@@ -246,7 +246,7 @@ class TestAsyncCredentialService:
         mock_table.select().execute.return_value = mock_response
 
         with patch.object(credential_service, "_get_supabase_client", return_value=mock_client):
-            with patch.object(credential_service, "_decrypt_value", return_value="decrypted_key"):
+            with patch("src.server.services.credentials.crypto_utils.CryptoUtils.decrypt_value", return_value="decrypted_key"):
                 with patch.dict(os.environ, {}):  # Clear specific environment variables
                     await initialize_credentials()
 
@@ -276,7 +276,7 @@ class TestAsyncCredentialService:
         credential_service._cache = {"CORRUPTED_KEY": encrypted_data}
         credential_service._cache_initialized = True
 
-        with patch.object(credential_service, "_decrypt_value", side_effect=Exception("Decryption failed")):
+        with patch("src.server.services.credentials.crypto_utils.CryptoUtils.decrypt_value", side_effect=Exception("Decryption failed")):
             # Should fall back to default when decryption fails
             result = await credential_service.get_credential("CORRUPTED_KEY", "fallback_value")
             assert result == "fallback_value"
@@ -299,7 +299,7 @@ class TestAsyncCredentialService:
         if credential_service._cache_initialized and "OPENAI_API_KEY" in credential_service._cache:
             cached_key = credential_service._cache["OPENAI_API_KEY"]
             if isinstance(cached_key, dict) and cached_key.get("is_encrypted"):
-                # Would need to call credential_service._decrypt_value(cached_key["encrypted_value"])
+                # Would need to call CryptoUtils.decrypt_value(cached_key["encrypted_value"])
                 assert cached_key["encrypted_value"] == "encrypted_key"
                 assert cached_key["is_encrypted"] is True
 

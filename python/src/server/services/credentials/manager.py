@@ -1,32 +1,15 @@
 import os
 import re
 import time
-from dataclasses import dataclass
 from typing import Any
 
 from supabase import Client, create_client
 
 from ...config.logfire_config import get_logger
-from .encryption_util import EncryptionUtil
+from .crypto_utils import CryptoUtils
+from .models import CredentialItem
 
 logger = get_logger(__name__)
-
-
-@dataclass
-class CredentialItem:
-    """
-    Represents a credential/setting item.
-
-    This is used primarily for the Settings UI to represent the state
-    of a specific configuration key.
-    """
-
-    key: str
-    value: str | None = None
-    encrypted_value: str | None = None
-    is_encrypted: bool = False
-    category: str | None = None
-    description: str | None = None
 
 
 class CredentialManager:
@@ -147,8 +130,7 @@ class CredentialManager:
             encrypted_value = value.get("encrypted_value")
             if encrypted_value:
                 try:
-                    # SELF-DELEGATION: Use internal method to allow object-level mocking in tests
-                    return self._decrypt_value(encrypted_value)
+                    return CryptoUtils.decrypt_value(encrypted_value)
                 except Exception as e:
                     logger.error(f"Failed to decrypt credential {key}: {e}")
                     return default
@@ -217,8 +199,7 @@ class CredentialManager:
             }
 
             if is_encrypted:
-                # SELF-DELEGATION: Use internal method to allow object-level mocking in tests
-                data["encrypted_value"] = self._encrypt_value(value)
+                data["encrypted_value"] = CryptoUtils.encrypt_value(value)
                 data["value"] = None
             else:
                 data["value"] = value
@@ -417,31 +398,21 @@ class CredentialManager:
         return env_dict
 
     async def get_active_provider(self, service_type: str = "llm") -> dict[str, Any]:
-        from .provider_discovery import get_active_provider
+        from .provider_configs import get_active_provider
         return await get_active_provider(self, service_type)
 
     async def get_embedding_provider_configs(self) -> list[dict[str, Any]]:
-        from .provider_discovery import get_embedding_provider_configs
+        from .provider_configs import get_embedding_provider_configs
         return await get_embedding_provider_configs(self)
 
     async def _get_provider_api_key(self, provider: str) -> str | None:
-        from .provider_discovery import _get_provider_api_key
+        from .provider_configs import _get_provider_api_key
         return await _get_provider_api_key(self, provider)
 
     def _get_provider_base_url(self, provider: str, rag_settings: dict) -> str | None:
-        from .provider_discovery import _get_provider_base_url
+        from .provider_configs import _get_provider_base_url
         return _get_provider_base_url(provider, rag_settings)
 
     async def set_active_provider(self, provider: str, service_type: str = "llm") -> bool:
-        from .provider_discovery import set_active_provider
+        from .provider_configs import set_active_provider
         return await set_active_provider(self, provider, service_type)
-
-    # BACKWARD COMPATIBILITY ALIASES (Physical Alignment with Phase 4.6 Legacy)
-    def _encrypt_value(self, value: str) -> str:
-        return EncryptionUtil.encrypt_value(value)
-
-    def _decrypt_value(self, encrypted_value: str) -> str:
-        return EncryptionUtil.decrypt_value(encrypted_value)
-
-    def _get_encryption_key(self) -> bytes:
-        return EncryptionUtil.get_encryption_key()

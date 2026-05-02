@@ -73,7 +73,8 @@ Format your response as JSON:
             if credential_service._cache_initialized and "OPENAI_API_KEY" in credential_service._cache:
                 cached_key = credential_service._cache["OPENAI_API_KEY"]
                 if isinstance(cached_key, dict) and cached_key.get("is_encrypted"):
-                    api_key = credential_service._decrypt_value(cached_key["encrypted_value"])
+                    from src.server.services.credentials.crypto_utils import CryptoUtils
+                    api_key = CryptoUtils.decrypt_value(cached_key["encrypted_value"])
                 else:
                     api_key = cached_key
             else:

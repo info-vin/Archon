@@ -12,7 +12,8 @@ def get_setting(key: str, default: str = "false") -> str:
                 encrypted_value = cached_value.get("encrypted_value")
                 if encrypted_value:
                     try:
-                        return credential_service._decrypt_value(encrypted_value)
+                        from src.server.services.credentials.crypto_utils import CryptoUtils
+                        return CryptoUtils.decrypt_value(encrypted_value)
                     except Exception:
                         pass
             elif cached_value:

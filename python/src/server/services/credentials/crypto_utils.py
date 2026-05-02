@@ -10,7 +10,7 @@ from ...config.logfire_config import get_logger
 logger = get_logger(__name__)
 
 
-class EncryptionUtil:
+class CryptoUtils:
     """Utilities for Fernet encryption and key management."""
 
     @staticmethod
@@ -31,7 +31,7 @@ class EncryptionUtil:
         if not value:
             return ""
         try:
-            fernet = Fernet(EncryptionUtil.get_encryption_key())
+            fernet = Fernet(CryptoUtils.get_encryption_key())
             encrypted_bytes = fernet.encrypt(value.encode("utf-8"))
             return base64.urlsafe_b64encode(encrypted_bytes).decode("utf-8")
         except Exception as e:
@@ -44,7 +44,7 @@ class EncryptionUtil:
         if not encrypted_value:
             return ""
         try:
-            fernet = Fernet(EncryptionUtil.get_encryption_key())
+            fernet = Fernet(CryptoUtils.get_encryption_key())
             encrypted_bytes = base64.urlsafe_b64decode(encrypted_value.encode("utf-8"))
             decrypted_bytes = fernet.decrypt(encrypted_bytes)
             return str(decrypted_bytes.decode("utf-8"))

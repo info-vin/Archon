@@ -73,7 +73,7 @@
 | **一** | **B. Search/RAG** | ~~`python/src/server/services/search/rag_service.py`~~ | ✅ 425 | 檢索增強生成 (RAG) 核心邏輯 |
 | **一** | **B. Search/RAG** | ~~`python/src/server/services/search/agentic_rag_strategy.py`~~ | ✅ 409 | 代理人 RAG 策略與決策鏈 |
 | **二** | **C. Frontend UI** | `enduser-ui-fe/src/features/admin/components/IdentityMatrix.tsx` | 453 | 管理員 RBAC UI 權限矩陣 |
-| **二** | **D. Ops/Infra** | `python/src/server/services/credentials/manager.py` | 447 | 金鑰安全管理 |
+| **二** | **D. Ops/Infra** | ~~`python/src/server/services/credentials/manager.py`~~ | ✅ 447 | 金鑰安全管理 |
 | **二** | **C. Frontend UI** | `enduser-ui-fe/src/features/marketing/components/LeadsCardStack.tsx` | 368 | 行銷 Leads 轉化視覺呈現 |
 | **二** | **C. Frontend UI** | `enduser-ui-fe/src/pages/TeamManagementPage.tsx` | 367 | 團隊職責管理與狀態 |
 | **二** | **C. Frontend UI** | `enduser-ui-fe/src/features/admin/components/SystemHealthDashboard.tsx` | 312 | 系統物理健康指標面板 |
