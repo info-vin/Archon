@@ -10,12 +10,12 @@ from unittest.mock import AsyncMock, MagicMock, Mock, patch
 import openai
 import pytest
 
+from src.server.services.embeddings import EmbeddingBatchResult
 from src.server.services.embeddings.embedding_exceptions import (
     EmbeddingAPIError,
     EmbeddingQuotaExhaustedError,
     EmbeddingRateLimitError,
 )
-from src.server.services.embeddings import EmbeddingBatchResult
 from src.server.services.embeddings.embedding_service import (
     create_embedding,
     create_embeddings_batch,

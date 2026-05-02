@@ -5,6 +5,7 @@ Handles database operations for knowledge items, documents, and code examples.
 """
 
 from typing import Any
+
 from ...config.logfire_config import safe_logfire_error
 
 

@@ -10,10 +10,10 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import openai
 import pytest
 
+from src.server.services.embeddings import EmbeddingBatchResult
 from src.server.services.embeddings.embedding_exceptions import (
     EmbeddingAPIError,
 )
-from src.server.services.embeddings import EmbeddingBatchResult
 from src.server.services.embeddings.embedding_service import (
     create_embedding,
     create_embeddings_batch,
