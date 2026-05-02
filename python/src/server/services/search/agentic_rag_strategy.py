@@ -160,8 +160,9 @@ class AgenticRAGStrategy(BaseRepository):
 
                     # Add additional context if requested
                     if include_context:
+                        from src.server.services.search.result_formatters import extract_code_context
                         formatted_result["chunk_number"] = result.get("chunk_number")
-                        formatted_result["context"] = self._extract_code_context(result)
+                        formatted_result["context"] = extract_code_context(result)
 
                     formatted_results.append(formatted_result)
 
@@ -194,149 +195,6 @@ class AgenticRAGStrategy(BaseRepository):
                     "source_filter": source_id,
                     "search_mode": "agentic_rag",
                 }
-
-    def _extract_code_context(self, result: dict[str, Any]) -> dict[str, Any]:
-        """
-        Extract additional context information from a code example result.
-
-        Args:
-            result: Raw search result from database
-
-        Returns:
-            Dictionary with contextual information
-        """
-        context = {}
-
-        metadata = result.get("metadata", {})
-        if isinstance(metadata, dict):
-            # Extract programming language if available
-            if "language" in metadata:
-                context["language"] = metadata["language"]
-
-            # Extract framework/library information
-            if "framework" in metadata:
-                context["framework"] = metadata["framework"]
-
-            # Extract file information
-            if "file_path" in metadata:
-                context["file_path"] = metadata["file_path"]
-
-            # Extract line numbers if available
-            if "line_start" in metadata and "line_end" in metadata:
-                context["line_range"] = f"{metadata['line_start']}-{metadata['line_end']}"
-
-        # Add content statistics
-        content = result.get("content", "")
-        if content:
-            context["content_length"] = len(content)
-            context["line_count"] = content.count("\\n") + 1
-
-        return context
-
-    def analyze_code_query(self, query: str) -> dict[str, Any]:
-        """
-        Analyze a query to determine if it's code-related and extract relevant information.
-
-        Args:
-            query: Search query to analyze
-
-        Returns:
-            Analysis results with query classification and extracted info
-        """
-        query_lower = query.lower()
-
-        # Programming language detection
-        languages = [
-            "python",
-            "javascript",
-            "java",
-            "c++",
-            "cpp",
-            "c#",
-            "csharp",
-            "ruby",
-            "go",
-            "golang",
-            "rust",
-            "swift",
-            "kotlin",
-            "scala",
-            "php",
-            "typescript",
-            "html",
-            "css",
-            "sql",
-            "bash",
-            "shell",
-            "r",
-            "matlab",
-            "julia",
-            "perl",
-            "lua",
-            "dart",
-            "elixir",
-        ]
-
-        detected_languages = [lang for lang in languages if lang in query_lower]
-
-        # Framework/library detection
-        frameworks = [
-            "react",
-            "angular",
-            "vue",
-            "django",
-            "flask",
-            "fastapi",
-            "express",
-            "spring",
-            "rails",
-            "laravel",
-            "tensorflow",
-            "pytorch",
-            "pandas",
-            "numpy",
-            "matplotlib",
-            "opencv",
-        ]
-
-        detected_frameworks = [fw for fw in frameworks if fw in query_lower]
-
-        # Code-related keywords
-        code_keywords = [
-            "function",
-            "class",
-            "method",
-            "algorithm",
-            "implementation",
-            "example",
-            "tutorial",
-            "pattern",
-            "template",
-            "snippet",
-            "code",
-            "programming",
-            "development",
-            "api",
-            "library",
-        ]
-
-        code_indicators = [kw for kw in code_keywords if kw in query_lower]
-
-        # Determine if query is code-related
-        is_code_query = len(detected_languages) > 0 or len(detected_frameworks) > 0 or len(code_indicators) > 0
-
-        return {
-            "is_code_query": is_code_query,
-            "confidence": min(
-                1.0,
-                (len(detected_languages) + len(detected_frameworks) + len(code_indicators)) * 0.3,
-            ),
-            "languages": detected_languages,
-            "frameworks": detected_frameworks,
-            "code_indicators": code_indicators,
-            "enhanced_query_recommended": is_code_query,
-        }
-
 
 # Utility functions for standalone usage
 def create_agentic_rag_strategy(supabase_client: Client) -> AgenticRAGStrategy:
@@ -381,5 +239,5 @@ def analyze_query_for_code_search(query: str) -> dict[str, Any]:
     Returns:
         Analysis results
     """
-    strategy = AgenticRAGStrategy(cast(Client, None), None)  # Don't need client for analysis
-    return strategy.analyze_code_query(query)
+    from src.server.services.search.query_analyzer import analyze_code_query
+    return analyze_code_query(query)

@@ -69,7 +69,7 @@
 
 | 梯隊 | 檔案路徑 | 行數 | 職責領域 (Duty Area) |
 | :--- | :--- | :--- | :--- |
-| **一** | `python/src/server/services/threading_service.py` | 471 | 核心併發與任務調度 |
+| **一** | ~~`python/src/server/services/threading_service.py`~~ | ✅ 471 | 核心併發與任務調度 |
 | **一** | `python/src/server/services/search/rag_service.py` | 425 | 檢索增強生成 (RAG) 核心邏輯 |
 | **一** | `python/src/server/services/search/agentic_rag_strategy.py` | 409 | 代理人 RAG 策略與決策鏈 |
 | **二** | `enduser-ui-fe/src/features/admin/components/IdentityMatrix.tsx` | 453 | 管理員 RBAC UI 權限矩陣 |

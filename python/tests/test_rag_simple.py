@@ -242,8 +242,10 @@ class TestAgenticRAGCore:
 
     def test_query_enhancement(self, agentic_strategy):
         """Test code query enhancement"""
+        from src.server.services.search.query_analyzer import analyze_code_query
+
         original_query = "python function"
-        analysis = agentic_strategy.analyze_code_query(original_query)
+        analysis = analyze_code_query(original_query)
 
         assert isinstance(analysis, dict)
         assert "is_code_query" in analysis
