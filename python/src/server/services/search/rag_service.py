@@ -70,63 +70,14 @@ class RAGService(BaseRepository):
                 logger.info("Reranking strategy attached from singleton")
 
     def get_setting(self, key: str, default: str = "false") -> str:
-        """Get a setting from the credential service or fall back to environment variable."""
-        try:
-            from ..credential_service import credential_service
-
-            if hasattr(credential_service, "_cache") and credential_service._cache_initialized:
-                cached_value = credential_service._cache.get(key)
-                if isinstance(cached_value, dict) and cached_value.get("is_encrypted"):
-                    encrypted_value = cached_value.get("encrypted_value")
-                    if encrypted_value:
-                        try:
-                            return credential_service._decrypt_value(encrypted_value)
-                        except Exception:
-                            pass
-                elif cached_value:
-                    return str(cached_value)
-            # Fallback to environment variable
-            return os.getenv(key, default)
-        except Exception:
-            return os.getenv(key, default)
+        """Get a setting from credential service (deprecated, use rag_config)."""
+        from .rag_config import get_setting
+        return get_setting(key, default)
 
     def get_bool_setting(self, key: str, default: bool = False) -> bool:
         """Get a boolean setting from credential service."""
-        value = self.get_setting(key, "false" if not default else "true")
-        return value.lower() in ("true", "1", "yes", "on")
-
-    async def _remote_rerank(self, query: str, results: list[dict], content_key: str, top_k: int) -> list[dict]:
-        """Performs reranking via remote agents service (Phase 4.6.28)."""
-        import httpx
-
-        try:
-            async with httpx.AsyncClient(timeout=30.0) as client:
-                response = await client.post(
-                    f"{self.agents_url}/ml/rerank",
-                    json={
-                        "query": query,
-                        "results": results,
-                        "content_key": content_key,
-                        "top_k": top_k,
-                    },
-                )
-                if response.status_code == 200:
-                    data = response.json()
-                    if data.get("success"):
-                        logger.info("Remote reranking successful via Agents service.")
-                        from typing import Any, cast
-                        return cast(list[dict[str, Any]], data.get("results", []))
-
-                logger.warning(f"Remote rerank failed (Status {response.status_code}). Falling back...")
-        except Exception as e:
-            logger.warning(f"Remote rerank connection error: {e}. Falling back...")
-
-        # Fallback to local if available, else return original
-        if self.reranking_strategy:
-            return await self.reranking_strategy.rerank_results(
-                query, results, top_k=top_k, content_key=content_key
-            )
-        return results[:top_k]
+        from src.server.services.search.rag_config import get_bool_setting
+        return get_bool_setting(key, default)
 
     async def search_documents(
         self,
@@ -223,7 +174,7 @@ class RAGService(BaseRepository):
         Executes Google Search Grounding via Gemini.
         Returns (content, source_id).
         """
-        from .web_research_strategy import perform_web_research_impl
+        from src.server.services.search.web_research_strategy import perform_web_research_impl
         return await perform_web_research_impl(query, genai, types)
 
     async def perform_rag_query(
@@ -250,156 +201,15 @@ class RAGService(BaseRepository):
         Returns:
             Tuple of (success, result_dict)
         """
-        with safe_span("rag_query_pipeline", query_length=len(query), source=source, match_count=match_count) as span:
-            try:
-                logger.info(f"RAG query started: {query[:100]}{'...' if len(query) > 100 else ''}")
-
-                # Build filter metadata
-                search_filter = {"source": source} if source else {}
-                if filter_metadata:
-                    search_filter.update(filter_metadata)
-
-                final_filter = search_filter if search_filter else None
-
-                # Check which strategies are enabled
-                use_hybrid_search = self.get_bool_setting("USE_HYBRID_SEARCH", False)
-                use_reranking = self.get_bool_setting("USE_RERANKING", False)
-
-                search_match_count = match_count
-                if use_reranking and self.reranking_strategy:
-                    # Fetch 5x the requested amount when reranking is enabled
-                    # The reranker will select the best from this larger pool
-                    search_match_count = match_count * 5
-                    logger.debug(
-                        f"Reranking enabled - fetching {search_match_count} candidates for {match_count} final results"
-                    )
-
-                # Step 0: Web Research (if enabled)
-                # Check setting or parameter
-                enable_web_research = filter_metadata.get("enable_web_research") if filter_metadata else False
-                if not enable_web_research:
-                    enable_web_research = self.get_bool_setting("ENABLE_WEB_RESEARCH", False)
-
-                web_research_results = []
-                if enable_web_research:
-                    try:
-                        web_content, source_id = await self.perform_web_research(query)
-                        if web_content:
-                            web_research_results.append(
-                                {
-                                    "id": source_id,
-                                    "content": web_content,
-                                    "metadata": {"type": "web_research", "source_id": source_id},
-                                    "similarity": 1.0,  # Artificially high score to ensure visibility
-                                }
-                            )
-                            logger.info(f"Web research successful: {source_id}")
-                    except Exception as e:
-                        logger.warning(f"Web research failed: {e}")
-
-                # Step 1 & 2: Get results (with hybrid search if enabled)
-                results = await self.search_documents(
-                    query=query,
-                    match_count=search_match_count,
-                    filter_metadata=final_filter,
-                    use_hybrid_search=use_hybrid_search,
-                    min_score=min_score,
-                )
-
-                # Merge web research results
-                if web_research_results:
-                    # Prepend web results
-                    results = web_research_results + results
-
-                span.set_attribute("raw_results_count", len(results))
-                span.set_attribute("hybrid_search_enabled", use_hybrid_search)
-                span.set_attribute("web_research_enabled", enable_web_research)
-
-                # Format results for processing
-                formatted_results = []
-                for i, result in enumerate(results):
-                    try:
-                        res_metadata = result.get("metadata", {})
-                        base_score = float(result.get("similarity") or 0.0)
-
-                        # 1.6 - Policy Boosting: Increase score for high-authority documents
-                        if "policy" in res_metadata.get("tags", []):
-                            boosted_score = min(1.0, base_score + 0.15)
-                            logger.info(f"RAG: Applying Policy Boost | score {base_score:.3f} -> {boosted_score:.3f}")
-                            base_score = boosted_score
-
-                        formatted_result = {
-                            "id": result.get("id", f"result_{i}"),
-                            "content": result.get("content", "")[:1000],  # Limit content
-                            "metadata": res_metadata,
-                            "similarity_score": base_score,
-                        }
-                        formatted_results.append(formatted_result)
-                    except Exception as format_error:
-                        logger.warning(f"Failed to format result {i}: {format_error}")
-                        continue
-
-                # Step 3: Apply reranking if we have a strategy or if enabled
-                reranking_applied = False
-                if formatted_results:
-                    use_reranking = self.get_bool_setting("USE_RERANKING", False)
-                    if use_reranking:
-                        if self.agents_enabled:
-                            formatted_results = await self._remote_rerank(
-                                query, formatted_results, content_key="content", top_k=match_count
-                            )
-                            reranking_applied = True
-                        elif self.reranking_strategy:
-                            try:
-                                # Pass top_k to limit results to the originally requested count
-                                formatted_results = await self.reranking_strategy.rerank_results(
-                                    query, formatted_results, content_key="content", top_k=match_count
-                                )
-                                reranking_applied = True
-                                logger.debug(
-                                    f"Reranking applied: {search_match_count} candidates -> {len(formatted_results)} final results"
-                                )
-                            except Exception as e:
-                                logger.warning(f"Reranking failed: {e}")
-                                reranking_applied = False
-                                # If reranking fails but we fetched extra results, trim to requested count
-                                if len(formatted_results) > match_count:
-                                    formatted_results = formatted_results[:match_count]
-                    elif len(formatted_results) > match_count:
-                        # Even if reranking is off, we might have fetched match_count * 5, so trim it
-                        formatted_results = formatted_results[:match_count]
-
-                # Build response
-                response_data = {
-                    "results": formatted_results,
-                    "query": query,
-                    "source": source,
-                    "match_count": match_count,
-                    "total_found": len(formatted_results),
-                    "execution_path": "rag_service_pipeline",
-                    "search_mode": "hybrid" if use_hybrid_search else "vector",
-                    "reranking_applied": reranking_applied,
-                }
-
-                span.set_attribute("final_results_count", len(formatted_results))
-                span.set_attribute("reranking_applied", reranking_applied)
-                span.set_attribute("success", True)
-
-                logger.info(f"RAG query completed - {len(formatted_results)} results found")
-                return True, response_data
-
-            except Exception as e:
-                logger.error(f"RAG query failed: {e}")
-                span.set_attribute("error", str(e))
-                span.set_attribute("success", False)
-
-                return False, {
-                    "error": str(e),
-                    "error_type": type(e).__name__,
-                    "query": query,
-                    "source": source,
-                    "execution_path": "rag_service_pipeline",
-                }
+        from src.server.services.search.rag_pipeline_executor import execute_rag_pipeline
+        return await execute_rag_pipeline(
+            rag_service=self,
+            query=query,
+            source=source,
+            match_count=match_count,
+            filter_metadata=filter_metadata,
+            min_score=min_score
+        )
 
     async def search_code_examples_service(
         self, query: str, source_id: str | None = None, match_count: int = 5
@@ -421,5 +231,5 @@ class RAGService(BaseRepository):
         Returns:
             Tuple of (success, result_dict)
         """
-        from .code_search_service import execute_code_search_pipeline
+        from src.server.services.search.code_search_service import execute_code_search_pipeline
         return await execute_code_search_pipeline(self, query, source_id, match_count)

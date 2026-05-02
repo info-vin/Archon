@@ -24,8 +24,9 @@ async def execute_code_search_pipeline(
                     "query": query,
                 }
 
-            use_hybrid_search = rag_service.get_bool_setting("USE_HYBRID_SEARCH", False)
-            use_reranking = rag_service.get_bool_setting("USE_RERANKING", False)
+            from src.server.services.search.rag_config import get_bool_setting
+            use_hybrid_search = get_bool_setting("USE_HYBRID_SEARCH", False)
+            use_reranking = get_bool_setting("USE_RERANKING", False)
 
             search_match_count = match_count
             if use_reranking and rag_service.reranking_strategy:

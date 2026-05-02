@@ -40,32 +40,8 @@ class AgenticRAGStrategy(BaseRepository):
 
     def is_enabled(self) -> bool:
         """Check if agentic RAG is enabled via configuration."""
-        try:
-            from ..credential_service import credential_service
-
-            if hasattr(credential_service, "_cache") and credential_service._cache_initialized:
-                cached_value = credential_service._cache.get("USE_AGENTIC_RAG")
-                if cached_value:
-                    # Handle both direct values and encrypted values
-                    if isinstance(cached_value, dict) and cached_value.get("is_encrypted"):
-                        encrypted_value = cached_value.get("encrypted_value")
-                        if encrypted_value:
-                            try:
-                                value = credential_service._decrypt_value(encrypted_value)
-                            except Exception:
-                                return False
-                        else:
-                            return False
-                    else:
-                        value = str(cached_value)
-
-                    return value.lower() in ("true", "1", "yes", "on")
-
-            # Default to false if not found in settings
-            return False
-        except Exception:
-            # Default to false on any error
-            return False
+        from src.server.services.search.rag_config import get_bool_setting
+        return get_bool_setting("USE_AGENTIC_RAG", False)
 
     async def search_code_examples(
         self,
