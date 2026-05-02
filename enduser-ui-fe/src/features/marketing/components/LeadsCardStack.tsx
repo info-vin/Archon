@@ -217,6 +217,7 @@ const Card = ({ lead, style, onDragEnd, onPitch, onHistory }: { lead: Lead, styl
                         className="w-12 h-12 bg-white rounded-full shadow-lg border border-gray-100 flex items-center justify-center text-amber-500 hover:bg-amber-50 active:scale-95 transition-all"
                         onPointerDown={(e) => e.stopPropagation()}
                         title="View Timeline"
+                        aria-label="View Timeline"
                     >
                         <ActivityIcon className="w-6 h-6" />
                     </button>
@@ -225,6 +226,7 @@ const Card = ({ lead, style, onDragEnd, onPitch, onHistory }: { lead: Lead, styl
                         className="w-12 h-12 bg-white rounded-full shadow-lg border border-gray-100 flex items-center justify-center text-blue-500 hover:bg-blue-50 active:scale-95 transition-all"
                         onPointerDown={(e) => e.stopPropagation()}
                         title="Open Map"
+                        aria-label="Open Map"
                     >
                         <MapIcon className="w-6 h-6" />
                     </button>
@@ -233,6 +235,7 @@ const Card = ({ lead, style, onDragEnd, onPitch, onHistory }: { lead: Lead, styl
                         className={`w-12 h-12 rounded-full shadow-lg flex items-center justify-center text-white active:scale-95 transition-all ${lead.pitch_content ? 'bg-green-600 hover:bg-green-700 shadow-green-200' : 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-200'}`}
                         onPointerDown={(e) => e.stopPropagation()}
                         title={lead.pitch_content ? "View Saved Pitch" : "Generate AI Pitch"}
+                        aria-label={lead.pitch_content ? "View Saved Pitch" : "Generate AI Pitch"}
                     >
                         <SparklesIcon className="w-6 h-6" />
                     </button>
@@ -347,12 +350,14 @@ export const LeadsCardStack: React.FC<LeadsCardStackProps> = ({ leads, onSwipeRi
                 <button 
                     onClick={() => handleSwipe('left')}
                     className="w-14 h-14 bg-background border border-border rounded-full flex items-center justify-center shadow-lg text-red-500 hover:bg-red-50 active:scale-95 transition-all"
+                    aria-label="Reject Lead"
                 >
                     <XCircleIcon className="w-8 h-8" />
                 </button>
                  <button 
                     onClick={() => handleSwipe('right')}
                     className="w-14 h-14 bg-background border border-border rounded-full flex items-center justify-center shadow-lg text-green-500 hover:bg-green-50 active:scale-95 transition-all"
+                    aria-label="Accept Lead"
                 >
                     <CheckCircleIcon className="w-8 h-8" />
                 </button>
