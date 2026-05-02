@@ -67,27 +67,27 @@
 
 我們採用「梯隊 (Tier)」作為重構順序的決策依據，確保資源投入與系統健康度、業務職責緊密對齊。
 
-| 梯隊 | 檔案路徑 | 行數 | 職責領域 (Duty Area) |
-| :--- | :--- | :--- | :--- |
-| **一** | ~~`python/src/server/services/threading_service.py`~~ | ✅ 471 | 核心併發與任務調度 |
-| **一** | ~~`python/src/server/services/search/rag_service.py`~~ | ✅ 425 | 檢索增強生成 (RAG) 核心邏輯 |
-| **一** | ~~`python/src/server/services/search/agentic_rag_strategy.py`~~ | ✅ 409 | 代理人 RAG 策略與決策鏈 |
-| **二** | `enduser-ui-fe/src/features/admin/components/IdentityMatrix.tsx` | 453 | 管理員 RBAC UI 權限矩陣 |
-| **二** | `python/src/server/services/credentials/manager.py` | 447 | 金鑰安全管理 |
-| **二** | `enduser-ui-fe/src/features/marketing/components/LeadsCardStack.tsx` | 368 | 行銷 Leads 轉化視覺呈現 |
-| **二** | `enduser-ui-fe/src/pages/TeamManagementPage.tsx` | 367 | 團隊職責管理與狀態 |
-| **二** | `enduser-ui-fe/src/features/admin/components/SystemHealthDashboard.tsx` | 312 | 系統物理健康指標面板 |
-| **三** | ~~`python/src/server/services/search/keyword_extractor.py`~~ | ✅ 447 | 文字探勘與特徵詞提取 |
-| **三** | `python/src/server/services/storage/document_storage_service.py` | 395 | 檔案儲存層與索引 |
-| **三** | `python/src/server/services/embeddings/embedding_service.py` | 366 | 向量轉換與空間對應 |
-| **三** | `python/src/server/services/crawling/document_storage_operations.py` | 358 | 爬蟲儲存與物理路徑對齊 |
-| **三** | `python/src/server/services/stats/metrics.py` | 371 | 效能統計 |
-| **三** | `python/src/server/services/storage/code/extraction.py` | 322 | 程式碼片段自動化提取 |
-| **三** | `python/src/server/services/knowledge/knowledge_summary_service.py` | 310 | 知識庫摘要邏輯 |
-| **三** | `enduser-ui-fe/src/features/manager/components/OpLoadPanel.tsx` | 318 | 營運負載動態監控 |
-| **四** | `python/src/server/services/ollama/model_discovery_service.py` | 465 | Ollama 模型探索 |
-| **四** | `python/src/server/services/ollama/embedding_router.py` | 438 | Ollama 向量路由 |
-| **四** | `python/src/server/services/ollama/discovery/capabilities.py` | 386 | Ollama 能力偵測 |
+| 梯隊 | 群組 | 檔案路徑 | 行數 | 職責領域 (Duty Area) |
+| :--- | :--- | :--- | :--- | :--- |
+| **一** | **A. 任務調度** | ~~`python/src/server/services/threading_service.py`~~ | ✅ 471 | 核心併發與任務調度 |
+| **一** | **B. Search/RAG** | ~~`python/src/server/services/search/rag_service.py`~~ | ✅ 425 | 檢索增強生成 (RAG) 核心邏輯 |
+| **一** | **B. Search/RAG** | ~~`python/src/server/services/search/agentic_rag_strategy.py`~~ | ✅ 409 | 代理人 RAG 策略與決策鏈 |
+| **二** | **C. Frontend UI** | `enduser-ui-fe/src/features/admin/components/IdentityMatrix.tsx` | 453 | 管理員 RBAC UI 權限矩陣 |
+| **二** | **D. Ops/Infra** | `python/src/server/services/credentials/manager.py` | 447 | 金鑰安全管理 |
+| **二** | **C. Frontend UI** | `enduser-ui-fe/src/features/marketing/components/LeadsCardStack.tsx` | 368 | 行銷 Leads 轉化視覺呈現 |
+| **二** | **C. Frontend UI** | `enduser-ui-fe/src/pages/TeamManagementPage.tsx` | 367 | 團隊職責管理與狀態 |
+| **二** | **C. Frontend UI** | `enduser-ui-fe/src/features/admin/components/SystemHealthDashboard.tsx` | 312 | 系統物理健康指標面板 |
+| **三** | **B. Search/RAG** | ~~`python/src/server/services/search/keyword_extractor.py`~~ | ✅ 447 | 文字探勘與特徵詞提取 |
+| **三** | **D. Ops/Infra** | `python/src/server/services/storage/document_storage_service.py` | 395 | 檔案儲存層與索引 |
+| **三** | **B. Search/RAG** | `python/src/server/services/embeddings/embedding_service.py` | 366 | 向量轉換與空間對應 |
+| **三** | **D. Ops/Infra** | `python/src/server/services/crawling/document_storage_operations.py` | 358 | 爬蟲儲存與物理路徑對齊 |
+| **三** | **D. Ops/Infra** | `python/src/server/services/stats/metrics.py` | 371 | 效能統計 |
+| **三** | **D. Ops/Infra** | `python/src/server/services/storage/code/extraction.py` | 322 | 程式碼片段自動化提取 |
+| **三** | **B. Search/RAG** | `python/src/server/services/knowledge/knowledge_summary_service.py` | 310 | 知識庫摘要邏輯 |
+| **三** | **C. Frontend UI** | `enduser-ui-fe/src/features/manager/components/OpLoadPanel.tsx` | 318 | 營運負載動態監控 |
+| **四** | **E. Ollama** | `python/src/server/services/ollama/model_discovery_service.py` | 465 | Ollama 模型探索 |
+| **四** | **E. Ollama** | `python/src/server/services/ollama/embedding_router.py` | 438 | Ollama 向量路由 |
+| **四** | **E. Ollama** | `python/src/server/services/ollama/discovery/capabilities.py` | 386 | Ollama 能力偵測 |
 
 ---
 
