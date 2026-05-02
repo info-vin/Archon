@@ -70,14 +70,14 @@
 | 梯隊 | 檔案路徑 | 行數 | 職責領域 (Duty Area) |
 | :--- | :--- | :--- | :--- |
 | **一** | ~~`python/src/server/services/threading_service.py`~~ | ✅ 471 | 核心併發與任務調度 |
-| **一** | `python/src/server/services/search/rag_service.py` | 425 | 檢索增強生成 (RAG) 核心邏輯 |
-| **一** | `python/src/server/services/search/agentic_rag_strategy.py` | 409 | 代理人 RAG 策略與決策鏈 |
+| **一** | ~~`python/src/server/services/search/rag_service.py`~~ | ✅ 425 | 檢索增強生成 (RAG) 核心邏輯 |
+| **一** | ~~`python/src/server/services/search/agentic_rag_strategy.py`~~ | ✅ 409 | 代理人 RAG 策略與決策鏈 |
 | **二** | `enduser-ui-fe/src/features/admin/components/IdentityMatrix.tsx` | 453 | 管理員 RBAC UI 權限矩陣 |
 | **二** | `python/src/server/services/credentials/manager.py` | 447 | 金鑰安全管理 |
 | **二** | `enduser-ui-fe/src/features/marketing/components/LeadsCardStack.tsx` | 368 | 行銷 Leads 轉化視覺呈現 |
 | **二** | `enduser-ui-fe/src/pages/TeamManagementPage.tsx` | 367 | 團隊職責管理與狀態 |
 | **二** | `enduser-ui-fe/src/features/admin/components/SystemHealthDashboard.tsx` | 312 | 系統物理健康指標面板 |
-| **三** | `python/src/server/services/search/keyword_extractor.py` | 447 | 文字探勘與特徵詞提取 |
+| **三** | ~~`python/src/server/services/search/keyword_extractor.py`~~ | ✅ 447 | 文字探勘與特徵詞提取 |
 | **三** | `python/src/server/services/storage/document_storage_service.py` | 395 | 檔案儲存層與索引 |
 | **三** | `python/src/server/services/embeddings/embedding_service.py` | 366 | 向量轉換與空間對應 |
 | **三** | `python/src/server/services/crawling/document_storage_operations.py` | 358 | 爬蟲儲存與物理路徑對齊 |
