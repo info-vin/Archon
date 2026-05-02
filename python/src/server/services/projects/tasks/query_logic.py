@@ -164,3 +164,46 @@ async def get_all_project_task_counts_logic(task_service_instance) -> tuple[bool
         logger.error(f"Error fetching task counts logic: {e}")
         error_data: Any = {"error": f"Error fetching task counts: {str(e)}"}
         return False, cast(dict[str, dict[str, int]], error_data)
+
+
+async def get_task_logic(task_service_instance, task_id: str) -> tuple[bool, dict[str, Any]]:
+    """
+    Get a specific task by ID, including AI usage metrics.
+    """
+    def _query():
+        return task_service_instance.supabase_client.table("archon_tasks").select("*").eq("id", task_id).execute()
+
+    success, result = task_service_instance.execute_query(query_func=_query, error_context=f"Task with ID {task_id} not found")
+
+    if not success:
+        return False, result
+
+    task_data = result["data"][0]
+
+    # 1. Aggregate AI Metrics (Token Usage & Cost)
+    try:
+        # We search for token usage linked to this task_id.
+        token_res = (
+            task_service_instance.supabase_client.table("token_usage")
+            .select("total_tokens, cost_usd")
+            .ilike("request_id", f"%{task_id}%")
+            .execute()
+        )
+
+        total_tokens = 0
+        total_cost = 0.0
+        for row in (token_res.data or []):
+            total_tokens += row.get("total_tokens", 0)
+            total_cost += float(row.get("cost_usd", 0))
+
+        task_data["ai_metrics"] = {
+            "total_tokens": total_tokens,
+            "total_cost_usd": round(total_cost, 6),
+            "is_ai_powered": total_tokens > 0,
+        }
+    except Exception as e:
+        logger.warning(f"Failed to aggregate AI metrics for task {task_id}: {e}")
+        task_data["ai_metrics"] = {"total_tokens": 0, "total_cost_usd": 0, "is_ai_powered": False}
+
+    return True, {"task": task_data}
+

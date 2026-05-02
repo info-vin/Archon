@@ -2,7 +2,16 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import DashboardPage from './DashboardPage';
-import { AuthProvider } from '@/hooks/useAuth';
+
+// Mock useAuth to avoid AuthProvider hanging
+vi.mock('../hooks/useAuth', () => ({
+  useAuth: vi.fn().mockReturnValue({
+    user: { id: 'admin-1', name: 'Admin User' },
+    isAdmin: true,
+    isAuthenticated: true,
+    loading: false
+  })
+}));
 
 // Mock the hook to return non-loading state to skip loading screen
 vi.mock('../features/dashboard/hooks/useDashboardLogic', () => ({
@@ -28,7 +37,8 @@ vi.mock('../services/api', () => ({
     getCurrentUser: vi.fn().mockResolvedValue({ id: '1', email: 'test@example.com', role: 'user' }),
     getAssignableUsers: vi.fn().mockResolvedValue([]),
     getAssignableAgents: vi.fn().mockResolvedValue([]),
-    getAttendanceStatus: vi.fn().mockResolvedValue({ status: 'out' })
+    getAttendanceStatus: vi.fn().mockResolvedValue({ status: 'out' }),
+    getEmployees: vi.fn().mockResolvedValue([])
   },
   supabase: null
 }));
@@ -36,12 +46,15 @@ vi.mock('../services/api', () => ({
 describe('DashboardPage Accessibility', () => {
   it('renders view mode buttons with proper aria labels', async () => {
     render(
-      <AuthProvider>
-        <BrowserRouter>
-          <DashboardPage />
-        </BrowserRouter>
-      </AuthProvider>
+      <BrowserRouter>
+        <DashboardPage />
+      </BrowserRouter>
     );
+
+    // Wait for loading to finish
+    await waitFor(() => {
+      expect(screen.queryByText(/Loading tasks/i)).not.toBeInTheDocument();
+    }, { timeout: 3000 });
 
     // Verify the group
     await waitFor(() => {

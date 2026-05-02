@@ -67,3 +67,14 @@
 1. **`main.py`**: 作為全系統入口，將 Error Handlers 與 Middleware 抽離，是提高穩定性的第一步。
 2. **`TaskModal.tsx`**: 前端最容易產生 Merge Conflict 的地方，必須優先組件化。
 3. **`librarian_service.py`**: RAG 系統的心臟，降低耦合度有助於未來串接更多外部知識庫。
+
+---
+
+## 4. 功能斷層與未來功能 (Identified Feature Gaps)
+
+在盤點 `task_service.py` 與 RBAC 架構時，我們發現了一個關鍵的業務斷層，需在後續階段補齊：
+
+- **Agent 協作功能 (Collaborative Agent Assignment)**:
+  - **現況**: 目前的任務所有權是「互斥的」，單一任務只能指派給人類 (如 Bob) **或**單一 AI Agent。
+  - **目標**: 實作主副負責人 (或協作者) 機制。允許任務的主負責人為人類，但同時能指定 AI Agent (如 MarketBot) 作為「協作者 (Collaborators)」自動介入提供協助。
+  - **影響範圍**: 屬於跨全端的大型 Feature，需修改資料庫 (`archon_tasks` 擴充 `collaborator_agent_ids` 欄位)、後端 (`ops.py`, `task_service.py`) 以及前端 (`TaskModal.tsx` 新增獨立的 AI Assistant 選擇器)。

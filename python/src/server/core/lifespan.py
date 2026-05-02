@@ -24,6 +24,7 @@ async def lifespan(app: FastAPI):
     from src.server.services.background_task_manager import cleanup_task_manager, get_task_manager
     from src.server.services.crawler_manager import cleanup_crawler
     from src.server.services.credential_service import initialize_credentials
+    from src.server.services.log_service import log_service
     from src.server.services.prompt_service import prompt_service
     from src.server.services.scheduler_service import SchedulerService
     from src.server.services.search.reranking_strategy import reranking_strategy
@@ -62,7 +63,7 @@ async def lifespan(app: FastAPI):
         # Initialize MCP Client
         api_logger.info("Initializing MCP Client...")
         mcp_client = await get_mcp_client()
-        
+
         # Initialize tool list to verify connection
         tools = await mcp_client.list_tools()
         if not tools:

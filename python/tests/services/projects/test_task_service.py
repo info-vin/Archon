@@ -4,7 +4,8 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from src.server.services.projects.task_service import AI_AGENT_ROLES, TaskService
+from src.server.services.projects.task_service import TaskService
+from src.server.services.shared_constants import AI_AGENT_ROLES
 
 
 @pytest.mark.asyncio
