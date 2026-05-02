@@ -15,8 +15,8 @@ from src.server.services.embeddings.embedding_exceptions import (
     EmbeddingQuotaExhaustedError,
     EmbeddingRateLimitError,
 )
+from src.server.services.embeddings import EmbeddingBatchResult
 from src.server.services.embeddings.embedding_service import (
-    EmbeddingBatchResult,
     create_embedding,
     create_embeddings_batch,
 )
@@ -44,12 +44,12 @@ class TestNoZeroEmbeddings:
 
         with (
             patch(
-                "src.server.services.embeddings.embedding_service.credential_service.get_embedding_provider_configs",
+                "src.server.services.embeddings.batch_processor.credential_service.get_embedding_provider_configs",
                 mock_get_configs,
             ),
-            patch("src.server.services.embeddings.embedding_service.create_embedding_client", mock_create_client),
+            patch("src.server.services.embeddings.batch_processor.create_embedding_client", mock_create_client),
             patch(
-                "src.server.services.embeddings.embedding_service.credential_service.get_credentials_by_category",
+                "src.server.services.embeddings.batch_processor.credential_service.get_credentials_by_category",
                 AsyncMock(return_value={"EMBEDDING_BATCH_SIZE": "10"}),
             ),
         ):
@@ -75,12 +75,12 @@ class TestNoZeroEmbeddings:
 
         with (
             patch(
-                "src.server.services.embeddings.embedding_service.credential_service.get_embedding_provider_configs",
+                "src.server.services.embeddings.batch_processor.credential_service.get_embedding_provider_configs",
                 mock_get_configs,
             ),
-            patch("src.server.services.embeddings.embedding_service.create_embedding_client", mock_create_client),
+            patch("src.server.services.embeddings.batch_processor.create_embedding_client", mock_create_client),
             patch(
-                "src.server.services.embeddings.embedding_service.credential_service.get_credentials_by_category",
+                "src.server.services.embeddings.batch_processor.credential_service.get_credentials_by_category",
                 AsyncMock(return_value={"EMBEDDING_BATCH_SIZE": "10"}),
             ),
         ):
@@ -126,12 +126,12 @@ class TestNoZeroEmbeddings:
 
         with (
             patch(
-                "src.server.services.embeddings.embedding_service.credential_service.get_embedding_provider_configs",
+                "src.server.services.embeddings.batch_processor.credential_service.get_embedding_provider_configs",
                 mock_get_configs,
             ),
-            patch("src.server.services.embeddings.embedding_service.create_embedding_client", mock_create_client),
+            patch("src.server.services.embeddings.batch_processor.create_embedding_client", mock_create_client),
             patch(
-                "src.server.services.embeddings.embedding_service.credential_service.get_credentials_by_category",
+                "src.server.services.embeddings.batch_processor.credential_service.get_credentials_by_category",
                 AsyncMock(return_value={"EMBEDDING_BATCH_SIZE": "2"}),
             ),
         ):
@@ -170,12 +170,12 @@ class TestNoZeroEmbeddings:
 
         with (
             patch(
-                "src.server.services.embeddings.embedding_service.credential_service.get_embedding_provider_configs",
+                "src.server.services.embeddings.batch_processor.credential_service.get_embedding_provider_configs",
                 mock_get_configs,
             ),
-            patch("src.server.services.embeddings.embedding_service.create_embedding_client", mock_create_client),
+            patch("src.server.services.embeddings.batch_processor.create_embedding_client", mock_create_client),
             patch(
-                "src.server.services.embeddings.embedding_service.credential_service.get_credentials_by_category",
+                "src.server.services.embeddings.batch_processor.credential_service.get_credentials_by_category",
                 AsyncMock(return_value={"EMBEDDING_DIMENSIONS": "3072"}),
             ),
         ):
@@ -210,12 +210,12 @@ class TestNoZeroEmbeddings:
 
         with (
             patch(
-                "src.server.services.embeddings.embedding_service.credential_service.get_embedding_provider_configs",
+                "src.server.services.embeddings.batch_processor.credential_service.get_embedding_provider_configs",
                 mock_get_configs,
             ),
-            patch("src.server.services.embeddings.embedding_service.create_embedding_client", mock_create_client),
+            patch("src.server.services.embeddings.batch_processor.create_embedding_client", mock_create_client),
             patch(
-                "src.server.services.embeddings.embedding_service.credential_service.get_credentials_by_category",
+                "src.server.services.embeddings.batch_processor.credential_service.get_credentials_by_category",
                 AsyncMock(return_value={}),
             ),
         ):  # No dimensions specified
@@ -246,12 +246,12 @@ class TestNoZeroEmbeddings:
 
         with (
             patch(
-                "src.server.services.embeddings.embedding_service.credential_service.get_embedding_provider_configs",
+                "src.server.services.embeddings.batch_processor.credential_service.get_embedding_provider_configs",
                 mock_get_configs,
             ),
-            patch("src.server.services.embeddings.embedding_service.create_embedding_client", mock_create_client),
+            patch("src.server.services.embeddings.batch_processor.create_embedding_client", mock_create_client),
             patch(
-                "src.server.services.embeddings.embedding_service.credential_service.get_credentials_by_category",
+                "src.server.services.embeddings.batch_processor.credential_service.get_credentials_by_category",
                 AsyncMock(return_value={"EMBEDDING_BATCH_SIZE": "10"}),
             ),
         ):

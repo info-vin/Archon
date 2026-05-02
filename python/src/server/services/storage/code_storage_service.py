@@ -13,8 +13,8 @@ from supabase import Client
 
 from src.server.config.logfire_config import search_logger
 
+from ..embeddings import EmbeddingBatchResult, create_embeddings_batch
 from ..embeddings.contextual_embedding_service import generate_contextual_embeddings_batch
-from ..embeddings.embedding_service import EmbeddingBatchResult, create_embeddings_batch
 
 
 def _get_model_choice() -> str:

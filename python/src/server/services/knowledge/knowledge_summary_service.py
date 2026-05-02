@@ -8,6 +8,7 @@ Optimized for frequent polling and card displays.
 from typing import Any
 
 from ...config.logfire_config import safe_logfire_error, safe_logfire_info
+from .knowledge_repository import KnowledgeRepository
 
 
 class KnowledgeSummaryService:
@@ -24,6 +25,7 @@ class KnowledgeSummaryService:
             supabase_client: The Supabase client for database operations
         """
         self.supabase = supabase_client
+        self.repository = KnowledgeRepository(supabase_client)
 
     async def get_summaries(
         self,
@@ -95,13 +97,13 @@ class KnowledgeSummaryService:
 
             if source_ids:
                 # Get document counts in a single query
-                doc_counts = await self._get_document_counts_batch(source_ids)
+                doc_counts = await self.repository.get_document_counts_batch(source_ids)
 
                 # Get code example counts in a single query
-                code_counts = await self._get_code_example_counts_batch(source_ids)
+                code_counts = await self.repository.get_code_example_counts_batch(source_ids)
 
                 # Get first URLs in a single query
-                first_urls = await self._get_first_urls_batch(source_ids)
+                first_urls = await self.repository.get_first_urls_batch(source_ids)
 
                 # Build summaries
                 for source in sources:
@@ -120,14 +122,14 @@ class KnowledgeSummaryService:
 
                     # Extract knowledge_type - check metadata first, otherwise default based on source content
                     # The metadata should always have it if it was crawled properly
-                    knowledge_type = metadata.get("knowledge_type")
-                    if not knowledge_type:
+                    knowledge_type_val = metadata.get("knowledge_type")
+                    if not knowledge_type_val:
                         # Fallback: If not in metadata, default to "technical" for now
                         # This handles legacy data that might not have knowledge_type set
                         safe_logfire_info(
                             f"Knowledge type not found in metadata for {source_id}, defaulting to technical"
                         )
-                        knowledge_type = "technical"
+                        knowledge_type_val = "technical"
 
                     summary = {
                         "source_id": source_id,
@@ -136,7 +138,7 @@ class KnowledgeSummaryService:
                         "status": "active",  # Always active for now
                         "document_count": doc_counts.get(source_id, 0),
                         "code_examples_count": code_counts.get(source_id, 0),
-                        "knowledge_type": knowledge_type,
+                        "knowledge_type": knowledge_type_val,
                         "source_type": source_type,
                         "created_at": source.get("created_at"),
                         "updated_at": source.get("updated_at"),
@@ -158,153 +160,13 @@ class KnowledgeSummaryService:
             safe_logfire_error(f"Failed to get knowledge summaries | error={str(e)}")
             raise
 
-    async def _get_document_counts_batch(self, source_ids: list[str]) -> dict[str, int]:
-        """
-        Get document counts for multiple sources in a single query.
-
-        Args:
-            source_ids: List of source IDs
-
-        Returns:
-            Dict mapping source_id to document count
-        """
-        try:
-            # Use a raw SQL query for efficient counting
-            # Group by source_id and count
-            counts = {}
-
-            # For now, use individual queries but optimize later with raw SQL
-            for source_id in source_ids:
-                result = (
-                    self.supabase.from_("archon_crawled_pages")
-                    .select("id", count="exact", head=True)
-                    .eq("source_id", source_id)
-                    .execute()
-                )
-                counts[source_id] = result.count if hasattr(result, "count") else 0
-
-            return counts
-
-        except Exception as e:
-            safe_logfire_error(f"Failed to get document counts | error={str(e)}")
-            return dict.fromkeys(source_ids, 0)
-
-    async def _get_code_example_counts_batch(self, source_ids: list[str]) -> dict[str, int]:
-        """
-        Get code example counts for multiple sources efficiently.
-
-        Args:
-            source_ids: List of source IDs
-
-        Returns:
-            Dict mapping source_id to code example count
-        """
-        try:
-            counts = {}
-
-            # For now, use individual queries but can optimize with raw SQL later
-            for source_id in source_ids:
-                result = (
-                    self.supabase.from_("archon_code_examples")
-                    .select("id", count="exact", head=True)
-                    .eq("source_id", source_id)
-                    .execute()
-                )
-                counts[source_id] = result.count if hasattr(result, "count") else 0
-
-            return counts
-
-        except Exception as e:
-            safe_logfire_error(f"Failed to get code example counts | error={str(e)}")
-            return dict.fromkeys(source_ids, 0)
-
-    async def _get_first_urls_batch(self, source_ids: list[str]) -> dict[str, str]:
-        """
-        Get first URL for each source in a batch.
-
-        Args:
-            source_ids: List of source IDs
-
-        Returns:
-            Dict mapping source_id to first URL
-        """
-        try:
-            # Get all first URLs in one query
-            result = (
-                self.supabase.from_("archon_crawled_pages")
-                .select("source_id, url")
-                .in_("source_id", source_ids)
-                .order("created_at", desc=False)
-                .execute()
-            )
-
-            # Group by source_id, keeping first URL for each
-            urls = {}
-            for item in result.data or []:
-                source_id = item["source_id"]
-                if source_id not in urls:
-                    urls[source_id] = item["url"]
-
-            # Provide defaults for any missing
-            for source_id in source_ids:
-                if source_id not in urls:
-                    urls[source_id] = f"source://{source_id}"
-
-            return urls
-
-        except Exception as e:
-            safe_logfire_error(f"Failed to get first URLs | error={str(e)}")
-            return {sid: f"source://{sid}" for sid in source_ids}
-
     async def get_item_chunks(
         self, source_id: str, page: int = 1, per_page: int = 50, domain_filter: str | None = None
     ) -> tuple[bool, dict[str, Any]]:
         """
         Get document chunks for a specific knowledge item with pagination and optional domain filtering.
         """
-        try:
-            # Enforce physical bounds for pagination
-            per_page = max(1, min(per_page, 100))
-            page = max(1, page)
-
-            safe_logfire_info(
-                f"Fetching chunks for source_id: {source_id}, page={page}, per_page={per_page}, domain_filter={domain_filter}"
-            )
-
-            query = self.supabase.from_("archon_crawled_pages").select(
-                "id, source_id, content, metadata, url", count="exact"
-            )
-            query = query.eq("source_id", source_id)
-
-            if domain_filter:
-                query = query.ilike("url", f"%{domain_filter}%")
-
-            offset = (page - 1) * per_page
-
-            # Deterministic ordering
-            query = query.order("url", desc=False).order("id", desc=False)
-
-            # Apply pagination
-            query = query.range(offset, offset + per_page - 1)
-
-            result = query.execute()
-
-            if getattr(result, "error", None):
-                safe_logfire_error(f"Supabase query error | source_id={source_id} | error={result.error}")
-                return False, {"error": str(result.error)}
-
-            chunks = result.data if result.data else []
-            total_count = result.count if hasattr(result, "count") and result.count is not None else len(chunks)
-
-            return True, {
-                "chunks": chunks,
-                "pagination": {
-                    "total": total_count,
-                    "page": page,
-                    "per_page": per_page,
-                    "total_pages": (total_count + per_page - 1) // per_page if total_count > 0 else 0,
-                },
-            }
-        except Exception as e:
-            safe_logfire_error(f"Failed to fetch chunks | source_id={source_id} | error={str(e)}")
-            return False, {"error": str(e)}
+        safe_logfire_info(
+            f"Fetching chunks via repository for source_id: {source_id}, page={page}, per_page={per_page}, domain_filter={domain_filter}"
+        )
+        return await self.repository.get_item_chunks(source_id, page, per_page, domain_filter)

@@ -5,7 +5,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from src.server.services.embeddings.embedding_service import EmbeddingBatchResult
+from src.server.services.embeddings import EmbeddingBatchResult
 from src.server.services.storage.document_storage_service import add_documents_to_supabase
 from src.server.utils.progress.progress_tracker import ProgressTracker
 
