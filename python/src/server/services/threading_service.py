@@ -10,7 +10,7 @@ from concurrent.futures import ThreadPoolExecutor
 from contextlib import asynccontextmanager
 from typing import Any
 
-from src.server.services.shared_constants import ProcessingMode
+from server.services.shared_constants import ProcessingMode
 
 from ..config.logfire_config import get_logger
 from ..utils.rate_limiter import RateLimitConfig, RateLimiter
