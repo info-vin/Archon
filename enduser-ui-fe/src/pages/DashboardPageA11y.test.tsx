@@ -4,6 +4,21 @@ import { BrowserRouter } from 'react-router-dom';
 import DashboardPage from './DashboardPage';
 import { AuthProvider } from '@/hooks/useAuth';
 
+// Mock the hook to return non-loading state to skip loading screen
+vi.mock('../features/dashboard/hooks/useDashboardLogic', () => ({
+  useDashboardLogic: () => ({
+    projects: [],
+    tasks: [],
+    sortedTasks: [],
+    recentActivity: [],
+    isLoading: false,
+    selectedProjectId: 'all',
+    setSelectedProjectId: vi.fn(),
+    refreshData: vi.fn(),
+    assignableUsers: []
+  })
+}));
+
 // Mock the api to avoid network calls during render
 vi.mock('../services/api', () => ({
   api: {
