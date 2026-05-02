@@ -63,10 +63,31 @@
 
 **Phase 4.6.50 不應一次性完成所有拆分**，而是作為一個「還債地圖」。未來的任何 Feature PR (Pull Request) 若涉及到上述檔案，都必須順手進行「童子軍清掃 (Boy Scout Rule)」，將相關的一小塊邏輯剝離出去，逐步降低檔案行數。
 
-### 優先處置目標 (High Priority Targets)
-1. **`main.py`**: 作為全系統入口，將 Error Handlers 與 Middleware 抽離，是提高穩定性的第一步。
-2. **`TaskModal.tsx`**: 前端最容易產生 Merge Conflict 的地方，必須優先組件化。
-3. **`librarian_service.py`**: RAG 系統的心臟，降低耦合度有助於未來串接更多外部知識庫。
+### 技術債分拆地圖 (Responsibility-Based Refactoring Roadmap)
+
+我們採用「梯隊 (Tier)」作為重構順序的決策依據，確保資源投入與系統健康度、業務職責緊密對齊。
+
+| 梯隊 | 檔案路徑 | 行數 | 職責領域 (Duty Area) |
+| :--- | :--- | :--- | :--- |
+| **一** | `python/src/server/services/threading_service.py` | 471 | 核心併發與任務調度 |
+| **一** | `python/src/server/services/search/rag_service.py` | 425 | 檢索增強生成 (RAG) 核心邏輯 |
+| **一** | `python/src/server/services/search/agentic_rag_strategy.py` | 409 | 代理人 RAG 策略與決策鏈 |
+| **二** | `enduser-ui-fe/src/features/admin/components/IdentityMatrix.tsx` | 453 | 管理員 RBAC UI 權限矩陣 |
+| **二** | `python/src/server/services/credentials/manager.py` | 447 | 金鑰安全管理 |
+| **二** | `enduser-ui-fe/src/features/marketing/components/LeadsCardStack.tsx` | 368 | 行銷 Leads 轉化視覺呈現 |
+| **二** | `enduser-ui-fe/src/pages/TeamManagementPage.tsx` | 367 | 團隊職責管理與狀態 |
+| **二** | `enduser-ui-fe/src/features/admin/components/SystemHealthDashboard.tsx` | 312 | 系統物理健康指標面板 |
+| **三** | `python/src/server/services/search/keyword_extractor.py` | 447 | 文字探勘與特徵詞提取 |
+| **三** | `python/src/server/services/storage/document_storage_service.py` | 395 | 檔案儲存層與索引 |
+| **三** | `python/src/server/services/embeddings/embedding_service.py` | 366 | 向量轉換與空間對應 |
+| **三** | `python/src/server/services/crawling/document_storage_operations.py` | 358 | 爬蟲儲存與物理路徑對齊 |
+| **三** | `python/src/server/services/stats/metrics.py` | 371 | 效能統計 |
+| **三** | `python/src/server/services/storage/code/extraction.py` | 322 | 程式碼片段自動化提取 |
+| **三** | `python/src/server/services/knowledge/knowledge_summary_service.py` | 310 | 知識庫摘要邏輯 |
+| **三** | `enduser-ui-fe/src/features/manager/components/OpLoadPanel.tsx` | 318 | 營運負載動態監控 |
+| **四** | `python/src/server/services/ollama/model_discovery_service.py` | 465 | Ollama 模型探索 |
+| **四** | `python/src/server/services/ollama/embedding_router.py` | 438 | Ollama 向量路由 |
+| **四** | `python/src/server/services/ollama/discovery/capabilities.py` | 386 | Ollama 能力偵測 |
 
 ---
 

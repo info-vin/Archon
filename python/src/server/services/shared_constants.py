@@ -1,5 +1,6 @@
 # python/src/server/services/shared_constants.py
 from dataclasses import dataclass
+from enum import StrEnum
 
 
 @dataclass(frozen=True)
@@ -13,6 +14,16 @@ class AgentUUIDs:
     DEV_BOT = "e1682371-0000-0000-0000-000000000000"
     PO_BOT = "p0b00000-0000-0000-0000-000000000000"
     CLOCKWORK = "e1bf7a99-44bf-44ce-a460-cb4e31e798f4"
+
+
+class ProcessingMode(StrEnum):
+    """Processing modes for different workload types"""
+
+    CPU_INTENSIVE = "cpu_intensive"  # AI summaries, embeddings, heavy computation
+    IO_BOUND = "io_bound"  # Database operations, file I/O
+    NETWORK_BOUND = "network_bound"  # External API calls, web requests
+    WEBSOCKET_SAFE = "websocket_safe"  # Operations that need to yield for WebSocket health
+
 
 # Known AI agent roles that can be assigned tasks
 AI_AGENT_ROLES = {
