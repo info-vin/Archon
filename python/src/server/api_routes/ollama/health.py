@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Any, cast
+from typing import Any
 
 from fastapi import APIRouter, HTTPException, Query
 
@@ -42,15 +42,22 @@ async def health_check_endpoint(
                     "last_checked": None,
                 }
 
-        healthy_count = sum(1 for result in health_results.values() if result["is_healthy"])
+        # PERFORMANCE: Replaced sum(1 for ...) and list comprehension with a single pass loop
+        healthy_count = 0
+        response_times_sum = 0.0
+        response_times_count = 0
+
+        for result in health_results.values():
+            if result["is_healthy"]:
+                healthy_count += 1
+
+            if result.get("response_time_ms") is not None:
+                response_times_sum += result["response_time_ms"]
+                response_times_count += 1
+
         avg_response_time = None
-        if healthy_count > 0:
-            response_times = cast(
-                list[float],
-                [r["response_time_ms"] for r in health_results.values() if r["response_time_ms"] is not None],
-            )
-            if response_times:
-                avg_response_time = sum(response_times) / len(response_times)
+        if healthy_count > 0 and response_times_count > 0:
+            avg_response_time = response_times_sum / response_times_count
 
         return {
             "summary": {
