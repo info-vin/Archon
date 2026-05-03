@@ -7,13 +7,13 @@ Supports multi-instance configurations with automatic dimension detection and he
 
 import asyncio
 import time
-from typing import Any, cast
-
-import httpx
+from typing import Any
 
 from src.server.config.logfire_config import get_logger
 
+from .discovery.manifest_parser import OllamaManifestParser
 from .discovery.models import InstanceHealthStatus, ModelCapabilities, OllamaModel
+from .discovery.network_scanner import OllamaNetworkScanner
 
 logger = get_logger(__name__)
 
@@ -27,7 +27,8 @@ class ModelDiscoveryService:
         self.capability_lock = asyncio.Lock()  # Restored for concurrency control
         self.health_cache: dict[str, InstanceHealthStatus] = {}
         self.cache_ttl = 300  # 5 minutes TTL
-        self.discovery_timeout = 30  # 30 seconds timeout for discovery
+        self.scanner = OllamaNetworkScanner(timeout=30)
+        self.parser = OllamaManifestParser()
 
     def _get_cached_models(self, instance_url: str) -> list[OllamaModel] | None:
         """Get cached models if not expired."""
@@ -67,48 +68,6 @@ class ModelDiscoveryService:
         Returns:
             List of OllamaModel objects with discovered capabilities
         """
-        # ULTRA FAST MODE DISABLED - Now fetching real models
-        # logger.warning(f"🚀 ULTRA FAST MODE ACTIVE - Returning mock models instantly for {instance_url}")
-
-        # mock_models = [
-        #     OllamaModel(
-        #         name="llama3.2:latest",
-        #         tag="llama3.2:latest",
-        #         size=5000000000,
-        #         digest="mock",
-        #         capabilities=["chat", "structured_output"],
-        #         instance_url=instance_url
-        #     ),
-        #     OllamaModel(
-        #         name="mistral:latest",
-        #         tag="mistral:latest",
-        #         size=4000000000,
-        #         digest="mock",
-        #         capabilities=["chat"],
-        #         instance_url=instance_url
-        #     ),
-        #     OllamaModel(
-        #         name="nomic-embed-text:latest",
-        #         tag="nomic-embed-text:latest",
-        #         size=300000000,
-        #         digest="mock",
-        #         capabilities=["embedding"],
-        #         embedding_dimensions=768,
-        #         instance_url=instance_url
-        #     ),
-        #     OllamaModel(
-        #         name="mxbai-embed-large:latest",
-        #         tag="mxbai-embed-large:latest",
-        #         size=670000000,
-        #         digest="mock",
-        #         capabilities=["embedding"],
-        #         embedding_dimensions=1024,
-        #         instance_url=instance_url
-        #     ),
-        # ]
-
-        # return mock_models
-
         # Check cache first (but skip if we need detailed info)
         if not fetch_details:
             cached_models = self._get_cached_models(instance_url)
@@ -118,61 +77,27 @@ class ModelDiscoveryService:
         try:
             logger.info(f"Discovering models from Ollama instance: {instance_url}")
 
-            # Use direct HTTP client for /api/tags endpoint (not OpenAI-compatible)
-            async with httpx.AsyncClient(timeout=httpx.Timeout(self.discovery_timeout)) as client:
-                # Remove /v1 suffix if present (OpenAI compatibility layer)
-                base_url = instance_url.rstrip("/").replace("/v1", "")
-                # Ollama API endpoint for listing models
-                tags_url = f"{base_url}/api/tags"
+            # Use network scanner to fetch raw tags
+            data = await self.scanner.fetch_tags(instance_url)
 
-                response = await client.get(tags_url)
-                response.raise_for_status()
-                data = response.json()
+            # Use manifest parser to parse the tags
+            models = self.parser.parse_tags_response(data, instance_url)
 
-                models = []
-                if "models" in data:
-                    for model_data in data["models"]:
-                        # Extract basic model information
-                        model = OllamaModel(
-                            name=model_data.get("name", "unknown"),
-                            tag=model_data.get("name", "unknown"),  # Ollama uses name as tag
-                            size=model_data.get("size", 0),
-                            digest=model_data.get("digest", ""),
-                            capabilities=[],  # Will be filled by capability detection
-                            instance_url=instance_url,
-                        )
+            logger.info(f"Discovered {len(models)} models from {instance_url}")
 
-                        # Extract additional model details if available
-                        details = model_data.get("details", {})
-                        if details:
-                            model.parameters = {
-                                "family": details.get("family", ""),
-                                "parameter_size": details.get("parameter_size", ""),
-                                "quantization": details.get("quantization_level", ""),
-                            }
+            # Enrich models with capability information
+            enriched_models = await self._enrich_model_capabilities(
+                models, instance_url, fetch_details=fetch_details
+            )
 
-                        models.append(model)
+            # Cache the results
+            self._cache_models(instance_url, enriched_models)
 
-                logger.info(f"Discovered {len(models)} models from {instance_url}")
+            return enriched_models
 
-                # Enrich models with capability information
-                enriched_models = await self._enrich_model_capabilities(
-                    models, instance_url, fetch_details=fetch_details
-                )
-
-                # Cache the results
-                self._cache_models(instance_url, enriched_models)
-
-                return enriched_models
-
-        except httpx.TimeoutException as e:
-            logger.error(f"Timeout discovering models from {instance_url}")
-            raise Exception(f"Timeout connecting to Ollama instance at {instance_url}") from e
-        except httpx.HTTPStatusError as e:
-            logger.error(f"HTTP error discovering models from {instance_url}: {e.response.status_code}")
-            raise Exception(f"HTTP {e.response.status_code} error from {instance_url}") from e
         except Exception as e:
             logger.error(f"Error discovering models from {instance_url}: {e}")
+            # The network_scanner raises standard exceptions which we propagate
             raise Exception(f"Failed to discover models: {str(e)}") from e
 
     async def _enrich_model_capabilities(
@@ -312,38 +237,20 @@ class ModelDiscoveryService:
                 if time.time() - cache_time < 30:
                     return cached_health
 
-        start_time = time.time()
         status = InstanceHealthStatus(is_healthy=False)
+        is_healthy, response_time_ms, models_count, error_message = await self.scanner.ping_health(instance_url)
 
-        try:
-            async with httpx.AsyncClient(timeout=httpx.Timeout(10)) as client:
-                # Try to ping the Ollama API
-                ping_url = f"{instance_url.rstrip('/')}/api/tags"
-
-                response = await client.get(ping_url)
-                response.raise_for_status()
-
-                data = response.json()
-                models_count = len(data.get("models", []))
-
-                status.is_healthy = True
-                status.response_time_ms = (time.time() - start_time) * 1000
-                status.models_available = models_count
-                status.last_checked = str(time.time())
-
-                logger.debug(
-                    f"Instance {instance_url} is healthy: {models_count} models, {status.response_time_ms:.0f}ms"
-                )
-
-        except httpx.TimeoutException:
-            status.error_message = "Connection timeout"
-            logger.warning(f"Health check timeout for {instance_url}")
-        except httpx.HTTPStatusError as e:
-            status.error_message = f"HTTP {e.response.status_code}"
-            logger.warning(f"Health check HTTP error for {instance_url}: {e.response.status_code}")
-        except Exception as e:
-            status.error_message = str(e)
-            logger.warning(f"Health check failed for {instance_url}: {e}")
+        if is_healthy:
+            status.is_healthy = True
+            status.response_time_ms = response_time_ms
+            status.models_available = models_count
+            status.last_checked = str(time.time())
+            logger.debug(
+                f"Instance {instance_url} is healthy: {models_count} models, {status.response_time_ms:.0f}ms"
+            )
+        else:
+            status.error_message = error_message
+            logger.warning(f"Health check failed for {instance_url}: {error_message}")
 
         # Cache the result
         self.health_cache[cache_key] = status
@@ -378,88 +285,15 @@ class ModelDiscoveryService:
         tasks = [self.discover_models(url, fetch_details=fetch_details) for url in instance_urls]
         results = await asyncio.gather(*tasks, return_exceptions=True)
 
-        # Aggregate results
-        all_models: list[OllamaModel] = []
-        chat_models = []
-        embedding_models = []
-        host_status = {}
-        discovery_errors = []
-
-        for _i, (url, result) in enumerate(zip(instance_urls, results, strict=False)):
-            if isinstance(result, Exception):
-                error_msg = f"Failed to discover models from {url}: {str(result)}"
-                discovery_errors.append(error_msg)
-                host_status[url] = {"status": "error", "error": str(result)}
-                logger.error(error_msg)
-            else:
-                # Use cast to tell type checker this is list[OllamaModel]
-                models = cast(list[OllamaModel], result)
-                all_models.extend(models)
-                host_status[url] = {"status": "online", "models_count": str(len(models)), "instance_url": url}
-
-                # Categorize models
-                for model in models:
-                    if "chat" in model.capabilities:
-                        chat_models.append(
-                            {
-                                "name": model.name,
-                                "instance_url": model.instance_url,
-                                "size": model.size,
-                                "parameters": model.parameters,
-                                # Real API data from /api/show - all 3 context values
-                                "context_window": model.context_window,
-                                "max_context_length": model.max_context_length,
-                                "base_context_length": model.base_context_length,
-                                "custom_context_length": model.custom_context_length,
-                                "architecture": model.architecture,
-                                "format": model.format,
-                                "parent_model": model.parent_model,
-                                "capabilities": model.capabilities,
-                            }
-                        )
-
-                    if "embedding" in model.capabilities:
-                        embedding_models.append(
-                            {
-                                "name": model.name,
-                                "instance_url": model.instance_url,
-                                "dimensions": model.embedding_dimensions,
-                                "size": model.size,
-                                "parameters": model.parameters,
-                                # Real API data from /api/show - all 3 context values
-                                "context_window": model.context_window,
-                                "max_context_length": model.max_context_length,
-                                "base_context_length": model.base_context_length,
-                                "custom_context_length": model.custom_context_length,
-                                "architecture": model.architecture,
-                                "format": model.format,
-                                "parent_model": model.parent_model,
-                                "capabilities": model.capabilities,
-                            }
-                        )
-
-        # Remove duplicates (same model on multiple instances)
-        unique_models = {}
-        for model in all_models:
-            key = f"{model.name}@{model.instance_url}"
-            unique_models[key] = model
-
-        discovery_result = {
-            "total_models": len(unique_models),
-            "chat_models": chat_models,
-            "embedding_models": embedding_models,
-            "host_status": host_status,
-            "discovery_errors": discovery_errors,
-            "unique_model_names": list({model.name for model in unique_models.values()}),
-        }
+        # Delegate aggregation to the parser
+        discovery_result = self.parser.aggregate_discovery_results(instance_urls, results)
 
         logger.info(
             f"Discovery complete: {discovery_result['total_models']} total models, "
-            f"{len(chat_models)} chat, {len(embedding_models)} embedding"
+            f"{len(discovery_result['chat_models'])} chat, {len(discovery_result['embedding_models'])} embedding"
         )
 
         return discovery_result
-
 
 # Global service instance
 model_discovery_service = ModelDiscoveryService()
