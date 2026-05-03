@@ -9,7 +9,7 @@ from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
-from src.server.services.crawling.document_storage_operations import DocumentStorageOperations
+from src.server.services.storage.document_storage import DocumentStorageFacade
 
 
 class TestDocumentStorageMetrics:
@@ -20,10 +20,10 @@ class TestDocumentStorageMetrics:
         """Test that avg_chunks_per_doc handles empty documents correctly."""
         # Create mock supabase client
         mock_supabase = Mock()
-        doc_storage = DocumentStorageOperations(mock_supabase)
+        doc_storage = DocumentStorageFacade(mock_supabase)
 
         # Mock the storage service
-        doc_storage.doc_storage_service.smart_chunk_text = Mock(
+        doc_storage.chunking_utils.doc_storage_service.smart_chunk_text_async = AsyncMock(
             side_effect=lambda text, chunk_size: ["chunk1", "chunk2"] if text else []
         )
 
@@ -33,10 +33,10 @@ class TestDocumentStorageMetrics:
         # Track what gets logged
         logged_messages = []
 
-        with patch("src.server.services.crawling.document_storage_operations.safe_logfire_info") as mock_log:
+        with patch("src.server.services.storage.document_storage.safe_logfire_info") as mock_log:
             mock_log.side_effect = lambda msg: logged_messages.append(msg)
 
-            with patch("src.server.services.crawling.document_storage_operations.add_documents_to_supabase"):
+            with patch("src.server.services.storage.document_storage.DocumentStorageFacade._add_documents_to_supabase"):
                 # Test data with mix of empty and non-empty documents
                 crawl_results = [
                     {"url": "https://example.com/page1", "markdown": "Content 1"},
@@ -46,7 +46,7 @@ class TestDocumentStorageMetrics:
                     {"url": "https://example.com/page5", "markdown": "Content 5"},
                 ]
 
-                await doc_storage.process_and_store_documents(
+                await doc_storage.store_documents(
                     crawl_results=crawl_results,
                     request={},
                     crawl_type="test",
@@ -68,24 +68,24 @@ class TestDocumentStorageMetrics:
                 # 3 documents processed (non-empty), 5 total, 6 chunks (2 per doc), avg = 2.0
                 assert "processed=3/5" in metrics_log, "Should show 3 processed out of 5 total"
                 assert "chunks=6" in metrics_log, "Should have 6 chunks total"
-                assert "avg_chunks_per_doc=2.0" in metrics_log, "Average should be 2.0 (6/3)"
+                assert "avg_chunks=2.0" in metrics_log, "Average should be 2.0 (6/3)"
 
     @pytest.mark.asyncio
     async def test_avg_chunks_all_empty_docs(self):
         """Test that avg_chunks_per_doc handles all empty documents without division by zero."""
         mock_supabase = Mock()
-        doc_storage = DocumentStorageOperations(mock_supabase)
+        doc_storage = DocumentStorageFacade(mock_supabase)
 
         # Mock the storage service
-        doc_storage.doc_storage_service.smart_chunk_text = Mock(return_value=[])
+        doc_storage.chunking_utils.doc_storage_service.smart_chunk_text_async = AsyncMock(return_value=[])
         doc_storage._create_source_records = AsyncMock()
 
         logged_messages = []
 
-        with patch("src.server.services.crawling.document_storage_operations.safe_logfire_info") as mock_log:
+        with patch("src.server.services.storage.document_storage.safe_logfire_info") as mock_log:
             mock_log.side_effect = lambda msg: logged_messages.append(msg)
 
-            with patch("src.server.services.crawling.document_storage_operations.add_documents_to_supabase"):
+            with patch("src.server.services.storage.document_storage.DocumentStorageFacade._add_documents_to_supabase"):
                 # All documents are empty
                 crawl_results = [
                     {"url": "https://example.com/page1", "markdown": ""},
@@ -93,7 +93,7 @@ class TestDocumentStorageMetrics:
                     {"url": "https://example.com/page3", "markdown": ""},
                 ]
 
-                await doc_storage.process_and_store_documents(
+                await doc_storage.store_documents(
                     crawl_results=crawl_results,
                     request={},
                     crawl_type="test",
@@ -114,31 +114,31 @@ class TestDocumentStorageMetrics:
                 # Should show 0 processed, 0 chunks, 0.0 average (no division by zero)
                 assert "processed=0/3" in metrics_log, "Should show 0 processed out of 3 total"
                 assert "chunks=0" in metrics_log, "Should have 0 chunks"
-                assert "avg_chunks_per_doc=0.0" in metrics_log, "Average should be 0.0 (no division by zero)"
+                assert "avg_chunks=0.0" in metrics_log, "Average should be 0.0 (no division by zero)"
 
     @pytest.mark.asyncio
     async def test_avg_chunks_single_doc(self):
         """Test avg_chunks_per_doc with a single document."""
         mock_supabase = Mock()
-        doc_storage = DocumentStorageOperations(mock_supabase)
+        doc_storage = DocumentStorageFacade(mock_supabase)
 
         # Mock to return 5 chunks for content
-        doc_storage.doc_storage_service.smart_chunk_text = Mock(
+        doc_storage.chunking_utils.doc_storage_service.smart_chunk_text_async = AsyncMock(
             return_value=["chunk1", "chunk2", "chunk3", "chunk4", "chunk5"]
         )
         doc_storage._create_source_records = AsyncMock()
 
         logged_messages = []
 
-        with patch("src.server.services.crawling.document_storage_operations.safe_logfire_info") as mock_log:
+        with patch("src.server.services.storage.document_storage.safe_logfire_info") as mock_log:
             mock_log.side_effect = lambda msg: logged_messages.append(msg)
 
-            with patch("src.server.services.crawling.document_storage_operations.add_documents_to_supabase"):
+            with patch("src.server.services.storage.document_storage.DocumentStorageFacade._add_documents_to_supabase"):
                 crawl_results = [
                     {"url": "https://example.com/page", "markdown": "Long content here..."},
                 ]
 
-                await doc_storage.process_and_store_documents(
+                await doc_storage.store_documents(
                     crawl_results=crawl_results,
                     request={},
                     crawl_type="test",
@@ -157,24 +157,24 @@ class TestDocumentStorageMetrics:
                 assert metrics_log is not None
                 assert "processed=1/1" in metrics_log, "Should show 1 processed out of 1 total"
                 assert "chunks=5" in metrics_log, "Should have 5 chunks"
-                assert "avg_chunks_per_doc=5.0" in metrics_log, "Average should be 5.0"
+                assert "avg_chunks=5.0" in metrics_log, "Average should be 5.0"
 
     @pytest.mark.asyncio
     async def test_processed_count_accuracy(self):
         """Test that processed_docs count is accurate."""
         mock_supabase = Mock()
-        doc_storage = DocumentStorageOperations(mock_supabase)
+        doc_storage = DocumentStorageFacade(mock_supabase)
 
         def mock_chunk(text, chunk_size):
             if text:
                 return ["chunk"]
             return []
 
-        doc_storage.doc_storage_service.smart_chunk_text = Mock(side_effect=mock_chunk)
+        doc_storage.chunking_utils.doc_storage_service.smart_chunk_text_async = AsyncMock(side_effect=mock_chunk)
         doc_storage._create_source_records = AsyncMock()
 
-        with patch("src.server.services.crawling.document_storage_operations.safe_logfire_info"):
-            with patch("src.server.services.crawling.document_storage_operations.add_documents_to_supabase"):
+        with patch("src.server.services.storage.document_storage.safe_logfire_info"):
+            with patch("src.server.services.storage.document_storage.DocumentStorageFacade._add_documents_to_supabase"):
                 # Mix of documents with various content states
                 crawl_results = [
                     {"url": "https://example.com/1", "markdown": "Content"},
@@ -185,7 +185,7 @@ class TestDocumentStorageMetrics:
                     {"url": "https://example.com/6", "markdown": "   "},  # Whitespace only - skipped
                 ]
 
-                result = await doc_storage.process_and_store_documents(
+                result = await doc_storage.store_documents(
                     crawl_results=crawl_results,
                     request={},
                     crawl_type="test",

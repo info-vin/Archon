@@ -46,7 +46,7 @@ class TestCrawlOrchestrationProgressIntegration:
 
     @pytest.mark.asyncio
     @patch(
-        "src.server.services.crawling.document_storage_operations.DocumentStorageOperations.process_and_store_documents"
+        "src.server.services.storage.document_storage.DocumentStorageFacade.store_documents"
     )
     @patch("src.server.services.crawling.strategies.batch.BatchCrawlStrategy.crawl_batch_with_progress")
     async def test_full_crawl_orchestration_progress(self, mock_batch_crawl, mock_doc_storage, crawling_service):
@@ -123,7 +123,7 @@ class TestCrawlOrchestrationProgressIntegration:
         progress_callback = await crawling_service._create_crawl_progress_callback("document_storage")
 
         # Execute document storage operation
-        await crawling_service.doc_storage_ops.process_and_store_documents(
+        await crawling_service.doc_storage_ops.store_documents(
             crawl_results=crawl_results,
             request=test_request,
             crawl_type="sitemap",

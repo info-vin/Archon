@@ -98,7 +98,7 @@ class CrawlOrchestrator:
                         status="document_storage", progress=mapped_progress, log=message, **kwargs
                     )
 
-            storage_results = await self.service.doc_storage_ops.process_and_store_documents(
+            storage_results = await self.service.doc_storage_ops.store_documents(
                 crawl_results,
                 request,
                 crawl_type,
@@ -134,7 +134,7 @@ class CrawlOrchestrator:
                             **{k: v for k, v in data.items() if k not in ["status", "progress", "percentage", "log"]},
                         )
 
-                code_examples_count = await self.service.doc_storage_ops.extract_and_store_code_examples(
+                code_examples_count = await self.service.doc_storage_ops.store_code_examples(
                     crawl_results,
                     storage_results["url_to_full_document"],
                     storage_results["source_id"],

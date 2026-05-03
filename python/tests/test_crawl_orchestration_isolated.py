@@ -64,7 +64,7 @@ class MockCrawlOrchestrationService:
         else:
             return [{"url": url, "markdown": "Web content", "title": "Web Page"}], "webpage"
 
-    async def _process_and_store_documents(
+    async def _store_documents(
         self,
         crawl_results: list[dict],
         request: dict[str, Any],
@@ -90,7 +90,7 @@ class MockCrawlOrchestrationService:
             "url_to_full_document": url_to_full_document,
         }
 
-    async def _extract_and_store_code_examples(
+    async def _store_code_examples(
         self, crawl_results: list[dict], url_to_full_document: dict[str, str]
     ) -> int:
         """Mock code examples extraction"""
@@ -122,14 +122,14 @@ class MockCrawlOrchestrationService:
             parsed_url = urlparse(url)
             source_id = parsed_url.netloc or parsed_url.path
 
-            storage_results = await self._process_and_store_documents(crawl_results, request, crawl_type, source_id)
+            storage_results = await self._store_documents(crawl_results, request, crawl_type, source_id)
 
             self._check_cancellation()
 
             # Mock code extraction
             code_examples_count = 0
             if request.get("enable_code_extraction", False):
-                code_examples_count = await self._extract_and_store_code_examples(
+                code_examples_count = await self._store_code_examples(
                     crawl_results, storage_results.get("url_to_full_document", {})
                 )
 
@@ -254,7 +254,7 @@ class TestAsyncCrawlOrchestration:
         assert len(crawl_results) == 1
 
     @pytest.mark.asyncio
-    async def test_process_and_store_documents(self, orchestration_service):
+    async def test_store_documents(self, orchestration_service):
         """Test document processing and storage"""
         crawl_results = [
             {"url": "https://example.com/page1", "markdown": "Content 1", "title": "Page 1"},
@@ -263,7 +263,7 @@ class TestAsyncCrawlOrchestration:
 
         request = {"knowledge_type": "technical", "tags": ["test"]}
 
-        result = await orchestration_service._process_and_store_documents(
+        result = await orchestration_service._store_documents(
             crawl_results, request, "webpage", "example.com"
         )
 
@@ -274,7 +274,7 @@ class TestAsyncCrawlOrchestration:
         assert len(result["url_to_full_document"]) == 2
 
     @pytest.mark.asyncio
-    async def test_extract_and_store_code_examples(self, orchestration_service):
+    async def test_store_code_examples(self, orchestration_service):
         """Test code examples extraction"""
         crawl_results = [
             {
@@ -286,7 +286,7 @@ class TestAsyncCrawlOrchestration:
 
         url_to_full_document = {"https://example.com/api": crawl_results[0]["markdown"]}
 
-        result = await orchestration_service._extract_and_store_code_examples(crawl_results, url_to_full_document)
+        result = await orchestration_service._store_code_examples(crawl_results, url_to_full_document)
 
         assert result == 2  # Two code blocks found
 
@@ -312,7 +312,7 @@ class TestAsyncCrawlOrchestration:
         orchestration_service.cancel()
 
         with pytest.raises(Exception, match="CrawlCancelledException"):
-            await orchestration_service._process_and_store_documents(crawl_results, request, "webpage", "example.com")
+            await orchestration_service._store_documents(crawl_results, request, "webpage", "example.com")
 
     @pytest.mark.asyncio
     async def test_error_handling_in_orchestration(self, orchestration_service):
@@ -413,11 +413,11 @@ class TestAsyncBehaviors:
         # This chain should complete without blocking
         crawl_results, crawl_type = await service._crawl_by_url_type("https://example.com", {"max_depth": 1})
 
-        storage_results = await service._process_and_store_documents(
+        storage_results = await service._store_documents(
             crawl_results, {"knowledge_type": "technical"}, crawl_type, "example.com"
         )
 
-        code_count = await service._extract_and_store_code_examples(
+        code_count = await service._store_code_examples(
             crawl_results, storage_results["url_to_full_document"]
         )
 

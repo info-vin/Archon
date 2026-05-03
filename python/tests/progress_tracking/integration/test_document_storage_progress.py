@@ -6,7 +6,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 from src.server.services.embeddings import EmbeddingBatchResult
-from src.server.services.storage.document_storage_service import add_documents_to_supabase
+from src.server.services.storage.document_storage import DocumentStorageFacade
 from src.server.utils.progress.progress_tracker import ProgressTracker
 
 
@@ -80,7 +80,7 @@ class TestDocumentStorageProgressIntegration:
     """Integration tests for document storage progress tracking."""
 
     @pytest.mark.asyncio
-    @patch("src.server.services.storage.document_storage_service.create_embeddings_batch")
+    @patch("src.server.services.storage.document_storage.create_embeddings_batch")
     @patch("src.server.services.credential_service.credential_service")
     async def test_batch_progress_reporting(
         self,
@@ -102,8 +102,8 @@ class TestDocumentStorageProgressIntegration:
         mock_create_embeddings.return_value = create_mock_embedding_result(3)
 
         # Call the function
-        await add_documents_to_supabase(
-            client=mock_supabase_client,
+        facade = DocumentStorageFacade(mock_supabase_client)
+        await facade._add_documents_to_supabase(
             urls=sample_document_data["urls"],
             chunk_numbers=sample_document_data["chunk_numbers"],
             contents=sample_document_data["contents"],
@@ -133,7 +133,7 @@ class TestDocumentStorageProgressIntegration:
             assert call_kwargs["completed_batches"] >= 0
 
     @pytest.mark.asyncio
-    @patch("src.server.services.storage.document_storage_service.create_embeddings_batch")
+    @patch("src.server.services.storage.document_storage.create_embeddings_batch")
     @patch("src.server.services.credential_service.credential_service")
     async def test_progress_callback_signature(
         self, mock_credentials, mock_create_embeddings, mock_supabase_client, sample_document_data
@@ -155,8 +155,8 @@ class TestDocumentStorageProgressIntegration:
             callback_calls.append({"status": status, "progress": progress, "message": message, "kwargs": kwargs})
 
         # Call function
-        await add_documents_to_supabase(
-            client=mock_supabase_client,
+        facade = DocumentStorageFacade(mock_supabase_client)
+        await facade._add_documents_to_supabase(
             urls=sample_document_data["urls"],
             chunk_numbers=sample_document_data["chunk_numbers"],
             contents=sample_document_data["contents"],
@@ -182,7 +182,7 @@ class TestDocumentStorageProgressIntegration:
                 assert call["kwargs"]["total_batches"] >= 1
 
     @pytest.mark.asyncio
-    @patch("src.server.services.storage.document_storage_service.create_embeddings_batch")
+    @patch("src.server.services.storage.document_storage.create_embeddings_batch")
     @patch("src.server.services.credential_service.credential_service")
     async def test_cancellation_support(
         self, mock_credentials, mock_create_embeddings, mock_supabase_client, sample_document_data
@@ -206,9 +206,9 @@ class TestDocumentStorageProgressIntegration:
                 raise asyncio.CancelledError("Operation cancelled")
 
         # Should raise CancelledError
+        facade = DocumentStorageFacade(mock_supabase_client)
         with pytest.raises(asyncio.CancelledError):
-            await add_documents_to_supabase(
-                client=mock_supabase_client,
+            await facade._add_documents_to_supabase(
                 urls=sample_document_data["urls"],
                 chunk_numbers=sample_document_data["chunk_numbers"],
                 contents=sample_document_data["contents"],
@@ -218,7 +218,7 @@ class TestDocumentStorageProgressIntegration:
             )
 
     @pytest.mark.asyncio
-    @patch("src.server.services.storage.document_storage_service.create_embeddings_batch")
+    @patch("src.server.services.storage.document_storage.create_embeddings_batch")
     @patch("src.server.services.credential_service.credential_service")
     async def test_error_handling_in_progress_reporting(
         self, mock_credentials, mock_create_embeddings, mock_supabase_client, sample_document_data
@@ -238,8 +238,8 @@ class TestDocumentStorageProgressIntegration:
                 raise Exception("Progress callback failed")
 
         # Should not raise exception - storage should continue despite callback failure
-        result = await add_documents_to_supabase(
-            client=mock_supabase_client,
+        facade = DocumentStorageFacade(mock_supabase_client)
+        result = await facade._add_documents_to_supabase(
             urls=sample_document_data["urls"][:3],  # Limit to 3 for simplicity
             chunk_numbers=sample_document_data["chunk_numbers"][:3],
             contents=sample_document_data["contents"][:3],

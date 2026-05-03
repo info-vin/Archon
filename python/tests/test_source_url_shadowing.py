@@ -6,11 +6,11 @@ is correctly passed to _create_source_records and not overwritten
 by individual document URLs during processing.
 """
 
-from unittest.mock import Mock, patch
+from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
-from src.server.services.crawling.document_storage_operations import DocumentStorageOperations
+from src.server.services.storage.document_storage import DocumentStorageFacade
 
 
 class TestSourceUrlShadowing:
@@ -22,11 +22,11 @@ class TestSourceUrlShadowing:
         # Create mock supabase client
         mock_supabase = Mock()
 
-        # Create DocumentStorageOperations instance
-        doc_storage = DocumentStorageOperations(mock_supabase)
+        # Create DocumentStorageFacade instance
+        doc_storage = DocumentStorageFacade(mock_supabase)
 
         # Mock the storage service
-        doc_storage.doc_storage_service.smart_chunk_text = Mock(return_value=["chunk1", "chunk2"])
+        doc_storage.chunking_utils.doc_storage_service.smart_chunk_text_async = AsyncMock(return_value=["chunk1", "chunk2"])
 
         # Track what gets passed to _create_source_records
         captured_source_url = None
@@ -40,7 +40,7 @@ class TestSourceUrlShadowing:
         doc_storage._create_source_records = mock_create_source_records
 
         # Mock add_documents_to_supabase
-        with patch("src.server.services.crawling.document_storage_operations.add_documents_to_supabase") as mock_add:
+        with patch("src.server.services.storage.document_storage.DocumentStorageFacade._add_documents_to_supabase") as mock_add:
             mock_add.return_value = {"chunks_stored": 3}
 
             # Test data - simulating a sitemap crawl
@@ -58,7 +58,7 @@ class TestSourceUrlShadowing:
             request = {"knowledge_type": "documentation", "tags": []}
 
             # Call the method
-            result = await doc_storage.process_and_store_documents(
+            result = await doc_storage.store_documents(
                 crawl_results=crawl_results,
                 request=request,
                 crawl_type="sitemap",
@@ -88,10 +88,10 @@ class TestSourceUrlShadowing:
     async def test_metadata_uses_document_urls(self):
         """Test that metadata correctly uses individual document URLs."""
         mock_supabase = Mock()
-        doc_storage = DocumentStorageOperations(mock_supabase)
+        doc_storage = DocumentStorageFacade(mock_supabase)
 
         # Mock the storage service
-        doc_storage.doc_storage_service.smart_chunk_text = Mock(return_value=["chunk1"])
+        doc_storage.chunking_utils.doc_storage_service.smart_chunk_text_async = AsyncMock(return_value=["chunk1"])
 
         # Capture metadata
         captured_metadatas = None
@@ -104,14 +104,14 @@ class TestSourceUrlShadowing:
 
         doc_storage._create_source_records = mock_create_source_records
 
-        with patch("src.server.services.crawling.document_storage_operations.add_documents_to_supabase") as mock_add:
+        with patch("src.server.services.storage.document_storage.DocumentStorageFacade._add_documents_to_supabase") as mock_add:
             mock_add.return_value = {"chunks_stored": 2}
             crawl_results = [
                 {"url": "https://example.com/doc1", "markdown": "Doc 1"},
                 {"url": "https://example.com/doc2", "markdown": "Doc 2"},
             ]
 
-            await doc_storage.process_and_store_documents(
+            await doc_storage.store_documents(
                 crawl_results=crawl_results,
                 request={},
                 crawl_type="normal",

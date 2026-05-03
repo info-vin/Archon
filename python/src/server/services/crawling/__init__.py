@@ -10,7 +10,6 @@ from .crawling_service import (
     CrawlingService,
     CrawlOrchestrationService,
 )
-from .document_storage_operations import DocumentStorageOperations
 from .handlers.registry import (
     get_active_orchestration,
     register_orchestration,
@@ -32,7 +31,7 @@ __all__ = [
     "CrawlingService",
     "CrawlOrchestrationService",
     "CodeExtractionService",
-    "DocumentStorageOperations",
+
     "ProgressMapper",
     "BatchCrawlStrategy",
     "RecursiveCrawlStrategy",

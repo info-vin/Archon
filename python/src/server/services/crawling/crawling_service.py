@@ -18,7 +18,6 @@ from src.server.repositories.base_repository import BaseRepository
 from ...config.logfire_config import get_logger, safe_logfire_info
 from ...utils import get_supabase_client
 from ...utils.progress.progress_tracker import ProgressTracker
-from .document_storage_operations import DocumentStorageOperations
 from .handlers.orchestrator import CrawlOrchestrator
 from .handlers.registry import (
     register_orchestration,
@@ -69,7 +68,8 @@ class CrawlingService(BaseRepository):
         self.sitemap_strategy = SitemapCrawlStrategy()
 
         # Initialize operations
-        self.doc_storage_ops = DocumentStorageOperations(self.supabase_client)
+        from ..storage.document_storage import DocumentStorageFacade
+        self.doc_storage_ops = DocumentStorageFacade(self.supabase_client)
 
         # Track progress state across all stages to prevent UI resets
         self.progress_state = {"progressId": self.progress_id} if self.progress_id else {}

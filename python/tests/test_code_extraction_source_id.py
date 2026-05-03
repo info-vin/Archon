@@ -10,7 +10,7 @@ from unittest.mock import AsyncMock, Mock
 import pytest
 
 from src.server.services.crawling.code_extraction_service import CodeExtractionService
-from src.server.services.crawling.document_storage_operations import DocumentStorageOperations
+from src.server.services.storage.document_storage import DocumentStorageFacade
 
 
 class TestCodeExtractionSourceId:
@@ -73,12 +73,12 @@ class TestCodeExtractionSourceId:
 
     @pytest.mark.asyncio
     async def test_document_storage_passes_source_id(self):
-        """Test that DocumentStorageOperations passes source_id to code extraction."""
+        """Test that DocumentStorageFacade passes source_id to code extraction."""
         # Create mock supabase client
         mock_supabase = Mock()
 
-        # Create DocumentStorageOperations instance
-        doc_storage = DocumentStorageOperations(mock_supabase)
+        # Create DocumentStorageFacade instance
+        doc_storage = DocumentStorageFacade(mock_supabase)
 
         # Mock the code extraction service
         mock_extract = AsyncMock(return_value=5)
@@ -90,7 +90,7 @@ class TestCodeExtractionSourceId:
         source_id = "abc123def456"
 
         # Call the wrapper method
-        result = await doc_storage.extract_and_store_code_examples(crawl_results, url_to_full_document, source_id, None)
+        result = await doc_storage.store_code_examples(crawl_results, url_to_full_document, source_id, None)
 
         # Verify the correct source_id was passed (now with cancellation_check parameter)
         mock_extract.assert_called_once()

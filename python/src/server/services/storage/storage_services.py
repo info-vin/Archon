@@ -9,7 +9,7 @@ from typing import Any
 
 from ...config.logfire_config import get_logger, safe_span
 from .base_storage_service import BaseStorageService
-from .document_storage_service import add_documents_to_supabase
+from .document_storage import DocumentStorageFacade
 
 logger = get_logger(__name__)
 
@@ -112,9 +112,8 @@ class DocumentStorageService(BaseStorageService):
                 # Create URL to full document mapping
                 url_to_full_document = {doc_url: file_content}
 
-                # Store documents
-                await add_documents_to_supabase(
-                    client=self.supabase_client,
+                facade = DocumentStorageFacade(self.supabase_client)
+                await facade._add_documents_to_supabase(
                     urls=urls,
                     chunk_numbers=chunk_numbers,
                     contents=contents,
@@ -122,8 +121,6 @@ class DocumentStorageService(BaseStorageService):
                     url_to_full_document=url_to_full_document,
                     batch_size=15,
                     progress_callback=progress_callback,
-                    enable_parallel_batches=True,
-                    provider=None,  # Use configured provider
                     cancellation_check=cancellation_check,
                 )
 

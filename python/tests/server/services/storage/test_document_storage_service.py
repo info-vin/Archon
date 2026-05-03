@@ -16,7 +16,7 @@ async def test_upload_document_sets_source_type_file():
     # Mock dependencies
     with (
         patch(
-            "src.server.services.storage.storage_services.add_documents_to_supabase", new_callable=AsyncMock
+            "src.server.services.storage.document_storage.DocumentStorageFacade._add_documents_to_supabase", new_callable=AsyncMock
         ) as mock_add_docs,
         patch("src.server.services.storage.storage_services.get_logger"),
         patch("src.server.services.storage.storage_services.safe_span") as mock_safe_span,

@@ -80,7 +80,7 @@
 | **三** | **B. Search/RAG** | ~~`python/src/server/services/search/keyword_extractor.py`~~ | ✅ 447 | 文字探勘與特徵詞提取 |
 | **三** | **D. Ops/Infra** | `python/src/server/services/storage/document_storage_service.py` | 395 | 檔案儲存層與索引 |
 | **三** | **B. Search/RAG** | ~~`python/src/server/services/embeddings/embedding_service.py`~~ | ✅ 366 | 向量轉換與空間對應 |
-| **三** | **D. Ops/Infra** | `python/src/server/services/crawling/document_storage_operations.py` | 358 | 爬蟲儲存與物理路徑對齊 |
+| **三** | **D. Ops/Infra** | ~~`python/src/server/services/crawling/document_storage_operations.py`~~ | ✅ 358 | 爬蟲儲存與物理路徑對齊 |
 | **三** | **D. Ops/Infra** | `python/src/server/services/stats/metrics.py` | 371 | 效能統計 |
 | **三** | **D. Ops/Infra** | `python/src/server/services/storage/code/extraction.py` | 322 | 程式碼片段自動化提取 |
 | **三** | **B. Search/RAG** | ~~`python/src/server/services/knowledge/knowledge_summary_service.py`~~ | ✅ 310 | 知識庫摘要邏輯 |
