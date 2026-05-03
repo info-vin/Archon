@@ -5,6 +5,7 @@ from fastapi import APIRouter, HTTPException, Query
 from ...config.logfire_config import get_logger
 from ...services.ollama.embedding_router import embedding_router
 from ...services.ollama.model_discovery_service import model_discovery_service
+from ...services.ollama.routing.vector_normalization import VectorNormalization
 from .schemas import EmbeddingRouteRequest, EmbeddingRouteResponse
 
 logger = get_logger(__name__)
@@ -19,7 +20,7 @@ async def analyze_embedding_route_endpoint(request: EmbeddingRouteRequest) -> Em
         routing_decision = await embedding_router.route_embedding(
             model_name=request.model_name, instance_url=request.instance_url, text_content=request.text_sample
         )
-        performance_score = embedding_router._calculate_performance_score(routing_decision.dimensions)
+        performance_score = VectorNormalization.calculate_performance_score(routing_decision.dimensions)
         return EmbeddingRouteResponse(
             target_column=routing_decision.target_column,
             model_name=routing_decision.model_name,

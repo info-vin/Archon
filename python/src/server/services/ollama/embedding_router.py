@@ -10,8 +10,9 @@ from dataclasses import dataclass
 from typing import Any
 
 from ...config.logfire_config import get_logger
-from ..embeddings.multi_dimensional_embedding_service import multi_dimensional_embedding_service
 from .model_discovery_service import model_discovery_service
+from .routing.fallback_strategy import FallbackStrategy
+from .routing.vector_normalization import VectorNormalization
 
 logger = get_logger(__name__)
 
@@ -51,17 +52,6 @@ class EmbeddingRouter:
     - Performance optimization for different vector sizes
     - Multi-instance load balancing consideration
     """
-
-    # Database column mapping for different dimensions
-    DIMENSION_COLUMNS = {768: "embedding_768", 1024: "embedding_1024", 1536: "embedding_1536", 3072: "embedding_3072"}
-
-    # Index type preferences for performance optimization
-    INDEX_PREFERENCES = {
-        768: "ivfflat",  # Good for smaller dimensions
-        1024: "ivfflat",  # Good for medium dimensions
-        1536: "ivfflat",  # Good for standard OpenAI dimensions
-        3072: "hnsw",  # Better for high dimensions
-    }
 
     def __init__(self):
         self.routing_cache: dict[str, RoutingDecision] = {}
@@ -174,13 +164,13 @@ class EmbeddingRouter:
             RoutingDecision for the detected dimensions
         """
         # Get target column for dimensions
-        target_column = self._get_target_column(dimensions)
+        target_column = VectorNormalization.get_target_column(dimensions)
 
         # Calculate confidence based on exact dimension match
-        confidence = 1.0 if dimensions in self.DIMENSION_COLUMNS else 0.7
+        confidence = 1.0 if dimensions in VectorNormalization.DIMENSION_COLUMNS else 0.7
 
         # Check if fallback was applied
-        fallback_applied = dimensions not in self.DIMENSION_COLUMNS
+        fallback_applied = dimensions not in VectorNormalization.DIMENSION_COLUMNS
 
         if fallback_applied:
             logger.warning(
@@ -209,11 +199,8 @@ class EmbeddingRouter:
         Returns:
             RoutingDecision based on model name mapping
         """
-        # Use the existing multi-dimensional service for model mapping
-        dimensions = multi_dimensional_embedding_service.get_dimension_for_model(model_name)
-        target_column = multi_dimensional_embedding_service.get_embedding_column_name(dimensions)
-
-        logger.info(f"Model mapping: {model_name} -> {dimensions}D -> {target_column}")
+        # Use the existing fallback strategy for model mapping
+        dimensions, target_column = FallbackStrategy.get_fallback_dimensions_and_column(model_name)
 
         return RoutingDecision(
             target_column=target_column,
@@ -225,34 +212,6 @@ class EmbeddingRouter:
             routing_strategy="model-mapping",
         )
 
-    def _get_target_column(self, dimensions: int) -> str:
-        """
-        Get the appropriate database column for the given dimensions.
-
-        Args:
-            dimensions: Embedding dimensions
-
-        Returns:
-            Target column name for storage
-        """
-        # Direct mapping if supported
-        if dimensions in self.DIMENSION_COLUMNS:
-            return self.DIMENSION_COLUMNS[dimensions]
-
-        # Fallback logic for unsupported dimensions
-        if dimensions <= 768:
-            logger.warning(f"Dimensions {dimensions} ≤ 768, using embedding_768 with padding")
-            return "embedding_768"
-        elif dimensions <= 1024:
-            logger.warning(f"Dimensions {dimensions} ≤ 1024, using embedding_1024 with padding")
-            return "embedding_1024"
-        elif dimensions <= 1536:
-            logger.warning(f"Dimensions {dimensions} ≤ 1536, using embedding_1536 with padding")
-            return "embedding_1536"
-        else:
-            logger.warning(f"Dimensions {dimensions} > 1536, using embedding_3072 (may truncate)")
-            return "embedding_3072"
-
     def get_optimal_index_type(self, dimensions: int) -> str:
         """
         Get the optimal index type for the given dimensions.
@@ -263,7 +222,7 @@ class EmbeddingRouter:
         Returns:
             Recommended index type (ivfflat or hnsw)
         """
-        return self.INDEX_PREFERENCES.get(dimensions, "hnsw")
+        return VectorNormalization.get_optimal_index_type(dimensions)
 
     async def get_available_embedding_routes(self, instance_urls: list[str]) -> list[EmbeddingRoute]:
         """
@@ -288,10 +247,10 @@ class EmbeddingRouter:
                 dimensions = embedding_model.get("dimensions")
 
                 if dimensions:
-                    target_column = self._get_target_column(dimensions)
+                    target_column = VectorNormalization.get_target_column(dimensions)
 
                     # Calculate performance score based on dimension efficiency
-                    performance_score = self._calculate_performance_score(dimensions)
+                    performance_score = VectorNormalization.calculate_performance_score(dimensions)
 
                     route = EmbeddingRoute(
                         model_name=model_name,
@@ -312,46 +271,6 @@ class EmbeddingRouter:
             logger.error(f"Error getting embedding routes: {e}")
 
         return routes
-
-    def _calculate_performance_score(self, dimensions: int) -> float:
-        """
-        Calculate performance score for embedding dimensions.
-
-        Args:
-            dimensions: Embedding dimensions
-
-        Returns:
-            Performance score (0.0 to 1.0, higher is better)
-        """
-        # Base score on standard dimensions (exact matches get higher scores)
-        if dimensions in self.DIMENSION_COLUMNS:
-            base_score = 1.0
-        else:
-            base_score = 0.7  # Penalize non-standard dimensions
-
-        # Adjust based on index performance characteristics
-        if dimensions <= 1536:
-            # IVFFlat performs well for smaller dimensions
-            index_bonus = 0.0
-        else:
-            # HNSW needed for larger dimensions, slight penalty for complexity
-            index_bonus = -0.1
-
-        # Dimension efficiency (smaller = faster, but less semantic information)
-        if dimensions == 1536:
-            # Sweet spot for most applications
-            dimension_bonus = 0.1
-        elif dimensions == 768:
-            # Good balance of speed and quality
-            dimension_bonus = 0.05
-        else:
-            dimension_bonus = 0.0
-
-        final_score = max(0.0, min(1.0, base_score + index_bonus + dimension_bonus))
-
-        logger.debug(f"Performance score for {dimensions}D: {final_score}")
-
-        return final_score
 
     async def validate_routing_decision(self, decision: RoutingDecision) -> bool:
         """
