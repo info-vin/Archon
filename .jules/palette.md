@@ -28,3 +28,7 @@
 ## 2025-05-19 - Multiline Scanning for Accessibility Attributes
 **Learning:** Standard line-by-line grep fails to identify missing `aria-label`s on `<button>` elements that span multiple lines, leaving hidden accessibility gaps in JSX code.
 **Action:** When auditing the codebase for missing attributes, use multiline regex scripts (e.g., Python `re.findall(r'<button[^>]*>[\s\S]*?</button>', content)`) to correctly parse and validate components structured across multiple lines.
+
+## 2024-05-03 - Contextual ARIA labels in mapped arrays
+**Learning:** When using generic icon-only buttons (like "Delete", "View", or "Like") inside a list or a grid of identical cards, screen readers will read identically named elements consecutively (e.g. "View Timeline", "View Timeline"). This provides no context as to *which* element the action applies to.
+**Action:** Always use dynamic interpolation when inside of `.map()` lists or components representing a generic child (e.g., `LeadCard.tsx`) so that the `aria-label` includes the uniquely identifying information (like `${lead.company_name}` or `${user.name}`).
