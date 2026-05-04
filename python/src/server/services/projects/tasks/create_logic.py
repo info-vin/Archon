@@ -78,6 +78,7 @@ async def create_task_logic(
     due_date: datetime | None = None,
     knowledge_source_ids: list[str] | None = None,
     assignee_id: str | None = None,
+    collaborator_agent_ids: list[str] | None = None,
     priority: str = "medium",
     is_recurring: bool = False,
     crawler_target_id: str | None = None,

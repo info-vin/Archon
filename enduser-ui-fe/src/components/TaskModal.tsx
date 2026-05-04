@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { AssignableUser, Task, TaskPriority, NewTaskData, UpdateTaskData } from '../types.ts';
 import { api } from '../services/api';
-import { XIcon, SparklesIcon, RefreshCwIcon } from './Icons.tsx';
+import { XIcon, RefreshCwIcon } from './Icons.tsx';
 import { KnowledgeSelector } from './KnowledgeSelector.tsx';
-import { MobileDateTimePicker } from './common/MobileDateTimePicker';
 import { TaskAIAgentReport } from './task-modal/TaskAIAgentReport';
-import { TaskCrawlerSettings } from './task-modal/TaskCrawlerSettings';
+import { TaskGeneralTab } from './task-modal/TaskGeneralTab';
+import { TaskAssignmentTab } from './task-modal/TaskAssignmentTab';
 
 interface TaskModalProps {
   task?: Task | null;
@@ -273,107 +273,31 @@ export const TaskModal: React.FC<TaskModalProps> = ({ task, onClose, onTaskCreat
         <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto custom-scrollbar pr-1">
           <div className="space-y-4">
             {/* General Tab */}
-            <div className={activeTab === 'general' ? 'space-y-4' : 'hidden'}>
-              <div>
-                <label htmlFor="title" className="block text-sm font-medium mb-1">Title</label>
-                <input id="title" type="text" value={title} onChange={(e) => setTitle(e.target.value)} className={inputClass} required={activeTab === 'general'} />
-              </div>
-              <div>
-                <div className="flex justify-between items-center mb-1">
-                    <label htmlFor="description" className="block text-sm font-medium">Description</label>
-                    <button 
-                        type="button" 
-                        onClick={handleRefineWithAI} 
-                        disabled={isRefining || !title}
-                        className="text-xs flex items-center gap-1 text-indigo-600 hover:text-indigo-800 disabled:opacity-50 transition-colors font-medium"
-                    >
-                        <SparklesIcon className="w-3 h-3" />
-                        {isRefining ? 'POBot is thinking...' : 'Refine with AI'}
-                    </button>
-                </div>
-                <textarea id="description" value={description} onChange={(e) => setDescription(e.target.value)} className={inputClass} rows={6} placeholder="Enter a brief description, then click 'Refine with AI' to generate a spec..."></textarea>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label htmlFor="project" className="block text-sm font-medium mb-1">Project</label>
-                  <select 
-                    id="project" 
-                    value={selectedProjectId} 
-                    onChange={(e) => setSelectedProjectId(e.target.value)} 
-                    className={inputClass}
-                    disabled={isEditMode}
-                  >
-                    {!selectedProjectId && <option value="">Select Project</option>}
-                    {projects.map(p => <option key={p.id} value={p.id}>{p.title}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label htmlFor="priority" className="block text-sm font-medium mb-1">Priority</label>
-                  <select id="priority" value={priority} onChange={(e) => setPriority(e.target.value as TaskPriority)} className={inputClass}>
-                    {Object.values(TaskPriority).map(p => <option key={p} value={p}>{p.charAt(0).toUpperCase() + p.slice(1)}</option>)}
-                  </select>
-                </div>
-              </div>
-              <div className="w-full md:w-1/2">
-                <MobileDateTimePicker 
-                  label="Due Date"
-                  value={dueDate}
-                  onChange={setDueDate}
-                />
-              </div>
+            <div className={activeTab === 'general' ? 'block' : 'hidden'}>
+              <TaskGeneralTab 
+                title={title} setTitle={setTitle}
+                description={description} setDescription={setDescription}
+                selectedProjectId={selectedProjectId} setSelectedProjectId={setSelectedProjectId}
+                priority={priority} setPriority={setPriority}
+                dueDate={dueDate} setDueDate={setDueDate}
+                projects={projects}
+                isEditMode={isEditMode}
+                isRefining={isRefining}
+                handleRefineWithAI={handleRefineWithAI}
+                inputClass={inputClass}
+              />
             </div>
 
             {/* Assignment Tab */}
-            <div className={activeTab === 'assignment' ? 'space-y-4' : 'hidden'}>
-              <div>
-                <label htmlFor="assignee" className="block text-sm font-medium mb-1">Assignee</label>
-                <select 
-                  id="assignee" 
-                  value={assigneeId || ''} 
-                  onChange={(e) => setAssigneeId(e.target.value)} 
-                  className={inputClass} 
-                  disabled={isLoadingUsers}
-                >
-                  <option value="">{isLoadingUsers ? 'Loading...' : 'Unassigned'}</option>
-                  {assignableUsers.map(user => (
-                    <option key={user.id} value={user.id}>
-                      {user.role === 'ai_agent' ? `(AI) ${user.name}` : user.name}
-                    </option>
-                  ))}
-                </select>
-                
-                {/* Agent Capabilities Preview */}
-                {assigneeId && (() => {
-                    const selected = assignableUsers.find(u => u.id === assigneeId);
-                    if (selected?.tools && selected.tools.length > 0) {
-                        return (
-                            <div className="mt-2 p-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 rounded text-xs text-blue-700 dark:text-blue-300">
-                                <p className="font-semibold mb-1">🤖 {selected.description || 'Agent Capabilities'}</p>
-                                <div className="flex flex-wrap gap-1">
-                                    {selected.tools.map((tool) => (
-                                        <span key={tool} className="px-1.5 py-0.5 bg-blue-100 dark:bg-blue-800 rounded-full border border-blue-200 dark:border-blue-700">
-                                            {tool}
-                                        </span>
-                                    ))}
-                                </div>
-                            </div>
-                        );
-                    }
-                    return null;
-                })()}
-              </div>
-
-              <TaskCrawlerSettings
-                assigneeId={assigneeId}
+            <div className={activeTab === 'assignment' ? 'block' : 'hidden'}>
+              <TaskAssignmentTab 
+                assigneeId={assigneeId} setAssigneeId={setAssigneeId}
                 assignableUsers={assignableUsers}
                 isLoadingUsers={isLoadingUsers}
-                crawlerTargets={crawlerTargets}
-                crawlerTargetId={crawlerTargetId}
-                setCrawlerTargetId={setCrawlerTargetId}
-                isRecurring={isRecurring}
-                setIsRecurring={setIsRecurring}
-                frequency={frequency}
-                setFrequency={setFrequency}
+                collaboratorAgentIds={collaboratorAgentIds} setCollaboratorAgentIds={setCollaboratorAgentIds}
+                crawlerTargets={crawlerTargets} crawlerTargetId={crawlerTargetId} setCrawlerTargetId={setCrawlerTargetId}
+                isRecurring={isRecurring} setIsRecurring={setIsRecurring}
+                frequency={frequency} setFrequency={setFrequency}
                 inputClass={inputClass}
               />
             </div>

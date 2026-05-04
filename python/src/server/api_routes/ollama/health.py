@@ -51,9 +51,13 @@ async def health_check_endpoint(
             if result["is_healthy"]:
                 healthy_count += 1
 
-            if result.get("response_time_ms") is not None:
-                response_times_sum += result["response_time_ms"]
-                response_times_count += 1
+            val = result.get("response_time_ms")
+            if val is not None:
+                try:
+                    response_times_sum += float(str(val))
+                    response_times_count += 1
+                except (ValueError, TypeError):
+                    pass
 
         avg_response_time = None
         if healthy_count > 0 and response_times_count > 0:
