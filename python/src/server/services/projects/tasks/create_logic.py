@@ -169,6 +169,7 @@ async def create_task_logic(
                     "status": task["status"],
                     "assignee": task["assignee"],
                     "assignee_id": task.get("assignee_id"),
+                    "collaborator_agent_ids": task.get("collaborator_agent_ids", []),
                     "task_order": task["task_order"],
                     "priority": task.get("priority"),
                     "created_at": task["created_at"],

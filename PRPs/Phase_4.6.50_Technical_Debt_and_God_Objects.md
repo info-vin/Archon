@@ -78,11 +78,11 @@
 | **二** | **C. Frontend UI** | ~~`enduser-ui-fe/src/pages/TeamManagementPage.tsx`~~ | ✅ 367 | 團隊職責管理與狀態 |
 | **二** | **C. Frontend UI** | ~~`enduser-ui-fe/src/features/admin/components/SystemHealthDashboard.tsx`~~ | ✅ 312 | 系統物理健康指標面板 |
 | **三** | **B. Search/RAG** | ~~`python/src/server/services/search/keyword_extractor.py`~~ | ✅ 447 | 文字探勘與特徵詞提取 |
-| **三** | **D. Ops/Infra** | `python/src/server/services/storage/document_storage_service.py` | 395 | 檔案儲存層與索引 |
+| **三** | **D. Ops/Infra** | ~~`python/src/server/services/storage/document_storage_service.py`~~ | ✅ 395 | 檔案儲存層與索引 |
 | **三** | **B. Search/RAG** | ~~`python/src/server/services/embeddings/embedding_service.py`~~ | ✅ 366 | 向量轉換與空間對應 |
 | **三** | **D. Ops/Infra** | ~~`python/src/server/services/crawling/document_storage_operations.py`~~ | ✅ 358 | 爬蟲儲存與物理路徑對齊 |
-| **三** | **D. Ops/Infra** | `python/src/server/services/stats/metrics.py` | 371 | 效能統計 |
-| **三** | **D. Ops/Infra** | `python/src/server/services/storage/code/extraction.py` | 322 | 程式碼片段自動化提取 |
+| **三** | **D. Ops/Infra** | ~~`python/src/server/services/stats/metrics.py`~~ | ✅ 371 | 效能統計 |
+| **三** | **D. Ops/Infra** | ~~`python/src/server/services/storage/code/extraction.py`~~ | ✅ 322 | 程式碼片段自動化提取 |
 | **三** | **B. Search/RAG** | ~~`python/src/server/services/knowledge/knowledge_summary_service.py`~~ | ✅ 310 | 知識庫摘要邏輯 |
 | **三** | **C. Frontend UI** | ~~`enduser-ui-fe/src/features/manager/components/OpLoadPanel.tsx`~~ | ✅ 318 | 營運負載動態監控 |
 | **四** | **E. Ollama** | ~~`python/src/server/services/ollama/model_discovery_service.py`~~ | ✅ 465 | Ollama 模型探索 |
@@ -99,3 +99,7 @@
   - **現況**: 目前的任務所有權是「互斥的」，單一任務只能指派給人類 (如 Bob) **或**單一 AI Agent。
   - **目標**: 實作主副負責人 (或協作者) 機制。允許任務的主負責人為人類，但同時能指定 AI Agent (如 MarketBot) 作為「協作者 (Collaborators)」自動介入提供協助。
   - **影響範圍**: 屬於跨全端的大型 Feature，需修改資料庫 (`archon_tasks` 擴充 `collaborator_agent_ids` 欄位)、後端 (`ops.py`, `task_service.py`) 以及前端 (`TaskModal.tsx` 新增獨立的 AI Assistant 選擇器)。
+  - **實作計畫與進度**:
+    - [x] **1. 資料庫層 (Database)**: 透過新增 `migration/0.2.2/16_add_task_collaborators.sql` 腳本，在 `archon_tasks` 新增 `collaborator_agent_ids text[]` 陣列欄位，保持系統輕量與讀取效率。
+    - [x] **2. 後端對齊 (Backend)**: 擴充 Pydantic Schema，在相應模組中加入讀寫 `collaborator_agent_ids: list[str]` 的邏輯。
+    - [x] **3. 前端對齊 (Frontend)**: 於 `TaskModal.tsx` 實作多選 AI 協作者的選單介面。

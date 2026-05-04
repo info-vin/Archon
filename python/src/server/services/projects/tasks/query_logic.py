@@ -31,7 +31,7 @@ async def list_tasks_logic(
         if exclude_large_fields:
             query = task_service_instance.supabase_client.table("archon_tasks").select(
                 "id, project_id, parent_task_id, title, description, "
-                "status, assignee, assignee_id, task_order, feature, archived, "
+                "status, assignee, assignee_id, collaborator_agent_ids, task_order, feature, archived, "
                 "archived_at, archived_by, created_at, updated_at, due_date, "
                 "sources, code_examples, is_recurring, crawler_target_id, schedule_config"
             )

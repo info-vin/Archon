@@ -114,6 +114,7 @@ export interface NewTaskData {
   status: TaskStatus;
   priority: TaskPriority;
   assigneeId: string | null;
+  collaborator_agent_ids?: string[];
   due_date: string;
   project_id: string;
   knowledge_source_ids?: string[];

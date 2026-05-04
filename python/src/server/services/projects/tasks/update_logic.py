@@ -56,6 +56,9 @@ async def update_task_logic(
         if "assignee_id" in update_fields:
             update_data["assignee_id"] = update_fields["assignee_id"]
 
+        if "collaborator_agent_ids" in update_fields:
+            update_data["collaborator_agent_ids"] = update_fields["collaborator_agent_ids"]
+
         if "task_order" in update_fields:
             update_data["task_order"] = update_fields["task_order"]
 

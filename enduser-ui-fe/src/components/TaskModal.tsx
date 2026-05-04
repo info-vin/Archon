@@ -29,6 +29,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({ task, onClose, onTaskCreat
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isRefining, setIsRefining] = useState(false);
   const [assignableUsers, setAssignableUsers] = useState<AssignableUser[]>([]);
+  const [collaboratorAgentIds, setCollaboratorAgentIds] = useState<string[]>([]);
   const [isLoadingUsers, setIsLoadingUsers] = useState(true);
   const [selectedKnowledgeIds, setSelectedKnowledgeIds] = useState<string[]>([]);
   const [currentUser, setCurrentUser] = useState<any>(null);
@@ -171,6 +172,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({ task, onClose, onTaskCreat
           priority,
           is_recurring: isRecurring,
           crawler_target_id: crawlerTargetId || null,
+          collaborator_agent_ids: collaboratorAgentIds,
           schedule_config: isRecurring ? { frequency } : null
         };
         await api.updateTask(task.id, updatedData);

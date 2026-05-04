@@ -77,6 +77,7 @@ class UpdateTaskRequest(BaseModel):
     priority: str | None = None
     assignee: str | None = None
     assignee_id: str | None = None
+    collaborator_agent_ids: list[str] | None = None
     task_order: int | None = None
     feature: str | None = None
     attachments: list[Attachment] | None = None

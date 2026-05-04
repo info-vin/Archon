@@ -64,7 +64,7 @@ class TaskService(BaseRepository):
     ) -> tuple[bool, dict[str, Any]]:
         from .tasks.create_logic import create_task_logic
         return await create_task_logic(
-            self, project_id, title, description, assignee, task_order, feature, sources, code_examples, due_date, knowledge_source_ids, assignee_id, priority, is_recurring, crawler_target_id, schedule_config
+            self, project_id, title, description, assignee, task_order, feature, sources, code_examples, due_date, knowledge_source_ids, assignee_id, collaborator_agent_ids, priority, is_recurring, crawler_target_id, schedule_config
         )
 
     async def list_tasks(
