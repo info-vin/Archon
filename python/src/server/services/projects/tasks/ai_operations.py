@@ -10,6 +10,7 @@ from typing import Any
 
 from src.server.config.logfire_config import get_logger
 from src.server.services.log_service import LogService
+from src.server.utils.retry_utils import retry_with_backoff
 
 logger = get_logger(__name__)
 
@@ -223,14 +224,18 @@ async def generate_task_from_alert_logic(
         from server.services.system.rate_limiter import GlobalThrottler
         await GlobalThrottler.wait_for_capacity(tier="pro")
 
-        response = client.models.generate_content(
-            model=model_name,
-            contents=prompt,
-            config=types.GenerateContentConfig(
-                system_instruction="You are Charlie's Assistant. Answer in Traditional Chinese (Taiwan).",
-                temperature=0.7,
-            ),
-        )
+        @retry_with_backoff(max_retries=2)
+        async def _call_gemini():
+            return await client.aio.models.generate_content(
+                model=model_name,
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    system_instruction="You are Charlie's Assistant. Answer in Traditional Chinese (Taiwan).",
+                    temperature=0.7,
+                ),
+            )
+
+        response = await _call_gemini()
         ai_output = response.text or ""
         if not ai_output:
             raise ValueError("LLM returned empty dispatch content")

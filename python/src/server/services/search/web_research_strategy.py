@@ -1,6 +1,8 @@
 import logging
 from typing import Any
 
+from ...utils.retry_utils import retry_with_backoff
+
 logger = logging.getLogger(__name__)
 
 async def perform_web_research_impl(query: str, genai_module: Any, types_module: Any) -> tuple[str, str]:
@@ -32,14 +34,19 @@ async def perform_web_research_impl(query: str, genai_module: Any, types_module:
 
         from ...config.model_ssot import SYSTEM_MODELS
         model_id = SYSTEM_MODELS["DEFAULT_TEXT"]
-        response = client.models.generate_content(
-            model=model_id,
-            contents=prompt,
-            config=types_module.GenerateContentConfig(
-                tools=[google_search_tool],
-                response_modalities=["TEXT"],
-            ),
-        )
+
+        @retry_with_backoff(max_retries=2)
+        async def _call_gemini():
+            return await client.aio.models.generate_content(
+                model=model_id,
+                contents=prompt,
+                config=types_module.GenerateContentConfig(
+                    tools=[google_search_tool],
+                    response_modalities=["TEXT"],
+                ),
+            )
+
+        response = await _call_gemini()
 
         content = ""
         references = []

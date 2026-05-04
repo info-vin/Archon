@@ -11,6 +11,7 @@ from ...config.model_ssot import SYSTEM_MODELS
 from ...prompts.marketing_prompts import BLOG_DRAFT_SYSTEM_PROMPT
 from ...prompts.sales_prompts import SALES_PITCH_SYSTEM_PROMPT
 from ...utils.json_utils import safe_json_loads
+from ...utils.retry_utils import retry_with_backoff
 from ..credential_service import credential_service
 from ..guardrail_service import GuardrailService
 from ..librarian_service import LibrarianService
@@ -42,11 +43,15 @@ class ContentHandler:
             client = genai.Client(api_key=api_key)
             sys_prompt = prompt_service.get_prompt("SALES_PITCH", SALES_PITCH_SYSTEM_PROMPT)
 
-            response = await client.aio.models.generate_content(
-                model=marketing_model,
-                contents=f"Company: {company}\nRole: {job_title}",
-                config=types.GenerateContentConfig(system_instruction=sys_prompt),
-            )
+            @retry_with_backoff(max_retries=2)
+            async def _call_gemini():
+                return await client.aio.models.generate_content(
+                    model=marketing_model,
+                    contents=f"Company: {company}\nRole: {job_title}",
+                    config=types.GenerateContentConfig(system_instruction=sys_prompt),
+                )
+
+            response = await _call_gemini()
 
             # Token Logging
             try:
@@ -130,12 +135,21 @@ class ContentHandler:
 
             client = genai.Client(api_key=api_key)
             sys_prompt = prompt_service.get_prompt("BLOG_DRAFT", BLOG_DRAFT_SYSTEM_PROMPT)
+            google_search_tool = types.Tool(google_search=types.GoogleSearch())
 
-            response = client.models.generate_content(
-                model=SYSTEM_MODELS["DEFAULT_TEXT"],
-                contents=f"Topic: {topic}\nContext: {context_text}",
-                config=types.GenerateContentConfig(system_instruction=sys_prompt, response_mime_type="application/json"),
-            )
+            @retry_with_backoff(max_retries=2)
+            async def _call_gemini():
+                return await client.aio.models.generate_content(
+                    model=SYSTEM_MODELS["DEFAULT_TEXT"],
+                    contents=f"Topic: {topic}\nContext: {context_text}",
+                    config=types.GenerateContentConfig(
+                        system_instruction=sys_prompt,
+                        response_mime_type="application/json",
+                        tools=[google_search_tool]
+                    ),
+                )
+
+            response = await _call_gemini()
 
             # Token Usage
             try:

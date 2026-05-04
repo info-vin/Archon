@@ -25,6 +25,7 @@ def mock_genai_client():
         mock_response.candidates = [mock_candidate]
 
         client_instance.models.generate_content.return_value = mock_response
+        client_instance.aio.models.generate_content = AsyncMock(return_value=mock_response)
         yield client_instance
 
 
@@ -73,7 +74,7 @@ async def test_perform_web_research_success(
     assert source_id == "web-source-123"
 
     # Verify GenAI call
-    mock_genai_client.models.generate_content.assert_called_once()
+    mock_genai_client.aio.models.generate_content.assert_called_once()
 
     # Verify Librarian archive
     mock_librarian.archive_web_research.assert_called_once()

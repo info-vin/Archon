@@ -4,6 +4,7 @@ from google.genai import types
 
 from ...config.logfire_config import get_logger
 from ...config.model_ssot import SYSTEM_MODELS
+from ...utils.retry_utils import retry_with_backoff
 
 logger = get_logger("web_researcher")
 
@@ -26,11 +27,15 @@ class WebResearcher:
             client = genai.Client(api_key=api_key)
             google_search_tool = types.Tool(google_search=types.GoogleSearch())
 
-            response = client.models.generate_content(
-                model=SYSTEM_MODELS["DEFAULT_TEXT"],
-                contents=f"Research: {query}",
-                config=types.GenerateContentConfig(tools=[google_search_tool], response_modalities=["TEXT"]),
-            )
+            @retry_with_backoff(max_retries=2)
+            async def _call_gemini():
+                return await client.aio.models.generate_content(
+                    model=SYSTEM_MODELS["DEFAULT_TEXT"],
+                    contents=f"Research: {query}",
+                    config=types.GenerateContentConfig(tools=[google_search_tool], response_modalities=["TEXT"]),
+                )
+
+            response = await _call_gemini()
 
             content = ""
             if response.candidates and response.candidates[0].content:

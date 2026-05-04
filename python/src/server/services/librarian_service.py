@@ -10,6 +10,7 @@ from ..services.source_management_service import (
     update_source_info,
 )
 from ..utils import get_supabase_client
+from ..utils.retry_utils import retry_with_backoff
 from .knowledge.chunking_service import KnowledgeChunkingService
 from .shared_constants import AgentUUIDs
 
@@ -400,11 +401,15 @@ class LibrarianService:
                 "Return the rules as a clear Markdown list."
             )
 
-            response = client.models.generate_content(
-                model=SYSTEM_MODELS["DEFAULT_TEXT"],
-                contents=extraction_prompt,
-                config=types.GenerateContentConfig(temperature=0.1),
-            )
+            @retry_with_backoff(max_retries=2)
+            async def _call_gemini():
+                return await client.aio.models.generate_content(
+                    model=SYSTEM_MODELS["DEFAULT_TEXT"],
+                    contents=extraction_prompt,
+                    config=types.GenerateContentConfig(temperature=0.1),
+                )
+
+            response = await _call_gemini()
             extracted_rules = response.text
 
             unique_id = str(uuid.uuid4())[:8]

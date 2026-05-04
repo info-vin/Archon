@@ -44,8 +44,8 @@
 >     - **Schema 對帳**: 在執行任何 API 或資料庫欄位修改前，必須讀取 `migration/` 資料夾下的 SQL 實體。**嚴禁幻想欄位名稱**。
 >     - **雙生對帳**: 執行 `make twin-scout` 巡檢前，必須讀取 `scripts/twin_scout.py`，確保 Reality Snapshot 的 SQL 指標與 UI 頁面路徑 100% 物理對齊，防止 false mismatch。
 > 3.  **第三步：口頭確認 (Verbal Confirmation)**: 讀取後，我會向您用一兩句話總結我所理解的「**上次會話的最終狀態**」和「**今天的第一個目標**」。
-*   **當前狀態 (Current Context)**: Phase 4.6.46 (物理加固與失落功能恢復) 已結案。
-*   **今日目標 (Today's Goal)**: 維護系統 100% 物理健康度並啟動下一階段擴展。
+*   **當前狀態 (Current Context)**: Phase 4.6.51 (Google GenAI 物理硬化與對帳) 已結案。
+*   **今日目標 (Today's Goal)**: 啟動 Phase 4.6.52，執行 LibrarianService 拆分與 TextToSpeechService 導入，並提交 4.6.51 的修改。
 
 > 4.  **第四步：取得您的確認**: 在您確認我對起點的理解無誤後，我才能開始執行第一個指令。
 
