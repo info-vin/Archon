@@ -1,5 +1,5 @@
 import { FileText, Plus, Search } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { DeleteConfirmModal } from "../../ui/components/DeleteConfirmModal";
 import { Button, Input } from "../../ui/primitives";
 import { AddDocumentModal } from "./components/AddDocumentModal";
@@ -114,7 +114,13 @@ export const DocsTab = ({ project }: DocsTabProps) => {
   }, [documents, selectedDocument]);
 
   // Filter documents based on search
-  const filteredDocuments = documents.filter((doc) => doc.title.toLowerCase().includes(searchQuery.toLowerCase()));
+  const filteredDocuments = useMemo(() => {
+    if (!searchQuery) return documents;
+
+    // PERFORMANCE: Extract .toLowerCase() outside loop to prevent O(N) redundant string allocations
+    const searchQueryLower = searchQuery.toLowerCase();
+    return documents.filter((doc) => doc.title.toLowerCase().includes(searchQueryLower));
+  }, [documents, searchQuery]);
 
   if (isLoading) {
     return (

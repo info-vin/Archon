@@ -89,10 +89,13 @@ export const ComboBox = React.forwardRef<HTMLButtonElement, ComboBoxProps>(
     // Derived state
     const selectedOption = React.useMemo(() => options.find((opt) => opt.value === value), [options, value]);
     const displayValue = selectedOption?.label || value || "";
+
+    // PERFORMANCE: Extract .toLowerCase() outside loop to prevent O(N) redundant string allocations
+    const searchLowerCheck = search.toLowerCase();
     const hasCustomOption =
       allowCustomValue &&
       search.trim() &&
-      !filteredOptions.some((opt) => opt.label.toLowerCase() === search.toLowerCase());
+      !filteredOptions.some((opt) => opt.label.toLowerCase() === searchLowerCheck);
 
     // Event handlers
     const handleSelect = React.useCallback(

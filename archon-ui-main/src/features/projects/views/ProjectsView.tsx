@@ -69,9 +69,12 @@ export function ProjectsView({ className = "", "data-id": dataId }: ProjectsView
 
   // Sort and filter projects
   const sortedProjects = useMemo(() => {
+    // PERFORMANCE: Extract .toLowerCase() outside loop to prevent O(N) redundant string allocations
+    const searchQueryLower = searchQuery.toLowerCase();
+
     // Filter by search query
     const filtered = (projects as Project[]).filter((project) =>
-      project.title.toLowerCase().includes(searchQuery.toLowerCase()),
+      project.title.toLowerCase().includes(searchQueryLower),
     );
 
     // Sort: pinned first, then alphabetically
