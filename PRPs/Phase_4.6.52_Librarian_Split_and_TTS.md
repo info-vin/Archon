@@ -26,22 +26,22 @@
 ## 2. 執行任務 (Implementation Tasks)
 
 ### 🧱 任務 1：LibrarianService 模組化
-- [ ] **Task 1.1**: 建立 `src/server/services/librarian/` 目錄與子檔案。
-- [ ] **Task 1.2**: 將爬蟲與網路研究邏輯遷移至 `web_archiver.py`。
-- [ ] **Task 1.3**: 將商業邏輯（Pitch, Critique, Failure Case）遷移至 `business_archiver.py`。
-- [ ] **Task 1.4**: 將檔案處理邏輯遷移至 `file_archiver.py`。
-- [ ] **Task 1.5**: 實作 `librarian_facade.py` 並替換原有的 `librarian_service.py`。
-- [ ] **驗證**: `make test-be` 必須 100% 通過，確保無向後相容性破壞。
+- [x] **Task 1.1**: 建立 `src/server/services/librarian/` 目錄與子檔案。
+- [x] **Task 1.2**: 將爬蟲與網路研究邏輯遷移至 `web_archiver.py`。
+- [x] **Task 1.3**: 將商業邏輯（Pitch, Critique, Failure Case）遷移至 `business_archiver.py`。
+- [x] **Task 1.4**: 將檔案處理邏輯遷移至 `file_archiver.py`。
+- [x] **Task 1.5**: 實作 `librarian_facade.py` 並替換原有的 `librarian_service.py`。
+- [x] **驗證**: `make test-be` 必須 100% 通過，確保無向後相容性破壞。
 
 ### 🗣️ 任務 2：TextToSpeechService 開發
-- [ ] **Task 2.1**: 在 `src/server/services/` 下建立 `text_to_speech_service.py`。
-- [ ] **Task 2.2**: 實作非同步的 `generate_audio` 方法，呼叫 `gemini-3.1-flash-tts-preview`，並掛載 `@retry_with_backoff`。
-- [ ] **Task 2.3**: 實作 TTS 服務的單元測試，驗證其在 API 金鑰缺失或 429 錯誤時能優雅降級。
+- [x] **Task 2.1**: 在 `src/server/services/` 下建立 `text_to_speech_service.py`。
+- [x] **Task 2.2**: 實作非同步的 `generate_audio` 方法，呼叫 `gemini-3.1-flash-tts-preview`，並掛載 `@retry_with_backoff`。
+- [x] **Task 2.3**: 實作 TTS 服務的單元測試，驗證其在 API 金鑰缺失或 429 錯誤時能優雅降級。
 
 ---
 
 ## 3. 驗證標準 (Definition of Done)
 
-- [ ] `LibrarianService` 原檔案被刪除，由 `librarian/` 資料夾取代。
-- [ ] `TextToSpeechService` 成功通過隔離測試。
-- [ ] 系統 `make lint`, `make test-be`, `make persona-audit` 全綠。
+- [x] `LibrarianService` 原檔案被刪除，由 `librarian/` 資料夾取代。
+- [x] `TextToSpeechService` 成功通過隔離測試。
+- [x] 系統 `make lint`, `make test-be`, `make persona-audit` 全綠。
