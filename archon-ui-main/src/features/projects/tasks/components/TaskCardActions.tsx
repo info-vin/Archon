@@ -45,7 +45,7 @@ export const TaskCardActions: React.FC<TaskCardActionsProps> = ({
   };
 
   return (
-    <div className="flex items-center gap-1.5">
+    <div className="flex items-center gap-1.5" role="group" aria-label="Task actions">
       <SimpleTooltip content={isDeleting ? "Deleting..." : "Delete task"}>
         <button
           type="button"
@@ -102,7 +102,7 @@ export const TaskCardActions: React.FC<TaskCardActionsProps> = ({
             glassmorphism.priority.low.hover,
             glassmorphism.priority.low.glow,
           )}
-          aria-label="Copy Task ID"
+          aria-label={`Copy ID for ${taskTitle}`}
         >
           <Clipboard className="w-3 h-3" />
         </button>
