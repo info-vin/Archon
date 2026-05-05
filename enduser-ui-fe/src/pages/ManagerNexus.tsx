@@ -187,7 +187,13 @@ export const ManagerNexus: React.FC = () => {
 
     return (
         <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-8 min-h-screen bg-gray-50/50 font-sans nexus-font-scope" style={{fontFamily: "'Inter', sans-serif"}}>
-             <NexusHeader onOpenSpec={() => setIsSpecOpen(true)} />
+             <NexusHeader 
+                onOpenSpec={() => setIsSpecOpen(true)} 
+                dailyData={{
+                    staleLeads: alerts?.length || 0,
+                    pendingApprovals: (approvals?.blogs?.length || 0) + (approvals?.leads?.length || 0)
+                }}
+            />
 
             {/* HUD Grid */}
             <NexusHUD

@@ -33,7 +33,10 @@ def mock_credential_service():
 async def test_generate_audio_success(mock_genai_client, mock_credential_service):
     success, data = await text_to_speech_service.generate_audio("Hello world")
     assert success is True
-    assert data == b"fake-audio-data"
+    # Verify the audio is wrapped in a valid WAV container
+    assert data.startswith(b"RIFF")
+    assert b"WAVEfmt" in data
+    assert b"fake-audio-data" in data
     mock_genai_client.aio.models.generate_content.assert_called_once()
 
 @pytest.mark.asyncio

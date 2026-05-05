@@ -25,6 +25,7 @@ from src.server.core import (
 from .api_routes.admin_api import router as admin_router  # NEW IMPORT
 from .api_routes.agent_chat_api import router as agent_chat_router
 from .api_routes.agents_api import router as agents_router  # MISSING
+from .api_routes.audio_api import router as audio_router
 from .api_routes.auth_api import router as auth_router  # NEW IMPORT
 from .api_routes.blog_api import router as blog_router
 from .api_routes.bug_report_api import router as bug_report_router
@@ -119,6 +120,7 @@ app.include_router(providers_router)
 app.include_router(migration_router)
 app.include_router(system_router)
 app.include_router(agent_chat_router)
+app.include_router(audio_router)
 app.include_router(progress_router)
 app.include_router(knowledge_router)
 app.include_router(agents_router)
