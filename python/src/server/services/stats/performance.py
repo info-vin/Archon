@@ -149,7 +149,13 @@ class PerformanceManager:
 
         avg_weekly_30d = total_30d / 4.28
         momentum = round(((total_7d / avg_weekly_30d) - 1) * 100, 1) if avg_weekly_30d > 0 else 0.0
-        active_paths_count = len([1 for r in formatted_matrix for i in r["interactions"] if i["actual_7d"] > 0])
+
+        # PERFORMANCE: Replaced nested list comprehension with a standard for loop to avoid memory allocation overhead
+        active_paths_count = 0
+        for r in formatted_matrix:
+            for i in r["interactions"]:
+                if i["actual_7d"] > 0:
+                    active_paths_count += 1
 
         # Return dynamic synergy data
         return {

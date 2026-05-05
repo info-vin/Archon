@@ -63,3 +63,6 @@
 ## 2025-05-18 - Replacing len(text.split()) with text.count(' ') is functionally incorrect
 **Learning:** In Python, replacing `len(text.split())` with `text.count(' ') + 1` for word counting or token estimations is functionally incorrect because `split()` handles all whitespace characters (tabs, newlines, multiple spaces) and groups them, whereas `count(' ')` introduces logical bugs by ignoring other whitespaces and miscounting consecutive spaces.
 **Action:** Do not use `text.count(' ') + 1` to replace `len(text.split())`. If performance is a critical issue without allocations, use regex iterators like `sum(1 for _ in re.finditer(r'\S+', text))` or stick to the highly optimized CPython `split()` for general cases.
+## 2024-05-18 - Nested list comprehensions vs explicit loops for counting
+**Learning:** Using `len([1 for x in y for z in x if condition])` causes unnecessary list allocation and generator overhead in Python, slowing down execution.
+**Action:** Replace `len([1 for ...])` with standard `for` loops and a counter variable to prevent allocation overhead.
