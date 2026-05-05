@@ -1,4 +1,5 @@
 import io
+import uuid
 import wave
 
 from google import genai
@@ -7,6 +8,7 @@ from google.genai import types
 from ..config.logfire_config import get_logger
 from ..config.model_ssot import SYSTEM_MODELS
 from ..services.credential_service import credential_service
+from ..services.token_usage_service import TokenUsageService
 from ..utils.retry_utils import retry_with_backoff
 
 logger = get_logger(__name__)
@@ -57,15 +59,17 @@ class TextToSpeechService:
 
             if not response.candidates or not response.candidates[0].content or not response.candidates[0].content.parts:
                 return False, "No audio generated."
-                
+
             # Log token usage for ROI calculation
-            if response.usage_metadata:
-                token_usage_service.log_usage(
+            usage = getattr(response, "usage_metadata", None)
+            if usage:
+                await TokenUsageService.log_usage(
+                    request_id=f"tts-{uuid.uuid4()}",
                     model=model_name,
-                    prompt_tokens=response.usage_metadata.prompt_token_count,
-                    completion_tokens=response.usage_metadata.candidates_token_count,
-                    total_tokens=response.usage_metadata.total_token_count,
-                    agent_name="Librarian_TTS"
+                    provider="google",
+                    input_tokens=int(usage.prompt_token_count or 0),
+                    output_tokens=int(usage.candidates_token_count or 0),
+                    context_type="Librarian_TTS"
                 )
 
             for part in response.candidates[0].content.parts:

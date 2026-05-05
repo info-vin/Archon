@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { FileTextIcon, ClockIcon } from '../../../../components/Icons';
 import { AudioPlayer } from '../../../../components/common/AudioPlayer';
 
@@ -8,24 +8,6 @@ export interface NexusHeaderProps {
 }
 
 export const NexusHeader: React.FC<NexusHeaderProps> = ({ onOpenSpec, dailyData }) => {
-    // Generate the briefing text based on the available data
-    const briefingText = useMemo(() => {
-        if (!dailyData) return "目前無法取得今日數據。但系統運作正常。";
-        
-        const staleCount = dailyData.staleLeads || 0;
-        const pendingCount = dailyData.pendingApprovals || 0;
-        
-        let report = `目前有 ${staleCount} 筆潛在客戶處於「降溫」停滯狀態`;
-        if (staleCount > 0) report += "，需要您的立即關注。";
-        else report += "。";
-        
-        if (pendingCount > 0) {
-            report += `另外，有 ${pendingCount} 項待審核任務。`;
-        }
-        
-        return report;
-    }, [dailyData]);
-
     return (
         <header className="flex justify-between items-end mb-8">
             <div>
@@ -34,10 +16,10 @@ export const NexusHeader: React.FC<NexusHeaderProps> = ({ onOpenSpec, dailyData 
             </div>
             <div className="flex items-center gap-4">
                 <AudioPlayer 
-                    text={briefingText} 
                     scene="commander_briefing" 
                     label="Play Daily Briefing" 
                     className="h-9"
+                    agentData={dailyData}
                 />
                 
                 <button

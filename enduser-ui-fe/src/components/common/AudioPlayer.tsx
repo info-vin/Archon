@@ -23,19 +23,21 @@ const MicIcon = ({ className = "w-4 h-4" }) => (
 );
 
 export interface AudioPlayerProps {
-    text: string;
+    text?: string;
     scene: 'commander_briefing' | 'marketing_pitch';
     voice?: string;
     label?: string;
     className?: string;
+    agentData?: Record<string, any>;
 }
 
 export const AudioPlayer: React.FC<AudioPlayerProps> = ({ 
-    text, 
+    text = "", 
     scene, 
     voice, 
     label = "Play Audio", 
-    className = "" 
+    className = "",
+    agentData
 }) => {
     const [isPlaying, setIsPlaying] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
@@ -81,7 +83,7 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
             const response = await fetch(`${apiUrl}/api/audio/generate`, {
                 method: 'POST',
                 headers,
-                body: JSON.stringify({ text, scene, voice })
+                body: JSON.stringify({ text, scene, voice, agent_data: agentData })
             });
 
             if (!response.ok) {
