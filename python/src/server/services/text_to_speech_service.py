@@ -2,6 +2,7 @@
 from google import genai
 
 from ..config.logfire_config import get_logger
+from ..config.model_ssot import SYSTEM_MODELS
 from ..services.credential_service import credential_service
 from ..utils.retry_utils import retry_with_backoff
 
@@ -29,7 +30,7 @@ class TextToSpeechService:
             client = genai.Client(api_key=api_key)
 
             # The dedicated TTS model
-            model_name = "gemini-3.1-flash-tts-preview"
+            model_name = SYSTEM_MODELS.get("TTS_MODEL", "models/gemini-3.1-flash-tts-preview").split("/")[-1]
 
             # Combine voice director notes with the text if a specific voice style is requested
             prompt = f"[Voice style: {voice_name}]\n{text}"

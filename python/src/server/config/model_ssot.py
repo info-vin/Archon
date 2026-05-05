@@ -15,6 +15,9 @@ SYSTEM_MODELS = {
     # Image Models (Requires Billing for API, MarketingService uses internal fallback)
     "IMAGE_GEN": "models/gemini-3.1-flash-image-preview",
 
+    # TTS Model
+    "TTS_MODEL": "models/gemini-3.1-flash-tts-preview",
+
     # Legacy Alignment (Kept per User Request - Deprecates July 2026)
     "EMBEDDING": "models/gemini-embedding-001"
 }

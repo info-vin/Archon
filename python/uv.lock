@@ -225,6 +225,7 @@ source = { virtual = "." }
 dependencies = [
     { name = "browser-use" },
     { name = "langchain-google-genai" },
+    { name = "tenacity" },
 ]
 
 [package.dev-dependencies]
@@ -352,6 +353,7 @@ server-reranking = [
 requires-dist = [
     { name = "browser-use", specifier = ">=0.3.2" },
     { name = "langchain-google-genai", specifier = ">=2.1.5" },
+    { name = "tenacity", specifier = ">=9.1.4" },
 ]
 
 [package.metadata.requires-dev]

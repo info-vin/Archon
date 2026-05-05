@@ -8,6 +8,7 @@ requires-python = ">=3.12"
 dependencies = [
     "browser-use>=0.3.2",
     "langchain-google-genai>=2.1.5",
+    "tenacity>=9.1.4",
 ]
 
 [dependency-groups]
