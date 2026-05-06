@@ -336,6 +336,30 @@ Phase 4.4.5 引入了 **Clockwork** 進行系統自動檢測。
 
 ### 4.3 部署標準作業流程 (SOP)
 
+### 2024-05-20 新增資料庫遷移檔
+- `migration/0.2.2/01_foundation_types.sql`
+- `migration/0.2.2/02_tables_core.sql`
+- `migration/0.2.2/03_tables_business.sql`
+- `migration/0.2.2/04_tables_ops.sql`
+- `migration/0.2.2/05_logic_functions.sql`
+- `migration/0.2.2/06_constraints_main.sql`
+- `migration/0.2.2/07_logic_indexes.sql`
+- `migration/0.2.2/08_logic_triggers.sql`
+- `migration/0.2.2/09_constraints_fkeys.sql`
+- `migration/0.2.2/10_security_rls.sql`
+- `migration/0.2.2/11_seed_config.sql`
+- `migration/0.2.2/12_seed_rbac.sql`
+- `migration/0.2.2/13_optimize_task_reordering.sql`
+- `migration/0.2.2/14_sync_persona_parity.sql`
+- `migration/0.2.2/15_add_blog_cover_image.sql`
+- `migration/0.2.2/16_add_task_collaborators.sql`
+- `migration/0.2.2/RESET_DB.sql`
+- `migration/0.2.2/seed_blog_posts.sql`
+- `migration/0.2.2/seed_mock_data.sql`
+- `migration/0.2.2/seed_rag_defaults.sql`
+- `migration/temp_fix_seq.sql`
+
+
 此流程的最終目標，是成功將一個穩定的 `feature/...` 分支部署到 **Render**。
 
 1.  **階段一：部署前本地檢查**

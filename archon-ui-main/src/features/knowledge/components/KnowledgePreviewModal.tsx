@@ -32,6 +32,7 @@ export const KnowledgePreviewModal: React.FC<KnowledgePreviewModalProps> = ({ is
             size="sm"
             onClick={onClose}
             className="rounded-full hover:bg-red-500/10 hover:text-red-500"
+            aria-label="Close preview"
           >
             <X className="w-5 h-5" />
           </Button>

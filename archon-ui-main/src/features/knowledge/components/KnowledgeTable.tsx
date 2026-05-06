@@ -216,6 +216,7 @@ export const KnowledgeTable: React.FC<KnowledgeTableProps> = ({ items, onViewDoc
                               variant="ghost"
                               size="sm"
                               className="h-8 w-8 p-0 text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
+                              aria-label="More actions"
                             >
                               <MoreHorizontal className="w-4 h-4" />
                             </Button>
