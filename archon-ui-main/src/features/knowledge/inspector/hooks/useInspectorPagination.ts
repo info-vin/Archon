@@ -61,11 +61,12 @@ export function useInspectorPagination({
     initialPageParam: 0,
   });
 
-  // Flatten the paginated data and apply search filtering
-  const { items, totalCount, loadedCount } = useMemo(() => {
+  // PERFORMANCE: Separate data extraction/precalculation from search filtering
+  // This prevents recalculating the search strings on every keystroke
+  const processedData = useMemo(() => {
     type Page = ChunksResponse | CodeExamplesResponse;
     if (!data || !data.pages) {
-      return { items: [], totalCount: 0, loadedCount: 0 };
+      return { allItems: [], searchableItems: [], totalCount: 0, loadedCount: 0 };
     }
 
     // Flatten all pages - data has 'pages' property from useInfiniteQuery
@@ -79,35 +80,37 @@ export function useInspectorPagination({
     const totalCount = first && "total" in first && typeof first.total === "number" ? first.total : allItems.length;
     const loadedCount = allItems.length;
 
-    // Apply search filtering
+    // Precalculate .toLowerCase() searchable string to prevent O(N*M) redundant string allocations during filter
+    const searchableItems = allItems.map((item) => {
+      let searchStr = "";
+      if (viewMode === "documents") {
+        const doc = item as DocumentChunk;
+        searchStr = `${doc.content || ""} ${doc.title || ""} ${doc.metadata?.title || ""} ${doc.metadata?.section || ""}`.toLowerCase();
+      } else {
+        const code = item as CodeExample;
+        searchStr = `${code.content || ""} ${code.summary || ""} ${code.language || ""} ${code.file_path || ""} ${code.title || ""}`.toLowerCase();
+      }
+      return { item, searchStr };
+    });
+
+    return { allItems, searchableItems, totalCount, loadedCount };
+  }, [data, viewMode]);
+
+  // Apply search filtering
+  const { items, totalCount, loadedCount } = useMemo(() => {
+    const { allItems, searchableItems, totalCount, loadedCount } = processedData;
+
     if (!searchQuery) {
       return { items: allItems, totalCount, loadedCount };
     }
 
     const query = searchQuery.toLowerCase();
-    const filteredItems = allItems.filter((item: DocumentChunk | CodeExample) => {
-      if (viewMode === "documents") {
-        const doc = item as DocumentChunk;
-        return (
-          doc.content?.toLowerCase().includes(query) ||
-          doc.title?.toLowerCase().includes(query) ||
-          doc.metadata?.title?.toLowerCase().includes(query) ||
-          doc.metadata?.section?.toLowerCase().includes(query)
-        );
-      } else {
-        const code = item as CodeExample;
-        return (
-          code.content?.toLowerCase().includes(query) ||
-          code.summary?.toLowerCase().includes(query) ||
-          code.language?.toLowerCase().includes(query) ||
-          code.file_path?.toLowerCase().includes(query) ||
-          code.title?.toLowerCase().includes(query)
-        );
-      }
-    });
+    const filteredItems = searchableItems
+      .filter(({ searchStr }) => searchStr.includes(query))
+      .map(({ item }) => item);
 
     return { items: filteredItems, totalCount, loadedCount };
-  }, [data, viewMode, searchQuery]);
+  }, [processedData, searchQuery]);
 
   return {
     items,

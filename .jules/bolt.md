@@ -69,3 +69,6 @@
 ## 2024-05-18 - String conversions inside array iterators
 **Learning:** In React/JavaScript frontend applications, calling string transformations like `.toLowerCase()` inside iterative array methods (e.g., `.filter()`, `.some()`) causes O(N) redundant string allocations.
 **Action:** Precalculate these values outside the loop to improve rendering performance and memory efficiency.
+## 2026-05-06 - Separating pre-calculation from active filtering in React
+**Learning:** When optimizing React frontend search filters to avoid redundant string allocations (e.g., `.toLowerCase()`), separating the pre-calculation and filtering logic into two distinct `useMemo` hooks is crucial. Combining them executes the allocations on every keystroke, resulting in a de-optimization. The first `useMemo` must cache the pre-calculated search strings (dependent on the source data), and the second `useMemo` should handle the active filtering (dependent on the cached strings and search query).
+**Action:** Always verify the dependency arrays of `useMemo` hooks when pre-calculating string values to ensure they do not re-run on frequent user inputs like search queries.
