@@ -66,3 +66,6 @@
 ## 2024-05-18 - Nested list comprehensions vs explicit loops for counting
 **Learning:** Using `len([1 for x in y for z in x if condition])` causes unnecessary list allocation and generator overhead in Python, slowing down execution.
 **Action:** Replace `len([1 for ...])` with standard `for` loops and a counter variable to prevent allocation overhead.
+## 2024-05-18 - String conversions inside array iterators
+**Learning:** In React/JavaScript frontend applications, calling string transformations like `.toLowerCase()` inside iterative array methods (e.g., `.filter()`, `.some()`) causes O(N) redundant string allocations.
+**Action:** Precalculate these values outside the loop to improve rendering performance and memory efficiency.
