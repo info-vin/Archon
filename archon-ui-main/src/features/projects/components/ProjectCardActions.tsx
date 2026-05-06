@@ -46,7 +46,7 @@ export const ProjectCardActions: React.FC<ProjectCardActionsProps> = ({
     }
   };
   return (
-    <div className="flex items-center gap-1.5">
+    <div className="flex items-center gap-1.5" role="group" aria-label="Project actions">
       {/* Delete Button */}
       <SimpleTooltip content={isDeleting ? "Deleting..." : "Delete project"}>
         <button
@@ -92,7 +92,7 @@ export const ProjectCardActions: React.FC<ProjectCardActionsProps> = ({
                   " " +
                   glassmorphism.priority.medium.glow,
           )}
-          aria-label={isPinned ? "Unpin project" : "Pin as default"}
+          aria-label={isPinned ? `Unpin ${projectTitle}` : `Pin ${projectTitle} as default`}
         >
           <Pin className={cn("w-3 h-3", isPinned && "fill-current")} />
         </button>
@@ -111,7 +111,7 @@ export const ProjectCardActions: React.FC<ProjectCardActionsProps> = ({
             glassmorphism.priority.low.hover,
             glassmorphism.priority.low.glow,
           )}
-          aria-label="Copy Project ID"
+          aria-label={`Copy ID for ${projectTitle}`}
         >
           <Clipboard className="w-3 h-3" />
         </button>
