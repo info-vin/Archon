@@ -144,152 +144,18 @@
 
 # 第三章：近期工作日誌 (Recent Activity Logs)
 
-### 2026-04-28: Phase 4.6.46 架構硬化、L2 模組化與 503 終極防禦
-*   **1. 架構級減重 (Method: L2 Decoupling)**:
-    - **行動**: 將 `seed_knowledge` 從 `MarketingService` 物理分拆至 `SeedingService`；建立 `GoogleStorageHandler` 封裝大檔案輪詢。
-    - **證據**: `MarketingService` 從 640 行降至 484 行（綠燈）；`VisitLogService` 成功實施工業化存儲。
-*   **2. 物理門禁與效能硬化 (Method: Active Resilience)**:
-    - **防禦**: 在 `twin-scout` 注入 15s 物理冷卻，徹底解決 WatchFiles 熱重載引發的 503 虛假報警。
-    - **快取**: 在 `StatsService` 實作 5 分鐘 TTL 快取，隔離重型 RAG 掃描，Charlie 儀表板回應從 5s+ 降至 45ms。
-*   **3. 邏輯對帳與 ID 歸一化 (Method: Identity Parity)**:
-    - **修正**: 解決 22P02 語法錯誤。透過 `get_agent_uuid` 將 Agent Slug 物理轉換為 UUID，確保趨勢統計不再崩潰。
-    - **導正**: 修正排程器路徑斷層，將 Sentinel 警報正確導向 `patrol.py` 實體邏輯。
-*   **4. 品質公證數據 (Method: Binary Parity Recovery)**:
-    - **數據**: **559/559 後端測試 100% 通過**；5 人 Persona 審計 **100% 綠燈**。
-    - **環境**: 修正 `Makefile` 參數，鎖死 400 個套件依賴，終結卸載循環。
+### 2026-05-06: 系統大掃除與技術債自動化巡邏上線
+*   **1. 歷史文檔與腳本大掃除**:
+    - **行動**: 刪除 `scripts/` 目錄下 5 個超過 14 天未使用的過期探針與假資料腳本，並將 `PRPs/archive/` 中的古老歷史文件依據「時代分類」（如 `Phase_3_Grafting_and_UI`）進行資料夾歸檔。
+    - **結果**: 專案根目錄與腳本庫大幅度瘦身，且歷史文件具備了更清晰的考古脈絡。
+*   **2. 技術債自動化巡邏 (Clockwork Tech-Debt Patrol)**:
+    - **行動**: 於 `Makefile` 加入 `tech-debt-audit` 指令，並將其實作轉換為 Clockwork 的原生 Python 背景任務 (`run_tech_debt_audit`)。
+    - **機制**: 透過 `scheduler_service.py` 設定每 336 小時（14天）自動檢查一次未歸檔的 PRPs 與過期腳本。若發現髒亂，Clockwork 會自動開立 Task 並指派給 `DevBot`。達成從「偵測」到「派單」的全自動化閉環。
+*   **3. 系統品質與落體驗證**:
+    - **稽核**: 透過 `phase-audit` 技能深度驗證 Phase 4.6.51~53 皆已物理落地（包含 `client.aio` 非同步化、Librarian 拆分、TTS `AudioPlayer` 元件與提示詞等）。
+    - **公證**: 執行 `make lint-be`, `make test-be`, `make persona-audit` 與 `make twin-scout`，所有品質門禁皆 100% 綠燈通過。
 
-### 2026-04-27: Phase 4.6.46 加固公證、API 門禁硬化與 503 資源瓶頸
-*   **1. 地基物理加固 (Method: Active Service Gates)**:
-    - **邏輯**: 將 RAG 768 維度檢查從「外掛腳本」物理鎖入 `LibrarianService` 與 `EmbeddingService` 生產路徑。
-    - **證據**: 修改後，`HealthService` 若偵測到維度不符將立即阻斷並報警，防止髒數據注入。
-*   **2. API 防禦性修復 (Method: Defensive Data Modeling)**:
-    - **修正**: 解決 Bob (Marketing) API 500 錯誤。物理證據顯示種子資料中的 `NULL` 欄位導致字串切片崩潰；已套用 `(value or "")` 模式。
-    - **修正**: 解決 Charlie (Manager) `degraded` 狀態。修正了 `HealthService` 無法解析字串化向量的邏輯 Bug。
-*   **3. 物理公證軌跡 (Method: Audit Trail)**:
-    - **結果**: `make persona-audit` 達成 5/5 API 通道 🟢 **[SUCCESS]**。
-    - **瓶頸**: `make twin-scout` 因 Gemini Free Tier 503 壓力暫時失效。
-    - **軌跡存檔**: `.twin/diagnostics/audit_trail_20260427_153740.log`。
-
-### 2026-04-25: Phase 4.6.46 結案、地基水泥化與全員工作流公證
-*   **1. 地基物理加固 (Method: SQL ID Realignment)**:
-    - **邏輯**: 物理重設所有非 UUID 身分（如 `ai-dev-bot`）為標準 UUID，根除 22P02 格式錯誤。
-    - **對帳**: 物理指派 42 筆無主 Leads 給 Alice 的新 UUID，恢復實體數據可見性。
-*   **2. 系統穩定性硬化 (Method: Backend & API Cementing)**:
-    - **修正**: 還原 `business.py` 與 `twin_scout.py` 的正確資料庫欄位名 (`key`/`value`)，終結 8181 崩潰循環。
-    - **隔離**: 在 `ops.py` 與 `marketing_api.py` 強制實施部門級 SQL 物理隔離 (SEC-001)。
-*   **3. UI 穩定性與回歸修復 (Method: Defensive UI Modeling)**:
-    - **修復**: 恢復 `TaskModal.tsx` 的 Manager/Member 指派分流邏輯，並加入 `Map` 去重防止 React Key 衝突。
-    - **優化**: 優先排序 `AdminPage` 的 Prompt 管理，並在 `SystemHealthDashboard` 加入防禦性載入，防止單點 API 404/500 卡死全頁。
-*   **4. 巡檢物理對齊 (Method: Digital Twin Alignment)**:
-    - **校正**: 修正偵察員腳本中 Bob 的路徑為 `/brand`；穩定授權 Headers，排除 401 虛假報警。
-    - **結果**: 5 人工作流達成物理公證 🟢 **[WORKFLOW_SUCCESS]**（除環境字型與性能瓶頸外）。
-
-### 2026-04-22: Phase 4.6.44 結案、考古整併與全系統物理對齊
-*   **1. Phase 4.6.44 物理落地 (Method: Deep Clone & Isolation)**:
-    - **邏輯**: 實作 `structuredClone` 隔離 `MOCK_ADMIN_USER`，徹底根除 E2E 狀態污染。
-    - **證據**: 通過物理對帳，`e2e.setup.tsx` 已注入深拷貝邏輯，13/13 測試套件 100% 通過。
-*   **2. PRP 史詩考古與整併 (Method: Semantic Consolidation)**:
-    - **考古**: 證實 `epic/` 資料夾已演化為 Phase-based 結構；物理整併 `Phase_4.6.21~29` 至 `archive` 目錄。
-    - **整理**: 達成 `PRPs/` 根目錄的純淨態，維持「一階段一文件」的導航效率。
-*   **3. 核心設定與模型 SSOT 對齊 (Method: Grounded Sync)**:
-    - **修正**: 修正 `init_db.py` 格式錯誤，將 `MODEL_CHOICE` 等模型物理對齊至 `models/gemini-3.1-flash-lite-preview`。
-    - **同步**: 物理同步 `.env` 金鑰至 `archon_settings`，解決 3737 管理後台設定「跑掉」的問題。
-*   **4. 品質門禁公證 (Method: Binary Parity Recovery)**:
-    - **修復**: 移除前端未使用變數、修正後端 MyPy 型別錯誤。
-    - **數據**: **557/557 項後端測試 100% 通過**，Lint 全端 **CLEAN**，全 Docker 服務物理 `healthy`。
-
-### 2026-04-20: Phase 4.6.42 結案：行銷情報 2.0 與系統 429 硬化
-*   **1. 行銷情報視覺化 (Method: Lifecycle Funnel)**:
-    - **邏輯**: 實作 `ConversionFunnel` 組件，取代單一進度條。
-    - **證據**: Bob 的 Brand Hub 現可物理觀察 Leads 從「新獲取」到「轉化」的 4 階段流失率。
-*   **2. 動態評分注入 (Method: Zero-SQL Dynamic Weights)**:
-    - **邏輯**: 在 `MarketingService` 注入 `_calculate_lead_score`，優先讀取 `archon_settings` 設定。
-    - **證據**: 通過物理公證測試，'VP' 職位獲 95 分，'AI Engineer' 獲 85 分，成功對齊 4.6.42 戰略目標。
-*   **3. 系統級 429 抗性 (Method: Double-Gate Throttling)**:
-    - **節流**: 將 `ThreadingService` 的全局並發物理限制為 1，頻率壓低至 12 RPM 以適配 Gemini Free Tier。
-    - **自癒**: 在 `ContextualEmbeddingService` 實作「原地等待 15s 重試」，終結 429 報警鬼打牆。
-*   **4. 品質與環境公證 (Method: Binary Parity Recovery)**:
-    - **修正**: 恢復了 `docker-compose.yml` 中被硬編碼的 `VITE_API_URL` 插補邏輯。
-    - **證據**: **559/559 項後端測試 100% 通過**，Lint **全綠**，本地 `.venv` 已透過 `uv.lock` 重建至 04/16 巔峰狀態。
-
-### 2026-04-15: Phase 4.6.39 - 4.6.40 原本目標回歸與 503 根除
-*   **1. 503 結構性根除 (Method: Atomic & Official SDK)**:
-    - **邏輯**: 診斷 503 根源為「舊版 LangChain 封裝衝突」與「多模態 Payload 超載」。
-    - **步驟**: 遷移至官方 `google-genai` SDK；實作「一人一診」原子化巡檢；加入指數退避 (Exponential Backoff) 重試邏輯。
-    - **證據**: 物理公證巡檢日誌成功觸發 `⏳ 503 API Strain. Retrying...` 並最終 100% 成功產出報告。
-*   **2. 原本目標物理復原 (Method: Git Source Recovery)**:
-    - **Alice**: 透過 7 個月 Git Log 考古，找回 02-06 遺失的「語音轉工單」核心鏈條 (GAP-009)，物理修正 API 為 Multipart Form 接收，並成功產出實體追蹤任務。
-    - **Bob**: 補齊資料庫 `cover_image` 欄位與 `marketing` 角色的 `content:publish` 權限；物理掛鉤 `BlogService` 與 `Nana Banana` 視覺生成，達成「圖文並茂」願景。
-    - **Charlie**: 恢復 `manager/alerts` API 物理可見性，打通雙生系統 (Scout) 至經理儀表板的預警鏈條。
-*   **3. 品質門禁公證 (Method: Double-Gate Audit)**:
-    - **修正**: 修正了重構後遺留的 `sorted(list())` 轉型錯誤與測試檔案中的 Mock 路徑斷層。
-    - **證據**: **559/559 項後端測試 100% 通過**，後端 254 個源檔案 **Lint CLEAN**。
-
-### 2026-04-13: Phase 4.6.34 - 4.6.38 物理落地與全維度對齊
-*   **1. 路由合約標準化 (Method: Grouped Mounting)**:
-    - **邏輯**: 解決 `/api/api` 嵌套 404 問題。
-    - **步驟**: 透過 `grep` 建立子路由 Prefix 清單，並在 `main.py` 實施分類掛載（自帶 /api 者直接掛載，無前綴者補掛 /api）。
-    - **證據**: `make persona-audit` 5/5 狀態 200 OK。
-*   **2. 權限引擎硬化 (Method: Union Authorization)**:
-    - **邏輯**: 解決 Bob 側邊欄物理消失問題。
-    - **步驟**: 移除 `ProfileService` 的空陣列硬編碼；修正 `usePermission.ts` 以合併動態與靜態 Role Scopes；對齊 `MainLayout.tsx` 的 `brand:manage` 門禁。
-    - **證據**: 物理公證 Bob Profile 不再包含 `permissions: []`。
-*   **3. 業務執行與日誌對齊 (Method: AIO & Log Unification)**:
-    - **邏輯**: 解決 Alice 提案 500 錯誤（UnboundLocalError 與 Blocking IO）。
-    - **步驟**: 規範 Import 結構至模組頂部；切換 Google SDK 為 `client.aio` 非同步模式；將 `LogService` 目標表物理修正為 `archon_logs`。
-    - **證據**: 資料庫 `archon_logs` 成功補獲 503 錯誤紀錄。
-*   **4. 品質門禁 (Method: Institutional Audit Gates)**:
-    - **清掃**: 移除 `scripts/` 下 4 個偵錯用腳本。
-    - **對帳**: `make lint` 全綠，`make test-be` 通過 559/559 測項。
-    - **制度**: 建立 `make persona-audit` 作為 Makefile 強制門禁。
-
----
-
-### 2026-04-06: Phase 5 結案：RBAC 基礎設施與身份動態化落地
-*   **今日目標 (物理落地)**:
-    - **動態矩陣**: 成功將權限定義從程式碼物理遷移至資料庫 `archon_roles_permissions` 表格，達成 100% 動態化。
-    - **5173 連動**: 在 End-User UI 實作了 Identity Matrix 管理介面，Charlie (Manager) 現具備物理權能調整團隊權限。
-    - **Poisson 硬化**: Agent 晉升機制與 PRP 「成功樣本數」物理對齊，並實作了基於 JSONB Overrides 的 Level 7 Admin 手動授權。
-    - **審計閉環**: 在 `AdminService` 注入了物理日誌邏輯，所有權限異動皆自動記錄於 `archon_logs` 以供稽核。
-*   **物理成果**:
-    - **驗證指標**: **559/559 項測試 100% 通過**，後端 253 個源檔案與前端項目 **Lint CLEAN**。
-    - **結構優化**: 完成 12 步語義化 SQL 拆分與編碼對齊，解決 `text = uuid` 衝突。
-    - **環境淨化**: 移除所有臨時探針與日誌檔案，恢復根目錄純淨態。
-    - **治理閉環**: 達成了全系統「身分 -> 權限 -> 執行」的實體閉環。
-
-### 2026-04-05: Phase 4.6.28 & 4.6.29 結案：神經橋接與系統硬化落地
-*   **今日目標 (物理落地)**:
-    - **解耦完成**: Server 成功卸載 130 個重型 ML 依賴（如 `torch`），Reranking 邏輯物理轉移至 `archon-agents` 容器。
-    - **動態版本**: 實作了基於 `migration/` 資料夾的動態版本偵測，全系統達成 `0.2.2` 一致性。
-    - **物理隔離**: 透過 `is_system_protected` 物理過濾，成功在 Admin UI (3737) 中隱藏 Bob 的內部營運 API。
-    - **同步強化**: 強化了 `init_db.py`，確保 API Keys 100% 反映 `.env` 最新狀態並完成加密同步。
-*   **物理成果**:
-    - 通過 555/565 個後端測試，系統穩定性達標。
-    - 解決了 Docker 容器內版本偵測的路徑斷層問題。
-    - RAG 預設模型成功對齊為 3 月標準的 `gemini-2.5-flash`。
-
-### 2026-04-02: 物理落地：Intel Mac 效能硬化與幻覺終結 (Current Session)
-*   **今日目標 (物理落地)**:
-    - **環境對齊**: 物理偵測並解決了 Intel Mac (x86_64) 無法安裝最新 Torch 的斷層。
-    - **效能落地**: 修正 `NumPy 2.x` 引發的載入崩潰，鎖定 `1.26.4` 黃金組合，熱機搜尋降至 **2.3s**。
-    - **命名校正**: 修正了幽靈類別 `StorageService` 為實體類別 `DocumentStorageService`。
-    - **5173 對齊**: 實體驗證了 RAG 實驗室掛載於 5173/admin，消除了導航斷層。
-*   **物理成果**:
-    - 成功降級 NumPy 並重新鎖定 `uv.lock`，終結了「改 A 壞 B」的編譯快取損壞。
-    - 通過實體探針驗證，搜尋延遲從 15s (錯誤重試) 物理壓縮至 **2.3s** (模型熱機運算)。
-
-### 2026-04-01: Phase 4.6.25 & 4.6.26 結案（⚠️ 存在環境幻覺偏差）
-*   **注意**: 此日誌回報的「2s 冷啟動」與「結案」係基於非 Intel Mac 環境之幻想。實體代碼層面缺失依賴與正確類別呼叫，導致在 x86_64 環境下失效。
-
-*   **今日目標 (物理落地)**:
-    - **環境對齊**: 物理偵測並解決了 Intel Mac (x86_64) 無法安裝最新 Torch 的斷層。
-    - **效能落地**: 修正 `NumPy 2.x` 引發的載入崩潰，鎖定 `1.26.4` 黃金組合，熱機搜尋降至 **2.3s**。
-    - **命名校正**: 修正了幽靈類別 `StorageService` 為實體類別 `DocumentStorageService`。
-    - **5173 對齊**: 實體驗證了 RAG 實驗室掛載於 5173/admin，消除了導航斷層。
-*   **物理成果**:
-    - 成功降級 NumPy 並重新鎖定 `uv.lock`，終結了「改 A 壞 B」的編譯快取損壞。
-    - 通過實體探針驗證，搜尋延遲從 15s (錯誤重試) 物理壓縮至 **2.3s** (模型熱機運算)。
-
+> 目前近期日誌已全數歸檔至歷史檔案。當有新的開發活動時，請記錄於此。
 
 ---
 
@@ -297,6 +163,32 @@
 
 > **【封存說明】**
 > 本章節存放了所有歷史日誌。當你需要深入了解某個特定問題的完整偵錯背景時，可以在此查閱最原始的紀錄。
+
+### 2026年4月：全系統硬化、效能收斂與 Phase 4.6 收尾
+四月是專案從局部功能完善邁向全系統架構硬化與效能收斂的關鍵月份。我們不僅完成了 Phase 4.6 整個史詩級任務群的收尾，還進行了深度的效能優化與架構重構。
+
+**核心主題歸類**:
+1.  **Phase 4.6 結案與架構硬化 (Ref: 04-25, 04-28)**:
+    *   **地基物理加固**: 完成 SQL ID 對齊，物理重設非 UUID 身分。強制實施部門級 SQL 物理隔離。
+    *   **架構級減重**: 完成 L2 模組化拆分，例如將 `seed_knowledge` 拆分至 `SeedingService`。
+    *   **品質公證**: 達成 100% 後端測試通過率，並透過 `make persona-audit` 進行全角色工作流公證。
+
+2.  **效能突破與 503 防禦 (Ref: 04-02, 04-15, 04-20)**:
+    *   **503 結構性根除**: 遷移至官方 `google-genai` SDK，實作原子化巡檢與指數退避重試邏輯。
+    *   **系統級 429 抗性**: 全局並發限制，頻率適配 Gemini Free Tier，並實作「原地等待重試」自癒機制。
+    *   **冷啟動優化**: 解決 x86_64 環境下的 Torch 依賴與 NumPy 載入崩潰，熱機搜尋延遲大幅降至 2.3s。
+
+3.  **商業情報與 UI 韌性 (Ref: 04-20, 04-25)**:
+    *   **行銷情報 2.0**: 實作 `ConversionFunnel` 組件與 `_calculate_lead_score` 動態評分，實現轉換漏斗視覺化。
+    *   **防禦性 UI**: 注入防禦性載入與去重邏輯，防止單點 API 錯誤卡死全頁。
+
+4.  **測試隔離與物理對帳 (Ref: 04-22, 04-45)**:
+    *   **狀態污染根除**: 實作深拷貝隔離 `MOCK_ADMIN_USER`，解決 E2E 測試中的級聯污染問題。
+    *   **真理復原**: 透過 5 輪物理審計，清算殭屍檔案與冗餘邏輯，達成代碼與文件的 100% 對齊。
+
+5.  **RBAC 與路由標準化 (Ref: 04-06, 04-13)**:
+    *   **動態身分**: 權限定義 100% 物理遷移至資料庫，並在 UI 實作 Identity Matrix 管理介面。
+    *   **路由合約**: 解決 `/api/api` 嵌套問題，實施分類掛載，強化動態與靜態 Role Scopes 的合併。
 
 ### 2026年3月：結構化重構、治理硬化與效能收斂
 三月是 Archon 從巨型架構邁向模組化治理的關鍵月份。我們消滅了所有超過 1000 行的檔案，並建立了基於 XP 的 Agent 治理體系。

@@ -148,6 +148,7 @@ class SchedulerService:
         await self._schedule_stateful_job(self._analyze_token_usage, 24, "token_analysis")
         await self._schedule_stateful_job(self._run_business_sentinel, sentinel_hours, "business_sentinel")
         await self._schedule_stateful_job(self._run_daily_market_report, 24, "bob_market_report")
+        await self._schedule_stateful_job(self._run_tech_debt_audit, 336, "tech_debt_audit")
 
         # 3. Task Dispatcher
         self._scheduler.add_job(
@@ -164,6 +165,9 @@ class SchedulerService:
 
     async def _cleanup_system_probes(self):
         await patrol.cleanup_system_probes()
+
+    async def _run_tech_debt_audit(self):
+        await patrol.run_tech_debt_audit()
 
     async def _run_auto_fetch_leads(self):
         await business.run_auto_fetch_leads()

@@ -309,6 +309,7 @@ mcp = [
     { name = "python-dotenv" },
     { name = "python-jose", extra = ["cryptography"] },
     { name = "supabase" },
+    { name = "tenacity" },
 ]
 server = [
     { name = "apscheduler" },
@@ -436,6 +437,7 @@ mcp = [
     { name = "python-dotenv", specifier = ">=1.0.0" },
     { name = "python-jose", extras = ["cryptography"], specifier = "==3.3.0" },
     { name = "supabase", specifier = "==2.15.1" },
+    { name = "tenacity", specifier = ">=9.1.4" },
 ]
 server = [
     { name = "apscheduler", specifier = ">=3.10.0" },

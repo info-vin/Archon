@@ -175,3 +175,75 @@ async def cleanup_system_probes():
             logger.info("✅ Clockwork: Cleanup complete. No expired probe data found.")
     except Exception as e:
         logger.error(f"💥 Clockwork: System Probe Cleanup Failed: {e}")
+
+async def run_tech_debt_audit():
+    """Scans PRPs and scripts for technical debt, and dispatches DevBot if needed."""
+    logger.info("🧹 Clockwork: Starting Tech Debt Patrol...")
+    try:
+        import glob
+        import os
+        import time
+
+        from server.services.agent_service import agent_service
+        from server.services.projects.task_service import task_service
+        from server.services.shared_constants import AI_AGENT_ROLES
+        from server.utils import get_supabase_client
+
+        warnings = []
+
+        # 1. Check unarchived PRPs
+        prp_files = glob.glob("/app/PRPs/Phase_*.md")
+        if len(prp_files) >= 5:
+            warnings.append(f"PRPs directory is cluttered ({len(prp_files)} unarchived files). Please archive completed phases.")
+
+        # 2. Check stale scripts (older than 14 days)
+        fourteen_days_ago = time.time() - (14 * 24 * 3600)
+        stale_scripts = []
+
+        script_patterns = ["/app/scripts/*.py", "/app/scripts/*.sh", "/app/python/scripts/*.py"]
+        for pattern in script_patterns:
+            for filepath in glob.glob(pattern):
+                if os.path.isfile(filepath):
+                    mtime = os.path.getmtime(filepath)
+                    if mtime < fourteen_days_ago:
+                        stale_scripts.append(os.path.relpath(filepath, "/app"))
+
+        if stale_scripts:
+            stale_msg = f"Found {len(stale_scripts)} stale script(s) (no modifications in > 14 days):\n"
+            stale_msg += "\n".join([f"- {s}" for s in stale_scripts[:5]])
+            if len(stale_scripts) > 5:
+                stale_msg += "\n..."
+            warnings.append(stale_msg)
+
+        if not warnings:
+            logger.info("✅ Clockwork: Tech Debt Patrol found no issues.")
+            return
+
+        logger.info("⚠️ Clockwork: Detected Tech Debt. Creating task for DevBot...")
+
+        task_title = f"Auto-Cleanup: Technical Debt Audit ({datetime.now(UTC).strftime('%Y-%m-%d')})"
+        task_desc = "Clockwork detected the following technical debt that needs archiving or cleanup:\n\n" + "\n\n".join(warnings) + "\n\nPlease review and clean up the workspace."
+
+        supabase = get_supabase_client()
+        p_res = supabase.table("archon_projects").select("id").limit(1).execute()
+        if not p_res.data:
+            logger.warning("Clockwork: No projects found to attach tech debt task.")
+            return
+
+        project_id = p_res.data[0]["id"]
+
+        success, task_result = await task_service.create_task(
+            project_id=project_id,
+            title=task_title,
+            description=task_desc,
+            assignee_id=AI_AGENT_ROLES.get("DevBot (Engineering)") or "ai-dev-bot",
+        )
+
+        if success:
+            logger.info(f"🧹 Clockwork: Created tech debt task {task_result['task']['id']}. Dispatching DevBot...")
+            await agent_service.run_agent_task(
+                task_id=task_result["task"]["id"], agent_id=task_result["task"]["assignee_id"]
+            )
+
+    except Exception as e:
+        logger.error(f"💥 Clockwork: Tech Debt Patrol Failed: {e}")

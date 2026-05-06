@@ -7,7 +7,7 @@ SHELL := /bin/bash
 # Docker compose command - prefer newer 'docker compose' plugin over standalone 'docker-compose'
 COMPOSE ?= $(shell docker compose version >/dev/null 2>&1 && echo "docker compose" || echo "docker-compose")
 
-.PHONY: help dev dev-docker stop test test-fe test-be lint lint-fe lint-be clean install check install-ui db-init db-migrate
+.PHONY: help dev dev-docker stop test test-fe test-be lint lint-fe lint-be clean install check install-ui db-init db-migrate tech-debt-audit
 
 help:
 	@echo "Archon Development Commands"
@@ -31,6 +31,7 @@ help:
 	@echo "  make install    - Install dependencies"
 	@echo "  make install-ui - Install monorepo UI dependencies"
 	@echo "  make check      - Check environment setup"
+	@echo "  make tech-debt-audit - Check for stale files and cluttered directories"
 
 # Install dependencies
 install:
@@ -243,3 +244,31 @@ sync-grounding:
 	@echo "🎉 FULL SYSTEM SYNC COMPLETE & VERIFIED."
 	@docker images --format "table {{.Repository}}\t{{.Size}}" | grep -E "archon|enduser"
 	@docker compose ps
+
+# Run Technical Debt Audit (Charlie's Command to DevBot)
+tech-debt-audit:
+	@echo "🧹 Running Technical Debt Audit (DevBot Prep)..."
+	@echo "--- 1. Unarchived PRPs Check ---"
+	@count=$$(ls -1 PRPs/Phase_*.md 2>/dev/null | wc -l | tr -d ' '); \
+	if [ "$$count" -ge 5 ]; then \
+		echo "⚠️  [WARNING] PRPs directory is cluttered ($$count unarchived files). Charlie: Assign DevBot to archive completed phases."; \
+	else \
+		echo "✅ PRPs directory is clean."; \
+	fi
+	@echo "--- 2. Stale Scripts Check ---"
+	@threshold=$$(date -v-14d +%s 2>/dev/null || date -d "14 days ago" +%s 2>/dev/null); \
+	stale_found=0; \
+	for file in scripts/*.py scripts/*.sh python/scripts/*.py; do \
+		if [ -f "$$file" ]; then \
+			last_commit=$$(git log -1 --format="%ct" -- "$$file" 2>/dev/null); \
+			if [ -n "$$last_commit" ] && [ "$$last_commit" -lt "$$threshold" ]; then \
+				echo "⚠️  [WARNING] Stale script found: $$file (No updates in > 14 days)."; \
+				stale_found=1; \
+			fi \
+		fi \
+	done; \
+	if [ "$$stale_found" -eq 0 ]; then \
+		echo "✅ No stale scripts found."; \
+	fi
+	@echo "--- 3. Action Item ---"
+	@echo "💡 Charlie: If warnings exist, assign a cleanup task to DevBot."
