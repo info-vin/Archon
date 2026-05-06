@@ -39,7 +39,7 @@ def _err(msg: str, code: int = 403):
     raise HTTPException(status_code=code, detail=msg)
 
 @router.get("/jobs")
-async def search_jobs(keyword: str = Query(...), limit: int = 10, current_user: dict = Depends(get_current_user)):
+async def search_jobs(keyword: str = Query(...), limit: int = 8, current_user: dict = Depends(get_current_user)):
     service = MarketingService()
     return await service.search_jobs(keyword, limit)
 

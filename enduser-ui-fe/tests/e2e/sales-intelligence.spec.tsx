@@ -27,8 +27,12 @@ describe('MarketingPage Sales Intelligence Flow', () => {
         // Wait for auth to load
         await screen.findByText(/Sales Intelligence/i);
 
+        // Switch to Search tab
+        const searchTabBtn = await screen.findByRole('button', { name: /Job Search/i });
+        fireEvent.click(searchTabBtn);
+
         // 2. 執行搜尋
-        const input = screen.getByPlaceholderText(/Enter job title/i);
+        const input = await screen.findByPlaceholderText(/Enter job title/i);
         fireEvent.change(input, { target: { value: 'Data Analyst' } });
         
         const searchBtn = screen.getByText(/Find Leads/i);

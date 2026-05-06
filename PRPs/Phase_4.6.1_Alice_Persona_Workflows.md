@@ -100,7 +100,7 @@ sequenceDiagram
     rect rgb(240, 248, 255)
     note over Alice, DB: A. 獵人模式 (捷運通勤)
     Alice->>App: 1. 右滑卡片 (Swipe Right)
-    App->>Backend: PUT /api/leads/{id} (status: shortlisted)
+    App->>Backend: PATCH /api/marketing/leads/{id} (status: shortlisted)
     Backend->>DB: UPDATE leads SET status = 'shortlisted'
     
     par Async Enrichment

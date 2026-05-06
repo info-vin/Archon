@@ -185,9 +185,21 @@ class JobBoardService:
                 return f"Hiring for {job.title}"
 
             from google import genai
+            from ..services.prompt_service import prompt_service
 
             client = genai.Client(api_key=api_key)
-            prompt = f"Analyze job needs: {job.title} at {job.company}. Desc: {job.description_full or job.description}"
+            
+            default_prompt = (
+                "You are a sales assistant helping Alice (Sales Rep) analyze a job posting quickly on her mobile phone.\n"
+                "Job: {title} at {company}\n"
+                "Desc: {desc}\n\n"
+                "Output exactly 2 short markdown bullet points (max 50 words each) using Traditional Chinese (繁體中文):\n"
+                "- **技術棧**: [關鍵字與技術需求]\n"
+                "- **痛點預測**: [可能面臨的業務痛點與需求]"
+            )
+            
+            prompt_template = prompt_service.get_prompt("ALICE_INFER_NEED", default=default_prompt)
+            prompt = prompt_template.format(title=job.title, company=job.company, desc=(job.description_full or job.description))
 
             @retry_with_backoff(max_retries=2)
             async def _call_gemini():

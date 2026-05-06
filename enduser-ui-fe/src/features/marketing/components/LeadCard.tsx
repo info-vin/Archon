@@ -1,4 +1,5 @@
 import React from 'react';
+import ReactMarkdown from 'react-markdown';
 import { motion } from 'framer-motion';
 import { ExternalLinkIcon, SparklesIcon, UserIcon, MapIcon, ActivityIcon } from '@/components/Icons.tsx';
 import { Lead } from './LeadsCardStack.tsx';
@@ -60,18 +61,7 @@ export const LeadCard = ({ lead, style, onDragEnd, onPitch, onHistory }: LeadCar
                     <div className="space-y-1 mt-0.5 bg-amber-50/50 dark:bg-amber-900/10 p-3 rounded-xl border border-amber-100/50 dark:border-amber-900/20 mb-1">
                         {(() => {
                             const text = lead.identified_need || "";
-                            if (text.includes(" -> ")) {
-                                const [line1, line2] = text.split(" -> ");
-                                return (
-                                    <>
-                                        <p className="text-xs text-slate-600 dark:text-slate-400 leading-tight italic">"{line1}"</p>
-                                        <p className="text-base font-black text-indigo-600 dark:text-indigo-300 leading-tight">
-                                            {line2}
-                                        </p>
-                                    </>
-                                );
-                            }
-                            return <p className="text-sm text-slate-700 dark:text-slate-300 font-medium leading-relaxed">{text}</p>;
+                            return <div className="text-sm text-slate-700 dark:text-slate-300 font-medium leading-relaxed prose prose-sm max-w-none"><ReactMarkdown>{text}</ReactMarkdown></div>;
                         })()}
                     </div>
                 </div>

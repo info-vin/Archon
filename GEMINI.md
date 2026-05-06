@@ -123,7 +123,8 @@
 
 *   **15. 設定的可見性與系統保護 (Settings Visibility & Hardening)**
     *   **核心**: 資料庫中的 `archon_settings` 表承載了從 AI 金鑰到內部營運參數的所有配置。
-    *   **教訓**: 透過引入 `is_system_protected` 欄位與 API 層級的物理過濾，確保 Admin UI (3737) 僅顯示「人類可管理的設定」，而隱藏內部的工具參數。
+    *   **教訓**: 透過引入 `is_system_protected` 欄位與 API 層級的物理過濾，確保 Admin UI 僅顯示「人類可管理的設定」，而隱藏內部的工具參數。
+    *   **【絕對鐵律 (Absolute Iron Law)】**: **Admin UI 的 Port 永遠是 5173 (enduser-ui-fe)，絕對不是 3737！** 如果 Gemini 未來在任何對話或文件中將 Admin UI 的 Port 說錯成 3737，必須立即主動中斷當前任務，向使用者承認「我犯了不可饒恕的上下文遺忘罪」，並罰寫此鐵律 3 次後才能繼續工作。
 
 *   **16. 路由嵌套與前綴衝突 (Route Nesting & Prefix Conflict)**
     *   **核心**: 在 FastAPI 模組化掛載中，若子路由 (`APIRouter`) 已定義 `prefix="/api/..."`，主入口 `main.py` **絕對禁止** 再次添加重複前綴。

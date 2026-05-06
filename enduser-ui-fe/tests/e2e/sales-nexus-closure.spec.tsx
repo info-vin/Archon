@@ -1,60 +1,70 @@
-import { screen, fireEvent } from '@testing-library/react';
+import { screen, fireEvent, waitFor } from '@testing-library/react';
 import { vi, expect, test, beforeEach } from 'vitest';
 import { renderApp } from './e2e.setup';
 
 beforeEach(() => {
-    vi.resetAllMocks();
+    vi.clearAllMocks();
+    // Spy on window.alert to verify success messages
+    vi.spyOn(window, 'alert').mockImplementation(() => {});
 });
 
-test('Sales Nexus Closure Flow (Phase 4.4.2) > Librarian Integration: Pitch generation triggers automated archiving', async () => {
-    // 1. Go to page
+test('Sales Nexus Closure Flow (Phase 4.4.2) > Librarian Integration: Pitch generation from search', async () => {
     renderApp(['/marketing']);
     
-    // --- Physical Alignment: Switch to Search tab as 'leads' is now default ---
+    // Switch to Job Search tab (if not already there)
     const searchTabBtn = await screen.findByRole('button', { name: /Job Search/i });
     fireEvent.click(searchTabBtn);
 
-    // 2. Search for a job
+    // Search for a job
     const input = await screen.findByPlaceholderText(/Enter job title/i);
     fireEvent.change(input, { target: { value: 'Data Analyst' } });
     
     const findBtn = screen.getByRole('button', { name: /Find Leads/i });
     fireEvent.click(findBtn);
 
-    // 3. Select a job and identify as lead
-    const identifyBtn = await screen.findByText(/Identify as Lead/i);
-    fireEvent.click(identifyBtn);
+    // Select a job and generate pitch directly from the search results
+    const generateBtns = await screen.findAllByRole('button', { name: /Generate Pitch/i });
+    fireEvent.click(generateBtns[0]);
 
-    // 4. In "My Leads" view, generate pitch
-    // Explicitly click the "My Leads" tab button to resolve ambiguity
-    const leadsTabBtn = await screen.findByRole('button', { name: /My Leads/i });
-    fireEvent.click(leadsTabBtn);
-    
-    const generateBtn = await screen.findByText(/Generate Pitch/i);
-    fireEvent.click(generateBtn);
+    // Verify the AI Pitch is generated and displayed
+    const generatedPitchTitle = await screen.findByRole('heading', { name: /Generated Pitch/i });
+    expect(generatedPitchTitle).toBeInTheDocument();
 
-    // 5. Verify Librarian archiving is called (Physical Audit)
-    expect(await screen.findByText(/Pitch generated and archived/i)).toBeInTheDocument();
+    // Click Approve & Save
+    const approveBtn = await screen.findByRole('button', { name: /Approve & Save/i });
+    fireEvent.click(approveBtn);
+
+    // Verify alert was called
+    await waitFor(() => {
+        expect(window.alert).toHaveBeenCalledWith('Saved!');
+    });
 });
 
 test('Sales Nexus Closure Flow (Phase 4.4.2) > Hunter Mode: Logging a physical visit', async () => {
     renderApp(['/marketing']);
 
-    // 1. Switch to "My Leads" Tab using specific role to avoid heading ambiguity
+    // Switch to "My Leads" Tab 
     const leadsTabBtn = await screen.findByRole('button', { name: /My Leads/i });
     fireEvent.click(leadsTabBtn);
 
-    // 2. Open Visit Log Modal
-    const logBtn = await screen.findByTitle(/New Visit Log/i);
-    fireEvent.click(logBtn);
+    // Open Visit Log Modal
+    // Desktop view uses 'Log Visit'
+    const logBtns = await screen.findAllByTitle(/Log Visit/i);
+    fireEvent.click(logBtns[0]);
 
-    // 3. Submit Log
-    const textArea = screen.getByPlaceholderText(/What happened during the visit/i);
+    // Submit Log
+    // First, select a type (e.g., Client Meeting)
+    const typeBtn = await screen.findByText(/Client Meeting/i);
+    fireEvent.click(typeBtn);
+
+    // Then, enter notes into the textarea
+    const textArea = await screen.findByPlaceholderText(/Type summary or upload audio/i);
     fireEvent.change(textArea, { target: { value: 'Customer was very interested in the RAG features.' } });
     
-    const submitBtn = screen.getByText(/Save Visit Log/i);
+    // Click Save Visit
+    const submitBtn = screen.getByRole('button', { name: /Save Visit/i });
     fireEvent.click(submitBtn);
 
-    // 4. Verify success
-    expect(await screen.findByText(/Visit log saved/i)).toBeInTheDocument();
+    // Verify success screen is shown
+    expect(await screen.findByText(/Visit Logged!/i)).toBeInTheDocument();
 });

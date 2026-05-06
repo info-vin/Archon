@@ -1,4 +1,5 @@
 import React from 'react';
+import ReactMarkdown from 'react-markdown';
 import { JobData } from '../../../types';
 import { SourceBadge } from '../../../components/SourceBadge';
 import { SearchIcon, XIcon, SparklesIcon, RefreshCwIcon, ExternalLinkIcon, ShieldCheckIcon } from '../../../components/Icons';
@@ -110,7 +111,9 @@ export const MarketingJobSearch: React.FC<MarketingJobSearchProps> = ({
                     </div>
                     <div className="bg-yellow-50 border-l-4 border-yellow-400 p-3 mb-4 rounded-r insight">
                       <p className="text-xs font-bold text-yellow-800 uppercase tracking-wide">AI Insight</p>
-                      <p className="text-sm text-yellow-900 mt-1">{job.identified_need || "Analyzing requirements..."}</p>
+                      <div className="text-sm text-yellow-900 mt-1 prose prose-sm prose-yellow max-w-none">
+                          <ReactMarkdown>{job.identified_need || "Analyzing requirements..."}</ReactMarkdown>
+                      </div>
                     </div>
                     {expandedJobIdx === idx && (
                       <div className="mt-4 mb-4 p-4 bg-gray-50 rounded-lg border border-gray-200 text-sm text-gray-700 whitespace-pre-line animate-in fade-in slide-in-from-top-2 duration-200 full-description cursor-auto" onClick={e => e.stopPropagation()}>

@@ -17,7 +17,7 @@ const { MOCK_ADMIN_USER } = vi.hoisted(() => ({
         'task:create', 'task:read:all', 'task:update:all',
         'agent:trigger:dev', 'agent:trigger:mkt', 'agent:trigger:know',
         'code:approve', 'content:publish', 'stats:view:all',
-        'leads:view:sales', 'leads:view:marketing',
+        'leads:view:all', 'leads:view:sales', 'leads:view:marketing',
         'user:manage', 'user:manage:team', 'mcp:manage'
     ],
     user_metadata: { full_name: 'System Admin' }
@@ -48,7 +48,14 @@ vi.mock('../../src/services/api', async (importOriginal) => {
         }
     });
     
-    return { ...actual, api: mockedApi };
+    const mockedSupabase = {
+        auth: {
+            getSession: vi.fn().mockResolvedValue({ data: { session: { access_token: 'mock-token' } }, error: null }),
+            onAuthStateChange: vi.fn().mockReturnValue({ data: { subscription: { unsubscribe: vi.fn() } } })
+        }
+    };
+
+    return { ...actual, api: mockedApi, supabase: mockedSupabase };
 });
 
 beforeAll(() => {

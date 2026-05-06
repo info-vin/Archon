@@ -1,6 +1,6 @@
 # Phase 4.6.4 Admin Persona: The Architect (系統架構師)
 
-> **Status**: Implemented (2026-02-11)
+> **Status**: WIP / Stubbed (Re-opened 2026-05-06 due to UI/Backend disconnect)
 > **Role**: System Admin / CTO / SRE
 > **Motto**: "Stable Core, Evolving Soul" (穩固核心，進化靈魂)
 > **Goal**: 確保系統的安全性、穩定性與自我進化能力，維護 Archon 的「數位體質」。
@@ -9,16 +9,16 @@
 
 ## 1. 角色定位與權限優勢 (Role Definition)
 
-Admin 是 Archon 系統的創造者與守護者。他擁有上帝視角 (God Mode)，但不應介入日常業務細節（那是 Charlie 的工作）。他的核心職責是維護 **「基礎設施 (Infrastructure)」** 與 **「認知架構 (Cognitive Architecture)」**。
+Admin 是 Archon 系統的創造者與守護者。他擁有上帝視角 (God Mode)，但不應介入日常業務細節（那是 Charlie 的工作）。他的核心職責是維護 **「基礎設施 (Infrastructure)」** 與 **「認知架構 (Cognitive Architecture)」**，以及**「AI 經濟 (ROI) 治理」**。
 
 ### 角色責任區分 (Admin vs Manager)
 
 | 特徵 | 👨 Charlie (Manager / 琥珀色) | 🛠️ David (Admin / 玫瑰色) |
 | :--- | :--- | :--- |
-| **關注點** | **Business Health** (SLA、Velocity、轉換率) | **System Health** (API 延遲、模型存活、Token 成本) |
+| **關注點** | **Business Health** (SLA、Velocity、轉換率) | **System Health & ROI** (API 延遲、模型存活、Token 成本) |
 | **介入時機** | 業務流轉緩慢或內容品質不佳時 | 系統報錯、API Key 洩漏或 Agent 邏輯損壞時 |
 | **權限邊界** | 僅限戰略決策區 (Amber Zone) | 擁有基礎設施區 (Rose Zone) 的物理控制權 |
-| **核心工具** | Nexus Command, Approvals, Team | Admin Center, Identity Matrix, **Crawler Targets** |
+| **核心工具** | Nexus Command, Approvals, Team | Admin Center, Identity Matrix, **Crawler Targets**, **Prompt Manager** |
 | **色彩規範** | **Amber-500** (代表決策與分派) | **Rose-500** (代表安全與防禦) |
 
 ---
@@ -29,16 +29,16 @@ Admin 的 Agent 團隊不是用來處理業務，是用來「修系統」的。
 
 | Agent 名稱 | 職責 (Role) | 核心能力 (Capability) | 如何節省 Admin 工時 (Efficiency) |
 | :--- | :--- | :--- | :--- |
-| **Clockwork (巡邏員)** | **主動巡邏 (L5)**<br>(分析 `archon_logs`) | **不需手動查 Log**。每小時自動掃描錯誤，使用 `LLMProviderService` 分析 Traceback，區分是「偶發網路問題」還是「代碼邏輯錯誤」。 |
-| **DevBot (工匠)** | **自癒執行 (L2)**<br>(生成 Hotfix) | **不需手寫修復代碼**。接收 Clockwork 的診斷，可透過 `ProposeChangeService` 建立 `proposed_changes` 紀錄 (Diff)。 |
+| **Clockwork (巡邏員)** | **主動巡邏 (L5)**<br>(分析 `archon_logs` 與 技術債) | **不需手動查 Log**。每小時自動掃描錯誤，使用 `LLMProviderService` 分析 Traceback。並定期執行技術債巡邏 (`tech-debt-audit`)。 |
+| **DevBot (工匠)** | **自癒執行 (L2)**<br>(生成 Hotfix) | **不需手寫修復代碼**。接收 Clockwork 的診斷與派單，可透過 `ProposeChangeService` 建立 `proposed_changes` 紀錄 (Diff)。 |
 | **Sentinel (哨兵)** | **安全監控**<br>(API Key & RBAC 審計) | **不需手動檢查設定**。定期檢查 API Key 額度，並監控 `auth.users` 異常權限變更。 |
-| **Librarian (圖書館員)** | **知識管理**<br>(RAG Indexing) | **不需手動整理文件**。Admin 可透過 **"Rebuild Index"** 按鈕強制 Librarian 掃描所有文件並更新向量資料庫。 |
+| **Librarian (圖書館員)** | **知識管理**<br>(RAG Indexing) | **不需手動整理文件**。已完成 L2 模組化，具備高併發處理能力，負責掃描與更新向量資料庫。 |
 
 ---
 
 ## 3. 詳細工作流程 UML (Day in the Life of Admin)
 
-> **場景**: Admin 登入系統，首先確認系統健康度，處理權限變更要求，並監控 Token 成本。
+> **場景**: Admin 登入系統，首先確認系統健康度與 Token 成本，處理權限變更要求，並維護系統 Prompt。
 
 ```mermaid
 sequenceDiagram
@@ -51,10 +51,10 @@ sequenceDiagram
     participant DB as 🗄️ Database
 
     %% ==========================================
-    %% 1. 系統健康巡檢 (System Health Check)
+    %% 1. 系統健康與成本巡檢 (System Health & ROI Check)
     %% ==========================================
     rect rgb(240, 248, 255)
-    Note over Admin, DB: Phase 1: 系統健康巡檢 (Health Check)
+    Note over Admin, DB: Phase 1: 健康與成本巡檢 (Health & ROI)
     
     Admin->>UI: 登入 Command Center
     UI->>API: GET /api/stats/system-overview (Admin Only)
@@ -63,11 +63,11 @@ sequenceDiagram
         API->>Sentinel: Check RAG Integrity (Vectors)
         Sentinel-->>API: Status: Healthy (Latency: 45ms)
         API->>DB: Count ERROR Logs (Last 24h)
-        API->>DB: Sum Token Costs (Last 24h)
+        API->>DB: 聚合 TokenUsageTable 計算成本
     end
     
     API-->>UI: 回傳健康報告 (RAG Green, Errors < 5, Cost $2.50)
-    UI-->>Admin: 顯示 "System Healthy" 綠燈儀表板
+    UI-->>Admin: 顯示 "System Healthy" 綠燈與 ROI 儀表板
     end
 
     %% ==========================================
@@ -115,17 +115,20 @@ sequenceDiagram
 
 ---
 
-## 4. 實作計畫 (Implementation Gap Analysis)
+## 4. 實作計畫 (Implementation Gap Analysis - 2026-05-06 物理查核校正)
 
-| 模組 | 現狀 (As-Is) | 缺口 (Gap) | 實作行動 (Action Item) | 狀態 |
+> **⚠️ 警語**: 2026/05/06 物理查核發現，許多標記為 Done 的 UI 組件僅為空殼 (Stubbed) 或複製貼上，缺乏真實後端連動。狀態已重新校正。
+
+| 模組 | 物理現狀 (As-Is vs Illusion) | 缺口 (Gap) | 實作行動 (Action Item) | 狀態 |
 | :--- | :--- | :--- | :--- | :--- |
-| **System Health** | `system_api.py` 鎖定權限。 | 模型 ID 與邊界隔離。 | **Fix BUG-047/048**: 校正模型版本為 2.0，將 Probe 改為唯讀檢查。 | ✅ Done |
-| **RBAC** | `IdentityMatrix.tsx` 支援細粒度覆寫。 | 已實作 `permission_overrides` 覆寫機制。 | **Permission Override**: 實作交互式權限矩陣，支援三態授權 (Inherit/Grant/Revoke)。 | ✅ Done |
-| **Crawler Management** | `admin_api.py` 具備專屬端點。 | 物理隔離 URI 設定。 | **Feature 1.7**: 建立 `archon_crawler_targets` 表並實施 David 專屬管理。 | ✅ Done |
-| **Trinity Workflow** | 規則與執行斷開。 | 實作 3737 -> 5173 -> 背景執行 閉環。 | **Ops-001**: 實作動態白名單注入、循環任務排程與 Clockwork 任務分派器。 | ✅ Done |
-| **Token Ops** | `stats_api.py` 支援 Hybrid 統計。 | 定價解耦與實體追蹤。 | **Phase 4.6.15**: 實作 `TOKEN_PRICING_JSON` 配置，實現「零代碼」成本調整。 | ✅ Done |
-| **Config** | `Scoring Logic` 已持久化。 | 評分規則已存入 `archon_settings` 資料庫。 | **Config Persistence**: 實作 Lead Scoring Weights 配置區塊，支援即時微調。 | ✅ Done |
-| **Audit** | 前端具備搜尋與過濾介面。 | 已實作多維度即時過濾稽核紀錄。 | **Audit Log Viewer**: 在 `DocumentVersionsLog` 增加 Search UI 與 Sticky Header。 | ✅ Done |
+| **System Health** | `system_api.py` 鎖定權限，儀表板已實作。 | 無法深度下鑽，僅顯示頂層數據。 | 確保 Health Dashboard 數據為即時而非靜態 mock。 | 🟡 WIP |
+| **Cost & Usage** | **嚴重斷層**: UI `AdminPage.tsx` 中直接複製貼上 `<SystemHealthDashboard />` 充當成本頁面。 | 無獨立的成本視圖與資料連動。 | **實作 TokenUsage 儀表板**: 解除複製貼上，實作真實的 ROI Analytics Badge 連動。 | 🔴 待修復 |
+| **Prompt Manager** | UI 僅提供純文字 `content` 編輯 (`PromptManagement.tsx`)，無變數與版本控制。 | 缺乏進階 Prompt 工程所需的變數注入、版本比對能力。 | **升級 Prompt Editor**: 實作進階 Prompt 編輯器與還原機制。 | 🔴 待修復 |
+| **System Settings** | UI `AdminSystemConfig.tsx` 寫死 9 個靜態欄位，未動態載入全域設定。 | 無法管理系統多數真實參數，淪為靜態表單。 | **動態配置中心**: 串接 `/api/settings` 動態渲染所有可配置欄位。 | 🔴 待修復 |
+| **Blog Management** | 列表存在，但 "NEW POST" 導向的 `/admin/editor/new` 路由缺失或功能殘缺。 | 無法真正發布文章。 | **打通 Blog 編輯器**: 實作並驗證完整 Markdown 編輯與發布流。 | 🔴 待修復 |
+| **Document Versions** | `AdminAuditLogs.tsx` 僅能觀賞靜態表格，無比對/還原功能。 | 無管理價值，僅有展示價值。 | **實作 Diff Viewer**: 加入版本比對與 Rollback 物理操作。 | 🔴 待修復 |
+| **RBAC / Identity** | `IdentityMatrix.tsx` 支援細粒度覆寫。 | - | - | ✅ Done |
+| **Crawler Management** | `archon_crawler_targets` 表已建立，Admin 專屬管理。 | 後端 API `/knowledge-items/sources` 存在，但 UI 尚未完全對齊呈現。 | 將 Crawler UI 與 `/knowledge-items/sources` 實體連動。 | 🟡 WIP |
 
 ---
 

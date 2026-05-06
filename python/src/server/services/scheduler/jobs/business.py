@@ -34,6 +34,28 @@ async def run_auto_fetch_leads():
         logger.error(f"💥 Clockwork: Alice auto-fetch failed: {e}")
 
 
+async def run_prune_stale_leads():
+    """Clockwork task to prune stale leads (Scenario D Pruning Loop)."""
+    logger.info("🧹 Clockwork: Triggering hourly prune stale leads...")
+    try:
+        from server.services.enrichment_service import EnrichmentService
+
+        pruned_count = await EnrichmentService.prune_stale_leads()
+
+        if pruned_count > 0:
+            get_supabase_client().table("archon_logs").insert(
+                {
+                    "source": "clockwork-scheduler",
+                    "level": "INFO",
+                    "message": f"Stale leads pruning completed. {pruned_count} leads archived.",
+                    "details": {"pruned_count": pruned_count},
+                }
+            ).execute()
+        logger.info(f"✅ Clockwork: Stale leads pruning finished ({pruned_count} leads archived).")
+    except Exception as e:
+        logger.error(f"💥 Clockwork: Pruning stale leads failed: {e}")
+
+
 async def run_daily_market_report():
     """Triggering Bob (MarketingBot) to summarize today's leads."""
     logger.info("✍️ Clockwork: Triggering Bob's Daily Market Report...")

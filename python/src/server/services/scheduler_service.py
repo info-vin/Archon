@@ -144,6 +144,7 @@ class SchedulerService:
         logger.info(f"✅ Scheduled Job: Log Patrol (Every {patrol_mins} mins)")
 
         # 2. Business Jobs (Stateful)
+        await self._schedule_stateful_job(self._run_prune_stale_leads, 1, "prune_stale_leads")
         await self._schedule_stateful_job(self._run_auto_fetch_leads, 24, "alice_auto_fetch")
         await self._schedule_stateful_job(self._analyze_token_usage, 24, "token_analysis")
         await self._schedule_stateful_job(self._run_business_sentinel, sentinel_hours, "business_sentinel")
@@ -168,6 +169,9 @@ class SchedulerService:
 
     async def _run_tech_debt_audit(self):
         await patrol.run_tech_debt_audit()
+
+    async def _run_prune_stale_leads(self):
+        await business.run_prune_stale_leads()
 
     async def _run_auto_fetch_leads(self):
         await business.run_auto_fetch_leads()
