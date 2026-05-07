@@ -1,6 +1,7 @@
 import React from 'react';
 import { RefreshCwIcon, EyeIcon } from '@/components/Icons';
 import { ContentSource } from '../VictoryFeedList';
+import { AudioPlayer } from '@/components/common/AudioPlayer';
 
 interface EditorBodyProps {
   activeSource: ContentSource;
@@ -59,17 +60,24 @@ export const EditorBody: React.FC<EditorBodyProps> = ({
           className="w-full text-4xl font-black mb-8 outline-none bg-transparent dark:text-white placeholder:text-slate-200 dark:placeholder:text-slate-800 border-none"
         />
 
-        <div className="flex items-center gap-4 mb-8">
+        <div className="flex flex-wrap items-center gap-4 mb-8">
             <button
             onClick={() => onGenerateImage(title || activeSource.title)}
             disabled={isGeneratingImage}
-            className="flex items-center px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-50 hover:text-indigo-600 transition-all disabled:opacity-50"
+            className="flex items-center px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-50 hover:text-indigo-600 transition-all disabled:opacity-50 shrink-0"
           >
             <EyeIcon className={`w-3.5 h-3.5 mr-2 ${isGeneratingImage ? 'animate-bounce' : ''}`} />
             {isGeneratingImage ? 'Generating...' : 'AI Image'}
           </button>
-          <div className="h-4 w-px bg-slate-200 dark:bg-slate-800" />
-          <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest italic">
+          
+          <AudioPlayer 
+            text={content.substring(0, 500) || title} 
+            scene="marketing_pitch" 
+            className="shrink-0"
+          />
+
+          <div className="h-4 w-px bg-slate-200 dark:bg-slate-800 hidden md:block" />
+          <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest italic w-full md:w-auto mt-2 md:mt-0">
             Markdown & AI Collaboration Active
           </span>
         </div>

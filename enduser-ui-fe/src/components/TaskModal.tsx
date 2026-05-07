@@ -257,13 +257,13 @@ export const TaskModal: React.FC<TaskModalProps> = ({ task, onClose, onTaskCreat
         </div>
 
         {/* Tabs Header */}
-        <div className="flex space-x-1 border-b border-border mb-4 flex-shrink-0 overflow-x-auto custom-scrollbar pb-1">
+        <div className="flex w-full border-b border-border mb-4 flex-shrink-0 overflow-x-auto custom-scrollbar pb-0">
           {tabs.map(tab => (
             <button
               key={tab.id}
               type="button"
               onClick={() => setActiveTab(tab.id as TabType)}
-              className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${activeTab === tab.id ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'}`}
+              className={`flex-1 px-2 py-3 text-xs sm:text-sm font-medium border-b-2 transition-colors text-center whitespace-nowrap ${activeTab === tab.id ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'}`}
             >
               {tab.label}
             </button>

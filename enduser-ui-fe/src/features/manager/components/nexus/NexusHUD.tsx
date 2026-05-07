@@ -8,6 +8,7 @@ export interface NexusHUDProps {
     loading: boolean;
     overview: any;
     approvals: any;
+    codeProposals?: any[];
     alerts: any;
     team: any;
     ethicsAudit: any;
@@ -22,6 +23,7 @@ export const NexusHUD: React.FC<NexusHUDProps> = ({
     loading,
     overview,
     approvals,
+    codeProposals = [],
     alerts,
     team,
     ethicsAudit,
@@ -53,10 +55,10 @@ export const NexusHUD: React.FC<NexusHUDProps> = ({
             />
             <HUDCard
                 id="op_load" label="Op Load"
-                value={`${approvals.blogs.length + approvals.leads.length} Items`}
+                value={`${(approvals?.blogs?.length || 0) + (codeProposals?.length || 0)} Items`}
                 sub="Decision Queue"
                 active={activeMetric === 'op_load'}
-                status={approvals.blogs.length > 0 ? "warning" : "good"}
+                status={((approvals?.blogs?.length || 0) + (codeProposals?.length || 0)) > 0 ? "warning" : "good"}
                 onClick={setActiveMetric}
                 tooltip="Pending Approvals & Reviews"
                 loading={loading}

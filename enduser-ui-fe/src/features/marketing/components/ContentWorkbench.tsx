@@ -125,10 +125,9 @@ export const ContentWorkbench: React.FC<ContentWorkbenchProps> = ({
           {/* Floating Action Buttons */}
           <div className="fixed bottom-8 right-8 flex flex-col gap-4 z-50">
             {/* Pro Editor Access */}
-            <button 
-              onClick={() => navigate(`/brand/editor/${activeSource.id}`)}
-              className="w-16 h-16 bg-white dark:bg-slate-800 border-2 border-indigo-100 dark:border-slate-700 hover:border-indigo-500 text-indigo-600 rounded-2xl shadow-xl flex items-center justify-center transition-all hover:scale-110 active:scale-95 group"
-              aria-label="Open Pro Editor"
+            <button
+              onClick={() => navigate(`/brand/editor/${activeSource?.id || 'new'}`)}
+              className="w-16 h-16 bg-white dark:bg-slate-800 border-2 border-indigo-100 dark:border-slate-700 hover:border-indigo-500 text-indigo-600 rounded-2xl shadow-xl flex items-center justify-center transition-all hover:scale-110 active:scale-95 group"              aria-label="Open Pro Editor"
               title="Open Pro Editor"
             >
               <FileEditIcon className="w-7 h-7 group-hover:rotate-12 transition-transform" />

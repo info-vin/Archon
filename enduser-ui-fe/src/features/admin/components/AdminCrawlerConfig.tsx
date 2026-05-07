@@ -1,7 +1,7 @@
 import React from 'react';
-import { SearchIcon, ShieldCheckIcon, RefreshCwIcon, PlusIcon, XIcon } from '../../../components/Icons';
+import { ShieldCheckIcon, RefreshCwIcon, PlusIcon, XIcon } from '../../../components/Icons';
 import { ConfigDrivenInput } from './ConfigDrivenInput';
-import { useSystemSettings, useCrawlerTargets } from '../hooks/useAdminDashboard';
+import { useCrawlerTargets } from '../hooks/useAdminDashboard';
 
 const crawlerFieldsConfig = [
     { key: 'url', type: 'url', label: 'Target URL', placeholder: 'e.g. https://wlb.mol.gov.tw/Page/index.aspx' },
@@ -10,7 +10,6 @@ const crawlerFieldsConfig = [
 ];
 
 export const AdminCrawlerConfig: React.FC = () => {
-    const { settings, isSaving: isSettingsSaving, updateSetting } = useSystemSettings(['crawler_config']);
     const { 
         targets, loading, newUrl, setNewUrl, newDepth, setNewDepth, newDesc, setNewDesc, 
         isSaving: isTargetsSaving, saveTarget, deleteTarget 
@@ -20,35 +19,6 @@ export const AdminCrawlerConfig: React.FC = () => {
 
     return (
         <div className="space-y-8 font-sans">
-            {/* Endpoint Config */}
-            {settings.length > 0 && (
-                <div className="bg-card p-6 rounded-2xl border border-border shadow-sm border-l-4 border-l-blue-500">
-                    <h3 className="text-lg font-bold mb-4 flex items-center gap-2 text-blue-600">
-                        <SearchIcon className="w-5 h-5" />
-                        Crawler Endpoint Configuration (104.com.tw)
-                    </h3>
-                    <div className="space-y-4">
-                        {settings.map(setting => (
-                            <div key={setting.key} className="p-4 bg-muted/20 rounded-xl border border-border flex flex-col md:flex-row md:items-center justify-between gap-4">
-                                <div className="flex-1">
-                                    <div className="font-bold text-xs uppercase tracking-widest text-blue-600/70">{setting.key.replace(/CRAWLER_104_/g, '').replace(/_/g, ' ')}</div>
-                                    <p className="text-[10px] text-muted-foreground mt-0.5">{setting.description}</p>
-                                </div>
-                                <div className="w-full md:w-2/3">
-                                    <ConfigDrivenInput 
-                                        field={{ key: setting.key, type: 'text' }}
-                                        value={setting.value}
-                                        onBlur={(v) => updateSetting(setting.key, v.toString())}
-                                        isSaving={isSettingsSaving === setting.key}
-                                        className="flex-1 p-2 bg-background border border-border rounded-lg text-xs font-mono outline-none focus:ring-2 ring-blue-500/50 transition-all w-full"
-                                    />
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            )}
-
             {/* Target Manager */}
             <div className="bg-card p-6 rounded-2xl border border-border shadow-sm border-l-4 border-l-green-500">
                 <h3 className="text-lg font-bold mb-4 flex items-center gap-2 text-green-600">

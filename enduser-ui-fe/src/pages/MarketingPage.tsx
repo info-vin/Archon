@@ -106,7 +106,7 @@ const MarketingPage: React.FC = () => {
               alert("Add a lead first to create a visit log!");
             }
           }}
-          className="fixed bottom-6 right-6 w-14 h-14 bg-indigo-600 text-white rounded-full shadow-2xl flex items-center justify-center hover:bg-indigo-700 transition-all active:scale-95 z-40 md:hidden"
+          className="fixed bottom-24 right-6 w-14 h-14 bg-indigo-600 text-white rounded-full shadow-2xl flex items-center justify-center hover:bg-indigo-700 transition-all active:scale-95 z-40 md:hidden"
           title="New Visit Log"
         >
           <MapPinIcon className="w-6 h-6" />

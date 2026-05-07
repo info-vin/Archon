@@ -19,6 +19,14 @@ export class APIServiceError extends Error {
   }
 }
 
+export function getBaseUrl(): string {
+  let envBase = import.meta.env.VITE_API_URL || '';
+  if (typeof window !== 'undefined' && envBase.includes('archon-server')) {
+    envBase = envBase.replace('archon-server', 'localhost');
+  }
+  return envBase;
+}
+
 /**
  * Call the backend API with automatic authentication and Persona-based RBAC headers.
  * 
@@ -32,11 +40,7 @@ export async function callAPI<T>(
   // --- Physical Network Alignment (Pattern 7: Internal/External Isolation) ---
   // In Docker environments, VITE_API_URL might point to internal DNS (archon-server).
   // We MUST rewrite this to localhost for browser-side execution.
-  let envBase = import.meta.env.VITE_API_URL || '';
-  
-  if (typeof window !== 'undefined' && envBase.includes('archon-server')) {
-    envBase = envBase.replace('archon-server', 'localhost');
-  }
+  const envBase = getBaseUrl();
   
   const normalizedEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
   

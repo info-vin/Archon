@@ -235,16 +235,17 @@ class ContentHandler:
             return {"notes": "Item not found."}
 
         from google import genai
-        from ..prompt_service import prompt_service
+
         from ...config.model_ssot import SYSTEM_MODELS
-        from ..credentials.manager import credential_service
-        
+        from ..credential_service import credential_service
+        from ..prompt_service import prompt_service
+
         api_key = await credential_service.get_credential("GEMINI_API_KEY")
         if not api_key:
             return {"notes": "Cannot generate AI reason: AI provider missing."}
 
         client = genai.Client(api_key=api_key)
-        
+
         default_prompt = (
             "You are a marketing director reviewing a blog post draft.\n"
             "The draft is slightly off-brand or has quality issues.\n"

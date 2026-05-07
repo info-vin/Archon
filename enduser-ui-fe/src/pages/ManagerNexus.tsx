@@ -194,7 +194,6 @@ export const ManagerNexus: React.FC = () => {
                     pendingApprovals: (approvals?.blogs?.length || 0) + (approvals?.leads?.length || 0)
                 }}
             />
-
             {/* HUD Grid */}
             <NexusHUD
                 activeMetric={activeMetric}
@@ -202,6 +201,7 @@ export const ManagerNexus: React.FC = () => {
                 loading={loading}
                 overview={overview}
                 approvals={approvals}
+                codeProposals={codeProposals}
                 alerts={alerts}
                 team={team}
                 ethicsAudit={ethicsAudit}

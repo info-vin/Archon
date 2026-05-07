@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { getHeaders } from '../../services/api/base';
+import { getBaseUrl } from '../../services/api/apiClient';
 
 // Minimal Inline Icons to avoid massive imports if they don't exist
 
@@ -75,7 +76,7 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
         setIsLoading(true);
         setIsExpanded(true);
         try {
-            const apiUrl = import.meta.env.VITE_API_URL || '';
+            const apiUrl = getBaseUrl();
             const headers = await getHeaders({
                 'Content-Type': 'application/json'
             });
