@@ -98,32 +98,41 @@ export function usePaginatedInspectorData({
     }
   }, [codeResponse, codeOffset]);
 
+  // Pre-calculate document search strings to avoid O(N) string allocations during active search
+  const searchableDocs = useMemo(() => {
+    return allDocs.map((doc) => ({
+      doc,
+      searchStr: `${doc.content || ""} ${doc.metadata?.title || ""} ${doc.metadata?.section || ""} ${doc.url || ""}`.toLowerCase(),
+    }));
+  }, [allDocs]);
+
+  // Pre-calculate code search strings to avoid O(N) string allocations during active search
+  const searchableCode = useMemo(() => {
+    return allCode.map((code) => ({
+      code,
+      searchStr: `${code.content || ""} ${code.summary || ""} ${code.metadata?.language || ""}`.toLowerCase(),
+    }));
+  }, [allCode]);
+
   // Filter documents based on search
   const filteredDocuments = useMemo(() => {
     if (!searchQuery) return allDocs;
 
     const query = searchQuery.toLowerCase();
-    return allDocs.filter(
-      (doc) =>
-        doc.content?.toLowerCase().includes(query) ||
-        doc.metadata?.title?.toLowerCase().includes(query) ||
-        doc.metadata?.section?.toLowerCase().includes(query) ||
-        doc.url?.toLowerCase().includes(query),
-    );
-  }, [allDocs, searchQuery]);
+    return searchableDocs
+      .filter(({ searchStr }) => searchStr.includes(query))
+      .map(({ doc }) => doc);
+  }, [searchableDocs, allDocs, searchQuery]);
 
   // Filter code examples based on search
   const filteredCode = useMemo(() => {
     if (!searchQuery) return allCode;
 
     const query = searchQuery.toLowerCase();
-    return allCode.filter(
-      (code) =>
-        code.content?.toLowerCase().includes(query) ||
-        code.summary?.toLowerCase().includes(query) ||
-        code.metadata?.language?.toLowerCase().includes(query),
-    );
-  }, [allCode, searchQuery]);
+    return searchableCode
+      .filter(({ searchStr }) => searchStr.includes(query))
+      .map(({ code }) => code);
+  }, [searchableCode, allCode, searchQuery]);
 
   // Load more documents
   const loadMoreDocs = useCallback(() => {
