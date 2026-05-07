@@ -185,10 +185,11 @@ class JobBoardService:
                 return f"Hiring for {job.title}"
 
             from google import genai
+
             from ..services.prompt_service import prompt_service
 
             client = genai.Client(api_key=api_key)
-            
+
             default_prompt = (
                 "You are a sales assistant helping Alice (Sales Rep) analyze a job posting quickly on her mobile phone.\n"
                 "Job: {title} at {company}\n"
@@ -197,7 +198,7 @@ class JobBoardService:
                 "- **技術棧**: [關鍵字與技術需求]\n"
                 "- **痛點預測**: [可能面臨的業務痛點與需求]"
             )
-            
+
             prompt_template = prompt_service.get_prompt("ALICE_INFER_NEED", default=default_prompt)
             prompt = prompt_template.format(title=job.title, company=job.company, desc=(job.description_full or job.description))
 

@@ -2,6 +2,7 @@ import React from 'react';
 import { useAdminPageLogic } from '../features/admin/hooks/useAdminPageLogic';
 import { IdentityMatrix } from '../features/admin/components/IdentityMatrix.tsx';
 import { SystemHealthDashboard } from '../features/admin/components/SystemHealthDashboard.tsx';
+import { AdminCostDashboard } from '../features/admin/components/AdminCostDashboard';
 import { PromptManagement } from '../features/admin/components/PromptManagement.tsx';
 import { AdminSystemConfig } from '../features/admin/components/AdminSystemConfig';
 import { AdminExtractionConfig } from '../features/admin/components/AdminExtractionConfig';
@@ -48,12 +49,9 @@ const AdminPage: React.FC = () => {
         {activeTab === 'users' && canManageUsers && <IdentityMatrix />}
         {activeTab === 'costs' && (
           <div className="space-y-6">
-             {/* Reuse the dashboard data or separate component. 
-                 For now, we point back to SystemHealthDashboard but we will split its logic later to prevent卡死 */}
-             <SystemHealthDashboard />
+             <AdminCostDashboard />
           </div>
-        )}
-        {activeTab === 'settings' && <AdminSystemConfig />}
+        )}        {activeTab === 'settings' && <AdminSystemConfig />}
         {activeTab === 'extraction' && (
           <div className="space-y-8">
             <AdminCrawlerConfig />

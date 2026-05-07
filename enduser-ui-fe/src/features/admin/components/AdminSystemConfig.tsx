@@ -1,231 +1,97 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { RefreshCwIcon, ShieldCheckIcon } from '../../../components/Icons';
 import { ConfigDrivenInput } from './ConfigDrivenInput';
 import { useSystemSettings } from '../hooks/useAdminDashboard';
 
-const systemFieldsConfig = [
-    { key: 'system.log_level', type: 'select', label: 'Backend Access Log Level', options: [
-      { value: 'DEBUG', label: 'DEBUG (Detailed)' },
-      { value: 'INFO', label: 'INFO (Normal)' },
-      { value: 'WARNING', label: 'WARNING (Recommended)' },
-      { value: 'ERROR', label: 'ERROR (Critical Only)' }
-    ]},
-    { key: 'CRAWL_ALLOWED_DOMAINS_RESTRICTED', type: 'textarea', label: 'Global Whitelist Domains', placeholder: 'comma, separated, domains.com' },
-    { key: 'SCHEDULER_PROBE_INTERVAL_MINS', type: 'number', label: 'System Heartbeat (Probe)' },
-    { key: 'SCHEDULER_PATROL_INTERVAL_MINS', type: 'number', label: 'Log Patrol (Auto-Repair)' },
-    { key: 'SCHEDULER_SENTINEL_INTERVAL_HOURS', type: 'number', label: 'Sentinel (Business Risks)' },
-    { key: 'SCORING_RELEVANCE', type: 'number', label: 'Scoring: Relevance' },
-    { key: 'SCORING_AUTHORITY', type: 'number', label: 'Scoring: Authority' },
-    { key: 'SCORING_RECENCY', type: 'number', label: 'Scoring: Recency' },
-    { key: 'TOKEN_PRICING_JSON', type: 'textarea', label: 'AI Token Pricing (JSON)', placeholder: '{"google": {"gemini-pro": 0.01}}' }
-];
-
 export const AdminSystemConfig: React.FC = () => {
-    const { settings, loading, isSaving, updateSetting } = useSystemSettings(['crawler_rbac', 'diagnostics', 'lead_scoring', 'system']);
+    // Dynamic loading of all settings across categories
+    const { settings, loading, isSaving, updateSetting } = useSystemSettings(['crawler_rbac', 'diagnostics', 'lead_scoring', 'system', 'marketing_scoring']);
     
     if (loading) return <div className="flex justify-center p-12"><RefreshCwIcon className="animate-spin w-8 h-8 text-indigo-600" /></div>;
 
-    const roles = ['SALES', 'MARKETING', 'MANAGER', 'ADMIN'];
+    // Group settings by category dynamically
+    const groupedSettings = useMemo(() => {
+        return settings.reduce((acc, curr) => {
+            const cat = curr.category || 'general';
+            if (!acc[cat]) acc[cat] = [];
+            acc[cat].push(curr);
+            return acc;
+        }, {} as Record<string, any[]>);
+    }, [settings]);
+
+    const getIconForCategory = (category: string) => {
+        if (category === 'system' || category.includes('diagnostic')) return <RefreshCwIcon className="w-5 h-5" />;
+        return <ShieldCheckIcon className="w-5 h-5" />;
+    };
+
+    const getColorsForCategory = (category: string) => {
+        switch (category) {
+            case 'system': return 'border-orange-500 text-orange-600';
+            case 'lead_scoring': return 'border-indigo-600 text-indigo-600';
+            case 'crawler_rbac': return 'border-emerald-500 text-emerald-600';
+            default: return 'border-blue-500 text-blue-600';
+        }
+    };
+
+    const inferFieldType = (key: string, value: string) => {
+        if (key.includes('JSON') || key.includes('RESTRICTED') || value?.includes('{') || value?.includes(',')) return 'textarea';
+        if (!isNaN(Number(value))) return 'number';
+        return 'text';
+    };
 
     return (
         <div className="space-y-6 pb-20 font-sans">
-            {/* Heartbeat */}
-            <div className="bg-card p-6 rounded-2xl border border-border shadow-sm border-l-4 border-l-orange-500">
-                <h3 className="text-lg font-bold mb-4 flex items-center gap-2 text-orange-600">
-                    <RefreshCwIcon className="w-5 h-5" />
-                    Clockwork: Agent Biological Frequencies (Heartbeat)
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {systemFieldsConfig.filter(f => f.key.startsWith('SCHEDULER_')).map(field => {
-                        const setting = settings.find(s => s.key === field.key);
-                        if (!setting) return null;
-                        return (
-                            <div key={field.key} className="p-4 bg-muted/20 rounded-xl border border-border flex flex-col justify-between gap-3 group hover:border-orange-500/30 transition-all">
-                                <div>
-                                    <div className="font-bold text-[10px] uppercase tracking-widest text-orange-600/70">{field.label}</div>
-                                    <p className="text-[10px] text-muted-foreground mt-1 leading-tight">{setting.description}</p>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <ConfigDrivenInput 
-                                        field={field}
-                                        value={setting.value}
-                                        onBlur={(v) => updateSetting(field.key, v.toString())}
-                                        isSaving={isSaving === field.key}
-                                        className="w-full p-2 bg-background border border-border rounded-lg text-sm font-bold text-center outline-none focus:ring-2 ring-orange-500/50 transition-all"
-                                    />
-                                    <span className="text-[10px] font-bold text-muted-foreground uppercase">{field.key.includes('MINS') ? 'Mins' : 'Hrs'}</span>
-                                </div>
-                            </div>
-                        );
-                    })}
-                </div>
+            <div className="mb-4">
+                <h2 className="text-2xl font-bold text-gray-800">Dynamic System Configuration</h2>
+                <p className="text-sm text-gray-500">Settings are dynamically loaded from the `archon_settings` table. No hardcoded fields.</p>
             </div>
 
-            {/* Lead Scoring */}
-            <div className="bg-card p-6 rounded-2xl border border-border shadow-sm border-l-4 border-l-indigo-600">
-                <h3 className="text-lg font-bold mb-4 flex items-center gap-2 text-indigo-600">
-                    <ShieldCheckIcon className="w-5 h-5" />
-                    Lead Scoring Weights
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {systemFieldsConfig.filter(f => f.key.startsWith('SCORING_')).map(field => {
-                        const setting = settings.find(s => s.key === field.key);
-                        if (!setting) return null;
-                        return (
-                            <div key={field.key} className="p-4 bg-muted/20 rounded-xl border border-border flex items-center justify-between gap-4 group hover:border-indigo-500/30 transition-all">
-                                <div className="flex-1">
-                                    <div className="font-bold text-[10px] uppercase tracking-widest text-indigo-600/70">{field.label}</div>
-                                    <p className="text-xs font-medium text-slate-700 dark:text-slate-300 leading-tight mt-1">{setting.description}</p>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <ConfigDrivenInput 
-                                        field={field}
-                                        value={setting.value}
-                                        onBlur={(v) => updateSetting(field.key, v.toString())}
-                                        isSaving={isSaving === field.key}
-                                        className="w-16 p-2 bg-background border border-border rounded-lg text-sm font-bold text-center outline-none focus:ring-2 ring-indigo-500/50 transition-all"
-                                    />
-                                </div>
-                            </div>
-                        );
-                    })}
-                </div>
-            </div>
-
-            {/* Token Pricing & Budget */}
-            <div className="bg-card p-6 rounded-2xl border border-border shadow-sm border-l-4 border-l-emerald-500">
-                <h3 className="text-lg font-bold mb-4 flex items-center gap-2 text-emerald-600">
-                    <ShieldCheckIcon className="w-5 h-5" />
-                    AI Token Pricing & Resource Budget
-                </h3>
-                {systemFieldsConfig.filter(f => f.key === 'TOKEN_PRICING_JSON').map(field => {
-                    const setting = settings.find(s => s.key === field.key);
-                    if (!setting) return null;
-                    return (
-                        <div key={field.key} className="space-y-4">
-                            <div className="p-4 bg-muted/20 rounded-xl border border-border">
-                                <div className="font-bold text-sm mb-1">{field.label}</div>
-                                <p className="text-xs text-muted-foreground mb-4">{setting.description}</p>
-                                <ConfigDrivenInput 
-                                    field={field}
-                                    value={setting.value}
-                                    onBlur={(v) => updateSetting(field.key, v.toString())}
-                                    isSaving={isSaving === field.key}
-                                    className="w-full p-4 bg-background border border-border rounded-xl font-mono text-xs focus:ring-2 ring-emerald-500 outline-none h-40"
-                                />
-                                <div className="mt-2 flex items-center gap-2">
-                                    <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                                    <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest">Pricing Policy Active</span>
-                                </div>
-                            </div>
-                        </div>
-                    );
-                })}
-            </div>
-
-            {/* Diagnostics */}
-            <div className="bg-card p-6 rounded-2xl border border-border shadow-sm border-l-4 border-l-amber-500">
-                <h3 className="text-lg font-bold mb-4 flex items-center gap-2 text-amber-600">
-                    <RefreshCwIcon className="w-5 h-5" />
-                    Server Diagnostics
-                </h3>
-                {systemFieldsConfig.filter(f => f.key === 'system.log_level' || f.key === 'CRAWL_ALLOWED_DOMAINS_RESTRICTED').map(field => {
-                    const setting = settings.find(s => s.key === field.key);
-                    if (!setting) return null;
-                    
-                    if (field.type === 'select') {
-                        return (
-                            <div key={field.key} className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 bg-muted/20 rounded-xl border border-border mb-4">
-                                <div className="flex-1">
-                                    <div className="font-bold text-sm">{field.label}</div>
-                                    <p className="text-xs text-muted-foreground">{setting.description}</p>
-                                </div>
-                                <div className="flex items-center gap-3">
-                                    <ConfigDrivenInput 
-                                        field={field}
-                                        value={setting.value}
-                                        onChange={(v) => updateSetting(field.key, v.toString())}
-                                        isSaving={isSaving === field.key}
-                                        className="bg-background border border-border rounded-lg px-3 py-2 text-sm font-mono outline-none focus:ring-2 ring-primary/50"
-                                    />
-                                </div>
-                            </div>
-                        );
-                    }
-                    
-                    if (field.type === 'textarea') {
-                        return (
-                            <div key={field.key} className="p-6 bg-card rounded-2xl border border-border shadow-sm mt-4">
-                                <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
-                                    <ShieldCheckIcon className="w-5 h-5 text-indigo-500" />
-                                    {field.label}
-                                </h3>
-                                <div className="space-y-2">
-                                    <ConfigDrivenInput 
-                                        field={field}
-                                        value={setting.value}
-                                        onBlur={(v) => updateSetting(field.key, v.toString())}
-                                        className="w-full p-3 bg-background border border-border rounded-xl font-mono text-xs focus:ring-2 ring-primary outline-none h-24"
-                                    />
-                                    <p className="text-[10px] text-muted-foreground italic">Changes are saved automatically on blur.</p>
-                                </div>
-                            </div>
-                        );
-                    }
-                    return null;
-                })}
-            </div>
-
-            {/* RBAC Limits */}
-            <div className="bg-card p-6 rounded-2xl border border-border shadow-sm">
-                <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
-                    <RefreshCwIcon className="w-5 h-5 text-indigo-500" />
-                    Crawler RBAC Limits
-                </h3>
-                <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-border">
-                        <thead>
-                            <tr className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                                <th className="px-4 py-2 text-left">Role</th>
-                                <th className="px-4 py-2 text-left">Max Depth</th>
-                                <th className="px-4 py-2 text-left">Concurrency</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-border text-sm">
-                            {roles.map(role => {
-                                const depthKey = `CRAWL_MAX_DEPTH_${role}`;
-                                const concurrentKey = `CRAWL_CONCURRENT_MAX_${role}`;
-                                const depthSetting = settings.find(s => s.key === depthKey);
-                                const concurrentSetting = settings.find(s => s.key === concurrentKey);
-
+            {Object.entries(groupedSettings).map(([category, _catSettings]) => {
+                const catSettings = _catSettings as any[];
+                const colors = getColorsForCategory(category);
+                
+                return (
+                    <div key={category} className={`bg-card p-6 rounded-2xl border border-border shadow-sm border-l-4 ${colors.split(' ')[0]}`}>
+                        <h3 className={`text-lg font-bold mb-4 flex items-center gap-2 ${colors.split(' ')[1]}`}>
+                            {getIconForCategory(category)}
+                            {category.toUpperCase().replace('_', ' ')}
+                        </h3>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {catSettings.map((setting: any) => {
+                                const type = inferFieldType(setting.key, setting.value);
+                                const fieldDef = { key: setting.key, type, label: setting.key };
+                                
                                 return (
-                                    <tr key={role}>
-                                        <td className="px-4 py-3 font-medium">{role}</td>
-                                        <td className="px-4 py-3">
+                                    <div key={setting.key} className="p-4 bg-muted/20 rounded-xl border border-border flex flex-col justify-between gap-3 group transition-all hover:border-gray-400">
+                                        <div>
+                                            <div className={`font-bold text-[10px] uppercase tracking-widest ${colors.split(' ')[1]}/70 break-all`}>
+                                                {setting.key}
+                                            </div>
+                                            <p className="text-xs text-muted-foreground mt-1 leading-tight">{setting.description || 'No description provided.'}</p>
+                                        </div>
+                                        <div className="mt-2">
                                             <ConfigDrivenInput 
-                                                field={{ key: depthKey, type: 'number' }}
-                                                value={depthSetting?.value || 0}
-                                                onBlur={(v) => updateSetting(depthKey, v.toString())}
-                                                isSaving={isSaving === depthKey}
-                                                className="w-20 p-1 bg-background border border-border rounded focus:ring-1 ring-primary outline-none inline-block mr-2"
+                                                field={fieldDef}
+                                                value={setting.value || ''}
+                                                onBlur={(v) => updateSetting(setting.key, v.toString())}
+                                                isSaving={isSaving === setting.key}
+                                                className={`w-full p-2 bg-background border border-border rounded-lg text-sm outline-none focus:ring-2 transition-all ${type === 'textarea' ? 'h-32 font-mono text-xs' : 'font-bold'}`}
                                             />
-                                        </td>
-                                        <td className="px-4 py-3">
-                                            <ConfigDrivenInput 
-                                                field={{ key: concurrentKey, type: 'number' }}
-                                                value={concurrentSetting?.value || 0}
-                                                onBlur={(v) => updateSetting(concurrentKey, v.toString())}
-                                                isSaving={isSaving === concurrentKey}
-                                                className="w-20 p-1 bg-background border border-border rounded focus:ring-1 ring-primary outline-none inline-block mr-2"
-                                            />
-                                        </td>
-                                    </tr>
+                                        </div>
+                                    </div>
                                 );
                             })}
-                        </tbody>
-                    </table>
+                        </div>
+                    </div>
+                );
+            })}
+
+            {Object.keys(groupedSettings).length === 0 && (
+                <div className="text-center p-12 text-gray-500">
+                    No settings found in the database.
                 </div>
-            </div>
+            )}
         </div>
     );
 };

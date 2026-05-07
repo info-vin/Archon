@@ -62,7 +62,7 @@ describe('MarketingPage Sales Intelligence Flow', () => {
 renderApp(['/marketing']);
 
 // --- Physical Alignment: Switch to Search tab as 'leads' is now default ---
-const searchTabBtn = await screen.findByText(/Job Search/i);
+const searchTabBtn = await screen.findByRole('button', { name: /Job Search/i });
 fireEvent.click(searchTabBtn);
 
 // 2. 執行搜尋

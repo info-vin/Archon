@@ -31,12 +31,13 @@ describe('Public Navigation & Dashboard Access', () => {
         id: 'user-1',
         name: 'Test User',
         email: 'test@example.com',
-        role: 'member',
+        role: 'system_admin',
         status: 'active'
     };
     vi.mocked(api.getCurrentUser).mockResolvedValue(mockUser as any);
+    localStorage.setItem('user', JSON.stringify(mockUser));
     
-    renderApp();
+    renderApp(['/dashboard']);
 
     // 2. Start at Dashboard (redirected from / because authenticated)
     await waitFor(() => expect(screen.getByText(/My Tasks/i)).toBeInTheDocument());

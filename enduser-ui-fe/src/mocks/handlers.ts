@@ -113,6 +113,10 @@ export const handlers = [
     leads: []
   })),
   http.get('/api/system/logs/connectivity', () => HttpResponse.json([])),
+  http.get('/api/system/settings', () => HttpResponse.json([
+      { key: 'system.log_level', value: 'INFO', category: 'system', description: 'Log level' },
+      { key: 'SCORING_RELEVANCE', value: '30', category: 'lead_scoring', description: 'Relevance weight' }
+  ])),
   http.get('/api/stats/commander-trends', () => HttpResponse.json({ daily_output: [], cumulative_momentum: [] })),
   http.get('/api/stats/force-readiness', () => HttpResponse.json({ combat_power: 85 })),
   http.get('/api/stats/collab-synergy', () => HttpResponse.json({ snapshot: { total_7d: 45 }, matrix: [] })),
