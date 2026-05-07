@@ -39,6 +39,11 @@ class ApprovalRequest(BaseModel):
     notes: str | None = None
 
 
+class RejectSuggestionRequest(BaseModel):
+    item_type: str
+    item_id: str
+
+
 class DraftBlogRequest(BaseModel):
     topic: str
     industry: list[str] | None = None

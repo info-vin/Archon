@@ -226,6 +226,43 @@ class ContentHandler:
         res = self.supabase_client.table("blog_posts").select("*").eq("status", "review").order("updated_at", desc=True).execute()
         return {"blogs": res.data or [], "leads": []}
 
+    async def generate_reject_suggestion(self, item_type: str, item_id: str) -> dict:
+        if item_type != "blog":
+            return {"notes": "Content type not supported for AI rejection."}
+
+        post = self.supabase_client.table("blog_posts").select("*").eq("id", item_id).single().execute().data
+        if not post:
+            return {"notes": "Item not found."}
+
+        from google import genai
+        from ..prompt_service import prompt_service
+        from ...config.model_ssot import SYSTEM_MODELS
+        from ..credentials.manager import credential_service
+        
+        api_key = await credential_service.get_credential("GEMINI_API_KEY")
+        if not api_key:
+            return {"notes": "Cannot generate AI reason: AI provider missing."}
+
+        client = genai.Client(api_key=api_key)
+        
+        default_prompt = (
+            "You are a marketing director reviewing a blog post draft.\n"
+            "The draft is slightly off-brand or has quality issues.\n"
+            "Content:\n{content}\n\n"
+            "Provide exactly ONE brief, constructive paragraph (max 50 words) explaining why this is rejected and what needs to be improved. Use Traditional Chinese."
+        )
+        prompt_template = prompt_service.get_prompt("REJECT_SUGGESTION", default=default_prompt)
+        prompt = prompt_template.format(content=post.get("content", ""))
+
+        try:
+            response = await client.aio.models.generate_content(
+                model=SYSTEM_MODELS["DEFAULT_TEXT"],
+                contents=prompt
+            )
+            return {"notes": response.text.strip() if response.text else "Failed to generate reason."}
+        except Exception as e:
+            return {"notes": f"AI Generation Failed: {str(e)}"}
+
     async def get_content_context(self, source_id: str, source_type: str) -> dict:
         context_text = ""
         if source_type == "lead":

@@ -16,6 +16,7 @@ from src.server.schemas.marketing import (
     PitchRequest,
     PitchResponse,
     PromoteLeadRequest,
+    RejectSuggestionRequest,
 )
 from src.server.services.marketing_service import MarketingService
 
@@ -173,6 +174,14 @@ async def seed_knowledge_base(current_user: dict = Depends(requires_permission(C
 async def get_pending_approvals(current_user: dict = Depends(requires_permission(TASK_READ_TEAM))):
     service = MarketingService()
     return await service.get_pending_approvals()
+
+@router.post("/approvals/reject-suggestion")
+async def generate_reject_suggestion(
+    req: RejectSuggestionRequest,
+    current_user: dict = Depends(requires_permission(CONTENT_PUBLISH)),
+):
+    service = MarketingService()
+    return await service.generate_reject_suggestion(req.item_type, req.item_id)
 
 @router.post("/approvals/{item_type}/{item_id}/{action}")
 async def process_approval(

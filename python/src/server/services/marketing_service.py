@@ -69,6 +69,10 @@ class MarketingService(BaseRepository):
         from .marketing.content_handler import ContentHandler
         return await ContentHandler(self.supabase_client).process_approval(item_type, item_id, action, notes)
 
+    async def generate_reject_suggestion(self, item_type: str, item_id: str) -> dict:
+        from .marketing.content_handler import ContentHandler
+        return await ContentHandler(self.supabase_client).generate_reject_suggestion(item_type, item_id)
+
     async def get_pending_approvals(self) -> dict:
         from .marketing.content_handler import ContentHandler
         return await ContentHandler(self.supabase_client).get_pending_approvals()
