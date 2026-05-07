@@ -125,7 +125,8 @@ export const handlers = [
   http.get('/api/stats/ethics-audit-queue', () => HttpResponse.json({ violations: [], pending_versions: [], total_pending: 0 })),
   http.get('/api/marketing/manager/alerts', () => HttpResponse.json([])),
   http.post('/api/visit-logs/', () => HttpResponse.json({ summary: 'Mock AI Summary', voice_transcript: 'Mock transcript' })),
-  http.get('/api/visit-logs/attendance/status', () => HttpResponse.json({ status: 'clocked_out' })),
+  http.get('/api/visit-logs/attendance/status', () => HttpResponse.json({ status: 'clocked_out', logs: [] })),
+  http.get('/api/system/prompts', () => HttpResponse.json([])),
   
   http.get('/api/system/health/ai', () => HttpResponse.json({
     status: 'healthy',

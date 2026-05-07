@@ -25,7 +25,7 @@ test('Manager (Charlie) can access Team Management Panel', async () => {
 });
 
 test('Sales (Alice) is denied access to Team Management Panel', async () => {
-    const alice = { id: 'user-1', name: 'Alice', role: EmployeeRole.SALES };
+    const alice = { id: 'user-1', name: 'Alice', role: EmployeeRole.SALES, email: 'alice@archon.com', permissions: ['task:create'] };
     vi.mocked(api.getCurrentUser).mockResolvedValue(alice as any);
 
     renderApp(['/team']);
