@@ -75,9 +75,16 @@ export const statsApi = {
   },
 
   async processApproval(type: string, id: string, action: 'approve' | 'reject', reason?: string): Promise<any> {
-    return await callAPI(`/api/approvals/${type}/${id}/${action}`, {
+    return await callAPI(`/api/marketing/approvals/${type}/${id}/${action}`, {
         method: 'POST',
-        body: JSON.stringify({ reason })
+        body: JSON.stringify({ notes: reason })
+    });
+  },
+
+  async generateRejectReason(type: string, id: string): Promise<{ notes: string }> {
+    return await callAPI<{ notes: string }>(`/api/marketing/approvals/reject-suggestion`, {
+        method: 'POST',
+        body: JSON.stringify({ item_type: type, item_id: id })
     });
   },
 

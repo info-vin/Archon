@@ -60,6 +60,7 @@ export const api = {
   getBusinessRisks: statsApi.getBusinessRisks.bind(statsApi),
   getPendingApprovals: statsApi.getPendingApprovals.bind(statsApi),
   processApproval: statsApi.processApproval.bind(statsApi),
+  generateRejectReason: statsApi.generateRejectReason.bind(statsApi),
   getMarketingTrends: statsApi.getMarketingTrends.bind(statsApi),
   getMarketStats: statsApi.getMarketStats.bind(statsApi),
   getMarketingIntelligence: statsApi.getMarketingIntelligence.bind(statsApi),

@@ -49,9 +49,10 @@
 ### D. 下午茶時間：數據驗收 (Enrichment & Pruning Loop)
 *   **情境**: 系統自動維護資料庫健康度，Alice 閒暇時只需檢視高品質名單。
 *   **流程**:
-    1.  **自動歸檔 (Pruning)**: Backend `SchedulerService` 定期掃描。
-        *   條件: 建立 > 3 天 (可配置 `PRUNING_THRESHOLD_MINUTES`) **且** `enrichment_score` < 40。
-        *   動作: 自動將狀態標記為 `archived` (Reason: `stale_low_quality`)。
+    1.  **自動歸檔與生成洞察**: Backend `SchedulerService` 每小時定期掃描 (`prune_stale_leads`)，並於每日自動執行爬蟲 (`run_auto_fetch_leads`)。
+        *   搜尋名單 (Find Jobs) 時不消耗 Token，但背景會自動非同步為每筆資料補齊 `AI Insight`。
+        *   **AI Insight 嚴格限制**: 系統強制輸出不超過 50 字的 Markdown 項目符號 (技術棧/痛點預測)，適配手機版型。
+        *   歸檔條件: 建立 > 3 天 (可配置 `PRUNING_THRESHOLD_MINUTES`) **且** `enrichment_score` < 40，自動標記為 `archived`。
     2.  **Review Queue**: 在 Marketing 頁面切換至 "Review Queue" 視圖，僅顯示 AI 篩選過的高潛力 Leads。
 
 ---

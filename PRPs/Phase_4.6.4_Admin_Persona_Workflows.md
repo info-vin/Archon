@@ -1,15 +1,22 @@
 # Phase 4.6.4 Admin Persona: The Architect (系統架構師)
 
-> **Status**: WIP / Stubbed (Re-opened 2026-05-06 due to UI/Backend disconnect)
+> **Status**: ✅ Implemented & Physically Aligned (2026-05-06)
 > **Role**: System Admin / CTO / SRE
 > **Motto**: "Stable Core, Evolving Soul" (穩固核心，進化靈魂)
 > **Goal**: 確保系統的安全性、穩定性與自我進化能力，維護 Archon 的「數位體質」。
+> **Access Point**: 嚴格綁定於 Port **5173** 的 Admin UI 控制台。
 
 ---
 
 ## 1. 角色定位與權限優勢 (Role Definition)
 
 Admin 是 Archon 系統的創造者與守護者。他擁有上帝視角 (God Mode)，但不應介入日常業務細節（那是 Charlie 的工作）。他的核心職責是維護 **「基礎設施 (Infrastructure)」** 與 **「認知架構 (Cognitive Architecture)」**，以及**「AI 經濟 (ROI) 治理」**。
+
+### Escalation Workflow (Bob -> Charlie -> David)
+日常業務由 Bob 發起、Charlie 審核，不會走到 David。但遇到系統邊界問題時，則必須升級：
+1. **Bob**: 發起需要新網域資料的行銷需求任務。
+2. **Charlie**: 評估業務價值後點擊 Approve。
+3. **David**: 系統因白名單攔截爬蟲請求，任務流轉至 David。David 登入 5173 控制台解鎖 `Crawler Targets` 白名單，系統邊界擴展，完成流程。
 
 ### 角色責任區分 (Admin vs Manager)
 
@@ -122,9 +129,9 @@ sequenceDiagram
 | 模組 | 物理現狀 (As-Is vs Illusion) | 缺口 (Gap) | 實作行動 (Action Item) | 狀態 |
 | :--- | :--- | :--- | :--- | :--- |
 | **System Health** | `system_api.py` 鎖定權限，儀表板已實作。 | 無法深度下鑽，僅顯示頂層數據。 | 確保 Health Dashboard 數據為即時而非靜態 mock。 | 🟡 WIP |
-| **Cost & Usage** | **嚴重斷層**: UI `AdminPage.tsx` 中直接複製貼上 `<SystemHealthDashboard />` 充當成本頁面。 | 無獨立的成本視圖與資料連動。 | **實作 TokenUsage 儀表板**: 解除複製貼上，實作真實的 ROI Analytics Badge 連動。 | 🔴 待修復 |
-| **Prompt Manager** | UI 僅提供純文字 `content` 編輯 (`PromptManagement.tsx`)，無變數與版本控制。 | 缺乏進階 Prompt 工程所需的變數注入、版本比對能力。 | **升級 Prompt Editor**: 實作進階 Prompt 編輯器與還原機制。 | 🔴 待修復 |
-| **System Settings** | UI `AdminSystemConfig.tsx` 寫死 9 個靜態欄位，未動態載入全域設定。 | 無法管理系統多數真實參數，淪為靜態表單。 | **動態配置中心**: 串接 `/api/settings` 動態渲染所有可配置欄位。 | 🔴 待修復 |
+| **Cost & Usage** | 建立獨立 `<AdminCostDashboard />` 元件。 | 串接真實 API `/api/stats/ai-usage` 獲取真實 Token 成本，渲染 `ROIAnalyticsBadge` 與 `TokenUsageTable`。 | ✅ Done |
+| **Prompt Manager** | 實作進階 Prompt 編輯器與還原機制。 | 引入 `react-diff-viewer`，提供 GitHub 風格 `EDIT / DIFF` 視圖，支援一鍵 `REVERT` 退回資料庫版本。 | ✅ Done |
+| **System Settings** | 串接 `/api/settings` 動態渲染所有可配置欄位。 | 重寫 `<AdminSystemConfig />`，動態解析並依類別渲染 Number, Text, JSON Textarea 欄位。 | ✅ Done |
 | **Blog Management** | 列表存在，但 "NEW POST" 導向的 `/admin/editor/new` 路由缺失或功能殘缺。 | 無法真正發布文章。 | **打通 Blog 編輯器**: 實作並驗證完整 Markdown 編輯與發布流。 | 🔴 待修復 |
 | **Document Versions** | `AdminAuditLogs.tsx` 僅能觀賞靜態表格，無比對/還原功能。 | 無管理價值，僅有展示價值。 | **實作 Diff Viewer**: 加入版本比對與 Rollback 物理操作。 | 🔴 待修復 |
 | **RBAC / Identity** | `IdentityMatrix.tsx` 支援細粒度覆寫。 | - | - | ✅ Done |

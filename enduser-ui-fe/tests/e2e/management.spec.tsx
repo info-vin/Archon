@@ -1,4 +1,4 @@
-import { screen, waitFor } from '@testing-library/react';
+import { screen, waitFor, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { renderApp } from './e2e.setup';
 import { api } from '../../src/services/api';
@@ -75,6 +75,7 @@ test('Manager can view pending approvals and click approve', async () => {
     ];
     vi.mocked(api.getCurrentUser).mockResolvedValue(charlie as any);
     vi.mocked(api.getPendingChanges).mockResolvedValue(mockProposals as any);
+    vi.mocked(api.getPendingApprovals).mockResolvedValue({ blogs: [], leads: [] } as any);
     vi.mocked(api.approveChange).mockResolvedValue({ success: true } as any);
 
     renderApp(['/approvals']);
@@ -87,9 +88,11 @@ test('Manager can view pending approvals and click approve', async () => {
     expect(blogItems.length).toBeGreaterThan(0);
 
     // 3. Approve Action
-    const approveBtn = await screen.findByText(/APPROVE & EXECUTE/i);
-    await user.click(approveBtn);
+    const approveBtn = await screen.findByText(/APPROVE & PUBLISH/i);
+    fireEvent.click(approveBtn);
 
     // 4. Verify API Call
-    expect(api.approveChange).toHaveBeenCalledWith('prop-1');
+    await waitFor(() => {
+        expect(api.approveChange).toHaveBeenCalledWith('prop-1');
+    });
 });

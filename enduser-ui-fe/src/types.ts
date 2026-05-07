@@ -152,7 +152,8 @@ export enum ChangeStatus {
 export enum ChangeType {
   FILE = 'file',
   GIT = 'git',
-  SHELL = 'shell'
+  SHELL = 'shell',
+  BLOG = 'blog'
 }
 
 export interface CrawlerTarget {
