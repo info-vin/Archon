@@ -63,7 +63,6 @@ test('User can use POBot to refine task description', async () => {
 });
 
 test('Manager can view pending approvals and click approve', async () => {
-    const user = userEvent.setup();
     const charlie = {
         id: 'user-3',
         name: 'Charlie',

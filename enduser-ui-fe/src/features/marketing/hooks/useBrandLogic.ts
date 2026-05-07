@@ -182,13 +182,28 @@ export const useBrandLogic = () => {
         }
     };
 
+    const cleanAIImageReference = (content: string, currentImageUrl: string): { cleanContent: string, extractedUrl: string } => {
+        let extractedUrl = currentImageUrl;
+        // Match Markdown image syntax: ![alt text](image_url)
+        const imgRegex = /!\[.*?\]\((.*?)\)/g;
+        const match = imgRegex.exec(content);
+        if (match && match[1]) {
+            extractedUrl = match[1];
+        }
+        // Remove all markdown images from content to keep it clean
+        const cleanContent = content.replace(imgRegex, '').trim();
+        return { cleanContent, extractedUrl };
+    };
+
     const handleSaveWorkbench = async () => {
         try {
+            const { cleanContent, extractedUrl } = cleanAIImageReference(workbenchContent || "", workbenchImageUrl);
+            
             const postPayload = {
                 title: workbenchTitle || "Untitled Draft",
-                content: workbenchContent || "",
-                excerpt: workbenchContent.slice(0, 100) + "...",
-                imageUrl: workbenchImageUrl,
+                content: cleanContent,
+                excerpt: cleanContent.slice(0, 100) + "...",
+                imageUrl: extractedUrl,
                 status: 'draft',
                 authorName: user?.name || "Bob",
                 publishDate: new Date().toISOString(),
@@ -209,6 +224,9 @@ export const useBrandLogic = () => {
             if (activeTaskId) {
                 await api.updateTask(activeTaskId, { status: TaskStatus.DOING });
             }
+            // Update local state to reflect cleaned content
+            setWorkbenchContent(cleanContent);
+            setWorkbenchImageUrl(extractedUrl);
             setViewMode('dashboard');
             loadData();
         } catch (err: any) {
@@ -219,10 +237,13 @@ export const useBrandLogic = () => {
     const handlePublishWorkbench = async (postData: { title: string, content: string }) => {
         const isManager = user?.role === EmployeeRole.MANAGER || user?.role === EmployeeRole.ADMIN;
         try {
+            const { cleanContent, extractedUrl } = cleanAIImageReference(postData.content || "", workbenchImageUrl);
+
             const payload = {
-                ...postData,
-                excerpt: postData.content.slice(0, 150) + '...',
-                imageUrl: workbenchImageUrl,
+                title: postData.title,
+                content: cleanContent,
+                excerpt: cleanContent.slice(0, 150) + '...',
+                imageUrl: extractedUrl,
                 status: 'draft',
                 authorName: user?.name || 'Unknown Author',
                 publishDate: new Date().toISOString(),
@@ -245,6 +266,9 @@ export const useBrandLogic = () => {
                     await api.updateTask(activeTaskId, { status: TaskStatus.REVIEW });
                 }
             }
+            // Update local state
+            setWorkbenchContent(cleanContent);
+            setWorkbenchImageUrl(extractedUrl);
             loadData();
         } catch (err: any) {
             alert(`Operation failed: ${err.message}`);
