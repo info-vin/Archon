@@ -54,7 +54,7 @@ const OllamaModelDiscoveryModal: React.FC<OllamaModelDiscoveryModalProps> = ({
               <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2"><Database className="w-6 h-6 text-green-500" />Ollama Model Discovery</h2>
               <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Discover models across instances {hasCache && <span className="text-green-600">(Cached)</span>}</p>
             </div>
-            <Button variant="ghost" size="sm" onClick={onClose}><X className="w-5 h-5" /></Button>
+            <Button variant="ghost" size="sm" onClick={onClose} aria-label="Close modal"><X className="w-5 h-5" /></Button>
           </div>
           <div className="p-6 border-b border-gray-200 dark:border-gray-700 flex flex-col md:flex-row gap-4">
             <Input type="text" placeholder="Search..." value={selectionState.filterText} onChange={e => setSelectionState(p => ({ ...p, filterText: e.target.value }))} icon={<Search className="w-4 h-4" />} className="flex-1" />
