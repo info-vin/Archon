@@ -7,7 +7,7 @@ import DiffViewer from '../../../components/DiffViewer';
 
 export const PromptManagement: React.FC<{ isManagerMode: boolean }> = ({ isManagerMode }) => {
     const [state, send] = useMachine(promptMachine);
-    const { prompts, selectedPrompt, editValue, viewMode, error } = state.context;
+    const { prompts, selectedPrompt, editValue, viewMode } = state.context;
     const isLoading = state.matches('loading');
     const isSaving = state.matches({ ready: 'saving' });
 

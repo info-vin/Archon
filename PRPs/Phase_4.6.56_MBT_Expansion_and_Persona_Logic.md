@@ -64,6 +64,6 @@
 ---
 
 ## 6. 下一步 (Next Steps)
-*   **步驟 1**: 實作第一階段。建立 `playwright/global.setup.ts` 並設定 `playwright.config.ts` 以支援 `admin_storage_state.json` 全域認證持久化。
-*   **步驟 2**: 建立 `systemFixtures.ts` 以提供標準化的 100% 物理對齊資料與異常狀態模擬。
-*   **步驟 3**: 將稍早遇到登入牆的 `PromptManagement.mbt.spec.ts` 重構為依賴上述系統級基礎設施，並成功產出錄影。
+*   **步驟 1**: (✅ 已完成) 實作第一階段。建立 `playwright/global.setup.ts` 並設定 `playwright.config.ts` 以支援 `admin_storage_state.json` 全域認證持久化。
+*   **步驟 2**: (✅ 已完成) 建立 `systemFixtures.ts` 以提供標準化的 100% 物理對齊資料與異常狀態模擬 (`StatefulMock`, `simulateNetworkTimeout`, `simulate500Error`)。
+*   **步驟 3**: (✅ 已完成) 將稍早遇到登入牆的 `PromptManagement.mbt.spec.ts` 重構為依賴上述系統級基礎設施，移除了腳本內的假登入與 API Mock，改用 `global.setup.ts` 的持久化狀態與 `systemFixtures.ts` 的具狀態 Mock，並成功產出時光機錄影。
