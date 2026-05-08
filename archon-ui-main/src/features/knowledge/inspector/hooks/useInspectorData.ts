@@ -33,34 +33,41 @@ export function useInspectorData({ sourceId, searchQuery }: UseInspectorDataProp
   const documentChunks = useMemo(() => documentsResponse?.chunks || [], [documentsResponse?.chunks]);
   const codeList = useMemo(() => codeResponse?.code_examples || [], [codeResponse?.code_examples]);
 
+  // Pre-calculate document search strings to avoid O(N) string allocations during active search
+  const searchableDocuments = useMemo(() => {
+    return documentChunks.map((doc) => ({
+      doc,
+      searchStr: `${doc.content || ""} ${doc.title || ""} ${doc.metadata?.title || ""} ${doc.metadata?.section || ""}`.toLowerCase(),
+    }));
+  }, [documentChunks]);
+
+  // Pre-calculate code search strings to avoid O(N) string allocations during active search
+  const searchableCode = useMemo(() => {
+    return codeList.map((code) => ({
+      code,
+      searchStr: `${code.content || ""} ${code.summary || ""} ${code.language || ""} ${code.file_path || ""} ${code.title || ""}`.toLowerCase(),
+    }));
+  }, [codeList]);
+
   // Filter documents based on search
   const filteredDocuments = useMemo(() => {
     if (!searchQuery) return documentChunks;
 
     const query = searchQuery.toLowerCase();
-    return documentChunks.filter(
-      (doc) =>
-        doc.content?.toLowerCase().includes(query) ||
-        doc.title?.toLowerCase().includes(query) ||
-        doc.metadata?.title?.toLowerCase().includes(query) ||
-        doc.metadata?.section?.toLowerCase().includes(query),
-    );
-  }, [documentChunks, searchQuery]);
+    return searchableDocuments
+      .filter(({ searchStr }) => searchStr.includes(query))
+      .map(({ doc }) => doc);
+  }, [searchableDocuments, documentChunks, searchQuery]);
 
   // Filter code examples based on search
   const filteredCode = useMemo(() => {
     if (!searchQuery) return codeList;
 
     const query = searchQuery.toLowerCase();
-    return codeList.filter(
-      (code) =>
-        code.content?.toLowerCase().includes(query) ||
-        code.summary?.toLowerCase().includes(query) ||
-        code.language?.toLowerCase().includes(query) ||
-        code.file_path?.toLowerCase().includes(query) ||
-        code.title?.toLowerCase().includes(query),
-    );
-  }, [codeList, searchQuery]);
+    return searchableCode
+      .filter(({ searchStr }) => searchStr.includes(query))
+      .map(({ code }) => code);
+  }, [searchableCode, codeList, searchQuery]);
 
   return {
     documents: {
