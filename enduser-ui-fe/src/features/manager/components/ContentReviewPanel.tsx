@@ -123,9 +123,10 @@ export const ContentReviewPanel: React.FC<ContentReviewPanelProps> = ({
                                     <button 
                                         disabled={!rejectReason.trim() || !!processingId}
                                         onClick={handleRejectContent} 
-                                        className="px-4 py-1.5 bg-red-600 text-white text-xs font-black rounded-lg hover:bg-red-700 shadow-lg shadow-red-100 dark:shadow-none transition-all active:scale-95"
+                                        className="px-4 py-1.5 bg-red-600 text-white text-xs font-black rounded-lg hover:bg-red-700 shadow-lg shadow-red-100 dark:shadow-none transition-all active:scale-95 flex items-center justify-center gap-2"
                                     >
-                                        CONFIRM RETURN
+                                        {!!processingId ? <RefreshCwIcon className="animate-spin w-3 h-3" /> : null}
+                                        {!!processingId ? 'RETURNING...' : 'CONFIRM RETURN'}
                                     </button>
                                 </div>
                             </div>
