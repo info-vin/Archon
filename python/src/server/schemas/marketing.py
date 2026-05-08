@@ -48,3 +48,7 @@ class DraftBlogRequest(BaseModel):
     topic: str
     industry: list[str] | None = None
     keywords: str | None = None
+
+
+class DraftFromLeadsRequest(BaseModel):
+    lead_ids: list[str]

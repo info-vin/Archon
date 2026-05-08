@@ -10,6 +10,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from src.server.schemas.marketing import (
     ApprovalRequest,
     DraftBlogRequest,
+    DraftFromLeadsRequest,
     LeadCreateRequest,
     LeadUpdateRequest,
     LogoRequest,
@@ -106,6 +107,14 @@ async def draft_blog_post(req: DraftBlogRequest, current_user: dict = Depends(re
     success, res = await service.draft_blog(req.topic, req.industry, req.keywords)
     if not success:
         _err(res.get("message", "AI Draft failed"), res.get("error_code", 500))
+    return res
+
+@router.post("/draft-from-leads")
+async def draft_from_leads(req: DraftFromLeadsRequest, current_user: dict = Depends(requires_permission(AGENT_TRIGGER_MKT))):
+    service = MarketingService()
+    success, res = await service.draft_from_leads(req.lead_ids)
+    if not success:
+        _err(res.get("message", "AI Draft from leads failed"), res.get("error_code", 500))
     return res
 
 @router.post("/blog/{post_id}/submit")

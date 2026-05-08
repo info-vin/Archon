@@ -102,6 +102,7 @@ export const api = {
   updateBlogPost: opsApi.updateBlogPost.bind(opsApi),
   deleteBlogPost: opsApi.deleteBlogPost.bind(opsApi),
   draftBlogPost: opsApi.draftBlogPost.bind(opsApi),
+  draftFromLeads: opsApi.draftFromLeads.bind(opsApi),
   submitBlogPost: opsApi.submitBlogPost.bind(opsApi),
   updateBlogPostStatus: opsApi.updateBlogPostStatus.bind(opsApi),
   uploadFile: opsApi.uploadFile.bind(opsApi),

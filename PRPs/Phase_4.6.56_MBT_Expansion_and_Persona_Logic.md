@@ -67,3 +67,20 @@
 *   **步驟 1**: (✅ 已完成) 實作第一階段。建立 `playwright/global.setup.ts` 並設定 `playwright.config.ts` 以支援 `admin_storage_state.json` 全域認證持久化。
 *   **步驟 2**: (✅ 已完成) 建立 `systemFixtures.ts` 以提供標準化的 100% 物理對齊資料與異常狀態模擬 (`StatefulMock`, `simulateNetworkTimeout`, `simulate500Error`)。
 *   **步驟 3**: (✅ 已完成) 將稍早遇到登入牆的 `PromptManagement.mbt.spec.ts` 重構為依賴上述系統級基礎設施，移除了腳本內的假登入與 API Mock，改用 `global.setup.ts` 的持久化狀態與 `systemFixtures.ts` 的具狀態 Mock，並成功產出時光機錄影。
+*   **步驟 4**: (✅ 已完成) 實作第二階段：擴展 MBT 防禦網。重構了 `ApprovalsPage.tsx`，提取狀態邏輯至 `approvalMachine.ts` 並全面導入 `@xstate/react`；同時撰寫了 `ApprovalsPage.mbt.spec.ts` 以驗證在極端網路延遲與 500 錯誤下的時光機錄影與防呆狀態。
+*   **步驟 5**: (✅ 已完成) 實作第三階段：向右推進角色商業邏輯。成功修復並穩定了 `PersonaWorkflow.mbt.spec.ts` 跨角色工作流測試（Alice -> Bob -> Charlie）。
+*   **步驟 6**: (🚀 結案) 達成 Phase 4.6.56 所有目標。本階段成功建立了系統級驗證地基，擴展了 MBT 防禦網至 `ApprovalsPage`，並打通了跨角色的業務閉環驗證。
+
+## 7. 階段性成果總結 (Conclusion)
+
+本階段 (Phase 4.6.56) 已物理落地，達成以下關鍵指標：
+
+1. **基礎設施硬化**: 透過 `global.setup.ts` 實現全域認證持久化，並建立 `systemFixtures.ts` 提供具狀態的 Mock 環境，消滅了「測試幻覺」。
+2. **MBT 防禦網實體擴展**: 成功對 `ApprovalsPage.tsx` 進行 XState 重構，並建立對應的 MBT 測試，具備應對 500 錯誤與網路延遲的防禦能力。
+3. **跨角色業務閉環驗證**: 徹底修復 `PersonaWorkflow.mbt.spec.ts` 的所有失效點，包含：
+    - **CORS 與 Preflight 解決**: 透過 Mock `OPTIONS` 請求解決了跨網域提交的阻斷。
+    - **具狀態審批流**: 實作了會隨操作改變狀態的 Mock，驗證了「審批後消失」的真實業務邏輯。
+    - **UI 穩定性與逾時優化**: 針對複雜頁面（如 Manager Dashboard）優化了頁籤切換與可視性等待，達成 100% 通過率。
+
+> [!IMPORTANT]
+> **下一個里程碑**: 基於目前穩定的測試地基，我們已準備好進入 Phase 4.7，進行更大規模的特徵開發與效能優化。所有新開發的功能必須嚴格遵守本階段建立的「先設計狀態，再寫 UI，且必附 MBT 測試」的鐵律。

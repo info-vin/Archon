@@ -43,7 +43,7 @@ export const SourceContextPane: React.FC<SourceContextPaneProps> = ({
                   Librarian Knowledge Base
                 </h3>
                 <div className="space-y-4">
-                  {contextData?.rag_refs.map((ref, idx) => (
+                  {contextData?.rag_refs?.map((ref, idx) => (
                     <div key={idx} className="p-4 bg-white dark:bg-slate-900 border dark:border-slate-800 rounded-2xl hover:shadow-md transition-all group border-l-4 border-l-indigo-500/20">
                       <div className="flex justify-between items-start mb-2">
                         <span className="text-[9px] font-black text-indigo-600 uppercase tracking-tighter">REF #{idx + 1}</span>

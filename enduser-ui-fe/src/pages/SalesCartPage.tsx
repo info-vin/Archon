@@ -1,113 +1,43 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
+import { useMachine } from '@xstate/react';
 import { api } from '../services/api';
 import { SparklesIcon, TrashIcon, XIcon } from '../components/Icons';
 import { PermissionGuard } from '../features/auth/components/PermissionGuard';
 import { EmptyState } from '../components/common/EmptyState';
+import { salesCartMachine } from '../features/manager/machines/salesCartMachine';
 
 const SalesCartPage: React.FC = () => {
-    const [leads, setLeads] = useState<any[]>([]);
-    const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-    const [loading, setLoading] = useState(true);
-    const [processing, setProcessing] = useState(false);
-    const [generatingPitch, setGeneratingPitch] = useState<string | null>(null);
-    const [pitchResult, setPitchResult] = useState<{ content: string; company: string } | null>(null);
+    const [state, send] = useMachine(salesCartMachine);
+    
+    const { 
+      leads, 
+      selectedIds, 
+      pitchResult, 
+      generatingPitchId 
+    } = state.context;
+
+    const loading = state.matches('loading');
+    const processing = state.matches('processingBatch') || state.matches('processingRemove');
 
     useEffect(() => {
-        fetchCart();
-    }, []);
+        send({ type: 'FETCH' });
+    }, [send]);
 
-    const fetchCart = async () => {
-        setLoading(true);
-        try {
-            const allLeads = await api.getLeads();
-            // Filter for shortlisted items
-            setLeads(allLeads.filter((l: any) => l.status === 'shortlisted'));
-        } catch (err) {
-            console.error("Failed to load cart", err);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const toggleSelection = (id: string) => {
-        const newSet = new Set(selectedIds);
-        if (newSet.has(id)) {
-            newSet.delete(id);
-        } else {
-            newSet.add(id);
-        }
-        setSelectedIds(newSet);
-    };
-
-    const toggleSelectAll = () => {
-        if (selectedIds.size === leads.length) {
-            setSelectedIds(new Set());
-        } else {
-            setSelectedIds(new Set(leads.map(l => l.id)));
-        }
-    };
-
-    const handleBatchAction = async (action: 'export' | 'content' | 'remove') => {
-        if (selectedIds.size === 0) return;
-        setProcessing(true);
-        try {
-            const ids = Array.from(selectedIds);
-            
-            if (action === 'remove') {
-                await Promise.all(ids.map(id => api.updateLead(id, { status: 'new' })));
-                setLeads(leads.filter(l => !selectedIds.has(l.id)));
-                setSelectedIds(new Set());
-            } else if (action === 'export') {
-                // Simulate CRM Export
-                await new Promise(resolve => setTimeout(resolve, 1500));
-                alert(`Exported ${ids.length} leads to Salesforce/HubSpot successfully.`);
-            } else if (action === 'content') {
-                 // Simulate triggering Magic Draft
-                 await new Promise(resolve => setTimeout(resolve, 1500));
-                 alert(`Requested Magic Draft content for ${ids.length} leads. Bob has been notified.`);
-            }
-        } catch (err) {
-            alert(`Batch ${action} failed`);
-        } finally {
-            setProcessing(false);
-        }
-    };
-
-    const handleRemove = async (id: string) => {
-        try {
-            await api.updateLead(id, { status: 'new' });
-            setLeads(leads.filter(l => l.id !== id));
-            if (selectedIds.has(id)) {
-                const newSet = new Set(selectedIds);
-                newSet.delete(id);
-                setSelectedIds(newSet);
-            }
-        } catch (err) {
-            alert("Failed to remove item");
-        }
-    };
+    const fetchCart = () => send({ type: 'FETCH' });
+    const toggleSelection = (id: string) => send({ type: 'TOGGLE_SELECTION', id });
+    const toggleSelectAll = () => send({ type: 'TOGGLE_SELECT_ALL' });
+    const handleBatchAction = (action: 'export' | 'content' | 'remove') => send({ type: 'BATCH_ACTION', action });
+    const handleRemove = (id: string) => send({ type: 'REMOVE_LEAD', id });
+    const handleGeneratePitch = (lead: any) => send({ type: 'GENERATE_PITCH', lead });
 
     const handlePromote = async (lead: any) => {
         if (confirm(`Promote ${lead.company_name} to Vendor?`)) {
             try {
                 await api.promoteLead(lead.id, { vendor_name: lead.company_name });
-                setLeads(leads.filter(l => l.id !== lead.id));
+                fetchCart(); // simple refresh after direct api call for promote
             } catch (err) {
                 alert("Failed to promote");
             }
-        }
-    };
-
-    const handleGeneratePitch = async (lead: any) => {
-        setGeneratingPitch(lead.id);
-        try {
-             const res = await api.generatePitch(lead.job_title, lead.company_name, lead.identified_need);
-             // alert(`Pitch Generated:\n\n${res.content.substring(0, 100)}...`);
-             setPitchResult({ content: res.content, company: lead.company_name });
-        } catch(err) {
-            alert("Failed to generate pitch");
-        } finally {
-            setGeneratingPitch(null);
         }
     };
 
@@ -169,22 +99,28 @@ const SalesCartPage: React.FC = () => {
                                     <div className="grid grid-cols-2 gap-2" onClick={e => e.stopPropagation()}>
                                         <button 
                                             onClick={() => handleGeneratePitch(lead)}
-                                            disabled={generatingPitch === lead.id}
-                                            className="col-span-2 flex items-center justify-center gap-2 bg-indigo-50 text-indigo-700 py-2 rounded-lg text-sm font-medium hover:bg-indigo-100"
+                                            disabled={generatingPitchId === lead.id}
+                                            className="col-span-2 flex items-center justify-center gap-2 bg-indigo-50 text-indigo-700 py-2 rounded-lg text-sm font-medium hover:bg-indigo-100 disabled:opacity-50"
                                         >
-                                            <SparklesIcon className="w-4 h-4" />
-                                            {generatingPitch === lead.id ? "Generating..." : "Generate AI Pitch"}
+                                            {generatingPitchId === lead.id ? (
+                                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-indigo-700"></div>
+                                            ) : (
+                                                <SparklesIcon className="w-4 h-4" />
+                                            )}
+                                            {generatingPitchId === lead.id ? "Generating..." : "Generate AI Pitch"}
                                         </button>
                                         <button 
                                             onClick={() => handleRemove(lead.id)}
-                                            className="py-2 rounded-lg text-sm font-medium border border-border text-muted-foreground hover:bg-secondary flex items-center justify-center gap-2"
+                                            className="py-2 rounded-lg text-sm font-medium border border-border text-muted-foreground hover:bg-secondary flex items-center justify-center gap-2 disabled:opacity-50"
+                                            disabled={processing}
                                         >
                                             <TrashIcon className="w-4 h-4" />
                                             Remove
                                         </button>
                                         <button 
                                             onClick={() => handlePromote(lead)}
-                                            className="py-2 rounded-lg text-sm font-medium bg-secondary text-secondary-foreground hover:bg-secondary/80"
+                                            className="py-2 rounded-lg text-sm font-medium bg-secondary text-secondary-foreground hover:bg-secondary/80 disabled:opacity-50"
+                                            disabled={processing}
                                         >
                                             Promote
                                         </button>
@@ -205,24 +141,24 @@ const SalesCartPage: React.FC = () => {
                              <button 
                                 onClick={() => handleBatchAction('remove')}
                                 disabled={processing}
-                                className="flex-1 bg-red-500/20 hover:bg-red-500/40 text-red-200 py-2 px-3 rounded-xl text-xs font-bold transition-colors"
+                                className="flex-1 bg-red-500/20 hover:bg-red-500/40 text-red-200 py-2 px-3 rounded-xl text-xs font-bold transition-colors disabled:opacity-50"
                              >
-                                Remove
+                                {processing && state.context.processingAction === 'remove' ? 'Processing...' : 'Remove'}
                              </button>
                              <button 
                                 onClick={() => handleBatchAction('export')}
                                 disabled={processing}
-                                className="flex-1 bg-white/10 hover:bg-white/20 py-2 px-3 rounded-xl text-xs font-bold transition-colors whitespace-nowrap"
+                                className="flex-1 bg-white/10 hover:bg-white/20 py-2 px-3 rounded-xl text-xs font-bold transition-colors whitespace-nowrap disabled:opacity-50"
                              >
-                                Export CRM
+                                {processing && state.context.processingAction === 'export' ? 'Processing...' : 'Export CRM'}
                              </button>
                              <button 
                                 onClick={() => handleBatchAction('content')}
                                 disabled={processing}
-                                className="flex-1 bg-indigo-500 hover:bg-indigo-600 text-white py-2 px-3 rounded-xl text-xs font-bold transition-colors whitespace-nowrap flex items-center justify-center gap-1 shadow-lg shadow-indigo-500/20"
+                                className="flex-1 bg-indigo-500 hover:bg-indigo-600 text-white py-2 px-3 rounded-xl text-xs font-bold transition-colors whitespace-nowrap flex items-center justify-center gap-1 shadow-lg shadow-indigo-500/20 disabled:opacity-50"
                              >
                                 <SparklesIcon className="w-3 h-3" />
-                                Magic Draft
+                                {processing && state.context.processingAction === 'content' ? 'Drafting...' : 'Magic Draft'}
                              </button>
                         </div>
                     </div>
@@ -231,7 +167,7 @@ const SalesCartPage: React.FC = () => {
                 {pitchResult && (
                     <PitchModal 
                         isOpen={!!pitchResult} 
-                        onClose={() => setPitchResult(null)} 
+                        onClose={() => send({ type: 'CLOSE_PITCH_MODAL' })}
                         content={pitchResult.content} 
                         company={pitchResult.company} 
                     />

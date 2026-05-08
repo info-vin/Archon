@@ -191,6 +191,60 @@ class ContentHandler:
             logger.error(f"ContentHandler: Blog drafting failed: {e}")
             return False, {"error_code": 500, "message": str(e)}
 
+    async def draft_from_leads(self, lead_ids: list[str]) -> tuple[bool, dict]:
+        try:
+            # 1. Fetch Leads
+            leads_res = self.supabase_client.table("leads").select("*").in_("id", lead_ids).execute()
+            leads = leads_res.data or []
+            if not leads:
+                return False, {"error_code": 404, "message": "No leads found for the provided IDs."}
+
+            api_key = await credential_service.get_credential("GEMINI_API_KEY") or await credential_service.get_credential("GOOGLE_API_KEY")
+            if not api_key:
+                return False, {"error_code": 401, "message": "API Key missing"}
+
+            client = genai.Client(api_key=api_key)
+            sys_prompt = prompt_service.get_prompt("BLOG_DRAFT", BLOG_DRAFT_SYSTEM_PROMPT)
+
+            generated_drafts = []
+
+            for lead in leads:
+                @retry_with_backoff(max_retries=2)
+                async def _call_gemini(current_lead=lead):
+                    return await client.aio.models.generate_content(
+                        model=SYSTEM_MODELS["DEFAULT_TEXT"],
+                        contents=f"Generate a blog post. Target Company: {current_lead.get('company_name')}. Identified Need: {current_lead.get('identified_need')}. Job Title: {current_lead.get('job_title')}",
+                        config=types.GenerateContentConfig(
+                            system_instruction=sys_prompt,
+                            response_mime_type="application/json"
+                        ),
+                    )
+
+                response = await _call_gemini()
+                if not response.text:
+                    continue
+
+                result = safe_json_loads(response.text)
+
+                new_post = {
+                    "title": str(result.get("title", f"Draft for {lead.get('company_name')}")),
+                    "content": str(result.get("content", "")),
+                    "excerpt": str(result.get("excerpt", "")),
+                    "status": "draft",
+                    "ai_score": self.calculate_ai_score(str(result.get("content", ""))),
+                    "image_url": "https://picsum.photos/seed/market/1024/1024",
+                }
+
+                insert_res = self.supabase_client.table("blog_posts").insert(new_post).execute()
+                if insert_res.data:
+                     generated_drafts.append(insert_res.data[0])
+
+            return True, {"generated_count": len(generated_drafts), "drafts": generated_drafts}
+
+        except Exception as e:
+            logger.error(f"ContentHandler: Draft from leads failed: {e}")
+            return False, {"error_code": 500, "message": str(e)}
+
     async def submit_blog(self, post_id: str) -> tuple[bool, dict]:
         post = self.supabase_client.table("blog_posts").select("*").eq("id", post_id).single().execute().data
         if not post:

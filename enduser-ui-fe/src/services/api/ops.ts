@@ -195,9 +195,16 @@ export const opsApi = {
   },
 
   async draftBlogPost(data: any): Promise<any> {
-    return await callAPI('/api/marketing/blog/draft', {
+    return await callAPI('/api/marketing/draft-blog', {
         method: 'POST',
         body: JSON.stringify(data)
+    });
+  },
+
+  async draftFromLeads(leadIds: string[]): Promise<any> {
+    return await callAPI('/api/marketing/draft-from-leads', {
+        method: 'POST',
+        body: JSON.stringify({ lead_ids: leadIds })
     });
   },
 

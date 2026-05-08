@@ -61,6 +61,10 @@ class MarketingService(BaseRepository):
         from .marketing.content_handler import ContentHandler
         return await ContentHandler(self.supabase_client).draft_blog(topic, industry, keywords)
 
+    async def draft_from_leads(self, lead_ids: list[str]) -> tuple[bool, dict]:
+        from .marketing.content_handler import ContentHandler
+        return await ContentHandler(self.supabase_client).draft_from_leads(lead_ids)
+
     async def submit_blog(self, post_id: str) -> tuple[bool, dict]:
         from .marketing.content_handler import ContentHandler
         return await ContentHandler(self.supabase_client).submit_blog(post_id)
