@@ -72,3 +72,11 @@
 ## 2026-05-06 - Separating pre-calculation from active filtering in React
 **Learning:** When optimizing React frontend search filters to avoid redundant string allocations (e.g., `.toLowerCase()`), separating the pre-calculation and filtering logic into two distinct `useMemo` hooks is crucial. Combining them executes the allocations on every keystroke, resulting in a de-optimization. The first `useMemo` must cache the pre-calculated search strings (dependent on the source data), and the second `useMemo` should handle the active filtering (dependent on the cached strings and search query).
 **Action:** Always verify the dependency arrays of `useMemo` hooks when pre-calculating string values to ensure they do not re-run on frequent user inputs like search queries.
+
+## 2024-05-18 - Avoid object cloning inside memoized filters
+**Learning:** When optimizing React frontend search filters to avoid redundant string allocations, hoisting operations like `searchQuery.toLowerCase()` outside the `.filter()` loop into a `useMemo` hook is good, but mapping or cloning the original data array (e.g., `data.map(item => ({...item, searchStr}))`) just to cache search strings breaks object reference equality and causes unnecessary memory allocations that often outweigh the CPU savings.
+**Action:** Filter the original array directly without cloning objects.
+
+## 2024-05-18 - Avoid meaningless micro-optimizations
+**Learning:** Extracting string operations (e.g., `.toLowerCase()`) from small, fixed-size array iterations (e.g., mapping over a 4-item status list) saves no measurable time and violates the rule against meaningless micro-optimizations.
+**Action:** Only optimize string transformations or allocations when they occur inside O(N) loops operating on potentially large datasets or frequent user input events.

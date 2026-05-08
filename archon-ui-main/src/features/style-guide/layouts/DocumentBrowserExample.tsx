@@ -1,5 +1,5 @@
 import { Code, FileText, Globe, Search } from "lucide-react";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Button } from "@/features/ui/primitives/button";
 import { Dialog, DialogContent } from "@/features/ui/primitives/dialog";
 import { Input } from "@/features/ui/primitives/input";
@@ -75,9 +75,19 @@ const DocumentBrowserModal = ({ open, onOpenChange }: { open: boolean; onOpenCha
   const [selectedDoc, setSelectedDoc] = useState(MOCK_DOCUMENTS[0]);
   const [selectedCode, setSelectedCode] = useState(MOCK_CODE[0]);
 
-  const filteredDocuments = MOCK_DOCUMENTS.filter((doc) => doc.title.toLowerCase().includes(searchQuery.toLowerCase()));
+  // PERFORMANCE: Extract .toLowerCase() outside the filter loop to prevent O(N) string allocations
+  // and memoize the result to prevent recalculation on unrelated re-renders.
+  const filteredDocuments = useMemo(() => {
+    if (!searchQuery) return MOCK_DOCUMENTS;
+    const query = searchQuery.toLowerCase();
+    return MOCK_DOCUMENTS.filter((doc) => doc.title.toLowerCase().includes(query));
+  }, [searchQuery]);
 
-  const filteredCode = MOCK_CODE.filter((example) => example.summary.toLowerCase().includes(searchQuery.toLowerCase()));
+  const filteredCode = useMemo(() => {
+    if (!searchQuery) return MOCK_CODE;
+    const query = searchQuery.toLowerCase();
+    return MOCK_CODE.filter((example) => example.summary.toLowerCase().includes(query));
+  }, [searchQuery]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
