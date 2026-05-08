@@ -139,7 +139,9 @@
 *   **18. 環境物理對齊原則 (Environment Physical Alignment)**
     *   **核心**: 嚴禁幻想 Host 機器與 Docker 容器具有完全相同的依賴狀態。
     - **教訓**: 在 4.6.42 中，本地執行 `make lint` 導致 `uv` 因群組未對齊而物理卸載 130 個套件。`google` 等命名空間包（Namespace Packages）極易因安裝順序或快取而發生 Import 衝突。
-    - **SOP**: 當發生 `ImportError` 且路徑看似正確時，執行「終極自癒」：`rm -rf .venv uv.lock && uv sync --all-groups`。執行測試時必須顯式指定 `PYTHONPATH=src` 以確保 Host 與容器邏輯對等。
+*   **19. 環境相依性與幻想基礎設施 (Hallucinated Infrastructure)**
+    *   **核心**: 絕對禁止在未讀取 `docker-compose.yml` 的情況下，向使用者提議或設定依賴本地端伺服器的服務（如 `http://localhost:8000`）。
+    *   **教訓**: 在 Phase 4.6.55 中，因未檢查 Compose 檔案便提出 PostHog 本地部署方案，導致使用者浪費時間並產生不信任。必須落實「實體驗證基礎設施」的前置風險評估鐵律。
 
 ---
 

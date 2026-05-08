@@ -1,72 +1,68 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
+import { useMachine } from '@xstate/react';
+import { promptMachine } from '../machines/promptMachine.ts';
 import { api } from '../../../services/api.ts';
 import { CheckCircleIcon, KeyIcon, RefreshCwIcon, SaveIcon, ShieldCheckIcon, EyeIcon, Edit2Icon, UndoIcon } from '../../../components/Icons.tsx';
 import DiffViewer from '../../../components/DiffViewer';
 
 export const PromptManagement: React.FC<{ isManagerMode: boolean }> = ({ isManagerMode }) => {
-    const [prompts, setPrompts] = useState<any[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [selectedPrompt, setSelectedPrompt] = useState<any>(null);
-    const [editValue, setEditValue] = useState('');
-    const [isSaving, setIsSaving] = useState(false);
-    const [viewMode, setViewMode] = useState<'edit' | 'diff'>('edit');
+    const [state, send] = useMachine(promptMachine);
+    const { prompts, selectedPrompt, editValue, viewMode, error } = state.context;
+    const isLoading = state.matches('loading');
+    const isSaving = state.matches({ ready: 'saving' });
 
     useEffect(() => {
         fetchPrompts();
     }, []);
 
     const fetchPrompts = async () => {
-        setLoading(true);
         try {
             const data = await api.getSystemPrompts();
-            setPrompts(data);
-            if (data.length > 0 && !selectedPrompt) {
-                handleSelect(data[0]);
+            send({ type: 'FETCH_SUCCESS', prompts: data });
+            if (data.length > 0 && !state.context.selectedPrompt) {
+                send({ type: 'SELECT_PROMPT', prompt: data[0] });
             }
         } catch (err: any) {
+            send({ type: 'FETCH_ERROR', error: err.message });
             alert("Failed to load prompts: " + err.message);
-        } finally {
-            setLoading(false);
         }
     };
 
     const handleSelect = (p: any) => {
-        setSelectedPrompt(p);
-        setEditValue(p.prompt || p.content || '');
-        setViewMode('edit');
+        send({ type: 'SELECT_PROMPT', prompt: p });
     };
 
     const handleRevert = () => {
-        if (!selectedPrompt) return;
-        setEditValue(selectedPrompt.prompt || selectedPrompt.content || '');
-        setViewMode('edit');
+        send({ type: 'REVERT' });
     };
 
     const handleSave = async () => {
         if (!selectedPrompt) return;
-        setIsSaving(true);
+        send({ type: 'SAVE' });
         try {
             await api.updateSystemPrompt(selectedPrompt.prompt_name, { content: editValue });
+            send({ type: 'SAVE_SUCCESS' });
             alert("Prompt updated and cache reloaded successfully!");
-            await fetchPrompts(); // Refresh list to get updated_at
+            
+            // Reload from API
+            const data = await api.getSystemPrompts();
+            send({ type: 'FETCH_SUCCESS', prompts: data });
             
             // Re-select the updated prompt to refresh original value
-            const updatedPrompt = prompts.find(p => p.prompt_name === selectedPrompt.prompt_name);
+            const updatedPrompt = data.find(p => p.prompt_name === selectedPrompt.prompt_name);
             if(updatedPrompt) {
-                setSelectedPrompt(updatedPrompt);
-                setViewMode('edit');
+                send({ type: 'SELECT_PROMPT', prompt: updatedPrompt });
             }
         } catch (err: any) {
+            send({ type: 'SAVE_ERROR', error: err.message });
             alert("Save failed: " + err.message);
-        } finally {
-            setIsSaving(false);
         }
     };
 
     const isLocked = isManagerMode && selectedPrompt?.is_system_protected;
     const hasChanges = selectedPrompt && editValue !== (selectedPrompt.prompt || selectedPrompt.content);
 
-    if (loading) return <div className="flex justify-center p-12"><RefreshCwIcon className="animate-spin w-8 h-8 text-primary" /></div>;
+    if (isLoading) return <div className="flex justify-center p-12"><RefreshCwIcon className="animate-spin w-8 h-8 text-primary" /></div>;
 
     return (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-250px)] min-h-[600px] font-sans">
@@ -126,13 +122,13 @@ export const PromptManagement: React.FC<{ isManagerMode: boolean }> = ({ isManag
                                         </button>
                                         <div className="bg-muted p-1 rounded-lg flex gap-1">
                                             <button 
-                                                onClick={() => setViewMode('edit')}
+                                                onClick={() => send({ type: 'TOGGLE_VIEW', mode: 'edit' })}
                                                 className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all flex items-center gap-1 ${viewMode === 'edit' ? 'bg-background shadow text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
                                             >
                                                 <Edit2Icon className="w-3.5 h-3.5" /> EDIT
                                             </button>
                                             <button 
-                                                onClick={() => setViewMode('diff')}
+                                                onClick={() => send({ type: 'TOGGLE_VIEW', mode: 'diff' })}
                                                 className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all flex items-center gap-1 ${viewMode === 'diff' ? 'bg-background shadow text-indigo-600' : 'text-muted-foreground hover:text-foreground'}`}
                                             >
                                                 <EyeIcon className="w-3.5 h-3.5" /> DIFF
@@ -158,7 +154,7 @@ export const PromptManagement: React.FC<{ isManagerMode: boolean }> = ({ isManag
                                 <div className="flex-1 relative">
                                     <textarea 
                                         value={editValue}
-                                        onChange={(e) => setEditValue(e.target.value)}
+                                        onChange={(e) => send({ type: 'UPDATE_VALUE', value: e.target.value })}
                                         readOnly={isLocked}
                                         className={`w-full h-full p-4 bg-background border border-border rounded-xl font-mono text-sm focus:ring-2 focus:ring-primary outline-none resize-none leading-relaxed shadow-inner ${isLocked ? 'opacity-70 cursor-not-allowed bg-muted/20' : ''}`}
                                         placeholder="Enter system prompt here..."
