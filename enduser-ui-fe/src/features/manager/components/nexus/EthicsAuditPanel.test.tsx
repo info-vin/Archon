@@ -7,7 +7,8 @@ vi.mock('../../../../components/Icons', () => ({
   ShieldCheckIcon: (props: any) => <svg data-testid="shield-icon" {...props} />,
   ZapIcon: (props: any) => <svg data-testid="zap-icon" {...props} />,
   FileTextIcon: (props: any) => <svg data-testid="file-icon" {...props} />,
-  CheckCircleIcon: (props: any) => <svg data-testid="check-icon" {...props} />
+  CheckCircleIcon: (props: any) => <svg data-testid="check-icon" {...props} />,
+  RefreshCwIcon: (props: any) => <svg data-testid="refresh-icon" {...props} />
 }));
 
 describe('EthicsAuditPanel Component Hardening', () => {
@@ -70,7 +71,7 @@ describe('EthicsAuditPanel Component Hardening', () => {
       />
     );
 
-    expect(screen.getByText('...')).toBeInTheDocument();
+    expect(screen.getByText('APPROVING...')).toBeInTheDocument();
   });
 
   it('renders compliance nominal state when no items are pending', () => {

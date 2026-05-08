@@ -1,5 +1,5 @@
 import React from 'react';
-import { ShieldCheckIcon, ZapIcon, FileTextIcon, CheckCircleIcon } from '../../../../components/Icons';
+import { ShieldCheckIcon, ZapIcon, FileTextIcon, CheckCircleIcon, RefreshCwIcon } from '../../../../components/Icons';
 
 export interface EthicsAuditPanelProps {
     ethicsAudit: any;
@@ -99,9 +99,16 @@ export const EthicsAuditPanel: React.FC<EthicsAuditPanelProps> = ({
                                 <button
                                     onClick={() => handleApprovePrompt(p.id)}
                                     disabled={processingId === p.id}
-                                    className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-[10px] font-black hover:bg-indigo-700"
+                                    className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-[10px] font-black hover:bg-indigo-700 disabled:opacity-50 transition-all flex items-center gap-2"
                                 >
-                                    {processingId === p.id ? '...' : 'APPROVE'}
+                                    {processingId === p.id ? (
+                                        <>
+                                            <RefreshCwIcon className="w-3 h-3 animate-spin" />
+                                            APPROVING...
+                                        </>
+                                    ) : (
+                                        'APPROVE'
+                                    )}
                                 </button>
                             </div>
                         </div>
