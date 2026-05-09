@@ -74,6 +74,19 @@ describe('EthicsAuditPanel Component Hardening', () => {
     expect(screen.getByText('APPROVING...')).toBeInTheDocument();
   });
 
+  it('shows loading state on dispatch button when processingId matches', () => {
+    render(
+      <EthicsAuditPanel
+        ethicsAudit={mockEthicsAudit}
+        handleDispatch={mockHandleDispatch}
+        handleApprovePrompt={mockHandleApprovePrompt}
+        processingId="v1"
+      />
+    );
+
+    expect(screen.getByText('DISPATCHING...')).toBeInTheDocument();
+  });
+
   it('renders compliance nominal state when no items are pending', () => {
     const emptyAudit = { total_pending: 0, violations: [], pending_versions: [] };
     render(
