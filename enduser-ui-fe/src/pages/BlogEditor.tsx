@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
 import { BlogPost } from '../types';
 import DiffViewer from '../components/DiffViewer';
+import { SmartImagePicker } from '../features/marketing/components/SmartImagePicker';
 // Icons
 import { ArrowLeftIcon, SaveIcon, ImageIcon, CheckIcon, Wand2Icon, AlertTriangleIcon } from 'lucide-react';
 
@@ -19,7 +20,7 @@ const BlogEditor: React.FC = () => {
     });
     const [loading, setLoading] = useState(!isNew);
     const [saving, setSaving] = useState(false);
-    const [uploadingImage, setUploadingImage] = useState(false);
+    const [showImagePicker, setShowImagePicker] = useState<'cover' | 'markdown' | null>(null);
 
     // AI Context / Diff View
     const [showDiff, setShowDiff] = useState(false);
@@ -61,41 +62,28 @@ const BlogEditor: React.FC = () => {
         }
     };
 
-    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
-
-        setUploadingImage(true);
-        try {
-            const { url } = await api.uploadFile(file);
+    const handleImagePicked = (url: string) => {
+        if (showImagePicker === 'cover') {
             setPost({ ...post, imageUrl: url });
-        } catch (error: any) {
-            alert('Image upload failed: ' + error.message);
-        } finally {
-            setUploadingImage(false);
-        }
-    };
-
-    const insertImageMarkdown = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
-
-        setUploadingImage(true);
-        try {
-            const { url } = await api.uploadFile(file);
-            const imgMarkdown = `\n![${file.name}](${url})\n`;
+        } else if (showImagePicker === 'markdown') {
+            const imgName = url.split('/').pop() || 'image';
+            const imgMarkdown = `\n![${imgName}](${url})\n`;
             setPost(prev => ({ ...prev, content: (prev.content || '') + imgMarkdown }));
-        } catch (error: any) {
-            alert('Image upload failed: ' + error.message);
-        } finally {
-            setUploadingImage(false);
         }
+        setShowImagePicker(null);
     };
 
     if (loading) return <div className="p-8 text-center text-gray-500 animate-pulse">Loading Editor...</div>;
 
     return (
-        <div className="max-w-6xl mx-auto p-4 md:p-8 font-sans font-inter">
+        <div className="max-w-6xl mx-auto p-4 md:p-8 font-sans font-inter relative">
+            {showImagePicker && (
+                <SmartImagePicker 
+                    onSelect={handleImagePicked}
+                    onClose={() => setShowImagePicker(null)}
+                />
+            )}
+            
             {/* Header */}
             <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 pb-4 border-b border-gray-200">
                 <div className="flex items-center gap-4 border-b border-transparent">
@@ -169,20 +157,26 @@ const BlogEditor: React.FC = () => {
                     <div>
                         <div className="flex items-center justify-between mb-2">
                             <label className="text-xs font-black uppercase tracking-widest text-gray-500">Cover Image</label>
-                            <label className="cursor-pointer flex items-center gap-1.5 text-xs font-bold text-indigo-600 hover:text-indigo-700 transition-colors">
-                                {uploadingImage ? <span className="animate-pulse">Uploading...</span> : <><ImageIcon className="w-4 h-4" /> Upload Cover</>}
-                                <input type="file" className="hidden" accept="image/*" onChange={handleImageUpload} disabled={uploadingImage} />
-                            </label>
+                            <div className="flex gap-2">
+                                <button 
+                                    onClick={() => setShowImagePicker('cover')}
+                                    className="cursor-pointer flex items-center gap-1.5 text-xs font-bold text-indigo-600 hover:text-indigo-700 transition-colors"
+                                >
+                                    <ImageIcon className="w-4 h-4" /> Smart Asset Search
+                                </button>
+                            </div>
                         </div>
                         {post.imageUrl ? (
                             <div className="relative group rounded-2xl overflow-hidden border border-gray-200 bg-gray-50 aspect-video flex items-center justify-center">
                                 <img src={post.imageUrl} alt="Cover" className="w-full h-full object-cover" />
                                 <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                     <label className="cursor-pointer flex items-center gap-2 px-4 py-2 bg-white rounded-lg text-sm font-bold text-gray-900 shadow-xl hover:scale-105 transition-transform">
+                                     <button 
+                                        onClick={() => setShowImagePicker('cover')}
+                                        className="cursor-pointer flex items-center gap-2 px-4 py-2 bg-white rounded-lg text-sm font-bold text-gray-900 shadow-xl hover:scale-105 transition-transform"
+                                     >
                                          <ImageIcon className="w-4 h-4" />
                                          Change Cover
-                                         <input type="file" className="hidden" accept="image/*" onChange={handleImageUpload} disabled={uploadingImage} />
-                                     </label>
+                                     </button>
                                 </div>
                             </div>
                         ) : (
@@ -196,10 +190,12 @@ const BlogEditor: React.FC = () => {
                     <div className="flex-1 min-w-0 flex flex-col">
                         <div className="flex items-center justify-between mb-2">
                             <label className="text-xs font-black uppercase tracking-widest text-gray-500">Main Content (Markdown)</label>
-                            <label className="cursor-pointer flex items-center gap-1.5 text-xs font-bold text-indigo-600 hover:text-indigo-700 transition-colors bg-indigo-50 px-3 py-1.5 rounded-lg">
-                                 {uploadingImage ? <span className="animate-pulse">Uploading...</span> : <><ImageIcon className="w-4 h-4" /> Insert Image</>}
-                                <input type="file" className="hidden" accept="image/*" onChange={insertImageMarkdown} disabled={uploadingImage} />
-                            </label>
+                            <button 
+                                onClick={() => setShowImagePicker('markdown')}
+                                className="cursor-pointer flex items-center gap-1.5 text-xs font-bold text-indigo-600 hover:text-indigo-700 transition-colors bg-indigo-50 px-3 py-1.5 rounded-lg"
+                            >
+                                 <ImageIcon className="w-4 h-4" /> Smart Insert
+                            </button>
                         </div>
                         <textarea 
                             value={showDiff && suggestedContent ? suggestedContent : post.content}

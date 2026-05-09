@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { simulate500Error, simulateNetworkTimeout } from './fixtures/systemFixtures';
+import { simulate500Error } from './fixtures/systemFixtures';
 
 test.use({ storageState: '../.playwright/admin_storage_state.json' });
 
