@@ -58,10 +58,10 @@
 
 ## 5. 實作路徑 (Implementation Path)
 
-- [ ] **Step 1**: 建立 `features/marketing/machines/imagePickerMachine.ts`。
-- [ ] **Step 2**: 實作 `SmartImagePicker.tsx` 並集成至部落格工作台。
-- [ ] **Step 3**: 撰寫 `ImagePicker.mbt.spec.ts`。
-- [ ] **Step 4**: 後端實作 `AI_CORRECTION` 紀錄邏輯。
+- [x] **Step 1**: 建立 `features/marketing/machines/imagePickerMachine.ts`。
+- [x] **Step 2**: 實作 `SmartImagePicker.tsx` 並集成至部落格工作台。
+- [x] **Step 3**: 撰寫 `ImagePicker.mbt.spec.ts`。
+- [x] **Step 4**: 後端實作 `AI_CORRECTION` 紀錄邏輯。
 - [ ] **Step 5**: 建立 `features/admin/components/CorrectionAnalytics.tsx` 並撰寫 MBT。
 
 ---

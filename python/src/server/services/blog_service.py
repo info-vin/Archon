@@ -68,8 +68,40 @@ class BlogService(BaseRepository):
 
     async def update_post(self, post_id: str, update_data: dict[str, Any]) -> tuple[bool, dict[str, Any]]:
         """Update an existing blog post."""
-        # P6: Smart Polish - Extract image and clean content
+        # Phase 4.6.57: AI Correction Tracking
         if "content" in update_data:
+            # Fetch old post to compare content
+            old_post_success, old_post_res = await self.get_post(post_id)
+            if old_post_success and "post" in old_post_res:
+                old_content = old_post_res["post"].get("content", "")
+                new_content = update_data["content"]
+                
+                # Calculate diff if content changed
+                if old_content and old_content != new_content:
+                    import difflib
+                    s = difflib.SequenceMatcher(None, old_content, new_content)
+                    correction_rate = round((1.0 - s.ratio()) * 100, 2)
+                    
+                    # Log AI_CORRECTION to archon_logs
+                    log_data = {
+                        "source": "blog_editor",
+                        "level": "INFO",
+                        "message": f"AI Content Correction: {correction_rate}% changed",
+                        "type": "AI_CORRECTION",
+                        "details": {
+                            "post_id": post_id,
+                            "correction_rate": correction_rate,
+                            "old_length": len(old_content),
+                            "new_length": len(new_content)
+                        }
+                    }
+                    try:
+                        self.supabase_client.table("archon_logs").insert(log_data).execute()
+                        logger.info(f"Logged AI_CORRECTION for post {post_id} with rate {correction_rate}%")
+                    except Exception as e:
+                        logger.error(f"Failed to log AI_CORRECTION: {e}")
+
+            # P6: Smart Polish - Extract image and clean content
             update_data = self._clean_content_images(update_data)
 
         def _query():
