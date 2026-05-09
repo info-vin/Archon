@@ -199,6 +199,15 @@ export interface BlogPost {
     status: 'draft' | 'review' | 'published' | 'changes_requested';
     ai_score?: number;
     review_notes?: string;
+    generation_metadata?: {
+        citations?: {
+            id: string;
+            title: string;
+            url: string;
+            snippet?: string;
+        }[];
+        [key: string]: any;
+    };
 }
 
 export interface AssignableUser {

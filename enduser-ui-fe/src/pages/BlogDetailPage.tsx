@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import Markdown from 'react-markdown';
 import { api } from '../services/api';
 import { BlogPost } from '../types.ts';
+import { RAGCitation } from '../features/marketing/components/RAGCitation';
 
 const BlogDetailPage: React.FC = () => {
     const { id } = useParams<{ id: string }>();
@@ -41,6 +42,18 @@ const BlogDetailPage: React.FC = () => {
         );
     }
 
+    // Preprocess markdown: replace [1] with a specific markdown link syntax: [1](#rag-citation-1)
+    // Only match standalone [digits], avoiding existing links
+    const processCitations = (text: string) => {
+        if (!text) return '';
+        // Look behind to avoid matching inside existing markdown links like [Text]([1])
+        // This is a simple regex that works for most AI generated texts like "The sky is blue [1]."
+        return text.replace(/(?<!\]\()\[(\d+)\](?!\()/g, '[$1](#rag-citation-$1)');
+    };
+
+    const processedContent = processCitations(post.content || '');
+    const citations = post.generation_metadata?.citations || [];
+
     return (
         <div className="container mx-auto px-4 py-12 max-w-4xl">
             <Link to="/blog" className="text-primary hover:underline mb-8 inline-block">&larr; Back to Blog</Link>
@@ -57,7 +70,19 @@ const BlogDetailPage: React.FC = () => {
                 </div>
 
                 <div className="markdown-content">
-                    <Markdown>{post.content}</Markdown>
+                    <Markdown
+                        components={{
+                            a: ({ node, href, children, ...props }) => {
+                                if (href?.startsWith('#rag-citation-')) {
+                                    const citationId = href.replace('#rag-citation-', '');
+                                    return <RAGCitation citationId={citationId} citations={citations} />;
+                                }
+                                return <a href={href} {...props}>{children}</a>;
+                            }
+                        }}
+                    >
+                        {processedContent}
+                    </Markdown>
                 </div>
 
                 {post.hashtags && (

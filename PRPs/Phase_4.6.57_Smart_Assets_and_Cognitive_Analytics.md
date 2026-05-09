@@ -63,10 +63,11 @@
 - [x] **Step 3**: 撰寫 `ImagePicker.mbt.spec.ts`。
 - [x] **Step 4**: 後端實作 `AI_CORRECTION` 紀錄邏輯。
 - [x] **Step 5**: 建立 `features/admin/components/CorrectionAnalytics.tsx` 並撰寫 MBT。
+- [x] **Step 6**: 實作 RAG 引用透明化 (`RAGCitation.tsx`)，解析 Markdown 標籤並顯示來源，並撰寫 MBT 測試。
 
 ---
 
 ## 6. 驗證標準 (Definition of Done)
-1. `npx playwright test` 全綠，包含異常狀態模擬。
-2. David 可以在 Admin UI 看到 Bob 剛剛修改文章所產生的修改百分比。
-3. Bob 可以點擊文章中的引用標籤直接查看 RAG 知識庫來源。
+1. [x] `npx playwright test` 全綠，包含異常狀態模擬。
+2. [x] David 可以在 Admin UI 看到 Bob 剛剛修改文章所產生的修改百分比。
+3. [x] Bob 可以點擊文章中的引用標籤直接查看 RAG 知識庫來源。
