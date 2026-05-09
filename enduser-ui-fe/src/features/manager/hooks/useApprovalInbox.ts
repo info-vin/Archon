@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useMachine } from '@xstate/react';
 import { approvalMachine } from '../machines/approvalMachine';
 import { ProposedChange } from '@/types';
@@ -13,6 +14,10 @@ export interface UnifiedProposal extends ProposedChange {
 
 export const useApprovalInbox = () => {
   const [state, send] = useMachine(approvalMachine);
+
+  useEffect(() => {
+    send({ type: 'FETCH' });
+  }, [send]);
 
   const fetchData = () => send({ type: 'FETCH' });
   
