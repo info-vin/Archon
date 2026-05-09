@@ -6,6 +6,21 @@ import { EmployeeRole } from '../../src/types';
 import { renderApp } from './e2e.setup';
 import { createUser } from '../factories/userFactory';
 
+vi.mock('../../src/services/api', () => ({
+  api: {
+    getCurrentUser: vi.fn(),
+    getContentSources: vi.fn().mockResolvedValue([]),
+    getContentContext: vi.fn().mockResolvedValue({}),
+    draftBlogPost: vi.fn().mockResolvedValue({}),
+    getMarketingStats: vi.fn().mockResolvedValue({ totalLeads: 0 }),
+    getMarketingTrends: vi.fn().mockResolvedValue([]),
+    getBlogPosts: vi.fn().mockResolvedValue([]),
+    getPendingApprovals: vi.fn().mockResolvedValue({ blogs: [], leads: [] }),
+    updateTaskStatus: vi.fn().mockResolvedValue({}),
+    createTask: vi.fn().mockResolvedValue({}),
+  }
+}));
+
 describe('Content Marketing E2E Flow', () => {
     it('Bob can draft a blog post using the Workbench workflow', async () => {
         const user = userEvent.setup();
@@ -43,7 +58,7 @@ describe('Content Marketing E2E Flow', () => {
         renderApp(['/brand']);
 
         // 2. Verify Victory Feed is active and find the signal
-        const signal = await screen.findByText('Mozilla', {}, { timeout: 15000 });
+        const signal = await screen.findByText('Mozilla');
         await user.click(signal);
 
         // 3. Verify Context Intelligence is loaded in the left pane

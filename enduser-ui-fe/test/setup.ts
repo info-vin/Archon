@@ -21,6 +21,10 @@ Object.defineProperty(window, 'matchMedia', {
   })),
 });
 
+// Polyfill for scrollIntoView and scrollTo which are not implemented in jsdom
+window.HTMLElement.prototype.scrollIntoView = vi.fn();
+window.scrollTo = vi.fn();
+
 // Establish API mocking for any remaining HTTP requests before all tests.
 beforeAll(() => server.listen());
 

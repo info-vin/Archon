@@ -20,29 +20,43 @@ const inputClass = "appearance-none rounded-md relative block w-full px-3 py-2 b
 type TabType = 'general' | 'assignment' | 'knowledge' | 'report';
 
 export const TaskModal: React.FC<TaskModalProps> = ({ task, onClose, onTaskCreated, onTaskUpdated, initialProjectId }) => {
+  const isEditMode = !!(task && task.id);
+
   const [activeTab, setActiveTab] = useState<TabType>('general');
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [assigneeId, setAssigneeId] = useState('');
-  const [dueDate, setDueDate] = useState('');
-  const [priority, setPriority] = useState<TaskPriority>(TaskPriority.MEDIUM);
+  const [title, setTitle] = useState(task?.title || '');
+  const [description, setDescription] = useState(task?.description || '');
+  const [assigneeId, setAssigneeId] = useState(task?.assignee_id || '');
+  const [dueDate, setDueDate] = useState(() => {
+    if (task?.due_date) {
+      const date = new Date(task.due_date);
+      return new Date(date.getTime() - (date.getTimezoneOffset() * 60000)).toISOString().slice(0, 16);
+    }
+    return '';
+  });
+  const [priority, setPriority] = useState<TaskPriority>(task?.priority || TaskPriority.MEDIUM);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isRefining, setIsRefining] = useState(false);
   const [assignableUsers, setAssignableUsers] = useState<AssignableUser[]>([]);
   const [collaboratorAgentIds, setCollaboratorAgentIds] = useState<string[]>([]);
   const [isLoadingUsers, setIsLoadingUsers] = useState(true);
-  const [selectedKnowledgeIds, setSelectedKnowledgeIds] = useState<string[]>([]);
+  
+  const [selectedKnowledgeIds, setSelectedKnowledgeIds] = useState<string[]>(() => {
+    if (task?.sources && Array.isArray(task.sources)) {
+      return task.sources
+        .filter((s: any) => s.source_id && s.type === 'knowledge_item')
+        .map((s: any) => s.source_id);
+    }
+    return [];
+  });
   const [currentUser, setCurrentUser] = useState<any>(null);
   
   // David's Architect Workflow States
-  const [isRecurring, setIsRecurring] = useState(false);
-  const [crawlerTargetId, setCrawlerTargetId] = useState('');
+  const [isRecurring, setIsRecurring] = useState(task?.is_recurring || false);
+  const [crawlerTargetId, setCrawlerTargetId] = useState(task?.crawler_target_id || '');
   const [crawlerTargets, setCrawlerTargets] = useState<any[]>([]);
   const [frequency, setFrequency] = useState('daily');
   const [projects, setProjects] = useState<any[]>([]);
-  const [selectedProjectId, setSelectedProjectId] = useState<string>(initialProjectId || '');
-
-  const isEditMode = !!(task && task.id);
+  const [selectedProjectId, setSelectedProjectId] = useState<string>(initialProjectId || task?.project_id || '');
 
   useEffect(() => {
     const fetchInitialData = async () => {
@@ -103,26 +117,8 @@ export const TaskModal: React.FC<TaskModalProps> = ({ task, onClose, onTaskCreat
 
   useEffect(() => {
     if (isEditMode && task) {
-      setTitle(task.title);
-      setDescription(task.description || '');
-      setAssigneeId(task.assignee_id || '');
-      if (task.due_date) {
-        // Convert ISO string to local datetime string for input
-        const date = new Date(task.due_date);
-        const localIso = new Date(date.getTime() - (date.getTimezoneOffset() * 60000)).toISOString().slice(0, 16);
-        setDueDate(localIso);
-      }
-      setPriority(task.priority);
-      setIsRecurring(task.is_recurring || false);
-      setCrawlerTargetId(task.crawler_target_id || '');
-      
-      // Initialize selected knowledge IDs from existing sources
-      if (task.sources && Array.isArray(task.sources)) {
-        const ids = task.sources
-          .filter(s => s.source_id && s.type === 'knowledge_item')
-          .map(s => s.source_id);
-        setSelectedKnowledgeIds(ids);
-      }
+      // In edit mode, if the task prop changes drastically we might want to reset,
+      // but usually the modal is unmounted and remounted. We will keep only dynamic derivations if needed.
     }
   }, [task, isEditMode]);
 

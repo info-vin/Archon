@@ -65,7 +65,7 @@ export default defineConfig(({ mode }) => {
         globals: true,
               environment: 'jsdom',
               setupFiles: './test/setup.ts',
-              exclude: ['tests/e2e/**', 'node_modules'],
+              exclude: ['tests/playwright/**', 'node_modules'],
             }
           };
       });

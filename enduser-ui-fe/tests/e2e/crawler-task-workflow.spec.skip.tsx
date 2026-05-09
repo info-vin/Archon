@@ -4,6 +4,21 @@ import { renderApp } from './e2e.setup';
 import { api } from '../../src/services/api';
 import { EmployeeRole } from '../../src/types';
 
+vi.mock('../../src/services/api', () => ({
+  api: {
+    getCurrentUser: vi.fn(),
+    getProjects: vi.fn().mockResolvedValue([]),
+    getAssignableUsers: vi.fn().mockResolvedValue([]),
+    getCrawlerTargets: vi.fn().mockResolvedValue([]),
+    createTask: vi.fn().mockResolvedValue({ id: 'task-1' }),
+    getPendingChanges: vi.fn().mockResolvedValue([]),
+    getPendingApprovals: vi.fn().mockResolvedValue({ blogs: [], leads: [] }),
+    getSystemStats: vi.fn().mockResolvedValue({}),
+    getMarketingStats: vi.fn().mockResolvedValue({}),
+    getTasks: vi.fn().mockResolvedValue([]),
+  }
+}));
+
 beforeEach(() => {
     vi.clearAllMocks();
     vi.spyOn(window, 'alert').mockImplementation(() => {});
