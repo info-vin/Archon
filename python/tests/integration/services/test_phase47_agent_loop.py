@@ -3,6 +3,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 from server.services.agent_service import AgentService
+from server.services.shared_constants import AgentUUIDs
 
 
 @pytest.fixture
@@ -115,22 +116,21 @@ async def test_run_general_agent_task_librarian(mock_mcp_client):
         await service.run_agent_task(task_id="t-2", agent_id="librarian")
         mock_mcp_client.perform_rag_query.assert_called_once()
 
-from server.services.shared_constants import AgentUUIDs
 
 @pytest.mark.asyncio
 async def test_run_agent_task_direct_crawler_pipeline(mock_mcp_client):
     """
-    [Phase 4.6.58] Test that an empty description task with a crawler_target_id 
+    [Phase 4.6.58] Test that an empty description task with a crawler_target_id
     triggers the direct orchestrate_crawl pipeline bypassing the LLM.
     """
     service = AgentService(mcp_client=mock_mcp_client)
     mock_task_service = AsyncMock()
     mock_task_service.update_task.return_value = (True, {})
-    
+
     mock_task = {
         "id": "t-crawl",
         "title": "Crawl Govt Site",
-        "description": "", # Empty description triggers the pipeline
+        "description": "",  # Empty description triggers the pipeline
         "crawler_target_id": "target-uuid-123",
         "status": "todo",
     }
@@ -146,21 +146,22 @@ async def test_run_agent_task_direct_crawler_pipeline(mock_mcp_client):
 
     with (
         patch("server.utils.get_supabase_client", return_value=mock_supabase),
-        patch("server.services.crawling.crawling_service.CrawlingService", return_value=mock_crawler),
+        patch(
+            "server.services.crawling.crawling_service.CrawlingService",
+            return_value=mock_crawler,
+        ),
         patch("server.services.projects.task_service.task_service", mock_task_service),
-        patch.object(service, "_award_agent_xp", new_callable=AsyncMock) as mock_xp
+        patch.object(service, "_award_agent_xp", new_callable=AsyncMock) as mock_xp,
     ):
         await service.run_agent_task(task_id="t-crawl", agent_id=AgentUUIDs.LIBRARIAN)
-        
+
         # Verify the crawler was orchestrated with correct parameters
-        mock_crawler.orchestrate_crawl.assert_called_once_with({
-            "url": "https://example.com",
-            "max_depth": 3,
-            "user_role": "system_admin"
-        })
-        
+        mock_crawler.orchestrate_crawl.assert_called_once_with(
+            {"url": "https://example.com", "max_depth": 3, "user_role": "system_admin"}
+        )
+
         # Verify the task was marked as done directly
         mock_task_service.update_task.assert_any_call("t-crawl", {"status": "done"})
-        
+
         # Verify XP was awarded
         mock_xp.assert_called_once()

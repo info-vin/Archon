@@ -1,11 +1,11 @@
-import pytest
 from unittest.mock import AsyncMock, patch
 
+import pytest
 from fastapi.testclient import TestClient
 
-from src.server.main import app
-from src.server.schemas.marketing import DraftFromLeadsRequest
 from src.server.auth.dependencies import get_current_user
+from src.server.main import app
+
 
 @pytest.fixture
 def client():
@@ -21,12 +21,12 @@ def test_draft_from_leads_success(client):
         new_callable=AsyncMock
     ) as mock_draft:
         mock_draft.return_value = (True, {"generated_count": 2, "drafts": [{"id": "1"}, {"id": "2"}]})
-        
+
         response = client.post(
             "/api/marketing/draft-from-leads",
             json={"lead_ids": ["lead1", "lead2"]}
         )
-        
+
         assert response.status_code == 200
         assert response.json() == {"generated_count": 2, "drafts": [{"id": "1"}, {"id": "2"}]}
         mock_draft.assert_called_once_with(["lead1", "lead2"])
@@ -38,12 +38,12 @@ def test_draft_from_leads_failure(client):
         new_callable=AsyncMock
     ) as mock_draft:
         mock_draft.return_value = (False, {"error_code": 404, "message": "No leads found for the provided IDs."})
-        
+
         response = client.post(
             "/api/marketing/draft-from-leads",
             json={"lead_ids": ["invalid_lead"]}
         )
-        
+
         assert response.status_code == 404
         assert response.json() == {"detail": "No leads found for the provided IDs."}
         mock_draft.assert_called_once_with(["invalid_lead"])

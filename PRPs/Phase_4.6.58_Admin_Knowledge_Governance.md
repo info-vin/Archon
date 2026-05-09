@@ -12,16 +12,19 @@
 
 ## 2. 架構驗證與防禦網 (Architecture Verification)
 
-### 2.1 填補測試斷層 (Test Coverage Gap)
-雖然底層爬蟲有測試，Agent 對話有測試，但「給 Librarian 一張帶有 crawler_target_id 的空描述工單，它會不會直接去跑爬蟲並將狀態改為 Done」的這段截斷邏輯一直沒有專屬的測試。
-
+### 2.1 填補後端測試斷層 (Backend Test Coverage Gap)
 - [x] **Step 1**: 撰寫 `test_run_agent_task_direct_crawler_pipeline`。
 - [x] **Step 2**: 確保測試使用 Mock 成功驗證 `orchestrate_crawl` 被以正確的參數呼叫，且 Task 狀態成功跳轉。
 
-### 2.2 工作流文件化 (Workflow Documentation)
-- [ ] **Step 3**: 將這種「Task-Driven Crawler」的模式更新至專案架構文件 (`GEMINI.md` 或等效架構指引)，防止未來的開發者誤以為需要把 3737 的舊介面搬過來。
+### 2.2 MBT 硬化 (MBT Hardening)
+- [x] **Step 3**: 建立 `src/features/admin/machines/taskAssignmentMachine.ts`。設計明確的「爬蟲綁定」狀態。
+- [x] **Step 4**: 重構 `TaskAssignmentTab.tsx` 及其子組件，全面接入 XState 驅動，取代分散的 `useState`。
+- [x] **Step 5**: 建立 `tests/playwright/TaskAssignment.mbt.spec.ts`。在實體瀏覽器執行狀態機路徑，並產出 `trace.zip` 作為物理證據。
 
-## 3. 預期效益 (Expected Outcomes)
-*   消除了對「爬蟲功能遺失」的恐慌與誤解。
-*   為最關鍵的 Agent 截斷邏輯加上了保護網。
-*   確立了「不要混在一起，而是用 Task 對接」的跨服務治理新典範。
+### 2.3 工作流文件化 (Workflow Documentation)
+- [x] **Step 6**: 將這種「Task-Driven Crawler」的模式更新至專案架構文件 (`GEMINI.md`)。
+
+## 3. 驗證標準 (Definition of Done)
+1. 後端 `test_run_agent_task_direct_crawler_pipeline` 通過。
+2. `npx playwright test TaskAssignment.mbt.spec.ts` 通過並產出錄影。
+3. `TaskAssignmentTab.tsx` 中不再含有分散的爬蟲控制邏輯，全部集中於 XState Machine。

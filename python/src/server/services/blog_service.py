@@ -75,13 +75,13 @@ class BlogService(BaseRepository):
             if old_post_success and "post" in old_post_res:
                 old_content = old_post_res["post"].get("content", "")
                 new_content = update_data["content"]
-                
+
                 # Calculate diff if content changed
                 if old_content and old_content != new_content:
                     import difflib
                     s = difflib.SequenceMatcher(None, old_content, new_content)
                     correction_rate = round((1.0 - s.ratio()) * 100, 2)
-                    
+
                     # Log AI_CORRECTION to archon_logs
                     log_data = {
                         "source": "blog_editor",

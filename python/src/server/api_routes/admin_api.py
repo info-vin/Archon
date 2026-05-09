@@ -171,18 +171,19 @@ async def get_admin_logs(
     current_user: dict = Depends(get_current_user)
 ):
     """Fetch system logs (e.g., AI_CORRECTION)."""
-    from ..utils import get_supabase_client
     from datetime import datetime, timedelta
-    
+
+    from ..utils import get_supabase_client
+
     query = get_supabase_client().table("archon_logs").select("*")
-    
+
     if type:
         query = query.eq("type", type)
-        
+
     if time_range:
         days = int(time_range.replace("d", "")) if time_range.endswith("d") else 7
         cutoff_time = (datetime.now() - timedelta(days=days)).isoformat()
         query = query.gte("created_at", cutoff_time)
-        
+
     res = query.order("created_at", desc=True).execute()
     return res.data or []

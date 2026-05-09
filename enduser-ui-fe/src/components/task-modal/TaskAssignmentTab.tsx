@@ -1,4 +1,6 @@
-import React from 'react';
+import React, { useEffect } from 'react';
+import { useMachine } from '@xstate/react';
+import { taskAssignmentMachine } from '../../features/admin/machines/taskAssignmentMachine';
 import { AssignableUser } from '../../types.ts';
 import { TaskCrawlerSettings } from './TaskCrawlerSettings';
 
@@ -29,14 +31,48 @@ export const TaskAssignmentTab: React.FC<TaskAssignmentTabProps> = ({
   frequency, setFrequency,
   inputClass
 }) => {
+  const [state, send] = useMachine(taskAssignmentMachine, {
+    input: {
+        assigneeId,
+        crawlerTargetId,
+        isRecurring,
+        frequency,
+        collaboratorAgentIds,
+        isLibrarian: assignableUsers.find(u => u.id === assigneeId)?.role === 'ai_agent' || false
+    }
+  });
+
+  // Sync machine context back to parent state
+  useEffect(() => {
+    const ctx = state.context;
+    if (ctx.assigneeId !== assigneeId) setAssigneeId(ctx.assigneeId);
+    if (ctx.crawlerTargetId !== crawlerTargetId) setCrawlerTargetId(ctx.crawlerTargetId);
+    if (ctx.isRecurring !== isRecurring) setIsRecurring(ctx.isRecurring);
+    if (ctx.frequency !== frequency) setFrequency(ctx.frequency);
+    if (JSON.stringify(ctx.collaboratorAgentIds) !== JSON.stringify(collaboratorAgentIds)) {
+        setCollaboratorAgentIds(ctx.collaboratorAgentIds);
+    }
+  }, [state.context]);
+
+  const handleAssigneeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const id = e.target.value;
+    const user = assignableUsers.find(u => u.id === id);
+    send({ 
+        type: 'SELECT_ASSIGNEE', 
+        id, 
+        role: user?.role || '', 
+        name: user?.name || '' 
+    });
+  };
+
   return (
     <div className="space-y-4">
       <div>
         <label htmlFor="assignee" className="block text-sm font-medium mb-1">Assignee</label>
         <select 
           id="assignee" 
-          value={assigneeId || ''} 
-          onChange={(e) => setAssigneeId(e.target.value)} 
+          value={state.context.assigneeId || ''} 
+          onChange={handleAssigneeChange} 
           className={inputClass} 
           disabled={isLoadingUsers}
         >
@@ -49,8 +85,8 @@ export const TaskAssignmentTab: React.FC<TaskAssignmentTabProps> = ({
         </select>
         
         {/* Agent Capabilities Preview */}
-        {assigneeId && (() => {
-            const selected = assignableUsers.find(u => u.id === assigneeId);
+        {state.context.assigneeId && (() => {
+            const selected = assignableUsers.find(u => u.id === state.context.assigneeId);
             if (selected?.tools && selected.tools.length > 0) {
                 return (
                     <div className="mt-2 p-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 rounded text-xs text-blue-700 dark:text-blue-300">
@@ -78,14 +114,8 @@ export const TaskAssignmentTab: React.FC<TaskAssignmentTabProps> = ({
               <input 
                 type="checkbox" 
                 className="rounded text-primary focus:ring-primary h-4 w-4"
-                checked={collaboratorAgentIds.includes(agent.id)}
-                onChange={(e) => {
-                  if (e.target.checked) {
-                    setCollaboratorAgentIds(prev => [...prev, agent.id]);
-                  } else {
-                    setCollaboratorAgentIds(prev => prev.filter(id => id !== agent.id));
-                  }
-                }}
+                checked={state.context.collaboratorAgentIds.includes(agent.id)}
+                onChange={() => send({ type: 'TOGGLE_COLLABORATOR', agentId: agent.id })}
               />
               <span className="text-sm font-medium">{agent.name}</span>
             </label>
@@ -97,16 +127,16 @@ export const TaskAssignmentTab: React.FC<TaskAssignmentTabProps> = ({
       </div>
 
       <TaskCrawlerSettings
-        assigneeId={assigneeId}
+        assigneeId={state.context.assigneeId}
         assignableUsers={assignableUsers}
         isLoadingUsers={isLoadingUsers}
         crawlerTargets={crawlerTargets}
-        crawlerTargetId={crawlerTargetId}
-        setCrawlerTargetId={setCrawlerTargetId}
-        isRecurring={isRecurring}
-        setIsRecurring={setIsRecurring}
-        frequency={frequency}
-        setFrequency={setFrequency}
+        crawlerTargetId={state.context.crawlerTargetId}
+        setCrawlerTargetId={(id) => send({ type: 'SELECT_CRAWLER_TARGET', id })}
+        isRecurring={state.context.isRecurring}
+        setIsRecurring={(checked) => send({ type: 'TOGGLE_RECURRING', checked })}
+        frequency={state.context.frequency}
+        setFrequency={(f) => send({ type: 'SET_FREQUENCY', frequency: f })}
         inputClass={inputClass}
       />
     </div>

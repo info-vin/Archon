@@ -69,8 +69,9 @@ export const TaskCrawlerSettings: React.FC<TaskCrawlerSettingsProps> = ({
 
           {isRecurring && (
               <div className="pl-6 border-l-2 border-rose-200 dark:border-rose-800 py-1 space-y-2">
-                  <label className="block text-[10px] font-bold text-rose-600 uppercase">Sync Frequency</label>
+                  <label htmlFor="frequency" className="block text-[10px] font-bold text-rose-600 uppercase">Sync Frequency</label>
                   <select 
+                      id="frequency"
                       value={frequency} 
                       onChange={(e) => setFrequency(e.target.value)}
                       className={`${inputClass} py-1 text-xs border-rose-100`}
