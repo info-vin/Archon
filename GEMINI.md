@@ -139,9 +139,14 @@
 *   **18. 環境物理對齊原則 (Environment Physical Alignment)**
     *   **核心**: 嚴禁幻想 Host 機器與 Docker 容器具有完全相同的依賴狀態。
     - **教訓**: 在 4.6.42 中，本地執行 `make lint` 導致 `uv` 因群組未對齊而物理卸載 130 個套件。`google` 等命名空間包（Namespace Packages）極易因安裝順序或快取而發生 Import 衝突。
+
 *   **19. 環境相依性與幻想基礎設施 (Hallucinated Infrastructure)**
     *   **核心**: 絕對禁止在未讀取 `docker-compose.yml` 的情況下，向使用者提議或設定依賴本地端伺服器的服務（如 `http://localhost:8000`）。
     *   **教訓**: 在 Phase 4.6.55 中，因未檢查 Compose 檔案便提出 PostHog 本地部署方案，導致使用者浪費時間並產生不信任。必須落實「實體驗證基礎設施」的前置風險評估鐵律。
+
+*   **20. 任務導向的知識治理 (Task-Driven Knowledge Governance)**
+    *   **核心**: 拒絕將舊版 (3737) 複雜的爬蟲進度條與資料表 CRUD 盲目移植到新版 (5173)。新版架構是「Agentic Workflow」。
+    *   **教訓**: 在 Phase 4.6.58 發現，爬蟲不再是獨立的系統操作，而是一張「工單 (Task)」。Admin 只需設定 `crawler_target_id`，並指派給 `Librarian` (AI Agent)。Agent 收到空描述任務後，會自動在背景啟動實體爬蟲 `CrawlingService`，完成後自動標記任務為 Done。這種「透過 Task 對接」的方式是跨服務治理的新典範。
 
 ---
 
