@@ -9,6 +9,7 @@ import { AdminExtractionConfig } from '../features/admin/components/AdminExtract
 import { AdminCrawlerConfig } from '../features/admin/components/AdminCrawlerConfig';
 import { AdminAuditLogs } from '../features/admin/components/AdminAuditLogs';
 import { AdminContentManager } from '../features/admin/components/AdminContentManager';
+import { AdminCorrectionAnalytics } from '../features/admin/components/AdminCorrectionAnalytics';
 
 const AdminPage: React.FC = () => {
   const {
@@ -37,6 +38,7 @@ const AdminPage: React.FC = () => {
           <TabButton title="System Health" isActive={activeTab === 'health'} onClick={() => setActiveTab('health')} />
           {canManageUsers && <TabButton title="User Management" isActive={activeTab === 'users'} onClick={() => setActiveTab('users')} />}
           <TabButton title="Cost & Usage" isActive={activeTab === 'costs'} onClick={() => setActiveTab('costs')} />
+          <TabButton title="Cognitive Analytics" isActive={activeTab === 'analytics'} onClick={() => setActiveTab('analytics')} />
           <TabButton title="System Settings" isActive={activeTab === 'settings'} onClick={() => setActiveTab('settings')} />
           <TabButton title="Data Extraction" isActive={activeTab === 'extraction'} onClick={() => setActiveTab('extraction')} />
           {!isOnlyManager && <TabButton title="Blog Management" isActive={activeTab === 'blog'} onClick={() => setActiveTab('blog')} />}
@@ -51,7 +53,9 @@ const AdminPage: React.FC = () => {
           <div className="space-y-6">
              <AdminCostDashboard />
           </div>
-        )}        {activeTab === 'settings' && <AdminSystemConfig />}
+        )}
+        {activeTab === 'analytics' && <AdminCorrectionAnalytics />}
+        {activeTab === 'settings' && <AdminSystemConfig />}
         {activeTab === 'extraction' && (
           <div className="space-y-8">
             <AdminCrawlerConfig />

@@ -163,3 +163,26 @@ async def delete_crawler_target(target_id: str, current_user: dict = Depends(get
     # Managers can only delete if RLS allows (matching department)
     get_supabase_client().table("archon_crawler_targets").delete().eq("id", target_id).execute()
     return {"success": True}
+
+@router.get("/logs", dependencies=[Depends(verify_manager_role)])
+async def get_admin_logs(
+    type: str | None = None,
+    time_range: str | None = "7d",
+    current_user: dict = Depends(get_current_user)
+):
+    """Fetch system logs (e.g., AI_CORRECTION)."""
+    from ..utils import get_supabase_client
+    from datetime import datetime, timedelta
+    
+    query = get_supabase_client().table("archon_logs").select("*")
+    
+    if type:
+        query = query.eq("type", type)
+        
+    if time_range:
+        days = int(time_range.replace("d", "")) if time_range.endswith("d") else 7
+        cutoff_time = (datetime.now() - timedelta(days=days)).isoformat()
+        query = query.gte("created_at", cutoff_time)
+        
+    res = query.order("created_at", desc=True).execute()
+    return res.data or []
