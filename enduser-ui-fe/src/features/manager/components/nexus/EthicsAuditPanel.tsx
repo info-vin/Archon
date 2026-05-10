@@ -69,9 +69,17 @@ export const EthicsAuditPanel: React.FC<EthicsAuditPanelProps> = ({
                             </div>
                             <button
                                 onClick={() => handleDispatch(v.id)}
-                                className="px-4 py-2 bg-red-600 text-white rounded-xl text-[10px] font-black hover:bg-red-700 transition-all"
+                                disabled={processingId === v.id}
+                                className="px-4 py-2 bg-red-600 text-white rounded-xl text-[10px] font-black hover:bg-red-700 disabled:opacity-50 transition-all flex items-center gap-2"
                             >
-                                DISPATCH INVESTIGATION
+                                {processingId === v.id ? (
+                                    <>
+                                        <RefreshCwIcon className="w-3 h-3 animate-spin" />
+                                        DISPATCHING...
+                                    </>
+                                ) : (
+                                    'DISPATCH INVESTIGATION'
+                                )}
                             </button>
                         </div>
                     ))}
