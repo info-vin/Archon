@@ -5,12 +5,11 @@ import { useSystemSettings } from '../hooks/useAdminDashboard';
 
 export const AdminSystemConfig: React.FC = () => {
     // Dynamic loading of all settings across categories
-    const { settings, loading, isSaving, updateSetting } = useSystemSettings(['crawler_rbac', 'diagnostics', 'lead_scoring', 'system', 'marketing_scoring']);
-    
-    if (loading) return <div className="flex justify-center p-12"><RefreshCwIcon className="animate-spin w-8 h-8 text-indigo-600" /></div>;
+    const { settings, loading, isSaving, updateSetting } = useSystemSettings(['features', 'monitoring', 'api_keys', 'rag_strategy']);
 
     // Group settings by category dynamically
     const groupedSettings = useMemo(() => {
+        console.log("AdminSystemConfig settings loaded:", settings);
         return settings.reduce((acc, curr) => {
             const cat = curr.category || 'general';
             if (!acc[cat]) acc[cat] = [];
@@ -38,6 +37,22 @@ export const AdminSystemConfig: React.FC = () => {
         if (!isNaN(Number(value))) return 'number';
         return 'text';
     };
+
+    if (loading) return <div className="flex justify-center p-12"><RefreshCwIcon className="animate-spin w-8 h-8 text-indigo-600" /></div>;
+
+    if (!loading && settings.length === 0) {
+        return (
+            <div className="space-y-6 pb-20 font-sans">
+                <div className="mb-4">
+                    <h2 className="text-2xl font-bold text-gray-800">Dynamic System Configuration</h2>
+                </div>
+                <div className="bg-red-50 text-red-600 p-6 rounded-xl border border-red-200">
+                    <h3 className="font-bold">Settings failed to load</h3>
+                    <p>No settings were returned from the API. Please check your browser console (F12) for network errors.</p>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-6 pb-20 font-sans">

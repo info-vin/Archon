@@ -49,7 +49,7 @@ export const AdminExtractionConfig: React.FC = () => {
                 {suggestions && (
                     <div className="mt-6 p-4 bg-muted/30 rounded-xl border border-dashed border-border animate-in slide-in-from-top-2 duration-300">
                         <div className="flex justify-between items-start mb-4">
-                            <h4 className="font-bold text-indigo-500">Suggested Fields Found</h4>
+                            <h4 className="font-bold text-indigo-500">LLM Semantic Analysis & Suggested Fields</h4>
                             <div className="flex gap-2">
                                 {extractionFieldsConfig.filter(f => f.key !== 'analyzeUrl').map(field => {
                                     const valueMap: any = { newSchemaName: newSchemaName, newDomainPattern: newDomainPattern };
@@ -68,6 +68,14 @@ export const AdminExtractionConfig: React.FC = () => {
                                 <button onClick={saveSchema} className="px-3 py-1 bg-green-600 text-white text-xs font-bold rounded hover:bg-green-700">SAVE TEMPLATE</button>
                             </div>
                         </div>
+
+                        {suggestions.summary && (
+                            <div className="mb-6 p-4 bg-indigo-50 dark:bg-indigo-900/20 border-l-4 border-indigo-500 rounded-r-lg">
+                                <h5 className="text-xs font-bold text-indigo-700 dark:text-indigo-400 uppercase tracking-wider mb-1">Semantic Understanding</h5>
+                                <p className="text-sm text-indigo-900 dark:text-indigo-200">{suggestions.summary}</p>
+                            </div>
+                        )}
+
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                             {suggestions.fields?.map((field: any, idx: number) => (
                                 <div key={idx} className="p-3 bg-card border border-border rounded-lg shadow-sm">

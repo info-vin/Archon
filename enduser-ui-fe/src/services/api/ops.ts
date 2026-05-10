@@ -244,7 +244,7 @@ export const opsApi = {
 
   async getCrawlerTargets(): Promise<CrawlerTarget[]> {
     const data = await callAPI<any>('/api/admin/crawler-targets');
-    return data.targets || [];
+    return Array.isArray(data) ? data : (data.targets || []);
   },
 
   async createCrawlerTarget(targetData: any): Promise<CrawlerTarget> {

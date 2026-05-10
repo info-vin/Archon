@@ -32,20 +32,25 @@ class ExtractionService:
             if not url.startswith(("http://", "https://")):
                 url = f"https://{url}"
 
-            crawler = await get_crawler()
-            if not crawler:
-                raise Exception("Crawler unavailable")
+            from crawl4ai import AsyncWebCrawler, BrowserConfig
+            browser_config = BrowserConfig(
+                headless=True,
+                verbose=False,
+                browser_type="chromium",
+                extra_args=["--no-sandbox"],
+            )
+            async with AsyncWebCrawler(config=browser_config) as crawler:
+                # Use crawl4ai to get markdown directly
+                result = await crawler.arun(url)
+                content = result.markdown if hasattr(result, "markdown") and result.markdown else ""
 
-            # Use crawl4ai to get markdown directly
-            result = await crawler.arun(url)
-            content = result.markdown if hasattr(result, "markdown") and result.markdown else ""
+                if not content:
+                    # Fallback: Try raw HTML if markdown extraction failed
+                    content = result.html if hasattr(result, "html") and result.html else ""
 
-            if not content:
-                # Fallback: Try raw HTML if markdown extraction failed
-                content = result.html if hasattr(result, "html") and result.html else ""
-
-            if not content:
-                raise Exception(f"URL returned empty content. Status: {getattr(result, 'status_code', 'unknown')}")
+                if not content:
+                    error_msg = getattr(result, "error_message", "No error message")
+                    raise Exception(f"URL returned empty content. Status: {getattr(result, 'status_code', 'unknown')}. Error: {error_msg}")
 
             # Truncate content to avoid context limit issues
             if len(content) > 15000:
@@ -63,7 +68,9 @@ class ExtractionService:
                 "You are a Data Extraction Expert. Analyze the provided web content (Markdown) "
                 "and identify key structured data fields that would be valuable for business intelligence "
                 "(Sales, Marketing, HR). \n"
-                "Return a JSON object with a 'fields' list. Each field should have: 'name', 'type' (string, number, list), "
+                "Return a JSON object with: \n"
+                "1. 'summary': A 2-3 sentence semantic understanding of what this website is and its main business purpose.\n"
+                "2. 'fields': A list where each field has: 'name', 'type' (string, number, list), "
                 "and 'description' (example value from text)."
             )
             system_prompt = prompt_service.get_prompt("data_extraction_prompt", default_prompt)

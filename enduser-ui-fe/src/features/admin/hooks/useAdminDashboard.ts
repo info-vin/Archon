@@ -137,9 +137,11 @@ export const useExtractionSchemas = () => {
         setIsAnalyzing(true);
         setSuggestions(null);
         try {
-            const result = await api.analyzeExtractionUrl(analyzeUrl);
+            // Ensure analyzeUrl has a protocol for the frontend URL parser
+            const safeUrl = analyzeUrl.startsWith('http') ? analyzeUrl : `https://${analyzeUrl}`;
+            const result = await api.analyzeExtractionUrl(safeUrl);
             setSuggestions(result);
-            const url = new URL(analyzeUrl);
+            const url = new URL(safeUrl);
             setNewDomainPattern(`${url.hostname}${url.pathname.split('/').slice(0, 3).join('/')}/*`);
         } catch (err: any) {
             alert("Analysis failed: " + err.message);
