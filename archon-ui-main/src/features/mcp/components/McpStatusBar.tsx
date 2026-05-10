@@ -24,14 +24,14 @@ export const McpStatusBar: React.FC<McpStatusBarProps> = ({ status, sessionInfo,
   };
 
   const getStatusIcon = () => {
-    if (status.status === "running") {
+    if (status.status === "running" || status.status === "healthy") {
       return <CheckCircle className="w-4 h-4 text-green-500" />;
     }
     return <AlertCircle className="w-4 h-4 text-red-500" />;
   };
 
   const getStatusColor = () => {
-    if (status.status === "running") {
+    if (status.status === "running" || status.status === "healthy") {
       return "text-green-500 shadow-[0_0_10px_rgba(34,197,94,0.5)]";
     }
     return "text-red-500";
@@ -59,7 +59,7 @@ export const McpStatusBar: React.FC<McpStatusBarProps> = ({ status, sessionInfo,
       <div className="w-px h-4 bg-zinc-700" />
 
       {/* Uptime */}
-      {status.uptime !== null && (
+      {typeof status.uptime === 'number' && !isNaN(status.uptime) && (
         <>
           <div className="flex items-center gap-2">
             <Clock className="w-4 h-4 text-blue-500" />

@@ -85,7 +85,7 @@ async def lifespan(app: FastAPI):
         # Initialize Sentinel / Scheduler
         api_logger.info("Waking up Sentinels (Scheduler Service)...")
         scheduler = SchedulerService()
-        scheduler.start()
+        await scheduler.start()
         initialized_components.add("scheduler")
 
         # Signal that all initialization steps are complete
