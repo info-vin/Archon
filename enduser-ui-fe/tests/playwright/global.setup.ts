@@ -13,6 +13,16 @@ setup('authenticate as system admin', async ({ page }) => {
 
   console.log('🚀 [Global Setup] Authenticating as System Admin...');
   await page.goto('/#/auth');
+  
+  try {
+      await page.waitForSelector('input[name="email"]', { timeout: 5000 });
+  } catch (e) {
+      console.log("Timeout waiting for email input. Dumping HTML:");
+      const html = await page.evaluate(() => document.body.innerHTML);
+      console.log(html.substring(0, 2000));
+      throw e;
+  }
+
   await page.fill('input[name="email"]', 'admin@archon.com');
   await page.fill('input[name="password"]', 'qwer45tyuiop');
   await page.click('button[type="submit"]');

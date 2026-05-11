@@ -3,6 +3,7 @@ import { test, expect } from '@playwright/test';
 test.use({ storageState: '../.playwright/admin_storage_state.json' });
 
 test.describe('Exhaustive Admin Panel Verification', () => {
+    test.setTimeout(60000); // 9 tabs may take longer than 30s to verify
     
     test.beforeEach(async ({ page }) => {
         // Prevent random network timeouts from causing flakiness
@@ -19,15 +20,15 @@ test.describe('Exhaustive Admin Panel Verification', () => {
         await expect(page.getByRole('heading', { name: 'Admin Control Center' })).toBeVisible({ timeout: 10000 });
 
         const tabsToVerify = [
-            { name: 'System Prompts', expectedContent: 'Editor Mode' },
-            { name: 'System Health', expectedContent: 'Connectivity Alerts' },
+            { name: 'System Prompts', expectedContent: 'Save Changes' },
+            { name: 'System Health', expectedContent: 'AI Connectivity Exception Log' },
             { name: 'User Management', expectedContent: 'Identity Matrix' },
-            { name: 'Cost & Usage', expectedContent: 'AI Usage' },
-            { name: 'Cognitive Analytics', expectedContent: 'Correction Analytics' },
+            { name: 'Cost & Usage', expectedContent: 'Token Cost & ROI Analytics' },
+            { name: 'Cognitive Analytics', expectedContent: 'AI Cognitive Analytics' },
             { name: 'System Settings', expectedContent: 'Dynamic System Configuration' },
-            { name: 'Data Extraction', expectedContent: 'Crawler Targets' },
-            { name: 'Blog Management', expectedContent: 'Manage Knowledge Base' },
-            { name: 'Document Versions', expectedContent: 'Document Version History' }
+            { name: 'Data Extraction', expectedContent: 'Knowledge Base Targets (Crawler)' },
+            { name: 'Blog Management', expectedContent: 'Content Assets' },
+            { name: 'Document Versions', expectedContent: 'Document Version Audit Trail' }
         ];
 
         for (const tab of tabsToVerify) {

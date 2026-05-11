@@ -1,11 +1,13 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { PlusIcon } from '../../../components/Icons';
+import { PlusIcon, TrashIcon } from '../../../components/Icons';
 import { useBlogPosts } from '../hooks/useAdminDashboard';
 
 export const AdminContentManager: React.FC = () => {
-    const { posts, deletePost } = useBlogPosts();
+    const { posts, deletePost, loading } = useBlogPosts();
     const navigate = useNavigate();
+
+    if (loading) return <div className="p-12 text-center">Loading posts...</div>;
 
     return (
         <div className="bg-card p-6 rounded-2xl border border-border shadow-sm font-sans">
@@ -28,20 +30,21 @@ export const AdminContentManager: React.FC = () => {
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-border bg-card text-sm">
-                        {posts.map(post => (
-                            <tr key={post.id} className="hover:bg-muted/30 transition-colors cursor-pointer" onClick={() => navigate(`/admin/editor/${post.id}`)}>
-                                <td className="px-6 py-4 whitespace-nowrap font-bold text-gray-900 dark:text-white">{post.title}</td>
-                                <td className="px-6 py-4 whitespace-nowrap">{post.authorName}</td>
-                                <td className="px-6 py-4 whitespace-nowrap">
-                                    <span className={`px-2 py-0.5 text-[10px] font-bold uppercase rounded border ${post.status === 'published' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-amber-50 text-amber-700 border-amber-200'}`}>{post.status}</span>
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-xs text-muted-foreground">{new Date(post.publishDate).toLocaleDateString()}</td>
-                                <td className="px-6 py-4 whitespace-nowrap text-right font-medium">
-                                    <button onClick={(e) => { e.stopPropagation(); navigate(`/admin/editor/${post.id}`); }} className="text-indigo-600 hover:text-indigo-800 font-bold transition-colors">Edit</button>
-                                    <button onClick={(e) => { e.stopPropagation(); deletePost(post.id); }} className="text-red-600 hover:text-red-800 font-bold ml-4 transition-colors">Delete</button>
+                        {posts.length > 0 ? posts.map((post) => (
+                            <tr key={post.id}>
+                                <td className="px-6 py-4 font-bold">{post.title}</td>
+                                <td className="px-6 py-4">{post.authorName || 'Admin'}</td>
+                                <td className="px-6 py-4 capitalize">{post.status}</td>
+                                <td className="px-6 py-4">{new Date(post.publishDate).toLocaleDateString()}</td>
+                                <td className="px-6 py-4 text-right">
+                                    <button onClick={() => deletePost(post.id)} className="text-red-500 hover:text-red-700"><TrashIcon className="w-4 h-4"/></button>
                                 </td>
                             </tr>
-                        ))}
+                        )) : (
+                            <tr>
+                                <td colSpan={5} className="px-6 py-12 text-center text-muted-foreground italic">No blog posts found. Start by creating a new post.</td>
+                            </tr>
+                        )}
                     </tbody>
                 </table>
             </div>
