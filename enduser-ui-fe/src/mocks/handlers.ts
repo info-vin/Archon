@@ -168,4 +168,7 @@ export const handlers = [
   http.post('/api/marketing/blog/draft', () => HttpResponse.json({ title: 'Mock', content: '...', excerpt: '...', references: [] })),
   http.post('/api/marketing/leads/:id/promote', () => HttpResponse.json({ success: true, vendor_id: 'v-123' })),
   http.get('/api/auth/me', () => HttpResponse.json(mockUsers.admin)) // Global Fallback
+
+,
+  http.get('/docs/nexus-spec.md', () => HttpResponse.text('# Nexus Spec\n\nMocked spec content for E2E tests.'))
 ];
