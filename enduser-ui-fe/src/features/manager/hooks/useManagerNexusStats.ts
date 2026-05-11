@@ -52,6 +52,7 @@ export const useManagerNexusStats = () => {
         updated_at: new Date().toISOString(),
         updated_by: 'System Default'
     });
+    const [isSavingRules, setIsSavingRules] = useState(false);
 
     const fetchData = useCallback(async () => {
         setLoading(true);
@@ -209,6 +210,7 @@ export const useManagerNexusStats = () => {
             ...newMeta
         };
 
+        setIsSavingRules(true);
         try {
             await api.updateSystemSetting('marketing_scoring', { 
                 value: JSON.stringify(payload),
@@ -218,6 +220,8 @@ export const useManagerNexusStats = () => {
             alert("Scoring Rules Saved to Database!");
         } catch (e: any) {
             alert("Failed to save rules: " + e.message);
+        } finally {
+            setIsSavingRules(false);
         }
     };
 
@@ -227,7 +231,7 @@ export const useManagerNexusStats = () => {
         overview, healthTrend, team, approvals, alerts, aiStats,
         commanderTrends, forceReadiness, businessRisks, collabSynergy,
         slaReliability, ethicsAudit, knowledgeRoi, codeProposals,
-        rules, setRules, rulesMeta, setRulesMeta,
+        rules, setRules, rulesMeta, setRulesMeta, isSavingRules,
         fetchData, handleDispatch, handleApprovePrompt, handleRebuildIndex,
         handleApproveContent, handleCodeAction, handleRuleChange, handleSaveRules
     };
