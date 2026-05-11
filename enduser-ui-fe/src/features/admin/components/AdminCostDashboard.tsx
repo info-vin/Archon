@@ -33,7 +33,8 @@ export const AdminCostDashboard: React.FC = () => {
                 }
             } finally {
                 if (isMounted) {
-                    setLoading(false);
+                    // Physical delay to allow Headless renderer to paint the UI
+                    setTimeout(() => setLoading(false), 300);
                 }
             }
         };
