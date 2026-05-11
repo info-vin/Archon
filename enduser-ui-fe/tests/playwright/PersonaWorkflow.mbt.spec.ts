@@ -133,10 +133,9 @@ test.describe('Cross-Persona Workflow: Alice (Leads) -> Bob (Brand) -> Charlie (
     // ---------------------------------------------------------
 
     // Mock pending approvals with stateful behavior
-    let approvalsFetchCount = 0;
+    let isApproved = false;
     await page.route('**/api/marketing/approvals', async route => {
-      if (approvalsFetchCount === 0) {
-          approvalsFetchCount++;
+      if (!isApproved) {
           await route.fulfill({
             status: 200,
             json: {
@@ -162,14 +161,20 @@ test.describe('Cross-Persona Workflow: Alice (Leads) -> Bob (Brand) -> Charlie (
           });
       }
     });
+    await page.route(`**/api/marketing/approvals/blog/${mockPostId}/approve`, async route => {
+      isApproved = true;
+      await route.fulfill({ status: 200, json: { success: true } });
+    });
 
     await page.route(`**/api/changes`, async route => {
       await route.fulfill({ status: 200, json: [] });
     });
 
-    await page.route(`**/api/marketing/approvals/blog/${mockPostId}/approve`, async route => {
-      await route.fulfill({ status: 200, json: { success: true } });
-    });
+    // Mock heavy analytics APIs to prevent test timeouts in CI
+    await page.route('**/api/stats/*', async route => route.fulfill({ status: 200, json: [] }));
+    await page.route('**/api/logs/*', async route => route.fulfill({ status: 200, json: [] }));
+    await page.route('**/api/system/settings*', async route => route.fulfill({ status: 200, json: [] }));
+    await page.route('**/api/admin/users*', async route => route.fulfill({ status: 200, json: {profiles:[]} }));
 
     await page.goto('/#/manager');
     // Go to the Operational Load tab where approvals are shown

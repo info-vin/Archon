@@ -75,7 +75,10 @@ export const useManagerNexusStats = () => {
 
             const getData = <T>(index: number, fallback: T): T => {
                 const res = results[index];
-                return res.status === 'fulfilled' ? res.value as T : fallback;
+                if (res.status === 'fulfilled' && res.value !== null && res.value !== undefined) {
+                    return res.value as T;
+                }
+                return fallback;
             };
 
             setOverview(getData(0, null));
@@ -83,14 +86,14 @@ export const useManagerNexusStats = () => {
             setApprovals(getData(2, { blogs: [], leads: [] }));
             setAlerts(getData(3, []));
             setAiStats(getData(4, null));
-            const settings = getData(5, null);
+            const settings = getData(5, []);
             setCommanderTrends(getData(6, []));
             setForceReadiness(getData(7, null));
             setBusinessRisks(getData(8, []));
             setCollabSynergy(getData(9, null));
             setSlaReliability(getData(10, null));
-            setEthicsAudit(getData(11, null));
-            setKnowledgeRoi(getData(12, null));
+            setEthicsAudit(getData(11, { violations: [], status: 'clear' }));
+            setKnowledgeRoi(getData(12, { roi: 0, active_nodes: 0 }));
             setCodeProposals(getData(13, []) || []);
 
             if (settings && (settings as any[]).length > 0) {

@@ -24,23 +24,22 @@ export const PerformancePulseChart: React.FC<PerformancePulseChartProps> = ({ da
                                     <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
                                 </linearGradient>
                             </defs>
-                            <XAxis 
-                                dataKey="date" 
-                                axisLine={false} 
-                                tickLine={false} 
-                                fontSize={10} 
-                                interval={Math.max(0, Math.floor(data.length / 3))} 
+                            <XAxis
+                                dataKey="date"
+                                axisLine={false}
+                                tickLine={false}
+                                fontSize={10}
+                                interval={data.length > 0 ? Math.max(0, Math.floor(data.length / 3)) : 0}
                                 tick={{fill: '#94a3b8'}}
                             />
-                            <YAxis yAxisId="left" hide />
+                            <YAxis yAxisId="left" hide domain={[0, 'auto']} />
                             <YAxis yAxisId="right" hide domain={[0, 24]} />
-                            <ReTooltip 
+                            <ReTooltip
                                 contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)'}}
                             />
                             <Area yAxisId="left" type="monotone" dataKey="bob_tokens" stroke="#6366f1" fillOpacity={1} fill="url(#colorTokens)" strokeWidth={2} name="Bob's Tokens" isAnimationActive={false} />
                             <Area yAxisId="right" type="monotone" dataKey="decision_hours" stroke="#f59e0b" fill="transparent" strokeWidth={2} strokeDasharray="5 5" name="Decision Gap (Hrs)" isAnimationActive={false} />
-                        </AreaChart>
-                    </ResponsiveContainer>
+                        </AreaChart>                    </ResponsiveContainer>
                 ) : (
                     <div className="h-full flex items-center justify-center text-muted-foreground italic text-xs">
                         No performance data recorded in the last 30 days.

@@ -377,3 +377,10 @@
 3.  **部署與非同步測試的挑戰**: 九月下旬，我們專注於打通完整的開發到部署流程。我們演練了部署流程，解決了因服務耦合、Git Remote 混淆和鎖定檔案缺失導致的部署失敗問題 (Ref: 09-30)。同時，我們在為非同步 API 撰寫測試時遇到了困難，最終透過在 `patch` 中使用 `AsyncMock` 和在獨立檔案中進行「沙盒驗證」，才成功突破了 Mocking 的迷霧 (Ref: 09-25)。
 
 總結來說，九月是透過解決一系列棘手的環境、部署和測試問題，從而建立起穩固的工程紀律和核心工作原則的基礎月份。
+
+### 【Phase 4.6.60: 穩定性硬化與 E2E 物理公證鐵律】
+> **【鐵律】此為針對 Manager Nexus 與 MBT 測試在極端環境 (Headless/Empty Data) 下的血淚教訓，在進行全端開發時必須嚴格遵守：**
+>
+> 1.  **前端圖表規範 (Headless Chart Hardening)**: 所有基於 Recharts 的圖表元件（特別是 AreaChart, LineChart），必須預設關閉動畫 (`isAnimationActive={false}`)。這能防止 Playwright 在 Headless 環境下，因動畫計算座標產生 `NaN` 而導致的 `TickItem Error` 崩潰。
+> 2.  **後端空資料防禦 (Backend Empty State Parity)**: 絕對禁止使用 Supabase Python 客戶端的 `.single()` 或 `.maybe_single()` 來獲取單筆資料，因為它在空資料時會引發 HTTP 500 (`PGRST116`) 或返回 `None` 導致 `AttributeError`。必須使用安全的陣列查詢模式：`res = query.execute()` 並搭配 `if res.data and len(res.data) > 0:`。
+> 3.  **測試狀態防護 (Stateful Mocks & Negative Paths)**: E2E 測試絕不可依賴「已有資料的開發者資料庫」。所有 MBT 測試必須包含空資料 (Empty State) 的負面斷言。在 Mock API 時，必須使用外部變數 (如 `let isApproved = false`) 來實現具狀態模擬 (Stateful Mock)，以真實還原 React 重新渲染時的資料狀態。

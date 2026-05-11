@@ -55,14 +55,12 @@ class ProposeChangeService:
         # Physical Department Isolation (Phase 4.6.23 Hardening)
         if user_id:
             # First, get the department of the requesting manager
-            manager_res = (
-                self.db_client.table("profiles").select("department, role").eq("id", user_id).single().execute()
-            )
-            if manager_res.data and manager_res.data.get("role") != "system_admin":
-                dept = manager_res.data.get("department")
-                # Filter proposals where the embedded created_by user belongs to the same department
-                # Note: This requires create_file_proposal to embed 'created_by' in JSONB
-                query = query.filter("request_payload->>created_by_dept", "eq", dept)
+            p_res = self.db_client.table("profiles").select("department, role").eq("id", user_id).execute()
+            if p_res.data and len(p_res.data) > 0:
+                profile = p_res.data[0]
+                if profile.get("role") != "system_admin":
+                    dept = profile.get("department")
+                    query = query.filter("request_payload->>created_by_dept", "eq", dept)
 
         res = query.order("created_at", desc=True).execute()
         return cast(list[dict[str, Any]], res.data or [])
@@ -84,8 +82,8 @@ class ProposeChangeService:
         # Physical identity embedding (Phase 4.6.23)
         dept = "General"
         if user_id:
-            u_res = self.db_client.table("profiles").select("department").eq("id", user_id).single().execute()
-            dept = u_res.data.get("department", "General") if u_res.data else "General"
+            u_res = self.db_client.table("profiles").select("department").eq("id", user_id).execute()
+            dept = u_res.data[0].get("department", "General") if u_res.data else "General"
 
         payload = {
             "file_path": file_path,
@@ -93,7 +91,7 @@ class ProposeChangeService:
             "new_content": new_content,
             "created_by": user_id,
             "created_by_dept": dept,
-            "change_summary": summary, # Embedded in payload for resilience
+            "change_summary": summary,
         }
 
         res = (
@@ -113,8 +111,8 @@ class ProposeChangeService:
 
         # Physical Audit Log (Phase 4.6.41)
         try:
-            u_res = self.db_client.table("profiles").select("name").eq("id", str(user_id)).single().execute()
-            user_name = u_res.data.get("name", "Unknown Admin") if u_res.data else "Unknown Admin"
+            u_res = self.db_client.table("profiles").select("name").eq("id", str(user_id)).execute()
+            user_name = u_res.data[0].get("name", "Unknown Admin") if u_res.data else "Unknown Admin"
 
             from .log_service import log_service
             log_service.create_log_entry({
@@ -138,8 +136,8 @@ class ProposeChangeService:
 
         # Physical Audit Log (Phase 4.6.41)
         try:
-            u_res = self.db_client.table("profiles").select("name").eq("id", str(user_id)).single().execute()
-            user_name = u_res.data.get("name", "Unknown Admin") if u_res.data else "Unknown Admin"
+            u_res = self.db_client.table("profiles").select("name").eq("id", str(user_id)).execute()
+            user_name = u_res.data[0].get("name", "Unknown Admin") if u_res.data else "Unknown Admin"
 
             from .log_service import log_service
             log_service.create_log_entry({
@@ -152,35 +150,3 @@ class ProposeChangeService:
             self.logger.warning(f"Audit log failed: {e}")
 
         return cast(dict[str, Any], res.data[0])
-
-    async def execute_proposal(self, proposal_id: UUID) -> dict[str, Any]:
-        proposal = await self.get_proposal(proposal_id)
-        if not proposal or proposal["status"] != "approved":
-            raise PermissionError("Not approved")
-        try:
-            change_type, payload = proposal["type"], proposal["request_payload"]
-            log = await self.executor.execute_file_change(payload) if change_type == "file" else "Executed"
-            res = (
-                self.db_client.table("proposed_changes")
-                .update({"status": "executed", "executed_at": "now()", "execution_log": log})
-                .eq("id", str(proposal_id))
-                .execute()
-            )
-
-            # Physical Execution Audit (Phase 4.6.41)
-            try:
-                from .log_service import log_service
-                log_service.create_log_entry({
-                    "project_name": "admin-audit",
-                    "gemini_response": f"Proposal {proposal_id} executed successfully: {log[:100]}",
-                    "user_input": f"Execute {proposal_id}"
-                })
-            except Exception:
-                pass
-
-            return cast(dict[str, Any], res.data[0])
-        except Exception as e:
-            self.db_client.table("proposed_changes").update({"status": "failed", "execution_log": str(e)}).eq(
-                "id", str(proposal_id)
-            ).execute()
-            raise

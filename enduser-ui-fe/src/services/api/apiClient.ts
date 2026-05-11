@@ -58,12 +58,33 @@ export async function callAPI<T>(
     // 1. JWT Injection (Authorization)
     // Primary: archon_token (Admin UI pattern), Fallback: Supabase session
     let token = localStorage.getItem('archon_token');
-    
-    if (!token && supabase) {
-      const { data: { session } } = await supabase.auth.getSession();
-      token = session?.access_token || null;
-    }
 
+    if (!token && supabase) {
+      // Resilient check: check localStorage directly to avoid Web Lock hangs in E2E
+      const keys = Object.keys(localStorage);
+      const sbKey = keys.find(k => k.startsWith('sb-') && k.endsWith('-auth-token'));
+      if (sbKey) {
+        try {
+          const sessionData = JSON.parse(localStorage.getItem(sbKey) || '{}');
+          token = sessionData?.access_token || null;
+        } catch (e) {
+          console.warn("apiClient: Failed to parse localStorage token", e);
+        }
+      }
+
+      // If still no token, try getSession but with a race to avoid permanent hang
+      if (!token) {
+        try {
+          const sessionResult: any = await Promise.race([
+            supabase.auth.getSession(),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('Auth timeout')), 3000))
+          ]);
+          token = sessionResult?.data?.session?.access_token || null;
+        } catch (e) {
+          console.warn("apiClient: Auth session retrieval failed/timed out", e);
+        }
+      }
+    }
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;
     }
@@ -75,12 +96,22 @@ export async function callAPI<T>(
       headers['X-User-Role'] = savedRole;
     }
 
-    const response = await fetch(fullUrl, {
-      ...options,
-      headers,
-    });
+    // 3. Timeout Logic (Resiliency against hangs)
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
 
-    // 3. 429 Retry Logic (Persona Resiliency)
+    let response;
+    try {
+        response = await fetch(fullUrl, {
+            ...options,
+            headers,
+            signal: controller.signal
+        });
+    } finally {
+        clearTimeout(timeoutId);
+    }
+
+    // 4. 429 Retry Logic (Persona Resiliency)
     if (response.status === 429) {
        console.warn(`⏳ [API 429][${normalizedEndpoint}]: Rate limited. Retrying in 2s...`);
        await new Promise(r => setTimeout(r, 2000));

@@ -7,8 +7,7 @@ import { opsApi } from './ops';
  * Modularized API Service for Archon End-User UI.
  * Achieves L2 Hardening by domain separation.
  * 
- * Using explicit mapping instead of spread operator to ensure 
- * 100% reference stability for tests and build tools.
+ * Hardened version for Phase 4.6.59+
  */
 export const api = {
   // Auth
@@ -120,6 +119,5 @@ export const api = {
   diagnoseFile: opsApi.diagnoseFile.bind(opsApi),
 };
 
-// Re-export core dependencies and types
 export { supabase } from './client';
 export * from './types';

@@ -29,10 +29,10 @@ async def test_department_isolation_physical_logic():
     service = ProposeChangeService(db_client=mock_db)
 
     # --- Test Scenario A: Marketing Manager ---
-    # Setup chain of mocks for Supabase syntax: table().select().eq().single().execute()
-    mock_db.table.return_value.select.return_value.eq.return_value.single.return_value.execute.return_value.data = (
+    # Setup chain of mocks for Supabase syntax: table().select().eq().execute()
+    mock_db.table.return_value.select.return_value.eq.return_value.execute.return_value.data = [
         manager_marketing
-    )
+    ]
 
     # Setup chain for the query filter
     # We expect table("proposed_changes").select("*").eq("status", "pending").filter(...).order().execute()
@@ -49,9 +49,9 @@ async def test_department_isolation_physical_logic():
     print("\n✅ Assertion Passed: Marketing Manager only sees Marketing proposals.")
 
     # --- Test Scenario B: Sales Manager ---
-    mock_db.table.return_value.select.return_value.eq.return_value.single.return_value.execute.return_value.data = (
+    mock_db.table.return_value.select.return_value.eq.return_value.execute.return_value.data = [
         manager_sales
-    )
+    ]
     mock_query.execute.return_value.data = [
         p for p in all_proposals if p["request_payload"]["created_by_dept"] == "Sales"
     ]
