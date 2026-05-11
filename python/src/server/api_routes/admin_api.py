@@ -47,6 +47,20 @@ async def diagnose_file(request: DiagnoseRequest, current_user: dict = Depends(g
     return await agent_service.dev_ops.diagnose_file_health(request.file_path)
 
 
+@router.get("/document-versions")
+async def get_document_versions(limit: int = 100, current_user: dict = Depends(verify_admin_role)):
+    """
+    Get document versions for the Admin audit trail.
+    """
+    try:
+        from ..utils import get_supabase_client
+        supabase = get_supabase_client()
+        res = supabase.table("archon_document_versions").select("*").order("created_at", desc=True).limit(limit).execute()
+        return {"versions": res.data if res and res.data else []}
+    except Exception as e:
+        logger.error(f"Admin API: Failed to fetch document versions: {e}")
+        return {"versions": []}
+
 @router.get("/users")
 async def get_users(limit: int = 100, role: str | None = None, current_user: dict = Depends(get_current_user)):
     """

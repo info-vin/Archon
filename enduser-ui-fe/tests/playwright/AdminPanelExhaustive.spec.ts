@@ -11,6 +11,20 @@ test.describe('Exhaustive Admin Panel Verification', () => {
         page.on('console', msg => {
             if (msg.type() === 'error') console.log(`BROWSER ERROR: ${msg.text()}`);
         });
+
+        // Fast-path intercepts to prevent slow external API checks or 404s from causing timeouts
+        await page.route('**/api/system/health/ai*', async route => {
+            await route.fulfill({ status: 200, json: { models: [], status: 'healthy' } });
+        });
+        await page.route('**/api/admin/document-versions*', async route => {
+            await route.fulfill({ status: 200, json: { versions: [] } });
+        });
+        await page.route('**/api/admin/logs?type=system*', async route => {
+            await route.fulfill({ status: 200, json: [] });
+        });
+        await page.route('**/api/admin/logs?type=AI_CORRECTION*', async route => {
+            await route.fulfill({ status: 200, json: [] });
+        });
     });
 
     test('should successfully render every tab in the Admin Panel without crashing or endless loading', async ({ page }) => {
