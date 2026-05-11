@@ -37,7 +37,7 @@ export const SmartImagePicker: React.FC<SmartImagePickerProps> = ({ onSelect, on
             <ImageIcon className="w-5 h-5 text-indigo-600" />
             Smart Image Picker
           </h2>
-          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full text-gray-500 transition-colors">
+          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full text-gray-500 transition-colors" aria-label="Close Smart Image Picker">
             <XIcon className="w-5 h-5" />
           </button>
         </div>
