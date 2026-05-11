@@ -67,14 +67,19 @@ export function ProjectsView({ className = "", "data-id": dataId }: ProjectsView
   const updateProjectMutation = useUpdateProject();
   const deleteProjectMutation = useDeleteProject();
 
+  // PERFORMANCE: Precalculate searchable lowercase strings to prevent O(N) redundant string allocations during active search filtering.
+  // We keep this in a separate useMemo so it only re-runs when the source 'projects' array changes, not on every keystroke.
+  const searchableTitles = useMemo(() => {
+    return (projects as Project[]).map((project) => project.title.toLowerCase());
+  }, [projects]);
+
   // Sort and filter projects
   const sortedProjects = useMemo(() => {
-    // PERFORMANCE: Extract .toLowerCase() outside loop to prevent O(N) redundant string allocations
     const searchQueryLower = searchQuery.toLowerCase();
 
-    // Filter by search query
-    const filtered = (projects as Project[]).filter((project) =>
-      project.title.toLowerCase().includes(searchQueryLower),
+    // Filter by search query using parallel array index for fast O(1) string comparison
+    const filtered = (projects as Project[]).filter((_, index) =>
+      searchableTitles[index].includes(searchQueryLower),
     );
 
     // Sort: pinned first, then alphabetically
@@ -83,7 +88,7 @@ export function ProjectsView({ className = "", "data-id": dataId }: ProjectsView
       if (!a.pinned && b.pinned) return 1;
       return a.title.localeCompare(b.title);
     });
-  }, [projects, searchQuery]);
+  }, [projects, searchQuery, searchableTitles]);
 
   // Handle project selection
   const handleProjectSelect = useCallback(

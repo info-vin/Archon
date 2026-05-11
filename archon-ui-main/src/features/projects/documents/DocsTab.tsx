@@ -113,14 +113,18 @@ export const DocsTab = ({ project }: DocsTabProps) => {
     }
   }, [documents, selectedDocument]);
 
+  // PERFORMANCE: Precalculate searchable lowercase titles to avoid O(N) string allocations during fast keystroke filtering
+  const searchableTitles = useMemo(() => {
+    return documents.map((doc) => doc.title.toLowerCase());
+  }, [documents]);
+
   // Filter documents based on search
   const filteredDocuments = useMemo(() => {
     if (!searchQuery) return documents;
 
-    // PERFORMANCE: Extract .toLowerCase() outside loop to prevent O(N) redundant string allocations
     const searchQueryLower = searchQuery.toLowerCase();
-    return documents.filter((doc) => doc.title.toLowerCase().includes(searchQueryLower));
-  }, [documents, searchQuery]);
+    return documents.filter((_, index) => searchableTitles[index].includes(searchQueryLower));
+  }, [documents, searchQuery, searchableTitles]);
 
   if (isLoading) {
     return (
