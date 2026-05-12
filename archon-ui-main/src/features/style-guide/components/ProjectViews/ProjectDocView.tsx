@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { FileText, Search } from "lucide-react";
 import { Input } from "@/features/ui/primitives/input";
 import { cn } from "@/features/ui/primitives/styles";
@@ -6,7 +6,15 @@ import { MOCK_DOCUMENTS } from "../../mock/projectsMock";
 
 export const ProjectDocView = ({ doc, onDocSelect }: { doc: any; onDocSelect: (doc: any) => void }) => {
   const [searchQuery, setSearchQuery] = useState("");
-  const filteredDocs = MOCK_DOCUMENTS.filter(d => d.title.toLowerCase().includes(searchQuery.toLowerCase()));
+
+  // PERFORMANCE: Precalculate searchable lowercase strings to prevent O(N) redundant string allocations
+  const searchableTitles = useMemo(() => MOCK_DOCUMENTS.map((d) => d.title.toLowerCase()), []);
+
+  const filteredDocs = useMemo(() => {
+    if (!searchQuery) return MOCK_DOCUMENTS;
+    const query = searchQuery.toLowerCase();
+    return MOCK_DOCUMENTS.filter((_, i) => searchableTitles[i].includes(query));
+  }, [searchQuery, searchableTitles]);
 
   return (
     <div className="flex h-[600px] gap-6 font-sans">
