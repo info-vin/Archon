@@ -123,7 +123,7 @@ export const ContentReviewPanel: React.FC<ContentReviewPanelProps> = ({
                                     <button 
                                         disabled={!rejectReason.trim() || !!processingId}
                                         onClick={handleRejectContent} 
-                                        className="px-4 py-1.5 bg-red-600 text-white text-xs font-black rounded-lg hover:bg-red-700 shadow-lg shadow-red-100 dark:shadow-none transition-all active:scale-95 flex items-center justify-center gap-2"
+                                        className="px-4 py-1.5 bg-red-600 text-white text-xs font-black rounded-lg hover:bg-red-700 shadow-lg shadow-red-100 dark:shadow-none transition-all active:scale-95 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
                                         {!!processingId ? <RefreshCwIcon className="animate-spin w-3 h-3" /> : null}
                                         {!!processingId ? 'RETURNING...' : 'CONFIRM RETURN'}
@@ -135,14 +135,14 @@ export const ContentReviewPanel: React.FC<ContentReviewPanelProps> = ({
                                 <button 
                                     disabled={!!processingId}
                                     onClick={() => { setIsRejecting(true); }}
-                                    className="flex-1 py-4 text-sm font-bold text-red-600 border border-red-200 rounded-xl hover:bg-red-50 transition-all active:scale-95"
+                                    className="flex-1 py-4 text-sm font-bold text-red-600 border border-red-200 rounded-xl hover:bg-red-50 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     RETURN
                                 </button>
                                 <button 
                                     disabled={!!processingId}
                                     onClick={() => handleApproveContent(selectedContent.id, 'blog')}
-                                    className="flex-[2] py-4 text-sm font-black bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 shadow-lg shadow-indigo-100 dark:shadow-none transition-all active:scale-95 flex items-center justify-center gap-2"
+                                    className="flex-[2] py-4 text-sm font-black bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 shadow-lg shadow-indigo-100 dark:shadow-none transition-all active:scale-95 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     {processingId === selectedContent.id ? <RefreshCwIcon className="animate-spin w-4 h-4" /> : <CheckCircleIcon className="w-4 h-4" />}
                                     PUBLISH ASSET
