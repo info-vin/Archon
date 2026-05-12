@@ -1,5 +1,5 @@
 import React from 'react';
-import { ZapIcon, CheckCircleIcon } from '../../../components/Icons';
+import { ZapIcon, CheckCircleIcon, RefreshCwIcon } from '../../../components/Icons';
 
 interface SentinelRadarProps {
     businessRisks: any[];
@@ -7,13 +7,14 @@ interface SentinelRadarProps {
     handleDispatch: (alertId: string) => Promise<void>;
     rules: any[];
     rulesMeta: { version: string };
+    isSavingRules?: boolean;
     handleRuleChange: (key: string, weight: number) => void;
     handleSaveRules: () => Promise<void>;
 }
 
 export const SentinelRadar: React.FC<SentinelRadarProps> = ({
     businessRisks, processingId, handleDispatch,
-    rules, rulesMeta, handleRuleChange, handleSaveRules
+    rules, rulesMeta, isSavingRules, handleRuleChange, handleSaveRules
 }) => {
     return (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -82,7 +83,18 @@ export const SentinelRadar: React.FC<SentinelRadarProps> = ({
                     <span className={`text-xs font-bold ${rules.reduce((a,b)=>a+b.weight,0) === 100 ? 'text-green-500' : 'text-red-500'}`}>
                         Total: {rules.reduce((a,b)=>a+b.weight,0)}%
                     </span>
-                    <button onClick={handleSaveRules} className="text-xs font-bold text-indigo-600 hover:underline">Save Changes</button>
+                    <button
+                        onClick={handleSaveRules}
+                        disabled={isSavingRules}
+                        className="text-xs font-bold text-indigo-600 hover:underline disabled:opacity-50 flex items-center gap-1"
+                    >
+                        {isSavingRules ? (
+                            <>
+                                <RefreshCwIcon className="w-3 h-3 animate-spin" />
+                                Saving...
+                            </>
+                        ) : 'Save Changes'}
+                    </button>
                 </div>
             </div>
         </div>

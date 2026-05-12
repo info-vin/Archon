@@ -48,7 +48,7 @@ export const ManagerNexus: React.FC = () => {
         overview, healthTrend, team, approvals, alerts, aiStats,
         commanderTrends, forceReadiness, businessRisks, collabSynergy,
         slaReliability, ethicsAudit, knowledgeRoi, codeProposals,
-        rules, rulesMeta,
+        rules, rulesMeta, isSavingRules,
         fetchData, handleDispatch, handleApprovePrompt, handleRebuildIndex,
         handleApproveContent, handleCodeAction, handleRuleChange, handleSaveRules
     } = useManagerNexusStats();
@@ -115,6 +115,7 @@ export const ManagerNexus: React.FC = () => {
                             handleDispatch={handleDispatch}
                             rules={rules}
                             rulesMeta={rulesMeta}
+                            isSavingRules={isSavingRules}
                             handleRuleChange={handleRuleChange}
                             handleSaveRules={handleSaveRules}
                         />
