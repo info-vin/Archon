@@ -40,7 +40,7 @@
 目標：建立能流轉上下文與呼叫不同 Agent 的中樞神經。
 - [ ] **任務 5.2.1**: 定義全域共享狀態 `SharedState(BaseModel)`，包含 `messages` (歷史), `current_assignee`, `artifacts` (共享檔案)。
 - [ ] **任務 5.2.2**: 在 `agents/server.py` 新增 `/agents/workflow/run` 端點，作為 Supervisor 網路的唯一入口。
-- [ ] **任務 5.2.3**: 實作 `WorkflowEngine` 類別，包含 `_route_next_node()` 函式 (呼叫 2.5-pro 判斷下一步交給誰) 以及 `_execute_node()` 函式 (執行底層 Agent)。
+- [ ] **任務 5.2.3**: 實作 `WorkflowEngine` 類別，包含 `_route_next_node()` 函式 (呼叫 gemini-3-flash-preview 判斷下一步交給誰) 以及 `_execute_node()` 函式 (執行底層 Agent)。
 - [ ] **任務 5.2.4**: 實作硬體級熔斷機制。在 `WorkflowEngine` 中加入 `step_count` 計數器，當 `step_count > 3` 時觸發 `HumanFallbackException`。
 
 ### Phase 5.3: Charlie Supervisor 概念驗證 (實體驗證)
@@ -48,7 +48,13 @@
 - [ ] **任務 5.3.1**: 將 Charlie 設定為本劇本的 Supervisor 角色。
 - [ ] **任務 5.3.2**: 建立測試情境：「查閱最新 AI 模型資訊，並寫成一篇部落格草稿存入」。
 - [ ] **任務 5.3.3**: 監控執行日誌，驗證流轉順序必須為：`User -> Charlie(Supervisor) -> Librarian(RAG 搜尋) -> Charlie -> MarketBot(寫草稿) -> Charlie -> POBot(建立 Task/Blog)`。
-- [ ] **任務 5.3.4**: 驗證 Token 成本。查核資料庫紀錄，確保僅有 Charlie 節點耗用 `gemini-3.1-pro-preview` 額度，其餘節點耗用 flash 額度。
+- [ ] **任務 5.3.4**: 驗證 Token 成本。查核資料庫紀錄，確保僅有 Charlie 節點耗用 `gemini-3-flash-preview` 額度，其餘節點耗用 `gemini-3.1-flash-lite-preview` 額度。
+
+### Phase 5.4: 核心架構減重與技術債清理 (Architecture Slimming)
+目標：消除 Phase 5.1 盤點時發現的 3 個超過 400 行的「上帝類別 (God Class)」檔案，降低維護複雜度。
+- [ ] **任務 5.4.1 (MCP Server)**: 重構 `mcp_server.py` (491行)。將龐大的 `MCP_INSTRUCTIONS` 字串抽離至獨立的 Markdown 或設定檔；將 RPC Bridge 與 Tool Registration 邏輯拆分至 `mcp_server/router.py`。
+- [ ] **任務 5.4.2 (Document Logic)**: 重構 `document/logic.py` (418行)。將各種文件 (Feature Plan, ERD, PRD) 的 Markdown 模板產生邏輯抽離至 `document/templates/` 目錄。
+- [ ] **任務 5.4.3 (RAG Agent)**: 重構 `rag_agent.py` (408行)。將 Pydantic 工具 Schema 定義與搜尋邏輯分離，使其專注於 Agent 狀態流轉。
 
 ---
 
@@ -57,4 +63,4 @@
 實作本階段時，必須嚴格遵守以下公證標準：
 1. **SSOT 不退讓**: 任何新增加的模型名稱，**絕對**只能透過 `fetch_credentials_from_server` 從 `archon_settings` 取得，嚴禁在 `WorkflowEngine` 中寫死字串。
 2. **斷線自癒測試**: 在執行 Phase 5.3 驗證時，必須手動切斷一次 MCP 連線，驗證 `WorkflowEngine` 是否能正確捕捉 Exception，而非讓整個執行緒崩潰消失。
-3. **無盡迴圈負面測試**: 故意撰寫一個「永遠無法成功寫入」的 Mock Tool，驗證神經網路是否會在嘗試 3 次後精準觸發熔斷並中止執行。中止執行。執行。��觸發熔斷並中止執行。執行。��執行。
+3. **無盡迴圈負面測試**: 故意撰寫一個「永遠無法成功寫入」的 Mock Tool，驗證神經網路是否會在嘗試 3 次後精準觸發熔斷並中止執行。
