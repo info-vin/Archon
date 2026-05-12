@@ -151,7 +151,7 @@ async def update_document_logic(
 ) -> str:
     """Logic for updating an existing document."""
     try:
-        mcp_client = await get_mcp_client()
+        mcp_client = await get_mcp_client(agent_type="document")
         get_result = await mcp_client.manage_document(action="get", project_id=project_id, title=document_title)
 
         get_data = json.loads(get_result)
@@ -239,7 +239,7 @@ async def create_feature_plan_logic(
             },
         }
 
-        mcp_client = await get_mcp_client()
+        mcp_client = await get_mcp_client(agent_type="document")
         new_feature = {
             "id": str(uuid.uuid4()),
             "feature_type": "feature_plan",
@@ -281,7 +281,7 @@ async def create_erd_logic(
             "database_schema": {"sql_statements": sql_schema},
         }
 
-        mcp_client = await get_mcp_client()
+        mcp_client = await get_mcp_client(agent_type="document")
         new_data_model = {
             "id": str(uuid.uuid4()),
             "data_type": "erd",
@@ -322,7 +322,7 @@ async def request_approval_logic(
             "change_summary": change_summary,
         }
 
-        mcp_client = await get_mcp_client()
+        mcp_client = await get_mcp_client(agent_type="document")
         result_json = await mcp_client.manage_document(
             action="create",
             project_id=project_id,

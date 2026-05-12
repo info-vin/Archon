@@ -246,6 +246,9 @@ async def mcp_rpc_handler(request: Request) -> Response:
 
         # 1. Discovery handling (Fast path using Worker-local Registry)
         if method_name == "list_tools":
+            agent_type = request.headers.get("X-Agent-Type", "anonymous")
+            tools_to_return = []
+            
             # FAIL-SAFE A: Try disk cache first
             tools_cache = "/tmp/mcp_tools.json"
             if os.path.exists(tools_cache):
@@ -253,33 +256,60 @@ async def mcp_rpc_handler(request: Request) -> Response:
                     with open(tools_cache) as f:
                         cached = json.load(f)
                         if cached:
+                            tools_to_return = cached
                             logger.info(
-                                f"✅ [PID {os.getpid()}] Discovery: Serving {len(cached)} tools from disk cache"
+                                f"✅ [PID {os.getpid()}] Discovery: Serving {len(cached)} tools from disk cache for {agent_type}"
                             )
-                            return JSONResponse({"jsonrpc": "2.0", "result": cached, "id": body.get("id")})
                 except Exception:
                     pass
 
             # FAIL-SAFE B: If registry is empty, try live fetch
-            if not GLOBAL_TOOL_REGISTRY:
-                logger.warning(f"⚠️ [PID {os.getpid()}] Registry empty, triggering fail-safe live fetch")
-                raw_tools = mcp._tool_manager.list_tools()
-                GLOBAL_TOOL_REGISTRY = [
-                    {
-                        "type": "function",
-                        "function": {
-                            "name": t.name,
-                            "description": t.description or "",
-                            "parameters": get_tool_schema(t),
-                        },
-                    }
-                    for t in raw_tools
-                ]
+            if not tools_to_return:
+                if not GLOBAL_TOOL_REGISTRY:
+                    logger.warning(f"⚠️ [PID {os.getpid()}] Registry empty, triggering fail-safe live fetch")
+                    raw_tools = mcp._tool_manager.list_tools()
+                    GLOBAL_TOOL_REGISTRY = [
+                        {
+                            "type": "function",
+                            "function": {
+                                "name": t.name,
+                                "description": t.description or "",
+                                "parameters": get_tool_schema(t),
+                            },
+                        }
+                        for t in raw_tools
+                    ]
+                tools_to_return = GLOBAL_TOOL_REGISTRY
 
-            return JSONResponse({"jsonrpc": "2.0", "result": GLOBAL_TOOL_REGISTRY, "id": body.get("id")})
+            # Apply RBAC Filtering (Dynamic Tool Exposing) via RBACService
+            from server.services.rbac_service import RBACService
+            rbac = RBACService()
+            restricted_tools = await rbac.get_restricted_mcp_tools(agent_type)
+            
+            if restricted_tools:
+                tools_to_return = [
+                    t for t in tools_to_return 
+                    if t.get("function", {}).get("name") not in restricted_tools
+                ]
+                logger.info(f"🔒 [PID {os.getpid()}] RBAC applied for {agent_type}. Returning {len(tools_to_return)} tools.")
+
+            return JSONResponse({"jsonrpc": "2.0", "result": tools_to_return, "id": body.get("id")})
 
         # 2. Tool execution via official API
         logger.info(f"RPC Call: [PID {os.getpid()}] Executing tool '{method_name}' via official call_tool API")
+        
+        # Apply RBAC Enforcement on Execution via RBACService
+        agent_type = request.headers.get("X-Agent-Type", "anonymous")
+        from server.services.rbac_service import RBACService
+        rbac = RBACService()
+        restricted_tools = await rbac.get_restricted_mcp_tools(agent_type)
+        
+        if method_name in restricted_tools:
+            logger.warning(f"🚫 [PID {os.getpid()}] RBAC Violation: {agent_type} attempted to call {method_name}")
+            return JSONResponse(
+                {"error": {"code": -32003, "message": f"RBAC Violation: Tool '{method_name}' is restricted for agent '{agent_type}'"}}, status_code=403
+            )
+        
         try:
             raw_result = await mcp.call_tool(method_name, params)
         except Exception as tool_err:

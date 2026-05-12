@@ -18,13 +18,16 @@ logger = logging.getLogger(__name__)
 class MCPClient:
     """Client for calling MCP tools via HTTP."""
 
-    def __init__(self, mcp_url: str | None = None):
+    def __init__(self, mcp_url: str | None = None, agent_type: str | None = None):
         """
         Initialize MCP client.
 
         Args:
             mcp_url: MCP server URL (defaults to service discovery)
+            agent_type: Optional string identifier for the calling agent (used for RBAC)
         """
+        self.agent_type = agent_type
+
         if mcp_url:
             self.mcp_url = mcp_url
         else:
@@ -52,7 +55,7 @@ class MCPClient:
                     self.mcp_url = f"http://localhost:{mcp_port}"
 
         self.client = httpx.AsyncClient(timeout=2.0)
-        logger.info(f"MCP Client initialized with URL: {self.mcp_url}")
+        logger.info(f"MCP Client initialized with URL: {self.mcp_url}, agent_type: {self.agent_type}")
 
     async def __aenter__(self):
         """Async context manager entry."""
@@ -81,11 +84,15 @@ class MCPClient:
             # MCP tools are called via JSON-RPC protocol
             request_data = {"jsonrpc": "2.0", "method": tool_name, "params": kwargs, "id": 1}
 
+            headers = {"Content-Type": "application/json"}
+            if hasattr(self, "agent_type") and self.agent_type:
+                headers["X-Agent-Type"] = self.agent_type
+
             # Make HTTP request to MCP server via the new /rpc bridge (Phase 4.6.19)
             response = await self.client.post(
                 f"{self.mcp_url}/rpc",
                 json=request_data,
-                headers={"Content-Type": "application/json"},
+                headers=headers,
             )
 
             response.raise_for_status()
@@ -155,20 +162,23 @@ class MCPClient:
         return json.dumps(result) if isinstance(result, dict) else str(result)
 
 
-# Global MCP client instance (created on first use)
-_mcp_client: MCPClient | None = None
+# Global MCP client instances by agent_type (created on first use)
+_mcp_clients: dict[str, MCPClient] = {}
 
 
-async def get_mcp_client() -> MCPClient:
+async def get_mcp_client(agent_type: str = "anonymous") -> MCPClient:
     """
-    Get or create the global MCP client instance.
+    Get or create the global MCP client instance for a specific agent type.
+
+    Args:
+        agent_type: The role or identifier of the agent
 
     Returns:
         MCPClient instance
     """
-    global _mcp_client
+    global _mcp_clients
 
-    if _mcp_client is None:
-        _mcp_client = MCPClient()
+    if agent_type not in _mcp_clients:
+        _mcp_clients[agent_type] = MCPClient(agent_type=agent_type)
 
-    return _mcp_client
+    return _mcp_clients[agent_type]

@@ -99,7 +99,7 @@ class RagAgent(BaseAgent[RagDependencies, str]):
                     source_filter = ctx.deps.source_filter
 
                 # Use MCP client to perform RAG query
-                mcp_client = await get_mcp_client()
+                mcp_client = await get_mcp_client(agent_type="rag")
                 result_json = await mcp_client.perform_rag_query(
                     query=query, source=source_filter, match_count=ctx.deps.match_count
                 )
@@ -147,7 +147,7 @@ class RagAgent(BaseAgent[RagDependencies, str]):
             """List all available sources that can be searched."""
             try:
                 # Use MCP client to get available sources
-                mcp_client = await get_mcp_client()
+                mcp_client = await get_mcp_client(agent_type="rag")
                 result_json = await mcp_client.get_available_sources()
 
                 # Parse the JSON response
@@ -191,7 +191,7 @@ class RagAgent(BaseAgent[RagDependencies, str]):
                     source_filter = ctx.deps.source_filter
 
                 # Use MCP client to search code examples
-                mcp_client = await get_mcp_client()
+                mcp_client = await get_mcp_client(agent_type="rag")
                 result_json = await mcp_client.search_code_examples(
                     query=query, source_id=source_filter, match_count=ctx.deps.match_count
                 )

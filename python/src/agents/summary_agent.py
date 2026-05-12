@@ -94,7 +94,7 @@ class SummaryAgent(BaseAgent[SummaryDependencies, SummaryOperation]):
             generated_summary = response["choices"][0]["message"]["content"]
 
             # Report output back to archon-server via MCP Client
-            mcp_client = await get_mcp_client()
+            mcp_client = await get_mcp_client(agent_type="summary")
 
             await mcp_client.call_tool(
                 tool_name="manage_task",
