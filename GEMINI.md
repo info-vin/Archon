@@ -152,6 +152,19 @@
 
 # 第三章：近期工作日誌 (Recent Activity Logs)
 
+### 2026-05-12: Model SSOT 確立與 Phase 5 星型群聊架構規劃
+*   **1. 基礎設施幻覺根除 (Model SSOT 100%)**:
+    - **行動**: 全域盤點並移除了 `agents/`, `server/`, `mcp_server/` 中 13 處關於 `openai:gpt-4o`, `gpt-4.1-nano` 與 `gemini-embedding-001` 的硬編碼回退機制。
+    - **機制**: 導入「Fail Fast」原則。系統現在完全依賴 `archon_settings` (資料庫) 與 `.env` 作為唯一的模型事實來源。若未設定則直接拋出 `ValueError`，徹底解決了隱性 429 崩潰問題。
+*   **2. Phase 5 架構藍圖 (LangGraph Evolution)**:
+    - **行動**: 將 Phase 4.6 收尾文件歸檔，並建立 `Phase_5.0_LangGraph_Evolution_Implementation.md` 實作計畫。
+    - **決策**: 
+        - **Reject LangGraph**: 為了避免 Pydantic v1 依賴衝突，決定採用原生的 `pydantic-graph` 來構建狀態機。
+        - **星型群聊 (Star-Topology)**: 捨棄 AutoGen 的自由對話，改由 Supervisor 動態路由，並加上 `MAX_RECURSION = 3` 熔斷器以保護 API 成本。
+*   **3. Free Tier 經濟學與模型分級**:
+    - **驗證**: 透過實體腳本測試與聯網查證，修正了 AI 對新模型可用性的幻覺。
+    - **定案**: Supervisor 綁定 `gemini-3-flash-preview` (兼具免費層級與高智商)；Worker 綁定 `gemini-3.1-flash-lite-preview` (價格減半，吞吐量極高)；Embedding 暫不升級至 v2，以避開每日 1000 次的嚴苛免費限制。
+
 ### 2026-05-06: 系統大掃除與技術債自動化巡邏上線
 *   **1. 歷史文檔與腳本大掃除**:
     - **行動**: 刪除 `scripts/` 目錄下 5 個超過 14 天未使用的過期探針與假資料腳本，並將 `PRPs/archive/` 中的古老歷史文件依據「時代分類」（如 `Phase_3_Grafting_and_UI`）進行資料夾歸檔。
@@ -384,3 +397,4 @@
 > 1.  **前端圖表規範 (Headless Chart Hardening)**: 所有基於 Recharts 的圖表元件（特別是 AreaChart, LineChart），必須預設關閉動畫 (`isAnimationActive={false}`)。這能防止 Playwright 在 Headless 環境下，因動畫計算座標產生 `NaN` 而導致的 `TickItem Error` 崩潰。
 > 2.  **後端空資料防禦 (Backend Empty State Parity)**: 絕對禁止使用 Supabase Python 客戶端的 `.single()` 或 `.maybe_single()` 來獲取單筆資料，因為它在空資料時會引發 HTTP 500 (`PGRST116`) 或返回 `None` 導致 `AttributeError`。必須使用安全的陣列查詢模式：`res = query.execute()` 並搭配 `if res.data and len(res.data) > 0:`。
 > 3.  **測試狀態防護 (Stateful Mocks & Negative Paths)**: E2E 測試絕不可依賴「已有資料的開發者資料庫」。所有 MBT 測試必須包含空資料 (Empty State) 的負面斷言。在 Mock API 時，必須使用外部變數 (如 `let isApproved = false`) 來實現具狀態模擬 (Stateful Mock)，以真實還原 React 重新渲染時的資料狀態。
+let isApproved = false`) 來實現具狀態模擬 (Stateful Mock)，以真實還原 React 重新渲染時的資料狀態。
