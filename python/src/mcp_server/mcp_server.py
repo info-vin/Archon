@@ -248,7 +248,7 @@ async def mcp_rpc_handler(request: Request) -> Response:
         if method_name == "list_tools":
             agent_type = request.headers.get("X-Agent-Type", "anonymous")
             tools_to_return = []
-            
+
             # FAIL-SAFE A: Try disk cache first
             tools_cache = "/tmp/mcp_tools.json"
             if os.path.exists(tools_cache):
@@ -285,31 +285,34 @@ async def mcp_rpc_handler(request: Request) -> Response:
             from server.services.rbac_service import RBACService
             rbac = RBACService()
             restricted_tools = await rbac.get_restricted_mcp_tools(agent_type)
-            
+
             if restricted_tools:
-                tools_to_return = [
-                    t for t in tools_to_return 
-                    if t.get("function", {}).get("name") not in restricted_tools
-                ]
+                filtered_tools = []
+                for t in tools_to_return:
+                    if isinstance(t, dict):
+                        func = t.get("function")
+                        if isinstance(func, dict) and func.get("name") not in restricted_tools:
+                            filtered_tools.append(t)
+                tools_to_return = filtered_tools
                 logger.info(f"🔒 [PID {os.getpid()}] RBAC applied for {agent_type}. Returning {len(tools_to_return)} tools.")
 
             return JSONResponse({"jsonrpc": "2.0", "result": tools_to_return, "id": body.get("id")})
 
         # 2. Tool execution via official API
         logger.info(f"RPC Call: [PID {os.getpid()}] Executing tool '{method_name}' via official call_tool API")
-        
+
         # Apply RBAC Enforcement on Execution via RBACService
         agent_type = request.headers.get("X-Agent-Type", "anonymous")
         from server.services.rbac_service import RBACService
         rbac = RBACService()
         restricted_tools = await rbac.get_restricted_mcp_tools(agent_type)
-        
+
         if method_name in restricted_tools:
             logger.warning(f"🚫 [PID {os.getpid()}] RBAC Violation: {agent_type} attempted to call {method_name}")
             return JSONResponse(
                 {"error": {"code": -32003, "message": f"RBAC Violation: Tool '{method_name}' is restricted for agent '{agent_type}'"}}, status_code=403
             )
-        
+
         try:
             raw_result = await mcp.call_tool(method_name, params)
         except Exception as tool_err:
