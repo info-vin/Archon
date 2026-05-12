@@ -13,11 +13,16 @@
     *   **實作**: 參考其 `StateGraph` 的觀念，在 `archon-agents` 中利用原生的 `asyncio` 與 `Pydantic` 實作一個輕量級的**狀態流轉引擎 (State Router)**。
 2.  **異質化神經網路 (Heterogeneous Model Topology)**:
     *   **決策**: 嚴格劃分大腦與苦力，拒絕讓高階模型做簡單格式化工作。
-    *   **實作**: Supervisor (任務分派大腦) 強制綁定 `gemini-3-flash-preview`；底層 Worker (如 MarketBot, SummaryAgent) 強制降級綁定 `gemini-3.1-flash-lite-preview`。
-3.  **實體硬化熔斷器 (Physical Circuit Breakers)**:
+    *   **實作**: 
+        *   Supervisor (任務分派大腦) 強制綁定 `gemini-3-flash-preview`：負責需要工具調用 (Tool Use) 與深層邏輯判斷的路由工作。
+        *   底層 Worker (如 MarketBot, SummaryAgent) 強制降級綁定 `gemini-3.1-flash-lite-preview`：作為「苦力節點 (Worker Node)」，其價格僅為 3 Flash 的一半，且具備超高吞吐量 (約 382 tokens/sec)，專門負責高併發的資料抽取、總結與格式化任務。
+3.  **星型群聊架構 (Star-Topology Group Chat)**:
+    *   **決策**: 不使用 AutoGen 式的無政府群聊，以防止 Agent 陷入無限客套或偏離主題。
+    *   **實作**: 在 pydantic-graph 中實作「主持人中心制」。定義一個共享黑板 (`SharedState`)，所有 Agent 講完話後必須將控制權還給 Supervisor (Manager Node)，由 Manager 決定下一位發言者或終止討論，確保企業級的絕對可控性。
+4.  **實體硬化熔斷器 (Physical Circuit Breakers)**:
     *   **決策**: 防禦 LLM 在除錯時的「鬼打牆無限迴圈」，保護 API 額度。
     *   **實作**: 狀態流轉引擎中寫死 `MAX_RECURSION = 3`。超過 3 次自動中斷，並寫入 Supabase `tasks` 表，狀態設為 `Needs Human Review`。
-4.  **邏輯拆分式動態 MCP (Logical Dynamic MCP Federation)**:
+5.  **邏輯拆分式動態 MCP (Logical Dynamic MCP Federation)**:
     *   **決策**: 拒絕將 MCP 拆分為多個 Docker 容器，避免服務發現災難與交易(Transaction)斷層。
     *   **實作**: 在現有單一 `archon-mcp` (Port 8051) 中，實作 **「動態工具暴露 (Dynamic Tool Exposing)」**。Agent 連線時需夾帶身分，MCP 伺服器動態過濾並只回傳該身分有權限存取的 Tool Schema。
 
@@ -52,4 +57,4 @@
 實作本階段時，必須嚴格遵守以下公證標準：
 1. **SSOT 不退讓**: 任何新增加的模型名稱，**絕對**只能透過 `fetch_credentials_from_server` 從 `archon_settings` 取得，嚴禁在 `WorkflowEngine` 中寫死字串。
 2. **斷線自癒測試**: 在執行 Phase 5.3 驗證時，必須手動切斷一次 MCP 連線，驗證 `WorkflowEngine` 是否能正確捕捉 Exception，而非讓整個執行緒崩潰消失。
-3. **無盡迴圈負面測試**: 故意撰寫一個「永遠無法成功寫入」的 Mock Tool，驗證神經網路是否會在嘗試 3 次後精準觸發熔斷並中止執行。執行。��觸發熔斷並中止執行。執行。
+3. **無盡迴圈負面測試**: 故意撰寫一個「永遠無法成功寫入」的 Mock Tool，驗證神經網路是否會在嘗試 3 次後精準觸發熔斷並中止執行。執行。��觸發熔斷並中止執行。執行。
