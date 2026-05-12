@@ -215,19 +215,19 @@ class RBACService:
         Phase 5.1: Dynamic MCP Tool Schema Cropping based on RBAC.
         """
         role = (role_or_agent or "anonymous").lower()
-        
+
         # High-level roles have no restrictions
         if role in ["admin", "system_admin", "charlie"]:
             return set()
-            
+
         # Base restrictions for all lower-level bots/users to protect infrastructure
         restricted_tools = {"delete_project", "delete_task", "run_system_command", "execute_sql"}
-        
+
         # Additional restrictions based on specific roles
         if role in ["marketbot", "marketing", "summary"]:
             restricted_tools.update(["manage_project"])
         elif role in ["librarian", "rag", "document"]:
             restricted_tools.update(["manage_project", "manage_task"])
-            
+
         # Here we could extend to check DB permissions in the future
         return restricted_tools

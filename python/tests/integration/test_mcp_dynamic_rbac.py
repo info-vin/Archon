@@ -1,6 +1,6 @@
 import pytest
-import httpx
 from httpx import AsyncClient
+
 
 # Skip tests if MCP server is not running
 async def is_server_running():
@@ -18,7 +18,7 @@ async def test_mcp_dynamic_rbac_list_tools():
     """
     if not await is_server_running():
         pytest.skip("MCP server not running on localhost:8051")
-        
+
     mcp_server_url = "http://localhost:8051"
     async with AsyncClient() as client:
         # Test 1: Admin should get all tools
@@ -30,7 +30,7 @@ async def test_mcp_dynamic_rbac_list_tools():
         assert resp_admin.status_code == 200
         admin_data = resp_admin.json()
         admin_tools = [t["function"]["name"] for t in admin_data.get("result", [])]
-        
+
         # Test 2: MarketBot should have restricted tools
         resp_market = await client.post(
             f"{mcp_server_url}/rpc",
@@ -53,21 +53,21 @@ async def test_mcp_dynamic_rbac_tool_execution_enforcement():
     """
     if not await is_server_running():
         pytest.skip("MCP server not running on localhost:8051")
-        
+
     mcp_server_url = "http://localhost:8051"
     async with AsyncClient() as client:
         # MarketBot tries to call manage_project
         resp_market = await client.post(
             f"{mcp_server_url}/rpc",
             json={
-                "jsonrpc": "2.0", 
-                "method": "manage_project", 
-                "params": {"action": "create", "title": "Hacked Project"}, 
+                "jsonrpc": "2.0",
+                "method": "manage_project",
+                "params": {"action": "create", "title": "Hacked Project"},
                 "id": 3
             },
             headers={"X-Agent-Type": "marketbot", "Content-Type": "application/json"}
         )
-        
+
         # Expecting our 403 Forbidden RBAC violation
         assert resp_market.status_code == 403
         error_data = resp_market.json()

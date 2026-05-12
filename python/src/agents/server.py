@@ -27,6 +27,7 @@ from pydantic import BaseModel
 from .document_agent import DocumentAgent
 from .rag_agent import RagAgent
 from .rerank_router import router as rerank_router
+from .workflow_engine import WorkflowEngine
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -60,7 +61,6 @@ AVAILABLE_AGENTS = {
 
 # Global credentials storage
 AGENT_CREDENTIALS = {}
-
 
 async def fetch_credentials_from_server():
     """Fetch credentials from the server's internal API."""
@@ -150,6 +150,40 @@ app = FastAPI(
 )
 
 app.include_router(rerank_router, prefix="/ml", tags=["ml"])
+
+
+# --- Workflow Endpoint (Phase 5.2) ---
+class WorkflowRequest(BaseModel):
+    prompt: str
+
+@app.post("/agents/workflow/run", response_model=AgentResponse)
+async def run_workflow(request: WorkflowRequest):
+    """
+    Run a multi-agent workflow using the pydantic-graph State Router.
+    Phase 5.2: Supervisor / Worker Topology.
+    """
+    try:
+        engine = WorkflowEngine()
+        result = await engine.run_workflow(request.prompt)
+
+        if result["success"]:
+            return AgentResponse(
+                success=True,
+                result=result["final_result"],
+                metadata={
+                    "step_count": result["step_count"],
+                    "messages": result["messages"]
+                }
+            )
+        else:
+            return AgentResponse(
+                success=False,
+                error=result.get("error", "Unknown error in workflow"),
+                metadata={"step_count": result["step_count"]}
+            )
+    except Exception as e:
+        logger.error(f"Error in workflow endpoint: {e}")
+        return AgentResponse(success=False, error=str(e))
 
 
 @app.get("/")
