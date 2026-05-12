@@ -36,11 +36,10 @@ async def get_embedding_model(provider: str | None = None) -> str:
             if len(m) <= 100 and not any(char in m for char in ["\n", "\r", "\t", "\0"]):
                 return m
 
-        mapping = {"openai": "text-embedding-3-small", "ollama": "nomic-embed-text", "google": "gemini-embedding-001"}
-        return mapping.get(provider_name, "text-embedding-3-small")
+        raise ValueError(f"Embedding model is not configured for provider: {provider_name}")
     except Exception as e:
         logger.error(f"Error getting embedding model: {e}")
-        return "text-embedding-3-small"
+        raise
 
 
 def is_openai_embedding_model(model: str) -> bool:

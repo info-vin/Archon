@@ -28,7 +28,7 @@ class DocumentAgent(BaseAgent[DocumentDependencies, DocumentOperation]):
 
     def __init__(self, model: str | None = None, supabase_client: Any = None, **kwargs):
         if model is None:
-            model = os.getenv("DOCUMENT_AGENT_MODEL", "openai:gpt-4o")
+            model = os.getenv("DOCUMENT_AGENT_MODEL")
 
         super().__init__(model=model, name="DocumentAgent", retries=3, enable_rate_limiting=True, **kwargs)
         self.supabase_client = supabase_client

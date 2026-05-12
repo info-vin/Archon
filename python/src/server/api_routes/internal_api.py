@@ -72,15 +72,15 @@ async def get_agent_credentials(request: Request) -> dict[str, Any]:
     try:
         # Get credentials needed by agents
         credentials = {
-            # OpenAI credentials
+            # API Keys
             "OPENAI_API_KEY": await credential_service.get_credential("OPENAI_API_KEY", decrypt=True),
-            "OPENAI_MODEL": await credential_service.get_credential("OPENAI_MODEL", default="gpt-4o-mini"),
+            "GEMINI_API_KEY": await credential_service.get_credential("GEMINI_API_KEY", decrypt=True),
+
             # Model configurations
-            "DOCUMENT_AGENT_MODEL": await credential_service.get_credential(
-                "DOCUMENT_AGENT_MODEL", default="openai:gpt-4o"
-            ),
-            "RAG_AGENT_MODEL": await credential_service.get_credential("RAG_AGENT_MODEL", default="openai:gpt-4o-mini"),
-            "TASK_AGENT_MODEL": await credential_service.get_credential("TASK_AGENT_MODEL", default="openai:gpt-4o"),
+            "DOCUMENT_AGENT_MODEL": await credential_service.get_credential("DOCUMENT_AGENT_MODEL"),
+            "RAG_AGENT_MODEL": await credential_service.get_credential("RAG_AGENT_MODEL"),
+            "TASK_AGENT_MODEL": await credential_service.get_credential("TASK_AGENT_MODEL"),
+            "SUMMARY_AGENT_MODEL": await credential_service.get_credential("SUMMARY_AGENT_MODEL"),
             # Rate limiting settings
             "AGENT_RATE_LIMIT_ENABLED": await credential_service.get_credential(
                 "AGENT_RATE_LIMIT_ENABLED", default="true"

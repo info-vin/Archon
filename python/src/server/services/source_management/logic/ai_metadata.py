@@ -29,7 +29,9 @@ The above content is from the documentation for '{source_id}'. Please provide a 
             from server.services.credential_service import credential_service
 
             rag_settings = await credential_service.get_credentials_by_category("rag_strategy")
-            model_choice = rag_settings.get("MODEL_CHOICE", "gpt-4.1-nano")
+            model_choice = rag_settings.get("MODEL_CHOICE")
+            if not model_choice:
+                raise ValueError("MODEL_CHOICE is not configured in rag_strategy settings")
             search_logger.info(f"Generating summary for {source_id} using model: {model_choice}")
 
             response = await client.chat.completions.create(

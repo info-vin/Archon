@@ -54,7 +54,9 @@ Instructions:
     try:
         # Get active model from config
         provider_config = await credential_service.get_active_provider()
-        model = provider_config.get("chat_model") or "gpt-4o"
+        model = provider_config.get("chat_model")
+        if not model:
+            raise ValueError("chat_model is not configured in provider_config")
 
         async with get_llm_client() as client:
             response = await client.chat.completions.create(

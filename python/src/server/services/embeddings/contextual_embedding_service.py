@@ -107,7 +107,10 @@ async def _get_model_choice(provider: str | None = None) -> str:
 
     # Get the active provider configuration
     provider_config = await credential_service.get_active_provider("llm")
-    model = cast(str, provider_config.get("chat_model", "gpt-4.1-nano"))
+    model = provider_config.get("chat_model")
+    if not model:
+        raise ValueError("chat_model is not configured in provider_config")
+    model = cast(str, model)
 
     search_logger.debug(f"Using model from credential service: {model}")
 

@@ -43,7 +43,7 @@ class SummaryAgent(BaseAgent[SummaryDependencies, SummaryOperation]):
 
     def __init__(self, model: str | None = None, **kwargs):
         if model is None:
-            model = os.getenv("SUMMARY_AGENT_MODEL", "openai:gpt-4o-mini")  # Use a cheaper model for summary
+            model = os.getenv("SUMMARY_AGENT_MODEL")
 
         super().__init__(model=model, name="SummaryAgent", retries=3, enable_rate_limiting=True, **kwargs)
 

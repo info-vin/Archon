@@ -360,13 +360,12 @@ class TestAsyncLLMProviderService:
 
     @pytest.mark.asyncio
     async def test_get_embedding_model_error_fallback(self, mock_credential_service):
-        """Test fallback when error occurs getting embedding model"""
+        """Test that an error getting embedding model propagates the exception (Fail Fast SSOT)."""
         mock_credential_service.get_active_provider.side_effect = Exception("Database error")
 
         with patch("src.server.services.llm_provider_service.credential_service", mock_credential_service):
-            model = await get_embedding_model()
-            # Should fallback to OpenAI default
-            assert model == "text-embedding-3-small"
+            with pytest.raises(Exception, match="Database error"):
+                await get_embedding_model()
 
     def test_cache_functionality(self):
         """Test settings cache functionality"""

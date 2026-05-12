@@ -183,12 +183,14 @@ class BaseAgent[DepsT, OutputT](ABC):
 
     def __init__(
         self,
-        model: str = "openai:gpt-4o",
+        model: str | None = None,
         name: str | None = None,
         retries: int = 3,
         enable_rate_limiting: bool = True,
         **agent_kwargs,
     ):
+        if not model:
+            raise ValueError(f"No model specified for {self.__class__.__name__}. Please set the appropriate environment variable.")
         self.model = model
         self.name = name or self.__class__.__name__
         self.retries = retries

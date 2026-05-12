@@ -21,11 +21,13 @@ def _get_model_choice_logic() -> str:
         if credential_service._cache_initialized and "MODEL_CHOICE" in credential_service._cache:
             model = credential_service._cache["MODEL_CHOICE"]
         else:
-            model = os.getenv("MODEL_CHOICE", "gpt-4.1-nano")
+            model = os.getenv("MODEL_CHOICE")
+            if not model:
+                raise ValueError("MODEL_CHOICE is not configured in environment or credentials")
         return cast(str, model)
     except Exception as e:
-        search_logger.warning(f"Error getting model choice logic: {e}, using default")
-        return "gpt-4.1-nano"
+        search_logger.error(f"Error getting model choice logic: {e}")
+        raise
 
 
 def generate_code_example_summary_logic(
