@@ -151,8 +151,12 @@ services:
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
       - ARCHON_AGENTS_PORT=${ARCHON_AGENTS_PORT:-8052}
       - ARCHON_SERVER_PORT=${ARCHON_SERVER_PORT:-8181}
+      - RAG_AGENT_MODEL=gemini-3.1-flash-lite-preview
+      - DOCUMENT_AGENT_MODEL=gemini-3-flash-preview
+      - SUPERVISOR_AGENT_MODEL=gemini-3-flash-preview
+      - WORKER_AGENT_MODEL=gemini-3.1-flash-lite-preview
     volumes:
-      - ./python/src/agents:/app/agents
+      - ./python/src/agents:/app/src/agents
       - ./python/src/server/services/search/reranking_strategy.py:/app/src/server/services/search/reranking_strategy.py
     networks:
       - app-network

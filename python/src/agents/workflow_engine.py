@@ -40,7 +40,7 @@ class SupervisorNode(BaseNode[SharedState, None, str]):
 
         router_agent = Agent(
             model=model_name,
-            result_type=SupervisorDecision,
+            output_type=SupervisorDecision,
             system_prompt=(
                 "You are Charlie, the Supervisor. Review the conversation history. "
                 "Decide which worker should act next. "
@@ -55,7 +55,7 @@ class SupervisorNode(BaseNode[SharedState, None, str]):
         history_text = "\n".join([f"{m['role']}: {m['content']}" for m in ctx.state.messages])
         try:
             result = await router_agent.run(f"History:\n{history_text}\n\nDecide next step.")
-            decision: SupervisorDecision = result.data
+            decision: SupervisorDecision = result.output
             logger.info(f"🧠 [Supervisor] Decision: {decision.next_node} (Reason: {decision.reasoning})")
 
             if decision.next_node == "end":
@@ -74,7 +74,7 @@ class SupervisorNode(BaseNode[SharedState, None, str]):
                 return End("Error: Unknown routing decision.")
 
         except Exception as e:
-            logger.error(f"Supervisor error: {e}")
+            logger.error(f"Supervisor error: {e}", exc_info=True)
             return End(f"Supervisor Error: {str(e)}")
 
 # --- 3. Worker Nodes (The Muscle) ---
@@ -88,8 +88,9 @@ class MarketBotNode(BaseNode[SharedState, None, str]):
 
         try:
             res = await agent.run(f"Based on history, provide the marketing copy.\n{history_text}")
-            ctx.state.messages.append({"role": "marketbot", "content": res.data})
+            ctx.state.messages.append({"role": "marketbot", "content": str(res.output)})
         except Exception as e:
+            logger.error(f"MarketBot error: {e}")
             ctx.state.messages.append({"role": "marketbot", "content": f"Error: {e}"})
 
         return SupervisorNode()
@@ -104,8 +105,9 @@ class LibrarianNode(BaseNode[SharedState, None, str]):
 
         try:
             res = await agent.run(f"Extract facts from history.\n{history_text}")
-            ctx.state.messages.append({"role": "librarian", "content": res.data})
+            ctx.state.messages.append({"role": "librarian", "content": str(res.output)})
         except Exception as e:
+            logger.error(f"Librarian error: {e}")
             ctx.state.messages.append({"role": "librarian", "content": f"Error: {e}"})
 
         return SupervisorNode()
@@ -120,8 +122,9 @@ class SummaryNode(BaseNode[SharedState, None, str]):
 
         try:
             res = await agent.run(f"Summarize the conversation:\n{history_text}")
-            ctx.state.messages.append({"role": "summary", "content": res.data})
+            ctx.state.messages.append({"role": "summary", "content": str(res.output)})
         except Exception as e:
+            logger.error(f"SummaryAgent error: {e}")
             ctx.state.messages.append({"role": "summary", "content": f"Error: {e}"})
 
         return SupervisorNode()
