@@ -55,6 +55,8 @@
 - [ ] **任務 5.4.1 (MCP Server)**: 重構 `mcp_server.py` (491行)。將龐大的 `MCP_INSTRUCTIONS` 字串抽離至獨立的 Markdown 或設定檔；將 RPC Bridge 與 Tool Registration 邏輯拆分至 `mcp_server/router.py`。
 - [ ] **任務 5.4.2 (Document Logic)**: 重構 `document/logic.py` (418行)。將各種文件 (Feature Plan, ERD, PRD) 的 Markdown 模板產生邏輯抽離至 `document/templates/` 目錄。
 - [ ] **任務 5.4.3 (RAG Agent)**: 重構 `rag_agent.py` (408行)。將 Pydantic 工具 Schema 定義與搜尋邏輯分離，使其專注於 Agent 狀態流轉。
+- [ ] **任務 5.4.4 (Token Logging Fix)**: 修復 Phase 5.3 驗證時發現的 Token 紀錄逃逸問題。在 `workflow_engine.py` 每次完成 Graph 節點執行或結束 Workflow 時，抽取出 `usage` 數據並透過內部 API 寫回 Supabase 的 `token_usage` 表。
+- [ ] **任務 5.4.5 (Global Model SSOT Hardening)**: 徹底根除 `agents` 服務中任何形式的模型名稱硬編碼。移除 `os.getenv` 中的字串回退 (Fallback)，強制僅從 `archon_settings` (透過 `AGENT_CREDENTIALS`) 讀取。若缺失則拋出 `ValueError`。
 
 ---
 

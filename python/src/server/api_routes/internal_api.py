@@ -94,10 +94,11 @@ async def get_agent_credentials(request: Request) -> dict[str, Any]:
 
     try:
         from ..config.model_ssot import SYSTEM_MODELS
-        
+
         credentials = {
             "OPENAI_API_KEY": await credential_service.get_credential("OPENAI_API_KEY"),
             "GEMINI_API_KEY": await credential_service.get_credential("GEMINI_API_KEY"),
+            "GOOGLE_API_KEY": await credential_service.get_credential("GOOGLE_API_KEY"),
             "ANTHROPIC_API_KEY": await credential_service.get_credential("ANTHROPIC_API_KEY"),
             "LOGFIRE_TOKEN": await credential_service.get_credential("LOGFIRE_TOKEN"),
             "AGENT_RATE_LIMIT_ENABLED": await credential_service.get_credential(

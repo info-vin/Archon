@@ -8,6 +8,8 @@ requires-python = ">=3.12"
 dependencies = [
     "browser-use>=0.3.2",
     "langchain-google-genai>=2.1.5",
+    "mcp>=1.12.2",
+    "pydantic-ai>=0.0.55",
     "tenacity>=9.1.4",
 ]
 
@@ -78,7 +80,7 @@ server-reranking = [
 
 # MCP container dependencies (Hardened for Phase 4.6.28 - Fully grounded)
 mcp = [
-    "mcp==1.12.2",
+    "mcp>=1.18.0",
     "httpx>=0.24.0",
     "pydantic>=2.0.0",
     "python-dotenv>=1.0.0",
@@ -135,7 +137,7 @@ all = [
     "docker>=6.1.0",
     "logfire>=0.30.0",
     "APScheduler>=3.10.0",
-    "mcp==1.12.2",
+    "mcp>=1.18.0",
     "pydantic-ai>=0.0.13",
     "structlog>=23.1.0",
     "httpx>=0.24.0",
