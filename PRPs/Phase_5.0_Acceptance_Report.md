@@ -45,4 +45,4 @@
 
 1.  **Phase 5 的多智能體引擎已經具備生產級別的穩定度**。它不僅能靈活路由，更能自癒 API 波動，且 100% 確保了企業成本的追蹤。
 2.  **Google Free Tier 極限驗證**：本次驗收中我們實際上撞到了 `gemini-3-flash` 每日 20 次的硬限制，這證明了我們在代碼中設計的「配額防護網」是精準有效的。
-3.  **建議行動**: 未來若需進行高強度的自動化測試，建議在 CI 環境切換為 Paid Tier API Key，或全面降級至限制較寬鬆的 `gemini-1.5-flash` 進行冒煙測試。剩餘的 Phase 5.4 上帝類別重構（MCP 與 Document）可作為獨立的技術債工單進行。
+3.  **建議行動**: 針對高強度的自動化測試，我們將持續依賴已驗證的 **Google Free Tier 金鑰輪轉機制** (從 `GEMINI_API_KEY` 輪轉至 `GOOGLE_API_KEY`) 來突破單一帳號的 RPD 限制。系統架構將堅守 `gemini-3-flash-preview` 作為大腦，絕不妥協降級。此外，Phase 5.4 階段的上帝類別重構 (MCP, Document, RAG Agent 拆分) 皆已全數完成並結案，系統技術債已大幅清零。
