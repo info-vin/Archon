@@ -187,7 +187,6 @@ try:
 
     mcp = FastMCP(
         "archon-mcp-server",
-        description="MCP server for Archon - uses HTTP calls to other services",
         instructions=MCP_INSTRUCTIONS,  # Correct way to pass instructions
         lifespan=lifespan,
         host=server_host,

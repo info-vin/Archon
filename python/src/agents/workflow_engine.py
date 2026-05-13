@@ -143,7 +143,7 @@ class MarketBotNode(BaseNode[SharedState, None, str]):
                 agent, f"Based on history, provide the marketing copy.\n{history_text}", ctx.state, model_name
             )
             # Container uses PydanticAI 1.44.0, which uses res.output
-            ctx.state.messages.append({"role": "marketbot", "content": str(res.output)})  # type: ignore
+            ctx.state.messages.append({"role": "marketbot", "content": str(res.output)})
         except Exception as e:
             logger.error(f"MarketBot error: {e}")
             ctx.state.messages.append({"role": "marketbot", "content": f"Error: {e}"})
@@ -166,7 +166,7 @@ class LibrarianNode(BaseNode[SharedState, None, str]):
                 agent, f"Extract facts from history.\n{history_text}", ctx.state, model_name
             )
             # Container uses PydanticAI 1.44.0, which uses res.output
-            ctx.state.messages.append({"role": "librarian", "content": str(res.output)})  # type: ignore
+            ctx.state.messages.append({"role": "librarian", "content": str(res.output)})
         except Exception as e:
             logger.error(f"Librarian error: {e}")
             ctx.state.messages.append({"role": "librarian", "content": f"Error: {e}"})
@@ -238,7 +238,7 @@ class WorkflowEngine:
 
             return {
                 "success": True,
-                "final_result": final_state.final_result or run_result.output,  # type: ignore
+                "final_result": final_state.final_result or run_result.output,
                 "step_count": final_state.step_count,
                 "messages": final_state.messages,
             }
