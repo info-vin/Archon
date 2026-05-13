@@ -272,7 +272,7 @@ class WorkflowEngine:
                     if msg.get("role") in ["marketbot", "librarian", "summary"]:
                         final_res_str = msg.get("content", "")
                         break
-            
+
             if not final_res_str:
                 final_res_str = str(final_state.final_result or _get_output(run_result))
 
