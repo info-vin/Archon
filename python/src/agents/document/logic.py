@@ -4,6 +4,10 @@ import uuid
 from datetime import datetime
 from typing import Any
 
+from src.agents.document.templates.generators import (
+    generate_document_blocks,
+    generate_erd_content,
+)
 from src.agents.mcp_client import get_mcp_client
 
 logger = logging.getLogger(__name__)
@@ -102,7 +106,7 @@ async def create_document_logic(
             )
 
         # Generate blocks using the full implementation
-        blocks = _convert_to_blocks(title, document_type, content_description)
+        blocks = generate_document_blocks(title, document_type, content_description)
         content = {"id": str(uuid.uuid4()), "title": title, "blocks": blocks}
 
         from server.services.projects.document_service import DocumentService
@@ -269,17 +273,7 @@ async def create_erd_logic(
 ) -> str:
     """Logic for creating an ERD and SQL schema."""
     try:
-        entities: list[dict[str, Any]] = []
-        sql_schema: list[str] = []
-
-        content = {
-            "system_overview": {
-                "name": system_name,
-                "description": entity_descriptions,
-            },
-            "entities": entities,
-            "database_schema": {"sql_statements": sql_schema},
-        }
+        content = generate_erd_content(system_name, entity_descriptions)
 
         mcp_client = await get_mcp_client(agent_type="document")
         new_data_model = {
@@ -343,76 +337,3 @@ async def request_approval_logic(
 
 
 # --- Helper functions ---
-
-
-def _convert_to_blocks(title: str, document_type: str, content_description: str) -> list[dict[str, Any]]:
-    """FULL Jules implementation of block conversion including PRD sections."""
-    blocks = [
-        {
-            "id": str(uuid.uuid4()),
-            "type": "heading_1",
-            "content": title,
-            "properties": {"text": title},
-        }
-    ]
-
-    if document_type == "prd":
-        prd_sections = [
-            "Project Overview",
-            "Goals",
-            "Scope",
-            "Technical Requirements",
-            "Architecture",
-            "User Stories",
-            "Timeline & Milestones",
-            "Risks & Mitigations",
-        ]
-        for section in prd_sections:
-            blocks.append(
-                {
-                    "id": str(uuid.uuid4()),
-                    "type": "heading_2",
-                    "content": section,
-                    "properties": {"text": section},
-                }
-            )
-            if section == "Project Overview":
-                blocks.append(
-                    {
-                        "id": str(uuid.uuid4()),
-                        "type": "paragraph",
-                        "content": content_description,
-                        "properties": {"text": content_description},
-                    }
-                )
-    elif document_type == "technical_spec":
-        tech_sections = ["Overview", "Technical Architecture", "API Design", "Database Schema"]
-        for section in tech_sections:
-            blocks.append(
-                {
-                    "id": str(uuid.uuid4()),
-                    "type": "heading_2",
-                    "content": section,
-                    "properties": {"text": section},
-                }
-            )
-    else:
-        # Default fallback
-        blocks.append(
-            {
-                "id": str(uuid.uuid4()),
-                "type": "heading_2",
-                "content": "Overview",
-                "properties": {"text": "Overview"},
-            }
-        )
-        blocks.append(
-            {
-                "id": str(uuid.uuid4()),
-                "type": "paragraph",
-                "content": content_description,
-                "properties": {"text": content_description},
-            }
-        )
-
-    return blocks
