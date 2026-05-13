@@ -32,11 +32,12 @@
 
 ## 🟢 Phase 5.4: 架構硬化與 503/429 韌性自癒 (Resilience)
 **驗收結果：物理公證通過 (Physical Parity Reached)**
-*   **[✓] 任務 5.4.4 (503/429 韌性與重試)**: 
+*   **[✓] 任務 5.4.4 (503/429 韌性、重試與金鑰輪轉)**: 
     *   **物理證據**: 在多智能體演習中，我們確實遭遇到 Google API 的 `503 Service Unavailable` 與 `429 Too Many Requests` (Free Tier RPD Limit)。
-    *   **自癒表現**: `_run_agent_with_retry` (整合自 tenacity) 成功捕捉錯誤並觸發 Exponential Backoff (最大等待 65 秒)，隨後成功取得 200 OK 繼續流程。當面臨 429 絕對日配額耗盡時，Supervisor 正確捕捉 `ClientError` 並透過 RuntimeError 優雅降級，防止無意義的死迴圈。
-*   **[✓] 任務 5.4.5 (Global Model SSOT)**:
+    *   **自癒表現**: `_run_agent_with_retry` (整合自 tenacity) 成功捕捉錯誤並觸發 Exponential Backoff (最大等待 65 秒)。當面臨 429 日配額耗盡時，系統自動啟動**金鑰輪轉**，從 `GEMINI_API_KEY` 動態切換至備用的 `GOOGLE_API_KEY` 重新建立 Provider，確保任務不中斷。若所有金鑰皆耗盡，Supervisor 會正確捕捉並透過 RuntimeError 優雅降級。
+*   **[✓] 任務 5.4.5 (Global Model SSOT 與版本相容性)**:
     *   **物理證據**: 徹底移除了 `workflow_engine.py` 與 `server.py` 的 `os.getenv` 字串回退。所有 Agent 嚴格遵守 `model_ssot.py` 定義的架構 (大腦: `gemini-3-flash-preview`, 苦工: `gemini-3.1-flash-lite-preview`)。
+    *   **環境對齊**: 解決了宿主機 (PydanticAI 0.0.55) 與容器 (PydanticAI 1.44.0) 之間的版本撕裂，透過動態檢查 `__version__` 參數 (`result_type` vs `output_type`) 以及動態屬性讀取 (`getattr`)，實現了跨環境的完美相容與無報錯 Linting。
 
 ---
 
