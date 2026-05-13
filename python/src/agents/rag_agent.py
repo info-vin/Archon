@@ -9,14 +9,12 @@ intelligent responses based on the retrieved information.
 import logging
 import os
 from dataclasses import dataclass
-from datetime import datetime
 from typing import Any
 
 from pydantic import BaseModel, Field
-from pydantic_ai import Agent, RunContext
+from pydantic_ai import Agent
 
 from .base_agent import ArchonDependencies, BaseAgent
-from .mcp_client import get_mcp_client
 
 logger = logging.getLogger(__name__)
 
@@ -76,191 +74,21 @@ class RagAgent(BaseAgent[RagDependencies, str]):
         )
 
         # Register dynamic system prompt for context
-        @agent.system_prompt
-        async def add_search_context(ctx: RunContext[RagDependencies]) -> str:
-            source_info = f"Source Filter: {ctx.deps.source_filter}" if ctx.deps.source_filter else "No source filter"
-            return f"""
-**Current Search Context:**
-- Project ID: {ctx.deps.project_id or "Global search"}
-- {source_info}
-- Max Results: {ctx.deps.match_count}
-- Timestamp: {datetime.now().isoformat()}
-"""
+        from src.agents.rag.tools import (
+            add_search_context_prompt,
+            list_available_sources_tool,
+            refine_search_query_tool,
+            search_code_examples_tool,
+            search_documents_tool,
+        )
+
+        agent.system_prompt(add_search_context_prompt)
 
         # Register tools for RAG operations
-        @agent.tool
-        async def search_documents(
-            ctx: RunContext[RagDependencies], query: str, source_filter: str | None = None
-        ) -> str:
-            """Search through documents using RAG query."""
-            try:
-                # Use source filter from context if not provided
-                if source_filter is None:
-                    source_filter = ctx.deps.source_filter
-
-                # Use MCP client to perform RAG query
-                mcp_client = await get_mcp_client(agent_type="rag")
-                result_json = await mcp_client.perform_rag_query(
-                    query=query, source=source_filter, match_count=ctx.deps.match_count
-                )
-
-                # Parse the JSON response
-                import json
-
-                result = json.loads(result_json)
-
-                if not result.get("success", False):
-                    return f"Search failed: {result.get('error', 'Unknown error')}"
-
-                results = result.get("results", [])
-                if not results:
-                    return "No results found for your query. Try using different search terms or removing filters."
-
-                # Format results for display
-                formatted_results = []
-                for i, res in enumerate(results, 1):
-                    similarity = res.get("similarity_score", res.get("similarity", 0))
-                    metadata = res.get("metadata", {})
-                    source = metadata.get("source", "Unknown")
-                    url = metadata.get("url", res.get("url", ""))
-                    content = res.get("content", "")
-
-                    # Truncate content if too long
-                    if len(content) > 500:
-                        content = content[:500] + "..."
-
-                    formatted_results.append(
-                        f"**Result {i}** (Relevance: {similarity:.2%})\n"
-                        f"Source: {source}\n"
-                        f"URL: {url}\n"
-                        f"Content: {content}\n"
-                    )
-
-                return f"Found {len(results)} relevant results:\n\n" + "\n---\n".join(formatted_results)
-
-            except Exception as e:
-                logger.error(f"Error searching documents: {e}")
-                return f"Error performing search: {str(e)}"
-
-        @agent.tool
-        async def list_available_sources(ctx: RunContext[RagDependencies]) -> str:
-            """List all available sources that can be searched."""
-            try:
-                # Use MCP client to get available sources
-                mcp_client = await get_mcp_client(agent_type="rag")
-                result_json = await mcp_client.get_available_sources()
-
-                # Parse the JSON response
-                import json
-
-                result = json.loads(result_json)
-
-                if not result.get("success", False):
-                    return f"Failed to get sources: {result.get('error', 'Unknown error')}"
-
-                sources = result.get("sources", [])
-                if not sources:
-                    return "No sources are currently available. You may need to crawl some documentation first."
-
-                source_list = []
-                for source in sources:
-                    source_id = source.get("source_id", "Unknown")
-                    title = source.get("title", "Untitled")
-                    description = source.get("description", "")
-                    created = source.get("created_at", "")
-
-                    # Format the description if available
-                    desc_text = f" - {description}" if description else ""
-
-                    source_list.append(f"- **{source_id}**: {title}{desc_text} (added {created[:10]})")
-
-                return f"Available sources ({len(sources)} total):\n" + "\n".join(source_list)
-
-            except Exception as e:
-                logger.error(f"Error listing sources: {e}")
-                return f"Error retrieving sources: {str(e)}"
-
-        @agent.tool
-        async def search_code_examples(
-            ctx: RunContext[RagDependencies], query: str, source_filter: str | None = None
-        ) -> str:
-            """Search for code examples related to the query."""
-            try:
-                # Use source filter from context if not provided
-                if source_filter is None:
-                    source_filter = ctx.deps.source_filter
-
-                # Use MCP client to search code examples
-                mcp_client = await get_mcp_client(agent_type="rag")
-                result_json = await mcp_client.search_code_examples(
-                    query=query, source_id=source_filter, match_count=ctx.deps.match_count
-                )
-
-                # Parse the JSON response
-                import json
-
-                result = json.loads(result_json)
-
-                if not result.get("success", False):
-                    return f"Code search failed: {result.get('error', 'Unknown error')}"
-
-                examples = result.get("results", result.get("code_examples", []))
-                if not examples:
-                    return "No code examples found for your query."
-
-                formatted_examples = []
-                for i, example in enumerate(examples, 1):
-                    similarity = example.get("similarity", 0)
-                    summary = example.get("summary", "No summary")
-                    code = example.get("code", example.get("code_block", ""))
-                    url = example.get("url", "")
-
-                    # Extract language from code block if available
-                    lang = "code"
-                    if code.startswith("```"):
-                        first_line = code.split("\n")[0]
-                        if len(first_line) > 3:
-                            lang = first_line[3:].strip()
-
-                    formatted_examples.append(
-                        f"**Example {i}** (Relevance: {similarity:.2%})\n"
-                        f"Summary: {summary}\n"
-                        f"Source: {url}\n"
-                        f"```{lang}\n{code}\n```"
-                    )
-
-                return f"Found {len(examples)} code examples:\n\n" + "\n---\n".join(formatted_examples)
-
-            except Exception as e:
-                logger.error(f"Error searching code examples: {e}")
-                return f"Error searching code: {str(e)}"
-
-        @agent.tool
-        async def refine_search_query(ctx: RunContext[RagDependencies], original_query: str, context: str) -> str:
-            """Refine a search query based on context to get better results."""
-            try:
-                # Simple query expansion based on context
-                refined_parts = [original_query]
-
-                # Add contextual keywords
-                if "how" in original_query.lower():
-                    refined_parts.append("tutorial guide example")
-                elif "what" in original_query.lower():
-                    refined_parts.append("definition explanation overview")
-                elif "error" in original_query.lower() or "issue" in original_query.lower():
-                    refined_parts.append("troubleshooting solution fix")
-                elif "api" in original_query.lower():
-                    refined_parts.append("endpoint method parameters response")
-
-                # Add project-specific context if available
-                if ctx.deps.project_id:
-                    refined_parts.append(f"project:{ctx.deps.project_id}")
-
-                refined_query = " ".join(refined_parts)
-                return f"Refined query: '{refined_query}' (original: '{original_query}')"
-
-            except Exception as e:
-                return f"Could not refine query: {str(e)}"
+        agent.tool(search_documents_tool)
+        agent.tool(list_available_sources_tool)
+        agent.tool(search_code_examples_tool)
+        agent.tool(refine_search_query_tool)
 
         return agent
 
