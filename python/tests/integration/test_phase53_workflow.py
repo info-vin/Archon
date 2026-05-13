@@ -33,13 +33,11 @@ async def test_phase53_bob_to_charlie_workflow():
 
     logger.info("🚀 Initiating Workflow as Bob...")
 
-    async with AsyncClient() as client:
-        import httpx
+    async with AsyncClient(timeout=300.0) as client:
         response = await client.post(
             f"{agents_url}/agents/workflow/run",
             json={"prompt": prompt},
-            headers={"X-User-Role": "marketing"}, # Simulating Bob's context
-            timeout=httpx.Timeout(300.0) # Multi-agent workflow takes time + Backoff
+            headers={"X-User-Role": "marketing"} # Simulating Bob's context
         )
 
         # 1. Assert Basic Execution
