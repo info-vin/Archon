@@ -1,8 +1,8 @@
-import os
-import pytest
-from httpx import AsyncClient
 import logging
+
+import pytest
 from dotenv import load_dotenv
+from httpx import AsyncClient
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
@@ -27,42 +27,42 @@ async def test_phase53_bob_to_charlie_workflow():
     """
     if not await is_server_running():
         pytest.skip("Agents server not running on localhost:8052")
-        
+
     agents_url = "http://localhost:8052"
     prompt = "I need a short blog post about the latest Gemini models for our website."
-    
+
     logger.info("🚀 Initiating Workflow as Bob...")
-    
+
     async with AsyncClient() as client:
         response = await client.post(
             f"{agents_url}/agents/workflow/run",
             json={"prompt": prompt},
             headers={"X-User-Role": "marketing"}, # Simulating Bob's context
-            timeout=30.0 # Multi-agent workflow takes time
+            timeout=180.0 # Multi-agent workflow takes time + Backoff
         )
-        
+
         # 1. Assert Basic Execution
         assert response.status_code == 200
         data = response.json()
         assert data.get("success") is True, f"Workflow failed: {data.get('error')}"
-        
+
         metadata = data.get("metadata", {})
         messages = metadata.get("messages", [])
-        
+
         # 2. Assert Star-Topology Path
         # We expect messages from: user -> supervisor(charlie) -> librarian -> supervisor -> marketbot -> supervisor...
         # At minimum, librarian and marketbot should have participated.
-        participants = set(m.get("role") for m in messages)
+        participants = {m.get("role") for m in messages}
         logger.info(f"👥 Participants in workflow: {participants}")
-        
+
         assert "librarian" in participants, "Librarian Node did not execute"
         assert "marketbot" in participants, "MarketBot Node did not execute"
-        
+
         # 3. Assert Final Output Structure
         final_result = data.get("result", "")
         logger.info(f"📝 Final Result Length: {len(final_result)}")
         assert len(final_result) > 50, "Final result is suspiciously short"
-        
+
         # 4. Assert Circuit Breaker didn't trip unnecessarily
         assert metadata.get("step_count", 0) <= 5, "Workflow took too many steps, potential loop."
         assert "Needs Human Review" not in final_result, "Workflow hit the recursion limit!"

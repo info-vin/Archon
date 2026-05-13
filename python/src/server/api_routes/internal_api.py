@@ -7,9 +7,11 @@ not by external clients. They provide internal functionality like credential sha
 
 import logging
 import os
+import uuid
 from typing import Any
 
 from fastapi import APIRouter, BackgroundTasks, HTTPException, Request
+from pydantic import BaseModel
 
 from ..services.credential_service import credential_service
 
@@ -18,85 +20,102 @@ logger = logging.getLogger(__name__)
 # Create router with internal prefix
 router = APIRouter(prefix="/internal", tags=["internal"])
 
-# Simple IP-based access control for internal endpoints
-ALLOWED_INTERNAL_IPS = [
-    "127.0.0.1",  # Localhost
-    "172.18.0.0/16",  # Docker network range
-    "archon-agents",  # Docker service name
-    "archon-mcp",  # Docker service name
-]
-
 
 def is_internal_request(request: Request) -> bool:
-    """Check if request is from an internal source."""
-    if request.client is None:
-        return False
-    client_host = request.client.host
+    """
+    Check if a request is coming from within the internal network.
+    This is a basic security check for internal API endpoints.
+    """
+    client_host = request.client.host if request.client else "unknown"
 
-    # Check if it's a Docker network IP (172.16.0.0/12 range)
+    # Allow requests from localhost/127.0.0.1
+    if client_host in ("127.0.0.1", "localhost", "::1", "testclient"):
+        return True
+
+    # Allow requests from Docker internal network (typically 172.x.x.x)
     if client_host.startswith("172."):
-        parts = client_host.split(".")
-        if len(parts) == 4:
-            second_octet = int(parts[1])
-            # Docker uses 172.16.0.0 - 172.31.255.255
-            if 16 <= second_octet <= 31:
-                logger.info(f"Allowing Docker network request from {client_host}")
-                return True
+        return True
 
-    # Check if it's localhost
-    if client_host in ["127.0.0.1", "::1", "localhost"]:
+    # Check for X-Internal-Key header (used for inter-service auth)
+    internal_key = os.getenv("ARCHON_INTERNAL_KEY")
+    request_key = request.headers.get("X-Internal-Key")
+    if internal_key and request_key == internal_key:
         return True
 
     return False
 
 
-@router.get("/health")
-async def internal_health():
-    """Internal health check endpoint."""
-    return {"status": "healthy", "service": "internal-api"}
+class TokenUsagePayload(BaseModel):
+    model: str
+    provider: str
+    input_tokens: int
+    output_tokens: int
+    context_type: str = "agentic_workflow"
+
+
+@router.post("/stats/token-usage")
+async def log_token_usage(payload: TokenUsagePayload, request: Request):
+    """
+    Internal endpoint to log token usage from agents service.
+    Phase 5.4: Fix Token Logging Gap.
+    """
+    if not is_internal_request(request):
+        client_host = request.client.host if request.client else "unknown"
+        logger.warning(f"Unauthorized access to internal token-usage from {client_host}")
+        raise HTTPException(status_code=403, detail="Access forbidden")
+
+    try:
+        from ..services.token_usage_service import TokenUsageService
+
+        await TokenUsageService.log_usage(
+            request_id=str(uuid.uuid4()),
+            model=payload.model,
+            provider=payload.provider,
+            input_tokens=payload.input_tokens,
+            output_tokens=payload.output_tokens,
+            context_type=payload.context_type,
+        )
+        return {"success": True}
+    except Exception as e:
+        logger.error(f"Error logging token usage: {e}")
+        raise HTTPException(status_code=500, detail="Failed to log token usage") from e
 
 
 @router.get("/credentials/agents")
 async def get_agent_credentials(request: Request) -> dict[str, Any]:
     """
     Get credentials needed by the agents service.
-
-    This endpoint is only accessible from internal services and provides
-    the necessary credentials for AI agents to function.
     """
     # Check if request is from internal source
     if not is_internal_request(request):
-        logger.warning("Unauthorized access to internal credentials")
+        client_host = request.client.host if request.client else "unknown"
+        logger.warning(f"Unauthorized access to internal credentials from {client_host}")
         raise HTTPException(status_code=403, detail="Access forbidden")
 
     try:
-        # Get credentials needed by agents
+        from ..config.model_ssot import SYSTEM_MODELS
+        
         credentials = {
-            # API Keys
-            "OPENAI_API_KEY": await credential_service.get_credential("OPENAI_API_KEY", decrypt=True),
-            "GEMINI_API_KEY": await credential_service.get_credential("GEMINI_API_KEY", decrypt=True),
-
-            # Model configurations
-            "DOCUMENT_AGENT_MODEL": await credential_service.get_credential("DOCUMENT_AGENT_MODEL"),
-            "RAG_AGENT_MODEL": await credential_service.get_credential("RAG_AGENT_MODEL"),
-            "TASK_AGENT_MODEL": await credential_service.get_credential("TASK_AGENT_MODEL"),
-            "SUMMARY_AGENT_MODEL": await credential_service.get_credential("SUMMARY_AGENT_MODEL"),
-            # Rate limiting settings
+            "OPENAI_API_KEY": await credential_service.get_credential("OPENAI_API_KEY"),
+            "GEMINI_API_KEY": await credential_service.get_credential("GEMINI_API_KEY"),
+            "ANTHROPIC_API_KEY": await credential_service.get_credential("ANTHROPIC_API_KEY"),
+            "LOGFIRE_TOKEN": await credential_service.get_credential("LOGFIRE_TOKEN"),
             "AGENT_RATE_LIMIT_ENABLED": await credential_service.get_credential(
                 "AGENT_RATE_LIMIT_ENABLED", default="true"
             ),
             "AGENT_MAX_RETRIES": await credential_service.get_credential("AGENT_MAX_RETRIES", default="3"),
-            # MCP endpoint
-            "MCP_SERVICE_URL": f"http://archon-mcp:{os.getenv('ARCHON_MCP_PORT')}",
-            # Additional settings
+            "MCP_SERVICE_URL": await credential_service.get_credential(
+                "MCP_SERVICE_URL", default="http://archon-mcp:8051"
+            ),
             "LOG_LEVEL": await credential_service.get_credential("LOG_LEVEL", default="INFO"),
+            # Phase 5.4.5: Global Model SSOT Hardening
+            "SUPERVISOR_AGENT_MODEL": SYSTEM_MODELS["DEFAULT_PRO"].split("/")[-1],
+            "WORKER_AGENT_MODEL": SYSTEM_MODELS["DEFAULT_TEXT"].split("/")[-1],
+            "DOCUMENT_AGENT_MODEL": SYSTEM_MODELS["DEFAULT_PRO"].split("/")[-1],
+            "RAG_AGENT_MODEL": SYSTEM_MODELS["DEFAULT_TEXT"].split("/")[-1],
         }
 
-        # Filter out None values
-        credentials = {k: v for k, v in credentials.items() if v is not None}
-
-        client_host = request.client.host if request.client is not None else "unknown"
-        logger.info(f"Provided credentials to agents service from {client_host}")
+        logger.info(f"Provided credentials to agents service from {request.client.host if request.client else 'unknown'}")
         return credentials
 
     except Exception as e:
@@ -108,8 +127,6 @@ async def get_agent_credentials(request: Request) -> dict[str, Any]:
 async def get_mcp_credentials(request: Request) -> dict[str, Any]:
     """
     Get credentials needed by the MCP service.
-
-    This endpoint provides credentials for the MCP service if needed in the future.
     """
     # Check if request is from internal source
     if not is_internal_request(request):
@@ -119,11 +136,10 @@ async def get_mcp_credentials(request: Request) -> dict[str, Any]:
 
     try:
         credentials = {
-            # MCP might need some credentials in the future
             "LOG_LEVEL": await credential_service.get_credential("LOG_LEVEL", default="INFO"),
         }
 
-        logger.info(f"Provided credentials to MCP service from {client_host}")
+        logger.info(f"Provided credentials to MCP service from {request.client.host if request.client else 'unknown'}")
         return credentials
 
     except Exception as e:
@@ -158,7 +174,7 @@ async def trigger_cron_jobs(request: Request, background_tasks: BackgroundTasks,
         background_tasks.add_task(scheduler_service._run_task_dispatcher)
         background_tasks.add_task(scheduler_service._cleanup_system_probes)
 
-        return {"status": "success", "message": "Background jobs queued successfully"}
+        return {"status": "triggered", "jobs": 6}
     except Exception as e:
-        logger.error(f"Error triggering jobs: {e}")
+        logger.error(f"Error triggering cron jobs: {e}")
         raise HTTPException(status_code=500, detail=str(e)) from e

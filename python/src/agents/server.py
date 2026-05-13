@@ -123,12 +123,12 @@ async def lifespan(app: FastAPI):
     app.state.agents = {}
     for name, agent_class in AVAILABLE_AGENTS.items():
         try:
-            # Pass model configuration from credentials
+            # Pass model configuration from credentials, fallback to ENV
             model_key = f"{name.upper()}_AGENT_MODEL"
-            model = AGENT_CREDENTIALS.get(model_key)
+            model = AGENT_CREDENTIALS.get(model_key) or os.getenv(model_key)
+
             if not model:
-                # Agent will raise a ValueError upon initialization if model is None
-                pass
+                raise ValueError(f"❌ [SSOT Violation] Model configuration '{model_key}' missing from DB and ENV.")
 
             app.state.agents[name] = agent_class(model=model)
             logger.info(f"Initialized {name} agent with model: {model}")

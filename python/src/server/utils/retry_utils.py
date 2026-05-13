@@ -47,7 +47,8 @@ def retry_with_backoff(
     """
 
     # Configure tenacity retry conditions
-    wait_strategy = wait_exponential_jitter(initial=initial_delay, max=10) if jitter else wait_exponential_jitter(initial=initial_delay, max=10, jitter=0)
+    # Increased max to 65 to handle Gemini's 54s cooldowns for Free Tier RPM limits
+    wait_strategy = wait_exponential_jitter(initial=initial_delay, max=65) if jitter else wait_exponential_jitter(initial=initial_delay, max=65, jitter=0)
 
     # Create a custom retry condition combining type and content checks
     def custom_retry_condition(e: BaseException) -> bool:
