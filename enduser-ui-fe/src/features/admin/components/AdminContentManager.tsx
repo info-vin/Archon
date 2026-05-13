@@ -37,7 +37,14 @@ export const AdminContentManager: React.FC = () => {
                                 <td className="px-6 py-4 capitalize">{post.status}</td>
                                 <td className="px-6 py-4">{new Date(post.publishDate).toLocaleDateString()}</td>
                                 <td className="px-6 py-4 text-right">
-                                    <button onClick={() => deletePost(post.id)} className="text-red-500 hover:text-red-700"><TrashIcon className="w-4 h-4"/></button>
+                                    <button
+                                        onClick={() => deletePost(post.id)}
+                                        className="p-1.5 text-red-500 hover:bg-red-50 rounded-md transition-colors focus-visible:ring-2 focus-visible:ring-red-500 outline-none"
+                                        aria-label="Delete post"
+                                        title="Delete post"
+                                    >
+                                        <TrashIcon className="w-4 h-4" />
+                                    </button>
                                 </td>
                             </tr>
                         )) : (
