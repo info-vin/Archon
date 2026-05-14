@@ -309,7 +309,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({ task, onClose, onTaskCreat
 
             {/* AI Report Tab */}
             <div className={activeTab === 'report' ? 'space-y-4' : 'hidden'}>
-               {task && <TaskAIAgentReport task={task} />}
+               {task && <TaskAgentGroupChat task={task} />}
             </div>
           </div>
 
@@ -342,3 +342,4 @@ export const TaskModal: React.FC<TaskModalProps> = ({ task, onClose, onTaskCreat
     </div>
   );
 };
+

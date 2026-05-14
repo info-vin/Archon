@@ -9,6 +9,7 @@ class AgentUUIDs:
     Physical Source of Truth for AI Agent Identities (Phase 4.6.47 Grounded).
     Eliminates hardcoded strings while maintaining test stability.
     """
+    SUPERVISOR = "f0f00000-0000-0000-0000-000000000000"
     MARKET_BOT = "a11ce000-0000-0000-0000-000000000000"
     LIBRARIAN = "b0b00000-0000-0000-0000-000000000000"
     DEV_BOT = "e1682371-0000-0000-0000-000000000000"
@@ -27,6 +28,7 @@ class ProcessingMode(StrEnum):
 
 # Known AI agent roles that can be assigned tasks
 AI_AGENT_ROLES = {
+    "Supervisor (Group Chat)": AgentUUIDs.SUPERVISOR,
     "MarketBot (Sales)": AgentUUIDs.MARKET_BOT,
     "Librarian (Knowledge)": AgentUUIDs.LIBRARIAN,
     "DevBot (Engineering)": AgentUUIDs.DEV_BOT,

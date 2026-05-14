@@ -103,6 +103,55 @@ class AgentService:
             details={"task_id": task_data.get("id"), "score": score},
         )
 
+    async def _run_workflow_engine_task(self, task_id: str, task_data: dict, agent_id: str):
+        """Phase 5.0.2: Bridges the execution to the isolated archon-agents WorkflowEngine container."""
+        from ..services.projects.task_service import task_service
+        import os
+        import httpx
+        
+        logger = get_logger(__name__)
+        
+        # 1. Determine task_type for dynamic prompt routing
+        task_type = task_data.get("task_type", "General")
+        prompt = f"Task: {task_data['title']}\n\nDetails: {task_data.get('description', '')}"
+
+        # 2. Call WorkflowEngine via httpx
+        agents_url = os.getenv("AGENTS_SERVICE_URL", "http://archon-agents:8052")
+        try:
+            # Group chats take time, set a safe timeout
+            async with httpx.AsyncClient(timeout=300.0) as client:
+                response = await client.post(
+                    f"{agents_url}/agents/workflow/run",
+                    json={"prompt": prompt, "context": {"task_type": task_type}},
+                )
+                response.raise_for_status()
+                data = response.json()
+                
+                if data.get("success"):
+                    await task_service.update_task(task_id, {"status": "done"})
+                    
+                    # Milestone 2: Save the entire JSON state, not just final_result
+                    messages = data.get("metadata", {}).get("messages", [])
+                    final_result = data.get("result", "")
+                    
+                    save_payload = {
+                        "content": final_result,
+                        "messages": messages,
+                        "step_count": data.get("metadata", {}).get("step_count", 0)
+                    }
+                    await task_service.save_agent_output(task_id, save_payload, agent_id)
+                    await self._award_agent_xp(agent_id, task_data, str(final_result))
+                else:
+                    logger.error(f"WorkflowEngine failed: {data.get('error')}")
+                    await task_service.update_task(task_id, {"status": "failed"})
+                    
+        except httpx.RequestError as e:
+            logger.error(f"Network error calling WorkflowEngine: {e}")
+            await task_service.update_task(task_id, {"status": "failed"})
+        except Exception as e:
+            logger.error(f"Unexpected error in WorkflowEngine execution: {e}")
+            await task_service.update_task(task_id, {"status": "failed"})
+
     async def _run_general_agent_task(self, task_id: str, agent_id: str):
         from ..services.projects.task_service import task_service
 
