@@ -157,7 +157,7 @@
     - **行動**: 全域盤點並移除了 `agents/`, `server/`, `mcp_server/` 中 13 處關於 `openai:gpt-4o`, `gpt-4.1-nano` 與 `gemini-embedding-001` 的硬編碼回退機制。
     - **機制**: 導入「Fail Fast」原則。系統現在完全依賴 `archon_settings` (資料庫) 與 `.env` 作為唯一的模型事實來源。若未設定則直接拋出 `ValueError`，徹底解決了隱性 429 崩潰問題。
 *   **2. Phase 5 架構藍圖 (LangGraph Evolution)**:
-    - **行動**: 將 Phase 4.6 收尾文件歸檔，並建立 `Phase_5.0_LangGraph_Evolution_Implementation.md` 實作計畫。
+    - **行動**: 將 Phase 4.6 收尾文件歸檔，並建立 `Phase_5.0.0_Multi_Agent_Implementation.md` 實作計畫與驗收報告。
     - **決策**: 
         - **Reject LangGraph**: 為了避免 Pydantic v1 依賴衝突，決定採用原生的 `pydantic-graph` 來構建狀態機。
         - **星型群聊 (Star-Topology)**: 捨棄 AutoGen 的自由對話，改由 Supervisor 動態路由，並加上 `MAX_RECURSION = 3` 熔斷器以保護 API 成本。
