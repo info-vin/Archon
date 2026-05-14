@@ -5,6 +5,9 @@ import { vi } from 'vitest';
  * Using Object.defineProperty to lock down globals before React ever runs.
  */
 
+// Inject default test API URL so URL parsing doesn't fail
+vi.stubEnv('VITE_API_URL', 'http://localhost');
+
 const mockMatchMedia = vi.fn().mockImplementation(query => ({
   matches: false,
   media: query,
