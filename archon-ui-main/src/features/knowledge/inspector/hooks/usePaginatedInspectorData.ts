@@ -100,18 +100,16 @@ export function usePaginatedInspectorData({
 
   // Pre-calculate document search strings to avoid O(N) string allocations during active search
   const searchableDocs = useMemo(() => {
-    return allDocs.map((doc) => ({
-      doc,
-      searchStr: `${doc.content || ""} ${doc.metadata?.title || ""} ${doc.metadata?.section || ""} ${doc.url || ""}`.toLowerCase(),
-    }));
+    return allDocs.map(
+      (doc) => `${doc.content || ""} ${doc.metadata?.title || ""} ${doc.metadata?.section || ""} ${doc.url || ""}`.toLowerCase()
+    );
   }, [allDocs]);
 
   // Pre-calculate code search strings to avoid O(N) string allocations during active search
   const searchableCode = useMemo(() => {
-    return allCode.map((code) => ({
-      code,
-      searchStr: `${code.content || ""} ${code.summary || ""} ${code.metadata?.language || ""}`.toLowerCase(),
-    }));
+    return allCode.map(
+      (code) => `${code.content || ""} ${code.summary || ""} ${code.metadata?.language || ""}`.toLowerCase()
+    );
   }, [allCode]);
 
   // Filter documents based on search
@@ -119,9 +117,7 @@ export function usePaginatedInspectorData({
     if (!searchQuery) return allDocs;
 
     const query = searchQuery.toLowerCase();
-    return searchableDocs
-      .filter(({ searchStr }) => searchStr.includes(query))
-      .map(({ doc }) => doc);
+    return allDocs.filter((_, index) => searchableDocs[index].includes(query));
   }, [searchableDocs, allDocs, searchQuery]);
 
   // Filter code examples based on search
@@ -129,9 +125,7 @@ export function usePaginatedInspectorData({
     if (!searchQuery) return allCode;
 
     const query = searchQuery.toLowerCase();
-    return searchableCode
-      .filter(({ searchStr }) => searchStr.includes(query))
-      .map(({ code }) => code);
+    return allCode.filter((_, index) => searchableCode[index].includes(query));
   }, [searchableCode, allCode, searchQuery]);
 
   // Load more documents
