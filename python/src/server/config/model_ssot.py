@@ -7,10 +7,10 @@ Models optimized for Free Tier compatibility.
 
 SYSTEM_MODELS = {
     # Gemini 3.1 Flash-Lite: Best Free Tier model (15 RPM / 1000 RPD)
-    "DEFAULT_TEXT": "models/gemini-3.1-flash-lite-preview",
+    "DEFAULT_TEXT": "models/gemini-3.1-flash-lite",
 
     # Gemini 3 Flash: Best Free Tier model for reasoning
-    "DEFAULT_PRO": "models/gemini-3-flash-preview",
+    "DEFAULT_PRO": "models/gemini-3.1-flash-lite",
 
     # Image Models (Requires Billing for API, MarketingService uses internal fallback)
     "IMAGE_GEN": "models/gemini-3.1-flash-image-preview",

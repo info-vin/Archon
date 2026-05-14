@@ -23,8 +23,8 @@ async def search_documents_tool(
 
         # Use MCP client to perform RAG query
         mcp_client = await get_mcp_client(agent_type="rag")
-        result_json = await mcp_client.perform_rag_query(
-            query=query, source=source_filter, match_count=ctx.deps.match_count
+        result_json = await mcp_client.rag_search_knowledge_base(  # type: ignore
+            query=query, source_id=source_filter, match_count=ctx.deps.match_count
         )
 
         # Parse the JSON response
@@ -109,8 +109,8 @@ async def search_code_examples_tool(
 
         # Use MCP client to search code examples
         mcp_client = await get_mcp_client(agent_type="rag")
-        result_json = await mcp_client.search_code_examples(
-            query=query, source_id=source_filter, match_count=ctx.deps.match_count
+        result_json = await mcp_client.call_tool(
+            "rag_search_code_examples", query=query, source_id=source_filter, match_count=ctx.deps.match_count
         )
 
         # Parse the JSON response
@@ -185,3 +185,4 @@ async def add_search_context_prompt(ctx: RunContext[RagDependencies]) -> str:
 - Max Results: {ctx.deps.match_count}
 - Timestamp: {datetime.now().isoformat()}
 """
+

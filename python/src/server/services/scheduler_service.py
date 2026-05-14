@@ -143,6 +143,11 @@ class SchedulerService:
         )
         logger.info(f"✅ Scheduled Job: Log Patrol (Every {patrol_mins} mins)")
 
+        self._scheduler.add_job(
+            self._run_model_verification, trigger=IntervalTrigger(minutes=60), id="model_verification", replace_existing=True
+        )
+        logger.info(f"✅ Scheduled Job: Model Verification (Every 60 mins)")
+
         # 2. Business Jobs (Stateful)
         await self._schedule_stateful_job(self._run_prune_stale_leads, 1, "prune_stale_leads")
         await self._schedule_stateful_job(self._run_auto_fetch_leads, 24, "alice_auto_fetch")
@@ -150,6 +155,7 @@ class SchedulerService:
         await self._schedule_stateful_job(self._run_business_sentinel, sentinel_hours, "business_sentinel")
         await self._schedule_stateful_job(self._run_daily_market_report, 24, "bob_market_report")
         await self._schedule_stateful_job(self._run_tech_debt_audit, 336, "tech_debt_audit")
+        await self._schedule_stateful_job(self._run_api_deprecation_scan, 336, "api_deprecation_scan")
 
         # 3. Task Dispatcher
         self._scheduler.add_job(
@@ -170,6 +176,9 @@ class SchedulerService:
     async def _run_tech_debt_audit(self):
         await patrol.run_tech_debt_audit()
 
+    async def _run_model_verification(self):
+        await patrol.run_model_verification()
+
     async def _run_prune_stale_leads(self):
         await business.run_prune_stale_leads()
 
@@ -187,6 +196,9 @@ class SchedulerService:
 
     async def _run_daily_market_report(self):
         await business.run_daily_market_report()
+
+    async def _run_api_deprecation_scan(self):
+        await business.run_api_deprecation_scan()
 
     async def _run_task_dispatcher(self):
         await task_dispatcher.run_task_dispatcher()

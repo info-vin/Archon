@@ -257,3 +257,52 @@ async def run_business_sentinel():
             logger.info(f"🛡️ Sentinel: Created bottleneck alert for {post['title']}")
     except Exception as e:
         logger.error(f"💥 Clockwork: Business Sentinel Failed: {e}", exc_info=True)
+
+
+async def run_api_deprecation_scan():
+    """Bi-weekly scan of Google's Gemini API Docs to check for deprecations and limit changes."""
+    logger.info("🔍 Clockwork: Starting API Deprecation & Limit Scan...")
+    try:
+        from server.services.agent_service import agent_service
+        from server.services.projects.task_service import task_service
+        from server.services.shared_constants import AI_AGENT_ROLES
+        
+        supabase = get_supabase_client()
+        
+        task_title = f"Auto-Scan: Gemini API Deprecations & Quotas ({datetime.now(UTC).strftime('%Y-%m-%d')})"
+        task_desc = (
+            "Clockwork has initiated the bi-weekly scan of Google's Gemini API documentation.\n\n"
+            "Please use your RAG and Web capabilities to extract the latest information regarding:\n"
+            "1. Model Deprecations (e.g., gemini-3.1-flash-lite, gemini-3-flash-preview).\n"
+            "2. Free Tier API Rate Limits (RPD, RPM) for the Gemini 3/3.1 series.\n\n"
+            "Provide a summary of any changes that might affect our system stability."
+        )
+
+        p_res = supabase.table("archon_projects").select("id").limit(1).execute()
+        if not p_res.data:
+            logger.warning("Clockwork: No projects found to attach API scan task.")
+            return
+
+        project_id = p_res.data[0]["id"]
+
+        success, task_result = await task_service.create_task(
+            project_id=project_id,
+            title=task_title,
+            description=task_desc,
+            assignee_id=AI_AGENT_ROLES.get("Librarian (Research)") or "ai-librarian",
+        )
+
+        if success:
+            logger.info(f"🔍 Clockwork: Created API scan task {task_result['task']['id']}. Dispatching Librarian...")
+            await agent_service.run_agent_task(
+                task_id=task_result["task"]["id"], agent_id=task_result["task"]["assignee_id"]
+            )
+            
+            supabase.table("archon_logs").insert({
+                "source": "clockwork-scheduler",
+                "level": "INFO",
+                "message": "Dispatched Bi-Weekly API Limit & Deprecation Scan to Librarian",
+            }).execute()
+            
+    except Exception as e:
+        logger.error(f"💥 Clockwork: API Scan Failed: {e}", exc_info=True)

@@ -176,6 +176,35 @@ async def cleanup_system_probes():
     except Exception as e:
         logger.error(f"💥 Clockwork: System Probe Cleanup Failed: {e}")
 
+async def run_model_verification():
+    """Verifies that the system is using the safe Lite model to prevent 429 errors."""
+    logger.info("🤖 Clockwork: Running Model Verification...")
+    try:
+        from server.config.model_ssot import SYSTEM_MODELS
+        from server.utils import get_supabase_client
+
+        supabase = get_supabase_client()
+        
+        default_pro = SYSTEM_MODELS.get("DEFAULT_PRO", "")
+        default_text = SYSTEM_MODELS.get("DEFAULT_TEXT", "")
+        
+        # Check if the models are set to lite versions to bypass 20 RPD limit
+        is_safe = "lite" in default_pro and "lite" in default_text
+        msg = "Model Verification Passed (Using Lite models)" if is_safe else "Model Verification WARNING: Potentially using high-quota models"
+        log_level = "INFO" if is_safe else "WARNING"
+
+        logger.info(f"{'✅' if is_safe else '⚠️'} Clockwork: {msg}")
+
+        try:
+            supabase.table("archon_logs").insert(
+                {"source": "clockwork-scheduler", "level": log_level, "message": msg, "details": {"DEFAULT_PRO": default_pro, "DEFAULT_TEXT": default_text}}
+            ).execute()
+        except Exception as db_err:
+            logger.error(f"❌ Clockwork: Failed to write to archon_logs: {db_err}")
+
+    except Exception as e:
+        logger.error(f"💥 Clockwork: Model Verification Crashed: {e}")
+
 async def run_tech_debt_audit():
     """Scans PRPs and scripts for technical debt, and dispatches DevBot if needed."""
     logger.info("🧹 Clockwork: Starting Tech Debt Patrol...")
