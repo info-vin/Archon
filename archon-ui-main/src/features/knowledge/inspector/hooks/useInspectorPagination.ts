@@ -82,15 +82,13 @@ export function useInspectorPagination({
 
     // Precalculate .toLowerCase() searchable string to prevent O(N*M) redundant string allocations during filter
     const searchableItems = allItems.map((item) => {
-      let searchStr = "";
       if (viewMode === "documents") {
         const doc = item as DocumentChunk;
-        searchStr = `${doc.content || ""} ${doc.title || ""} ${doc.metadata?.title || ""} ${doc.metadata?.section || ""}`.toLowerCase();
+        return `${doc.content || ""} ${doc.title || ""} ${doc.metadata?.title || ""} ${doc.metadata?.section || ""}`.toLowerCase();
       } else {
         const code = item as CodeExample;
-        searchStr = `${code.content || ""} ${code.summary || ""} ${code.language || ""} ${code.file_path || ""} ${code.title || ""}`.toLowerCase();
+        return `${code.content || ""} ${code.summary || ""} ${code.language || ""} ${code.file_path || ""} ${code.title || ""}`.toLowerCase();
       }
-      return { item, searchStr };
     });
 
     return { allItems, searchableItems, totalCount, loadedCount };
@@ -105,9 +103,7 @@ export function useInspectorPagination({
     }
 
     const query = searchQuery.toLowerCase();
-    const filteredItems = searchableItems
-      .filter(({ searchStr }) => searchStr.includes(query))
-      .map(({ item }) => item);
+    const filteredItems = allItems.filter((_, index) => searchableItems[index].includes(query));
 
     return { items: filteredItems, totalCount, loadedCount };
   }, [processedData, searchQuery]);

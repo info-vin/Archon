@@ -35,18 +35,16 @@ export function useInspectorData({ sourceId, searchQuery }: UseInspectorDataProp
 
   // Pre-calculate document search strings to avoid O(N) string allocations during active search
   const searchableDocuments = useMemo(() => {
-    return documentChunks.map((doc) => ({
-      doc,
-      searchStr: `${doc.content || ""} ${doc.title || ""} ${doc.metadata?.title || ""} ${doc.metadata?.section || ""}`.toLowerCase(),
-    }));
+    return documentChunks.map(
+      (doc) => `${doc.content || ""} ${doc.title || ""} ${doc.metadata?.title || ""} ${doc.metadata?.section || ""}`.toLowerCase()
+    );
   }, [documentChunks]);
 
   // Pre-calculate code search strings to avoid O(N) string allocations during active search
   const searchableCode = useMemo(() => {
-    return codeList.map((code) => ({
-      code,
-      searchStr: `${code.content || ""} ${code.summary || ""} ${code.language || ""} ${code.file_path || ""} ${code.title || ""}`.toLowerCase(),
-    }));
+    return codeList.map(
+      (code) => `${code.content || ""} ${code.summary || ""} ${code.language || ""} ${code.file_path || ""} ${code.title || ""}`.toLowerCase()
+    );
   }, [codeList]);
 
   // Filter documents based on search
@@ -54,9 +52,7 @@ export function useInspectorData({ sourceId, searchQuery }: UseInspectorDataProp
     if (!searchQuery) return documentChunks;
 
     const query = searchQuery.toLowerCase();
-    return searchableDocuments
-      .filter(({ searchStr }) => searchStr.includes(query))
-      .map(({ doc }) => doc);
+    return documentChunks.filter((_, index) => searchableDocuments[index].includes(query));
   }, [searchableDocuments, documentChunks, searchQuery]);
 
   // Filter code examples based on search
@@ -64,9 +60,7 @@ export function useInspectorData({ sourceId, searchQuery }: UseInspectorDataProp
     if (!searchQuery) return codeList;
 
     const query = searchQuery.toLowerCase();
-    return searchableCode
-      .filter(({ searchStr }) => searchStr.includes(query))
-      .map(({ code }) => code);
+    return codeList.filter((_, index) => searchableCode[index].includes(query));
   }, [searchableCode, codeList, searchQuery]);
 
   return {

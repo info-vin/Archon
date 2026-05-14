@@ -80,3 +80,11 @@
 ## 2024-05-18 - Avoid meaningless micro-optimizations
 **Learning:** Extracting string operations (e.g., `.toLowerCase()`) from small, fixed-size array iterations (e.g., mapping over a 4-item status list) saves no measurable time and violates the rule against meaningless micro-optimizations.
 **Action:** Only optimize string transformations or allocations when they occur inside O(N) loops operating on potentially large datasets or frequent user input events.
+
+## 2026-05-18 - Pre-calculating strings using parallel arrays
+**Learning:** When optimizing React search filters, using  to create objects containing the original item and the search string (e.g. ) causes unnecessary memory allocations and breaks object reference equality.
+**Action:** Use parallel arrays for searchable strings (e.g. ) and filter the original array using the index: .
+
+## 2026-05-18 - Pre-calculating strings using parallel arrays
+**Learning:** When optimizing React search filters, using map() to create objects containing the original item and the search string (e.g. { doc, searchStr }) causes unnecessary memory allocations and breaks object reference equality.
+**Action:** Use parallel arrays for searchable strings (e.g. const searchStrings = data.map(d => d.text.toLowerCase())) and filter the original array using the index: data.filter((_, i) => searchStrings[i].includes(query)).
