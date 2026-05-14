@@ -38,7 +38,7 @@ class SupervisorDecision(BaseModel):
 
 
 # --- Resilience Helpers (Phase 5.4.4) ---
-async def _run_agent_with_retry(agent: Agent[Any, Any], prompt: str, ctx_state: SharedState, model_name: str) -> Any:
+async def _run_agent_with_retry(agent: Agent[Any, Any], prompt: str, ctx_state: SharedState, model_name: str, deps: Any = None) -> Any:
     """
     Executes an agent run with exponential backoff for 503/429 errors.
     Supports Google API Key rotation (GEMINI_API_KEY -> GOOGLE_API_KEY).
@@ -47,14 +47,14 @@ async def _run_agent_with_retry(agent: Agent[Any, Any], prompt: str, ctx_state: 
     @retry_with_backoff(max_retries=5, initial_delay=2.0)
     async def _execute(override_key: str | None = None):
         if override_key:
+            # Re-initialize the model with the backup key if we hit a hard quota.
             from pydantic_ai.models.gemini import GeminiModel
             from pydantic_ai.providers.google_gla import GoogleGLAProvider
 
             provider = GoogleGLAProvider(api_key=override_key)
             backup_model: Any = GeminiModel(model_name, provider=provider)
-            return await agent.run(prompt, model=backup_model)
-        return await agent.run(prompt)
-
+            return await agent.run(prompt, model=backup_model, deps=deps)
+        return await agent.run(prompt, deps=deps)
     try:
         return await _execute()
     except Exception as e:
@@ -188,17 +188,26 @@ class LibrarianNode(BaseNode[SharedState, None, str]):
         logger.info("🛠️ [Librarian] Executing task...")
         model_name = os.getenv("WORKER_AGENT_MODEL")
         if not model_name:
-            raise ValueError("❌ [SSOT Violation] WORKER_AGENT_MODEL missing.")
+            raise ValueError("❌ [SSOT Violation] WORKER_AGENT_MODEL not found for LibrarianNode.")
 
-        agent = Agent(model=model_name, system_prompt="You are a researcher. Summarize facts.")
+        from src.agents.rag_agent import RagAgent, RagDependencies
+
+        # Instantiate RagAgent which already has RAG tools registered
+        rag_agent_wrapper = RagAgent(model=model_name)
+        # Get the underlying PydanticAI agent to use with our retry helper
+        agent = rag_agent_wrapper._agent
+
+        # Setup dependencies for RAG tools
+        deps = RagDependencies(match_count=3)
+
         history_text = "\n".join([f"{m['role']}: {m['content']}" for m in ctx.state.messages])
 
         try:
             res = await _run_agent_with_retry(
-                agent, f"Extract facts from history.\n{history_text}", ctx.state, model_name
+                agent, f"Extract facts from history by searching available knowledge.\n{history_text}", ctx.state, model_name, deps=deps
             )
             _accumulate_usage(ctx.state, res, model_name)
-            ctx.state.messages.append({"role": "librarian", "content": str(_get_output(res))})
+            ctx.state.messages.append({"role": "librarian", "content": str(res.output)})
         except Exception as e:
             logger.error(f"Librarian error: {e}")
             ctx.state.messages.append({"role": "librarian", "content": f"Error: {e}"})

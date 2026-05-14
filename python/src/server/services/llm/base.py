@@ -88,7 +88,58 @@ class UsageTrackingCompletions:
         self._context = context
 
     async def create(self, *args, **kwargs):
-        response = await self._original.create(*args, **kwargs)
+        import os
+
+        from ...utils.retry_utils import retry_with_backoff
+
+        @retry_with_backoff(max_retries=5, initial_delay=2.0)
+        async def _execute(override_key: str | None = None):
+            # If an override key is provided and we are using Google's endpoint via OpenAI SDK
+            # The API key is usually passed in default_headers['x-goog-api-key'] or as the bearer token
+            original_client = self._original._client
+
+            # Temporary override of the client's API key for this request if needed
+            original_api_key = original_client.api_key
+            original_headers = getattr(original_client, 'default_headers', {})
+
+            try:
+                if override_key:
+                    original_client.api_key = override_key
+                    if "x-goog-api-key" in original_headers:
+                        new_headers = dict(original_headers)
+                        new_headers["x-goog-api-key"] = override_key
+                        original_client.default_headers = new_headers
+
+                return await self._original.create(*args, **kwargs)
+            finally:
+                # Restore original credentials
+                if override_key:
+                    original_client.api_key = original_api_key
+                    original_client.default_headers = original_headers
+
+        try:
+            response = await _execute()
+        except Exception as e:
+            err_msg = str(e)
+            if "429" in err_msg and ("Quota exceeded" in err_msg or "RESOURCE_EXHAUSTED" in err_msg):
+                provider = self._context.get("provider", "unknown")
+                if provider == "google":
+                    primary_key = os.getenv("GEMINI_API_KEY")
+                    google_key_backup = os.getenv("GOOGLE_API_KEY")
+                    if google_key_backup and google_key_backup != primary_key:
+                        logger.warning("⚠️ Primary GEMINI_API_KEY exhausted in archon-server. Rotating to backup GOOGLE_API_KEY...")
+                        try:
+                            response = await _execute(override_key=google_key_backup)
+                        except Exception as fallback_e:
+                            logger.error(f"❌ Backup GOOGLE_API_KEY also failed: {fallback_e}")
+                            raise fallback_e
+                    else:
+                        raise e
+                else:
+                    raise e
+            else:
+                raise e
+
         try:
             if hasattr(response, "usage") and response.usage:
                 model = kwargs.get("model", "unknown")

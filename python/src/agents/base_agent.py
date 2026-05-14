@@ -240,18 +240,46 @@ class BaseAgent[DepsT, OutputT](ABC):
             return await self._run_agent(user_prompt, deps)
 
     async def _run_agent(self, user_prompt: str, deps: DepsT) -> OutputT:
-        """Internal method to run the agent."""
+        """Internal method to run the agent with global resilience and token logging."""
+        import os
+
+        import httpx
+
+        from src.agents.utils.resilience import get_pydantic_ai_output, run_agent_with_global_resilience
+
         try:
-            # Add timeout to prevent hanging
+            # Add timeout to prevent hanging, use global resilience
             result = await asyncio.wait_for(
-                self._agent.run(user_prompt, deps=deps),
-                timeout=120.0,  # 2 minute timeout for agent operations
+                run_agent_with_global_resilience(self._agent, user_prompt, deps=deps),
+                timeout=180.0,  # Increased timeout for backoffs
             )
             self.logger.info(f"Agent {self.name} completed successfully")
-            # PydanticAI returns a RunResult with data attribute
-            return result.data
+
+            # Phase 5.4.4: Fix Token Logging Gap for all generic agent runs
+            try:
+                if result.usage():
+                    server_port = os.getenv("ARCHON_SERVER_PORT", "8181")
+                    async with httpx.AsyncClient() as client:
+                        payload = {
+                            "model": self.model if isinstance(self.model, str) else getattr(self.model, 'model_name', "unknown"),
+                            "provider": "google",
+                            "input_tokens": result.usage().request_tokens or 0,
+                            "output_tokens": result.usage().response_tokens or 0,
+                            "context_type": f"agent_{self.name.lower()}",
+                        }
+                        is_docker = os.getenv("DOCKER_CONTAINER") == "true" or os.path.exists("/.dockerenv")
+                        server_host = "archon-server" if is_docker else "localhost"
+                        await client.post(
+                            f"http://{server_host}:{server_port}/internal/stats/token-usage",
+                            json=payload,
+                            timeout=5.0,
+                        )
+            except Exception as e:
+                self.logger.warning(f"Failed to log token usage: {e}")
+
+            return get_pydantic_ai_output(result)  # type: ignore[no-any-return]
         except TimeoutError as e:
-            self.logger.error(f"Agent {self.name} timed out after 120 seconds")
+            self.logger.error(f"Agent {self.name} timed out after 180 seconds")
             raise Exception(f"Agent {self.name} operation timed out - taking too long to respond") from e
         except Exception as e:
             self.logger.error(f"Agent {self.name} failed: {str(e)}")

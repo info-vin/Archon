@@ -32,29 +32,29 @@
 
 ### Phase 5.1: 邏輯動態 MCP 與 RBAC 整合 (基礎建設)
 目標：確保 Agent 取用工具時具有身分邊界，為後續協作打好地基。
-- [ ] **任務 5.1.1**: 更新 `agents/mcp_client.py`，在 `ListTools` 請求中加入 `agent_type` 與 `auth_token` 參數。
-- [ ] **任務 5.1.2**: 在 `archon-mcp` 端點中，引入 `server.services.rbac_service`，比對請求的 Agent 權限，**動態裁切** Tool Schema (例如：移除 `delete_project` 工具，若呼叫者是 MarketBot)。
-- [ ] **任務 5.1.3**: 建立 MCP 權限負面測試 (`tests/integration/test_mcp_dynamic_rbac.py`)，確保越權調用工具會被 403 攔截。
+- [x] **任務 5.1.1**: 更新 `agents/mcp_client.py`，在 `ListTools` 請求中加入 `agent_type` 與 `auth_token` 參數。
+- [x] **任務 5.1.2**: 在 `archon-mcp` 端點中，引入 `server.services.rbac_service`，比對請求的 Agent 權限，**動態裁切** Tool Schema (例如：移除 `delete_project` 工具，若呼叫者是 MarketBot)。
+- [x] **任務 5.1.3**: 建立 MCP 權限負面測試 (`tests/integration/test_mcp_dynamic_rbac.py`)，確保越權調用工具會被 403 攔截。
 
 ### Phase 5.2: 輕量級 PydanticAI 狀態機實作 (核心引擎)
 目標：建立能流轉上下文與呼叫不同 Agent 的中樞神經。
-- [ ] **任務 5.2.1**: 定義全域共享狀態 `SharedState(BaseModel)`，包含 `messages` (歷史), `current_assignee`, `artifacts` (共享檔案)。
-- [ ] **任務 5.2.2**: 在 `agents/server.py` 新增 `/agents/workflow/run` 端點，作為 Supervisor 網路的唯一入口。
-- [ ] **任務 5.2.3**: 實作 `WorkflowEngine` 類別，包含 `_route_next_node()` 函式 (呼叫 gemini-3-flash-preview 判斷下一步交給誰) 以及 `_execute_node()` 函式 (執行底層 Agent)。
-- [ ] **任務 5.2.4**: 實作硬體級熔斷機制。在 `WorkflowEngine` 中加入 `step_count` 計數器，當 `step_count > 3` 時觸發 `HumanFallbackException`。
+- [x] **任務 5.2.1**: 定義全域共享狀態 `SharedState(BaseModel)`，包含 `messages` (歷史), `current_assignee`, `artifacts` (共享檔案)。
+- [x] **任務 5.2.2**: 在 `agents/server.py` 新增 `/agents/workflow/run` 端點，作為 Supervisor 網路的唯一入口。
+- [x] **任務 5.2.3**: 實作 `WorkflowEngine` 類別，包含 `_route_next_node()` 函式 (呼叫 gemini-3-flash-preview 判斷下一步交給誰) 以及 `_execute_node()` 函式 (執行底層 Agent)。
+- [x] **任務 5.2.4**: 實作硬體級熔斷機制。在 `WorkflowEngine` 中加入 `step_count` 計數器，當 `step_count > 3` 時觸發 `HumanFallbackException`。
 
 ### Phase 5.3: Charlie Supervisor 概念驗證 (實體驗證)
 目標：透過具體的「市場分析與入庫」劇本，驗證協作網路的真實可行性。
-- [ ] **任務 5.3.1**: 將 Charlie 設定為本劇本的 Supervisor 角色。
-- [ ] **任務 5.3.2**: 建立測試情境：「查閱最新 AI 模型資訊，並寫成一篇部落格草稿存入」。
-- [ ] **任務 5.3.3**: 監控執行日誌，驗證流轉順序必須為：`User -> Charlie(Supervisor) -> Librarian(RAG 搜尋) -> Charlie -> MarketBot(寫草稿) -> Charlie -> POBot(建立 Task/Blog)`。
-- [ ] **任務 5.3.4**: 驗證 Token 成本。查核資料庫紀錄，確保僅有 Charlie 節點耗用 `gemini-3-flash-preview` 額度，其餘節點耗用 `gemini-3.1-flash-lite-preview` 額度。
+- [x] **任務 5.3.1**: 將 Charlie 設定為本劇本的 Supervisor 角色。
+- [x] **任務 5.3.2**: 建立測試情境：「查閱最新 AI 模型資訊，並寫成一篇部落格草稿存入」。
+- [x] **任務 5.3.3**: 監控執行日誌，驗證流轉順序必須為：`User -> Charlie(Supervisor) -> Librarian(RAG 搜尋) -> Charlie -> MarketBot(寫草稿) -> Charlie -> POBot(建立 Task/Blog)`。
+- [x] **任務 5.3.4**: 驗證 Token 成本。查核資料庫紀錄，確保僅有 Charlie 節點耗用 `gemini-3-flash-preview` 額度，其餘節點耗用 `gemini-3.1-flash-lite-preview` 額度。
 
 ### Phase 5.4: 核心架構減重與技術債清理 (Architecture Slimming)
 目標：消除 Phase 5.1 盤點時發現的 3 個超過 400 行的「上帝類別 (God Class)」檔案，降低維護複雜度。
-- [ ] **任務 5.4.1 (MCP Server)**: 重構 `mcp_server.py` (491行)。將龐大的 `MCP_INSTRUCTIONS` 字串抽離至獨立的 Markdown 或設定檔；將 RPC Bridge 與 Tool Registration 邏輯拆分至 `mcp_server/router.py`。
-- [ ] **任務 5.4.2 (Document Logic)**: 重構 `document/logic.py` (418行)。將各種文件 (Feature Plan, ERD, PRD) 的 Markdown 模板產生邏輯抽離至 `document/templates/` 目錄。
-- [ ] **任務 5.4.3 (RAG Agent)**: 重構 `rag_agent.py` (408行)。將 Pydantic 工具 Schema 定義與搜尋邏輯分離，使其專注於 Agent 狀態流轉。
+- [x] **任務 5.4.1 (MCP Server)**: 重構 `mcp_server.py` (491行)。將龐大的 `MCP_INSTRUCTIONS` 字串抽離至獨立的 Markdown 或設定檔；將 RPC Bridge 與 Tool Registration 邏輯拆分至 `mcp_server/router.py`。
+- [x] **任務 5.4.2 (Document Logic)**: 重構 `document/logic.py` (418行)。將各種文件 (Feature Plan, ERD, PRD) 的 Markdown 模板產生邏輯抽離至 `document/templates/` 目錄。
+- [x] **任務 5.4.3 (RAG Agent)**: 重構 `rag_agent.py` (408行)。將 Pydantic 工具 Schema 定義與搜尋邏輯分離，使其專注於 Agent 狀態流轉。
 - [x] **任務 5.4.4 (Token Logging Fix)**: 修復 Phase 5.3 驗證時發現的 Token 紀錄逃逸問題。在 `workflow_engine.py` 每次完成 Graph 節點執行或結束 Workflow 時，抽取出 `usage` 數據並透過內部 API 寫回 Supabase 的 `token_usage` 表。
 - [x] **任務 5.4.5 (Global Model SSOT Hardening & Key Rotation)**: 徹底根除 `agents` 服務中任何形式的模型名稱硬編碼。移除 `os.getenv` 中的字串回退 (Fallback)，強制僅從 `archon_settings` (透過 `AGENT_CREDENTIALS`) 讀取。若缺失則拋出 `ValueError`。加入 `GEMINI_API_KEY` 至 `GOOGLE_API_KEY` 的 429 容錯輪轉機制，並相容 PydanticAI 不同版本的 `output_type` 屬性。
 
