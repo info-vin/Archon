@@ -175,6 +175,14 @@ class AgentService:
         task_data = task_response["task"]
 
         from .shared_constants import AgentUUIDs
+
+        # Phase 5.0.2: 真正的物理橋接點 (Milestone 1)
+        # Ensure Supervisor tasks are routed to the Workflow Engine and bypass the legacy LLM flow.
+        if agent_id == AgentUUIDs.SUPERVISOR:
+            logger.info(f"🌉 Routing task '{task_id}' to WorkflowEngine (Supervisor).")
+            await self._run_workflow_engine_task(task_id, task_data, agent_id)
+            return
+
         # Direct Pipeline Check for Librarian
         if agent_id == AgentUUIDs.LIBRARIAN and task_data.get("crawler_target_id"):
             description = task_data.get("description", "").strip()
