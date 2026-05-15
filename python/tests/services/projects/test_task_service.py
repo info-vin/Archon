@@ -16,18 +16,19 @@ class TestTaskServiceAIAssignment(unittest.TestCase):
         mock_supabase_client = MagicMock()
         task_service = TaskService(supabase_client=mock_supabase_client)
 
-        ai_agent_name = list(AI_AGENT_ROLES)[0]
+        ai_agent_name = "Supervisor"
+        ai_agent_id = AI_AGENT_ROLES["Supervisor (Group Chat)"]
         task_id = "task-abc"
-        mock_task_data = {"id": task_id, "assignee": ai_agent_name, "project_id": "p1", "title": "t1"}
+        mock_task_data = {"id": task_id, "assignee": ai_agent_name, "assignee_id": ai_agent_id, "project_id": "p1", "title": "t1"}
 
         execute_mock = MagicMock()
         execute_mock.data = [mock_task_data]
         mock_supabase_client.table.return_value.insert.return_value.execute.return_value = execute_mock
 
-        await task_service.create_task(project_id="p1", title="t1", assignee=ai_agent_name)
+        await task_service.create_task(project_id="p1", title="t1", assignee=ai_agent_name, assignee_id=ai_agent_id)
         await asyncio.sleep(0.01)
 
-        mock_agent_service.run_agent_task.assert_awaited_once_with(task_id=task_id, agent_id=ai_agent_name)
+        mock_agent_service.run_agent_task.assert_awaited_once_with(task_id=task_id, agent_id=ai_agent_id)
 
     @patch("src.server.services.projects.task_service.agent_service")
     async def test_update_task_to_ai_assignee_notifies_agent_service(self, mock_agent_service):
