@@ -21,7 +21,7 @@ export const KnowledgeROI: React.FC<KnowledgeROIProps> = ({ knowledgeRoi, handle
                     </h4>
                     <div className="h-[250px]">
                         {knowledgeRoi?.trend && knowledgeRoi.trend.length > 0 ? (
-                            <ResponsiveContainer width="100%" height="100%">
+                            <ResponsiveContainer width="100%" height={isMaximized ? 500 : 320}>
                                 <AreaChart data={knowledgeRoi.trend}>
                                     <defs>
                                         <linearGradient id="colorROI" x1="0" y1="0" x2="0" y2="1">

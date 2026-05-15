@@ -46,7 +46,7 @@ export const AiCollaborationWidget: React.FC<AiCollaborationWidgetProps> = ({ da
             </div>
 
             <div className="w-40 h-40 relative">
-                <ResponsiveContainer width="100%" height="100%">
+                <ResponsiveContainer width={160} height={160}>
                     <PieChart>
                         <Pie
                             data={chartData}
