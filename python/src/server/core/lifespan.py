@@ -28,6 +28,7 @@ async def lifespan(app: FastAPI):
     from src.server.services.prompt_service import prompt_service
     from src.server.services.scheduler_service import SchedulerService
     from src.server.services.search.reranking_strategy import reranking_strategy
+    from src.server.services.system.worker_service import worker_service
 
     # Keep track of initialized components for cleanup
     initialized_components = set()
@@ -87,6 +88,10 @@ async def lifespan(app: FastAPI):
         scheduler = SchedulerService()
         await scheduler.start()
         initialized_components.add("scheduler")
+        # Initialize DB-based Worker Queue
+        api_logger.info("Starting Worker Service Queue...")
+        await worker_service.start()
+        initialized_components.add("worker")
 
         # Signal that all initialization steps are complete
         app_state.initialization_complete = True
@@ -117,6 +122,13 @@ async def lifespan(app: FastAPI):
                 scheduler.shutdown()
             except Exception as e:
                 api_logger.error(f"Error stopping scheduler: {e}")
+
+        # Stop Worker
+        if "worker" in initialized_components:
+            try:
+                await worker_service.stop()
+            except Exception as e:
+                api_logger.error(f"Error stopping worker: {e}")
 
         # MCP Client cleanup not needed
 

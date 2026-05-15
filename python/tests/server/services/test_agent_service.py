@@ -1,4 +1,4 @@
-from unittest.mock import AsyncMock, MagicMock, call, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
@@ -7,21 +7,18 @@ from src.server.services.agent_service import AgentService
 
 @pytest.mark.asyncio
 # Correctly patch the dependencies at their source, accounting for local imports.
+@pytest.mark.asyncio
+# Correctly patch the dependencies at their source, accounting for local imports.
 @patch("src.server.services.projects.task_service.task_service", new_callable=AsyncMock)
 @patch("src.server.services.agent_service.get_logger")
-async def test_run_agent_task(mock_get_logger, mock_task_service):
+async def test_run_agent_task_enqueues(mock_get_logger, mock_task_service):
     """
-    Unit tests the AgentService.run_agent_task method.
-    Verifies its actual behavior:
-    1. It calls task_service.update_task to set status to 'processing'.
-    2. It logs informational messages.
+    Unit tests the AgentService.run_agent_task method for default enqueuing.
+    Verifies that it sets status to 'dispatched'.
     """
     # --- Setup ---
-    # Configure the mock logger returned by the mocked get_logger function
     mock_logger = MagicMock()
     mock_get_logger.return_value = mock_logger
-
-    # Configure the mock for update_task to return a successful tuple
     mock_task_service.update_task.return_value = (True, {})
 
     agent_service = AgentService()
@@ -29,31 +26,50 @@ async def test_run_agent_task(mock_get_logger, mock_task_service):
     agent_id = "ai-test-agent"
 
     # --- Test Execution ---
-    # We mock _run_general_agent_task to avoid LLM calls in this unit test
-    with patch.object(AgentService, "_run_general_agent_task", new_callable=AsyncMock) as mock_general_loop:
-        await agent_service.run_agent_task(task_id, agent_id)
-        mock_general_loop.assert_awaited_once_with(task_id, agent_id)
+    await agent_service.run_agent_task(task_id, agent_id, immediate=False)
 
     # --- Assertions ---
-    # 1. Verify starting logger call
-    mock_logger.info.assert_any_call(f"AI agent '{agent_id}' starting work on task '{task_id}'.")
+    # 1. Verify enqueuing logger call
+    mock_logger.info.assert_any_call(f"📥 Enqueuing task '{task_id}' for AI agent '{agent_id}'.")
 
-    # 2. Verify that task_service.update_task was called correctly (Processing)
-    mock_task_service.update_task.assert_has_awaits([call(task_id, {"status": "doing", "assignee": agent_id})])
+    # 2. Verify that task_service.update_task was called with 'dispatched'
+    mock_task_service.update_task.assert_awaited_once_with(task_id, {"status": "dispatched", "assignee": agent_id})
 
 
 @pytest.mark.asyncio
 @patch("src.server.services.projects.task_service.task_service", new_callable=AsyncMock)
 @patch("src.server.services.agent_service.get_logger")
-async def test_run_agent_task_fails_to_update(mock_get_logger, mock_task_service):
+async def test_run_agent_task_immediate(mock_get_logger, mock_task_service):
     """
-    Tests that if updating the task status fails, an error is logged.
+    Tests immediate execution (bypassing queue).
+    """
+    mock_logger = MagicMock()
+    mock_get_logger.return_value = mock_logger
+    mock_task_service.update_task.return_value = (True, {})
+
+    agent_service = AgentService()
+    task_id = "task-123"
+    agent_id = "ai-test-agent"
+
+    with patch.object(AgentService, "_run_general_agent_task", new_callable=AsyncMock) as mock_general_loop:
+        await agent_service.run_agent_task(task_id, agent_id, immediate=True)
+        mock_general_loop.assert_awaited_once_with(task_id, agent_id)
+
+    # Assertions
+    mock_logger.info.assert_any_call(f"🚀 AI agent '{agent_id}' starting physical work on task '{task_id}'.")
+    mock_task_service.update_task.assert_awaited_once_with(task_id, {"status": "doing", "assignee": agent_id})
+
+
+@pytest.mark.asyncio
+@patch("src.server.services.projects.task_service.task_service", new_callable=AsyncMock)
+@patch("src.server.services.agent_service.get_logger")
+async def test_run_agent_task_fails_to_enqueue(mock_get_logger, mock_task_service):
+    """
+    Tests failure handling when enqueuing.
     """
     # --- Setup ---
     mock_logger = MagicMock()
     mock_get_logger.return_value = mock_logger
-
-    # Configure the mock to return a failure tuple
     mock_task_service.update_task.return_value = (False, {"error": "DB down"})
 
     agent_service = AgentService()
@@ -64,11 +80,8 @@ async def test_run_agent_task_fails_to_update(mock_get_logger, mock_task_service
     await agent_service.run_agent_task(task_id, agent_id)
 
     # --- Assertions ---
-    # Verify the starting log was called
-    mock_logger.info.assert_called_once_with(f"AI agent '{agent_id}' starting work on task '{task_id}'.")
-
-    # Verify the error log call matches implementation
-    mock_logger.error.assert_called_once_with("Failed to update task status: DB down")
+    mock_logger.info.assert_called_once_with(f"📥 Enqueuing task '{task_id}' for AI agent '{agent_id}'.")
+    mock_logger.error.assert_called_once_with("Failed to enqueue task: DB down")
 
 
 @pytest.mark.asyncio

@@ -64,7 +64,7 @@ async def test_run_general_agent_task_market_bot(mock_mcp_client):
         patch.object(src.server.services.agents.dispatcher, "credential_service") as mock_cred_svc,
     ):
         mock_cred_svc.get_credential = AsyncMock(return_value="fake_key")
-        await service.run_agent_task(task_id="t-1", agent_id="market-bot")
+        await service.run_agent_task(task_id="t-1", agent_id="market-bot", immediate=True)
 
         assert real_task_service.update_task.call_count >= 2
         mock_mcp_client.search_job_market.assert_called_once()
@@ -106,7 +106,7 @@ async def test_run_general_agent_task_librarian(mock_mcp_client):
         patch.object(src.server.services.agents.dispatcher, "credential_service") as mock_cred_svc,
     ):
         mock_cred_svc.get_credential = AsyncMock(return_value="fake_key")
-        await service.run_agent_task(task_id="t-2", agent_id="librarian")
+        await service.run_agent_task(task_id="t-2", agent_id="librarian", immediate=True)
         mock_mcp_client.perform_rag_query.assert_called_once()
 
 
@@ -141,7 +141,7 @@ async def test_run_agent_task_direct_crawler_pipeline(mock_mcp_client):
         patch.object(real_task_service, "update_task", new_callable=AsyncMock, return_value=(True, {})),
         patch.object(service, "_award_agent_xp", new_callable=AsyncMock) as mock_xp,
     ):
-        await service.run_agent_task(task_id="t-crawl", agent_id=AgentUUIDs.LIBRARIAN)
+        await service.run_agent_task(task_id="t-crawl", agent_id=AgentUUIDs.LIBRARIAN, immediate=True)
 
         # Verify the crawler was orchestrated with correct parameters
         mock_crawler.orchestrate_crawl.assert_called_once_with(

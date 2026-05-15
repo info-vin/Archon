@@ -8,6 +8,7 @@ batch project task counting.
 from typing import Any, cast
 
 from src.server.config.logfire_config import get_logger
+from src.server.schemas.agent_outputs import AgentOutputSchema
 
 logger = get_logger(__name__)
 
@@ -99,6 +100,17 @@ async def list_tasks_logic(
             }
 
             if not exclude_large_fields:
+                raw_attachments = task.get("attachments", [])
+                validated_attachments = []
+                if isinstance(raw_attachments, list):
+                    for att in raw_attachments:
+                        try:
+                            # Try to validate and normalize
+                            validated_attachments.append(AgentOutputSchema.model_validate(att).model_dump(mode="json"))
+                        except Exception:
+                            # Fallback for legacy data
+                            validated_attachments.append(att)
+                task_data["attachments"] = validated_attachments
                 task_data["sources"] = task.get("sources", [])
                 task_data["code_examples"] = task.get("code_examples", [])
             else:
@@ -179,6 +191,17 @@ async def get_task_logic(task_service_instance, task_id: str) -> tuple[bool, dic
         return False, result
 
     task_data = result["data"][0]
+
+    # Phase 5.1.0: Transform JSONB attachments to Pydantic objects
+    raw_attachments = task_data.get("attachments", [])
+    validated_attachments = []
+    if isinstance(raw_attachments, list):
+        for att in raw_attachments:
+            try:
+                validated_attachments.append(AgentOutputSchema.model_validate(att).model_dump(mode="json"))
+            except Exception:
+                validated_attachments.append(att)
+    task_data["attachments"] = validated_attachments
 
     # 1. Aggregate AI Metrics (Token Usage & Cost)
     try:

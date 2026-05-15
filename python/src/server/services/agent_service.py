@@ -1,13 +1,10 @@
 # python/src/server/services/agent_service.py
 
-from typing import Any, cast
 
 from ..config.logfire_config import get_logger
 from .agent_registry import get_agent_config
 from .agent_tool_executor import AgentToolExecutor
-from .credential_service import credential_service
 from .dev_ops_agent_service import DevOpsAgentService
-from .llm_provider_service import get_llm_client
 from .shared_constants import AI_AGENT_ROLES
 
 
@@ -59,15 +56,24 @@ class AgentService:
                 filtered.append(agent)
         return filtered
 
-    async def run_agent_task(self, task_id: str, agent_id: str):
+    async def run_agent_task(self, task_id: str, agent_id: str, immediate: bool = False):
         from ..services.projects.task_service import task_service
 
         logger = get_logger(__name__)
-        logger.info(f"AI agent '{agent_id}' starting work on task '{task_id}'.")
 
+        if not immediate:
+            logger.info(f"📥 Enqueuing task '{task_id}' for AI agent '{agent_id}'.")
+            success, result = await task_service.update_task(task_id, {"status": "dispatched", "assignee": agent_id})
+            if not success:
+                logger.error(f"Failed to enqueue task: {result.get('error')}")
+            return
+
+        logger.info(f"🚀 AI agent '{agent_id}' starting physical work on task '{task_id}'.")
+
+        # When immediate=True, we move to 'doing' (or it might be 'processing' from worker)
         success, result = await task_service.update_task(task_id, {"status": "doing", "assignee": agent_id})
         if not success:
-            logger.error(f"Failed to update task status: {result.get('error')}")
+            logger.error(f"Failed to update task status to doing: {result.get('error')}")
             return
 
         await self._run_general_agent_task(task_id, agent_id)
@@ -163,117 +169,18 @@ class AgentService:
         from ..services.projects.task_service import task_service
 
         logger = get_logger(__name__)
-        config = get_agent_config(agent_id)
-        if not config:
-            logger.error(f"Agent '{agent_id}' not found.")
-            await task_service.update_task(task_id, {"status": "failed"})
-            return
 
         success, task_response = await task_service.get_task(task_id)
         if not (success and task_response and "task" in task_response):
             return
         task_data = task_response["task"]
 
-        from .shared_constants import AgentUUIDs
+        # Phase 5.1.0 Milestone 1: Delegate execution to the Agent Dispatcher (Strategy Pattern)
+        from .agents.dispatcher import agent_dispatcher
 
-        # Phase 5.0.2: 真正的物理橋接點 (Milestone 1)
-        # Ensure Supervisor tasks are routed to the Workflow Engine and bypass the legacy LLM flow.
-        if agent_id == AgentUUIDs.SUPERVISOR:
-            logger.info(f"🌉 Routing task '{task_id}' to WorkflowEngine (Supervisor).")
-            await self._run_workflow_engine_task(task_id, task_data, agent_id)
-            return
+        strategy = agent_dispatcher.get_strategy(agent_id, task_data)
+        logger.info(f"🚀 Dispatching task '{task_id}' for agent '{agent_id}' using {strategy.__class__.__name__}")
 
-        # Direct Pipeline Check for Librarian
-        if agent_id == AgentUUIDs.LIBRARIAN and task_data.get("crawler_target_id"):
-            description = task_data.get("description", "").strip()
-            # If description is empty, bypass LLM and trigger crawling directly
-            if not description or description.lower() in ["periodic sync", "knowledge sync"]:
-                from ..services.crawling.crawling_service import CrawlingService
-                from ..utils import get_supabase_client
-
-                logger.info(f"[{agent_id}] Direct crawler pipeline triggered for empty description")
-                try:
-                    target_id = task_data["crawler_target_id"]
-                    supabase = get_supabase_client()
-                    res = supabase.table("archon_crawler_targets").select("*").eq("id", target_id).execute()
-                    if not res.data:
-                        raise ValueError(f"Crawler target {target_id} not found")
-                    target = res.data[0]
-
-                    crawler = CrawlingService()
-                    await crawler.orchestrate_crawl(
-                        {
-                            "url": target["target_url"],
-                            "max_depth": target.get("max_depth", 2),
-                            "user_role": "system_admin",
-                        }
-                    )
-                    output_msg = f"Direct crawler pipeline started for {target['target_url']}"
-                    await task_service.update_task(task_id, {"status": "done"})
-                    await self._award_agent_xp(agent_id, task_data, output_msg)
-                    return
-                except Exception as e:
-                    logger.error(f"Direct crawl failed: {e}")
-                    await task_service.update_task(task_id, {"status": "failed"})
-                    return
-
-        # Grounded Reasoning: Provide both title and description to the Agent
-        task_desc = task_data.get("description", "No description provided.")
-        messages = [
-            {"role": "system", "content": config["system_prompt"]},
-            {"role": "user", "content": f"Task: {task_data['title']}\n\nDetails: {task_desc}"},
-        ]
-
-        # Physical Synchronization: Fetch dynamic tools from MCP (Phase 4.6.19)
-        all_mcp_tools: list[dict[str, Any]] = []
-        if self.mcp_client:
-            all_mcp_tools = await self.mcp_client.list_tools()
-            logger.info(f"Dynamic Tool Discovery: Synced {len(all_mcp_tools)} tools from MCP.")
-
-        agent_tools_list: list[str] = list(config.get("tools", []))
-        agent_tools = [t for t in all_mcp_tools if cast(dict, t["function"])["name"] in agent_tools_list]
-
-        # If any tools are requested but not found in MCP, they will naturally be missing
-        # from tools_param, ensuring we don't call non-existent or shadow tools.
-        tools_param = agent_tools if agent_tools else None
-
-        try:
-            admin_api_key = await credential_service.get_credential(
-                "GEMINI_API_KEY"
-            ) or await credential_service.get_credential("GOOGLE_API_KEY")
-            from ..config.model_ssot import SYSTEM_MODELS
-
-            tier = config.get("model_tier", "lite")
-            model_key = "DEFAULT_PRO" if tier == "pro" else "DEFAULT_TEXT"
-            active_model = SYSTEM_MODELS[model_key]
-
-            from .system.rate_limiter import GlobalThrottler
-            await GlobalThrottler.wait_for_capacity(tier=tier)
-
-            async with get_llm_client(api_key=admin_api_key) as client:
-                response = await client.chat.completions.create(
-                    model=active_model, messages=messages, tools=tools_param
-                )
-                res_msg = response.choices[0].message
-                if res_msg.tool_calls and self.mcp_client:
-                    messages.append(res_msg)
-                    tool_results = await self.tool_executor.handle_tool_calls(res_msg.tool_calls, agent_id=agent_id)
-                    messages.extend(tool_results)
-                    final_response = await client.chat.completions.create(
-                        model=active_model, messages=messages, tools=tools_param
-                    )
-                    final_output = final_response.choices[0].message.content
-                else:
-                    final_output = res_msg.content
-
-                await task_service.update_task(task_id, {"status": "done"})
-
-                # Use save_agent_output to persist LLM's raw final output
-                await task_service.save_agent_output(task_id, {"content": final_output}, agent_id)
-
-                await self._award_agent_xp(agent_id, task_data, final_output)
-        except Exception:
-            await task_service.update_task(task_id, {"status": "failed"})
-
+        await strategy.execute(task_id, task_data, agent_id, self)
 
 agent_service = AgentService()

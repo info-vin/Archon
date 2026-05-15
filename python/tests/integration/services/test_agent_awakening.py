@@ -58,8 +58,8 @@ class TestAgentAwakening:
         with patch.object(real_task_service, 'get_task', new_callable=AsyncMock, return_value=(True, {"task": {"title": "Write a blog", "description": "About AI"}})) as mock_get_task, \
              patch.object(real_task_service, 'update_task', new_callable=AsyncMock, return_value=(True, {})):
             mock_cred_service.get_credential = AsyncMock(return_value="fake_key")
-            # Execute Run (MarketBot)
-            await service.run_agent_task(task_id="task_123", agent_id="market-bot")
+            # Execute Run (MarketBot) - Phase 5.1.0: Use immediate=True to run synchronously in test
+            await service.run_agent_task(task_id="task_123", agent_id="market-bot", immediate=True)
 
         # Verify:
         # 1. Task was fetched
