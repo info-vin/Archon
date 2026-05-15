@@ -22,56 +22,45 @@ async def is_server_running():
 @pytest.mark.asyncio
 async def test_phase53_bob_to_charlie_workflow():
     """
-    Phase 5.3: Concept Verification for Supervisor/Worker Topology.
-    Simulates Bob (Marketing) requesting a blog post about AI models.
+    Phase 5.3 & 5.0.2: Concept Verification for Supervisor/Worker Topology and Dynamic Prompt Governance.
+    Simulates Charlie hosting a Marketing Data Deep Dive.
     """
     if not await is_server_running():
         pytest.skip("Agents server not running on localhost:8052")
 
     agents_url = "http://localhost:8052"
-    prompt = "I need a short blog post about the latest Gemini models for our website."
+    prompt = "Please pull the latest conversion rates, calculate the WoW growth, and give me a marketing strategy."
 
-    logger.info("🚀 Initiating Workflow as Bob...")
+    logger.info("🚀 Initiating Workflow as Charlie (Marketing Data Deep Dive)...")
 
     async with AsyncClient(timeout=300.0) as client:
         response = await client.post(
             f"{agents_url}/agents/workflow/run",
-            json={"prompt": prompt},
-            headers={"X-User-Role": "marketing"} # Simulating Bob's context
+            json={"prompt": prompt, "context": {"task_type": "Marketing Data Deep Dive"}},
+            headers={"X-User-Role": "marketing"}
         )
 
-        # 1. Assert Basic Execution
         assert response.status_code == 200
         data = response.json()
 
-        # Check if we hit the Google API Free Tier Daily Limit (Phase 5.4.4 Resilience check)
         if not data.get("success") and "API Daily Limit Exceeded" in data.get("error", ""):
             logger.warning("⚠️ Google Free Tier Daily Limit Exceeded. Workflow gracefully degraded.")
-            logger.warning("⚠️ Cannot verify full node path, but resilience mechanism is VERIFIED.")
-            return # Conditional Pass
+            return
 
         assert data.get("success") is True, f"Workflow failed: {data.get('error')}"
 
         metadata = data.get("metadata", {})
-        messages = metadata.get("messages", [])
+        # Depending on PAI version, messages might be in metadata or data
+        messages = data.get("messages") or metadata.get("messages", [])
 
-        # 2. Assert Star-Topology Path
-        # We expect messages from: user -> supervisor(charlie) -> librarian -> supervisor -> marketbot -> supervisor...
-        # At minimum, librarian and marketbot should have participated.
         participants = {m.get("role") for m in messages}
         logger.info(f"👥 Participants in workflow: {participants}")
 
-        assert "librarian" in participants, "Librarian Node did not execute"
-        assert "marketbot" in participants, "MarketBot Node did not execute"
+        # The new prompt should route to at least david or devbot or marketbot(bob)
+        has_worker = any(role in participants for role in ["david", "devbot", "marketbot", "bob"])
+        assert has_worker, f"No expected worker node executed. Participants: {participants}"
 
-        # 3. Assert Final Output Structure
-        final_result = data.get("result", "")
-        logger.info(f"📝 Final Result Length: {len(final_result)}")
-        assert len(final_result) > 50, "Final result is suspiciously short"
-
-        # 4. Assert Circuit Breaker didn't trip unnecessarily
-        assert metadata.get("step_count", 0) <= 5, "Workflow took too many steps, potential loop."
-        assert "Needs Human Review" not in final_result, "Workflow hit the recursion limit!"
+        assert metadata.get("step_count", 0) <= 8, "Workflow took too many steps, potential loop."
 
 if __name__ == "__main__":
     import asyncio

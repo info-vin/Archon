@@ -16,7 +16,7 @@ VALUES (
 ) ON CONFLICT (id) DO NOTHING;
 
 -- 2. Insert Supervisor profile
-INSERT INTO public.profiles (id, employee_id, name, email, department, role_title, status, role, avatar_url)
+INSERT INTO public.profiles (id, "employeeId", name, email, department, "position", status, role, avatar)
 VALUES (
     'f0f00000-0000-0000-0000-000000000000',
     'A9001',

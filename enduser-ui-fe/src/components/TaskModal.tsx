@@ -3,7 +3,7 @@ import { AssignableUser, Task, TaskPriority, NewTaskData, UpdateTaskData } from 
 import { api } from '../services/api';
 import { XIcon, RefreshCwIcon } from './Icons.tsx';
 import { KnowledgeSelector } from './KnowledgeSelector.tsx';
-import { TaskAIAgentReport } from './task-modal/TaskAIAgentReport';
+import { TaskAgentGroupChat } from './task-modal/TaskAgentGroupChat';
 import { TaskGeneralTab } from './task-modal/TaskGeneralTab';
 import { TaskAssignmentTab } from './task-modal/TaskAssignmentTab';
 

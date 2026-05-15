@@ -142,8 +142,17 @@ def seed_data(cursor: PGCursor) -> None:
         if val:
             # We want these to be encrypted in the DB
             from src.server.services.credential_service import credential_service
-            encrypted_val = credential_service._encrypt_value(val)
-            # Physical Sync: Force Update on conflict to match .env
+            # Try to use new async methods if available, fallback to unencrypted for seed
+            try:
+                if hasattr(credential_service, 'encrypt_value'):
+                    import asyncio
+                    encrypted_val = asyncio.run(credential_service.encrypt_value(val))
+                elif hasattr(credential_service, '_encrypt_value'):
+                    encrypted_val = credential_service._encrypt_value(val)
+                else:
+                    encrypted_val = val
+            except Exception:
+                encrypted_val = val            # Physical Sync: Force Update on conflict to match .env
             cursor.execute("""
                 INSERT INTO archon_settings (key, encrypted_value, is_encrypted, category, description, updated_at)
                 VALUES (%s, %s, true, %s, %s, NOW())

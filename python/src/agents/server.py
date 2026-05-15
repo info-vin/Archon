@@ -168,7 +168,7 @@ async def run_workflow(request: WorkflowRequest):
         task_type = "General"
         if request.context:
             task_type = request.context.get("task_type", "General")
-            
+
         engine = WorkflowEngine()
         result = await engine.run_workflow(request.prompt, task_type)
 

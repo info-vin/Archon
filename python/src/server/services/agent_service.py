@@ -105,15 +105,22 @@ class AgentService:
 
     async def _run_workflow_engine_task(self, task_id: str, task_data: dict, agent_id: str):
         """Phase 5.0.2: Bridges the execution to the isolated archon-agents WorkflowEngine container."""
-        from ..services.projects.task_service import task_service
         import os
+
         import httpx
-        
+
+        from ..services.projects.task_service import task_service
+
         logger = get_logger(__name__)
-        
+
         # 1. Determine task_type for dynamic prompt routing
-        task_type = task_data.get("task_type", "General")
-        prompt = f"Task: {task_data['title']}\n\nDetails: {task_data.get('description', '')}"
+        task_title = task_data.get("title", "")
+        task_type = "General"
+        # Temporary hack: Deduce task_type from title since UI lacks a dropdown
+        if "Marketing Data Deep Dive" in task_title or "行銷數據" in task_title:
+            task_type = "Marketing Data Deep Dive"
+
+        prompt = f"Task: {task_title}\n\nDetails: {task_data.get('description', '')}"
 
         # 2. Call WorkflowEngine via httpx
         agents_url = os.getenv("AGENTS_SERVICE_URL", "http://archon-agents:8052")
@@ -126,14 +133,14 @@ class AgentService:
                 )
                 response.raise_for_status()
                 data = response.json()
-                
+
                 if data.get("success"):
                     await task_service.update_task(task_id, {"status": "done"})
-                    
+
                     # Milestone 2: Save the entire JSON state, not just final_result
                     messages = data.get("metadata", {}).get("messages", [])
                     final_result = data.get("result", "")
-                    
+
                     save_payload = {
                         "content": final_result,
                         "messages": messages,
@@ -144,7 +151,7 @@ class AgentService:
                 else:
                     logger.error(f"WorkflowEngine failed: {data.get('error')}")
                     await task_service.update_task(task_id, {"status": "failed"})
-                    
+
         except httpx.RequestError as e:
             logger.error(f"Network error calling WorkflowEngine: {e}")
             await task_service.update_task(task_id, {"status": "failed"})

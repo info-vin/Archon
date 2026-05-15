@@ -158,8 +158,10 @@ async def create_task_logic(
             task = create_result["data"][0]
 
             # If the assignee is an AI agent, notify the MCP
-            if assignee in AI_AGENT_ROLES:
-                task_service_instance._notify_ai_agent_of_assignment(task_id=task["id"], agent_id=assignee)
+            if assignee_id in AI_AGENT_ROLES.values():
+                task_service_instance._notify_ai_agent_of_assignment(task_id=task["id"], agent_id=assignee_id)
+            elif assignee in AI_AGENT_ROLES:
+                task_service_instance._notify_ai_agent_of_assignment(task_id=task["id"], agent_id=AI_AGENT_ROLES[assignee])
 
             return True, {
                 "task": {
