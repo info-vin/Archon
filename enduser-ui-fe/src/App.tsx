@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from '@/hooks/useAuth';
+import { useSSE } from '@/hooks/useSSE';
 import { EmployeeRole } from './types';
 import LandingPage from './pages/LandingPage.tsx';
 import AuthPage from './pages/AuthPage.tsx';
@@ -33,6 +34,9 @@ const App: React.FC = () => {
 
 export const AppRoutes: React.FC = () => {
   const { isAuthenticated, loading } = useAuth();
+
+  // Initialize SSE for real-time updates (Phase 5.1.1)
+  useSSE();
 
   useEffect(() => {
     // Initialize theme on app load

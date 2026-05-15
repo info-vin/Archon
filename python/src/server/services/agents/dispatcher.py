@@ -131,6 +131,41 @@ class DefaultLLMStrategy(BaseAgentStrategy):
             await task_service.update_task(task_id, {"status": "failed"})
 
 
+class DraftFromLeadsStrategy(BaseAgentStrategy):
+    """Phase 5.1.1: Executes the blog drafting pipeline from lead parameters."""
+    async def execute(self, task_id: str, task_data: dict[str, Any], agent_id: str, agent_service: Any) -> None:
+        logger.info(f"[{agent_id}] Strategy: Blog drafting pipeline triggered for task {task_id}")
+        try:
+            # 1. Extract lead_ids from metadata or description
+            lead_ids = task_data.get("metadata", {}).get("lead_ids", [])
+            if not lead_ids:
+                # Fallback to description parsing if metadata column not present
+                desc = task_data.get("description", "")
+                if "[PARAM:LEAD_IDS:" in desc:
+                    params = desc.split("[PARAM:LEAD_IDS:")[1].split("]")[0]
+                    lead_ids = params.split(",")
+            
+            if not lead_ids:
+                raise ValueError("No lead_ids found in task parameters.")
+
+            # 2. Call the physical handler
+            from src.server.services.marketing_service import MarketingService
+            content_handler = MarketingService().ContentHandler(get_supabase_client()) # This is a bit hacky but works
+            # Wait! MarketingService doesn't have ContentHandler as property.
+            from src.server.services.marketing.content_handler import ContentHandler
+            handler = ContentHandler(get_supabase_client())
+            
+            output_msg = await handler.draft_from_leads_physical(task_id, lead_ids)
+            
+            # 3. Update task
+            await task_service.update_task(task_id, {"status": "done"})
+            await agent_service._award_agent_xp(agent_id, task_data, output_msg)
+            
+        except Exception as e:
+            logger.error(f"DraftFromLeadsStrategy failed: {e}")
+            await task_service.update_task(task_id, {"status": "failed"})
+
+
 class AgentDispatcher:
     """Routes tasks to the appropriate strategy based on agent_id and task_data."""
 
@@ -150,6 +185,10 @@ class AgentDispatcher:
         self.register_strategy(
             lambda a_id, t_data: a_id == AgentUUIDs.LIBRARIAN and t_data.get("crawler_target_id") and t_data.get("description", "").strip().lower() in ["periodic sync", "knowledge sync"],
             LibrarianDirectStrategy()
+        )
+        self.register_strategy(
+            lambda a_id, t_data: a_id == AgentUUIDs.MARKET_BOT and (t_data.get("feature") == "blog_drafting" or "AI Draft from Leads" in t_data.get("title", "")),
+            DraftFromLeadsStrategy()
         )
 
     def register_strategy(self, condition_func: Any, strategy: BaseAgentStrategy):

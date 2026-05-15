@@ -20,7 +20,7 @@ def test_draft_from_leads_success(client):
         "src.server.api_routes.marketing_api.MarketingService.draft_from_leads",
         new_callable=AsyncMock
     ) as mock_draft:
-        mock_draft.return_value = (True, {"generated_count": 2, "drafts": [{"id": "1"}, {"id": "2"}]})
+        mock_draft.return_value = (True, {"task_id": "task123", "status": "dispatched"})
 
         response = client.post(
             "/api/marketing/draft-from-leads",
@@ -28,7 +28,7 @@ def test_draft_from_leads_success(client):
         )
 
         assert response.status_code == 200
-        assert response.json() == {"generated_count": 2, "drafts": [{"id": "1"}, {"id": "2"}]}
+        assert response.json() == {"task_id": "task123", "status": "dispatched"}
         mock_draft.assert_called_once_with(["lead1", "lead2"])
 
 

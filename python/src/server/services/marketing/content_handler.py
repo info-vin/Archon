@@ -192,22 +192,72 @@ class ContentHandler:
             return False, {"error_code": 500, "message": str(e)}
 
     async def draft_from_leads(self, lead_ids: list[str]) -> tuple[bool, dict]:
+        """
+        [Phase 5.1.1] Reactive Refactor:
+        Creates a background task for Bob's 'Draft From Leads' action.
+        Returns the task_id immediately so the UI can wait reactively via SSE.
+        """
         try:
-            # 1. Fetch Leads
+            from ..projects.task_service import task_service
+            from ..shared_constants import AgentUUIDs, AgentNames
+            
+            # 1. Fetch lead names for the task title
+            leads_res = self.supabase_client.table("leads").select("company_name").in_("id", lead_ids).execute()
+            lead_names = [L["company_name"] for L in (leads_res.data or [])]
+            title = f"AI Draft from Leads: {', '.join(lead_names[:2])}"
+            if len(lead_names) > 2:
+                title += f" (+{len(lead_names)-2})"
+
+            # 2. Create Task assigned to MarketBot
+            success, res = await task_service.create_task(
+                project_id="marketing_ops", # Standard marketing project
+                title=title,
+                description=f"AI is drafting blog posts for {len(lead_ids)} leads.",
+                assignee=AgentNames.MARKET_BOT,
+                assignee_id=AgentUUIDs.MARKET_BOT,
+                priority="high",
+                feature="blog_drafting"
+            )
+            
+            if not success:
+                return False, res
+
+            task_id = res["task"]["id"]
+            
+            # 3. Store lead_ids in metadata (or fallback to description if column missing)
+            # We try to update with metadata=lead_ids
+            try:
+                self.supabase_client.table("archon_tasks").update({
+                    "metadata": {"lead_ids": lead_ids}
+                }).eq("id", task_id).execute()
+            except Exception:
+                # Fallback to description suffix if metadata column is not yet migrated
+                self.supabase_client.table("archon_tasks").update({
+                    "description": res["task"]["description"] + f"\n\n[PARAM:LEAD_IDS:{','.join(lead_ids)}]"
+                }).eq("id", task_id).execute()
+
+            # 4. Return task info
+            return True, {"task_id": task_id, "status": "dispatched"}
+
+        except Exception as e:
+            logger.error(f"ContentHandler: Async draft from leads failed: {e}")
+            return False, {"error_code": 500, "message": str(e)}
+
+    async def draft_from_leads_physical(self, task_id: str, lead_ids: list[str]) -> str:
+        """
+        Physical execution of the blog drafting. Called by the Strategy.
+        """
+        try:
             leads_res = self.supabase_client.table("leads").select("*").in_("id", lead_ids).execute()
             leads = leads_res.data or []
             if not leads:
-                return False, {"error_code": 404, "message": "No leads found for the provided IDs."}
+                return "No leads found for enrichment."
 
             api_key = await credential_service.get_credential("GEMINI_API_KEY") or await credential_service.get_credential("GOOGLE_API_KEY")
-            if not api_key:
-                return False, {"error_code": 401, "message": "API Key missing"}
-
             client = genai.Client(api_key=api_key)
             sys_prompt = prompt_service.get_prompt("BLOG_DRAFT", BLOG_DRAFT_SYSTEM_PROMPT)
 
-            generated_drafts = []
-
+            generated_count = 0
             for lead in leads:
                 @retry_with_backoff(max_retries=2)
                 async def _call_gemini(current_lead=lead):
@@ -221,29 +271,25 @@ class ContentHandler:
                     )
 
                 response = await _call_gemini()
-                if not response.text:
-                    continue
+                if not response.text: continue
 
                 result = safe_json_loads(response.text)
-
                 new_post = {
                     "title": str(result.get("title", f"Draft for {lead.get('company_name')}")),
                     "content": str(result.get("content", "")),
                     "excerpt": str(result.get("excerpt", "")),
                     "status": "draft",
                     "ai_score": self.calculate_ai_score(str(result.get("content", ""))),
-                    "image_url": "https://picsum.photos/seed/market/1024/1024",
+                    "lead_id": lead.get("id"),
                 }
+                self.supabase_client.table("blog_posts").insert(new_post).execute()
+                generated_count += 1
 
-                insert_res = self.supabase_client.table("blog_posts").insert(new_post).execute()
-                if insert_res.data:
-                     generated_drafts.append(insert_res.data[0])
-
-            return True, {"generated_count": len(generated_drafts), "drafts": generated_drafts}
+            return f"Successfully generated {generated_count} blog drafts from {len(lead_ids)} leads."
 
         except Exception as e:
-            logger.error(f"ContentHandler: Draft from leads failed: {e}")
-            return False, {"error_code": 500, "message": str(e)}
+            logger.error(f"ContentHandler: Physical draft from leads failed: {e}")
+            raise e
 
     async def submit_blog(self, post_id: str) -> tuple[bool, dict]:
         post = self.supabase_client.table("blog_posts").select("*").eq("id", post_id).single().execute().data

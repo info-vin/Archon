@@ -16,8 +16,8 @@ const SalesCartPage: React.FC = () => {
       generatingPitchId 
     } = state.context;
 
-    const loading = state.matches('loading');
-    const processing = state.matches('processingBatch') || state.matches('processingRemove');
+    const loading = state.hasTag('loading');
+    const processing = state.hasTag('processing');
 
     useEffect(() => {
         send({ type: 'FETCH' });
