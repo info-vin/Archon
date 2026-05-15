@@ -46,6 +46,12 @@ def get_tool_min_level(tool_name: str) -> int:
 
 
 AGENT_CONFIG = {
+    "supervisor": {
+        "name": "Archon Supervisor",
+        "model_tier": "pro",
+        "system_prompt": "Routing Agent (Prompt injected dynamically via WorkflowEngine)",
+        "tools": [],
+    },
     "market-bot": {
         "name": "Archon MarketBot",
         "model_tier": "lite",
@@ -108,6 +114,7 @@ def get_agent_config(agent_id: str) -> dict | None:
     """
     from .shared_constants import AgentUUIDs
     mapping = {
+        AgentUUIDs.SUPERVISOR: "supervisor",
         AgentUUIDs.MARKET_BOT: "market-bot",
         AgentUUIDs.LIBRARIAN: "librarian",
         AgentUUIDs.PO_BOT: "po-bot",

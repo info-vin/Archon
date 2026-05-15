@@ -146,7 +146,7 @@ class SchedulerService:
         self._scheduler.add_job(
             self._run_model_verification, trigger=IntervalTrigger(minutes=60), id="model_verification", replace_existing=True
         )
-        logger.info(f"✅ Scheduled Job: Model Verification (Every 60 mins)")
+        logger.info("✅ Scheduled Job: Model Verification (Every 60 mins)")
 
         # 2. Business Jobs (Stateful)
         await self._schedule_stateful_job(self._run_prune_stale_leads, 1, "prune_stale_leads")

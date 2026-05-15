@@ -266,9 +266,9 @@ async def run_api_deprecation_scan():
         from server.services.agent_service import agent_service
         from server.services.projects.task_service import task_service
         from server.services.shared_constants import AI_AGENT_ROLES
-        
+
         supabase = get_supabase_client()
-        
+
         task_title = f"Auto-Scan: Gemini API Deprecations & Quotas ({datetime.now(UTC).strftime('%Y-%m-%d')})"
         task_desc = (
             "Clockwork has initiated the bi-weekly scan of Google's Gemini API documentation.\n\n"
@@ -297,12 +297,12 @@ async def run_api_deprecation_scan():
             await agent_service.run_agent_task(
                 task_id=task_result["task"]["id"], agent_id=task_result["task"]["assignee_id"]
             )
-            
+
             supabase.table("archon_logs").insert({
                 "source": "clockwork-scheduler",
                 "level": "INFO",
                 "message": "Dispatched Bi-Weekly API Limit & Deprecation Scan to Librarian",
             }).execute()
-            
+
     except Exception as e:
         logger.error(f"💥 Clockwork: API Scan Failed: {e}", exc_info=True)

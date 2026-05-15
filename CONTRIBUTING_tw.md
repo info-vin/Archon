@@ -315,6 +315,27 @@ Phase 4.4.5 引入了 **Clockwork** 進行系統自動檢測。
 2.  **物理核對**: 嚴禁猜測測試結果。必須執行 `make lint` (全端) 與 `pnpm test:unit`。
 3.  ** Regression 防止**: 即使只改後端，也必須驗證 `enduser-ui-fe` 的行銷頁面與統計圖表是否正常顯示。
 
+### 3.8 Multi-Agent 群聊驗證 SOP (Dev Auto-Login)
+
+在 Phase 5.0.2 之後，系統導入了基於 Supervisor 的「星型群聊」架構。為了驗證這個新功能（例如：DevBot、MarketBot、David 的協作），**請不要使用 `make twin-scout`，因為它無法測試動態渲染的 UI。** 
+
+請遵循以下步驟，使用開發者後門 (Dev Auto-Login) 進行真實體驗驗證：
+
+1. **獲取萬能鑰匙**: 執行 `make db-init`。在終端機輸出的最後幾行，找到並複製這段網址：
+   ```text
+   🔑 Dev Auto-Login URL: http://localhost:5173/dev-token?token=eyJhb...
+   ```
+   *(⚠️ 鐵律：請注意 Port 號永遠是 5173，絕對不是 3737)*
+2. **免密碼登入**: 將該網址貼上瀏覽器，系統會自動以 Admin 身分登入並跳轉。
+3. **觸發特定劇本 (Context Routing)**: 在 UI 中建立一張新的工單 (Task)。
+   * **Assignee (指派)**: 選擇 **`Archon Supervisor`** (大腦)。
+   * **Title (標題)**: 這是觸發隱藏劇本的關鍵！
+     * 若要測試「行銷數據深度分析」(場景 B，呼叫 DevBot/David)：請在標題中包含 **`Marketing Data Deep Dive`** 或 **`行銷數據`**。
+     * 若要測試「一般任務」(場景 A，呼叫 Librarian/Summary)：隨意輸入不含上述關鍵字的標題即可。
+   * **Description (描述)**: 寫下你希望 Agent 執行的具體指令。
+4. **觀察非同步群聊**: 按下送出後，前端會進入 Loading 狀態。此時後端 `WorkflowEngine` 正在進行 30~60 秒的思考與資料庫存取。
+5. **物理驗收**: 點開該工單，你應該會看到原本的純文字報告，被渲染成擁有各角色大頭貼與顏色的「WhatsApp 風格對話泡泡群聊」。
+
 ---
 
 ## 第四章：貢獻與部署流程 (Contribution & Deployment)

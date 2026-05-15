@@ -103,6 +103,62 @@ class AgentService:
             details={"task_id": task_data.get("id"), "score": score},
         )
 
+    async def _run_workflow_engine_task(self, task_id: str, task_data: dict, agent_id: str):
+        """Phase 5.0.2: Bridges the execution to the isolated archon-agents WorkflowEngine container."""
+        import os
+
+        import httpx
+
+        from ..services.projects.task_service import task_service
+
+        logger = get_logger(__name__)
+
+        # 1. Determine task_type for dynamic prompt routing
+        task_title = task_data.get("title", "")
+        task_type = "General"
+        # Temporary hack: Deduce task_type from title since UI lacks a dropdown
+        if "Marketing Data Deep Dive" in task_title or "行銷數據" in task_title:
+            task_type = "Marketing Data Deep Dive"
+
+        prompt = f"Task: {task_title}\n\nDetails: {task_data.get('description', '')}"
+
+        # 2. Call WorkflowEngine via httpx
+        agents_url = os.getenv("AGENTS_SERVICE_URL", "http://archon-agents:8052")
+        try:
+            # Group chats take time, set a safe timeout
+            async with httpx.AsyncClient(timeout=300.0) as client:
+                response = await client.post(
+                    f"{agents_url}/agents/workflow/run",
+                    json={"prompt": prompt, "context": {"task_type": task_type}},
+                )
+                response.raise_for_status()
+                data = response.json()
+
+                if data.get("success"):
+                    await task_service.update_task(task_id, {"status": "done"})
+
+                    # Milestone 2: Save the entire JSON state, not just final_result
+                    messages = data.get("metadata", {}).get("messages", [])
+                    final_result = data.get("result", "")
+
+                    save_payload = {
+                        "content": final_result,
+                        "messages": messages,
+                        "step_count": data.get("metadata", {}).get("step_count", 0)
+                    }
+                    await task_service.save_agent_output(task_id, save_payload, agent_id)
+                    await self._award_agent_xp(agent_id, task_data, str(final_result))
+                else:
+                    logger.error(f"WorkflowEngine failed: {data.get('error')}")
+                    await task_service.update_task(task_id, {"status": "failed"})
+
+        except httpx.RequestError as e:
+            logger.error(f"Network error calling WorkflowEngine: {e}")
+            await task_service.update_task(task_id, {"status": "failed"})
+        except Exception as e:
+            logger.error(f"Unexpected error in WorkflowEngine execution: {e}")
+            await task_service.update_task(task_id, {"status": "failed"})
+
     async def _run_general_agent_task(self, task_id: str, agent_id: str):
         from ..services.projects.task_service import task_service
 
@@ -119,6 +175,14 @@ class AgentService:
         task_data = task_response["task"]
 
         from .shared_constants import AgentUUIDs
+
+        # Phase 5.0.2: 真正的物理橋接點 (Milestone 1)
+        # Ensure Supervisor tasks are routed to the Workflow Engine and bypass the legacy LLM flow.
+        if agent_id == AgentUUIDs.SUPERVISOR:
+            logger.info(f"🌉 Routing task '{task_id}' to WorkflowEngine (Supervisor).")
+            await self._run_workflow_engine_task(task_id, task_data, agent_id)
+            return
+
         # Direct Pipeline Check for Librarian
         if agent_id == AgentUUIDs.LIBRARIAN and task_data.get("crawler_target_id"):
             description = task_data.get("description", "").strip()

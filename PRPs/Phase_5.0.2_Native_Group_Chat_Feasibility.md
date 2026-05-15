@@ -2,7 +2,7 @@
 
 > **調查日期**: 2026-05-14
 > **負責人**: David (IT Architect)
-> **狀態**: 前置調查完畢，準備執行
+> **狀態**: ✅ 全部實作完成 (100% Implemented)
 
 ## 🚨 核心問題：我們真的能用幾十行 Code 做出群聊嗎？
 
@@ -31,32 +31,32 @@
 
 ### Milestone 0: 基礎設施與配置準備 (Infrastructure & Configuration)
 目標：確保環境變數、Docker 網路與資料庫就緒，無需新增額外套件 (pnpm/uv)。
-- [ ] **任務 5.0.2.0.1 (Docker & Env)**: 修改 `docker-compose.yml`，在 `archon-server` 服務中注入 `AGENTS_SERVICE_URL=${AGENTS_SERVICE_URL:-http://archon-agents:${ARCHON_AGENTS_PORT:-8052}}` 環境變數，避免在 Python 中硬編碼 IP。
-- [ ] **任務 5.0.2.0.2 (Supabase Migration)**: 在 `migration/0.2.2/` 下建立新的 SQL 遷移檔 (例如 `19_seed_marketing_group_chat_prompts.sql`)，透過 SQL 將群聊的 4 個角色 Prompt (`WORKFLOW_SUPERVISOR_MARKETING` 等) 寫入 `archon_prompts` 表中。
-- [ ] **任務 5.0.2.0.3 (Dependencies)**: 經評估，本階段無需修改 `pyproject.toml` (uv) 或 `package.json` (pnpm)，現有 `httpx` (Python) 與 Tailwind/React (前端) 已滿足需求。
+- [x] **任務 5.0.2.0.1 (Docker & Env)**: 修改 `docker-compose.yml`，在 `archon-server` 服務中注入 `AGENTS_SERVICE_URL=${AGENTS_SERVICE_URL:-http://archon-agents:${ARCHON_AGENTS_PORT:-8052}}` 環境變數，避免在 Python 中硬編碼 IP。
+- [x] **任務 5.0.2.0.2 (Supabase Migration)**: 在 `migration/0.2.2/` 下建立新的 SQL 遷移檔 (例如 `19_seed_marketing_group_chat_prompts.sql`)，透過 SQL 將群聊的 4 個角色 Prompt (`WORKFLOW_SUPERVISOR_MARKETING` 等) 寫入 `archon_prompts` 表中。
+- [x] **任務 5.0.2.0.3 (Dependencies)**: 經評估，本階段無需修改 `pyproject.toml` (uv) 或 `package.json` (pnpm)，現有 `httpx` (Python) 與 Tailwind/React (前端) 已滿足需求。
 
 ### Milestone 1: 橋接主伺服器與智能體微服務 (Backend Wiring)
 目標：打通 `archon-server` 與 `archon-agents` 的網路斷層。
-- [ ] **任務 5.0.2.1**: 修改 `python/src/server/services/agent_service.py` 中的 `_run_general_agent_task`。當 `agent_id` 指向 Supervisor 時，停止呼叫本機的 `get_llm_client()`。
-- [ ] **任務 5.0.2.2**: 改為透過 `httpx.post("http://archon-agents:8052/agents/workflow/run")` 將前端的 Prompt 與 `task_type` 傳遞給 WorkflowEngine。
-- [ ] **任務 5.0.2.3**: 接收並解析 WorkflowEngine 回傳的 JSON (必須包含 `messages` 陣列與 `step_count`)。
+- [x] **任務 5.0.2.1**: 修改 `python/src/server/services/agent_service.py` 中的 `_run_general_agent_task`。當 `agent_id` 指向 Supervisor 時，停止呼叫本機的 `get_llm_client()`。
+- [x] **任務 5.0.2.2**: 改為透過 `httpx.post("http://archon-agents:8052/agents/workflow/run")` 將前端的 Prompt 與 `task_type` 傳遞給 WorkflowEngine。
+- [x] **任務 5.0.2.3**: 接收並解析 WorkflowEngine 回傳的 JSON (必須包含 `messages` 陣列與 `step_count`)。
 
 ### Milestone 2: 擴充資料庫 Schema (Database Persistence)
 目標：確保群聊過程與多智能體對話紀錄不遺失。
-- [ ] **任務 5.0.2.4**: 更新 `task_service.py` 中的 `save_agent_output` 邏輯。
-- [ ] **任務 5.0.2.5**: 確保寫入 `archon_tasks.agent_output` 的 JSONB 結構包含完整的 `messages` 陣列（`[{role: "...", content: "..."}]`），而不僅僅是最終字串。
+- [x] **任務 5.0.2.4**: 更新 `task_service.py` 中的 `save_agent_output` 邏輯。
+- [x] **任務 5.0.2.5**: 確保寫入 `archon_tasks.agent_output` 的 JSONB 結構包含完整的 `messages` 陣列（`[{role: "...", content: "..."}]`），而不僅僅是最終字串。
 
 ### Milestone 3: 前端群聊渲染器實作 (Frontend ChatRoom UI)
 目標：把冰冷的 JSONB 變成 WhatsApp/Slack 風格的群聊介面。
-- [ ] **任務 5.0.2.6**: 在 `enduser-ui-fe` 新增 `TaskAgentGroupChat.tsx` 元件以取代原本純文字的 `TaskAIAgentReport`。
-- [ ] **任務 5.0.2.7**: 實作 `ROLE_CONFIG` (為不同角色如 Librarian 📚, MarketBot ✍️ 等設定大頭貼、名稱與泡泡顏色)。
-- [ ] **任務 5.0.2.8**: 透過 `map` 將 `task.agent_output.messages` 渲染成左/右對齊的對話泡泡。
+- [x] **任務 5.0.2.6**: 在 `enduser-ui-fe` 新增 `TaskAgentGroupChat.tsx` 元件以取代原本純文字的 `TaskAIAgentReport`。
+- [x] **任務 5.0.2.7**: 實作 `ROLE_CONFIG` (為不同角色如 Librarian 📚, MarketBot ✍️ 等設定大頭貼、名稱與泡泡顏色)。
+- [x] **任務 5.0.2.8**: 透過 `map` 將 `task.agent_output.messages` 渲染成左/右對齊的對話泡泡。
 
 ### Milestone 4: 動態 Prompt 治理與多場景路由 (Prompt Governance & Dynamic Routing)
 目標：解決「多智能體群聊」場景的 Prompt 硬編碼問題，支援新場景擴充。
-- [ ] **任務 5.0.2.9**: **Prompt 實體隔離**: 移除 `workflow_engine.py` 內所有硬編碼的 System Prompt。
-- [ ] **任務 5.0.2.10**: **資料庫治理**: 將「行銷數據分析」所需的 4 個角色 Prompt (`WORKFLOW_SUPERVISOR_MARKETING`, `WORKFLOW_DATA_DAVID`, `WORKFLOW_SCIENTIST_DEVBOT`, `WORKFLOW_STRATEGIST_BOB`) 寫入 `archon_prompts` 資料庫。
-- [ ] **任務 5.0.2.11**: **情境動態注入**: 當 `archon-server` 呼叫 WorkflowEngine 時，傳遞 `task_type`。WorkflowEngine 根據類型動態向 `PromptService` 拉取對應的 System Prompts 並注入給 Agent Nodes。
+- [x] **任務 5.0.2.9**: **Prompt 實體隔離**: 移除 `workflow_engine.py` 內所有硬編碼的 System Prompt。
+- [x] **任務 5.0.2.10**: **資料庫治理**: 將「行銷數據分析」所需的 4 個角色 Prompt (`WORKFLOW_SUPERVISOR_MARKETING`, `WORKFLOW_DATA_DAVID`, `WORKFLOW_SCIENTIST_DEVBOT`, `WORKFLOW_STRATEGIST_BOB`) 寫入 `archon_prompts` 資料庫。
+- [x] **任務 5.0.2.11**: **情境動態注入**: 當 `archon-server` 呼叫 WorkflowEngine 時，傳遞 `task_type`。WorkflowEngine 根據類型動態向 `PromptService` 拉取對應的 System Prompts 並注入給 Agent Nodes。
 
 ### Milestone 5: 體驗優化 (Streaming UI - 進階選項)
 目標：提供即時打字體驗。

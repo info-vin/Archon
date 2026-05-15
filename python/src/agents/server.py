@@ -155,16 +155,22 @@ app.include_router(rerank_router, prefix="/ml", tags=["ml"])
 # --- Workflow Endpoint (Phase 5.2) ---
 class WorkflowRequest(BaseModel):
     prompt: str
+    context: dict[str, Any] | None = None
 
 @app.post("/agents/workflow/run", response_model=AgentResponse)
 async def run_workflow(request: WorkflowRequest):
     """
     Run a multi-agent workflow using the pydantic-graph State Router.
     Phase 5.2: Supervisor / Worker Topology.
+    Phase 5.0.2: Pass context for Dynamic Prompt Governance.
     """
     try:
+        task_type = "General"
+        if request.context:
+            task_type = request.context.get("task_type", "General")
+
         engine = WorkflowEngine()
-        result = await engine.run_workflow(request.prompt)
+        result = await engine.run_workflow(request.prompt, task_type)
 
         if result["success"]:
             return AgentResponse(

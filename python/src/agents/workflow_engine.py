@@ -28,10 +28,11 @@ class SharedState(BaseModel):
     input_tokens: int = 0
     output_tokens: int = 0
     model_used: str | None = None
+    task_type: str = "General"  # Phase 5.0.2: Dynamic Prompt Governance
 
 
 class SupervisorDecision(BaseModel):
-    next_node: Literal["marketbot", "librarian", "summary", "end", "human"] = Field(
+    next_node: Literal["marketbot", "librarian", "summary", "devbot", "david", "end", "human"] = Field(
         description="The next agent to route to, or 'end' if task is completed, or 'human' if stuck."
     )
     reasoning: str = Field(description="Why this node was selected")
@@ -94,7 +95,7 @@ def _accumulate_usage(ctx_state: SharedState, result: Any, model_name: str):
 
 # --- 2. Supervisor Node (The Brain) ---
 class SupervisorNode(BaseNode[SharedState, None, str]):
-    async def run(self, ctx: GraphRunContext[SharedState]) -> MarketBotNode | LibrarianNode | SummaryNode | End[str]:
+    async def run(self, ctx: GraphRunContext[SharedState]) -> MarketBotNode | LibrarianNode | SummaryNode | DevBotNode | DavidNode | End[str]:
         ctx.state.step_count += 1
         logger.info(f"🕸️ [Supervisor] Step {ctx.state.step_count}/{ctx.state.max_steps}")
 
@@ -107,18 +108,31 @@ class SupervisorNode(BaseNode[SharedState, None, str]):
         if not model_name:
             raise ValueError("❌ [SSOT Violation] SUPERVISOR_AGENT_MODEL missing.")
 
+        from src.server.services.prompt_service import prompt_service
+
+        task_type = ctx.state.task_type
+        if task_type == "Marketing Data Deep Dive":
+            prompt_key = "WORKFLOW_SUPERVISOR_MARKETING"
+        else:
+            prompt_key = "WORKFLOW_SUPERVISOR_GENERAL"
+
+        default_supervisor_prompt = (
+            "You are Charlie, the Supervisor. Review the conversation history. "
+            "Decide which worker should act next. "
+            "- 'marketbot' writes marketing content.\n"
+            "- 'librarian' searches documentation/RAG.\n"
+            "- 'summary' summarizes text.\n"
+            "- 'devbot' calculates statistics or writes code.\n"
+            "- 'david' extracts raw data from the database.\n"
+            "- 'end' if the goal is fully achieved.\n"
+            "- 'human' if you are stuck or lack permissions."
+        )
+        system_prompt = prompt_service.get_prompt(prompt_key, default_supervisor_prompt)
+
         # Build agent config dynamically to avoid version mismatch errors
         agent_args: dict[str, Any] = {
             "model": model_name,
-            "system_prompt": (
-                "You are Charlie, the Supervisor. Review the conversation history. "
-                "Decide which worker should act next. "
-                "- 'marketbot' writes marketing content.\n"
-                "- 'librarian' searches documentation/RAG.\n"
-                "- 'summary' summarizes text.\n"
-                "- 'end' if the goal is fully achieved.\n"
-                "- 'human' if you are stuck or lack permissions."
-            )
+            "system_prompt": system_prompt
         }
         if PAI_V1:
             agent_args["output_type"] = SupervisorDecision
@@ -149,6 +163,10 @@ class SupervisorNode(BaseNode[SharedState, None, str]):
                 return LibrarianNode()
             elif decision.next_node == "summary":
                 return SummaryNode()
+            elif decision.next_node == "devbot":
+                return DevBotNode()
+            elif decision.next_node == "david":
+                return DavidNode()
             else:
                 ctx.state.final_result = f"Error: Unknown decision {decision.next_node}"
                 return End(ctx.state.final_result)
@@ -160,27 +178,43 @@ class SupervisorNode(BaseNode[SharedState, None, str]):
 
 
 # --- 3. Worker Nodes (The Muscle) ---
+async def _run_generic_worker(
+    ctx: GraphRunContext[SharedState],
+    role_name: str,
+    prompt_key: str,
+    default_prompt: str,
+    task_instruction: str,
+) -> SupervisorNode:
+    logger.info(f"🛠️ [{role_name}] Executing task...")
+    model_name = os.getenv("WORKER_AGENT_MODEL")
+    if not model_name:
+        raise ValueError("❌ [SSOT Violation] WORKER_AGENT_MODEL missing.")
+
+    from src.server.services.prompt_service import prompt_service
+    system_prompt = prompt_service.get_prompt(prompt_key, default_prompt)
+    agent = Agent(model=model_name, system_prompt=system_prompt)
+    history_text = "\n".join([f"{m['role']}: {m['content']}" for m in ctx.state.messages])
+
+    try:
+        res = await _run_agent_with_retry(
+            agent, f"{task_instruction}\n{history_text}", ctx.state, model_name
+        )
+        _accumulate_usage(ctx.state, res, model_name)
+        ctx.state.messages.append({"role": role_name.lower(), "content": str(_get_output(res))})
+    except Exception as e:
+        logger.error(f"{role_name} error: {e}")
+        ctx.state.messages.append({"role": role_name.lower(), "content": f"Error: {e}"})
+
+    return SupervisorNode()
+
+
 class MarketBotNode(BaseNode[SharedState, None, str]):
     async def run(self, ctx: GraphRunContext[SharedState]) -> SupervisorNode:
-        logger.info("🛠️ [MarketBot] Executing task...")
-        model_name = os.getenv("WORKER_AGENT_MODEL")
-        if not model_name:
-            raise ValueError("❌ [SSOT Violation] WORKER_AGENT_MODEL missing.")
-
-        agent = Agent(model=model_name, system_prompt="You are a marketing copywriter. Be concise.")
-        history_text = "\n".join([f"{m['role']}: {m['content']}" for m in ctx.state.messages])
-
-        try:
-            res = await _run_agent_with_retry(
-                agent, f"Based on history, provide the marketing copy.\n{history_text}", ctx.state, model_name
-            )
-            _accumulate_usage(ctx.state, res, model_name)
-            ctx.state.messages.append({"role": "marketbot", "content": str(_get_output(res))})
-        except Exception as e:
-            logger.error(f"MarketBot error: {e}")
-            ctx.state.messages.append({"role": "marketbot", "content": f"Error: {e}"})
-
-        return SupervisorNode()
+        task_type = ctx.state.task_type
+        prompt_key = "WORKFLOW_STRATEGIST_BOB" if task_type == "Marketing Data Deep Dive" else "WORKFLOW_WORKER_MARKETBOT"
+        return await _run_generic_worker(
+            ctx, "MarketBot", prompt_key, "You are a marketing copywriter. Be concise.", "Based on history, provide the marketing copy."
+        )
 
 
 class LibrarianNode(BaseNode[SharedState, None, str]):
@@ -217,36 +251,37 @@ class LibrarianNode(BaseNode[SharedState, None, str]):
 
 class SummaryNode(BaseNode[SharedState, None, str]):
     async def run(self, ctx: GraphRunContext[SharedState]) -> SupervisorNode:
-        logger.info("🛠️ [SummaryAgent] Executing task...")
-        model_name = os.getenv("WORKER_AGENT_MODEL")
-        if not model_name:
-            raise ValueError("❌ [SSOT Violation] WORKER_AGENT_MODEL missing.")
+        return await _run_generic_worker(
+            ctx, "Summary", "WORKFLOW_WORKER_SUMMARY", "You summarize text into bullet points.", "Summarize the conversation:"
+        )
 
-        agent = Agent(model=model_name, system_prompt="You summarize text into bullet points.")
-        history_text = "\n".join([f"{m['role']}: {m['content']}" for m in ctx.state.messages])
 
-        try:
-            res = await _run_agent_with_retry(
-                agent, f"Summarize the conversation:\n{history_text}", ctx.state, model_name
-            )
-            _accumulate_usage(ctx.state, res, model_name)
-            ctx.state.messages.append({"role": "summary", "content": str(_get_output(res))})
-        except Exception as e:
-            logger.error(f"SummaryAgent error: {e}")
-            ctx.state.messages.append({"role": "summary", "content": f"Error: {e}"})
+class DevBotNode(BaseNode[SharedState, None, str]):
+    async def run(self, ctx: GraphRunContext[SharedState]) -> SupervisorNode:
+        return await _run_generic_worker(
+            ctx, "DevBot", "WORKFLOW_SCIENTIST_DEVBOT", "You are DevBot, a data scientist.", "Task from Supervisor:"
+        )
 
-        return SupervisorNode()
+
+class DavidNode(BaseNode[SharedState, None, str]):
+    async def run(self, ctx: GraphRunContext[SharedState]) -> SupervisorNode:
+        return await _run_generic_worker(
+            ctx, "David", "WORKFLOW_DATA_DAVID", "You are David, the data extractor.", "Task from Supervisor:"
+        )
 
 
 # --- 4. The Graph Orchestrator ---
-workflow_graph = Graph(nodes=[SupervisorNode, MarketBotNode, LibrarianNode, SummaryNode])
+workflow_graph = Graph(nodes=[SupervisorNode, MarketBotNode, LibrarianNode, SummaryNode, DevBotNode, DavidNode])
 
 
 class WorkflowEngine:
     """Wrapper to run the graph and manage the state."""
 
-    async def run_workflow(self, initial_prompt: str) -> dict[str, Any]:
-        state = SharedState(messages=[{"role": "user", "content": initial_prompt}])
+    async def run_workflow(self, initial_prompt: str, task_type: str = "General") -> dict[str, Any]:
+        state = SharedState(
+            messages=[{"role": "user", "content": initial_prompt}],
+            task_type=task_type
+        )
         try:
             run_result = await workflow_graph.run(SupervisorNode(), state=state)
             final_state = run_result.state
@@ -278,7 +313,7 @@ class WorkflowEngine:
             if final_state.final_result and "Workflow completed successfully" in final_state.final_result:
                 # Extract the last message from a worker as the result
                 for msg in reversed(final_state.messages):
-                    if msg.get("role") in ["marketbot", "librarian", "summary"]:
+                    if msg.get("role") in ["marketbot", "librarian", "summary", "devbot", "david"]:
                         final_res_str = msg.get("content", "")
                         break
 

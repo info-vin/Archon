@@ -184,10 +184,10 @@ async def run_model_verification():
         from server.utils import get_supabase_client
 
         supabase = get_supabase_client()
-        
+
         default_pro = SYSTEM_MODELS.get("DEFAULT_PRO", "")
         default_text = SYSTEM_MODELS.get("DEFAULT_TEXT", "")
-        
+
         # Check if the models are set to lite versions to bypass 20 RPD limit
         is_safe = "lite" in default_pro and "lite" in default_text
         msg = "Model Verification Passed (Using Lite models)" if is_safe else "Model Verification WARNING: Potentially using high-quota models"

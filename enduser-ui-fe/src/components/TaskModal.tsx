@@ -3,7 +3,7 @@ import { AssignableUser, Task, TaskPriority, NewTaskData, UpdateTaskData } from 
 import { api } from '../services/api';
 import { XIcon, RefreshCwIcon } from './Icons.tsx';
 import { KnowledgeSelector } from './KnowledgeSelector.tsx';
-import { TaskAIAgentReport } from './task-modal/TaskAIAgentReport';
+import { TaskAgentGroupChat } from './task-modal/TaskAgentGroupChat';
 import { TaskGeneralTab } from './task-modal/TaskGeneralTab';
 import { TaskAssignmentTab } from './task-modal/TaskAssignmentTab';
 
@@ -309,7 +309,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({ task, onClose, onTaskCreat
 
             {/* AI Report Tab */}
             <div className={activeTab === 'report' ? 'space-y-4' : 'hidden'}>
-               {task && <TaskAIAgentReport task={task} />}
+               {task && <TaskAgentGroupChat task={task} />}
             </div>
           </div>
 
@@ -342,3 +342,4 @@ export const TaskModal: React.FC<TaskModalProps> = ({ task, onClose, onTaskCreat
     </div>
   );
 };
+

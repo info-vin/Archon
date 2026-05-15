@@ -60,12 +60,12 @@ class PromptService(BaseRepository):
 
             # Fallback to direct DB call - Schema: prompt_name, prompt
             res = (
-                self.supabase_client.table("archon_prompts").select("prompt").eq("prompt_name", name).single().execute()
+                self.supabase_client.table("archon_prompts").select("prompt").eq("prompt_name", name).execute()
             )
 
             # DEFENSIVE: Check if res.data is a real dict and not a MagicMock
-            if res.data and not isinstance(res.data, MagicMock):
-                return res.data.get("prompt") or default or ""
+            if res.data and not isinstance(res.data, MagicMock) and len(res.data) > 0:
+                return res.data[0].get("prompt") or default or ""
         except Exception:
             pass
         return default or "You are a helpful AI assistant."
