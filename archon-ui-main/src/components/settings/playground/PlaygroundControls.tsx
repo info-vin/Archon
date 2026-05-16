@@ -82,6 +82,7 @@ export const PlaygroundControls: React.FC<PlaygroundControlsProps> = (props) => 
     <div className="flex items-center gap-1">
       <button
         onClick={() => toggleLink(layer, corner)}
+        aria-label={linked ? 'Unlink corner radius' : 'Link corner radius'}
         className={cn(
           'w-5 h-5 rounded border transition-all flex items-center justify-center',
           linked ? 'bg-blue-500 border-blue-600 text-white' : 'bg-gray-200 dark:bg-gray-700 border-gray-300 dark:border-gray-600'
