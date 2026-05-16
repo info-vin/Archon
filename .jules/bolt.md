@@ -88,3 +88,6 @@
 ## 2026-05-18 - Pre-calculating strings using parallel arrays
 **Learning:** When optimizing React search filters, using map() to create objects containing the original item and the search string (e.g. { doc, searchStr }) causes unnecessary memory allocations and breaks object reference equality.
 **Action:** Use parallel arrays for searchable strings (e.g. const searchStrings = data.map(d => d.text.toLowerCase())) and filter the original array using the index: data.filter((_, i) => searchStrings[i].includes(query)).
+## 2024-05-15 - React Component Primitive Array Filtering
+**Learning:** Inside core React primitives like a Combobox that get reused frequently, string operations like `.toLowerCase()` inside iterative filtering cause redundant O(N) string allocations on every keystroke. Using `.map(item => ({...item, searchStr}))` is dangerous as it breaks object reference equality and memoization.
+**Action:** Precalculate parallel arrays (e.g., `searchableLabels = options.map(opt => opt.label.toLowerCase())`) in a separate `useMemo` and use the index `(_, i)` to filter the original array, preserving references while eliminating per-keystroke allocations.
