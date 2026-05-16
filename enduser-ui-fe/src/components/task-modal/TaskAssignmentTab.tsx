@@ -77,8 +77,8 @@ export const TaskAssignmentTab: React.FC<TaskAssignmentTabProps> = ({
           disabled={isLoadingUsers}
         >
           <option value="">{isLoadingUsers ? 'Loading...' : 'Unassigned'}</option>
-          {assignableUsers.map(user => (
-            <option key={user.id} value={user.id}>
+          {assignableUsers.map((user, index) => (
+            <option key={user.id || `fallback-${index}`} value={user.id}>
               {user.role === 'ai_agent' ? `(AI) ${user.name}` : user.name}
             </option>
           ))}

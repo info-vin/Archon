@@ -21,7 +21,8 @@ const mockUsers = {
   }
 };
 
-const mockAssignableUsers = [mockUsers.alice, mockUsers.bob, mockUsers.charlie];
+const mockAssignableUsers = [mockUsers.alice, mockUsers.bob, mockUsers.charlie  ,
+];
 
 const mockAiAgents = [
   { id: 'ai-researcher-1', name: 'Market Researcher', role: 'ai_agent' },
@@ -40,6 +41,7 @@ export const clearMockData = () => {
 };
 
 export const handlers = [
+  http.get('*/api/test', () => HttpResponse.json({ success: true })),
   // 1. Auth & Profiles
   http.get('*/api/users', () => HttpResponse.json(mockAssignableUsers)),
   http.get('*/api/assignable-users', () => HttpResponse.json(mockAssignableUsers)),
@@ -126,6 +128,8 @@ export const handlers = [
   http.get('*/api/marketing/manager/alerts', () => HttpResponse.json([])),
   http.post('*/api/visit-logs/', () => HttpResponse.json({ summary: 'Mock AI Summary', voice_transcript: 'Mock transcript' })),
   http.get('*/api/visit-logs/attendance/status', () => HttpResponse.json({ status: 'clocked_out', logs: [] })),
+  http.post('*/api/visit-logs/attendance/clock-in', () => HttpResponse.json({ success: true })),
+  http.post('*/api/visit-logs/attendance/clock-out', () => HttpResponse.json({ success: true })),
   http.get('*/api/system/prompts', () => HttpResponse.json([])),
   
   http.get('*/api/system/health/ai', () => HttpResponse.json({

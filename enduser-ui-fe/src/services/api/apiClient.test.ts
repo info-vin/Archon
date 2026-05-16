@@ -4,10 +4,10 @@ import { callAPI } from './apiClient';
 
 // Mock global fetch
 const fetchSpy = vi.fn();
-global.fetch = fetchSpy;
 
 describe('apiClient Network Resilience', () => {
   beforeEach(() => {
+    global.fetch = fetchSpy as any;
     fetchSpy.mockClear();
     fetchSpy.mockImplementation(() => 
       Promise.resolve(new Response(JSON.stringify({ success: true }), {
