@@ -24,6 +24,7 @@ WORKDIR /app
 
 # Install runtime dependencies for Playwright (minimal set)
 RUN apt-get update && apt-get install -y \
+    git \
     wget \
     ca-certificates \
     fonts-liberation \

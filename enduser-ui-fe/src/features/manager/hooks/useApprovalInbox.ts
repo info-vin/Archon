@@ -19,6 +19,17 @@ export const useApprovalInbox = () => {
     send({ type: 'FETCH' });
   }, [send]);
 
+  // Phase 5.1.3: Deep linking support for AI proposals
+  useEffect(() => {
+    if (state.matches('idle') && state.context.proposals.length > 0) {
+      const params = new URLSearchParams(window.location.search);
+      const targetId = params.get('id');
+      if (targetId && state.context.selectedId !== targetId) {
+        send({ type: 'SELECT', id: targetId });
+      }
+    }
+  }, [state.matches('idle'), state.context.proposals.length, state.context.selectedId, send]);
+
   const fetchData = () => send({ type: 'FETCH' });
   
   const setSelectedId = (id: string | null) => {

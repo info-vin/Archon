@@ -49,6 +49,7 @@ services:
       - ./enduser-ui-fe/public:/app/frontend_public # Mount frontend assets for Knowledge Seeding
       - ./PRPs:/app/PRPs # Mount PRPs for Alice's SOP access
       - ./CONTRIBUTING_tw.md:/app/CONTRIBUTING_tw.md # Force mount developer guidelines
+      - ./.git:/app/.git # Mount Git metadata for CodeModifier
     extra_hosts:
       - "host.docker.internal:host-gateway"
     command:

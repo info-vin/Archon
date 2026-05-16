@@ -45,6 +45,10 @@ export const TaskAgentGroupChat: React.FC<TaskAgentGroupChatProps> = ({ task }) 
         align: 'left' 
       };
       const isRight = config.align === 'right';
+      
+      // Phase 5.1.3: Detect Proposal ID and render quick-action button
+      const proposalMatch = msg.content?.match(/ID: ([a-f0-9-]{36})/);
+      const proposalId = proposalMatch ? proposalMatch[1] : null;
 
       return (
         <div key={idx} className={`flex w-full mb-4 ${isRight ? 'justify-end' : 'justify-start'} animate-in fade-in slide-in-from-bottom-2`}>
@@ -53,6 +57,20 @@ export const TaskAgentGroupChat: React.FC<TaskAgentGroupChatProps> = ({ task }) 
           <div className={`max-w-[75%] p-3 rounded-xl ${config.color} shadow-sm border border-black/5 dark:border-white/5`}>
             <div className="text-[10px] font-bold opacity-70 mb-1 tracking-wide uppercase">{config.name}</div>
             <div className="text-sm whitespace-pre-wrap break-words">{msg.content}</div>
+            
+            {proposalId && (
+              <div className="mt-3 pt-3 border-t border-black/10 dark:border-white/10">
+                <a 
+                  href={`/approvals?id=${proposalId}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-3 py-1.5 bg-primary text-primary-foreground text-xs font-bold rounded-lg hover:opacity-90 transition-all shadow-md"
+                >
+                  <SparklesIcon className="w-3 h-3" />
+                  Review Proposed Changes
+                </a>
+              </div>
+            )}
           </div>
 
           {isRight && <div className="text-2xl ml-2 flex-shrink-0 mt-1">{config.avatar}</div>}

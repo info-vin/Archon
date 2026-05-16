@@ -1,0 +1,46 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.12.11, pytest-9.0.3, pluggy-1.6.0 -- /Users/vincenta/GoogleKwok022/Archon/python/.venv/bin/python
+cachedir: .pytest_cache
+rootdir: /Users/vincenta/GoogleKwok022/Archon/python
+configfile: pytest.ini
+plugins: mock-3.15.1, Faker-40.15.0, cov-7.1.0, timeout-2.4.0, asyncio-1.3.0, langsmith-0.3.45, logfire-4.32.1, anyio-4.13.0
+asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=function, asyncio_default_test_loop_scope=function
+collecting ... collected 0 items / 1 error
+
+==================================== ERRORS ====================================
+_____ ERROR collecting tests/integration/services/test_agent_awakening.py ______
+ImportError while importing test module '/Users/vincenta/GoogleKwok022/Archon/python/tests/integration/services/test_agent_awakening.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+../../../.local/share/uv/python/cpython-3.12.11-macos-x86_64-none/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/integration/services/test_agent_awakening.py:5: in <module>
+    import server.services.agents.dispatcher
+src/server/services/agents/__init__.py:4: in <module>
+    from .dispatcher import agent_dispatcher
+src/server/services/agents/dispatcher.py:14: in <module>
+    from src.server.services.crawling.crawling_service import CrawlingService
+src/server/services/crawling/__init__.py:8: in <module>
+    from .code_extraction_service import CodeExtractionService
+src/server/services/crawling/code_extraction_service.py:15: in <module>
+    from src.server.services.storage.code_storage_service import (
+src/server/services/storage/__init__.py:11: in <module>
+    from .storage_services import DocumentStorageService
+src/server/services/storage/storage_services.py:12: in <module>
+    from .document_storage import DocumentStorageFacade
+src/server/services/storage/document_storage.py:17: in <module>
+    from src.server.services.crawling.code_extraction_service import CodeExtractionService
+E   ImportError: cannot import name 'CodeExtractionService' from partially initialized module 'src.server.services.crawling.code_extraction_service' (most likely due to a circular import) (/Users/vincenta/GoogleKwok022/Archon/python/src/server/services/crawling/code_extraction_service.py)
+------------------------------- Captured stdout --------------------------------
+
+--- DEBUG CONTEST.PY IMPORT ENVIRONMENT ---
+sys.path: ['/Users/vincenta/GoogleKwok022/Archon/python', '/Users/vincenta/GoogleKwok022/Archon/python/src', '/Users/vincenta/GoogleKwok022/Archon/python/.venv/bin', '/Users/vincenta/.local/share/uv/python/cpython-3.12.11-macos-x86_64-none/lib/python312.zip', '/Users/vincenta/.local/share/uv/python/cpython-3.12.11-macos-x86_64-none/lib/python3.12', '/Users/vincenta/.local/share/uv/python/cpython-3.12.11-macos-x86_64-none/lib/python3.12/lib-dynload', '/Users/vincenta/GoogleKwok022/Archon/python/.venv/lib/python3.12/site-packages']
+sys.modules keys (first 20): ['sys', 'builtins', '_frozen_importlib', '_imp', '_thread', '_warnings', '_weakref', '_io', 'marshal', 'posix', '_frozen_importlib_external', 'time', 'zipimport', '_codecs', 'codecs', 'encodings.aliases', 'encodings', 'encodings.utf_8', '_signal', '_abc']
+sys.modules['server']: None
+sys.modules['server.services']: None
+--- END DEBUG ---
+=========================== short test summary info ============================
+ERROR tests/integration/services/test_agent_awakening.py
+!!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!
+========================= 3 warnings, 1 error in 3.95s =========================

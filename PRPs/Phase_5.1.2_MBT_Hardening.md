@@ -26,6 +26,11 @@
 6.  **[ ] CorrectionAnalytics** (Token Usage)
 7.  **[ ] CitationTransparency** (RAG Refs)
 
+### 🧱 實體環境與 Schema 技術債 (Environment & Schema Debt)
+在 5.1.3 啟動前夕偵得的底層阻塞：
+*   **[CRITICAL] 容器環境殘缺**: `archon-server` 容器未安裝 `git`，導致 L2 `CodeModifier` 呼叫失敗。必須更新 `Dockerfile`。
+*   **[BLOCKER] 混合 ID 陷阱**: `auth.users` 與 `proposed_changes` 外鍵強綁定 UUID，但 `profiles` 卻使用簡化 ID ('1', '2', '3')。需統一物理 ID 策略。
+
 ## Proposed Changes
 
 ### [Frontend UI] enduser-ui-fe/src/

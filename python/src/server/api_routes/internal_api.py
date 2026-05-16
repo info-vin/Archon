@@ -179,3 +179,51 @@ async def trigger_cron_jobs(request: Request, background_tasks: BackgroundTasks,
     except Exception as e:
         logger.error(f"Error triggering cron jobs: {e}")
         raise HTTPException(status_code=500, detail=str(e)) from e
+
+
+# --- David's Self-Evolution Endpoints (Phase 5.1.3) ---
+
+@router.get("/david/read")
+async def david_read_file(request: Request, path: str):
+    """
+    Internal endpoint for David to read codebase files.
+    """
+    if not is_internal_request(request):
+        raise HTTPException(status_code=403, detail="Access forbidden")
+    
+    import os
+    if ".." in path or path.startswith("/"):
+         raise HTTPException(status_code=400, detail="Invalid path")
+    
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            return f.read()
+    except Exception as e:
+        logger.error(f"Internal Read: Failed to read {path}: {e}")
+        raise HTTPException(status_code=404, detail=str(e))
+
+@router.post("/david/propose")
+async def david_create_proposal(request: Request, payload: dict[str, Any]):
+    """
+    Internal endpoint for David to submit code change proposals.
+    """
+    if not is_internal_request(request):
+        raise HTTPException(status_code=403, detail="Access forbidden")
+        
+    from ..services.propose_change_service import ProposeChangeService
+    service = ProposeChangeService()
+    
+    file_path = payload.get("file_path")
+    new_content = payload.get("new_content")
+    summary = payload.get("summary", "AI Generated Fix")
+    
+    if not file_path or new_content is None:
+        raise HTTPException(status_code=400, detail="Missing file_path or new_content")
+        
+    res = await service.create_file_proposal(
+        file_path=file_path,
+        new_content=new_content,
+        summary=summary,
+        user_id=None # David is a system agent
+    )
+    return res
