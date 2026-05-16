@@ -17,10 +17,10 @@
 *   **對策**: MBT 斷言必須對齊產品生命週期。對於「動作完成即隱藏」的 UI，應改用 `expect(btn).not.toBeVisible()`。
 
 ### 📊 全量 MBT 盤點 (Global MBT Audit)
-目前系統共有 7 個核心 MBT，除已完成加固的 2 個外，剩餘 5 個均存在「定位器脆弱」與「缺乏 Spinner 防禦」的問題：
+目前系統共有 7 個核心 MBT，除已完成加固的 3 個外，剩餘 4 個均存在「定位器脆弱」與「缺乏 Spinner 防禦」的問題：
 1.  **[x] PersonaWorkflow** (Alice -> Bob -> Charlie)
 2.  **[x] TaskAssignment** (Crawler/Agent Dispatch)
-3.  **[ ] PromptManagement** (Visual/Diff View)
+3.  **[x] PromptManagement** (Visual/Diff View) - Hardened in Phase 5.1.1
 4.  **[ ] ApprovalsPage** (Manager Inbox)
 5.  **[ ] ImagePicker** (Asset Selection)
 6.  **[ ] CorrectionAnalytics** (Token Usage)
