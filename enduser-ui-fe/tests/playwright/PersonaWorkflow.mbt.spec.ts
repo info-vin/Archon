@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { simulate500Error } from './fixtures/systemFixtures';
+import { simulate500Error, simulateSSEUpdate, waitForSpinner } from './fixtures/systemFixtures';
 
 test.use({ storageState: '../.playwright/admin_storage_state.json' });
 
@@ -32,38 +32,40 @@ test.describe('Cross-Persona Workflow: Alice (Leads) -> Bob (Brand) -> Charlie (
       });
     });
 
-    // Mock the draft-from-leads API
+    // Mock the draft-from-leads API (Asynchronous Task Dispatch)
     await page.route('**/api/marketing/draft-from-leads', async route => {
       await route.fulfill({
         status: 200,
         json: {
-          generated_count: 1,
-          drafts: [{
-            id: mockPostId,
-            title: `Draft for ${mockCompany}`,
-            status: 'draft'
-          }]
+          task_id: 'task-123',
+          status: 'dispatched'
         }
       });
     });
 
     await page.goto('/#/sales-cart');
+    await waitForSpinner(page);
     
     // Verify lead is in the cart
-    await expect(page.getByText(mockCompany)).toBeVisible({ timeout: 15000 });
+    await expect(page.getByTestId('sales-cart-list').getByText(mockCompany)).toBeVisible({ timeout: 15000 });
     
     // Select the lead
-    await page.getByText(mockCompany).first().click({ force: true });
+    await page.getByTestId('sales-cart-list').getByText(mockCompany).first().click({ force: true });
     
-    // Click Magic Draft
-    await page.getByRole('button', { name: /magic draft/i }).click();
+    // Click Magic Draft via TestID
+    const magicDraftBtn = page.getByTestId('magic-draft-button');
+    await expect(magicDraftBtn).toBeVisible();
+    await magicDraftBtn.click();
     
-    // Wait for the action to finish. In the UI, `salesCartMachine` handles this.
-    // The button might show 'Drafting...' temporarily.
-    // Assuming UI shows an alert for success currently? Wait, I removed the alert. Let's check `salesCartMachine`. 
-    // In `salesCartMachine`, it just transitions back to `idle`. There is no success alert.
-    // The `draft-from-leads` doesn't remove the lead from the cart by default unless we update its status.
-    // For this E2E, we just verify the API was called.
+    // Verify it enters the "Drafting..." state (mapped to awaitingDrafts)
+    await expect(page.getByText('Drafting...')).toBeVisible();
+    
+    // Simulate the SSE event from the backend
+    await simulateSSEUpdate(page, 'task-123', 'done');
+    
+    // Verify that the button is gone (because selection was cleared and Batch Bar unmounted)
+    await expect(magicDraftBtn).not.toBeVisible();
+    await expect(page.getByText('Drafting...')).not.toBeVisible();
     
     // ---------------------------------------------------------
     // STEP 2: Bob (Marketing) reviews and submits the draft
@@ -216,18 +218,20 @@ test.describe('Cross-Persona Workflow: Alice (Leads) -> Bob (Brand) -> Charlie (
     await simulate500Error(page, '**/api/marketing/draft-from-leads');
 
     await page.goto('/#/sales-cart');
+    await waitForSpinner(page);
     
     // Wait for stability and verify
-    await expect(page.getByText(mockCompany)).toBeVisible({ timeout: 10000 });
+    await expect(page.getByTestId('sales-cart-list').getByText(mockCompany)).toBeVisible({ timeout: 10000 });
     
     // Select the lead
-    await page.getByText(mockCompany).first().click({ force: true });
+    await page.getByTestId('sales-cart-list').getByText(mockCompany).first().click({ force: true });
     
     // Click Magic Draft
-    await page.getByRole('button', { name: /magic draft/i }).click();
+    const magicDraftBtn = page.getByTestId('magic-draft-button');
+    await magicDraftBtn.click();
 
     // Verify state machine catches the error and stops processing, resetting button state
-    await expect(page.getByRole('button', { name: /magic draft/i })).toBeEnabled();
+    await expect(magicDraftBtn).toBeEnabled();
     // The state machine stores `error`. The UI might not show it explicitly unless we added an error banner, but we ensure it doesn't get stuck.
   });
 });

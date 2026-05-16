@@ -71,7 +71,7 @@ const SalesCartPage: React.FC = () => {
                         onAction={() => window.location.href = '/marketing'} 
                     />
                 ) : (
-                    <div className="space-y-4">
+                    <div className="space-y-4" data-testid="sales-cart-list">
                         {leads.map(lead => (
                             <div 
                                 key={lead.id} 
@@ -155,6 +155,7 @@ const SalesCartPage: React.FC = () => {
                              <button 
                                 onClick={() => handleBatchAction('content')}
                                 disabled={processing}
+                                data-testid="magic-draft-button"
                                 className="flex-1 bg-indigo-500 hover:bg-indigo-600 text-white py-2 px-3 rounded-xl text-xs font-bold transition-colors whitespace-nowrap flex items-center justify-center gap-1 shadow-lg shadow-indigo-500/20 disabled:opacity-50"
                              >
                                 <SparklesIcon className="w-3 h-3" />

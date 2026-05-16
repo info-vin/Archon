@@ -199,8 +199,8 @@ class ContentHandler:
         """
         try:
             from ..projects.task_service import task_service
-            from ..shared_constants import AgentUUIDs, AgentNames
-            
+            from ..shared_constants import AgentNames, AgentUUIDs
+
             # 1. Fetch lead names for the task title
             leads_res = self.supabase_client.table("leads").select("company_name").in_("id", lead_ids).execute()
             lead_names = [L["company_name"] for L in (leads_res.data or [])]
@@ -218,12 +218,12 @@ class ContentHandler:
                 priority="high",
                 feature="blog_drafting"
             )
-            
+
             if not success:
                 return False, res
 
             task_id = res["task"]["id"]
-            
+
             # 3. Store lead_ids in metadata (or fallback to description if column missing)
             # We try to update with metadata=lead_ids
             try:
@@ -271,7 +271,8 @@ class ContentHandler:
                     )
 
                 response = await _call_gemini()
-                if not response.text: continue
+                if not response.text:
+                    continue
 
                 result = safe_json_loads(response.text)
                 new_post = {

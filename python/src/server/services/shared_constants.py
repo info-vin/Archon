@@ -4,6 +4,15 @@ from enum import StrEnum
 
 
 @dataclass(frozen=True)
+class AgentNames:
+    SUPERVISOR = "Supervisor (Group Chat)"
+    MARKET_BOT = "MarketBot (Sales)"
+    LIBRARIAN = "Librarian (Knowledge)"
+    DEV_BOT = "DevBot (Engineering)"
+    PO_BOT = "POBot (Product)"
+    CLOCKWORK = "Clockwork (Ops)"
+
+@dataclass(frozen=True)
 class AgentUUIDs:
     """
     Physical Source of Truth for AI Agent Identities (Phase 4.6.47 Grounded).
