@@ -26,7 +26,7 @@ export const IntegrityAnalysis: React.FC<IntegrityAnalysisProps> = ({ healthTren
                 </div>
                 
                 <div className={`${isMaximized ? 'h-[500px]' : 'h-[320px]'} w-full transition-all duration-500`} key={`integrity-${isMaximized}`}>
-                    <ResponsiveContainer width="100%" height="100%">
+                    <ResponsiveContainer width="100%" height={isMaximized ? 500 : 320}>
                         <AreaChart data={trendData.length > 0 ? trendData : [{date: '', daily: 100, baseline: 100}]}>
                             <defs>
                                 <linearGradient id="colorDaily" x1="0" y1="0" x2="0" y2="1">
