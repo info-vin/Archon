@@ -10,8 +10,8 @@ from datetime import UTC, datetime, timedelta
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 
-from server.config.logfire_config import get_logger
-from server.services.scheduler.jobs import business, patrol, task_dispatcher
+from src.server.config.logfire_config import get_logger
+from src.server.services.scheduler.jobs import business, patrol, task_dispatcher
 
 logger = get_logger(__name__)
 
@@ -29,7 +29,7 @@ class SchedulerService:
     async def _get_setting(self, key: str, default: int) -> int:
         """Helper to fetch numerical settings from DB with safety bounds."""
         try:
-            from server.utils import get_supabase_client
+            from src.server.utils import get_supabase_client
 
             supabase = get_supabase_client()
             res = supabase.table("archon_settings").select("value").eq("key", key).execute()
@@ -57,7 +57,7 @@ class SchedulerService:
     async def _update_last_run(self, key: str):
         """Robust last run persistence."""
         try:
-            from server.utils import get_supabase_client
+            from src.server.utils import get_supabase_client
 
             supabase = get_supabase_client()
             now_iso = datetime.now(UTC).isoformat()
@@ -72,7 +72,7 @@ class SchedulerService:
     async def _get_last_run(self, key: str) -> datetime | None:
         """Robust last run retrieval."""
         try:
-            from server.utils import get_supabase_client
+            from src.server.utils import get_supabase_client
 
             supabase = get_supabase_client()
             res = supabase.table("archon_settings").select("value").eq("key", key).execute()

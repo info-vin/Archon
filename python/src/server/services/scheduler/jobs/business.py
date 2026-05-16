@@ -5,9 +5,9 @@ Handles leads, market reports, and token analysis.
 
 from datetime import UTC, datetime, timedelta
 
-from server.config.logfire_config import get_logger
-from server.services.shared_constants import AgentUUIDs
-from server.utils import get_supabase_client
+from src.server.config.logfire_config import get_logger
+from src.server.services.shared_constants import AgentUUIDs
+from src.server.utils import get_supabase_client
 
 logger = get_logger(__name__)
 
@@ -16,7 +16,7 @@ async def run_auto_fetch_leads():
     """Clockwork task to trigger Alice's daily lead auto-fetch."""
     logger.info("📡 Clockwork: Triggering daily Alice job search...")
     try:
-        from server.services.job_board_service import JobBoardService
+        from src.server.services.job_board_service import JobBoardService
 
         service = JobBoardService()
         new_leads = await service.auto_fetch_daily_leads()
@@ -38,7 +38,7 @@ async def run_prune_stale_leads():
     """Clockwork task to prune stale leads (Scenario D Pruning Loop)."""
     logger.info("🧹 Clockwork: Triggering hourly prune stale leads...")
     try:
-        from server.services.enrichment_service import EnrichmentService
+        from src.server.services.enrichment_service import EnrichmentService
 
         pruned_count = await EnrichmentService.prune_stale_leads()
 
@@ -60,8 +60,8 @@ async def run_daily_market_report():
     """Triggering Bob (MarketingBot) to summarize today's leads."""
     logger.info("✍️ Clockwork: Triggering Bob's Daily Market Report...")
     try:
-        from server.services.agent_service import agent_service
-        from server.services.projects.task_service import task_service
+        from src.server.services.agent_service import agent_service
+        from src.server.services.projects.task_service import task_service
 
         supabase = get_supabase_client()
         one_day_ago = (datetime.now(UTC) - timedelta(hours=24)).isoformat()
@@ -209,7 +209,7 @@ async def run_business_sentinel():
                     try:
                         import asyncio
 
-                        from server.services.projects.task_service import task_service
+                        from src.server.services.projects.task_service import task_service
                         # We don't have assignee_id in the basic select above, but task_service can handle fallback or we can add it.
                         # For now, we trigger the orchestration.
                         asyncio.create_task(
@@ -263,9 +263,9 @@ async def run_api_deprecation_scan():
     """Bi-weekly scan of Google's Gemini API Docs to check for deprecations and limit changes."""
     logger.info("🔍 Clockwork: Starting API Deprecation & Limit Scan...")
     try:
-        from server.services.agent_service import agent_service
-        from server.services.projects.task_service import task_service
-        from server.services.shared_constants import AI_AGENT_ROLES
+        from src.server.services.agent_service import agent_service
+        from src.server.services.projects.task_service import task_service
+        from src.server.services.shared_constants import AI_AGENT_ROLES
 
         supabase = get_supabase_client()
 

@@ -71,6 +71,31 @@ export const TaskAgentGroupChat: React.FC<TaskAgentGroupChatProps> = ({ task }) 
                 </a>
               </div>
             )}
+
+            {/* Phase 5.1.4: Citation Transparency UI */}
+            {msg.citations && msg.citations.length > 0 && (
+              <div className="mt-3 pt-3 border-t border-black/10 dark:border-white/10 space-y-2">
+                <div className="text-[10px] font-bold opacity-60 uppercase tracking-tight flex items-center gap-1.5">
+                  <span className="w-1 h-1 bg-emerald-500 rounded-full animate-pulse" />
+                  Primary Sources & Citations
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {msg.citations.map((cite: any, cIdx: number) => (
+                    <a 
+                      key={cIdx}
+                      href={cite.url} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      title={cite.snippet}
+                      className="text-[10px] px-2 py-0.5 bg-black/5 dark:bg-white/5 rounded border border-black/10 dark:border-white/10 hover:bg-black/10 dark:hover:bg-white/10 transition-colors truncate max-w-[180px] flex items-center gap-1"
+                    >
+                      <span className="opacity-50">[{cite.index}]</span>
+                      <span className="font-medium">{cite.source}</span>
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           {isRight && <div className="text-2xl ml-2 flex-shrink-0 mt-1">{config.avatar}</div>}

@@ -109,7 +109,7 @@ async def create_document_logic(
         blocks = generate_document_blocks(title, document_type, content_description)
         content = {"id": str(uuid.uuid4()), "title": title, "blocks": blocks}
 
-        from server.services.projects.document_service import DocumentService
+        from src.server.services.projects.document_service import DocumentService
 
         doc_service = DocumentService()
         success, result_data = doc_service.add_document(

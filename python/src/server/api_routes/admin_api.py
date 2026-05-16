@@ -52,14 +52,13 @@ async def david_read_file(path: str, current_user: dict = Depends(get_current_us
     """
     Allows David Agent to read codebase files for self-evolution (Admin only).
     """
-    import os
     # Basic security check: ensure the path is within the app directory
     # (The container itself is already limited by Docker mounts)
     if ".." in path or path.startswith("/"):
          raise HTTPException(status_code=400, detail="Invalid path or traversal attempt")
-    
+
     try:
-        with open(path, "r", encoding="utf-8") as f:
+        with open(path, encoding="utf-8") as f:
             return f.read()
     except Exception as e:
         logger.error(f"David Read: Failed to read {path}: {e}")

@@ -27,6 +27,7 @@ class RagDependencies(ArchonDependencies):
     source_filter: str | None = None
     match_count: int = 5
     progress_callback: Any | None = None  # Callback for progress updates
+    collected_citations: list[dict[str, Any]] = Field(default_factory=list) # Physical audit trail
 
 
 class RagQueryResult(BaseModel):
@@ -85,10 +86,13 @@ class RagAgent(BaseAgent[RagDependencies, str]):
         agent.system_prompt(add_search_context_prompt)
 
         # Register tools for RAG operations
+        from src.agents.librarian.tools import web_crawl_tool
+        
         agent.tool(search_documents_tool)
         agent.tool(list_available_sources_tool)
         agent.tool(search_code_examples_tool)
         agent.tool(refine_search_query_tool)
+        agent.tool(web_crawl_tool)
 
         return agent
 
@@ -116,6 +120,8 @@ class RagAgent(BaseAgent[RagDependencies, str]):
 - "Search for X" → Use search_documents tool
 - "Find code examples for Y" → Use search_code_examples tool
 - "What documentation do you have?" → Use list_available_sources tool
+- "I need the latest info from https://example.com" → Use web_crawl_tool
+- "Internal search for X returned nothing" → Use web_crawl_tool with a relevant URL if possible
 
 **Search Strategies:**
 - For conceptual questions: Use broader search terms
@@ -130,7 +136,7 @@ class RagAgent(BaseAgent[RagDependencies, str]):
 - Admit when information is not found
 - Suggest alternative searches if needed"""
         try:
-            from server.services.prompt_service import prompt_service
+            from src.server.services.prompt_service import prompt_service
 
             return str(
                 prompt_service.get_prompt(
@@ -211,7 +217,7 @@ class RagAgent(BaseAgent[RagDependencies, str]):
                 results_found=results_found,
                 sources=list(set(sources)),  # Remove duplicates
                 answer=response_text,
-                citations=[],  # Could be enhanced to extract citations
+                citations=deps.collected_citations,  # Use physically collected citations
                 success=True,
                 message="Query completed successfully",
             )

@@ -19,7 +19,7 @@ PAI_V1 = not pydantic_ai.__version__.startswith("0.")
 
 # --- 1. Shared State ---
 class SharedState(BaseModel):
-    messages: list[dict[str, str]] = Field(default_factory=list)
+    messages: list[dict[str, Any]] = Field(default_factory=list)
     current_assignee: str | None = None
     artifacts: dict[str, Any] = Field(default_factory=dict)
     step_count: int = 0
@@ -48,13 +48,13 @@ async def propose_code_fix(file_path: str, new_content: str, summary: str) -> st
     is_docker = os.getenv("DOCKER_CONTAINER") == "true" or os.path.exists("/.dockerenv")
     server_host = "archon-server" if is_docker else "localhost"
     url = f"http://{server_host}:{server_port}/internal/david/propose"
-    
+
     payload = {
         "file_path": file_path,
         "new_content": new_content,
         "summary": summary
     }
-    
+
     try:
         async with httpx.AsyncClient() as client:
             # Note: In a production scenario, we'd add auth headers here.
@@ -76,7 +76,7 @@ async def read_code_file(file_path: str) -> str:
     server_host = "archon-server" if is_docker else "localhost"
     # Reusing the existing internal proxy endpoint
     url = f"http://{server_host}:{server_port}/internal/david/read?path={file_path}"
-    
+
     try:
         async with httpx.AsyncClient() as client:
             response = await client.get(url, timeout=5.0)
@@ -98,9 +98,14 @@ async def _run_agent_with_retry(agent: Agent[Any, Any], prompt: str, ctx_state: 
         if override_key:
             # Re-initialize the model with the backup key if we hit a hard quota.
             from pydantic_ai.models.gemini import GeminiModel
-            from pydantic_ai.providers.google_gla import GoogleGLAProvider
+            
+            # Phase 5.1.5: Version-aware Provider Selection
+            if PAI_V1:
+                from pydantic_ai.providers.google import GoogleProvider as ProviderClass
+            else:
+                from pydantic_ai.providers.google_gla import GoogleGLAProvider as ProviderClass
 
-            provider = GoogleGLAProvider(api_key=override_key)
+            provider = ProviderClass(api_key=override_key)
             backup_model: Any = GeminiModel(model_name, provider=provider)
             return await agent.run(prompt, model=backup_model, deps=deps)
         return await agent.run(prompt, deps=deps)
@@ -285,11 +290,23 @@ class LibrarianNode(BaseNode[SharedState, None, str]):
         history_text = "\n".join([f"{m['role']}: {m['content']}" for m in ctx.state.messages])
 
         try:
+            # Phase 5.1.4: Hunter Mode - Librarian can now crawl external sites if internal search is insufficient
+            instruction = (
+                "Extract facts from history by searching available knowledge.\n"
+                "If the internal knowledge base does not contain the required information, "
+                "or if the user provides a specific URL, use the web_crawl_tool to get the latest data."
+            )
             res = await _run_agent_with_retry(
-                agent, f"Extract facts from history by searching available knowledge.\n{history_text}", ctx.state, model_name, deps=deps
+                agent, f"{instruction}\n{history_text}", ctx.state, model_name, deps=deps
             )
             _accumulate_usage(ctx.state, res, model_name)
-            ctx.state.messages.append({"role": "librarian", "content": str(res.output)})
+
+            # Phase 5.1.4: Citation Transparency - Pass collected citations to state
+            ctx.state.messages.append({
+                "role": "librarian",
+                "content": str(res.output),
+                "citations": deps.collected_citations
+            })
         except Exception as e:
             logger.error(f"Librarian error: {e}")
             ctx.state.messages.append({"role": "librarian", "content": f"Error: {e}"})
@@ -320,23 +337,23 @@ class DavidNode(BaseNode[SharedState, None, str]):
 
         from src.server.services.prompt_service import prompt_service
         system_prompt = prompt_service.get_prompt(
-            "WORKFLOW_DATA_DAVID", 
+            "WORKFLOW_DATA_DAVID",
             "You are David, the Senior Developer. You can read code and propose fixes using tools."
         )
-        
+
         agent = Agent(
-            model=model_name, 
+            model=model_name,
             system_prompt=system_prompt,
             tools=[propose_code_fix, read_code_file]
         )
-        
+
         history_text = "\n".join([f"{m['role']}: {m['content']}" for m in ctx.state.messages])
 
         try:
             res = await _run_agent_with_retry(
-                agent, 
-                f"Review the history and use tools if needed to fix code or extract data.\n{history_text}", 
-                ctx.state, 
+                agent,
+                f"Review the history and use tools if needed to fix code or extract data.\n{history_text}",
+                ctx.state,
                 model_name
             )
             _accumulate_usage(ctx.state, res, model_name)

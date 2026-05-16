@@ -31,10 +31,10 @@ async def create_proposal(payload: dict[str, Any], current_user: dict = Depends(
     file_path = payload.get("file_path")
     new_content = payload.get("new_content")
     summary = payload.get("summary", "AI Generated Fix")
-    
+
     if not file_path or new_content is None:
         raise HTTPException(status_code=400, detail="Missing file_path or new_content")
-        
+
     res = await service.create_file_proposal(
         file_path=file_path,
         new_content=new_content,

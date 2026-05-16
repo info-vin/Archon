@@ -12,7 +12,7 @@ from urllib.parse import urljoin
 
 import httpx
 
-from server.config.service_discovery import get_api_url
+from src.server.config.service_discovery import get_api_url
 
 from .timeout_config import get_default_timeout, get_polling_timeout
 

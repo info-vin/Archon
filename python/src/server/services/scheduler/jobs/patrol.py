@@ -5,8 +5,8 @@ Handles system health, log monitoring, and cleanup.
 
 from datetime import UTC, datetime, timedelta
 
-from server.config.logfire_config import get_logger
-from server.services.shared_constants import AgentUUIDs
+from src.server.config.logfire_config import get_logger
+from src.server.services.shared_constants import AgentUUIDs
 
 logger = get_logger(__name__)
 
@@ -15,8 +15,8 @@ async def run_system_probe():
     """Triggering System Probe via HealthService."""
     logger.info("🤖 Clockwork: Triggering System Probe via HealthService...")
     try:
-        from server.services.health_service import HealthService
-        from server.utils import get_supabase_client
+        from src.server.services.health_service import HealthService
+        from src.server.utils import get_supabase_client
 
         supabase = get_supabase_client()
 
@@ -41,7 +41,7 @@ async def run_system_probe():
     except Exception as e:
         logger.error(f"💥 Clockwork: System Probe Crashed: {e}")
         try:
-            from server.utils import get_supabase_client
+            from src.server.utils import get_supabase_client
 
             get_supabase_client().table("archon_logs").insert(
                 {
@@ -59,10 +59,10 @@ async def run_log_patrol():
     """Scans logs for errors and dispatches DevBot."""
     logger.info("👮 Clockwork: Starting Log Patrol...")
     try:
-        from server.services.agent_service import agent_service
-        from server.services.projects.task_service import task_service
-        from server.services.shared_constants import AI_AGENT_ROLES
-        from server.utils import get_supabase_client
+        from src.server.services.agent_service import agent_service
+        from src.server.services.projects.task_service import task_service
+        from src.server.services.shared_constants import AI_AGENT_ROLES
+        from src.server.utils import get_supabase_client
 
         supabase = get_supabase_client()
         one_hour_ago = (datetime.now(UTC) - timedelta(hours=1)).isoformat()
@@ -125,7 +125,7 @@ async def cleanup_system_probes():
     """Retention Policy: Deletes Probe data older than 48h."""
     logger.info("🧹 Clockwork: Running System Probe Cleanup...")
     try:
-        from server.utils import get_supabase_client
+        from src.server.utils import get_supabase_client
 
         supabase = get_supabase_client()
         cutoff_time = (datetime.now(UTC) - timedelta(hours=48)).isoformat()
@@ -180,8 +180,8 @@ async def run_model_verification():
     """Verifies that the system is using the safe Lite model to prevent 429 errors."""
     logger.info("🤖 Clockwork: Running Model Verification...")
     try:
-        from server.config.model_ssot import SYSTEM_MODELS
-        from server.utils import get_supabase_client
+        from src.server.config.model_ssot import SYSTEM_MODELS
+        from src.server.utils import get_supabase_client
 
         supabase = get_supabase_client()
 
@@ -213,10 +213,10 @@ async def run_tech_debt_audit():
         import os
         import time
 
-        from server.services.agent_service import agent_service
-        from server.services.projects.task_service import task_service
-        from server.services.shared_constants import AI_AGENT_ROLES
-        from server.utils import get_supabase_client
+        from src.server.services.agent_service import agent_service
+        from src.server.services.projects.task_service import task_service
+        from src.server.services.shared_constants import AI_AGENT_ROLES
+        from src.server.utils import get_supabase_client
 
         warnings = []
 

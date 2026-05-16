@@ -37,7 +37,7 @@ async def search_documents_tool(
         if not results:
             return "No results found for your query. Try using different search terms or removing filters."
 
-        # Format results for display
+        # Format results for display and capture citations
         formatted_results = []
         for i, res in enumerate(results, 1):
             similarity = res.get("similarity_score", res.get("similarity", 0))
@@ -46,15 +46,23 @@ async def search_documents_tool(
             url = metadata.get("url", res.get("url", ""))
             content = res.get("content", "")
 
-            # Truncate content if too long
-            if len(content) > 500:
-                content = content[:500] + "..."
+            # Capture physical citation
+            ctx.deps.collected_citations.append({
+                "index": i,
+                "source": source,
+                "url": url,
+                "similarity": similarity,
+                "snippet": content[:200] + "..." if len(content) > 200 else content
+            })
+
+            # Truncate content for LLM if too long
+            llm_content = content[:500] + "..." if len(content) > 500 else content
 
             formatted_results.append(
                 f"**Result {i}** (Relevance: {similarity:.2%})\n"
                 f"Source: {source}\n"
                 f"URL: {url}\n"
-                f"Content: {content}\n"
+                f"Content: {llm_content}\n"
             )
 
         return f"Found {len(results)} relevant results:\n\n" + "\n---\n".join(formatted_results)

@@ -67,7 +67,7 @@ async def refresh_knowledge_item(
 ):
     """Refresh an existing knowledge item by re-crawling its source. Requires TASK_CREATE."""
     # LATE IMPORT to share the same physical registry with other modules
-    from server.services.rbac_service import RBACService
+    from src.server.services.rbac_service import RBACService
 
     try:
         service = KnowledgeItemService(get_supabase_client())
@@ -135,7 +135,7 @@ async def crawl_knowledge_item(
 ):
     """Start a new web crawl to populate the knowledge base. Requires TASK_CREATE."""
     # LATE IMPORT to share the same physical registry with other modules
-    from server.services.rbac_service import RBACService
+    from src.server.services.rbac_service import RBACService
 
     try:
         rbac_service = RBACService()

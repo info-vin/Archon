@@ -7,16 +7,16 @@ to maintain a clean, maintainable file size (< 300 lines).
 
 from typing import Any
 
-from server.config.logfire_config import get_logger
-from server.repositories.base_repository import BaseRepository
-from server.services.client_manager import get_supabase_client
+from src.server.config.logfire_config import get_logger
+from src.server.repositories.base_repository import BaseRepository
+from src.server.services.client_manager import get_supabase_client
 
 # Re-export logic functions for backward compatibility
-from server.services.source_management.logic.ai_metadata import (
+from src.server.services.source_management.logic.ai_metadata import (
     extract_source_summary,
     generate_source_title_and_metadata,
 )
-from server.services.source_management.logic.storage_ops import (
+from src.server.services.source_management.logic.storage_ops import (
     create_source_from_upload_logic,
     update_source_info,
 )

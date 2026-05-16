@@ -32,13 +32,13 @@ class ActionExecutor:
 
         from ..utils.code_modifier import CodeModifier
         modifier = CodeModifier()
-        
+
         # 1. Create a sandbox branch for safety
         branch_name = modifier.create_sandbox_branch(task_id)
-        
+
         # 2. Apply the modification
         modifier.apply_modification(file_path_str, new_content)
-        
+
         return f"File '{file_path_str}' written to branch '{branch_name}'"
 
 
@@ -127,7 +127,7 @@ class ProposeChangeService:
             proposal = res.data[0]
             try:
                 await self.executor.execute_file_change(
-                    proposal.get("request_payload", {}), 
+                    proposal.get("request_payload", {}),
                     task_id=str(proposal_id)[:8]
                 )
             except Exception as e:

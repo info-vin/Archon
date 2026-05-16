@@ -190,13 +190,12 @@ async def david_read_file(request: Request, path: str):
     """
     if not is_internal_request(request):
         raise HTTPException(status_code=403, detail="Access forbidden")
-    
-    import os
+
     if ".." in path or path.startswith("/"):
          raise HTTPException(status_code=400, detail="Invalid path")
-    
+
     try:
-        with open(path, "r", encoding="utf-8") as f:
+        with open(path, encoding="utf-8") as f:
             return f.read()
     except Exception as e:
         logger.error(f"Internal Read: Failed to read {path}: {e}")
@@ -209,17 +208,17 @@ async def david_create_proposal(request: Request, payload: dict[str, Any]):
     """
     if not is_internal_request(request):
         raise HTTPException(status_code=403, detail="Access forbidden")
-        
+
     from ..services.propose_change_service import ProposeChangeService
     service = ProposeChangeService()
-    
+
     file_path = payload.get("file_path")
     new_content = payload.get("new_content")
     summary = payload.get("summary", "AI Generated Fix")
-    
+
     if not file_path or new_content is None:
         raise HTTPException(status_code=400, detail="Missing file_path or new_content")
-        
+
     res = await service.create_file_proposal(
         file_path=file_path,
         new_content=new_content,

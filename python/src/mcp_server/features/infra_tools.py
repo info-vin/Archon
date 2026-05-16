@@ -11,7 +11,7 @@ from mcp.server.fastmcp import Context, FastMCP
 from starlette.requests import Request
 from starlette.responses import JSONResponse, Response
 
-from server.services.mcp_session_manager import get_session_manager
+from src.server.services.mcp_session_manager import get_session_manager
 
 from ..core import perform_health_checks
 

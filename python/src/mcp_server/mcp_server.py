@@ -28,7 +28,7 @@ from mcp.server.fastmcp import FastMCP
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 # Import Core Infrastructure (Phase 4.6.20 Slimming)
-from server.config.logfire_config import setup_logfire
+from src.server.config.logfire_config import setup_logfire
 from src.mcp_server.core import (
     get_tool_schema,
     lifespan,

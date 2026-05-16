@@ -96,7 +96,7 @@ def register_custom_routes(mcp: FastMCP) -> None:
                     tools_to_return = GLOBAL_TOOL_REGISTRY
 
                 # Apply RBAC Filtering (Dynamic Tool Exposing) via RBACService
-                from server.services.rbac_service import RBACService
+                from src.server.services.rbac_service import RBACService
                 rbac = RBACService()
                 restricted_tools = await rbac.get_restricted_mcp_tools(agent_type)
 
@@ -117,7 +117,7 @@ def register_custom_routes(mcp: FastMCP) -> None:
 
             # Apply RBAC Enforcement on Execution via RBACService
             agent_type = request.headers.get("X-Agent-Type", "anonymous")
-            from server.services.rbac_service import RBACService
+            from src.server.services.rbac_service import RBACService
             rbac = RBACService()
             restricted_tools = await rbac.get_restricted_mcp_tools(agent_type)
 

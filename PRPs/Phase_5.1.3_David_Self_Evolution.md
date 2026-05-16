@@ -30,7 +30,7 @@
 *   **[MODIFY] [useApprovalInbox.ts](file:///Users/vincenta/GoogleKwok022/Archon/enduser-ui-fe/src/features/manager/hooks/useApprovalInbox.ts)**: 
     *   支援 URL 參數自動選中，達成「對話到審核」的無縫跳轉。
 
-### 4. [Infrastructure] 環境缺失加固 - 🔴 待執行
+### 4. [Infrastructure] 環境缺失加固 - 🟢 已完成
 *   **[MODIFY] Dockerfile**: 在 `archon-server` 鏡像中加入 `git` 安裝指令。
 *   **[FIX] UUID 兼容**: 在 `ProposeChangeService` 中對 `approved_by` 進行類型防禦，容許 String ID。
 

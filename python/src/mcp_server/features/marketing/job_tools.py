@@ -2,8 +2,8 @@ import logging
 
 from pydantic import BaseModel, Field
 
-from server.services.crawling.crawling_service import CrawlingService
-from server.services.job_board_service import JobBoardService
+from src.server.services.crawling.crawling_service import CrawlingService
+from src.server.services.job_board_service import JobBoardService
 
 logger = logging.getLogger(__name__)
 
