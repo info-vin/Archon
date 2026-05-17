@@ -36,6 +36,7 @@ vi.mock('../../src/services/api', async (importOriginal) => {
         'X-User-Role': 'system_admin', 
         'Authorization': 'Bearer mock-token'
     });
+    mockedApi.getAttendanceStatus = vi.fn().mockResolvedValue({ status: 'clocked_out', clock_in_time: null, location: null });
 
     // Pass-through spies
     Object.keys(mockedApi).forEach(key => {
