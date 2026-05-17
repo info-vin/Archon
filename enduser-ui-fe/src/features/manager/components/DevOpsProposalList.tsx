@@ -1,5 +1,5 @@
 import React from 'react';
-import { SearchIcon } from '../../../components/Icons';
+import { SearchIcon, RefreshCwIcon } from '../../../components/Icons';
 
 interface DevOpsProposalListProps {
     proposals: any[];
@@ -39,16 +39,18 @@ export const DevOpsProposalList: React.FC<DevOpsProposalListProps> = ({
                             <button 
                                 onClick={() => handleCodeAction(prop.id, 'reject')}
                                 disabled={!!processingId}
-                                className="flex-1 px-6 py-4 text-xs font-bold text-red-600 border border-red-100 rounded-2xl hover:bg-red-50 transition-all active:scale-95 min-w-[80px]"
+                                className="flex-1 px-6 py-4 text-xs font-bold text-red-600 border border-red-100 rounded-2xl hover:bg-red-50 transition-all active:scale-95 min-w-[80px] flex items-center justify-center gap-2"
                             >
-                                REJECT
+                                {processingId === prop.id ? <RefreshCwIcon className="w-4 h-4 animate-spin" /> : null}
+                                {processingId === prop.id ? 'REJECTING...' : 'REJECT'}
                             </button>
                             <button 
                                 onClick={() => handleCodeAction(prop.id, 'approve')}
                                 disabled={!!processingId}
-                                className="flex-1 px-6 py-4 text-xs font-black bg-amber-500 text-white rounded-2xl shadow-lg shadow-amber-100 dark:shadow-none transition-all active:scale-95 min-w-[80px]"
+                                className="flex-1 px-6 py-4 text-xs font-black bg-amber-500 text-white rounded-2xl shadow-lg shadow-amber-100 dark:shadow-none transition-all active:scale-95 min-w-[80px] flex items-center justify-center gap-2"
                             >
-                                {processingId === prop.id ? '...' : 'APPROVE'}
+                                {processingId === prop.id ? <RefreshCwIcon className="w-4 h-4 animate-spin" /> : null}
+                                {processingId === prop.id ? 'APPROVING...' : 'APPROVE'}
                             </button>
                         </div>
                     </div>
