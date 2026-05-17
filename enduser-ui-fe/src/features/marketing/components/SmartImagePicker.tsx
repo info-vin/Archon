@@ -134,9 +134,3 @@ export const SmartImagePicker: React.FC<SmartImagePickerProps> = ({ onSelect, on
     </div>
   );
 };
-
-        </div>
-      </div>
-    </div>
-  );
-};

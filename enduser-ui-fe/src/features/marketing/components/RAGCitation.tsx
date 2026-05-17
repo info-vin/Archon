@@ -66,4 +66,3 @@ export const RAGCitation: React.FC<RAGCitationProps> = ({ citationId, citations 
     </span>
   );
 };
-};

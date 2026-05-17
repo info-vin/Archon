@@ -10,11 +10,15 @@ export function useSSE() {
   useEffect(() => {
     // Determine SSE URL (proxy handles /api)
     const sseUrl = '/api/sse/tasks';
-    
+
     console.log('📡 Initializing SSE connection to:', sseUrl);
-    
-    const es = new EventSource(sseUrl);
-    eventSourceRef.current = es;
+
+    if (typeof window === 'undefined' || typeof EventSource === 'undefined') {
+      console.warn('📡 EventSource is not supported in this environment (likely tests). Skipping SSE initialization.');
+      return;
+    }
+
+    const es = new EventSource(sseUrl);    eventSourceRef.current = es;
 
     es.onopen = () => {
       console.log('📡 SSE connection established.');

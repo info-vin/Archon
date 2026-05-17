@@ -62,7 +62,7 @@ async def david_read_file(path: str, current_user: dict = Depends(get_current_us
             return f.read()
     except Exception as e:
         logger.error(f"David Read: Failed to read {path}: {e}")
-        raise HTTPException(status_code=404, detail=f"File not found or unreadable: {str(e)}")
+        raise HTTPException(status_code=404, detail=f"File not found or unreadable: {str(e)}") from e
 
 
 @router.get("/document-versions")

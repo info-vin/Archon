@@ -28,12 +28,12 @@ from mcp.server.fastmcp import FastMCP
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 # Import Core Infrastructure (Phase 4.6.20 Slimming)
-from src.server.config.logfire_config import setup_logfire
 from src.mcp_server.core import (
     get_tool_schema,
     lifespan,
 )
 from src.mcp_server.router import register_custom_routes
+from src.server.config.logfire_config import setup_logfire
 
 # Load environment variables from the project root .env file
 project_root = Path(__file__).resolve().parent.parent

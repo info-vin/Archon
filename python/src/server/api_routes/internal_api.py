@@ -199,7 +199,7 @@ async def david_read_file(request: Request, path: str):
             return f.read()
     except Exception as e:
         logger.error(f"Internal Read: Failed to read {path}: {e}")
-        raise HTTPException(status_code=404, detail=str(e))
+        raise HTTPException(status_code=404, detail=str(e)) from e
 
 @router.post("/david/propose")
 async def david_create_proposal(request: Request, payload: dict[str, Any]):

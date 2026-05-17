@@ -87,7 +87,7 @@ class RagAgent(BaseAgent[RagDependencies, str]):
 
         # Register tools for RAG operations
         from src.agents.librarian.tools import web_crawl_tool
-        
+
         agent.tool(search_documents_tool)
         agent.tool(list_available_sources_tool)
         agent.tool(search_code_examples_tool)

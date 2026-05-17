@@ -27,7 +27,7 @@ async def run_agent_with_global_resilience(agent: Agent[Any, Any], prompt: str, 
     async def _execute(override_key: str | None = None):
         if override_key:
             from pydantic_ai.models.gemini import GeminiModel
-            
+
             # Phase 5.1.5: Version-aware Provider Selection
             if PAI_V1:
                 from pydantic_ai.providers.google import GoogleProvider as ProviderClass

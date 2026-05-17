@@ -10,10 +10,9 @@ from concurrent.futures import ThreadPoolExecutor
 from contextlib import asynccontextmanager
 from typing import Any
 
-from .shared_constants import ProcessingMode
-
 from ..config.logfire_config import get_logger
 from ..utils.rate_limiter import RateLimitConfig, RateLimiter
+from .shared_constants import ProcessingMode
 from .threading.dispatcher import MemoryAdaptiveDispatcher
 from .threading.metrics import SystemMetrics, get_system_metrics
 

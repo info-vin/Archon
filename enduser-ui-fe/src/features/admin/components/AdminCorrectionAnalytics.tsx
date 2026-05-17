@@ -126,5 +126,3 @@ export const AdminCorrectionAnalytics: React.FC = () => {
     </div>
   );
 };
-
-};

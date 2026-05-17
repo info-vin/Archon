@@ -12,9 +12,9 @@ from urllib.parse import urljoin
 import httpx
 from mcp.server.fastmcp import Context, FastMCP
 
-from src.server.config.service_discovery import get_api_url
 from src.mcp_server.utils.error_handling import MCPErrorFormatter
 from src.mcp_server.utils.timeout_config import get_default_timeout
+from src.server.config.service_discovery import get_api_url
 
 logger = logging.getLogger(__name__)
 

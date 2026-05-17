@@ -118,4 +118,4 @@ const ApprovalsPage: React.FC = () => {
   );
 };
 
-export default ApprovalsPage;t ApprovalsPage;Page;
+export default ApprovalsPage;

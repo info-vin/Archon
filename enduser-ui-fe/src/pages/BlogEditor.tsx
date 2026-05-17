@@ -265,8 +265,3 @@ const BlogEditor: React.FC = () => {
 };
 
 export default BlogEditor;
-</div>
-    );
-};
-
-export default BlogEditor;
