@@ -33,7 +33,7 @@ export const SmartImagePicker: React.FC<SmartImagePickerProps> = ({ onSelect, on
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl overflow-hidden flex flex-col max-h-[85vh]">
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-gray-100">
-          <h2 className="text-lg font-bold flex items-center gap-2">
+          <h2 data-testid="image-picker-modal-title" className="text-lg font-bold flex items-center gap-2">
             <ImageIcon className="w-5 h-5 text-indigo-600" />
             Smart Image Picker
           </h2>
@@ -48,6 +48,7 @@ export const SmartImagePicker: React.FC<SmartImagePickerProps> = ({ onSelect, on
             <div className="relative flex-1">
               <input
                 type="text"
+                data-testid="image-search-input"
                 value={keyword}
                 onChange={(e) => send({ type: 'UPDATE_KEYWORD', keyword: e.target.value })}
                 placeholder="Search high-quality images (e.g., 'business meeting')..."
@@ -58,6 +59,7 @@ export const SmartImagePicker: React.FC<SmartImagePickerProps> = ({ onSelect, on
             </div>
             <button
               type="submit"
+              data-testid="image-search-submit-btn"
               disabled={isSearching}
               className="px-6 py-3 bg-indigo-600 text-white rounded-xl text-sm font-bold disabled:opacity-50 flex items-center gap-2"
             >
@@ -127,6 +129,12 @@ export const SmartImagePicker: React.FC<SmartImagePickerProps> = ({ onSelect, on
           >
             Insert Image
           </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
         </div>
       </div>
     </div>

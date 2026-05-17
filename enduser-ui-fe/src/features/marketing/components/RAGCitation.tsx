@@ -49,6 +49,7 @@ export const RAGCitation: React.FC<RAGCitationProps> = ({ citationId, citations 
           )}
 
           <a 
+            data-testid="citation-popover-link"
             href={citation.url} 
             target="_blank" 
             rel="noopener noreferrer"
@@ -64,4 +65,5 @@ export const RAGCitation: React.FC<RAGCitationProps> = ({ citationId, citations 
       )}
     </span>
   );
+};
 };

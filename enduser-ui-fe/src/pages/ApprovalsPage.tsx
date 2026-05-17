@@ -41,12 +41,12 @@ const ApprovalsPage: React.FC = () => {
             Gatekeeper Console • {proposals.length} Pending Actions
           </p>
         </div>
-        <button 
+        <button
           onClick={fetchData}
           className="p-2 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-full transition-colors"
+          data-testid="refresh-proposals-btn"
           aria-label="Refresh proposals"
-        >
-          <ArrowPathIcon className={`w-5 h-5 text-gray-400 ${loading ? 'animate-spin' : ''}`} />
+        >          <ArrowPathIcon className={`w-5 h-5 text-gray-400 ${loading ? 'animate-spin' : ''}`} />
         </button>
       </div>
 
@@ -118,4 +118,4 @@ const ApprovalsPage: React.FC = () => {
   );
 };
 
-export default ApprovalsPage;
+export default ApprovalsPage;t ApprovalsPage;Page;

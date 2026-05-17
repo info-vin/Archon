@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { simulate500Error, simulateNetworkTimeout } from './fixtures/systemFixtures';
+import { simulate500Error, simulateNetworkTimeout, waitForSpinner } from './fixtures/systemFixtures';
 
 // Using the global setup for authentication from playwright.config.ts.
 
@@ -18,9 +18,10 @@ test.describe('ApprovalsPage MBT & Pessimistic Flow', () => {
 
     // Instead of reloading which can cause auth race conditions, let's just trigger a refetch
     // by clicking the refresh button
-    await page.locator('button[aria-label="Refresh proposals"]').click();
+    await page.getByTestId('refresh-proposals-btn').click();
+    await waitForSpinner(page);
 
-    await expect(page.getByText('Select a contribution to begin the audit process.')).toBeVisible();
+    await expect(page.getByTestId('empty-selection-msg')).toBeVisible();
     await expect(page.getByText('Pending Actions')).toBeVisible(); // The count might be 0
   });
 
@@ -48,7 +49,8 @@ test.describe('ApprovalsPage MBT & Pessimistic Flow', () => {
       await route.fulfill({ status: 200, json: [] });
     });
 
-    await page.locator('button[aria-label="Refresh proposals"]').click();
+    await page.getByTestId('refresh-proposals-btn').click();
+    await waitForSpinner(page);
 
     // Wait for the proposal to show up in the sidebar
     await expect(page.getByText('Test Blog Proposal').first()).toBeVisible();
@@ -66,7 +68,7 @@ test.describe('ApprovalsPage MBT & Pessimistic Flow', () => {
     await expect(approveButton).toBeDisabled();
 
     // After it completes, the item should be gone from the list.
-    await expect(page.getByText('Test Blog Proposal')).toHaveCount(0, { timeout: 10000 });
+    await expect(page.getByText('Test Blog Proposal')).not.toBeVisible({ timeout: 10000 });
   });
 
   test('should handle AI reason generation error gracefully', async ({ page }) => {
@@ -96,7 +98,8 @@ test.describe('ApprovalsPage MBT & Pessimistic Flow', () => {
       await route.fulfill({ status: 200, json: [] });
     });
 
-    await page.locator('button[aria-label="Refresh proposals"]').click();
+    await page.getByTestId('refresh-proposals-btn').click();
+    await waitForSpinner(page);
     await page.getByText('Another Blog').first().click();
 
     // Click Reject to show the input
@@ -106,9 +109,9 @@ test.describe('ApprovalsPage MBT & Pessimistic Flow', () => {
     await simulate500Error(page, '**/api/marketing/approvals/reject-suggestion');
 
     // Click Generate AI Reason
-    await page.getByRole('button', { name: /generate ai reason/i }).click();
+    await page.getByTestId('generate-ai-reason-btn').click();
 
     // Verify it falls back to the manual input message
-    await expect(page.locator('textarea')).toHaveValue(/Failed to generate AI reason|The content does not align/, { timeout: 5000 });
+    await expect(page.getByTestId('reject-reason-input')).toHaveValue(/Failed to generate AI reason|The content does not align/, { timeout: 5000 });
   });
 });

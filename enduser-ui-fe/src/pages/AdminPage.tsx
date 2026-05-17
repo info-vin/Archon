@@ -38,7 +38,7 @@ const AdminPage: React.FC = () => {
           <TabButton title="System Health" isActive={activeTab === 'health'} onClick={() => setActiveTab('health')} />
           {canManageUsers && <TabButton title="User Management" isActive={activeTab === 'users'} onClick={() => setActiveTab('users')} />}
           <TabButton title="Cost & Usage" isActive={activeTab === 'costs'} onClick={() => setActiveTab('costs')} />
-          <TabButton title="Cognitive Analytics" isActive={activeTab === 'analytics'} onClick={() => setActiveTab('analytics')} />
+          <TabButton title="Cognitive Analytics" isActive={activeTab === 'analytics'} onClick={() => setActiveTab('analytics')} data-testid="tab-cognitive-analytics" />
           <TabButton title="System Settings" isActive={activeTab === 'settings'} onClick={() => setActiveTab('settings')} />
           <TabButton title="Data Extraction" isActive={activeTab === 'extraction'} onClick={() => setActiveTab('extraction')} />
           {!isOnlyManager && <TabButton title="Blog Management" isActive={activeTab === 'blog'} onClick={() => setActiveTab('blog')} />}

@@ -98,9 +98,9 @@ export const AdminCorrectionAnalytics: React.FC = () => {
                 </thead>
                 <tbody className="divide-y divide-gray-100">
                   {data.map((item, idx) => (
-                    <tr key={idx} className="hover:bg-gray-50/50 transition-colors">
+                    <tr key={idx} data-testid="correction-row" className="hover:bg-gray-50/50 transition-colors">
                       <td className="px-4 py-3 text-gray-500">{new Date(item.created_at).toLocaleDateString()}</td>
-                      <td className="px-4 py-3 font-mono text-xs text-gray-500">
+                      <td data-testid="post-id-cell" className="px-4 py-3 font-mono text-xs text-gray-500">
                         {item.post_id?.substring(0,8)}...
                       </td>
                       <td className="px-4 py-3 text-right text-gray-600">
@@ -125,4 +125,6 @@ export const AdminCorrectionAnalytics: React.FC = () => {
       </div>
     </div>
   );
+};
+
 };
