@@ -62,12 +62,19 @@ export const KnowledgeSelector: React.FC<KnowledgeSelectorProps> = ({
     }
   };
 
-  const filteredItems = items.filter(item => 
-    item.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.source_id?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const searchableStrings = React.useMemo(() => {
+    return items.map(item => `${item.title || ''} ${item.source_id || ''}`.toLowerCase());
+  }, [items]);
 
-  const selectedItems = items.filter(item => selectedIds.includes(item.source_id));
+  const filteredItems = React.useMemo(() => {
+    if (!searchTerm) return items;
+    const searchLower = searchTerm.toLowerCase();
+    return items.filter((_, index) => searchableStrings[index].includes(searchLower));
+  }, [items, searchTerm, searchableStrings]);
+
+  const selectedItems = React.useMemo(() => {
+    return items.filter(item => selectedIds.includes(item.source_id));
+  }, [items, selectedIds]);
 
   return (
     <div className="space-y-2" ref={dropdownRef}>

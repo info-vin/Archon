@@ -91,3 +91,6 @@
 ## 2024-05-15 - React Component Primitive Array Filtering
 **Learning:** Inside core React primitives like a Combobox that get reused frequently, string operations like `.toLowerCase()` inside iterative filtering cause redundant O(N) string allocations on every keystroke. Using `.map(item => ({...item, searchStr}))` is dangerous as it breaks object reference equality and memoization.
 **Action:** Precalculate parallel arrays (e.g., `searchableLabels = options.map(opt => opt.label.toLowerCase())`) in a separate `useMemo` and use the index `(_, i)` to filter the original array, preserving references while eliminating per-keystroke allocations.
+## 2024-05-18 - Pre-calculating combined search strings in parallel arrays
+**Learning:** When optimizing React search filters to prevent redundant `.toLowerCase()` string allocations, if the search requires matching across multiple object fields (e.g. `item.title` and `item.source_id`), creating a single pre-calculated parallel array of combined strings (e.g. `` `${item.title} ${item.source_id}`.toLowerCase() ``) provides O(1) active search speed without breaking object reference equality.
+**Action:** Use `useMemo` to pre-calculate combined string fields into a parallel array when multiple fields must be searchable, and use the array index `(_, index)` to filter the original array during active searches.
