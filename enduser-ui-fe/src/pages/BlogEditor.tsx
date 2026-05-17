@@ -160,6 +160,7 @@ const BlogEditor: React.FC = () => {
                             <div className="flex gap-2">
                                 <button 
                                     onClick={() => setShowImagePicker('cover')}
+                                    data-testid="smart-asset-search-btn"
                                     className="cursor-pointer flex items-center gap-1.5 text-xs font-bold text-indigo-600 hover:text-indigo-700 transition-colors"
                                 >
                                     <ImageIcon className="w-4 h-4" /> Smart Asset Search

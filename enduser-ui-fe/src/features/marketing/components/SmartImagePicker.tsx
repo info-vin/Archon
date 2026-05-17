@@ -73,25 +73,26 @@ export const SmartImagePicker: React.FC<SmartImagePickerProps> = ({ onSelect, on
           {isSearching ? (
             <div className="flex flex-col items-center justify-center h-full text-gray-400">
               <RefreshCwIcon className="w-8 h-8 animate-spin mb-4" />
-              <p>Searching smart assets...</p>
+              <p data-testid="searching-assets-msg">Searching smart assets...</p>
             </div>
           ) : error ? (
             <div className="flex flex-col items-center justify-center h-full text-red-500">
-              <p className="font-bold mb-2">Error searching images</p>
+              <p data-testid="image-search-error-msg" className="font-bold mb-2">Error searching images</p>
               <p className="text-sm mb-4">{error}</p>
-              <button onClick={() => send({ type: 'RETRY' })} className="px-6 py-2 bg-red-100 hover:bg-red-200 text-red-700 rounded-xl text-sm font-bold transition-colors">
+              <button data-testid="image-search-retry-btn" onClick={() => send({ type: 'RETRY' })} className="px-6 py-2 bg-red-100 hover:bg-red-200 text-red-700 rounded-xl text-sm font-bold transition-colors">
                 Retry
               </button>
             </div>
           ) : images.length === 0 && state.matches('success') ? (
             <div className="flex items-center justify-center h-full text-gray-400">
-              <p>No images found. Try a different keyword.</p>
+              <p data-testid="no-images-found-msg">No images found. Try a different keyword.</p>
             </div>
           ) : images.length > 0 ? (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {images.map((img) => (
                 <div
                   key={img.id}
+                  data-testid="image-result"
                   onClick={() => send({ type: 'SELECT', image: img })}
                   className={`relative cursor-pointer rounded-xl overflow-hidden aspect-video border-4 transition-all ${
                     selectedImage?.id === img.id ? 'border-indigo-600 scale-95 shadow-lg' : 'border-transparent hover:scale-105'
@@ -125,6 +126,7 @@ export const SmartImagePicker: React.FC<SmartImagePickerProps> = ({ onSelect, on
           <button
             onClick={handleConfirm}
             disabled={!selectedImage}
+            data-testid="insert-image-btn"
             className="px-6 py-2 rounded-xl font-bold text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
           >
             Insert Image

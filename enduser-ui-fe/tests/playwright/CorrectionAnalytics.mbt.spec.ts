@@ -13,7 +13,7 @@ test.describe('Correction Analytics MBT Visual Test', () => {
     await analyticsTab.waitFor({ state: 'visible' });
     
     // Scenario 1: API Error Path
-    await simulate500Error(page, '**/api/admin/logs?type=AI_CORRECTION*');
+    await simulate500Error(page, /.*\/api\/admin\/logs.*/);
     await analyticsTab.click();
     await waitForSpinner(page);
 
@@ -21,8 +21,8 @@ test.describe('Correction Analytics MBT Visual Test', () => {
     await expect(page.getByTestId('error-msg')).toBeVisible();
 
     // Unroute the error and provide success mock
-    await page.unroute('**/api/admin/logs?type=AI_CORRECTION*');
-    await page.route('**/api/admin/logs?type=AI_CORRECTION*', async route => {
+    await page.unroute(/.*\/api\/admin\/logs.*/);
+    await page.route(/.*\/api\/admin\/logs.*/, async route => {
       await route.fulfill({ 
         status: 200, 
         json: [

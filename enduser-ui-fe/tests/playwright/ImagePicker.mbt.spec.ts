@@ -25,7 +25,7 @@ test.describe('Smart Image Picker MBT Visual Test', () => {
     await page.goto('/#/brand/editor/new');
 
     // Scenario 1: API Error Path
-    await simulate500Error(page, '**/api/marketing/images/search*');
+    await simulate500Error(page, /.*\/api\/marketing\/images\/search.*/);
 
     // Click 'Smart Asset Search' for cover image
     const smartAssetBtn = page.getByTestId('smart-asset-search-btn');
@@ -46,8 +46,8 @@ test.describe('Smart Image Picker MBT Visual Test', () => {
     await expect(page.getByTestId('image-search-error-msg')).toBeVisible();
 
     // Unroute the error and provide success mock
-    await page.unroute('**/api/marketing/images/search*');
-    await page.route('**/api/marketing/images/search*', async route => {
+    await page.unroute(/.*\/api\/marketing\/images\/search.*/);
+    await page.route(/.*\/api\/marketing\/images\/search.*/, async route => {
       await route.fulfill({ status: 200, json: mockImages.get() });
     });
 
@@ -82,10 +82,9 @@ test.describe('Smart Image Picker MBT Visual Test', () => {
   test('should handle network timeout gracefully', async ({ page }) => {
     await page.goto('/#/brand/editor/new');
 
-    // Simulate 3 second delay
-    await simulateNetworkTimeout(page, '**/api/marketing/images/search*', 3000);
     // Provide empty result after delay
-    await page.route('**/api/marketing/images/search*', async route => {
+    await page.route(/.*\/api\/marketing\/images\/search.*/, async route => {
+      await new Promise(resolve => setTimeout(resolve, 3000));
       await route.fulfill({ status: 200, json: [] });
     });
 

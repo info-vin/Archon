@@ -57,12 +57,12 @@ test.describe('RAG Citation Transparency MBT Visual Test', () => {
     await citation1.click();
 
     // Verify popover content for citation [1]
-    const popover1Title = page.getByTestId('citation-popover-title');
+    const popover1Title = page.getByTestId('citation-popover-title').first();
     await expect(popover1Title).toHaveText('Agentic Workflow Principles');
     await expect(page.getByText('"Dynamic routing is the core of modern agentic workflows, replacing static if/else chains."')).toBeVisible();
     
     // Verify the external link
-    const externalLink1 = page.getByTestId('citation-popover-link');
+    const externalLink1 = page.getByTestId('citation-popover-link').first();
     await expect(externalLink1).toBeVisible();
     await expect(externalLink1).toHaveAttribute('href', 'https://docs.archon.ai/workflows');
 
@@ -71,7 +71,7 @@ test.describe('RAG Citation Transparency MBT Visual Test', () => {
     await citation2.click();
 
     // Verify popover content for citation [2]
-    const popover2Title = page.getByTestId('citation-popover-title');
+    const popover2Title = page.getByTestId('citation-popover-title').last();
     await expect(popover2Title).toHaveText('Token Optimization Guide');
   });
 });

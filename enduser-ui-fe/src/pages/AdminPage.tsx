@@ -70,9 +70,10 @@ const AdminPage: React.FC = () => {
   );
 };
 
-const TabButton: React.FC<{ title: string; isActive: boolean; onClick: () => void }> = ({ title, isActive, onClick }) => (
+const TabButton: React.FC<{ title: string; isActive: boolean; onClick: () => void; 'data-testid'?: string }> = ({ title, isActive, onClick, 'data-testid': testId }) => (
   <button
     onClick={onClick}
+    data-testid={testId}
     className={`${
       isActive
         ? 'border-indigo-500 text-indigo-500'
