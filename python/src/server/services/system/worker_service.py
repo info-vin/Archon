@@ -19,10 +19,12 @@ class WorkerService:
     Background worker that polls for 'dispatched' tasks and executes them.
     """
 
-    def __init__(self, poll_interval_seconds: float = 5.0):
+    def __init__(self, poll_interval_seconds: float = 5.0, max_concurrent_tasks: int = 3):
         self.poll_interval = poll_interval_seconds
         self._running = False
         self._task: asyncio.Task[Any] | None = None
+        # Phase 5.1.1 Milestone 3.2: Semaphore concurrency protection
+        self._semaphore = asyncio.Semaphore(max_concurrent_tasks)
 
     async def start(self):
         """Start the background worker loop"""
@@ -31,7 +33,7 @@ class WorkerService:
 
         self._running = True
         self._task = asyncio.create_task(self._run_loop())
-        logger.info(f"🚀 Worker Service started (poll interval: {self.poll_interval}s)")
+        logger.info(f"🚀 Worker Service started (poll interval: {self.poll_interval}s, max concurrency: {self._semaphore._value})")
 
     async def stop(self):
         """Stop the background worker loop"""
@@ -65,6 +67,21 @@ class WorkerService:
         tasks = result["tasks"]
         logger.info(f"📥 Worker found {len(tasks)} dispatched tasks. Processing...")
 
+        async def _execute_with_semaphore(task_id: str, agent_id: str):
+            async with self._semaphore:
+                # 3. Wait for rate limit capacity before executing
+                # Note: We assume 'lite' tier by default, or could deduce from agent_id
+                await global_throttler.wait_for_capacity(tier="lite")
+
+                # 4. Execute the task
+                try:
+                    logger.info(f"⚙️ Worker executing task {task_id} for agent {agent_id}")
+                    # We call run_agent_task with immediate=True to bypass enqueuing
+                    await agent_service.run_agent_task(task_id=task_id, agent_id=agent_id, immediate=True)
+                except Exception as e:
+                    logger.error(f"Worker failed to execute task {task_id}: {e}")
+                    await task_service.update_task(task_id, {"status": "failed"})
+
         for task in tasks:
             task_id = task["id"]
             agent_id = task.get("assignee")
@@ -73,24 +90,10 @@ class WorkerService:
                 logger.warning(f"Task {task_id} is dispatched but has no assignee. Skipping.")
                 continue
 
-            # 2. Mark as processing to prevent other workers (if any) from picking it up
-            # Phase 5.1.0: Use 'processing' as a lock state
+            # 2. Mark as processing synchronously to prevent other workers from picking it up
             await task_service.update_task(task_id, {"status": "processing"})
 
-            # 3. Wait for rate limit capacity before executing
-            # This replaces the sleep in the agent execution loop
-            # Note: We assume 'lite' tier by default, or could deduce from agent_id
-            await global_throttler.wait_for_capacity(tier="lite")
-
-            # 4. Execute the task
-            # We call run_agent_task with immediate=True to bypass enqueuing
-            try:
-                logger.info(f"⚙️ Worker executing task {task_id} for agent {agent_id}")
-                # We need to make sure run_agent_task doesn't re-enqueue
-                await agent_service.run_agent_task(task_id=task_id, agent_id=agent_id, immediate=True)
-            except Exception as e:
-                logger.error(f"Worker failed to execute task {task_id}: {e}")
-                await task_service.update_task(task_id, {"status": "failed"})
-
+            # Fire and forget concurrent execution bounded by the Semaphore
+            asyncio.create_task(_execute_with_semaphore(task_id, agent_id))
 
 worker_service = WorkerService()
