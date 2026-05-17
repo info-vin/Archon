@@ -73,7 +73,7 @@ describe('IdentityMatrix', () => {
         const editButtons = screen.getAllByText('Edit');
         fireEvent.click(editButtons[0]); // Click Alice's edit
 
-        expect(screen.getByText(/Access Overrides: Alice Admin/i)).toBeInTheDocument();
+        await waitFor(() => expect(screen.getByText(/Access Overrides: Alice Admin/i)).toBeInTheDocument());
         expect(screen.getByLabelText(/Base Role/i)).toBeInTheDocument();
     });
 });
