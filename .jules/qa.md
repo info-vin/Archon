@@ -7,3 +7,7 @@
 ## 2026-05-15 - Recharts ResponsiveContainer in JSDOM (Vitest/Jest)
 **Learning:** Recharts `ResponsiveContainer` components that rely entirely on percentage values (`width="100%" height="100%"`) will fail to render dimensions in headless JSDOM environments, resulting in error logs like: `The width(-1) and height(-1) of chart should be greater than 0`.
 **Action:** Always provide explicit numeric fallbacks or fixed values for at least one dimension (e.g. `height={160}`) when using `ResponsiveContainer` to ensure test stability and prevent console errors that muddy test logs.
+
+## 2024-05-20 - Vitest Mocking of API Functions
+**Learning:** When API functions (like `getAttendanceStatus`) are placed in an `ignoreList` within a `vi.mock` factory in Vitest (e.g. `tests/e2e/e2e.setup.tsx`), they bypass MSW interception entirely and invoke Node.js native `fetch`. This leads to `NETWORK_ERROR`s when attempting to reach `localhost:8181` during tests.
+**Action:** Explicitly mock such ignored functions directly inside the `vi.mock` factory (e.g., `mockedApi.getAttendanceStatus = vi.fn().mockResolvedValue(...)`) to ensure stable test execution without network dependency.
