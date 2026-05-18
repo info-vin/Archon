@@ -44,8 +44,8 @@
 >     - **Schema 對帳**: 在執行任何 API 或資料庫欄位修改前，必須讀取 `migration/` 資料夾下的 SQL 實體。**嚴禁幻想欄位名稱**。
 >     - **雙生對帳**: 執行 `make twin-scout` 巡檢前，必須讀取 `scripts/twin_scout.py`，確保 Reality Snapshot 的 SQL 指標與 UI 頁面路徑 100% 物理對齊，防止 false mismatch。
 > 3.  **第三步：口頭確認 (Verbal Confirmation)**: 讀取後，我會向您用一兩句話總結我所理解的「**上次會話的最終狀態**」和「**今天的第一個目標**」。
-*   **當前狀態 (Current Context)**: Phase 4.6.51 (Google GenAI 物理硬化與對帳) 已結案。
-*   **今日目標 (Today's Goal)**: 啟動 Phase 4.6.52，執行 LibrarianService 拆分與 TextToSpeechService 導入，並提交 4.6.51 的修改。
+*   **當前狀態 (Current Context)**: Phase 5.1.7 (雙生對帳架構還原與星型群聊動態自癒巡檢) 已結案。
+*   **今日目標 (Today's Goal)**: 啟動 Phase 5.1.8，展開 RAG 快取優化與多 Agent 連動架構開發，並提交 5.1.7 的物理修改。
 
 > 4.  **第四步：取得您的確認**: 在您確認我對起點的理解無誤後，我才能開始執行第一個指令。
 
@@ -183,13 +183,24 @@
 ### 2026-05-17: AdminPanelExhaustive E2E 物理加固與 React TypeError 阻斷
 *   **1. 系統健康標籤頁 (System Health Tab) 網絡 100% 隔離**:
     - **行動**: 在 `AdminPanelExhaustive.spec.ts` 中補齊對系統健康看板 5 大核心 API 端點（系統概覽、AI 用量、連線例外日誌、Agent XP、Token 明細）的 Playwright 路由攔截。
-    - **結果**: 徹底切斷 E2E 測試與真實 backend/資料庫冷啟動延遲的物理耦合，消除 「System Probe Failed」 錯誤畫面。
+    - **結果**: 徹底切斷 E2E 測試與真實 backend/資料庫冷啟動延遲 of 物理耦合，消除 「System Probe Failed」 錯誤畫面。
 *   **2. Mock 與 TypeScript 數據對齊 (React Crash 阻斷)**:
     - **行動**: 修正 recent token usage mock 數據結構，補齊 `role`, `user_name`, `tokens`, `context` 等關鍵欄位，使其與 `TokenUsageDetail` 介面 100% 物理對齊。
     - **結果**: 根治了 `<TokenUsageTable>` 存取 `row.role.toUpperCase()` 時的 React TypeError 渲染崩潰。
 *   **3. 嚴苛測試綠燈公證**:
     - **行動**: 修改控制台日誌過濾以只顯示 Warning/Error，並在 `CI=1` 且停用自動重試 (`--retries=0`) 的模式下執行驗收。
     - **結果**: 9 大標籤頁一次性 100% 物理綠燈通過，執行時間縮短至 43.2 秒，徹底消滅 flaky 抖動。
+
+### 2026-05-18: Phase 5.1.7 雙生參數 CLI 雙軌與星型群聊動態自癒巡航落地
+*   **1. 雙向對帳引導規格化 (CLI --mode Integration)**:
+    - **行動**: 在 `scripts/twin_scout.py` 中完美實作 `--mode` CLI 參數選取（支援 `audit` 與 `action` 模式）。
+    - **機制**: 當 `--mode action` 時，啟動 Headed 模式並加載本地免密碼 `.browser_data/scout_action` 目錄，無縫繼承宿主機 OS Keychain 的 Cookie，完全根除了 Docker 與 Host 之間的 Chromium 加密憑證讀取障礙。
+*   **2. 星型群聊 (Multi-Agent) 動態 UI 自癒核查**:
+    - **行動**: 在雙生對帳巡航中，實現 `verify_multi_agent_chat` 核查函式。
+    - **流程**: 自動點擊 `New Task`，輸入標題 `Marketing Data Deep Dive`，指派給 Supervisor (UUID: `f0f00000-0000-0000-0000-000000000000`)。在 45s 非同步處理完畢後，切換至 `AI Report` 標籤，捕獲 headed 瀏覽器截圖並傳送至 Gemini Vision 進行真實協作對話氣泡的 physical parity 公證斷言。
+*   **3. Makefile 自動化與 SOP 全面對帳**:
+    - **行動**: 重構 `Makefile` 保留 `make twin-scout` (容器化 audit 模式)，並新增 `make twin-scout-action`。同步在 `CONTRIBUTING_tw.md` 修正 SOP 命令字眼，100% 根除「文檔與代碼不對稱」之技術債。
+    - **驗證**: 執行 `make lint-be` (329 個檔案全數綠燈通過) 與 `make test-be` (569 個核心單元測試全數綠燈通過)，已安全合併並 push 到開發主幹 `feat/twins`！
 
 > 目前近期日誌已全數歸檔至歷史檔案。當有新的開發活動時，請記錄於此。
 
