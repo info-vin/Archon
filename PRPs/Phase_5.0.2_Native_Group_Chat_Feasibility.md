@@ -60,7 +60,7 @@
 
 ### Milestone 5: 體驗優化 (Streaming UI - 進階選項)
 目標：提供即時打字體驗。
-- [ ] **任務 5.0.2.12**: (Optional) 實作 `StreamingResponse` 或 Server-Sent Events (SSE)，讓前端能在工作流執行期間即時渲染 Agent 的對話過程。
+- [x] **任務 5.0.2.12**: (Optional) 實作 `StreamingResponse` 或 Server-Sent Events (SSE)，讓前端能在工作流執行期間即時渲染 Agent 的對話過程。
 
 ---
 
