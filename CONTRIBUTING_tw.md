@@ -127,7 +127,7 @@
 
 > **🛑 開發鐵律**: 
 > 任何極度依賴「維持由 Host 本機建立的敏感登入狀態 (如 Google 帳號)」的自動化工具 (例如生圖工具 `ImageGenerationTool`)，都**不應該**被封裝成 Docker 內的微服務 API 給代理 (Agents) 呼叫。這會導致極度脆弱的架構。
-> **正確作法**: 這類腳本（如展示用的 `make twin-scout`）應該直接在終端機使用原生指令執行：`uv run python scripts/twin_scout.py --mode action`，以確保它能正確讀取本機的解密憑證。
+> **正確作法**: 這類腳本（如展示用的 `make twin-scout-action`）應該直接在宿主機本機終端機使用原生指令執行：`make twin-scout-action`，以確保它能 headed 運行、繼承 Session 並正確讀取本機的解密憑證。而一般容器內的無狀態安全對帳則執行 `make twin-scout`。
 
 ---
 
