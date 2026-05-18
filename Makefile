@@ -215,12 +215,18 @@ clean:
 		echo "Cancelled"; \
 	fi
 
-.PHONY: twin-scout twin-fix
+.PHONY: twin-scout twin-scout-action twin-fix
 
-# 執行自動偵察
+# 執行自動偵察 (容器化對帳模式)
 twin-scout:
-	@echo "🚀 啟動數位孿生偵察員 (目標 Prompt: $${T:-twin_scout_mission})..."
-	@docker exec -it -e SCOUT_PROMPT_KEY=$${T:-twin_scout_mission} archon-server /venv/bin/python scripts/twin_scout.py
+	@echo "🚀 啟動數位孿生偵察員 (容器化對帳 | 目標 Prompt: $${T:-twin_scout_mission})..."
+	@docker exec -it -e SCOUT_PROMPT_KEY=$${T:-twin_scout_mission} archon-server /venv/bin/python scripts/twin_scout.py --mode audit
+
+# 執行自動偵察 (本地原生行動與星型群聊自癒巡檢)
+twin-scout-action:
+	@echo "🚀 啟動數位孿生偵察員 (本機原生模式 | 目標 Prompt: $${T:-twin_scout_mission})..."
+	@set -a; [ -f .env ] && . ./.env; set +a; \
+	$(UV) run --env-file .env python scripts/twin_scout.py --mode action --headless false
 
 # 提示 Antigravity 維修流程
 twin-fix:

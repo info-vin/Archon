@@ -7,11 +7,11 @@ import time
 import sys
 from datetime import datetime
 
-# --- Physical Environment Realignment (Phase 4.6.39) ---
-# When running inside archon-server, we must align PYTHONPATH to reuse services.
-project_root = "/app"
-if project_root not in sys.path:
-    sys.path.insert(0, project_root)
+# --- Physical Environment Realignment (Phase 4.6.39 / 5.1.7) ---
+# Align PYTHONPATH dynamically for both Docker (/app) and Host (local workspace)
+for p in ["/app", os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "python"))]:
+    if p not in sys.path:
+        sys.path.insert(0, p)
 
 from supabase import create_client, Client
 from playwright.async_api import async_playwright
@@ -25,6 +25,7 @@ from src.server.services.prompt_service import prompt_service
 def parse_args():
     parser = argparse.ArgumentParser(description="Digital Twin Scout v39.1 - 503 Resistant")
     parser.add_argument("--headless", type=str, default="true")
+    parser.add_argument("--mode", type=str, default="audit", choices=["audit", "action"])
     return parser.parse_args()
 
 def limit_diagnostic_capacity(directory="./.twin/diagnostics", max_files=10):
@@ -178,13 +179,104 @@ async def inspect_and_analyze(pg, p_config, reality_map, client, target_model, m
         print(f"❌ [Scout] {name} FAILED: {e}")
         return {"name": name, "analysis": f"Critical Failure: {e}"}
 
-async def run_scout_session():
-    # Phase 4.6.46 Hardening: Wait for backend hot-reload stability
-    print("⏳ [Scout] Cooling down 15s for backend stability (Anti-503)...")
-    await asyncio.sleep(15)
+async def verify_multi_agent_chat(pg, client, target_model, mission_prompt):
+    """
+    Physically logs in as Admin, creates a task assigned to Supervisor (f0f00000-0000-0000-0000-000000000000),
+    waits for Multi-Agent workflow processing, and verifies dynamic bubble rendering.
+    """
+    url = os.getenv("ENDUSER_UI_URL", "http://localhost:5173")
+    print(f"📡 [Scout-Action] Navigating to EndUser UI Auth ({url})...")
     
+    try:
+        await pg.goto(f"{url}/#/auth", wait_until="domcontentloaded", timeout=30000)
+        
+        # Check if already logged in (if page redirects or input doesn't exist)
+        try:
+            await pg.wait_for_selector('input[type="email"]', timeout=5000)
+            print("🔑 [Scout-Action] Fill login credentials...")
+            await pg.fill('input[type="email"]', "admin@archon.com")
+            await pg.fill('input[type="password"]', "qwer45tyuiop")
+            await pg.click('button[type="submit"]')
+            await asyncio.sleep(3)
+        except Exception:
+            print("⚡ [Scout-Action] Already authenticated or skipping login page...")
+
+        await pg.goto(f"{url}/#/dashboard", wait_until="domcontentloaded", timeout=30000)
+        await pg.wait_for_selector('button:has-text("New Task")', timeout=30000)
+        
+        # Click "New Task"
+        print("➕ [Scout-Action] Clicking 'New Task'...")
+        await pg.locator('button:has-text("New Task")').first.click()
+        await pg.wait_for_selector('#title', timeout=10000)
+        
+        # Fill Title & Description
+        task_title = f"Marketing Data Deep Dive [Scout Action {int(time.time())}]"
+        print(f"✍️ [Scout-Action] Creating task: '{task_title}'...")
+        await pg.fill('#title', task_title)
+        await pg.fill('#description', "Please perform deep marketing analysis for Q2 conversion funnel.")
+        
+        # Switch to Assignment tab
+        await pg.locator('button:has-text("Assignment & Automation")').click()
+        await pg.wait_for_selector('#assignee', timeout=5000)
+        
+        # Select Archon Supervisor (f0f00000-0000-0000-0000-000000000000)
+        await pg.select_option('#assignee', 'f0f00000-0000-0000-0000-000000000000')
+        await asyncio.sleep(1)
+        
+        # Submit Task
+        print("💾 [Scout-Action] Submitting task...")
+        await pg.click('button[type="submit"]')
+        await asyncio.sleep(5) # Wait for modal to close and dashboard to refresh
+        
+        # Wait for the star-topology multi-agent workflow to trigger and run in backend
+        print("⏳ [Scout-Action] Waiting 45s for star-topology Supervisor-Worker processing...")
+        await asyncio.sleep(45)
+        
+        # Open task modal for the newly created task to check AI report
+        print(f"🔍 [Scout-Action] Clicking task '{task_title}' to open details...")
+        await pg.locator(f'text={task_title}').first.click()
+        await pg.wait_for_selector('button:has-text("AI Report")', timeout=20000)
+        
+        # Click AI Report tab
+        print("💬 [Scout-Action] Switching to 'AI Report' tab...")
+        await pg.locator('button:has-text("AI Report")').click()
+        await asyncio.sleep(3) # Wait for chat bubbles rendering
+        
+        # Capture screenshot for Gemini analysis
+        print("📸 [Scout-Action] Capturing dynamic group chat screenshot...")
+        img_bytes = await pg.screenshot(full_page=True)
+        txt = await pg.evaluate("() => document.body.innerText.substring(0, 1500)")
+        
+        system_prompt = (
+            "你是一位精準的工作流診斷員 Digital Twin Scout v39.1。\n"
+            "任務：診斷星型群聊 (Multi-Agent Group Chat) 的 UI 與內容狀態。\n"
+            "請檢查截圖中是否正確顯示 Supervisor 與 DevBot/MarketBot 之間的協作對話泡泡 (WhatsApp風格)。\n"
+            "若聊天記錄非空且正常協作，回傳 [WORKFLOW_SUCCESS]，否則回傳 [WORKFLOW_FAILURE] 並附上原因。"
+        )
+        
+        contents = [
+            f"[DOM Context]: {txt}",
+            types.Part.from_bytes(data=img_bytes, mime_type="image/png")
+        ]
+        
+        analysis = await analyze_with_retry(client, target_model, contents, system_prompt)
+        print(f"✅ [Scout-Action] Multi-Agent chat analysis complete.")
+        return analysis
+        
+    except Exception as e:
+        print(f"❌ [Scout-Action] Star-topology verification FAILED: {e}")
+        return f"WORKFLOW_FAILURE: Critical Failure during verify_multi_agent_chat: {e}"
+
+async def run_scout_session():
     args = parse_args()
     is_headless = args.headless.lower() == "true"
+    mode = args.mode.lower()
+    
+    # Phase 4.6.46 Hardening: Wait for backend hot-reload stability
+    if mode == "audit":
+        print("⏳ [Scout] Cooling down 15s for backend stability (Anti-503)...")
+        await asyncio.sleep(15)
+    
     if not await initialize_services(): return
 
     api_key = await credential_service.get_credential("GEMINI_API_KEY")
@@ -199,75 +291,106 @@ async def run_scout_session():
     mission_prompt = prompt_service.get_prompt(mission_key, "任務：進行一般巡檢")
 
     limit_diagnostic_capacity()
-    reality_map = {}
-    for p_email in ["alice@archon.com", "bob@archon.com", "charlie@archon.com", "admin@archon.com", "dev.bot@archon.com"]:
-        reality_map[p_email] = await get_workflow_snapshot(p_email)
 
-    personas = [
-        {"email": "alice@archon.com", "url": "/marketing", "selector": "ul, table, .grid-cols-1", "name": "Alice (Sales)"},
-        {"email": "bob@archon.com", "url": "/brand", "selector": "ul, .grid-cols-1", "name": "Bob (Marketing)"},
-        {"email": "charlie@archon.com", "url": "/nexus", "selector": "canvas, .recharts-responsive-container", "name": "Charlie (Manager Nexus)"},
-        {"email": "admin@archon.com", "url": "/admin", "selector": "h1, .admin-panel", "name": "David Howard (Admin)"},
-        {"email": "dev.bot@archon.com", "url": "/dashboard", "selector": "ul, table, .card", "name": "DevBot (Agent)"}
-    ]
+    if mode == "audit":
+        reality_map = {}
+        for p_email in ["alice@archon.com", "bob@archon.com", "charlie@archon.com", "admin@archon.com", "dev.bot@archon.com"]:
+            reality_map[p_email] = await get_workflow_snapshot(p_email)
 
-    global_report = []
-    async with async_playwright() as p:
-        for p_config in personas:
-            safe_name = p_config["name"].split()[0].lower()
-            audit_dir = os.path.abspath(f"./.browser_data/scout_{safe_name}")
-            if os.path.exists(audit_dir): shutil.rmtree(audit_dir, ignore_errors=True)
-            os.makedirs(audit_dir, exist_ok=True)
+        personas = [
+            {"email": "alice@archon.com", "url": "/marketing", "selector": "ul, table, .grid-cols-1", "name": "Alice (Sales)"},
+            {"email": "bob@archon.com", "url": "/brand", "selector": "ul, .grid-cols-1", "name": "Bob (Marketing)"},
+            {"email": "charlie@archon.com", "url": "/nexus", "selector": "canvas, .recharts-responsive-container", "name": "Charlie (Manager Nexus)"},
+            {"email": "admin@archon.com", "url": "/admin", "selector": "h1, .admin-panel", "name": "David Howard (Admin)"},
+            {"email": "dev.bot@archon.com", "url": "/dashboard", "selector": "ul, table, .card", "name": "DevBot (Agent)"}
+        ]
 
+        global_report = []
+        async with async_playwright() as p:
+            for p_config in personas:
+                safe_name = p_config["name"].split()[0].lower()
+                audit_dir = os.path.abspath(f"./.browser_data/scout_{safe_name}")
+                if os.path.exists(audit_dir): shutil.rmtree(audit_dir, ignore_errors=True)
+                os.makedirs(audit_dir, exist_ok=True)
+
+                ctx = await p.chromium.launch_persistent_context(
+                    user_data_dir=audit_dir, headless=is_headless, 
+                    args=['--no-sandbox', '--disable-setuid-sandbox'],
+                    viewport={'width': 1920, 'height': 1080},
+                    user_agent=f"ArchonIntegratedScout/3.9.1 ({safe_name})"
+                )
+                pg = await ctx.new_page()
+                res = await inspect_and_analyze(pg, p_config, reality_map, client, target_model, mission_prompt)
+                global_report.append(res)
+                await ctx.close()
+                
+                # Physical Cooldown to prevent 503 API Strain (Gemini Free Tier)
+                print(f"⏳ [Scout] Cooling down for 15s before next persona...")
+                await asyncio.sleep(15)
+
+        report_text = "# Digital Twin Consolidated Report (v39.1 - Anti-503)\n\n"
+        for r in global_report:
+            report_text += f"## {r['name']}\n{r['analysis']}\n\n"
+        
+        report_dir = "./.twin/diagnostics"
+        os.makedirs(report_dir, exist_ok=True)
+        report_path = f"{report_dir}/report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md"
+        with open(report_path, "w", encoding="utf-8") as f: f.write(report_text)
+        
+        print(f"📄 [Scout] Final Report saved: {report_path}")
+        final_type = "PARITY_MISMATCH" if "PARITY_MISMATCH" in report_text else "WORKFLOW_SUCCESS"
+        await log_twin_diagnosis(report_text, final_type)
+
+        # --- RESTORED FEEDBACK LOOP (Phase 4.6.46) ---
+        if final_type == "WORKFLOW_SUCCESS":
+            try:
+                url = os.getenv("SUPABASE_URL")
+                key = os.getenv("SUPABASE_SERVICE_KEY")
+                supabase: Client = create_client(url, key)
+                
+                optimizations = {
+                    "search_job_market": {"min_xp_level": 0},
+                    "rag_search_knowledge_base": {"min_xp_level": 0}
+                }
+                supabase.table("archon_settings").upsert({
+                    "key": "AGENT_TOOL_OVERRIDES",
+                    "value": optimizations,
+                    "is_system_protected": True
+                }, on_conflict="key").execute()
+                print("🚀 [Scout] Self-tuning optimizations applied to AgentRegistry.")
+            except Exception as e:
+                print(f"⚠️ [Scout] Feedback loop write failed: {e}")
+    else:
+        # Action mode (Multi-Agent star topology dynamic verification)
+        print("🚀 [Scout] Entering ACTION mode for Multi-Agent group chat verification...")
+        
+        audit_dir = os.path.abspath("./.browser_data/scout_action")
+        os.makedirs(audit_dir, exist_ok=True)
+        
+        async with async_playwright() as p:
             ctx = await p.chromium.launch_persistent_context(
                 user_data_dir=audit_dir, headless=is_headless, 
                 args=['--no-sandbox', '--disable-setuid-sandbox'],
                 viewport={'width': 1920, 'height': 1080},
-                user_agent=f"ArchonIntegratedScout/3.9.1 ({safe_name})"
+                user_agent="ArchonIntegratedScout/3.9.1 (action-twin)"
             )
             pg = await ctx.new_page()
-            res = await inspect_and_analyze(pg, p_config, reality_map, client, target_model, mission_prompt)
-            global_report.append(res)
+            
+            # Dismiss all alerts/dialogs safely
+            pg.on("dialog", lambda dialog: asyncio.create_task(dialog.accept()))
+            
+            res_analysis = await verify_multi_agent_chat(pg, client, target_model, mission_prompt)
             await ctx.close()
             
-            # Physical Cooldown to prevent 503 API Strain (Gemini Free Tier)
-            print(f"⏳ [Scout] Cooling down for 15s before next persona...")
-            await asyncio.sleep(15)
-
-    report_text = "# Digital Twin Consolidated Report (v39.1 - Anti-503)\n\n"
-    for r in global_report:
-        report_text += f"## {r['name']}\n{r['analysis']}\n\n"
-    
-    report_dir = "./.twin/diagnostics"
-    os.makedirs(report_dir, exist_ok=True)
-    report_path = f"{report_dir}/report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md"
-    with open(report_path, "w", encoding="utf-8") as f: f.write(report_text)
-    
-    print(f"📄 [Scout] Final Report saved: {report_path}")
-    final_type = "PARITY_MISMATCH" if "PARITY_MISMATCH" in report_text else "WORKFLOW_SUCCESS"
-    await log_twin_diagnosis(report_text, final_type)
-
-    # --- RESTORED FEEDBACK LOOP (Phase 4.6.46) ---
-    if final_type == "WORKFLOW_SUCCESS":
-        try:
-            url = os.getenv("SUPABASE_URL")
-            key = os.getenv("SUPABASE_SERVICE_KEY")
-            supabase: Client = create_client(url, key)
+            report_text = f"# Digital Twin Action Report (Multi-Agent Chat v39.1)\n\n## Action Verification\n{res_analysis}\n"
+            report_dir = "./.twin/diagnostics"
+            os.makedirs(report_dir, exist_ok=True)
+            report_path = f"{report_dir}/report_action_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md"
+            with open(report_path, "w", encoding="utf-8") as f: f.write(report_text)
             
-            # Example heuristic: if success, ensure basic tools are low friction
-            # In a production EXP-03, this would parse 'analysis' for specific tool name recommendations
-            optimizations = {
-                "search_job_market": {"min_xp_level": 0},
-                "rag_search_knowledge_base": {"min_xp_level": 0}
-            }
-            supabase.table("archon_settings").upsert({
-                "key": "AGENT_TOOL_OVERRIDES",
-                "value": optimizations,
-                "is_system_protected": True
-            }, on_conflict="key").execute()
-            print("🚀 [Scout] Self-tuning optimizations applied to AgentRegistry.")
-        except Exception as e:
-            print(f"⚠️ [Scout] Feedback loop write failed: {e}")
+            print(f"📄 [Scout] Action Report saved: {report_path}")
+            final_type = "WORKFLOW_FAILURE" if "WORKFLOW_FAILURE" in report_text or "PARITY_MISMATCH" in report_text else "WORKFLOW_SUCCESS"
+            await log_twin_diagnosis(report_text, final_type)
 
 if __name__ == "__main__":
     asyncio.run(run_scout_session())
