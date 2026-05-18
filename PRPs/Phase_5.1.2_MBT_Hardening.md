@@ -21,10 +21,10 @@
 1.  **[x] PersonaWorkflow** (Alice -> Bob -> Charlie)
 2.  **[x] TaskAssignment** (Crawler/Agent Dispatch)
 3.  **[x] PromptManagement** (Visual/Diff View) - Hardened in Phase 5.1.1
-4.  **[ ] ApprovalsPage** (Manager Inbox)
-5.  **[ ] ImagePicker** (Asset Selection)
-6.  **[ ] CorrectionAnalytics** (Token Usage)
-7.  **[ ] CitationTransparency** (RAG Refs)
+4.  **[x] ApprovalsPage** (Manager Inbox)
+5.  **[x] ImagePicker** (Asset Selection)
+6.  **[x] CorrectionAnalytics** (Token Usage)
+7.  **[x] CitationTransparency** (RAG Refs)
 
 ### 🧱 實體環境與 Schema 技術債 (Environment & Schema Debt)
 在 5.1.3 啟動前夕偵得的底層阻塞：

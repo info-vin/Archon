@@ -15,26 +15,26 @@
 ## 2. 實作里程碑與工作清單 (Execution Milestones)
 
 ### Milestone 1: 前端 SSE 基礎設施 (Frontend SSE Infrastructure)
-- [ ] **1.1 建立 `useSSE` Hook**: 在 `src/hooks/useSSE.ts` 中實作一個具備斷線重連、事件分發功能的 SSE Hook。
-- [ ] **1.2 全域注入**: 在 `App.tsx` 或 `Layout.tsx` 中啟動 SSE 連線，並將更新事件透過事件總線或 Context 傳遞給 XState Machines。
-- [ ] **1.3 斷線自癒機制**: 實作 `Last-Event-ID` 支援，確保手機端在切換網路或螢幕關閉後重新連線時能補抓遺失的狀態變更。
+- [x] **1.1 建立 `useSSE` Hook**: 在 `src/hooks/useSSE.ts` 中實作一個具備斷線重連、事件分發功能的 SSE Hook。
+- [x] **1.2 全域注入**: 在 `App.tsx` 或 `Layout.tsx` 中啟動 SSE 連線，並將更新事件透過事件總線或 Context 傳遞給 XState Machines。
+- [x] **1.3 斷線自癒機制**: 實作 `Last-Event-ID` 支援，確保手機端在切換網路或螢幕關閉後重新連線時能補抓遺失的狀態變更。
 
 ### Milestone 2: 狀態機反應式重構 (Reactive State Machine Refactoring)
-- [ ] **2.1 `salesCartMachine` 被動化**: 
+- [x] **2.1 `salesCartMachine` 被動化**: 
     - 移除 `processBatchAction` 的 `fromPromise` 阻塞等待。
     - 點擊按鈕後立即進入 `dispatched` 狀態（樂觀 UI）。
     - 監聽 `SSE_TASK_UPDATED` 事件，當任務狀態變為 `done` 時自動觸發資料重新整理或顯示結果。
-- [ ] **2.2 任務詳情同步**: 確保 `TaskModal` 能夠即時顯示 Agent 在背景產出的 `agent_output` (打字機效果或流式顯示)。
+- [x] **2.2 任務詳情同步**: 確保 `TaskModal` 能夠即時顯示 Agent 在背景產出的 `agent_output` (打字機效果或流式顯示)。
 
 ### Milestone 3: 進階多智能體工作流 (Advanced Orchestration)
-- [ ] **3.1 實作「獵人模式」自動補全管線**: 
+- [x] **3.1 實作「獵人模式」自動補全管線**: 
     - 當 Alice 右滑 Lead 時，觸發一個複雜的 `Supervisor` 任務。
     - 流程：`Supervisor` -> `Librarian` (104 爬蟲) -> `MarketBot` (需求預測) -> `Supervisor` -> `Update DB`。
-- [ ] **3.2 強化 Worker 並發防護**: 在 `WorkerService` 中引入 `semaphore` 或併發限制，避免同時執行過多耗費 Token 的大型任務。
+- [x] **3.2 強化 Worker 並發防護**: 在 `WorkerService` 中引入 `semaphore` 或併發限制，避免同時執行過多耗費 Token 的大型任務。
 
 ### Milestone 4: 測試與驗證 (Verification & Hardening)
-- [ ] **4.1 SSE 斷線模擬測試**: 使用 Playwright 模擬網路中斷，驗證 UI 是否能正確恢復狀態。
-- [ ] **4.2 負載壓力測試**: 同時觸發 10 個以上的 Agent 任務，觀察 `WorkerService` 的調度邏輯與 SSE 的傳遞延遲。
+- [x] **4.1 SSE 斷線模擬測試**: 使用 Playwright 模擬網路中斷，驗證 UI 是否能正確恢復狀態。
+- [x] **4.2 負載壓力測試**: 同時觸發 10 個以上的 Agent 任務，觀察 `WorkerService` 的調度邏輯與 SSE 的傳遞延遲。
 
 ---
 

@@ -20,3 +20,6 @@ release-notes-*.md
 # Node dependencies
 node_modules/
 .browser_data/
+
+# Playwright Test Artifacts
+.playwright/
