@@ -8,7 +8,7 @@
 -- Create temp mapping table
 CREATE TEMP TABLE agent_mapping (
     old_id text,
-    new_id uuid,
+    new_id text,
     agent_name text
 );
 
