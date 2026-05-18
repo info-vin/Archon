@@ -47,9 +47,14 @@ export const ApprovalActionHeader: React.FC<ApprovalActionHeaderProps> = ({
                <button 
                  onClick={() => handleAction(selectedProposal.id, 'reject')}
                  disabled={!!processingId || !rejectReason.trim()}
-                 className="px-6 py-2 bg-red-600 text-white text-xs font-black rounded-lg hover:bg-red-700 transition-colors"
+                 className="px-6 py-2 bg-red-600 text-white text-xs font-black rounded-lg hover:bg-red-700 transition-colors flex items-center gap-2"
                >
-                 {processingId === selectedProposal.id ? 'PROCESSING...' : 'CONFIRM REJECT'}
+                 {processingId === selectedProposal.id ? (
+                   <>
+                     <ArrowPathIcon className="w-4 h-4 animate-spin" />
+                     REJECTING...
+                   </>
+                 ) : 'CONFIRM REJECT'}
                </button>
             </div>
         ) : (
@@ -59,7 +64,12 @@ export const ApprovalActionHeader: React.FC<ApprovalActionHeaderProps> = ({
                   disabled={!!processingId}
                   className="px-4 py-2 bg-white dark:bg-slate-800 border border-red-200 dark:border-red-900/30 text-red-600 text-xs font-black rounded-lg hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors flex items-center gap-2"
                 >
-                  <XCircleIcon className="w-4 h-4" /> REJECT
+                  {processingId === selectedProposal.id ? (
+                    <ArrowPathIcon className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <XCircleIcon className="w-4 h-4" />
+                  )}
+                  {processingId === selectedProposal.id ? 'REJECTING...' : 'REJECT'}
                 </button>
                 <button 
                   onClick={() => handleAction(selectedProposal.id, 'approve')}
