@@ -164,3 +164,9 @@ def register_custom_routes(mcp: FastMCP) -> None:
             logger.error(f"Failed to get active sessions: {e}")
 
         return JSONResponse({"active_sessions": active_sessions})
+
+    # Custom route for health check (Phase 5.2.0 Task 5.2.0.10)
+    @mcp.custom_route("/health", methods=["GET"])
+    async def get_health(request: Request) -> Response:
+        """Get MCP health status."""
+        return JSONResponse({"status": "healthy"})
