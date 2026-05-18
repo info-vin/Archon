@@ -92,6 +92,7 @@ export const PlaygroundControls: React.FC<PlaygroundControlsProps> = (props) => 
       </button>
       <input
         type="number" min="0" max="50" value={value}
+        aria-label={`Corner radius for ${corner}`}
         onChange={(e) => onChange(parseInt(e.target.value) || 0)}
         className="w-12 px-1 py-0.5 text-sm text-center bg-white/50 dark:bg-black/50 border border-gray-300 dark:border-gray-600 rounded"
       />
@@ -115,7 +116,7 @@ export const PlaygroundControls: React.FC<PlaygroundControlsProps> = (props) => 
             <button onClick={() => setActiveTab('layer2')} className={cn('px-4 py-2 text-sm font-medium relative', activeTab === 'layer2' ? 'text-purple-600' : 'text-gray-500')}>
               Layer 2 {activeTab === 'layer2' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-purple-600" />}
             </button>
-            <input type="checkbox" checked={showLayer2} onChange={(e) => setShowLayer2(e.target.checked)} className="w-4 h-4 rounded text-purple-600" />
+            <input type="checkbox" checked={showLayer2} aria-label="Toggle layer 2" onChange={(e) => setShowLayer2(e.target.checked)} className="w-4 h-4 rounded text-purple-600" />
           </div>
         </div>
       </div>
@@ -160,7 +161,7 @@ export const PlaygroundControls: React.FC<PlaygroundControlsProps> = (props) => 
             </div>
             <div>
               <label className="block text-xs text-gray-600 mb-1">Layer 2 Inset: {layer2Inset}px</label>
-              <input type="range" min="-20" max="20" value={layer2Inset} onChange={(e) => setLayer2Inset(parseInt(e.target.value))} className="w-full" disabled={!showLayer2} />
+              <input type="range" min="-20" max="20" value={layer2Inset} aria-label="Adjust layer 2 inset" onChange={(e) => setLayer2Inset(parseInt(e.target.value))} className="w-full" disabled={!showLayer2} />
             </div>
           </>
         )}

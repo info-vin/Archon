@@ -420,6 +420,7 @@ export const ArchonChatPanel: React.FC<ArchonChatPanelProps> = props => {
                   connectionStatus === 'connecting' ? "Connecting..." :
                   "Search the knowledge base..."
                 }
+                aria-label="Chat input message"
                 disabled={connectionStatus !== 'online'} 
                 className="w-full bg-transparent text-gray-800 dark:text-white placeholder:text-gray-500 dark:placeholder:text-zinc-600 focus:outline-none disabled:opacity-50" 
                 onKeyDown={e => {
