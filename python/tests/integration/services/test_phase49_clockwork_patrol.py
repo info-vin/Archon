@@ -3,7 +3,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 # CRITICAL: Import the service AFTER patching if possible, or patch the specific module reference
-from server.services.scheduler_service import scheduler_service
+from src.server.services.scheduler_service import scheduler_service
 
 
 @pytest.mark.asyncio
@@ -40,9 +40,9 @@ async def test_run_log_patrol_creates_task():
 
     # We patch BOTH possible paths to be absolutely sure
     with (
-        patch("server.utils.get_supabase_client", return_value=mock_supabase),
-        patch("server.services.projects.task_service.task_service", mock_task_service),
-        patch("server.services.agent_service.agent_service", mock_agent_service),
+        patch("src.server.utils.get_supabase_client", return_value=mock_supabase),
+        patch("src.server.services.projects.task_service.task_service", mock_task_service),
+        patch("src.server.services.agent_service.agent_service", mock_agent_service),
     ):
         # Execute
         await scheduler_service._run_log_patrol()
@@ -73,8 +73,8 @@ async def test_run_log_patrol_no_errors():
     mock_task_service = AsyncMock()
 
     with (
-        patch("server.utils.get_supabase_client", return_value=mock_supabase),
-        patch("server.services.projects.task_service.task_service", mock_task_service),
+        patch("src.server.utils.get_supabase_client", return_value=mock_supabase),
+        patch("src.server.services.projects.task_service.task_service", mock_task_service),
     ):
         await scheduler_service._run_log_patrol()
 

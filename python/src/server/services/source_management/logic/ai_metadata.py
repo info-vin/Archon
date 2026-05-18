@@ -5,8 +5,8 @@ Physically isolated to reduce monolithic file size.
 
 from typing import Any
 
-from server.config.logfire_config import search_logger
-from server.services.llm_provider_service import get_llm_client
+from src.server.config.logfire_config import search_logger
+from src.server.services.llm_provider_service import get_llm_client
 
 
 async def extract_source_summary(
@@ -26,7 +26,7 @@ The above content is from the documentation for '{source_id}'. Please provide a 
 
     try:
         async with get_llm_client(provider=provider) as client:
-            from server.services.credential_service import credential_service
+            from src.server.services.credential_service import credential_service
 
             rag_settings = await credential_service.get_credentials_by_category("rag_strategy")
             model_choice = rag_settings.get("MODEL_CHOICE")
@@ -76,7 +76,7 @@ async def generate_source_title_and_metadata(
     if content and len(content.strip()) > 100:
         try:
             async with get_llm_client(provider=provider) as client:
-                from server.services.credential_service import credential_service
+                from src.server.services.credential_service import credential_service
 
                 rag_settings = await credential_service.get_credentials_by_category("rag_strategy")
                 model_choice = rag_settings.get("MODEL_CHOICE", "gpt-4.1-nano")

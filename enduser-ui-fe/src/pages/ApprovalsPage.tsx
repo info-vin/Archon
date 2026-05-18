@@ -41,18 +41,18 @@ const ApprovalsPage: React.FC = () => {
             Gatekeeper Console • {proposals.length} Pending Actions
           </p>
         </div>
-        <button 
+        <button
           onClick={fetchData}
           className="p-2 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-full transition-colors"
+          data-testid="refresh-proposals-btn"
           aria-label="Refresh proposals"
-        >
-          <ArrowPathIcon className={`w-5 h-5 text-gray-400 ${loading ? 'animate-spin' : ''}`} />
+        >          <ArrowPathIcon className={`w-5 h-5 text-gray-400 ${loading ? 'animate-spin' : ''}`} />
         </button>
       </div>
 
       <div className="flex flex-1 overflow-hidden">
         {/* Sidebar List */}
-        <div className="w-1/3 border-r border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-y-auto">
+        <div data-testid="approval-inbox-list" className="w-1/3 border-r border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-y-auto">
            <ApprovalSidebarList 
               proposals={proposals} 
               loading={loading} 
@@ -83,6 +83,7 @@ const ApprovalsPage: React.FC = () => {
                           <button 
                               onClick={handleGenerateAIReason}
                               disabled={generatingReason}
+                              data-testid="generate-ai-reason-btn"
                               className="text-xs font-bold text-indigo-600 flex items-center gap-1 hover:text-indigo-800 disabled:opacity-50"
                           >
                               {generatingReason ? <ArrowPathIcon className="w-3 h-3 animate-spin" /> : <SparklesIcon className="w-3 h-3" />}
@@ -90,6 +91,7 @@ const ApprovalsPage: React.FC = () => {
                           </button>
                       </div>
                       <textarea
+                          data-testid="reject-reason-input"
                           value={rejectReason}
                           onChange={(e) => setRejectReason(e.target.value)}
                           placeholder="Explain why this content is being rejected..."
@@ -109,7 +111,7 @@ const ApprovalsPage: React.FC = () => {
               <div className="p-4 bg-gray-100 dark:bg-slate-900 rounded-full">
                 <DocumentTextIcon className="w-8 h-8" />
               </div>
-              <p className="italic text-sm">Select a contribution to begin the audit process.</p>
+              <p data-testid="empty-selection-msg" className="italic text-sm">Select a contribution to begin the audit process.</p>
             </div>
           )}
         </div>

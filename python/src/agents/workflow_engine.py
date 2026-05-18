@@ -19,7 +19,7 @@ PAI_V1 = not pydantic_ai.__version__.startswith("0.")
 
 # --- 1. Shared State ---
 class SharedState(BaseModel):
-    messages: list[dict[str, str]] = Field(default_factory=list)
+    messages: list[dict[str, Any]] = Field(default_factory=list)
     current_assignee: str | None = None
     artifacts: dict[str, Any] = Field(default_factory=dict)
     step_count: int = 0
@@ -38,6 +38,54 @@ class SupervisorDecision(BaseModel):
     reasoning: str = Field(description="Why this node was selected")
 
 
+# --- David's Developer Tools (Phase 5.1.3) ---
+async def propose_code_fix(file_path: str, new_content: str, summary: str) -> str:
+    """
+    Submits a code change proposal to the Archon Server for human approval.
+    Use this when you have identified a fix for a bug or a way to implement a feature.
+    """
+    server_port = os.getenv("ARCHON_SERVER_PORT", "8181")
+    is_docker = os.getenv("DOCKER_CONTAINER") == "true" or os.path.exists("/.dockerenv")
+    server_host = "archon-server" if is_docker else "localhost"
+    url = f"http://{server_host}:{server_port}/internal/david/propose"
+
+    payload = {
+        "file_path": file_path,
+        "new_content": new_content,
+        "summary": summary
+    }
+
+    try:
+        async with httpx.AsyncClient() as client:
+            # Note: In a production scenario, we'd add auth headers here.
+            # For now, we rely on the internal Docker network security.
+            response = await client.post(url, json=payload, timeout=10.0)
+            response.raise_for_status()
+            data = response.json()
+            return f"✅ Proposal created successfully! ID: {data.get('id')}. Waiting for human approval."
+    except Exception as e:
+        logger.error(f"Failed to submit proposal: {e}")
+        return f"❌ Failed to submit proposal: {str(e)}"
+
+async def read_code_file(file_path: str) -> str:
+    """
+    Reads the content of a file from the codebase.
+    """
+    server_port = os.getenv("ARCHON_SERVER_PORT", "8181")
+    is_docker = os.getenv("DOCKER_CONTAINER") == "true" or os.path.exists("/.dockerenv")
+    server_host = "archon-server" if is_docker else "localhost"
+    # Reusing the existing internal proxy endpoint
+    url = f"http://{server_host}:{server_port}/internal/david/read?path={file_path}"
+
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.get(url, timeout=5.0)
+            response.raise_for_status()
+            return response.text
+    except Exception as e:
+        return f"❌ Failed to read file: {str(e)}"
+
+
 # --- Resilience Helpers (Phase 5.4.4) ---
 async def _run_agent_with_retry(agent: Agent[Any, Any], prompt: str, ctx_state: SharedState, model_name: str, deps: Any = None) -> Any:
     """
@@ -50,10 +98,15 @@ async def _run_agent_with_retry(agent: Agent[Any, Any], prompt: str, ctx_state: 
         if override_key:
             # Re-initialize the model with the backup key if we hit a hard quota.
             from pydantic_ai.models.gemini import GeminiModel
-            from pydantic_ai.providers.google_gla import GoogleGLAProvider
 
-            provider = GoogleGLAProvider(api_key=override_key)
-            backup_model: Any = GeminiModel(model_name, provider=provider)
+            # Phase 5.1.5: Version-aware Provider Selection
+            if PAI_V1:
+                from pydantic_ai.providers.google import GoogleProvider as ProviderClass
+            else:
+                from pydantic_ai.providers.google_gla import GoogleGLAProvider as ProviderClass  # type: ignore
+
+            provider = ProviderClass(api_key=override_key)
+            backup_model: Any = GeminiModel(model_name, provider=provider)  # type: ignore
             return await agent.run(prompt, model=backup_model, deps=deps)
         return await agent.run(prompt, deps=deps)
     try:
@@ -237,11 +290,23 @@ class LibrarianNode(BaseNode[SharedState, None, str]):
         history_text = "\n".join([f"{m['role']}: {m['content']}" for m in ctx.state.messages])
 
         try:
+            # Phase 5.1.4: Hunter Mode - Librarian can now crawl external sites if internal search is insufficient
+            instruction = (
+                "Extract facts from history by searching available knowledge.\n"
+                "If the internal knowledge base does not contain the required information, "
+                "or if the user provides a specific URL, use the web_crawl_tool to get the latest data."
+            )
             res = await _run_agent_with_retry(
-                agent, f"Extract facts from history by searching available knowledge.\n{history_text}", ctx.state, model_name, deps=deps
+                agent, f"{instruction}\n{history_text}", ctx.state, model_name, deps=deps
             )
             _accumulate_usage(ctx.state, res, model_name)
-            ctx.state.messages.append({"role": "librarian", "content": str(res.output)})
+
+            # Phase 5.1.4: Citation Transparency - Pass collected citations to state
+            ctx.state.messages.append({
+                "role": "librarian",
+                "content": str(res.output),
+                "citations": deps.collected_citations
+            })
         except Exception as e:
             logger.error(f"Librarian error: {e}")
             ctx.state.messages.append({"role": "librarian", "content": f"Error: {e}"})
@@ -265,9 +330,39 @@ class DevBotNode(BaseNode[SharedState, None, str]):
 
 class DavidNode(BaseNode[SharedState, None, str]):
     async def run(self, ctx: GraphRunContext[SharedState]) -> SupervisorNode:
-        return await _run_generic_worker(
-            ctx, "David", "WORKFLOW_DATA_DAVID", "You are David, the data extractor.", "Task from Supervisor:"
+        logger.info("🛠️ [David] Thinking about code changes...")
+        model_name = os.getenv("WORKER_AGENT_MODEL")
+        if not model_name:
+            raise ValueError("❌ [SSOT Violation] WORKER_AGENT_MODEL missing.")
+
+        from src.server.services.prompt_service import prompt_service
+        system_prompt = prompt_service.get_prompt(
+            "WORKFLOW_DATA_DAVID",
+            "You are David, the Senior Developer. You can read code and propose fixes using tools."
         )
+
+        agent = Agent(
+            model=model_name,
+            system_prompt=system_prompt,
+            tools=[propose_code_fix, read_code_file]
+        )
+
+        history_text = "\n".join([f"{m['role']}: {m['content']}" for m in ctx.state.messages])
+
+        try:
+            res = await _run_agent_with_retry(
+                agent,
+                f"Review the history and use tools if needed to fix code or extract data.\n{history_text}",
+                ctx.state,
+                model_name
+            )
+            _accumulate_usage(ctx.state, res, model_name)
+            ctx.state.messages.append({"role": "david", "content": str(_get_output(res))})
+        except Exception as e:
+            logger.error(f"David error: {e}")
+            ctx.state.messages.append({"role": "david", "content": f"Error: {e}"})
+
+        return SupervisorNode()
 
 
 # --- 4. The Graph Orchestrator ---

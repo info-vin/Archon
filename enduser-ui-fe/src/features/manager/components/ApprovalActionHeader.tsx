@@ -62,6 +62,7 @@ export const ApprovalActionHeader: React.FC<ApprovalActionHeaderProps> = ({
                 <button 
                   onClick={() => handleAction(selectedProposal.id, 'reject')}
                   disabled={!!processingId}
+                  data-testid="reject-action-button"
                   className="px-4 py-2 bg-white dark:bg-slate-800 border border-red-200 dark:border-red-900/30 text-red-600 text-xs font-black rounded-lg hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors flex items-center gap-2"
                 >
                   {processingId === selectedProposal.id ? (
@@ -74,6 +75,7 @@ export const ApprovalActionHeader: React.FC<ApprovalActionHeaderProps> = ({
                 <button 
                   onClick={() => handleAction(selectedProposal.id, 'approve')}
                   disabled={!!processingId}
+                  data-testid="approve-action-button"
                   className="px-6 py-2 bg-indigo-600 text-white text-xs font-black rounded-lg hover:bg-indigo-700 shadow-lg shadow-indigo-200 dark:shadow-none transition-all flex items-center gap-2"
                 >
                   {processingId === selectedProposal.id ? (

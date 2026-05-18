@@ -2,7 +2,9 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from server.services.agent_service import AgentService
+import src.server.services.agents.dispatcher
+from src.server.services.agent_service import AgentService
+from src.server.services.projects.task_service import task_service as real_task_service
 
 
 @pytest.mark.asyncio
@@ -34,15 +36,14 @@ async def test_agent_service_dynamic_tool_discovery():
 
     # 4. Mock dependencies
     with (
-        patch("server.services.agent_service.get_agent_config", return_value=mock_config),
-        patch(
-            "server.services.projects.task_service.task_service.get_task",
-            return_value=(True, {"task": {"id": "t1", "title": "Test Task"}}),
-        ),
-        patch("server.services.projects.task_service.task_service.update_task", new_callable=AsyncMock),
-        patch("server.services.projects.task_service.task_service.save_agent_output", new_callable=AsyncMock),
-        patch("server.services.agent_service.get_llm_client") as mock_get_llm,
+        patch.object(src.server.services.agents.dispatcher, "get_agent_config", return_value=mock_config),
+        patch.object(real_task_service, "get_task", new_callable=AsyncMock, return_value=(True, {"task": {"id": "t1", "title": "Test Task"}})),
+        patch.object(real_task_service, "update_task", new_callable=AsyncMock, return_value=(True, {})),
+        patch.object(real_task_service, "save_agent_output", new_callable=AsyncMock, return_value=(True, {})),
+        patch.object(src.server.services.agents.dispatcher, "get_llm_client") as mock_get_llm,
+        patch.object(src.server.services.agents.dispatcher, "credential_service") as mock_cred_svc,
     ):
+        mock_cred_svc.get_credential = AsyncMock(return_value="fake_key")
         # Mock LLM response
         mock_client_ctx = AsyncMock()
         mock_get_llm.return_value.__aenter__.return_value = mock_client_ctx

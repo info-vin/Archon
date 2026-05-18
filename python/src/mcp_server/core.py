@@ -98,8 +98,8 @@ async def lifespan(server: FastMCP) -> AsyncIterator[ArchonContext]:
     global _initialization_complete, _shared_context, GLOBAL_TOOL_REGISTRY
 
     # Import dependencies here to avoid circular imports if core is used elsewhere
-    from server.services.mcp_service_client import get_mcp_service_client
-    from server.services.mcp_session_manager import get_session_manager
+    from src.server.services.mcp_service_client import get_mcp_service_client
+    from src.server.services.mcp_session_manager import get_session_manager
 
     # Quick check without lock
     if _initialization_complete and _shared_context:

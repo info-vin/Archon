@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { simulateSSEUpdate } from './fixtures/systemFixtures';
 
 test.use({ storageState: '../.playwright/admin_storage_state.json' });
 
@@ -94,5 +95,13 @@ test.describe('Task Assignment MBT Visual Test', () => {
     });
 
     await page.getByRole('button', { name: 'Create task' }).click();
+    
+    // 9. Reactive Verification (Wait for the newly created task to be processed)
+    // In a real scenario, the TaskModal might close or show a processing state.
+    // Here we simulate the Librarian (ai_agent) completing the task.
+    await simulateSSEUpdate(page, 'mock-task-id', 'done');
+    
+    // Verify modal is closed or success state reached
+    await expect(page.getByRole('button', { name: 'Create task' })).not.toBeVisible();
   });
 });

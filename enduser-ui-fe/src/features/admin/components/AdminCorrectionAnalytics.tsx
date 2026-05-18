@@ -33,6 +33,7 @@ export const AdminCorrectionAnalytics: React.FC = () => {
         
         <div className="flex items-center gap-3">
           <select 
+            data-testid="time-range-select"
             value={timeRange}
             onChange={(e) => send({ type: 'SET_TIME_RANGE', range: e.target.value })}
             className="text-sm bg-white border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500"
@@ -44,6 +45,7 @@ export const AdminCorrectionAnalytics: React.FC = () => {
           </select>
           
           <button 
+            data-testid="refresh-analytics-btn"
             onClick={() => send({ type: 'FETCH' })}
             disabled={isLoading}
             className="p-2 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50"
@@ -57,14 +59,14 @@ export const AdminCorrectionAnalytics: React.FC = () => {
         {isError ? (
           <div className="p-4 bg-red-50 text-red-700 rounded-xl flex items-center gap-3 border border-red-100">
             <AlertTriangleIcon className="w-5 h-5 flex-shrink-0" />
-            <p className="font-medium">{error}</p>
+            <p data-testid="error-msg" className="font-medium">{error}</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
             <div className="bg-indigo-50/50 rounded-xl p-5 border border-indigo-100">
-              <p className="text-xs font-bold text-indigo-600 uppercase tracking-wider mb-1">Avg. Correction Rate</p>
+              <p data-testid="stat-card-title" className="text-xs font-bold text-indigo-600 uppercase tracking-wider mb-1">Avg. Correction Rate</p>
               <div className="flex items-end gap-2">
-                <span className="text-3xl font-black text-gray-900">{avgCorrection}%</span>
+                <span data-testid="stat-card-value" className="text-3xl font-black text-gray-900">{avgCorrection}%</span>
               </div>
             </div>
             <div className="bg-emerald-50/50 rounded-xl p-5 border border-emerald-100">
@@ -98,9 +100,9 @@ export const AdminCorrectionAnalytics: React.FC = () => {
                 </thead>
                 <tbody className="divide-y divide-gray-100">
                   {data.map((item, idx) => (
-                    <tr key={idx} className="hover:bg-gray-50/50 transition-colors">
+                    <tr key={idx} data-testid="correction-row" className="hover:bg-gray-50/50 transition-colors">
                       <td className="px-4 py-3 text-gray-500">{new Date(item.created_at).toLocaleDateString()}</td>
-                      <td className="px-4 py-3 font-mono text-xs text-gray-500">
+                      <td data-testid="post-id-cell" className="px-4 py-3 font-mono text-xs text-gray-500">
                         {item.post_id?.substring(0,8)}...
                       </td>
                       <td className="px-4 py-3 text-right text-gray-600">

@@ -160,6 +160,7 @@ const BlogEditor: React.FC = () => {
                             <div className="flex gap-2">
                                 <button 
                                     onClick={() => setShowImagePicker('cover')}
+                                    data-testid="smart-asset-search-btn"
                                     className="cursor-pointer flex items-center gap-1.5 text-xs font-bold text-indigo-600 hover:text-indigo-700 transition-colors"
                                 >
                                     <ImageIcon className="w-4 h-4" /> Smart Asset Search
@@ -168,7 +169,7 @@ const BlogEditor: React.FC = () => {
                         </div>
                         {post.imageUrl ? (
                             <div className="relative group rounded-2xl overflow-hidden border border-gray-200 bg-gray-50 aspect-video flex items-center justify-center">
-                                <img src={post.imageUrl} alt="Cover" className="w-full h-full object-cover" />
+                                <img src={post.imageUrl} alt="Cover" data-testid="cover-image" className="w-full h-full object-cover" />
                                 <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                                      <button 
                                         onClick={() => setShowImagePicker('cover')}

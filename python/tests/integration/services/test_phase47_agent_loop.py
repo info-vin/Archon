@@ -2,17 +2,22 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from server.services.agent_service import AgentService
-from server.services.shared_constants import AgentUUIDs
+import src.server.services.agents.dispatcher
+from src.server.services.agent_service import AgentService
+from src.server.services.projects.task_service import task_service as real_task_service
+from src.server.services.shared_constants import AgentUUIDs
 
 
 @pytest.fixture
 def mock_mcp_client():
-    client = AsyncMock()
-    client.call_tool.return_value = {"status": "success", "results": "Mocked Tool Result"}
-    client.search_job_market.return_value = "Found 5 React jobs"
-    client.perform_rag_query.return_value = "Knowledge summary about Archon"
-    return client
+    mock_mcp_client = AsyncMock()
+    mock_mcp_client.list_tools.return_value = [
+        {"function": {"name": "search_job_market", "description": "Search 104", "parameters": {}}},
+        {"function": {"name": "perform_rag_query", "description": "Search DB", "parameters": {}}},
+    ]
+    mock_mcp_client.call_tool = AsyncMock(return_value="I found 5 React jobs")
+    mock_mcp_client.perform_rag_query.return_value = "Knowledge summary about Archon"
+    return mock_mcp_client
 
 
 @pytest.mark.asyncio
@@ -28,11 +33,6 @@ async def test_run_general_agent_task_market_bot(mock_mcp_client):
         "description": "Search for senior react roles in Taipei",
         "status": "todo",
     }
-
-    mock_task_service = AsyncMock()
-    mock_task_service.update_task.return_value = (True, {})
-    mock_task_service.save_agent_output.return_value = (True, {})
-    mock_task_service.get_task.return_value = (True, {"task": mock_task})
 
     mock_llm_client = AsyncMock()
 
@@ -57,19 +57,19 @@ async def test_run_general_agent_task_market_bot(mock_mcp_client):
     mock_ctx.__aenter__.return_value = mock_llm_client
 
     with (
-        patch("server.services.agent_service.get_llm_client", return_value=mock_ctx),
-        patch(
-            "server.services.agent_service.credential_service.get_active_provider",
-            return_value={"chat_model": "gpt-4o"},
-        ),
-        patch("server.services.projects.task_service.task_service", mock_task_service),
+        patch.object(src.server.services.agents.dispatcher, "get_llm_client", return_value=mock_ctx),
+        patch.object(real_task_service, "get_task", new_callable=AsyncMock, return_value=(True, {"task": mock_task})),
+        patch.object(real_task_service, "update_task", new_callable=AsyncMock, return_value=(True, {})),
+        patch.object(real_task_service, "save_agent_output", new_callable=AsyncMock, return_value=(True, {})),
+        patch.object(src.server.services.agents.dispatcher, "credential_service") as mock_cred_svc,
     ):
-        await service.run_agent_task(task_id="t-1", agent_id="market-bot")
+        mock_cred_svc.get_credential = AsyncMock(return_value="fake_key")
+        await service.run_agent_task(task_id="t-1", agent_id="market-bot", immediate=True)
 
-        assert mock_task_service.update_task.call_count >= 2
+        assert real_task_service.update_task.call_count >= 2
         mock_mcp_client.search_job_market.assert_called_once()
-        mock_task_service.save_agent_output.assert_called_once()
-        last_call_args = mock_task_service.save_agent_output.call_args_list[-1]
+        real_task_service.save_agent_output.assert_called_once()
+        last_call_args = real_task_service.save_agent_output.call_args_list[-1]
         assert "I found 5 React jobs" in last_call_args.args[1]["content"]
 
 
@@ -79,13 +79,6 @@ async def test_run_general_agent_task_librarian(mock_mcp_client):
     [Phase 4.7 Extension] Test Librarian agent using RAG tool.
     """
     service = AgentService(mcp_client=mock_mcp_client)
-    mock_task_service = AsyncMock()
-    mock_task_service.update_task.return_value = (True, {})
-    mock_task_service.save_agent_output.return_value = (True, {})
-    mock_task_service.get_task.return_value = (
-        True,
-        {"task": {"id": "t-2", "title": "Check Specs", "description": "some desc"}},
-    )
 
     mock_llm_client = AsyncMock()
     r1_msg = MagicMock()
@@ -106,14 +99,14 @@ async def test_run_general_agent_task_librarian(mock_mcp_client):
     mock_ctx.__aenter__.return_value = mock_llm_client
 
     with (
-        patch("server.services.agent_service.get_llm_client", return_value=mock_ctx),
-        patch(
-            "server.services.agent_service.credential_service.get_active_provider",
-            return_value={"chat_model": "gpt-4o"},
-        ),
-        patch("server.services.projects.task_service.task_service", mock_task_service),
+        patch.object(src.server.services.agents.dispatcher, "get_llm_client", return_value=mock_ctx),
+        patch.object(real_task_service, "get_task", new_callable=AsyncMock, return_value=(True, {"task": {"id": "t-2", "title": "Check Specs", "description": "some desc"}})),
+        patch.object(real_task_service, "update_task", new_callable=AsyncMock, return_value=(True, {})),
+        patch.object(real_task_service, "save_agent_output", new_callable=AsyncMock, return_value=(True, {})),
+        patch.object(src.server.services.agents.dispatcher, "credential_service") as mock_cred_svc,
     ):
-        await service.run_agent_task(task_id="t-2", agent_id="librarian")
+        mock_cred_svc.get_credential = AsyncMock(return_value="fake_key")
+        await service.run_agent_task(task_id="t-2", agent_id="librarian", immediate=True)
         mock_mcp_client.perform_rag_query.assert_called_once()
 
 
@@ -124,8 +117,6 @@ async def test_run_agent_task_direct_crawler_pipeline(mock_mcp_client):
     triggers the direct orchestrate_crawl pipeline bypassing the LLM.
     """
     service = AgentService(mcp_client=mock_mcp_client)
-    mock_task_service = AsyncMock()
-    mock_task_service.update_task.return_value = (True, {})
 
     mock_task = {
         "id": "t-crawl",
@@ -134,26 +125,23 @@ async def test_run_agent_task_direct_crawler_pipeline(mock_mcp_client):
         "crawler_target_id": "target-uuid-123",
         "status": "todo",
     }
-    mock_task_service.get_task.return_value = (True, {"task": mock_task})
 
     mock_supabase = MagicMock()
     mock_supabase.table().select().eq().execute.return_value.data = [
         {"id": "target-uuid-123", "target_url": "https://example.com", "max_depth": 3}
     ]
 
-    mock_crawler = AsyncMock()
-    mock_crawler.orchestrate_crawl.return_value = {"status": "completed"}
+    mock_crawler = MagicMock()
+    mock_crawler.orchestrate_crawl = AsyncMock(return_value={"status": "completed"})
 
     with (
-        patch("server.utils.get_supabase_client", return_value=mock_supabase),
-        patch(
-            "server.services.crawling.crawling_service.CrawlingService",
-            return_value=mock_crawler,
-        ),
-        patch("server.services.projects.task_service.task_service", mock_task_service),
+        patch.object(src.server.services.agents.dispatcher, "get_supabase_client", return_value=mock_supabase),
+        patch.object(src.server.services.agents.dispatcher, "CrawlingService", return_value=mock_crawler),
+        patch.object(real_task_service, "get_task", new_callable=AsyncMock, return_value=(True, {"task": mock_task})),
+        patch.object(real_task_service, "update_task", new_callable=AsyncMock, return_value=(True, {})),
         patch.object(service, "_award_agent_xp", new_callable=AsyncMock) as mock_xp,
     ):
-        await service.run_agent_task(task_id="t-crawl", agent_id=AgentUUIDs.LIBRARIAN)
+        await service.run_agent_task(task_id="t-crawl", agent_id=AgentUUIDs.LIBRARIAN, immediate=True)
 
         # Verify the crawler was orchestrated with correct parameters
         mock_crawler.orchestrate_crawl.assert_called_once_with(
@@ -161,7 +149,7 @@ async def test_run_agent_task_direct_crawler_pipeline(mock_mcp_client):
         )
 
         # Verify the task was marked as done directly
-        mock_task_service.update_task.assert_any_call("t-crawl", {"status": "done"})
+        real_task_service.update_task.assert_any_call("t-crawl", {"status": "done"})
 
         # Verify XP was awarded
         mock_xp.assert_called_once()

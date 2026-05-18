@@ -9,7 +9,9 @@ test.describe('Exhaustive Admin Panel Verification', () => {
         // Prevent random network timeouts from causing flakiness
         // We are checking rendering, not backend logic here, but backend logic should be fast.
         page.on('console', msg => {
-            if (msg.type() === 'error') console.log(`BROWSER ERROR: ${msg.text()}`);
+            if (msg.type() === 'error' || msg.type() === 'warning') {
+                console.log(`[BROWSER][${msg.type().toUpperCase()}] ${msg.text()}`);
+            }
         });
 
         // Fast-path intercepts to prevent slow external API checks or 404s from causing timeouts
@@ -24,6 +26,83 @@ test.describe('Exhaustive Admin Panel Verification', () => {
         });
         await page.route('**/api/admin/logs?type=AI_CORRECTION*', async route => {
             await route.fulfill({ status: 200, json: [] });
+        });
+
+        // Intercept System Health dashboard core endpoints to prevent 'System Probe Failed' under cold-start conditions
+        await page.route('**/api/stats/system-overview*', async route => {
+            await route.fulfill({
+                status: 200,
+                json: {
+                    status: 'healthy',
+                    rag: { status: 'healthy', details: { errors: [] } },
+                    errors_24h: 0,
+                    active_agents: [
+                        { id: 'librarian', name: 'Librarian', role: 'Librarian Agent', status: 'active' }
+                    ],
+                    cost_24h: 0.05
+                }
+            });
+        });
+
+        await page.route('**/api/stats/ai-usage*', async route => {
+            await route.fulfill({
+                status: 200,
+                json: {
+                    daily_costs: [{ date: '2026-05-17', cost: 0.05, request_count: 5, models: ['gemini-3.1-flash'] }],
+                    is_real_data: true,
+                    total_xp: 100,
+                    total_cost: 0.5,
+                    roi_ratio: 4.5
+                }
+            });
+        });
+
+        await page.route('**/api/system/logs/connectivity*', async route => {
+            await route.fulfill({
+                status: 200,
+                json: [
+                    {
+                        id: 'log-1',
+                        source: 'Gemini API',
+                        created_at: new Date().toISOString(),
+                        message: 'Transient network timeout resolved after 1 retry.',
+                        details: { model: 'gemini-3-flash' }
+                    }
+                ]
+            });
+        });
+
+        await page.route('**/api/stats/agent-xp*', async route => {
+            await route.fulfill({
+                status: 200,
+                json: [
+                    {
+                        name: 'Librarian',
+                        total_xp: 250,
+                        total_cost: 0.12,
+                        roi_ratio: 8.5,
+                        level: 'Elite'
+                    }
+                ]
+            });
+        });
+
+        await page.route('**/api/stats/token-usage/recent*', async route => {
+            await route.fulfill({
+                status: 200,
+                json: [
+                    {
+                        id: "tx-1",
+                        timestamp: new Date().toISOString(),
+                        user_name: "Librarian Agent",
+                        role: "ai_agent",
+                        model: "gemini-3-flash",
+                        tokens: 200,
+                        cost: 0.00015,
+                        context: "RAG Enrichment"
+                    }
+                ]
+            });
         });
     });
 
@@ -63,4 +142,73 @@ test.describe('Exhaustive Admin Panel Verification', () => {
             console.log(`✅ Tab ${tab.name} passed.`);
         }
     });
+
+    test('should gracefully handle 503 errors and show System Probe Failed when core APIs are unreachable', async ({ page }) => {
+        // Override the default intercepts with 503 service unavailable failures
+        await page.route('**/api/stats/system-overview*', async route => {
+            await route.fulfill({ 
+                status: 503, 
+                contentType: 'application/json', 
+                body: JSON.stringify({ error: 'Service Unavailable' }) 
+            });
+        });
+        await page.route('**/api/stats/ai-usage*', async route => {
+            await route.fulfill({ 
+                status: 503, 
+                contentType: 'application/json', 
+                body: JSON.stringify({ error: 'Service Unavailable' }) 
+            });
+        });
+
+        await page.goto('/#/admin');
+        await expect(page.getByRole('heading', { name: 'Admin Control Center' })).toBeVisible({ timeout: 10000 });
+
+        // Navigate to the System Health tab which relies on these core APIs
+        await page.getByRole('button', { name: 'System Health', exact: true }).click();
+
+        // Physically verify the error card appears and no React TypeError crash occurs
+        await expect(page.getByText('System Probe Failed').first()).toBeVisible({ timeout: 15000 });
+        await expect(page.getByText('Core health services are currently unreachable.').first()).toBeVisible({ timeout: 15000 });
+    });
+
+    test('should render empty states correctly without crashing when stats return empty lists', async ({ page }) => {
+        // Override intercepts with clean, empty data arrays
+        await page.route('**/api/stats/system-overview*', async route => {
+            await route.fulfill({
+                status: 200,
+                json: {
+                    status: 'healthy',
+                    rag: { status: 'healthy', details: { errors: [] } },
+                    errors_24h: 0,
+                    active_agents: [],
+                    cost_24h: 0
+                }
+            });
+        });
+        await page.route('**/api/stats/ai-usage*', async route => {
+            await route.fulfill({
+                status: 200,
+                json: {
+                    daily_costs: [],
+                    is_real_data: true,
+                    total_xp: 0,
+                    total_cost: 0,
+                    roi_ratio: 0
+                }
+            });
+        });
+        await page.route('**/api/stats/token-usage/recent*', async route => {
+            await route.fulfill({ status: 200, json: [] });
+        });
+
+        await page.goto('/#/admin');
+        await expect(page.getByRole('heading', { name: 'Admin Control Center' })).toBeVisible({ timeout: 10000 });
+
+        await page.getByRole('button', { name: 'System Health', exact: true }).click();
+
+        // Verify custom placeholder messages appear properly to prevent Recharts/Table crashes
+        await expect(page.getByText('No cost data recorded yet.').first()).toBeVisible({ timeout: 15000 });
+        await expect(page.getByText('No recent transactions found in token_usage table.').first()).toBeVisible({ timeout: 15000 });
+    });
 });
+

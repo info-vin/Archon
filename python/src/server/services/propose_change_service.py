@@ -23,21 +23,23 @@ class ActionExecutor:
             raise RuntimeError("Command failed")
         return stdout.decode().strip()
 
-    async def execute_file_change(self, payload: dict[str, Any]) -> str:
+    async def execute_file_change(self, payload: dict[str, Any], task_id: str = "ai-fix") -> str:
         file_path_str = payload.get("file_path")
         new_content = payload.get("new_content")
 
         if not file_path_str or new_content is None:
             raise ValueError("Invalid payload")
 
-        file_path = Path(file_path_str)
-        if not file_path.is_relative_to(Path.cwd()):
-            raise PermissionError("Security: Path outside project")
+        from ..utils.code_modifier import CodeModifier
+        modifier = CodeModifier()
 
-        file_path.parent.mkdir(parents=True, exist_ok=True)
-        async with aiofiles.open(file_path, "w", encoding="utf-8") as f:
-            await f.write(new_content)
-        return f"File '{file_path}' written"
+        # 1. Create a sandbox branch for safety
+        branch_name = modifier.create_sandbox_branch(task_id)
+
+        # 2. Apply the modification
+        modifier.apply_modification(file_path_str, new_content)
+
+        return f"File '{file_path_str}' written to branch '{branch_name}'"
 
 
 class ProposeChangeService:
@@ -45,6 +47,16 @@ class ProposeChangeService:
         self.db_client = db_client or get_supabase_client()
         self.executor = ActionExecutor()
         self.logger = logging.getLogger(__name__)
+
+    def _resolve_user_id(self, user_id: Any) -> str:
+        """
+        Dynamically handles both UUIDs and simplified IDs ('1', '2', '3').
+        Ensures the ID is returned in a format suitable for the database column.
+        """
+        uid_str = str(user_id)
+        # If it's a simple numeric string, we treat it as a valid identity
+        # but keep it as a string to match the updated TEXT column type.
+        return uid_str
 
     async def list_proposals(self, status: str | None = "pending", user_id: str | None = None) -> list[dict[str, Any]]:
         """Lists proposals, optionally filtered by status and user department scope."""
@@ -101,13 +113,50 @@ class ProposeChangeService:
         )
         return cast(dict[str, Any], res.data[0])
 
-    async def approve_proposal(self, proposal_id: UUID, user_id: Any) -> dict[str, Any]:
+    async def create_proposal(
+        self, change_type: str, payload: dict[str, Any], user_id: str | None = None
+    ) -> dict[str, Any]:
+        """Creates a generic proposal (e.g. git commands, feature management) in proposed_changes."""
+        # Embed physical identity (Phase 4.6.23)
+        dept = "General"
+        if user_id:
+            u_res = self.db_client.table("profiles").select("department").eq("id", user_id).execute()
+            dept = u_res.data[0].get("department", "General") if u_res.data else "General"
+
+        # Inject created_by and created_by_dept into request_payload for audit
+        request_payload = {
+            **payload,
+            "created_by": user_id,
+            "created_by_dept": dept,
+        }
+
         res = (
             self.db_client.table("proposed_changes")
-            .update({"status": "approved", "approved_by": str(user_id), "approved_at": "now()"})
+            .insert({"type": change_type, "status": "pending", "request_payload": request_payload})
+            .execute()
+        )
+        return cast(dict[str, Any], res.data[0])
+
+    async def approve_proposal(self, proposal_id: UUID, user_id: Any) -> dict[str, Any]:
+        resolved_id = self._resolve_user_id(user_id)
+        res = (
+            self.db_client.table("proposed_changes")
+            .update({"status": "approved", "approved_by": resolved_id, "approved_at": "now()"})
             .eq("id", str(proposal_id))
             .execute()
         )
+
+        # Physical Execution Trigger (Phase 5.1.3)
+        if res.data:
+            proposal = res.data[0]
+            try:
+                await self.executor.execute_file_change(
+                    proposal.get("request_payload", {}),
+                    task_id=str(proposal_id)[:8]
+                )
+            except Exception as e:
+                self.logger.error(f"Failed to execute approved change: {e}")
+                raise
 
         # Physical Audit Log (Phase 4.6.41)
         try:
@@ -127,9 +176,10 @@ class ProposeChangeService:
         return cast(dict[str, Any], res.data[0])
 
     async def reject_proposal(self, proposal_id: UUID, user_id: Any) -> dict[str, Any]:
+        resolved_id = self._resolve_user_id(user_id)
         res = (
             self.db_client.table("proposed_changes")
-            .update({"status": "rejected", "approved_by": str(user_id), "approved_at": "now()"})
+            .update({"status": "rejected", "approved_by": resolved_id, "approved_at": "now()"})
             .eq("id", str(proposal_id))
             .execute()
         )

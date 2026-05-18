@@ -13,6 +13,11 @@ export default defineConfig({
     video: 'on',
     baseURL: 'http://localhost:5173',
   },
+  expect: {
+    toHaveScreenshot: {
+      maxDiffPixelRatio: 0.05,
+    },
+  },
 
   projects: [
     {

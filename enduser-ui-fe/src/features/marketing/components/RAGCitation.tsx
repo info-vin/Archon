@@ -25,6 +25,7 @@ export const RAGCitation: React.FC<RAGCitationProps> = ({ citationId, citations 
   return (
     <span className="relative inline-block mx-0.5">
       <button
+        data-testid={`citation-tag-${citationId}`}
         onClick={() => setIsOpen(!isOpen)}
         onBlur={() => setTimeout(() => setIsOpen(false), 200)}
         className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-indigo-100 text-indigo-700 text-[10px] font-bold border border-indigo-200 hover:bg-indigo-200 hover:scale-110 transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-indigo-500 z-10"
@@ -37,7 +38,7 @@ export const RAGCitation: React.FC<RAGCitationProps> = ({ citationId, citations 
         <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 p-3 z-50 text-left animate-in fade-in slide-in-from-bottom-2">
           <div className="flex items-start gap-2 mb-2">
             <InfoIcon className="w-4 h-4 text-indigo-500 flex-shrink-0 mt-0.5" />
-            <h4 className="text-sm font-bold text-gray-900 dark:text-gray-100 leading-tight">
+            <h4 data-testid="citation-popover-title" className="text-sm font-bold text-gray-900 dark:text-gray-100 leading-tight">
               {citation.title}
             </h4>
           </div>
@@ -49,6 +50,7 @@ export const RAGCitation: React.FC<RAGCitationProps> = ({ citationId, citations 
           )}
 
           <a 
+            data-testid="citation-popover-link"
             href={citation.url} 
             target="_blank" 
             rel="noopener noreferrer"

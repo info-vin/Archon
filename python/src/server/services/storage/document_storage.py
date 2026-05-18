@@ -14,7 +14,6 @@ from urllib.parse import urlparse
 
 from src.server.config.logfire_config import safe_logfire_error, safe_logfire_info, safe_span, search_logger
 from src.server.repositories.base_repository import BaseRepository
-from src.server.services.crawling.code_extraction_service import CodeExtractionService
 from src.server.services.credential_service import credential_service
 from src.server.services.embeddings.contextual_embedding_service import generate_contextual_embeddings_batch
 from src.server.services.embeddings.embedding_service import create_embeddings_batch
@@ -32,6 +31,7 @@ class DocumentStorageFacade(BaseRepository):
         super().__init__(supabase_client)
         self.repo = DocumentRepository(self.supabase_client)
         self.chunking_utils = ChunkingUtils(self.supabase_client)
+        from src.server.services.crawling.code_extraction_service import CodeExtractionService
         self.code_extraction_service = CodeExtractionService(self.supabase_client)
 
     async def store_documents(

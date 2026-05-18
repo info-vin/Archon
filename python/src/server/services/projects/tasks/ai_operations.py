@@ -76,7 +76,7 @@ async def refine_task_description_logic(supabase_client, title: str, description
             raise ValueError("No AI API Key available for PO Workflows")
 
         client = genai.Client(api_key=charlie_api_key)
-        from server.services.system.rate_limiter import GlobalThrottler
+        from src.server.services.system.rate_limiter import GlobalThrottler
         await GlobalThrottler.wait_for_capacity(tier="pro")
 
         response = client.models.generate_content(
@@ -221,7 +221,7 @@ async def generate_task_from_alert_logic(
         from google.genai import types
 
         client = genai.Client(api_key=charlie_api_key)
-        from server.services.system.rate_limiter import GlobalThrottler
+        from src.server.services.system.rate_limiter import GlobalThrottler
         await GlobalThrottler.wait_for_capacity(tier="pro")
 
         @retry_with_backoff(max_retries=2)

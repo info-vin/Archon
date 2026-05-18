@@ -38,7 +38,7 @@ const AdminPage: React.FC = () => {
           <TabButton title="System Health" isActive={activeTab === 'health'} onClick={() => setActiveTab('health')} />
           {canManageUsers && <TabButton title="User Management" isActive={activeTab === 'users'} onClick={() => setActiveTab('users')} />}
           <TabButton title="Cost & Usage" isActive={activeTab === 'costs'} onClick={() => setActiveTab('costs')} />
-          <TabButton title="Cognitive Analytics" isActive={activeTab === 'analytics'} onClick={() => setActiveTab('analytics')} />
+          <TabButton title="Cognitive Analytics" isActive={activeTab === 'analytics'} onClick={() => setActiveTab('analytics')} data-testid="tab-cognitive-analytics" />
           <TabButton title="System Settings" isActive={activeTab === 'settings'} onClick={() => setActiveTab('settings')} />
           <TabButton title="Data Extraction" isActive={activeTab === 'extraction'} onClick={() => setActiveTab('extraction')} />
           {!isOnlyManager && <TabButton title="Blog Management" isActive={activeTab === 'blog'} onClick={() => setActiveTab('blog')} />}
@@ -70,9 +70,10 @@ const AdminPage: React.FC = () => {
   );
 };
 
-const TabButton: React.FC<{ title: string; isActive: boolean; onClick: () => void }> = ({ title, isActive, onClick }) => (
+const TabButton: React.FC<{ title: string; isActive: boolean; onClick: () => void; 'data-testid'?: string }> = ({ title, isActive, onClick, 'data-testid': testId }) => (
   <button
     onClick={onClick}
+    data-testid={testId}
     className={`${
       isActive
         ? 'border-indigo-500 text-indigo-500'

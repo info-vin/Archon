@@ -7,8 +7,8 @@ import logging
 
 from supabase import Client
 
-from server.config.logfire_config import search_logger
-from server.services.source_management.logic.ai_metadata import generate_source_title_and_metadata
+from src.server.config.logfire_config import search_logger
+from src.server.services.source_management.logic.ai_metadata import generate_source_title_and_metadata
 
 logger = logging.getLogger(__name__)
 

@@ -2,8 +2,10 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
+import src.server.services.agents.dispatcher
 from src.server.services.agent_registry import get_agent_config
 from src.server.services.agent_service import AgentService
+from src.server.services.projects.task_service import task_service as real_task_service
 
 
 @pytest.mark.asyncio
@@ -23,10 +25,9 @@ class TestAgentAwakening:
         assert lib_config["name"] == "Archon Librarian"
         assert "rag_search_knowledge_base" in lib_config["tools"]
 
-    @patch("src.server.services.agent_service.get_llm_client")
-    # Patch the singleton instance directly where it lives
-    @patch("src.server.services.projects.task_service.task_service")
-    async def test_marketbot_awakening_loop(self, mock_task_service, mock_get_client):
+    @patch.object(src.server.services.agents.dispatcher, "get_llm_client")
+    @patch.object(src.server.services.agents.dispatcher, "credential_service")
+    async def test_marketbot_awakening_loop(self, mock_cred_service, mock_get_client):
         """
         Verify MarketBot wakes up, loads its prompt, and executes a task loop.
         """
@@ -44,12 +45,6 @@ class TestAgentAwakening:
         ]
         service = AgentService(mcp_client=mock_mcp)
 
-        # Mock Task Service (Async methods must return awaitables)
-        mock_task_service.get_task = AsyncMock(
-            return_value=(True, {"task": {"title": "Write a blog", "description": "About AI"}})
-        )
-        mock_task_service.update_task = AsyncMock(return_value=(True, {}))
-
         # Mock LLM Client
         mock_client_instance = AsyncMock()
         mock_get_client.return_value.__aenter__.return_value = mock_client_instance
@@ -60,12 +55,15 @@ class TestAgentAwakening:
         mock_response.choices[0].message.tool_calls = None
         mock_client_instance.chat.completions.create.return_value = mock_response
 
-        # Execute Run (MarketBot)
-        await service.run_agent_task(task_id="task_123", agent_id="market-bot")
+        with patch.object(real_task_service, 'get_task', new_callable=AsyncMock, return_value=(True, {"task": {"title": "Write a blog", "description": "About AI"}})) as mock_get_task, \
+             patch.object(real_task_service, 'update_task', new_callable=AsyncMock, return_value=(True, {})):
+            mock_cred_service.get_credential = AsyncMock(return_value="fake_key")
+            # Execute Run (MarketBot) - Phase 5.1.0: Use immediate=True to run synchronously in test
+            await service.run_agent_task(task_id="task_123", agent_id="market-bot", immediate=True)
 
         # Verify:
         # 1. Task was fetched
-        mock_task_service.get_task.assert_called_with("task_123")
+        mock_get_task.assert_called_with("task_123")
 
         # 2. LLM was called with MarketBot's System Prompt
         call_args = mock_client_instance.chat.completions.create.call_args

@@ -6,9 +6,10 @@ archiving, and maintenance tasks like pruning.
 """
 
 from datetime import datetime, timedelta
-from typing import Any, cast
+from typing import Any, Literal, cast
 
 from src.server.config.logfire_config import get_logger
+from src.server.schemas.agent_outputs import AgentOutputSchema
 
 logger = get_logger(__name__)
 
@@ -159,7 +160,25 @@ async def save_agent_output_logic(
             logger.warning(error_msg)
             return False, {"error": error_msg}
 
-        agent_output_data = {"agent_id": agent_id, "timestamp": datetime.now().isoformat(), "output": output}
+        # Phase 5.1.0: Pydantic Boundary Validation
+        try:
+            # Determine output type based on content structure
+            output_type = "text"
+            if isinstance(output, dict):
+                output_type = "group_chat" if "summary" in output and "decisions" in output else "structured"
+
+            validated_output = AgentOutputSchema(
+                agent_id=agent_id,
+                timestamp=datetime.now(),
+                output_type=cast(Literal["text", "structured", "group_chat"], output_type),
+                output=output
+            )
+            # Convert to dict for JSONB storage
+            agent_output_data = validated_output.model_dump(mode="json")
+        except Exception as ve:
+            logger.error(f"Validation failed for agent output: {ve}")
+            # Fallback to legacy format but log error
+            agent_output_data = {"agent_id": agent_id, "timestamp": datetime.now().isoformat(), "output": output}
 
         current_attachments = current_task.get("attachments") or []
         if isinstance(current_attachments, list):

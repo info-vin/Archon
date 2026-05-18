@@ -5,9 +5,8 @@ import asyncio
 from collections.abc import Callable
 from typing import Any
 
-from server.services.shared_constants import ProcessingMode
-
 from ...config.logfire_config import get_logger
+from ..shared_constants import ProcessingMode
 from .metrics import SystemMetrics, get_system_metrics
 
 logfire_logger = get_logger("threading")

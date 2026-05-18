@@ -144,9 +144,13 @@
     *   **核心**: 絕對禁止在未讀取 `docker-compose.yml` 的情況下，向使用者提議或設定依賴本地端伺服器的服務（如 `http://localhost:8000`）。
     *   **教訓**: 在 Phase 4.6.55 中，因未檢查 Compose 檔案便提出 PostHog 本地部署方案，導致使用者浪費時間並產生不信任。必須落實「實體驗證基礎設施」的前置風險評估鐵律。
 
-*   **20. 任務導向的知識治理 (Task-Driven Knowledge Governance)**
-    *   **核心**: 拒絕將舊版 (3737) 複雜的爬蟲進度條與資料表 CRUD 盲目移植到新版 (5173)。新版架構是「Agentic Workflow」。
-    *   **教訓**: 在 Phase 4.6.58 發現，爬蟲不再是獨立的系統操作，而是一張「工單 (Task)」。Admin 只需設定 `crawler_target_id`，並指派給 `Librarian` (AI Agent)。Agent 收到空描述任務後，會自動在背景啟動實體爬蟲 `CrawlingService`，完成後自動標記任務為 Done。這種「透過 Task 對接」的方式是跨服務治理的新典範。
+*   **21. E2E 網路隔離與 TypeScript/Mock 資料對齊 (E2E Network Isolation & TypeScript/Mock Alignment)**
+    *   **核心**: E2E 測試穩定性的基石在於「100% 網絡/環境隔離」以及「Mock 數據與 TypeScript 接口的物理對齊」。
+    *   **教訓**: 在 `AdminPanelExhaustive` 測試中，雖然 mock 了舊版 AI 健康端點，但因遺漏了系統健康看板（`SystemHealthDashboard.tsx`）掛載時用 `Promise.all` 請求的 5 大核心指標 APIs（系統概覽、AI 用量、連線例外日誌、Agent XP、Token 明細），在測試冷啟動時，真實 API 返空/超時引發前端「System Probe Failed」紅色卡片。補齊 Mock 後，又因 recent token usage 的 Mock 數據缺少 `role`、`user_name` 和 `tokens` 屬性，引發 React 的 `<TokenUsageTable>` 存取 `toUpperCase()` 時發生 `TypeError` 渲染崩潰。
+    *   **SOP**:
+        1. **完整隔離**：Dashboard 的所有非同步 API 必須 100% Mock 覆蓋，絕不可依賴真實後端查詢。
+        2. **物理對齊**：Mock 數據必須精確適配前端 TypeScript 介面規格（如 `TokenUsageDetail`），缺少任何非 nullable 欄位都可能在 React 渲染時引發不可預知的 TypeError，並在 Headless 測試中被無聲掩蓋。
+        3. **Warning/Error 日誌穿透**：調優 Playwright 監聽器以捕獲瀏覽器的 `warning` 與 `error`，使 React 組件崩潰與警告能夠在終端清晰浮現，杜絕盲人摸象式偵錯。
 
 ---
 
@@ -175,6 +179,17 @@
 *   **3. 系統品質與落體驗證**:
     - **稽核**: 透過 `phase-audit` 技能深度驗證 Phase 4.6.51~53 皆已物理落地（包含 `client.aio` 非同步化、Librarian 拆分、TTS `AudioPlayer` 元件與提示詞等）。
     - **公證**: 執行 `make lint-be`, `make test-be`, `make persona-audit` 與 `make twin-scout`，所有品質門禁皆 100% 綠燈通過。
+
+### 2026-05-17: AdminPanelExhaustive E2E 物理加固與 React TypeError 阻斷
+*   **1. 系統健康標籤頁 (System Health Tab) 網絡 100% 隔離**:
+    - **行動**: 在 `AdminPanelExhaustive.spec.ts` 中補齊對系統健康看板 5 大核心 API 端點（系統概覽、AI 用量、連線例外日誌、Agent XP、Token 明細）的 Playwright 路由攔截。
+    - **結果**: 徹底切斷 E2E 測試與真實 backend/資料庫冷啟動延遲的物理耦合，消除 「System Probe Failed」 錯誤畫面。
+*   **2. Mock 與 TypeScript 數據對齊 (React Crash 阻斷)**:
+    - **行動**: 修正 recent token usage mock 數據結構，補齊 `role`, `user_name`, `tokens`, `context` 等關鍵欄位，使其與 `TokenUsageDetail` 介面 100% 物理對齊。
+    - **結果**: 根治了 `<TokenUsageTable>` 存取 `row.role.toUpperCase()` 時的 React TypeError 渲染崩潰。
+*   **3. 嚴苛測試綠燈公證**:
+    - **行動**: 修改控制台日誌過濾以只顯示 Warning/Error，並在 `CI=1` 且停用自動重試 (`--retries=0`) 的模式下執行驗收。
+    - **結果**: 9 大標籤頁一次性 100% 物理綠燈通過，執行時間縮短至 43.2 秒，徹底消滅 flaky 抖動。
 
 > 目前近期日誌已全數歸檔至歷史檔案。當有新的開發活動時，請記錄於此。
 
@@ -396,5 +411,4 @@
 >
 > 1.  **前端圖表規範 (Headless Chart Hardening)**: 所有基於 Recharts 的圖表元件（特別是 AreaChart, LineChart），必須預設關閉動畫 (`isAnimationActive={false}`)。這能防止 Playwright 在 Headless 環境下，因動畫計算座標產生 `NaN` 而導致的 `TickItem Error` 崩潰。
 > 2.  **後端空資料防禦 (Backend Empty State Parity)**: 絕對禁止使用 Supabase Python 客戶端的 `.single()` 或 `.maybe_single()` 來獲取單筆資料，因為它在空資料時會引發 HTTP 500 (`PGRST116`) 或返回 `None` 導致 `AttributeError`。必須使用安全的陣列查詢模式：`res = query.execute()` 並搭配 `if res.data and len(res.data) > 0:`。
-> 3.  **測試狀態防護 (Stateful Mocks & Negative Paths)**: E2E 測試絕不可依賴「已有資料的開發者資料庫」。所有 MBT 測試必須包含空資料 (Empty State) 的負面斷言。在 Mock API 時，必須使用外部變數 (如 `let isApproved = false`) 來實現具狀態模擬 (Stateful Mock)，以真實還原 React 重新渲染時的資料狀態。
-let isApproved = false`) 來實現具狀態模擬 (Stateful Mock)，以真實還原 React 重新渲染時的資料狀態。
+> 3.  **測試狀態防護 (Stateful Mocks & Negative Paths)**: E2E 測試絕不可依賴「已有資料的開發者資料庫」。所有 MBT 測試必須包含空資料 (Empty State) 的負面斷言。在 Mock API 時，必須使用外部變數 (如 `let isApproved = false`) 來實現具狀態模擬 (Stateful Mock), 以真實還原 React 重新渲染時的資料狀態。

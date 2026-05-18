@@ -187,7 +187,7 @@ class SinglePageCrawlStrategy:
                     "url": original_url,  # Use original URL for tracking
                     "markdown": result.markdown,
                     "html": result.html,  # Use raw HTML instead of cleaned_html for code extraction
-                    "title": result.title or "Untitled",
+                    "title": getattr(result, "metadata", {}).get("title") or "Untitled",
                     "links": result.links,
                     "content_length": len(result.markdown),
                 }

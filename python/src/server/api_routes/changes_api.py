@@ -24,6 +24,26 @@ async def list_proposals(current_user: dict = Depends(get_current_user)):
     return await service.list_proposals(user_id=str(current_user.get("id")))
 
 
+@router.post("", response_model=dict[str, Any])
+async def create_proposal(payload: dict[str, Any], current_user: dict = Depends(get_current_user)):
+    """Creates a new AI proposal. Typically called by an Agent."""
+    service = ProposeChangeService()
+    file_path = payload.get("file_path")
+    new_content = payload.get("new_content")
+    summary = payload.get("summary", "AI Generated Fix")
+
+    if not file_path or new_content is None:
+        raise HTTPException(status_code=400, detail="Missing file_path or new_content")
+
+    res = await service.create_file_proposal(
+        file_path=file_path,
+        new_content=new_content,
+        summary=summary,
+        user_id=str(current_user.get("id"))
+    )
+    return res
+
+
 @router.get("/{change_id}")
 async def get_proposal(change_id: UUID, current_user: dict = Depends(get_current_user)):
     """Retrieves a specific proposal with Diff data."""

@@ -7,6 +7,7 @@ from typing import Any
 
 from src.server.config.logfire_config import get_logger
 from src.server.services.shared_constants import AI_AGENT_ROLES
+from src.server.utils.sse_manager import sse_manager
 
 logger = get_logger(__name__)
 
@@ -109,6 +110,9 @@ async def update_task_logic(
             # If the assignee was updated to an AI agent, notify the MCP
             if "assignee" in update_fields and update_fields["assignee"] in AI_AGENT_ROLES:
                 task_service_instance._notify_ai_agent_of_assignment(task_id=task_id, agent_id=update_fields["assignee"])
+
+            # Phase 5.1.0: Broadcast update via SSE
+            await sse_manager.broadcast("task_updated", {"task_id": task_id, "status": task.get("status"), "task": task})
 
             return True, {"task": task, "message": "Task updated successfully"}
         return False, update_result

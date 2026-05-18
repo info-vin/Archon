@@ -25,7 +25,7 @@ async def test_extract_source_summary_logic():
     # 4. 執行測試
     with patch("src.server.services.source_management.logic.ai_metadata.get_llm_client", side_effect=mock_llm_context):
         with patch(
-            "server.services.credential_service.credential_service.get_credentials_by_category",
+            "src.server.services.credential_service.CredentialService.get_credentials_by_category",
             new_callable=AsyncMock,
         ) as mock_creds:
             mock_creds.return_value = {"MODEL_CHOICE": "test-model"}

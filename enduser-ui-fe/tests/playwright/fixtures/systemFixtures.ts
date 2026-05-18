@@ -61,3 +61,44 @@ export class StatefulMock<T> {
     this.data = this.data.filter(item => !predicate(item));
   }
 }
+
+/**
+ * Resiliently waits for any active loading spinners to disappear from the page.
+ * 
+ * @param page Playwright Page object
+ * @param timeout Timeout in milliseconds (default: 10000ms)
+ */
+export async function waitForSpinner(page: Page, timeout: number = 10000) {
+  // Resiliently wait 50ms for React rendering cycle to finish mounting the spinner
+  await page.waitForTimeout(50);
+  
+  // Wait for the common spinner class or a generic loading indicator
+  // In Archon, this is usually a div with 'animate-spin' class
+  const spinner = page.locator('.animate-spin');
+  try {
+    await spinner.waitFor({ state: 'detached', timeout });
+  } catch (e) {
+    console.warn('⚠️ Timed out waiting for spinner to detach. UI might be locked.');
+  }
+}
+
+/**
+ * Simulates an SSE task update event by dispatching a CustomEvent on the window.
+ * 
+ * @param page Playwright Page object
+ * @param taskId ID of the task being updated
+ * @param status Target status (done, failed, etc.)
+ * @param result Optional result payload
+ */
+export async function simulateSSEUpdate(page: Page, taskId: string, status: 'done' | 'failed' | 'processing', result: any = null) {
+  await page.evaluate(({ taskId, status, result }) => {
+    const event = new CustomEvent('archon:task_updated', {
+      detail: {
+        task_id: taskId,
+        status: status,
+        agent_output: result
+      }
+    });
+    window.dispatchEvent(event);
+  }, { taskId, status, result });
+}

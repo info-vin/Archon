@@ -25,3 +25,7 @@ dist-ssr
 
 # OS-specific lockfiles
 package-lock.json
+# Playwright Test Artifacts
+playwright-report/
+test-results/
+.playwright/

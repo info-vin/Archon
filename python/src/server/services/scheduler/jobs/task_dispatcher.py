@@ -5,9 +5,9 @@ Handles reclamation of stuck tasks and dispatching of recurring tasks.
 
 from datetime import UTC, datetime, timedelta
 
-from server.config.logfire_config import get_logger
-from server.services.shared_constants import AgentUUIDs
-from server.utils import get_supabase_client
+from src.server.config.logfire_config import get_logger
+from src.server.services.shared_constants import AgentUUIDs
+from src.server.utils import get_supabase_client
 
 logger = get_logger(__name__)
 
@@ -16,8 +16,8 @@ async def run_task_dispatcher():
     """Scans and dispatches recurring tasks. Reclaims zombie tasks."""
     logger.info("📡 Clockwork: Starting Task Dispatcher (Physical Alignment Mode)...")
     try:
-        from server.services.agent_service import agent_service
-        from server.services.credential_service import credential_service
+        from src.server.services.agent_service import agent_service
+        from src.server.services.credential_service import credential_service
 
         supabase = get_supabase_client()
 

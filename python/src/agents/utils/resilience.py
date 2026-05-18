@@ -27,9 +27,14 @@ async def run_agent_with_global_resilience(agent: Agent[Any, Any], prompt: str, 
     async def _execute(override_key: str | None = None):
         if override_key:
             from pydantic_ai.models.gemini import GeminiModel
-            from pydantic_ai.providers.google_gla import GoogleGLAProvider
 
-            provider = GoogleGLAProvider(api_key=override_key)
+            # Phase 5.1.5: Version-aware Provider Selection
+            if PAI_V1:
+                from pydantic_ai.providers.google import GoogleProvider as ProviderClass
+            else:
+                from pydantic_ai.providers.google_gla import GoogleGLAProvider as ProviderClass  # type: ignore
+
+            provider = ProviderClass(api_key=override_key)
             # We need to recreate the model with the new provider
             # Assuming agent.model is set, but agent.model could be a string or a Model instance.
             # In PydanticAI, we can pass model=... to .run() to override.
@@ -37,9 +42,9 @@ async def run_agent_with_global_resilience(agent: Agent[Any, Any], prompt: str, 
             model_name = getattr(agent.model, 'model_name', None)
             if not model_name:
                 # If it's a string initially
-                model_name = agent.model if isinstance(agent.model, str) else "gemini-3.1-flash-lite-preview"
+                model_name = agent.model if isinstance(agent.model, str) else "gemini-3.1-flash-lite"
 
-            backup_model: Any = GeminiModel(model_name, provider=provider)
+            backup_model: Any = GeminiModel(model_name, provider=provider)  # type: ignore
             return await agent.run(prompt, model=backup_model, **run_kwargs)
 
         return await agent.run(prompt, **run_kwargs)

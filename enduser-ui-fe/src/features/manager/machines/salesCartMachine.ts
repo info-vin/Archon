@@ -1,4 +1,4 @@
-import { setup, assign, fromPromise } from 'xstate';
+import { setup, assign, fromPromise, fromCallback } from 'xstate';
 import { api } from '@/services/api';
 
 export const salesCartMachine = setup({
@@ -10,6 +10,7 @@ export const salesCartMachine = setup({
       processingAction: 'export' | 'content' | 'remove' | null;
       generatingPitchId: string | null;
       pitchResult: { content: string; company: string } | null;
+      activeTaskId: string | null;
     },
     events: {} as
       | { type: 'FETCH' }
@@ -19,6 +20,7 @@ export const salesCartMachine = setup({
       | { type: 'REMOVE_LEAD'; id: string }
       | { type: 'GENERATE_PITCH'; lead: any }
       | { type: 'CLOSE_PITCH_MODAL' }
+      | { type: 'TASK_UPDATED'; data: any }
   },
   actors: {
     fetchCart: fromPromise(async () => {
@@ -32,7 +34,8 @@ export const salesCartMachine = setup({
       } else if (action === 'export') {
         await new Promise(resolve => setTimeout(resolve, 1500));
       } else if (action === 'content') {
-        await api.draftFromLeads(ids);
+        const res = await api.draftFromLeads(ids);
+        return { ...input, task_id: res.task_id };
       }
       return input;
     }),
@@ -43,6 +46,13 @@ export const salesCartMachine = setup({
     generatePitch: fromPromise(async ({ input }: { input: { lead: any } }) => {
       const res = await api.generatePitch(input.lead.job_title, input.lead.company_name, input.lead.identified_need);
       return { content: res.content, company: input.lead.company_name };
+    }),
+    listenToSSE: fromCallback(({ sendBack }) => {
+      const handler = (event: any) => {
+        sendBack({ type: 'TASK_UPDATED', data: event.detail });
+      };
+      window.addEventListener('archon:task_updated', handler);
+      return () => window.removeEventListener('archon:task_updated', handler);
     })
   }
 }).createMachine({
@@ -55,9 +65,14 @@ export const salesCartMachine = setup({
     processingAction: null,
     generatingPitchId: null,
     pitchResult: null,
+    activeTaskId: null,
+  },
+  invoke: {
+    src: 'listenToSSE'
   },
   states: {
     loading: {
+      tags: ['loading'],
       invoke: {
         src: 'fetchCart',
         onDone: {
@@ -106,12 +121,21 @@ export const salesCartMachine = setup({
             }
           })
         },
-        BATCH_ACTION: {
-          target: 'processingBatch',
-          actions: assign({
-            processingAction: ({ event }) => event.action
-          })
-        },
+        BATCH_ACTION: [
+          {
+            guard: ({ event }) => event.action === 'content',
+            target: 'awaitingDrafts',
+            actions: assign({
+              processingAction: ({ event }) => event.action
+            })
+          },
+          {
+            target: 'processingBatch',
+            actions: assign({
+              processingAction: ({ event }) => event.action
+            })
+          }
+        ],
         REMOVE_LEAD: {
           target: 'processingRemove',
         },
@@ -129,7 +153,45 @@ export const salesCartMachine = setup({
         }
       }
     },
+    awaitingDrafts: {
+      tags: ['processing'],
+      invoke: {
+        src: 'processBatchAction',
+        input: ({ context }) => ({
+          action: context.processingAction!,
+          ids: Array.from(context.selectedIds)
+        }),
+        onDone: {
+          actions: assign({
+            activeTaskId: ({ event }) => (event.output as any).task_id
+          })
+        },
+        onError: {
+          target: 'idle',
+          actions: assign({
+            error: ({ event }) => (event.error as any)?.message || 'Failed to start drafting'
+          })
+        }
+      },
+      on: {
+        TASK_UPDATED: {
+          target: 'idle',
+          guard: ({ context, event }) => 
+            event.data.task_id === context.activeTaskId && 
+            (event.data.status === 'done' || event.data.status === 'failed'),
+          actions: [
+            assign({
+              selectedIds: new Set(),
+              processingAction: null,
+              activeTaskId: null
+            }),
+            () => console.log('Action completed successfully')
+          ]
+        }
+      }
+    },
     processingBatch: {
+      tags: ['processing'],
       invoke: {
         src: 'processBatchAction',
         input: ({ context }) => ({
@@ -164,6 +226,7 @@ export const salesCartMachine = setup({
       }
     },
     processingRemove: {
+      tags: ['processing'],
       invoke: {
         src: 'removeLead',
         input: ({ event }: any) => ({ id: event.id }),
@@ -187,6 +250,7 @@ export const salesCartMachine = setup({
       }
     },
     generatingPitch: {
+      tags: ['processing'],
       invoke: {
         src: 'generatePitch',
         input: ({ event }: any) => ({ lead: event.lead }),
@@ -204,6 +268,13 @@ export const salesCartMachine = setup({
             generatingPitchId: null
           })
         }
+      }
+    }
+  },
+  implementations: {
+    actions: {
+      notifySuccess: () => {
+        console.log('Action completed successfully');
       }
     }
   }

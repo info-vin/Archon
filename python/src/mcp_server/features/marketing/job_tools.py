@@ -2,8 +2,8 @@ import logging
 
 from pydantic import BaseModel, Field
 
-from server.services.crawling.crawling_service import CrawlingService
-from server.services.job_board_service import JobBoardService
+from src.server.services.crawling.crawling_service import CrawlingService
+from src.server.services.job_board_service import JobBoardService
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +23,7 @@ class SearchJobMarketTool(BaseModel):
         """Executes the job search."""
         try:
             # Call the service
-            jobs = await JobBoardService.search_jobs(keyword=self.keyword, limit=self.limit)
+            jobs = await JobBoardService().search_jobs(keyword=self.keyword, limit=self.limit)
 
             if not jobs:
                 return f"No jobs found for keyword '{self.keyword}'."

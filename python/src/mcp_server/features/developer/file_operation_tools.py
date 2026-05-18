@@ -5,21 +5,21 @@ from pydantic import BaseModel, Field
 
 # This is a placeholder for the actual service.
 # In a real implementation, this would be injected.
-from server.services.propose_change_service import ProposeChangeService
+from src.server.services.propose_change_service import ProposeChangeService
 
 logger = logging.getLogger(__name__)
 
 
 # A mock dependency injector for now
 class ToolDependencies:
-    _propose_change_service: ProposeChangeService = None
+    _propose_change_service: ProposeChangeService | None = None
 
     @classmethod
     def get_propose_change_service(cls) -> ProposeChangeService:
         if cls._propose_change_service is None:
             # In a real app, this would be properly initialized and injected.
             # For now, we create a mock/placeholder.
-            from server.dependencies import get_supabase_client
+            from src.server.dependencies import get_supabase_client
 
             db_client = get_supabase_client()
             cls._propose_change_service = ProposeChangeService(db_client=db_client)
