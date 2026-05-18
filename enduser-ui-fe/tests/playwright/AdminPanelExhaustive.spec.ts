@@ -142,4 +142,73 @@ test.describe('Exhaustive Admin Panel Verification', () => {
             console.log(`✅ Tab ${tab.name} passed.`);
         }
     });
+
+    test('should gracefully handle 503 errors and show System Probe Failed when core APIs are unreachable', async ({ page }) => {
+        // Override the default intercepts with 503 service unavailable failures
+        await page.route('**/api/stats/system-overview*', async route => {
+            await route.fulfill({ 
+                status: 503, 
+                contentType: 'application/json', 
+                body: JSON.stringify({ error: 'Service Unavailable' }) 
+            });
+        });
+        await page.route('**/api/stats/ai-usage*', async route => {
+            await route.fulfill({ 
+                status: 503, 
+                contentType: 'application/json', 
+                body: JSON.stringify({ error: 'Service Unavailable' }) 
+            });
+        });
+
+        await page.goto('/#/admin');
+        await expect(page.getByRole('heading', { name: 'Admin Control Center' })).toBeVisible({ timeout: 10000 });
+
+        // Navigate to the System Health tab which relies on these core APIs
+        await page.getByRole('button', { name: 'System Health', exact: true }).click();
+
+        // Physically verify the error card appears and no React TypeError crash occurs
+        await expect(page.getByText('System Probe Failed').first()).toBeVisible({ timeout: 15000 });
+        await expect(page.getByText('Core health services are currently unreachable.').first()).toBeVisible({ timeout: 15000 });
+    });
+
+    test('should render empty states correctly without crashing when stats return empty lists', async ({ page }) => {
+        // Override intercepts with clean, empty data arrays
+        await page.route('**/api/stats/system-overview*', async route => {
+            await route.fulfill({
+                status: 200,
+                json: {
+                    status: 'healthy',
+                    rag: { status: 'healthy', details: { errors: [] } },
+                    errors_24h: 0,
+                    active_agents: [],
+                    cost_24h: 0
+                }
+            });
+        });
+        await page.route('**/api/stats/ai-usage*', async route => {
+            await route.fulfill({
+                status: 200,
+                json: {
+                    daily_costs: [],
+                    is_real_data: true,
+                    total_xp: 0,
+                    total_cost: 0,
+                    roi_ratio: 0
+                }
+            });
+        });
+        await page.route('**/api/stats/token-usage/recent*', async route => {
+            await route.fulfill({ status: 200, json: [] });
+        });
+
+        await page.goto('/#/admin');
+        await expect(page.getByRole('heading', { name: 'Admin Control Center' })).toBeVisible({ timeout: 10000 });
+
+        await page.getByRole('button', { name: 'System Health', exact: true }).click();
+
+        // Verify custom placeholder messages appear properly to prevent Recharts/Table crashes
+        await expect(page.getByText('No cost data recorded yet.').first()).toBeVisible({ timeout: 15000 });
+        await expect(page.getByText('No recent transactions found in token_usage table.').first()).toBeVisible({ timeout: 15000 });
+    });
 });
+

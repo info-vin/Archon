@@ -45,23 +45,24 @@ test.describe('ApprovalsPage MBT & Pessimistic Flow', () => {
     await page.goto('/#/approvals');
     await waitForSpinner(page);
 
-    // Wait for the proposal to show up in the sidebar
-    await expect(page.getByText('Test Blog Proposal').first()).toBeVisible();
+    // Verify the proposal shows up inside the hardened sidebar list container
+    const sidebar = page.getByTestId('approval-inbox-list');
+    await expect(sidebar.getByText('Test Blog Proposal').first()).toBeVisible();
 
-    // Click the proposal
-    await page.getByText('Test Blog Proposal').first().click();
+    // Click the proposal within the sidebar container
+    await sidebar.getByText('Test Blog Proposal').first().click();
 
     // Simulate network delay for the approve action
     await simulateNetworkTimeout(page, /.*\/api\/marketing\/approvals.*/, 5000);
 
-    // Click Approve
-    const approveButton = page.getByRole('button', { name: /approve/i });
+    // Click Approve using our hardened test-id
+    const approveButton = page.getByTestId('approve-action-button');
     await approveButton.click();
 
     await expect(approveButton).toBeDisabled();
 
     // After it completes, the item should be gone from the list.
-    await expect(page.getByText('Test Blog Proposal').first()).not.toBeVisible({ timeout: 10000 });
+    await expect(sidebar.getByText('Test Blog Proposal').first()).not.toBeVisible({ timeout: 10000 });
   });
 
   test('should handle AI reason generation error gracefully', async ({ page }) => {
@@ -101,11 +102,12 @@ test.describe('ApprovalsPage MBT & Pessimistic Flow', () => {
     await page.goto('/#/approvals');
     await waitForSpinner(page);
     
-    // Ensure the blog proposal is selected
-    await page.getByText('Another Blog').first().click();
+    // Ensure the blog proposal is selected from the sidebar
+    const sidebar = page.getByTestId('approval-inbox-list');
+    await sidebar.getByText('Another Blog').first().click();
 
-    // Click REJECT to show the input
-    const rejectBtn = page.getByRole('button', { name: 'REJECT', exact: true });
+    // Click REJECT to show the input using our hardened test-id
+    const rejectBtn = page.getByTestId('reject-action-button');
     await expect(rejectBtn).toBeVisible();
     await rejectBtn.click();
 

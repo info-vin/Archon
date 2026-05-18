@@ -69,6 +69,9 @@ export class StatefulMock<T> {
  * @param timeout Timeout in milliseconds (default: 10000ms)
  */
 export async function waitForSpinner(page: Page, timeout: number = 10000) {
+  // Resiliently wait 50ms for React rendering cycle to finish mounting the spinner
+  await page.waitForTimeout(50);
+  
   // Wait for the common spinner class or a generic loading indicator
   // In Archon, this is usually a div with 'animate-spin' class
   const spinner = page.locator('.animate-spin');

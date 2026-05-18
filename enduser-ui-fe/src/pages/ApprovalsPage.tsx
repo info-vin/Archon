@@ -52,7 +52,7 @@ const ApprovalsPage: React.FC = () => {
 
       <div className="flex flex-1 overflow-hidden">
         {/* Sidebar List */}
-        <div className="w-1/3 border-r border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-y-auto">
+        <div data-testid="approval-inbox-list" className="w-1/3 border-r border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-y-auto">
            <ApprovalSidebarList 
               proposals={proposals} 
               loading={loading} 
