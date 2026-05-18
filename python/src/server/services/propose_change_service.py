@@ -113,6 +113,30 @@ class ProposeChangeService:
         )
         return cast(dict[str, Any], res.data[0])
 
+    async def create_proposal(
+        self, change_type: str, payload: dict[str, Any], user_id: str | None = None
+    ) -> dict[str, Any]:
+        """Creates a generic proposal (e.g. git commands, feature management) in proposed_changes."""
+        # Embed physical identity (Phase 4.6.23)
+        dept = "General"
+        if user_id:
+            u_res = self.db_client.table("profiles").select("department").eq("id", user_id).execute()
+            dept = u_res.data[0].get("department", "General") if u_res.data else "General"
+
+        # Inject created_by and created_by_dept into request_payload for audit
+        request_payload = {
+            **payload,
+            "created_by": user_id,
+            "created_by_dept": dept,
+        }
+
+        res = (
+            self.db_client.table("proposed_changes")
+            .insert({"type": change_type, "status": "pending", "request_payload": request_payload})
+            .execute()
+        )
+        return cast(dict[str, Any], res.data[0])
+
     async def approve_proposal(self, proposal_id: UUID, user_id: Any) -> dict[str, Any]:
         resolved_id = self._resolve_user_id(user_id)
         res = (

@@ -103,10 +103,10 @@ async def _run_agent_with_retry(agent: Agent[Any, Any], prompt: str, ctx_state: 
             if PAI_V1:
                 from pydantic_ai.providers.google import GoogleProvider as ProviderClass
             else:
-                from pydantic_ai.providers.google_gla import GoogleGLAProvider as ProviderClass
+                from pydantic_ai.providers.google_gla import GoogleGLAProvider as ProviderClass  # type: ignore
 
             provider = ProviderClass(api_key=override_key)
-            backup_model: Any = GeminiModel(model_name, provider=provider)
+            backup_model: Any = GeminiModel(model_name, provider=provider)  # type: ignore
             return await agent.run(prompt, model=backup_model, deps=deps)
         return await agent.run(prompt, deps=deps)
     try:

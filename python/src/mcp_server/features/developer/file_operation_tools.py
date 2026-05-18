@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 # A mock dependency injector for now
 class ToolDependencies:
-    _propose_change_service: ProposeChangeService = None
+    _propose_change_service: ProposeChangeService | None = None
 
     @classmethod
     def get_propose_change_service(cls) -> ProposeChangeService:

@@ -32,7 +32,7 @@ async def run_agent_with_global_resilience(agent: Agent[Any, Any], prompt: str, 
             if PAI_V1:
                 from pydantic_ai.providers.google import GoogleProvider as ProviderClass
             else:
-                from pydantic_ai.providers.google_gla import GoogleGLAProvider as ProviderClass
+                from pydantic_ai.providers.google_gla import GoogleGLAProvider as ProviderClass  # type: ignore
 
             provider = ProviderClass(api_key=override_key)
             # We need to recreate the model with the new provider
@@ -44,7 +44,7 @@ async def run_agent_with_global_resilience(agent: Agent[Any, Any], prompt: str, 
                 # If it's a string initially
                 model_name = agent.model if isinstance(agent.model, str) else "gemini-3.1-flash-lite"
 
-            backup_model: Any = GeminiModel(model_name, provider=provider)
+            backup_model: Any = GeminiModel(model_name, provider=provider)  # type: ignore
             return await agent.run(prompt, model=backup_model, **run_kwargs)
 
         return await agent.run(prompt, **run_kwargs)

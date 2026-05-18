@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { StatefulMock, simulateNetworkTimeout, simulate500Error, waitForSpinner } from './fixtures/systemFixtures';
+import { StatefulMock, simulate500Error, waitForSpinner } from './fixtures/systemFixtures';
 import { ImageResult } from '../../src/features/marketing/machines/imagePickerMachine';
 
 const mockImages = new StatefulMock<ImageResult>([
