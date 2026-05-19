@@ -9,7 +9,7 @@ from pydantic_graph import BaseNode, End, GraphRunContext
 
 from .state import SharedState, SupervisorDecision
 from .tools import propose_code_fix, read_code_file
-from .utils import PAI_V1, _accumulate_usage, _get_output, _run_agent_with_retry
+from .utils import PAI_V1, _accumulate_usage, _build_pruned_history, _get_output, _run_agent_with_retry
 
 logger = logging.getLogger(__name__)
 
@@ -61,7 +61,7 @@ class SupervisorNode(BaseNode[SharedState, None, str]):
 
         router_agent = Agent(**agent_args)
 
-        history_text = "\n".join([f"{m['role']}: {m['content']}" for m in ctx.state.messages])
+        history_text = _build_pruned_history(ctx.state.messages)
         try:
             result = await _run_agent_with_retry(
                 router_agent, f"History:\n{history_text}\n\nDecide next step.", ctx.state, model_name
@@ -113,7 +113,7 @@ async def _run_generic_worker(
     from src.server.services.prompt_service import prompt_service
     system_prompt = prompt_service.get_prompt(prompt_key, default_prompt)
     agent = Agent(model=model_name, system_prompt=system_prompt)
-    history_text = "\n".join([f"{m['role']}: {m['content']}" for m in ctx.state.messages])
+    history_text = _build_pruned_history(ctx.state.messages)
 
     try:
         res = await _run_agent_with_retry(
@@ -154,7 +154,7 @@ class LibrarianNode(BaseNode[SharedState, None, str]):
         # Setup dependencies for RAG tools
         deps = RagDependencies(match_count=3)
 
-        history_text = "\n".join([f"{m['role']}: {m['content']}" for m in ctx.state.messages])
+        history_text = _build_pruned_history(ctx.state.messages)
 
         try:
             # Phase 5.1.4: Hunter Mode - Librarian can now crawl external sites if internal search is insufficient
@@ -190,9 +190,10 @@ class SummaryNode(BaseNode[SharedState, None, str]):
 
 class DevBotNode(BaseNode[SharedState, None, str]):
     async def run(self, ctx: GraphRunContext[SharedState]) -> SupervisorNode:
-        return await _run_generic_worker(
+        await _run_generic_worker(
             ctx, "DevBot", "WORKFLOW_SCIENTIST_DEVBOT", "You are DevBot, a data scientist.", "Task from Supervisor:"
         )
+        return SupervisorNode()
 
 
 class DavidNode(BaseNode[SharedState, None, str]):
@@ -214,7 +215,7 @@ class DavidNode(BaseNode[SharedState, None, str]):
             tools=[propose_code_fix, read_code_file]
         )
 
-        history_text = "\n".join([f"{m['role']}: {m['content']}" for m in ctx.state.messages])
+        history_text = _build_pruned_history(ctx.state.messages)
 
         try:
             res = await _run_agent_with_retry(

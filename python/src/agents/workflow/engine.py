@@ -26,28 +26,37 @@ class WorkflowEngine:
             run_result = await workflow_graph.run(SupervisorNode(), state=state)
             final_state = run_result.state
 
-            # Phase 5.4: Fix Token Logging Gap
+            # Phase 5.4 / 5.1.9: Fix Token Logging Gap with Fire-and-Forget Telemetry
             try:
                 if final_state.input_tokens > 0 or final_state.output_tokens > 0:
-                    server_port = os.getenv("ARCHON_SERVER_PORT", "8181")
-                    async with httpx.AsyncClient() as client:
-                        payload = {
-                            "model": final_state.model_used or "workflow-engine",
-                            "provider": "google",
-                            "input_tokens": final_state.input_tokens,
-                            "output_tokens": final_state.output_tokens,
-                            "context_type": "agentic_workflow",
-                        }
-                        is_docker = os.getenv("DOCKER_CONTAINER") == "true" or os.path.exists("/.dockerenv")
-                        server_host = "archon-server" if is_docker else "localhost"
-                        await client.post(
-                            f"http://{server_host}:{server_port}/internal/stats/token-usage",
-                            json=payload,
-                            timeout=5.0,
-                        )
-                        logger.info("📊 Token usage logged via Internal API")
+                    import asyncio
+
+                    async def log_telemetry():
+                        server_port = os.getenv("ARCHON_SERVER_PORT", "8181")
+                        async with httpx.AsyncClient() as client:
+                            payload = {
+                                "model": final_state.model_used or "workflow-engine",
+                                "provider": "google",
+                                "input_tokens": final_state.input_tokens,
+                                "output_tokens": final_state.output_tokens,
+                                "context_type": "agentic_workflow",
+                            }
+                            is_docker = os.getenv("DOCKER_CONTAINER") == "true" or os.path.exists("/.dockerenv")
+                            server_host = "archon-server" if is_docker else "localhost"
+                            try:
+                                await client.post(
+                                    f"http://{server_host}:{server_port}/internal/stats/token-usage",
+                                    json=payload,
+                                    timeout=5.0,
+                                )
+                                logger.info("📊 Token usage logged via Internal API (Background Task)")
+                            except Exception as e:
+                                logger.warning(f"⚠️ Background telemetry failed: {e}")
+
+                    # Fire and forget the telemetry task
+                    asyncio.create_task(log_telemetry())
             except Exception as e:
-                logger.warning(f"⚠️ Failed to log token usage: {e}")
+                logger.warning(f"⚠️ Failed to initiate background token logging: {e}")
 
             final_res_str = ""
             if final_state.final_result and "Workflow completed successfully" in final_state.final_result:

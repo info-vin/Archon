@@ -71,3 +71,17 @@ def _accumulate_usage(ctx_state: SharedState, result: Any, model_name: str):
         ctx_state.model_used = model_name
     except Exception:
         pass
+
+
+def _build_pruned_history(messages: list[dict[str, Any]], max_messages: int = 6) -> str:
+    """
+    Cost Optimization (Context Pruning):
+    Keeps the original goal (first message) and the most recent N messages.
+    Prevents token explosion on deep multi-agent recursion.
+    """
+    if len(messages) <= max_messages:
+        pruned = messages
+    else:
+        # Keep the user's initial prompt [0] + the last (max_messages - 1) messages
+        pruned = [messages[0]] + messages[-(max_messages - 1):]
+    return "\n".join([f"{m['role']}: {m['content']}" for m in pruned])
