@@ -25,23 +25,30 @@ async def run_agent_with_global_resilience(agent: Agent[Any, Any], prompt: str, 
 
     @retry_with_backoff(max_retries=5, initial_delay=2.0)
     async def _execute(override_key: str | None = None):
-        if override_key:
+        # Phase 5.1.8 Centralized LLM Gateway Routing
+        gateway_url = os.getenv("API_GATEWAY_URL")
+
+        # Determine the key to use
+        api_key = override_key or os.getenv("GEMINI_API_KEY") or "dummy-key-for-gateway"
+
+        # If a gateway URL is provided or an override key is specified, we must use an explicit provider
+        if gateway_url or override_key:
+            import httpx
             from pydantic_ai.models.gemini import GeminiModel
 
-            # Phase 5.1.5: Version-aware Provider Selection
             if PAI_V1:
                 from pydantic_ai.providers.google import GoogleProvider as ProviderClass
             else:
                 from pydantic_ai.providers.google_gla import GoogleGLAProvider as ProviderClass  # type: ignore
 
-            provider = ProviderClass(api_key=override_key)
-            # We need to recreate the model with the new provider
-            # Assuming agent.model is set, but agent.model could be a string or a Model instance.
-            # In PydanticAI, we can pass model=... to .run() to override.
-            # We extract the model name from the agent's current model.
+            if gateway_url:
+                custom_http_client = httpx.AsyncClient(timeout=120.0)
+                provider = ProviderClass(api_key=api_key, base_url=gateway_url, http_client=custom_http_client)
+            else:
+                provider = ProviderClass(api_key=api_key)
+
             model_name = getattr(agent.model, 'model_name', None)
             if not model_name:
-                # If it's a string initially
                 model_name = agent.model if isinstance(agent.model, str) else "gemini-3.1-flash-lite"
 
             backup_model: Any = GeminiModel(model_name, provider=provider)  # type: ignore

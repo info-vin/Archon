@@ -6,6 +6,7 @@ from src.server.services.job_board_service import JobBoardService
 
 @pytest.mark.asyncio
 @pytest.mark.external
+@pytest.mark.xfail(reason="104.com.tw blocks automated requests occasionally leading to 403")
 async def test_104_crawler_reliability():
     """物理驗證與 104 的真實連通性 (預熱 + AJAX)"""
     service = JobBoardService()

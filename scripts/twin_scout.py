@@ -5,6 +5,7 @@ import argparse
 import shutil
 import time
 import sys
+from datetime import datetime
 from dotenv import load_dotenv
 # Load environment variables from host .env or python/.env
 for p in [".env", "python/.env", "../.env", "../python/.env"]:

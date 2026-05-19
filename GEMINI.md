@@ -156,6 +156,14 @@
 
 # 第三章：近期工作日誌 (Recent Activity Logs)
 
+### 2026-05-19: Phase 5.1.8 實體貫通驗證與 Makefile 自動化測試文件升級
+*   **1. Phase 5.1.8 (Centralized LLM Gateway) 落地公證**:
+    - **驗證**: 審查了 `internal_llm_api.py`, `resilience.py` 與 `docker-compose.yml`。
+    - **結果**: 確證無虛假開發與系統斷層。`archon-server` 確實升格為網關並實作了 `ThreadingService` 的 `rate_limited_operation` (max_concurrent=1)。代理 URL 已正確注入 `archon-mcp` 與 `archon-agents`，所有底層架構對齊計畫。
+*   **2. Makefile 品質門禁 (Quality Gates) 文件擴充**:
+    - **行動**: 微調並擴充 `CONTRIBUTING_tw.md` 的測試指南章節，新增「進階驗證與自動化品質門禁」。
+    - **成果**: 完整記錄了 `make audit-qa`, `make persona-audit`, `make tech-debt-audit`, `make twin-scout` 等進階指令的使用時機與防禦層級，為未來 AI 與人類協作者提供了更清晰的系統驗收標準。
+
 ### 2026-05-12: Model SSOT 確立與 Phase 5 星型群聊架構規劃
 *   **1. 基礎設施幻覺根除 (Model SSOT 100%)**:
     - **行動**: 全域盤點並移除了 `agents/`, `server/`, `mcp_server/` 中 13 處關於 `openai:gpt-4o`, `gpt-4.1-nano` 與 `gemini-embedding-001` 的硬編碼回退機制。

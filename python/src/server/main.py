@@ -33,6 +33,7 @@ from .api_routes.changes_api import router as changes_router  # NEW IMPORT
 from .api_routes.ethics_api import router as ethics_router  # NEW IMPORT
 from .api_routes.extraction_api import router as extraction_router  # NEW IMPORT (GAP-018)
 from .api_routes.internal_api import router as internal_router
+from .api_routes.internal_llm_api import router as internal_llm_router  # NEW IMPORT
 from .api_routes.knowledge_api import router as knowledge_router
 from .api_routes.log_api import router as log_router
 from .api_routes.marketing_api import router as marketing_router  # NEW IMPORT
@@ -83,6 +84,7 @@ app.add_middleware(
 
 
 app.include_router(test_api_router)  # NEW ROUTER
+app.include_router(internal_llm_router)
 
 
 # Add middleware to skip logging for health checks

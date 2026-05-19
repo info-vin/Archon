@@ -90,11 +90,11 @@ audit-qa:
 	@echo "Step 1: Running DNS Leak Probe static scan..."
 	@bash scripts/probe_dns_leak.sh
 	@echo "Step 2: Running Mobile Viewport Scroll Lockup static scan..."
-	@python scripts/check_scroll_lockup.py
+	@cd python && $(UV) run python ../scripts/check_scroll_lockup.py
 	@echo "Step 3: Running Shadow DB Migration verifier..."
-	@python scripts/verify_migrations.py
+	@cd python && $(UV) run python ../scripts/verify_migrations.py
 	@echo "Step 4: Running LLM Content Judge Semantic checks..."
-	@python scripts/llm_judge_content.py
+	@cd python && $(UV) run python ../scripts/llm_judge_content.py
 	@echo "Step 5: Running Backend Pytest suite..."
 	@make test-be
 	@echo "Step 6: Running Frontend Playwright E2E tests (Budget Warning boundary)..."
