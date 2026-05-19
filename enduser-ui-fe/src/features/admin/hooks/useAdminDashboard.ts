@@ -20,16 +20,19 @@ export const useDocumentVersions = () => {
         fetchVersions();
     }, [fetchVersions]);
 
+    // PERFORMANCE: Precalculate lowercase searchable strings to prevent O(N) string allocations during typing.
+    // Memoized to only recalculate when the original versions array changes.
+    const searchableVersions = useMemo(() => {
+        return versions.map(v =>
+            `${v.created_by || ''} ${v.field_name || ''} ${v.change_summary || ''} ${v.change_type || ''}`.toLowerCase()
+        );
+    }, [versions]);
+
     const filteredVersions = useMemo(() => {
         const query = searchTerm.toLowerCase().trim();
         if (!query) return versions;
-        return versions.filter(v => 
-            v.created_by?.toLowerCase().includes(query) ||
-            v.field_name?.toLowerCase().includes(query) ||
-            v.change_summary?.toLowerCase().includes(query) ||
-            v.change_type?.toLowerCase().includes(query)
-        );
-    }, [versions, searchTerm]);
+        return versions.filter((_, i) => searchableVersions[i].includes(query));
+    }, [versions, searchTerm, searchableVersions]);
 
     return { versions, filteredVersions, searchTerm, setSearchTerm, loading, fetchVersions };
 };
