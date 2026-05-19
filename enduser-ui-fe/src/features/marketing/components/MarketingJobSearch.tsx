@@ -42,6 +42,7 @@ export const MarketingJobSearch: React.FC<MarketingJobSearchProps> = ({
             value={keyword}
             onChange={(e) => setKeyword(e.target.value)}
             placeholder="Enter job title (e.g., Data Analyst)"
+            aria-label="Job title search"
             className="flex-1 p-3 border border-input bg-background text-gray-900 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-primary focus:outline-none"
           />
           <Button type="submit" disabled={loading} isLoading={loading} variant="primary" accentColor="indigo" size="lg">

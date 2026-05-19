@@ -57,6 +57,7 @@ export const EditorBody: React.FC<EditorBodyProps> = ({
           placeholder="Article Title..."
           value={title}
           onChange={(e) => onTitleChange(e.target.value)}
+          aria-label="Article title"
           className="w-full text-4xl font-black mb-8 outline-none bg-transparent dark:text-white placeholder:text-slate-200 dark:placeholder:text-slate-800 border-none"
         />
 
@@ -86,6 +87,7 @@ export const EditorBody: React.FC<EditorBodyProps> = ({
           placeholder="Start typing or use the AI toolbox to synthesize your draft..."
           value={content}
           onChange={(e) => onContentChange(e.target.value)}
+          aria-label="Article content"
           className="w-full min-h-[80vh] outline-none bg-transparent dark:text-slate-300 resize-none leading-relaxed text-lg border-none font-sans"
         />
       </div>
