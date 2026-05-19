@@ -7,13 +7,16 @@ import {
   ShieldCheckIcon,
   ArrowPathIcon,
   SparklesIcon,
-  FileTextIcon as DocumentTextIcon
+  FileTextIcon as DocumentTextIcon,
+  XCircleIcon
 } from '../components/Icons';
 
 const ApprovalsPage: React.FC = () => {
   const {
       proposals,
       loading,
+      error,
+      actionError,
       selectedId,
       setSelectedId,
       selectedProposal,
@@ -53,18 +56,44 @@ const ApprovalsPage: React.FC = () => {
       <div className="flex flex-1 overflow-hidden">
         {/* Sidebar List */}
         <div data-testid="approval-inbox-list" className="w-1/3 border-r border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-y-auto">
-           <ApprovalSidebarList 
-              proposals={proposals} 
-              loading={loading} 
-              selectedId={selectedId} 
-              onSelect={(id) => { setSelectedId(id); setShowRejectInput(false); }} 
-           />
+           {error ? (
+             <div className="p-8 text-center" data-testid="error-msg">
+               <div className="inline-block p-4 bg-red-50 dark:bg-red-900/20 rounded-full mb-4">
+                 <XCircleIcon className="w-8 h-8 text-red-500" />
+               </div>
+               <h3 className="text-sm font-bold text-gray-800 dark:text-gray-200">Failed to load approvals</h3>
+               <p className="text-xs text-gray-500 mt-1">{error}</p>
+               <button 
+                 onClick={fetchData}
+                 className="mt-4 px-4 py-2 bg-indigo-600 text-white text-xs font-bold rounded-lg hover:bg-indigo-700 transition-colors"
+               >
+                 Retry
+               </button>
+             </div>
+           ) : (
+             <ApprovalSidebarList 
+                proposals={proposals} 
+                loading={loading} 
+                selectedId={selectedId} 
+                onSelect={(id) => { setSelectedId(id); setShowRejectInput(false); }} 
+             />
+           )}
         </div>
 
         {/* Detail Pane */}
         <div className="flex-1 overflow-y-auto p-10 md:p-14">
           {selectedProposal ? (
             <div className="max-w-5xl mx-auto shadow-sm shadow-gray-200 dark:shadow-none flex flex-col relative">
+              {/* Action Failure Banner */}
+              {actionError && (
+                <div data-testid="action-error-banner" className="p-4 bg-red-50 border-x border-t border-red-200 text-red-800 text-sm font-bold flex justify-between items-center rounded-t-2xl animate-in fade-in">
+                  <div className="flex items-center gap-2">
+                    <XCircleIcon className="w-5 h-5 text-red-500" />
+                    <span>{actionError}</span>
+                  </div>
+                </div>
+              )}
+
               {/* Proposal Meta & Actions */}
               <ApprovalActionHeader 
                  selectedProposal={selectedProposal}

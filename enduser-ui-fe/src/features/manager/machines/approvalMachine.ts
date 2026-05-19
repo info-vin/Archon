@@ -27,8 +27,8 @@ export const approvalMachine = setup({
   actors: {
     fetchData: fromPromise(async () => {
       const [devChanges, marketingApprovals] = await Promise.all([
-        api.getPendingChanges().catch(() => []),
-        api.getPendingApprovals().catch(() => ({ blogs: [], leads: [] }))
+        api.getPendingChanges(),
+        api.getPendingApprovals()
       ]);
       const unifiedList: UnifiedProposal[] = [
         ...devChanges.map((c: any) => ({ ...c, is_marketing: false })),

@@ -70,7 +70,8 @@ export const useApprovalInbox = () => {
   return {
       proposals: state.context.proposals,
       loading: state.matches('loading'),
-      error: state.context.error,
+      error: state.matches('error') ? state.context.error : null,
+      actionError: !state.matches('error') ? state.context.error : null,
       selectedId: state.context.selectedId,
       setSelectedId,
       selectedProposal: state.context.proposals.find(p => p.id === state.context.selectedId) || null,
