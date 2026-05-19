@@ -1,4 +1,4 @@
-import { Page } from '@playwright/test';
+import { test as base, Page, expect } from '@playwright/test';
 
 /**
  * Simulates a severe network timeout for a specific endpoint pattern.
@@ -102,3 +102,56 @@ export async function simulateSSEUpdate(page: Page, taskId: string, status: 'don
     window.dispatchEvent(event);
   }, { taskId, status, result });
 }
+
+/**
+ * Disables all CSS transitions, animations, and Recharts animations for the given page.
+ * This guarantees 100% deterministic and stable VRT and E2E screenshots by eliminating
+ * animation lag, transition delays, and rendering flakiness.
+ * 
+ * @param page Playwright Page object
+ */
+export async function disableChartAnimations(page: Page) {
+  // Inject CSS to disable animations/transitions before page loads or during run
+  await page.addInitScript(() => {
+    const style = document.createElement('style');
+    style.id = 'disable-animations-styles';
+    style.innerHTML = `
+      *, *::before, *::after {
+        transition: none !important;
+        animation: none !important;
+        transition-duration: 0s !important;
+        animation-duration: 0s !important;
+        transition-delay: 0s !important;
+        animation-delay: 0s !important;
+      }
+    `;
+    document.head.appendChild(style);
+  });
+
+  try {
+    await page.addStyleTag({
+      content: `
+        *, *::before, *::after {
+          transition: none !important;
+          animation: none !important;
+          transition-duration: 0s !important;
+          animation-duration: 0s !important;
+          transition-delay: 0s !important;
+          animation-delay: 0s !important;
+        }
+      `
+    });
+  } catch (e) {
+    // Ignore in case the page is not loaded yet or has no document head
+  }
+}
+
+// Export custom test that automatically disables all animations on startup
+export const test = base.extend({
+  page: async ({ page }, use) => {
+    await disableChartAnimations(page);
+    await use(page);
+  }
+});
+
+export { expect };

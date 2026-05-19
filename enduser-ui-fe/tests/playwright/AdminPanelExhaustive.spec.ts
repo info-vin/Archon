@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures/systemFixtures';
 
 test.use({ storageState: '../.playwright/admin_storage_state.json' });
 

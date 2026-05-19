@@ -1,5 +1,4 @@
-import { test, expect } from '@playwright/test';
-import { simulate500Error, waitForSpinner } from './fixtures/systemFixtures';
+import { test, expect, simulate500Error, waitForSpinner } from './fixtures/systemFixtures';
 
 test.use({ storageState: '../.playwright/admin_storage_state.json' });
 
