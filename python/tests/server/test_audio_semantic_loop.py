@@ -1,9 +1,12 @@
 import os
+
 import pytest
 from google import genai
 from google.genai import types
-from src.server.services.credential_service import credential_service
+
 from src.server.config.model_ssot import SYSTEM_MODELS
+from src.server.services.credential_service import credential_service
+
 
 @pytest.mark.asyncio
 async def test_audio_semantic_loop_live(client):
@@ -20,7 +23,7 @@ async def test_audio_semantic_loop_live(client):
     api_key = os.getenv("GEMINI_API_KEY")
     if not api_key:
         api_key = await credential_service.get_credential("GEMINI_API_KEY")
-        
+
     if not api_key or api_key == "fake-api-key":
         pytest.skip("Skipping live integration test: GEMINI_API_KEY not found in environment or DB")
 
@@ -37,7 +40,7 @@ async def test_audio_semantic_loop_live(client):
     # 4. Verify basic HTTP and WAV parameters
     assert response.status_code == 200
     assert response.headers.get("content-type") == "audio/wav"
-    
+
     audio_bytes = response.content
     assert len(audio_bytes) > 100
     assert audio_bytes.startswith(b"RIFF")
@@ -45,7 +48,7 @@ async def test_audio_semantic_loop_live(client):
 
     # 5. Connect to live Gemini and transcribe the generated audio
     genai_client = genai.Client(api_key=api_key)
-    
+
     # We pack the audio bytes directly into a Part object
     audio_part = types.Part.from_bytes(
         data=audio_bytes,
@@ -53,7 +56,7 @@ async def test_audio_semantic_loop_live(client):
     )
 
     model_name = SYSTEM_MODELS["DEFAULT_TEXT"].split("/")[-1]
-    
+
     # Generate content using the audio part to transcribe the text
     res = genai_client.models.generate_content(
         model=model_name,

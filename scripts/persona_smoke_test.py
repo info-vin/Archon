@@ -1,6 +1,10 @@
 import httpx
 import asyncio
 import json
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 BASE_URL = "http://localhost:8181/api"
 
