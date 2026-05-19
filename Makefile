@@ -7,7 +7,7 @@ SHELL := /bin/bash
 # Docker compose command - prefer newer 'docker compose' plugin over standalone 'docker-compose'
 COMPOSE ?= $(shell docker compose version >/dev/null 2>&1 && echo "docker compose" || echo "docker-compose")
 
-.PHONY: help dev dev-docker stop test test-fe test-be lint lint-fe lint-be clean install check install-ui db-init db-migrate tech-debt-audit
+.PHONY: help dev dev-docker stop test test-fe test-be lint lint-fe lint-be clean install check install-ui db-init db-migrate tech-debt-audit audit-qa
 
 help:
 	@echo "Archon Development Commands"
@@ -32,6 +32,7 @@ help:
 	@echo "  make install-ui - Install monorepo UI dependencies"
 	@echo "  make check      - Check environment setup"
 	@echo "  make tech-debt-audit - Check for stale files and cluttered directories"
+	@echo "  make audit-qa   - Run unified E2E, semantic & static Quality Gateway suite"
 
 # Install dependencies
 install:
@@ -82,6 +83,23 @@ verify-data:
 persona-audit:
 	@echo "🔍 Performing Global Persona Physical Audit (Alice, Bob, Charlie, David, Agents)..."
 	@docker exec -it archon-server /venv/bin/python scripts/persona_smoke_test.py
+
+# --- Automated Quality Gateway (Milestone 5) ---
+audit-qa:
+	@echo "🚨 [AuditQA] Starting Unified Quality Gateway Automation Suite..."
+	@echo "Step 1: Running DNS Leak Probe static scan..."
+	@bash scripts/probe_dns_leak.sh
+	@echo "Step 2: Running Mobile Viewport Scroll Lockup static scan..."
+	@python scripts/check_scroll_lockup.py
+	@echo "Step 3: Running Shadow DB Migration verifier..."
+	@python scripts/verify_migrations.py
+	@echo "Step 4: Running LLM Content Judge Semantic checks..."
+	@python scripts/llm_judge_content.py
+	@echo "Step 5: Running Backend Pytest suite..."
+	@make test-be
+	@echo "Step 6: Running Frontend Playwright E2E tests (Budget Warning boundary)..."
+	@cd enduser-ui-fe && npx playwright test tests/playwright/BudgetWarning.mbt.spec.ts
+	@echo "🎉 [AuditQA] ALL STATIC, SEMANTIC, UNIT & E2E GATEWAYS PASSED SUCCESSFULLY!"
 
 probe:
 	@echo "Running Librarian Probe inside archon-server..."

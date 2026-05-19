@@ -23,11 +23,26 @@ export const AiCollaborationWidget: React.FC<AiCollaborationWidgetProps> = ({ da
 
     const COLORS = ['#6366f1', '#e5e7eb']; // Indigo-500, Gray-200
 
+    const isExceeded = data.total_used >= data.total_budget;
+
     return (
-        <div 
-            onClick={onClick}
-            className={`bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col md:flex-row items-center gap-8 min-h-[200px] ${onClick ? 'cursor-pointer hover:border-indigo-200 hover:shadow-md transition-all group' : ''}`}
-        >
+        <>
+            {isExceeded && (
+                <div 
+                    data-testid="budget-warning-banner" 
+                    className="w-full mb-4 p-4 rounded-xl border border-red-500/30 bg-red-950/20 backdrop-blur-md text-red-400 font-bold flex items-center justify-between shadow-[0_0_15px_rgba(239,68,68,0.15)] animate-pulse"
+                >
+                    <div className="flex items-center gap-2">
+                        <span className="text-lg">⚠️</span>
+                        <span>AI Budget Exhausted! Shared AI Token allocation is fully depleted. Some automated tasks may be suspended.</span>
+                    </div>
+                    <span className="text-xs uppercase px-2 py-0.5 rounded bg-red-500/20 border border-red-500/30">Limit Exceeded</span>
+                </div>
+            )}
+            <div 
+                onClick={onClick}
+                className={`bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col md:flex-row items-center gap-8 min-h-[200px] ${onClick ? 'cursor-pointer hover:border-indigo-200 hover:shadow-md transition-all group' : ''}`}
+            >
             <div className="flex-1">
                 <h3 className={`text-lg font-bold text-gray-900 mb-1 ${onClick ? 'group-hover:text-indigo-600' : ''}`}>Human-AI Collaboration</h3>
                 <p className="text-sm text-gray-500 mb-4">Resource allocation between human tasks and AI automation agents. {onClick && 'Click for details.'}</p>
@@ -71,12 +86,12 @@ export const AiCollaborationWidget: React.FC<AiCollaborationWidgetProps> = ({ da
                         />
                     </PieChart>
                 </ResponsiveContainer>
-                
                 <div className="absolute inset-0 flex items-center justify-center flex-col pointer-events-none">
                     <span className="text-xl font-bold text-indigo-600">{data.usage_percentage}%</span>
                     <span className="text-[8px] uppercase tracking-widest text-gray-400">Load</span>
                 </div>
             </div>
         </div>
+        </>
     );
 };
