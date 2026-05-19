@@ -5,7 +5,11 @@ import argparse
 import shutil
 import time
 import sys
-from datetime import datetime
+from dotenv import load_dotenv
+# Load environment variables from host .env or python/.env
+for p in [".env", "python/.env", "../.env", "../python/.env"]:
+    if os.path.exists(p):
+        load_dotenv(p)
 
 # --- Physical Environment Realignment (Phase 4.6.39 / 5.1.7) ---
 # Align PYTHONPATH dynamically for both Docker (/app) and Host (local workspace)
@@ -305,17 +309,16 @@ async def run_scout_session():
             {"email": "dev.bot@archon.com", "url": "/dashboard", "selector": "ul, table, .card", "name": "DevBot (Agent)"}
         ]
 
+        from cookie_injector import KeychainBypassCookieInjector
+        
         global_report = []
         async with async_playwright() as p:
             for p_config in personas:
                 safe_name = p_config["name"].split()[0].lower()
-                audit_dir = os.path.abspath(f"./.browser_data/scout_{safe_name}")
-                if os.path.exists(audit_dir): shutil.rmtree(audit_dir, ignore_errors=True)
-                os.makedirs(audit_dir, exist_ok=True)
-
-                ctx = await p.chromium.launch_persistent_context(
-                    user_data_dir=audit_dir, headless=is_headless, 
-                    args=['--no-sandbox', '--disable-setuid-sandbox'],
+                browser, ctx = await KeychainBypassCookieInjector.create_keychain_bypass_context(
+                    p, 
+                    headless=is_headless,
+                    state_path="NONEXISTENT_STATE_TO_FORCE_CLEAN",  # Bypasses any pre-saved state to force clean programmatic login
                     viewport={'width': 1920, 'height': 1080},
                     user_agent=f"ArchonIntegratedScout/3.9.1 ({safe_name})"
                 )
@@ -323,6 +326,7 @@ async def run_scout_session():
                 res = await inspect_and_analyze(pg, p_config, reality_map, client, target_model, mission_prompt)
                 global_report.append(res)
                 await ctx.close()
+                await browser.close()
                 
                 # Physical Cooldown to prevent 503 API Strain (Gemini Free Tier)
                 print(f"⏳ [Scout] Cooling down for 15s before next persona...")
@@ -364,13 +368,12 @@ async def run_scout_session():
         # Action mode (Multi-Agent star topology dynamic verification)
         print("🚀 [Scout] Entering ACTION mode for Multi-Agent group chat verification...")
         
-        audit_dir = os.path.abspath("./.browser_data/scout_action")
-        os.makedirs(audit_dir, exist_ok=True)
+        from cookie_injector import KeychainBypassCookieInjector
         
         async with async_playwright() as p:
-            ctx = await p.chromium.launch_persistent_context(
-                user_data_dir=audit_dir, headless=is_headless, 
-                args=['--no-sandbox', '--disable-setuid-sandbox'],
+            browser, ctx = await KeychainBypassCookieInjector.create_keychain_bypass_context(
+                p, 
+                headless=is_headless,
                 viewport={'width': 1920, 'height': 1080},
                 user_agent="ArchonIntegratedScout/3.9.1 (action-twin)"
             )
@@ -381,6 +384,7 @@ async def run_scout_session():
             
             res_analysis = await verify_multi_agent_chat(pg, client, target_model, mission_prompt)
             await ctx.close()
+            await browser.close()
             
             report_text = f"# Digital Twin Action Report (Multi-Agent Chat v39.1)\n\n## Action Verification\n{res_analysis}\n"
             report_dir = "./.twin/diagnostics"
