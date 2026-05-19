@@ -73,6 +73,7 @@ export const SentinelRadar: React.FC<SentinelRadarProps> = ({
                                 type="range" 
                                 min="0" max="100" 
                                 value={rule.weight}
+                                aria-label={`Adjust weight for ${rule.label}`}
                                 onChange={e => handleRuleChange(rule.key, parseInt(e.target.value))}
                                 className="w-full h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
                             />
