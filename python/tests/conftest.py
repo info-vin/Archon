@@ -169,6 +169,7 @@ def client(mock_supabase_client):
                 with patch(
                     "server.services.credential_service.create_client",
                     return_value=mock_supabase_client,
+                    create=True,
                 ):
                     with patch("supabase.create_client", return_value=mock_supabase_client):
                         from unittest.mock import AsyncMock
@@ -190,7 +191,7 @@ def client(mock_supabase_client):
                         "email": "admin@test.com",
                     }
 
-                    with patch("server.main._check_database_schema", new=mock_schema_check):
+                    with patch("server.main._check_database_schema", new=mock_schema_check, create=True):
                         return TestClient(app)
 
 
