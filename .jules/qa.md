@@ -11,3 +11,7 @@
 ## 2024-05-20 - Vitest Mocking of API Functions
 **Learning:** When API functions (like `getAttendanceStatus`) are placed in an `ignoreList` within a `vi.mock` factory in Vitest (e.g. `tests/e2e/e2e.setup.tsx`), they bypass MSW interception entirely and invoke Node.js native `fetch`. This leads to `NETWORK_ERROR`s when attempting to reach `localhost:8181` during tests.
 **Action:** Explicitly mock such ignored functions directly inside the `vi.mock` factory (e.g., `mockedApi.getAttendanceStatus = vi.fn().mockResolvedValue(...)`) to ensure stable test execution without network dependency.
+
+## 2024-05-19 - Unhandled React state updates in Vitest teardown
+**Learning:** When async operations (like fetch calls) resolve or reject after a test has finished and Vitest has started teardown, React state updates inside `.finally()` or `.then()` blocks will throw "window is not defined" `Unhandled Rejection` errors, instead of the standard "Can't perform a React state update on an unmounted component" warning. This creates noisy, polluting test output.
+**Action:** Always use an `isMounted` boolean flag pattern inside `useEffect` for data fetching hooks to ensure state setters are not called if the component unmounts or the test finishes before the promise settles.

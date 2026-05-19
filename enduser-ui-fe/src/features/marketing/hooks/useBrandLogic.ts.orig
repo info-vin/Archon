@@ -7,7 +7,7 @@ import { ContentSource } from '../components/VictoryFeedList';
 export const useBrandLogic = () => {
     const { user } = useAuth();
     const [viewMode, setViewMode] = useState<'dashboard' | 'workbench'>('workbench');
-    
+
     // Dashboard State
     const [posts, setPosts] = useState<BlogPost[]>([]);
     const [trendsData, setTrendsData] = useState<any>(null);
@@ -32,7 +32,7 @@ export const useBrandLogic = () => {
     const [isLoadingContext, setIsLoadingContext] = useState(false);
     const [isDrafting, setIsDrafting] = useState(false);
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-    
+
     // Workbench Editor State
     const [workbenchTitle, setWorkbenchTitle] = useState('');
     const [workbenchContent, setWorkbenchContent] = useState('');
@@ -44,7 +44,7 @@ export const useBrandLogic = () => {
             const savedTitle = localStorage.getItem(`draft_title_${activeSource.id}`);
             const savedContent = localStorage.getItem(`draft_content_${activeSource.id}`);
             const savedImage = localStorage.getItem(`draft_image_${activeSource.id}`);
-            
+
             setWorkbenchTitle(savedTitle || '');
             setWorkbenchContent(savedContent || '');
             setWorkbenchImageUrl(savedImage || '/placeholder-blog.jpg');
@@ -67,14 +67,14 @@ export const useBrandLogic = () => {
                 api.getBlogPosts(),
                 api.getMarketingTrends()
             ]);
-            
+
             if (results[0].status === 'fulfilled') setPosts(results[0].value);
             if (results[1].status === 'fulfilled') setTrendsData(results[1].value);
-            
+
         } catch (err) {
             console.error("Failed to load brand data:", err);
         } finally {
-            if (typeof window !== 'undefined') setLoading(false);
+            setLoading(false);
         }
     }, []);
 
@@ -86,23 +86,13 @@ export const useBrandLogic = () => {
         } catch (err) {
             console.error("Failed to load content sources:", err);
         } finally {
-            if (typeof window !== 'undefined') setIsLoadingSources(false);
+            setIsLoadingSources(false);
         }
     }, []);
 
     useEffect(() => {
-        let isMounted = true;
-
-        const initData = async () => {
-            if (isMounted) await loadData();
-            if (isMounted && viewMode === 'workbench') await loadWorkbenchData();
-        };
-
-        initData();
-
-        return () => {
-            isMounted = false;
-        };
+        loadData();
+        if (viewMode === 'workbench') loadWorkbenchData();
     }, [viewMode, loadData, loadWorkbenchData]);
 
     const handleSelectSource = async (source: ContentSource) => {
@@ -110,9 +100,9 @@ export const useBrandLogic = () => {
         setWorkbenchContent('');
         setWorkbenchImageUrl('/placeholder-blog.jpg');
         setContextData(null);
-        
+
         const sourceData = { ...source };
-        
+
         if (source.type === 'blog' && source.id && !source.id.startsWith('blank-')) {
             setIsLoadingContext(true);
             try {
@@ -121,12 +111,12 @@ export const useBrandLogic = () => {
                 setWorkbenchTitle(blogRes.title);
                 setWorkbenchContent(blogRes.content || '');
                 setWorkbenchImageUrl(finalImage);
-                setActivePostId(blogRes.id); 
-                
+                setActivePostId(blogRes.id);
+
                 localStorage.setItem(`draft_title_${source.id}`, blogRes.title);
                 localStorage.setItem(`draft_content_${source.id}`, blogRes.content || '');
                 localStorage.setItem(`draft_image_${source.id}`, finalImage);
-                
+
                 const taskId = (blogRes as any).generationMetadata?.task_id || (blogRes as any).task_id;
                 setActiveTaskId(taskId || null);
                 sourceData.review_notes = blogRes.review_notes;
@@ -141,7 +131,7 @@ export const useBrandLogic = () => {
             const taskId = sourceData.metadata?.task_id || (sourceData as any).task_id;
             setActiveTaskId(taskId || null);
         }
-        
+
         setActiveSource(sourceData);
         if (!source.id.startsWith('blank-')) {
             setIsLoadingContext(true);
@@ -208,7 +198,7 @@ export const useBrandLogic = () => {
     const handleSaveWorkbench = async () => {
         try {
             const { cleanContent, extractedUrl } = cleanAIImageReference(workbenchContent || "", workbenchImageUrl);
-            
+
             const postPayload = {
                 title: workbenchTitle || "Untitled Draft",
                 content: cleanContent,
@@ -264,7 +254,7 @@ export const useBrandLogic = () => {
                 }
             };
 
-            const targetPost = activePostId 
+            const targetPost = activePostId
                 ? await api.updateBlogPost(activePostId, payload as any)
                 : await api.createBlogPost(payload as any);
 
@@ -351,7 +341,7 @@ export const useBrandLogic = () => {
         workbenchContent, setWorkbenchContent,
         workbenchImageUrl, setWorkbenchImageUrl,
         handleSelectSource, handleMagicDraft, handleSaveWorkbench, handlePublishWorkbench,
-        handleDeletePost, handleNewPost, updatePostStatus, handleSavePost, 
+        handleDeletePost, handleNewPost, updatePostStatus, handleSavePost,
         handleGenerateImage,
         loadData, loadWorkbenchData
     };

@@ -151,6 +151,7 @@ export const handlers = [
   http.get('*/api/stats/ai-usage', () => HttpResponse.json({ total_budget: 1000, total_used: 150 })),
   http.get('*/api/stats/token-usage/recent', () => HttpResponse.json([])),
   http.get('*/api/blogs', () => HttpResponse.json([])),
+  http.get('*/api/blogs/:id', () => HttpResponse.json({ id: '1', title: 'Mock Post', content: 'Mock Content' })),
   http.get('*/api/marketing/blogs', () => HttpResponse.json([])),
   http.get('*/api/knowledge', () => HttpResponse.json({ 
     items: [
