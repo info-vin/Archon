@@ -154,6 +154,7 @@ class SchedulerService:
         await self._schedule_stateful_job(self._analyze_token_usage, 24, "token_analysis")
         await self._schedule_stateful_job(self._run_business_sentinel, sentinel_hours, "business_sentinel")
         await self._schedule_stateful_job(self._run_daily_market_report, 24, "bob_market_report")
+        await self._schedule_stateful_job(self._run_daily_executive_summary, 24, "daily_executive_summary")
         await self._schedule_stateful_job(self._run_tech_debt_audit, 336, "tech_debt_audit")
         await self._schedule_stateful_job(self._run_api_deprecation_scan, 336, "api_deprecation_scan")
 
