@@ -75,19 +75,23 @@ const DocumentBrowserModal = ({ open, onOpenChange }: { open: boolean; onOpenCha
   const [selectedDoc, setSelectedDoc] = useState(MOCK_DOCUMENTS[0]);
   const [selectedCode, setSelectedCode] = useState(MOCK_CODE[0]);
 
+  // Precalculate lowercase strings for efficient search filtering
+  const searchableDocs = useMemo(() => MOCK_DOCUMENTS.map((doc) => doc.title.toLowerCase()), []);
+  const searchableCode = useMemo(() => MOCK_CODE.map((example) => example.summary.toLowerCase()), []);
+
   // PERFORMANCE: Extract .toLowerCase() outside the filter loop to prevent O(N) string allocations
   // and memoize the result to prevent recalculation on unrelated re-renders.
   const filteredDocuments = useMemo(() => {
     if (!searchQuery) return MOCK_DOCUMENTS;
     const query = searchQuery.toLowerCase();
-    return MOCK_DOCUMENTS.filter((doc) => doc.title.toLowerCase().includes(query));
-  }, [searchQuery]);
+    return MOCK_DOCUMENTS.filter((_, i) => searchableDocs[i].includes(query));
+  }, [searchQuery, searchableDocs]);
 
   const filteredCode = useMemo(() => {
     if (!searchQuery) return MOCK_CODE;
     const query = searchQuery.toLowerCase();
-    return MOCK_CODE.filter((example) => example.summary.toLowerCase().includes(query));
-  }, [searchQuery]);
+    return MOCK_CODE.filter((_, i) => searchableCode[i].includes(query));
+  }, [searchQuery, searchableCode]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
