@@ -183,9 +183,9 @@ if __name__ == "__main__":
             run_result = await beta_graph.run(deps=None, state=test_state)
             
             logger.info("=" * 40)
-            logger.info(f"✅ Final Return Value: \n{run_result.output}")
+            logger.info(f"✅ Final Return Value: \n{run_result}")
             logger.info("-" * 40)
-            logger.info(f"💰 Token ROI Verification: Input: {run_result.state.shared.input_tokens}, Output: {run_result.state.shared.output_tokens}, Model: {run_result.state.shared.model_used}")
+            logger.info(f"💰 Token ROI Verification: Input: {test_state.shared.input_tokens}, Output: {test_state.shared.output_tokens}, Model: {test_state.shared.model_used}")
             logger.info("=" * 40)
         except Exception as e:
             logger.error(f"Execution crashed: {e}")
