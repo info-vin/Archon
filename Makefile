@@ -233,7 +233,7 @@ clean:
 		echo "Cancelled"; \
 	fi
 
-.PHONY: twin-scout twin-scout-action twin-fix
+.PHONY: twin-scout twin-scout-action twin-scout-fanout twin-fix
 
 # 執行自動偵察 (容器化對帳模式)
 twin-scout:
@@ -245,6 +245,12 @@ twin-scout-action:
 	@echo "🚀 啟動數位孿生偵察員 (本機原生模式 | 目標 Prompt: $${T:-twin_scout_mission})..."
 	@set -a; [ -f .env ] && . ./.env; set +a; \
 	$(UV) run --env-file .env python scripts/twin_scout.py --mode action --headless false
+
+# 執行 Fan-out 並發引擎物理公證
+twin-scout-fanout:
+	@echo "🚀 啟動數位孿生偵察員 (Fan-out 併發公證)..."
+	@set -a; [ -f .env ] && . ./.env; set +a; \
+	$(UV) run --env-file .env python scripts/twin_scout.py --mode fanout --headless false
 
 # 提示 Antigravity 維修流程
 twin-fix:

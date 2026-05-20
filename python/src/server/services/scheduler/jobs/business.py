@@ -96,6 +96,62 @@ Use the tool to save this blog post as a DRAFT."""
         logger.error(f"💥 Clockwork: Bob market report generation failed: {e}")
 
 
+async def run_daily_executive_summary():
+    """Clockwork task to trigger Fan-out Map-Reduce for Daily Executive Summary."""
+    logger.info("📊 Clockwork: Triggering Daily Executive Summary (Fan-out)...")
+    try:
+        from src.agents.workflow.engine_beta_graph import BetaState, beta_graph
+        from src.agents.workflow.state import SharedState
+        from src.server.services.projects.task_service import task_service
+        from src.server.services.shared_constants import AgentUUIDs
+
+        # Initialize State
+        state = BetaState(shared=SharedState())
+
+        logger.info("📊 Clockwork: Executing beta_graph...")
+        from typing import Any
+        run_result: Any = await beta_graph.run(deps=None, state=state)
+        output = run_result.output if hasattr(run_result, "output") else run_result
+
+        # Save to DB as Task
+        supabase = get_supabase_client()
+        p_res = supabase.table("archon_projects").select("id").limit(1).execute()
+        if not p_res.data:
+            logger.warning("Clockwork: No projects found to attach summary task.")
+            return
+
+        task_title = f"[Daily Report] Executive Summary ({datetime.now().strftime('%Y-%m-%d')})"
+        task_desc = str(output)
+
+        # Get Charlie's ID for assignment
+        charlie_res = supabase.table("profiles").select("id").eq("email", "charlie@archon.com").execute()
+        assignee_id = charlie_res.data[0]["id"] if charlie_res.data else AgentUUIDs.SUPERVISOR
+
+        success, tr = await task_service.create_task(
+            project_id=p_res.data[0]["id"],
+            title=task_title,
+            description=task_desc,
+            assignee_id=assignee_id
+        )
+        if success:
+            logger.info(f"✅ Clockwork: Created Executive Summary task {tr['task']['id']}. Dispatching Charlie...")
+
+            # Record ROI info to logs
+            supabase.table("archon_logs").insert({
+                "source": "clockwork-scheduler",
+                "level": "INFO",
+                "message": f"Daily Executive Summary completed. Task created: {tr['task']['id']}",
+                "details": {
+                    "type": "executive_summary",
+                    "input_tokens": state.shared.input_tokens,
+                    "output_tokens": state.shared.output_tokens,
+                    "model": state.shared.model_used
+                }
+            }).execute()
+
+    except Exception as e:
+        logger.error(f"💥 Clockwork: Executive Summary generation failed: {e}")
+
 async def analyze_token_usage():
     """Token Usage Analysis & Proactive Alerting (Phase 4.6.46: Proactive)"""
     logger.info("🤖 Clockwork: Starting Token Usage Analysis...")

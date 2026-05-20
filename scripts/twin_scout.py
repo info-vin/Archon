@@ -30,7 +30,7 @@ from src.server.services.prompt_service import prompt_service
 def parse_args():
     parser = argparse.ArgumentParser(description="Digital Twin Scout v39.1 - 503 Resistant")
     parser.add_argument("--headless", type=str, default="true")
-    parser.add_argument("--mode", type=str, default="audit", choices=["audit", "action"])
+    parser.add_argument("--mode", type=str, default="audit", choices=["audit", "action", "fanout"])
     return parser.parse_args()
 
 def limit_diagnostic_capacity(directory="./.twin/diagnostics", max_files=10):
@@ -272,6 +272,48 @@ async def verify_multi_agent_chat(pg, client, target_model, mission_prompt):
         print(f"❌ [Scout-Action] Star-topology verification FAILED: {e}")
         return f"WORKFLOW_FAILURE: Critical Failure during verify_multi_agent_chat: {e}"
 
+async def verify_fanout_executive_summary(pg):
+    """
+    Physically executes the Fan-out scheduler job, then logs in as Charlie,
+    and asserts the [Daily Report] Executive Summary task exists in the DOM.
+    """
+    from src.server.services.scheduler.jobs.business import run_daily_executive_summary
+    print("⏳ [Scout-Fanout] Triggering backend Fan-out Map-Reduce...")
+    await run_daily_executive_summary()
+    print("✅ [Scout-Fanout] Backend Fan-out completed.")
+
+    url = os.getenv("ENDUSER_UI_URL", "http://localhost:5173")
+    print(f"📡 [Scout-Fanout] Navigating to EndUser UI Auth ({url})...")
+    
+    try:
+        await pg.goto(f"{url}/#/auth", wait_until="domcontentloaded", timeout=30000)
+        
+        try:
+            await pg.wait_for_selector('input[type="email"]', timeout=5000)
+            print("🔑 [Scout-Fanout] Fill login credentials...")
+            await pg.fill('input[type="email"]', "charlie@archon.com")
+            await pg.fill('input[type="password"]', "qwer45tyuiop")
+            await pg.click('button[type="submit"]')
+            await asyncio.sleep(3)
+        except Exception:
+            print("⚡ [Scout-Fanout] Already authenticated or skipping login page...")
+
+        await pg.goto(f"{url}/#/dashboard", wait_until="domcontentloaded", timeout=30000)
+        
+        # Navigate to Dashboard where tasks are visible.
+        # Check if the task is visible
+        print("🔍 [Scout-Fanout] Looking for '[Daily Report]' task card...")
+        # Since it takes time to render, wait for the element
+        await pg.wait_for_selector('text=Daily Report', timeout=15000)
+        await pg.wait_for_selector('text=Executive Summary', timeout=15000)
+        
+        print("✅ [Scout-Fanout] Fan-out task successfully physicalized on frontend.")
+        return "WORKFLOW_SUCCESS: Executive Summary found."
+    except Exception as e:
+        print(f"❌ [Scout-Fanout] Verification FAILED: {e}")
+        await pg.screenshot(path="fanout_debug.png", full_page=True)
+        return f"WORKFLOW_FAILURE: {e}"
+
 async def run_scout_session():
     args = parse_args()
     is_headless = args.headless.lower() == "true"
@@ -365,6 +407,38 @@ async def run_scout_session():
                 print("🚀 [Scout] Self-tuning optimizations applied to AgentRegistry.")
             except Exception as e:
                 print(f"⚠️ [Scout] Feedback loop write failed: {e}")
+    elif mode == "fanout":
+        # Fan-out mode (Executive Summary Map-Reduce verification)
+        print("🚀 [Scout] Entering FANOUT mode for Executive Summary Map-Reduce verification...")
+        
+        from cookie_injector import KeychainBypassCookieInjector
+        
+        async with async_playwright() as p:
+            browser, ctx = await KeychainBypassCookieInjector.create_keychain_bypass_context(
+                p, 
+                headless=is_headless,
+                viewport={'width': 1920, 'height': 1080},
+                user_agent="ArchonIntegratedScout/3.9.1 (fanout-twin)"
+            )
+            pg = await ctx.new_page()
+            
+            # Dismiss all alerts/dialogs safely
+            pg.on("dialog", lambda dialog: asyncio.create_task(dialog.accept()))
+            
+            res_analysis = await verify_fanout_executive_summary(pg)
+            await ctx.close()
+            await browser.close()
+            
+            report_text = f"# Digital Twin Fan-out Report (Executive Summary v39.1)\n\n## Fan-out Verification\n{res_analysis}\n"
+            report_dir = "./.twin/diagnostics"
+            os.makedirs(report_dir, exist_ok=True)
+            report_path = f"{report_dir}/report_fanout_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md"
+            with open(report_path, "w", encoding="utf-8") as f: f.write(report_text)
+            
+            print(f"📄 [Scout] Fan-out Report saved: {report_path}")
+            final_type = "WORKFLOW_FAILURE" if "WORKFLOW_FAILURE" in report_text or "PARITY_MISMATCH" in report_text else "WORKFLOW_SUCCESS"
+            await log_twin_diagnosis(report_text, final_type)
+
     else:
         # Action mode (Multi-Agent star topology dynamic verification)
         print("🚀 [Scout] Entering ACTION mode for Multi-Agent group chat verification...")

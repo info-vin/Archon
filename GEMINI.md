@@ -156,6 +156,11 @@
 
 # 第三章：近期工作日誌 (Recent Activity Logs)
 
+### 2026-05-20: 封存 Phase 5.0.x 歷史文件
+*   **1. 歷史文件歸檔**:
+    - **行動**: 將 `PRPs/Phase_5.0.0_Multi_Agent_Implementation.md`, `PRPs/Phase_5.0.1_API_Error_Handling.md`, `PRPs/Phase_5.0.2_Native_Group_Chat_Feasibility.md` 三份過期歷史計畫文件，依循命名慣例封存至 `PRPs/archive/Phases_5.0.0_to_5.0.2/`。
+    - **結果**: 保持 `PRPs` 根目錄的精簡與聚焦。
+
 ### 2026-05-19: Phase 5.1.8 實體貫通驗證與 Makefile 自動化測試文件升級
 *   **1. Phase 5.1.8 (Centralized LLM Gateway) 落地公證**:
     - **驗證**: 審查了 `internal_llm_api.py`, `resilience.py` 與 `docker-compose.yml`。

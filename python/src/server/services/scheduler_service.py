@@ -197,6 +197,9 @@ class SchedulerService:
     async def _run_daily_market_report(self):
         await business.run_daily_market_report()
 
+    async def _run_daily_executive_summary(self):
+        await business.run_daily_executive_summary()
+
     async def _run_api_deprecation_scan(self):
         await business.run_api_deprecation_scan()
 
