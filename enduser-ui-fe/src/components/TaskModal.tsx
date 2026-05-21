@@ -253,11 +253,13 @@ export const TaskModal: React.FC<TaskModalProps> = ({ task, onClose, onTaskCreat
         </div>
 
         {/* Tabs Header */}
-        <div className="flex w-full border-b border-border mb-4 flex-shrink-0 overflow-x-auto custom-scrollbar pb-0">
+        <div className="flex w-full border-b border-border mb-4 flex-shrink-0 overflow-x-auto custom-scrollbar pb-0" role="tablist" aria-label="Task Details Tabs">
           {tabs.map(tab => (
             <button
               key={tab.id}
               type="button"
+              role="tab"
+              aria-selected={activeTab === tab.id}
               onClick={() => setActiveTab(tab.id as TabType)}
               className={`flex-1 px-2 py-3 text-xs sm:text-sm font-medium border-b-2 transition-colors text-center whitespace-nowrap ${activeTab === tab.id ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'}`}
             >
