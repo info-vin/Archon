@@ -65,6 +65,7 @@ describe('BlogDetailPage Rendering (Phase 6 Verification)', () => {
     });
 
     it('should show error message when post is not found', async () => {
+        const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
         (api.getBlogPost as any).mockRejectedValue(new Error('Post not found'));
 
         render(
@@ -78,5 +79,7 @@ describe('BlogDetailPage Rendering (Phase 6 Verification)', () => {
         await waitFor(() => {
             expect(screen.getByText(/Failed to load blog post/i)).toBeInTheDocument();
         });
+
+        consoleSpy.mockRestore();
     });
 });
