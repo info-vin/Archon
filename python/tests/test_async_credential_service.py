@@ -416,8 +416,19 @@ class TestAsyncCredentialService:
             assert configs[0]["embedding_model"] == "model-b"
 
     @pytest.mark.asyncio
-    async def test_get_embedding_provider_configs_no_provider(self):
-        """Test get_embedding_provider_configs with no provider configured."""
-        with patch.object(credential_service, "get_credentials_by_category", return_value={}):
+    async def test_get_embedding_provider_configs_fallback_defaults(self):
+        """Test get_embedding_provider_configs falls back to defaults when nothing is configured."""
+        async def mock_get_credential(key):
+            if key == "OPENAI_API_KEY":
+                return "fallback_openai_key"
+            return None
+
+        with (
+            patch.object(credential_service, "get_credentials_by_category", return_value={}),
+            patch.object(credential_service, "get_credential", side_effect=mock_get_credential),
+        ):
             configs = await credential_service.get_embedding_provider_configs()
-            assert len(configs) == 0
+            assert len(configs) == 1
+            assert configs[0]["provider"] == "openai"
+            assert configs[0]["embedding_model"] == "text-embedding-3-small"
+

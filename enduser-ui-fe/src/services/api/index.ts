@@ -117,6 +117,7 @@ export const api = {
   getContentContext: opsApi.getContentContext.bind(opsApi),
   generateLogo: opsApi.generateLogo.bind(opsApi),
   diagnoseFile: opsApi.diagnoseFile.bind(opsApi),
+  crawlKnowledgeItem: opsApi.crawlKnowledgeItem.bind(opsApi),
 };
 
 export { supabase } from './client';

@@ -93,16 +93,17 @@ class ContentHandler:
     async def generate_visual_asset(self, style: str) -> dict:
         from .logo_tool import generate_logo_svg
 
+        # 1. Try native AI visual generation
         try:
             api_key = await credential_service.get_credential(
                 "GEMINI_API_KEY"
             ) or await credential_service.get_credential("GOOGLE_API_KEY")
-            client = genai.Client(api_key=api_key)
-            prompt = f"Professional tech logo, {style}, high resolution"
 
-            try:
+            if api_key:
+                client = genai.Client(api_key=api_key)
+                prompt = f"Professional tech logo, {style}, high resolution"
                 native_resp = client.models.generate_content(
-                    model=SYSTEM_MODELS["IMAGE_GEN"],
+                    model=SYSTEM_MODELS.get("IMAGE_GEN", "imagen-3.0-generate-002"),
                     contents=cast(Any, [prompt]),
                     config=types.GenerateContentConfig(response_modalities=["IMAGE"]),
                 )
@@ -114,9 +115,13 @@ class ContentHandler:
                             "tier": "native",
                             "svg_content": "",
                         }
-            except Exception:
-                logger.warning("ContentHandler: Native AI visual generation failed, using SVG.")
+            else:
+                logger.info("ContentHandler: API Key missing, using SVG generator directly.")
+        except Exception as e:
+            logger.warning(f"ContentHandler: Native AI visual generation failed ({e}), using SVG.")
 
+        # 2. Try SVG Generation (Fallback)
+        try:
             svg_content = generate_logo_svg(style)
             svg_base64 = base64.b64encode(svg_content.encode("utf-8")).decode("utf-8")
             return {
@@ -126,7 +131,7 @@ class ContentHandler:
                 "svg_content": svg_content,
             }
         except Exception as e:
-            logger.error(f"ContentHandler: Visual fallback: {e}")
+            logger.critical(f"ContentHandler: Comprehensive visual failure: {e}")
             return {"status": "success", "image_url": "https://picsum.photos/1024/1024", "tier": "emergency"}
 
     async def draft_blog(self, topic: str, industry: list[str] | None, keywords: str | None) -> tuple[bool, dict]:

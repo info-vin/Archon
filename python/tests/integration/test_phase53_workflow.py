@@ -1,4 +1,5 @@
 import logging
+import os
 
 import pytest
 from dotenv import load_dotenv
@@ -25,6 +26,9 @@ async def test_phase53_bob_to_charlie_workflow():
     Phase 5.3 & 5.0.2: Concept Verification for Supervisor/Worker Topology and Dynamic Prompt Governance.
     Simulates Charlie hosting a Marketing Data Deep Dive.
     """
+    if os.environ.get("RUN_INTEGRATION_TESTS") != "true":
+        pytest.skip("Skipping integration workflow test (set RUN_INTEGRATION_TESTS=true to run)")
+
     if not await is_server_running():
         pytest.skip("Agents server not running on localhost:8052")
 

@@ -1,9 +1,11 @@
 import React from 'react';
 import { ContentSource } from './VictoryFeedList';
 import { ContentWorkbench } from './ContentWorkbench';
+import { MarketingIngestion } from './MarketingIngestion';
 import { 
     LayoutIcon, XIcon, RefreshCwIcon
 } from '../../../components/Icons';
+
 
 interface BrandWorkbenchViewProps {
     sources: ContentSource[];
@@ -45,8 +47,10 @@ export const BrandWorkbenchView: React.FC<BrandWorkbenchViewProps> = ({
                     </h2>
                     {isLoadingSources && <RefreshCwIcon className="w-4 h-4 animate-spin text-indigo-400" />}
                 </div>
-                <div className="flex-1 overflow-y-auto p-4 space-y-2">
-                    {sources.map(source => (
+                <div className="flex-1 overflow-y-auto p-4 space-y-3">
+                    <MarketingIngestion />
+                    <div className="space-y-2">
+                        {sources.map(source => (
                         <div 
                             key={`${source.type}-${source.id}`}
                             onClick={() => handleSelectSource(source)}
@@ -67,6 +71,7 @@ export const BrandWorkbenchView: React.FC<BrandWorkbenchViewProps> = ({
                             <p className="text-[10px] text-slate-400 mt-1 line-clamp-2 leading-relaxed">{source.summary}</p>
                         </div>
                     ))}
+                    </div>
                 </div>
             </aside>
 

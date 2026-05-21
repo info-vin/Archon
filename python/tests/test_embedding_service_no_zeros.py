@@ -92,12 +92,25 @@ class TestNoZeroEmbeddings:
     @pytest.mark.asyncio
     async def test_async_api_error_raises_exception(self) -> None:
         """Test that API errors raise exception instead of returning zeros."""
-        with patch("src.server.services.embeddings.embedding_service.get_llm_client") as mock_client:
-            # Mock the client to raise generic error
-            mock_ctx = AsyncMock()
-            mock_ctx.__aenter__.return_value.embeddings.create.side_effect = Exception("Network error")
-            mock_client.return_value = mock_ctx
+        mock_client = MagicMock()
+        mock_client.aclose = AsyncMock()
+        mock_client.embeddings.create.side_effect = Exception("Network error")
 
+        primary_config = {"provider": "openai", "embedding_model": "text-embedding-3-small", "api_key": "key-ok"}
+        mock_get_configs = AsyncMock(return_value=[primary_config])
+        mock_create_client = AsyncMock(return_value=mock_client)
+
+        with (
+            patch(
+                "src.server.services.embeddings.batch_processor.credential_service.get_embedding_provider_configs",
+                mock_get_configs,
+            ),
+            patch("src.server.services.embeddings.batch_processor.create_embedding_client", mock_create_client),
+            patch(
+                "src.server.services.embeddings.batch_processor.credential_service.get_credentials_by_category",
+                AsyncMock(return_value={"EMBEDDING_BATCH_SIZE": "10"}),
+            ),
+        ):
             with pytest.raises(EmbeddingAPIError) as exc_info:
                 await create_embedding("test text")
 

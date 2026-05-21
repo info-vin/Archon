@@ -293,5 +293,12 @@ export const opsApi = {
         method: 'POST',
         body: JSON.stringify({ file_path: filePath })
     });
+  },
+
+  async crawlKnowledgeItem(url: string, knowledgeType = 'marketing', tags: string[] = []): Promise<any> {
+    return await callAPI('/api/knowledge-items/crawl', {
+        method: 'POST',
+        body: JSON.stringify({ url, knowledge_type: knowledgeType, tags })
+    });
   }
 };

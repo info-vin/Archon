@@ -346,7 +346,7 @@ async def run_scout_session():
 
         personas = [
             {"email": "alice@archon.com", "url": "/marketing", "selector": "ul, table, .grid-cols-1", "name": "Alice (Sales)"},
-            {"email": "bob@archon.com", "url": "/brand", "selector": "ul, .grid-cols-1", "name": "Bob (Marketing)"},
+            {"email": "bob@archon.com", "url": "/brand", "selector": ".bg-purple-50, aside div.flex-1.overflow-y-auto > div", "name": "Bob (Marketing)"},
             {"email": "charlie@archon.com", "url": "/nexus", "selector": "canvas, .recharts-responsive-container", "name": "Charlie (Manager Nexus)"},
             {"email": "admin@archon.com", "url": "/admin", "selector": "h1, .admin-panel", "name": "David Howard (Admin)"},
             {"email": "dev.bot@archon.com", "url": "/dashboard", "selector": "ul, table, .card", "name": "DevBot (Agent)"}

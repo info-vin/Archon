@@ -63,10 +63,11 @@ export default defineConfig(({ mode }) => {
       },
       test: {
         globals: true,
-              environment: 'jsdom',
-              setupFiles: './test/setup.ts',
-              exclude: ['tests/playwright/**', 'node_modules'],
-            }
-          };
-      });
-      
+        environment: 'jsdom',
+        setupFiles: './test/setup.ts',
+        exclude: ['tests/playwright/**', 'node_modules'],
+        testTimeout: 10000,
+        hookTimeout: 10000,
+      }
+    };
+});

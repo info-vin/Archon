@@ -82,7 +82,7 @@ verify-data:
 # --- 5-Persona Physical Health Gate ---
 persona-audit:
 	@echo "🔍 Performing Global Persona Physical Audit (Alice, Bob, Charlie, David, Agents)..."
-	@docker exec -it archon-server /venv/bin/python scripts/persona_smoke_test.py
+	@docker exec -i archon-server /venv/bin/python scripts/persona_smoke_test.py
 
 # --- Automated Quality Gateway (Milestone 5) ---
 audit-qa:
@@ -247,7 +247,7 @@ clean:
 # 執行自動偵察 (容器化對帳模式)
 twin-scout:
 	@echo "🚀 啟動數位孿生偵察員 (容器化對帳 | 目標 Prompt: $${T:-twin_scout_mission})..."
-	@docker exec -it -e SCOUT_PROMPT_KEY=$${T:-twin_scout_mission} archon-server /venv/bin/python scripts/twin_scout.py --mode audit
+	@docker exec -i -e SCOUT_PROMPT_KEY=$${T:-twin_scout_mission} archon-server /venv/bin/python scripts/twin_scout.py --mode audit
 
 # 執行自動偵察 (本地原生行動與星型群聊自癒巡檢)
 twin-scout-action:

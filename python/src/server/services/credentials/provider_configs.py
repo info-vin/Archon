@@ -57,7 +57,11 @@ async def get_embedding_provider_configs(manager: Any) -> list[dict[str, Any]]:
     """
     configs = []
     try:
+        ai_settings = await manager.get_credentials_by_category("ai")
+        marketing_settings = await manager.get_credentials_by_category("marketing")
         rag_settings = await manager.get_credentials_by_category("rag_strategy")
+
+        all_settings = {**ai_settings, **marketing_settings, **rag_settings}
 
         provider_types = [
             {"type": "primary", "suffix": ""},
@@ -69,25 +73,30 @@ async def get_embedding_provider_configs(manager: Any) -> list[dict[str, Any]]:
             model_key = f"EMBEDDING_MODEL{pt['suffix']}"
             api_key_override_key = f"EMBEDDING_API_KEY{pt['suffix']}"
 
-            provider = rag_settings.get(provider_key)
+            provider = all_settings.get(provider_key)
             if not provider:
                 if pt["type"] == "primary":
-                    provider = rag_settings.get("LLM_PROVIDER", "openai")
+                    provider = all_settings.get("LLM_PROVIDER") or os.getenv("LLM_PROVIDER", "openai").lower()
                 else:
                     continue
 
-            embedding_model = rag_settings.get(model_key)
+            embedding_model = all_settings.get(model_key)
             if not embedding_model and pt["type"] == "primary":
-                embedding_model = rag_settings.get("EMBEDDING_MODEL")
+                embedding_model = all_settings.get("EMBEDDING_MODEL") or os.getenv("EMBEDDING_MODEL", "")
 
-            if not provider or not embedding_model:
-                continue
+            if not embedding_model:
+                if provider == "google":
+                    embedding_model = "gemini-embedding-001"
+                elif provider == "openai":
+                    embedding_model = "text-embedding-3-small"
+                else:
+                    embedding_model = "default-embedding"
 
             api_key = await manager.get_credential(api_key_override_key)
             if not api_key:
                 api_key = await _get_provider_api_key(manager, provider)
 
-            base_url = _get_provider_base_url(provider, rag_settings)
+            base_url = _get_provider_base_url(provider, all_settings)
 
             if api_key:
                 configs.append(
