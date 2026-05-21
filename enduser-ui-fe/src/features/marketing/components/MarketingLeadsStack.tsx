@@ -1,5 +1,5 @@
 import React from 'react';
-import { RefreshCwIcon, MapPinIcon } from '../../../components/Icons';
+import { RefreshCwIcon, MapPinIcon, ActivityIcon, SparklesIcon } from '../../../components/Icons';
 import { Button } from '../../../components/Button';
 import { EmptyState as CommonEmptyState } from '../../../components/common/EmptyState';
 import { api } from '../../../services/api';
@@ -136,7 +136,7 @@ export const MarketingLeadsStack: React.FC<MarketingLeadsStackProps> = ({
                     </Button>
                     {/* Scenario B: Restore One-Tap Pitch */}
                     <Button variant="outline" size="sm" className="text-amber-600 border-amber-100 bg-amber-50/30 font-bold text-[10px] h-9 rounded-xl" onClick={() => onGeneratePitch(lead)}>
-                      <RefreshCwIcon className="w-3.5 h-3.5 mr-1" /> PITCH
+                      <SparklesIcon className="w-3.5 h-3.5 mr-1" /> PITCH
                     </Button>
                     <a href={lead.source_job_url} target="_blank" rel="noreferrer" className="flex items-center justify-center bg-gray-900 text-white rounded-xl text-[10px] font-bold h-9">
                       VIEW URL
@@ -190,7 +190,7 @@ export const MarketingLeadsStack: React.FC<MarketingLeadsStackProps> = ({
                       <Button variant="ghost" size="sm" className="text-indigo-600 hover:bg-indigo-50" onClick={() => onOpenVisitLog(lead)} aria-label="Log Visit (Hunter Mode)" title="Log Visit (Hunter Mode)">
                         <MapPinIcon className="w-4 h-4" />
                       </Button>
-                      <Button variant="ghost" size="sm" aria-label="Track Activity" title="Track Activity" onClick={() => alert("Activity Tracker: " + lead.company_name)}><RefreshCwIcon className="w-4 h-4" /></Button>
+                      <Button variant="ghost" size="sm" aria-label="Track Activity" title="Track Activity" onClick={() => alert("Activity Tracker: " + lead.company_name)}><ActivityIcon className="w-4 h-4" /></Button>
                     </td>
                   </tr>
                 ))}
