@@ -25,3 +25,9 @@ node_modules/
 
 # Playwright Test Artifacts
 .playwright/
+
+# Agent runtime and diagnostics
+.gemini/
+.twin/
+python/.twin/
+

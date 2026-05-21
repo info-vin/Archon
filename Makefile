@@ -87,19 +87,28 @@ persona-audit:
 # --- Automated Quality Gateway (Milestone 5) ---
 audit-qa:
 	@echo "🚨 [AuditQA] Starting Unified Quality Gateway Automation Suite..."
-	@echo "Step 1: Running DNS Leak Probe static scan..."
+	@echo "Step 1: Running Linter & Type Checker (make lint)..."
+	@make lint
+	@echo "Step 2: Running Frontend Unit Tests (pnpm)..."
+	@cd enduser-ui-fe && $(PNPM) run test:unit
+	@cd archon-ui-main && $(PNPM) test
+	@echo "Step 3: Running DNS Leak Probe static scan..."
 	@bash scripts/probe_dns_leak.sh
-	@echo "Step 2: Running Mobile Viewport Scroll Lockup static scan..."
+	@echo "Step 4: Running Mobile Viewport Scroll Lockup static scan..."
 	@cd python && $(UV) run python ../scripts/check_scroll_lockup.py
-	@echo "Step 3: Running Shadow DB Migration verifier..."
+	@echo "Step 5: Running Shadow DB Migration verifier..."
 	@cd python && $(UV) run python ../scripts/verify_migrations.py
-	@echo "Step 4: Running LLM Content Judge Semantic checks..."
+	@echo "Step 6: Running LLM Content Judge Semantic checks..."
 	@cd python && $(UV) run python ../scripts/llm_judge_content.py
-	@echo "Step 5: Running Backend Pytest suite..."
+	@echo "Step 7: Running Backend Pytest suite..."
 	@make test-be
-	@echo "Step 6: Running Frontend Playwright E2E tests (Budget Warning boundary)..."
+	@echo "🎉 [AuditQA] ALL STATIC & HERMETIC UNIT GATEWAYS PASSED SUCCESSFULLY!"
+
+# 獨立出會重置資料庫的 E2E 測試門禁
+audit-qa-e2e:
+	@echo "🚨 [AuditQA-E2E] Running destructive E2E suite (Resets Database)..."
 	@cd enduser-ui-fe && npx playwright test tests/playwright/BudgetWarning.mbt.spec.ts
-	@echo "🎉 [AuditQA] ALL STATIC, SEMANTIC, UNIT & E2E GATEWAYS PASSED SUCCESSFULLY!"
+	@echo "🎉 [AuditQA-E2E] E2E GATEWAY PASSED."
 
 probe:
 	@echo "Running Librarian Probe inside archon-server..."
