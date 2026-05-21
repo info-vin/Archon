@@ -44,8 +44,8 @@
 >     - **Schema 對帳**: 在執行任何 API 或資料庫欄位修改前，必須讀取 `migration/` 資料夾下的 SQL 實體。**嚴禁幻想欄位名稱**。
 >     - **雙生對帳**: 執行 `make twin-scout` 巡檢前，必須讀取 `scripts/twin_scout.py`，確保 Reality Snapshot 的 SQL 指標與 UI 頁面路徑 100% 物理對齊，防止 false mismatch。
 > 3.  **第三步：口頭確認 (Verbal Confirmation)**: 讀取後，我會向您用一兩句話總結我所理解的「**上次會話的最終狀態**」和「**今天的第一個目標**」。
-*   **當前狀態 (Current Context)**: Phase 5.1.7 (雙生對帳架構還原與星型群聊動態自癒巡檢) 已結案。
-*   **今日目標 (Today's Goal)**: 啟動 Phase 5.1.8，展開 RAG 快取優化與多 Agent 連動架構開發，並提交 5.1.7 的物理修改。
+*   **當前狀態 (Current Context)**: Phase 5.1.13 (Karpathy 式極簡 AI 知識庫與行銷反饋閉環) 已結案並提交。
+*   **今日目標 (Today's Goal)**: 啟動下一階段任務（RAG 快取優化與多 Agent 連動架構開發，或依使用者指示開展後續迭代）。
 
 > 4.  **第四步：取得您的確認**: 在您確認我對起點的理解無誤後，我才能開始執行第一個指令。
 
@@ -108,6 +108,15 @@
 ---
 
 # 第三章：近期工作日誌 (Recent Activity Logs)
+
+### 2026-05-21: Phase 5.1.13 Karpathy 式極簡 AI 知識庫與行銷反饋閉環落地
+* **1. 零 Token 實用主義視覺優化 (local SVG fallback)**:
+    * **行動**: 於 `logo_tool.py` 擴充科技霓虹濾鏡與多樣化幾何圖樣，並在 `content_handler.py` 中整併為乾淨的兩階段 fallback 邏輯，大幅減低雲端 AI 生圖的 API 成本。
+* **2. 「只管丟」原始網址爬網輸入**:
+    * **行動**: 實作前端 `MarketingIngestion` 輸入框與背景 API 對接，成功將網頁內容抓取、切片與向量化流程嵌入 Bob 的內容工作臺。
+* **3. 憑證與測試自癒加固**:
+    * **行動**: 清理 `provider_configs.py` 中的冗餘檢查，建立 `enduser-ui-fe/.env.test` 隔離測試環境，放寬 Vitest timeout，並為後端 integration tests 加裝 `RUN_INTEGRATION_TESTS` 門檻。
+    * **結果**: 後端/前端測試全數物理綠燈通過，`make twin-scout` 跨角色 UI 物理巡檢 100% 通過，成功以單一 Commit 提交推送。
 
 ### 2026-05-20: 封存 Phase 5.0.x 歷史文件
 * **1. 歷史文件歸檔與目錄精簡**:
