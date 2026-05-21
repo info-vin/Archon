@@ -169,7 +169,9 @@ async def inspect_and_analyze(pg, p_config, reality_map, client, target_model, m
         system_prompt = (
             f"你是一位精準的工作流診斷員 Digital Twin Scout v39.1。\n"
             f"任務：診斷角色 {name} 的 UI 狀態。特殊指令：{mission_prompt}\n"
-            f"比對 [Reality Snapshot] 與截圖。若正常請回傳 [WORKFLOW_SUCCESS]，否則回傳 [PARITY_MISMATCH]。"
+            f"比對 [Reality Snapshot] 與截圖。若正常請回傳 [WORKFLOW_SUCCESS]，否則回傳 [PARITY_MISMATCH]。\n"
+            f"重要規定：請務必全程使用繁體中文（zh-TW）撰寫報告，絕對不可使用簡體中文。\n"
+            f"注意：若 Reality Snapshot 顯示 0 tasks assigned，UI 左側導覽列的「My Tasks」項目旁預設不會顯示任何數字標記，此為正常現象，請勿將其視為異常。"
         )
         
         contents = [
@@ -256,7 +258,8 @@ async def verify_multi_agent_chat(pg, client, target_model, mission_prompt):
             "你是一位精準的工作流診斷員 Digital Twin Scout v39.1。\n"
             "任務：診斷星型群聊 (Multi-Agent Group Chat) 的 UI 與內容狀態。\n"
             "請檢查截圖中是否正確顯示 Supervisor 與 DevBot/MarketBot 之間的協作對話泡泡 (WhatsApp風格)。\n"
-            "若聊天記錄非空且正常協作，回傳 [WORKFLOW_SUCCESS]，否則回傳 [WORKFLOW_FAILURE] 並附上原因。"
+            "若聊天記錄非空且正常協作，回傳 [WORKFLOW_SUCCESS]，否則回傳 [WORKFLOW_FAILURE] 並附上原因。\n"
+            "重要規定：請務必全程使用繁體中文（zh-TW）撰寫報告，絕對不可使用簡體中文。"
         )
         
         contents = [
